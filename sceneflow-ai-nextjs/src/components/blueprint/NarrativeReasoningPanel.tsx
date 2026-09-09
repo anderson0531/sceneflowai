@@ -1,16 +1,22 @@
 'use client'
 
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Award, Lightbulb, RefreshCw, Sparkles, Users } from 'lucide-react'
-import { BlueprintNarrationSection } from '@/components/blueprint/BlueprintNarrationSection'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { BlueprintListenButton } from '@/components/blueprint/BlueprintListenButton'
+import { useBlueprintTtsContext } from '@/contexts/BlueprintTtsContext'
 import type { NarrativeReasoningNarrationInput } from '@/lib/blueprint/buildNarrativeReasoningNarrationText'
+import { buildNarrativeReasoningNarrationText } from '@/lib/blueprint/buildNarrativeReasoningNarrationText'
 import { useContentTranslation } from '@/i18n/content/useContentTranslation'
 import { buildNarrativeReasoningDisplayFields } from '@/i18n/content/buildBlueprintDisplayFields'
 import { EMPTY_ENTITY_I18N, type EntityI18n } from '@/i18n/content/entityI18n'
 import { TranslationNotice } from '@/components/i18n/LocalizedField'
 
 export type NarrativeReasoning = NarrativeReasoningNarrationInput
+
+const TAB_IDS = ['characterFocus', 'keyDecisions', 'storyStrengths', 'emphasis'] as const
+type ReasoningTabId = (typeof TAB_IDS)[number]
 
 /**
  * The AI's account of the choices it made. Lives in the side panel's Reasoning
@@ -24,6 +30,8 @@ export function NarrativeReasoningPanel({
   contentI18n?: EntityI18n
 }) {
   const t = useTranslations('blueprint.reasoning')
+  const tts = useBlueprintTtsContext()
+  const playId = 'reasoning-narration'
 
   const fields = useMemo(
     () => buildNarrativeReasoningDisplayFields(reasoning),
@@ -33,7 +41,7 @@ export function NarrativeReasoningPanel({
   const {
     resolve,
     needsTranslation,
-    isLoading,
+    isLoading: contentTranslating,
     pendingCount,
     uiLocale,
     sourceLocale,
@@ -85,12 +93,54 @@ export function NarrativeReasoningPanel({
     }
   }, [reasoning, text])
 
+  const narrationText = useMemo(
+    () => buildNarrativeReasoningNarrationText(localizedReasoning),
+    [localizedReasoning]
+  )
+
+  const isActive = tts.loadingId === playId
+  const isLoading =
+    isActive &&
+    tts.generationProgress != null &&
+    tts.generationProgress.phase !== 'playing'
+
+  const availableTabs = useMemo(() => {
+    if (!localizedReasoning) return [] as ReasoningTabId[]
+    const tabs: ReasoningTabId[] = []
+    if (localizedReasoning.character_focus?.trim()) tabs.push('characterFocus')
+    const decisions = localizedReasoning.key_decisions || []
+    if (decisions.length > 0) tabs.push('keyDecisions')
+    if (localizedReasoning.story_strengths?.trim()) tabs.push('storyStrengths')
+    if (localizedReasoning.user_adjustments?.trim()) tabs.push('emphasis')
+    return tabs
+  }, [localizedReasoning])
+
+  const [activeTab, setActiveTab] = useState<ReasoningTabId>('characterFocus')
+
+  React.useEffect(() => {
+    if (availableTabs.length > 0 && !availableTabs.includes(activeTab)) {
+      setActiveTab(availableTabs[0])
+    }
+  }, [availableTabs, activeTab])
+
   if (!reasoning || !localizedReasoning) {
     return (
       <div className="p-4 space-y-4">
-        <BlueprintNarrationSection reasoning={null} playId="reasoning-narration" />
-        <div className="rounded-lg border border-slate-700/60 bg-slate-800/40 p-3">
-          <p className="text-xs text-gray-400">{t('noneRecorded')}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold text-white">{t('title')}</h3>
+            <p className="text-sm text-gray-500 mt-0.5">{t('subtitle')}</p>
+          </div>
+          <BlueprintListenButton
+            variant="purple"
+            disabled
+            isPlaying={false}
+            onPlay={() => {}}
+            onStop={() => {}}
+          />
+        </div>
+        <div className="rounded-lg border border-slate-700/60 bg-slate-800/40 p-4">
+          <p className="text-sm text-gray-400">{t('noneRecorded')}</p>
         </div>
       </div>
     )
@@ -102,98 +152,130 @@ export function NarrativeReasoningPanel({
   const characterFocus = localizedReasoning.character_focus || ''
   const storyStrengths = localizedReasoning.story_strengths || ''
   const userAdjustments = localizedReasoning.user_adjustments || ''
-  const isEmpty = !characterFocus && !storyStrengths
+  const isEmpty = availableTabs.length === 0
+
+  const tabLabel: Record<ReasoningTabId, string> = {
+    characterFocus: t('characterFocus'),
+    keyDecisions: t('keyDecisions'),
+    storyStrengths: t('storyStrengths'),
+    emphasis: t('wantDifferentEmphasis'),
+  }
 
   return (
     <div className="p-4 space-y-4">
-      <BlueprintNarrationSection
-        reasoning={localizedReasoning}
-        playId="reasoning-narration"
-      />
-
-      <div className="flex items-center gap-2">
-        <Lightbulb className="w-4 h-4 text-amber-400 shrink-0" />
-        <div>
-          <h3 className="text-sm font-semibold text-white">{t('title')}</h3>
-          <p className="text-[11px] text-gray-500">{t('subtitle')}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-base font-semibold text-white flex items-center gap-2">
+            <Lightbulb className="w-4 h-4 text-amber-400 shrink-0" />
+            {t('title')}
+          </h3>
+          <p className="text-sm text-gray-500 mt-0.5">{t('subtitle')}</p>
         </div>
+        <BlueprintListenButton
+          variant="purple"
+          isPlaying={isActive && !isLoading}
+          isLoading={isLoading}
+          disabled={!tts.enabled || tts.voices.length === 0 || !narrationText.trim()}
+          onPlay={() => void tts.playText(narrationText, playId)}
+          onStop={tts.stopAny}
+        />
       </div>
 
       {needsTranslation ? (
         <TranslationNotice
           sourceLocale={sourceLocale}
           uiLocale={uiLocale}
-          isLoading={isLoading}
+          isLoading={contentTranslating}
           pendingCount={pendingCount}
         />
       ) : null}
 
       {isEmpty ? (
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
-          <p className="text-xs text-amber-200/90">{t('notProvided')}</p>
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+          <p className="text-sm text-amber-200/90">{t('notProvided')}</p>
         </div>
       ) : (
-        <>
-          {characterFocus && (
-            <section className="rounded-lg border border-blue-500/25 bg-blue-500/10 p-3">
-              <h4 className="text-xs font-semibold text-blue-100 mb-1.5 flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5" />
-                {t('characterFocus')}
-              </h4>
-              <p className="text-xs text-blue-100/90 leading-relaxed">{characterFocus}</p>
-            </section>
-          )}
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as ReasoningTabId)}
+          className="w-full"
+        >
+          <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-900/60 p-1">
+            {availableTabs.map((tabId) => (
+              <TabsTrigger
+                key={tabId}
+                value={tabId}
+                className="text-xs sm:text-sm data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-100"
+              >
+                {tabLabel[tabId]}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-          {decisions.length > 0 && (
-            <section className="space-y-2">
-              <h4 className="text-xs font-semibold text-gray-200 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-                {t('keyDecisions')}
-              </h4>
-              {decisions.map((decision, idx) => (
-                <div
-                  key={idx}
-                  className="rounded-lg border-l-2 border-purple-500 bg-purple-500/10 p-3"
-                >
-                  <div className="text-xs font-medium text-purple-100 mb-1">
-                    {decision.decision}
-                  </div>
-                  {decision.why && (
-                    <p className="text-[11px] text-purple-100/90 mb-1">
-                      <strong className="font-semibold">{t('why')}</strong> {decision.why}
-                    </p>
-                  )}
-                  {decision.impact && (
-                    <p className="text-[11px] text-purple-200/80 italic">
-                      <strong className="font-semibold not-italic">{t('impact')}</strong>{' '}
-                      {decision.impact}
-                    </p>
-                  )}
+          <TabsContent value="characterFocus" className="mt-4">
+            {characterFocus ? (
+              <section className="rounded-lg border border-blue-500/25 bg-blue-500/10 p-4">
+                <h4 className="text-sm font-semibold text-blue-100 mb-2 flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  {t('characterFocus')}
+                </h4>
+                <p className="text-sm text-gray-200 leading-7">{characterFocus}</p>
+              </section>
+            ) : null}
+          </TabsContent>
+
+          <TabsContent value="keyDecisions" className="mt-4 space-y-3">
+            {decisions.map((decision, idx) => (
+              <div
+                key={idx}
+                className="rounded-lg border-l-2 border-purple-500 bg-purple-500/10 p-4"
+              >
+                <div className="text-sm font-medium text-purple-100 mb-2 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
+                  {decision.decision}
                 </div>
-              ))}
-            </section>
-          )}
+                {decision.why ? (
+                  <p className="text-sm text-gray-200 leading-7 mb-2">
+                    <strong className="font-semibold text-purple-200">{t('why')}</strong>{' '}
+                    {decision.why}
+                  </p>
+                ) : null}
+                {decision.impact ? (
+                  <p className="text-sm text-gray-300 leading-7 italic">
+                    <strong className="font-semibold not-italic text-purple-200">
+                      {t('impact')}
+                    </strong>{' '}
+                    {decision.impact}
+                  </p>
+                ) : null}
+              </div>
+            ))}
+          </TabsContent>
 
-          {storyStrengths && (
-            <section className="rounded-lg border border-emerald-500/25 bg-emerald-500/10 p-3">
-              <h4 className="text-xs font-semibold text-emerald-100 mb-1.5 flex items-center gap-1.5">
-                <Award className="w-3.5 h-3.5" />
-                {t('storyStrengths')}
-              </h4>
-              <p className="text-xs text-emerald-100/90 leading-relaxed">{storyStrengths}</p>
-            </section>
-          )}
+          <TabsContent value="storyStrengths" className="mt-4">
+            {storyStrengths ? (
+              <section className="rounded-lg border border-emerald-500/25 bg-emerald-500/10 p-4">
+                <h4 className="text-sm font-semibold text-emerald-100 mb-2 flex items-center gap-2">
+                  <Award className="w-4 h-4" />
+                  {t('storyStrengths')}
+                </h4>
+                <p className="text-sm text-gray-200 leading-7">{storyStrengths}</p>
+              </section>
+            ) : null}
+          </TabsContent>
 
-          {userAdjustments && (
-            <section className="rounded-lg border border-amber-500/25 bg-amber-500/10 p-3">
-              <h4 className="text-xs font-semibold text-amber-100 mb-1.5 flex items-center gap-1.5">
-                <RefreshCw className="w-3.5 h-3.5" />
-                {t('wantDifferentEmphasis')}
-              </h4>
-              <p className="text-xs text-amber-100/90 leading-relaxed">{userAdjustments}</p>
-            </section>
-          )}
-        </>
+          <TabsContent value="emphasis" className="mt-4">
+            {userAdjustments ? (
+              <section className="rounded-lg border border-amber-500/25 bg-amber-500/10 p-4">
+                <h4 className="text-sm font-semibold text-amber-100 mb-2 flex items-center gap-2">
+                  <RefreshCw className="w-4 h-4" />
+                  {t('wantDifferentEmphasis')}
+                </h4>
+                <p className="text-sm text-gray-200 leading-7">{userAdjustments}</p>
+              </section>
+            ) : null}
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   )

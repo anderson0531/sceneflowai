@@ -72,10 +72,13 @@
     "wholeBlueprint": "whole blueprint"
   },
   "audio": {
+    "listen": "Listen",
     "previewPrint": "Preview & Print",
     "moreActions": "More actions",
     "play": "Play (P)",
     "stop": "Stop (P)",
+    "blueprintListenHint": "Listen to this blueprint with your selected narrator voice.",
+    "reasoningListenHint": "Listen to the AI's narrative reasoning with your selected narrator voice.",
     "unavailable": "Audio preview unavailable",
     "configureTts": "Configure Google TTS to enable audio previews",
     "configureTtsDetailed": "Configure Google TTS (GOOGLE_API_KEY or Vertex) to enable audio previews",
@@ -93,7 +96,45 @@
     "playing": "Playing narration"
   },
   "menu": {
-    "reimagine": "Reimagine"
+    "reimagine": "Regenerate Blueprint"
+  },
+  "regenerate": {
+    "sectionTitle": "Start over from scratch",
+    "sectionHint": "Regenerate replaces the entire Blueprint. Use the Assistant for targeted edits instead.",
+    "confirmTitle": "Regenerate Blueprint?",
+    "confirmDescription": "This will replace your current Blueprint with a new AI-generated treatment. Manual edits, resonance scores, and variant history for this blueprint will be lost. This cannot be undone.",
+    "cancel": "Cancel",
+    "confirmAction": "Yes, regenerate"
+  },
+  "export": {
+    "title": "Export Blueprint",
+    "description": "Download your treatment in a format compatible with other writing and production tools.",
+    "cancel": "Cancel",
+    "download": "Download",
+    "savePdf": "Save as PDF",
+    "noVariant": "No blueprint to export.",
+    "pdfNotReady": "Export preview is not ready yet.",
+    "pdfHint": "Use your browser's print dialog and choose Save as PDF.",
+    "exportFailed": "Export failed.",
+    "downloadSuccess": "Downloaded as {format}",
+    "formats": {
+      "pdf": {
+        "label": "PDF",
+        "hint": "Print-quality layout for sharing or archiving."
+      },
+      "fountain": {
+        "label": "Fountain",
+        "hint": "Industry-standard text format for WriterDuet, Highland, and Slugline."
+      },
+      "markdown": {
+        "label": "Markdown",
+        "hint": "Readable outline for Google Docs, Notion, or wikis."
+      },
+      "json": {
+        "label": "JSON",
+        "hint": "Full structured backup of this blueprint variant."
+      }
+    }
   },
   "credit": {
     "addYourName": "Add your name"
@@ -234,6 +275,8 @@
     "improveWeakest": "Improve weakest"
   },
   "nextStep": {
+    "readyForProduction": "Ready for Production",
+    "nextStepLabel": "Next step",
     "remainingToFinish": "{count} to finish",
     "go": "Go",
     "generateBlueprint": "Generate Blueprint",
@@ -251,6 +294,9 @@
       "reasoning": "Narrative"
     },
     "collab": {
+      "exportTitle": "Export Blueprint",
+      "exportHint": "Download PDF, Fountain, Markdown, or JSON for use in other tools.",
+      "exportButton": "Download…",
       "creatingLink": "Creating link…",
       "shareAndCollaborate": "Share & Collaborate",
       "reviewerAudio": "Reviewer audio",

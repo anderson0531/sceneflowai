@@ -1492,28 +1492,6 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                         }}
                       />
                     )}
-                    {hasBlueprint && (
-                      <Button
-                        onClick={handleRequestStartProduction}
-                        disabled={isStartingProduction}
-                        // Short label matches the next-step banner's Go button; the
-                        // destination stays in the accessible name and tooltip so
-                        // "Go" is never the only context.
-                        aria-label={t('goToProduction')}
-                        title={t('goTooltip')}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white text-sm h-9"
-                        size="sm"
-                      >
-                        {isStartingProduction ? (
-                          <RefreshCw className="w-4 h-4 animate-spin mr-1.5" />
-                        ) : (
-                          <Clapperboard className="w-4 h-4 mr-1.5" />
-                        )}
-                        {isStartingProduction
-                          ? t('openingProduction')
-                          : t('goShort')}
-                      </Button>
-                    )}
                     <Button
                       onClick={() => (showSidePanel ? closeSidePanel() : setShowSidePanel(true))}
                       variant="outline"
@@ -1537,6 +1515,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                     progress={blueprintProgress}
                     checklist={checklist}
                     onAction={handleNextStepAction}
+                    isStartingProduction={isStartingProduction}
                   />
                 )}
                 {refineDiffSummary.length > 0 && (

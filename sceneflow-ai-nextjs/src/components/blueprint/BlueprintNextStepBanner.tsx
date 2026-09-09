@@ -4,7 +4,6 @@ import { useTranslations } from 'next-intl'
 
 import React, { useState } from 'react'
 import {
-  ArrowRight,
   Sparkles,
   Eye,
   Clapperboard,
@@ -12,6 +11,7 @@ import {
   Circle,
   ChevronDown,
   ChevronUp,
+  RefreshCw,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
@@ -25,6 +25,7 @@ interface BlueprintNextStepBannerProps {
   /** When provided, the banner also owns the readiness checklist. */
   checklist?: BlueprintReadyChecklist
   onAction?: () => void
+  isStartingProduction?: boolean
   className?: string
 }
 
@@ -60,9 +61,11 @@ export function BlueprintNextStepBanner({
   progress,
   checklist,
   onAction,
+  isStartingProduction = false,
   className,
 }: BlueprintNextStepBannerProps) {
   const t = useTranslations('blueprint.nextStep')
+  const tStudio = useTranslations('blueprint.studio')
   const tCheck = useTranslations('blueprint.checklist')
   const [expanded, setExpanded] = useState(false)
 
@@ -127,7 +130,7 @@ export function BlueprintNextStepBanner({
           </div>
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-wide text-gray-500">
-              {isReady ? 'Ready for Production' : 'Next step'}
+              {isReady ? t('readyForProduction') : t('nextStepLabel')}
             </p>
             <p className="text-sm font-medium text-white truncate">{t(progress.nextStepLabelKey)}</p>
           </div>
@@ -153,10 +156,17 @@ export function BlueprintNextStepBanner({
             <Button
               size="sm"
               onClick={onAction}
-              className="bg-cyan-600 hover:bg-cyan-500 text-white"
+              disabled={isStartingProduction}
+              aria-label={tStudio('goToProduction')}
+              title={tStudio('goTooltip')}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white"
             >
-              {t('go')}
-              <ArrowRight className="w-4 h-4 ml-1" />
+              {isStartingProduction ? (
+                <RefreshCw className="w-4 h-4 animate-spin mr-1.5" />
+              ) : (
+                <Clapperboard className="w-4 h-4 mr-1.5" />
+              )}
+              {isStartingProduction ? tStudio('openingProduction') : tStudio('goShort')}
             </Button>
           )}
         </div>
