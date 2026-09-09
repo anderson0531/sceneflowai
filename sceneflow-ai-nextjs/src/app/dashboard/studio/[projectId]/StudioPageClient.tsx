@@ -40,6 +40,7 @@ import { resolveLoadedBlueprintVariants } from '@/lib/blueprint/resolveLoadedVar
 import type { ReimagineFoundationField } from '@/components/vision/ReimagineFoundationDialog'
 import { normalizeVariantFoundation } from '@/lib/treatment/blueprintFoundation'
 import { checkBeatsPatch } from '@/lib/treatment/blueprintRevisionValidate'
+import { focusScopeForRecommendations } from '@/lib/treatment/resonanceFixInstructions'
 import { toast } from 'sonner'
 import {
   createPersistedBlueprintAR,
@@ -663,7 +664,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     if (pending.length > 0) {
       openBlueprintRefine({
         resonanceRecommendations: pending,
-        initialActiveTab: pending[0]?.fixSection || 'story',
+        initialScope: focusScopeForRecommendations(pending),
         onApplyExtra: () => {
           if (!savedBlueprintAR?.analysis) return
           const audDef =

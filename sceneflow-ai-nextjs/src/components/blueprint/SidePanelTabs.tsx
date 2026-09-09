@@ -19,6 +19,7 @@ import type {
   AudienceIntent,
 } from '@/lib/types/audienceResonance'
 import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRefine'
+import { focusScopeForRecommendations } from '@/lib/treatment/resonanceFixInstructions'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { triggerBlueprintShareSectionAudio } from '@/lib/blueprint/createBlueprintShare'
 import type { BlueprintSectionAudioStatus } from '@/lib/blueprint/shareTypes'
@@ -776,7 +777,7 @@ function CollaborationContent({
                     const selected = recommendations.filter((r) => selectedRecIds.has(r.id))
                     onOpenBlueprintRefine?.({
                       resonanceRecommendations: selected,
-                      initialScope: selected[0]?.fixSection || 'all',
+                      initialScope: focusScopeForRecommendations(selected),
                     })
                   }}
                   disabled={selectedRecIds.size === 0 || !onOpenBlueprintRefine}

@@ -59,6 +59,37 @@ describe('the Assistant direction field', () => {
   })
 })
 
+describe('resonance recommendations become instruction text', () => {
+  const dialog = readSource('src/components/blueprint/BlueprintRefineDialog.tsx')
+  const catalog = JSON.parse(readSource('messages/app/en/blueprint.json'))
+
+  it('prefills the direction field from the concrete fix, not the chip label', () => {
+    expect(dialog).toContain('formatResonanceFixInstructions(resonanceRecommendations)')
+    expect(dialog).toContain('fixInstructionForRecommendation(rec)')
+    expect(dialog).not.toContain('rec.intentLabel || rec.title || rec.text.slice(0, 80)')
+  })
+
+  it('lets the user add or remove a fix in the instruction field', () => {
+    expect(dialog).toContain('appendFixInstruction')
+    expect(dialog).toContain('removeFixInstruction')
+    expect(dialog).toContain("t('addToInstructions')")
+    expect(dialog).toContain("t('addedToInstructions')")
+    expect(typeof catalog.assistant.addToInstructions).toBe('string')
+    expect(typeof catalog.assistant.addedToInstructions).toBe('string')
+    expect(catalog.assistant.addToInstructions.length).toBeGreaterThan(0)
+    expect(catalog.assistant.addedToInstructions.length).toBeGreaterThan(0)
+  })
+
+  it('opens full-balance when the selected fixes span sections', () => {
+    const panel = readSource('src/components/blueprint/AudienceResonancePanelV3.tsx')
+    const studio = readSource('src/app/dashboard/studio/[projectId]/StudioPageClient.tsx')
+    const tabs = readSource('src/components/blueprint/SidePanelTabs.tsx')
+    expect(panel).toContain('focusScopeForRecommendations(list)')
+    expect(studio).toContain('focusScopeForRecommendations(pending)')
+    expect(tabs).toContain('focusScopeForRecommendations(selected)')
+  })
+})
+
 describe('DictationTextarea', () => {
   const field = readSource('src/components/ui/DictationTextarea.tsx')
 

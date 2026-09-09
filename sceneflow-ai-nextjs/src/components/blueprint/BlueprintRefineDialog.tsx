@@ -37,6 +37,12 @@ import {
   mergeRevisionIntoVariant,
 } from '@/lib/treatment/blueprintRevisionDiff'
 import { trimVariantForPrompt } from '@/lib/treatment/blueprintRevisionPrompts'
+import {
+  appendFixInstruction,
+  fixInstructionForRecommendation,
+  formatResonanceFixInstructions,
+  removeFixInstruction,
+} from '@/lib/treatment/resonanceFixInstructions'
 import { readJsonSafe } from '@/lib/readJsonSafe'
 import {
   hasBlockingIssue,
@@ -443,6 +449,9 @@ export function BlueprintRefineDialog({
     if (resonanceRecommendations?.length) {
       setSelectedRecIds(new Set(resonanceRecommendations.map((r) => r.id)))
       setShowResonanceRecs(true)
+      if (!(initialIntent ?? '').trim() && !rewriteToEnglish) {
+        setUserIntent(formatResonanceFixInstructions(resonanceRecommendations))
+      }
     } else {
       setSelectedRecIds(new Set())
     }
@@ -462,6 +471,12 @@ export function BlueprintRefineDialog({
   const combinedIntent = useMemo(() => {
     const parts: string[] = []
     if (userIntent.trim()) parts.push(userIntent.trim())
+    const selectedRecs =
+      resonanceRecommendations?.filter((r) => selectedRecIds.has(r.id)) ?? []
+    for (const rec of selectedRecs) {
+      const fix = fixInstructionForRecommendation(rec)
+      if (fix && !userIntent.includes(fix)) parts.push(fix)
+    }
     for (const { section, templates } of templateSections) {
       for (const t of templates) {
         const key = `${section}:${t.id}`
@@ -471,7 +486,13 @@ export function BlueprintRefineDialog({
       }
     }
     return parts.join('\n')
-  }, [userIntent, templateSections, selectedTemplateKeys])
+  }, [
+    userIntent,
+    templateSections,
+    selectedTemplateKeys,
+    resonanceRecommendations,
+    selectedRecIds,
+  ])
 
   // All validation below is pure and synchronous, so it can run per keystroke.
   const selectedRecCount = useMemo(
@@ -505,13 +526,25 @@ export function BlueprintRefineDialog({
     setSelectedTemplateKeys(new Set())
   }, [])
 
-  const toggleRec = (id: string) => {
+  const addRecToIntent = (rec: BlueprintAudienceRecommendation) => {
+    const text = fixInstructionForRecommendation(rec)
+    setUserIntent((prev) => appendFixInstruction(prev, text))
+    setSelectedRecIds((prev) => new Set(prev).add(rec.id))
+  }
+
+  const removeRecFromIntent = (rec: BlueprintAudienceRecommendation) => {
+    const text = fixInstructionForRecommendation(rec)
+    setUserIntent((prev) => removeFixInstruction(prev, text))
     setSelectedRecIds((prev) => {
       const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
+      next.delete(rec.id)
       return next
     })
+  }
+
+  const toggleRec = (rec: BlueprintAudienceRecommendation) => {
+    if (selectedRecIds.has(rec.id)) removeRecFromIntent(rec)
+    else addRecToIntent(rec)
   }
 
   const toggleTemplate = (section: string, id: string) => {
@@ -728,33 +761,78 @@ export function BlueprintRefineDialog({
                     />
                   </button>
                   {showResonanceRecs && (
-                    <div className="space-y-1.5 max-h-[120px] overflow-y-auto">
-                      {resonanceRecommendations.map((rec) => (
-                        <div
-                          key={rec.id}
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => toggleRec(rec.id)}
-                          className={cn(
-                            'flex items-start gap-2 p-2 rounded-lg cursor-pointer border text-left text-xs',
-                            selectedRecIds.has(rec.id)
-                              ? 'border-cyan-500/40 bg-cyan-500/10'
-                              : 'border-slate-700/50 bg-slate-800/40'
-                          )}
-                        >
-                          {selectedRecIds.has(rec.id) ? (
-                            <CheckSquare className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
-                          ) : (
-                            <Square className="w-3.5 h-3.5 text-gray-500 shrink-0 mt-0.5" />
-                          )}
-                          <span className="text-gray-300 flex-1">
-                            {rec.intentLabel || rec.title || rec.text.slice(0, 80)}
-                            <span className="text-red-400/80 ml-1 font-mono">
-                              {t('minusPoints', { points: rec.pointsDeducted })}
-                            </span>
-                          </span>
-                        </div>
-                      ))}
+                    <div className="space-y-1.5 max-h-[280px] overflow-y-auto">
+                      {resonanceRecommendations.map((rec) => {
+                        const selected = selectedRecIds.has(rec.id)
+                        const heading = rec.intentLabel || rec.title || rec.category
+                        const fixText = fixInstructionForRecommendation(rec)
+                        const gapText = rec.reason?.trim()
+                        return (
+                          <div
+                            key={rec.id}
+                            className={cn(
+                              'flex items-start gap-2 p-2 rounded-lg border text-left text-xs',
+                              selected
+                                ? 'border-cyan-500/40 bg-cyan-500/10'
+                                : 'border-slate-700/50 bg-slate-800/40'
+                            )}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => toggleRec(rec)}
+                              className="shrink-0 mt-0.5"
+                              aria-pressed={selected}
+                            >
+                              {selected ? (
+                                <CheckSquare className="w-3.5 h-3.5 text-cyan-400" />
+                              ) : (
+                                <Square className="w-3.5 h-3.5 text-gray-500" />
+                              )}
+                            </button>
+                            <div className="flex-1 min-w-0 space-y-1">
+                              {heading && (
+                                <div className="font-medium text-gray-200">
+                                  {heading}
+                                  <span className="text-red-400/80 ml-1 font-mono font-normal">
+                                    {t('minusPoints', { points: rec.pointsDeducted })}
+                                  </span>
+                                </div>
+                              )}
+                              {fixText && (
+                                <p className="text-gray-300 leading-relaxed">{fixText}</p>
+                              )}
+                              {gapText && gapText !== fixText && (
+                                <p className="text-[10px] text-gray-500 leading-relaxed">
+                                  {t('resonanceGap')}: {gapText}
+                                </p>
+                              )}
+                            </div>
+                            {selected ? (
+                              <button
+                                type="button"
+                                onClick={() => removeRecFromIntent(rec)}
+                                className="flex items-center gap-1 text-cyan-400 text-[10px] font-medium flex-shrink-0 mt-0.5"
+                              >
+                                <Check className="w-3 h-3" />
+                                {t('addedToInstructions')}
+                              </button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/30 flex-shrink-0"
+                                disabled={
+                                  !fixText ||
+                                  appendFixInstruction(userIntent, fixText) === userIntent
+                                }
+                                onClick={() => addRecToIntent(rec)}
+                              >
+                                {t('addToInstructions')}
+                              </Button>
+                            )}
+                          </div>
+                        )
+                      })}
                     </div>
                   )}
                 </div>
