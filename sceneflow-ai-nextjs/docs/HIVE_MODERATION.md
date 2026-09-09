@@ -9,7 +9,7 @@ Optional server-side content validation using [Hive AI](https://thehive.ai). Val
 | Harmful (NSFW, violence, CSAM, etc.) | **Informational warning** in `moderationReport` — never HTTP 403 |
 | Copyright / trademark / celebrity / likeness (NIL) | **Informational warning** in `moderationReport` |
 
-Client-side `promptModerator.ts` remains a UX preflight only. Paid validation is authoritative when the user explicitly requests it.
+`promptModerator.ts` is a silent sanitizer for media retry after Google/Vertex already blocked a request. It is not a user-facing preflight. Paid Hive validation is authoritative when the user explicitly requests it.
 
 ## Environment
 

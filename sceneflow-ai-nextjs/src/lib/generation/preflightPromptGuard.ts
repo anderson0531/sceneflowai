@@ -30,7 +30,7 @@ export interface PreflightNeutralizeResult {
   guidePrompt?: string
   wasRewritten: boolean
   riskScore: PromptRiskScore
-  /** True when high risk persists after rewrite — caller may surface ContentPolicyAlert */
+  /** True when high risk persists after rewrite */
   requiresUserReview?: boolean
 }
 

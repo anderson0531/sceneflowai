@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Copy, Check, Sparkles, Info, Loader2, Video, Image as ImageIcon, Clock, ArrowRight, Film, Link as LinkIcon, Upload, Camera, Wand2, Library, Users, Box, Clapperboard, X, Plus, MessageSquare, AlertCircle, RotateCcw, Eye, Type, Scissors, MapPin, Coffee, CreditCard, ShieldAlert, RefreshCw, Shirt } from 'lucide-react'
+import { Copy, Check, Sparkles, Info, Loader2, Video, Image as ImageIcon, Clock, ArrowRight, Film, Link as LinkIcon, Upload, Camera, Wand2, Library, Users, Box, Clapperboard, X, Plus, MessageSquare, AlertCircle, RotateCcw, Eye, Type, Scissors, MapPin, Coffee, CreditCard, RefreshCw, Shirt } from 'lucide-react'
 import { GuidePromptEditor } from './GuidePromptEditor'
 import { visionSceneToGuideAudioData } from '@/lib/scene/visionSceneAudio'
 import { artStylePresets } from '@/constants/artStylePresets'
@@ -16,10 +16,8 @@ import { VisualReference, type LocationReference } from '@/types/visionReference
 import { resolveFrameGenerationContext, isNoTalentSceneForFrames } from '@/lib/vision/frameGenerationContext'
 import { cn } from '@/lib/utils'
 import { wardrobesForScene } from '@/lib/character/characterReferenceAssembly'
-import { ContentPolicyAlert, PolicyFixedBanner } from './ContentPolicyAlert'
 import { ImageEditModal } from '@/components/vision/ImageEditModal'
 import { AnalyzeKeyframeRiskPanel } from './AnalyzeKeyframeRiskPanel'
-import { moderatePrompt, type ModerationResult } from '@/utils/promptModerator'
 import { 
   CINEMATIC_ELEMENT_TYPES, 
   type SpecialSegmentType, 
@@ -193,11 +191,7 @@ export function SegmentPromptBuilder({
   // Track if we started a generation (to know when to auto-close on success)
   const [generationStarted, setGenerationStarted] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
-  
-  // Content policy moderation state
-  const [postFailureModerationResult, setPostFailureModerationResult] = useState<ModerationResult | null>(null)
-  const [preflightModerationResult, setPreflightModerationResult] = useState<ModerationResult | null>(null)
-  const [promptFixApplied, setPromptFixApplied] = useState(false)
+  const [isContentPolicyFailure, setIsContentPolicyFailure] = useState(false)
   
   // Video generation method (only for video mode)
   const [generationMethod, setGenerationMethod] = useState<VideoGenerationMethod>('T2V')
@@ -262,6 +256,7 @@ export function SegmentPromptBuilder({
       setGenerationStarted(false)
       setLocalError(null)
       setIsFTVContentPolicyFailure(false)
+      setIsContentPolicyFailure(false)
       // Don't auto-close - user controls when to close
     }
     
@@ -281,34 +276,11 @@ export function SegmentPromptBuilder({
         setGenerationMethod('I2V')
       }
       
-      // If this is a content policy error, run moderator to provide actionable UI
       const isContentPolicy = errMsg.includes('Content Policy') ||
         errMsg.includes('safety filter') ||
         errMsg.includes('violat') ||
         errMsg.includes('usage guidelines')
-      if (isContentPolicy) {
-        const currentPrompt = getRawPrompt()
-        if (currentPrompt) {
-          const modResult = moderatePrompt(currentPrompt)
-          // Even if moderator finds nothing (Vertex flagged something we don't know about),
-          // create a synthetic result so ContentPolicyAlert can show with AI Rephrase option
-          if (modResult.isClean) {
-            setPostFailureModerationResult({
-              isClean: false,
-              severity: 'medium',
-              flaggedTerms: [],
-              suggestedPrompt: currentPrompt,
-              warnings: isFTVRelated 
-                ? ['FTV interpolation between two frames triggered a safety rejection. This is a known false-positive pattern. Retry with I2V (Image-to-Video) using your start frame — your prompt and keyframe are preserved.']
-                : ['Vertex AI rejected this prompt but no specific trigger words were found. Try using AI Rephrase for a complete rewrite.']
-            })
-          } else {
-            setPostFailureModerationResult(modResult)
-          }
-        }
-      } else {
-        setPostFailureModerationResult(null)
-      }
+      setIsContentPolicyFailure(isContentPolicy)
     }
   }, [segment.status, segment.errorMessage, generationStarted])
   
@@ -317,9 +289,7 @@ export function SegmentPromptBuilder({
     if (!open) {
       setGenerationStarted(false)
       setLocalError(null)
-      setPostFailureModerationResult(null)
-      setPreflightModerationResult(null)
-      setPromptFixApplied(false)
+      setIsContentPolicyFailure(false)
       setKeyframeEdit(null)
     }
   }, [open])
@@ -886,62 +856,10 @@ export function SegmentPromptBuilder({
     return activeTab === 'advanced' ? advancedPrompt : constructPrompt()
   }
 
-  // AI Rephrase handler for ContentPolicyAlert
-  const handleAIRephrase = useCallback(async (originalPrompt: string): Promise<string> => {
-    const response = await fetch('/api/prompt/rephrase', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        prompt: originalPrompt,
-        flaggedTerms: (postFailureModerationResult || preflightModerationResult)?.flaggedTerms.map(ft => ft.term) || []
-      })
-    })
-    if (!response.ok) {
-      throw new Error('Failed to rephrase prompt')
-    }
-    const data = await response.json()
-    return data.rephrasedPrompt || data.prompt || originalPrompt
-  }, [postFailureModerationResult, preflightModerationResult])
-
-  // Apply fix from ContentPolicyAlert — updates the prompt in the builder
-  const handleApplyContentFix = useCallback((fixedPrompt: string) => {
-    if (activeTab === 'advanced') {
-      setAdvancedPrompt(fixedPrompt)
-    } else {
-      // For guided mode, switch to advanced tab with the fixed prompt
-      setAdvancedPrompt(fixedPrompt)
-      setActiveTab('advanced')
-    }
-    setPostFailureModerationResult(null)
-    setPreflightModerationResult(null)
-    setLocalError(null)
-    setPromptFixApplied(true)
-    // Auto-dismiss success banner after 5s
-    setTimeout(() => setPromptFixApplied(false), 5000)
-  }, [activeTab])
-
-  const handleGenerate = (forceOverride = false) => {
+  const handleGenerate = () => {
     const rawPrompt = getRawPrompt()
-    
-    // Pre-flight content policy check (skip if user clicked "Generate Anyway")
-    if (!forceOverride) {
-      const modResult = moderatePrompt(rawPrompt)
-      if (!modResult.isClean) {
-        if (modResult.severity === 'medium' || modResult.severity === 'high') {
-          // Block generation and show ContentPolicyAlert for medium/high severity
-          setPreflightModerationResult(modResult)
-          return
-        } else if (modResult.severity === 'low') {
-          // Show warning but allow override for low severity
-          setPreflightModerationResult(modResult)
-          return
-        }
-      }
-    }
-    
-    // Clear preflight warning since we're proceeding
-    setPreflightModerationResult(null)
-    
+    setIsContentPolicyFailure(false)
+
     const mergedNegative =
       [structure.negativePrompt, veoGuideNegativePrompt].filter(Boolean).join(', ') || structure.negativePrompt
 
@@ -1099,44 +1017,11 @@ export function SegmentPromptBuilder({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Prompt Fix Applied Success Banner */}
-        {promptFixApplied && (
-          <div className="flex-shrink-0 mx-6 mt-2">
-            <PolicyFixedBanner onDismiss={() => setPromptFixApplied(false)} />
-          </div>
-        )}
-
-        {/* Pre-flight Content Policy Warning - shown before generation */}
-        {preflightModerationResult && !preflightModerationResult.isClean && (
-          <div className="flex-shrink-0 mx-6 mt-2">
-            <ContentPolicyAlert
-              moderationResult={preflightModerationResult}
-              onApplyFix={handleApplyContentFix}
-              onDismiss={() => setPreflightModerationResult(null)}
-              enableAIRegeneration={true}
-              onRegenerateWithAI={handleAIRephrase}
-            />
-            {/* Generate Anyway override for low severity */}
-            {preflightModerationResult.severity === 'low' && (
-              <div className="flex justify-end mt-2">
-                <button
-                  onClick={() => handleGenerate(true)}
-                  className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1 px-2 py-1 rounded border border-amber-700/50 hover:border-amber-600 transition-colors"
-                >
-                  <ShieldAlert className="w-3.5 h-3.5" />
-                  Generate Anyway
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Post-failure Error Banner - content policy errors use ContentPolicyAlert */}
+        {/* Post-failure error banner — Vertex policy failures show the Google error, not a keyword preflight */}
         {localError && (
           <div className="flex-shrink-0 mx-6 mt-2">
-            {postFailureModerationResult ? (
+            {isContentPolicyFailure ? (
               <div className="space-y-2">
-                {/* Vertex AI error message */}
                 <div className="p-3 rounded-lg bg-red-900/30 border border-red-700">
                   <div className="flex items-start gap-2">
                     <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
@@ -1147,7 +1032,7 @@ export function SegmentPromptBuilder({
                       <p className="text-xs text-red-300/80">
                         {isFTVContentPolicyFailure
                           ? 'Frame-to-Video (FTV) interpolation between two images triggered a content policy violation. This is a common false positive — the AI model interprets the transition between frames as potentially sensitive. Retry with Image-to-Video (I2V) using just your start frame.'
-                          : 'The video prompt was rejected by Vertex AI\u0027s safety filters. Use Auto-Fix for quick replacements or AI Rephrase for a complete rewrite.'}
+                          : 'The prompt was rejected by Vertex AI safety filters. Try rephrasing it to be more descriptive and less sensitive.'}
                       </p>
                       {segment.lastContentPolicyFailure?.vertexRaiDetails ? (
                         <details className="mt-2 rounded border border-red-800/50 bg-black/20 px-2 py-1.5">
@@ -1178,7 +1063,7 @@ export function SegmentPromptBuilder({
                           // Method already switched to I2V by the status watcher
                           // Clear error state and trigger regeneration
                           setLocalError(null)
-                          setPostFailureModerationResult(null)
+                          setIsContentPolicyFailure(false)
                           setIsFTVContentPolicyFailure(false)
                           handleGenerate()
                         }}
@@ -1198,14 +1083,16 @@ export function SegmentPromptBuilder({
                     emphasizeImageHypothesis={isFTVContentPolicyFailure}
                   />
                 )}
-                {/* Actionable ContentPolicyAlert with Auto-Fix and AI Rephrase */}
-                <ContentPolicyAlert
-                  moderationResult={postFailureModerationResult}
-                  onApplyFix={handleApplyContentFix}
-                  onDismiss={() => { setLocalError(null); setPostFailureModerationResult(null); setIsFTVContentPolicyFailure(false) }}
-                  enableAIRegeneration={true}
-                  onRegenerateWithAI={handleAIRephrase}
-                />
+                <button
+                  onClick={() => {
+                    setLocalError(null)
+                    setIsContentPolicyFailure(false)
+                    setIsFTVContentPolicyFailure(false)
+                  }}
+                  className="text-xs text-red-400 hover:text-red-300 underline"
+                >
+                  Dismiss
+                </button>
               </div>
             ) : (
               /* Generic error banner for non-content-policy errors */

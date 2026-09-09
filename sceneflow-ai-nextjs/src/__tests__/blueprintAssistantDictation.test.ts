@@ -57,6 +57,13 @@ describe('the Assistant direction field', () => {
       expect(typeof catalog.assistant.scopes[scope]).toBe('string')
     }
   })
+
+  it('does not run the keyword content-safety preflight', () => {
+    expect(dialog).not.toContain('moderatePrompt')
+    expect(dialog).not.toContain('ContentPolicyAlert')
+    expect(dialog).not.toContain('policyBlocks')
+    expect(dialog).toContain('submitBlocked = hasBlockingIssue(requestIssues)')
+  })
 })
 
 describe('DictationTextarea', () => {

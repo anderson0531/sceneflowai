@@ -43,10 +43,8 @@ import {
   MAX_INTENT_CHARS,
   validateRevisionRequest,
 } from '@/lib/treatment/blueprintRequestValidation'
-import { moderatePrompt } from '@/utils/promptModerator'
 import { ASSISTANT, assistantTitle } from '@/lib/constants/assistant'
 import { ASSISTANT_ICON as AssistantIcon } from '@/lib/constants/assistantIcon'
-import { ContentPolicyAlert } from '@/components/vision/scene-production/ContentPolicyAlert'
 import { useBackgroundJob } from '@/hooks/useBackgroundJob'
 import { cn } from '@/lib/utils'
 import type { ContentIntent } from '@/lib/content/contentIntent'
@@ -490,20 +488,9 @@ export function BlueprintRefineDialog({
     [combinedIntent, focusScope, variant, selectedRecCount]
   )
 
-  const moderation = useMemo(() => moderatePrompt(combinedIntent), [combinedIntent])
-  // Low severity is advisory; medium and high are what actually get rejected upstream.
-  const policyBlocks =
-    !moderation.isClean &&
-    (moderation.severity === 'medium' || moderation.severity === 'high')
-
   const blockers = requestIssues.filter((i) => i.severity === 'blocker')
   const warnings = requestIssues.filter((i) => i.severity === 'warning')
-  const submitBlocked = hasBlockingIssue(requestIssues) || policyBlocks
-
-  const applyPolicyFix = useCallback((fixed: string) => {
-    setUserIntent(fixed)
-    setSelectedTemplateKeys(new Set())
-  }, [])
+  const submitBlocked = hasBlockingIssue(requestIssues)
 
   const toggleRec = (id: string) => {
     setSelectedRecIds((prev) => {
@@ -862,14 +849,8 @@ export function BlueprintRefineDialog({
           )}
         </div>
 
-        {phase === 'intent' && (blockers.length > 0 || warnings.length > 0 || !moderation.isClean) && (
+        {phase === 'intent' && (blockers.length > 0 || warnings.length > 0) && (
           <div className="flex-shrink-0 space-y-2 pt-3">
-            {!moderation.isClean && (
-              <ContentPolicyAlert
-                moderationResult={moderation}
-                onApplyFix={applyPolicyFix}
-              />
-            )}
             {blockers.map((issue) => (
               <div
                 key={issue.code}
