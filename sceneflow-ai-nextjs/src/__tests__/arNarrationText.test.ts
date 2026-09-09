@@ -56,6 +56,31 @@ describe('buildBlueprintARNarrationText', () => {
     expect(text).not.toContain('Antagonist clarity')
   })
 
+  it('stops reading out a gap once its fix is applied', () => {
+    const text = buildBlueprintARNarrationText({
+      analysis: baseAnalysis,
+      appliedRecommendationIds: ['rec-1'],
+    })
+    expect(text).not.toContain('Weak midpoint')
+    expect(text).not.toContain('Score breakdown from 100')
+  })
+
+  it('reads the gap off a merged recommendation', () => {
+    const text = buildBlueprintARNarrationText({
+      analysis: {
+        ...baseAnalysis,
+        deductions: [],
+        recommendations: [
+          {
+            ...baseAnalysis.recommendations[0],
+            reason: 'Act two loses momentum',
+          },
+        ],
+      },
+    })
+    expect(text).toContain('Act two loses momentum. Minus 10 points.')
+  })
+
   it('falls back to treatment when no analysis', () => {
     const text = buildBlueprintARNarrationText({
       analysis: null,

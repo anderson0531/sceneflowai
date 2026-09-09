@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-08T23:15:45.872Z",
+  "generatedAt": "2026-09-09T02:38:02.735Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -477,6 +477,8 @@
       "audienceResonance.scoreBreakdown": "db4584399066ee00",
       "audienceResonance.scoreBreakdownBalancedHint": "748bcb64e722353f",
       "audienceResonance.minusPoints": "814d493f4ba4061d",
+      "audienceResonance.selectGapForFix": "73eb1fb29913045c",
+      "audienceResonance.fixSelectedWith": "a915ede24dba48eb",
       "audienceResonance.recommendations": "0738ee00b61bc3af",
       "audienceResonance.optionalPolish": "99f8bf6113381feb",
       "audienceResonance.polishBadge": "770341d6e89e04e8",

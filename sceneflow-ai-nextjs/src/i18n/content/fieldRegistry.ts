@@ -96,9 +96,11 @@ export const CONTENT_FIELDS: Record<string, FieldKind> = {
   // ── Blueprint: Audience Resonance analysis (persisted creative prose) ───
   'audienceResonance.summary': 'display',
   'audienceResonance.strengths[]': 'display',
+  // Kept for analyses stored before the gap and its fix became one object.
   'audienceResonance.deductions[].reason': 'display',
   'audienceResonance.recommendations[].title': 'display',
   'audienceResonance.recommendations[].text': 'display',
+  'audienceResonance.recommendations[].reason': 'display',
   'audienceResonance.categories[].name': 'display',
   'audienceDefinition.description': 'display',
   'audienceDefinition.customDirection': 'display',

@@ -337,7 +337,6 @@ describe('Model selection', () => {
 
     for (const relativePath of [
       'src/app/api/treatment/audience-resonance/route.ts',
-      'src/app/api/treatment/analyze-resonance/route.ts',
       'src/lib/script/audienceResonance/scenePass.ts',
       'src/lib/script/audienceResonance/synthesisPass.ts',
     ]) {

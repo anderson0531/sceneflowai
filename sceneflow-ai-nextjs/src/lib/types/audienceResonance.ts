@@ -1008,17 +1008,34 @@ export type BlueprintRecommendationPriority = 'critical' | 'high' | 'medium' | '
 
 export type BlueprintFixSection = 'core' | 'story' | 'tone' | 'beats' | 'characters'
 
+/**
+ * Legacy projection of a recommendation, kept so stored analyses and the TTS
+ * narration keep working. Derived from the recommendations server-side — never
+ * authored independently, which is how a deduction used to exist with no fix.
+ */
 export interface BlueprintAudienceDeduction {
   reason: string
   points: number
   category: string
   priority?: BlueprintRecommendationPriority
+  /** The recommendation that closes this gap. */
+  recommendationId?: string
 }
 
+/**
+ * One audience-resonance gap and the fix that closes it.
+ *
+ * Gap and fix are a single object, matching how the Production Studio scores a
+ * scene (`100 - sum(pointsDeducted)`). Keeping them apart let the score
+ * breakdown list problems the Assistant had no way to act on.
+ */
 export interface BlueprintAudienceRecommendation {
   id: string
+  /** The concrete fix to apply. */
   text: string
   title?: string
+  /** The audience-resonance gap this fix closes, i.e. what costs the points. */
+  reason?: string
   priority: BlueprintRecommendationPriority
   pointsDeducted: number
   fixSection: BlueprintFixSection
