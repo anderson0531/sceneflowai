@@ -8,7 +8,7 @@ import { SubscriptionService } from '../../../../services/SubscriptionService'
 import { runScriptQA, autoFixScript } from '@/lib/script/qualityAssurance'
 import { generateText } from '@/lib/vertexai/gemini'
 import { getScriptGenerationModel } from '@/lib/config/modelConfig'
-import { getSettingsForFormat, getScriptProgressStatuses, buildScriptConstraintPrompt, SCRIPT_SETTINGS_BY_FORMAT } from '@/lib/script/scriptGenerationRules'
+import { getSettingsForFormat, getScriptProgressStatuses, buildScriptConstraintPrompt } from '@/lib/script/scriptGenerationRules'
 import {
   extractBlueprintBeats,
   formatBlueprintBeatsForPrompt,
@@ -19,6 +19,14 @@ import {
   MAX_BEATS_PER_SCENE,
   type SceneDecompositionPlan,
 } from '@/lib/script/sceneDecomposition'
+import {
+  buildFallbackSceneChunks,
+  buildSceneChunks,
+  halveChunk,
+  summarizeChunkYield,
+  type SceneChunk,
+} from '@/lib/script/sceneChunkPlan'
+import { runWithConcurrencyLimit } from '@/lib/utils/concurrency'
 import { resolveContentIntentFromMetadata, buildPacingPhilosophyBlock } from '@/lib/content/contentIntent'
 import { migrateProjectToSegmented } from '@/lib/script/migrateToSegmented'
 import { normalizeDialogueToProductionLineTargets } from '@/lib/script/segmentScript'
@@ -42,7 +50,6 @@ import {
   buildBeatDirectionPromptBlock,
   buildBeatDirectionSchemaExample,
   buildBeatTimelineNarrationRules,
-  buildNarrationLegacyFieldHint,
   buildNarrationPromptSection,
   buildNarrationSchemaExample,
   enforceNarrationPolicyOnScenes,
@@ -65,6 +72,9 @@ import {
 } from '@/lib/script/scriptCraftPrompt'
 export const runtime = 'nodejs'
 export const maxDuration = 600  // 10 minutes for large script generation (requires Vercel Pro)
+
+/** Wall-clock budget for this route, mirroring `maxDuration` / vercel.json. */
+const ROUTE_BUDGET_MS = maxDuration * 1000
 
 export async function POST(request: NextRequest) {
   const encoder = new TextEncoder()
@@ -186,14 +196,29 @@ export async function POST(request: NextRequest) {
 
         const ABSOLUTE_MAX_SCENES = 120
         const formatTargetScenes = getSettingsForFormat(projectFormat).targetSceneCount || 40
-        const plannedScenes = decompositionPlan.totalTargetScenes || beatCount * 4
-        const storyDrivenCeiling = Math.max(formatTargetScenes, plannedScenes, 24)
-        const maxSafetyScenes = Math.min(ABSOLUTE_MAX_SCENES, storyDrivenCeiling + 20)
+
+        // The chunk plan decides how many scenes each Blueprint beat gets, and
+        // generation asks for that many per call. Leaving the count to prompt
+        // prose let the model collapse a 10-minute beat into one scene, because
+        // the full script never fit in a single response's token budget.
+        const chunkPlan =
+          decompositionPlan.entries.length > 0
+            ? buildSceneChunks(decompositionPlan, storyBeats)
+            : buildFallbackSceneChunks(Math.min(ABSOLUTE_MAX_SCENES, formatTargetScenes))
+        const plannedScenes = chunkPlan.totalScenes
+        const plannedScenesByBeatIndex: Record<number, number> = {}
+        for (const entry of decompositionPlan.entries) {
+          plannedScenesByBeatIndex[entry.index] = entry.targetScenes
+        }
 
         console.log(
-          `[Script Gen V2] Format: ${projectFormat}, Duration: ${duration}s, Blueprint beats: ${beatCount}, planned scenes: ${decompositionPlan.totalTargetScenes || 'n/a'}`
+          `[Script Gen V2] Format: ${projectFormat}, Duration: ${duration}s, Blueprint beats: ${beatCount}, planned scenes: ${plannedScenes}`
         )
-        console.log(`[Script Gen V2] Single-pass generation with safety cap of ${maxSafetyScenes} scenes`)
+        console.log(
+          `[Script Gen V2] Chunked generation: ${chunkPlan.chunks.length} call(s) — ${chunkPlan.chunks
+            .map((c) => `beat ${c.blueprintBeatIndex === null ? '-' : c.blueprintBeatIndex + 1}:${c.sceneCount}`)
+            .join(', ')}`
+        )
         
         // Check scene limits for user's subscription tier
         let subscriptionMaxScenes: number | null = null
@@ -243,13 +268,14 @@ export async function POST(request: NextRequest) {
         }
 
         // ============================================================
-        // SINGLE-PASS GENERATION: Let the AI follow the Film Treatment
+        // CHUNKED GENERATION: one call per Blueprint beat slice
         // ============================================================
-        const MAX_RETRIES = 3
         let allScenes: any[] = []
         
         // Time-based progress tracking
         const generationStartTime = Date.now()
+        // Bookends are appended after generation, so the client's total includes them.
+        const expectedTotalScenes = plannedScenes + 2
 
         // Send initial progress
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({
@@ -257,12 +283,14 @@ export async function POST(request: NextRequest) {
           status: 'Analyzing story structure...',
           batch: 1,
           scenesGenerated: 0,
-          totalScenes: beatCount, // Use beats as rough estimate
+          totalScenes: expectedTotalScenes,
           elapsedSeconds: 0,
           estimatedRemainingSeconds: 60  // Conservative initial estimate
         })}\n\n`))
 
-        console.log(`[Script Gen V2] Starting single-pass generation for ${duration}s film with ${beatCount} story beats...`)
+        console.log(
+          `[Script Gen V2] Starting chunked generation for ${duration}s film: ${plannedScenes} planned scenes across ${beatCount} Blueprint beats`
+        )
 
         const narrationPolicy = resolveNarrationPolicy({
           format: projectFormat,
@@ -312,14 +340,12 @@ export async function POST(request: NextRequest) {
           userIdOrEmail: (project as any).user_id,
         })
 
-        // Build the single-pass prompt
-        const singlePassPrompt = buildSinglePassPrompt(
-          treatment, 
-          duration, 
-          existingCharacters, 
-          storyBeats, 
-          maxSafetyScenes, 
-          subscriptionMaxScenes,
+        // Story context is identical for every chunk, so build it once.
+        const sharedContext = buildSharedScriptContext(
+          treatment,
+          duration,
+          existingCharacters,
+          storyBeats,
           projectFormat,
           contentIntent,
           narrationPolicy,
@@ -333,168 +359,179 @@ export async function POST(request: NextRequest) {
           referenceCatalogBlock,
           decompositionPlan
         )
-        
-        let retryCount = 0
-        let generationSuccessful = false
+
         let sceneLimitWarning: { generated: number; allowed: number } | null = null
-        
-        while (!generationSuccessful && retryCount < MAX_RETRIES) {
-          try {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-              type: 'progress',
-              status: retryCount > 0 ? `Regenerating script (attempt ${retryCount + 1})...` : 'Writing complete script...',
-              batch: 1,
-              scenesGenerated: 0,
-              totalScenes: beatCount,
-              elapsedSeconds: Math.floor((Date.now() - generationStartTime) / 1000),
-              estimatedRemainingSeconds: 45,
-              progress: 10  // Starting progress
-            })}\n\n`))
-            
-            // Start a progress ticker to show activity during Gemini call
-            const estimatedDuration = 45 // seconds
-            let progressInterval: NodeJS.Timeout | null = null
-            const progressStatuses = getScriptProgressStatuses(projectFormat)
-            let statusIndex = 0
-            
-            progressInterval = setInterval(() => {
-              const elapsed = Math.floor((Date.now() - generationStartTime) / 1000)
-              const estimatedProgress = Math.min(85, Math.floor((elapsed / estimatedDuration) * 100))
-              const remaining = Math.max(5, estimatedDuration - elapsed)
-              
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                type: 'progress',
-                status: progressStatuses[statusIndex % progressStatuses.length],
-                batch: 1,
-                scenesGenerated: 0,
-                totalScenes: beatCount,
-                elapsedSeconds: elapsed,
-                estimatedRemainingSeconds: remaining,
-                progress: estimatedProgress
-              })}\n\n`))
-              
-              statusIndex++
-            }, 5000) // Update every 5 seconds
-            
-            let response: string
-            try {
-              response = await callGemini(singlePassPrompt)
-            } finally {
-              // Always clear the interval
-              if (progressInterval) {
-                clearInterval(progressInterval)
-              }
-            }
-            
-            // Send parsing progress
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-              type: 'progress',
-              status: 'Parsing generated script...',
-              batch: 1,
-              scenesGenerated: 0,
-              totalScenes: beatCount,
-              elapsedSeconds: Math.floor((Date.now() - generationStartTime) / 1000),
-              estimatedRemainingSeconds: 5,
-              progress: 90
-            })}\n\n`))
-            
-            let parsedData = parseSinglePassResponse(response)
-            
-            // Release memory immediately
-            response = ''
-            
-            if (parsedData.scenes && parsedData.scenes.length > 0) {
-              allScenes = parsedData.scenes
-              allScenes = allScenes.map((scene: any) => ({
-                ...scene,
-                dialogue: normalizeDialogueToProductionLineTargets(
-                  Array.isArray(scene?.dialogue) ? scene.dialogue : []
-                ),
-              }))
-              
-              // Post-process: split oversized scenes (safety net for >15 beats)
-              const splitResult = splitOversizedScenes(allScenes as Record<string, unknown>[])
-              if (splitResult.splitCount > 0) {
-                console.log(
-                  `[Script Gen V2] Split ${splitResult.splitCount} oversized scene(s) to enforce ${MAX_BEATS_PER_SCENE}-beat cap`
-                )
-              }
-              allScenes = renumberScenes(splitResult.scenes)
+        let scenesGenerated = 0
+        let chunksDone = 0
 
-              // Post-process: consolidate any fragmented scenes
-              allScenes = consolidateFragmentedScenes(allScenes)
+        const progressStatuses = getScriptProgressStatuses(projectFormat)
+        let statusIndex = 0
+        const emitGenerationProgress = (status: string) => {
+          const elapsed = Math.floor((Date.now() - generationStartTime) / 1000)
+          // 10–85% covers generation; the remainder is post-processing.
+          const progress = Math.min(
+            85,
+            10 + Math.floor((chunksDone / Math.max(1, chunkPlan.chunks.length)) * 75)
+          )
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            type: 'progress',
+            status,
+            batch: chunksDone + 1,
+            scenesGenerated,
+            totalScenes: expectedTotalScenes,
+            elapsedSeconds: elapsed,
+            estimatedRemainingSeconds: Math.max(
+              5,
+              Math.round(
+                (elapsed / Math.max(1, chunksDone)) * (chunkPlan.chunks.length - chunksDone)
+              ) || 45
+            ),
+            progress,
+          })}\n\n`))
+        }
 
-              const bookendsResult = ensureCinematicBookends(allScenes, {
-                title: treatment.title,
-                logline: treatment.logline,
-                genre: treatment.genre,
-                tone: treatment.tone,
-                author_writer: treatment.author_writer,
+        emitGenerationProgress('Writing scenes...')
+        const progressInterval = setInterval(() => {
+          emitGenerationProgress(progressStatuses[statusIndex++ % progressStatuses.length])
+        }, 5000)
+
+        let chunkResults: any[][] = []
+        try {
+          chunkResults = await runWithConcurrencyLimit(
+            chunkPlan.chunks,
+            CHUNK_CONCURRENCY,
+            (chunk) =>
+              generateSceneChunk(sharedContext, chunk, {
+                storyBeats,
+                totalScenes: plannedScenes,
+                onChunkScenes: (count) => {
+                  scenesGenerated += count
+                  chunksDone++
+                },
               })
-              allScenes = bookendsResult.scenes
-              if (bookendsResult.injectedTitle || bookendsResult.injectedOutro) {
-                console.log('[Script Gen V2] Injected cinematic bookends:', {
-                  injectedTitle: bookendsResult.injectedTitle,
-                  injectedOutro: bookendsResult.injectedOutro,
-                })
-              }
+          )
+        } finally {
+          clearInterval(progressInterval)
+        }
 
-              allScenes = enforceNarrationPolicyOnScenes(allScenes, narrationPolicy)
-              
-              // Business limit: warn but keep full script (do not silently truncate).
-              if (subscriptionMaxScenes && allScenes.length > subscriptionMaxScenes) {
-                console.warn(
-                  `[Script Gen V2] Generated ${allScenes.length} scenes, exceeds subscription limit ${subscriptionMaxScenes}. Keeping full script with warning.`
-                )
-                sceneLimitWarning = {
-                  generated: allScenes.length,
-                  allowed: subscriptionMaxScenes,
-                }
-              }
-              
-              // We no longer force-merge scenes down to a duration-derived count —
-              // that used to cut creative scenes/beats to hit a runtime. Only guard
-              // against true runaway output well beyond the absolute ceiling.
-              if (allScenes.length > ABSOLUTE_MAX_SCENES) {
-                console.warn(`[Script Gen V2] Generated ${allScenes.length} scenes exceeds absolute cap of ${ABSOLUTE_MAX_SCENES}. Consolidating runaway output.`)
-                allScenes = consolidateToTargetCount(allScenes, ABSOLUTE_MAX_SCENES)
-              } else if (allScenes.length > maxSafetyScenes) {
-                console.log(`[Script Gen V2] Generated ${allScenes.length} scenes (above soft ceiling ${maxSafetyScenes}); keeping — story-driven length.`)
-              }
-              
-              console.log(`[Script Gen V2] Single-pass generation complete: ${allScenes.length} scenes`)
-              generationSuccessful = true
-              
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                type: 'progress',
-                status: `Generated ${allScenes.length} complete scenes`,
-                batch: 1,
-                scenesGenerated: allScenes.length,
-                totalScenes: allScenes.length,
-                elapsedSeconds: Math.floor((Date.now() - generationStartTime) / 1000),
-                estimatedRemainingSeconds: 3,
-                progress: 95  // Almost done, just processing characters
-              })}\n\n`))
-            } else {
-              throw new Error('No scenes generated')
-            }
-          } catch (error: any) {
-            retryCount++
-            console.error(`[Script Gen V2] Generation attempt ${retryCount} failed:`, error.message)
-            
-            if (retryCount >= MAX_RETRIES) {
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                type: 'error',
-                error: `Script generation failed after ${MAX_RETRIES} attempts: ${error.message}`
-              })}\n\n`))
-              controller.close()
-              return
-            }
-            
-            // Wait before retry
-            await new Promise(resolve => setTimeout(resolve, 2000))
+        // Chunk order is script order; runWithConcurrencyLimit preserves it.
+        allScenes = chunkResults.flat()
+
+        const chunkYield = summarizeChunkYield(
+          chunkPlan.chunks,
+          chunkResults.map((scenes) => scenes.length)
+        )
+        console.log(
+          '[Script Gen V2] Blueprint beat yield:',
+          chunkYield
+            .map((y) => `${y.blueprintBeatIndex === null ? '-' : y.blueprintBeatIndex + 1} "${y.title}" ${y.produced}/${y.planned}`)
+            .join(' | ')
+        )
+
+        if (allScenes.length === 0) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            type: 'error',
+            error: 'Script generation failed: the model returned no usable scenes.',
+          })}\n\n`))
+          controller.close()
+          return
+        }
+
+        const underDecomposed = chunkYield.filter((y) => y.produced < y.planned)
+        if (allScenes.length < plannedScenes * 0.7) {
+          console.warn(
+            `[Script Gen V2] Under-decomposed: ${allScenes.length} scenes vs ${plannedScenes} planned`
+          )
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            type: 'warning',
+            message: `Generated ${allScenes.length} scenes for a ${plannedScenes}-scene plan. Some Blueprint beats may be thinner than intended.`,
+            underDecomposedBeats: underDecomposed.map((y) => y.title),
+          })}\n\n`))
+        }
+
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+          type: 'progress',
+          status: 'Assembling script...',
+          batch: chunkPlan.chunks.length,
+          scenesGenerated: allScenes.length,
+          totalScenes: expectedTotalScenes,
+          elapsedSeconds: Math.floor((Date.now() - generationStartTime) / 1000),
+          estimatedRemainingSeconds: 10,
+          progress: 88,
+        })}\n\n`))
+
+        // Beats are the story payload; derive the legacy dialogue/action/narration
+        // fields now so character extraction, consolidation, and QA all see them.
+        allScenes = allScenes.map((scene: any) => ensureSceneBeats(scene as Record<string, unknown>))
+        allScenes = allScenes.map((scene: any) => ({
+          ...scene,
+          dialogue: normalizeDialogueToProductionLineTargets(
+            Array.isArray(scene?.dialogue) ? scene.dialogue : []
+          ),
+        }))
+
+        // Consolidate first: merging after a split would undo it.
+        allScenes = consolidateFragmentedScenes(allScenes)
+
+        // Safety net for any scene that still exceeds the production beat cap.
+        const splitResult = splitOversizedScenes(allScenes as Record<string, unknown>[])
+        if (splitResult.splitCount > 0) {
+          console.log(
+            `[Script Gen V2] Split ${splitResult.splitCount} oversized scene(s) to enforce ${MAX_BEATS_PER_SCENE}-beat cap`
+          )
+        }
+        allScenes = renumberScenes(splitResult.scenes)
+
+        const bookendsResult = ensureCinematicBookends(allScenes, {
+          title: treatment.title,
+          logline: treatment.logline,
+          genre: treatment.genre,
+          tone: treatment.tone,
+          author_writer: treatment.author_writer,
+        })
+        allScenes = bookendsResult.scenes
+        if (bookendsResult.injectedTitle || bookendsResult.injectedOutro) {
+          console.log('[Script Gen V2] Injected cinematic bookends:', {
+            injectedTitle: bookendsResult.injectedTitle,
+            injectedOutro: bookendsResult.injectedOutro,
+          })
+        }
+
+        allScenes = enforceNarrationPolicyOnScenes(allScenes, narrationPolicy)
+
+        // Business limit: warn but keep full script (do not silently truncate).
+        if (subscriptionMaxScenes && allScenes.length > subscriptionMaxScenes) {
+          console.warn(
+            `[Script Gen V2] Generated ${allScenes.length} scenes, exceeds subscription limit ${subscriptionMaxScenes}. Keeping full script with warning.`
+          )
+          sceneLimitWarning = {
+            generated: allScenes.length,
+            allowed: subscriptionMaxScenes,
           }
         }
+
+        // We no longer force-merge scenes down to a duration-derived count —
+        // that used to cut creative scenes/beats to hit a runtime. Only guard
+        // against true runaway output well beyond the absolute ceiling.
+        if (allScenes.length > ABSOLUTE_MAX_SCENES) {
+          console.warn(`[Script Gen V2] Generated ${allScenes.length} scenes exceeds absolute cap of ${ABSOLUTE_MAX_SCENES}. Consolidating runaway output.`)
+          allScenes = consolidateToTargetCount(allScenes, ABSOLUTE_MAX_SCENES)
+        }
+
+        console.log(
+          `[Script Gen V2] Chunked generation complete: ${allScenes.length} scenes (planned ${plannedScenes} + bookends)`
+        )
+
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+          type: 'progress',
+          status: `Generated ${allScenes.length} complete scenes`,
+          batch: chunkPlan.chunks.length,
+          scenesGenerated: allScenes.length,
+          totalScenes: allScenes.length,
+          elapsedSeconds: Math.floor((Date.now() - generationStartTime) / 1000),
+          estimatedRemainingSeconds: 3,
+          progress: 92,
+        })}\n\n`))
     
         // Process characters and embed IDs (existing logic)
         const includeNarratorChars =
@@ -645,7 +682,9 @@ export async function POST(request: NextRequest) {
         // Phase 3: Quality Assurance - Run QA and auto-fix
         let finalScenes = scenesWithCharacterIds
         try {
-          const qaResult = runScriptQA(scenesWithCharacterIds, mergedCharacters)
+          const qaResult = runScriptQA(scenesWithCharacterIds, mergedCharacters, {
+            plannedScenesByBeatIndex: plannedScenesByBeatIndex,
+          })
           
           console.log('[Script Gen V2] QA Result:', {
             valid: qaResult.valid,
@@ -747,8 +786,15 @@ export async function POST(request: NextRequest) {
               totalScenes: scenesForDirection.length,
             })}\n\n`))
 
+            // Route budget is 600s (vercel.json). Leave ~90s for persistence and
+            // the final migrations rather than letting direction consume it all.
+            const directionDeadlineMs = Math.max(
+              30_000,
+              ROUTE_BUDGET_MS - (Date.now() - generationStartTime) - 90_000
+            )
+
             const attachResult = await attachSceneDirectionsToScript(scenesForDirection, {
-              concurrency: 3,
+              deadlineMs: directionDeadlineMs,
               onProgress: (done, total) => {
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({
                   type: 'progress',
@@ -768,6 +814,7 @@ export async function POST(request: NextRequest) {
             console.log('[Script Gen V2] Scene directions attached:', {
               attached: attachResult.attachedCount,
               skipped: attachResult.skippedCount,
+              deferred: attachResult.deferredCount,
               failures: directionFailures,
             })
           }
@@ -834,302 +881,27 @@ export async function POST(request: NextRequest) {
   })
 }
 
-function buildBatch1Prompt(treatment: any, start: number, end: number, min: number, max: number, suggested: number, targetDuration: number, prev: any[], characters: any[]) {
-  // Build character list from Film Treatment
-  const characterList = characters.length > 0
-    ? `\n\nDEFINED CHARACTERS (USE ONLY THESE):\n${characters.map((c: any) => 
-        `${c.name} (${c.role || 'character'}): ${c.description || ''}
-        ${c.appearance ? `Appearance: ${c.appearance}` : ''}
-        ${c.demeanor ? `Demeanor: ${c.demeanor}` : ''}
-        ${c.clothing ? `Clothing: ${c.clothing}` : ''}`
-      ).join('\n\n')}`
-    : ''
-
-  return `Generate the FIRST ${end} scenes of a script targeting ${targetDuration} seconds total.
-
-TREATMENT:
-Title: ${treatment.title}
-Logline: ${treatment.logline}
-Synopsis: ${treatment.synopsis || treatment.content}
-Genre: ${treatment.genre}
-Tone: ${treatment.tone}
-${characterList}
-
-CRITICAL CHARACTER RULES:
-- The character list below defines the ONLY approved characters
-- Character names are formatted in Title Case — use EXACT names in dialogue attribution
-- Use EXACT names in dialogue - NO variations, abbreviations, or nicknames in the "character" field
-- DO NOT invent new characters unless absolutely necessary (minor roles: waiter, passerby with 1 line)
-
-${buildCharacterDialogueExamples(characters)}
-
-DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
-EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
-Target dialogue lines to roughly ~15 seconds of spoken delivery (soft target, can be shorter/longer when the beat needs it).
-
-STYLE TAGS (In square brackets BEFORE text):
-Emotions: [happy], [sad], [angry], [fearful], [surprised], [disgusted], [neutral]
-Intensity: [very], [slightly], [extremely]
-Vocal Quality: [whispering], [shouting], [mumbling], [singing], [laughing], [crying], [gasping]
-Pace: [quickly], [slowly], [hesitantly], [confidently]
-Combined: [very happy], [slightly angry], [extremely fearful], [confidently asserting]
-
-PUNCTUATION & PACING:
-- Use ellipses (...) for pauses, trailing off, or hesitation
-- Use dashes (—) for interruptions or sudden stops  
-- Use CAPS for EMPHASIS on specific words
-- Use commas (,) for natural breathing pauses
-
-EXAMPLES:
-  * {"character": "BRIAN ANDERSON SR", "line": "[very excited] I can't believe it! This changes EVERYTHING!"}
-  * {"character": "MINT", "line": "[whispering nervously] Don't tell anyone... It's our secret, okay?"}
-  * {"character": "ERIC", "line": "[sadly, slowly] I wish things were different— but they're not."}
-
-CRITICAL: Every single dialogue line must start with at least one emotion/style tag in [brackets].
-CRITICAL: Avoid micro-lines that are only short fragments; combine adjacent thoughts from the same speaker when natural.
-CRITICAL: Voiceover/narration timing is flexible and can be aligned later; optimize narration lines for coherence, not strict seconds.
-
-IMPORTANT - DIALOGUE VS STAGE DIRECTION:
-- Stage directions (actions, movements, descriptions) go in the "action" field, NOT in dialogue
-- Dialogue lines must contain SPOKEN WORDS, not just bracketed directions
-- WRONG: {"character": "ALEX", "line": "[shaky breath] [Alex retrieves the cufflink]"} ← This is a stage direction, not dialogue!
-- CORRECT: {"character": "ALEX", "line": "[shaky breath, defeated] I found it... the cufflink."}
-- If a character performs an action without speaking, put it in the "action" field, NOT as a dialogue line
-
-SCENE PLANNING (CRITICAL - READ CAREFULLY):
-- Total runtime: ${targetDuration}s (~${Math.floor(targetDuration / 60)} minutes)
-- Target scene count: ${suggested} scenes (this is OPTIMAL based on your story beats)
-- Generate first ${end} scenes now
-- Average scene duration: estimate from content density (story determines length)
-
-IMPORTANT SCENE STRUCTURE GUIDANCE:
-- Each scene should cover a COMPLETE dramatic beat - don't fragment action into multiple tiny scenes
-- A scene should have a clear beginning, middle, and end (mini arc)
-- Combine related moments that happen in the same location/time into ONE scene
-- Think like a film director: when would you naturally call "CUT"?
-
-WHAT MAKES A GOOD SCENE:
-- Substantial dialogue exchanges (4-8 lines minimum for dialogue-heavy scenes)
-- Complete character interactions, not fragments
-- Natural scene breaks at location changes, time jumps, or POV shifts
-- Each scene advances the plot OR reveals character - preferably both
-
-DURATION ESTIMATION:
-- Estimate based on content density: dialogue, action, emotional beats
-- Report realistic durations after writing — do not compress or pad to a clock
-- Transitional scenes may be brief when the story calls for it
-
-AVOID THESE COMMON MISTAKES:
-❌ Creating separate scenes for each line of dialogue
-❌ Splitting a single conversation across multiple scenes
-❌ Scenes under 30s (too fragmented)
-❌ Ending scenes mid-conversation
-❌ Creating "reaction" scenes that should be part of the previous scene
-
-Return JSON:
-{
-  "totalScenes": ${suggested},  // REQUIRED: Use ${suggested} scenes (±2 max) for ${targetDuration}s story
-  "estimatedTotalDuration": 300,  // Sum of first ${end} scenes only
-  "scenes": [
-    {
-      "sceneNumber": 1,
-      "heading": "INT. LOCATION - TIME",
-      "characters": ["Character Name 1", "Character Name 2"],  // CRITICAL: List all characters in this scene
-      "action": "SOUND of gentle sizzling, a timer beeps. CLOSE UP on character's hands. They move across the room.\n\nSFX: Gentle kitchen sizzling with rhythmic timer beep creating anticipation\n\nMusic: Soft upbeat piano melody with warm, inviting tones suggesting morning optimism",
-      "narration": "In the quiet hours before dawn, a dream takes shape in flour and fire.",  // NEW: Captivating voiceover narration
-      "dialogue": [{"character": "NAME", "line": "..."}],
-      "visualDescription": "Camera, lighting",
-      "duration": 25,  // REALISTIC based on content (dialogue count + action time)
-      "sfx": [{"time": 0, "description": "Gentle sizzling, timer beeps"}],
-      "music": {"description": "Soft upbeat piano"}
-    }
-  ]
-}
-
-CRITICAL SCENE REQUIREMENTS:
-- Write COMPLETE, SUBSTANTIVE scenes - not fragments
-- Each scene should feel like a mini-movie with its own arc
-- Include 4-8 dialogue exchanges per scene minimum (for dialogue scenes)
-- A conversation between two characters should be ONE scene, not split into many
-- Target ${suggested} total scenes for this ${Math.floor(targetDuration / 60)}-minute film
-- If a story beat naturally spans multiple locations, that's multiple scenes
-- If characters are in the same place having one conversation, that's ONE scene
-
-NARRATION: Follow format-appropriate narration policy — visual-first formats use empty "narration" on main content scenes.
-
-SCRIPT FORMAT REQUIREMENTS (CRITICAL):
-- Include sound effects naturally in action description using SOUND OF, HEAR, etc.
-- After the main action, add separate labeled lines for audio:
-  * "SFX: [description of sound effects]" on its own line
-  * "Music: [description of background music]" on its own line
-- Keep audio descriptions concise but emotionally evocative
-- Example action format:
-  "SOUND of gentle sizzling, a timer beeps. CLOSE UP on Mint's hands, deftly shaping dough, dusting flour.
-  
-  SFX: Gentle kitchen sizzling with rhythmic timer beep creating anticipation
-  
-  Music: Soft upbeat piano melody with warm, inviting tones suggesting morning optimism"
-
-AUDIO FIELD REQUIREMENTS (CRITICAL FOR MOOD AND EMOTION):
-- sfx: Array with timing - be specific about the sound quality and emotional impact
-  * Examples: "Deep, resonant car horn echoing through empty streets", "Sharp glass breaking with cascading shards", "Distant thunder rumbling ominously"
-- music: Object for advanced features - describe the mood, instrumentation, tempo, and emotional intent
-  * Examples: "Melancholic piano with slow, deliberate notes building tension", "Upbeat acoustic guitar with hopeful undertones", "Dark orchestral strings creating a sense of foreboding"
-- Think cinematically: music and SFX should enhance the emotional storytelling
-- Descriptions should be 10-20 words, balancing specificity with creative interpretation
-
-${LYRIA_MUSIC_PROMPT_RULES}
-
-CRITICAL JSON FORMATTING RULES:
-- Return ONLY valid JSON - no markdown, no explanations
-- Property names MUST be double-quoted
-- String values MUST be properly escaped
-- NO control characters (tabs, newlines) except in escaped form (\\n, \\t)
-- NO trailing commas
-- Validate JSON structure before returning
-
-CRITICAL:
-1. Determine total scene count that best fits ${targetDuration}s story
-2. Estimate accurate durations (don't use arbitrary numbers)
-3. Quality writing over exact duration matching
-4. MUST include "characters" array in EVERY scene - list all characters who appear (speaking or non-speaking)
-
-Generate first ${end} scenes with realistic durations.`
-}
-
-function buildBatch2Prompt(treatment: any, start: number, end: number, total: number, targetDuration: number, prevScenes: any[], totalPrevScenes: number, prevDuration: number, characters: any[]) {
-  const batchSize = end - start + 1
-  const remainingDuration = targetDuration - prevDuration
-  
-  const characterList = characters.length > 0
-    ? `\n\nDEFINED CHARACTERS (USE ONLY THESE):\n${characters.map((c: any) => `${c.name} (${c.role || 'character'}): ${c.description || ''}`).join('\n')}`
-    : ''
-  
-  return `Generate scenes ${start}-${end} (batch of ${batchSize} scenes) for a ${total}-scene script.
-
-TREATMENT:
-Title: ${treatment.title}
-Logline: ${treatment.logline}
-Synopsis: ${treatment.synopsis || treatment.content}
-${characterList}
-
-CRITICAL CHARACTER RULES:
-- Use ONLY these approved characters: ${characters.map((c: any) => c.name).join(', ')}
-- Names are in Title Case - use them EXACTLY in the "character" field
-- Match character names exactly as listed in the character list
-- DO NOT invent new dialogue speakers
-
-${buildCharacterDialogueExamples(characters)}
-
-DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
-EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
-Target dialogue lines to roughly ~15 seconds of spoken delivery (soft target, can be shorter/longer when the beat needs it).
-
-STYLE TAGS (In square brackets BEFORE text):
-Emotions: [happy], [sad], [angry], [fearful], [surprised], [disgusted], [neutral]
-Intensity: [very], [slightly], [extremely]
-Vocal Quality: [whispering], [shouting], [mumbling], [singing], [laughing], [crying], [gasping]
-Pace: [quickly], [slowly], [hesitantly], [confidently]
-
-PUNCTUATION & PACING:
-- Use ellipses (...) for pauses, trailing off, or hesitation
-- Use dashes (—) for interruptions or sudden stops
-- Use CAPS for EMPHASIS on specific words
-
-EXAMPLES:
-  * {"character": "NAME", "line": "[sadly] ...I can't believe it."}
-  * {"character": "NAME", "line": "[very excited, quickly] This is AMAZING!"}
-
-CRITICAL: Every single dialogue line must start with at least one emotion/style tag in [brackets].
-CRITICAL: Avoid micro-lines that are only short fragments; combine adjacent thoughts from the same speaker when natural.
-CRITICAL: Voiceover/narration timing is flexible and can be aligned later; optimize narration lines for coherence, not strict seconds.
-
-PREVIOUS SCENES (${totalPrevScenes} scenes generated so far, ${prevDuration}s total):
-${prevScenes.slice(-3).map((s: any) => `Scene ${s.sceneNumber}. ${s.heading} (${s.duration}s): ${s.action.substring(0, 100)}...`).join('\n')}
-
-CONTINUATION GUIDANCE:
-- Remaining scenes: ${total - totalPrevScenes} more scenes needed (scenes ${start}-${total})
-- Remaining duration: ~${remainingDuration}s
-- Average per remaining scene: estimate from remaining story, not a clock target
-- Total target: ${targetDuration}s
-
-IMPORTANT - SCENE STRUCTURE:
-- Each scene should be a COMPLETE dramatic beat
-- Don't fragment conversations across multiple scenes
-- A scene with dialogue should have 4-8+ exchanges minimum
-- Include beginning, middle, end within each scene
-- Natural scene breaks: location change, time jump, POV shift
-
-DURATION ESTIMATION:
-- Based on content density: dialogue exchanges, action, emotional beats
-- Report realistic durations after writing — do not compress or pad to a clock
-- Transitional scenes may be brief when the story calls for it
-
-AVOID FRAGMENTATION:
-❌ Don't split one conversation into multiple scenes
-❌ Don't create scenes under 30s
-❌ Don't end scenes mid-interaction
-✓ Combine related moments in same location/time
-
-Return JSON array:
-[
-  {
-    "sceneNumber": ${start},
-    "heading": "INT. LOCATION - TIME",
-    "characters": ["Character Name 1", "Character Name 2"],  // CRITICAL: List all characters in this scene
-    "action": "SOUND of footsteps approaching. Character enters.\n\nSFX: Footsteps on hardwood\n\nMusic: Suspenseful strings",
-    "narration": "Every step echoes with the weight of decisions unmade.",  // CRITICAL: Captivating voiceover
-    "dialogue": [{"character": "NAME", "line": "..."}],
-    "visualDescription": "Camera, lighting",
-    "duration": 45,  // REALISTIC estimate
-    "sfx": [{"time": 0, "description": "Footsteps on hardwood"}],
-    "music": {"description": "Suspenseful strings"}
-  }
-]
-
-NARRATION: Follow format-appropriate narration policy — do not force voiceover on visual-first formats.
-
-SCRIPT FORMAT REQUIREMENTS (CRITICAL):
-- Include sound effects naturally in action using SOUND OF, HEAR, etc.
-- Add separate "SFX: [description]" line after main action
-- Add separate "Music: [description]" line for background music
-- Keep audio descriptions concise
-
-${LYRIA_MUSIC_PROMPT_RULES}
-
-CRITICAL JSON FORMATTING RULES:
-- Return ONLY valid JSON - no markdown, no explanations
-- Property names MUST be double-quoted
-- String values MUST be properly escaped
-- NO control characters (tabs, newlines) except in escaped form (\\n, \\t)
-- NO trailing commas
-- Validate JSON structure before returning
-
-FOCUS ON:
-1. Quality, engaging writing
-2. Natural dialogue
-3. Realistic duration estimates
-4. Smooth conclusion to story
-5. MUST include "characters" array in EVERY scene - list all characters who appear
-
-Complete the script with accurate duration estimates.`
-}
-
 /**
- * SINGLE-PASS PROMPT: Generates complete script following Film Treatment naturally
- * Key changes from batch approach:
- * - NO scene count targets or constraints
- * - Focus on entertainment value and engagement
- * - Let story structure drive scene breaks
- * - Minimum 60s per scene to prevent fragmentation
+ * Story context every chunk call shares. Built once per request so per-chunk
+ * prompts only append their own assignment block.
  */
-function buildSinglePassPrompt(
+interface SharedScriptContext {
+  persona: string
+  formatLabel: string
+  sceneHeadingExample: string
+  narrationSchemaLine: string
+  beatDirectionSchema: string
+  hasReferenceCatalog: boolean
+  storyBlock: string
+  craftBlock: string
+  languageBlock: string
+}
+
+function buildSharedScriptContext(
   treatment: any,
   targetDuration: number,
   characters: any[],
   storyBeats: any[],
-  maxSafetyScenes: number,
-  subscriptionMaxScenes: number | null,
   format: string = 'narrative',
   contentIntent?: string,
   narrationPolicy?: NarrationPolicy,
@@ -1137,24 +909,23 @@ function buildSinglePassPrompt(
   languageBlock: string = '',
   referenceCatalogBlock: string = '',
   decompositionPlan?: SceneDecompositionPlan
-): string {
+): SharedScriptContext {
   const intent = contentIntent || resolveContentIntentFromMetadata({ format, genre: treatment.genre })
   const policy = narrationPolicy ?? resolveNarrationPolicy({ format, treatment, contentIntent })
   const scriptSettings = getSettingsForFormat(format)
   const constraintBlock = buildScriptConstraintPrompt(scriptSettings)
   const narrationSection = buildNarrationPromptSection(policy)
-  const narrationSchemaLine = buildNarrationSchemaExample(policy)
-  const narrationLegacyHint = buildNarrationLegacyFieldHint(policy)
-  const beatTimelineNarrationRules = buildBeatTimelineNarrationRules(policy)
-  const beatDirectionRules = buildBeatDirectionPromptBlock()
-  const beatDirectionSchema = buildBeatDirectionSchemaExample()
+  const narrationSchemaLine = buildNarrationSchemaExample(policy, { compact: true })
+  const beatTimelineNarrationRules = buildBeatTimelineNarrationRules(policy, { compact: true })
+  const beatDirectionRules = buildBeatDirectionPromptBlock({ compact: true })
+  const beatDirectionSchema = buildBeatDirectionSchemaExample({ compact: true })
 
   // Dynamically set persona based on format/intent
   let persona = 'You are a master screenwriter. Write a complete, production-ready script'
   let formatLabel = 'FILM'
   let sceneHeadingExample = '"heading": "INT. LOCATION - TIME"'
   let philosophyIntro = 'Your goal is to write an ENGAGING, CINEMATIC script optimized for audience connection and long-form storytelling.'
-  
+
   if (format === 'educational' || format === 'education' || format === 'training') {
     persona = 'You are an expert curriculum designer and educational video producer. Write a complete, production-ready lesson script'
     formatLabel = 'EDUCATIONAL COURSE'
@@ -1177,6 +948,7 @@ function buildSinglePassPrompt(
   } else if (intent !== 'fiction') {
     philosophyIntro = 'Your goal is to serve the user\'s content intent. Do NOT invent fictional characters or plot unless explicitly requested.'
   }
+
   // Build character list with strict name enforcement
   const characterNames = characters.map((c: any) => c.name)
   const characterList = characters.length > 0
@@ -1190,7 +962,7 @@ ${characterNames.map(name => `• "${name}"`).join('\n')}
 - Do NOT expand titles (wrong: "Doctor" when name uses "Dr.")
 - Do NOT use first name only unless that IS the full character name
 
-CHARACTER DETAILS:\n${characters.map((c: any) => 
+CHARACTER DETAILS:\n${characters.map((c: any) =>
         `• ${c.name}${c.role ? ` (${c.role})` : ''}: ${c.description || 'No description'}
         ${c.appearance ? `  Appearance: ${c.appearance}` : ''}
         ${c.demeanor ? `  Demeanor: ${c.demeanor}` : ''}`
@@ -1204,19 +976,13 @@ CHARACTER DETAILS:\n${characters.map((c: any) =>
       ? `\n\n${formatDecompositionPromptBlock(decompositionPlan)}`
       : ''
 
-  const sceneLimit = subscriptionMaxScenes 
-    ? Math.min(maxSafetyScenes, subscriptionMaxScenes)
-    : maxSafetyScenes
-
-  return `${persona} for the following production.
-
-${formatLabel} TREATMENT:
+  const storyBlock = `${formatLabel} TREATMENT:
 Title: ${treatment.title}
 Logline: ${treatment.logline}
 Genre: ${treatment.genre || 'Drama'}
 Tone: ${treatment.tone || 'Engaging'}
 Format: ${format}
-Approximate Scope (advisory only): ~${Math.floor(targetDuration / 60)} minutes. This is a rough reference, NOT a target to hit — let the story/illustration determine its own length. Each scene should run as long as its beat genuinely needs; do not pad thin material or compress rich material to match this number.
+Full Blueprint runtime: ~${Math.floor(targetDuration / 60)} minutes across the whole script. Your assignment below covers only part of it.
 
 Synopsis:
 ${treatment.synopsis || treatment.content}
@@ -1239,23 +1005,22 @@ ${buildScriptCraftPromptBlock(treatment)}
 Art Style: ${getArtStylePresetName(resolveVariantArtStyle(treatment))}
 Aspect Ratio: ${resolveVariantAspectRatio(treatment)}
 - Action beat descriptions MUST use shot language appropriate for ${resolveVariantAspectRatio(treatment)} framing.
-- Dialogue and atmosphere MUST reflect the locked ${getArtStylePresetName(resolveVariantArtStyle(treatment))} aesthetic.
+- Dialogue and atmosphere MUST reflect the locked ${getArtStylePresetName(resolveVariantArtStyle(treatment))} aesthetic.`
 
-=== SCRIPT GENERATION PHILOSOPHY ===
+  const craftBlock = `=== SCRIPT GENERATION PHILOSOPHY ===
 
 ${philosophyIntro}
-Decompose each Blueprint beat into multiple complete scenes (~${MAX_BEATS_PER_SCENE} beats max per scene).
 
 ${buildPacingPhilosophyBlock(intent as any)}
-${buildLongformScriptLengthBlock()}
+${buildLongformScriptLengthBlock({ chunked: true })}
 ${constraintBlock}
 
 STRUCTURE PRINCIPLES:
-• Each segment = ONE complete dramatic unit with beginning, middle, end
+• Each scene = ONE complete dramatic unit with beginning, middle, end
 • Natural breaks occur at: location changes, time jumps, act turns, POV shifts
-• Dialogue-driven segments: 4–8+ exchanges when speech carries the scene
-• Visual/action-driven segments: may be mostly action beats with little or no dialogue
-• Do NOT create duplicate segments for the same dialogue line.
+• Dialogue-driven scenes: 4–8+ exchanges when speech carries the scene
+• Visual/action-driven scenes: may be mostly action beats with little or no dialogue
+• Do NOT create duplicate scenes for the same dialogue line.
 
 VISUAL STORYTELLING (CRITICAL):
 • Prefer ACTION beats for: reveals, reactions, geography, tension, montage, silent character moments
@@ -1264,13 +1029,13 @@ VISUAL STORYTELLING (CRITICAL):
 • Show emotion through behavior, blocking, and camera before defaulting to exposition dialogue
 
 WHAT TO AVOID:
-❌ Fragmenting discussions across multiple segments
-❌ One segment per line of dialogue
+❌ Fragmenting one discussion across multiple scenes
+❌ One scene per line of dialogue
 ❌ Arbitrary breaks that disrupt flow
-❌ Duplicate segments containing the exact same dialogue
+❌ Duplicate scenes containing the exact same dialogue
 
 WHAT TO CREATE:
-✓ Rich, substantive segments with complete arcs
+✓ Rich, substantive scenes with complete arcs
 ✓ Natural dialogue/monologues that sound like real conversation
 ✓ Content that advances BOTH the topic AND audience engagement
 ✓ Emotional beats that resonate with the audience
@@ -1293,127 +1058,6 @@ ${LYRIA_MUSIC_PROMPT_RULES}
 
 ${narrationSection}
 
-OUTPUT FORMAT (JSON):
-{
-  "scenes": [
-    {
-      "sceneNumber": 1,
-      "heading": "INT. TITLE SEQUENCE - DAY",
-      "cinematicType": "title",
-      "characters": [],
-      "action": "Title sequence summary (legacy — reflected in action beats)",
-      "beats": [
-        {
-          "kind": "action",
-          "actionDescription": "Wide cinematic opening: atmospheric motif, slow drift, dramatic lighting...",
-          ${beatDirectionSchema}
-        },
-        {
-          "kind": "action",
-          "actionDescription": "Title card reveal: bold centered typography for '${treatment.title || 'FILM TITLE'}'...",
-          "beatDirection": {"shotType": "Center Composition", "cameraMovement": "static", "blocking": "typography center-frame", "frozenMoment": "Title '${treatment.title || 'FILM TITLE'}' holds dead center.", "transition": "DISSOLVE"}
-        },
-        {
-          "kind": "action",
-          "actionDescription": "Title holds then dissolves into opening atmosphere...",
-          "beatDirection": {"shotType": "Wide", "cameraMovement": "slow push-in", "frozenMoment": "Atmospheric wide of the story world materializes as title fades.", "transition": "CUT"}
-        }
-      ],
-      "dialogue": [],
-      "creditLines": [{"name": "${treatment.title || 'Film Title'}", "role": "", "isPrimary": true}],
-      "visualDescription": "Cinematic title sequence, genre-appropriate motion graphics",
-      "duration": 20
-    },
-    {
-      "sceneNumber": 2,
-      "blueprintBeatIndex": 0,
-      "blueprintBeatTitle": "Blueprint beat title from treatment",
-      ${sceneHeadingExample},
-      "locationAssetId": "catalog-location-id-or-null",
-      "characters": ["Character Name 1", "Character Name 2"],
-      "sceneCharacters": [{"name": "Character Name 1", "libraryAssetId": "catalog-id-or-null"}],
-      "action": "Summary scene action (legacy field — also reflected in action beats)",
-      ${narrationLegacyHint}
-      "beats": [
-        {
-          "kind": "action",
-          "actionDescription": "Wide establishing shot of the location, golden hour light...",
-          "beatDirection": {"shotType": "Wide Shot", "cameraMovement": "slow push-in", "blocking": "characters small in frame at threshold", "gaze": "toward the interior", "frozenMoment": "Two figures backlit at the doorway, golden light spilling past them.", "transition": "CUT"}
-        },
-        ${narrationSchemaLine}
-        {
-          "kind": "action",
-          "actionDescription": "Close-up: character's hands on the desk, shallow depth of field...",
-          "beatDirection": {"shotType": "Close-Up", "cameraAngle": "eye-level", "cameraMovement": "static", "blocking": "hands rest on the desk, fingers splayed", "keyProps": ["desk"], "propAssetIds": ["catalog-prop-id-if-known"], "propInteraction": "fingers tap once on the wood grain", "frozenMoment": "Fingertips pressed against the desk edge, wood grain in tack-sharp focus.", "transition": "CUT"}
-        },
-        {
-          "kind": "dialogue",
-          "character": "Character Name",
-          "line": "[emotion] Dialogue...",
-          "beatDirection": {"shotType": "Medium Close-Up", "blocking": "speaker faces the listener across the desk", "emotion": "guarded honesty", "gaze": "into the listener's eyes", "frozenMoment": "Speaker mid-word, eyes locked on the listener.", "transition": "CUT"}
-        },
-        {
-          "kind": "action",
-          "actionDescription": "Reaction shot: character turns toward window, concern on face...",
-          "beatDirection": {"shotType": "Medium Close-Up", "cameraMovement": "handheld drift", "blocking": "listener pivots head to window", "emotion": "quiet worry", "gaze": "off-frame right toward the window", "frozenMoment": "Listener's profile against the window light, brow furrowed.", "transition": "CUT"}
-        },
-        {
-          "kind": "dialogue",
-          "character": "Character Name",
-          "line": "[emotion] Response...",
-          "beatDirection": {"shotType": "Over-the-Shoulder", "blocking": "listener foregrounded, speaker behind, both faces catching key light", "emotion": "reluctant resolve", "gaze": "back to the speaker", "frozenMoment": "OTS on the listener, speaker just visible past her shoulder.", "transition": "CUT"}
-        }
-      ],
-      "dialogue": [
-        {"character": "Character Name", "line": "[emotion] Dialogue text..."}
-      ],
-      "visualDescription": "Camera and lighting notes (or audio focus if podcast)",
-      "duration": 75,
-      "sfx": [{"time": 0, "description": "Sound effect"}],
-      "music": {"description": "Background music mood"}
-    },
-    {
-      "sceneNumber": "N (final)",
-      "heading": "INT. CREDITS - DAY",
-      "cinematicType": "outro",
-      "characters": [],
-      "action": "Closing credits summary (legacy — reflected in action beats)",
-      "beats": [
-        {
-          "kind": "action",
-          "actionDescription": "Closing visual: lingering atmosphere from final story beat...",
-          "beatDirection": {"shotType": "Wide", "cameraMovement": "slow pull-out", "frozenMoment": "Final tableau of the story world, subject centered.", "transition": "DISSOLVE"}
-        },
-        {
-          "kind": "action",
-          "actionDescription": "Credits roll: elegant scrolling typography over cinematic background...",
-          "beatDirection": {"shotType": "Center Composition", "cameraMovement": "static", "frozenMoment": "Elegant scrolling credits against a soft cinematic background.", "transition": "FADE"}
-        },
-        {
-          "kind": "action",
-          "actionDescription": "End card: title logo holds, fade to black...",
-          "beatDirection": {"shotType": "Center Composition", "cameraMovement": "static", "frozenMoment": "Title logo holds dead center as the frame fades.", "transition": "FADE"}
-        }
-      ],
-      "dialogue": [],
-      "creditLines": ${creditLinesJsonForPrompt(treatment.author_writer)},
-      "visualDescription": "Professional end credits sequence",
-      "duration": 25
-    }
-  ],
-  "newAssets": [
-    {"tempId": "new-1", "kind": "prop", "name": "New Prop Name", "description": "Only if not in catalog", "isNew": true}
-  ]
-}
-
-CINEMATIC BOOKENDS (MANDATORY):
-• Scene 1 MUST be the title sequence (cinematicType: "title", heading: "INT. TITLE SEQUENCE - DAY")
-• Final scene MUST be closing credits (cinematicType: "outro", heading: "INT. CREDITS - DAY")
-• Bookend scenes: characters: [], no dialogue beats
-• Title/credits beats[]: 2–4 action beats each — opening motif, title/credits reveal, end card
-• Optional single narration beat in title sequence only — never dialogue in bookends
-• Bookend scenes do NOT count toward the ${sceneLimit} main content segment limit
-
 BEAT TIMELINE (CRITICAL — PRIMARY PRODUCTION SOURCE):
 ${beatTimelineNarrationRules}
 • Action beats are MANDATORY for visuals without spoken lines: reactions, inserts, B-roll, camera moves, environment changes, blocking without speech
@@ -1427,28 +1071,293 @@ ${beatTimelineNarrationRules}
 • "action" beats use actionDescription only — NO spoken line, NO character field
 • "dialogue" beats must contain SPOKEN words with [emotion] tags — NO stage directions in line
 • beats[] order is the storyboard frame order (one frame per beat)
-• Keep legacy "dialogue" and "action" fields in sync with beats content
 
-${beatDirectionRules}
+${beatDirectionRules}`
 
-IMPORTANT CONSTRAINTS:
-• Each Blueprint beat → MULTIPLE scenes (see decomposition budget above); NEVER one scene per Blueprint beat
-• Hard cap: at most ${MAX_BEATS_PER_SCENE} beats per scene — split across consecutive scenes when needed
-• Up to ${sceneLimit} main content segments (bookends excluded)
-• Every main-content scene MUST include blueprintBeatIndex and blueprintBeatTitle
-• Write the COMPLETE longform script from beginning to end
-• Do NOT duplicate dialogue or segments
-• Ensure "action" is specific to the events of the segment, NOT repeated across segments
-• Return ONLY valid JSON - no markdown, no explanations
+  return {
+    persona,
+    formatLabel,
+    sceneHeadingExample,
+    narrationSchemaLine,
+    beatDirectionSchema,
+    hasReferenceCatalog: Boolean(referenceCatalogBlock),
+    storyBlock,
+    craftBlock,
+    languageBlock,
+  }
+}
 
-Now write the complete script, decomposing each Blueprint beat into manageable scenes with natural dramatic breaks.
-${languageBlock}`
+/** One-line context for a neighbouring Blueprint beat, so chunks join up. */
+function formatNeighborBeat(
+  beats: any[],
+  index: number,
+  label: string
+): string {
+  const beat = beats[index]
+  if (!beat) return ''
+  const title =
+    (typeof beat.title === 'string' && beat.title.trim()) ||
+    (typeof beat.intent === 'string' && beat.intent.trim()) ||
+    `Beat ${index + 1}`
+  const synopsis =
+    (typeof beat.synopsis === 'string' && beat.synopsis.trim()) ||
+    (typeof beat.description === 'string' && beat.description.trim()) ||
+    ''
+  const summary = synopsis ? ` — ${synopsis.slice(0, 300)}${synopsis.length > 300 ? '…' : ''}` : ''
+  return `${label}: "${title}"${summary}`
 }
 
 /**
- * Parse single-pass response into scenes array
+ * Prompt for one chunk of scenes.
+ *
+ * The scene count and numbering are handed to the model rather than negotiated:
+ * a single call cannot hold a longform script inside the output token budget, so
+ * asking for the whole thing made the model silently compress a Blueprint beat
+ * into one scene.
  */
-function parseSinglePassResponse(response: string): { scenes: any[] } {
+function buildSceneChunkPrompt(
+  shared: SharedScriptContext,
+  chunk: SceneChunk,
+  opts: {
+    storyBeats: any[]
+    totalScenes: number
+    shortfallNote?: string
+  }
+): string {
+  const sceneNumberEnd = chunk.sceneNumberStart + chunk.sceneCount - 1
+  const sceneNumbers = Array.from(
+    { length: chunk.sceneCount },
+    (_, i) => chunk.sceneNumberStart + i
+  )
+  const beatIndex = chunk.blueprintBeatIndex
+  const isBeatScoped = typeof beatIndex === 'number'
+
+  const beatIdentityLines = isBeatScoped
+    ? `• Every scene you return MUST set "blueprintBeatIndex": ${beatIndex} and "blueprintBeatTitle": ${JSON.stringify(chunk.blueprintBeatTitle)}
+• Write ONLY what happens inside this Blueprint beat. Do NOT cover material from earlier or later beats.`
+    : `• Every scene you return MUST omit "blueprintBeatIndex" (this treatment has no Blueprint beat sheet).`
+
+  const partLine =
+    chunk.partCount > 1
+      ? `\n• This is part ${chunk.partIndex + 1} of ${chunk.partCount} for this Blueprint beat. Cover the ${
+          chunk.partIndex === 0
+            ? 'OPENING'
+            : chunk.partIndex === chunk.partCount - 1
+              ? 'CLOSING'
+              : 'MIDDLE'
+        } portion of the beat and leave the rest to the other parts.`
+      : ''
+
+  const neighborLines = isBeatScoped
+    ? [
+        formatNeighborBeat(opts.storyBeats, beatIndex - 1, 'Immediately BEFORE your slice'),
+        formatNeighborBeat(opts.storyBeats, beatIndex + 1, 'Immediately AFTER your slice'),
+      ].filter(Boolean)
+    : []
+
+  const beatSynopsisBlock = chunk.beatSynopsis
+    ? `\nYOUR BLUEPRINT BEAT IN FULL:\n${chunk.beatSynopsis}\n`
+    : ''
+
+  const assignment = `=== YOUR ASSIGNMENT (MANDATORY) ===
+You are writing ONE SLICE of a ${opts.totalScenes}-scene script, not the whole script.
+
+• Return EXACTLY ${chunk.sceneCount} scene${chunk.sceneCount === 1 ? '' : 's'}, numbered ${sceneNumbers.join(', ')}.
+• Blueprint beat ${isBeatScoped ? beatIndex + 1 : '—'}: ${JSON.stringify(chunk.blueprintBeatTitle)}
+${beatIdentityLines}${partLine}
+• Aim for ~${chunk.targetBeatsPerScene} beats in each scene; never exceed ${MAX_BEATS_PER_SCENE} beats in one scene.
+• Returning fewer than ${chunk.sceneCount} scenes, or scenes with far fewer than ${chunk.targetBeatsPerScene} beats, is a FAILED response. Break the beat at location changes, time jumps, and dramatic turns to reach the count honestly — do not pad.
+• Do NOT write a title sequence or closing credits. Those are added separately.
+${beatSynopsisBlock}${neighborLines.length > 0 ? `\nADJACENT CONTEXT (do not write these — just hand off cleanly):\n${neighborLines.join('\n')}\n` : ''}`
+
+  const schema = `OUTPUT FORMAT (JSON — main content scenes only):
+{
+  "scenes": [
+    {
+      "sceneNumber": ${chunk.sceneNumberStart},${
+        isBeatScoped
+          ? `
+      "blueprintBeatIndex": ${beatIndex},
+      "blueprintBeatTitle": ${JSON.stringify(chunk.blueprintBeatTitle)},`
+          : ''
+      }
+      ${shared.sceneHeadingExample},
+      "locationAssetId": "catalog-location-id-or-null",
+      "characters": ["Character Name 1", "Character Name 2"],
+      "sceneCharacters": [{"name": "Character Name 1", "libraryAssetId": "catalog-id-or-null"}],
+      "beats": [
+        {
+          "kind": "action",
+          "actionDescription": "Wide establishing shot of the location, golden hour light...",
+          ${shared.beatDirectionSchema}
+        },
+${shared.narrationSchemaLine}
+        {
+          "kind": "dialogue",
+          "character": "Character Name",
+          "line": "[emotion] Dialogue...",
+          "beatDirection": {"shotType": "Medium Close-Up", "frozenMoment": "Speaker mid-word, eyes locked on the listener.", "transition": "CUT"}
+        },
+        {
+          "kind": "action",
+          "actionDescription": "Reaction shot: character turns toward window, concern on face...",
+          "beatDirection": {"shotType": "Medium Close-Up", "frozenMoment": "Listener's profile against the window light, brow furrowed.", "transition": "CUT"}
+        }
+      ],
+      "visualDescription": "Camera and lighting notes (or audio focus if podcast)",
+      "duration": 120,
+      "sfx": [{"time": 0, "description": "Sound effect"}],
+      "music": {"description": "Background music mood"}
+    }
+  ]${
+    shared.hasReferenceCatalog
+      ? `,
+  "newAssets": [
+    {"tempId": "new-1", "kind": "prop", "name": "New Prop Name", "description": "Only if not in catalog", "isNew": true}
+  ]`
+      : ''
+  }
+}
+
+SCHEMA RULES:
+• "beats" is the ONLY place story content goes. Do NOT emit "action", "dialogue", or "narration" fields on a scene — they are derived from beats automatically and duplicating them wastes your budget.
+• Scene numbers MUST be exactly ${sceneNumbers.join(', ')} — in that order, no gaps, no extras.
+• Return ONLY valid JSON - no markdown, no explanations.`
+
+  return `${shared.persona} for the following production.
+
+${shared.storyBlock}
+
+${assignment}
+${shared.craftBlock}
+
+${schema}
+${opts.shortfallNote ? `\n${opts.shortfallNote}\n` : ''}
+Now write scenes ${chunk.sceneNumberStart}–${sceneNumberEnd}.
+${shared.languageBlock}`
+}
+
+/** Concurrent chunk calls. Two keeps the 600s route budget while halving wall time. */
+const CHUNK_CONCURRENCY = 2
+
+/** One corrective retry per chunk when the model returns fewer scenes than assigned. */
+const MAX_CHUNK_ATTEMPTS = 2
+
+function describeChunk(chunk: SceneChunk): string {
+  const beat = chunk.blueprintBeatIndex === null ? '-' : chunk.blueprintBeatIndex + 1
+  const end = chunk.sceneNumberStart + chunk.sceneCount - 1
+  return `beat ${beat} scenes ${chunk.sceneNumberStart}-${end}`
+}
+
+/** Stamp the assignment onto returned scenes so provenance never depends on the model. */
+function stampChunkProvenance(scenes: any[], chunk: SceneChunk): any[] {
+  return scenes.map((scene) => ({
+    ...scene,
+    ...(chunk.blueprintBeatIndex === null
+      ? {}
+      : {
+          blueprintBeatIndex: chunk.blueprintBeatIndex,
+          blueprintBeatTitle: chunk.blueprintBeatTitle,
+        }),
+  }))
+}
+
+/**
+ * Generate the scenes for one chunk.
+ *
+ * Two recoveries matter here: a MAX_TOKENS stop means the slice was too big to
+ * emit, so it is halved and each half asked for separately; a short return means
+ * the model ignored the count, so it is asked again with the shortfall named.
+ */
+async function generateSceneChunk(
+  shared: SharedScriptContext,
+  chunk: SceneChunk,
+  ctx: {
+    storyBeats: any[]
+    totalScenes: number
+    onChunkScenes?: (count: number) => void
+    depth?: number
+  }
+): Promise<any[]> {
+  const depth = ctx.depth ?? 0
+  let best: any[] = []
+
+  for (let attempt = 1; attempt <= MAX_CHUNK_ATTEMPTS; attempt++) {
+    const label = `${describeChunk(chunk)}${attempt > 1 ? ` (retry ${attempt - 1})` : ''}`
+    const shortfallNote =
+      attempt > 1
+        ? `PREVIOUS ATTEMPT FAILED: you returned ${best.length} scene(s) instead of ${chunk.sceneCount}. Return all ${chunk.sceneCount} scenes this time. Find the ${chunk.sceneCount} distinct dramatic units inside this Blueprint beat — separate locations, time jumps, or turns — and write each as its own scene.`
+        : undefined
+
+    const prompt = buildSceneChunkPrompt(shared, chunk, {
+      storyBeats: ctx.storyBeats,
+      totalScenes: ctx.totalScenes,
+      shortfallNote,
+    })
+
+    let text = ''
+    let truncated = false
+    try {
+      const result = await callGemini(prompt, label)
+      text = result.text
+      truncated = result.truncated
+    } catch (err: any) {
+      console.error(`[Script Gen V2] Chunk call failed (${label}):`, err?.message || err)
+      continue
+    }
+
+    const parsed = parseChunkResponse(text)
+    text = ''
+    const scenes = parsed.scenes.slice().sort((a, b) => (a.sceneNumber || 0) - (b.sceneNumber || 0))
+
+    if (scenes.length > best.length) best = scenes
+
+    // A truncated response cannot be fixed by asking again — the slice is too
+    // large for one response. Split it instead.
+    if (truncated && depth < 1) {
+      const halves = halveChunk(chunk)
+      if (halves) {
+        console.warn(
+          `[Script Gen V2] ${label} truncated; splitting into ${halves[0].sceneCount}+${halves[1].sceneCount} scenes`
+        )
+        const recovered: any[] = []
+        for (const half of halves) {
+          recovered.push(
+            ...(await generateSceneChunk(shared, half, { ...ctx, depth: depth + 1 }))
+          )
+        }
+        if (recovered.length > best.length) best = recovered
+        break
+      }
+    }
+
+    if (best.length >= chunk.sceneCount) break
+
+    if (attempt < MAX_CHUNK_ATTEMPTS) {
+      console.warn(
+        `[Script Gen V2] ${label} returned ${scenes.length}/${chunk.sceneCount} scenes; retrying`
+      )
+    }
+  }
+
+  if (best.length < chunk.sceneCount) {
+    console.warn(
+      `[Script Gen V2] ${describeChunk(chunk)} short after retries: ${best.length}/${chunk.sceneCount} scenes`
+    )
+  }
+
+  const stamped = stampChunkProvenance(best, chunk)
+  ctx.onChunkScenes?.(stamped.length)
+  return stamped
+}
+
+/**
+ * Parse one chunk response into a scenes array.
+ *
+ * Beats are the only story payload the model returns now; legacy `action` /
+ * `dialogue` / `narration` are derived downstream by `applyBeatsToScene`.
+ */
+function parseChunkResponse(response: string): { scenes: any[] } {
   let parsedScenes: any[] = []
   
   try {
@@ -1456,7 +1365,7 @@ function parseSinglePassResponse(response: string): { scenes: any[] } {
     const parsed = JSON.parse(cleaned)
     parsedScenes = parsed.scenes || []
   } catch (parseError: any) {
-    console.warn('[Parse Single-Pass] Full parse failed, attempting extraction...', parseError.message.substring(0, 100))
+    console.warn('[Parse Chunk] Full parse failed, attempting extraction...', parseError.message.substring(0, 100))
     
     // Try to extract scenes using brace-counting
     try {
@@ -1518,10 +1427,10 @@ function parseSinglePassResponse(response: string): { scenes: any[] } {
       
       if (extractedScenes.length > 0) {
         parsedScenes = extractedScenes.sort((a, b) => a.sceneNumber - b.sceneNumber)
-        console.log(`[Parse Single-Pass] Recovered ${parsedScenes.length} scenes via extraction`)
+        console.log(`[Parse Chunk] Recovered ${parsedScenes.length} scenes via extraction`)
       }
     } catch (extractError) {
-      console.error('[Parse Single-Pass] Extraction failed:', extractError)
+      console.error('[Parse Chunk] Extraction failed:', extractError)
     }
   }
   
@@ -1531,7 +1440,19 @@ function parseSinglePassResponse(response: string): { scenes: any[] } {
       sceneNumber: s.sceneNumber || idx + 1,
       heading: s.heading || `SCENE ${idx + 1}`,
       cinematicType: s.cinematicType,
+      // Blueprint provenance drives beat grouping in the UI and the
+      // decomposition audit — it must survive parsing.
+      ...(typeof s.blueprintBeatIndex === 'number'
+        ? { blueprintBeatIndex: s.blueprintBeatIndex }
+        : {}),
+      ...(typeof s.blueprintBeatTitle === 'string'
+        ? { blueprintBeatTitle: s.blueprintBeatTitle }
+        : {}),
       characters: s.characters || [],
+      ...(Array.isArray(s.sceneCharacters) ? { sceneCharacters: s.sceneCharacters } : {}),
+      ...(typeof s.locationAssetId === 'string' && s.locationAssetId
+        ? { locationAssetId: s.locationAssetId }
+        : {}),
       action: s.action || '',
       narration: s.narration || '',
       beats: Array.isArray(s.beats) ? s.beats : undefined,
@@ -1543,7 +1464,9 @@ function parseSinglePassResponse(response: string): { scenes: any[] } {
       // model gave no usable duration. We no longer force every scene up to 45s.
       duration: (typeof s.duration === 'number' && s.duration > 0) ? Math.max(4, s.duration) : 60,
       sfx: Array.isArray(s.sfx) ? s.sfx : [],
-      music: s.music || undefined,
+      music: s.music?.description
+        ? { ...s.music, description: adaptPromptForLyria(s.music.description) }
+        : s.music || undefined,
       isExpanded: true
     }))
   }
@@ -1562,10 +1485,31 @@ function isDegenerateScene(scene: any): boolean {
 }
 
 /**
- * Two adjacent scenes are near-duplicates when they share the same heading and
- * repeat the same content (same speakers / near-identical action text).
+ * Consecutive scenes decomposed from one Blueprint beat legitimately share a
+ * location and a cast, so a shared heading is not evidence of duplication.
+ * Merging on that alone collapsed a decomposed beat back into a single scene.
+ */
+function isMergeProtectedScene(scene: any): boolean {
+  // Continuation parts produced by splitOversizedScenes are deliberate splits.
+  if (typeof scene?.scenePartIndex === 'number') return true
+  // Bookends are structural, never merge candidates.
+  if (scene?.cinematicType === 'title' || scene?.cinematicType === 'outro') return true
+  return false
+}
+
+/**
+ * Two adjacent scenes are near-duplicates only when the heading, the speaker
+ * sequence, AND the action text all line up — i.e. the model genuinely emitted
+ * the same scene twice.
  */
 function areNearDuplicateScenes(a: any, b: any): boolean {
+  if (isMergeProtectedScene(a) || isMergeProtectedScene(b)) return false
+
+  // Different Blueprint beats are different story units by construction.
+  const beatOf = (s: any) =>
+    typeof s?.blueprintBeatIndex === 'number' ? s.blueprintBeatIndex : null
+  if (beatOf(a) !== beatOf(b)) return false
+
   const normHeading = (s: any) => String(s?.heading || '').trim().toLowerCase()
   if (!normHeading(a) || normHeading(a) !== normHeading(b)) return false
 
@@ -1573,7 +1517,7 @@ function areNearDuplicateScenes(a: any, b: any): boolean {
     (Array.isArray(s?.dialogue) ? s.dialogue : [])
       .map((d: any) => String(d?.character || d?.speaker || '').toLowerCase())
       .join(',')
-  const sameSpeakers = speakers(a) && speakers(a) === speakers(b)
+  const sameSpeakers = speakers(a) !== '' && speakers(a) === speakers(b)
 
   const actionA = String(a?.action || '').toLowerCase().split(/\s+/).filter(Boolean)
   const actionB = new Set(String(b?.action || '').toLowerCase().split(/\s+/).filter(Boolean))
@@ -1581,7 +1525,7 @@ function areNearDuplicateScenes(a: any, b: any): boolean {
     ? actionA.filter((w: string) => actionB.has(w)).length / actionA.length
     : 0
 
-  return sameSpeakers || overlap > 0.8
+  return sameSpeakers && overlap > 0.8
 }
 
 /**
@@ -1603,7 +1547,10 @@ function consolidateFragmentedScenes(scenes: any[]): any[] {
       continue
     }
     
-    if (isDegenerateScene(currentScene) || areNearDuplicateScenes(currentScene, scene)) {
+    const mergeDegenerate =
+      isDegenerateScene(currentScene) && !isMergeProtectedScene(currentScene)
+
+    if (mergeDegenerate || areNearDuplicateScenes(currentScene, scene)) {
       console.log(`[Consolidate] Merging redundant scene ${currentScene.sceneNumber} into scene ${scene.sceneNumber}`)
       currentScene = mergeScenes(currentScene, scene)
     } else {
@@ -1663,17 +1610,33 @@ function consolidateToTargetCount(scenes: any[], targetCount: number): any[] {
 }
 
 /**
- * Merge two scenes into one
+ * Merge two scenes into one.
+ *
+ * Spreads the first scene so identity and provenance (`id`, `blueprintBeatIndex`,
+ * `cinematicType`, `creditLines`, asset ids) survive, and concatenates `beats`.
+ * Returning a hand-built object dropped all of that and left the merged scene
+ * without a beat timeline, which was then re-derived at a lower beat count.
  */
 function mergeScenes(scene1: any, scene2: any): any {
+  const beats = [
+    ...(Array.isArray(scene1.beats) ? scene1.beats : []),
+    ...(Array.isArray(scene2.beats) ? scene2.beats : []),
+  ]
+  const joinText = (a: unknown, b: unknown, sep: string) =>
+    [a, b].map((v) => (typeof v === 'string' ? v.trim() : '')).filter(Boolean).join(sep)
+
   return {
+    ...scene1,
     sceneNumber: scene1.sceneNumber,
     heading: scene1.heading, // Keep first scene's heading
     characters: [...new Set([...(scene1.characters || []), ...(scene2.characters || [])])],
-    action: `${scene1.action}\\n\\n${scene2.action}`.trim(),
+    action: joinText(scene1.action, scene2.action, '\n\n'),
     narration: scene1.narration || scene2.narration, // Keep first non-empty
     dialogue: [...(scene1.dialogue || []), ...(scene2.dialogue || [])],
-    visualDescription: `${scene1.visualDescription} ${scene2.visualDescription}`.trim(),
+    ...(beats.length > 0
+      ? { beats: beats.map((beat: any, idx: number) => ({ ...beat, sequenceIndex: idx })) }
+      : {}),
+    visualDescription: joinText(scene1.visualDescription, scene2.visualDescription, ' '),
     duration: (scene1.duration || 0) + (scene2.duration || 0),
     sfx: [...(scene1.sfx || []), ...(scene2.sfx || [])],
     music: scene1.music || scene2.music,
@@ -1681,47 +1644,35 @@ function mergeScenes(scene1: any, scene2: any): any {
   }
 }
 
-async function callGemini(prompt: string): Promise<string> {
-  console.log('[Generate Script V2] Calling Vertex AI Gemini...')
+/**
+ * `finishReason` is returned alongside the text: a MAX_TOKENS stop means the
+ * chunk was too large to emit, which the caller recovers from by halving it.
+ * Swallowing it made truncated scripts look like successful ones.
+ */
+async function callGemini(
+  prompt: string,
+  label: string
+): Promise<{ text: string; truncated: boolean }> {
+  console.log(`[Generate Script V2] Calling Vertex AI Gemini (${label})...`)
   const result = await generateText(prompt, {
     model: getScriptGenerationModel(),
     temperature: 0.7,
-    maxOutputTokens: 16384,  // Reduced from 32768 to lower memory footprint
+    maxOutputTokens: 16384,  // Per-chunk budget; chunks are sized to fit inside it
     timeoutMs: 180000,       // 180s timeout for large script generation (increased from default 90s)
     thinkingLevel: 'high',
   })
-  
-  const text = result.text || ''
-  
-  // Debug logging - first 500 chars
-  console.log('[Gemini Response] First 500 chars:', text.substring(0, 500))
-  console.log('[Gemini Response] Last 500 chars:', text.substring(Math.max(0, text.length - 500)))
-  console.log('[Gemini Response] Total length:', text.length)
-  
-  return text
-}
 
-function* streamParseScenes(jsonText: string): Generator<any[], void, unknown> {
-  // Try to extract complete scenes from partial JSON
-  // Look for "scenes" array patterns in the JSON
-  const scenePattern = /"scenes":\s*\[\s*((?:"[^"]+"|\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}|\d+|true|false|null)(?:,\s*(?:"[^"]+"|\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}|\d+|true|false|null))*)\s*\]/
-  
-  let lastIndex = 0
-  while (lastIndex < jsonText.length) {
-    const match = jsonText.slice(lastIndex).match(scenePattern)
-    if (!match) break
-    
-    try {
-      const scenesJson = `[${match[1]}]`
-      const scenes = JSON.parse(scenesJson)
-      if (Array.isArray(scenes) && scenes.length > 0) {
-        yield scenes
-      }
-    } catch {
-      // Partial match or invalid JSON, continue
-    }
-    lastIndex += (match.index || 0) + match[0].length
+  const text = result.text || ''
+  const truncated = result.finishReason === 'MAX_TOKENS'
+
+  console.log(
+    `[Gemini Response] ${label}: ${text.length} chars, finishReason=${result.finishReason ?? 'unknown'}`
+  )
+  if (truncated) {
+    console.warn(`[Gemini Response] ${label} hit the output token ceiling — response is incomplete`)
   }
+
+  return { text, truncated }
 }
 
 function sanitizeJsonString(jsonStr: string): string {
@@ -2021,306 +1972,6 @@ function sanitizeJsonString(jsonStr: string): string {
     } catch (secondError: any) {
     console.error('[Sanitize] Failed after all attempts')
     throw secondError
-  }
-}
-
-/**
- * Detects and extracts SFX entries that were incorrectly placed in dialogue array
- * 
- * Detection criteria:
- * - Entire line wrapped in parentheses: (text)
- * - Contains sound-related keywords
- * - Does NOT contain conversational dialogue patterns
- */
-function extractSFXFromDialogue(scene: any): any {
-  if (!scene.dialogue || !Array.isArray(scene.dialogue) || scene.dialogue.length === 0) {
-    return scene
-  }
-  
-  // Keywords that indicate sound effects (not dialogue)
-  const sfxKeywords = [
-    'HUM', 'SOUND', 'NOISE', 'BEEP', 'BUZZ', 'CLICK', 'RING', 'BANG', 
-    'CRASH', 'THUD', 'WHOOSH', 'RUSTLE', 'CREAK', 'SLAM', 'WHISTLE', 
-    'ECHO', 'RUMBLE', 'DISTANT', 'APPROACHING', 'FADING', 'HISSING',
-    'DRIPPING', 'SCRAPING', 'FOOTSTEPS', 'KNOCKING', 'TAPPING'
-  ]
-  
-  const extractedSFX: Array<{time: number, description: string}> = []
-  const cleanedDialogue: Array<any> = []
-  
-  scene.dialogue.forEach((d: any) => {
-    const line = (d.line || '').trim()
-    
-    // Check 1: Is the entire line wrapped in parentheses?
-    const isWrappedInParens = /^\(.*\)$/.test(line)
-    
-    if (!isWrappedInParens) {
-      // Not wrapped in parens -> keep as dialogue
-      cleanedDialogue.push(d)
-      return
-    }
-    
-    // Check 2: Contains SFX keywords?
-    const upperLine = line.toUpperCase()
-    const containsSFXKeyword = sfxKeywords.some(keyword => upperLine.includes(keyword))
-    
-    // Check 3: Does NOT look like actual dialogue
-    const hasQuotationMarks = line.includes('"') || line.includes("'")
-    const hasConversationalWords = /\b(I|you|we|they|my|your|our|their|yes|no|okay|please|thank|sorry|hello|hi|hey|what|when|where|why|how)\b/i.test(line)
-    
-    // If it's wrapped in parens, has SFX keywords, and doesn't look like dialogue -> it's SFX
-    if (containsSFXKeyword && !hasQuotationMarks && !hasConversationalWords) {
-      const description = line.replace(/^\(|\)$/g, '').trim()
-      extractedSFX.push({
-        time: 0,  // Default to start of scene
-        description
-      })
-      console.log(`[SFX Extraction] Moved from dialogue (${d.character}) to SFX: "${description}"`)
-    } else {
-      // Keep as dialogue
-      cleanedDialogue.push(d)
-    }
-  })
-  
-  // Only update if we actually extracted something
-  if (extractedSFX.length > 0) {
-    return {
-      ...scene,
-      dialogue: cleanedDialogue,
-      sfx: [...(scene.sfx || []), ...extractedSFX]
-    }
-  }
-  
-  return scene
-}
-
-function parseBatch1(response: string, start: number, end: number): any {
-  let parsed: any
-  let parsedScenes: any[] = []
-  
-  try {
-    // Try full parse first
-    const cleaned = sanitizeJsonString(response)
-    parsed = JSON.parse(cleaned)
-    parsedScenes = parsed.scenes || []
-  } catch (parseError: any) {
-    console.warn('[Parse Batch 1] Full parse failed, attempting incremental extraction...', parseError.message.substring(0, 100))
-    
-    // Extract as many complete scenes as possible
-    for (const sceneChunk of streamParseScenes(response)) {
-      parsedScenes.push(...sceneChunk)
-    }
-    
-    if (parsedScenes.length === 0) {
-      console.error('[Parse Batch 1] No scenes recovered via incremental parsing')
-      return {
-        totalScenes: null,
-        estimatedTotalDuration: 0,
-        scenes: []
-      }
-    }
-    
-    console.log(`[Parse Batch 1] Recovered ${parsedScenes.length} scenes via incremental parsing`)
-    parsed = { scenes: parsedScenes }
-  }
-    
-    // Batch 1 returns object with totalScenes and scenes
-        return {
-          totalScenes: parsed.totalScenes || null,
-          estimatedTotalDuration: parsed.estimatedTotalDuration || 0,
-    scenes: (parsedScenes || []).map((s: any, idx: number) => {
-            const scene = {
-              sceneNumber: start + idx,
-              heading: s.heading || `SCENE ${start + idx}`,
-              action: s.action || 'Scene content',
-              narration: s.narration || '',  // NEW: Preserve captivating narration
-              dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
-              visualDescription: s.visualDescription || s.action || 'Cinematic shot',
-              duration: s.duration || 30,  // Use AI's realistic estimate
-              sfx: Array.isArray(s.sfx) ? s.sfx.map((sfx: any) => ({
-                time: sfx.time || 0,
-                description: sfx.description || ''
-              })) : [],
-              music: s.music ? {
-                description: s.music.description?.trim()
-                  ? adaptPromptForLyria(s.music.description)
-                  : '',
-                duration: s.music.duration
-              } : undefined,
-              isExpanded: true
-            }
-            
-            // Extract SFX from dialogue (post-processing fix)
-            return extractSFXFromDialogue(scene)
-          })
-  }
-}
-
-function parseScenes(response: string, start: number, end: number): any {
-  let parsed: any
-  let parsedScenes: any[] = []
-  
-  try {
-    // Try full parse first
-    const cleaned = sanitizeJsonString(response)
-    parsed = JSON.parse(cleaned)
-    parsedScenes = Array.isArray(parsed) ? parsed : (parsed.scenes || [])
-  } catch (parseError: any) {
-    console.warn('[Parse Scenes] Full parse failed, attempting incremental extraction...', parseError.message.substring(0, 100))
-    
-    // Extract scenes using brace counting for proper nesting
-    try {
-      const extractedScenes: any[] = []
-      
-      // Find all positions where scenes start
-      const sceneStartPattern = /"sceneNumber"\s*:\s*(\d+)/g
-      let match: RegExpExecArray | null
-      
-      while ((match = sceneStartPattern.exec(response)) !== null) {
-        const sceneNumber = parseInt(match[1])
-        const startPos = match.index
-        
-        // Find the opening brace before "sceneNumber"
-        let openBracePos = startPos
-        while (openBracePos > 0 && response[openBracePos] !== '{') {
-          openBracePos--
-        }
-        
-        if (openBracePos < 0 || response[openBracePos] !== '{') {
-          continue // No opening brace found
-        }
-        
-        // Count braces to find the matching closing brace
-        let braceCount = 0
-        let inString = false
-        let escaped = false
-        let endPos = openBracePos
-        
-        for (let i = openBracePos; i < response.length; i++) {
-          const char = response[i]
-          
-          // Handle escape sequences
-          if (escaped) {
-            escaped = false
-            continue
-          }
-          
-          if (char === '\\') {
-            escaped = true
-            continue
-          }
-          
-          // Handle string delimiters
-          if (char === '"') {
-            inString = !inString
-            continue
-          }
-          
-          // Only count braces outside of strings
-          if (!inString) {
-            if (char === '{') {
-              braceCount++
-            } else if (char === '}') {
-              braceCount--
-              
-              // Found the matching closing brace
-              if (braceCount === 0) {
-                endPos = i + 1
-                break
-              }
-            }
-          }
-        }
-        
-        // Extract the complete scene object
-        if (braceCount === 0 && endPos > openBracePos) {
-          const sceneText = response.substring(openBracePos, endPos)
-          
-          try {
-            const scene = JSON.parse(sceneText)
-            
-            // Validate scene has required fields
-            if (scene.sceneNumber && scene.sceneNumber >= start && scene.sceneNumber <= end) {
-              extractedScenes.push(scene)
-              console.log(`[Parse Scenes] Extracted scene ${scene.sceneNumber} (${sceneText.length} chars)`)
-            }
-          } catch (parseErr) {
-            console.warn(`[Parse Scenes] Failed to parse scene at position ${openBracePos}:`, parseErr)
-            // Try to sanitize this specific scene
-            try {
-              const sanitized = sanitizeJsonString(sceneText)
-              const scene = JSON.parse(sanitized)
-              if (scene.sceneNumber && scene.sceneNumber >= start && scene.sceneNumber <= end) {
-                extractedScenes.push(scene)
-                console.log(`[Parse Scenes] Extracted scene ${scene.sceneNumber} after sanitization`)
-              }
-            } catch {
-              // Skip invalid scenes
-              continue
-            }
-          }
-        }
-      }
-      
-      if (extractedScenes.length > 0) {
-        // Sort by sceneNumber and remove duplicates
-        const uniqueScenes = Array.from(
-          new Map(extractedScenes.map(s => [s.sceneNumber, s])).values()
-        ).sort((a, b) => a.sceneNumber - b.sceneNumber)
-        
-        parsedScenes = uniqueScenes
-        console.log(`[Parse Scenes] Recovered ${uniqueScenes.length} scenes via brace-counting extraction`)
-      } else {
-        // Fallback to original streamParseScenes
-        console.warn('[Parse Scenes] Brace-counting extraction found nothing, trying stream parse')
-        for (const sceneChunk of streamParseScenes(response)) {
-          parsedScenes.push(...sceneChunk)
-        }
-      }
-    } catch (extractError) {
-      console.error('[Parse Scenes] Brace-counting extraction failed, trying stream parse:', extractError)
-      // Fallback to stream parse
-      for (const sceneChunk of streamParseScenes(response)) {
-        parsedScenes.push(...sceneChunk)
-      }
-    }
-    
-    if (parsedScenes.length === 0) {
-      console.error('[Parse Scenes] No scenes recovered via incremental parsing')
-      return { scenes: [] }
-    }
-    
-    console.log(`[Parse Scenes] Recovered ${parsedScenes.length} scenes via incremental parsing`)
-  }
-    
-    // Batch 2+ returns just scenes array
-      return {
-    scenes: parsedScenes.map((s: any, idx: number) => {
-          const scene = {
-            sceneNumber: start + idx,
-            heading: s.heading || `SCENE ${start + idx}`,
-            characters: s.characters || [],  // CRITICAL: Preserve characters array from AI
-            action: s.action || 'Scene content',
-            narration: s.narration || '',  // NEW: Preserve captivating narration
-            dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
-            visualDescription: s.visualDescription || s.action || 'Cinematic shot',
-            duration: s.duration || 30,  // Use AI's realistic estimate
-            sfx: Array.isArray(s.sfx) ? s.sfx.map((sfx: any) => ({
-              time: sfx.time || 0,
-              description: sfx.description || ''
-            })) : [],
-            music: s.music ? {
-              description: s.music.description?.trim()
-                ? adaptPromptForLyria(s.music.description)
-                : '',
-              duration: s.music.duration
-            } : undefined,
-            isExpanded: true
-          }
-          
-          // Extract SFX from dialogue (post-processing fix)
-          return extractSFXFromDialogue(scene)
-        })
   }
 }
 
