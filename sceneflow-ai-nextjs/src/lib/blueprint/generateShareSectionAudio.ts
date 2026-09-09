@@ -24,6 +24,7 @@ import {
 } from './sectionNarrationText'
 import { getPayload, isBlueprintPayload } from './shareSession'
 import { translateBlueprintNarration } from './translateBlueprintNarration'
+import { buildBlueprintARNarrationText } from './arNarrationText'
 import {
   DEFAULT_SHARE_AUDIO_LANGUAGE,
   PHANTOM_PENDING_MS,
@@ -292,6 +293,8 @@ export async function patchSessionSectionAudio(
       | 'sectionAudioDirectorNotes'
       | 'sectionAudioGeneratedAt'
       | 'sectionAudioStartedAt'
+      | 'resonanceAudioByLanguage'
+      | 'resonanceTranslations'
     >
   >,
   options?: { mergeSectionAudio?: boolean; language?: string }
@@ -339,6 +342,81 @@ export type RunShareSectionAudioOptions = {
   language?: string
   voiceId?: string
   directorNotes?: string
+}
+
+async function generateResonanceShareAudio(params: {
+  sessionId: string
+  projectId: string
+  language: string
+  voiceId: string
+  directorNotes?: string
+  payload: BlueprintSessionPayload
+}): Promise<{
+  resonanceAudioByLanguage: Record<string, { url: string; textHash: string }>
+  resonanceTranslations: Record<string, string>
+} | null> {
+  const analysis = params.payload.blueprintAudienceResonance?.analysis
+  if (!analysis) return null
+
+  const text = buildBlueprintARNarrationText({
+    analysis: analysis as never,
+    treatment: params.payload.treatment,
+    appliedRecommendationIds:
+      params.payload.blueprintAudienceResonance?.appliedRecommendationIds || [],
+  })
+  if (!text.trim()) return null
+
+  let speakableText = text
+  try {
+    speakableText = await translateBlueprintNarration(text, params.language)
+  } catch (err) {
+    console.error('[generateResonanceShareAudio] translate:', err)
+    if (params.language !== DEFAULT_SHARE_AUDIO_LANGUAGE) return null
+  }
+
+  const textHash = hashForLanguage(
+    hashShareAudioContent(speakableText, params.voiceId, params.directorNotes),
+    params.language
+  )
+  const existing = params.payload.resonanceAudioByLanguage?.[params.language]
+  const translations = { ...(params.payload.resonanceTranslations || {}) }
+  translations[params.language] = speakableText
+
+  if (existing?.url && existing.textHash === textHash) {
+    return {
+      resonanceAudioByLanguage: {
+        ...(params.payload.resonanceAudioByLanguage || {}),
+        [params.language]: existing,
+      },
+      resonanceTranslations: translations,
+    }
+  }
+
+  try {
+    const buffer = await synthesizeSectionMp3(
+      speakableText,
+      params.voiceId,
+      params.directorNotes,
+      params.language
+    )
+    if (!buffer.length) return null
+    const filename = `audio/blueprint-share/${params.projectId}/${params.sessionId}/${params.language}/resonance.mp3`
+    const blob = await put(filename, buffer, {
+      access: 'public',
+      contentType: 'audio/mpeg',
+      addRandomSuffix: false,
+    })
+    return {
+      resonanceAudioByLanguage: {
+        ...(params.payload.resonanceAudioByLanguage || {}),
+        [params.language]: { url: blob.url, textHash },
+      },
+      resonanceTranslations: translations,
+    }
+  } catch (err) {
+    console.error('[generateResonanceShareAudio]', err)
+    return null
+  }
 }
 
 export async function runShareSectionAudioGeneration(
@@ -394,6 +472,20 @@ export async function runShareSectionAudioGeneration(
   const existingAudio = getSectionAudioForLanguage(payload, language)
 
   if (isShareSectionAudioCurrent(existingAudio, payload.sectionAudioStatus, plan)) {
+    const resonance = await generateResonanceShareAudio({
+      sessionId,
+      projectId: payload.projectId,
+      language,
+      voiceId,
+      directorNotes,
+      payload,
+    })
+    if (resonance) {
+      await patchSessionSectionAudio(sessionId, {
+        resonanceAudioByLanguage: resonance.resonanceAudioByLanguage,
+        resonanceTranslations: resonance.resonanceTranslations,
+      })
+    }
     console.info(`[runShareSectionAudioGeneration] up-to-date session=${sessionId} lang=${language}`)
     return {
       skipped: true,
@@ -447,6 +539,15 @@ export async function runShareSectionAudioGeneration(
     const prevByLang = payload.sectionAudioByLanguage || {}
     const prevTrans = payload.sectionTranslations || {}
 
+    const resonance = await generateResonanceShareAudio({
+      sessionId,
+      projectId: payload.projectId,
+      language,
+      voiceId,
+      directorNotes,
+      payload,
+    })
+
     await patchSessionSectionAudio(sessionId, {
       sectionAudio: sectionAudio,
       sectionAudioByLanguage: { ...prevByLang, [language]: sectionAudio },
@@ -459,6 +560,12 @@ export async function runShareSectionAudioGeneration(
       sectionAudioDirectorNotes: directorNotes,
       sectionAudioLanguage: language,
       sectionAudioGeneratedAt: new Date().toISOString(),
+      ...(resonance
+        ? {
+            resonanceAudioByLanguage: resonance.resonanceAudioByLanguage,
+            resonanceTranslations: resonance.resonanceTranslations,
+          }
+        : {}),
     })
 
     return { skipped: false, status, sectionAudio, language }

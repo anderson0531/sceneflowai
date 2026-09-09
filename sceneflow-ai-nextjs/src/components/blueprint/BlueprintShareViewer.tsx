@@ -37,6 +37,11 @@ import {
 } from '@/i18n/content/buildBlueprintDisplayFields'
 import { EMPTY_ENTITY_I18N, readContentEntityI18n } from '@/i18n/content/entityI18n'
 import { fromTtsLanguageCode } from '@/i18n/languageCodeBridge'
+import { isBlueprintFeedbackAllowed } from '@/lib/blueprint/shareSettings'
+import type { SharedBlueprintARSnapshot } from '@/lib/blueprint/sanitizeShareAR'
+import { BlueprintShareResonancePanel } from './BlueprintShareResonancePanel'
+import { PipelineDemoChrome } from '@/components/landing/PipelineDemoChrome'
+import type { BlueprintSectionAudioEntry } from '@/lib/blueprint/shareTypes'
 
 const PARTICIPANT_KEY = (token: string) => `sf_collab_participant_${token}`
 const SHARE_LANG_KEY = (token: string) => `sf_share_lang_${token}`
@@ -81,6 +86,12 @@ export function BlueprintShareViewer({ token }: Props) {
   const [heroImageUrl, setHeroImageUrl] = useState<string | undefined>()
   const [ownerName, setOwnerName] = useState('Owner')
   const [allowTts, setAllowTts] = useState(true)
+  const [allowFeedback, setAllowFeedback] = useState(true)
+  const [arSnapshot, setArSnapshot] = useState<SharedBlueprintARSnapshot | null>(null)
+  const [resonanceAudioByLanguage, setResonanceAudioByLanguage] = useState<
+    Record<string, BlueprintSectionAudioEntry>
+  >({})
+  const [resonanceTranslations, setResonanceTranslations] = useState<Record<string, string>>({})
   const [sectionAudio, setSectionAudio] = useState<BlueprintSectionAudioMap>({})
   const [sectionAudioByLanguage, setSectionAudioByLanguage] = useState<
     Record<string, BlueprintSectionAudioMap>
@@ -127,6 +138,10 @@ export function BlueprintShareViewer({ token }: Props) {
     )
     setOwnerName(data.payload?.ownerDisplayName || 'Owner')
     setAllowTts(data.payload?.shareSettings?.allowTts !== false)
+    setAllowFeedback(isBlueprintFeedbackAllowed(data.payload?.shareSettings))
+    setArSnapshot(data.payload?.blueprintAudienceResonance ?? null)
+    setResonanceAudioByLanguage(data.payload?.resonanceAudioByLanguage || {})
+    setResonanceTranslations(data.payload?.resonanceTranslations || {})
     const lang = data.payload?.sectionAudioLanguage || 'en'
     const byLang = data.payload?.sectionAudioByLanguage || {}
     const flat = data.payload?.sectionAudio || byLang[lang] || {}
@@ -412,8 +427,11 @@ export function BlueprintShareViewer({ token }: Props) {
     )
   }
 
+  const canFeedback = allowFeedback && !!participantId && !submitted
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-slate-950 to-gray-950 text-gray-100">
+      <PipelineDemoChrome tokenOrSlug={token} />
       <header className="border-b border-gray-800/60 bg-gray-900/80 backdrop-blur-md sticky top-0 z-20">
         <div className="max-w-4xl mx-auto px-4 py-3 space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
@@ -425,7 +443,9 @@ export function BlueprintShareViewer({ token }: Props) {
               Learn more about SceneFlow
             </Link>
           </div>
-          <p className="sf-review-eyebrow">Blueprint Review</p>
+          <p className="sf-review-eyebrow">
+            {allowFeedback ? 'Blueprint Review' : 'Blueprint · Listen only'}
+          </p>
           <BlueprintShareLanguageControls
             language={reviewLanguage}
             onLanguageChange={setReviewLanguage}
@@ -462,6 +482,15 @@ export function BlueprintShareViewer({ token }: Props) {
           genre={displayGenre}
         />
 
+        {arSnapshot ? (
+          <BlueprintShareResonancePanel
+            snapshot={arSnapshot}
+            audio={resonanceAudioByLanguage[reviewLanguage]}
+            translationNarration={resonanceTranslations[reviewLanguage]}
+            allowTts={allowTts}
+          />
+        ) : null}
+
         {!hasCachedAudio &&
           allowTts &&
           audioStatus !== 'skipped' &&
@@ -493,10 +522,10 @@ export function BlueprintShareViewer({ token }: Props) {
                 audioStartedAt
               )}
               allowTts={allowTts}
-              canFeedback={!!participantId && !submitted}
+              canFeedback={canFeedback}
               feedback={draft.sections?.[s.id]}
               onFeedbackChange={
-                participantId && !submitted
+                canFeedback
                   ? (next) => updateSectionFeedback(s.id, next)
                   : undefined
               }
@@ -506,7 +535,7 @@ export function BlueprintShareViewer({ token }: Props) {
           ))}
         </div>
 
-        {!participantId ? (
+        {allowFeedback ? !participantId ? (
           <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-6 space-y-4">
             <h3 className="text-lg font-semibold text-white">Join to leave feedback</h3>
             <p className="text-sm text-gray-400">
@@ -637,7 +666,7 @@ export function BlueprintShareViewer({ token }: Props) {
 
       </main>
 
-      {participantId && !submitted && activeTab === 'review' && (
+      {allowFeedback && participantId && !submitted && activeTab === 'review' && (
         <div className="fixed bottom-0 inset-x-0 z-30 border-t border-gray-800 bg-gray-950/95 backdrop-blur px-4 py-3">
           <div className="max-w-4xl mx-auto flex items-center gap-3">
             <p className="text-xs text-gray-500 flex-1 hidden sm:block">

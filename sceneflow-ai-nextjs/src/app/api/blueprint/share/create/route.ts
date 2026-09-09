@@ -8,6 +8,8 @@ import CollabParticipant from '@/models/CollabParticipant'
 import { getAuthenticatedUserId, assertProjectAccess } from '@/lib/projectAccess'
 import type { BlueprintSessionPayload, BlueprintShareCreateBody } from '@/lib/blueprint/shareTypes'
 import { getPayload } from '@/lib/blueprint/shareSession'
+import { sanitizeBlueprintARForShare } from '@/lib/blueprint/sanitizeShareAR'
+import { loadBlueprintARFromMetadata } from '@/lib/types/audienceResonance'
 import {
   DEFAULT_SHARE_AUDIO_LANGUAGE,
   getShareAudioLanguage,
@@ -27,11 +29,19 @@ import { ensureCollabBlueprintFeedbackTable } from '@/lib/blueprint/ensureCollab
 export const runtime = 'nodejs'
 export const maxDuration = 300
 
+function resolveShareExpiry(body: BlueprintShareCreateBody): Date | null {
+  if (body.neverExpires === true || body.allowFeedback === false) return null
+  const days = body.expiresInDays ?? 14
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+}
+
 function buildSharePayload(
   body: BlueprintShareCreateBody,
   ownerName: string,
-  expiresAt: Date
+  expiresAt: Date | null,
+  arSnapshot: BlueprintSessionPayload['blueprintAudienceResonance']
 ): BlueprintSessionPayload {
+  const neverExpires = expiresAt == null
   return {
     type: 'blueprint',
     projectId: body.projectId,
@@ -40,15 +50,18 @@ function buildSharePayload(
     heroImageUrl: body.heroImageUrl,
     audienceDefinition: body.audienceDefinition ?? null,
     shareSettings: {
-      expiresAt: expiresAt.toISOString(),
+      expiresAt: expiresAt?.toISOString(),
       allowTts: true,
       collectEmail: false,
+      allowFeedback: body.allowFeedback !== false,
+      neverExpires,
     },
     ownerDisplayName: ownerName,
     sectionAudioStatus: isGeminiTtsConfigured() ? 'idle' : 'skipped',
     sectionAudioLanguage: DEFAULT_SHARE_AUDIO_LANGUAGE,
     sectionAudioVoiceId: DEFAULT_BLUEPRINT_GEMINI_VOICE,
     sectionAudioByLanguage: {},
+    blueprintAudienceResonance: arSnapshot ?? null,
   }
 }
 
@@ -112,6 +125,8 @@ export async function POST(req: NextRequest) {
       expiresInDays = 14,
       legacyOwnerId,
       forceNew = false,
+      allowFeedback,
+      neverExpires,
     } = body
 
     if (!projectId || !variantId || !treatment) {
@@ -128,6 +143,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: access.error }, { status: access.status })
     }
 
+    const { persisted: persistedAR } = loadBlueprintARFromMetadata(
+      (access.project.metadata || {}) as Record<string, unknown>
+    )
+    const arSnapshot = sanitizeBlueprintARForShare(persistedAR)
+
     await sequelize.authenticate()
 
     const heroDraft: BlueprintSessionPayload = {
@@ -142,7 +162,14 @@ export async function POST(req: NextRequest) {
     const syncedTreatment = heroSyncedDraft.treatment
     const syncedHeroImageUrl = heroSyncedDraft.heroImageUrl
 
-    const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)
+    const settingsChanged =
+      typeof allowFeedback === 'boolean' || typeof neverExpires === 'boolean'
+    const expiresAt = resolveShareExpiry({
+      ...body,
+      allowFeedback,
+      neverExpires,
+      expiresInDays,
+    })
 
     await CollabSession.sync({ alter: false })
     await CollabParticipant.sync({ alter: false })
@@ -163,10 +190,17 @@ export async function POST(req: NextRequest) {
           heroImageUrl: syncedHeroImageUrl,
           audienceDefinition: audienceDefinition ?? null,
           ownerDisplayName: ownerName,
+          blueprintAudienceResonance: arSnapshot ?? prev.blueprintAudienceResonance ?? null,
           shareSettings: {
             ...prev.shareSettings,
-            expiresAt: expiresAt.toISOString(),
             allowTts: true,
+            ...(settingsChanged
+              ? {
+                  expiresAt: expiresAt?.toISOString(),
+                  allowFeedback: allowFeedback !== false,
+                  neverExpires: expiresAt == null,
+                }
+              : {}),
           },
         }
         nextPayload = invalidateAudioIfTreatmentChanged(prev, syncedTreatment)
@@ -177,14 +211,21 @@ export async function POST(req: NextRequest) {
           heroImageUrl: syncedHeroImageUrl,
           audienceDefinition: audienceDefinition ?? null,
           ownerDisplayName: ownerName,
+          blueprintAudienceResonance: arSnapshot ?? nextPayload.blueprintAudienceResonance ?? null,
           shareSettings: {
             ...nextPayload.shareSettings,
-            expiresAt: expiresAt.toISOString(),
             allowTts: true,
+            ...(settingsChanged
+              ? {
+                  expiresAt: expiresAt?.toISOString(),
+                  allowFeedback: allowFeedback !== false,
+                  neverExpires: expiresAt == null,
+                }
+              : {}),
           },
         }
         await existing.update({
-          expires_at: expiresAt,
+          ...(settingsChanged ? { expires_at: expiresAt } : {}),
           payload: nextPayload,
         })
 
@@ -212,9 +253,12 @@ export async function POST(req: NextRequest) {
         heroImageUrl: syncedHeroImageUrl,
         audienceDefinition,
         expiresInDays,
+        allowFeedback,
+        neverExpires,
       },
       ownerName,
-      expiresAt
+      expiresAt,
+      arSnapshot
     )
 
     const t = await sequelize.transaction()

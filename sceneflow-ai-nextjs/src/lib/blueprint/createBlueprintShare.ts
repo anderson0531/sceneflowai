@@ -8,6 +8,8 @@ export type CreateBlueprintShareInput = {
   legacyOwnerId?: string
   /** When true, always create a new share URL (regenerates audio). Default false reuses active link. */
   forceNew?: boolean
+  allowFeedback?: boolean
+  neverExpires?: boolean
 }
 
 function legacyOwnerIdFromStorage(): string | undefined {

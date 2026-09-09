@@ -1,5 +1,6 @@
 import type { AudienceDefinition } from '@/lib/types/audienceResonance'
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
+import type { SharedBlueprintARSnapshot } from './sanitizeShareAR'
 
 export type BlueprintSectionAudioEntry = {
   url: string
@@ -47,6 +48,10 @@ export type BlueprintShareSettings = {
   expiresAt?: string
   allowTts?: boolean
   collectEmail?: boolean
+  /** Default true. When false, hide and reject review/chat/register. */
+  allowFeedback?: boolean
+  /** When true, CollabSession.expires_at stays null. */
+  neverExpires?: boolean
 }
 
 export type BlueprintSessionPayload = {
@@ -74,6 +79,10 @@ export type BlueprintSessionPayload = {
   sectionAudioGeneratedAt?: string
   /** Set when generation enters pending; used for stale-job recovery. */
   sectionAudioStartedAt?: string
+  /** Snapshot of Blueprint AR at share-create time (listen-only and review). */
+  blueprintAudienceResonance?: SharedBlueprintARSnapshot | null
+  resonanceAudioByLanguage?: Record<string, BlueprintSectionAudioEntry>
+  resonanceTranslations?: Record<string, string>
 }
 
 export type BlueprintShareCreateBody = {
@@ -87,6 +96,8 @@ export type BlueprintShareCreateBody = {
   forceNew?: boolean
   /** Pre-login localStorage authUserId when project ownership was not synced yet */
   legacyOwnerId?: string
+  allowFeedback?: boolean
+  neverExpires?: boolean
 }
 
 export type BlueprintStructuredFeedbackInput = {

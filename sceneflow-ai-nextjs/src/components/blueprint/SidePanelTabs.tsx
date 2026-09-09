@@ -31,8 +31,10 @@ interface SidePanelTabsProps {
   onClose?: () => void
   sessionId: string | null
   shareUrl: string | null
-  onShare: (opts?: { forceNew?: boolean }) => void
+  onShare: (opts?: { forceNew?: boolean; listenOnly?: boolean }) => void
   isSharing: boolean
+  listenOnly?: boolean
+  onListenOnlyChange?: (next: boolean) => void
   onProceedToScripting?: () => void
   projectId?: string
   audienceDefinition?: AudienceDefinition | null
@@ -70,6 +72,8 @@ export function SidePanelTabs({
   contentIntent,
   onOpenBlueprintRefine,
   shareToken,
+  listenOnly = false,
+  onListenOnlyChange,
   collaborationTabSignal = 0,
   resonanceTabSignal = 0,
   foundationTabSignal = 0,
@@ -205,6 +209,8 @@ export function SidePanelTabs({
             shareUrl={shareUrl}
             onShare={onShare}
             isSharing={isSharing}
+            listenOnly={listenOnly}
+            onListenOnlyChange={onListenOnlyChange}
             onOpenBlueprintRefine={onOpenBlueprintRefine}
             treatmentVariant={currentTreatment}
             projectName={(guide as any)?.title || 'Blueprint'}
@@ -222,6 +228,8 @@ function CollaborationContent({
   shareUrl,
   onShare,
   isSharing,
+  listenOnly = false,
+  onListenOnlyChange,
   onOpenBlueprintRefine,
   treatmentVariant,
   projectName,
@@ -229,8 +237,10 @@ function CollaborationContent({
   sessionId: string | null
   shareToken: string | null | undefined
   shareUrl: string | null
-  onShare: (opts?: { forceNew?: boolean }) => void
+  onShare: (opts?: { forceNew?: boolean; listenOnly?: boolean }) => void
   isSharing: boolean
+  listenOnly?: boolean
+  onListenOnlyChange?: (next: boolean) => void
   onOpenBlueprintRefine?: (opts: OpenBlueprintRefineOptions) => void
   treatmentVariant?: Record<string, unknown> | null
   projectName?: string
@@ -455,15 +465,37 @@ function CollaborationContent({
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-semibold text-white leading-tight">
-              {hasShareLink ? 'Reviewer link' : 'Share for feedback'}
+              {hasShareLink
+                ? listenOnly
+                  ? 'Listen-only preview'
+                  : 'Reviewer link'
+                : 'Share for feedback'}
             </h3>
             <p className="text-[11px] text-gray-400 mt-0.5 leading-snug">
-              {hasShareLink
-                ? 'One link for all reviewers. Send it so collaborators can read, listen, and comment.'
-                : 'Create a link reviewers can open without logging in.'}
+              {listenOnly
+                ? 'Read and listen only. No ratings, notes, or chat. Does not expire.'
+                : hasShareLink
+                  ? 'One link for all reviewers. Send it so collaborators can read, listen, and comment.'
+                  : 'Create a link reviewers can open without logging in.'}
             </p>
           </div>
         </div>
+
+        <label className="mt-2.5 flex items-start gap-2 text-xs text-gray-300 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={listenOnly}
+            onChange={(e) => {
+              const next = e.target.checked
+              onListenOnlyChange?.(next)
+              if (hasShareLink) {
+                onShare({ listenOnly: next })
+              }
+            }}
+            className="mt-0.5 rounded border-gray-600"
+          />
+          <span>Listen-only preview (no feedback)</span>
+        </label>
 
         {hasShareLink && shareUrl ? (
           <div className="mt-2.5 flex items-center gap-2">
@@ -488,7 +520,7 @@ function CollaborationContent({
         ) : (
           <button
             type="button"
-            onClick={onShare}
+            onClick={() => onShare({ listenOnly })}
             disabled={isSharing}
             className="mt-2.5 w-full px-3 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
@@ -549,7 +581,7 @@ function CollaborationContent({
             ) : null}
             <button
               type="button"
-              onClick={() => onShare({ forceNew: true })}
+              onClick={() => onShare({ forceNew: true, listenOnly })}
               disabled={isSharing}
               className="w-full text-[11px] text-purple-300/90 hover:text-purple-200 disabled:opacity-50 text-left"
             >

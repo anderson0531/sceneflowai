@@ -17,6 +17,10 @@ import {
 } from '@/components/landing/ProductionStyleCard'
 import { getProductionShowcaseScreeningSlug } from '@/config/landing/productionShowcaseScreening'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
+import {
+  PipelineReviewWalk,
+  type PipelineWalkStepCopy,
+} from '@/components/landing/PipelineReviewWalk'
 
 export const PRODUCTION_EXAMPLES_SECTION_ID = 'production-examples'
 
@@ -126,21 +130,21 @@ export default function ProductionExamplesSection() {
             {t('subtitleTagline')}
           </p>
           <p className="mx-auto mt-3 max-w-3xl text-sm text-gray-400">{t('languagesBanner')}</p>
-          <div className="mx-auto mt-6 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
-            <Button
-              variant="outline"
-              className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/10"
-              onClick={() => {
-                document
-                  .getElementById('production-showcase-drama')
-                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              }}
-            >
-              {t('explorePipelineCta')}
-            </Button>
-            <p className="max-w-md text-xs text-gray-500">{t('explorePipelineHint')}</p>
-          </div>
+          <p className="mx-auto mt-6 text-sm font-semibold text-cyan-200">{t('explorePipelineCta')}</p>
+          <p className="mx-auto mt-1 max-w-md text-xs text-gray-500">{t('explorePipelineHint')}</p>
         </motion.div>
+
+        <PipelineReviewWalk
+          steps={t.raw('pipelineSteps') as PipelineWalkStepCopy[]}
+          listenOnlyLabel={t('explorePipelineHint')}
+          openLabel={t('pipelineOpenLabel')}
+          comingSoonLabel={t('pipelineComingSoon')}
+        />
+
+        <div className="mb-6 text-center">
+          <h3 className="text-lg font-semibold text-white">{t('moreProductionsLabel')}</h3>
+          <p className="mx-auto mt-1 max-w-2xl text-sm text-gray-400">{t('moreProductionsHint')}</p>
+        </div>
 
         {/* Desktop: 2-column grid */}
         <div className="hidden md:block">
