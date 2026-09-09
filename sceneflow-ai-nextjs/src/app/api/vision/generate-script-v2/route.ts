@@ -268,6 +268,7 @@ export async function POST(request: NextRequest) {
 
         // Load series continuity context if this project belongs to a series
         let seriesContinuityBlock = ''
+        let referenceCatalogBlock = ''
         if ((project as any).series_id) {
           try {
             const continuityCtx = await loadContinuityContextForProject(project)
@@ -280,6 +281,23 @@ export async function POST(request: NextRequest) {
           } catch (err) {
             console.warn('[Script Gen V2] Failed to load series continuity context:', err)
           }
+        }
+
+        try {
+          const userId = (project as any).user_id
+          if (userId && projectId) {
+            const { loadProjectReferenceCatalog } = await import('@/lib/referenceLibrary/catalogLoader')
+            const { formatReferenceCatalogForPrompt } = await import('@/lib/referenceLibrary/projection')
+            const catalog = await loadProjectReferenceCatalog(projectId, userId)
+            if (
+              catalog.characters.length + catalog.locations.length + catalog.props.length >
+              0
+            ) {
+              referenceCatalogBlock = formatReferenceCatalogForPrompt(catalog)
+            }
+          }
+        } catch (err) {
+          console.warn('[Script Gen V2] Failed to load reference catalog:', err)
         }
         
         // Dialogue and narration are performed by TTS, so the script has to be
@@ -306,7 +324,8 @@ export async function POST(request: NextRequest) {
               { characters: existingCharacters ?? [] },
               properNouns
             ),
-          })
+          }),
+          referenceCatalogBlock
         )
         
         let retryCount = 0
@@ -1093,7 +1112,8 @@ function buildSinglePassPrompt(
   contentIntent?: string,
   narrationPolicy?: NarrationPolicy,
   seriesContinuityBlock: string = '',
-  languageBlock: string = ''
+  languageBlock: string = '',
+  referenceCatalogBlock: string = ''
 ): string {
   const intent = contentIntent || resolveContentIntentFromMetadata({ format, genre: treatment.genre })
   const policy = narrationPolicy ?? resolveNarrationPolicy({ format, treatment, contentIntent })
@@ -1182,6 +1202,12 @@ ${characterList}
 ${characters.length > 0 ? `\n${buildCharacterDialogueExamples(characters)}` : ''}
 ${storyBeatsText}
 ${seriesContinuityBlock ? `\n${seriesContinuityBlock}` : ''}
+${referenceCatalogBlock ? `\n${referenceCatalogBlock}` : ''}
+${referenceCatalogBlock ? `\nREFERENCE ASSET SELECTION (MANDATORY):
+- Assign libraryAssetId from the catalog to each scene character when a catalog match exists.
+- Assign locationAssetId per scene heading when the location matches the catalog.
+- Assign propAssetIds on beats for keyProps that match catalog props.
+- List genuinely new assets in newAssets[] with kind, name, and description; do NOT auto-create without marking isNew: true.\n` : ''}
 
 ${buildFoundationPromptBlock(resolveVariantArtStyle(treatment), resolveVariantAspectRatio(treatment))}
 ${buildScriptCraftPromptBlock(treatment)}
@@ -1278,7 +1304,9 @@ OUTPUT FORMAT (JSON):
     {
       "sceneNumber": 2,
       ${sceneHeadingExample},
+      "locationAssetId": "catalog-location-id-or-null",
       "characters": ["Character Name 1", "Character Name 2"],
+      "sceneCharacters": [{"name": "Character Name 1", "libraryAssetId": "catalog-id-or-null"}],
       "action": "Summary scene action (legacy field — also reflected in action beats)",
       ${narrationLegacyHint}
       "beats": [
@@ -1291,7 +1319,7 @@ OUTPUT FORMAT (JSON):
         {
           "kind": "action",
           "actionDescription": "Close-up: character's hands on the desk, shallow depth of field...",
-          "beatDirection": {"shotType": "Close-Up", "cameraAngle": "eye-level", "cameraMovement": "static", "blocking": "hands rest on the desk, fingers splayed", "keyProps": ["desk"], "propInteraction": "fingers tap once on the wood grain", "frozenMoment": "Fingertips pressed against the desk edge, wood grain in tack-sharp focus.", "transition": "CUT"}
+          "beatDirection": {"shotType": "Close-Up", "cameraAngle": "eye-level", "cameraMovement": "static", "blocking": "hands rest on the desk, fingers splayed", "keyProps": ["desk"], "propAssetIds": ["catalog-prop-id-if-known"], "propInteraction": "fingers tap once on the wood grain", "frozenMoment": "Fingertips pressed against the desk edge, wood grain in tack-sharp focus.", "transition": "CUT"}
         },
         {
           "kind": "dialogue",
@@ -1347,6 +1375,9 @@ OUTPUT FORMAT (JSON):
       "visualDescription": "Professional end credits sequence",
       "duration": 25
     }
+  ],
+  "newAssets": [
+    {"tempId": "new-1", "kind": "prop", "name": "New Prop Name", "description": "Only if not in catalog", "isNew": true}
   ]
 }
 

@@ -262,6 +262,9 @@ export const CONTENT_FIELDS: Record<string, FieldKind> = {
   'visionPhase.characters[].wardrobes[].description': 'machine',
   'visionPhase.characters[].wardrobes[].accessories': 'machine',
   'visionPhase.characters[].wardrobes[].appearanceNotes': 'machine',
+  'visionPhase.characters[].libraryAssetId': 'opaque',
+  'visionPhase.references.locationReferences[].libraryAssetId': 'opaque',
+  'visionPhase.references.objectReferences[].libraryAssetId': 'opaque',
 }
 
 /**

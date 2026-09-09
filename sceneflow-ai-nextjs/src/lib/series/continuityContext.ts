@@ -20,6 +20,8 @@ import type {
   EpisodeSummary,
   SeriesContinuityContext,
 } from '@/types/series'
+import type { ReferenceCatalog } from '@/types/referenceLibrary'
+import { formatReferenceCatalogForPrompt, MAX_ROSTER_ENTRIES } from '@/lib/referenceLibrary/projection'
 import {
   type ContentIntent,
   resolveContentIntentFromMetadata,
@@ -30,6 +32,9 @@ import {
 const MAX_RECENT_EPISODES_FULL = 3
 const MAX_KEY_EVENTS_IN_PROMPT = 30
 const MAX_STORY_THREADS_IN_PROMPT = 15
+const MAX_ROSTER_CHARS = 12
+const MAX_ROSTER_LOCATIONS = 10
+const MAX_ROSTER_PROPS = 10
 
 /**
  * Build a SeriesContinuityContext from raw series data.
@@ -50,7 +55,8 @@ export function buildContinuityContext(
   currentEpisodeNumber: number,
   totalEpisodes: number,
   format?: string,
-  genre?: string
+  genre?: string,
+  referenceCatalog?: ReferenceCatalog
 ): SeriesContinuityContext {
   const contentIntent = resolveContentIntentFromMetadata({ format, genre })
   // 1. Gather episode summaries from bible (canonical) or fall back to blueprint synopses
@@ -66,6 +72,8 @@ export function buildContinuityContext(
   const characterStatuses = deriveCharacterStatuses(bible, keyEvents)
 
   // 5. Build the pre-formatted prompt block
+  const referenceRoster = buildReferenceRosterFromBible(bible, referenceCatalog)
+
   const continuityPromptBlock = formatContinuityPromptBlock({
     seriesTitle,
     seriesLogline,
@@ -85,6 +93,7 @@ export function buildContinuityContext(
     audioGuidelines: bible.audioGuidelines,
     unresolvedHooks: bible.unresolvedHooks || [],
     contentIntent,
+    referenceRoster,
   })
 
   return {
@@ -243,6 +252,38 @@ function deriveCharacterStatuses(
   return statuses
 }
 
+function buildReferenceRosterFromBible(
+  bible: SeriesProductionBible,
+  referenceCatalog?: ReferenceCatalog
+): string {
+  if (referenceCatalog) {
+    return formatReferenceCatalogForPrompt(referenceCatalog, MAX_ROSTER_ENTRIES)
+  }
+
+  const lines: string[] = ['REFERENCE ROSTER (reuse these established assets verbatim):']
+  let count = 0
+
+  for (const c of bible.characters || []) {
+    if (count >= MAX_ROSTER_CHARS) break
+    lines.push(`  [CHARACTER] id=${c.id} name="${c.name}" — ${(c.description || c.appearance || '').slice(0, 80)}`)
+    count++
+  }
+  for (const l of bible.locations || []) {
+    if (count >= MAX_ROSTER_CHARS + MAX_ROSTER_LOCATIONS) break
+    lines.push(`  [LOCATION] id=${l.id} name="${l.name}" — ${(l.description || l.visualDescription || '').slice(0, 80)}`)
+    count++
+  }
+  for (const p of bible.props || []) {
+    if (count >= MAX_ROSTER_CHARS + MAX_ROSTER_LOCATIONS + MAX_ROSTER_PROPS) break
+    lines.push(`  [PROP] id=${p.id} name="${p.name}" — ${(p.description || '').slice(0, 80)}`)
+    count++
+  }
+
+  if (count === 0) return ''
+  lines.push('')
+  return lines.join('\n')
+}
+
 function formatContinuityPromptBlock(ctx: {
   seriesTitle: string
   seriesLogline: string
@@ -262,6 +303,7 @@ function formatContinuityPromptBlock(ctx: {
   audioGuidelines?: string
   unresolvedHooks: string[]
   contentIntent?: ContentIntent
+  referenceRoster?: string
 }): string {
   const intent = ctx.contentIntent ?? 'fiction'
   const leadLabel =
@@ -286,6 +328,10 @@ function formatContinuityPromptBlock(ctx: {
     lines.push(`${oppositionLabel}: ${ctx.antagonistConflict.description}${ctx.antagonistConflict.type ? ` (${ctx.antagonistConflict.type})` : ''}`)
   }
   lines.push('')
+
+  if (ctx.referenceRoster) {
+    lines.push(ctx.referenceRoster)
+  }
 
   // Previous episode summaries — full for recent, one-line for older
   if (ctx.episodeSummaries.length > 0) {

@@ -164,8 +164,12 @@ export function buildTreatmentPrompt(opts: {
   storyLocale?: string
   /** Character/location names that must be reproduced verbatim. */
   properNouns?: readonly string[]
+  /** Pre-formatted reference asset catalog block */
+  referenceCatalogBlock?: string
+  /** Series continuity block including asset roster */
+  seriesContinuityBlock?: string
 }) {
-  const { input, coreConcept, format, targetMinutes, autoScope, advisoryScopeLabel, styleHint, context, beatStructure, persona, hasExplicitSettings, contentIntent, rigor = 'thorough', storyLocale, properNouns } = opts
+  const { input, coreConcept, format, targetMinutes, autoScope, advisoryScopeLabel, styleHint, context, beatStructure, persona, hasExplicitSettings, contentIntent, rigor = 'thorough', storyLocale, properNouns, referenceCatalogBlock, seriesContinuityBlock } = opts
   const intent = contentIntent ?? resolveContentIntent(context?.genre)
   const pacingPhilosophy = buildPacingPhilosophyBlock(intent)
   // In auto scope, runtime is advisory: the story/illustration decides its own
@@ -227,6 +231,11 @@ ${scoringChecklist}
 ${CULTURAL_AUTHENTICITY_BLOCK}
 ${formatSpecifics.optimizationBlock}
 ${antiFictionBlock}
+
+${seriesContinuityBlock ? `\n${seriesContinuityBlock}\n` : ''}${referenceCatalogBlock ? `\n${referenceCatalogBlock}\n` : ''}${referenceCatalogBlock || seriesContinuityBlock ? `\nREFERENCE ASSET RULES:
+- Reuse catalog characters, locations, and props verbatim when the story requires them.
+- Do NOT rename or re-describe established assets; reference them by the same names.
+- Author new character_descriptions or scene_descriptions ONLY for genuinely new assets; mark new entries clearly in description.\n` : ''}
 
 INPUT:
 ${input}

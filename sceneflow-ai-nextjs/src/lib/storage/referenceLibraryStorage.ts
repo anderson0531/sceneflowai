@@ -44,9 +44,21 @@ function inferContentType(filename: string, fallback = 'image/png'): string {
   }
 }
 
-function buildBlobPath(filename: string, projectId = 'default'): string {
-  if (filename.startsWith('projects/') || filename.startsWith('references/')) {
+function buildBlobPath(
+  filename: string,
+  projectId = 'default',
+  userId?: string
+): string {
+  if (
+    filename.startsWith('projects/') ||
+    filename.startsWith('references/') ||
+    filename.startsWith('users/')
+  ) {
     return filename
+  }
+
+  if (userId) {
+    return `users/${userId}/references/${filename}`
   }
 
   if (projectId && projectId !== 'default') {
@@ -62,7 +74,8 @@ function buildBlobPath(filename: string, projectId = 'default'): string {
 export async function uploadReferenceLibraryBase64Image(
   base64Data: string,
   filename: string,
-  projectId = 'default'
+  projectId = 'default',
+  userId?: string
 ): Promise<string> {
   if (useGcsForReferenceLibraryImages()) {
     const { uploadImageToBlob } = await import('./blob')
@@ -70,7 +83,7 @@ export async function uploadReferenceLibraryBase64Image(
   }
 
   const { buffer, contentType } = parseBase64Image(base64Data)
-  const blobPath = buildBlobPath(filename, projectId)
+  const blobPath = buildBlobPath(filename, projectId, userId)
 
   const blob = await put(blobPath, buffer, {
     access: 'public',
@@ -88,7 +101,8 @@ export async function uploadReferenceLibraryBuffer(
   buffer: Buffer,
   filename: string,
   contentType: string,
-  projectId = 'default'
+  projectId = 'default',
+  userId?: string
 ): Promise<string> {
   if (useGcsForReferenceLibraryImages()) {
     const { uploadToGCS } = await import('./gcsAssets')
@@ -102,7 +116,7 @@ export async function uploadReferenceLibraryBuffer(
     return result.url
   }
 
-  const blobPath = buildBlobPath(filename, projectId)
+  const blobPath = buildBlobPath(filename, projectId, userId)
   const blob = await put(blobPath, buffer, {
     access: 'public',
     contentType,
