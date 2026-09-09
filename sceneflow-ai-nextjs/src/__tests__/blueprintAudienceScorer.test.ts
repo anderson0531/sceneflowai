@@ -261,9 +261,11 @@ describe('blueprint AR prompt backlog guidance', () => {
     expect(source).toContain('do NOT stop at an arbitrary count')
   })
 
-  it('derives the score breakdown from the recommendations rather than a second list', () => {
-    expect(source).toContain('deductionsFromRecommendations(allRecommendations)')
+  it('derives the score breakdown from the pending recommendations', () => {
+    expect(source).toContain('deductionsFromRecommendations(recommendations)')
     expect(source).not.toContain('mapDeductions(')
+    // A fix the creator already applied must not keep costing points.
+    expect(source).toContain('.filter((r) => !appliedIds.includes(r.id))')
   })
 
   it('sends the whole blueprint to the analyzer', () => {

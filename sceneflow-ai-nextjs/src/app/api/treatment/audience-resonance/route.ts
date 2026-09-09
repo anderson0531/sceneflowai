@@ -279,10 +279,12 @@ export async function POST(request: NextRequest) {
     const parsed = safeParseJsonFromText(result.text || '{}') as Record<string, unknown>
     // Gaps and fixes are one list now, so the score breakdown is a projection of
     // the recommendations rather than a second list that can contradict them.
-    const allRecommendations = mapRecommendations(
+    // Projecting the pending list keeps a fix the creator already applied from
+    // being charged against the score while hidden from the panel.
+    const recommendations = mapRecommendations(
       (parsed.recommendations as unknown[]) || []
-    )
-    const deductions = deductionsFromRecommendations(allRecommendations)
+    ).filter((r) => !appliedIds.includes(r.id))
+    const deductions = deductionsFromRecommendations(recommendations)
     let categories = ((parsed.categories as BlueprintAudienceCategory[]) || []).map(
       (c) => ({
         name: c.name,
@@ -304,10 +306,6 @@ export async function POST(request: NextRequest) {
       deductions,
       categories,
       body.previousAnalysis?.categories
-    )
-
-    const recommendations = allRecommendations.filter(
-      (r) => !appliedIds.includes(r.id)
     )
 
     const analysis: BlueprintAudienceResonanceAnalysis = {
