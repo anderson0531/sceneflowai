@@ -648,7 +648,6 @@ export function BlueprintRefineDialog({
     rewriteStartedRef.current = true
     void handleGenerate()
     // handleGenerate closes over the just-reset intent; starting once per open.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, rewriteToEnglish, userIntent])
 
   const handleApplyPreview = useCallback(() => {
