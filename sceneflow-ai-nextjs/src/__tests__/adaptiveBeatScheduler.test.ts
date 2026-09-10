@@ -50,9 +50,11 @@ describe('getSceneExpressBeatConcurrency', () => {
     expect(getSceneExpressBeatConcurrency()).toBe(2)
   })
 
-  it('defaults maxAttempts to 1', () => {
+  // Above 1, or scheduleRetry bails before the backoff below it can ever run
+  // and every transient 429 becomes a manual "Retry failed" click.
+  it('defaults maxAttempts to 3 so transient rate limits self-heal in-run', () => {
     delete process.env.SCENE_EXPRESS_BEAT_MAX_ATTEMPTS
-    expect(getSceneExpressBeatMaxAttempts()).toBe(1)
+    expect(getSceneExpressBeatMaxAttempts()).toBe(3)
   })
 
   it('reads SCENE_EXPRESS_BEAT_CONCURRENCY env', () => {
