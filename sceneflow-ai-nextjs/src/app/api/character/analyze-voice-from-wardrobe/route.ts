@@ -7,6 +7,7 @@ import {
   buildWardrobeVoiceAnalysisPrompt,
   parseWardrobeVoiceAnalysisJson,
 } from '@/lib/character/wardrobeVoiceAnalysis'
+import { narrativeVoiceInputs } from '@/lib/tts/buildCharacterVoiceProfile'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -34,14 +35,17 @@ function buildAnalysisPrompt(
   screenplayContext?: ScreenplayContext,
   hasPortrait?: boolean,
 ): string {
+  const narrative = narrativeVoiceInputs({
+    role: characterContext?.role,
+    personality: characterContext?.personality,
+    voiceDescription: characterContext?.voiceDescription,
+    description: characterContext?.description,
+  })
   return buildWardrobeVoiceAnalysisPrompt(characterName, {
     screenplayContext,
-    characterDescription:
-      characterContext?.description ||
-      characterContext?.voiceDescription ||
-      undefined,
-    characterRole: characterContext?.role,
-    personality: characterContext?.personality,
+    characterDescription: narrative.narrative || narrative.matchingBrief,
+    characterRole: narrative.role,
+    personality: narrative.personality,
     hasPortrait,
   })
 }
@@ -70,11 +74,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Character name is required' }, { status: 400 })
     }
 
-    const hasNarrative =
-      Boolean(characterContext?.description?.trim()) ||
-      Boolean(characterContext?.voiceDescription?.trim()) ||
-      Boolean(characterContext?.role?.trim()) ||
-      Boolean(characterContext?.personality?.trim())
+    const narrative = narrativeVoiceInputs({
+      role: characterContext?.role,
+      personality: characterContext?.personality,
+      voiceDescription: characterContext?.voiceDescription,
+      description: characterContext?.description,
+    })
+    const hasNarrative = Boolean(
+      narrative.role ||
+        narrative.personality ||
+        narrative.matchingBrief ||
+        narrative.narrative
+    )
 
     if (!hasPortrait && !hasNarrative) {
       return NextResponse.json(

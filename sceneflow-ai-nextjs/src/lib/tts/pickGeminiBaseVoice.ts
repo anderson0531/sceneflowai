@@ -76,7 +76,10 @@ export function pickGeminiBaseVoice(
 
 export function buildGoogleVoiceAssignment(
   profile: string,
-  options?: Parameters<typeof pickGeminiBaseVoice>[1]
+  options?: Parameters<typeof pickGeminiBaseVoice>[1] & {
+    /** Gemini TTS director's note. Defaults to the matching profile. */
+    prompt?: string
+  }
 ): {
   provider: 'google'
   voiceId: string
@@ -88,6 +91,6 @@ export function buildGoogleVoiceAssignment(
     provider: 'google',
     voiceId: pick.voiceId,
     voiceName: pick.voiceName,
-    prompt: profile.trim(),
+    prompt: (options?.prompt ?? profile).trim(),
   }
 }
