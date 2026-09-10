@@ -110,17 +110,33 @@ export async function POST(req: NextRequest) {
     }
 
     if (batch && Array.isArray(batch) && batch.length > 0) {
+      // Items live on the payload, not just in the Inngest event, so the work
+      // is recoverable after a cold start and inspectable when a run stalls.
       const { job } = await createGenerationJob({
         userId,
         projectId,
         jobType,
-        payload: { batchSize: batch.length },
+        payload: { batchSize: batch.length, items: batch },
+        dispatch: false,
       })
-      await inngest.send({
-        name: 'generation/batch.queued',
-        data: { jobId: job.id, userId, projectId, jobType, items: batch },
+
+      let dispatched = false
+      try {
+        await inngest.send({
+          name: 'generation/batch.queued',
+          data: { jobId: job.id, userId, projectId, jobType, items: batch },
+        })
+        dispatched = true
+      } catch (err) {
+        console.warn('[jobs] Batch dispatch failed — job left queued:', err)
+      }
+
+      return NextResponse.json({
+        jobId: job.id,
+        status: 'queued',
+        batchSize: batch.length,
+        dispatched,
       })
-      return NextResponse.json({ jobId: job.id, status: 'queued' })
     }
 
     const { job } = await createGenerationJob({
