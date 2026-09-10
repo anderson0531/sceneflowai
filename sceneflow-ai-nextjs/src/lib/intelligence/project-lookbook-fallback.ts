@@ -64,11 +64,25 @@ function text(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+const MIN_ONE_LINE_CHARS = 40
+
+/**
+ * Opening sentence of a scene's prose. Screenplay text is full of abbreviations
+ * ("INT.", "Mr.") that a naive split truncates to nothing, so keep taking
+ * sentences until the result carries some meaning.
+ */
 function firstSentence(value: string, maxChars = 180): string {
   const trimmed = value.replace(/\s+/g, ' ').trim()
   if (!trimmed) return ''
-  const sentence = trimmed.split(/(?<=[.!?])\s+/)[0] ?? trimmed
-  return sentence.length > maxChars ? `${sentence.slice(0, maxChars).trimEnd()}…` : sentence
+
+  const sentences = trimmed.split(/(?<=[.!?])\s+/)
+  let result = ''
+  for (const sentence of sentences) {
+    result = result ? `${result} ${sentence}` : sentence
+    if (result.length >= MIN_ONE_LINE_CHARS) break
+  }
+
+  return result.length > maxChars ? `${result.slice(0, maxChars).trimEnd()}…` : result
 }
 
 /** Reduce raw scenes to lookbook inputs. Accepts both script and vision shapes. */
@@ -87,12 +101,10 @@ export function summarizeScenesForLookbook(scenes: unknown[]): LookbookSceneSumm
         : undefined
     ) as Record<string, any> | undefined
     const meta = extractDirectionMetadata(direction)
-    const oneLine = firstSentence(
-      meta.sceneDescription ||
-        text(scene.action) ||
-        text(scene.visualDescription) ||
-        heading
-    )
+    // A heading is a slug, not prose — never run it through the sentence split.
+    const prose =
+      meta.sceneDescription || text(scene.action) || text(scene.visualDescription)
+    const oneLine = prose ? firstSentence(prose) : heading.replace(/\s+/g, ' ').trim()
 
     return {
       sceneIndex,
