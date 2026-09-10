@@ -372,11 +372,16 @@ export function inferAgeFromDescription(description: string): CharacterAgeBand |
     'gravelly',
   ]
 
+  // Word boundaries matter here: substring checks read "old" out of "bold" and
+  // "boy" out of "cowboy", which silently flipped characters into the wrong band.
+  const hasWord = (word: string) =>
+    new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(text)
+
   for (const indicator of matureIndicators) {
-    if (text.includes(indicator)) return 'mature'
+    if (hasWord(indicator)) return 'mature'
   }
   for (const indicator of youngIndicators) {
-    if (text.includes(indicator)) return 'young'
+    if (hasWord(indicator)) return 'young'
   }
 
   if (text === 'adult' || text === 'middle-aged' || text === 'middle') {
