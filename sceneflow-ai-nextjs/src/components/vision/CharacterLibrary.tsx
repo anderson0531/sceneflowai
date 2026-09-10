@@ -82,7 +82,6 @@ import {
   vocalCharacterContext,
 } from "@/lib/tts/buildCharacterVoiceProfile";
 import {
-  type VocalAttributes,
   type WardrobeVoiceAnalysisResult,
 } from "@/lib/character/wardrobeVoiceAnalysis";
 import type { EdgeVoiceConfig } from "@/types/vision";
@@ -1754,54 +1753,6 @@ const CharacterCard = ({
     return data as WardrobeVoiceAnalysisResult;
   };
 
-  const generateDirectorNote = async (
-    directorContext: CharacterContext,
-    options?: { selectedInstructions?: string[] },
-  ): Promise<{ prompt: string; vocalAttributes?: VocalAttributes } | null> => {
-    try {
-      const characterRef = character.referenceImage?.trim();
-      const wardrobeImageUrl = characterRef?.startsWith("http")
-        ? characterRef
-        : undefined;
-      const promptRes = await fetch("/api/tts/google/director-prompt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          characterContext: directorContext,
-          screenplayContext,
-          wardrobeImageUrl,
-          selectedInstructions: options?.selectedInstructions,
-        }),
-      });
-      if (!promptRes.ok) return null;
-      const promptData = await promptRes.json().catch(() => ({}));
-      const prompt = (promptData?.script || "").trim();
-      if (!prompt) return null;
-      return {
-        prompt,
-        vocalAttributes: promptData?.vocalAttributes as VocalAttributes | undefined,
-      };
-    } catch (err) {
-      console.warn("[Voice] Director prompt generation failed:", err);
-      return null;
-    }
-  };
-
-  const resolveDirectorNote = async (
-    directorContext: CharacterContext,
-    fallbacks: {
-      audioProfile?: string | null;
-      existingPrompt?: string | null;
-    },
-  ): Promise<{ prompt: string; vocalAttributes?: VocalAttributes }> => {
-    const fromDirector = await generateDirectorNote(directorContext);
-    if (fromDirector) return fromDirector;
-    return {
-      prompt:
-        fallbacks.audioProfile?.trim() || fallbacks.existingPrompt?.trim() || "",
-    };
-  };
-
   const resolvedGender = useMemo(
     () => resolveVisualGender(character),
     [character]
@@ -1850,7 +1801,6 @@ const CharacterCard = ({
     }
 
     setIsAutoSelectingVoice(true);
-    let generatedPrompt = "";
     let testAudioPlayed = false;
     let assignment: ReturnType<typeof buildGoogleVoiceAssignment> | null = null;
 
@@ -1926,25 +1876,6 @@ const CharacterCard = ({
           : {}),
       };
 
-      const directorContext: CharacterContext = {
-        ...scoringContext,
-        referenceImage: character.referenceImage,
-      };
-
-      // The system instruction is what Gemini TTS actually consumes; the prose
-      // director note is only a fallback for characters with no analysis.
-      let vocalAttributes = analysisProfile?.vocalAttributes;
-      if (analysisProfile?.systemInstruction) {
-        generatedPrompt = analysisProfile.systemInstruction;
-      } else {
-        const resolved = await resolveDirectorNote(directorContext, {
-          audioProfile: visionAnalysis?.audioProfile,
-          existingPrompt: character.voiceConfig?.prompt,
-        });
-        generatedPrompt = resolved.prompt;
-        vocalAttributes = resolved.vocalAttributes ?? vocalAttributes;
-      }
-
       const matchingBrief =
         analysisProfile?.matchingBrief ||
         narrativeVoiceInputs(character).matchingBrief ||
@@ -1956,8 +1887,7 @@ const CharacterCard = ({
         age: scoringContext.age,
         role: scoringContext.role,
         screenplayContext: screenplayContext as ScreenplayContext,
-        vocalAttributes,
-        prompt: generatedPrompt,
+        vocalAttributes: analysisProfile?.vocalAttributes,
       });
 
       if (matchingBrief && onUpdateCharacterAttributes) {
@@ -1976,7 +1906,7 @@ const CharacterCard = ({
 
         testAudioPlayed = await playGeminiVoicePreview(
           assignment.voiceId,
-          generatedPrompt || assignment.prompt,
+          assignment.prompt,
           sampleText,
         );
       } catch (testErr) {
@@ -3620,9 +3550,9 @@ const CharacterCard = ({
               {character.voiceConfig?.voiceId ? (
                 <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
                   SceneFlow voice
-                  {character.voiceConfig.prompt ? (
+                  {character.voiceDescription || character.voiceConfig.prompt ? (
                     <span className="text-emerald-600 dark:text-emerald-400 ml-1">
-                      · Director&apos;s Note
+                      · Voice profile
                     </span>
                   ) : null}
                 </p>
@@ -3702,17 +3632,6 @@ const CharacterCard = ({
                 )}
               </div>
 
-              {character.voiceConfig?.prompt ? (
-                <div className="space-y-1">
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                    Director&apos;s Note
-                  </span>
-                  <p className="text-xs text-gray-500 dark:text-gray-500 line-clamp-3">
-                    {character.voiceConfig.prompt}
-                  </p>
-                </div>
-              ) : null}
-
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={(e) => {
@@ -3786,7 +3705,7 @@ const CharacterCard = ({
                   className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-900/40 disabled:opacity-40 disabled:cursor-not-allowed"
                   title={
                     supportsGeminiVoiceProfileEditor
-                      ? "Edit Director's Note, test delivery, and refine the voice profile"
+                      ? "Edit the casting brief, test delivery, and refine the voice profile"
                       : "Assign a Gemini voice first"
                   }
                 >
@@ -4460,7 +4379,7 @@ const CharacterCard = ({
             <DialogHeader className="sr-only">
               <DialogTitle>Edit voice profile for {character.name}</DialogTitle>
               <DialogDescription>
-                Customize director notes and test voice delivery for this character.
+                Edit the casting brief and test voice delivery for this character.
               </DialogDescription>
             </DialogHeader>
             {character.voiceConfig?.voiceId ? (
@@ -4468,20 +4387,28 @@ const CharacterCard = ({
                 key={`${characterId}-${character.voiceConfig.voiceId}`}
                 voiceId={character.voiceConfig.voiceId}
                 voiceName={character.voiceConfig.voiceName || character.voiceConfig.voiceId}
-                initialPrompt={character.voiceConfig.prompt || ""}
+                initialPrompt={
+                  character.voiceDescription || character.voiceConfig.prompt || ""
+                }
                 characterContext={{
                   ...characterContext,
                   voiceDescription: character.voiceDescription,
                 }}
                 screenplayContext={screenplayContext}
                 onSave={(prompt) => {
+                  const nextPrompt = prompt.trim();
                   onUpdateCharacterVoice?.(characterId, {
                     ...character.voiceConfig,
                     provider: character.voiceConfig.provider || "google",
                     voiceId: character.voiceConfig.voiceId,
                     voiceName: character.voiceConfig.voiceName,
-                    prompt: prompt.trim(),
+                    prompt: nextPrompt,
                   });
+                  if (nextPrompt) {
+                    onUpdateCharacterAttributes?.(characterId, {
+                      voiceDescription: nextPrompt,
+                    });
+                  }
                   setVoiceProfileDialogOpen(false);
                   toast.success("Voice profile updated");
                 }}
