@@ -338,8 +338,10 @@ export function buildPropReferenceMappingLines(
       const token = `prop [${p.sendIndex}]`
       return (
         `- PROP REFERENCE (Ref Image [${p.sendIndex}] = ${token}): ${p.propName} — ` +
-        `Extract shape, material, color, and design of the named prop only. ` +
-        `Use token ${token} in the scene prompt. Do not add unrelated objects.`
+        `Defines how ${token} looks where the scene prompt already places it: ` +
+        `match shape, material, color, and design. Use token ${token} in the scene prompt. ` +
+        `This is not an instruction to add the object: if the scene prompt does not use ${token}, ` +
+        `the object is not in this frame. Do not add unrelated objects.`
       )
     })
     .join('\n')

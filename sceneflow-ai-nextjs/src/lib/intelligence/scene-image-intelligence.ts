@@ -541,7 +541,8 @@ CRITICAL RULES:
    - A character name inside a prop label or possessive prop title is NOT on-screen presence — omit that person token
    - selectedCharacterNames must list ONLY characters who appear in the frame
    - Select the location that matches the scene heading and beat action
-   - selectedPropNames MUST be the intersection of BEAT DIRECTION key props (when present) with the PROPS list. When beat direction lists no key props, fall back to scene direction key props and props flagged critical/important
+   - selectedPropNames MUST be the intersection of BEAT DIRECTION key props (when present) with the PROPS list. When beat direction lists no key props, select ONLY props named in THIS beat's action or prop interaction — scene direction key props are the catalog for the whole scene, NOT a list of props to put in this frame
+   - Every prop in selectedPropNames MUST also appear as a prop [N] token in Action/Framing, and every prop [N] token in Action/Framing MUST be in selectedPropNames. A prop that is not part of the directed action is omitted from both
    - Do NOT include every person token from CHARACTERS input if beat/scene direction shows fewer people on camera
 
 5. STATIC IMAGE OPTIMIZATION:

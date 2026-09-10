@@ -287,6 +287,16 @@ export function findMatchingObject(
   return null
 }
 
+export interface FindSceneObjectsOptions {
+  /**
+   * Match a prop when words from its description appear in the text.
+   *
+   * Useful across a whole scene, misleading for a single beat: a prop
+   * described with "iron rail" attaches to every beat set in a rail tunnel.
+   */
+  matchDescriptions?: boolean
+}
+
 /**
  * Find all matching objects for a scene
  * Matches object names against scene text (heading, action, visualDescription, keyProps)
@@ -295,7 +305,8 @@ export function findMatchingObject(
 export function findSceneObjects(
   sceneText: string,
   availableObjects: ObjectReference[],
-  sceneNumber?: number
+  sceneNumber?: number,
+  options: FindSceneObjectsOptions = {}
 ): ObjectReference[] {
   if (!sceneText || availableObjects.length === 0) return []
 
@@ -326,7 +337,9 @@ export function findSceneObjects(
   })
 
   // Strategy 3: Match object descriptions for critical/important objects
+  const matchDescriptions = options.matchDescriptions ?? true
   availableObjects.forEach(obj => {
+    if (!matchDescriptions) return
     if (!obj.description) return
     if (obj.importance !== 'critical' && obj.importance !== 'important') return
     
