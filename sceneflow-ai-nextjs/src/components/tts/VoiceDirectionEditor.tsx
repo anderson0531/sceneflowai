@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Loader, Sparkles, ChevronDown, ChevronUp, Wand2, Play, Square, FileText } from 'lucide-react'
+import { Loader, Sparkles, ChevronDown, ChevronUp, Play, Square, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { VOICE_TRAIT_CATEGORIES } from '@/lib/constants/director-note-templates'
 
@@ -22,7 +22,7 @@ export function VoiceDirectionEditor({
   voiceName,
   initialPrompt = '',
   characterContext,
-  screenplayContext,
+  screenplayContext: _screenplayContext,
   onSave,
   onCancel
 }: VoiceDirectionEditorProps) {
@@ -36,9 +36,7 @@ export function VoiceDirectionEditor({
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   
   // Editor tab mode ('guided' vs 'character')
-  const [editorTab, setEditorTab] = useState<'guided' | 'character'>('guided')
-  
-  const [isGenerating, setIsGenerating] = useState(false)
+  const [editorTab, setEditorTab] = useState<'guided' | 'character'>('character')
   const [isTesting, setIsTesting] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -108,48 +106,6 @@ export function VoiceDirectionEditor({
     return finalPrompt
   }
 
-  const handleAutoFill = async () => {
-    if (!characterContext && !screenplayContext) {
-      toast.error('Character context is required to generate.')
-      return
-    }
-
-    setIsGenerating(true)
-    try {
-      const selectedInstructions: string[] = []
-      VOICE_TRAIT_CATEGORIES.forEach(category => {
-        category.templates.forEach(template => {
-          if (selectedTemplates.has(template.id)) {
-            selectedInstructions.push(template.label) // use label for prompt context
-          }
-        })
-      })
-
-      const response = await fetch('/api/tts/google/director-prompt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          characterContext: characterContext || { name: 'the speaker', role: 'narrator' }, 
-          screenplayContext,
-          selectedInstructions
-        }),
-      })
-
-      if (!response.ok) throw new Error('Failed to generate prompt')
-      const data = await response.json()
-      
-      if (data.script) {
-        setCustomInstruction(data.script)
-        toast.success("Generated Voice Direction!")
-      }
-    } catch (error) {
-      console.error('[VoiceDirectionEditor] Error:', error)
-      toast.error('Failed to generate Voice Direction')
-    } finally {
-      setIsGenerating(false)
-    }
-  }
-
   const handleTestVoice = async () => {
     if (isPlaying) {
       if (audioRef.current) {
@@ -213,10 +169,10 @@ export function VoiceDirectionEditor({
         <div>
           <h3 className="font-semibold text-white flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-cyan-400" />
-            Voice Direction
+            Casting Brief
           </h3>
           <p className="text-xs text-gray-400 mt-1">
-            Shaping <span className="text-gray-300 font-medium">{voiceName.replace(/ \((Gemini|Studio)\)/i, '')}</span> for {name}
+            Voice profile for <span className="text-gray-300 font-medium">{name}</span>
           </p>
         </div>
       </div>
@@ -299,33 +255,17 @@ export function VoiceDirectionEditor({
 
         {editorTab === 'character' && (
           <div className="flex flex-col h-full space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-cyan-400" />
-                Text Direction
-              </label>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleAutoFill}
-                disabled={isGenerating}
-                className="border-cyan-700/50 hover:bg-cyan-900/30 text-cyan-300 h-7"
-              >
-                {isGenerating ? (
-                  <Loader className="w-3.5 h-3.5 animate-spin mr-1.5" />
-                ) : (
-                  <Wand2 className="w-3.5 h-3.5 mr-1.5" />
-                )}
-                Generate
-              </Button>
-            </div>
+            <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+              <FileText className="w-4 h-4 text-cyan-400" />
+              Casting Brief
+            </label>
             <p className="text-[11px] text-gray-400">
-              The AI will generate a comprehensive voice direction based on the character's profile and any currently selected guides. You can test and refine the generated text below.
+              This prose is the Gemini voice profile. Guided traits prepend if you select any. Test, then Save.
             </p>
             <Textarea
               value={customInstruction}
               onChange={(e) => setCustomInstruction(e.target.value)}
-              placeholder="e.g., Make the speaker sound like a 50-year-old professor from London, slightly raspy, speaking with a gentle, scholarly authority."
+              placeholder="e.g., A female voice in her late 30s, grounded smoky alto with a fatigue-worn rasp and sharp investigative cadence."
               className="flex-1 min-h-[200px] text-sm bg-gray-900 border-gray-700 text-gray-200 resize-y focus:border-cyan-500/50 focus:ring-cyan-500/20"
             />
           </div>

@@ -45,11 +45,15 @@ describe('Gemini voice profile source contracts', () => {
     expect(source).toContain('mode={isNarratorCharacter ? "narrator" : "character"}')
   })
 
-  it('Auto Voice scores the matching brief and does not send appearance to TTS', () => {
+  it('Match scores the casting brief and persists it as the Gemini voice profile', () => {
     const source = readFileSync(characterLibraryPath, 'utf8')
     expect(source).toContain('characterVoiceProfileFromAnalysis')
     expect(source).toContain('matchingBrief')
-    expect(source).toContain('prompt: generatedPrompt')
+    expect(source).toContain('buildGoogleVoiceAssignment(matchingBrief')
+    expect(source).not.toContain('prompt: generatedPrompt')
+    expect(source).not.toContain('analysisProfile?.systemInstruction')
+    expect(source).not.toContain('generateDirectorNote')
+    expect(source).not.toContain('/api/tts/google/director-prompt')
     expect(source).not.toContain('voiceDescription: generatedPrompt')
     expect(source).not.toContain(
       'character.description || character.appearanceDescription',
