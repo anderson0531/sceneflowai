@@ -30,6 +30,8 @@ export type SynthesizeGeminiFlashMp3Params = {
   audioType?: GeminiTtsAudioType
   /** Per-line acting cues woven into the TTS prompt. */
   deliveryCues?: string[]
+  /** Runtime scene wrapper from `buildSceneDirection`, appended after the persona. */
+  sceneDirection?: string
   languageCode?: string
   modelName?: string
   timeoutMs?: number
@@ -89,6 +91,7 @@ export async function synthesizeGeminiFlashMp3(
         audioType: params.audioType ?? 'narration',
         voicePrompt: params.directorNotes,
         deliveryCues: params.deliveryCues,
+        sceneDirection: params.sceneDirection,
       }),
     },
     voice: {

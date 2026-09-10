@@ -27,6 +27,10 @@ import {
   isQuotaOrRateLimitError,
 } from '../../../../lib/tts/edgeTtsFallback'
 import { buildGeminiTtsPrompt } from '../../../../lib/tts/geminiTtsPrompt'
+import {
+  buildSceneDirection,
+  type SceneDeliveryState,
+} from '../../../../lib/tts/characterSystemInstruction'
 import { resolveCharacterVoicePrompt } from '../../../../lib/tts/resolveCharacterVoicePrompt'
 import { buildGeminiTtsAdvancedVoiceOptions } from '../../../../lib/tts/geminiTtsSafety'
 import { resolveGeminiTtsLanguageCode, resolveGoogleTtsLanguageCode } from '../../../../lib/tts/googleTtsLocale'
@@ -100,6 +104,9 @@ interface AudioGenerationRequest {
   edgeVoiceConfig?: EdgeVoiceConfig
   /** Client-resolved character gender for Edge fallback. */
   characterGender?: string
+  /** Per-line dynamic state. Kept out of the persisted persona so the static
+   *  system instruction stays identical across a character's dialogue tree. */
+  sceneState?: SceneDeliveryState
 }
 
 export async function POST(req: NextRequest) {
@@ -129,6 +136,7 @@ export async function POST(req: NextRequest) {
       skipDbUpdate = false,
       edgeVoiceConfig: clientEdgeVoiceConfig,
       characterGender: clientCharacterGender,
+      sceneState,
     } = parsed
 
     // Log the request for debugging
@@ -320,6 +328,13 @@ export async function POST(req: NextRequest) {
       edgeVoiceName: characterEdgeVoice?.voiceName ?? null,
     })
 
+    // Bracketed script directions become per-line cues, so the persona keeps
+    // describing who the character is and the wrapper carries how this one lands.
+    const sceneDirection = buildSceneDirection({
+      ...(sceneState ?? {}),
+      cues: [...(sceneState?.cues ?? []), ...optimized.cues],
+    })
+
     const synthesis = await generateAudio(
       optimized.text,
       finalVoiceConfig,
@@ -327,7 +342,8 @@ export async function POST(req: NextRequest) {
       audioType,
       optimized.cues,
       characterGender,
-      characterEdgeVoice
+      characterEdgeVoice,
+      sceneDirection
     )
     const audioBuffer = synthesis.buffer
     const usedProvider = synthesis.provider
@@ -545,7 +561,8 @@ async function generateAudio(
   audioType: AudioGenerationRequest['audioType'] = 'narration',
   deliveryCues: string[] = [],
   characterGender?: string,
-  characterEdgeVoice?: EdgeVoiceConfig
+  characterEdgeVoice?: EdgeVoiceConfig,
+  sceneDirection?: string
 ): Promise<AudioSynthesisResult> {
   const primaryProvider: 'google' | 'elevenlabs' =
     voiceConfig.provider === 'elevenlabs' ? 'elevenlabs' : 'google'
@@ -554,7 +571,14 @@ async function generateAudio(
     const buffer =
       voiceConfig.provider === 'elevenlabs'
         ? await generateElevenLabsAudio(text, voiceConfig)
-        : await generateGoogleAudio(text, voiceConfig, language, audioType, deliveryCues)
+        : await generateGoogleAudio(
+            text,
+            voiceConfig,
+            language,
+            audioType,
+            deliveryCues,
+            sceneDirection
+          )
     return {
       buffer,
       provider: primaryProvider,
@@ -682,7 +706,8 @@ async function generateGoogleAudio(
   voiceConfig: VoiceConfig,
   language: string = 'en',
   audioType: AudioGenerationRequest['audioType'] = 'narration',
-  deliveryCues: string[] = []
+  deliveryCues: string[] = [],
+  sceneDirection?: string
 ): Promise<Buffer> {
   if (voiceConfig.provider !== 'google') {
     throw new Error('Internal error: Google TTS invoked for non-google voice config')
@@ -827,6 +852,7 @@ async function generateGoogleAudio(
         audioType: geminiAudioType,
         voicePrompt: voiceConfig.prompt,
         deliveryCues,
+        sceneDirection,
         promptLevel,
       })
     }
