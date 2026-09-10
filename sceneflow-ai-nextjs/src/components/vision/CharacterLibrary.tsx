@@ -93,6 +93,10 @@ import {
 import { getSceneBeats } from "@/lib/script/beatMigration";
 import { runWithConcurrencyLimit } from "@/lib/utils/concurrency";
 import { DictationTextarea } from "@/components/ui/DictationTextarea";
+import {
+  ExpandableText,
+  isShortCharacterRole,
+} from "@/components/ui/ExpandableText";
 import { requestCastingBrief } from "@/lib/character/requestCastingBrief";
 import {
   applyCastingBriefUpdate,
@@ -3419,20 +3423,33 @@ const CharacterCard = ({
                 </div>
               ) : (
                 <>
-                  {character.role && (
-                    <span
-                      className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (onUpdateCharacterRole) {
-                          setEditingRole(true);
-                        }
-                      }}
-                      title={onUpdateCharacterRole ? "Click to edit role" : ""}
-                    >
-                      {character.role}
-                    </span>
-                  )}
+                  {character.role &&
+                    (isShortCharacterRole(character.role) ? (
+                      <span
+                        className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onUpdateCharacterRole) {
+                            setEditingRole(true);
+                          }
+                        }}
+                        title={onUpdateCharacterRole ? "Click to edit role" : ""}
+                      >
+                        {character.role}
+                      </span>
+                    ) : (
+                      <ExpandableText
+                        text={character.role}
+                        lines={2}
+                        className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
+                        onTextClick={(e) => {
+                          e.stopPropagation();
+                          if (onUpdateCharacterRole) {
+                            setEditingRole(true);
+                          }
+                        }}
+                      />
+                    ))}
                 </>
               )}
               {character.aliases &&
@@ -3504,9 +3521,11 @@ const CharacterCard = ({
         </div>
 
         {/* Description */}
-        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-          {character.description}
-        </p>
+        <ExpandableText
+          text={character.description}
+          lines={2}
+          className="text-sm text-gray-600 dark:text-gray-400"
+        />
 
         {/* Workflow tabs: Identity → Voice → Wardrobe */}
         <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
@@ -3856,10 +3875,12 @@ const CharacterCard = ({
                     </div>
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-500 dark:text-gray-500 italic line-clamp-3">
-                    {character.voiceDescription ||
-                      "Direct a casting brief, or Recommend from appearance and role"}
-                  </p>
+                  <ExpandableText
+                    text={character.voiceDescription}
+                    lines={3}
+                    className="text-xs text-gray-500 dark:text-gray-500 italic"
+                    empty="Direct a casting brief, or Recommend from appearance and role"
+                  />
                 )}
               </div>
 
