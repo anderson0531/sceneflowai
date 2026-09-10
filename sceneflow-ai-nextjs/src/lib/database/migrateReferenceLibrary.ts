@@ -131,3 +131,54 @@ export async function migrateReferenceLibrary(): Promise<{
     return { success: false, actions, errors }
   }
 }
+
+/** Postgres `undefined_table`. */
+const UNDEFINED_TABLE = '42P01'
+
+/** True when a query failed only because the reference library is not created. */
+export function isMissingReferenceLibraryTable(error: unknown): boolean {
+  const candidates = [
+    error,
+    (error as { parent?: unknown })?.parent,
+    (error as { original?: unknown })?.original,
+  ]
+  return candidates.some(
+    (candidate) => (candidate as { code?: string } | undefined)?.code === UNDEFINED_TABLE
+  )
+}
+
+let tablesReady = false
+let tablesInFlight: Promise<void> | null = null
+
+/**
+ * Memoized, fail-soft table check for the reference library.
+ *
+ * The tables ship in this migration rather than in a deploy step, so a
+ * deployment that never ran bootstrap answers every library query with
+ * `relation "reference_asset_links" does not exist`. Callers run this first and
+ * the DDL is idempotent, so the cost is one existence check per process.
+ */
+export async function ensureReferenceLibraryTablesOnce(): Promise<void> {
+  if (tablesReady) return
+  if (tablesInFlight) return tablesInFlight
+
+  tablesInFlight = migrateReferenceLibrary()
+    .then((result) => {
+      if (!result.success) {
+        console.warn('[migrateReferenceLibrary] ensure failed:', result.errors.join('; '))
+      }
+      tablesReady = true
+    })
+    .catch((error: unknown) => {
+      // Never block a user action on a DDL permission problem; the query that
+      // follows reports a clearer error if the tables really are missing.
+      const msg = error instanceof Error ? error.message : String(error)
+      console.warn('[migrateReferenceLibrary] ensure threw:', msg)
+      tablesReady = true
+    })
+    .finally(() => {
+      tablesInFlight = null
+    })
+
+  return tablesInFlight
+}
