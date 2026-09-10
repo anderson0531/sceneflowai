@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { put, del, head } from '@vercel/blob'
+import { put, del } from '@vercel/blob'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { optimizeTextForTTS, optimizeTextForGeminiTTS, finalizeTextForGoogleTts, finalizeTextForGeminiTts } from '../../../../lib/tts/textOptimizer'
@@ -27,16 +27,11 @@ import {
   isQuotaOrRateLimitError,
 } from '../../../../lib/tts/edgeTtsFallback'
 import { buildGeminiTtsPrompt } from '../../../../lib/tts/geminiTtsPrompt'
-import {
-  buildSceneDirection,
-  type SceneDeliveryState,
-} from '../../../../lib/tts/characterSystemInstruction'
 import { resolveCharacterVoicePrompt } from '../../../../lib/tts/resolveCharacterVoicePrompt'
 import { buildGeminiTtsAdvancedVoiceOptions } from '../../../../lib/tts/geminiTtsSafety'
 import { resolveGeminiTtsLanguageCode, resolveGoogleTtsLanguageCode } from '../../../../lib/tts/googleTtsLocale'
 import { persistSceneAudioAtomic } from '../../../../lib/audio/persistSceneAudioAtomic'
 import { audioSourceFingerprintForSpoken } from '../../../../lib/audio/beatAudioStale'
-import { characterStateHash } from '../../../../lib/tts/characterStateHash'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -105,9 +100,6 @@ interface AudioGenerationRequest {
   edgeVoiceConfig?: EdgeVoiceConfig
   /** Client-resolved character gender for Edge fallback. */
   characterGender?: string
-  /** Per-line dynamic state. Kept out of the persisted persona so the static
-   *  system instruction stays identical across a character's dialogue tree. */
-  sceneState?: SceneDeliveryState
 }
 
 export async function POST(req: NextRequest) {
@@ -137,7 +129,6 @@ export async function POST(req: NextRequest) {
       skipDbUpdate = false,
       edgeVoiceConfig: clientEdgeVoiceConfig,
       characterGender: clientCharacterGender,
-      sceneState,
     } = parsed
 
     // Log the request for debugging
@@ -329,84 +320,20 @@ export async function POST(req: NextRequest) {
       edgeVoiceName: characterEdgeVoice?.voiceName ?? null,
     })
 
-    // Bracketed script directions become per-line cues, so the persona keeps
-    // describing who the character is and the wrapper carries how this one lands.
-    const sceneDirection = buildSceneDirection({
-      ...(sceneState ?? {}),
-      cues: [...(sceneState?.cues ?? []), ...optimized.cues],
-    })
-
-    const languageSuffix = language !== 'en' ? `-${language}` : ''
-
-    // Sanitize character name for URL-safe filenames (replace spaces/special chars with dashes)
-    const sanitizeForFilename = (str: string): string => {
-      return str
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
-    }
-
-    const fileDescriptor = audioType === 'description'
-      ? 'description'
-      : audioType === 'narration'
-        ? 'narration'
-        : sanitizeForFilename(characterName || 'dialogue')
-
-    const blobPathForState = (stateHash: string) =>
-      `audio/${audioType}/${projectId}/scene-${sceneIndex}-${fileDescriptor}${languageSuffix}-${stateHash}.mp3`
-
-    const stateFor = (voiceId: string, provider: string) =>
-      characterStateHash({
-        text: optimized.text,
-        voiceId,
-        systemInstruction: finalVoiceConfig.prompt,
-        sceneDirection,
-        language,
-        provider,
-      })
-
-    // The requested-state path only ever holds audio rendered by the requested
-    // voice, so a hit there is safe to report as that voice. A run that fell
-    // back to another provider stores under its own state and simply misses.
-    const requestedStateHash = stateFor(finalVoiceConfig.voiceId, finalVoiceConfig.provider)
-    const cached = await lookupCachedSceneAudio(blobPathForState(requestedStateHash))
-
-    let audioBuffer: Buffer
-    let usedProvider: AudioSynthesisResult['provider']
-    let usedVoiceId: string
-    let didFallback = false
-    let blobUrl: string
-
-    if (cached) {
-      console.log('[Scene Audio] Reusing cached audio for identical character state:', cached.url)
-      audioBuffer = cached.buffer
-      usedProvider = finalVoiceConfig.provider === 'elevenlabs' ? 'elevenlabs' : 'google'
-      usedVoiceId = finalVoiceConfig.voiceId
-      blobUrl = cached.url
-    } else {
-      const synthesis = await generateAudio(
-        optimized.text,
-        finalVoiceConfig,
-        language,
-        audioType,
-        optimized.cues,
-        characterGender,
-        characterEdgeVoice,
-        sceneDirection
-      )
-      audioBuffer = synthesis.buffer
-      usedProvider = synthesis.provider
-      usedVoiceId = synthesis.voiceId
-      didFallback = synthesis.fallback ?? false
-
-      const blob = await put(blobPathForState(stateFor(usedVoiceId, usedProvider)), audioBuffer, {
-        access: 'public',
-        contentType: 'audio/mpeg',
-        addRandomSuffix: false, // Ensures consistent file extension
-      })
-      blobUrl = blob.url
-      console.log(`[Scene Audio] Uploaded to Vercel Blob:`, blob.url)
-    }
+    // Bracket cues become ## THE SCENE on Voice Design prompts inside
+    // buildGeminiTtsPrompt; the Audio Profile itself stays unchanged.
+    const synthesis = await generateAudio(
+      optimized.text,
+      finalVoiceConfig,
+      language,
+      audioType,
+      optimized.cues,
+      characterGender,
+      characterEdgeVoice
+    )
+    const audioBuffer = synthesis.buffer
+    const usedProvider = synthesis.provider
+    const usedVoiceId = synthesis.voiceId
 
     // Step 5: Get actual audio duration from buffer
     let audioDuration: number | null = null
@@ -424,13 +351,39 @@ export async function POST(req: NextRequest) {
       console.log('[Scene Audio] Buffer-based fallback duration:', audioDuration?.toFixed(2), 'seconds')
     }
 
+    // Step 6: Upload to Vercel Blob
+    const languageSuffix = language !== 'en' ? `-${language}` : ''
+    
+    // Sanitize character name for URL-safe filenames (replace spaces/special chars with dashes)
+    const sanitizeForFilename = (str: string): string => {
+      return str
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+    }
+    
+    const fileDescriptor = audioType === 'description'
+      ? 'description'
+      : audioType === 'narration'
+        ? 'narration'
+        : sanitizeForFilename(characterName || 'dialogue')
+
+    const fileName = `audio/${audioType}/${projectId}/scene-${sceneIndex}-${fileDescriptor}${languageSuffix}-${Date.now()}.mp3`
+
+    const blob = await put(fileName, audioBuffer, {
+      access: 'public',
+      contentType: 'audio/mpeg',
+      addRandomSuffix: false, // Ensures consistent file extension
+    })
+
+    console.log(`[Scene Audio] Uploaded to Vercel Blob:`, blob.url)
+
     const sourceFingerprint =
       audioType === 'narration' || audioType === 'dialogue'
         ? audioSourceFingerprintForSpoken({
             kind: lineKind || (audioType === 'narration' ? 'narration' : 'dialogue'),
             character: characterName,
             line: text,
-            voiceStateHash: stateFor(usedVoiceId, usedProvider),
           })
         : undefined
 
@@ -440,7 +393,7 @@ export async function POST(req: NextRequest) {
         projectId, 
         sceneIndex, 
         audioType, 
-        blobUrl, 
+        blob.url, 
         language,
         audioDuration,
         usedVoiceId,
@@ -463,13 +416,12 @@ export async function POST(req: NextRequest) {
       sceneIndex,
       provider: usedProvider,
       voiceId: usedVoiceId,
-      fallback: didFallback,
-      cached: Boolean(cached),
+      fallback: synthesis.fallback ?? false,
     })
 
     return NextResponse.json({
       success: true,
-      audioUrl: blobUrl,
+      audioUrl: blob.url,
       audioType,
       language,
       duration: audioDuration,
@@ -478,7 +430,7 @@ export async function POST(req: NextRequest) {
       adaptation: adaptationDiagnostics,
       provider: usedProvider,
       voiceId: usedVoiceId,
-      fallback: didFallback,
+      fallback: synthesis.fallback ?? false,
     })
   } catch (error: any) {
     if (error instanceof GoogleTtsBlockedError) {
@@ -542,37 +494,6 @@ type AudioSynthesisResult = {
   fallback?: boolean
 }
 
-/**
- * Reuse a previously synthesized clip when the character state is unchanged.
- *
- * The buffer is fetched so the caller can measure duration exactly as it would
- * for fresh audio; one blob GET is far cheaper than another TTS call. A miss or
- * any storage error returns null, which just means we synthesize.
- */
-async function lookupCachedSceneAudio(
-  pathname: string
-): Promise<{ url: string; buffer: Buffer } | null> {
-  let url: string
-  try {
-    const existing = await head(pathname)
-    if (!existing?.url || !existing.size) return null
-    url = existing.url
-  } catch {
-    return null
-  }
-
-  try {
-    const response = await fetch(url)
-    if (!response.ok) return null
-    const buffer = Buffer.from(await response.arrayBuffer())
-    if (buffer.length === 0) return null
-    return { url, buffer }
-  } catch (error) {
-    console.warn('[Scene Audio] Cached blob could not be read; re-synthesizing:', error)
-    return null
-  }
-}
-
 async function lookupCharacterGender(
   projectId: string,
   characterId?: string,
@@ -626,8 +547,7 @@ async function generateAudio(
   audioType: AudioGenerationRequest['audioType'] = 'narration',
   deliveryCues: string[] = [],
   characterGender?: string,
-  characterEdgeVoice?: EdgeVoiceConfig,
-  sceneDirection?: string
+  characterEdgeVoice?: EdgeVoiceConfig
 ): Promise<AudioSynthesisResult> {
   const primaryProvider: 'google' | 'elevenlabs' =
     voiceConfig.provider === 'elevenlabs' ? 'elevenlabs' : 'google'
@@ -636,14 +556,7 @@ async function generateAudio(
     const buffer =
       voiceConfig.provider === 'elevenlabs'
         ? await generateElevenLabsAudio(text, voiceConfig)
-        : await generateGoogleAudio(
-            text,
-            voiceConfig,
-            language,
-            audioType,
-            deliveryCues,
-            sceneDirection
-          )
+        : await generateGoogleAudio(text, voiceConfig, language, audioType, deliveryCues)
     return {
       buffer,
       provider: primaryProvider,
@@ -771,8 +684,7 @@ async function generateGoogleAudio(
   voiceConfig: VoiceConfig,
   language: string = 'en',
   audioType: AudioGenerationRequest['audioType'] = 'narration',
-  deliveryCues: string[] = [],
-  sceneDirection?: string
+  deliveryCues: string[] = []
 ): Promise<Buffer> {
   if (voiceConfig.provider !== 'google') {
     throw new Error('Internal error: Google TTS invoked for non-google voice config')
@@ -917,7 +829,6 @@ async function generateGoogleAudio(
         audioType: geminiAudioType,
         voicePrompt: voiceConfig.prompt,
         deliveryCues,
-        sceneDirection,
         promptLevel,
       })
     }

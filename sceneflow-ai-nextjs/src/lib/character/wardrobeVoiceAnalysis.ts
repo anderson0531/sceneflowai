@@ -11,16 +11,6 @@ export interface VocalAttributes {
   authority?: string
   warmth?: string
   accent?: string
-  /** Perceived pitch band within the speaker's gender range; drives base-voice selection. */
-  register?: string
-  /** Perceived heft of the voice, independent of pitch. */
-  vocalWeight?: string
-  /** Words per minute, so cadence reaches the model as a number it can hold. */
-  wpm?: number
-  /** Pitch-contour rule, e.g. flat declarative with downward resolution. */
-  inflection?: string
-  /** Standing emotional state when no scene direction overrides it. */
-  emotionalDefault?: string
 }
 
 export interface WardrobeVoiceCharacterInput {
@@ -93,8 +83,6 @@ export function getWardrobeVoiceImageForCharacter(
 
 export function formatVocalAttributesForDescription(attrs: VocalAttributes): string {
   const parts: string[] = []
-  if (attrs.register?.trim()) parts.push(`${attrs.register.trim()} register`)
-  if (attrs.vocalWeight?.trim()) parts.push(`${attrs.vocalWeight.trim()} vocal weight`)
   if (attrs.timbre?.trim()) parts.push(`${attrs.timbre.trim()} timbre`)
   if (attrs.pitch?.trim()) parts.push(`${attrs.pitch.trim()} pitch`)
   if (attrs.pace?.trim()) parts.push(`${attrs.pace.trim()} pace`)
@@ -130,14 +118,14 @@ export function buildWardrobeVoiceAnalysisPrompt(
     narrativeLines.push(`Personality / key traits: ${options.personality.trim()}`)
   }
   if (options?.characterDescription?.trim()) {
-    narrativeLines.push(`Story role / personality: ${options.characterDescription.trim()}`)
+    narrativeLines.push(`Character description: ${options.characterDescription.trim()}`)
   }
 
   const portraitBlock = hasPortrait
     ? `PORTRAIT REFERENCE:
-An attached character portrait is provided. Use it to refine gender, apparent age, ethnicity, and vocal timbre — but the narrative profile above is the PRIMARY casting signal. Reconcile portrait cues with the character's role and personality; if they conflict, favor the narrative unless the portrait clearly contradicts gender. Do not describe clothing, hair, or body in the output.`
+An attached character portrait is provided. Use it to refine gender, apparent age, ethnicity, and physical vocal timbre — but the narrative profile above is the PRIMARY casting signal. Reconcile portrait cues with the character's role and personality; if they conflict, favor the narrative unless the portrait clearly contradicts gender.`
     : `NO PORTRAIT:
-No reference image is attached. Derive the voice profile from role, personality, and production context below.`
+No reference image is attached. Derive the full voice profile from the character narrative, role, personality, and production context below.`
 
   return `You are an expert voice casting director for film, television, and documentary narration.
 
@@ -163,20 +151,15 @@ REQUIREMENTS:
 1. "gender" — exactly "male" or "female" from narrative and${hasPortrait ? ' portrait' : ''} cues.
 2. "apparentAge" — short phrase (e.g. "late 40s", "early 60s", "mid 20s").
 3. "ethnicity" — optional, brief accent/cultural hint if inferable.
-4. "vocalAttributes" — the acoustic parameters. These select the base voice, so be literal, not evocative:
-   - "register" — EXACTLY one of: low, low-mid, mid, mid-high, high. Perceived pitch band within this character's own gender range.
-   - "vocalWeight" — EXACTLY one of: light, medium, heavy. Heft and body, independent of pitch.
+4. "vocalAttributes" — object with short phrases:
    - "timbre" (e.g. resonant baritone, bright tenor, warm alto)
    - "pitch" (e.g. low, mid, high)
    - "pace" (e.g. measured, brisk, deliberate)
-   - "wpm" — integer words per minute, 95–190. Deliberate ≈ 110, measured ≈ 130, conversational ≈ 150, brisk ≈ 170.
-   - "inflection" — pitch-contour rule, e.g. "flat and declarative; resolve sentences downward, no up-speak".
-   - "emotionalDefault" — standing affect when no scene direction applies, e.g. "clinical detachment".
    - "authority" (e.g. quiet authority, commanding, approachable)
    - "warmth" (e.g. warm, neutral, cool)
    - "accent" (e.g. neutral American, British RP) — optional
-5. "voiceDescription" — 200–600 characters MATCHING BRIEF for catalog scoring only. Archetype vocabulary: authoritative, intellectual, measured, resonant, articulate, quiet authority, conviction, corporate, warm, gravelly, crisp, professional, confident, steady, polished, engaging, deep, bright, gentle, energetic. Role and personality only — no clothing, hair, body, plot, or dialogue.
-6. "audioProfile" — 4–5 sentences, Director's Note for Gemini TTS. Vocal style only: timbre, pitch, cadence, accent, texture, emotional delivery. Do NOT write dialogue. Do NOT mention appearance, wardrobe, or plot.
+5. "voiceDescription" — 200–600 characters for voice matching. Use archetype vocabulary: authoritative, intellectual, measured, resonant, articulate, quiet authority, conviction, corporate, warm, gravelly, crisp, professional, confident, steady, polished, engaging, deep, bright, gentle, energetic, etc. Reflect role and personality.
+6. "audioProfile" — 4–5 sentences, Director's Note for Gemini TTS. Tone, pitch, cadence, texture, emotional delivery. Do NOT write dialogue.
 
 OUTPUT: Return ONLY valid JSON, no markdown:
 {
@@ -184,66 +167,27 @@ OUTPUT: Return ONLY valid JSON, no markdown:
   "apparentAge": "late 50s",
   "ethnicity": "optional string",
   "vocalAttributes": {
-    "register": "low-mid",
-    "vocalWeight": "heavy",
     "timbre": "resonant baritone",
     "pitch": "low-mid",
-    "pace": "deliberate and controlled",
-    "wpm": 115,
-    "inflection": "flat and declarative; resolve sentences downward, no up-speak",
-    "emotionalDefault": "calm, composed detachment",
+    "pace": "measured",
     "authority": "quiet authority",
-    "warmth": "cool",
-    "accent": "neutral American"
+    "warmth": "neutral",
+    "accent": "neutral British"
   },
   "voiceDescription": "casting brief paragraph",
   "audioProfile": "Director's Note paragraph"
 }`
 }
 
-const REGISTER_VALUES = ['low', 'low-mid', 'mid', 'mid-high', 'high'] as const
-const WEIGHT_VALUES = ['light', 'medium', 'heavy'] as const
-
-/** Accept only the documented enum values so scoring never sees improvised bands. */
-function parseEnum<T extends string>(raw: unknown, allowed: readonly T[]): T | undefined {
-  const value = String(raw ?? '')
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-  return allowed.find((option) => option === value)
-}
-
 function parseVocalAttributes(raw: unknown): VocalAttributes | undefined {
   if (!raw || typeof raw !== 'object') return undefined
   const obj = raw as Record<string, unknown>
   const attrs: VocalAttributes = {}
-
-  const textKeys = [
-    'timbre',
-    'pitch',
-    'pace',
-    'authority',
-    'warmth',
-    'accent',
-    'inflection',
-    'emotionalDefault',
-  ] as const
-  for (const key of textKeys) {
+  const keys = ['timbre', 'pitch', 'pace', 'authority', 'warmth', 'accent'] as const
+  for (const key of keys) {
     const val = String(obj[key] ?? '').trim()
-    if (val) attrs[key] = val.slice(0, 160)
+    if (val) attrs[key] = val.slice(0, 80)
   }
-
-  const register = parseEnum(obj.register, REGISTER_VALUES)
-  if (register) attrs.register = register
-
-  const vocalWeight = parseEnum(obj.vocalWeight, WEIGHT_VALUES)
-  if (vocalWeight) attrs.vocalWeight = vocalWeight
-
-  const wpm = Number(obj.wpm)
-  if (Number.isFinite(wpm) && wpm >= 80 && wpm <= 220) {
-    attrs.wpm = Math.round(wpm)
-  }
-
   return Object.keys(attrs).length > 0 ? attrs : undefined
 }
 

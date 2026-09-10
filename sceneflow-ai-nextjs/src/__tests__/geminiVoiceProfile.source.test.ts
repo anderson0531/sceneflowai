@@ -18,10 +18,6 @@ const visionPagePath = path.join(
   process.cwd(),
   'src/app/dashboard/workflow/vision/[projectId]/page.tsx',
 )
-const directorPromptPath = path.join(
-  process.cwd(),
-  'src/app/api/tts/google/director-prompt/route.ts',
-)
 
 describe('Gemini voice profile source contracts', () => {
   it('VoiceSelectionDialog no longer imports VoiceDesignPanel or ElevenLabs browse', () => {
@@ -45,17 +41,6 @@ describe('Gemini voice profile source contracts', () => {
     expect(source).toContain('mode={isNarratorCharacter ? "narrator" : "character"}')
   })
 
-  it('Auto Voice scores the matching brief and does not send appearance to TTS', () => {
-    const source = readFileSync(characterLibraryPath, 'utf8')
-    expect(source).toContain('characterVoiceProfileFromAnalysis')
-    expect(source).toContain('matchingBrief')
-    expect(source).toContain('prompt: generatedPrompt')
-    expect(source).not.toContain('voiceDescription: generatedPrompt')
-    expect(source).not.toContain(
-      'character.description || character.appearanceDescription',
-    )
-  })
-
   it('Series listen buttons use Google narrator presets', () => {
     const source = readFileSync(seriesPagePath, 'utf8')
     expect(source).toContain('DEFAULT_CINEMATIC_NARRATOR')
@@ -63,13 +48,6 @@ describe('Gemini voice profile source contracts', () => {
     expect(source).toContain('mode="narrator"')
     expect(source).not.toContain('provider="elevenlabs"')
     expect(source).not.toContain('GEMINI_VOICES')
-  })
-
-  it('director-prompt builds vocal-only notes without a raw Description dump', () => {
-    const source = readFileSync(directorPromptPath, 'utf8')
-    expect(source).toContain('buildDirectorNotePrompt')
-    expect(source).not.toContain('Description: ${description}')
-    expect(source).not.toContain('Backstory: ${backstory}')
   })
 
   it('Production narrator default is a cinematic Google preset', () => {

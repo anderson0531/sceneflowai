@@ -104,8 +104,6 @@ describe('buildWardrobeVoiceAnalysisPrompt', () => {
     expect(prompt).toContain('Professor Gideon Croft')
     expect(prompt).toContain('quiet authority')
     expect(prompt).toContain('academic outcast')
-    expect(prompt).toContain('MATCHING BRIEF')
-    expect(prompt).toContain('Do NOT mention appearance')
     expect(prompt).not.toContain('FACE only')
     expect(prompt).not.toContain('disambiguation only')
     expect(prompt).toContain('PORTRAIT REFERENCE')

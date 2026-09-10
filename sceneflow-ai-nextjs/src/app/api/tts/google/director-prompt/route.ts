@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText, generateWithVision } from '@/lib/vertexai/gemini'
 import { CharacterContext, ScreenplayContext } from '@/lib/voiceRecommendation'
-import {
-  buildDirectorNotePrompt,
-  parseDirectorNoteResponse,
-} from '@/lib/tts/buildCharacterVoiceProfile'
+import { parseDirectorVoiceDesignResponse } from '@/lib/tts/geminiVoiceDesignPrompt'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,7 +24,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing character context' }, { status: 400 })
     }
 
-    const { name, referenceImage } = characterContext
+    const { name, role, attributes, backstory, description, age, gender, ethnicity, personality, referenceImage } = characterContext
+    
+    // Construct the prompt for the director script
+    let prompt = `You are an expert Voice Director writing Google AI Studio Voice Design notes for Gemini TTS.
+
+The notes become Cloud TTS Style Instructions (input.prompt). They must describe how the character sounds, not what they look like or what they will say.
+
+CHARACTER DETAILS:
+Name: ${name || 'Unknown'}
+Role: ${role || 'Not specified'}
+Age: ${age || 'Not specified'}
+Gender: ${gender || 'Not specified'}
+Ethnicity: ${ethnicity || 'Not specified'}
+Personality: ${personality || 'Not specified'}
+Description: ${description || 'Not specified'}
+Traits/Attributes: ${attributes ? Object.entries(attributes).map(([k, v]) => `${k}: ${v}`).join(', ') : 'Not specified'}
+Backstory: ${backstory || 'Not specified'}`
 
     const visionImageUrl =
       wardrobeImageUrl?.startsWith('http')
@@ -36,13 +49,59 @@ export async function POST(request: NextRequest) {
           ? referenceImage
           : undefined
 
-    const prompt = buildDirectorNotePrompt({
-      characterContext,
-      screenplayContext,
-      selectedInstructions,
-      hasPortrait: Boolean(referenceImage?.startsWith('http')),
-      wardrobeTurnaround: Boolean(wardrobeImageUrl?.startsWith('http')),
-    })
+    if (wardrobeImageUrl?.startsWith('http')) {
+      prompt += `\n\nWARDROBE TURNAROUND IMAGE:
+A 2-row costume turnaround sheet is attached. Use ONLY the TOP ROW headshots for voice inference (ignore outfit/bottom row). Analyze facial structure, apparent age, ethnicity, and demeanor to infer vocal qualities.`
+    } else if (referenceImage) {
+      prompt += `\n\nREFERENCE IMAGE:
+A visual reference of the character is attached. Analyze their facial structure, apparent age, ethnicity, and overall demeanor to infer vocal qualities that perfectly match their physical presence.`
+    }
+
+    if (selectedInstructions && selectedInstructions.length > 0) {
+      prompt += `\n\nSELECTED VOICE TRAITS:
+The user has specifically requested the voice to include the following characteristics:
+${selectedInstructions.map(i => `- ${i}`).join('\n')}
+
+INCORPORATE THESE TRAITS into your final description naturally.`
+    }
+
+    if (screenplayContext) {
+      prompt += `\n\nSERIES CONTEXT:
+Genre: ${screenplayContext.genre || 'Not specified'}
+Tone: ${screenplayContext.tone || 'Not specified'}
+Synopsis: ${screenplayContext.synopsis || 'Not specified'}`
+    }
+
+    prompt += `\n\nREQUIREMENTS:
+This note is Cloud TTS Style Instructions (AI Studio Voice Design). The spoken line is sent separately — never write dialogue or a TRANSCRIPT.
+
+Focus strictly on vocal identity: timbre, pitch, cadence, accent, articulation, and standing affect. Do NOT mention wardrobe, clothing, hair, eyes, plot, or a line to speak.
+
+Match the character's age, gender, ethnicity, and role. If those fields say "Not specified" but appear in Description or Backstory, extract them.
+
+Return ONLY a JSON object with these keys (empty string if unknown):
+{
+  "name": "character name",
+  "archetype": "short role title, no clothing",
+  "identity": "1-2 sentences: age, gender, ethnicity, timbre",
+  "style": "diction, inflection, how they colour the material",
+  "pace": "cadence in plain language",
+  "accent": "accent or dialect",
+  "scene": ""
+}
+
+Leave "scene" empty unless the series context implies a standing location and vibe (not a plot beat).
+
+Example:
+{
+  "name": "Julian Ward",
+  "archetype": "Senior Director of Corporate Risk",
+  "identity": "Late 50s Caucasian male. Authoritative, clinical baritone with dry, crisp diction.",
+  "style": "Flat, declarative statements. Always resolve sentences with downward pitch; never lift pitch at phrase ends. Treat catastrophic events with the quiet nonchalance of a balance sheet.",
+  "pace": "Slow, measured, and completely unhurried.",
+  "accent": "Neutral American, no regionalisms.",
+  "scene": ""
+}`
 
     let generatedText = ''
 
@@ -84,33 +143,13 @@ export async function POST(request: NextRequest) {
       generatedText = response.text.trim()
     }
     
-    const structured = parseDirectorNoteResponse(generatedText, {
-      name: characterContext.name,
-      role: typeof characterContext.role === 'string' ? characterContext.role : undefined,
-      age: characterContext.age !== undefined ? String(characterContext.age) : undefined,
-      gender: characterContext.gender,
-      ethnicity: characterContext.ethnicity,
-      personality: characterContext.personality,
+    const designed = parseDirectorVoiceDesignResponse(generatedText, {
+      name: name || undefined,
+      archetype: role || undefined,
     })
+    generatedText = designed || ''
 
-    if (structured) {
-      return NextResponse.json({
-        script: structured.systemInstruction,
-        vocalAttributes: structured.vocalAttributes,
-      })
-    }
-
-    // The model ignored the JSON contract. Return the prose as-is; the prompt
-    // assembler still handles unstructured profiles on its legacy path.
-    console.warn('[Director Prompt] No structured fields returned; falling back to prose')
-    generatedText = generatedText
-      .replace(/^```[a-zA-Z]*\n?/, '')
-      .replace(/^```\n?/, '')
-      .replace(/\n?```$/, '')
-      .replace(/^(Here is the )?JSON requested:?\n?/i, '')
-      .trim()
-
-    if (!generatedText) {
+    if (!generatedText?.trim()) {
       console.error('[Director Prompt] Empty profile after parsing')
       return NextResponse.json(
         { error: 'Failed to generate director prompt (empty response)' },
