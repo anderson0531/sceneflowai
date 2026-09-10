@@ -1412,7 +1412,8 @@ const CharacterCard = ({
   ); // Which wardrobe is being edited
   const [wardrobeText, setWardrobeText] = useState("");
   const [editingBodyDescription, setEditingBodyDescription] = useState(false);
-  const [bodyDescriptionText, setBodyDescriptionText] = useState("");
+  const [bodyDirectorText, setBodyDirectorText] = useState("");
+  const [isGeneratingBody, setIsGeneratingBody] = useState(false);
   const [accessoriesText, setAccessoriesText] = useState("");
   const [appearanceNotesText, setAppearanceNotesText] = useState("");
   const [wardrobeName, setWardrobeName] = useState(""); // Name for new/edited wardrobe
@@ -1949,6 +1950,71 @@ const CharacterCard = ({
     return parts.length > 0
       ? parts.join(", ")
       : "Click to add appearance description for scene generation";
+  };
+
+  const handleGenerateBody = async (recommendMode: boolean = false) => {
+    if (!onUpdateAppearance) {
+      toast.error("Body update is not available.");
+      return;
+    }
+    if (!recommendMode && !bodyDirectorText.trim()) {
+      toast.error("Describe the change, or use Recommend from the screenplay.");
+      return;
+    }
+
+    setIsGeneratingBody(true);
+    try {
+      const response = await fetch("/api/character/generate-body-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          characterName: character.name,
+          characterRole: character.role,
+          gender: character.gender,
+          age: character.age,
+          ethnicity: character.ethnicity,
+          genre: screenplayContext?.genre,
+          tone: screenplayContext?.tone,
+          setting: screenplayContext?.setting,
+          logline: screenplayContext?.logline,
+          visualStyle: screenplayContext?.visualStyle,
+          currentAppearance: character.appearanceDescription,
+          directorNotes: recommendMode ? undefined : bodyDirectorText,
+          recommendMode,
+        }),
+      });
+
+      const body = await readJsonSafe(response);
+      if (!response.ok) {
+        throw new Error(
+          (body.error as string) || "Failed to generate body description",
+        );
+      }
+
+      const nextDescription =
+        typeof body.appearanceDescription === "string"
+          ? body.appearanceDescription.trim()
+          : "";
+      if (!nextDescription) {
+        throw new Error("Body description response was empty.");
+      }
+
+      onUpdateAppearance(characterId, nextDescription);
+      setBodyDirectorText("");
+      setEditingBodyDescription(false);
+      toast.success(
+        recommendMode
+          ? "Body description recommended from the screenplay."
+          : "Body description updated.",
+      );
+    } catch (error) {
+      console.error("[Direct Body] Error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to generate body description",
+      );
+    } finally {
+      setIsGeneratingBody(false);
+    }
   };
 
   const handleSaveName = async () => {
@@ -3473,7 +3539,7 @@ const CharacterCard = ({
                   </p>
                 </div>
 
-                {/* Body Description - Editable for image generation prompts */}
+                {/* Body Description - director prompt for image-generation identity */}
                 <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between mb-1">
                     <span className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
@@ -3484,60 +3550,92 @@ const CharacterCard = ({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setBodyDescriptionText(
-                            character.appearanceDescription || "",
-                          );
+                          setBodyDirectorText("");
                           setEditingBodyDescription(true);
                         }}
-                        className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
-                        title="Edit body description for image generation"
+                        className="p-1 text-gray-400 hover:text-purple-500 transition-colors"
+                        title="Direct body description"
                       >
-                        <Edit className="w-3 h-3" />
+                        <Sparkles className="w-3 h-3" />
                       </button>
                     )}
                   </div>
 
                   {editingBodyDescription ? (
                     <div
-                      className="space-y-2"
+                      className="space-y-2 p-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <textarea
-                        value={bodyDescriptionText}
-                        onChange={(e) => setBodyDescriptionText(e.target.value)}
-                        placeholder="e.g., Athletic build, tall, muscular, slim figure"
-                        className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                        rows={2}
-                        autoFocus
+                      <div className="flex items-center gap-2 text-xs font-medium text-purple-700 dark:text-purple-300">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        Direct body
+                      </div>
+                      {character.appearanceDescription?.trim() ? (
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed">
+                          Current — {character.appearanceDescription.trim()}
+                        </p>
+                      ) : null}
+                      <DictationTextarea
+                        value={bodyDirectorText}
+                        onChange={setBodyDirectorText}
+                        placeholder={
+                          character.appearanceDescription?.trim()
+                            ? "Say the change, e.g. Taller, keep the cheekbones, late 40s"
+                            : "Describe the body, or leave empty and Recommend from the screenplay"
+                        }
+                        rows={3}
+                        disabled={isGeneratingBody}
+                        className="text-xs border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-800"
                       />
-                      <div className="flex gap-2 justify-end">
+                      <div className="flex gap-2">
                         <button
-                          onClick={() => setEditingBodyDescription(false)}
-                          className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void handleGenerateBody(false);
+                          }}
+                          disabled={isGeneratingBody || !bodyDirectorText.trim()}
+                          className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          Cancel
+                          {isGeneratingBody ? (
+                            <>
+                              <Loader className="w-3 h-3 animate-spin" />
+                              Applying...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-3 h-3" />
+                              Apply
+                            </>
+                          )}
                         </button>
                         <button
-                          onClick={() => {
-                            if (onUpdateAppearance) {
-                              onUpdateAppearance(
-                                characterId,
-                                bodyDescriptionText,
-                              );
-                              setEditingBodyDescription(false);
-                            }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void handleGenerateBody(true);
                           }}
-                          className="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded flex items-center gap-1"
+                          disabled={isGeneratingBody}
+                          className="px-2 py-1.5 text-xs bg-amber-500 text-white rounded hover:bg-amber-600 disabled:opacity-50"
+                          title="Recommend a body from the character and screenplay"
                         >
-                          <Check className="w-3 h-3" />
-                          Save
+                          Recommend
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingBodyDescription(false);
+                            setBodyDirectorText("");
+                          }}
+                          disabled={isGeneratingBody}
+                          className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                        >
+                          Cancel
                         </button>
                       </div>
                     </div>
                   ) : (
                     <p className="text-xs text-gray-500 dark:text-gray-500 italic">
                       {character.appearanceDescription ||
-                        "Click edit to add body description"}
+                        "Direct a body description, or Recommend from the screenplay"}
                     </p>
                   )}
                 </div>
