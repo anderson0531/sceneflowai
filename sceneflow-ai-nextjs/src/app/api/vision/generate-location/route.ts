@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
-import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibraryStorage'
 import { getCreditCost } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
-import { LOCATION_TURNAROUND_GENERATION_INSTRUCTION } from '@/lib/vision/locationReferencePrompts'
-import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import {
+  generateLocationReferenceImage,
+  ReferenceGenerationError,
+  type ReferenceAspectRatio,
+} from '@/lib/vision/referenceExpress/generateReferenceImage'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -25,7 +27,7 @@ interface GenerateLocationImageRequest {
   /** User or AI-generated description of the location */
   description?: string
   /** Aspect ratio for the generated image */
-  aspectRatio?: '1:1' | '4:3' | '3:4' | '16:9' | '9:16'
+  aspectRatio?: ReferenceAspectRatio
   /** Screenplay context for richer prompt generation */
   screenplayContext?: {
     genre?: string
@@ -50,65 +52,11 @@ interface GenerateLocationImageRequest {
 }
 
 /**
- * Build an optimized prompt for location reference image generation
- * Creates environment-only shots WITHOUT actors for production consistency
- */
-function buildLocationPrompt(
-  locationName: string,
-  intExt?: string,
-  timeOfDay?: string,
-  description?: string
-): string {
-  const parts: string[] = []
-
-  // Core location
-  if (description) {
-    parts.push(description)
-  } else {
-    parts.push(`${locationName} setting`)
-  }
-
-  // Interior/Exterior context
-  if (intExt) {
-    const mapping: Record<string, string> = {
-      'INT': 'Interior scene',
-      'EXT': 'Exterior scene',
-      'INT/EXT': 'Interior/Exterior transitional scene',
-      'EXT/INT': 'Exterior/Interior transitional scene'
-    }
-    parts.push(mapping[intExt] || '')
-  }
-
-  // Time of day lighting
-  if (timeOfDay) {
-    const lightingMap: Record<string, string> = {
-      'DAY': 'Natural daylight, bright ambient lighting',
-      'NIGHT': 'Nighttime atmosphere, artificial interior lighting or moonlight',
-      'MORNING': 'Early morning light, soft golden hour tones',
-      'EVENING': 'Evening atmosphere, warm golden lighting',
-      'SUNSET': 'Dramatic sunset lighting with warm orange and pink tones',
-      'SUNRISE': 'Sunrise atmosphere, soft warm golden light breaking through',
-      'DUSK': 'Twilight atmosphere, cool blue-purple tones with fading light',
-      'DAWN': 'Pre-dawn atmosphere, soft cool light with hint of warmth'
-    }
-    const lighting = lightingMap[timeOfDay.toUpperCase()]
-    if (lighting) parts.push(lighting)
-  }
-
-  // Production quality modifiers — single extreme-wide establishing shot
-  parts.push(
-    LOCATION_TURNAROUND_GENERATION_INSTRUCTION,
-    'Cinematic production design, professional film set quality',
-    'High resolution, sharp focus, detailed textures',
-    'Film production location reference photograph for visual consistency across scenes'
-  )
-
-  return parts.filter(Boolean).join('. ') + '.'
-}
-
-/**
  * Generate a location reference image for the Reference Library.
  * Creates environment-only shots for visual consistency across scenes.
+ *
+ * Generation itself lives in `@/lib/vision/referenceExpress/generateReferenceImage`
+ * so the Reference Express background worker can run it without a session.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -135,91 +83,35 @@ export async function POST(req: NextRequest) {
     }
 
     const body: GenerateLocationImageRequest = await req.json()
-    const {
-      projectId: reqProjectId,
-      locationName,
-      locationDisplay,
-      intExt,
-      timeOfDay,
-      description,
-      aspectRatio = '16:9', // Widescreen is best for location establishing shots
-      screenplayContext,
-      locationPrompt,
-      artStyle,
-      shotType,
-      cameraAngle,
-      lighting,
-      additionalDetails,
-      rawMode
-    } = body
 
-    if (!locationName) {
-      return NextResponse.json(
-        { error: 'Missing required field: locationName' },
-        { status: 400 }
-      )
-    }
+    console.log(`[Location Generation] Generating: ${body.locationName}`)
+    console.log(
+      `[Location Generation] INT/EXT: ${body.intExt || 'N/A'}, Time: ${body.timeOfDay || 'N/A'}`
+    )
 
-    console.log(`[Location Generation] Generating: ${locationName}`)
-    console.log(`[Location Generation] INT/EXT: ${intExt || 'N/A'}, Time: ${timeOfDay || 'N/A'}`)
+    const locale = await resolveRequestStoryLocale(req, { projectId: body.projectId })
 
-    // Build optimized prompt — use pre-composed prompt from LocationPromptBuilder if provided
-    let prompt: string
-    if (locationPrompt && locationPrompt.trim()) {
-      // LocationPromptBuilder already composed the prompt (Guided or Advanced mode)
-      prompt = locationPrompt
-      console.log(`[Location Generation] Using prompt builder prompt (rawMode=${rawMode})`)
-    } else {
-      // Legacy path: server-side composition from metadata fields
-      prompt = buildLocationPrompt(locationName, intExt, timeOfDay, description)
-    }
-
-    // The builder fields and description are typed by the creator, so the
-    // composed prompt can arrive in any language; the image model needs English.
-    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, {
-      projectId: reqProjectId,
-    })
-    prompt = await englishForModel(prompt, storyLocale, [locationName, ...properNouns])
-
-    console.log(`[Location Generation] Prompt: ${prompt.substring(0, 200)}...`)
-
-    // Generate image — negativePrompt enforces no people in location shots
-    const result = await generateImageWithGeminiStudio({
-      prompt,
-      aspectRatio,
-      negativePrompt: 'people, persons, humans, actors, characters, figures, silhouettes, faces, crowds',
-    })
-
-    if (!result.imageBase64) {
-      return NextResponse.json(
-        { error: 'No image generated. Try adjusting the description.' },
-        { status: 500 }
-      )
-    }
-
-    // Upload to blob storage
-    const fileName = `scenes/location-${locationName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.png`
-    const imageUrl = await uploadReferenceLibraryBase64Image(result.imageBase64, fileName, reqProjectId || 'default')
-
-    // Deduct credits
-    await CreditService.charge(userId, CREDIT_COST, 'ai_usage', null, {
-      provider: 'gemini',
-      category: 'images',
-      operation: `Location reference: ${locationName}`
+    const { imageUrl, prompt, creditCost } = await generateLocationReferenceImage({
+      userId,
+      projectId: body.projectId,
+      locationName: body.locationName,
+      intExt: body.intExt,
+      timeOfDay: body.timeOfDay,
+      description: body.description,
+      aspectRatio: body.aspectRatio,
+      locationPrompt: body.locationPrompt,
+      locale,
     })
 
     console.log(`[Location Generation] Success: ${imageUrl}`)
 
-    return NextResponse.json({
-      imageUrl,
-      prompt,
-      creditCost: CREDIT_COST
-    })
+    return NextResponse.json({ imageUrl, prompt, creditCost })
   } catch (error: any) {
     console.error('[Location Generation] Error:', error)
+    const status = error instanceof ReferenceGenerationError ? error.status : 500
     return NextResponse.json(
       { error: error.message || 'Failed to generate location image' },
-      { status: 500 }
+      { status }
     )
   }
 }
