@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText, generateWithVision } from '@/lib/vertexai/gemini'
 import { CharacterContext, ScreenplayContext } from '@/lib/voiceRecommendation'
+import { parseDirectorVoiceDesignResponse } from '@/lib/tts/geminiVoiceDesignPrompt'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,10 +27,9 @@ export async function POST(request: NextRequest) {
     const { name, role, attributes, backstory, description, age, gender, ethnicity, personality, referenceImage } = characterContext
     
     // Construct the prompt for the director script
-    let prompt = `You are an expert Voice Director casting a voice actor for a specific character. 
-Your task is to write a short, precise Director's Note (Audio Profile) that captures the character's unique voice, personality, and tone.
+    let prompt = `You are an expert Voice Director writing Google AI Studio Voice Design notes for Gemini TTS.
 
-This note will be passed as instructions to an advanced Text-to-Speech system (Gemini TTS).
+The notes become Cloud TTS Style Instructions (input.prompt). They must describe how the character sounds, not what they look like or what they will say.`
 
 CHARACTER DETAILS:
 Name: ${name || 'Unknown'}
@@ -73,15 +73,34 @@ Synopsis: ${screenplayContext.synopsis || 'Not specified'}`
     }
 
     prompt += `\n\nREQUIREMENTS:
-1. Write ONLY the voice description / Audio Profile. Do NOT write a monologue or script for the character to say.
-2. Ensure the generated voice description exactly matches the character's provided age, gender, ethnicity, and role from the details above. If the demographic fields are "Not specified" but the details are mentioned in the Description or Backstory, you MUST extract and use them.
-3. The description must focus strictly on the vocal qualities: tone, pitch, cadence, accent, texture, and emotional delivery. Include how their role and personality shape their vocal delivery.
-4. Be highly descriptive but concise (4-5 sentences max).
-5. Be highly descriptive but concise (4-5 sentences max).
-6. You MUST return a valid JSON object with a single key "audio_profile" containing your generated description. Do NOT return plain text.
-7. Example output:
+This note is Cloud TTS Style Instructions (AI Studio Voice Design). The spoken line is sent separately — never write dialogue or a TRANSCRIPT.
+
+Focus strictly on vocal identity: timbre, pitch, cadence, accent, articulation, and standing affect. Do NOT mention wardrobe, clothing, hair, eyes, plot, or a line to speak.
+
+Match the character's age, gender, ethnicity, and role. If those fields say "Not specified" but appear in Description or Backstory, extract them.
+
+Return ONLY a JSON object with these keys (empty string if unknown):
 {
-  "audio_profile": "An African American male voice in his late 40s to early 50s. The tone is a warm, textured baritone with a slight, natural huskiness. As the visionary host of 'Cognitive Horizons,' his delivery balances an energetic, forward-leaning enthusiasm with a measured, thoughtful pacing. His emotional delivery exudes a deep, empathetic hope, capturing the calm authority of an intellectually stimulating mind grappling with profound responsibilities."
+  "name": "character name",
+  "archetype": "short role title, no clothing",
+  "identity": "1-2 sentences: age, gender, ethnicity, timbre",
+  "style": "diction, inflection, how they colour the material",
+  "pace": "cadence in plain language",
+  "accent": "accent or dialect",
+  "scene": ""
+}
+
+Leave "scene" empty unless the series context implies a standing location and vibe (not a plot beat).
+
+Example:
+{
+  "name": "Julian Ward",
+  "archetype": "Senior Director of Corporate Risk",
+  "identity": "Late 50s Caucasian male. Authoritative, clinical baritone with dry, crisp diction.",
+  "style": "Flat, declarative statements. Always resolve sentences with downward pitch; never lift pitch at phrase ends. Treat catastrophic events with the quiet nonchalance of a balance sheet.",
+  "pace": "Slow, measured, and completely unhurried.",
+  "accent": "Neutral American, no regionalisms.",
+  "scene": ""
 }`
 
     let generatedText = ''
@@ -124,29 +143,11 @@ Synopsis: ${screenplayContext.synopsis || 'Not specified'}`
       generatedText = response.text.trim()
     }
     
-    // Extract JSON block using regex to safely ignore any conversational filler
-    const jsonMatch = generatedText.match(/\{[\s\S]*?"audio_profile"\s*:[\s\S]*?\}/);
-    
-    if (jsonMatch) {
-      try {
-        const parsed = JSON.parse(jsonMatch[0])
-        if (parsed.audio_profile) {
-          generatedText = parsed.audio_profile
-        }
-      } catch (e) {
-        console.error('[Director Prompt] Failed to parse JSON:', e)
-        // If JSON parsing fails but we extracted it, it might have trailing commas, etc.
-        // Fallback to stripping the JSON keys manually as a last resort
-        generatedText = jsonMatch[0].replace(/\{\s*"audio_profile"\s*:\s*"/, '').replace(/"\s*\}$/, '').trim()
-      }
-    } else {
-      // Complete fallback in case the model ignored the JSON instruction completely
-      generatedText = generatedText.replace(/^```[a-zA-Z]*\n?/, '')
-                                   .replace(/^```\n?/, '')
-                                   .replace(/\n?```$/, '')
-                                   .replace(/^(Here is the )?JSON requested:?\n?/i, '')
-                                   .trim()
-    }
+    const designed = parseDirectorVoiceDesignResponse(generatedText, {
+      name: name || undefined,
+      archetype: role || undefined,
+    })
+    generatedText = designed || ''
 
     if (!generatedText?.trim()) {
       console.error('[Director Prompt] Empty profile after parsing')

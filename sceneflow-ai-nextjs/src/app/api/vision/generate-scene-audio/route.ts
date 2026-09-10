@@ -320,6 +320,8 @@ export async function POST(req: NextRequest) {
       edgeVoiceName: characterEdgeVoice?.voiceName ?? null,
     })
 
+    // Bracket cues become ## THE SCENE on Voice Design prompts inside
+    // buildGeminiTtsPrompt; the Audio Profile itself stays unchanged.
     const synthesis = await generateAudio(
       optimized.text,
       finalVoiceConfig,

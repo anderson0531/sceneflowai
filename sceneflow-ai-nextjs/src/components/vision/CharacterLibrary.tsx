@@ -75,6 +75,7 @@ import {
   type CharacterGender,
 } from "@/lib/character/visualGender";
 import { buildGoogleVoiceAssignment } from "@/lib/tts/pickGeminiBaseVoice";
+import { coerceToVoiceDesignPrompt } from "@/lib/tts/geminiVoiceDesignPrompt";
 import {
   type WardrobeVoiceAnalysisResult,
 } from "@/lib/character/wardrobeVoiceAnalysis";
@@ -1899,10 +1900,16 @@ const CharacterCard = ({
         referenceImage: character.referenceImage,
       };
 
-      generatedPrompt = await resolveDirectorNote(directorContext, {
-        audioProfile: visionAnalysis?.audioProfile,
-        existingPrompt: character.voiceConfig?.prompt,
-      });
+      generatedPrompt = coerceToVoiceDesignPrompt(
+        await resolveDirectorNote(directorContext, {
+          audioProfile: visionAnalysis?.audioProfile,
+          existingPrompt: character.voiceConfig?.prompt,
+        }),
+        {
+          name: character.name,
+          archetype: character.role,
+        },
+      );
 
       const profile =
         generatedPrompt ||
