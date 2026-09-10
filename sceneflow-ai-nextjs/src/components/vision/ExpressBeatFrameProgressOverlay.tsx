@@ -31,6 +31,8 @@ export interface ExpressBeatFrameProgressOverlayProps {
   onRetryFailed?: (failedKeys: string[]) => void
   onDirectFailed?: (failedKeys: string[]) => void
   onAutoFailed?: (failedKeys: string[]) => void
+  /** Override the anchor so concurrent docks do not sit on top of each other. */
+  className?: string
 }
 
 const PHASE_LABELS: Record<ExpressOverlayPhase, string> = {
@@ -63,7 +65,7 @@ function PhasePill({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border',
+        'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium border',
         cls
       )}
     >
@@ -92,7 +94,7 @@ function FrameStatusRow({ item }: { item: ExpressBeatFrameItem }) {
   return (
     <div
       className={cn(
-        'flex items-center gap-2 rounded-md border px-3 py-2 text-sm',
+        'flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px]',
         item.status === 'running' && 'animate-pulse',
         cls
       )}
@@ -100,24 +102,31 @@ function FrameStatusRow({ item }: { item: ExpressBeatFrameItem }) {
     >
       <span className="shrink-0">
         {item.status === 'running' && (
-          <Loader2 className="w-4 h-4 animate-spin text-amber-300" aria-hidden />
+          <Loader2 className="w-3 h-3 animate-spin text-amber-300" aria-hidden />
         )}
         {item.status === 'done' && (
-          <Check className="w-4 h-4 text-emerald-300" aria-hidden />
+          <Check className="w-3 h-3 text-emerald-300" aria-hidden />
         )}
-        {item.status === 'error' && <X className="w-4 h-4 text-rose-300" aria-hidden />}
+        {item.status === 'error' && <X className="w-3 h-3 text-rose-300" aria-hidden />}
         {item.status === 'pending' && (
-          <span className="inline-block w-4 h-4 rounded-full border border-gray-500" aria-hidden />
+          <span className="inline-block w-3 h-3 rounded-full border border-gray-500" aria-hidden />
         )}
       </span>
       <span className="flex-1 truncate">{item.label}</span>
       {item.status === 'error' && item.error && (
-        <span className="text-[10px] text-rose-200/80 truncate max-w-[160px]">{item.error}</span>
+        <span className="text-[10px] text-rose-200/80 truncate max-w-[100px]">{item.error}</span>
       )}
     </div>
   )
 }
 
+/**
+ * Corner progress card for scene-frame Express.
+ *
+ * Used to be a full-screen modal that locked the page. The SSE run still
+ * happens in the open tab; this card only reports it so the user can keep
+ * editing. Closing the tab still stops the stream.
+ */
 export function ExpressBeatFrameProgressOverlay({
   visible,
   sceneNumber,
@@ -130,6 +139,7 @@ export function ExpressBeatFrameProgressOverlay({
   onRetryFailed,
   onDirectFailed,
   onAutoFailed,
+  className,
 }: ExpressBeatFrameProgressOverlayProps) {
   const t = useTranslations('production.expressScene')
   const [elapsedSec, setElapsedSec] = useState(0)
@@ -153,15 +163,6 @@ export function ExpressBeatFrameProgressOverlay({
     const id = window.setInterval(tick, 1000)
     return () => window.clearInterval(id)
   }, [visible, startedAt])
-
-  useEffect(() => {
-    if (!visible) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
-  }, [visible])
 
   const completedFrames = useMemo(() => countCompletedFrames(items), [items])
   const totalFrames = items.length
@@ -211,101 +212,133 @@ export function ExpressBeatFrameProgressOverlay({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4"
-      role="dialog"
-      aria-modal="true"
+      className={cn(
+        'fixed bottom-4 right-4 z-[80] w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-700 bg-slate-900/95 shadow-2xl backdrop-blur',
+        className
+      )}
+      role="status"
+      aria-live="polite"
       aria-labelledby="express-beat-frame-progress-title"
     >
-      <div className="w-full max-w-lg rounded-lg border border-gray-700 bg-gray-950/95 shadow-2xl">
-        <div className="border-b border-gray-800 px-5 py-4">
-          <div className="flex items-center gap-2">
-            {!finished && <Loader2 className="w-5 h-5 animate-spin text-amber-300" />}
-            <h2
+      <div className="border-b border-slate-800 px-3 py-2">
+        <div className="flex items-start gap-2">
+          <div className="mt-0.5 shrink-0">
+            {!finished ? (
+              <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
+            ) : frameErrors || preflightError ? (
+              <X className="h-4 w-4 text-amber-400" />
+            ) : (
+              <Check className="h-4 w-4 text-emerald-400" />
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p
               id="express-beat-frame-progress-title"
-              className="text-base font-semibold text-gray-100"
+              className="truncate text-xs font-semibold text-white"
             >
               Express Scene {sceneNumber}
-            </h2>
-          </div>
-          {preflightError && (
-            <p className="mt-2 text-sm text-rose-300">{preflightError}</p>
-          )}
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {(Object.keys(PHASE_LABELS) as ExpressOverlayPhase[]).map((phase) => (
-              <PhasePill key={phase} label={PHASE_LABELS[phase]} status={phases[phase]} />
-            ))}
-          </div>
-        </div>
-
-        <div className="px-5 py-4 space-y-3">
-          <div className="text-sm text-gray-300" aria-live="polite">
-            {totalFrames > 0 ? (
-              <>
-                {completedFrames}/{totalFrames} frames complete
-                {' · '}
-                {elapsedSec}s elapsed
-                {' · '}
-                {formatEta(etaSec)}
-              </>
+            </p>
+            {!finished ? (
+              <p className="mt-0.5 text-[11px] text-slate-400">
+                Generating frames — you can keep editing
+              </p>
+            ) : preflightError ? (
+              <p className="mt-0.5 text-[11px] text-rose-300">{preflightError}</p>
+            ) : frameErrors ? (
+              <p className="mt-0.5 text-[11px] text-amber-300/90">
+                Some frames failed — retry to fill the gaps
+              </p>
             ) : (
-              <>
-                Preparing scene… {elapsedSec}s elapsed
-              </>
+              <p className="mt-0.5 text-[11px] text-slate-400">Frames ready</p>
             )}
           </div>
+          {showClose ? (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={t('close')}
+              className="shrink-0 rounded p-0.5 text-slate-500 transition-colors hover:text-slate-200"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          ) : null}
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1">
+          {(Object.keys(PHASE_LABELS) as ExpressOverlayPhase[]).map((phase) => (
+            <PhasePill key={phase} label={PHASE_LABELS[phase]} status={phases[phase]} />
+          ))}
+        </div>
+      </div>
 
-          {totalFrames > 0 && (
-            <div className="h-2 w-full rounded bg-gray-800 overflow-hidden">
-              <div
-                className="h-full rounded bg-gradient-to-r from-emerald-500 via-amber-400 to-emerald-500 transition-[width] duration-300 ease-out"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-          )}
-
-          {totalFrames > 0 && (
-            <div className="max-h-[min(50vh,320px)] overflow-y-auto space-y-1.5 pr-1">
-              {items.map((item) => (
-                <FrameStatusRow key={item.key} item={item} />
-              ))}
-            </div>
+      <div className="px-3 py-2 space-y-2">
+        <div className="text-[11px] text-slate-400">
+          {totalFrames > 0 ? (
+            <>
+              {completedFrames}/{totalFrames} frames
+              {' · '}
+              {elapsedSec}s
+              {' · '}
+              {formatEta(etaSec)}
+            </>
+          ) : (
+            <>Preparing scene… {elapsedSec}s</>
           )}
         </div>
 
-        {showClose && (
-          <div className="border-t border-gray-800 px-5 py-3 flex flex-wrap justify-end gap-2">
-            {frameErrors && onRetryFailed && (
-              <Button
-                size="sm"
-                onClick={() => onRetryFailed(failedExpressFrameKeys(items))}
-              >
-                {t('retryFailed')}
-              </Button>
-            )}
-            {frameErrors && onDirectFailed && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onDirectFailed(failedExpressFrameKeys(items))}
-              >
-                {t('direct')}
-              </Button>
-            )}
-            {frameErrors && onAutoFailed && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onAutoFailed(failedExpressFrameKeys(items))}
-              >
-                {t('auto')}
-              </Button>
-            )}
-            <Button variant="outline" size="sm" onClick={onClose}>
-              {t('close')}
-            </Button>
+        {totalFrames > 0 && (
+          <div className="h-1 w-full overflow-hidden rounded-full bg-slate-800">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 transition-[width] duration-500"
+              style={{ width: `${Math.max(finished ? 0 : 4, progressPct)}%` }}
+            />
+          </div>
+        )}
+
+        {totalFrames > 0 && (
+          <div className="max-h-40 overflow-y-auto space-y-1 pr-0.5">
+            {items.map((item) => (
+              <FrameStatusRow key={item.key} item={item} />
+            ))}
           </div>
         )}
       </div>
+
+      {showClose && (
+        <div className="border-t border-slate-800 px-3 py-2 flex flex-wrap justify-end gap-1.5">
+          {frameErrors && onRetryFailed && (
+            <Button
+              size="sm"
+              onClick={() => onRetryFailed(failedExpressFrameKeys(items))}
+              className="h-7 text-[11px]"
+            >
+              {t('retryFailed')}
+            </Button>
+          )}
+          {frameErrors && onDirectFailed && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onDirectFailed(failedExpressFrameKeys(items))}
+              className="h-7 text-[11px]"
+            >
+              {t('direct')}
+            </Button>
+          )}
+          {frameErrors && onAutoFailed && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onAutoFailed(failedExpressFrameKeys(items))}
+              className="h-7 text-[11px]"
+            >
+              {t('auto')}
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={onClose} className="h-7 text-[11px]">
+            {t('close')}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
