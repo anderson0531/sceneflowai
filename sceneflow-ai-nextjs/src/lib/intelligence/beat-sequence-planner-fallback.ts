@@ -182,10 +182,6 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
   if (!body) return ''
 
   const parts: string[] = []
-  const shot = [direction?.shotType?.trim(), direction?.cameraAngle?.trim()]
-    .filter(Boolean)
-    .join(', ')
-  appendFacet(parts, shot)
   appendFacet(parts, body)
   appendFacet(parts, direction?.blocking, 'Blocking')
   appendFacet(parts, direction?.propInteraction, 'Prop handling')
@@ -199,6 +195,15 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
     .filter((prop) => prop && !described.includes(prop.toLowerCase()))
   if (unmentionedProps.length > 0) {
     parts.push(`Props in frame: ${unmentionedProps.join(', ')}.`)
+  }
+
+  // Framing leads the description, but a body read back from a previously
+  // composed frame already opens with it.
+  const shot = [direction?.shotType?.trim(), direction?.cameraAngle?.trim()]
+    .filter(Boolean)
+    .join(', ')
+  if (shot && !described.includes(shot.toLowerCase())) {
+    parts.unshift(asSentence(shot))
   }
 
   return parts.join(' ')
