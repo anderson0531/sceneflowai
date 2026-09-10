@@ -11,6 +11,16 @@ export interface VocalAttributes {
   authority?: string
   warmth?: string
   accent?: string
+  /** Perceived pitch band within the speaker's gender range; drives base-voice selection. */
+  register?: string
+  /** Perceived heft of the voice, independent of pitch. */
+  vocalWeight?: string
+  /** Words per minute, so cadence reaches the model as a number it can hold. */
+  wpm?: number
+  /** Pitch-contour rule, e.g. flat declarative with downward resolution. */
+  inflection?: string
+  /** Standing emotional state when no scene direction overrides it. */
+  emotionalDefault?: string
 }
 
 export interface WardrobeVoiceCharacterInput {
@@ -83,6 +93,8 @@ export function getWardrobeVoiceImageForCharacter(
 
 export function formatVocalAttributesForDescription(attrs: VocalAttributes): string {
   const parts: string[] = []
+  if (attrs.register?.trim()) parts.push(`${attrs.register.trim()} register`)
+  if (attrs.vocalWeight?.trim()) parts.push(`${attrs.vocalWeight.trim()} vocal weight`)
   if (attrs.timbre?.trim()) parts.push(`${attrs.timbre.trim()} timbre`)
   if (attrs.pitch?.trim()) parts.push(`${attrs.pitch.trim()} pitch`)
   if (attrs.pace?.trim()) parts.push(`${attrs.pace.trim()} pace`)
@@ -151,10 +163,15 @@ REQUIREMENTS:
 1. "gender" — exactly "male" or "female" from narrative and${hasPortrait ? ' portrait' : ''} cues.
 2. "apparentAge" — short phrase (e.g. "late 40s", "early 60s", "mid 20s").
 3. "ethnicity" — optional, brief accent/cultural hint if inferable.
-4. "vocalAttributes" — object with short phrases:
+4. "vocalAttributes" — the acoustic parameters. These select the base voice, so be literal, not evocative:
+   - "register" — EXACTLY one of: low, low-mid, mid, mid-high, high. Perceived pitch band within this character's own gender range.
+   - "vocalWeight" — EXACTLY one of: light, medium, heavy. Heft and body, independent of pitch.
    - "timbre" (e.g. resonant baritone, bright tenor, warm alto)
    - "pitch" (e.g. low, mid, high)
    - "pace" (e.g. measured, brisk, deliberate)
+   - "wpm" — integer words per minute, 95–190. Deliberate ≈ 110, measured ≈ 130, conversational ≈ 150, brisk ≈ 170.
+   - "inflection" — pitch-contour rule, e.g. "flat and declarative; resolve sentences downward, no up-speak".
+   - "emotionalDefault" — standing affect when no scene direction applies, e.g. "clinical detachment".
    - "authority" (e.g. quiet authority, commanding, approachable)
    - "warmth" (e.g. warm, neutral, cool)
    - "accent" (e.g. neutral American, British RP) — optional
@@ -167,27 +184,66 @@ OUTPUT: Return ONLY valid JSON, no markdown:
   "apparentAge": "late 50s",
   "ethnicity": "optional string",
   "vocalAttributes": {
+    "register": "low-mid",
+    "vocalWeight": "heavy",
     "timbre": "resonant baritone",
     "pitch": "low-mid",
-    "pace": "measured",
+    "pace": "deliberate and controlled",
+    "wpm": 115,
+    "inflection": "flat and declarative; resolve sentences downward, no up-speak",
+    "emotionalDefault": "calm, composed detachment",
     "authority": "quiet authority",
-    "warmth": "neutral",
-    "accent": "neutral British"
+    "warmth": "cool",
+    "accent": "neutral American"
   },
   "voiceDescription": "casting brief paragraph",
   "audioProfile": "Director's Note paragraph"
 }`
 }
 
+const REGISTER_VALUES = ['low', 'low-mid', 'mid', 'mid-high', 'high'] as const
+const WEIGHT_VALUES = ['light', 'medium', 'heavy'] as const
+
+/** Accept only the documented enum values so scoring never sees improvised bands. */
+function parseEnum<T extends string>(raw: unknown, allowed: readonly T[]): T | undefined {
+  const value = String(raw ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+  return allowed.find((option) => option === value)
+}
+
 function parseVocalAttributes(raw: unknown): VocalAttributes | undefined {
   if (!raw || typeof raw !== 'object') return undefined
   const obj = raw as Record<string, unknown>
   const attrs: VocalAttributes = {}
-  const keys = ['timbre', 'pitch', 'pace', 'authority', 'warmth', 'accent'] as const
-  for (const key of keys) {
+
+  const textKeys = [
+    'timbre',
+    'pitch',
+    'pace',
+    'authority',
+    'warmth',
+    'accent',
+    'inflection',
+    'emotionalDefault',
+  ] as const
+  for (const key of textKeys) {
     const val = String(obj[key] ?? '').trim()
-    if (val) attrs[key] = val.slice(0, 80)
+    if (val) attrs[key] = val.slice(0, 160)
   }
+
+  const register = parseEnum(obj.register, REGISTER_VALUES)
+  if (register) attrs.register = register
+
+  const vocalWeight = parseEnum(obj.vocalWeight, WEIGHT_VALUES)
+  if (vocalWeight) attrs.vocalWeight = vocalWeight
+
+  const wpm = Number(obj.wpm)
+  if (Number.isFinite(wpm) && wpm >= 80 && wpm <= 220) {
+    attrs.wpm = Math.round(wpm)
+  }
+
   return Object.keys(attrs).length > 0 ? attrs : undefined
 }
 

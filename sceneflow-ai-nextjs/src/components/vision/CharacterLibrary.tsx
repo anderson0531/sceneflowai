@@ -81,6 +81,7 @@ import {
   vocalCharacterContext,
 } from "@/lib/tts/buildCharacterVoiceProfile";
 import {
+  type VocalAttributes,
   type WardrobeVoiceAnalysisResult,
 } from "@/lib/character/wardrobeVoiceAnalysis";
 import type { EdgeVoiceConfig } from "@/types/vision";
@@ -1754,7 +1755,7 @@ const CharacterCard = ({
   const generateDirectorNote = async (
     directorContext: CharacterContext,
     options?: { selectedInstructions?: string[] },
-  ): Promise<string | null> => {
+  ): Promise<{ prompt: string; vocalAttributes?: VocalAttributes } | null> => {
     try {
       const characterRef = character.referenceImage?.trim();
       const wardrobeImageUrl = characterRef?.startsWith("http")
@@ -1772,8 +1773,12 @@ const CharacterCard = ({
       });
       if (!promptRes.ok) return null;
       const promptData = await promptRes.json().catch(() => ({}));
-      const script = (promptData?.script || "").trim();
-      return script || null;
+      const prompt = (promptData?.script || "").trim();
+      if (!prompt) return null;
+      return {
+        prompt,
+        vocalAttributes: promptData?.vocalAttributes as VocalAttributes | undefined,
+      };
     } catch (err) {
       console.warn("[Voice] Director prompt generation failed:", err);
       return null;
@@ -1786,14 +1791,13 @@ const CharacterCard = ({
       audioProfile?: string | null;
       existingPrompt?: string | null;
     },
-  ): Promise<string> => {
+  ): Promise<{ prompt: string; vocalAttributes?: VocalAttributes }> => {
     const fromDirector = await generateDirectorNote(directorContext);
-    return (
-      fromDirector?.trim() ||
-      fallbacks.audioProfile?.trim() ||
-      fallbacks.existingPrompt?.trim() ||
-      ""
-    );
+    if (fromDirector) return fromDirector;
+    return {
+      prompt:
+        fallbacks.audioProfile?.trim() || fallbacks.existingPrompt?.trim() || "",
+    };
   };
 
   const resolvedGender = useMemo(
@@ -1892,7 +1896,11 @@ const CharacterCard = ({
       }
 
       const analysisProfile = visionAnalysis
-        ? characterVoiceProfileFromAnalysis(visionAnalysis)
+        ? characterVoiceProfileFromAnalysis(visionAnalysis, {
+            name: character.name,
+            role: character.role,
+            personality: character.keyFeature ?? character.personality,
+          })
         : null;
 
       const scoringContext: CharacterContext = {
@@ -1915,12 +1923,19 @@ const CharacterCard = ({
         referenceImage: character.referenceImage,
       };
 
-      generatedPrompt =
-        analysisProfile?.directorNotes ||
-        (await resolveDirectorNote(directorContext, {
+      // The system instruction is what Gemini TTS actually consumes; the prose
+      // director note is only a fallback for characters with no analysis.
+      let vocalAttributes = analysisProfile?.vocalAttributes;
+      if (analysisProfile?.systemInstruction) {
+        generatedPrompt = analysisProfile.systemInstruction;
+      } else {
+        const resolved = await resolveDirectorNote(directorContext, {
           audioProfile: visionAnalysis?.audioProfile,
           existingPrompt: character.voiceConfig?.prompt,
-        }));
+        });
+        generatedPrompt = resolved.prompt;
+        vocalAttributes = resolved.vocalAttributes ?? vocalAttributes;
+      }
 
       const matchingBrief =
         analysisProfile?.matchingBrief ||
@@ -1933,6 +1948,7 @@ const CharacterCard = ({
         age: scoringContext.age,
         role: scoringContext.role,
         screenplayContext: screenplayContext as ScreenplayContext,
+        vocalAttributes,
         prompt: generatedPrompt,
       });
 
