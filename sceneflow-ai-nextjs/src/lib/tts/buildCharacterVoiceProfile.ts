@@ -138,6 +138,7 @@ export function vocalCharacterContext(
     voiceDescription: narrative.matchingBrief,
     description: narrative.narrative,
     referenceImage: character.referenceImage,
+    appearanceDescription: character.appearanceDescription?.trim() || undefined,
   }
 }
 

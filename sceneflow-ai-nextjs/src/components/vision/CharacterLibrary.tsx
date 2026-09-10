@@ -93,6 +93,11 @@ import {
 import { getSceneBeats } from "@/lib/script/beatMigration";
 import { runWithConcurrencyLimit } from "@/lib/utils/concurrency";
 import { DictationTextarea } from "@/components/ui/DictationTextarea";
+import { requestCastingBrief } from "@/lib/character/requestCastingBrief";
+import {
+  applyCastingBriefUpdate,
+  refreshCastingBriefForAppearance,
+} from "@/lib/character/applyCastingBriefUpdate";
 
 /** Parse API response body without throwing on Vercel HTML/plain-text error pages (504, etc.). */
 async function readJsonSafe(res: Response): Promise<Record<string, unknown>> {
@@ -122,7 +127,11 @@ export interface CharacterLibraryProps {
   onUploadCharacter: (characterId: string, file: File) => void;
   onApproveCharacter: (characterId: string) => void;
   onUpdateCharacterAttributes?: (characterId: string, attributes: any) => void;
-  onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void;
+  onUpdateCharacterVoice?: (
+    characterId: string,
+    voiceConfig: any,
+    options?: { quiet?: boolean },
+  ) => void;
   onUpdateCharacterEdgeVoice?: (
     characterId: string,
     lang: string,
@@ -391,7 +400,11 @@ interface CharacterCardProps {
     charId: string,
     section: "coreIdentity" | "appearance",
   ) => void;
-  onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void;
+  onUpdateCharacterVoice?: (
+    characterId: string,
+    voiceConfig: any,
+    options?: { quiet?: boolean },
+  ) => void;
   onUpdateCharacterEdgeVoice?: (
     characterId: string,
     lang: string,
@@ -1422,8 +1435,9 @@ const CharacterCard = ({
   const [isGeneratingWardrobe, setIsGeneratingWardrobe] = useState(false);
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
   const [voiceProfileDialogOpen, setVoiceProfileDialogOpen] = useState(false);
-  const [editingVoiceDescription, setEditingVoiceDescription] = useState(false);
-  const [voiceDescriptionText, setVoiceDescriptionText] = useState("");
+  const [editingCastingBrief, setEditingCastingBrief] = useState(false);
+  const [castingDirectorText, setCastingDirectorText] = useState("");
+  const [isGeneratingCasting, setIsGeneratingCasting] = useState(false);
   const [expandedWardrobeDescriptions, setExpandedWardrobeDescriptions] = useState<Set<string>>(new Set());
 
   const toggleWardrobeDescription = (wardrobeId: string) => {
@@ -2007,6 +2021,7 @@ const CharacterCard = ({
           ? "Body description recommended from the screenplay."
           : "Body description updated.",
       );
+      await syncCastingBriefFromAppearance(nextDescription);
     } catch (error) {
       console.error("[Direct Body] Error:", error);
       toast.error(
@@ -2014,6 +2029,85 @@ const CharacterCard = ({
       );
     } finally {
       setIsGeneratingBody(false);
+    }
+  };
+
+  const persistCastingBrief = (brief: string, quietRematch: boolean) => {
+    const applied = applyCastingBriefUpdate(character, brief, {
+      screenplayContext: screenplayContext as ScreenplayContext,
+    });
+    onUpdateCharacterAttributes?.(characterId, {
+      voiceDescription: applied.voiceDescription,
+    });
+    if (applied.voiceConfig) {
+      onUpdateCharacterVoice?.(characterId, applied.voiceConfig, {
+        quiet: quietRematch,
+      });
+    }
+  };
+
+  const syncCastingBriefFromAppearance = async (appearanceDescription: string) => {
+    if (isNarratorCharacter) return;
+    try {
+      const applied = await refreshCastingBriefForAppearance({
+        character,
+        appearanceDescription,
+        screenplayContext: screenplayContext as ScreenplayContext,
+        hasPortrait: hasCharacterReferenceForVoice,
+      });
+      if (!applied) return;
+      persistCastingBrief(applied.voiceDescription, true);
+      toast.success("Casting brief updated to match the body.");
+    } catch (error) {
+      console.warn("[Casting Brief] Appearance sync failed:", error);
+      toast.error("Body updated, but the casting brief could not be refreshed.");
+    }
+  };
+
+  const handleGenerateCasting = async (recommendMode: boolean = false) => {
+    if (!onUpdateCharacterAttributes) {
+      toast.error("Casting brief update is not available.");
+      return;
+    }
+    if (!recommendMode && !castingDirectorText.trim()) {
+      toast.error("Describe the change, or use Recommend from the screenplay.");
+      return;
+    }
+
+    setIsGeneratingCasting(true);
+    try {
+      const { voiceDescription } = await requestCastingBrief({
+        characterName: character.name,
+        characterRole: character.role,
+        gender: character.gender,
+        age: character.age,
+        ethnicity: character.ethnicity,
+        genre: screenplayContext?.genre,
+        tone: screenplayContext?.tone,
+        setting: screenplayContext?.setting,
+        logline: screenplayContext?.logline,
+        visualStyle: screenplayContext?.visualStyle,
+        appearanceDescription: character.appearanceDescription,
+        currentBrief: character.voiceDescription,
+        directorNotes: recommendMode ? undefined : castingDirectorText,
+        recommendMode,
+        hasPortrait: hasCharacterReferenceForVoice,
+      });
+      persistCastingBrief(voiceDescription, false);
+      setCastingDirectorText("");
+      setEditingCastingBrief(false);
+      toast.success(
+        recommendMode
+          ? "Casting brief recommended from appearance and role."
+          : "Casting brief updated.",
+      );
+    } catch (error) {
+      console.error("[Direct Casting] Error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to generate casting brief",
+      );
+    } finally {
+      setIsGeneratingCasting(false);
     }
   };
 
@@ -3676,56 +3770,95 @@ const CharacterCard = ({
                     <FileText className="w-3.5 h-3.5" />
                     Casting Brief
                   </span>
-                  {!editingVoiceDescription && onUpdateCharacterAttributes && (
+                  {!editingCastingBrief && onUpdateCharacterAttributes && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        setVoiceDescriptionText(character.voiceDescription || "");
-                        setEditingVoiceDescription(true);
+                        setCastingDirectorText("");
+                        setEditingCastingBrief(true);
                       }}
-                      className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
-                      title="Edit casting brief used for voice matching"
+                      className="p-1 text-gray-400 hover:text-purple-500 transition-colors"
+                      title="Direct casting brief"
                     >
-                      <Edit className="w-3 h-3" />
+                      <Sparkles className="w-3 h-3" />
                     </button>
                   )}
                 </div>
-                {editingVoiceDescription ? (
-                  <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
-                    <textarea
-                      value={voiceDescriptionText}
-                      onChange={(e) => setVoiceDescriptionText(e.target.value)}
-                      placeholder="e.g., Intelligent male voice with quiet authority, measured pace, and deep conviction."
-                      className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                {editingCastingBrief ? (
+                  <div
+                    className="space-y-2 p-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center gap-2 text-xs font-medium text-purple-700 dark:text-purple-300">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Direct casting
+                    </div>
+                    {character.voiceDescription?.trim() ? (
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed">
+                        Current — {character.voiceDescription.trim()}
+                      </p>
+                    ) : null}
+                    <DictationTextarea
+                      value={castingDirectorText}
+                      onChange={setCastingDirectorText}
+                      placeholder={
+                        character.voiceDescription?.trim()
+                          ? "Say the change, e.g. Older, drier, keep the quiet authority"
+                          : "Describe the voice, or leave empty and Recommend from appearance and role"
+                      }
                       rows={3}
-                      autoFocus
+                      disabled={isGeneratingCasting}
+                      className="text-xs border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-800"
                     />
-                    <div className="flex gap-2 justify-end">
+                    <div className="flex gap-2">
                       <button
-                        onClick={() => setEditingVoiceDescription(false)}
-                        className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleGenerateCasting(false);
+                        }}
+                        disabled={isGeneratingCasting || !castingDirectorText.trim()}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Cancel
+                        {isGeneratingCasting ? (
+                          <>
+                            <Loader className="w-3 h-3 animate-spin" />
+                            Applying...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-3 h-3" />
+                            Apply
+                          </>
+                        )}
                       </button>
                       <button
-                        onClick={() => {
-                          onUpdateCharacterAttributes?.(characterId, {
-                            voiceDescription: voiceDescriptionText.trim(),
-                          });
-                          setEditingVoiceDescription(false);
-                          toast.success("Casting brief updated");
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleGenerateCasting(true);
                         }}
-                        className="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded flex items-center gap-1"
+                        disabled={isGeneratingCasting}
+                        className="px-2 py-1.5 text-xs bg-amber-500 text-white rounded hover:bg-amber-600 disabled:opacity-50"
+                        title="Recommend a casting brief from appearance and role"
                       >
-                        <Check className="w-3 h-3" />
-                        Save
+                        Recommend
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingCastingBrief(false);
+                          setCastingDirectorText("");
+                        }}
+                        disabled={isGeneratingCasting}
+                        className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                      >
+                        Cancel
                       </button>
                     </div>
                   </div>
                 ) : (
                   <p className="text-xs text-gray-500 dark:text-gray-500 italic line-clamp-3">
                     {character.voiceDescription ||
-                      "Run Match or edit to add a casting brief for voice matching."}
+                      "Direct a casting brief, or Recommend from appearance and role"}
                   </p>
                 )}
               </div>

@@ -104,8 +104,8 @@ describe('buildWardrobeVoiceAnalysisPrompt', () => {
     expect(prompt).toContain('Professor Gideon Croft')
     expect(prompt).toContain('quiet authority')
     expect(prompt).toContain('academic outcast')
-    expect(prompt).toContain('MATCHING BRIEF')
-    expect(prompt).toContain('Do NOT mention appearance')
+    expect(prompt).toContain('CASTING BRIEF')
+    expect(prompt).toContain('Do NOT mention clothing')
     expect(prompt).not.toContain('FACE only')
     expect(prompt).not.toContain('disambiguation only')
     expect(prompt).toContain('PORTRAIT REFERENCE')
@@ -119,6 +119,19 @@ describe('buildWardrobeVoiceAnalysisPrompt', () => {
     })
     expect(prompt).toContain('NO PORTRAIT')
     expect(prompt).not.toContain('PORTRAIT REFERENCE')
+  })
+
+  it('includes standing physical identity in the casting brief instructions', () => {
+    const prompt = buildWardrobeVoiceAnalysisPrompt('Julian Ward', {
+      characterRole: 'corporate fixer',
+      appearanceDescription:
+        'Late 50s Caucasian man, tall lean build, deep-set eyes, salt-and-pepper hair.',
+      hasPortrait: false,
+    })
+    expect(prompt).toContain('PHYSICAL IDENTITY')
+    expect(prompt).toContain('salt-and-pepper hair')
+    expect(prompt).toContain('Combine standing physical identity')
+    expect(prompt).not.toContain('Role and personality only')
   })
 })
 

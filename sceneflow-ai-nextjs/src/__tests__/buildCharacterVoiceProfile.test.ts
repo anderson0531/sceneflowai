@@ -67,6 +67,7 @@ describe('vocalCharacterContext', () => {
       keyFeature: 'measured gravitas',
     })
     expect(ctx.description).toBeUndefined()
+    expect(ctx.appearanceDescription).toBe('Red hair, torn grey hoodie')
     expect(ctx.personality).toBe('measured gravitas')
     expect(ctx.role).toBe('guide')
   })

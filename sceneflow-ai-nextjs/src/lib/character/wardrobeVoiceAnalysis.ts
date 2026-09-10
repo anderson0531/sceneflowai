@@ -111,6 +111,7 @@ export function buildWardrobeVoiceAnalysisPrompt(
     characterDescription?: string
     characterRole?: string
     personality?: string
+    appearanceDescription?: string
     hasPortrait?: boolean
   },
 ): string {
@@ -133,18 +134,23 @@ export function buildWardrobeVoiceAnalysisPrompt(
     narrativeLines.push(`Story role / personality: ${options.characterDescription.trim()}`)
   }
 
+  const appearance = options?.appearanceDescription?.trim()
+  const appearanceBlock = appearance
+    ? `\nPHYSICAL IDENTITY (from Body Description — use this for age, ethnicity, build, face, and hair cues):\n${appearance}\n`
+    : ''
+
   const portraitBlock = hasPortrait
     ? `PORTRAIT REFERENCE:
-An attached character portrait is provided. Use it to refine gender, apparent age, ethnicity, and vocal timbre — but the narrative profile above is the PRIMARY casting signal. Reconcile portrait cues with the character's role and personality; if they conflict, favor the narrative unless the portrait clearly contradicts gender. Do not describe clothing, hair, or body in the output.`
+An attached character portrait is provided. Use it to refine gender, apparent age, ethnicity, and how the person should sound. Reconcile portrait cues with role and the physical identity above; if they conflict on gender, favor the narrative unless the portrait clearly contradicts it. Do not describe clothing or wardrobe.`
     : `NO PORTRAIT:
-No reference image is attached. Derive the voice profile from role, personality, and production context below.`
+No reference image is attached. Derive the voice profile from role, physical identity, and production context below.`
 
   return `You are an expert voice casting director for film, television, and documentary narration.
 
 CHARACTER: ${characterName}
 
 ${narrativeLines.length > 0 ? `CHARACTER NARRATIVE (PRIMARY — cast from this first):\n${narrativeLines.join('\n')}` : 'CHARACTER NARRATIVE: Limited — infer voice from name and production context.'}
-
+${appearanceBlock}
 ${screenplayLines.length > 0 ? `\nPRODUCTION CONTEXT:\n${screenplayLines.join('\n')}` : ''}
 
 ${portraitBlock}
@@ -175,8 +181,8 @@ REQUIREMENTS:
    - "authority" (e.g. quiet authority, commanding, approachable)
    - "warmth" (e.g. warm, neutral, cool)
    - "accent" (e.g. neutral American, British RP) — optional
-5. "voiceDescription" — 200–600 characters MATCHING BRIEF for catalog scoring only. Archetype vocabulary: authoritative, intellectual, measured, resonant, articulate, quiet authority, conviction, corporate, warm, gravelly, crisp, professional, confident, steady, polished, engaging, deep, bright, gentle, energetic. Role and personality only — no clothing, hair, body, plot, or dialogue.
-6. "audioProfile" — 4–5 sentences, Director's Note for Gemini TTS. Vocal style only: timbre, pitch, cadence, accent, texture, emotional delivery. Do NOT write dialogue. Do NOT mention appearance, wardrobe, or plot.
+5. "voiceDescription" — 200–600 characters CASTING BRIEF. Combine standing physical identity (age, ethnicity, build, face, hair) with role, demeanor, cadence, and accent. This is the matching brief and the Gemini voice profile. No clothing, wardrobe, plot, or dialogue.
+6. "audioProfile" — 4–5 sentences, Director's Note for Gemini TTS. Vocal style only: timbre, pitch, cadence, accent, texture, emotional delivery. Do NOT write dialogue. Do NOT mention clothing, wardrobe, or plot.
 
 OUTPUT: Return ONLY valid JSON, no markdown:
 {
