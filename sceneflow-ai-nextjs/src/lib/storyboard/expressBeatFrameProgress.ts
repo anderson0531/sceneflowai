@@ -105,7 +105,7 @@ export function hasFrameErrors(items: ExpressBeatFrameItem[]): boolean {
 export const EXPRESS_IMAGE_ETA_PRIOR_SEC = 55
 
 /** Overlay default; keep in sync with DEFAULT_EXPRESS_IMAGE_CONCURRENCY. */
-export const EXPRESS_IMAGE_ETA_CONCURRENCY_DEFAULT = 2
+export const EXPRESS_IMAGE_ETA_CONCURRENCY_DEFAULT = 1
 
 export function estimateRemainingSec(params: {
   /** Image-phase elapsed only — not overlay time including direction/audio. */

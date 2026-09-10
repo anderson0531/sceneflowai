@@ -3,6 +3,7 @@ import {
   isExpressBeatPoolRetryable,
   isExpressImageCanaryAbortError,
   isExpressImageRateLimitError,
+  isIdentityRefLadderExhausted,
   isIdentityRefRateLimitExhausted,
   isTransientExpressImageError,
   formatExpressImageErrorForUser,
@@ -118,6 +119,23 @@ describe('isIdentityRefRateLimitExhausted', () => {
   })
 })
 
+describe('isIdentityRefLadderExhausted', () => {
+  it('is fatal only after the 3-retry ladder, not a fail-fast 1-attempt 429', () => {
+    expect(
+      isIdentityRefLadderExhausted(
+        err(
+          'Vertex Gemini Image error 429: identity-ref rate limit exhausted after 3 retries: RESOURCE_EXHAUSTED'
+        )
+      )
+    ).toBe(true)
+    expect(
+      isIdentityRefLadderExhausted(
+        err('Vertex Gemini Image error 429: identity-ref rate limit exhausted after 1 attempt(s)')
+      )
+    ).toBe(false)
+  })
+})
+
 describe('isExpressBeatPoolRetryable', () => {
   it('retries gateway timeouts but not identity-ref exhaustion', () => {
     expect(isExpressBeatPoolRetryable(err('Scene image generation failed (HTTP 504)', 504))).toBe(
@@ -131,6 +149,11 @@ describe('isExpressBeatPoolRetryable', () => {
         )
       )
     ).toBe(false)
+    expect(
+      isExpressBeatPoolRetryable(
+        err('Vertex Gemini Image error 429: identity-ref rate limit exhausted after 1 attempt(s)')
+      )
+    ).toBe(true)
   })
 })
 

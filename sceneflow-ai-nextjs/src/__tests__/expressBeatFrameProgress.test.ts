@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildExpressBeatFrameItems,
   countCompletedFrames,
+  EXPRESS_IMAGE_ETA_CONCURRENCY_DEFAULT,
   estimateRemainingSec,
   formatEta,
   slotKeyFromBeat,
@@ -65,6 +66,10 @@ describe('expressBeatFrameProgress', () => {
     const items = buildExpressBeatFrameItems(scene, { selectedFrameKeys: ['b1', 'b2'] })
     const updated = updateBeatFrameItemStatus(items, 'b1', 'done')
     expect(countCompletedFrames(updated)).toBe(1)
+  })
+
+  it('defaults ETA concurrency to sequential image jobs', () => {
+    expect(EXPRESS_IMAGE_ETA_CONCURRENCY_DEFAULT).toBe(1)
   })
 
   it('estimateRemainingSec uses image-phase rate after first completion', () => {

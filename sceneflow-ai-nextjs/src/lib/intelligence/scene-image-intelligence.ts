@@ -27,10 +27,9 @@ import {
   DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
 } from '@/lib/character/characterReferenceAssembly'
 import { LOCATION_TURNAROUND_USER_PROMPT_HINT } from '@/lib/vision/locationReferencePrompts'
-import {
-  formatLookbookForPlannerPrompt,
-  type ProjectLookbook,
-} from '@/lib/intelligence/project-lookbook-fallback'
+import { type ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
+import { composeBeatStillPrompt } from '@/lib/intelligence/beat-sequence-planner-fallback'
+import { parseStillPromptSource } from '@/lib/imagen/structuredStillPrompt'
 import type { BeatKind } from '@/lib/script/segmentTypes'
 
 // =============================================================================
@@ -171,9 +170,8 @@ export interface SceneImageIntelligenceRequest {
   /** Natural-language director notes applied on top of the beat-aligned baseline */
   userDirection?: string
   /**
-   * The one look every frame in this film shares. When present it is copied
-   * verbatim into [GLOBAL STYLE ANCHOR] so a frame regenerated on its own still
-   * matches the frames around it.
+   * The one look every frame in this film shares. Code wraps Action/Framing
+   * in the lookbook style anchor — the model must not reprint it.
    */
   lookbook?: ProjectLookbook
   /** This scene's sanctioned departure from the master look. */
@@ -373,6 +371,19 @@ export function hasCompleteSceneImageComposition(prompt: string): boolean {
   return true
 }
 
+/**
+ * Action text we can wrap in a lookbook anchor. Style-only truncated JSON
+ * (GLOBAL STYLE ANCHOR with no Action/Framing) is not usable.
+ */
+export function hasUsableSceneImageAction(prompt: string): boolean {
+  if (hasCompleteSceneImageComposition(prompt)) return true
+  const { actionFraming, style } = parseStillPromptSource(prompt)
+  if (!actionFraming || actionFraming.length < 20) return false
+  if (style && actionFraming === style) return false
+  if (/^\[GLOBAL STYLE ANCHOR\]/i.test(actionFraming)) return false
+  return true
+}
+
 function normalizeCachedSceneImageResult(
   result: SceneImageIntelligenceResult
 ): SceneImageIntelligenceResult | null {
@@ -552,11 +563,15 @@ CRITICAL RULES:
 
 8. PROMPT STRUCTURE — the "prompt" field MUST use these exact section headers in order (preserve newlines):
 
-[GLOBAL STYLE ANCHOR]
-Master Style: [when a PROJECT LOOKBOOK is provided, copy its Master Style verbatim and do NOT invent a new look; otherwise art style + photorealistic/cinematic quality from input]
-Lighting & Camera: [when a PROJECT LOOKBOOK is provided, copy its Lighting Grammar and Lens & Format verbatim, then add only this beat's key-light accent; otherwise lighting mood, color temperature, time of day, lens/framing from direction cues]
-Palette & Grade: [when a PROJECT LOOKBOOK is provided, copy its Color Palette and Texture & Grade verbatim; otherwise omit this line]
+When a PROJECT LOOKBOOK is in the user prompt: do NOT emit [GLOBAL STYLE ANCHOR]. Code owns the look. Reprinting the lookbook truncates Action/Framing. The "prompt" field is Action/Framing only — you MAY wrap it in [SCENE COMPOSITION & BEAT].
 
+When no lookbook is provided:
+[GLOBAL STYLE ANCHOR]
+Master Style: [art style + photorealistic/cinematic quality from input]
+Lighting & Camera: [lighting mood, color temperature, time of day, lens/framing from direction cues]
+Palette & Grade: [omit this line unless the input names a grade]
+
+Then always:
 [SCENE COMPOSITION & BEAT]
 Action/Framing: [shot type + frozen action for THIS beat; use ONLY person [N] tokens for characters VISIBLE in this beat — never invent or renumber tokens; you MAY omit person [N] tokens for characters not on camera; never restate character names in parentheses after a person token; use prop [N] and location [N] tokens (not library names) for referenced props/locations; describe body blocking, gesture, what each character is physically doing, hand/prop interaction, and gaze target (where they look); include directed facial expression/emotion for each visible character — do NOT copy neutral expression from identity reference; characters are engaged in the action and NOT looking at the camera unless the beat is direct-to-camera address]
 
@@ -670,9 +685,10 @@ export function buildSceneImageIntelligenceUserPrompt(request: SceneImageIntelli
 function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
   let prompt = ''
 
-  // Look first: every later section composes inside it, never around it.
+  // Look is code-owned. A one-line lock is enough — dumping the lookbook here
+  // made Flash reprint it into JSON and truncate before Action/Framing.
   if (request.lookbook) {
-    prompt += `${formatLookbookForPlannerPrompt(request.lookbook, request.sceneLookNote)}\n\n`
+    prompt += `PROJECT LOOKBOOK is authoritative — do not invent a look and do not reprint it. Code will attach the film's style. Write Action/Framing only.\n\n`
   }
 
   // Film context
@@ -937,7 +953,7 @@ export async function generateSceneImagePrompt(
       if (!recovered) {
         throw new Error('AI returned unparseable JSON prompt')
       }
-      if (!hasCompleteSceneImageComposition(recovered)) {
+      if (!hasUsableSceneImageAction(recovered)) {
         console.warn(
           '[Scene Image Intelligence] Recovered prompt missing composition section — falling back'
         )
@@ -957,7 +973,7 @@ export async function generateSceneImagePrompt(
       throw new Error('AI returned JSON-wrapped prompt')
     }
 
-    if (!hasCompleteSceneImageComposition(rawPrompt)) {
+    if (!hasUsableSceneImageAction(rawPrompt)) {
       console.warn(
         '[Scene Image Intelligence] Recovered prompt missing composition section — falling back'
       )
@@ -966,6 +982,15 @@ export async function generateSceneImagePrompt(
 
     // Sanitize: ensure no dangerous content slipped through
     let finalPrompt = rawPrompt
+    if (request.lookbook) {
+      const actionFraming = parseStillPromptSource(rawPrompt).actionFraming || rawPrompt
+      finalPrompt = composeBeatStillPrompt({
+        actionFraming,
+        lookbook: request.lookbook,
+        sceneIndex: Math.max(0, (request.sceneNumber || 1) - 1),
+        lighting: request.beatDirection?.lightingAccent,
+      })
+    }
     
     // Structured prompts are longer — preserve section headers; truncate only if excessive
     const MAX_PROMPT_CHARS = 2400

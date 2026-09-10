@@ -43,11 +43,11 @@ describe('getSceneExpressBeatConcurrency', () => {
     else process.env.SCENE_EXPRESS_BEAT_MAX_ATTEMPTS = prevAttempts
   })
 
-  it('defaults to 2 so two identity-ref frames can overlap', () => {
+  it('defaults to 1 so identity-ref frames run sequentially', () => {
     delete process.env.SCENE_EXPRESS_BEAT_CONCURRENCY
     delete process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY
     delete process.env.EXPRESS_IMAGE_CONCURRENCY
-    expect(getSceneExpressBeatConcurrency()).toBe(2)
+    expect(getSceneExpressBeatConcurrency()).toBe(1)
   })
 
   // Above 1, or scheduleRetry bails before the backoff below it can ever run
@@ -354,5 +354,33 @@ describe('runAdaptiveBeatPool', () => {
     expect(attempts).toBe(1)
     expect(result.failed.has(0)).toBe(true)
     expect(result.aborted).toBeUndefined()
+  })
+
+  it('retries a fail-fast identity-ref 429 after one attempt', async () => {
+    let attempts = 0
+    const failFast = new Error(
+      'Vertex Gemini Image error 429: identity-ref rate limit exhausted after 1 attempt(s): RESOURCE_EXHAUSTED'
+    )
+
+    const promise = runAdaptiveBeatPool(
+      [0],
+      async () => {
+        attempts += 1
+        if (attempts < 2) throw failFast
+      },
+      {
+        initialConcurrency: 1,
+        maxAttempts: 3,
+        baseBackoffMs: 10,
+        isRetryable: isExpressBeatPoolRetryable,
+        isCanaryAbort: isExpressImageCanaryAbortError,
+      }
+    )
+
+    await vi.runAllTimersAsync()
+    const result = await promise
+
+    expect(attempts).toBe(2)
+    expect(result.succeeded.has(0)).toBe(true)
   })
 })

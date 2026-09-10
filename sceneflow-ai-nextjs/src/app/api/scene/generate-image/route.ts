@@ -4,6 +4,7 @@ import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import { generateImageWithVertexKlingFallback } from '@/lib/generation/vertexImageWithKlingFallback'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor, buildIdentityPromptToken, sanitizePromptForIdentityRefs, filterCharactersForPromptRefs, stripReferenceImageMappingBlock } from '@/lib/imagen/promptOptimizer'
+import { ethnicityKeyFeature } from '@/lib/imagen/characterKeyFeatures'
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
 import { waitForGCSURIs, checkGCSURIAccessibility } from '@/lib/storage/gcsAccessibility'
 import { generateDirectionHash, generateImageSourceHash } from '@/lib/utils/contentHash'
@@ -29,6 +30,7 @@ import {
 } from '@/lib/intelligence/scene-image-intelligence'
 import { shouldUseCustomPromptOverride } from '@/lib/vision/preVisDirectGenerate'
 import { ensureProjectLookbook, getSceneLookNote } from '@/lib/intelligence/project-lookbook'
+import { composePersistedLookbookBeatPrompt } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import { applySceneImageAiResultToPrompt } from '@/lib/scene/sceneImageAiPromptApply'
 import {
   assembleStructuredStillPrompt,
@@ -1484,9 +1486,16 @@ export async function POST(req: NextRequest) {
         keyFeatures.push(char.keyFeature)
       }
       
-      if (char.ethnicity && !keyFeatures.some(f => f.toLowerCase().includes(char.ethnicity.toLowerCase()))) {
-        // Only add ethnicity if not already mentioned
-        keyFeatures.push(char.ethnicity)
+      const ethnicityFeature = ethnicityKeyFeature(char.ethnicity, {
+        referenceImage: char.referenceImage,
+        identityReferenceId: char.identityReferenceId,
+        hasReferenceImage: Boolean(char.referenceImage || char.identityReferenceId),
+      })
+      if (
+        ethnicityFeature &&
+        !keyFeatures.some((f) => f.toLowerCase().includes(ethnicityFeature.toLowerCase()))
+      ) {
+        keyFeatures.push(ethnicityFeature)
       }
       
       console.log(`[Scene Image] Extracted key features for ${char.name}:`, keyFeatures)
@@ -1725,6 +1734,14 @@ export async function POST(req: NextRequest) {
       // neighbours. After any Express run this is a free read of the persisted
       // look; only a project that never ran Express pays for a derivation.
       const projectLookbook = await ensureProjectLookbook(project, artStyle)
+      const beatForLookbookCompose = isBeatFrame
+        ? getSceneBeats(sceneData as Record<string, unknown>)[effectiveBeatIndex]
+        : undefined
+      const persistedLookbookPrompt = composePersistedLookbookBeatPrompt({
+        lookbook: projectLookbook,
+        sceneIndex: sceneIndex || 0,
+        beat: beatForLookbookCompose,
+      })
       
       // Build character contexts with resolved wardrobes
       const characterContexts: CharacterContext[] = characterReferences.map((ref: any) => ({
@@ -1867,51 +1884,57 @@ export async function POST(req: NextRequest) {
         sceneLookNote: getSceneLookNote(projectLookbook, sceneIndex || 0),
       }
 
-      const aiResult = await generateSceneImagePromptWithDeadline(sceneImageIntelligenceRequest)
-      sceneImageAiResult = aiResult
+      if (persistedLookbookPrompt) {
+        optimizedPrompt = persistedLookbookPrompt
+        usedAIIntelligence = false
+        console.log('[Scene Image] Using persisted lookbook + beat action — skipped intelligence')
+      } else {
+        const aiResult = await generateSceneImagePromptWithDeadline(sceneImageIntelligenceRequest)
+        sceneImageAiResult = aiResult
 
-      const appliedAiPrompt = applySceneImageAiResultToPrompt({
-        aiResult,
-        characterReferences,
-        fullSceneContext: bindLibraryNamesToTokens(fullSceneContext, libraryTokenItems),
-        artStyle,
-        autoDetectObjects,
-        autoDetectLocations,
-        projectObjectRefs,
-        projectLocationRefs,
-        detectedObjectReferences,
-        matchedLocationReference,
-        sceneType: aiSceneType,
-        protectPhrases: libraryTokenItems.map((item) => item.name).filter(Boolean),
-      })
-      optimizedPrompt = appliedAiPrompt.optimizedPrompt
-      usedAIIntelligence = appliedAiPrompt.usedAIIntelligence
-      characterReferencesForImages = appliedAiPrompt.characterReferencesForImages
-      detectedObjectReferences = appliedAiPrompt.detectedObjectReferences.map((obj: any) => ({
-        ...obj,
-        promptToken:
-          obj.promptToken ||
-          propsWithTokens.find((p) => p.name.toLowerCase() === String(obj.name || '').toLowerCase())
-            ?.promptToken,
-      }))
-      matchedLocationReference = appliedAiPrompt.matchedLocationReference
-        ? {
-            ...appliedAiPrompt.matchedLocationReference,
-            promptToken:
-              appliedAiPrompt.matchedLocationReference.promptToken ||
-              locationsWithTokens.find(
-                (loc) =>
-                  loc.name.toLowerCase() ===
-                  String(
-                    appliedAiPrompt.matchedLocationReference.location ||
-                      appliedAiPrompt.matchedLocationReference.name ||
-                      ''
-                  ).toLowerCase()
-              )?.promptToken ||
-              buildLocationPromptToken(1),
-          }
-        : appliedAiPrompt.matchedLocationReference
-      aiNegativePromptAdditions = appliedAiPrompt.aiNegativePromptAdditions
+        const appliedAiPrompt = applySceneImageAiResultToPrompt({
+          aiResult,
+          characterReferences,
+          fullSceneContext: bindLibraryNamesToTokens(fullSceneContext, libraryTokenItems),
+          artStyle,
+          autoDetectObjects,
+          autoDetectLocations,
+          projectObjectRefs,
+          projectLocationRefs,
+          detectedObjectReferences,
+          matchedLocationReference,
+          sceneType: aiSceneType,
+          protectPhrases: libraryTokenItems.map((item) => item.name).filter(Boolean),
+        })
+        optimizedPrompt = appliedAiPrompt.optimizedPrompt
+        usedAIIntelligence = appliedAiPrompt.usedAIIntelligence
+        characterReferencesForImages = appliedAiPrompt.characterReferencesForImages
+        detectedObjectReferences = appliedAiPrompt.detectedObjectReferences.map((obj: any) => ({
+          ...obj,
+          promptToken:
+            obj.promptToken ||
+            propsWithTokens.find((p) => p.name.toLowerCase() === String(obj.name || '').toLowerCase())
+              ?.promptToken,
+        }))
+        matchedLocationReference = appliedAiPrompt.matchedLocationReference
+          ? {
+              ...appliedAiPrompt.matchedLocationReference,
+              promptToken:
+                appliedAiPrompt.matchedLocationReference.promptToken ||
+                locationsWithTokens.find(
+                  (loc) =>
+                    loc.name.toLowerCase() ===
+                    String(
+                      appliedAiPrompt.matchedLocationReference.location ||
+                        appliedAiPrompt.matchedLocationReference.name ||
+                        ''
+                    ).toLowerCase()
+                )?.promptToken ||
+                buildLocationPromptToken(1),
+            }
+          : appliedAiPrompt.matchedLocationReference
+        aiNegativePromptAdditions = appliedAiPrompt.aiNegativePromptAdditions
+      }
     } else {
       // Rules-based optimizer (no AI, no custom prompt)
       const rulesProps = assignStableLibraryTokens(detectedObjectReferences, 'prop')
