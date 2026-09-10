@@ -161,7 +161,10 @@ const ProductionStreamsManager = dynamic(
 import { NotificationCenter } from '@/components/notifications/NotificationCenter'
 import { useSession } from 'next-auth/react'
 import { useBackgroundJob } from '@/hooks/useBackgroundJob'
-import { BackgroundJobDock } from '@/components/vision/BackgroundJobDock'
+import {
+  BackgroundJobDock,
+  describeReferenceExpressResult,
+} from '@/components/vision/BackgroundJobDock'
 import {
   BackgroundAnalysisHandoffDialog,
   hasAcknowledgedAnalysisHandoff,
@@ -6555,6 +6558,65 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }, [projectId])
 
+  /**
+   * Pull cast and reference images back from the server.
+   *
+   * A background batch writes straight to project metadata, so the client has
+   * no idea what landed. Only the reference slices are adopted — reloading the
+   * script here would discard edits made while the batch ran.
+   */
+  const refreshReferencesFromServer = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/projects/${projectId}?lite=true&_t=${Date.now()}`, {
+        cache: 'no-store',
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      const visionPhase = data?.project?.metadata?.visionPhase
+      if (!visionPhase) return
+
+      const nextCharacters = visionPhase.characters
+      if (Array.isArray(nextCharacters)) {
+        charactersRef.current = nextCharacters
+        setCharacters(nextCharacters)
+      }
+
+      const references = visionPhase.references
+      if (references) {
+        if (Array.isArray(references.locationReferences)) {
+          locationReferencesRef.current = references.locationReferences
+          setLocationReferences(references.locationReferences)
+        }
+        if (Array.isArray(references.objectReferences)) {
+          objectReferencesRef.current = references.objectReferences
+          setObjectReferences(references.objectReferences)
+        }
+      }
+
+      setProject((prev) => {
+        if (!prev) return prev
+        const prevVisionPhase = (prev.metadata?.visionPhase || {}) as Record<string, any>
+        const updated = {
+          ...prev,
+          metadata: {
+            ...prev.metadata,
+            visionPhase: {
+              ...prevVisionPhase,
+              characters: Array.isArray(nextCharacters)
+                ? nextCharacters
+                : prevVisionPhase.characters,
+              references: references ?? prevVisionPhase.references,
+            },
+          },
+        } as typeof prev
+        projectRef.current = updated
+        return updated
+      })
+    } catch (error) {
+      console.error('[Reference Express] Failed to refresh references after job:', error)
+    }
+  }, [projectId])
+
   const scriptAnalysisJob = useBackgroundJob({
     projectId,
     jobType: 'script_analysis',
@@ -6646,6 +6708,117 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       clearInterval(interval)
     }
   }, [scriptAnalysisJobActive, scriptAnalysisJobId])
+
+  const referenceExpressJob = useBackgroundJob({
+    projectId,
+    jobType: 'reference_express',
+    onCompleted: (job) => {
+      setIsExpressGeneratingReferences(false)
+      void refreshReferencesFromServer()
+
+      const result = (job.result ?? {}) as {
+        total?: number
+        succeeded?: number
+        failed?: number
+        staleCount?: number
+      }
+      const total = Number(result.total ?? job.payload?.itemCount ?? 0)
+      const succeeded = Number(result.succeeded ?? 0)
+      const failed = Number(result.failed ?? 0)
+      const stale = Number(result.staleCount ?? 0)
+
+      const details: string[] = []
+      if (failed > 0) details.push(`${failed} failed — retry to fill the gaps.`)
+      if (stale > 0) {
+        details.push(
+          `${stale} changed while the batch ran, so those images may not match your latest edits. Re-run Express to refresh them.`
+        )
+      }
+      const message = details.length
+        ? `${succeeded} of ${total} generated. ${details.join(' ')}`
+        : `All ${succeeded} reference image${succeeded === 1 ? '' : 's'} generated.`
+
+      if (failed > 0 && succeeded === 0) {
+        toast.error('Reference Express failed', { description: message, duration: 12000 })
+      } else if (failed > 0 || stale > 0) {
+        toast.warning('Reference Express finished', { description: message, duration: 12000 })
+      } else {
+        toast.success('Reference images ready', { description: message, duration: 8000 })
+      }
+
+      notifyIfHidden({
+        title: 'Reference images ready',
+        body: message,
+        tag: `reference-express-${job.id}`,
+      })
+    },
+    onFailed: (job) => {
+      setIsExpressGeneratingReferences(false)
+      // Whatever landed before the failure is already saved, so adopt it.
+      void refreshReferencesFromServer()
+
+      const cancelled =
+        job.status === 'cancelled' ||
+        (typeof job.error === 'string' && job.error.toLowerCase().includes('cancelled'))
+      if (cancelled) {
+        toast.info('Reference Express cancelled', {
+          description: 'Images generated so far were kept. You can start again anytime.',
+          duration: 6000,
+        })
+        return
+      }
+      toast.error('Reference Express failed', {
+        description: job.error || 'Please try again.',
+        duration: 10000,
+      })
+      notifyIfHidden({
+        title: 'Reference Express failed',
+        body: job.error || 'Please try again.',
+        tag: `reference-express-${job.id}`,
+      })
+    },
+  })
+
+  // Keep the Express button in sync with the tracked job so a reload that
+  // re-attaches to a running batch still shows it as busy.
+  useEffect(() => {
+    setIsExpressGeneratingReferences(referenceExpressJob.isActive)
+  }, [referenceExpressJob.isActive])
+
+  // Same client-driven advance as analysis: one item per tick, server-side
+  // lease guarded. Self-chaining inside the function would trip Vercel's 508.
+  const referenceExpressJobId = referenceExpressJob.job?.id
+  const referenceExpressJobActive = referenceExpressJob.isActive
+  useEffect(() => {
+    if (!referenceExpressJobActive || !referenceExpressJobId) return
+
+    let cancelled = false
+    let inFlight = false
+
+    const advance = async () => {
+      if (cancelled || inFlight) return
+      inFlight = true
+      try {
+        await fetch('/api/vision/references/express/step', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ jobId: referenceExpressJobId }),
+        })
+      } catch {
+        // The next tick retries; polling still reflects real job state.
+      } finally {
+        inFlight = false
+      }
+    }
+
+    void advance()
+    const interval = setInterval(advance, 5000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [referenceExpressJobActive, referenceExpressJobId])
 
   const startScriptAnalysis = useCallback(
     async (targetDemographic?: string) => {
@@ -9649,154 +9822,60 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   /**
-   * Batch-generate missing Cast, Location, and Prop reference images (Express).
+   * Queue missing Cast, Location, and Prop reference images as a background batch.
+   *
+   * The old version drove every image from this component behind a blocking
+   * overlay, which meant a 26-item run froze the page for minutes and a reload
+   * lost the whole thing. Now the server owns the queue and the user keeps
+   * editing while it runs.
    */
   const handleExpressGenerateReferences = async () => {
-    const { buildCharacterReferencePrompt, buildObjectReferencePrompt } = await import(
-      '@/lib/vision/referenceExpressPrompts'
-    )
+    if (!projectId) return
 
-    const castMissing = (characters || []).filter(
-      (c: { type?: string; referenceImage?: string }) =>
-        c.type !== 'narrator' && !c.referenceImage?.trim()
-    )
-    const locationsMissing = (locationReferences || []).filter((l) => !l.imageUrl?.trim())
-    const propsMissing = (objectReferences || []).filter((o) => !o.imageUrl?.trim())
-    const total = castMissing.length + locationsMissing.length + propsMissing.length
-
-    if (total === 0) {
-      try {
-        const { toast } = require('sonner')
-        toast.info('All reference images are already generated')
-      } catch {}
+    if (referenceExpressJob.isActive) {
+      toast.info('Reference Express is already running', {
+        description: 'Watch the status card in the corner — you can keep working.',
+      })
       return
     }
 
     setIsExpressGeneratingReferences(true)
-    overlayStore.show(`Generating ${total} reference images`, total * 20, 'storyboard-production')
-
-    let completed = 0
-    let failures = 0
-
     try {
-      for (const char of castMissing) {
-        const refIndex = charactersRef.current.findIndex(
-          (c) => c.id === char.id || c.name === char.name
-        )
-        const charId = resolveCharacterId(
-          char,
-          refIndex >= 0 ? refIndex : charactersRef.current.indexOf(char)
-        )
-        completed += 1
-        overlayStore.setStatus(`Cast: ${char.name} (${completed}/${total})`)
-        try {
-          await handleGenerateCharacter(charId, buildCharacterReferencePrompt(char), {
-            quiet: true,
-          })
-        } catch (err) {
-          failures += 1
-          console.error('[Express References] Character failed:', char.name, err)
-        }
-        if (completed < total) await new Promise((r) => setTimeout(r, 1000))
+      const res = await fetch('/api/vision/references/express/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ projectId }),
+      })
+      const data = await res.json().catch(() => ({}))
+
+      if (res.status === 409 && data?.code === 'NOTHING_TO_GENERATE') {
+        toast.info('All reference images are already generated')
+        setIsExpressGeneratingReferences(false)
+        return
+      }
+      if (!res.ok) {
+        throw new Error(data?.error || 'Failed to start Reference Express')
       }
 
-      for (const location of locationsMissing) {
-        completed += 1
-        const locationLabel = location.location || 'Location'
-        overlayStore.setStatus(`Location: ${locationLabel} (${completed}/${total})`)
-        try {
-          const response = await fetch('/api/vision/generate-location', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              projectId,
-              locationName: location.location,
-              intExt: location.intExt,
-              timeOfDay: location.timeOfDay,
-              description: location.description,
-              screenplayContext: {
-                genre: project?.genre,
-                tone:
-                  project?.tone ||
-                  project?.metadata?.filmTreatmentVariant?.tone_description,
-                setting: project?.metadata?.filmTreatmentVariant?.setting,
-                visualStyle:
-                  project?.metadata?.filmTreatmentVariant?.visual_style ||
-                  project?.metadata?.filmTreatmentVariant?.style,
-              },
-            }),
-          })
-          if (!response.ok) {
-            const error = await response.json().catch(() => ({}))
-            throw new Error(error.error || 'Location generation failed')
-          }
-          const result = await response.json()
-          const updatedLocations = locationReferencesRef.current.map((ref) =>
-            ref.id === location.id
-              ? { ...ref, imageUrl: result.imageUrl, generationPrompt: result.prompt }
-              : ref
-          )
-          setLocationReferences(updatedLocations)
-          locationReferencesRef.current = updatedLocations
-          await persistLocationReferences(updatedLocations)
-        } catch (err) {
-          failures += 1
-          console.error('[Express References] Location failed:', locationLabel, err)
-        }
-        if (completed < total) await new Promise((r) => setTimeout(r, 1000))
-      }
+      referenceExpressJob.track(data.jobId, {
+        status: data.status || 'queued',
+        progress: 0,
+        payload: { itemCount: data.itemCount },
+      })
 
-      for (const prop of propsMissing) {
-        completed += 1
-        overlayStore.setStatus(`Prop: ${prop.name} (${completed}/${total})`)
-        try {
-          const response = await fetch('/api/vision/generate-object', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: prop.name,
-              description: prop.description || prop.name,
-              prompt: buildObjectReferencePrompt(prop),
-              category: prop.category || 'other',
-            }),
-          })
-          if (!response.ok) {
-            const error = await response.json().catch(() => ({}))
-            throw new Error(error.error || 'Prop generation failed')
-          }
-          const data = await response.json()
-          if (data.imageUrl) {
-            await handleUpdateReferenceImage('object', prop.id, data.imageUrl, {
-              quiet: true,
-            })
-          }
-        } catch (err) {
-          failures += 1
-          console.error('[Express References] Prop failed:', prop.name, err)
-        }
-        if (completed < total) await new Promise((r) => setTimeout(r, 1000))
-      }
+      // Tied to an explicit user action so the browser prompt has context.
+      void ensureBrowserNotificationPermission()
 
-      const succeeded = total - failures
-      try {
-        const { toast } = require('sonner')
-        if (failures === 0) {
-          toast.success(`Generated ${succeeded} reference image${succeeded === 1 ? '' : 's'}!`)
-        } else if (succeeded > 0) {
-          toast.warning(`Generated ${succeeded} of ${total} references (${failures} failed)`)
-        } else {
-          toast.error('Reference generation failed')
-        }
-      } catch {}
+      const count = Number(data.itemCount || 0)
+      toast.success('Reference Express started', {
+        description: `Generating ${count} reference image${count === 1 ? '' : 's'} in the background. Keep working — we'll notify you when they're ready.`,
+        duration: 8000,
+      })
     } catch (error) {
       console.error('[handleExpressGenerateReferences] Error:', error)
-      try {
-        const { toast } = require('sonner')
-        toast.error('Reference Express failed')
-      } catch {}
-    } finally {
+      toast.error(error instanceof Error ? error.message : 'Failed to start Reference Express')
       setIsExpressGeneratingReferences(false)
-      overlayStore.hide()
     }
   }
 
@@ -15508,6 +15587,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           setShowReviewModal(true)
           scriptAnalysisJob.dismiss()
         }}
+      />
+
+      <BackgroundJobDock
+        job={referenceExpressJob.job}
+        title="Reference Express"
+        activeLabel={
+          referenceExpressJob.job?.status === 'queued'
+            ? 'Queued'
+            : `Generating references${
+                referenceExpressJob.job?.payload?.itemCount
+                  ? ` (${referenceExpressJob.job.payload.itemCount} items)`
+                  : ''
+              }`
+        }
+        cancelLabel="Cancel generation"
+        describeResult={describeReferenceExpressResult}
+        onDismiss={referenceExpressJob.dismiss}
+        onCancel={() => void referenceExpressJob.cancel()}
+        // Analysis owns the bottom-right corner; stack above it so both stay
+        // readable when a user runs Express while analysis is still going.
+        className={scriptAnalysisJob.job ? 'bottom-44' : undefined}
       />
 
       {/* Scene Editor Modal */}
