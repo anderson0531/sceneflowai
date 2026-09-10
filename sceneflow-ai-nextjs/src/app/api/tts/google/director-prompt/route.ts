@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     // Construct the prompt for the director script
     let prompt = `You are an expert Voice Director writing Google AI Studio Voice Design notes for Gemini TTS.
 
-The notes become Cloud TTS Style Instructions (input.prompt). They must describe how the character sounds, not what they look like or what they will say.`
+The notes become Cloud TTS Style Instructions (input.prompt). They must describe how the character sounds, not what they look like or what they will say.
 
 CHARACTER DETAILS:
 Name: ${name || 'Unknown'}
