@@ -98,22 +98,44 @@ describe('GEMINI_VOICE_CATALOG', () => {
     }
   })
 
-  it('derives acoustics consistently: same label means same acoustics', () => {
-    const byLabel = new Map<string, ReturnType<typeof getGeminiVoiceAcoustics>>()
+  it('gives every voice a resting cadence', () => {
     for (const voice of GEMINI_VOICE_CATALOG) {
-      const acoustics = {
-        register: voice.register,
-        vocalWeight: voice.vocalWeight,
-        texture: voice.texture,
-        ageAffinity: voice.ageAffinity,
-      }
-      const seen = byLabel.get(voice.officialLabel)
-      if (seen) {
-        expect(acoustics, `${voice.officialLabel} acoustics`).toEqual(seen)
-      } else {
-        byLabel.set(voice.officialLabel, acoustics)
-      }
+      expect(['deliberate', 'steady', 'dynamic', 'volatile']).toContain(voice.cadence)
     }
+  })
+
+  it('applies the reference-matrix row for the twelve named voices', () => {
+    const matrix: Record<string, { register: string; texture: string; cadence: string }> = {
+      'gemini-Algenib': { register: 'low', texture: 'gravelly', cadence: 'deliberate' },
+      'gemini-Charon': { register: 'low', texture: 'smooth', cadence: 'steady' },
+      'gemini-Algieba': { register: 'low', texture: 'smooth', cadence: 'steady' },
+      'gemini-Enceladus': { register: 'low', texture: 'breathy', cadence: 'deliberate' },
+      'gemini-Orus': { register: 'low-mid', texture: 'even', cadence: 'steady' },
+      'gemini-Schedar': { register: 'low-mid', texture: 'even', cadence: 'steady' },
+      'gemini-Alnilam': { register: 'low-mid', texture: 'clear', cadence: 'steady' },
+      'gemini-Fenrir': { register: 'low-mid', texture: 'gravelly', cadence: 'volatile' },
+      'gemini-Gacrux': { register: 'mid', texture: 'warm', cadence: 'steady' },
+      'gemini-Kore': { register: 'mid', texture: 'even', cadence: 'steady' },
+      'gemini-Erinome': { register: 'mid', texture: 'clear', cadence: 'steady' },
+      'gemini-Vindemiatrix': { register: 'low-mid', texture: 'soft', cadence: 'deliberate' },
+    }
+
+    for (const [id, expected] of Object.entries(matrix)) {
+      const voice = getGeminiVoice(id)
+      expect(voice, id).toBeDefined()
+      expect(voice?.register, `${id} register`).toBe(expected.register)
+      expect(voice?.texture, `${id} texture`).toBe(expected.texture)
+      expect(voice?.cadence, `${id} cadence`).toBe(expected.cadence)
+    }
+  })
+
+  it('lets matrix voices diverge from a shared Google label', () => {
+    const orus = getGeminiVoiceAcoustics('gemini-Orus')
+    const kore = getGeminiVoiceAcoustics('gemini-Kore')
+    expect(getGeminiVoice('gemini-Orus')?.officialLabel).toBe('Firm')
+    expect(getGeminiVoice('gemini-Kore')?.officialLabel).toBe('Firm')
+    expect(orus?.register).toBe('low-mid')
+    expect(kore?.register).toBe('mid')
   })
 
   it('only claims an age affinity where Google\u2019s label states one', () => {
@@ -186,15 +208,50 @@ describe('parseAcousticTarget', () => {
     expect(hasAcousticSignal(target)).toBe(false)
     expect(describeAcousticTarget(target)).toBe('no acoustic signal')
   })
+
+  it('does not treat vocal weight alone as an acoustic signal', () => {
+    const target = parseAcousticTarget({ brief: 'resonant and full-bodied' })
+    expect(target.vocalWeight).toBe('heavy')
+    expect(target.register).toBeUndefined()
+    expect(target.texture).toBeUndefined()
+    expect(target.cadence).toBeUndefined()
+    expect(hasAcousticSignal(target)).toBe(false)
+  })
+
+  it('deepens baritone to low when the brief is late-50s or deep', () => {
+    expect(
+      parseAcousticTarget({
+        gender: 'male',
+        apparentAge: 'late 50s',
+        brief: 'a clinical baritone',
+      }).register,
+    ).toBe('low')
+    expect(
+      parseAcousticTarget({ gender: 'male', brief: 'a deep baritone' }).register,
+    ).toBe('low')
+  })
+
+  it('lets gravel and dry win over clinical or clear', () => {
+    const target = parseAcousticTarget({
+      brief: 'clinical baritone with a dry, gravelly edge',
+    })
+    expect(target.texture).toBe('gravelly')
+  })
+
+  it('reads resting cadence from delivery words', () => {
+    expect(parseAcousticTarget({ brief: 'unhurried, measured, methodical' }).cadence).toBe(
+      'deliberate',
+    )
+    expect(parseAcousticTarget({ brief: 'steady informative delivery' }).cadence).toBe('steady')
+    expect(parseAcousticTarget({ brief: 'energetic and projected' }).cadence).toBe('dynamic')
+    expect(parseAcousticTarget({ brief: 'erratic, frantic, volatile' }).cadence).toBe('volatile')
+  })
 })
 
 describe('scoreVoiceAcoustics', () => {
   it('penalizes register error more than any texture or age bonus can offset', () => {
     const target = { register: 'low-mid' as const, texture: 'clear' as const }
-    const onRegister = scoreVoiceAcoustics(
-      { ...getGeminiVoice('gemini-Charon')! },
-      target
-    )
+    const onRegister = scoreVoiceAcoustics({ ...getGeminiVoice('gemini-Alnilam')! }, target)
     const twoBandsOff = scoreVoiceAcoustics({ ...getGeminiVoice('gemini-Zephyr')! }, target)
     expect(onRegister.score).toBeGreaterThan(twoBandsOff.score)
   })
@@ -208,33 +265,46 @@ describe('scoreVoiceAcoustics', () => {
     const clear = scoreVoiceAcoustics({ ...getGeminiVoice('gemini-Charon')! }, gravellyTarget)
     expect(clear.reasons.join(' ')).toMatch(/Phonation conflict/)
   })
+
+  it('cannot let vocal weight flip a register or gravel mismatch', () => {
+    const gravelTarget = {
+      register: 'low' as const,
+      texture: 'gravelly' as const,
+      vocalWeight: 'heavy' as const,
+    }
+    const gravel = scoreVoiceAcoustics({ ...getGeminiVoice('gemini-Algenib')! }, gravelTarget)
+    const smoothHeavy = scoreVoiceAcoustics(
+      { ...getGeminiVoice('gemini-Charon')!, vocalWeight: 'heavy' },
+      gravelTarget,
+    )
+    expect(gravel.score).toBeGreaterThan(smoothHeavy.score)
+  })
 })
 
 describe('base voice selection', () => {
   /**
-   * The case that prompted the rebuild. Julian Ward is a clear, resonant
-   * baritone in the lower-mid range with cool, precise articulation — so the
-   * pick must be a low-mid male voice, and must not be the gravelly one.
+   * Matrix Julian: late-50s clinical baritone, dry/gravelly edge, unhurried.
+   * Algenib is the gravelly low deliberate voice; Charon is the smooth counterpart.
    */
-  it('picks a clear low-mid male voice for the Julian Ward brief', () => {
+  it('picks Algenib, then Charon, for the Julian Ward brief', () => {
     const brief =
-      'A clear, resonant baritone, pitched in the lower-mid range. Cadence is deliberate ' +
-      'and controlled. Cool precision in his articulation rather than overt aggression. ' +
-      'Calm and composed, conveying unshakeable confidence. Neutral American accent.'
+      'A male voice in his late 50s. Clinical baritone with a dry, gravelly edge. ' +
+      'Unhurried, measured delivery. Corporate detachment; cool and composed.'
 
     const target = parseAcousticTarget({ gender: 'male', apparentAge: 'late 50s', brief })
-    expect(target.register).toBe('low-mid')
-    expect(target.vocalWeight).toBe('heavy')
-    expect(target.texture).toBe('clear')
+    expect(target.register).toBe('low')
+    expect(target.texture).toBe('gravelly')
+    expect(target.cadence).toBe('deliberate')
     expect(target.ageAffinity).toBe('mature')
+    expect(hasAcousticSignal(target)).toBe(true)
 
-    const pick = selectGeminiBaseVoice(target)
-    const voice = getGeminiVoice(pick.voiceId)!
-    expect(voice.gender).toBe('male')
-    expect(voice.register).toBe('low-mid')
-    expect(voice.texture).not.toBe('gravelly')
-    expect(pick.voiceId).not.toBe('gemini-Algenib')
-    expect(pick.voiceId).not.toBe('gemini-Schedar')
+    const ranked = rankVoicesByAcoustics(target, 5)
+    expect(ranked[0]?.voiceId).toBe('gemini-Algenib')
+    expect(ranked[1]?.voiceId).toBe('gemini-Charon')
+    expect(ranked.slice(0, 2).map((row) => row.voiceId)).not.toContain('gemini-Fenrir')
+    expect(ranked.slice(0, 2).map((row) => row.voiceId)).not.toContain('gemini-Orus')
+
+    expect(selectGeminiBaseVoice(target).voiceId).toBe('gemini-Algenib')
   })
 
   it('still reaches the gravelly voice when the brief actually asks for gravel', () => {
@@ -243,7 +313,43 @@ describe('base voice selection', () => {
       brief: 'a gravelly, weathered baritone with a heavy rasp',
     })
     expect(target.texture).toBe('gravelly')
-    expect(selectGeminiBaseVoice(target).voiceId).toBe('gemini-Algenib')
+    expect(getGeminiVoice(selectGeminiBaseVoice(target).voiceId)?.texture).toBe('gravelly')
+  })
+
+  it('picks Fenrir for a raspy, frantic male brief', () => {
+    const target = parseAcousticTarget({
+      gender: 'male',
+      brief: 'a raspy, frantic delivery — erratic and volatile',
+    })
+    expect(target.texture).toBe('gravelly')
+    expect(target.cadence).toBe('volatile')
+    expect(selectGeminiBaseVoice(target).voiceId).toBe('gemini-Fenrir')
+  })
+
+  it('picks Kore for a female middle firm, decisive brief', () => {
+    const target = parseAcousticTarget({
+      gender: 'female',
+      brief: 'a middle, firm, decisive voice',
+    })
+    expect(target.register).toBe('mid')
+    expect(target.texture).toBe('even')
+    expect(selectGeminiBaseVoice(target).voiceId).toBe('gemini-Kore')
+  })
+
+  it('keeps a gravelly female alto in the female pool', () => {
+    const target = parseAcousticTarget({
+      gender: 'female',
+      brief: 'a gravelly alto with a dry rasp',
+    })
+    expect(target.register).toBe('low-mid')
+    expect(target.texture).toBe('gravelly')
+
+    const ranked = rankVoicesByAcoustics(target, 30)
+    expect(ranked.length).toBeGreaterThan(0)
+    for (const match of ranked) {
+      expect(getGeminiVoice(match.voiceId)?.gender).toBe('female')
+    }
+    expect(selectGeminiBaseVoice(target).voiceId).not.toBe('gemini-Algenib')
   })
 
   it('honors gender as a hard filter', () => {

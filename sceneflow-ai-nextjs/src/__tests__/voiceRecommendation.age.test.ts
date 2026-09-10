@@ -95,6 +95,9 @@ describe('getCharacterVoiceRecommendations age matching', () => {
       'gemini-Rasalgethi',
       'gemini-Sadaltager',
       'gemini-Schedar',
+      'gemini-Alnilam',
+      'gemini-Orus',
+      'gemini-Fenrir',
     ]
     expect(weatheredMaleIds).toContain(topId)
     expect(topId).not.toBe('gemini-Leda')
