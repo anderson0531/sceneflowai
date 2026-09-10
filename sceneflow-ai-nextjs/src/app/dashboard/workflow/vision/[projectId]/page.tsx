@@ -5695,7 +5695,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Scene reference generation state (for Reference Library Scene tab)
   const [generatingSceneReferenceIndex, setGeneratingSceneReferenceIndex] = useState<number | null>(null)
-  const [isGeneratingAllSceneReferences, setIsGeneratingAllSceneReferences] = useState(false)
   const [isExpressGeneratingReferences, setIsExpressGeneratingReferences] = useState(false)
   const [isUpdatingAllDirections, setIsUpdatingAllDirections] = useState(false)
   
@@ -9876,55 +9875,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       console.error('[handleExpressGenerateReferences] Error:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to start Reference Express')
       setIsExpressGeneratingReferences(false)
-    }
-  }
-
-  /**
-   * Generate all scene references sequentially
-   */
-  const handleGenerateAllSceneReferences = async () => {
-    const scenes = script?.script?.scenes || []
-    const scenesNeedingRefs = scenes
-      .map((s: any, idx: number) => ({ scene: s, idx }))
-      .filter(({ scene }: any) => scene.sceneDirection && !scene.sceneReferenceImageUrl)
-    
-    if (scenesNeedingRefs.length === 0) {
-      try { 
-        const { toast } = require('sonner')
-        toast.info('All scenes with direction already have references')
-      } catch {}
-      return
-    }
-    
-    setIsGeneratingAllSceneReferences(true)
-    const userId = getUserId()
-    try {
-      const res = await fetch('/api/jobs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          projectId,
-          jobType: 'reference_library',
-          batch: scenesNeedingRefs.map(({ idx }: { idx: number }) => ({
-            projectId,
-            sceneIndex: idx,
-            excludeCharacters: true,
-          })),
-        }),
-      })
-      if (!res.ok) {
-        throw new Error('Failed to queue reference generation')
-      }
-      toast.info(
-        `Queued ${scenesNeedingRefs.length} reference images. You'll be notified when complete.`,
-        { duration: 5000 }
-      )
-    } catch (error) {
-      console.error('[handleGenerateAllSceneReferences] Error:', error)
-      toast.error('Failed to queue reference generation')
-    } finally {
-      setIsGeneratingAllSceneReferences(false)
     }
   }
 
@@ -15146,8 +15096,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         onUploadSceneReferenceImage={handleUploadSceneReferenceImage}
         onAddSceneReferenceToLibrary={handleAddSceneReferenceToLibrary}
         generatingReferenceForScene={generatingSceneReferenceIndex}
-        onGenerateAllSceneReferences={handleGenerateAllSceneReferences}
-        isGeneratingAllSceneReferences={isGeneratingAllSceneReferences}
         onGenerateSceneImage={(sceneIdx) => handleGenerateSceneImage(sceneIdx, undefined, { excludeCharacters: true })}
         onUploadSceneImage={handleUploadScene}
         generatingImageForScene={generatingKeyframeSceneNumber !== null ? generatingKeyframeSceneNumber - 1 : null}
