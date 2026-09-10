@@ -15986,6 +15986,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           startedAt={expressBeatFrameOverlay.startedAt}
           finished={expressBeatFrameOverlay.finished}
           preflightError={expressBeatFrameOverlay.preflightError}
+          className={
+            scriptAnalysisJob.job && referenceExpressJob.job
+              ? 'bottom-80'
+              : scriptAnalysisJob.job || referenceExpressJob.job
+                ? 'bottom-44'
+                : undefined
+          }
           onClose={() => setExpressBeatFrameOverlay(null)}
           onRetryFailed={(failedKeys) => {
             const overlay = expressBeatFrameOverlay
