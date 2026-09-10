@@ -24,13 +24,13 @@ export type WardrobeDirectorResult = {
 const RESPONSE_SCHEMA = `{
   "wardrobeName": "A short name for this look (2-3 words max), e.g., 'Office Attire', 'Casual Home', 'Formal Event'",
   "defaultWardrobe": "Clothing only: garments, colors, materials, fit. 1-2 sentences for an image prompt. No jewelry, bags, makeup, hair state, injuries, body identity, plot, or emotion.",
-  "wardrobeAccessories": "Carry items and worn extras: jewelry, glasses, watches, bags, hats. Empty string if none.",
+  "wardrobeAccessories": "Worn extras only: jewelry, glasses, watches, hats, belts, scarves. Never handheld or story props. Empty string if none.",
   "appearanceNotes": "Makeup, hair state, visible injuries or marks for scene continuity. Empty string if none. Not emotion or performance."
 }`
 
 const SHARED_RULES = `SPLIT RULES:
 - Clothing (shirt, jacket, trousers, dress, shoes, coat) → defaultWardrobe
-- Jewelry, glasses, watches, bags, hats, worn extras → wardrobeAccessories
+- Jewelry, glasses, watches, hats, belts, scarves and other WORN extras → wardrobeAccessories
 - Makeup, hair, bruises, blood, dirt, sweat, bandages → appearanceNotes
 - Never put body identity (age, ethnicity, face, body shape) into any field
 - Never write plot beats, dialogue, or emotion as wardrobe
@@ -38,6 +38,7 @@ const SHARED_RULES = `SPLIT RULES:
 
 GUARDRAILS:
 - Keep each field concise and visually specific (colors, materials, fit)
+- Wardrobe is what the character WEARS, never what they CARRY. Omit every handheld or story prop — tools, weapons, spanners, lanterns, documents, books, instruments, phones, cups, bags, satchels, backpacks, briefcases, luggage. Those are props, directed per scene, and the wardrobe reference image is copied into every frame of this character
 - Do NOT include bags, satchels, backpacks, or other casual carry items if the scene is a formal event, public debate, or stage performance
 - On stage / debate / public event, accessories may include glasses, watch, ring — not satchel or backpack
 - If a field does not apply, return an empty string
