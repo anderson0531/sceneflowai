@@ -8,6 +8,13 @@ import {
   type FilmContext,
   type SceneType,
 } from '@/lib/intelligence/scene-direction-metadata'
+import {
+  formatLookbookForPlannerPrompt,
+  formatLookbookStyleAnchor,
+  getSceneLookNote,
+  type LookbookSceneSummary,
+  type ProjectLookbook,
+} from '@/lib/intelligence/project-lookbook-fallback'
 import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import type { BeatDirection, SceneBeat } from '@/lib/script/segmentTypes'
@@ -36,6 +43,21 @@ export interface BeatKeyframePlan {
   allowTypography: boolean
   durationSeconds?: number
   negativeAdditions?: string[]
+  /** Key-light accent for this beat inside the film's lighting grammar. */
+  lighting?: string
+  /** Focal length for this beat inside the film's lens family. */
+  lensMm?: string
+  /** Where subjects sit and face, so consecutive beats hold the axis. */
+  screenDirection?: string
+  /** Visible state carried forward from the previous beat. */
+  continuityNote?: string
+}
+
+/** The previous beat a frame must stay continuous with, across a scene cut. */
+export interface BeatPlannerContinuityAnchor {
+  shotType?: string
+  frozenMoment?: string
+  screenDirection?: string
 }
 
 /** Exact library labels the planner must use — appearance comes from reference images. */
@@ -55,6 +77,14 @@ export interface BeatSequencePlanRequest {
   projectId?: string
   forceFallback?: boolean
   referenceCatalog?: BeatSequenceReferenceCatalog
+  /** The one look every frame in this film shares. */
+  lookbook?: ProjectLookbook
+  /** One line per scene, so beats connect to the film and not just the scene. */
+  storySpine?: LookbookSceneSummary[]
+  /** Last beat of the preceding scene, for continuity across the cut. */
+  previousSceneLastBeat?: BeatPlannerContinuityAnchor
+  /** Code-owned realism anchor, folded in when the lookbook omits one. */
+  artStyleAnchor?: string
 }
 
 export function formatBeatPlannerReferenceCatalog(
@@ -76,18 +106,55 @@ export function formatBeatPlannerReferenceCatalog(
   return lines.join('\n')
 }
 
+export interface ComposeBeatStillPromptArgs {
+  /** Blocking, shot, gaze, and prop handling for this beat. */
+  actionFraming: string
+  lookbook?: ProjectLookbook
+  /** 0-based, for looking up this scene's departure from the master look. */
+  sceneIndex: number
+  artStyleAnchor?: string
+  lighting?: string
+  lensMm?: string
+}
+
+/**
+ * Wrap a beat's action text in the film's `[GLOBAL STYLE ANCHOR]`.
+ *
+ * `parseStillPromptSource` lifts that header into the `[STYLE]` block of the
+ * final still prompt, which is how a beat frame ends up with a look at all.
+ * Without a lookbook this returns the bare action text, so callers with no
+ * project look behave exactly as before.
+ */
+export function composeBeatStillPrompt(args: ComposeBeatStillPromptArgs): string {
+  const actionFraming = args.actionFraming.trim()
+  if (!args.lookbook || !actionFraming) return actionFraming
+
+  const anchor = formatLookbookStyleAnchor(args.lookbook, {
+    artStyleAnchor: args.artStyleAnchor,
+    sceneLookNote: getSceneLookNote(args.lookbook, args.sceneIndex),
+    beatLighting: args.lighting,
+    beatLens: args.lensMm,
+  })
+
+  return `${anchor}\n\n[SCENE COMPOSITION & BEAT]\nAction/Framing: ${actionFraming}`
+}
+
 export function buildPlannerSystemPrompt(): string {
-  return `You are a cinematic still-frame planner for an animatic. Plan DISTINCT live-action photoreal film stills — one frozen instant per beat. These stills illustrate the beat for the animatic. They are NOT Veo/F2V start frames, NOT video clips, and NOT motion direction.
+  return `You are a cinematic still-frame planner for an animatic. Plan a CONTINUOUS SEQUENCE of live-action photoreal film stills — one frozen instant per beat — that read as coverage of one continuous moment in one film. These stills illustrate the beats for the animatic. They are NOT Veo/F2V start frames, NOT video clips, and NOT motion direction.
+
+COVERAGE VARIES, THE LOOK DOES NOT. Beats differ in what the camera is pointed at. They never differ in palette, grade, key-light direction, or lens family.
 
 CRITICAL RULES:
-1. Each beat gets ONE unique frozen moment — different subject, scale, composition, or story beat. Never repeat the same visual across beats.
-2. NO camera movement and NO temporal/motion verbs (pulses, glitching, flickering, walking through). Describe a single photograph.
-3. Title typography ONLY on beats with beatRole "title_reveal" or "credit". All other beats: NO on-screen text.
-4. Map direction.camera.shots to beats when provided (beat 0 → shot 0, etc.).
-5. Follow the narrative arc: opening → progression → climax → title_reveal (if title scene) → dissolve.
-6. The "prompt" field is Action/Framing ONLY: shot type, body blocking, who holds which named library prop, gaze. Do NOT write style dumps, lighting essays, exclusions, F2V, or start-frame language — code owns those.
-7. Use EXACT character / prop / location labels from the REFERENCE LIBRARY. Do not invent objects that are not listed. Do not describe the visual appearance of library props or locations (reference images own appearance).
-8. When art style is photorealistic, keep action language photographic (no illustration, cartoon, or anime). Populate negativeAdditions with anti-illustration terms.
+1. Vary coverage, not look. Each beat must change at least one of: subject, shot scale, or camera angle. Palette, key-light direction and quality, lens family, and grade stay locked to the PROJECT LOOKBOOK on every beat. Two beats sharing a look is correct; two beats sharing a camera setup is not.
+2. Hold continuity across consecutive beats. Keep screen direction and eyelines consistent — a character facing frame-right stays facing frame-right, and do not cross the axis unless the beat calls for it. Carry visible state forward: a prop set down in beat 2 is still down in beat 3, a door opened stays open, dirt and damage accumulate and never reset.
+3. NO camera movement and NO temporal/motion verbs (pulses, glitching, flickering, walking through). Describe a single photograph.
+4. Title typography ONLY on beats with beatRole "title_reveal" or "credit". All other beats: NO on-screen text.
+5. Map direction.camera.shots to beats when provided (beat 0 → shot 0, etc.).
+6. Follow the narrative arc: opening → progression → climax → title_reveal (if title scene) → dissolve.
+7. "lighting" and "lensMm" place THIS beat inside the film's established grammar — a key-light accent and a focal length, never a new look. Derive both from the PROJECT LOOKBOOK. Leave a field empty rather than contradict the lookbook.
+8. The "prompt" field is Action/Framing ONLY: shot type, body blocking, who holds which named library prop, gaze. Do NOT write style dumps, lighting essays, exclusions, F2V, or start-frame language — the lookbook and code own those.
+9. Use EXACT character / prop / location labels from the REFERENCE LIBRARY. Do not invent objects that are not listed. Do not describe the visual appearance of library props or locations (reference images own appearance).
+10. When art style is photorealistic, keep action language photographic (no illustration, cartoon, or anime). Populate negativeAdditions with anti-illustration terms.
 
 Output JSON:
 {
@@ -99,6 +166,10 @@ Output JSON:
       "shotType": "Wide Shot",
       "frozenMoment": "one-sentence frozen moment description",
       "prompt": "Action/Framing only for this beat",
+      "lighting": "key-light accent for this beat within the film's lighting grammar",
+      "lensMm": "35mm",
+      "screenDirection": "who sits where in frame and which way they face",
+      "continuityNote": "what carries over from the previous beat",
       "allowTypography": false,
       "durationSeconds": 4,
       "negativeAdditions": []
@@ -118,15 +189,55 @@ export function buildPlannerUserPrompt(request: BeatSequencePlanRequest): string
   const shots = getDirectionShots(scene)
 
   const parts: string[] = []
-  parts.push(`Plan ${beats.length} DISTINCT frozen animatic stills for this scene (Action/Framing only — not video motion).`)
+  parts.push(
+    `Plan ${beats.length} continuous frozen animatic stills for this scene (Action/Framing only — not video motion).`
+  )
   parts.push('')
-  parts.push(`SCENE ${sceneNumber}${totalScenes ? ` of ${totalScenes}` : ''}: ${heading}`)
-  parts.push(`Scene Type: ${sceneType.toUpperCase()}`)
+
+  if (request.lookbook) {
+    parts.push(
+      formatLookbookForPlannerPrompt(
+        request.lookbook,
+        getSceneLookNote(request.lookbook, sceneNumber - 1)
+      )
+    )
+    parts.push('')
+  }
+
   if (filmContext?.title) parts.push(`Film Title: "${filmContext.title}"`)
   if (filmContext?.genre?.length) parts.push(`Genre: ${filmContext.genre.join(', ')}`)
   if (filmContext?.tone) parts.push(`Tone: ${filmContext.tone}`)
+  if (filmContext?.logline) parts.push(`Logline: ${filmContext.logline}`)
+  if (filmContext?.visualStyle) parts.push(`Director's visual style: ${filmContext.visualStyle}`)
   parts.push(`Art Style: ${artStyle || 'photorealistic'}`)
   parts.push('')
+
+  const spine = request.storySpine ?? []
+  if (spine.length > 1) {
+    parts.push('STORY SPINE (the whole film — these beats must belong to it):')
+    for (const entry of spine) {
+      const marker = entry.sceneIndex === sceneNumber - 1 ? '>' : ' '
+      parts.push(
+        `${marker} ${entry.sceneIndex + 1}. ${entry.heading || '(untitled)'} — ${entry.oneLine || '(no description)'}`
+      )
+    }
+    parts.push('')
+  }
+
+  parts.push(`SCENE ${sceneNumber}${totalScenes ? ` of ${totalScenes}` : ''}: ${heading}`)
+  parts.push(`Scene Type: ${sceneType.toUpperCase()}`)
+  parts.push('')
+
+  const anchor = request.previousSceneLastBeat
+  const anchorCues = [anchor?.shotType, anchor?.frozenMoment, anchor?.screenDirection]
+    .map((cue) => (cue ?? '').trim())
+    .filter(Boolean)
+  if (anchorCues.length > 0) {
+    parts.push('PREVIOUS SCENE ENDED ON (match the look; the first beat here cuts from it):')
+    parts.push(anchorCues.join(' — '))
+    parts.push('')
+  }
+
   parts.push('SCENE ACTION:')
   parts.push(action || visualDescription || '(none)')
   parts.push('')
@@ -340,9 +451,16 @@ export function buildFallbackBeatPlans(request: BeatSequencePlanRequest): BeatKe
       beatRole,
       shotType,
       frozenMoment,
-      prompt: prompt.trim(),
+      prompt: composeBeatStillPrompt({
+        actionFraming: prompt.trim(),
+        lookbook: request.lookbook,
+        sceneIndex: sceneNumber - 1,
+        artStyleAnchor: request.artStyleAnchor,
+        lighting: directionMeta.lightingMood,
+      }),
       allowTypography,
       durationSeconds,
+      ...(directionMeta.lightingMood ? { lighting: directionMeta.lightingMood } : {}),
     }
   })
 }
@@ -362,12 +480,14 @@ function mergePlannerDirectionIntoBeat(
 
   const planShotType = plan.shotType?.trim() || undefined
   const planFrozenMoment = plan.frozenMoment?.trim() || undefined
+  const planLighting = plan.lighting?.trim() || undefined
 
-  if (!planShotType && !planFrozenMoment && !existing) return undefined
+  if (!planShotType && !planFrozenMoment && !planLighting && !existing) return undefined
 
   const merged: BeatDirection = { ...(existing ?? {}) }
   if (!merged.shotType && planShotType) merged.shotType = planShotType
   if (!merged.frozenMoment && planFrozenMoment) merged.frozenMoment = planFrozenMoment
+  if (!merged.lightingAccent && planLighting) merged.lightingAccent = planLighting
 
   merged.generatedBy = authored ? existing?.generatedBy : merged.generatedBy || 'planner'
   merged.updatedAt = new Date().toISOString()

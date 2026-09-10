@@ -27,6 +27,10 @@ import {
   DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
 } from '@/lib/character/characterReferenceAssembly'
 import { LOCATION_TURNAROUND_USER_PROMPT_HINT } from '@/lib/vision/locationReferencePrompts'
+import {
+  formatLookbookForPlannerPrompt,
+  type ProjectLookbook,
+} from '@/lib/intelligence/project-lookbook-fallback'
 import type { BeatKind } from '@/lib/script/segmentTypes'
 
 // =============================================================================
@@ -166,6 +170,14 @@ export interface SceneImageIntelligenceRequest {
   talentDirection?: SceneImageTalentDirectionOverlay
   /** Natural-language director notes applied on top of the beat-aligned baseline */
   userDirection?: string
+  /**
+   * The one look every frame in this film shares. When present it is copied
+   * verbatim into [GLOBAL STYLE ANCHOR] so a frame regenerated on its own still
+   * matches the frames around it.
+   */
+  lookbook?: ProjectLookbook
+  /** This scene's sanctioned departure from the master look. */
+  sceneLookNote?: string
 }
 
 export interface SceneImageVisualSetupOverlay {
@@ -272,7 +284,7 @@ interface CacheEntry {
 
 const promptCache = new Map<string, CacheEntry>()
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
-const SCENE_IMAGE_CACHE_KEY_VERSION = 'v3'
+const SCENE_IMAGE_CACHE_KEY_VERSION = 'v4'
 
 function unescapeJsonString(value: string): string {
   return value
@@ -413,6 +425,8 @@ export function buildSceneImageCacheKey(request: SceneImageIntelligenceRequest):
     compactOverlayKey(request.visualSetup),
     compactOverlayKey(request.talentDirection),
     compactOverlayKey(request.beatDirection),
+    request.lookbook?.fingerprint ?? 'no-lookbook',
+    request.sceneLookNote ?? 'na',
     ...request.characters.map(c => `${c.name}:${c.wardrobeDescription || 'default'}:${c.directedEmotion || 'na'}`),
     request.referenceImageCount,
   ]
@@ -539,8 +553,9 @@ CRITICAL RULES:
 8. PROMPT STRUCTURE — the "prompt" field MUST use these exact section headers in order (preserve newlines):
 
 [GLOBAL STYLE ANCHOR]
-Master Style: [art style + photorealistic/cinematic quality from input]
-Lighting & Camera: [lighting mood, color temperature, time of day, lens/framing from direction cues]
+Master Style: [when a PROJECT LOOKBOOK is provided, copy its Master Style verbatim and do NOT invent a new look; otherwise art style + photorealistic/cinematic quality from input]
+Lighting & Camera: [when a PROJECT LOOKBOOK is provided, copy its Lighting Grammar and Lens & Format verbatim, then add only this beat's key-light accent; otherwise lighting mood, color temperature, time of day, lens/framing from direction cues]
+Palette & Grade: [when a PROJECT LOOKBOOK is provided, copy its Color Palette and Texture & Grade verbatim; otherwise omit this line]
 
 [SCENE COMPOSITION & BEAT]
 Action/Framing: [shot type + frozen action for THIS beat; use ONLY person [N] tokens for characters VISIBLE in this beat — never invent or renumber tokens; you MAY omit person [N] tokens for characters not on camera; never restate character names in parentheses after a person token; use prop [N] and location [N] tokens (not library names) for referenced props/locations; describe body blocking, gesture, what each character is physically doing, hand/prop interaction, and gaze target (where they look); include directed facial expression/emotion for each visible character — do NOT copy neutral expression from identity reference; characters are engaged in the action and NOT looking at the camera unless the beat is direct-to-camera address]
@@ -654,7 +669,12 @@ export function buildSceneImageIntelligenceUserPrompt(request: SceneImageIntelli
 
 function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
   let prompt = ''
-  
+
+  // Look first: every later section composes inside it, never around it.
+  if (request.lookbook) {
+    prompt += `${formatLookbookForPlannerPrompt(request.lookbook, request.sceneLookNote)}\n\n`
+  }
+
   // Film context
   if (request.filmContext) {
     const fc = request.filmContext

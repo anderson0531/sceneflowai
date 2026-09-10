@@ -13,6 +13,7 @@ import {
   type PropContext,
   type LocationContext,
 } from '@/lib/intelligence/scene-image-intelligence'
+import { ensureProjectLookbook, getSceneLookNote } from '@/lib/intelligence/project-lookbook'
 import { stripEmotionalDescriptors } from '@/lib/imagen/promptOptimizer'
 import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
@@ -176,6 +177,10 @@ export async function POST(req: NextRequest) {
     const sceneType = detectSceneType(sceneData.heading || '', fullSceneContext, sceneIndex + 1, scenes.length)
     const directionMetadata = extractDirectionMetadata(sceneData.sceneDirection)
 
+    // The Prompt Builder baseline has to preview the same look the frame will
+    // be generated with, or the director edits against the wrong reference.
+    const projectLookbook = await ensureProjectLookbook(project, artStyle)
+
     // 6. Call Gemini intelligence
     const aiResult = await generateSceneImagePromptWithDeadline({
       sceneHeading: sceneData.heading || '',
@@ -190,7 +195,9 @@ export async function POST(req: NextRequest) {
       availableLocations: locationsWithIndices,
       artStyle: artStyle || 'photorealistic',
       referenceImageCount: totalAvailableRefImages,
-      projectId
+      projectId,
+      lookbook: projectLookbook,
+      sceneLookNote: getSceneLookNote(projectLookbook, sceneIndex),
     })
 
     return NextResponse.json({
