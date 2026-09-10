@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText, generateWithVision } from '@/lib/vertexai/gemini'
 import { CharacterContext, ScreenplayContext } from '@/lib/voiceRecommendation'
-import { buildDirectorNotePrompt } from '@/lib/tts/buildCharacterVoiceProfile'
+import {
+  buildDirectorNotePrompt,
+  parseDirectorNoteResponse,
+} from '@/lib/tts/buildCharacterVoiceProfile'
 
 export const dynamic = 'force-dynamic'
 
@@ -81,31 +84,33 @@ export async function POST(request: NextRequest) {
       generatedText = response.text.trim()
     }
     
-    // Extract JSON block using regex to safely ignore any conversational filler
-    const jsonMatch = generatedText.match(/\{[\s\S]*?"audio_profile"\s*:[\s\S]*?\}/);
-    
-    if (jsonMatch) {
-      try {
-        const parsed = JSON.parse(jsonMatch[0])
-        if (parsed.audio_profile) {
-          generatedText = parsed.audio_profile
-        }
-      } catch (e) {
-        console.error('[Director Prompt] Failed to parse JSON:', e)
-        // If JSON parsing fails but we extracted it, it might have trailing commas, etc.
-        // Fallback to stripping the JSON keys manually as a last resort
-        generatedText = jsonMatch[0].replace(/\{\s*"audio_profile"\s*:\s*"/, '').replace(/"\s*\}$/, '').trim()
-      }
-    } else {
-      // Complete fallback in case the model ignored the JSON instruction completely
-      generatedText = generatedText.replace(/^```[a-zA-Z]*\n?/, '')
-                                   .replace(/^```\n?/, '')
-                                   .replace(/\n?```$/, '')
-                                   .replace(/^(Here is the )?JSON requested:?\n?/i, '')
-                                   .trim()
+    const structured = parseDirectorNoteResponse(generatedText, {
+      name: characterContext.name,
+      role: typeof characterContext.role === 'string' ? characterContext.role : undefined,
+      age: characterContext.age !== undefined ? String(characterContext.age) : undefined,
+      gender: characterContext.gender,
+      ethnicity: characterContext.ethnicity,
+      personality: characterContext.personality,
+    })
+
+    if (structured) {
+      return NextResponse.json({
+        script: structured.systemInstruction,
+        vocalAttributes: structured.vocalAttributes,
+      })
     }
 
-    if (!generatedText?.trim()) {
+    // The model ignored the JSON contract. Return the prose as-is; the prompt
+    // assembler still handles unstructured profiles on its legacy path.
+    console.warn('[Director Prompt] No structured fields returned; falling back to prose')
+    generatedText = generatedText
+      .replace(/^```[a-zA-Z]*\n?/, '')
+      .replace(/^```\n?/, '')
+      .replace(/\n?```$/, '')
+      .replace(/^(Here is the )?JSON requested:?\n?/i, '')
+      .trim()
+
+    if (!generatedText) {
       console.error('[Director Prompt] Empty profile after parsing')
       return NextResponse.json(
         { error: 'Failed to generate director prompt (empty response)' },

@@ -391,14 +391,18 @@ export function inferAgeFromDescription(description: string): CharacterAgeBand |
   return null
 }
 
-/** Normalize character.age / vision apparentAge into a scoring band. */
+/**
+ * Normalize character.age / vision apparentAge into a scoring band.
+ * Accepts numbers because `CharacterContext.age` allows them.
+ */
 export function normalizeCharacterAgeBand(
-  age?: string
+  age?: string | number
 ): CharacterAgeBand | null {
-  if (!age?.trim()) return null
-  const direct = inferAgeFromDescription(age)
+  const text = typeof age === 'number' ? String(age) : age
+  if (!text?.trim()) return null
+  const direct = inferAgeFromDescription(text)
   if (direct) return direct
-  const lower = age.toLowerCase().trim()
+  const lower = text.toLowerCase().trim()
   if (lower === 'young' || lower === 'youthful') return 'young'
   if (lower === 'mature' || lower === 'senior' || lower === 'elderly') return 'mature'
   if (lower === 'middle' || lower === 'adult') return 'middle'
@@ -1123,7 +1127,7 @@ export function generateVoiceDesignPrompt(
   
   // Add age
   if (character.age) {
-    parts.push(character.age)
+    parts.push(String(character.age))
   }
   
   // Extract voice traits from description
