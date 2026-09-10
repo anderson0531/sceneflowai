@@ -89,6 +89,12 @@ export async function createGenerationJob(input: {
   projectId: string
   jobType: GenerationJobType
   payload: Record<string, unknown>
+  /**
+   * Send `generation/job.queued`. Batch callers set this false and send
+   * `generation/batch.queued` themselves — emitting both would hand the same
+   * job to `processGenerationJob` and `processBatchGenerationJob` at once.
+   */
+  dispatch?: boolean
 }): Promise<{ job: GenerationJob; dispatched: boolean }> {
   await ensureNotificationsSchema()
   const job = await GenerationJob.create({
@@ -99,6 +105,10 @@ export async function createGenerationJob(input: {
     status: 'queued',
     progress: 0,
   })
+
+  if (input.dispatch === false) {
+    return { job, dispatched: false }
+  }
 
   // Leave status=queued when undispatched: callers (guided revise, AR) fall back
   // to an HTTP step worker when Inngest is missing or send fails.

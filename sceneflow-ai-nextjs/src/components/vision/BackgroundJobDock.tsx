@@ -21,6 +21,9 @@ export function BackgroundJobDock({
   onCancel,
   onViewResult,
   viewResultLabel = 'View results',
+  cancelLabel = 'Cancel analysis',
+  describeResult,
+  className,
 }: {
   job: BackgroundJob | null
   title: string
@@ -30,6 +33,11 @@ export function BackgroundJobDock({
   onCancel?: () => void
   onViewResult?: () => void
   viewResultLabel?: string
+  cancelLabel?: string
+  /** Completion summary line. Defaults to Audience Resonance's scene coverage. */
+  describeResult?: (job: BackgroundJob) => string
+  /** Override the anchor so two concurrent docks do not sit on top of each other. */
+  className?: string
 }) {
   if (!job) return null
 
@@ -38,10 +46,6 @@ export function BackgroundJobDock({
   const isCancelled = job.status === 'cancelled'
   const isActive = !isFailed && !isCompleted && !isCancelled
   const progress = Math.min(100, Math.max(0, job.progress ?? 0))
-
-  const analyzed = Number(job.result?.analyzedScenes ?? 0)
-  const total = Number(job.result?.totalScenes ?? job.payload?.sceneCount ?? 0)
-  const stale = job.result?.stale === true
 
   const handleClose = () => {
     // Active jobs must be cancelled — bare dismiss orphans the server job
@@ -54,7 +58,12 @@ export function BackgroundJobDock({
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-[80] w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-700 bg-slate-900/95 p-3 shadow-2xl backdrop-blur">
+    <div
+      className={cn(
+        'fixed bottom-4 right-4 z-[80] w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-700 bg-slate-900/95 p-3 shadow-2xl backdrop-blur',
+        className
+      )}
+    >
       <div className="flex items-start gap-2">
         <div className="mt-0.5 shrink-0">
           {isActive ? (
@@ -79,8 +88,7 @@ export function BackgroundJobDock({
             </p>
           ) : (
             <p className="mt-0.5 text-[11px] text-slate-400">
-              {total ? `${analyzed} of ${total} scenes analyzed` : 'Analysis complete'}
-              {stale ? ' — script changed since it started' : ''}
+              {(describeResult ?? describeAnalysisResult)(job)}
             </p>
           )}
 
@@ -100,7 +108,7 @@ export function BackgroundJobDock({
               onClick={onCancel}
               className="mt-2 h-8 w-full text-[11px] font-semibold"
             >
-              Cancel analysis
+              {cancelLabel}
             </Button>
           ) : null}
 
@@ -120,7 +128,7 @@ export function BackgroundJobDock({
         <button
           type="button"
           onClick={handleClose}
-          aria-label={isActive && onCancel ? 'Cancel analysis' : 'Dismiss'}
+          aria-label={isActive && onCancel ? cancelLabel : 'Dismiss'}
           className="shrink-0 rounded p-0.5 text-slate-500 transition-colors hover:text-slate-200"
         >
           <X className="h-3.5 w-3.5" />
@@ -128,4 +136,34 @@ export function BackgroundJobDock({
       </div>
     </div>
   )
+}
+
+function describeAnalysisResult(job: BackgroundJob): string {
+  const analyzed = Number(job.result?.analyzedScenes ?? 0)
+  const total = Number(job.result?.totalScenes ?? job.payload?.sceneCount ?? 0)
+  const stale = job.result?.stale === true
+  return `${total ? `${analyzed} of ${total} scenes analyzed` : 'Analysis complete'}${
+    stale ? ' — script changed since it started' : ''
+  }`
+}
+
+/** Completion line for a Reference Express batch. */
+export function describeReferenceExpressResult(job: BackgroundJob): string {
+  const result = (job.result ?? {}) as {
+    succeeded?: number
+    total?: number
+    failed?: number
+    skipped?: number
+    staleCount?: number
+  }
+  const total = Number(result.total ?? job.payload?.itemCount ?? 0)
+  const succeeded = Number(result.succeeded ?? 0)
+
+  if (!total) return 'Reference generation complete'
+
+  const parts = [`${succeeded} of ${total} references generated`]
+  if (result.failed) parts.push(`${result.failed} failed`)
+  if (result.skipped) parts.push(`${result.skipped} skipped`)
+  if (result.staleCount) parts.push(`${result.staleCount} changed while running`)
+  return parts.join(' — ')
 }

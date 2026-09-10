@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
-import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibraryStorage'
 import { getCreditCost } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
 import { ObjectCategory } from '@/types/visionReferences'
-import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import {
+  generateObjectReferenceImage,
+  ReferenceGenerationError,
+  type ReferenceAspectRatio,
+} from '@/lib/vision/referenceExpress/generateReferenceImage'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -16,51 +19,18 @@ interface GenerateObjectRequest {
   description: string
   prompt: string
   category?: ObjectCategory
+  projectId?: string
   referenceImageUrl?: string // Optional reference image to base generation on
   referenceImageBase64?: string // Alternative: base64 encoded reference
-  aspectRatio?: '1:1' | '4:3' | '3:4' | '16:9' | '9:16'
-}
-
-/**
- * Build an optimized prompt for clean reference image generation
- */
-function buildReferenceImagePrompt(
-  prompt: string, 
-  category: ObjectCategory = 'other',
-  hasReference: boolean
-): string {
-  // Base prompt modifiers for clean reference images
-  const studioModifiers = [
-    'Professional product photography',
-    'Clean studio lighting with soft shadows',
-    'High resolution, sharp focus',
-    'Centered composition',
-    '8K quality, production reference image'
-  ]
-
-  // Category-specific enhancements
-  const categoryEnhancements: Record<ObjectCategory, string[]> = {
-    'prop': ['Hero prop presentation', 'Detailed texture visible', 'Museum quality display'],
-    'vehicle': ['3/4 angle automotive photography', 'Dramatic studio lighting', 'Showroom quality'],
-    'set-piece': ['Architectural detail photography', 'Environmental context minimal', 'Scale reference implied'],
-    'costume': ['Fashion photography on form', 'Fabric texture detailed', 'Full garment visible'],
-    'technology': ['Tech product showcase', 'Sleek modern presentation', 'Interface visible if applicable'],
-    'other': ['Professional reference photography', 'Clear subject isolation', 'Production quality']
-  }
-
-  const enhancements = categoryEnhancements[category] || categoryEnhancements.other
-
-  // If we have a reference image, focus on extracting/enhancing rather than creating
-  if (hasReference) {
-    return `Create a clean, studio-quality reference image based on the provided reference photo. ${prompt}. ${enhancements.join(', ')}. ${studioModifiers.join(', ')}. Remove background clutter, enhance clarity, professional product shot quality.`
-  }
-
-  return `${prompt}. ${enhancements.join(', ')}. ${studioModifiers.join(', ')}.`
+  aspectRatio?: ReferenceAspectRatio
 }
 
 /**
  * Generate a clean reference image for an object
  * Supports optional reference image for generating improved versions
+ *
+ * Generation itself lives in `@/lib/vision/referenceExpress/generateReferenceImage`
+ * so the Reference Express background worker can run it without a session.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -87,86 +57,45 @@ export async function POST(req: NextRequest) {
     }
 
     const body: GenerateObjectRequest = await req.json()
-    const { 
-      name, 
-      description, 
-      prompt: enteredPrompt,
-      category = 'other',
-      referenceImageUrl,
-      referenceImageBase64,
-      aspectRatio = '1:1' // Square is best for reference images
-    } = body
+    const { name, description, category = 'other' } = body
 
-    if (!name || !enteredPrompt) {
-      return NextResponse.json(
-        { error: 'Missing required fields: name and prompt' },
-        { status: 400 }
-      )
-    }
-
-    // Typed in the creator's language; the image model needs English.
-    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, {
-      projectId: (body as { projectId?: string }).projectId,
-    })
-    const prompt = await englishForModel(enteredPrompt, storyLocale, [name, ...properNouns])
-
-    const hasReference = !!(referenceImageUrl || referenceImageBase64)
+    const hasReference = !!(body.referenceImageUrl || body.referenceImageBase64)
     console.log(`[Key Props Generation] Generating: ${name}`)
     console.log(`[Key Props Generation] Category: ${category}, Has Reference: ${hasReference}`)
 
-    // Build optimized prompt
-    const optimizedPrompt = buildReferenceImagePrompt(prompt, category, hasReference)
-    console.log(`[Key Props Generation] Optimized prompt: ${optimizedPrompt.substring(0, 200)}...`)
+    // Typed in the creator's language; the image model needs English.
+    const locale = await resolveRequestStoryLocale(req, { projectId: body.projectId })
 
-    // Build reference images array if provided
-    const referenceImages = hasReference ? [{
-      imageUrl: referenceImageUrl,
-      base64Image: referenceImageBase64,
-      mimeType: 'image/jpeg',
-      name: `${name} reference`
-    }] : undefined
-
-    // Generate using Gemini Studio (supports reference images natively)
-    const result = await generateImageWithGeminiStudio({
-      prompt: optimizedPrompt,
-      aspectRatio: aspectRatio as any,
-      imageSize: '2K',
-      referenceImages
+    const result = await generateObjectReferenceImage({
+      userId,
+      name,
+      prompt: body.prompt,
+      category,
+      referenceImageUrl: body.referenceImageUrl,
+      referenceImageBase64: body.referenceImageBase64,
+      aspectRatio: body.aspectRatio,
+      locale,
     })
 
-    console.log('[Key Props Generation] Image generated, uploading to storage...')
+    console.log('[Key Props Generation] Upload complete:', result.imageUrl)
 
-    // Upload to blob storage
-    const safeName = name.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 50)
-    const filename = `objects/${category}/${safeName}-${Date.now()}.${result.mimeType === 'image/png' ? 'png' : 'jpg'}`
-    const imageUrl = await uploadReferenceLibraryBase64Image(result.imageBase64, filename)
-
-    console.log('[Key Props Generation] Upload complete:', imageUrl)
-
-    // Charge credits after successful generation
     let newBalance: number | undefined
     try {
-      await CreditService.charge(
-        userId,
-        CREDIT_COST,
-        'IMAGE_GENERATION',
-        `Object reference: ${name}`
-      )
       const breakdown = await CreditService.getCreditBreakdown(userId)
       newBalance = breakdown.total_credits
-    } catch (creditError) {
-      console.error('[Key Props Generation] Credit charge failed:', creditError)
+    } catch (balanceError) {
+      console.error('[Key Props Generation] Balance lookup failed:', balanceError)
     }
 
     return NextResponse.json({
       success: true,
-      imageUrl,
+      imageUrl: result.imageUrl,
       name,
       description,
       category,
-      prompt: optimizedPrompt,
-      hasReferenceSource: hasReference,
-      creditsUsed: CREDIT_COST,
+      prompt: result.prompt,
+      hasReferenceSource: result.hasReferenceSource,
+      creditsUsed: result.creditCost,
       newBalance
     })
 
@@ -188,9 +117,10 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    const status = error instanceof ReferenceGenerationError ? error.status : 500
     return NextResponse.json(
       { error: error.message || 'Failed to generate object reference image' },
-      { status: 500 }
+      { status }
     )
   }
 }

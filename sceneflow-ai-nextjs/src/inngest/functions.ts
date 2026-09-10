@@ -31,6 +31,8 @@ import {
   runSectionRewriteStep,
 } from '@/lib/treatment/runGuidedRevise'
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
+import { runReferenceExpressStep } from '@/lib/jobs/referenceExpressWorker'
+import { getReferenceExpressMaxAttempts } from '@/lib/jobs/referenceExpressWorkerState'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -82,6 +84,9 @@ export const processGenerationJob = inngest.createFunction(
     }
     if (jobType === 'blueprint_guided_revise') {
       return { ok: true, delegated: 'process-blueprint-guided-revise' }
+    }
+    if (jobType === 'reference_express') {
+      return { ok: true, delegated: 'process-reference-express' }
     }
 
     await step.run('mark-processing', async () => {
@@ -144,7 +149,7 @@ export const processGenerationJob = inngest.createFunction(
 export const processBatchGenerationJob = inngest.createFunction(
   { id: 'process-batch-generation-job', retries: 3, triggers: [{ event: 'generation/batch.queued' }] },
   async ({ event, step }) => {
-    const { jobId, userId, projectId, jobType, items } = event.data as {
+    const { jobId, userId, projectId, jobType } = event.data as {
       jobId: string
       userId: string
       projectId: string
@@ -152,37 +157,76 @@ export const processBatchGenerationJob = inngest.createFunction(
       items: Record<string, unknown>[]
     }
 
-    await updateGenerationJob(jobId, { status: 'processing', progress: 0 })
+    // Prefer the event, but fall back to the payload so a replayed or
+    // late-delivered event still knows what to do.
+    const items = await step.run('load-items', async () => {
+      const fromEvent = (event.data as { items?: Record<string, unknown>[] }).items
+      if (Array.isArray(fromEvent) && fromEvent.length) return fromEvent
+      const { default: GenerationJob } = await import('@/models/GenerationJob')
+      const job = await GenerationJob.findByPk(jobId)
+      const stored = (job?.payload as { items?: Record<string, unknown>[] })?.items
+      return Array.isArray(stored) ? stored : []
+    })
 
-    let completed = 0
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i]
-      await step.run(`batch-item-${i}`, async () => {
-        const path =
-          jobType === 'scene_audio'
-            ? '/api/vision/generate-scene-audio'
-            : jobType === 'segment_frames'
-              ? '/api/production/generate-segment-frames'
-            : jobType === 'reference_library'
-              ? '/api/scene/generate-image'
-              : '/api/vision/generate-characters'
-        await callInternalApi(path, item)
-        completed += 1
-        const progress = Math.round((completed / items.length) * 100)
-        await updateGenerationJob(jobId, { progress })
+    if (!items.length) {
+      await updateGenerationJob(jobId, {
+        status: 'failed',
+        error: 'Batch job has no items',
       })
-      await step.sleep('rate-limit-gap', '1500ms')
+      return { ok: false, error: 'Batch job has no items' }
     }
 
-    await updateGenerationJob(jobId, { status: 'completed', progress: 100 })
-    await notifyUser({
-      userId,
-      projectId,
-      jobId,
-      type: 'job_completed',
-      title: 'Batch generation complete',
-      message: `Finished ${items.length} ${jobType.replace(/_/g, ' ')} tasks.`,
-    })
+    await updateGenerationJob(jobId, { status: 'processing', progress: 0 })
+
+    try {
+      let completed = 0
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i]
+        await step.run(`batch-item-${i}`, async () => {
+          const path =
+            jobType === 'scene_audio'
+              ? '/api/vision/generate-scene-audio'
+              : jobType === 'segment_frames'
+                ? '/api/production/generate-segment-frames'
+              : jobType === 'reference_library'
+                ? '/api/scene/generate-image'
+                : '/api/vision/generate-characters'
+          await callInternalApi(path, item)
+          completed += 1
+          const progress = Math.round((completed / items.length) * 100)
+          await updateGenerationJob(jobId, { progress })
+        })
+        await step.sleep(`rate-limit-gap-${i}`, '1500ms')
+      }
+
+      await updateGenerationJob(jobId, { status: 'completed', progress: 100 })
+      await notifyUser({
+        userId,
+        projectId,
+        jobId,
+        type: 'job_completed',
+        title: 'Batch generation complete',
+        message: `Finished ${items.length} ${jobType.replace(/_/g, ' ')} tasks.`,
+      })
+
+      return { ok: true }
+    } catch (err: unknown) {
+      // Without this the row sits in `processing` until the stale sweeper
+      // expires it, and the client polls a job that will never move.
+      const message = err instanceof Error ? err.message : 'Batch generation failed'
+      await step.run('fail', async () => {
+        await updateGenerationJob(jobId, { status: 'failed', error: message })
+        await notifyUser({
+          userId,
+          projectId,
+          jobId,
+          type: 'job_failed',
+          title: 'Batch generation failed',
+          message,
+        })
+      })
+      throw err
+    }
   }
 )
 
@@ -634,10 +678,63 @@ export const processBlueprintGuidedRevise = inngest.createFunction(
   }
 )
 
+/**
+ * Reference Express: cast, location and prop images for one project.
+ *
+ * One image per durable step, sequentially. Concurrency here would only buy
+ * wall-clock time, which stopped mattering when this moved off a blocking
+ * overlay — and the shared Vertex image lane answers bursts with 429s, so a
+ * parallel batch trades its speedup for failures the user then has to retry by
+ * hand. A rate-limited item is slept off and re-run rather than abandoned.
+ */
+export const processReferenceExpress = inngest.createFunction(
+  {
+    id: 'process-reference-express',
+    retries: 2,
+    triggers: [
+      { event: 'generation/job.queued', if: 'event.data.jobType == "reference_express"' },
+    ],
+  },
+  async ({ event, step }) => {
+    const { jobId, projectId, payload } = event.data as {
+      jobId: string
+      userId: string
+      projectId: string
+      payload: Record<string, unknown>
+    }
+
+    const items = Array.isArray(payload.items) ? payload.items : []
+    // Each step resolves at most one item, plus one for init and a margin for
+    // deferred retries, so the loop always has room to reach the last image.
+    const maxSteps = (items.length + 1) * (getReferenceExpressMaxAttempts() + 1)
+
+    for (let i = 0; i < maxSteps; i++) {
+      const outcome = await step.run(`reference-item-${i}`, async () =>
+        runReferenceExpressStep(jobId)
+      )
+
+      if (outcome.done) {
+        return { ok: !outcome.error, projectId, ...outcome }
+      }
+
+      if (outcome.retryInMs && outcome.retryInMs > 0) {
+        await step.sleep(`reference-backoff-${i}`, `${outcome.retryInMs}ms`)
+        continue
+      }
+
+      // Keeps the shared image lane from being hammered back into a 429.
+      await step.sleep(`reference-gap-${i}`, '1500ms')
+    }
+
+    return { ok: false, error: 'Reference Express exceeded its step budget' }
+  }
+)
+
 export const inngestFunctions = [
   processGenerationJob,
   processBatchGenerationJob,
   processKlingLongTake,
   processScriptAnalysis,
   processBlueprintGuidedRevise,
+  processReferenceExpress,
 ]

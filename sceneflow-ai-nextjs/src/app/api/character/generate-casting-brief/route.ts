@@ -1,25 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateText } from '@/lib/vertexai/gemini'
 import {
-  buildCastingBriefDirectorPrompt,
-  parseCastingBriefDirectorResponse,
-  type CastingBriefDirectorRequest,
-} from '@/lib/character/buildCastingBriefDirectorPrompt'
+  CastingBriefParseError,
+  generateCastingBrief,
+} from '@/lib/character/generateCastingBrief'
+import type { CastingBriefDirectorRequest } from '@/lib/character/buildCastingBriefDirectorPrompt'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
-
-async function callGemini(prompt: string): Promise<string> {
-  console.log('[Generate Casting Brief] Calling Vertex AI Gemini...')
-  const result = await generateText(prompt, {
-    model: 'gemini-2.5-flash',
-    temperature: 0.7,
-    topP: 0.95,
-    maxOutputTokens: 1024,
-    responseMimeType: 'application/json',
-  })
-  return result.text
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,31 +26,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const prompt = buildCastingBriefDirectorPrompt(body)
-    console.log(
-      '[Generate Casting Brief] Processing request for:',
-      body.characterName,
-      body.recommendMode ? '(recommend mode)' : '(director notes)',
-    )
-
-    const responseText = await callGemini(prompt)
-
-    let brief
-    try {
-      brief = parseCastingBriefDirectorResponse(responseText)
-    } catch (parseError) {
-      console.error('[Generate Casting Brief] Parse error:', parseError, 'Response:', responseText)
-      return NextResponse.json(
-        { error: 'Failed to parse casting brief response' },
-        { status: 500 },
-      )
-    }
+    const brief = await generateCastingBrief(body)
 
     return NextResponse.json({
       success: true,
       voiceDescription: brief.voiceDescription,
     })
   } catch (error) {
+    if (error instanceof CastingBriefParseError) {
+      console.error('[Generate Casting Brief] Parse error:', error.cause, 'Response:', error.raw)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
     console.error('[Generate Casting Brief] Error:', error)
     return NextResponse.json(
       {

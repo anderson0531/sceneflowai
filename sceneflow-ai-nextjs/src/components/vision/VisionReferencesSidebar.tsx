@@ -103,10 +103,6 @@ export interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps
   onAddSceneReferenceToLibrary?: (sceneIdx: number, imageUrl: string, name: string) => void
   /** Index of scene currently generating reference image */
   generatingReferenceForScene?: number | null
-  /** Callback for generate all scene reference images */
-  onGenerateAllSceneReferences?: () => void
-  /** Whether currently generating all scene references */
-  isGeneratingAllSceneReferences?: boolean
   // Legacy props (deprecated - keep for backward compatibility)
   /** @deprecated Use onGenerateSceneReferenceImage */
   onGenerateSceneImage?: (sceneIdx: number) => void
@@ -118,9 +114,7 @@ export interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps
   onAddToReferenceLibrary?: (imageUrl: string, name: string, sceneNumber: number) => void
   /** @deprecated Use generatingReferenceForScene */
   generatingImageForScene?: number | null
-  /** @deprecated Use onGenerateAllSceneReferences */
   onGenerateAllSceneImages?: () => void
-  /** @deprecated Use isGeneratingAllSceneReferences */
   isGeneratingAllSceneImages?: boolean
   /** Location references for environment consistency */
   locationReferences?: LocationReference[]
@@ -1197,8 +1191,6 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onEditSceneReferenceImage,
     onAddSceneReferenceToLibrary,
     generatingReferenceForScene,
-    onGenerateAllSceneReferences,
-    isGeneratingAllSceneReferences = false,
     // Legacy props (backward compatibility)
     onGenerateSceneImage,
     onUploadSceneImage,
@@ -1245,8 +1237,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   const handleUploadSceneRef = onUploadSceneReferenceImage || onUploadSceneImage
   const handleEditSceneRef = onEditSceneReferenceImage || onEditSceneImage
   const currentGeneratingScene = generatingReferenceForScene ?? generatingImageForScene
-  const handleGenerateAllRefs = onGenerateAllSceneReferences || onGenerateAllSceneImages
-  const isGeneratingAll = isGeneratingAllSceneReferences || isGeneratingAllSceneImages
+  const handleGenerateAllRefs = onGenerateAllSceneImages
+  const isGeneratingAll = isGeneratingAllSceneImages
 
   // Count scenes with/without scene direction and references
   // NOTE: Only count actual sceneReferenceImageUrl - NOT storyboard images (imageUrl)

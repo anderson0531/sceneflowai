@@ -16,8 +16,16 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
 /** Runtime beat concurrency for Scene Express (aligned with image lane, default 2). */
 export const DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY = 2
 
-/** Fail-fast: one Vertex attempt per beat unless env overrides. */
-export const DEFAULT_SCENE_EXPRESS_BEAT_MAX_ATTEMPTS = 1
+/**
+ * Attempts per beat before it is reported as failed.
+ *
+ * Above 1 so the backoff below is reachable at all: a 429 from the image lane
+ * is the expected answer to a burst, not a real failure, and self-healing
+ * in-run beats making the user find and press "Retry failed" once the run has
+ * already finished. The canary abort still stops a genuinely broken
+ * configuration on its first non-retryable error.
+ */
+export const DEFAULT_SCENE_EXPRESS_BEAT_MAX_ATTEMPTS = 3
 
 export function getSceneExpressBeatMaxAttempts(): number {
   return parsePositiveInt(
