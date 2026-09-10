@@ -51,20 +51,4 @@ describe('pickGeminiBaseVoice', () => {
     )
     expect(assignment.voiceName).toBe('Female SceneFlow voice')
   })
-
-  it('scores the matching brief and persists a separate director note', () => {
-    const assignment = buildGoogleVoiceAssignment(
-      'Authoritative, measured, resonant male voice.',
-      {
-        gender: 'male',
-        name: 'Gideon',
-        prompt:
-          'A late-40s male baritone, warm and slightly husky. Measured pacing with quiet authority.',
-      },
-    )
-
-    expect(assignment.voiceId.startsWith('gemini-')).toBe(true)
-    expect(assignment.prompt).toContain('late-40s male baritone')
-    expect(assignment.prompt).not.toContain('Authoritative, measured, resonant')
-  })
 })

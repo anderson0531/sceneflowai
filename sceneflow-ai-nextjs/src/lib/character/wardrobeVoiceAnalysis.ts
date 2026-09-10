@@ -118,14 +118,14 @@ export function buildWardrobeVoiceAnalysisPrompt(
     narrativeLines.push(`Personality / key traits: ${options.personality.trim()}`)
   }
   if (options?.characterDescription?.trim()) {
-    narrativeLines.push(`Story role / personality: ${options.characterDescription.trim()}`)
+    narrativeLines.push(`Character description: ${options.characterDescription.trim()}`)
   }
 
   const portraitBlock = hasPortrait
     ? `PORTRAIT REFERENCE:
-An attached character portrait is provided. Use it to refine gender, apparent age, ethnicity, and vocal timbre — but the narrative profile above is the PRIMARY casting signal. Reconcile portrait cues with the character's role and personality; if they conflict, favor the narrative unless the portrait clearly contradicts gender. Do not describe clothing, hair, or body in the output.`
+An attached character portrait is provided. Use it to refine gender, apparent age, ethnicity, and physical vocal timbre — but the narrative profile above is the PRIMARY casting signal. Reconcile portrait cues with the character's role and personality; if they conflict, favor the narrative unless the portrait clearly contradicts gender.`
     : `NO PORTRAIT:
-No reference image is attached. Derive the voice profile from role, personality, and production context below.`
+No reference image is attached. Derive the full voice profile from the character narrative, role, personality, and production context below.`
 
   return `You are an expert voice casting director for film, television, and documentary narration.
 
@@ -158,8 +158,8 @@ REQUIREMENTS:
    - "authority" (e.g. quiet authority, commanding, approachable)
    - "warmth" (e.g. warm, neutral, cool)
    - "accent" (e.g. neutral American, British RP) — optional
-5. "voiceDescription" — 200–600 characters MATCHING BRIEF for catalog scoring only. Archetype vocabulary: authoritative, intellectual, measured, resonant, articulate, quiet authority, conviction, corporate, warm, gravelly, crisp, professional, confident, steady, polished, engaging, deep, bright, gentle, energetic. Role and personality only — no clothing, hair, body, plot, or dialogue.
-6. "audioProfile" — 4–5 sentences, Director's Note for Gemini TTS. Vocal style only: timbre, pitch, cadence, accent, texture, emotional delivery. Do NOT write dialogue. Do NOT mention appearance, wardrobe, or plot.
+5. "voiceDescription" — 200–600 characters for voice matching. Use archetype vocabulary: authoritative, intellectual, measured, resonant, articulate, quiet authority, conviction, corporate, warm, gravelly, crisp, professional, confident, steady, polished, engaging, deep, bright, gentle, energetic, etc. Reflect role and personality.
+6. "audioProfile" — 4–5 sentences, Director's Note for Gemini TTS. Tone, pitch, cadence, texture, emotional delivery. Do NOT write dialogue.
 
 OUTPUT: Return ONLY valid JSON, no markdown:
 {

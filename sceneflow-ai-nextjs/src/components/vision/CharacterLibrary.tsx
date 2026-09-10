@@ -76,11 +76,6 @@ import {
 } from "@/lib/character/visualGender";
 import { buildGoogleVoiceAssignment } from "@/lib/tts/pickGeminiBaseVoice";
 import {
-  characterVoiceProfileFromAnalysis,
-  narrativeVoiceInputs,
-  vocalCharacterContext,
-} from "@/lib/tts/buildCharacterVoiceProfile";
-import {
   type WardrobeVoiceAnalysisResult,
 } from "@/lib/character/wardrobeVoiceAnalysis";
 import type { EdgeVoiceConfig } from "@/types/vision";
@@ -1606,18 +1601,15 @@ const CharacterCard = ({
 
   // Build character context for voice recommendations
   const characterContext: CharacterContext = {
-    ...vocalCharacterContext({
-      name: character.name || "Unknown",
-      role: isNarratorCharacter ? "narrator" : character.role,
-      gender: character.gender,
-      age: character.age,
-      ethnicity: character.ethnicity,
-      keyFeature: character.keyFeature,
-      description: character.description,
-      appearanceDescription: character.appearanceDescription,
-      voiceDescription: character.voiceDescription,
-      referenceImage: character.referenceImage,
-    }),
+    name: character.name || "Unknown",
+    role: isNarratorCharacter ? "narrator" : character.role,
+    gender: character.gender,
+    age: character.age,
+    ethnicity: character.ethnicity,
+    personality: character.keyFeature,
+    description: character.description || character.appearanceDescription,
+    referenceImage: character.referenceImage,
+    voiceDescription: character.voiceDescription,
   };
 
   const playGeminiVoicePreview = async (
@@ -1727,18 +1719,10 @@ const CharacterCard = ({
           : {}),
         characterContext: {
           ...characterContext,
-          ...vocalCharacterContext({
-            name: characterContext.name,
-            role: character.role,
-            gender: character.gender,
-            age: character.age,
-            ethnicity: character.ethnicity,
-            keyFeature: character.keyFeature,
-            description: character.description,
-            appearanceDescription: character.appearanceDescription,
-            voiceDescription: character.voiceDescription,
-            referenceImage: character.referenceImage,
-          }),
+          role: character.role,
+          personality: character.keyFeature,
+          description:
+            character.description || character.appearanceDescription,
         },
         screenplayContext,
       }),
@@ -1891,21 +1875,21 @@ const CharacterCard = ({
         );
       }
 
-      const analysisProfile = visionAnalysis
-        ? characterVoiceProfileFromAnalysis(visionAnalysis)
-        : null;
-
       const scoringContext: CharacterContext = {
         ...characterContext,
         role: character.role ?? characterContext.role,
         personality: character.keyFeature ?? characterContext.personality,
+        description:
+          character.description ||
+          character.appearanceDescription ||
+          characterContext.description,
         ...(genderOverride ? { gender: genderOverride } : {}),
-        ...(analysisProfile
+        ...(visionAnalysis
           ? {
-              gender: analysisProfile.identity.gender,
-              age: analysisProfile.identity.age,
-              ethnicity: analysisProfile.identity.ethnicity,
-              voiceDescription: analysisProfile.matchingBrief,
+              gender: visionAnalysis.gender,
+              age: visionAnalysis.apparentAge,
+              ethnicity: visionAnalysis.ethnicity,
+              voiceDescription: visionAnalysis.voiceDescription,
             }
           : {}),
       };
@@ -1915,30 +1899,28 @@ const CharacterCard = ({
         referenceImage: character.referenceImage,
       };
 
-      generatedPrompt =
-        analysisProfile?.directorNotes ||
-        (await resolveDirectorNote(directorContext, {
-          audioProfile: visionAnalysis?.audioProfile,
-          existingPrompt: character.voiceConfig?.prompt,
-        }));
+      generatedPrompt = await resolveDirectorNote(directorContext, {
+        audioProfile: visionAnalysis?.audioProfile,
+        existingPrompt: character.voiceConfig?.prompt,
+      });
 
-      const matchingBrief =
-        analysisProfile?.matchingBrief ||
-        narrativeVoiceInputs(character).matchingBrief ||
+      const profile =
+        generatedPrompt ||
+        visionAnalysis?.voiceDescription ||
+        character.voiceDescription ||
         "";
 
-      assignment = buildGoogleVoiceAssignment(matchingBrief, {
+      assignment = buildGoogleVoiceAssignment(profile, {
         gender: scoringContext.gender,
         name: character.name,
         age: scoringContext.age,
         role: scoringContext.role,
         screenplayContext: screenplayContext as ScreenplayContext,
-        prompt: generatedPrompt,
       });
 
-      if (matchingBrief && onUpdateCharacterAttributes) {
+      if (generatedPrompt && onUpdateCharacterAttributes) {
         onUpdateCharacterAttributes(characterId, {
-          voiceDescription: matchingBrief,
+          voiceDescription: generatedPrompt,
         });
       }
 
@@ -1952,7 +1934,7 @@ const CharacterCard = ({
 
         testAudioPlayed = await playGeminiVoicePreview(
           assignment.voiceId,
-          generatedPrompt || assignment.prompt,
+          assignment.prompt || character.voiceConfig?.prompt,
           sampleText,
         );
       } catch (testErr) {
