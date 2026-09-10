@@ -36,6 +36,11 @@ vi.mock('@/lib/sceneGeneration/generateImage', () => ({
   }),
 }))
 
+vi.mock('@/lib/intelligence/project-lookbook', () => ({
+  ensureProjectLookbook: vi.fn(async () => undefined),
+  summarizeScenesForLookbook: vi.fn(() => []),
+}))
+
 vi.mock('@/lib/intelligence/beat-sequence-planner', () => ({
   planBeatSequence: vi.fn(async ({ beats }: { beats: unknown[] }) => ({
     plans: beats.map((_, beatIndex) => ({
@@ -51,6 +56,7 @@ vi.mock('@/lib/intelligence/beat-sequence-planner', () => ({
 }))
 
 import { runExpress } from '@/lib/sceneGeneration/expressOrchestrator'
+import { planBeatSequence } from '@/lib/intelligence/beat-sequence-planner'
 import type { ExpressEvent, ExpressPhase } from '@/lib/sceneGeneration/types'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 
@@ -264,6 +270,83 @@ describe('runExpress', () => {
     expect(Array.isArray(firstBeat.selectedCharacters)).toBe(true)
     expect((firstBeat.selectedCharacters as string[]).length).toBeGreaterThan(0)
     expect(firstBeat.locationReferences).toBeDefined()
+  })
+
+  it('matches references against the beat action, not the style anchor', async () => {
+    const project = {
+      metadata: {
+        title: 'Parity Film',
+        visionPhase: {
+          narrationVoice: { voiceId: 'v1', provider: 'google' },
+          characters: [
+            {
+              id: 'c1',
+              name: 'ALICE',
+              referenceImage: 'https://example.com/alice.png',
+              voiceConfig: { voiceId: 'v2', provider: 'google' },
+            },
+            { id: 'c2', name: 'BOB', referenceImage: 'https://example.com/bob.png' },
+          ],
+          references: { locationReferences: [], objectReferences: [] },
+          script: {
+            script: {
+              scenes: [
+                {
+                  heading: 'INT. OFFICE - DAY',
+                  action: 'ALICE works.',
+                  beats: [
+                    {
+                      beatId: 'bt_a',
+                      kind: 'action',
+                      actionDescription: 'ALICE reviews documents.',
+                      sequenceIndex: 0,
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      },
+    }
+
+    // BOB is named only in the style prose. A frame that pulls his reference
+    // image in on that basis would put a character in the shot who is not in
+    // the beat.
+    vi.mocked(planBeatSequence).mockImplementationOnce(async () => ({
+      plans: [
+        {
+          beatIndex: 0,
+          beatRole: 'progression' as const,
+          shotType: 'Medium shot',
+          frozenMoment: 'ALICE at the desk.',
+          prompt: [
+            '[GLOBAL STYLE ANCHOR]',
+            'Master Style: BOB Fosse-era stage realism, live-action photoreal',
+            '',
+            '[SCENE COMPOSITION & BEAT]',
+            'Action/Framing: Medium shot: ALICE reviews documents at the desk.',
+          ].join('\n'),
+          allowTypography: false,
+        },
+      ],
+      usedAI: true,
+    }))
+
+    await runExpress({
+      project,
+      options: { projectId: 'p1', mode: 'batch', regenerate: true },
+      baseUrl: 'http://localhost',
+      emit: () => {},
+    })
+
+    const firstBeat = capturedImageCalls.filter(
+      (c) => c.frameType === 'beat' && c.frameRole !== 'end'
+    )[0]
+
+    expect(firstBeat.customPrompt).toContain('[GLOBAL STYLE ANCHOR]')
+    expect(firstBeat.selectedCharacters).toContain('c1')
+    expect(firstBeat.selectedCharacters).not.toContain('c2')
   })
 
   it('sends excludeCharacters without selectedCharacters on title scenes', async () => {

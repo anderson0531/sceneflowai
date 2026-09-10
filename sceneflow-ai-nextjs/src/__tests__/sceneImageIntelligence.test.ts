@@ -21,6 +21,7 @@ import {
   parseTalentDirectionOverlay,
   type SceneImageIntelligenceRequest,
 } from '@/lib/intelligence/scene-image-intelligence'
+import { PROJECT_LOOKBOOK_VERSION } from '@/lib/intelligence/project-lookbook-fallback'
 
 const baseRequest: SceneImageIntelligenceRequest = {
   sceneHeading: 'INT. ALLEY - NIGHT',
@@ -146,5 +147,61 @@ describe('scene image intelligence direction authority', () => {
     expect(prompt).toContain('Piper Hayes and Professor Gideon Croft')
     expect(prompt).toContain('Key props: Water-damaged leather journal')
     expect(prompt).toContain('omit off-screen tokens')
+  })
+})
+
+describe('scene image intelligence under a project lookbook', () => {
+  const lookbook = {
+    version: PROJECT_LOOKBOOK_VERSION,
+    fingerprint: 'eeee5555',
+    masterStyle: 'Rain-slick neo-noir, live-action photoreal',
+    colorPalette: 'Sodium orange against slate blue',
+    lightingGrammar: 'Single hard key from a practical, deep falloff',
+    lensAndFormat: 'Anamorphic 40mm, 2.39:1',
+    textureAndGrade: '35mm grain, crushed blacks',
+    negativeStyleTerms: ['illustration', 'cartoon'],
+    generatedAt: '2026-01-01T00:00:00.000Z',
+  }
+
+  it('states the look first so every later section composes inside it', () => {
+    const prompt = buildSceneImageIntelligenceUserPrompt({
+      ...baseRequest,
+      lookbook,
+      sceneLookNote: 'Rain sheeting off the fire escape',
+    })
+
+    expect(prompt.startsWith('PROJECT LOOKBOOK')).toBe(true)
+    expect(prompt).toContain('Rain-slick neo-noir')
+    expect(prompt).toContain('Anamorphic 40mm')
+    expect(prompt).toContain('Rain sheeting off the fire escape')
+    expect(prompt).toContain('Never render as: illustration, cartoon')
+  })
+
+  it('tells the model to copy the look verbatim rather than invent one', () => {
+    const system = buildSceneImageSystemPrompt()
+    expect(system).toMatch(/copy its Master Style verbatim and do NOT invent a new look/)
+    expect(system).toMatch(/copy its Lighting Grammar and Lens & Format verbatim/)
+    expect(system).toMatch(/copy its Color Palette and Texture & Grade verbatim/)
+  })
+
+  it('keys the cache on the look, so a restyled project does not reuse old prompts', () => {
+    const unstyled = buildSceneImageCacheKey(baseRequest)
+    const styled = buildSceneImageCacheKey({ ...baseRequest, lookbook })
+    const restyled = buildSceneImageCacheKey({
+      ...baseRequest,
+      lookbook: { ...lookbook, fingerprint: 'ffff6666' },
+    })
+    const departed = buildSceneImageCacheKey({
+      ...baseRequest,
+      lookbook,
+      sceneLookNote: 'Rain sheeting off the fire escape',
+    })
+
+    expect(new Set([unstyled, styled, restyled, departed]).size).toBe(4)
+  })
+
+  it('leaves the prompt unchanged when the project has no look', () => {
+    const prompt = buildSceneImageIntelligenceUserPrompt(baseRequest)
+    expect(prompt).not.toContain('PROJECT LOOKBOOK')
   })
 })

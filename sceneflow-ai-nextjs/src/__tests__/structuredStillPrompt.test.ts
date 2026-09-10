@@ -21,7 +21,9 @@ import { compileBeatVideoPrompt } from '@/lib/scene/beatVideoPromptCompiler'
 import {
   buildPlannerSystemPrompt,
   buildPlannerUserPrompt,
+  composeBeatStillPrompt,
 } from '@/lib/intelligence/beat-sequence-planner-fallback'
+import { PROJECT_LOOKBOOK_VERSION } from '@/lib/intelligence/project-lookbook-fallback'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 describe('assembleStructuredStillPrompt', () => {
@@ -187,6 +189,41 @@ describe('planner still vs video split', () => {
     expect(user).toContain('Faraday cage workshop')
     expect(user).toContain('REFERENCE LIBRARY')
     expect(user).toContain('not video motion')
+  })
+
+  it('gives a lookbook-anchored beat prompt a [STYLE] section beyond the realism anchor', () => {
+    const beatPrompt = composeBeatStillPrompt({
+      actionFraming: 'Medium shot: person [1] sets the journal on the bench.',
+      sceneIndex: 0,
+      lookbook: {
+        version: PROJECT_LOOKBOOK_VERSION,
+        fingerprint: 'cccc3333',
+        masterStyle: 'Rain-slick neo-noir, live-action photoreal',
+        colorPalette: 'Sodium orange against slate blue',
+        lightingGrammar: 'Single hard key from a practical, deep falloff',
+        lensAndFormat: 'Anamorphic 40mm, 2.39:1',
+        textureAndGrade: '35mm grain, crushed blacks',
+        negativeStyleTerms: ['illustration'],
+        generatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    })
+
+    const prompt = assembleStructuredStillPrompt({
+      actionOrStructured: beatPrompt,
+      refs: [{ kind: 'person', token: 'person [1]', name: 'Vesper Vale', roleLabel: 'identity' }],
+      photorealisticAnchor: 'live-action film still, photographed on real camera',
+      includeCandid: true,
+    })
+
+    const style = prompt.split(STILL_SECTION_STYLE)[1]?.split('\n[')[0] ?? ''
+    expect(style).toContain('Rain-slick neo-noir')
+    expect(style).toContain('Single hard key from a practical')
+    expect(style).toContain('Anamorphic 40mm')
+    expect(style).toContain('Sodium orange against slate blue')
+    // The action stays in [STILL]; the look never leaks back into it.
+    const still = prompt.split(STILL_SECTION_STILL)[1]?.split(STILL_SECTION_STYLE)[0] ?? ''
+    expect(still).toContain('sets the journal on the bench')
+    expect(still).not.toContain('Anamorphic 40mm')
   })
 
   it('video compiler stays motion-of-beat and does not use still sections', () => {

@@ -2,6 +2,11 @@ import { describe, it, expect, vi } from 'vitest'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
+vi.mock('@/lib/intelligence/project-lookbook', () => ({
+  ensureProjectLookbook: vi.fn(async () => undefined),
+  summarizeScenesForLookbook: vi.fn(() => []),
+}))
+
 vi.mock('@/lib/intelligence/beat-sequence-planner', () => ({
   planBeatSequence: vi.fn(),
   applyBeatKeyframePlansToScene: vi.fn((scene: Record<string, unknown>) => scene),
@@ -27,6 +32,7 @@ import {
   resolveExpressBeatReferences,
   buildExpressBeatRefPayload,
 } from '@/lib/sceneGeneration/expressOrchestrator'
+import { parseStillPromptSource } from '@/lib/imagen/structuredStillPrompt'
 
 const alice = {
   id: 'char-alice',
@@ -205,6 +211,46 @@ describe('resolveExpressBeatReferences', () => {
     expect(refs!.selection.characterIds).toEqual(
       expect.arrayContaining(['char-alice', 'char-bob'])
     )
+  })
+
+  it('takes only the parsed action text from a style-anchored beat prompt', () => {
+    const bob = {
+      id: 'char-bob',
+      name: 'BOB',
+      referenceImage: 'https://example.com/bob.png',
+      wardrobes: [],
+    }
+    const project = buildProject()
+    project.metadata.visionPhase.characters = [alice, bob]
+    const scene = project.metadata.visionPhase.script.script.scenes[0]
+    const beat = scene.beats[0] as SceneBeat
+
+    const beatPrompt = [
+      '[GLOBAL STYLE ANCHOR]',
+      'Master Style: BOB Fosse-era stage realism, live-action photoreal',
+      '',
+      '[SCENE COMPOSITION & BEAT]',
+      'Action/Framing: ALICE lifts the lantern in the alley.',
+    ].join('\n')
+
+    const args = {
+      beat,
+      scene,
+      sceneIndex: 0,
+      beatIdx: 0,
+      sceneNumber: 1,
+      project,
+    }
+
+    const fromWholePrompt = resolveExpressBeatReferences({ ...args, promptText: beatPrompt })
+    const fromActionOnly = resolveExpressBeatReferences({
+      ...args,
+      promptText: parseStillPromptSource(beatPrompt).actionFraming,
+    })
+
+    expect(fromWholePrompt!.selection.characterIds).toContain('char-bob')
+    expect(fromActionOnly!.selection.characterIds).not.toContain('char-bob')
+    expect(fromActionOnly!.selection.characterIds).toContain('char-alice')
   })
 })
 

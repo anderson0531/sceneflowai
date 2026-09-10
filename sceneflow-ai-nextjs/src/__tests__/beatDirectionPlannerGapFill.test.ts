@@ -88,4 +88,39 @@ describe('applyBeatKeyframePlansToScene persists planner direction', () => {
     expect(nextBeat.beatDirection?.shotType).toBe('Wide Establishing')
     expect(nextBeat.beatDirection?.frozenMoment).toBe('Elara faces the dormant console.')
   })
+
+  it('fills lightingAccent from the planner’s per-beat key-light', () => {
+    const beat: SceneBeat = {
+      beatId: 'b1',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription: 'Elara enters the control room.',
+    }
+    const scene = { beats: [beat] }
+    const updated = applyBeatKeyframePlansToScene(scene, [
+      { ...plan, lighting: 'Console glow from below, no fill' },
+    ])
+    const [nextBeat] = getSceneBeats(updated)
+    expect(nextBeat.beatDirection?.lightingAccent).toBe('Console glow from below, no fill')
+  })
+
+  it('does not overwrite an authored lightingAccent', () => {
+    const beat: SceneBeat = {
+      beatId: 'b1',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription: 'Elara enters the control room.',
+      beatDirection: {
+        lightingAccent: 'Hard practical from the doorway',
+        generatedBy: 'llm',
+      },
+    }
+    const scene = { beats: [beat] }
+    const updated = applyBeatKeyframePlansToScene(scene, [
+      { ...plan, lighting: 'Console glow from below, no fill' },
+    ])
+    const [nextBeat] = getSceneBeats(updated)
+    expect(nextBeat.beatDirection?.lightingAccent).toBe('Hard practical from the doorway')
+    expect(nextBeat.beatDirection?.generatedBy).toBe('llm')
+  })
 })
