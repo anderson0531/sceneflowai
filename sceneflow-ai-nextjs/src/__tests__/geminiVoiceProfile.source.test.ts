@@ -34,7 +34,7 @@ describe('Gemini voice profile source contracts', () => {
     expect(source).toContain('pickGeminiBaseVoice')
   })
 
-  it('CharacterLibrary Auto writes google provider + prompt and drops the star-name picker', () => {
+  it('CharacterLibrary Match writes google provider + prompt and drops the star-name picker', () => {
     const source = readFileSync(characterLibraryPath, 'utf8')
     expect(source).toContain('buildGoogleVoiceAssignment')
     expect(source).toContain('Voice profile ready.')
