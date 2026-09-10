@@ -14,7 +14,7 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
 }
 
 /** Runtime beat concurrency for Scene Express (aligned with image lane, default 2). */
-export const DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY = 2
+export const DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY = 1
 
 /**
  * Attempts per beat before it is reported as failed.

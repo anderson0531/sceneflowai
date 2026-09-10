@@ -17,6 +17,7 @@ import {
 } from '@/lib/intelligence/project-lookbook-fallback'
 import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
+import { parseStillPromptSource } from '@/lib/imagen/structuredStillPrompt'
 import type { BeatDirection, SceneBeat } from '@/lib/script/segmentTypes'
 
 function getSceneDirection(scene: Record<string, unknown>): Record<string, any> | undefined {
@@ -137,6 +138,46 @@ export function composeBeatStillPrompt(args: ComposeBeatStillPromptArgs): string
   })
 
   return `${anchor}\n\n[SCENE COMPOSITION & BEAT]\nAction/Framing: ${actionFraming}`
+}
+
+/** Action/Framing only — never the style header a lookbook wrap already owns. */
+export function actionFramingFromBeat(beat?: SceneBeat | null): string {
+  if (!beat) return ''
+  const stored = beat.storyboardImagePrompt?.trim()
+  const fromPrompt = stored ? parseStillPromptSource(stored).actionFraming.trim() : ''
+  return (
+    fromPrompt ||
+    beat.beatDirection?.frozenMoment?.trim() ||
+    beat.actionDescription?.trim() ||
+    beat.line?.trim() ||
+    ''
+  )
+}
+
+/**
+ * When the film already has a look and this beat already has direction or a
+ * stored still prompt, compose the frame in code and skip Flash intelligence.
+ */
+export function composePersistedLookbookBeatPrompt(args: {
+  lookbook?: ProjectLookbook
+  sceneIndex: number
+  beat?: SceneBeat | null
+  artStyleAnchor?: string
+}): string | undefined {
+  const { lookbook, beat } = args
+  if (!lookbook || !beat) return undefined
+  const hasStoredLook =
+    Boolean(beat.beatDirection) || Boolean(beat.storyboardImagePrompt?.trim())
+  if (!hasStoredLook) return undefined
+  const actionFraming = actionFramingFromBeat(beat)
+  if (!actionFraming) return undefined
+  return composeBeatStillPrompt({
+    actionFraming,
+    lookbook,
+    sceneIndex: args.sceneIndex,
+    artStyleAnchor: args.artStyleAnchor,
+    lighting: beat.beatDirection?.lightingAccent,
+  })
 }
 
 export function buildPlannerSystemPrompt(): string {

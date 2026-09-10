@@ -85,7 +85,10 @@ import { shouldUseKlingLongTake } from '@/lib/kling/longTakePlanner'
 import {
   GALLERY_MANUAL_GENERATE_OPTS,
 } from '@/lib/vision/galleryImageGeneration'
-import { buildPreVisDirectApiFields } from '@/lib/vision/preVisDirectGenerate'
+import {
+  buildPreVisDirectApiFields,
+  buildBeatRegenDirectImagePayload,
+} from '@/lib/vision/preVisDirectGenerate'
 import {
   PreVisFramePromptDialog,
   type PreVisDirectGenerationOptions,
@@ -10141,46 +10144,32 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     const beats = getSceneBeats(scene)
     const beat = beats[rawBeatIdx]
-    const isRegenerate = !!beat?.storyboardImageUrl?.trim()
+    if (!beat) {
+      try { const { toast } = require('sonner'); toast.error('Beat not found') } catch {}
+      return
+    }
 
     if (!batchGeneratingRef.current) {
       overlayStore.show(`Beat frame — Scene ${sceneIdx + 1}`, 25, 'storyboard-production')
     }
     setGeneratingKeyframeSceneNumber(sceneIdx + 1)
 
-    const explicitRefs = referenceSelection
-      ? mapBeatReferenceSelectionForApi(
-          referenceSelection,
-          characters,
-          locationReferences,
-          objectReferences
-        )
-      : null
-
     try {
-      const requestBody = {
+      const requestBody = buildBeatRegenDirectImagePayload({
         projectId,
         sceneIndex: sceneIdx,
-        frameType: 'beat',
-        beatId,
+        scene,
+        beat,
         beatIndex: rawBeatIdx,
+        frameRole: 'start',
         quality: imageQuality,
-        characterWardrobes:
-          explicitRefs?.characterWardrobes ?? scene.characterWardrobes ?? [],
-        ...(explicitRefs
-          ? {
-              selectedCharacters: explicitRefs.selectedCharacters,
-              locationReferences: explicitRefs.locationReferences,
-              objectReferences: explicitRefs.objectReferences,
-              characterSelectionExplicit: explicitRefs.characterSelectionExplicit,
-              skipObjectAutoDetection: explicitRefs.skipObjectAutoDetection,
-            }
-          : {
-              characterSelectionExplicit: true,
-            }),
-        ...GALLERY_MANUAL_GENERATE_OPTS,
-        regenerate: isRegenerate,
-      }
+        projectCharacters: characters,
+        locationReferences,
+        objectReferences,
+        filmTitle: project?.title,
+        lockedArtStyle: project?.metadata?.visionPhase?.artStyle as string | undefined,
+        referenceSelection,
+      })
 
       let retryToastId: string | number | undefined
       const { response, data } = await fetchSceneGenerateImageWith429Retry(requestBody, {
@@ -10302,8 +10291,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     const beats = getSceneBeats(scene)
     const beat = beats[rawBeatIdx]
-    const startFrameUrl = beat?.storyboardImageUrl?.trim()
-    const isRegenerate = !!beat?.storyboardEndImageUrl?.trim()
+    if (!beat) {
+      try { const { toast } = require('sonner'); toast.error('Beat not found') } catch {}
+      return
+    }
+
+    const startFrameUrl = beat.storyboardImageUrl?.trim()
     if (!startFrameUrl) {
       try { const { toast } = require('sonner'); toast.error('Generate the start frame first') } catch {}
       return
@@ -10315,19 +10308,38 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     setGeneratingKeyframeSceneNumber(sceneIdx + 1)
 
     try {
-      const requestBody = {
+      let referenceSelection: BeatReferenceSelection | undefined
+      if (shouldUseExplicitBeatReferences(beat)) {
+        referenceSelection = beat.referenceSelection
+      } else {
+        const auto = resolveBeatFrameGenerationContext({
+          scene,
+          beat,
+          sceneIndex: sceneIdx,
+          projectCharacters: characters,
+          locationReferences,
+          objectReferences,
+          filmTitle: project?.title,
+        })
+        referenceSelection = toBeatReferenceSelection(auto)
+      }
+
+      const requestBody = buildBeatRegenDirectImagePayload({
         projectId,
         sceneIndex: sceneIdx,
-        frameType: 'beat',
-        frameRole: 'end',
-        beatId,
+        scene,
+        beat,
         beatIndex: rawBeatIdx,
+        frameRole: 'end',
         startFrameUrl,
         quality: imageQuality,
-        characterSelectionExplicit: true,
-        ...GALLERY_MANUAL_GENERATE_OPTS,
-        regenerate: isRegenerate,
-      }
+        projectCharacters: characters,
+        locationReferences,
+        objectReferences,
+        filmTitle: project?.title,
+        lockedArtStyle: project?.metadata?.visionPhase?.artStyle as string | undefined,
+        referenceSelection,
+      })
 
       let retryToastId: string | number | undefined
       const { response, data } = await fetchSceneGenerateImageWith429Retry(requestBody, {

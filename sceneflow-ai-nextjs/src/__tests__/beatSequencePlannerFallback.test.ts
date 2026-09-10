@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { buildFallbackBeatPlans } from '@/lib/intelligence/beat-sequence-planner-fallback'
+import {
+  buildFallbackBeatPlans,
+  composePersistedLookbookBeatPrompt,
+} from '@/lib/intelligence/beat-sequence-planner-fallback'
 import {
   PROJECT_LOOKBOOK_VERSION,
   type ProjectLookbook,
@@ -165,5 +168,48 @@ describe('buildFallbackBeatPlans under a project lookbook', () => {
 
     expect(plan.lighting).toBe('Low-key desk lamp')
     expect(plan.prompt).toContain('Low-key desk lamp')
+  })
+})
+
+describe('composePersistedLookbookBeatPrompt', () => {
+  it('wraps stored beat action in the lookbook when direction exists', () => {
+    const prompt = composePersistedLookbookBeatPrompt({
+      lookbook,
+      sceneIndex: 0,
+      beat: {
+        beatId: 'bt_1',
+        sequenceIndex: 0,
+        kind: 'action',
+        actionDescription: 'Gideon hunches over the seismograph.',
+        beatDirection: {
+          frozenMoment: 'Gideon at the zinc workbench',
+          lightingAccent: 'Low-key practicals',
+        },
+        storyboardImagePrompt: 'Medium shot: Gideon at the zinc workbench.',
+      },
+    })
+
+    expect(prompt).toBeDefined()
+    expect(prompt!.startsWith('[GLOBAL STYLE ANCHOR]')).toBe(true)
+    expect(prompt).toContain('Rain-slick neo-noir')
+    expect(prompt).toContain('Action/Framing: Medium shot: Gideon at the zinc workbench.')
+    const parsed = parseStillPromptSource(prompt!)
+    expect(parsed.style?.trim()).toBeTruthy()
+    expect(parsed.actionFraming).toContain('Gideon at the zinc workbench')
+  })
+
+  it('returns undefined when the beat has no stored look to compose', () => {
+    expect(
+      composePersistedLookbookBeatPrompt({
+        lookbook,
+        sceneIndex: 0,
+        beat: {
+          beatId: 'bt_1',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Gideon hunches over the seismograph.',
+        },
+      })
+    ).toBeUndefined()
   })
 })

@@ -115,8 +115,15 @@ export function isIdentityRefRateLimitExhausted(err: unknown): boolean {
  * Beat-pool retries: transient Vertex/gateway errors only.
  * Identity-ref 429 exhaustion already ran the inner ladder — do not re-burst.
  */
+export function isIdentityRefLadderExhausted(err: unknown): boolean {
+  const msg = String((err as { message?: unknown })?.message || err || '').toLowerCase()
+  if (!msg.includes('identity-ref rate limit exhausted')) return false
+  return /after\s+3\s+(retries|attempts?)/.test(msg)
+}
+
 export function isExpressBeatPoolRetryable(err: unknown): boolean {
-  if (isIdentityRefRateLimitExhausted(err)) return false
+  // Fail-fast 1-attempt 429s are retryable. Only a finished 3-retry ladder is fatal.
+  if (isIdentityRefLadderExhausted(err)) return false
   return isTransientExpressImageError(err)
 }
 

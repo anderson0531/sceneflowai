@@ -10,18 +10,22 @@ vi.mock('@/lib/vertexai/gemini', () => ({
   ),
 }))
 
+import { generateTextCacheAware } from '@/lib/vertexai/gemini'
 import {
   SCENE_IMAGE_INTELLIGENCE_GEMINI_OPTIONS,
   SCENE_IMAGE_INTELLIGENCE_DEADLINE_MS,
+  generateSceneImagePrompt,
   generateSceneImagePromptWithDeadline,
   buildSceneImageIntelligenceUserPrompt,
   buildSceneImageSystemPrompt,
   buildSceneImageCacheKey,
+  hasUsableSceneImageAction,
   parseVisualSetupOverlay,
   parseTalentDirectionOverlay,
   type SceneImageIntelligenceRequest,
 } from '@/lib/intelligence/scene-image-intelligence'
 import { PROJECT_LOOKBOOK_VERSION } from '@/lib/intelligence/project-lookbook-fallback'
+import { parseStillPromptSource } from '@/lib/imagen/structuredStillPrompt'
 
 const baseRequest: SceneImageIntelligenceRequest = {
   sceneHeading: 'INT. ALLEY - NIGHT',
@@ -151,6 +155,16 @@ describe('scene image intelligence direction authority', () => {
 })
 
 describe('scene image intelligence under a project lookbook', () => {
+  afterEach(() => {
+    vi.mocked(generateTextCacheAware).mockReset()
+    vi.mocked(generateTextCacheAware).mockImplementation(
+      () =>
+        new Promise(() => {
+          // never resolves — simulates a hung Vertex call
+        })
+    )
+  })
+
   const lookbook = {
     version: PROJECT_LOOKBOOK_VERSION,
     fingerprint: 'eeee5555',
@@ -163,7 +177,7 @@ describe('scene image intelligence under a project lookbook', () => {
     generatedAt: '2026-01-01T00:00:00.000Z',
   }
 
-  it('states the look first so every later section composes inside it', () => {
+  it('locks the look without dumping it for the model to reprint', () => {
     const prompt = buildSceneImageIntelligenceUserPrompt({
       ...baseRequest,
       lookbook,
@@ -171,17 +185,17 @@ describe('scene image intelligence under a project lookbook', () => {
     })
 
     expect(prompt.startsWith('PROJECT LOOKBOOK')).toBe(true)
-    expect(prompt).toContain('Rain-slick neo-noir')
-    expect(prompt).toContain('Anamorphic 40mm')
-    expect(prompt).toContain('Rain sheeting off the fire escape')
-    expect(prompt).toContain('Never render as: illustration, cartoon')
+    expect(prompt).toMatch(/do not reprint it/i)
+    expect(prompt).toMatch(/Write Action\/Framing only/)
+    expect(prompt).not.toContain('Rain-slick neo-noir')
+    expect(prompt).not.toContain('Anamorphic 40mm')
   })
 
-  it('tells the model to copy the look verbatim rather than invent one', () => {
+  it('tells the model not to emit a style dump when a lookbook is present', () => {
     const system = buildSceneImageSystemPrompt()
-    expect(system).toMatch(/copy its Master Style verbatim and do NOT invent a new look/)
-    expect(system).toMatch(/copy its Lighting Grammar and Lens & Format verbatim/)
-    expect(system).toMatch(/copy its Color Palette and Texture & Grade verbatim/)
+    expect(system).toMatch(/do NOT emit \[GLOBAL STYLE ANCHOR\]/)
+    expect(system).toMatch(/Code owns the look/)
+    expect(system).not.toMatch(/copy its Master Style verbatim and do NOT invent a new look/)
   })
 
   it('keys the cache on the look, so a restyled project does not reuse old prompts', () => {
@@ -203,5 +217,78 @@ describe('scene image intelligence under a project lookbook', () => {
   it('leaves the prompt unchanged when the project has no look', () => {
     const prompt = buildSceneImageIntelligenceUserPrompt(baseRequest)
     expect(prompt).not.toContain('PROJECT LOOKBOOK')
+  })
+
+  it('accepts Action/Framing-only recovery and rejects a style-only truncate', () => {
+    expect(
+      hasUsableSceneImageAction(
+        '[SCENE COMPOSITION & BEAT]\nAction/Framing: Medium shot: Gideon at the bench.'
+      )
+    ).toBe(true)
+    expect(
+      hasUsableSceneImageAction(
+        'Medium shot: Gideon hunches over the seismograph, palm on the drum.'
+      )
+    ).toBe(true)
+    expect(
+      hasUsableSceneImageAction(
+        '[GLOBAL STYLE ANCHOR]\nMaster Style: narrative cinematography; live-action photoreal film still'
+      )
+    ).toBe(false)
+  })
+
+  it('wraps Action/Framing so assembled output has a style block', async () => {
+    vi.mocked(generateTextCacheAware).mockResolvedValueOnce({
+      text: JSON.stringify({
+        prompt: 'Medium shot: Gideon hunches over the seismograph, palm on the drum.',
+      }),
+      usedCache: false,
+    } as never)
+
+    const result = await generateSceneImagePrompt({
+      ...baseRequest,
+      lookbook,
+      bustPromptCache: true,
+    })
+
+    expect(result.usedAI).toBe(true)
+    const parsed = parseStillPromptSource(result.prompt)
+    expect(parsed.style?.trim()).toBeTruthy()
+    expect(result.prompt).toContain('[GLOBAL STYLE ANCHOR]')
+    expect(result.prompt).toContain('Action/Framing:')
+    expect(result.prompt).toContain('Rain-slick neo-noir')
+  })
+
+  it('falls back when truncated JSON is only a style header', async () => {
+    vi.mocked(generateTextCacheAware).mockResolvedValueOnce({
+      text: '{"prompt": "[GLOBAL STYLE ANCHOR]\\nMaster Style: narrative cinematography',
+      usedCache: false,
+    } as never)
+
+    const result = await generateSceneImagePrompt({
+      ...baseRequest,
+      lookbook,
+      bustPromptCache: true,
+    })
+
+    expect(result.usedAI).toBe(false)
+    expect(result.prompt).toBe('')
+  })
+
+  it('recovers Action/Framing-only truncated JSON and wraps the lookbook', async () => {
+    vi.mocked(generateTextCacheAware).mockResolvedValueOnce({
+      text: '{"prompt": "[SCENE COMPOSITION & BEAT]\\nAction/Framing: Medium shot: Gideon at the bench.',
+      usedCache: false,
+    } as never)
+
+    const result = await generateSceneImagePrompt({
+      ...baseRequest,
+      lookbook,
+      bustPromptCache: true,
+    })
+
+    expect(result.usedAI).toBe(true)
+    expect(result.prompt).toContain('[GLOBAL STYLE ANCHOR]')
+    expect(result.prompt).toContain('Gideon at the bench')
   })
 })
