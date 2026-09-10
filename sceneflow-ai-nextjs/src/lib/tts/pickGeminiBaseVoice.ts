@@ -10,6 +10,7 @@ import {
   type AcousticTarget,
   type AcousticTargetInput,
 } from '@/lib/tts/voiceAcoustics'
+import { reconcilePickerGender } from '@/lib/tts/autoVoiceGender'
 import {
   getCharacterVoiceRecommendations,
   type CharacterContext,
@@ -58,16 +59,18 @@ export function pickGeminiBaseVoice(
   profile: string,
   options?: PickGeminiBaseVoiceOptions,
 ): GeminiBaseVoicePick {
-  const voiceName = options?.displayName || humanVoiceLabel(options?.gender, options?.name)
+  const gender = reconcilePickerGender(profile, options?.gender)
+  const voiceName = options?.displayName || humanVoiceLabel(gender, options?.name)
 
-  const target =
+  const parsed =
     options?.acousticTarget ??
     parseAcousticTarget({
-      gender: options?.gender,
+      gender,
       apparentAge: options?.age,
       vocalAttributes: options?.vocalAttributes,
       brief: profile,
     })
+  const target = gender ? { ...parsed, gender } : parsed
 
   if (hasAcousticSignal(target)) {
     const match = selectGeminiBaseVoice(target)
@@ -86,7 +89,7 @@ export function pickGeminiBaseVoice(
 
   const character: CharacterContext = {
     name: options?.name?.trim() || 'Speaker',
-    gender: options?.gender,
+    gender,
     age: options?.age,
     role: options?.role,
     voiceDescription: profile.trim(),

@@ -468,6 +468,26 @@ export function normalizeGender(value?: string): 'male' | 'female' | null {
   return null
 }
 
+const FEMALE_VOICE_CUE =
+  /\bfemale\s+voice\b|\bwoman'?s\s+voice\b|\bgirl'?s\s+voice\b|\bwoman\s+voice\b/i
+const MALE_VOICE_CUE =
+  /\bmale\s+voice\b|\bman'?s\s+voice\b|\bboy'?s\s+voice\b|\bman\s+voice\b/i
+
+/**
+ * Unambiguous voice-profile wording such as "A female voice in her late 30s".
+ * Used to override a conflicting explicit gender on the Gemini base-voice picker.
+ */
+export function inferStrongVoiceProfileGender(
+  text?: string,
+): 'male' | 'female' | null {
+  if (!text?.trim()) return null
+  const voiceFemale = FEMALE_VOICE_CUE.test(text)
+  const voiceMale = MALE_VOICE_CUE.test(text)
+  if (voiceFemale && !voiceMale) return 'female'
+  if (voiceMale && !voiceFemale) return 'male'
+  return null
+}
+
 function normalizeVoiceGender(voice: ElevenLabsVoice): 'male' | 'female' | null {
   return (
     normalizeGender(voice.gender) ||
@@ -1022,10 +1042,9 @@ function inferGenderFromDescriptionWeighted(
   const text = description
 
   // Strong voice-profile cues
-  const voiceFemale = /\bfemale\s+voice\b|\bwoman'?s\s+voice\b|\bgirl'?s\s+voice\b|\bwoman\s+voice\b/i.test(text)
-  const voiceMale = /\bmale\s+voice\b|\bman'?s\s+voice\b|\bboy'?s\s+voice\b|\bman\s+voice\b/i.test(text)
-  if (voiceFemale && !voiceMale) return { gender: 'female', maleScore: 0, femaleScore: 10 }
-  if (voiceMale && !voiceFemale) return { gender: 'male', maleScore: 10, femaleScore: 0 }
+  const strong = inferStrongVoiceProfileGender(text)
+  if (strong === 'female') return { gender: 'female', maleScore: 0, femaleScore: 10 }
+  if (strong === 'male') return { gender: 'male', maleScore: 10, femaleScore: 0 }
 
   let maleScore = 0
   let femaleScore = 0
@@ -1070,18 +1089,8 @@ function inferGenderFromDescription(description: string): 'male' | 'female' | nu
   const text = description.toLowerCase()
 
   // Strong cues from AI voice profiles (e.g. "female voice in her late twenties")
-  if (
-    /\bfemale\s+voice\b|\bwoman'?s\s+voice\b|\bgirl'?s\s+voice\b|\bwoman\s+voice\b/.test(
-      text,
-    )
-  ) {
-    return 'female'
-  }
-  if (
-    /\bmale\s+voice\b|\bman'?s\s+voice\b|\bboy'?s\s+voice\b|\bman\s+voice\b/.test(text)
-  ) {
-    return 'male'
-  }
+  const strong = inferStrongVoiceProfileGender(text)
+  if (strong) return strong
   
   // Female indicators (check first since character names like Ka'ali might be female)
   const femaleIndicators = [
