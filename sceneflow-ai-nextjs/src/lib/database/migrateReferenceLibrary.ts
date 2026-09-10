@@ -132,21 +132,6 @@ export async function migrateReferenceLibrary(): Promise<{
   }
 }
 
-/** Postgres `undefined_table`. */
-const UNDEFINED_TABLE = '42P01'
-
-/** True when a query failed only because the reference library is not created. */
-export function isMissingReferenceLibraryTable(error: unknown): boolean {
-  const candidates = [
-    error,
-    (error as { parent?: unknown })?.parent,
-    (error as { original?: unknown })?.original,
-  ]
-  return candidates.some(
-    (candidate) => (candidate as { code?: string } | undefined)?.code === UNDEFINED_TABLE
-  )
-}
-
 let tablesReady = false
 let tablesInFlight: Promise<void> | null = null
 

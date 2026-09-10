@@ -7,10 +7,8 @@ import { sequelize } from '@/config/database'
 import ReferenceAsset from '@/models/ReferenceAsset'
 import ReferenceAssetLink from '@/models/ReferenceAssetLink'
 import { toCanonicalName } from '@/lib/character/canonical'
-import {
-  ensureReferenceLibraryTablesOnce,
-  isMissingReferenceLibraryTable,
-} from '@/lib/database/migrateReferenceLibrary'
+import { ensureReferenceLibraryTablesOnce } from '@/lib/database/migrateReferenceLibrary'
+import { isUndefinedTableError } from '@/lib/database/pgErrors'
 import type {
   ReferenceAssetKind,
   ReferenceAssetListQuery,
@@ -158,7 +156,7 @@ async function linkedAssetIds(where: Record<string, string>): Promise<string[]> 
     const links = await ReferenceAssetLink.findAll({ where, attributes: ['asset_id'] })
     return links.map((link) => link.asset_id)
   } catch (error: unknown) {
-    if (!isMissingReferenceLibraryTable(error)) throw error
+    if (!isUndefinedTableError(error)) throw error
     console.warn('[referenceLibrary] reference_asset_links missing; treating scope as empty')
     return []
   }
@@ -290,7 +288,7 @@ export async function listLinksForProject(projectId: string): Promise<
       addedBy: l.added_by,
     }))
   } catch (error: unknown) {
-    if (!isMissingReferenceLibraryTable(error)) throw error
+    if (!isUndefinedTableError(error)) throw error
     console.warn('[referenceLibrary] reference_asset_links missing; no links for project')
     return []
   }
