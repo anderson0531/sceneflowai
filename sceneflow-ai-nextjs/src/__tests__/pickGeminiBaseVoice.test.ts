@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import {
+  reconcilePickerGender,
+  resolveAutoVoiceScoringGender,
+} from '@/lib/tts/autoVoiceGender'
 import { GEMINI_VOICE_CATALOG } from '@/lib/tts/geminiVoiceCatalog'
 import {
   buildGoogleVoiceAssignment,
@@ -66,5 +70,81 @@ describe('pickGeminiBaseVoice', () => {
     expect(assignment.voiceId.startsWith('gemini-')).toBe(true)
     expect(assignment.prompt).toContain('late-40s male baritone')
     expect(assignment.prompt).not.toContain('Authoritative, measured, resonant')
+  })
+})
+
+const REPORTER_PROFILE =
+  'A female voice in her late 30s to early 40s of African American descent, possessing a grounded, smoky alto pitch with a textured, fatigue-worn rasp. Her cadence is sharp, propulsive, and articulate, carrying the brisk, probing efficiency of a seasoned investigative reporter layered with a subtle Chicago urban inflection. Guided by fierce empathy and hard-bitten skepticism, her vocal delivery cuts through atmospheric dread with steady, low-register conviction. Underneath the guarded, razor-edged intensity lies an unyielding moral urgency, projecting a survivor who speaks with tactical clarity even under extreme peril.'
+
+describe('resolveAutoVoiceScoringGender', () => {
+  it('prefers the confirm-dialog override over vision analysis', () => {
+    expect(
+      resolveAutoVoiceScoringGender({
+        genderOverride: 'female',
+        genderSource: 'ai',
+        characterGender: 'male',
+        analysisGender: 'male',
+      }),
+    ).toBe('female')
+  })
+
+  it('prefers a user-set character gender over vision analysis', () => {
+    expect(
+      resolveAutoVoiceScoringGender({
+        genderSource: 'user',
+        characterGender: 'female',
+        analysisGender: 'male',
+      }),
+    ).toBe('female')
+  })
+
+  it('uses vision analysis when gender is not user-set', () => {
+    expect(
+      resolveAutoVoiceScoringGender({
+        genderSource: 'ai',
+        characterGender: 'male',
+        analysisGender: 'female',
+      }),
+    ).toBe('female')
+  })
+})
+
+describe('reconcilePickerGender', () => {
+  it('lets a female voice profile override a conflicting explicit male gender', () => {
+    expect(reconcilePickerGender(REPORTER_PROFILE, 'male')).toBe('female')
+  })
+
+  it('lets a male voice profile override a conflicting explicit female gender', () => {
+    expect(
+      reconcilePickerGender('A male voice in his late 40s, resonant baritone.', 'female'),
+    ).toBe('male')
+  })
+})
+
+describe('pickGeminiBaseVoice gender from profile', () => {
+  it('picks a female catalog voice from the reporter profile with no gender option', () => {
+    const pick = pickGeminiBaseVoice(REPORTER_PROFILE)
+    expect(catalogGender(pick.voiceId)).toBe('female')
+    expect(pick.voiceName).toBe('Female SceneFlow voice')
+  })
+
+  it('picks a female catalog voice even when options.gender is male', () => {
+    const pick = pickGeminiBaseVoice(REPORTER_PROFILE, { gender: 'male' })
+    expect(catalogGender(pick.voiceId)).toBe('female')
+    expect(pick.voiceName).toBe('Female SceneFlow voice')
+  })
+
+  it('picks a female catalog voice when options.gender is female', () => {
+    const pick = pickGeminiBaseVoice(REPORTER_PROFILE, { gender: 'female' })
+    expect(catalogGender(pick.voiceId)).toBe('female')
+  })
+
+  it('picks a male catalog voice when a male profile conflicts with explicit female', () => {
+    const pick = pickGeminiBaseVoice(
+      'A male voice in his late 40s, resonant baritone with measured pacing.',
+      { gender: 'female' },
+    )
+    expect(catalogGender(pick.voiceId)).toBe('male')
+    expect(pick.voiceName).toBe('Male SceneFlow voice')
   })
 })

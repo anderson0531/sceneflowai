@@ -74,6 +74,7 @@ import {
   formatGenderLabel,
   type CharacterGender,
 } from "@/lib/character/visualGender";
+import { resolveAutoVoiceScoringGender } from "@/lib/tts/autoVoiceGender";
 import { buildGoogleVoiceAssignment } from "@/lib/tts/pickGeminiBaseVoice";
 import {
   characterVoiceProfileFromAnalysis,
@@ -1903,14 +1904,20 @@ const CharacterCard = ({
           })
         : null;
 
+      const scoringGender = resolveAutoVoiceScoringGender({
+        genderOverride,
+        genderSource: character.genderSource,
+        characterGender: character.gender,
+        analysisGender: analysisProfile?.identity.gender,
+      });
+
       const scoringContext: CharacterContext = {
         ...characterContext,
         role: character.role ?? characterContext.role,
         personality: character.keyFeature ?? characterContext.personality,
-        ...(genderOverride ? { gender: genderOverride } : {}),
+        ...(scoringGender ? { gender: scoringGender } : {}),
         ...(analysisProfile
           ? {
-              gender: analysisProfile.identity.gender,
               age: analysisProfile.identity.age,
               ethnicity: analysisProfile.identity.ethnicity,
               voiceDescription: analysisProfile.matchingBrief,
