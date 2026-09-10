@@ -8,6 +8,7 @@ export type GenerationJobType =
   | 'scene_render'
   | 'production_render'
   | 'reference_library'
+  | 'reference_express'
   | 'kling_long_take'
   | 'script_analysis'
   | 'blueprint_guided_revise'
