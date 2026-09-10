@@ -49,9 +49,9 @@ export type PickGeminiBaseVoiceOptions = {
 /**
  * Map a voice profile (and optional gender) to a hidden gemini-* base voice.
  *
- * Prefers acoustic selection — register and vocal weight decide the physical
- * substrate. Falls back to the legacy keyword scorer only when the profile
- * carries no acoustic signal at all.
+ * Prefers acoustic selection — Gender → Register → Texture → Cadence.
+ * Falls back to the legacy keyword scorer only when the profile carries no
+ * register, texture, or cadence signal.
  *
  * Callers must persist voiceName as a human label, not the catalog star name.
  */

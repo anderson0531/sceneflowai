@@ -2,9 +2,10 @@
  * Gemini-TTS base voices with acoustic metadata for selection and UI.
  *
  * Google publishes one authoritative character label per voice (Zephyr — Bright,
- * Algenib — Gravelly, ...). Those labels are the source of truth here; every
- * structured acoustic field is derived from the label through
- * `ACOUSTICS_BY_LABEL` so each value is auditable rather than invented prose.
+ * Algenib — Gravelly, ...). Official labels stay for UI honesty. Acoustics can
+ * differ per voice: the 12 matrix voices carry explicit register / texture /
+ * cadence overrides, and the rest keep label-derived bands plus a cadence
+ * derived from the label.
  *
  * `register` and `vocalWeight` are perceived bands *within the voice's own
  * gender range*, not absolute pitch. Absolute values come from
@@ -17,6 +18,7 @@
 
 import measuredAcoustics from '@/lib/tts/geminiVoiceAcoustics.measured.json'
 import type {
+  VoiceCadenceBand,
   VoiceRegisterBand,
   VoiceTextureBand,
   VoiceWeightBand,
@@ -33,6 +35,8 @@ export type GeminiVoiceWeight = VoiceWeightBand
 
 export type GeminiVoiceTexture = VoiceTextureBand
 
+export type GeminiVoiceCadence = VoiceCadenceBand
+
 /** Only asserted where Google's own label asserts it; everything else is neutral. */
 export type GeminiVoiceAgeAffinity = 'young' | 'neutral' | 'mature'
 
@@ -40,6 +44,7 @@ export interface GeminiVoiceAcoustics {
   register: GeminiVoiceRegister
   vocalWeight: GeminiVoiceWeight
   texture: GeminiVoiceTexture
+  cadence: GeminiVoiceCadence
   ageAffinity: GeminiVoiceAgeAffinity
 }
 
@@ -60,14 +65,13 @@ export interface GeminiVoiceCatalogEntry extends GeminiVoiceAcoustics {
 }
 
 /**
- * Label to acoustics. This is the whole derivation: change a row here and every
- * voice carrying that label moves together, which keeps the catalog honest.
+ * Label to acoustics for voices without a matrix row. Matrix seeds override
+ * register / texture / cadence per voice, even when they share a Google label.
  *
  * `ageAffinity` is only non-neutral for the two labels where Google states an
- * age ("Mature", "Youthful"). Guessing it elsewhere is what made the previous
- * catalog apply large age penalties to voices it had mislabelled.
+ * age ("Mature", "Youthful").
  */
-const ACOUSTICS_BY_LABEL: Record<string, GeminiVoiceAcoustics> = {
+const ACOUSTICS_BY_LABEL: Record<string, Omit<GeminiVoiceAcoustics, 'cadence'>> = {
   Bright: { register: 'mid-high', vocalWeight: 'light', texture: 'bright', ageAffinity: 'neutral' },
   Breathy: { register: 'low-mid', vocalWeight: 'light', texture: 'breathy', ageAffinity: 'neutral' },
   Breezy: { register: 'mid-high', vocalWeight: 'light', texture: 'smooth', ageAffinity: 'neutral' },
@@ -94,11 +98,44 @@ const ACOUSTICS_BY_LABEL: Record<string, GeminiVoiceAcoustics> = {
   Youthful: { register: 'mid-high', vocalWeight: 'light', texture: 'bright', ageAffinity: 'young' },
 }
 
+/**
+ * Resting cadence from Google's label when the voice has no matrix row.
+ * Excitable is the one volatile label; Lively/Upbeat/Bright/Youthful are dynamic.
+ */
+const CADENCE_BY_LABEL: Record<string, GeminiVoiceCadence> = {
+  Bright: 'dynamic',
+  Breathy: 'deliberate',
+  Breezy: 'steady',
+  Casual: 'steady',
+  Clear: 'steady',
+  'Easy-going': 'steady',
+  Even: 'steady',
+  Excitable: 'volatile',
+  Firm: 'steady',
+  Forward: 'dynamic',
+  Friendly: 'steady',
+  Gentle: 'deliberate',
+  Gravelly: 'deliberate',
+  Informative: 'steady',
+  Knowledgeable: 'steady',
+  Lively: 'dynamic',
+  Mature: 'steady',
+  Smooth: 'steady',
+  Soft: 'deliberate',
+  Upbeat: 'dynamic',
+  Warm: 'steady',
+  Youthful: 'dynamic',
+}
+
+type MatrixAcoustics = Partial<Pick<GeminiVoiceAcoustics, 'register' | 'texture' | 'cadence'>>
+
 type VoiceSeed = {
   name: string
   gender: GeminiVoiceGender
   officialLabel: keyof typeof ACOUSTICS_BY_LABEL & string
   archetypeDescription: string
+  /** Per-voice matrix row. Official label stays; acoustics may diverge. */
+  acoustics?: MatrixAcoustics
 }
 
 /** Google's published voice list: name, gender, and character label. */
@@ -123,6 +160,7 @@ const VOICE_SEEDS: VoiceSeed[] = [
     officialLabel: 'Gravelly',
     archetypeDescription:
       'Gravelly and textured; rough-edged low register for weathered, gritty, or hard-worn characters.',
+    acoustics: { register: 'low', texture: 'gravelly', cadence: 'deliberate' },
   },
   {
     name: 'Algieba',
@@ -130,6 +168,7 @@ const VOICE_SEEDS: VoiceSeed[] = [
     officialLabel: 'Smooth',
     archetypeDescription:
       'Smooth and unbroken; polished legato phrasing for composed speakers and voiceover.',
+    acoustics: { register: 'low', texture: 'smooth', cadence: 'steady' },
   },
   {
     name: 'Alnilam',
@@ -137,6 +176,7 @@ const VOICE_SEEDS: VoiceSeed[] = [
     officialLabel: 'Firm',
     archetypeDescription:
       'Firm and unwavering; steady weight for decisive, no-nonsense speakers.',
+    acoustics: { register: 'low-mid', texture: 'clear', cadence: 'steady' },
   },
   {
     name: 'Aoede',
@@ -165,6 +205,7 @@ const VOICE_SEEDS: VoiceSeed[] = [
     officialLabel: 'Informative',
     archetypeDescription:
       'Informative and grounded; measured low-mid delivery for explainers, documentary, and briefings.',
+    acoustics: { register: 'low', texture: 'smooth', cadence: 'steady' },
   },
   {
     name: 'Despina',
@@ -179,6 +220,7 @@ const VOICE_SEEDS: VoiceSeed[] = [
     officialLabel: 'Breathy',
     archetypeDescription:
       'Breathy and airy; audible breath for tired, hushed, or deadpan delivery.',
+    acoustics: { register: 'low', texture: 'breathy', cadence: 'deliberate' },
   },
   {
     name: 'Erinome',
@@ -186,6 +228,7 @@ const VOICE_SEEDS: VoiceSeed[] = [
     officialLabel: 'Clear',
     archetypeDescription:
       'Clear and precisely articulated; neutral placement that stays legible in any mix.',
+    acoustics: { register: 'mid', texture: 'clear', cadence: 'steady' },
   },
   {
     name: 'Fenrir',
@@ -193,6 +236,7 @@ const VOICE_SEEDS: VoiceSeed[] = [
     officialLabel: 'Excitable',
     archetypeDescription:
       'Excitable and reactive; high-energy bursts for animated, volatile characters.',
+    acoustics: { register: 'low-mid', texture: 'gravelly', cadence: 'volatile' },
   },
   {
     name: 'Gacrux',
@@ -200,6 +244,7 @@ const VOICE_SEEDS: VoiceSeed[] = [
     officialLabel: 'Mature',
     archetypeDescription:
       'Mature and settled; an older female register with lived-in weight.',
+    acoustics: { register: 'mid', texture: 'warm', cadence: 'steady' },
   },
   {
     name: 'Iapetus',
@@ -214,6 +259,7 @@ const VOICE_SEEDS: VoiceSeed[] = [
     officialLabel: 'Firm',
     archetypeDescription:
       'Firm and self-assured; grounded weight for leaders and assertive characters.',
+    acoustics: { register: 'mid', texture: 'even', cadence: 'steady' },
   },
   {
     name: 'Laomedeia',
@@ -234,6 +280,7 @@ const VOICE_SEEDS: VoiceSeed[] = [
     gender: 'male',
     officialLabel: 'Firm',
     archetypeDescription: 'Firm and planted; solid weight without embellishment.',
+    acoustics: { register: 'low-mid', texture: 'even', cadence: 'steady' },
   },
   {
     name: 'Pulcherrima',
@@ -276,6 +323,7 @@ const VOICE_SEEDS: VoiceSeed[] = [
     officialLabel: 'Even',
     archetypeDescription:
       'Even and level; minimal tonal variation for neutral, unshaded delivery.',
+    acoustics: { register: 'low-mid', texture: 'even', cadence: 'steady' },
   },
   {
     name: 'Sulafat',
@@ -297,6 +345,7 @@ const VOICE_SEEDS: VoiceSeed[] = [
     officialLabel: 'Gentle',
     archetypeDescription:
       'Gentle and light-touch; soft dynamics for tender or careful moments.',
+    acoustics: { register: 'low-mid', texture: 'soft', cadence: 'deliberate' },
   },
   {
     name: 'Zephyr',
@@ -327,7 +376,12 @@ function ageBandFromAffinity(affinity: GeminiVoiceAgeAffinity): GeminiVoiceAgeBa
 
 export const GEMINI_VOICE_CATALOG: GeminiVoiceCatalogEntry[] = VOICE_SEEDS.map((seed) => {
   const id = `gemini-${seed.name}`
-  const acoustics = ACOUSTICS_BY_LABEL[seed.officialLabel]
+  const labelAcoustics = ACOUSTICS_BY_LABEL[seed.officialLabel]
+  const acoustics: GeminiVoiceAcoustics = {
+    ...labelAcoustics,
+    cadence: CADENCE_BY_LABEL[seed.officialLabel] ?? 'steady',
+    ...seed.acoustics,
+  }
   const measured = MEASURED_BY_ID[id]
 
   return {
@@ -365,6 +419,7 @@ export function getGeminiVoiceAcoustics(id: string): GeminiVoiceAcoustics | unde
     register: entry.register,
     vocalWeight: entry.vocalWeight,
     texture: entry.texture,
+    cadence: entry.cadence,
     ageAffinity: entry.ageAffinity,
   }
 }
@@ -427,6 +482,7 @@ export function enrichGeminiVoicesForScoring<
     texture?: GeminiVoiceTexture
     register?: GeminiVoiceRegister
     vocalWeight?: GeminiVoiceWeight
+    cadence?: GeminiVoiceCadence
   }
 > {
   return apiVoices.map((voice) => {
@@ -443,6 +499,7 @@ export function enrichGeminiVoicesForScoring<
             texture: catalog.texture,
             register: catalog.register,
             vocalWeight: catalog.vocalWeight,
+            cadence: catalog.cadence,
           }
         : {}),
     }

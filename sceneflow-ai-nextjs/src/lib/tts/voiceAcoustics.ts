@@ -1,21 +1,20 @@
 /**
  * Acoustic base-voice selection for Gemini-TTS.
  *
+ * Hierarchy is strict: Gender (hard filter) → Register → Harmonic Texture →
+ * Resting Cadence. Vocal weight and age are tiny tiebreakers and cannot flip
+ * a register band or a gravel/clear phonation conflict.
+ *
  * Gemini treats the base voice as the physical substrate — vocal tract
  * resonance, pitch floor, baseline timbre — while the system instruction
- * controls prosody, cadence, dialect, and affect. Asking a naturally high,
- * light voice to perform a late-50s baritone produces strain and artifacting,
- * so the voice has to be chosen on register and weight, not on adjectives that
- * the prompt can supply anyway.
- *
- * Selection therefore ranks on physical parameters first (register, then
- * vocal weight), and only uses texture and age as tiebreakers.
+ * controls prosody, dialect, and affect.
  */
 
 import {
   GEMINI_VOICE_CATALOG,
   NEUTRAL_GEMINI_VOICE_ID,
   type GeminiVoiceAgeAffinity,
+  type GeminiVoiceCadence,
   type GeminiVoiceCatalogEntry,
   type GeminiVoiceRegister,
   type GeminiVoiceTexture,
@@ -25,7 +24,8 @@ import { normalizeCharacterAgeBand, normalizeGender } from '@/lib/voiceRecommend
 import {
   PHYSICAL_TEXTURES,
   REGISTER_SCALE,
-  WEIGHT_SCALE,
+  cadenceDistance,
+  parseCadenceFromText,
   parseRegisterFromText,
   parseTextureFromText,
   parseWeightFromText,
@@ -33,12 +33,17 @@ import {
   weightDistance,
 } from '@/lib/tts/voiceAcousticWords'
 
+export type VoiceDomainHint = 'corporate' | 'military' | 'street' | 'intimate'
+
 export type AcousticTarget = {
   gender?: 'male' | 'female'
   register?: GeminiVoiceRegister
   vocalWeight?: GeminiVoiceWeight
   texture?: GeminiVoiceTexture
+  cadence?: GeminiVoiceCadence
   ageAffinity?: GeminiVoiceAgeAffinity
+  /** Last-place tiebreak only — never part of the numeric score. */
+  domainHint?: VoiceDomainHint
 }
 
 export type AcousticVoiceMatch = {
@@ -47,20 +52,42 @@ export type AcousticVoiceMatch = {
   reasons: string[]
 }
 
-/** Register dominates: one band of error costs more than any texture or age bonus. */
-const REGISTER_STEP_PENALTY = 26
-const WEIGHT_STEP_PENALTY = 10
-const TEXTURE_EXACT_BONUS = 8
+/** One register band costs more than texture, cadence, weight, and age combined. */
+const REGISTER_STEP_PENALTY = 40
+const TEXTURE_EXACT_BONUS = 10
 const TEXTURE_NEIGHBOR_BONUS = 4
-const AGE_MATCH_BONUS = 12
-const AGE_OPPOSITE_PENALTY = 30
+const CADENCE_EXACT_BONUS = 8
+const CADENCE_ADJACENT_PENALTY = 6
+const CADENCE_EXTREME_PENALTY = 16
+/** Weight and age must stay well under one texture step (exact vs neighbor is 6). */
+const WEIGHT_STEP_PENALTY = 2
+const AGE_MATCH_BONUS = 4
+const AGE_OPPOSITE_PENALTY = 4
 
 /**
- * Gravel and breath are properties of phonation, not delivery: the prompt can
- * neither add nor remove them. Mismatching one costs nearly a register band,
- * which keeps a rasping voice out of a "clear baritone" role and vice versa.
+ * Gravel and breath vs clear/smooth: phonation the prompt cannot add or remove.
+ * Larger than any cadence or weight swing so clinical never beats gravel.
  */
-const PHYSICAL_TEXTURE_MISMATCH_PENALTY = 18
+const PHYSICAL_TEXTURE_MISMATCH_PENALTY = 32
+/** Gravel and breath are opposite phonations; farther than either vs smooth. */
+const OPPOSITE_PHONATION_PENALTY = 48
+
+const PROMPTABLE_TEXTURES: GeminiVoiceTexture[] = ['clear', 'smooth']
+
+const DOMAIN_WORDS: Array<[RegExp, VoiceDomainHint]> = [
+  [/\b(?:corporate|boardroom|executive|documentary|briefing)\b/, 'corporate'],
+  [/\b(?:military|command|tactical|officer)\b/, 'military'],
+  [/\b(?:street|urban)\b/, 'street'],
+  [/\b(?:intimate|confessional)\b/, 'intimate'],
+]
+
+/** Preferred ids when two voices still tie after Gender→Register→Texture→Cadence. */
+const DOMAIN_PREFERRED_IDS: Record<VoiceDomainHint, string[]> = {
+  corporate: ['gemini-Charon', 'gemini-Iapetus', 'gemini-Sadaltager', 'gemini-Rasalgethi'],
+  military: ['gemini-Orus', 'gemini-Alnilam', 'gemini-Kore'],
+  street: ['gemini-Fenrir', 'gemini-Algenib', 'gemini-Zubenelgenubi'],
+  intimate: ['gemini-Enceladus', 'gemini-Vindemiatrix', 'gemini-Achernar'],
+}
 
 /** Near-equivalent textures, used for partial credit only. */
 const TEXTURE_NEIGHBORS: Record<GeminiVoiceTexture, GeminiVoiceTexture[]> = {
@@ -79,6 +106,20 @@ function normalizeText(...parts: Array<string | undefined | null>): string {
     .filter((p): p is string => typeof p === 'string' && p.trim().length > 0)
     .join(' ')
     .toLowerCase()
+}
+
+function parseDomainHint(text: string): VoiceDomainHint | undefined {
+  const lower = text.toLowerCase()
+  for (const [pattern, value] of DOMAIN_WORDS) {
+    if (pattern.test(lower)) return value
+  }
+  return undefined
+}
+
+function domainTiebreakRank(voiceId: string, domain?: VoiceDomainHint): number {
+  if (!domain) return 99
+  const idx = DOMAIN_PREFERRED_IDS[domain].indexOf(voiceId)
+  return idx === -1 ? 99 : idx
 }
 
 function parseAgeAffinity(age?: string): GeminiVoiceAgeAffinity | undefined {
@@ -123,6 +164,7 @@ export function parseAcousticTarget(input: AcousticTargetInput): AcousticTarget 
     attrs.pitch,
     attrs.authority,
     attrs.warmth,
+    attrs.pace,
   )
   const briefText = normalizeText(input.brief)
   const combined = normalizeText(structuredText, briefText)
@@ -130,8 +172,9 @@ export function parseAcousticTarget(input: AcousticTargetInput): AcousticTarget 
   const explicitRegister = normalizeText(attrs.register, attrs.pitch, attrs.timbre)
 
   const register =
-    (explicitRegister ? parseRegisterFromText(explicitRegister, gender) : undefined) ??
-    parseRegisterFromText(combined, gender)
+    (explicitRegister
+      ? parseRegisterFromText(explicitRegister, gender, input.apparentAge)
+      : undefined) ?? parseRegisterFromText(combined, gender, input.apparentAge)
 
   const explicitWeight = normalizeText(attrs.vocalWeight, attrs.timbre, attrs.authority)
   const vocalWeight =
@@ -140,24 +183,32 @@ export function parseAcousticTarget(input: AcousticTargetInput): AcousticTarget 
 
   const texture = parseTextureFromText(structuredText) ?? parseTextureFromText(combined)
 
+  const explicitCadence = normalizeText(attrs.pace)
+  const cadence =
+    (explicitCadence ? parseCadenceFromText(explicitCadence) : undefined) ??
+    parseCadenceFromText(combined)
+
   // Age comes only from the explicit field. Inferring it from prose misfires on
   // substrings ("Bold" reads as "old") and age is a static trait we already collect.
   const ageSource =
     typeof input.apparentAge === 'number' ? String(input.apparentAge) : input.apparentAge
   const ageAffinity = parseAgeAffinity(ageSource)
+  const domainHint = parseDomainHint(combined)
 
   return {
     ...(gender ? { gender } : {}),
     ...(register ? { register } : {}),
     ...(vocalWeight ? { vocalWeight } : {}),
     ...(texture ? { texture } : {}),
+    ...(cadence ? { cadence } : {}),
     ...(ageAffinity ? { ageAffinity } : {}),
+    ...(domainHint ? { domainHint } : {}),
   }
 }
 
-/** True when the target carries at least one physical parameter worth ranking on. */
+/** True when register, texture, or cadence is present. Weight alone is not enough. */
 export function hasAcousticSignal(target: AcousticTarget): boolean {
-  return !!(target.register || target.vocalWeight || target.texture)
+  return !!(target.register || target.texture || target.cadence)
 }
 
 /**
@@ -171,6 +222,20 @@ function measuredF0Nudge(voice: GeminiVoiceCatalogEntry, register: GeminiVoiceRe
   const direction = REGISTER_SCALE.indexOf(register) <= 1 ? -1 : 1
   // 300 Hz spans the full plausible range, so this contributes at most ~1 point.
   return (direction * measured) / 300
+}
+
+function phonationPenalty(voiceTexture: GeminiVoiceTexture, targetTexture: GeminiVoiceTexture): number {
+  if (voiceTexture === targetTexture) return 0
+  const physicalVoice = PHYSICAL_TEXTURES.includes(voiceTexture)
+  const physicalTarget = PHYSICAL_TEXTURES.includes(targetTexture)
+  if (physicalVoice && physicalTarget) return OPPOSITE_PHONATION_PENALTY
+  if (
+    (physicalVoice || physicalTarget) &&
+    (PROMPTABLE_TEXTURES.includes(voiceTexture) || PROMPTABLE_TEXTURES.includes(targetTexture))
+  ) {
+    return PHYSICAL_TEXTURE_MISMATCH_PENALTY
+  }
+  return 0
 }
 
 export function scoreVoiceAcoustics(
@@ -191,6 +256,42 @@ export function scoreVoiceAcoustics(
     score += measuredF0Nudge(voice, target.register)
   }
 
+  if (target.texture) {
+    if (voice.texture === target.texture) {
+      score += TEXTURE_EXACT_BONUS
+      reasons.push(`Texture match: ${voice.texture}`)
+    } else if (TEXTURE_NEIGHBORS[target.texture].includes(voice.texture)) {
+      score += TEXTURE_NEIGHBOR_BONUS
+      reasons.push(`Texture adjacent: ${voice.texture} near ${target.texture}`)
+    } else {
+      const penalty = phonationPenalty(voice.texture, target.texture)
+      if (penalty > 0) {
+        score -= penalty
+        reasons.push(`Phonation conflict: ${voice.texture} vs ${target.texture}`)
+      }
+    }
+  }
+
+  if (target.cadence) {
+    const distance = cadenceDistance(voice.cadence, target.cadence)
+    if (distance === 0) {
+      score += CADENCE_EXACT_BONUS
+      reasons.push(`Cadence match: ${voice.cadence}`)
+    } else if (distance === 1) {
+      score -= CADENCE_ADJACENT_PENALTY
+      reasons.push(`Cadence adjacent: ${voice.cadence} vs ${target.cadence}`)
+    } else if (
+      (voice.cadence === 'volatile' && target.cadence === 'deliberate') ||
+      (voice.cadence === 'deliberate' && target.cadence === 'volatile')
+    ) {
+      score -= CADENCE_EXTREME_PENALTY
+      reasons.push(`Cadence conflict: ${voice.cadence} vs ${target.cadence}`)
+    } else {
+      score -= CADENCE_ADJACENT_PENALTY * distance
+      reasons.push(`Cadence off by ${distance}: ${voice.cadence} vs ${target.cadence}`)
+    }
+  }
+
   if (target.vocalWeight) {
     const distance = weightDistance(voice.vocalWeight, target.vocalWeight)
     score -= distance * WEIGHT_STEP_PENALTY
@@ -199,22 +300,6 @@ export function scoreVoiceAcoustics(
         ? `Vocal weight match: ${voice.vocalWeight}`
         : `Vocal weight off by ${distance}: ${voice.vocalWeight} vs ${target.vocalWeight}`,
     )
-  }
-
-  if (target.texture) {
-    if (voice.texture === target.texture) {
-      score += TEXTURE_EXACT_BONUS
-      reasons.push(`Texture match: ${voice.texture}`)
-    } else if (TEXTURE_NEIGHBORS[target.texture].includes(voice.texture)) {
-      score += TEXTURE_NEIGHBOR_BONUS
-      reasons.push(`Texture adjacent: ${voice.texture} near ${target.texture}`)
-    } else if (
-      PHYSICAL_TEXTURES.includes(voice.texture) ||
-      PHYSICAL_TEXTURES.includes(target.texture)
-    ) {
-      score -= PHYSICAL_TEXTURE_MISMATCH_PENALTY
-      reasons.push(`Phonation conflict: ${voice.texture} vs ${target.texture}`)
-    }
   }
 
   if (target.ageAffinity) {
@@ -252,7 +337,14 @@ export function rankVoicesByAcoustics(
       const { score, reasons } = scoreVoiceAcoustics(voice, target)
       return { voiceId: voice.id, score, reasons }
     })
-    .sort((a, b) => (b.score !== a.score ? b.score - a.score : a.voiceId.localeCompare(b.voiceId)))
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score
+      const domainDelta =
+        domainTiebreakRank(a.voiceId, target.domainHint) -
+        domainTiebreakRank(b.voiceId, target.domainHint)
+      if (domainDelta !== 0) return domainDelta
+      return a.voiceId.localeCompare(b.voiceId)
+    })
     .slice(0, topN)
 }
 
@@ -268,6 +360,7 @@ export function describeAcousticTarget(target: AcousticTarget): string {
     target.register && `${target.register} register`,
     target.vocalWeight && `${target.vocalWeight} weight`,
     target.texture,
+    target.cadence && `${target.cadence} cadence`,
     target.ageAffinity && target.ageAffinity !== 'neutral' && `${target.ageAffinity} age`,
   ].filter(Boolean)
   return parts.length > 0 ? parts.join(', ') : 'no acoustic signal'
