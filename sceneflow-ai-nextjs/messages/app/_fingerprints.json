@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-09T08:06:37.152Z",
+  "generatedAt": "2026-09-10T14:18:07.770Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -766,6 +766,11 @@
       "studio.audienceResonanceRunTooltip": "7771fa743d63aae2",
       "studio.audienceResonanceViewTooltip": "09e860eb02f57c4e",
       "studio.audienceResonanceCancel": "98fb59ae65417317",
+      "studio.topImpact": "9ee67712a01c621a",
+      "studio.topImpactTooltip": "848243e96dd0b1f4",
+      "studio.topImpactDialogTitle": "9ee67712a01c621a",
+      "studio.topImpactDialogDescription": "9463541728e84892",
+      "studio.topImpactAllClosed": "c36aa05847d82a3f",
       "studio.budgetTooltipView": "d9c5d37f43f454cb",
       "studio.budgetTooltipSet": "17b55feba78f9ad9",
       "studio.budgetDescription": "a00314a7c3ac8d6b",

@@ -1,9 +1,17 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { CheckSquare, ChevronDown, ChevronUp, Film, Square, TrendingDown } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { CheckSquare, Film, Square, TrendingDown } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/Button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import {
   collectTopImpactIssues,
@@ -20,7 +28,8 @@ export function WritersRoomTopImpactPanel({
   onJumpToScene?: (sceneIndex: number) => void
   onToggleApplied?: (sceneIndex: number, recId: string, applied: boolean) => void
 }) {
-  const [open, setOpen] = useState(true)
+  const tStudio = useTranslations('production.studio')
+  const [open, setOpen] = useState(false)
   const [showResolved, setShowResolved] = useState(false)
 
   const openIssues = useMemo(
@@ -37,66 +46,108 @@ export function WritersRoomTopImpactPanel({
 
   if (openIssues.length === 0 && resolvedIssues.length === 0) return null
 
+  const jumpToScene = (sceneIndex: number) => {
+    setOpen(false)
+    onJumpToScene?.(sceneIndex)
+  }
+
   return (
-    <div className="rounded-xl border border-rose-500/25 bg-slate-950/60 p-3.5 shadow-[0_8px_24px_rgba(8,8,20,0.35)]">
-      <button
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        className="flex w-full items-center justify-between text-left"
-        aria-expanded={open}
+    <Dialog open={open} onOpenChange={setOpen}>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-2 border-rose-500/30 hover:border-rose-500/50 hover:bg-rose-500/10"
+        title={tStudio('topImpactTooltip')}
       >
-        <span className="flex items-center gap-2 text-sm font-medium text-gray-100">
-          <TrendingDown className="h-4 w-4 text-rose-400" />
-          Top Impact
-          {openIssues.length > 0 && (
-            <span className="rounded-full bg-rose-500/20 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-rose-200">
-              {openIssues.length}
-            </span>
-          )}
-        </span>
-        {open ? (
-          <ChevronUp className="h-4 w-4 text-gray-400" />
-        ) : (
-          <ChevronDown className="h-4 w-4 text-gray-400" />
+        <TrendingDown className="w-4 h-4 text-rose-400" />
+        <span className="text-sm hidden sm:inline">{tStudio('topImpact')}</span>
+        {openIssues.length > 0 && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-200 font-semibold tabular-nums">
+            {openIssues.length}
+          </span>
         )}
-      </button>
+      </Button>
+      <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col bg-slate-900 border-gray-700">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-white">
+            <TrendingDown className="h-5 w-5 text-rose-400" />
+            {tStudio('topImpactDialogTitle')}
+            {openIssues.length > 0 && (
+              <span className="rounded-full bg-rose-500/20 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-rose-200">
+                {openIssues.length}
+              </span>
+            )}
+          </DialogTitle>
+          <DialogDescription className="text-gray-400">
+            {tStudio('topImpactDialogDescription')}
+          </DialogDescription>
+        </DialogHeader>
+        <WritersRoomTopImpactList
+          openIssues={openIssues}
+          resolvedIssues={resolvedIssues}
+          showResolved={showResolved}
+          onToggleShowResolved={() => setShowResolved((prev) => !prev)}
+          onJumpToScene={jumpToScene}
+          onToggleApplied={onToggleApplied}
+          allClosedLabel={tStudio('topImpactAllClosed')}
+        />
+      </DialogContent>
+    </Dialog>
+  )
+}
 
-      {open && (
-        <div className="mt-3 space-y-2">
-          {openIssues.length === 0 ? (
-            <p className="text-xs text-gray-400">All top-impact fixes are closed.</p>
-          ) : (
-            openIssues.map((issue) => (
-              <ImpactRow
-                key={`${issue.sceneIndex}-${issue.recId}`}
-                issue={issue}
-                onJumpToScene={onJumpToScene}
-                onToggleApplied={onToggleApplied}
-              />
-            ))
-          )}
+export function WritersRoomTopImpactList({
+  openIssues,
+  resolvedIssues,
+  showResolved,
+  onToggleShowResolved,
+  onJumpToScene,
+  onToggleApplied,
+  allClosedLabel,
+}: {
+  openIssues: TopImpactIssue[]
+  resolvedIssues: TopImpactIssue[]
+  showResolved: boolean
+  onToggleShowResolved: () => void
+  onJumpToScene?: (sceneIndex: number) => void
+  onToggleApplied?: (sceneIndex: number, recId: string, applied: boolean) => void
+  allClosedLabel: string
+}) {
+  return (
+    <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+      {openIssues.length === 0 ? (
+        <p className="text-xs text-gray-400">{allClosedLabel}</p>
+      ) : (
+        openIssues.map((issue) => (
+          <ImpactRow
+            key={`${issue.sceneIndex}-${issue.recId}`}
+            issue={issue}
+            onJumpToScene={onJumpToScene}
+            onToggleApplied={onToggleApplied}
+          />
+        ))
+      )}
 
-          {resolvedIssues.length > 0 && (
-            <div className="pt-1">
-              <button
-                type="button"
-                onClick={() => setShowResolved((prev) => !prev)}
-                className="text-[11px] font-medium text-gray-400 hover:text-gray-200"
-              >
-                {showResolved ? 'Hide' : 'Show'} {resolvedIssues.length} resolved
-              </button>
-              {showResolved && (
-                <div className="mt-2 space-y-2">
-                  {resolvedIssues.slice(0, 8).map((issue) => (
-                    <ImpactRow
-                      key={`done-${issue.sceneIndex}-${issue.recId}`}
-                      issue={issue}
-                      onJumpToScene={onJumpToScene}
-                      onToggleApplied={onToggleApplied}
-                    />
-                  ))}
-                </div>
-              )}
+      {resolvedIssues.length > 0 && (
+        <div className="pt-1">
+          <button
+            type="button"
+            onClick={onToggleShowResolved}
+            className="text-[11px] font-medium text-gray-400 hover:text-gray-200"
+          >
+            {showResolved ? 'Hide' : 'Show'} {resolvedIssues.length} resolved
+          </button>
+          {showResolved && (
+            <div className="mt-2 space-y-2">
+              {resolvedIssues.slice(0, 8).map((issue) => (
+                <ImpactRow
+                  key={`done-${issue.sceneIndex}-${issue.recId}`}
+                  issue={issue}
+                  onJumpToScene={onJumpToScene}
+                  onToggleApplied={onToggleApplied}
+                />
+              ))}
             </div>
           )}
         </div>

@@ -84,6 +84,11 @@
     "audienceResonanceRunTooltip": "Run Audience Resonance Analysis on your script",
     "audienceResonanceViewTooltip": "Audience Resonance Analysis and script insights",
     "audienceResonanceCancel": "Cancel Audience Resonance analysis",
+    "topImpact": "Top Impact",
+    "topImpactTooltip": "Highest-leverage script fixes across all scenes",
+    "topImpactDialogTitle": "Top Impact",
+    "topImpactDialogDescription": "The highest-leverage Audience Resonance fixes across every scene.",
+    "topImpactAllClosed": "All top-impact fixes are closed.",
     "budgetTooltipView": "View or adjust project credit budget",
     "budgetTooltipSet": "Estimate and set a default credit budget from your script",
     "budgetDescription": "Plan credit spend from your scenes and beats, track actuals, and forecast cost to complete."
