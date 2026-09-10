@@ -1,13 +1,17 @@
 import { describe, it, expect } from 'vitest'
 import {
   buildFallbackBeatPlans,
+  composeBeatActionFraming,
   composePersistedLookbookBeatPrompt,
 } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import {
   PROJECT_LOOKBOOK_VERSION,
   type ProjectLookbook,
 } from '@/lib/intelligence/project-lookbook-fallback'
-import { parseStillPromptSource } from '@/lib/imagen/structuredStillPrompt'
+import {
+  assembleStructuredStillPrompt,
+  parseStillPromptSource,
+} from '@/lib/imagen/structuredStillPrompt'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 const lookbook: ProjectLookbook = {
@@ -196,6 +200,82 @@ describe('composePersistedLookbookBeatPrompt', () => {
     const parsed = parseStillPromptSource(prompt!)
     expect(parsed.style?.trim()).toBeTruthy()
     expect(parsed.actionFraming).toContain('Gideon at the zinc workbench')
+  })
+
+  it('states shot, blocking, prop handling and gaze so the frame is described', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_2',
+      sequenceIndex: 1,
+      kind: 'action',
+      actionDescription: 'Brass pneumatic hatch collar flanked by three rusted locking dogs.',
+      beatDirection: {
+        shotType: 'Medium Shot',
+        cameraAngle: 'low angle',
+        blocking: 'Piper Hayes braces against the bulkhead, Gideon Croft behind her',
+        propInteraction: 'Piper Hayes swings the Thirty-Inch Iron Rail Spanner at the dogs',
+        gaze: 'toward the hatch wheel',
+        keyProps: ['Thirty-Inch Iron Rail Spanner', 'Violet Ink Drafting Vellum'],
+      },
+    })
+
+    expect(framing).toContain('Medium Shot, low angle')
+    expect(framing).toContain('Brass pneumatic hatch collar')
+    expect(framing).toContain('Blocking: Piper Hayes braces against the bulkhead')
+    expect(framing).toContain('Prop handling: Piper Hayes swings the Thirty-Inch Iron Rail Spanner')
+    expect(framing).toContain('Gaze: toward the hatch wheel')
+    // The spanner is already handled; only the untouched prop needs stating.
+    expect(framing).toContain('Props in frame: Violet Ink Drafting Vellum.')
+    expect(framing.match(/Thirty-Inch Iron Rail Spanner/g)).toHaveLength(1)
+  })
+
+  it('does not restate its own facets when the composed frame is recomposed', () => {
+    const beat: SceneBeat = {
+      beatId: 'bt_3',
+      sequenceIndex: 2,
+      kind: 'action',
+      actionDescription: 'Gideon Croft hunches over the seismograph.',
+      beatDirection: {
+        shotType: 'Medium Close-Up',
+        blocking: 'Gideon Croft at the zinc workbench',
+        gaze: 'toward the drum needle',
+        keyProps: ['Violet Ink Drafting Vellum'],
+      },
+    }
+
+    const first = composeBeatActionFraming(beat)
+    const second = composeBeatActionFraming({ ...beat, storyboardImagePrompt: first })
+
+    expect(second).toBe(first)
+    expect(first.match(/Blocking:/g)).toHaveLength(1)
+    expect(first.match(/Props in frame:/g)).toHaveLength(1)
+  })
+
+  it('binds composed cast names to person tokens during still assembly', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_4',
+      sequenceIndex: 3,
+      kind: 'action',
+      actionDescription: 'Piper turns on Gideon.',
+      beatDirection: { shotType: 'Two-Shot' },
+    })
+
+    const still = assembleStructuredStillPrompt({
+      actionOrStructured: framing,
+      refs: [
+        { kind: 'person', token: 'person [1]', name: 'Piper Hayes', roleLabel: 'identity' },
+        {
+          kind: 'person',
+          token: 'person [2]',
+          name: 'Professor Gideon Croft',
+          roleLabel: 'identity',
+        },
+      ],
+      includeCandid: true,
+    })
+
+    expect(still).toContain('Action/Framing: Two-Shot. person [1] turns on person [2].')
+    // Cast names belong in the legend; the composition itself must be tokenized.
+    expect(parseStillPromptSource(still).actionFraming).not.toMatch(/Piper|Gideon/)
   })
 
   it('returns undefined when the beat has no stored look to compose', () => {

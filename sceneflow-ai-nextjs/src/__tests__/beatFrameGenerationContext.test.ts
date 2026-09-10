@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { resolveBeatFrameGenerationContext } from '@/lib/vision/beatFrameGenerationContext'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
-import type { LocationReference } from '@/types/visionReferences'
+import type { LocationReference, VisualReference } from '@/types/visionReferences'
 
 const characters = [
   { id: 'c1', name: 'Elara Vance', referenceImage: 'https://blob.example/elara.jpg' },
@@ -379,5 +379,114 @@ describe('resolveBeatFrameGenerationContext', () => {
     expect(resolved.characterIds).toEqual(expect.arrayContaining(['piper', 'gideon']))
     expect(resolved.characterIds).not.toContain('arthur')
     expect(resolved.objectRefIds).toContain('prop-journal')
+  })
+
+  describe('prop attachment is beat-scoped', () => {
+    const spanner: VisualReference[] = [
+      {
+        id: 'prop-spanner',
+        type: 'object',
+        name: 'Thirty-Inch Iron Rail Spanner',
+        description: 'A heavy iron rail spanner resting against the brass hatch collar.',
+        importance: 'critical',
+      },
+    ]
+    const hatchScene = {
+      heading: 'INT. SUBMERSIBLE HATCH - NIGHT',
+      sceneDirection: {
+        scene: {
+          keyProps: ['Thirty-Inch Iron Rail Spanner', 'Violet Ink Drafting Vellum'],
+        },
+      },
+    }
+
+    it('does not attach a spanner that only scene direction lists', () => {
+      const resolved = resolveBeatFrameGenerationContext({
+        scene: hatchScene,
+        beat: actionBeat({
+          actionDescription:
+            'Brass pneumatic hatch collar flanked by three rusted locking dogs.',
+        }),
+        projectCharacters: characters,
+        locationReferences: [],
+        objectReferences: spanner,
+      })
+
+      expect(resolved.objectRefIds).toEqual([])
+      expect(resolved.objectNames).toEqual([])
+    })
+
+    it('does not attach a prop matched only through the scene heading', () => {
+      const resolved = resolveBeatFrameGenerationContext({
+        scene: { heading: 'INT. IRON RAIL YARD - NIGHT' },
+        beat: actionBeat({ actionDescription: 'Steam vents along the walkway.' }),
+        projectCharacters: characters,
+        locationReferences: [],
+        objectReferences: spanner,
+      })
+
+      expect(resolved.objectRefIds).toEqual([])
+    })
+
+    it('does not attach a prop matched only through its own description text', () => {
+      const resolved = resolveBeatFrameGenerationContext({
+        scene: hatchScene,
+        beat: actionBeat({
+          actionDescription: 'The brass hatch collar hisses as pressure equalizes.',
+        }),
+        projectCharacters: characters,
+        locationReferences: [],
+        objectReferences: spanner,
+      })
+
+      expect(resolved.objectRefIds).toEqual([])
+    })
+
+    it('attaches a spanner the beat direction pins as a key prop', () => {
+      const resolved = resolveBeatFrameGenerationContext({
+        scene: hatchScene,
+        beat: actionBeat({
+          actionDescription: 'Brass pneumatic hatch collar flanked by three rusted locking dogs.',
+          beatDirection: { keyProps: ['Thirty-Inch Iron Rail Spanner'] },
+        }),
+        projectCharacters: characters,
+        locationReferences: [],
+        objectReferences: spanner,
+      })
+
+      expect(resolved.objectRefIds).toEqual(['prop-spanner'])
+    })
+
+    it('attaches a spanner the beat direction has a character handle', () => {
+      const resolved = resolveBeatFrameGenerationContext({
+        scene: hatchScene,
+        beat: actionBeat({
+          actionDescription: 'She braces against the bulkhead.',
+          beatDirection: {
+            propInteraction: 'Elara swings the Thirty-Inch Iron Rail Spanner at the locking dogs.',
+          },
+        }),
+        projectCharacters: characters,
+        locationReferences: [],
+        objectReferences: spanner,
+      })
+
+      expect(resolved.objectRefIds).toEqual(['prop-spanner'])
+    })
+
+    it('attaches a spanner the beat action names outright', () => {
+      const resolved = resolveBeatFrameGenerationContext({
+        scene: hatchScene,
+        beat: actionBeat({
+          actionDescription:
+            'Elara hefts the Thirty-Inch Iron Rail Spanner over the locking dogs.',
+        }),
+        projectCharacters: characters,
+        locationReferences: [],
+        objectReferences: spanner,
+      })
+
+      expect(resolved.objectRefIds).toEqual(['prop-spanner'])
+    })
   })
 })

@@ -29,6 +29,18 @@ describe('wardrobeReferencePrompts', () => {
     expect(prompt.toLowerCase()).not.toContain('top row')
   })
 
+  it('keeps handheld props off the turnaround mannequin', () => {
+    const prompt = buildWardrobeTurnaroundPrompt({
+      wardrobeDescription: 'Oil-stained coveralls',
+      accessories: 'Leather tool belt, brass goggles',
+      gender: 'male',
+    })
+
+    expect(prompt).toMatch(/mannequin holds and carries nothing/i)
+    expect(prompt).toMatch(/no tools, weapons, bags/i)
+    expect(prompt).toMatch(/Worn accessories visible where appropriate/i)
+  })
+
   it('consumption instruction references front full-body view only', () => {
     expect(WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION).toContain('FRONT full-body view')
     expect(WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION).not.toContain('BOTTOM ROW')

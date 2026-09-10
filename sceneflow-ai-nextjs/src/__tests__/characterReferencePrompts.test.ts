@@ -69,6 +69,17 @@ describe('buildFullBodyWardrobePrompt', () => {
     expect(prompt).toMatch(/Scene appearance \/ continuity marks/i)
     expect(prompt).toMatch(/visible scene marks/i)
   })
+
+  it('requires empty hands so held props do not become costume', () => {
+    const prompt = buildFullBodyWardrobePrompt({
+      characterName: 'Gideon',
+      wardrobeDescription: 'Oil-stained coveralls and steel-toe boots',
+    })
+
+    expect(prompt).toMatch(/Hands: empty and visible at the sides/i)
+    expect(prompt).toMatch(/holds, carries, or wears NO props/i)
+    expect(prompt).toMatch(/no tools, weapons, bags/i)
+  })
 })
 
 describe('resolveDefaultWardrobeDescription', () => {

@@ -63,6 +63,43 @@ describe('deriveBeatDirection', () => {
     expect(derived?.keyProps).toEqual(['Water-damaged leather journal'])
   })
 
+  it('does not derive a key prop from a single coincidental word', () => {
+    const derived = deriveBeatDirection(
+      actionBeat({
+        actionDescription: 'Violet light washes over the console as the brass fittings rattle.',
+      }),
+      0,
+      {
+        sceneDirection: {
+          ...sceneDirection,
+          scene: {
+            ...sceneDirection.scene,
+            keyProps: ['Violet Ink Drafting Vellum', 'Thirty-Inch Iron Rail Spanner'],
+          },
+          keyProps: ['Violet Ink Drafting Vellum', 'Thirty-Inch Iron Rail Spanner'],
+        },
+      }
+    )
+    expect(derived?.keyProps).toBeUndefined()
+  })
+
+  it('derives a key prop when the beat action hits several of its words', () => {
+    const derived = deriveBeatDirection(
+      actionBeat({
+        actionDescription: 'Elara unrolls the violet drafting vellum across the console.',
+      }),
+      0,
+      {
+        sceneDirection: {
+          ...sceneDirection,
+          scene: { ...sceneDirection.scene, keyProps: ['Violet Ink Drafting Vellum'] },
+          keyProps: ['Violet Ink Drafting Vellum'],
+        },
+      }
+    )
+    expect(derived?.keyProps).toEqual(['Violet Ink Drafting Vellum'])
+  })
+
   it('defaults transition to CUT when scene direction is silent', () => {
     const derived = deriveBeatDirection(actionBeat(), 0, { sceneDirection: {} })
     expect(derived?.transition).toBe('CUT')

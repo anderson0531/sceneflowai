@@ -53,6 +53,18 @@ describe('buildWardrobeDirectorPrompt', () => {
     expect(prompt).toContain('Make the suit navy')
   })
 
+  it('keeps handheld story props out of every wardrobe field', () => {
+    const prompt = buildWardrobeDirectorPrompt({
+      ...base,
+      wardrobeDescription: 'Navy suit, carrying a rail spanner',
+    })
+
+    expect(prompt).toMatch(/what the character WEARS, never what they CARRY/i)
+    expect(prompt).toMatch(/Omit every handheld or story prop/i)
+    expect(prompt).toMatch(/wardrobeAccessories[^\n]*Never handheld or story props/i)
+    expect(prompt).toMatch(/WORN extras/)
+  })
+
   it('recommend mode omits director notes and still requires appearanceNotes', () => {
     const prompt = buildWardrobeDirectorPrompt({
       ...base,

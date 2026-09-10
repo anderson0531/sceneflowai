@@ -9,6 +9,7 @@ import {
   projectVisionFromLibraryAssets,
   MAX_ROSTER_ENTRIES,
 } from '@/lib/referenceLibrary/projection'
+import { isUndefinedTableError, PG_UNDEFINED_TABLE } from '@/lib/database/pgErrors'
 import type { ReferenceAssetRecord } from '@/types/referenceLibrary'
 import { buildContinuityContext } from '@/lib/series/continuityContext'
 import type { SeriesProductionBible } from '@/types/series'
@@ -177,5 +178,39 @@ describe('generate-script-v2 prompt contract', () => {
     expect(src).toContain('locationAssetId')
     expect(src).toContain('propAssetIds')
     expect(src).toContain('newAssets')
+  })
+})
+
+describe('missing reference library tables', () => {
+  it('recognizes 42P01 on the error, its parent, and its original', () => {
+    expect(isUndefinedTableError({ code: PG_UNDEFINED_TABLE })).toBe(true)
+    // Sequelize shape for `relation "reference_asset_links" does not exist`.
+    expect(
+      isUndefinedTableError({
+        name: 'SequelizeDatabaseError',
+        message: 'relation "reference_asset_links" does not exist',
+        parent: { code: PG_UNDEFINED_TABLE },
+      })
+    ).toBe(true)
+    expect(isUndefinedTableError({ original: { code: PG_UNDEFINED_TABLE } })).toBe(true)
+  })
+
+  it('does not swallow unrelated database failures', () => {
+    expect(isUndefinedTableError(null)).toBe(false)
+    expect(isUndefinedTableError(new Error('connection terminated'))).toBe(false)
+    expect(isUndefinedTableError({ parent: { code: '23505' } })).toBe(false)
+    // A missing column is a schema bug to surface, not an absent library.
+    expect(isUndefinedTableError({ parent: { code: '42703' } })).toBe(false)
+  })
+
+  it('link scoping tolerates the missing table instead of failing the query', async () => {
+    const fs = await import('fs')
+    const path = await import('path')
+    const src = fs.readFileSync(
+      path.join(process.cwd(), 'src/lib/referenceLibrary/assetRepository.ts'),
+      'utf8'
+    )
+    expect(src).toContain('ensureReferenceLibraryTablesOnce')
+    expect(src).toMatch(/if \(!isUndefinedTableError\(error\)\) throw error/)
   })
 })
