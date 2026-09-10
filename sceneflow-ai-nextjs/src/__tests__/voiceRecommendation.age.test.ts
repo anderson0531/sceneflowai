@@ -53,21 +53,19 @@ describe('normalizeCharacterAgeBand', () => {
 })
 
 describe('geminiVoiceCatalog age bands', () => {
-  it('only claims an age band where Google labels one', () => {
+  it('tags youthful and mature Gemini voices', () => {
     expect(getGeminiVoiceAgeBand('gemini-Leda')).toBe('young')
-    expect(getGeminiVoiceAgeBand('gemini-Gacrux')).toBe('mature')
-    // Google labels these Smooth, Even, and Informative — none of them say "old".
-    expect(getGeminiVoiceAgeBand('gemini-Despina')).toBe('middle')
-    expect(getGeminiVoiceAgeBand('gemini-Schedar')).toBe('middle')
-    expect(getGeminiVoiceAgeBand('gemini-Rasalgethi')).toBe('middle')
+    expect(getGeminiVoiceAgeBand('gemini-Despina')).toBe('young')
+    expect(getGeminiVoiceAgeBand('gemini-Schedar')).toBe('mature')
+    expect(getGeminiVoiceAgeBand('gemini-Rasalgethi')).toBe('mature')
     expect(getGeminiVoiceAgeBand('gemini-Alnilam')).toBe('middle')
   })
 
   it('enriches Gemini voices with age for scoring', () => {
     const pool = buildGeminiVoicePool()
-    const gacrux = pool.find((v) => v.id === 'gemini-Gacrux')
+    const schedar = pool.find((v) => v.id === 'gemini-Schedar')
     const leda = pool.find((v) => v.id === 'gemini-Leda')
-    expect(gacrux?.age).toBe('mature')
+    expect(schedar?.age).toBe('mature')
     expect(leda?.age).toBe('young')
   })
 })
@@ -89,14 +87,8 @@ describe('getCharacterVoiceRecommendations age matching', () => {
     expect(recs.length).toBeGreaterThan(0)
 
     const topId = recs[0].voiceId
-    const weatheredMaleIds = [
-      'gemini-Algenib',
-      'gemini-Charon',
-      'gemini-Rasalgethi',
-      'gemini-Sadaltager',
-      'gemini-Schedar',
-    ]
-    expect(weatheredMaleIds).toContain(topId)
+    const matureMaleIds = ['gemini-Schedar', 'gemini-Rasalgethi', 'gemini-Charon', 'gemini-Zubenelgenubi']
+    expect(matureMaleIds).toContain(topId)
     expect(topId).not.toBe('gemini-Leda')
     expect(topId).not.toBe('gemini-Despina')
     expect(topId).not.toBe('gemini-Puck')

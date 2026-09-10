@@ -4,7 +4,7 @@
  */
 
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
-import { finalizeTextForGeminiTts } from '@/lib/tts/textOptimizer'
+import { finalizeTextForGoogleTts } from '@/lib/tts/textOptimizer'
 import { buildGeminiTtsPrompt, type GeminiTtsAudioType } from '@/lib/tts/geminiTtsPrompt'
 import {
   DEFAULT_BLUEPRINT_GEMINI_VOICE,
@@ -30,8 +30,6 @@ export type SynthesizeGeminiFlashMp3Params = {
   audioType?: GeminiTtsAudioType
   /** Per-line acting cues woven into the TTS prompt. */
   deliveryCues?: string[]
-  /** Runtime scene wrapper from `buildSceneDirection`, appended after the persona. */
-  sceneDirection?: string
   languageCode?: string
   modelName?: string
   timeoutMs?: number
@@ -61,7 +59,7 @@ function resolveGeminiVoiceName(voiceId: string): { actualVoiceName: string } {
 export async function synthesizeGeminiFlashMp3(
   params: SynthesizeGeminiFlashMp3Params
 ): Promise<Buffer> {
-  const sanitizedText = finalizeTextForGeminiTts(params.text)
+  const sanitizedText = finalizeTextForGoogleTts(params.text)
   if (!sanitizedText.trim()) {
     return Buffer.alloc(0)
   }
@@ -91,7 +89,6 @@ export async function synthesizeGeminiFlashMp3(
         audioType: params.audioType ?? 'narration',
         voicePrompt: params.directorNotes,
         deliveryCues: params.deliveryCues,
-        sceneDirection: params.sceneDirection,
       }),
     },
     voice: {

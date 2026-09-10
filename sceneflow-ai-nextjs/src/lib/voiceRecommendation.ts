@@ -6,15 +6,6 @@
  * character profiles.
  */
 
-import {
-  PHYSICAL_TEXTURES,
-  parseRegisterFromText,
-  parseTextureFromText,
-  registerDistance,
-  type VoiceRegisterBand,
-  type VoiceTextureBand,
-} from '@/lib/tts/voiceAcousticWords'
-
 // ================================================================================
 // Types & Interfaces
 // ================================================================================
@@ -81,13 +72,6 @@ export interface ElevenLabsVoice {
   age?: string
   accent?: string
   useCase?: string
-  /**
-   * Structured acoustics from the Gemini catalog, when the voice comes from it.
-   * Absent for ElevenLabs voices, which simply skips acoustic scoring.
-   */
-  texture?: string
-  register?: string
-  vocalWeight?: string
 }
 
 // ================================================================================
@@ -141,7 +125,7 @@ export function blendCharacterProfileForVoiceScoring(character: CharacterContext
 }
 
 // Maximum possible score for normalization (sum of all possible bonuses)
-const MAX_POSSIBLE_SCORE = 198 // prior cap + 18 phonation alignment + 20 register alignment
+const MAX_POSSIBLE_SCORE = 160 // prior cap + up to 15 for AI voice-profile keyword overlap vs catalog metadata
 
 /**
  * Infer ethnicity/cultural background from character description and name
@@ -332,7 +316,7 @@ export function inferAgeFromDescription(description: string): CharacterAgeBand |
 
   // Decade phrases: "early 60s", "mid-sixties", "late 50s"
   const decadeMatch = text.match(
-    /\b(early|mid|late|mid-)?\s*(\d{2})s\b|\b(early|mid|late|mid-)?\s*(twenties|thirties|forties|fifties|sixties|seventies|eighties)\b/
+    /\b(?:early|mid|late|mid-)?\s*(\d{2})s\b|\b(?:early|mid|late|mid-)?\s*(twenties|thirties|forties|fifties|sixties|seventies|eighties)\b/
   )
   if (decadeMatch) {
     const wordToDecade: Record<string, number> = {
@@ -344,18 +328,12 @@ export function inferAgeFromDescription(description: string): CharacterAgeBand |
       seventies: 70,
       eighties: 80,
     }
-    const decade = decadeMatch[2]
-      ? parseInt(decadeMatch[2], 10)
-      : wordToDecade[decadeMatch[4]] ?? NaN
+    const decade = decadeMatch[1]
+      ? parseInt(decadeMatch[1], 10)
+      : wordToDecade[decadeMatch[2]] ?? NaN
     if (!Number.isNaN(decade)) {
-      // The qualifier decides which side of a band boundary the age lands on:
-      // "late 50s" is mature, "early 50s" is middle, and dropping it put both
-      // in the same band.
-      const qualifier = (decadeMatch[1] || decadeMatch[3] || '').replace(/-$/, '')
-      const offset = qualifier === 'late' ? 8 : qualifier === 'mid' ? 5 : 2
-      const age = decade + offset
-      if (age < 30) return 'young'
-      if (age < 55) return 'middle'
+      if (decade < 30) return 'young'
+      if (decade >= 30 && decade < 55) return 'middle'
       return 'mature'
     }
   }
@@ -394,16 +372,11 @@ export function inferAgeFromDescription(description: string): CharacterAgeBand |
     'gravelly',
   ]
 
-  // Word boundaries matter here: substring checks read "old" out of "bold" and
-  // "boy" out of "cowboy", which silently flipped characters into the wrong band.
-  const hasWord = (word: string) =>
-    new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(text)
-
   for (const indicator of matureIndicators) {
-    if (hasWord(indicator)) return 'mature'
+    if (text.includes(indicator)) return 'mature'
   }
   for (const indicator of youngIndicators) {
-    if (hasWord(indicator)) return 'young'
+    if (text.includes(indicator)) return 'young'
   }
 
   if (text === 'adult' || text === 'middle-aged' || text === 'middle') {
@@ -413,30 +386,14 @@ export function inferAgeFromDescription(description: string): CharacterAgeBand |
   return null
 }
 
-/**
- * Normalize character.age / vision apparentAge into a scoring band.
- * Accepts numbers because `CharacterContext.age` allows them.
- */
+/** Normalize character.age / vision apparentAge into a scoring band. */
 export function normalizeCharacterAgeBand(
-  age?: string | number
+  age?: string
 ): CharacterAgeBand | null {
-  const text = typeof age === 'number' ? String(age) : age
-  if (!text?.trim()) return null
-
-  // This field is an age, so a bare number needs no "years old" to disambiguate.
-  const bare = /^(\d{1,3})$/.exec(text.trim())
-  if (bare) {
-    const years = parseInt(bare[1], 10)
-    if (years > 0 && years <= 120) {
-      if (years < 30) return 'young'
-      if (years < 55) return 'middle'
-      return 'mature'
-    }
-  }
-
-  const direct = inferAgeFromDescription(text)
+  if (!age?.trim()) return null
+  const direct = inferAgeFromDescription(age)
   if (direct) return direct
-  const lower = text.toLowerCase().trim()
+  const lower = age.toLowerCase().trim()
   if (lower === 'young' || lower === 'youthful') return 'young'
   if (lower === 'mature' || lower === 'senior' || lower === 'elderly') return 'mature'
   if (lower === 'middle' || lower === 'adult') return 'middle'
@@ -554,19 +511,16 @@ function scoreVoiceForCharacter(
     'contemporary',
     'high-energy',
   ]
-  /**
-   * Age cues only. Gravel and grit are phonation, not age: a 58-year-old
-   * described as an articulate academic should not be pushed toward a rasping
-   * voice, and the texture a brief actually asks for is scored separately.
-   */
   const matureArchetype = [
     'older',
     'veteran',
+    'gravelly',
     'seasoned',
+    'deep',
     'gravitas',
     'elder',
     'historical',
-    'mature',
+    'gritty',
   ]
 
   if (charAgeBand === 'mature') {
@@ -586,45 +540,6 @@ function scoreVoiceForCharacter(
     if (matureArchetype.some((k) => archetypeDesc.includes(k))) {
       score -= 15
       reasons.push('Mature archetype penalty for young character')
-    }
-  }
-
-  /**
-   * Register and phonation alignment, scored against the voice's structured
-   * acoustic fields rather than its prose copy. Only Gemini catalog voices
-   * carry these, so ElevenLabs scoring is unchanged.
-   *
-   * Register comes first because it is the one parameter a prompt cannot move:
-   * asking a mid-register voice to sound like a baritone produces strain, not a
-   * baritone. Gravel and breath are likewise phonation rather than delivery.
-   */
-  if (voice.register) {
-    const targetRegister = parseRegisterFromText(profileText, charGender ?? undefined)
-    if (targetRegister) {
-      const distance = registerDistance(voice.register as VoiceRegisterBand, targetRegister)
-      if (distance === 0) {
-        score += 20
-        reasons.push(`Register match: ${voice.register}`)
-      } else {
-        score -= distance * 10
-        reasons.push(`Register off by ${distance}: ${voice.register} vs ${targetRegister}`)
-      }
-    }
-  }
-
-  if (voice.texture) {
-    const targetTexture = parseTextureFromText(profileText)
-    if (targetTexture) {
-      if (voice.texture === targetTexture) {
-        score += 18
-        reasons.push(`Phonation match: ${targetTexture}`)
-      } else if (
-        PHYSICAL_TEXTURES.includes(voice.texture as VoiceTextureBand) ||
-        PHYSICAL_TEXTURES.includes(targetTexture)
-      ) {
-        score -= 12
-        reasons.push(`Phonation conflict: ${voice.texture} vs ${targetTexture}`)
-      }
     }
   }
 
@@ -1203,7 +1118,7 @@ export function generateVoiceDesignPrompt(
   
   // Add age
   if (character.age) {
-    parts.push(String(character.age))
+    parts.push(character.age)
   }
   
   // Extract voice traits from description
