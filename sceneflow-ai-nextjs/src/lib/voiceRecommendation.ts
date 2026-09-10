@@ -49,6 +49,8 @@ export interface CharacterContext {
   referenceImage?: string
   /** Cached AI-generated voice description for this character */
   voiceDescription?: string
+  /** Standing physical identity — used for casting brief, not TTS dialogue. */
+  appearanceDescription?: string
 }
 
 export interface ScreenplayContext {

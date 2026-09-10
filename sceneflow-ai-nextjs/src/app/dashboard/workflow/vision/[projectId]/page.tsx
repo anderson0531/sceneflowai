@@ -251,6 +251,7 @@ import { isStoryboardNoCharacterScene } from '../../../../../lib/script/sceneCla
 import { resolveQuickFrameActionPrompt } from '@/lib/vision/framePromptBaseline'
 import { toCanonicalName } from '@/lib/character/canonical'
 import { resolveDialogueTtsVoice } from '@/lib/character/dialogueTtsVoice'
+import { refreshCastingBriefForAppearance } from '@/lib/character/applyCastingBriefUpdate'
 import { getEdgeVoiceConfigForResolution } from '@/lib/tts/edgeTtsVoices'
 import { backoffMsFor429Attempt, sleep } from '@/lib/tts/googleTtsRetry'
 import { DEFAULT_CINEMATIC_NARRATOR } from '@/lib/tts/cinematicNarratorPresets'
@@ -5782,7 +5783,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
   
   // Handle character voice update
-  const handleUpdateCharacterVoice = async (characterId: string, voiceConfig: VoiceConfig) => {
+  const handleUpdateCharacterVoice = async (
+    characterId: string,
+    voiceConfig: VoiceConfig,
+    options?: { quiet?: boolean },
+  ) => {
     console.log('[Character Voice] Updating:', { characterId, voiceConfig })
     console.log('[Character Voice] Current characters:', characters.map(c => ({ id: c.id, name: c.name })))
     
@@ -5844,12 +5849,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }, 'handleUpdateCharacterVoice')
         console.log('[Character Voice] Updated character voice:', characterId, voiceConfig)
         
-        // Add success toast
-        try { 
-          const { toast } = require('sonner')
-          const char = updatedCharacters.find(c => c.id === characterId)
-          toast.success(`Voice assigned to ${char?.name || 'character'}: ${voiceConfig.voiceName}`)
-        } catch {}
+        if (!options?.quiet) {
+          try { 
+            const { toast } = require('sonner')
+            const char = updatedCharacters.find(c => c.id === characterId)
+            toast.success(`Voice assigned to ${char?.name || 'character'}: ${voiceConfig.voiceName}`)
+          } catch {}
+        }
       } catch (error) {
         console.error('[Character Voice] Failed to save character voice:', error)
         // Add error toast
@@ -8208,6 +8214,43 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     console.log('Regenerate character:', characterId)
   }
 
+  const visionScreenplayContext = () => ({
+    genre: project?.genre,
+    tone:
+      project?.tone ||
+      project?.metadata?.filmTreatmentVariant?.tone_description ||
+      project?.metadata?.filmTreatmentVariant?.tone,
+    setting: project?.metadata?.filmTreatmentVariant?.setting,
+    logline: script?.logline || project?.description,
+  })
+
+  const castingBriefFieldsFromAppearance = async (
+    character: any,
+    appearanceDescription: string,
+    hasPortrait: boolean,
+  ) => {
+    try {
+      const applied = await refreshCastingBriefForAppearance({
+        character,
+        appearanceDescription,
+        screenplayContext: visionScreenplayContext(),
+        hasPortrait,
+      })
+      if (!applied) return {}
+      return {
+        voiceDescription: applied.voiceDescription,
+        ...(applied.voiceConfig ? { voiceConfig: applied.voiceConfig } : {}),
+      }
+    } catch (error) {
+      console.warn('[Casting Brief] Appearance sync failed:', error)
+      try {
+        const { toast } = require('sonner')
+        toast.error('Appearance saved, but the casting brief could not be refreshed.')
+      } catch {}
+      return {}
+    }
+  }
+
   const handleUploadCharacter = async (characterId: string, file: File) => {
     try {
       setUploadingRef(prev => ({ ...prev, [characterId]: true }))
@@ -8247,6 +8290,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         appearanceDescription: visionDescription,
         // Parse individual attributes if needed in future
       } : null
+
+      const castingFields = analysisData?.success
+        ? await castingBriefFieldsFromAppearance(
+            { ...character, appearanceDescription: visionDescription },
+            visionDescription,
+            true,
+          )
+        : {}
       
       // Update character with the Blob URL and analysis results
         const updatedCharacters = updateCharacterInList(
@@ -8268,6 +8319,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   keyFeature: analysisData.keyFeature || char.keyFeature,
                 }
               : {}),
+            ...castingFields,
           })
         )
         
@@ -8348,6 +8400,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   ) => {
     try {
+      const existing = charactersRef.current.find((c, idx) => resolveCharacterId(c, idx) === characterId)
+      const castingFields = payload.visionDescription
+        ? await castingBriefFieldsFromAppearance(
+            { ...existing, appearanceDescription: payload.visionDescription },
+            payload.visionDescription,
+            true,
+          )
+        : {}
       const updatedCharacters = updateCharacterInList(
         charactersRef.current,
         characterId,
@@ -8360,6 +8420,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 appearanceDescription: payload.visionDescription,
               }
             : {}),
+          ...castingFields,
           ...(payload.enhanceIterationCount != null
             ? { enhanceIterationCount: payload.enhanceIterationCount }
             : {}),
@@ -8417,6 +8478,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (json?.imageUrl) {
         const visionDescription =
           typeof json.visionDescription === 'string' ? json.visionDescription : undefined
+        const existing = charactersRef.current.find((c, idx) => resolveCharacterId(c, idx) === characterId)
+        const castingFields = visionDescription
+          ? await castingBriefFieldsFromAppearance(
+              { ...existing, appearanceDescription: visionDescription },
+              visionDescription,
+              true,
+            )
+          : {}
         const updatedCharacters = updateCharacterInList(
           charactersRef.current,
           characterId,
@@ -8430,6 +8499,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   appearanceDescription: visionDescription,
                 }
               : {}),
+            ...castingFields,
           })
         )
         

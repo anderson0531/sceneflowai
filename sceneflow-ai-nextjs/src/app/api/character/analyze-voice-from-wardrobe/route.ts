@@ -40,12 +40,14 @@ function buildAnalysisPrompt(
     personality: characterContext?.personality,
     voiceDescription: characterContext?.voiceDescription,
     description: characterContext?.description,
+    appearanceDescription: characterContext?.appearanceDescription,
   })
   return buildWardrobeVoiceAnalysisPrompt(characterName, {
     screenplayContext,
     characterDescription: narrative.narrative || narrative.matchingBrief,
     characterRole: narrative.role,
     personality: narrative.personality,
+    appearanceDescription: characterContext?.appearanceDescription,
     hasPortrait,
   })
 }
@@ -79,12 +81,14 @@ export async function POST(req: NextRequest) {
       personality: characterContext?.personality,
       voiceDescription: characterContext?.voiceDescription,
       description: characterContext?.description,
+      appearanceDescription: characterContext?.appearanceDescription,
     })
     const hasNarrative = Boolean(
       narrative.role ||
         narrative.personality ||
         narrative.matchingBrief ||
-        narrative.narrative
+        narrative.narrative ||
+        characterContext?.appearanceDescription?.trim()
     )
 
     if (!hasPortrait && !hasNarrative) {
