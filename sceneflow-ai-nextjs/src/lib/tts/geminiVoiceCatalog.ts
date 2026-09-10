@@ -16,25 +16,22 @@
  */
 
 import measuredAcoustics from '@/lib/tts/geminiVoiceAcoustics.measured.json'
+import type {
+  VoiceRegisterBand,
+  VoiceTextureBand,
+  VoiceWeightBand,
+} from '@/lib/tts/voiceAcousticWords'
 
 export type GeminiVoiceGender = 'male' | 'female'
 export type GeminiVoiceAgeBand = 'young' | 'middle' | 'mature'
 
 /** Perceived pitch band relative to the voice's own gender range. */
-export type GeminiVoiceRegister = 'low' | 'low-mid' | 'mid' | 'mid-high' | 'high'
+export type GeminiVoiceRegister = VoiceRegisterBand
 
 /** Perceived heft/body of the voice, independent of pitch. */
-export type GeminiVoiceWeight = 'light' | 'medium' | 'heavy'
+export type GeminiVoiceWeight = VoiceWeightBand
 
-export type GeminiVoiceTexture =
-  | 'gravelly'
-  | 'breathy'
-  | 'smooth'
-  | 'clear'
-  | 'soft'
-  | 'even'
-  | 'warm'
-  | 'bright'
+export type GeminiVoiceTexture = VoiceTextureBand
 
 /** Only asserted where Google's own label asserts it; everything else is neutral. */
 export type GeminiVoiceAgeAffinity = 'young' | 'neutral' | 'mature'
@@ -419,7 +416,19 @@ export function getGeminiVoicesForApi() {
 
 export function enrichGeminiVoicesForScoring<
   T extends { id: string; name?: string; gender?: string; description?: string; age?: string },
->(apiVoices: T[]): Array<T & { description: string; gender: string; age: string }> {
+>(
+  apiVoices: T[]
+): Array<
+  T & {
+    description: string
+    gender: string
+    age: string
+    /** Structured phonation, so scorers need not regex the prose copy. */
+    texture?: GeminiVoiceTexture
+    register?: GeminiVoiceRegister
+    vocalWeight?: GeminiVoiceWeight
+  }
+> {
   return apiVoices.map((voice) => {
     const catalog = CATALOG_BY_ID.get(voice.id)
     const ageBand = catalog?.ageBand ?? getGeminiVoiceAgeBand(voice.id)
@@ -429,6 +438,13 @@ export function enrichGeminiVoicesForScoring<
       gender: catalog?.gender || voice.gender || '',
       name: catalog?.displayName || voice.name || voice.id,
       age: ageBand,
+      ...(catalog
+        ? {
+            texture: catalog.texture,
+            register: catalog.register,
+            vocalWeight: catalog.vocalWeight,
+          }
+        : {}),
     }
   })
 }

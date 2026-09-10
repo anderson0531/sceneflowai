@@ -22,6 +22,16 @@ import {
   type GeminiVoiceWeight,
 } from '@/lib/tts/geminiVoiceCatalog'
 import { normalizeCharacterAgeBand, normalizeGender } from '@/lib/voiceRecommendation'
+import {
+  PHYSICAL_TEXTURES,
+  REGISTER_SCALE,
+  WEIGHT_SCALE,
+  parseRegisterFromText,
+  parseTextureFromText,
+  parseWeightFromText,
+  registerDistance,
+  weightDistance,
+} from '@/lib/tts/voiceAcousticWords'
 
 export type AcousticTarget = {
   gender?: 'male' | 'female'
@@ -37,9 +47,6 @@ export type AcousticVoiceMatch = {
   reasons: string[]
 }
 
-const REGISTER_SCALE: GeminiVoiceRegister[] = ['low', 'low-mid', 'mid', 'mid-high', 'high']
-const WEIGHT_SCALE: GeminiVoiceWeight[] = ['light', 'medium', 'heavy']
-
 /** Register dominates: one band of error costs more than any texture or age bonus. */
 const REGISTER_STEP_PENALTY = 26
 const WEIGHT_STEP_PENALTY = 10
@@ -53,7 +60,6 @@ const AGE_OPPOSITE_PENALTY = 30
  * neither add nor remove them. Mismatching one costs nearly a register band,
  * which keeps a rasping voice out of a "clear baritone" role and vice versa.
  */
-const PHYSICAL_TEXTURES: GeminiVoiceTexture[] = ['gravelly', 'breathy']
 const PHYSICAL_TEXTURE_MISMATCH_PENALTY = 18
 
 /** Near-equivalent textures, used for partial credit only. */
@@ -68,89 +74,11 @@ const TEXTURE_NEIGHBORS: Record<GeminiVoiceTexture, GeminiVoiceTexture[]> = {
   bright: ['clear'],
 }
 
-/**
- * Voice-type nouns to register, resolved against the speaker's own gender range.
- * "Baritone" is low-mid for a man; "alto" is low-mid for a woman.
- */
-const MALE_VOICE_TYPES: Array<[RegExp, GeminiVoiceRegister]> = [
-  [/\bbass(?:o|-baritone)?\b/, 'low'],
-  [/\bbari(?:tone)?\b/, 'low-mid'],
-  [/\bcounter-?tenor\b|\bfalsetto\b/, 'high'],
-  [/\btenor\b/, 'mid-high'],
-]
-
-const FEMALE_VOICE_TYPES: Array<[RegExp, GeminiVoiceRegister]> = [
-  [/\bcontralto\b|\balto\b/, 'low-mid'],
-  [/\bmezzo(?:-soprano)?\b/, 'mid'],
-  [/\bsoprano\b/, 'mid-high'],
-]
-
-/** Generic pitch words, applied when no voice-type noun is present. */
-const REGISTER_WORDS: Array<[RegExp, GeminiVoiceRegister]> = [
-  [/\b(?:lower?[-\s]?mid|mid[-\s]?low|low[-\s]?mid)(?:dle)?\b/, 'low-mid'],
-  [/\b(?:upper?[-\s]?mid|mid[-\s]?high|high[-\s]?mid)\b/, 'mid-high'],
-  [/\b(?:very\s+)?(?:deep|sub-?bass|rumbling|booming|cavernous|basso)\b/, 'low'],
-  [/\b(?:low|lower)\b/, 'low-mid'],
-  [/\b(?:piercing|shrill|squeaky|high-?pitched)\b/, 'high'],
-  [/\bhigh(?:er)?\b/, 'mid-high'],
-  [/\b(?:mid|middle|medium|neutral)\b/, 'mid'],
-]
-
-const HEAVY_WORDS =
-  /\b(?:resonant|resonance|full[-\s]?bodied|booming|weighty|heavy|thick|chesty|barrel|powerful|commanding|stentorian|sonorous|rich)\b/
-const LIGHT_WORDS =
-  /\b(?:light|thin|slight|airy|wispy|breathy|delicate|feathery|reedy|slender)\b/
-const MEDIUM_WORDS = /\b(?:balanced|moderate|even|medium[-\s]?weight)\b/
-
-const TEXTURE_WORDS: Array<[RegExp, GeminiVoiceTexture]> = [
-  [/\b(?:gravell?y|gritty|raspy|rasp|rough|hoarse|weathered|grizzled|sandpaper|craggy)\b/, 'gravelly'],
-  [/\b(?:breathy|hushed|whispery|whispered|airy)\b/, 'breathy'],
-  [/\b(?:smooth|silky|velvety|legato|polished|sleek)\b/, 'smooth'],
-  [/\b(?:clear|crisp|precise|articulate|clean|clinical|incisive|cut-?glass)\b/, 'clear'],
-  [/\b(?:soft|gentle|tender|intimate|feather|gossamer)\b/, 'soft'],
-  [/\b(?:even|level|flat|measured|controlled|steady|deadpan|monotone|unshaded|impassive)\b/, 'even'],
-  [/\b(?:warm|rounded|mellow|burnished|honeyed)\b/, 'warm'],
-  [/\b(?:bright|vibrant|lively|sparkling|zesty|buoyant|upbeat|energetic)\b/, 'bright'],
-]
-
 function normalizeText(...parts: Array<string | undefined | null>): string {
   return parts
     .filter((p): p is string => typeof p === 'string' && p.trim().length > 0)
     .join(' ')
     .toLowerCase()
-}
-
-function matchFirst<T>(text: string, table: Array<[RegExp, T]>): T | undefined {
-  for (const [pattern, value] of table) {
-    if (pattern.test(text)) return value
-  }
-  return undefined
-}
-
-function parseRegister(text: string, gender?: 'male' | 'female'): GeminiVoiceRegister | undefined {
-  const voiceTypes =
-    gender === 'female' ? FEMALE_VOICE_TYPES : gender === 'male' ? MALE_VOICE_TYPES : []
-  const fromVoiceType = matchFirst(text, voiceTypes)
-  if (fromVoiceType) return fromVoiceType
-
-  // With no gender known, a voice-type noun still implies a direction.
-  if (!gender) {
-    const eitherWay = matchFirst(text, [...MALE_VOICE_TYPES, ...FEMALE_VOICE_TYPES])
-    if (eitherWay) return eitherWay
-  }
-
-  return matchFirst(text, REGISTER_WORDS)
-}
-
-function parseWeight(text: string): GeminiVoiceWeight | undefined {
-  if (HEAVY_WORDS.test(text)) return 'heavy'
-  if (LIGHT_WORDS.test(text)) return 'light'
-  if (MEDIUM_WORDS.test(text)) return 'medium'
-  return undefined
-}
-
-function parseTexture(text: string): GeminiVoiceTexture | undefined {
-  return matchFirst(text, TEXTURE_WORDS)
 }
 
 function parseAgeAffinity(age?: string): GeminiVoiceAgeAffinity | undefined {
@@ -202,14 +130,15 @@ export function parseAcousticTarget(input: AcousticTargetInput): AcousticTarget 
   const explicitRegister = normalizeText(attrs.register, attrs.pitch, attrs.timbre)
 
   const register =
-    (explicitRegister ? parseRegister(explicitRegister, gender) : undefined) ??
-    parseRegister(combined, gender)
+    (explicitRegister ? parseRegisterFromText(explicitRegister, gender) : undefined) ??
+    parseRegisterFromText(combined, gender)
 
   const explicitWeight = normalizeText(attrs.vocalWeight, attrs.timbre, attrs.authority)
   const vocalWeight =
-    (explicitWeight ? parseWeight(explicitWeight) : undefined) ?? parseWeight(combined)
+    (explicitWeight ? parseWeightFromText(explicitWeight) : undefined) ??
+    parseWeightFromText(combined)
 
-  const texture = parseTexture(structuredText) ?? parseTexture(combined)
+  const texture = parseTextureFromText(structuredText) ?? parseTextureFromText(combined)
 
   // Age comes only from the explicit field. Inferring it from prose misfires on
   // substrings ("Bold" reads as "old") and age is a static trait we already collect.
@@ -252,9 +181,7 @@ export function scoreVoiceAcoustics(
   let score = 100
 
   if (target.register) {
-    const distance = Math.abs(
-      REGISTER_SCALE.indexOf(voice.register) - REGISTER_SCALE.indexOf(target.register),
-    )
+    const distance = registerDistance(voice.register, target.register)
     score -= distance * REGISTER_STEP_PENALTY
     reasons.push(
       distance === 0
@@ -265,9 +192,7 @@ export function scoreVoiceAcoustics(
   }
 
   if (target.vocalWeight) {
-    const distance = Math.abs(
-      WEIGHT_SCALE.indexOf(voice.vocalWeight) - WEIGHT_SCALE.indexOf(target.vocalWeight),
-    )
+    const distance = weightDistance(voice.vocalWeight, target.vocalWeight)
     score -= distance * WEIGHT_STEP_PENALTY
     reasons.push(
       distance === 0
