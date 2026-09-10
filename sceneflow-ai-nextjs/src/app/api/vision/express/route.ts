@@ -113,6 +113,9 @@ async function persistExpressScenes(
         ...(orchestratedVisionPhase.playerLabels
           ? { playerLabels: orchestratedVisionPhase.playerLabels }
           : {}),
+        ...(orchestratedVisionPhase.lookbook
+          ? { lookbook: orchestratedVisionPhase.lookbook }
+          : {}),
         artStyle: options.artStyle || freshVisionPhase.artStyle || 'photorealistic',
         scenes: mergedScenes,
         script: nested

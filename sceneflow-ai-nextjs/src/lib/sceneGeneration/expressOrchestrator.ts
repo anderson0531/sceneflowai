@@ -71,7 +71,15 @@ import {
   ensureSceneMusicFromDirection,
   isTitleOrCinematicScene,
   type BeatKeyframePlan,
+  type BeatPlannerContinuityAnchor,
 } from '../intelligence/beat-sequence-planner'
+import {
+  ensureProjectLookbook,
+  summarizeScenesForLookbook,
+  type LookbookSceneSummary,
+  type ProjectLookbook,
+} from '../intelligence/project-lookbook'
+import { parseStillPromptSource } from '../imagen/structuredStillPrompt'
 import {
   resolveStoryboardGeneration,
   beatFrameNeedsGeneration,
@@ -287,6 +295,12 @@ interface SceneRunContext {
   sceneIndex: number
   sceneNumber: number
   scene: any
+  /** The one look every frame in this run shares. */
+  lookbook?: ProjectLookbook
+  /** One line per scene, so beats are planned against the whole film. */
+  storySpine?: LookbookSceneSummary[]
+  /** Last beat of the preceding scene, for continuity across the cut. */
+  previousSceneLastBeat?: BeatPlannerContinuityAnchor
 }
 
 function getScenes(project: any): { scenes: any[]; nested: boolean } {
@@ -304,6 +318,62 @@ function safeEmit(emit: ExpressEmit, event: ExpressEvent) {
   } catch (err: any) {
     console.error('[expressOrchestrator] emit failed:', err?.message || err)
   }
+}
+
+/**
+ * Resolve the project's look once per run and stash it on the in-memory
+ * project, so the route's atomic metadata write persists it and later
+ * single-frame regenerations resolve to the same look.
+ */
+async function resolveRunLookbook(
+  project: any,
+  options: ExpressOptions
+): Promise<ProjectLookbook | undefined> {
+  try {
+    const lookbook = await ensureProjectLookbook(project, options.artStyle)
+    if (!lookbook) return undefined
+    if (!project.metadata) project.metadata = {}
+    if (!project.metadata.visionPhase) project.metadata.visionPhase = {}
+    project.metadata.visionPhase.lookbook = lookbook
+    console.log(
+      `[expressOrchestrator] Lookbook ${lookbook.fingerprint} (AI: ${lookbook.usedAI !== false})`
+    )
+    return lookbook
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.warn(`[expressOrchestrator] Lookbook unavailable, frames run unanchored: ${message}`)
+    return undefined
+  }
+}
+
+/**
+ * Last beat of the preceding scene, read from stored direction rather than the
+ * in-flight plan: scenes run concurrently, so the previous scene may not have
+ * been planned yet in this run.
+ */
+function getPreviousSceneContinuityAnchor(
+  scenes: any[],
+  sceneIndex: number
+): BeatPlannerContinuityAnchor | undefined {
+  if (sceneIndex <= 0) return undefined
+  const previous = scenes[sceneIndex - 1]
+  if (!previous) return undefined
+  const beats = getSceneBeats(previous)
+  const lastBeat = beats[beats.length - 1]
+  if (!lastBeat) return undefined
+
+  const shotType = lastBeat.beatDirection?.shotType?.trim() || undefined
+  const frozenMoment =
+    lastBeat.beatDirection?.frozenMoment?.trim() || lastBeat.actionDescription?.trim() || undefined
+  if (!shotType && !frozenMoment) return undefined
+  return { shotType, frozenMoment }
+}
+
+/** Action/Framing text only — style prose must not drive reference matching. */
+function beatPlanActionText(plan?: BeatKeyframePlan): string | undefined {
+  const prompt = plan?.prompt?.trim()
+  if (!prompt) return undefined
+  return parseStillPromptSource(prompt).actionFraming || prompt
 }
 
 function sceneNeedsDirection(scene: any): boolean {
@@ -713,7 +783,7 @@ async function generateSingleBeatImage(
         beatIdx,
         sceneNumber,
         project,
-        promptText: beatPlan?.prompt,
+        promptText: beatPlanActionText(beatPlan),
       })
     : null
   if (beat && verifiedBeatRefs?.selection && !verifiedBeatRefs.fromSavedSelection) {
@@ -1215,6 +1285,9 @@ async function planSceneBeatKeyframes(
         artStyle,
         projectId: options.projectId,
         referenceCatalog: buildExpressReferenceCatalog(project),
+        lookbook: ctx.lookbook,
+        storySpine: ctx.storySpine,
+        previousSceneLastBeat: ctx.previousSceneLastBeat,
       })
     )
     const remappedPlans = planResult.plans.map((plan) => ({
@@ -1782,6 +1855,9 @@ export async function runExpress(
 
   const rateLimitedFailures: ExpressRateLimitedFailure[] = []
 
+  const lookbook = await resolveRunLookbook(project, options)
+  const storySpine = summarizeScenesForLookbook(scenes)
+
   const trafficCop = new ExpressTrafficCop({
     onThrottle: (lane, max, cooldownMs) => {
       safeEmit(emit, { type: 'throttle', lane, max, cooldownMs })
@@ -1799,6 +1875,9 @@ export async function runExpress(
           sceneIndex: idx,
           sceneNumber: idx + 1,
           scene: scenes[idx],
+          lookbook,
+          storySpine,
+          previousSceneLastBeat: getPreviousSceneContinuityAnchor(scenes, idx),
         },
         options,
         project,

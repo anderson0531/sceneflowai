@@ -50,24 +50,7 @@ export type ReferenceExpressResult = {
   dispatch?: 'inngest' | 'step_worker'
 }
 
-/**
- * Order-independent digest of the prompt inputs for one item.
- *
- * FNV-1a rather than node `crypto` so the same helper runs in tests and in any
- * future client-side preview without pulling a node builtin into the bundle.
- */
-export function fingerprintSource(parts: Array<string | undefined | null>): string {
-  const normalized = parts
-    .map((part) => (part ?? '').replace(/\s+/g, ' ').trim().toLowerCase())
-    .join('\u0000')
-
-  let hash = 0x811c9dc5
-  for (let i = 0; i < normalized.length; i++) {
-    hash ^= normalized.charCodeAt(i)
-    hash = Math.imul(hash, 0x01000193)
-  }
-  return (hash >>> 0).toString(16).padStart(8, '0')
-}
+export { fingerprintSource } from '@/lib/utils/fingerprint'
 
 export function summarizeItemResults(
   items: ReferenceExpressItemResult[]

@@ -13,22 +13,26 @@ import {
 import {
   applyBeatKeyframePlansToScene,
   buildFallbackBeatPlans,
+  composeBeatStillPrompt,
   ensureSceneMusicFromDirection,
   formatBeatPlannerReferenceCatalog,
   buildPlannerSystemPrompt,
   buildPlannerUserPrompt,
   inferBeatRole,
   type BeatKeyframePlan,
+  type BeatPlannerContinuityAnchor,
   type BeatRole,
   type BeatSequencePlanRequest,
   type BeatSequenceReferenceCatalog,
 } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import { generateDirectionHash } from '@/lib/utils/contentHash'
+import { fingerprintSource } from '@/lib/utils/fingerprint'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 export type {
   BeatRole,
   BeatKeyframePlan,
+  BeatPlannerContinuityAnchor,
   BeatSequencePlanRequest,
   BeatSequenceReferenceCatalog,
   FilmContext,
@@ -37,6 +41,7 @@ export {
   inferBeatRole,
   buildFallbackBeatPlans,
   applyBeatKeyframePlansToScene,
+  composeBeatStillPrompt,
   ensureSceneMusicFromDirection,
   formatBeatPlannerReferenceCatalog,
   buildPlannerSystemPrompt,
@@ -57,12 +62,8 @@ interface PlanCacheEntry {
 const planCache = new Map<string, PlanCacheEntry>()
 const PLAN_CACHE_TTL_MS = 5 * 60 * 1000
 
-export function getBeatPlanCacheKey(
-  scene: Record<string, unknown>,
-  beatCount: number,
-  projectId?: string,
-  catalog?: BeatSequenceReferenceCatalog
-): string {
+export function getBeatPlanCacheKey(request: BeatSequencePlanRequest): string {
+  const { scene, referenceCatalog: catalog } = request
   const directionHash = generateDirectionHash(scene)
   const heading = String(scene.heading ?? '').slice(0, 80)
   const actionHash = String(scene.action ?? scene.visualDescription ?? '').slice(0, 120)
@@ -71,7 +72,24 @@ export function getBeatPlanCacheKey(
     ...(catalog?.propNames ?? []),
     ...(catalog?.locationNames ?? []),
   ].join(',')
-  return [projectId ?? 'default', directionHash, beatCount, heading, actionHash, catalogKey].join('|')
+  // Style inputs belong in the key: without them a cached pre-lookbook plan
+  // would be served after the project's look changes.
+  const spineHash = fingerprintSource(
+    (request.storySpine ?? []).flatMap((entry) => [entry.heading, entry.oneLine])
+  )
+  const anchor = request.previousSceneLastBeat
+  return [
+    request.projectId ?? 'default',
+    directionHash,
+    request.beats.length,
+    heading,
+    actionHash,
+    catalogKey,
+    request.artStyle ?? 'photorealistic',
+    request.lookbook?.fingerprint ?? 'no-lookbook',
+    spineHash,
+    fingerprintSource([anchor?.shotType, anchor?.frozenMoment, anchor?.screenDirection]),
+  ].join('|')
 }
 
 function getCachedPlan(key: string): BeatSequencePlanResult | null {
@@ -96,11 +114,26 @@ function roleAllowsTypography(role: BeatRole): boolean {
   return role === 'title_reveal' || role === 'credit'
 }
 
+/**
+ * Beats should share a look but not a camera setup. Reject only the degenerate
+ * case where every beat is the same setup on the same moment — an earlier
+ * distinctness gate on `frozenMoment` alone punished the continuity the planner
+ * is now asked to produce.
+ */
+function hasShotCoverageVariety(plans: BeatKeyframePlan[]): boolean {
+  if (plans.length < 2) return true
+  const setups = new Set(
+    plans.map(
+      (plan) =>
+        `${plan.shotType.trim().toLowerCase()}|${plan.frozenMoment.trim().toLowerCase()}`
+    )
+  )
+  return setups.size >= 2
+}
+
 function validatePlans(plans: BeatKeyframePlan[], beatCount: number): BeatKeyframePlan[] | null {
   if (plans.length !== beatCount) return null
-  const moments = plans.map((p) => p.frozenMoment.trim().toLowerCase())
-  const uniqueMoments = new Set(moments)
-  if (uniqueMoments.size < Math.min(beatCount, 2)) return null
+  if (!hasShotCoverageVariety(plans)) return null
   for (const plan of plans) {
     if (!plan.prompt || plan.prompt.trim().length < 20) return null
     if (!plan.frozenMoment || plan.frozenMoment.trim().length < 8) return null
@@ -136,6 +169,10 @@ async function planWithGemini(
       shotType?: string
       frozenMoment?: string
       prompt?: string
+      lighting?: string
+      lensMm?: string
+      screenDirection?: string
+      continuityNote?: string
       allowTypography?: boolean
       durationSeconds?: number
       negativeAdditions?: string[]
@@ -173,24 +210,37 @@ async function planWithGemini(
       allowTypography,
       durationSeconds: b.durationSeconds,
       negativeAdditions: b.negativeAdditions,
+      ...(b.lighting?.trim() ? { lighting: b.lighting.trim() } : {}),
+      ...(b.lensMm?.trim() ? { lensMm: b.lensMm.trim() } : {}),
+      ...(b.screenDirection?.trim() ? { screenDirection: b.screenDirection.trim() } : {}),
+      ...(b.continuityNote?.trim() ? { continuityNote: b.continuityNote.trim() } : {}),
     }
   })
 
+  // Validate the raw action text, then wrap it in the style anchor — validating
+  // the composed prompt would pass on anchor length alone.
   const validated = validatePlans(plans, request.beats.length)
   if (!validated) return null
 
-  return { plans: validated, usedAI: true, reasoning: parsed.reasoning }
+  const anchored = validated.map((plan) => ({
+    ...plan,
+    prompt: composeBeatStillPrompt({
+      actionFraming: plan.prompt,
+      lookbook: request.lookbook,
+      sceneIndex: request.sceneNumber - 1,
+      artStyleAnchor: request.artStyleAnchor,
+      lighting: plan.lighting,
+      lensMm: plan.lensMm,
+    }),
+  }))
+
+  return { plans: anchored, usedAI: true, reasoning: parsed.reasoning }
 }
 
 export async function planBeatSequence(
   request: BeatSequencePlanRequest
 ): Promise<BeatSequencePlanResult> {
-  const cacheKey = getBeatPlanCacheKey(
-    request.scene,
-    request.beats.length,
-    request.projectId,
-    request.referenceCatalog
-  )
+  const cacheKey = getBeatPlanCacheKey(request)
   const cached = getCachedPlan(cacheKey)
   if (cached) {
     console.log(`[BeatSequencePlanner] Cache hit (${request.beats.length} beats)`)

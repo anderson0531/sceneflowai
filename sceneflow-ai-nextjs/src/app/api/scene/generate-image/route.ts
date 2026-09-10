@@ -28,6 +28,7 @@ import {
   type SceneImageIntelligenceResult,
 } from '@/lib/intelligence/scene-image-intelligence'
 import { shouldUseCustomPromptOverride } from '@/lib/vision/preVisDirectGenerate'
+import { ensureProjectLookbook, getSceneLookNote } from '@/lib/intelligence/project-lookbook'
 import { applySceneImageAiResultToPrompt } from '@/lib/scene/sceneImageAiPromptApply'
 import {
   assembleStructuredStillPrompt,
@@ -1719,6 +1720,11 @@ export async function POST(req: NextRequest) {
         tone: treatment?.tone || undefined,
         visualStyle: treatment?.visualStyle || undefined,
       }
+
+      // A frame regenerated on its own has to land in the same film as its
+      // neighbours. After any Express run this is a free read of the persisted
+      // look; only a project that never ran Express pays for a derivation.
+      const projectLookbook = await ensureProjectLookbook(project, artStyle)
       
       // Build character contexts with resolved wardrobes
       const characterContexts: CharacterContext[] = characterReferences.map((ref: any) => ({
@@ -1857,6 +1863,8 @@ export async function POST(req: NextRequest) {
         visualSetup: parseVisualSetupOverlay(visualSetup),
         talentDirection: parseTalentDirectionOverlay(talentDirection),
         userDirection: userDirection?.trim() || undefined,
+        lookbook: projectLookbook,
+        sceneLookNote: getSceneLookNote(projectLookbook, sceneIndex || 0),
       }
 
       const aiResult = await generateSceneImagePromptWithDeadline(sceneImageIntelligenceRequest)
