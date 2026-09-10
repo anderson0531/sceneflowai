@@ -101,9 +101,25 @@ describe('High-impact audience resonance issues', () => {
     expect(panel).toContain('sceneHasHighImpactIssue')
     expect(panel).toContain('focusedSceneIndex')
     expect(panel).toContain('High impact')
-    expect(panel).toContain('WritersRoomTopImpactPanel')
+    expect(panel).toContain('<WritersRoomTopImpactPanel')
+    expect(panel).toContain("tStudio('audienceResonance')")
+    expect(panel).toContain('DialogContent')
+    expect(panel.indexOf('<WritersRoomTopImpactPanel')).toBeGreaterThan(
+      panel.indexOf("tStudio('audienceResonance')")
+    )
+    expect(panel.indexOf('<WritersRoomTopImpactPanel')).toBeLessThan(
+      panel.indexOf('{productionProgressSlot &&')
+    )
+    expect(panel.indexOf('<WritersRoomTopImpactPanel')).toBeLessThan(
+      panel.indexOf('<BlueprintBeatGroupHeader')
+    )
     expect(panel).toContain('appliedRecommendationIds')
     expect(panel).toContain('onToggleAudienceRecommendation')
+
+    const impactPanel = readSource('src/components/vision/WritersRoomTopImpactPanel.tsx')
+    expect(impactPanel).toContain('DialogContent')
+    expect(impactPanel).toContain('setOpen(false)')
+    expect(impactPanel).toContain('onJumpToScene')
 
     expect(page).toContain('loadPersistedAssistantVoice')
     expect(page).toContain('onJumpToScene={handleJumpToSceneFromReview}')

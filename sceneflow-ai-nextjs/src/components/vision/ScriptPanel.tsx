@@ -3111,6 +3111,15 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
               </div>
             )}
 
+            <WritersRoomTopImpactPanel
+              scenes={scenes}
+              onJumpToScene={(sceneIndex) => {
+                if (onJumpToImpactScene) onJumpToImpactScene(sceneIndex)
+                else onSelectSceneIndex?.(sceneIndex)
+              }}
+              onToggleApplied={onToggleAudienceRecommendation}
+            />
+
             {productionProgressSlot && (
               <Button
                 variant="outline"
@@ -3351,14 +3360,6 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
               </div>
             ) : (
               <div className="space-y-4">
-              <WritersRoomTopImpactPanel
-                scenes={scenes}
-                onJumpToScene={(sceneIndex) => {
-                  if (onJumpToImpactScene) onJumpToImpactScene(sceneIndex)
-                  else onSelectSceneIndex?.(sceneIndex)
-                }}
-                onToggleApplied={onToggleAudienceRecommendation}
-              />
               {displayedScenes.length > 0 && (
                 <BlueprintBeatGroupHeader
                   scenes={scenes}
