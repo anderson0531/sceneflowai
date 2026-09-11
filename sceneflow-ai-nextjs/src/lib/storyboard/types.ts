@@ -25,6 +25,7 @@ import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback
 import { getBeatOverlayFields } from '@/lib/storyboard/beatCaption'
 import type { BeatKenBurnsSettings } from '@/lib/storyboard/kenBurnsFrame'
 import {
+  HARD_CUT,
   SCENE_FADE_TO_BLACK_SEC,
   resolveBeatTransition,
   resolveSceneTransition,
@@ -1877,6 +1878,18 @@ export interface ProjectAnimaticRenderSegment {
   startTime: number
   duration: number
   kenBurns?: BeatKenBurnsSettings
+  /**
+   * How this segment arrives from the one before it, and how long that takes.
+   * Absent means a hard cut.
+   *
+   * `transitionInSec` is also the overlap between the two segments: the
+   * previous one runs that much past this one's `startTime`, which is what
+   * gives the renderer material to fade across. Sum the durations, subtract
+   * the transitions, and you are back at `totalDuration` — that identity is
+   * what keeps the picture with the audio.
+   */
+  transitionIn?: PlayableTransition
+  transitionInSec?: number
 }
 
 export interface ProjectAnimaticAudioClip {
@@ -1900,6 +1913,46 @@ export interface ProjectAnimaticTimelineOptions {
   interSceneFadeUrl?: string
   /** Duration of each inter-scene black segment (default SCENE_FADE_TO_BLACK_SEC). */
   interSceneFadeSec?: number
+  /**
+   * Emit overlapping segments for authored dissolves and fades.
+   *
+   * Off by default because it is a contract with the renderer, not just extra
+   * metadata: a segment that hands over to the next one carries the overlap in
+   * its own duration, so a renderer that hard-concatenates without reading
+   * `transitionIn` produces a video longer than its soundtrack. Turn this on
+   * only once the ffmpeg container understands the field.
+   */
+  transitions?: boolean
+}
+
+/**
+ * Turn each authored join into an overlap the renderer can fade across.
+ *
+ * A transition costs time that has to come from somewhere. In the player the
+ * outgoing frame simply stays on screen, drawn over the incoming one, for the
+ * length of the effect — so here the outgoing segment is lengthened by exactly
+ * that much and the incoming one records it as the overlap to consume. Nothing
+ * moves, and the durations and the overlaps cancel back to `totalDuration`.
+ *
+ * Segments that already overlap, like a beat's start and end frames, are
+ * tagged where they are built and skipped here.
+ */
+function applySegmentTransitions(
+  segments: ProjectAnimaticRenderSegment[],
+  joins: Array<ResolvedTransition | null>
+): void {
+  for (let i = 0; i < segments.length - 1; i++) {
+    const join = joins[i]
+    if (!join || join.effect === 'cut' || join.durationSec <= 0) continue
+    if (segments[i + 1].transitionIn) continue
+
+    segments[i] = { ...segments[i], duration: segments[i].duration + join.durationSec }
+    segments[i + 1] = {
+      ...segments[i + 1],
+      transitionIn: join.effect,
+      transitionInSec: join.durationSec,
+    }
+  }
 }
 
 /**
@@ -1913,11 +1966,14 @@ export function buildProjectAnimaticTimeline(
   options?: ProjectAnimaticTimelineOptions
 ): ProjectAnimaticTimeline {
   const preVisAnimatic = options?.preVisAnimatic === true
+  const emitTransitions = options?.transitions === true
   const interSceneFadeUrl = options?.interSceneFadeUrl
   const interSceneFadeSec = options?.interSceneFadeSec ?? SCENE_FADE_TO_BLACK_SEC
 
   let globalOffset = 0
   const segments: ProjectAnimaticRenderSegment[] = []
+  /** How each segment hands over to the one after it. Parallel to `segments`. */
+  const joins: Array<ResolvedTransition | null> = []
   const audioClips: ProjectAnimaticAudioClip[] = []
 
   for (let sceneIndex = 0; sceneIndex < scenes.length; sceneIndex++) {
@@ -1982,10 +2038,17 @@ export function buildProjectAnimaticTimeline(
       })
     }
 
+    let sceneHandover: ResolvedTransition = HARD_CUT
+
     for (const frame of visualFrames) {
       if (!frame.imageUrl) continue
       const frameStart = globalOffset + frame.startTime
       const frameDuration = frame.duration
+      const handover: ResolvedTransition = {
+        effect: frame.transitionOut ?? 'cut',
+        durationSec: frame.transitionOutSec ?? 0,
+      }
+      if (frame.isSceneEnd) sceneHandover = handover
 
       if (frame.endImageUrl) {
         const crossfadeDur = Math.min(IN_BEAT_CROSSFADE_MAX_SEC, frameDuration * 0.25)
@@ -2000,6 +2063,9 @@ export function buildProjectAnimaticTimeline(
           duration: startDur,
           kenBurns: frame.kenBurns,
         })
+        // The end frame already starts inside the start frame's window, so
+        // this join needs tagging but not lengthening.
+        joins.push(null)
         segments.push({
           segmentId: `s${sceneIndex}-${frame.clipId}-end`,
           sceneIndex,
@@ -2008,7 +2074,11 @@ export function buildProjectAnimaticTimeline(
           startTime: frameStart + startDur - crossfadeDur,
           duration: endDur,
           kenBurns: frame.kenBurns,
+          ...(emitTransitions
+            ? { transitionIn: 'dissolve' as const, transitionInSec: crossfadeDur }
+            : {}),
         })
+        joins.push(handover)
       } else {
         segments.push({
           segmentId: `s${sceneIndex}-${frame.clipId}`,
@@ -2019,12 +2089,26 @@ export function buildProjectAnimaticTimeline(
           duration: frameDuration,
           kenBurns: frame.kenBurns,
         })
+        joins.push(handover)
       }
     }
 
     globalOffset += sceneDuration
 
-    if (interSceneFadeUrl && sceneIndex < scenes.length - 1) {
+    // Black between scenes belongs to a scene that fades out. One that cuts or
+    // dissolves into the next has said it does not want to go through black.
+    if (
+      interSceneFadeUrl &&
+      sceneIndex < scenes.length - 1 &&
+      sceneHandover.effect === 'fade'
+    ) {
+      // The scene's own handover now describes how it reaches the black rather
+      // than how it reaches the next scene, and the black fades up from there.
+      const throughBlack: ResolvedTransition = {
+        effect: 'dissolve',
+        durationSec: Math.min(interSceneFadeSec, sceneHandover.durationSec),
+      }
+      if (joins.length > 0) joins[joins.length - 1] = throughBlack
       segments.push({
         segmentId: `s${sceneIndex}-fade`,
         sceneIndex,
@@ -2032,9 +2116,12 @@ export function buildProjectAnimaticTimeline(
         startTime: globalOffset,
         duration: interSceneFadeSec,
       })
+      joins.push(throughBlack)
       globalOffset += interSceneFadeSec
     }
   }
+
+  if (emitTransitions) applySegmentTransitions(segments, joins)
 
   return {
     totalDuration: globalOffset,

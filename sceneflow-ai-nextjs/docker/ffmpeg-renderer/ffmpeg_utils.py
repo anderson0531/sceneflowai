@@ -12,7 +12,7 @@ import os
 import subprocess
 import json
 import re
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 # Resolution presets
 RESOLUTIONS = {
@@ -28,6 +28,15 @@ SCALE_FACTOR = 2
 # Bottom crop range for uploaded beat watermark removal (matches segmentVideoCrop.ts)
 WATERMARK_CROP_MIN = 2
 WATERMARK_CROP_MAX = 10
+
+# Shorter than this a transition is imperceptible and not worth a filter pass.
+MIN_TRANSITION_SEC = 0.1
+
+# The xfade transition each authored effect renders as.
+XFADE_BY_EFFECT = {
+    'dissolve': 'fade',
+    'fade': 'fadeblack',
+}
 
 
 def clamp_watermark_crop_percent(value: Any) -> Optional[int]:
@@ -615,6 +624,121 @@ def build_ken_burns_filter(
     return filter_str
 
 
+def resolve_segment_transitions(
+    segments: List[Dict[str, Any]],
+) -> List[Optional[Tuple[str, float]]]:
+    """
+    Read the transition into each segment from the job spec.
+
+    Entry i describes how segment i arrives from segment i-1, or None for a
+    hard cut. `transitionInSec` is the overlap the previous segment already
+    carries in its own duration, so anything longer than either side would
+    consume a segment whole and is clamped down.
+
+    A spec written before transitions existed produces all None, which is how
+    this renderer has always behaved.
+    """
+    joins: List[Optional[Tuple[str, float]]] = [None] * len(segments)
+
+    for i in range(1, len(segments)):
+        effect = segments[i].get('transitionIn')
+        if effect not in XFADE_BY_EFFECT:
+            continue
+        try:
+            requested = float(segments[i].get('transitionInSec') or 0)
+            previous_duration = float(segments[i - 1].get('duration', 0) or 0)
+            current_duration = float(segments[i].get('duration', 0) or 0)
+        except (TypeError, ValueError):
+            continue
+
+        duration = min(requested, previous_duration, current_duration)
+        if duration <= MIN_TRANSITION_SEC:
+            continue
+        joins[i] = (effect, duration)
+
+    return joins
+
+
+def build_xfade_video_chain(
+    segments: List[Dict[str, Any]],
+    joins: List[Optional[Tuple[str, float]]],
+    fps: int,
+) -> Tuple[List[str], str, float]:
+    """
+    Chain the per-segment [v*] streams into one, fading where asked to.
+
+    Runs of segments joined by cuts are concatenated as before; only the joins
+    that actually dissolve or fade cost an `xfade`, which overlaps its two
+    sides and therefore shortens the result by the transition's length. That
+    length is exactly the overlap the timeline built into the outgoing
+    segment's duration, so the picture lands back on the soundtrack.
+
+    Returns the extra filter strings, the label holding the finished video,
+    and its duration.
+    """
+    filter_parts: List[str] = []
+
+    # xfade will not touch streams whose timebase, rate or pixel format differ,
+    # and needs both sides to end — zoompan on a looped still does not.
+    for i, segment in enumerate(segments):
+        duration = float(segment.get('duration', 5) or 0)
+        filter_parts.append(
+            f"[v{i}]settb=AVTB,fps={fps},format=yuv420p,"
+            f"trim=duration={duration:.4f},setpts=PTS-STARTPTS[n{i}]"
+        )
+
+    groups: List[List[int]] = []
+    for i in range(len(segments)):
+        if i > 0 and joins[i] is not None:
+            groups.append([i])
+        elif groups:
+            groups[-1].append(i)
+        else:
+            groups.append([i])
+
+    group_labels: List[str] = []
+    group_durations: List[float] = []
+    for group_index, members in enumerate(groups):
+        group_durations.append(
+            sum(float(segments[i].get('duration', 5) or 0) for i in members)
+        )
+        if len(members) == 1:
+            group_labels.append(f"[n{members[0]}]")
+            continue
+        inputs = ''.join(f"[n{i}]" for i in members)
+        filter_parts.append(
+            f"{inputs}concat=n={len(members)}:v=1:a=0[g{group_index}]"
+        )
+        group_labels.append(f"[g{group_index}]")
+
+    current = group_labels[0]
+    total_duration = group_durations[0]
+
+    for group_index in range(1, len(groups)):
+        join = joins[groups[group_index][0]]
+        effect, requested = join  # type: ignore[misc]
+        duration = min(requested, total_duration, group_durations[group_index])
+        if duration <= MIN_TRANSITION_SEC:
+            # Nothing left to fade across; fall back to butting them together.
+            filter_parts.append(
+                f"{current}{group_labels[group_index]}concat=n=2:v=1:a=0[x{group_index}]"
+            )
+            current = f"[x{group_index}]"
+            total_duration += group_durations[group_index]
+            continue
+
+        offset = max(0.0, total_duration - duration)
+        filter_parts.append(
+            f"{current}{group_labels[group_index]}"
+            f"xfade=transition={XFADE_BY_EFFECT[effect]}:"
+            f"duration={duration:.4f}:offset={offset:.4f}[x{group_index}]"
+        )
+        current = f"[x{group_index}]"
+        total_duration += group_durations[group_index] - duration
+
+    return filter_parts, current, total_duration
+
+
 def build_ffmpeg_command(
     segments: List[Dict[str, Any]],
     audio_clips: List[Dict[str, Any]],
@@ -687,8 +811,20 @@ def build_ffmpeg_command(
         filter_parts.append(filter_str)
         video_concat_inputs.append(f"[v{i}]")
     
-    # Concatenate all video segments
-    if len(video_concat_inputs) > 1:
+    # Join the video segments. A spec with no transitions concatenates exactly
+    # as it always has; one that asks for a dissolve or a fade goes through
+    # xfade instead, which is only available on a rebuilt container.
+    joins = resolve_segment_transitions(segments)
+    total_duration = sum(float(seg.get('duration', 5) or 0) for seg in segments)
+
+    if any(join is not None for join in joins) and len(segments) > 1:
+        transition_count = sum(1 for join in joins if join is not None)
+        print(f"[FFmpeg] Applying {transition_count} segment transition(s) via xfade")
+        chain_parts, video_output, total_duration = build_xfade_video_chain(
+            segments, joins, fps
+        )
+        filter_parts.extend(chain_parts)
+    elif len(video_concat_inputs) > 1:
         concat_filter = f"{''.join(video_concat_inputs)}concat=n={len(segments)}:v=1:a=0[outv]"
         filter_parts.append(concat_filter)
         video_output = "[outv]"
@@ -749,7 +885,6 @@ def build_ffmpeg_command(
         ])
     
     # Set output duration based on total video length
-    total_duration = sum(seg.get('duration', 5) for seg in segments)
     cmd.extend(['-t', str(total_duration)])
     
     # Output file

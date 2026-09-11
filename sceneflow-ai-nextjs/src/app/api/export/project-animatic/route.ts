@@ -44,6 +44,19 @@ export interface ProjectAnimaticResponse {
   sourceHash?: string
 }
 
+/**
+ * Whether the deployed ffmpeg container can render dissolves and fades.
+ *
+ * A segment that hands over to the next one carries the overlap in its own
+ * duration, so a container that still hard-concatenates would render a video
+ * longer than its soundtrack. The renderer lives in `docker/ffmpeg-renderer/`
+ * and ships on its own schedule, so this stays off until someone confirms the
+ * running image reads `transitionIn`.
+ */
+function animaticTransitionsEnabled(): boolean {
+  return process.env.ANIMATIC_RENDER_TRANSITIONS === 'true'
+}
+
 function getKenBurnsSettings(intensity: KenBurnsIntensity): KenBurnsSettings {
   switch (intensity) {
     case 'off':
@@ -89,6 +102,9 @@ function buildProjectAnimaticJobSpec(
       startTime: seg.startTime,
       duration: seg.duration,
       kenBurns,
+      ...(seg.transitionIn && seg.transitionIn !== 'cut'
+        ? { transitionIn: seg.transitionIn, transitionInSec: seg.transitionInSec }
+        : {}),
     }
   })
 
@@ -151,6 +167,7 @@ export async function POST(request: NextRequest) {
     const timeline = buildProjectAnimaticTimeline(body.scenes, body.language || 'en', {}, {
       preVisAnimatic: true,
       interSceneFadeUrl: blackUrl,
+      transitions: animaticTransitionsEnabled(),
     })
     if (timeline.segments.length === 0) {
       return NextResponse.json(
