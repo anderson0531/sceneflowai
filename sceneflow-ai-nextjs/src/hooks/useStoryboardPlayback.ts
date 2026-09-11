@@ -280,6 +280,11 @@ export function useStoryboardPlayback({
     [visualFrames]
   )
 
+  // Cue-scored scenes carry their tracks on `sceneMusicCues[].url` and never
+  // write `musicAudio`, so testing the legacy fields alone muted every scene
+  // scored after music cues landed.
+  const hasPlayableMusic = useMemo(() => collectSceneMusicUrls(scene).length > 0, [scene])
+
   const effectiveDialogueVolume = effectiveScreeningTrackVolume({
     muted: isMuted,
     master: volume,
@@ -319,7 +324,7 @@ export function useStoryboardPlayback({
     initialEnabled: {
       voiceover: true,
       dialogue: true,
-      music: !!scene?.musicAudio || !!(scene?.music as { url?: string } | undefined)?.url,
+      music: hasPlayableMusic,
       sfx: Array.isArray(scene?.sfxAudio) && scene!.sfxAudio.length > 0,
     },
     musicIntroFade,
@@ -371,9 +376,9 @@ export function useStoryboardPlayback({
   ])
 
   useEffect(() => {
-    setTrackEnabled('music', !!scene?.musicAudio || !!(scene?.music as { url?: string } | undefined)?.url)
+    setTrackEnabled('music', hasPlayableMusic)
     setTrackEnabled('sfx', Array.isArray(scene?.sfxAudio) && (scene?.sfxAudio?.length ?? 0) > 0)
-  }, [scene, setTrackEnabled])
+  }, [scene, hasPlayableMusic, setTrackEnabled])
 
   const currentVisualFrame = useMemo(
     () => getCurrentStoryboardVisualFrame(visualFrames, currentTime),

@@ -1093,6 +1093,12 @@ export interface AudioTracksDataV2 {
   description: AudioTrackClipV2 | null
   dialogue: AudioTrackClipV2[]
   music: AudioTrackClipV2 | null
+  /**
+   * Per-cue music, each scoring the stretch of the scene its beats cover.
+   * Populated instead of `music` when the scene has scored music cues; the
+   * single `music` track remains for scenes written before cues existed.
+   */
+  musicCues: AudioTrackClipV2[]
   sfx: AudioTrackClipV2[]
 }
 

@@ -133,6 +133,8 @@ function getClipAudioTime(clip: AudioTrackClipV2, timelineSec: number): number {
 interface VisualClip {
   id: string
   segmentId: string
+  /** Source beat, so beat-ranged data like music cues can be placed in time. */
+  beatId?: string
   thumbnailUrl?: string
   endThumbnailUrl?: string
   startTime: number
@@ -511,6 +513,7 @@ export function FullscreenPlayer({
         const clip: VisualClip = {
           id: seg.segmentId,
           segmentId: seg.segmentId,
+          beatId: (seg as { beatId?: string }).beatId,
           thumbnailUrl: seg.references?.startFrameUrl || seg.activeAssetUrl || undefined,
           endThumbnailUrl: seg.references?.endFrameUrl || seg.endFrameUrl || undefined,
           startTime: cumulativeStart,
@@ -535,6 +538,7 @@ export function FullscreenPlayer({
       const clip: VisualClip = {
         id: seg.segmentId,
         segmentId: seg.segmentId,
+        beatId: (seg as { beatId?: string }).beatId,
         thumbnailUrl: seg.references?.startFrameUrl || seg.activeAssetUrl || undefined,
         endThumbnailUrl: seg.references?.endFrameUrl || seg.endFrameUrl || undefined,
         startTime: seg.startTime + cumulativeOffset,
@@ -547,8 +551,12 @@ export function FullscreenPlayer({
   
   const audioTracks = useMemo(() => {
     if (!scene) return null
-    return buildAudioTracksWithBaselineTiming(scene, language, baselineLanguage)
-  }, [scene, language, baselineLanguage])
+    // The visual row is production segments, and only they link a beat to a
+    // scene time, so music cues need them to know where to sound.
+    return buildAudioTracksWithBaselineTiming(scene, language, baselineLanguage, {
+      beatSegments: visualClips,
+    })
+  }, [scene, language, baselineLanguage, visualClips])
   
   // ============================================================================
   // Flatten Audio Tracks to Clips (using flattenAudioTracks like SceneTimelineV2)
