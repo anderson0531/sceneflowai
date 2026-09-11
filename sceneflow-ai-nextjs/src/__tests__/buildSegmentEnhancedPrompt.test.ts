@@ -21,6 +21,16 @@ describe('buildSegmentEnhancedPrompt', () => {
     expect(enhancedPrompt).toContain('native synchronized audio')
   })
 
+  it('asks for dialogue and ambience but leaves the score to the mixer', () => {
+    const { enhancedPrompt } = buildSegmentEnhancedPrompt({
+      prompt: 'Slow dolly on Elara in an office.',
+      guidePrompt: "ELARA says: 'Hello there.'",
+      method: 'T2V',
+    })
+    expect(enhancedPrompt).toContain('dialogue and ambience')
+    expect(enhancedPrompt).toContain('Do not generate music or score')
+  })
+
   it('builds REF multimodal preamble and reference fallback', () => {
     const { enhancedPrompt, referenceFallbackPrompt } = buildSegmentEnhancedPrompt({
       prompt: 'Elara leans forward during an interview.',
