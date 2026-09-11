@@ -1,6 +1,7 @@
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import type { ExpressPhase } from '@/lib/sceneGeneration/types'
 import {
+  beatFrameSlotKey,
   enumerateStoryboardFrameSlots,
   filterStoryboardSlotsForExpressChecklist,
   type StoryboardFrameSlot,
@@ -90,7 +91,7 @@ export function slotKeyFromBeat(
   const beats = getSceneBeats(scene)
   const beat = beats[beatIndex]
   if (!beat?.beatId) return `${beatIndex}-${frameRole}`
-  return frameRole === 'end' ? `${beat.beatId}-end` : beat.beatId
+  return beatFrameSlotKey(beat.beatId, frameRole)
 }
 
 export function countCompletedFrames(items: ExpressBeatFrameItem[]): number {

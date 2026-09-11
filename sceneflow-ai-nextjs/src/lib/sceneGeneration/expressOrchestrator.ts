@@ -66,7 +66,7 @@ import {
   applyBeatsToScene,
   isBeatExcluded,
 } from '../script/beatMigration'
-import { countExpressFrameScope } from '../storyboard/types'
+import { beatFrameSlotKey, countExpressFrameScope } from '../storyboard/types'
 import { stampPreVisContentHash } from '../storyboard/preVisSync'
 import type { BeatReferenceSelection, SceneBeat } from '../script/segmentTypes'
 import {
@@ -167,13 +167,13 @@ function getSelectedFrameKeySet(options: ExpressOptions): Set<string> | null {
 function isBeatStartSlotSelected(beat: SceneBeat, selectedKeys: Set<string> | null): boolean {
   if (!selectedKeys) return true
   if (!beat.beatId) return false
-  return selectedKeys.has(beat.beatId)
+  return selectedKeys.has(beatFrameSlotKey(beat.beatId, 'start'))
 }
 
 function isBeatEndSlotSelected(beat: SceneBeat, selectedKeys: Set<string> | null): boolean {
   if (!selectedKeys) return true
   if (!beat.beatId) return false
-  return selectedKeys.has(`${beat.beatId}-end`)
+  return selectedKeys.has(beatFrameSlotKey(beat.beatId, 'end'))
 }
 
 function isLegacySlotSelected(key: string, selectedKeys: Set<string> | null): boolean {
