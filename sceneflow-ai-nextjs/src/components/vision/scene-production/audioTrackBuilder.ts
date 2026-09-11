@@ -23,6 +23,10 @@ import { DEFAULT_LML_CONFIG } from './defaults'
 import { resolveStandaloneNarrationUrl } from '@/lib/script/narration'
 import { generateAliases, toCanonicalName } from '@/lib/character/canonical'
 import { NARRATOR_CHARACTER, NARRATOR_CHARACTER_ID } from '@/lib/script/segmentTypes'
+import {
+  buildProductionMusicCueClips,
+  type MusicCueSegment,
+} from '@/lib/scene/productionMusicCues'
 
 function dialogueAudioCharacterNamesMatch(a: string, b: string): boolean {
   const canonicalA = toCanonicalName(a)
@@ -521,6 +525,12 @@ export type BuildAudioTracksOptions = {
    * Use true for dubs / non-baseline languages so dialogue aligns with the extended segment layout.
    */
   packDialogueToSegmentTimeline?: boolean
+  /**
+   * Production segments for this scene, which carry `beatId` and so can place
+   * a music cue's beat range on the timeline. `scene.segments` are script
+   * segments and hold no beat link, so cue music needs these passed in.
+   */
+  beatSegments?: MusicCueSegment[]
 }
 
 /**
@@ -537,6 +547,7 @@ export function buildAudioTracksForLanguage(
     description: null,
     dialogue: [],
     music: null,
+    musicCues: [],
     sfx: [],
   }
   
@@ -712,8 +723,25 @@ export function buildAudioTracksForLanguage(
   const segmentOffset = options?.segmentPlaybackOffsetSeconds ?? 0
   const timelineSpan = computeSceneTimelineSpanFromSegments(scene, segmentOffset)
 
+  // A scored cue owns its stretch of the scene, so when cues exist they replace
+  // the scene-wide loop rather than playing underneath it.
+  const cueClips = buildProductionMusicCueClips(scene, options?.beatSegments)
+  tracks.musicCues = cueClips.map((clip) => ({
+    id: clip.id,
+    url: clip.url,
+    startTime: clip.startTime,
+    duration: clip.duration,
+    label: clip.label,
+    volume: 0.6,
+    language: 'all',
+    source: 'scene' as AudioClipSource,
+    scenePropertyPath: 'sceneMusicCues',
+    loop: clip.loop,
+    actualDuration: clip.actualDuration,
+  }))
+
   const musicUrl = scene.musicAudio || scene.music?.url || scene.musicUrl
-  if (musicUrl && typeof musicUrl === 'string' && musicUrl.trim()) {
+  if (cueClips.length === 0 && musicUrl && typeof musicUrl === 'string' && musicUrl.trim()) {
     const fileDur =
       normalizeAudioDurationSeconds(scene.musicDuration) ??
       normalizeAudioDurationSeconds(scene.music?.duration) ??
@@ -812,6 +840,7 @@ export function buildAudioTracksWithBaselineTiming(
     description: null,
     dialogue: [],
     music: null,
+    musicCues: [],
     sfx: [],
   }
   
@@ -854,6 +883,7 @@ export function buildAudioTracksWithBaselineTiming(
     description: null,
     dialogue: [],
     music: baselineTracks.music,
+    musicCues: baselineTracks.musicCues,
     sfx: [],
   }
 
@@ -1287,6 +1317,7 @@ export function getCurrentLanguageTracks(state: TimelineAudioState): AudioTracks
     description: null,
     dialogue: [],
     music: null,
+    musicCues: [],
     sfx: [],
   }
 }
@@ -1306,6 +1337,10 @@ export function flattenAudioTracks(tracks: AudioTracksDataV2): AudioTrackClipV2[
   })
   
   if (tracks.music?.url) clips.push(tracks.music)
+
+  tracks.musicCues?.forEach(clip => {
+    if (clip.url) clips.push(clip)
+  })
   
   tracks.sfx.forEach(clip => {
     if (clip.url) clips.push(clip)

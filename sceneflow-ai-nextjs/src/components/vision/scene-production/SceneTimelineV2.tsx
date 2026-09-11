@@ -250,6 +250,7 @@ export function SceneTimelineV2({
       description: filterClip(audioTracks.description),
       dialogue: audioTracks.dialogue.filter(d => d.url && !staleUrls.has(d.url)),
       music: filterClip(audioTracks.music),
+      musicCues: audioTracks.musicCues.filter(c => c.url && !staleUrls.has(c.url)),
       sfx: audioTracks.sfx.filter(s => s.url && !staleUrls.has(s.url)),
     }
   }, [audioTracks, staleUrls])
