@@ -53,6 +53,7 @@ vi.mock('@/lib/sceneGeneration/generateImage', () => ({
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import { planSceneBeatKeyframes } from '@/lib/sceneGeneration/expressOrchestrator'
 import { ExpressTrafficCop } from '@/lib/sceneGeneration/expressTrafficCop'
+import type { ExpressEvent, ExpressPhaseEvent } from '@/lib/sceneGeneration/types'
 import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
 
 /**
@@ -90,17 +91,25 @@ function buildBeats(): SceneBeat[] {
 
 function runPlanner(
   beats: SceneBeat[],
-  options: { selectedFrameKeys?: string[] } = {}
+  options: { selectedFrameKeys?: string[] } = {},
+  emit: (event: ExpressEvent) => void = () => {}
 ): ReturnType<typeof planSceneBeatKeyframes> {
   const scene = { heading: 'INT. GATE - NIGHT', beats }
   return planSceneBeatKeyframes(
     { sceneIndex: 0, sceneNumber: 1, scene },
     { projectId: 'proj-1', ...options },
     { metadata: { title: 'Test Film', visionPhase: {} }, title: 'Test Film' },
-    () => {},
+    emit,
     new ExpressTrafficCop(),
     beats,
     'photorealistic'
+  )
+}
+
+function imagePlanDone(events: ExpressEvent[]): ExpressPhaseEvent | undefined {
+  return events.find(
+    (event): event is ExpressPhaseEvent =>
+      event.type === 'phase-done' && event.phase === 'image-plan'
   )
 }
 
@@ -224,6 +233,47 @@ describe('the reused plan carries what the orchestrator reads off it', () => {
     const plans = await runPlanner(beats, { selectedFrameKeys: ['bt_one'] })
 
     expect(plans.get(0)!.allowTypography).toBe(true)
+  })
+})
+
+describe('a degraded plan is reported rather than buried', () => {
+  function staleBeats(): SceneBeat[] {
+    const beats = buildBeats()
+    beats[0].storyboardImagePromptDirectionKey = 'stale-fingerprint'
+    beats[1].storyboardImagePromptDirectionKey = 'stale-fingerprint'
+    return beats
+  }
+
+  const plans = [
+    { beatIndex: 0, beatRole: 'progression', prompt: 'FRESH one.' },
+    { beatIndex: 1, beatRole: 'progression', prompt: 'FRESH two.' },
+  ]
+
+  it('carries the planner’s reason onto the image-plan phase event', async () => {
+    planBeatSequence.mockResolvedValue({
+      plans,
+      usedAI: true,
+      fallbackReason: 'beat 2 filled deterministically (beat 2 has no usable prompt)',
+    })
+    const events: ExpressEvent[] = []
+
+    await runPlanner(staleBeats(), {}, (event) => events.push(event))
+
+    expect(imagePlanDone(events)?.ok).toBe(true)
+    expect(imagePlanDone(events)?.degraded).toBe(
+      'Beat direction fell back: beat 2 filled deterministically (beat 2 has no usable prompt)'
+    )
+  })
+
+  it('stays quiet when the plan came back whole', async () => {
+    planBeatSequence.mockResolvedValue({ plans, usedAI: true })
+    const events: ExpressEvent[] = []
+
+    await runPlanner(staleBeats(), {}, (event) => events.push(event))
+
+    const done = imagePlanDone(events)
+    expect(done?.ok).toBe(true)
+    expect(done && 'degraded' in done).toBe(false)
   })
 })
 
