@@ -26,6 +26,7 @@ import {
 } from '@/lib/vision/objectBeatUsage'
 import { cn } from '@/lib/utils'
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
+import { runObjectBatch } from '@/lib/vision/objectBatchGeneration'
 
 interface ObjectSuggestionPanelProps {
   /** Script scenes for analysis */
@@ -359,33 +360,31 @@ export function ObjectSuggestionPanel({
     setBatchProgress(0)
     setError(null)
     
-    let completedCount = 0
-    const totalCount = suggestionsToGenerate.length
-    
-    for (const suggestion of suggestionsToGenerate) {
-      setCurrentBatchItem(suggestion.name)
-      
-      try {
+    const summary = await runObjectBatch(suggestionsToGenerate, {
+      onProgress: setBatchProgress,
+      onInFlightChange: names => setCurrentBatchItem(names.join(', ')),
+      generate: async suggestion => {
         setGeneratingIds(prev => new Set(prev).add(suggestion.id))
-        
-        const response = await fetch('/api/vision/generate-object', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: suggestion.name,
-            description: suggestion.description,
-            prompt: suggestion.suggestedPrompt,
-            category: suggestion.category
-          })
-        })
 
-        if (!response.ok) {
+        try {
+          const response = await fetch('/api/vision/generate-object', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: suggestion.name,
+              description: suggestion.description,
+              prompt: suggestion.suggestedPrompt,
+              category: suggestion.category
+            })
+          })
+
+          if (!response.ok) {
+            const data = await response.json().catch(() => ({}))
+            throw new Error(data.error || `Failed to generate ${suggestion.name}`)
+          }
+
           const data = await response.json()
-          console.error(`Failed to generate ${suggestion.name}:`, data.error)
-          // Continue with next item instead of stopping
-        } else {
-          const data = await response.json()
-          
+
           onObjectGenerated({
             name: suggestion.name,
             description: suggestion.description,
@@ -396,21 +395,31 @@ export function ObjectSuggestionPanel({
             aiGenerated: true
           })
 
+          // Only a generated object leaves the list; a failed one keeps its
+          // place and its own Generate button, which is the retry.
           setSuggestions(prev => prev.filter(s => s.id !== suggestion.id))
+        } finally {
+          setGeneratingIds(prev => {
+            const next = new Set(prev)
+            next.delete(suggestion.id)
+            return next
+          })
         }
-      } catch (err: any) {
-        console.error(`Error generating ${suggestion.name}:`, err)
-      } finally {
-        setGeneratingIds(prev => {
-          const next = new Set(prev)
-          next.delete(suggestion.id)
-          return next
-        })
-        completedCount++
-        setBatchProgress(Math.round((completedCount / totalCount) * 100))
       }
+    })
+
+    // Failures were per-item and silent, so a batch that generated nothing
+    // still looked like it finished.
+    if (summary.failed > 0) {
+      const target =
+        summary.total === 1 ? 'that object' : `any of the ${summary.total} objects`
+      setError(
+        summary.succeeded === 0
+          ? `Could not generate ${target}. ${summary.firstError ?? 'Please try again.'}`
+          : `${summary.failed} of ${summary.total} objects could not be generated — they are still listed below.`
+      )
     }
-    
+
     setIsBatchGenerating(false)
     setCurrentBatchItem('')
   }, [suggestions, generatingIds, onObjectGenerated])
@@ -427,7 +436,9 @@ export function ObjectSuggestionPanel({
         progress={isBatchGenerating ? batchProgress : 50}
         subtext={
           isBatchGenerating 
-            ? `Processing "${currentBatchItem}"... ${batchProgress}% complete`
+            ? // Unquoted: several objects are in flight at once, so this names
+              // a list as often as it names one item.
+              `Processing ${currentBatchItem || 'objects'}... ${batchProgress}% complete`
             : generatingIds.size > 0 
               ? 'Creating visual reference...'
               : undefined
