@@ -17,6 +17,13 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
 import { ObjectSuggestion, ObjectCategory, ObjectImportance, VisualReference } from '@/types/visionReferences'
+import {
+  MIN_BEATS_FOR_LIBRARY,
+  countObjectBeatReferences,
+  isAlreadyInLibrary,
+  selectRecurringObjects,
+  slimSceneForObjectUsage,
+} from '@/lib/vision/objectBeatUsage'
 import { cn } from '@/lib/utils'
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
 
@@ -28,6 +35,8 @@ interface ObjectSuggestionPanelProps {
     action?: string
     visualDescription?: string
     description?: string
+    /** Scene beats — object recurrence is counted per beat, not per scene */
+    beats?: unknown[]
   }>
   /** Already added objects to exclude from suggestions */
   existingObjects: VisualReference[]
@@ -87,11 +96,17 @@ function SuggestionCard({ suggestion, isGenerating, onGenerate, onDismiss }: Sug
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1 line-clamp-2">{suggestion.description}</p>
-          {suggestion.sceneNumbers.length > 0 && (
+          {(suggestion.beatCount ?? 0) > 0 || suggestion.sceneNumbers.length > 0 ? (
             <p className="text-[10px] text-slate-500 mt-1">
-              Scenes: {suggestion.sceneNumbers.join(', ')}
+              {(suggestion.beatCount ?? 0) > 0
+                ? `${suggestion.beatCount} beat${suggestion.beatCount === 1 ? '' : 's'}`
+                : null}
+              {(suggestion.beatCount ?? 0) > 0 && suggestion.sceneNumbers.length > 0 ? ' · ' : null}
+              {suggestion.sceneNumbers.length > 0
+                ? `Scene${suggestion.sceneNumbers.length === 1 ? '' : 's'} ${suggestion.sceneNumbers.join(', ')}`
+                : null}
             </p>
-          )}
+          ) : null}
         </div>
         <button
           onClick={() => onDismiss(suggestion.id)}
@@ -208,12 +223,13 @@ export function ObjectSuggestionPanel({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          scenes: scenes.map(s => ({
+          scenes: scenes.map((s, idx) => ({
             sceneNumber: s.sceneNumber,
             heading: s.heading,
             action: s.action,
             visualDescription: s.visualDescription,
-            description: s.description
+            description: s.description,
+            beats: slimSceneForObjectUsage(s, idx).beats
           })),
           existingObjects: existingObjects.map(o => o.name)
         })

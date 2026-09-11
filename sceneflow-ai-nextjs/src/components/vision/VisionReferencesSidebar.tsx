@@ -1413,7 +1413,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     heading: typeof s.heading === 'string' ? s.heading : s.heading?.text,
     action: s.action,
     visualDescription: s.visualDescription || s.visual_description,
-    description: s.description
+    description: s.description,
+    beats: Array.isArray(s.beats) ? s.beats : undefined
   }))
 
   // Calculate scenes with/without images for storyboard tab

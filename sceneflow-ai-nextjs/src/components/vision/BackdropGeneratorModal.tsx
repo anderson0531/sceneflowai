@@ -53,6 +53,11 @@ export interface SceneForBackdrop {
   scene_name?: string
   heading?: string | { text: string }
   description?: string
+  action?: string
+  visualDescription?: string
+  visual_description?: string
+  /** Scene beats, when the caller passes whole script scenes. */
+  beats?: unknown[]
   sceneDirection?: DetailedSceneDirection
 }
 

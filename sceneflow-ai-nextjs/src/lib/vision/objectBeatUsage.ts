@@ -179,6 +179,35 @@ function sceneNumberOf(scene: ObjectUsageScene, index: number): number {
 }
 
 /**
+ * A scene reduced to the fields the counter reads, so the client can post
+ * beats to the suggestion route without shipping storyboard URLs and audio.
+ */
+export function slimSceneForObjectUsage(
+  scene: ObjectUsageScene,
+  index: number
+): Required<Pick<ObjectUsageScene, 'sceneNumber'>> & { beats: Record<string, unknown>[] } {
+  return {
+    sceneNumber: sceneNumberOf(scene, index),
+    beats: sceneBeatRecords(scene).map((beat) => {
+      const direction = asRecord(beat.beatDirection)
+      return {
+        beatId: asString(beat.beatId) || undefined,
+        actionDescription: asString(beat.actionDescription) || undefined,
+        line: asString(beat.line) || undefined,
+        overlayText: asString(beat.overlayText) || undefined,
+        beatDirection: direction
+          ? {
+              keyProps: keyPropStrings(beat),
+              frozenMoment: asString(direction.frozenMoment) || undefined,
+              propInteraction: asString(direction.propInteraction) || undefined,
+            }
+          : undefined,
+      }
+    }),
+  }
+}
+
+/**
  * Every object name the script's beats tag in `beatDirection.keyProps`,
  * deduplicated by normalized form and keeping the richest spelling.
  */

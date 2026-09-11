@@ -41,6 +41,16 @@ export interface VisualReference {
   alwaysInclude?: boolean
 }
 
+/** Where in the script a suggested object is handled */
+export interface ObjectBeatReference {
+  sceneNumber: number
+  /** 0-based index of the beat within its scene */
+  beatIndex: number
+  beatId?: string
+  /** True when the beat tags this object in `beatDirection.keyProps` */
+  tagged: boolean
+}
+
 /** Suggested object from script analysis */
 export interface ObjectSuggestion {
   id: string
@@ -53,6 +63,10 @@ export interface ObjectSuggestion {
   sceneNumbers: number[]
   /** Confidence score 0-1 */
   confidence: number
+  /** Beats that reference this object, counted from the script itself */
+  beatRefs?: ObjectBeatReference[]
+  /** Number of distinct beats referencing this object */
+  beatCount?: number
 }
 
 /**

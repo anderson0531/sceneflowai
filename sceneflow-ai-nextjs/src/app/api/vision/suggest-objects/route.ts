@@ -4,18 +4,28 @@ import { authOptions } from '@/lib/auth'
 import { generateText } from '@/lib/vertexai/gemini'
 import { safeParseJsonFromText } from '@/lib/safeJson'
 import { ObjectSuggestion, ObjectCategory, ObjectImportance } from '@/types/visionReferences'
+import {
+  MIN_BEATS_FOR_LIBRARY,
+  countObjectBeatReferences,
+  harvestKeyPropNames,
+  normalizeObjectName,
+} from '@/lib/vision/objectBeatUsage'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
+interface SuggestObjectsScene {
+  sceneNumber: number
+  heading?: string
+  action?: string
+  visualDescription?: string
+  description?: string
+  /** Beats of the scene, used to count real per-beat object usage. */
+  beats?: unknown[]
+}
+
 interface SuggestObjectsRequest {
-  scenes: Array<{
-    sceneNumber: number
-    heading?: string
-    action?: string
-    visualDescription?: string
-    description?: string
-  }>
+  scenes: SuggestObjectsScene[]
   existingObjects?: string[] // Names of already-added objects to exclude
 }
 
@@ -57,7 +67,10 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    console.log(`[Key Props] Analyzing ${scenes.length} scenes for significant objects`)
+    const hasBeats = scenes.some((s) => Array.isArray(s.beats) && s.beats.length > 0)
+    console.log(
+      `[Key Props] Analyzing ${scenes.length} scenes for significant objects (beat data: ${hasBeats ? 'yes' : 'no'})`
+    )
 
     // Build scene context for AI analysis
     const sceneContext = scenes.map(s => {
@@ -73,17 +86,29 @@ export async function POST(req: NextRequest) {
       ? `\n\nAlready added objects (exclude these): ${existingObjects.join(', ')}`
       : ''
 
+    // Objects the beat direction already names, with how many beats handle each.
+    // These are established by the script, so they anchor naming and guarantee
+    // the recurring ones come back described rather than being rediscovered.
+    const taggedNames = hasBeats ? harvestKeyPropNames(scenes) : []
+    const taggedUsage = taggedNames.length > 0 ? countObjectBeatReferences(scenes, taggedNames) : []
+    const recurringTagged = taggedUsage.filter((u) => u.beatCount >= MIN_BEATS_FOR_LIBRARY)
+    const taggedInventory = recurringTagged.length > 0
+      ? `\n\nOBJECTS THE BEAT DIRECTION ALREADY HANDLES (beat counts measured from the script — you MUST include every one of these in your suggestions, described for image generation):\n${recurringTagged
+          .map((u) => `- ${u.name} — ${u.beatCount} beats (scenes ${u.sceneNumbers.join(', ')})`)
+          .join('\n')}`
+      : ''
+
     // Use Vertex AI Gemini to analyze script for significant objects
     const analysisPrompt = `You are a production designer analyzing a film script to identify significant props, vehicles, set pieces, costumes, and technology items that need consistent visual reference images for production.
 
 SCRIPT SCENES:
 ${sceneContext}
-${existingObjectsList}
+${existingObjectsList}${taggedInventory}
 
-CRITICAL: Focus on RECURRING PROPS that appear in MULTIPLE scenes. Single-scene background items should NOT be included unless they are critical plot devices.
+CRITICAL: Focus on RECURRING PROPS that are handled in MULTIPLE BEATS. A beat is one rendered shot, so an object held across several beats of a single scene needs a reference image just as much as one that crosses scenes. Items appearing in a single beat should NOT be included unless they are critical plot devices.
 
 Identify 3-8 significant objects that:
-1. MUST appear in 2+ scenes OR be critical to the plot (mark as "critical" importance)
+1. MUST be handled in 2+ beats OR be critical to the plot (mark as "critical" importance)
 2. Need visual consistency across production  
 3. Would benefit from a clean reference image for the art department
 4. Are specific enough to generate (not generic items like "chair" unless it's a distinctive hero prop)
@@ -93,7 +118,7 @@ For each object, provide:
 - name: Short, specific VISUAL name that does NOT include character names, location names, or possessives (e.g. "1893 Water-Damaged Leather Journal", "Brass Faraday Energy Core", "Rugged Military Laptop"). NEVER use forms like "Marcus's Vintage Pocket Watch" or "Arthur Pendelton's 1893 Journal" — ownership is stored separately, not in the prompt-facing name.
 - description: Detailed visual description for image generation (materials, colors, style, era, condition)
 - category: One of: prop, vehicle, set-piece, costume, technology, other
-- importance: One of: critical (plot device that drives the story), important (recurring in 2+ scenes), background (atmosphere only - AVOID these unless essential)
+- importance: One of: critical (plot device that drives the story), important (handled in 2+ beats), background (atmosphere only - AVOID these unless essential)
 - sceneNumbers: Array of scene numbers where it appears
 - confidence: 0-1 how confident you are this needs a reference image
 
@@ -139,10 +164,34 @@ Respond with valid JSON only:
       console.error('[Key Props] Raw response:', result.text)
     }
 
-    // Filter: Only show props that recur across 2+ scenes OR are critical importance
-    // This prevents single-scene background props from cluttering the library
-    const filteredSuggestions = suggestions.filter(s => 
-      s.sceneNumbers.length >= 2 || s.importance === 'critical'
+    // Recurrence is decided by counting the script, not by the scene numbers the
+    // model recalls: it routinely under-reports, and scene counts miss an object
+    // handled across many beats of one scene.
+    if (hasBeats) {
+      const usageByKey = new Map(
+        countObjectBeatReferences(
+          scenes,
+          suggestions.map((s) => s.name)
+        ).map((usage) => [usage.key, usage])
+      )
+      suggestions = suggestions.map((s) => {
+        const usage = usageByKey.get(normalizeObjectName(s.name))
+        if (!usage) return { ...s, beatRefs: [], beatCount: 0 }
+        return {
+          ...s,
+          beatRefs: usage.beatRefs,
+          beatCount: usage.beatCount,
+          sceneNumbers: usage.sceneNumbers.length > 0 ? usage.sceneNumbers : s.sceneNumbers,
+        }
+      })
+    }
+
+    // Only show objects the script actually handles more than once, plus plot
+    // devices, so single-appearance dressing never clutters the library.
+    const filteredSuggestions = suggestions.filter(s =>
+      hasBeats
+        ? (s.beatCount ?? 0) >= MIN_BEATS_FOR_LIBRARY || s.importance === 'critical'
+        : s.sceneNumbers.length >= 2 || s.importance === 'critical'
     )
 
     // Sort by importance and confidence
@@ -158,6 +207,8 @@ Respond with valid JSON only:
     return NextResponse.json({
       suggestions: filteredSuggestions,
       analyzedScenes: scenes.length,
+      beatCountingEnabled: hasBeats,
+      minBeatsForLibrary: MIN_BEATS_FOR_LIBRARY,
       totalSuggested: suggestions.length,
       filteredCount: filteredSuggestions.length
     })
