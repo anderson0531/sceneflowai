@@ -51,7 +51,7 @@ describe('buildBeatAlignedMusicClips', () => {
     expect(clips[0].fadeAnchorTime).toBe(0)
     expect(clips[0].startTime).toBe(0)
     expect(clips[0].duration).toBe(12)
-    expect(clips[0].loop).toBe(true)
+    expect(clips[0].loop).toBe(false)
   })
 
   it('splits music into two clips when a middle beat disables music', () => {
@@ -145,7 +145,7 @@ describe('buildBeatAlignedMusicClips', () => {
     expect(clips[0].id).not.toBe('music-scene')
     expect(clips[0].startTime).toBe(0)
     expect(clips[0].duration).toBe(9)
-    expect(clips[0].loop).toBe(true)
+    expect(clips[0].loop).toBe(false)
   })
 
   it('uses earliest enabled beat startTime as fadeAnchor when first beat has music off', () => {

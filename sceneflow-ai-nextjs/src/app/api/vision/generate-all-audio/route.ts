@@ -26,11 +26,12 @@ async function generateAndSaveMusicForScene(
     
     // Generate music via our API endpoint, using saveToBlob to avoid payload limits
     const { generateMusicTrackServer } = await import('@/lib/audio/musicClient')
+    const { resolveMusicRequestDuration } = await import('@/lib/audio/lyriaClient')
     const result = await generateMusicTrackServer(
       baseUrl,
       {
         text: description,
-        duration: 30,
+        duration: resolveMusicRequestDuration(scene),
         saveToBlob: true,
         projectId,
         sceneId: `scene-${sceneIdx}`,

@@ -151,7 +151,7 @@ export function getEstimatedProviderCost(
     case 'elevenlabs_music':
     case 'google_music':
       // Music is a flat rate per generation
-      return 0.10 // ~$0.10 per music generation (30 seconds)
+      return 0.10 // ~$0.10 per music generation (per track)
     
     case 'gemini_flash':
       // Gemini Flash: ~$0.0375 per 1M input tokens, ~$0.15 per 1M output tokens
@@ -346,6 +346,7 @@ export async function trackCost(
     projectId?: string
     sceneId?: string
     segmentId?: string
+    model?: string
   }
 ): Promise<void> {
   const providerCostUsd = getEstimatedProviderCost(operation, metrics)
@@ -354,7 +355,7 @@ export async function trackCost(
     userId,
     operation,
     provider: mapOperationToProvider(operation),
-    model: mapOperationToModel(operation),
+    model: metrics?.model || mapOperationToModel(operation),
     creditsCharged,
     providerCostUsd,
     marginPercent: 0, // Will be calculated in logProviderCost
@@ -380,7 +381,7 @@ function mapOperationToModel(operation: string): string {
   if (operation.includes('gemini_flash')) return getGeminiTextModel('flash')
   if (operation.includes('gemini_pro')) return getGeminiTextModel('pro')
   if (operation.includes('elevenlabs_tts')) return 'eleven_turbo_v2_5'
-  if (operation.includes('google_music')) return 'lyria-002'
+  if (operation.includes('google_music')) return 'lyria-3-pro-preview'
   if (operation.includes('sfx')) return 'sound_generation_v1'
   if (operation.includes('music')) return 'music_v1'
   return 'unknown'

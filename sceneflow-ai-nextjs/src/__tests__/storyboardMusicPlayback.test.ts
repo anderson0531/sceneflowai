@@ -6,6 +6,7 @@ import {
   collectSceneMusicUrls,
   isBeatMusicEnabled,
   resolveMusicTrimStart,
+  resolveSceneMusicFileDuration,
 } from '@/lib/storyboard/musicPlayback'
 
 const SARAH_URL = 'https://example.com/sarah.mp3'
@@ -86,8 +87,38 @@ describe('resolveMusicTrimStart', () => {
   })
 })
 
+describe('resolveSceneMusicFileDuration', () => {
+  it('prefers the stored file length over play duration', () => {
+    expect(
+      resolveSceneMusicFileDuration({
+        musicAudio: MUSIC_URL,
+        musicDuration: 120,
+        musicFileDuration: 95,
+      })
+    ).toBe(95)
+  })
+
+  it('falls back to 30s when the file was never measured', () => {
+    expect(
+      resolveSceneMusicFileDuration({
+        musicAudio: MUSIC_URL,
+        musicDuration: 120,
+      })
+    ).toBe(30)
+  })
+
+  it('prefers a probed length over the stored file length', () => {
+    expect(
+      resolveSceneMusicFileDuration(
+        { musicAudio: MUSIC_URL, musicFileDuration: 30 },
+        { [MUSIC_URL]: 118 }
+      )
+    ).toBe(118)
+  })
+})
+
 describe('buildBeatAlignedMusicClips', () => {
-  it('merges contiguous music-enabled beats into one looping scene clip', () => {
+  it('merges contiguous music-enabled beats into one scene clip', () => {
     const scene = buildBeatScene()
     const { visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', {
       [SARAH_URL]: 3,
@@ -112,7 +143,7 @@ describe('buildBeatAlignedMusicClips', () => {
     expect(clips[0].trimStart).toBe(
       resolveMusicTrimStart(firstFrame.startTime, 30)
     )
-    expect(clips[0].loop).toBe(true)
+    expect(clips[0].loop).toBe(expectedDuration > 30)
   })
 
   it('splits music into two clips when a middle beat disables music', () => {
@@ -228,19 +259,26 @@ describe('buildBeatAlignedMusicClips', () => {
     expect(clips).toHaveLength(0)
   })
 
-  it('falls back to one full-scene looping clip for legacy scenes without beats', () => {
+  it('falls back to one full-scene clip for legacy scenes without beats', () => {
     const scene = { musicAudio: MUSIC_URL }
 
-    const clips = buildBeatAlignedMusicClips(scene, [], {
+    const covered = buildBeatAlignedMusicClips(scene, [], {
       musicUrl: MUSIC_URL,
-      sceneDuration: 30,
-      musicFileDuration: 30,
+      sceneDuration: 90,
+      musicFileDuration: 90,
     })
 
-    expect(clips).toHaveLength(1)
-    expect(clips[0].startTime).toBe(0)
-    expect(clips[0].duration).toBe(30)
-    expect(clips[0].loop).toBe(true)
+    expect(covered).toHaveLength(1)
+    expect(covered[0].startTime).toBe(0)
+    expect(covered[0].duration).toBe(90)
+    expect(covered[0].loop).toBe(false)
+
+    const shortFile = buildBeatAlignedMusicClips(scene, [], {
+      musicUrl: MUSIC_URL,
+      sceneDuration: 90,
+      musicFileDuration: 30,
+    })
+    expect(shortFile[0].loop).toBe(true)
   })
 
   it('wraps trimStart for a late beat beyond music file length', () => {
@@ -264,7 +302,7 @@ describe('buildBeatAlignedMusicClips', () => {
 
     expect(clips).toHaveLength(1)
     expect(clips[0].trimStart).toBe(15)
-    expect(clips[0].loop).toBe(true)
+    expect(clips[0].loop).toBe(false)
   })
 })
 

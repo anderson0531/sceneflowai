@@ -182,6 +182,40 @@ describe('production Screening Room music tracks', () => {
     expect(tracks.music?.url).toBe(LEGACY_URL)
   })
 
+  it('loops a short file across a longer production timeline', () => {
+    const tracks = buildAudioTracksForLanguage(
+      {
+        musicAudio: LEGACY_URL,
+        musicFileDuration: 30,
+        segments: [
+          { sequenceIndex: 0, startTime: 0, endTime: 45 },
+          { sequenceIndex: 1, startTime: 45, endTime: 90 },
+        ],
+      },
+      'en'
+    )
+
+    expect(tracks.music?.actualDuration).toBe(30)
+    expect(tracks.music?.loop).toBe(true)
+  })
+
+  it('does not loop a scene-length file that already covers the timeline', () => {
+    const tracks = buildAudioTracksForLanguage(
+      {
+        musicAudio: LEGACY_URL,
+        musicFileDuration: 90,
+        segments: [
+          { sequenceIndex: 0, startTime: 0, endTime: 45 },
+          { sequenceIndex: 1, startTime: 45, endTime: 90 },
+        ],
+      },
+      'en'
+    )
+
+    expect(tracks.music?.actualDuration).toBe(90)
+    expect(tracks.music?.loop).toBe(false)
+  })
+
   it('lets scored cues replace the legacy scene-wide loop', () => {
     const tracks = buildAudioTracksForLanguage(
       cueScene({ musicAudio: LEGACY_URL }),

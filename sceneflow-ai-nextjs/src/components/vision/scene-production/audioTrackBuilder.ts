@@ -743,8 +743,7 @@ export function buildAudioTracksForLanguage(
   const musicUrl = scene.musicAudio || scene.music?.url || scene.musicUrl
   if (cueClips.length === 0 && musicUrl && typeof musicUrl === 'string' && musicUrl.trim()) {
     const fileDur =
-      normalizeAudioDurationSeconds(scene.musicDuration) ??
-      normalizeAudioDurationSeconds(scene.music?.duration) ??
+      normalizeAudioDurationSeconds(scene.musicFileDuration) ??
       30
     const barDur = timelineSpan > 0 ? Math.max(timelineSpan, fileDur) : fileDur
     tracks.music = {
@@ -757,7 +756,7 @@ export function buildAudioTracksForLanguage(
       language: 'all',
       source: 'scene' as AudioClipSource,
       scenePropertyPath: 'musicAudio',
-      loop: true,
+      loop: barDur > fileDur,
       actualDuration: fileDur,
     }
   }

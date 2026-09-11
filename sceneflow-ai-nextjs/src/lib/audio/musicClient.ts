@@ -1,5 +1,5 @@
 /**
- * Client helper for Gemini Lyria music generation via /api/tts/google/music.
+ * Client helper for Vertex Lyria 3 music generation via /api/tts/google/music.
  */
 
 import {
