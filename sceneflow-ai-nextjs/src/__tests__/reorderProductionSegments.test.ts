@@ -41,8 +41,8 @@ function segments(): SceneSegment[] {
     sequenceIndex: index,
     startTime: index * 6,
     endTime: index * 6 + 6,
-    status: 'COMPLETED',
-    assetType: 'VIDEO',
+    status: 'COMPLETE',
+    assetType: 'video',
     activeAssetUrl: `https://cdn.test/${beat.beatId}.mp4`,
     references: { characterIds: [], sceneRefIds: [], objectRefIds: [] },
     takes: [],
@@ -113,7 +113,7 @@ describe('reorderSegmentsToMatchBeats', () => {
 
     expect(row[0].segmentId).toBe('seg_4')
     expect(row[0].activeAssetUrl).toBe('https://cdn.test/bt_a4.mp4')
-    expect(row.map((segment) => segment.status)).toEqual(Array(4).fill('COMPLETED'))
+    expect(row.map((segment) => segment.status)).toEqual(Array(4).fill('COMPLETE'))
   })
 
   it('recomputes sequenceIndex and cumulative timing', () => {

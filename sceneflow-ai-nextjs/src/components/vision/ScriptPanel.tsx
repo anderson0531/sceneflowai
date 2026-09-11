@@ -113,7 +113,11 @@ import { ReportType, StoryboardData, SceneDirectionData } from '@/lib/types/repo
 import { resolveSegmentEditCharacterReferences } from '@/lib/vision/resolveFrameEditCharacterReferences'
 import { flattenSceneToStoryboardFrames } from '@/lib/storyboard/types'
 import { StoryboardReviewPanel } from './StoryboardReviewPanel'
-import { getSceneBeats, isBeatFirstPipelineEnabled } from '@/lib/script/beatMigration'
+import {
+  findBrokenContinuityBeats,
+  getSceneBeats,
+  isBeatFirstPipelineEnabled,
+} from '@/lib/script/beatMigration'
 import {
   assignDialogueSpeakerToScene,
   type AssignableSpeaker,
@@ -487,6 +491,12 @@ interface ScriptPanelProps {
   /** Beat-first: approve storyboard frames before segment/video work */
   onApproveStoryboard?: (sceneIndex: number) => void | Promise<void>
   approvingStoryboardFor?: number | null
+  /** Drop the dragged beat above `toBeatId`, carrying its frames and video. */
+  onReorderBeats?: (
+    sceneIndex: number,
+    fromBeatId: string,
+    toBeatId: string
+  ) => void | Promise<void>
   // Per-scene storyboard frame viewer (Pre-Vis beat images)
   onGenerateBeatFrame?: (sceneIdx: number, beatId: string) => Promise<void>
   onGenerateBeatEndFrame?: (sceneIdx: number, beatId: string) => Promise<void>
@@ -781,6 +791,72 @@ function BlueprintBeatGroupHeader({
   )
 }
 
+/**
+ * Badge on a beat whose CONTINUE join was broken by a reorder.
+ *
+ * The beat asks to continue straight out of the beat above it, and its frames
+ * were shot against a different one. Nothing is regenerated automatically —
+ * frames cost credits — so the user is told which join to re-shoot.
+ */
+function BeatContinuityWarning() {
+  return (
+    <span
+      className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-500/40 flex items-center gap-1 shrink-0"
+      title="This beat continues from the beat above it, but that is now a different shot. Re-check or re-shoot its frames."
+    >
+      <AlertTriangle className="w-3 h-3" />
+      Continuity
+    </span>
+  )
+}
+
+/**
+ * Drag-to-reorder wrapper for one row of the beats list.
+ *
+ * Keyed by `beatId` rather than position so the beat's frames, video and audio
+ * follow it. The grip sits outside the card so the card's own controls — the
+ * per-beat toggles, the direction editor, the caption fields — stay clickable.
+ */
+function SortableBeatRow({
+  beatId,
+  beatNumber,
+  disabled,
+  children,
+}: {
+  beatId: string
+  beatNumber: number
+  disabled?: boolean
+  children: React.ReactNode
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: beatId,
+    disabled,
+  })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`flex items-start gap-1 ${isDragging ? 'relative z-10 opacity-80' : ''}`}
+    >
+      {!disabled && (
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          onClick={(e) => e.stopPropagation()}
+          className="mt-3 shrink-0 p-1 rounded text-gray-600 hover:text-gray-200 hover:bg-slate-700/60 cursor-grab active:cursor-grabbing touch-none"
+          title="Drag to reorder — frames, video and audio move with the beat"
+          aria-label={`Reorder beat ${beatNumber}`}
+        >
+          <GripVertical className="w-3.5 h-3.5" />
+        </button>
+      )}
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  )
+}
+
 // Sortable Scene Card Wrapper for drag-and-drop
 function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onEditImage, totalScenes, onNavigateScene, scenes, script, onScriptChange, setEditingImageData, setImageEditModalOpen, getPlaybackOffsetForScene, handlePlaybackOffsetChange, getSuggestedOffsetForScene, expandedRecommendations, setExpandedRecommendations, onAnalyzeScene, analyzingSceneIndex, onOptimizeScene, optimizingSceneIndex, setOptimizeDialogScene, setOptimizeDialogOpen, onResyncAudioTiming, resyncingAudioSceneIndex, onResetSegments, ...props }: any) {
   const {
@@ -838,7 +914,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, onJumpToImpactScene, onToggleAudienceRecommendation, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled,   projectStreams = [] }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, onJumpToImpactScene, onToggleAudienceRecommendation, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onReorderBeats, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled,   projectStreams = [] }: ScriptPanelProps) {
 
   const tStudio = useTranslations('production.studio')
   const tCommon = useTranslations('common')
@@ -3658,6 +3734,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       projectAspectRatio={projectAspectRatio}
                       onApproveStoryboard={onApproveStoryboard}
                       approvingStoryboardFor={approvingStoryboardFor}
+                      onReorderBeats={onReorderBeats}
                       onGenerateBeatFrame={onGenerateBeatFrame}
                       onGenerateBeatEndFrame={onGenerateBeatEndFrame}
                       onGenerateDialogueFrame={onGenerateDialogueFrame}
@@ -4317,6 +4394,11 @@ interface SceneCardProps {
   resyncingAudioSceneIndex?: number | null
   onApproveStoryboard?: (sceneIndex: number) => void | Promise<void>
   approvingStoryboardFor?: number | null
+  onReorderBeats?: (
+    sceneIndex: number,
+    fromBeatId: string,
+    toBeatId: string
+  ) => void | Promise<void>
   // Production readiness for workflow guards (voices assigned, etc.)
   productionReadiness?: ProductionReadiness
   onModerationReport?: (report: import('@/lib/moderation/moderationPipeline').ModerationReport) => void
@@ -4508,6 +4590,7 @@ function SceneCard({
   resyncingAudioSceneIndex,
   onApproveStoryboard,
   approvingStoryboardFor = null,
+  onReorderBeats,
   projectTitle = '',
   projectLogline = '',
   visualStyle,
@@ -4608,6 +4691,48 @@ function SceneCard({
     })
     return map
   }, [sceneBeatsForTabs, sceneMusicCues])
+
+  const beatDragSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+  const canReorderBeats = !!onReorderBeats && sceneBeatsForTabs.length > 1
+  const [brokenContinuityBeatIds, setBrokenContinuityBeatIds] = useState<Set<string>>(
+    () => new Set()
+  )
+
+  const handleBeatDragEnd = useCallback(
+    (event: { active: { id: string | number }; over: { id: string | number } | null }) => {
+      if (!onReorderBeats || !event.over) return
+      const fromBeatId = String(event.active.id)
+      const toBeatId = String(event.over.id)
+      if (fromBeatId === toBeatId) return
+
+      const fromIndex = sceneBeatsForTabs.findIndex((beat) => beat.beatId === fromBeatId)
+      const toIndex = sceneBeatsForTabs.findIndex((beat) => beat.beatId === toBeatId)
+      if (fromIndex < 0 || toIndex < 0) return
+
+      // Flagged here rather than in the save handler because this is where the
+      // before-and-after orders both exist, and where the badge renders. The
+      // frames stay as they are — they are valid images that were simply shot
+      // to continue from a beat that is no longer above them.
+      const broken = findBrokenContinuityBeats(
+        sceneBeatsForTabs,
+        arrayMove(sceneBeatsForTabs, fromIndex, toIndex)
+      )
+      setBrokenContinuityBeatIds(new Set(broken))
+      if (broken.length > 0) {
+        toast.warning(
+          broken.length === 1
+            ? '1 beat now continues from a different shot — re-check its frames'
+            : `${broken.length} beats now continue from different shots — re-check their frames`
+        )
+      }
+
+      void onReorderBeats(sceneIdx, fromBeatId, toBeatId)
+    },
+    [onReorderBeats, sceneBeatsForTabs, sceneIdx]
+  )
   // The scene's own track still plays under any music-enabled beat no cue
   // covers, so it keeps its panel until a cue has claimed it.
   const showLegacyMusicPanel =
@@ -6914,10 +7039,20 @@ function SceneCard({
                         </div>
                         )}
                       </div>
+                      <DndContext
+                        sensors={beatDragSensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleBeatDragEnd}
+                      >
+                      <SortableContext
+                        items={timelineBeats.map((beat) => beat.beatId)}
+                        strategy={verticalListSortingStrategy}
+                      >
                       <div className="space-y-3">
                       {timelineBeats.map((beat, beatIndex) => {
                         const beatNumber =
                           (typeof beat.sequenceIndex === 'number' ? beat.sequenceIndex : beatIndex) + 1
+                        const continuityBroken = brokenContinuityBeatIds.has(beat.beatId)
                         if (beat.kind === 'action') {
                           const beatSfx = sfxByBeatId.get(beat.beatId) ?? []
                           const inlineSfx =
@@ -6938,8 +7073,13 @@ function SceneCard({
                               }
                             })()
                           return (
-                            <div
+                            <SortableBeatRow
                               key={beat.beatId}
+                              beatId={beat.beatId}
+                              beatNumber={beatNumber}
+                              disabled={!canReorderBeats}
+                            >
+                            <div
                               className={`p-3 bg-amber-950/35 rounded-lg border border-amber-500/45 hover:border-amber-400/55 transition-colors ${
                                 beat.excluded ? 'opacity-50' : ''
                               }`}
@@ -6962,6 +7102,7 @@ function SceneCard({
                                     Title
                                   </span>
                                 )}
+                                {continuityBroken && <BeatContinuityWarning />}
                                 </div>
                                 <BeatExcludeToggle
                                   beat={beat}
@@ -7029,6 +7170,7 @@ function SceneCard({
                                 onSaveTranslations={onSaveTranslations}
                               />
                             </div>
+                            </SortableBeatRow>
                           )
                         }
 
@@ -7099,8 +7241,13 @@ function SceneCard({
                           pendingSpeakerAssign?.dialogueIndex === i
                         
                         return (
-                          <div
+                          <SortableBeatRow
                             key={beat.beatId}
+                            beatId={beat.beatId}
+                            beatNumber={beatNumber}
+                            disabled={!canReorderBeats}
+                          >
+                          <div
                             className={`p-3 rounded-lg border transition-colors ${
                               isNarrationBeat
                                 ? 'bg-indigo-900/20 border-indigo-700/30 hover:border-indigo-600/40'
@@ -7229,6 +7376,7 @@ function SceneCard({
                                       Ready
                                     </span>
                                   ) : null}
+                                  {continuityBroken && <BeatContinuityWarning />}
                                   </div>
                                   <BeatExcludeToggle
                                     beat={beat}
@@ -7413,9 +7561,12 @@ function SceneCard({
                               onSaveTranslations={onSaveTranslations}
                             />
                           </div>
+                          </SortableBeatRow>
                         )
                       })}
                       </div>
+                      </SortableContext>
+                      </DndContext>
                     </div>
                     )
                   })()}
