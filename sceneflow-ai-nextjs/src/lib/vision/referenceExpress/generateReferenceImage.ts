@@ -313,12 +313,11 @@ export async function generateObjectReferenceImage(
 
   // A charge failure must not discard a generated image the user can still use.
   try {
-    await CreditService.charge(
-      userId,
-      creditCost,
-      'IMAGE_GENERATION',
-      `Object reference: ${name}`
-    )
+    await CreditService.charge(userId, creditCost, 'ai_usage', null, {
+      provider: 'gemini',
+      category: 'images',
+      operation: `Object reference: ${name}`,
+    })
   } catch (creditError) {
     console.error('[Key Props Generation] Credit charge failed:', creditError)
   }
