@@ -611,6 +611,7 @@ export async function PATCH(
         beatDescription,
         musicDuration,
         musicFileDuration,
+        musicCueId,
       } = body.atomicAudioUpdate
 
       let sfxIndex = rawSfxIndex
@@ -662,8 +663,13 @@ export async function PATCH(
           audioUrl,
           musicDuration,
           musicFileDuration,
+          ...(typeof musicCueId === 'string' && musicCueId.trim()
+            ? { musicCueId: musicCueId.trim() }
+            : {}),
         })
-        console.log(`[Projects PATCH] Updated musicAudio for scene ${sceneIndex}`)
+        console.log(
+          `[Projects PATCH] Updated ${musicCueId ? `music cue ${musicCueId}` : 'musicAudio'} for scene ${sceneIndex}`
+        )
       } else if (audioType === 'sfx' && sfxIndex !== undefined) {
         await persistSceneSfxAudioAtomic({
           projectId: id,

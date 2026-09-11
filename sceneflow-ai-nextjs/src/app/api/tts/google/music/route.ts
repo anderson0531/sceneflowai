@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       }, { status: 402 })
     }
 
-    const { text, projectId, sceneId, saveToBlob = false, duration: requestedDuration } =
+    const { text, projectId, sceneId, cueId, saveToBlob = false, duration: requestedDuration } =
       await request.json()
 
     const requestedDurationSeconds =
@@ -217,7 +217,10 @@ export async function POST(request: NextRequest) {
 
     if (saveToBlob) {
       const timestamp = Date.now()
-      const filename = `audio/music/${projectId || 'default'}/${sceneId || 'music'}-${timestamp}.wav`
+      const slug = [sceneId || 'music', typeof cueId === 'string' ? cueId : '']
+        .filter(Boolean)
+        .join('-')
+      const filename = `audio/music/${projectId || 'default'}/${slug}-${timestamp}.wav`
       const blob = await put(filename, arrayBuffer, {
         access: 'public',
         contentType: 'audio/wav',

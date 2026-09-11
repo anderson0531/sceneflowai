@@ -13,6 +13,8 @@ export interface GenerateMusicTrackParams {
   saveToBlob?: boolean
   projectId?: string
   sceneId?: string
+  /** Cue this track scores; keeps a scene's cue tracks in separate blobs. */
+  cueId?: string
 }
 
 export interface GenerateMusicTrackResult {
@@ -51,6 +53,7 @@ export async function generateMusicTrack(
       saveToBlob: params.saveToBlob ?? true,
       projectId: params.projectId,
       sceneId: params.sceneId,
+      cueId: params.cueId,
     }),
   })
 
@@ -95,6 +98,7 @@ export async function generateMusicTrackServer(
         saveToBlob: params.saveToBlob ?? true,
         projectId: params.projectId,
         sceneId: params.sceneId,
+        cueId: params.cueId,
       }),
     })
 
