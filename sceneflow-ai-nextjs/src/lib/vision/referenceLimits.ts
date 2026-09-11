@@ -76,6 +76,21 @@ export interface PrioritizedReferenceImage {
   originalOrder?: number
   /** Stable composition token (prop [N] / location [N]) independent of send index. */
   promptToken?: string
+  /** Person token index the scene prompt uses for this character. */
+  subjectOrdinal?: number
+}
+
+/**
+ * Label builders a caller can substitute. The image pipeline names references
+ * by send index and person token; the video pipeline names them by `Char_`
+ * alias because its prompt text is written that way.
+ */
+export interface ReferenceLabelOptions {
+  buildIdentityLabel?: (name: string, index: number, personTokenIndex?: number) => string
+  buildWardrobeLabel?: (name: string, index: number, personTokenIndex?: number) => string
+  buildDiptychLabel?: (name: string, index?: number, personTokenIndex?: number) => string
+  buildPropLabel?: (name: string, index: number, promptToken?: string) => string
+  buildLocationLabel?: (name: string, index: number, promptToken?: string) => string
 }
 
 export type ReferenceIndexMap = Map<number, number | null>
@@ -114,30 +129,30 @@ export function prioritizeReferenceImages(
 function applySendIndexLabel(
   ref: PrioritizedReferenceImage,
   sendIndex: number,
-  labelOptions?: {
-    buildIdentityLabel?: (name: string, index: number) => string
-    buildWardrobeLabel?: (name: string, index: number) => string
-    buildDiptychLabel?: (name: string) => string
-  }
+  labelOptions?: ReferenceLabelOptions
 ): string {
   const buildIdentity = labelOptions?.buildIdentityLabel ?? buildIdentityReferenceLabel
   const buildWardrobe = labelOptions?.buildWardrobeLabel ?? buildWardrobeReferenceLabel
   const buildDiptych = labelOptions?.buildDiptychLabel ?? buildWardrobeDiptychReferenceLabel
 
   if (ref.refRole === 'wardrobe-diptych' && ref.characterName) {
-    return buildDiptych(ref.characterName)
+    return buildDiptych(ref.characterName, sendIndex, ref.subjectOrdinal)
   }
   if (ref.refRole === 'identity' && ref.characterName) {
-    return buildIdentity(ref.characterName, sendIndex)
+    return buildIdentity(ref.characterName, sendIndex, ref.subjectOrdinal)
   }
   if (ref.refRole === 'wardrobe' && ref.characterName) {
-    return buildWardrobe(ref.characterName, sendIndex)
+    return buildWardrobe(ref.characterName, sendIndex, ref.subjectOrdinal)
   }
   if (ref.propName) {
-    return `Prop reference ${sendIndex}: ${ref.propName}`
+    return labelOptions?.buildPropLabel
+      ? labelOptions.buildPropLabel(ref.propName, sendIndex, ref.promptToken)
+      : `Prop reference ${sendIndex}: ${ref.propName}`
   }
   if (ref.locationName) {
-    return buildLocationReferenceLabel(ref.locationName, sendIndex)
+    return labelOptions?.buildLocationLabel
+      ? labelOptions.buildLocationLabel(ref.locationName, sendIndex, ref.promptToken)
+      : buildLocationReferenceLabel(ref.locationName, sendIndex)
   }
   return ref.name
 }
@@ -149,10 +164,7 @@ function applySendIndexLabel(
 export function selectReferenceImagesInOrder(
   refs: PrioritizedReferenceImage[],
   maxCount: number = MAX_VERTEX_GEMINI_REFERENCE_IMAGES,
-  labelOptions?: {
-    buildIdentityLabel?: (name: string, index: number) => string
-    buildWardrobeLabel?: (name: string, index: number) => string
-    buildDiptychLabel?: (name: string) => string
+  labelOptions?: ReferenceLabelOptions & {
     /** When true, group survivors by role (identity, wardrobe, location, props) for contiguous person tokens. */
     groupByRole?: boolean
   }
@@ -291,11 +303,16 @@ export function buildCharacterReferenceEntries(
     refRole: CharacterRefRole
     characterName: string
   }>,
-  characterReferences: Array<{ name: string; hasDualReferences?: boolean; hasWardrobeDiptych?: boolean }>,
-  buildIdentityLabel: (name: string, index: number) => string,
-  buildWardrobeLabel: (name: string, index: number) => string,
+  characterReferences: Array<{
+    name: string
+    hasDualReferences?: boolean
+    hasWardrobeDiptych?: boolean
+    subjectOrdinal?: number
+  }>,
+  buildIdentityLabel: (name: string, index: number, personTokenIndex?: number) => string,
+  buildWardrobeLabel: (name: string, index: number, personTokenIndex?: number) => string,
   startIndex: number,
-  buildDiptychLabel?: (name: string) => string
+  buildDiptychLabel?: (name: string, index?: number, personTokenIndex?: number) => string
 ): PrioritizedReferenceImage[] {
   const entries: PrioritizedReferenceImage[] = []
   let refImageIndex = startIndex
@@ -303,15 +320,16 @@ export function buildCharacterReferenceEntries(
   for (const ref of imageReferences) {
     refImageIndex++
     const matchingCharRef = characterReferences.find((cr) => cr.name === ref.characterName)
+    const subjectOrdinal = matchingCharRef?.subjectOrdinal
     let label: string
     if (ref.refRole === 'wardrobe-diptych') {
       label = buildDiptychLabel
-        ? buildDiptychLabel(ref.characterName)
+        ? buildDiptychLabel(ref.characterName, refImageIndex, subjectOrdinal)
         : `Diptych ref: ${ref.characterName} — LEFT=identity face, RIGHT=wardrobe outfit`
     } else if (ref.refRole === 'identity') {
-      label = buildIdentityLabel(ref.characterName, refImageIndex)
+      label = buildIdentityLabel(ref.characterName, refImageIndex, subjectOrdinal)
     } else if (matchingCharRef?.hasDualReferences) {
-      label = buildWardrobeLabel(ref.characterName, refImageIndex)
+      label = buildWardrobeLabel(ref.characterName, refImageIndex, subjectOrdinal)
     } else {
       label = `Character reference ${refImageIndex}: ${ref.characterName} (mannequin outfit sheet)`
     }
@@ -322,6 +340,7 @@ export function buildCharacterReferenceEntries(
       provisionalIndex: refImageIndex,
       characterName: ref.characterName,
       refRole: ref.refRole,
+      subjectOrdinal,
     })
   }
 
@@ -329,13 +348,15 @@ export function buildCharacterReferenceEntries(
 }
 
 export function buildPropReferenceMappingLines(
-  props: Array<{ propName?: string; sendIndex?: number }>
+  props: Array<{ propName?: string; sendIndex?: number; promptToken?: string }>
 ): string {
   const valid = props.filter((p) => p.propName && p.sendIndex)
   if (!valid.length) return ''
   const lines = valid
     .map((p) => {
-      const token = `prop [${p.sendIndex}]`
+      // The composition text already names the prop by its stable token; the
+      // mapping line has to use that same token, not the send index.
+      const token = p.promptToken || `prop [${p.sendIndex}]`
       return (
         `- PROP REFERENCE (Ref Image [${p.sendIndex}] = ${token}): ${p.propName} — ` +
         `Defines how ${token} looks where the scene prompt already places it: ` +
