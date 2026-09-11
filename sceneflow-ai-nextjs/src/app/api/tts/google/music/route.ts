@@ -13,35 +13,62 @@ import {
   LYRIA_RECITATION_ERROR_CODE,
   LYRIA_RECITATION_USER_MESSAGE,
 } from '@/lib/audio/lyriaPromptAdapter'
-import { getWavDurationSeconds } from '@/lib/audio/loopingAudioSync'
+import { getWavDurationSeconds } from '@/lib/audio/audioContainerDuration'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 60 // Allow up to 60 seconds for music generation
+export const runtime = 'nodejs'
+/**
+ * Lyria's predict call is synchronous and returns ~30s of WAV. One attempt
+ * regularly takes longer than a minute; recitation fallbacks need a second
+ * attempt after that. 60s is why production logged
+ * "Task timed out after 60 seconds" mid-generate.
+ */
+export const maxDuration = 300
 
 const MUSIC_CREDIT_COST = AUDIO_CREDITS.MUSIC_TRACK || 25 // Fallback to 25
+/** Leave time to upload the clip and charge after Vertex returns. */
+const ROUTE_RESERVE_MS = 20_000
+/** One Lyria predict; recitation errors return in seconds, not this long. */
+const LYRIA_ATTEMPT_TIMEOUT_MS = 180_000
+const LYRIA_MIN_ATTEMPT_MS = 15_000
 
 type LyriaCallResult =
   | { ok: true; base64Data: string }
-  | { ok: false; status: number; body: string; recitation: boolean }
+  | { ok: false; status: number; body: string; recitation: boolean; timedOut?: boolean }
 
 async function callLyria(
   prompt: string,
   endpoint: string,
-  accessToken: string
+  accessToken: string,
+  timeoutMs: number
 ): Promise<LyriaCallResult> {
   const requestBody = {
     instances: [{ prompt }],
     parameters: { sample_count: 1 },
   }
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(requestBody),
-  })
+  let response: Response
+  try {
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+      signal: AbortSignal.timeout(timeoutMs),
+    })
+  } catch (error) {
+    const timedOut =
+      error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError')
+    return {
+      ok: false,
+      status: timedOut ? 504 : 502,
+      body: error instanceof Error ? error.message : String(error),
+      recitation: false,
+      timedOut,
+    }
+  }
 
   if (!response.ok) {
     const errorText = await response.text()
@@ -102,7 +129,7 @@ export async function POST(request: NextRequest) {
       }, { status: 402 })
     }
 
-    const { text, projectId, sceneId, cueId, saveToBlob = false, duration: requestedDuration } =
+    const { text, projectId, sceneId, cueId, duration: requestedDuration } =
       await request.json()
 
     const requestedDurationSeconds =
@@ -123,6 +150,10 @@ export async function POST(request: NextRequest) {
       console.error('[Google Music] Error: Vertex AI not configured (VERTEX_PROJECT_ID required)')
       return NextResponse.json({ error: 'Music generation API not configured' }, { status: 500 })
     }
+
+    const routeStartedAt = Date.now()
+    const remainingBudgetMs = () =>
+      maxDuration * 1000 - (Date.now() - routeStartedAt) - ROUTE_RESERVE_MS
 
     const accessToken = await getVertexAIAuthToken()
     const modelId = 'lyria-002'
@@ -146,11 +177,21 @@ export async function POST(request: NextRequest) {
     let winningVariant = ''
 
     for (const attempt of promptAttempts) {
+      const budgetMs = remainingBudgetMs()
+      if (budgetMs < LYRIA_MIN_ATTEMPT_MS) {
+        console.warn(
+          `[Google Music] Skipping ${attempt.variant} — ${budgetMs}ms left, needs ${LYRIA_MIN_ATTEMPT_MS}ms`
+        )
+        break
+      }
+
+      const attemptTimeoutMs = Math.min(LYRIA_ATTEMPT_TIMEOUT_MS, budgetMs)
       console.log(`[Google Music] Trying Lyria (${attempt.variant}):`, {
         prompt: attempt.prompt,
+        timeoutMs: attemptTimeoutMs,
       })
 
-      const result = await callLyria(attempt.prompt, endpoint, accessToken)
+      const result = await callLyria(attempt.prompt, endpoint, accessToken, attemptTimeoutMs)
 
       if (result.ok) {
         successResult = result
@@ -163,6 +204,13 @@ export async function POST(request: NextRequest) {
         result.status,
         result.body.slice(0, 300)
       )
+
+      if (result.timedOut) {
+        return NextResponse.json({
+          error: 'Music generation timed out. Try again in a moment.',
+          details: result.body,
+        }, { status: 504 })
+      }
 
       if (result.recitation) {
         lastRecitationBody = result.body
@@ -215,31 +263,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (saveToBlob) {
-      const timestamp = Date.now()
-      const slug = [sceneId || 'music', typeof cueId === 'string' ? cueId : '']
-        .filter(Boolean)
-        .join('-')
-      const filename = `audio/music/${projectId || 'default'}/${slug}-${timestamp}.wav`
-      const blob = await put(filename, arrayBuffer, {
-        access: 'public',
-        contentType: 'audio/wav',
-      })
-      console.log('[Google Music] Saved to blob:', blob.url)
-      return NextResponse.json({
-        url: blob.url,
-        size: arrayBuffer.byteLength,
-        duration: actualDurationSeconds,
-        requestedDuration: requestedDurationSeconds,
-      })
-    }
-
-    return new Response(arrayBuffer, {
-      status: 200,
-      headers: {
-        'Content-Type': 'audio/wav',
-        'Cache-Control': 'no-store',
-      },
+    // Always Blob the WAV. A 30s Lyria clip is ~5.7MB uncompressed, which is
+    // over Vercel's 4.5MB response body limit — returning the bytes inline is
+    // what produced the buffer/payload-size failures.
+    const timestamp = Date.now()
+    const slug = [sceneId || 'music', typeof cueId === 'string' ? cueId : '']
+      .filter(Boolean)
+      .join('-')
+    const filename = `audio/music/${projectId || 'default'}/${slug}-${timestamp}.wav`
+    const blob = await put(filename, arrayBuffer, {
+      access: 'public',
+      contentType: 'audio/wav',
+    })
+    console.log('[Google Music] Saved to blob:', blob.url)
+    return NextResponse.json({
+      url: blob.url,
+      size: arrayBuffer.byteLength,
+      duration: actualDurationSeconds,
+      requestedDuration: requestedDurationSeconds,
     })
   } catch (error: unknown) {
     console.error(
