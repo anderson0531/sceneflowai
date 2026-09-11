@@ -1392,7 +1392,8 @@ async function persistBeatFrame(
   }
 }
 
-async function planSceneBeatKeyframes(
+/** Exported for tests; the run path calls it through runImagePhase. */
+export async function planSceneBeatKeyframes(
   ctx: SceneRunContext,
   options: ExpressOptions,
   project: any,

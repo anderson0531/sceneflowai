@@ -3,7 +3,7 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 import {
   getExpressAnimaticImageModel,
-  usesFlashAnimaticTier,
+  usesFlashDraftTier,
 } from '@/lib/sceneGeneration/animaticImageModel'
 import {
   DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY,
@@ -42,23 +42,54 @@ describe('getExpressAnimaticImageModel', () => {
   it('reverts to pro without a redeploy', () => {
     process.env.EXPRESS_ANIMATIC_IMAGE_MODEL = 'PRO'
     expect(getExpressAnimaticImageModel()).toBe('pro')
-    expect(usesFlashAnimaticTier({ isBeatFrame: true, animaticDraft: true })).toBe(false)
+    expect(usesFlashDraftTier({ isBeatFrame: true, resolvedModelTier: 'eco' })).toBe(false)
   })
 })
 
-describe('usesFlashAnimaticTier', () => {
-  it('only applies to beat frames that opted in', () => {
+describe('usesFlashDraftTier', () => {
+  it('reads the resolved tier, so every caller asking for a draft beat gets flash', () => {
     delete process.env.EXPRESS_ANIMATIC_IMAGE_MODEL
-    expect(usesFlashAnimaticTier({ isBeatFrame: true, animaticDraft: true })).toBe(true)
-    // The prompt builder and final beats never send animaticDraft.
-    expect(usesFlashAnimaticTier({ isBeatFrame: true, animaticDraft: false })).toBe(false)
-    expect(usesFlashAnimaticTier({ isBeatFrame: true })).toBe(false)
-    // Establishing and dialogue frames stay on pro even if the flag leaks in.
-    expect(usesFlashAnimaticTier({ isBeatFrame: false, animaticDraft: true })).toBe(false)
+    // This is the whole point: the prompt builder and the per-beat regen send
+    // modelTier eco and no animaticDraft, and used to be forced onto pro.
+    expect(usesFlashDraftTier({ isBeatFrame: true, resolvedModelTier: 'eco' })).toBe(true)
+  })
+
+  it('keeps final beats on pro', () => {
+    delete process.env.EXPRESS_ANIMATIC_IMAGE_MODEL
+    expect(usesFlashDraftTier({ isBeatFrame: true, resolvedModelTier: 'designer' })).toBe(false)
+    expect(usesFlashDraftTier({ isBeatFrame: true, resolvedModelTier: 'director' })).toBe(false)
+    expect(usesFlashDraftTier({ isBeatFrame: true })).toBe(false)
+  })
+
+  it('leaves establishing and dialogue frames alone', () => {
+    delete process.env.EXPRESS_ANIMATIC_IMAGE_MODEL
+    expect(usesFlashDraftTier({ isBeatFrame: false, resolvedModelTier: 'eco' })).toBe(false)
+    expect(usesFlashDraftTier({ isBeatFrame: false, animaticDraft: true })).toBe(false)
+  })
+
+  it('still honours animaticDraft, so an in-flight Express run keeps its tier across a deploy', () => {
+    delete process.env.EXPRESS_ANIMATIC_IMAGE_MODEL
+    expect(usesFlashDraftTier({ isBeatFrame: true, animaticDraft: true })).toBe(true)
+    expect(
+      usesFlashDraftTier({
+        isBeatFrame: true,
+        resolvedModelTier: 'designer',
+        animaticDraft: true,
+      })
+    ).toBe(true)
   })
 })
 
 describe('animatic concurrency', () => {
+  it('runs three draft frames at once and keeps pro sequential', () => {
+    // Iterating on an animatic is repeated frame regeneration, so this number
+    // is what sets how long that loop takes.
+    expect(DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY).toBe(3)
+    expect(DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY).toBe(3)
+    expect(DEFAULT_EXPRESS_IMAGE_CONCURRENCY).toBe(1)
+    expect(DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY).toBe(1)
+  })
+
   it('widens the image lane for flash and leaves pro sequential', () => {
     delete process.env.EXPRESS_IMAGE_CONCURRENCY
     expect(getExpressImageConcurrency()).toBe(DEFAULT_EXPRESS_IMAGE_CONCURRENCY)
@@ -78,6 +109,13 @@ describe('animatic concurrency', () => {
     )
   })
 
+  it('keeps the beat pool from queueing behind the image lane', () => {
+    // A beat pool wider than the traffic cop's lane just parks jobs in the cop.
+    expect(DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY).toBe(
+      DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY
+    )
+  })
+
   it('lets an explicit env override win over both defaults', () => {
     process.env.EXPRESS_IMAGE_CONCURRENCY = '6'
     expect(getExpressImageConcurrency({ flashAnimatic: true })).toBe(6)
@@ -85,26 +123,35 @@ describe('animatic concurrency', () => {
   })
 })
 
-describe('animatic tier wiring', () => {
+describe('draft tier wiring', () => {
   const routeSource = readFileSync(
     join(process.cwd(), 'src/app/api/scene/generate-image/route.ts'),
     'utf8'
   )
 
-  it('exempts animatic beats from the forced designer path without changing Vertex routing', () => {
+  it('decides the tier from the resolved tier, not from an Express-only flag', () => {
     expect(routeSource).toContain(
-      'const useAnimaticFlashTier = usesFlashAnimaticTier({ isBeatFrame, animaticDraft })'
+      `const useFlashDraftTier = usesFlashDraftTier({
+      isBeatFrame,
+      resolvedModelTier,
+      animaticDraft,
+    })`
     )
     expect(routeSource).toContain(
-      'const forceVertexGeminiImagePath = isBeatFrame || skipLikenessValidation'
+      'const forceDesignerImagePath = forceVertexGeminiImagePath && !useFlashDraftTier'
     )
-    expect(routeSource).toContain(
-      'const forceDesignerImagePath = forceVertexGeminiImagePath && !useAnimaticFlashTier'
-    )
-    expect(routeSource).toContain('allowEcoWithReferences: useAnimaticFlashTier')
+    expect(routeSource).toContain('allowEcoWithReferences: useFlashDraftTier')
+  })
+
+  it('does not reintroduce the flag-only check', () => {
+    expect(routeSource).not.toContain('usesFlashAnimaticTier')
+    expect(routeSource).not.toContain('!useAnimaticFlashTier')
   })
 
   it('still routes every beat frame through Vertex Gemini', () => {
+    expect(routeSource).toContain(
+      'const forceVertexGeminiImagePath = isBeatFrame || skipLikenessValidation'
+    )
     expect(routeSource).toContain('forceVertexGeminiImagePath ||\n      imageReferences.length > 0')
   })
 })
