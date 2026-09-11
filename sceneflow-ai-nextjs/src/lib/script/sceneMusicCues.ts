@@ -699,6 +699,25 @@ export function estimateMusicCueDuration(
   return total > 0 ? Math.round(total) : ASSUMED_BEAT_DURATION_SEC
 }
 
+/**
+ * The scene's running time as its beats actually lay it out, or 0 with none.
+ *
+ * `scene.duration` is the script LLM's guess written before beats existed and
+ * is routinely wrong by a factor of two. The beat timeline is what the animatic
+ * plays, so it is what a track has to cover.
+ */
+export function estimateSceneBeatDuration(beats: SceneBeat[]): number {
+  if (beats.length === 0) return 0
+  let total = 0
+  for (const beat of beats) {
+    total +=
+      typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0
+        ? beat.durationSeconds
+        : ASSUMED_BEAT_DURATION_SEC
+  }
+  return Math.round(total)
+}
+
 /** Human label for a cue's beat span, 1-based for the UI. */
 export function formatMusicCueRange(cue: SceneMusicCue): string {
   return cue.beatStart === cue.beatEnd
