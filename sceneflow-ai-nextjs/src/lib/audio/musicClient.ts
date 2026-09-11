@@ -125,6 +125,7 @@ export async function generateMusicTrackServer(
       url: result.url,
       size: result.size,
       duration: result.duration,
+      requestedDuration: result.requestedDuration,
     }
   } catch (error: unknown) {
     console.error(

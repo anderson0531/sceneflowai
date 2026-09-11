@@ -81,7 +81,15 @@ export interface SceneAudioAsset {
   /** Stable character id (e.g. 'narrator' for narrator lines). */
   characterId?: string | null
   audioUrl: string
+  /** Measured length of the generated file. For music, the probed track length. */
   durationSeconds?: number | null
+  /**
+   * For audioType === 'music', the play span the track was asked to cover.
+   *
+   * Distinct from `durationSeconds`: Lyria caps generation at 184s, so a longer
+   * scene gets a shorter file that the mixer holds for this long.
+   */
+  requestedDurationSeconds?: number | null
   voiceId?: string | null
   voiceProvider?: string | null
   character?: string | null

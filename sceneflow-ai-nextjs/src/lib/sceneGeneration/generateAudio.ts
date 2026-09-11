@@ -73,13 +73,21 @@ function findParentSegmentDurationSeconds(
   return undefined
 }
 
+/**
+ * Generate the scene's music track and report how long it actually is.
+ *
+ * The measured file length has to travel back with the URL: playback wraps
+ * scene time into the file length and loops when the file is shorter, so a
+ * scene-length Lyria 3 Pro track whose length was never recorded still
+ * restarts at the 30s default.
+ */
 async function generateMusicForScene(
   scene: any,
   projectId: string,
   sceneIdx: number,
   baseUrl: string,
   authCookie?: string
-): Promise<string | null> {
+): Promise<{ url: string; fileDuration?: number; requestedDuration: number } | null> {
   try {
     const description =
       typeof scene.music === 'string' ? scene.music : scene.music?.description
@@ -100,7 +108,15 @@ async function generateMusicForScene(
       },
       authCookie
     )
-    return result?.url ?? null
+    if (!result?.url) return null
+
+    return {
+      url: result.url,
+      ...(typeof result.duration === 'number' && result.duration > 0
+        ? { fileDuration: result.duration }
+        : {}),
+      requestedDuration: result.requestedDuration ?? sceneDuration,
+    }
   } catch (error: any) {
     console.error(
       `[generateSceneAudio] Music generation failed for scene ${sceneIdx + 1}:`,
@@ -440,9 +456,14 @@ export async function generateSceneAudio(
 
   // 3. Music
   if (includeMusic && scene?.music && !scene.musicAudio) {
-    const musicUrl = await generateMusicForScene(scene, projectId, sceneIndex, baseUrl, authCookie)
-    if (musicUrl) {
-      assets.push({ audioType: 'music', audioUrl: musicUrl })
+    const music = await generateMusicForScene(scene, projectId, sceneIndex, baseUrl, authCookie)
+    if (music) {
+      assets.push({
+        audioType: 'music',
+        audioUrl: music.url,
+        durationSeconds: music.fileDuration ?? null,
+        requestedDurationSeconds: music.requestedDuration,
+      })
       counts.music += 1
     }
   }
@@ -532,6 +553,18 @@ export function applyAudioAssetsToScene(
       }
     } else if (asset.audioType === 'music') {
       scene.musicAudio = asset.audioUrl
+      // Without the measured length, `resolveSceneMusicFileDuration` assumes
+      // 30s and the mixer loops a scene-length track at 30 seconds. Matches
+      // what `persistSceneAudioAtomic` writes on the single-scene path.
+      if (typeof asset.durationSeconds === 'number' && asset.durationSeconds > 0) {
+        scene.musicFileDuration = asset.durationSeconds
+      }
+      if (
+        typeof asset.requestedDurationSeconds === 'number' &&
+        asset.requestedDurationSeconds > 0
+      ) {
+        scene.musicDuration = asset.requestedDurationSeconds
+      }
     } else if (asset.audioType === 'sfx') {
       const existing = Array.isArray(scene.sfxAudio) ? [...scene.sfxAudio] : []
       const idx = asset.sfxIndex ?? 0

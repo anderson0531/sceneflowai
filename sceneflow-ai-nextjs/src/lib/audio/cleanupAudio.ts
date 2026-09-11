@@ -85,6 +85,7 @@ export const SCENE_AUDIO_FIELD_KEYS = [
   'musicAudio',
   'musicUrl',
   'musicDuration',
+  'musicFileDuration',
   'sceneMusicCues',
   'sfxAudio',
   'sfxSourceMeta',
@@ -364,6 +365,10 @@ function copyMusicAudioFields(from: any, to: any): void {
   else delete to.musicUrl
   if (from?.musicDuration !== undefined) to.musicDuration = from.musicDuration
   else delete to.musicDuration
+  // Travels with the URL: separated from it, the mixer falls back to 30s and
+  // loops a scene-length track.
+  if (from?.musicFileDuration !== undefined) to.musicFileDuration = from.musicFileDuration
+  else delete to.musicFileDuration
   if (from?.sceneMusicCues !== undefined) to.sceneMusicCues = from.sceneMusicCues
   else delete to.sceneMusicCues
   if (from?.music && typeof from.music === 'object') {
@@ -461,6 +466,7 @@ function clearMusicAudioFields(scene: any): void {
   delete scene.musicAudio
   delete scene.musicUrl
   delete scene.musicDuration
+  delete scene.musicFileDuration
   if (scene.music && typeof scene.music === 'object') {
     delete scene.music.url
   }
@@ -1404,6 +1410,7 @@ export function clearAllSceneAudio(scene: any): CleanupResult {
   delete cleanedScene.musicAudio
   delete cleanedScene.musicUrl
   delete cleanedScene.musicDuration
+  delete cleanedScene.musicFileDuration
   if (cleanedScene.music) {
     delete cleanedScene.music.url
   }
