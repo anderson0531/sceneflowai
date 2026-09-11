@@ -256,29 +256,65 @@ export function resolveExpressBeatReferences(args: {
   return finish(toBeatReferenceSelection({ ...autoCtx, source: 'auto' }), false)
 }
 
+/**
+ * Narrow a scene-level no-talent verdict down to one beat.
+ *
+ * `isStoryboardNoCharacterScene` answers for the whole scene, so a heading
+ * containing "TITLE SEQUENCE" stripped the cast from every beat inside it —
+ * including beats whose own text names a character. Those frames reached Vertex
+ * with zero identity references and came back with a stranger's face.
+ *
+ * A beat that resolves to no cast is a genuine card or credit roll and stays
+ * reference-free.
+ */
+export function resolveBeatExcludesCharacters(args: {
+  sceneExcludesCharacters: boolean
+  verifiedBeatRefs: ExpressBeatRefsResolved | null
+  beatIdx: number
+  sceneNumber: number
+}): boolean {
+  if (!args.sceneExcludesCharacters) return false
+
+  const resolvedCast = args.verifiedBeatRefs?.api.selectedCharacters ?? []
+  if (resolvedCast.length === 0) return true
+
+  console.log(
+    `[expressOrchestrator] Beat ${args.beatIdx + 1} scene ${args.sceneNumber} — no-talent scene, but this beat names ${resolvedCast.join(', ')}; attaching character references`
+  )
+  return false
+}
+
+/**
+ * Build the reference fields for one beat's generate-image call.
+ *
+ * Owns `excludeCharacters` as well as the selection so the exclusion decision
+ * has a single source of truth. `characterSelectionExplicit` locks the route out
+ * of its own auto-detection, so it is only ever set alongside a real cast or a
+ * deliberate exclusion — an explicit-but-empty selection reaches the route as
+ * "zero valid character objects" with no way to recover.
+ */
 export function buildExpressBeatRefPayload(
   verifiedBeatRefs: ReturnType<typeof mapBeatReferenceSelectionForApi> | null,
   excludeCharacters: boolean
 ): Record<string, unknown> {
-  if (!verifiedBeatRefs) return {}
+  const exclusion: Record<string, unknown> = excludeCharacters
+    ? { excludeCharacters: true, characterSelectionExplicit: true }
+    : {}
+
+  if (!verifiedBeatRefs) return exclusion
 
   const hasCharacters =
     !excludeCharacters && verifiedBeatRefs.selectedCharacters.length > 0
 
   const payload: Record<string, unknown> = {
+    ...exclusion,
     locationReferences: verifiedBeatRefs.locationReferences,
     objectReferences: verifiedBeatRefs.objectReferences,
     skipObjectAutoDetection: true,
   }
 
-  // Only lock generate-image out of auto-detect when we have a real cast
-  // or are intentionally excluding people. An empty explicit selection was
-  // sending talent beats down the flash / no-ref path.
-  if (excludeCharacters || hasCharacters) {
-    payload.characterSelectionExplicit = true
-  }
-
   if (hasCharacters) {
+    payload.characterSelectionExplicit = true
     payload.selectedCharacters = verifiedBeatRefs.selectedCharacters
     if (verifiedBeatRefs.characterWardrobes.length > 0) {
       payload.characterWardrobes = verifiedBeatRefs.characterWardrobes
@@ -780,7 +816,7 @@ async function generateSingleBeatImage(
 ): Promise<{ imageUrl: string }> {
   const { sceneIndex, sceneNumber, scene } = ctx
   const imageParams = getExpressImageParams(options)
-  const excludeCharacters = isStoryboardNoCharacterScene(scene, sceneNumber)
+  const sceneExcludesCharacters = isStoryboardNoCharacterScene(scene, sceneNumber)
   const beats = getSceneBeats(scene)
   const beat = beats[beatIdx]
 
@@ -798,6 +834,12 @@ async function generateSingleBeatImage(
   if (beat && verifiedBeatRefs?.selection && !verifiedBeatRefs.fromSavedSelection) {
     persistBeatReferenceSelection(scene, beatIdx, verifiedBeatRefs.selection)
   }
+  const excludeCharacters = resolveBeatExcludesCharacters({
+    sceneExcludesCharacters,
+    verifiedBeatRefs,
+    beatIdx,
+    sceneNumber,
+  })
   const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs?.api ?? null, excludeCharacters)
 
   // Emitted after the lane grants a slot, so the UI shows what is generating
@@ -823,7 +865,6 @@ async function generateSingleBeatImage(
       ...(beat?.beatId ? { beatId: beat.beatId } : {}),
       sceneOverride: scene,
       ...beatRefPayload,
-      ...(excludeCharacters ? { excludeCharacters: true } : {}),
       useAIPrompt: false,
       ...(beatPlan?.prompt?.trim() ? { customPrompt: beatPlan.prompt } : {}),
       ...(typeof beatPlan?.allowTypography === 'boolean'
@@ -868,7 +909,7 @@ async function generateSingleBeatEndImage(
 ): Promise<{ imageUrl: string }> {
   const { sceneIndex, sceneNumber, scene } = ctx
   const imageParams = getExpressImageParams(options)
-  const excludeCharacters = isStoryboardNoCharacterScene(scene, sceneNumber)
+  const sceneExcludesCharacters = isStoryboardNoCharacterScene(scene, sceneNumber)
   const beats = getSceneBeats(scene)
   const beat = beats[beatIdx]
   if (!beat) return { imageUrl: startFrameUrl }
@@ -886,6 +927,12 @@ async function generateSingleBeatEndImage(
   if (verifiedBeatRefs?.selection && !verifiedBeatRefs.fromSavedSelection) {
     persistBeatReferenceSelection(scene, beatIdx, verifiedBeatRefs.selection)
   }
+  const excludeCharacters = resolveBeatExcludesCharacters({
+    sceneExcludesCharacters,
+    verifiedBeatRefs,
+    beatIdx,
+    sceneNumber,
+  })
   const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs?.api ?? null, excludeCharacters)
 
   const result = await trafficCop.runInLane('image', () => {
@@ -911,7 +958,6 @@ async function generateSingleBeatEndImage(
       ...(beat?.beatId ? { beatId: beat.beatId } : {}),
       sceneOverride: scene,
       ...beatRefPayload,
-      ...(excludeCharacters ? { excludeCharacters: true } : {}),
       customPrompt: endPrompt,
       useAIPrompt: false,
       modelTier: imageParams.modelTier,
