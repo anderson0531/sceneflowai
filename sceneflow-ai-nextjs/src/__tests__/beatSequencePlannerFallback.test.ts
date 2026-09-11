@@ -12,6 +12,7 @@ import {
   assembleStructuredStillPrompt,
   parseStillPromptSource,
 } from '@/lib/imagen/structuredStillPrompt'
+import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 const lookbook: ProjectLookbook = {
@@ -176,7 +177,11 @@ describe('buildFallbackBeatPlans under a project lookbook', () => {
 })
 
 describe('composePersistedLookbookBeatPrompt', () => {
-  it('wraps stored beat action in the lookbook when direction exists', () => {
+  it('wraps stored beat action in the lookbook when the prompt matches current direction', () => {
+    const beatDirection = {
+      frozenMoment: 'Gideon at the zinc workbench',
+      lightingAccent: 'Low-key practicals',
+    }
     const prompt = composePersistedLookbookBeatPrompt({
       lookbook,
       sceneIndex: 0,
@@ -185,11 +190,9 @@ describe('composePersistedLookbookBeatPrompt', () => {
         sequenceIndex: 0,
         kind: 'action',
         actionDescription: 'Gideon hunches over the seismograph.',
-        beatDirection: {
-          frozenMoment: 'Gideon at the zinc workbench',
-          lightingAccent: 'Low-key practicals',
-        },
+        beatDirection,
         storyboardImagePrompt: 'Medium shot: Gideon at the zinc workbench.',
+        storyboardImagePromptDirectionKey: beatDirectionFingerprint(beatDirection),
       },
     })
 
@@ -200,6 +203,30 @@ describe('composePersistedLookbookBeatPrompt', () => {
     const parsed = parseStillPromptSource(prompt!)
     expect(parsed.style?.trim()).toBeTruthy()
     expect(parsed.actionFraming).toContain('Gideon at the zinc workbench')
+  })
+
+  it('recomposes from direction when the stored prompt predates it', () => {
+    const prompt = composePersistedLookbookBeatPrompt({
+      lookbook,
+      sceneIndex: 0,
+      beat: {
+        beatId: 'bt_1',
+        sequenceIndex: 0,
+        kind: 'action',
+        actionDescription: 'Gideon hunches over the seismograph.',
+        beatDirection: {
+          frozenMoment: 'Gideon turns away from the dead seismograph',
+          lightingAccent: 'Low-key practicals',
+        },
+        storyboardImagePrompt: 'Medium shot: Gideon at the zinc workbench.',
+        storyboardImagePromptDirectionKey: beatDirectionFingerprint({
+          frozenMoment: 'Gideon at the zinc workbench',
+        }),
+      },
+    })
+
+    expect(prompt).toContain('Gideon turns away from the dead seismograph')
+    expect(prompt).not.toContain('zinc workbench')
   })
 
   it('states shot, blocking, prop handling and gaze so the frame is described', () => {

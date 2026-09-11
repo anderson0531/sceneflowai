@@ -14,6 +14,7 @@ import type { TalentDirection, VisualSetup } from '@/components/image-gen/types'
 import { resolveBeatFrameGenerationContext } from '@/lib/vision/beatFrameGenerationContext'
 import { resolveWardrobeIdForCharacterInScene } from '@/lib/character/characterReferenceAssembly'
 import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPrompt'
+import { storedPromptMatchesDirection } from '@/lib/intelligence/beat-sequence-planner-fallback'
 
 export interface PreVisFramePromptContext {
   frameLabel: string
@@ -205,11 +206,15 @@ export function resolvePreVisFramePromptContext(args: {
         sceneIndex,
         selectedWardrobes
       )
+      // A regen seeded from a prompt composed before the current direction just
+      // reproduces the frame the user is trying to change.
+      const storedSeedIsCurrent = storedPromptMatchesDirection(beat)
       return {
         frameLabel: slot.label,
         seedPrompt:
-          actionFramingFromStoredPrompt(slot.storyboardImagePrompt) ||
-          actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
+          (storedSeedIsCurrent &&
+            (actionFramingFromStoredPrompt(slot.storyboardImagePrompt) ||
+              actionFramingFromStoredPrompt(beat.storyboardImagePrompt))) ||
           beat.beatDirection?.frozenMoment?.trim() ||
           beat.actionDescription ||
           beat.line ||

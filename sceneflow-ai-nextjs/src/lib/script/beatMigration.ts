@@ -3,6 +3,7 @@
  */
 
 import { toCanonicalName } from '@/lib/character/canonical'
+import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import {
   NARRATOR_CHARACTER,
@@ -1206,41 +1207,6 @@ export function applyExpressStoryboardImageErrorToScene(
   return applyBeatsToScene(scene, beats)
 }
 
-/** Stable fingerprint of beat direction fields for pre-vis invalidation. */
-function beatDirectionFingerprint(direction: SceneBeat['beatDirection']): string {
-  if (!direction) return ''
-  const keys: Array<keyof NonNullable<SceneBeat['beatDirection']>> = [
-    'shotType',
-    'cameraAngle',
-    'cameraMovement',
-    'blocking',
-    'emotion',
-    'gaze',
-    'propInteraction',
-    'lightingAccent',
-    'frozenMoment',
-    'audioCue',
-    'transition',
-  ]
-  const parts: string[] = []
-  for (const key of keys) {
-    const value = direction[key]
-    if (typeof value === 'string' && value.trim()) {
-      parts.push(`${key}=${value.trim()}`)
-    }
-  }
-  const props = Array.isArray(direction.keyProps)
-    ? direction.keyProps
-        .map((prop) => (typeof prop === 'string' ? prop.trim() : ''))
-        .filter(Boolean)
-        .sort()
-    : []
-  if (props.length > 0) {
-    parts.push(`keyProps=${props.join(',')}`)
-  }
-  return parts.join('|')
-}
-
 /** Stable fingerprint of beat script text for pre-vis invalidation. */
 export function beatContentFingerprint(beat: SceneBeat): string {
   const directionFingerprint = beatDirectionFingerprint(beat.beatDirection)
@@ -1335,6 +1301,7 @@ function clearBeatStoryboardFrames(beat: SceneBeat): SceneBeat {
   delete next.storyboardImageUrl
   delete next.storyboardImageGcsPath
   delete next.storyboardImagePrompt
+  delete next.storyboardImagePromptDirectionKey
   delete next.storyboardImageTier
   delete next.storyboardEndImageUrl
   delete next.storyboardEndImageGcsPath
