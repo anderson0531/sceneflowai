@@ -49,7 +49,7 @@ import { runSceneExpressPreflight } from './sceneExpressPreflight'
 import { generateSceneDirection } from './generateDirection'
 import { generateSceneAudio, applyAudioAssetsToScene } from './generateAudio'
 import { generateSceneImage } from './generateImage'
-import { usesFlashAnimaticTier } from './animaticImageModel'
+import { usesFlashDraftTier } from './animaticImageModel'
 import { beatDirectionFingerprint } from '../script/beatDirectionFingerprint'
 import { shouldScheduleStandaloneNarration } from '../script/narration'
 import {
@@ -141,9 +141,9 @@ function getExpressImageParams(options: ExpressOptions) {
 
 /** Draft beats on flash get a wider image lane than pro identity-ref frames. */
 function usesFlashAnimaticRun(options: ExpressOptions): boolean {
-  return usesFlashAnimaticTier({
+  return usesFlashDraftTier({
     isBeatFrame: true,
-    animaticDraft: getExpressImageParams(options).animaticDraft,
+    resolvedModelTier: getExpressImageParams(options).modelTier,
   })
 }
 
