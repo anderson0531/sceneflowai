@@ -204,6 +204,7 @@ export function buildFullBodyWardrobePrompt(input: FullBodyWardrobePromptInput):
     `Character: ${input.characterName}. Same real person as the attached identity reference photo — match face exactly.`,
     '',
     'Pose: full-length front-facing standing pose, relaxed neutral stance, head to feet visible including footwear.',
+    'Hands: empty and visible at the sides. The subject holds, carries, or wears NO props — no tools, weapons, bags, documents, books, phones, cups, or objects of any kind. This image is copied as costume into every downstream frame, so anything held here appears in scenes that never directed it.',
     'Framing: single subject centered, entire outfit visible with no cropping at ankles or head.',
     'Background: plain neutral gray studio backdrop matching the identity headshot.',
     'Lighting: soft even studio lighting, photorealistic human photography.',

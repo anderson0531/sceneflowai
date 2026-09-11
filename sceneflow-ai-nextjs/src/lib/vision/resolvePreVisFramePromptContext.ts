@@ -13,6 +13,7 @@ import type { LocationReference, VisualReference } from '@/types/visionReference
 import type { TalentDirection, VisualSetup } from '@/components/image-gen/types'
 import { resolveBeatFrameGenerationContext } from '@/lib/vision/beatFrameGenerationContext'
 import { resolveWardrobeIdForCharacterInScene } from '@/lib/character/characterReferenceAssembly'
+import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPrompt'
 
 export interface PreVisFramePromptContext {
   frameLabel: string
@@ -71,7 +72,9 @@ function defaultTalentDirection(
   return {
     talentBlocking: bd?.blocking || direction?.talent?.blocking || '',
     emotionalBeat: bd?.emotion || direction?.talent?.emotionalBeat || '',
-    keyProps: beatProps || direction?.keyProps?.join(', ') || '',
+    // Beat props only. Scene key props are the catalog for the whole scene, so
+    // listing them here puts props the beat never directed into the frame.
+    keyProps: beatProps,
   }
 }
 
@@ -148,7 +151,9 @@ export function resolvePreVisFramePromptContext(args: {
     )
     return {
       frameLabel: slot.label,
-      seedPrompt: slot.storyboardImagePrompt || String(frame?.line || frame?.label || ''),
+      seedPrompt:
+        actionFramingFromStoredPrompt(slot.storyboardImagePrompt) ||
+        String(frame?.line || frame?.label || ''),
       visualSetup,
       talentDirection,
       artStyle,
@@ -203,8 +208,8 @@ export function resolvePreVisFramePromptContext(args: {
       return {
         frameLabel: slot.label,
         seedPrompt:
-          slot.storyboardImagePrompt?.trim() ||
-          beat.storyboardImagePrompt?.trim() ||
+          actionFramingFromStoredPrompt(slot.storyboardImagePrompt) ||
+          actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
           beat.beatDirection?.frozenMoment?.trim() ||
           beat.actionDescription ||
           beat.line ||
@@ -243,8 +248,8 @@ export function resolvePreVisFramePromptContext(args: {
     return {
       frameLabel: slot.label,
       seedPrompt:
-        slot.storyboardImagePrompt?.trim() ||
-        line?.storyboardImagePrompt?.trim() ||
+        actionFramingFromStoredPrompt(slot.storyboardImagePrompt) ||
+        actionFramingFromStoredPrompt(line?.storyboardImagePrompt) ||
         line?.line ||
         '',
       visualSetup,
@@ -286,7 +291,7 @@ export function resolvePreVisFramePromptContext(args: {
   return {
     frameLabel: slot.label || 'Establishing',
     seedPrompt:
-      slot.storyboardImagePrompt?.trim() ||
+      actionFramingFromStoredPrompt(slot.storyboardImagePrompt) ||
       String(scene.visualDescription || scene.action || sceneHeadingText(scene) || ''),
     visualSetup,
     talentDirection,

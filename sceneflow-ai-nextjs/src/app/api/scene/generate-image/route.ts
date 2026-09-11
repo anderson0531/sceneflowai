@@ -39,6 +39,7 @@ import {
   buildLocationPromptToken,
   buildPropPromptToken,
   joinPromptBlocks,
+  promptReferencesLibraryItem,
   stillRefsFromAttachedImages,
 } from '@/lib/imagen/structuredStillPrompt'
 import {
@@ -2199,6 +2200,24 @@ export async function POST(req: NextRequest) {
     const finalNegativePrompt = mergeBeatFrameNegativePrompt(negativePromptParts.join(', '))
     
     console.log(`[Scene Image] Negative prompt includes ${characterSpecificNegatives.length} character-specific exclusions (facial features only)`)
+
+    // Attaching a prop the frame never names hands the model an object with no
+    // direction, and it resolves that by inventing the prop into the shot. Beat
+    // frames therefore only carry references their composition actually uses.
+    if (isBeatFrame) {
+      const unnamedProps = detectedObjectReferences.filter(
+        (obj: any) => obj.imageUrl && !promptReferencesLibraryItem(optimizedPrompt, obj)
+      )
+      if (unnamedProps.length > 0) {
+        console.log(
+          `[Scene Image] Dropping ${unnamedProps.length} prop reference(s) not named in the frame:`,
+          unnamedProps.map((o: any) => o.name).join(', ')
+        )
+        detectedObjectReferences = detectedObjectReferences.filter(
+          (obj: any) => !unnamedProps.includes(obj)
+        )
+      }
+    }
 
     // Build object reference images for inclusion in generation
     const objectImageReferences = detectedObjectReferences

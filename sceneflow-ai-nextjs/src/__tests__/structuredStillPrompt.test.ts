@@ -7,8 +7,12 @@ import {
   STILL_SECTION_STILL,
   STILL_SECTION_STYLE,
   STILL_SECTION_EXCLUSIONS,
+  STILL_PURPOSE_LINE,
   stillRefsFromAttachedImages,
   bindLibraryNamesToTokens,
+  replaceLibraryNamesWithTokens,
+  actionFramingFromStoredPrompt,
+  promptReferencesLibraryItem,
 } from '@/lib/imagen/structuredStillPrompt'
 import {
   applySceneImageAiResultToPrompt,
@@ -287,5 +291,136 @@ describe('bindLibraryNamesToTokens', () => {
     )
     expect(text).toContain('prop [1]')
     expect(text).not.toContain("Arthur Pendelton's 1893 Journal")
+  })
+
+  it('binds a first-name alias when only one cast member owns it', () => {
+    const text = replaceLibraryNamesWithTokens(
+      'Piper turns as Gideon lifts the spanner.',
+      [
+        { kind: 'person', token: 'person [1]', name: 'Piper Hayes', roleLabel: 'identity' },
+        {
+          kind: 'person',
+          token: 'person [2]',
+          name: 'Professor Gideon Croft',
+          roleLabel: 'identity',
+        },
+      ]
+    )
+    expect(text).toBe('person [1] turns as person [2] lifts the spanner.')
+  })
+
+  it('leaves a first name alone when two cast members share it', () => {
+    const text = replaceLibraryNamesWithTokens('Gideon watches Gideon.', [
+      { kind: 'person', token: 'person [1]', name: 'Gideon Croft', roleLabel: 'identity' },
+      { kind: 'person', token: 'person [2]', name: 'Gideon Hayes', roleLabel: 'identity' },
+    ])
+    expect(text).toBe('Gideon watches Gideon.')
+  })
+})
+
+describe('still prompt round-trips without consuming itself', () => {
+  const refs = [
+    { kind: 'person' as const, token: 'person [1]', name: 'Piper Hayes', roleLabel: 'identity' },
+    {
+      kind: 'prop' as const,
+      token: 'prop [7]',
+      name: 'Thirty-Inch Iron Rail Spanner',
+      roleLabel: 'library prop',
+    },
+  ]
+
+  const assemble = (source: string) =>
+    assembleStructuredStillPrompt({
+      actionOrStructured: source,
+      refs,
+      photorealisticAnchor: 'live-action film still, photographed on real camera',
+      includeCandid: true,
+    })
+
+  it('is stable when an assembled still is re-assembled three times', () => {
+    const first = assemble('Medium shot: person [1] raises prop [7] toward the hatch collar.')
+    const second = assemble(first)
+    const third = assemble(second)
+
+    expect(second).toBe(first)
+    expect(third).toBe(first)
+    expect(first.match(/Action\/Framing:/g)).toHaveLength(1)
+    expect(first.match(/Not a video start frame/g)).toHaveLength(1)
+    expect(first.match(/Subjects caught mid-action/g)).toHaveLength(1)
+  })
+
+  it('recovers the beat action from an assembled still', () => {
+    expect(actionFramingFromStoredPrompt(assemble('person [1] raises prop [7].'))).toBe(
+      'person [1] raises prop [7].'
+    )
+  })
+
+  it('repairs a prompt that already swallowed its own boilerplate', () => {
+    // Reported prompt: one Action/Framing wrapper per regeneration, each
+    // wrapping the purpose and candid lines this module re-emits.
+    const corrupted = `[REFERENCES]
+person [1] = Piper Hayes — identity
+prop [7] = Thirty-Inch Iron Rail Spanner — library prop
+
+[STILL]
+${STILL_PURPOSE_LINE}
+Subjects caught mid-action, unaware of the camera — no posing, no lens eye-contact, no headshot or turnaround framing.
+Action/Framing: ${STILL_PURPOSE_LINE} Subjects caught mid-action, unaware of the camera — no posing, no lens eye-contact, no headshot or turnaround framing. Action/Framing: ${STILL_PURPOSE_LINE} Subjects caught mid-action, unaware of the camera — no posing, no lens eye-contact, no headshot or turnaround framing. Action/Framing: Brass pneumatic hatch collar flanked by three rusted locking dogs. Facial expression: Violent paranoia shifting to desperate realization.
+
+[STYLE]
+live-action film still, photographed on real camera`
+
+    const recovered = actionFramingFromStoredPrompt(corrupted)
+    expect(recovered).toBe(
+      'Brass pneumatic hatch collar flanked by three rusted locking dogs. Facial expression: Violent paranoia shifting to desperate realization.'
+    )
+
+    const repaired = assemble(corrupted)
+    expect(repaired.match(/Action\/Framing:/g)).toHaveLength(1)
+    expect(repaired.match(/Not a video start frame/g)).toHaveLength(1)
+    expect(repaired).toContain('Facial expression: Violent paranoia')
+    expect(assemble(repaired)).toBe(repaired)
+  })
+})
+
+describe('promptReferencesLibraryItem', () => {
+  const prompt = 'Action/Framing: person [1] sets prop [7] on the bench.'
+
+  it('accepts a prop bound to a token the prompt uses', () => {
+    expect(
+      promptReferencesLibraryItem(prompt, {
+        name: 'Thirty-Inch Iron Rail Spanner',
+        promptToken: 'prop [7]',
+      })
+    ).toBe(true)
+  })
+
+  it('accepts a prop the prompt still names in full', () => {
+    expect(
+      promptReferencesLibraryItem('Piper sets the Violet Ink Drafting Vellum down.', {
+        name: 'Violet Ink Drafting Vellum',
+        promptToken: 'prop [6]',
+      })
+    ).toBe(true)
+  })
+
+  it('rejects a prop the prompt never places', () => {
+    expect(
+      promptReferencesLibraryItem(prompt, {
+        name: 'Violet Ink Drafting Vellum',
+        promptToken: 'prop [6]',
+      })
+    ).toBe(false)
+  })
+
+  it('the beat frame route drops unnamed prop refs before it builds the image list', () => {
+    const src = readFileSync(
+      join(process.cwd(), 'src/app/api/scene/generate-image/route.ts'),
+      'utf8'
+    )
+    const dropsUnnamed = src.indexOf('!promptReferencesLibraryItem(optimizedPrompt')
+    const buildsImages = src.indexOf('const objectImageReferences =')
+    expect(dropsUnnamed).toBeGreaterThan(-1)
+    expect(buildsImages).toBeGreaterThan(dropsUnnamed)
   })
 })

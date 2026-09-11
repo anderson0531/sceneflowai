@@ -106,6 +106,17 @@ describe('referenceLimits', () => {
     expect(mapping).toContain('Coffee mug')
   })
 
+  it('buildPropReferenceMappingLines describes appearance without ordering an insertion', () => {
+    const mapping = buildPropReferenceMappingLines([
+      { propName: 'Thirty-Inch Iron Rail Spanner', sendIndex: 7 },
+    ])
+    expect(mapping).toMatch(/where the scene prompt already places it/i)
+    expect(mapping).toMatch(
+      /if the scene prompt does not use prop \[7\], the object is not in this frame/i
+    )
+    expect(mapping).not.toMatch(/extract this prop/i)
+  })
+
   it('buildPropReferenceMappingLines returns empty string when no valid props', () => {
     expect(buildPropReferenceMappingLines([])).toBe('')
     expect(buildPropReferenceMappingLines([{ propName: 'Mug' }])).toBe('')

@@ -69,9 +69,17 @@ function sceneHeadingText(scene: Record<string, unknown>): string {
   return ''
 }
 
-function buildBeatPropMatchText(scene: Record<string, unknown>, beat: SceneBeat): string {
+/**
+ * Text that decides which props are on camera for THIS beat.
+ *
+ * Scene-level text (heading, scene action, scene key props) is deliberately
+ * excluded: scene direction is the catalog of props present in the scene, and
+ * the beat decides which of them the frame actually shows. Attaching a prop
+ * the beat never mentions gives the image model a reference with no direction,
+ * which it resolves by inventing the prop into the frame.
+ */
+function buildBeatPropMatchText(beat: SceneBeat): string {
   return [
-    sceneHeadingText(scene),
     beat.actionDescription || '',
     beat.line || '',
     beat.character || '',
@@ -173,15 +181,6 @@ function characterDetectionOptions(
       locationNames: (locationReferences || []).map((loc) => loc.location || loc.locationDisplay),
     }),
   }
-}
-
-function sceneDirectionKeyProps(scene: Record<string, unknown>): string[] {
-  const dir = (scene.sceneDirection ?? scene.detailedDirection) as
-    | { scene?: { keyProps?: unknown } }
-    | undefined
-  const props = dir?.scene?.keyProps
-  if (!Array.isArray(props)) return []
-  return props.filter((prop): prop is string => typeof prop === 'string' && prop.trim().length > 0)
 }
 
 function uniqueObjects<T extends { id?: string; name?: string }>(objects: T[]): T[] {
@@ -368,12 +367,13 @@ export function resolveBeatFrameGenerationContext(
     }
   }
 
-  const matchText = buildBeatPropMatchText(scene, beat)
+  const matchText = buildBeatPropMatchText(beat)
   const beatDirectionKeyProps = beat.beatDirection?.keyProps ?? []
   const detectedObjects = uniqueObjects([
     ...matchObjectsBySelectedNames(beatDirectionKeyProps, objectReferences as any[]),
-    ...findSceneObjects(matchText, objectReferences as any[]),
-    ...matchObjectsBySelectedNames(sceneDirectionKeyProps(scene), objectReferences as any[]),
+    ...findSceneObjects(matchText, objectReferences as any[], undefined, {
+      matchDescriptions: false,
+    }),
   ])
   const objectRefIds = detectedObjects.map((o) => o.id).filter(Boolean) as string[]
 

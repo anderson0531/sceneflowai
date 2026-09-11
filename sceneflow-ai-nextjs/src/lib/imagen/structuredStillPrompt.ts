@@ -85,6 +85,46 @@ function extractSection(text: string, header: RegExp, nextHeaders: RegExp): stri
 const NEXT_SECTION =
   /\[(?:REFERENCES|STILL|STYLE|EXCLUSIONS|GLOBAL STYLE ANCHOR|SCENE COMPOSITION\s*&\s*BEAT|EXCLUSIONS\s*&\s*BOUNDARIES)\]/i
 
+/** Lines this module owns and re-emits, so they must never read back as action. */
+const STILL_BOILERPLATE_LINES = [STILL_PURPOSE_LINE, BEAT_FRAME_CANDID_ACTION_CONSTRAINT]
+
+/**
+ * Recover the beat action from a `[STILL]` or `[SCENE COMPOSITION & BEAT]` body.
+ *
+ * An assembled still is persisted as the beat's stored prompt and read back on
+ * the next generation, so parsing has to be the exact inverse of assembly.
+ * Prompts stored before this was true carry one `Action/Framing:` wrapper per
+ * regeneration around the code-owned purpose and candid lines; those layers are
+ * unwrapped here rather than left for a human to clean up.
+ */
+export function extractActionFramingBody(section: string): string {
+  if (!section) return ''
+
+  const lines: string[] = []
+  for (const rawLine of section.split('\n')) {
+    if (!rawLine.trim()) {
+      lines.push('')
+      continue
+    }
+
+    let value = rawLine
+    for (const boilerplate of STILL_BOILERPLATE_LINES) {
+      value = value.split(boilerplate).join(' ')
+    }
+
+    let previous = ''
+    while (previous !== value) {
+      previous = value
+      value = value.replace(/^\s*Action\/Framing:\s*/i, '')
+    }
+
+    const trimmed = value.trim()
+    if (trimmed) lines.push(trimmed)
+  }
+
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim()
+}
+
 export function parseStillPromptSource(text: string): {
   actionFraming: string
   style: string
@@ -110,13 +150,10 @@ export function parseStillPromptSource(text: string): {
   const exclusionsSection = extractSection(trimmed, /\[EXCLUSIONS\]/i, NEXT_SECTION)
   const stillSection = extractSection(trimmed, /\[STILL\]/i, NEXT_SECTION)
 
-  let actionFraming = composition || stillSection
-  if (actionFraming) {
-    actionFraming = actionFraming.replace(/^Action\/Framing:\s*/i, '').trim()
-  }
+  let actionFraming = extractActionFramingBody(composition || stillSection)
 
   if (!actionFraming) {
-    actionFraming = trimmed
+    const withoutSections = trimmed
       .replace(/\[REFERENCES\][\s\S]*?(?=\[STILL\]|\[STYLE\]|\[SCENE COMPOSITION|$)/i, '')
       .replace(/\[GLOBAL STYLE ANCHOR\][\s\S]*?(?=\[SCENE COMPOSITION|\[STILL\]|\[STYLE\]|$)/i, '')
       .replace(/\[EXCLUSIONS[^\]]*\][\s\S]*$/i, '')
@@ -124,6 +161,7 @@ export function parseStillPromptSource(text: string): {
       .replace(/^Cinematic film still\.\s*/i, '')
       .replace(/person \[\d+\](?: and person \[\d+\])* performing the following moment in-scene[^:]*:\s*/i, '')
       .trim()
+    actionFraming = extractActionFramingBody(withoutSections)
   }
 
   return {
@@ -133,8 +171,104 @@ export function parseStillPromptSource(text: string): {
   }
 }
 
+/**
+ * Does the prompt actually direct this library item?
+ *
+ * A reference image is consumed as an instruction. An attached prop that the
+ * composition never mentions asks the model to place an object without saying
+ * where, why, or who touches it — so it invents an answer. Props are matched
+ * by bound token or by name, since the name is only rewritten to a token
+ * during assembly.
+ */
+export function promptReferencesLibraryItem(
+  prompt: string,
+  item: { name?: string; promptToken?: string }
+): boolean {
+  const text = prompt || ''
+  if (!text.trim()) return false
+
+  const token = item.promptToken?.trim()
+  if (token && text.includes(token)) return true
+
+  const name = item.name?.trim()
+  if (!name) return false
+  return new RegExp(`\\b${escapeRegExp(name)}\\b`, 'i').test(text)
+}
+
+/**
+ * Beat action from a stored prompt, whether that prompt is a full assembled
+ * still or plain action text. Consumers (video prompts, seed prompts, re-runs)
+ * want the beat, never the code-owned still boilerplate around it.
+ */
+export function actionFramingFromStoredPrompt(stored?: string | null): string {
+  const text = stored?.trim()
+  if (!text) return ''
+  return parseStillPromptSource(text).actionFraming.trim()
+}
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+const NAME_TITLE_PATTERN =
+  /^(?:dr|doctor|prof|professor|mr|mrs|ms|miss|sir|madam|capt|captain|officer|det|detective|sgt|sergeant|lt|lieutenant|col|colonel|gen|general|father|mother|sister|brother|rev|reverend|judge|mayor|president|king|queen|lord|lady|uncle|aunt)\.?$/i
+
+/**
+ * Shorter forms a script actually uses for a cast member — "Piper Hayes" is
+ * written as "Piper", and "Professor Gideon Croft" as "Gideon". Without these
+ * the composed action keeps display names instead of person tokens.
+ */
+function personNameAliases(name: string): string[] {
+  const parts = name.split(/\s+/).filter(Boolean)
+  const withoutTitles = parts.filter((part) => !NAME_TITLE_PATTERN.test(part))
+  const aliases = new Set<string>()
+
+  if (withoutTitles.length > 0 && withoutTitles.length !== parts.length) {
+    aliases.add(withoutTitles.join(' '))
+  }
+  if (withoutTitles.length > 1) {
+    aliases.add(withoutTitles[0])
+    aliases.add(withoutTitles[withoutTitles.length - 1])
+  }
+
+  return [...aliases].filter(
+    (alias) => alias.length >= 3 && alias.toLowerCase() !== name.toLowerCase()
+  )
+}
+
+/** Ref names plus unambiguous person aliases, as name/token pairs. */
+function bindableNameTokenPairs(
+  refs: StillPromptBoundRef[]
+): Array<{ name: string; token: string }> {
+  const pairs = refs
+    .filter((ref) => ref.name.trim())
+    .map((ref) => ({ name: ref.name, token: ref.token }))
+
+  const aliasOwners = new Map<string, Set<string>>()
+  for (const ref of refs) {
+    if (ref.kind !== 'person') continue
+    for (const alias of personNameAliases(ref.name)) {
+      const key = alias.toLowerCase()
+      if (!aliasOwners.has(key)) aliasOwners.set(key, new Set())
+      aliasOwners.get(key)!.add(ref.token)
+    }
+  }
+
+  const reservedNames = new Set(refs.map((ref) => ref.name.toLowerCase()))
+  const added = new Set<string>()
+  for (const ref of refs) {
+    if (ref.kind !== 'person') continue
+    for (const alias of personNameAliases(ref.name)) {
+      const key = alias.toLowerCase()
+      // An alias shared by two cast members cannot be bound to either token.
+      if (aliasOwners.get(key)?.size !== 1) continue
+      if (reservedNames.has(key) || added.has(key)) continue
+      added.add(key)
+      pairs.push({ name: alias, token: ref.token })
+    }
+  }
+
+  return pairs
 }
 
 /** Replace library names with bound tokens (longest names first). */
@@ -144,12 +278,11 @@ export function replaceLibraryNamesWithTokens(
 ): string {
   if (!text || refs.length === 0) return text
 
-  const sorted = [...refs].sort((a, b) => b.name.length - a.name.length)
+  const sorted = bindableNameTokenPairs(refs).sort((a, b) => b.name.length - a.name.length)
   let result = text
-  for (const ref of sorted) {
-    if (!ref.name.trim()) continue
-    const pattern = new RegExp(`\\b${escapeRegExp(ref.name)}\\b`, 'gi')
-    result = result.replace(pattern, ref.token)
+  for (const pair of sorted) {
+    const pattern = new RegExp(`\\b${escapeRegExp(pair.name)}\\b`, 'gi')
+    result = result.replace(pattern, pair.token)
   }
   return result
 }

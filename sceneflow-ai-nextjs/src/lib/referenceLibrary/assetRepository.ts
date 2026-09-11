@@ -7,6 +7,8 @@ import { sequelize } from '@/config/database'
 import ReferenceAsset from '@/models/ReferenceAsset'
 import ReferenceAssetLink from '@/models/ReferenceAssetLink'
 import { toCanonicalName } from '@/lib/character/canonical'
+import { ensureReferenceLibraryTablesOnce } from '@/lib/database/migrateReferenceLibrary'
+import { isUndefinedTableError } from '@/lib/database/pgErrors'
 import type {
   ReferenceAssetKind,
   ReferenceAssetListQuery,
@@ -63,6 +65,7 @@ export interface UpdateReferenceAssetInput {
 export async function createReferenceAsset(
   input: CreateReferenceAssetInput
 ): Promise<ReferenceAssetRecord> {
+  await ensureReferenceLibraryTablesOnce()
   const row = await ReferenceAsset.create({
     user_id: input.userId,
     kind: input.kind,
@@ -83,6 +86,7 @@ export async function getReferenceAssetById(
   assetId: string,
   userId: string
 ): Promise<ReferenceAssetRecord | null> {
+  await ensureReferenceLibraryTablesOnce()
   const row = await ReferenceAsset.findOne({
     where: { id: assetId, user_id: userId },
   })
@@ -94,6 +98,7 @@ export async function findByCanonicalName(
   kind: ReferenceAssetKind,
   name: string
 ): Promise<ReferenceAssetRecord | null> {
+  await ensureReferenceLibraryTablesOnce()
   const canonical = toCanonicalName(name)
   const row = await ReferenceAsset.findOne({
     where: {
@@ -111,6 +116,7 @@ export async function updateReferenceAsset(
   userId: string,
   input: UpdateReferenceAssetInput
 ): Promise<ReferenceAssetRecord | null> {
+  await ensureReferenceLibraryTablesOnce()
   const row = await ReferenceAsset.findOne({
     where: { id: assetId, user_id: userId },
   })
@@ -134,16 +140,33 @@ export async function deleteReferenceAsset(
   assetId: string,
   userId: string
 ): Promise<boolean> {
+  await ensureReferenceLibraryTablesOnce()
   const deleted = await ReferenceAsset.destroy({
     where: { id: assetId, user_id: userId },
   })
   return deleted > 0
 }
 
+/**
+ * Link scoping is a filter, not the answer: a library that has never been
+ * created should narrow to nothing rather than fail the page that asked.
+ */
+async function linkedAssetIds(where: Record<string, string>): Promise<string[]> {
+  try {
+    const links = await ReferenceAssetLink.findAll({ where, attributes: ['asset_id'] })
+    return links.map((link) => link.asset_id)
+  } catch (error: unknown) {
+    if (!isUndefinedTableError(error)) throw error
+    console.warn('[referenceLibrary] reference_asset_links missing; treating scope as empty')
+    return []
+  }
+}
+
 export async function listReferenceAssets(
   userId: string,
   query: ReferenceAssetListQuery = {}
 ): Promise<ReferenceAssetListResult> {
+  await ensureReferenceLibraryTablesOnce()
   const limit = Math.min(query.limit ?? 50, 100)
   const where: Record<string, unknown> = { user_id: userId }
 
@@ -166,17 +189,9 @@ export async function listReferenceAssets(
   let assetIdsFilter: string[] | undefined
 
   if (query.linkedToProjectId) {
-    const links = await ReferenceAssetLink.findAll({
-      where: { project_id: query.linkedToProjectId },
-      attributes: ['asset_id'],
-    })
-    assetIdsFilter = links.map((l) => l.asset_id)
+    assetIdsFilter = await linkedAssetIds({ project_id: query.linkedToProjectId })
   } else if (query.linkedToSeriesId) {
-    const links = await ReferenceAssetLink.findAll({
-      where: { series_id: query.linkedToSeriesId },
-      attributes: ['asset_id'],
-    })
-    assetIdsFilter = links.map((l) => l.asset_id)
+    assetIdsFilter = await linkedAssetIds({ series_id: query.linkedToSeriesId })
   }
 
   if (assetIdsFilter !== undefined) {
@@ -214,6 +229,7 @@ export async function createReferenceAssetLink(input: {
   seriesId?: string
   addedBy?: ReferenceLinkAddedBy
 }): Promise<{ id: string } | null> {
+  await ensureReferenceLibraryTablesOnce()
   const asset = await ReferenceAsset.findOne({
     where: { id: input.assetId, user_id: input.userId },
   })
@@ -241,6 +257,7 @@ export async function deleteReferenceAssetLink(
   linkId: string,
   userId: string
 ): Promise<boolean> {
+  await ensureReferenceLibraryTablesOnce()
   const links = (await sequelize.query(
     `SELECT l.id FROM reference_asset_links l
      JOIN reference_assets a ON a.id = l.asset_id
@@ -260,17 +277,25 @@ export async function deleteReferenceAssetLink(
 export async function listLinksForProject(projectId: string): Promise<
   Array<{ linkId: string; assetId: string; addedBy: ReferenceLinkAddedBy }>
 > {
-  const links = await ReferenceAssetLink.findAll({
-    where: { project_id: projectId },
-  })
-  return links.map((l) => ({
-    linkId: l.id,
-    assetId: l.asset_id,
-    addedBy: l.added_by,
-  }))
+  await ensureReferenceLibraryTablesOnce()
+  try {
+    const links = await ReferenceAssetLink.findAll({
+      where: { project_id: projectId },
+    })
+    return links.map((l) => ({
+      linkId: l.id,
+      assetId: l.asset_id,
+      addedBy: l.added_by,
+    }))
+  } catch (error: unknown) {
+    if (!isUndefinedTableError(error)) throw error
+    console.warn('[referenceLibrary] reference_asset_links missing; no links for project')
+    return []
+  }
 }
 
 export async function recordAssetUsage(assetId: string, userId: string): Promise<void> {
+  await ensureReferenceLibraryTablesOnce()
   await ReferenceAsset.update(
     {
       use_count: sequelize.literal('use_count + 1') as unknown as number,

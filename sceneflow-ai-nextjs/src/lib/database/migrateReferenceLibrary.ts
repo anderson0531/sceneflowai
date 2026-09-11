@@ -131,3 +131,39 @@ export async function migrateReferenceLibrary(): Promise<{
     return { success: false, actions, errors }
   }
 }
+
+let tablesReady = false
+let tablesInFlight: Promise<void> | null = null
+
+/**
+ * Memoized, fail-soft table check for the reference library.
+ *
+ * The tables ship in this migration rather than in a deploy step, so a
+ * deployment that never ran bootstrap answers every library query with
+ * `relation "reference_asset_links" does not exist`. Callers run this first and
+ * the DDL is idempotent, so the cost is one existence check per process.
+ */
+export async function ensureReferenceLibraryTablesOnce(): Promise<void> {
+  if (tablesReady) return
+  if (tablesInFlight) return tablesInFlight
+
+  tablesInFlight = migrateReferenceLibrary()
+    .then((result) => {
+      if (!result.success) {
+        console.warn('[migrateReferenceLibrary] ensure failed:', result.errors.join('; '))
+      }
+      tablesReady = true
+    })
+    .catch((error: unknown) => {
+      // Never block a user action on a DDL permission problem; the query that
+      // follows reports a clearer error if the tables really are missing.
+      const msg = error instanceof Error ? error.message : String(error)
+      console.warn('[migrateReferenceLibrary] ensure threw:', msg)
+      tablesReady = true
+    })
+    .finally(() => {
+      tablesInFlight = null
+    })
+
+  return tablesInFlight
+}

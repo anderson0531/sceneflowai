@@ -125,8 +125,12 @@ export function buildWardrobeTurnaroundPrompt(input: WardrobeTurnaroundPromptInp
   }
 
   if (accessories) {
-    parts.push(`Accessories visible where appropriate: ${accessories}`)
+    parts.push(`Worn accessories visible where appropriate: ${accessories}`)
   }
+
+  parts.push(
+    'The mannequin holds and carries nothing: no tools, weapons, bags, documents, books, or handheld objects of any kind in any view — this sheet is copied as costume into every downstream frame'
+  )
 
   parts.push(
     'No dynamic action poses, no twisted torso, no dramatic foreshortening'

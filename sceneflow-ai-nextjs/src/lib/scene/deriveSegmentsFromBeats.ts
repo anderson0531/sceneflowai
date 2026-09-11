@@ -15,6 +15,7 @@ import {
   isStoryboardApproved,
 } from '@/lib/script/beatMigration'
 import { collectDraftStoryboardFrameWarnings } from '@/lib/storyboard/storyboardQuality'
+import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPrompt'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { SceneSegment } from '@/components/vision/scene-production/types'
 import type { VideoGenerationMethod } from '@/components/vision/scene-production/types'
@@ -40,7 +41,7 @@ function shortenVisualPrompt(text: string, maxLen = 160): string {
 
 export function buildEndFramePrompt(beat: SceneBeat): string {
   const startVisual =
-    beat.storyboardImagePrompt?.trim() ||
+    actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
     (beat.kind === 'action' ? beat.actionDescription?.trim() : undefined) ||
     beat.line?.replace(/\[[^\]]*\]/g, '').trim()
 
@@ -158,8 +159,12 @@ function beatToSegment(
       sceneRefIds: [],
       objectRefIds: [],
     },
-    startFramePrompt: beat.storyboardImagePrompt ?? beat.actionDescription ?? spokenText,
-    endFramePrompt: beat.storyboardEndImagePrompt ?? buildEndFramePrompt(beat),
+    startFramePrompt:
+      actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
+      beat.actionDescription ||
+      spokenText,
+    endFramePrompt:
+      actionFramingFromStoredPrompt(beat.storyboardEndImagePrompt) || buildEndFramePrompt(beat),
     generatedPrompt: buildVideoPrompt(beat, spokenText),
     action: beat.actionDescription ?? '',
     beatId: beat.beatId,

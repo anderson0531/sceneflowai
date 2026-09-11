@@ -24,6 +24,28 @@ function firstNonEmpty(...values: (string | undefined | null)[]): string | undef
   return undefined
 }
 
+const PROP_MATCH_STOP_WORDS = new Set([
+  'that',
+  'this',
+  'their',
+  'with',
+  'from',
+  'into',
+  'onto',
+  'inch',
+  'inches',
+  'foot',
+  'feet',
+])
+
+/** Distinctive words of a prop label, used to require more than one hit. */
+function propMatchWords(propName: string): string[] {
+  return propName
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((word) => word.length >= 4 && !PROP_MATCH_STOP_WORDS.has(word))
+}
+
 function collectKeyPropsForBeat(
   beat: SceneBeat,
   scenePropCatalog: string[]
@@ -50,8 +72,13 @@ function collectKeyPropsForBeat(
       out.push(trimmed)
       continue
     }
-    const [firstWord] = propLower.split(/\s+/)
-    if (firstWord && firstWord.length >= 4 && text.includes(firstWord)) {
+    // A prop's first word alone is a coincidence, not a reference: "violet"
+    // matches every beat mentioning the colour, and a derived key prop is
+    // persisted as this beat's directed prop list.
+    const words = propMatchWords(propLower)
+    if (words.length === 0) continue
+    const hits = words.filter((word) => text.includes(word)).length
+    if (hits >= 2 || (words.length === 1 && hits === 1)) {
       seen.add(propLower)
       out.push(trimmed)
     }

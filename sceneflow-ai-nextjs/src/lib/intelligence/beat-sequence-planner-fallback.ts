@@ -17,7 +17,7 @@ import {
 } from '@/lib/intelligence/project-lookbook-fallback'
 import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
-import { parseStillPromptSource } from '@/lib/imagen/structuredStillPrompt'
+import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPrompt'
 import type { BeatDirection, SceneBeat } from '@/lib/script/segmentTypes'
 
 function getSceneDirection(scene: Record<string, unknown>): Record<string, any> | undefined {
@@ -140,13 +140,81 @@ export function composeBeatStillPrompt(args: ComposeBeatStillPromptArgs): string
   return `${anchor}\n\n[SCENE COMPOSITION & BEAT]\nAction/Framing: ${actionFraming}`
 }
 
+function asSentence(value: string): string {
+  const trimmed = value.trim().replace(/\s+/g, ' ')
+  if (!trimmed) return ''
+  return /[.!?:;]$/.test(trimmed) ? trimmed : `${trimmed}.`
+}
+
+/**
+ * Append a beat facet unless the text is already covered.
+ *
+ * The composed result is persisted and read back on the next generation, so
+ * every facet has to be skipped when it is already present or a regenerated
+ * frame would restate its own blocking and gaze each pass.
+ */
+function appendFacet(parts: string[], value: string | undefined, label?: string): void {
+  const trimmed = value?.trim()
+  if (!trimmed) return
+  const alreadyPresent = parts.join(' ').toLowerCase()
+  if (alreadyPresent.includes(trimmed.toLowerCase())) return
+  parts.push(label ? `${label}: ${asSentence(trimmed)}` : asSentence(trimmed))
+}
+
+/**
+ * Build the frame description for a beat out of its structured direction.
+ *
+ * The lookbook path skips scene-image intelligence entirely, so nothing else
+ * would state who is on camera, how they are blocked, or which prop they are
+ * handling. Library and cast names here are bound to person/prop tokens later,
+ * during still assembly.
+ */
+export function composeBeatActionFraming(beat?: SceneBeat | null): string {
+  if (!beat) return ''
+  const direction = beat.beatDirection
+
+  const body =
+    actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
+    direction?.frozenMoment?.trim() ||
+    beat.actionDescription?.trim() ||
+    beat.line?.trim() ||
+    ''
+  if (!body) return ''
+
+  const parts: string[] = []
+  appendFacet(parts, body)
+  appendFacet(parts, direction?.blocking, 'Blocking')
+  appendFacet(parts, direction?.propInteraction, 'Prop handling')
+  appendFacet(parts, direction?.gaze, 'Gaze')
+
+  // A prop reference is only attached when the frame names it, so a directed
+  // key prop that no other facet mentions has to be stated here.
+  const described = parts.join(' ').toLowerCase()
+  const unmentionedProps = (direction?.keyProps ?? [])
+    .map((prop) => prop.trim())
+    .filter((prop) => prop && !described.includes(prop.toLowerCase()))
+  if (unmentionedProps.length > 0) {
+    parts.push(`Props in frame: ${unmentionedProps.join(', ')}.`)
+  }
+
+  // Framing leads the description, but a body read back from a previously
+  // composed frame already opens with it.
+  const shot = [direction?.shotType?.trim(), direction?.cameraAngle?.trim()]
+    .filter(Boolean)
+    .join(', ')
+  if (shot && !described.includes(shot.toLowerCase())) {
+    parts.unshift(asSentence(shot))
+  }
+
+  return parts.join(' ')
+}
+
 /** Action/Framing only — never the style header a lookbook wrap already owns. */
 export function actionFramingFromBeat(beat?: SceneBeat | null): string {
   if (!beat) return ''
-  const stored = beat.storyboardImagePrompt?.trim()
-  const fromPrompt = stored ? parseStillPromptSource(stored).actionFraming.trim() : ''
   return (
-    fromPrompt ||
+    composeBeatActionFraming(beat) ||
+    actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
     beat.beatDirection?.frozenMoment?.trim() ||
     beat.actionDescription?.trim() ||
     beat.line?.trim() ||
