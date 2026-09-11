@@ -7,6 +7,7 @@ import {
   LYRIA_RECITATION_ERROR_CODE,
   stripInlineVisualSync,
 } from '@/lib/audio/lyriaPromptAdapter'
+import { buildLyria3Prompt } from '@/lib/audio/lyriaClient'
 
 const AURA_PROMPT =
   "A deep, resonant synth pad begins, slowly building with ethereal, shimmering arpeggios as the digital landscape is revealed. As the golden tendril appears, a subtle, hopeful high-frequency synth melody emerges, contrasting with the cold. When biometric data is scanned and deconstructed, a rhythmic, pulsing digital beat joins, increasing in tempo and intensity, giving a sense of relentless, invasive processing. During the neural network tracking shot, the music swells with a driving, slightly ominous electronic beat, layered with high-frequency digital chirps and sweeps, creating an overwhelming, accelerating information flow, punctuated by the struggling, rising golden melody. The music peaks as the title 'AURA'S ECHO' appears, hitting a powerful, sustained, yet cold, orchestral and synth chord, which then resolves into a warm, harmonious, and hopeful crescendo as the golden light takes over, slowly fading into the transition."
@@ -76,6 +77,16 @@ describe('adaptPromptForLyria', () => {
     const adapted = adaptPromptForLyria('')
     expect(adapted.length).toBeGreaterThan(10)
     expect(adapted.toLowerCase()).toContain('instrumental')
+  })
+
+  it('keeps the duration prefix when the adapted brief is attached', () => {
+    const adapted = adaptPromptForLyria(ROCK_PROMPT)
+    const prompted = buildLyria3Prompt(adapted, 95)
+    expect(prompted.startsWith('Create a 95-second instrumental film underscore, no vocals, no lyrics.')).toBe(
+      true
+    )
+    expect(prompted.toLowerCase()).toContain('instrumental')
+    expect(prompted.toLowerCase()).toContain('distorted guitar riff')
   })
 })
 

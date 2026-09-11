@@ -1,7 +1,10 @@
 /**
- * Adapts scene music descriptions for Google Lyria (lyria-002).
- * Lyria expects short instrumental prompts: [genre] + [mood] + [instruments] + [tempo].
- * Long visual-sync spotting sheets often trigger recitation (copyright-similarity) blocks.
+ * Adapts scene music descriptions for Google Lyria 3.
+ *
+ * The brief itself stays short and instrumental: [genre] + [mood] + [instruments]
+ * + [tempo]. Long visual-sync spotting sheets still trigger recitation blocks.
+ * Duration lives in a separate prefix (`buildLyria3Prompt`) so this adapter
+ * never strips the "Create an N-second…" sentence.
  */
 
 const MAX_LYRIA_WORDS = 30
@@ -238,7 +241,8 @@ export const LYRIA_RECITATION_ERROR_CODE = 'LYRIA_RECITATION_BLOCKED'
 export const LYRIA_MUSIC_PROMPT_RULES = `LYRIA MUSIC RULES (for scene.music.description):
 - ONE sentence only — opening music cue (genre, mood, instruments, tempo)
 - 10-20 words ONLY
-- Instrumental only (no vocals/lyrics)
+- Instrumental only (no vocals/lyrics) — Lyria 3 Pro writes songs unless told not to
 - Format: [genre], [mood], [instruments], [tempo]
 - NO beat spotting — no "when X appears", "as the camera…", title cards, or narrative arcs
-- NO film titles, character names, or timestamps`
+- NO film titles, character names, or timestamps
+- Do NOT put a duration in the description; the generator adds that itself`

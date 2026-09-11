@@ -680,9 +680,8 @@ const ASSUMED_BEAT_DURATION_SEC = 4
 /**
  * How long the cue plays, summed from the beats it covers.
  *
- * Lyria returns a fixed ~30s clip whatever is asked for, so this is not a
- * length the generator honours — it is what the mixer loops or trims the track
- * to, and what the cue is labelled with.
+ * This is the play span we ask Lyria 3 to match (capped at 184s). If the
+ * generated file is still shorter, the mixer loops or trims to this length.
  */
 export function estimateMusicCueDuration(
   cue: SceneMusicCue,

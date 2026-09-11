@@ -97,7 +97,7 @@ export interface SceneMusicCue {
   url?: string
   /** Timeline length the cue plays for, looping the file as needed. */
   duration?: number
-  /** Real length of the generated file (Lyria returns ~30s). */
+  /** Real length of the generated file (Lyria 3 writes up to ~184s). */
   fileDuration?: number
   /** Provenance of this cue record. */
   generatedBy?: SceneMusicCueSource

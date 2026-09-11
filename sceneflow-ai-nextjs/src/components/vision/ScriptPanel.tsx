@@ -7758,7 +7758,7 @@ function SceneCard({
                           />
                         </label>
                         <span className="text-[10px] text-gray-500 dark:text-gray-500">
-                          Lyria generates ~30s clips; longer durations loop in the Mixer.
+                          Generates a track matching this duration (up to ~3 minutes). Longer scenes loop the leftover.
                         </span>
                         {typeof scene.musicFileDuration === 'number' && scene.musicFileDuration > 0 && (
                           <span className="text-[10px] text-gray-500">

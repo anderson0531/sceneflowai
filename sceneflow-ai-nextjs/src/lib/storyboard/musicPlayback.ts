@@ -7,6 +7,7 @@ import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
 import { isMusicCueScored, parsePersistedMusicCues } from '@/lib/script/sceneMusicCues'
 import type { StoryboardVisualFrame } from '@/lib/storyboard/types'
 
+/** Fallback only when the file length was never measured or stored. */
 export const DEFAULT_MUSIC_FILE_DURATION_SEC = 30
 
 export interface BeatAlignedMusicClip {
@@ -137,7 +138,7 @@ export function buildBeatAlignedMusicClips(
         duration: sceneDuration,
         trackType: 'music',
         label: 'Background Music',
-        loop: true,
+        loop: sceneDuration > musicFileDuration,
       },
     ]
   }
@@ -212,7 +213,7 @@ export function buildBeatAlignedMusicClips(
         fadeAnchorTime,
         trackType: 'music',
         label: 'Background Music',
-        loop: true,
+        loop: duration > musicFileDuration,
       })
     }
   }
@@ -274,13 +275,11 @@ export function resolveSceneMusicFileDuration(
   const probed = dynamicDurations[musicUrl]
   if (typeof probed === 'number' && probed > 0) return probed
 
-  const sceneDuration = scene.musicDuration
-  if (typeof sceneDuration === 'number' && sceneDuration > 0) return sceneDuration
-
-  const musicObj = scene.music as { duration?: number } | undefined
-  if (typeof musicObj?.duration === 'number' && musicObj.duration > 0) {
-    return musicObj.duration
-  }
+  // Play length (`musicDuration`) is how long the mixer holds the track, not
+  // how long the file is. Using it here made a 90s scene over a 30s clip look
+  // like it already covered the scene.
+  const stored = scene.musicFileDuration
+  if (typeof stored === 'number' && stored > 0) return stored
 
   return DEFAULT_MUSIC_FILE_DURATION_SEC
 }

@@ -9,107 +9,35 @@ import { authOptions } from '@/lib/auth'
 import {
   adaptPromptForLyria,
   buildLyriaFallbackPrompts,
-  isLyriaRecitationError,
   LYRIA_RECITATION_ERROR_CODE,
   LYRIA_RECITATION_USER_MESSAGE,
 } from '@/lib/audio/lyriaPromptAdapter'
-import { getWavDurationSeconds } from '@/lib/audio/audioContainerDuration'
+import { getContainerAudioDurationSeconds } from '@/lib/audio/audioContainerDuration'
+import {
+  buildLyria3Prompt,
+  callLyria3,
+  clampGenerationDuration,
+  clampRequestedPlayDuration,
+  lyriaBlobMeta,
+  selectLyriaModel,
+  type LyriaCallResult,
+} from '@/lib/audio/lyriaClient'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 /**
- * Lyria's predict call is synchronous and returns ~30s of WAV. One attempt
- * regularly takes longer than a minute; recitation fallbacks need a second
- * attempt after that. 60s is why production logged
- * "Task timed out after 60 seconds" mid-generate.
+ * Lyria 3 Pro is a synchronous Interactions call that can take a couple of
+ * minutes to write a full track. Recitation fallbacks need a second attempt
+ * after that. 300s is the Vercel ceiling this route already had.
  */
 export const maxDuration = 300
 
 const MUSIC_CREDIT_COST = AUDIO_CREDITS.MUSIC_TRACK || 25 // Fallback to 25
 /** Leave time to upload the clip and charge after Vertex returns. */
 const ROUTE_RESERVE_MS = 20_000
-/** One Lyria predict; recitation errors return in seconds, not this long. */
-const LYRIA_ATTEMPT_TIMEOUT_MS = 180_000
+/** One Lyria 3 interaction, including poll. Pro tracks regularly exceed 3 minutes of wait. */
+const LYRIA_ATTEMPT_TIMEOUT_MS = 240_000
 const LYRIA_MIN_ATTEMPT_MS = 15_000
-
-type LyriaCallResult =
-  | { ok: true; base64Data: string }
-  | { ok: false; status: number; body: string; recitation: boolean; timedOut?: boolean }
-
-async function callLyria(
-  prompt: string,
-  endpoint: string,
-  accessToken: string,
-  timeoutMs: number
-): Promise<LyriaCallResult> {
-  const requestBody = {
-    instances: [{ prompt }],
-    parameters: { sample_count: 1 },
-  }
-
-  let response: Response
-  try {
-    response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-      signal: AbortSignal.timeout(timeoutMs),
-    })
-  } catch (error) {
-    const timedOut =
-      error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError')
-    return {
-      ok: false,
-      status: timedOut ? 504 : 502,
-      body: error instanceof Error ? error.message : String(error),
-      recitation: false,
-      timedOut,
-    }
-  }
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    return {
-      ok: false,
-      status: response.status,
-      body: errorText,
-      recitation: isLyriaRecitationError(errorText),
-    }
-  }
-
-  const data = await response.json()
-  const predictions = data?.predictions
-
-  if (!predictions || predictions.length === 0) {
-    return {
-      ok: false,
-      status: 500,
-      body: JSON.stringify(data).slice(0, 500),
-      recitation: false,
-    }
-  }
-
-  const prediction = predictions[0]
-  const base64Data =
-    prediction.bytesBase64Encoded ||
-    prediction.audioContent ||
-    prediction.audio ||
-    prediction.content
-
-  if (!base64Data) {
-    return {
-      ok: false,
-      status: 500,
-      body: JSON.stringify(prediction).slice(0, 500),
-      recitation: false,
-    }
-  }
-
-  return { ok: true, base64Data }
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -132,17 +60,14 @@ export async function POST(request: NextRequest) {
     const { text, projectId, sceneId, cueId, duration: requestedDuration } =
       await request.json()
 
-    const requestedDurationSeconds =
-      typeof requestedDuration === 'number' && requestedDuration > 0
-        ? Math.min(Math.round(requestedDuration), 600)
-        : 30
+    const requestedDurationSeconds = clampRequestedPlayDuration(requestedDuration)
+    const generationDurationSeconds = clampGenerationDuration(requestedDurationSeconds)
 
     if (!text || typeof text !== 'string') {
       return NextResponse.json({ error: 'Missing text parameter' }, { status: 400 })
     }
 
     const gcpProjectId = process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID
-    const region = process.env.GCP_REGION || 'us-central1'
 
     console.log('[Google Music] Vertex AI project configured:', !!gcpProjectId)
 
@@ -156,17 +81,21 @@ export async function POST(request: NextRequest) {
       maxDuration * 1000 - (Date.now() - routeStartedAt) - ROUTE_RESERVE_MS
 
     const accessToken = await getVertexAIAuthToken()
-    const modelId = 'lyria-002'
-    const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${gcpProjectId}/locations/${region}/publishers/google/models/${modelId}:predict`
+    const modelId = selectLyriaModel(generationDurationSeconds)
 
     const adaptedPrompt = adaptPromptForLyria(text)
     const fallbackPrompts = buildLyriaFallbackPrompts(text)
     const promptAttempts: Array<{ variant: string; prompt: string }> = [
-      { variant: 'adapted', prompt: adaptedPrompt },
-      ...fallbackPrompts.map((prompt, i) => ({ variant: `fallback_${i + 1}`, prompt })),
+      { variant: 'adapted', prompt: buildLyria3Prompt(adaptedPrompt, generationDurationSeconds) },
+      ...fallbackPrompts.map((prompt, i) => ({
+        variant: `fallback_${i + 1}`,
+        prompt: buildLyria3Prompt(prompt, generationDurationSeconds),
+      })),
     ]
 
     console.log('[Google Music] Lyria prompt plan:', {
+      modelId,
+      generationDurationSeconds,
       originalLength: text.length,
       adaptedLength: adaptedPrompt.length,
       attemptCount: promptAttempts.length,
@@ -187,11 +116,18 @@ export async function POST(request: NextRequest) {
 
       const attemptTimeoutMs = Math.min(LYRIA_ATTEMPT_TIMEOUT_MS, budgetMs)
       console.log(`[Google Music] Trying Lyria (${attempt.variant}):`, {
+        modelId,
         prompt: attempt.prompt,
         timeoutMs: attemptTimeoutMs,
       })
 
-      const result = await callLyria(attempt.prompt, endpoint, accessToken, attemptTimeoutMs)
+      const result = await callLyria3({
+        prompt: attempt.prompt,
+        model: modelId,
+        projectId: gcpProjectId,
+        accessToken,
+        timeoutMs: attemptTimeoutMs,
+      })
 
       if (result.ok) {
         successResult = result
@@ -233,13 +169,18 @@ export async function POST(request: NextRequest) {
     }
 
     const arrayBuffer = Buffer.from(successResult.base64Data, 'base64')
-    const actualDurationSeconds = getWavDurationSeconds(arrayBuffer)
+    const actualDurationSeconds =
+      getContainerAudioDurationSeconds(arrayBuffer) ?? generationDurationSeconds
+    const { extension, contentType } = lyriaBlobMeta(successResult.mimeType)
 
     console.log('[Google Music] Music generated successfully:', {
       variant: winningVariant,
+      modelId,
+      mimeType: successResult.mimeType,
       size: arrayBuffer.byteLength,
       actualDurationSeconds,
       requestedDurationSeconds,
+      generationDurationSeconds,
     })
 
     try {
@@ -255,6 +196,7 @@ export async function POST(request: NextRequest) {
       await trackCost(userId, 'google_music', MUSIC_CREDIT_COST, {
         projectId,
         sceneId,
+        model: modelId,
       })
     } catch (chargeError: unknown) {
       console.error(
@@ -263,17 +205,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Always Blob the WAV. A 30s Lyria clip is ~5.7MB uncompressed, which is
-    // over Vercel's 4.5MB response body limit — returning the bytes inline is
-    // what produced the buffer/payload-size failures.
+    // Always Blob the file. A 30s Lyria 2 WAV was ~5.7MB and blew Vercel's
+    // 4.5MB inline limit; a 2-minute Pro MP3 is smaller but still safer here.
     const timestamp = Date.now()
     const slug = [sceneId || 'music', typeof cueId === 'string' ? cueId : '']
       .filter(Boolean)
       .join('-')
-    const filename = `audio/music/${projectId || 'default'}/${slug}-${timestamp}.wav`
+    const filename = `audio/music/${projectId || 'default'}/${slug}-${timestamp}.${extension}`
     const blob = await put(filename, arrayBuffer, {
       access: 'public',
-      contentType: 'audio/wav',
+      contentType,
     })
     console.log('[Google Music] Saved to blob:', blob.url)
     return NextResponse.json({
@@ -281,6 +222,7 @@ export async function POST(request: NextRequest) {
       size: arrayBuffer.byteLength,
       duration: actualDurationSeconds,
       requestedDuration: requestedDurationSeconds,
+      model: modelId,
     })
   } catch (error: unknown) {
     console.error(

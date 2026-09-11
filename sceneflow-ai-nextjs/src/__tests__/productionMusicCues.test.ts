@@ -180,6 +180,22 @@ describe('production Screening Room music tracks', () => {
 
     expect(tracks.musicCues).toEqual([])
     expect(tracks.music?.url).toBe(LEGACY_URL)
+    expect(tracks.music?.loop).toBe(true)
+  })
+
+  it('does not loop a scene-length file that already covers the timeline', () => {
+    const tracks = buildAudioTracksForLanguage(
+      {
+        beats: [{ beatId: 'bt_a1', kind: 'action' }],
+        musicAudio: LEGACY_URL,
+        musicFileDuration: 90,
+      },
+      'en',
+      { beatSegments: beatSegments() }
+    )
+
+    expect(tracks.music?.actualDuration).toBe(90)
+    expect(tracks.music?.loop).toBe(false)
   })
 
   it('lets scored cues replace the legacy scene-wide loop', () => {
