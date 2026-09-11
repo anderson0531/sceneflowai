@@ -49,7 +49,7 @@ import { runSceneExpressPreflight } from './sceneExpressPreflight'
 import { generateSceneDirection } from './generateDirection'
 import { generateSceneAudio, applyAudioAssetsToScene } from './generateAudio'
 import { generateSceneImage } from './generateImage'
-import { usesFlashAnimaticTier } from './animaticImageModel'
+import { usesFlashDraftTier } from './animaticImageModel'
 import { beatDirectionFingerprint } from '../script/beatDirectionFingerprint'
 import { shouldScheduleStandaloneNarration } from '../script/narration'
 import {
@@ -66,14 +66,17 @@ import {
   applyBeatsToScene,
   isBeatExcluded,
 } from '../script/beatMigration'
-import { countExpressFrameScope } from '../storyboard/types'
+import { beatFrameSlotKey, countExpressFrameScope } from '../storyboard/types'
 import { stampPreVisContentHash } from '../storyboard/preVisSync'
 import type { BeatReferenceSelection, SceneBeat } from '../script/segmentTypes'
 import {
   planBeatSequence,
   applyBeatKeyframePlansToScene,
+  asBeatRole,
   ensureSceneMusicFromDirection,
   isTitleOrCinematicScene,
+  roleAllowsTypography,
+  storedPromptMatchesDirection,
   type BeatKeyframePlan,
   type BeatPlannerContinuityAnchor,
 } from '../intelligence/beat-sequence-planner'
@@ -141,9 +144,9 @@ function getExpressImageParams(options: ExpressOptions) {
 
 /** Draft beats on flash get a wider image lane than pro identity-ref frames. */
 function usesFlashAnimaticRun(options: ExpressOptions): boolean {
-  return usesFlashAnimaticTier({
+  return usesFlashDraftTier({
     isBeatFrame: true,
-    animaticDraft: getExpressImageParams(options).animaticDraft,
+    resolvedModelTier: getExpressImageParams(options).modelTier,
   })
 }
 
@@ -164,13 +167,13 @@ function getSelectedFrameKeySet(options: ExpressOptions): Set<string> | null {
 function isBeatStartSlotSelected(beat: SceneBeat, selectedKeys: Set<string> | null): boolean {
   if (!selectedKeys) return true
   if (!beat.beatId) return false
-  return selectedKeys.has(beat.beatId)
+  return selectedKeys.has(beatFrameSlotKey(beat.beatId, 'start'))
 }
 
 function isBeatEndSlotSelected(beat: SceneBeat, selectedKeys: Set<string> | null): boolean {
   if (!selectedKeys) return true
   if (!beat.beatId) return false
-  return selectedKeys.has(`${beat.beatId}-end`)
+  return selectedKeys.has(beatFrameSlotKey(beat.beatId, 'end'))
 }
 
 function isLegacySlotSelected(key: string, selectedKeys: Set<string> | null): boolean {
@@ -467,6 +470,31 @@ function getPreviousSceneContinuityAnchor(
     lastBeat.beatDirection?.frozenMoment?.trim() || lastBeat.actionDescription?.trim() || undefined
   if (!shotType && !frozenMoment) return undefined
   return { shotType, frozenMoment }
+}
+
+/**
+ * A plan that replays what the beat already had.
+ *
+ * Used on a scoped run so a regen renders the frame the user was looking at
+ * rather than the planner's fresh interpretation of the same beat. `beatRole`
+ * and `shotType` are inert here — nothing downstream reads them off a reused
+ * plan, and the beat keeps its own stored values because
+ * `applyBeatKeyframePlansToScene` is not called for it.
+ */
+function reusedBeatPlan(beat: SceneBeat, beatIndex: number): BeatKeyframePlan {
+  const beatRole = asBeatRole(beat.beatRole) ?? 'progression'
+  return {
+    beatIndex,
+    beatRole,
+    shotType: beat.beatDirection?.shotType ?? '',
+    frozenMoment: beat.beatDirection?.frozenMoment ?? '',
+    prompt: beat.storyboardImagePrompt ?? '',
+    allowTypography: roleAllowsTypography(beat.beatRole),
+    ...(beat.durationSeconds ? { durationSeconds: beat.durationSeconds } : {}),
+    ...(beat.beatDirection?.lightingAccent
+      ? { lighting: beat.beatDirection.lightingAccent }
+      : {}),
+  }
 }
 
 /** Action/Framing text only — style prose must not drive reference matching. */
@@ -1364,7 +1392,8 @@ async function persistBeatFrame(
   }
 }
 
-async function planSceneBeatKeyframes(
+/** Exported for tests; the run path calls it through runImagePhase. */
+export async function planSceneBeatKeyframes(
   ctx: SceneRunContext,
   options: ExpressOptions,
   project: any,
@@ -1384,9 +1413,52 @@ async function planSceneBeatKeyframes(
   })
 
   try {
+    const selectedKeys = getSelectedFrameKeySet(options)
     const activeEntries = beats
       .map((beat, beatIndex) => ({ beat, beatIndex }))
       .filter(({ beat }) => !isBeatExcluded(beat))
+
+    // A scoped run plans only the frames it was asked to render. Planning writes
+    // storyboardImagePrompt on every beat it covers, so planning a whole scene
+    // in order to regenerate one frame would overwrite its siblings' prompts —
+    // including any authored by hand in the prompt builder.
+    const inScope = selectedKeys
+      ? activeEntries.filter(
+          ({ beat }) =>
+            isBeatStartSlotSelected(beat, selectedKeys) ||
+            isBeatEndSlotSelected(beat, selectedKeys)
+        )
+      : activeEntries
+
+    // A stored prompt whose direction fingerprint still matches describes the
+    // beat as it stands, so it is replayed instead of re-planned. Only scoped
+    // runs reuse: an unscoped pass is asking for the scene to be re-planned.
+    const toPlan = selectedKeys
+      ? inScope.filter(({ beat }) => !storedPromptMatchesDirection(beat))
+      : inScope
+
+    if (selectedKeys) {
+      for (const { beat, beatIndex } of inScope) {
+        if (storedPromptMatchesDirection(beat)) {
+          beatPlansByIndex.set(beatIndex, reusedBeatPlan(beat, beatIndex))
+        }
+      }
+    }
+
+    if (toPlan.length === 0) {
+      safeEmit(emit, {
+        type: 'phase-done',
+        sceneIndex,
+        sceneNumber,
+        phase: 'image-plan',
+        ok: true,
+        skipped: true,
+      })
+      console.log(
+        `[expressOrchestrator] Reused ${beatPlansByIndex.size} stored beat prompt(s) scene ${sceneNumber} — planner skipped`
+      )
+      return beatPlansByIndex
+    }
 
     const visionPhase = project?.metadata?.visionPhase || {}
     const treatment = visionPhase.treatment || project?.metadata?.treatmentPhase
@@ -1397,7 +1469,7 @@ async function planSceneBeatKeyframes(
     const planResult = await trafficCop.runInLane('text', () =>
       planBeatSequence({
         scene,
-        beats: activeEntries.map((entry) => entry.beat),
+        beats: toPlan.map((entry) => entry.beat),
         sceneNumber,
         totalScenes: Array.isArray(scenes) ? scenes.length : undefined,
         filmContext: {
@@ -1421,7 +1493,7 @@ async function planSceneBeatKeyframes(
     )
     const remappedPlans = planResult.plans.map((plan) => ({
       ...plan,
-      beatIndex: activeEntries[plan.beatIndex]?.beatIndex ?? plan.beatIndex,
+      beatIndex: toPlan[plan.beatIndex]?.beatIndex ?? plan.beatIndex,
     }))
     Object.assign(scene, applyBeatKeyframePlansToScene(scene, remappedPlans))
     for (const plan of remappedPlans) {

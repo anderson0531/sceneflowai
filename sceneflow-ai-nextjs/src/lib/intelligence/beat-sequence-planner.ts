@@ -19,6 +19,9 @@ import {
   buildPlannerSystemPrompt,
   buildPlannerUserPrompt,
   inferBeatRole,
+  asBeatRole,
+  roleAllowsTypography,
+  storedPromptMatchesDirection,
   type BeatKeyframePlan,
   type BeatPlannerContinuityAnchor,
   type BeatRole,
@@ -39,6 +42,9 @@ export type {
 }
 export {
   inferBeatRole,
+  asBeatRole,
+  roleAllowsTypography,
+  storedPromptMatchesDirection,
   buildFallbackBeatPlans,
   applyBeatKeyframePlansToScene,
   composeBeatStillPrompt,
@@ -110,9 +116,6 @@ function setCachedPlan(key: string, result: BeatSequencePlanResult): void {
   planCache.set(key, { result, timestamp: Date.now() })
 }
 
-function roleAllowsTypography(role: BeatRole): boolean {
-  return role === 'title_reveal' || role === 'credit'
-}
 
 /**
  * Beats should share a look but not a camera setup. Reject only the degenerate

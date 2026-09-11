@@ -395,12 +395,29 @@ describe('Express beat generate-image flags', () => {
 })
 
 describe('frameType is decided by the beat, not by the button', () => {
-  it('quick regen sends a beat frame for every beat kind', () => {
+  it('quick regen has no payload of its own to get wrong', () => {
+    // It used to build a Direct body here, which is how it ended up pinned to
+    // the pro tier and skipping the beat planner. It now starts a scoped
+    // Express run instead, so there is one payload for every beat frame.
     const src = readFileSync(join(process.cwd(), 'src/lib/vision/preVisDirectGenerate.ts'), 'utf8')
+    expect(src).not.toContain('buildBeatRegenDirectImagePayload')
+    expect(src).not.toContain("frameType: 'beat'")
 
-    expect(src).toContain("frameType: 'beat'")
-    expect(src).not.toMatch(/frameType:\s*[^,\n]*slot\.kind/)
-    expect(src).not.toMatch(/frameType:\s*[^,\n]*beat\.kind/)
+    const page = readFileSync(
+      join(process.cwd(), 'src/app/dashboard/workflow/vision/[projectId]/page.tsx'),
+      'utf8'
+    )
+    for (const handler of [
+      'const handleGenerateBeatFrameImage',
+      'const handleGenerateBeatEndFrameImage',
+    ]) {
+      const start = page.indexOf(handler)
+      expect(start, handler).toBeGreaterThan(-1)
+      const body = page.slice(start, page.indexOf('\n  const ', start + handler.length))
+      expect(body, handler).toContain('handleExpressSceneGenerate')
+      expect(body, handler).toContain("scope: 'selected'")
+      expect(body, handler).not.toContain('/api/scene/generate-image')
+    }
   })
 
   it('the Direct dialog routes any beat-backed slot the same way', () => {

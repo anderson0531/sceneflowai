@@ -89,20 +89,13 @@ import { shouldUseKlingLongTake } from '@/lib/kling/longTakePlanner'
 import {
   GALLERY_MANUAL_GENERATE_OPTS,
 } from '@/lib/vision/galleryImageGeneration'
-import {
-  buildPreVisDirectApiFields,
-  buildBeatRegenDirectImagePayload,
-} from '@/lib/vision/preVisDirectGenerate'
+import { buildPreVisDirectApiFields } from '@/lib/vision/preVisDirectGenerate'
 import {
   PreVisFramePromptDialog,
   type PreVisDirectGenerationOptions,
 } from '@/components/vision/PreVisFramePromptDialog'
 import { toast } from 'sonner'
 import { SceneImageQuotaToast } from '@/components/vision/SceneImageQuotaToast'
-import {
-  fetchSceneGenerateImageWith429Retry,
-  isSceneImageQuotaResponse,
-} from '@/lib/vision/sceneImageClientRetry'
 import {
   resolveCharacterId,
   updateCharacterInList,
@@ -300,7 +293,7 @@ import { sanitizeScriptScenes } from '@/lib/script/segmentScript'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { hydrateVisionStateFromFullProject } from '@/lib/vision/hydrateVisionProjectImages'
 import { uploadAssetViaAPI } from '@/lib/vision/uploads'
-import { appendStoryboardFrame, removeStoryboardFrame, findStoryboardFrame, getOrderedStoryboardFrames, enumerateStoryboardFrameSlots } from '@/lib/storyboard/types'
+import { appendStoryboardFrame, removeStoryboardFrame, findStoryboardFrame, getOrderedStoryboardFrames, enumerateStoryboardFrameSlots, beatFrameSlotKey } from '@/lib/storyboard/types'
 
 // Scene Analysis interface for score generation
 interface SceneAnalysis {
@@ -10195,11 +10188,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  /**
+   * Regenerate one beat's start frame through Express, scoped to that beat.
+   *
+   * This used to post its own payload straight to the image route, which pinned
+   * the frame to the pro tier and bypassed the beat planner — so the same beat
+   * came out different depending on which button started it. Running the scene
+   * pipeline for a single frame key keeps one code path for every beat frame.
+   */
   const handleGenerateBeatFrameImage = async (
     sceneIdx: number,
     beatId: string,
     referenceSelection?: BeatReferenceSelection
   ) => {
+    // handleExpressSceneGenerate no-ops silently while a run is in flight, and
+    // this button sits outside the progress overlay, so say so.
+    if (isExpressRunning) {
+      try { const { toast } = require('sonner'); toast.info('A scene generation is already running') } catch {}
+      return
+    }
+
     const scene = script?.script?.scenes?.[sceneIdx]
     if (!scene) {
       try { const { toast } = require('sonner'); toast.error('Scene not found') } catch {}
@@ -10207,110 +10215,35 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
 
     const rawBeatIdx = resolveRawBeatIndex(scene, { beatId })
-    if (rawBeatIdx === undefined) {
+    if (rawBeatIdx === undefined || !getSceneBeats(scene)[rawBeatIdx]) {
       try { const { toast } = require('sonner'); toast.error('Beat not found') } catch {}
       return
     }
 
-    const beats = getSceneBeats(scene)
-    const beat = beats[rawBeatIdx]
-    if (!beat) {
-      try { const { toast } = require('sonner'); toast.error('Beat not found') } catch {}
-      return
-    }
-
-    if (!batchGeneratingRef.current) {
-      overlayStore.show(`Beat frame — Scene ${sceneIdx + 1}`, 25, 'storyboard-production')
-    }
-    setGeneratingKeyframeSceneNumber(sceneIdx + 1)
-
-    try {
-      const requestBody = buildBeatRegenDirectImagePayload({
-        projectId,
-        sceneIndex: sceneIdx,
-        scene,
-        beat,
-        beatIndex: rawBeatIdx,
-        frameRole: 'start',
-        quality: imageQuality,
-        projectCharacters: characters,
-        locationReferences,
-        objectReferences,
-        filmTitle: project?.title,
-        lockedArtStyle: project?.metadata?.visionPhase?.artStyle as string | undefined,
-        referenceSelection,
-      })
-
-      let retryToastId: string | number | undefined
-      const { response, data } = await fetchSceneGenerateImageWith429Retry(requestBody, {
-        onRetryScheduled: (attempt, maxRetries) => {
-          try {
-            if (retryToastId !== undefined) toast.dismiss(retryToastId)
-            retryToastId = toast.loading(
-              `Image service busy — retrying (${attempt}/${maxRetries})…`
-            )
-          } catch {}
-        },
-      })
-
-      if (retryToastId !== undefined) {
-        try {
-          toast.dismiss(retryToastId)
-        } catch {}
-      }
-
-      if (!response.ok) {
-        if (isSceneImageQuotaResponse(response.status, data)) {
-          toast.error(
-            <SceneImageQuotaToast
-              onRetry={() => handleGenerateBeatFrameImage(sceneIdx, beatId, referenceSelection)}
-              retryLabel="Retry Beat Frame"
-            />,
-            { duration: 10000, position: 'top-center' }
-          )
-          return
-        }
-        throw new Error((data?.error as string) || 'Beat frame generation failed')
-      }
-
+    // Saved before the run, because Express reads the selection off the stored
+    // beat — a choice just made in the reference dialog would otherwise be
+    // invisible to the server.
+    if (referenceSelection) {
       const updatedScenes = [...(script.script.scenes || [])]
-      let updatedScene = applyBeatStoryboardImageToScene(
+      updatedScenes[sceneIdx] = applyBeatReferenceSelectionToScene(
         updatedScenes[sceneIdx],
-        rawBeatIdx,
-        data.imageUrl,
-        { imagePrompt: data.prompt || '' }
+        beatId,
+        referenceSelection
       )
-      if (referenceSelection) {
-        updatedScene = applyBeatReferenceSelectionToScene(
-          updatedScene,
-          beatId,
-          referenceSelection
-        )
-      }
-      updatedScenes[sceneIdx] = stampPreVisContentHash(updatedScene)
-
-      setScript({
-        ...script,
-        script: { ...script.script, scenes: updatedScenes },
-      })
-
+      setScript({ ...script, script: { ...script.script, scenes: updatedScenes } })
       const saved = await persistVisionScriptScenes(updatedScenes, 'handleGenerateBeatFrameImage')
       if (!saved) {
-        try { const { toast } = require('sonner'); toast.error('Beat frame generated but failed to save') } catch {}
+        try { const { toast } = require('sonner'); toast.error('Failed to save reference selection') } catch {}
         return
       }
-
-      const sceneId = scene.id || scene.sceneId || `scene-${sceneIdx}`
-      syncBeatStartFrameToProduction(sceneId, beatId, data.imageUrl)
-
-      try { const { toast } = require('sonner'); toast.success('Beat frame generated!') } catch {}
-    } catch (error: any) {
-      console.error('Failed to generate beat frame:', error)
-      try { const { toast } = require('sonner'); toast.error(error?.message || 'Failed to generate beat frame') } catch {}
-    } finally {
-      if (!batchGeneratingRef.current) overlayStore.hide()
-      setGeneratingKeyframeSceneNumber(null)
     }
+
+    // framesOnly skips the audio phase, so no generator ever reads the locale.
+    await handleExpressSceneGenerate(sceneIdx, 'en', {
+      scope: 'selected',
+      includeEndFrames: false,
+      selectedFrameKeys: [beatFrameSlotKey(beatId, 'start')],
+    })
   }
 
   const handleRequestGenerateBeatFrame = async (sceneIdx: number, beatId: string) => {
@@ -10346,7 +10279,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     await handleGenerateBeatFrameImage(sceneIdx, beatId, referenceSelection)
   }
 
+  /** End-frame regen, on the same scoped Express run as the start frame. */
   const handleGenerateBeatEndFrameImage = async (sceneIdx: number, beatId: string) => {
+    if (isExpressRunning) {
+      try { const { toast } = require('sonner'); toast.info('A scene generation is already running') } catch {}
+      return
+    }
+
     const scene = script?.script?.scenes?.[sceneIdx]
     if (!scene) {
       try { const { toast } = require('sonner'); toast.error('Scene not found') } catch {}
@@ -10354,124 +10293,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
 
     const rawBeatIdx = resolveRawBeatIndex(scene, { beatId })
-    if (rawBeatIdx === undefined) {
-      try { const { toast } = require('sonner'); toast.error('Beat not found') } catch {}
-      return
-    }
-
-    const beats = getSceneBeats(scene)
-    const beat = beats[rawBeatIdx]
+    const beat = rawBeatIdx === undefined ? undefined : getSceneBeats(scene)[rawBeatIdx]
     if (!beat) {
       try { const { toast } = require('sonner'); toast.error('Beat not found') } catch {}
       return
     }
 
-    const startFrameUrl = beat.storyboardImageUrl?.trim()
-    if (!startFrameUrl) {
+    // Express interpolates the end frame from the start frame, so there has to
+    // be one to interpolate from.
+    if (!beat.storyboardImageUrl?.trim()) {
       try { const { toast } = require('sonner'); toast.error('Generate the start frame first') } catch {}
       return
     }
 
-    if (!batchGeneratingRef.current) {
-      overlayStore.show(`End frame — Scene ${sceneIdx + 1}`, 25, 'storyboard-production')
-    }
-    setGeneratingKeyframeSceneNumber(sceneIdx + 1)
-
-    try {
-      let referenceSelection: BeatReferenceSelection | undefined
-      if (shouldUseExplicitBeatReferences(beat)) {
-        referenceSelection = beat.referenceSelection
-      } else {
-        const auto = resolveBeatFrameGenerationContext({
-          scene,
-          beat,
-          sceneIndex: sceneIdx,
-          projectCharacters: characters,
-          locationReferences,
-          objectReferences,
-          filmTitle: project?.title,
-        })
-        referenceSelection = toBeatReferenceSelection(auto)
-      }
-
-      const requestBody = buildBeatRegenDirectImagePayload({
-        projectId,
-        sceneIndex: sceneIdx,
-        scene,
-        beat,
-        beatIndex: rawBeatIdx,
-        frameRole: 'end',
-        startFrameUrl,
-        quality: imageQuality,
-        projectCharacters: characters,
-        locationReferences,
-        objectReferences,
-        filmTitle: project?.title,
-        lockedArtStyle: project?.metadata?.visionPhase?.artStyle as string | undefined,
-        referenceSelection,
-      })
-
-      let retryToastId: string | number | undefined
-      const { response, data } = await fetchSceneGenerateImageWith429Retry(requestBody, {
-        onRetryScheduled: (attempt, maxRetries) => {
-          try {
-            if (retryToastId !== undefined) toast.dismiss(retryToastId)
-            retryToastId = toast.loading(
-              `Image service busy — retrying (${attempt}/${maxRetries})…`
-            )
-          } catch {}
-        },
-      })
-
-      if (retryToastId !== undefined) {
-        try {
-          toast.dismiss(retryToastId)
-        } catch {}
-      }
-
-      if (!response.ok) {
-        if (isSceneImageQuotaResponse(response.status, data)) {
-          toast.error(
-            <SceneImageQuotaToast
-              onRetry={() => handleGenerateBeatEndFrameImage(sceneIdx, beatId)}
-              retryLabel="Retry End Frame"
-            />,
-            { duration: 10000, position: 'top-center' }
-          )
-          return
-        }
-        throw new Error((data?.error as string) || 'End frame generation failed')
-      }
-
-      const updatedScenes = [...(script.script.scenes || [])]
-      updatedScenes[sceneIdx] = stampPreVisContentHash(
-        applyBeatStoryboardImageToScene(
-          updatedScenes[sceneIdx],
-          rawBeatIdx,
-          data.imageUrl,
-          { imagePrompt: data.prompt || '', frameRole: 'end' }
-        )
-      )
-
-      setScript({
-        ...script,
-        script: { ...script.script, scenes: updatedScenes },
-      })
-
-      const saved = await persistVisionScriptScenes(updatedScenes, 'handleGenerateBeatEndFrameImage')
-      if (!saved) {
-        try { const { toast } = require('sonner'); toast.error('End frame generated but failed to save') } catch {}
-        return
-      }
-
-      try { const { toast } = require('sonner'); toast.success('End frame generated!') } catch {}
-    } catch (error: any) {
-      console.error('Failed to generate end frame:', error)
-      try { const { toast } = require('sonner'); toast.error(error?.message || 'Failed to generate end frame') } catch {}
-    } finally {
-      if (!batchGeneratingRef.current) overlayStore.hide()
-      setGeneratingKeyframeSceneNumber(null)
-    }
+    await handleExpressSceneGenerate(sceneIdx, 'en', {
+      scope: 'selected',
+      includeEndFrames: true,
+      selectedFrameKeys: [beatFrameSlotKey(beatId, 'end')],
+    })
   }
 
   const handleRequestGenerateBeatEndFrame = async (sceneIdx: number, beatId: string) => {

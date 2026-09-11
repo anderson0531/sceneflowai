@@ -221,6 +221,19 @@ export interface StoryboardFrameSlot {
   imageError?: string
 }
 
+/**
+ * Selection key for one of a beat's two frame slots.
+ *
+ * The client sends these as `selectedFrameKeys` and the Express orchestrator
+ * filters beats on them, so both sides have to spell the suffix identically.
+ */
+export function beatFrameSlotKey(
+  beatId: string,
+  frameRole: 'start' | 'end' = 'start'
+): string {
+  return frameRole === 'end' ? `${beatId}-end` : beatId
+}
+
 function getRawBeatStoryboardUrl(
   scene: Record<string, unknown>,
   beat: SceneBeat
@@ -289,7 +302,7 @@ function buildBeatFrameSlot(
   const displayImageUrl = opts.displayImageUrl
 
   return {
-    key: frameRole === 'end' ? `${beat.beatId}-end` : beat.beatId,
+    key: beatFrameSlotKey(beat.beatId, frameRole),
     label: `${baseLabel}${roleSuffix}`,
     kind: beat.kind,
     frameRole,
