@@ -2887,6 +2887,10 @@ export async function POST(req: NextRequest) {
         `[Scene Image] Skipping likeness validation on retry — ${remainingBudgetMs()}ms left, needs ~${projectLikenessValidationCostMs(round0ValidationMs)}ms`
       )
     }
+    // The validator scores facial structure, which a wide establishing frame
+    // never resolves. Beat direction wins because it framed this shot.
+    const validationShotType = beatForEmotion?.beatDirection?.shotType || effectiveShotType
+
     const validationStart = Date.now()
     if (!skipLikenessValidation && characterObjects.length > 0 && hasBudgetForValidation) {
       console.log('[Scene Image] Validating character likeness...')
@@ -2912,23 +2916,18 @@ export async function POST(req: NextRequest) {
           validation = await validateCharacterLikeness(
             imageUrl,
             primaryFeatured.referenceImageUrl,
-            primaryFeatured.name
-          )
-
-          console.log(
-            `[Image Validator] ${primaryFeatured.name} - Matches: ${validation.matches}, Confidence: ${validation.confidence}%`
+            primaryFeatured.name,
+            { shotType: validationShotType }
           )
 
           if (featuredCharacters.length > 1) {
             for (const extraFeatured of featuredCharacters.slice(1)) {
               try {
-                const extraValidation = await validateCharacterLikeness(
+                await validateCharacterLikeness(
                   imageUrl,
                   extraFeatured.referenceImageUrl,
-                  extraFeatured.name
-                )
-                console.log(
-                  `[Image Validator] ${extraFeatured.name} - Matches: ${extraValidation.matches}, Confidence: ${extraValidation.confidence}%`
+                  extraFeatured.name,
+                  { shotType: validationShotType }
                 )
               } catch (error) {
                 console.error(`[Scene Image] Validation failed for ${extraFeatured.name}:`, error)
@@ -2936,11 +2935,17 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          if (!validation.matches && validation.confidence < 80) {
-            console.warn('[Scene Image] ⚠️  Character likeness validation failed (confidence < 80%).')
-            console.warn('[Scene Image] Issues:', validation.issues.join(', '))
-          } else if (validation.matches) {
+          if (validation.matches) {
             console.log(`[Scene Image] ✓ Character likeness validated (${validation.confidence}% confidence)`)
+          } else if (validation.mismatchKind === 'identity') {
+            console.warn(
+              `[Scene Image] ⚠️  Character likeness failed — wrong person at ${validation.confidence}% confidence.`
+            )
+            console.warn('[Scene Image] Issues:', validation.issues.join(', '))
+          } else {
+            console.log(
+              `[Scene Image] Character likeness ${validation.mismatchKind} at ${validation.confidence}% confidence (${validation.shotScale} shot) — keeping frame, not worth a regeneration.`
+            )
           }
         } catch (error) {
           console.error('[Scene Image] Validation failed:', error)

@@ -60,11 +60,28 @@ describe('resolveFeaturedCharactersForValidation', () => {
 })
 
 describe('isGenuineLikenessFailure', () => {
-  it('detects low-confidence mismatch', () => {
-    expect(isGenuineLikenessFailure({ matches: false, confidence: 0 })).toBe(true)
-    expect(isGenuineLikenessFailure({ matches: false, confidence: 79 })).toBe(true)
-    expect(isGenuineLikenessFailure({ matches: false, confidence: 80 })).toBe(false)
-    expect(isGenuineLikenessFailure({ matches: true, confidence: 50 })).toBe(false)
+  it('fires on a reported identity mismatch', () => {
+    expect(
+      isGenuineLikenessFailure({ matches: false, confidence: 30, mismatchKind: 'identity' })
+    ).toBe(true)
+  })
+
+  it('does not spend a regeneration on surface drift or an unassessable face', () => {
+    expect(
+      isGenuineLikenessFailure({ matches: false, confidence: 70, mismatchKind: 'surface' })
+    ).toBe(false)
+    expect(
+      isGenuineLikenessFailure({ matches: false, confidence: 0, mismatchKind: 'indeterminate' })
+    ).toBe(false)
+    expect(isGenuineLikenessFailure({ matches: true, confidence: 50, mismatchKind: 'none' })).toBe(
+      false
+    )
     expect(isGenuineLikenessFailure(null)).toBe(false)
+  })
+
+  it('reads confidence when no kind was reported', () => {
+    expect(isGenuineLikenessFailure({ matches: false, confidence: 30 })).toBe(true)
+    expect(isGenuineLikenessFailure({ matches: false, confidence: 70 })).toBe(false)
+    expect(isGenuineLikenessFailure({ matches: true, confidence: 50 })).toBe(false)
   })
 })
