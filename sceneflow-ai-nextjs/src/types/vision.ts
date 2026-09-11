@@ -62,6 +62,14 @@ export interface Scene {
   segments?: ScriptSegment[]
   music?: string | { description: string }
   /**
+   * Stretches of the scene that play scored, each with its own generated
+   * track. Supersedes the single `musicAudio` loop; that field stays for
+   * scenes written before cues existed.
+   */
+  musicCues?: import('@/lib/script/segmentTypes').SceneMusicCue[]
+  /** Coverage fingerprint of the applied cue plan; see `applySceneMusicCues`. */
+  musicCueCoverage?: string
+  /**
    * @deprecated Per-scene SFX list. New scenes carry SFX inside segments.
    */
   sfx?: any[]
