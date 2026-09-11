@@ -568,6 +568,51 @@ function buildTitleDirectionContext(
   return parts.filter(Boolean).join('. ')
 }
 
+/**
+ * Drop a framing prefix the moment text already carries.
+ *
+ * `deriveActionBeatsFromDirection` composes `actionDescription` as
+ * `${shot}: ${moment}` from the same direction shot list this planner reads, so
+ * a beat's moment usually already opens with the framing the prompt is about to
+ * state — the source of `Medium shot: Medium shot: ...` frames. Only prefixes
+ * drawn from that list are removed; an arbitrary `Word:` opening is the
+ * writer's, not ours.
+ */
+function stripLeadingShotPrefix(text: string, candidates: string[]): string {
+  const known = candidates.map((c) => c.trim().toLowerCase()).filter(Boolean)
+  let out = text.trim()
+  // Two layers can stack: one from the beat's stored action, one from the shot
+  // the direction assigned to the same index.
+  for (let pass = 0; pass < 2; pass++) {
+    const colon = out.indexOf(':')
+    if (colon <= 0) break
+    if (!known.includes(out.slice(0, colon).trim().toLowerCase())) break
+    const rest = out.slice(colon + 1).trim()
+    if (!rest) break
+    out = rest
+  }
+  return out || text.trim()
+}
+
+/**
+ * Join prompt clauses into sentences without doubling terminators.
+ *
+ * Clauses come from direction text that may or may not already end in
+ * punctuation, and the composed prompt is written back onto the beat and read
+ * again on the next generation — so a stray `vault..` survives every
+ * regeneration of that frame rather than being a one-off cosmetic slip.
+ */
+function joinPromptClauses(parts: string[]): string {
+  const joined = parts
+    .map((part) => part.trim().replace(/[.\s]+$/, ''))
+    .filter(Boolean)
+    .join('. ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+  if (!joined) return ''
+  return /[.!?]["'’”]?$/.test(joined) ? joined : `${joined}.`
+}
+
 export function buildFallbackBeatPlans(request: BeatSequencePlanRequest): BeatKeyframePlan[] {
   const { scene, beats, sceneNumber, totalScenes, filmContext } = request
   const heading = String(scene.heading ?? '')
@@ -581,41 +626,51 @@ export function buildFallbackBeatPlans(request: BeatSequencePlanRequest): BeatKe
   return beats.map((beat, beatIndex) => {
     const beatRole = inferBeatRole(beat, beatIndex, beats.length, sceneType, filmTitle)
     const shotType = shots[beatIndex] ?? shots[shots.length - 1] ?? 'Medium shot'
-    const moment =
+    const rawMoment =
       beat.actionDescription?.trim() ||
       (beat.kind === 'dialogue'
         ? [beat.character, beat.line].filter(Boolean).join(' — ')
         : '') ||
       (beat.kind !== 'dialogue' ? moments[beatIndex] : '') ||
       `Beat ${beatIndex + 1} visual moment`
+    const moment = stripLeadingShotPrefix(rawMoment, [shotType, ...shots])
     const setContext = buildSetContext(scene, beatIndex === 0 || beatIndex === beats.length - 1)
 
-    const frozenParts = [`${shotType}: ${moment}`]
+    // Framing is deliberately absent here: `frozenMoment` is persisted onto
+    // `beat.beatDirection`, which already carries `shotType` as its own field
+    // and has `composeBeatActionFraming` prepend it when composing a frame.
+    const frozenParts = [moment]
     if (setContext) frozenParts.push(setContext)
     if (directionMeta.atmosphere && (beatIndex === 0 || sceneType === 'title')) {
       frozenParts.push(`Atmosphere: ${directionMeta.atmosphere}`)
     }
 
-    const frozenMoment = frozenParts.join('. ').replace(/\.\s*\./g, '.').trim()
+    const frozenMoment = joinPromptClauses(frozenParts)
     const allowTypography = roleAllowsTypography(beatRole)
     const titleDirectionContext =
       sceneType === 'title' ? buildTitleDirectionContext(scene, directionMeta, shotType) : ''
 
-    let prompt = `${shotType}: ${frozenMoment}`
+    const promptParts = [`${shotType}: ${frozenMoment}`]
     if (titleDirectionContext) {
-      prompt += `. ${titleDirectionContext}. Abstract digital composition, no people, no character portraits`
+      promptParts.push(
+        titleDirectionContext,
+        'Abstract digital composition, no people, no character portraits'
+      )
     }
     if (allowTypography && filmTitle) {
-      prompt += `. Centered bold typography displaying "${filmTitle}" as the main visual element`
+      promptParts.push(
+        `Centered bold typography displaying "${filmTitle}" as the main visual element`
+      )
     } else if (beat.kind === 'narration') {
-      prompt += '. Voiceover backdrop — environment and mood only, no narrator on screen'
+      promptParts.push('Voiceover backdrop — environment and mood only, no narrator on screen')
     } else if (beat.kind === 'dialogue' && beat.character) {
-      prompt += `. Focus on ${beat.character}${beat.line ? `: "${beat.line}"` : ''}`
+      promptParts.push(`Focus on ${beat.character}${beat.line ? `: "${beat.line}"` : ''}`)
     }
     if (!allowTypography) {
-      prompt += '. No on-screen text, no dialogue captions'
+      promptParts.push('No on-screen text, no dialogue captions')
     }
-    prompt += '.'
+
+    const prompt = joinPromptClauses(promptParts)
 
     const durationSeconds =
       beatRole === 'climax' ? 6 : beatRole === 'title_reveal' ? 5 : beatRole === 'dissolve' ? 3 : 4
@@ -626,7 +681,7 @@ export function buildFallbackBeatPlans(request: BeatSequencePlanRequest): BeatKe
       shotType,
       frozenMoment,
       prompt: composeBeatStillPrompt({
-        actionFraming: prompt.trim(),
+        actionFraming: prompt,
         lookbook: request.lookbook,
         sceneIndex: sceneNumber - 1,
         artStyleAnchor: request.artStyleAnchor,
