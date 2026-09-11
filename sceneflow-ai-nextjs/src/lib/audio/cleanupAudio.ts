@@ -85,6 +85,7 @@ export const SCENE_AUDIO_FIELD_KEYS = [
   'musicAudio',
   'musicUrl',
   'musicDuration',
+  'sceneMusicCues',
   'sfxAudio',
   'sfxSourceMeta',
   'dialogueAudioGeneratedAt',
@@ -140,6 +141,7 @@ export type AudioSlotSavedPayload = {
   beatContext?: { beatId: string; beatDescription: string }
   musicDuration?: number
   musicFileDuration?: number
+  musicCueId?: string
 }
 
 /** Apply one server-confirmed audio slot onto a scene (mirrors persistSceneAudioAtomic client-side). */
@@ -148,6 +150,25 @@ export function applyAudioSlotToScene(scene: any, payload: AudioSlotSavedPayload
   const updated = { ...scene }
 
   if (payload.audioType === 'music') {
+    const cueId = payload.musicCueId?.trim()
+    if (cueId && Array.isArray(updated.sceneMusicCues)) {
+      updated.sceneMusicCues = updated.sceneMusicCues.map((cue: any) =>
+        cue?.cueId === cueId
+          ? {
+              ...cue,
+              url: payload.audioUrl,
+              updatedAt: new Date().toISOString(),
+              ...(typeof payload.musicDuration === 'number' && payload.musicDuration > 0
+                ? { duration: payload.musicDuration }
+                : {}),
+              ...(typeof payload.musicFileDuration === 'number' && payload.musicFileDuration > 0
+                ? { fileDuration: payload.musicFileDuration }
+                : {}),
+            }
+          : cue
+      )
+      return updated
+    }
     updated.musicAudio = payload.audioUrl
     if (typeof payload.musicDuration === 'number' && payload.musicDuration > 0) {
       updated.musicDuration = payload.musicDuration
@@ -270,10 +291,29 @@ function collectDescriptionAudioUrls(scene: any, target: string[]): void {
   }
 }
 
+/** Tracks generated for the scene's music cues, one blob per cue. */
+function collectMusicCueUrls(scene: any): string[] {
+  if (!Array.isArray(scene?.sceneMusicCues)) return []
+  return scene.sceneMusicCues
+    .map((cue: any) => (typeof cue?.url === 'string' ? cue.url.trim() : ''))
+    .filter(Boolean)
+}
+
+/** Drop the generated track from every cue, leaving the cue plan itself intact. */
+function clearMusicCueTracks(scene: any): void {
+  if (!Array.isArray(scene?.sceneMusicCues)) return
+  scene.sceneMusicCues = scene.sceneMusicCues.map((cue: any) => {
+    if (!cue || typeof cue !== 'object') return cue
+    const { url, duration, fileDuration, updatedAt, ...rest } = cue
+    return rest
+  })
+}
+
 function collectMusicAudioUrls(scene: any, target: string[]): void {
   if (scene?.musicAudio) target.push(scene.musicAudio)
   if (scene?.music?.url) target.push(scene.music.url)
   if (scene?.musicUrl && !target.includes(scene.musicUrl)) target.push(scene.musicUrl)
+  target.push(...collectMusicCueUrls(scene))
 }
 
 function collectSfxAudioUrls(scene: any, target: string[]): void {
@@ -324,6 +364,8 @@ function copyMusicAudioFields(from: any, to: any): void {
   else delete to.musicUrl
   if (from?.musicDuration !== undefined) to.musicDuration = from.musicDuration
   else delete to.musicDuration
+  if (from?.sceneMusicCues !== undefined) to.sceneMusicCues = from.sceneMusicCues
+  else delete to.sceneMusicCues
   if (from?.music && typeof from.music === 'object') {
     to.music = { ...(typeof to.music === 'object' && to.music ? to.music : {}), ...from.music }
   }
@@ -422,6 +464,7 @@ function clearMusicAudioFields(scene: any): void {
   if (scene.music && typeof scene.music === 'object') {
     delete scene.music.url
   }
+  clearMusicCueTracks(scene)
 }
 
 function clearSfxAudioFields(scene: any): void {
@@ -851,6 +894,7 @@ export function sceneHasAudioRefs(scene: any): boolean {
   if (scene.narrationAudioUrl || scene.descriptionAudioUrl || scene.musicAudio || scene.musicUrl) {
     return true
   }
+  if (collectMusicCueUrls(scene).length > 0) return true
   if (scene.narrationAudio && typeof scene.narrationAudio === 'object') {
     for (const v of Object.values(scene.narrationAudio)) {
       if ((v as any)?.url) return true
@@ -1092,6 +1136,14 @@ export function removeStaleAudioUrlFromScene(scene: any, staleUrl: string): { cl
     delete updatedScene.musicAudio
     changed = true
   }
+  if (Array.isArray(updatedScene.sceneMusicCues)) {
+    updatedScene.sceneMusicCues = updatedScene.sceneMusicCues.map((cue: any) => {
+      if (cue?.url !== staleUrl) return cue
+      changed = true
+      const { url, duration, fileDuration, updatedAt, ...rest } = cue
+      return rest
+    })
+  }
 
   return { cleanedScene: updatedScene, changed }
 }
@@ -1322,6 +1374,7 @@ export function clearAllSceneAudio(scene: any): CleanupResult {
   if (scene.musicUrl) {
     deletedUrls.push(scene.musicUrl)
   }
+  deletedUrls.push(...collectMusicCueUrls(scene))
   
   // SFX audio - from sfxAudio array
   if (Array.isArray(scene.sfxAudio)) {
@@ -1354,6 +1407,7 @@ export function clearAllSceneAudio(scene: any): CleanupResult {
   if (cleanedScene.music) {
     delete cleanedScene.music.url
   }
+  clearMusicCueTracks(cleanedScene)
   delete cleanedScene.sfxAudio
   delete cleanedScene.dialogueAudioGeneratedAt
   

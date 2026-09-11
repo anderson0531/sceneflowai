@@ -671,6 +671,35 @@ export function formatMusicCueSteer(cue: SceneMusicCue | undefined): string {
   return `Scored moment: ${intent} — carry that in the pacing and performance`
 }
 
+/**
+ * Fallback beat length when a beat has no measured duration, matching the
+ * animatic's own default hold for an action beat.
+ */
+const ASSUMED_BEAT_DURATION_SEC = 4
+
+/**
+ * How long the cue plays, summed from the beats it covers.
+ *
+ * Lyria returns a fixed ~30s clip whatever is asked for, so this is not a
+ * length the generator honours — it is what the mixer loops or trims the track
+ * to, and what the cue is labelled with.
+ */
+export function estimateMusicCueDuration(
+  cue: SceneMusicCue,
+  beats: SceneBeat[]
+): number {
+  let total = 0
+  for (let index = cue.beatStart; index <= cue.beatEnd; index++) {
+    const beat = beats[index]
+    if (!beat) continue
+    total +=
+      typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0
+        ? beat.durationSeconds
+        : ASSUMED_BEAT_DURATION_SEC
+  }
+  return total > 0 ? Math.round(total) : ASSUMED_BEAT_DURATION_SEC
+}
+
 /** Human label for a cue's beat span, 1-based for the UI. */
 export function formatMusicCueRange(cue: SceneMusicCue): string {
   return cue.beatStart === cue.beatEnd
