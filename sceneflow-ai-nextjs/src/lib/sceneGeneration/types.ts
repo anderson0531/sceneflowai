@@ -139,6 +139,14 @@ export interface ExpressPhaseEvent {
   gcsPath?: string | null
   /** Whether this phase was skipped because output already existed. */
   skipped?: boolean
+  /**
+   * Why a phase that reports `ok` still produced a lesser result than intended.
+   *
+   * Distinct from `error`, which means the phase produced nothing. A degraded
+   * phase leaves usable output behind, so nothing downstream would ever reveal
+   * that it happened.
+   */
+  degraded?: string
   /** True when the failure was due to rate limiting after retries were exhausted. */
   rateLimited?: boolean
 }

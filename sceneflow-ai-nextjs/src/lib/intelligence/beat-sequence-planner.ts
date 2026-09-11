@@ -58,6 +58,15 @@ export interface BeatSequencePlanResult {
   plans: BeatKeyframePlan[]
   usedAI: boolean
   reasoning?: string
+  /**
+   * Why the AI plan was not used, when it was attempted and lost.
+   *
+   * The fallback produces a whole scene of plausible-looking prompts, so
+   * without this a rejected plan is indistinguishable from a planned one —
+   * which is how a scene of near-identical frames reached a user with nothing
+   * in the logs but `AI: false`.
+   */
+  fallbackReason?: string
 }
 
 interface PlanCacheEntry {
@@ -134,19 +143,36 @@ function hasShotCoverageVariety(plans: BeatKeyframePlan[]): boolean {
   return setups.size >= 2
 }
 
-function validatePlans(plans: BeatKeyframePlan[], beatCount: number): BeatKeyframePlan[] | null {
-  if (plans.length !== beatCount) return null
-  if (!hasShotCoverageVariety(plans)) return null
-  for (const plan of plans) {
-    if (!plan.prompt || plan.prompt.trim().length < 20) return null
-    if (!plan.frozenMoment || plan.frozenMoment.trim().length < 8) return null
+/**
+ * Outcome of one planner pass, carrying why a rejected plan was rejected.
+ *
+ * Callers used to get a bare `null` and had nothing to log, so every reason a
+ * plan could lose looked the same from the outside.
+ */
+type PlanAttempt = { ok: true; result: BeatSequencePlanResult } | { ok: false; reason: string }
+
+function validatePlans(
+  plans: BeatKeyframePlan[],
+  beatCount: number
+): { ok: true } | { ok: false; reason: string } {
+  if (plans.length !== beatCount) {
+    return { ok: false, reason: `planned ${plans.length} beats for a ${beatCount}-beat scene` }
   }
-  return plans
+  if (!hasShotCoverageVariety(plans)) {
+    return { ok: false, reason: 'every beat repeated the same shot on the same moment' }
+  }
+  for (const plan of plans) {
+    if (!plan.prompt || plan.prompt.trim().length < 20) {
+      return { ok: false, reason: `beat ${plan.beatIndex + 1} came back without a usable prompt` }
+    }
+    if (!plan.frozenMoment || plan.frozenMoment.trim().length < 8) {
+      return { ok: false, reason: `beat ${plan.beatIndex + 1} came back without a frozen moment` }
+    }
+  }
+  return { ok: true }
 }
 
-async function planWithGemini(
-  request: BeatSequencePlanRequest
-): Promise<BeatSequencePlanResult | null> {
+async function planWithGemini(request: BeatSequencePlanRequest): Promise<PlanAttempt> {
   const systemPrompt = buildPlannerSystemPrompt()
   const userPrompt = buildPlannerUserPrompt(request)
 
@@ -182,7 +208,9 @@ async function planWithGemini(
     }>
   }
 
-  if (!Array.isArray(parsed.beats) || parsed.beats.length === 0) return null
+  if (!Array.isArray(parsed.beats) || parsed.beats.length === 0) {
+    return { ok: false, reason: 'planner response carried no beats' }
+  }
 
   const plans: BeatKeyframePlan[] = parsed.beats.map((b, i) => {
     const beatIndex = typeof b.beatIndex === 'number' ? b.beatIndex : i
@@ -223,9 +251,9 @@ async function planWithGemini(
   // Validate the raw action text, then wrap it in the style anchor — validating
   // the composed prompt would pass on anchor length alone.
   const validated = validatePlans(plans, request.beats.length)
-  if (!validated) return null
+  if (!validated.ok) return validated
 
-  const anchored = validated.map((plan) => ({
+  const anchored = plans.map((plan) => ({
     ...plan,
     prompt: composeBeatStillPrompt({
       actionFraming: plan.prompt,
@@ -237,7 +265,7 @@ async function planWithGemini(
     }),
   }))
 
-  return { plans: anchored, usedAI: true, reasoning: parsed.reasoning }
+  return { ok: true, result: { plans: anchored, usedAI: true, reasoning: parsed.reasoning } }
 }
 
 export async function planBeatSequence(
@@ -250,16 +278,22 @@ export async function planBeatSequence(
     return cached
   }
 
+  let fallbackReason: string | undefined
   if (!request.forceFallback) {
     try {
-      const aiResult = await planWithGemini(request)
-      if (aiResult) {
-        setCachedPlan(cacheKey, aiResult)
-        console.log(`[BeatSequencePlanner] AI planned ${aiResult.plans.length} distinct keyframes`)
-        return aiResult
+      const attempt = await planWithGemini(request)
+      if (attempt.ok) {
+        setCachedPlan(cacheKey, attempt.result)
+        console.log(
+          `[BeatSequencePlanner] AI planned ${attempt.result.plans.length} distinct keyframes`
+        )
+        return attempt.result
       }
+      fallbackReason = attempt.reason
+      console.warn(`[BeatSequencePlanner] AI plan rejected, using fallback: ${attempt.reason}`)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
+      fallbackReason = msg
       console.warn(`[BeatSequencePlanner] Gemini failed, using fallback: ${msg}`)
     }
   }
@@ -269,6 +303,7 @@ export async function planBeatSequence(
     plans: fallbackPlans,
     usedAI: false,
     reasoning: 'Deterministic fallback from direction shots and scene description',
+    ...(fallbackReason ? { fallbackReason } : {}),
   }
   setCachedPlan(cacheKey, result)
   return result
