@@ -61,6 +61,8 @@ interface ImageGenerationOptions {
   quality?: ModelQuality
   /** No-op on Gemini Image (Imagen FACE_MESH control reference is gone). */
   skipFaceMesh?: boolean
+  /** Absolute epoch-ms cutoff for the call and its retries. */
+  deadlineAt?: number
 }
 
 const NO_PEOPLE_INSTRUCTION =
@@ -103,6 +105,7 @@ export async function generateImageWithGemini(
     aspectRatio,
     ...(options.imageSize ? { imageSize: options.imageSize } : {}),
     ...(options.negativePrompt ? { negativePrompt: options.negativePrompt } : {}),
+    ...(options.deadlineAt ? { deadlineAt: options.deadlineAt } : {}),
     modelTier,
     ...(hasReferenceImages
       ? {

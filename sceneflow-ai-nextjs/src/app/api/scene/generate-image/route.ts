@@ -25,6 +25,7 @@ import {
   type CharacterContext,
   type PropContext,
   type LocationContext,
+  SCENE_IMAGE_INTELLIGENCE_DEADLINE_MS,
   type SceneImageIntelligenceRequest,
   type SceneImageIntelligenceResult,
 } from '@/lib/intelligence/scene-image-intelligence'
@@ -130,6 +131,14 @@ import {
   type BeatArcContext,
 } from '@/lib/vision/beatArcContext'
 import { resolveBeatFrameGenerationContext } from '@/lib/vision/beatFrameGenerationContext'
+import {
+  canStartLikenessRetry,
+  canValidateLikeness,
+  projectLikenessRetryCostMs,
+  projectLikenessValidationCostMs,
+  resolveImageDeadlineAt,
+  resolveRetryPromptDeadlineMs,
+} from '@/lib/scene/sceneImageTimeBudget'
 import { englishForModelBatch, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import {
   isExpressImageRateLimitError,
@@ -139,12 +148,14 @@ import {
 } from '@/lib/sceneGeneration/expressImageErrors'
 
 export const runtime = 'nodejs'
-export const maxDuration = 120  // Increased for new AI image models
+export const maxDuration = 300  // Two full generate + validate rounds must fit
 
-/** Stop image-generation retries when this much of the route budget is consumed. */
-const ROUTE_TIME_BUDGET_MS = 100_000
-/** Reserve time for one likeness auto-retry (AI prompt + image gen + validation). */
-const LIKENESS_RETRY_RESERVE_MS = 45_000
+/**
+ * Wall clock this route may spend generating. The rest of `maxDuration` covers
+ * the blob upload, the credit charge, and writing the response, so exceeding
+ * this budget is a warning the route can act on rather than a hard kill.
+ */
+const ROUTE_TIME_BUDGET_MS = maxDuration * 1000 - 20_000
 
 /**
  * Flatten a persisted `BeatDirection` into a compact single-line summary the
@@ -2057,6 +2068,12 @@ export async function POST(req: NextRequest) {
     let validation: any = null
     let likenessRound = 0
     let shouldLikenessAutoRetry = false
+    /** Measured cost of round 0, used to decide whether a retry can finish. */
+    let round0CostMs = 0
+    let round0ValidationMs = 0
+    const remainingBudgetMs = () => ROUTE_TIME_BUDGET_MS - (Date.now() - routeStart)
+    /** Nothing downstream of the image call can run if the image itself overruns. */
+    const imageDeadlineAt = resolveImageDeadlineAt(routeStart, ROUTE_TIME_BUDGET_MS)
     let firstLikenessRound: {
       imageUrl: string
       validation: any
@@ -2087,13 +2104,21 @@ export async function POST(req: NextRequest) {
     )
 
     do {
+      const roundStart = Date.now()
       if (likenessRound > 0) {
         if (!sceneImageIntelligenceRequest) break
         console.log('[Scene Image] Likeness auto-retry: busting prompt cache and regenerating image...')
-        const retryAiResult = await generateSceneImagePromptWithDeadline({
-          ...sceneImageIntelligenceRequest,
-          bustPromptCache: true,
-        })
+        const retryPromptDeadlineMs = resolveRetryPromptDeadlineMs(
+          remainingBudgetMs(),
+          SCENE_IMAGE_INTELLIGENCE_DEADLINE_MS
+        )
+        const retryAiResult = await generateSceneImagePromptWithDeadline(
+          {
+            ...sceneImageIntelligenceRequest,
+            bustPromptCache: true,
+          },
+          retryPromptDeadlineMs
+        )
         sceneImageAiResult = retryAiResult
         const appliedRetry = applySceneImageAiResultToPrompt({
           aiResult: retryAiResult,
@@ -2718,6 +2743,7 @@ export async function POST(req: NextRequest) {
             requireAllReferenceImages: allReferenceImages.length > 0,
             policyMaxAttempts: skipLikenessValidation ? 1 : undefined,
             skipProductionStillFraming: isBeatFrame,
+            deadlineAt: imageDeadlineAt,
           })
 
           base64Image = vertexResult.imageBase64
@@ -2754,6 +2780,7 @@ export async function POST(req: NextRequest) {
             quality: effectiveImagenQuality,
             personGeneration: effectivePersonGeneration,
             negativePrompt: finalNegativePrompt,
+            deadlineAt: imageDeadlineAt,
           })
           generationModelId = GEMINI_IMAGE_MODELS.flash
           generationProvider = 'vertex'
@@ -2847,7 +2874,21 @@ export async function POST(req: NextRequest) {
 
     // Validate character likeness (optional - informational only; skipped during Express batch)
     validation = null
-    if (!skipLikenessValidation && characterObjects.length > 0) {
+    // On a retry round the route is already deep into its budget, and an
+    // unvalidated retry is discarded in favour of round 0 rather than risking
+    // the function being killed mid-call.
+    const hasBudgetForValidation = canValidateLikeness(
+      likenessRound,
+      remainingBudgetMs(),
+      round0ValidationMs
+    )
+    if (!hasBudgetForValidation) {
+      console.warn(
+        `[Scene Image] Skipping likeness validation on retry — ${remainingBudgetMs()}ms left, needs ~${projectLikenessValidationCostMs(round0ValidationMs)}ms`
+      )
+    }
+    const validationStart = Date.now()
+    if (!skipLikenessValidation && characterObjects.length > 0 && hasBudgetForValidation) {
       console.log('[Scene Image] Validating character likeness...')
 
       const featuredCharacters = resolveFeaturedCharactersForValidation({
@@ -2907,6 +2948,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    if (likenessRound === 0) {
+      round0ValidationMs = Date.now() - validationStart
+      round0CostMs = Date.now() - roundStart
+    }
+
     if (
       likenessRound === 0 &&
       isGenuineLikenessFailure(validation) &&
@@ -2914,7 +2960,7 @@ export async function POST(req: NextRequest) {
       sceneImageIntelligenceRequest &&
       !skipLikenessValidation
     ) {
-      if (Date.now() - routeStart <= ROUTE_TIME_BUDGET_MS - LIKENESS_RETRY_RESERVE_MS) {
+      if (canStartLikenessRetry(remainingBudgetMs(), round0CostMs)) {
         firstLikenessRound = {
           imageUrl,
           validation,
@@ -2926,10 +2972,14 @@ export async function POST(req: NextRequest) {
         likenessRound = 1
         continue
       }
-      console.log('[Scene Image] Skipping likeness auto-retry — insufficient time budget')
+      console.log(
+        `[Scene Image] Skipping likeness auto-retry — ${remainingBudgetMs()}ms left, a retry of the ${round0CostMs}ms first round needs ~${projectLikenessRetryCostMs(round0CostMs)}ms`
+      )
     }
 
     if (likenessRound === 1 && firstLikenessRound) {
+      // A retry skipped for budget scores 0 and therefore loses to any measured
+      // first round, which is the safe outcome: unmeasured is not better.
       const retryConfidence = validation?.confidence ?? 0
       const firstConfidence = firstLikenessRound.validation?.confidence ?? 0
       if (firstConfidence > retryConfidence) {

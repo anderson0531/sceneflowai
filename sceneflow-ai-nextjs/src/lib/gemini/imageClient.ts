@@ -23,6 +23,8 @@ interface ImageGenerationOptions {
   negativePrompt?: string
   quality?: 'fast' | 'standard' | 'max'
   skipFaceMesh?: boolean
+  /** Absolute epoch-ms cutoff for the call and its retries. */
+  deadlineAt?: number
 }
 
 /**

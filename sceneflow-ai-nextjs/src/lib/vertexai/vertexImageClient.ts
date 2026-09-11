@@ -28,10 +28,30 @@ const MAX_RETRY_DELAY_MS = 10_000
 /** Identity-ref 429 ladder — longer than generic backoff to avoid stampeding Startup quota. */
 const IDENTITY_REF_RETRY_DELAYS_MS = [5_000, 15_000, 30_000] as const
 const REQUEST_TIMEOUT_MS = 90_000
+/** Below this there is no point issuing the request at all. */
+const MIN_REQUEST_TIMEOUT_MS = 10_000
 
 /** Marker so scene route does not re-burst another full outer×inner 429 ladder. */
 export const IDENTITY_REF_RATE_LIMIT_EXHAUSTED =
   'identity-ref rate limit exhausted'
+
+/** Marker for a caller-supplied budget running out mid-ladder. */
+export const IMAGE_DEADLINE_EXCEEDED = 'image generation deadline exceeded'
+
+function deadlinePassed(deadlineAt?: number): boolean {
+  return deadlineAt != null && Date.now() >= deadlineAt
+}
+
+/**
+ * Per-attempt timeout, shortened to land inside the caller's deadline. Without
+ * this the client's own 90s timeout plus its retry ladder can outlast the
+ * serverless function that is waiting on it.
+ */
+function requestTimeoutFor(deadlineAt?: number): number {
+  if (deadlineAt == null) return REQUEST_TIMEOUT_MS
+  const remaining = deadlineAt - Date.now()
+  return Math.min(REQUEST_TIMEOUT_MS, Math.max(MIN_REQUEST_TIMEOUT_MS, remaining))
+}
 
 function referenceCountExceedsEcoCap(referenceImages?: VertexReferenceImage[]): boolean {
   return (referenceImages?.length ?? 0) > MAX_REFERENCE_IMAGES_ECO
@@ -138,6 +158,11 @@ export interface GenerateVertexImageOptions {
   policyMaxAttempts?: number
   /** Skip wardrobe “production still” framing on policy retries (scene/beat frames). */
   skipProductionStillFraming?: boolean
+  /**
+   * Absolute epoch-ms cutoff covering this call and every retry it makes.
+   * Attempts are shortened to fit it and no further attempt starts past it.
+   */
+  deadlineAt?: number
 }
 
 export interface VertexImageResult {
@@ -204,6 +229,9 @@ export async function generateVertexGeminiImage(
   options: GenerateVertexImageOptions,
   retryCount = 0
 ): Promise<VertexImageResult> {
+  if (deadlinePassed(options.deadlineAt)) {
+    throw new Error(`Vertex Gemini Image error: ${IMAGE_DEADLINE_EXCEEDED}`)
+  }
   const tier = options.modelTier || 'designer'
   const useFlashFallback =
     tier !== 'eco' &&
@@ -262,7 +290,8 @@ export async function generateVertexGeminiImage(
 
   const accessToken = await getVertexAIAuthToken()
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  const requestTimeoutMs = requestTimeoutFor(options.deadlineAt)
+  const timeoutId = setTimeout(() => controller.abort(), requestTimeoutMs)
 
   let response: Response
   try {
@@ -280,7 +309,7 @@ export async function generateVertexGeminiImage(
     if (error instanceof Error && error.name === 'AbortError') {
       if (model.includes('pro-image') && canFallbackToEcoTier(options)) {
         console.warn(
-          `[Vertex Gemini Image] ${model} timed out after ${REQUEST_TIMEOUT_MS}ms, falling back to ${GEMINI_IMAGE_TIER_CONFIG.eco.model}`
+          `[Vertex Gemini Image] ${model} timed out after ${requestTimeoutMs}ms, falling back to ${GEMINI_IMAGE_TIER_CONFIG.eco.model}`
         )
         proModelRateLimitedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS
         return generateVertexGeminiImage({ ...options, modelTier: 'eco' }, 0)
@@ -290,7 +319,7 @@ export async function generateVertexGeminiImage(
           `[Vertex Gemini Image] ${model} timed out with ${options.referenceImages?.length ?? 0} refs (exceeds eco cap ${MAX_REFERENCE_IMAGES_ECO}); retrying pro model`
         )
       }
-      if (retryCount < MAX_RETRIES) {
+      if (retryCount < MAX_RETRIES && !deadlinePassed(options.deadlineAt)) {
         await sleepWithBackoff(retryCount)
         return generateVertexGeminiImage(options, retryCount + 1)
       }
@@ -303,7 +332,10 @@ export async function generateVertexGeminiImage(
     const errorText = await response.text()
     if (response.status === 429 && model.includes('pro-image')) {
       if (hasIdentityReferenceImages(options)) {
-        const allowIdentityRefRetry = !options.failFastIdentityRefs && retryCount < MAX_RETRIES
+        const allowIdentityRefRetry =
+          !options.failFastIdentityRefs &&
+          retryCount < MAX_RETRIES &&
+          !deadlinePassed(options.deadlineAt)
         if (allowIdentityRefRetry) {
           console.warn(
             `[Vertex Gemini Image] Rate limit on ${model} with reference images (attempt ${retryCount + 1}/${MAX_RETRIES}) — backing off without eco fallback`
@@ -323,7 +355,7 @@ export async function generateVertexGeminiImage(
         return generateVertexGeminiImage(options, 0)
       }
     }
-    if (response.status === 429 && retryCount < MAX_RETRIES) {
+    if (response.status === 429 && retryCount < MAX_RETRIES && !deadlinePassed(options.deadlineAt)) {
       console.warn(
         `[Vertex Gemini Image] Rate limit on ${model} (attempt ${retryCount + 1}/${MAX_RETRIES}). Backing off...`
       )
@@ -351,7 +383,7 @@ export async function generateVertexGeminiImage(
         `[Vertex Gemini Image] Model ${model} unavailable (404) with ${options.referenceImages?.length ?? 0} refs; cannot fall back to eco (cap ${MAX_REFERENCE_IMAGES_ECO})`
       )
     }
-    if (response.status === 503 && retryCount < MAX_RETRIES) {
+    if (response.status === 503 && retryCount < MAX_RETRIES && !deadlinePassed(options.deadlineAt)) {
       await sleepWithBackoff(retryCount)
       return generateVertexGeminiImage(options, retryCount + 1)
     }
