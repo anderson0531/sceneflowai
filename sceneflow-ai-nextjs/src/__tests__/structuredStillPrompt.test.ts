@@ -12,6 +12,7 @@ import {
   bindLibraryNamesToTokens,
   replaceLibraryNamesWithTokens,
   actionFramingFromStoredPrompt,
+  isStructuredStillPrompt,
   promptReferencesLibraryItem,
 } from '@/lib/imagen/structuredStillPrompt'
 import {
@@ -422,5 +423,110 @@ describe('promptReferencesLibraryItem', () => {
     const buildsImages = src.indexOf('const objectImageReferences =')
     expect(dropsUnnamed).toBeGreaterThan(-1)
     expect(buildsImages).toBeGreaterThan(dropsUnnamed)
+  })
+})
+
+describe('isStructuredStillPrompt', () => {
+  it('recognizes a lookbook-composed beat prompt', () => {
+    const composed = composeBeatStillPrompt({
+      actionFraming: 'Medium shot: Gideon Croft at the zinc workbench, palm on the drum.',
+      lookbook: {
+        version: PROJECT_LOOKBOOK_VERSION,
+        fingerprint: 'deadbeef',
+        masterStyle: 'Rain-slick neo-noir, live-action photoreal',
+        colorPalette: 'Sodium orange against slate blue',
+        lightingGrammar: 'Single hard key from a practical, deep falloff',
+        lensAndFormat: 'Anamorphic 40mm, 2.39:1',
+        textureAndGrade: '35mm grain, crushed blacks',
+        negativeStyleTerms: ['illustration'],
+        generatedAt: '2026-01-01T00:00:00.000Z',
+      },
+      sceneIndex: 0,
+    })
+
+    expect(isStructuredStillPrompt(composed)).toBe(true)
+  })
+
+  it('recognizes an already-assembled still, so a regeneration is not re-flattened', () => {
+    const assembled = assembleStructuredStillPrompt({
+      actionOrStructured: 'Medium shot: person [1] lifts the lantern.',
+      refs: [{ kind: 'person', token: 'person [1]', name: 'Gideon Croft', roleLabel: 'identity' }],
+    })
+
+    expect(isStructuredStillPrompt(assembled)).toBe(true)
+  })
+
+  it('treats plain scene prose as unstructured, so the optimizer still shapes it', () => {
+    expect(
+      isStructuredStillPrompt('Gideon leans over the seismograph as the needle jumps.')
+    ).toBe(false)
+    expect(isStructuredStillPrompt('')).toBe(false)
+  })
+
+  it('rejects a style-only stub, which has nothing for assembly to work with', () => {
+    expect(
+      isStructuredStillPrompt(
+        '[GLOBAL STYLE ANCHOR]\nMaster Style: narrative cinematography; live-action photoreal film still'
+      )
+    ).toBe(false)
+  })
+
+  it('the route hands structured custom prompts to assembly instead of the rules optimizer', () => {
+    const src = readFileSync(
+      join(process.cwd(), 'src/app/api/scene/generate-image/route.ts'),
+      'utf8'
+    )
+
+    // The old gate looked for a phrase pair no code emits any more, so every
+    // Express beat fell through to optimizePromptForImagen and lost its sections.
+    expect(src).not.toMatch(/must\\s\+match\\s\+their\\s\+reference\\s\+image/)
+    expect(src).not.toContain('\\\\s+appears`')
+    expect(src).toMatch(/isStructuredStillPrompt\(promptBody\)/)
+
+    const structuredBranch = src.indexOf('isStructuredStillPrompt(promptBody)')
+    const reoptimize = src.indexOf('Added character references to user-edited prompt (re-optimized)')
+    expect(structuredBranch).toBeGreaterThan(-1)
+    expect(reoptimize).toBeGreaterThan(structuredBranch)
+  })
+})
+
+describe('identity traits reach every reference-bearing frame', () => {
+  const GIDEON_VISION =
+    'A man in his early 50s with warm medium-brown skin, tightly curled salt-and-pepper hair ' +
+    'cropped close, and a short grizzled beard.'
+
+  const gideonRefs = (identityTraitsWordCap?: number) =>
+    stillRefsFromAttachedImages({
+      selected: [{ sendIndex: 1, characterName: 'Gideon Croft', refRole: 'identity' }],
+      characterReferences: [
+        {
+          name: 'Gideon Croft',
+          promptToken: 'person [1]',
+          subjectOrdinal: 1,
+          visionDescription: GIDEON_VISION,
+        },
+      ],
+      ...(identityTraitsWordCap != null ? { identityTraitsWordCap } : {}),
+    })
+
+  it('the route leads a non-beat reference prompt with the legend', () => {
+    const src = readFileSync(
+      join(process.cwd(), 'src/app/api/scene/generate-image/route.ts'),
+      'utf8'
+    )
+
+    // Dialogue, establishing, and custom frames used to fall through to the bare
+    // optimized prompt, which names the subject only as `person [N]`.
+    expect(src).not.toMatch(/\}\)\s*\n\s*:\s*remappedOptimizedPrompt/)
+    expect(src).toMatch(
+      /joinPromptBlocks\(formatStillReferencesLegend\(stillRefs\), remappedOptimizedPrompt\)/
+    )
+  })
+
+  it('widens the legend clause when a likeness retry asks for it', () => {
+    expect(gideonRefs()[0].identityTraits).toBe(
+      'warm medium-brown skin, tightly curled salt-and-pepper hair, short grizzled beard, early 50s'
+    )
+    expect(gideonRefs(6)[0].identityTraits).toBe('warm medium-brown skin, short grizzled beard')
   })
 })
