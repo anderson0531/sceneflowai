@@ -66,7 +66,9 @@ export interface Scene {
    * track. Supersedes the single `musicAudio` loop; that field stays for
    * scenes written before cues existed.
    */
-  musicCues?: import('@/lib/script/segmentTypes').SceneMusicCue[]
+  sceneMusicCues?: import('@/lib/script/segmentTypes').SceneMusicCue[]
+  /** Raw cue plan straight from the script LLM, normalized into `sceneMusicCues`. */
+  musicCues?: unknown[]
   /** Coverage fingerprint of the applied cue plan; see `applySceneMusicCues`. */
   musicCueCoverage?: string
   /**

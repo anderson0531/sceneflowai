@@ -35,6 +35,7 @@ import { resolveContentIntentFromMetadata, buildPacingPhilosophyBlock } from '@/
 import { migrateProjectToSegmented } from '@/lib/script/migrateToSegmented'
 import { normalizeDialogueToProductionLineTargets } from '@/lib/script/segmentScript'
 import { MAX_SCENE_MOVEMENTS } from '@/lib/script/sceneMovements'
+import { MAX_MUSIC_CUES } from '@/lib/script/sceneMusicCues'
 import {
   ensureSceneBeats,
   embedCharacterIdsInSceneBeats,
@@ -1090,6 +1091,16 @@ SCENE ARC → BEATS (PLAN BEFORE YOU WRITE):
 • Inside a movement, consecutive beats must ADVANCE it: change what the audience knows, who holds power, or what is physically happening. Do not write several beats that restate the same instant from different angles.
 • Across a movement boundary the story must visibly turn — that turn is why the boundary is there.
 
+SCORING THE SCENE ("musicCues" — OPTIONAL, WRITE ONLY WHERE MUSIC EARNS ITS PLACE):
+• A cue is a contiguous run of beats that plays under score, with "beatStart"/"beatEnd" as 0-based INCLUSIVE indices into beats[]. Cues must not overlap. At most ${MAX_MUSIC_CUES} per scene.
+• Score for CONTRAST, not for coverage. A cue that runs the whole scene marks nothing, because there is no silence for it to stand against. Most scenes want ONE or TWO cues; many want none at all.
+• Leave the scene's quietest work dry. Procedural exchanges, interrogations, and two people negotiating usually play harder without music under them.
+• Start a cue ON a turn — the beat where the audience learns something, loses ground, or sees the situation change. Music entering at that instant is what makes the turn land; music already playing through it does not.
+• "intent" names the VIEWER emotion the cue exists to trigger, in a short phrase: "rising dread", "the weight of a revelation landing", "grief settling in". This is direction, not a mood label.
+• "description" is the brief the track is generated from and MUST obey the LYRIA MUSIC RULES above: one sentence, 10-20 words, [genre], [mood], [instruments], [tempo], instrumental only, no narrative, no beat spotting.
+• "entry" is how the cue arrives: "fade" (creep in), "hard" (hit on the cut), "swell" (build into it). "exit" is how it leaves: "fade", "hard", "tail" (ring out under the next beat).
+• Omit "musicCues" entirely when the scene should play unscored. That is a real and frequent answer.
+
 BEAT TIMELINE (CRITICAL — PRIMARY PRODUCTION SOURCE):
 ${beatTimelineNarrationRules}
 • Action beats are MANDATORY for visuals without spoken lines: reactions, inserts, B-roll, camera moves, environment changes, blocking without speech
@@ -1246,7 +1257,10 @@ ${shared.narrationSchemaLine}
       "visualDescription": "Camera and lighting notes (or audio focus if podcast)",
       "duration": 120,
       "sfx": [{"time": 0, "description": "Sound effect"}],
-      "music": {"description": "Background music mood"}
+      "music": {"description": "Background music mood"},
+      "musicCues": [
+        {"beatStart": 1, "beatEnd": 2, "intent": "rising dread", "description": "Cinematic orchestral score, ominous mood, low strings and sub-bass drone, slow tempo", "entry": "fade", "exit": "tail"}
+      ]
     }
   ]${
     shared.hasReferenceCatalog
@@ -1261,6 +1275,7 @@ ${shared.narrationSchemaLine}
 SCHEMA RULES:
 • "beats" is the ONLY place story content goes. Do NOT emit "action", "dialogue", or "narration" fields on a scene — they are derived from beats automatically and duplicating them wastes your budget.
 • "movements" is MANDATORY on every scene, and every beat MUST carry a "movementIndex" pointing at one of them.
+• "musicCues" is OPTIONAL and is omitted entirely for scenes that play unscored.
 • Scene numbers MUST be exactly ${sceneNumbers.join(', ')} — in that order, no gaps, no extras.
 • Return ONLY valid JSON - no markdown, no explanations.`
 
@@ -1495,6 +1510,11 @@ function parseChunkResponse(response: string): { scenes: any[] } {
         : {}),
       action: s.action || '',
       narration: s.narration || '',
+      // The arc and its score are planned before the beats and consumed after
+      // them by ensureSceneBeats, so both must survive parsing. Dropping
+      // `movements` here silently downgrades every scene to a derived arc.
+      movements: Array.isArray(s.movements) ? s.movements : undefined,
+      musicCues: Array.isArray(s.musicCues) ? s.musicCues : undefined,
       beats: Array.isArray(s.beats) ? s.beats : undefined,
       dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
       creditLines: Array.isArray(s.creditLines) ? s.creditLines : undefined,

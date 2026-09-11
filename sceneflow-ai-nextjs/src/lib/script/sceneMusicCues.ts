@@ -216,11 +216,12 @@ export function planSceneMusicCues(
   for (const item of raw) {
     if (!item || typeof item !== 'object') continue
     const row = item as Record<string, unknown>
-    const description = cleanText(
-      row.description ?? row.music ?? row.brief,
-      MAX_DESCRIPTION_LENGTH
-    )
-    if (description.length < MIN_DESCRIPTION_LENGTH) continue
+    const raw = cleanText(row.description ?? row.music ?? row.brief, MAX_DESCRIPTION_LENGTH)
+    if (raw.length < MIN_DESCRIPTION_LENGTH) continue
+    // Adapted here rather than at the call site so every entry point — script
+    // generation, scene revision, manual edits — reaches Lyria with a brief it
+    // will not reject as recitation.
+    const description = adaptPromptForLyria(raw)
 
     const beatStart = Number(row.beatStart)
     const beatEnd = Number(row.beatEnd ?? row.beatStart)
@@ -524,7 +525,7 @@ export function getSceneMusicCues(
 ): SceneMusicCue[] {
   if (!scene || beats.length === 0) return []
 
-  const persisted = parsePersistedMusicCues(scene.musicCues, beats)
+  const persisted = parsePersistedMusicCues(scene.sceneMusicCues, beats)
   if (persisted.length > 0) {
     const authored = persisted.some(
       (cue) => cue.generatedBy !== 'derived' || isMusicCueScored(cue)
@@ -532,7 +533,7 @@ export function getSceneMusicCues(
     if (authored) return persisted
   }
 
-  const fromLlm = planSceneMusicCues(scene.musicCues ?? scene.music_cues, beats, 'llm')
+  const fromLlm = planSceneMusicCues(scene.musicCues, beats, 'llm')
   if (fromLlm.length > 0) return fromLlm
 
   const derived = deriveSceneMusicCues(scene, beats, movements)
@@ -570,10 +571,15 @@ export function applySceneMusicCues(
         return beat.musicEnabled === covered ? beat : { ...beat, musicEnabled: covered }
       })
 
-  return {
-    scene: { ...scene, musicCues: cues, musicCueCoverage: signature },
-    beats: nextBeats,
+  const nextScene: Record<string, unknown> = {
+    ...scene,
+    sceneMusicCues: cues,
+    musicCueCoverage: signature,
   }
+  // `musicCues` is the raw LLM field; `sceneMusicCues` is the normalized record.
+  delete nextScene.musicCues
+
+  return { scene: nextScene, beats: nextBeats }
 }
 
 /** Resolve the scene's cues and persist them together with the beat flags. */
