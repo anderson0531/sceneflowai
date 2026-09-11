@@ -1588,16 +1588,19 @@ export function migrateProjectBeatDirection(metadata: unknown): MigrateBeatsResu
     if (priorBeats.length === 0) continue
 
     const withArc = ensureSceneMovements(scene, priorBeats)
-    const withCues = ensureSceneMusicCues(
-      withArc.scene,
-      withArc.beats,
-      (withArc.scene.sceneMovements as SceneMovement[] | undefined) ?? []
-    )
     const backfilled = backfillBeatDirectionsOnScene({
-      ...withCues.scene,
-      beats: withCues.beats,
+      ...withArc.scene,
+      beats: withArc.beats,
     })
     if (backfilled.length === 0) continue
+
+    // Placed after the backfill: a cue is cut from the emotion the backfill
+    // writes onto each beat, so running it first would score nothing.
+    const withCues = ensureSceneMusicCues(
+      withArc.scene,
+      backfilled,
+      (withArc.scene.sceneMovements as SceneMovement[] | undefined) ?? []
+    )
 
     const priorJson = JSON.stringify([
       scene.sceneMovements ?? null,
@@ -1611,7 +1614,7 @@ export function migrateProjectBeatDirection(metadata: unknown): MigrateBeatsResu
     const nextJson = JSON.stringify([
       withCues.scene.sceneMovements ?? null,
       withCues.scene.sceneMusicCues ?? null,
-      backfilled.map((b) => [
+      withCues.beats.map((b) => [
         b.beatDirection ?? null,
         b.movementIndex ?? null,
         b.musicEnabled ?? null,
@@ -1619,7 +1622,7 @@ export function migrateProjectBeatDirection(metadata: unknown): MigrateBeatsResu
     ])
     if (priorJson === nextJson) continue
 
-    scenes[i] = applyBeatsToScene(withCues.scene, backfilled)
+    scenes[i] = applyBeatsToScene(withCues.scene, withCues.beats)
     changed = true
     migratedSceneCount++
   }
@@ -1770,15 +1773,17 @@ export function ensureSceneBeats(scene: Record<string, unknown>): Record<string,
   // The arc is resolved before direction backfill so per-beat direction can be
   // scoped to the movement the beat belongs to instead of the whole scene.
   const withArc = ensureSceneMovements(withSfx, beats)
-  // Cues read the arc's emotional shape, so they are placed after it.
+  const beatsWithDirection = backfillBeatDirectionsOnScene({
+    ...withArc.scene,
+    beats: withArc.beats,
+  })
+  // Cues read the emotion the direction backfill writes onto each beat, so
+  // they are placed last. Run before it, the first pass sees no emotion and
+  // scores nothing, and only a second pass over the same scene finds the cues.
   const withCues = ensureSceneMusicCues(
     withArc.scene,
-    withArc.beats,
+    beatsWithDirection,
     (withArc.scene.sceneMovements as SceneMovement[] | undefined) ?? []
   )
-  const beatsWithDirection = backfillBeatDirectionsOnScene({
-    ...withCues.scene,
-    beats: withCues.beats,
-  })
-  return applyBeatsToScene(withCues.scene, beatsWithDirection)
+  return applyBeatsToScene(withCues.scene, withCues.beats)
 }
