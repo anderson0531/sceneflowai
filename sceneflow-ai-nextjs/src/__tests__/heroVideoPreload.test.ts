@@ -1,11 +1,13 @@
-import { describe, it, expect } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   getVideoPreloadStrategy,
   getModalVideoPreload,
 } from '@/lib/landing/videoPreload'
+import { prefersLeanHeroSource } from '@/lib/landing/heroPlaybackPolicy'
 import {
   getHeroVideoPosterUrl,
   getHeroVideoHlsUrl,
+  getHeroVideoFallbackMp4Url,
   getHeroVideoPlaybackSources,
 } from '@/config/landing/heroVideoLocales'
 
@@ -58,4 +60,55 @@ describe('hero video CDN config', () => {
       expect(sources?.poster).toBe(`/landing/hero/sceneflow-hero-${locale}-poster.jpg`)
     }
   })
+
+  it('serves 720p to phones and 1080p to desktop', () => {
+    const mobile = getHeroVideoPlaybackSources('en', {
+      isMobile: true,
+      saveData: false,
+      effectiveType: '4g',
+    })
+    const desktop = getHeroVideoPlaybackSources('en', {
+      isMobile: false,
+      saveData: false,
+      effectiveType: '4g',
+    })
+
+    expect(mobile?.mp4Src).toContain('sceneflow-hero-en-720p.mp4')
+    expect(mobile?.mp4SrcFallback).toContain('SceneFlow%20Hero%20Video.mp4')
+    expect(desktop?.mp4Src).toContain('sceneflow-hero-en-1080p.mp4')
+    expect(desktop?.mp4SrcFallback).toContain('SceneFlow%20Hero%20Video.mp4')
+  })
+
+  it('treats Save-Data and slow networks as lean even on desktop', () => {
+    expect(
+      prefersLeanHeroSource({ isMobile: false, saveData: true, effectiveType: '4g' })
+    ).toBe(true)
+    expect(
+      prefersLeanHeroSource({ isMobile: false, saveData: false, effectiveType: '3g' })
+    ).toBe(true)
+    expect(
+      prefersLeanHeroSource({ isMobile: false, saveData: false, effectiveType: '4g' })
+    ).toBe(false)
+  })
+
+  it('points HLS and the 720p CDN fallback at the Transcoder layout when env is set', () => {
+    vi.stubEnv('NEXT_PUBLIC_LANDING_VIDEO_CDN', 'https://media.example.com/')
+    expect(getHeroVideoHlsUrl('en')).toBe(
+      'https://media.example.com/hero/en/hls/manifest.m3u8'
+    )
+    expect(getHeroVideoFallbackMp4Url('en')).toBe(
+      'https://media.example.com/hero/en/hls/fallback-720p.mp4'
+    )
+    const mobile = getHeroVideoPlaybackSources('en', {
+      isMobile: true,
+      saveData: false,
+      effectiveType: '4g',
+    })
+    expect(mobile?.hlsSrc).toBe('https://media.example.com/hero/en/hls/manifest.m3u8')
+    expect(mobile?.mp4Src).toBe('https://media.example.com/hero/en/hls/fallback-720p.mp4')
+  })
+})
+
+afterEach(() => {
+  vi.unstubAllEnvs()
 })

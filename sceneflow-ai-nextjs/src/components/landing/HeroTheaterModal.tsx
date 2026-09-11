@@ -36,7 +36,14 @@ export function HeroTheaterModal({
   const activeEntry = getHeroVideoLocale(activeLocale)
   const heroLocales = getHeroVideoLocalesAsVideoLocales()
   const playbackSources = useMemo(
-    () => (activeEntry ? getHeroVideoPlaybackSources(activeLocale) : null),
+    () =>
+      activeEntry
+        ? getHeroVideoPlaybackSources(activeLocale, {
+            isMobile: false,
+            saveData: false,
+            effectiveType: '4g',
+          })
+        : null,
     [activeEntry, activeLocale]
   )
 

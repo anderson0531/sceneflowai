@@ -4,6 +4,14 @@
  */
 
 import type { VideoLocale } from '@/config/landing/videoLocales'
+import {
+  heroHlsFallbackMp4Object,
+  heroHlsManifestObject,
+} from '@/lib/landing/heroHlsJobConfig'
+import {
+  prefersLeanHeroSource,
+  type HeroNetworkContext,
+} from '@/lib/landing/heroPlaybackPolicy'
 
 export type HeroVideoLocaleId = 'en' | 'es' | 'pt' | 'hi' | 'zh' | 'ar' | 'th'
 
@@ -19,6 +27,10 @@ export type HeroVideoLocale = {
   hlsSrc?: string
   /** Explicit MP4 fallback (same as src when unset) */
   mp4Src?: string
+  /** 720p web encode for phones / Save-Data / slow networks */
+  mp4SrcMobile?: string
+  /** 1080p web encode for desktop / theater when present */
+  mp4SrcHd?: string
   /** JPG poster shown while video loads */
   poster: string
   available: boolean
@@ -26,10 +38,17 @@ export type HeroVideoLocale = {
 
 export const HERO_VIDEO_BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
 
-/** Optional GCP Cloud CDN base — set when Transcoder HLS output is live. */
-export const LANDING_VIDEO_CDN_HOST = (
-  typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_LANDING_VIDEO_CDN : undefined
-)?.replace(/\/$/, '')
+/**
+ * Optional GCP Cloud CDN (or `https://storage.googleapis.com/{bucket}`) base.
+ * Read at call time so tests can stub the env and Next still inlines the
+ * `NEXT_PUBLIC_` value at build.
+ */
+export function getLandingVideoCdnHost(): string | undefined {
+  const raw =
+    typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_LANDING_VIDEO_CDN : undefined
+  const trimmed = raw?.replace(/\/$/, '').trim()
+  return trimmed || undefined
+}
 
 const BLOB_HOST = HERO_VIDEO_BLOB_HOST
 
@@ -45,8 +64,16 @@ export function getHeroVideoPosterPath(locale: HeroVideoLocaleId): string {
 
 /** HLS manifest on landing video CDN (Phase 2 — enabled via env). */
 export function getHeroVideoHlsUrl(locale: HeroVideoLocaleId): string | undefined {
-  if (!LANDING_VIDEO_CDN_HOST) return undefined
-  return `${LANDING_VIDEO_CDN_HOST}/hero/${locale}/hls/manifest.m3u8`
+  const cdn = getLandingVideoCdnHost()
+  if (!cdn) return undefined
+  return `${cdn}/${heroHlsManifestObject(locale)}`
+}
+
+/** Progressive 720p on the same CDN — HLS fallback, never the 4K Blob master. */
+export function getHeroVideoFallbackMp4Url(locale: HeroVideoLocaleId): string | undefined {
+  const cdn = getLandingVideoCdnHost()
+  if (!cdn) return undefined
+  return `${cdn}/${heroHlsFallbackMp4Object(locale)}`
 }
 
 /** Blob master filename for each locale once produced. */
@@ -58,6 +85,28 @@ export const HERO_VIDEO_BLOB_PATHS: Record<HeroVideoLocaleId, string> = {
   zh: 'Hero Video (Chinese).mp4',
   ar: 'Hero Video (Arabic).mp4',
   th: 'Hero Video (Thai).mp4',
+}
+
+/** 720p +faststart web encodes from the current 4K masters (encode-hero-web-mp4). */
+export const HERO_VIDEO_WEB_720P_PATHS: Record<HeroVideoLocaleId, string> = {
+  en: 'landing/hero/sceneflow-hero-en-720p.mp4',
+  es: 'landing/hero/sceneflow-hero-es-720p.mp4',
+  pt: 'landing/hero/sceneflow-hero-pt-720p.mp4',
+  hi: 'landing/hero/sceneflow-hero-hi-720p.mp4',
+  zh: 'landing/hero/sceneflow-hero-zh-720p.mp4',
+  ar: 'landing/hero/sceneflow-hero-ar-720p.mp4',
+  th: 'landing/hero/sceneflow-hero-th-720p.mp4',
+}
+
+/** Optional 1080p web encodes for desktop / theater. */
+export const HERO_VIDEO_WEB_1080P_PATHS: Record<HeroVideoLocaleId, string> = {
+  en: 'landing/hero/sceneflow-hero-en-1080p.mp4',
+  es: 'landing/hero/sceneflow-hero-es-1080p.mp4',
+  pt: 'landing/hero/sceneflow-hero-pt-1080p.mp4',
+  hi: 'landing/hero/sceneflow-hero-hi-1080p.mp4',
+  zh: 'landing/hero/sceneflow-hero-zh-1080p.mp4',
+  ar: 'landing/hero/sceneflow-hero-ar-1080p.mp4',
+  th: 'landing/hero/sceneflow-hero-th-1080p.mp4',
 }
 
 function heroSrc(path: string): string {
@@ -132,6 +181,8 @@ export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = (
     src: mp4Src,
     hlsSrc: produced?.hlsSrc,
     mp4Src: mp4Src || undefined,
+    mp4SrcMobile: mp4Src ? heroSrc(HERO_VIDEO_WEB_720P_PATHS[id]) : undefined,
+    mp4SrcHd: mp4Src ? heroSrc(HERO_VIDEO_WEB_1080P_PATHS[id]) : undefined,
     poster: produced?.poster ?? (mp4Src ? getHeroVideoPosterUrl(id) : ''),
     available: Boolean(mp4Src),
   }
@@ -162,17 +213,44 @@ export function getHeroVideoLocalesAsVideoLocales(): VideoLocale[] {
   }))
 }
 
-/** Resolve playback sources for the adaptive landing player. */
-export function getHeroVideoPlaybackSources(id: HeroVideoLocaleId): {
+export type HeroPlaybackSources = {
   hlsSrc?: string
   mp4Src: string
+  /** Last-resort progressive file if the chosen web encode is not on Blob yet. */
+  mp4SrcFallback?: string
   poster: string
-} | null {
+}
+
+/**
+ * Resolve playback sources for the adaptive landing player.
+ *
+ * `context` selects 720p vs 1080p/4K. Theater should pass a desktop-like
+ * context so fullscreen keeps the sharp encode.
+ */
+export function getHeroVideoPlaybackSources(
+  id: HeroVideoLocaleId,
+  context?: HeroNetworkContext
+): HeroPlaybackSources | null {
   const entry = getHeroVideoLocale(id)
   if (!entry?.available || !entry.src) return null
+
+  const master = entry.mp4Src ?? entry.src
+  const lean = context ? prefersLeanHeroSource(context) : false
+  const cdnFallback = getHeroVideoFallbackMp4Url(id)
+
+  const mobileMp4 = cdnFallback ?? entry.mp4SrcMobile ?? master
+  const desktopMp4 = entry.mp4SrcHd ?? master
+
   return {
-    hlsSrc: entry.hlsSrc,
-    mp4Src: entry.mp4Src ?? entry.src,
+    hlsSrc: getHeroVideoHlsUrl(id),
+    mp4Src: lean ? mobileMp4 : desktopMp4,
+    mp4SrcFallback: lean
+      ? master !== mobileMp4
+        ? master
+        : undefined
+      : master !== desktopMp4
+        ? master
+        : undefined,
     poster: entry.poster,
   }
 }
