@@ -10545,7 +10545,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         skipObjectAutoDetection: explicitRefs?.skipObjectAutoDetection ?? true,
       }
 
-      if (slot.beatId && (slot.kind === 'action' || slot.kind === 'narration')) {
+      // Any beat-backed slot is a beat frame, dialogue beats included. Routing
+      // spoken beats to frameType 'dialogue' sent them down a path with no
+      // structured still and no [REFERENCES] legend, so the same beat rendered
+      // differently depending on which button started it. Quick regen has always
+      // sent 'beat' for every kind; this matches it.
+      if (slot.beatId) {
         const rawBeatIdx = resolveRawBeatIndex(scene, { beatId: slot.beatId })
         payload.frameType = 'beat'
         payload.beatId = slot.beatId

@@ -6,6 +6,11 @@ import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor, buildIdentityPromptToken, sanitizePromptForIdentityRefs, filterCharactersForPromptRefs, stripReferenceImageMappingBlock } from '@/lib/imagen/promptOptimizer'
 import { ethnicityKeyFeature } from '@/lib/imagen/characterKeyFeatures'
 import {
+  IDENTITY_TRAITS_RETRY_WORD_CAP,
+  buildIdentityEscalationBlock,
+  buildIdentityTraitsClause,
+} from '@/lib/imagen/identityTraitsClause'
+import {
   buildSceneImageNegativePrompt,
   ORIGINAL_ADULT_SUBJECT_REQUIREMENT,
 } from '@/lib/imagen/sceneImageNegativePrompt'
@@ -49,6 +54,8 @@ import {
   assignStableLibraryTokens,
   bindLibraryNamesToTokens,
   buildLocationPromptToken,
+  formatStillReferencesLegend,
+  isStructuredStillPrompt,
   joinPromptBlocks,
   promptReferencesLibraryItem,
   stillRefsFromAttachedImages,
@@ -289,6 +296,44 @@ function lookupSubjectOrdinal(
 ): number | undefined {
   if (!characterName) return undefined
   return characterReferences.find((cr) => cr.name === characterName)?.subjectOrdinal
+}
+
+/** Shape `buildIdentityTraitsClause` reads, as the route's character refs carry it. */
+type CharacterReferenceForTraits = {
+  name?: string
+  appearanceDescription?: string | null
+  visionDescription?: string | null
+  hairStyle?: string
+  hairColor?: string
+}
+
+/**
+ * Report the identity anchor each subject actually got.
+ *
+ * With reference-first binding the prompt says `person [N]` and nothing else
+ * about the subject, so the legend clause is the whole textual identity. The
+ * old logs could not tell "traits omitted by design" from "traits missing
+ * because no vision pass ever described this character" — which is how a frame
+ * ships with a face the portrait contradicts and nothing in the log to show it.
+ */
+function logIdentityAnchors(
+  stillRefs: Array<{ kind: string; token: string; name: string; identityTraits?: string }>,
+  characterReferences: CharacterReferenceForTraits[]
+): void {
+  for (const ref of stillRefs) {
+    if (ref.kind !== 'person') continue
+    if (ref.identityTraits) {
+      console.log(`[Scene Image] Identity anchor: ${ref.token} = ${ref.name} — ${ref.identityTraits}`)
+      continue
+    }
+    const char = characterReferences.find((cr) => cr.name === ref.name)
+    const describedBy = char?.visionDescription || char?.appearanceDescription
+    console.warn(
+      `[Scene Image] ⚠️  No identity anchor for ${ref.token} = ${ref.name} — ` +
+        `${describedBy ? 'description present but no observable traits parsed from it' : 'no vision or appearance description stored'}. ` +
+        'The reference image is the only identity signal in this request.'
+    )
+  }
 }
 
 /**
@@ -1699,21 +1744,23 @@ export async function POST(req: NextRequest) {
           'Centered title typography is the primary subject. ' +
           promptBody
       }
-      // User provided a custom prompt (likely from Prompt Builder, already optimized and possibly edited)
-      // Only re-optimize if character references aren't already in the prompt
-      const hasCharacterReferences = characterReferences.length > 0 && (() => {
-        const hasReferencePattern = 
-          characterReferences.some((ref: { name: string }) => {
-            const namePattern = new RegExp(`character\\s+${ref.name.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+appears`, 'i')
-            return namePattern.test(promptBody)
-          }) &&
-          /must\s+match\s+their\s+reference\s+image/i.test(promptBody)
-        return hasReferencePattern
-      })()
-      
-      if (hasCharacterReferences || characterReferences.length === 0) {
+      // Express and the prompt builder send prompts that are already composed in
+      // sections. Those go to still assembly as they stand — the rules optimizer
+      // would wrap them in its own template and delete the shot language the beat
+      // planner wrote. Cast names still become person tokens here, because the
+      // by-name binding in assembly only runs for beat frames.
+      if (characterReferences.length === 0) {
         optimizedPrompt = promptBody
-        console.log('[Scene Image] Using custom prompt from Prompt Builder (preserving user edits)')
+        console.log('[Scene Image] Using custom prompt as provided (no character references)')
+      } else if (isStructuredStillPrompt(promptBody)) {
+        optimizedPrompt = sanitizePromptForIdentityRefs(promptBody, characterReferences, {
+          protectPhrases: detectedObjectReferences
+            .map((obj: { name?: string }) => obj.name)
+            .filter((name: unknown): name is string => typeof name === 'string'),
+        })
+        console.log(
+          '[Scene Image] Using structured custom prompt as composed (bound cast names to person tokens)'
+        )
       } else {
         optimizedPrompt = optimizePromptForImagen({
           sceneAction: promptBody,
@@ -1725,8 +1772,11 @@ export async function POST(req: NextRequest) {
         console.log('[Scene Image] Added character references to user-edited prompt (re-optimized)')
       }
 
+      // A sectioned prompt gets its realism anchor from the [STYLE] block that
+      // appendSceneImagePromptModifiers and still assembly own; appending a
+      // comma-spliced suffix here would leave it dangling after [EXCLUSIONS].
       const effectiveArtStyle = artStyle || 'photorealistic'
-      if (effectiveArtStyle === 'photorealistic') {
+      if (effectiveArtStyle === 'photorealistic' && !isStructuredStillPrompt(optimizedPrompt)) {
         const lower = optimizedPrompt.toLowerCase()
         const hasRealismKeywords =
           lower.includes('photorealistic') ||
@@ -2115,11 +2165,31 @@ export async function POST(req: NextRequest) {
         .filter((token): token is string => !!token)
     )
 
+    /**
+     * Identity lock added on round 1 only. Empty on round 0, so the first
+     * attempt keeps the short legend clause and does not argue with its own
+     * reference image before there is anything to argue about.
+     */
+    let identityEscalationBlock = ''
+
     do {
       const roundStart = Date.now()
       if (likenessRound > 0) {
-        if (!sceneImageIntelligenceRequest) break
-        console.log('[Scene Image] Likeness auto-retry: busting prompt cache and regenerating image...')
+        // Escalation is the point of the retry, and it has to happen on every
+        // path. Previously the round bailed out whenever there was no
+        // intelligence request, which is exactly the persisted-lookbook and
+        // custom-prompt cases — so Express and one-click regen never retried at
+        // all, and the paths that did retried with the same prompt.
+        identityEscalationBlock = buildIdentityEscalationBlock(characterReferences)
+        if (!identityEscalationBlock) {
+          console.log(
+            '[Scene Image] Likeness auto-retry skipped — no describable identity traits to escalate'
+          )
+          break
+        }
+        console.log('[Scene Image] Likeness auto-retry: escalating identity lock and regenerating...')
+      }
+      if (likenessRound > 0 && sceneImageIntelligenceRequest) {
         const retryPromptDeadlineMs = resolveRetryPromptDeadlineMs(
           remainingBudgetMs(),
           SCENE_IMAGE_INTELLIGENCE_DEADLINE_MS
@@ -2154,18 +2224,22 @@ export async function POST(req: NextRequest) {
             ...(sceneImageIntelligenceRequest?.availableLocations ?? []).map((l) => l.name),
           ].filter(Boolean),
         })
-        if (!appliedRetry.usedAIIntelligence) {
-          console.log('[Scene Image] Likeness auto-retry skipped — AI prompt unavailable on retry')
-          break
+        if (appliedRetry.usedAIIntelligence) {
+          optimizedPrompt = appendSceneImagePromptModifiers(
+            appliedRetry.optimizedPrompt,
+            promptModifierContext
+          )
+          characterReferencesForImages = appliedRetry.characterReferencesForImages
+          detectedObjectReferences = appliedRetry.detectedObjectReferences
+          matchedLocationReference = appliedRetry.matchedLocationReference
+          aiNegativePromptAdditions = appliedRetry.aiNegativePromptAdditions
+        } else {
+          // A failed re-plan is not a reason to abandon the round: the escalated
+          // identity lock is carried by the request either way.
+          console.log(
+            '[Scene Image] Likeness auto-retry: AI re-plan unavailable, reusing round 0 prompt with the escalated lock'
+          )
         }
-        optimizedPrompt = appendSceneImagePromptModifiers(
-          appliedRetry.optimizedPrompt,
-          promptModifierContext
-        )
-        characterReferencesForImages = appliedRetry.characterReferencesForImages
-        detectedObjectReferences = appliedRetry.detectedObjectReferences
-        matchedLocationReference = appliedRetry.matchedLocationReference
-        aiNegativePromptAdditions = appliedRetry.aiNegativePromptAdditions
       }
 
     // Build image references — identity and wardrobe are separate slots when both exist
@@ -2374,7 +2448,9 @@ export async function POST(req: NextRequest) {
             totalWantedRefs,
             allowEcoWithReferences: useAnimaticFlashTier,
           })
-          const referenceImageCap = getMaxReferenceImagesForTier(effectiveImageTier)
+          const referenceImageCap = getMaxReferenceImagesForTier(effectiveImageTier, {
+            flashAnimatic: useAnimaticFlashTier,
+          })
 
           if (effectiveImageTier !== baseImageTier) {
             console.log(
@@ -2403,10 +2479,23 @@ export async function POST(req: NextRequest) {
             )
 
           if (droppedReferenceImages.length > 0) {
-            console.log(
+            // A dropped prop or location costs the frame a detail. A dropped
+            // character reference costs it the identity or the outfit, and the
+            // prompt's `[N]` mentions get nulled to match, so it has to read
+            // louder than the props do.
+            const droppedCharacterRefs = droppedReferenceImages.filter((r) => r.characterName)
+            const log = droppedCharacterRefs.length > 0 ? console.warn : console.log
+            log(
               `[Scene Image] Dropped ${droppedReferenceImages.length} reference image(s) (tier=${effectiveImageTier}, cap=${referenceImageCap}):`,
               droppedReferenceImages.map((r) => r.name).join(', ')
             )
+            if (droppedCharacterRefs.length > 0) {
+              console.warn(
+                `[Scene Image] ⚠️  ${droppedCharacterRefs.length} of those are character reference(s): ` +
+                  `${droppedCharacterRefs.map((r) => `${r.characterName} ${r.refRole}`).join(', ')}. ` +
+                  'Raise the tier cap or send fewer subjects — likeness will drift without them.'
+              )
+            }
           }
 
           console.log(
@@ -2623,6 +2712,9 @@ export async function POST(req: NextRequest) {
           const stillRefs = stillRefsFromAttachedImages({
             selected: selectedReferenceImages,
             characterReferences,
+            ...(identityEscalationBlock
+              ? { identityTraitsWordCap: IDENTITY_TRAITS_RETRY_WORD_CAP }
+              : {}),
           })
           const structuredStill = isBeatFrame
             ? assembleStructuredStillPrompt({
@@ -2638,8 +2730,14 @@ export async function POST(req: NextRequest) {
                 // a list of things not to draw instead of the identity lock.
                 exclusions: finalNegativePrompt,
               })
-            : remappedOptimizedPrompt
+            : // Reference-first binding leaves `person [N]` as the only mention of
+              // the subject, so the legend is the one place the request says what
+              // that person looks like. Dialogue, establishing, and custom frames
+              // need it as much as beats do — without it the model is free to
+              // invent an ethnicity the portrait contradicts.
+              joinPromptBlocks(formatStillReferencesLegend(stillRefs), remappedOptimizedPrompt)
           promptForResponse = structuredStill
+          logIdentityAnchors(stillRefs, characterReferences)
           const distinctCharacterNamesForBinding = [
             ...new Set(cappedImageReferences.map((ref) => ref.characterName)),
           ]
@@ -2700,6 +2798,11 @@ export async function POST(req: NextRequest) {
           }
           if (subjectBindingSummary) {
             geminiPrompt += `${subjectBindingSummary}\n\n`
+          }
+          // Above the scene prompt, because the retry is correcting who is in
+          // the frame, not what they are doing in it.
+          if (identityEscalationBlock) {
+            geminiPrompt += `${identityEscalationBlock}\n\n`
           }
           geminiPrompt += `SCENE PROMPT:\n${structuredStill}\n\n`
           
@@ -2795,11 +2898,12 @@ export async function POST(req: NextRequest) {
                 actionOrStructured: optimizedPrompt,
                 refs: characterReferencesForImages
                   .filter((ref: { promptToken?: string; name?: string }) => ref.promptToken && ref.name)
-                  .map((ref: { promptToken: string; name: string }) => ({
+                  .map((ref: CharacterReferenceForTraits & { promptToken: string; name: string }) => ({
                     kind: 'person' as const,
                     token: ref.promptToken,
                     name: ref.name,
                     roleLabel: 'identity',
+                    identityTraits: buildIdentityTraitsClause(ref),
                   })),
                 photorealisticAnchor: getPhotorealisticPromptAnchor(
                   resolvedGen.storyboardQuality,

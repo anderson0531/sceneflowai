@@ -393,3 +393,36 @@ describe('Express beat generate-image flags', () => {
     expect(src).toContain('referenceCatalog: buildExpressReferenceCatalog(project)')
   })
 })
+
+describe('frameType is decided by the beat, not by the button', () => {
+  it('quick regen sends a beat frame for every beat kind', () => {
+    const src = readFileSync(join(process.cwd(), 'src/lib/vision/preVisDirectGenerate.ts'), 'utf8')
+
+    expect(src).toContain("frameType: 'beat'")
+    expect(src).not.toMatch(/frameType:\s*[^,\n]*slot\.kind/)
+    expect(src).not.toMatch(/frameType:\s*[^,\n]*beat\.kind/)
+  })
+
+  it('the Direct dialog routes any beat-backed slot the same way', () => {
+    const src = readFileSync(
+      join(process.cwd(), 'src/app/dashboard/workflow/vision/[projectId]/page.tsx'),
+      'utf8'
+    )
+
+    // The old gate let only action and narration slots become beat frames, so a
+    // dialogue beat opened from this dialog skipped the structured still and the
+    // [REFERENCES] legend that the very same beat got from quick regen.
+    expect(src).not.toMatch(
+      /slot\.beatId && \(slot\.kind === 'action' \|\| slot\.kind === 'narration'\)/
+    )
+
+    const beatBranch = src.indexOf('if (slot.beatId) {')
+    expect(beatBranch).toBeGreaterThan(-1)
+
+    // Still first in the chain: a beat-backed slot with a dialogueIndex must not
+    // fall through to the dialogue branch.
+    const dialogueBranch = src.indexOf("payload.frameType = 'dialogue'")
+    expect(dialogueBranch).toBeGreaterThan(beatBranch)
+    expect(src.slice(beatBranch, dialogueBranch)).toContain("payload.frameType = 'beat'")
+  })
+})

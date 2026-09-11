@@ -23,6 +23,13 @@ import {
 export const IDENTITY_TRAITS_WORD_CAP = 15
 
 /**
+ * Wider cap for the retry lock, where brevity has already been tried and lost.
+ * Every trait the description yields gets stated rather than the first fifteen
+ * words' worth.
+ */
+export const IDENTITY_TRAITS_RETRY_WORD_CAP = 40
+
+/**
  * Modifiers kept when they sit directly before a trait noun. An allowlist,
  * because the window before "skin" is just as likely to hold "beneath his" or
  * "scarred by" as it is to hold a tone.
@@ -171,4 +178,50 @@ export function buildIdentityTraitsClause(character: {
   }
 
   return traits.length > 0 ? traits.join(', ') : undefined
+}
+
+export interface IdentityEscalationCharacter {
+  name?: string
+  promptToken?: string
+  appearanceDescription?: string | null
+  visionDescription?: string | null
+  hairStyle?: string
+  hairColor?: string
+}
+
+/**
+ * Stronger identity statement for a likeness retry.
+ *
+ * Round 0 states traits once, briefly, in the legend, and that is the right
+ * default — a long appearance essay competes with the portrait. But once
+ * validation reports the frame is a different person, re-sending the same brief
+ * clause asks for the same answer. The retry restates the traits at a wider cap
+ * and names the four properties the validator actually rejects frames over, so
+ * the second attempt is arguing against a specific failure rather than
+ * re-rolling the dice.
+ */
+export function buildIdentityEscalationBlock(
+  characters: IdentityEscalationCharacter[]
+): string {
+  const lines: string[] = []
+  const seen = new Set<string>()
+
+  for (const character of characters) {
+    const token = character.promptToken?.trim()
+    if (!token || seen.has(token)) continue
+    const traits = buildIdentityTraitsClause({
+      ...character,
+      wordCap: IDENTITY_TRAITS_RETRY_WORD_CAP,
+    })
+    if (!traits) continue
+    seen.add(token)
+    lines.push(`${token}${character.name ? ` (${character.name})` : ''} must read as: ${traits}.`)
+  }
+
+  if (lines.length === 0) return ''
+  return [
+    'IDENTITY RETRY LOCK — the previous attempt rendered a different person.',
+    ...lines,
+    'Ethnicity, skin tone, hair texture, and apparent age come from the identity reference image. Do not substitute a different one.',
+  ].join('\n')
 }

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  MAX_REFERENCE_IMAGES_ECO,
+  MAX_REFERENCE_IMAGES_FLASH_ANIMATIC,
   MAX_VERTEX_GEMINI_REFERENCE_IMAGES,
   buildPropReferenceMappingLines,
   buildSubjectCountGuardrail,
@@ -35,6 +37,90 @@ describe('referenceLimits', () => {
     expect(getMaxReferenceImagesForTier('eco')).toBe(3)
     expect(getMaxReferenceImagesForTier('designer')).toBe(10)
     expect(getMaxReferenceImagesForTier('director')).toBe(10)
+  })
+
+  it('getMaxReferenceImagesForTier gives the flash animatic tier its own cap', () => {
+    // Eco's 3 is a Fal Kling element budget; flash animatic beats run on Vertex,
+    // where three slots cannot hold two subjects' identity and wardrobe.
+    expect(getMaxReferenceImagesForTier('eco', { flashAnimatic: true })).toBe(
+      MAX_REFERENCE_IMAGES_FLASH_ANIMATIC
+    )
+    expect(MAX_REFERENCE_IMAGES_FLASH_ANIMATIC).toBeGreaterThan(MAX_REFERENCE_IMAGES_ECO)
+    expect(MAX_REFERENCE_IMAGES_FLASH_ANIMATIC).toBeLessThanOrEqual(
+      MAX_VERTEX_GEMINI_REFERENCE_IMAGES
+    )
+
+    // The flag is opt-in, and it never touches the pro caps.
+    expect(getMaxReferenceImagesForTier('eco', { flashAnimatic: false })).toBe(
+      MAX_REFERENCE_IMAGES_ECO
+    )
+    expect(getMaxReferenceImagesForTier('designer', { flashAnimatic: true })).toBe(10)
+    expect(getMaxReferenceImagesForTier('director', { flashAnimatic: true })).toBe(10)
+  })
+
+  it('the flash animatic cap keeps wardrobe and location that the eco cap dropped', () => {
+    const refs = [
+      ref('identity', 'Identity 1: Elara', undefined, {
+        provisionalIndex: 1,
+        characterName: 'Elara Vance',
+        refRole: 'identity',
+        imageUrl: 'https://example.com/elara-identity.jpg',
+      }),
+      ref('wardrobe', 'Wardrobe 2: Elara', undefined, {
+        provisionalIndex: 2,
+        characterName: 'Elara Vance',
+        refRole: 'wardrobe',
+        imageUrl: 'https://example.com/elara-wardrobe.jpg',
+      }),
+      ref('identity', 'Identity 3: Marcus', undefined, {
+        provisionalIndex: 3,
+        characterName: 'Marcus Thorne',
+        refRole: 'identity',
+        imageUrl: 'https://example.com/marcus-identity.jpg',
+      }),
+      ref('wardrobe', 'Wardrobe 4: Marcus', undefined, {
+        provisionalIndex: 4,
+        characterName: 'Marcus Thorne',
+        refRole: 'wardrobe',
+        imageUrl: 'https://example.com/marcus-wardrobe.jpg',
+      }),
+      ref('location', 'Location 5: Office', undefined, {
+        provisionalIndex: 5,
+        locationName: 'Office',
+        imageUrl: 'https://example.com/office.jpg',
+      }),
+    ]
+
+    // Identity outranks everything, so at 3 slots the survivors are two faces
+    // and one outfit: Marcus renders in invented clothes, in an invented room.
+    const eco = selectReferenceImagesInOrder(refs, MAX_REFERENCE_IMAGES_ECO)
+    expect(eco.dropped.map((r) => r.provisionalIndex)).toEqual([4, 5])
+    expect(eco.indexMap.get(4)).toBeNull()
+    expect(eco.indexMap.get(5)).toBeNull()
+
+    const flash = selectReferenceImagesInOrder(refs, MAX_REFERENCE_IMAGES_FLASH_ANIMATIC)
+    expect(flash.dropped).toHaveLength(0)
+    expect(flash.selected.map((r) => r.sendIndex)).toEqual([1, 2, 3, 4, 5])
+  })
+
+  it('a dropped wardrobe reference nulls its prompt mention, so the cap is not cosmetic', () => {
+    const indexMap = new Map<number, number | null>([
+      [1, 1],
+      [2, 2],
+      [3, 3],
+      [4, null],
+    ])
+
+    const input = [
+      '- SUBJECT REFERENCE (Ref Image [1]): Elara identity',
+      '- WARDROBE REFERENCE (Ref Image [4]): Marcus charcoal suit',
+      'Two-shot of person [1] and person [2].',
+    ].join('\n')
+
+    const output = remapReferenceNumbersInPrompt(input, indexMap)
+
+    expect(output).not.toContain('WARDROBE REFERENCE')
+    expect(output).not.toContain('charcoal suit')
   })
 
   it('resolveEffectiveImageTier upgrades eco whenever any reference is wanted', () => {

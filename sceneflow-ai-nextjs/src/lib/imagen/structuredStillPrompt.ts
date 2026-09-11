@@ -174,6 +174,27 @@ export function parseStillPromptSource(text: string): {
   }
 }
 
+const STRUCTURED_SECTION_HEADER =
+  /\[(?:REFERENCES|STILL|GLOBAL STYLE ANCHOR|SCENE COMPOSITION\s*&\s*BEAT)\]/i
+
+/**
+ * Is this prompt already written in section form?
+ *
+ * `optimizePromptForImagen` rewrites prose into its own template: it prepends
+ * "Create an image about …", strips the shot language a beat planner wrote, and
+ * collapses the text to a single line. Run over a sectioned prompt that buries
+ * the headers mid-sentence, and `parseStillPromptSource` can no longer find
+ * Action/Framing — so a caller that already composed sections must be handed
+ * straight to assembly. A header alone is not enough: a style-only stub has
+ * nothing for assembly to work with and is better off re-optimized.
+ */
+export function isStructuredStillPrompt(text: string): boolean {
+  const trimmed = (text || '').trim()
+  if (!trimmed) return false
+  if (!STRUCTURED_SECTION_HEADER.test(trimmed)) return false
+  return Boolean(parseStillPromptSource(trimmed).actionFraming)
+}
+
 /**
  * Does the prompt actually direct this library item?
  *
@@ -318,6 +339,8 @@ export function stillRefsFromAttachedImages(args: {
     hairStyle?: string
     hairColor?: string
   }>
+  /** Widened on a likeness retry, where the short legend clause already failed. */
+  identityTraitsWordCap?: number
 }): StillPromptBoundRef[] {
   const refs: StillPromptBoundRef[] = []
   const seenPerson = new Set<string>()
@@ -341,7 +364,9 @@ export function stillRefsFromAttachedImages(args: {
         token,
         name: entry.characterName,
         roleLabel: 'identity',
-        identityTraits: char ? buildIdentityTraitsClause(char) : undefined,
+        identityTraits: char
+          ? buildIdentityTraitsClause({ ...char, wordCap: args.identityTraitsWordCap })
+          : undefined,
       })
       continue
     }
