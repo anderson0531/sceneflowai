@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { buildIdentityTraitsClause } from '@/lib/imagen/identityTraitsClause'
+import {
+  IDENTITY_TRAITS_RETRY_WORD_CAP,
+  IDENTITY_TRAITS_WORD_CAP,
+  buildIdentityEscalationBlock,
+  buildIdentityTraitsClause,
+} from '@/lib/imagen/identityTraitsClause'
 import {
   formatStillReferencesLegend,
   stillRefsFromAttachedImages,
@@ -8,6 +13,12 @@ import {
 const GIDEON_VISION =
   'A man in his early 50s with warm medium-brown skin, tightly curled salt-and-pepper hair ' +
   'cropped close, and a short grizzled beard. He wears a charcoal wool overcoat.'
+
+/** Enough traits to overrun the legend cap, so the retry cap has something to recover. */
+const VERBOSE_VISION =
+  'A man in his early 50s with warm sun-weathered medium-brown skin, tightly coiled ' +
+  'salt-and-pepper shoulder length natural black hair, and a thick neatly trimmed ' +
+  'salt-and-pepper beard.'
 
 describe('buildIdentityTraitsClause', () => {
   it('reads skin, hair, facial hair, and age from a vision description', () => {
@@ -123,5 +134,74 @@ describe('identity traits in the [REFERENCES] legend', () => {
 
     expect(formatStillReferencesLegend(refs)).toContain('person [1] = Piper Hayes — identity')
     expect(formatStillReferencesLegend(refs)).not.toContain('identity:')
+  })
+})
+
+describe('buildIdentityEscalationBlock', () => {
+  it('restates traits the legend cap had to drop', () => {
+    const legendClause = buildIdentityTraitsClause({ visionDescription: VERBOSE_VISION })
+    const block = buildIdentityEscalationBlock([
+      { name: 'Gideon Croft', promptToken: 'person [1]', visionDescription: VERBOSE_VISION },
+    ])
+
+    expect(legendClause).not.toContain('beard')
+    expect(block).toContain('thick neatly trimmed salt-and-pepper beard')
+    expect(IDENTITY_TRAITS_RETRY_WORD_CAP).toBeGreaterThan(IDENTITY_TRAITS_WORD_CAP)
+  })
+
+  it('names the subject and the four properties the validator rejects frames over', () => {
+    const block = buildIdentityEscalationBlock([
+      { name: 'Gideon Croft', promptToken: 'person [1]', visionDescription: GIDEON_VISION },
+    ])
+
+    expect(block).toBe(
+      'IDENTITY RETRY LOCK — the previous attempt rendered a different person.\n' +
+        'person [1] (Gideon Croft) must read as: warm medium-brown skin, ' +
+        'tightly curled salt-and-pepper hair, short grizzled beard, early 50s.\n' +
+        'Ethnicity, skin tone, hair texture, and apparent age come from the identity ' +
+        'reference image. Do not substitute a different one.'
+    )
+  })
+
+  it('locks every subject in the frame on one line each', () => {
+    const block = buildIdentityEscalationBlock([
+      { name: 'Gideon Croft', promptToken: 'person [1]', visionDescription: GIDEON_VISION },
+      {
+        name: 'Piper Hayes',
+        promptToken: 'person [2]',
+        visionDescription: 'fair freckled skin, long auburn hair, late 20s',
+      },
+    ])
+
+    expect(block).toContain('person [1] (Gideon Croft) must read as:')
+    expect(block).toContain(
+      'person [2] (Piper Hayes) must read as: fair freckled skin, long auburn hair, late 20s.'
+    )
+  })
+
+  it('states a token once even when the cast list repeats it', () => {
+    const gideon = {
+      name: 'Gideon Croft',
+      promptToken: 'person [1]',
+      visionDescription: GIDEON_VISION,
+    }
+    const block = buildIdentityEscalationBlock([gideon, gideon])
+
+    expect(block.match(/person \[1\]/g)).toHaveLength(1)
+  })
+
+  it('stays silent rather than shouting an empty lock', () => {
+    expect(buildIdentityEscalationBlock([])).toBe('')
+
+    // No token to bind the traits to, so the sentence would name nobody.
+    expect(buildIdentityEscalationBlock([{ name: 'Gideon', visionDescription: GIDEON_VISION }])).toBe('')
+
+    // A description with no observable traits: the reference image is all there is,
+    // and an escalation that repeats nothing gives the retry no new information.
+    expect(
+      buildIdentityEscalationBlock([
+        { name: 'Piper Hayes', promptToken: 'person [1]', visionDescription: 'She moves quickly.' },
+      ])
+    ).toBe('')
   })
 })
