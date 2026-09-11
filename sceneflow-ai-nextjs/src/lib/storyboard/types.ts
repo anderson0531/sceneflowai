@@ -25,7 +25,6 @@ import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback
 import { getBeatOverlayFields } from '@/lib/storyboard/beatCaption'
 import type { BeatKenBurnsSettings } from '@/lib/storyboard/kenBurnsFrame'
 import {
-  HARD_CUT,
   SCENE_FADE_TO_BLACK_SEC,
   resolveBeatTransition,
   resolveSceneTransition,
@@ -2038,7 +2037,11 @@ export function buildProjectAnimaticTimeline(
       })
     }
 
-    let sceneHandover: ResolvedTransition = HARD_CUT
+    // Read off the scene rather than off its last frame: a scene whose final
+    // beat is excluded or has no image still ends the same way.
+    const sceneHandover = resolveSceneTransition(
+      scene.transitionToNext as BeatDirectionTransition | undefined
+    )
 
     for (const frame of visualFrames) {
       if (!frame.imageUrl) continue
@@ -2048,7 +2051,6 @@ export function buildProjectAnimaticTimeline(
         effect: frame.transitionOut ?? 'cut',
         durationSec: frame.transitionOutSec ?? 0,
       }
-      if (frame.isSceneEnd) sceneHandover = handover
 
       if (frame.endImageUrl) {
         const crossfadeDur = Math.min(IN_BEAT_CROSSFADE_MAX_SEC, frameDuration * 0.25)

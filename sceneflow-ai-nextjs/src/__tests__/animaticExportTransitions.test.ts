@@ -149,6 +149,21 @@ describe('buildProjectAnimaticTimeline transitions', () => {
     expect(timeline.segments.every((seg) => seg.transitionIn === undefined)).toBe(true)
   })
 
+  it('still separates scenes whose last beat has no frame to end on', () => {
+    const noFinalFrame = {
+      beats: [
+        actionBeat(1, 0),
+        { ...actionBeat(1, 1), storyboardImageUrl: undefined },
+      ],
+    }
+    const timeline = buildProjectAnimaticTimeline([noFinalFrame, scene(2, [undefined])], 'en', {}, {
+      transitions: true,
+      interSceneFadeUrl: BLACK_URL,
+    })
+
+    expect(timeline.segments.some((seg) => seg.imageUrl === BLACK_URL)).toBe(true)
+  })
+
   it('dissolves straight from one scene into the next when asked to', () => {
     const scenes = [scene(1, [undefined], 'DISSOLVE'), scene(2, [undefined])]
     const timeline = buildProjectAnimaticTimeline(scenes, 'en', {}, {
