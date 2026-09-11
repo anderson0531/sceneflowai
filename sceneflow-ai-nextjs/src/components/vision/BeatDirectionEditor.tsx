@@ -8,6 +8,8 @@ import type {
   BeatDirectionTransition,
   SceneBeat,
 } from '@/lib/script/segmentTypes'
+import { restampPreVisHashIfScriptCurrent } from '@/lib/storyboard/preVisSync'
+import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
 
 export interface BeatDirectionEditorProps {
   beat: SceneBeat
@@ -102,9 +104,12 @@ export function BeatDirectionEditor({
       } else {
         delete patched.beatDirection
       }
-      return patched
+      return syncBeatStillPromptToDirection(patched)
     })
-    updatedScenes[sceneIdx] = applyBeatsToScene(scene, beats)
+    updatedScenes[sceneIdx] = restampPreVisHashIfScriptCurrent(
+      scene,
+      applyBeatsToScene(scene, beats)
+    )
 
     onScriptChange({
       ...script,

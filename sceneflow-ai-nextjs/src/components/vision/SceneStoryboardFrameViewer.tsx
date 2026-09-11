@@ -32,6 +32,7 @@ import {
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { runSceneExpressPreflight } from '@/lib/sceneGeneration/sceneExpressPreflight'
 import { isPreVisStale } from '@/lib/storyboard/preVisSync'
+import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import { countDraftStoryboardFrames } from '@/lib/storyboard/storyboardQuality'
 import { resolveFrameEditCharacterReferences } from '@/lib/vision/resolveFrameEditCharacterReferences'
 import { cn } from '@/lib/utils'
@@ -113,7 +114,8 @@ interface StoryboardSlotHandlers {
 
 function buildStoryboardSlotFrameProps(
   slot: StoryboardFrameSlot,
-  handlers: StoryboardSlotHandlers
+  handlers: StoryboardSlotHandlers,
+  promptChanged = false
 ): Omit<
   SceneImageFrameProps,
   | 'compact'
@@ -209,6 +211,7 @@ function buildStoryboardSlotFrameProps(
     beatNumber: slot.beatId ? slot.beatNumber : undefined,
     imagePrompt: slot.storyboardImagePrompt,
     imageError: slot.ownImageUrl ? undefined : slot.imageError,
+    promptChanged,
     onGenerate: () => {
       if (routeGenerateToExpress) {
         routeGenerateToExpress()
@@ -364,6 +367,18 @@ export function SceneStoryboardFrameViewer({
   const sceneBeats = useMemo(() => getSceneBeats(scene), [scene])
   const frameStats = useMemo(() => countStoryboardFrameStats(scene), [scene])
   const preVisStale = useMemo(() => isPreVisStale(scene), [scene])
+  const staleFrameCount = useMemo(
+    () => sceneBeats.filter((beat) => isBeatFrameStale(beat)).length,
+    [sceneBeats]
+  )
+  const slotPromptChanged = useCallback(
+    (slot: StoryboardFrameSlot) => {
+      if (!slot.beatId) return false
+      const beat = sceneBeats.find((entry) => entry.beatId === slot.beatId)
+      return beat ? isBeatFrameStale(beat) : false
+    },
+    [sceneBeats]
+  )
   const isFirstTimeFrameGeneration = useMemo(
     () => sceneHasNoOwnedBeatImages(scene),
     [scene]
@@ -696,7 +711,7 @@ export function SceneStoryboardFrameViewer({
                 <span
                   className={cn(
                     'text-[10px]',
-                    frameStats.missing > 0
+                    frameStats.missing > 0 || staleFrameCount > 0
                       ? 'text-amber-500'
                       : frameStats.placeholders > 0
                         ? 'text-amber-400'
@@ -707,6 +722,9 @@ export function SceneStoryboardFrameViewer({
                   {frameStats.withEndImage > 0 ? ` · ${frameStats.withEndImage} end` : ''}
                   {frameStats.missing > 0 ? ` · ${frameStats.missing} missing` : ''}
                   {frameStats.placeholders > 0 ? ` · ${frameStats.placeholders} placeholder` : ''}
+                  {staleFrameCount > 0
+                    ? ` · ${staleFrameCount} out of sync`
+                    : ''}
                 </span>
                 <div className="flex items-center gap-2 flex-wrap">
                   {preVisStale && onSyncPreVisToScript && (
@@ -778,7 +796,11 @@ export function SceneStoryboardFrameViewer({
                   {frameSlots.map((slot) => (
                     <div key={slot.key} className="relative w-full">
                       <SceneImageFrame
-                        {...buildStoryboardSlotFrameProps(slot, slotHandlers)}
+                        {...buildStoryboardSlotFrameProps(
+                          slot,
+                          slotHandlers,
+                          slotPromptChanged(slot)
+                        )}
                         showControls={false}
                         compact
                         showBorder
@@ -802,7 +824,11 @@ export function SceneStoryboardFrameViewer({
                     <div className="relative overflow-hidden">
                       {previewSlot ? (
                         <SceneImageFrame
-                          {...buildStoryboardSlotFrameProps(previewSlot, slotHandlers)}
+                          {...buildStoryboardSlotFrameProps(
+                            previewSlot,
+                            slotHandlers,
+                            slotPromptChanged(previewSlot)
+                          )}
                           label=""
                           imagePrompt={undefined}
                           showControls

@@ -23,6 +23,13 @@ export type SceneChangeKey =
   | `beat-added:${string}`
   | `beat-removed:${string}`
 
+function beatChangedForPreview(original: SceneBeat, candidate: SceneBeat): boolean {
+  return (
+    beatContentFingerprint(original) !== beatContentFingerprint(candidate) ||
+    beatDirectionChanged(original, candidate)
+  )
+}
+
 function normalizeText(value: unknown): string {
   return String(value ?? '').trim()
 }
@@ -156,7 +163,7 @@ function diffStructuredBeatChanges(originalScene: any, candidateScene: any): Sce
     const original = originalById.get(beat.beatId)
     if (!original) {
       changes.push(`beat-added:${beat.beatId}`)
-    } else if (beatContentFingerprint(original) !== beatContentFingerprint(beat)) {
+    } else if (beatChangedForPreview(original, beat)) {
       changes.push(`beat:${beat.beatId}`)
     }
   }
@@ -218,7 +225,7 @@ function mergeBeatsWithDeselection(
       }
       continue
     }
-    if (beatContentFingerprint(original) !== beatContentFingerprint(beat)) {
+    if (beatChangedForPreview(original, beat)) {
       merged.push(
         deselectedChanges.has(`beat:${beat.beatId}`) ? original : beat
       )
@@ -350,7 +357,7 @@ export function beatChangeSummary(
   if (!original && candidate) return { status: 'added', candidate }
   if (original && !candidate) return { status: 'removed', original }
   if (original && candidate) {
-    if (beatContentFingerprint(original) !== beatContentFingerprint(candidate)) {
+    if (beatChangedForPreview(original, candidate)) {
       return { status: 'changed', original, candidate }
     }
     return { status: 'unchanged', original, candidate }

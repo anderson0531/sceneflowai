@@ -19,9 +19,12 @@ import {
   parseLlmBeats,
 } from '@/lib/script/beatMigration'
 import { dedupeRedundantActionBeats } from '@/lib/script/actionBeatDedupe'
+import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
 import { mintLineId } from '@/lib/script/segmentScript'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import { MAX_BEATS_PER_SCENE } from '@/lib/script/sceneDecomposition'
+import { restampPreVisHashIfScriptCurrent } from '@/lib/storyboard/preVisSync'
+import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
 
 export type RevisionDepth = 'light' | 'moderate' | 'deep'
 
@@ -33,6 +36,7 @@ const BEAT_MEDIA_KEYS = [
   'storyboardImageGcsPath',
   'storyboardImagePrompt',
   'storyboardImagePromptDirectionKey',
+  'storyboardImageDirectionKey',
   'storyboardImageTier',
   'storyboardEndImageUrl',
   'storyboardEndImageGcsPath',
@@ -498,7 +502,7 @@ export function invalidateChangedBeatFramesOnScene(
     if (prior === undefined || prior !== next) {
       return clearBeatStoryboardFrames(beat)
     }
-    return beat
+    return syncBeatStillPromptToDirection(beat)
   })
 
   let working = applyBeatsToScene(scene, updatedBeats)
@@ -514,7 +518,7 @@ export function invalidateChangedBeatFramesOnScene(
     delete working.imageGeneratedAt
   }
 
-  return working
+  return restampPreVisHashIfScriptCurrent(originalScene, working)
 }
 
 export function beatPreviewLabel(beat: SceneBeat): string {
@@ -541,6 +545,10 @@ export function beatsWithChangedFingerprints(
     }
     const original = originalById.get(beat.beatId)
     if (!original) return true
-    return beatContentFingerprint(original) !== beatContentFingerprint(beat)
+    return (
+      beatContentFingerprint(original) !== beatContentFingerprint(beat) ||
+      beatDirectionFingerprint(original.beatDirection) !==
+        beatDirectionFingerprint(beat.beatDirection)
+    )
   })
 }

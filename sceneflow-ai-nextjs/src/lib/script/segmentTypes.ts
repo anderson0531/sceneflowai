@@ -166,11 +166,17 @@ export interface SceneBeat {
   storyboardImageUrl?: string
   storyboardImagePrompt?: string
   /**
-   * `beatDirectionFingerprint` of the direction `storyboardImagePrompt` was
-   * composed from. A mismatch means the direction moved on and the stored
-   * prompt must not be reused as this beat's action/framing.
+   * `beatStillDirectionFingerprint` of the direction `storyboardImagePrompt`
+   * was composed from. A mismatch means the still-relevant direction moved on
+   * and the stored prompt must not be reused as this beat's action/framing.
    */
   storyboardImagePromptDirectionKey?: string
+  /**
+   * `beatStillDirectionFingerprint` of the direction the current
+   * `storyboardImageUrl` was generated from. A mismatch means the frame is
+   * optional-regen stale (prompt may already have been auto-updated).
+   */
+  storyboardImageDirectionKey?: string
   storyboardImageGcsPath?: string
   /** draft = Express layout pass; final = hi-res for animatic & video */
   storyboardImageTier?: 'draft' | 'final'

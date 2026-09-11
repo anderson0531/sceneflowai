@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import {
   generatePreVisContentHash,
+  generateLegacyPreVisContentHash,
   isPreVisStale,
   syncPreVisToScript,
   stampPreVisContentHash,
+  restampPreVisHashIfScriptCurrent,
   PRE_VIS_CONTENT_HASH_FIELD,
 } from '@/lib/storyboard/preVisSync'
 import { mergeScenePreservingMedia } from '@/lib/storyboard/mergeSceneMedia'
@@ -78,7 +80,11 @@ describe('preVisSync', () => {
       ...baseScene,
       dialogue: [{ character: 'DR. CHEN', line: 'The readings are off the charts.' }],
       beats: [
-        baseScene.beats[0],
+        {
+          ...baseScene.beats[0],
+          actionDescription: undefined,
+          description: 'A scientist drops the glowing sample.',
+        },
         {
           ...baseScene.beats[1],
           beatId: staleBeatId,
@@ -101,11 +107,12 @@ describe('preVisSync', () => {
       filmTitle: 'Test Film',
     })
 
+    const actionBeat = (synced.beats as typeof baseScene.beats)[0]
     const dialogueBeat = (synced.beats as typeof baseScene.beats)[1]
     expect(promptsUpdated).toBe(2)
     expect(imagesCleared).toBeGreaterThan(0)
-    expect(dialogueBeat.storyboardImageUrl).toBeUndefined()
-    expect(dialogueBeat.storyboardImagePrompt).toContain('readings are off the charts')
+    expect(actionBeat.storyboardImageUrl).toBeUndefined()
+    expect(dialogueBeat.storyboardImagePrompt).toContain('Original line')
     expect(synced.storyboardStatus).toBe('pending_review')
     expect(synced[PRE_VIS_CONTENT_HASH_FIELD]).toBeUndefined()
   })
@@ -126,6 +133,64 @@ describe('preVisSync', () => {
   it('stampPreVisContentHash stores current content hash', () => {
     const stamped = stampPreVisContentHash(baseScene)
     expect(stamped[PRE_VIS_CONTENT_HASH_FIELD]).toBe(generatePreVisContentHash(baseScene))
+  })
+
+  it('isPreVisStale is false for a direction-only edit after a prose hash stamp', () => {
+    const stamped = stampPreVisContentHash(baseScene)
+    const directionOnly = {
+      ...stamped,
+      beats: stamped.beats.map((beat, index) =>
+        index === 0
+          ? {
+              ...beat,
+              beatDirection: { shotType: 'Insert Shot', cameraMovement: 'push-in' },
+            }
+          : beat
+      ),
+    }
+
+    expect(isPreVisStale(directionOnly)).toBe(false)
+  })
+
+  it('isPreVisStale stays false when a legacy direction-mixed hash still matches', () => {
+    const withDirection = {
+      ...baseScene,
+      beats: baseScene.beats.map((beat, index) =>
+        index === 0
+          ? { ...beat, beatDirection: { shotType: 'Wide Shot', emotion: 'wary' } }
+          : beat
+      ),
+    }
+    const scene = {
+      ...withDirection,
+      [PRE_VIS_CONTENT_HASH_FIELD]: generateLegacyPreVisContentHash(withDirection),
+    }
+
+    expect(isPreVisStale(scene)).toBe(false)
+  })
+
+  it('restampPreVisHashIfScriptCurrent upgrades a current hash and leaves script-stale alone', () => {
+    const current = stampPreVisContentHash(baseScene)
+    const restamped = restampPreVisHashIfScriptCurrent(current, {
+      ...current,
+      beats: current.beats.map((beat, index) =>
+        index === 0 ? { ...beat, beatDirection: { shotType: 'Close-Up' } } : beat
+      ),
+    })
+    expect(restamped[PRE_VIS_CONTENT_HASH_FIELD]).toBe(generatePreVisContentHash(restamped))
+
+    const stale = {
+      ...baseScene,
+      [PRE_VIS_CONTENT_HASH_FIELD]: generatePreVisContentHash({
+        ...baseScene,
+        dialogue: [{ character: 'DR. CHEN', line: 'Original line.' }],
+        beats: baseScene.beats.map((beat, i) =>
+          i === 1 ? { ...beat, line: 'Original line.' } : beat
+        ),
+      }),
+    }
+    const leftAlone = restampPreVisHashIfScriptCurrent(stale, { ...stale, heading: 'INT. LAB - NIGHT' })
+    expect(leftAlone[PRE_VIS_CONTENT_HASH_FIELD]).toBe(stale[PRE_VIS_CONTENT_HASH_FIELD])
   })
 })
 

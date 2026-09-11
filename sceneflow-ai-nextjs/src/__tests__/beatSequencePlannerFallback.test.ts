@@ -3,6 +3,7 @@ import {
   buildFallbackBeatPlans,
   composeBeatActionFraming,
   composePersistedLookbookBeatPrompt,
+  storedPromptMatchesDirection,
 } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import {
   PROJECT_LOOKBOOK_VERSION,
@@ -318,5 +319,19 @@ describe('composePersistedLookbookBeatPrompt', () => {
         },
       })
     ).toBeUndefined()
+  })
+
+  it('storedPromptMatchesDirection ignores video-only direction edits', () => {
+    const still = { shotType: 'Medium Shot', frozenMoment: 'Gideon at the bench' }
+    const beat = {
+      beatId: 'bt_1',
+      sequenceIndex: 0,
+      kind: 'action' as const,
+      actionDescription: 'Gideon hunches over the seismograph.',
+      beatDirection: { ...still, cameraMovement: 'dolly in', emotion: 'tense' },
+      storyboardImagePrompt: 'Medium Shot. Gideon at the bench.',
+      storyboardImagePromptDirectionKey: beatDirectionFingerprint(still),
+    }
+    expect(storedPromptMatchesDirection(beat)).toBe(true)
   })
 })

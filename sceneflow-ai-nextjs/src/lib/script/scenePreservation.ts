@@ -15,6 +15,7 @@ const BEAT_FRAME_KEYS = [
   'storyboardImageGcsPath',
   'storyboardImagePrompt',
   'storyboardImagePromptDirectionKey',
+  'storyboardImageDirectionKey',
   'storyboardImageTier',
   'storyboardEndImageUrl',
   'storyboardEndImageGcsPath',
