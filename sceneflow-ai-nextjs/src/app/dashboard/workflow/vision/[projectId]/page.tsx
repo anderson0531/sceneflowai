@@ -51,9 +51,13 @@ import {
   ensureSceneBeats,
   getSceneBeats,
   isBeatFirstPipelineEnabled,
+  reorderSceneBeats,
   resolveRawBeatIndex,
 } from '@/lib/script/beatMigration'
-import { needsProductionDerive } from '@/lib/scene/deriveSegmentsFromBeats'
+import {
+  needsProductionDerive,
+  reorderSegmentsToMatchBeats,
+} from '@/lib/scene/deriveSegmentsFromBeats'
 import { invalidateChangedBeatFramesOnScene, applyDeepRestructureAssetClear, REVISION_DEPTH_SCENE_KEY, type RevisionDepth } from '@/lib/script/structuredSceneRevision'
 import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
 import type { StoryboardFrameSlot } from '@/lib/storyboard/types'
@@ -12525,6 +12529,56 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  /**
+   * Move a beat within a scene, taking its frames, video and audio with it.
+   *
+   * The script and the production segments are two separate saves, and
+   * `needsProductionDerive` now watches beat order, so a render where only one
+   * of them has landed would look like a scene that needs re-deriving. Both
+   * state updates are therefore made synchronously, before the first await, so
+   * React commits them together and the auto-derive never sees a half-move.
+   */
+  const handleReorderBeats = async (
+    sceneIndex: number,
+    fromBeatId: string,
+    toBeatId: string
+  ) => {
+    if (!script?.script?.scenes || fromBeatId === toBeatId) return
+
+    const scene = script.script.scenes[sceneIndex]
+    if (!scene) return
+
+    const fromIndex = resolveRawBeatIndex(scene, { beatId: fromBeatId })
+    const toIndex = resolveRawBeatIndex(scene, { beatId: toBeatId })
+    if (fromIndex === undefined || toIndex === undefined || fromIndex === toIndex) return
+
+    const reorderedScene = reorderSceneBeats(scene, fromIndex, toIndex)
+    if (reorderedScene === scene) return
+
+    const updatedScenes = script.script.scenes.map((entry: any, idx: number) =>
+      idx === sceneIndex ? reorderedScene : entry
+    )
+    const nextScript = { ...script, script: { ...script.script, scenes: updatedScenes } }
+
+    setScript(nextScript)
+    scriptRef.current = nextScript
+
+    const sceneId = getSceneProductionKey(scene as Scene, sceneIndex)
+    applySceneProductionUpdate(sceneId, (current) => {
+      if (!current?.segments?.length) return current
+      const segments = reorderSegmentsToMatchBeats(reorderedScene, current.segments)
+      return segments === current.segments ? current : { ...current, segments }
+    })
+
+    try {
+      await persistVisionScriptScenes(updatedScenes, 'handleReorderBeats')
+      toast.success('Beats reordered')
+    } catch (error) {
+      console.error('[Vision] handleReorderBeats - Failed:', error)
+      toast.error('Failed to save the new beat order')
+    }
+  }
+
   // Scene editor handlers
   const openSceneDirectWithInstruction = (sceneIndex: number, instruction: string) => {
     setEditingSceneIndex(sceneIndex)
@@ -14860,6 +14914,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onAddScene={handleAddScene}
                 onDeleteScene={handleDeleteScene}
                 onReorderScenes={handleReorderScenes}
+                onReorderBeats={handleReorderBeats}
                 onEditScene={handleEditScene}
                 onEditSceneWithRecommendations={handleEditSceneWithRecommendations}
                 recentlyUpdatedSceneIndex={recentlyUpdatedSceneIndex}

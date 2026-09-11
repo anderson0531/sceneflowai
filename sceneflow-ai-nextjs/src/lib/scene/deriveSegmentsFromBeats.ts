@@ -212,6 +212,47 @@ export interface DeriveSegmentsOptions {
   existingSegments?: SceneSegment[]
 }
 
+/** The running order segments have to match: active beats, in beat order. */
+function activeBeatIdOrder(scene: Record<string, unknown>): string[] {
+  return getSceneBeats(scene)
+    .filter((beat) => !isBeatExcluded(beat))
+    .map((beat) => beat.beatId)
+}
+
+/** The beat order the segments currently express, de-duplicated across splits. */
+function segmentBeatIdOrder(segments: SceneSegment[]): string[] {
+  const order: string[] = []
+  for (const segment of segments) {
+    if (!segment.beatId) continue
+    if (order.includes(segment.beatId)) continue
+    order.push(segment.beatId)
+  }
+  return order
+}
+
+/**
+ * Whether the segments still run in the beats' order.
+ *
+ * Set membership is not enough on its own: a beat reorder changes no ids at
+ * all, so without this the segment row, its `sequenceIndex` and its timeline
+ * keep the order the beats had before the move.
+ */
+export function segmentOrderMatchesBeats(
+  scene: Record<string, unknown>,
+  segments: SceneSegment[] | null | undefined
+): boolean {
+  const existing = segments ?? []
+  if (existing.length === 0) return true
+
+  const segmentOrder = segmentBeatIdOrder(existing)
+  if (segmentOrder.length === 0) return true
+
+  const beatOrder = activeBeatIdOrder(scene).filter((beatId) =>
+    segmentOrder.includes(beatId)
+  )
+  return beatOrder.join('|') === segmentOrder.join('|')
+}
+
 /**
  * Whether production segments should be derived from beats for an approved scene.
  * Compares active (non-excluded) beat IDs to existing segment beatIds — not raw counts.
@@ -231,7 +272,56 @@ export function needsProductionDerive(
   const segmentBeatIds = new Set(
     existing.map((seg) => seg.beatId).filter((id): id is string => !!id)
   )
-  return activeBeats.some((beat) => !segmentBeatIds.has(beat.beatId))
+  if (activeBeats.some((beat) => !segmentBeatIds.has(beat.beatId))) return true
+
+  return !segmentOrderMatchesBeats(scene, existing)
+}
+
+/**
+ * Reorder existing production segments into the beats' running order.
+ *
+ * This is what a beat reorder needs rather than a re-derive. Every segment
+ * already exists and may hold generated video, while a re-derive rewrites
+ * prompts and refuses outright on a beat whose storyboard frame is still
+ * missing. Segments are matched to their beat by `beatId`, keep their own
+ * duration, and have `sequenceIndex` and cumulative timing recomputed.
+ *
+ * Returns the input untouched when the segments do not correspond to the
+ * active beats — a segment with no beat link, or one whose beat is gone, means
+ * beats were added or removed and that is a derive, not a reorder.
+ */
+export function reorderSegmentsToMatchBeats(
+  scene: Record<string, unknown>,
+  segments: SceneSegment[] | null | undefined
+): SceneSegment[] {
+  const existing = segments ?? []
+  if (existing.length < 2) return existing
+
+  const beatOrder = activeBeatIdOrder(scene)
+  const position = new Map(beatOrder.map((beatId, index) => [beatId, index]))
+  if (existing.some((seg) => !seg.beatId || !position.has(seg.beatId))) return existing
+
+  const ordered = [...existing].sort((a, b) => {
+    const byBeat =
+      (position.get(a.beatId as string) ?? 0) - (position.get(b.beatId as string) ?? 0)
+    if (byBeat !== 0) return byBeat
+    // Several segments on one beat are a dialogue split, whose parts run in
+    // their own order inside the beat.
+    return (a.dialoguePortion?.partIndex ?? 0) - (b.dialoguePortion?.partIndex ?? 0)
+  })
+
+  let startTime = 0
+  return ordered.map((segment, index) => {
+    const duration = Math.max(0, (segment.endTime ?? 0) - (segment.startTime ?? 0))
+    const next: SceneSegment = {
+      ...segment,
+      sequenceIndex: index,
+      startTime,
+      endTime: startTime + duration,
+    }
+    startTime += duration
+    return next
+  })
 }
 
 /** Preserve generated/uploaded assets when re-deriving extension timing. */
