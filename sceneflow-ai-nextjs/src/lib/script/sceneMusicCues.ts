@@ -331,19 +331,46 @@ export function musicCueBudget(movementCount: number): number {
 }
 
 /**
+ * Whether a movement plays with nobody speaking over it.
+ *
+ * An opening that turns straight from silence into action is a recognized place
+ * to score — the music is the scene's entrance, and a run of opening action
+ * beats is exactly what it can carry. Narration counts as spoken: a voiceover
+ * is already holding the audience's ear.
+ */
+function isActionOnlyMovement(movement: SceneMovement, beats: SceneBeat[]): boolean {
+  let sawBeat = false
+  for (let index = movement.beatStart; index <= movement.beatEnd; index++) {
+    const beat = beats[index]
+    if (!beat) continue
+    sawBeat = true
+    if (beat.kind === 'dialogue' || beat.kind === 'narration') return false
+  }
+  return sawBeat
+}
+
+/**
  * Place cues on the movements whose emotion is strongest or whose arrival is
  * the sharpest turn from the movement before it — where a composer scores.
+ *
+ * `openingScoresAsTurn` is the opening-action pattern: an action-only opening
+ * is credited with the full turn out of silence, so a hard entrance can
+ * outrank a mid-scene swing of the same charge. It never guarantees the
+ * opening a cue — a movement with no emotional charge is still filtered out,
+ * and the budget still leaves at least one movement dry.
  */
 function selectMovementsToScore(
   charges: MovementCharge[],
-  budget: number
+  budget: number,
+  openingScoresAsTurn: boolean
 ): MovementCharge[] {
   const scored = charges
     .map((entry, index) => {
-      // The opening movement turns from nothing, so it is weighed on its own
-      // charge alone — otherwise every scene scores its first beats and the
-      // climax it was building toward plays dry.
-      const previous = index > 0 ? charges[index - 1].charge : entry.charge
+      // An opening built on dialogue is weighed on its own charge alone:
+      // otherwise every such scene scores its first exchange and the climax it
+      // was building toward plays dry.
+      const previous =
+        index > 0 ? charges[index - 1].charge : openingScoresAsTurn ? 0 : entry.charge
       const turn = Math.abs(entry.charge - previous)
       return { entry, index, weight: entry.charge * 2 + turn }
     })
@@ -412,7 +439,11 @@ export function deriveSceneMusicCues(
 
   const charges = chargeMovements(movements, beats)
   const budget = musicCueBudget(movements.length)
-  const selected = selectMovementsToScore(charges, budget)
+  const selected = selectMovementsToScore(
+    charges,
+    budget,
+    isActionOnlyMovement(movements[0], beats)
+  )
   if (selected.length === 0) return []
 
   const ranges = mergeAdjacentSameFamily(
