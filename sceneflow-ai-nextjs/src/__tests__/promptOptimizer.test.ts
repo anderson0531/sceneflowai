@@ -6,6 +6,10 @@ import {
   sanitizePromptForIdentityRefs,
   stripReferenceImageMappingBlock,
 } from '@/lib/imagen/promptOptimizer'
+import {
+  isStructuredStillPrompt,
+  parseStillPromptSource,
+} from '@/lib/imagen/structuredStillPrompt'
 import { stripPromptMetaInstructions } from '@/lib/scene/performanceCues'
 
 describe('promptOptimizer reference-first binding', () => {
@@ -263,5 +267,71 @@ Strictly Avoid: cartoon style.`
     expect(prompt).not.toMatch(/Focus on person \[1\]:\s*\./)
     expect(prompt).toContain('Focus on person [1]')
     expect(prompt).toContain('person [1]')
+  })
+})
+
+describe('what optimizing an already-sectioned prompt costs', () => {
+  const SECTIONED = [
+    '[GLOBAL STYLE ANCHOR]',
+    'Master Style: photoreal anamorphic, tungsten practicals',
+    '',
+    '[SCENE COMPOSITION & BEAT]',
+    'Action/Framing: extreme close-up on person [1] as he folds the telegram. Dolly in on his hands.',
+    'Lighting: single window shaft, 40mm for compression.',
+  ].join('\n')
+
+  function flatten(): string {
+    return optimizePromptForImagen({
+      sceneAction: SECTIONED,
+      visualDescription: SECTIONED,
+      artStyle: 'photorealistic',
+      characterReferences: [
+        {
+          referenceId: 1,
+          name: 'Gideon Croft',
+          identityReferenceId: 1,
+          promptToken: 'person [1]',
+          linkingDescription: 'person [1]',
+        },
+      ],
+    })
+  }
+
+  it('deletes the shot language the beat planner wrote', () => {
+    const flattened = flatten()
+
+    expect(SECTIONED).toContain('extreme close-up')
+    expect(flattened).not.toContain('extreme close-up')
+    expect(flattened).not.toContain('Dolly in')
+    expect(flattened).not.toContain('40mm')
+  })
+
+  it('collapses the sections into one line of prose', () => {
+    const flattened = flatten()
+
+    expect(flattened.split('\n')).toHaveLength(1)
+    expect(flattened).toMatch(/^Create an image about/)
+    // The headers survive only as litter mid-sentence, which is worse than
+    // losing them: the model reads them as content.
+    expect(flattened).toContain('description: Cinematic frame')
+  })
+
+  it('leaves an Action/Framing that reparses into the wrong thing', () => {
+    const flattened = flatten()
+
+    expect(parseStillPromptSource(SECTIONED).actionFraming).toContain(
+      'extreme close-up on person [1] as he folds the telegram. Dolly in on his hands.'
+    )
+
+    // Reparsing the flattened line finds a header and an Action/Framing, so this
+    // damage is not detectable after the fact — but the action it recovers has
+    // lost the shot language and swallowed the style suffix and the negative
+    // tail, because there are no line breaks left to end the field at. The route
+    // therefore has to decide whether to optimize before it optimizes.
+    const reparsed = parseStillPromptSource(flattened).actionFraming ?? ''
+    expect(reparsed).not.toContain('extreme close-up')
+    expect(reparsed).toContain('8K, sharp focus')
+    expect(reparsed).toContain('no watermarks')
+    expect(isStructuredStillPrompt(flattened)).toBe(true)
   })
 })
