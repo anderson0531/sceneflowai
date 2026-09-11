@@ -5,6 +5,17 @@ import { generateImageWithVertexKlingFallback } from '@/lib/generation/vertexIma
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor, buildIdentityPromptToken, sanitizePromptForIdentityRefs, filterCharactersForPromptRefs, stripReferenceImageMappingBlock } from '@/lib/imagen/promptOptimizer'
 import { ethnicityKeyFeature } from '@/lib/imagen/characterKeyFeatures'
+import {
+  buildSceneImageNegativePrompt,
+  ORIGINAL_ADULT_SUBJECT_REQUIREMENT,
+} from '@/lib/imagen/sceneImageNegativePrompt'
+import {
+  buildSceneImageDiptychLabel,
+  buildSceneImageIdentityLabel,
+  buildSceneImageLocationLabel,
+  buildSceneImagePropLabel,
+  buildSceneImageWardrobeLabel,
+} from '@/lib/imagen/sceneImageReferenceLabels'
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
 import { waitForGCSURIs, checkGCSURIAccessibility } from '@/lib/storage/gcsAccessibility'
 import { generateDirectionHash, generateImageSourceHash } from '@/lib/utils/contentHash'
@@ -38,7 +49,6 @@ import {
   assignStableLibraryTokens,
   bindLibraryNamesToTokens,
   buildLocationPromptToken,
-  buildPropPromptToken,
   joinPromptBlocks,
   promptReferencesLibraryItem,
   stillRefsFromAttachedImages,
@@ -72,9 +82,8 @@ import {
   buildFramingAwareIdentityBlock,
   buildHairCompositionLock,
   buildHairStyleNegativeTerms,
-  buildIdentityReferenceLabel,
+  buildIdentityLockLine,
   buildIdentityReferencePromptLine,
-  buildWardrobeReferenceLabel,
   buildWardrobeReferencePromptLine,
   BEAT_FRAME_ANTI_POSE_NEGATIVE_PROMPT,
   buildWardrobeBindingSummary,
@@ -84,7 +93,6 @@ import {
 } from '@/lib/character/characterReferenceAssembly'
 import {
   buildWardrobeDiptychCharacterConsumptionLine,
-  buildWardrobeDiptychReferenceLabel,
   DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT,
   WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION,
   mergeBeatFrameNegativePrompt,
@@ -2198,16 +2206,14 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Scene Image] Using ${imageReferences.length} character reference image(s) for structured API call`)
 
-    // Build character-specific negative prompts based on reference characteristics
-    // NOTE: We focus on FACIAL/IDENTITY negatives only, not wardrobe negatives
-    // Per Gemini docs: "Use positive descriptions instead of negatives" for better results
-    const typographyNegatives = allowTypography
-      ? ''
-      : 'text overlay, captions, subtitles, dialogue text, speech bubbles, text on image, watermark, logo text, title cards, intertitles, written words, typography overlay, '
-    const baseNegativePrompt = `elderly appearance, deeply wrinkled, aged beyond reference, geriatric, wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager, youthful appearance, ${typographyNegatives}`.replace(/,\s*$/, '')
-    
+    // Facial negatives are only safe for characters the model cannot see. When
+    // an identity reference is attached, the image owns the face, and naming
+    // features in text next to that image competes with it.
     const characterSpecificNegatives: string[] = []
     characterObjects.forEach((char: any) => {
+      const charRef = characterReferences.find((cr: { name?: string }) => cr.name === char.name)
+      if (charRef?.identityImageUrl || charRef?.wardrobeDiptychImageUrl) return
+
       // If reference is bald, exclude hair
       if (char.hairStyle && char.hairStyle.toLowerCase() === 'bald') {
         characterSpecificNegatives.push('hair', 'full head of hair', 'long hair', 'short hair')
@@ -2218,7 +2224,6 @@ export async function POST(req: NextRequest) {
         characterSpecificNegatives.push('clean-shaven', 'no facial hair', 'shaved')
       }
 
-      const charRef = characterReferences.find((cr: { name?: string }) => cr.name === char.name)
       characterSpecificNegatives.push(
         ...buildHairStyleNegativeTerms(
           char.hairStyle,
@@ -2230,12 +2235,7 @@ export async function POST(req: NextRequest) {
       // Gemini docs recommend describing what you WANT, not what to avoid
     })
     
-    // Combine base negative prompt with character-specific ones (facial features only)
-    const negativePromptParts = [baseNegativePrompt]
-    if (characterSpecificNegatives.length > 0) {
-      const uniqueNegatives = [...new Set(characterSpecificNegatives)] // Remove duplicates
-      negativePromptParts.push(...uniqueNegatives)
-    }
+    const negativePromptParts: string[] = [...new Set(characterSpecificNegatives)]
     const styleNegativeTerms = getArtStyleNegativeTerms(artStyle)
     if (styleNegativeTerms) {
       negativePromptParts.push(styleNegativeTerms)
@@ -2261,9 +2261,12 @@ export async function POST(req: NextRequest) {
     if (isBeatFrame && !isDirectAddressDialogue) {
       negativePromptParts.push(BEAT_FRAME_ANTI_POSE_NEGATIVE_PROMPT)
     }
-    const finalNegativePrompt = mergeBeatFrameNegativePrompt(negativePromptParts.join(', '))
+    const finalNegativePrompt = buildSceneImageNegativePrompt({
+      allowTypography,
+      extraTerms: [mergeBeatFrameNegativePrompt(negativePromptParts.join(', '))],
+    })
     
-    console.log(`[Scene Image] Negative prompt includes ${characterSpecificNegatives.length} character-specific exclusions (facial features only)`)
+    console.log(`[Scene Image] Negative prompt includes ${characterSpecificNegatives.length} character-specific exclusions (characters without an identity reference only)`)
 
     // Attaching a prop the frame never names hands the model an object with no
     // direction, and it resolves that by inventing the prop into the shot. Beat
@@ -2333,10 +2336,10 @@ export async function POST(req: NextRequest) {
           const characterRefEntries = buildCharacterReferenceEntries(
             imageReferences,
             characterReferences,
-            buildIdentityReferenceLabel,
-            buildWardrobeReferenceLabel,
+            buildSceneImageIdentityLabel,
+            buildSceneImageWardrobeLabel,
             0,
-            buildWardrobeDiptychReferenceLabel
+            buildSceneImageDiptychLabel
           )
           const propRefEntries = buildPropReferenceEntries(
             objectImageReferences,
@@ -2378,9 +2381,11 @@ export async function POST(req: NextRequest) {
               allPrioritizedRefs,
               referenceImageCap,
               {
-                buildIdentityLabel: buildIdentityReferenceLabel,
-                buildWardrobeLabel: buildWardrobeReferenceLabel,
-                buildDiptychLabel: buildWardrobeDiptychReferenceLabel,
+                buildIdentityLabel: buildSceneImageIdentityLabel,
+                buildWardrobeLabel: buildSceneImageWardrobeLabel,
+                buildDiptychLabel: buildSceneImageDiptychLabel,
+                buildPropLabel: buildSceneImagePropLabel,
+                buildLocationLabel: buildSceneImageLocationLabel,
                 groupByRole: true,
               }
             )
@@ -2398,26 +2403,12 @@ export async function POST(req: NextRequest) {
               .join(', ')}`
           )
 
-          const allReferenceImages = selectedReferenceImages.map((ref) => {
-            if (ref.propName && ref.sendIndex != null) {
-              return {
-                imageUrl: ref.imageUrl,
-                name: `${buildPropPromptToken(ref.sendIndex)}: ${ref.propName}`,
-              }
-            }
-            if ((ref.locationName || ref.role === 'location') && ref.sendIndex != null) {
-              return {
-                imageUrl: ref.imageUrl,
-                name: `${buildLocationPromptToken(ref.sendIndex)}: ${
-                  ref.locationName || 'Location'
-                }`,
-              }
-            }
-            return {
-              imageUrl: ref.imageUrl,
-              name: ref.name,
-            }
-          })
+          // Labels already carry the send index and the prompt token the text
+          // uses, so the attached image needs no second naming scheme.
+          const allReferenceImages = selectedReferenceImages.map((ref) => ({
+            imageUrl: ref.imageUrl,
+            name: ref.name,
+          }))
           const selectedReferenceUrls = new Set(selectedReferenceImages.map((ref) => ref.imageUrl))
           const cappedObjectImageReferences = objectImageReferences.filter((obj) =>
             selectedReferenceUrls.has(obj.imageUrl)
@@ -2470,10 +2461,19 @@ export async function POST(req: NextRequest) {
                   (r.refRole === 'identity' || r.refRole === 'wardrobe-diptych')
               )?.referenceId
               if (ref.refRole === 'wardrobe-diptych') {
-                geminiPrompt += `- Reference image ${ref.referenceId}: ${buildWardrobeDiptychReferenceLabel(ref.characterName)}\n`
+                geminiPrompt += `- ${buildSceneImageDiptychLabel(
+                  ref.characterName,
+                  ref.referenceId,
+                  subjectOrdinal
+                )}\n`
                 geminiPrompt += `  ${buildWardrobeDiptychCharacterConsumptionLine(
                   ref.characterName,
                   subjectOrdinal ?? identitySendIndexForChar ?? ref.referenceId
+                )}\n`
+                geminiPrompt += `  ${buildIdentityLockLine(
+                  ref.characterName,
+                  ref.referenceId,
+                  subjectOrdinal
                 )}\n`
                 const hairLock =
                   matchingCharRef?.hairAnchor ?? matchingCharRef?.hairDescription
@@ -2485,7 +2485,12 @@ export async function POST(req: NextRequest) {
                 geminiPrompt += `${buildIdentityReferencePromptLine(
                   ref.characterName,
                   ref.referenceId,
-                  subjectOrdinal
+                  subjectOrdinal,
+                  buildSceneImageIdentityLabel(
+                    ref.characterName,
+                    ref.referenceId,
+                    subjectOrdinal
+                  )
                 )}\n`
                 const hairLock =
                   matchingCharRef?.hairAnchor ?? matchingCharRef?.hairDescription
@@ -2497,10 +2502,19 @@ export async function POST(req: NextRequest) {
                 geminiPrompt += `${buildWardrobeReferencePromptLine(
                   ref.characterName,
                   ref.referenceId,
-                  subjectOrdinal
+                  subjectOrdinal,
+                  buildSceneImageWardrobeLabel(
+                    ref.characterName,
+                    ref.referenceId,
+                    subjectOrdinal
+                  )
                 )}\n`
               } else {
-                geminiPrompt += `- Reference image ${ref.referenceId}: WARDROBE REFERENCE for ${ref.characterName}\n  ${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION}\n`
+                geminiPrompt += `- ${buildSceneImageWardrobeLabel(
+                  ref.characterName,
+                  ref.referenceId,
+                  subjectOrdinal
+                )}\n  ${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION}\n`
               }
             })
             const distinctCharacterNames = [
@@ -2581,7 +2595,15 @@ export async function POST(req: NextRequest) {
               cappedLocationReference.location ||
               cappedLocationReference.name ||
               'Location'
-            geminiPrompt += `${buildLocationReferencePromptLine(locationName, cappedLocationEntry.sendIndex)} Use token ${buildLocationPromptToken(cappedLocationEntry.sendIndex)} in the scene prompt. Environment: "${locationName}". Match lighting to the scene prompt Style section.\n\n`
+            const locationToken =
+              cappedLocationEntry.promptToken ||
+              buildLocationPromptToken(cappedLocationEntry.sendIndex)
+            const locationLabel = buildSceneImageLocationLabel(
+              locationName,
+              cappedLocationEntry.sendIndex,
+              locationToken
+            )
+            geminiPrompt += `${buildLocationReferencePromptLine(locationName, cappedLocationEntry.sendIndex, locationLabel)} Use token ${locationToken} in the scene prompt. Environment: "${locationName}". Match lighting to the scene prompt Style section.\n\n`
           }
 
           const scenePromptBody = stripReferenceImageMappingBlock(optimizedPrompt)
@@ -2599,6 +2621,10 @@ export async function POST(req: NextRequest) {
                   artStyle
                 ),
                 includeCandid: !isExplicitDirectToCameraBeat(beatForEmotion),
+                // Exclusions belong in their own section mid-prompt. Passed as a
+                // negative prompt they are appended last, so the request ends on
+                // a list of things not to draw instead of the identity lock.
+                exclusions: finalNegativePrompt,
               })
             : remappedOptimizedPrompt
           promptForResponse = structuredStill
@@ -2668,6 +2694,7 @@ export async function POST(req: NextRequest) {
           geminiPrompt += `CRITICAL REQUIREMENTS:\n`
           geminiPrompt += `- ${BEAT_FRAME_CANDID_ACTION_CONSTRAINT}\n`
           geminiPrompt += `- Match character identity from identity reference images (bone structure, features, hair, skin tone, age, ethnicity — NOT facial expression)\n`
+          geminiPrompt += `- ${ORIGINAL_ADULT_SUBJECT_REQUIREMENT}\n`
           geminiPrompt += `- ${EXPRESSION_OVERRIDE_INSTRUCTION}\n`
           const beatDirectedEmotionSection = buildBeatDirectedEmotionPromptSection(
             characterReferences.map((ref: { name: string; directedEmotion?: string }) => ({
@@ -2737,7 +2764,7 @@ export async function POST(req: NextRequest) {
             aspectRatio: '16:9',
             imageSize: effectiveImageSize,
             referenceImages: allReferenceImages,
-            negativePrompt: finalNegativePrompt,
+            ...(isBeatFrame ? {} : { negativePrompt: finalNegativePrompt }),
             ...(effectiveImageTier ? { modelTier: effectiveImageTier } : {}),
             failFastIdentityRefs: !!skipLikenessValidation,
             requireAllReferenceImages: allReferenceImages.length > 0,

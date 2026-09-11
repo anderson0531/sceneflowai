@@ -410,26 +410,62 @@ export function buildDualReferenceLabels(
 export const BEAT_FRAME_ANTI_POSE_NEGATIVE_PROMPT =
   'posing for camera, looking at camera, direct eye contact with lens, staged studio portrait, headshot, red carpet pose, hands at sides neutral stance'
 
-export function buildIdentityReferencePromptLine(
+/**
+ * Positive statement of the constraint the removed identity negatives
+ * ("different person", "incorrect ethnicity") were written to enforce. A
+ * negative term is indistinguishable from a subject description to an image
+ * model; an equality statement is not.
+ */
+export function buildIdentityLockLine(
   characterName: string,
   referenceIndex: number,
   personTokenIndex?: number
 ): string {
+  const subject = personTokenIndex != null ? `person [${personTokenIndex}]` : characterName
+  return (
+    `IDENTITY LOCK: ${subject} is the exact same individual shown in Reference image ${referenceIndex} — ` +
+    'same skin tone, same hair texture and color, same facial bone structure, same age.'
+  )
+}
+
+/**
+ * `label` lets the caller reuse the exact label attached to the image part, so
+ * the wrapper line and the image name the reference identically.
+ */
+export function buildIdentityReferencePromptLine(
+  characterName: string,
+  referenceIndex: number,
+  personTokenIndex?: number,
+  label?: string
+): string {
   const personBinding =
     personTokenIndex != null ? ` = person [${personTokenIndex}]` : ` for ${characterName}`
-  return `- Reference image ${referenceIndex}: IDENTITY REFERENCE${personBinding}\n  ${CHARACTER_IDENTITY_REFERENCE_INSTRUCTION}`
+  const heading = label ?? `Reference image ${referenceIndex}: IDENTITY REFERENCE${personBinding}`
+  return (
+    `- ${heading}\n` +
+    `  ${CHARACTER_IDENTITY_REFERENCE_INSTRUCTION}\n` +
+    `  ${buildIdentityLockLine(characterName, referenceIndex, personTokenIndex)}`
+  )
 }
 
 export function buildWardrobeReferencePromptLine(
   characterName: string,
   referenceIndex: number,
-  identityReferenceIndex?: number
+  identityReferenceIndex?: number,
+  label?: string
 ): string {
   const binding =
     identityReferenceIndex != null
       ? ` for ${characterName}: apply this outfit ONLY to person [${identityReferenceIndex}] (${characterName}); do not apply to any other character`
       : ` for ${characterName}`
-  return `- Reference image ${referenceIndex}: WARDROBE REFERENCE${binding}\n  ${WARDROBE_ONLY_REFERENCE_INSTRUCTION}`
+  const heading = label
+    ? `${label}${
+        identityReferenceIndex != null
+          ? ` — apply this outfit ONLY to person [${identityReferenceIndex}] (${characterName})`
+          : ''
+      }`
+    : `Reference image ${referenceIndex}: WARDROBE REFERENCE${binding}`
+  return `- ${heading}\n  ${WARDROBE_ONLY_REFERENCE_INSTRUCTION}`
 }
 
 /** Multi-character wardrobe binding summary for beat-frame gemini prompts. */

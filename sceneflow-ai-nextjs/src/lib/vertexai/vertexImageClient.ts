@@ -173,16 +173,23 @@ export interface VertexImageResult {
   modelId: string
 }
 
-async function buildMultimodalParts(
+/**
+ * Reference images lead, instruction text follows.
+ *
+ * Google's multimodal formula is [reference images] + [relationship
+ * instruction] + [new scenario]. Sending the whole instruction first asked the
+ * model to commit to a subject before it had seen the identity it was supposed
+ * to reproduce, which is how a frame comes back with the right composition and
+ * the wrong person.
+ */
+export async function buildMultimodalParts(
   fullPrompt: string,
   referenceImages?: VertexReferenceImage[],
   requireAllReferenceImages?: boolean
 ): Promise<Array<{ text: string } | { inlineData: { mimeType: string; data: string } }>> {
-  const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
-    { text: fullPrompt },
-  ]
+  if (!referenceImages?.length) return [{ text: fullPrompt }]
 
-  if (!referenceImages?.length) return parts
+  const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = []
 
   for (const ref of referenceImages) {
     let base64Data = ref.base64Image
@@ -204,8 +211,7 @@ async function buildMultimodalParts(
     }
     if (base64Data.includes(',')) base64Data = base64Data.split(',')[1] || base64Data
 
-    const label = ref.name ? `[Reference: ${ref.name}]\n` : ''
-    parts.push({ text: label })
+    parts.push({ text: ref.name ? `[${ref.name}]\n` : '' })
     parts.push({ inlineData: { mimeType, data: base64Data } })
   }
 
@@ -218,6 +224,8 @@ async function buildMultimodalParts(
       `Failed to attach all reference images (${inlineCount}/${referenceImages.length})`
     )
   }
+
+  parts.push({ text: fullPrompt })
 
   return parts
 }

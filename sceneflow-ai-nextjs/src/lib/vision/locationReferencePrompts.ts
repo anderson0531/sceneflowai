@@ -29,12 +29,15 @@ export function buildLocationReferenceLabel(
   return `Location reference ${referenceIndex}: ${locationName} (extreme-wide establishing shot)`
 }
 
+/**
+ * `label` lets the caller reuse the exact label attached to the image part, so
+ * the wrapper line and the image name the reference identically.
+ */
 export function buildLocationReferencePromptLine(
   locationName: string,
-  referenceIndex: number
+  referenceIndex: number,
+  label?: string
 ): string {
-  return (
-    `- Reference image ${referenceIndex}: LOCATION REFERENCE for "${locationName}"\n` +
-    `  ${LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION}`
-  )
+  const heading = label ?? `Reference image ${referenceIndex}: LOCATION REFERENCE for "${locationName}"`
+  return `- ${heading}\n  ${LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION}`
 }

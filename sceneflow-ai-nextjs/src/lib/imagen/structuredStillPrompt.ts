@@ -362,6 +362,22 @@ function styleAlreadyHasPhotoreal(style: string): boolean {
   return /photorealistic|live-action|live action|photographed on real camera/i.test(style)
 }
 
+/**
+ * Fold caller exclusions into the section, skipping what is already stated.
+ *
+ * An assembled still is persisted and re-assembled, so the parsed section
+ * already carries everything a previous pass added; the containment check is
+ * what keeps re-assembly byte-stable.
+ */
+function mergeExclusions(base: string, extra?: string): string {
+  const primary = base.trim()
+  const addition = extra?.trim()
+  if (!addition) return primary
+  if (!primary) return addition
+  if (primary.toLowerCase().includes(addition.toLowerCase())) return primary
+  return `${primary}\n${addition}`
+}
+
 export function assembleStructuredStillPrompt(input: {
   actionOrStructured: string
   refs?: StillPromptBoundRef[]
@@ -386,7 +402,10 @@ export function assembleStructuredStillPrompt(input: {
     style = joinPromptBlocks(style, input.photorealisticAnchor)
   }
 
-  const exclusions = parsed.exclusions || input.exclusions || DEFAULT_STILL_EXCLUSIONS
+  const exclusions = mergeExclusions(
+    parsed.exclusions || DEFAULT_STILL_EXCLUSIONS,
+    input.exclusions
+  )
 
   return joinPromptBlocks(
     formatStillReferencesLegend(refs),
