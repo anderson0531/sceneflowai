@@ -20,6 +20,8 @@ const BEAT_STORYBOARD_URL_KEYS = [
 const BEAT_STORYBOARD_PROMPT_KEYS = [
   'storyboardImagePrompt',
   'storyboardEndImagePrompt',
+  'storyboardImagePromptDirectionKey',
+  'storyboardImageDirectionKey',
 ] as const
 
 const SCENE_IMAGE_URL_KEYS = [

@@ -6320,7 +6320,7 @@ function SceneCard({
                           {directionStale
                             ? 'Script has changed. Re-edit the scene to refresh direction, or continue with the current summary.'
                             : preVisStale
-                              ? 'Script has changed since pre-vis was generated — update frame prompts before regenerating.'
+                              ? 'Script has changed since pre-vis was generated — update frame prompts before regenerating. Beat direction edits update prompts automatically.'
                               : 'Direction has changed. Consider regenerating Frame.'}
                         </span>
                         <div className="ml-auto flex items-center gap-2">

@@ -3,7 +3,6 @@
  */
 
 import { toCanonicalName } from '@/lib/character/canonical'
-import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import {
   NARRATOR_CHARACTER,
@@ -1327,16 +1326,14 @@ export function applyExpressStoryboardImageErrorToScene(
   return applyBeatsToScene(scene, beats)
 }
 
-/** Stable fingerprint of beat script text for pre-vis invalidation. */
+/** Stable fingerprint of beat script prose for pre-vis invalidation. */
 export function beatContentFingerprint(beat: SceneBeat): string {
-  const directionFingerprint = beatDirectionFingerprint(beat.beatDirection)
-  const directionSuffix = directionFingerprint ? `||direction:${directionFingerprint}` : ''
   if (beat.kind === 'action') {
-    return `${(beat.actionDescription ?? '').trim()}${directionSuffix}`
+    return (beat.actionDescription ?? '').trim()
   }
   const character = (beat.character ?? '').trim().toUpperCase()
   const line = (beat.line ?? '').trim()
-  return `${beat.kind}|${character}|${line}${directionSuffix}`
+  return `${beat.kind}|${character}|${line}`
 }
 
 function beatMatchKey(beat: SceneBeat, index: number): string {
@@ -1422,6 +1419,7 @@ function clearBeatStoryboardFrames(beat: SceneBeat): SceneBeat {
   delete next.storyboardImageGcsPath
   delete next.storyboardImagePrompt
   delete next.storyboardImagePromptDirectionKey
+  delete next.storyboardImageDirectionKey
   delete next.storyboardImageTier
   delete next.storyboardEndImageUrl
   delete next.storyboardEndImageGcsPath

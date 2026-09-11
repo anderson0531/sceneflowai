@@ -13,6 +13,7 @@ import {
   getSceneBeats,
   reconcileBeatsWithScriptContent,
 } from '@/lib/script/beatMigration'
+import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
 import { applyDerivedSfxToScene } from '@/lib/script/deriveSfxFromSceneContent'
 import { generateSceneContentHash } from '@/lib/utils/contentHash'
 import { isValidStoryboardMediaUrl } from '@/lib/storyboard/mergeSceneMedia'
@@ -29,13 +30,31 @@ function djb2Hash(str: string): string {
   return (hash >>> 0).toString(16).padStart(8, '0')
 }
 
-/** Hash of script content that drives pre-vis frame prompts. */
-export function generatePreVisContentHash(scene: Record<string, unknown>): string {
-  const beats = getSceneBeats(scene).map((beat) => beatContentFingerprint(beat))
+function hashPreVisPayload(scene: Record<string, unknown>, beats: string[]): string {
   return djb2Hash(
     JSON.stringify({
       script: generateSceneContentHash(scene),
       beats,
+    })
+  )
+}
+
+/** Hash of script prose that drives pre-vis frame prompts (direction excluded). */
+export function generatePreVisContentHash(scene: Record<string, unknown>): string {
+  return hashPreVisPayload(
+    scene,
+    getSceneBeats(scene).map((beat) => beatContentFingerprint(beat))
+  )
+}
+
+/** Pre-deploy hash that mixed beat direction into the stamp. */
+export function generateLegacyPreVisContentHash(scene: Record<string, unknown>): string {
+  return hashPreVisPayload(
+    scene,
+    getSceneBeats(scene).map((beat) => {
+      const directionFingerprint = beatDirectionFingerprint(beat.beatDirection)
+      const directionSuffix = directionFingerprint ? `||direction:${directionFingerprint}` : ''
+      return `${beatContentFingerprint(beat)}${directionSuffix}`
     })
   )
 }
@@ -52,12 +71,30 @@ export function sceneHasPreVisOutput(scene: Record<string, unknown>): boolean {
   )
 }
 
-/** True when pre-vis exists but was generated from different script content. */
+/** True when pre-vis exists but was generated from different script prose. */
 export function isPreVisStale(scene: Record<string, unknown>): boolean {
   if (!sceneHasPreVisOutput(scene)) return false
   const stored = scene[PRE_VIS_CONTENT_HASH_FIELD]
   if (typeof stored !== 'string' || !stored.trim()) return false
-  return stored !== generatePreVisContentHash(scene)
+  if (stored === generatePreVisContentHash(scene)) return false
+  // Existing stamps included beat direction. Matching that hash means the
+  // script prose has not drifted — do not force Update Frames.
+  return stored !== generateLegacyPreVisContentHash(scene)
+}
+
+/**
+ * After a direction-only edit, rewrite the stamp to the prose-only hash so
+ * later direction edits stay off the Update Frames path. Leaves a truly
+ * script-stale hash alone.
+ */
+export function restampPreVisHashIfScriptCurrent(
+  previousScene: Record<string, unknown>,
+  nextScene: Record<string, unknown>
+): Record<string, unknown> {
+  const stored = previousScene[PRE_VIS_CONTENT_HASH_FIELD]
+  if (typeof stored !== 'string' || !stored.trim()) return nextScene
+  if (isPreVisStale(previousScene)) return nextScene
+  return stampPreVisContentHash(nextScene)
 }
 
 export interface SyncPreVisOptions {

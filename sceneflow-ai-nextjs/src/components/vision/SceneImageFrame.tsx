@@ -62,6 +62,8 @@ export interface SceneImageFrameProps {
   useExpressGenerateIcon?: boolean
   /** Persisted generation error when this frame failed Express/manual gen. */
   imageError?: string
+  /** Direction/prompt changed after this frame was generated. Regen is optional. */
+  promptChanged?: boolean
 }
 
 function CompactIconButton({
@@ -290,6 +292,7 @@ export function SceneImageFrame({
   generateLabel,
   useExpressGenerateIcon = false,
   imageError,
+  promptChanged = false,
 }: SceneImageFrameProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isHovering, setIsHovering] = useState(false)
@@ -405,7 +408,15 @@ export function SceneImageFrame({
             )}
 
             <div className="absolute top-1 right-1 z-10">
-              {isPlaceholder ? (
+              {promptChanged ? (
+                <span
+                  className="text-[9px] px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded-full flex items-center gap-0.5 backdrop-blur-sm"
+                  title="Direction changed after this frame was generated. Regen is optional."
+                >
+                  <AlertTriangle className="w-2.5 h-2.5" />
+                  Prompt changed
+                </span>
+              ) : isPlaceholder ? (
                 <span className="text-[9px] px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded-full flex items-center gap-0.5 backdrop-blur-sm">
                   <AlertTriangle className="w-2.5 h-2.5" />
                   Placeholder

@@ -223,6 +223,36 @@ describe('structured scene revision', () => {
     expect(dialogueBeat?.storyboardImageUrl).toBeUndefined()
   })
 
+  it('invalidateChangedBeatFramesOnScene keeps images when only still direction changes', () => {
+    const original = structuredScene([
+      {
+        beatId: 'bt-action',
+        sequenceIndex: 0,
+        kind: 'action',
+        actionDescription: 'Alex enters quietly.',
+        storyboardImageUrl: FRAME_URL,
+        storyboardImagePrompt: 'Medium shot: Alex enters quietly.',
+        storyboardImagePromptDirectionKey: 'shotType=Medium Shot',
+        beatDirection: { shotType: 'Medium Shot', frozenMoment: 'Alex enters quietly.' },
+      },
+    ])
+    const revised = {
+      ...original,
+      beats: [
+        {
+          ...original.beats[0],
+          beatDirection: { shotType: 'Insert Shot', frozenMoment: 'Alex fills the doorway.' },
+        },
+      ],
+    }
+
+    const invalidated = invalidateChangedBeatFramesOnScene(revised, original)
+    const [beat] = getSceneBeats(invalidated)
+    expect(beat.storyboardImageUrl).toBe(FRAME_URL)
+    expect(beat.storyboardImagePrompt).toContain('Alex fills the doorway.')
+    expect(beat.storyboardImageDirectionKey).toBe('shotType=Medium Shot')
+  })
+
   it('finalizeFlatRevisedScene falls back without beats reconstruction', () => {
     const flat = finalizeFlatRevisedScene(
       { action: 'New action prose.', music: 'New music' },

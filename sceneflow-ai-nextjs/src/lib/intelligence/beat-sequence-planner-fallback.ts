@@ -18,7 +18,10 @@ import {
 import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPrompt'
-import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
+import {
+  beatStillDirectionFingerprint,
+  storedStillDirectionKeyMatches,
+} from '@/lib/script/beatDirectionFingerprint'
 import { formatSceneArcBlock, getSceneMovements } from '@/lib/script/sceneMovements'
 import type { BeatDirection, SceneBeat } from '@/lib/script/segmentTypes'
 
@@ -177,10 +180,10 @@ function appendFacet(parts: string[], value: string | undefined, label?: string)
  */
 export function storedPromptMatchesDirection(beat: SceneBeat): boolean {
   if (!beat.storyboardImagePrompt?.trim()) return false
-  const currentKey = beatDirectionFingerprint(beat.beatDirection)
-  const storedKey = beat.storyboardImagePromptDirectionKey
-  if (storedKey === undefined) return currentKey === ''
-  return storedKey === currentKey
+  return storedStillDirectionKeyMatches(
+    beat.storyboardImagePromptDirectionKey,
+    beat.beatDirection
+  )
 }
 
 /** Action/framing carried over from a previous generation, when still current. */
@@ -738,7 +741,7 @@ export function applyBeatKeyframePlansToScene(
       storyboardImagePrompt: plan.prompt,
       // The plan and the direction it merges are written together, so the
       // prompt is keyed to the direction as it will be after this write.
-      storyboardImagePromptDirectionKey: beatDirectionFingerprint(
+      storyboardImagePromptDirectionKey: beatStillDirectionFingerprint(
         mergedDirection ?? beat.beatDirection
       ),
       ...(plan.durationSeconds ? { durationSeconds: plan.durationSeconds } : {}),

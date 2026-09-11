@@ -50,7 +50,7 @@ import { generateSceneDirection } from './generateDirection'
 import { generateSceneAudio, applyAudioAssetsToScene } from './generateAudio'
 import { generateSceneImage } from './generateImage'
 import { usesFlashDraftTier } from './animaticImageModel'
-import { beatDirectionFingerprint } from '../script/beatDirectionFingerprint'
+import { beatStillDirectionFingerprint } from '../script/beatDirectionFingerprint'
 import { shouldScheduleStandaloneNarration } from '../script/narration'
 import {
   detectCharactersNamedInBeat,
@@ -1304,9 +1304,12 @@ function writeBeatFrameToScene(
     ...(result.imagePrompt
       ? {
           storyboardImagePrompt: result.imagePrompt,
-          storyboardImagePromptDirectionKey: beatDirectionFingerprint(previous.beatDirection),
+          storyboardImagePromptDirectionKey: beatStillDirectionFingerprint(previous.beatDirection),
+          storyboardImageDirectionKey: beatStillDirectionFingerprint(previous.beatDirection),
         }
-      : {}),
+      : {
+          storyboardImageDirectionKey: beatStillDirectionFingerprint(previous.beatDirection),
+        }),
   }
   const updated = applyBeatsToScene(scene, beats)
   Object.assign(scene, updated)
