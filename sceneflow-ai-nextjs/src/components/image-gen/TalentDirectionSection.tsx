@@ -63,7 +63,7 @@ export function TalentDirectionSection({
             />
           </div>
           <div>
-            <Label className="text-xs text-slate-400">Key Props in Hand</Label>
+            <Label className="text-xs text-slate-400">Key Objects in Hand</Label>
             <Input
               value={talentDirection.keyProps}
               onChange={(e) => onTalentDirectionChange({ keyProps: e.target.value })}

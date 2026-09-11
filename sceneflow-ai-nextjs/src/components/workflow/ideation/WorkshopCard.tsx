@@ -35,7 +35,7 @@ export function WorkshopCard(props: WorkshopCardProps) {
     { label: 'Editorial Pacing', key: 'sr_pacing', multiline: true, rows: 2, placeholder: 'Cuts/min, max shot length, hook timing' },
     { label: 'Platform & Deliverables', key: 'sr_platformDeliverables', multiline: true, rows: 3, placeholder: 'Primary platform, safe areas, captions, end card, variants' },
     { label: 'Branding & Compliance', key: 'sr_branding', multiline: true, rows: 3, placeholder: 'Voice/tone guardrails, logo/type, legal' },
-    { label: 'Props & Continuity', key: 'sr_propsContinuity', multiline: true, rows: 2, placeholder: 'Hero props, wardrobe, must-match' },
+    { label: 'Objects & Continuity', key: 'sr_propsContinuity', multiline: true, rows: 2, placeholder: 'Hero objects, wardrobe, must-match' },
     { label: 'Accessibility & Localization', key: 'sr_accessibility', multiline: true, rows: 2, placeholder: 'Captions style/language, alt text, VO variants' },
     { label: 'Pre-vis Hints', key: 'sr_storyboardHints', multiline: true, rows: 3, placeholder: 'Per-beat intents, coverage plan, B-roll, graphics, on-screen text buckets' },
   ] as const

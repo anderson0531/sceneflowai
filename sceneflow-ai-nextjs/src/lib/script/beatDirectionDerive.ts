@@ -12,7 +12,8 @@ import {
   parsePerformanceCue,
   resolveBeatDirectedEmotion,
 } from '@/lib/scene/performanceCues'
-import type { BeatDirection, SceneBeat } from '@/lib/script/segmentTypes'
+import { getSceneMovements, resolveBeatMovement } from '@/lib/script/sceneMovements'
+import type { BeatDirection, SceneBeat, SceneMovement } from '@/lib/script/segmentTypes'
 
 function firstNonEmpty(...values: (string | undefined | null)[]): string | undefined {
   for (const v of values) {
@@ -90,6 +91,11 @@ function collectKeyPropsForBeat(
  * Best-effort inference of camera framing hint for THIS beat, prefer scene
  * camera shots array position, else the beat's own shot vocab, else the
  * scene-level framing hint.
+ *
+ * When the scene lists fewer shots than it has beats, the overflow beats cycle
+ * through the list rather than all inheriting the final shot — a scene that
+ * ends on fifteen identical "Close-Up" frames is the shape that made long
+ * scenes read as one repeated image.
  */
 function inferShotType(
   beat: SceneBeat,
@@ -102,7 +108,7 @@ function inferShotType(
       ? (sceneDirection.camera.shots as string[])
       : []
   if (shots.length > 0) {
-    const raw = shots[beatIndex] ?? shots[shots.length - 1]
+    const raw = shots[beatIndex] ?? shots[beatIndex % shots.length]
     const trimmed = raw?.trim()
     if (trimmed) return trimmed
   }
@@ -151,11 +157,18 @@ function inferGaze(beat: SceneBeat): string | undefined {
  * Derive a BeatDirection for `beat` from scene direction + beat text.
  * Fields present on `existing` (from the LLM or user) are preserved; only gaps
  * get filled from derived signals.
+ *
+ * Fills prefer signals scoped to this beat, then to the beat's movement, and
+ * only then fall back to a scene-wide value. Broadcasting one scene-level
+ * blocking or emotion onto every beat gave a 15-beat scene fifteen frames with
+ * identical staging notes, which downstream prompt builders then rendered as
+ * fifteen variations of the same image.
  */
 export function deriveBeatDirection(
   beat: SceneBeat,
   beatIndex: number,
-  scene: Record<string, unknown>
+  scene: Record<string, unknown>,
+  movements?: SceneMovement[]
 ): BeatDirection | undefined {
   const existing = beat.beatDirection ?? {}
   const sceneDirection =
@@ -163,6 +176,14 @@ export function deriveBeatDirection(
       ? (scene.sceneDirection as Record<string, any>)
       : undefined
   const meta = extractDirectionMetadata(sceneDirection)
+  const arc = movements ?? []
+  const resolvedMovement = arc.length > 0 ? resolveBeatMovement(arc, beatIndex) : undefined
+  // One keyAction per movement is what the direction pass is asked for, so the
+  // movement index selects this beat's action rather than the beat index.
+  const movementKeyAction =
+    resolvedMovement && Array.isArray(meta.talentKeyActions)
+      ? meta.talentKeyActions[resolvedMovement.movement.index]
+      : undefined
 
   const derived: BeatDirection = { ...existing }
 
@@ -179,7 +200,10 @@ export function deriveBeatDirection(
     if (movement) derived.cameraMovement = movement
   }
   if (!derived.blocking) {
-    const blocking = firstNonEmpty(meta.talentBlocking, beat.actionDescription)
+    // The movement's key action is the closest thing to per-beat staging that
+    // scene direction offers; the scene-wide blocking is the same sentence for
+    // every beat and is only used when this beat has no movement of its own.
+    const blocking = firstNonEmpty(movementKeyAction, meta.talentBlocking, beat.actionDescription)
     if (blocking) derived.blocking = blocking
   }
   if (!derived.emotion) {
@@ -202,7 +226,7 @@ export function deriveBeatDirection(
     if (lighting) derived.lightingAccent = lighting
   }
   if (!derived.frozenMoment) {
-    const moment = firstNonEmpty(beat.actionDescription, beat.line)
+    const moment = firstNonEmpty(beat.actionDescription, beat.line, movementKeyAction)
     if (moment) derived.frozenMoment = moment
   }
   if (!derived.audioCue) {
@@ -231,8 +255,10 @@ export function deriveBeatDirection(
  */
 export function backfillBeatDirectionsOnScene(scene: Record<string, unknown>): SceneBeat[] {
   const beats = Array.isArray(scene.beats) ? (scene.beats as SceneBeat[]) : []
+  if (beats.length === 0) return beats
+  const movements = getSceneMovements(scene, beats)
   return beats.map((beat, index) => {
-    const direction = deriveBeatDirection(beat, index, scene)
+    const direction = deriveBeatDirection(beat, index, scene, movements)
     return direction ? { ...beat, beatDirection: direction } : beat
   })
 }

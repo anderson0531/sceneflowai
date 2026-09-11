@@ -351,7 +351,7 @@ export function SceneDirectionDisplay({
 
                   {/* Props & Set Design */}
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Props & Set Design</h4>
+                    <h4 className="font-medium text-gray-900 mb-2">Objects & Set Design</h4>
                     <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
                       {direction.props_set_design}
                     </p>

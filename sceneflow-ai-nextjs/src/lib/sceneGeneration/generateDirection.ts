@@ -14,6 +14,8 @@ import {
 } from '../../types/scene-direction'
 import { generateSceneContentHash } from '../../lib/utils/contentHash'
 import { generateText } from '@/lib/vertexai/gemini'
+import { getSceneBeats } from '@/lib/script/beatMigration'
+import { getSceneMovements } from '@/lib/script/sceneMovements'
 import type { SceneDirectionResult } from './types'
 
 export interface GenerateSceneDirectionParams {
@@ -296,6 +298,49 @@ function normalizePromptBundle(
   })
 }
 
+/**
+ * The scene's movement arc and the beats inside each movement.
+ *
+ * Direction written against a whole scene produces one blocking note, one
+ * angle, and one emotional beat that every frame then reuses. Naming the
+ * movements and the beats under them lets the model order `camera.shots` and
+ * `talent.keyActions` to the beat timeline instead of to the scene as a whole.
+ */
+function buildSceneArcBlock(scene: GenerateSceneDirectionParams['scene']): {
+  block: string
+  movementCount: number
+  beatCount: number
+} {
+  const beats = getSceneBeats(scene as Record<string, unknown>)
+  if (beats.length === 0) return { block: '', movementCount: 0, beatCount: 0 }
+
+  const movements = getSceneMovements(scene as Record<string, unknown>, beats)
+  if (movements.length === 0) return { block: '', movementCount: 0, beatCount: beats.length }
+
+  const lines: string[] = [
+    `SCENE ARC (${movements.length} movements across ${beats.length} beats — this is the story the beats tell, in order):`,
+  ]
+  for (const movement of movements) {
+    lines.push(
+      `Movement ${movement.index + 1} (beats ${movement.beatStart + 1}-${movement.beatEnd + 1}): ${movement.summary}`
+    )
+    for (let i = movement.beatStart; i <= movement.beatEnd && i < beats.length; i++) {
+      const beat = beats[i]
+      const label =
+        beat.kind === 'action'
+          ? beat.actionDescription || 'action beat'
+          : `${beat.character || 'SPEAKER'}: ${beat.line || ''}`
+      lines.push(`  Beat ${i + 1} (${beat.kind}): ${String(label).slice(0, 200)}`)
+    }
+  }
+
+  return {
+    block: lines.join('\n'),
+    movementCount: movements.length,
+    beatCount: beats.length,
+  }
+}
+
 function buildSceneDirectionPrompt(
   scene: GenerateSceneDirectionParams['scene']
 ): string {
@@ -319,11 +364,24 @@ function buildSceneDirectionPrompt(
     line: d.line || d.text || '',
   }))
   const segmentPromptTimeline = buildSegmentPromptTimeline(scene)
+  const arc = buildSceneArcBlock(scene)
+
+  const arcRules = arc.block
+    ? `
+${arc.block}
+
+DIRECT THE ARC, NOT THE AVERAGE (MANDATORY):
+- "sceneDescription" MUST be exactly ${arc.movementCount} sentence(s) — ONE per movement, in movement order, each describing that movement's change in plain language.
+- "camera.shots" MUST contain exactly ${arc.beatCount} entries, one per beat in beat order. Vary shot scale across the beats of a movement; do not repeat the same shot back to back.
+- "talent.keyActions" MUST contain one entry per movement (${arc.movementCount} total), in movement order, naming the physical action that carries that movement.
+- "talent.blocking" MUST describe how positions CHANGE from the first movement to the last, not one static arrangement.
+`
+    : ''
 
   return `You are a world-class film director and cinematographer specializing in scene direction for AI video generation (Veo-3). Your task is to generate detailed, professional-grade technical instructions optimized for cinematic, human-like performances based on the following scene information.
 
 SCENE INFORMATION:
-${heading ? `Heading: ${heading}\n` : ''}${charactersList}${action ? `Action: ${action}\n` : ''}${visualDescription ? `Visual Description: ${visualDescription}\n` : ''}${narration ? `Narration: ${narration}\n` : ''}${dialogueText ? `Dialogue:\n${dialogueText}\n` : ''}
+${heading ? `Heading: ${heading}\n` : ''}${charactersList}${action ? `Action: ${action}\n` : ''}${visualDescription ? `Visual Description: ${visualDescription}\n` : ''}${narration ? `Narration: ${narration}\n` : ''}${dialogueText ? `Dialogue:\n${dialogueText}\n` : ''}${arcRules}
 CRITICAL TALENT RULE:
 - The talent blocking MUST reference ONLY the characters listed above
 - DO NOT invent new characters or add characters not in this scene
@@ -351,7 +409,11 @@ CRITICAL QUALITY GUIDELINES (apply to every scene):
 Generate comprehensive technical direction suitable for professional film production and AI video generation. Return ONLY valid JSON with this exact structure:
 
 {
-  "sceneDescription": "A clear, plain-language narrative summary (2-4 sentences) of what happens in this scene. Describe the intent, action, and emotional arc in accessible terms that anyone can understand without film jargon. Focus on WHO does WHAT, WHY, and how the emotional tone shifts.",
+  "sceneDescription": "${
+    arc.movementCount > 0
+      ? `Exactly ${arc.movementCount} sentences, ONE per movement in movement order. Each sentence says WHO does WHAT and HOW the situation changes during that movement, in plain language with no film jargon.`
+      : 'A clear, plain-language narrative summary (2-4 sentences) of what happens in this scene. Describe the intent, action, and emotional arc in accessible terms that anyone can understand without film jargon. Focus on WHO does WHAT, WHY, and how the emotional tone shifts.'
+  }",
   "camera": {
     "shots": ["array of shot types, e.g., 'Wide Shot', 'Medium Close-Up', 'Insert Shot'"],
     "angle": "camera angle, e.g., 'Eye-Level', 'Low Angle', 'High Angle', 'Over-the-Shoulder'",

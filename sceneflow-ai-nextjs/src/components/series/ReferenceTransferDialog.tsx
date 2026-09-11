@@ -736,7 +736,7 @@ function TransferDiffView({ diff }: { diff: ReferenceTransferDiff | null }) {
         </DiffSection>
       )}
       {diff.props.added.length > 0 && (
-        <DiffSection title="Props added" count={diff.props.added.length}>
+        <DiffSection title="Objects added" count={diff.props.added.length}>
           {diff.props.added.map((p) => (
             <li key={p.id}>{p.name}</li>
           ))}

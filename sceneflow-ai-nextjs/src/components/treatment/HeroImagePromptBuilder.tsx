@@ -838,7 +838,7 @@ export function HeroImagePromptBuilder({
               <div className="space-y-3 p-3 rounded border border-gray-700 bg-gray-800/50">
                 <h3 className="text-sm font-semibold text-gray-200">Additional Details</h3>
                 <div>
-                  <label className="text-xs text-gray-400">Key Props</label>
+                  <label className="text-xs text-gray-400">Key Objects</label>
                   <Input
                     value={structure.keyProps}
                     onChange={(e) => setStructure(prev => ({ ...prev, keyProps: e.target.value }))}

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { 
   Sparkles, 
   Check, 
@@ -17,6 +17,13 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
 import { ObjectSuggestion, ObjectCategory, ObjectImportance, VisualReference } from '@/types/visionReferences'
+import {
+  MIN_BEATS_FOR_LIBRARY,
+  countObjectBeatReferences,
+  isAlreadyInLibrary,
+  selectRecurringObjects,
+  slimSceneForObjectUsage,
+} from '@/lib/vision/objectBeatUsage'
 import { cn } from '@/lib/utils'
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
 
@@ -28,6 +35,8 @@ interface ObjectSuggestionPanelProps {
     action?: string
     visualDescription?: string
     description?: string
+    /** Scene beats — object recurrence is counted per beat, not per scene */
+    beats?: unknown[]
   }>
   /** Already added objects to exclude from suggestions */
   existingObjects: VisualReference[]
@@ -41,8 +50,21 @@ interface ObjectSuggestionPanelProps {
     generationPrompt: string
     aiGenerated: boolean
   }) => void
+  /**
+   * Add objects the script handles across several beats straight to the
+   * library, without images. Called with only the entries that are missing.
+   */
+  onObjectsAutoAdded?: (objects: AutoAddedObject[]) => void | Promise<void>
   /** Compact mode for sidebar */
   compact?: boolean
+}
+
+export interface AutoAddedObject {
+  name: string
+  category: ObjectCategory
+  importance: ObjectImportance
+  beatCount: number
+  sceneNumbers: number[]
 }
 
 const CATEGORY_COLORS: Record<ObjectCategory, string> = {
@@ -87,11 +109,17 @@ function SuggestionCard({ suggestion, isGenerating, onGenerate, onDismiss }: Sug
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1 line-clamp-2">{suggestion.description}</p>
-          {suggestion.sceneNumbers.length > 0 && (
+          {(suggestion.beatCount ?? 0) > 0 || suggestion.sceneNumbers.length > 0 ? (
             <p className="text-[10px] text-slate-500 mt-1">
-              Scenes: {suggestion.sceneNumbers.join(', ')}
+              {(suggestion.beatCount ?? 0) > 0
+                ? `${suggestion.beatCount} beat${suggestion.beatCount === 1 ? '' : 's'}`
+                : null}
+              {(suggestion.beatCount ?? 0) > 0 && suggestion.sceneNumbers.length > 0 ? ' · ' : null}
+              {suggestion.sceneNumbers.length > 0
+                ? `Scene${suggestion.sceneNumbers.length === 1 ? '' : 's'} ${suggestion.sceneNumbers.join(', ')}`
+                : null}
             </p>
-          )}
+          ) : null}
         </div>
         <button
           onClick={() => onDismiss(suggestion.id)}
@@ -183,6 +211,7 @@ export function ObjectSuggestionPanel({
   scenes, 
   existingObjects, 
   onObjectGenerated,
+  onObjectsAutoAdded,
   compact = false 
 }: ObjectSuggestionPanelProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -197,6 +226,42 @@ export function ObjectSuggestionPanel({
   const [batchProgress, setBatchProgress] = useState(0)
   const [currentBatchItem, setCurrentBatchItem] = useState<string>('')
 
+  // Objects the beat direction already names and handles more than once are a
+  // fact of the script, not a guess, so they go into the library without a
+  // model call — un-imaged, one click from a reference.
+  const recurringInBeats = useMemo(() => {
+    const hasBeats = scenes.some((s) => Array.isArray(s.beats) && s.beats.length > 0)
+    if (!hasBeats) return []
+    const slim = scenes.map((s, idx) => slimSceneForObjectUsage(s, idx))
+    return selectRecurringObjects(countObjectBeatReferences(slim))
+  }, [scenes])
+
+  const autoAddedKeysRef = useRef<Set<string>>(new Set())
+  const [autoAddedNames, setAutoAddedNames] = useState<string[]>([])
+
+  useEffect(() => {
+    if (!onObjectsAutoAdded || recurringInBeats.length === 0) return
+    const existingNames = existingObjects.map((o) => o.name)
+    const missing = recurringInBeats.filter(
+      (usage) =>
+        !autoAddedKeysRef.current.has(usage.key) &&
+        !isAlreadyInLibrary(usage.name, existingNames)
+    )
+    if (missing.length === 0) return
+
+    for (const usage of missing) autoAddedKeysRef.current.add(usage.key)
+    setAutoAddedNames((prev) => [...prev, ...missing.map((usage) => usage.name)])
+    void onObjectsAutoAdded(
+      missing.map((usage) => ({
+        name: usage.name,
+        category: 'prop' as ObjectCategory,
+        importance: 'important' as ObjectImportance,
+        beatCount: usage.beatCount,
+        sceneNumbers: usage.sceneNumbers,
+      }))
+    )
+  }, [recurringInBeats, existingObjects, onObjectsAutoAdded])
+
   const analyzeScenesForObjects = useCallback(async () => {
     if (scenes.length === 0) return
     
@@ -208,12 +273,13 @@ export function ObjectSuggestionPanel({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          scenes: scenes.map(s => ({
+          scenes: scenes.map((s, idx) => ({
             sceneNumber: s.sceneNumber,
             heading: s.heading,
             action: s.action,
             visualDescription: s.visualDescription,
-            description: s.description
+            description: s.description,
+            beats: slimSceneForObjectUsage(s, idx).beats
           })),
           existingObjects: existingObjects.map(o => o.name)
         })
@@ -354,10 +420,10 @@ export function ObjectSuggestionPanel({
 
   return (
     <>
-      {/* Processing Overlay for Props Generation */}
+      {/* Processing Overlay for Key Objects Generation */}
       <GeneratingOverlay
         visible={isBatchGenerating || generatingIds.size > 0}
-        title={isBatchGenerating ? 'Generating Key Props' : 'Generating Reference Image'}
+        title={isBatchGenerating ? 'Generating Key Objects' : 'Generating Reference Image'}
         progress={isBatchGenerating ? batchProgress : 50}
         subtext={
           isBatchGenerating 
@@ -376,7 +442,7 @@ export function ObjectSuggestionPanel({
         >
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-indigo-400" />
-            <span className="text-sm font-medium text-indigo-300">Key Props</span>
+            <span className="text-sm font-medium text-indigo-300">Key Objects</span>
             {suggestions.length > 0 && (
               <span className="text-xs px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400">
                 {suggestions.length}
@@ -388,11 +454,22 @@ export function ObjectSuggestionPanel({
 
       {expanded && (
         <div className="px-3 pb-3 space-y-3">
+          {autoAddedNames.length > 0 && (
+            <div className="flex items-start gap-2 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded text-xs text-emerald-300">
+              <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>
+                Added {autoAddedNames.length} object{autoAddedNames.length === 1 ? '' : 's'} handled
+                in {MIN_BEATS_FOR_LIBRARY}+ beats ({autoAddedNames.join(', ')}). Generate a reference
+                below so every beat renders the same object.
+              </span>
+            </div>
+          )}
+
           {/* Analysis Button or Results */}
           {!hasAnalyzed ? (
             <div className="text-center py-4">
               <p className="text-xs text-slate-400 mb-3">
-                Scan your script to identify key props, vehicles, and set pieces that recur across scenes.
+                Scan your script to identify key objects, vehicles, and set pieces that recur across beats.
               </p>
               <Button
                 onClick={analyzeScenesForObjects}
@@ -407,7 +484,7 @@ export function ObjectSuggestionPanel({
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 mr-2" />
-                    Get Key Props
+                    Get Key Objects
                   </>
                 )}
               </Button>

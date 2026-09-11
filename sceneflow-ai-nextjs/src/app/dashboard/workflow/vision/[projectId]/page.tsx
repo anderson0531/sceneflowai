@@ -275,6 +275,7 @@ import { getScriptDirectionReadiness, isDirectionStale } from '@/lib/utils/conte
 import { DirectionReadinessBanner } from '@/components/vision/DirectionReadinessBanner'
 import { sanitizeReturnTo } from '@/lib/navigation/sanitizeReturnTo'
 import { ReferenceLibraryDialog, type ReferenceLibraryTab } from '@/components/vision/ReferenceLibraryDialog'
+import type { AutoAddedObject } from '@/components/vision/ObjectSuggestionPanel'
 import {
   PublishingLibraryDialog,
 } from '@/components/publishing/PublishingLibraryDialog'
@@ -2518,6 +2519,71 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     },
     [project, projectId]  // Removed sceneReferences, objectReferences - using refs instead
+  )
+
+  // An object handled across several beats renders in every one of them, so it
+  // is added to the library the moment the script says so — without an image,
+  // because spending generation credits is the user's call, not ours.
+  const handleObjectsAutoAdded = useCallback(
+    async (objects: AutoAddedObject[]) => {
+      if (objects.length === 0) return
+
+      const createdAt = new Date().toISOString()
+      const existingNames = new Set(
+        objectReferencesRef.current.map(o => o.name.trim().toLowerCase())
+      )
+      const additions: VisualReference[] = objects
+        .filter(object => !existingNames.has(object.name.trim().toLowerCase()))
+        .map((object) => ({
+          id: crypto.randomUUID(),
+          type: 'object',
+          name: object.name,
+          createdAt,
+          category: object.category,
+          importance: object.importance,
+          aiGenerated: false,
+        }))
+      if (additions.length === 0) return
+
+      const updatedObjectRefs = [...objectReferencesRef.current, ...additions]
+      objectReferencesRef.current = updatedObjectRefs
+      setObjectReferences(updatedObjectRefs)
+
+      try {
+        const existingMetadata = project?.metadata || {}
+        const existingVisionPhase = existingMetadata.visionPhase || {}
+
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              ...existingMetadata,
+              visionPhase: {
+                ...existingVisionPhase,
+                references: {
+                  sceneReferences: sceneReferencesRef.current,
+                  objectReferences: updatedObjectRefs,
+                  locationReferences: locationReferencesRef.current
+                }
+              }
+            }
+          })
+        })
+
+        if (!response.ok) {
+          console.error('[handleObjectsAutoAdded] Failed to save references to database')
+          return
+        }
+
+        toast.success(
+          `Added ${additions.length} recurring object${additions.length === 1 ? '' : 's'} to the Reference Library`
+        )
+      } catch (error) {
+        console.error('[handleObjectsAutoAdded] Error saving references:', error)
+      }
+    },
+    [project, projectId]
   )
 
   // Handler for inserting a backdrop segment at the beginning of a scene
@@ -15097,6 +15163,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         onBackdropGenerated={handleBackdropGenerated}
         onInsertBackdropSegment={handleInsertBackdropSegment}
         onObjectGenerated={handleObjectGenerated}
+        onObjectsAutoAdded={handleObjectsAutoAdded}
         screenplayContext={{
           genre: project?.genre,
           tone: project?.tone || project?.metadata?.filmTreatmentVariant?.tone_description || project?.metadata?.filmTreatmentVariant?.tone,

@@ -142,7 +142,7 @@ export function SeriesReferenceLibraryPanel({
       icon: <MapPin className="w-3.5 h-3.5" />,
       count: bible?.locations?.length || 0,
     },
-    { key: 'props', label: 'Props', icon: <Package className="w-3.5 h-3.5" />, count: bible?.props?.length || 0 },
+    { key: 'props', label: 'Objects', icon: <Package className="w-3.5 h-3.5" />, count: bible?.props?.length || 0 },
     { key: 'settings', label: 'Settings', icon: <Palette className="w-3.5 h-3.5" />, count: bible?.aesthetic ? 1 : 0 },
   ]
 
@@ -162,7 +162,7 @@ export function SeriesReferenceLibraryPanel({
                 {lastUpdated ? ` · Updated ${lastUpdated}` : ''}
               </p>
               <p className="text-xs text-gray-500 mt-2 max-w-xl">
-                Shared cast, locations, and props for this series. Assets are authored in Production
+                Shared cast, locations, and objects for this series. Assets are authored in Production
                 Studio and synced here — use Edit in Production to iterate, not this panel.
               </p>
             </div>
@@ -419,7 +419,7 @@ function SeriesPropsSection({
   return (
     <div>
       <div className="mb-6">
-        <h3 className="text-xl font-bold text-white">Props</h3>
+        <h3 className="text-xl font-bold text-white">Objects</h3>
         <p className="text-sm text-gray-500">Named objects with cross-episode continuity</p>
       </div>
       {props.length > 0 ? (

@@ -39,6 +39,31 @@ export interface BeatReferenceSelection {
 
 export type BeatDirectionTransition = 'CUT' | 'CONTINUE' | 'DISSOLVE' | 'FADE' | 'MATCH_CUT'
 export type BeatDirectionSource = 'llm' | 'planner' | 'derived' | 'user'
+export type SceneMovementSource = 'llm' | 'derived' | 'user'
+
+/**
+ * One dramatic movement inside a scene, covering a contiguous run of beats.
+ *
+ * A scene of up to `MAX_BEATS_PER_SCENE` beats reads as a single continuous
+ * story only when each beat knows which part of the scene it illustrates.
+ * Movements carry that mapping: `summary` is the sentence of the scene
+ * description this run of beats dramatizes, and `beatStart`/`beatEnd` are
+ * inclusive indices into `scene.beats`.
+ */
+export interface SceneMovement {
+  /** Position in the scene, 0-based. */
+  index: number
+  /** One sentence of the scene description that this run of beats dramatizes. */
+  summary: string
+  /** What changes dramatically across this movement (optional, LLM-authored). */
+  intent?: string
+  /** Inclusive first beat index covered by this movement. */
+  beatStart: number
+  /** Inclusive last beat index covered by this movement. */
+  beatEnd: number
+  /** Provenance of this movement record. */
+  generatedBy?: SceneMovementSource
+}
 
 /**
  * Structured, per-beat direction produced during script generation.
@@ -96,6 +121,8 @@ export interface SceneBeat {
   actionDescription?: string
   /** Sequence role for keyframe planning (opening, title_reveal, etc.). */
   beatRole?: string
+  /** Index into `scene.sceneMovements` — which part of the scene this beat tells. */
+  movementIndex?: number
   storyboardImageUrl?: string
   storyboardImagePrompt?: string
   storyboardImageGcsPath?: string

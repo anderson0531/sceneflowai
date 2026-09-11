@@ -18,7 +18,12 @@ import { SceneImageFrame } from './SceneImageFrame'
 import { VisualReference, VisualReferenceType, ObjectCategory, LocationReference } from '@/types/visionReferences'
 import { BackdropGeneratorModal, SceneForBackdrop, CharacterForBackdrop } from './BackdropGeneratorModal'
 import { BackdropMode } from '@/lib/vision/backdropGenerator'
-import { ObjectSuggestionPanel } from './ObjectSuggestionPanel'
+import { ObjectSuggestionPanel, type AutoAddedObject } from './ObjectSuggestionPanel'
+import {
+  countObjectBeatReferences,
+  normalizeObjectName,
+  slimSceneForObjectUsage,
+} from '@/lib/vision/objectBeatUsage'
 import { LocationLibrary } from './LocationLibrary'
 import { LocationPromptPayload } from './LocationPromptBuilder'
 import { ImageEditModal } from './ImageEditModal'
@@ -85,6 +90,8 @@ export interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps
     generationPrompt: string
     aiGenerated: boolean
   }) => void
+  /** Callback when objects recurring across beats are added to the library un-imaged */
+  onObjectsAutoAdded?: (objects: AutoAddedObject[]) => void | Promise<void>
   /** Callback to update a reference image after editing */
   onUpdateReferenceImage?: (type: 'scene' | 'object', referenceId: string, newImageUrl: string) => void
   /** Callback to edit a character's reference image */
@@ -159,6 +166,8 @@ interface ReferenceSectionProps {
 
 interface DraggableReferenceCardProps {
   reference: VisualReference
+  /** Beats in the script that handle this object, when known */
+  beatCount?: number
   onRemove?: () => void
   /** Scenes for Add to Timeline feature (scene backdrops only) */
   scenes?: SceneForBackdrop[]
@@ -172,7 +181,7 @@ interface DraggableReferenceCardProps {
   projectId?: string
   /** Callback when an image is uploaded */
   onImageUploaded?: (referenceId: string, referenceType: 'scene' | 'object', imageUrl: string) => void
-  /** Open prompt dialog for object reference regeneration (Props tab) */
+  /** Open prompt dialog for object reference regeneration (Objects tab) */
   onOpenObjectPromptDialog?: (reference: VisualReference) => void
   /** 50/50 image | controls layout for Reference Library dialog */
   splitLayout?: boolean
@@ -180,6 +189,7 @@ interface DraggableReferenceCardProps {
 
 function DraggableReferenceCard({
   reference,
+  beatCount,
   onRemove,
   scenes,
   onInsertBackdropSegment,
@@ -268,7 +278,7 @@ function DraggableReferenceCard({
         throw new Error(data.error || 'Failed to generate image')
       }
       onImageUploaded(reference.id, 'object', data.imageUrl)
-      toast.success('Prop reference image updated')
+      toast.success('Object reference image updated')
     } catch (error) {
       console.error('[DraggableReferenceCard] Quick generate:', error)
       toast.error(error instanceof Error ? error.message : 'Generation failed')
@@ -462,9 +472,21 @@ function DraggableReferenceCard({
           {reference.description ? (
             <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-0.5">{reference.description}</div>
           ) : null}
+          {isObjectCard && beatCount && beatCount > 0 ? (
+            <div className="mt-1 flex items-center gap-1.5 text-[10px]">
+              <span className="px-1.5 py-0.5 rounded bg-slate-500/20 text-slate-400">
+                {beatCount} beat{beatCount === 1 ? '' : 's'}
+              </span>
+              {!hasImage && (
+                <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">
+                  Needs reference
+                </span>
+              )}
+            </div>
+          ) : null}
         </div>
 
-        {/* Row 3: legacy actions (non–Props cards) + Remove */}
+        {/* Row 3: legacy actions (non–Objects cards) + Remove */}
         {!isObjectCard && (
           <div className="flex items-center gap-2 flex-wrap">
             {projectId && referenceType && (
@@ -1015,7 +1037,7 @@ function ObjectReferencePromptDialog({
         throw new Error(data.error || 'Failed to generate image')
       }
       onUpdateReferenceImage('object', reference.id, data.imageUrl)
-      toast.success('Prop reference image updated')
+      toast.success('Object reference image updated')
       onClose()
     } catch (error) {
       console.error('[ObjectReferencePromptDialog]', error)
@@ -1029,7 +1051,7 @@ function ObjectReferencePromptDialog({
     <Dialog open={open} onOpenChange={(value) => !value && !loading && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Regenerate prop — {reference?.name}</DialogTitle>
+          <DialogTitle>Regenerate object — {reference?.name}</DialogTitle>
           <DialogDescription>
             Adjust the prompt, then generate a new reference image (same controls as storyboard Prompt Builder).
           </DialogDescription>
@@ -1181,6 +1203,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onBackdropGenerated,
     onInsertBackdropSegment,
     onObjectGenerated,
+    onObjectsAutoAdded,
     onUpdateReferenceImage,
     onEditCharacterImage,
     showProductionReadiness = true,
@@ -1408,13 +1431,32 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   }
 
   // Prepare scenes for ObjectSuggestionPanel
-  const scenesForSuggestion = scenes.map((s, idx) => ({
-    sceneNumber: s.scene_number ?? idx + 1,
-    heading: typeof s.heading === 'string' ? s.heading : s.heading?.text,
-    action: s.action,
-    visualDescription: s.visualDescription || s.visual_description,
-    description: s.description
-  }))
+  const scenesForSuggestion = useMemo(
+    () =>
+      scenes.map((s, idx) => ({
+        sceneNumber: s.scene_number ?? idx + 1,
+        heading: typeof s.heading === 'string' ? s.heading : s.heading?.text,
+        action: s.action,
+        visualDescription: s.visualDescription || s.visual_description,
+        description: s.description,
+        beats: Array.isArray(s.beats) ? s.beats : undefined
+      })),
+    [scenes]
+  )
+
+  // How many beats handle each library object, recomputed from the script so
+  // the card never shows a count that a script edit has since invalidated.
+  const objectBeatCounts = useMemo(() => {
+    if (objectReferences.length === 0) return new Map<string, number>()
+    const slim = scenesForSuggestion.map((s, idx) => slimSceneForObjectUsage(s, idx))
+    if (slim.every((s) => s.beats.length === 0)) return new Map<string, number>()
+    return new Map(
+      countObjectBeatReferences(
+        slim,
+        objectReferences.map((o) => o.name)
+      ).map((usage) => [usage.key, usage.beatCount])
+    )
+  }, [scenesForSuggestion, objectReferences])
 
   // Calculate scenes with/without images for storyboard tab
   const scenesWithImages = useMemo(() => {
@@ -1459,7 +1501,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   const referenceTabs = [
     { key: 'cast' as const, label: 'Cast', icon: <Users className="w-3.5 h-3.5" />, count: characters.length },
     { key: 'locations' as const, label: 'Locations', icon: <MapPin className="w-3.5 h-3.5" />, count: locationReferences.length },
-    { key: 'object' as const, label: 'Props', icon: <Package className="w-3.5 h-3.5" />, count: objectReferences.length },
+    { key: 'object' as const, label: 'Objects', icon: <Package className="w-3.5 h-3.5" />, count: objectReferences.length },
   ]
 
   const linkedAssetIds = useMemo(() => {
@@ -1565,7 +1607,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs text-xs">
                     Generate missing reference images: {referencesExpressStats.cast} cast,{' '}
-                    {referencesExpressStats.locations} locations, {referencesExpressStats.props} props
+                    {referencesExpressStats.locations} locations, {referencesExpressStats.props} objects
                   </TooltipContent>
                 </Tooltip>
               )}
@@ -1744,6 +1786,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                   scenes={scenesForSuggestion}
                   existingObjects={objectReferences}
                   onObjectGenerated={onObjectGenerated}
+                  onObjectsAutoAdded={onObjectsAutoAdded}
                   compact
                 />
               )}
@@ -1761,13 +1804,14 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               </div>
               {objectReferences.length === 0 ? (
                 <div className="text-sm text-gray-500 border border-dashed border-gray-700/60 rounded-lg py-6 text-center">
-                  No props yet. Add props or set pieces for this scene.
+                  No objects yet. Add objects or set pieces for this scene.
                 </div>
               ) : (
                 objectReferences.map((reference) => (
                   <DraggableReferenceCard
                     key={reference.id}
                     reference={reference}
+                    beatCount={objectBeatCounts.get(normalizeObjectName(reference.name))}
                     onRemove={() => onRemoveReference('object', reference.id)}
                     onEditImage={handleEditReferenceImage}
                     referenceType="object"
@@ -1853,7 +1897,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               <li>• {referencesExpressStats.locations} location{referencesExpressStats.locations === 1 ? '' : 's'}</li>
             )}
             {referencesExpressStats.props > 0 && (
-              <li>• {referencesExpressStats.props} prop{referencesExpressStats.props === 1 ? '' : 's'}</li>
+              <li>• {referencesExpressStats.props} object{referencesExpressStats.props === 1 ? '' : 's'}</li>
             )}
           </ul>
           <DialogFooter>

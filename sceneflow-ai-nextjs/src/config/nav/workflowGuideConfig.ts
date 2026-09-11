@@ -75,7 +75,7 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
     collapsed: true,
     steps: [
       { id: 'create-character-images', label: 'Character references', actionEventName: 'production:generate-characters' },
-      { id: 'create-suggested-objects', label: 'Key props', actionEventName: 'production:create-objects' },
+      { id: 'create-suggested-objects', label: 'Key objects', actionEventName: 'production:create-objects' },
       { id: 'create-scene-references', label: 'Location references', actionEventName: 'production:generate-references' },
     ],
   },

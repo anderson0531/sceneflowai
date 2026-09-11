@@ -60,7 +60,7 @@ export function PropSelectionSection({
         className="flex items-center gap-2 w-full text-left"
       >
         <Box className="w-4 h-4 text-cyan-400" />
-        <h4 className="text-sm font-medium text-slate-200 flex-1">Props & Objects</h4>
+        <h4 className="text-sm font-medium text-slate-200 flex-1">Objects</h4>
         {selectedObjectIds.length > 0 && (
           <Badge variant="secondary" className="text-[10px] bg-cyan-500/20 text-cyan-300 border-0">
             {selectedObjectIds.length} selected
@@ -108,7 +108,7 @@ export function PropSelectionSection({
         <div className="flex items-start gap-2 p-2 rounded bg-amber-500/10 border border-amber-500/30">
           <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
           <p className="text-xs text-amber-300">
-            You've selected {selectedObjectIds.length} objects. For best results, limit to 5 or fewer key props.
+            You've selected {selectedObjectIds.length} objects. For best results, limit to 5 or fewer key objects.
           </p>
         </div>
       )}

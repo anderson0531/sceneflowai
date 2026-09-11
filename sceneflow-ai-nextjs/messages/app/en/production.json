@@ -74,7 +74,7 @@
     "assetBeats": "{count, plural, one {# beat} other {# beats}}",
     "assetMusic": "Music",
     "reference": "Reference",
-    "referenceTooltip": "Open Reference Library — cast, locations, and props",
+    "referenceTooltip": "Open Reference Library — cast, locations, and objects",
     "referenceNeedsDirection": "{count, plural, one {# scene needs updated direction before references} other {# scenes need updated direction before references}}",
     "publish": "Publish",
     "publishTooltip": "Open Publishing Library — streams, screening, promo, YouTube",

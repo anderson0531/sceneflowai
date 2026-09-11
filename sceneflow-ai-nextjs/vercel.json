@@ -61,6 +61,9 @@
     "src/app/api/character/generate-image/route.ts": {
       "maxDuration": 300
     },
+    "src/app/api/scene/generate-image/route.ts": {
+      "maxDuration": 300
+    },
     "src/app/api/character/enhance-reference/route.ts": {
       "maxDuration": 300
     },

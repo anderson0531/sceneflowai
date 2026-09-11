@@ -193,7 +193,7 @@ export const SceneDirectionRenderer = React.forwardRef<HTMLDivElement, RendererP
                     )}
                     {scene.sceneDirection.scene.keyProps && scene.sceneDirection.scene.keyProps.length > 0 && (
                       <div>
-                        <strong className="!text-gray-700">Key Props: </strong>
+                        <strong className="!text-gray-700">Key Objects: </strong>
                         <span className="!text-gray-900">{scene.sceneDirection.scene.keyProps.join(', ')}</span>
                       </div>
                     )}
