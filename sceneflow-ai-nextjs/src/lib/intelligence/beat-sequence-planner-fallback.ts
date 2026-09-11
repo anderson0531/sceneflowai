@@ -443,7 +443,26 @@ export function buildPlannerUserPrompt(request: BeatSequencePlanRequest): string
   return parts.join('\n')
 }
 
-function roleAllowsTypography(role: BeatRole): boolean {
+const BEAT_ROLES: readonly BeatRole[] = [
+  'opening',
+  'progression',
+  'climax',
+  'title_reveal',
+  'credit',
+  'dissolve',
+  'dialogue',
+  'narration_backdrop',
+]
+
+/** A `beatRole` read back off a stored beat is plain text; narrow it to the union. */
+export function asBeatRole(value: unknown): BeatRole | undefined {
+  return typeof value === 'string' && (BEAT_ROLES as readonly string[]).includes(value)
+    ? (value as BeatRole)
+    : undefined
+}
+
+/** Accepts a stored role, so an unrecognized or absent one forbids text. */
+export function roleAllowsTypography(role: string | undefined): boolean {
   return role === 'title_reveal' || role === 'credit'
 }
 
