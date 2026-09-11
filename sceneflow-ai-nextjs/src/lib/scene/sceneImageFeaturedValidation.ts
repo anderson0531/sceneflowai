@@ -1,6 +1,7 @@
 import {
   buildIdentityPromptToken,
 } from '@/lib/imagen/promptOptimizer'
+import { isHardIdentityMismatch } from '@/lib/imagen/likenessMismatch'
 import type { SceneImageIntelligenceResult } from '@/lib/intelligence/scene-image-intelligence'
 
 export interface FeaturedCharacterForValidation {
@@ -111,8 +112,19 @@ export function resolveFeaturedCharactersForValidation(params: {
   ]
 }
 
+/**
+ * Worth paying for a second generation?
+ *
+ * Only a hard identity mismatch is. The previous rule — any miss under 80%
+ * confidence — also caught the right person rendered at a distance, or scored
+ * by a validator whose reply did not parse, and a regeneration costs the user
+ * both time and credits either way.
+ */
 export function isGenuineLikenessFailure(
-  validation: { matches: boolean; confidence: number } | null | undefined
+  validation:
+    | { matches?: boolean | null; confidence?: number | null; mismatchKind?: unknown }
+    | null
+    | undefined
 ): boolean {
-  return !!validation && !validation.matches && validation.confidence < 80
+  return isHardIdentityMismatch(validation)
 }
