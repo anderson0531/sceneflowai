@@ -445,6 +445,40 @@ export function shouldUseExplicitBeatReferences(
   )
 }
 
+/**
+ * Cast this beat names in its own text.
+ *
+ * Deliberately stricter than `resolveBeatFrameGenerationContext`, which falls
+ * back to the scene cast — and, for a one-character project, to that lone
+ * character — when a beat names nobody. That fallback is right for an ordinary
+ * scene and wrong for a title sequence, where it would put a face on a card
+ * that should only carry typography.
+ */
+export function detectCharactersNamedInBeat(args: {
+  beat: SceneBeat
+  promptText?: string
+  projectCharacters: ResolveBeatFrameGenerationContextArgs['projectCharacters']
+  filmTitle?: string
+  objectReferences?: VisualReference[]
+  locationReferences?: LocationReference[]
+}): Array<{ id?: string; name?: string }> {
+  const { beat, promptText, projectCharacters } = args
+  if (projectCharacters.length === 0) return []
+  if (isNarratorBeat(beat) || beat.kind === 'narration') return []
+
+  const text = [beat.actionDescription, beat.line, beat.character, promptText]
+    .map((part) => (typeof part === 'string' ? part.trim() : ''))
+    .filter(Boolean)
+    .join(' ')
+  if (!text) return []
+
+  return detectCharactersInText(
+    text,
+    projectCharacters,
+    characterDetectionOptions(args.filmTitle, args.objectReferences, args.locationReferences)
+  )
+}
+
 /** Add characters named in prompt text to an existing beat selection. */
 export function unionBeatSelectionWithPromptText(
   selection: BeatReferenceSelection,

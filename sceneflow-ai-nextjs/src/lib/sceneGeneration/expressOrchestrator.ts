@@ -52,6 +52,7 @@ import { generateSceneImage } from './generateImage'
 import { usesFlashAnimaticTier } from './animaticImageModel'
 import { shouldScheduleStandaloneNarration } from '../script/narration'
 import {
+  detectCharactersNamedInBeat,
   mapBeatReferenceSelectionForApi,
   resolveBeatFrameGenerationContext,
   shouldUseExplicitBeatReferences,
@@ -256,6 +257,16 @@ export function resolveExpressBeatReferences(args: {
   return finish(toBeatReferenceSelection({ ...autoCtx, source: 'auto' }), false)
 }
 
+export interface BeatCharacterPolicy {
+  excludeCharacters: boolean
+  /**
+   * Cast this beat is allowed to reference, as id/name tokens. Non-null only
+   * inside a no-talent scene, where the beat earns references by naming people
+   * and must not inherit the rest of the scene cast.
+   */
+  restrictToCharacterIds: string[] | null
+}
+
 /**
  * Narrow a scene-level no-talent verdict down to one beat.
  *
@@ -264,24 +275,49 @@ export function resolveExpressBeatReferences(args: {
  * including beats whose own text names a character. Those frames reached Vertex
  * with zero identity references and came back with a stranger's face.
  *
- * A beat that resolves to no cast is a genuine card or credit roll and stays
- * reference-free.
+ * The beat has to name someone itself. The ordinary auto-resolver is too loose
+ * here: when a beat names nobody it falls back to the scene cast, and in a
+ * one-character project to that character, which would put a face on a title
+ * card. A beat that names nobody stays reference-free.
  */
-export function resolveBeatExcludesCharacters(args: {
+export function resolveBeatCharacterPolicy(args: {
   sceneExcludesCharacters: boolean
-  verifiedBeatRefs: ExpressBeatRefsResolved | null
+  beat: SceneBeat | undefined
+  promptText?: string
+  project: any
   beatIdx: number
   sceneNumber: number
-}): boolean {
-  if (!args.sceneExcludesCharacters) return false
+}): BeatCharacterPolicy {
+  if (!args.sceneExcludesCharacters) {
+    return { excludeCharacters: false, restrictToCharacterIds: null }
+  }
+  if (!args.beat) return { excludeCharacters: true, restrictToCharacterIds: null }
 
-  const resolvedCast = args.verifiedBeatRefs?.api.selectedCharacters ?? []
-  if (resolvedCast.length === 0) return true
+  const visionPhase = args.project?.metadata?.visionPhase || {}
+  const references = visionPhase.references || {}
+  const named = detectCharactersNamedInBeat({
+    beat: args.beat,
+    promptText: args.promptText,
+    projectCharacters: visionPhase.characters || [],
+    filmTitle: args.project?.metadata?.title || args.project?.title,
+    objectReferences: references.objectReferences || [],
+    locationReferences: references.locationReferences || [],
+  })
+
+  if (named.length === 0) {
+    return { excludeCharacters: true, restrictToCharacterIds: null }
+  }
+
+  const restrictToCharacterIds = named
+    .flatMap((char) => [char.id, char.name])
+    .filter((token): token is string => !!token)
 
   console.log(
-    `[expressOrchestrator] Beat ${args.beatIdx + 1} scene ${args.sceneNumber} — no-talent scene, but this beat names ${resolvedCast.join(', ')}; attaching character references`
+    `[expressOrchestrator] Beat ${args.beatIdx + 1} scene ${args.sceneNumber} — no-talent scene, but this beat names ${named
+      .map((c) => c.name || c.id)
+      .join(', ')}; attaching character references`
   )
-  return false
+  return { excludeCharacters: false, restrictToCharacterIds }
 }
 
 /**
@@ -295,16 +331,25 @@ export function resolveBeatExcludesCharacters(args: {
  */
 export function buildExpressBeatRefPayload(
   verifiedBeatRefs: ReturnType<typeof mapBeatReferenceSelectionForApi> | null,
-  excludeCharacters: boolean
+  policy: BeatCharacterPolicy
 ): Record<string, unknown> {
+  const { excludeCharacters, restrictToCharacterIds } = policy
   const exclusion: Record<string, unknown> = excludeCharacters
     ? { excludeCharacters: true, characterSelectionExplicit: true }
     : {}
 
   if (!verifiedBeatRefs) return exclusion
 
-  const hasCharacters =
-    !excludeCharacters && verifiedBeatRefs.selectedCharacters.length > 0
+  const allowed = restrictToCharacterIds
+    ? new Set(restrictToCharacterIds.map((token) => token.toLowerCase()))
+    : null
+  const selectedCharacters = excludeCharacters
+    ? []
+    : allowed
+      ? verifiedBeatRefs.selectedCharacters.filter((token) =>
+          allowed.has(token.toLowerCase())
+        )
+      : verifiedBeatRefs.selectedCharacters
 
   const payload: Record<string, unknown> = {
     ...exclusion,
@@ -313,11 +358,18 @@ export function buildExpressBeatRefPayload(
     skipObjectAutoDetection: true,
   }
 
-  if (hasCharacters) {
+  if (selectedCharacters.length > 0) {
+    const selectedKeys = new Set(selectedCharacters.map((token) => token.toLowerCase()))
+    const characterWardrobes = allowed
+      ? verifiedBeatRefs.characterWardrobes.filter((cw) =>
+          selectedKeys.has(cw.characterId.toLowerCase())
+        )
+      : verifiedBeatRefs.characterWardrobes
+
     payload.characterSelectionExplicit = true
-    payload.selectedCharacters = verifiedBeatRefs.selectedCharacters
-    if (verifiedBeatRefs.characterWardrobes.length > 0) {
-      payload.characterWardrobes = verifiedBeatRefs.characterWardrobes
+    payload.selectedCharacters = selectedCharacters
+    if (characterWardrobes.length > 0) {
+      payload.characterWardrobes = characterWardrobes
     }
   }
 
@@ -834,13 +886,15 @@ async function generateSingleBeatImage(
   if (beat && verifiedBeatRefs?.selection && !verifiedBeatRefs.fromSavedSelection) {
     persistBeatReferenceSelection(scene, beatIdx, verifiedBeatRefs.selection)
   }
-  const excludeCharacters = resolveBeatExcludesCharacters({
+  const characterPolicy = resolveBeatCharacterPolicy({
     sceneExcludesCharacters,
-    verifiedBeatRefs,
+    beat,
+    promptText: beatPlanActionText(beatPlan),
+    project,
     beatIdx,
     sceneNumber,
   })
-  const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs?.api ?? null, excludeCharacters)
+  const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs?.api ?? null, characterPolicy)
 
   // Emitted after the lane grants a slot, so the UI shows what is generating
   // rather than every queued beat at once.
@@ -927,13 +981,15 @@ async function generateSingleBeatEndImage(
   if (verifiedBeatRefs?.selection && !verifiedBeatRefs.fromSavedSelection) {
     persistBeatReferenceSelection(scene, beatIdx, verifiedBeatRefs.selection)
   }
-  const excludeCharacters = resolveBeatExcludesCharacters({
+  const characterPolicy = resolveBeatCharacterPolicy({
     sceneExcludesCharacters,
-    verifiedBeatRefs,
+    beat,
+    promptText: endPrompt,
+    project,
     beatIdx,
     sceneNumber,
   })
-  const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs?.api ?? null, excludeCharacters)
+  const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs?.api ?? null, characterPolicy)
 
   const result = await trafficCop.runInLane('image', () => {
     safeEmit(emit, {
