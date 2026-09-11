@@ -26,6 +26,7 @@ vi.mock('@/i18n/server/requestLocale', () => ({
 
 import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { generateObjectReferenceImage } from '@/lib/vision/referenceExpress/generateReferenceImage'
+import { CreditService } from '@/services/CreditService'
 import {
   OBJECT_BATCH_CONCURRENCY,
   runObjectBatch,
@@ -57,6 +58,22 @@ describe('object reference images generate on the flash tier', () => {
     await generateObjectReferenceImage(input)
 
     expect(mockGenerateImage.mock.calls[0]![0]!.imageSize).toBe('2K')
+  })
+
+  it('charges ai_usage rather than the IMAGE_GENERATION cost key as a ledger reason', async () => {
+    await generateObjectReferenceImage(input)
+
+    expect(CreditService.charge).toHaveBeenCalledWith(
+      'user-1',
+      12,
+      'ai_usage',
+      null,
+      expect.objectContaining({
+        provider: 'gemini',
+        category: 'images',
+        operation: "Object reference: Gideon's pocket watch",
+      })
+    )
   })
 
   it('still runs on eco when the user attached a photo of the real object', async () => {

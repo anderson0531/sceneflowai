@@ -25,8 +25,11 @@ const RATE_LIMIT_COOLDOWN_MS = 60_000
 const MAX_RETRIES = 3
 const INITIAL_RETRY_DELAY_MS = 2000
 const MAX_RETRY_DELAY_MS = 10_000
-/** Identity-ref 429 ladder — longer than generic backoff to avoid stampeding Startup quota. */
-const IDENTITY_REF_RETRY_DELAYS_MS = [5_000, 15_000, 30_000] as const
+/**
+ * 429 ladder for Flash and identity-ref Pro. Generic 2s/4s/8s burned ~45s of
+ * short retries on flash then failed (production 2026-09-11 draft beats).
+ */
+const RATE_LIMIT_RETRY_DELAYS_MS = [5_000, 15_000, 30_000] as const
 const REQUEST_TIMEOUT_MS = 90_000
 /** Below this there is no point issuing the request at all. */
 const MIN_REQUEST_TIMEOUT_MS = 10_000
@@ -120,14 +123,14 @@ function parseRetryAfterMs(response: Response): number | null {
   return null
 }
 
-async function sleepIdentityRefBackoff(
+async function sleepRateLimitBackoff(
   attempt: number,
   response?: Response
 ): Promise<void> {
   const retryAfter = response ? parseRetryAfterMs(response) : null
   const scheduled =
-    IDENTITY_REF_RETRY_DELAYS_MS[
-      Math.min(attempt, IDENTITY_REF_RETRY_DELAYS_MS.length - 1)
+    RATE_LIMIT_RETRY_DELAYS_MS[
+      Math.min(attempt, RATE_LIMIT_RETRY_DELAYS_MS.length - 1)
     ] ?? 30_000
   const delay = retryAfter != null ? Math.max(retryAfter, scheduled) : scheduled
   const jitter = Math.random() * 750
@@ -294,6 +297,12 @@ export async function generateVertexGeminiImage(
     regionalLocation: location,
   })
 
+  if (retryCount === 0) {
+    console.log(
+      `[Vertex Gemini Image] Generating (tier=${tier}, model=${model}, refs=${options.referenceImages?.length ?? 0}, aspect=${options.aspectRatio ?? 'unset'})`
+    )
+  }
+
   if (model.includes('gemini-3') && effectiveLocation === 'global') {
     console.log(
       `[Vertex Gemini Image] Using global endpoint for ${model} (Gemini 3 image models are not regional)`
@@ -380,7 +389,7 @@ export async function generateVertexGeminiImage(
           console.warn(
             `[Vertex Gemini Image] Rate limit on ${model} with reference images (attempt ${retryCount + 1}/${MAX_RETRIES}) — backing off without eco fallback`
           )
-          await sleepIdentityRefBackoff(retryCount, response)
+          await sleepRateLimitBackoff(retryCount, response)
           return generateVertexGeminiImage(options, retryCount + 1)
         }
         console.warn(
@@ -399,7 +408,11 @@ export async function generateVertexGeminiImage(
       console.warn(
         `[Vertex Gemini Image] Rate limit on ${model} (attempt ${retryCount + 1}/${MAX_RETRIES}). Backing off...`
       )
-      await sleepWithBackoff(retryCount)
+      if (model.includes('flash-image')) {
+        await sleepRateLimitBackoff(retryCount, response)
+      } else {
+        await sleepWithBackoff(retryCount)
+      }
       return generateVertexGeminiImage(options, retryCount + 1)
     }
     // Pro preview models require allowlist access; fall back to GA flash-image model
