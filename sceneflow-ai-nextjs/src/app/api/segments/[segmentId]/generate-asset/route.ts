@@ -21,6 +21,10 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { isBeatFirstPipelineEnabled, isStoryboardApproved, getSceneBeats } from '@/lib/script/beatMigration'
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import {
+  parsePersistedMusicCues,
+  resolveBeatMusicCue,
+} from '@/lib/script/sceneMusicCues'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
 import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
 import Project from '@/models/Project'
@@ -276,7 +280,8 @@ export async function POST(
 
       if (beatId && sceneRecord && (genType === 'T2V' || genType === 'I2V')) {
         const beats = getSceneBeats(sceneRecord as Record<string, unknown>)
-        const beat = beats.find((b) => b.beatId === beatId)
+        const beatIndex = beats.findIndex((b) => b.beatId === beatId)
+        const beat = beatIndex >= 0 ? beats[beatIndex] : undefined
         if (beat) {
           const artStyleId = resolveProjectArtStyle(project?.metadata)
           const sceneDirection =
@@ -284,10 +289,19 @@ export async function POST(
               .sceneDirection ??
             (sceneRecord as { detailedDirection?: unknown }).detailedDirection ??
             null
+          // Music the beat plays under shapes how it should be shot, so the
+          // clip's pacing matches the score that will sit beneath it.
+          const musicCue = resolveBeatMusicCue(
+            parsePersistedMusicCues(
+              (sceneRecord as Record<string, unknown>).sceneMusicCues,
+              beats
+            ),
+            beatIndex
+          )
           const compiled = compileBeatVideoPromptFromDirection(
             beat,
             sceneDirection as DetailedSceneDirection | null,
-            { artStyleId }
+            { artStyleId, ...(musicCue ? { musicCue } : {}) }
           )
           prompt = compiled.prompt
           negativePrompt = negativePrompt || compiled.negativePrompt
