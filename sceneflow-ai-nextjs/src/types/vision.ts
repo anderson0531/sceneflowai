@@ -90,6 +90,13 @@ export interface Scene {
   /** @deprecated Narration audio is now part of dialogueAudio. */
   narrationAudio?: any
   musicAudio?: string
+  /**
+   * How this scene hands over to the next one in playback and in the animatic
+   * export. `FADE` goes through black, `DISSOLVE` crossfades into the opening
+   * frame, and `CUT` / `MATCH_CUT` / `CONTINUE` butt the two scenes together.
+   * Unset fades through black, which is what every scene boundary has done.
+   */
+  transitionToNext?: import('@/lib/script/segmentTypes').BeatDirectionTransition
   duration?: number
   scoreAnalysis?: SceneAnalysis
   sceneDirection?: any

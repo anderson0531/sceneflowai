@@ -10,7 +10,11 @@ import {
   findDialogueAudioForLine,
 } from '@/components/vision/scene-production/audioTrackBuilder'
 import { getSceneBeats, getStoryboardTimelineBeats, isBeatExcluded } from '@/lib/script/beatMigration'
-import type { SceneBeat, BeatOverlayType } from '@/lib/script/segmentTypes'
+import type {
+  BeatDirectionTransition,
+  BeatOverlayType,
+  SceneBeat,
+} from '@/lib/script/segmentTypes'
 import { resolveEffectiveStoryboardTier } from '@/lib/storyboard/storyboardQuality'
 import { NARRATOR_CHARACTER, NARRATOR_CHARACTER_ID } from '@/lib/script/segmentTypes'
 import { generateAliases, toCanonicalName } from '@/lib/character/canonical'
@@ -20,13 +24,19 @@ import { buildStoryboardMusicClips, resolveSceneMusicFileDuration } from '@/lib/
 import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
 import { getBeatOverlayFields } from '@/lib/storyboard/beatCaption'
 import type { BeatKenBurnsSettings } from '@/lib/storyboard/kenBurnsFrame'
+import {
+  SCENE_FADE_TO_BLACK_SEC,
+  resolveBeatTransition,
+  resolveSceneTransition,
+  transitionTailSec,
+} from '@/lib/storyboard/transitions'
+import type { PlayableTransition, ResolvedTransition } from '@/lib/storyboard/transitions'
 import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 
 const NARRATION_CLIP_BUFFER_SEC = 0.5
 const DIALOGUE_CLIP_BUFFER_SEC = 0.3
 const DEFAULT_CLIP_DURATION_SEC = 3
-/** Fade-to-black duration between scenes in playback and animatic export. */
-export const SCENE_FADE_TO_BLACK_SEC = 1
+export { SCENE_FADE_TO_BLACK_SEC }
 /** Silent establishing/action beat hold when no durationSeconds is stored. */
 const DEFAULT_ACTION_BEAT_DURATION_SEC = 4
 
@@ -107,6 +117,20 @@ export interface StoryboardVisualFrame {
   isSceneStart?: boolean
   /** Per-beat Ken Burns settings authored on the Frames tab. */
   kenBurns?: BeatKenBurnsSettings
+  /**
+   * Resolved transition out of this frame into the next, from the beat's own
+   * `beatDirection.transition` — or, on the last beat, the scene's
+   * `transitionToNext`.
+   */
+  transitionOut?: PlayableTransition
+  transitionOutSec?: number
+  /**
+   * Resolved transition into this frame from the previous one. The same join
+   * as the previous frame's `transitionOut`, repeated here because the player
+   * only ever holds the frame it is currently showing.
+   */
+  transitionIn?: PlayableTransition
+  transitionInSec?: number
 }
 
 function createStoryboardFrameId(): string {
@@ -1272,6 +1296,13 @@ export function buildStoryboardVoiceClips(
 export interface BeatFirstPlaybackOptions {
   /** Pre-Vis animatic: start frame only, 10s hold when no voice audio. */
   preVisAnimatic?: boolean
+  /**
+   * The previous scene's `transitionToNext`, which owns the join this scene
+   * opens on. A scene builds its own timeline and cannot see the one before
+   * it, so whoever is playing a run of scenes has to say. Omitted means the
+   * historical fade up from black.
+   */
+  sceneTransitionIn?: BeatDirectionTransition
 }
 
 function resolveActionBeatDuration(
@@ -1543,27 +1574,53 @@ export function buildBeatFirstPlaybackTimeline(
     currentStartTime += duration + DIALOGUE_CLIP_BUFFER_SEC
   }
 
-  const visualFrames: StoryboardVisualFrame[] = windows.map((win, index) => ({
-    clipId: win.clipId,
-    beatId: win.beatId,
-    frameType: win.kind === 'action' ? 'establishing' : 'dialogue',
-    dialogueIndex: win.dialogueIndex,
-    imageUrl: win.imageUrl,
-    endImageUrl: win.endImageUrl,
-    startTime: win.startTime,
-    duration:
-      index < windows.length - 1
-        ? windows[index + 1].startTime - win.startTime
-        : win.duration + (win.isSceneEnd ? SCENE_FADE_TO_BLACK_SEC : 0),
-    label: win.label,
-    character: win.character,
-    line: win.line,
-    overlayText: win.overlayText,
-    overlayType: win.overlayType,
-    isSceneEnd: win.isSceneEnd,
-    isSceneStart: index === 0,
-    kenBurns: win.kenBurns,
-  }))
+  const transitionByBeatId = new Map(
+    beats.map((beat) => [beat.beatId, beat.beatDirection?.transition])
+  )
+  const sceneTransitionOut = resolveSceneTransition(
+    scene.transitionToNext as BeatDirectionTransition | undefined
+  )
+  const sceneTransitionIn = resolveSceneTransition(options?.sceneTransitionIn)
+
+  // A beat-to-beat transition plays inside the two frames it joins, so it never
+  // moves a start time. Only the scene boundary can lengthen the scene, and only
+  // when it goes through black and has to hold it.
+  const baseDurations = windows.map((win, index) =>
+    index < windows.length - 1 ? windows[index + 1].startTime - win.startTime : win.duration
+  )
+  const transitionsOut: ResolvedTransition[] = windows.map((win, index) =>
+    index === windows.length - 1 && win.isSceneEnd
+      ? sceneTransitionOut
+      : resolveBeatTransition(transitionByBeatId.get(win.beatId), baseDurations[index])
+  )
+
+  const visualFrames: StoryboardVisualFrame[] = windows.map((win, index) => {
+    const isLast = index === windows.length - 1
+    const transitionOut = transitionsOut[index]
+    const transitionIn = index > 0 ? transitionsOut[index - 1] : sceneTransitionIn
+    return {
+      clipId: win.clipId,
+      beatId: win.beatId,
+      frameType: win.kind === 'action' ? 'establishing' : 'dialogue',
+      dialogueIndex: win.dialogueIndex,
+      imageUrl: win.imageUrl,
+      endImageUrl: win.endImageUrl,
+      startTime: win.startTime,
+      duration: baseDurations[index] + (isLast ? transitionTailSec(transitionOut) : 0),
+      label: win.label,
+      character: win.character,
+      line: win.line,
+      overlayText: win.overlayText,
+      overlayType: win.overlayType,
+      isSceneEnd: win.isSceneEnd,
+      isSceneStart: index === 0,
+      kenBurns: win.kenBurns,
+      transitionOut: transitionOut.effect,
+      transitionOutSec: transitionOut.durationSec,
+      transitionIn: transitionIn.effect,
+      transitionInSec: transitionIn.durationSec,
+    }
+  })
 
   return {
     voiceClips: extendVoiceClipsToVisualFrameDuration(voiceClips, visualFrames),
