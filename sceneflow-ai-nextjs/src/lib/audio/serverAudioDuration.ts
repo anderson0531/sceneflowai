@@ -9,6 +9,7 @@ import { spawn } from 'child_process'
 import { writeFileSync, unlinkSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
+import { getContainerAudioDurationSeconds } from '@/lib/audio/audioContainerDuration'
 
 // Languages that don't use spaces between words (CJK + Southeast Asian)
 // Word count estimation is BROKEN for these languages
@@ -31,22 +32,27 @@ export async function getAudioDurationFromBuffer(
   language: string = 'en',
   voiceId?: string
 ): Promise<number> {
+  const fromContainer = getContainerAudioDurationSeconds(buffer)
+  if (fromContainer != null && fromContainer >= 0.5) {
+    console.log('[Audio Duration] Container duration:', fromContainer.toFixed(2), 'seconds')
+    return fromContainer
+  }
+
   const tempPath = join(tmpdir(), `audio-${Date.now()}-${Math.random().toString(36).slice(2)}.mp3`)
   
   try {
-    // Write buffer to temp file
-    writeFileSync(tempPath, buffer)
-    
-    // Try to get duration using ffprobe
-    // Skip ffprobe on Vercel to avoid large binary issues and tracing warnings
-    if (!process.env.VERCEL) {
-      const duration = await getAudioDurationWithFFprobe(tempPath)
-      console.log('[Audio Duration] FFprobe duration:', duration.toFixed(2), 'seconds')
-      return duration
+    if (process.env.VERCEL) {
+      throw new Error('ffprobe unavailable on Vercel')
     }
-    throw new Error('Skipping ffprobe on Vercel')
+    writeFileSync(tempPath, buffer)
+    const duration = await getAudioDurationWithFFprobe(tempPath)
+    console.log('[Audio Duration] FFprobe duration:', duration.toFixed(2), 'seconds')
+    return duration
   } catch (error) {
-    console.warn('[Audio Duration] FFprobe failed, using buffer-size estimation:', error)
+    console.log(
+      '[Audio Duration] Falling back to bitrate estimate:',
+      error instanceof Error ? error.message : error
+    )
     
     // PRIMARY FALLBACK: Estimate from buffer size (works for ALL languages!)
     // This is the most reliable method when ffprobe is unavailable (e.g., Vercel serverless).
