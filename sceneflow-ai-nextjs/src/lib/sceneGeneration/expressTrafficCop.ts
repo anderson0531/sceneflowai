@@ -39,8 +39,15 @@ const EXPRESS_LANES: ExpressLane[] = ['text', 'image', 'audio']
 /** Default image in-flight cap — sequential identity-ref jobs. */
 export const DEFAULT_EXPRESS_IMAGE_CONCURRENCY = 1
 
-/** Draft animatic beats run on flash, whose quota tolerates two in flight. */
-export const DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY = 2
+/**
+ * Draft beats run on flash, whose quota tolerates three in flight.
+ *
+ * Iterating on an animatic means regenerating frames over and over, so this is
+ * the number that decides how long that loop takes. Two held without 429s, and
+ * the lane halves itself on the first rate limit, so the cost of being one too
+ * high is a slower run rather than failed frames.
+ */
+export const DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY = 3
 
 /** Default TTS in-flight cap for Express Audio / Storyboard Express audio lane. */
 export const DEFAULT_EXPRESS_AUDIO_CONCURRENCY = 8
