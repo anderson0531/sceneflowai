@@ -443,6 +443,69 @@ describe('cue-scored scenes', () => {
     expect(clips.every((clip) => clip.fadeAnchorTime === 0)).toBe(true)
   })
 
+  it('plays a scored cue whose beats were never flagged', () => {
+    // Placing a cue over a beat is the decision to score it. `musicEnabled`
+    // only ever gets stamped when cue coverage changes, so a scene scored
+    // before that ran would otherwise sit silent on a finished track.
+    const scene = buildCueScene({
+      beats: ['bt_a1', 'bt_a2', 'bt_a3', 'bt_a4'].map((beatId) => ({
+        beatId,
+        kind: 'action',
+        actionDescription: beatId,
+        durationSeconds: 4,
+      })),
+    })
+
+    const clips = buildStoryboardMusicClips(scene, cueFrames, 16)
+
+    expect(clips.map((clip) => clip.url)).toEqual([DREAD_URL, VIOLENCE_URL])
+  })
+
+  it('still lets an explicit false switch a beat out of its cue', () => {
+    const scene = buildCueScene({
+      beats: [
+        { beatId: 'bt_a1', kind: 'action', durationSeconds: 4 },
+        { beatId: 'bt_a2', kind: 'action', durationSeconds: 4, musicEnabled: false },
+        { beatId: 'bt_a3', kind: 'action', durationSeconds: 4 },
+        { beatId: 'bt_a4', kind: 'action', durationSeconds: 4 },
+      ],
+    })
+
+    const clips = buildStoryboardMusicClips(scene, cueFrames, 16)
+
+    expect(clips).toHaveLength(2)
+    expect(clips[0].url).toBe(DREAD_URL)
+    expect(clips[0].duration).toBe(4)
+    expect(clips[1].url).toBe(VIOLENCE_URL)
+  })
+
+  it('leaves the scene track an opt-in outside every cue', () => {
+    const scene = buildCueScene({
+      musicAudio: MUSIC_URL,
+      cues: [
+        {
+          cueId: 'cue-0-0',
+          beatStart: 0,
+          beatEnd: 0,
+          description: 'Cinematic orchestral score, ominous mood, slow tempo',
+          intent: 'rising dread',
+          url: DREAD_URL,
+          fileDuration: 30,
+        },
+      ],
+      beats: ['bt_a1', 'bt_a2', 'bt_a3', 'bt_a4'].map((beatId) => ({
+        beatId,
+        kind: 'action',
+        durationSeconds: 4,
+      })),
+    })
+
+    const clips = buildStoryboardMusicClips(scene, cueFrames, 16)
+
+    expect(clips).toHaveLength(1)
+    expect(clips[0].url).toBe(DREAD_URL)
+  })
+
   it('skips a cue that has not been generated yet', () => {
     const clips = buildStoryboardMusicClips(
       buildCueScene({

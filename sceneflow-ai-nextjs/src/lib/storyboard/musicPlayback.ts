@@ -38,6 +38,19 @@ export function isBeatMusicEnabled(beat: SceneBeat | undefined): boolean {
   return beat?.musicEnabled === true
 }
 
+/**
+ * Whether a beat a scored cue covers plays that cue.
+ *
+ * `musicEnabled` is tri-state in practice: unset means nobody has decided,
+ * false means the user switched this beat off. Placing a cue over a beat is
+ * itself the decision to score it, so only an explicit false opts out —
+ * otherwise a scene whose cues were scored before `applySceneMusicCues` ever
+ * stamped the flags plays silent with a finished track sitting on it.
+ */
+export function isCuedBeatMusicEnabled(beat: SceneBeat | undefined): boolean {
+  return beat?.musicEnabled !== false
+}
+
 /** Wrap a scene timeline offset into the music file duration. */
 export function resolveMusicTrimStart(
   sceneTimelineOffset: number,
@@ -137,16 +150,13 @@ export function buildBeatAlignedMusicClips(
     (frame) => frame.beatId && frame.duration > 0 && beatById.has(frame.beatId)
   )
 
-  const enabledFrames = eligibleFrames.filter((frame) =>
-    isBeatMusicEnabled(beatById.get(frame.beatId as string))
-  )
-
   const claimed = new Set<StoryboardVisualFrame>()
 
   for (const cue of cues) {
-    const cueFrames = enabledFrames.filter((frame) => {
+    const cueFrames = eligibleFrames.filter((frame) => {
       const index = indexByBeatId.get(frame.beatId as string)
-      return index !== undefined && index >= cue.beatStart && index <= cue.beatEnd
+      if (index === undefined || index < cue.beatStart || index > cue.beatEnd) return false
+      return isCuedBeatMusicEnabled(beatById.get(frame.beatId as string))
     })
     if (cueFrames.length === 0) continue
 
@@ -177,7 +187,11 @@ export function buildBeatAlignedMusicClips(
     for (const frame of cueFrames) claimed.add(frame)
   }
 
-  const looseFrames = enabledFrames.filter((frame) => !claimed.has(frame))
+  // Outside every cue the flag stays an explicit opt-in: the scene's own track
+  // only plays where the user asked for it.
+  const looseFrames = eligibleFrames.filter(
+    (frame) => !claimed.has(frame) && isBeatMusicEnabled(beatById.get(frame.beatId as string))
+  )
   if (looseFrames.length > 0 && musicUrl.trim()) {
     const fadeAnchorTime = Math.min(...looseFrames.map((frame) => frame.startTime))
     const coversWholeScene =
