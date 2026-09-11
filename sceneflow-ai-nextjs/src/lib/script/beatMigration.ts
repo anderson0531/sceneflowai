@@ -15,14 +15,23 @@ import {
   type BeatReferenceSelection,
   type SceneBeat,
   type SceneMovement,
+  type SceneMusicCue,
   type StoryboardStatus,
 } from '@/lib/script/segmentTypes'
 import { mintLineId } from '@/lib/script/segmentScript'
 import { applyDerivedSfxToScene } from '@/lib/script/deriveSfxFromSceneContent'
 import { dedupeRedundantActionBeats } from '@/lib/script/actionBeatDedupe'
 import { backfillBeatDirectionsOnScene } from '@/lib/script/beatDirectionDerive'
-import { ensureSceneMovements } from '@/lib/script/sceneMovements'
-import { ensureSceneMusicCues } from '@/lib/script/sceneMusicCues'
+import {
+  applySceneMovements,
+  ensureSceneMovements,
+  getSceneMovements,
+  parsePersistedSceneMovements,
+} from '@/lib/script/sceneMovements'
+import {
+  ensureSceneMusicCues,
+  parsePersistedMusicCues,
+} from '@/lib/script/sceneMusicCues'
 
 const BEAT_MIGRATION_FLAG = 'beatsMigratedAt'
 const START_FRAME_ONLY_MIGRATION_FLAG = 'startFrameOnlyMigrationAt'
@@ -926,6 +935,117 @@ export function applyBeatsToScene(
     ...(legacy.narration !== undefined ? { narration: legacy.narration } : {}),
     ...(legacy.action !== undefined ? { action: legacy.action } : {}),
   }
+}
+
+/** Move `list[from]` to index `to`, leaving the rest in order. */
+function moveItem<T>(list: T[], from: number, to: number): T[] {
+  const next = [...list]
+  const [item] = next.splice(from, 1)
+  next.splice(to, 0, item)
+  return next
+}
+
+function isBeatCoveredByCue(cues: SceneMusicCue[], beatIndex: number): boolean {
+  return cues.some((cue) => beatIndex >= cue.beatStart && beatIndex <= cue.beatEnd)
+}
+
+/**
+ * Re-derive `musicEnabled` for beats the move carried across a cue boundary.
+ *
+ * Cue ranges are positional — a cue scores this stretch of the scene, not
+ * these particular beats — so a beat dragged into a scored stretch should
+ * start playing it and one dragged out should stop. Beats that land on the
+ * same side of every boundary keep whatever flag they had, because there the
+ * flag is the user's per-beat override from the script panel and the move says
+ * nothing about it.
+ */
+function reconcileMusicEnabledAfterMove(
+  beats: SceneBeat[],
+  cues: SceneMusicCue[],
+  indexBefore: Map<string, number>
+): SceneBeat[] {
+  if (cues.length === 0) return beats
+
+  return beats.map((beat, index) => {
+    const before = indexBefore.get(beat.beatId)
+    if (before === undefined) return beat
+    const covered = isBeatCoveredByCue(cues, index)
+    if (isBeatCoveredByCue(cues, before) === covered) return beat
+    return beat.musicEnabled === covered ? beat : { ...beat, musicEnabled: covered }
+  })
+}
+
+/**
+ * Beats whose `CONTINUE` transition no longer describes the beat above them.
+ *
+ * `CONTINUE` and the end frame it is shot against are a statement about the
+ * *previous* beat, so a move silently re-points them at a new neighbour. The
+ * frames themselves are still valid images and are left alone; this names the
+ * joins so the UI can ask the user to re-shoot them rather than quietly
+ * regenerating work they paid for.
+ */
+export function findBrokenContinuityBeats(
+  beatsBefore: SceneBeat[],
+  beatsAfter: SceneBeat[]
+): string[] {
+  const previousBefore = new Map<string, string | undefined>()
+  beatsBefore.forEach((beat, index) => {
+    previousBefore.set(beat.beatId, beatsBefore[index - 1]?.beatId)
+  })
+
+  const broken: string[] = []
+  beatsAfter.forEach((beat, index) => {
+    if (beat.beatDirection?.transition !== 'CONTINUE') return
+    if (!previousBefore.has(beat.beatId)) return
+    if (previousBefore.get(beat.beatId) === beatsAfter[index - 1]?.beatId) return
+    broken.push(beat.beatId)
+  })
+  return broken
+}
+
+/**
+ * Move one beat to a new position, keeping every positional derivative in step.
+ *
+ * A `beatId` encodes no position, so the beat's own frames, audio, reference
+ * selection and direction travel with it for free. What has to be reconciled
+ * is everything keyed by *where* a beat sits: `sequenceIndex` and the legacy
+ * `dialogue[]` / `action` mirrors (rewritten by `applyBeatsToScene`), the
+ * movement each beat belongs to, and which beats a music cue now covers.
+ *
+ * Movement and cue ranges deliberately stay where they are and the beats move
+ * through them — both describe a stretch of the scene's running order, not a
+ * set of beats.
+ */
+export function reorderSceneBeats(
+  scene: Record<string, unknown>,
+  fromIndex: number,
+  toIndex: number
+): Record<string, unknown> {
+  if (!Number.isInteger(fromIndex) || !Number.isInteger(toIndex)) return scene
+  if (fromIndex === toIndex) return scene
+
+  const beats = getSceneBeats(scene)
+  if (beats.length < 2) return scene
+  if (fromIndex < 0 || fromIndex >= beats.length) return scene
+  if (toIndex < 0 || toIndex >= beats.length) return scene
+
+  const indexBefore = new Map(beats.map((beat, index) => [beat.beatId, index]))
+  const cues = parsePersistedMusicCues(scene.sceneMusicCues, beats)
+  const moved = reconcileMusicEnabledAfterMove(
+    moveItem(beats, fromIndex, toIndex),
+    cues,
+    indexBefore
+  )
+
+  // An authored arc is the scene's intent and is never recut, and a beat count
+  // that has not changed means a derived one still fits, so the persisted
+  // ranges are reused as-is when there are any. Only `movementIndex` moves.
+  const persistedMovements = parsePersistedSceneMovements(scene.sceneMovements, moved)
+  const movements =
+    persistedMovements.length > 0 ? persistedMovements : getSceneMovements(scene, moved)
+  const tagged = applySceneMovements(scene, movements, moved)
+
+  return applyBeatsToScene(tagged.scene, tagged.beats)
 }
 
 /** Persist establishing / scene-card image to scene.imageUrl and the action beat. */
