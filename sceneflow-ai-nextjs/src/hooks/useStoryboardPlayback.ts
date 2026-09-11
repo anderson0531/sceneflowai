@@ -17,7 +17,11 @@ import {
   SCENE_FADE_TO_BLACK_SEC,
 } from '@/lib/storyboard/types'
 import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
-import { buildStoryboardMusicClips, resolveSceneMusicFileDuration } from '@/lib/storyboard/musicPlayback'
+import {
+  buildStoryboardMusicClips,
+  collectSceneMusicUrls,
+  resolveSceneMusicFileDuration,
+} from '@/lib/storyboard/musicPlayback'
 import type { MusicIntroFadeConfig } from '@/lib/storyboard/musicIntroFade'
 import {
   useTimelinePlayback,
@@ -96,8 +100,7 @@ function collectSceneAudioUrls(
     if (beat.audioUrl?.trim()) urls.push(beat.audioUrl.trim())
   }
 
-  const musicUrl = scene.musicAudio || (scene.music as { url?: string } | undefined)?.url
-  if (typeof musicUrl === 'string' && musicUrl.trim()) urls.push(musicUrl.trim())
+  urls.push(...collectSceneMusicUrls(scene))
 
   const sfxArray = scene.sfxAudio
   if (Array.isArray(sfxArray)) {
@@ -240,7 +243,8 @@ export function useStoryboardPlayback({
           activeScene,
           visualFrames,
           sceneDuration,
-          musicFileDuration
+          musicFileDuration,
+          dynamicDurations
         ).map((clip) => ({
           id: clip.id,
           url: clip.url,

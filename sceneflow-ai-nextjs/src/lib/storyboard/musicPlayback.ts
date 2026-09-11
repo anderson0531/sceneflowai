@@ -3,7 +3,8 @@
  */
 
 import { getSceneBeats } from '@/lib/script/beatMigration'
-import type { SceneBeat } from '@/lib/script/segmentTypes'
+import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
+import { isMusicCueScored, parsePersistedMusicCues } from '@/lib/script/sceneMusicCues'
 import type { StoryboardVisualFrame } from '@/lib/storyboard/types'
 
 export const DEFAULT_MUSIC_FILE_DURATION_SEC = 30
@@ -26,6 +27,10 @@ export interface BuildBeatAlignedMusicClipsOptions {
   sceneDuration: number
   /** Known music file length — used to wrap scene timeline offsets. Defaults to 30s. */
   musicFileDuration?: number
+  /** Scored cues, each supplying its own track for the beats it covers. */
+  cues?: SceneMusicCue[]
+  /** Probed durations keyed by audio URL, preferred over a cue's stored length. */
+  dynamicDurations?: Record<string, number>
 }
 
 /** Default off — only explicit true enables music for a beat. */
@@ -76,9 +81,26 @@ export function groupContiguousMusicFrames(
   return groups
 }
 
+/** Cue tracks are written for their own stretch, so they play from the top. */
+function resolveCueFileDuration(
+  cue: SceneMusicCue,
+  dynamicDurations: Record<string, number>
+): number {
+  const probed = cue.url ? dynamicDurations[cue.url] : undefined
+  if (typeof probed === 'number' && probed > 0) return probed
+  if (cue.fileDuration && cue.fileDuration > 0) return cue.fileDuration
+  return DEFAULT_MUSIC_FILE_DURATION_SEC
+}
+
 /**
  * Schedule background music aligned to beat visual frames when the scene has beats.
  * Legacy scenes without beats use one full-scene looping clip.
+ *
+ * A scene's cues each bring their own track for the beats they score, and
+ * `musicEnabled` remains the gate on top: a beat the user switched off inside
+ * a cue drops out of it, splitting the cue into the runs that survive. Beats
+ * switched on outside every cue fall back to the scene's own track, so the
+ * per-beat toggle is never a dead switch.
  */
 export function buildBeatAlignedMusicClips(
   scene: Record<string, unknown>,
@@ -87,10 +109,13 @@ export function buildBeatAlignedMusicClips(
 ): BeatAlignedMusicClip[] {
   const { musicUrl, sceneDuration } = options
   const musicFileDuration = options.musicFileDuration ?? DEFAULT_MUSIC_FILE_DURATION_SEC
-  if (!musicUrl.trim()) return []
+  const dynamicDurations = options.dynamicDurations ?? {}
+  const cues = (options.cues ?? []).filter(isMusicCueScored)
+  if (!musicUrl.trim() && cues.length === 0) return []
 
   const beats = getSceneBeats(scene)
   if (beats.length === 0) {
+    if (!musicUrl.trim()) return []
     return [
       {
         id: 'music',
@@ -105,48 +130,104 @@ export function buildBeatAlignedMusicClips(
   }
 
   const beatById = new Map(beats.map((beat) => [beat.beatId, beat]))
+  const indexByBeatId = new Map(beats.map((beat, index) => [beat.beatId, index]))
   const clips: BeatAlignedMusicClip[] = []
 
   const eligibleFrames = visualFrames.filter(
     (frame) => frame.beatId && frame.duration > 0 && beatById.has(frame.beatId)
   )
 
-  const enabledFrames = visualFrames.filter((frame) => {
-    if (!frame.beatId || frame.duration <= 0) return false
-    const beat = beatById.get(frame.beatId)
-    return isBeatMusicEnabled(beat)
-  })
+  const enabledFrames = eligibleFrames.filter((frame) =>
+    isBeatMusicEnabled(beatById.get(frame.beatId as string))
+  )
 
-  const fadeAnchorTime =
-    enabledFrames.length > 0
-      ? Math.min(...enabledFrames.map((frame) => frame.startTime))
-      : 0
+  const claimed = new Set<StoryboardVisualFrame>()
 
-  const runs = groupContiguousMusicFrames(enabledFrames)
-  const coversWholeScene =
-    runs.length === 1 && enabledFrames.length === eligibleFrames.length
-
-  for (const run of runs) {
-    const first = run[0]
-    const last = run[run.length - 1]
-    const startTime = first.startTime
-    const duration = last.startTime + last.duration - startTime
-    const id = coversWholeScene ? 'music-scene' : `music-${first.beatId}`
-
-    clips.push({
-      id,
-      url: musicUrl.trim(),
-      startTime,
-      duration,
-      trimStart: resolveMusicTrimStart(startTime, musicFileDuration),
-      fadeAnchorTime,
-      trackType: 'music',
-      label: 'Background Music',
-      loop: true,
+  for (const cue of cues) {
+    const cueFrames = enabledFrames.filter((frame) => {
+      const index = indexByBeatId.get(frame.beatId as string)
+      return index !== undefined && index >= cue.beatStart && index <= cue.beatEnd
     })
+    if (cueFrames.length === 0) continue
+
+    const cueFileDuration = resolveCueFileDuration(cue, dynamicDurations)
+    // Every run of a cue restarts its own track, and the fade is anchored to
+    // where the cue first sounds rather than to the scene.
+    const fadeAnchorTime = Math.min(...cueFrames.map((frame) => frame.startTime))
+
+    for (const run of groupContiguousMusicFrames(cueFrames)) {
+      const first = run[0]
+      const last = run[run.length - 1]
+      const startTime = first.startTime
+      const duration = last.startTime + last.duration - startTime
+
+      clips.push({
+        id: `music-${cue.cueId}-${first.beatId}`,
+        url: (cue.url as string).trim(),
+        startTime,
+        duration,
+        trimStart: 0,
+        fadeAnchorTime,
+        trackType: 'music',
+        label: cue.intent?.trim() || 'Background Music',
+        loop: duration > cueFileDuration,
+      })
+    }
+
+    for (const frame of cueFrames) claimed.add(frame)
   }
 
-  return clips
+  const looseFrames = enabledFrames.filter((frame) => !claimed.has(frame))
+  if (looseFrames.length > 0 && musicUrl.trim()) {
+    const fadeAnchorTime = Math.min(...looseFrames.map((frame) => frame.startTime))
+    const coversWholeScene =
+      cues.length === 0 && looseFrames.length === eligibleFrames.length
+
+    for (const run of groupContiguousMusicFrames(looseFrames)) {
+      const first = run[0]
+      const last = run[run.length - 1]
+      const startTime = first.startTime
+      const duration = last.startTime + last.duration - startTime
+
+      clips.push({
+        id: coversWholeScene ? 'music-scene' : `music-${first.beatId}`,
+        url: musicUrl.trim(),
+        startTime,
+        duration,
+        trimStart: resolveMusicTrimStart(startTime, musicFileDuration),
+        fadeAnchorTime,
+        trackType: 'music',
+        label: 'Background Music',
+        loop: true,
+      })
+    }
+  }
+
+  return clips.sort((a, b) => a.startTime - b.startTime)
+}
+
+/** The scene's scored cues, if any, normalized against its beats. */
+export function resolveSceneMusicCues(
+  scene: Record<string, unknown> | null | undefined
+): SceneMusicCue[] {
+  if (!scene) return []
+  return parsePersistedMusicCues(scene.sceneMusicCues, getSceneBeats(scene)).filter(
+    isMusicCueScored
+  )
+}
+
+/**
+ * Every music file the scene can play, so callers can probe their real lengths
+ * before building the timeline.
+ */
+export function collectSceneMusicUrls(
+  scene: Record<string, unknown> | null | undefined
+): string[] {
+  if (!scene) return []
+  const urls = resolveSceneMusicCues(scene).map((cue) => (cue.url as string).trim())
+  const sceneUrl = resolveSceneMusicUrl(scene)
+  if (sceneUrl) urls.push(sceneUrl)
+  return [...new Set(urls.filter(Boolean))]
 }
 
 /** Resolve music URL from scene and build beat-aligned clips (convenience wrapper). */
@@ -154,14 +235,18 @@ export function buildStoryboardMusicClips(
   scene: Record<string, unknown>,
   visualFrames: StoryboardVisualFrame[],
   sceneDuration: number,
-  musicFileDuration?: number
+  musicFileDuration?: number,
+  dynamicDurations?: Record<string, number>
 ): BeatAlignedMusicClip[] {
   const musicUrl = resolveSceneMusicUrl(scene)
-  if (!musicUrl) return []
+  const cues = resolveSceneMusicCues(scene)
+  if (!musicUrl && cues.length === 0) return []
   return buildBeatAlignedMusicClips(scene, visualFrames, {
-    musicUrl,
+    musicUrl: musicUrl ?? '',
     sceneDuration,
     musicFileDuration,
+    cues,
+    dynamicDurations,
   })
 }
 
