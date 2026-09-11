@@ -141,6 +141,20 @@ export interface SceneImageIntelligenceRequest {
   /** Beat-level directed emotion (parsed from line/action before cue stripping) */
   beatDirectedEmotion?: string
   /**
+   * Where this beat sits in the scene's story.
+   *
+   * `sceneArc` lists every movement of the scene with a marker on this beat's;
+   * `movementSummary` is the one sentence this frame is responsible for. Without
+   * them every beat composes for the whole scene and the sequence reads as
+   * disconnected frames.
+   */
+  sceneArc?: string
+  movementSummary?: string
+  movementPosition?: string
+  /** Frozen moments either side of this beat, for screen direction and carried state. */
+  previousBeatMoment?: string
+  nextBeatMoment?: string
+  /**
    * Structured, per-beat direction (shot, angle, blocking, gaze, key props, prop
    * interaction, lighting accent, frozen moment, audio cue, transition).
    * When present these values are AUTHORITATIVE for THIS beat and override any
@@ -432,6 +446,10 @@ export function buildSceneImageCacheKey(request: SceneImageIntelligenceRequest):
     request.beatRole ?? 'na',
     request.beatKind ?? 'na',
     request.beatDirectedEmotion ?? 'na',
+    (request.movementSummary ?? '').substring(0, 120),
+    request.movementPosition ?? 'na',
+    (request.previousBeatMoment ?? '').substring(0, 80),
+    (request.nextBeatMoment ?? '').substring(0, 80),
     (request.userDirection ?? '').substring(0, 120),
     compactOverlayKey(request.visualSetup),
     compactOverlayKey(request.talentDirection),
@@ -551,6 +569,11 @@ CRITICAL RULES:
    - Capture the single most dramatic INSTANT of the action mid-motion; preserve the physical performance (body posture, gesture, hand/prop interaction, weight, gaze direction). Do NOT reduce it to a neutral standing pose.
 
 6. CAMERA AWARENESS: Subjects must appear unaware of the camera (no posing, no lens eye-contact, no red-carpet/headshot framing) unless the beat explicitly calls for direct-to-camera address.
+
+6b. STORY CONTINUITY: When a STORY CONTINUITY block is provided, this frame is one shot inside a continuous scene, not a standalone illustration of the scene.
+   - Compose for the movement named there, not for the whole scene. SCENE CONTEXT is background only; the movement sentence and the beat action decide what is on camera.
+   - Match the previous frame's screen direction, eyelines, and carried physical state, and change at least one of subject, shot scale, or camera angle so the two frames are not the same picture.
+   - Advance the story: the frame must show something the previous frame did not, and must lead into the next frame.
 
 7. OUTPUT FORMAT: Return ONLY a JSON object:
    {
@@ -677,6 +700,41 @@ function appendDirectOverlayBlocks(request: SceneImageIntelligenceRequest): stri
 }
 
 /**
+ * Where this frame sits in the scene's story, and what the frames on either
+ * side of it hold.
+ *
+ * Placed immediately after BEAT ACTION so the model reads its own moment
+ * first, then the story it has to stay continuous with.
+ */
+function appendStoryContinuityBlock(request: SceneImageIntelligenceRequest): string {
+  const hasArc = Boolean(
+    request.movementSummary || request.previousBeatMoment || request.nextBeatMoment
+  )
+  if (!hasArc) return ''
+
+  let block = 'STORY CONTINUITY (this frame is one shot inside a continuous scene):\n'
+
+  if (request.movementSummary) {
+    block += `This beat dramatizes: ${request.movementSummary}\n`
+  }
+  if (request.movementPosition) {
+    block += `Placement: ${request.movementPosition}. Show ONE instant of it — not the whole scene, and not the whole movement.\n`
+  }
+  if (request.previousBeatMoment) {
+    block += `Previous frame: ${request.previousBeatMoment}\n`
+    block += `Hold continuity with it — same screen direction, eyelines, and carried state (props set down stay down, damage accumulates) — while showing a DIFFERENT moment with a different subject, shot scale, or angle.\n`
+  }
+  if (request.nextBeatMoment) {
+    block += `Next frame: ${request.nextBeatMoment}. This frame must cut cleanly into it.\n`
+  }
+  if (request.sceneArc) {
+    block += `\n${request.sceneArc}\n`
+  }
+
+  return `${block}\n`
+}
+
+/**
  * Build the user prompt with all scene context for Gemini.
  */
 export function buildSceneImageIntelligenceUserPrompt(request: SceneImageIntelligenceRequest): string {
@@ -719,12 +777,17 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
     prompt += '\n'
   }
 
+  prompt += appendStoryContinuityBlock(request)
+
   prompt += appendBeatDirectionAuthorityBlock(request)
   prompt += appendDirectOverlayBlocks(request)
   prompt += appendSceneDirectionAuthorityBlock(request)
   
-  // Scene action (context — beat action takes priority when present)
-  prompt += `SCENE CONTEXT:\n${request.sceneAction}\n\n`
+  // Scene action (context — beat action and the movement take priority when present)
+  const sceneContextLabel = request.movementSummary
+    ? 'SCENE CONTEXT (background only — the movement above decides what is on camera)'
+    : 'SCENE CONTEXT'
+  prompt += `${sceneContextLabel}:\n${request.sceneAction}\n\n`
   
   // Characters with reference mapping — suppress text that conflicts with reference images
   if (request.characters.length > 0) {

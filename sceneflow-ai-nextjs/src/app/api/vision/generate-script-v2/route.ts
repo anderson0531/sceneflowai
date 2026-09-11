@@ -34,6 +34,7 @@ import { runWithConcurrencyLimit } from '@/lib/utils/concurrency'
 import { resolveContentIntentFromMetadata, buildPacingPhilosophyBlock } from '@/lib/content/contentIntent'
 import { migrateProjectToSegmented } from '@/lib/script/migrateToSegmented'
 import { normalizeDialogueToProductionLineTargets } from '@/lib/script/segmentScript'
+import { MAX_SCENE_MOVEMENTS } from '@/lib/script/sceneMovements'
 import {
   ensureSceneBeats,
   embedCharacterIdsInSceneBeats,
@@ -1079,6 +1080,16 @@ ${LYRIA_MUSIC_PROMPT_RULES}
 
 ${narrationSection}
 
+SCENE ARC → BEATS (PLAN BEFORE YOU WRITE):
+• Before writing beats[], write "movements": 2–${MAX_SCENE_MOVEMENTS} ordered dramatic movements that carry the scene from its opening state to its closing state.
+• Each movement is ONE sentence of plain narrative prose naming WHO does WHAT and HOW the situation changes — not camera language, not a shot list.
+• Movements read end-to-end as the scene's description. Example for a three-movement scene: "Piper tumbles out of the pneumatic access tube into the vault." / "Gideon pins her at gunpoint, certain she is corporate espionage." / "Piper reveals she carries Clara's encrypted final schematics and Gideon's fury collapses into shock."
+• Then write beats[]. EVERY beat MUST carry "movementIndex": the 0-based index of the movement it dramatizes.
+• Beats must be in movement order: all of movement 0's beats, then all of movement 1's beats, and so on. Never interleave, never skip a movement, never leave a movement with zero beats.
+• Spread beats across movements roughly in proportion to each movement's dramatic weight. A ${MAX_BEATS_PER_SCENE}-beat scene with 4 movements is about 3–4 beats each — not 12 beats on one movement and 1 on the rest.
+• Inside a movement, consecutive beats must ADVANCE it: change what the audience knows, who holds power, or what is physically happening. Do not write several beats that restate the same instant from different angles.
+• Across a movement boundary the story must visibly turn — that turn is why the boundary is there.
+
 BEAT TIMELINE (CRITICAL — PRIMARY PRODUCTION SOURCE):
 ${beatTimelineNarrationRules}
 • Action beats are MANDATORY for visuals without spoken lines: reactions, inserts, B-roll, camera moves, environment changes, blocking without speech
@@ -1206,21 +1217,28 @@ ${beatSynopsisBlock}${neighborLines.length > 0 ? `\nADJACENT CONTEXT (do not wri
       "locationAssetId": "catalog-location-id-or-null",
       "characters": ["Character Name 1", "Character Name 2"],
       "sceneCharacters": [{"name": "Character Name 1", "libraryAssetId": "catalog-id-or-null"}],
+      "movements": [
+        {"summary": "One sentence of narrative prose: who does what, and how the situation changes."},
+        {"summary": "The next turn in the scene, in one sentence."}
+      ],
       "beats": [
         {
           "kind": "action",
+          "movementIndex": 0,
           "actionDescription": "Wide establishing shot of the location, golden hour light...",
           ${shared.beatDirectionSchema}
         },
 ${shared.narrationSchemaLine}
         {
           "kind": "dialogue",
+          "movementIndex": 0,
           "character": "Character Name",
           "line": "[emotion] Dialogue...",
           "beatDirection": {"shotType": "Medium Close-Up", "frozenMoment": "Speaker mid-word, eyes locked on the listener.", "transition": "CUT"}
         },
         {
           "kind": "action",
+          "movementIndex": 1,
           "actionDescription": "Reaction shot: character turns toward window, concern on face...",
           "beatDirection": {"shotType": "Medium Close-Up", "frozenMoment": "Listener's profile against the window light, brow furrowed.", "transition": "CUT"}
         }
@@ -1242,6 +1260,7 @@ ${shared.narrationSchemaLine}
 
 SCHEMA RULES:
 • "beats" is the ONLY place story content goes. Do NOT emit "action", "dialogue", or "narration" fields on a scene — they are derived from beats automatically and duplicating them wastes your budget.
+• "movements" is MANDATORY on every scene, and every beat MUST carry a "movementIndex" pointing at one of them.
 • Scene numbers MUST be exactly ${sceneNumbers.join(', ')} — in that order, no gaps, no extras.
 • Return ONLY valid JSON - no markdown, no explanations.`
 

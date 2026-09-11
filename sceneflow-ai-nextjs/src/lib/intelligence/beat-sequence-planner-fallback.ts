@@ -18,6 +18,7 @@ import {
 import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPrompt'
+import { formatSceneArcBlock, getSceneMovements } from '@/lib/script/sceneMovements'
 import type { BeatDirection, SceneBeat } from '@/lib/script/segmentTypes'
 
 function getSceneDirection(scene: Record<string, unknown>): Record<string, any> | undefined {
@@ -350,6 +351,17 @@ export function buildPlannerUserPrompt(request: BeatSequencePlanRequest): string
   parts.push('SCENE ACTION:')
   parts.push(action || visualDescription || '(none)')
   parts.push('')
+
+  // The arc tells the planner which run of beats carries which part of the
+  // scene, so coverage follows the story instead of spreading evenly.
+  const movements = getSceneMovements(scene, beats)
+  if (movements.length > 0) {
+    parts.push(formatSceneArcBlock(movements))
+    parts.push(
+      'Plan each beat for its own movement. Beats inside one movement advance it; the frame at a movement boundary must show the story turning.'
+    )
+    parts.push('')
+  }
 
   if (shots.length > 0) {
     parts.push('CAMERA SHOTS (map to beats in order):')

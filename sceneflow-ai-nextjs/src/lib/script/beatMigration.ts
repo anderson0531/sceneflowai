@@ -19,6 +19,7 @@ import { mintLineId } from '@/lib/script/segmentScript'
 import { applyDerivedSfxToScene } from '@/lib/script/deriveSfxFromSceneContent'
 import { dedupeRedundantActionBeats } from '@/lib/script/actionBeatDedupe'
 import { backfillBeatDirectionsOnScene } from '@/lib/script/beatDirectionDerive'
+import { ensureSceneMovements } from '@/lib/script/sceneMovements'
 
 const BEAT_MIGRATION_FLAG = 'beatsMigratedAt'
 const START_FRAME_ONLY_MIGRATION_FLAG = 'startFrameOnlyMigrationAt'
@@ -1551,10 +1552,11 @@ export function isProjectBeatDirectionMigrated(metadata: unknown): boolean {
 }
 
 /**
- * Idempotent: fill in `beatDirection` on every beat across all script scenes.
+ * Idempotent: resolve each scene's movement arc, then fill in `beatDirection`
+ * on every beat across all script scenes.
  *
  * Non-destructive — LLM- and user-authored beat directions are preserved; only
- * gaps are filled from scene direction, performance cues, and beat text.
+ * gaps are filled from the beat's movement, performance cues, and beat text.
  */
 export function migrateProjectBeatDirection(metadata: unknown): MigrateBeatsResult {
   const empty: MigrateBeatsResult = {
@@ -1580,13 +1582,27 @@ export function migrateProjectBeatDirection(metadata: unknown): MigrateBeatsResu
 
   for (let i = 0; i < scenes.length; i++) {
     const scene = scenes[i] as Record<string, unknown>
-    const backfilled = backfillBeatDirectionsOnScene(scene)
-    if (backfilled.length === 0) continue
     const priorBeats = Array.isArray(scene.beats) ? (scene.beats as SceneBeat[]) : []
-    const priorJson = JSON.stringify(priorBeats.map((b) => b.beatDirection ?? null))
-    const nextJson = JSON.stringify(backfilled.map((b) => b.beatDirection ?? null))
+    if (priorBeats.length === 0) continue
+
+    const withArc = ensureSceneMovements(scene, priorBeats)
+    const backfilled = backfillBeatDirectionsOnScene({
+      ...withArc.scene,
+      beats: withArc.beats,
+    })
+    if (backfilled.length === 0) continue
+
+    const priorJson = JSON.stringify([
+      scene.sceneMovements ?? null,
+      priorBeats.map((b) => [b.beatDirection ?? null, b.movementIndex ?? null]),
+    ])
+    const nextJson = JSON.stringify([
+      withArc.scene.sceneMovements ?? null,
+      backfilled.map((b) => [b.beatDirection ?? null, b.movementIndex ?? null]),
+    ])
     if (priorJson === nextJson) continue
-    scenes[i] = applyBeatsToScene(scene, backfilled)
+
+    scenes[i] = applyBeatsToScene(withArc.scene, backfilled)
     changed = true
     migratedSceneCount++
   }
@@ -1717,6 +1733,11 @@ export function parseLlmBeats(raw: unknown[]): SceneBeat[] {
       beat.beatDirection = beatDirection
     }
 
+    const movementIndex = Number(b.movementIndex)
+    if (Number.isInteger(movementIndex) && movementIndex >= 0) {
+      beat.movementIndex = movementIndex
+    }
+
     beats.push(beat)
   }
   return normalizeBeatsForProduction(beats)
@@ -1729,6 +1750,12 @@ export function ensureSceneBeats(scene: Record<string, unknown>): Record<string,
   const beats = dedupeRedundantActionBeats(rawBeats)
   const withBeats = applyBeatsToScene(scene, beats)
   const withSfx = applyDerivedSfxToScene(withBeats, beats)
-  const beatsWithDirection = backfillBeatDirectionsOnScene(withSfx)
-  return applyBeatsToScene(withSfx, beatsWithDirection)
+  // The arc is resolved before direction backfill so per-beat direction can be
+  // scoped to the movement the beat belongs to instead of the whole scene.
+  const withArc = ensureSceneMovements(withSfx, beats)
+  const beatsWithDirection = backfillBeatDirectionsOnScene({
+    ...withArc.scene,
+    beats: withArc.beats,
+  })
+  return applyBeatsToScene(withArc.scene, beatsWithDirection)
 }

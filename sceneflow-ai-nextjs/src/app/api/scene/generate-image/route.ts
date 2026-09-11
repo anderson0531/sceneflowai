@@ -124,6 +124,11 @@ import { editImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { buildEndFramePrompt } from '@/lib/scene/deriveSegmentsFromBeats'
 import { buildPreVisEndFrameEditInstruction } from '@/lib/vision/framePromptBaseline'
 import { buildSceneStagingText } from '@/lib/vision/frameGenerationContext'
+import {
+  buildBeatArcContext,
+  formatBeatArcContextLines,
+  type BeatArcContext,
+} from '@/lib/vision/beatArcContext'
 import { resolveBeatFrameGenerationContext } from '@/lib/vision/beatFrameGenerationContext'
 import { englishForModelBatch, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import {
@@ -594,6 +599,7 @@ export async function POST(req: NextRequest) {
     let beatKindForIntelligence: BeatKind | undefined
     let dialogueResolvedBeat: SceneBeat | undefined
     let dialogueResolvedBeatIndex = -1
+    let beatArcContext: BeatArcContext | undefined
     
     let effectiveExcludeCharacters = excludeCharactersParam
     
@@ -1160,14 +1166,25 @@ export async function POST(req: NextRequest) {
           const beats = getSceneBeats(scene as Record<string, unknown>)
           const beat = beats[effectiveBeatIndex]
           const beatAction = beat?.actionDescription?.trim() || beat?.line?.trim() || ''
-          const staging = buildSceneStagingText(scene)
+          beatArcContext = buildBeatArcContext(
+            scene as Record<string, unknown>,
+            effectiveBeatIndex,
+            beats
+          )
           const base = beatAction || scene.action || scene.visualDescription || scene.heading || ''
           const beatDirectionText = formatBeatDirectionForContext(beat?.beatDirection)
           const contextParts = [base]
           if (beatDirectionText) contextParts.push(`Beat direction: ${beatDirectionText}`)
-          if (staging) contextParts.push(`Scene staging: ${staging}`)
+          contextParts.push(...formatBeatArcContextLines(beatArcContext))
+          if (beatArcContext.stagingText) {
+            contextParts.push(`Scene staging: ${beatArcContext.stagingText}`)
+          }
           fullSceneContext = contextParts.filter(Boolean).join('\n\n')
-          console.log('[Scene Image] Using beat-primary context for beat frame')
+          console.log(
+            `[Scene Image] Using beat-primary context for beat frame${
+              beatArcContext.movementPosition ? ` (${beatArcContext.movementPosition})` : ''
+            }`
+          )
         } else if (isDialogueFrame && scene && typeof dialogueIndex === 'number') {
           const resolved = resolveDialogueBeat(scene as Record<string, unknown>, dialogueIndex)
           if (resolved) {
@@ -1175,11 +1192,22 @@ export async function POST(req: NextRequest) {
             dialogueResolvedBeatIndex = resolved.beatIndex
             const beatAction =
               resolved.beat.actionDescription?.trim() || resolved.beat.line?.trim() || ''
-            const staging = buildSceneStagingText(scene)
+            beatArcContext = buildBeatArcContext(
+              scene as Record<string, unknown>,
+              resolved.beatIndex
+            )
             const base =
               beatAction || scene.action || scene.visualDescription || scene.heading || ''
-            fullSceneContext = staging ? `${base}\n\nScene staging: ${staging}` : base
-            console.log('[Scene Image] Using beat-primary context for dialogue frame')
+            const contextParts = [base, ...formatBeatArcContextLines(beatArcContext)]
+            if (beatArcContext.stagingText) {
+              contextParts.push(`Scene staging: ${beatArcContext.stagingText}`)
+            }
+            fullSceneContext = contextParts.filter(Boolean).join('\n\n')
+            console.log(
+              `[Scene Image] Using beat-primary context for dialogue frame${
+                beatArcContext.movementPosition ? ` (${beatArcContext.movementPosition})` : ''
+              }`
+            )
           } else if (sceneDirectionText && sceneDirectionText.trim()) {
             fullSceneContext = sceneDirectionText.trim()
             const scriptExtra =
@@ -1854,6 +1882,17 @@ export async function POST(req: NextRequest) {
         ),
         beatDirectedEmotion: beatDirectedEmotion || undefined,
         beatRole: beatForIntelligence?.beatRole,
+        sceneArc: beatArcContext?.sceneArc,
+        movementSummary: beatArcContext?.movementSummary
+          ? bindLibraryNamesToTokens(beatArcContext.movementSummary, libraryTokenItems)
+          : undefined,
+        movementPosition: beatArcContext?.movementPosition,
+        previousBeatMoment: beatArcContext?.previousBeatMoment
+          ? bindLibraryNamesToTokens(beatArcContext.previousBeatMoment, libraryTokenItems)
+          : undefined,
+        nextBeatMoment: beatArcContext?.nextBeatMoment
+          ? bindLibraryNamesToTokens(beatArcContext.nextBeatMoment, libraryTokenItems)
+          : undefined,
         beatDirection: beatForIntelligence?.beatDirection
           ? {
               shotType: beatForIntelligence.beatDirection.shotType,
