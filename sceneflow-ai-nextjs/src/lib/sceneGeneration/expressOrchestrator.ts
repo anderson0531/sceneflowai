@@ -1505,9 +1505,13 @@ export async function planSceneBeatKeyframes(
       sceneNumber,
       phase: 'image-plan',
       ok: true,
+      ...(planResult.fallbackReason
+        ? { degraded: `Beat direction fell back: ${planResult.fallbackReason}` }
+        : {}),
     })
     console.log(
-      `[expressOrchestrator] Planned ${remappedPlans.length} keyframes (AI: ${planResult.usedAI}) scene ${sceneNumber}`
+      `[expressOrchestrator] Planned ${remappedPlans.length} keyframes (AI: ${planResult.usedAI}) scene ${sceneNumber}` +
+        (planResult.fallbackReason ? ` — fallback: ${planResult.fallbackReason}` : '')
     )
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : String(err)

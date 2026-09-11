@@ -13026,6 +13026,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         let rateLimitToastShown = false
         let regulatorToastShown = false
         let rateLimitedFailureCount = 0
+        let degradedToastShown = false
 
         while (true) {
           const { done, value } = await reader.read()
@@ -13048,6 +13049,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         ? { rateLimited: true, rateLimitedPhases: { [event.phase]: true } }
                         : {}),
                     })
+                    // A degraded phase still produces frames, so the run looks
+                    // clean while the prompts behind it are the deterministic
+                    // fallback's. One toast per run, every scene in the log.
+                    if (event.degraded) {
+                      console.warn(
+                        `[Express] Scene ${event.sceneNumber} ${event.phase}: ${event.degraded}`
+                      )
+                      if (!degradedToastShown) {
+                        degradedToastShown = true
+                        toast.warning(event.degraded)
+                      }
+                    }
                     if (event.phase === 'image' && event.imageUrl) {
                       applyExpressSceneImage(event.sceneIndex, event.imageUrl, {
                         dialogueIndex: event.dialogueIndex,
@@ -13548,6 +13561,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         let rateLimitedFailureCount = 0
         let scenePersisted = false
         let lastSceneError: string | undefined
+        let degradedToastShown = false
 
         while (true) {
           const { done, value } = await reader.read()
@@ -13582,6 +13596,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     }
                     if (isOverlayPhase(event.phase) && event.beatIndex == null) {
                       updateOverlayPhase(event.phase, 'done')
+                    }
+                    // A degraded phase still produces frames, so the run looks
+                    // clean while the prompts behind it are the deterministic
+                    // fallback's. One toast per run, every scene in the log.
+                    if (event.degraded) {
+                      console.warn(
+                        `[Express] Scene ${event.sceneNumber} ${event.phase}: ${event.degraded}`
+                      )
+                      if (!degradedToastShown) {
+                        degradedToastShown = true
+                        toast.warning(event.degraded)
+                      }
                     }
                     if (event.phase === 'image' && event.imageUrl) {
                       applyExpressSceneImage(event.sceneIndex, event.imageUrl, {

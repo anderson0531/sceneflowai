@@ -58,6 +58,16 @@ export interface BeatSequencePlanResult {
   plans: BeatKeyframePlan[]
   usedAI: boolean
   reasoning?: string
+  /**
+   * Why this plan is deterministic, in whole or in part.
+   *
+   * The fallback produces a whole scene of plausible-looking prompts, so
+   * without this a rejected plan is indistinguishable from a planned one —
+   * which is how a scene of near-identical frames reached a user with nothing
+   * in the logs but `AI: false`. Also set when `usedAI` is true but individual
+   * beats had to be filled deterministically.
+   */
+  fallbackReason?: string
 }
 
 interface PlanCacheEntry {
@@ -117,36 +127,69 @@ function setCachedPlan(key: string, result: BeatSequencePlanResult): void {
 }
 
 
-/**
- * Beats should share a look but not a camera setup. Reject only the degenerate
- * case where every beat is the same setup on the same moment — an earlier
- * distinctness gate on `frozenMoment` alone punished the continuity the planner
- * is now asked to produce.
- */
-function hasShotCoverageVariety(plans: BeatKeyframePlan[]): boolean {
-  if (plans.length < 2) return true
-  const setups = new Set(
+/** Distinct camera setups a plan of this length has to bring. */
+export function requiredShotSetups(beatCount: number): number {
+  return Math.max(2, Math.ceil(beatCount / 3))
+}
+
+function countShotSetups(plans: BeatKeyframePlan[]): number {
+  return new Set(
     plans.map(
-      (plan) =>
-        `${plan.shotType.trim().toLowerCase()}|${plan.frozenMoment.trim().toLowerCase()}`
+      (plan) => `${plan.shotType.trim().toLowerCase()}|${plan.frozenMoment.trim().toLowerCase()}`
     )
-  )
-  return setups.size >= 2
+  ).size
 }
 
-function validatePlans(plans: BeatKeyframePlan[], beatCount: number): BeatKeyframePlan[] | null {
-  if (plans.length !== beatCount) return null
-  if (!hasShotCoverageVariety(plans)) return null
-  for (const plan of plans) {
-    if (!plan.prompt || plan.prompt.trim().length < 20) return null
-    if (!plan.frozenMoment || plan.frozenMoment.trim().length < 8) return null
-  }
-  return plans
+/**
+ * Beats should share a look but not a camera setup.
+ *
+ * The gate is scaled to scene length because a flat `>= 2` passed a 15-beat
+ * scene on one differing frame — which is how a user got fifteen frames of the
+ * same vault. Setups collide only when shot and moment both match, and real
+ * coverage gives every beat its own moment, so a third of the scene is a floor
+ * no genuine plan comes near. An earlier gate on `frozenMoment` alone punished
+ * the continuity the planner is now asked to produce; this one does not.
+ */
+function hasShotCoverageVariety(plans: BeatKeyframePlan[], beatCount: number): boolean {
+  if (beatCount < 2) return true
+  return countShotSetups(plans) >= requiredShotSetups(beatCount)
 }
 
-async function planWithGemini(
-  request: BeatSequencePlanRequest
-): Promise<BeatSequencePlanResult | null> {
+/**
+ * Outcome of one planner pass, carrying why a rejected plan was rejected.
+ *
+ * Callers used to get a bare `null` and had nothing to log, so every reason a
+ * plan could lose looked the same from the outside.
+ */
+type PlanAttempt = { ok: true; result: BeatSequencePlanResult } | { ok: false; reason: string }
+
+/** Why a single plan is too thin to generate from, or null when it is fine. */
+function planTextDefect(plan: BeatKeyframePlan): string | null {
+  if (!plan.prompt || plan.prompt.trim().length < 20) return 'no usable prompt'
+  if (!plan.frozenMoment || plan.frozenMoment.trim().length < 8) return 'no frozen moment'
+  return null
+}
+
+/**
+ * Shift to apply to the planner's claimed beat indices, 0 or -1.
+ *
+ * The prompt asks for 0-based indices and Gemini mostly complies, but a 1-based
+ * response left beat 1 with no plan at all and pushed the last beat past the
+ * end of the scene — a whole-scene defect out of an off-by-one. A response that
+ * numbers anything from zero, or that reaches past the beat count, is taken at
+ * its word.
+ */
+export function detectBeatIndexOffset(
+  claimed: Array<number | undefined>,
+  beatCount: number
+): number {
+  const values = claimed.filter((value): value is number => typeof value === 'number')
+  if (values.length === 0) return 0
+  if (values.some((value) => value < 1 || value > beatCount)) return 0
+  return Math.max(...values) === beatCount ? -1 : 0
+}
+
+async function planWithGemini(request: BeatSequencePlanRequest): Promise<PlanAttempt> {
   const systemPrompt = buildPlannerSystemPrompt()
   const userPrompt = buildPlannerUserPrompt(request)
 
@@ -182,29 +225,45 @@ async function planWithGemini(
     }>
   }
 
-  if (!Array.isArray(parsed.beats) || parsed.beats.length === 0) return null
+  if (!Array.isArray(parsed.beats) || parsed.beats.length === 0) {
+    return { ok: false, reason: 'planner response carried no beats' }
+  }
 
-  const plans: BeatKeyframePlan[] = parsed.beats.map((b, i) => {
-    const beatIndex = typeof b.beatIndex === 'number' ? b.beatIndex : i
-    const beat = request.beats[beatIndex] ?? request.beats[i]
+  const beatCount = request.beats.length
+  const sceneType = detectSceneType(
+    String(request.scene.heading ?? ''),
+    String(request.scene.action ?? ''),
+    request.sceneNumber,
+    request.totalScenes
+  )
+  const offset = detectBeatIndexOffset(
+    parsed.beats.map((b) => b.beatIndex),
+    beatCount
+  )
+
+  // A response can be wrong about any one beat without being wrong about the
+  // scene, so defects are collected per beat and the plan is judged on what
+  // survives rather than discarded on the first flaw.
+  const byIndex = new Map<number, BeatKeyframePlan>()
+  const defects: string[] = []
+  parsed.beats.forEach((b, i) => {
+    const beatIndex = typeof b.beatIndex === 'number' ? b.beatIndex + offset : i
+    if (beatIndex < 0 || beatIndex >= beatCount) {
+      defects.push(`beat ${b.beatIndex ?? i} is outside the scene`)
+      return
+    }
+    if (byIndex.has(beatIndex)) {
+      defects.push(`beat ${beatIndex + 1} was planned twice`)
+      return
+    }
+    const beat = request.beats[beatIndex]
     const beatRole =
       b.beatRole ??
-      inferBeatRole(
-        beat,
-        beatIndex,
-        request.beats.length,
-        detectSceneType(
-          String(request.scene.heading ?? ''),
-          String(request.scene.action ?? ''),
-          request.sceneNumber,
-          request.totalScenes
-        ),
-        request.filmContext?.title
-      )
+      inferBeatRole(beat, beatIndex, beatCount, sceneType, request.filmContext?.title)
     const allowTypography =
       typeof b.allowTypography === 'boolean' ? b.allowTypography : roleAllowsTypography(beatRole)
 
-    return {
+    const plan: BeatKeyframePlan = {
       beatIndex,
       beatRole,
       shotType: b.shotType?.trim() || 'Medium shot',
@@ -218,26 +277,68 @@ async function planWithGemini(
       ...(b.screenDirection?.trim() ? { screenDirection: b.screenDirection.trim() } : {}),
       ...(b.continuityNote?.trim() ? { continuityNote: b.continuityNote.trim() } : {}),
     }
+
+    // Judged on the raw action text: validating the composed prompt would pass
+    // on the length of the style anchor alone.
+    const defect = planTextDefect(plan)
+    if (defect) {
+      defects.push(`beat ${beatIndex + 1} has ${defect}`)
+      return
+    }
+    byIndex.set(beatIndex, plan)
   })
 
-  // Validate the raw action text, then wrap it in the style anchor — validating
-  // the composed prompt would pass on anchor length alone.
-  const validated = validatePlans(plans, request.beats.length)
-  if (!validated) return null
+  const usable = [...byIndex.values()]
+  if (usable.length === 0) {
+    return { ok: false, reason: `no beat survived validation (${defects.join('; ')})` }
+  }
+  if (!hasShotCoverageVariety(usable, beatCount)) {
+    return {
+      ok: false,
+      reason:
+        `only ${countShotSetups(usable)} distinct setup(s) across ${beatCount} beats, ` +
+        `needs ${requiredShotSetups(beatCount)}`,
+    }
+  }
 
-  const anchored = validated.map((plan) => ({
-    ...plan,
-    prompt: composeBeatStillPrompt({
-      actionFraming: plan.prompt,
-      lookbook: request.lookbook,
-      sceneIndex: request.sceneNumber - 1,
-      artStyleAnchor: request.artStyleAnchor,
-      lighting: plan.lighting,
-      lensMm: plan.lensMm,
-    }),
-  }))
+  // Beats the planner missed take the deterministic plan rather than sinking
+  // the scene — the fallback already wraps its own prompts in the style anchor.
+  let fallbackPlans: BeatKeyframePlan[] | null = null
+  const filled: number[] = []
+  const plans = request.beats.map((_, beatIndex) => {
+    const planned = byIndex.get(beatIndex)
+    if (planned) {
+      return {
+        ...planned,
+        prompt: composeBeatStillPrompt({
+          actionFraming: planned.prompt,
+          lookbook: request.lookbook,
+          sceneIndex: request.sceneNumber - 1,
+          artStyleAnchor: request.artStyleAnchor,
+          lighting: planned.lighting,
+          lensMm: planned.lensMm,
+        }),
+      }
+    }
+    filled.push(beatIndex + 1)
+    return (fallbackPlans ??= buildFallbackBeatPlans(request))[beatIndex]
+  })
 
-  return { plans: anchored, usedAI: true, reasoning: parsed.reasoning }
+  return {
+    ok: true,
+    result: {
+      plans,
+      usedAI: true,
+      reasoning: parsed.reasoning,
+      ...(filled.length > 0
+        ? {
+            fallbackReason:
+              `beat${filled.length > 1 ? 's' : ''} ${filled.join(', ')} filled ` +
+              `deterministically (${defects.join('; ')})`,
+          }
+        : {}),
+    },
+  }
 }
 
 export async function planBeatSequence(
@@ -250,16 +351,22 @@ export async function planBeatSequence(
     return cached
   }
 
+  let fallbackReason: string | undefined
   if (!request.forceFallback) {
     try {
-      const aiResult = await planWithGemini(request)
-      if (aiResult) {
-        setCachedPlan(cacheKey, aiResult)
-        console.log(`[BeatSequencePlanner] AI planned ${aiResult.plans.length} distinct keyframes`)
-        return aiResult
+      const attempt = await planWithGemini(request)
+      if (attempt.ok) {
+        setCachedPlan(cacheKey, attempt.result)
+        console.log(
+          `[BeatSequencePlanner] AI planned ${attempt.result.plans.length} distinct keyframes`
+        )
+        return attempt.result
       }
+      fallbackReason = attempt.reason
+      console.warn(`[BeatSequencePlanner] AI plan rejected, using fallback: ${attempt.reason}`)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
+      fallbackReason = msg
       console.warn(`[BeatSequencePlanner] Gemini failed, using fallback: ${msg}`)
     }
   }
@@ -269,6 +376,7 @@ export async function planBeatSequence(
     plans: fallbackPlans,
     usedAI: false,
     reasoning: 'Deterministic fallback from direction shots and scene description',
+    ...(fallbackReason ? { fallbackReason } : {}),
   }
   setCachedPlan(cacheKey, result)
   return result
