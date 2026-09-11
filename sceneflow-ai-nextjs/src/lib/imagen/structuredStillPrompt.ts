@@ -7,6 +7,7 @@
  */
 
 import { BEAT_FRAME_CANDID_ACTION_CONSTRAINT } from '@/lib/character/characterReferenceAssembly'
+import { buildIdentityTraitsClause } from '@/lib/imagen/identityTraitsClause'
 import { buildIdentityPromptToken } from '@/lib/imagen/promptOptimizer'
 
 export const STILL_SECTION_REFERENCES = '[REFERENCES]'
@@ -27,6 +28,8 @@ export interface StillPromptBoundRef {
   token: string
   name: string
   roleLabel: string
+  /** Short observable traits, stated here and nowhere else in the prompt. */
+  identityTraits?: string
 }
 
 export function buildPropPromptToken(sendIndex: number): string {
@@ -289,7 +292,10 @@ export function replaceLibraryNamesWithTokens(
 
 export function formatStillReferencesLegend(refs: StillPromptBoundRef[]): string {
   if (refs.length === 0) return ''
-  const lines = refs.map((ref) => `${ref.token} = ${ref.name} — ${ref.roleLabel}`)
+  const lines = refs.map((ref) => {
+    const entry = `${ref.token} = ${ref.name} — ${ref.roleLabel}`
+    return ref.identityTraits ? `${entry}: ${ref.identityTraits}` : entry
+  })
   return `${STILL_SECTION_REFERENCES}\n${lines.join('\n')}`
 }
 
@@ -307,6 +313,10 @@ export function stillRefsFromAttachedImages(args: {
     name: string
     promptToken?: string
     subjectOrdinal?: number
+    appearanceDescription?: string | null
+    visionDescription?: string | null
+    hairStyle?: string
+    hairColor?: string
   }>
 }): StillPromptBoundRef[] {
   const refs: StillPromptBoundRef[] = []
@@ -331,6 +341,7 @@ export function stillRefsFromAttachedImages(args: {
         token,
         name: entry.characterName,
         roleLabel: 'identity',
+        identityTraits: char ? buildIdentityTraitsClause(char) : undefined,
       })
       continue
     }

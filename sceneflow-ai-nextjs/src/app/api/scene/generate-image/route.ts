@@ -1657,6 +1657,7 @@ export async function POST(req: NextRequest) {
         promptToken,
         subjectTextDescription,
         appearanceDescription: char.appearanceDescription || char.visionDescription,
+        visionDescription: char.visionDescription,
         appearanceNotes: refPair.resolvedWardrobe?.appearanceNotes,
         sceneAppearanceContinuity: resolveSceneAppearanceContinuity(
           refPair.resolvedWardrobe?.appearanceNotes
@@ -2570,7 +2571,7 @@ export async function POST(req: NextRequest) {
                 'Wardrobe diptych refs: LEFT panel = face/identity only; RIGHT panel = outfit/wardrobe only. Do not describe clothing in text — copy outfit from the RIGHT panel.\n\n'
             } else if (hasAnyDual) {
               geminiPrompt +=
-                'In the scene prompt, refer to characters with identity refs using ONLY "person [N]" tokens — no ethnicity, age, or appearance adjectives in text.\n\n'
+                'In the scene prompt, refer to characters with identity refs using ONLY "person [N]" tokens. Identity traits are stated once in the [REFERENCES] legend, so the action text needs no ethnicity, age, or appearance adjectives.\n\n'
             } else if (hasIdentityOnly) {
               geminiPrompt +=
                 'Use identity reference(s) for face, hair, skin tone, age, ethnicity, and body proportions only. Ignore clothing in identity reference images — outfit must come from wardrobe text in the scene prompt.\n\n'
