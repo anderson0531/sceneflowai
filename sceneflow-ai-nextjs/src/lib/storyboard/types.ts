@@ -1159,6 +1159,14 @@ export function buildStoryboardVisualRevision(
   for (const beat of getSceneBeats(scene)) {
     const url = beat.storyboardImageUrl?.trim()
     if (url) parts.push(`beat:${beat.beatId}:${url}`)
+    // Transitions are part of what the viewer sees, so editing one has to
+    // rebuild the timeline the same way swapping a frame does.
+    const transition = beat.beatDirection?.transition
+    if (transition) parts.push(`tx:${beat.beatId}:${transition}`)
+  }
+
+  if (typeof scene.transitionToNext === 'string' && scene.transitionToNext) {
+    parts.push(`tx:scene:${scene.transitionToNext}`)
   }
 
   return parts.join('|')
