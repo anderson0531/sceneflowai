@@ -46,6 +46,17 @@ export interface RenderSegment {
   duration: number
   /** Ken Burns animation settings (optional) */
   kenBurns?: KenBurnsSettings
+  /**
+   * How this segment arrives from the previous one. Absent means a hard cut,
+   * which is what every segment did before the renderer learned `xfade`.
+   */
+  transitionIn?: 'dissolve' | 'fade'
+  /**
+   * Seconds of overlap with the previous segment, which the renderer fades
+   * across and then reclaims. The previous segment's duration already
+   * includes it.
+   */
+  transitionInSec?: number
 }
 
 /**

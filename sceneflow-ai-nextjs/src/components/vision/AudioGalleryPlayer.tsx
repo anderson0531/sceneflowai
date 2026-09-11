@@ -32,6 +32,8 @@ import {
   SCENE_FADE_TO_BLACK_SEC,
 } from '@/lib/storyboard/types'
 import {
+  computeFrameFadeIn,
+  computeFrameFadeOut,
   computeSceneStartFadeBlack,
   shouldSkipPosterToPrimaryCrossfade,
 } from '@/lib/storyboard/animaticSceneFade'
@@ -274,7 +276,14 @@ export function AudioGalleryPlayer({
   const [imageEffectPrefs, setImageEffectPrefs] = useState<GalleryImageEffectPrefs>(() =>
     loadGalleryImageEffectPrefs()
   )
-  const [crossfadeFromUrl, setCrossfadeFromUrl] = useState<string | null>(null)
+  /**
+   * The frame we are dissolving away from, and how long that takes. An
+   * authored dissolve sets its own length; the viewer's global crossfade
+   * preference uses the house one.
+   */
+  const [crossfade, setCrossfade] = useState<{ url: string; durationMs: number } | null>(null)
+  const crossfadeFromUrl = crossfade?.url ?? null
+  const crossfadeDurationMs = crossfade?.durationMs ?? CROSSFADE_DURATION_MS
   const videoRef = useRef<HTMLVideoElement>(null)
   const [videoPlaying, setVideoPlaying] = useState(false)
   const [videoCurrentTime, setVideoCurrentTime] = useState(0)
@@ -472,6 +481,7 @@ export function AudioGalleryPlayer({
 
   const playback = useStoryboardPlayback({
     scene: currentScene,
+    sceneTransitionIn: scenes[currentSceneIndex - 1]?.transitionToNext,
     language: selectedLanguage,
     volume,
     dialogueVolume,
@@ -523,19 +533,19 @@ export function AudioGalleryPlayer({
       !!screeningPosterUrl &&
       (screeningPosterUrl === primaryUrl || screeningPosterMatchesPrimary)
 
-    let fadeBlack = computeSceneStartFadeBlack(t, SCENE_FADE_TO_BLACK_SEC, {
-      isSceneStart: !!frame.isSceneStart,
-      skipFadeFromBlack,
-    })
-    if (frame.isSceneEnd) {
-      const fadeStart = Math.max(0, frameDuration - SCENE_FADE_TO_BLACK_SEC)
-      if (t >= fadeStart) {
-        fadeBlack = Math.max(
-          fadeBlack,
-          Math.min(1, (t - fadeStart) / SCENE_FADE_TO_BLACK_SEC)
-        )
-      }
-    }
+    // Both halves of a fade through black belong to the frames either side of
+    // it, so a beat-to-beat FADE reads exactly like a scene boundary — the only
+    // difference is how long it runs and who authored it.
+    const fadeInSec = frame.transitionIn === 'fade' ? (frame.transitionInSec ?? 0) : 0
+    const fadeOutSec = frame.transitionOut === 'fade' ? (frame.transitionOutSec ?? 0) : 0
+
+    const fadeIn = frame.isSceneStart
+      ? computeSceneStartFadeBlack(t, fadeInSec, {
+          isSceneStart: true,
+          skipFadeFromBlack,
+        })
+      : computeFrameFadeIn(t, fadeInSec)
+    const fadeBlack = Math.max(fadeIn, computeFrameFadeOut(t, frameDuration, fadeOutSec))
 
     return { primaryUrl, overlayUrl: null as string | null, blend: 0, fadeBlack }
   }, [
@@ -625,29 +635,50 @@ export function AudioGalleryPlayer({
     setVisualFrameKey(prev => (prev === next ? prev : next))
   }, [currentSceneIndex, currentVisualFrame?.clipId, currentVisualFrame?.dialogueIndex, currentVisualFrame?.frameType])
 
+  /**
+   * Whether the join we are arriving on dissolves, and over how long.
+   *
+   * An authored DISSOLVE always plays. A fade through black never also
+   * dissolves — the black already hides the change. Everything else falls back
+   * to the viewer's global crossfade preference, which is how this worked
+   * before beats could ask for anything.
+   */
+  const arrivingDissolveMs = useMemo(() => {
+    const transitionIn = currentVisualFrame?.transitionIn
+    if (transitionIn === 'dissolve') {
+      return Math.round((currentVisualFrame?.transitionInSec ?? 0) * 1000) || CROSSFADE_DURATION_MS
+    }
+    if (transitionIn === 'fade') return 0
+    return imageEffectPrefs.mode === 'crossfade' ? CROSSFADE_DURATION_MS : 0
+  }, [
+    currentVisualFrame?.transitionIn,
+    currentVisualFrame?.transitionInSec,
+    imageEffectPrefs.mode,
+  ])
+
   // Crossfade between dialogue frames (inter-beat); in-beat start→end uses inBeatVisual
   useEffect(() => {
     const url = inBeatVisual.primaryUrl
     if (!url) {
       lastImageUrlRef.current = null
-      setCrossfadeFromUrl(null)
+      setCrossfade(null)
       return
     }
     const prev = lastImageUrlRef.current
     if (
       prev &&
       prev !== url &&
-      imageEffectPrefs.mode === 'crossfade' &&
+      arrivingDissolveMs > 0 &&
       !inBeatVisual.overlayUrl &&
       !shouldSkipPosterToPrimaryCrossfade(prev, url, screeningPosterUrl)
     ) {
-      setCrossfadeFromUrl(prev)
-      const timer = setTimeout(() => setCrossfadeFromUrl(null), CROSSFADE_DURATION_MS)
+      setCrossfade({ url: prev, durationMs: arrivingDissolveMs })
+      const timer = setTimeout(() => setCrossfade(null), arrivingDissolveMs)
       lastImageUrlRef.current = url
       return () => clearTimeout(timer)
     }
     lastImageUrlRef.current = url
-  }, [inBeatVisual.primaryUrl, inBeatVisual.overlayUrl, imageEffectPrefs.mode, screeningPosterUrl])
+  }, [inBeatVisual.primaryUrl, inBeatVisual.overlayUrl, arrivingDissolveMs, screeningPosterUrl])
 
   const goToPrevScene = useCallback(() => {
     if (playbackMode === 'video') {
@@ -895,9 +926,9 @@ export function AudioGalleryPlayer({
               ? 'transform 0.1s linear'
               : 'transform 0.2s ease-out',
           animation: isPrevious
-            ? `galleryCrossfadeOut ${CROSSFADE_DURATION_MS}ms ease-in-out forwards`
-            : crossfadeFromUrl && imageEffectPrefs.mode === 'crossfade'
-              ? `galleryCrossfadeIn ${CROSSFADE_DURATION_MS}ms ease-in-out forwards`
+            ? `galleryCrossfadeOut ${crossfadeDurationMs}ms ease-in-out forwards`
+            : crossfadeFromUrl
+              ? `galleryCrossfadeIn ${crossfadeDurationMs}ms ease-in-out forwards`
               : undefined,
         }}
       />
@@ -1195,9 +1226,7 @@ export function AudioGalleryPlayer({
         </>
       ) : inBeatVisual.primaryUrl ? (
         <>
-          {crossfadeFromUrl && imageEffectPrefs.mode === 'crossfade' && (
-            renderSceneImage(crossfadeFromUrl, 'previous')
-          )}
+          {crossfadeFromUrl && renderSceneImage(crossfadeFromUrl, 'previous')}
           {renderSceneImage(
             showPosterStill ? screeningPosterUrl! : inBeatVisual.primaryUrl,
             'current'

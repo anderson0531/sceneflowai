@@ -2,6 +2,28 @@
  * Scene fade helpers for Screening Room animatic playback.
  */
 
+/** How black a frame still is while it fades up, at the head of its window. */
+export function computeFrameFadeIn(
+  timeIntoFrame: number,
+  fadeDurationSec: number
+): number {
+  if (fadeDurationSec <= 0) return 0
+  if (timeIntoFrame >= fadeDurationSec) return 0
+  return Math.max(0, 1 - timeIntoFrame / fadeDurationSec)
+}
+
+/** How black a frame has gone while it fades down, at the tail of its window. */
+export function computeFrameFadeOut(
+  timeIntoFrame: number,
+  frameDurationSec: number,
+  fadeDurationSec: number
+): number {
+  if (fadeDurationSec <= 0) return 0
+  const fadeStart = Math.max(0, frameDurationSec - fadeDurationSec)
+  if (timeIntoFrame < fadeStart) return 0
+  return Math.min(1, (timeIntoFrame - fadeStart) / fadeDurationSec)
+}
+
 /**
  * Fade-from-black amount at the start of a scene frame.
  * Skip when idle poster already showed this start frame (press-play on same scene).
@@ -15,9 +37,7 @@ export function computeSceneStartFadeBlack(
   }
 ): number {
   if (!options.isSceneStart || options.skipFadeFromBlack) return 0
-  if (fadeDurationSec <= 0) return 0
-  if (timeIntoFrame >= fadeDurationSec) return 0
-  return Math.max(0, 1 - timeIntoFrame / fadeDurationSec)
+  return computeFrameFadeIn(timeIntoFrame, fadeDurationSec)
 }
 
 /** True when switching from screening poster to the same beat-1 URL should not crossfade. */

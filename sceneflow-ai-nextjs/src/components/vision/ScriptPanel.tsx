@@ -153,6 +153,7 @@ import { BeatSfxToggle } from '@/components/vision/BeatSfxToggle'
 import { BeatExcludeToggle } from '@/components/vision/BeatExcludeToggle'
 import { BeatDirectionEditor } from '@/components/vision/BeatDirectionEditor'
 import { BeatCaptionControl } from '@/components/vision/BeatCaptionControl'
+import { SceneTransitionSelect } from '@/components/vision/SceneTransitionSelect'
 import { ExportDialog } from './ExportDialog'
 import { isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
 import { isPreVisStale } from '@/lib/storyboard/preVisSync'
@@ -7567,6 +7568,13 @@ function SceneCard({
                       </div>
                       </SortableContext>
                       </DndContext>
+                      <SceneTransitionSelect
+                        sceneIdx={sceneIdx}
+                        scenes={scenes}
+                        script={script}
+                        onScriptChange={onScriptChange}
+                        className="mt-4 pt-3 border-t border-slate-700/50"
+                      />
                     </div>
                     )
                   })()}

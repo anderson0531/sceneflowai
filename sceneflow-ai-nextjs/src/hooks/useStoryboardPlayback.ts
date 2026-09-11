@@ -14,8 +14,9 @@ import {
   buildStoryboardVisualTimeline,
   getCurrentStoryboardVisualFrame,
   type StoryboardVisualFrame,
-  SCENE_FADE_TO_BLACK_SEC,
 } from '@/lib/storyboard/types'
+import { computeFrameFadeOut } from '@/lib/storyboard/animaticSceneFade'
+import type { BeatDirectionTransition } from '@/lib/script/segmentTypes'
 import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
 import {
   buildStoryboardMusicClips,
@@ -44,6 +45,12 @@ export interface UseStoryboardPlaybackOptions {
   sfxVolume?: number
   isMuted?: boolean
   musicIntroFade?: MusicIntroFadeConfig
+  /**
+   * The previous scene's `transitionToNext`. A scene only knows its own
+   * timeline, so whoever is stepping through a run of them has to say whether
+   * this one fades up from black or is cut straight into.
+   */
+  sceneTransitionIn?: BeatDirectionTransition
   onPlaybackEnd?: () => void
 }
 
@@ -126,6 +133,7 @@ export function useStoryboardPlayback({
   sfxVolume = DEFAULT_MIXER_AUDIO_TRACKS.sfx.volume,
   isMuted = false,
   musicIntroFade,
+  sceneTransitionIn,
   onPlaybackEnd,
 }: UseStoryboardPlaybackOptions): UseStoryboardPlaybackReturn {
   const [dynamicDurations, setDynamicDurations] = useState<Record<string, number>>({})
@@ -191,8 +199,9 @@ export function useStoryboardPlayback({
     if (!activeScene?.beats?.length) return null
     return buildBeatFirstPlaybackTimeline(activeScene, language, dynamicDurations, {
       preVisAnimatic: true,
+      sceneTransitionIn,
     })
-  }, [sceneAudioRevision, sceneVisualRevision, language, dynamicDurationKey])
+  }, [sceneAudioRevision, sceneVisualRevision, language, dynamicDurationKey, sceneTransitionIn])
 
   const voiceClips = useMemo(() => {
     const activeScene = sceneRef.current
@@ -354,14 +363,15 @@ export function useStoryboardPlayback({
 
   useEffect(() => {
     const frame = getCurrentStoryboardVisualFrame(visualFrames, currentTime)
-    let duck = 1
-    if (frame?.isSceneEnd) {
-      const fadeStart = Math.max(0, frame.duration - SCENE_FADE_TO_BLACK_SEC)
-      const t = currentTime - frame.startTime
-      if (t >= fadeStart) {
-        duck = 1 - Math.min(1, (t - fadeStart) / SCENE_FADE_TO_BLACK_SEC) * 0.75
-      }
-    }
+    // Music and SFX duck under a fade to black so the picture and the score
+    // reach the boundary together. A scene that cuts away has no black to duck
+    // under, so it stays at level right to the last sample.
+    const fadeOutSec = frame?.transitionOut === 'fade' ? (frame.transitionOutSec ?? 0) : 0
+    const duck =
+      frame && fadeOutSec > 0
+        ? 1 -
+          computeFrameFadeOut(currentTime - frame.startTime, frame.duration, fadeOutSec) * 0.75
+        : 1
     setTrackVolume('voiceover', effectiveDialogueVolume)
     setTrackVolume('dialogue', effectiveDialogueVolume)
     setTrackVolume('music', effectiveMusicVolume * duck)

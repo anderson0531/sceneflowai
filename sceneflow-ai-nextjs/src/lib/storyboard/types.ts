@@ -10,7 +10,11 @@ import {
   findDialogueAudioForLine,
 } from '@/components/vision/scene-production/audioTrackBuilder'
 import { getSceneBeats, getStoryboardTimelineBeats, isBeatExcluded } from '@/lib/script/beatMigration'
-import type { SceneBeat, BeatOverlayType } from '@/lib/script/segmentTypes'
+import type {
+  BeatDirectionTransition,
+  BeatOverlayType,
+  SceneBeat,
+} from '@/lib/script/segmentTypes'
 import { resolveEffectiveStoryboardTier } from '@/lib/storyboard/storyboardQuality'
 import { NARRATOR_CHARACTER, NARRATOR_CHARACTER_ID } from '@/lib/script/segmentTypes'
 import { generateAliases, toCanonicalName } from '@/lib/character/canonical'
@@ -20,13 +24,19 @@ import { buildStoryboardMusicClips, resolveSceneMusicFileDuration } from '@/lib/
 import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
 import { getBeatOverlayFields } from '@/lib/storyboard/beatCaption'
 import type { BeatKenBurnsSettings } from '@/lib/storyboard/kenBurnsFrame'
+import {
+  SCENE_FADE_TO_BLACK_SEC,
+  resolveBeatTransition,
+  resolveSceneTransition,
+  transitionTailSec,
+} from '@/lib/storyboard/transitions'
+import type { PlayableTransition, ResolvedTransition } from '@/lib/storyboard/transitions'
 import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 
 const NARRATION_CLIP_BUFFER_SEC = 0.5
 const DIALOGUE_CLIP_BUFFER_SEC = 0.3
 const DEFAULT_CLIP_DURATION_SEC = 3
-/** Fade-to-black duration between scenes in playback and animatic export. */
-export const SCENE_FADE_TO_BLACK_SEC = 1
+export { SCENE_FADE_TO_BLACK_SEC }
 /** Silent establishing/action beat hold when no durationSeconds is stored. */
 const DEFAULT_ACTION_BEAT_DURATION_SEC = 4
 
@@ -107,6 +117,20 @@ export interface StoryboardVisualFrame {
   isSceneStart?: boolean
   /** Per-beat Ken Burns settings authored on the Frames tab. */
   kenBurns?: BeatKenBurnsSettings
+  /**
+   * Resolved transition out of this frame into the next, from the beat's own
+   * `beatDirection.transition` — or, on the last beat, the scene's
+   * `transitionToNext`.
+   */
+  transitionOut?: PlayableTransition
+  transitionOutSec?: number
+  /**
+   * Resolved transition into this frame from the previous one. The same join
+   * as the previous frame's `transitionOut`, repeated here because the player
+   * only ever holds the frame it is currently showing.
+   */
+  transitionIn?: PlayableTransition
+  transitionInSec?: number
 }
 
 function createStoryboardFrameId(): string {
@@ -1135,6 +1159,14 @@ export function buildStoryboardVisualRevision(
   for (const beat of getSceneBeats(scene)) {
     const url = beat.storyboardImageUrl?.trim()
     if (url) parts.push(`beat:${beat.beatId}:${url}`)
+    // Transitions are part of what the viewer sees, so editing one has to
+    // rebuild the timeline the same way swapping a frame does.
+    const transition = beat.beatDirection?.transition
+    if (transition) parts.push(`tx:${beat.beatId}:${transition}`)
+  }
+
+  if (typeof scene.transitionToNext === 'string' && scene.transitionToNext) {
+    parts.push(`tx:scene:${scene.transitionToNext}`)
   }
 
   return parts.join('|')
@@ -1272,6 +1304,13 @@ export function buildStoryboardVoiceClips(
 export interface BeatFirstPlaybackOptions {
   /** Pre-Vis animatic: start frame only, 10s hold when no voice audio. */
   preVisAnimatic?: boolean
+  /**
+   * The previous scene's `transitionToNext`, which owns the join this scene
+   * opens on. A scene builds its own timeline and cannot see the one before
+   * it, so whoever is playing a run of scenes has to say. Omitted means the
+   * historical fade up from black.
+   */
+  sceneTransitionIn?: BeatDirectionTransition
 }
 
 function resolveActionBeatDuration(
@@ -1543,27 +1582,53 @@ export function buildBeatFirstPlaybackTimeline(
     currentStartTime += duration + DIALOGUE_CLIP_BUFFER_SEC
   }
 
-  const visualFrames: StoryboardVisualFrame[] = windows.map((win, index) => ({
-    clipId: win.clipId,
-    beatId: win.beatId,
-    frameType: win.kind === 'action' ? 'establishing' : 'dialogue',
-    dialogueIndex: win.dialogueIndex,
-    imageUrl: win.imageUrl,
-    endImageUrl: win.endImageUrl,
-    startTime: win.startTime,
-    duration:
-      index < windows.length - 1
-        ? windows[index + 1].startTime - win.startTime
-        : win.duration + (win.isSceneEnd ? SCENE_FADE_TO_BLACK_SEC : 0),
-    label: win.label,
-    character: win.character,
-    line: win.line,
-    overlayText: win.overlayText,
-    overlayType: win.overlayType,
-    isSceneEnd: win.isSceneEnd,
-    isSceneStart: index === 0,
-    kenBurns: win.kenBurns,
-  }))
+  const transitionByBeatId = new Map(
+    beats.map((beat) => [beat.beatId, beat.beatDirection?.transition])
+  )
+  const sceneTransitionOut = resolveSceneTransition(
+    scene.transitionToNext as BeatDirectionTransition | undefined
+  )
+  const sceneTransitionIn = resolveSceneTransition(options?.sceneTransitionIn)
+
+  // A beat-to-beat transition plays inside the two frames it joins, so it never
+  // moves a start time. Only the scene boundary can lengthen the scene, and only
+  // when it goes through black and has to hold it.
+  const baseDurations = windows.map((win, index) =>
+    index < windows.length - 1 ? windows[index + 1].startTime - win.startTime : win.duration
+  )
+  const transitionsOut: ResolvedTransition[] = windows.map((win, index) =>
+    index === windows.length - 1 && win.isSceneEnd
+      ? sceneTransitionOut
+      : resolveBeatTransition(transitionByBeatId.get(win.beatId), baseDurations[index])
+  )
+
+  const visualFrames: StoryboardVisualFrame[] = windows.map((win, index) => {
+    const isLast = index === windows.length - 1
+    const transitionOut = transitionsOut[index]
+    const transitionIn = index > 0 ? transitionsOut[index - 1] : sceneTransitionIn
+    return {
+      clipId: win.clipId,
+      beatId: win.beatId,
+      frameType: win.kind === 'action' ? 'establishing' : 'dialogue',
+      dialogueIndex: win.dialogueIndex,
+      imageUrl: win.imageUrl,
+      endImageUrl: win.endImageUrl,
+      startTime: win.startTime,
+      duration: baseDurations[index] + (isLast ? transitionTailSec(transitionOut) : 0),
+      label: win.label,
+      character: win.character,
+      line: win.line,
+      overlayText: win.overlayText,
+      overlayType: win.overlayType,
+      isSceneEnd: win.isSceneEnd,
+      isSceneStart: index === 0,
+      kenBurns: win.kenBurns,
+      transitionOut: transitionOut.effect,
+      transitionOutSec: transitionOut.durationSec,
+      transitionIn: transitionIn.effect,
+      transitionInSec: transitionIn.durationSec,
+    }
+  })
 
   return {
     voiceClips: extendVoiceClipsToVisualFrameDuration(voiceClips, visualFrames),
@@ -1812,6 +1877,18 @@ export interface ProjectAnimaticRenderSegment {
   startTime: number
   duration: number
   kenBurns?: BeatKenBurnsSettings
+  /**
+   * How this segment arrives from the one before it, and how long that takes.
+   * Absent means a hard cut.
+   *
+   * `transitionInSec` is also the overlap between the two segments: the
+   * previous one runs that much past this one's `startTime`, which is what
+   * gives the renderer material to fade across. Sum the durations, subtract
+   * the transitions, and you are back at `totalDuration` — that identity is
+   * what keeps the picture with the audio.
+   */
+  transitionIn?: PlayableTransition
+  transitionInSec?: number
 }
 
 export interface ProjectAnimaticAudioClip {
@@ -1835,6 +1912,46 @@ export interface ProjectAnimaticTimelineOptions {
   interSceneFadeUrl?: string
   /** Duration of each inter-scene black segment (default SCENE_FADE_TO_BLACK_SEC). */
   interSceneFadeSec?: number
+  /**
+   * Emit overlapping segments for authored dissolves and fades.
+   *
+   * Off by default because it is a contract with the renderer, not just extra
+   * metadata: a segment that hands over to the next one carries the overlap in
+   * its own duration, so a renderer that hard-concatenates without reading
+   * `transitionIn` produces a video longer than its soundtrack. Turn this on
+   * only once the ffmpeg container understands the field.
+   */
+  transitions?: boolean
+}
+
+/**
+ * Turn each authored join into an overlap the renderer can fade across.
+ *
+ * A transition costs time that has to come from somewhere. In the player the
+ * outgoing frame simply stays on screen, drawn over the incoming one, for the
+ * length of the effect — so here the outgoing segment is lengthened by exactly
+ * that much and the incoming one records it as the overlap to consume. Nothing
+ * moves, and the durations and the overlaps cancel back to `totalDuration`.
+ *
+ * Segments that already overlap, like a beat's start and end frames, are
+ * tagged where they are built and skipped here.
+ */
+function applySegmentTransitions(
+  segments: ProjectAnimaticRenderSegment[],
+  joins: Array<ResolvedTransition | null>
+): void {
+  for (let i = 0; i < segments.length - 1; i++) {
+    const join = joins[i]
+    if (!join || join.effect === 'cut' || join.durationSec <= 0) continue
+    if (segments[i + 1].transitionIn) continue
+
+    segments[i] = { ...segments[i], duration: segments[i].duration + join.durationSec }
+    segments[i + 1] = {
+      ...segments[i + 1],
+      transitionIn: join.effect,
+      transitionInSec: join.durationSec,
+    }
+  }
 }
 
 /**
@@ -1848,11 +1965,14 @@ export function buildProjectAnimaticTimeline(
   options?: ProjectAnimaticTimelineOptions
 ): ProjectAnimaticTimeline {
   const preVisAnimatic = options?.preVisAnimatic === true
+  const emitTransitions = options?.transitions === true
   const interSceneFadeUrl = options?.interSceneFadeUrl
   const interSceneFadeSec = options?.interSceneFadeSec ?? SCENE_FADE_TO_BLACK_SEC
 
   let globalOffset = 0
   const segments: ProjectAnimaticRenderSegment[] = []
+  /** How each segment hands over to the one after it. Parallel to `segments`. */
+  const joins: Array<ResolvedTransition | null> = []
   const audioClips: ProjectAnimaticAudioClip[] = []
 
   for (let sceneIndex = 0; sceneIndex < scenes.length; sceneIndex++) {
@@ -1917,10 +2037,20 @@ export function buildProjectAnimaticTimeline(
       })
     }
 
+    // Read off the scene rather than off its last frame: a scene whose final
+    // beat is excluded or has no image still ends the same way.
+    const sceneHandover = resolveSceneTransition(
+      scene.transitionToNext as BeatDirectionTransition | undefined
+    )
+
     for (const frame of visualFrames) {
       if (!frame.imageUrl) continue
       const frameStart = globalOffset + frame.startTime
       const frameDuration = frame.duration
+      const handover: ResolvedTransition = {
+        effect: frame.transitionOut ?? 'cut',
+        durationSec: frame.transitionOutSec ?? 0,
+      }
 
       if (frame.endImageUrl) {
         const crossfadeDur = Math.min(IN_BEAT_CROSSFADE_MAX_SEC, frameDuration * 0.25)
@@ -1935,6 +2065,9 @@ export function buildProjectAnimaticTimeline(
           duration: startDur,
           kenBurns: frame.kenBurns,
         })
+        // The end frame already starts inside the start frame's window, so
+        // this join needs tagging but not lengthening.
+        joins.push(null)
         segments.push({
           segmentId: `s${sceneIndex}-${frame.clipId}-end`,
           sceneIndex,
@@ -1943,7 +2076,11 @@ export function buildProjectAnimaticTimeline(
           startTime: frameStart + startDur - crossfadeDur,
           duration: endDur,
           kenBurns: frame.kenBurns,
+          ...(emitTransitions
+            ? { transitionIn: 'dissolve' as const, transitionInSec: crossfadeDur }
+            : {}),
         })
+        joins.push(handover)
       } else {
         segments.push({
           segmentId: `s${sceneIndex}-${frame.clipId}`,
@@ -1954,12 +2091,26 @@ export function buildProjectAnimaticTimeline(
           duration: frameDuration,
           kenBurns: frame.kenBurns,
         })
+        joins.push(handover)
       }
     }
 
     globalOffset += sceneDuration
 
-    if (interSceneFadeUrl && sceneIndex < scenes.length - 1) {
+    // Black between scenes belongs to a scene that fades out. One that cuts or
+    // dissolves into the next has said it does not want to go through black.
+    if (
+      interSceneFadeUrl &&
+      sceneIndex < scenes.length - 1 &&
+      sceneHandover.effect === 'fade'
+    ) {
+      // The scene's own handover now describes how it reaches the black rather
+      // than how it reaches the next scene, and the black fades up from there.
+      const throughBlack: ResolvedTransition = {
+        effect: 'dissolve',
+        durationSec: Math.min(interSceneFadeSec, sceneHandover.durationSec),
+      }
+      if (joins.length > 0) joins[joins.length - 1] = throughBlack
       segments.push({
         segmentId: `s${sceneIndex}-fade`,
         sceneIndex,
@@ -1967,9 +2118,12 @@ export function buildProjectAnimaticTimeline(
         startTime: globalOffset,
         duration: interSceneFadeSec,
       })
+      joins.push(throughBlack)
       globalOffset += interSceneFadeSec
     }
   }
+
+  if (emitTransitions) applySegmentTransitions(segments, joins)
 
   return {
     totalDuration: globalOffset,
