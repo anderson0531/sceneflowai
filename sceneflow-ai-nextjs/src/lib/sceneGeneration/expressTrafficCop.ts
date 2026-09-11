@@ -39,6 +39,9 @@ const EXPRESS_LANES: ExpressLane[] = ['text', 'image', 'audio']
 /** Default image in-flight cap — sequential identity-ref jobs. */
 export const DEFAULT_EXPRESS_IMAGE_CONCURRENCY = 1
 
+/** Draft animatic beats run on flash, whose quota tolerates two in flight. */
+export const DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY = 2
+
 /** Default TTS in-flight cap for Express Audio / Storyboard Express audio lane. */
 export const DEFAULT_EXPRESS_AUDIO_CONCURRENCY = 8
 
@@ -52,10 +55,12 @@ export function getExpressSceneConcurrency(): number {
 }
 
 /** Image-lane max; override via EXPRESS_IMAGE_CONCURRENCY when dedicated GCP arrives. */
-export function getExpressImageConcurrency(): number {
+export function getExpressImageConcurrency(opts?: { flashAnimatic?: boolean }): number {
   return parsePositiveInt(
     process.env.EXPRESS_IMAGE_CONCURRENCY,
-    DEFAULT_EXPRESS_IMAGE_CONCURRENCY
+    opts?.flashAnimatic
+      ? DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY
+      : DEFAULT_EXPRESS_IMAGE_CONCURRENCY
   )
 }
 

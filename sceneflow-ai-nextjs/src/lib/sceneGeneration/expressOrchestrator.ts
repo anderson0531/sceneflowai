@@ -31,6 +31,7 @@ import {
 } from './expressImageErrors'
 import {
   ExpressTrafficCop,
+  getExpressImageConcurrency,
   getExpressSceneConcurrency,
 } from './expressTrafficCop'
 import type {
@@ -48,6 +49,7 @@ import { runSceneExpressPreflight } from './sceneExpressPreflight'
 import { generateSceneDirection } from './generateDirection'
 import { generateSceneAudio, applyAudioAssetsToScene } from './generateAudio'
 import { generateSceneImage } from './generateImage'
+import { usesFlashAnimaticTier } from './animaticImageModel'
 import { shouldScheduleStandaloneNarration } from '../script/narration'
 import {
   mapBeatReferenceSelectionForApi,
@@ -131,7 +133,16 @@ function getExpressImageParams(options: ExpressOptions) {
         ? options.imageQuality
         : undefined,
   })
-  return { ...gen, ...EXPRESS_SKIP_LIKENESS }
+  // Draft beats are animatic coverage — the image route may serve them from flash.
+  return { ...gen, animaticDraft: gen.modelTier === 'eco', ...EXPRESS_SKIP_LIKENESS }
+}
+
+/** Draft beats on flash get a wider image lane than pro identity-ref frames. */
+function usesFlashAnimaticRun(options: ExpressOptions): boolean {
+  return usesFlashAnimaticTier({
+    isBeatFrame: true,
+    animaticDraft: getExpressImageParams(options).animaticDraft,
+  })
 }
 
 function getBeatGenerationContext(options: ExpressOptions) {
@@ -463,8 +474,13 @@ function recordRateLimitedFailure(
   failures.push(entry)
 }
 
-function buildAdaptiveBeatPoolOptions(emit: ExpressEmit): AdaptiveBeatPoolOptions {
-  const concurrency = getSceneExpressBeatConcurrency()
+function buildAdaptiveBeatPoolOptions(
+  emit: ExpressEmit,
+  options: ExpressOptions
+): AdaptiveBeatPoolOptions {
+  const concurrency = getSceneExpressBeatConcurrency({
+    flashAnimatic: usesFlashAnimaticRun(options),
+  })
   return {
     initialConcurrency: concurrency,
     maxConcurrency: concurrency,
@@ -763,13 +779,6 @@ async function generateSingleBeatImage(
   beatPlan?: BeatKeyframePlan
 ): Promise<{ imageUrl: string }> {
   const { sceneIndex, sceneNumber, scene } = ctx
-  safeEmit(emit, {
-    type: 'frame-start',
-    sceneIndex,
-    sceneNumber,
-    beatIndex: beatIdx,
-    frameRole: 'start',
-  })
   const imageParams = getExpressImageParams(options)
   const excludeCharacters = isStoryboardNoCharacterScene(scene, sceneNumber)
   const beats = getSceneBeats(scene)
@@ -791,30 +800,40 @@ async function generateSingleBeatImage(
   }
   const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs?.api ?? null, excludeCharacters)
 
-  const result = await trafficCop.runInLane('image', () =>
-    generateSceneImage({
-    projectId: options.projectId,
-    sceneIndex,
-    baseUrl,
-    authCookie,
-    quality: imageParams.quality,
-    storyboardQuality: imageParams.storyboardQuality,
-    artStyle,
-    frameType: 'beat',
-    beatIndex: beatIdx,
-    ...(beat?.beatId ? { beatId: beat.beatId } : {}),
-    sceneOverride: scene,
-    ...beatRefPayload,
-    ...(excludeCharacters ? { excludeCharacters: true } : {}),
-    useAIPrompt: false,
-    ...(beatPlan?.prompt?.trim() ? { customPrompt: beatPlan.prompt } : {}),
-    ...(typeof beatPlan?.allowTypography === 'boolean'
-      ? { allowTypography: beatPlan.allowTypography }
-      : {}),
-    modelTier: imageParams.modelTier,
-    skipLikenessValidation: true,
+  // Emitted after the lane grants a slot, so the UI shows what is generating
+  // rather than every queued beat at once.
+  const result = await trafficCop.runInLane('image', () => {
+    safeEmit(emit, {
+      type: 'frame-start',
+      sceneIndex,
+      sceneNumber,
+      beatIndex: beatIdx,
+      frameRole: 'start',
     })
-  )
+    return generateSceneImage({
+      projectId: options.projectId,
+      sceneIndex,
+      baseUrl,
+      authCookie,
+      quality: imageParams.quality,
+      storyboardQuality: imageParams.storyboardQuality,
+      artStyle,
+      frameType: 'beat',
+      beatIndex: beatIdx,
+      ...(beat?.beatId ? { beatId: beat.beatId } : {}),
+      sceneOverride: scene,
+      ...beatRefPayload,
+      ...(excludeCharacters ? { excludeCharacters: true } : {}),
+      useAIPrompt: false,
+      ...(beatPlan?.prompt?.trim() ? { customPrompt: beatPlan.prompt } : {}),
+      ...(typeof beatPlan?.allowTypography === 'boolean'
+        ? { allowTypography: beatPlan.allowTypography }
+        : {}),
+      modelTier: imageParams.modelTier,
+      animaticDraft: imageParams.animaticDraft,
+      skipLikenessValidation: true,
+    })
+  })
   await persistBeatFrame(scene, beatIdx, result, imageParams.storyboardQuality)
   safeEmit(emit, {
     type: 'phase-done',
@@ -869,16 +888,15 @@ async function generateSingleBeatEndImage(
   }
   const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs?.api ?? null, excludeCharacters)
 
-  safeEmit(emit, {
-    type: 'frame-start',
-    sceneIndex,
-    sceneNumber,
-    beatIndex: beatIdx,
-    frameRole: 'end',
-  })
-
-  const result = await trafficCop.runInLane('image', () =>
-    generateSceneImage({
+  const result = await trafficCop.runInLane('image', () => {
+    safeEmit(emit, {
+      type: 'frame-start',
+      sceneIndex,
+      sceneNumber,
+      beatIndex: beatIdx,
+      frameRole: 'end',
+    })
+    return generateSceneImage({
       projectId: options.projectId,
       sceneIndex,
       baseUrl,
@@ -897,9 +915,10 @@ async function generateSingleBeatEndImage(
       customPrompt: endPrompt,
       useAIPrompt: false,
       modelTier: imageParams.modelTier,
+      animaticDraft: imageParams.animaticDraft,
       skipLikenessValidation: imageParams.skipLikenessValidation,
     })
-  )
+  })
 
   await persistBeatEndFrame(scene, beatIdx, result, imageParams.storyboardQuality)
   safeEmit(emit, {
@@ -981,7 +1000,7 @@ async function runSupplementalEndFrames(
       )
       lastImageUrl = result.imageUrl
     },
-    buildAdaptiveBeatPoolOptions(emit)
+    buildAdaptiveBeatPoolOptions(emit, options)
   )
 
   for (const [beatIdx, err] of pool.failed) {
@@ -1063,7 +1082,7 @@ async function runBeatImages(
         )
         lastImageUrl = result.imageUrl
       },
-      buildAdaptiveBeatPoolOptions(emit)
+      buildAdaptiveBeatPoolOptions(emit, options)
     )
 
     for (const [beatIdx, err] of pool.failed) {
@@ -1859,6 +1878,9 @@ export async function runExpress(
   const storySpine = summarizeScenesForLookbook(scenes)
 
   const trafficCop = new ExpressTrafficCop({
+    laneMax: {
+      image: getExpressImageConcurrency({ flashAnimatic: usesFlashAnimaticRun(options) }),
+    },
     onThrottle: (lane, max, cooldownMs) => {
       safeEmit(emit, { type: 'throttle', lane, max, cooldownMs })
     },

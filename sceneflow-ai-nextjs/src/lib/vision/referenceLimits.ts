@@ -25,10 +25,13 @@ export function resolveEffectiveImageTier(args: {
   modelTier?: VertexImageTier
   distinctCharacterCount: number
   totalWantedRefs: number
+  /** Express animatic beats keep the eco (flash) tier even with references attached. */
+  allowEcoWithReferences?: boolean
 }): VertexImageTier {
   const baseTier = args.modelTier ?? 'designer'
   if (
     baseTier === 'eco' &&
+    !args.allowEcoWithReferences &&
     (args.totalWantedRefs > 0 || args.distinctCharacterCount >= 1)
   ) {
     return 'designer'

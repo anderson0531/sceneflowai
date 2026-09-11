@@ -63,6 +63,8 @@ export interface GenerateSceneImageParams {
   sceneOverride?: Record<string, unknown>
   /** Vertex image tier — Express beat frames are promoted to designer when generating. */
   modelTier?: 'eco' | 'designer' | 'director'
+  /** Express draft beat frame — opts this request into the flash image model. */
+  animaticDraft?: boolean
   /** Skip post-generation likeness validation (Express batch). */
   skipLikenessValidation?: boolean
 }
@@ -111,6 +113,7 @@ export async function generateSceneImage(
     customFrameId,
     sceneOverride,
     modelTier,
+    animaticDraft,
     skipLikenessValidation,
     frameRole,
     startFrameUrl,
@@ -161,6 +164,7 @@ export async function generateSceneImage(
       ...(startFrameUrl ? { startFrameUrl } : {}),
       ...(sceneOverride ? { sceneOverride } : {}),
       ...(modelTier ? { modelTier } : {}),
+      ...(animaticDraft ? { animaticDraft: true } : {}),
       ...(skipLikenessValidation ? { skipLikenessValidation: true } : {}),
     }),
   })

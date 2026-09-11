@@ -13,8 +13,15 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
   return Number.isFinite(n) && n >= 1 ? Math.floor(n) : fallback
 }
 
-/** Runtime beat concurrency for Scene Express (aligned with image lane, default 2). */
+/** Runtime beat concurrency for Scene Express, aligned with the image lane. */
 export const DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY = 1
+
+/**
+ * Draft animatic beats run on flash, which has its own larger quota than the pro
+ * image model, so two can be in flight without reproducing the 429 storm that
+ * forced pro identity-ref frames back to sequential.
+ */
+export const DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY = 2
 
 /**
  * Attempts per beat before it is reported as failed.
@@ -34,12 +41,16 @@ export function getSceneExpressBeatMaxAttempts(): number {
   )
 }
 
-export function getSceneExpressBeatConcurrency(): number {
+export function getSceneExpressBeatConcurrency(opts?: {
+  flashAnimatic?: boolean
+}): number {
   return parsePositiveInt(
     process.env.SCENE_EXPRESS_BEAT_CONCURRENCY ??
       process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY ??
       process.env.EXPRESS_IMAGE_CONCURRENCY,
-    DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY
+    opts?.flashAnimatic
+      ? DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY
+      : DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY
   )
 }
 
