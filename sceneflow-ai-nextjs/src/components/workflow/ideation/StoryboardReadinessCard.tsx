@@ -58,7 +58,7 @@ const attributeConfig = {
   sr_pacing: { label: 'Pacing', icon: Zap, description: 'Rhythm and timing' },
   sr_platformDeliverables: { label: 'Platform Deliverables', icon: Monitor, description: 'Format requirements' },
   sr_branding: { label: 'Branding', icon: Shield, description: 'Brand guidelines and elements' },
-  sr_propsContinuity: { label: 'Props & Continuity', icon: Puzzle, description: 'Object consistency' },
+  sr_propsContinuity: { label: 'Objects & Continuity', icon: Puzzle, description: 'Object consistency' },
   sr_accessibility: { label: 'Accessibility', icon: Users, description: 'Inclusive design considerations' },
   sr_storyboardHints: { label: 'Pre-vis Hints', icon: Lightbulb, description: 'Additional guidance' }
 }

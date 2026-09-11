@@ -413,7 +413,7 @@ export function ImageEditModal({
                   <div className="mt-3 space-y-2">
                     <Label className="text-slate-300 flex items-center gap-2">
                       <Package className="w-3 h-3" />
-                      Include Props for Consistency
+                      Include Objects for Consistency
                     </Label>
                     <div className="grid grid-cols-4 gap-2 max-h-28 overflow-y-auto p-2 bg-slate-800 rounded border border-slate-700">
                       {objectReferences.map((ref) => (

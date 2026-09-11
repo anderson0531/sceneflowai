@@ -240,7 +240,7 @@ export function BeatDirectionEditor({
           </label>
 
           <label className="flex flex-col gap-1">
-            <span className="text-[10px] uppercase text-gray-500">Prop interaction</span>
+            <span className="text-[10px] uppercase text-gray-500">Object interaction</span>
             <input
               className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
               value={direction?.propInteraction ?? ''}

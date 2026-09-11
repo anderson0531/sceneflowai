@@ -6249,7 +6249,7 @@ function SceneCard({
                                 )}
                                 {sceneDir.scene?.keyProps && sceneDir.scene.keyProps.length > 0 && (
                                   <div className="text-xs">
-                                    <span className="font-semibold text-blue-600 dark:text-blue-400">Key Props:</span>
+                                    <span className="font-semibold text-blue-600 dark:text-blue-400">Key Objects:</span>
                                     <span className="ml-1 text-gray-600 dark:text-gray-400">{sceneDir.scene.keyProps.join(', ')}</span>
                                   </div>
                                 )}

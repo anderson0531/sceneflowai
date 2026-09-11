@@ -65,7 +65,7 @@ export function KeyPropDisplay({
           <>
             <img
               src={image.url}
-              alt={`${name} - Key Prop`}
+              alt={`${name} - Key Object`}
               className="absolute inset-0 w-full h-full object-contain p-4"
               onError={() => setImageError(true)}
             />

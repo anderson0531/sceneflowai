@@ -559,7 +559,7 @@ export function SceneDirectionBuilder({
                 
                 {/* Key Props */}
                 <div>
-                  <label className="text-xs text-gray-400">Key Props</label>
+                  <label className="text-xs text-gray-400">Key Objects</label>
                   <div className="mt-1 flex flex-wrap gap-2">
                     {structure.keyProps.map(prop => (
                       <span 

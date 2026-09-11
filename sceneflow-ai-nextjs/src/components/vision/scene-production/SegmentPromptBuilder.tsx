@@ -2074,7 +2074,7 @@ export function SegmentPromptBuilder({
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-400">Key Props</label>
+                    <label className="text-xs text-gray-400">Key Objects</label>
                     <Input
                       value={structure.keyProps}
                       onChange={(e) => setStructure(prev => ({ ...prev, keyProps: e.target.value }))}
