@@ -69,6 +69,36 @@ function canFallbackToEcoTier(options: GenerateVertexImageOptions): boolean {
   return !referenceCountExceedsEcoCap(options.referenceImages)
 }
 
+/**
+ * One pro retry when flash refuses an identity-ref frame.
+ *
+ * `canFallbackToEcoTier` refuses the reverse move because flash both rate-limited
+ * and hit IMAGE_SAFETY on identity work (production 2026-08-07). Animatic beats
+ * request eco explicitly, which bypasses that guard, so the protection has to be
+ * restored from this side: a refusal costs one pro attempt, not the frame.
+ */
+function escalateEcoRefusalToPro(
+  model: string,
+  options: GenerateVertexImageOptions,
+  reason: string
+): Promise<VertexImageResult> | null {
+  if (
+    !model.includes('flash-image') ||
+    !hasIdentityReferenceImages(options) ||
+    options.escalatedFromEcoTier ||
+    deadlinePassed(options.deadlineAt)
+  ) {
+    return null
+  }
+  console.warn(
+    `[Vertex Gemini Image] ${model} returned no image for an identity-ref frame (${reason}); escalating to ${GEMINI_IMAGE_TIER_CONFIG.designer.model}`
+  )
+  return generateVertexGeminiImage(
+    { ...options, modelTier: 'designer', escalatedFromEcoTier: true },
+    0
+  )
+}
+
 async function sleepWithBackoff(attempt: number): Promise<void> {
   const delay = Math.min(INITIAL_RETRY_DELAY_MS * 2 ** attempt, MAX_RETRY_DELAY_MS)
   const jitter = Math.random() * 500
@@ -152,6 +182,8 @@ export interface GenerateVertexImageOptions {
   negativePrompt?: string
   /** Express: throw on the first identity-ref 429 instead of the 5s/15s/30s ladder. */
   failFastIdentityRefs?: boolean
+  /** Internal: this call is already the pro retry of a refused eco request. */
+  escalatedFromEcoTier?: boolean
   /** Throw if any requested reference image fails to download instead of silently dropping it. */
   requireAllReferenceImages?: boolean
   /** Policy ladder attempts (used by vertexImageWithKlingFallback). */
@@ -402,6 +434,12 @@ export async function generateVertexGeminiImage(
 
   const data = await response.json()
   if (data.promptFeedback?.blockReason) {
+    const escalated = escalateEcoRefusalToPro(
+      model,
+      options,
+      `blockReason=${data.promptFeedback.blockReason}`
+    )
+    if (escalated) return escalated
     throw new Error(
       `Image generation blocked by safety: ${data.promptFeedback.blockReason}`
     )
@@ -410,6 +448,8 @@ export async function generateVertexGeminiImage(
   const candidates = data.candidates
   if (!candidates?.length) {
     const block = data.promptFeedback?.blockReason
+    const escalated = escalateEcoRefusalToPro(model, options, 'empty candidates')
+    if (escalated) return escalated
     throw new Error(
       block
         ? `Image generation blocked by safety: ${block}`
@@ -441,6 +481,8 @@ export async function generateVertexGeminiImage(
     const detail = `model=${model}, finishReason=${finishReason}${
       textSnippet ? `, text=${JSON.stringify(textSnippet)}` : ''
     }`
+    const escalated = escalateEcoRefusalToPro(model, options, `finishReason=${finishReason}`)
+    if (escalated) return escalated
     // Soft refusals (text-only 200 / SAFETY finish) — mark as safety so sanitize retries run.
     throw new Error(
       `No image in Vertex Gemini Image response — blocked by safety (${detail})`

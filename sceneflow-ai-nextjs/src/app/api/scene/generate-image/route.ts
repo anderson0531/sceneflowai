@@ -128,6 +128,7 @@ import {
   resolveStoryboardGeneration,
   getPhotorealisticPromptAnchor,
 } from '@/lib/storyboard/storyboardQuality'
+import { usesFlashAnimaticTier } from '@/lib/sceneGeneration/animaticImageModel'
 import { getArtStyleNegativeTerms, getArtStylePromptSuffix } from '@/lib/vision/artStyle'
 import { editImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { buildEndFramePrompt } from '@/lib/scene/deriveSegmentsFromBeats'
@@ -527,6 +528,8 @@ export async function POST(req: NextRequest) {
       sceneOverride,
       modelTier,
       storyboardQuality,
+      /** Express draft beat frames — eligible for the flash image model. */
+      animaticDraft = false,
       skipLikenessValidation = false,
       generationMode = 'default',
       includeWardrobeReferenceImages = true,
@@ -2306,9 +2309,13 @@ export async function POST(req: NextRequest) {
     let generationAttempt = 0
     // Identity-ref jobs already retry inside vertexImageClient (up to 3× with long backoff).
     // Cap outer attempts so we do not multiply into ~12 Vertex calls per frame under 429 storms.
-    const forceDesignerImagePath = isBeatFrame || skipLikenessValidation
+    // Express animatic beats run on flash; every other beat frame stays on pro.
+    // Routing to Vertex is unchanged either way — only the tier differs.
+    const useAnimaticFlashTier = usesFlashAnimaticTier({ isBeatFrame, animaticDraft })
+    const forceVertexGeminiImagePath = isBeatFrame || skipLikenessValidation
+    const forceDesignerImagePath = forceVertexGeminiImagePath && !useAnimaticFlashTier
     const useVertexGeminiImage =
-      forceDesignerImagePath ||
+      forceVertexGeminiImagePath ||
       imageReferences.length > 0 ||
       objectImageReferences.length > 0 ||
       (matchedLocationReference && matchedLocationReference.imageUrl)
@@ -2324,8 +2331,9 @@ export async function POST(req: NextRequest) {
         console.log(`[Scene Image] Generation attempt ${generationAttempt}/${maxGenerationAttempts}`)
         
         if (useVertexGeminiImage) {
-          const baseImageTier: VertexImageTier =
-            forceDesignerImagePath
+          const baseImageTier: VertexImageTier = useAnimaticFlashTier
+            ? 'eco'
+            : forceDesignerImagePath
               ? 'designer'
               : resolvedModelTier === 'eco' ||
                   resolvedModelTier === 'designer' ||
@@ -2364,6 +2372,7 @@ export async function POST(req: NextRequest) {
             modelTier: baseImageTier,
             distinctCharacterCount,
             totalWantedRefs,
+            allowEcoWithReferences: useAnimaticFlashTier,
           })
           const referenceImageCap = getMaxReferenceImagesForTier(effectiveImageTier)
 
@@ -2374,7 +2383,9 @@ export async function POST(req: NextRequest) {
           }
 
           console.log(
-            `[Scene Image] Using Vertex Gemini Image (tier=${effectiveImageTier}) for reference images`
+            `[Scene Image] Using Vertex Gemini Image (tier=${effectiveImageTier}${
+              useAnimaticFlashTier ? ', animatic draft' : ''
+            }) for reference images`
           )
 
           const { selected: selectedReferenceImages, dropped: droppedReferenceImages, indexMap } =
@@ -2393,7 +2404,7 @@ export async function POST(req: NextRequest) {
 
           if (droppedReferenceImages.length > 0) {
             console.log(
-              `[Scene Image] Dropped ${droppedReferenceImages.length} reference image(s) (cap=${referenceImageCap}):`,
+              `[Scene Image] Dropped ${droppedReferenceImages.length} reference image(s) (tier=${effectiveImageTier}, cap=${referenceImageCap}):`,
               droppedReferenceImages.map((r) => r.name).join(', ')
             )
           }

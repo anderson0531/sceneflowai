@@ -18,6 +18,7 @@ import {
 import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPrompt'
+import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
 import { formatSceneArcBlock, getSceneMovements } from '@/lib/script/sceneMovements'
 import type { BeatDirection, SceneBeat } from '@/lib/script/segmentTypes'
 
@@ -163,6 +164,32 @@ function appendFacet(parts: string[], value: string | undefined, label?: string)
 }
 
 /**
+ * Whether a beat's stored image prompt still describes its current direction.
+ *
+ * Express writes the composed prompt back after every generation, and the
+ * composer reads it first, so without this check the first frame's wording won
+ * forever: regenerating or hand-editing the direction changed nothing on the
+ * image. `reconcileSceneBeatsFromScript` only clears the prompt on script
+ * edits, which is a different path entirely.
+ *
+ * Prompts stored before the key existed have no recorded direction, so they are
+ * only trusted for beats that have no direction to contradict them.
+ */
+export function storedPromptMatchesDirection(beat: SceneBeat): boolean {
+  if (!beat.storyboardImagePrompt?.trim()) return false
+  const currentKey = beatDirectionFingerprint(beat.beatDirection)
+  const storedKey = beat.storyboardImagePromptDirectionKey
+  if (storedKey === undefined) return currentKey === ''
+  return storedKey === currentKey
+}
+
+/** Action/framing carried over from a previous generation, when still current. */
+function currentStoredActionFraming(beat: SceneBeat): string {
+  if (!storedPromptMatchesDirection(beat)) return ''
+  return actionFramingFromStoredPrompt(beat.storyboardImagePrompt)
+}
+
+/**
  * Build the frame description for a beat out of its structured direction.
  *
  * The lookbook path skips scene-image intelligence entirely, so nothing else
@@ -174,13 +201,20 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
   if (!beat) return ''
   const direction = beat.beatDirection
 
+  const storedBody = currentStoredActionFraming(beat)
   const body =
-    actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
+    storedBody ||
     direction?.frozenMoment?.trim() ||
     beat.actionDescription?.trim() ||
     beat.line?.trim() ||
     ''
   if (!body) return ''
+
+  if (!storedBody && beat.storyboardImagePrompt?.trim()) {
+    console.log(
+      `[BeatFraming] Beat ${beat.beatId} — stored prompt is stale for current direction; recomposing`
+    )
+  }
 
   const parts: string[] = []
   appendFacet(parts, body)
@@ -215,7 +249,7 @@ export function actionFramingFromBeat(beat?: SceneBeat | null): string {
   if (!beat) return ''
   return (
     composeBeatActionFraming(beat) ||
-    actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
+    currentStoredActionFraming(beat) ||
     beat.beatDirection?.frozenMoment?.trim() ||
     beat.actionDescription?.trim() ||
     beat.line?.trim() ||
@@ -628,6 +662,11 @@ export function applyBeatKeyframePlansToScene(
       ...beat,
       beatRole: plan.beatRole,
       storyboardImagePrompt: plan.prompt,
+      // The plan and the direction it merges are written together, so the
+      // prompt is keyed to the direction as it will be after this write.
+      storyboardImagePromptDirectionKey: beatDirectionFingerprint(
+        mergedDirection ?? beat.beatDirection
+      ),
       ...(plan.durationSeconds ? { durationSeconds: plan.durationSeconds } : {}),
       ...(mergedDirection ? { beatDirection: mergedDirection } : {}),
     }

@@ -31,6 +31,7 @@ import type { SceneBeat } from '@/lib/script/segmentTypes'
 import {
   resolveExpressBeatReferences,
   buildExpressBeatRefPayload,
+  resolveBeatCharacterPolicy,
 } from '@/lib/sceneGeneration/expressOrchestrator'
 import { parseStillPromptSource } from '@/lib/imagen/structuredStillPrompt'
 
@@ -56,6 +57,9 @@ const locationRef = {
   locationDisplay: 'Rainy Alley',
   imageUrl: 'https://example.com/alley.png',
   sceneNumbers: [1],
+  sourceSceneIndex: 0,
+  sourceSceneHeading: 'EXT. RAINY ALLEY - NIGHT',
+  pinnedAt: '2026-01-01T00:00:00.000Z',
 }
 
 const lanternProp = {
@@ -254,6 +258,57 @@ describe('resolveExpressBeatReferences', () => {
   })
 })
 
+describe('resolveBeatCharacterPolicy', () => {
+  const titleSceneArgs = { sceneExcludesCharacters: true, project: buildProject(), beatIdx: 0, sceneNumber: 1 }
+
+  it('leaves an ordinary scene alone', () => {
+    const policy = resolveBeatCharacterPolicy({
+      ...titleSceneArgs,
+      sceneExcludesCharacters: false,
+      beat: { beatId: 'bt', kind: 'action', sequenceIndex: 0, actionDescription: 'Title cards animate.' },
+    })
+
+    expect(policy.excludeCharacters).toBe(false)
+    expect(policy.restrictToCharacterIds).toBeNull()
+  })
+
+  it('keeps a title card reference-free when the beat names nobody', () => {
+    const policy = resolveBeatCharacterPolicy({
+      ...titleSceneArgs,
+      beat: { beatId: 'bt', kind: 'action', sequenceIndex: 0, actionDescription: 'Title cards animate.' },
+    })
+
+    expect(policy.excludeCharacters).toBe(true)
+    expect(policy.restrictToCharacterIds).toBeNull()
+  })
+
+  it('attaches references when a title-scene beat names cast', () => {
+    const policy = resolveBeatCharacterPolicy({
+      ...titleSceneArgs,
+      beat: {
+        beatId: 'bt',
+        kind: 'action',
+        sequenceIndex: 0,
+        actionDescription: 'ALICE stands centered in the void.',
+      },
+    })
+
+    expect(policy.excludeCharacters).toBe(false)
+    expect(policy.restrictToCharacterIds).toContain('char-alice')
+  })
+
+  it('reads the beat plan prompt as well as the beat text', () => {
+    const policy = resolveBeatCharacterPolicy({
+      ...titleSceneArgs,
+      beat: { beatId: 'bt', kind: 'action', sequenceIndex: 0, actionDescription: 'The void holds.' },
+      promptText: 'Medium shot: ALICE stands centered.',
+    })
+
+    expect(policy.excludeCharacters).toBe(false)
+    expect(policy.restrictToCharacterIds).toContain('char-alice')
+  })
+})
+
 describe('buildExpressBeatRefPayload', () => {
   it('omits characters and wardrobes when excludeCharacters is true', () => {
     const project = buildProject()
@@ -269,8 +324,12 @@ describe('buildExpressBeatRefPayload', () => {
       project,
     })!
 
-    const payload = buildExpressBeatRefPayload(refs.api, true)
+    const payload = buildExpressBeatRefPayload(refs.api, {
+      excludeCharacters: true,
+      restrictToCharacterIds: null,
+    })
 
+    expect(payload.excludeCharacters).toBe(true)
     expect(payload.selectedCharacters).toBeUndefined()
     expect(payload.characterWardrobes).toBeUndefined()
     expect(payload.locationReferences).toHaveLength(1)
@@ -288,13 +347,37 @@ describe('buildExpressBeatRefPayload', () => {
         characterSelectionExplicit: true,
         skipObjectAutoDetection: true,
       },
-      false
+      { excludeCharacters: false, restrictToCharacterIds: null }
     )
 
+    expect(payload.excludeCharacters).toBeUndefined()
     expect(payload.characterSelectionExplicit).toBeUndefined()
     expect(payload.selectedCharacters).toBeUndefined()
     expect(payload.skipObjectAutoDetection).toBe(true)
     expect(payload.locationReferences).toHaveLength(1)
+  })
+
+  it('keeps only the cast a title-scene beat actually names', () => {
+    const payload = buildExpressBeatRefPayload(
+      {
+        selectedCharacters: ['char-alice', 'char-bob'],
+        locationReferences: [locationRef],
+        objectReferences: [],
+        characterWardrobes: [
+          { characterId: 'char-alice', wardrobeId: 'wardrobe-alley' },
+          { characterId: 'char-bob', wardrobeId: 'wardrobe-bob' },
+        ],
+        characterSelectionExplicit: true,
+        skipObjectAutoDetection: true,
+      },
+      { excludeCharacters: false, restrictToCharacterIds: ['char-alice', 'ALICE'] }
+    )
+
+    expect(payload.selectedCharacters).toEqual(['char-alice'])
+    expect(payload.characterWardrobes).toEqual([
+      { characterId: 'char-alice', wardrobeId: 'wardrobe-alley' },
+    ])
+    expect(payload.characterSelectionExplicit).toBe(true)
   })
 })
 

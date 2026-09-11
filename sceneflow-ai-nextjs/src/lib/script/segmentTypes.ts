@@ -165,6 +165,12 @@ export interface SceneBeat {
   movementIndex?: number
   storyboardImageUrl?: string
   storyboardImagePrompt?: string
+  /**
+   * `beatDirectionFingerprint` of the direction `storyboardImagePrompt` was
+   * composed from. A mismatch means the direction moved on and the stored
+   * prompt must not be reused as this beat's action/framing.
+   */
+  storyboardImagePromptDirectionKey?: string
   storyboardImageGcsPath?: string
   /** draft = Express layout pass; final = hi-res for animatic & video */
   storyboardImageTier?: 'draft' | 'final'

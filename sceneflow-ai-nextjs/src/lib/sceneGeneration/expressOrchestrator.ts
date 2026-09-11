@@ -31,6 +31,7 @@ import {
 } from './expressImageErrors'
 import {
   ExpressTrafficCop,
+  getExpressImageConcurrency,
   getExpressSceneConcurrency,
 } from './expressTrafficCop'
 import type {
@@ -48,8 +49,11 @@ import { runSceneExpressPreflight } from './sceneExpressPreflight'
 import { generateSceneDirection } from './generateDirection'
 import { generateSceneAudio, applyAudioAssetsToScene } from './generateAudio'
 import { generateSceneImage } from './generateImage'
+import { usesFlashAnimaticTier } from './animaticImageModel'
+import { beatDirectionFingerprint } from '../script/beatDirectionFingerprint'
 import { shouldScheduleStandaloneNarration } from '../script/narration'
 import {
+  detectCharactersNamedInBeat,
   mapBeatReferenceSelectionForApi,
   resolveBeatFrameGenerationContext,
   shouldUseExplicitBeatReferences,
@@ -131,7 +135,16 @@ function getExpressImageParams(options: ExpressOptions) {
         ? options.imageQuality
         : undefined,
   })
-  return { ...gen, ...EXPRESS_SKIP_LIKENESS }
+  // Draft beats are animatic coverage — the image route may serve them from flash.
+  return { ...gen, animaticDraft: gen.modelTier === 'eco', ...EXPRESS_SKIP_LIKENESS }
+}
+
+/** Draft beats on flash get a wider image lane than pro identity-ref frames. */
+function usesFlashAnimaticRun(options: ExpressOptions): boolean {
+  return usesFlashAnimaticTier({
+    isBeatFrame: true,
+    animaticDraft: getExpressImageParams(options).animaticDraft,
+  })
 }
 
 function getBeatGenerationContext(options: ExpressOptions) {
@@ -245,32 +258,119 @@ export function resolveExpressBeatReferences(args: {
   return finish(toBeatReferenceSelection({ ...autoCtx, source: 'auto' }), false)
 }
 
+export interface BeatCharacterPolicy {
+  excludeCharacters: boolean
+  /**
+   * Cast this beat is allowed to reference, as id/name tokens. Non-null only
+   * inside a no-talent scene, where the beat earns references by naming people
+   * and must not inherit the rest of the scene cast.
+   */
+  restrictToCharacterIds: string[] | null
+}
+
+/**
+ * Narrow a scene-level no-talent verdict down to one beat.
+ *
+ * `isStoryboardNoCharacterScene` answers for the whole scene, so a heading
+ * containing "TITLE SEQUENCE" stripped the cast from every beat inside it —
+ * including beats whose own text names a character. Those frames reached Vertex
+ * with zero identity references and came back with a stranger's face.
+ *
+ * The beat has to name someone itself. The ordinary auto-resolver is too loose
+ * here: when a beat names nobody it falls back to the scene cast, and in a
+ * one-character project to that character, which would put a face on a title
+ * card. A beat that names nobody stays reference-free.
+ */
+export function resolveBeatCharacterPolicy(args: {
+  sceneExcludesCharacters: boolean
+  beat: SceneBeat | undefined
+  promptText?: string
+  project: any
+  beatIdx: number
+  sceneNumber: number
+}): BeatCharacterPolicy {
+  if (!args.sceneExcludesCharacters) {
+    return { excludeCharacters: false, restrictToCharacterIds: null }
+  }
+  if (!args.beat) return { excludeCharacters: true, restrictToCharacterIds: null }
+
+  const visionPhase = args.project?.metadata?.visionPhase || {}
+  const references = visionPhase.references || {}
+  const named = detectCharactersNamedInBeat({
+    beat: args.beat,
+    promptText: args.promptText,
+    projectCharacters: visionPhase.characters || [],
+    filmTitle: args.project?.metadata?.title || args.project?.title,
+    objectReferences: references.objectReferences || [],
+    locationReferences: references.locationReferences || [],
+  })
+
+  if (named.length === 0) {
+    return { excludeCharacters: true, restrictToCharacterIds: null }
+  }
+
+  const restrictToCharacterIds = named
+    .flatMap((char) => [char.id, char.name])
+    .filter((token): token is string => !!token)
+
+  console.log(
+    `[expressOrchestrator] Beat ${args.beatIdx + 1} scene ${args.sceneNumber} — no-talent scene, but this beat names ${named
+      .map((c) => c.name || c.id)
+      .join(', ')}; attaching character references`
+  )
+  return { excludeCharacters: false, restrictToCharacterIds }
+}
+
+/**
+ * Build the reference fields for one beat's generate-image call.
+ *
+ * Owns `excludeCharacters` as well as the selection so the exclusion decision
+ * has a single source of truth. `characterSelectionExplicit` locks the route out
+ * of its own auto-detection, so it is only ever set alongside a real cast or a
+ * deliberate exclusion — an explicit-but-empty selection reaches the route as
+ * "zero valid character objects" with no way to recover.
+ */
 export function buildExpressBeatRefPayload(
   verifiedBeatRefs: ReturnType<typeof mapBeatReferenceSelectionForApi> | null,
-  excludeCharacters: boolean
+  policy: BeatCharacterPolicy
 ): Record<string, unknown> {
-  if (!verifiedBeatRefs) return {}
+  const { excludeCharacters, restrictToCharacterIds } = policy
+  const exclusion: Record<string, unknown> = excludeCharacters
+    ? { excludeCharacters: true, characterSelectionExplicit: true }
+    : {}
 
-  const hasCharacters =
-    !excludeCharacters && verifiedBeatRefs.selectedCharacters.length > 0
+  if (!verifiedBeatRefs) return exclusion
+
+  const allowed = restrictToCharacterIds
+    ? new Set(restrictToCharacterIds.map((token) => token.toLowerCase()))
+    : null
+  const selectedCharacters = excludeCharacters
+    ? []
+    : allowed
+      ? verifiedBeatRefs.selectedCharacters.filter((token) =>
+          allowed.has(token.toLowerCase())
+        )
+      : verifiedBeatRefs.selectedCharacters
 
   const payload: Record<string, unknown> = {
+    ...exclusion,
     locationReferences: verifiedBeatRefs.locationReferences,
     objectReferences: verifiedBeatRefs.objectReferences,
     skipObjectAutoDetection: true,
   }
 
-  // Only lock generate-image out of auto-detect when we have a real cast
-  // or are intentionally excluding people. An empty explicit selection was
-  // sending talent beats down the flash / no-ref path.
-  if (excludeCharacters || hasCharacters) {
-    payload.characterSelectionExplicit = true
-  }
+  if (selectedCharacters.length > 0) {
+    const selectedKeys = new Set(selectedCharacters.map((token) => token.toLowerCase()))
+    const characterWardrobes = allowed
+      ? verifiedBeatRefs.characterWardrobes.filter((cw) =>
+          selectedKeys.has(cw.characterId.toLowerCase())
+        )
+      : verifiedBeatRefs.characterWardrobes
 
-  if (hasCharacters) {
-    payload.selectedCharacters = verifiedBeatRefs.selectedCharacters
-    if (verifiedBeatRefs.characterWardrobes.length > 0) {
-      payload.characterWardrobes = verifiedBeatRefs.characterWardrobes
+    payload.characterSelectionExplicit = true
+    payload.selectedCharacters = selectedCharacters
+    if (characterWardrobes.length > 0) {
+      payload.characterWardrobes = characterWardrobes
     }
   }
 
@@ -463,8 +563,13 @@ function recordRateLimitedFailure(
   failures.push(entry)
 }
 
-function buildAdaptiveBeatPoolOptions(emit: ExpressEmit): AdaptiveBeatPoolOptions {
-  const concurrency = getSceneExpressBeatConcurrency()
+function buildAdaptiveBeatPoolOptions(
+  emit: ExpressEmit,
+  options: ExpressOptions
+): AdaptiveBeatPoolOptions {
+  const concurrency = getSceneExpressBeatConcurrency({
+    flashAnimatic: usesFlashAnimaticRun(options),
+  })
   return {
     initialConcurrency: concurrency,
     maxConcurrency: concurrency,
@@ -763,15 +868,8 @@ async function generateSingleBeatImage(
   beatPlan?: BeatKeyframePlan
 ): Promise<{ imageUrl: string }> {
   const { sceneIndex, sceneNumber, scene } = ctx
-  safeEmit(emit, {
-    type: 'frame-start',
-    sceneIndex,
-    sceneNumber,
-    beatIndex: beatIdx,
-    frameRole: 'start',
-  })
   const imageParams = getExpressImageParams(options)
-  const excludeCharacters = isStoryboardNoCharacterScene(scene, sceneNumber)
+  const sceneExcludesCharacters = isStoryboardNoCharacterScene(scene, sceneNumber)
   const beats = getSceneBeats(scene)
   const beat = beats[beatIdx]
 
@@ -789,32 +887,49 @@ async function generateSingleBeatImage(
   if (beat && verifiedBeatRefs?.selection && !verifiedBeatRefs.fromSavedSelection) {
     persistBeatReferenceSelection(scene, beatIdx, verifiedBeatRefs.selection)
   }
-  const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs?.api ?? null, excludeCharacters)
+  const characterPolicy = resolveBeatCharacterPolicy({
+    sceneExcludesCharacters,
+    beat,
+    promptText: beatPlanActionText(beatPlan),
+    project,
+    beatIdx,
+    sceneNumber,
+  })
+  const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs?.api ?? null, characterPolicy)
 
-  const result = await trafficCop.runInLane('image', () =>
-    generateSceneImage({
-    projectId: options.projectId,
-    sceneIndex,
-    baseUrl,
-    authCookie,
-    quality: imageParams.quality,
-    storyboardQuality: imageParams.storyboardQuality,
-    artStyle,
-    frameType: 'beat',
-    beatIndex: beatIdx,
-    ...(beat?.beatId ? { beatId: beat.beatId } : {}),
-    sceneOverride: scene,
-    ...beatRefPayload,
-    ...(excludeCharacters ? { excludeCharacters: true } : {}),
-    useAIPrompt: false,
-    ...(beatPlan?.prompt?.trim() ? { customPrompt: beatPlan.prompt } : {}),
-    ...(typeof beatPlan?.allowTypography === 'boolean'
-      ? { allowTypography: beatPlan.allowTypography }
-      : {}),
-    modelTier: imageParams.modelTier,
-    skipLikenessValidation: true,
+  // Emitted after the lane grants a slot, so the UI shows what is generating
+  // rather than every queued beat at once.
+  const result = await trafficCop.runInLane('image', () => {
+    safeEmit(emit, {
+      type: 'frame-start',
+      sceneIndex,
+      sceneNumber,
+      beatIndex: beatIdx,
+      frameRole: 'start',
     })
-  )
+    return generateSceneImage({
+      projectId: options.projectId,
+      sceneIndex,
+      baseUrl,
+      authCookie,
+      quality: imageParams.quality,
+      storyboardQuality: imageParams.storyboardQuality,
+      artStyle,
+      frameType: 'beat',
+      beatIndex: beatIdx,
+      ...(beat?.beatId ? { beatId: beat.beatId } : {}),
+      sceneOverride: scene,
+      ...beatRefPayload,
+      useAIPrompt: false,
+      ...(beatPlan?.prompt?.trim() ? { customPrompt: beatPlan.prompt } : {}),
+      ...(typeof beatPlan?.allowTypography === 'boolean'
+        ? { allowTypography: beatPlan.allowTypography }
+        : {}),
+      modelTier: imageParams.modelTier,
+      animaticDraft: imageParams.animaticDraft,
+      skipLikenessValidation: true,
+    })
+  })
   await persistBeatFrame(scene, beatIdx, result, imageParams.storyboardQuality)
   safeEmit(emit, {
     type: 'phase-done',
@@ -849,7 +964,7 @@ async function generateSingleBeatEndImage(
 ): Promise<{ imageUrl: string }> {
   const { sceneIndex, sceneNumber, scene } = ctx
   const imageParams = getExpressImageParams(options)
-  const excludeCharacters = isStoryboardNoCharacterScene(scene, sceneNumber)
+  const sceneExcludesCharacters = isStoryboardNoCharacterScene(scene, sceneNumber)
   const beats = getSceneBeats(scene)
   const beat = beats[beatIdx]
   if (!beat) return { imageUrl: startFrameUrl }
@@ -867,18 +982,25 @@ async function generateSingleBeatEndImage(
   if (verifiedBeatRefs?.selection && !verifiedBeatRefs.fromSavedSelection) {
     persistBeatReferenceSelection(scene, beatIdx, verifiedBeatRefs.selection)
   }
-  const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs?.api ?? null, excludeCharacters)
-
-  safeEmit(emit, {
-    type: 'frame-start',
-    sceneIndex,
+  const characterPolicy = resolveBeatCharacterPolicy({
+    sceneExcludesCharacters,
+    beat,
+    promptText: endPrompt,
+    project,
+    beatIdx,
     sceneNumber,
-    beatIndex: beatIdx,
-    frameRole: 'end',
   })
+  const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs?.api ?? null, characterPolicy)
 
-  const result = await trafficCop.runInLane('image', () =>
-    generateSceneImage({
+  const result = await trafficCop.runInLane('image', () => {
+    safeEmit(emit, {
+      type: 'frame-start',
+      sceneIndex,
+      sceneNumber,
+      beatIndex: beatIdx,
+      frameRole: 'end',
+    })
+    return generateSceneImage({
       projectId: options.projectId,
       sceneIndex,
       baseUrl,
@@ -893,13 +1015,13 @@ async function generateSingleBeatEndImage(
       ...(beat?.beatId ? { beatId: beat.beatId } : {}),
       sceneOverride: scene,
       ...beatRefPayload,
-      ...(excludeCharacters ? { excludeCharacters: true } : {}),
       customPrompt: endPrompt,
       useAIPrompt: false,
       modelTier: imageParams.modelTier,
+      animaticDraft: imageParams.animaticDraft,
       skipLikenessValidation: imageParams.skipLikenessValidation,
     })
-  )
+  })
 
   await persistBeatEndFrame(scene, beatIdx, result, imageParams.storyboardQuality)
   safeEmit(emit, {
@@ -981,7 +1103,7 @@ async function runSupplementalEndFrames(
       )
       lastImageUrl = result.imageUrl
     },
-    buildAdaptiveBeatPoolOptions(emit)
+    buildAdaptiveBeatPoolOptions(emit, options)
   )
 
   for (const [beatIdx, err] of pool.failed) {
@@ -1063,7 +1185,7 @@ async function runBeatImages(
         )
         lastImageUrl = result.imageUrl
       },
-      buildAdaptiveBeatPoolOptions(emit)
+      buildAdaptiveBeatPoolOptions(emit, options)
     )
 
     for (const [beatIdx, err] of pool.failed) {
@@ -1149,7 +1271,14 @@ function writeBeatFrameToScene(
     storyboardImageUrl: result.imageUrl,
     storyboardImageTier: tier,
     ...(result.gcsPath ? { storyboardImageGcsPath: result.gcsPath } : {}),
-    ...(result.imagePrompt ? { storyboardImagePrompt: result.imagePrompt } : {}),
+    // Stamped with the direction it describes, so a later direction edit
+    // recomposes the frame instead of replaying this wording.
+    ...(result.imagePrompt
+      ? {
+          storyboardImagePrompt: result.imagePrompt,
+          storyboardImagePromptDirectionKey: beatDirectionFingerprint(previous.beatDirection),
+        }
+      : {}),
   }
   const updated = applyBeatsToScene(scene, beats)
   Object.assign(scene, updated)
@@ -1859,6 +1988,9 @@ export async function runExpress(
   const storySpine = summarizeScenesForLookbook(scenes)
 
   const trafficCop = new ExpressTrafficCop({
+    laneMax: {
+      image: getExpressImageConcurrency({ flashAnimatic: usesFlashAnimaticRun(options) }),
+    },
     onThrottle: (lane, max, cooldownMs) => {
       safeEmit(emit, { type: 'throttle', lane, max, cooldownMs })
     },
