@@ -13,6 +13,7 @@ import {
   type BeatKind,
   type BeatReferenceSelection,
   type SceneBeat,
+  type SceneMovement,
   type StoryboardStatus,
 } from '@/lib/script/segmentTypes'
 import { mintLineId } from '@/lib/script/segmentScript'
@@ -20,6 +21,7 @@ import { applyDerivedSfxToScene } from '@/lib/script/deriveSfxFromSceneContent'
 import { dedupeRedundantActionBeats } from '@/lib/script/actionBeatDedupe'
 import { backfillBeatDirectionsOnScene } from '@/lib/script/beatDirectionDerive'
 import { ensureSceneMovements } from '@/lib/script/sceneMovements'
+import { ensureSceneMusicCues } from '@/lib/script/sceneMusicCues'
 
 const BEAT_MIGRATION_FLAG = 'beatsMigratedAt'
 const START_FRAME_ONLY_MIGRATION_FLAG = 'startFrameOnlyMigrationAt'
@@ -1586,23 +1588,38 @@ export function migrateProjectBeatDirection(metadata: unknown): MigrateBeatsResu
     if (priorBeats.length === 0) continue
 
     const withArc = ensureSceneMovements(scene, priorBeats)
+    const withCues = ensureSceneMusicCues(
+      withArc.scene,
+      withArc.beats,
+      (withArc.scene.sceneMovements as SceneMovement[] | undefined) ?? []
+    )
     const backfilled = backfillBeatDirectionsOnScene({
-      ...withArc.scene,
-      beats: withArc.beats,
+      ...withCues.scene,
+      beats: withCues.beats,
     })
     if (backfilled.length === 0) continue
 
     const priorJson = JSON.stringify([
       scene.sceneMovements ?? null,
-      priorBeats.map((b) => [b.beatDirection ?? null, b.movementIndex ?? null]),
+      scene.sceneMusicCues ?? null,
+      priorBeats.map((b) => [
+        b.beatDirection ?? null,
+        b.movementIndex ?? null,
+        b.musicEnabled ?? null,
+      ]),
     ])
     const nextJson = JSON.stringify([
-      withArc.scene.sceneMovements ?? null,
-      backfilled.map((b) => [b.beatDirection ?? null, b.movementIndex ?? null]),
+      withCues.scene.sceneMovements ?? null,
+      withCues.scene.sceneMusicCues ?? null,
+      backfilled.map((b) => [
+        b.beatDirection ?? null,
+        b.movementIndex ?? null,
+        b.musicEnabled ?? null,
+      ]),
     ])
     if (priorJson === nextJson) continue
 
-    scenes[i] = applyBeatsToScene(withArc.scene, backfilled)
+    scenes[i] = applyBeatsToScene(withCues.scene, backfilled)
     changed = true
     migratedSceneCount++
   }
@@ -1753,9 +1770,15 @@ export function ensureSceneBeats(scene: Record<string, unknown>): Record<string,
   // The arc is resolved before direction backfill so per-beat direction can be
   // scoped to the movement the beat belongs to instead of the whole scene.
   const withArc = ensureSceneMovements(withSfx, beats)
+  // Cues read the arc's emotional shape, so they are placed after it.
+  const withCues = ensureSceneMusicCues(
+    withArc.scene,
+    withArc.beats,
+    (withArc.scene.sceneMovements as SceneMovement[] | undefined) ?? []
+  )
   const beatsWithDirection = backfillBeatDirectionsOnScene({
-    ...withArc.scene,
-    beats: withArc.beats,
+    ...withCues.scene,
+    beats: withCues.beats,
   })
-  return applyBeatsToScene(withArc.scene, beatsWithDirection)
+  return applyBeatsToScene(withCues.scene, beatsWithDirection)
 }

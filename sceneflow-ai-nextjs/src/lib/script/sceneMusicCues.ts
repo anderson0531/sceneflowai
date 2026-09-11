@@ -511,12 +511,14 @@ export function isMusicCueScored(cue: SceneMusicCue | undefined): boolean {
 }
 
 /**
- * The scene's cues, in order of authority: a persisted list that holds audio or
- * was authored, then the raw `musicCues` the script LLM emitted, then a list
- * cut from the scene's movements.
+ * The scene's cues, in order of authority: an already-persisted plan, then the
+ * raw `musicCues` the script LLM emitted, then a plan cut from the movements.
  *
- * A persisted list with generated audio outranks everything — re-planning it
- * would leave paid-for tracks pointing at beats they were not written for.
+ * A persisted plan is never recomputed, even a derived one. Cues spend credits
+ * and hold the tracks those credits bought, and the scene fields a derived plan
+ * reads from are rewritten by the beat migration itself — re-deriving on every
+ * pass would reshuffle a scene's score, and leave paid-for tracks sitting under
+ * beats they were not written for. Re-planning is an explicit action.
  */
 export function getSceneMusicCues(
   scene: Record<string, unknown> | null | undefined,
@@ -526,23 +528,42 @@ export function getSceneMusicCues(
   if (!scene || beats.length === 0) return []
 
   const persisted = parsePersistedMusicCues(scene.sceneMusicCues, beats)
-  if (persisted.length > 0) {
-    const authored = persisted.some(
-      (cue) => cue.generatedBy !== 'derived' || isMusicCueScored(cue)
-    )
-    if (authored) return persisted
-  }
+  if (persisted.length > 0) return persisted
 
   const fromLlm = planSceneMusicCues(scene.musicCues, beats, 'llm')
   if (fromLlm.length > 0) return fromLlm
 
-  const derived = deriveSceneMusicCues(scene, beats, movements)
-  return derived.length > 0 ? derived : persisted
+  return deriveSceneMusicCues(scene, beats, movements)
 }
 
 /** Stable fingerprint of a cue plan's coverage, used to detect a re-plan. */
 function coverageSignature(cues: SceneMusicCue[]): string {
   return cues.map((cue) => `${cue.beatStart}-${cue.beatEnd}`).join(',')
+}
+
+/**
+ * Rebuild a cue with a fixed field order.
+ *
+ * Cues are persisted, read back, and compared as JSON by the project
+ * migration. Without one canonical shape a cue written by the planner and the
+ * same cue read back differ only in key order, which reads as a change and
+ * makes the migration rewrite every scene on every run.
+ */
+function normalizeCueShape(cue: SceneMusicCue): SceneMusicCue {
+  return {
+    cueId: cue.cueId,
+    beatStart: cue.beatStart,
+    beatEnd: cue.beatEnd,
+    description: cue.description,
+    intent: cue.intent,
+    ...(cue.entry ? { entry: cue.entry } : {}),
+    ...(cue.exit ? { exit: cue.exit } : {}),
+    ...(cue.url ? { url: cue.url } : {}),
+    ...(cue.duration && cue.duration > 0 ? { duration: cue.duration } : {}),
+    ...(cue.fileDuration && cue.fileDuration > 0 ? { fileDuration: cue.fileDuration } : {}),
+    ...(cue.generatedBy ? { generatedBy: cue.generatedBy } : {}),
+    ...(cue.updatedAt ? { updatedAt: cue.updatedAt } : {}),
+  }
 }
 
 /**
@@ -573,7 +594,7 @@ export function applySceneMusicCues(
 
   const nextScene: Record<string, unknown> = {
     ...scene,
-    sceneMusicCues: cues,
+    sceneMusicCues: cues.map(normalizeCueShape),
     musicCueCoverage: signature,
   }
   // `musicCues` is the raw LLM field; `sceneMusicCues` is the normalized record.
@@ -582,13 +603,49 @@ export function applySceneMusicCues(
   return { scene: nextScene, beats: nextBeats }
 }
 
+/**
+ * Hand a scene's pre-cue music track to the cue that was written from the same
+ * brief, so upgrading a project does not strand a track the user already paid
+ * to generate — or silently regenerate it.
+ */
+export function adoptLegacySceneTrack(
+  scene: Record<string, unknown>,
+  cues: SceneMusicCue[]
+): SceneMusicCue[] {
+  if (cues.length === 0 || cues.some(isMusicCueScored)) return cues
+
+  const url = typeof scene.musicAudio === 'string' ? scene.musicAudio.trim() : ''
+  if (!url) return cues
+
+  const brief = sceneMusicDescription(scene)
+  if (!brief) return cues
+  // Only the cue written from the scene's own brief can claim the scene's own
+  // track; a cue with its own brief would be playing the wrong music.
+  if (cues[0].description !== adaptPromptForLyria(brief)) return cues
+
+  const fileDuration = Number(scene.musicFileDuration)
+  const duration = Number(scene.musicDuration)
+
+  return cues.map((cue, index) =>
+    index === 0
+      ? {
+          ...cue,
+          url,
+          ...(fileDuration > 0 ? { fileDuration } : {}),
+          ...(duration > 0 ? { duration } : {}),
+        }
+      : cue
+  )
+}
+
 /** Resolve the scene's cues and persist them together with the beat flags. */
 export function ensureSceneMusicCues(
   scene: Record<string, unknown>,
   beats: SceneBeat[],
   movements: SceneMovement[]
 ): { scene: Record<string, unknown>; beats: SceneBeat[] } {
-  return applySceneMusicCues(scene, getSceneMusicCues(scene, beats, movements), beats)
+  const cues = adoptLegacySceneTrack(scene, getSceneMusicCues(scene, beats, movements))
+  return applySceneMusicCues(scene, cues, beats)
 }
 
 /** The cue scoring a beat, if any. */
