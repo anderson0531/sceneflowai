@@ -34,6 +34,11 @@ import { NotifyCapture } from '@/components/landing/NotifyCapture'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { getVideoPreloadStrategy, type VideoPreloadValue } from '@/lib/landing/videoPreload'
 import { useAdaptiveVideoSource } from '@/lib/landing/useAdaptiveVideoSource'
+import {
+  HERO_NETWORK_CONTEXT_PENDING,
+  prefersLeanHeroSource,
+  readHeroNetworkContext,
+} from '@/lib/landing/heroPlaybackPolicy'
 
 function readUnmuteDismissed(): boolean {
   if (typeof window === 'undefined') return false
@@ -57,15 +62,17 @@ export function HeroSection() {
   const [inlineVideoLocale, setInlineVideoLocale] =
     useState<HeroVideoLocaleId>(syncedVideoLocale)
   const [videoPreload, setVideoPreload] = useState<VideoPreloadValue>('metadata')
+  const [networkCtx, setNetworkCtx] = useState(HERO_NETWORK_CONTEXT_PENDING)
   const [isBuffering, setIsBuffering] = useState(true)
   const suppressTheaterOpenUntilRef = useRef(0)
 
   const heroLocales = getHeroVideoLocalesAsVideoLocales()
+  const leanHero = prefersLeanHeroSource(networkCtx)
   const playbackSources = useMemo(
     () =>
-      getHeroVideoPlaybackSources(inlineVideoLocale) ??
-      getHeroVideoPlaybackSources(DEFAULT_HERO_VIDEO_LOCALE)!,
-    [inlineVideoLocale]
+      getHeroVideoPlaybackSources(inlineVideoLocale, networkCtx) ??
+      getHeroVideoPlaybackSources(DEFAULT_HERO_VIDEO_LOCALE, networkCtx)!,
+    [inlineVideoLocale, networkCtx]
   )
 
   useAdaptiveVideoSource(
@@ -73,12 +80,15 @@ export function HeroSection() {
     {
       hlsSrc: playbackSources.hlsSrc,
       mp4Src: playbackSources.mp4Src,
+      mp4SrcFallback: playbackSources.mp4SrcFallback,
     },
     !isTheaterOpen
   )
 
   useEffect(() => {
-    setVideoPreload(getVideoPreloadStrategy())
+    const ctx = readHeroNetworkContext()
+    setNetworkCtx(ctx)
+    setVideoPreload(getVideoPreloadStrategy(ctx))
   }, [])
 
   useEffect(() => {
@@ -257,7 +267,7 @@ export function HeroSection() {
                 <video
                   ref={videoRef}
                   poster={playbackSources.poster}
-                  autoPlay
+                  autoPlay={!leanHero}
                   loop
                   muted={isMuted}
                   playsInline
@@ -266,7 +276,12 @@ export function HeroSection() {
                   onPlay={() => setIsPlaying(true)}
                   onPause={() => setIsPlaying(false)}
                   onWaiting={() => setIsBuffering(true)}
-                  onCanPlay={() => setIsBuffering(false)}
+                  onCanPlay={() => {
+                    setIsBuffering(false)
+                    if (leanHero && isPlaying && !isTheaterOpen) {
+                      void videoRef.current?.play().catch(() => {})
+                    }
+                  }}
                   onPlaying={() => setIsBuffering(false)}
                 />
 

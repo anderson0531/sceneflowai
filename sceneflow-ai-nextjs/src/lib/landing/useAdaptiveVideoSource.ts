@@ -5,6 +5,8 @@ import { useEffect, useRef, type RefObject } from 'react'
 export type AdaptiveVideoSources = {
   hlsSrc?: string
   mp4Src: string
+  /** Used when the preferred MP4 404s (web encode not uploaded yet). */
+  mp4SrcFallback?: string
 }
 
 function stripHash(url: string): string {
@@ -31,6 +33,7 @@ export function useAdaptiveVideoSource(
     if (!video || !enabled) return
 
     const mp4 = sources.mp4Src
+    const mp4Fallback = sources.mp4SrcFallback?.trim()
     const hls = sources.hlsSrc?.trim()
 
     let cancelled = false
@@ -42,13 +45,18 @@ export function useAdaptiveVideoSource(
       }
     }
 
-    const loadMp4 = () => {
+    const loadMp4 = (url = mp4) => {
       destroyHls()
-      const next = mp4
-      if (stripHash(video.src) !== stripHash(next)) {
-        video.src = next
+      if (stripHash(video.src) !== stripHash(url)) {
+        video.src = url
         video.load()
       }
+    }
+
+    const onProgressiveError = () => {
+      if (!mp4Fallback || stripHash(video.src) === stripHash(mp4Fallback)) return
+      console.warn('[Hero video] preferred MP4 failed, falling back', video.src)
+      loadMp4(mp4Fallback)
     }
 
     const attach = async () => {
@@ -78,18 +86,29 @@ export function useAdaptiveVideoSource(
       const instance = new HlsConstructor({
         enableWorker: true,
         lowLatencyMode: false,
+        // Let ABR pick the rung, but never request 1080p for a 360px hero tile.
         startLevel: -1,
+        capLevelToPlayerSize: true,
+        // Assume a modest first hop so the first segments are 360p, not 1080p.
+        abrEwmaDefaultEstimate: 500_000,
       })
       hlsRef.current = instance
+      instance.on(HlsConstructor.Events.ERROR, (_event, data) => {
+        if (!data.fatal) return
+        console.warn('[Hero HLS] fatal error, falling back to MP4', data.type, data.details)
+        loadMp4()
+      })
       instance.loadSource(hls)
       instance.attachMedia(video)
     }
 
+    video.addEventListener('error', onProgressiveError)
     void attach()
 
     return () => {
       cancelled = true
+      video.removeEventListener('error', onProgressiveError)
       destroyHls()
     }
-  }, [enabled, sources.hlsSrc, sources.mp4Src, videoRef])
+  }, [enabled, sources.hlsSrc, sources.mp4Src, sources.mp4SrcFallback, videoRef])
 }
