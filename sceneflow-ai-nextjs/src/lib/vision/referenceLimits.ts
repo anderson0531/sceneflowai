@@ -7,14 +7,29 @@ import { buildLocationReferenceLabel } from '@/lib/vision/locationReferencePromp
 
 export const MAX_VERTEX_GEMINI_REFERENCE_IMAGES = 8
 export const MAX_REFERENCE_IMAGES_ECO = 3
+/**
+ * Express draft beats on `gemini-2.5-flash-image`.
+ *
+ * The eco cap of 3 is a Fal Kling element budget, and reusing it on Vertex
+ * multimodal silently dropped wardrobe and location references the moment a
+ * scene had two characters — identity has top priority, so the survivors were
+ * faces with no outfit and `remapReferenceNumbersInPrompt` nulled the mentions
+ * of everything else. Flash takes more than three inline images; six covers two
+ * fully referenced subjects plus a location.
+ */
+export const MAX_REFERENCE_IMAGES_FLASH_ANIMATIC = 6
 /** Fal Kling O3 Omni: max 10 total elements + image_urls */
 export const MAX_REFERENCE_IMAGES_PRO = 10
 export const MAX_FAL_KLING_REFERENCE_SLOTS = 10
 
 export type VertexImageTier = 'eco' | 'designer' | 'director'
 
-export function getMaxReferenceImagesForTier(tier: VertexImageTier): number {
-  return tier === 'eco' ? MAX_REFERENCE_IMAGES_ECO : MAX_REFERENCE_IMAGES_PRO
+export function getMaxReferenceImagesForTier(
+  tier: VertexImageTier,
+  options?: { flashAnimatic?: boolean }
+): number {
+  if (tier !== 'eco') return MAX_REFERENCE_IMAGES_PRO
+  return options?.flashAnimatic ? MAX_REFERENCE_IMAGES_FLASH_ANIMATIC : MAX_REFERENCE_IMAGES_ECO
 }
 
 /**
