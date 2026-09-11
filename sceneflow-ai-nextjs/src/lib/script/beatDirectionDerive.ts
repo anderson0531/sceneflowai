@@ -244,8 +244,21 @@ export function deriveBeatDirection(
       ? existing.generatedBy
       : 'derived'
   derived.generatedBy = source
-  derived.updatedAt = new Date().toISOString()
+  // A pass that filled no gaps keeps the stamp it already had. Re-stamping
+  // made the project migration see a change on every run and rewrite every
+  // scene it had already migrated.
+  derived.updatedAt =
+    existing.updatedAt && !directionFieldsChanged(existing, derived)
+      ? existing.updatedAt
+      : new Date().toISOString()
   return derived
+}
+
+/** Compare two directions ignoring the timestamp that records the comparison. */
+function directionFieldsChanged(before: BeatDirection, after: BeatDirection): boolean {
+  const { updatedAt: _beforeStamp, ...beforeFields } = before
+  const { updatedAt: _afterStamp, ...afterFields } = after
+  return JSON.stringify(beforeFields) !== JSON.stringify(afterFields)
 }
 
 /**

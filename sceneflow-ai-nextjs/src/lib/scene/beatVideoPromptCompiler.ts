@@ -1,5 +1,11 @@
 /**
  * Compile clean Veo video prompts from beats — no SFX/music language.
+ *
+ * A beat scored by a music cue carries that cue as tonal direction only: what
+ * the moment should feel like and how it should move, never what it should
+ * sound like. The score is generated separately and mixed under the clip, and
+ * a cue spans several beats while each clip is a few seconds, so asking the
+ * model for music would seam the score at every cut and bake it in unmixable.
  */
 
 import { getArtStyleNegativeTerms, getArtStylePromptSuffix } from '@/lib/vision/artStyle'
@@ -9,7 +15,8 @@ import {
   type CharacterGender,
 } from '@/lib/character/visualGender'
 import { toCharacterPromptAlias } from '@/lib/character/characterPromptAlias'
-import type { SceneBeat } from '@/lib/script/segmentTypes'
+import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
+import { formatMusicCueSteer } from '@/lib/script/sceneMusicCues'
 import type {
   DetailedSceneDirection,
   SceneSegmentPromptBundleEntry,
@@ -169,18 +176,22 @@ export function compileBeatVideoPrompt(
     excerpt?: string
     characterGender?: CharacterGender | null
     characterName?: string
+    /** Cue scoring this beat, if any; enters as tonal direction, never as audio. */
+    musicCue?: SceneMusicCue
   }
 ): BeatVideoPromptResult {
   const artStyleId = options?.artStyleId ?? 'photorealistic'
   const styleSuffix = getArtStylePromptSuffix(artStyleId)
   const styleNegative = getArtStyleNegativeTerms(artStyleId)
   const line = options?.excerpt ?? beat.line ?? ''
+  const steer = formatMusicCueSteer(options?.musicCue)
+  const steerSuffix = steer ? `${steer}. ` : ''
 
   let prompt = ''
   if (beat.kind === 'action') {
-    prompt = `${beat.actionDescription ?? 'Scene action'}. Natural cinematic motion. ${styleSuffix}`
+    prompt = `${beat.actionDescription ?? 'Scene action'}. Natural cinematic motion. ${steerSuffix}${styleSuffix}`
   } else if (beat.kind === 'narration') {
-    prompt = `Atmospheric visual scene supporting voiceover mood. Subtle environmental motion. No on-screen text. ${styleSuffix}`
+    prompt = `Atmospheric visual scene supporting voiceover mood. Subtle environmental motion. No on-screen text. ${steerSuffix}${styleSuffix}`
   } else {
     const character = beat.character ?? 'Character'
     const speakerAlias = toCharacterPromptAlias(character)
@@ -194,7 +205,7 @@ export function compileBeatVideoPrompt(
     const deliverySuffix = parsed.deliveryProse
       ? ` Delivery: ${parsed.deliveryProse}.`
       : ''
-    prompt = `${speakerAlias} speaks naturally: "${cleanLine}".${deliverySuffix} Subtle facial expression and body language. ${styleSuffix}`
+    prompt = `${speakerAlias} speaks naturally: "${cleanLine}".${deliverySuffix} Subtle facial expression and body language. ${steerSuffix}${styleSuffix}`
   }
 
   const negativePrompt = `${BASE_NEGATIVES}, ${styleNegative}`
@@ -211,11 +222,14 @@ export function compileBeatVideoPromptFromDirection(
   options?: {
     artStyleId?: string
     excerpt?: string
+    /** Cue scoring this beat, if any; enters as tonal direction, never as audio. */
+    musicCue?: SceneMusicCue
   }
 ): BeatVideoPromptResult {
   const artStyleId = options?.artStyleId ?? 'photorealistic'
   const styleSuffix = getArtStylePromptSuffix(artStyleId)
   const styleNegative = getArtStyleNegativeTerms(artStyleId)
+  const steer = formatMusicCueSteer(options?.musicCue)
   const entry = findBundleEntryForBeat(
     beat,
     sceneDirection?.segmentPromptBundle
@@ -232,7 +246,7 @@ export function compileBeatVideoPromptFromDirection(
     const hints = sceneDirectionMotionHints(sceneDirection, core)
     if (hints) core = normalizePromptJoin(core, hints)
     return {
-      prompt: normalizePromptJoin(core, styleSuffix),
+      prompt: normalizePromptJoin(core, steer, styleSuffix),
       negativePrompt: `${BASE_NEGATIVES}, ${styleNegative}`,
     }
   }
@@ -246,22 +260,25 @@ export function compileBeatVideoPromptFromDirection(
       ? normalizePromptJoin(core, hints)
       : normalizePromptJoin(core, 'Natural cinematic motion')
     return {
-      prompt: normalizePromptJoin(core, styleSuffix),
+      prompt: normalizePromptJoin(core, steer, styleSuffix),
       negativePrompt: `${BASE_NEGATIVES}, ${styleNegative}`,
     }
   }
 
+  // The fallback already carries the steer, so it is stripped along with the
+  // style suffix and re-joined in order rather than appearing twice.
   const fallback = compileBeatVideoPrompt(beat, options)
   const beatHints = beatDirectionMotionHints(beat, fallback.prompt)
   const hints = sceneDirectionMotionHints(sceneDirection, fallback.prompt)
   if (!beatHints && !hints) return fallback
 
+  const tail = steer ? `\\. ${escapeRegExp(steer)}\\. ` : '\\. '
   const withoutStyle = fallback.prompt.replace(
-    new RegExp(`\\. ${escapeRegExp(styleSuffix)}$`),
+    new RegExp(`${tail}${escapeRegExp(styleSuffix)}$`),
     ''
   )
   return {
-    prompt: normalizePromptJoin(withoutStyle, beatHints, hints, styleSuffix),
+    prompt: normalizePromptJoin(withoutStyle, beatHints, hints, steer, styleSuffix),
     negativePrompt: fallback.negativePrompt,
   }
 }

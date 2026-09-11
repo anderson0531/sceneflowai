@@ -17,6 +17,8 @@ export interface PersistSceneAudioAtomicParams {
   beatDescription?: string
   musicDuration?: number
   musicFileDuration?: number
+  /** Targets one cue in `scene.sceneMusicCues` instead of the legacy scene track. */
+  musicCueId?: string
   characterName?: string
   dialogueIndex?: number
   duration?: number | null
@@ -85,7 +87,8 @@ function extractOldAudioUrl(
   language: string,
   dialogueIndex?: number,
   characterName?: string,
-  lineMeta?: PersistSceneAudioAtomicParams['lineMeta']
+  lineMeta?: PersistSceneAudioAtomicParams['lineMeta'],
+  musicCueId?: string
 ): string | null {
   if (audioType === 'narration') {
     const narrationAudio = scene.narrationAudio as Record<string, { url?: string }> | undefined
@@ -104,6 +107,15 @@ function extractOldAudioUrl(
     )
   }
   if (audioType === 'music') {
+    // Re-scoring a cue replaces that cue's track. Reporting the scene-wide
+    // track here would have the caller delete a blob other cues still play.
+    if (musicCueId) {
+      const cues = Array.isArray(scene.sceneMusicCues)
+        ? (scene.sceneMusicCues as Array<Record<string, unknown>>)
+        : []
+      const url = cues.find((entry) => entry?.cueId === musicCueId)?.url
+      return typeof url === 'string' && url.trim() ? url : null
+    }
     const url = scene.musicAudio
     return typeof url === 'string' && url.trim() ? url : null
   }
@@ -218,6 +230,26 @@ function applySfxMutation(
 }
 
 function applyMusicMutation(scene: SceneRecord, params: PersistSceneAudioAtomicParams): void {
+  // A cue-targeted save belongs to that stretch of the scene alone. Writing it
+  // to `musicAudio` as well would give a scene one track claiming to score the
+  // whole thing on top of the cue that actually does.
+  if (params.musicCueId) {
+    const cues = Array.isArray(scene.sceneMusicCues)
+      ? (scene.sceneMusicCues as Array<Record<string, unknown>>)
+      : []
+    const cue = cues.find((entry) => entry?.cueId === params.musicCueId)
+    if (!cue) return
+    cue.url = params.audioUrl
+    cue.updatedAt = new Date().toISOString()
+    if (typeof params.musicDuration === 'number' && params.musicDuration > 0) {
+      cue.duration = params.musicDuration
+    }
+    if (typeof params.musicFileDuration === 'number' && params.musicFileDuration > 0) {
+      cue.fileDuration = params.musicFileDuration
+    }
+    return
+  }
+
   scene.musicAudio = params.audioUrl
   if (typeof params.musicDuration === 'number' && params.musicDuration > 0) {
     scene.musicDuration = params.musicDuration
@@ -402,7 +434,8 @@ export async function persistSceneAudioAtomic(
       language,
       params.dialogueIndex,
       params.characterName,
-      params.lineMeta
+      params.lineMeta,
+      params.musicCueId
     )
 
     let sfxIndex: number | undefined

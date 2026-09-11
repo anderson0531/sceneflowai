@@ -1100,6 +1100,15 @@ export function buildStoryboardAudioRevision(
     parts.push(`music:${scene.musicAudio}`)
   }
 
+  // Scoring or re-scoring a cue changes what plays, so the cue tracks and the
+  // beats they cover belong in the revision the timeline is rebuilt from.
+  if (Array.isArray(scene.sceneMusicCues)) {
+    for (const entry of scene.sceneMusicCues as Array<Record<string, unknown>>) {
+      if (!entry) continue
+      parts.push(`cue:${entry.cueId}:${entry.beatStart}-${entry.beatEnd}:${entry.url ?? ''}`)
+    }
+  }
+
   const sfx = scene.sfxAudio
   if (Array.isArray(sfx)) {
     sfx.forEach((entry, index) => {
@@ -1877,7 +1886,8 @@ export function buildProjectAnimaticTimeline(
       scene,
       visualFrames,
       sceneDuration,
-      musicFileDuration
+      musicFileDuration,
+      dynamicDurations
     )) {
       audioClips.push({
         url: clip.url,

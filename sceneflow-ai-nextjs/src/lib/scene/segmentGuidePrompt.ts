@@ -404,12 +404,17 @@ export function composeGuidePromptFromElements(
 
   // SFX cues are excluded from Veo video prompts — sound design is handled outside native video gen.
 
+  // Music is scored separately and mixed under the clip, so its description
+  // enters as tonal direction for the picture rather than as a request for
+  // audio. Asking for a track here would fight the cue laid over the beat.
   const musicElements = selectedElements.filter((el) => el.type === 'music')
   if (musicElements.length > 0) {
     const musicDescriptions = musicElements
       .map((m) => textFor(m).toLowerCase())
       .join(', ')
-    visualParts.push(`Background music: ${musicDescriptions}`)
+    visualParts.push(
+      `Scored moment (${musicDescriptions}) — match the pacing and performance to that mood; generate no music`
+    )
   }
 
   if (customAddition) {

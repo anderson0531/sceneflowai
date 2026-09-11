@@ -159,6 +159,26 @@ describe('segmentGuidePrompt', () => {
     expect(composeGuidePromptFromElements(withEdit, {})).not.toContain('A narrator with')
   })
 
+  it('turns a music element into tonal direction instead of a request for a track', () => {
+    const elements: GuideAudioElement[] = [
+      {
+        id: 'm1',
+        type: 'music',
+        label: 'Music',
+        content: 'Ominous low strings and sub-bass drone',
+        selected: true,
+        portionStart: 0,
+        portionEnd: 100,
+      },
+    ]
+
+    const out = composeGuidePromptFromElements(elements, {})
+    expect(out).toContain('Scored moment')
+    expect(out).toContain('ominous low strings')
+    expect(out).toContain('generate no music')
+    expect(out).not.toContain('Background music:')
+  })
+
   it('omits SFX from composed guide prompt (sound design is outside Veo text)', () => {
     const elements: GuideAudioElement[] = [
       {

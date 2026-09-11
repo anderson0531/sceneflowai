@@ -725,7 +725,11 @@ export function GuidePromptEditor({
     
     const music = selectedElements.filter(el => el.type === 'music')
     if (music.length > 0) {
-      parts.push(`[MUSIC]\n${music.map(m => getEffectiveElementText(m)).join(', ')}`)
+      parts.push(
+        `[SCORED MOMENT — tonal direction only, generate no music]\n${music
+          .map(m => getEffectiveElementText(m))
+          .join(', ')}`
+      )
     }
     
     if (customAddition.trim()) {
@@ -1021,8 +1025,12 @@ export function GuidePromptEditor({
                                 {element.type}
                               </Badge>
                               {(element.type === 'sfx' || element.type === 'music') && (
-                                <Badge variant="secondary" className="text-[10px] bg-green-500/20 text-green-300">
-                                  Veo Native
+                                <Badge
+                                  variant="secondary"
+                                  className="text-[10px] bg-amber-500/20 text-amber-300"
+                                  title="Generated separately and mixed under the clip. In the prompt this only steers the shot's mood and pacing."
+                                >
+                                  Mixed in post
                                 </Badge>
                               )}
                             </div>

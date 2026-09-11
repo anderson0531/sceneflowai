@@ -40,6 +40,12 @@ export interface BeatReferenceSelection {
 export type BeatDirectionTransition = 'CUT' | 'CONTINUE' | 'DISSOLVE' | 'FADE' | 'MATCH_CUT'
 export type BeatDirectionSource = 'llm' | 'planner' | 'derived' | 'user'
 export type SceneMovementSource = 'llm' | 'derived' | 'user'
+export type SceneMusicCueSource = 'llm' | 'derived' | 'user'
+
+/** How a cue arrives. */
+export type MusicCueEntry = 'fade' | 'hard' | 'swell'
+/** How a cue leaves. */
+export type MusicCueExit = 'fade' | 'hard' | 'tail'
 
 /**
  * One dramatic movement inside a scene, covering a contiguous run of beats.
@@ -63,6 +69,40 @@ export interface SceneMovement {
   beatEnd: number
   /** Provenance of this movement record. */
   generatedBy?: SceneMovementSource
+}
+
+/**
+ * One stretch of a scene that plays scored, and the emotion it is scored for.
+ *
+ * A scene used to hold a single music file looped end to end, which cannot
+ * follow a scene that swings from dread to violence to revelation. A cue names
+ * the contiguous run of beats it underscores, so a scene can carry a few
+ * distinct pieces of music — and, just as deliberately, stretches with none.
+ * Cues are placed by the script LLM when available and derived from the
+ * scene's movements otherwise.
+ */
+export interface SceneMusicCue {
+  cueId: string
+  /** Inclusive first beat index this cue scores. */
+  beatStart: number
+  /** Inclusive last beat index this cue scores. */
+  beatEnd: number
+  /** Lyria brief: genre, mood, instruments, tempo. Obeys LYRIA_MUSIC_PROMPT_RULES. */
+  description: string
+  /** The viewer emotion this cue exists to trigger; drives the video-prompt steer. */
+  intent: string
+  entry?: MusicCueEntry
+  exit?: MusicCueExit
+  /** Generated track. Absent until the cue is scored. */
+  url?: string
+  /** Timeline length the cue plays for, looping the file as needed. */
+  duration?: number
+  /** Real length of the generated file (Lyria returns ~30s). */
+  fileDuration?: number
+  /** Provenance of this cue record. */
+  generatedBy?: SceneMusicCueSource
+  /** ISO timestamp of last write. */
+  updatedAt?: string
 }
 
 /**

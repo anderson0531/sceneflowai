@@ -3,7 +3,7 @@ import {
   compileBeatVideoPrompt,
   compileBeatVideoPromptFromDirection,
 } from '@/lib/scene/beatVideoPromptCompiler'
-import type { SceneBeat } from '@/lib/script/segmentTypes'
+import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
 
 const dialogueBeat: SceneBeat = {
@@ -140,5 +140,62 @@ describe('compileBeatVideoPrompt speaker alias', () => {
     expect(result.prompt).toContain('Char_SARAH speaks naturally:')
     expect(result.prompt).toContain('We need to leave now.')
     expect(result.prompt).not.toMatch(/^SARAH speaks naturally/)
+  })
+})
+
+describe('music cue steer', () => {
+  const musicCue: SceneMusicCue = {
+    cueId: 'cue-0-2',
+    beatStart: 0,
+    beatEnd: 2,
+    description: 'Cinematic orchestral score, aggressive mood, low brass, driving tempo',
+    intent: 'the turn into violence',
+    generatedBy: 'llm',
+  }
+
+  it('directs the performance with the cue’s emotion, not its instrumentation', () => {
+    const result = compileBeatVideoPrompt(actionBeat, { musicCue })
+
+    expect(result.prompt).toContain('the turn into violence')
+    expect(result.prompt).toContain('pacing and performance')
+    expect(result.prompt).not.toMatch(/orchestral|brass|tempo/i)
+  })
+
+  it('keeps music in the negative prompt so only Lyria scores the beat', () => {
+    const result = compileBeatVideoPrompt(actionBeat, { musicCue })
+    expect(result.negativePrompt).toContain('music')
+  })
+
+  it('leaves the prompt untouched for a beat no cue scores', () => {
+    expect(compileBeatVideoPrompt(actionBeat, {}).prompt).toBe(
+      compileBeatVideoPrompt(actionBeat).prompt
+    )
+  })
+
+  it('adds the steer once when compiling from scene direction', () => {
+    const direction: DetailedSceneDirection = {
+      camera: { shots: ['Wide Shot'], angle: '', movement: 'Handheld', lensChoice: '', focus: '' },
+      lighting: {
+        overallMood: 'Hard & Dramatic',
+        timeOfDay: '',
+        keyLight: '',
+        fillLight: '',
+        backlight: '',
+        practicals: '',
+        colorTemperature: '',
+      },
+      scene: { location: '', keyProps: [], atmosphere: '' },
+      talent: { blocking: '', keyActions: [], emotionalBeat: 'Suppressed anger' },
+      audio: { priorities: '', considerations: '' },
+    }
+
+    const result = compileBeatVideoPromptFromDirection(actionBeat, direction, { musicCue })
+    expect(result.prompt.match(/the turn into violence/g)).toHaveLength(1)
+    expect(result.prompt).not.toContain('..')
+  })
+
+  it('adds the steer once when falling back with no direction at all', () => {
+    const result = compileBeatVideoPromptFromDirection(actionBeat, null, { musicCue })
+    expect(result.prompt.match(/the turn into violence/g)).toHaveLength(1)
   })
 })

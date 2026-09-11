@@ -136,6 +136,15 @@ import {
   stripInlineSfxLinesFromActionText,
 } from '@/lib/script/deriveSfxFromSceneContent'
 import { BeatMusicToggle } from '@/components/vision/BeatMusicToggle'
+import { SceneMusicCuePanel } from '@/components/vision/SceneMusicCuePanel'
+import {
+  estimateMusicCueDuration,
+  formatMusicCueRange,
+  isMusicCueScored,
+  parsePersistedMusicCues,
+  resolveBeatMusicCue,
+} from '@/lib/script/sceneMusicCues'
+import type { SceneMusicCue } from '@/lib/script/segmentTypes'
 import { BeatSfxToggle } from '@/components/vision/BeatSfxToggle'
 import { BeatExcludeToggle } from '@/components/vision/BeatExcludeToggle'
 import { BeatDirectionEditor } from '@/components/vision/BeatDirectionEditor'
@@ -1178,6 +1187,11 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
   
   // Audio features state
   const [generatingMusic, setGeneratingMusic] = useState<number | null>(null)
+  const [generatingMusicCue, setGeneratingMusicCue] = useState<{
+    sceneIdx: number
+    cueId: string
+  } | null>(null)
+  const [generatingAllCuesFor, setGeneratingAllCuesFor] = useState<number | null>(null)
   const [audioTracks, setAudioTracks] = useState<AudioTrack[]>([])
   const [isPlayingMixed, setIsPlayingMixed] = useState(false)
   const [isPlayingAll, setIsPlayingAll] = useState(false)
@@ -2325,6 +2339,108 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     }
   }
 
+  /**
+   * Score one cue.
+   *
+   * Each cue is its own Lyria track saved onto that cue, so regenerating one
+   * stretch of the scene leaves the rest of the score untouched.
+   */
+  const generateMusicCue = async (sceneIdx: number, cueId: string) => {
+    const scene = scenes[sceneIdx]
+    if (!scene) return
+
+    const beats = getSceneBeats(scene)
+    const cue = parsePersistedMusicCues(scene.sceneMusicCues, beats).find(
+      (entry) => entry.cueId === cueId
+    )
+    if (!cue) {
+      toast.error('Music cue not found')
+      return
+    }
+
+    const duration = estimateMusicCueDuration(cue, beats)
+    setGeneratingMusicCue({ sceneIdx, cueId })
+    try {
+      const { generateMusicTrack } = await import('@/lib/audio/musicClient')
+      const data = await generateMusicTrack({
+        text: cue.description,
+        duration,
+        saveToBlob: true,
+        projectId: projectId || 'temp',
+        sceneId: `scene-${sceneIdx}`,
+        cueId,
+      })
+
+      await saveSceneAudio(
+        sceneIdx,
+        'music',
+        data.url,
+        undefined,
+        undefined,
+        undefined,
+        duration,
+        typeof data.duration === 'number' && data.duration > 0 ? data.duration : undefined,
+        cueId
+      )
+    } catch (error: unknown) {
+      console.error('[Music Cue Generation] Error:', error)
+      const { LyriaRecitationError } = await import('@/lib/audio/musicClient')
+      const message =
+        error instanceof LyriaRecitationError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : 'Music generation failed'
+      toast.error(
+        error instanceof LyriaRecitationError
+          ? message
+          : `Failed to score ${formatMusicCueRange(cue)}: ${message}`
+      )
+      throw error
+    } finally {
+      setGeneratingMusicCue(null)
+    }
+  }
+
+  /**
+   * Score every cue that has no track yet.
+   *
+   * Sequential so the credit spend stops at the first failure rather than
+   * charging for the rest of the scene after Lyria starts rejecting briefs.
+   */
+  const generateAllMusicCues = async (sceneIdx: number) => {
+    const scene = scenes[sceneIdx]
+    if (!scene) return
+
+    const pending = parsePersistedMusicCues(
+      scene.sceneMusicCues,
+      getSceneBeats(scene)
+    ).filter((cue) => !isMusicCueScored(cue))
+    if (pending.length === 0) return
+
+    setGeneratingAllCuesFor(sceneIdx)
+    overlayStore?.show(
+      `Scoring ${pending.length} cue${pending.length === 1 ? '' : 's'} for Scene ${sceneIdx + 1}...`,
+      45 * pending.length,
+      'audio-generation'
+    )
+    let scored = 0
+    try {
+      for (const cue of pending) {
+        await generateMusicCue(sceneIdx, cue.cueId)
+        scored++
+      }
+      toast.success(`Scored ${scored} cue${scored === 1 ? '' : 's'}`)
+    } catch {
+      if (scored > 0) {
+        toast.info(`Scored ${scored} of ${pending.length} cues before stopping`)
+      }
+    } finally {
+      overlayStore?.hide()
+      setGeneratingAllCuesFor(null)
+    }
+  }
+
   const uploadAudio = async (sceneIdx: number, type: 'description' | 'narration' | 'dialogue' | 'sfx' | 'music', sfxIdx?: number, dialogueIdx?: number, characterName?: string) => {
     if (type === 'sfx') {
       toast.info('SFX uploads are no longer supported. Use Generate to create the cue with ElevenLabs.')
@@ -2428,7 +2544,8 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     sfxAttribution?: Record<string, unknown> | null,
     beatContext?: { beatId: string; beatDescription: string },
     musicDuration?: number,
-    musicFileDuration?: number
+    musicFileDuration?: number,
+    musicCueId?: string
   ) => {
     // CRITICAL FIX: Use atomic server update instead of stale client state
     // The old approach used local `scenes` state which was stale and overwrote server-saved dialogue audio
@@ -2461,6 +2578,9 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
       if (audioType === 'music' && typeof musicFileDuration === 'number' && musicFileDuration > 0) {
         atomicAudioUpdate.musicFileDuration = musicFileDuration
       }
+      if (audioType === 'music' && musicCueId) {
+        atomicAudioUpdate.musicCueId = musicCueId
+      }
 
       // Make atomic update to database via PATCH endpoint
       const response = await fetch(`/api/projects/${projectId}`, {
@@ -2488,6 +2608,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
           beatContext,
           musicDuration,
           musicFileDuration,
+          musicCueId,
         })
         console.log('[Save Audio] Applied server-confirmed slot from PATCH response:', {
           sceneIdx,
@@ -3429,6 +3550,10 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       generatingMusic={generatingMusic}
                       setGeneratingMusic={setGeneratingMusic}
                       generateMusic={generateMusic}
+                      generateMusicCue={generateMusicCue}
+                      generateAllMusicCues={generateAllMusicCues}
+                      generatingMusicCue={generatingMusicCue}
+                      generatingAllCuesFor={generatingAllCuesFor}
                       uploadAudio={uploadAudio}
                       onSaveSfxAudio={saveSceneAudio}
                       generatingDirectionFor={generatingDirectionFor}
@@ -4042,6 +4167,12 @@ interface SceneCardProps {
   setGeneratingMusic?: (state: number | null) => void
   // Functions for generating and saving audio
   generateMusic?: (sceneIdx: number, skipOverlay?: boolean, durationSeconds?: number) => Promise<void>
+  /** Score one music cue, saving the track onto that cue. */
+  generateMusicCue?: (sceneIdx: number, cueId: string) => Promise<void>
+  /** Score every cue in the scene that has no track yet. */
+  generateAllMusicCues?: (sceneIdx: number) => Promise<void>
+  generatingMusicCue?: { sceneIdx: number; cueId: string } | null
+  generatingAllCuesFor?: number | null
   /** Persist a generated SFX URL through the project PATCH path. */
   onSaveSfxAudio?: (
     sceneIdx: number,
@@ -4287,6 +4418,10 @@ function SceneCard({
   generatingMusic,
   setGeneratingMusic,
   generateMusic,
+  generateMusicCue,
+  generateAllMusicCues,
+  generatingMusicCue,
+  generatingAllCuesFor,
   onSaveSfxAudio,
   uploadAudio,
   generatingDirectionFor,
@@ -4461,6 +4596,25 @@ function SceneCard({
   )
   const frameSlotsForTabs = useMemo(() => enumerateStoryboardFrameSlots(scene), [scene])
   const preVisFrameStats = useMemo(() => countStoryboardFrameStats(scene), [scene])
+  const sceneMusicCues = useMemo<SceneMusicCue[]>(
+    () => parsePersistedMusicCues(scene.sceneMusicCues, sceneBeatsForTabs),
+    [scene.sceneMusicCues, sceneBeatsForTabs]
+  )
+  const musicCueByBeatId = useMemo(() => {
+    const map = new Map<string, SceneMusicCue>()
+    sceneBeatsForTabs.forEach((beat, index) => {
+      const cue = resolveBeatMusicCue(sceneMusicCues, index)
+      if (cue) map.set(beat.beatId, cue)
+    })
+    return map
+  }, [sceneBeatsForTabs, sceneMusicCues])
+  // The scene's own track still plays under any music-enabled beat no cue
+  // covers, so it keeps its panel until a cue has claimed it.
+  const showLegacyMusicPanel =
+    !!scene.music &&
+    (sceneMusicCues.length === 0 ||
+      (!!scene.musicAudio &&
+        !sceneMusicCues.some((cue) => cue.url === scene.musicAudio)))
 
   const hasDirectionTab = !!(
     scene.visualDescription ||
@@ -4475,7 +4629,7 @@ function SceneCard({
   )
   const hasPreVisTab = frameSlotsForTabs.length > 0 || sceneBeatsForTabs.length > 0
   const hasBeatsTab = sceneBeatsForTabs.length > 0
-  const hasMusicTab = !!scene.music
+  const hasMusicTab = !!scene.music || sceneMusicCues.length > 0
 
   const defaultMusicPlayDuration = useMemo(() => {
     if (typeof scene.musicDuration === 'number' && scene.musicDuration > 0) {
@@ -6599,7 +6753,8 @@ function SceneCard({
                         .map((line) => line.replace(/^SFX:\s*/i, '').trim())
                         .filter(Boolean)
                     }
-                    const hasSceneMusic = !!(scene.musicAudio || scene.music?.url)
+                    const hasSceneMusic =
+                      !!(scene.musicAudio || scene.music?.url) || sceneMusicCues.length > 0
                     let spokenBeatCursor = 0
                     return (
                     <div className="p-4 rounded-lg bg-slate-900/40 border border-slate-700/50">
@@ -6822,6 +6977,7 @@ function SceneCard({
                                     scenes={scenes}
                                     script={script}
                                     onScriptChange={onScriptChange}
+                                    cue={musicCueByBeatId.get(beat.beatId)}
                                   />
                                 )}
                                 {hasBeatSfx && (
@@ -7088,6 +7244,7 @@ function SceneCard({
                                       scenes={scenes}
                                       script={script}
                                       onScriptChange={onScriptChange}
+                                      cue={musicCueByBeatId.get(beat.beatId)}
                                     />
                                   )}
                                   {hasBeatSfx && (
@@ -7267,8 +7424,41 @@ function SceneCard({
 
                   {/* Music */}
                   {hasMusicTab && (
-                  <TabsContent value="music" className="mt-3 focus-visible:outline-none">
+                  <TabsContent value="music" className="mt-3 focus-visible:outline-none space-y-3">
+                    <SceneMusicCuePanel
+                      cues={sceneMusicCues}
+                      sceneNumber={sceneIdx + 1}
+                      playingAudio={playingAudio}
+                      onPlayAudio={onPlayAudio}
+                      onGenerateCue={(cueId) => {
+                        // Rethrown by the handler so the batch action can stop;
+                        // a single click has already shown its toast.
+                        void generateMusicCue?.(sceneIdx, cueId)?.catch(() => {})
+                      }}
+                      onGenerateAllCues={() => generateAllMusicCues?.(sceneIdx)}
+                      onDownloadCue={(e, cue) =>
+                        void downloadSceneAudioFile(e, cue.url as string, {
+                          sceneNumber: sceneIdx + 1,
+                          track: 'music',
+                        })
+                      }
+                      generatingCueId={
+                        generatingMusicCue?.sceneIdx === sceneIdx
+                          ? generatingMusicCue.cueId
+                          : null
+                      }
+                      isGeneratingAll={generatingAllCuesFor === sceneIdx}
+                    />
+                    {showLegacyMusicPanel && (
                     <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                      {sceneMusicCues.length > 0 && (
+                        <div className="text-xs font-semibold text-purple-800 dark:text-purple-200 mb-2">
+                          Scene track
+                          <span className="ml-2 font-normal text-gray-600 dark:text-gray-400">
+                            Plays under music-enabled beats that no cue covers.
+                          </span>
+                        </div>
+                      )}
                       <div className="flex items-center justify-end gap-2 mb-2">
                         {scene.musicAudio && (
                           <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1 mr-auto">
@@ -7421,6 +7611,7 @@ function SceneCard({
                         {typeof scene.music === 'string' ? scene.music : scene.music.description}
                       </div>
                     </div>
+                    )}
                   </TabsContent>
                   )}
 

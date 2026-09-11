@@ -101,8 +101,11 @@ export function buildSegmentEnhancedPrompt(
       if (method === 'FTV') {
         enhancedPrompt += `\n\n${FTV_MINIMAL_NATIVE_AUDIO_HINT}`
       } else {
+        // Score is generated separately and mixed under the clip, so it is
+        // excluded here: native music would restart at every beat cut and
+        // could not be balanced against the dialogue laid over it.
         enhancedPrompt +=
-          '\n\nInclude native synchronized audio (dialogue, ambience, and music) matching the descriptions above unless the scene should be silent.'
+          '\n\nInclude native synchronized audio (dialogue and ambience) matching the descriptions above unless the scene should be silent. Do not generate music or score.'
       }
     }
   }
