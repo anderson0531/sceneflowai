@@ -17,7 +17,7 @@ async function generateAndSaveMusicForScene(
   sceneIdx: number,
   baseUrl: string,
   authCookie: string
-): Promise<string | null> {
+): Promise<{ url: string; fileDuration?: number; requestedDuration: number } | null> {
   try {
     const description = typeof scene.music === 'string' ? scene.music : scene.music?.description
     if (!description) return null
@@ -27,11 +27,12 @@ async function generateAndSaveMusicForScene(
     // Generate music via our API endpoint, using saveToBlob to avoid payload limits
     const { generateMusicTrackServer } = await import('@/lib/audio/musicClient')
     const { resolveMusicRequestDuration } = await import('@/lib/audio/lyriaClient')
+    const requestedDuration = resolveMusicRequestDuration(scene)
     const result = await generateMusicTrackServer(
       baseUrl,
       {
         text: description,
-        duration: resolveMusicRequestDuration(scene),
+        duration: requestedDuration,
         saveToBlob: true,
         projectId,
         sceneId: `scene-${sceneIdx}`,
@@ -40,8 +41,16 @@ async function generateAndSaveMusicForScene(
     )
 
     if (result?.url) {
-      console.log(`[Batch Audio] Music saved for scene ${sceneIdx + 1}: ${result.url}`)
-      return result.url
+      console.log(
+        `[Batch Audio] Music saved for scene ${sceneIdx + 1}: ${result.url} (${result.duration ?? '?'}s of ${requestedDuration}s)`
+      )
+      return {
+        url: result.url,
+        ...(typeof result.duration === 'number' && result.duration > 0
+          ? { fileDuration: result.duration }
+          : {}),
+        requestedDuration: result.requestedDuration ?? requestedDuration,
+      }
     }
 
     return null
@@ -596,9 +605,15 @@ export async function POST(req: NextRequest) {
               
               // Generate music if enabled
               if (includeMusic && scene.music && !scene.musicAudio) {
-                const musicUrl = await generateAndSaveMusicForScene(scene, projectId, sceneIndex, baseUrl, authCookie);
-                if (musicUrl) {
-                  scenes[sceneIndex].musicAudio = musicUrl;
+                const music = await generateAndSaveMusicForScene(scene, projectId, sceneIndex, baseUrl, authCookie);
+                if (music) {
+                  scenes[sceneIndex].musicAudio = music.url;
+                  // Playback loops anything it believes is shorter than the
+                  // scene, and assumes 30s when the length was never recorded.
+                  if (music.fileDuration) {
+                    scenes[sceneIndex].musicFileDuration = music.fileDuration;
+                  }
+                  scenes[sceneIndex].musicDuration = music.requestedDuration;
                   musicCount++;
                 }
               }

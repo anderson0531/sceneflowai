@@ -7,6 +7,8 @@
  */
 
 import { isLyriaRecitationError } from '@/lib/audio/lyriaPromptAdapter'
+import { estimateSceneBeatDuration } from '@/lib/script/sceneMusicCues'
+import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 export const LYRIA_3_CLIP_MODEL = 'lyria-3-clip-preview'
 export const LYRIA_3_PRO_MODEL = 'lyria-3-pro-preview'
@@ -50,15 +52,25 @@ export function selectLyriaModel(generationSec: number): Lyria3Model {
 /**
  * Scene/cue play length the generator should try to match.
  *
- * `musicDuration` is what the user set on the Play duration control;
- * `duration` is the scene's own running time.
+ * `musicDuration` is what the Play duration control was set to and wins
+ * outright. Otherwise the beat timeline decides: it is what the animatic
+ * actually plays, whereas `scene.duration` is the script LLM's estimate,
+ * written before the beats were laid out and frequently half the real length —
+ * which is how a two-minute scene asked for a thirty-second track.
  */
 export function resolveMusicRequestDuration(scene: {
   musicDuration?: unknown
   duration?: unknown
+  beats?: unknown
 }): number {
   if (typeof scene.musicDuration === 'number' && scene.musicDuration > 0) {
     return scene.musicDuration
+  }
+  const beatTimeline = Array.isArray(scene.beats)
+    ? estimateSceneBeatDuration(scene.beats as SceneBeat[])
+    : 0
+  if (beatTimeline > 0) {
+    return beatTimeline
   }
   if (typeof scene.duration === 'number' && scene.duration > 0) {
     return scene.duration

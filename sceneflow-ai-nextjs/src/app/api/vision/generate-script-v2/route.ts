@@ -1096,6 +1096,7 @@ SCORING THE SCENE ("musicCues" — OPTIONAL, WRITE ONLY WHERE MUSIC EARNS ITS PL
 • Score for CONTRAST, not for coverage. A cue that runs the whole scene marks nothing, because there is no silence for it to stand against. Most scenes want ONE or TWO cues; many want none at all.
 • Leave the scene's quietest work dry. Procedural exchanges, interrogations, and two people negotiating usually play harder without music under them.
 • Start a cue ON a turn — the beat where the audience learns something, loses ground, or sees the situation change. Music entering at that instant is what makes the turn land; music already playing through it does not.
+• OPENING ACTION is the one place a cue may start on beat 0: when the scene opens on a run of action beats with nobody speaking, the music IS the entrance, and dropping it out as the first line lands is itself the turn. Only when the opening is wordless — an opening built on dialogue takes the contrast rule above.
 • "intent" names the VIEWER emotion the cue exists to trigger, in a short phrase: "rising dread", "the weight of a revelation landing", "grief settling in". This is direction, not a mood label.
 • "description" is the brief the track is generated from and MUST obey the LYRIA MUSIC RULES above: one sentence, 10-20 words, [genre], [mood], [instruments], [tempo], instrumental only, no narrative, no beat spotting.
 • "entry" is how the cue arrives: "fade" (creep in), "hard" (hit on the cut), "swell" (build into it). "exit" is how it leaves: "fade", "hard", "tail" (ring out under the next beat).
