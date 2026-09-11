@@ -82,6 +82,26 @@ describe('referenceLimits', () => {
     ).toBe('designer')
   })
 
+  it('resolveEffectiveImageTier keeps eco for animatic beats that opt out', () => {
+    expect(
+      resolveEffectiveImageTier({
+        modelTier: 'eco',
+        distinctCharacterCount: 2,
+        totalWantedRefs: 4,
+        allowEcoWithReferences: true,
+      })
+    ).toBe('eco')
+    // The opt-out never downgrades a tier the caller actually asked for.
+    expect(
+      resolveEffectiveImageTier({
+        modelTier: 'designer',
+        distinctCharacterCount: 2,
+        totalWantedRefs: 4,
+        allowEcoWithReferences: true,
+      })
+    ).toBe('designer')
+  })
+
   it('buildSubjectCountGuardrail lists contiguous person tokens', () => {
     const guardrail = buildSubjectCountGuardrail([
       { characterName: 'Elara Vance', subjectOrdinal: 1 },
