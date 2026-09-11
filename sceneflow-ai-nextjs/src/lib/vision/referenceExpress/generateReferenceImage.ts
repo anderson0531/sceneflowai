@@ -293,6 +293,14 @@ export async function generateObjectReferenceImage(
   const result = await generateImageWithGeminiStudio({
     prompt: optimizedPrompt,
     aspectRatio,
+    // A prop sheet is a lit object on a clean background — the thing pro buys
+    // over flash is facial likeness, which no object needs. Left unset, Vertex
+    // defaults to `designer`, so a scene's worth of props was generating on pro
+    // at four times the latency for no visible gain. `eco` caps at 2K, which is
+    // the size already requested here. When the user attached a photo of the
+    // real object, `escalateEcoRefusalToPro` still buys one pro attempt if
+    // flash refuses the frame, so the cheap tier cannot cost the image.
+    modelTier: 'eco',
     imageSize: '2K',
     referenceImages,
   })
