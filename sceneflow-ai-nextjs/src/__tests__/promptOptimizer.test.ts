@@ -289,6 +289,7 @@ describe('what optimizing an already-sectioned prompt costs', () => {
         {
           referenceId: 1,
           name: 'Gideon Croft',
+          description: 'Man in his early 50s',
           identityReferenceId: 1,
           promptToken: 'person [1]',
           linkingDescription: 'person [1]',
