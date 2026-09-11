@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { 
   Sparkles, 
   Check, 
@@ -50,8 +50,21 @@ interface ObjectSuggestionPanelProps {
     generationPrompt: string
     aiGenerated: boolean
   }) => void
+  /**
+   * Add objects the script handles across several beats straight to the
+   * library, without images. Called with only the entries that are missing.
+   */
+  onObjectsAutoAdded?: (objects: AutoAddedObject[]) => void | Promise<void>
   /** Compact mode for sidebar */
   compact?: boolean
+}
+
+export interface AutoAddedObject {
+  name: string
+  category: ObjectCategory
+  importance: ObjectImportance
+  beatCount: number
+  sceneNumbers: number[]
 }
 
 const CATEGORY_COLORS: Record<ObjectCategory, string> = {
@@ -198,6 +211,7 @@ export function ObjectSuggestionPanel({
   scenes, 
   existingObjects, 
   onObjectGenerated,
+  onObjectsAutoAdded,
   compact = false 
 }: ObjectSuggestionPanelProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -211,6 +225,42 @@ export function ObjectSuggestionPanel({
   const [isBatchGenerating, setIsBatchGenerating] = useState(false)
   const [batchProgress, setBatchProgress] = useState(0)
   const [currentBatchItem, setCurrentBatchItem] = useState<string>('')
+
+  // Objects the beat direction already names and handles more than once are a
+  // fact of the script, not a guess, so they go into the library without a
+  // model call — un-imaged, one click from a reference.
+  const recurringInBeats = useMemo(() => {
+    const hasBeats = scenes.some((s) => Array.isArray(s.beats) && s.beats.length > 0)
+    if (!hasBeats) return []
+    const slim = scenes.map((s, idx) => slimSceneForObjectUsage(s, idx))
+    return selectRecurringObjects(countObjectBeatReferences(slim))
+  }, [scenes])
+
+  const autoAddedKeysRef = useRef<Set<string>>(new Set())
+  const [autoAddedNames, setAutoAddedNames] = useState<string[]>([])
+
+  useEffect(() => {
+    if (!onObjectsAutoAdded || recurringInBeats.length === 0) return
+    const existingNames = existingObjects.map((o) => o.name)
+    const missing = recurringInBeats.filter(
+      (usage) =>
+        !autoAddedKeysRef.current.has(usage.key) &&
+        !isAlreadyInLibrary(usage.name, existingNames)
+    )
+    if (missing.length === 0) return
+
+    for (const usage of missing) autoAddedKeysRef.current.add(usage.key)
+    setAutoAddedNames((prev) => [...prev, ...missing.map((usage) => usage.name)])
+    void onObjectsAutoAdded(
+      missing.map((usage) => ({
+        name: usage.name,
+        category: 'prop' as ObjectCategory,
+        importance: 'important' as ObjectImportance,
+        beatCount: usage.beatCount,
+        sceneNumbers: usage.sceneNumbers,
+      }))
+    )
+  }, [recurringInBeats, existingObjects, onObjectsAutoAdded])
 
   const analyzeScenesForObjects = useCallback(async () => {
     if (scenes.length === 0) return
@@ -404,6 +454,17 @@ export function ObjectSuggestionPanel({
 
       {expanded && (
         <div className="px-3 pb-3 space-y-3">
+          {autoAddedNames.length > 0 && (
+            <div className="flex items-start gap-2 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded text-xs text-emerald-300">
+              <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>
+                Added {autoAddedNames.length} object{autoAddedNames.length === 1 ? '' : 's'} handled
+                in {MIN_BEATS_FOR_LIBRARY}+ beats ({autoAddedNames.join(', ')}). Generate a reference
+                below so every beat renders the same object.
+              </span>
+            </div>
+          )}
+
           {/* Analysis Button or Results */}
           {!hasAnalyzed ? (
             <div className="text-center py-4">

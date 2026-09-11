@@ -18,7 +18,12 @@ import { SceneImageFrame } from './SceneImageFrame'
 import { VisualReference, VisualReferenceType, ObjectCategory, LocationReference } from '@/types/visionReferences'
 import { BackdropGeneratorModal, SceneForBackdrop, CharacterForBackdrop } from './BackdropGeneratorModal'
 import { BackdropMode } from '@/lib/vision/backdropGenerator'
-import { ObjectSuggestionPanel } from './ObjectSuggestionPanel'
+import { ObjectSuggestionPanel, type AutoAddedObject } from './ObjectSuggestionPanel'
+import {
+  countObjectBeatReferences,
+  normalizeObjectName,
+  slimSceneForObjectUsage,
+} from '@/lib/vision/objectBeatUsage'
 import { LocationLibrary } from './LocationLibrary'
 import { LocationPromptPayload } from './LocationPromptBuilder'
 import { ImageEditModal } from './ImageEditModal'
@@ -85,6 +90,8 @@ export interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps
     generationPrompt: string
     aiGenerated: boolean
   }) => void
+  /** Callback when objects recurring across beats are added to the library un-imaged */
+  onObjectsAutoAdded?: (objects: AutoAddedObject[]) => void | Promise<void>
   /** Callback to update a reference image after editing */
   onUpdateReferenceImage?: (type: 'scene' | 'object', referenceId: string, newImageUrl: string) => void
   /** Callback to edit a character's reference image */
@@ -159,6 +166,8 @@ interface ReferenceSectionProps {
 
 interface DraggableReferenceCardProps {
   reference: VisualReference
+  /** Beats in the script that handle this object, when known */
+  beatCount?: number
   onRemove?: () => void
   /** Scenes for Add to Timeline feature (scene backdrops only) */
   scenes?: SceneForBackdrop[]
@@ -180,6 +189,7 @@ interface DraggableReferenceCardProps {
 
 function DraggableReferenceCard({
   reference,
+  beatCount,
   onRemove,
   scenes,
   onInsertBackdropSegment,
@@ -461,6 +471,18 @@ function DraggableReferenceCard({
           <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">{reference.name}</div>
           {reference.description ? (
             <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-0.5">{reference.description}</div>
+          ) : null}
+          {isObjectCard && beatCount && beatCount > 0 ? (
+            <div className="mt-1 flex items-center gap-1.5 text-[10px]">
+              <span className="px-1.5 py-0.5 rounded bg-slate-500/20 text-slate-400">
+                {beatCount} beat{beatCount === 1 ? '' : 's'}
+              </span>
+              {!hasImage && (
+                <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">
+                  Needs reference
+                </span>
+              )}
+            </div>
           ) : null}
         </div>
 
@@ -1181,6 +1203,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onBackdropGenerated,
     onInsertBackdropSegment,
     onObjectGenerated,
+    onObjectsAutoAdded,
     onUpdateReferenceImage,
     onEditCharacterImage,
     showProductionReadiness = true,
@@ -1408,14 +1431,32 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   }
 
   // Prepare scenes for ObjectSuggestionPanel
-  const scenesForSuggestion = scenes.map((s, idx) => ({
-    sceneNumber: s.scene_number ?? idx + 1,
-    heading: typeof s.heading === 'string' ? s.heading : s.heading?.text,
-    action: s.action,
-    visualDescription: s.visualDescription || s.visual_description,
-    description: s.description,
-    beats: Array.isArray(s.beats) ? s.beats : undefined
-  }))
+  const scenesForSuggestion = useMemo(
+    () =>
+      scenes.map((s, idx) => ({
+        sceneNumber: s.scene_number ?? idx + 1,
+        heading: typeof s.heading === 'string' ? s.heading : s.heading?.text,
+        action: s.action,
+        visualDescription: s.visualDescription || s.visual_description,
+        description: s.description,
+        beats: Array.isArray(s.beats) ? s.beats : undefined
+      })),
+    [scenes]
+  )
+
+  // How many beats handle each library object, recomputed from the script so
+  // the card never shows a count that a script edit has since invalidated.
+  const objectBeatCounts = useMemo(() => {
+    if (objectReferences.length === 0) return new Map<string, number>()
+    const slim = scenesForSuggestion.map((s, idx) => slimSceneForObjectUsage(s, idx))
+    if (slim.every((s) => s.beats.length === 0)) return new Map<string, number>()
+    return new Map(
+      countObjectBeatReferences(
+        slim,
+        objectReferences.map((o) => o.name)
+      ).map((usage) => [usage.key, usage.beatCount])
+    )
+  }, [scenesForSuggestion, objectReferences])
 
   // Calculate scenes with/without images for storyboard tab
   const scenesWithImages = useMemo(() => {
@@ -1745,6 +1786,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                   scenes={scenesForSuggestion}
                   existingObjects={objectReferences}
                   onObjectGenerated={onObjectGenerated}
+                  onObjectsAutoAdded={onObjectsAutoAdded}
                   compact
                 />
               )}
@@ -1769,6 +1811,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                   <DraggableReferenceCard
                     key={reference.id}
                     reference={reference}
+                    beatCount={objectBeatCounts.get(normalizeObjectName(reference.name))}
                     onRemove={() => onRemoveReference('object', reference.id)}
                     onEditImage={handleEditReferenceImage}
                     referenceType="object"
