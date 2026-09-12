@@ -52,11 +52,9 @@ describe('getSceneExpressBeatConcurrency', () => {
     expect(getSceneExpressBeatConcurrency()).toBe(1)
   })
 
-  // Above 1, or scheduleRetry bails before the backoff below it can ever run
-  // and every transient 429 becomes a manual "Retry failed" click.
-  it('defaults maxAttempts to 4 so transient rate limits self-heal in-run', () => {
+  it('defaults maxAttempts to 1 so Express fail-fast stamps the frame and continues', () => {
     delete process.env.SCENE_EXPRESS_BEAT_MAX_ATTEMPTS
-    expect(getSceneExpressBeatMaxAttempts()).toBe(4)
+    expect(getSceneExpressBeatMaxAttempts()).toBe(1)
   })
 
   it('reads SCENE_EXPRESS_BEAT_CONCURRENCY env', () => {
@@ -301,6 +299,34 @@ describe('runAdaptiveBeatPool', () => {
     expect(result.failed.has(3)).toBe(true)
     expect(result.failed.has(4)).toBe(true)
     expect(ran).toContain(1)
+  })
+
+  it('does not canary abort on content policy and continues sibling beats', async () => {
+    const ran: number[] = []
+    const policyError = new Error('blocked by content policy')
+
+    const promise = runAdaptiveBeatPool(
+      [0, 1, 2],
+      async (beatIndex) => {
+        ran.push(beatIndex)
+        if (beatIndex === 0) throw policyError
+      },
+      {
+        initialConcurrency: 1,
+        maxAttempts: 1,
+        isRetryable: isExpressBeatPoolRetryable,
+        isCanaryAbort: isExpressImageCanaryAbortError,
+      }
+    )
+
+    await vi.runAllTimersAsync()
+    const result = await promise
+
+    expect(result.aborted).toBeUndefined()
+    expect(result.failed.has(0)).toBe(true)
+    expect(result.succeeded.has(1)).toBe(true)
+    expect(result.succeeded.has(2)).toBe(true)
+    expect(ran).toEqual([0, 1, 2])
   })
 
   it('fail-fast maxAttempts=1 records a 429 and continues sibling beats', async () => {

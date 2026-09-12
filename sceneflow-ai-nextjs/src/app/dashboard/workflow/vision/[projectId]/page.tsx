@@ -13119,7 +13119,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             framesOnly: !!options.framesOnly,
             regenerate: !!options.regenerate,
             storyboardQuality: options.storyboardQuality ?? 'draft',
-            finalizeOnly: !!options.finalizeOnly,
             dialogueOnly: !!options.dialogueOnly,
             imageQuality,
           }),
@@ -13645,14 +13644,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         typeof sceneRecord.sceneNumber === 'number' ? sceneRecord.sceneNumber : sceneIndex + 1
       const imageTier: 'draft' | 'final' = options?.quality === 'final' ? 'final' : 'draft'
 
-      /**
-       * The old `Finalize` button's job, now reachable as Final + the default
-       * scope: upgrade the frames that are not final yet. `missingFramesOnly`
-       * cannot also be set, because it short-circuits the tier comparison and
-       * would leave every drafted frame untouched.
-       */
-      const upgradeToFinal = imageTier === 'final' && options?.scope === 'missing'
-
       const isOverlayPhase = (phase: string): phase is ExpressOverlayPhase =>
         phase === 'direction' ||
         phase === 'audio' ||
@@ -13717,8 +13708,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           includeEndFrames: options?.includeEndFrames,
           // Mirrors the request below, or the overlay would list a different
           // set of frames than the run actually draws.
-          scope: upgradeToFinal ? undefined : options?.scope,
-          finalizeOnly: upgradeToFinal,
+          scope: options?.scope,
           storyboardQuality: imageTier,
         }),
         phases: {
@@ -13857,14 +13847,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             includeMusic: false,
             includeSFX: false,
             includeEndFrames: !!options?.includeEndFrames,
-            missingFramesOnly: !upgradeToFinal && options?.scope === 'missing',
+            missingFramesOnly: options?.scope === 'missing',
             regenerate: options?.scope === 'selected',
             framesOnly: options?.scope === 'selected' || options?.scope === 'missing',
             ...(options?.selectedFrameKeys?.length
               ? { selectedFrameKeys: options.selectedFrameKeys }
               : {}),
             storyboardQuality: imageTier,
-            finalizeOnly: upgradeToFinal,
             imageQuality,
           }),
         })
@@ -16352,7 +16341,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               const overlay = expressBeatFrameOverlay
               setExpressBeatFrameOverlay(null)
               void handleExpressSceneGenerate(overlay.sceneIndex, overlay.language, {
-                scope: 'missing',
+                scope: 'selected',
                 includeEndFrames: false,
                 selectedFrameKeys: failedKeys,
                 quality: overlay.quality,

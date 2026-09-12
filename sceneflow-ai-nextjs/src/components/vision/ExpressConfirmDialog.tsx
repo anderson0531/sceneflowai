@@ -455,10 +455,6 @@ export function ExpressConfirmDialog({
                 language,
                 artStyle,
                 storyboardQuality,
-                // Final without an explicit scope means "bring every frame up
-                // to Final", which is what the old Finalize button did.
-                finalizeOnly:
-                  storyboardQuality === 'final' && !regenerate && !missingFramesOnly,
                 includeEndFrames: false,
                 missingFramesOnly,
               })

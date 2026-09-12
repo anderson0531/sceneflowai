@@ -23,6 +23,21 @@ export interface ExpressBeatFrameItem {
   error?: string
 }
 
+/**
+ * Which frames the default Frame Agent scope covers.
+ *
+ * Missing is "no image URL", at whatever quality the user picked. Drafts are
+ * not treated as missing — Final is an explicit one-shot quality for empty
+ * or selected frames, not an upgrade-all pass.
+ */
+export function slotEligibleForScope(
+  slot: Pick<StoryboardFrameSlot, 'ownImageUrl'>,
+  scope: 'missing' | 'selected'
+): boolean {
+  if (scope === 'selected') return !!slot.ownImageUrl
+  return !slot.ownImageUrl
+}
+
 export interface BuildExpressBeatFrameItemsOptions {
   selectedFrameKeys?: string[]
   includeEndFrames?: boolean

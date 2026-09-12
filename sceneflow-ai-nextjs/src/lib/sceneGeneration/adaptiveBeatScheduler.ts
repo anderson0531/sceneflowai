@@ -27,16 +27,15 @@ export const DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY = 3
 /**
  * Attempts per beat before it is reported as failed.
  *
- * Above 1 so the backoff below is reachable at all: a 429 from the image lane
- * is the expected answer to a burst, not a real failure, and self-healing
- * in-run beats making the user find and press "Retry failed" once the run has
- * already finished. The canary abort still stops a genuinely broken
- * configuration on its first non-retryable error.
+ * Frame Agent Express fail-fast: one shot, then stamp the error and keep
+ * sibling beats moving. In-run 429/policy retries delay the scene for a
+ * frame the user will usually regenerate anyway. Ops can raise this with
+ * `SCENE_EXPRESS_BEAT_MAX_ATTEMPTS` if a run must self-heal.
  *
- * Four rather than three because the image client no longer sleeps through a
- * 429 itself — all of the patience now lives in this queue.
+ * Auth/config canary abort still stops a genuinely broken configuration on
+ * its first 401/403.
  */
-export const DEFAULT_SCENE_EXPRESS_BEAT_MAX_ATTEMPTS = 4
+export const DEFAULT_SCENE_EXPRESS_BEAT_MAX_ATTEMPTS = 1
 
 export function getSceneExpressBeatMaxAttempts(): number {
   return parsePositiveInt(

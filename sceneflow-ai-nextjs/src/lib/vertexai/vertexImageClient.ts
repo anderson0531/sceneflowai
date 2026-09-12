@@ -73,6 +73,9 @@ function hasIdentityReferenceImages(options: GenerateVertexImageOptions): boolea
 }
 
 function canFallbackToEcoTier(options: GenerateVertexImageOptions): boolean {
+  // Express fail-fast: stay on the requested tier. A salvage frame from eco
+  // (or a later pro retry) is the result the user would regenerate anyway.
+  if (options.failFastOnRateLimit) return false
   // Identity / wardrobe lock jobs must stay on the pro image model. A warm-instance
   // 429 cooldown previously forced flash, which then rate-limited and still hit
   // IMAGE_SAFETY (production 2026-08-07 Scene Headshot logs).
@@ -100,6 +103,7 @@ function escalateEcoRefusalToPro(
   reason: string
 ): Promise<VertexImageResult> | null {
   if (
+    options.failFastOnRateLimit ||
     !model.includes('flash-image') ||
     !hasIdentityReferenceImages(options) ||
     options.escalatedFromEcoTier ||
@@ -211,11 +215,11 @@ export interface GenerateVertexImageOptions {
   thinkingLevel?: VertexThinkingLevel
   negativePrompt?: string
   /**
-   * Express: throw on the first 429 instead of the 5s/15s/30s ladder.
+   * Express fail-fast: one Vertex attempt, then throw.
    *
-   * The ladder sleeps inside the caller's image-lane slot, so a rate-limited
-   * draft frame holds concurrency it is not using. Callers that re-queue their
-   * own work wait outside the lane instead.
+   * Skips the 429 sleep ladder, timeout/503 inner retries, eco↔pro fallback,
+   * and flash→pro refusal escalation. The lane frees immediately so sibling
+   * frames can finish; the caller stamps the error for a later user regen.
    */
   failFastOnRateLimit?: boolean
   /** Internal: this call is already the pro retry of a refused eco request. */
@@ -408,7 +412,11 @@ export async function generateVertexGeminiImage(
           `[Vertex Gemini Image] ${model} timed out with ${options.referenceImages?.length ?? 0} refs (exceeds eco cap ${MAX_REFERENCE_IMAGES_ECO}); retrying pro model`
         )
       }
-      if (retryCount < MAX_RETRIES && !deadlinePassed(options.deadlineAt)) {
+      if (
+        !options.failFastOnRateLimit &&
+        retryCount < MAX_RETRIES &&
+        !deadlinePassed(options.deadlineAt)
+      ) {
         await sleepWithBackoff(retryCount)
         return generateVertexGeminiImage(options, retryCount + 1)
       }
@@ -489,7 +497,12 @@ export async function generateVertexGeminiImage(
         `[Vertex Gemini Image] Model ${model} unavailable (404) with ${options.referenceImages?.length ?? 0} refs; cannot fall back to eco (cap ${MAX_REFERENCE_IMAGES_ECO})`
       )
     }
-    if (response.status === 503 && retryCount < MAX_RETRIES && !deadlinePassed(options.deadlineAt)) {
+    if (
+      response.status === 503 &&
+      !options.failFastOnRateLimit &&
+      retryCount < MAX_RETRIES &&
+      !deadlinePassed(options.deadlineAt)
+    ) {
       await sleepWithBackoff(retryCount)
       return generateVertexGeminiImage(options, retryCount + 1)
     }

@@ -50,6 +50,15 @@ describe('expressBeatFrameProgress', () => {
     expect(items.map((item) => item.key)).toEqual(['b1'])
   })
 
+  it('missing scope at Final still skips drafted frames', () => {
+    const items = buildExpressBeatFrameItems(scene, {
+      scope: 'missing',
+      includeEndFrames: false,
+      storyboardQuality: 'final',
+    })
+    expect(items.map((item) => item.key)).toEqual(['b1'])
+  })
+
   it('slotKeyFromBeat maps beat index and frame role to slot keys', () => {
     expect(slotKeyFromBeat(scene, 0, 'start')).toBe('b1')
     expect(slotKeyFromBeat(scene, 0, 'end')).toBe('b1-end')
