@@ -10,6 +10,7 @@ import type {
 } from '@/lib/script/segmentTypes'
 import { restampPreVisHashIfScriptCurrent } from '@/lib/storyboard/preVisSync'
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
+import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
 
 export interface BeatDirectionEditorProps {
   beat: SceneBeat
@@ -19,6 +20,17 @@ export interface BeatDirectionEditorProps {
   onScriptChange?: (script: any) => void
   readOnly?: boolean
   className?: string
+  /**
+   * The project's locked art style and lookbook.
+   *
+   * Saving direction recomposes the beat's still prompt, and composing it here
+   * without what the Frame Agent composes with left the same beat holding a
+   * different prompt depending on which path wrote it last.
+   */
+  promptComposition?: {
+    artStyleAnchor?: string
+    lookbook?: ProjectLookbook
+  }
 }
 
 const SHOT_TYPE_OPTIONS = [
@@ -95,6 +107,7 @@ export function BeatDirectionEditor({
   onScriptChange,
   readOnly,
   className,
+  promptComposition,
 }: BeatDirectionEditorProps) {
   const [expanded, setExpanded] = useState(false)
   const direction = beat.beatDirection
@@ -120,7 +133,11 @@ export function BeatDirectionEditor({
       } else {
         delete patched.beatDirection
       }
-      return syncBeatStillPromptToDirection(patched)
+      return syncBeatStillPromptToDirection(patched, {
+        sceneIndex: sceneIdx,
+        artStyleAnchor: promptComposition?.artStyleAnchor,
+        lookbook: promptComposition?.lookbook,
+      })
     })
     updatedScenes[sceneIdx] = restampPreVisHashIfScriptCurrent(
       scene,

@@ -267,6 +267,15 @@ export interface DirectorConsoleProps {
   projectAspectRatio?: BlueprintAspectRatio
   /** Project-level configured language streams (visionPhase.streams). */
   projectStreams?: import('@/lib/streams/projectStreams').ProjectStream[]
+  /**
+   * Report a Video Agent batch up to an owner that outlives this console.
+   *
+   * The queue keeps rendering after the console closes, so the progress readout
+   * and the cancel button cannot both live inside it.
+   */
+  onVideoRunReport?: import('@/lib/video/videoQueueRunReport').VideoQueueRunReporter
+  /** Hand the page a cancel for the run it is now reporting. */
+  onVideoRunCancelReady?: (cancel: () => void) => void
 }
 
 /** Slots for splitting Video / Mixer / Streams across parent section cards (ScriptPanel). */
@@ -338,6 +347,8 @@ export function DirectorConsoleRoot({
   locationReferences = [],
   projectAspectRatio = '16:9',
   projectStreams,
+  onVideoRunReport,
+  onVideoRunCancelReady,
   children,
 }: DirectorConsoleProps & {
   children?: (slots: DirectorWorkflowSlots) => React.ReactNode
@@ -395,6 +406,14 @@ export function DirectorConsoleRoot({
     () => segments.some(s => s.activeAssetUrl && s.status === 'COMPLETE'),
     [segments]
   )
+
+  const videoRunReport = useMemo(
+    () =>
+      onVideoRunReport
+        ? { sceneLabel: `Scene ${sceneNumber}`, onReport: onVideoRunReport }
+        : undefined,
+    [onVideoRunReport, sceneNumber]
+  )
   
   // Video queue state and actions
   const {
@@ -417,8 +436,15 @@ export function DirectorConsoleRoot({
     onGenerate,
     segmentGuideContext,
     () => productionData?.segments ?? EMPTY_SEGMENTS,
-    videoAspectRatio
+    videoAspectRatio,
+    videoRunReport
   )
+
+  // Registered after the queue exists, so the page's Cancel drives the same
+  // loop this console's own Cancel does.
+  useEffect(() => {
+    if (onVideoRunCancelReady) onVideoRunCancelReady(cancelRendering)
+  }, [onVideoRunCancelReady, cancelRendering])
   
   // Selected segment for DirectorDialog
   const [selectedSegment, setSelectedSegment] = useState<SceneSegment | null>(null)

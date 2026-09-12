@@ -34,6 +34,11 @@ import {
   segmentHasVeoChain,
 } from '@/lib/video/veoChainQueue'
 import { normalizeReferenceImages } from '@/lib/video/normalizeReferenceImages'
+import type {
+  VideoQueueRunReporter,
+  VideoRunItem,
+  VideoRunItemStatus,
+} from '@/lib/video/videoQueueRunReport'
 
 export interface VideoQueueState {
   /** All queue items with their configs */
@@ -131,7 +136,15 @@ export function useVideoQueue(
   segmentGuideContext?: SegmentGuideContext,
   /** Fresh segment list after each generate (for EXT veoVideoRef handoff). */
   getSegments?: () => SceneSegment[],
-  defaultAspectRatio: '16:9' | '9:16' | '1:1' | '4:3' = '16:9'
+  defaultAspectRatio: '16:9' | '9:16' | '1:1' | '4:3' = '16:9',
+  /**
+   * Report the run to an owner that outlives this hook. The batch keeps going
+   * when the console unmounts, so the record of it has to live elsewhere.
+   */
+  runReport?: {
+    sceneLabel: string
+    onReport: VideoQueueRunReporter
+  }
 ): UseVideoQueueReturn {
   // QUARANTINE GUARD: Delay initialization by one frame to let module graph settle
   // This prevents TDZ errors from rapid re-renders during initial mount
@@ -222,9 +235,20 @@ export function useVideoQueue(
   const [currentSegmentId, setCurrentSegmentId] = useState<string | null>(null)
   const [completedCount, setCompletedCount] = useState(0)
   const [failedCount, setFailedCount] = useState(0)
-  const [cancelRequested, setCancelRequested] = useState(false)
   const [isRateLimitPaused, setIsRateLimitPaused] = useState(false)
   const [rateLimitCountdown, setRateLimitCountdown] = useState(0)
+
+  // Cancellation lives in a ref, not state: the worker loop closed over the
+  // state value as it stood when processQueue was built, so a mid-run Cancel
+  // never reached the loop it was meant to stop.
+  const cancelRequestedRef = useRef(false)
+
+  // Reporting goes through refs so the loop keeps reporting after a re-render
+  // hands it a new callback, and after the console that owns it unmounts.
+  const runReportRef = useRef(runReport)
+  useEffect(() => {
+    runReportRef.current = runReport
+  }, [runReport])
   
   // Content hash to prevent redundant queue rebuilds during render loops
   // This compares actual segment content, not just array references
@@ -439,18 +463,60 @@ export function useVideoQueue(
     setProgress(0)
     setCompletedCount(0)
     setFailedCount(0)
-    setCancelRequested(false)
+    cancelRequestedRef.current = false
     
     toast.info(`Starting batch render of ${itemsToProcess.length} segments...`)
     
     let currentIndex = 0
     let completed = 0
     let failed = 0
+
+    const runItems = new Map<string, VideoRunItem>(
+      itemsToProcess.map((item, idx) => [
+        item.segmentId,
+        {
+          key: item.segmentId,
+          label: `Shot ${idx + 1}`,
+          status: 'pending' as VideoRunItemStatus,
+        },
+      ])
+    )
+    let pausedFor = 0
+
+    const report = (finished: boolean) => {
+      const reporter = runReportRef.current
+      if (!reporter) return
+      reporter.onReport({
+        sceneId,
+        sceneLabel: reporter.sceneLabel,
+        total: itemsToProcess.length,
+        completed,
+        failed,
+        finished,
+        cancelled: cancelRequestedRef.current,
+        rateLimitCountdown: pausedFor,
+        items: [...runItems.values()],
+      })
+    }
+
+    const markItem = (
+      segmentId: string,
+      status: VideoRunItemStatus,
+      error?: string
+    ) => {
+      const existing = runItems.get(segmentId)
+      if (existing) {
+        runItems.set(segmentId, { ...existing, status, ...(error ? { error } : {}) })
+      }
+      report(false)
+    }
+
+    report(false)
     
     // Worker function for concurrent processing
     const worker = async () => {
       while (currentIndex < itemsToProcess.length) {
-        if (cancelRequested) break
+        if (cancelRequestedRef.current) break
         
         const i = currentIndex++
         const item = itemsToProcess[i]
@@ -463,6 +529,7 @@ export function useVideoQueue(
           // For concurrent mode, update progress based on completed items
           setProgress(Math.round((completed / itemsToProcess.length) * 100))
         }
+        markItem(item.segmentId, 'running')
         
         const config = overrideConfigs?.get(item.segmentId) || item.config
         const liveSegments = getSegments?.() ?? segments
@@ -479,11 +546,14 @@ export function useVideoQueue(
               if (isKlingProvider) {
                 batchMethod = 'I2V'
               } else {
+                const chainError =
+                  'Generate the previous part of this beat first — Veo extension references expire after ~2 days.'
                 toast.error(
                   `Generate the previous part of this beat first (segment ${item.segmentId.slice(0, 6)}…). Veo extension references expire after ~2 days.`
                 )
                 failed++
                 setFailedCount(failed)
+                markItem(item.segmentId, 'error', chainError)
                 continue
               }
             }
@@ -580,6 +650,7 @@ export function useVideoQueue(
           
           completed++
           setCompletedCount(completed)
+          markItem(item.segmentId, 'done')
         } catch (error: any) {
           console.error(`[VideoQueue] Failed to render segment ${item.segmentId}:`, error)
           
@@ -602,18 +673,22 @@ export function useVideoQueue(
             // Set paused state with countdown
             setIsRateLimitPaused(true)
             setRateLimitCountdown(waitSeconds)
+            markItem(item.segmentId, 'pending', `Rate limited — retrying in ${waitSeconds}s`)
             
             // Countdown timer
             for (let sec = waitSeconds; sec > 0; sec--) {
-              if (cancelRequested) break
+              if (cancelRequestedRef.current) break
               setRateLimitCountdown(sec)
+              pausedFor = sec
+              report(false)
               await new Promise(r => setTimeout(r, 1000))
             }
             
             setIsRateLimitPaused(false)
             setRateLimitCountdown(0)
+            pausedFor = 0
             
-            if (!cancelRequested) {
+            if (!cancelRequestedRef.current) {
               toast.info('Rate limit cleared. Resuming queue...')
               // Push item back to process later
               itemsToProcess.push(item)
@@ -622,6 +697,11 @@ export function useVideoQueue(
           } else {
             failed++
             setFailedCount(failed)
+            markItem(
+              item.segmentId,
+              'error',
+              String(error?.message || error || 'Render failed').slice(0, 140)
+            )
           }
         }
         
@@ -639,17 +719,20 @@ export function useVideoQueue(
     setProgress(100)
     setCurrentSegmentId(null)
     setIsRendering(false)
+    report(true)
     
-    if (failed === 0) {
+    if (cancelRequestedRef.current) {
+      toast.info(`Video Agent cancelled after ${completed} segment${completed === 1 ? '' : 's'}`)
+    } else if (failed === 0) {
       toast.success(`Successfully rendered ${completed} segments!`)
     } else {
       toast.warning(`Rendered ${completed} segments, ${failed} failed`)
     }
-  }, [queue, sceneId, onGenerate, cancelRequested, segments, getSegments, segmentGuideContext, sceneImageUrl])
+  }, [queue, sceneId, onGenerate, segments, getSegments, segmentGuideContext, sceneImageUrl])
   
   // Cancel rendering
   const cancelRendering = useCallback(() => {
-    setCancelRequested(true)
+    cancelRequestedRef.current = true
   }, [])
   
   // Reset queue to auto-drafted state

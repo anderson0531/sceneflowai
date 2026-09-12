@@ -32,7 +32,11 @@ import {
 } from '@/lib/storyboard/types'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { runSceneExpressPreflight } from '@/lib/sceneGeneration/sceneExpressPreflight'
-import { isPreVisStale } from '@/lib/storyboard/preVisSync'
+import {
+  countStalePromptKeys,
+  isPreVisStale,
+  sceneHasStalePromptKeys,
+} from '@/lib/storyboard/preVisSync'
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import { countDraftStoryboardFrames } from '@/lib/storyboard/storyboardQuality'
 import { resolveFrameEditCharacterReferences } from '@/lib/vision/resolveFrameEditCharacterReferences'
@@ -382,7 +386,17 @@ export function SceneStoryboardFrameViewer({
   )
   const sceneBeats = useMemo(() => getSceneBeats(scene), [scene])
   const frameStats = useMemo(() => countStoryboardFrameStats(scene), [scene])
-  const preVisStale = useMemo(() => isPreVisStale(scene), [scene])
+  /**
+   * Two independent reasons to offer a refresh: the script prose moved under
+   * the frames, or the beats are carrying prompts keyed to a direction (or a
+   * composer version) that is no longer current. Gating only on the first hid
+   * the control for every scene in the second state.
+   */
+  const preVisStale = useMemo(
+    () => isPreVisStale(scene) || sceneHasStalePromptKeys(scene),
+    [scene]
+  )
+  const stalePromptCount = useMemo(() => countStalePromptKeys(scene), [scene])
   const staleFrameCount = useMemo(
     () => sceneBeats.filter((beat) => isBeatFrameStale(beat)).length,
     [sceneBeats]
@@ -815,6 +829,9 @@ export function SceneStoryboardFrameViewer({
                   {frameStats.placeholders > 0 ? ` · ${frameStats.placeholders} placeholder` : ''}
                   {staleFrameCount > 0
                     ? ` · ${staleFrameCount} out of sync`
+                    : ''}
+                  {stalePromptCount > 0
+                    ? ` · ${stalePromptCount} prompt${stalePromptCount === 1 ? '' : 's'} to refresh`
                     : ''}
                 </span>
                 <div className="flex items-center gap-2 flex-wrap">

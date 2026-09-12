@@ -11,13 +11,19 @@ import {
   applyBeatsToScene,
   beatContentFingerprint,
   getSceneBeats,
+  isBeatExcluded,
   reconcileBeatsWithScriptContent,
 } from '@/lib/script/beatMigration'
-import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
+import {
+  beatDirectionFingerprint,
+  beatStillDirectionFingerprint,
+  storedStillDirectionKeyMatches,
+} from '@/lib/script/beatDirectionFingerprint'
 import { applyDerivedSfxToScene } from '@/lib/script/deriveSfxFromSceneContent'
 import { generateSceneContentHash } from '@/lib/utils/contentHash'
 import { isValidStoryboardMediaUrl } from '@/lib/storyboard/mergeSceneMedia'
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
+import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 export const PRE_VIS_CONTENT_HASH_FIELD = 'preVisBasedOnContentHash'
@@ -81,6 +87,43 @@ export function isPreVisStale(scene: Record<string, unknown>): boolean {
   // Existing stamps included beat direction. Matching that hash means the
   // script prose has not drifted — do not force Update Frames.
   return stored !== generateLegacyPreVisContentHash(scene)
+}
+
+/**
+ * A beat whose stored still prompt no longer describes its direction, or which
+ * has direction and no prompt at all.
+ *
+ * Excluded beats are skipped: nothing composes a frame for them, so a prompt
+ * they will never render from is not something to offer to refresh.
+ */
+export function beatHasStalePromptKey(beat: SceneBeat): boolean {
+  if (isBeatExcluded(beat)) return false
+
+  const hasDirection = !!beatStillDirectionFingerprint(beat.beatDirection)
+  const hasPrompt = !!beat.storyboardImagePrompt?.trim()
+
+  if (!hasPrompt) return hasDirection
+  return !storedStillDirectionKeyMatches(
+    beat.storyboardImagePromptDirectionKey,
+    beat.beatDirection
+  )
+}
+
+/**
+ * True when the scene is carrying beats whose prompts need recomposing.
+ *
+ * `isPreVisStale` only sees *prose* drift, and only for scenes that already
+ * have a stamp — so after the still fingerprint version was bumped, beats read
+ * as "Prompt changed" in the frame viewer while the one control that would fix
+ * them was hidden. This is the other half of that question.
+ */
+export function sceneHasStalePromptKeys(scene: Record<string, unknown>): boolean {
+  return getSceneBeats(scene).some(beatHasStalePromptKey)
+}
+
+/** How many beats a prompts-only refresh would actually touch. */
+export function countStalePromptKeys(scene: Record<string, unknown>): number {
+  return getSceneBeats(scene).filter(beatHasStalePromptKey).length
 }
 
 /**
@@ -210,6 +253,55 @@ export function syncPreVisToScript(
     imagesCleared,
     audioCleared: deletedUrls.length > 0,
   }
+}
+
+export interface RefreshStillPromptsResult {
+  scene: Record<string, unknown>
+  promptsUpdated: number
+}
+
+/**
+ * Recompose only the beat prompts whose direction key has gone stale.
+ *
+ * The prompt half of `syncPreVisToScript`, without the rest of it: no images
+ * cleared, no audio cleanup, no `segments` drop, no stamp reset. Those are all
+ * answers to the script prose having moved, and a beat carrying a prompt from
+ * an older composer is not that — charging a user's Director's Console segments
+ * for a wording refresh is not a trade they asked for.
+ *
+ * Leaves `storyboardImageUrl` alone throughout: a refreshed prompt makes the
+ * existing frame show as out of sync, which is the user's call to re-render.
+ */
+export function refreshSceneBeatStillPrompts(
+  scene: Record<string, unknown>,
+  options: SyncPreVisOptions & { lookbook?: ProjectLookbook } = {}
+): RefreshStillPromptsResult {
+  const beats = getSceneBeats(scene)
+  if (beats.length === 0) return { scene, promptsUpdated: 0 }
+
+  const sceneNumber = options.sceneNumber ?? (Number(scene.sceneNumber) || 1)
+  let promptsUpdated = 0
+
+  const nextBeats = beats.map((beat) => {
+    if (!beatHasStalePromptKey(beat)) return beat
+    const synced = syncBeatStillPromptToDirection(beat, {
+      sceneIndex: sceneNumber - 1,
+      artStyleAnchor: options.artStyle,
+      lookbook: options.lookbook,
+      force: true,
+    })
+    if (
+      synced.storyboardImagePrompt !== beat.storyboardImagePrompt ||
+      synced.storyboardImagePromptDirectionKey !== beat.storyboardImagePromptDirectionKey
+    ) {
+      promptsUpdated++
+      return synced
+    }
+    return beat
+  })
+
+  if (promptsUpdated === 0) return { scene, promptsUpdated: 0 }
+  return { scene: applyBeatsToScene(scene, nextBeats), promptsUpdated }
 }
 
 /** Stamp scene after successful pre-vis image generation. */
