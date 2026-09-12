@@ -238,7 +238,7 @@
         "icon": "хлопушка",
         "label": "Кинопроизводство",
         "outcome": "Сценарий интерактивного аниматика, который можно показать аудитории и протестировать перед съемками.",
-        "narrative": "Раньше превизуализация и тестирование на аудитории означали недели работы над раскадровками, записью чернового озвучания и дорогостоящими догадками еще до начала съемок. SceneFlow превращает ваш сценарий в интерактивный аниматик с помощью технологии Express pre-vis: оптимизируйте материал средствами Audience Resonance, проводите показы в Screening Room и выделяйте бюджет только тогда, когда история действительно «сработает».",
+        "narrative": "Раньше превизуализация и тестирование на аудитории означали недели работы над раскадровками, записью чернового озвучания и дорогостоящими догадками еще до начала съемок. SceneFlow превращает ваш сценарий в интерактивный аниматик с помощью технологии Pre-vis Agent: оптимизируйте материал средствами Audience Resonance, проводите показы в Screening Room и выделяйте бюджет только тогда, когда история действительно «сработает».",
         "useCases": [
           "Превизуализация для полнометражных и независимых фильмов",
           "Аниматики для презентации инвесторам",
@@ -285,9 +285,9 @@
     "title": "Процесс создания видео с упором на ритм",
     "subtitle": "Утверждайте до рендеринга — никакого случайного пересоздания",
     "intro": "Никаких генераций методом проб и ошибок. Вы просматриваете и утверждаете внешний вид, прежде чем SceneFlow потратит кредиты на создание финального видео.",
-    "description": "SceneFlow выстраивает процесс визуального согласования на каждом этапе: Express Pre-vis для просмотра, Beat Frames для фиксации композиции, а затем F2V для каждого бита. Вы дорабатываете визуальный ряд, прежде чем тратить кредиты на дрейф и галлюцинации.",
+    "description": "SceneFlow выстраивает процесс визуального согласования на каждом этапе: Pre-vis Agent для просмотра, Beat Frames для фиксации композиции, а затем F2V для каждого бита. Вы дорабатываете визуальный ряд, прежде чем тратить кредиты на дрейф и галлюцинации.",
     "steps": [
-      "Express Pre-vis — делитесь аудиовизуальными битами для проверки за считанные минуты",
+      "Pre-vis Agent — делитесь аудиовизуальными битами для проверки за считанные минуты",
       "Beat Frames — фиксация начала/конца композиции с непрерывностью Reference Library",
       "F2V (кадр в видео) с привязкой к биту — генерация видео на основе утвержденных кадров, а не слепых промптов.",
       "Непрерывная цепочка EXT — нативные шаги расширения по 7 секунд для длинных диалоговых фрагментов.",
@@ -810,7 +810,7 @@
       "title": "Процесс создания видео с упором на ритм",
       "description": "Утверждайте ключевые этапы превизуализации и Beat Frames до этапа F2V — это сократит число слепых перегенераций, вызванных галлюцинациями и визуальным дрейфом. Единый структурированный путь от этапа согласования до финального ролика.",
       "keyFeatures": [
-        "Express Pre-vis на проверку — делитесь битами перед тяжелым рендером",
+        "Pre-vis Agent на проверку — делитесь битами перед тяжелым рендером",
         "Beat Frames состав блокировки — Reference Library непрерывность",
         "F2V на бит — генерация видео из утвержденных кадров",
         "Непрерывные цепочки EXT — нативные шаги +7s для длинных диалогов в рамках одного бита",
@@ -919,7 +919,7 @@
           "Screening Room — предпросмотр сцен, финальная сборка, показы и публикация на YouTube"
         ],
         "screenshotSlot": "Вставьте скриншот: панель управления производством с вкладками «Сценарий», «Съемка» и «Превизуализация».",
-        "videoSlot": "Вставка ролика (60 с): Утверждение сценария → Express Pre-vis для каждой сцены → Съемка материала → Микшер → Потоки"
+        "videoSlot": "Вставка ролика (60 с): Утверждение сценария → Pre-vis Agent для каждой сцены → Съемка материала → Микшер → Потоки"
       },
       {
         "id": "14",
@@ -1049,7 +1049,7 @@
       "howWeScore": {
         "toggle": "How we score",
         "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
         "bullets": [
           "Scores Blueprint and script against your stated target audience",
           "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
@@ -1060,26 +1060,26 @@
     },
     "express": {
       "badge": "Hyper-Speed Production",
-      "title": "Sceneflow Express",
+      "title": "SceneFlow Agents",
       "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
-          "title": "Express Pre-Vis",
+          "title": "Pre-vis Agent",
           "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
-          "title": "Express Motion Video",
+          "title": "Video Agent",
           "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
           "time": "Minutes vs Days"
         },
         {
-          "title": "Express Delivery",
+          "title": "Delivery Agent",
           "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
           "time": "Minutes vs Weeks"
         }
       ],
-      "cta": "Start Express Rendering"
+      "cta": "Run Production Agents"
     }
   },
   "preVisEngine": {

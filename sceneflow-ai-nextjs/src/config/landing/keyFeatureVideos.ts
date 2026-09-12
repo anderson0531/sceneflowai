@@ -25,7 +25,7 @@ export const KEY_FEATURE_VIDEO_LABELS: Record<string, string> = {
   referenceLibrary: 'Reference Library',
   iad: 'Intelligent Assistant Director',
   multilanguage: 'Multilanguage Streams',
-  express: 'Express Generation',
+  express: 'Production Agents',
   screeningRoom: 'Screening Room',
   upscale: 'Delivery-Quality Upscale',
   versionControl: 'Version Control',

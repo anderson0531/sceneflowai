@@ -84,7 +84,7 @@ describe('isExpressImageCanaryAbortError', () => {
     expect(
       isExpressImageCanaryAbortError(
         err(
-          'Talent beat is missing character reference images: Elara Vance — add in Reference Library before Express.',
+          'Talent beat is missing character reference images: Elara Vance — add in Reference Library before Frame Agent.',
           422
         )
       )

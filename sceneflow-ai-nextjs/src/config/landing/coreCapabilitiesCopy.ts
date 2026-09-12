@@ -17,7 +17,7 @@ export const CORE_CAPABILITIES_COPY = {
       toggle: 'How we score',
       title: 'How Audience Resonance works',
       description:
-        'Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.',
+        'Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.',
       bullets: [
         'Scores Blueprint and script against your stated target audience',
         'Cultural authenticity checks on names, dialect, customs, faith, and sensitivities',
@@ -27,27 +27,27 @@ export const CORE_CAPABILITIES_COPY = {
     },
   },
   express: {
-    badge: 'Hyper-Speed Production',
-    title: 'Sceneflow Express',
+    badge: 'Intelligent Production',
+    title: 'SceneFlow Agents',
     description:
-      'Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.',
+      'Audio Agent, Frame Agent, and Video Agent compose expert prompts from beat direction, attach the right references, and generate in parallel. A scene can take several minutes because the agent is doing specialist work — then you approve Beat Frames before you spend on motion video.',
     items: [
       {
-        title: 'Express Pre-Vis',
-        desc: 'Fully voiced, scored beat frames per scene, ready to share in the Screening Room.',
-        time: 'Minutes vs Hours',
+        title: 'Pre-vis Agent',
+        desc: 'Fully voiced, scored beat frames per scene, prompted from locked direction and ready to share in the Screening Room.',
+        time: 'Quality first',
       },
       {
-        title: 'Express Motion Video',
+        title: 'Video Agent',
         desc: 'Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.',
-        time: 'Minutes vs Days',
+        time: 'Approve, then render',
       },
       {
-        title: 'Express Delivery',
+        title: 'Delivery Agent',
         desc: 'Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.',
-        time: 'Minutes vs Weeks',
+        time: 'Ship the cut',
       },
     ],
-    cta: 'Start Express Rendering',
+    cta: 'Run Production Agents',
   },
 } as const

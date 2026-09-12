@@ -134,8 +134,8 @@
     "saveFailed": "Änderungen konnten nicht gespeichert werden"
   },
   "express": {
-    "title": "Express All — erweitert",
-    "description": "Führt Richtung → Audio → Previs-Frames für jede Szene parallel aus (bis zu 3 gleichzeitig). Dies ist ein langer, kreditintensiver Lauf – für Kontrollpunkte wird eine Express-Karte pro Szene pro Szene empfohlen.",
+    "title": "Run All Agents — erweitert",
+    "description": "Führt Richtung → Audio → Previs-Frames für jede Szene parallel aus (bis zu 3 gleichzeitig). Dies ist ein langer, kreditintensiver Lauf – für Kontrollpunkte werden Agents auf jeder Szenenkarte empfohlen.",
     "audioLanguage": "Audiosprache",
     "translateBadge": "übersetzen",
     "audioLanguageHint": "Dialog und Erzählung werden in {lang} generiert. Vorhandene Audioinhalte in anderen Sprachen bleiben davon unberührt.",
@@ -168,10 +168,10 @@
     "costTotal": "Gesamt: ~{credits} Credits",
     "costEstimateDisclaimer": "Nur Schätzungen. Die tatsächliche Nutzung hängt von der Länge des Dialogs und der Anzahl der Phasen ab, die tatsächlich ausgeführt werden müssen.",
     "running": "Läuft…",
-    "confirm": "Express All"
+    "confirm": "Run All Agents"
   },
   "expressAudio": {
-    "title": "Express Audio",
+    "title": "Audio Agent",
     "description": "Generieren Sie gleichzeitig Dialoge, Soundeffekte und Musik für diese Szene. Dialoge verwenden TTS, Action-Beats verwenden Veo-natives Audio und Musik verwendet Lyria.",
     "scope": "Umfang",
     "scopeMissing": "Fehlt nur",
@@ -191,10 +191,10 @@
     "sfxCredits": "SFX-Credits: {credits}. {hint}",
     "creditHint": "~{credits} Credits · bis zu 8 Sekunden ununterbrochen",
     "running": "Läuft...",
-    "confirm": "Express Audio ({count})"
+    "confirm": "Audio Agent ({count})"
   },
   "expressScene": {
-    "title": "Express Frames",
+    "title": "Frame Agent",
     "description": "Wählen Sie aus, welche Pre-Vis-Frames generiert oder neu generiert werden sollen. Durch die Neugenerierung bestehender Frames werden nur Bilder aktualisiert – Richtung und Ton bleiben unverändert.",
     "scope": "Umfang",
     "scopeMissing": "Fehlt nur",
@@ -214,11 +214,11 @@
     "close": "Schließen",
     "imageCredits": "Bildnachweis (geschätzt): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Läuft...",
-    "confirm": "Express Frames"
+    "confirm": "Frame Agent"
   },
   "expressGenerateAll": {
-    "title": "Express All",
-    "description": "Führen Sie Express Audio und Express Frames parallel aus. Die Standardwerte stimmen mit der Auswahl „Nur fehlend“ jeder Pipeline überein. Passen Sie den Bereich an, wenn Sie eine Neugenerierung benötigen.",
+    "title": "Run All Agents",
+    "description": "Führen Sie Audio Agent und Frame Agent parallel aus. Die Standardwerte stimmen mit der Auswahl „Nur fehlend“ jeder Pipeline überein. Passen Sie den Bereich an, wenn Sie eine Neugenerierung benötigen.",
     "audioSection": "Audio",
     "framesSection": "Rahmen",
     "scope": "Umfang",
@@ -242,7 +242,7 @@
     "missing": "Fehlen",
     "imageCredits": "Bildnachweis (geschätzt): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Läuft...",
-    "confirm": "Express All"
+    "confirm": "Run All Agents"
   },
   "retake": {
     "title": "Vorhandenen Take ersetzen?",
@@ -1366,7 +1366,7 @@
         "hint": "Einzelbilder und Videos in endgültiger Auflösung, wobei Topaz für die Politur geplant ist."
       },
       "express_sprint": {
-        "name": "Express-Sprint",
+        "name": "Agent Sprint",
         "hint": "Gleichzeitiger Batch-Pfad. Höhere Iterationskontingenz – Skriptänderungen nach dem Batch sind kostspielig."
       }
     },

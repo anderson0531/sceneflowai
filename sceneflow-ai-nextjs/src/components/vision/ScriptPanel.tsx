@@ -2932,7 +2932,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p className="text-xs">Translations available — pick a language on the scene card, then run Express Audio</p>
+                    <p className="text-xs">Translations available — pick a language on the scene card, then run Audio Agent</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -4454,7 +4454,7 @@ function SceneCard({
       const selectedDialogueIndices = new Set(selection.dialogueIndices)
 
       setIsExpressAudioRunning(true)
-      overlayStore?.show(`Express Audio for Scene ${sceneIdx + 1}...`, 60, 'audio-generation')
+      overlayStore?.show(`Audio Agent for Scene ${sceneIdx + 1}...`, 60, 'audio-generation')
 
       try {
         // Scope = All: delete existing audio for the selected items first.
@@ -4583,15 +4583,15 @@ function SceneCard({
         const results = await Promise.allSettled([ttsLane(), musicLane(), sfxLane()])
         const failed = results.filter((r) => r.status === 'rejected')
         if (failed.length === 0) {
-          toast.success(`Express Audio complete for Scene ${sceneIdx + 1}`)
+          toast.success(`Audio Agent complete for Scene ${sceneIdx + 1}`)
         } else {
           toast.warning(
-            `Express Audio finished with ${failed.length} issue${failed.length === 1 ? '' : 's'} for Scene ${sceneIdx + 1}`
+            `Audio Agent finished with ${failed.length} issue${failed.length === 1 ? '' : 's'} for Scene ${sceneIdx + 1}`
           )
         }
       } catch (error) {
         console.error('[ScriptPanel] Express Audio failed:', error)
-        toast.error('Express Audio failed')
+        toast.error('Audio Agent failed')
       }       finally {
         overlayStore?.hide()
         setIsExpressAudioRunning(false)
@@ -5321,12 +5321,12 @@ function SceneCard({
                       {laneBusy ? (
                         <>
                           <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                          Express All...
+                          Run All Agents...
                         </>
                       ) : (
                         <>
                           <Zap className="w-3 h-3 mr-1" />
-                          Express All
+                          Run All Agents
                           {(!voicesReady || !hasNarrationVoice) && (
                             <span className="ml-1 text-amber-400">⚠</span>
                           )}
@@ -6423,12 +6423,12 @@ function SceneCard({
                               {isExpressAudioRunning ? (
                                 <>
                                   <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                  Express Audio...
+                                  Audio Agent...
                                 </>
                               ) : (
                                 <>
                                   <Sparkles className="w-3 h-3 mr-1" />
-                                  Express Audio
+                                  Audio Agent
                                   {(!voicesReady || !hasNarrationVoice) && (
                                     <span className="ml-1 text-amber-400">⚠</span>
                                   )}

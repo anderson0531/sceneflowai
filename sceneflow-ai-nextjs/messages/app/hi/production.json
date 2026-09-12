@@ -134,7 +134,7 @@
     "saveFailed": "आपके बदलाव सेव नहीं किए जा सके"
   },
   "express": {
-    "title": "Express All — उन्नत",
+    "title": "Run All Agents — उन्नत",
     "description": "समानांतर में हर दृश्य → के लिए दिशा → ऑडियो प्री - विज़ फ्रेम चलाता है (एक बार में 3 तक)। यह एक लंबी, क्रेडिट - हेवी रन है — चेकपॉइंट के लिए प्रत्येक दृश्य कार्ड पर प्रति - दृश्य एक्सप्रेस की सिफारिश की जाती है।",
     "audioLanguage": "ऑडियो भाषा",
     "translateBadge": "अनुवाद",
@@ -168,10 +168,10 @@
     "costTotal": "कुल: ~{credits} क्रेडिट",
     "costEstimateDisclaimer": "केवल अनुमान। वास्तविक उपयोग संवाद की लंबाई और उन चरणों की संख्या पर निर्भर करता है जिन्हें वास्तव में चलाने की आवश्यकता है।",
     "running": "चल रहा है",
-    "confirm": "Express All"
+    "confirm": "Run All Agents"
   },
   "expressAudio": {
-    "title": "Express Audio",
+    "title": "Audio Agent",
     "description": "इस दृश्य के लिए एक साथ संवाद, ध्वनि प्रभाव और संगीत उत्पन्न करें। डायलॉग टीटीएस का उपयोग करता है, एक्शन बीट्स वीईओ नेटिव ऑडियो का उपयोग करता है, और संगीत लिरिया का उपयोग करता है।",
     "scope": "दायरा ",
     "scopeMissing": "सिर्फ़ मौजूद नहीं है",
@@ -191,10 +191,10 @@
     "sfxCredits": "SFX क्रेडिट: {credits}. {hint}",
     "creditHint": "~{credits} क्रेडिट · लगातार 8 सेकंड तक",
     "running": "UI कानफिगर करें",
-    "confirm": "Express Audio ({count})"
+    "confirm": "Audio Agent ({count})"
   },
   "expressScene": {
-    "title": "Express Frames",
+    "title": "Frame Agent",
     "description": "यह चुनें कि कौन - से फ़्रेम जनरेट करने या फिर से जनरेट करने हैं। मौजूदा फ़्रेम को फिर से बनाना केवल छवियों को अपडेट करता है — दिशा और ऑडियो को अपरिवर्तित छोड़ दिया जाता है।",
     "scope": "दायरा ",
     "scopeMissing": "सिर्फ़ मौजूद नहीं है",
@@ -214,11 +214,11 @@
     "close": "बंद करें",
     "imageCredits": "इमेज क्रेडिट (अनुमानित): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "UI कानफिगर करें",
-    "confirm": "Express Frames"
+    "confirm": "Frame Agent"
   },
   "expressGenerateAll": {
-    "title": "Express All",
-    "description": "Express Audio और Express Frames को समानांतर में चलाएं। डिफ़ॉल्ट प्रत्येक पाइपलाइन के \"केवल अनुपस्थित\" चयन से मेल खाते हैं — यदि आपको पुन: उत्पन्न करने की आवश्यकता है तो गुंजाइश समायोजित करें।",
+    "title": "Run All Agents",
+    "description": "Audio Agent और Frame Agent को समानांतर में चलाएं। डिफ़ॉल्ट प्रत्येक पाइपलाइन के \"केवल अनुपस्थित\" चयन से मेल खाते हैं — यदि आपको पुन: उत्पन्न करने की आवश्यकता है तो गुंजाइश समायोजित करें।",
     "audioSection": " inf",
     "framesSection": "ढांचा",
     "scope": "दायरा ",
@@ -242,7 +242,7 @@
     "missing": "गुमा Generic prefix label for error messages when creating documentation index, first arg is the document' s identifier, second is the document' s name",
     "imageCredits": "इमेज क्रेडिट (अनुमानित): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "UI कानफिगर करें",
-    "confirm": "Express All"
+    "confirm": "Run All Agents"
   },
   "retake": {
     "title": "मौजूदा टेक को बदलें?",
@@ -1366,7 +1366,7 @@
         "hint": "अंतिम रिज़ॉल्यूशन फ़्रेम और वीडियो, पुखराज के साथ पॉलिश की योजना बनाई गई।"
       },
       "express_sprint": {
-        "name": "एक्सप्रेस स्प्रिंट",
+        "name": "Agent Sprint",
         "hint": "समवर्ती बैच पथ. उच्च पुनरावृत्ति आकस्मिकता - बैच के बाद स्क्रिप्ट परिवर्तन महंगा है।"
       }
     },

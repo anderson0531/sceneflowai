@@ -238,7 +238,7 @@
         "icon": "κλακέτα",
         "label": "Παραγωγή ταινιών",
         "outcome": "Σενάριο για ένα διαδραστικό animatic που μπορείτε να προβάλετε και να δοκιμάσετε πριν από τα γυρίσματα.",
-        "narrative": "Παλαιότερα, η προ-οπτικοποίηση (previz) και οι δοκιμές στο κοινό συνεπάγονταν εβδομάδες εργασίας σε storyboards, προσωρινές εκφωνήσεις και δαπανηρές υποθέσεις πριν καν ξεκινήσουν τα γυρίσματα. Η SceneFlow μετατρέπει το σενάριό σας σε διαδραστικό animatic μέσω της διαδικασίας Express pre-vis: βελτιστοποιήστε το με την Audience Resonance, προβάλετέ το στην Screening Room και δεσμεύστε τον προϋπολογισμό μόνο όταν η ιστορία αποδώσει το επιθυμητό αποτέλεσμα.",
+        "narrative": "Παλαιότερα, η προ-οπτικοποίηση (previz) και οι δοκιμές στο κοινό συνεπάγονταν εβδομάδες εργασίας σε storyboards, προσωρινές εκφωνήσεις και δαπανηρές υποθέσεις πριν καν ξεκινήσουν τα γυρίσματα. Η SceneFlow μετατρέπει το σενάριό σας σε διαδραστικό animatic μέσω της διαδικασίας Pre-vis Agent: βελτιστοποιήστε το με την Audience Resonance, προβάλετέ το στην Screening Room και δεσμεύστε τον προϋπολογισμό μόνο όταν η ιστορία αποδώσει το επιθυμητό αποτέλεσμα.",
         "useCases": [
           "Προ-οπτικοποίηση για ταινίες μεγάλου μήκους και ανεξάρτητες παραγωγές",
           "Animatics για παρουσιάσεις σε επενδυτές",
@@ -285,9 +285,9 @@
     "title": "Ροή εργασιών βίντεο με προτεραιότητα στον ρυθμό",
     "subtitle": "Έγκριση πριν από την απόδοση — όχι αναδημιουργία τύπου κουλοχέρη",
     "intro": "Όχι παραγωγή αποτελεσμάτων με τη μέθοδο της δοκιμής και του σφάλματος. Ελέγχετε την εμφάνιση και δίνετε την έγκρισή σας προτού το SceneFlow χρησιμοποιήσει μονάδες για το τελικό βίντεο.",
-    "description": "Το SceneFlow οργανώνει τη διαδικασία οπτικής έγκρισης σε κάθε στάδιο: Express Pre-vis για επισκόπηση, Beat Frames για το κλείδωμα της σύνθεσης και, στη συνέχεια, F2V ανά χτύπο (beat). Βελτιώνετε την οπτική απόδοση προτού σπαταλήσετε credits σε αποκλίσεις και παραισθήσεις (hallucinations).",
+    "description": "Το SceneFlow οργανώνει τη διαδικασία οπτικής έγκρισης σε κάθε στάδιο: Pre-vis Agent για επισκόπηση, Beat Frames για το κλείδωμα της σύνθεσης και, στη συνέχεια, F2V ανά χτύπο (beat). Βελτιώνετε την οπτική απόδοση προτού σπαταλήσετε credits σε αποκλίσεις και παραισθήσεις (hallucinations).",
     "steps": [
-      "Express Pre-vis — μοιραστείτε οπτικοακουστικά beats για αξιολόγηση μέσα σε λίγα λεπτά",
+      "Pre-vis Agent — μοιραστείτε οπτικοακουστικά beats για αξιολόγηση μέσα σε λίγα λεπτά",
       "Beat Frames — κλείδωμα σύνθεσης έναρξης/λήξης με τη συνέχεια της Reference Library",
       "F2V ανά χτύπο — δημιουργία βίντεο από εγκεκριμένα καρέ, όχι από τυφλά prompts",
       "Συνεχής αλυσίδα επέκτασης (EXT) — εγγενή βήματα επέκτασης +7 δευτερολέπτων για εκτενή διαλογικά τμήματα",
@@ -810,7 +810,7 @@
       "title": "Ροή εργασιών βίντεο με προτεραιότητα στον ρυθμό",
       "description": "Εγκρίνετε τα βασικά στάδια του pre-vis και το Beat Frames πριν από το F2V — λιγότερες τυφλές αναδημιουργίες λόγω «παραισθήσεων» (hallucinations) και οπτικής απόκλισης. Μία δομημένη διαδρομή από την αξιολόγηση έως το τελικό κλιπ.",
       "keyFeatures": [
-        "Express Pre-vis για έλεγχο — κοινοποίηση των beats πριν από τη βαριά διαδικασία rendering",
+        "Pre-vis Agent για έλεγχο — κοινοποίηση των beats πριν από τη βαριά διαδικασία rendering",
         "Beat Frames σύνθεση κλειδώματος — Reference Library συνέχεια",
         "F2V ανά χτύπο — δημιουργία βίντεο από εγκεκριμένα καρέ",
         "Συνεχείς αλυσίδες EXT — εγγενή βήματα +7 δευτερολέπτων για εκτενή διάλογο εντός μιας ενότητας δράσης (beat)",
@@ -919,7 +919,7 @@
           "Screening Room — προεπισκόπηση σκηνών, τελική συναρμολόγηση, προβολές και δημοσίευση στο YouTube"
         ],
         "screenshotSlot": "Εισαγωγή στιγμιότυπου οθόνης: Πίνακας ελέγχου παραγωγής που εμφανίζει τις καρτέλες «Σενάριο» (Script), «Γύρισμα» (Shoot) και «Προ-οπτικοποίηση» (Pre-Vis).",
-        "videoSlot": "Εισαγωγή κλιπ 60 δευτερολέπτων: Οριστικοποίηση σεναρίου → Express Pre-vis ανά σκηνή → Λήψη υλικού → Μίκτης → Ροές"
+        "videoSlot": "Εισαγωγή κλιπ 60 δευτερολέπτων: Οριστικοποίηση σεναρίου → Pre-vis Agent ανά σκηνή → Λήψη υλικού → Μίκτης → Ροές"
       },
       {
         "id": "14",
@@ -1049,7 +1049,7 @@
       "howWeScore": {
         "toggle": "How we score",
         "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
         "bullets": [
           "Scores Blueprint and script against your stated target audience",
           "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
@@ -1060,26 +1060,26 @@
     },
     "express": {
       "badge": "Hyper-Speed Production",
-      "title": "Sceneflow Express",
+      "title": "SceneFlow Agents",
       "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
-          "title": "Express Pre-Vis",
+          "title": "Pre-vis Agent",
           "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
-          "title": "Express Motion Video",
+          "title": "Video Agent",
           "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
           "time": "Minutes vs Days"
         },
         {
-          "title": "Express Delivery",
+          "title": "Delivery Agent",
           "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
           "time": "Minutes vs Weeks"
         }
       ],
-      "cta": "Start Express Rendering"
+      "cta": "Run Production Agents"
     }
   },
   "preVisEngine": {

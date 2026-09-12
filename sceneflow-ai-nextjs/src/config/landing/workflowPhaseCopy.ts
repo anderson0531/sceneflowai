@@ -113,7 +113,7 @@ export const BEAT_FIRST_CARD = {
   description:
     'Approve pre-vis beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.',
   keyFeatures: [
-    'Express Pre-vis for review — share beats before heavy render',
+    'Pre-vis Agent for review — share beats before heavy render',
     'Beat Frames lock composition — Reference Library continuity',
     'F2V per beat — generate video from approved frames',
     'Continuous EXT chains — native +7s steps for long dialogue within a beat',

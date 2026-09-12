@@ -138,14 +138,14 @@
             "id": "production-audio",
             "number": "4",
             "title": "Generate audio",
-            "description": "Generate dialogue, narration, SFX, and music with Express Production across all scenes, Express Scene, or beat by beat — native-quality voiceover in 70+ languages.",
-            "imagePlaceholder": "Express audio — all scenes, single scene, or beat by beat"
+            "description": "Generate dialogue, narration, SFX, and music with Run All Agents across all scenes, Audio Agent per scene, or beat by beat — native-quality voiceover in 70+ languages.",
+            "imagePlaceholder": "Audio Agent — all scenes, single scene, or beat by beat"
           },
           {
             "id": "production-frames",
             "number": "5",
             "title": "Generate and edit frames",
-            "description": "Generate beat frames with Express Production, Express Scene, or beat by beat, then edit any frame with the Intelligent Assistant Director (IAD) — just describe the change.",
+            "description": "Generate beat frames with Run All Agents, Frame Agent per scene, or beat by beat, then edit any frame with the Intelligent Assistant Director (IAD) — just describe the change.",
             "imagePlaceholder": "Beat frames with Intelligent Assistant Director edits"
           },
           {
@@ -159,8 +159,8 @@
             "id": "production-video",
             "number": "7",
             "title": "Generate video",
-            "description": "Turn approved frames into motion with Express Scene or beat by beat. Retake any shot with the Intelligent Assistant Director — no endless slot-machine regenerations.",
-            "imagePlaceholder": "Express video generation with IAD retakes"
+            "description": "Turn approved frames into motion with Video Agent per scene or beat by beat. Retake any shot with the Intelligent Assistant Director — no endless slot-machine regenerations.",
+            "imagePlaceholder": "Video Agent generation with IAD retakes"
           },
           {
             "id": "production-mixer",
@@ -235,7 +235,7 @@
       },
       {
         "id": "video",
-        "label": "Full Motion Express Video Renders"
+        "label": "Full Motion Video Agent Renders"
       }
     ],
     "previewLabel": "Preview"
@@ -349,18 +349,18 @@
             "description": "Write natively in your story's language, then dub or lip-sync into 70+ more — auto-aligned to beat frames and published as multi-language audio tracks on a single YouTube video.",
             "learnMore": {
               "problem": "Reaching a global audience usually means re-recording voice talent, re-timing every scene, and rebuilding the project once per language — a cost and coordination nightmare that keeps most creators single-market.",
-              "solution": "Author dialogue and treatment natively in your story's language rather than translating English after the fact, then express-generate audio in 70+ languages, auto-aligned to your beat frames. Dialogue is rewritten to fit each dub's timing budget, and you can ship dubbed or lip-synced streams from the same approved cut.",
+              "solution": "Author dialogue and treatment natively in your story's language rather than translating English after the fact, then generate audio in 70+ languages, auto-aligned to your beat frames. Dialogue is rewritten to fit each dub's timing budget, and you can ship dubbed or lip-synced streams from the same approved cut.",
               "outcome": "Ship every story natively to 70+ markets from one production — multiply your reach and revenue without multiplying your workload."
             }
           },
           {
             "icon": "express",
-            "title": "Express Generation",
-            "description": "Orchestrate concurrent audio, frame, and video generation across scenes. A 30-beat production in ~30 minutes instead of hours of sequential waiting.",
+            "title": "Production Agents",
+            "description": "Audio Agent, Frame Agent, and Video Agent compose expert prompts from beat direction, attach the right references, and generate in parallel. A scene can take several minutes because the agent is doing the specialist work — not because the queue is slow.",
             "learnMore": {
-              "problem": "Generating a production one asset at a time turns a single project into an all-day wait — you queue a clip, watch it render, then repeat hundreds of times while momentum evaporates.",
-              "solution": "Express Generation taps SceneFlow's dedicated cloud to run concurrent generations of audio, frames, and video across your entire production at once, instead of one slow job after another.",
-              "outcome": "A 30-beat production finishes in about 30 minutes instead of roughly 2.5 hours — so you iterate the same day and ship while the idea is still hot."
+              "problem": "Writing every prompt and waiting on one asset at a time turns production into babysitting — you queue a clip, watch it render, then repeat while momentum evaporates.",
+              "solution": "Agents read the locked beat, build the prompt, attach identity and location refs, generate, and retry when the provider or likeness check fails — then hand you a reviewable beat.",
+              "outcome": "You direct and approve. The agents prompt and generate. Quality first; time is the cost of that quality."
             }
           },
           {
@@ -706,7 +706,7 @@
         "icon": "clapperboard",
         "label": "Film Production",
         "outcome": "Script to an interactive animatic you can screen and test before you shoot",
-        "narrative": "Previz and audience testing used to mean weeks of storyboards, temp VO, and expensive guesswork before cameras roll. SceneFlow takes your script to an interactive animatic with Express pre-vis — optimize with Audience Resonance, screen it in the Screening Room, and commit budget only when the story lands.",
+        "narrative": "Previz and audience testing used to mean weeks of storyboards, temp VO, and expensive guesswork before cameras roll. SceneFlow takes your script to an interactive animatic with the Pre-vis Agent — optimize with Audience Resonance, screen it in the Screening Room, and commit budget only when the story lands.",
         "useCases": [
           "Feature & indie previz",
           "Investor pitch animatics",
@@ -719,7 +719,7 @@
           "challengeTitle": "Slow Pre-Vis Before You Can Test the Story",
           "challengeDescription": "You have a script — but table reads, storyboard cycles, and fragmented previz tools delay investor pitches, audience tests, and greenlight decisions.",
           "solutionTitle": "Script-First Interactive Pre-Visualization",
-          "solutionDescription": "Upload your script (MDX, FDX, and other formats), optimize with Audience Resonance, and generate an interactive pre-vis to screen and test — with Express concurrent generation across beats, in 70+ language options, and fast multi-language overlays.",
+          "solutionDescription": "Upload your script (MDX, FDX, and other formats), optimize with Audience Resonance, and generate an interactive pre-vis to screen and test — with Production Agents composing prompts and generating across beats, in 70+ language options, and fast multi-language overlays.",
           "win": "Validate story and audience fit before principal photography — with a shareable animatic, not a weeks-long previz cycle."
         }
       }
@@ -753,9 +753,9 @@
     "title": "Beat-First Video Pipeline",
     "subtitle": "Approve before you render — not slot-machine regeneration",
     "intro": "No guess-and-check generations. You preview and approve the look before SceneFlow spends credits on final video.",
-    "description": "SceneFlow structures visual approval at every step: Express Pre-vis for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
+    "description": "SceneFlow structures visual approval at every step: Pre-vis Agent for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
     "steps": [
-      "Express Pre-vis — share audio-visual beats for review in minutes",
+      "Pre-vis Agent — share audio-visual beats for review after expert prompting",
       "Beat Frames — lock start/end composition with Reference Library continuity",
       "F2V per beat — generate video from approved frames, not blind prompts",
       "Continuous EXT chain — native +7s extension steps for long dialogue beats",
@@ -794,10 +794,10 @@
       {
         "id": "validation-provenance",
         "title": "Validation & Provenance",
-        "description": "Additional moderation and risk mitigation is available across Blueprint, script, pre-vis, and beat video—using the same credit model as other Studio tools. Successful clips receive signed content provenance records.",
+        "description": "Additional moderation and risk mitigation is available across Blueprint, script, pre-vis, and segment video—using the same credit model as other Studio tools. Successful clips receive signed content provenance records.",
         "highlights": [
           "Content validation signals before heavy render spend",
-          "Signed content hash and provenance metadata on beat video",
+          "Signed content hash and provenance metadata on segment video",
           "Audit logs, violation tracking, and abuse reporting for platform protection"
         ],
         "badge": "Content validation"
@@ -846,7 +846,7 @@
       },
       {
         "title": "Production Mixer finish",
-        "description": "Chained beats stitch into scene playback; elastic audio holds cover narration that runs longer than video."
+        "description": "Chain segments stitch into scene playback; elastic audio holds cover narration that runs longer than video."
       }
     ],
     "stats": [
@@ -1522,7 +1522,7 @@
       "title": "Beat-First Video Pipeline",
       "description": "Approve pre-vis beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
       "keyFeatures": [
-        "Express Pre-vis for review — share beats before heavy render",
+        "Pre-vis Agent for review — share beats before heavy render",
         "Beat Frames lock composition — Reference Library continuity",
         "F2V per beat — generate video from approved frames",
         "Continuous EXT chains — native +7s steps for long dialogue within a beat",
@@ -1631,7 +1631,7 @@
           "Screening Room — scene preview, master assembly, screenings, and YouTube publish"
         ],
         "screenshotSlot": "Insert screenshot: Production dashboard showing Writer's Room, Motion, and Pre-Vis",
-        "videoSlot": "Insert 00:60 clip: Lock script → Express Pre-vis per scene → Motion Footage → Mixer → Streams"
+        "videoSlot": "Insert 00:60 clip: Lock script → Pre-vis Agent per scene → Motion Footage → Mixer → Streams"
       },
       {
         "id": "14",
@@ -1649,7 +1649,7 @@
       {
         "id": "16",
         "title": "Trust & Safety",
-        "description": "Layered guardrails on every generation path: Google Vertex AI safety, Extended Creative Services with Guardrails, optional Studio content validation, and signed provenance on beat video.",
+        "description": "Layered guardrails on every generation path: Google Vertex AI safety, Extended Creative Services with Guardrails, optional Studio content validation, and signed provenance on segment video.",
         "keyFeatures": [
           "Google-native safety — Vertex Responsible AI on all generation",
           "Guarded fallback — pre-storage review on alternate paths",
@@ -1761,7 +1761,7 @@
       "howWeScore": {
         "toggle": "How we score",
         "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
         "bullets": [
           "Scores Blueprint and script against your stated target audience",
           "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
@@ -1771,27 +1771,27 @@
       }
     },
     "express": {
-      "badge": "Hyper-Speed Production",
-      "title": "Sceneflow Express",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "badge": "Intelligent Production",
+      "title": "SceneFlow Agents",
+      "description": "Audio Agent, Frame Agent, and Video Agent compose expert prompts from beat direction, attach the right references, and generate in parallel. A scene can take several minutes because the agent is doing specialist work — then you approve Beat Frames before you spend on motion video.",
       "items": [
         {
-          "title": "Express Pre-Vis",
-          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
-          "time": "Minutes vs Hours"
+          "title": "Pre-vis Agent",
+          "desc": "Fully voiced, scored beat frames per scene, prompted from locked direction and ready to share in the Screening Room.",
+          "time": "Quality first"
         },
         {
-          "title": "Express Motion Video",
+          "title": "Video Agent",
           "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
-          "time": "Minutes vs Days"
+          "time": "Approve, then render"
         },
         {
-          "title": "Express Delivery",
+          "title": "Delivery Agent",
           "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
-          "time": "Minutes vs Weeks"
+          "time": "Ship the cut"
         }
       ],
-      "cta": "Start Express Rendering"
+      "cta": "Run Production Agents"
     }
   },
   "preVisEngine": {

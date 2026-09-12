@@ -2256,7 +2256,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: `Talent beat is missing character reference images: ${missingNames} — add in Reference Library before Express.`,
+          error: `Talent beat is missing character reference images: ${missingNames} — add in Reference Library before Frame Agent.`,
           code: 'MISSING_CHARACTER_REFERENCE_IMAGES',
         },
         { status: 422 }

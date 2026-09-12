@@ -27,7 +27,7 @@ const EXPECTED_TITLES: Record<string, string[]> = {
     'Intelligent Reference Library',
     'Intelligent Assistant Director (IAD)',
     'Multilanguage Streams',
-    'Express Generation',
+    'Production Agents',
     'Screening Room',
   ],
   ship: [

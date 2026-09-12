@@ -148,11 +148,11 @@ export const USE_CASE_PERSONAS = {
     solution: {
       title: 'Script-First Interactive Pre-Visualization',
       description:
-        'Upload your script (MDX, FDX, and other formats), optimize with Audience Resonance, and generate an interactive pre-vis to screen and test — with Express concurrent generation across beats, in 70+ language options, and fast multi-language overlays.',
+        'Upload your script (MDX, FDX, and other formats), optimize with Audience Resonance, and generate an interactive pre-vis to screen and test — with Production Agents composing prompts and generating across beats, in 70+ language options, and fast multi-language overlays.',
       features: [
         'Upload & import scripts (MDX, FDX, and more)',
         'Optimize with Audience Resonance',
-        'Express pre-vis animatic for review and stakeholder sign-off',
+        'Pre-vis Agent animatic for review and stakeholder sign-off',
         '70+ languages with fast multi-language overlays',
         'Revise and export script (MDX and other formats)',
         'Screening Room for audience-testing the full animatic',

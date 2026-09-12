@@ -134,8 +134,8 @@
     "saveFailed": "Não foi possível salvar as alterações"
   },
   "express": {
-    "title": "Express All — avançado",
-    "description": "Executa Direção → Áudio → quadros de pré-visualização para cada cena em paralelo (até 3 por vez). Esta é uma corrida longa e com muitos créditos – o Express por cena em cada cartão de cena é recomendado para pontos de verificação.",
+    "title": "Run All Agents — avançado",
+    "description": "Executa Direção → Áudio → quadros de pré-visualização para cada cena em paralelo (até 3 por vez). Esta é uma corrida longa e com muitos créditos – os agents por cena em cada cartão de cena são recomendados para pontos de verificação.",
     "audioLanguage": "Idioma de áudio",
     "translateBadge": "traduzir",
     "audioLanguageHint": "O diálogo e a narração serão gerados no {lang}. O áudio existente em outros idiomas permanece intacto.",
@@ -168,10 +168,10 @@
     "costTotal": "Total: ~{credits} créditos",
     "costEstimateDisclaimer": "Apenas estimativas. O uso real depende da duração do diálogo e do número de fases que realmente precisam ser executadas.",
     "running": "Correndo…",
-    "confirm": "Express All"
+    "confirm": "Run All Agents"
   },
   "expressAudio": {
-    "title": "Express Audio",
+    "title": "Audio Agent",
     "description": "Gere diálogos, efeitos sonoros e música para esta cena simultaneamente. O diálogo usa TTS, as batidas de ação usam áudio nativo Veo e a música usa Lyria.",
     "scope": "Escopo",
     "scopeMissing": "Faltando apenas",
@@ -191,10 +191,10 @@
     "sfxCredits": "Créditos SFX: {credits}. {hint}",
     "creditHint": "~{credits} créditos · até 8s contínuos",
     "running": "Correndo...",
-    "confirm": "Express Audio ({count})"
+    "confirm": "Audio Agent ({count})"
   },
   "expressScene": {
-    "title": "Express Frames",
+    "title": "Frame Agent",
     "description": "Escolha quais quadros de pré-visualização serão gerados ou regenerados. A regeneração dos quadros existentes atualiza apenas as imagens – a direção e o áudio permanecem inalterados.",
     "scope": "Escopo",
     "scopeMissing": "Faltando apenas",
@@ -214,11 +214,11 @@
     "close": "Fechar",
     "imageCredits": "Créditos da imagem (est.): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Correndo...",
-    "confirm": "Express Frames"
+    "confirm": "Frame Agent"
   },
   "expressGenerateAll": {
-    "title": "Express All",
-    "description": "Execute Express Audio e Express Frames em paralelo. Os padrões correspondem à seleção “somente ausente” de cada pipeline – ajuste o escopo se precisar regenerar.",
+    "title": "Run All Agents",
+    "description": "Execute Audio Agent e Frame Agent em paralelo. Os padrões correspondem à seleção “somente ausente” de cada pipeline – ajuste o escopo se precisar regenerar.",
     "audioSection": "Áudio",
     "framesSection": "Molduras",
     "scope": "Escopo",
@@ -242,7 +242,7 @@
     "missing": "Ausente",
     "imageCredits": "Créditos da imagem (est.): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Correndo...",
-    "confirm": "Express All"
+    "confirm": "Run All Agents"
   },
   "retake": {
     "title": "Substituir a tomada existente?",
@@ -1366,7 +1366,7 @@
         "hint": "Quadros de resolução final e vídeo, com Topázio planejado para polimento."
       },
       "express_sprint": {
-        "name": "Sprint Expresso",
+        "name": "Agent Sprint",
         "hint": "Caminho de lote simultâneo. Maior contingência de iteração – alterações de script após lote são caras."
       }
     },

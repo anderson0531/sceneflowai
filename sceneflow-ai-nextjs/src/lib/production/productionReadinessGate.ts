@@ -109,7 +109,7 @@ export function canRunExpress(input: {
     )
   }
   if (!input.checklist.hasReferences) {
-    reasons.push('Add at least one character, prop, or location reference before Express.')
+    reasons.push('Add at least one character, prop, or location reference before running agents.')
   }
 
   if (reasons.length === 0 && input.checklist.referencesReady !== false) {

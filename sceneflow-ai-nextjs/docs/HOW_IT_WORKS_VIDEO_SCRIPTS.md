@@ -190,15 +190,15 @@ Aligns with existing landing narrator patterns in [`src/config/landing/roleStory
 ### Beat 4 — Generate audio
 - **On-screen title:** Generate audio
 - **Narration:**
-  > Hear it before you see it. Generate dialogue, narration, SFX, and music with Express Production across every scene, a single scene, or beat by beat — native-quality voiceover in seventy-plus languages.
-- **Screen capture:** **Beats** tab → **Express Audio** → `ExpressAudioConfirmDialog` scope + credit estimate; waveforms populate.
+  > Hear it before you see it. Generate dialogue, narration, SFX, and music with Audio Agent across every scene, a single scene, or beat by beat — native-quality voiceover in seventy-plus languages.
+- **Screen capture:** **Beats** tab → **Audio Agent** → `ExpressAudioConfirmDialog` scope + credit estimate; waveforms populate.
 - **Primary UI:** `src/components/vision/ExpressAudioConfirmDialog.tsx`, `src/components/vision/ScriptPanel.tsx`
 
 ### Beat 5 — Generate and edit frames
 - **On-screen title:** Generate and edit frames
 - **Narration:**
-  > Generate beat frames with Express Production, Express Scene, or beat by beat — then edit any frame with the Intelligent Assistant Director. Just describe the change: remove the coffee mug, and it's done.
-- **Screen capture:** `SceneGallery` **Express All**; frames populate locked to references; open IAD edit on a frame; type an instruction; show the result.
+  > Generate beat frames with Run All Agents, Frame Agent per scene, or beat by beat — then edit any frame with the Intelligent Assistant Director. Just describe the change: remove the coffee mug, and it's done.
+- **Screen capture:** `SceneGallery` **Run All Agents**; frames populate locked to references; open IAD edit on a frame; type an instruction; show the result.
 - **Primary UI:** `src/components/vision/SceneGallery.tsx`, `src/components/vision/SceneStoryboardFrameViewer.tsx`
 
 ### Beat 6 — Review the animatic
@@ -211,7 +211,7 @@ Aligns with existing landing narrator patterns in [`src/config/landing/roleStory
 ### Beat 7 — Generate video
 - **On-screen title:** Generate video
 - **Narration:**
-  > Turn approved frames into motion with Express Scene or beat by beat. Don't love a shot? Retake it with the Intelligent Assistant Director — no endless slot-machine loops.
+  > Turn approved frames into motion with Video Agent per scene or beat by beat. Don't love a shot? Retake it with the Intelligent Assistant Director — no endless slot-machine loops.
 - **Screen capture:** **Shoot** tab in `DirectorConsoleImpl`; generate beats with method badges; open the intelligent retake dialog; regenerate one beat.
 - **Primary UI:** `src/components/vision/scene-production/DirectorConsoleImpl.tsx`, `src/components/vision/scene-production/IntelligentRetakeDialog.tsx`
 

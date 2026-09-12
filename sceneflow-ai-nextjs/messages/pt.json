@@ -285,9 +285,9 @@
     "title": "Fluxo de produção de vídeo centrado na batida",
     "subtitle": "Aprove antes de renderizar — nada de regeneração estilo caça-níqueis",
     "intro": "Nada de gerar conteúdo na base da tentativa e erro. Você visualiza e aprova o visual antes que o SceneFlow gaste créditos com o vídeo final.",
-    "description": "SceneFlow estrutura a aprovação visual em cada etapa: Express Pre-vis para revisão, Beat Frames para fixar a composição e, em seguida, F2V por batida. Você refina o visual antes de gastar créditos com desvios e alucinações.",
+    "description": "SceneFlow estrutura a aprovação visual em cada etapa: Pre-vis Agent para revisão, Beat Frames para fixar a composição e, em seguida, F2V por batida. Você refina o visual antes de gastar créditos com desvios e alucinações.",
     "steps": [
-      "Express Pre-vis — compartilhe trechos audiovisuais para revisão em minutos",
+      "Pre-vis Agent — compartilhe trechos audiovisuais para revisão em minutos",
       "Beat Frames — travar composição de início/fim com continuidade Reference Library",
       "F2V por batida — gere vídeos a partir de quadros aprovados, não de prompts às cegas.",
       "Cadeia de extensão contínua — etapas de extensão nativas de +7 segundos para trechos longos de diálogo",
@@ -810,7 +810,7 @@
       "title": "Fluxo de produção de vídeo centrado na batida",
       "description": "Aprove as etapas de pré-visualização e Beat Frames antes da fase F2V — menos regenerações às cegas causadas por alucinações e desvios visuais. Um fluxo estruturado, da revisão ao clipe final.",
       "keyFeatures": [
-        "Express Pre-vis para revisão — compartilhar batidas antes da renderização pesada",
+        "Pre-vis Agent para revisão — compartilhar batidas antes da renderização pesada",
         "Beat Frames composição de eclusas — Reference Library continuidade",
         "F2V por batida — gerar vídeo a partir de quadros aprovados",
         "Cadeias EXT contínuas — passos nativos de +7s para diálogos longos dentro de um *beat*",
@@ -919,7 +919,7 @@
           "Screening Room — pré-visualização de cenas, montagem final, exibições e publicação no YouTube"
         ],
         "screenshotSlot": "Inserir captura de tela: Painel de produção exibindo as abas Roteiro, Filmagem e Pré-visualização.",
-        "videoSlot": "Inserir clipe de 60 segundos: Finalizar roteiro → Express Pre-vis por cena → Gravar imagens → Mixer → Streams"
+        "videoSlot": "Inserir clipe de 60 segundos: Finalizar roteiro → Pre-vis Agent por cena → Gravar imagens → Mixer → Streams"
       },
       {
         "id": "14",
@@ -1049,7 +1049,7 @@
       "howWeScore": {
         "toggle": "How we score",
         "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
         "bullets": [
           "Scores Blueprint and script against your stated target audience",
           "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
@@ -1060,26 +1060,26 @@
     },
     "express": {
       "badge": "Hyper-Speed Production",
-      "title": "Sceneflow Express",
+      "title": "SceneFlow Agents",
       "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
-          "title": "Express Pre-Vis",
+          "title": "Pre-vis Agent",
           "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
-          "title": "Express Motion Video",
+          "title": "Video Agent",
           "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
           "time": "Minutes vs Days"
         },
         {
-          "title": "Express Delivery",
+          "title": "Delivery Agent",
           "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
           "time": "Minutes vs Weeks"
         }
       ],
-      "cta": "Start Express Rendering"
+      "cta": "Run Production Agents"
     }
   },
   "preVisEngine": {
@@ -1683,7 +1683,7 @@
             "description": "Orquestre a geração simultânea de áudio, quadro e vídeo em todas as cenas. Uma produção de 30 batidas em ~30 minutos em vez de horas de espera sequencial.",
             "learnMore": {
               "problem": "Gerar uma produção um ativo de cada vez transforma um único projeto em uma espera de um dia inteiro — você enfileira um clipe, assiste à renderização e repete centenas de vezes enquanto o momentum evapora.",
-              "solution": "A Express Generation aproveita a nuvem dedicada do SceneFlow para executar gerações simultâneas de áudio, quadros e vídeo em toda a sua produção de uma só vez, em vez de um trabalho lento após o outro.",
+              "solution": "Production Agents aproveita a nuvem dedicada do SceneFlow para executar gerações simultâneas de áudio, quadros e vídeo em toda a sua produção de uma só vez, em vez de um trabalho lento após o outro.",
               "outcome": "Uma produção de 30 batidas termina em cerca de 30 minutos em vez de cerca de 2,5 horas — então você itera no mesmo dia e envia enquanto a ideia ainda está quente."
             }
           },
@@ -1887,7 +1887,7 @@
             "id": "production-audio",
             "number": "4",
             "title": "Gerar áudio",
-            "description": "Gere diálogos, narração, SFX e música com a Express Production em todas as cenas, Express Scene ou beat por beat — narração com qualidade nativa em mais de 70 idiomas.",
+            "description": "Gere diálogos, narração, SFX e música com a Run All Agents em todas as cenas, per-scene agents ou beat por beat — narração com qualidade nativa em mais de 70 idiomas.",
             "imagePlaceholder": "Áudio expresso — todas as cenas, cena única ou batida a batida"
           },
           {
@@ -1908,7 +1908,7 @@
             "id": "production-video",
             "number": "7",
             "title": "Gerar a partir do vídeo",
-            "description": "Transforme quadros aprovados em movimento com Express Scene ou batida por batida. Volte a tirar qualquer foto com o Diretor Assistente Inteligente — sem regenerações intermináveis de máquinas caça-níqueis.",
+            "description": "Transforme quadros aprovados em movimento com per-scene agents ou batida por batida. Volte a tirar qualquer foto com o Diretor Assistente Inteligente — sem regenerações intermináveis de máquinas caça-níqueis.",
             "imagePlaceholder": "Geração de vídeo expresso com retomadas do IAD"
           },
           {

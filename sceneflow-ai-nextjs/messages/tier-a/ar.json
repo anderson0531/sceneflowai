@@ -37,7 +37,7 @@
       "steps": [
         "Upload industry-standard scripts (.fountain, .fdx, .txt)",
         "Run Audience Resonance scoring on your target demographic",
-        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Run the Pre-vis Agent — voiced, scored animatics with expert prompting",
         "Share for stakeholder review before final video spend"
       ]
     },

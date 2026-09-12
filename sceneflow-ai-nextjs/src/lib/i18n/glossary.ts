@@ -31,15 +31,18 @@ export const GLOSSARY_TERMS = [
   'Final Cut',
   'Premiere',
   'Animatic',
-  // The four Express actions plus their umbrella. "Express" here is the name of
-  // a feature, not the verb — every locale had been given the verb sense, so
-  // the project-wide title read as "Articulate all scenes".
-  'Express References',
-  'Express Audio',
-  'Express Frames',
-  'Express Video',
-  'Express All',
-  'Express Pre-vis',
+  // Agent actions plus their umbrella. These are product names, not verbs —
+  // MT used to turn "Express All" into "Articulate all scenes".
+  'Audio Agent',
+  'Frame Agent',
+  'Video Agent',
+  'Run All Agents',
+  'Reference Agent',
+  'Pre-vis Agent',
+  'Production Agents',
+  'SceneFlow Agents',
+  'Delivery Agent',
+  'Agent Sprint',
   'Pre-vis',
   'Pre-Visualization Engine',
   'Creative Decision Engine',

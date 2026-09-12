@@ -6853,7 +6853,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (failed > 0) details.push(`${failed} failed — retry to fill the gaps.`)
       if (stale > 0) {
         details.push(
-          `${stale} changed while the batch ran, so those images may not match your latest edits. Re-run Express to refresh them.`
+          `${stale} changed while the batch ran, so those images may not match your latest edits. Re-run Reference Agent to refresh them.`
         )
       }
       const message = details.length
@@ -6861,9 +6861,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         : `All ${succeeded} reference image${succeeded === 1 ? '' : 's'} generated.`
 
       if (failed > 0 && succeeded === 0) {
-        toast.error('Reference Express failed', { description: message, duration: 12000 })
+        toast.error('Reference Agent failed', { description: message, duration: 12000 })
       } else if (failed > 0 || stale > 0) {
-        toast.warning('Reference Express finished', { description: message, duration: 12000 })
+        toast.warning('Reference Agent finished', { description: message, duration: 12000 })
       } else {
         toast.success('Reference images ready', { description: message, duration: 8000 })
       }
@@ -6883,18 +6883,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         job.status === 'cancelled' ||
         (typeof job.error === 'string' && job.error.toLowerCase().includes('cancelled'))
       if (cancelled) {
-        toast.info('Reference Express cancelled', {
+        toast.info('Reference Agent cancelled', {
           description: 'Images generated so far were kept. You can start again anytime.',
           duration: 6000,
         })
         return
       }
-      toast.error('Reference Express failed', {
+      toast.error('Reference Agent failed', {
         description: job.error || 'Please try again.',
         duration: 10000,
       })
       notifyIfHidden({
-        title: 'Reference Express failed',
+        title: 'Reference Agent failed',
         body: job.error || 'Please try again.',
         tag: `reference-express-${job.id}`,
       })
@@ -9604,7 +9604,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     })
 
     if (!response.ok) {
-      throw new Error('Failed to sync references for Express')
+      throw new Error('Failed to sync references for Reference Agent')
     }
 
     setProject((prev) => {
@@ -9973,7 +9973,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (!projectId) return { outcome: 'error', error: 'No project loaded' }
 
     if (referenceExpressJob.isActive) {
-      toast.info('Reference Express is already running', {
+      toast.info('Reference Agent is already running', {
         description: 'Watch the status card in the corner — you can keep working.',
       })
       return { outcome: 'already-running' }
@@ -10005,7 +10005,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return { outcome: 'nothing-to-do' }
       }
       if (!res.ok) {
-        throw new Error(data?.error || 'Failed to start Reference Express')
+        throw new Error(data?.error || 'Failed to start Reference Agent')
       }
 
       referenceExpressJob.track(data.jobId, {
@@ -10019,7 +10019,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       const count = Number(data.itemCount || 0)
       const sceneLabel = scope?.sceneIndices?.length === 1 ? ` for scene ${scope.sceneIndices[0] + 1}` : ''
-      toast.success('Express References started', {
+      toast.success('Reference Agent started', {
         description: `Generating ${count} reference image${count === 1 ? '' : 's'}${sceneLabel} in the background. Keep working — we'll notify you when they're ready.`,
         duration: 8000,
       })
@@ -10027,7 +10027,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     } catch (error) {
       console.error('[handleExpressGenerateReferences] Error:', error)
       const message =
-        error instanceof Error ? error.message : 'Failed to start Express References'
+        error instanceof Error ? error.message : 'Failed to start Reference Agent'
       toast.error(message)
       setIsExpressGeneratingReferences(false)
       return { outcome: 'error', error: message }
@@ -12967,7 +12967,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const errText = await response.text().catch(() => '')
           console.error('[Express] Request failed:', response.status, errText)
           if (reportMissingReferenceImages(response.status, errText)) return
-          toast.error(`Express failed: ${response.status} ${errText.slice(0, 120)}`)
+          toast.error(`Run All Agents failed: ${response.status} ${errText.slice(0, 120)}`)
           return
         }
 
@@ -13070,7 +13070,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   setPhase(event.sceneIndex, 'direction', 'error', {
                     error: event.errors?.join(' ') || 'preflight failed',
                   })
-                  toast.error(event.errors?.[0] || 'Express preflight failed')
+                  toast.error(event.errors?.[0] || 'Run All Agents preflight failed')
                   break
                 case 'scene-persisted':
                   await refreshProjectScript()
@@ -13097,7 +13097,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       streamErrLower.includes('resource_exhausted') ||
                       streamErrLower.includes('quota')
                     toast.error(
-                      isQuotaError ? VERTEX_QUOTA_EXHAUSTED_USER_MESSAGE : `Express error: ${event.error}`
+                      isQuotaError ? VERTEX_QUOTA_EXHAUSTED_USER_MESSAGE : `Run All Agents error: ${event.error}`
                     )
                   }
                   break
@@ -13111,7 +13111,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
 
         if (failedScenes === 0 && successScenes > 0) {
-          toast.success(`Express complete — ${successScenes} scene${successScenes === 1 ? '' : 's'}`, {
+          toast.success(`Run All Agents complete — ${successScenes} scene${successScenes === 1 ? '' : 's'}`, {
             action: {
               label: 'Share for review',
               onClick: () => {
@@ -13122,7 +13122,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           openScreeningRoomFromVisionUi()
         } else if (failedScenes > 0 && successScenes > 0) {
           toast.warning(
-            `Express finished — ${successScenes} ok, ${failedScenes} with errors${
+            `Run All Agents finished — ${successScenes} ok, ${failedScenes} with errors${
               rateLimitedFailureCount > 0
                 ? ` (${rateLimitedFailureCount} rate limited)`
                 : ''
@@ -13147,7 +13147,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           )
         } else if (failedScenes > 0) {
           toast.error(
-            `Express failed for ${failedScenes} scene${failedScenes === 1 ? '' : 's'}${
+            `Run All Agents failed for ${failedScenes} scene${failedScenes === 1 ? '' : 's'}${
               rateLimitedFailureCount > 0
                 ? ` — ${rateLimitedFailureCount} item${rateLimitedFailureCount === 1 ? '' : 's'} hit rate limits`
                 : ''
@@ -13172,7 +13172,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           )
         } else if (rateLimitedFailureCount > 0) {
           toast.warning(
-            `Express complete with ${rateLimitedFailureCount} rate-limited item${rateLimitedFailureCount === 1 ? '' : 's'}.`,
+            `Run All Agents complete with ${rateLimitedFailureCount} rate-limited item${rateLimitedFailureCount === 1 ? '' : 's'}.`,
             {
               action: {
                 label: 'Retry failed',
@@ -13215,7 +13215,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       } catch (err: any) {
         console.error('[Express] Unexpected error:', err)
-        toast.error(`Express error: ${err?.message || String(err)}`)
+        toast.error(`Run All Agents error: ${err?.message || String(err)}`)
       } finally {
         setIsExpressRunning(false)
       }
@@ -13326,7 +13326,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       toast.success(
-        `Updated ${promptsUpdated} frame prompt${promptsUpdated === 1 ? '' : 's'}. Run Express to regenerate images and audio.`
+        `Updated ${promptsUpdated} frame prompt${promptsUpdated === 1 ? '' : 's'}. Run agents to regenerate images and audio.`
       )
     },
     [script, project?.title, lockedArtStyle, persistVisionScriptScenes]
@@ -13579,7 +13579,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           console.error('[Scene Express] Request failed:', response.status, errText)
           setExpressBeatFrameOverlay(null)
           if (reportMissingReferenceImages(response.status, errText)) return
-          toast.error(`Scene Express failed: ${response.status} ${errText.slice(0, 120)}`)
+          toast.error(`Frame Agent failed: ${response.status} ${errText.slice(0, 120)}`)
           return
         }
 
@@ -13702,7 +13702,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         errLower.includes('rate limit'))
                     ) {
                       rateLimitToastShown = true
-                      toast.error('Vertex rate limited — wait ~60s and retry Scene Express.')
+                      toast.error('Vertex rate limited — wait ~60s and retry Frame Agent.')
                     }
                   }
                   break
@@ -13735,7 +13735,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         }
                       : prev
                   )
-                  toast.error(event.errors?.[0] || 'Scene Express preflight failed')
+                  toast.error(event.errors?.[0] || 'Frame Agent preflight failed')
                   failedScenes = 1
                   break
                 }
@@ -13764,7 +13764,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   break
                 case 'error':
                   console.error('[Scene Express] Stream error:', event.error)
-                  toast.error(`Scene Express error: ${event.error}`)
+                  toast.error(`Frame Agent error: ${event.error}`)
                   break
                 default:
                   break
@@ -13782,17 +13782,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (failedScenes === 0 && successScenes > 0) {
           if (rateLimitedFailureCount > 0) {
             toast.warning(
-              `Scene ${sceneIndex + 1} Express complete with ${rateLimitedFailureCount} rate-limited item${rateLimitedFailureCount === 1 ? '' : 's'}. Re-run with Only missing frames.`
+              `Scene ${sceneIndex + 1} Frame Agent complete with ${rateLimitedFailureCount} rate-limited item${rateLimitedFailureCount === 1 ? '' : 's'}. Re-run with Only missing frames.`
             )
           } else {
-            toast.success(`Scene ${sceneIndex + 1} Express complete`)
+            toast.success(`Scene ${sceneIndex + 1} Frame Agent complete`)
           }
         } else if (failedScenes > 0 && lastSceneError && !rateLimitToastShown) {
           toast.error(lastSceneError.slice(0, 200))
         }
       } catch (err: any) {
         console.error('[Scene Express] Unexpected error:', err)
-        toast.error(`Scene Express error: ${err?.message || String(err)}`)
+        toast.error(`Frame Agent error: ${err?.message || String(err)}`)
         setExpressBeatFrameOverlay((prev) =>
           prev
             ? {
@@ -14958,7 +14958,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 expressGateBlocked={!expressGate.allowed && !expressGate.blockedOnlyByReferences}
                 onExpressGateBlocked={() => {
                   const { toast } = require('sonner')
-                  toast.error(expressGate.reasons[0] || 'Complete the Pre-Vis ready checklist before Express.')
+                  toast.error(expressGate.reasons[0] || 'Complete the Pre-Vis ready checklist before running agents.')
                   openReferenceLibrary()
                 }}
                 isExpressRunning={isExpressRunning}
@@ -15557,7 +15557,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       <BackgroundJobDock
         job={referenceExpressJob.job}
-        title="Reference Express"
+        title="Reference Agent"
         activeLabel={
           referenceExpressJob.job?.status === 'queued'
             ? 'Queued'

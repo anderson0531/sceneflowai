@@ -153,7 +153,7 @@ export function ActionBeatSfxControls({
           {expressStatus === 'running' && (
             <span className="text-[10px] px-2 py-0.5 bg-amber-500/20 text-amber-200 rounded flex items-center gap-1">
               <Loader2 className="w-3 h-3 animate-spin" />
-              Express
+              Agent
             </span>
           )}
           {expressStatus === 'done' && (

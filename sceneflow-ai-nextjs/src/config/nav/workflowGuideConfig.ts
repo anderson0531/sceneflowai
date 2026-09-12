@@ -85,7 +85,7 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
     icon: 'Image',
     iconColor: 'text-emerald-500',
     steps: [
-      { id: 'run-express-scene', label: 'Express per scene (recommended)', description: 'Checkpoint after each scene to avoid massive redos', actionEventName: 'production:scene-gallery' },
+      { id: 'run-express-scene', label: 'Agents per scene (recommended)', description: 'Checkpoint after each scene to avoid massive redos', actionEventName: 'production:scene-gallery' },
       { id: 'review-storyboard', label: 'Open Screening Room', actionEventName: 'production:scene-gallery' },
       { id: 'collaborate-share', label: 'Share for review', actionEventName: 'production:share-link' },
       { id: 'review-animatic', label: 'Screening Room preview', actionEventName: 'production:screening-room' },
@@ -122,7 +122,7 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
     collapsed: true,
     steps: [
       { id: 'revise-script', label: 'Unlock script & revise', actionEventName: 'production:review-analysis' },
-      { id: 'revise-frames', label: 'Re-run Express or edit Beat Frames', actionEventName: 'production:edit-frames' },
+      { id: 'revise-frames', label: 'Re-run Frame Agent or edit Beat Frames', actionEventName: 'production:edit-frames' },
       { id: 'revise-audio', label: 'Revise audio timeline', actionEventName: 'production:audio-timeline' },
     ],
   },

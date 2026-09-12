@@ -236,7 +236,7 @@
         "icon": "Pátákó ìbẹ̀rẹ̀ fíìmù",
         "label": "Ṣíṣe fíìmù",
         "outcome": "Ìwé-ìtàn fún àwòrán-aláìlẹ́mìí tó ṣeé lò pẹ̀lú ìbá-ṣiṣẹ́-pọ̀, èyí tí o lè wo kí o sì dán wò kí o tó bẹ̀rẹ̀ sí ní ya fídíò náà.",
-        "narrative": "Ni iṣaaju, ṣiṣe ayẹwo iṣẹ́-ṣiṣe (previz) ati idanwo pẹlu awọn oluwo maa n gba ọpọlọpọ ọsẹ fun ṣiṣe awọn aworan itan (storyboards), gbigbasilẹ ohun igba diẹ, ati ṣiṣe awọn iṣiro ti o gbowo lori laisi idaniloju ṣaaju ki wọn to bẹrẹ si ni ya aworan. SceneFlow yoo yi iwe itan rẹ pada si iru ere idanilaraya ti a le ṣe ajọṣepọ pẹlu rẹ (interactive animatic) nipasẹ ọna 'Express pre-vis' — o le mu u dara si pẹlu Audience Resonance, ṣe afihan rẹ ni Screening Room, ki o si fi owo ranṣẹ si iṣẹ́ naa nikan nigbati o ba ti han gbangba pe itan naa ti munadoko.",
+        "narrative": "Ni iṣaaju, ṣiṣe ayẹwo iṣẹ́-ṣiṣe (previz) ati idanwo pẹlu awọn oluwo maa n gba ọpọlọpọ ọsẹ fun ṣiṣe awọn aworan itan (storyboards), gbigbasilẹ ohun igba diẹ, ati ṣiṣe awọn iṣiro ti o gbowo lori laisi idaniloju ṣaaju ki wọn to bẹrẹ si ni ya aworan. SceneFlow yoo yi iwe itan rẹ pada si iru ere idanilaraya ti a le ṣe ajọṣepọ pẹlu rẹ (interactive animatic) nipasẹ ọna 'Pre-vis Agent' — o le mu u dara si pẹlu Audience Resonance, ṣe afihan rẹ ni Screening Room, ki o si fi owo ranṣẹ si iṣẹ́ naa nikan nigbati o ba ti han gbangba pe itan naa ti munadoko.",
         "useCases": [
           "Àwòrán àkọ́kọ́ fún fíìmù ńlá àti ti olùṣe-aládáni",
           "Àwọn àwòrán oní-ìgbé-n-sókè fún fífi ètò hàn àwọn olùdókòwò",
@@ -283,9 +283,9 @@
     "title": "Ilana Ṣiṣe Fidio ti o Bẹrẹ pẹlu Ilu",
     "subtitle": "Fọwọ́ sí i kí o tó ṣe é — kì í ṣe bíi ti ẹ̀rọ ayéyẹ́ tí àbájáde rẹ̀ kò ṣeé sọtẹ́lẹ̀.",
     "intro": "Ko si ṣiṣẹda nipasẹ ifoju-wọn-wo. Iwọ yoo wo awotẹlẹ ki o si fọwọsi irisi rẹ ṣaaju ki SceneFlow to lo awọn kirediti fun fidio ti o kẹhin.",
-    "description": "SceneFlow ṣeto ilana ifọwọsi fun irisi iṣẹ ni gbogbo ipele: Express Pre-vis fun ayẹwo, Beat Frames lati fi idi eto aworan mulẹ, lẹhinna F2V fun igba orin kọọkan. O ṣe atunṣe irisi rẹ ki o to lo awọn kirediti lori awọn aṣiṣe bii iyapa kuro ni itọsọna tabi awọn aworan ti ko tọna.",
+    "description": "SceneFlow ṣeto ilana ifọwọsi fun irisi iṣẹ ni gbogbo ipele: Pre-vis Agent fun ayẹwo, Beat Frames lati fi idi eto aworan mulẹ, lẹhinna F2V fun igba orin kọọkan. O ṣe atunṣe irisi rẹ ki o to lo awọn kirediti lori awọn aṣiṣe bii iyapa kuro ni itọsọna tabi awọn aworan ti ko tọna.",
     "steps": [
-      "Express Pre-vis — pín àwọn orin (pẹ̀lú àwòrán tàbí fídíò) fún àyẹ̀wò láàrin ìṣẹ́jú díẹ̀",
+      "Pre-vis Agent — pín àwọn orin (pẹ̀lú àwòrán tàbí fídíò) fún àyẹ̀wò láàrin ìṣẹ́jú díẹ̀",
       "Beat Frames — ti ìṣẹ̀dá ìbẹ̀rẹ̀/òpin mọ́ra pẹ̀lú ìtẹ̀síwájú Reference Library",
       "F2V fún ìlù kọ̀ọ̀kan — ṣẹ̀dá fídíò láti ara àwọn àwòrán tí a ti fọwọ́ sí, kì í ṣe láti ara àwọn ìtọ́ni lásán.",
       "Ẹ̀wọ̀n EXT tí kò ní ìdádúró — àwọn ìgbésẹ̀ ìfàgùn \"native\" ti ìṣẹ́jú-àáyá 7 fún àwọn apá ìjíròrò gígùn.",
@@ -808,7 +808,7 @@
       "title": "Ilana Ṣiṣe Fidio ti o Bẹrẹ pẹlu Ilu",
       "description": "Fọwọ́ sí àwọn ìpele àwòrán àkọ́kọ́ (pre-vis beats) àti Beat Frames kí o tó bẹ̀rẹ̀ ìpele F2V — èyí yóò dín àwọn ìgbìyànjú láti tún àwòrán ṣe láìní ìtọ́sọ́nà tó péye (tó máa ń wáyé nítorí àṣìṣe ẹ̀rọ tàbí ìyàtọ̀ nínú ìrísí) kù. Yóò sì mú kí ìlànà iṣẹ́ láti ìpele àyẹ̀wò dé ìpele àwòrán tó parí wà ní ọ̀nà kan ṣoṣo tó ní ètò tó dájú.",
       "keyFeatures": [
-        "Express Pre-vis fún àyẹ̀wò — pín àwọn ìlù náà kí o tó ṣe ìgbékalẹ̀ ikẹyìn (render) tó nira",
+        "Pre-vis Agent fún àyẹ̀wò — pín àwọn ìlù náà kí o tó ṣe ìgbékalẹ̀ ikẹyìn (render) tó nira",
         "Beat Frames ètò títìpa — Reference Library ìtẹ̀síwájú",
         "F2V fún ìlù kọ̀ọ̀kan — ṣẹ̀dá fídíò láti àwọn fúrémù tí a ti fọwọ́ sí",
         "Àwọn ìsopọ̀ EXT tí kò ní ìdádúró — àwọn ìgbésẹ̀ +7s àbínibí fún ìjíròrò gígùn láàrin ìlù kan",
@@ -917,7 +917,7 @@
           "Screening Room — àyẹ̀wò ìṣẹ̀lẹ̀, àpapọ̀ gbogbo apá iṣẹ́, àwọn ìfihàn, àti títẹ́wé sí YouTube"
         ],
         "screenshotSlot": "Fi àwòrán ojú-iboju (screenshot) yìí sí i: Pátákó ìṣàkóso iṣẹ́ tó ń fi àwọn abala wọ̀nyí hàn: Ìwé-ìtàn (Script), Gbígbà-fídíò (Shoot), àti Àwòrán àkọ́kọ́ (Pre-Vis).",
-        "videoSlot": "Fi fidio iṣẹ́jú kan (00:60) sii: Fidi ìwé-ìtànkànlẹ̀ múlẹ̀ → Express Pre-vis fún ìṣẹ̀lẹ̀ kọ̀ọ̀kan → Ya àwòrán → Ẹ̀rọ àdàpọ̀ ohùn → Àwọn ìṣàn ìgbóhùn-sáfẹ́fẹ́ tàbí ìfihàn"
+        "videoSlot": "Fi fidio iṣẹ́jú kan (00:60) sii: Fidi ìwé-ìtànkànlẹ̀ múlẹ̀ → Pre-vis Agent fún ìṣẹ̀lẹ̀ kọ̀ọ̀kan → Ya àwòrán → Ẹ̀rọ àdàpọ̀ ohùn → Àwọn ìṣàn ìgbóhùn-sáfẹ́fẹ́ tàbí ìfihàn"
       },
       {
         "id": "14",
@@ -1047,7 +1047,7 @@
       "howWeScore": {
         "toggle": "How we score",
         "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
         "bullets": [
           "Scores Blueprint and script against your stated target audience",
           "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
@@ -1058,26 +1058,26 @@
     },
     "express": {
       "badge": "Hyper-Speed Production",
-      "title": "Sceneflow Express",
+      "title": "SceneFlow Agents",
       "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
-          "title": "Express Pre-Vis",
+          "title": "Pre-vis Agent",
           "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
-          "title": "Express Motion Video",
+          "title": "Video Agent",
           "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
           "time": "Minutes vs Days"
         },
         {
-          "title": "Express Delivery",
+          "title": "Delivery Agent",
           "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
           "time": "Minutes vs Weeks"
         }
       ],
-      "cta": "Start Express Rendering"
+      "cta": "Run Production Agents"
     }
   },
   "preVisEngine": {

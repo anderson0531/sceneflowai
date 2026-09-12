@@ -134,7 +134,7 @@
     "saveFailed": "ไม่สามารถบันทึกการเปลี่ยนแปลง"
   },
   "express": {
-    "title": "Express All — ขั้นสูง",
+    "title": "Run All Agents — ขั้นสูง",
     "description": "เรียกใช้เฟรม Direction → → Audio pre-vis สำหรับทุกฉากแบบคู่ขนาน (สูงสุด 3 เฟรมต่อครั้ง) นี่เป็นการดำเนินการที่ยาวนานและมีเครดิตสูง — แนะนำให้ใช้ต่อฉากด่วนในแต่ละฉากสำหรับจุดตรวจ",
     "audioLanguage": "ภาษาเสียง",
     "translateBadge": "การแปล",
@@ -168,10 +168,10 @@
     "costTotal": "รวม: ~ เครดิต {credits}",
     "costEstimateDisclaimer": "ประมาณการเท่านั้นการใช้งานจริงขึ้นอยู่กับความยาวของบทสนทนาและจำนวนเฟสที่ต้องใช้งานจริง",
     "running": "กำลังดำเนินการ...",
-    "confirm": "Express All"
+    "confirm": "Run All Agents"
   },
   "expressAudio": {
-    "title": "Express Audio",
+    "title": "Audio Agent",
     "description": "สร้างบทสนทนาเอฟเฟกต์เสียงและเพลงสำหรับฉากนี้พร้อมกันบทสนทนาใช้ TTS จังหวะการกระทำใช้เสียงพื้นเมืองของ Veo และดนตรีใช้ Lyria",
     "scope": "ขอบเขต",
     "scopeMissing": "ไม่ครบเท่านั้น",
@@ -191,10 +191,10 @@
     "sfxCredits": "เครดิต SFX: {credits} {hint}",
     "creditHint": "~ {credits} เครดิต · ต่อเนื่องสูงสุด 8 วินาที",
     "running": "กำลังรัน...",
-    "confirm": "Express Audio ({count})"
+    "confirm": "Audio Agent ({count})"
   },
   "expressScene": {
-    "title": "Express Frames",
+    "title": "Frame Agent",
     "description": "เลือกกรอบก่อนการมองเห็นที่จะสร้างหรือสร้างใหม่การสร้างเฟรมที่มีอยู่ใหม่จะอัปเดตเฉพาะภาพเท่านั้น — ทิศทางและเสียงจะไม่เปลี่ยนแปลง",
     "scope": "ขอบเขต",
     "scopeMissing": "ไม่ครบเท่านั้น",
@@ -214,11 +214,11 @@
     "close": "ปิด",
     "imageCredits": "เครดิตภาพ (โดยประมาณ): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "กำลังรัน...",
-    "confirm": "Express Frames"
+    "confirm": "Frame Agent"
   },
   "expressGenerateAll": {
-    "title": "Express All",
-    "description": "เรียกใช้ Express Audio และ Express Frames ในแบบคู่ขนานค่าเริ่มต้นตรงกับการเลือก \"ขาดเท่านั้น\" ของแต่ละท่อ — ปรับขอบเขตหากคุณต้องการสร้างใหม่",
+    "title": "Run All Agents",
+    "description": "เรียกใช้ Audio Agent และ Frame Agent ในแบบคู่ขนานค่าเริ่มต้นตรงกับการเลือก \"ขาดเท่านั้น\" ของแต่ละท่อ — ปรับขอบเขตหากคุณต้องการสร้างใหม่",
     "audioSection": "เสียง",
     "framesSection": "กรอบ",
     "scope": "ขอบเขต",
@@ -242,7 +242,7 @@
     "missing": "สูญหาย",
     "imageCredits": "เครดิตภาพ (โดยประมาณ): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "กำลังรัน...",
-    "confirm": "Express All"
+    "confirm": "Run All Agents"
   },
   "retake": {
     "title": "ต้องการเปลี่ยนเทคที่มีอยู่ใช่ไหม",
@@ -1366,7 +1366,7 @@
         "hint": "ความละเอียดเฟรมและวิดีโอขั้นสุดท้าย โดยมี Topaz วางแผนไว้สำหรับการขัดเงา"
       },
       "express_sprint": {
-        "name": "วิ่งด่วน",
+        "name": "Agent Sprint",
         "hint": "เส้นทางแบทช์ที่เกิดขึ้นพร้อมกัน เหตุฉุกเฉินในการทำซ้ำที่สูงขึ้น — การเปลี่ยนแปลงสคริปต์หลังแบทช์มีค่าใช้จ่ายสูง"
       }
     },

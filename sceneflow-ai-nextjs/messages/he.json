@@ -238,7 +238,7 @@
         "icon": "לוח סימון (קלאפרבורד)",
         "label": "הפקת סרטים",
         "outcome": "תסריט לאנימטיק אינטראקטיבי שניתן להקרין ולבחון לפני הצילומים",
-        "narrative": "בעבר, תהליכי Pre-vis (הדמיה מקדימה) ובדיקות קהל דרשו שבועות של עבודה על סטוריבורדים, הקלטות קול זמניות וניחושים יקרים עוד לפני שהמצלמות החלו לפעול. SceneFlow הופך את התסריט שלכם לאנימטיק אינטראקטיבי באמצעות Express pre-vis — בצעו אופטימיזציה בעזרת Audience Resonance, הציגו את התוצר ב-Screening Room, והקצו תקציב רק לאחר שהסיפור עובד ומדויק.",
+        "narrative": "בעבר, תהליכי Pre-vis (הדמיה מקדימה) ובדיקות קהל דרשו שבועות של עבודה על סטוריבורדים, הקלטות קול זמניות וניחושים יקרים עוד לפני שהמצלמות החלו לפעול. SceneFlow הופך את התסריט שלכם לאנימטיק אינטראקטיבי באמצעות Pre-vis Agent — בצעו אופטימיזציה בעזרת Audience Resonance, הציגו את התוצר ב-Screening Room, והקצו תקציב רק לאחר שהסיפור עובד ומדויק.",
         "useCases": [
           "הדמיה מקדימה (Previz) לסרטים עלילתיים ועצמאיים",
           "אנימטיקים למצגת משקיעים",
@@ -285,9 +285,9 @@
     "title": "תהליך הפקת וידאו מונחה-מקצב",
     "subtitle": "אשר לפני הרינדור — לא יצירה מחדש בסגנון מכונת מזל",
     "intro": "אין צורך ביצירה בשיטת \"ניסוי וטעייה\". אתם צופים בתצוגה מקדימה ומאשרים את המראה לפני ש-SceneFlow משתמשת בקרדיטים להפקת הסרטון הסופי.",
-    "description": "SceneFlow מסדיר את תהליך האישור החזותי בכל שלב: Express Pre-vis לבחינה, Beat Frames לקיבוע הקומפוזיציה, ולאחר מכן F2V לכל פעימה (beat). כך אתם משכללים את המראה לפני שבזבזתם קרדיטים על \"סחיפה\" (drift) והזיות (hallucinations).",
+    "description": "SceneFlow מסדיר את תהליך האישור החזותי בכל שלב: Pre-vis Agent לבחינה, Beat Frames לקיבוע הקומפוזיציה, ולאחר מכן F2V לכל פעימה (beat). כך אתם משכללים את המראה לפני שבזבזתם קרדיטים על \"סחיפה\" (drift) והזיות (hallucinations).",
     "steps": [
-      "Express Pre-vis — שתפו ביטים אודיו-ויזואליים לבדיקה תוך דקות",
+      "Pre-vis Agent — שתפו ביטים אודיו-ויזואליים לבדיקה תוך דקות",
       "Beat Frames — נעילת הרכב ההתחלה/סיום עם רציפות Reference Library",
       "F2V לפי ביט (beat) — יצירת וידאו מפריימים מאושרים, ולא מהנחיות (prompts) עיוורות.",
       "שרשרת EXT רציפה — שלבי הרחבה מובנים של 7+ שניות עבור קטעי דיאלוג ארוכים",
@@ -810,7 +810,7 @@
       "title": "תהליך הפקת וידאו מונחה-מקצב",
       "description": "יש לאשר את שלבי ה-Pre-vis ואת Beat Frames לפני שלב ה-F2V — כך מצטמצם הצורך ביצירה מחדש \"על עיוור\" עקב הזיות (hallucinations) או סחיפה ויזואלית. מסלול אחד ומובנה, משלב הבחינה ועד לקליפ הסופי.",
       "keyFeatures": [
-        "Express Pre-vis לבדיקה — שיתוף ביטים לפני רינדור כבד",
+        "Pre-vis Agent לבדיקה — שיתוף ביטים לפני רינדור כבד",
         "Beat Frames הרכב נעילה — Reference Library רציפות",
         "F2V לפי פעימה — יצירת וידאו מפריימים מאושרים",
         "שרשראות EXT רציפות — שלבי +7s טבעיים עבור דיאלוג ארוך בתוך \"ביט\" (beat)",
@@ -919,7 +919,7 @@
           "Screening Room — תצוגה מקדימה של סצנות, הרכבת המאסטר, הקרנות ופרסום ב-YouTube"
         ],
         "screenshotSlot": "הוסף צילום מסך: לוח מחוונים של ההפקה המציג את הלשוניות \"תסריט\" (Script), \"צילומים\" (Shoot) ו-\"Pre-Vis\" (הדמיה מקדימה).",
-        "videoSlot": "הכנסת קטע באורך 60 שניות: נעילת תסריט → Express Pre-vis לכל סצנה → צילום חומרים → מיקסר → זרמי שידור"
+        "videoSlot": "הכנסת קטע באורך 60 שניות: נעילת תסריט → Pre-vis Agent לכל סצנה → צילום חומרים → מיקסר → זרמי שידור"
       },
       {
         "id": "14",
@@ -1049,7 +1049,7 @@
       "howWeScore": {
         "toggle": "How we score",
         "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
         "bullets": [
           "Scores Blueprint and script against your stated target audience",
           "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
@@ -1060,26 +1060,26 @@
     },
     "express": {
       "badge": "Hyper-Speed Production",
-      "title": "Sceneflow Express",
+      "title": "SceneFlow Agents",
       "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
-          "title": "Express Pre-Vis",
+          "title": "Pre-vis Agent",
           "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
-          "title": "Express Motion Video",
+          "title": "Video Agent",
           "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
           "time": "Minutes vs Days"
         },
         {
-          "title": "Express Delivery",
+          "title": "Delivery Agent",
           "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
           "time": "Minutes vs Weeks"
         }
       ],
-      "cta": "Start Express Rendering"
+      "cta": "Run Production Agents"
     }
   },
   "preVisEngine": {

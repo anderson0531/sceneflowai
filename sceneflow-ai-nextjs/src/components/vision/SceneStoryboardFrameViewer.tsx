@@ -263,7 +263,7 @@ function buildStoryboardSlotFrameProps(
             }
           }
         : undefined,
-    generateLabel: useExpressGenerate ? 'Express Frames' : undefined,
+    generateLabel: useExpressGenerate ? 'Frame Agent' : undefined,
     useExpressGenerateIcon: useExpressGenerate,
   }
 }
@@ -489,7 +489,7 @@ export function SceneStoryboardFrameViewer({
   const sceneExpressTooltip = expressPreflightBlocks
     ? sceneExpressPreflight.errors[0]
     : expressCanDrawMissingReferences
-      ? `${referenceGateMessage} Express draws them first.`
+      ? `${referenceGateMessage} Frame Agent draws them first.`
       : sceneExpressPreflight.nothingToDo
         ? 'Scene complete — choose frames to regenerate'
         : '~60s — Vertex AI — Direction (if needed) → Audio + beats in parallel'
@@ -591,7 +591,7 @@ export function SceneStoryboardFrameViewer({
     if (referenceReadiness.ready) return false
     toast.error(referenceGateMessage, {
       description:
-        'Run Express Frames to draw them first, or draw them from the References tab.',
+        'Run Frame Agent to draw them first, or draw them from the References tab.',
     })
     return true
   }, [referenceReadiness.ready, referenceGateMessage])
@@ -773,7 +773,7 @@ export function SceneStoryboardFrameViewer({
               <p className="text-[11px] leading-relaxed text-amber-200">
                 {referenceGateMessage}{' '}
                 <span className="text-amber-300/80">
-                  Express Frames draws them first; the References tab shows what is missing.
+                  Frame Agent draws them first; the References tab shows what is missing.
                 </span>
               </p>
             </div>
@@ -792,7 +792,7 @@ export function SceneStoryboardFrameViewer({
                   onClick={openExpressSceneDialog}
                 >
                   <Zap className="w-3.5 h-3.5 mr-1.5" />
-                  Express Frames
+                  Frame Agent
                 </Button>
               )}
             </div>
@@ -844,8 +844,8 @@ export function SceneStoryboardFrameViewer({
                         >
                           <Zap className="w-3 h-3 mr-0.5" />
                           {sceneExpressRunning
-                            ? `Express Frames ${expressElapsedSec}s`
-                            : 'Express Frames'}
+                            ? `Frame Agent ${expressElapsedSec}s`
+                            : 'Frame Agent'}
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">{sceneExpressTooltip}</TooltipContent>
