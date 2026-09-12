@@ -15,7 +15,7 @@
 
 /** Motion the camera does over time, which a frozen instant cannot show. */
 const CAMERA_MOTION_SOURCE =
-  /\b(?:dynamic|dynamically|dynamism|kinetic|moving|movement|motion|dolly(?:ing|s)?|dollies|pan(?:ning|s)?|tilt(?:ing|s)?|track(?:ing|s)?|truck(?:ing)?|zoom(?:ing|s)?|push(?:ing)?[- ]?in|pull(?:ing)?[- ]?(?:out|back)|crane|craning|jib|steadicam|hand[- ]?held|whip|swish|orbit(?:ing)?|arc(?:ing)?|drift(?:ing)?|sweep(?:ing)?|shak(?:e|ing|y)|rack[- ]focus|slow[- ]motion|follow(?:ing)?|continuous|then)\b/
+  /\b(?:dynamic|dynamically|dynamism|kinetic|moving|movement|motion|dolly(?:ing|s)?|dollies|pan(?:ning|s)?|tilt(?:ing|s)?|track(?:ing|s)?|truck(?:ing)?|zoom(?:ing|s)?|push(?:ing)?[- ]?in|pull(?:ing)?[- ]?(?:out|back)|crane|craning|jib|steadicam|hand[- ]?held|whip|swish|orbit(?:ing)?|arc(?:ing)?|drift(?:ing)?|sweep(?:ing)?|shak(?:e|ing|y)|rack[- ]focus|slow[- ]motion|follow(?:ing)?|continuous)\b/
   .source
 
 const HAS_CAMERA_MOTION = new RegExp(CAMERA_MOTION_SOURCE, 'i')
@@ -80,9 +80,9 @@ function reduceTransitionToEndState(value: string): string {
     if (match?.[1]) return tidy(match[1])
   }
 
-  // `X to Y` with no verb naming the move. Only a reduction when both halves
-  // read as framing, so "close to the ground" survives intact.
-  const bare = value.match(/^(.+?)\s+to\s+(.+)$/i)
+  // `X to Y` or `X then Y` with no verb naming the move. Only a reduction when
+  // both halves read as framing, so "close to the ground" survives intact.
+  const bare = value.match(/^(.+?)\s+(?:to|then)\s+(.+)$/i)
   if (bare && ANGLE_KEYWORD.test(bare[1]) && ANGLE_KEYWORD.test(bare[2])) {
     return tidy(bare[2])
   }

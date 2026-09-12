@@ -18,6 +18,9 @@ describe('normalizeStillCameraAngle', () => {
 
   it('reduces a bare start-to-end angle to its end state', () => {
     expect(normalizeStillCameraAngle('from eye level to overhead')).toBe('overhead angle')
+    expect(normalizeStillCameraAngle('high-angle dominance then low-angle vulnerability')).toBe(
+      'low angle'
+    )
   })
 
   it('drops the mood a directed angle carries', () => {
