@@ -2,10 +2,8 @@
  * Pure (no DB writes) helper that produces all audio assets for a single
  * scene: narration, dialogue, music, and SFX.
  *
- * Lifted from the per-scene loop body of
- * `[api/vision/generate-all-audio/route.ts]`. Internal calls pass
- * `skipDbUpdate: true` to the per-scene audio route so this helper can be
- * driven from any caller (the per-scene route, the batch route, or the
+ * Internal calls pass `skipDbUpdate: true` to the per-scene audio route so
+ * this helper can be driven from any caller (the per-scene route or the
  * Storyboard Express orchestrator) without racing on `project.update`.
  */
 

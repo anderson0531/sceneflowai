@@ -416,8 +416,11 @@ interface SceneProductionMixerProps {
   sceneIndex?: number
   /** Generate audio for a specific scene, audio type, and language */
   onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number, language?: string) => void | Promise<void>
-  /** Generate all audio for all scenes in a given language */
-  onGenerateAllAudio?: (language: string) => void | Promise<void>
+  /**
+   * Generate the dialogue and narration stream for one language across every
+   * scene, then backfill caption and mixer-text translations.
+   */
+  onGenerateLanguageStream?: (language: string) => void | Promise<void>
   /** Whether audio generation is in progress */
   isGeneratingAudio?: boolean
   /** Current production target: animatic vs video preview + language for audio */
@@ -3077,7 +3080,7 @@ export function SceneProductionMixer({
   remainingServerRenders = Infinity,
   sceneIndex,
   onGenerateSceneAudio,
-  onGenerateAllAudio,
+  onGenerateLanguageStream,
   isGeneratingAudio,
   productionTarget,
   onProductionTargetChange,
@@ -3699,6 +3702,14 @@ export function SceneProductionMixer({
     }
     return mergeStreamSelectorLanguages(projectStreams, langs)
   }, [audioAssets, projectStreams])
+
+  const languagesNotYetGenerated = useMemo(
+    () =>
+      SUPPORTED_LANGUAGES.map((lang) => lang.code).filter(
+        (code) => !availableLanguages.includes(code)
+      ),
+    [availableLanguages]
+  )
 
   const displayOverlays = useMemo(
     () => applyResolvedOverlaysForLanguage(textOverlays, selectedLanguage, textOverlayTranslations),
@@ -6321,19 +6332,20 @@ export function SceneProductionMixer({
                     title="Language Streams"
                     badge={availableLanguages.length}
                     rightAction={
-                      onGenerateAllAudio ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const lang = productionTarget.language === 'en' ? 'es' : productionTarget.language
-                            onGenerateAllAudio(lang)
+                      onGenerateLanguageStream && languagesNotYetGenerated.length > 0 ? (
+                        <GroupedLanguageSelector
+                          value=""
+                          onValueChange={(code) => {
+                            onProductionTargetChange({ ...productionTarget, language: code })
+                            void onGenerateLanguageStream(code)
                           }}
+                          filterCodes={languagesNotYetGenerated}
+                          size="xs"
+                          intent="generate"
+                          placeholder="+ Add Language"
                           disabled={isRendering || isGeneratingAudio || isGeneratingLanguageAudio}
-                          className="text-[11px] text-purple-400 hover:text-purple-300 disabled:opacity-50"
-                          title="Generate audio for all scenes in a new language"
-                        >
-                          + Add Language
-                        </button>
+                          className="h-[26px] w-auto min-w-[110px] text-[11px] bg-gray-700/30 border-purple-500/40 text-purple-200"
+                        />
                       ) : undefined
                     }
                   />

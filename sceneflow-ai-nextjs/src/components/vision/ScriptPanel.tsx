@@ -289,16 +289,8 @@ interface ScriptPanelProps {
   onDismissValidationWarning?: (sceneIdx: number) => void
   onPlayAudio?: (audioUrl: string, label: string, sceneId?: string) => void
   onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number, language?: string) => void
-  // NEW: Props for Production Script Header
-  onGenerateAllAudio?: (
-    language?: string,
-    options?: {
-      includeNarration?: boolean
-      includeDialogue?: boolean
-      includeMusic?: boolean
-      includeSFX?: boolean
-    }
-  ) => void
+  /** Generate the dialogue and narration stream for one language across every scene */
+  onGenerateLanguageStream?: (language: string) => void | Promise<void>
   isGeneratingAudio?: boolean
   // NEW: Production readiness for workflow guards (disable actions until prerequisites met)
   productionReadiness?: ProductionReadiness
@@ -896,7 +888,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onExpressSceneReferences, isExpressGeneratingReferences = false, onOpenReferenceLibrary, onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, onJumpToImpactScene, onToggleAudienceRecommendation, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onReorderBeats, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled,   projectStreams = [] }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateLanguageStream, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onExpressSceneReferences, isExpressGeneratingReferences = false, onOpenReferenceLibrary, onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, onJumpToImpactScene, onToggleAudienceRecommendation, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onReorderBeats, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled,   projectStreams = [] }: ScriptPanelProps) {
 
   const tStudio = useTranslations('production.studio')
   const tCommon = useTranslations('common')
@@ -3177,7 +3169,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       onRenderedSceneUrlChange={onRenderedSceneUrlChange}
                       onProductionDataChange={onProductionDataChange}
                       onResetSegments={onResetSegments}
-                      onGenerateAllAudio={onGenerateAllAudio}
+                      onGenerateLanguageStream={onGenerateLanguageStream}
                       isGeneratingAudio={isGeneratingAudio}
                       onAddSegment={onAddSegment}
                       onAddFullSegment={onAddFullSegment}
@@ -3718,15 +3710,7 @@ interface SceneCardProps {
   // Individual audio playback
   onPlayAudio?: (audioUrl: string, label: string, sceneId?: string) => void
   onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number, language?: string) => void
-  onGenerateAllAudio?: (
-    language?: string,
-    options?: {
-      includeNarration?: boolean
-      includeDialogue?: boolean
-      includeMusic?: boolean
-      includeSFX?: boolean
-    }
-  ) => void
+  onGenerateLanguageStream?: (language: string) => void | Promise<void>
   isGeneratingAudio?: boolean
   selectedLanguage?: string
   onLanguageChange?: (lang: string) => void
@@ -4002,7 +3986,7 @@ function SceneCard({
   generateAndPlayMusic,
   onPlayAudio,
   onGenerateSceneAudio,
-  onGenerateAllAudio,
+  onGenerateLanguageStream,
   isGeneratingAudio,
   selectedLanguage = 'en',
   onLanguageChange,
@@ -7575,7 +7559,7 @@ function SceneCard({
                           onProductionDataChange={onProductionDataChange ? (data) => onProductionDataChange(workflowSceneId, data) : undefined}
                           sceneIndex={sceneIdx}
                           onGenerateSceneAudio={onGenerateSceneAudio ? (idx, audioType, characterName, dialogueIndex, language) => onGenerateSceneAudio(idx, audioType, characterName, dialogueIndex, language) : undefined}
-                          onGenerateAllAudio={onGenerateAllAudio}
+                          onGenerateLanguageStream={onGenerateLanguageStream}
                           isGeneratingAudio={isGeneratingAudio}
                           onSaveEditedKeyframe={onEditFrame}
                           onModerationReport={onModerationReport}

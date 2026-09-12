@@ -2,8 +2,8 @@
  * Shared ElevenLabs SFX (sound-generation) helper.
  *
  * Encapsulates the call to the ElevenLabs `/v1/sound-generation` endpoint and
- * the GCS upload step so both the per-cue API route and the batch
- * `generate-all-audio` pipeline can reuse the same code path.
+ * the GCS upload step so both the per-cue API route and the Express audio
+ * pipeline can reuse the same code path.
  */
 
 import { uploadToGCS } from '@/lib/storage/gcsAssets'

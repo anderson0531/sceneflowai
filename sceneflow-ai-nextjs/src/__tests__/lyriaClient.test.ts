@@ -161,8 +161,8 @@ describe('music route wiring', () => {
     join(__dirname, '../app/api/tts/google/music/route.ts'),
     'utf8'
   )
-  const generateAll = readFileSync(
-    join(__dirname, '../app/api/vision/generate-all-audio/route.ts'),
+  const sceneAudio = readFileSync(
+    join(__dirname, '../lib/sceneGeneration/generateAudio.ts'),
     'utf8'
   )
 
@@ -176,8 +176,8 @@ describe('music route wiring', () => {
     expect(route).not.toContain('getWavDurationSeconds')
   })
 
-  it('asks generate-all-audio for the scene length instead of a hardcoded 30s', () => {
-    expect(generateAll).toContain('resolveMusicRequestDuration')
-    expect(generateAll).not.toMatch(/duration:\s*30/)
+  it('asks scene audio generation for the scene length instead of a hardcoded 30s', () => {
+    expect(sceneAudio).toContain('resolveMusicRequestDuration')
+    expect(sceneAudio).not.toMatch(/duration:\s*30/)
   })
 })

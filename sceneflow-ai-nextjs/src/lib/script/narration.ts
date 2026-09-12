@@ -93,7 +93,7 @@ export function sceneHasNarratorInDialogue(
 
 /**
  * True when a separate `narrationAudio` track should exist / play (not narrator-as-dialogue).
- * Mirrors the generation contract in generateSceneAudio / generate-all-audio.
+ * Mirrors the generation contract in generateSceneAudio.
  */
 export function shouldScheduleStandaloneNarration(
   scene: SceneLikeForNarration & Record<string, unknown>,

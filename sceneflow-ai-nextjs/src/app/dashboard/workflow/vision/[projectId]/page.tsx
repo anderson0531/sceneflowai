@@ -5745,12 +5745,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     dialogueIndex: number
   } | null>(null)
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false)
-  const [audioProgress, setAudioProgress] = useState<{
-    current: number
-    total: number
-    status: string
-    dialogueCount?: number
-  } | null>(null)
   
   // Generation lock mechanism to prevent race conditions
   const [generatingAudioLocks, setGeneratingAudioLocks] = useState<Set<string>>(new Set())
@@ -11371,167 +11365,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   // Handle generate all audio - supports multi-language via translation
-  const handleGenerateAllAudio = async (
-    language: string = 'en',
-    options?: {
-      includeNarration?: boolean
-      includeDialogue?: boolean
-      includeMusic?: boolean
-      includeSFX?: boolean
-    }
-  ) => {
-    if (!narrationVoice) {
-      try { const { toast } = require('sonner'); toast.error('Please select a narration voice first') } catch {}                                                
-      return
-    }
-
-    // Check if all characters have voices (exclude narrator)
-    const charactersWithoutVoice = Array.isArray(characters) ? characters.filter(c => c.type !== 'narrator' && !c.voiceConfig) : []
-    if (charactersWithoutVoice.length > 0) {
-      console.warn('[Generate All Audio] Characters without voices:', charactersWithoutVoice.map(c => c.name))                                                  
-      try { 
-        const { toast } = require('sonner')
-        const charNames = charactersWithoutVoice.map(c => c.name).join(', ')
-        toast.error(`🎤 Voice Assignment Required\n\n${charNames}\n\nPlease assign voices to all characters before generating audio. Click on each character card to select a voice.`, {                                                        
-          duration: 15000, // Show for 15 seconds
-          style: {
-            background: '#dc2626',
-            color: 'white',
-            fontSize: '14px',
-            fontWeight: '500'
-          }
-        })
-      } catch {}
-      return
-    }
-
-    const sceneCount = script?.script?.scenes?.length || 0
-    if (sceneCount === 0) {
-      try { const { toast } = require('sonner'); toast.error('No scenes to generate audio for') } catch {}
-      return
-    }
-
-    // Estimate duration: ~30 seconds per scene for narration + dialogue + music (SFX added per scene, not here)
-    const estimatedDuration = Math.max(60, sceneCount * 30) // Minimum 60 seconds
-
-    setIsGeneratingAudio(true)
-    setAudioProgress({ current: 0, total: 0, status: 'Deleting existing audio...' })
-    
-    await execute(
-      async () => {
-        const response = await fetch('/api/vision/generate-all-audio', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            projectId,
-            includeMusic: options?.includeMusic ?? true,
-            includeSFX: options?.includeSFX ?? false,
-            deleteAllAudioFirst: true, // Delete all existing audio before generating new
-            language, // Pass language for multi-language translation support
-          }),
-        })
-
-        if (!response.body) {
-          throw new Error('No response body')
-        }
-
-        const reader = response.body.getReader()
-        const decoder = new TextDecoder()
-        let buffer = ''
-
-        // Read SSE stream
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-
-          buffer += decoder.decode(value, { stream: true })
-          const lines = buffer.split('\n\n')
-          buffer = lines.pop() || ''
-          
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6))
-                
-                if (data.type === 'progress') {
-                  setAudioProgress({
-                    current: data.scene,
-                    total: data.total,
-                    status: data.status === 'generating_narration' 
-                      ? 'Generating narration...'
-                      : data.status === 'generating_dialogue'
-                      ? `Generating dialogue (${data.dialogueCount || 0} lines)...`
-                      : data.status === 'generating_music'
-                      ? 'Generating music...'
-                      : data.status === 'generating_sfx'
-                      ? `Generating SFX (${data.sfxCount || 0} sounds)...`
-                      : 'Processing...',                                                                              
-                    dialogueCount: data.dialogueCount
-                  })
-                } else if (data.type === 'complete') {
-                  try { 
-                    const { toast } = require('sonner')
-                    const parts = []
-                    if (data.narrationCount > 0) parts.push(`${data.narrationCount} narration`)
-                    if (data.dialogueCount > 0) parts.push(`${data.dialogueCount} dialogue`)
-                    if (data.musicCount > 0) parts.push(`${data.musicCount} music`)
-                    if (data.sfxCount > 0) parts.push(`${data.sfxCount} SFX`)
-                    const msg = `Generated ${parts.join(', ')} audio file${parts.length > 1 ? 's' : ''}!`                                        
-                    
-                    if (data.skipped && data.skipped.length > 0) {
-                      const skippedChars = [...new Set(data.skipped.map((s: any) => s.character))].join(', ')                                                     
-                      toast.warning(`${msg}\n\nSkipped dialogue for: ${skippedChars} (no voice assigned)`, {                                                      
-                        duration: 8000
-                      })
-                    } else {
-                      toast.success(msg)
-                    }
-                  } catch {}
-                  
-                  // NOTE: Removed loadProject() to fix race condition where
-                  // state would be overwritten with stale data before all DB writes completed.
-                  // The audio is saved in the database by the API - the UI will update on next page load.
-                  // For immediate UI update, we need to manually refresh the scenes from database.
-                  
-                  // Reload project with extra retry logic
-                  let retries = 3
-                  while (retries > 0) {
-                    try {
-                      await loadProject(true) // Skip auto-generation to prevent accidental script regeneration
-                      console.log('[Generate All Audio] Project reloaded successfully')
-                      break // Success!
-                    } catch (error) {
-                      retries--
-                      console.warn(`[Generate All Audio] Project reload failed, ${retries} retries left`)
-                      if (retries > 0) {
-                        await new Promise(resolve => setTimeout(resolve, 2500)) // Wait 2.5s before retry
-                      } else {
-                        console.error('[Generate All Audio] All retries exhausted')
-                        try { const { toast } = require('sonner'); toast.info('Audio generated! Refresh page if audio is not visible.', { duration: 8000 }) } catch {}
-                      }
-                    }
-                  }
-                } else if (data.type === 'error') {
-                  throw new Error(data.message)
-                }
-              } catch (e) {
-                console.error('[Audio Progress] Parse error:', e)
-              }
-            }
-          }
-        }
-      },
-      {
-        message: `Generating all audio for ${sceneCount} scenes (narration, dialogue, and music)`,
-        estimatedDuration,
-        operationType: 'audio-generation'
-      }
-    )
-    
-    setIsGeneratingAudio(false)
-    setAudioProgress(null)
-  }
-
   // Handle generate scene audio
   // Optional sceneOverride parameter allows passing scene data directly (avoids stale state issues in sequential operations)
   // NOTE: 'description' audioType is deprecated - scene description is now read-only context, not an audio track
@@ -13390,16 +13223,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [projectId, script, isExpressRunning, blockedByMissingReferences, reportMissingReferenceImages, openScreeningRoomFromVisionUi, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage, syncExpressBeatImageToProduction]
   )
 
+  /**
+   * The one path that adds a language. The Screening Room, the Production
+   * Streams manager and the mixer's language picker all come through here, so
+   * a new language always gets the same dialogue run plus the same caption and
+   * mixer-text backfills.
+   */
   const handleGenerateLanguageStream = useCallback(
     async (language: string) => {
-      await handleExpressGenerate({
-        includeMusic: false,
-        includeSFX: false,
-        regenerate: true,
-        language,
-        dialogueOnly: true,
-        storyboardQuality: 'draft',
-      })
+      setIsGeneratingAudio(true)
+      try {
+        await handleExpressGenerate({
+          includeMusic: false,
+          includeSFX: false,
+          regenerate: true,
+          language,
+          dialogueOnly: true,
+          storyboardQuality: 'draft',
+        })
+      } finally {
+        setIsGeneratingAudio(false)
+      }
 
       const scenes = script?.script?.scenes
       if (!scenes?.length || !handleSaveTranslations) return
@@ -14918,7 +14762,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 pendingSpeakerAssign={pendingSpeakerAssign}
                 onPendingSpeakerAssignHandled={() => setPendingSpeakerAssign(null)}
                 narrationVoice={narrationVoice}
-                onGenerateAllAudio={handleGenerateAllAudio}
+                onGenerateLanguageStream={handleGenerateLanguageStream}
                 isGeneratingAudio={isGeneratingAudio}
                 productionReadiness={productionReadiness}
                 projectTitle={projectTitle}
@@ -15758,32 +15602,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           logline={script?.logline}
           scriptTitle={script?.title}
         />
-      )}
-
-      {/* Audio Generation Progress */}
-      {audioProgress && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-200 mb-4">
-              Generating Audio
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">Scene {audioProgress.current} of {audioProgress.total}</span>
-                <span className="text-gray-400">
-                  {Math.round((audioProgress.current / audioProgress.total) * 100)}%
-                </span>
-              </div>
-              <div className="w-full bg-gray-800 rounded-full h-2">
-                <div 
-                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${(audioProgress.current / audioProgress.total) * 100}%` }}
-                />
-              </div>
-              <p className="text-sm text-gray-400">{audioProgress.status}</p>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Image Generation Progress */}

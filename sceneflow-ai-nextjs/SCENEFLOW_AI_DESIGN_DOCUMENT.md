@@ -876,7 +876,7 @@ This ensures users see and edit a clean still-image prompt, not conflicting vide
 - `/api/vision/expand-scene` — Scene expansion
 - `/api/vision/generate-scenes` — Batch scene generation
 - `/api/vision/generate-scene-audio` — Scene audio generation
-- `/api/vision/generate-all-audio` — Batch audio generation
+- `/api/vision/express` — Batch audio, direction and frames (Express pipeline)
 - `/api/vision/generate-all-images` — Batch image generation
 - `/api/vision/regenerate-scene-image` — Regenerate single scene image
 - `/api/vision/analyze-script` — Script analysis
@@ -1739,7 +1739,7 @@ POST /api/image/edit
 - Segment Asset Generation: `src/app/api/segments/[segmentId]/generate-asset/route.ts`
 - Vision Script: `src/app/api/vision/generate-script-v2/route.ts`
 - Character Save: `src/app/api/character/save/route.ts`
-- Batch Audio: `src/app/api/vision/generate-all-audio/route.ts`
+- Batch Audio: `src/app/api/vision/express/route.ts`
 - Batch Images: `src/app/api/vision/generate-all-images/route.ts`
 
 **State Management:**

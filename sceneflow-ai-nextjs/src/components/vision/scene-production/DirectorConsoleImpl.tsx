@@ -229,8 +229,8 @@ export interface DirectorConsoleProps {
   sceneIndex?: number
   /** Generate audio for a specific scene, audio type, and language */
   onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number, language?: string) => void | Promise<void>
-  /** Generate all audio for all scenes in a given language */
-  onGenerateAllAudio?: (language?: string) => void | Promise<void>
+  /** Generate the dialogue and narration stream for one language across every scene */
+  onGenerateLanguageStream?: (language: string) => void | Promise<void>
   /** Whether audio generation is in progress */
   isGeneratingAudio?: boolean
   /** Persist keyframe after AI edit (DirectorDialog / pre-flight) */
@@ -327,7 +327,7 @@ export function DirectorConsoleRoot({
   onProductionDataChange,
   sceneIndex,
   onGenerateSceneAudio,
-  onGenerateAllAudio,
+  onGenerateLanguageStream,
   isGeneratingAudio,
   onSaveEditedKeyframe,
   onModerationReport,
@@ -1418,7 +1418,7 @@ export function DirectorConsoleRoot({
         onTextOverlaysChange={handleTextOverlaysChange}
         sceneIndex={sceneIndex}
         onGenerateSceneAudio={onGenerateSceneAudio}
-        onGenerateAllAudio={onGenerateAllAudio}
+        onGenerateLanguageStream={onGenerateLanguageStream}
         isGeneratingAudio={isGeneratingAudio}
         productionTarget={productionTarget}
         onProductionTargetChange={setProductionTarget}
