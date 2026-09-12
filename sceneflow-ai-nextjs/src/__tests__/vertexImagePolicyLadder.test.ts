@@ -49,7 +49,7 @@ describe('identity-ref jobs stay on pro under rate limit', () => {
     expect(src).toContain('IDENTITY_REF_RATE_LIMIT_EXHAUSTED')
     expect(src).toContain('sleepRateLimitBackoff')
     expect(src).toContain('RATE_LIMIT_RETRY_DELAYS_MS')
-    expect(src).toContain('failFastIdentityRefs')
+    expect(src).toContain('failFastOnRateLimit')
     expect(src).toContain('failing fast without eco fallback')
     expect(src).toContain('requireAllReferenceImages')
   })
@@ -77,7 +77,25 @@ describe('nested 429 retry de-amplification', () => {
     expect(src).toContain('isIdentityRefRateLimitExhausted')
     expect(src).toContain('skipping outer retry burst')
     expect(src).toContain('skipLikenessValidation || useVertexGeminiImage ? 1 : 4')
-    expect(src).toContain('failFastIdentityRefs: !!skipLikenessValidation')
+    expect(src).toContain('failFastOnRateLimit: !!skipLikenessValidation')
     expect(src).toContain('skipProductionStillFraming: isBeatFrame')
+  })
+})
+
+describe('express beat likeness gate', () => {
+  it('validates talent beats with identity refs even when skipLikenessValidation is set', () => {
+    const src = readSource('src/app/api/scene/generate-image/route.ts')
+    expect(src).toContain('expressBeatLikenessEligible')
+    expect(src).toContain('shouldValidateCharacterLikeness')
+    expect(src).toContain('CHARACTER_LIKENESS_MISMATCH_MESSAGE')
+    expect(src).toContain('likenessRound >= 1')
+    expect(src).toContain('passedLookbook')
+  })
+
+  it('passes the Express run lookbook through generateSceneImage', () => {
+    const orchestrator = readSource('src/lib/sceneGeneration/expressOrchestrator.ts')
+    const wrapper = readSource('src/lib/sceneGeneration/generateImage.ts')
+    expect(orchestrator).toContain('{ lookbook: ctx.lookbook }')
+    expect(wrapper).toContain('lookbook?: ProjectLookbook')
   })
 })

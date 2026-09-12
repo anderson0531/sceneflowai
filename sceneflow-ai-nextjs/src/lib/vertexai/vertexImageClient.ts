@@ -38,6 +38,13 @@ const MIN_REQUEST_TIMEOUT_MS = 10_000
 export const IDENTITY_REF_RATE_LIMIT_EXHAUSTED =
   'identity-ref rate limit exhausted'
 
+/**
+ * Marker for a 429 surrendered on the first attempt rather than slept through.
+ * Distinct from the exhausted ladder above: nothing has been spent yet, so the
+ * caller's own queue is expected to bring this frame back.
+ */
+export const RATE_LIMIT_FAILED_FAST = 'rate limit failed fast'
+
 /** Marker for a caller-supplied budget running out mid-ladder. */
 export const IMAGE_DEADLINE_EXCEEDED = 'image generation deadline exceeded'
 
@@ -183,8 +190,14 @@ export interface GenerateVertexImageOptions {
   modelTier?: VertexImageTier
   thinkingLevel?: VertexThinkingLevel
   negativePrompt?: string
-  /** Express: throw on the first identity-ref 429 instead of the 5s/15s/30s ladder. */
-  failFastIdentityRefs?: boolean
+  /**
+   * Express: throw on the first 429 instead of the 5s/15s/30s ladder.
+   *
+   * The ladder sleeps inside the caller's image-lane slot, so a rate-limited
+   * draft frame holds concurrency it is not using. Callers that re-queue their
+   * own work wait outside the lane instead.
+   */
+  failFastOnRateLimit?: boolean
   /** Internal: this call is already the pro retry of a refused eco request. */
   escalatedFromEcoTier?: boolean
   /** Throw if any requested reference image fails to download instead of silently dropping it. */
@@ -379,12 +392,25 @@ export async function generateVertexGeminiImage(
 
   if (!response.ok) {
     const errorText = await response.text()
+    if (response.status === 429 && options.failFastOnRateLimit) {
+      // Every sleep below is served while still holding the caller's image-lane
+      // slot, which on a 3-wide lane parks a third of the run on a frame that
+      // is doing nothing. Hand the slot back now; the caller re-queues.
+      console.warn(
+        `[Vertex Gemini Image] Rate limit on ${model} — failing fast without eco fallback so the lane frees immediately`
+      )
+      throw new Error(
+        `Vertex Gemini Image error ${response.status}: ${
+          hasIdentityReferenceImages(options)
+            ? IDENTITY_REF_RATE_LIMIT_EXHAUSTED
+            : RATE_LIMIT_FAILED_FAST
+        } after ${retryCount + 1} attempt(s): ${errorText}`
+      )
+    }
     if (response.status === 429 && model.includes('pro-image')) {
       if (hasIdentityReferenceImages(options)) {
         const allowIdentityRefRetry =
-          !options.failFastIdentityRefs &&
-          retryCount < MAX_RETRIES &&
-          !deadlinePassed(options.deadlineAt)
+          retryCount < MAX_RETRIES && !deadlinePassed(options.deadlineAt)
         if (allowIdentityRefRetry) {
           console.warn(
             `[Vertex Gemini Image] Rate limit on ${model} with reference images (attempt ${retryCount + 1}/${MAX_RETRIES}) — backing off without eco fallback`

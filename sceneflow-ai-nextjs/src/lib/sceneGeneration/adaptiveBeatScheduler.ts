@@ -32,8 +32,11 @@ export const DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY = 3
  * in-run beats making the user find and press "Retry failed" once the run has
  * already finished. The canary abort still stops a genuinely broken
  * configuration on its first non-retryable error.
+ *
+ * Four rather than three because the image client no longer sleeps through a
+ * 429 itself — all of the patience now lives in this queue.
  */
-export const DEFAULT_SCENE_EXPRESS_BEAT_MAX_ATTEMPTS = 3
+export const DEFAULT_SCENE_EXPRESS_BEAT_MAX_ATTEMPTS = 4
 
 export function getSceneExpressBeatMaxAttempts(): number {
   return parsePositiveInt(
@@ -41,6 +44,17 @@ export function getSceneExpressBeatMaxAttempts(): number {
     DEFAULT_SCENE_EXPRESS_BEAT_MAX_ATTEMPTS
   )
 }
+
+/**
+ * Per-beat 429 backoff, laddering 5s/10s/20s across the retries above.
+ *
+ * This replaces the image client's own 5s/15s/30s ladder, which was served
+ * inside an ExpressTrafficCop lane slot and so blocked frames that had no
+ * quota problem at all. The same wait taken here is a `readyAt` timestamp in
+ * the queue: the beat is not running, and its slot is free.
+ */
+export const DEFAULT_SCENE_EXPRESS_BEAT_BACKOFF_MS = 5_000
+export const DEFAULT_SCENE_EXPRESS_BEAT_MAX_BACKOFF_MS = 30_000
 
 export function getSceneExpressBeatConcurrency(opts?: {
   flashAnimatic?: boolean
@@ -105,10 +119,16 @@ export async function runAdaptiveBeatPool(
     options.maxAttempts ?? getSceneExpressBeatMaxAttempts()
   const baseBackoffMs =
     options.baseBackoffMs ??
-    parseNonNegativeInt(process.env.SCENE_EXPRESS_BEAT_BACKOFF_MS, 2000)
+    parseNonNegativeInt(
+      process.env.SCENE_EXPRESS_BEAT_BACKOFF_MS,
+      DEFAULT_SCENE_EXPRESS_BEAT_BACKOFF_MS
+    )
   const maxBackoffMs =
     options.maxBackoffMs ??
-    parseNonNegativeInt(process.env.SCENE_EXPRESS_BEAT_MAX_BACKOFF_MS, 15_000)
+    parseNonNegativeInt(
+      process.env.SCENE_EXPRESS_BEAT_MAX_BACKOFF_MS,
+      DEFAULT_SCENE_EXPRESS_BEAT_MAX_BACKOFF_MS
+    )
   const successesToIncrease = options.successesToIncrease ?? 3
   const isRetryable = options.isRetryable ?? isRetryableError
   const isCanaryAbort =

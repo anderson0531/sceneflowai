@@ -127,8 +127,37 @@ export function isExpressBeatPoolRetryable(err: unknown): boolean {
   return isTransientExpressImageError(err)
 }
 
+/** Stable code for a frame that rendered but the face is the wrong person. */
+export const CHARACTER_LIKENESS_MISMATCH_CODE = 'CHARACTER_LIKENESS_MISMATCH'
+
+/**
+ * User-facing copy for likeness drift. Deliberately avoids transient/canary
+ * trigger words (timeout, unavailable, quota, blocked, safety, forbidden).
+ */
+export const CHARACTER_LIKENESS_MISMATCH_MESSAGE =
+  'Character does not match reference photo — regenerate this frame'
+
+export function isCharacterLikenessMismatchError(err: unknown): boolean {
+  if (err && typeof err === 'object') {
+    const e = err as {
+      status?: unknown
+      code?: unknown
+      payload?: { code?: unknown }
+    }
+    if (e.code === CHARACTER_LIKENESS_MISMATCH_CODE) return true
+    if (e.payload?.code === CHARACTER_LIKENESS_MISMATCH_CODE) return true
+    if (e.status === 422 && e.code === CHARACTER_LIKENESS_MISMATCH_CODE) return true
+  }
+
+  const msg = String((err as { message?: unknown })?.message || err || '').toLowerCase()
+  return msg.includes('character does not match reference photo')
+}
+
 /** Short overlay/tile copy — never dump Vertex payload text to the user. */
 export function formatExpressImageErrorForUser(err: unknown): string {
+  if (isCharacterLikenessMismatchError(err)) {
+    return CHARACTER_LIKENESS_MISMATCH_MESSAGE
+  }
   if (isIdentityRefRateLimitExhausted(err) || isExpressImageRateLimitError(err)) {
     return 'Rate limited — retry this frame'
   }

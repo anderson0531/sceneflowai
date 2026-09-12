@@ -8,6 +8,7 @@
  * scene copy that the orchestrator will atomically persist at the end.
  */
 
+import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook'
 import type { SceneImageResult } from './types'
 
 export interface GenerateSceneImageParams {
@@ -67,6 +68,8 @@ export interface GenerateSceneImageParams {
   animaticDraft?: boolean
   /** Skip post-generation likeness validation (Express batch). */
   skipLikenessValidation?: boolean
+  /** Pre-resolved project lookbook from the Express run. */
+  lookbook?: ProjectLookbook
 }
 
 export class SceneImageGenerationError extends Error {
@@ -115,6 +118,7 @@ export async function generateSceneImage(
     modelTier,
     animaticDraft,
     skipLikenessValidation,
+    lookbook,
     frameRole,
     startFrameUrl,
   } = params
@@ -166,6 +170,7 @@ export async function generateSceneImage(
       ...(modelTier ? { modelTier } : {}),
       ...(animaticDraft ? { animaticDraft: true } : {}),
       ...(skipLikenessValidation ? { skipLikenessValidation: true } : {}),
+      ...(lookbook ? { lookbook } : {}),
     }),
   })
 

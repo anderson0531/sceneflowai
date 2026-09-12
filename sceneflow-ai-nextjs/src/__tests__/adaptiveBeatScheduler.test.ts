@@ -1,5 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import {
+  DEFAULT_SCENE_EXPRESS_BEAT_BACKOFF_MS,
+  DEFAULT_SCENE_EXPRESS_BEAT_MAX_BACKOFF_MS,
   getSceneExpressBeatConcurrency,
   getSceneExpressBeatMaxAttempts,
   runAdaptiveBeatPool,
@@ -52,9 +54,9 @@ describe('getSceneExpressBeatConcurrency', () => {
 
   // Above 1, or scheduleRetry bails before the backoff below it can ever run
   // and every transient 429 becomes a manual "Retry failed" click.
-  it('defaults maxAttempts to 3 so transient rate limits self-heal in-run', () => {
+  it('defaults maxAttempts to 4 so transient rate limits self-heal in-run', () => {
     delete process.env.SCENE_EXPRESS_BEAT_MAX_ATTEMPTS
-    expect(getSceneExpressBeatMaxAttempts()).toBe(3)
+    expect(getSceneExpressBeatMaxAttempts()).toBe(4)
   })
 
   it('reads SCENE_EXPRESS_BEAT_CONCURRENCY env', () => {
@@ -354,6 +356,40 @@ describe('runAdaptiveBeatPool', () => {
     expect(attempts).toBe(1)
     expect(result.failed.has(0)).toBe(true)
     expect(result.aborted).toBeUndefined()
+  })
+
+  it('defaults pool backoff to 5s base and 30s cap', () => {
+    expect(DEFAULT_SCENE_EXPRESS_BEAT_BACKOFF_MS).toBe(5_000)
+    expect(DEFAULT_SCENE_EXPRESS_BEAT_MAX_BACKOFF_MS).toBe(30_000)
+  })
+
+  it('keeps sibling beats moving while one waits on readyAt backoff', async () => {
+    const ran: number[] = []
+
+    const promise = runAdaptiveBeatPool(
+      [0, 1],
+      async (beatIndex, attempt) => {
+        ran.push(beatIndex * 10 + attempt)
+        if (beatIndex === 0 && attempt === 1) {
+          throw rateLimitError()
+        }
+      },
+      {
+        initialConcurrency: 2,
+        maxConcurrency: 2,
+        maxAttempts: 3,
+        baseBackoffMs: DEFAULT_SCENE_EXPRESS_BEAT_BACKOFF_MS,
+        maxBackoffMs: DEFAULT_SCENE_EXPRESS_BEAT_MAX_BACKOFF_MS,
+        isRetryable: (err) => String(err).includes('429'),
+      }
+    )
+
+    await vi.runAllTimersAsync()
+    const result = await promise
+
+    expect(result.succeeded.has(1)).toBe(true)
+    expect(ran).toContain(1)
+    expect(ran.filter((n) => n === 1).length).toBeGreaterThanOrEqual(1)
   })
 
   it('retries a fail-fast identity-ref 429 after one attempt', async () => {
