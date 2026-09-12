@@ -172,8 +172,29 @@ export function beatFrameNeedsHairLock(sceneContext: string, shotType?: string):
   )
 }
 
+/**
+ * Anti-pose constraint for beat frames.
+ *
+ * The point is that nobody is performing for the lens. The earlier wording said
+ * "caught mid-action", which asked for a moment of movement one line below the
+ * still prompt's own "No camera motion." — and the model resolved the conflict
+ * by rendering several positions of the same body at once. "Absorbed in the
+ * action" keeps the candid intent without requesting motion.
+ */
 export const BEAT_FRAME_CANDID_ACTION_CONSTRAINT =
-  'Subjects caught mid-action, unaware of the camera — no posing, no lens eye-contact, no headshot or turnaround framing.'
+  'Subjects absorbed in the action and unaware of the camera — no posing, no lens eye-contact, no headshot or turnaround framing.'
+
+/**
+ * Earlier wordings of the line above.
+ *
+ * An assembled still is stored on the beat and re-parsed on the next
+ * generation, so a prompt written before the rewording still carries the old
+ * literal. Without it here, that line reads back as beat action and gets
+ * re-wrapped in `Action/Framing:` once per regeneration.
+ */
+export const LEGACY_BEAT_FRAME_CANDID_ACTION_CONSTRAINTS = [
+  'Subjects caught mid-action, unaware of the camera — no posing, no lens eye-contact, no headshot or turnaround framing.',
+] as const
 
 /** Beat explicitly calls for on-camera address (skip anti-pose negatives). */
 export function isExplicitDirectToCameraBeat(beat: {

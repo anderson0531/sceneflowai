@@ -6,7 +6,10 @@
  * and emits consistent section headers so Vertex does not get a run-on blob.
  */
 
-import { BEAT_FRAME_CANDID_ACTION_CONSTRAINT } from '@/lib/character/characterReferenceAssembly'
+import {
+  BEAT_FRAME_CANDID_ACTION_CONSTRAINT,
+  LEGACY_BEAT_FRAME_CANDID_ACTION_CONSTRAINTS,
+} from '@/lib/character/characterReferenceAssembly'
 import { buildIdentityTraitsClause } from '@/lib/imagen/identityTraitsClause'
 import { buildIdentityPromptToken } from '@/lib/imagen/promptOptimizer'
 import {
@@ -16,12 +19,33 @@ import {
 } from '@/lib/script/propNameMatch'
 
 export const STILL_SECTION_REFERENCES = '[REFERENCES]'
+export const STILL_SECTION_TASK = '[TASK]'
 export const STILL_SECTION_STILL = '[STILL]'
 export const STILL_SECTION_STYLE = '[STYLE]'
 export const STILL_SECTION_EXCLUSIONS = '[EXCLUSIONS]'
 
 export const STILL_PURPOSE_LINE =
   'Frozen animatic film still of this beat. Not a video start frame. No camera motion.'
+
+/**
+ * The job, stated before the content it applies to.
+ *
+ * A beat arrives described as a span of time — "impacts the floor, tumbling out
+ * of the fog and curling into a fetal position" — and a model handed three
+ * successive positions for one exposure renders them superimposed: a body off
+ * the floor with a spare arm (production 2026-09-12). `[EXCLUSIONS]` already
+ * names "multiple limbs" and "physically impossible anatomy" and did not
+ * prevent it, because a negative cannot outvote a positive instruction that
+ * asks for movement. So the instruction to pick one instant has to be positive,
+ * and it has to come before the beat text rather than after it.
+ */
+export const STILL_TASK_LINES = [
+  'Produce one photograph of a single instant — a 1/500s exposure, everything in it simultaneous.',
+  'Choose the most legible instant of the described action and render only that instant: the settled pose a viewer reads the whole action from, not the movement that produced it.',
+  'Each subject has one head, two arms and two legs, each in exactly one position. Never duplicate, blur, streak or repeat a limb to imply movement.',
+  'A body in contact with a surface rests on it with its full weight, in contact along its length, with a matching contact shadow.',
+  `Every token listed in ${STILL_SECTION_REFERENCES} appears in this frame and matches its reference image.`,
+] as const
 
 export const DEFAULT_STILL_EXCLUSIONS =
   'Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, turnaround sheet layout, 2x2 grid output, 4-panel layout, split-screen output, multi-panel layout, diptych, reference sheet collage, faceless figures, or artistic blending of reference mediums. Maintain 100% photographic realism when art style is photorealistic. No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).'
@@ -91,10 +115,18 @@ function extractSection(text: string, header: RegExp, nextHeaders: RegExp): stri
 }
 
 const NEXT_SECTION =
-  /\[(?:REFERENCES|STILL|STYLE|EXCLUSIONS|GLOBAL STYLE ANCHOR|SCENE COMPOSITION\s*&\s*BEAT|EXCLUSIONS\s*&\s*BOUNDARIES)\]/i
+  /\[(?:REFERENCES|TASK|STILL|STYLE|EXCLUSIONS|GLOBAL STYLE ANCHOR|SCENE COMPOSITION\s*&\s*BEAT|EXCLUSIONS\s*&\s*BOUNDARIES)\]/i
 
 /** Lines this module owns and re-emits, so they must never read back as action. */
-const STILL_BOILERPLATE_LINES = [STILL_PURPOSE_LINE, BEAT_FRAME_CANDID_ACTION_CONSTRAINT]
+const STILL_BOILERPLATE_LINES = [
+  STILL_PURPOSE_LINE,
+  BEAT_FRAME_CANDID_ACTION_CONSTRAINT,
+  ...LEGACY_BEAT_FRAME_CANDID_ACTION_CONSTRAINTS,
+  ...STILL_TASK_LINES,
+]
+
+/** Prefixes of code-owned lines whose tail varies with the beat's references. */
+const STILL_BOILERPLATE_PREFIXES = [/^Also in frame:/i]
 
 /**
  * Recover the beat action from a `[STILL]` or `[SCENE COMPOSITION & BEAT]` body.
@@ -127,7 +159,9 @@ export function extractActionFramingBody(section: string): string {
     }
 
     const trimmed = value.trim()
-    if (trimmed) lines.push(trimmed)
+    if (!trimmed) continue
+    if (STILL_BOILERPLATE_PREFIXES.some((prefix) => prefix.test(trimmed))) continue
+    lines.push(trimmed)
   }
 
   return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim()
@@ -162,10 +196,11 @@ export function parseStillPromptSource(text: string): {
 
   if (!actionFraming) {
     const withoutSections = trimmed
-      .replace(/\[REFERENCES\][\s\S]*?(?=\[STILL\]|\[STYLE\]|\[SCENE COMPOSITION|$)/i, '')
+      .replace(/\[REFERENCES\][\s\S]*?(?=\[TASK\]|\[STILL\]|\[STYLE\]|\[SCENE COMPOSITION|$)/i, '')
+      .replace(/\[TASK\][\s\S]*?(?=\[STILL\]|\[STYLE\]|\[SCENE COMPOSITION|$)/i, '')
       .replace(/\[GLOBAL STYLE ANCHOR\][\s\S]*?(?=\[SCENE COMPOSITION|\[STILL\]|\[STYLE\]|$)/i, '')
       .replace(/\[EXCLUSIONS[^\]]*\][\s\S]*$/i, '')
-      .replace(/^Subjects caught mid-action[^.]*\.\s*/i, '')
+      .replace(/^Subjects (?:caught mid-action|absorbed in the action)[^.]*\.\s*/i, '')
       .replace(/^Cinematic film still\.\s*/i, '')
       .replace(/person \[\d+\](?: and person \[\d+\])* performing the following moment in-scene[^:]*:\s*/i, '')
       .trim()
@@ -180,7 +215,7 @@ export function parseStillPromptSource(text: string): {
 }
 
 const STRUCTURED_SECTION_HEADER =
-  /\[(?:REFERENCES|STILL|GLOBAL STYLE ANCHOR|SCENE COMPOSITION\s*&\s*BEAT)\]/i
+  /\[(?:REFERENCES|TASK|STILL|GLOBAL STYLE ANCHOR|SCENE COMPOSITION\s*&\s*BEAT)\]/i
 
 /**
  * Is this prompt already written in section form?
@@ -261,6 +296,64 @@ export function promptReferencesLibraryItem(
 }
 
 /**
+ * Thin out library labels that only matched on a head noun they share.
+ *
+ * The head-noun rule is what keeps a reference attached when a frame writes
+ * "the spanner" for a "Thirty-Inch Iron Rail Spanner". But a library holding
+ * three similar objects — "Brass cylinder", "Machined brass cylinder",
+ * "Olive-drab aluminum cylinder" — matches all three on "cylinder" from one
+ * mention, so a beat with a single cylinder in it spent three reference slots
+ * on contradictory designs of one object (production 2026-09-12).
+ *
+ * The prose decides which one: whichever label has the most of its own
+ * describing words in the text. A group where none of them do is a genuine tie,
+ * and the first is kept so the object still has exactly one design.
+ */
+export function dropDuplicateHeadNounMatches<T extends { name?: string }>(
+  prompt: string,
+  matched: Array<{ item: T; match: LibraryItemPromptMatch }>
+): { kept: T[]; dropped: Array<{ item: T; keptInstead: string }> } {
+  const groups = new Map<string, Array<{ item: T; match: LibraryItemPromptMatch }>>()
+  for (const entry of matched) {
+    const key = entry.match.basis === 'head-noun' ? propHeadNoun(entry.item.name ?? '') : ''
+    const groupKey = key ? `head:${key}` : `keep:${groups.size}`
+    if (!groups.has(groupKey)) groups.set(groupKey, [])
+    groups.get(groupKey)!.push(entry)
+  }
+
+  const kept: T[] = []
+  const dropped: Array<{ item: T; keptInstead: string }> = []
+
+  for (const group of groups.values()) {
+    if (group.length === 1) {
+      kept.push(group[0].item)
+      continue
+    }
+
+    const scored = group.map((entry) => {
+      const name = entry.item.name ?? ''
+      const head = propHeadNoun(name)
+      const describing = propModifierWords(name, head)
+      return {
+        entry,
+        score: describing.filter((word) => mentionsWord(prompt, word)).length,
+      }
+    })
+
+    const best = scored.reduce((winner, candidate) =>
+      candidate.score > winner.score ? candidate : winner
+    )
+    kept.push(best.entry.item)
+    for (const candidate of scored) {
+      if (candidate.entry === best.entry) continue
+      dropped.push({ item: candidate.entry.item, keptInstead: best.entry.item.name ?? '' })
+    }
+  }
+
+  return { kept, dropped }
+}
+
+/**
  * Beat action from a stored prompt, whether that prompt is a full assembled
  * still or plain action text. Consumers (video prompts, seed prompts, re-runs)
  * want the beat, never the code-owned still boilerplate around it.
@@ -301,6 +394,70 @@ function personNameAliases(name: string): string[] {
   )
 }
 
+/** Label words long enough to identify a prop, minus the object's own noun. */
+function propModifierWords(name: string, head: string): string[] {
+  return [
+    ...new Set(
+      name
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter((word) => word.length >= 4 && word !== head)
+    ),
+  ]
+}
+
+/**
+ * Patterns for props the frame names its own way.
+ *
+ * A prop catalog and a beat rarely agree on the middle word: the library holds
+ * "Olive-drab aluminum cylinder" and the frame writes "Olive-drab dispatch
+ * cylinder", so exact-name binding leaves `prop [6]` unused and the attached
+ * image instructs nothing (production 2026-09-12).
+ *
+ * A modifier only anchors a pattern when no other ref with the same head noun
+ * carries it. Three near-identical cylinders in one legend is exactly where a
+ * loose bind would attach the wrong image, so "brass" — shared by two of them —
+ * binds nothing, while "olive" binds only the one prop that owns it.
+ */
+function propAliasPatterns(
+  refs: StillPromptBoundRef[]
+): Array<{ name: string; token: string; pattern: RegExp }> {
+  const props = refs
+    .filter((ref) => ref.kind === 'prop' && ref.name.trim())
+    .map((ref) => {
+      const head = propHeadNoun(ref.name)
+      return { ref, head, modifiers: propModifierWords(ref.name, head) }
+    })
+    .filter((entry) => entry.head && entry.modifiers.length > 0)
+
+  const modifierOwners = new Map<string, Set<string>>()
+  for (const entry of props) {
+    for (const modifier of entry.modifiers) {
+      const key = `${entry.head}|${modifier}`
+      if (!modifierOwners.has(key)) modifierOwners.set(key, new Set())
+      modifierOwners.get(key)!.add(entry.ref.token)
+    }
+  }
+
+  const patterns: Array<{ name: string; token: string; pattern: RegExp }> = []
+  for (const entry of props) {
+    for (const modifier of entry.modifiers) {
+      if (modifierOwners.get(`${entry.head}|${modifier}`)?.size !== 1) continue
+      patterns.push({
+        name: `${modifier} ${entry.head}`,
+        token: entry.ref.token,
+        // Up to three words of the frame's own wording between the two anchors.
+        pattern: new RegExp(
+          `\\b${escapeRegExp(modifier)}(?:[-\\s]\\w+){0,3}[-\\s]${escapeRegExp(entry.head)}s?\\b`,
+          'gi'
+        ),
+      })
+    }
+  }
+
+  return patterns
+}
+
 /** Ref names plus unambiguous person aliases, as name/token pairs. */
 function bindableNameTokenPairs(
   refs: StillPromptBoundRef[]
@@ -336,7 +493,14 @@ function bindableNameTokenPairs(
   return pairs
 }
 
-/** Replace library names with bound tokens (longest names first). */
+/**
+ * Replace library names with bound tokens (longest names first).
+ *
+ * Full labels and person aliases go first: they are the exact thing the library
+ * recorded, so anything they match is settled before the looser prop patterns
+ * get a turn. Those patterns cannot then re-match, because the text already
+ * holds a token where the name used to be.
+ */
 export function replaceLibraryNamesWithTokens(
   text: string,
   refs: StillPromptBoundRef[]
@@ -349,7 +513,48 @@ export function replaceLibraryNamesWithTokens(
     const pattern = new RegExp(`\\b${escapeRegExp(pair.name)}\\b`, 'gi')
     result = result.replace(pattern, pair.token)
   }
+
+  for (const alias of propAliasPatterns(refs).sort((a, b) => b.name.length - a.name.length)) {
+    result = result.replace(alias.pattern, alias.token)
+  }
   return result
+}
+
+/**
+ * Name references the action text never uses, so the legend is not dead weight.
+ *
+ * A reference image is consumed as an instruction, and a token that appears
+ * only in `[REFERENCES]` instructs nothing — the model is handed a picture of a
+ * cylinder and left to decide whether it is in the frame at all. Two things
+ * produce that state and both shipped: prose that names a prop differently from
+ * the library ("Olive-drab dispatch cylinder" against a library "Olive-drab
+ * aluminum cylinder"), and location refs, whose token composed action almost
+ * never mentions by name.
+ *
+ * Stating them keeps the legend honest without the caller having to rewrite the
+ * beat. Props and people also warn, because for those a missing token usually
+ * means a name mismatch worth fixing upstream.
+ */
+export function formatUnboundRefsInFrameLine(
+  refs: StillPromptBoundRef[],
+  actionFraming: string
+): string {
+  const unbound = refs.filter((ref) => !actionFraming.includes(ref.token))
+  if (unbound.length === 0) return ''
+
+  const mismatched = unbound.filter((ref) => ref.kind !== 'location')
+  if (mismatched.length > 0) {
+    console.warn(
+      `[Still Prompt] Action text never uses ${mismatched
+        .map((ref) => `${ref.token} (${ref.name})`)
+        .join(', ')}; stated as in-frame instead — check the beat names these the way the library does`
+    )
+  }
+
+  const tokens = unbound.map((ref) => ref.token).join(', ')
+  return unbound.length === 1
+    ? `Also in frame: ${tokens} — match it to its reference image.`
+    : `Also in frame: ${tokens} — match each to its reference image.`
 }
 
 export function formatStillReferencesLegend(refs: StillPromptBoundRef[]): string {
@@ -473,6 +678,10 @@ export function assembleStructuredStillPrompt(input: {
   if (actionFraming) {
     stillLines.push(`Action/Framing: ${actionFraming}`)
   }
+  const inFrameLine = formatUnboundRefsInFrameLine(refs, actionFraming)
+  if (inFrameLine) {
+    stillLines.push(inFrameLine)
+  }
 
   let style = parsed.style
   if (input.photorealisticAnchor && !styleAlreadyHasPhotoreal(style) && !styleAlreadyHasPhotoreal(actionFraming)) {
@@ -486,6 +695,7 @@ export function assembleStructuredStillPrompt(input: {
 
   return joinPromptBlocks(
     formatStillReferencesLegend(refs),
+    `${STILL_SECTION_TASK}\n${STILL_TASK_LINES.join('\n')}`,
     `${STILL_SECTION_STILL}\n${stillLines.join('\n')}`,
     style ? `${STILL_SECTION_STYLE}\n${style}` : '',
     `${STILL_SECTION_EXCLUSIONS}\n${exclusions}`

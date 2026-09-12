@@ -21,6 +21,7 @@ import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPromp
 import {
   normalizeStillFraming,
   normalizeStillShotType,
+  reduceActionToSingleInstant,
 } from '@/lib/imagen/stillFramingNormalize'
 import { storedStillDirectionKeyMatches } from '@/lib/script/beatDirectionFingerprint'
 import { formatSceneArcBlock, getSceneMovements } from '@/lib/script/sceneMovements'
@@ -298,8 +299,12 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
     )
   }
   appendFacet(parts, frozen || described)
-  appendFacet(parts, direction?.blocking, 'Blocking')
-  appendFacet(parts, direction?.propInteraction, 'Prop handling')
+  // "Blocking" and "Prop handling" are stage-direction words, and direction
+  // written under them reads as choreography: a move, or a run of them. A still
+  // can only hold one position per body, so the label asks for one and the
+  // reduction drops the stages that lead into it.
+  appendFacet(parts, reduceActionToSingleInstant(direction?.blocking), 'Body position')
+  appendFacet(parts, reduceActionToSingleInstant(direction?.propInteraction), 'Hands and props')
   appendFacet(parts, direction?.gaze, 'Gaze')
 
   // A prop reference is only attached when the frame names it, so a directed
