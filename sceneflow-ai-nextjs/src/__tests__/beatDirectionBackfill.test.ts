@@ -64,6 +64,52 @@ describe('deriveBeatDirection', () => {
     expect(derived?.keyProps).toEqual(['Water-damaged leather journal'])
   })
 
+  it('derives castInFrame from the scene cast the beat names', () => {
+    const scene = { sceneDirection, characters: ['Elara', 'Gideon', 'NARRATOR'] }
+    const derived = deriveBeatDirection(
+      actionBeat({ actionDescription: 'Elara lifts the journal while Gideon watches.' }),
+      0,
+      scene
+    )
+    expect(derived?.castInFrame).toEqual(['Elara', 'Gideon'])
+  })
+
+  it('takes a dialogue beat’s cast from its speaker', () => {
+    const scene = { sceneDirection, characters: ['Elara', 'Gideon'] }
+    const derived = deriveBeatDirection(
+      { beatId: 'b2', sequenceIndex: 1, kind: 'dialogue', character: 'ELARA', line: 'Ready.' },
+      1,
+      scene
+    )
+    expect(derived?.castInFrame).toEqual(['Elara'])
+  })
+
+  it('leaves castInFrame unstated rather than asserting nobody', () => {
+    // A backfill cannot tell "no people in this frame" from "the beat used a
+    // pronoun". Guessing [] here would strip the cast off every such beat, so
+    // an unnamed beat stays on the old heuristics until someone states it.
+    const scene = { sceneDirection, characters: ['Elara', 'Gideon'] }
+    const derived = deriveBeatDirection(
+      actionBeat({ actionDescription: 'She reaches for the lever.' }),
+      0,
+      scene
+    )
+    expect(derived?.castInFrame).toBeUndefined()
+  })
+
+  it('does not overwrite a stated empty castInFrame', () => {
+    const scene = { sceneDirection, characters: ['Elara'] }
+    const derived = deriveBeatDirection(
+      actionBeat({
+        actionDescription: 'Elara’s abandoned console blinks.',
+        beatDirection: { castInFrame: [], generatedBy: 'llm' },
+      }),
+      0,
+      scene
+    )
+    expect(derived?.castInFrame).toEqual([])
+  })
+
   it('does not derive a key prop from a single coincidental word', () => {
     const derived = deriveBeatDirection(
       actionBeat({

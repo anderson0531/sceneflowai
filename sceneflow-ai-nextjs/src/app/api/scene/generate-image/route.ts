@@ -56,7 +56,10 @@ import {
 } from '@/lib/intelligence/scene-image-intelligence'
 import { shouldUseCustomPromptOverride } from '@/lib/vision/preVisDirectGenerate'
 import { ensureProjectLookbook, getSceneLookNote } from '@/lib/intelligence/project-lookbook'
-import { composePersistedBeatStillPrompt } from '@/lib/intelligence/beat-sequence-planner-fallback'
+import {
+  composePersistedBeatStillPrompt,
+  TITLE_BEAT_ACTION_LEAD_IN,
+} from '@/lib/intelligence/beat-sequence-planner-fallback'
 import { applySceneImageAiResultToPrompt } from '@/lib/scene/sceneImageAiPromptApply'
 import {
   assembleStructuredStillPrompt,
@@ -155,7 +158,10 @@ import {
   formatBeatArcContextLines,
   type BeatArcContext,
 } from '@/lib/vision/beatArcContext'
-import { resolveBeatFrameGenerationContext } from '@/lib/vision/beatFrameGenerationContext'
+import {
+  directedCastForBeat,
+  resolveBeatFrameGenerationContext,
+} from '@/lib/vision/beatFrameGenerationContext'
 import {
   canStartLikenessRetry,
   canValidateLikeness,
@@ -969,6 +975,12 @@ export async function POST(req: NextRequest) {
           const beat = beats[effectiveBeatIndex]
           if (beat) {
             beatKindForIntelligence = beat.kind
+            // Null when the beat never stated its cast, which is the only case
+            // the name-detection and scene-cast fallbacks below are for.
+            const directedCast =
+              clientVerifiedBeatRefs || (storyboardNoCharacterScene && !honorExplicitChars)
+                ? null
+                : directedCastForBeat(beat, allCharacters)
             if (storyboardNoCharacterScene && !honorExplicitChars) {
               if (!clientVerifiedBeatRefs) characterObjects = []
               if (beat.kind === 'action') {
@@ -1022,7 +1034,15 @@ export async function POST(req: NextRequest) {
                 'Frame the speaking character prominently — medium close-up or over-the-shoulder — with scene continuity preserved. '
               effectiveShotType = effectiveShotType || 'medium close-up'
             }
+            if (directedCast) {
+              characterObjects = directedCast
+              console.log(
+                `[Scene Image] Beat states its cast (${directedCast.length}):`,
+                directedCast.map((c: any) => c.name).join(', ') || 'nobody'
+              )
+            }
             const shouldFillCharacters =
+              !directedCast &&
               characterObjects.length === 0 &&
               !effectiveExcludeCharacters &&
               !(storyboardNoCharacterScene && !honorExplicitChars) &&
@@ -1059,8 +1079,13 @@ export async function POST(req: NextRequest) {
             ]
               .filter(Boolean)
               .join(' ')
+            // Not for a beat that stated its cast. Widening the selection to
+            // whoever the prompt text names is half of a loop that confirms
+            // itself: the extra reference makes the next prompt name them
+            // again, and no step in the circuit ever asks the direction.
             if (
               promptUnionText &&
+              !directedCast &&
               !effectiveExcludeCharacters &&
               !(storyboardNoCharacterScene && !honorExplicitChars) &&
               allCharacters.length > 0
@@ -1762,8 +1787,36 @@ export async function POST(req: NextRequest) {
     let sceneImageIntelligenceRequest: SceneImageIntelligenceRequest | null = null
     let sceneImageAiResult: SceneImageIntelligenceResult | null = null
     let aiSceneType: string | undefined
-    
-    if (shouldUseCustomPromptOverride(generationMode, customPrompt)) {
+
+    const usingCustomPrompt = shouldUseCustomPromptOverride(generationMode, customPrompt)
+    const runsSceneIntelligence =
+      !usingCustomPrompt && !effectiveExcludeCharacters && !!useAIPrompt && !!project && !!sceneData
+    // A beat frame is composed from its beat direction whether or not the caller
+    // asked for intelligence. Express asks for neither intelligence nor a custom
+    // prompt precisely so this runs: direction is the record of the shot, and a
+    // prompt written by anything else is a second opinion on it.
+    const beatForPromptCompose =
+      isBeatFrame && sceneData && !usingCustomPrompt && !effectiveExcludeCharacters
+        ? getSceneBeats(sceneData as Record<string, unknown>)[effectiveBeatIndex]
+        : undefined
+    // A frame regenerated on its own has to land in the same film as its
+    // neighbours. After any Express run this is a free read of the persisted
+    // look; only a project that never ran Express pays for a derivation, so it
+    // is read only when a branch that composes a prompt will use it.
+    const projectLookbook =
+      project && (beatForPromptCompose || runsSceneIntelligence)
+        ? await ensureProjectLookbook(project, artStyle)
+        : undefined
+    const persistedBeatPrompt = beatForPromptCompose
+      ? composePersistedBeatStillPrompt({
+          lookbook: projectLookbook,
+          sceneIndex: sceneIndex || 0,
+          beat: beatForPromptCompose,
+          actionLeadIn: allowTypography ? TITLE_BEAT_ACTION_LEAD_IN : undefined,
+        })
+      : undefined
+
+    if (usingCustomPrompt) {
       let promptBody = stripPromptMetaInstructions(customPrompt.trim())
       if (allowTypography) {
         promptBody =
@@ -1827,7 +1880,13 @@ export async function POST(req: NextRequest) {
         objectReferences: detectedObjectReferences
       })
       console.log('[Scene Image] Building scene reference prompt (excludeCharacters=true)')
-    } else if (useAIPrompt && project && sceneData) {
+    } else if (persistedBeatPrompt) {
+      // Composed from the beat's own direction, so there is nothing for the
+      // optimizer or the intelligence call to add — either would reintroduce
+      // staging the direction does not ask for.
+      optimizedPrompt = persistedBeatPrompt
+      console.log('[Scene Image] Composed prompt from beat direction')
+    } else if (runsSceneIntelligence) {
       // =====================================================================
       // AI INTELLIGENCE PATH: Use Gemini to generate a smart, context-aware prompt
       // =====================================================================
@@ -1859,19 +1918,6 @@ export async function POST(req: NextRequest) {
         visualStyle: treatment?.visualStyle || undefined,
       }
 
-      // A frame regenerated on its own has to land in the same film as its
-      // neighbours. After any Express run this is a free read of the persisted
-      // look; only a project that never ran Express pays for a derivation.
-      const projectLookbook = await ensureProjectLookbook(project, artStyle)
-      const beatForPromptCompose = isBeatFrame
-        ? getSceneBeats(sceneData as Record<string, unknown>)[effectiveBeatIndex]
-        : undefined
-      const persistedBeatPrompt = composePersistedBeatStillPrompt({
-        lookbook: projectLookbook,
-        sceneIndex: sceneIndex || 0,
-        beat: beatForPromptCompose,
-      })
-      
       // Build character contexts with resolved wardrobes
       const characterContexts: CharacterContext[] = characterReferences.map((ref: any) => ({
         name: ref.name,
@@ -1998,6 +2044,7 @@ export async function POST(req: NextRequest) {
               shotType: beatForIntelligence.beatDirection.shotType,
               cameraAngle: beatForIntelligence.beatDirection.cameraAngle,
               cameraMovement: beatForIntelligence.beatDirection.cameraMovement,
+              castInFrame: beatForIntelligence.beatDirection.castInFrame,
               blocking: beatForIntelligence.beatDirection.blocking,
               emotion: beatForIntelligence.beatDirection.emotion,
               gaze: beatForIntelligence.beatDirection.gaze,
@@ -2024,58 +2071,52 @@ export async function POST(req: NextRequest) {
         sceneLookNote: getSceneLookNote(projectLookbook, sceneIndex || 0),
       }
 
-      if (persistedBeatPrompt) {
-        optimizedPrompt = persistedBeatPrompt
-        usedAIIntelligence = false
-        console.log('[Scene Image] Using persisted beat direction — skipped intelligence')
-      } else {
-        const aiResult = await generateSceneImagePromptWithDeadline(sceneImageIntelligenceRequest)
-        sceneImageAiResult = aiResult
+      const aiResult = await generateSceneImagePromptWithDeadline(sceneImageIntelligenceRequest)
+      sceneImageAiResult = aiResult
 
-        const appliedAiPrompt = applySceneImageAiResultToPrompt({
-          aiResult,
-          characterReferences,
-          fullSceneContext: bindLibraryNamesToTokens(fullSceneContext, libraryTokenItems),
-          artStyle,
-          autoDetectObjects,
-          autoDetectLocations,
-          projectObjectRefs,
-          projectLocationRefs,
-          detectedObjectReferences,
-          matchedLocationReference,
-          sceneType: aiSceneType,
-          protectPhrases: libraryTokenItems.map((item) => item.name).filter(Boolean),
-          isBeatFrame,
-        })
-        optimizedPrompt = appliedAiPrompt.optimizedPrompt
-        usedAIIntelligence = appliedAiPrompt.usedAIIntelligence
-        characterReferencesForImages = appliedAiPrompt.characterReferencesForImages
-        detectedObjectReferences = appliedAiPrompt.detectedObjectReferences.map((obj: any) => ({
-          ...obj,
-          promptToken:
-            obj.promptToken ||
-            propsWithTokens.find((p) => p.name.toLowerCase() === String(obj.name || '').toLowerCase())
-              ?.promptToken,
-        }))
-        matchedLocationReference = appliedAiPrompt.matchedLocationReference
-          ? {
-              ...appliedAiPrompt.matchedLocationReference,
-              promptToken:
-                appliedAiPrompt.matchedLocationReference.promptToken ||
-                locationsWithTokens.find(
-                  (loc) =>
-                    loc.name.toLowerCase() ===
-                    String(
-                      appliedAiPrompt.matchedLocationReference.location ||
-                        appliedAiPrompt.matchedLocationReference.name ||
-                        ''
-                    ).toLowerCase()
-                )?.promptToken ||
-                buildLocationPromptToken(1),
-            }
-          : appliedAiPrompt.matchedLocationReference
-        aiNegativePromptAdditions = appliedAiPrompt.aiNegativePromptAdditions
-      }
+      const appliedAiPrompt = applySceneImageAiResultToPrompt({
+        aiResult,
+        characterReferences,
+        fullSceneContext: bindLibraryNamesToTokens(fullSceneContext, libraryTokenItems),
+        artStyle,
+        autoDetectObjects,
+        autoDetectLocations,
+        projectObjectRefs,
+        projectLocationRefs,
+        detectedObjectReferences,
+        matchedLocationReference,
+        sceneType: aiSceneType,
+        protectPhrases: libraryTokenItems.map((item) => item.name).filter(Boolean),
+        isBeatFrame,
+      })
+      optimizedPrompt = appliedAiPrompt.optimizedPrompt
+      usedAIIntelligence = appliedAiPrompt.usedAIIntelligence
+      characterReferencesForImages = appliedAiPrompt.characterReferencesForImages
+      detectedObjectReferences = appliedAiPrompt.detectedObjectReferences.map((obj: any) => ({
+        ...obj,
+        promptToken:
+          obj.promptToken ||
+          propsWithTokens.find((p) => p.name.toLowerCase() === String(obj.name || '').toLowerCase())
+            ?.promptToken,
+      }))
+      matchedLocationReference = appliedAiPrompt.matchedLocationReference
+        ? {
+            ...appliedAiPrompt.matchedLocationReference,
+            promptToken:
+              appliedAiPrompt.matchedLocationReference.promptToken ||
+              locationsWithTokens.find(
+                (loc) =>
+                  loc.name.toLowerCase() ===
+                  String(
+                    appliedAiPrompt.matchedLocationReference.location ||
+                      appliedAiPrompt.matchedLocationReference.name ||
+                      ''
+                  ).toLowerCase()
+              )?.promptToken ||
+              buildLocationPromptToken(1),
+          }
+        : appliedAiPrompt.matchedLocationReference
+      aiNegativePromptAdditions = appliedAiPrompt.aiNegativePromptAdditions
     } else {
       // Rules-based optimizer (no AI, no custom prompt)
       const rulesProps = assignStableLibraryTokens(detectedObjectReferences, 'prop')

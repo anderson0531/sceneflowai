@@ -106,13 +106,89 @@ describe('unionBeatSelectionWithPromptText', () => {
       objectRefIds: [],
       source: 'auto',
     })
-    const unioned = unionBeatSelectionWithPromptText(
+    const unioned = unionBeatSelectionWithPromptText({
       selection,
-      'Dutch Angle: Gideon reclaims his academic authority.',
-      characters.concat([{ id: 'c3', name: 'Gideon', referenceImage: 'https://blob.example/gideon.jpg' }]),
-      { heading: 'INT. OFFICE - DAY' }
-    )
+      promptText: 'Dutch Angle: Gideon reclaims his academic authority.',
+      projectCharacters: characters.concat([
+        { id: 'c3', name: 'Gideon', referenceImage: 'https://blob.example/gideon.jpg' },
+      ]),
+      scene: { heading: 'INT. OFFICE - DAY' },
+    })
     expect(unioned.characterIds).toEqual(expect.arrayContaining(['c1', 'c3']))
+  })
+
+  it('does not widen the cast of a beat that stated who is in frame', () => {
+    const selection = toBeatReferenceSelection({
+      characterIds: ['c1'],
+      objectRefIds: [],
+      source: 'auto',
+    })
+    const unioned = unionBeatSelectionWithPromptText({
+      selection,
+      promptText: 'Dutch Angle: Gideon reclaims his academic authority.',
+      beat: {
+        beatId: 'b1',
+        sequenceIndex: 0,
+        kind: 'action',
+        actionDescription: 'Elara holds the doorway.',
+        beatDirection: { shotType: 'Dutch Angle', castInFrame: ['Elara Vance'] },
+      },
+      projectCharacters: characters.concat([
+        { id: 'c3', name: 'Gideon', referenceImage: 'https://blob.example/gideon.jpg' },
+      ]),
+      scene: { heading: 'INT. OFFICE - DAY' },
+    })
+
+    expect(unioned).toBe(selection)
+  })
+
+  it('does not add props to a beat that listed its key props', () => {
+    const selection = toBeatReferenceSelection({
+      characterIds: [],
+      objectRefIds: [],
+      source: 'auto',
+    })
+    const unioned = unionBeatSelectionWithPromptText({
+      selection,
+      promptText: 'Insert Shot: the Briefcase sits open on the counter.',
+      beat: {
+        beatId: 'b2',
+        sequenceIndex: 1,
+        kind: 'action',
+        actionDescription: 'The counter is bare but for one thing.',
+        beatDirection: { shotType: 'Insert Shot', keyProps: ['Leather Ledger'] },
+      },
+      projectCharacters: characters,
+      scene: { heading: 'INT. KITCHEN - DAY' },
+      sceneIndex: 0,
+      objectReferences: objects,
+      locationReferences: locations,
+    })
+
+    expect(unioned).toBe(selection)
+  })
+
+  it('still widens a legacy beat that stated no cast at all', () => {
+    const selection = toBeatReferenceSelection({
+      characterIds: [],
+      objectRefIds: [],
+      source: 'auto',
+    })
+    const unioned = unionBeatSelectionWithPromptText({
+      selection,
+      promptText: 'Two-Shot: Elara Vance faces Marcus Thorne.',
+      beat: {
+        beatId: 'b3',
+        sequenceIndex: 2,
+        kind: 'action',
+        actionDescription: 'They square off.',
+        beatDirection: { shotType: 'Two-Shot' },
+      },
+      projectCharacters: characters,
+      scene: { heading: 'INT. OFFICE - DAY' },
+    })
+
+    expect(unioned.characterIds).toEqual(['c1', 'c2'])
   })
 
   // A planned prompt may name any prop in the reference catalog, but auto-resolve
@@ -124,16 +200,15 @@ describe('unionBeatSelectionWithPromptText', () => {
       objectRefIds: [],
       source: 'auto',
     })
-    const unioned = unionBeatSelectionWithPromptText(
+    const unioned = unionBeatSelectionWithPromptText({
       selection,
-      'Insert Shot: the Briefcase sits open on the counter.',
-      characters,
-      { heading: 'INT. KITCHEN - DAY' },
-      0,
-      undefined,
-      objects,
-      locations
-    )
+      promptText: 'Insert Shot: the Briefcase sits open on the counter.',
+      projectCharacters: characters,
+      scene: { heading: 'INT. KITCHEN - DAY' },
+      sceneIndex: 0,
+      objectReferences: objects,
+      locationReferences: locations,
+    })
 
     expect(unioned.objectRefIds).toEqual(['obj-briefcase'])
   })
@@ -147,16 +222,15 @@ describe('unionBeatSelectionWithPromptText', () => {
       objectRefIds: [],
       source: 'auto',
     })
-    const unioned = unionBeatSelectionWithPromptText(
+    const unioned = unionBeatSelectionWithPromptText({
       selection,
-      'Insert Shot: the Leather Ledger lies open.',
-      characters,
-      { heading: 'INT. KITCHEN - DAY' },
-      0,
-      undefined,
-      unimaged,
-      locations
-    )
+      promptText: 'Insert Shot: the Leather Ledger lies open.',
+      projectCharacters: characters,
+      scene: { heading: 'INT. KITCHEN - DAY' },
+      sceneIndex: 0,
+      objectReferences: unimaged,
+      locationReferences: locations,
+    })
 
     expect(unioned.objectRefIds).toEqual([])
     expect(unioned).toBe(selection)
@@ -168,16 +242,15 @@ describe('unionBeatSelectionWithPromptText', () => {
       objectRefIds: ['obj-briefcase'],
       source: 'auto',
     })
-    const unioned = unionBeatSelectionWithPromptText(
+    const unioned = unionBeatSelectionWithPromptText({
       selection,
-      'Insert Shot: the Briefcase sits open on the counter.',
-      characters,
-      { heading: 'INT. KITCHEN - DAY' },
-      0,
-      undefined,
-      objects,
-      locations
-    )
+      promptText: 'Insert Shot: the Briefcase sits open on the counter.',
+      projectCharacters: characters,
+      scene: { heading: 'INT. KITCHEN - DAY' },
+      sceneIndex: 0,
+      objectReferences: objects,
+      locationReferences: locations,
+    })
 
     expect(unioned).toBe(selection)
   })

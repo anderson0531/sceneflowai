@@ -34,12 +34,38 @@ const FINGERPRINTED_KEYS: Array<keyof BeatDirection> = [
   ...VIDEO_ONLY_FINGERPRINTED_KEYS,
 ]
 
-const STILL_KEY_NAMES = new Set<string>([...STILL_FINGERPRINTED_KEYS, 'keyProps'])
+/**
+ * List facets, fingerprinted separately because order is not meaningful.
+ *
+ * `castInFrame: []` is a statement — nobody is on camera — so clearing the list
+ * has to move the fingerprint the way populating it does. A list that is absent
+ * contributes nothing.
+ */
+const LIST_KEYS = ['castInFrame', 'keyProps'] as const
+
+const STILL_KEY_NAMES = new Set<string>([...STILL_FINGERPRINTED_KEYS, ...LIST_KEYS])
+
+/**
+ * Bumped when the composer builds a different frame from direction that has
+ * not moved.
+ *
+ * Every key stored before the bump mismatches once, so the next read of a beat
+ * recomposes its prompt instead of handing back wording an earlier composer
+ * produced. That is the whole migration: no pass over every project's JSONB,
+ * and no beat left carrying a prompt that named cast its direction never did.
+ *
+ * Only the still fingerprint is versioned. The full fingerprint is also what
+ * `generateLegacyPreVisContentHash` replays to recognise pre-deploy pre-vis
+ * stamps, and moving it would make every one of those scenes ask to be updated.
+ */
+const STILL_FINGERPRINT_VERSION = 'still-v2'
+
+const VERSION_PREFIX_PATTERN = /^still-v\d+$/
 
 function fingerprintDirection(
   direction: BeatDirection | null | undefined,
   keys: Array<keyof BeatDirection>,
-  includeKeyProps: boolean
+  includeLists: boolean
 ): string {
   if (!direction) return ''
   const parts: string[] = []
@@ -49,15 +75,15 @@ function fingerprintDirection(
       parts.push(`${key}=${value.trim()}`)
     }
   }
-  if (includeKeyProps) {
-    const props = Array.isArray(direction.keyProps)
-      ? direction.keyProps
-          .map((prop) => (typeof prop === 'string' ? prop.trim() : ''))
-          .filter(Boolean)
-          .sort()
-      : []
-    if (props.length > 0) {
-      parts.push(`keyProps=${props.join(',')}`)
+  if (includeLists) {
+    for (const key of LIST_KEYS) {
+      const value = direction[key]
+      if (!Array.isArray(value)) continue
+      const items = value
+        .map((item) => (typeof item === 'string' ? item.trim() : ''))
+        .filter(Boolean)
+        .sort()
+      parts.push(`${key}=${items.join(',')}`)
     }
   }
   return parts.join('|')
@@ -70,20 +96,28 @@ export function beatDirectionFingerprint(direction?: BeatDirection | null): stri
 
 /** Facets that actually enter the still / pre-vis frame prompt. */
 export function beatStillDirectionFingerprint(direction?: BeatDirection | null): string {
-  return fingerprintDirection(direction, STILL_FINGERPRINTED_KEYS, true)
+  const facets = fingerprintDirection(direction, STILL_FINGERPRINTED_KEYS, true)
+  if (!facets) return ''
+  return `${STILL_FINGERPRINT_VERSION}|${facets}`
 }
 
 /**
  * Lift the still-relevant portion out of a stored key. Keys written before the
  * still/video split were the full fingerprint; comparing the still slice keeps
  * those records from looking stale after a movement-only edit.
+ *
+ * The stored version travels with the slice rather than being assumed, so a key
+ * from an older composer stays recognisably older.
  */
 export function stillDirectionKeyFromStored(storedKey: string): string {
   if (!storedKey) return ''
-  return storedKey
-    .split('|')
+  const parts = storedKey.split('|')
+  const version = VERSION_PREFIX_PATTERN.test(parts[0] ?? '') ? parts.shift() : undefined
+  const facets = parts
     .filter((part) => STILL_KEY_NAMES.has(part.split('=')[0] ?? ''))
     .join('|')
+  if (!facets) return ''
+  return version ? `${version}|${facets}` : facets
 }
 
 /** Whether a stored still-prompt (or image) key still describes this direction. */

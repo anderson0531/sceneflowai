@@ -110,20 +110,31 @@ describe('syncBeatStillPromptToDirection', () => {
     expect(storedPromptMatchesDirection(beat)).toBe(true)
   })
 
-  it('does not mark a frame stale when only a legacy full key is stored and stills match', () => {
+  it('recomposes a prompt keyed by an earlier composer, once', () => {
     const direction = {
       shotType: 'Wide Shot',
       cameraMovement: 'crane down',
       frozenMoment: 'The lab at dusk',
+      castInFrame: [],
     }
-    const beat = actionBeat({
+    // A pre-bump record: the key describes this direction, but the wording was
+    // built by a composer that put the scene's cast in an empty room.
+    const stale = actionBeat({
+      actionDescription: 'The lab stands empty, centrifuges still spinning.',
       beatDirection: direction,
-      storyboardImagePrompt: 'Wide Shot. The lab at dusk.',
+      storyboardImagePrompt: 'Wide Shot. Elara and Marcus stand in the lab at dusk.',
       storyboardImagePromptDirectionKey: beatDirectionFingerprint(direction),
       storyboardImageDirectionKey: undefined,
     })
 
-    expect(storedPromptMatchesDirection(beat)).toBe(true)
-    expect(isBeatFrameStale(beat)).toBe(false)
+    expect(storedPromptMatchesDirection(stale)).toBe(false)
+
+    const next = syncBeatStillPromptToDirection(stale)
+    expect(next.storyboardImagePrompt).not.toContain('Elara')
+    expect(next.storyboardImagePrompt).toContain('No people in frame')
+    expect(storedPromptMatchesDirection(next)).toBe(true)
+
+    // And it settles: the recomposed record is not asked to recompose again.
+    expect(syncBeatStillPromptToDirection(next)).toBe(next)
   })
 })

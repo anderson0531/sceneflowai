@@ -14,7 +14,10 @@ import {
   isStructuredStillPrompt,
   parseStillPromptSource,
 } from '@/lib/imagen/structuredStillPrompt'
-import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
+import {
+  beatDirectionFingerprint,
+  beatStillDirectionFingerprint,
+} from '@/lib/script/beatDirectionFingerprint'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 const lookbook: ProjectLookbook = {
@@ -197,7 +200,7 @@ describe('buildFallbackBeatPlans under a project lookbook', () => {
 })
 
 describe('composePersistedBeatStillPrompt', () => {
-  it('wraps stored beat action in the lookbook when the prompt matches current direction', () => {
+  it('wraps the direction in the lookbook rather than the wording it last shipped', () => {
     const beatDirection = {
       frozenMoment: 'Gideon at the zinc workbench',
       lightingAccent: 'Low-key practicals',
@@ -211,7 +214,9 @@ describe('composePersistedBeatStillPrompt', () => {
         kind: 'action',
         actionDescription: 'Gideon hunches over the seismograph.',
         beatDirection,
-        storyboardImagePrompt: 'Medium shot: Gideon at the zinc workbench.',
+        // Keyed to the direction above, so the staleness check passes. The
+        // composer still ignores it: a prompt can be current and wrong.
+        storyboardImagePrompt: 'Wide shot: Piper sprints across the gantry.',
         storyboardImagePromptDirectionKey: beatDirectionFingerprint(beatDirection),
       },
     })
@@ -219,10 +224,11 @@ describe('composePersistedBeatStillPrompt', () => {
     expect(prompt).toBeDefined()
     expect(prompt!.startsWith('[GLOBAL STYLE ANCHOR]')).toBe(true)
     expect(prompt).toContain('Rain-slick neo-noir')
-    expect(prompt).toContain('Action/Framing: Medium shot: Gideon at the zinc workbench.')
     const parsed = parseStillPromptSource(prompt!)
     expect(parsed.style?.trim()).toBeTruthy()
     expect(parsed.actionFraming).toContain('Gideon at the zinc workbench')
+    expect(parsed.actionFraming).toContain('Gideon hunches over the seismograph')
+    expect(parsed.actionFraming).not.toMatch(/Piper|gantry/)
   })
 
   it('recomposes from direction when the stored prompt predates it', () => {
@@ -275,7 +281,7 @@ describe('composePersistedBeatStillPrompt', () => {
     expect(framing.match(/Thirty-Inch Iron Rail Spanner/g)).toHaveLength(1)
   })
 
-  it('does not restate its own facets when the composed frame is recomposed', () => {
+  it('composes the same frame no matter what was stored last time', () => {
     const beat: SceneBeat = {
       beatId: 'bt_3',
       sequenceIndex: 2,
@@ -290,11 +296,53 @@ describe('composePersistedBeatStillPrompt', () => {
     }
 
     const first = composeBeatActionFraming(beat)
-    const second = composeBeatActionFraming({ ...beat, storyboardImagePrompt: first })
 
-    expect(second).toBe(first)
+    expect(composeBeatActionFraming({ ...beat, storyboardImagePrompt: first })).toBe(first)
+    expect(
+      composeBeatActionFraming({
+        ...beat,
+        storyboardImagePrompt: 'Wide shot: an entirely different frame.',
+        storyboardImagePromptDirectionKey: beatDirectionFingerprint(beat.beatDirection),
+      })
+    ).toBe(first)
     expect(first.match(/Blocking:/g)).toHaveLength(1)
     expect(first.match(/Props in frame:/g)).toHaveLength(1)
+  })
+
+  it('says outright that an insert shot has nobody in it', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_gauge',
+      sequenceIndex: 4,
+      kind: 'action',
+      actionDescription:
+        'A brass pressure gauge redlines. Three heavy iron locking dogs scream against the metal.',
+      beatDirection: {
+        shotType: 'Extreme Close-Up',
+        blocking: 'The brass pressure needle shakes violently in the red zone.',
+        frozenMoment: 'Pressure gauge needle pinned to the maximum.',
+        keyProps: ['Heavy iron spanner'],
+        castInFrame: [],
+      },
+    })
+
+    expect(framing).toContain('No people in frame')
+    expect(framing).not.toMatch(/Cast in frame/)
+  })
+
+  it('closes the cast list so nobody else can join the frame', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_cast',
+      sequenceIndex: 5,
+      kind: 'action',
+      actionDescription: 'Piper Hayes braces against the bulkhead.',
+      beatDirection: {
+        shotType: 'Medium Shot',
+        castInFrame: ['Piper Hayes'],
+      },
+    })
+
+    expect(framing).toContain('Cast in frame: Piper Hayes — and no other people.')
+    expect(framing).not.toMatch(/No people in frame/)
   })
 
   it('binds composed cast names to person tokens during still assembly', () => {
@@ -349,7 +397,7 @@ describe('composePersistedBeatStillPrompt', () => {
       actionDescription: 'Gideon hunches over the seismograph.',
       beatDirection: { ...still, cameraMovement: 'dolly in', emotion: 'tense' },
       storyboardImagePrompt: 'Medium Shot. Gideon at the bench.',
-      storyboardImagePromptDirectionKey: beatDirectionFingerprint(still),
+      storyboardImagePromptDirectionKey: beatStillDirectionFingerprint(still),
     }
     expect(storedPromptMatchesDirection(beat)).toBe(true)
   })

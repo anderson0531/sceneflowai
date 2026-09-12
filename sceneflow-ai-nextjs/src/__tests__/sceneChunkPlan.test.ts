@@ -397,11 +397,14 @@ describe('generate-script-v2 chunked generation', () => {
 })
 
 describe('compact beat direction', () => {
-  it('asks for three fields so the output budget buys scenes', () => {
+  it('asks for four fields so the output budget buys scenes', () => {
     const example = buildBeatDirectionSchemaExample({ compact: true })
     const parsed = JSON.parse(`{${example}}`)
 
+    // castInFrame earns its tokens even here: it is the only statement of who
+    // is on camera, and everything else has to guess without it.
     expect(Object.keys(parsed.beatDirection).sort()).toEqual([
+      'castInFrame',
       'frozenMoment',
       'shotType',
       'transition',

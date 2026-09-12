@@ -87,6 +87,55 @@ function collectKeyPropsForBeat(
   return out.length > 0 ? out : undefined
 }
 
+function sceneCharacterNames(scene: Record<string, unknown>): string[] {
+  const raw = Array.isArray(scene?.characters) ? scene.characters : []
+  const names: string[] = []
+  for (const entry of raw) {
+    const name =
+      typeof entry === 'string'
+        ? entry
+        : typeof (entry as { name?: unknown })?.name === 'string'
+          ? ((entry as { name: string }).name)
+          : ''
+    const trimmed = name.trim()
+    if (trimmed && !/^narrator$/i.test(trimmed)) names.push(trimmed)
+  }
+  return names
+}
+
+/**
+ * Cast this beat names outright, or undefined when it names nobody.
+ *
+ * Never returns an empty list. An empty `castInFrame` asserts that the frame
+ * has no people in it, and a beat that says "she reaches for the lever" names
+ * nobody while plainly having someone in it. Only the LLM contract and the
+ * editor, which can see the whole beat, are trusted to assert nobody; a
+ * backfill that guessed it would erase cast from every pronoun-only beat.
+ */
+function collectCastInFrameForBeat(
+  beat: SceneBeat,
+  scene: Record<string, unknown>
+): string[] | undefined {
+  const names = sceneCharacterNames(scene)
+  if (names.length === 0) return undefined
+
+  if (beat.kind === 'dialogue') {
+    const speaker = beat.character?.trim()
+    const match = speaker
+      ? names.find((name) => name.toLowerCase() === speaker.toLowerCase())
+      : undefined
+    if (match) return [match]
+  }
+
+  const text = [beat.actionDescription ?? '', beat.line ?? '', beat.beatDirection?.blocking ?? '']
+    .join(' ')
+    .toLowerCase()
+  if (!text.trim()) return undefined
+
+  const found = names.filter((name) => text.includes(name.toLowerCase()))
+  return found.length > 0 ? found : undefined
+}
+
 /**
  * Best-effort inference of camera framing hint for THIS beat, prefer scene
  * camera shots array position, else the beat's own shot vocab, else the
@@ -198,6 +247,10 @@ export function deriveBeatDirection(
   if (!derived.cameraMovement) {
     const movement = firstNonEmpty(sceneDirection?.camera?.movement)
     if (movement) derived.cameraMovement = movement
+  }
+  if (!Array.isArray(derived.castInFrame)) {
+    const cast = collectCastInFrameForBeat(beat, scene)
+    if (cast) derived.castInFrame = cast
   }
   if (!derived.blocking) {
     // The movement's key action is the closest thing to per-beat staging that

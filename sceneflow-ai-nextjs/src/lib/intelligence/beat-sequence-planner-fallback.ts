@@ -18,10 +18,7 @@ import {
 import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPrompt'
-import {
-  beatStillDirectionFingerprint,
-  storedStillDirectionKeyMatches,
-} from '@/lib/script/beatDirectionFingerprint'
+import { storedStillDirectionKeyMatches } from '@/lib/script/beatDirectionFingerprint'
 import { formatSceneArcBlock, getSceneMovements } from '@/lib/script/sceneMovements'
 import type { BeatDirection, SceneBeat } from '@/lib/script/segmentTypes'
 
@@ -184,11 +181,11 @@ function appendFacet(parts: string[], value: string | undefined, label?: string)
 /**
  * Whether a beat's stored image prompt still describes its current direction.
  *
- * Express writes the composed prompt back after every generation, and the
- * composer reads it first, so without this check the first frame's wording won
- * forever: regenerating or hand-editing the direction changed nothing on the
- * image. `reconcileSceneBeatsFromScript` only clears the prompt on script
- * edits, which is a different path entirely.
+ * Answers "is the text we last sent the image model still worth showing" — it
+ * does not decide what the next frame is composed from. `composeBeatActionFraming`
+ * derives that from the direction regardless, because a stored prompt keyed to
+ * the direction it shipped with looks current even when its wording was wrong
+ * from the start.
  *
  * Prompts stored before the key existed have no recorded direction, so they are
  * only trusted for beats that have no direction to contradict them.
@@ -210,70 +207,94 @@ function currentStoredActionFraming(beat: SceneBeat): string {
 /**
  * Build the frame description for a beat out of its structured direction.
  *
- * The lookbook path skips scene-image intelligence entirely, so nothing else
- * would state who is on camera, how they are blocked, or which prop they are
- * handling. Library and cast names here are bound to person/prop tokens later,
- * during still assembly.
+ * A pure function of the direction and the beat's own prose. It deliberately
+ * does not read `storyboardImagePrompt`: that field holds whatever text was
+ * last sent to the image model, and reading it back made the first wording win
+ * forever. A planner sentence that placed the wrong cast in the wrong shot was
+ * keyed to the direction it was generated alongside, so the staleness check
+ * passed and the direction never got a say. Direction is the reliable record,
+ * so it is the source here and the stored prompt is only ever an output.
+ *
+ * Library and cast names are bound to person/prop tokens later, during still
+ * assembly.
  */
 export function composeBeatActionFraming(beat?: SceneBeat | null): string {
   if (!beat) return ''
   const direction = beat.beatDirection
 
-  const storedBody = currentStoredActionFraming(beat)
-  const body =
-    storedBody ||
-    direction?.frozenMoment?.trim() ||
-    beat.actionDescription?.trim() ||
-    beat.line?.trim() ||
-    ''
-  if (!body) return ''
-
-  if (!storedBody && beat.storyboardImagePrompt?.trim()) {
-    console.log(
-      `[BeatFraming] Beat ${beat.beatId} — stored prompt is stale for current direction; recomposing`
-    )
-  }
+  const frozen = direction?.frozenMoment?.trim()
+  const described = beat.actionDescription?.trim() || beat.line?.trim() || ''
 
   const parts: string[] = []
-  appendFacet(parts, body)
+  // The frozen moment leads when there is one: it is the single field that
+  // names the instant the frame catches, where the beat's prose usually
+  // describes a span of time. The prose still follows it for texture.
+  appendFacet(parts, frozen || described)
+  if (frozen) appendFacet(parts, described)
   appendFacet(parts, direction?.blocking, 'Blocking')
   appendFacet(parts, direction?.propInteraction, 'Prop handling')
   appendFacet(parts, direction?.gaze, 'Gaze')
 
   // A prop reference is only attached when the frame names it, so a directed
   // key prop that no other facet mentions has to be stated here.
-  const described = parts.join(' ').toLowerCase()
+  const soFar = parts.join(' ').toLowerCase()
   const unmentionedProps = (direction?.keyProps ?? [])
     .map((prop) => prop.trim())
-    .filter((prop) => prop && !described.includes(prop.toLowerCase()))
+    .filter((prop) => prop && !soFar.includes(prop.toLowerCase()))
   if (unmentionedProps.length > 0) {
     parts.push(`Props in frame: ${unmentionedProps.join(', ')}.`)
   }
 
-  // Framing leads the description, but a body read back from a previously
-  // composed frame already opens with it.
+  // Occupancy is stated rather than left to the prose. Prose says "she reaches
+  // for the lever" or says nothing about people at all, and an image model
+  // reading either one is free to decide how many people that means — which is
+  // how a close-up of a pressure gauge came back with a character mid-fall.
+  // The empty list is the load-bearing case: it is the only way to say that a
+  // frame of a gauge or a hatch has nobody standing in it.
+  const cast = direction?.castInFrame
+  if (Array.isArray(cast)) {
+    const named = cast.map((name) => name.trim()).filter(Boolean)
+    parts.push(
+      named.length === 0
+        ? 'No people in frame: no faces, no hands, no silhouettes, no figures.'
+        : `Cast in frame: ${named.join(', ')} — and no other people.`
+    )
+  }
+
+  // Framing leads the description, unless the beat's own prose already names
+  // this shot and would otherwise state it twice.
   const shot = [direction?.shotType?.trim(), direction?.cameraAngle?.trim()]
     .filter(Boolean)
     .join(', ')
-  if (shot && !described.includes(shot.toLowerCase())) {
+  if (shot && !soFar.includes(shot.toLowerCase())) {
     parts.unshift(asSentence(shot))
   }
 
   return parts.join(' ')
 }
 
-/** Action/Framing only — never the style header a lookbook wrap already owns. */
+/**
+ * Action/Framing only — never the style header a lookbook wrap already owns.
+ *
+ * The stored prompt is the last resort rather than the first, and it is only
+ * reachable for a beat carrying no direction facet and no prose of its own —
+ * a legacy beat hydrated from `scene.imagePrompt`. Anything the direction can
+ * describe, it describes.
+ */
 export function actionFramingFromBeat(beat?: SceneBeat | null): string {
   if (!beat) return ''
-  return (
-    composeBeatActionFraming(beat) ||
-    currentStoredActionFraming(beat) ||
-    beat.beatDirection?.frozenMoment?.trim() ||
-    beat.actionDescription?.trim() ||
-    beat.line?.trim() ||
-    ''
-  )
+  return composeBeatActionFraming(beat) || currentStoredActionFraming(beat)
 }
+
+/**
+ * Lead-in for a title or credit beat, which is typography rather than coverage.
+ *
+ * Stated inside the composition section rather than ahead of it, because
+ * everything before the first section header is dropped when the prompt is
+ * parsed back for assembly.
+ */
+export const TITLE_BEAT_ACTION_LEAD_IN =
+  'Abstract cinematic digital composition with NO people and NO character portraits. Centered title typography is the primary subject.'
 
 /**
  * When this beat already has direction or a stored still prompt, compose the
@@ -288,14 +309,19 @@ export function composePersistedBeatStillPrompt(args: {
   sceneIndex: number
   beat?: SceneBeat | null
   artStyleAnchor?: string
+  /** Prepended inside the composition, for title and credit beats. */
+  actionLeadIn?: string
 }): string | undefined {
   const { lookbook, beat } = args
   if (!beat) return undefined
   const hasStoredLook =
     Boolean(beat.beatDirection) || Boolean(beat.storyboardImagePrompt?.trim())
   if (!hasStoredLook) return undefined
-  const actionFraming = actionFramingFromBeat(beat)
-  if (!actionFraming) return undefined
+  const composed = actionFramingFromBeat(beat)
+  if (!composed) return undefined
+  const leadIn = args.actionLeadIn?.trim()
+  const actionFraming =
+    leadIn && !composed.includes(leadIn) ? `${asSentence(leadIn)} ${composed}` : composed
   return composeBeatStillPrompt({
     actionFraming,
     lookbook,
@@ -763,6 +789,18 @@ function mergePlannerDirectionIntoBeat(
   return merged
 }
 
+/**
+ * Write a plan's structured findings onto its beat: role, duration, and any
+ * direction facet the beat did not already state.
+ *
+ * The plan's prose is deliberately not written to `storyboardImagePrompt`. That
+ * field records what was last sent to the image model, and generation stamps it
+ * with the direction it describes. Writing planner wording there in advance
+ * made a hallucinated sentence look like a current, direction-keyed prompt
+ * before any frame existed to justify it. The planner's cinematography reaches
+ * the frame through the direction fields instead, where it is visible and
+ * editable on the scene card.
+ */
 export function applyBeatKeyframePlansToScene(
   scene: Record<string, unknown>,
   plans: BeatKeyframePlan[]
@@ -775,12 +813,6 @@ export function applyBeatKeyframePlansToScene(
     beats[plan.beatIndex] = {
       ...beat,
       beatRole: plan.beatRole,
-      storyboardImagePrompt: plan.prompt,
-      // The plan and the direction it merges are written together, so the
-      // prompt is keyed to the direction as it will be after this write.
-      storyboardImagePromptDirectionKey: beatStillDirectionFingerprint(
-        mergedDirection ?? beat.beatDirection
-      ),
       ...(plan.durationSeconds ? { durationSeconds: plan.durationSeconds } : {}),
       ...(mergedDirection ? { beatDirection: mergedDirection } : {}),
     }

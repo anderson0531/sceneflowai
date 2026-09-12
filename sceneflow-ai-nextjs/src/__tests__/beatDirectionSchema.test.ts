@@ -75,6 +75,26 @@ describe('normalizeBeatDirection', () => {
     expect(d?.keyProps).toEqual(['Journal', 'Core'])
   })
 
+  it('keeps an empty castInFrame, because nobody on camera is a statement', () => {
+    // Every other list collapses to undefined when empty. This one cannot:
+    // "no people in this frame" is the whole point of the field, and dropping
+    // it would put the beat back on the prose heuristics it exists to replace.
+    expect(normalizeBeatDirection({ castInFrame: [] })).toEqual({ castInFrame: [] })
+    expect(normalizeBeatDirection({ castInFrame: ['  ', ''] })).toEqual({ castInFrame: [] })
+    expect(normalizeBeatDirection({ keyProps: [] })).toBeUndefined()
+  })
+
+  it('dedupes castInFrame and accepts the snake_case alias', () => {
+    expect(
+      normalizeBeatDirection({ cast_in_frame: [' Piper Hayes ', 'piper hayes', 'Gideon Croft'] })
+        ?.castInFrame
+    ).toEqual(['Piper Hayes', 'Gideon Croft'])
+  })
+
+  it('leaves castInFrame absent when the beat never mentioned it', () => {
+    expect(normalizeBeatDirection({ shotType: 'Wide Shot' })?.castInFrame).toBeUndefined()
+  })
+
   it('parseLlmBeats attaches normalized beatDirection to each beat', () => {
     const beats = parseLlmBeats([
       {

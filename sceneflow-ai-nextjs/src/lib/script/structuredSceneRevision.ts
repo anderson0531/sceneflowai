@@ -59,6 +59,9 @@ function formatBeatDirectionForPrompt(beat: SceneBeat): string {
   if (d.shotType) parts.push(`shot: ${d.shotType}`)
   if (d.cameraAngle) parts.push(`angle: ${d.cameraAngle}`)
   if (d.cameraMovement) parts.push(`move: ${d.cameraMovement}`)
+  if (Array.isArray(d.castInFrame)) {
+    parts.push(`cast: ${d.castInFrame.length > 0 ? d.castInFrame.join(', ') : 'nobody on camera'}`)
+  }
   if (d.blocking) parts.push(`blocking: ${d.blocking}`)
   if (d.emotion) parts.push(`emotion: ${d.emotion}`)
   if (d.gaze) parts.push(`gaze: ${d.gaze}`)

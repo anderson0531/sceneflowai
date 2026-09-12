@@ -104,6 +104,24 @@ describe('applyBeatKeyframePlansToScene persists planner direction', () => {
     expect(nextBeat.beatDirection?.lightingAccent).toBe('Console glow from below, no fill')
   })
 
+  it('leaves the stored still prompt alone — the planner speaks in fields, not prose', () => {
+    const beat: SceneBeat = {
+      beatId: 'b1',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription: 'Elara enters the control room.',
+      storyboardImagePrompt: 'LAST SENT: Elara in the doorway.',
+      storyboardImagePromptDirectionKey: 'whatever-shipped-with-it',
+    }
+    const scene = { beats: [beat] }
+    const [nextBeat] = getSceneBeats(applyBeatKeyframePlansToScene(scene, [plan]))
+
+    // Writing plan.prompt here stamped a hallucinated sentence as a current,
+    // direction-keyed prompt before any frame existed to justify it.
+    expect(nextBeat.storyboardImagePrompt).toBe('LAST SENT: Elara in the doorway.')
+    expect(nextBeat.storyboardImagePromptDirectionKey).toBe('whatever-shipped-with-it')
+  })
+
   it('does not overwrite an authored lightingAccent', () => {
     const beat: SceneBeat = {
       beatId: 'b1',

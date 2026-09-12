@@ -1261,13 +1261,13 @@ ${shared.narrationSchemaLine}
           "movementIndex": 0,
           "character": "Character Name",
           "line": "[emotion] Dialogue...",
-          "beatDirection": {"shotType": "Medium Close-Up", "frozenMoment": "Speaker mid-word, eyes locked on the listener.", "transition": "CUT"}
+          "beatDirection": {"castInFrame": ["Character Name"], "shotType": "Medium Close-Up", "frozenMoment": "Speaker mid-word, eyes locked on the listener.", "transition": "CUT"}
         },
         {
           "kind": "action",
           "movementIndex": 1,
           "actionDescription": "Reaction shot: character turns toward window, concern on face...",
-          "beatDirection": {"shotType": "Medium Close-Up", "frozenMoment": "Listener's profile against the window light, brow furrowed.", "transition": "CUT"}
+          "beatDirection": {"castInFrame": ["Character Name"], "shotType": "Medium Close-Up", "frozenMoment": "Listener's profile against the window light, brow furrowed.", "transition": "CUT"}
         }
       ],
       "visualDescription": "Camera and lighting notes (or audio focus if podcast)",

@@ -378,6 +378,15 @@ export function beatDirectionFacetSummary(beat: SceneBeat | undefined): string[]
   if (direction.shotType) facets.push(`Shot: ${direction.shotType}`)
   if (direction.cameraAngle) facets.push(`Angle: ${direction.cameraAngle}`)
   if (direction.cameraMovement) facets.push(`Movement: ${direction.cameraMovement}`)
+  if (Array.isArray(direction.castInFrame)) {
+    // Listed even when empty: "nobody on camera" is an edit worth showing in a
+    // diff, and it is the one thing that stops cast being guessed from prose.
+    facets.push(
+      direction.castInFrame.length > 0
+        ? `Cast in frame: ${direction.castInFrame.join(', ')}`
+        : 'Cast in frame: nobody'
+    )
+  }
   if (direction.blocking) facets.push(`Blocking: ${direction.blocking}`)
   if (direction.emotion) facets.push(`Emotion: ${direction.emotion}`)
   if (direction.gaze) facets.push(`Gaze: ${direction.gaze}`)

@@ -39,14 +39,56 @@ describe('beatStillDirectionFingerprint', () => {
     )
   })
 
-  it('lifts the still slice out of a legacy full-direction key', () => {
-    const full = beatDirectionFingerprint(withVideoOnly)
-    const still = beatStillDirectionFingerprint(withVideoOnly)
-    expect(stillDirectionKeyFromStored(full)).toBe(still)
-    expect(storedStillDirectionKeyMatches(full, withVideoOnly)).toBe(true)
-    expect(storedStillDirectionKeyMatches(full, stillDirection)).toBe(true)
+  it('separates an empty cast from an unstated one', () => {
+    // Clearing the cast is a real edit — it turns "guess who is on camera" into
+    // "nobody is" — so a prompt composed before it has to read as stale.
+    const unstated = beatStillDirectionFingerprint(stillDirection)
+    const nobody = beatStillDirectionFingerprint({ ...stillDirection, castInFrame: [] })
+    const someone = beatStillDirectionFingerprint({
+      ...stillDirection,
+      castInFrame: ['Piper Hayes'],
+    })
+
+    expect(nobody).not.toBe(unstated)
+    expect(someone).not.toBe(nobody)
+    expect(storedStillDirectionKeyMatches(unstated, { ...stillDirection, castInFrame: [] })).toBe(
+      false
+    )
+  })
+
+  it('does not care what order the cast was listed in', () => {
     expect(
-      storedStillDirectionKeyMatches(full, { ...withVideoOnly, shotType: 'Insert Shot' })
+      beatStillDirectionFingerprint({ ...stillDirection, castInFrame: ['Piper', 'Gideon'] })
+    ).toBe(beatStillDirectionFingerprint({ ...stillDirection, castInFrame: ['Gideon', 'Piper'] }))
+  })
+
+  it('reads a key from an older composer as stale, whatever shape it was stored in', () => {
+    // This is the whole migration: a prompt composed before the bump recomposes
+    // on the next read, so no pass over every project's stored scenes is needed
+    // to clear wording that named cast the direction never did.
+    const still = beatStillDirectionFingerprint(withVideoOnly)
+    const legacyStill = still.replace(/^still-v\d+\|/, '')
+    const legacyFull = beatDirectionFingerprint(withVideoOnly)
+
+    expect(legacyStill).not.toBe(still)
+    expect(storedStillDirectionKeyMatches(legacyStill, withVideoOnly)).toBe(false)
+    expect(storedStillDirectionKeyMatches(legacyFull, withVideoOnly)).toBe(false)
+  })
+
+  it('settles once recomposed, so a movement-only edit is not a stale still', () => {
+    const still = beatStillDirectionFingerprint(withVideoOnly)
+
+    expect(storedStillDirectionKeyMatches(still, stillDirection)).toBe(true)
+    expect(
+      storedStillDirectionKeyMatches(still, { ...withVideoOnly, shotType: 'Insert Shot' })
     ).toBe(false)
+  })
+
+  it('lifts the still slice out of a key that also carries video facets', () => {
+    const still = beatStillDirectionFingerprint(withVideoOnly)
+    const withVideoFacets = `${still}|cameraMovement=handheld push-in|emotion=resolute`
+
+    expect(stillDirectionKeyFromStored(withVideoFacets)).toBe(still)
+    expect(storedStillDirectionKeyMatches(withVideoFacets, withVideoOnly)).toBe(true)
   })
 })

@@ -77,6 +77,7 @@ import {
   planBeatSequence,
   applyBeatKeyframePlansToScene,
   asBeatRole,
+  composeBeatActionFraming,
   ensureSceneMusicFromDirection,
   isTitleOrCinematicScene,
   roleAllowsTypography,
@@ -227,16 +228,17 @@ export function resolveExpressBeatReferences(args: {
     selection: BeatReferenceSelection,
     fromSavedSelection: boolean
   ): ExpressBeatRefsResolved => {
-    const unioned = unionBeatSelectionWithPromptText(
+    const unioned = unionBeatSelectionWithPromptText({
       selection,
       promptText,
+      beat,
       projectCharacters,
       scene,
       sceneIndex,
       filmTitle,
       objectReferences,
-      locationReferences
-    )
+      locationReferences,
+    })
     return {
       api: mapBeatReferenceSelectionForApi(
         unioned,
@@ -491,13 +493,18 @@ function getPreviousSceneContinuityAnchor(
 }
 
 /**
- * A plan that replays what the beat already had.
+ * A plan that stands in for a planner call the beat does not need.
  *
- * Used on a scoped run so a regen renders the frame the user was looking at
- * rather than the planner's fresh interpretation of the same beat. `beatRole`
- * and `shotType` are inert here — nothing downstream reads them off a reused
- * plan, and the beat keeps its own stored values because
- * `applyBeatKeyframePlansToScene` is not called for it.
+ * Used on a scoped run so a regen renders the beat as it stands rather than the
+ * planner's fresh interpretation of it. `beatRole` and `shotType` are inert
+ * here — nothing downstream reads them off a reused plan, and the beat keeps
+ * its own stored values because `applyBeatKeyframePlansToScene` is not called
+ * for it.
+ *
+ * The prompt is composed from the direction rather than read back from
+ * `storyboardImagePrompt`: it feeds reference matching, and matching a frame's
+ * references against wording the frame is no longer built from is how cast the
+ * beat never mentions kept its place.
  */
 function reusedBeatPlan(beat: SceneBeat, beatIndex: number): BeatKeyframePlan {
   const beatRole = asBeatRole(beat.beatRole) ?? 'progression'
@@ -506,7 +513,7 @@ function reusedBeatPlan(beat: SceneBeat, beatIndex: number): BeatKeyframePlan {
     beatRole,
     shotType: beat.beatDirection?.shotType ?? '',
     frozenMoment: beat.beatDirection?.frozenMoment ?? '',
-    prompt: beat.storyboardImagePrompt ?? '',
+    prompt: composeBeatActionFraming(beat),
     allowTypography: roleAllowsTypography(beat.beatRole),
     ...(beat.durationSeconds ? { durationSeconds: beat.durationSeconds } : {}),
     ...(beat.beatDirection?.lightingAccent
@@ -966,8 +973,10 @@ async function generateSingleBeatImage(
       ...(beat?.beatId ? { beatId: beat.beatId } : {}),
       sceneOverride: scene,
       ...beatRefPayload,
+      // No customPrompt and no intelligence: the route composes the start frame
+      // from this beat's direction. Sending the planner's wording here is what
+      // let prose the direction never asked for reach the image model.
       useAIPrompt: false,
-      ...(beatPlan?.prompt?.trim() ? { customPrompt: beatPlan.prompt } : {}),
       ...(typeof beatPlan?.allowTypography === 'boolean'
         ? { allowTypography: beatPlan.allowTypography }
         : {}),

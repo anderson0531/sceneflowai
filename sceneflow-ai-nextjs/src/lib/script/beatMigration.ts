@@ -103,7 +103,17 @@ function normalizeSource(value: unknown): BeatDirectionSource | undefined {
     : undefined
 }
 
-function normalizeStringArray(value: unknown): string[] | undefined {
+/**
+ * Trim, drop empties and dedupe a list field.
+ *
+ * `keepEmpty` is for fields where an empty list says something the absent field
+ * does not — `castInFrame: []` is "nobody on camera", where a missing
+ * `castInFrame` is a record written before the field existed.
+ */
+function normalizeStringArray(
+  value: unknown,
+  options: { keepEmpty?: boolean } = {}
+): string[] | undefined {
   if (!Array.isArray(value)) return undefined
   const out: string[] = []
   const seen = new Set<string>()
@@ -115,7 +125,8 @@ function normalizeStringArray(value: unknown): string[] | undefined {
     seen.add(key)
     out.push(s)
   }
-  return out.length > 0 ? out : undefined
+  if (out.length > 0) return out
+  return options.keepEmpty ? [] : undefined
 }
 
 /**
@@ -141,6 +152,13 @@ export function normalizeBeatDirection(raw: unknown): BeatDirection | undefined 
     b.cameraMovement ?? b.camera_movement ?? b.movement
   )
   if (cameraMovement) direction.cameraMovement = cameraMovement
+
+  // An empty list here is a statement — "nobody is on camera" — so it survives
+  // where `keyProps: []` would be dropped as an absence.
+  const castInFrame = normalizeStringArray(b.castInFrame ?? b.cast_in_frame ?? b.cast, {
+    keepEmpty: true,
+  })
+  if (castInFrame) direction.castInFrame = castInFrame
 
   const blocking = trimmedString(b.blocking)
   if (blocking) direction.blocking = blocking

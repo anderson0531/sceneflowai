@@ -239,6 +239,8 @@ export const CONTENT_FIELDS: Record<string, FieldKind> = {
   'scenes[].beats[].beatDirection.shotType': 'machine',
   'scenes[].beats[].beatDirection.cameraAngle': 'machine',
   'scenes[].beats[].beatDirection.cameraMovement': 'machine',
+  // Character names, which are never translated.
+  'scenes[].beats[].beatDirection.castInFrame[]': 'opaque',
   'scenes[].beats[].beatDirection.blocking': 'machine',
   'scenes[].beats[].beatDirection.emotion': 'machine',
   'scenes[].beats[].beatDirection.gaze': 'machine',
