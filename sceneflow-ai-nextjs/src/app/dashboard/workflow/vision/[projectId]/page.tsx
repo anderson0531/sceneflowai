@@ -22,6 +22,10 @@ import { upload } from '@vercel/blob/client'
 import debounce from 'lodash/debounce'
 import { waitForUiPaint } from '@/lib/ui/waitForUiPaint'
 import {
+  projectPutWouldExceedBodyLimit,
+  slimProjectPutPayload,
+} from '@/lib/projects/slimProjectPutPayload'
+import {
   applyScenePreservation,
   shouldRegenerateSceneDirection,
   shouldSkipBeatRederivation,
@@ -842,12 +846,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     // Chain onto the previous save so writes are sequential
     const resultPromise = saveQueueRef.current.then(async () => {
       const label = debugLabel || 'unknown'
+      const slimmed = slimProjectPutPayload(body)
+      const payload = JSON.stringify(slimmed)
+      if (projectPutWouldExceedBodyLimit(slimmed)) {
+        console.warn(
+          `[SAVE-QUEUE] ${label} payload is ${(payload.length / 1024 / 1024).toFixed(2)}MB — Vercel will 413 a body over 4.5MB`
+        )
+      }
       console.log(`[SAVE-QUEUE] Starting save: ${label}`)
       try {
         const response = await fetch(`/api/projects/${projectId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
+          body: payload
         })
         console.log(`[SAVE-QUEUE] Completed save: ${label}, status=${response.status}`)
         return response
@@ -944,15 +955,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       script: { ...currentScript.script, scenes: updatedScenes },
     }
 
+    // Script, characters, and the timestamp — nothing else. Production has
+    // its own PATCH, and `visionPhase.scenes` is rebuilt server-side from
+    // the canonical list. Re-sending either of those is what 413'd this
+    // project on a beat-frame save (production 2026-09-12).
     const response = await serializedProjectSave(
       {
         metadata: {
-          ...currentProject.metadata,
           visionPhase: {
-            ...visionPhaseWithoutCharacters,
             characters,
             script: updatedScript,
-            scenes: updatedScenes,
             scriptUpdatedAt: new Date().toISOString(),
           },
         },
@@ -7695,7 +7707,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 migratedSceneCount: setContextMigration.migratedSceneCount,
               })
             }
-            queuePersist({ metadata: finalMetadata }, 'loadProject-migration')
+            queuePersist(
+              { metadata: finalMetadata, persistProduction: true },
+              'loadProject-migration'
+            )
           }
           
           setScript(sanitizeScriptDialogueLines(finalScript))
