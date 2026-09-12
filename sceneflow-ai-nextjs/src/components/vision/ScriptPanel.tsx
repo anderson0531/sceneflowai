@@ -97,6 +97,8 @@ import { Badge } from '@/components/ui/badge'
 import { WorkflowNextStepBanner, type WorkflowState } from './WorkflowNextStepBanner'
 import { buildWorkflowState } from '@/lib/production/sceneProgress'
 import type { AudioRunItem } from '@/lib/audio/audioAgentRunReport'
+import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
+import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
 import { toast } from 'sonner'
 import { ModerationValidateButton } from '@/components/moderation/ModerationValidateButton'
 import { saveAudioFile } from '@/lib/download/saveFile'
@@ -154,7 +156,7 @@ import { BeatCaptionControl } from '@/components/vision/BeatCaptionControl'
 import { SceneTransitionSelect } from '@/components/vision/SceneTransitionSelect'
 import { ExportDialog } from './ExportDialog'
 import { isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
-import { isPreVisStale } from '@/lib/storyboard/preVisSync'
+import { isPreVisStale, sceneHasStalePromptKeys } from '@/lib/storyboard/preVisSync'
 import { getKenBurnsConfig, generateKenBurnsKeyframes, type KenBurnsIntensity } from '@/lib/animation/kenBurns'
 import { SceneDirectionProvider } from '@/contexts/SceneDirectionContext'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
@@ -917,6 +919,21 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     () => getProjectCreditsBudget(budgetMetadata),
     [budgetMetadata]
   )
+
+  /**
+   * What the Frame Agent composes prompts with. A direction edit recomposes the
+   * beat's prompt too, and doing that without the style anchor and lookbook the
+   * agent uses produced two different prompts for the same beat depending on
+   * which path last touched it.
+   */
+  const promptComposition = useMemo(() => {
+    const visionPhase = (projectMetadata as { visionPhase?: Record<string, unknown> } | null)
+      ?.visionPhase
+    return {
+      artStyleAnchor: resolveProjectArtStyle(projectMetadata),
+      lookbook: visionPhase?.lookbook as ProjectLookbook | undefined,
+    }
+  }, [projectMetadata])
 
   const saveProjectBudget = useCallback(
     async (budget: number, budgetParams?: Record<string, unknown>) => {
@@ -3286,6 +3303,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       onAudioRunReport={onAudioRunReport}
                       onVideoRunReport={onVideoRunReport}
                       onVideoRunCancelReady={onVideoRunCancelReady}
+                      promptComposition={promptComposition}
                       onResyncAudioTiming={onResyncAudioTiming}
                       resyncingAudioSceneIndex={resyncingAudioSceneIndex}
                       projectTitle={projectTitle}
@@ -3948,6 +3966,8 @@ interface SceneCardProps {
   onAudioRunReport?: import('@/lib/audio/audioAgentRunReport').AudioAgentRunReporter
   onVideoRunReport?: import('@/lib/video/videoQueueRunReport').VideoQueueRunReporter
   onVideoRunCancelReady?: (cancel: () => void) => void
+  /** Locked art style + lookbook, so a direction edit composes what the agent does. */
+  promptComposition?: { artStyleAnchor?: string; lookbook?: ProjectLookbook }
   onGenerateBeatFrame?: (sceneIdx: number, beatId: string) => Promise<void>
   onGenerateBeatEndFrame?: (sceneIdx: number, beatId: string) => Promise<void>
   onGenerateDialogueFrame?: (sceneIdx: number, dialogueIdx: number) => Promise<void>
@@ -4146,6 +4166,7 @@ function SceneCard({
   onAudioRunReport,
   onVideoRunReport,
   onVideoRunCancelReady,
+  promptComposition,
   onGenerateBeatFrame,
   onGenerateBeatEndFrame,
   onGenerateDialogueFrame,
@@ -4857,7 +4878,14 @@ function SceneCard({
     return {
       directorsChair: isDirectionStale(scene) && !dismissedWarnings.directorsChair,
       storyboardPreViz: isImageStale(scene) && !dismissedWarnings.storyboardPreViz,
-      preVisSync: isPreVisStale(scene) && !dismissedWarnings.preVisSync,
+      // Prose drift is only half of it — beats can also be carrying prompts
+      // keyed to direction the composer no longer produces, which the content
+      // hash cannot see.
+      preVisSync:
+        (isPreVisStale(scene) || sceneHasStalePromptKeys(scene)) &&
+        !dismissedWarnings.preVisSync,
+      /** Prompts drifted but the script did not — a different sentence to say. */
+      preVisPromptsOnly: !isPreVisStale(scene) && sceneHasStalePromptKeys(scene),
     }
   }, [scene, dismissedWarnings])
   
@@ -5899,7 +5927,9 @@ function SceneCard({
                           {directionStale
                             ? 'Script has changed. Re-edit the scene to refresh direction, or continue with the current summary.'
                             : preVisStale
-                              ? 'Script has changed since pre-vis was generated — update frame prompts before regenerating. Beat direction edits update prompts automatically.'
+                              ? stepStaleness.preVisPromptsOnly
+                                ? 'Frame prompts are out of date with this scene’s beat direction. Update them before regenerating frames.'
+                                : 'Script has changed since pre-vis was generated — update frame prompts before regenerating. Beat direction edits update prompts automatically.'
                               : 'Direction has changed. Consider regenerating Frame.'}
                         </span>
                         <div className="ml-auto flex items-center gap-2">
@@ -6761,6 +6791,7 @@ function SceneCard({
                                 scenes={scenes}
                                 script={script}
                                 onScriptChange={onScriptChange}
+                                promptComposition={promptComposition}
                                 className="mt-3"
                               />
                               <BeatCaptionControl
@@ -7145,6 +7176,7 @@ function SceneCard({
                               scenes={scenes}
                               script={script}
                               onScriptChange={onScriptChange}
+                              promptComposition={promptComposition}
                               className="mt-3"
                             />
                             <BeatCaptionControl

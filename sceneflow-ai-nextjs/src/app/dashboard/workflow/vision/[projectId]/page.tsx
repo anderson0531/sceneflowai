@@ -38,7 +38,13 @@ import {
 } from '@/lib/audio/cleanupAudio'
 import { audioSourceFingerprintForSpoken } from '@/lib/audio/beatAudioStale'
 import { resolveStoryboardScenes, totalStoryboardMediaScore } from '@/lib/storyboard/resolveStoryboardScenes'
-import { stampPreVisContentHash, syncPreVisToScript } from '@/lib/storyboard/preVisSync'
+import {
+  isPreVisStale,
+  refreshSceneBeatStillPrompts,
+  sceneHasStalePromptKeys,
+  stampPreVisContentHash,
+  syncPreVisToScript,
+} from '@/lib/storyboard/preVisSync'
 import { getBatchNarrationTtsText } from '@/lib/script/narration'
 import {
   applyBeatsToScene,
@@ -13443,12 +13449,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const scenes = script?.script?.scenes
       if (!scenes?.[sceneIndex]) return
 
-      const { scene: synced, promptsUpdated } = syncPreVisToScript(scenes[sceneIndex], {
-        sceneNumber: sceneIndex + 1,
-        totalScenes: scenes.length,
-        filmTitle: project?.title,
-        artStyle: lockedArtStyle,
-      })
+      /**
+       * Prompts drifting is not the script drifting. A full sync clears frames,
+       * cleans up audio and drops the scene's Director's Console segments —
+       * right when the prose moved, wrong when all that happened is that the
+       * composer moved on from the wording a beat is carrying.
+       */
+      const promptsOnly = !isPreVisStale(scenes[sceneIndex])
+
+      const { scene: synced, promptsUpdated } = promptsOnly
+        ? refreshSceneBeatStillPrompts(scenes[sceneIndex], {
+            sceneNumber: sceneIndex + 1,
+            artStyle: lockedArtStyle,
+          })
+        : syncPreVisToScript(scenes[sceneIndex], {
+            sceneNumber: sceneIndex + 1,
+            totalScenes: scenes.length,
+            filmTitle: project?.title,
+            artStyle: lockedArtStyle,
+          })
+
+      if (promptsOnly && promptsUpdated === 0) {
+        toast.info('Frame prompts are already up to date')
+        return
+      }
 
       const updatedScenes = [...scenes]
       updatedScenes[sceneIndex] = synced
@@ -13466,7 +13490,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       toast.success(
-        `Updated ${promptsUpdated} frame prompt${promptsUpdated === 1 ? '' : 's'}. Run agents to regenerate images and audio.`
+        promptsOnly
+          ? `Updated ${promptsUpdated} frame prompt${promptsUpdated === 1 ? '' : 's'}. Existing frames are kept — re-render the ones you want.`
+          : `Updated ${promptsUpdated} frame prompt${promptsUpdated === 1 ? '' : 's'}. Run agents to regenerate images and audio.`
       )
     },
     [script, project?.title, lockedArtStyle, persistVisionScriptScenes]
