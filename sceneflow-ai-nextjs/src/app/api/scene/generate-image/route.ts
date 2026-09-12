@@ -14,12 +14,14 @@ import {
   buildSceneImageNegativePrompt,
   ORIGINAL_ADULT_SUBJECT_REQUIREMENT,
 } from '@/lib/imagen/sceneImageNegativePrompt'
+import { emitProviderStillPrompt } from '@/lib/imagen/providerStillPromptEmit'
 import {
   buildSceneImageDiptychLabel,
   buildSceneImageIdentityLabel,
   buildSceneImageLocationLabel,
   buildSceneImagePropLabel,
   buildSceneImageWardrobeLabel,
+  providerCaptionForAttachedRef,
 } from '@/lib/imagen/sceneImageReferenceLabels'
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
 import { waitForGCSURIs, checkGCSURIAccessibility } from '@/lib/storage/gcsAccessibility'
@@ -3038,18 +3040,38 @@ export async function POST(req: NextRequest) {
             }
           }
 
+          const providerGeminiPrompt = emitProviderStillPrompt(geminiPrompt, {
+            refs: stillRefs,
+            imageBindings: selectedReferenceImages
+              .filter((ref): ref is typeof ref & { sendIndex: number } => ref.sendIndex != null)
+              .map((ref) => ({
+                sendIndex: ref.sendIndex,
+                name:
+                  ref.characterName ||
+                  ref.propName ||
+                  ref.locationName ||
+                  'reference',
+              })),
+            shotType: beatForEmotion?.beatDirection?.shotType || effectiveShotType,
+          })
+          const providerReferenceImages = selectedReferenceImages.map((ref) => ({
+            imageUrl: ref.imageUrl,
+            name: providerCaptionForAttachedRef(ref),
+          }))
+
           const vertexResult = await generateImageWithVertexKlingFallback({
-            prompt: geminiPrompt,
+            prompt: providerGeminiPrompt,
             aspectRatio: '16:9',
             imageSize: effectiveImageSize,
-            referenceImages: allReferenceImages,
+            referenceImages: providerReferenceImages,
             ...(isBeatFrame ? {} : { negativePrompt: finalNegativePrompt }),
             ...(effectiveImageTier ? { modelTier: effectiveImageTier } : {}),
             failFastOnRateLimit: !!skipLikenessValidation,
-            requireAllReferenceImages: allReferenceImages.length > 0,
+            requireAllReferenceImages: providerReferenceImages.length > 0,
             policyMaxAttempts: skipLikenessValidation ? 1 : undefined,
             skipProductionStillFraming: isBeatFrame,
             deadlineAt: imageDeadlineAt,
+            plainReferenceCaptions: true,
           })
 
           base64Image = vertexResult.imageBase64
@@ -3077,10 +3099,24 @@ export async function POST(req: NextRequest) {
               })
             : optimizedPrompt
           promptForResponse = imagenStill
+          const providerImagenStill = isBeatFrame
+            ? emitProviderStillPrompt(imagenStill, {
+                refs: characterReferencesForImages
+                  .filter((ref: { promptToken?: string; name?: string }) => ref.promptToken && ref.name)
+                  .map((ref: CharacterReferenceForTraits & { promptToken: string; name: string }) => ({
+                    kind: 'person' as const,
+                    token: ref.promptToken,
+                    name: ref.name,
+                    roleLabel: 'identity',
+                    identityTraits: buildIdentityTraitsClause(ref),
+                  })),
+                shotType: beatForEmotion?.beatDirection?.shotType || effectiveShotType,
+              })
+            : imagenStill
           const effectivePersonGeneration = effectiveExcludeCharacters
             ? 'dont_allow'
             : personGeneration || 'allow_adult'
-          base64Image = await generateImageWithGemini(imagenStill, {
+          base64Image = await generateImageWithGemini(providerImagenStill, {
             aspectRatio: '16:9',
             numberOfImages: 1,
             imageSize: effectiveImageSize,

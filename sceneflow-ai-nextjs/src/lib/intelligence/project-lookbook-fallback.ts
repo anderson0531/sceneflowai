@@ -12,6 +12,10 @@
  */
 
 import {
+  dedupeLightingCues,
+  reconcileLensWithShotType,
+} from '@/lib/imagen/providerStillPromptEmit'
+import {
   extractDirectionMetadata,
   type FilmContext,
 } from '@/lib/intelligence/scene-direction-metadata'
@@ -290,6 +294,8 @@ export interface LookbookStyleAnchorOverrides {
   beatLighting?: string
   /** Per-beat lens choice inside the film's lens family. */
   beatLens?: string
+  /** Shot scale — used to drop incompatible insert/wide lenses from this frame. */
+  beatShotType?: string
 }
 
 const PHOTOREAL_PATTERN = /photorealistic|live-action|live action|photographed on real camera/i
@@ -311,11 +317,16 @@ export function formatLookbookStyleAnchor(
       ? overrides.artStyleAnchor
       : undefined
   )
-  const lightingCamera = joinCues(
-    lookbook.lightingGrammar,
-    overrides.beatLighting,
-    lookbook.lensAndFormat,
-    overrides.beatLens
+  const lightingCamera = dedupeLightingCues(
+    reconcileLensWithShotType(
+      joinCues(
+        lookbook.lightingGrammar,
+        overrides.beatLighting,
+        lookbook.lensAndFormat,
+        overrides.beatLens
+      ),
+      overrides.beatShotType
+    )
   )
   const paletteGrade = joinCues(
     lookbook.colorPalette,

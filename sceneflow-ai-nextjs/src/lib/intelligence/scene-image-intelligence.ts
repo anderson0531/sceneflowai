@@ -1063,6 +1063,7 @@ export async function generateSceneImagePrompt(
         lookbook: request.lookbook,
         sceneIndex: Math.max(0, (request.sceneNumber || 1) - 1),
         lighting: request.beatDirection?.lightingAccent,
+        shotType: request.beatDirection?.shotType,
       })
     }
     

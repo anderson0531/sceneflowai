@@ -25,13 +25,10 @@ export const SCENE_CHARACTER_HEADSHOT_MODEL_TIER = 'designer' as const
 export const SCENE_CHARACTER_HEADSHOT_ANCHOR =
   'Photorealistic cinematic 16:9 character wardrobe reference diptych for scene beat consistency.'
 
-/** How beat frame generation should consume a wardrobe diptych reference image. */
-export const WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION =
-  'CRITICAL — WARDROBE CHARACTER REFERENCE (diptych): ' +
-  'LEFT half = identity source of truth (face, hair, skin tone, age, ethnicity, makeup, injuries). ' +
-  'RIGHT half = wardrobe source of truth (garments, footwear, accessories, fit, fabric, color). ' +
-  'NEVER derive face or identity from the RIGHT panel. NEVER derive clothing or outfit from the LEFT panel. ' +
-  'Render one seamless cinematic scene — do NOT reproduce the two-panel split, diptych layout, or reference sheet collage.'
+export {
+  WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION,
+  buildWardrobeDiptychCharacterConsumptionLine,
+} from '@/lib/character/wardrobeDiptychConsumption'
 
 /** Negative terms to prevent beat frames from reproducing the reference diptych layout. */
 export const DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT =
@@ -44,14 +41,6 @@ export const DIPTYCH_GENERATION_NEGATIVE_PROMPT =
 /** Reference image label for beat frame attachment. */
 export { buildWardrobeDiptychReferenceLabel } from '@/lib/character/characterReferenceAssembly'
 
-/** Per-character consumption line appended to beat frame prompts. */
-export function buildWardrobeDiptychCharacterConsumptionLine(
-  characterName: string,
-  personTokenIndex?: number
-): string {
-  const personPart = personTokenIndex != null ? `person [${personTokenIndex}]` : characterName
-  return `${characterName} (${personPart}): use LEFT panel for face/identity only, RIGHT panel for outfit/wardrobe only — outfit applies to ${personPart} only.`
-}
 /** Negative terms targeting physics violations and object hallucinations. */
 export const PHYSICS_HALLUCINATION_NEGATIVE_PROMPT =
   'floating objects, missing limbs, physically impossible anatomy, multiple limbs, floating chairs, sitting without a chair, chairs on tables, hallucinated objects, impossible physics, mutated bodies, deformed furniture, objects defying gravity, clipping geometry'
