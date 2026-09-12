@@ -55,7 +55,15 @@ import {
   type SceneImageIntelligenceResult,
 } from '@/lib/intelligence/scene-image-intelligence'
 import { shouldUseCustomPromptOverride } from '@/lib/vision/preVisDirectGenerate'
-import { ensureProjectLookbook, getSceneLookNote } from '@/lib/intelligence/project-lookbook'
+import {
+  ensureProjectLookbook,
+  getSceneLookNote,
+  type ProjectLookbook,
+} from '@/lib/intelligence/project-lookbook'
+import {
+  CHARACTER_LIKENESS_MISMATCH_CODE,
+  CHARACTER_LIKENESS_MISMATCH_MESSAGE,
+} from '@/lib/sceneGeneration/expressImageErrors'
 import {
   composePersistedBeatStillPrompt,
   TITLE_BEAT_ACTION_LEAD_IN,
@@ -609,6 +617,8 @@ export async function POST(req: NextRequest) {
       /** Express draft beat frames — eligible for the flash image model. */
       animaticDraft = false,
       skipLikenessValidation = false,
+      /** Pre-resolved look from an Express run — skips per-beat re-derivation. */
+      lookbook: passedLookbook,
       generationMode = 'default',
       includeWardrobeReferenceImages = true,
       includeWardrobeDiptych = true,
@@ -1803,10 +1813,12 @@ export async function POST(req: NextRequest) {
     // neighbours. After any Express run this is a free read of the persisted
     // look; only a project that never ran Express pays for a derivation, so it
     // is read only when a branch that composes a prompt will use it.
-    const projectLookbook =
-      project && (beatForPromptCompose || runsSceneIntelligence)
-        ? await ensureProjectLookbook(project, artStyle)
-        : undefined
+    const projectLookbook: ProjectLookbook | undefined =
+      passedLookbook && typeof passedLookbook === 'object' && passedLookbook.masterStyle
+        ? (passedLookbook as ProjectLookbook)
+        : project && (beatForPromptCompose || runsSceneIntelligence)
+          ? await ensureProjectLookbook(project, artStyle)
+          : undefined
     const persistedBeatPrompt = beatForPromptCompose
       ? composePersistedBeatStillPrompt({
           lookbook: projectLookbook,
@@ -2160,6 +2172,15 @@ export async function POST(req: NextRequest) {
     // Filter for characters that have reference images
     const charactersWithImages = characterObjects.filter((c: any) => c.referenceImage)
     const charactersWithoutImages = characterObjects.filter((c: any) => !c.referenceImage)
+
+    // Express passes skipLikenessValidation for throughput, but a talent beat with
+    // identity refs still needs a likeness gate — that is where credits were leaking.
+    const expressBeatLikenessEligible =
+      skipLikenessValidation &&
+      isBeatFrame &&
+      !effectiveExcludeCharacters &&
+      beatKindForIntelligence !== 'narration' &&
+      charactersWithImages.length > 0
     
     console.log(`[Scene Image] Character reference status:`, {
       totalCharacters: characterObjects.length,
@@ -3024,7 +3045,7 @@ export async function POST(req: NextRequest) {
             referenceImages: allReferenceImages,
             ...(isBeatFrame ? {} : { negativePrompt: finalNegativePrompt }),
             ...(effectiveImageTier ? { modelTier: effectiveImageTier } : {}),
-            failFastIdentityRefs: !!skipLikenessValidation,
+            failFastOnRateLimit: !!skipLikenessValidation,
             requireAllReferenceImages: allReferenceImages.length > 0,
             policyMaxAttempts: skipLikenessValidation ? 1 : undefined,
             skipProductionStillFraming: isBeatFrame,
@@ -3178,7 +3199,12 @@ export async function POST(req: NextRequest) {
     const validationShotType = beatForEmotion?.beatDirection?.shotType || effectiveShotType
 
     const validationStart = Date.now()
-    if (!skipLikenessValidation && characterObjects.length > 0 && hasBudgetForValidation) {
+    const shouldValidateCharacterLikeness =
+      characterObjects.length > 0 &&
+      hasBudgetForValidation &&
+      (!skipLikenessValidation || expressBeatLikenessEligible)
+
+    if (shouldValidateCharacterLikeness) {
       console.log('[Scene Image] Validating character likeness...')
 
       const featuredCharacters = resolveFeaturedCharactersForValidation({
@@ -3247,9 +3273,7 @@ export async function POST(req: NextRequest) {
     if (
       likenessRound === 0 &&
       isGenuineLikenessFailure(validation) &&
-      usedAIIntelligence &&
-      sceneImageIntelligenceRequest &&
-      !skipLikenessValidation
+      (!skipLikenessValidation || expressBeatLikenessEligible)
     ) {
       if (canStartLikenessRetry(remainingBudgetMs(), round0CostMs)) {
         firstLikenessRound = {
@@ -3291,6 +3315,24 @@ export async function POST(req: NextRequest) {
 
     shouldLikenessAutoRetry = false
     } while (shouldLikenessAutoRetry)
+
+    if (
+      expressBeatLikenessEligible &&
+      likenessRound >= 1 &&
+      isGenuineLikenessFailure(validation)
+    ) {
+      console.warn(
+        '[Scene Image] Express beat likeness failed after identity escalation — failing uncharged'
+      )
+      return NextResponse.json(
+        {
+          success: false,
+          error: CHARACTER_LIKENESS_MISMATCH_MESSAGE,
+          code: CHARACTER_LIKENESS_MISMATCH_CODE,
+        },
+        { status: 422 }
+      )
+    }
 
     // Calculate workflow sync hashes for tracking staleness
     const basedOnDirectionHash = sceneData ? generateDirectionHash(sceneData) : undefined

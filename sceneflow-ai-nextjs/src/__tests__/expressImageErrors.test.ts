@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  CHARACTER_LIKENESS_MISMATCH_CODE,
+  CHARACTER_LIKENESS_MISMATCH_MESSAGE,
+  isCharacterLikenessMismatchError,
   isExpressBeatPoolRetryable,
   isExpressImageCanaryAbortError,
   isExpressImageRateLimitError,
@@ -154,6 +157,26 @@ describe('isExpressBeatPoolRetryable', () => {
         err('Vertex Gemini Image error 429: identity-ref rate limit exhausted after 1 attempt(s)')
       )
     ).toBe(true)
+  })
+})
+
+describe('character likeness mismatch', () => {
+  it('is neither transient nor canary', () => {
+    const likenessErr = err(CHARACTER_LIKENESS_MISMATCH_MESSAGE, 422)
+    ;(likenessErr as Error & { code?: string }).code = CHARACTER_LIKENESS_MISMATCH_CODE
+
+    expect(isCharacterLikenessMismatchError(likenessErr)).toBe(true)
+    expect(isTransientExpressImageError(likenessErr)).toBe(false)
+    expect(isExpressImageCanaryAbortError(likenessErr)).toBe(false)
+    expect(isExpressBeatPoolRetryable(likenessErr)).toBe(false)
+  })
+
+  it('maps to a regenerable user message', () => {
+    expect(
+      formatExpressImageErrorForUser(
+        err(CHARACTER_LIKENESS_MISMATCH_MESSAGE, 422)
+      )
+    ).toBe(CHARACTER_LIKENESS_MISMATCH_MESSAGE)
   })
 })
 

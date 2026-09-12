@@ -983,6 +983,7 @@ async function generateSingleBeatImage(
       modelTier: imageParams.modelTier,
       animaticDraft: imageParams.animaticDraft,
       skipLikenessValidation: true,
+      ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
     })
   })
   await persistBeatFrame(scene, beatIdx, result, imageParams.storyboardQuality)
@@ -1075,6 +1076,7 @@ async function generateSingleBeatEndImage(
       modelTier: imageParams.modelTier,
       animaticDraft: imageParams.animaticDraft,
       skipLikenessValidation: imageParams.skipLikenessValidation,
+      ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
     })
   })
 
@@ -1680,6 +1682,7 @@ async function runImagePhase(
             modelTier: imageParams.modelTier,
             skipLikenessValidation: true,
             useAIPrompt: false,
+            ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
           })
           scene.imageUrl = result.imageUrl
           lastImageUrl = result.imageUrl
@@ -1726,6 +1729,7 @@ async function runImagePhase(
             modelTier: imageParams.modelTier,
             skipLikenessValidation: true,
             useAIPrompt: false,
+            ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
           })
           persistDialogueFrame(dialogueIdx, result, imageParams.storyboardQuality)
           lastImageUrl = result.imageUrl

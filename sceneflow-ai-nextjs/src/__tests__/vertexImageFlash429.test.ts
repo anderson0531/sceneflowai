@@ -4,8 +4,12 @@ vi.mock('@/lib/vertexai/client', () => ({
   getVertexAIAuthToken: vi.fn().mockResolvedValue('test-token'),
 }))
 
-import { generateVertexGeminiImage } from '@/lib/vertexai/vertexImageClient'
+import {
+  generateVertexGeminiImage,
+  IDENTITY_REF_RATE_LIMIT_EXHAUSTED,
+} from '@/lib/vertexai/vertexImageClient'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
+import { isExpressBeatPoolRetryable } from '@/lib/sceneGeneration/expressImageErrors'
 
 function jsonResponse(body: unknown, init?: ResponseInit): Response {
   return new Response(JSON.stringify(body), {
@@ -132,5 +136,58 @@ describe('flash 429 backoff uses the long ladder', () => {
     expect(delays).not.toContain(2_000)
     expect(delays).not.toContain(4_000)
     expect(delays).not.toContain(8_000)
+  })
+})
+
+describe('failFastOnRateLimit surrenders the lane on the first 429', () => {
+  beforeEach(() => {
+    process.env.VERTEX_PROJECT_ID = 'sceneflowai-test'
+    delete process.env.VERTEX_GEMINI_IMAGE_PRO_MODEL
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+  })
+
+  it('throws on the first eco 429 without sleeping', async () => {
+    const delays = captureBackoffDelays()
+    const fetchMock = vi.fn().mockResolvedValueOnce(rateLimitResponse())
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      generateVertexGeminiImage({
+        prompt: 'pressure gauge needle at redline',
+        modelTier: 'eco',
+        failFastOnRateLimit: true,
+        referenceImages: [{ base64Image: 'aW1hZ2U=', mimeType: 'image/jpeg', name: 'Elara' }],
+      })
+    ).rejects.toThrow(/after 1 attempt\(s\)/)
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(delays).toEqual([])
+  })
+
+  it('marks identity-ref fail-fast 429s as pool-retryable', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(rateLimitResponse())
+    vi.stubGlobal('fetch', fetchMock)
+
+    let thrown: unknown
+    try {
+      await generateVertexGeminiImage({
+        prompt: 'pressure gauge needle at redline',
+        modelTier: 'eco',
+        failFastOnRateLimit: true,
+        referenceImages: [{ base64Image: 'aW1hZ2U=', mimeType: 'image/jpeg', name: 'Elara' }],
+      })
+    } catch (err) {
+      thrown = err
+    }
+
+    expect(String((thrown as Error).message)).toContain(IDENTITY_REF_RATE_LIMIT_EXHAUSTED)
+    expect(isExpressBeatPoolRetryable(thrown)).toBe(true)
   })
 })

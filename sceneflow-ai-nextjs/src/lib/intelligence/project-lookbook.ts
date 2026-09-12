@@ -26,6 +26,7 @@ import {
   type ProjectLookbookSceneLook,
 } from '@/lib/intelligence/project-lookbook-fallback'
 import type { FilmContext } from '@/lib/intelligence/scene-direction-metadata'
+import { safeParseJsonFromText } from '@/lib/safeJson'
 
 export type {
   LookbookSceneSummary,
@@ -141,7 +142,7 @@ export async function deriveProjectLookbook(
       cleanText = cleanText.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '')
     }
 
-    const parsed = JSON.parse(cleanText) as Record<string, unknown>
+    const parsed = safeParseJsonFromText(cleanText) as Record<string, unknown>
     const core = validateLookbook(parsed)
     if (!core) {
       console.warn('[ProjectLookbook] Incomplete AI look, using deterministic fallback')
@@ -236,6 +237,11 @@ export async function ensureProjectLookbook(
 
   const lookbook = await deriveProjectLookbook(request)
   setCachedLookbook(fingerprint, lookbook)
+  if (project) {
+    if (!project.metadata) project.metadata = {}
+    if (!project.metadata.visionPhase) project.metadata.visionPhase = {}
+    project.metadata.visionPhase.lookbook = lookbook
+  }
   return lookbook
 }
 
