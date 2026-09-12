@@ -230,15 +230,62 @@ export interface CharacterRefForPromptFilter {
   identityReferenceId?: number
 }
 
+function escapeForRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/**
+ * Does the composition actually place this character in the frame?
+ *
+ * The subject template states outright that the image is *about* the people it
+ * lists, so naming cast the body never mentions does more than attach an unused
+ * reference — it instructs the model to put that person on camera. An
+ * empty-room beat came back with two faces in it that way.
+ *
+ * Matched on the bound token first, then the written name, since token binding
+ * happens at different points depending on the caller.
+ */
+export function promptPlacesCharacter(
+  promptBody: string,
+  ref: { name?: string; firstName?: string; promptToken?: string; linkingDescription?: string }
+): boolean {
+  const body = (promptBody || '').toLowerCase()
+  if (!body) return false
+
+  const token = ref.promptToken?.trim()
+  if (token && /\[\s*\d+\s*\]/.test(token) && body.includes(token.toLowerCase())) {
+    return true
+  }
+
+  for (const candidate of [ref.name, ref.firstName]) {
+    const name = candidate?.trim()
+    if (!name) continue
+    if (new RegExp(`\\b${escapeForRegExp(name)}\\b`, 'i').test(promptBody)) return true
+  }
+
+  // A character with no identity reference is referred to by its linking
+  // description, which is the only handle the prompt has on them.
+  const linking = ref.linkingDescription?.trim()
+  if (linking && !/\[\s*\d+\s*\]/.test(linking) && body.includes(linking.toLowerCase())) {
+    return true
+  }
+
+  return false
+}
+
 /**
  * Keep only characters whose person [N] token appears in the prompt body and/or
- * whose name was selected by AI intelligence. Falls back to the full set when
- * the filter would drop every character (avoids empty subject binding).
+ * whose name was selected by AI intelligence.
+ *
+ * `allowEmpty` callers (beat frames) take an empty result at face value: a beat
+ * that puts nobody on camera should send no identity references at all. Other
+ * callers fall back to the full set to avoid empty subject binding.
  */
 export function filterCharactersForPromptRefs<T extends CharacterRefForPromptFilter>(
   characterRefs: T[],
   promptBody: string,
-  selectedCharacterNames?: string[]
+  selectedCharacterNames?: string[],
+  options?: { allowEmpty?: boolean }
 ): T[] {
   if (characterRefs.length === 0) return characterRefs
 
@@ -266,6 +313,7 @@ export function filterCharactersForPromptRefs<T extends CharacterRefForPromptFil
     return false
   })
 
+  if (filtered.length === 0 && options?.allowEmpty) return filtered
   return filtered.length > 0 ? filtered : characterRefs
 }
 
@@ -868,6 +916,23 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
         }
       })
     
+    // Only cast the composition actually places earns a subject introduction,
+    // a wardrobe clause, and a hair lock. The template below asserts the frame
+    // is about whoever it lists, so an unplaced character is not a spare
+    // reference — it is an instruction to add a person the beat never had.
+    const placedCharacterRefs = characterRefs.filter((ref) =>
+      promptPlacesCharacter(cleanedAction, ref)
+    )
+    if (placedCharacterRefs.length !== characterRefs.length) {
+      const unplaced = characterRefs
+        .filter((ref) => !placedCharacterRefs.includes(ref))
+        .map((ref) => ref.name)
+      console.log(
+        `[Prompt Optimizer] Composition does not place ${unplaced.length} character(s); no subject introduction:`,
+        unplaced.join(', ')
+      )
+    }
+
     const appendHairLockClause = (
       clause: string,
       ref: { hairAnchor?: string; hairDescription?: string },
@@ -886,7 +951,7 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
     // - With reference image: use person [N] token; face/body from image
     // - Hairstyle lock text only when hairAnchor/hairDescription is explicitly set (injury/wide-shot cases)
     const subjectWardrobeDescriptions: string[] = []
-    characterRefs.forEach(ref => {
+    placedCharacterRefs.forEach(ref => {
       const fullRef = params.characterReferences!.find((r) => r.name === ref.name)
       const token = ref.promptToken || ref.linkingDescription
       const hasReferenceImage = !!(token?.includes('[') && token?.includes(']'))
@@ -945,7 +1010,7 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
 
     const compositionLock = buildHairCompositionLock(
       cleanedAction,
-      characterRefs
+      placedCharacterRefs
         .map((ref) => ref.promptToken || ref.linkingDescription)
         .filter((token): token is string => !!token)
     )
@@ -954,7 +1019,7 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
     }
     
     // PHASE 3: Replace character names with reference tokens
-    characterRefs.forEach(ref => {
+    placedCharacterRefs.forEach(ref => {
       const token = ref.promptToken || ref.linkingDescription
       const fullNamePattern = new RegExp(`\\b${ref.name}\\b`, 'gi')
       promptScene = promptScene.replace(fullNamePattern, token)
@@ -973,10 +1038,17 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
     let prompt = ''
     
     // Build the subject introductions for Google's template — reference-first tokens only
-    const subjectIntroductions = characterRefs.map(ref => ref.promptToken || ref.linkingDescription).join(' and ')
+    const subjectIntroductions = placedCharacterRefs
+      .map(ref => ref.promptToken || ref.linkingDescription)
+      .join(' and ')
     
-    // Use Google's recommended template structure for subject customization
-    prompt += `Create an image about ${subjectIntroductions} to match the description: `
+    // Use Google's recommended template structure for subject customization.
+    // Skipped when the composition places nobody: declaring the frame to be
+    // "about" absent cast is what put uninvolved characters into object and
+    // environment beats.
+    if (subjectIntroductions) {
+      prompt += `Create an image about ${subjectIntroductions} to match the description: `
+    }
     
     // Add explicit instruction to avoid UI overlays but allow in-world signage
     prompt += 'Cinematic frame without dialogue captions, subtitles, or UI overlays. In-world signage and text visible in the scene environment is acceptable. '
@@ -1015,10 +1087,16 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
     // Add final reminder - specific about what to avoid
     prompt += ' No dialogue captions, no subtitles, no watermarks.'
     
-    console.log('[Prompt Optimizer] Using TEXT-MATCHING LINK MODE with', characterRefs.length, 'reference(s)')
+    console.log(
+      '[Prompt Optimizer] Using TEXT-MATCHING LINK MODE with',
+      placedCharacterRefs.length,
+      'of',
+      characterRefs.length,
+      'reference(s) placed by the composition'
+    )
     console.log(`[Prompt Optimizer] Scene: ${params.sceneNumber || 'unknown'}`)
     console.log('[Prompt Optimizer] Linking descriptions (must match subjectDescription):')
-    characterRefs.forEach(r => {
+    placedCharacterRefs.forEach(r => {
       console.log(`  - ${r.name} -> "${r.linkingDescription}" | Wardrobe: ${r.defaultWardrobe || 'none'} (scene ${params.sceneNumber || 'N/A'})`)
     })
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
