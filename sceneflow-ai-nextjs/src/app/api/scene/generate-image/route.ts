@@ -126,6 +126,7 @@ import {
   mergeBeatFrameNegativePrompt,
 } from '@/lib/character/sceneCharacterHeadshot'
 import {
+  attributeBeatExpression,
   buildBeatDirectedEmotionPromptSection,
   buildSceneAppearanceContinuityPromptSection,
   formatDirectedEmotionLine,
@@ -231,6 +232,8 @@ function appendSceneImagePromptModifiers(
     characterReferences: any[]
     isBeatFrame: boolean
     beatDirectedEmotion?: string
+    /** Whose face a beat-level expression belongs on, in a multi-subject frame. */
+    beatSpeakerName?: string
     beatForEmotion?: { line?: string } | null
   }
 ): string {
@@ -297,10 +300,23 @@ function appendSceneImagePromptModifiers(
       !optimizedPrompt.includes('Facial expression:') &&
       !optimizedPrompt.includes('Directed emotion:')
     ) {
-      optimizedPrompt = joinPromptBlocks(
-        optimizedPrompt,
-        formatDirectedEmotionLine(ctx.beatDirectedEmotion)
-      )
+      const expression = attributeBeatExpression({
+        emotion: ctx.beatDirectedEmotion,
+        placedSubjects: characterReferences,
+        speakerName: ctx.beatSpeakerName,
+      })
+      if (expression.line) {
+        optimizedPrompt = joinPromptBlocks(optimizedPrompt, expression.line)
+        if (expression.attributedTo) {
+          console.log(
+            `[Scene Image] Beat expression "${ctx.beatDirectedEmotion}" bound to ${expression.attributedTo} — ${characterReferences.length} subjects in frame`
+          )
+        }
+      } else if (expression.dropped === 'ambiguous-subject') {
+        console.warn(
+          `[Scene Image] Beat expression "${ctx.beatDirectedEmotion}" names no speaker among ${characterReferences.length} placed subjects — dropped rather than letting the model pick a face`
+        )
+      }
     }
 
     const continuitySection = buildSceneAppearanceContinuityPromptSection(
@@ -2155,6 +2171,7 @@ export async function POST(req: NextRequest) {
       characterReferences,
       isBeatFrame,
       beatDirectedEmotion,
+      beatSpeakerName,
       beatForEmotion,
     })
 
@@ -2289,6 +2306,7 @@ export async function POST(req: NextRequest) {
       characterReferences,
       isBeatFrame,
       beatDirectedEmotion,
+      beatSpeakerName,
       beatForEmotion,
     }
 

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
+  attributeBeatExpression,
   buildBeatDirectedEmotionPromptSection,
   buildSceneAppearanceContinuityPromptSection,
   extractSceneStateFromAppearanceNotes,
@@ -116,6 +117,61 @@ describe('beat directed emotion prompt helpers', () => {
     )
   })
 
+  it('leaves a single subject to take the expression unnamed', () => {
+    expect(
+      attributeBeatExpression({
+        emotion: 'quiet dread',
+        placedSubjects: [{ name: 'Piper Hayes', promptToken: 'person [1]' }],
+        speakerName: 'Piper Hayes',
+      })
+    ).toEqual({ line: 'Facial expression: quiet dread.' })
+  })
+
+  it('binds the expression to the speaker when the frame holds two faces', () => {
+    const attributed = attributeBeatExpression({
+      emotion: 'quiet dread',
+      placedSubjects: [
+        { name: 'Piper Hayes', promptToken: 'person [1]' },
+        { name: 'Professor Gideon Croft', promptToken: 'person [2]' },
+      ],
+      speakerName: 'Gideon',
+    })
+
+    expect(attributed.line).toBe(
+      'Facial expression (person [2] — Professor Gideon Croft): quiet dread.'
+    )
+    expect(attributed.attributedTo).toBe('Professor Gideon Croft')
+  })
+
+  it('drops an expression no placed subject owns rather than guessing a face', () => {
+    expect(
+      attributeBeatExpression({
+        emotion: 'quiet dread',
+        placedSubjects: [
+          { name: 'Piper Hayes', promptToken: 'person [1]' },
+          { name: 'Professor Gideon Croft', promptToken: 'person [2]' },
+        ],
+      })
+    ).toEqual({ line: '', dropped: 'ambiguous-subject' })
+
+    expect(
+      attributeBeatExpression({
+        emotion: 'quiet dread',
+        placedSubjects: [
+          { name: 'Piper Hayes', promptToken: 'person [1]' },
+          { name: 'Professor Gideon Croft', promptToken: 'person [2]' },
+        ],
+        speakerName: 'A voice on the radio',
+      })
+    ).toEqual({ line: '', dropped: 'ambiguous-subject' })
+  })
+
+  it('directs no expression at a frame that places nobody', () => {
+    expect(
+      attributeBeatExpression({ emotion: 'quiet dread', placedSubjects: [] })
+    ).toEqual({ line: '' })
+  })
+
   it('resolveBeatDirectedEmotion reads action before appearance-only context', () => {
     expect(
       resolveBeatDirectedEmotion({
@@ -157,6 +213,10 @@ describe('generate-image beat frame acting and wardrobe regression guard', () =>
     expect(source).toMatch(/Storyboard dialogue frame/)
     expect(source).toMatch(/Storyboard silent action frame/)
     expect(source).toMatch(/buildSceneAppearanceContinuityPromptSection/)
+    // A two-shot's expression is attributed to the speaker, never left for the
+    // model to hang on whichever face it prefers.
+    expect(source).toMatch(/attributeBeatExpression\(\{/)
+    expect(source).toMatch(/speakerName: ctx\.beatSpeakerName/)
     expect(source).not.toMatch(
       /Create an image about \$\{subjectIntroductions\} to match the description:/
     )
