@@ -96,10 +96,10 @@ import { OptimizeSceneDialog } from './OptimizeSceneDialog'
 import { Badge } from '@/components/ui/badge'
 import { WorkflowNextStepBanner, type WorkflowState } from './WorkflowNextStepBanner'
 import { buildWorkflowState } from '@/lib/production/sceneProgress'
+import type { AudioRunItem } from '@/lib/audio/audioAgentRunReport'
 import { toast } from 'sonner'
 import { ModerationValidateButton } from '@/components/moderation/ModerationValidateButton'
 import { saveAudioFile } from '@/lib/download/saveFile'
-import { useOverlayStore } from '@/store/useOverlayStore'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData, SceneDirectionData } from '@/lib/types/reports'
 import { resolveSegmentEditCharacterReferences } from '@/lib/vision/resolveFrameEditCharacterReferences'
@@ -463,6 +463,12 @@ interface ScriptPanelProps {
   isRegeneratingScript?: boolean
   /** User-initiated Hive validation report callback */
   onModerationReport?: (report: import('@/lib/moderation/moderationPipeline').ModerationReport) => void
+  /** Report an Audio Agent batch to the page, which docks it non-blockingly. */
+  onAudioRunReport?: import('@/lib/audio/audioAgentRunReport').AudioAgentRunReporter
+  /** Report a Video Agent batch to the page, which outlives the console. */
+  onVideoRunReport?: import('@/lib/video/videoQueueRunReport').VideoQueueRunReporter
+  /** Hand the page a cancel for the Video Agent batch it is reporting. */
+  onVideoRunCancelReady?: (cancel: () => void) => void
   /** Beat-first: approve storyboard frames before segment/video work */
   onApproveStoryboard?: (sceneIndex: number) => void | Promise<void>
   approvingStoryboardFor?: number | null
@@ -888,13 +894,11 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateLanguageStream, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onExpressSceneReferences, isExpressGeneratingReferences = false, onOpenReferenceLibrary, onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, onJumpToImpactScene, onToggleAudienceRecommendation, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onReorderBeats, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled,   projectStreams = [] }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateLanguageStream, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onExpressSceneReferences, isExpressGeneratingReferences = false, onOpenReferenceLibrary, onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, onJumpToImpactScene, onToggleAudienceRecommendation, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onAudioRunReport, onVideoRunReport, onVideoRunCancelReady, onApproveStoryboard, approvingStoryboardFor = null, onReorderBeats, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled,   projectStreams = [] }: ScriptPanelProps) {
 
   const tStudio = useTranslations('production.studio')
   const tCommon = useTranslations('common')
 
-  // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
-  const overlayStore = useOverlayStore()
   
   // Credits context for budget calculator
   const { credits: userCredits } = useCredits()
@@ -1880,15 +1884,20 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     }
   }
 
-  // Audio generation functions
+  /**
+   * Score the scene's music bed.
+   *
+   * Returns whether it landed, so the Audio Agent's music lane can report a
+   * failed track instead of a finished one — Lyria rejections are surfaced to
+   * the user here as a toast and used to be swallowed by the caller.
+   */
   const generateMusic = async (
     sceneIdx: number,
-    skipOverlay?: boolean,
     durationSeconds?: number
-  ) => {
+  ): Promise<boolean> => {
     const scene = scenes[sceneIdx]
     const music = scene?.music
-    if (!music) return
+    if (!music) return false
 
     const duration =
       durationSeconds ??
@@ -1898,9 +1907,6 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
       (typeof scene.duration === 'number' && scene.duration > 0 ? scene.duration : 30)
 
     setGeneratingMusic(sceneIdx)
-    if (!skipOverlay) {
-      overlayStore?.show(`Generating music for Scene ${sceneIdx + 1}...`, 45, 'audio-generation')
-    }
     try {
       const { generateMusicTrack } = await import('@/lib/audio/musicClient')
       const data = await generateMusicTrack({
@@ -1922,14 +1928,9 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
         duration,
         typeof data.duration === 'number' && data.duration > 0 ? data.duration : undefined
       )
-      if (!skipOverlay) {
-        overlayStore?.hide()
-      }
+      return true
     } catch (error: unknown) {
       console.error('[Music Generation] Error:', error)
-      if (!skipOverlay) {
-        overlayStore?.hide()
-      }
       const { LyriaRecitationError } = await import('@/lib/audio/musicClient')
       const message =
         error instanceof LyriaRecitationError
@@ -1942,6 +1943,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
           ? message
           : `Failed to generate music: ${message}`
       )
+      return false
     } finally {
       setGeneratingMusic(null)
     }
@@ -2027,24 +2029,53 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     if (pending.length === 0) return
 
     setGeneratingAllCuesFor(sceneIdx)
-    overlayStore?.show(
-      `Scoring ${pending.length} cue${pending.length === 1 ? '' : 's'} for Scene ${sceneIdx + 1}...`,
-      45 * pending.length,
-      'audio-generation'
-    )
+
+    const runItems: AudioRunItem[] = pending.map((cue) => ({
+      key: cue.cueId,
+      label: formatMusicCueRange(cue),
+      lane: 'music' as const,
+      status: 'pending' as const,
+    }))
+    const report = (finished: boolean) => {
+      onAudioRunReport?.({
+        sceneIndex: sceneIdx,
+        sceneLabel: `Scene ${sceneIdx + 1}`,
+        items: [...runItems],
+        finished,
+      })
+    }
+    const markCue = (cueId: string, status: AudioRunItem['status'], error?: string) => {
+      const index = runItems.findIndex((item) => item.key === cueId)
+      if (index >= 0) {
+        runItems[index] = { ...runItems[index], status, ...(error ? { error } : {}) }
+      }
+      report(false)
+    }
+    report(false)
+
     let scored = 0
     try {
       for (const cue of pending) {
+        markCue(cue.cueId, 'running')
         await generateMusicCue(sceneIdx, cue.cueId)
+        markCue(cue.cueId, 'done')
         scored++
       }
       toast.success(`Scored ${scored} cue${scored === 1 ? '' : 's'}`)
-    } catch {
+    } catch (error) {
+      const stopped = pending[scored]
+      if (stopped) {
+        markCue(
+          stopped.cueId,
+          'error',
+          String((error as Error)?.message || error || 'Scoring failed').slice(0, 140)
+        )
+      }
       if (scored > 0) {
         toast.info(`Scored ${scored} of ${pending.length} cues before stopping`)
       }
     } finally {
-      overlayStore?.hide()
+      report(true)
       setGeneratingAllCuesFor(null)
     }
   }
@@ -3193,7 +3224,6 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       isBookmarked={bookmarkedSceneIndex === idx}
                       onBookmarkToggle={() => handleBookmarkToggle(idx)}
                       bookmarkSaving={bookmarkSavingSceneIdx === idx}
-                      overlayStore={overlayStore}
                       projectId={projectId}
                       onUploadKeyframe={handleUploadKeyframe}
                       onAddToReferenceLibrary={onAddToReferenceLibrary}
@@ -3253,6 +3283,9 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       setOptimizeDialogOpen={setOptimizeDialogOpen}
                       productionReadiness={productionReadiness}
                       onModerationReport={onModerationReport}
+                      onAudioRunReport={onAudioRunReport}
+                      onVideoRunReport={onVideoRunReport}
+                      onVideoRunCancelReady={onVideoRunCancelReady}
                       onResyncAudioTiming={onResyncAudioTiming}
                       resyncingAudioSceneIndex={resyncingAudioSceneIndex}
                       projectTitle={projectTitle}
@@ -3747,7 +3780,7 @@ interface SceneCardProps {
   generatingMusic?: number | null
   setGeneratingMusic?: (state: number | null) => void
   // Functions for generating and saving audio
-  generateMusic?: (sceneIdx: number, skipOverlay?: boolean, durationSeconds?: number) => Promise<void>
+  generateMusic?: (sceneIdx: number, durationSeconds?: number) => Promise<boolean>
   /** Score one music cue, saving the track onto that cue. */
   generateMusicCue?: (sceneIdx: number, cueId: string) => Promise<void>
   /** Score every cue in the scene that has no track yet. */
@@ -3837,7 +3870,6 @@ interface SceneCardProps {
   isBookmarked?: boolean
   onBookmarkToggle?: () => void
   bookmarkSaving?: boolean
-  overlayStore?: { show: (message: string, duration: number, category?: string) => void; hide: () => void }
   projectId?: string
   onUploadKeyframe?: (sceneIdx: number, file: File) => Promise<void>
   // Single-scene-open control
@@ -3913,6 +3945,9 @@ interface SceneCardProps {
   // Production readiness for workflow guards (voices assigned, etc.)
   productionReadiness?: ProductionReadiness
   onModerationReport?: (report: import('@/lib/moderation/moderationPipeline').ModerationReport) => void
+  onAudioRunReport?: import('@/lib/audio/audioAgentRunReport').AudioAgentRunReporter
+  onVideoRunReport?: import('@/lib/video/videoQueueRunReport').VideoQueueRunReporter
+  onVideoRunCancelReady?: (cancel: () => void) => void
   onGenerateBeatFrame?: (sceneIdx: number, beatId: string) => Promise<void>
   onGenerateBeatEndFrame?: (sceneIdx: number, beatId: string) => Promise<void>
   onGenerateDialogueFrame?: (sceneIdx: number, dialogueIdx: number) => Promise<void>
@@ -4051,7 +4086,6 @@ function SceneCard({
   isBookmarked = false,
   onBookmarkToggle,
   bookmarkSaving = false,
-  overlayStore,
   projectId,
   onUploadKeyframe,
   isWorkflowOpen = false,
@@ -4109,6 +4143,9 @@ function SceneCard({
   visualStyle,
   projectAspectRatio = '16:9',
   onModerationReport,
+  onAudioRunReport,
+  onVideoRunReport,
+  onVideoRunCancelReady,
   onGenerateBeatFrame,
   onGenerateBeatEndFrame,
   onGenerateDialogueFrame,
@@ -4454,7 +4491,34 @@ function SceneCard({
       const selectedDialogueIndices = new Set(selection.dialogueIndices)
 
       setIsExpressAudioRunning(true)
-      overlayStore?.show(`Audio Agent for Scene ${sceneIdx + 1}...`, 60, 'audio-generation')
+
+      /**
+       * Rows are appended by each lane as it decides what it will actually
+       * generate. Enumerating everything up front would show rows for items
+       * the staleness checks skip, which read as tracks that never finished.
+       */
+      const runItems: AudioRunItem[] = []
+      const report = (finished: boolean, runError?: string) => {
+        onAudioRunReport?.({
+          sceneIndex: sceneIdx,
+          sceneLabel: `Scene ${sceneIdx + 1}`,
+          items: [...runItems],
+          finished,
+          ...(runError ? { runError } : {}),
+        })
+      }
+      const addItem = (key: string, label: string, lane: AudioRunItem['lane']) => {
+        runItems.push({ key, label, lane, status: 'pending' })
+        report(false)
+      }
+      const markItem = (key: string, status: AudioRunItem['status'], error?: string) => {
+        const index = runItems.findIndex((item) => item.key === key)
+        if (index >= 0) {
+          runItems[index] = { ...runItems[index], status, ...(error ? { error } : {}) }
+        }
+        report(false)
+      }
+      report(false)
 
       try {
         // Scope = All: delete existing audio for the selected items first.
@@ -4493,9 +4557,11 @@ function SceneCard({
             hasNarrationText &&
             (isAll || !getNarrationAudioUrlForLang(lang))
           if (narrationNeeded) {
+            addItem('narration', 'Narration', 'tts')
             tasks.push({
               id: 'narration',
               execute: async () => {
+                markItem('narration', 'running')
                 await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined, lang)
               },
             })
@@ -4527,16 +4593,37 @@ function SceneCard({
               })
               if ((entry?.audioUrl || entry?.url) && !stale) return
             }
+            addItem(`dialogue-${i}`, `${i + 1}. ${d.character}`, 'tts')
             tasks.push({
               id: `dialogue-${i}`,
               execute: async () => {
+                markItem(`dialogue-${i}`, 'running')
                 await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i, lang)
               },
             })
           })
 
           if (tasks.length === 0) return
-          await processWithConcurrency(tasks, getExpressAudioConcurrency(), undefined, false)
+          // A failed line never rejected out of here, so the run reported clean
+          // while a voice was missing. Results carry the per-item outcome.
+          const results = await processWithConcurrency(
+            tasks,
+            getExpressAudioConcurrency(),
+            undefined,
+            false
+          )
+          for (const result of results) {
+            const key = String(result.id)
+            if (result.status === 'rejected') {
+              markItem(
+                key,
+                'error',
+                String(result.error?.message || 'Voice generation failed').slice(0, 140)
+              )
+            } else {
+              markItem(key, 'done')
+            }
+          }
         }
 
         // ---- Music lane ----
@@ -4544,12 +4631,20 @@ function SceneCard({
           if (!selection.includeMusic || !generateMusic || !scene.music) return
           const musicMissing = !((scene as any).musicAudio || (scene as any).music?.url)
           if (!isAll && !musicMissing) return
-          await generateMusic(sceneIdx, true)
+          addItem('music', 'Music bed', 'music')
+          markItem('music', 'running')
+          const scored = await generateMusic(sceneIdx)
+          markItem('music', scored ? 'done' : 'error', scored ? undefined : 'Scoring failed')
         }
 
         // ---- Veo SFX lane ----
         const sfxLane = async () => {
           if (selection.sfxBeatIds.length === 0) return
+          const sceneBeats = getSceneBeats(scene)
+          for (const beatId of selection.sfxBeatIds) {
+            const beatNumber = sceneBeats.findIndex((entry) => entry.beatId === beatId) + 1
+            addItem(`sfx-${beatId}`, beatNumber > 0 ? `SFX — beat ${beatNumber}` : 'SFX', 'sfx')
+          }
           await dispatchExpressVeoSfx({
             projectId,
             sceneIndex: sceneIdx,
@@ -4559,9 +4654,11 @@ function SceneCard({
             regenerate: isAll,
             onItemStart: (beatId) => {
               setExpressBeatStatus((prev) => ({ ...prev, [beatId]: 'running' }))
+              markItem(`sfx-${beatId}`, 'running')
             },
             onItemDone: async ({ beatId, sfxIndex, url, attribution }) => {
               setExpressBeatStatus((prev) => ({ ...prev, [beatId]: 'done' }))
+              markItem(`sfx-${beatId}`, 'done')
               const beat = getSceneBeats(scene).find((entry) => entry.beatId === beatId)
               await onSaveSfxAudio?.(
                 sceneIdx,
@@ -4574,26 +4671,34 @@ function SceneCard({
                   : undefined
               )
             },
-            onItemError: (beatId) => {
+            onItemError: (beatId, error) => {
               setExpressBeatStatus((prev) => ({ ...prev, [beatId]: 'error' }))
+              markItem(
+                `sfx-${beatId}`,
+                'error',
+                String(error || 'SFX generation failed').slice(0, 140)
+              )
             },
           })
         }
 
-        const results = await Promise.allSettled([ttsLane(), musicLane(), sfxLane()])
-        const failed = results.filter((r) => r.status === 'rejected')
-        if (failed.length === 0) {
+        const laneResults = await Promise.allSettled([ttsLane(), musicLane(), sfxLane()])
+        const laneFailures = laneResults.filter((r) => r.status === 'rejected').length
+        const itemFailures = runItems.filter((item) => item.status === 'error').length
+        const failed = laneFailures + itemFailures
+        if (failed === 0) {
           toast.success(`Audio Agent complete for Scene ${sceneIdx + 1}`)
         } else {
           toast.warning(
-            `Audio Agent finished with ${failed.length} issue${failed.length === 1 ? '' : 's'} for Scene ${sceneIdx + 1}`
+            `Audio Agent finished with ${failed} issue${failed === 1 ? '' : 's'} for Scene ${sceneIdx + 1}`
           )
         }
+        report(true)
       } catch (error) {
         console.error('[ScriptPanel] Express Audio failed:', error)
+        report(true, (error as Error)?.message || 'Audio Agent failed')
         toast.error('Audio Agent failed')
-      }       finally {
-        overlayStore?.hide()
+      } finally {
         setIsExpressAudioRunning(false)
         setExpressAudioDialogOpen(false)
       }
@@ -4604,6 +4709,7 @@ function SceneCard({
       scene,
       selectedLanguage,
       onGenerateSceneAudio,
+      onAudioRunReport,
       generateMusic,
       onDeleteSceneAudio,
       onSaveSfxAudio,
@@ -6106,13 +6212,10 @@ function SceneCard({
                               onClick={async (e) => {
                                 e.stopPropagation()
                                 setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
-                                overlayStore?.show(`Regenerating narration for Scene ${sceneIdx + 1}...`, 20)
                                 try {
                                   await onGenerateSceneAudio?.(sceneIdx, 'narration', undefined, undefined, selectedLanguage)
-                                  overlayStore?.hide()
                                 } catch (error) {
                                   console.error('[ScriptPanel] Narration regeneration failed:', error)
-                                  overlayStore?.hide()
                                   toast.error('Failed to regenerate narration')
                                 } finally {
                                   setGeneratingDialogue?.(null)
@@ -6170,13 +6273,10 @@ function SceneCard({
                               onClick={async (e) => {
                                 e.stopPropagation()
                                 setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
-                                overlayStore?.show(`Generating narration for Scene ${sceneIdx + 1}...`, 20)
                                 try {
                                   await onGenerateSceneAudio?.(sceneIdx, 'narration', undefined, undefined, selectedLanguage)
-                                  overlayStore?.hide()
                                 } catch (error) {
                                   console.error('[ScriptPanel] Narration generation failed:', error)
-                                  overlayStore?.hide()
                                   toast.error('Failed to generate narration')
                                 } finally {
                                   setGeneratingDialogue?.(null)
@@ -6937,13 +7037,10 @@ function SceneCard({
                                     if (!onGenerateSceneAudio) return
                                     
                                     setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
-                                    overlayStore?.show(`Regenerating dialogue for ${d.character}...`, 15)
                                     try {
                                       await onGenerateSceneAudio?.(sceneIdx, 'dialogue', d.character, i, selectedLanguage)
-                                      overlayStore?.hide()
                                     } catch (error) {
                                       console.error('[ScriptPanel] Dialogue regeneration failed:', error)
-                                      overlayStore?.hide()
                                       toast.error('Failed to regenerate dialogue')
                                     } finally {
                                       setGeneratingDialogue?.(null)
@@ -7008,14 +7105,10 @@ function SceneCard({
                                     }
                                     
                                     setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
-                                    overlayStore?.show(`Generating dialogue for ${d.character}...`, 15)
-                                    
                                     try {
                                       await onGenerateSceneAudio?.(sceneIdx, 'dialogue', d.character, i, selectedLanguage)
-                                      overlayStore?.hide()
                                     } catch (error) {
                                       console.error('[ScriptPanel] Dialogue generation failed:', error)
-                                      overlayStore?.hide()
                                       toast.error(`Failed to generate dialogue for ${d.character}`)
                                     } finally {
                                       setGeneratingDialogue?.(null)
@@ -7150,7 +7243,7 @@ function SceneCard({
                                 e.stopPropagation()
                                 setGeneratingMusic?.(sceneIdx)
                                 try {
-                                  await generateMusic?.(sceneIdx, false, musicPlayDuration)
+                                  await generateMusic?.(sceneIdx, musicPlayDuration)
                                 } catch (error) {
                                   console.error('[ScriptPanel] Music regeneration failed:', error)
                                 } finally {
@@ -7210,7 +7303,7 @@ function SceneCard({
                                 e.stopPropagation()
                                 setGeneratingMusic?.(sceneIdx)
                                 try {
-                                  await generateMusic?.(sceneIdx, false, musicPlayDuration)
+                                  await generateMusic?.(sceneIdx, musicPlayDuration)
                                 } catch (error) {
                                   console.error('[ScriptPanel] Music generation failed:', error)
                                 } finally {
@@ -7563,6 +7656,8 @@ function SceneCard({
                           isGeneratingAudio={isGeneratingAudio}
                           onSaveEditedKeyframe={onEditFrame}
                           onModerationReport={onModerationReport}
+                          onVideoRunReport={onVideoRunReport}
+                          onVideoRunCancelReady={onVideoRunCancelReady}
                           projectAspectRatio={projectAspectRatio}
                           projectStreams={projectStreams}
                         >

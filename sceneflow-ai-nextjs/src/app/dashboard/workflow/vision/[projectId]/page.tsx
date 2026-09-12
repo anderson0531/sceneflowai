@@ -151,6 +151,21 @@ import {
   ExpressBeatFrameProgressOverlay,
   type ExpressOverlayPhase,
 } from '@/components/vision/ExpressBeatFrameProgressOverlay'
+import { AgentDockStack, AgentRunDock, type AgentRunTone } from '@/components/vision/AgentRunDock'
+import {
+  ExpressProjectRunDock,
+  type ExpressProjectRunState,
+} from '@/components/vision/ExpressProjectRunDock'
+import {
+  AudioAgentRunDock,
+  type AudioAgentRunState,
+} from '@/components/vision/AudioAgentRunDock'
+import {
+  VideoAgentRunDock,
+  type VideoAgentRunState,
+} from '@/components/vision/VideoAgentRunDock'
+import type { AudioAgentRunReport } from '@/lib/audio/audioAgentRunReport'
+import type { VideoQueueRunReport } from '@/lib/video/videoQueueRunReport'
 import {
   buildExpressBeatFrameItems,
   hasFrameErrors,
@@ -5766,7 +5781,60 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     /** Carried so Retry failed re-runs at the quality the user chose. */
     quality: StoryboardQuality
   } | null>(null)
-  
+
+  /**
+   * Project-wide Run All Agents run, reported into the dock stack.
+   *
+   * `expressStatus` above only reaches the Scene Gallery, so a user who
+   * navigated away from the gallery mid-run had no way to tell whether it was
+   * still going.
+   */
+  const [expressProjectRun, setExpressProjectRun] = useState<ExpressProjectRunState | null>(
+    null
+  )
+
+  /**
+   * Audio Agent batch, reported from the page instead of the blocking overlay.
+   *
+   * The run lives inside a scene card; the dock has to outlive that card being
+   * scrolled past or collapsed, so the state is held here.
+   */
+  const [audioAgentRun, setAudioAgentRun] = useState<AudioAgentRunState | null>(null)
+
+  const handleAudioRunReport = useCallback((report: AudioAgentRunReport) => {
+    setAudioAgentRun({ ...report, visible: true })
+  }, [])
+
+  /**
+   * Video Agent batch, owned by the page rather than the Director's Console.
+   *
+   * The console unmounts when the user closes it, which used to take the only
+   * progress readout and the only cancel button with it while the worker pool
+   * kept rendering.
+   */
+  const [videoAgentRun, setVideoAgentRun] = useState<VideoAgentRunState | null>(null)
+  const videoAgentCancelRef = useRef<(() => void) | null>(null)
+
+  const handleVideoRunReport = useCallback((report: VideoQueueRunReport) => {
+    setVideoAgentRun({ ...report, visible: true })
+  }, [])
+
+  const handleVideoRunCancelReady = useCallback((cancel: () => void) => {
+    videoAgentCancelRef.current = cancel
+  }, [])
+
+  /**
+   * Project animatic stitch. One long poll with no per-item progress, so it
+   * reports as a single line rather than a row list — but it reports, instead
+   * of being a toast the user scrolls past and then cannot check on.
+   */
+  const [animaticRun, setAnimaticRun] = useState<{
+    visible: boolean
+    tone: AgentRunTone
+    message: string
+    meta?: string
+  } | null>(null)
+
   // Share functionality state
   const [isSharing, setIsSharing] = useState(false)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
@@ -12888,6 +12956,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       setExpressStatus(initial)
       setIsExpressRunning(true)
+      setExpressProjectRun({
+        visible: true,
+        startedAt: Date.now(),
+        sceneCount,
+        finished: false,
+      })
+
+      /** Settle the dock so its close button appears and the tone stops spinning. */
+      const finishProjectRun = (summary: {
+        runError?: string
+        successScenes?: number
+        failedScenes?: number
+        rateLimitedFailures?: number
+      }) => {
+        setExpressProjectRun((prev) =>
+          prev ? { ...prev, ...summary, finished: true } : prev
+        )
+      }
 
       const setPhase = (
         sceneIndex: number,
@@ -12967,7 +13053,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (!response.ok || !response.body) {
           const errText = await response.text().catch(() => '')
           console.error('[Express] Request failed:', response.status, errText)
-          if (reportMissingReferenceImages(response.status, errText)) return
+          if (reportMissingReferenceImages(response.status, errText)) {
+            finishProjectRun({ runError: 'Missing reference images' })
+            return
+          }
+          finishProjectRun({
+            runError: `Failed to start: ${response.status} ${errText.slice(0, 120)}`,
+          })
           toast.error(`Run All Agents failed: ${response.status} ${errText.slice(0, 120)}`)
           return
         }
@@ -12981,6 +13073,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         let regulatorToastShown = false
         let rateLimitedFailureCount = 0
         let degradedToastShown = false
+        let streamError: string | undefined
 
         while (true) {
           const { done, value } = await reader.read()
@@ -13092,6 +13185,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 case 'error':
                   console.error('[Express] Stream error:', event.error)
                   {
+                    streamError = String(event.error || 'stream error')
                     const streamErrLower = String(event.error || '').toLowerCase()
                     const isQuotaError =
                       streamErrLower.includes('429') ||
@@ -13110,6 +13204,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           }
         }
+
+        finishProjectRun({
+          ...(streamError ? { runError: streamError } : {}),
+          successScenes,
+          failedScenes,
+          rateLimitedFailures: rateLimitedFailureCount,
+        })
 
         if (failedScenes === 0 && successScenes > 0) {
           toast.success(`Run All Agents complete — ${successScenes} scene${successScenes === 1 ? '' : 's'}`, {
@@ -13216,6 +13317,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       } catch (err: any) {
         console.error('[Express] Unexpected error:', err)
+        finishProjectRun({ runError: err?.message || String(err) })
         toast.error(`Run All Agents error: ${err?.message || String(err)}`)
       } finally {
         setIsExpressRunning(false)
@@ -13824,7 +13926,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const handleGenProjectVideo = useCallback(async (language: string = 'en') => {
     if (!projectId || !script?.script?.scenes?.length || isGenVideoRunning) return
     setIsGenVideoRunning(true)
-    toast.info('Queuing full-project animatic render…')
+    setAnimaticRun({ visible: true, tone: 'running', message: 'Queuing render…' })
 
     try {
       const response = await fetch('/api/export/project-animatic', {
@@ -13852,13 +13954,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       const jobId = data.jobId as string
-      toast.success('Animatic render started — this may take a few minutes.')
 
       const pollStart = Date.now()
+      const reportElapsed = () => {
+        const elapsedSec = Math.floor((Date.now() - pollStart) / 1000)
+        setAnimaticRun({
+          visible: true,
+          tone: 'running',
+          message: 'Stitching every scene — you can keep editing',
+          meta:
+            elapsedSec < 60
+              ? `${elapsedSec}s elapsed`
+              : `${Math.floor(elapsedSec / 60)}m ${elapsedSec % 60}s elapsed`,
+        })
+      }
+      reportElapsed()
+
       const poll = async (): Promise<void> => {
         if (Date.now() - pollStart > 30 * 60 * 1000) {
           throw new Error('Animatic render timed out')
         }
+        reportElapsed()
         const statusRes = await fetch(`/api/export/animatics/${projectId}`)
         if (!statusRes.ok) {
           await new Promise((r) => setTimeout(r, 5000))
@@ -13879,6 +13995,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 }
               : prev
           )
+          setAnimaticRun({
+            visible: true,
+            tone: 'success',
+            message: 'Ready — open Premiere to screen it',
+          })
           toast.success('Project animatic ready — open Premiere to screen it.')
           return
         }
@@ -13892,6 +14013,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       await poll()
     } catch (err: any) {
       console.error('[Gen Video] Error:', err)
+      setAnimaticRun({
+        visible: true,
+        tone: 'error',
+        message: err?.message || 'Failed to generate project animatic',
+      })
       toast.error(err?.message || 'Failed to generate project animatic')
     } finally {
       setIsGenVideoRunning(false)
@@ -14938,6 +15064,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onRegenerateScript={handleRegenerateScript}
                 isRegeneratingScript={isRegeneratingScript}
                 onModerationReport={setLatestModerationReport}
+                onAudioRunReport={handleAudioRunReport}
+                onVideoRunReport={handleVideoRunReport}
+                onVideoRunCancelReady={handleVideoRunCancelReady}
                 onGenerateBeatFrame={handleRequestGenerateBeatFrame}
                 onGenerateDialogueFrame={handleGenerateDialogueFrameImage}
                 onUploadBeatFrame={handleUploadBeatFrame}
@@ -15542,41 +15671,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         onCancel={() => setAnalysisHandoffOpen(false)}
       />
 
-      <BackgroundJobDock
-        job={scriptAnalysisJob.job}
-        title="Audience Resonance analysis"
-        activeLabel={
-          scriptAnalysisJob.job?.status === 'queued' ? 'Queued' : 'Analyzing every scene'
-        }
-        onDismiss={scriptAnalysisJob.dismiss}
-        onCancel={() => void scriptAnalysisJob.cancel()}
-        onViewResult={() => {
-          setShowReviewModal(true)
-          scriptAnalysisJob.dismiss()
-        }}
-      />
-
-      <BackgroundJobDock
-        job={referenceExpressJob.job}
-        title="Reference Agent"
-        activeLabel={
-          referenceExpressJob.job?.status === 'queued'
-            ? 'Queued'
-            : `Generating references${
-                referenceExpressJob.job?.payload?.itemCount
-                  ? ` (${referenceExpressJob.job.payload.itemCount} items)`
-                  : ''
-              }`
-        }
-        cancelLabel="Cancel generation"
-        describeResult={describeReferenceExpressResult}
-        onDismiss={referenceExpressJob.dismiss}
-        onCancel={() => void referenceExpressJob.cancel()}
-        // Analysis owns the bottom-right corner; stack above it so both stay
-        // readable when a user runs Express while analysis is still going.
-        className={scriptAnalysisJob.job ? 'bottom-44' : undefined}
-      />
-
       {/* Scene Editor Modal */}
       {editingSceneIndex !== null && script?.script?.scenes?.[editingSceneIndex] && (
         <SceneEditorModal
@@ -15970,59 +16064,126 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         onConfirm={navigateToBlueprintReimagine}
       />
 
-      {expressBeatFrameOverlay?.visible && (
-        <ExpressBeatFrameProgressOverlay
-          visible={expressBeatFrameOverlay.visible}
-          sceneNumber={expressBeatFrameOverlay.sceneNumber}
-          items={expressBeatFrameOverlay.items}
-          phases={expressBeatFrameOverlay.phases}
-          startedAt={expressBeatFrameOverlay.startedAt}
-          finished={expressBeatFrameOverlay.finished}
-          preflightError={expressBeatFrameOverlay.preflightError}
-          className={
-            scriptAnalysisJob.job && referenceExpressJob.job
-              ? 'bottom-80'
-              : scriptAnalysisJob.job || referenceExpressJob.job
-                ? 'bottom-44'
-                : undefined
+      {/*
+        Every agent run reports into one column, newest nearest the corner, so a
+        user who starts a second agent while the first is still working does not
+        end up with two cards on top of each other.
+      */}
+      <AgentDockStack>
+        <BackgroundJobDock
+          job={scriptAnalysisJob.job}
+          title="Audience Resonance analysis"
+          activeLabel={
+            scriptAnalysisJob.job?.status === 'queued' ? 'Queued' : 'Analyzing every scene'
           }
-          onClose={() => setExpressBeatFrameOverlay(null)}
-          onRetryFailed={(failedKeys) => {
-            const overlay = expressBeatFrameOverlay
-            setExpressBeatFrameOverlay(null)
-            void handleExpressSceneGenerate(overlay.sceneIndex, overlay.language, {
-              scope: 'missing',
-              includeEndFrames: false,
-              selectedFrameKeys: failedKeys,
-              quality: overlay.quality,
-            })
-          }}
-          onDirectFailed={(failedKeys) => {
-            const overlay = expressBeatFrameOverlay
-            const scene = script?.script?.scenes?.[overlay.sceneIndex]
-            setExpressBeatFrameOverlay(null)
-            if (!scene) return
-            const slots = enumerateStoryboardFrameSlots(scene as Record<string, unknown>)
-            const slot = slots.find((s) => failedKeys.includes(s.key))
-            if (slot) handleOpenDirectFrame(overlay.sceneIndex, slot)
-          }}
-          onAutoFailed={(failedKeys) => {
-            const overlay = expressBeatFrameOverlay
-            const scene = script?.script?.scenes?.[overlay.sceneIndex]
-            setExpressBeatFrameOverlay(null)
-            if (!scene) return
-            const slots = enumerateStoryboardFrameSlots(scene as Record<string, unknown>)
-            void (async () => {
-              for (const key of failedKeys) {
-                const slot = slots.find((s) => s.key === key)
-                if (slot?.beatId) {
-                  await handleGenerateBeatFrameImage(overlay.sceneIndex, slot.beatId)
-                }
-              }
-            })()
+          onDismiss={scriptAnalysisJob.dismiss}
+          onCancel={() => void scriptAnalysisJob.cancel()}
+          onViewResult={() => {
+            setShowReviewModal(true)
+            scriptAnalysisJob.dismiss()
           }}
         />
-      )}
+
+        <BackgroundJobDock
+          job={referenceExpressJob.job}
+          title="Reference Agent"
+          activeLabel={
+            referenceExpressJob.job?.status === 'queued'
+              ? 'Queued'
+              : `Generating references${
+                  referenceExpressJob.job?.payload?.itemCount
+                    ? ` (${referenceExpressJob.job.payload.itemCount} items)`
+                    : ''
+                }`
+          }
+          cancelLabel="Cancel generation"
+          describeResult={describeReferenceExpressResult}
+          onDismiss={referenceExpressJob.dismiss}
+          onCancel={() => void referenceExpressJob.cancel()}
+        />
+
+        {expressProjectRun?.visible && (
+          <ExpressProjectRunDock
+            run={expressProjectRun}
+            status={expressStatus}
+            onClose={() => setExpressProjectRun(null)}
+          />
+        )}
+
+        {audioAgentRun?.visible && (
+          <AudioAgentRunDock
+            run={audioAgentRun}
+            onClose={() => setAudioAgentRun(null)}
+          />
+        )}
+
+        {videoAgentRun?.visible && (
+          <VideoAgentRunDock
+            run={videoAgentRun}
+            onClose={() => setVideoAgentRun(null)}
+            onCancel={videoAgentCancelRef.current ?? undefined}
+          />
+        )}
+
+        {animaticRun?.visible && (
+          <AgentRunDock
+            title="Project animatic"
+            tone={animaticRun.tone}
+            subtitle={animaticRun.message}
+            meta={animaticRun.meta}
+            onClose={
+              animaticRun.tone === 'running' ? undefined : () => setAnimaticRun(null)
+            }
+          />
+        )}
+
+        {expressBeatFrameOverlay?.visible && (
+          <ExpressBeatFrameProgressOverlay
+            visible={expressBeatFrameOverlay.visible}
+            sceneNumber={expressBeatFrameOverlay.sceneNumber}
+            items={expressBeatFrameOverlay.items}
+            phases={expressBeatFrameOverlay.phases}
+            startedAt={expressBeatFrameOverlay.startedAt}
+            finished={expressBeatFrameOverlay.finished}
+            preflightError={expressBeatFrameOverlay.preflightError}
+            onClose={() => setExpressBeatFrameOverlay(null)}
+            onRetryFailed={(failedKeys) => {
+              const overlay = expressBeatFrameOverlay
+              setExpressBeatFrameOverlay(null)
+              void handleExpressSceneGenerate(overlay.sceneIndex, overlay.language, {
+                scope: 'missing',
+                includeEndFrames: false,
+                selectedFrameKeys: failedKeys,
+                quality: overlay.quality,
+              })
+            }}
+            onDirectFailed={(failedKeys) => {
+              const overlay = expressBeatFrameOverlay
+              const scene = script?.script?.scenes?.[overlay.sceneIndex]
+              setExpressBeatFrameOverlay(null)
+              if (!scene) return
+              const slots = enumerateStoryboardFrameSlots(scene as Record<string, unknown>)
+              const slot = slots.find((s) => failedKeys.includes(s.key))
+              if (slot) handleOpenDirectFrame(overlay.sceneIndex, slot)
+            }}
+            onAutoFailed={(failedKeys) => {
+              const overlay = expressBeatFrameOverlay
+              const scene = script?.script?.scenes?.[overlay.sceneIndex]
+              setExpressBeatFrameOverlay(null)
+              if (!scene) return
+              const slots = enumerateStoryboardFrameSlots(scene as Record<string, unknown>)
+              void (async () => {
+                for (const key of failedKeys) {
+                  const slot = slots.find((s) => s.key === key)
+                  if (slot?.beatId) {
+                    await handleGenerateBeatFrameImage(overlay.sceneIndex, slot.beatId)
+                  }
+                }
+              })()
+            }}
+          />
+        )}
+      </AgentDockStack>
 
       {/* First-time onboarding tour */}
       <ProductionOnboarding />
