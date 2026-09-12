@@ -18,7 +18,10 @@ import {
 import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPrompt'
-import { normalizeStillFraming } from '@/lib/imagen/stillFramingNormalize'
+import {
+  normalizeStillFraming,
+  normalizeStillShotType,
+} from '@/lib/imagen/stillFramingNormalize'
 import { storedStillDirectionKeyMatches } from '@/lib/script/beatDirectionFingerprint'
 import { formatSceneArcBlock, getSceneMovements } from '@/lib/script/sceneMovements'
 import type { BeatDirection, SceneBeat } from '@/lib/script/segmentTypes'
@@ -119,6 +122,8 @@ export interface ComposeBeatStillPromptArgs {
   artStyleAnchor?: string
   lighting?: string
   lensMm?: string
+  /** This beat's shot scale, so the film's lens family can be fitted to it. */
+  shotType?: string
 }
 
 /**
@@ -153,6 +158,7 @@ export function composeBeatStillPrompt(args: ComposeBeatStillPromptArgs): string
     sceneLookNote: getSceneLookNote(args.lookbook, args.sceneIndex),
     beatLighting: args.lighting,
     beatLens: args.lensMm,
+    beatShotType: normalizeStillShotType(args.shotType),
   })
 
   return `${anchor}\n\n${composition}`
@@ -393,6 +399,7 @@ export function composePersistedBeatStillPrompt(args: {
     sceneIndex: args.sceneIndex,
     artStyleAnchor: args.artStyleAnchor,
     lighting: beat.beatDirection?.lightingAccent,
+    shotType: beat.beatDirection?.shotType,
   })
 }
 
@@ -817,6 +824,7 @@ export function buildFallbackBeatPlans(request: BeatSequencePlanRequest): BeatKe
         sceneIndex: sceneNumber - 1,
         artStyleAnchor: request.artStyleAnchor,
         lighting: directionMeta.lightingMood,
+        shotType,
       }),
       allowTypography,
       durationSeconds,

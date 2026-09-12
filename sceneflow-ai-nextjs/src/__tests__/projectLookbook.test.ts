@@ -279,6 +279,32 @@ describe('formatLookbookStyleAnchor', () => {
     expect(anchor).toContain('85mm')
   })
 
+  it('states a beat cue once when it repeats the film grammar it came from', () => {
+    const anchor = formatLookbookStyleAnchor(lookbook, {
+      beatLighting: 'Single motivated practical key',
+      beatLens: '40mm spherical',
+    })
+
+    expect(anchor.match(/motivated practical key/gi)).toHaveLength(1)
+    expect(anchor.match(/40mm spherical/gi)).toHaveLength(1)
+  })
+
+  it('drops a detail lens the beat cannot hold, and the subject it named', () => {
+    const macroFilm = {
+      ...lookbook,
+      lensAndFormat: 'Macro (100mm) for extreme detail on the needle and ash; 16:9 framing',
+    }
+
+    const twoShot = formatLookbookStyleAnchor(macroFilm, { beatShotType: 'Two-Shot' })
+    expect(twoShot).not.toMatch(/macro/i)
+    expect(twoShot).not.toMatch(/needle/i)
+    expect(twoShot).toContain('16:9 framing')
+
+    const insert = formatLookbookStyleAnchor(macroFilm, { beatShotType: 'Insert Shot' })
+    expect(insert).toContain('Macro (100mm)')
+    expect(insert).not.toMatch(/needle/i)
+  })
+
   it("includes the scene's sanctioned departure from the master look", () => {
     const anchor = formatLookbookStyleAnchor(lookbook, {
       sceneLookNote: getSceneLookNote(lookbook, 1),

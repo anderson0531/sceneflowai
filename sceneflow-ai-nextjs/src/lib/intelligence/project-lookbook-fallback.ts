@@ -15,6 +15,7 @@ import {
   extractDirectionMetadata,
   type FilmContext,
 } from '@/lib/intelligence/scene-direction-metadata'
+import { normalizeStillLens } from '@/lib/imagen/stillFramingNormalize'
 import { fingerprintSource } from '@/lib/utils/fingerprint'
 
 export const PROJECT_LOOKBOOK_VERSION = 1
@@ -162,8 +163,33 @@ function modalValue(values: Array<string | undefined>): string {
   return best?.original ?? ''
 }
 
+/**
+ * Join style cues, dropping any that a preceding cue already stated.
+ *
+ * A beat's lighting accent and lens are frequently the same values the master
+ * look was derived from — the film-wide grammar is the modal value across the
+ * scenes — so joining them verbatim restated the same cue two and three times
+ * in one style block, and repetition reads as emphasis to the image model.
+ */
+/** Below this length a phrase matches too much by accident to judge by containment. */
+const CUE_CONTAINMENT_FLOOR = 6
+
 function joinCues(...cues: Array<string | undefined>): string {
-  return cues.map((cue) => text(cue)).filter(Boolean).join('; ')
+  const kept: string[] = []
+  for (const cue of cues) {
+    for (const clause of text(cue).split(';')) {
+      const trimmed = clause.trim().replace(/\s+/g, ' ')
+      if (!trimmed) continue
+      const key = trimmed.toLowerCase()
+      const stated = kept.some((held) => {
+        const lower = held.toLowerCase()
+        return lower === key || (key.length >= CUE_CONTAINMENT_FLOOR && lower.includes(key))
+      })
+      if (stated) continue
+      kept.push(trimmed)
+    }
+  }
+  return kept.join('; ')
 }
 
 const PHOTOREAL_NEGATIVE_STYLE_TERMS = [
@@ -290,6 +316,12 @@ export interface LookbookStyleAnchorOverrides {
   beatLighting?: string
   /** Per-beat lens choice inside the film's lens family. */
   beatLens?: string
+  /**
+   * This beat's shot scale, so a detail lens is not asked of a frame that
+   * cannot hold one. The film's lens family is the modal value across every
+   * scene, so one scene's macro insert becomes the whole film's lens.
+   */
+  beatShotType?: string
 }
 
 const PHOTOREAL_PATTERN = /photorealistic|live-action|live action|photographed on real camera/i
@@ -314,8 +346,8 @@ export function formatLookbookStyleAnchor(
   const lightingCamera = joinCues(
     lookbook.lightingGrammar,
     overrides.beatLighting,
-    lookbook.lensAndFormat,
-    overrides.beatLens
+    normalizeStillLens(lookbook.lensAndFormat, overrides.beatShotType),
+    normalizeStillLens(overrides.beatLens, overrides.beatShotType)
   )
   const paletteGrade = joinCues(
     lookbook.colorPalette,
