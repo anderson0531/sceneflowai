@@ -14,6 +14,7 @@ import {
   actionFramingFromStoredPrompt,
   isStructuredStillPrompt,
   promptReferencesLibraryItem,
+  resolveLibraryItemPromptMatch,
 } from '@/lib/imagen/structuredStillPrompt'
 import {
   applySceneImageAiResultToPrompt,
@@ -414,15 +415,50 @@ describe('promptReferencesLibraryItem', () => {
     ).toBe(false)
   })
 
+  it('keeps a prop the frame names the way a script would', () => {
+    const match = resolveLibraryItemPromptMatch('Piper swings the spanner at the dogs.', {
+      name: 'Thirty-Inch Iron Rail Spanner',
+      promptToken: 'prop [7]',
+    })
+
+    expect(match).toEqual({ matched: true, basis: 'head-noun', matchedTerm: 'spanner' })
+  })
+
+  it('still rejects a prop the frame only shares decoration with', () => {
+    expect(
+      resolveLibraryItemPromptMatch('Piper braces against the iron rail.', {
+        name: 'Thirty-Inch Iron Rail Spanner',
+        promptToken: 'prop [7]',
+      })
+    ).toEqual({ matched: false, basis: 'none' })
+  })
+
+  it('reports the basis a token or full label matched on', () => {
+    expect(
+      resolveLibraryItemPromptMatch(prompt, {
+        name: 'Thirty-Inch Iron Rail Spanner',
+        promptToken: 'prop [7]',
+      }).basis
+    ).toBe('token')
+    expect(
+      resolveLibraryItemPromptMatch('Piper sets the Violet Ink Drafting Vellum down.', {
+        name: 'Violet Ink Drafting Vellum',
+      }).basis
+    ).toBe('name')
+  })
+
   it('the beat frame route drops unnamed prop refs before it builds the image list', () => {
     const src = readFileSync(
       join(process.cwd(), 'src/app/api/scene/generate-image/route.ts'),
       'utf8'
     )
-    const dropsUnnamed = src.indexOf('!promptReferencesLibraryItem(optimizedPrompt')
+    const dropsUnnamed = src.indexOf('resolveLibraryItemPromptMatch(optimizedPrompt')
     const buildsImages = src.indexOf('const objectImageReferences =')
     expect(dropsUnnamed).toBeGreaterThan(-1)
     expect(buildsImages).toBeGreaterThan(dropsUnnamed)
+    // The basis is logged, so a kept or dropped reference can be explained
+    // from a production log without re-deriving the match.
+    expect(src).toMatch(/frame names it by \$\{match\.basis\}/)
   })
 })
 

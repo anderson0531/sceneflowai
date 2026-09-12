@@ -78,7 +78,7 @@ import {
   formatStillReferencesLegend,
   isStructuredStillPrompt,
   joinPromptBlocks,
-  promptReferencesLibraryItem,
+  resolveLibraryItemPromptMatch,
   stillRefsFromAttachedImages,
 } from '@/lib/imagen/structuredStillPrompt'
 import {
@@ -2554,9 +2554,18 @@ export async function POST(req: NextRequest) {
     // direction, and it resolves that by inventing the prop into the shot. Beat
     // frames therefore only carry references their composition actually uses.
     if (isBeatFrame) {
-      const unnamedProps = detectedObjectReferences.filter(
-        (obj: any) => obj.imageUrl && !promptReferencesLibraryItem(optimizedPrompt, obj)
-      )
+      const unnamedProps: any[] = []
+      for (const obj of detectedObjectReferences) {
+        if (!obj?.imageUrl) continue
+        const match = resolveLibraryItemPromptMatch(optimizedPrompt, obj)
+        if (match.matched) {
+          console.log(
+            `[Scene Image] Prop reference "${obj.name}" kept — frame names it by ${match.basis} ("${match.matchedTerm}")`
+          )
+        } else {
+          unnamedProps.push(obj)
+        }
+      }
       if (unnamedProps.length > 0) {
         console.log(
           `[Scene Image] Dropping ${unnamedProps.length} prop reference(s) not named in the frame:`,

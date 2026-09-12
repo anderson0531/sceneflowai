@@ -9,6 +9,11 @@
 import { BEAT_FRAME_CANDID_ACTION_CONSTRAINT } from '@/lib/character/characterReferenceAssembly'
 import { buildIdentityTraitsClause } from '@/lib/imagen/identityTraitsClause'
 import { buildIdentityPromptToken } from '@/lib/imagen/promptOptimizer'
+import {
+  mentionsWord,
+  propHeadNoun,
+  propSignificantWords,
+} from '@/lib/script/propNameMatch'
 
 export const STILL_SECTION_REFERENCES = '[REFERENCES]'
 export const STILL_SECTION_STILL = '[STILL]'
@@ -195,28 +200,64 @@ export function isStructuredStillPrompt(text: string): boolean {
   return Boolean(parseStillPromptSource(trimmed).actionFraming)
 }
 
+/** How a prompt turned out to reference a library item, for logging. */
+export type LibraryItemMatchBasis = 'token' | 'name' | 'head-noun' | 'full-overlap' | 'none'
+
+export interface LibraryItemPromptMatch {
+  matched: boolean
+  basis: LibraryItemMatchBasis
+  /** The term the prompt actually used, so a log can name it. */
+  matchedTerm?: string
+}
+
 /**
- * Does the prompt actually direct this library item?
+ * Does the prompt actually direct this library item, and on what evidence?
  *
- * A reference image is consumed as an instruction. An attached prop that the
+ * A reference image is consumed as an instruction. An attached prop the
  * composition never mentions asks the model to place an object without saying
- * where, why, or who touches it — so it invents an answer. Props are matched
- * by bound token or by name, since the name is only rewritten to a token
- * during assembly.
+ * where, why, or who touches it — so it invents an answer. But the reverse cut
+ * just as deep: a composed frame writes props the way a script does ("the
+ * spanner"), not the way a prop catalog does ("Thirty-Inch Iron Rail Spanner"),
+ * and demanding the full label dropped references for props the frame is built
+ * around. The object's own noun settles it either way.
  */
+export function resolveLibraryItemPromptMatch(
+  prompt: string,
+  item: { name?: string; promptToken?: string }
+): LibraryItemPromptMatch {
+  const text = prompt || ''
+  if (!text.trim()) return { matched: false, basis: 'none' }
+
+  const token = item.promptToken?.trim()
+  if (token && text.includes(token)) {
+    return { matched: true, basis: 'token', matchedTerm: token }
+  }
+
+  const name = item.name?.trim()
+  if (!name) return { matched: false, basis: 'none' }
+  if (new RegExp(`\\b${escapeRegExp(name)}\\b`, 'i').test(text)) {
+    return { matched: true, basis: 'name', matchedTerm: name }
+  }
+
+  const head = propHeadNoun(name)
+  if (head && mentionsWord(text, head)) {
+    return { matched: true, basis: 'head-noun', matchedTerm: head }
+  }
+
+  // Every identifying word, in some other order or phrasing.
+  const words = propSignificantWords(name)
+  if (words.length > 1 && words.every((word) => mentionsWord(text, word))) {
+    return { matched: true, basis: 'full-overlap', matchedTerm: words.join(' ') }
+  }
+
+  return { matched: false, basis: 'none' }
+}
+
 export function promptReferencesLibraryItem(
   prompt: string,
   item: { name?: string; promptToken?: string }
 ): boolean {
-  const text = prompt || ''
-  if (!text.trim()) return false
-
-  const token = item.promptToken?.trim()
-  if (token && text.includes(token)) return true
-
-  const name = item.name?.trim()
-  if (!name) return false
-  return new RegExp(`\\b${escapeRegExp(name)}\\b`, 'i').test(text)
+  return resolveLibraryItemPromptMatch(prompt, item).matched
 }
 
 /**

@@ -12,6 +12,11 @@ import {
   parsePerformanceCue,
   resolveBeatDirectedEmotion,
 } from '@/lib/scene/performanceCues'
+import {
+  mentionsWord,
+  propHeadNoun,
+  propSignificantWords,
+} from '@/lib/script/propNameMatch'
 import { getSceneMovements, resolveBeatMovement } from '@/lib/script/sceneMovements'
 import type { BeatDirection, SceneBeat, SceneMovement } from '@/lib/script/segmentTypes'
 
@@ -23,75 +28,6 @@ function firstNonEmpty(...values: (string | undefined | null)[]): string | undef
     }
   }
   return undefined
-}
-
-const PROP_MATCH_STOP_WORDS = new Set([
-  'that',
-  'this',
-  'their',
-  'with',
-  'from',
-  'into',
-  'onto',
-  'inch',
-  'inches',
-  'foot',
-  'feet',
-])
-
-/**
- * Material, colour, size, and condition words that dress a prop label without
- * naming the object. A catalog written by a set decorator is full of them, and
- * a scene's prose is too, so counting them as evidence attaches props that are
- * nowhere in the beat.
- */
-const PROP_DECORATOR_WORDS = new Set([
-  // material
-  'iron', 'steel', 'brass', 'copper', 'bronze', 'chrome', 'tin', 'zinc', 'wood', 'wooden',
-  'leather', 'canvas', 'cotton', 'linen', 'wool', 'silk', 'velvet', 'glass', 'plastic',
-  'rubber', 'ceramic', 'porcelain', 'paper', 'cardboard', 'silver', 'gold', 'golden',
-  'stone', 'concrete', 'enamel', 'lacquer',
-  // colour
-  'black', 'white', 'grey', 'gray', 'brown', 'green', 'blue', 'yellow', 'orange', 'pink',
-  'violet', 'purple', 'crimson', 'scarlet', 'amber', 'ochre', 'olive', 'beige', 'ivory',
-  'navy', 'teal', 'cyan', 'magenta', 'maroon', 'sepia', 'slate',
-  // size and quantity
-  'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'large', 'small', 'heavy', 'light',
-  'thick', 'wide', 'narrow', 'giant', 'tiny', 'oversized', 'miniature', 'standard',
-  // condition
-  'rusted', 'rusty', 'worn', 'battered', 'damaged', 'cracked', 'chipped', 'faded',
-  'tarnished', 'polished', 'antique', 'vintage', 'salvaged', 'scuffed',
-])
-
-/** Distinctive words of a prop label, used to require more than one hit. */
-function propMatchWords(propName: string): string[] {
-  return propName
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .filter(
-      (word) =>
-        word.length >= 4 &&
-        !PROP_MATCH_STOP_WORDS.has(word) &&
-        !PROP_DECORATOR_WORDS.has(word)
-    )
-}
-
-/**
- * The noun a prop label ends on, which is the object itself: "Thirty-Inch Iron
- * Rail Spanner" is a spanner. Decorators are kept here — a prop can be named
- * for its material ("Heavy Iron") and still needs a head noun.
- */
-function propHeadNoun(propName: string): string {
-  const words = propName
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .filter((word) => word.length >= 3 && !PROP_MATCH_STOP_WORDS.has(word))
-  return words[words.length - 1] ?? ''
-}
-
-/** Whether text uses a word, allowing a plural or other suffix but not a prefix. */
-function mentionsWord(text: string, word: string): boolean {
-  return new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`).test(text)
 }
 
 function collectKeyPropsForBeat(
@@ -127,7 +63,7 @@ function collectKeyPropsForBeat(
     // itself has to be named before the rest of the label counts for anything.
     const head = propHeadNoun(propLower)
     if (!head || !mentionsWord(text, head)) continue
-    const words = propMatchWords(propLower)
+    const words = propSignificantWords(propLower)
     if (words.length > 0 && !words.some((word) => mentionsWord(text, word))) continue
     seen.add(propLower)
     out.push(trimmed)
