@@ -8,6 +8,10 @@ import type { ExpressEvent, ExpressOptions } from '@/lib/sceneGeneration/types'
 import { auditStoryboardSceneMedia } from '@/lib/storyboard/mergeSceneMedia'
 import { mergeExpressOrchestratedScenes } from '@/lib/audio/cleanupAudio'
 import { resolveStoryboardScenes } from '@/lib/storyboard/resolveStoryboardScenes'
+import {
+  formatReferenceReadinessMessage,
+  resolveProjectReferenceReadiness,
+} from '@/lib/vision/referenceReadiness'
 
 export const runtime = 'nodejs'
 export const maxDuration = 600
@@ -193,6 +197,24 @@ export async function POST(req: NextRequest) {
   })
   if (resolvedScenes.length > 0) {
     injectResolvedScenesIntoProject(project, resolvedScenes)
+  }
+
+  // Fail before the SSE stream opens, so the client gets one clear error
+  // instead of a per-scene preflight failure for every scene in the run.
+  if (!dialogueOnly) {
+    const readiness = resolveProjectReferenceReadiness(project)
+    if (!readiness.ready) {
+      return NextResponse.json(
+        {
+          error: formatReferenceReadinessMessage(readiness),
+          code: 'MISSING_REFERENCE_IMAGES',
+          missingCast: readiness.missingCast,
+          missingLocations: readiness.missingLocations,
+          missingObjects: readiness.missingObjects,
+        },
+        { status: 422 }
+      )
+    }
   }
 
   const protocol = req.headers.get('x-forwarded-proto') || 'http'

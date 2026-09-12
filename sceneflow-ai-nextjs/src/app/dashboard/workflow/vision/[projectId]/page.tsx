@@ -1064,6 +1064,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     return true
   }, [productionReadyChecklist.referenceReadiness, openReferenceLibrary])
 
+  /**
+   * The server runs the same reference check, so a client whose reference state
+   * is stale still gets the real reason instead of a raw 422 body.
+   */
+  const reportMissingReferenceImages = useCallback(
+    (status: number, body: string): boolean => {
+      if (status !== 422) return false
+      let parsed: { code?: string; error?: string } | null = null
+      try {
+        parsed = JSON.parse(body)
+      } catch {
+        return false
+      }
+      if (parsed?.code !== 'MISSING_REFERENCE_IMAGES') return false
+      toast.error(parsed.error || 'Generate all reference images first.', {
+        description: 'Opening the Reference Library — use Generate to draw the missing references.',
+      })
+      openReferenceLibrary()
+      return true
+    },
+    [openReferenceLibrary]
+  )
+
   const lockedArtStyle = useMemo(
     () => resolveProjectArtStyle(project?.metadata),
     [project?.metadata]
@@ -13054,6 +13077,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (!response.ok || !response.body) {
           const errText = await response.text().catch(() => '')
           console.error('[Express] Request failed:', response.status, errText)
+          if (reportMissingReferenceImages(response.status, errText)) return
           toast.error(`Express failed: ${response.status} ${errText.slice(0, 120)}`)
           return
         }
@@ -13307,7 +13331,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         setIsExpressRunning(false)
       }
     },
-    [projectId, script, isExpressRunning, blockedByMissingReferences, openScreeningRoomFromVisionUi, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage, syncExpressBeatImageToProduction]
+    [projectId, script, isExpressRunning, blockedByMissingReferences, reportMissingReferenceImages, openScreeningRoomFromVisionUi, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage, syncExpressBeatImageToProduction]
   )
 
   const handleGenerateLanguageStream = useCallback(
@@ -13422,7 +13446,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     ) => {
       if (!projectId || !script?.script?.scenes?.[sceneIndex]) return
       if (isExpressRunning) return
-      if (!options?.finalizeOnly && blockedByMissingReferences()) return
+      if (blockedByMissingReferences()) return
 
       const sceneRecord = script.script.scenes[sceneIndex] as Record<string, unknown>
       const sceneNumber =
@@ -13587,8 +13611,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (!response.ok || !response.body) {
           const errText = await response.text().catch(() => '')
           console.error('[Scene Express] Request failed:', response.status, errText)
-          toast.error(`Scene Express failed: ${response.status} ${errText.slice(0, 120)}`)
           setExpressBeatFrameOverlay(null)
+          if (reportMissingReferenceImages(response.status, errText)) return
+          toast.error(`Scene Express failed: ${response.status} ${errText.slice(0, 120)}`)
           return
         }
 
@@ -13820,7 +13845,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       }
     },
-    [projectId, script, isExpressRunning, blockedByMissingReferences, lockedArtStyle, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage, syncExpressBeatImageToProduction]
+    [projectId, script, isExpressRunning, blockedByMissingReferences, reportMissingReferenceImages, lockedArtStyle, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage, syncExpressBeatImageToProduction]
   )
 
   const handleFinalizeStoryboard = useCallback(

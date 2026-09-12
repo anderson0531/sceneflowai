@@ -46,6 +46,10 @@ import type {
   SceneAudioCounts,
 } from './types'
 import { runSceneExpressPreflight } from './sceneExpressPreflight'
+import {
+  formatReferenceReadinessMessage,
+  resolveProjectReferenceReadiness,
+} from '@/lib/vision/referenceReadiness'
 import { generateSceneDirection } from './generateDirection'
 import { generateSceneAudio, applyAudioAssetsToScene } from './generateAudio'
 import { generateSceneImage } from './generateImage'
@@ -1788,6 +1792,8 @@ async function runScene(
       language: options.language || 'en',
       regenerate: options.regenerate,
       framesOnly: options.framesOnly,
+      locationReferences: visionPhase.references?.locationReferences,
+      objectReferences: visionPhase.references?.objectReferences,
     })
 
     if (!preflight.ok) {
@@ -2070,6 +2076,39 @@ export async function runExpress(
       : scenes.map((_: any, idx: number) => idx)
 
   safeEmit(emit, { type: 'start', sceneCount: sceneIndices.length })
+
+  // An un-imaged reference row still gets named in the beat prompt, but has no
+  // image to attach, so the model invents an appearance — a different one per
+  // frame. Refuse the whole run rather than produce frames that will not match.
+  if (!options.dialogueOnly) {
+    const readiness = resolveProjectReferenceReadiness(project)
+    if (!readiness.ready) {
+      const error = formatReferenceReadinessMessage(readiness)
+      const perScene: ExpressPerSceneSummary[] = sceneIndices.map((idx: number) => {
+        safeEmit(emit, {
+          type: 'preflight-failed',
+          sceneIndex: idx,
+          sceneNumber: idx + 1,
+          errors: [error],
+        })
+        return {
+          sceneIndex: idx,
+          sceneNumber: idx + 1,
+          ok: false,
+          error,
+          phasesRun: [],
+          phasesSkipped: [],
+          phasesFailed: ['direction', 'audio', 'image'],
+        }
+      })
+      safeEmit(emit, {
+        type: 'complete',
+        successScenes: 0,
+        failedScenes: perScene.length,
+      })
+      return { successScenes: 0, failedScenes: perScene.length, perScene }
+    }
+  }
 
   if (options.dialogueOnly && options.language && options.language !== 'en') {
     await ensureLanguageStreamTranslations(project, scenes, options.language, sceneIndices)

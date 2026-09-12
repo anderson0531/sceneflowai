@@ -32,6 +32,10 @@ import Project from '../../../../models/Project'
 import { ensureDatabaseConnection } from '../../../../config/database'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
 import {
+  formatReferenceReadinessMessage,
+  resolveProjectReferenceReadiness,
+} from '@/lib/vision/referenceReadiness'
+import {
   generateSceneImagePromptWithDeadline,
   detectSceneType,
   extractDirectionMetadata,
@@ -2122,6 +2126,26 @@ export async function POST(req: NextRequest) {
       console.warn(`[Scene Image] ${charactersWithoutImages.length} character(s) will be included in prompt text only (no reference images):`, 
         charactersWithoutImages.map((c: any) => c.name))
       console.warn('[Scene Image] These characters should have referenceImage saved to database for optimal image generation')
+    }
+
+    // A reference row with no image is still named by the beat planner, so the
+    // model invents an appearance for it — and invents a different one on the
+    // next frame. Refuse the frame instead of banking that inconsistency.
+    if (isBeatFrame && project) {
+      const readiness = resolveProjectReferenceReadiness(project)
+      if (!readiness.ready) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: formatReferenceReadinessMessage(readiness),
+            code: 'MISSING_REFERENCE_IMAGES',
+            missingCast: readiness.missingCast,
+            missingLocations: readiness.missingLocations,
+            missingObjects: readiness.missingObjects,
+          },
+          { status: 422 }
+        )
+      }
     }
 
     const talentBeatMissingIdentityRefs =

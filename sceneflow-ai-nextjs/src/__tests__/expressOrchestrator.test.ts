@@ -75,7 +75,19 @@ function buildProject(sceneCount: number) {
     metadata: {
       visionPhase: {
         narrationVoice: { voiceId: 'v1', provider: 'google' },
-        characters: [{ id: 'c1', name: 'ALICE', voiceConfig: { voiceId: 'v2', provider: 'google' } }],
+        characters: [
+          {
+            id: 'c1',
+            name: 'ALICE',
+            voiceConfig: { voiceId: 'v2', provider: 'google' },
+            // Express refuses to run until every reference has been drawn.
+            referenceImage: 'https://example.com/alice.png',
+          },
+        ],
+        references: {} as {
+          locationReferences?: Array<{ location?: string; imageUrl?: string }>
+          objectReferences?: Array<{ name?: string; imageUrl?: string }>
+        },
         script: { script: { scenes } },
       },
     },
@@ -171,6 +183,49 @@ describe('runExpress', () => {
     })
 
     expect(imageCalls).toBe(3)
+  })
+
+  it('refuses the run when a prop reference was never drawn', async () => {
+    const project = buildProject(2)
+    project.metadata.visionPhase.references = {
+      objectReferences: [{ name: 'Heavy iron spanner' }],
+    }
+    const events: ExpressEvent[] = []
+
+    const result = await runExpress({
+      project,
+      options: { projectId: 'p1', mode: 'batch', regenerate: true },
+      baseUrl: 'http://localhost',
+      emit: (e) => events.push(e),
+    })
+
+    expect(imageCalls).toBe(0)
+    expect(directionCalls).toBe(0)
+    expect(result.successScenes).toBe(0)
+    expect(result.failedScenes).toBe(2)
+
+    const preflightFailures = events.filter((e) => e.type === 'preflight-failed')
+    expect(preflightFailures).toHaveLength(2)
+    expect(
+      (preflightFailures[0] as { errors: string[] }).errors[0]
+    ).toContain('Heavy iron spanner')
+  })
+
+  it('lets a dialogue-only dub through — it draws nothing', async () => {
+    const project = buildProject(1)
+    project.metadata.visionPhase.references = {
+      locationReferences: [{ location: 'INT. TERMINAL' }],
+    }
+
+    const result = await runExpress({
+      project,
+      options: { projectId: 'p1', mode: 'batch', dialogueOnly: true, regenerate: true },
+      baseUrl: 'http://localhost',
+      emit: () => {},
+    })
+
+    expect(result.failedScenes).toBe(0)
+    expect(imageCalls).toBe(0)
   })
 
   it('retains all beat storyboardImageUrl values after concurrent generation', async () => {
