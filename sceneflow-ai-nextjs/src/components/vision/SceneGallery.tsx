@@ -8,7 +8,7 @@
 
 import React, { useState, useCallback, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
-import { Loader, Printer, Clapperboard, Sparkles, X, Play, Zap, Tag } from 'lucide-react'
+import { Loader, Printer, Clapperboard, RefreshCw, Sparkles, X, Play, Zap, Tag } from 'lucide-react'
 import { toast } from 'sonner'
 import { AudioGalleryPlayer } from './AudioGalleryPlayer'
 import { Button } from '@/components/ui/Button'
@@ -50,6 +50,7 @@ import {
   sceneHasPlayablePreVisAudio,
 } from '@/lib/storyboard/types'
 import { countDraftStoryboardFrames } from '@/lib/storyboard/storyboardQuality'
+import { countStalePromptKeys } from '@/lib/storyboard/preVisSync'
 import { ProductionReadyBanner } from './production/ProductionReadyBanner'
 import type { ProductionReadyChecklist } from '@/lib/production/productionReadinessGate'
 
@@ -84,6 +85,11 @@ interface SceneGalleryProps {
    * SSE request and updating script state from incoming events.
    */
   onExpressGenerate?: (options: ExpressConfirmOptions) => Promise<void> | void
+  /**
+   * Recompose every beat still prompt whose stored direction key no longer
+   * matches its beat direction, across all scenes. Frames are kept.
+   */
+  onRefreshStalePrompts?: () => Promise<unknown> | void
   /** Upgrade draft storyboard frames to final quality (all scenes or one scene). */
   productionReadyChecklist?: ProductionReadyChecklist
   /** Whether an Express run is currently in flight. */
@@ -135,6 +141,7 @@ export function SceneGallery({
   mode = 'studio',
   onAssignVoices,
   onExpressGenerate,
+  onRefreshStalePrompts,
   productionReadyChecklist,
   isExpressRunning = false,
   expressStatus,
@@ -330,6 +337,23 @@ export function SceneGallery({
     () => scenes.reduce((sum, scene) => sum + countDraftStoryboardFrames(scene), 0),
     [scenes]
   )
+
+  const stalePromptCount = useMemo(
+    () => scenes.reduce((sum, scene) => sum + countStalePromptKeys(scene), 0),
+    [scenes]
+  )
+
+  const [refreshingPrompts, setRefreshingPrompts] = useState(false)
+
+  const handleRefreshStalePrompts = useCallback(async () => {
+    if (!onRefreshStalePrompts) return
+    setRefreshingPrompts(true)
+    try {
+      await onRefreshStalePrompts()
+    } finally {
+      setRefreshingPrompts(false)
+    }
+  }, [onRefreshStalePrompts])
 
   const storyboardBeatProgress = useMemo(() => {
     return scenes.reduce(
@@ -591,6 +615,35 @@ export function SceneGallery({
                 ) : (
                   'Advanced: runs all scenes at once (~3–10+ min, higher credit cost). Prefer per-scene agents on scene cards.'
                 )}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {onRefreshStalePrompts && stalePromptCount > 0 && !isExpressRunning && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRefreshStalePrompts}
+                  disabled={refreshingPrompts}
+                  className="flex items-center gap-2 border-amber-500/40 text-amber-200 hover:border-amber-400/60 hover:text-amber-100"
+                >
+                  {refreshingPrompts ? (
+                    <Loader className="w-4 h-4 animate-spin text-amber-300" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4 text-amber-300/80" />
+                  )}
+                  <span>
+                    {refreshingPrompts
+                      ? 'Updating prompts…'
+                      : `Update prompts (${stalePromptCount})`}
+                  </span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                {stalePromptCount} beat frame prompt{stalePromptCount === 1 ? '' : 's'} no longer match their
+                beat direction. Recomposes the prompts across every scene and keeps the frames you already
+                generated — regenerate a frame when you want it redrawn.
               </TooltipContent>
             </Tooltip>
           )}
