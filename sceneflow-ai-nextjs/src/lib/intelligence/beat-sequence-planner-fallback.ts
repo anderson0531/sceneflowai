@@ -18,6 +18,7 @@ import {
 import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPrompt'
+import { normalizeStillFraming } from '@/lib/imagen/stillFramingNormalize'
 import { storedStillDirectionKeyMatches } from '@/lib/script/beatDirectionFingerprint'
 import { formatSceneArcBlock, getSceneMovements } from '@/lib/script/sceneMovements'
 import type { BeatDirection, SceneBeat } from '@/lib/script/segmentTypes'
@@ -262,10 +263,14 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
   }
 
   // Framing leads the description, unless the beat's own prose already names
-  // this shot and would otherwise state it twice.
-  const shot = [direction?.shotType?.trim(), direction?.cameraAngle?.trim()]
-    .filter(Boolean)
-    .join(', ')
+  // this shot and would otherwise state it twice. Direction is authored for
+  // coverage, so it can hold a camera move; a still gets the end state of it.
+  const { shot, rewrites } = normalizeStillFraming(direction?.shotType, direction?.cameraAngle)
+  for (const rewrite of rewrites) {
+    console.warn(
+      `[Beat Still] Beat ${beat.beatId} ${rewrite.field} "${rewrite.from}" describes a camera move; a still cannot hold one — using "${rewrite.to}"`
+    )
+  }
   if (shot && !soFar.includes(shot.toLowerCase())) {
     parts.unshift(asSentence(shot))
   }

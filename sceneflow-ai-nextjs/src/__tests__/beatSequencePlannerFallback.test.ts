@@ -281,6 +281,24 @@ describe('composePersistedBeatStillPrompt', () => {
     expect(framing.match(/Thirty-Inch Iron Rail Spanner/g)).toHaveLength(1)
   })
 
+  it('reduces a directed camera move to the angle the still is taken from', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_move',
+      sequenceIndex: 6,
+      kind: 'dialogue',
+      character: 'Piper Hayes',
+      line: 'You knew, and you said nothing.',
+      beatDirection: {
+        shotType: 'Two-Shot',
+        cameraAngle: 'Dynamic, shifting from high-angle dominance to low-angle vulnerability',
+      },
+    })
+
+    expect(framing).toContain('Two-Shot, low angle')
+    expect(framing).not.toMatch(/shifting from/i)
+    expect(framing).not.toMatch(/Dynamic/i)
+  })
+
   it('composes the same frame no matter what was stored last time', () => {
     const beat: SceneBeat = {
       beatId: 'bt_3',
