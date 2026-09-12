@@ -91,6 +91,44 @@ function buildBeatPropMatchText(beat: SceneBeat): string {
     .trim()
 }
 
+/**
+ * Text that decides which cast are on camera for THIS beat.
+ *
+ * Beat-scoped for the same reason props are: the scene's cast list is who is
+ * in the scene, not who is in the frame. Direction facets are included because
+ * blocking, gaze and prop handling are where the beat says who is standing
+ * where — and they are carried into the composed prompt verbatim.
+ */
+function buildBeatCastMatchText(beat: SceneBeat): string {
+  return [
+    beat.actionDescription || '',
+    beat.beatDirection?.blocking || '',
+    beat.beatDirection?.gaze || '',
+    beat.beatDirection?.propInteraction || '',
+    beat.beatDirection?.frozenMoment || '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .trim()
+}
+
+/**
+ * Anyone in shot at all? Pronouns, body parts, and unnamed-person nouns all
+ * say yes without naming a character.
+ *
+ * A beat whose text has none of these is framing a prop, a room, or a title
+ * card. Handing it the scene's cast attaches identity references the
+ * composition never directs, and the image model resolves an undirected
+ * portrait by putting that face in the frame — which is how an insert of a
+ * pneumatic hatch collar came back with two characters standing in it.
+ */
+function beatTextImpliesPerson(text: string): boolean {
+  if (!text.trim()) return false
+  return /\b(he|him|his|she|her|hers|they|them|their|theirs|i|me|my|we|us|our|you|your|himself|herself|themselves|someone|somebody|anyone|man|men|woman|women|boy|girl|kid|child|children|person|people|figure|figures|silhouette|crowd|guard|guards|officer|worker|workers|soldier|passenger|bystander|body|face|faces|head|hand|hands|finger|fingers|fist|palm|wrist|arm|arms|shoulder|shoulders|eye|eyes|gaze|mouth|jaw|knee|knees|leg|legs|foot|feet|back|chest|profile|portrait)\b/i.test(
+    text
+  )
+}
+
 function pickBestLocationRef(
   scene: Record<string, unknown>,
   locationRefs: LocationReference[],
@@ -264,12 +302,12 @@ function resolveBeatCharacters(
   let matched: ResolveBeatFrameGenerationContextArgs['projectCharacters'] = []
 
   if (beat.kind === 'action') {
-    const actionContext = [
-      sceneHeadingText(scene),
-      beat.actionDescription || '',
-    ].join(' ')
+    const beatCastText = buildBeatCastMatchText(beat)
+    const actionContext = [sceneHeadingText(scene), beatCastText].join(' ')
     matched = detectCharactersInText(actionContext, projectCharacters, detectOptions)
-    if (matched.length === 0) {
+    // Guessing at who is on camera is only warranted when the beat says there
+    // is someone on camera. An object or environment beat resolves to no cast.
+    if (matched.length === 0 && beatTextImpliesPerson(beatCastText)) {
       const nonNarrators = projectCharacters.filter(
         (c) => c.type !== 'narrator' && (c.referenceImage || c.id || c.name)
       )

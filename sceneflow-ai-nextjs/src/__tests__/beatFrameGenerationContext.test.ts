@@ -489,4 +489,73 @@ describe('resolveBeatFrameGenerationContext', () => {
       expect(resolved.objectRefIds).toEqual(['prop-spanner'])
     })
   })
+
+  describe('cast attachment needs the beat to put someone on camera', () => {
+    const hatchScene = {
+      heading: 'INT. SUBMERSIBLE HATCH - NIGHT',
+      action: 'Elara Vance and Marcus Thorne fight the pressure door.',
+      sceneDirection: {
+        sceneDescription: 'Elara Vance and Marcus Thorne fight the pressure door.',
+      },
+    }
+
+    it('casts nobody in an insert of an object', () => {
+      const resolved = resolveBeatFrameGenerationContext({
+        scene: hatchScene,
+        beat: actionBeat({
+          actionDescription:
+            'Brass pneumatic hatch collar flanked by three rusted locking dogs, grease caked on the rim.',
+        }),
+        projectCharacters: characters,
+        locationReferences: [],
+        objectReferences: [],
+      })
+
+      expect(resolved.characterIds).toEqual([])
+      expect(resolved.characterNames).toEqual([])
+    })
+
+    it('casts nobody in an insert of an object even with a single-character project', () => {
+      const resolved = resolveBeatFrameGenerationContext({
+        scene: hatchScene,
+        beat: actionBeat({
+          actionDescription: 'The pressure gauge needle sits pinned in the red.',
+        }),
+        projectCharacters: [characters[0]],
+        locationReferences: [],
+        objectReferences: [],
+      })
+
+      expect(resolved.characterIds).toEqual([])
+    })
+
+    it('still falls back to scene cast when the beat frames a body part', () => {
+      const resolved = resolveBeatFrameGenerationContext({
+        scene: hatchScene,
+        beat: actionBeat({
+          actionDescription: 'Hands wrench the locking dogs open one at a time.',
+        }),
+        projectCharacters: characters,
+        locationReferences: [],
+        objectReferences: [],
+      })
+
+      expect(resolved.characterIds.length).toBeGreaterThan(0)
+    })
+
+    it('casts the character the beat direction blocks into the frame', () => {
+      const resolved = resolveBeatFrameGenerationContext({
+        scene: hatchScene,
+        beat: actionBeat({
+          actionDescription: 'The hatch wheel turns a quarter revolution.',
+          beatDirection: { blocking: 'Marcus Thorne braces against the bulkhead' },
+        }),
+        projectCharacters: characters,
+        locationReferences: [],
+        objectReferences: [],
+      })
+
+      expect(resolved.characterIds).toEqual(['c2'])
+    })
+  })
 })
