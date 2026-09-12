@@ -85,7 +85,6 @@ interface SceneGalleryProps {
    */
   onExpressGenerate?: (options: ExpressConfirmOptions) => Promise<void> | void
   /** Upgrade draft storyboard frames to final quality (all scenes or one scene). */
-  onFinalizeStoryboard?: (sceneIndex?: number, language?: string) => Promise<void> | void
   productionReadyChecklist?: ProductionReadyChecklist
   /** Whether an Express run is currently in flight. */
   isExpressRunning?: boolean
@@ -136,7 +135,6 @@ export function SceneGallery({
   mode = 'studio',
   onOpenGenerateAudio,
   onExpressGenerate,
-  onFinalizeStoryboard,
   productionReadyChecklist,
   isExpressRunning = false,
   expressStatus,
@@ -596,24 +594,11 @@ export function SceneGallery({
               </TooltipContent>
             </Tooltip>
           )}
-          {mode !== 'screening' && onFinalizeStoryboard && draftFrameCount > 0 && !isExpressRunning && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void onFinalizeStoryboard(undefined, selectedLanguage)}
-                  className="flex items-center gap-2 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Finalize frames ({draftFrameCount})
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                Upgrade draft storyboard frames to Final quality for animatic preview and video
-                generation.
-              </TooltipContent>
-            </Tooltip>
+          {mode !== 'screening' && draftFrameCount > 0 && !isExpressRunning && (
+            <span className="flex items-center gap-1.5 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-2 py-1 text-[11px] text-emerald-300/90">
+              <Sparkles className="w-3.5 h-3.5" />
+              {draftFrameCount} draft — choose Final in Express All
+            </span>
           )}
           {mode !== 'screening' && isExpressRunning && expressProgress && (
             <div className="flex items-center gap-1.5 rounded-md border border-indigo-500/40 bg-indigo-500/10 px-2 py-1 text-[11px] text-indigo-200">

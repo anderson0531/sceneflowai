@@ -61,6 +61,7 @@ import {
 import { invalidateChangedBeatFramesOnScene, applyDeepRestructureAssetClear, REVISION_DEPTH_SCENE_KEY, type RevisionDepth } from '@/lib/script/structuredSceneRevision'
 import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
 import type { StoryboardFrameSlot } from '@/lib/storyboard/types'
+import type { StoryboardQuality } from '@/lib/storyboard/storyboardQuality'
 import {
   mapBeatReferenceSelectionForApi,
   resolveBeatFrameGenerationContext,
@@ -5767,6 +5768,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     startedAt: number | null
     finished: boolean
     preflightError?: string
+    /** Carried so Retry failed re-runs at the quality the user chose. */
+    quality: StoryboardQuality
   } | null>(null)
   
   // Share functionality state
@@ -10352,6 +10355,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       scope: 'selected',
       includeEndFrames: false,
       selectedFrameKeys: [beatFrameSlotKey(beatId, 'start')],
+      quality: 'draft',
     })
   }
 
@@ -10421,6 +10425,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       scope: 'selected',
       includeEndFrames: true,
       selectedFrameKeys: [beatFrameSlotKey(beatId, 'end')],
+      quality: 'draft',
     })
   }
 
@@ -13491,9 +13496,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     async (
       sceneIndex: number,
       language: string,
-      options?: import('@/components/vision/ExpressSceneConfirmDialog').ExpressSceneConfirmOptions & {
-        finalizeOnly?: boolean
-      }
+      options?: import('@/components/vision/ExpressSceneConfirmDialog').ExpressSceneConfirmOptions
     ) => {
       if (!projectId || !script?.script?.scenes?.[sceneIndex]) return
       if (isExpressRunning) return
@@ -13501,7 +13504,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const sceneRecord = script.script.scenes[sceneIndex] as Record<string, unknown>
       const sceneNumber =
         typeof sceneRecord.sceneNumber === 'number' ? sceneRecord.sceneNumber : sceneIndex + 1
-      const imageTier: 'draft' | 'final' = options?.finalizeOnly ? 'final' : 'draft'
+      const imageTier: 'draft' | 'final' = options?.quality === 'final' ? 'final' : 'draft'
+
+      /**
+       * The old `Finalize` button's job, now reachable as Final + the default
+       * scope: upgrade the frames that are not final yet. `missingFramesOnly`
+       * cannot also be set, because it short-circuits the tier comparison and
+       * would leave every drafted frame untouched.
+       */
+      const upgradeToFinal = imageTier === 'final' && options?.scope === 'missing'
 
       const isOverlayPhase = (phase: string): phase is ExpressOverlayPhase =>
         phase === 'direction' ||
@@ -13565,8 +13576,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         items: buildExpressBeatFrameItems(sceneRecord, {
           selectedFrameKeys: options?.selectedFrameKeys,
           includeEndFrames: options?.includeEndFrames,
-          scope: options?.scope,
-          finalizeOnly: options?.finalizeOnly,
+          // Mirrors the request below, or the overlay would list a different
+          // set of frames than the run actually draws.
+          scope: upgradeToFinal ? undefined : options?.scope,
+          finalizeOnly: upgradeToFinal,
           storyboardQuality: imageTier,
         }),
         phases: {
@@ -13578,6 +13591,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         },
         startedAt: Date.now(),
         finished: false,
+        quality: imageTier,
       })
 
       const setPhase = (
@@ -13704,14 +13718,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             includeMusic: false,
             includeSFX: false,
             includeEndFrames: !!options?.includeEndFrames,
-            missingFramesOnly: options?.scope === 'missing',
+            missingFramesOnly: !upgradeToFinal && options?.scope === 'missing',
             regenerate: options?.scope === 'selected',
             framesOnly: options?.scope === 'selected' || options?.scope === 'missing',
             ...(options?.selectedFrameKeys?.length
               ? { selectedFrameKeys: options.selectedFrameKeys }
               : {}),
-            storyboardQuality: options?.finalizeOnly ? 'final' : 'draft',
-            finalizeOnly: !!options?.finalizeOnly,
+            storyboardQuality: imageTier,
+            finalizeOnly: upgradeToFinal,
             imageQuality,
           }),
         })
@@ -13957,33 +13971,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     },
     [projectId, script, isExpressRunning, characters, locationReferences, objectReferences, handleExpressSceneReferences, referenceExpressJob.waitUntilSettled, refreshReferencesFromServer, reportMissingReferenceImages, lockedArtStyle, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage, syncExpressBeatImageToProduction]
-  )
-
-  const handleFinalizeStoryboard = useCallback(
-    async (sceneIndex?: number, language: string = 'en') => {
-      if (isExpressRunning) return
-      if (sceneIndex !== undefined) {
-        toast.info(`Finalizing Scene ${sceneIndex + 1} frames for animatic and video…`)
-        await handleExpressSceneGenerate(sceneIndex, language, { finalizeOnly: true })
-        return
-      }
-      toast.info('Upgrading draft frames to Final quality for animatic and video…')
-      await handleExpressGenerate({
-        includeMusic: false,
-        includeSFX: false,
-        regenerate: false,
-        storyboardQuality: 'final',
-        finalizeOnly: true,
-        language,
-        artStyle: lockedArtStyle || 'photorealistic',
-      })
-    },
-    [
-      isExpressRunning,
-      handleExpressSceneGenerate,
-      handleExpressGenerate,
-      lockedArtStyle,
-    ]
   )
 
   const exportedAnimaticUrl =
@@ -15123,7 +15110,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onUploadCustomFrame={handleUploadCustomFrame}
                 onUploadStoryboardScene={handleUploadScene}
                 onExpressSceneGenerate={handleExpressSceneGenerate}
-                onFinalizeStoryboardScene={handleFinalizeStoryboard}
                 expressStatus={expressStatus}
                 expressGateBlocked={!expressGate.allowed && !expressGate.blockedOnlyByReferences}
                 onExpressGateBlocked={() => {
@@ -15164,7 +15150,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     productionReadyChecklist={productionReadyChecklist}
                     onOpenReferences={() => openReferenceLibrary()}
                     onExpressGenerate={handleExpressGenerate}
-                    onFinalizeStoryboard={handleFinalizeStoryboard}
                     isExpressRunning={isExpressRunning}
                     expressStatus={expressStatus}
                     expressGateBlocked={!expressGate.allowed}
@@ -16189,6 +16174,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               scope: 'missing',
               includeEndFrames: false,
               selectedFrameKeys: failedKeys,
+              quality: overlay.quality,
             })
           }}
           onDirectFailed={(failedKeys) => {

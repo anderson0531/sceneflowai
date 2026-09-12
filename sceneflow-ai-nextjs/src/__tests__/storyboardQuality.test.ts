@@ -143,6 +143,23 @@ describe('storyboardQuality', () => {
     ).toBe(false)
   })
 
+  /**
+   * The Express Frames dialog sends one or the other, never both: a Final run
+   * that also claimed `missingOnly` would look like an upgrade pass and quietly
+   * leave every drafted frame alone.
+   */
+  it('missingOnly wins over finalizeOnly, so callers must not send both', () => {
+    expect(
+      beatFrameNeedsGeneration(
+        {
+          storyboardImageUrl: 'https://example.com/a.jpg',
+          storyboardImageTier: 'draft',
+        },
+        { missingOnly: true, finalizeOnly: true, storyboardQuality: 'final' }
+      )
+    ).toBe(false)
+  })
+
   it('returns empty anchor for non-photorealistic art styles', () => {
     expect(getPhotorealisticPromptAnchor('final', 'anime-90s')).toBe('')
   })

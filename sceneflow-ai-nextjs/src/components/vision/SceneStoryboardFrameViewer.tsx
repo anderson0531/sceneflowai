@@ -88,7 +88,6 @@ export interface SceneStoryboardFrameViewerProps {
   onSaveEditedDialogueFrame?: (dialogueIndex: number, imageUrl: string) => void
   onSaveEditedCustomFrame?: (customFrameId: string, imageUrl: string) => void
   onExpressSceneGenerate?: (options?: ExpressSceneConfirmOptions) => void | Promise<void>
-  onFinalizeScene?: () => void | Promise<void>
   onSyncPreVisToScript?: () => void | Promise<void>
   onAddStoryboardFrame?: () => void | Promise<void>
   onDeleteStoryboardFrame?: (frameId: string) => void | Promise<void>
@@ -351,7 +350,6 @@ export function SceneStoryboardFrameViewer({
   onSaveEditedDialogueFrame,
   onSaveEditedCustomFrame,
   onExpressSceneGenerate,
-  onFinalizeScene,
   onSyncPreVisToScript,
   onAddStoryboardFrame,
   onDeleteStoryboardFrame,
@@ -389,6 +387,7 @@ export function SceneStoryboardFrameViewer({
     () => sceneBeats.filter((beat) => isBeatFrameStale(beat)).length,
     [sceneBeats]
   )
+  const draftFrameCount = useMemo(() => countDraftStoryboardFrames(scene), [scene])
   const slotPromptChanged = useCallback(
     (slot: StoryboardFrameSlot) => {
       if (!slot.beatId) return false
@@ -852,18 +851,11 @@ export function SceneStoryboardFrameViewer({
                       <TooltipContent className="max-w-xs">{sceneExpressTooltip}</TooltipContent>
                     </Tooltip>
                   )}
-                  {onFinalizeScene && countDraftStoryboardFrames(scene) > 0 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-[10px] border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10"
-                      disabled={isExpressRunning}
-                      onClick={() => void onFinalizeScene()}
-                    >
-                      <Sparkles className="w-3 h-3 mr-0.5" />
-                      Finalize
-                    </Button>
+                  {draftFrameCount > 0 && (
+                    <span className="flex items-center gap-1 rounded border border-emerald-500/30 bg-emerald-500/5 px-1.5 py-1 text-[10px] text-emerald-300/90">
+                      <Sparkles className="w-3 h-3" />
+                      {draftFrameCount} draft
+                    </span>
                   )}
                   {onAddStoryboardFrame && (
                     <Button

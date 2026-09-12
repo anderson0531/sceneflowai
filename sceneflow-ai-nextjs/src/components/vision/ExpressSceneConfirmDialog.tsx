@@ -12,13 +12,17 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Image as ImageIcon, Library, Loader, Zap } from 'lucide-react'
+import { Image as ImageIcon, Library, Loader, Sparkles, Zap } from 'lucide-react'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
 import {
   enumerateStoryboardFrameSlots,
   filterStoryboardSlotsForExpressChecklist,
   type StoryboardFrameSlot,
 } from '@/lib/storyboard/types'
+import {
+  resolveEffectiveStoryboardTier,
+  type StoryboardQuality,
+} from '@/lib/storyboard/storyboardQuality'
 import {
   estimateReferenceExpress,
   formatReferenceExpressEstimate,
@@ -34,6 +38,12 @@ export interface ExpressSceneConfirmOptions {
   scope: ExpressSceneScope
   includeEndFrames: boolean
   selectedFrameKeys: string[]
+  /**
+   * Draft is storyboard coverage; Final is what the animatic and the video
+   * need. This used to be a separate `Finalize` button, which read as a
+   * different operation rather than the same one at a different quality.
+   */
+  quality: StoryboardQuality
 }
 
 interface ExpressSceneConfirmDialogProps {
@@ -50,9 +60,24 @@ interface ExpressSceneConfirmDialogProps {
   missingReferences?: SceneReferenceRequirement[]
 }
 
-function slotEligibleForScope(slot: StoryboardFrameSlot, scope: ExpressSceneScope): boolean {
-  if (scope === 'missing') return !slot.ownImageUrl
-  return !!slot.ownImageUrl
+function slotIsFinal(slot: StoryboardFrameSlot): boolean {
+  return !!slot.ownImageUrl && resolveEffectiveStoryboardTier(slot.imageTier) === 'final'
+}
+
+/**
+ * Which frames the default scope covers.
+ *
+ * At Draft quality "outstanding" means no image at all. At Final it also means
+ * a frame that was only ever drafted — upgrading those is the whole reason to
+ * pick Final, and it is what the old `Finalize` button did.
+ */
+function slotEligibleForScope(
+  slot: StoryboardFrameSlot,
+  scope: ExpressSceneScope,
+  quality: StoryboardQuality
+): boolean {
+  if (scope === 'selected') return !!slot.ownImageUrl
+  return quality === 'final' ? !slotIsFinal(slot) : !slot.ownImageUrl
 }
 
 export function ExpressSceneConfirmDialog({
@@ -66,6 +91,7 @@ export function ExpressSceneConfirmDialog({
   const t = useTranslations('production.expressScene')
   const tCommon = useTranslations('common')
   const [scope, setScope] = useState<ExpressSceneScope>('missing')
+  const [quality, setQuality] = useState<StoryboardQuality>('draft')
   const [selectedFrameKeys, setSelectedFrameKeys] = useState<string[]>([])
 
   /**
@@ -104,18 +130,29 @@ export function ExpressSceneConfirmDialog({
     [allSlots]
   )
 
+  /**
+   * A scene whose frames are all drawn but only at draft tier has nothing left
+   * to draft, so opening at Draft would show an empty selection and a disabled
+   * button. Upgrading is the only work left — offer it.
+   */
   useEffect(() => {
     if (!open) return
     setScope('missing')
-  }, [open])
+    const drawn = checklistSlots.filter((slot) => slot.ownImageUrl)
+    const onlyUpgradeLeft =
+      checklistSlots.length > 0 &&
+      drawn.length === checklistSlots.length &&
+      drawn.some((slot) => !slotIsFinal(slot))
+    setQuality(onlyUpgradeLeft ? 'final' : 'draft')
+  }, [open, checklistSlots])
 
   useEffect(() => {
     if (!open) return
     const selected = checklistSlots
-      .filter((slot) => slotEligibleForScope(slot, scope))
+      .filter((slot) => slotEligibleForScope(slot, scope, quality))
       .map((slot) => slot.key)
     setSelectedFrameKeys(selected)
-  }, [open, scope, checklistSlots])
+  }, [open, scope, quality, checklistSlots])
 
   const selectedSet = useMemo(() => new Set(selectedFrameKeys), [selectedFrameKeys])
 
@@ -185,6 +222,33 @@ export function ExpressSceneConfirmDialog({
 
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+              {t('quality')}
+            </p>
+            <div className="inline-flex rounded-md border border-emerald-600/40 overflow-hidden">
+              {(['draft', 'final'] as StoryboardQuality[]).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  disabled={isRunning}
+                  onClick={() => setQuality(value)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
+                    quality === value
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-transparent text-emerald-200/80 hover:bg-emerald-900/30'
+                  }`}
+                >
+                  {value === 'final' && <Sparkles className="w-3 h-3" />}
+                  {value === 'draft' ? t('qualityDraft') : t('qualityFinal')}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-emerald-200/70 mt-2">
+              {quality === 'final' ? t('qualityFinalHint') : t('qualityDraftHint')}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
               {t('scope')}
             </p>
             <div className="inline-flex rounded-md border border-amber-600/40 overflow-hidden">
@@ -200,7 +264,11 @@ export function ExpressSceneConfirmDialog({
                       : 'bg-transparent text-amber-200/80 hover:bg-amber-900/30'
                   }`}
                 >
-                  {value === 'missing' ? t('scopeMissing') : t('scopeRegenerate')}
+                  {value === 'selected'
+                    ? t('scopeRegenerate')
+                    : quality === 'final'
+                      ? t('scopeNotFinal')
+                      : t('scopeMissing')}
                 </button>
               ))}
             </div>
@@ -246,7 +314,11 @@ export function ExpressSceneConfirmDialog({
                               : 'text-amber-400'
                         }`}
                       >
-                        {slot.ownImageUrl ? t('hasImage') : slot.imageError ? t('failed') : t('missing')}
+                        {slot.ownImageUrl
+                          ? `${t('hasImage')} · ${slotIsFinal(slot) ? t('qualityFinal') : t('qualityDraft')}`
+                          : slot.imageError
+                            ? t('failed')
+                            : t('missing')}
                       </span>
                     </span>
                   </label>
@@ -281,6 +353,7 @@ export function ExpressSceneConfirmDialog({
                 scope,
                 includeEndFrames: false,
                 selectedFrameKeys,
+                quality,
               })
             }
             disabled={isRunning || nothingSelected}

@@ -76,6 +76,7 @@ export function ExpressConfirmDialog({
   const [includeMusic, setIncludeMusic] = useState(false)
   const [missingFramesOnly, setMissingFramesOnly] = useState(false)
   const [regenerate, setRegenerate] = useState(false)
+  const [storyboardQuality, setStoryboardQuality] = useState<'draft' | 'final'>('draft')
   const [artStyle, setArtStyle] = useState(lockedArtStyle || 'photorealistic')
 
   const hasTitleScene = useMemo(
@@ -88,6 +89,7 @@ export function ExpressConfirmDialog({
       setIncludeMusic(hasTitleScene)
       setMissingFramesOnly(false)
       setRegenerate(false)
+      setStoryboardQuality('draft')
       setArtStyle(lockedArtStyle || 'photorealistic')
     }
   }, [open, lockedArtStyle, hasTitleScene])
@@ -297,9 +299,28 @@ export function ExpressConfirmDialog({
             <div className="flex items-start space-x-3 p-3 bg-gray-800/60 rounded-lg border border-gray-700/60">
               <Brush className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
               <div className="flex-1 text-sm text-gray-400">
-                <div className="font-medium text-gray-300">{t('storyboardQualityDraft')}</div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {t('storyboardQualityDraftHint')}
+                <div className="font-medium text-gray-300 mb-2">{t('quality')}</div>
+                <div className="inline-flex rounded-md border border-emerald-600/40 overflow-hidden">
+                  {(['draft', 'final'] as const).map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      disabled={isRunning}
+                      onClick={() => setStoryboardQuality(value)}
+                      className={`px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
+                        storyboardQuality === value
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-transparent text-emerald-200/80 hover:bg-emerald-900/30'
+                      }`}
+                    >
+                      {value === 'draft' ? t('qualityDraft') : t('qualityFinal')}
+                    </button>
+                  ))}
+                </div>
+                <div className="text-xs text-gray-500 mt-2">
+                  {storyboardQuality === 'final'
+                    ? t('qualityFinalHint')
+                    : t('qualityDraftHint')}
                 </div>
               </div>
             </div>
@@ -433,7 +454,11 @@ export function ExpressConfirmDialog({
                 regenerate,
                 language,
                 artStyle,
-                storyboardQuality: 'draft',
+                storyboardQuality,
+                // Final without an explicit scope means "bring every frame up
+                // to Final", which is what the old Finalize button did.
+                finalizeOnly:
+                  storyboardQuality === 'final' && !regenerate && !missingFramesOnly,
                 includeEndFrames: false,
                 missingFramesOnly,
               })

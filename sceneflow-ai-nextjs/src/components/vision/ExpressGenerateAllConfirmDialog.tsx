@@ -369,6 +369,10 @@ export function ExpressGenerateAllConfirmDialog({
                   scope: frameScope,
                   includeEndFrames: false,
                   selectedFrameKeys,
+                  // Express All is the "get this scene started" action, so its
+                  // frames are storyboard coverage. Upgrading to Final is a
+                  // deliberate second pass, chosen in Express Frames.
+                  quality: 'draft',
                 },
               })
             }
