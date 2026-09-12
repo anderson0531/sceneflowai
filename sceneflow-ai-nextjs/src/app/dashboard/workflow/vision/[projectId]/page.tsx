@@ -151,7 +151,12 @@ import {
   ExpressBeatFrameProgressOverlay,
   type ExpressOverlayPhase,
 } from '@/components/vision/ExpressBeatFrameProgressOverlay'
-import { AgentDockStack, AgentRunDock, type AgentRunTone } from '@/components/vision/AgentRunDock'
+import {
+  AgentDockStack,
+  AgentRunDock,
+  type AgentRunItem,
+  type AgentRunTone,
+} from '@/components/vision/AgentRunDock'
 import {
   ExpressProjectRunDock,
   type ExpressProjectRunState,
@@ -160,6 +165,7 @@ import {
   AudioAgentRunDock,
   type AudioAgentRunState,
 } from '@/components/vision/AudioAgentRunDock'
+import { DirectionRunDock } from '@/components/vision/DirectionRunDock'
 import {
   VideoAgentRunDock,
   type VideoAgentRunState,
@@ -5823,6 +5829,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     videoAgentCancelRef.current = cancel
   }, [])
 
+  /** Scene-direction batch — one row per scene it was asked to rewrite. */
+  const [directionRun, setDirectionRun] = useState<{
+    visible: boolean
+    items: AgentRunItem[]
+    finished: boolean
+  } | null>(null)
+
   /**
    * Project animatic stitch. One long poll with no per-item progress, so it
    * reports as a single line rather than a row list — but it reports, instead
@@ -11320,7 +11333,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     setIsUpdatingAllDirections(true)
     const total = scenesNeedingDirection.length
-    overlayStore.show('Updating scene directions', total * 8, 'scene-revision')
+
+    const runItems: AgentRunItem[] = scenesNeedingDirection.map(
+      ({ scene, idx }: { scene: any; idx: number }) => {
+        const headingText =
+          typeof scene.heading === 'string' ? scene.heading : scene.heading?.text
+        return {
+          key: `scene-${idx}`,
+          label: headingText ? `Scene ${idx + 1} — ${headingText}` : `Scene ${idx + 1}`,
+          status: 'pending' as const,
+        }
+      }
+    )
+    const reportDirections = (finished: boolean) => {
+      setDirectionRun({ visible: true, items: [...runItems], finished })
+    }
+    const markScene = (idx: number, status: AgentRunItem['status'], error?: string) => {
+      const position = runItems.findIndex((item) => item.key === `scene-${idx}`)
+      if (position >= 0) {
+        runItems[position] = { ...runItems[position], status, ...(error ? { error } : {}) }
+      }
+      reportDirections(false)
+    }
+    reportDirections(false)
 
     let completed = 0
     let failures = 0
@@ -11328,11 +11363,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     try {
       for (const { scene, idx } of scenesNeedingDirection) {
         completed += 1
-        const headingText =
-          typeof scene.heading === 'string' ? scene.heading : scene.heading?.text
-        const label = headingText || `Scene ${idx + 1}`
-        overlayStore.setStatus(`Scene ${completed}/${total}: ${label}`)
-        overlayStore.setProgress(Math.round((completed / total) * 95))
+        markScene(idx, 'running')
 
         try {
           const directionResponse = await fetch('/api/scene/generate-direction', {
@@ -11396,8 +11427,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
             return updatedScript
           })
+          markScene(idx, 'done')
         } catch (err) {
           failures += 1
+          markScene(
+            idx,
+            'error',
+            String((err as Error)?.message || err || 'Direction failed').slice(0, 140)
+          )
           console.error(`[UpdateAllDirections] Failed for Scene ${idx + 1}:`, err)
         }
 
@@ -11429,7 +11466,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       } catch {}
     } finally {
       setIsUpdatingAllDirections(false)
-      overlayStore.hide()
+      reportDirections(true)
     }
   }
 
@@ -16101,6 +16138,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           onDismiss={referenceExpressJob.dismiss}
           onCancel={() => void referenceExpressJob.cancel()}
         />
+
+        {directionRun?.visible && (
+          <DirectionRunDock
+            items={directionRun.items}
+            finished={directionRun.finished}
+            onClose={() => setDirectionRun(null)}
+          />
+        )}
 
         {expressProjectRun?.visible && (
           <ExpressProjectRunDock
