@@ -58,7 +58,7 @@ import {
 } from '@/lib/sceneGeneration/expressOrchestrator'
 import { ExpressTrafficCop } from '@/lib/sceneGeneration/expressTrafficCop'
 import type { ExpressEvent, ExpressPhaseEvent } from '@/lib/sceneGeneration/types'
-import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
+import { beatStillDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
 
 /**
  * Two beats whose stored prompts are both current, so neither needs re-planning
@@ -79,7 +79,7 @@ function buildBeats(): SceneBeat[] {
       actionDescription: 'ALICE lifts the lantern.',
       beatDirection: direction('ALICE at the gate'),
       storyboardImagePrompt: 'LAST SENT: Alice lifts the lantern, close.',
-      storyboardImagePromptDirectionKey: beatDirectionFingerprint(direction('ALICE at the gate')),
+      storyboardImagePromptDirectionKey: beatStillDirectionFingerprint(direction('ALICE at the gate')),
     },
     {
       beatId: 'bt_two',
@@ -88,7 +88,7 @@ function buildBeats(): SceneBeat[] {
       actionDescription: 'BOB steps out of the rain.',
       beatDirection: direction('BOB under the awning'),
       storyboardImagePrompt: 'LAST SENT: Bob steps out of the rain, wide.',
-      storyboardImagePromptDirectionKey: beatDirectionFingerprint(direction('BOB under the awning')),
+      storyboardImagePromptDirectionKey: beatStillDirectionFingerprint(direction('BOB under the awning')),
     },
   ]
 }

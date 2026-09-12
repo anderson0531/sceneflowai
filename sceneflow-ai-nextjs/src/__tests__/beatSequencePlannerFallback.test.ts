@@ -14,7 +14,10 @@ import {
   isStructuredStillPrompt,
   parseStillPromptSource,
 } from '@/lib/imagen/structuredStillPrompt'
-import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
+import {
+  beatDirectionFingerprint,
+  beatStillDirectionFingerprint,
+} from '@/lib/script/beatDirectionFingerprint'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 const lookbook: ProjectLookbook = {
@@ -394,7 +397,7 @@ describe('composePersistedBeatStillPrompt', () => {
       actionDescription: 'Gideon hunches over the seismograph.',
       beatDirection: { ...still, cameraMovement: 'dolly in', emotion: 'tense' },
       storyboardImagePrompt: 'Medium Shot. Gideon at the bench.',
-      storyboardImagePromptDirectionKey: beatDirectionFingerprint(still),
+      storyboardImagePromptDirectionKey: beatStillDirectionFingerprint(still),
     }
     expect(storedPromptMatchesDirection(beat)).toBe(true)
   })
