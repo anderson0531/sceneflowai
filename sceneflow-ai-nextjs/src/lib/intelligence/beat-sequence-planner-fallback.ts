@@ -227,11 +227,17 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
   const described = beat.actionDescription?.trim() || beat.line?.trim() || ''
 
   const parts: string[] = []
-  // The frozen moment leads when there is one: it is the single field that
-  // names the instant the frame catches, where the beat's prose usually
-  // describes a span of time. The prose still follows it for texture.
+  // Exactly one instant. `frozenMoment` names the moment the shutter caught;
+  // the beat's prose describes the span of time around it, and a request
+  // carrying both leaves the model to choose — which is how a still staged an
+  // action the frozen moment says has already finished. The frozen moment wins
+  // outright when there is one, and the prose is dropped rather than trailed.
+  if (frozen && described && !frozen.toLowerCase().includes(described.toLowerCase())) {
+    console.log(
+      `[Beat Still] Beat ${beat.beatId} frame is the frozen moment "${frozen}"; the beat's prose spans time and is not staged: "${described}"`
+    )
+  }
   appendFacet(parts, frozen || described)
-  if (frozen) appendFacet(parts, described)
   appendFacet(parts, direction?.blocking, 'Blocking')
   appendFacet(parts, direction?.propInteraction, 'Prop handling')
   appendFacet(parts, direction?.gaze, 'Gaze')

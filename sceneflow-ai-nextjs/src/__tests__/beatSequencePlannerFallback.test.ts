@@ -227,7 +227,9 @@ describe('composePersistedBeatStillPrompt', () => {
     const parsed = parseStillPromptSource(prompt!)
     expect(parsed.style?.trim()).toBeTruthy()
     expect(parsed.actionFraming).toContain('Gideon at the zinc workbench')
-    expect(parsed.actionFraming).toContain('Gideon hunches over the seismograph')
+    // One instant per still: the prose spans time, so it does not trail the
+    // frozen moment and leave the model choosing which action to stage.
+    expect(parsed.actionFraming).not.toMatch(/hunches over/)
     expect(parsed.actionFraming).not.toMatch(/Piper|gantry/)
   })
 
@@ -279,6 +281,34 @@ describe('composePersistedBeatStillPrompt', () => {
     // The spanner is already handled; only the untouched prop needs stating.
     expect(framing).toContain('Props in frame: Violet Ink Drafting Vellum.')
     expect(framing.match(/Thirty-Inch Iron Rail Spanner/g)).toHaveLength(1)
+  })
+
+  it('stages one instant, not the frozen moment and the prose around it', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_instant',
+      sequenceIndex: 7,
+      kind: 'action',
+      actionDescription: 'Gideon raises the spanner and swings it down onto the locking dogs.',
+      beatDirection: {
+        shotType: 'Medium Shot',
+        frozenMoment: 'The spanner is already buried in the third dog, Gideon following through.',
+      },
+    })
+
+    expect(framing).toContain('The spanner is already buried in the third dog')
+    expect(framing).not.toMatch(/raises the spanner/)
+  })
+
+  it('describes the beat from its prose when no frozen moment is directed', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_prose',
+      sequenceIndex: 8,
+      kind: 'action',
+      actionDescription: 'Gideon raises the spanner over the locking dogs.',
+      beatDirection: { shotType: 'Medium Shot' },
+    })
+
+    expect(framing).toContain('Gideon raises the spanner over the locking dogs.')
   })
 
   it('reduces a directed camera move to the angle the still is taken from', () => {
