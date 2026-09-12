@@ -34,12 +34,21 @@ const FINGERPRINTED_KEYS: Array<keyof BeatDirection> = [
   ...VIDEO_ONLY_FINGERPRINTED_KEYS,
 ]
 
-const STILL_KEY_NAMES = new Set<string>([...STILL_FINGERPRINTED_KEYS, 'keyProps'])
+/**
+ * List facets, fingerprinted separately because order is not meaningful.
+ *
+ * `castInFrame: []` is a statement — nobody is on camera — so clearing the list
+ * has to move the fingerprint the way populating it does. A list that is absent
+ * contributes nothing.
+ */
+const LIST_KEYS = ['castInFrame', 'keyProps'] as const
+
+const STILL_KEY_NAMES = new Set<string>([...STILL_FINGERPRINTED_KEYS, ...LIST_KEYS])
 
 function fingerprintDirection(
   direction: BeatDirection | null | undefined,
   keys: Array<keyof BeatDirection>,
-  includeKeyProps: boolean
+  includeLists: boolean
 ): string {
   if (!direction) return ''
   const parts: string[] = []
@@ -49,15 +58,15 @@ function fingerprintDirection(
       parts.push(`${key}=${value.trim()}`)
     }
   }
-  if (includeKeyProps) {
-    const props = Array.isArray(direction.keyProps)
-      ? direction.keyProps
-          .map((prop) => (typeof prop === 'string' ? prop.trim() : ''))
-          .filter(Boolean)
-          .sort()
-      : []
-    if (props.length > 0) {
-      parts.push(`keyProps=${props.join(',')}`)
+  if (includeLists) {
+    for (const key of LIST_KEYS) {
+      const value = direction[key]
+      if (!Array.isArray(value)) continue
+      const items = value
+        .map((item) => (typeof item === 'string' ? item.trim() : ''))
+        .filter(Boolean)
+        .sort()
+      parts.push(`${key}=${items.join(',')}`)
     }
   }
   return parts.join('|')

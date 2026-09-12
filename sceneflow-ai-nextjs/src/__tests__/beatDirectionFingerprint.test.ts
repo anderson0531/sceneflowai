@@ -39,6 +39,29 @@ describe('beatStillDirectionFingerprint', () => {
     )
   })
 
+  it('separates an empty cast from an unstated one', () => {
+    // Clearing the cast is a real edit — it turns "guess who is on camera" into
+    // "nobody is" — so a prompt composed before it has to read as stale.
+    const unstated = beatStillDirectionFingerprint(stillDirection)
+    const nobody = beatStillDirectionFingerprint({ ...stillDirection, castInFrame: [] })
+    const someone = beatStillDirectionFingerprint({
+      ...stillDirection,
+      castInFrame: ['Piper Hayes'],
+    })
+
+    expect(nobody).not.toBe(unstated)
+    expect(someone).not.toBe(nobody)
+    expect(storedStillDirectionKeyMatches(unstated, { ...stillDirection, castInFrame: [] })).toBe(
+      false
+    )
+  })
+
+  it('does not care what order the cast was listed in', () => {
+    expect(
+      beatStillDirectionFingerprint({ ...stillDirection, castInFrame: ['Piper', 'Gideon'] })
+    ).toBe(beatStillDirectionFingerprint({ ...stillDirection, castInFrame: ['Gideon', 'Piper'] }))
+  })
+
   it('lifts the still slice out of a legacy full-direction key', () => {
     const full = beatDirectionFingerprint(withVideoOnly)
     const still = beatStillDirectionFingerprint(withVideoOnly)

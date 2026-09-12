@@ -120,6 +120,15 @@ export interface BeatDirection {
   cameraAngle?: string
   /** Camera movement (e.g., "static", "handheld push-in", "Steadicam creep"). */
   cameraMovement?: string
+  /**
+   * Exactly who is on camera in this beat, by character name.
+   *
+   * The one statement of frame occupancy: an empty array means nobody, which is
+   * different from the field being absent. Absent is a legacy record, and cast
+   * for those is still guessed from prose. Guessing is what put a character in
+   * an extreme close-up of a pressure gauge.
+   */
+  castInFrame?: string[]
   /** Per-beat blocking: where subjects are and what their bodies do. */
   blocking?: string
   /** Directed emotion / expression for this beat. */

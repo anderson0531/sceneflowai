@@ -214,6 +214,7 @@ export interface SceneImageBeatDirectionOverlay {
   shotType?: string
   cameraAngle?: string
   cameraMovement?: string
+  castInFrame?: string[]
   blocking?: string
   emotion?: string
   gaze?: string
@@ -417,9 +418,11 @@ function normalizeCachedSceneImageResult(
 function compactOverlayKey(value: object | undefined): string {
   if (!value) return 'na'
   const entries = Object.entries(value)
-    .filter(([, v]) => {
+    .filter(([key, v]) => {
       if (typeof v === 'string') return v.trim().length > 0
-      if (Array.isArray(v)) return v.length > 0
+      // An empty castInFrame is a statement — nobody on camera — so it has to
+      // reach the cache key, where an empty list otherwise reads as an absence.
+      if (Array.isArray(v)) return v.length > 0 || key === 'castInFrame'
       return false
     })
     .map(([k, v]) => {
@@ -623,6 +626,13 @@ function appendBeatDirectionAuthorityBlock(request: SceneImageIntelligenceReques
   if (bd.shotType) lines.push(`Shot type: ${bd.shotType}`)
   if (bd.cameraAngle) lines.push(`Camera angle: ${bd.cameraAngle}`)
   if (bd.cameraMovement) lines.push(`Camera movement: ${bd.cameraMovement}`)
+  if (Array.isArray(bd.castInFrame)) {
+    lines.push(
+      bd.castInFrame.length > 0
+        ? `Cast in frame (the complete list — show nobody else): ${bd.castInFrame.join(', ')}`
+        : 'Cast in frame: NOBODY. No people, no faces, no hands, no silhouettes.'
+    )
+  }
   if (bd.blocking) lines.push(`Blocking: ${bd.blocking}`)
   if (bd.emotion) lines.push(`Emotion (render on primary subject): ${bd.emotion}`)
   if (bd.gaze) lines.push(`Gaze: ${bd.gaze}`)

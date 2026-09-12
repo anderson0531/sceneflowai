@@ -269,6 +269,7 @@ Field definitions:
 • "shotType": named shot for this beat (e.g., "Wide Shot", "Medium Wide", "Medium Close-Up", "Close-Up", "Extreme Close-Up", "Insert Shot", "Over-the-Shoulder", "Two-Shot"). Choose from the scene's camera shot list when one applies.
 • "cameraAngle": angle for this beat (e.g., "eye-level", "low angle", "high angle", "Dutch angle", "worm's eye"). Only include when it deviates from the scene default.
 • "cameraMovement": motion for this beat (e.g., "static", "handheld push-in", "slow Steadicam creep", "whip pan", "rack focus"). Use "static" for a locked-off still.
+• "castInFrame": array of the character names visible on camera in THIS beat, exactly as spelled in the scene's character list. REQUIRED on every beat, and it is the only thing that decides who appears — nothing else is read for it. Use [] for a frame with no people in it (an insert of a gauge, a prop, an empty room). Do not list a character who is only spoken about, only heard, or merely present in the scene. NARRATOR is off-screen and never goes here.
 • "blocking": one clause describing where each named subject stands / body posture / physical action in THIS beat (e.g., "Piper braces her forearm against Gideon's chest, journal raised in her free hand; Gideon leans toward the core"). No paraphrasing of dialogue.
 • "emotion": single phrase naming the directed emotion / expression on the primary subject (e.g., "hypnotic awe", "panicked determination", "wry resignation"). Match the scene's talent arc but be beat-specific.
 • "gaze": who or what the subject looks at (e.g., "toward the glowing core", "into Gideon's eyes", "off-frame left toward the door"). Include when it matters for framing.
@@ -280,12 +281,13 @@ Field definitions:
 • "transition": how this beat cuts into the NEXT beat. One of: "CUT", "CONTINUE", "DISSOLVE", "FADE", "MATCH_CUT". Default is "CUT".
 
 Beat-kind requirements:
-• action beats: populate shotType, cameraAngle (if not default), cameraMovement, blocking, gaze, keyProps, propInteraction, lightingAccent (if applicable), frozenMoment, audioCue (if applicable), transition.
-• dialogue beats: populate at least shotType, blocking, emotion, gaze, transition. keyProps + propInteraction when the speaker handles a prop. frozenMoment is the still of the speaker mid-line.
-• narration beats: populate shotType, cameraMovement, blocking (of on-screen subject, if any), gaze, lightingAccent, frozenMoment, audioCue, transition. NARRATOR is off-screen — do not name NARRATOR in blocking.
+• action beats: populate castInFrame, shotType, cameraAngle (if not default), cameraMovement, blocking, gaze, keyProps, propInteraction, lightingAccent (if applicable), frozenMoment, audioCue (if applicable), transition.
+• dialogue beats: populate at least castInFrame, shotType, blocking, emotion, gaze, transition. keyProps + propInteraction when the speaker handles a prop. frozenMoment is the still of the speaker mid-line.
+• narration beats: populate castInFrame, shotType, cameraMovement, blocking (of on-screen subject, if any), gaze, lightingAccent, frozenMoment, audioCue, transition. NARRATOR is off-screen — do not name NARRATOR in blocking or castInFrame.
 
 Rules:
 • Do NOT invent prop names. keyProps MUST be a subset of scene "Key Props" — never a character name and never a possessive.
+• castInFrame, blocking, gaze and frozenMoment must agree: do not describe a person in blocking, gaze or frozenMoment when castInFrame is [].
 • Do NOT restate the scene direction verbatim — refine it for THIS beat.
 • Do NOT put dialogue content in beatDirection fields.
 • frozenMoment is a photograph, not a video: no temporal verbs ("pulses", "walks toward"). Describe the instant.
@@ -313,6 +315,7 @@ function buildCompactBeatDirectionPromptBlock(includeProps: boolean): string {
   return `BEAT DIRECTION (COMPACT — MANDATORY OBJECT ON EVERY BEAT):
 Every beat MUST include a "beatDirection" object with the fields below and NO others. Richer direction is added by a later pass — extra fields here cost the scene budget.
 
+• "castInFrame": array of the character names visible on camera in THIS beat, exactly as spelled in the scene's character list. It is the only thing that decides who appears. Use [] for a frame with no people in it. Never list NARRATOR.
 • "shotType": named shot for this beat, 1–4 words (e.g., "Wide Shot", "Medium Close-Up", "Insert Shot", "Over-the-Shoulder", "Two-Shot").
 • "frozenMoment": ONE SENTENCE naming the single frozen still this beat represents (e.g., "Piper halts Gideon mid-lean, journal pressed to his sternum."). Noun-first, concrete, one composition. It is a photograph, not a video: no temporal verbs ("pulses", "walks toward").
 • "transition": how this beat cuts into the NEXT beat. One of: "CUT", "CONTINUE", "DISSOLVE", "FADE", "MATCH_CUT". Default is "CUT".${propFields}
@@ -331,9 +334,10 @@ export function buildBeatDirectionSchemaExample(opts?: {
     const props = opts.includeProps
       ? ', "keyProps": ["Water-damaged leather journal"], "propAssetIds": ["catalog-prop-id-if-known"]'
       : ''
-    return `"beatDirection": {"shotType": "Medium Close-Up", "frozenMoment": "Piper halts Gideon mid-lean, journal pressed to his sternum.", "transition": "CUT"${props}}`
+    return `"beatDirection": {"castInFrame": ["Piper Hayes", "Gideon Croft"], "shotType": "Medium Close-Up", "frozenMoment": "Piper halts Gideon mid-lean, journal pressed to his sternum.", "transition": "CUT"${props}}`
   }
   return `"beatDirection": {
+          "castInFrame": ["Piper Hayes", "Gideon Croft"],
           "shotType": "Medium Close-Up",
           "cameraAngle": "eye-level",
           "cameraMovement": "static",

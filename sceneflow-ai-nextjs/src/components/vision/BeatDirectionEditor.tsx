@@ -69,6 +69,18 @@ function parseChipInput(value: string): string[] | undefined {
   return parts.length > 0 ? parts : undefined
 }
 
+/** Names the scene lists, for suggesting valid cast. NARRATOR is never on camera. */
+function readSceneCharacterNames(scene: any): string[] {
+  const raw = Array.isArray(scene?.characters) ? scene.characters : []
+  const names: string[] = []
+  for (const entry of raw) {
+    const name = typeof entry === 'string' ? entry : typeof entry?.name === 'string' ? entry.name : ''
+    const trimmed = name.trim()
+    if (trimmed && !/^narrator$/i.test(trimmed)) names.push(trimmed)
+  }
+  return names
+}
+
 function summarizeDirection(direction: BeatDirection | undefined): string {
   if (!direction) return 'No beat direction yet — click to add'
   const parts = [direction.shotType, direction.cameraAngle, direction.cameraMovement].filter(Boolean)
@@ -87,6 +99,10 @@ export function BeatDirectionEditor({
   const [expanded, setExpanded] = useState(false)
   const direction = beat.beatDirection
   const summary = useMemo(() => summarizeDirection(direction), [direction])
+  const sceneCharacterNames = useMemo(
+    () => readSceneCharacterNames(scenes[sceneIdx]),
+    [scenes, sceneIdx]
+  )
 
   const persist = (next: BeatDirection | undefined) => {
     if (!onScriptChange) return
@@ -132,6 +148,24 @@ export function BeatDirectionEditor({
     }
     persist(Object.keys(next).length > 0 ? next : undefined)
   }
+
+  /**
+   * Cast needs its own setter: an empty list is "nobody on camera", which
+   * `updateField` would drop as an absence. Absent means the beat predates the
+   * field and its cast is still guessed from prose.
+   */
+  const setCastInFrame = (value: string[] | undefined) => {
+    const next: BeatDirection = { ...(direction ?? {}) }
+    if (value === undefined) {
+      delete next.castInFrame
+    } else {
+      next.castInFrame = value
+    }
+    persist(Object.keys(next).length > 0 ? next : undefined)
+  }
+
+  const castInFrame = direction?.castInFrame
+  const castListId = `cast-in-frame-${beat.beatId}`
 
   return (
     <div className={`rounded-md border border-gray-700/60 bg-black/20 ${className ?? ''}`}>
@@ -195,6 +229,44 @@ export function BeatDirectionEditor({
                 placeholder="e.g., static, slow push-in"
               />
             </label>
+          </div>
+
+          <label className="flex flex-col gap-1">
+            <span className="text-[10px] uppercase text-gray-500">
+              Cast in frame (comma-separated; decides who the image model draws)
+            </span>
+            <input
+              className="bg-gray-900 border border-gray-700 rounded px-2 py-1 disabled:opacity-50"
+              list={castListId}
+              value={(castInFrame ?? []).join(', ')}
+              onChange={(e) => setCastInFrame(parseChipInput(e.target.value) ?? [])}
+              disabled={readOnly || castInFrame?.length === 0}
+              placeholder={
+                sceneCharacterNames.length > 0
+                  ? sceneCharacterNames.join(', ')
+                  : 'Character names as spelled in the scene'
+              }
+            />
+            <datalist id={castListId}>
+              {sceneCharacterNames.map((name) => (
+                <option key={name} value={name} />
+              ))}
+            </datalist>
+          </label>
+
+          <div className="flex flex-wrap items-center gap-3 text-[10px] text-gray-500">
+            <label className="flex items-center gap-1.5">
+              <input
+                type="checkbox"
+                checked={castInFrame?.length === 0}
+                onChange={(e) => setCastInFrame(e.target.checked ? [] : undefined)}
+                disabled={readOnly}
+              />
+              <span>No one on camera</span>
+            </label>
+            {castInFrame === undefined && (
+              <span>Not stated — cast is guessed from the beat text</span>
+            )}
           </div>
 
           <label className="flex flex-col gap-1">

@@ -2022,6 +2022,7 @@ export async function POST(req: NextRequest) {
               shotType: beatForIntelligence.beatDirection.shotType,
               cameraAngle: beatForIntelligence.beatDirection.cameraAngle,
               cameraMovement: beatForIntelligence.beatDirection.cameraMovement,
+              castInFrame: beatForIntelligence.beatDirection.castInFrame,
               blocking: beatForIntelligence.beatDirection.blocking,
               emotion: beatForIntelligence.beatDirection.emotion,
               gaze: beatForIntelligence.beatDirection.gaze,
