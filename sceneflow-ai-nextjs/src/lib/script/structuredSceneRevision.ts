@@ -250,7 +250,7 @@ function enforceRevisionBeatCount(
   return applyBeatsToScene(scene, beats)
 }
 
-/** Cap revised scenes at MAX_BEATS_PER_SCENE (Express / Assistant limit). */
+/** Cap revised scenes at MAX_BEATS_PER_SCENE. An Assistant rewrite may grow a scene to the ceiling; it must not exceed it. */
 export function enforceMaxBeatsPerScene(beats: SceneBeat[]): SceneBeat[] {
   if (beats.length <= MAX_BEATS_PER_SCENE) return beats
   console.warn(

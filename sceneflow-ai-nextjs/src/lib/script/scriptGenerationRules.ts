@@ -7,6 +7,12 @@
  * These rules apply to both new script generation and script editing (regeneration).
  */
 
+import {
+  MAX_BEATS_PER_SCENE,
+  TARGET_BEATS_PER_SCENE,
+  TARGET_SCENE_MINUTES_LABEL,
+} from '@/lib/script/sceneDecomposition'
+
 // ============================================================================
 // Configuration Types
 // ============================================================================
@@ -728,10 +734,10 @@ export function buildScriptConstraintPrompt(settings: ScriptSettings): string {
 
 ## 1. SCENE DECOMPOSITION (Blueprint → Scenes)
 - Each Blueprint beat MUST become MULTIPLE scenes — NEVER one scene per Blueprint beat
-- Hard cap: at most 15 beats per scene (required for Express generation, Assistant revision, and Screening Room)
+- Hard cap: at most ${MAX_BEATS_PER_SCENE} beats per scene
 - Split at natural dramatic breaks: location changes, time jumps, act turns — NOT mid-conversation
-- When a Blueprint beat needs more than 15 beats, continue across consecutive scenes with the same blueprintBeatIndex
-- Each scene MUST have a beginning, middle, and end (~2 minutes / ~15 beats target)
+- When a Blueprint beat needs more than ${MAX_BEATS_PER_SCENE} beats, continue across consecutive scenes with the same blueprintBeatIndex
+- Each scene MUST have a beginning, middle, and end (~${TARGET_SCENE_MINUTES_LABEL} minutes / ~${TARGET_BEATS_PER_SCENE} beats target)
 - Approximate total scenes: follow the per-beat decomposition budget in the prompt
 - Maximum ${settings.maxScenesPerAct} scenes per act (soft guide)
 

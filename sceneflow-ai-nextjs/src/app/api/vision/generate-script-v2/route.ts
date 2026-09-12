@@ -17,6 +17,8 @@ import {
   renumberScenes,
   splitOversizedScenes,
   MAX_BEATS_PER_SCENE,
+  TARGET_BEATS_PER_SCENE,
+  TARGET_SCENE_SECONDS,
   type SceneDecompositionPlan,
 } from '@/lib/script/sceneDecomposition'
 import {
@@ -1102,7 +1104,7 @@ SCENE ARC → BEATS (PLAN BEFORE YOU WRITE):
 • Movements read end-to-end as the scene's description. Example for a three-movement scene: "Piper tumbles out of the pneumatic access tube into the vault." / "Gideon pins her at gunpoint, certain she is corporate espionage." / "Piper reveals she carries Clara's encrypted final schematics and Gideon's fury collapses into shock."
 • Then write beats[]. EVERY beat MUST carry "movementIndex": the 0-based index of the movement it dramatizes.
 • Beats must be in movement order: all of movement 0's beats, then all of movement 1's beats, and so on. Never interleave, never skip a movement, never leave a movement with zero beats.
-• Spread beats across movements roughly in proportion to each movement's dramatic weight. A ${MAX_BEATS_PER_SCENE}-beat scene with 4 movements is about 3–4 beats each — not 12 beats on one movement and 1 on the rest.
+• Spread beats across movements roughly in proportion to each movement's dramatic weight. A ${TARGET_BEATS_PER_SCENE}-beat scene with 4 movements is about ${Math.round(TARGET_BEATS_PER_SCENE / 4)} beats each — not ${TARGET_BEATS_PER_SCENE - 4} beats on one movement and 1 on the rest.
 • Inside a movement, consecutive beats must ADVANCE it: change what the audience knows, who holds power, or what is physically happening. Do not write several beats that restate the same instant from different angles.
 • Across a movement boundary the story must visibly turn — that turn is why the boundary is there.
 
@@ -1271,7 +1273,7 @@ ${shared.narrationSchemaLine}
         }
       ],
       "visualDescription": "Camera and lighting notes (or audio focus if podcast)",
-      "duration": 120,
+      "duration": ${TARGET_SCENE_SECONDS},
       "sfx": [{"time": 0, "description": "Sound effect"}],
       "music": {"description": "Background music mood"},
       "musicCues": [

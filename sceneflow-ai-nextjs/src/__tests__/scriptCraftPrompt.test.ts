@@ -10,6 +10,7 @@ import {
   parseScriptCraftNotes,
   parseScriptCraftPriorities,
 } from '@/lib/script/scriptCraftPrompt'
+import { MAX_BEATS_PER_SCENE, TARGET_BEATS_PER_SCENE } from '@/lib/script/sceneDecomposition'
 
 const ROOT = join(__dirname, '..', '..')
 
@@ -43,12 +44,21 @@ describe('scriptCraft parsing', () => {
     const block = buildLongformScriptLengthBlock()
     expect(block).toMatch(/story determines length/i)
     expect(block).toContain('Decompose each Blueprint beat into multiple scenes')
-    expect(block).toContain('15 beats')
+    expect(block).toContain(`${TARGET_BEATS_PER_SCENE} beats`)
+    expect(block).toContain(`${MAX_BEATS_PER_SCENE} beats`)
     expect(block).not.toMatch(/8–10/)
     expect(block).not.toMatch(/8-10/)
     expect(block).not.toMatch(/45 seconds/)
     expect(block).not.toMatch(/60–120/)
     expect(block).not.toMatch(/60-120/)
+  })
+
+  it('interpolates the beat ceiling instead of hardcoding fifteen', () => {
+    const rules = readSource('src/lib/script/scriptGenerationRules.ts')
+    expect(rules).toContain('MAX_BEATS_PER_SCENE')
+    expect(rules).toContain('TARGET_BEATS_PER_SCENE')
+    expect(rules).not.toMatch(/at most 15 beats per scene/)
+    expect(rules).not.toMatch(/~15 beats target/)
   })
 })
 

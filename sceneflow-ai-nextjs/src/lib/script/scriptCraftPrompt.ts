@@ -3,7 +3,7 @@
  * scene revision. These are not duration knobs.
  */
 
-import { MAX_BEATS_PER_SCENE } from '@/lib/script/sceneDecomposition'
+import { MAX_BEATS_PER_SCENE, TARGET_BEATS_PER_SCENE } from '@/lib/script/sceneDecomposition'
 
 export const SCRIPT_CRAFT_PRIORITIES = [
   'characterDepth',
@@ -65,15 +65,15 @@ export function buildLongformScriptLengthBlock(opts?: { chunked?: boolean }): st
     return `SCENE DEPTH (COUNT IS ASSIGNED, DEPTH IS YOURS):
 • The number of scenes in your slice is FIXED by the assignment below. Do not merge, drop, or add scenes to it.
 • Give characters, action, and story turns as much room as they need WITHIN each assigned scene.
-• Each scene MUST stay at or below ${MAX_BEATS_PER_SCENE} beats.
-• Fill each scene to its assigned beat target — a thin scene is a failure, not a stylistic choice.
+• Aim for ~${TARGET_BEATS_PER_SCENE} beats per scene. A scene may grow up to ${MAX_BEATS_PER_SCENE} when the story earns it, but must never exceed that cap.
+• Fill each scene to its assigned beat target — a thin scene is a failure, not a stylistic choice, and filling the ceiling is not the target.
 • JSON "duration" fields are estimates you report after writing, not targets to hit.
 • Intervening action beats only when they add NEW visual information — never to pad runtime.`
   }
   return `SCRIPT LENGTH (STORY DETERMINES LENGTH):
 • Write a complete longform script. Give characters, action, and story turns as much room as they need.
 • Decompose each Blueprint beat into multiple scenes; never collapse an entire Blueprint beat into one scene.
-• Each scene MUST stay at or below ${MAX_BEATS_PER_SCENE} beats — split across consecutive scenes when a beat needs more.
+• Aim for ~${TARGET_BEATS_PER_SCENE} beats per scene. Each scene MUST stay at or below ${MAX_BEATS_PER_SCENE} beats — split across consecutive scenes when a beat needs more.
 • Approximate Blueprint runtime guides beat volume (~8s per beat), not a hard seconds-per-scene target.
 • JSON "duration" fields are estimates you report after writing, not targets to hit.
 • Intervening action beats only when they add NEW visual information — never to pad runtime.`
