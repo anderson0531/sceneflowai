@@ -517,7 +517,30 @@ export function detectCharactersNamedInBeat(args: {
   )
 }
 
-/** Add characters named in prompt text to an existing beat selection. */
+/**
+ * Object references the prompt names outright.
+ *
+ * A planned prompt is free to name any prop in the reference catalog, and the
+ * beat's own text is what auto-resolve matched against — so a prop the planner
+ * staged but the beat never mentioned arrived with no reference image, and the
+ * image model invented its appearance. Only references that have an image are
+ * candidates; naming one without an image adds nothing to attach.
+ */
+function detectObjectsNamedInText(
+  text: string,
+  objectReferences: VisualReference[]
+): VisualReference[] {
+  if (!text.trim()) return []
+  return objectReferences.filter((ref) => {
+    if (!ref.imageUrl?.trim()) return false
+    const name = ref.name?.trim()
+    if (!name || name.length < 3) return false
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    return new RegExp(`\\b${escaped}\\b`, 'i').test(text)
+  })
+}
+
+/** Add characters and props named in prompt text to an existing beat selection. */
 export function unionBeatSelectionWithPromptText(
   selection: BeatReferenceSelection,
   promptText: string | undefined,
@@ -528,30 +551,51 @@ export function unionBeatSelectionWithPromptText(
   objectReferences: VisualReference[] = [],
   locationReferences: LocationReference[] = []
 ): BeatReferenceSelection {
-  if (!promptText?.trim() || projectCharacters.length === 0) return selection
-  const extra = detectCharactersInText(
-    promptText,
-    projectCharacters,
-    characterDetectionOptions(filmTitle, objectReferences, locationReferences)
-  )
+  if (!promptText?.trim()) return selection
+
   const characterIds = [...selection.characterIds]
-  const seen = new Set(characterIds.map((id) => id.toLowerCase()))
-  for (const char of extra) {
-    const id = char.id || char.name
-    if (!id) continue
-    if (seen.has(id.toLowerCase()) || seen.has((char.name || '').toLowerCase())) continue
-    seen.add(id.toLowerCase())
-    characterIds.push(id)
+  if (projectCharacters.length > 0) {
+    const extra = detectCharactersInText(
+      promptText,
+      projectCharacters,
+      characterDetectionOptions(filmTitle, objectReferences, locationReferences)
+    )
+    const seen = new Set(characterIds.map((id) => id.toLowerCase()))
+    for (const char of extra) {
+      const id = char.id || char.name
+      if (!id) continue
+      if (seen.has(id.toLowerCase()) || seen.has((char.name || '').toLowerCase())) continue
+      seen.add(id.toLowerCase())
+      characterIds.push(id)
+    }
   }
-  if (characterIds.length === selection.characterIds.length) return selection
+
+  const objectRefIds = [...selection.objectRefIds]
+  const seenObjects = new Set(objectRefIds.map((id) => id.toLowerCase()))
+  for (const ref of detectObjectsNamedInText(promptText, objectReferences)) {
+    const id = ref.id || ref.name
+    if (!id || seenObjects.has(id.toLowerCase())) continue
+    seenObjects.add(id.toLowerCase())
+    objectRefIds.push(id)
+  }
+
+  const castChanged = characterIds.length !== selection.characterIds.length
+  const propsChanged = objectRefIds.length !== selection.objectRefIds.length
+  if (!castChanged && !propsChanged) return selection
+
   return {
     ...selection,
     characterIds,
-    characterWardrobes: buildCharacterWardrobes(
-      scene,
-      characterIds,
-      projectCharacters,
-      sceneIndex
-    ),
+    objectRefIds,
+    ...(castChanged
+      ? {
+          characterWardrobes: buildCharacterWardrobes(
+            scene,
+            characterIds,
+            projectCharacters,
+            sceneIndex
+          ),
+        }
+      : {}),
   }
 }

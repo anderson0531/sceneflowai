@@ -100,7 +100,17 @@ import { ensureLanguageStreamTranslations } from '../storyboard/playerTranslatio
 
 const EXPRESS_SKIP_LIKENESS = { skipLikenessValidation: true }
 
-function buildExpressReferenceCatalog(project: any): {
+/**
+ * The library the beat planner is allowed to name, restricted to references
+ * that have a generated image.
+ *
+ * The catalog is handed to the planner as "use these exact labels; do not
+ * invent appearance — they have reference images". A row with no image breaks
+ * that promise: the planner names the object, no reference is attached because
+ * there is nothing to attach, and the image model invents an appearance for it.
+ * The same prop then looks different in every frame that mentions it.
+ */
+export function buildExpressReferenceCatalog(project: any): {
   characterNames: string[]
   propNames: string[]
   locationNames: string[]
@@ -114,15 +124,19 @@ function buildExpressReferenceCatalog(project: any): {
   const locationReferences = Array.isArray(references.locationReferences)
     ? references.locationReferences
     : []
+  const hasImage = (url?: string): boolean => Boolean(url && url.trim())
 
   return {
     characterNames: characters
+      .filter((c: { referenceImage?: string }) => hasImage(c?.referenceImage))
       .map((c: { name?: string }) => String(c?.name ?? '').trim())
       .filter(Boolean),
     propNames: objectReferences
+      .filter((o: { imageUrl?: string }) => hasImage(o?.imageUrl))
       .map((o: { name?: string }) => String(o?.name ?? '').trim())
       .filter(Boolean),
     locationNames: locationReferences
+      .filter((l: { imageUrl?: string }) => hasImage(l?.imageUrl))
       .map((l: { location?: string; name?: string }) =>
         String(l?.location || l?.name || '').trim()
       )

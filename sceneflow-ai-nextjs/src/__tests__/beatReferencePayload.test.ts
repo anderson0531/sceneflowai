@@ -114,4 +114,71 @@ describe('unionBeatSelectionWithPromptText', () => {
     )
     expect(unioned.characterIds).toEqual(expect.arrayContaining(['c1', 'c3']))
   })
+
+  // A planned prompt may name any prop in the reference catalog, but auto-resolve
+  // matched on the beat's own text — so a prop the planner staged arrived with no
+  // reference image and the model invented how it looks.
+  it('adds a prop the planned prompt names but the beat text did not', () => {
+    const selection = toBeatReferenceSelection({
+      characterIds: ['c1'],
+      objectRefIds: [],
+      source: 'auto',
+    })
+    const unioned = unionBeatSelectionWithPromptText(
+      selection,
+      'Insert Shot: the Briefcase sits open on the counter.',
+      characters,
+      { heading: 'INT. KITCHEN - DAY' },
+      0,
+      undefined,
+      objects,
+      locations
+    )
+
+    expect(unioned.objectRefIds).toEqual(['obj-briefcase'])
+  })
+
+  it('does not add a prop that has no reference image to attach', () => {
+    const unimaged: VisualReference[] = [
+      { id: 'obj-ledger', type: 'object', name: 'Leather Ledger' },
+    ]
+    const selection = toBeatReferenceSelection({
+      characterIds: [],
+      objectRefIds: [],
+      source: 'auto',
+    })
+    const unioned = unionBeatSelectionWithPromptText(
+      selection,
+      'Insert Shot: the Leather Ledger lies open.',
+      characters,
+      { heading: 'INT. KITCHEN - DAY' },
+      0,
+      undefined,
+      unimaged,
+      locations
+    )
+
+    expect(unioned.objectRefIds).toEqual([])
+    expect(unioned).toBe(selection)
+  })
+
+  it('leaves a selection alone when the prompt names nothing new', () => {
+    const selection = toBeatReferenceSelection({
+      characterIds: ['c1'],
+      objectRefIds: ['obj-briefcase'],
+      source: 'auto',
+    })
+    const unioned = unionBeatSelectionWithPromptText(
+      selection,
+      'Insert Shot: the Briefcase sits open on the counter.',
+      characters,
+      { heading: 'INT. KITCHEN - DAY' },
+      0,
+      undefined,
+      objects,
+      locations
+    )
+
+    expect(unioned).toBe(selection)
+  })
 })

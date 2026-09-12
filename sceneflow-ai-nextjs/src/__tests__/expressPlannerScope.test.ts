@@ -51,7 +51,10 @@ vi.mock('@/lib/sceneGeneration/generateImage', () => ({
 }))
 
 import type { SceneBeat } from '@/lib/script/segmentTypes'
-import { planSceneBeatKeyframes } from '@/lib/sceneGeneration/expressOrchestrator'
+import {
+  buildExpressReferenceCatalog,
+  planSceneBeatKeyframes,
+} from '@/lib/sceneGeneration/expressOrchestrator'
 import { ExpressTrafficCop } from '@/lib/sceneGeneration/expressTrafficCop'
 import type { ExpressEvent, ExpressPhaseEvent } from '@/lib/sceneGeneration/types'
 import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
@@ -274,6 +277,51 @@ describe('a degraded plan is reported rather than buried', () => {
     const done = imagePlanDone(events)
     expect(done?.ok).toBe(true)
     expect(done && 'degraded' in done).toBe(false)
+  })
+})
+
+describe('the planner is only shown references it can actually attach', () => {
+  function buildProject() {
+    return {
+      metadata: {
+        visionPhase: {
+          characters: [
+            { name: 'Piper Hayes', referenceImage: 'https://blob.example/piper.jpg' },
+            { name: 'Professor Gideon Croft' },
+          ],
+          references: {
+            objectReferences: [
+              { name: 'Thirty-Inch Iron Rail Spanner', imageUrl: 'https://blob.example/spanner.jpg' },
+              { name: 'Violet Ink Drafting Vellum' },
+              { name: 'Olive-Drab Aluminum Cylinder', imageUrl: '   ' },
+            ],
+            locationReferences: [
+              { location: 'SUBMERSIBLE HATCH', imageUrl: 'https://blob.example/hatch.jpg' },
+              { location: 'CLANDESTINE STUDIO' },
+            ],
+          },
+        },
+      },
+    }
+  }
+
+  // The catalog tells the planner these labels "have reference images", so a
+  // row with no image is a licence to name a prop nothing can be attached to —
+  // and the image model then invents a different appearance in every frame.
+  it('lists only references that have a generated image', () => {
+    const catalog = buildExpressReferenceCatalog(buildProject())
+
+    expect(catalog.characterNames).toEqual(['Piper Hayes'])
+    expect(catalog.propNames).toEqual(['Thirty-Inch Iron Rail Spanner'])
+    expect(catalog.locationNames).toEqual(['SUBMERSIBLE HATCH'])
+  })
+
+  it('returns empty lists for a project with no references at all', () => {
+    expect(buildExpressReferenceCatalog({})).toEqual({
+      characterNames: [],
+      propNames: [],
+      locationNames: [],
+    })
   })
 })
 
