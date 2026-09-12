@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import { generateImageWithVertexKlingFallback } from '@/lib/generation/vertexImageWithKlingFallback'
+import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalation'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor, buildIdentityPromptToken, sanitizePromptForIdentityRefs, filterCharactersForPromptRefs, promptPlacesCharacter, stripReferenceImageMappingBlock } from '@/lib/imagen/promptOptimizer'
 import { ethnicityKeyFeature } from '@/lib/imagen/characterKeyFeatures'
@@ -77,7 +78,7 @@ import {
   formatStillReferencesLegend,
   isStructuredStillPrompt,
   joinPromptBlocks,
-  promptReferencesLibraryItem,
+  resolveLibraryItemPromptMatch,
   stillRefsFromAttachedImages,
 } from '@/lib/imagen/structuredStillPrompt'
 import {
@@ -125,6 +126,7 @@ import {
   mergeBeatFrameNegativePrompt,
 } from '@/lib/character/sceneCharacterHeadshot'
 import {
+  attributeBeatExpression,
   buildBeatDirectedEmotionPromptSection,
   buildSceneAppearanceContinuityPromptSection,
   formatDirectedEmotionLine,
@@ -230,6 +232,8 @@ function appendSceneImagePromptModifiers(
     characterReferences: any[]
     isBeatFrame: boolean
     beatDirectedEmotion?: string
+    /** Whose face a beat-level expression belongs on, in a multi-subject frame. */
+    beatSpeakerName?: string
     beatForEmotion?: { line?: string } | null
   }
 ): string {
@@ -296,10 +300,23 @@ function appendSceneImagePromptModifiers(
       !optimizedPrompt.includes('Facial expression:') &&
       !optimizedPrompt.includes('Directed emotion:')
     ) {
-      optimizedPrompt = joinPromptBlocks(
-        optimizedPrompt,
-        formatDirectedEmotionLine(ctx.beatDirectedEmotion)
-      )
+      const expression = attributeBeatExpression({
+        emotion: ctx.beatDirectedEmotion,
+        placedSubjects: characterReferences,
+        speakerName: ctx.beatSpeakerName,
+      })
+      if (expression.line) {
+        optimizedPrompt = joinPromptBlocks(optimizedPrompt, expression.line)
+        if (expression.attributedTo) {
+          console.log(
+            `[Scene Image] Beat expression "${ctx.beatDirectedEmotion}" bound to ${expression.attributedTo} — ${characterReferences.length} subjects in frame`
+          )
+        }
+      } else if (expression.dropped === 'ambiguous-subject') {
+        console.warn(
+          `[Scene Image] Beat expression "${ctx.beatDirectedEmotion}" names no speaker among ${characterReferences.length} placed subjects — dropped rather than letting the model pick a face`
+        )
+      }
     }
 
     const continuitySection = buildSceneAppearanceContinuityPromptSection(
@@ -2154,6 +2171,7 @@ export async function POST(req: NextRequest) {
       characterReferences,
       isBeatFrame,
       beatDirectedEmotion,
+      beatSpeakerName,
       beatForEmotion,
     })
 
@@ -2288,6 +2306,7 @@ export async function POST(req: NextRequest) {
       characterReferences,
       isBeatFrame,
       beatDirectedEmotion,
+      beatSpeakerName,
       beatForEmotion,
     }
 
@@ -2308,6 +2327,14 @@ export async function POST(req: NextRequest) {
      * reference image before there is anything to argue about.
      */
     let identityEscalationBlock = ''
+    /**
+     * Set when the round-0 frame only existed because a content refusal was
+     * recovered from. A refused frame is the one most likely to come back with
+     * its identity references ignored — the model keeps the composition and
+     * invents a face — so the retry has to argue with the action language, not
+     * just restate who the person is.
+     */
+    let lastRoundPolicyRefusalRecovered = false
 
     do {
       const roundStart = Date.now()
@@ -2376,6 +2403,25 @@ export async function POST(req: NextRequest) {
           // identity lock is carried by the request either way.
           console.log(
             '[Scene Image] Likeness auto-retry: AI re-plan unavailable, reusing round 0 prompt with the escalated lock'
+          )
+        }
+      }
+      if (likenessRound > 0 && lastRoundPolicyRefusalRecovered) {
+        // A frame the eco model refused outright and pro then rendered without
+        // its referenced faces did not lose the likeness for want of identity
+        // instruction — it lost it because of what the action asks for. Restating
+        // the identity harder against unchanged wording asks for the same answer.
+        const softened = escalateImagePromptForRetry(optimizedPrompt, 1, {
+          skipProductionStillFraming: isBeatFrame,
+        })
+        if (softened !== optimizedPrompt) {
+          optimizedPrompt = softened
+          console.log(
+            '[Scene Image] Likeness retry: round 0 was content-refused before it rendered; softening action language alongside the identity lock'
+          )
+        } else {
+          console.log(
+            '[Scene Image] Likeness retry: round 0 was content-refused but no action wording matched a softening rule'
           )
         }
       }
@@ -2508,9 +2554,18 @@ export async function POST(req: NextRequest) {
     // direction, and it resolves that by inventing the prop into the shot. Beat
     // frames therefore only carry references their composition actually uses.
     if (isBeatFrame) {
-      const unnamedProps = detectedObjectReferences.filter(
-        (obj: any) => obj.imageUrl && !promptReferencesLibraryItem(optimizedPrompt, obj)
-      )
+      const unnamedProps: any[] = []
+      for (const obj of detectedObjectReferences) {
+        if (!obj?.imageUrl) continue
+        const match = resolveLibraryItemPromptMatch(optimizedPrompt, obj)
+        if (match.matched) {
+          console.log(
+            `[Scene Image] Prop reference "${obj.name}" kept — frame names it by ${match.basis} ("${match.matchedTerm}")`
+          )
+        } else {
+          unnamedProps.push(obj)
+        }
+      }
       if (unnamedProps.length > 0) {
         console.log(
           `[Scene Image] Dropping ${unnamedProps.length} prop reference(s) not named in the frame:`,
@@ -3055,6 +3110,12 @@ export async function POST(req: NextRequest) {
           base64Image = vertexResult.imageBase64
           generationModelId = vertexResult.modelId
           generationProvider = vertexResult.generationProvider
+          lastRoundPolicyRefusalRecovered = vertexResult.policyRefusalRecovered === true
+          if (lastRoundPolicyRefusalRecovered) {
+            console.warn(
+              `[Scene Image] ⚠️  Frame was content-refused before it rendered; ${vertexResult.modelId} produced it from softened wording. Expect identity drift — the refused content is why references get ignored.`
+            )
+          }
         } else {
           console.log('[Scene Image] Using Vertex Imagen text-to-image (no reference images)')
           const imagenStill = isBeatFrame
@@ -3225,22 +3286,39 @@ export async function POST(req: NextRequest) {
         )
 
         try {
+          const primaryValidationStart = Date.now()
           validation = await validateCharacterLikeness(
             imageUrl,
             primaryFeatured.referenceImageUrl,
             primaryFeatured.name,
             { shotType: validationShotType }
           )
+          const perSubjectValidationMs = Date.now() - primaryValidationStart
 
           if (featuredCharacters.length > 1) {
             for (const extraFeatured of featuredCharacters.slice(1)) {
+              // Each extra subject is another vision call. The retry decision
+              // still rides on the primary, so an extra that will not fit is
+              // dropped rather than allowed to eat the image budget.
+              if (remainingBudgetMs() < projectLikenessValidationCostMs(perSubjectValidationMs)) {
+                console.warn(
+                  `[Scene Image] Skipping likeness validation for ${extraFeatured.name} — ${remainingBudgetMs()}ms left`
+                )
+                break
+              }
               try {
-                await validateCharacterLikeness(
+                const extraValidation = await validateCharacterLikeness(
                   imageUrl,
                   extraFeatured.referenceImageUrl,
                   extraFeatured.name,
                   { shotType: validationShotType }
                 )
+                if (extraValidation.mismatchKind === 'identity') {
+                  console.warn(
+                    `[Scene Image] ⚠️  ${extraFeatured.name} is the wrong person at ${extraValidation.confidence}% confidence — ` +
+                      `the retry decision follows ${primaryFeatured.name}, so this frame may ship with that face.`
+                  )
+                }
               } catch (error) {
                 console.error(`[Scene Image] Validation failed for ${extraFeatured.name}:`, error)
               }

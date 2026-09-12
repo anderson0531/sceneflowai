@@ -130,6 +130,40 @@ describe('deriveBeatDirection', () => {
     expect(derived?.keyProps).toBeUndefined()
   })
 
+  it('does not derive a prop from its material and size alone', () => {
+    const derived = deriveBeatDirection(
+      actionBeat({
+        actionDescription: 'Elara braces against the iron rail as the thirty-foot shaft groans.',
+      }),
+      0,
+      {
+        sceneDirection: {
+          ...sceneDirection,
+          scene: { ...sceneDirection.scene, keyProps: ['Thirty-Inch Iron Rail Spanner'] },
+          keyProps: ['Thirty-Inch Iron Rail Spanner'],
+        },
+      }
+    )
+    expect(derived?.keyProps).toBeUndefined()
+  })
+
+  it('derives a prop the beat names by its head noun alone', () => {
+    const derived = deriveBeatDirection(
+      actionBeat({
+        actionDescription: 'Elara swings the spanner at the locking dogs.',
+      }),
+      0,
+      {
+        sceneDirection: {
+          ...sceneDirection,
+          scene: { ...sceneDirection.scene, keyProps: ['Thirty-Inch Iron Rail Spanner'] },
+          keyProps: ['Thirty-Inch Iron Rail Spanner'],
+        },
+      }
+    )
+    expect(derived?.keyProps).toEqual(['Thirty-Inch Iron Rail Spanner'])
+  })
+
   it('derives a key prop when the beat action hits several of its words', () => {
     const derived = deriveBeatDirection(
       actionBeat({

@@ -63,6 +63,7 @@ import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
 import type { StoryboardFrameSlot } from '@/lib/storyboard/types'
 import type { StoryboardQuality } from '@/lib/storyboard/storyboardQuality'
 import {
+  explicitBeatReferenceSelection,
   mapBeatReferenceSelectionForApi,
   resolveBeatFrameGenerationContext,
   shouldUseExplicitBeatReferences,
@@ -10369,7 +10370,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     let referenceSelection: BeatReferenceSelection
     if (shouldUseExplicitBeatReferences(beat)) {
-      referenceSelection = beat.referenceSelection
+      referenceSelection = explicitBeatReferenceSelection({ beat, objectReferences })
     } else {
       const auto = resolveBeatFrameGenerationContext({
         scene,

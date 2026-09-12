@@ -227,7 +227,9 @@ describe('composePersistedBeatStillPrompt', () => {
     const parsed = parseStillPromptSource(prompt!)
     expect(parsed.style?.trim()).toBeTruthy()
     expect(parsed.actionFraming).toContain('Gideon at the zinc workbench')
-    expect(parsed.actionFraming).toContain('Gideon hunches over the seismograph')
+    // One instant per still: the prose spans time, so it does not trail the
+    // frozen moment and leave the model choosing which action to stage.
+    expect(parsed.actionFraming).not.toMatch(/hunches over/)
     expect(parsed.actionFraming).not.toMatch(/Piper|gantry/)
   })
 
@@ -279,6 +281,105 @@ describe('composePersistedBeatStillPrompt', () => {
     // The spanner is already handled; only the untouched prop needs stating.
     expect(framing).toContain('Props in frame: Violet Ink Drafting Vellum.')
     expect(framing.match(/Thirty-Inch Iron Rail Spanner/g)).toHaveLength(1)
+  })
+
+  it('stages one instant, not the frozen moment and the prose around it', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_instant',
+      sequenceIndex: 7,
+      kind: 'action',
+      actionDescription: 'Gideon raises the spanner and swings it down onto the locking dogs.',
+      beatDirection: {
+        shotType: 'Medium Shot',
+        frozenMoment: 'The spanner is already buried in the third dog, Gideon following through.',
+      },
+    })
+
+    expect(framing).toContain('The spanner is already buried in the third dog')
+    expect(framing).not.toMatch(/raises the spanner/)
+  })
+
+  it('describes the beat from its prose when no frozen moment is directed', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_prose',
+      sequenceIndex: 8,
+      kind: 'action',
+      actionDescription: 'Gideon raises the spanner over the locking dogs.',
+      beatDirection: { shotType: 'Medium Shot' },
+    })
+
+    expect(framing).toContain('Gideon raises the spanner over the locking dogs.')
+  })
+
+  it('ignores a frozen moment that only restates the spoken line', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_said',
+      sequenceIndex: 9,
+      kind: 'dialogue',
+      character: 'Piper Hayes',
+      line: 'You knew about the shaft and you said nothing.',
+      beatDirection: {
+        shotType: 'Two-Shot',
+        frozenMoment: 'Piper says "You knew about the shaft and you said nothing."',
+        blocking: 'Piper Hayes squares up to Gideon Croft across the tunnel',
+        gaze: 'locked on Gideon Croft',
+        castInFrame: ['Piper Hayes', 'Professor Gideon Croft'],
+      },
+    })
+
+    expect(framing).not.toMatch(/you knew about the shaft/i)
+    expect(framing).toContain('Two-Shot')
+    expect(framing).toContain('Blocking: Piper Hayes squares up to Gideon Croft')
+    expect(framing).toContain('Gaze: locked on Gideon Croft')
+    expect(framing).toContain('Cast in frame: Piper Hayes, Professor Gideon Croft')
+  })
+
+  it('keeps the spoken line out of the frame when direction describes one', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_speaks',
+      sequenceIndex: 10,
+      kind: 'dialogue',
+      character: 'Piper Hayes',
+      line: 'We are not going back down there.',
+      beatDirection: {
+        shotType: 'Medium Close-Up',
+        blocking: 'Piper Hayes blocks the ladder with one arm',
+      },
+    })
+
+    expect(framing).not.toMatch(/not going back down/i)
+    expect(framing).toContain('Blocking: Piper Hayes blocks the ladder')
+  })
+
+  it('falls back to the spoken line for a beat whose direction shows nothing', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_legacy',
+      sequenceIndex: 11,
+      kind: 'dialogue',
+      character: 'Piper Hayes',
+      line: 'We are not going back down there.',
+      beatDirection: { shotType: 'Medium Close-Up' },
+    })
+
+    expect(framing).toContain('We are not going back down there.')
+  })
+
+  it('reduces a directed camera move to the angle the still is taken from', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_move',
+      sequenceIndex: 6,
+      kind: 'dialogue',
+      character: 'Piper Hayes',
+      line: 'You knew, and you said nothing.',
+      beatDirection: {
+        shotType: 'Two-Shot',
+        cameraAngle: 'Dynamic, shifting from high-angle dominance to low-angle vulnerability',
+      },
+    })
+
+    expect(framing).toContain('Two-Shot, low angle')
+    expect(framing).not.toMatch(/shifting from/i)
+    expect(framing).not.toMatch(/Dynamic/i)
   })
 
   it('composes the same frame no matter what was stored last time', () => {

@@ -18,6 +18,10 @@ import {
 import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPrompt'
+import {
+  normalizeStillFraming,
+  normalizeStillShotType,
+} from '@/lib/imagen/stillFramingNormalize'
 import { storedStillDirectionKeyMatches } from '@/lib/script/beatDirectionFingerprint'
 import { formatSceneArcBlock, getSceneMovements } from '@/lib/script/sceneMovements'
 import type { BeatDirection, SceneBeat } from '@/lib/script/segmentTypes'
@@ -118,6 +122,8 @@ export interface ComposeBeatStillPromptArgs {
   artStyleAnchor?: string
   lighting?: string
   lensMm?: string
+  /** This beat's shot scale, so the film's lens family can be fitted to it. */
+  shotType?: string
 }
 
 /**
@@ -152,6 +158,7 @@ export function composeBeatStillPrompt(args: ComposeBeatStillPromptArgs): string
     sceneLookNote: getSceneLookNote(args.lookbook, args.sceneIndex),
     beatLighting: args.lighting,
     beatLens: args.lensMm,
+    beatShotType: normalizeStillShotType(args.shotType),
   })
 
   return `${anchor}\n\n${composition}`
@@ -204,6 +211,46 @@ function currentStoredActionFraming(beat: SceneBeat): string {
   return actionFramingFromStoredPrompt(beat.storyboardImagePrompt)
 }
 
+function forComparison(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+/**
+ * Whether a "frozen moment" is really just the words the character speaks.
+ *
+ * Direction for a dialogue beat is often written by restating the line, some-
+ * times with the speaker's name or a "says" in front of it. That names nothing
+ * a camera can see, so the frame has no instant to catch and the model invents
+ * one — an invented action is what drew the safety refusal in production
+ * (2026-09-12). Anything the speaker is doing while talking has to come from
+ * blocking, gaze, prop handling, or cast.
+ */
+function restatesSpokenLine(frozenMoment: string, spokenLine: string): boolean {
+  const line = forComparison(spokenLine)
+  const frozen = forComparison(frozenMoment)
+  if (!line || !frozen) return false
+  if (frozen === line) return true
+  // A short line matches too much prose by accident to judge by containment.
+  if (line.split(' ').length < 3 || !frozen.includes(line)) return false
+  const remainder = frozen.replace(line, ' ').trim()
+  return remainder === '' || remainder.split(/\s+/).length <= 3
+}
+
+/** Facets that can describe a frame without borrowing the beat's spoken words. */
+function hasVisualDirection(direction?: BeatDirection): boolean {
+  if (!direction) return false
+  return Boolean(
+    direction.blocking?.trim() ||
+      direction.gaze?.trim() ||
+      direction.propInteraction?.trim() ||
+      Array.isArray(direction.castInFrame) ||
+      (direction.keyProps ?? []).some((prop) => prop.trim())
+  )
+}
+
 /**
  * Build the frame description for a beat out of its structured direction.
  *
@@ -222,15 +269,35 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
   if (!beat) return ''
   const direction = beat.beatDirection
 
-  const frozen = direction?.frozenMoment?.trim()
-  const described = beat.actionDescription?.trim() || beat.line?.trim() || ''
+  const spokenLine = beat.line?.trim() ?? ''
+  const directedFrozen = direction?.frozenMoment?.trim() ?? ''
+  const frozenIsSpokenLine = restatesSpokenLine(directedFrozen, spokenLine)
+  if (frozenIsSpokenLine) {
+    console.warn(
+      `[Beat Still] Beat ${beat.beatId} frozenMoment "${directedFrozen}" restates the spoken line instead of naming a visible instant; composing from shot, blocking, gaze and cast instead`
+    )
+  }
+  const frozen = frozenIsSpokenLine ? '' : directedFrozen
+
+  // The spoken line is the last thing a frame is described from, and only for a
+  // beat whose direction says nothing visible at all — a legacy beat. Handing a
+  // still the words a character says leaves it staging whatever action it
+  // imagines those words came with.
+  const described =
+    beat.actionDescription?.trim() || (hasVisualDirection(direction) ? '' : spokenLine)
 
   const parts: string[] = []
-  // The frozen moment leads when there is one: it is the single field that
-  // names the instant the frame catches, where the beat's prose usually
-  // describes a span of time. The prose still follows it for texture.
+  // Exactly one instant. `frozenMoment` names the moment the shutter caught;
+  // the beat's prose describes the span of time around it, and a request
+  // carrying both leaves the model to choose — which is how a still staged an
+  // action the frozen moment says has already finished. The frozen moment wins
+  // outright when there is one, and the prose is dropped rather than trailed.
+  if (frozen && described && !frozen.toLowerCase().includes(described.toLowerCase())) {
+    console.log(
+      `[Beat Still] Beat ${beat.beatId} framed from frozenMoment; prose not staged: "${described}"`
+    )
+  }
   appendFacet(parts, frozen || described)
-  if (frozen) appendFacet(parts, described)
   appendFacet(parts, direction?.blocking, 'Blocking')
   appendFacet(parts, direction?.propInteraction, 'Prop handling')
   appendFacet(parts, direction?.gaze, 'Gaze')
@@ -262,10 +329,14 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
   }
 
   // Framing leads the description, unless the beat's own prose already names
-  // this shot and would otherwise state it twice.
-  const shot = [direction?.shotType?.trim(), direction?.cameraAngle?.trim()]
-    .filter(Boolean)
-    .join(', ')
+  // this shot and would otherwise state it twice. Direction is authored for
+  // coverage, so it can hold a camera move; a still gets the end state of it.
+  const { shot, rewrites } = normalizeStillFraming(direction?.shotType, direction?.cameraAngle)
+  for (const rewrite of rewrites) {
+    console.warn(
+      `[Beat Still] Beat ${beat.beatId} ${rewrite.field} "${rewrite.from}" describes a camera move; a still cannot hold one — using "${rewrite.to}"`
+    )
+  }
   if (shot && !soFar.includes(shot.toLowerCase())) {
     parts.unshift(asSentence(shot))
   }
@@ -328,6 +399,7 @@ export function composePersistedBeatStillPrompt(args: {
     sceneIndex: args.sceneIndex,
     artStyleAnchor: args.artStyleAnchor,
     lighting: beat.beatDirection?.lightingAccent,
+    shotType: beat.beatDirection?.shotType,
   })
 }
 
@@ -752,6 +824,7 @@ export function buildFallbackBeatPlans(request: BeatSequencePlanRequest): BeatKe
         sceneIndex: sceneNumber - 1,
         artStyleAnchor: request.artStyleAnchor,
         lighting: directionMeta.lightingMood,
+        shotType,
       }),
       allowTypography,
       durationSeconds,

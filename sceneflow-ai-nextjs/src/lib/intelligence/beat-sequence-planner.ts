@@ -319,6 +319,7 @@ async function planWithGemini(request: BeatSequencePlanRequest): Promise<PlanAtt
           artStyleAnchor: request.artStyleAnchor,
           lighting: planned.lighting,
           lensMm: planned.lensMm,
+          shotType: planned.shotType,
         }),
       }
     }

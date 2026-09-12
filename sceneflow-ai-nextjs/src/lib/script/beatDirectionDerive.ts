@@ -12,6 +12,11 @@ import {
   parsePerformanceCue,
   resolveBeatDirectedEmotion,
 } from '@/lib/scene/performanceCues'
+import {
+  mentionsWord,
+  propHeadNoun,
+  propSignificantWords,
+} from '@/lib/script/propNameMatch'
 import { getSceneMovements, resolveBeatMovement } from '@/lib/script/sceneMovements'
 import type { BeatDirection, SceneBeat, SceneMovement } from '@/lib/script/segmentTypes'
 
@@ -23,28 +28,6 @@ function firstNonEmpty(...values: (string | undefined | null)[]): string | undef
     }
   }
   return undefined
-}
-
-const PROP_MATCH_STOP_WORDS = new Set([
-  'that',
-  'this',
-  'their',
-  'with',
-  'from',
-  'into',
-  'onto',
-  'inch',
-  'inches',
-  'foot',
-  'feet',
-])
-
-/** Distinctive words of a prop label, used to require more than one hit. */
-function propMatchWords(propName: string): string[] {
-  return propName
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .filter((word) => word.length >= 4 && !PROP_MATCH_STOP_WORDS.has(word))
 }
 
 function collectKeyPropsForBeat(
@@ -73,16 +56,17 @@ function collectKeyPropsForBeat(
       out.push(trimmed)
       continue
     }
-    // A prop's first word alone is a coincidence, not a reference: "violet"
-    // matches every beat mentioning the colour, and a derived key prop is
-    // persisted as this beat's directed prop list.
-    const words = propMatchWords(propLower)
-    if (words.length === 0) continue
-    const hits = words.filter((word) => text.includes(word)).length
-    if (hits >= 2 || (words.length === 1 && hits === 1)) {
-      seen.add(propLower)
-      out.push(trimmed)
-    }
+    // A prop's decorations are not its name. "Thirty-Inch Iron Rail Spanner"
+    // used to match any beat that mentioned iron and a rail with no spanner
+    // anywhere in it, and a derived key prop is persisted as this beat's
+    // directed prop list and pulls a reference image in behind it. The object
+    // itself has to be named before the rest of the label counts for anything.
+    const head = propHeadNoun(propLower)
+    if (!head || !mentionsWord(text, head)) continue
+    const words = propSignificantWords(propLower)
+    if (words.length > 0 && !words.some((word) => mentionsWord(text, word))) continue
+    seen.add(propLower)
+    out.push(trimmed)
   }
   return out.length > 0 ? out : undefined
 }

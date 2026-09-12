@@ -16,6 +16,7 @@ import {
 } from '@/lib/scene/characterDetection'
 import { getSceneBeats, isNarratorBeat } from '@/lib/script/beatMigration'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
+import { mentionsWord, propHeadNoun } from '@/lib/script/propNameMatch'
 import type { BeatReferenceSelection, SceneBeat } from '@/lib/script/segmentTypes'
 
 export function toBeatReferenceSelection(
@@ -45,6 +46,22 @@ import { resolveWardrobeIdForCharacterInScene } from '@/lib/character/characterR
 
 export type LocationMatchConfidence = 'assigned' | 'heading' | 'direction' | 'weak' | 'none'
 
+/**
+ * Why a reference is attached to this frame.
+ *
+ * Every failure where a frame carried cast or props it had no business with
+ * looked identical in the logs: a list of names, with nothing saying which of
+ * several selectors put them there or what text they matched. Recording it is
+ * the difference between "the direction is wrong" and "the matcher is wrong".
+ */
+export interface AttachedReferenceProvenance {
+  kind: 'character' | 'location' | 'prop'
+  name: string
+  selector: string
+  /** The text or label that matched, when the selector matched on one. */
+  matchedTerm?: string
+}
+
 export type ResolvedBeatFrameContext = BeatReferenceSelection & {
   locationMatchConfidence: LocationMatchConfidence
   warnings: string[]
@@ -52,6 +69,8 @@ export type ResolvedBeatFrameContext = BeatReferenceSelection & {
   characterNames: string[]
   locationName?: string
   objectNames: string[]
+  /** What selected each attached reference, in attach order. */
+  referenceProvenance: AttachedReferenceProvenance[]
 }
 
 export type ResolveBeatFrameGenerationContextArgs = {
@@ -330,6 +349,15 @@ function resolveSceneCastFallback(
   return uniqueProjectCharacters(found)
 }
 
+type CastSelector =
+  | 'no-talent-scene'
+  | 'direction-cast-in-frame'
+  | 'narration-beat'
+  | 'beat-text'
+  | 'lone-project-character'
+  | 'scene-cast-fallback'
+  | 'beat-speaker'
+
 function resolveBeatCharacters(
   scene: Record<string, unknown>,
   beat: SceneBeat,
@@ -337,8 +365,11 @@ function resolveBeatCharacters(
   filmTitle: string | undefined,
   objectReferences: VisualReference[],
   locationReferences: LocationReference[]
-): Array<{ id?: string; name?: string; referenceImage?: string }> {
-  if (isNoTalentSceneForFrames(scene)) return []
+): {
+  characters: Array<{ id?: string; name?: string; referenceImage?: string }>
+  selector: CastSelector
+} {
+  if (isNoTalentSceneForFrames(scene)) return { characters: [], selector: 'no-talent-scene' }
 
   // Stated cast is the answer, not a hint — and the empty list is an answer
   // too. Everything below exists because nothing used to say who was on
@@ -346,19 +377,23 @@ function resolveBeatCharacters(
   // Narration beats included: a narrated beat can still show someone, and the
   // blanket exclusion below is only there for beats that never said.
   const directedCast = directedCastForBeat(beat, projectCharacters)
-  if (directedCast) return directedCast
+  if (directedCast) {
+    return { characters: directedCast, selector: 'direction-cast-in-frame' }
+  }
 
   if (isNarratorBeat(beat) || beat.kind === 'narration') {
-    return []
+    return { characters: [], selector: 'narration-beat' }
   }
 
   const detectOptions = characterDetectionOptions(filmTitle, objectReferences, locationReferences)
   let matched: ResolveBeatFrameGenerationContextArgs['projectCharacters'] = []
+  let selector: CastSelector
 
   if (beat.kind === 'action') {
     const beatCastText = buildBeatCastMatchText(beat)
     const actionContext = [sceneHeadingText(scene), beatCastText].join(' ')
     matched = detectCharactersInText(actionContext, projectCharacters, detectOptions)
+    selector = 'beat-text'
     // Guessing at who is on camera is only warranted when the beat says there
     // is someone on camera. An object or environment beat resolves to no cast.
     if (matched.length === 0 && beatTextImpliesPerson(beatCastText)) {
@@ -367,6 +402,7 @@ function resolveBeatCharacters(
       )
       if (nonNarrators.length === 1) {
         matched = [nonNarrators[0]]
+        selector = 'lone-project-character'
       } else {
         matched = resolveSceneCastFallback(
           scene,
@@ -375,27 +411,34 @@ function resolveBeatCharacters(
           objectReferences,
           locationReferences
         )
+        selector = 'scene-cast-fallback'
       }
     }
   } else {
     const speaker = resolveBeatSpeaker(beat, projectCharacters)
-    matched = speaker
-      ? [speaker]
-      : resolveSceneCastFallback(
-          scene,
-          projectCharacters,
-          filmTitle,
-          objectReferences,
-          locationReferences
-        )
+    matched = speaker ? [speaker] : []
+    selector = 'beat-speaker'
+    if (!speaker) {
+      matched = resolveSceneCastFallback(
+        scene,
+        projectCharacters,
+        filmTitle,
+        objectReferences,
+        locationReferences
+      )
+      selector = 'scene-cast-fallback'
+    }
   }
 
-  return intersectDetectedCharactersWithDirectionText(
-    matched,
-    buildSceneStagingText(scene),
-    projectCharacters,
-    detectOptions
-  )
+  return {
+    characters: intersectDetectedCharactersWithDirectionText(
+      matched,
+      buildSceneStagingText(scene),
+      projectCharacters,
+      detectOptions
+    ),
+    selector,
+  }
 }
 
 function buildCharacterWardrobes(
@@ -426,7 +469,7 @@ export function resolveBeatFrameGenerationContext(
   const { scene, beat, sceneIndex, projectCharacters, locationReferences, objectReferences, filmTitle } = args
   const warnings: string[] = []
 
-  const matchedChars = resolveBeatCharacters(
+  const { characters: matchedChars, selector: castSelector } = resolveBeatCharacters(
     scene,
     beat,
     projectCharacters,
@@ -461,8 +504,13 @@ export function resolveBeatFrameGenerationContext(
 
   const matchText = buildBeatPropMatchText(beat)
   const beatDirectionKeyProps = beat.beatDirection?.keyProps ?? []
+  const directedObjects = matchObjectsBySelectedNames(
+    beatDirectionKeyProps,
+    objectReferences as any[]
+  )
+  const directedObjectIds = new Set(directedObjects.map((o) => String(o.id || o.name)))
   const detectedObjects = uniqueObjects([
-    ...matchObjectsBySelectedNames(beatDirectionKeyProps, objectReferences as any[]),
+    ...directedObjects,
     ...findSceneObjects(matchText, objectReferences as any[], undefined, {
       matchDescriptions: false,
     }),
@@ -470,6 +518,49 @@ export function resolveBeatFrameGenerationContext(
   const objectRefIds = detectedObjects.map((o) => o.id).filter(Boolean) as string[]
 
   const characterWardrobes = buildCharacterWardrobes(scene, characterIds, projectCharacters, sceneIndex)
+
+  const referenceProvenance: AttachedReferenceProvenance[] = [
+    ...matchedChars.map((char) => ({
+      kind: 'character' as const,
+      name: char.name || '',
+      selector: castSelector,
+      matchedTerm:
+        castSelector === 'direction-cast-in-frame'
+          ? (beat.beatDirection?.castInFrame ?? []).join(', ')
+          : undefined,
+    })),
+    ...(locationPick.id
+      ? [
+          {
+            kind: 'location' as const,
+            name: locationPick.name || locationPick.id,
+            selector: `location-${locationPick.confidence}`,
+          },
+        ]
+      : []),
+    ...detectedObjects.map((obj) => {
+      const directed = directedObjectIds.has(String(obj.id || obj.name))
+      return {
+        kind: 'prop' as const,
+        name: obj.name,
+        selector: directed ? 'direction-key-prop' : 'beat-text',
+        matchedTerm: directed ? beatDirectionKeyProps.join(', ') || undefined : obj.name,
+      }
+    }),
+  ]
+
+  if (referenceProvenance.length > 0) {
+    console.log(
+      `[Beat References] Beat ${beat.beatId} attaching ${referenceProvenance.length} reference(s): ` +
+        referenceProvenance
+          .map(
+            (entry) =>
+              `${entry.kind} "${entry.name}" via ${entry.selector}` +
+              (entry.matchedTerm ? ` ("${entry.matchedTerm}")` : '')
+          )
+          .join('; ')
+    )
+  }
 
   return {
     characterIds,
@@ -481,6 +572,7 @@ export function resolveBeatFrameGenerationContext(
     characterNames: matchedChars.map((c) => c.name || '').filter(Boolean),
     locationName: locationPick.name,
     objectNames: detectedObjects.map((o) => o.name),
+    referenceProvenance,
   }
 }
 
@@ -535,6 +627,60 @@ export function shouldUseExplicitBeatReferences(
     beat.referenceSelection.resolvedAt &&
     beat.referenceSelection.source === 'user'
   )
+}
+
+/**
+ * Props a saved selection carries that this beat's direction no longer asks for.
+ *
+ * A user selection is authoritative and stays attached — it is a person saying
+ * what they want in the shot. But direction gets revised after a selection is
+ * saved, and a reference the current beat says nothing about arrives with no
+ * instruction, which the model resolves by inventing the object into the frame.
+ * Naming those props is how that becomes diagnosable instead of mysterious.
+ */
+export function propsSelectionOutrunsDirection(args: {
+  selection: Pick<BeatReferenceSelection, 'objectRefIds'>
+  beat?: SceneBeat | null
+  objectReferences: VisualReference[]
+}): string[] {
+  const { selection, beat, objectReferences } = args
+  if (!beat || selection.objectRefIds.length === 0) return []
+
+  const supportedText = buildBeatPropMatchText(beat).toLowerCase()
+  const keyProps = beat.beatDirection?.keyProps ?? []
+
+  const unsupported: string[] = []
+  for (const id of selection.objectRefIds) {
+    const ref = objectReferences.find((obj) => obj.id === id || obj.name === id)
+    const name = ref?.name?.trim()
+    if (!name) continue
+    if (keyProps.some((prop) => libraryNamesFuzzyMatch(prop, name))) continue
+    if (mentionsWord(supportedText, propHeadNoun(name))) continue
+    unsupported.push(name)
+  }
+  return unsupported
+}
+
+/**
+ * The saved selection to generate from, warning about anything in it the beat's
+ * current direction has moved on from.
+ */
+export function explicitBeatReferenceSelection(args: {
+  beat: SceneBeat & { referenceSelection: BeatReferenceSelection }
+  objectReferences?: VisualReference[]
+}): BeatReferenceSelection {
+  const selection = args.beat.referenceSelection
+  const unsupported = propsSelectionOutrunsDirection({
+    selection,
+    beat: args.beat,
+    objectReferences: args.objectReferences ?? [],
+  })
+  if (unsupported.length > 0) {
+    console.warn(
+      `[Beat References] Beat ${args.beat.beatId} saved selection carries ${unsupported.length} prop(s) its current direction does not mention: ${unsupported.join(', ')} — the frame will be handed a reference with no instruction attached to it`
+    )
+  }
+  return selection
 }
 
 /**

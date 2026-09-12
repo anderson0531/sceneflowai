@@ -7,6 +7,7 @@
 
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
 import { fetchReferenceImageAsBase64 } from '@/lib/storage/fetchReferenceImage'
+import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalation'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import { getGeminiImageSafetySettings } from '@/lib/vertexai/safety'
 import { MAX_REFERENCE_IMAGES_ECO } from '@/lib/vision/referenceLimits'
@@ -86,6 +87,12 @@ function canFallbackToEcoTier(options: GenerateVertexImageOptions): boolean {
  * and hit IMAGE_SAFETY on identity work (production 2026-08-07). Animatic beats
  * request eco explicitly, which bypasses that guard, so the protection has to be
  * restored from this side: a refusal costs one pro attempt, not the frame.
+ *
+ * The escalated attempt carries a softened prompt. Re-sending the refused
+ * wording verbatim produced a rendered frame that ignored its identity
+ * references — pro kept the composition and put an invented face in it, which
+ * likeness validation then scored at 30% (production 2026-09-12 beat frames).
+ * A caller cannot tell that apart from ordinary drift, so the result is flagged.
  */
 function escalateEcoRefusalToPro(
   model: string,
@@ -103,10 +110,23 @@ function escalateEcoRefusalToPro(
   console.warn(
     `[Vertex Gemini Image] ${model} returned no image for an identity-ref frame (${reason}); escalating to ${GEMINI_IMAGE_TIER_CONFIG.designer.model}`
   )
+  const softenedPrompt = escalateImagePromptForRetry(options.prompt, 1, {
+    skipProductionStillFraming: options.skipProductionStillFraming,
+  })
+  if (softenedPrompt !== options.prompt) {
+    console.warn(
+      '[Vertex Gemini Image] Softened the refused action language before the pro attempt — an unchanged prompt returns a frame that ignores the identity references'
+    )
+  }
   return generateVertexGeminiImage(
-    { ...options, modelTier: 'designer', escalatedFromEcoTier: true },
+    {
+      ...options,
+      prompt: softenedPrompt,
+      modelTier: 'designer',
+      escalatedFromEcoTier: true,
+    },
     0
-  )
+  ).then((result) => ({ ...result, policyRefusalRecovered: true }))
 }
 
 async function sleepWithBackoff(attempt: number): Promise<void> {
@@ -219,6 +239,13 @@ export interface VertexImageResult {
   text?: string
   provider: 'vertex'
   modelId: string
+  /**
+   * This frame only exists because a refusal was recovered from: the eco model
+   * declined the request on content policy and the pro attempt carried softened
+   * wording. A refused frame is also the frame most likely to come back with the
+   * identity references ignored, so callers use this to decide what to escalate.
+   */
+  policyRefusalRecovered?: boolean
 }
 
 /**
