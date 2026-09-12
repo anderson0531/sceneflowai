@@ -426,6 +426,17 @@ describe('the route composes a beat frame from its direction', () => {
     expect(customBranch).toBeGreaterThan(-1)
     expect(beatBranch).toBeGreaterThan(customBranch)
   })
+
+  it('does not widen a stated cast to match the prompt text', () => {
+    expect(routeSrc).toContain('directedCastForBeat(beat, allCharacters)')
+
+    // The union and the scene-cast fill are both off for a beat that stated
+    // its cast; leaving either on lets the prompt argue with the direction.
+    const union = routeSrc.indexOf('if (\n              promptUnionText &&')
+    expect(union).toBeGreaterThan(-1)
+    expect(routeSrc.slice(union, union + 200)).toContain('!directedCast')
+    expect(routeSrc).toContain('const shouldFillCharacters =\n              !directedCast &&')
+  })
 })
 
 describe('frameType is decided by the beat, not by the button', () => {

@@ -228,16 +228,17 @@ export function resolveExpressBeatReferences(args: {
     selection: BeatReferenceSelection,
     fromSavedSelection: boolean
   ): ExpressBeatRefsResolved => {
-    const unioned = unionBeatSelectionWithPromptText(
+    const unioned = unionBeatSelectionWithPromptText({
       selection,
       promptText,
+      beat,
       projectCharacters,
       scene,
       sceneIndex,
       filmTitle,
       objectReferences,
-      locationReferences
-    )
+      locationReferences,
+    })
     return {
       api: mapBeatReferenceSelectionForApi(
         unioned,

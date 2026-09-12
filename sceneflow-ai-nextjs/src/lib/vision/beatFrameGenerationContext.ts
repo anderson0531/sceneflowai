@@ -262,6 +262,22 @@ function resolveDirectedCast(
 }
 
 /**
+ * The cast a beat states, or null when it states none.
+ *
+ * Null and the empty array are different answers, and the difference is the
+ * point: null is a beat that never said who was on camera, where guessing from
+ * its prose is all there is, while the empty array is a beat that said nobody.
+ */
+export function directedCastForBeat(
+  beat: SceneBeat | undefined | null,
+  projectCharacters: ResolveBeatFrameGenerationContextArgs['projectCharacters']
+): ResolveBeatFrameGenerationContextArgs['projectCharacters'] | null {
+  const stated = beat?.beatDirection?.castInFrame
+  if (!Array.isArray(stated)) return null
+  return resolveDirectedCast(stated, projectCharacters)
+}
+
+/**
  * When beat-scoped name detect misses (pronouns, "the man"), pull talent from
  * other beats, scene dialogue, and remaining scene text rather than generating
  * a people frame with no identity references.
@@ -329,10 +345,8 @@ function resolveBeatCharacters(
   // camera; once the beat says it, guessing can only contradict the direction.
   // Narration beats included: a narrated beat can still show someone, and the
   // blanket exclusion below is only there for beats that never said.
-  const directedCast = beat.beatDirection?.castInFrame
-  if (Array.isArray(directedCast)) {
-    return resolveDirectedCast(directedCast, projectCharacters)
-  }
+  const directedCast = directedCastForBeat(beat, projectCharacters)
+  if (directedCast) return directedCast
 
   if (isNarratorBeat(beat) || beat.kind === 'narration') {
     return []
@@ -580,21 +594,51 @@ function detectObjectsNamedInText(
   })
 }
 
-/** Add characters and props named in prompt text to an existing beat selection. */
+export type UnionBeatSelectionArgs = {
+  selection: BeatReferenceSelection
+  promptText?: string
+  /** The beat the selection is for, so stated direction can close the union. */
+  beat?: SceneBeat | null
+  projectCharacters: ResolveBeatFrameGenerationContextArgs['projectCharacters']
+  scene: Record<string, unknown>
+  sceneIndex?: number
+  filmTitle?: string
+  objectReferences?: VisualReference[]
+  locationReferences?: LocationReference[]
+}
+
+/**
+ * Add characters and props named in prompt text to an existing beat selection.
+ *
+ * Only for facets the beat left unstated. Expanding a selection to match the
+ * prompt closes a loop on itself: the prompt names someone, so a reference is
+ * attached; the reference is attached, so the prompt's post-filters keep the
+ * name. Nothing in that circuit ever consults the direction, which is how five
+ * rounds of hardening the prompt builder failed to remove cast the beat never
+ * asked for. Stated cast and stated key props end the loop — the direction is
+ * the complete answer, so there is nothing left for the prompt to add.
+ */
 export function unionBeatSelectionWithPromptText(
-  selection: BeatReferenceSelection,
-  promptText: string | undefined,
-  projectCharacters: ResolveBeatFrameGenerationContextArgs['projectCharacters'],
-  scene: Record<string, unknown>,
-  sceneIndex?: number,
-  filmTitle?: string,
-  objectReferences: VisualReference[] = [],
-  locationReferences: LocationReference[] = []
+  args: UnionBeatSelectionArgs
 ): BeatReferenceSelection {
+  const {
+    selection,
+    promptText,
+    beat,
+    projectCharacters,
+    scene,
+    sceneIndex,
+    filmTitle,
+    objectReferences = [],
+    locationReferences = [],
+  } = args
   if (!promptText?.trim()) return selection
 
+  const castIsStated = Array.isArray(beat?.beatDirection?.castInFrame)
+  const propsAreStated = (beat?.beatDirection?.keyProps ?? []).length > 0
+
   const characterIds = [...selection.characterIds]
-  if (projectCharacters.length > 0) {
+  if (projectCharacters.length > 0 && !castIsStated) {
     const extra = detectCharactersInText(
       promptText,
       projectCharacters,
@@ -611,12 +655,14 @@ export function unionBeatSelectionWithPromptText(
   }
 
   const objectRefIds = [...selection.objectRefIds]
-  const seenObjects = new Set(objectRefIds.map((id) => id.toLowerCase()))
-  for (const ref of detectObjectsNamedInText(promptText, objectReferences)) {
-    const id = ref.id || ref.name
-    if (!id || seenObjects.has(id.toLowerCase())) continue
-    seenObjects.add(id.toLowerCase())
-    objectRefIds.push(id)
+  if (!propsAreStated) {
+    const seenObjects = new Set(objectRefIds.map((id) => id.toLowerCase()))
+    for (const ref of detectObjectsNamedInText(promptText, objectReferences)) {
+      const id = ref.id || ref.name
+      if (!id || seenObjects.has(id.toLowerCase())) continue
+      seenObjects.add(id.toLowerCase())
+      objectRefIds.push(id)
+    }
   }
 
   const castChanged = characterIds.length !== selection.characterIds.length

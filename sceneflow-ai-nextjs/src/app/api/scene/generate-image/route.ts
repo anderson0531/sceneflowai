@@ -158,7 +158,10 @@ import {
   formatBeatArcContextLines,
   type BeatArcContext,
 } from '@/lib/vision/beatArcContext'
-import { resolveBeatFrameGenerationContext } from '@/lib/vision/beatFrameGenerationContext'
+import {
+  directedCastForBeat,
+  resolveBeatFrameGenerationContext,
+} from '@/lib/vision/beatFrameGenerationContext'
 import {
   canStartLikenessRetry,
   canValidateLikeness,
@@ -972,6 +975,12 @@ export async function POST(req: NextRequest) {
           const beat = beats[effectiveBeatIndex]
           if (beat) {
             beatKindForIntelligence = beat.kind
+            // Null when the beat never stated its cast, which is the only case
+            // the name-detection and scene-cast fallbacks below are for.
+            const directedCast =
+              clientVerifiedBeatRefs || (storyboardNoCharacterScene && !honorExplicitChars)
+                ? null
+                : directedCastForBeat(beat, allCharacters)
             if (storyboardNoCharacterScene && !honorExplicitChars) {
               if (!clientVerifiedBeatRefs) characterObjects = []
               if (beat.kind === 'action') {
@@ -1025,7 +1034,15 @@ export async function POST(req: NextRequest) {
                 'Frame the speaking character prominently — medium close-up or over-the-shoulder — with scene continuity preserved. '
               effectiveShotType = effectiveShotType || 'medium close-up'
             }
+            if (directedCast) {
+              characterObjects = directedCast
+              console.log(
+                `[Scene Image] Beat states its cast (${directedCast.length}):`,
+                directedCast.map((c: any) => c.name).join(', ') || 'nobody'
+              )
+            }
             const shouldFillCharacters =
+              !directedCast &&
               characterObjects.length === 0 &&
               !effectiveExcludeCharacters &&
               !(storyboardNoCharacterScene && !honorExplicitChars) &&
@@ -1062,8 +1079,13 @@ export async function POST(req: NextRequest) {
             ]
               .filter(Boolean)
               .join(' ')
+            // Not for a beat that stated its cast. Widening the selection to
+            // whoever the prompt text names is half of a loop that confirms
+            // itself: the extra reference makes the next prompt name them
+            // again, and no step in the circuit ever asks the direction.
             if (
               promptUnionText &&
+              !directedCast &&
               !effectiveExcludeCharacters &&
               !(storyboardNoCharacterScene && !honorExplicitChars) &&
               allCharacters.length > 0
