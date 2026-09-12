@@ -64,6 +64,11 @@ export interface SceneImageFrameProps {
   imageError?: string
   /** Direction/prompt changed after this frame was generated. Regen is optional. */
   promptChanged?: boolean
+  /**
+   * Why this frame cannot be generated yet (e.g. undrawn references). When set,
+   * the generate and Direct affordances are disabled and explain themselves.
+   */
+  generateBlockedReason?: string
 }
 
 function CompactIconButton({
@@ -114,6 +119,7 @@ function CompactActionBar({
   sceneNumber,
   alwaysVisible = false,
   controlsVariant = 'compact',
+  generateBlockedReason,
 }: {
   hasImage: boolean
   imageUrl?: string | null
@@ -127,6 +133,7 @@ function CompactActionBar({
   sceneNumber: number
   alwaysVisible?: boolean
   controlsVariant?: 'compact' | 'comfortable'
+  generateBlockedReason?: string
 }) {
   const iconClass =
     controlsVariant === 'comfortable' ? 'w-5 h-5 text-white' : 'w-3.5 h-3.5 text-white'
@@ -146,8 +153,8 @@ function CompactActionBar({
           e.stopPropagation()
           onGenerate()
         }}
-        disabled={isGenerating}
-        title={hasImage ? 'Regenerate' : 'Generate'}
+        disabled={isGenerating || !!generateBlockedReason}
+        title={generateBlockedReason || (hasImage ? 'Regenerate' : 'Generate')}
         className="bg-indigo-600/90 hover:bg-indigo-500"
         size={buttonSize}
       >
@@ -166,8 +173,8 @@ function CompactActionBar({
             e.stopPropagation()
             onDirect()
           }}
-          disabled={isGenerating}
-          title="Direct — prompt builder"
+          disabled={isGenerating || !!generateBlockedReason}
+          title={generateBlockedReason || 'Direct — prompt builder'}
           className="bg-amber-600/90 hover:bg-amber-500"
           size={buttonSize}
         >
@@ -293,6 +300,7 @@ export function SceneImageFrame({
   useExpressGenerateIcon = false,
   imageError,
   promptChanged = false,
+  generateBlockedReason,
 }: SceneImageFrameProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isHovering, setIsHovering] = useState(false)
@@ -459,6 +467,7 @@ export function SceneImageFrame({
                 sceneNumber={sceneNumber}
                 alwaysVisible={alwaysShowControls}
                 controlsVariant={controlsVariant}
+                generateBlockedReason={generateBlockedReason}
               />
             ) : showControls && !useOverlayControls ? (
               <AnimatePresence>
@@ -476,9 +485,9 @@ export function SceneImageFrame({
                         e.stopPropagation()
                         onGenerate()
                       }}
-                      disabled={isGenerating}
+                      disabled={isGenerating || !!generateBlockedReason}
                       className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
-                      title="Generate new image"
+                      title={generateBlockedReason || 'Generate new image'}
                     >
                       {isGenerating ? (
                         <Loader2 className="w-5 h-5 text-white animate-spin" />
@@ -493,9 +502,9 @@ export function SceneImageFrame({
                           e.stopPropagation()
                           onDirect()
                         }}
-                        disabled={isGenerating}
+                        disabled={isGenerating || !!generateBlockedReason}
                         className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
-                        title="Direct — prompt builder"
+                        title={generateBlockedReason || 'Direct — prompt builder'}
                       >
                         <SlidersHorizontal className="w-5 h-5 text-white" />
                       </button>
@@ -571,6 +580,7 @@ export function SceneImageFrame({
                 sceneNumber={sceneNumber}
                 alwaysVisible
                 controlsVariant={controlsVariant}
+                generateBlockedReason={generateBlockedReason}
               />
             )}
           </div>
@@ -589,7 +599,8 @@ export function SceneImageFrame({
               </p>
             )}
             <p className="text-xs text-gray-500 text-center mb-3 max-w-xs">
-              Create a reference image for scene consistency across production
+              {generateBlockedReason ||
+                'Create a reference image for scene consistency across production'}
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -597,7 +608,8 @@ export function SceneImageFrame({
                   e.stopPropagation()
                   onGenerate()
                 }}
-                disabled={isGenerating}
+                disabled={isGenerating || !!generateBlockedReason}
+                title={generateBlockedReason}
                 className="bg-indigo-600 hover:bg-indigo-700"
               >
                 {isGenerating ? (

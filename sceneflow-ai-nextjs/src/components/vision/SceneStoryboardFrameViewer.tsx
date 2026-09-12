@@ -116,6 +116,8 @@ interface StoryboardSlotHandlers {
   onDeleteStoryboardFrame?: (frameId: string) => void | Promise<void>
   /** When set, per-slot Generate opens Express instead of single-frame API. */
   routeGenerateToExpress?: () => void
+  /** Why no frame can be generated yet (undrawn references). */
+  generateBlockedReason?: string
 }
 
 function buildStoryboardSlotFrameProps(
@@ -151,6 +153,7 @@ function buildStoryboardSlotFrameProps(
     onUploadCustomFrame,
     onDeleteStoryboardFrame,
     routeGenerateToExpress,
+    generateBlockedReason,
   } = handlers
 
   const useExpressGenerate = !!routeGenerateToExpress
@@ -165,6 +168,7 @@ function buildStoryboardSlotFrameProps(
       isGenerating: generatingCustomFrames.has(genKey),
       label: slot.label,
       imagePrompt: slot.storyboardImagePrompt,
+      generateBlockedReason,
       onGenerate: () => void onGenerateCustomFrame?.(slot.customFrameId!),
       onDirect: onDirectFrame ? () => onDirectFrame(slot) : undefined,
       onUpload: (file) => onUploadCustomFrame?.(slot.customFrameId!, file),
@@ -212,6 +216,7 @@ function buildStoryboardSlotFrameProps(
         ? isGeneratingBeatFrame
         : isGeneratingFrame,
     label: slot.label,
+    generateBlockedReason,
     imageTier: slot.ownImageUrl ? slot.imageTier : undefined,
     beatRole: slot.beatRole,
     beatNumber: slot.beatId ? slot.beatNumber : undefined,
@@ -628,6 +633,7 @@ export function SceneStoryboardFrameViewer({
         isFirstTimeFrameGeneration && onExpressSceneGenerate
           ? openExpressSceneDialog
           : undefined,
+      generateBlockedReason: referenceGateMessage || undefined,
     }),
     [
       sceneIndex,
@@ -649,6 +655,7 @@ export function SceneStoryboardFrameViewer({
       onDeleteStoryboardFrame,
       wrapGenerate,
       blockedByReferences,
+      referenceGateMessage,
       isFirstTimeFrameGeneration,
       onExpressSceneGenerate,
       openExpressSceneDialog,
