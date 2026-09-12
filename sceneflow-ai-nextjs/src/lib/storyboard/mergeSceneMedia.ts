@@ -8,6 +8,9 @@
  * in cleanupAudio.ts instead.
  */
 
+import { storedStillDirectionKeyMatches } from '@/lib/script/beatDirectionFingerprint'
+import type { BeatDirection } from '@/lib/script/segmentTypes'
+
 const DIALOGUE_STORYBOARD_URL_KEYS = ['storyboardImageUrl', 'storyboardImageGcsPath'] as const
 const DIALOGUE_STORYBOARD_PROMPT_KEYS = ['storyboardImagePrompt'] as const
 
@@ -17,12 +20,18 @@ const BEAT_STORYBOARD_URL_KEYS = [
   'storyboardEndImageUrl',
   'storyboardEndImageGcsPath',
 ] as const
+/**
+ * `storyboardImagePrompt` and `storyboardImagePromptDirectionKey` are resolved
+ * as a pair by `pickStillPromptPair`, not here: picking them independently let
+ * a stale prompt keep a current key, which then reads as up to date forever.
+ */
 const BEAT_STORYBOARD_PROMPT_KEYS = [
-  'storyboardImagePrompt',
   'storyboardEndImagePrompt',
-  'storyboardImagePromptDirectionKey',
   'storyboardImageDirectionKey',
 ] as const
+
+const STILL_PROMPT_KEY = 'storyboardImagePrompt'
+const STILL_PROMPT_DIRECTION_KEY = 'storyboardImagePromptDirectionKey'
 
 const SCENE_IMAGE_URL_KEYS = [
   'imageUrl',
@@ -120,6 +129,57 @@ function beatContentChanged(canonBeat: any, incomingBeat: any): boolean {
   return norm(canonBeat) !== norm(incomingBeat)
 }
 
+function promptText(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined
+}
+
+/**
+ * Resolve a beat's still prompt together with the direction key it was composed
+ * from, preferring whichever side still describes the beat's direction.
+ *
+ * `pickPromptText` is `incoming ?? canonical`, and it ran per key. So a client
+ * holding a snapshot from before a prompt was recomposed would overwrite the
+ * fresh prompt *and* stamp its own outdated key over the fresh one — leaving a
+ * beat that reads as current while carrying wording from an older composer.
+ * That is how a scene ended up with half its frame prompts refreshed.
+ *
+ * The pair moves as a unit so a prompt can never be stored under a key it was
+ * not composed under.
+ */
+function pickStillPromptPair(
+  incomingBeat: Record<string, unknown>,
+  canonBeat: Record<string, unknown>,
+  direction: unknown
+): { prompt?: string; directionKey?: unknown } {
+  const incPrompt = promptText(incomingBeat[STILL_PROMPT_KEY])
+  const canPrompt = promptText(canonBeat[STILL_PROMPT_KEY])
+
+  const incoming = {
+    prompt: incPrompt,
+    directionKey: incomingBeat[STILL_PROMPT_DIRECTION_KEY],
+  }
+  const canonical = {
+    prompt: canPrompt,
+    directionKey: canonBeat[STILL_PROMPT_DIRECTION_KEY],
+  }
+
+  if (!incPrompt) return canonical
+  if (!canPrompt) return incoming
+
+  const beatDirection = (direction ?? undefined) as BeatDirection | undefined
+  const incomingCurrent = storedStillDirectionKeyMatches(
+    typeof incoming.directionKey === 'string' ? incoming.directionKey : undefined,
+    beatDirection
+  )
+  const canonicalCurrent = storedStillDirectionKeyMatches(
+    typeof canonical.directionKey === 'string' ? canonical.directionKey : undefined,
+    beatDirection
+  )
+
+  if (canonicalCurrent && !incomingCurrent) return canonical
+  return incoming
+}
+
 function mergeBeatMedia(canonBeat: any, incomingBeat: any): any {
   if (!incomingBeat) return canonBeat
   if (!canonBeat) return incomingBeat
@@ -136,6 +196,16 @@ function mergeBeatMedia(canonBeat: any, incomingBeat: any): any {
     BEAT_STORYBOARD_URL_KEYS,
     BEAT_STORYBOARD_PROMPT_KEYS
   )
+
+  const still = pickStillPromptPair(incomingBeat, canonBeat, merged.beatDirection)
+  if (still.prompt) merged[STILL_PROMPT_KEY] = still.prompt
+  else delete merged[STILL_PROMPT_KEY]
+  if (still.directionKey !== undefined) {
+    merged[STILL_PROMPT_DIRECTION_KEY] = still.directionKey
+  } else {
+    delete merged[STILL_PROMPT_DIRECTION_KEY]
+  }
+
   return merged
 }
 
