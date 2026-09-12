@@ -1016,8 +1016,40 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       ...loadedScript,
       script: { ...loadedScript.script, scenes: finalScenes },
     }
-    setScript(sanitizeScriptDialogueLines(nextScript))
+    const sanitizedScript = sanitizeScriptDialogueLines(nextScript)
+    setScript(sanitizedScript)
     setScriptEditedAt(Date.now())
+
+    /**
+     * Carry the server's `scriptUpdatedAt` into the project snapshot too.
+     *
+     * This refreshed `script` but never `project` / `projectRef.current`, so
+     * `visionPhase.scriptUpdatedAt` stayed frozen at whatever it was when the
+     * page loaded while the server kept bumping it on every write. During audio
+     * regen `handleScriptChange` deliberately replays the existing timestamp,
+     * which meant replaying a page-load one — and the PUT guard then rejected
+     * the whole script as a stale write. That is the 43-minute `deltaMs` in the
+     * `STALE SCRIPT WRITE BLOCKED` logs.
+     */
+    const currentProject = projectRef.current
+    if (currentProject) {
+      const refreshedProject = {
+        ...currentProject,
+        metadata: {
+          ...currentProject.metadata,
+          visionPhase: {
+            ...currentProject.metadata?.visionPhase,
+            ...(typeof visionPhase?.scriptUpdatedAt === 'string'
+              ? { scriptUpdatedAt: visionPhase.scriptUpdatedAt }
+              : {}),
+            script: sanitizedScript,
+            scenes: finalScenes,
+          },
+        },
+      }
+      projectRef.current = refreshedProject
+      setProject(refreshedProject)
+    }
 
     if (options?.repairIfRicher) {
       const dbScore = totalStoryboardMediaScore(dbCanonicalScenes)
