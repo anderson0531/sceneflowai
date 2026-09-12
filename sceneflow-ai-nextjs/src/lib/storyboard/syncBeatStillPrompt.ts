@@ -5,7 +5,7 @@
 
 import {
   composeBeatActionFraming,
-  composePersistedLookbookBeatPrompt,
+  composePersistedBeatStillPrompt,
 } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
 import {
@@ -41,15 +41,16 @@ export function syncBeatStillPromptToDirection(
     next.storyboardImageDirectionKey = next.storyboardImagePromptDirectionKey ?? ''
   }
 
-  const lookbookPrompt = options.lookbook
-    ? composePersistedLookbookBeatPrompt({
-        lookbook: options.lookbook,
-        sceneIndex: options.sceneIndex ?? 0,
-        beat: next,
-        artStyleAnchor: options.artStyleAnchor,
-      })
-    : undefined
-  const prompt = lookbookPrompt ?? composeBeatActionFraming(next)
+  // Composed without a lookbook too — the style anchor is the only part a
+  // lookbook contributes, and a prompt stored as bare prose gets rewritten by
+  // the rules optimizer on its way to the image model.
+  const composed = composePersistedBeatStillPrompt({
+    lookbook: options.lookbook,
+    sceneIndex: options.sceneIndex ?? 0,
+    beat: next,
+    artStyleAnchor: options.artStyleAnchor,
+  })
+  const prompt = composed ?? composeBeatActionFraming(next)
   if (prompt.trim()) {
     next.storyboardImagePrompt = prompt
   }

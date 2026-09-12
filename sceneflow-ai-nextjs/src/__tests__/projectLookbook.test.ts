@@ -311,10 +311,25 @@ describe('formatLookbookForPlannerPrompt', () => {
 })
 
 describe('composeBeatStillPrompt', () => {
-  it('leaves the action text alone when there is no lookbook', () => {
+  it('still sections the composition when there is no lookbook', () => {
     expect(
       composeBeatStillPrompt({ actionFraming: 'Wide shot of the booth.', sceneIndex: 0 })
-    ).toBe('Wide shot of the booth.')
+    ).toBe('[SCENE COMPOSITION & BEAT]\nAction/Framing: Wide shot of the booth.')
+  })
+
+  it('anchors on the code-owned art style when the lookbook is missing', () => {
+    const prompt = composeBeatStillPrompt({
+      actionFraming: 'Wide shot of the booth.',
+      sceneIndex: 0,
+      artStyleAnchor: 'live-action film still, photographed on real camera',
+    })
+    expect(prompt).toContain('[GLOBAL STYLE ANCHOR]')
+    expect(prompt).toContain('Master Style: live-action film still, photographed on real camera')
+    expect(parseStillPromptSource(prompt).actionFraming).toBe('Wide shot of the booth.')
+  })
+
+  it('returns nothing when there is no action to compose', () => {
+    expect(composeBeatStillPrompt({ actionFraming: '   ', sceneIndex: 0 })).toBe('')
   })
 
   it('wraps action in the style anchor and picks up the scene look note', () => {

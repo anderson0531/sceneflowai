@@ -47,7 +47,7 @@ import {
 } from '@/lib/intelligence/scene-image-intelligence'
 import { shouldUseCustomPromptOverride } from '@/lib/vision/preVisDirectGenerate'
 import { ensureProjectLookbook, getSceneLookNote } from '@/lib/intelligence/project-lookbook'
-import { composePersistedLookbookBeatPrompt } from '@/lib/intelligence/beat-sequence-planner-fallback'
+import { composePersistedBeatStillPrompt } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import { applySceneImageAiResultToPrompt } from '@/lib/scene/sceneImageAiPromptApply'
 import {
   assembleStructuredStillPrompt,
@@ -1836,13 +1836,13 @@ export async function POST(req: NextRequest) {
       // neighbours. After any Express run this is a free read of the persisted
       // look; only a project that never ran Express pays for a derivation.
       const projectLookbook = await ensureProjectLookbook(project, artStyle)
-      const beatForLookbookCompose = isBeatFrame
+      const beatForPromptCompose = isBeatFrame
         ? getSceneBeats(sceneData as Record<string, unknown>)[effectiveBeatIndex]
         : undefined
-      const persistedLookbookPrompt = composePersistedLookbookBeatPrompt({
+      const persistedBeatPrompt = composePersistedBeatStillPrompt({
         lookbook: projectLookbook,
         sceneIndex: sceneIndex || 0,
-        beat: beatForLookbookCompose,
+        beat: beatForPromptCompose,
       })
       
       // Build character contexts with resolved wardrobes
@@ -1997,10 +1997,10 @@ export async function POST(req: NextRequest) {
         sceneLookNote: getSceneLookNote(projectLookbook, sceneIndex || 0),
       }
 
-      if (persistedLookbookPrompt) {
-        optimizedPrompt = persistedLookbookPrompt
+      if (persistedBeatPrompt) {
+        optimizedPrompt = persistedBeatPrompt
         usedAIIntelligence = false
-        console.log('[Scene Image] Using persisted lookbook + beat action — skipped intelligence')
+        console.log('[Scene Image] Using persisted beat direction — skipped intelligence')
       } else {
         const aiResult = await generateSceneImagePromptWithDeadline(sceneImageIntelligenceRequest)
         sceneImageAiResult = aiResult

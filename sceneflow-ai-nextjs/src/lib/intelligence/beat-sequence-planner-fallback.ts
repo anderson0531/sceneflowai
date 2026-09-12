@@ -124,16 +124,31 @@ export interface ComposeBeatStillPromptArgs {
 }
 
 /**
- * Wrap a beat's action text in the film's `[GLOBAL STYLE ANCHOR]`.
+ * Wrap a beat's action text in `[SCENE COMPOSITION & BEAT]`, under the film's
+ * `[GLOBAL STYLE ANCHOR]` when there is a lookbook.
  *
- * `parseStillPromptSource` lifts that header into the `[STYLE]` block of the
- * final still prompt, which is how a beat frame ends up with a look at all.
- * Without a lookbook this returns the bare action text, so callers with no
- * project look behave exactly as before.
+ * `parseStillPromptSource` lifts those headers into the `[STYLE]` and
+ * Action/Framing blocks of the final still prompt, which is how a beat frame
+ * ends up with a look at all.
+ *
+ * The composition section is emitted with or without a lookbook. It is what
+ * `isStructuredStillPrompt` keys on, and a beat prompt that fails that test is
+ * handed to the rules optimizer, which rewrites it into its own template —
+ * declaring the frame to be "about" every attached character and discarding the
+ * shot language written here. A project whose lookbook failed to resolve used
+ * to lose its beat prompts to that path.
  */
 export function composeBeatStillPrompt(args: ComposeBeatStillPromptArgs): string {
   const actionFraming = args.actionFraming.trim()
-  if (!args.lookbook || !actionFraming) return actionFraming
+  if (!actionFraming) return ''
+
+  const composition = `[SCENE COMPOSITION & BEAT]\nAction/Framing: ${actionFraming}`
+  if (!args.lookbook) {
+    const anchor = args.artStyleAnchor?.trim()
+    return anchor
+      ? `[GLOBAL STYLE ANCHOR]\nMaster Style: ${anchor}\n\n${composition}`
+      : composition
+  }
 
   const anchor = formatLookbookStyleAnchor(args.lookbook, {
     artStyleAnchor: args.artStyleAnchor,
@@ -142,7 +157,7 @@ export function composeBeatStillPrompt(args: ComposeBeatStillPromptArgs): string
     beatLens: args.lensMm,
   })
 
-  return `${anchor}\n\n[SCENE COMPOSITION & BEAT]\nAction/Framing: ${actionFraming}`
+  return `${anchor}\n\n${composition}`
 }
 
 function asSentence(value: string): string {
@@ -261,17 +276,21 @@ export function actionFramingFromBeat(beat?: SceneBeat | null): string {
 }
 
 /**
- * When the film already has a look and this beat already has direction or a
- * stored still prompt, compose the frame in code and skip Flash intelligence.
+ * When this beat already has direction or a stored still prompt, compose the
+ * frame in code and skip Flash intelligence.
+ *
+ * A lookbook only adds the style anchor. It is not a precondition: the
+ * composition section has to be emitted either way so the result survives
+ * `isStructuredStillPrompt` instead of being rewritten by the rules optimizer.
  */
-export function composePersistedLookbookBeatPrompt(args: {
+export function composePersistedBeatStillPrompt(args: {
   lookbook?: ProjectLookbook
   sceneIndex: number
   beat?: SceneBeat | null
   artStyleAnchor?: string
 }): string | undefined {
   const { lookbook, beat } = args
-  if (!lookbook || !beat) return undefined
+  if (!beat) return undefined
   const hasStoredLook =
     Boolean(beat.beatDirection) || Boolean(beat.storyboardImagePrompt?.trim())
   if (!hasStoredLook) return undefined

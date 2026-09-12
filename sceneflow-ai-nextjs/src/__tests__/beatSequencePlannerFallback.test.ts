@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   buildFallbackBeatPlans,
   composeBeatActionFraming,
-  composePersistedLookbookBeatPrompt,
+  composePersistedBeatStillPrompt,
   storedPromptMatchesDirection,
 } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import {
@@ -11,6 +11,7 @@ import {
 } from '@/lib/intelligence/project-lookbook-fallback'
 import {
   assembleStructuredStillPrompt,
+  isStructuredStillPrompt,
   parseStillPromptSource,
 } from '@/lib/imagen/structuredStillPrompt'
 import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
@@ -151,7 +152,10 @@ describe('buildFallbackBeatPlans under a project lookbook', () => {
     expect(style).toContain('Rain-slick neo-noir')
   })
 
-  it('emits bare action text when the project has no lookbook', () => {
+  // A prompt that is not sectioned gets handed to the rules optimizer, which
+  // rewrites the shot language and declares the frame to be about every
+  // attached character. An unanchored project must not lose its beats that way.
+  it('still sections the composition when the project has no lookbook', () => {
     const [plan] = buildFallbackBeatPlans({
       scene,
       beats,
@@ -160,8 +164,23 @@ describe('buildFallbackBeatPlans under a project lookbook', () => {
     })
 
     expect(plan.prompt).not.toContain('[GLOBAL STYLE ANCHOR]')
-    expect(plan.prompt).not.toContain('[SCENE COMPOSITION & BEAT]')
-    expect(plan.prompt).toContain('Hero enters the room')
+    expect(plan.prompt).toContain('[SCENE COMPOSITION & BEAT]')
+    expect(isStructuredStillPrompt(plan.prompt)).toBe(true)
+    expect(parseStillPromptSource(plan.prompt).actionFraming).toContain('Hero enters the room')
+  })
+
+  it('anchors an unanchored project on the code-owned art style when given one', () => {
+    const [plan] = buildFallbackBeatPlans({
+      scene,
+      beats,
+      sceneNumber: 1,
+      artStyle: 'photorealistic',
+      artStyleAnchor: 'live-action film still, photographed on real camera',
+    })
+
+    expect(plan.prompt.startsWith('[GLOBAL STYLE ANCHOR]')).toBe(true)
+    expect(parseStillPromptSource(plan.prompt).style).toContain('live-action film still')
+    expect(parseStillPromptSource(plan.prompt).actionFraming).not.toMatch(/live-action film still/i)
   })
 
   it('carries the direction lighting mood onto the plan for direction gap-fill', () => {
@@ -177,13 +196,13 @@ describe('buildFallbackBeatPlans under a project lookbook', () => {
   })
 })
 
-describe('composePersistedLookbookBeatPrompt', () => {
+describe('composePersistedBeatStillPrompt', () => {
   it('wraps stored beat action in the lookbook when the prompt matches current direction', () => {
     const beatDirection = {
       frozenMoment: 'Gideon at the zinc workbench',
       lightingAccent: 'Low-key practicals',
     }
-    const prompt = composePersistedLookbookBeatPrompt({
+    const prompt = composePersistedBeatStillPrompt({
       lookbook,
       sceneIndex: 0,
       beat: {
@@ -207,7 +226,7 @@ describe('composePersistedLookbookBeatPrompt', () => {
   })
 
   it('recomposes from direction when the stored prompt predates it', () => {
-    const prompt = composePersistedLookbookBeatPrompt({
+    const prompt = composePersistedBeatStillPrompt({
       lookbook,
       sceneIndex: 0,
       beat: {
@@ -308,7 +327,7 @@ describe('composePersistedLookbookBeatPrompt', () => {
 
   it('returns undefined when the beat has no stored look to compose', () => {
     expect(
-      composePersistedLookbookBeatPrompt({
+      composePersistedBeatStillPrompt({
         lookbook,
         sceneIndex: 0,
         beat: {

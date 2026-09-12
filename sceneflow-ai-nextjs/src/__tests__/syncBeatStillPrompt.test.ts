@@ -3,6 +3,10 @@ import { beatDirectionFingerprint, beatStillDirectionFingerprint } from '@/lib/s
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import { storedPromptMatchesDirection } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import {
+  isStructuredStillPrompt,
+  parseStillPromptSource,
+} from '@/lib/imagen/structuredStillPrompt'
+import {
   isBeatFrameStale,
   syncBeatStillPromptToDirection,
 } from '@/lib/storyboard/syncBeatStillPrompt'
@@ -46,6 +50,25 @@ describe('syncBeatStillPromptToDirection', () => {
     )
     expect(next.storyboardImageDirectionKey).toBe(prior.storyboardImagePromptDirectionKey)
     expect(isBeatFrameStale(next)).toBe(true)
+  })
+
+  // Update Prompts runs with no lookbook on plenty of projects. A prompt left
+  // as bare prose is rewritten by the rules optimizer downstream, which is how
+  // uninvolved cast ended up in object beats.
+  it('writes a sectioned prompt even with no lookbook', () => {
+    const next = syncBeatStillPromptToDirection({
+      ...actionBeat(),
+      beatDirection: {
+        shotType: 'Insert Shot',
+        frozenMoment: 'The journal fills the frame',
+      },
+    })
+
+    expect(next.storyboardImagePrompt).toContain('[SCENE COMPOSITION & BEAT]')
+    expect(isStructuredStillPrompt(next.storyboardImagePrompt!)).toBe(true)
+    expect(parseStillPromptSource(next.storyboardImagePrompt!).actionFraming).toContain(
+      'The journal fills the frame'
+    )
   })
 
   it('is a no-op for video-only direction edits', () => {
