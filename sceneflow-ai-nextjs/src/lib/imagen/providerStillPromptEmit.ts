@@ -11,7 +11,7 @@
 import {
   WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION,
   buildWardrobeDiptychCharacterConsumptionLine,
-} from '@/lib/character/sceneCharacterHeadshot'
+} from '@/lib/character/wardrobeDiptychConsumption'
 import { LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/vision/locationReferencePrompts'
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
 import {
