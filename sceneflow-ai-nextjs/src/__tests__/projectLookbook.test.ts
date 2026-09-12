@@ -268,6 +268,20 @@ describe('formatLookbookStyleAnchor', () => {
     expect(still).toContain('Action/Framing: Wide shot of person [1] in the booth.')
   })
 
+  it('drops a lookbook Macro insert lens when the beat is a Two-Shot', () => {
+    const anchor = formatLookbookStyleAnchor(
+      {
+        ...lookbook,
+        lightingGrammar: 'Hard & Dramatic; Night; Hard & Dramatic',
+        lensAndFormat: 'Macro (100mm) for extreme detail on the needle and ash; 16:9 framing',
+      },
+      { beatShotType: 'Two-Shot' }
+    )
+    expect(anchor).not.toMatch(/Macro|100mm|extreme detail/)
+    expect(anchor).toContain('16:9 framing')
+    expect(anchor.match(/Hard & Dramatic/g)?.length).toBe(1)
+  })
+
   it('folds in per-beat lighting and lens without replacing the film grammar', () => {
     const anchor = formatLookbookStyleAnchor(lookbook, {
       beatLighting: 'key raked across the table edge',

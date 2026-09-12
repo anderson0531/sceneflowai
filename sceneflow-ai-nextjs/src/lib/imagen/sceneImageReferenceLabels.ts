@@ -75,3 +75,44 @@ export function buildSceneImageLocationLabel(
     token ? `${token} ` : ''
   }(${locationName}) — extreme-wide establishing shot`
 }
+
+/** Unbracketed caption Vertex sees next to an attached still. */
+export function buildProviderIdentityLabel(characterName: string): string {
+  return `${characterName} identity`
+}
+
+export function buildProviderWardrobeLabel(characterName: string): string {
+  return `${characterName} wardrobe`
+}
+
+export function buildProviderDiptychLabel(characterName: string): string {
+  return `${characterName} identity and wardrobe`
+}
+
+export function buildProviderPropLabel(propName: string): string {
+  return `${propName} prop`
+}
+
+export function buildProviderLocationLabel(locationName: string): string {
+  return `${locationName} location`
+}
+
+export function providerCaptionForAttachedRef(ref: {
+  characterName?: string
+  propName?: string
+  locationName?: string
+  refRole?: string
+  role?: string
+  name?: string
+}): string {
+  if (ref.characterName) {
+    if (ref.refRole === 'wardrobe-diptych') return buildProviderDiptychLabel(ref.characterName)
+    if (ref.refRole === 'wardrobe') return buildProviderWardrobeLabel(ref.characterName)
+    return buildProviderIdentityLabel(ref.characterName)
+  }
+  if (ref.propName) return buildProviderPropLabel(ref.propName)
+  if (ref.locationName || ref.role === 'location') {
+    return buildProviderLocationLabel(ref.locationName || 'Location')
+  }
+  return (ref.name || 'reference').replace(/[\[\]]/g, '').trim()
+}

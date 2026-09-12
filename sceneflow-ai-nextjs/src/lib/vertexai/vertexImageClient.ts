@@ -211,6 +211,11 @@ export interface GenerateVertexImageOptions {
    * Attempts are shortened to fit it and no further attempt starts past it.
    */
   deadlineAt?: number
+  /**
+   * Attach reference captions as plain text instead of `[label]`. Numbered
+   * bracket labels read as a contact-sheet brief on Gemini Image.
+   */
+  plainReferenceCaptions?: boolean
 }
 
 export interface VertexImageResult {
@@ -233,7 +238,8 @@ export interface VertexImageResult {
 export async function buildMultimodalParts(
   fullPrompt: string,
   referenceImages?: VertexReferenceImage[],
-  requireAllReferenceImages?: boolean
+  requireAllReferenceImages?: boolean,
+  plainReferenceCaptions?: boolean
 ): Promise<Array<{ text: string } | { inlineData: { mimeType: string; data: string } }>> {
   if (!referenceImages?.length) return [{ text: fullPrompt }]
 
@@ -259,7 +265,9 @@ export async function buildMultimodalParts(
     }
     if (base64Data.includes(',')) base64Data = base64Data.split(',')[1] || base64Data
 
-    parts.push({ text: ref.name ? `[${ref.name}]\n` : '' })
+    parts.push({
+      text: ref.name ? (plainReferenceCaptions ? `${ref.name}\n` : `[${ref.name}]\n`) : '',
+    })
     parts.push({ inlineData: { mimeType, data: base64Data } })
   }
 
@@ -330,7 +338,8 @@ export async function generateVertexGeminiImage(
   const parts = await buildMultimodalParts(
     fullPrompt,
     options.referenceImages,
-    options.requireAllReferenceImages
+    options.requireAllReferenceImages,
+    options.plainReferenceCaptions
   )
   const effectiveImageSize = model.includes('flash-image') ? undefined : options.imageSize
 

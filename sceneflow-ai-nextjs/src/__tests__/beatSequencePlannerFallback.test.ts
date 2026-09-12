@@ -227,7 +227,7 @@ describe('composePersistedBeatStillPrompt', () => {
     const parsed = parseStillPromptSource(prompt!)
     expect(parsed.style?.trim()).toBeTruthy()
     expect(parsed.actionFraming).toContain('Gideon at the zinc workbench')
-    expect(parsed.actionFraming).toContain('Gideon hunches over the seismograph')
+    expect(parsed.actionFraming).not.toContain('hunches over the seismograph')
     expect(parsed.actionFraming).not.toMatch(/Piper|gantry/)
   })
 
@@ -307,6 +307,31 @@ describe('composePersistedBeatStillPrompt', () => {
     ).toBe(first)
     expect(first.match(/Blocking:/g)).toHaveLength(1)
     expect(first.match(/Props in frame:/g)).toHaveLength(1)
+  })
+
+  it('does not append sequential beat prose once a frozen moment exists', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_frozen',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription:
+        'A heavy iron spanner slams down into the stone, missing her fingers by an inch. He raises the weapon for a fatal blow.',
+      beatDirection: {
+        shotType: 'Two-Shot',
+        cameraAngle: 'shifting from high-angle dominance to low-angle vulnerability',
+        frozenMoment:
+          'Gideon Croft frozen mid-swing, iron wrench raised overhead, staring wild-eyed down at Piper Hayes',
+        propInteraction: 'Slammed into metal, then raised as a weapon',
+      },
+    })
+
+    expect(framing).toContain('Gideon Croft frozen mid-swing')
+    expect(framing).not.toContain('slams down into the stone')
+    expect(framing).not.toContain('fatal blow')
+    expect(framing).not.toMatch(/shifting from/)
+    expect(framing).toContain('low-angle vulnerability')
+    expect(framing).toMatch(/Prop handling: raised as a weapon\./i)
+    expect(framing).not.toMatch(/Slammed into metal/i)
   })
 
   it('says outright that an insert shot has nobody in it', () => {

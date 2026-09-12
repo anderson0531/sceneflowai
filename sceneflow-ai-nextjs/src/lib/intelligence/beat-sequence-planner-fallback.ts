@@ -17,6 +17,10 @@ import {
 } from '@/lib/intelligence/project-lookbook-fallback'
 import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
+import {
+  collapseCameraAngleProgression,
+  collapseThenSequence,
+} from '@/lib/imagen/providerStillPromptEmit'
 import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPrompt'
 import { storedStillDirectionKeyMatches } from '@/lib/script/beatDirectionFingerprint'
 import { formatSceneArcBlock, getSceneMovements } from '@/lib/script/sceneMovements'
@@ -118,6 +122,8 @@ export interface ComposeBeatStillPromptArgs {
   artStyleAnchor?: string
   lighting?: string
   lensMm?: string
+  /** Shot scale used to drop incompatible lookbook insert/wide lenses. */
+  shotType?: string
 }
 
 /**
@@ -152,6 +158,7 @@ export function composeBeatStillPrompt(args: ComposeBeatStillPromptArgs): string
     sceneLookNote: getSceneLookNote(args.lookbook, args.sceneIndex),
     beatLighting: args.lighting,
     beatLens: args.lensMm,
+    beatShotType: args.shotType,
   })
 
   return `${anchor}\n\n${composition}`
@@ -226,13 +233,11 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
   const described = beat.actionDescription?.trim() || beat.line?.trim() || ''
 
   const parts: string[] = []
-  // The frozen moment leads when there is one: it is the single field that
-  // names the instant the frame catches, where the beat's prose usually
-  // describes a span of time. The prose still follows it for texture.
+  // Frozen moment is the only action sentence when present. The beat's prose
+  // usually spans time; appending it is what splits one frame into two beats.
   appendFacet(parts, frozen || described)
-  if (frozen) appendFacet(parts, described)
   appendFacet(parts, direction?.blocking, 'Blocking')
-  appendFacet(parts, direction?.propInteraction, 'Prop handling')
+  appendFacet(parts, collapseThenSequence(direction?.propInteraction, frozen), 'Prop handling')
   appendFacet(parts, direction?.gaze, 'Gaze')
 
   // A prop reference is only attached when the frame names it, so a directed
@@ -263,7 +268,10 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
 
   // Framing leads the description, unless the beat's own prose already names
   // this shot and would otherwise state it twice.
-  const shot = [direction?.shotType?.trim(), direction?.cameraAngle?.trim()]
+  const shot = [
+    direction?.shotType?.trim(),
+    collapseCameraAngleProgression(direction?.cameraAngle, frozen),
+  ]
     .filter(Boolean)
     .join(', ')
   if (shot && !soFar.includes(shot.toLowerCase())) {
@@ -328,6 +336,7 @@ export function composePersistedBeatStillPrompt(args: {
     sceneIndex: args.sceneIndex,
     artStyleAnchor: args.artStyleAnchor,
     lighting: beat.beatDirection?.lightingAccent,
+    shotType: beat.beatDirection?.shotType,
   })
 }
 
@@ -752,6 +761,7 @@ export function buildFallbackBeatPlans(request: BeatSequencePlanRequest): BeatKe
         sceneIndex: sceneNumber - 1,
         artStyleAnchor: request.artStyleAnchor,
         lighting: directionMeta.lightingMood,
+        shotType,
       }),
       allowTypography,
       durationSeconds,
