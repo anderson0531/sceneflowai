@@ -311,6 +311,59 @@ describe('composePersistedBeatStillPrompt', () => {
     expect(framing).toContain('Gideon raises the spanner over the locking dogs.')
   })
 
+  it('ignores a frozen moment that only restates the spoken line', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_said',
+      sequenceIndex: 9,
+      kind: 'dialogue',
+      character: 'Piper Hayes',
+      line: 'You knew about the shaft and you said nothing.',
+      beatDirection: {
+        shotType: 'Two-Shot',
+        frozenMoment: 'Piper says "You knew about the shaft and you said nothing."',
+        blocking: 'Piper Hayes squares up to Gideon Croft across the tunnel',
+        gaze: 'locked on Gideon Croft',
+        castInFrame: ['Piper Hayes', 'Professor Gideon Croft'],
+      },
+    })
+
+    expect(framing).not.toMatch(/you knew about the shaft/i)
+    expect(framing).toContain('Two-Shot')
+    expect(framing).toContain('Blocking: Piper Hayes squares up to Gideon Croft')
+    expect(framing).toContain('Gaze: locked on Gideon Croft')
+    expect(framing).toContain('Cast in frame: Piper Hayes, Professor Gideon Croft')
+  })
+
+  it('keeps the spoken line out of the frame when direction describes one', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_speaks',
+      sequenceIndex: 10,
+      kind: 'dialogue',
+      character: 'Piper Hayes',
+      line: 'We are not going back down there.',
+      beatDirection: {
+        shotType: 'Medium Close-Up',
+        blocking: 'Piper Hayes blocks the ladder with one arm',
+      },
+    })
+
+    expect(framing).not.toMatch(/not going back down/i)
+    expect(framing).toContain('Blocking: Piper Hayes blocks the ladder')
+  })
+
+  it('falls back to the spoken line for a beat whose direction shows nothing', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_legacy',
+      sequenceIndex: 11,
+      kind: 'dialogue',
+      character: 'Piper Hayes',
+      line: 'We are not going back down there.',
+      beatDirection: { shotType: 'Medium Close-Up' },
+    })
+
+    expect(framing).toContain('We are not going back down there.')
+  })
+
   it('reduces a directed camera move to the angle the still is taken from', () => {
     const framing = composeBeatActionFraming({
       beatId: 'bt_move',

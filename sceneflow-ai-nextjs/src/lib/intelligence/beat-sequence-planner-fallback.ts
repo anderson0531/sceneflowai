@@ -205,6 +205,46 @@ function currentStoredActionFraming(beat: SceneBeat): string {
   return actionFramingFromStoredPrompt(beat.storyboardImagePrompt)
 }
 
+function forComparison(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+/**
+ * Whether a "frozen moment" is really just the words the character speaks.
+ *
+ * Direction for a dialogue beat is often written by restating the line, some-
+ * times with the speaker's name or a "says" in front of it. That names nothing
+ * a camera can see, so the frame has no instant to catch and the model invents
+ * one — an invented action is what drew the safety refusal in production
+ * (2026-09-12). Anything the speaker is doing while talking has to come from
+ * blocking, gaze, prop handling, or cast.
+ */
+function restatesSpokenLine(frozenMoment: string, spokenLine: string): boolean {
+  const line = forComparison(spokenLine)
+  const frozen = forComparison(frozenMoment)
+  if (!line || !frozen) return false
+  if (frozen === line) return true
+  // A short line matches too much prose by accident to judge by containment.
+  if (line.split(' ').length < 3 || !frozen.includes(line)) return false
+  const remainder = frozen.replace(line, ' ').trim()
+  return remainder === '' || remainder.split(/\s+/).length <= 3
+}
+
+/** Facets that can describe a frame without borrowing the beat's spoken words. */
+function hasVisualDirection(direction?: BeatDirection): boolean {
+  if (!direction) return false
+  return Boolean(
+    direction.blocking?.trim() ||
+      direction.gaze?.trim() ||
+      direction.propInteraction?.trim() ||
+      Array.isArray(direction.castInFrame) ||
+      (direction.keyProps ?? []).some((prop) => prop.trim())
+  )
+}
+
 /**
  * Build the frame description for a beat out of its structured direction.
  *
@@ -223,8 +263,22 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
   if (!beat) return ''
   const direction = beat.beatDirection
 
-  const frozen = direction?.frozenMoment?.trim()
-  const described = beat.actionDescription?.trim() || beat.line?.trim() || ''
+  const spokenLine = beat.line?.trim() ?? ''
+  const directedFrozen = direction?.frozenMoment?.trim() ?? ''
+  const frozenIsSpokenLine = restatesSpokenLine(directedFrozen, spokenLine)
+  if (frozenIsSpokenLine) {
+    console.warn(
+      `[Beat Still] Beat ${beat.beatId} frozenMoment "${directedFrozen}" restates the spoken line instead of naming a visible instant; composing from shot, blocking, gaze and cast instead`
+    )
+  }
+  const frozen = frozenIsSpokenLine ? '' : directedFrozen
+
+  // The spoken line is the last thing a frame is described from, and only for a
+  // beat whose direction says nothing visible at all — a legacy beat. Handing a
+  // still the words a character says leaves it staging whatever action it
+  // imagines those words came with.
+  const described =
+    beat.actionDescription?.trim() || (hasVisualDirection(direction) ? '' : spokenLine)
 
   const parts: string[] = []
   // Exactly one instant. `frozenMoment` names the moment the shutter caught;
@@ -234,7 +288,7 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
   // outright when there is one, and the prose is dropped rather than trailed.
   if (frozen && described && !frozen.toLowerCase().includes(described.toLowerCase())) {
     console.log(
-      `[Beat Still] Beat ${beat.beatId} frame is the frozen moment "${frozen}"; the beat's prose spans time and is not staged: "${described}"`
+      `[Beat Still] Beat ${beat.beatId} framed from frozenMoment; prose not staged: "${described}"`
     )
   }
   appendFacet(parts, frozen || described)

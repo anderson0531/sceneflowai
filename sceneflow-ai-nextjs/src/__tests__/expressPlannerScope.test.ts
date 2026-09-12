@@ -135,7 +135,7 @@ describe('a scoped run plans only the frame it was asked to render', () => {
     // Composed from the direction, not read back from the last prompt sent —
     // the reused plan feeds reference matching, and matching against wording
     // the frame is no longer built from is how uninvolved cast got attached.
-    expect(plans.get(0)!.prompt).toBe('Medium Shot. ALICE at the gate. ALICE lifts the lantern.')
+    expect(plans.get(0)!.prompt).toBe('Medium Shot. ALICE at the gate.')
   })
 
   it('leaves a sibling beat byte-identical', async () => {
@@ -190,9 +190,7 @@ describe('a scoped run plans only the frame it was asked to render', () => {
     const plans = await runPlanner(beats, { selectedFrameKeys: ['bt_two-end'] })
 
     expect([...plans.keys()]).toEqual([1])
-    expect(plans.get(1)!.prompt).toBe(
-      'Medium Shot. BOB under the awning. BOB steps out of the rain.'
-    )
+    expect(plans.get(1)!.prompt).toBe('Medium Shot. BOB under the awning.')
   })
 })
 
