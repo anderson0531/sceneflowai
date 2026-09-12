@@ -392,6 +392,40 @@ describe('Express beat generate-image flags', () => {
     expect(src).toContain('skipLikenessValidation: true')
     expect(src).toContain('referenceCatalog: buildExpressReferenceCatalog(project)')
   })
+
+  it('sends the start frame no prompt wording, so the route composes from direction', () => {
+    const src = readFileSync(
+      join(process.cwd(), 'src/lib/sceneGeneration/expressOrchestrator.ts'),
+      'utf8'
+    )
+    // Sending the planner's prose put the beat on the route's custom-prompt
+    // branch, which forwards it untouched and never reads beatDirection.
+    expect(src).not.toContain('customPrompt: beatPlan.prompt')
+  })
+})
+
+describe('the route composes a beat frame from its direction', () => {
+  const routeSrc = readFileSync(
+    join(process.cwd(), 'src/app/api/scene/generate-image/route.ts'),
+    'utf8'
+  )
+
+  it('reaches the composer without being asked for intelligence', () => {
+    // The composer used to live inside `else if (useAIPrompt && ...)`, which
+    // Express — the caller that generates every beat frame — never satisfies.
+    const composed = routeSrc.indexOf('const persistedBeatPrompt = beatForPromptCompose')
+    const intelligenceBranch = routeSrc.indexOf('} else if (runsSceneIntelligence) {')
+    expect(composed).toBeGreaterThan(-1)
+    expect(intelligenceBranch).toBeGreaterThan(composed)
+    expect(routeSrc).toContain('} else if (persistedBeatPrompt) {')
+  })
+
+  it('still lets a genuine user prompt win', () => {
+    const customBranch = routeSrc.indexOf('if (usingCustomPrompt) {')
+    const beatBranch = routeSrc.indexOf('} else if (persistedBeatPrompt) {')
+    expect(customBranch).toBeGreaterThan(-1)
+    expect(beatBranch).toBeGreaterThan(customBranch)
+  })
 })
 
 describe('frameType is decided by the beat, not by the button', () => {

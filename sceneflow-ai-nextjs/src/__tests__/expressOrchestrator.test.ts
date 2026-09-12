@@ -282,7 +282,7 @@ describe('runExpress', () => {
     expect(scene.imageUrl).toBe('https://example.com/beat-0.png')
   })
 
-  it('sends explicit beat refs, customPrompt, and skips Gemini intelligence', async () => {
+  it('sends explicit beat refs and no prompt wording of its own', async () => {
     const project = {
       metadata: {
         title: 'Parity Film',
@@ -356,7 +356,9 @@ describe('runExpress', () => {
     expect(firstBeat.skipObjectAutoDetection).toBe(true)
     expect(firstBeat.useAIPrompt).toBe(false)
     expect(firstBeat.skipLikenessValidation).toBe(true)
-    expect(firstBeat.customPrompt).toBe('prompt-0')
+    // Neither intelligence nor a prompt: the route composes the frame from the
+    // beat's direction, which the planner has just gap-filled.
+    expect(firstBeat.customPrompt).toBeUndefined()
     expect(Array.isArray(firstBeat.selectedCharacters)).toBe(true)
     expect((firstBeat.selectedCharacters as string[]).length).toBeGreaterThan(0)
     expect(firstBeat.locationReferences).toBeDefined()
@@ -434,7 +436,7 @@ describe('runExpress', () => {
       (c) => c.frameType === 'beat' && c.frameRole !== 'end'
     )[0]
 
-    expect(firstBeat.customPrompt).toContain('[GLOBAL STYLE ANCHOR]')
+    expect(firstBeat.customPrompt).toBeUndefined()
     expect(firstBeat.selectedCharacters).toContain('c1')
     expect(firstBeat.selectedCharacters).not.toContain('c2')
   })

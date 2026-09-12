@@ -274,6 +274,16 @@ export function actionFramingFromBeat(beat?: SceneBeat | null): string {
 }
 
 /**
+ * Lead-in for a title or credit beat, which is typography rather than coverage.
+ *
+ * Stated inside the composition section rather than ahead of it, because
+ * everything before the first section header is dropped when the prompt is
+ * parsed back for assembly.
+ */
+export const TITLE_BEAT_ACTION_LEAD_IN =
+  'Abstract cinematic digital composition with NO people and NO character portraits. Centered title typography is the primary subject.'
+
+/**
  * When this beat already has direction or a stored still prompt, compose the
  * frame in code and skip Flash intelligence.
  *
@@ -286,14 +296,19 @@ export function composePersistedBeatStillPrompt(args: {
   sceneIndex: number
   beat?: SceneBeat | null
   artStyleAnchor?: string
+  /** Prepended inside the composition, for title and credit beats. */
+  actionLeadIn?: string
 }): string | undefined {
   const { lookbook, beat } = args
   if (!beat) return undefined
   const hasStoredLook =
     Boolean(beat.beatDirection) || Boolean(beat.storyboardImagePrompt?.trim())
   if (!hasStoredLook) return undefined
-  const actionFraming = actionFramingFromBeat(beat)
-  if (!actionFraming) return undefined
+  const composed = actionFramingFromBeat(beat)
+  if (!composed) return undefined
+  const leadIn = args.actionLeadIn?.trim()
+  const actionFraming =
+    leadIn && !composed.includes(leadIn) ? `${asSentence(leadIn)} ${composed}` : composed
   return composeBeatStillPrompt({
     actionFraming,
     lookbook,

@@ -966,8 +966,10 @@ async function generateSingleBeatImage(
       ...(beat?.beatId ? { beatId: beat.beatId } : {}),
       sceneOverride: scene,
       ...beatRefPayload,
+      // No customPrompt and no intelligence: the route composes the start frame
+      // from this beat's direction. Sending the planner's wording here is what
+      // let prose the direction never asked for reach the image model.
       useAIPrompt: false,
-      ...(beatPlan?.prompt?.trim() ? { customPrompt: beatPlan.prompt } : {}),
       ...(typeof beatPlan?.allowTypography === 'boolean'
         ? { allowTypography: beatPlan.allowTypography }
         : {}),
