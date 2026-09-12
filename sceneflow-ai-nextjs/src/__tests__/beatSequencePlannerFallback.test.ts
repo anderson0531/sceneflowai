@@ -197,7 +197,7 @@ describe('buildFallbackBeatPlans under a project lookbook', () => {
 })
 
 describe('composePersistedBeatStillPrompt', () => {
-  it('wraps stored beat action in the lookbook when the prompt matches current direction', () => {
+  it('wraps the direction in the lookbook rather than the wording it last shipped', () => {
     const beatDirection = {
       frozenMoment: 'Gideon at the zinc workbench',
       lightingAccent: 'Low-key practicals',
@@ -211,7 +211,9 @@ describe('composePersistedBeatStillPrompt', () => {
         kind: 'action',
         actionDescription: 'Gideon hunches over the seismograph.',
         beatDirection,
-        storyboardImagePrompt: 'Medium shot: Gideon at the zinc workbench.',
+        // Keyed to the direction above, so the staleness check passes. The
+        // composer still ignores it: a prompt can be current and wrong.
+        storyboardImagePrompt: 'Wide shot: Piper sprints across the gantry.',
         storyboardImagePromptDirectionKey: beatDirectionFingerprint(beatDirection),
       },
     })
@@ -219,10 +221,11 @@ describe('composePersistedBeatStillPrompt', () => {
     expect(prompt).toBeDefined()
     expect(prompt!.startsWith('[GLOBAL STYLE ANCHOR]')).toBe(true)
     expect(prompt).toContain('Rain-slick neo-noir')
-    expect(prompt).toContain('Action/Framing: Medium shot: Gideon at the zinc workbench.')
     const parsed = parseStillPromptSource(prompt!)
     expect(parsed.style?.trim()).toBeTruthy()
     expect(parsed.actionFraming).toContain('Gideon at the zinc workbench')
+    expect(parsed.actionFraming).toContain('Gideon hunches over the seismograph')
+    expect(parsed.actionFraming).not.toMatch(/Piper|gantry/)
   })
 
   it('recomposes from direction when the stored prompt predates it', () => {
@@ -275,7 +278,7 @@ describe('composePersistedBeatStillPrompt', () => {
     expect(framing.match(/Thirty-Inch Iron Rail Spanner/g)).toHaveLength(1)
   })
 
-  it('does not restate its own facets when the composed frame is recomposed', () => {
+  it('composes the same frame no matter what was stored last time', () => {
     const beat: SceneBeat = {
       beatId: 'bt_3',
       sequenceIndex: 2,
@@ -290,9 +293,15 @@ describe('composePersistedBeatStillPrompt', () => {
     }
 
     const first = composeBeatActionFraming(beat)
-    const second = composeBeatActionFraming({ ...beat, storyboardImagePrompt: first })
 
-    expect(second).toBe(first)
+    expect(composeBeatActionFraming({ ...beat, storyboardImagePrompt: first })).toBe(first)
+    expect(
+      composeBeatActionFraming({
+        ...beat,
+        storyboardImagePrompt: 'Wide shot: an entirely different frame.',
+        storyboardImagePromptDirectionKey: beatDirectionFingerprint(beat.beatDirection),
+      })
+    ).toBe(first)
     expect(first.match(/Blocking:/g)).toHaveLength(1)
     expect(first.match(/Props in frame:/g)).toHaveLength(1)
   })
