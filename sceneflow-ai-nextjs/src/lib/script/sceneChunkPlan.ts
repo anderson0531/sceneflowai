@@ -2,14 +2,14 @@
  * Chunk plan for script generation: turns the Blueprint beat decomposition into
  * per-call scene ranges.
  *
- * A single LLM call cannot emit a longform script — ~15 beats per scene across
- * 20+ scenes exceeds any safe output token budget. Generation therefore runs one
- * call per chunk, and the scene count per chunk is decided here rather than left
- * to prompt prose the model is free to compress.
+ * A single LLM call cannot emit a longform script — TARGET_BEATS_PER_SCENE
+ * beats per scene across 20+ scenes exceeds any safe output token budget.
+ * Generation therefore runs one call per chunk, and the scene count per chunk
+ * is decided here rather than left to prompt prose the model is free to compress.
  */
 
 import {
-  MAX_BEATS_PER_SCENE,
+  TARGET_BEATS_PER_SCENE,
   type BeatDecompositionEntry,
   type BlueprintBeatInput,
   type SceneDecompositionPlan,
@@ -68,7 +68,7 @@ function resolveBeatSynopsis(beat: BlueprintBeatInput | undefined): string | und
 
 function beatsPerSceneFor(entry: BeatDecompositionEntry): number {
   const perScene = Math.round(entry.targetBeats / Math.max(1, entry.targetScenes))
-  return Math.max(4, Math.min(MAX_BEATS_PER_SCENE, perScene))
+  return Math.max(4, Math.min(TARGET_BEATS_PER_SCENE, perScene))
 }
 
 /**
@@ -118,7 +118,7 @@ export function buildFallbackSceneChunks(
   const maxPerChunk = opts?.maxScenesPerChunk ?? MAX_SCENES_PER_CHUNK
   const targetBeatsPerScene = Math.max(
     4,
-    Math.min(MAX_BEATS_PER_SCENE, opts?.targetBeatsPerScene ?? MAX_BEATS_PER_SCENE)
+    Math.min(TARGET_BEATS_PER_SCENE, opts?.targetBeatsPerScene ?? TARGET_BEATS_PER_SCENE)
   )
   const sizes = splitSceneCount(totalScenes, maxPerChunk)
 

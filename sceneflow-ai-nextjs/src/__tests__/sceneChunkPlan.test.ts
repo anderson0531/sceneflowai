@@ -12,6 +12,7 @@ import {
 } from '@/lib/script/sceneChunkPlan'
 import {
   MAX_BEATS_PER_SCENE,
+  TARGET_BEATS_PER_SCENE,
   planSceneDecomposition,
   splitOversizedScenes,
 } from '@/lib/script/sceneDecomposition'
@@ -86,14 +87,14 @@ describe('splitSceneCount', () => {
 })
 
 describe('buildSceneChunks', () => {
-  it('gives each 10-minute Blueprint beat its own five-scene chunk', () => {
+  it('gives each 10-minute Blueprint beat its own planned-scene chunk', () => {
     const beats = fourTenMinuteBeats()
     const plan = planSceneDecomposition(beats)
     const { chunks, totalScenes } = buildSceneChunks(plan, beats)
 
     expect(chunks).toHaveLength(4)
-    expect(chunks.map((c) => c.sceneCount)).toEqual([5, 5, 5, 5])
-    expect(totalScenes).toBe(20)
+    expect(chunks.map((c) => c.sceneCount)).toEqual(plan.entries.map((e) => e.targetScenes))
+    expect(totalScenes).toBe(plan.totalTargetScenes)
   })
 
   it('numbers scenes contiguously across chunks', () => {
@@ -116,7 +117,7 @@ describe('buildSceneChunks', () => {
     expect(chunks[2].blueprintBeatTitle).toBe('Contact')
     expect(chunks[2].beatSynopsis).toBe('Something answers back.')
     for (const chunk of chunks) {
-      expect(chunk.targetBeatsPerScene).toBeLessThanOrEqual(MAX_BEATS_PER_SCENE)
+      expect(chunk.targetBeatsPerScene).toBeLessThanOrEqual(TARGET_BEATS_PER_SCENE)
       expect(chunk.targetBeatsPerScene).toBeGreaterThan(0)
     }
   })
@@ -150,7 +151,7 @@ describe('halveChunk', () => {
     blueprintBeatTitle: 'Descent',
     sceneNumberStart: 6,
     sceneCount: 5,
-    targetBeatsPerScene: 15,
+    targetBeatsPerScene: TARGET_BEATS_PER_SCENE,
     partIndex: 0,
     partCount: 1,
   }
@@ -247,10 +248,15 @@ describe('consolidation preserves decomposed scenes', () => {
     )
 
     const split = splitOversizedScenes([oversized])
-    expect(split.scenes.length).toBe(2)
+    expect(split.scenes.length).toBeGreaterThan(1)
+    for (const scene of split.scenes) {
+      expect(Array.isArray(scene.beats) ? scene.beats.length : 0).toBeLessThanOrEqual(
+        MAX_BEATS_PER_SCENE
+      )
+    }
 
     const consolidated = consolidateFragmentedScenes(split.scenes)
-    expect(consolidated).toHaveLength(2)
+    expect(consolidated).toHaveLength(split.scenes.length)
 
     const beatsAfter = consolidated.reduce(
       (sum: number, s) => sum + (Array.isArray(s.beats) ? s.beats.length : 0),

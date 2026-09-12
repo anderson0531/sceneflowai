@@ -198,7 +198,7 @@ async function planWithGemini(request: BeatSequencePlanRequest): Promise<PlanAtt
   const options: TextGenerationOptions = {
     systemInstruction: systemPrompt,
     temperature: 0.5,
-    maxOutputTokens: 4096,
+    maxOutputTokens: 8192,
     responseMimeType: 'application/json',
     thinkingLevel: 'low',
   }

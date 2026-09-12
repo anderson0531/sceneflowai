@@ -1,15 +1,25 @@
 /**
  * Blueprint beat → scene decomposition and post-generation scene splitting.
- * Keeps scenes at or below MAX_BEATS_PER_SCENE for Express, Assistant, and Screening Room.
+ *
+ * TARGET_BEATS_PER_SCENE is what planning aims for so a scene has a beginning,
+ * middle, and end without being forced to fill the ceiling. MAX_BEATS_PER_SCENE
+ * is the hard ceiling: split, QA, and Assistant revision truncation all read it.
  */
 
 import { v4 as uuidv4 } from 'uuid'
 import { applyBeatsToScene, getSceneBeats } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
-export const MAX_BEATS_PER_SCENE = 15
+/** Hard ceiling. A scene that exceeds this is split, flagged, or truncated. */
+export const MAX_BEATS_PER_SCENE = 30
+/** What planning aims for. Scene count and chunk targets derive from this. */
+export const TARGET_BEATS_PER_SCENE = 20
 export const AVG_BEAT_SECONDS = 8
-export const TARGET_SCENE_SECONDS = MAX_BEATS_PER_SCENE * AVG_BEAT_SECONDS
+export const TARGET_SCENE_SECONDS = TARGET_BEATS_PER_SCENE * AVG_BEAT_SECONDS
+/** Minutes label derived from TARGET_SCENE_SECONDS so the two cannot disagree. */
+export const TARGET_SCENE_MINUTES_LABEL = Number.isInteger(TARGET_SCENE_SECONDS / 60)
+  ? String(TARGET_SCENE_SECONDS / 60)
+  : (TARGET_SCENE_SECONDS / 60).toFixed(1)
 
 export interface BlueprintBeatInput {
   title?: string
@@ -52,7 +62,7 @@ export function planSceneDecomposition(blueprintBeats: BlueprintBeatInput[]): Sc
   const entries = blueprintBeats.map((beat, index) => {
     const minutes = typeof beat.minutes === 'number' && beat.minutes > 0 ? beat.minutes : 2
     const targetBeats = Math.max(1, Math.round((minutes * 60) / AVG_BEAT_SECONDS))
-    const targetScenes = Math.max(1, Math.ceil(targetBeats / MAX_BEATS_PER_SCENE))
+    const targetScenes = Math.max(1, Math.ceil(targetBeats / TARGET_BEATS_PER_SCENE))
     const title =
       (typeof beat.title === 'string' && beat.title.trim()) ||
       (typeof beat.intent === 'string' && beat.intent.trim()) ||
@@ -74,7 +84,8 @@ export function formatDecompositionPromptBlock(plan: SceneDecompositionPlan): st
     '=== BLUEPRINT BEAT → SCENE DECOMPOSITION (MANDATORY) ===',
     `Each Blueprint beat MUST become MULTIPLE scenes — NEVER one scene per Blueprint beat.`,
     `Hard cap: each scene beats[] array MUST contain at most ${MAX_BEATS_PER_SCENE} beats.`,
-    `Target ~${AVG_BEAT_SECONDS}s per beat (~${TARGET_SCENE_SECONDS}s / ~2 min per scene).`,
+    `Aim for ~${TARGET_BEATS_PER_SCENE} beats per scene (~${TARGET_SCENE_SECONDS}s / ~${TARGET_SCENE_MINUTES_LABEL} min). A scene may grow up to the cap when the story earns it.`,
+    `Target ~${AVG_BEAT_SECONDS}s per beat.`,
     '',
     'Per-beat scene budget:',
   ]

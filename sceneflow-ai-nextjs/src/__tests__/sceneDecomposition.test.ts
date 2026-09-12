@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   findSceneSplitIndex,
   getBlueprintBeatGroup,
+  formatDecompositionPromptBlock,
   planSceneDecomposition,
   splitOversizedScenes,
   MAX_BEATS_PER_SCENE,
+  TARGET_BEATS_PER_SCENE,
   AVG_BEAT_SECONDS,
 } from '@/lib/script/sceneDecomposition'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
@@ -17,10 +19,22 @@ const FARADAY_BEATS = [
 ]
 
 describe('planSceneDecomposition', () => {
-  it('plans 6/6/6/5 scenes for the 42-minute four-beat outline', () => {
+  it('derives scene counts from the per-scene target, not the ceiling', () => {
     const plan = planSceneDecomposition(FARADAY_BEATS)
-    expect(plan.entries.map((e) => e.targetScenes)).toEqual([6, 6, 6, 5])
-    expect(plan.totalTargetScenes).toBe(23)
+    const expected = FARADAY_BEATS.map((beat) => {
+      const targetBeats = Math.max(1, Math.round((beat.minutes * 60) / AVG_BEAT_SECONDS))
+      return Math.max(1, Math.ceil(targetBeats / TARGET_BEATS_PER_SCENE))
+    })
+    expect(plan.entries.map((e) => e.targetScenes)).toEqual(expected)
+    expect(plan.totalTargetScenes).toBe(expected.reduce((sum, n) => sum + n, 0))
+    expect(TARGET_BEATS_PER_SCENE).toBeLessThan(MAX_BEATS_PER_SCENE)
+  })
+
+  it('tells the model both the target and the ceiling', () => {
+    const plan = planSceneDecomposition(FARADAY_BEATS)
+    const block = formatDecompositionPromptBlock(plan)
+    expect(block).toContain(`at most ${MAX_BEATS_PER_SCENE} beats`)
+    expect(block).toContain(`~${TARGET_BEATS_PER_SCENE} beats per scene`)
   })
 
   it('derives beat counts from minutes at ~8s per beat', () => {
@@ -43,7 +57,7 @@ function makeBeat(kind: SceneBeat['kind'], index: number): SceneBeat {
 }
 
 describe('splitOversizedScenes', () => {
-  it('splits a 66-beat scene into 5 scenes each at or under 15 beats', () => {
+  it('splits a 66-beat scene into scenes each at or under the ceiling', () => {
     const beats: SceneBeat[] = []
     for (let i = 0; i < 66; i++) {
       // Alternate dialogue/action so splits can land on action boundaries
@@ -61,7 +75,7 @@ describe('splitOversizedScenes', () => {
     }
 
     const { scenes, splitCount } = splitOversizedScenes([scene])
-    expect(scenes.length).toBe(5)
+    expect(scenes.length).toBe(Math.ceil(66 / MAX_BEATS_PER_SCENE))
     expect(splitCount).toBeGreaterThan(0)
 
     for (const s of scenes) {
@@ -108,5 +122,29 @@ describe('getBlueprintBeatGroup', () => {
     expect(group!.beatTitle).toBe('Intro')
     expect(group!.sceneIndices).toEqual([0, 1])
     expect(group!.positionInGroup).toBe(2)
+  })
+})
+
+describe('cap versus target', () => {
+  it('lets a scene grow to the ceiling without splitting, while planning never aims above the target', () => {
+    const atCeiling: SceneBeat[] = []
+    for (let i = 0; i < MAX_BEATS_PER_SCENE; i++) {
+      atCeiling.push(makeBeat(i % 2 === 0 ? 'action' : 'dialogue', i))
+    }
+    const { scenes, splitCount } = splitOversizedScenes([
+      { heading: 'INT. LAB - NIGHT', beats: atCeiling },
+    ])
+    expect(splitCount).toBe(0)
+    expect(scenes).toHaveLength(1)
+    expect((scenes[0] as { beats: SceneBeat[] }).beats).toHaveLength(MAX_BEATS_PER_SCENE)
+
+    const justOver = [...atCeiling, makeBeat('action', MAX_BEATS_PER_SCENE)]
+    const oversized = splitOversizedScenes([{ heading: 'INT. LAB - NIGHT', beats: justOver }])
+    expect(oversized.splitCount).toBeGreaterThan(0)
+    expect(oversized.scenes.length).toBeGreaterThan(1)
+
+    const plan = planSceneDecomposition([{ title: 'A long beat', minutes: 20 }])
+    const beatsPerScene = plan.entries[0].targetBeats / plan.entries[0].targetScenes
+    expect(beatsPerScene).toBeLessThanOrEqual(TARGET_BEATS_PER_SCENE)
   })
 })
