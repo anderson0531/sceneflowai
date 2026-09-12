@@ -41,7 +41,6 @@ import { resolveStoryboardScenes, totalStoryboardMediaScore } from '@/lib/storyb
 import {
   isPreVisStale,
   refreshSceneBeatStillPrompts,
-  sceneHasStalePromptKeys,
   stampPreVisContentHash,
   syncPreVisToScript,
 } from '@/lib/storyboard/preVisSync'
