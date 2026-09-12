@@ -75,11 +75,13 @@ import {
   assignStableLibraryTokens,
   bindLibraryNamesToTokens,
   buildLocationPromptToken,
+  dropDuplicateHeadNounMatches,
   formatStillReferencesLegend,
   isStructuredStillPrompt,
   joinPromptBlocks,
   resolveLibraryItemPromptMatch,
   stillRefsFromAttachedImages,
+  type LibraryItemPromptMatch,
 } from '@/lib/imagen/structuredStillPrompt'
 import {
   resolveFeaturedCharactersForValidation,
@@ -2555,6 +2557,7 @@ export async function POST(req: NextRequest) {
     // frames therefore only carry references their composition actually uses.
     if (isBeatFrame) {
       const unnamedProps: any[] = []
+      const namedProps: Array<{ item: any; match: LibraryItemPromptMatch }> = []
       for (const obj of detectedObjectReferences) {
         if (!obj?.imageUrl) continue
         const match = resolveLibraryItemPromptMatch(optimizedPrompt, obj)
@@ -2562,19 +2565,30 @@ export async function POST(req: NextRequest) {
           console.log(
             `[Scene Image] Prop reference "${obj.name}" kept — frame names it by ${match.basis} ("${match.matchedTerm}")`
           )
+          namedProps.push({ item: obj, match })
         } else {
           unnamedProps.push(obj)
         }
       }
+
+      // One mentioned object is one object. Several library labels matching the
+      // same head noun describe it several contradictory ways.
+      const { kept, dropped } = dropDuplicateHeadNounMatches(optimizedPrompt, namedProps)
+      for (const entry of dropped) {
+        console.log(
+          `[Scene Image] Dropping prop reference "${entry.item.name}" — shares a head noun with "${entry.keptInstead}", which the frame names more closely`
+        )
+      }
+
       if (unnamedProps.length > 0) {
         console.log(
           `[Scene Image] Dropping ${unnamedProps.length} prop reference(s) not named in the frame:`,
           unnamedProps.map((o: any) => o.name).join(', ')
         )
-        detectedObjectReferences = detectedObjectReferences.filter(
-          (obj: any) => !unnamedProps.includes(obj)
-        )
       }
+      detectedObjectReferences = detectedObjectReferences.filter((obj: any) =>
+        kept.includes(obj)
+      )
     }
 
     // Build object reference images for inclusion in generation

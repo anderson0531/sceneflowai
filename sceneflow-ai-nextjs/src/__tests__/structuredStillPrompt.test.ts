@@ -4,10 +4,12 @@ import { join } from 'node:path'
 import {
   assembleStructuredStillPrompt,
   STILL_SECTION_REFERENCES,
+  STILL_SECTION_TASK,
   STILL_SECTION_STILL,
   STILL_SECTION_STYLE,
   STILL_SECTION_EXCLUSIONS,
   STILL_PURPOSE_LINE,
+  STILL_TASK_LINES,
   stillRefsFromAttachedImages,
   bindLibraryNamesToTokens,
   replaceLibraryNamesWithTokens,
@@ -15,6 +17,7 @@ import {
   isStructuredStillPrompt,
   promptReferencesLibraryItem,
   resolveLibraryItemPromptMatch,
+  dropDuplicateHeadNounMatches,
 } from '@/lib/imagen/structuredStillPrompt'
 import {
   applySceneImageAiResultToPrompt,
@@ -59,7 +62,7 @@ describe('assembleStructuredStillPrompt', () => {
     expect(prompt).toContain(STILL_SECTION_STILL)
     expect(prompt).toMatch(/\n\[STILL\]\n/)
     expect(prompt).toContain('Not a video start frame')
-    expect(prompt).not.toMatch(/Subjects caught mid-action[^\n]*\[GLOBAL STYLE ANCHOR\]/)
+    expect(prompt).not.toMatch(/Subjects absorbed in the action[^\n]*\[GLOBAL STYLE ANCHOR\]/)
     expect(prompt).not.toMatch(/title beats\)\.\s*live-action/)
     expect(prompt).toContain(STILL_SECTION_STYLE)
     expect(prompt).toContain(STILL_SECTION_EXCLUSIONS)
@@ -157,7 +160,7 @@ Action/Framing: person [1] grabs the file.`,
 
     expect(result.optimizedPrompt).toContain('[GLOBAL STYLE ANCHOR]')
     expect(result.optimizedPrompt).not.toMatch(
-      /Subjects caught mid-action[^\n]*\[GLOBAL STYLE ANCHOR\]/
+      /Subjects absorbed in the action[^\n]*\[GLOBAL STYLE ANCHOR\]/
     )
     expect(result.optimizedPrompt).not.toContain('performing the following moment in-scene')
   })
@@ -241,8 +244,11 @@ describe('planner still vs video split', () => {
     })
     expect(video.prompt.toLowerCase()).toContain('motion')
     expect(video.prompt).not.toContain('[STILL]')
+    expect(video.prompt).not.toContain('[TASK]')
     expect(video.prompt).not.toContain('[GLOBAL STYLE ANCHOR]')
     expect(video.prompt).not.toContain('[REFERENCES]')
+    // The still's single-instant rule is the one thing motion must not inherit.
+    expect(video.prompt).not.toContain('single instant')
   })
 
   it('beat-sequence planner source no longer treats stills as F2V start frames', () => {
@@ -320,6 +326,143 @@ describe('bindLibraryNamesToTokens', () => {
   })
 })
 
+describe('every [REFERENCES] token reaches the instruction body', () => {
+  // The reported prompt: one cylinder in the beat, three cylinder props and a
+  // location in the legend, and not one of those tokens in the action text.
+  const cylinderRefs = [
+    { kind: 'person' as const, token: 'person [1]', name: 'Piper Hayes', roleLabel: 'identity' },
+    {
+      kind: 'location' as const,
+      token: 'location [3]',
+      name: 'FREIGHT TUNNEL VAULT - PNEUMATIC ACCESS',
+      roleLabel: 'library location',
+    },
+    { kind: 'prop' as const, token: 'prop [4]', name: 'Brass cylinder', roleLabel: 'library prop' },
+    {
+      kind: 'prop' as const,
+      token: 'prop [5]',
+      name: 'Machined brass cylinder',
+      roleLabel: 'library prop',
+    },
+    {
+      kind: 'prop' as const,
+      token: 'prop [6]',
+      name: 'Olive-drab aluminum cylinder',
+      roleLabel: 'library prop',
+    },
+  ]
+
+  it('binds a prop the frame names its own way, on a modifier only it owns', () => {
+    const text = replaceLibraryNamesWithTokens(
+      'person [1] shields the Olive-drab dispatch cylinder against her chest.',
+      cylinderRefs
+    )
+
+    expect(text).toBe('person [1] shields the prop [6] against her chest.')
+  })
+
+  it('leaves a modifier two props share unbound rather than guessing', () => {
+    const text = replaceLibraryNamesWithTokens(
+      'person [1] shields the brass dispatch cylinder against her chest.',
+      cylinderRefs
+    )
+
+    expect(text).toContain('brass dispatch cylinder')
+    expect(text).not.toContain('prop [4]')
+    expect(text).not.toContain('prop [5]')
+  })
+
+  it('states the refs the action never uses, so the legend instructs something', () => {
+    const prompt = assembleStructuredStillPrompt({
+      actionOrStructured:
+        'Wide shot. person [1] sprawled across the damp flagstone floor, shielding prop [6].',
+      refs: cylinderRefs,
+      includeCandid: true,
+    })
+
+    const still = prompt.split(STILL_SECTION_STILL)[1]?.split(STILL_SECTION_STYLE)[0] ?? prompt
+    expect(still).toContain('Also in frame: location [3], prop [4], prop [5]')
+    expect(still).toMatch(/match each to its reference image\./)
+    // prop [6] is already placed by the action, so it is not restated.
+    expect(still).not.toMatch(/Also in frame:[^\n]*prop \[6\]/)
+  })
+
+  it('says nothing extra when the action already places every ref', () => {
+    const prompt = assembleStructuredStillPrompt({
+      actionOrStructured: 'person [1] raises prop [7] inside location [3].',
+      refs: [
+        { kind: 'person', token: 'person [1]', name: 'Piper Hayes', roleLabel: 'identity' },
+        { kind: 'prop', token: 'prop [7]', name: 'Iron Rail Spanner', roleLabel: 'library prop' },
+        { kind: 'location', token: 'location [3]', name: 'Tunnel Vault', roleLabel: 'library location' },
+      ],
+    })
+
+    expect(prompt).not.toContain('Also in frame:')
+  })
+
+  it('does not read its own in-frame line back as beat action', () => {
+    const assembleWith = (source: string) =>
+      assembleStructuredStillPrompt({
+        actionOrStructured: source,
+        refs: cylinderRefs,
+        includeCandid: true,
+      })
+
+    const first = assembleWith('person [1] sprawled across the flagstone floor.')
+    expect(first).toContain('Also in frame:')
+    expect(assembleWith(first)).toBe(first)
+    expect(first.match(/Also in frame:/g)).toHaveLength(1)
+    expect(actionFramingFromStoredPrompt(first)).toBe(
+      'person [1] sprawled across the flagstone floor.'
+    )
+  })
+})
+
+describe('dropDuplicateHeadNounMatches', () => {
+  const cylinders = [
+    { name: 'Brass cylinder' },
+    { name: 'Machined brass cylinder' },
+    { name: 'Olive-drab aluminum cylinder' },
+  ]
+  const headNoun = { matched: true as const, basis: 'head-noun' as const, matchedTerm: 'cylinder' }
+
+  it('keeps the one label the frame names most closely', () => {
+    const { kept, dropped } = dropDuplicateHeadNounMatches(
+      'person [1] shields the olive-drab dispatch cylinder.',
+      cylinders.map((item) => ({ item, match: headNoun }))
+    )
+
+    expect(kept).toEqual([{ name: 'Olive-drab aluminum cylinder' }])
+    expect(dropped.map((entry) => entry.item.name)).toEqual([
+      'Brass cylinder',
+      'Machined brass cylinder',
+    ])
+  })
+
+  it('keeps exactly one design when the prose cannot tell them apart', () => {
+    const { kept } = dropDuplicateHeadNounMatches(
+      'person [1] shields the cylinder.',
+      cylinders.map((item) => ({ item, match: headNoun }))
+    )
+
+    expect(kept).toEqual([{ name: 'Brass cylinder' }])
+  })
+
+  it('never thins props the frame named in full', () => {
+    const byName = { matched: true as const, basis: 'name' as const }
+    const { kept, dropped } = dropDuplicateHeadNounMatches(
+      'person [1] sets the Brass cylinder beside the Machined brass cylinder.',
+      [
+        { item: cylinders[0], match: byName },
+        { item: cylinders[1], match: byName },
+      ]
+    )
+
+    expect(kept).toHaveLength(2)
+    expect(dropped).toHaveLength(0)
+  })
+})
+
 describe('still prompt round-trips without consuming itself', () => {
   const refs = [
     { kind: 'person' as const, token: 'person [1]', name: 'Piper Hayes', roleLabel: 'identity' },
@@ -348,7 +491,36 @@ describe('still prompt round-trips without consuming itself', () => {
     expect(third).toBe(first)
     expect(first.match(/Action\/Framing:/g)).toHaveLength(1)
     expect(first.match(/Not a video start frame/g)).toHaveLength(1)
-    expect(first.match(/Subjects caught mid-action/g)).toHaveLength(1)
+    expect(first.match(/Subjects absorbed in the action/g)).toHaveLength(1)
+    expect(first.match(/Produce one photograph of a single instant/g)).toHaveLength(1)
+  })
+
+  it('keeps [TASK] ahead of the beat text it governs', () => {
+    const prompt = assemble('person [1] raises prop [7] toward the hatch collar.')
+
+    expect(prompt).toContain(STILL_SECTION_TASK)
+    expect(prompt.indexOf(STILL_SECTION_REFERENCES)).toBeLessThan(
+      prompt.indexOf(STILL_SECTION_TASK)
+    )
+    expect(prompt.indexOf(STILL_SECTION_TASK)).toBeLessThan(prompt.indexOf(STILL_SECTION_STILL))
+    for (const line of STILL_TASK_LINES) {
+      expect(prompt).toContain(line)
+    }
+  })
+
+  it('reads a stored prompt written with the old candid wording back as action', () => {
+    const stored = `[REFERENCES]
+person [1] = Piper Hayes — identity
+
+[STILL]
+${STILL_PURPOSE_LINE}
+Subjects caught mid-action, unaware of the camera — no posing, no lens eye-contact, no headshot or turnaround framing.
+Action/Framing: person [1] raises prop [7] toward the hatch collar.`
+
+    expect(actionFramingFromStoredPrompt(stored)).toBe(
+      'person [1] raises prop [7] toward the hatch collar.'
+    )
+    expect(assemble(stored)).not.toContain('caught mid-action')
   })
 
   it('recovers the beat action from an assembled still', () => {
