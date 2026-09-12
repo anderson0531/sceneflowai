@@ -19,8 +19,8 @@ import {
   extractHairStyleFromAppearance,
 } from '@/lib/character/characterReferenceAssembly'
 
-/** Roughly one legend line — long enough for four traits, short enough to read as a label. */
-export const IDENTITY_TRAITS_WORD_CAP = 15
+/** Roughly one legend line — long enough for five traits, short enough to read as a label. */
+export const IDENTITY_TRAITS_WORD_CAP = 18
 
 /**
  * Wider cap for the retry lock, where brevity has already been tried and lost.
@@ -99,6 +99,71 @@ function extractTraitPhrase(text: string, noun: RegExp, allowed: Set<string>): s
   return `${modifiers.join(' ')} ${head}`
 }
 
+/**
+ * Heritage terms a portrait actually shows.
+ *
+ * Read from the vision pass only. The `ethnicity` field is a casting and accent
+ * tag — "neutral American" — and never a source here; that is what
+ * `ethnicityKeyFeature` exists to block. But a vision description opens with
+ * what the portrait looks like ("An East Asian woman in her mid-to-late 40s"),
+ * and dropping that left the clause satisfiable by the wrong face: a frame that
+ * ignored its identity reference rendered Piper Hayes as a Caucasian woman and
+ * still agreed with "warm light-tan complexion, straight shoulder-length black
+ * hair, late 40s" (production 2026-09-12).
+ */
+const ETHNICITY_TERMS = [
+  'east asian', 'southeast asian', 'south asian', 'central asian', 'asian',
+  'african american', 'afro descendant', 'afro caribbean', 'afro latina', 'afro latino',
+  'north african', 'african', 'black',
+  'white', 'caucasian',
+  'latin american', 'latina', 'latino', 'latinx', 'hispanic',
+  'middle eastern', 'arab', 'persian',
+  'native american', 'first nations', 'indigenous',
+  'pacific islander', 'polynesian', 'melanesian', 'micronesian', 'aboriginal', 'maori',
+  'mixed race', 'biracial', 'multiracial',
+  'chinese', 'japanese', 'korean', 'vietnamese', 'filipino', 'filipina', 'thai',
+  'sri lankan', 'bangladeshi', 'pakistani', 'indian', 'nepali',
+  'nigerian', 'ghanaian', 'ethiopian', 'somali', 'kenyan', 'senegalese', 'congolese',
+  'puerto rican', 'mexican', 'brazilian', 'colombian', 'cuban', 'dominican',
+  'jamaican', 'haitian', 'trinidadian',
+  'turkish', 'iranian', 'lebanese', 'syrian', 'egyptian', 'moroccan', 'algerian', 'israeli',
+  'mediterranean', 'scandinavian', 'nordic', 'slavic', 'romani',
+]
+
+/**
+ * Longest first, so "East Asian" wins over "Asian" and "African American" over
+ * "African". Spaces match a hyphen too, because the same term is written both
+ * ways in one description.
+ */
+const ETHNICITY_ALTERNATION = [...ETHNICITY_TERMS]
+  .sort((a, b) => b.length - a.length)
+  .map((term) => term.replace(/ /g, '[- ]'))
+  .join('|')
+
+/**
+ * A term only counts next to the person it describes. Without this, "straight
+ * shoulder-length black hair" reads as an ethnicity of "black".
+ */
+const PERSON_NOUNS = 'man|woman|male|female|person|adult|figure|guy|lady|gentleman|boy|girl'
+
+const ETHNICITY_BEFORE_PERSON = new RegExp(
+  `\\b((?:(?:mixed|part|partly)\\s+)?(?:${ETHNICITY_ALTERNATION})(?:[- ]american)?)\\s+(?:${PERSON_NOUNS})\\b`,
+  'i'
+)
+
+const ETHNICITY_AS_HERITAGE = new RegExp(
+  `\\bof\\s+((?:(?:mixed|part|partly)\\s+)?(?:${ETHNICITY_ALTERNATION})\\s+(?:heritage|descent|ancestry|extraction))\\b`,
+  'i'
+)
+
+function extractEthnicity(visionDescription: string | null | undefined): string | undefined {
+  const text = (visionDescription ?? '').trim()
+  if (!text) return undefined
+
+  const match = text.match(ETHNICITY_BEFORE_PERSON) ?? text.match(ETHNICITY_AS_HERITAGE)
+  return match?.[1]?.replace(/\s+/g, ' ').trim() || undefined
+}
+
 const AGE_BAND = /\b(early|mid|late)[- ]?((?:20|30|40|50|60|70|80)s)\b/i
 const AGE_YEARS = /\b(\d{2})[- ](?:year|years)[- ]old\b/i
 const AGE_DECADE = /\b(?:his|her|their)\s+((?:20|30|40|50|60|70|80)s)\b/i
@@ -139,8 +204,9 @@ function countWords(value: string): number {
 }
 
 /**
- * Skin, hair, facial hair, age — in that order, because that is the order a
- * mismatch is noticed in, and the cap drops whatever no longer fits.
+ * Heritage, skin, hair, facial hair, age — in that order, because that is the
+ * order a mismatch is noticed in, and the cap drops whatever no longer fits.
+ * Heritage leads because it is what the validator rejects frames over.
  */
 export function buildIdentityTraitsClause(character: {
   appearanceDescription?: string | null
@@ -154,6 +220,7 @@ export function buildIdentityTraitsClause(character: {
   if (!text && !hasStructuredHair) return undefined
 
   const candidates = [
+    extractEthnicity(character.visionDescription),
     extractTraitPhrase(text, SKIN_NOUNS, SKIN_MODIFIERS),
     extractHair(text, character),
     extractFacialHair(text),

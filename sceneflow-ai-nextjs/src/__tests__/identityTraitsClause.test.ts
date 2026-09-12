@@ -16,8 +16,8 @@ const GIDEON_VISION =
 
 /** Enough traits to overrun the legend cap, so the retry cap has something to recover. */
 const VERBOSE_VISION =
-  'A man in his early 50s with warm sun-weathered medium-brown skin, tightly coiled ' +
-  'salt-and-pepper shoulder length natural black hair, and a thick neatly trimmed ' +
+  'A man in his early 50s with warm golden sun-weathered medium-brown skin, thick tightly ' +
+  'coiled salt-and-pepper shoulder length natural black hair, and a thick neatly trimmed ' +
   'salt-and-pepper beard.'
 
 describe('buildIdentityTraitsClause', () => {
@@ -50,6 +50,50 @@ describe('buildIdentityTraitsClause', () => {
 
     expect(clause).toBe('fair skin, long red hair, late 20s')
     expect(clause).not.toMatch(/neutral|american/i)
+  })
+
+  it('leads with the heritage the vision pass observed in the portrait', () => {
+    // Without this the clause reads as "warm light-tan complexion, straight
+    // shoulder-length black hair, late 40s", which a Caucasian woman satisfies —
+    // so a frame that ignored the reference had nothing contradicting it.
+    expect(
+      buildIdentityTraitsClause({
+        visionDescription:
+          'An East Asian woman in her mid-to-late 40s with a lean build and a warm ' +
+          'light-tan complexion. She has straight, shoulder-length black hair with a center part.',
+      })
+    ).toBe('East Asian, warm light-tan complexion, straight shoulder-length black hair, late 40s')
+  })
+
+  it('reads heritage stated as descent rather than as an adjective', () => {
+    expect(
+      buildIdentityTraitsClause({
+        visionDescription:
+          'A lean man in his late 50s of mixed Afro-descendant heritage, featuring warm ' +
+          'medium-brown skin. He has tightly curled, salt-and-pepper hair with a matching ' +
+          'short, neatly trimmed beard.',
+      })
+    ).toBe(
+      'mixed Afro-descendant heritage, warm medium-brown skin, ' +
+        'tightly curled salt-and-pepper hair, short neatly trimmed beard, late 50s'
+    )
+  })
+
+  it('does not read hair colour as heritage', () => {
+    const clause = buildIdentityTraitsClause({
+      visionDescription: 'A woman with olive skin and long black hair, mid 30s.',
+    })
+
+    expect(clause).toBe('olive skin, long black hair, mid 30s')
+    expect(clause).not.toMatch(/^black,/)
+  })
+
+  it('takes heritage from the vision pass only, never the authored appearance text', () => {
+    expect(
+      buildIdentityTraitsClause({
+        appearanceDescription: 'A Caucasian woman with fair skin and long red hair, late 20s.',
+      })
+    ).toBe('fair skin, long red hair, late 20s')
   })
 
   it('drops possessives and connectives that precede a trait noun', () => {

@@ -43,11 +43,45 @@ describe('resolveFeaturedCharactersForValidation', () => {
     expect(featured[0].referenceImageUrl).toBe('https://example.com/rafael-identity.jpg')
   })
 
-  it('falls back to first characterObjects entry whose name appears in scene when AI unused', () => {
+  it('validates every subject the composition places, not just the first', () => {
+    // A two-hander validated on one subject shipped frames with the right woman
+    // and the wrong man, with nothing in the log to show it.
+    const featured = resolveFeaturedCharactersForValidation({
+      characterObjects: [mia, rafael],
+      characterReferences,
+      optimizedPrompt: 'Action/Framing: person [1] hands the file to person [2].',
+      fullSceneContext: 'Mia and Rafael in the studio',
+      usedAIIntelligence: false,
+      aiResult: null,
+    })
+
+    expect(featured.map((f) => f.name)).toEqual(['Mia', 'Rafael'])
+    expect(featured.map((f) => f.referenceImageUrl)).toEqual([
+      'https://example.com/mia-identity.jpg',
+      'https://example.com/rafael-identity.jpg',
+    ])
+  })
+
+  it('prefers the subject the prompt places over one the scene merely names', () => {
     const featured = resolveFeaturedCharactersForValidation({
       characterObjects: [mia, rafael],
       characterReferences,
       optimizedPrompt: 'Rafael reacts to the news',
+      fullSceneContext: 'Rafael sits at the desk while Mia listens',
+      usedAIIntelligence: false,
+      aiResult: null,
+    })
+
+    expect(featured).toHaveLength(1)
+    expect(featured[0].name).toBe('Rafael')
+    expect(featured[0].referenceImageUrl).toBe('https://example.com/rafael-identity.jpg')
+  })
+
+  it('falls back to first characterObjects entry whose name appears in scene when the prompt places nobody', () => {
+    const featured = resolveFeaturedCharactersForValidation({
+      characterObjects: [mia, rafael],
+      characterReferences,
+      optimizedPrompt: 'A close-up of the desk lamp, nobody in frame.',
       fullSceneContext: 'Rafael sits at the desk while Mia listens',
       usedAIIntelligence: false,
       aiResult: null,

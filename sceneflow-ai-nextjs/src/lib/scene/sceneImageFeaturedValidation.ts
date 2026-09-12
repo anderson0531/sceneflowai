@@ -1,5 +1,6 @@
 import {
   buildIdentityPromptToken,
+  promptPlacesCharacter,
 } from '@/lib/imagen/promptOptimizer'
 import { isHardIdentityMismatch } from '@/lib/imagen/likenessMismatch'
 import type { SceneImageIntelligenceResult } from '@/lib/intelligence/scene-image-intelligence'
@@ -15,6 +16,7 @@ export interface CharacterReferenceLike {
   identityReferenceId?: number
   identityImageUrl?: string
   wardrobeDiptychImageUrl?: string
+  linkingDescription?: string
 }
 
 export interface CharacterObjectLike {
@@ -81,6 +83,25 @@ export function resolveFeaturedCharactersForValidation(params: {
 
     if (featured.length > 0) return featured
   }
+
+  // Every subject the composition places, not just the first one found.
+  // Returning one meant a two-hander was half-checked: a frame that rendered
+  // the right woman and the wrong man passed validation with nothing logged
+  // (production 2026-09-12, where only Piper Hayes of two subjects was scored).
+  const placedFeatured: FeaturedCharacterForValidation[] = []
+  for (const charRef of characterReferences) {
+    if (!charRef.name) continue
+    if (!promptPlacesCharacter(optimizedPrompt, charRef)) continue
+    const referenceImageUrl = resolveGenerationIdentityReferenceUrl(
+      charRef.name,
+      characterReferences,
+      characterObjects
+    )
+    if (referenceImageUrl) {
+      placedFeatured.push({ name: charRef.name, referenceImageUrl })
+    }
+  }
+  if (placedFeatured.length > 0) return placedFeatured
 
   const sceneText = `${fullSceneContext || ''}`.toLowerCase()
   for (const char of characterObjects) {

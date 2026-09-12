@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import { generateImageWithVertexKlingFallback } from '@/lib/generation/vertexImageWithKlingFallback'
+import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalation'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor, buildIdentityPromptToken, sanitizePromptForIdentityRefs, filterCharactersForPromptRefs, promptPlacesCharacter, stripReferenceImageMappingBlock } from '@/lib/imagen/promptOptimizer'
 import { ethnicityKeyFeature } from '@/lib/imagen/characterKeyFeatures'
@@ -2308,6 +2309,14 @@ export async function POST(req: NextRequest) {
      * reference image before there is anything to argue about.
      */
     let identityEscalationBlock = ''
+    /**
+     * Set when the round-0 frame only existed because a content refusal was
+     * recovered from. A refused frame is the one most likely to come back with
+     * its identity references ignored — the model keeps the composition and
+     * invents a face — so the retry has to argue with the action language, not
+     * just restate who the person is.
+     */
+    let lastRoundPolicyRefusalRecovered = false
 
     do {
       const roundStart = Date.now()
@@ -2376,6 +2385,25 @@ export async function POST(req: NextRequest) {
           // identity lock is carried by the request either way.
           console.log(
             '[Scene Image] Likeness auto-retry: AI re-plan unavailable, reusing round 0 prompt with the escalated lock'
+          )
+        }
+      }
+      if (likenessRound > 0 && lastRoundPolicyRefusalRecovered) {
+        // A frame the eco model refused outright and pro then rendered without
+        // its referenced faces did not lose the likeness for want of identity
+        // instruction — it lost it because of what the action asks for. Restating
+        // the identity harder against unchanged wording asks for the same answer.
+        const softened = escalateImagePromptForRetry(optimizedPrompt, 1, {
+          skipProductionStillFraming: isBeatFrame,
+        })
+        if (softened !== optimizedPrompt) {
+          optimizedPrompt = softened
+          console.log(
+            '[Scene Image] Likeness retry: round 0 was content-refused before it rendered; softening action language alongside the identity lock'
+          )
+        } else {
+          console.log(
+            '[Scene Image] Likeness retry: round 0 was content-refused but no action wording matched a softening rule'
           )
         }
       }
@@ -3055,6 +3083,12 @@ export async function POST(req: NextRequest) {
           base64Image = vertexResult.imageBase64
           generationModelId = vertexResult.modelId
           generationProvider = vertexResult.generationProvider
+          lastRoundPolicyRefusalRecovered = vertexResult.policyRefusalRecovered === true
+          if (lastRoundPolicyRefusalRecovered) {
+            console.warn(
+              `[Scene Image] ⚠️  Frame was content-refused before it rendered; ${vertexResult.modelId} produced it from softened wording. Expect identity drift — the refused content is why references get ignored.`
+            )
+          }
         } else {
           console.log('[Scene Image] Using Vertex Imagen text-to-image (no reference images)')
           const imagenStill = isBeatFrame
@@ -3225,22 +3259,39 @@ export async function POST(req: NextRequest) {
         )
 
         try {
+          const primaryValidationStart = Date.now()
           validation = await validateCharacterLikeness(
             imageUrl,
             primaryFeatured.referenceImageUrl,
             primaryFeatured.name,
             { shotType: validationShotType }
           )
+          const perSubjectValidationMs = Date.now() - primaryValidationStart
 
           if (featuredCharacters.length > 1) {
             for (const extraFeatured of featuredCharacters.slice(1)) {
+              // Each extra subject is another vision call. The retry decision
+              // still rides on the primary, so an extra that will not fit is
+              // dropped rather than allowed to eat the image budget.
+              if (remainingBudgetMs() < projectLikenessValidationCostMs(perSubjectValidationMs)) {
+                console.warn(
+                  `[Scene Image] Skipping likeness validation for ${extraFeatured.name} — ${remainingBudgetMs()}ms left`
+                )
+                break
+              }
               try {
-                await validateCharacterLikeness(
+                const extraValidation = await validateCharacterLikeness(
                   imageUrl,
                   extraFeatured.referenceImageUrl,
                   extraFeatured.name,
                   { shotType: validationShotType }
                 )
+                if (extraValidation.mismatchKind === 'identity') {
+                  console.warn(
+                    `[Scene Image] ⚠️  ${extraFeatured.name} is the wrong person at ${extraValidation.confidence}% confidence — ` +
+                      `the retry decision follows ${primaryFeatured.name}, so this frame may ship with that face.`
+                  )
+                }
               } catch (error) {
                 console.error(`[Scene Image] Validation failed for ${extraFeatured.name}:`, error)
               }
