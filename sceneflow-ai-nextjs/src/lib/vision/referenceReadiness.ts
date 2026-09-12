@@ -13,6 +13,8 @@
  * generate button, the client-side generate gates, and the server-side checks.
  */
 
+import type { SceneReferenceRequirement } from '@/lib/vision/sceneReferenceRequirements'
+
 export type ReferenceReadinessCharacter = {
   name?: string
   type?: string
@@ -45,6 +47,8 @@ export type ReferenceReadiness = {
   missingCast: string[]
   missingLocations: string[]
   missingObjects: string[]
+  /** Wardrobe is only ever scene-scoped; the project gate leaves this empty. */
+  missingWardrobe: string[]
   missingTotal: number
 }
 
@@ -87,7 +91,36 @@ export function resolveReferenceReadiness(
     missingCast,
     missingLocations,
     missingObjects,
+    missingWardrobe: [],
     missingTotal,
+  }
+}
+
+/**
+ * The same question asked of one scene: are the references *this* scene needs
+ * drawn? A gate's scope should equal its run's scope, so a scene-level action
+ * waits only on the scene's own requirements — but on the identical rule, so a
+ * reference that clears one gate clears the other.
+ */
+export function resolveSceneReferenceReadiness(
+  requirements: SceneReferenceRequirement[]
+): ReferenceReadiness {
+  const undrawn = requirements.filter((requirement) => !hasImage(requirement.imageUrl))
+  const namesOf = (kind: SceneReferenceRequirement['kind']): string[] =>
+    undrawn.filter((requirement) => requirement.kind === kind).map((requirement) => requirement.name)
+
+  const missingCast = namesOf('cast')
+  const missingWardrobe = namesOf('wardrobe')
+  const missingLocations = namesOf('location')
+  const missingObjects = namesOf('prop')
+
+  return {
+    ready: undrawn.length === 0,
+    missingCast,
+    missingLocations,
+    missingObjects,
+    missingWardrobe,
+    missingTotal: undrawn.length,
   }
 }
 
@@ -117,12 +150,23 @@ function namedList(labels: string[]): string {
 /**
  * One sentence naming what is missing, for a tooltip, a toast, or an API error.
  * Empty when the library is complete.
+ *
+ * `scope` only changes the wording — a scene-level action that says "generate
+ * all reference images" sends the user to do far more work than it needs.
  */
-export function formatReferenceReadinessMessage(readiness: ReferenceReadiness): string {
+export function formatReferenceReadinessMessage(
+  readiness: ReferenceReadiness,
+  scope: 'project' | 'scene' = 'project'
+): string {
   if (readiness.ready) return ''
   const groups: string[] = []
   if (readiness.missingCast.length > 0) {
     groups.push(`${readiness.missingCast.length} cast (${namedList(readiness.missingCast)})`)
+  }
+  if (readiness.missingWardrobe.length > 0) {
+    groups.push(
+      `${readiness.missingWardrobe.length} wardrobe (${namedList(readiness.missingWardrobe)})`
+    )
   }
   if (readiness.missingLocations.length > 0) {
     groups.push(
@@ -134,5 +178,9 @@ export function formatReferenceReadinessMessage(readiness: ReferenceReadiness): 
       `${readiness.missingObjects.length} object${readiness.missingObjects.length === 1 ? '' : 's'} (${namedList(readiness.missingObjects)})`
     )
   }
-  return `Generate all reference images first — missing ${groups.join(', ')}. Frames drawn without a reference invent their own appearance.`
+  const lead =
+    scope === 'scene'
+      ? 'This scene needs its references drawn first'
+      : 'Generate all reference images first'
+  return `${lead} — missing ${groups.join(', ')}. Frames drawn without a reference invent their own appearance.`
 }
