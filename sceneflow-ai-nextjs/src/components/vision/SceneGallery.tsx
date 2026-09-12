@@ -76,8 +76,8 @@ interface SceneGalleryProps {
   onClose?: () => void
   /** studio = Pre-Vis build tools; screening = playback + share only */
   mode?: 'studio' | 'screening'
-  /** Callback to open Generate Audio dialog */
-  onOpenGenerateAudio?: () => void
+  /** Jump to where character voices get assigned (Reference Library cast tab) */
+  onAssignVoices?: () => void
   /**
    * Run the Storyboard Express pipeline (Direction → Audio → Image per scene,
    * up to 3 scenes in parallel). The parent is responsible for kicking off the
@@ -133,7 +133,7 @@ export function SceneGallery({
   projectTitle,
   onClose,
   mode = 'studio',
-  onOpenGenerateAudio,
+  onAssignVoices,
   onExpressGenerate,
   productionReadyChecklist,
   isExpressRunning = false,
@@ -694,7 +694,7 @@ export function SceneGallery({
             id="previs-ready-banner"
             checklist={productionReadyChecklist}
             onOpenReferences={onOpenReferences}
-            onOpenGenerateAudio={onOpenGenerateAudio}
+            onAssignVoices={onAssignVoices}
           />
         </div>
       )}

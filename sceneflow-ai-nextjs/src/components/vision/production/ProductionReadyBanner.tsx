@@ -11,7 +11,7 @@ interface ProductionReadyBannerProps {
   className?: string
   id?: string
   onOpenReferences?: () => void
-  onOpenGenerateAudio?: () => void
+  onAssignVoices?: () => void
 }
 
 function Item({
@@ -38,7 +38,7 @@ export function ProductionReadyBanner({
   className,
   id,
   onOpenReferences,
-  onOpenGenerateAudio,
+  onAssignVoices,
 }: ProductionReadyBannerProps) {
   if (checklist.isPreVisReady) {
     return (
@@ -80,13 +80,13 @@ export function ProductionReadyBanner({
         />
       </ul>
       <div className="flex flex-wrap gap-2">
-        {!checklist.voicesReady && onOpenGenerateAudio && (
+        {!checklist.voicesReady && onAssignVoices && (
           <Button
             type="button"
             size="sm"
             variant="outline"
             className="h-7 text-[11px] border-amber-500/40 text-amber-200"
-            onClick={onOpenGenerateAudio}
+            onClick={onAssignVoices}
           >
             Assign voices
           </Button>

@@ -36,18 +36,11 @@ import {
   type SfxDurationOverride,
 } from '@/lib/elevenlabs/sfxDuration'
 import { dispatchExpressVeoSfx } from '@/lib/sfx/clientExpressVeoSfx'
-import {
-  beatHasSfxAudio,
-  listSelectableActionBeats,
-} from '@/lib/sfx/resolveExpressVeoSfxItems'
+import { listSelectableActionBeats } from '@/lib/sfx/resolveExpressVeoSfxItems'
 import {
   ActionBeatSfxControls,
   type ExpressBeatSfxStatus,
 } from '@/components/vision/ActionBeatSfxControls'
-import {
-  ExpressSfxConfirmDialog,
-  type ExpressSfxConfirmOptions,
-} from '@/components/vision/ExpressSfxConfirmDialog'
 import {
   ExpressAudioConfirmDialog,
   type ExpressAudioConfirmOptions,
@@ -63,7 +56,6 @@ import {
   parseExpressAudioSelectedIds,
 } from '@/lib/audio/buildExpressAudioItems'
 import {
-  actionBeatSfxIsStale,
   audioSourceFingerprintForSpoken,
   isBeatAudioStale,
 } from '@/lib/audio/beatAudioStale'
@@ -165,7 +157,6 @@ import { isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
 import { isPreVisStale } from '@/lib/storyboard/preVisSync'
 import { getKenBurnsConfig, generateKenBurnsKeyframes, type KenBurnsIntensity } from '@/lib/animation/kenBurns'
 import { SceneDirectionProvider } from '@/contexts/SceneDirectionContext'
-import { GenerateAudioDialog } from './GenerateAudioDialog'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { type ProjectStream } from '@/lib/streams/projectStreams'
@@ -199,28 +190,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
-
-type DialogGenerationMode = 'foreground' | 'background'
-
-interface DialogGenerationProgress {
-  status: 'idle' | 'running' | 'completed' | 'error'
-  phase: 'narration' | 'dialogue' | 'music' | 'sfx' | 'characters' | 'images'
-  currentScene: number
-  totalScenes: number
-  currentDialogue: number
-  totalDialogue: number
-  currentMusic: number
-  totalMusic: number
-  currentSfx: number
-  totalSfx: number
-  currentCharacter: number
-  totalCharacters: number
-  currentImage: number
-  totalImages: number
-  completedSteps: number
-  totalSteps: number
-  message: string
-}
 
 // Translation storage types for per-scene, per-language translations
 export interface SceneTranslation {
@@ -1065,7 +1034,6 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [costCalculatorOpen, setCostCalculatorOpen] = useState(false)
   const [isSettingBudget, setIsSettingBudget] = useState(false)
-  const [generateAudioDialogOpen, setGenerateAudioDialogOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en')
 
   // Language playback offset per scene (for translated audio alignment)
@@ -1426,16 +1394,6 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     return Math.round(avg)
   }, [scenes])
 
-  const [isDialogGenerating, setIsDialogGenerating] = useState(false)
-  const [dialogGenerationMode, setDialogGenerationMode] = useState<DialogGenerationMode>('foreground')
-  const [dialogGenerationProgress, setDialogGenerationProgress] = useState<DialogGenerationProgress | null>(null)
-  const generationModeRef = useRef<DialogGenerationMode>('foreground')
-  const backgroundRequestedRef = useRef(false)
-
-  useEffect(() => {
-    generationModeRef.current = dialogGenerationMode
-  }, [dialogGenerationMode])
-
   const toastVisualStyle = {
     background: '#111827',
     color: '#F9FAFB',
@@ -1486,437 +1444,6 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     // Notify parent to update timeline selection
     onSelectSceneIndex?.(bookmarkedSceneIndex)
     scrollSceneIntoView(bookmarkedSceneIndex)
-  }
-
-  const backgroundProgressPercent = dialogGenerationMode === 'background' && isDialogGenerating && dialogGenerationProgress
-    ? Math.min(99, Math.round((dialogGenerationProgress.completedSteps / Math.max(1, dialogGenerationProgress.totalSteps)) * 100))
-    : null
-
-  const updateDialogProgress = (updater: (prev: DialogGenerationProgress | null) => DialogGenerationProgress | null) => {
-    setDialogGenerationProgress(prev => updater(prev))
-  }
-
-  const handleRunGenerationInBackground = () => {
-    if (!isDialogGenerating) return
-    backgroundRequestedRef.current = true
-    setDialogGenerationMode('background')
-    generationModeRef.current = 'background'
-    setGenerateAudioDialogOpen(false)
-    toast.info('Audio generation will continue in the background.', { style: toastVisualStyle })
-  }
-
-  const handleGenerateDialogOpenChange = (open: boolean) => {
-    if (!open) {
-      if (isDialogGenerating && generationModeRef.current === 'foreground') {
-        toast.info('Generation is still running. Use "Run in background" to continue without this dialog.', { style: toastVisualStyle })
-        setGenerateAudioDialogOpen(true)
-        return
-      }
-      setGenerateAudioDialogOpen(false)
-      if (!isDialogGenerating) {
-        setDialogGenerationProgress(null)
-        setDialogGenerationMode('foreground')
-        generationModeRef.current = 'foreground'
-        backgroundRequestedRef.current = false
-      }
-    } else {
-      setGenerateAudioDialogOpen(true)
-    }
-  }
-
-  // Handler for generating audio from dialog
-  const handleGenerateAudioFromDialog = async (
-    language: string,
-    audioTypes: { narration: boolean; dialogue: boolean; music: boolean; sfx: boolean },
-    options?: { stayOpen: boolean; generateCharacters?: boolean; generateSceneImages?: boolean; forceRegenerateImages?: boolean }
-  ) => {
-    // Pass language parameter to enable multi-language TTS with translation
-    const stayOpen = options?.stayOpen ?? true
-    const includeCharacters = options?.generateCharacters ?? false
-    const includeSceneImages = options?.generateSceneImages ?? false
-    const forceRegenerateImages = options?.forceRegenerateImages ?? false
-
-    // Batch API covers narration, dialogue, music, and SFX (ElevenLabs).
-    if (audioTypes.narration && audioTypes.dialogue && audioTypes.music && onGenerateAllAudio) {
-      setDialogGenerationProgress(null)
-      setDialogGenerationMode('foreground')
-      generationModeRef.current = 'foreground'
-      backgroundRequestedRef.current = false
-      await onGenerateAllAudio(language, {
-        includeNarration: true,
-        includeDialogue: true,
-        includeMusic: true,
-        includeSFX: !!audioTypes.sfx,
-      })
-      setGenerateAudioDialogOpen(false)
-      return
-    }
-
-    if (!onGenerateSceneAudio) {
-      console.error('onGenerateSceneAudio not provided')
-      toast.error('Audio generation not available', { style: toastVisualStyle })
-      return
-    }
-
-    const scenes = script?.script?.scenes || []
-
-    if (!scenes.length) {
-      toast.error('No scenes to generate audio for', { style: toastVisualStyle })
-      return
-    }
-
-    const totalDialogueLines = audioTypes.dialogue
-      ? scenes.reduce((sum: number, scene: any) => {
-          if (!Array.isArray(scene.dialogue)) return sum
-          const count = scene.dialogue.filter((d: any) => d?.character && d?.line).length
-          return sum + count
-        }, 0)
-      : 0
-
-    // Count music scenes (scenes that have music description)
-    const totalMusicScenes = audioTypes.music
-      ? scenes.filter((scene: any) => scene?.music || typeof scene?.music === 'string').length
-      : 0
-
-    const totalSceneSteps = audioTypes.narration ? scenes.length : 0
-    const totalCharacters = includeCharacters ? (characters?.length || 0) : 0
-    const totalImages = includeSceneImages ? scenes.length : 0
-    const totalSteps = totalSceneSteps + totalDialogueLines + totalMusicScenes + totalCharacters + totalImages
-    const audioTasksSelected = audioTypes.narration || audioTypes.dialogue || audioTypes.music || audioTypes.sfx
-
-    // SFX-only batch: route directly through onGenerateAllAudio with sfx flag.
-    if (audioTypes.sfx && !audioTypes.narration && !audioTypes.dialogue && !audioTypes.music && !includeCharacters && !includeSceneImages) {
-      if (onGenerateAllAudio) {
-        setDialogGenerationProgress(null)
-        setDialogGenerationMode('foreground')
-        generationModeRef.current = 'foreground'
-        backgroundRequestedRef.current = false
-        await onGenerateAllAudio(language, { includeSFX: true, includeMusic: false, includeNarration: false, includeDialogue: false })
-        setGenerateAudioDialogOpen(false)
-      }
-      return
-    }
-
-    if (totalSteps === 0) {
-      toast.info('Select at least one generation option.', { style: toastVisualStyle })
-      return
-    }
-
-    setIsDialogGenerating(true)
-    backgroundRequestedRef.current = !stayOpen
-
-    const initialPhase: DialogGenerationProgress['phase'] = audioTypes.narration
-      ? 'narration'
-      : audioTypes.dialogue
-      ? 'dialogue'
-      : audioTypes.music
-      ? 'music'
-      : audioTypes.sfx
-      ? 'sfx'
-      : includeCharacters
-      ? 'characters'
-      : includeSceneImages
-      ? 'images'
-      : 'narration'
-
-    const initialMessage = (() => {
-      switch (initialPhase) {
-        case 'narration':
-          return audioTypes.narration ? 'Preparing narration...' : 'Narration skipped.'
-        case 'dialogue':
-          return 'Preparing dialogue...'
-        case 'music':
-          return 'Preparing music generation...'
-        case 'sfx':
-          return 'Preparing sound effects...'
-        case 'characters':
-          return totalCharacters > 0 ? 'Preparing character assets...' : 'No characters to generate.'
-        case 'images':
-          return totalImages > 0 ? 'Preparing scene images...' : 'No scenes to generate.'
-        default:
-          return 'Preparing generation...'
-      }
-    })()
-
-    setDialogGenerationProgress({
-      status: 'running',
-      phase: initialPhase,
-      currentScene: 0,
-      totalScenes: scenes.length,
-      currentDialogue: 0,
-      totalDialogue: totalDialogueLines,
-      currentMusic: 0,
-      totalMusic: totalMusicScenes,
-      currentSfx: 0,
-      totalSfx: 0,
-      currentCharacter: 0,
-      totalCharacters,
-      currentImage: 0,
-      totalImages,
-      completedSteps: 0,
-      totalSteps,
-      message: initialMessage,
-    })
-
-    if (stayOpen) {
-      setDialogGenerationMode('foreground')
-      generationModeRef.current = 'foreground'
-      setGenerateAudioDialogOpen(true)
-    } else {
-      setDialogGenerationMode('background')
-      generationModeRef.current = 'background'
-      setGenerateAudioDialogOpen(false)
-      toast.info('Generation will continue in the background. A notification will appear when finished.', { style: toastVisualStyle })
-    }
-
-    let completedSteps = 0
-    let processedDialogue = 0
-    const tasksCompleted: string[] = []
-
-    try {
-      for (let sceneIdx = 0; sceneIdx < scenes.length; sceneIdx++) {
-        const scene = scenes[sceneIdx]
-        const hasNarration = audioTypes.narration && (scene?.narration || scene?.action)
-        const dialogueEntries = audioTypes.dialogue && Array.isArray(scene.dialogue)
-          ? scene.dialogue
-              .map((d: any, idx: number) => ({ ...d, __index: idx }))
-              .filter((d: any) => d?.character && d?.line)
-          : []
-
-        if (hasNarration) {
-          updateDialogProgress((prev) => prev ? {
-            ...prev,
-            phase: 'narration',
-            currentScene: sceneIdx + 1,
-            message: `Generating narration for scene ${sceneIdx + 1} of ${scenes.length}`,
-          } : prev)
-
-          try {
-            await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined, language)
-          } catch (error) {
-            console.error(`[Narration Generation] Error for scene ${sceneIdx}:`, error)
-          }
-          
-          // Small delay to allow state updates to propagate
-          await new Promise(resolve => setTimeout(resolve, 100))
-
-          completedSteps += 1
-          updateDialogProgress((prev) => prev ? {
-            ...prev,
-            completedSteps,
-            currentScene: sceneIdx + 1,
-            message: `Narration generated for scene ${sceneIdx + 1}`,
-          } : prev)
-        }
-
-        if (dialogueEntries && dialogueEntries.length > 0) {
-          for (const entry of dialogueEntries) {
-            processedDialogue += 1
-            updateDialogProgress((prev) => prev ? {
-              ...prev,
-              phase: 'dialogue',
-              currentScene: sceneIdx + 1,
-              currentDialogue: processedDialogue,
-              message: `Generating dialogue ${processedDialogue} of ${totalDialogueLines}${entry.character ? ` • ${entry.character}` : ''}`,
-            } : prev)
-
-            try {
-              await onGenerateSceneAudio(sceneIdx, 'dialogue', entry.character, entry.__index, language)
-            } catch (error) {
-              console.error(`[Dialogue Generation] Error for scene ${sceneIdx}, entry ${entry.__index}:`, error)
-            }
-            
-            // Small delay to allow state updates to propagate
-            await new Promise(resolve => setTimeout(resolve, 100))
-
-            completedSteps += 1
-            updateDialogProgress((prev) => prev ? {
-              ...prev,
-              completedSteps,
-              currentDialogue: processedDialogue,
-            } : prev)
-          }
-        } else if (audioTypes.dialogue && stayOpen) {
-          updateDialogProgress((prev) => prev ? {
-            ...prev,
-            currentScene: sceneIdx + 1,
-          } : prev)
-        }
-      }
-
-      if (audioTypes.narration) {
-        tasksCompleted.push('narration')
-      }
-      if (audioTypes.dialogue) {
-        tasksCompleted.push('dialogue')
-      }
-
-      // Generate music for scenes that have music descriptions
-      // Always regenerate regardless of existing audio
-      if (audioTypes.music) {
-        let processedMusic = 0
-        for (let sceneIdx = 0; sceneIdx < scenes.length; sceneIdx++) {
-          const scene = scenes[sceneIdx]
-          const hasMusic = scene?.music || typeof scene?.music === 'string'
-          
-          if (hasMusic) {
-            processedMusic += 1
-            updateDialogProgress((prev) => prev ? {
-              ...prev,
-              phase: 'music',
-              currentScene: sceneIdx + 1,
-              currentMusic: processedMusic,
-              message: `Generating music for scene ${sceneIdx + 1} of ${scenes.length}`,
-            } : prev)
-
-            try {
-              const sceneForMusic = scenes[sceneIdx]
-              const musicDuration =
-                typeof sceneForMusic?.musicDuration === 'number' && sceneForMusic.musicDuration > 0
-                  ? sceneForMusic.musicDuration
-                  : typeof sceneForMusic?.duration === 'number' && sceneForMusic.duration > 0
-                    ? sceneForMusic.duration
-                    : 30
-              await generateMusic(sceneIdx, true, musicDuration)
-            } catch (error) {
-              console.error(`[Music Generation] Error for scene ${sceneIdx}:`, error)
-            }
-
-            completedSteps += 1
-            updateDialogProgress((prev) => prev ? {
-              ...prev,
-              completedSteps,
-              currentMusic: processedMusic,
-            } : prev)
-          }
-        }
-        if (processedMusic > 0) {
-          tasksCompleted.push('music')
-        }
-      }
-
-      if (includeCharacters) {
-        if (totalCharacters === 0) {
-          updateDialogProgress(prev => prev ? {
-            ...prev,
-            phase: 'characters',
-            currentCharacter: 0,
-            message: 'No characters to generate.',
-          } : prev)
-        } else if (onGenerateAllCharacters) {
-          updateDialogProgress(prev => prev ? {
-            ...prev,
-            phase: 'characters',
-            currentCharacter: 0,
-            message: `Generating ${totalCharacters} character asset${totalCharacters !== 1 ? 's' : ''}...`,
-          } : prev)
-
-          await onGenerateAllCharacters()
-
-          completedSteps += totalCharacters
-          tasksCompleted.push('characters')
-
-          updateDialogProgress(prev => prev ? {
-            ...prev,
-            phase: 'characters',
-            currentCharacter: totalCharacters,
-            completedSteps,
-            message: 'Character assets generated.',
-          } : prev)
-        } else {
-          toast.warning('Character generation is not available in this project.', { style: toastVisualStyle })
-        }
-      }
-
-      if (includeSceneImages) {
-        if (!onGenerateSceneImage) {
-          toast.warning('Scene image generation is not available.', { style: toastVisualStyle })
-        } else if (totalImages === 0) {
-          updateDialogProgress(prev => prev ? {
-            ...prev,
-            phase: 'images',
-            currentImage: 0,
-            message: 'No scene images to generate.',
-          } : prev)
-        } else {
-          for (let sceneIdx = 0; sceneIdx < scenes.length; sceneIdx++) {
-            const scene = scenes[sceneIdx]
-            const sceneHeading = scene?.heading || scene?.action || `Scene ${sceneIdx + 1}`
-            const hasImage = !!scene?.imageUrl
-            // Skip existing images unless forceRegenerate is enabled
-            const shouldGenerate = !hasImage || forceRegenerateImages
-
-            updateDialogProgress(prev => prev ? {
-              ...prev,
-              phase: 'images',
-              currentScene: sceneIdx + 1,
-              currentImage: Math.min(prev.currentImage, sceneIdx),
-              message: shouldGenerate
-                ? `${forceRegenerateImages && hasImage ? 'Regenerating' : 'Generating'} image for scene ${sceneIdx + 1}${sceneHeading ? ` • ${sceneHeading}` : ''}`
-                : `Scene ${sceneIdx + 1} already has an image. Skipping generation...`,
-            } : prev)
-
-            if (shouldGenerate) {
-              await onGenerateSceneImage(sceneIdx)
-              if (sceneIdx < scenes.length - 1) {
-                updateDialogProgress(prev => prev ? {
-                  ...prev,
-                  message: `Scene ${sceneIdx + 1} complete. Waiting ${SCENE_IMAGE_DELAY_MS / 1000}s before next scene...`,
-                } : prev)
-                await delay(SCENE_IMAGE_DELAY_MS)
-              }
-            }
-
-            completedSteps += 1
-
-            updateDialogProgress(prev => prev ? {
-              ...prev,
-              phase: 'images',
-              currentScene: sceneIdx + 1,
-              currentImage: sceneIdx + 1,
-              completedSteps,
-              message: shouldGenerate
-                ? `${forceRegenerateImages && hasImage ? 'Regenerated' : 'Generated'} image for scene ${sceneIdx + 1}.`
-                : `Scene ${sceneIdx + 1} already had an image (skipped).`,
-            } : prev)
-          }
-
-          if (totalImages > 0) {
-            tasksCompleted.push('scene images')
-          }
-        }
-      }
-
-      const isBackground = generationModeRef.current === 'background' || !stayOpen
-      const taskSummary = tasksCompleted.length > 0 ? tasksCompleted.join(', ') : 'selected items'
-
-      updateDialogProgress(prev => prev ? {
-        ...prev,
-        status: 'completed',
-        completedSteps: prev.totalSteps,
-        message: 'Generation complete.',
-      } : prev)
-
-      const completionMessage = `${isBackground ? 'Background generation' : 'Generation'} complete: ${taskSummary}.`
-      toast.success(completionMessage, { style: toastVisualStyle })
-    } catch (error) {
-      console.error('Error generating audio:', error)
-      updateDialogProgress(prev => prev ? {
-        ...prev,
-        status: 'error',
-        message: 'Generation failed. Please try again.',
-      } : prev)
-      toast.error('Failed to generate audio. Please try again.', { style: toastVisualStyle })
-    } finally {
-      setIsDialogGenerating(false)
-
-      if (generationModeRef.current === 'background' || !stayOpen) {
-        setDialogGenerationProgress(null)
-        setDialogGenerationMode('foreground')
-        generationModeRef.current = 'foreground'
-        backgroundRequestedRef.current = false
-      }
-    }
   }
 
   // Fetch Google/Gemini voices for fallback playback only
@@ -3413,7 +2940,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p className="text-xs">Translations available — select language in Generate Audio dialog</p>
+                    <p className="text-xs">Translations available — pick a language on the scene card, then run Express Audio</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -3474,14 +3001,6 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
             </DropdownMenu>
           </div>
         </div>
-        
-        {/* Background generation progress indicator */}
-        {dialogGenerationMode === 'background' && isDialogGenerating && backgroundProgressPercent !== null && (
-          <div className="flex items-center gap-1 text-xs text-blue-400 mt-2">
-            <Loader className="w-3 h-3 animate-spin" />
-            <span>BG {backgroundProgressPercent}%</span>
-          </div>
-        )}
         
         {/* Project Title & Logline */}
         {(projectTitle || projectLogline) && (
@@ -3988,20 +3507,6 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
         onExportStoryboard={() => setStoryboardPreviewOpen(true)}
         onExportSceneDirection={() => setSceneDirectionPreviewOpen(true)}
       />
-      
-      {/* Generate Audio Dialog */}
-      <GenerateAudioDialog
-        open={generateAudioDialogOpen}
-        onOpenChange={handleGenerateDialogOpenChange}
-        script={script}
-        onGenerate={handleGenerateAudioFromDialog}
-        characters={characters}
-        isGenerating={isDialogGenerating}
-        generationProgress={dialogGenerationMode === 'foreground' ? dialogGenerationProgress : null}
-        mode={dialogGenerationMode}
-        onRunInBackground={isDialogGenerating && dialogGenerationMode === 'foreground' ? handleRunGenerationInBackground : undefined}
-      />
-
       
       {/* Translation Import Modal */}
       <Dialog open={translationImportOpen} onOpenChange={setTranslationImportOpen}>
@@ -4894,9 +4399,6 @@ function SceneCard({
     }
   }, [sceneIdx, availableShootTabs, activeShootTab])
 
-  const [selectedExpressBeatIds, setSelectedExpressBeatIds] = useState<Set<string>>(() => new Set())
-  const [expressSfxDialogOpen, setExpressSfxDialogOpen] = useState(false)
-  const [isExpressSfxRunning, setIsExpressSfxRunning] = useState(false)
   const [expressAudioDialogOpen, setExpressAudioDialogOpen] = useState(false)
   const [isExpressAudioRunning, setIsExpressAudioRunning] = useState(false)
   const [expressGenerateAllDialogOpen, setExpressGenerateAllDialogOpen] = useState(false)
@@ -4934,92 +4436,9 @@ function SceneCard({
   // Manual workflow completion overrides (user marked as done)
   const workflowCompletions = scene.workflowCompletions || {}
 
-  const expressSfxBeatOptions = useMemo(() => {
-    const sceneRecord = scene as Record<string, unknown>
-    return listSelectableActionBeats(sceneRecord).map((beat) => {
-      const hasUrl = beatHasSfxAudio(sceneRecord, {
-        beatId: beat.beatId,
-        actionDescription: beat.actionDescription,
-        kind: 'action',
-      })
-      return {
-        beatId: beat.beatId,
-        label:
-          beat.actionDescription.length > 72
-            ? `${beat.actionDescription.slice(0, 72)}…`
-            : beat.actionDescription,
-        hasAudio:
-          hasUrl &&
-          !actionBeatSfxIsStale(
-            sceneRecord,
-            {
-              beatId: beat.beatId,
-              actionDescription: beat.actionDescription,
-              kind: 'action',
-            },
-            hasUrl
-          ),
-      }
-    })
-  }, [scene])
-
-  const selectedExpressCount = selectedExpressBeatIds.size
-
-  const toggleExpressBeatSelection = useCallback((beatId: string, selected: boolean) => {
-    setSelectedExpressBeatIds((prev) => {
-      const next = new Set(prev)
-      if (selected) next.add(beatId)
-      else next.delete(beatId)
-      return next
-    })
-  }, [])
-
-  const handleExpressSfxConfirm = useCallback(
-    async (options: ExpressSfxConfirmOptions) => {
-      if (!projectId || options.beatIds.length === 0) return
-
-      setIsExpressSfxRunning(true)
-      const statusSeed: Record<string, ExpressBeatSfxStatus> = {}
-      options.beatIds.forEach((beatId) => {
-        statusSeed[beatId] = 'pending'
-      })
-      setExpressBeatStatus(statusSeed)
-
-      try {
-        await dispatchExpressVeoSfx({
-          projectId,
-          sceneIndex: sceneIdx,
-          beatIds: options.beatIds,
-          segmentDurationSeconds: scene.duration,
-          durationOverride: options.durationOverride,
-          regenerate: options.regenerate,
-          onItemStart: (beatId) => {
-            setExpressBeatStatus((prev) => ({ ...prev, [beatId]: 'running' }))
-          },
-          onItemDone: async ({ beatId, sfxIndex, url, attribution }) => {
-            setExpressBeatStatus((prev) => ({ ...prev, [beatId]: 'done' }))
-            const beat = getSceneBeats(scene).find((entry) => entry.beatId === beatId)
-            await onSaveSfxAudio?.(
-              sceneIdx,
-              'sfx',
-              url,
-              sfxIndex,
-              attribution,
-              beat
-                ? { beatId, beatDescription: beat.actionDescription?.trim() ?? '' }
-                : undefined
-            )
-          },
-          onItemError: (beatId) => {
-            setExpressBeatStatus((prev) => ({ ...prev, [beatId]: 'error' }))
-          },
-        })
-      } finally {
-        setIsExpressSfxRunning(false)
-        setExpressSfxDialogOpen(false)
-      }
-    },
-    [projectId, sceneIdx, scene, onSaveSfxAudio]
+  const hasSelectableActionBeats = useMemo(
+    () => listSelectableActionBeats(scene as Record<string, unknown>).length > 0,
+    [scene]
   )
 
   // ---- Express Audio (dialogue + music + Veo SFX) ----
@@ -6994,7 +6413,7 @@ function SceneCard({
                             (Array.isArray(scene.dialogue) && scene.dialogue.length > 0) ||
                             !!String(scene.narration || '').trim() ||
                             !!scene.music ||
-                            expressSfxBeatOptions.length > 0
+                            hasSelectableActionBeats
                           if (!hasAudioContent) return null
 
                           const voicesReady = productionReadiness?.isAudioReady ?? true
@@ -7247,11 +6666,8 @@ function SceneCard({
                                 projectId={projectId}
                                 segmentDurationSeconds={scene.duration}
                                 playingAudio={playingAudio}
-                                expressSelectable={expressSfxBeatOptions.length > 0}
-                                expressSelected={selectedExpressBeatIds.has(beat.beatId)}
-                                onExpressSelectedChange={toggleExpressBeatSelection}
                                 expressStatus={expressBeatStatus[beat.beatId]}
-                                isExpressRunning={isExpressSfxRunning}
+                                isExpressRunning={isExpressAudioRunning}
                                 onPlayAudio={onPlayAudio}
                                 onSaveSfxAudio={onSaveSfxAudio}
                               />
@@ -8467,16 +7883,6 @@ function SceneCard({
             sceneFrameUrl={scene.imageUrl || null}
             onPromptChange={onSegmentPromptChange}
             onSegmentResize={onSegmentResize}
-          />
-
-          <ExpressSfxConfirmDialog
-            open={expressSfxDialogOpen}
-            onOpenChange={setExpressSfxDialogOpen}
-            beats={expressSfxBeatOptions}
-            initialBeatIds={Array.from(selectedExpressBeatIds)}
-            segmentDurationSeconds={scene.duration}
-            isRunning={isExpressSfxRunning}
-            onConfirm={handleExpressSfxConfirm}
           />
 
           <ExpressAudioConfirmDialog

@@ -3,7 +3,6 @@
 import { useMemo, useState } from 'react'
 import { Download, Loader2, Pause, Play, RefreshCw, Volume2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { Checkbox } from '@/components/ui/checkbox'
 import type { SfxDurationOverride } from '@/lib/elevenlabs/sfxDuration'
 import { resolveAutoSfxDuration } from '@/lib/elevenlabs/sfxDuration'
 import { saveAudioFile } from '@/lib/download/saveFile'
@@ -29,9 +28,6 @@ export interface ActionBeatSfxControlsProps {
   projectId?: string
   segmentDurationSeconds?: number
   playingAudio: string | null
-  expressSelectable?: boolean
-  expressSelected?: boolean
-  onExpressSelectedChange?: (beatId: string, selected: boolean) => void
   expressStatus?: ExpressBeatSfxStatus
   isExpressRunning?: boolean
   onPlayAudio?: (audioUrl: string, label: string, sceneId?: string) => void
@@ -52,9 +48,6 @@ export function ActionBeatSfxControls({
   projectId,
   segmentDurationSeconds,
   playingAudio,
-  expressSelectable = false,
-  expressSelected = false,
-  onExpressSelectedChange,
   expressStatus,
   isExpressRunning = false,
   onPlayAudio,
@@ -135,17 +128,6 @@ export function ActionBeatSfxControls({
     <div className="mt-3 pt-3 border-t border-amber-700/40">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
         <div className="flex items-center gap-2 flex-wrap">
-          {expressSelectable && (
-            <Checkbox
-              checked={expressSelected}
-              onCheckedChange={(checked) =>
-                onExpressSelectedChange?.(beat.beatId, checked === true)
-              }
-              disabled={isBusy || !actionText}
-              onClick={(e) => e.stopPropagation()}
-              className="border-amber-400/60 data-[state=checked]:bg-amber-600"
-            />
-          )}
           <Volume2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
           <span className="text-[11px] font-semibold uppercase tracking-wide text-amber-300/90">
             Action SFX

@@ -15149,6 +15149,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     onClose={() => setProductionViewWithUrl('studio')}
                     productionReadyChecklist={productionReadyChecklist}
                     onOpenReferences={() => openReferenceLibrary()}
+                    onAssignVoices={() => openReferenceLibrary('cast')}
                     onExpressGenerate={handleExpressGenerate}
                     isExpressRunning={isExpressRunning}
                     expressStatus={expressStatus}
