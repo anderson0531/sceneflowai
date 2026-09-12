@@ -38,6 +38,7 @@ import {
 } from '@/lib/vision/referenceExpress/estimate'
 import type { ReferenceExpressKind } from '@/lib/vision/referenceExpress/types'
 import {
+  expressKindForRequirement,
   requirementKey,
   type SceneReferenceOverrides,
   type SceneReferenceRequirement,
@@ -58,7 +59,7 @@ export interface SceneReferencesPanelProps {
    * Run Reference Express over this scene. `itemKeys` narrows it to single
    * rows, so a one-off gap does not queue the whole scene again.
    */
-  onExpressReferences?: (options?: { itemKeys?: string[] }) => void | Promise<void>
+  onExpressReferences?: (options?: { itemKeys?: string[] }) => void | Promise<unknown>
   isExpressRunning?: boolean
   onOpenReferenceLibrary?: (tab?: ReferenceLibraryTab) => void
   /** The full library, so a reference the matchers missed can be added by hand. */
@@ -91,16 +92,6 @@ const SOURCE_HINT: Record<SceneReferenceRequirementSource, string> = {
   'beat-plan': "Locked in when this scene's beats were planned — this is what the frames will use.",
   'scene-assigned': 'Assigned to this scene in the Reference Library.',
   detected: 'Matched from the script. Worth a glance — remove it if this scene does not use it.',
-}
-
-/**
- * Reference Express draws cast, locations and props. Wardrobe images come from
- * the character's own wardrobe pass, so they are listed here but not queued.
- */
-const EXPRESS_KIND: Partial<Record<SceneReferenceRequirementKind, ReferenceExpressKind>> = {
-  cast: 'cast',
-  location: 'location',
-  prop: 'prop',
 }
 
 const hasImage = (url?: string): boolean => Boolean(url && url.trim())
@@ -154,7 +145,7 @@ export function SceneReferencesPanel({
   const expressable = useMemo(
     () =>
       missing
-        .map((requirement) => EXPRESS_KIND[requirement.kind])
+        .map((requirement) => expressKindForRequirement(requirement.kind))
         .filter((kind): kind is ReferenceExpressKind => !!kind)
         .map((kind) => ({ kind })),
     [missing]
@@ -323,7 +314,7 @@ export function SceneReferencesPanel({
                   {rows.map((requirement) => {
                     const key = requirementKey(requirement)
                     const drawn = hasImage(requirement.imageUrl)
-                    const canExpress = !!EXPRESS_KIND[requirement.kind]
+                    const expressKind = expressKindForRequirement(requirement.kind)
 
                     return (
                       <div
@@ -362,7 +353,7 @@ export function SceneReferencesPanel({
                         </div>
 
                         <div className="flex items-center gap-1 shrink-0">
-                          {!drawn && canExpress && onExpressReferences && (
+                          {!drawn && expressKind && onExpressReferences && (
                             <button
                               type="button"
                               onClick={(e) => {
@@ -371,12 +362,12 @@ export function SceneReferencesPanel({
                               }}
                               disabled={busy}
                               className="text-[11px] px-2 py-1 bg-cyan-600 hover:bg-cyan-700 text-white rounded disabled:opacity-50"
-                              title={`Draw just this reference (${formatReferenceExpressEstimate(estimateReferenceExpress([{ kind: EXPRESS_KIND[requirement.kind]! }]))})`}
+                              title={`Draw just this reference (${formatReferenceExpressEstimate(estimateReferenceExpress([{ kind: expressKind }]))})`}
                             >
                               Draw
                             </button>
                           )}
-                          {!drawn && !canExpress && onOpenReferenceLibrary && (
+                          {!drawn && !expressKind && onOpenReferenceLibrary && (
                             <button
                               type="button"
                               onClick={(e) => {

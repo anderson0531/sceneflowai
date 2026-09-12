@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import {
+  expressKindForRequirement,
   requirementKey,
   resolveAllSceneReferenceRequirements,
   resolveSceneRequiredReferences,
+  selectUndrawnExpressableRequirements,
   type SceneReferenceRequirement,
 } from '@/lib/vision/sceneReferenceRequirements'
 
@@ -420,6 +422,66 @@ describe('the user can correct the matchers in both directions', () => {
     const lantern = requirements.find((requirement) => requirement.id === 'obj-lantern')!
 
     expect(requirementKey(lantern)).toBe('prop:obj-lantern')
+  })
+})
+
+describe('what Express References can actually draw', () => {
+  const requirement = (
+    over: Partial<SceneReferenceRequirement> & Pick<SceneReferenceRequirement, 'kind' | 'id'>
+  ): SceneReferenceRequirement => ({
+    name: over.id,
+    source: 'detected',
+    ...over,
+  })
+
+  it('maps the three kinds the reference batch generates', () => {
+    expect(expressKindForRequirement('cast')).toBe('cast')
+    expect(expressKindForRequirement('location')).toBe('location')
+    expect(expressKindForRequirement('prop')).toBe('prop')
+  })
+
+  it('excludes wardrobe, which is drawn by the character wardrobe pass', () => {
+    expect(expressKindForRequirement('wardrobe')).toBeNull()
+  })
+
+  it('selects only the undrawn rows a run would queue', () => {
+    const selected = selectUndrawnExpressableRequirements([
+      requirement({ kind: 'cast', id: 'char-piper', imageUrl: 'https://example.com/piper.png' }),
+      requirement({ kind: 'cast', id: 'char-ruiz' }),
+      requirement({ kind: 'location', id: 'loc-tunnel', imageUrl: '   ' }),
+      requirement({ kind: 'prop', id: 'obj-ledger', imageUrl: 'https://example.com/ledger.png' }),
+    ])
+
+    expect(selected.map((entry) => entry.id)).toEqual(['char-ruiz', 'loc-tunnel'])
+  })
+
+  /**
+   * An undrawn wardrobe is a real gap, but no reference batch will ever fill
+   * it. Chaining on it would wait forever, so it is reported and skipped.
+   */
+  it('skips an undrawn wardrobe so a chained run cannot block on it', () => {
+    const selected = selectUndrawnExpressableRequirements([
+      requirement({ kind: 'wardrobe', id: 'wd-piper-gala', characterId: 'char-piper' }),
+    ])
+
+    expect(selected).toEqual([])
+  })
+
+  it('finds nothing to draw once the scene is fully referenced', () => {
+    const requirements = resolveSceneRequiredReferences({
+      ...baseInput,
+      objectReferences: [LEDGER],
+      locationReferences: [ATRIUM],
+      sceneIndex: 1,
+      scene: {
+        heading: 'INT. GLASS ATRIUM - DAY',
+        sceneNumber: 2,
+        action: 'PIPER sets the leather ledger on the table.',
+      },
+    })
+
+    expect(requirements.length).toBeGreaterThan(0)
+    expect(selectUndrawnExpressableRequirements(requirements)).toEqual([])
   })
 })
 

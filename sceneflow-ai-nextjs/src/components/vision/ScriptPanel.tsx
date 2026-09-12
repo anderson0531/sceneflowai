@@ -454,7 +454,7 @@ interface ScriptPanelProps {
   onExpressSceneReferences?: (
     sceneIndex: number,
     options?: { itemKeys?: string[] }
-  ) => void | Promise<void>
+  ) => void | Promise<unknown>
   isExpressGeneratingReferences?: boolean
   onOpenReferenceLibrary?: (tab?: ReferenceLibraryTab) => void
   // Take management
@@ -4397,7 +4397,7 @@ interface SceneCardProps {
   onExpressSceneReferences?: (
     sceneIndex: number,
     options?: { itemKeys?: string[] }
-  ) => void | Promise<void>
+  ) => void | Promise<unknown>
   isExpressGeneratingReferences?: boolean
   onOpenReferenceLibrary?: (tab?: ReferenceLibraryTab) => void
   // Language playback offset for translated audio alignment
@@ -6849,6 +6849,7 @@ function SceneCard({
                     characters={characters}
                     objectReferences={objectReferences}
                     locationReferences={locationReferences}
+                    sceneRequirements={sceneRequiredReferences}
                     selectedLanguage={selectedLanguage}
                     narrationVoice={narrationVoice}
                     expressPhaseStatus={expressStatus?.[sceneIdx]}

@@ -12,13 +12,21 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Image as ImageIcon, Loader, Zap } from 'lucide-react'
+import { Image as ImageIcon, Library, Loader, Zap } from 'lucide-react'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
 import {
   enumerateStoryboardFrameSlots,
   filterStoryboardSlotsForExpressChecklist,
   type StoryboardFrameSlot,
 } from '@/lib/storyboard/types'
+import {
+  estimateReferenceExpress,
+  formatReferenceExpressEstimate,
+} from '@/lib/vision/referenceExpress/estimate'
+import {
+  expressKindForRequirement,
+  type SceneReferenceRequirement,
+} from '@/lib/vision/sceneReferenceRequirements'
 
 export type ExpressSceneScope = 'missing' | 'selected'
 
@@ -34,6 +42,12 @@ interface ExpressSceneConfirmDialogProps {
   scene: Record<string, unknown>
   isRunning?: boolean
   onConfirm: (options: ExpressSceneConfirmOptions) => void
+  /**
+   * References this scene needs that have no image yet. Confirming draws them
+   * first and then runs the frames, so the commitment has to be stated up
+   * front — it is the difference between a 60-second run and a five-minute one.
+   */
+  missingReferences?: SceneReferenceRequirement[]
 }
 
 function slotEligibleForScope(slot: StoryboardFrameSlot, scope: ExpressSceneScope): boolean {
@@ -47,11 +61,38 @@ export function ExpressSceneConfirmDialog({
   scene,
   isRunning = false,
   onConfirm,
+  missingReferences = [],
 }: ExpressSceneConfirmDialogProps) {
   const t = useTranslations('production.expressScene')
   const tCommon = useTranslations('common')
   const [scope, setScope] = useState<ExpressSceneScope>('missing')
   const [selectedFrameKeys, setSelectedFrameKeys] = useState<string[]>([])
+
+  /**
+   * Split rather than filtered: a wardrobe image comes from the character's
+   * own wardrobe pass, so it still has to be named here even though this run
+   * will not draw it. Silently omitting it is how a frame ends up inventing an
+   * outfit.
+   */
+  const { drawableReferences, libraryOnlyReferences } = useMemo(() => {
+    const drawable: SceneReferenceRequirement[] = []
+    const libraryOnly: SceneReferenceRequirement[] = []
+    for (const requirement of missingReferences) {
+      if (expressKindForRequirement(requirement.kind)) drawable.push(requirement)
+      else libraryOnly.push(requirement)
+    }
+    return { drawableReferences: drawable, libraryOnlyReferences: libraryOnly }
+  }, [missingReferences])
+
+  const referenceEstimate = useMemo(
+    () =>
+      estimateReferenceExpress(
+        drawableReferences.map((requirement) => ({
+          kind: expressKindForRequirement(requirement.kind)!,
+        }))
+      ),
+    [drawableReferences]
+  )
 
   const allSlots = useMemo(
     () => enumerateStoryboardFrameSlots(scene, undefined, { startFramesOnly: true }),
@@ -102,6 +143,46 @@ export function ExpressSceneConfirmDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
+          {missingReferences.length > 0 && (
+            <div className="rounded-md border border-cyan-700/50 bg-cyan-950/30 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-cyan-300 mb-1.5 flex items-center gap-1.5">
+                <Library className="w-3.5 h-3.5" />
+                Drawn first
+              </p>
+              {drawableReferences.length > 0 ? (
+                <p className="text-[11px] text-cyan-100/80">
+                  This scene is missing {drawableReferences.length} reference
+                  {drawableReferences.length === 1 ? '' : 's'}. They will be drawn before the
+                  frames, so nothing invents its own appearance — adds{' '}
+                  {formatReferenceExpressEstimate(referenceEstimate)}.
+                </p>
+              ) : (
+                <p className="text-[11px] text-cyan-100/80">
+                  This scene is still missing references that Express cannot draw.
+                </p>
+              )}
+              <ul className="mt-2 space-y-1">
+                {drawableReferences.map((requirement) => (
+                  <li
+                    key={`${requirement.kind}:${requirement.id}`}
+                    className="text-[11px] text-cyan-50/90 flex items-center gap-1.5"
+                  >
+                    <span className="w-1 h-1 rounded-full bg-cyan-400 shrink-0" />
+                    <span className="truncate">{requirement.name}</span>
+                    <span className="text-cyan-300/60">{requirement.kind}</span>
+                  </li>
+                ))}
+              </ul>
+              {libraryOnlyReferences.length > 0 && (
+                <p className="text-[11px] text-amber-300/80 mt-2">
+                  {libraryOnlyReferences.map((requirement) => requirement.name).join(', ')} —
+                  wardrobe is drawn from the character&apos;s own wardrobe pass, so open the
+                  Reference Library for {libraryOnlyReferences.length === 1 ? 'it' : 'those'}.
+                </p>
+              )}
+            </div>
+          )}
+
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
               {t('scope')}

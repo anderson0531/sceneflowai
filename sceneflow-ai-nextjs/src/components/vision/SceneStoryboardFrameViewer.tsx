@@ -40,6 +40,7 @@ import {
   formatReferenceReadinessMessage,
   resolveReferenceReadiness,
 } from '@/lib/vision/referenceReadiness'
+import type { SceneReferenceRequirement } from '@/lib/vision/sceneReferenceRequirements'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -60,6 +61,12 @@ export interface SceneStoryboardFrameViewerProps {
   characters?: any[]
   objectReferences?: Array<{ id: string; name: string; imageUrl: string; description?: string }>
   locationReferences?: Array<{ location?: string; locationDisplay?: string; imageUrl?: string }>
+  /**
+   * What this scene needs drawn, resolved by the caller so the References tab
+   * and the frame gate cannot disagree. Undrawn rows are named in the Express
+   * confirm dialog and drawn ahead of the frames.
+   */
+  sceneRequirements?: SceneReferenceRequirement[]
   selectedLanguage?: string
   narrationVoice?: unknown
   expressPhaseStatus?: ExpressSceneStatus
@@ -323,6 +330,7 @@ export function SceneStoryboardFrameViewer({
   characters = [],
   objectReferences = [],
   locationReferences = [],
+  sceneRequirements = [],
   selectedLanguage = 'en',
   narrationVoice,
   expressPhaseStatus,
@@ -464,6 +472,11 @@ export function SceneStoryboardFrameViewer({
     [characters, locationReferences, objectReferences]
   )
   const referenceGateMessage = formatReferenceReadinessMessage(referenceReadiness)
+
+  const missingSceneReferences = useMemo(
+    () => sceneRequirements.filter((requirement) => !requirement.imageUrl?.trim()),
+    [sceneRequirements]
+  )
 
   const sceneExpressDisabled =
     isExpressRunning || (!expressGateBlocked && !sceneExpressPreflight.ok)
@@ -1019,6 +1032,7 @@ export function SceneStoryboardFrameViewer({
           onOpenChange={setExpressSceneDialogOpen}
           scene={scene}
           isRunning={isExpressRunning}
+          missingReferences={missingSceneReferences}
           onConfirm={(options) => {
             setExpressSceneDialogOpen(false)
             void onExpressSceneGenerate(options)

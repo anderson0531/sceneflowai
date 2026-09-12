@@ -127,6 +127,11 @@ import {
 } from '@/lib/production/productionReadinessGate'
 import { formatReferenceReadinessMessage } from '@/lib/vision/referenceReadiness'
 import type { ReferenceExpressScope } from '@/lib/vision/referenceExpress/types'
+import {
+  resolveSceneRequiredReferences,
+  selectUndrawnExpressableRequirements,
+  type SceneReferenceOverrides,
+} from '@/lib/vision/sceneReferenceRequirements'
 // Dynamic import to break TDZ chain - SceneGallery → SceneProductionManager → SegmentStudio
 // shares scope-hoisted modules with ScriptPanel chunk causing 'Cannot access te before initialization'
 const SceneGallery = dynamic(
@@ -369,6 +374,20 @@ type SceneBookmark = {
   sceneId: string
   sceneNumber: number
 }
+
+/**
+ * Why an Express References run did or did not start.
+ *
+ * Auto-chaining needs the distinction: `nothing-to-do` means the frames can go
+ * straight away, `already-running` means wait for the run in flight rather
+ * than starting a second one, and `error` has to abort the chain instead of
+ * drawing frames against references that were never drawn.
+ */
+type ReferenceExpressStartOutcome =
+  | { outcome: 'started'; itemCount: number }
+  | { outcome: 'already-running' }
+  | { outcome: 'nothing-to-do' }
+  | { outcome: 'error'; error: string }
 
 // UUID v4 validation regex - rejects placeholder IDs like 'new-project'
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -9951,14 +9970,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
    * lost the whole thing. Now the server owns the queue and the user keeps
    * editing while it runs.
    */
-  const handleExpressGenerateReferences = async (scope?: ReferenceExpressScope) => {
-    if (!projectId) return
+  const handleExpressGenerateReferences = async (
+    scope?: ReferenceExpressScope
+  ): Promise<ReferenceExpressStartOutcome> => {
+    if (!projectId) return { outcome: 'error', error: 'No project loaded' }
 
     if (referenceExpressJob.isActive) {
       toast.info('Reference Express is already running', {
         description: 'Watch the status card in the corner — you can keep working.',
       })
-      return
+      return { outcome: 'already-running' }
     }
 
     const sceneScoped = !!scope?.sceneIndices?.length
@@ -9984,7 +10005,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             : 'All reference images are already generated'
         )
         setIsExpressGeneratingReferences(false)
-        return
+        return { outcome: 'nothing-to-do' }
       }
       if (!res.ok) {
         throw new Error(data?.error || 'Failed to start Reference Express')
@@ -10005,10 +10026,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         description: `Generating ${count} reference image${count === 1 ? '' : 's'}${sceneLabel} in the background. Keep working — we'll notify you when they're ready.`,
         duration: 8000,
       })
+      return { outcome: 'started', itemCount: count }
     } catch (error) {
       console.error('[handleExpressGenerateReferences] Error:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to start Express References')
+      const message =
+        error instanceof Error ? error.message : 'Failed to start Express References'
+      toast.error(message)
       setIsExpressGeneratingReferences(false)
+      return { outcome: 'error', error: message }
     }
   }
 
@@ -13472,7 +13497,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     ) => {
       if (!projectId || !script?.script?.scenes?.[sceneIndex]) return
       if (isExpressRunning) return
-      if (blockedByMissingReferences()) return
 
       const sceneRecord = script.script.scenes[sceneIndex] as Record<string, unknown>
       const sceneNumber =
@@ -13546,6 +13570,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           storyboardQuality: imageTier,
         }),
         phases: {
+          references: 'pending',
           direction: 'pending',
           audio: 'pending',
           'image-plan': 'pending',
@@ -13609,6 +13634,63 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       try {
+        /**
+         * Just-in-time references. A frame drawn against a reference that has
+         * no image invents its own appearance, differently each time, so the
+         * gaps this scene has are drawn first and the frames follow — one
+         * click, no detour through the Reference Library.
+         */
+        const missingReferences = selectUndrawnExpressableRequirements(
+          resolveSceneRequiredReferences({
+            scene: sceneRecord,
+            sceneIndex,
+            characters,
+            locationReferences,
+            objectReferences,
+            overrides:
+              (sceneRecord.referenceOverrides as SceneReferenceOverrides | undefined) ?? null,
+          })
+        )
+
+        if (missingReferences.length === 0) {
+          updateOverlayPhase('references', 'done')
+        } else {
+          updateOverlayPhase('references', 'running')
+          const started = await handleExpressSceneReferences(sceneIndex)
+
+          if (started.outcome === 'error') {
+            updateOverlayPhase('references', 'error')
+            finishBeatFrameOverlay({
+              preflightError: `Could not draw this scene's references: ${started.error}`,
+            })
+            return
+          }
+
+          if (started.outcome === 'started' || started.outcome === 'already-running') {
+            // The images land in `project.metadata`, which
+            // `/api/vision/express` re-reads server-side, so the frame run
+            // cannot start until the job settles.
+            const settled = await referenceExpressJob.waitUntilSettled()
+            if (settled && settled.status !== 'completed') {
+              updateOverlayPhase('references', 'error')
+              finishBeatFrameOverlay({
+                preflightError:
+                  settled.status === 'cancelled'
+                    ? 'Reference generation was cancelled, so no frames were drawn.'
+                    : `Reference generation failed: ${settled.error || 'unknown error'}`,
+              })
+              return
+            }
+          }
+
+          // Whether the batch ran or the server said there was nothing left to
+          // draw, this client's reference state is behind — and the sync below
+          // writes that state back. Pull the images in first, or the sync
+          // overwrites them with the blanks we still hold.
+          await refreshReferencesFromServer()
+          updateOverlayPhase('references', 'done')
+        }
+
         await syncVisionReferencesForExpress()
         const response = await fetch('/api/vision/express', {
           method: 'POST',
@@ -13784,6 +13866,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                           finished: true,
                           preflightError: preflightMsg,
                           phases: {
+                            // References already ran ahead of the frames, so
+                            // their outcome survives a frame-side failure.
+                            ...prev.phases,
                             direction: 'error',
                             audio: 'error',
                             'image-plan': 'error',
@@ -13871,7 +13956,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       }
     },
-    [projectId, script, isExpressRunning, blockedByMissingReferences, reportMissingReferenceImages, lockedArtStyle, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage, syncExpressBeatImageToProduction]
+    [projectId, script, isExpressRunning, characters, locationReferences, objectReferences, handleExpressSceneReferences, referenceExpressJob.waitUntilSettled, refreshReferencesFromServer, reportMissingReferenceImages, lockedArtStyle, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage, syncExpressBeatImageToProduction]
   )
 
   const handleFinalizeStoryboard = useCallback(

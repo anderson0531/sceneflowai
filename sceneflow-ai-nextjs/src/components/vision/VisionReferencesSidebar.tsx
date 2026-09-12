@@ -139,7 +139,7 @@ export interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps
   /** ID of location currently generating an image */
   generatingLocationId?: string | null
   /** Batch-generate missing cast, location, and prop reference images */
-  onExpressGenerateReferences?: () => Promise<void>
+  onExpressGenerateReferences?: () => Promise<unknown>
   isExpressGeneratingReferences?: boolean
   /** When true, hide the in-panel "Reference Library" heading (dialog provides its own) */
   hideTitle?: boolean
