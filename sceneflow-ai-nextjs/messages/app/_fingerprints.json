@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-12T03:49:35.922Z",
+  "generatedAt": "2026-09-12T04:31:58.697Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -936,6 +936,14 @@
       "expressAudio.confirm": "68118a0929eda9e4",
       "expressScene.title": "14e844e36bdc8bbc",
       "expressScene.description": "944606f355bbb385",
+      "expressScene.referencesTitle": "da357830de18eed1",
+      "expressScene.referencesMissing": "4b3694090cd5129b",
+      "expressScene.referencesNoneDrawable": "f9e847081069d861",
+      "expressScene.referencesLibraryOnly": "eb260ce891a32641",
+      "expressScene.referenceKindCast": "603705cc260e946d",
+      "expressScene.referenceKindWardrobe": "7d4b47cf84bb52b6",
+      "expressScene.referenceKindLocation": "e6eaea18e885e107",
+      "expressScene.referenceKindProp": "e835d0bf51a4ea93",
       "expressScene.scope": "b073f6c68ef87211",
       "expressScene.scopeMissing": "274b2e050602e8ee",
       "expressScene.scopeRegenerate": "374f52c90736fec2",

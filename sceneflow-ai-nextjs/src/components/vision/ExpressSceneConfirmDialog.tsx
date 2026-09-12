@@ -30,7 +30,19 @@ import {
 import {
   expressKindForRequirement,
   type SceneReferenceRequirement,
+  type SceneReferenceRequirementKind,
 } from '@/lib/vision/sceneReferenceRequirements'
+
+/**
+ * Static keys rather than a `referenceKind.${kind}` template, so the catalog
+ * check can see every message this dialog can render.
+ */
+const REFERENCE_KIND_LABEL_KEY: Record<SceneReferenceRequirementKind, string> = {
+  cast: 'referenceKindCast',
+  wardrobe: 'referenceKindWardrobe',
+  location: 'referenceKindLocation',
+  prop: 'referenceKindProp',
+}
 
 export type ExpressSceneScope = 'missing' | 'selected'
 
@@ -184,20 +196,16 @@ export function ExpressSceneConfirmDialog({
             <div className="rounded-md border border-cyan-700/50 bg-cyan-950/30 p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-cyan-300 mb-1.5 flex items-center gap-1.5">
                 <Library className="w-3.5 h-3.5" />
-                Drawn first
+                {t('referencesTitle')}
               </p>
-              {drawableReferences.length > 0 ? (
-                <p className="text-[11px] text-cyan-100/80">
-                  This scene is missing {drawableReferences.length} reference
-                  {drawableReferences.length === 1 ? '' : 's'}. They will be drawn before the
-                  frames, so nothing invents its own appearance — adds{' '}
-                  {formatReferenceExpressEstimate(referenceEstimate)}.
-                </p>
-              ) : (
-                <p className="text-[11px] text-cyan-100/80">
-                  This scene is still missing references that Express cannot draw.
-                </p>
-              )}
+              <p className="text-[11px] text-cyan-100/80">
+                {drawableReferences.length > 0
+                  ? t('referencesMissing', {
+                      count: drawableReferences.length,
+                      estimate: formatReferenceExpressEstimate(referenceEstimate),
+                    })
+                  : t('referencesNoneDrawable')}
+              </p>
               <ul className="mt-2 space-y-1">
                 {drawableReferences.map((requirement) => (
                   <li
@@ -206,15 +214,20 @@ export function ExpressSceneConfirmDialog({
                   >
                     <span className="w-1 h-1 rounded-full bg-cyan-400 shrink-0" />
                     <span className="truncate">{requirement.name}</span>
-                    <span className="text-cyan-300/60">{requirement.kind}</span>
+                    <span className="text-cyan-300/60">
+                      {t(REFERENCE_KIND_LABEL_KEY[requirement.kind])}
+                    </span>
                   </li>
                 ))}
               </ul>
               {libraryOnlyReferences.length > 0 && (
                 <p className="text-[11px] text-amber-300/80 mt-2">
-                  {libraryOnlyReferences.map((requirement) => requirement.name).join(', ')} —
-                  wardrobe is drawn from the character&apos;s own wardrobe pass, so open the
-                  Reference Library for {libraryOnlyReferences.length === 1 ? 'it' : 'those'}.
+                  {t('referencesLibraryOnly', {
+                    names: libraryOnlyReferences
+                      .map((requirement) => requirement.name)
+                      .join(', '),
+                    count: libraryOnlyReferences.length,
+                  })}
                 </p>
               )}
             </div>
