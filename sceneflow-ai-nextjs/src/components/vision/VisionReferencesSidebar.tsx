@@ -32,6 +32,7 @@ import { SceneReferenceCard } from './SceneReferenceCard'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { DetailedSceneDirection } from '@/types/scene-direction'
 import { buildObjectReferencePrompt } from '@/lib/vision/referenceExpressPrompts'
+import { resolveReferenceReadiness } from '@/lib/vision/referenceReadiness'
 import {
   DeferredImageSkeleton,
   isDeferredImageUrl,
@@ -1487,13 +1488,19 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   const [objectRegenerateTarget, setObjectRegenerateTarget] = useState<VisualReference | null>(null)
   const [referenceExpressDialogOpen, setReferenceExpressDialogOpen] = useState(false)
 
+  // Same counts that gate frame generation, so the button here clears the gate.
   const referencesExpressStats = useMemo(() => {
-    const cast = characters.filter(
-      (c) => c.type !== 'narrator' && !c.referenceImage?.trim()
-    ).length
-    const locations = locationReferences.filter((l) => !l.imageUrl?.trim()).length
-    const props = objectReferences.filter((o) => !o.imageUrl?.trim()).length
-    return { cast, locations, props, total: cast + locations + props }
+    const readiness = resolveReferenceReadiness({
+      characters,
+      locationReferences,
+      objectReferences,
+    })
+    return {
+      cast: readiness.missingCast.length,
+      locations: readiness.missingLocations.length,
+      props: readiness.missingObjects.length,
+      total: readiness.missingTotal,
+    }
   }, [characters, locationReferences, objectReferences])
 
   // Reference tabs matching ScriptPanel folder tab style (Storyboard removed - handled in main panel)

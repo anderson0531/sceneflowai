@@ -4,6 +4,11 @@
 
 import { calculateProductionReadiness } from '@/components/ui/StatusBadge'
 import { getStoryboardBeatProgress } from '@/lib/production/sceneProgress'
+import {
+  formatReferenceReadinessMessage,
+  resolveReferenceReadiness,
+  type ReferenceReadiness,
+} from '@/lib/vision/referenceReadiness'
 
 export interface ExpressGateResult {
   allowed: boolean
@@ -25,6 +30,9 @@ export interface ProductionReadyChecklist {
   missingVoices: string[]
   storyboardBeatsComplete: number
   storyboardBeatsTotal: number
+  /** Every reference row in the library has a generated image. */
+  referencesReady: boolean
+  referenceReadiness: ReferenceReadiness
   /** True when voices and references are ready for Express. */
   isPreVisReady: boolean
   /** @deprecated Use isPreVisReady */
@@ -34,8 +42,8 @@ export interface ProductionReadyChecklist {
 export function evaluateProductionReadyChecklist(input: {
   characters: Array<{ name: string; type?: string; voiceConfig?: unknown; referenceImageUrl?: string; referenceImage?: string }>
   scenes: Record<string, unknown>[]
-  objectReferences?: unknown[]
-  locationReferences?: unknown[]
+  objectReferences?: Array<{ name?: string; imageUrl?: string }>
+  locationReferences?: Array<{ location?: string; locationDisplay?: string; name?: string; imageUrl?: string }>
 }): ProductionReadyChecklist {
   const readiness = calculateProductionReadiness(input.characters, input.scenes as never[])
   const storyboardTotals = input.scenes.reduce(
@@ -51,12 +59,18 @@ export function evaluateProductionReadyChecklist(input: {
     (input.objectReferences?.length ?? 0) > 0 ||
     (input.locationReferences?.length ?? 0) > 0
 
+  const referenceReadiness = resolveReferenceReadiness({
+    characters: input.characters,
+    objectReferences: input.objectReferences,
+    locationReferences: input.locationReferences,
+  })
+
   const voicesReady = readiness.isAudioReady
   const storyboardBeatsReady =
     storyboardTotals.total === 0 ||
     storyboardTotals.complete >= storyboardTotals.total
 
-  const isPreVisReady = voicesReady && hasReferences
+  const isPreVisReady = voicesReady && hasReferences && referenceReadiness.ready
 
   return {
     voicesReady,
@@ -65,6 +79,8 @@ export function evaluateProductionReadyChecklist(input: {
     missingVoices: readiness.charactersMissingVoices,
     storyboardBeatsComplete: storyboardTotals.complete,
     storyboardBeatsTotal: storyboardTotals.total,
+    referencesReady: referenceReadiness.ready,
+    referenceReadiness,
     isPreVisReady,
     isProductionReady: isPreVisReady,
   }
@@ -88,8 +104,18 @@ export function canRunExpress(input: {
     reasons.push('Add at least one character, prop, or location reference before Express.')
   }
 
-  if (reasons.length === 0) {
+  if (reasons.length === 0 && input.checklist.referencesReady !== false) {
     return { allowed: true, reasons: [] }
+  }
+
+  // An un-imaged reference is a hard stop, not a warning: every frame that
+  // names it invents a different appearance, so a soft-gated run produces
+  // exactly the inconsistency Express exists to avoid.
+  if (input.checklist.referencesReady === false) {
+    return {
+      allowed: false,
+      reasons: [...reasons, formatReferenceReadinessMessage(input.checklist.referenceReadiness)],
+    }
   }
 
   return {

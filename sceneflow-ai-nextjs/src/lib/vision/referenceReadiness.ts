@@ -16,7 +16,9 @@
 export type ReferenceReadinessCharacter = {
   name?: string
   type?: string
+  /** Vision characters use `referenceImage`; some callers pass `referenceImageUrl`. */
   referenceImage?: string
+  referenceImageUrl?: string
 }
 
 export type ReferenceReadinessLocation = {
@@ -56,7 +58,12 @@ export function resolveReferenceReadiness(
   input: ReferenceReadinessInput
 ): ReferenceReadiness {
   const missingCast = (input.characters ?? [])
-    .filter((character) => needsAppearance(character) && !hasImage(character?.referenceImage))
+    .filter(
+      (character) =>
+        needsAppearance(character) &&
+        !hasImage(character?.referenceImage) &&
+        !hasImage(character?.referenceImageUrl)
+    )
     .map((character, index) => character?.name?.trim() || `Character ${index + 1}`)
 
   const missingLocations = (input.locationReferences ?? [])

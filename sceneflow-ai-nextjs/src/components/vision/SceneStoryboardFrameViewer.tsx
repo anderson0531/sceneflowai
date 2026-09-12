@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
+  AlertTriangle,
   Camera,
   Check,
   ChevronDown,
@@ -35,6 +36,10 @@ import { isPreVisStale } from '@/lib/storyboard/preVisSync'
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import { countDraftStoryboardFrames } from '@/lib/storyboard/storyboardQuality'
 import { resolveFrameEditCharacterReferences } from '@/lib/vision/resolveFrameEditCharacterReferences'
+import {
+  formatReferenceReadinessMessage,
+  resolveReferenceReadiness,
+} from '@/lib/vision/referenceReadiness'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -54,6 +59,7 @@ export interface SceneStoryboardFrameViewerProps {
   prompt?: string
   characters?: any[]
   objectReferences?: Array<{ id: string; name: string; imageUrl: string; description?: string }>
+  locationReferences?: Array<{ location?: string; locationDisplay?: string; imageUrl?: string }>
   selectedLanguage?: string
   narrationVoice?: unknown
   expressPhaseStatus?: ExpressSceneStatus
@@ -311,6 +317,7 @@ export function SceneStoryboardFrameViewer({
   prompt = '',
   characters = [],
   objectReferences = [],
+  locationReferences = [],
   selectedLanguage = 'en',
   narrationVoice,
   expressPhaseStatus,
@@ -422,9 +429,36 @@ export function SceneStoryboardFrameViewer({
         narrationVoice,
         language: selectedLanguage,
         framesOnly: isFirstTimeFrameGeneration,
+        locationReferences,
+        objectReferences,
       }),
-    [scene, sceneIndex, characters, narrationVoice, selectedLanguage, isFirstTimeFrameGeneration]
+    [
+      scene,
+      sceneIndex,
+      characters,
+      narrationVoice,
+      selectedLanguage,
+      isFirstTimeFrameGeneration,
+      locationReferences,
+      objectReferences,
+    ]
   )
+
+  /**
+   * Un-imaged references sink single-frame generation too, not just Express:
+   * the beat planner names the reference, nothing gets attached, and the model
+   * invents an appearance that will not match the next frame.
+   */
+  const referenceReadiness = useMemo(
+    () =>
+      resolveReferenceReadiness({
+        characters,
+        locationReferences,
+        objectReferences,
+      }),
+    [characters, locationReferences, objectReferences]
+  )
+  const referenceGateMessage = formatReferenceReadinessMessage(referenceReadiness)
 
   const sceneExpressDisabled =
     isExpressRunning || (!expressGateBlocked && !sceneExpressPreflight.ok)
@@ -528,6 +562,14 @@ export function SceneStoryboardFrameViewer({
     []
   )
 
+  const blockedByReferences = useCallback((): boolean => {
+    if (referenceReadiness.ready) return false
+    toast.error(referenceGateMessage, {
+      description: 'Open the Reference Library and use Generate to draw the missing references.',
+    })
+    return true
+  }, [referenceReadiness.ready, referenceGateMessage])
+
   const slotHandlers = useMemo(
     (): StoryboardSlotHandlers => ({
       sceneIndex,
@@ -537,27 +579,36 @@ export function SceneStoryboardFrameViewer({
       generatingDialogueFrames,
       generatingCustomFrames,
       onGenerate: async (p) => {
+        if (blockedByReferences()) return
         if (onGenerateScene) await onGenerateScene(p)
       },
       onGenerateDialogueFrame: onGenerateDialogueFrame
         ? async (dialogueIdx) => {
+            if (blockedByReferences()) return
             const key = `${sceneIndex}-${dialogueIdx}`
             await wrapGenerate(key, () => onGenerateDialogueFrame(dialogueIdx))
           }
         : undefined,
       onGenerateBeatFrame: onGenerateBeatFrame
         ? async (beatId) => {
+            if (blockedByReferences()) return
             const key = `${sceneIndex}-beat-${beatId}`
             await wrapGenerate(key, () => onGenerateBeatFrame(beatId))
           }
         : undefined,
-      onDirectFrame,
+      onDirectFrame: onDirectFrame
+        ? (slot) => {
+            if (blockedByReferences()) return
+            onDirectFrame(slot)
+          }
+        : undefined,
       onUploadDialogueFrame,
       onUploadBeatFrame,
       onEditFrame: handleEditFrame,
       onUpload: onUploadScene,
       onGenerateCustomFrame: onGenerateCustomFrame
         ? async (frameId) => {
+            if (blockedByReferences()) return
             const key = `custom-${sceneIndex}-${frameId}`
             setGeneratingCustomFrames((prev) => new Set(prev).add(key))
             try {
@@ -597,6 +648,7 @@ export function SceneStoryboardFrameViewer({
       onUploadCustomFrame,
       onDeleteStoryboardFrame,
       wrapGenerate,
+      blockedByReferences,
       isFirstTimeFrameGeneration,
       onExpressSceneGenerate,
       openExpressSceneDialog,
@@ -685,6 +737,17 @@ export function SceneStoryboardFrameViewer({
                   Rate limited
                 </span>
               )}
+            </div>
+          )}
+          {!referenceReadiness.ready && (
+            <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
+              <p className="text-[11px] leading-relaxed text-amber-200">
+                {referenceGateMessage}{' '}
+                <span className="text-amber-300/80">
+                  Open the Reference Library and use Generate to draw them.
+                </span>
+              </p>
             </div>
           )}
           {frameSlots.length === 0 ? (

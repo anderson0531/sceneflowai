@@ -6736,6 +6736,7 @@ function SceneCard({
                     prompt={scenePrompt || scene.imagePrompt || ''}
                     characters={characters}
                     objectReferences={objectReferences}
+                    locationReferences={locationReferences}
                     selectedLanguage={selectedLanguage}
                     narrationVoice={narrationVoice}
                     expressPhaseStatus={expressStatus?.[sceneIdx]}

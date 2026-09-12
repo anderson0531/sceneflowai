@@ -112,3 +112,68 @@ describe('evaluateProductionReadyChecklist', () => {
     expect(gate.reasons.some((r) => r.includes('voice'))).toBe(true)
   })
 })
+
+describe('Express waits for the whole reference library to be drawn', () => {
+  const readyCast = [
+    {
+      name: 'Marcus',
+      voiceConfig: { voiceId: 'gemini-achird' },
+      referenceImage: 'https://example.com/marcus.png',
+    },
+  ]
+
+  it('blocks on a prop reference that has no generated image', () => {
+    const checklist = evaluateProductionReadyChecklist({
+      scenes: [],
+      characters: readyCast,
+      objectReferences: [{ name: 'Iron spanner' }],
+      locationReferences: [],
+    })
+
+    expect(checklist.referencesReady).toBe(false)
+    expect(checklist.isPreVisReady).toBe(false)
+
+    const gate = canRunExpress({ checklist })
+    expect(gate.allowed).toBe(false)
+    expect(gate.reasons.some((r) => r.includes('Iron spanner'))).toBe(true)
+  })
+
+  it('blocks on a location reference that has no generated image', () => {
+    const checklist = evaluateProductionReadyChecklist({
+      scenes: [],
+      characters: readyCast,
+      objectReferences: [],
+      locationReferences: [{ location: 'INT. RECEIVING TERMINAL' }],
+    })
+
+    expect(checklist.referencesReady).toBe(false)
+    const gate = canRunExpress({ checklist })
+    expect(gate.allowed).toBe(false)
+    expect(gate.reasons.some((r) => r.includes('RECEIVING TERMINAL'))).toBe(true)
+  })
+
+  it('stays blocked even under a soft gate', () => {
+    const checklist = evaluateProductionReadyChecklist({
+      scenes: [],
+      characters: readyCast,
+      objectReferences: [{ name: 'Iron spanner' }],
+      locationReferences: [],
+    })
+
+    expect(canRunExpress({ checklist, softGate: true }).allowed).toBe(false)
+  })
+
+  it('allows once every row carries an image', () => {
+    const checklist = evaluateProductionReadyChecklist({
+      scenes: [],
+      characters: readyCast,
+      objectReferences: [{ name: 'Iron spanner', imageUrl: 'https://example.com/spanner.png' }],
+      locationReferences: [
+        { location: 'INT. RECEIVING TERMINAL', imageUrl: 'https://example.com/term.png' },
+      ],
+    })
+
+    expect(checklist.referencesReady).toBe(true)
+    expect(canRunExpress({ checklist }).allowed).toBe(true)
+  })
+})

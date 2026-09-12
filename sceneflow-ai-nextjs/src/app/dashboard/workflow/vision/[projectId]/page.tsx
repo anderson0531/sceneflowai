@@ -125,6 +125,7 @@ import {
   evaluateProductionReadyChecklist,
   canRunExpress,
 } from '@/lib/production/productionReadinessGate'
+import { formatReferenceReadinessMessage } from '@/lib/vision/referenceReadiness'
 // Dynamic import to break TDZ chain - SceneGallery → SceneProductionManager → SegmentStudio
 // shares scope-hoisted modules with ScriptPanel chunk causing 'Cannot access te before initialization'
 const SceneGallery = dynamic(
@@ -1046,6 +1047,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }),
     [productionReadyChecklist]
   )
+
+  /**
+   * Every frame path — Express, a single beat, Direct — refuses to run until
+   * the whole Reference Library is drawn. A reference row with no image still
+   * gets named in the prompt but has nothing to attach, so the model invents an
+   * appearance, differently each time.
+   */
+  const blockedByMissingReferences = useCallback((): boolean => {
+    const readiness = productionReadyChecklist.referenceReadiness
+    if (readiness.ready) return false
+    toast.error(formatReferenceReadinessMessage(readiness), {
+      description: 'Opening the Reference Library — use Generate to draw the missing references.',
+    })
+    openReferenceLibrary()
+    return true
+  }, [productionReadyChecklist.referenceReadiness, openReferenceLibrary])
 
   const lockedArtStyle = useMemo(
     () => resolveProjectArtStyle(project?.metadata),
@@ -10224,6 +10241,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
 
+    if (blockedByMissingReferences()) return
+
     const scene = script?.script?.scenes?.[sceneIdx]
     if (!scene) {
       try { const { toast } = require('sonner'); toast.error('Scene not found') } catch {}
@@ -10302,6 +10321,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
 
+    if (blockedByMissingReferences()) return
+
     const scene = script?.script?.scenes?.[sceneIdx]
     if (!scene) {
       try { const { toast } = require('sonner'); toast.error('Scene not found') } catch {}
@@ -10334,10 +10355,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const handleOpenDirectFrame = (sceneIdx: number, slot: StoryboardFrameSlot) => {
+    if (blockedByMissingReferences()) return
     setPreVisDirectDialog({ sceneIdx, slot })
   }
 
   const handleDirectFrameGenerate = async (options: PreVisDirectGenerationOptions) => {
+    if (blockedByMissingReferences()) return
     const { sceneIndex, slot } = options
     const scene = script?.script?.scenes?.[sceneIndex]
     if (!scene) {
@@ -12943,6 +12966,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     async (options: ExpressConfirmOptions) => {
       if (!projectId || !script?.script?.scenes?.length) return
       if (isExpressRunning) return
+      if (blockedByMissingReferences()) return
 
       const sceneCount = script.script.scenes.length
       const initial: ExpressSceneStatusMap = {}
@@ -13283,7 +13307,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         setIsExpressRunning(false)
       }
     },
-    [projectId, script, isExpressRunning, openScreeningRoomFromVisionUi, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage, syncExpressBeatImageToProduction]
+    [projectId, script, isExpressRunning, blockedByMissingReferences, openScreeningRoomFromVisionUi, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage, syncExpressBeatImageToProduction]
   )
 
   const handleGenerateLanguageStream = useCallback(
@@ -13398,6 +13422,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     ) => {
       if (!projectId || !script?.script?.scenes?.[sceneIndex]) return
       if (isExpressRunning) return
+      if (!options?.finalizeOnly && blockedByMissingReferences()) return
 
       const sceneRecord = script.script.scenes[sceneIndex] as Record<string, unknown>
       const sceneNumber =
@@ -13795,7 +13820,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       }
     },
-    [projectId, script, isExpressRunning, lockedArtStyle, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage, syncExpressBeatImageToProduction]
+    [projectId, script, isExpressRunning, blockedByMissingReferences, lockedArtStyle, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage, syncExpressBeatImageToProduction]
   )
 
   const handleFinalizeStoryboard = useCallback(

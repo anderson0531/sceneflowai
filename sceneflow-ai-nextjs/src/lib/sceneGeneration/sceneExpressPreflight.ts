@@ -6,6 +6,12 @@
 import { shouldScheduleStandaloneNarration, sceneHasNarratorInDialogue } from '../script/narration'
 import { resolveCharacterReferenceImageUrl } from '../production/productionReadinessGate'
 import { countStoryboardFramesNeedingGeneration } from '../storyboard/types'
+import {
+  formatReferenceReadinessMessage,
+  resolveReferenceReadiness,
+  type ReferenceReadinessLocation,
+  type ReferenceReadinessObject,
+} from '../vision/referenceReadiness'
 
 export interface SceneExpressPreflightInput {
   scene: Record<string, unknown>
@@ -22,6 +28,14 @@ export interface SceneExpressPreflightInput {
   regenerate?: boolean
   /** Image-only Express pass — relax voice checks when direction/audio are already complete. */
   framesOnly?: boolean
+  /**
+   * Project-wide prop and location references. Unlike the cast, these are not
+   * listed per scene, so any un-imaged row can end up named in this scene's
+   * frames — and a named reference with no image is drawn differently every
+   * time. Both groups must be complete before a scene generates.
+   */
+  locationReferences?: ReferenceReadinessLocation[]
+  objectReferences?: ReferenceReadinessObject[]
 }
 
 export interface SceneExpressPreflightResult {
@@ -79,6 +93,8 @@ export function runSceneExpressPreflight(
     language = 'en',
     regenerate,
     framesOnly,
+    locationReferences,
+    objectReferences,
   } = input
   const errors: string[] = []
 
@@ -104,6 +120,14 @@ export function runSceneExpressPreflight(
     errors.push(
       `Missing references: ${missingRefs.join(', ')} — add in Reference Library before Express.`
     )
+  }
+
+  const libraryReadiness = resolveReferenceReadiness({
+    locationReferences,
+    objectReferences,
+  })
+  if (!libraryReadiness.ready) {
+    errors.push(formatReferenceReadinessMessage(libraryReadiness))
   }
 
   const framesOnlyImagePreflight =
