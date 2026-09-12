@@ -46,6 +46,23 @@ export function useBackgroundJob(options: {
   const jobIdRef = useRef<string | null>(null)
   const notifiedRef = useRef<Set<string>>(new Set())
 
+  // Mirrors `job` so `waitUntilSettled` can read it in the same tick a caller
+  // starts a job, before React has re-rendered.
+  const jobRef = useRef<BackgroundJob | null>(null)
+  const waitersRef = useRef<Array<(job: BackgroundJob | null) => void>>([])
+
+  const publish = useCallback((next: BackgroundJob | null) => {
+    jobRef.current = next
+    setJob(next)
+  }, [])
+
+  const releaseWaiters = useCallback((next: BackgroundJob | null) => {
+    const waiters = waitersRef.current
+    if (waiters.length === 0) return
+    waitersRef.current = []
+    waiters.forEach((resolve) => resolve(next))
+  }, [])
+
   // Keep callbacks in refs so the poll loop does not restart on every render.
   const onCompletedRef = useRef(onCompleted)
   const onFailedRef = useRef(onFailed)
@@ -54,18 +71,41 @@ export function useBackgroundJob(options: {
     onFailedRef.current = onFailed
   }, [onCompleted, onFailed])
 
-  const settle = useCallback((next: BackgroundJob) => {
-    setJob(next)
-    if (!isTerminal(next.status)) return
-    if (notifiedRef.current.has(next.id)) return
-    notifiedRef.current.add(next.id)
-    if (next.status === 'completed') onCompletedRef.current?.(next)
-    if (next.status === 'failed' || next.status === 'cancelled') onFailedRef.current?.(next)
-  }, [])
+  const settle = useCallback(
+    (next: BackgroundJob) => {
+      publish(next)
+      if (!isTerminal(next.status)) return
+      releaseWaiters(next)
+      if (notifiedRef.current.has(next.id)) return
+      notifiedRef.current.add(next.id)
+      if (next.status === 'completed') onCompletedRef.current?.(next)
+      if (next.status === 'failed' || next.status === 'cancelled') onFailedRef.current?.(next)
+    },
+    [publish, releaseWaiters]
+  )
 
   const dismiss = useCallback(() => {
     jobIdRef.current = null
-    setJob(null)
+    publish(null)
+    // A dismissed job will never settle, so anything awaiting it must be let go
+    // rather than left hanging.
+    releaseWaiters(null)
+  }, [publish, releaseWaiters])
+
+  /**
+   * Resolve once the tracked job reaches a terminal state, or immediately with
+   * `null` when there is nothing to wait for.
+   *
+   * Auto-chained runs need this: a second stage that re-reads the project
+   * server-side must not start until the first stage has finished writing.
+   */
+  const waitUntilSettled = useCallback((): Promise<BackgroundJob | null> => {
+    const current = jobRef.current
+    if (!current || !jobIdRef.current) return Promise.resolve(null)
+    if (isTerminal(current.status)) return Promise.resolve(current)
+    return new Promise((resolve) => {
+      waitersRef.current.push(resolve)
+    })
   }, [])
 
   /** Re-attach to an in-flight job so refreshing does not orphan it.
@@ -82,14 +122,14 @@ export function useBackgroundJob(options: {
         jobIdRef.current = match.id
         // Mark as already-seen so re-attaching never replays a completion toast
         // for work the user was told about before the reload.
-        setJob(match)
+        publish(match)
         return match
       }
       return null
     } finally {
       setRehydrated(true)
     }
-  }, [projectId, jobType])
+  }, [projectId, jobType, publish])
 
   useEffect(() => {
     if (!enabled || !projectId) {
@@ -128,14 +168,14 @@ export function useBackgroundJob(options: {
   /** Begin tracking a newly queued job. */
   const track = useCallback((jobId: string, seed?: Partial<BackgroundJob>) => {
     jobIdRef.current = jobId
-    setJob({
+    publish({
       id: jobId,
       job_type: jobType,
       status: 'queued',
       progress: 0,
       ...seed,
     })
-  }, [jobType])
+  }, [jobType, publish])
 
   const cancel = useCallback(async () => {
     const jobId = jobIdRef.current
@@ -197,6 +237,7 @@ export function useBackgroundJob(options: {
     dismiss,
     cancel,
     cancelActive,
+    waitUntilSettled,
     refresh: poll,
     rehydrate,
   }

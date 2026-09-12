@@ -16,7 +16,17 @@ import {
   type ExpressBeatFrameItem,
 } from '@/lib/storyboard/expressBeatFrameProgress'
 
-export type ExpressOverlayPhase = 'direction' | 'audio' | 'image-plan' | 'image'
+/**
+ * `references` leads because just-in-time reference generation runs ahead of
+ * everything else, and one auto-chained run should read as one operation
+ * rather than two the user has to connect for themselves.
+ */
+export type ExpressOverlayPhase =
+  | 'references'
+  | 'direction'
+  | 'audio'
+  | 'image-plan'
+  | 'image'
 export type ExpressOverlayPhaseMap = Record<ExpressOverlayPhase, ExpressPhaseStatus>
 
 export interface ExpressBeatFrameProgressOverlayProps {
@@ -36,11 +46,20 @@ export interface ExpressBeatFrameProgressOverlayProps {
 }
 
 const PHASE_LABELS: Record<ExpressOverlayPhase, string> = {
+  references: 'References',
   direction: 'Direction',
   audio: 'Audio',
   'image-plan': 'Image plan',
   image: 'Beat frames',
 }
+
+const PHASE_ORDER: ExpressOverlayPhase[] = [
+  'references',
+  'direction',
+  'audio',
+  'image-plan',
+  'image',
+]
 
 function PhasePill({
   label,
@@ -169,11 +188,10 @@ export function ExpressBeatFrameProgressOverlay({
   const frameErrors = useMemo(() => hasFrameErrors(items), [items])
 
   const currentPhase = useMemo((): ExpressOverlayPhase | null => {
-    const order: ExpressOverlayPhase[] = ['direction', 'audio', 'image-plan', 'image']
-    for (const phase of order) {
+    for (const phase of PHASE_ORDER) {
       if (phases[phase] === 'running') return phase
     }
-    for (const phase of order) {
+    for (const phase of PHASE_ORDER) {
       if (phases[phase] === 'pending') return phase
     }
     return null
@@ -198,7 +216,9 @@ export function ExpressBeatFrameProgressOverlay({
     elapsedSec: imageElapsedSec,
     completedFrames,
     totalFrames,
-    currentPhase: currentPhase === 'image-plan' ? 'image-plan' : currentPhase,
+    // The frame ETA only models the frame phases; references run ahead of them
+    // and quote their own estimate before the run starts.
+    currentPhase: currentPhase === 'references' ? null : currentPhase,
     imagePhaseStarted,
     concurrency: EXPRESS_IMAGE_ETA_CONCURRENCY_DEFAULT,
   })
@@ -240,7 +260,9 @@ export function ExpressBeatFrameProgressOverlay({
             </p>
             {!finished ? (
               <p className="mt-0.5 text-[11px] text-slate-400">
-                Generating frames — you can keep editing
+                {currentPhase === 'references'
+                  ? 'Drawing the missing references first — you can keep editing'
+                  : 'Generating frames — you can keep editing'}
               </p>
             ) : preflightError ? (
               <p className="mt-0.5 text-[11px] text-rose-300">{preflightError}</p>
@@ -264,7 +286,7 @@ export function ExpressBeatFrameProgressOverlay({
           ) : null}
         </div>
         <div className="mt-2 flex flex-wrap gap-1">
-          {(Object.keys(PHASE_LABELS) as ExpressOverlayPhase[]).map((phase) => (
+          {PHASE_ORDER.map((phase) => (
             <PhasePill key={phase} label={PHASE_LABELS[phase]} status={phases[phase]} />
           ))}
         </div>
