@@ -118,6 +118,20 @@ Action/Framing: person [1] clutches a file.`
     expect(filtered.map((r) => r.name)).toEqual(['Piper Hayes'])
   })
 
+  it('filterCharactersForPromptRefs takes an empty cast at face value for beat frames', () => {
+    const refs = [
+      { name: 'Piper Hayes', promptToken: 'person [1]', identityReferenceId: 1 },
+      { name: 'Professor Gideon Croft', promptToken: 'person [2]', identityReferenceId: 2 },
+    ]
+    const filtered = filterCharactersForPromptRefs(
+      refs,
+      'Insert shot of a brass pneumatic hatch collar. No people in frame.',
+      undefined,
+      { allowEmpty: true }
+    )
+    expect(filtered).toEqual([])
+  })
+
   it('sanitizePromptForIdentityRefs preserves possessive prop names when protected', () => {
     const journal = "Arthur Pendelton's 1893 Journal"
     const sanitized = sanitizePromptForIdentityRefs(
@@ -267,6 +281,69 @@ Strictly Avoid: cartoon style.`
     expect(prompt).not.toMatch(/Focus on person \[1\]:\s*\./)
     expect(prompt).toContain('Focus on person [1]')
     expect(prompt).toContain('person [1]')
+  })
+})
+
+describe('the optimizer only casts people the composition places', () => {
+  const CAST = [
+    {
+      referenceId: 1,
+      name: 'Piper Hayes',
+      description: 'Woman in her 30s',
+      identityReferenceId: 1,
+      promptToken: 'person [1]',
+      linkingDescription: 'person [1]',
+      defaultWardrobe: 'oil-stained coveralls',
+    },
+    {
+      referenceId: 2,
+      name: 'Professor Gideon Croft',
+      description: 'Man in his early 50s',
+      identityReferenceId: 2,
+      promptToken: 'person [2]',
+      linkingDescription: 'person [2]',
+      defaultWardrobe: 'tweed waistcoat',
+    },
+  ]
+
+  function optimize(action: string): string {
+    return optimizePromptForImagen({
+      sceneAction: action,
+      visualDescription: action,
+      artStyle: 'photorealistic',
+      characterReferences: CAST,
+    })
+  }
+
+  it('says nothing about people for a frame that holds only an object', () => {
+    const prompt = optimize(
+      'Insert shot of a brass pneumatic hatch collar flanked by three rusted locking dogs, grease caked on the rim.'
+    )
+
+    expect(prompt).not.toMatch(/^Create an image about/)
+    expect(prompt).not.toContain('person [1]')
+    expect(prompt).not.toContain('person [2]')
+    expect(prompt).not.toContain('Piper')
+    expect(prompt).not.toContain('Gideon')
+    expect(prompt).not.toContain('coveralls')
+    expect(prompt).toContain('brass pneumatic hatch collar')
+  })
+
+  it('introduces only the character the composition names', () => {
+    const prompt = optimize('Medium shot: person [1] swings the iron spanner at the locking dogs.')
+
+    expect(prompt).toMatch(/^Create an image about person \[1\] to match the description/)
+    expect(prompt).not.toContain('person [2]')
+    expect(prompt).toContain('coveralls')
+    expect(prompt).not.toContain('tweed waistcoat')
+  })
+
+  it('matches a written name as well as a bound token', () => {
+    const prompt = optimize('Two-Shot: Piper Hayes braces against the bulkhead, Gideon behind her.')
+
+    expect(prompt).toContain('person [1]')
+    expect(prompt).toContain('person [2]')
+    expect(prompt).toMatch(/^Create an image about person \[1\] and person \[2\]/)
   })
 })
 

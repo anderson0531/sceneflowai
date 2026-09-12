@@ -234,6 +234,16 @@ function escapeForRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
+const NAME_TITLE_PATTERN = /^(dr|mr|mrs|ms|prof|professor|sir|lady|capt|captain|sgt|officer)\.?$/i
+
+/** The part of a full name a prompt is likely to use on its own. */
+function shortNameFor(fullName: string): string | undefined {
+  return fullName
+    .split(/\s+/)
+    .filter((part) => part.length >= 4 && !NAME_TITLE_PATTERN.test(part))
+    .find((part) => part !== fullName)
+}
+
 /**
  * Does the composition actually place this character in the frame?
  *
@@ -247,7 +257,7 @@ function escapeForRegExp(value: string): string {
  */
 export function promptPlacesCharacter(
   promptBody: string,
-  ref: { name?: string; firstName?: string; promptToken?: string; linkingDescription?: string }
+  ref: { name?: string; promptToken?: string; linkingDescription?: string }
 ): boolean {
   const body = (promptBody || '').toLowerCase()
   if (!body) return false
@@ -257,10 +267,12 @@ export function promptPlacesCharacter(
     return true
   }
 
-  for (const candidate of [ref.name, ref.firstName]) {
-    const name = candidate?.trim()
-    if (!name) continue
-    if (new RegExp(`\\b${escapeForRegExp(name)}\\b`, 'i').test(promptBody)) return true
+  const name = ref.name?.trim()
+  if (name) {
+    for (const candidate of [name, shortNameFor(name)]) {
+      if (!candidate) continue
+      if (new RegExp(`\\b${escapeForRegExp(candidate)}\\b`, 'i').test(promptBody)) return true
+    }
   }
 
   // A character with no identity reference is referred to by its linking

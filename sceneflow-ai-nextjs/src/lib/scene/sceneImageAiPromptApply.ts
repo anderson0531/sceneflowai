@@ -20,6 +20,8 @@ export interface SceneImageAiPromptApplyInput {
   matchedLocationReference: any
   sceneType?: string
   protectPhrases?: string[]
+  /** Beat frames take an empty cast at face value; see filterCharactersForPromptRefs. */
+  isBeatFrame?: boolean
 }
 
 export interface SceneImageAiPromptApplyResult {
@@ -47,6 +49,7 @@ export function applySceneImageAiResultToPrompt(
     matchedLocationReference: initialMatchedLocation,
     sceneType,
     protectPhrases,
+    isBeatFrame,
   } = input
 
   let detectedObjectReferences = initialDetectedObjects
@@ -93,7 +96,9 @@ export function applySceneImageAiResultToPrompt(
       const filteredForPrompt = filterCharactersForPromptRefs(
         charactersWithRefs,
         aiPromptBody,
-        aiResult.selectedCharacterNames
+        aiResult.selectedCharacterNames,
+        // A beat frame that names nobody wants no cast, not the whole scene's.
+        { allowEmpty: isBeatFrame }
       )
       characterReferencesForImages = characterReferences.filter((ref: any) =>
         filteredForPrompt.some((filtered) => filtered.name === ref.name)

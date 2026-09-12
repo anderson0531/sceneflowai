@@ -3,7 +3,7 @@ import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import { generateImageWithVertexKlingFallback } from '@/lib/generation/vertexImageWithKlingFallback'
 import { uploadImageToBlob } from '@/lib/storage/blob'
-import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor, buildIdentityPromptToken, sanitizePromptForIdentityRefs, filterCharactersForPromptRefs, stripReferenceImageMappingBlock } from '@/lib/imagen/promptOptimizer'
+import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor, buildIdentityPromptToken, sanitizePromptForIdentityRefs, filterCharactersForPromptRefs, promptPlacesCharacter, stripReferenceImageMappingBlock } from '@/lib/imagen/promptOptimizer'
 import { ethnicityKeyFeature } from '@/lib/imagen/characterKeyFeatures'
 import {
   IDENTITY_TRAITS_RETRY_WORD_CAP,
@@ -222,7 +222,20 @@ function appendSceneImagePromptModifiers(
     optimizedPrompt = joinPromptBlocks(optimizedPrompt, photorealisticAnchor)
   }
 
-  const personTokens = ctx.characterReferences
+  // Every clause below tells the model something about a person on camera. A
+  // beat that frames a prop or an empty room places nobody, and attaching
+  // wardrobe, hair and expression direction for absent cast is how an
+  // industrial hatch insert acquired two faces and "violent anticipation".
+  const characterReferences = ctx.isBeatFrame
+    ? ctx.characterReferences.filter((ref: any) => promptPlacesCharacter(optimizedPrompt, ref))
+    : ctx.characterReferences
+  if (characterReferences.length !== ctx.characterReferences.length) {
+    console.log(
+      `[Scene Image] Beat composition places ${characterReferences.length} of ${ctx.characterReferences.length} character(s); skipping subject direction for the rest`
+    )
+  }
+
+  const personTokens = characterReferences
     .map((ref: { promptToken?: string }) => ref.promptToken)
     .filter((token): token is string => !!token)
   const hairCompositionLock = buildHairCompositionLock(ctx.fullSceneContext, personTokens)
@@ -230,7 +243,7 @@ function appendSceneImagePromptModifiers(
     optimizedPrompt = joinPromptBlocks(optimizedPrompt, hairCompositionLock)
   }
 
-  const diptychCharacters = ctx.characterReferences.filter(
+  const diptychCharacters = characterReferences.filter(
     (cr: { hasWardrobeDiptych?: boolean }) => cr.hasWardrobeDiptych
   )
   if (diptychCharacters.length > 0) {
@@ -246,9 +259,9 @@ function appendSceneImagePromptModifiers(
     )
   }
 
-  if (ctx.isBeatFrame && ctx.characterReferences.length > 0) {
+  if (ctx.isBeatFrame && characterReferences.length > 0) {
     const directedEmotionSection = buildBeatDirectedEmotionPromptSection(
-      ctx.characterReferences.map((ref: { name: string; directedEmotion?: string }) => ({
+      characterReferences.map((ref: { name: string; directedEmotion?: string }) => ({
         name: ref.name,
         emotion: ref.directedEmotion || '',
       }))
@@ -267,7 +280,7 @@ function appendSceneImagePromptModifiers(
     }
 
     const continuitySection = buildSceneAppearanceContinuityPromptSection(
-      ctx.characterReferences.map(
+      characterReferences.map(
         (ref: { name: string; sceneAppearanceContinuity?: string }) => ({
           name: ref.name,
           continuity: ref.sceneAppearanceContinuity || '',
@@ -280,7 +293,12 @@ function appendSceneImagePromptModifiers(
     ) {
       optimizedPrompt = joinPromptBlocks(optimizedPrompt, continuitySection)
     }
-  } else if (ctx.beatForEmotion?.line) {
+  } else if (
+    ctx.beatForEmotion?.line &&
+    // Cast the beat narrowed away means the frame holds a prop or a room, not a
+    // face, so there is no expression to direct.
+    (!ctx.isBeatFrame || ctx.characterReferences.length === 0)
+  ) {
     const expressionCue = formatVisualExpressionCue(ctx.beatForEmotion.line)
     if (expressionCue && !optimizedPrompt.includes('Facial expression:')) {
       optimizedPrompt = joinPromptBlocks(optimizedPrompt, expressionCue)
@@ -2018,6 +2036,7 @@ export async function POST(req: NextRequest) {
           matchedLocationReference,
           sceneType: aiSceneType,
           protectPhrases: libraryTokenItems.map((item) => item.name).filter(Boolean),
+          isBeatFrame,
         })
         optimizedPrompt = appliedAiPrompt.optimizedPrompt
         usedAIIntelligence = appliedAiPrompt.usedAIIntelligence
@@ -2223,6 +2242,7 @@ export async function POST(req: NextRequest) {
             ...(sceneImageIntelligenceRequest?.props ?? []).map((p) => p.name),
             ...(sceneImageIntelligenceRequest?.availableLocations ?? []).map((l) => l.name),
           ].filter(Boolean),
+          isBeatFrame,
         })
         if (appliedRetry.usedAIIntelligence) {
           optimizedPrompt = appendSceneImagePromptModifiers(
@@ -2241,6 +2261,26 @@ export async function POST(req: NextRequest) {
           )
         }
       }
+
+    // An identity reference the composition never names is read the same way an
+    // unnamed prop is: an image with no instruction attached, which the model
+    // resolves by putting that person in the frame. The prop guard below has
+    // done this for objects; beat frames now hold cast to the same rule, so the
+    // reference stays out of both the sent images and the [REFERENCES] legend.
+    if (isBeatFrame) {
+      const unplacedCast = characterReferencesForImages.filter(
+        (ref: any) => !promptPlacesCharacter(optimizedPrompt, ref)
+      )
+      if (unplacedCast.length > 0) {
+        console.log(
+          `[Scene Image] Dropping ${unplacedCast.length} character reference(s) not placed by the frame:`,
+          unplacedCast.map((ref: any) => ref.name).join(', ')
+        )
+        characterReferencesForImages = characterReferencesForImages.filter(
+          (ref: any) => !unplacedCast.includes(ref)
+        )
+      }
+    }
 
     // Build image references — identity and wardrobe are separate slots when both exist
     const imageReferences: Array<{
