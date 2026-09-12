@@ -83,7 +83,7 @@ export const guidanceContent: Record<WorkflowStep, {
     whyItMatters: 'Beats are script units (dialogue, narration, action). Agents and production derive pre-vis frames and beat clips from them.',
     howItWorks: [
       'Beats are created from your script automatically',
-      'Pre-vis frames attach to beats via Frame Agent'
+      'Pre-vis frames attach to beats via Frame Agent',
       'Motion derives beat clips for Beat Frames and video generation',
     ],
     toolsAndTips: [
