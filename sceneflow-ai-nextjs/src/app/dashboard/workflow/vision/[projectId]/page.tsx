@@ -126,6 +126,7 @@ import {
   canRunExpress,
 } from '@/lib/production/productionReadinessGate'
 import { formatReferenceReadinessMessage } from '@/lib/vision/referenceReadiness'
+import type { ReferenceExpressScope } from '@/lib/vision/referenceExpress/types'
 // Dynamic import to break TDZ chain - SceneGallery → SceneProductionManager → SegmentStudio
 // shares scope-hoisted modules with ScriptPanel chunk causing 'Cannot access te before initialization'
 const SceneGallery = dynamic(
@@ -9950,7 +9951,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
    * lost the whole thing. Now the server owns the queue and the user keeps
    * editing while it runs.
    */
-  const handleExpressGenerateReferences = async () => {
+  const handleExpressGenerateReferences = async (scope?: ReferenceExpressScope) => {
     if (!projectId) return
 
     if (referenceExpressJob.isActive) {
@@ -9960,18 +9961,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
 
+    const sceneScoped = !!scope?.sceneIndices?.length
+
     setIsExpressGeneratingReferences(true)
     try {
       const res = await fetch('/api/vision/references/express/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ projectId }),
+        body: JSON.stringify({
+          projectId,
+          sceneIndices: scope?.sceneIndices,
+          itemKeys: scope?.itemKeys,
+        }),
       })
       const data = await res.json().catch(() => ({}))
 
       if (res.status === 409 && data?.code === 'NOTHING_TO_GENERATE') {
-        toast.info('All reference images are already generated')
+        toast.info(
+          sceneScoped
+            ? 'This scene already has every reference it needs'
+            : 'All reference images are already generated'
+        )
         setIsExpressGeneratingReferences(false)
         return
       }
@@ -9989,16 +10000,31 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       void ensureBrowserNotificationPermission()
 
       const count = Number(data.itemCount || 0)
-      toast.success('Reference Express started', {
-        description: `Generating ${count} reference image${count === 1 ? '' : 's'} in the background. Keep working — we'll notify you when they're ready.`,
+      const sceneLabel = scope?.sceneIndices?.length === 1 ? ` for scene ${scope.sceneIndices[0] + 1}` : ''
+      toast.success('Express References started', {
+        description: `Generating ${count} reference image${count === 1 ? '' : 's'}${sceneLabel} in the background. Keep working — we'll notify you when they're ready.`,
         duration: 8000,
       })
     } catch (error) {
       console.error('[handleExpressGenerateReferences] Error:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to start Reference Express')
+      toast.error(error instanceof Error ? error.message : 'Failed to start Express References')
       setIsExpressGeneratingReferences(false)
     }
   }
+
+  /**
+   * The scene card's own Express References — the same job, planned against one
+   * scene, so production does not detour through the whole library first.
+   */
+  const handleExpressSceneReferences = useCallback(
+    (sceneIndex: number, options?: { itemKeys?: string[] }) =>
+      handleExpressGenerateReferences({
+        sceneIndices: [sceneIndex],
+        itemKeys: options?.itemKeys,
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [projectId, referenceExpressJob.isActive]
+  )
 
   const handleRegenerateScene = async (sceneIndex: number) => {
     // Implement scene regeneration
@@ -14972,6 +14998,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 sceneReferences={sceneReferences}
                 objectReferences={objectReferences}
                 locationReferences={locationReferences}
+                onExpressSceneReferences={handleExpressSceneReferences}
+                isExpressGeneratingReferences={isExpressGeneratingReferences}
+                onOpenReferenceLibrary={openReferenceLibrary}
                 showDashboard={showDashboard}
                 onToggleDashboard={() => setShowDashboard(!showDashboard)}
                 isGeneratingKeyframe={isGeneratingKeyframe}

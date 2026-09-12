@@ -31,7 +31,6 @@ import {
   findMatchingLocationReferences,
   resolveSceneNumberForLocationMatch,
 } from '@/lib/vision/frameGenerationContext'
-import type { LocationReference, VisualReference } from '@/types/visionReferences'
 
 export type SceneReferenceRequirementKind = 'cast' | 'wardrobe' | 'location' | 'prop'
 
@@ -69,8 +68,30 @@ export type SceneRequirementCharacter = {
   [key: string]: unknown
 }
 
-/** Object library rows carry scene assignments at runtime even though the type omits them. */
-export type SceneRequirementObject = VisualReference & { sceneNumbers?: number[] }
+/**
+ * Library rows, kept structural rather than tied to `LocationReference` and
+ * `VisualReference`. Half the callers hold a narrower shape of their own, and
+ * every one of them needs the same answer.
+ */
+export type SceneRequirementLocation = {
+  id: string
+  location?: string
+  locationDisplay?: string
+  imageUrl?: string
+  description?: string
+  sceneNumbers?: number[]
+}
+
+export type SceneRequirementObject = {
+  id: string
+  name: string
+  description?: string
+  imageUrl?: string
+  category?: string
+  importance?: string
+  /** Present at runtime from the library's script-analysis pass. */
+  sceneNumbers?: number[]
+}
 
 /**
  * User corrections to the heuristic set, keyed by `requirementKey`. The
@@ -90,7 +111,7 @@ export type SceneReferenceRequirementsInput = {
   /** 0-based position in the script; scene numbers are this plus one. */
   sceneIndex: number
   characters?: SceneRequirementCharacter[] | null
-  locationReferences?: LocationReference[] | null
+  locationReferences?: SceneRequirementLocation[] | null
   objectReferences?: SceneRequirementObject[] | null
   overrides?: SceneReferenceOverrides | null
   /**
@@ -408,14 +429,14 @@ function resolveOne(input: SceneReferenceRequirementsInput): SceneReferenceRequi
   }
 
   const addLocation = (
-    ref: LocationReference,
+    ref: SceneRequirementLocation,
     source: SceneReferenceRequirementSource
   ) => {
     add({
       kind: 'location',
       id: ref.id,
       name: ref.location?.trim() || ref.locationDisplay?.trim() || 'Location',
-      imageUrl: hasImage(ref.imageUrl) ? ref.imageUrl.trim() : undefined,
+      imageUrl: hasImage(ref.imageUrl) ? ref.imageUrl!.trim() : undefined,
       source,
     })
   }
@@ -511,7 +532,7 @@ function applyOverrides(
         kind,
         id,
         name: ref.location?.trim() || ref.locationDisplay?.trim() || 'Location',
-        imageUrl: hasImage(ref.imageUrl) ? ref.imageUrl.trim() : undefined,
+        imageUrl: hasImage(ref.imageUrl) ? ref.imageUrl!.trim() : undefined,
         source: 'scene-assigned',
       })
       continue

@@ -105,12 +105,25 @@ export type FindLocationReferenceOptions = {
   includeWithoutImages?: boolean
 }
 
+/**
+ * The fields location matching actually reads. Structural, because several
+ * callers hold a narrower row than the full `LocationReference`.
+ */
+export type LocationReferenceMatchable = {
+  id: string
+  location?: string
+  locationDisplay?: string
+  imageUrl?: string
+  description?: string
+  sceneNumbers?: number[]
+}
+
 /** Location refs explicitly assigned to a scene via sceneNumbers. */
-export function findLocationReferencesAssignedToScene(
-  locationRefs: LocationReference[],
+export function findLocationReferencesAssignedToScene<T extends LocationReferenceMatchable>(
+  locationRefs: T[],
   sceneNumber: number,
   options: FindLocationReferenceOptions = {}
-): LocationReference[] {
+): T[] {
   return locationRefs.filter(
     (ref) =>
       (options.includeWithoutImages || !!ref.imageUrl) &&
@@ -124,7 +137,7 @@ export function findLocationReferencesAssignedToScene(
  */
 export function findMatchingLocationReferences(
   scene: any,
-  locationRefs: LocationReference[],
+  locationRefs: LocationReferenceMatchable[],
   sceneIndex?: number,
   options: FindLocationReferenceOptions = {}
 ): ResolvedLocationForFrames[] {
@@ -135,7 +148,7 @@ export function findMatchingLocationReferences(
   if (!withImages.length) return []
 
   const sceneNumber = resolveSceneNumberForLocationMatch(scene, sceneIndex)
-  const matches: LocationReference[] = []
+  const matches: LocationReferenceMatchable[] = []
   const seen = new Set<string>()
 
   if (sceneNumber !== undefined) {
@@ -148,7 +161,7 @@ export function findMatchingLocationReferences(
     if (matches.length > 0) {
       return matches.map((ref) => ({
         id: ref.id,
-        name: ref.location,
+        name: ref.location ?? '',
         imageUrl: ref.imageUrl,
         description: ref.description,
       }))
@@ -189,7 +202,7 @@ export function findMatchingLocationReferences(
 
   return matches.map(ref => ({
     id: ref.id,
-    name: ref.location,
+    name: ref.location ?? '',
     imageUrl: ref.imageUrl,
     description: ref.description,
   }))

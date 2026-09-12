@@ -141,6 +141,12 @@ import {
 } from '@/lib/script/deriveSfxFromSceneContent'
 import { BeatMusicToggle } from '@/components/vision/BeatMusicToggle'
 import { SceneMusicCuePanel } from '@/components/vision/SceneMusicCuePanel'
+import { SceneReferencesPanel } from '@/components/vision/SceneReferencesPanel'
+import type { ReferenceLibraryTab } from '@/components/vision/ReferenceLibraryDialog'
+import {
+  resolveSceneRequiredReferences,
+  type SceneReferenceOverrides,
+} from '@/lib/vision/sceneReferenceRequirements'
 import {
   estimateMusicCueDuration,
   formatMusicCueRange,
@@ -444,6 +450,13 @@ interface ScriptPanelProps {
   objectReferences?: Array<{ id: string; name: string; description?: string; imageUrl?: string }>
   // Location references for environment consistency in keyframe generation
   locationReferences?: Array<{ id: string; location: string; locationDisplay: string; imageUrl: string; description?: string; sceneNumbers?: number[] }>
+  /** Draw the references a single scene needs, just in time, from its card. */
+  onExpressSceneReferences?: (
+    sceneIndex: number,
+    options?: { itemKeys?: string[] }
+  ) => void | Promise<void>
+  isExpressGeneratingReferences?: boolean
+  onOpenReferenceLibrary?: (tab?: ReferenceLibraryTab) => void
   // Take management
   onSelectTake?: (sceneId: string, segmentId: string, takeId: string, assetUrl: string) => void
   onDeleteTake?: (sceneId: string, segmentId: string, takeId: string) => void
@@ -915,7 +928,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, onJumpToImpactScene, onToggleAudienceRecommendation, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onReorderBeats, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled,   projectStreams = [] }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onExpressSceneReferences, isExpressGeneratingReferences = false, onOpenReferenceLibrary, onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, onJumpToImpactScene, onToggleAudienceRecommendation, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onReorderBeats, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled,   projectStreams = [] }: ScriptPanelProps) {
 
   const tStudio = useTranslations('production.studio')
   const tCommon = useTranslations('common')
@@ -3714,6 +3727,9 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       sceneReferences={sceneReferences}
                       objectReferences={objectReferences}
                       locationReferences={locationReferences}
+                      onExpressSceneReferences={onExpressSceneReferences}
+                      isExpressGeneratingReferences={isExpressGeneratingReferences}
+                      onOpenReferenceLibrary={onOpenReferenceLibrary}
                       getPlaybackOffsetForScene={getPlaybackOffsetForScene}
                       handlePlaybackOffsetChange={handlePlaybackOffsetChange}
                       getSuggestedOffsetForScene={getSuggestedOffsetForScene}
@@ -4377,6 +4393,13 @@ interface SceneCardProps {
   objectReferences?: Array<{ id: string; name: string; description?: string; imageUrl?: string }>
   // Location references for environment consistency in keyframe generation
   locationReferences?: Array<{ id: string; location: string; locationDisplay: string; imageUrl: string; description?: string; sceneNumbers?: number[] }>
+  /** Draw the references this scene needs, just in time, without leaving the card. */
+  onExpressSceneReferences?: (
+    sceneIndex: number,
+    options?: { itemKeys?: string[] }
+  ) => void | Promise<void>
+  isExpressGeneratingReferences?: boolean
+  onOpenReferenceLibrary?: (tab?: ReferenceLibraryTab) => void
   // Language playback offset for translated audio alignment
   getPlaybackOffsetForScene?: (sceneId: string, language: string) => number
   handlePlaybackOffsetChange?: (sceneId: string, sceneIdx: number, language: string, offset: number) => void
@@ -4575,6 +4598,9 @@ function SceneCard({
   sceneReferences = [],
   objectReferences = [],
   locationReferences = [],
+  onExpressSceneReferences,
+  isExpressGeneratingReferences = false,
+  onOpenReferenceLibrary,
   getPlaybackOffsetForScene,
   handlePlaybackOffsetChange,
   getSuggestedOffsetForScene,
@@ -4667,7 +4693,7 @@ function SceneCard({
     onPendingSpeakerAssignHandled?.()
   }, [pendingSpeakerAssign, sceneIdx, onPendingSpeakerAssignHandled])
 
-  type SceneScriptTab = 'direction' | 'narration' | 'previs' | 'beats' | 'music'
+  type SceneScriptTab = 'direction' | 'narration' | 'previs' | 'beats' | 'music' | 'references'
   const [activeSceneTab, setActiveSceneTab] = useState<SceneScriptTab>('direction')
 
   type ShootTab = 'review' | 'video' | 'mixer' | 'streams'
@@ -4757,6 +4783,52 @@ function SceneCard({
   const hasBeatsTab = sceneBeatsForTabs.length > 0
   const hasMusicTab = !!scene.music || sceneMusicCues.length > 0
 
+  const sceneReferenceOverrides = useMemo<SceneReferenceOverrides | null>(
+    () => (scene.referenceOverrides as SceneReferenceOverrides | undefined) ?? null,
+    [scene.referenceOverrides]
+  )
+
+  /**
+   * Exactly what this scene needs drawn — not the whole library.
+   *
+   * `scenes` is passed so each row can name the other scenes that need the
+   * same reference, which is what makes drawing one here read as amortised
+   * rather than as work this scene alone has to pay for.
+   */
+  const sceneRequiredReferences = useMemo(
+    () =>
+      resolveSceneRequiredReferences({
+        scene,
+        sceneIndex: sceneIdx,
+        characters,
+        locationReferences,
+        objectReferences,
+        overrides: sceneReferenceOverrides,
+        scenes,
+      }),
+    [scene, sceneIdx, characters, locationReferences, objectReferences, sceneReferenceOverrides, scenes]
+  )
+
+  const missingSceneReferenceCount = useMemo(
+    () => sceneRequiredReferences.filter((requirement) => !requirement.imageUrl?.trim()).length,
+    [sceneRequiredReferences]
+  )
+
+  // The tab earns its place as soon as the scene has anything to shoot, even
+  // with nothing detected yet: "nothing needed" is the answer the user came for.
+  const hasReferencesTab = hasBeatsTab || hasPreVisTab || sceneRequiredReferences.length > 0
+
+  const handleSceneReferenceOverridesChange = useCallback(
+    (next: SceneReferenceOverrides) => {
+      if (!onScriptChange || !script || !Array.isArray(scenes)) return
+      const updatedScenes = scenes.map((s: any, idx: number) =>
+        idx === sceneIdx ? { ...s, referenceOverrides: next } : s
+      )
+      onScriptChange({ ...script, script: { ...script.script, scenes: updatedScenes } })
+    },
+    [onScriptChange, script, scenes, sceneIdx]
+  )
+
   const defaultMusicPlayDuration = useMemo(() => {
     if (typeof scene.musicDuration === 'number' && scene.musicDuration > 0) {
       return scene.musicDuration
@@ -4786,10 +4858,12 @@ function SceneCard({
     if (hasDirectionTab) tabs.push('direction')
     if (hasBeatsTab) tabs.push('beats')
     if (hasMusicTab) tabs.push('music')
+    // Ahead of Frames because it gates them.
+    if (hasReferencesTab) tabs.push('references')
     if (hasPreVisTab) tabs.push('previs')
     if (hasNarrationTab) tabs.push('narration')
     return tabs
-  }, [hasDirectionTab, hasNarrationTab, hasPreVisTab, hasBeatsTab, hasMusicTab])
+  }, [hasDirectionTab, hasNarrationTab, hasPreVisTab, hasBeatsTab, hasMusicTab, hasReferencesTab])
 
   useEffect(() => {
     if (availableSceneTabs.length === 0) return
@@ -6468,6 +6542,20 @@ function SceneCard({
                               Music
                             </TabsTrigger>
                           )}
+                          {hasReferencesTab && (
+                            <TabsTrigger value="references" className="text-xs gap-1.5 px-2.5 py-1.5">
+                              <Library className="w-3.5 h-3.5 shrink-0" />
+                              References
+                              {sceneRequiredReferences.length > 0 && (
+                                <span
+                                  className={`text-[10px] ${missingSceneReferenceCount > 0 ? 'text-amber-500' : 'opacity-60'}`}
+                                >
+                                  ({sceneRequiredReferences.length - missingSceneReferenceCount}/
+                                  {sceneRequiredReferences.length})
+                                </span>
+                              )}
+                            </TabsTrigger>
+                          )}
                           {hasPreVisTab && (
                             <TabsTrigger value="previs" className="text-xs gap-1.5 px-2.5 py-1.5">
                               <Clapperboard className="w-3.5 h-3.5 shrink-0" />
@@ -6722,6 +6810,30 @@ function SceneCard({
                     </div>
                   )
                   })()}
+                  </TabsContent>
+                  )}
+
+                  {/* References — ahead of Frames because it gates them */}
+                  {hasReferencesTab && (
+                  <TabsContent value="references" className="mt-3 focus-visible:outline-none">
+                    <SceneReferencesPanel
+                      sceneNumber={sceneNumber}
+                      requirements={sceneRequiredReferences}
+                      overrides={sceneReferenceOverrides}
+                      onOverridesChange={
+                        onScriptChange ? handleSceneReferenceOverridesChange : undefined
+                      }
+                      onExpressReferences={
+                        onExpressSceneReferences
+                          ? (options) => onExpressSceneReferences(sceneIdx, options)
+                          : undefined
+                      }
+                      isExpressRunning={isExpressGeneratingReferences}
+                      onOpenReferenceLibrary={onOpenReferenceLibrary}
+                      characters={characters}
+                      locationReferences={locationReferences}
+                      objectReferences={objectReferences}
+                    />
                   </TabsContent>
                   )}
 

@@ -23,6 +23,24 @@ export type ReferenceExpressItem = {
   sourceFingerprint: string
 }
 
+/**
+ * How much of the project a run covers.
+ *
+ * Scoping is a planning concern only: the worker, the job row and the browser
+ * rehydration all behave identically on a shorter `payload.items`.
+ */
+export type ReferenceExpressScope = {
+  /** 0-based scene indices. Omit to plan the whole project. */
+  sceneIndices?: number[]
+  /**
+   * Narrow to single rows, as `kind:id` requirement keys from
+   * `sceneReferenceRequirements` — a character id or name, or a library row id.
+   * The planner still resolves item identity itself, so the worker never sees
+   * a key the client invented.
+   */
+  itemKeys?: string[]
+}
+
 export type ReferenceExpressItemResult = {
   kind: ReferenceExpressKind
   targetId: string

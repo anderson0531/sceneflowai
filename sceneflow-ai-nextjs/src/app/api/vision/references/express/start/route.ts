@@ -7,36 +7,17 @@ import {
 import { scheduleReferenceExpressStep } from '@/lib/jobs/dispatchReferenceExpressStep'
 import { getSessionUserId } from '@/lib/auth/sessionUser'
 import { CreditService } from '@/services/CreditService'
-import { getCreditCost } from '@/lib/credits/creditCosts'
-import { CAST_IMAGE_CREDIT_COST } from '@/lib/vision/referenceExpress/generateReferenceImage'
+import {
+  estimateReferenceExpressCredits,
+  estimateReferenceExpressSeconds,
+} from '@/lib/vision/referenceExpress/estimate'
 import {
   loadReferenceExpressContext,
   planReferenceExpressItems,
 } from '@/lib/vision/referenceExpress/planItems'
-import type { ReferenceExpressItem } from '@/lib/vision/referenceExpress/types'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-
-/** Wall-clock estimate per item so the UI can say what to expect. */
-const SECONDS_PER_ITEM: Record<ReferenceExpressItem['kind'], number> = {
-  // Generate, enhance, then vision-analyse a portrait.
-  cast: 90,
-  location: 30,
-  prop: 30,
-}
-
-function estimateSeconds(items: ReferenceExpressItem[]): number {
-  return items.reduce((total, item) => total + SECONDS_PER_ITEM[item.kind], 0)
-}
-
-function creditsFor(items: ReferenceExpressItem[]): number {
-  const imageCost = getCreditCost('IMAGE_GENERATION')
-  return items.reduce(
-    (total, item) => total + (item.kind === 'cast' ? CAST_IMAGE_CREDIT_COST : imageCost),
-    0
-  )
-}
 
 /**
  * Queue Reference Express (cast, locations, props) and return immediately.
@@ -85,7 +66,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const requiredCredits = creditsFor(items)
+    const requiredCredits = estimateReferenceExpressCredits(items)
     const hasCredits = await CreditService.ensureCredits(userId, requiredCredits)
     if (!hasCredits) {
       const breakdown = await CreditService.getCreditBreakdown(userId)
@@ -127,7 +108,7 @@ export async function POST(req: NextRequest) {
         jobId: job.id,
         status: 'queued',
         itemCount: items.length,
-        estimatedSeconds: estimateSeconds(items),
+        estimatedSeconds: estimateReferenceExpressSeconds(items),
         estimatedCredits: requiredCredits,
         replacedPreviousCount: cancelledIds.length,
         dispatch: dispatched ? 'inngest' : 'step_worker',
