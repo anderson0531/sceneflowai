@@ -541,7 +541,8 @@ export function buildSceneImageSystemPrompt(): string {
 
 CRITICAL RULES:
 
-1. IN-SCENE FILM STILL: Generate a prompt for ONE decisive dramatic instant — a candid in-scene film still capturing the character mid-action, as if photographed by an on-set cinematographer. NOT a sequence, NOT camera movement, NOT a posed reference portrait, NOT a Veo/F2V start frame, NOT video motion direction.
+1. IN-SCENE FILM STILL: Generate a prompt for ONE decisive dramatic instant — a candid in-scene film still of a character absorbed in the action, as if photographed by an on-set cinematographer. NOT a sequence, NOT camera movement, NOT a posed reference portrait, NOT a Veo/F2V start frame, NOT video motion direction.
+   - Action/Framing describes one settled position per body, never a movement or a series of them. Write the pose the action arrives at ("curled into a defensive fetal position on the floor"), not the movement that produced it ("impacts the floor, tumbling out of the fog and curling into a fetal position"). A body given several successive positions for one exposure renders them superimposed, with duplicated limbs.
 
 2. TITLE SEQUENCES: For title/credit beats, compose a CENTERED title card. The film title is the primary subject with genre-appropriate background. No people unless explicitly required.
 
@@ -557,7 +558,8 @@ CRITICAL RULES:
    - ${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}
 
 4. REFERENCE SELECTION — BEAT DIRECTION IS AUTHORITATIVE for THIS beat (scene direction is authoritative when no beat direction is provided):
-   - When a BEAT DIRECTION block is provided in the user prompt, its shot type, camera angle, blocking, gaze, key props, prop interaction, lighting accent, and frozen moment define THIS frame — use them verbatim. Only fall back to SCENE DIRECTION for fields the beat direction does not cover.
+   - When a BEAT DIRECTION block is provided in the user prompt, its shot type, camera angle, blocking, gaze, key props, prop interaction, lighting accent, and frozen moment define THIS frame — use them verbatim, with one exception: blocking or prop interaction written as a sequence of movements is reduced to the single position it ends in. The frozen moment is the instant; where blocking disagrees with it, the frozen moment wins.
+   - Only fall back to SCENE DIRECTION for fields the beat direction does not cover.
    - Include a person [N] token ONLY if that character is visible in THIS beat AND supported by beat action + BEAT DIRECTION blocking/gaze (or SCENE DIRECTION when beat direction is silent)
    - A character name inside a prop label or possessive prop title is NOT on-screen presence — omit that person token
    - selectedCharacterNames must list ONLY characters who appear in the frame

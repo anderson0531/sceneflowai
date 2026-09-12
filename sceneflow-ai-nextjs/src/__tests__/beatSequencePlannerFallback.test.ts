@@ -275,8 +275,10 @@ describe('composePersistedBeatStillPrompt', () => {
 
     expect(framing).toContain('Medium Shot, low angle')
     expect(framing).toContain('Brass pneumatic hatch collar')
-    expect(framing).toContain('Blocking: Piper Hayes braces against the bulkhead')
-    expect(framing).toContain('Prop handling: Piper Hayes swings the Thirty-Inch Iron Rail Spanner')
+    expect(framing).toContain('Body position: Piper Hayes braces against the bulkhead')
+    expect(framing).toContain(
+      'Hands and props: Piper Hayes swings the Thirty-Inch Iron Rail Spanner'
+    )
     expect(framing).toContain('Gaze: toward the hatch wheel')
     // The spanner is already handled; only the untouched prop needs stating.
     expect(framing).toContain('Props in frame: Violet Ink Drafting Vellum.')
@@ -329,7 +331,7 @@ describe('composePersistedBeatStillPrompt', () => {
 
     expect(framing).not.toMatch(/you knew about the shaft/i)
     expect(framing).toContain('Two-Shot')
-    expect(framing).toContain('Blocking: Piper Hayes squares up to Gideon Croft')
+    expect(framing).toContain('Body position: Piper Hayes squares up to Gideon Croft')
     expect(framing).toContain('Gaze: locked on Gideon Croft')
     expect(framing).toContain('Cast in frame: Piper Hayes, Professor Gideon Croft')
   })
@@ -348,7 +350,27 @@ describe('composePersistedBeatStillPrompt', () => {
     })
 
     expect(framing).not.toMatch(/not going back down/i)
-    expect(framing).toContain('Blocking: Piper Hayes blocks the ladder')
+    expect(framing).toContain('Body position: Piper Hayes blocks the ladder')
+  })
+
+  it('holds one body position when blocking stages a fall into it', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_fall',
+      sequenceIndex: 12,
+      kind: 'action',
+      beatDirection: {
+        shotType: 'Wide Shot',
+        cameraAngle: 'low angle',
+        frozenMoment:
+          'Piper Hayes sprawled across the damp flagstone floor, shielding the cylinder.',
+        blocking:
+          'Piper Hayes impacts the floor, tumbling out of the fog and curling into a defensive fetal position',
+      },
+    })
+
+    expect(framing).toContain('Body position: Piper Hayes curling into a defensive fetal position.')
+    expect(framing).not.toMatch(/impacts the floor/i)
+    expect(framing).not.toMatch(/tumbling out of the fog/i)
   })
 
   it('falls back to the spoken line for a beat whose direction shows nothing', () => {
@@ -406,7 +428,7 @@ describe('composePersistedBeatStillPrompt', () => {
         storyboardImagePromptDirectionKey: beatDirectionFingerprint(beat.beatDirection),
       })
     ).toBe(first)
-    expect(first.match(/Blocking:/g)).toHaveLength(1)
+    expect(first.match(/Body position:/g)).toHaveLength(1)
     expect(first.match(/Props in frame:/g)).toHaveLength(1)
   })
 

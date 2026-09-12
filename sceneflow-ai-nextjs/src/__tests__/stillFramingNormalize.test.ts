@@ -5,9 +5,58 @@ import {
   normalizeStillFraming,
   normalizeStillLens,
   normalizeStillShotType,
+  reduceActionToSingleInstant,
   stripLensSubjectNote,
   suppressDetailLensForShot,
 } from '@/lib/imagen/stillFramingNormalize'
+
+describe('reduceActionToSingleInstant', () => {
+  it('keeps the position a staged fall ends in', () => {
+    // The blocking behind the reported frame: three body positions in one line.
+    expect(
+      reduceActionToSingleInstant(
+        'person [1] impacts the floor, tumbling out of the fog and curling into a defensive fetal position.'
+      )
+    ).toBe('person [1] curling into a defensive fetal position.')
+  })
+
+  it('keeps the held state when a move and a grip share the line', () => {
+    expect(
+      reduceActionToSingleInstant('person [1] falls to her knees and grips prop [6] against her chest')
+    ).toBe('person [1] grips prop [6] against her chest')
+  })
+
+  it('carries a compound subject onto the surviving position', () => {
+    expect(
+      reduceActionToSingleInstant(
+        'person [1] and person [2] stagger apart, each pressing a palm against the hatch'
+      )
+    ).toBe('person [1] and person [2] each pressing a palm against the hatch')
+  })
+
+  it('leaves blocking that is already one position exactly as written', () => {
+    const held = 'person [1] crouched behind the crate, one hand on the hatch wheel'
+    expect(reduceActionToSingleInstant(held)).toBe(held)
+    expect(reduceActionToSingleInstant('Piper Hayes braces against the bulkhead')).toBe(
+      'Piper Hayes braces against the bulkhead'
+    )
+  })
+
+  it('leaves a move alone when no clause names where it lands', () => {
+    const noLanding = 'person [1] staggers back and turns away'
+    expect(reduceActionToSingleInstant(noLanding)).toBe(noLanding)
+  })
+
+  it('does not reduce when it cannot tell who the subject is', () => {
+    const noSubject = 'tumbling out of the fog and curling into a fetal position'
+    expect(reduceActionToSingleInstant(noSubject)).toBe(noSubject)
+  })
+
+  it('handles empty direction', () => {
+    expect(reduceActionToSingleInstant('')).toBe('')
+    expect(reduceActionToSingleInstant(undefined)).toBe('')
+  })
+})
 
 describe('normalizeStillCameraAngle', () => {
   it('reduces a camera move to the angle the frame ends on', () => {

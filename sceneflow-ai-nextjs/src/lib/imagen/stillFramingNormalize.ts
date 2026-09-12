@@ -130,6 +130,98 @@ export function normalizeStillShotType(shotType?: string | null): string {
   return stripCameraMotion(reduceTransitionToEndState(raw))
 }
 
+/** Travel or impact — the movement into a position, rather than the position. */
+const BALLISTIC_VERB =
+  /\b(?:impact(?:s|ed|ing)?|hit(?:s|ting)?|strik(?:e|es|ing)|struck|slam(?:s|med|ming)?|crash(?:es|ed|ing)?|tumbl(?:e|es|ed|ing)|roll(?:s|ed|ing)?|fall(?:s|ing)?|fell|drop(?:s|ped|ping)?|lung(?:e|es|ed|ing)|leap(?:s|ed|ing)?|div(?:e|es|ed|ing)|hurl(?:s|ed|ing)?|hurtl(?:e|es|ed|ing)|fling(?:s|ing)?|flung|stagger(?:s|ed|ing)?|stumbl(?:e|es|ed|ing)|swing(?:s|ing)?|swung|spin(?:s|ning)?|spun|whirl(?:s|ed|ing)?|burst(?:s|ing)?|scrambl(?:e|es|ed|ing)|charg(?:e|es|ed|ing)|rush(?:es|ed|ing)?)\b/i
+
+/**
+ * Prepositions that land a body or object somewhere, which is what makes a
+ * clause a pose rather than a move. Bare prepositions need a determiner after
+ * them so "out of the fog" and "in time" do not read as a landing place.
+ */
+const SETTLED_STATE =
+  /\b(?:into|onto|against|atop|beneath|underneath)\b|\b(?:on|across|over|under|around|beside|behind|between|in)\s+(?:the|a|an|his|her|their|its|one)\b/i
+
+/**
+ * Subject a clause opens on: a reference token, a pronoun, or a run of
+ * capitalized words, and any number of those joined by "and". Full names have
+ * to survive whole — "Piper Hayes" reduced to "Piper" loses the binding that
+ * `replaceLibraryNamesWithTokens` needs to find later.
+ */
+const SUBJECT_TERM =
+  "(?:person \\[\\d+\\]|prop \\[\\d+\\]|she|he|they|it|[A-Z][\\w'’-]*(?:\\s+[A-Z][\\w'’-]*)*)"
+const CLAUSE_SUBJECT = new RegExp(
+  `^(${SUBJECT_TERM}(?:\\s+and\\s+${SUBJECT_TERM})*)\\s+\\S`
+)
+
+/**
+ * Split action prose into the clauses that each name a position.
+ *
+ * Commas separate the stages of a move. Within the last stage, `and` chains
+ * more of them ("tumbling out of the fog and curling into a ball") — but an
+ * `and` in the opening clause usually joins two subjects, so only the final
+ * comma segment is split that way.
+ */
+function splitActionClauses(text: string): string[] {
+  const segments = text
+    .split(',')
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+  if (segments.length === 0) return []
+
+  const head = segments.slice(0, -1)
+  const tail = segments[segments.length - 1]
+  return [...head, ...tail.split(/\s+and\s+/i).map((part) => part.trim())].filter(Boolean)
+}
+
+/**
+ * Reduce staged action to the one position the frame holds.
+ *
+ * Beat direction is authored as choreography — `person [1] impacts the floor,
+ * tumbling out of the fog and curling into a defensive fetal position` — and an
+ * image model handed three successive positions for one exposure renders them
+ * superimposed: a body off the floor with a spare arm (production 2026-09-12).
+ * `normalizeStillFraming` already does this for the camera; the body needs the
+ * same treatment, because the frozen moment is the only instant that exists.
+ *
+ * Only a reduction when the prose actually stages a move: something earlier has
+ * to be travel or impact toward a later landing place, and the subject has to
+ * be identifiable. Anything else is returned untouched, so blocking that was
+ * already one held position keeps its exact wording. Verb tense is left alone —
+ * the surviving participle is labeled as a position by its facet, and guessing
+ * past forms ("taking" to "taked") would corrupt more than it fixed.
+ */
+export function reduceActionToSingleInstant(value?: string | null): string {
+  const raw = (value ?? '').trim()
+  if (!raw) return ''
+
+  const terminator = raw.match(/[.!?]$/)?.[0] ?? ''
+  const reduced = reduceTransitionToEndState(raw.replace(/[.!?\s]+$/, ''))
+  const restore = (text: string) => `${text}${terminator}`
+
+  const clauses = splitActionClauses(reduced)
+  if (clauses.length < 2) return restore(reduced)
+
+  let landing = -1
+  for (let i = clauses.length - 1; i > 0; i -= 1) {
+    if (SETTLED_STATE.test(clauses[i])) {
+      landing = i
+      break
+    }
+  }
+  if (landing < 1) return restore(reduced)
+
+  const travels = clauses.slice(0, landing).some((clause) => BALLISTIC_VERB.test(clause))
+  if (!travels) return restore(reduced)
+
+  const subject = clauses[0].match(CLAUSE_SUBJECT)?.[1]
+  if (!subject) return restore(reduced)
+
+  const terminal = clauses[landing]
+  const pose = terminal.startsWith(subject) ? terminal : `${subject} ${terminal}`
+  return restore(tidy(pose))
+}
+
 export interface NormalizedStillFraming {
   /** Shot clause to lead Action/Framing with, e.g. `Two-Shot, low angle`. */
   shot: string
