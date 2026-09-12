@@ -84,7 +84,7 @@ export type SceneRequirementLocation = {
 
 export type SceneRequirementObject = {
   id: string
-  name: string
+  name?: string
   description?: string
   imageUrl?: string
   category?: string

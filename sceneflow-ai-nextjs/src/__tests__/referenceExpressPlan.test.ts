@@ -7,6 +7,7 @@ import {
   castFingerprint,
   locationFingerprint,
   planReferenceExpressItems,
+  planSceneReferenceExpressItems,
   propFingerprint,
   type CastSource,
   type LocationSource,
@@ -85,6 +86,120 @@ describe('planReferenceExpressItems', () => {
       locations: [location({ id: '' })],
       props: [prop({ id: '' })],
     })
+
+    expect(items).toEqual([])
+  })
+})
+
+describe('planSceneReferenceExpressItems', () => {
+  const MIRA = cast({ id: 'c1', name: 'Mira' })
+  const BO = cast({ id: 'c2', name: 'Bo' })
+  const DOCKYARD = location({ id: 'l1', location: 'Dockyard' })
+  const ATRIUM = location({ id: 'l2', location: 'Atrium' })
+  const KEY = prop({ id: 'p1', name: 'Brass key' })
+  const LEDGER = prop({ id: 'p2', name: 'Leather ledger' })
+
+  const input = {
+    characters: [MIRA, BO],
+    locations: [DOCKYARD, ATRIUM],
+    props: [KEY, LEDGER],
+    scenes: [
+      { heading: 'EXT. DOCKYARD - NIGHT', sceneNumber: 1, action: 'Mira turns the brass key.' },
+      { heading: 'INT. ATRIUM - DAY', sceneNumber: 2, action: 'Bo signs the leather ledger.' },
+    ],
+  }
+
+  it('plans only what the named scene needs', () => {
+    const items = planSceneReferenceExpressItems(input, { sceneIndices: [0] })
+
+    expect(items.map((item) => item.targetId)).toEqual(['c1', 'l1', 'p1'])
+  })
+
+  it('unions the scenes in a multi-scene scope without repeating shared rows', () => {
+    const shared = {
+      ...input,
+      scenes: [input.scenes[0], { ...input.scenes[0], sceneNumber: 2 }],
+    }
+    const items = planSceneReferenceExpressItems(shared, { sceneIndices: [0, 1] })
+
+    expect(items.map((item) => item.targetId)).toEqual(['c1', 'l1', 'p1'])
+  })
+
+  it('keeps cast ahead of locations and props, like the project-wide plan', () => {
+    const items = planSceneReferenceExpressItems(input, { sceneIndices: [0, 1] })
+
+    expect(items.map((item) => item.kind)).toEqual([
+      'cast',
+      'cast',
+      'location',
+      'location',
+      'prop',
+      'prop',
+    ])
+  })
+
+  it('still skips anything already drawn', () => {
+    const items = planSceneReferenceExpressItems(
+      { ...input, characters: [{ ...MIRA, referenceImage: 'https://cdn/mira.png' }, BO] },
+      { sceneIndices: [0] }
+    )
+
+    expect(items.map((item) => item.targetId)).toEqual(['l1', 'p1'])
+  })
+
+  it('emits the same items and fingerprints the project-wide plan would', () => {
+    const scoped = planSceneReferenceExpressItems(input, { sceneIndices: [0, 1] })
+    const projectWide = planReferenceExpressItems(input)
+
+    expect(scoped).toEqual(projectWide)
+  })
+
+  it('narrows to single rows when the caller names them', () => {
+    const items = planSceneReferenceExpressItems(input, {
+      sceneIndices: [0],
+      itemKeys: ['prop:p1'],
+    })
+
+    expect(items.map((item) => item.targetId)).toEqual(['p1'])
+  })
+
+  it('matches a cast key given as the character name, since ids are optional', () => {
+    const noIds = {
+      ...input,
+      characters: [{ ...MIRA, id: undefined }, { ...BO, id: undefined }],
+    }
+    const items = planSceneReferenceExpressItems(noIds, {
+      sceneIndices: [0],
+      itemKeys: ['cast:Mira'],
+    })
+
+    expect(items).toHaveLength(1)
+    // The planner keeps owning item identity: list position, not the name.
+    expect(items[0]).toMatchObject({ kind: 'cast', targetId: '0', label: 'Mira' })
+  })
+
+  it('honours the scene overrides the user made on the card', () => {
+    const withOverride = {
+      ...input,
+      scenes: [{ ...input.scenes[0], referenceOverrides: { removed: ['prop:p1'] } }, input.scenes[1]],
+    }
+    const items = planSceneReferenceExpressItems(withOverride, { sceneIndices: [0] })
+
+    expect(items.map((item) => item.targetId)).toEqual(['c1', 'l1'])
+  })
+
+  it('falls back to the project-wide plan when the scope names no real scene', () => {
+    expect(planSceneReferenceExpressItems(input, {})).toEqual(planReferenceExpressItems(input))
+    expect(planSceneReferenceExpressItems(input, { sceneIndices: [99] })).toEqual(
+      planReferenceExpressItems(input)
+    )
+  })
+
+  it('plans nothing when the scene needs nothing', () => {
+    const items = planSceneReferenceExpressItems(
+      { ...input, scenes: [{ heading: 'INT. VOID - DAY', sceneNumber: 1 }, input.scenes[1]] },
+      { sceneIndices: [0] }
+    )
 
     expect(items).toEqual([])
   })

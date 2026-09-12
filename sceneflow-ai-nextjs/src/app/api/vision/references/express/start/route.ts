@@ -13,19 +13,25 @@ import {
 } from '@/lib/vision/referenceExpress/estimate'
 import {
   loadReferenceExpressContext,
-  planReferenceExpressItems,
+  planSceneReferenceExpressItems,
 } from '@/lib/vision/referenceExpress/planItems'
+import type { ReferenceExpressScope } from '@/lib/vision/referenceExpress/types'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 /**
- * Queue Reference Express (cast, locations, props) and return immediately.
+ * Queue Express References (cast, locations, props) and return immediately.
  *
  * Always background, matching Audience Resonance: there is no size threshold to
  * tune, and even a two-item batch then survives a reload. Items are planned
  * here and stored on the job payload, so the run is resumable without Inngest
  * and a browser refresh can re-attach to it.
+ *
+ * `sceneIndices` scopes the run to what those scenes need, which is what makes
+ * just-in-time generation viable: the whole library is 20+ minutes of serial
+ * work, one scene is usually four items. Scoping is a planning change only —
+ * the worker and the job row are unchanged.
  *
  * Starting always means "run a new batch": any prior active batch for this
  * project is cancelled first so the user is never blocked on a stuck queue.
@@ -38,11 +44,25 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}))
-    const { projectId } = body as { projectId?: string }
+    const { projectId, sceneIndices, itemKeys } = body as {
+      projectId?: string
+      sceneIndices?: unknown
+      itemKeys?: unknown
+    }
 
     if (!projectId) {
       return NextResponse.json({ error: 'projectId required' }, { status: 400 })
     }
+
+    const scope: ReferenceExpressScope = {
+      sceneIndices: Array.isArray(sceneIndices)
+        ? sceneIndices.filter((index): index is number => Number.isInteger(index) && index >= 0)
+        : undefined,
+      itemKeys: Array.isArray(itemKeys)
+        ? itemKeys.filter((key): key is string => typeof key === 'string' && !!key.trim())
+        : undefined,
+    }
+    const sceneScoped = !!scope.sceneIndices?.length
 
     const { cancelledIds } = await cancelActiveJobsForProject({
       userId,
@@ -55,11 +75,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
-    const items = planReferenceExpressItems(context)
+    const items = planSceneReferenceExpressItems(context, scope)
     if (!items.length) {
       return NextResponse.json(
         {
-          error: 'All reference images are already generated',
+          error: sceneScoped
+            ? 'This scene already has every reference it needs'
+            : 'All reference images are already generated',
           code: 'NOTHING_TO_GENERATE',
         },
         { status: 409 }
@@ -91,6 +113,9 @@ export async function POST(req: NextRequest) {
         castCount: items.filter((item) => item.kind === 'cast').length,
         locationCount: items.filter((item) => item.kind === 'location').length,
         propCount: items.filter((item) => item.kind === 'prop').length,
+        // Recorded so the status card can name the scope. The worker reads
+        // only `items` and `_worker`, so this stays informational.
+        sceneIndices: sceneScoped ? scope.sceneIndices : undefined,
       },
     })
 

@@ -3,7 +3,17 @@ import { Project } from '@/models/Project'
 import { resolveCharacterId } from '@/lib/vision/updateCharacterReference'
 import type { CastingBriefVoiceConfig } from '@/lib/character/applyCastingBriefUpdate'
 import type { ScreenplayContext } from '@/lib/voiceRecommendation'
-import { fingerprintSource, type ReferenceExpressItem } from './types'
+import {
+  requirementKey,
+  resolveSceneRequiredReferences,
+  type SceneReferenceOverrides,
+  type SceneReferenceRequirement,
+} from '@/lib/vision/sceneReferenceRequirements'
+import {
+  fingerprintSource,
+  type ReferenceExpressItem,
+  type ReferenceExpressScope,
+} from './types'
 
 export type CastSource = {
   id?: string
@@ -22,7 +32,18 @@ export type CastSource = {
   wardrobeAccessories?: string
   voiceDescription?: string
   voiceConfig?: CastingBriefVoiceConfig
-  wardrobes?: Array<{ description?: string; accessories?: string; isDefault?: boolean }>
+  wardrobes?: Array<{
+    id?: string
+    name?: string
+    description?: string
+    accessories?: string
+    isDefault?: boolean
+    headshotUrl?: string
+    fullBodyUrl?: string
+    previewImageUrl?: string
+    sceneNumbers?: number[]
+    needsImageRegen?: boolean
+  }>
   [key: string]: unknown
 }
 
@@ -34,6 +55,8 @@ export type LocationSource = {
   intExt?: string
   timeOfDay?: string
   description?: string
+  /** 1-based scenes this location was assigned to by the library. */
+  sceneNumbers?: number[]
   [key: string]: unknown
 }
 
@@ -44,6 +67,8 @@ export type PropSource = {
   description?: string
   generationPrompt?: string
   category?: string
+  importance?: string
+  sceneNumbers?: number[]
   [key: string]: unknown
 }
 
@@ -51,6 +76,8 @@ export type ReferenceExpressPlanInput = {
   characters: CastSource[]
   locations: LocationSource[]
   props: PropSource[]
+  /** Script scenes, so a run can be planned against particular scenes. */
+  scenes?: Array<Record<string, any>>
 }
 
 /** Age arrives as either a band ("late 50s") or a number, depending on the source. */
@@ -140,6 +167,152 @@ export function planReferenceExpressItems(
   return items
 }
 
+/** Requirement cast ids fall back to the character name, so match on either. */
+function findCastIndex(characters: CastSource[], idOrName: string): number {
+  const needle = idOrName.trim().toLowerCase()
+  if (!needle) return -1
+  const byId = characters.findIndex(
+    (character) => String(character.id ?? '').toLowerCase() === needle
+  )
+  if (byId >= 0) return byId
+  return characters.findIndex(
+    (character) => String(character.name ?? '').trim().toLowerCase() === needle
+  )
+}
+
+/**
+ * Emit the items these requirements call for, cast first so character identity
+ * exists before locations and props are drawn around it — the same ordering the
+ * project-wide plan uses.
+ *
+ * Wardrobe requirements are dropped: Reference Express draws cast, locations
+ * and props, and wardrobe images come from the character's own wardrobe pass.
+ */
+function planItemsForRequirements(
+  input: ReferenceExpressPlanInput,
+  requirements: SceneReferenceRequirement[]
+): ReferenceExpressItem[] {
+  const items: ReferenceExpressItem[] = []
+  const seen = new Set<string>()
+  const push = (item: ReferenceExpressItem) => {
+    const key = `${item.kind}:${item.targetId}`
+    if (seen.has(key)) return
+    seen.add(key)
+    items.push(item)
+  }
+
+  for (const requirement of requirements) {
+    if (requirement.kind !== 'cast') continue
+    const index = findCastIndex(input.characters, requirement.id)
+    if (index < 0) continue
+    const character = input.characters[index]
+    if (character.type === 'narrator') continue
+    if (hasImage(character.referenceImage)) continue
+    push({
+      kind: 'cast',
+      targetId: resolveCharacterId(character, index),
+      label: character.name?.trim() || `Character ${index + 1}`,
+      sourceFingerprint: castFingerprint(character),
+    })
+  }
+
+  for (const requirement of requirements) {
+    if (requirement.kind !== 'location') continue
+    const location = input.locations.find((row) => row.id === requirement.id)
+    if (!location?.id || hasImage(location.imageUrl)) continue
+    push({
+      kind: 'location',
+      targetId: location.id,
+      label: location.location?.trim() || location.locationDisplay?.trim() || 'Location',
+      sourceFingerprint: locationFingerprint(location),
+    })
+  }
+
+  for (const requirement of requirements) {
+    if (requirement.kind !== 'prop') continue
+    const prop = input.props.find((row) => row.id === requirement.id)
+    if (!prop?.id || hasImage(prop.imageUrl)) continue
+    push({
+      kind: 'prop',
+      targetId: prop.id,
+      label: prop.name?.trim() || 'Prop',
+      sourceFingerprint: propFingerprint(prop),
+    })
+  }
+
+  return items
+}
+
+/** Narrow a plan to the rows the caller named, by requirement key. */
+function applyItemKeyFilter(
+  items: ReferenceExpressItem[],
+  itemKeys: string[] | undefined,
+  input: ReferenceExpressPlanInput
+): ReferenceExpressItem[] {
+  if (!itemKeys?.length) return items
+  const wanted = new Set(itemKeys.map((key) => key.trim().toLowerCase()))
+  return items.filter((item) => {
+    if (wanted.has(`${item.kind}:${item.targetId}`.toLowerCase())) return true
+    if (item.kind !== 'cast') return false
+    const name = input.characters
+      .find((character, index) => resolveCharacterId(character, index) === item.targetId)
+      ?.name?.trim()
+      .toLowerCase()
+    return !!name && wanted.has(`cast:${name}`)
+  })
+}
+
+/**
+ * Plan only what the given scenes need.
+ *
+ * A scene typically needs two characters, one location and a prop or two, so
+ * this is the difference between four items and the whole library — and
+ * between starting production at the scene card and detouring through the
+ * Reference Library first.
+ *
+ * Deliberately a planning change and nothing else: the worker, the lease
+ * guard, the `generation_jobs` row, Inngest dispatch and the browser's
+ * rehydration all behave identically on a shorter `payload.items`.
+ */
+export function planSceneReferenceExpressItems(
+  input: ReferenceExpressPlanInput,
+  scope: ReferenceExpressScope = {}
+): ReferenceExpressItem[] {
+  const scenes = input.scenes ?? []
+  const sceneIndices = [...new Set(scope.sceneIndices ?? [])]
+    .filter((index) => Number.isInteger(index) && index >= 0 && index < scenes.length)
+    .sort((a, b) => a - b)
+
+  // No usable scene scope — the project-wide plan is the honest answer.
+  if (sceneIndices.length === 0) {
+    return applyItemKeyFilter(planReferenceExpressItems(input), scope.itemKeys, input)
+  }
+
+  const wanted = scope.itemKeys?.length
+    ? new Set(scope.itemKeys.map((key) => key.trim().toLowerCase()))
+    : null
+
+  const requirements = new Map<string, SceneReferenceRequirement>()
+  for (const sceneIndex of sceneIndices) {
+    const scene = scenes[sceneIndex]
+    const resolved = resolveSceneRequiredReferences({
+      scene,
+      sceneIndex,
+      characters: input.characters,
+      locationReferences: input.locations,
+      objectReferences: input.props,
+      overrides: (scene?.referenceOverrides as SceneReferenceOverrides | undefined) ?? null,
+    })
+    for (const requirement of resolved) {
+      const key = requirementKey(requirement)
+      if (wanted && !wanted.has(key.toLowerCase())) continue
+      if (!requirements.has(key)) requirements.set(key, requirement)
+    }
+  }
+
+  return planItemsForRequirements(input, [...requirements.values()])
+}
+
 export type ReferenceExpressContext = ReferenceExpressPlanInput & {
   /** Same shape the vision page passes to the Casting Brief generator. */
   screenplayContext: ScreenplayContext
@@ -163,6 +336,9 @@ export async function loadReferenceExpressContext(
       ? references.locationReferences
       : [],
     props: Array.isArray(references.objectReferences) ? references.objectReferences : [],
+    scenes: Array.isArray(visionPhase.script?.script?.scenes)
+      ? visionPhase.script.script.scenes
+      : [],
     screenplayContext: {
       genre: project.genre,
       tone: project.tone || treatment.tone_description || treatment.tone,
