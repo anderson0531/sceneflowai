@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs'
+import path from 'path'
 import { describe, it, expect } from 'vitest'
 import {
   beatHasStalePromptKey,
@@ -210,5 +212,46 @@ describe('refreshSceneBeatStillPrompts', () => {
   it('is a no-op for a scene with no beats', () => {
     const scene = { sceneNumber: 1, beats: [] }
     expect(refreshSceneBeatStillPrompts(scene).promptsUpdated).toBe(0)
+  })
+})
+
+describe('stale prompts get refreshed without the user hunting for a button', () => {
+  const ROOT = path.resolve(__dirname, '../..')
+  const readSource = (relativePath: string) =>
+    readFileSync(path.join(ROOT, relativePath), 'utf8')
+
+  const PAGE = 'src/app/dashboard/workflow/vision/[projectId]/page.tsx'
+  const GALLERY = 'src/components/vision/SceneGallery.tsx'
+
+  it('offers one project-wide pass rather than a per-scene button per scene', () => {
+    const gallery = readSource(GALLERY)
+
+    // A 26-scene script cannot be refreshed one open scene card at a time.
+    expect(gallery).toContain('countStalePromptKeys')
+    expect(gallery).toContain('onRefreshStalePrompts')
+    expect(gallery).toContain('Update prompts (${stalePromptCount})')
+  })
+
+  it('wires the gallery action to the page-level pass', () => {
+    const page = readSource(PAGE)
+
+    expect(page).toContain('onRefreshStalePrompts={refreshAllStalePrompts}')
+    expect(page).toContain('const refreshAllStalePrompts = useCallback(')
+  })
+
+  it('recomposes stale prompts on load, once per project and never mid-run', () => {
+    const page = readSource(PAGE)
+    const start = page.indexOf('const autoPromptRefreshForProject = useRef<string | null>(null)')
+    expect(start, 'auto prompt refresh effect not found').toBeGreaterThan(-1)
+    const effect = page.slice(start, start + 1200)
+
+    // The fingerprint version bump shipped without a migration, so a project
+    // nobody touches keeps reporting "Prompt changed" forever.
+    expect(effect).toContain('sceneHasStalePromptKeys')
+    expect(effect).toContain('refreshAllStalePrompts({ silent: true })')
+    // It writes to the database, so it must not fire on every rehydrate, and
+    // must not race an agent run's own writes.
+    expect(effect).toContain('autoPromptRefreshForProject.current === projectId')
+    expect(effect).toContain('isExpressRunning || isUpdatingAllDirections')
   })
 })

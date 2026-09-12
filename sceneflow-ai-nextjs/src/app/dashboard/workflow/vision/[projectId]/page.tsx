@@ -41,6 +41,7 @@ import { resolveStoryboardScenes, totalStoryboardMediaScore } from '@/lib/storyb
 import {
   isPreVisStale,
   refreshSceneBeatStillPrompts,
+  sceneHasStalePromptKeys,
   stampPreVisContentHash,
   syncPreVisToScript,
 } from '@/lib/storyboard/preVisSync'
@@ -1016,8 +1017,40 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       ...loadedScript,
       script: { ...loadedScript.script, scenes: finalScenes },
     }
-    setScript(sanitizeScriptDialogueLines(nextScript))
+    const sanitizedScript = sanitizeScriptDialogueLines(nextScript)
+    setScript(sanitizedScript)
     setScriptEditedAt(Date.now())
+
+    /**
+     * Carry the server's `scriptUpdatedAt` into the project snapshot too.
+     *
+     * This refreshed `script` but never `project` / `projectRef.current`, so
+     * `visionPhase.scriptUpdatedAt` stayed frozen at whatever it was when the
+     * page loaded while the server kept bumping it on every write. During audio
+     * regen `handleScriptChange` deliberately replays the existing timestamp,
+     * which meant replaying a page-load one — and the PUT guard then rejected
+     * the whole script as a stale write. That is the 43-minute `deltaMs` in the
+     * `STALE SCRIPT WRITE BLOCKED` logs.
+     */
+    const currentProject = projectRef.current
+    if (currentProject) {
+      const refreshedProject = {
+        ...currentProject,
+        metadata: {
+          ...currentProject.metadata,
+          visionPhase: {
+            ...currentProject.metadata?.visionPhase,
+            ...(typeof visionPhase?.scriptUpdatedAt === 'string'
+              ? { scriptUpdatedAt: visionPhase.scriptUpdatedAt }
+              : {}),
+            script: sanitizedScript,
+            scenes: finalScenes,
+          },
+        },
+      }
+      projectRef.current = refreshedProject
+      setProject(refreshedProject)
+    }
 
     if (options?.repairIfRicher) {
       const dbScore = totalStoryboardMediaScore(dbCanonicalScenes)
@@ -13498,6 +13531,103 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   /**
+   * Recompose every scene's stale frame prompts in one pass.
+   *
+   * Refreshing a 26-scene script one Update Frames button at a time is not a
+   * thing anyone will finish, and the per-scene control only appears on scenes
+   * whose card is open. Prompts only — frames, audio and segments are left
+   * alone, same as the per-scene prompts-only path.
+   */
+  const refreshAllStalePrompts = useCallback(
+    async (options?: { silent?: boolean }): Promise<number> => {
+      const scenes = script?.script?.scenes
+      if (!Array.isArray(scenes) || scenes.length === 0) return 0
+
+      let promptsUpdated = 0
+      let scenesTouched = 0
+      const updatedScenes = scenes.map((scene: any, index: number) => {
+        const result = refreshSceneBeatStillPrompts(scene, {
+          sceneNumber: index + 1,
+          artStyle: lockedArtStyle,
+        })
+        if (result.promptsUpdated > 0) {
+          promptsUpdated += result.promptsUpdated
+          scenesTouched++
+          return result.scene
+        }
+        return scene
+      })
+
+      if (promptsUpdated === 0) {
+        if (!options?.silent) toast.info('Frame prompts are already up to date')
+        return 0
+      }
+
+      setScript((prev: any) =>
+        prev?.script
+          ? { ...prev, script: { ...prev.script, scenes: updatedScenes } }
+          : prev
+      )
+      setScriptEditedAt(Date.now())
+
+      const saved = await persistVisionScriptScenes(
+        updatedScenes,
+        'refreshAllStalePrompts'
+      )
+      if (!saved) {
+        if (!options?.silent) toast.error('Failed to save refreshed frame prompts')
+        return 0
+      }
+
+      if (!options?.silent) {
+        toast.success(
+          `Refreshed ${promptsUpdated} frame prompt${promptsUpdated === 1 ? '' : 's'} across ${scenesTouched} scene${scenesTouched === 1 ? '' : 's'}. Existing frames are kept.`
+        )
+      } else {
+        console.log(
+          `[PromptRefresh] Recomposed ${promptsUpdated} stale frame prompt(s) across ${scenesTouched} scene(s) on load`
+        )
+      }
+      return promptsUpdated
+    },
+    [script, lockedArtStyle, persistVisionScriptScenes]
+  )
+
+  /**
+   * Recompose stale prompts once per project, on load.
+   *
+   * The version bump that invalidated every stored prompt key had no migration:
+   * beats started reporting "Prompt changed" and waited for someone to press a
+   * per-scene button. Nothing else recomposes them, so a project opened and
+   * never touched stays that way, and the Frame Agent renders the scenes it was
+   * asked for from whatever wording each beat happens to hold.
+   *
+   * One shot per project id — this writes to the database, so it must not run
+   * again on every rehydrate — and never while an agent run is mid-flight,
+   * whose own writes it would race.
+   */
+  const autoPromptRefreshForProject = useRef<string | null>(null)
+  useEffect(() => {
+    if (!projectId || !initialLoadComplete) return
+    if (autoPromptRefreshForProject.current === projectId) return
+    if (isExpressRunning || isUpdatingAllDirections) return
+
+    const scenes = script?.script?.scenes
+    if (!Array.isArray(scenes) || scenes.length === 0) return
+    if (!scenes.some((scene: any) => sceneHasStalePromptKeys(scene))) return
+
+    autoPromptRefreshForProject.current = projectId
+    void refreshAllStalePrompts({ silent: true })
+  }, [
+    projectId,
+    initialLoadComplete,
+    isExpressRunning,
+    isUpdatingAllDirections,
+    script,
+    refreshAllStalePrompts,
+  ])
+
+  /**
    * Per-scene Scene Express (mode=scene): fail-fast preflight, parallel audio+images,
    * per-scene checkpoint persist. Target <60s for a typical scene.
    */
@@ -15187,6 +15317,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     onOpenReferences={() => openReferenceLibrary()}
                     onAssignVoices={() => openReferenceLibrary('cast')}
                     onExpressGenerate={handleExpressGenerate}
+                    onRefreshStalePrompts={refreshAllStalePrompts}
                     isExpressRunning={isExpressRunning}
                     expressStatus={expressStatus}
                     expressGateBlocked={!expressGate.allowed}
