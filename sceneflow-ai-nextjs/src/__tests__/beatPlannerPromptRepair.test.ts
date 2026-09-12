@@ -87,7 +87,7 @@ describe('the fallback beat planner composes one shot and one period', () => {
     // `mergePlannerDirectionIntoBeat` writes this onto `beat.beatDirection`,
     // which carries `shotType` in its own field.
     expect(plans[0].frozenMoment).toMatch(/^Piper steps through the antechamber/)
-    expect(plans[1].frozenMoment).toBe('Gideon turns from the vault.')
+    expect(plans[1].frozenMoment).toMatch(/^Gideon turns from the vault\./)
     expect(plans[2].frozenMoment).toMatch(/^the door gives and light floods out/)
     for (const plan of plans) {
       expect(plan.frozenMoment).not.toMatch(/^(Medium Shot|Close-Up|Wide Shot):/i)
@@ -97,22 +97,38 @@ describe('the fallback beat planner composes one shot and one period', () => {
   it('never doubles a sentence terminator in the composed prompt', () => {
     const plans = buildFallbackBeatPlans(buildFallbackRequest())
 
-    // A middle beat gets neither set context nor atmosphere, so its moment's
-    // own period used to run straight into the appended negative clause.
-    expect(plans[1].prompt).toContain('vault. No on-screen text')
+    // Clauses arrive with and without their own terminator, and the composed
+    // prompt is written back onto the beat and read again next generation.
+    expect(plans[1].prompt).toContain('Cold sodium light. No on-screen text')
     for (const plan of plans) {
       expect(plan.prompt).not.toMatch(/\.\s*\./)
       expect(plan.frozenMoment).not.toMatch(/\.\s*\./)
     }
   })
 
-  it('still states the set and the atmosphere on the beats that open and close', () => {
+  it('states the set on every beat, once', () => {
     const plans = buildFallbackBeatPlans(buildFallbackRequest())
 
-    expect(plans[0].frozenMoment).toContain('Vault antechamber')
-    expect(plans[0].frozenMoment).toContain('Cold sodium light')
-    expect(plans[2].frozenMoment).toContain('Vault antechamber')
-    expect(plans[1].frozenMoment).not.toContain('Vault antechamber')
+    for (const plan of plans) {
+      expect(plan.frozenMoment).toContain('Vault antechamber')
+      expect(plan.frozenMoment).toContain('Cold sodium light')
+      expect(plan.frozenMoment.match(/Vault antechamber/g)).toHaveLength(1)
+      expect(plan.frozenMoment.match(/Cold sodium light/g)).toHaveLength(1)
+    }
+  })
+
+  // The scene's prop catalog and the film's look are not this beat's staging.
+  // Persisted onto `beatDirection.frozenMoment`, they asked the first and last
+  // frames of a scene for objects staged in other beats.
+  it('keeps the scene prop catalog and the lighting grammar out of the beat', () => {
+    const plans = buildFallbackBeatPlans(buildFallbackRequest())
+
+    for (const plan of plans) {
+      expect(plan.frozenMoment).not.toContain('Core drill')
+      expect(plan.frozenMoment).not.toContain('Brass keyring')
+      expect(plan.frozenMoment).not.toContain('Hard raking key')
+      expect(plan.frozenMoment).not.toContain('Sodium amber')
+    }
   })
 
   it('keeps a colon the writer put in the action text', () => {

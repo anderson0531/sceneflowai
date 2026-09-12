@@ -162,11 +162,14 @@ describe('beat sequence planner', () => {
       expect(plan.prompt).toMatch(/Dense, luminous|luminous, increasingly chaotic/i)
       expect(plan.prompt).toMatch(/digital fingerprints|retinal scans|recognition grids/i)
       expect(plan.prompt).toMatch(/Abstract digital composition, no people/i)
+      // A title card has no staged action to carry the set, so the facets are
+      // labelled once rather than restated by the frozen moment as well.
+      expect(plan.prompt.match(/Dense, luminous, increasingly chaotic/g)).toHaveLength(1)
     }
 
     const titleBeat = result.find((p) => p.beatRole === 'title_reveal')
     expect(titleBeat?.prompt).toMatch(/Centered bold typography/i)
-    expect(titleBeat?.prompt).toMatch(/Deep blues, electric purples/i)
+    expect(titleBeat?.prompt).toMatch(/Cool blues\/purples transitioning to warm amber/i)
   })
 
   it('maps camera shots 1:1 when shots match beat count', () => {

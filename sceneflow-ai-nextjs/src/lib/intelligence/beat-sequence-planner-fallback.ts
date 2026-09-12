@@ -557,37 +557,51 @@ function getProgressiveMoments(scene: Record<string, unknown>, beatCount: number
   return moments
 }
 
-function buildSetContext(scene: Record<string, unknown>, includeFull: boolean): string {
+/**
+ * The set this beat sits in — where it is and what the air is like.
+ *
+ * Scene `keyProps` is deliberately excluded. It is the catalog of props present
+ * somewhere in the scene, and the beat decides which of them the frame shows;
+ * dumping it here asked one beat's frame for up to four props staged in other
+ * beats. Lighting mood and colour temperature are excluded for the same reason
+ * a beat does not restate the film's look: the lookbook style anchor owns them.
+ * All of it was persisted onto `beatDirection.frozenMoment`, so it came back on
+ * every regeneration of that frame.
+ */
+function buildSetContext(scene: Record<string, unknown>): string {
   const direction = getSceneDirection(scene)
-  if (!includeFull) return ''
-  const parts: string[] = []
-  if (direction?.scene?.location) parts.push(String(direction.scene.location))
-  if (direction?.scene?.atmosphere) parts.push(String(direction.scene.atmosphere))
-  const props = direction?.scene?.keyProps
-  if (Array.isArray(props) && props.length > 0) {
-    parts.push(`Props: ${props.slice(0, 4).join(', ')}`)
-  }
-  const lighting = direction?.lighting
-  if (lighting?.overallMood) parts.push(String(lighting.overallMood))
-  if (lighting?.colorTemperature) parts.push(String(lighting.colorTemperature))
-  return parts.filter(Boolean).join('. ')
+  return [direction?.scene?.location, direction?.scene?.atmosphere]
+    .map((value) => (value ? String(value).trim() : ''))
+    .filter(Boolean)
+    .join('. ')
 }
 
+/**
+ * Direction facets for an abstract title card, which has no staged action to
+ * carry them. Facets the frozen moment already states are skipped, so the set
+ * is not described twice in one prompt.
+ */
 function buildTitleDirectionContext(
   scene: Record<string, unknown>,
   directionMeta: ReturnType<typeof extractDirectionMetadata>,
-  shotType: string
+  shotType: string,
+  frozenMoment: string
 ): string {
+  const stated = frozenMoment.toLowerCase()
   const parts: string[] = []
-  if (directionMeta.atmosphere) parts.push(`Atmosphere: ${directionMeta.atmosphere}`)
-  if (directionMeta.lightingMood) parts.push(`Lighting: ${directionMeta.lightingMood}`)
-  if (directionMeta.colorTemperature) parts.push(`Color: ${directionMeta.colorTemperature}`)
-  if (directionMeta.locationDescription) parts.push(`Location: ${directionMeta.locationDescription}`)
-  if (directionMeta.keyProps?.length) parts.push(`Props: ${directionMeta.keyProps.join(', ')}`)
-  if (shotType) parts.push(`Camera: ${shotType}`)
-  const direction = getSceneDirection(scene)
-  if (direction?.audio?.priorities) parts.push(`Audio mood: ${direction.audio.priorities}`)
-  return parts.filter(Boolean).join('. ')
+  const append = (label: string, value?: string) => {
+    const trimmed = value?.trim()
+    if (!trimmed || stated.includes(trimmed.toLowerCase())) return
+    parts.push(`${label}: ${trimmed}`)
+  }
+  append('Atmosphere', directionMeta.atmosphere)
+  append('Lighting', directionMeta.lightingMood)
+  append('Color', directionMeta.colorTemperature)
+  append('Location', directionMeta.locationDescription)
+  append('Props', directionMeta.keyProps?.join(', '))
+  append('Camera', shotType)
+  append('Audio mood', getSceneDirection(scene)?.audio?.priorities)
+  return parts.join('. ')
 }
 
 /**
@@ -656,21 +670,25 @@ export function buildFallbackBeatPlans(request: BeatSequencePlanRequest): BeatKe
       (beat.kind !== 'dialogue' ? moments[beatIndex] : '') ||
       `Beat ${beatIndex + 1} visual moment`
     const moment = stripLeadingShotPrefix(rawMoment, [shotType, ...shots])
-    const setContext = buildSetContext(scene, beatIndex === 0 || beatIndex === beats.length - 1)
+    // Every beat of a scene stands in the same set, so every beat states it.
+    // Gating this on the first and last beat left the middle of a scene
+    // unanchored while loading its two ends with scene-wide detail.
+    const setContext = buildSetContext(scene)
 
     // Framing is deliberately absent here: `frozenMoment` is persisted onto
     // `beat.beatDirection`, which already carries `shotType` as its own field
     // and has `composeBeatActionFraming` prepend it when composing a frame.
     const frozenParts = [moment]
-    if (setContext) frozenParts.push(setContext)
-    if (directionMeta.atmosphere && (beatIndex === 0 || sceneType === 'title')) {
-      frozenParts.push(`Atmosphere: ${directionMeta.atmosphere}`)
+    if (setContext && !moment.toLowerCase().includes(setContext.toLowerCase())) {
+      frozenParts.push(setContext)
     }
 
     const frozenMoment = joinPromptClauses(frozenParts)
     const allowTypography = roleAllowsTypography(beatRole)
     const titleDirectionContext =
-      sceneType === 'title' ? buildTitleDirectionContext(scene, directionMeta, shotType) : ''
+      sceneType === 'title'
+        ? buildTitleDirectionContext(scene, directionMeta, shotType, frozenMoment)
+        : ''
 
     const promptParts = [`${shotType}: ${frozenMoment}`]
     if (titleDirectionContext) {
