@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { resolveBeatFrameGenerationContext } from '@/lib/vision/beatFrameGenerationContext'
+import {
+  propsSelectionOutrunsDirection,
+  resolveBeatFrameGenerationContext,
+} from '@/lib/vision/beatFrameGenerationContext'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
 
@@ -665,5 +668,113 @@ describe('resolveBeatFrameGenerationContext', () => {
 
       expect(resolved.characterIds).toEqual(['c2'])
     })
+  })
+
+  describe('every attached reference records what selected it', () => {
+    const spanner: VisualReference[] = [
+      {
+        id: 'prop-spanner',
+        type: 'object',
+        name: 'Thirty-Inch Iron Rail Spanner',
+        importance: 'critical',
+      },
+    ]
+
+    it('names the selector for stated cast, a matched location, and a directed prop', () => {
+      const resolved = resolveBeatFrameGenerationContext({
+        scene: { heading: 'INT. KITCHEN - DAY' },
+        beat: actionBeat({
+          actionDescription: 'Elara hefts the spanner.',
+          beatDirection: {
+            castInFrame: ['Elara Vance'],
+            keyProps: ['Thirty-Inch Iron Rail Spanner'],
+          },
+        }),
+        projectCharacters: characters,
+        locationReferences: locations,
+        objectReferences: spanner,
+      })
+
+      expect(resolved.referenceProvenance).toEqual([
+        {
+          kind: 'character',
+          name: 'Elara Vance',
+          selector: 'direction-cast-in-frame',
+          matchedTerm: 'Elara Vance',
+        },
+        { kind: 'location', name: 'KITCHEN', selector: 'location-heading' },
+        {
+          kind: 'prop',
+          name: 'Thirty-Inch Iron Rail Spanner',
+          selector: 'direction-key-prop',
+          matchedTerm: 'Thirty-Inch Iron Rail Spanner',
+        },
+      ])
+    })
+
+    it('distinguishes a prop the beat text named from one the direction pinned', () => {
+      const resolved = resolveBeatFrameGenerationContext({
+        scene: { heading: 'INT. KITCHEN - DAY' },
+        beat: actionBeat({
+          actionDescription: 'Elara hefts the Thirty-Inch Iron Rail Spanner.',
+        }),
+        projectCharacters: characters,
+        locationReferences: [],
+        objectReferences: spanner,
+      })
+
+      expect(resolved.referenceProvenance).toContainEqual({
+        kind: 'prop',
+        name: 'Thirty-Inch Iron Rail Spanner',
+        selector: 'beat-text',
+        matchedTerm: 'Thirty-Inch Iron Rail Spanner',
+      })
+      expect(resolved.referenceProvenance).toContainEqual({
+        kind: 'character',
+        name: 'Elara Vance',
+        selector: 'beat-text',
+        matchedTerm: undefined,
+      })
+    })
+  })
+})
+
+describe('propsSelectionOutrunsDirection', () => {
+  const objectReferences: VisualReference[] = [
+    { id: 'prop-spanner', type: 'object', name: 'Thirty-Inch Iron Rail Spanner' },
+    { id: 'prop-vellum', type: 'object', name: 'Violet Ink Drafting Vellum' },
+  ]
+
+  it('names a saved prop the beat direction has moved on from', () => {
+    expect(
+      propsSelectionOutrunsDirection({
+        selection: { objectRefIds: ['prop-spanner', 'prop-vellum'] },
+        beat: actionBeat({
+          actionDescription: 'Elara swings the spanner at the dogs.',
+          beatDirection: { keyProps: ['Thirty-Inch Iron Rail Spanner'] },
+        }),
+        objectReferences,
+      })
+    ).toEqual(['Violet Ink Drafting Vellum'])
+  })
+
+  it('accepts a prop the beat names colloquially without pinning it', () => {
+    expect(
+      propsSelectionOutrunsDirection({
+        selection: { objectRefIds: ['prop-spanner'] },
+        beat: actionBeat({ actionDescription: 'Elara swings the spanner at the dogs.' }),
+        objectReferences,
+      })
+    ).toEqual([])
+  })
+
+  it('reports nothing for a selection with no props', () => {
+    expect(
+      propsSelectionOutrunsDirection({
+        selection: { objectRefIds: [] },
+        beat: actionBeat(),
+        objectReferences,
+      })
+    ).toEqual([])
   })
 })
