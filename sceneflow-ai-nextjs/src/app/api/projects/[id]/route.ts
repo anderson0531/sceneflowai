@@ -3,6 +3,8 @@ import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { stripBase64FromMetadata, calculateBase64Size } from '@/lib/storage/mediaStorage'
 import { isValidStoryboardMediaUrl, mergeSceneArraysForPersistence } from '@/lib/storyboard/mergeSceneMedia'
+import { describeStaleScriptWrite } from '@/lib/storyboard/staleWriteDiff'
+import { salvageStaleWriteMedia } from '@/lib/storyboard/staleWriteSalvage'
 import { upsertBeatSfxCueOnScene } from '@/lib/script/deriveSfxFromSceneContent'
 import { persistSceneAudioAtomic } from '@/lib/audio/persistSceneAudioAtomic'
 import { persistSceneSfxAudioAtomic } from '@/lib/sfx/persistSceneSfxAudio'
@@ -244,14 +246,43 @@ export async function PUT(
           const existingTime = new Date(existingScriptTimestamp).getTime()
           const incomingTime = new Date(incomingScriptTimestamp).getTime()
           if (incomingTime < existingTime) {
+            // A character count says a write was dropped, not what was in it.
+            // Name the scenes and beats so the next occurrence is diagnosable
+            // without reproducing it.
+            const droppedChanges = describeStaleScriptWrite(
+              existingScript?.script?.scenes,
+              incomingScript?.script?.scenes
+            )
+            // The newer script stays authoritative, but a frame or clip the
+            // rejected payload rendered is paid-for work with no other copy.
+            // Adopt those into the slots the newer script left empty.
+            const salvage = salvageStaleWriteMedia(
+              existingScript?.script?.scenes,
+              incomingScript?.script?.scenes
+            )
             console.warn('[Projects PUT] STALE SCRIPT WRITE BLOCKED:', {
               existingTimestamp: existingScriptTimestamp,
               incomingTimestamp: incomingScriptTimestamp,
               deltaMs: existingTime - incomingTime,
-              preservingNewerScript: true
+              preservingNewerScript: true,
+              scenesChanged: droppedChanges.scenesChanged,
+              beatsChanged: droppedChanges.beatsChanged,
+              promptsChanged: droppedChanges.promptsChanged,
+              droppedChanges: droppedChanges.scenes,
+              ...(droppedChanges.scenesOmitted
+                ? { scenesOmitted: droppedChanges.scenesOmitted }
+                : {}),
+              mediaSalvaged: salvage.salvaged,
+              ...(salvage.salvaged > 0 ? { salvagedFields: salvage.fields } : {})
             })
             // Preserve existing script but allow other visionPhase fields (like reviews) to merge
-            mergedMetadata.visionPhase.script = existingScript
+            mergedMetadata.visionPhase.script =
+              salvage.salvaged > 0
+                ? {
+                    ...existingScript,
+                    script: { ...existingScript.script, scenes: salvage.scenes },
+                  }
+                : existingScript
             mergedMetadata.visionPhase.scriptUpdatedAt = existingScriptTimestamp
             scriptSafeguardTriggered = true
           }
