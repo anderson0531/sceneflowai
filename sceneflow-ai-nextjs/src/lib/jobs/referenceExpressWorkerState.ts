@@ -1,4 +1,11 @@
-import type { ReferenceExpressItemResult } from '@/lib/vision/referenceExpress/types'
+import type {
+  ReferenceExpressItem,
+  ReferenceExpressItemResult,
+} from '@/lib/vision/referenceExpress/types'
+import {
+  DEFAULT_REFERENCE_EXPRESS_CONCURRENCY,
+  resolveReferenceExpressWindow,
+} from '@/lib/vision/referenceExpress/window'
 
 /**
  * How long a claimed step may run before another invocation may take it over.
@@ -27,6 +34,29 @@ export function getReferenceExpressMaxAttempts(): number {
 }
 
 /**
+ * Steps draw this many location or prop images at once. Raise on dedicated
+ * quota; the pre-commit estimate still quotes the default, so a higher value
+ * only makes a run finish sooner than promised.
+ */
+export function getReferenceExpressConcurrency(): number {
+  const raw = Number(
+    process.env.REFERENCE_EXPRESS_CONCURRENCY ?? DEFAULT_REFERENCE_EXPRESS_CONCURRENCY
+  )
+  return Number.isFinite(raw) && raw >= 1
+    ? Math.floor(raw)
+    : DEFAULT_REFERENCE_EXPRESS_CONCURRENCY
+}
+
+/** The run of items this step should take, starting at the cursor. */
+export function resolveReferenceExpressStepWindow(
+  items: ReferenceExpressItem[],
+  cursor: number,
+  concurrency = getReferenceExpressConcurrency()
+): number {
+  return resolveReferenceExpressWindow(items, cursor, concurrency)
+}
+
+/**
  * Intermediate state on `generation_jobs.payload._worker` between invocations.
  *
  * Retries live here rather than inside a single item's execution: one cast
@@ -35,16 +65,23 @@ export function getReferenceExpressMaxAttempts(): number {
  * inside the current one and being killed mid-retry.
  */
 export type ReferenceExpressWorkerState = {
-  /** Index into `payload.items` of the item still to be done. */
+  /** Index into `payload.items` of the first item still to be done. */
   cursor: number
-  /** Attempts already spent on `items[cursor]`. */
+  /** Attempts already spent on the window starting at `cursor`. */
   attempt: number
   /** ISO timestamp before which the next attempt should not start. */
   nextAttemptAt?: string | null
-  /** Outcomes for items already resolved. */
+  /** Outcomes for items already resolved, in item order. */
   results: ReferenceExpressItemResult[]
-  /** ISO timestamp of the invocation currently executing this item. */
+  /** ISO timestamp of the invocation currently executing this window. */
   inFlightAt?: string | null
+  /**
+   * Outcomes for items in the current window that already landed, keyed by
+   * their index in `payload.items`. A window only advances the cursor once all
+   * of its items resolve, so this is what stops a retry from redrawing the
+   * siblings of the one image that hit a rate limit.
+   */
+  windowResults?: Record<string, ReferenceExpressItemResult>
 }
 
 export function readReferenceExpressWorkerState(
@@ -60,10 +97,14 @@ export function readReferenceExpressWorkerState(
     nextAttemptAt: state.nextAttemptAt ?? null,
     results: Array.isArray(state.results) ? state.results : [],
     inFlightAt: state.inFlightAt ?? null,
+    windowResults:
+      state.windowResults && typeof state.windowResults === 'object'
+        ? state.windowResults
+        : {},
   }
 }
 
-/** True when another invocation holds an unexpired lease on this item. */
+/** True when another invocation holds an unexpired lease on this window. */
 export function isReferenceExpressLeaseHeld(
   worker: ReferenceExpressWorkerState,
   now = Date.now()
@@ -74,7 +115,7 @@ export function isReferenceExpressLeaseHeld(
   return now - started < REFERENCE_EXPRESS_STEP_LEASE_MS
 }
 
-/** Milliseconds until the current item may be attempted again. */
+/** Milliseconds until the current window may be attempted again. */
 export function millisUntilNextAttempt(
   worker: ReferenceExpressWorkerState,
   now = Date.now()

@@ -19,15 +19,16 @@ import {
   readReferenceExpressWorkerState,
   REFERENCE_EXPRESS_BACKOFF_MS,
   REFERENCE_EXPRESS_MAX_BACKOFF_MS,
+  resolveReferenceExpressStepWindow,
   type ReferenceExpressWorkerState,
 } from '@/lib/jobs/referenceExpressWorkerState'
 
 export type ReferenceExpressStepOutcome = {
   done: boolean
   error?: string
-  /** Index of the item this step acted on. */
+  /** Index of the first item this step acted on. */
   cursor?: number
-  /** Another invocation currently holds the lease on this item. */
+  /** Another invocation currently holds the lease on this window. */
   inFlight?: boolean
   /** Caller should wait this long before stepping again (rate-limit backoff). */
   retryInMs?: number
@@ -99,17 +100,18 @@ async function completeJob(
 }
 
 /**
- * Run one item of a reference_express job.
+ * Run the next window of a reference_express job.
  *
- * Strictly one image per invocation. Concurrency here would only shorten
- * wall-clock time, which stopped mattering once the work moved off a blocking
- * overlay — and the Vertex image lane answers bursts with 429s, so a parallel
- * batch spends its speedup on failures. Retries are deferred to a later step
- * rather than slept through in place: one cast item can already consume most of
- * a function's budget, so retrying inside the same isolate risks being killed
- * mid-attempt.
+ * A window is one cast item, or up to `REFERENCE_EXPRESS_CONCURRENCY` location
+ * and prop items. Cast stays alone because the 429 bursts that made this worker
+ * serial come from the identity-reference lane a portrait uses, and because one
+ * portrait can already consume most of a function's time budget.
+ *
+ * Retries are deferred to a later step rather than slept through in place, for
+ * the same budget reason. Items in the window that already landed are kept in
+ * `windowResults`, so a rate limit on one image does not redraw its siblings.
  */
-async function runCurrentItem(
+async function runCurrentWindow(
   jobId: string,
   userId: string,
   projectId: string,
@@ -130,68 +132,95 @@ async function runCurrentItem(
     return { done: false, cursor: worker.cursor, retryInMs: waitMs }
   }
 
-  const item = items[worker.cursor]!
+  const windowSize = resolveReferenceExpressStepWindow(items, worker.cursor)
+  const landed = { ...(worker.windowResults ?? {}) }
+  const pending = Array.from({ length: windowSize }, (_, offset) => worker.cursor + offset).filter(
+    (index) => !landed[String(index)]
+  )
+
   await saveWorkerState(jobId, { ...worker, inFlightAt: new Date().toISOString() })
 
-  const advance = async (result: ReferenceExpressItemResult) => {
-    const results = [...worker.results, result]
-    const nextCursor = worker.cursor + 1
-    await updateGenerationJob(jobId, {
-      progress: Math.round((nextCursor / items.length) * 100),
+  const maxAttempts = getReferenceExpressMaxAttempts()
+  const attempt = worker.attempt + 1
+  let retryable = false
+
+  const outcomes = await Promise.all(
+    pending.map(async (index) => {
+      const item = items[index]!
+      try {
+        return { index, result: await runReferenceExpressItem({ userId, projectId, item }) }
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Reference generation failed'
+        if (isRetryableError(err, (err as { status?: number })?.status) && attempt < maxAttempts) {
+          retryable = true
+          console.warn(
+            `[ReferenceExpress] ${item.label} attempt ${attempt}/${maxAttempts} failed (${message}); retrying in a later step`
+          )
+          return { index, result: null }
+        }
+        console.error(`[ReferenceExpress] ${item.label} failed permanently:`, message)
+        return {
+          index,
+          result: {
+            kind: item.kind,
+            targetId: item.targetId,
+            label: item.label,
+            status: 'failed' as const,
+            error: message,
+          },
+        }
+      }
     })
+  )
+
+  for (const outcome of outcomes) {
+    if (outcome.result) landed[String(outcome.index)] = outcome.result
+  }
+
+  if (retryable) {
+    const delay = calculateBackoffDelay(
+      attempt - 1,
+      REFERENCE_EXPRESS_BACKOFF_MS,
+      REFERENCE_EXPRESS_MAX_BACKOFF_MS
+    )
     await saveWorkerState(jobId, {
-      cursor: nextCursor,
-      attempt: 0,
-      nextAttemptAt: null,
-      results,
+      ...worker,
+      attempt,
+      nextAttemptAt: new Date(Date.now() + delay).toISOString(),
       inFlightAt: null,
+      windowResults: landed,
     })
-    if (nextCursor >= items.length) {
-      return completeJob(jobId, userId, projectId, results)
-    }
-    return { done: false, cursor: nextCursor }
+    return { done: false, cursor: worker.cursor, retryInMs: delay }
   }
 
-  try {
-    const result = await runReferenceExpressItem({ userId, projectId, item })
-    return await advance(result)
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Reference generation failed'
-    const attempt = worker.attempt + 1
-    const maxAttempts = getReferenceExpressMaxAttempts()
+  const results = [
+    ...worker.results,
+    ...Array.from({ length: windowSize }, (_, offset) => landed[String(worker.cursor + offset)]!),
+  ]
+  const nextCursor = worker.cursor + windowSize
 
-    if (isRetryableError(err, (err as { status?: number })?.status) && attempt < maxAttempts) {
-      const delay = calculateBackoffDelay(
-        attempt - 1,
-        REFERENCE_EXPRESS_BACKOFF_MS,
-        REFERENCE_EXPRESS_MAX_BACKOFF_MS
-      )
-      console.warn(
-        `[ReferenceExpress] ${item.label} attempt ${attempt}/${maxAttempts} failed (${message}); retrying in ${delay}ms`
-      )
-      await saveWorkerState(jobId, {
-        ...worker,
-        attempt,
-        nextAttemptAt: new Date(Date.now() + delay).toISOString(),
-        inFlightAt: null,
-      })
-      return { done: false, cursor: worker.cursor, retryInMs: delay }
-    }
+  await updateGenerationJob(jobId, {
+    progress: Math.round((nextCursor / items.length) * 100),
+  })
+  await saveWorkerState(jobId, {
+    cursor: nextCursor,
+    attempt: 0,
+    nextAttemptAt: null,
+    results,
+    inFlightAt: null,
+    windowResults: {},
+  })
 
-    console.error(`[ReferenceExpress] ${item.label} failed permanently:`, message)
-    return await advance({
-      kind: item.kind,
-      targetId: item.targetId,
-      label: item.label,
-      status: 'failed',
-      error: message,
-    })
+  if (nextCursor >= items.length) {
+    return completeJob(jobId, userId, projectId, results)
   }
+  return { done: false, cursor: nextCursor }
 }
 
 /**
- * Advance a reference_express job by one item. Safe to call repeatedly: a DB
- * lease guards the in-flight item and the cursor only moves once it resolves.
+ * Advance a reference_express job by one window. Safe to call repeatedly: a DB
+ * lease guards the in-flight window and the cursor only moves once every item
+ * in it resolves.
  */
 export async function runReferenceExpressStep(
   jobId: string
@@ -218,7 +247,7 @@ export async function runReferenceExpressStep(
           error: 'Reference worker state missing — cancel and start a new batch',
         }
       }
-      return await runCurrentItem(jobId, userId, projectId, payload, worker)
+      return await runCurrentWindow(jobId, userId, projectId, payload, worker)
     }
 
     if (job.status !== 'queued') {
@@ -238,7 +267,7 @@ export async function runReferenceExpressStep(
         ? readReferenceExpressWorkerState((retry.payload ?? {}) as Record<string, unknown>)
         : null
       if (retry?.status === 'processing' && retryWorker) {
-        return await runCurrentItem(
+        return await runCurrentWindow(
           jobId,
           userId,
           projectId,
@@ -260,6 +289,7 @@ export async function runReferenceExpressStep(
       nextAttemptAt: null,
       results: [],
       inFlightAt: null,
+      windowResults: {},
     })
     return { done: false, cursor: 0 }
   } catch (err: unknown) {

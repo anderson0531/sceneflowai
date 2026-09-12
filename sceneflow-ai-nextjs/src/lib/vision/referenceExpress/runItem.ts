@@ -89,14 +89,14 @@ export async function runReferenceExpressItem(input: {
     })
 
     const visionDescription = generated.visionDescription || undefined
-    const castingFields = visionDescription
-      ? await castingBriefFields({
-          character,
-          appearanceDescription: visionDescription,
-          screenplayContext: context.screenplayContext,
-        })
-      : {}
 
+    /**
+     * The portrait is saved before the Casting Brief is asked for. The brief is
+     * text metadata derived from the appearance we just wrote, so it does not
+     * belong on the path that decides whether this item's two designer-tier
+     * generations have to be paid for again: if the isolate runs out of budget
+     * during the LLM call, the retry now sees the image and skips.
+     */
     const { saved, staleSource } = await persistReferenceImage({
       projectId,
       kind: 'cast',
@@ -108,11 +108,33 @@ export async function runReferenceExpressItem(input: {
         ...(visionDescription
           ? { visionDescription, appearanceDescription: visionDescription }
           : {}),
-        ...castingFields,
       },
     })
 
     if (!saved) return skipped(item, 'missing')
+
+    if (visionDescription) {
+      const castingFields = await castingBriefFields({
+        character,
+        appearanceDescription: visionDescription,
+        screenplayContext: context.screenplayContext,
+      })
+      if (Object.keys(castingFields).length > 0) {
+        await persistReferenceImage({
+          projectId,
+          kind: 'cast',
+          targetId: item.targetId,
+          // The write above changed `appearanceDescription`, which the cast
+          // fingerprint covers, so comparing against the enqueue-time digest
+          // would flag every brief as stale against our own edit.
+          expectedFingerprint: castFingerprint({
+            ...character,
+            appearanceDescription: visionDescription,
+          }),
+          patch: castingFields,
+        })
+      }
+    }
     return {
       kind: item.kind,
       targetId: item.targetId,

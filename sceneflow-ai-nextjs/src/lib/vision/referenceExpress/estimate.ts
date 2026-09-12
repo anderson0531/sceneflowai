@@ -7,10 +7,14 @@
  * job, so both must come from here: a client estimate that disagrees with the
  * server's charge is worse than no estimate.
  *
- * Client-safe — `creditCosts` is a constants module with no imports.
+ * Client-safe — `creditCosts` and `window` are constants and pure functions.
  */
 
 import { getCreditCost, IMAGE_CREDITS } from '@/lib/credits/creditCosts'
+import {
+  DEFAULT_REFERENCE_EXPRESS_CONCURRENCY,
+  forEachReferenceExpressWindow,
+} from './window'
 import type { ReferenceExpressItem, ReferenceExpressKind } from './types'
 
 /** Cast costs two designer-tier generations plus a vision pass, hence the gap. */
@@ -31,10 +35,21 @@ export type ReferenceExpressEstimate = {
 const creditsForKind = (kind: ReferenceExpressKind): number =>
   kind === 'cast' ? CAST_ITEM_CREDITS : getCreditCost('IMAGE_GENERATION')
 
+/**
+ * Walks the items the way the worker will: cast portraits one at a time, and
+ * locations and props in windows that cost as much as their slowest member.
+ * Quoting a serial sum here would over-promise the wait by roughly half on a
+ * prop-heavy library, which is exactly the number the user decides on.
+ */
 export function estimateReferenceExpressSeconds(
-  items: Array<Pick<ReferenceExpressItem, 'kind'>>
+  items: Array<Pick<ReferenceExpressItem, 'kind'>>,
+  concurrency: number = DEFAULT_REFERENCE_EXPRESS_CONCURRENCY
 ): number {
-  return items.reduce((total, item) => total + SECONDS_PER_ITEM[item.kind], 0)
+  let total = 0
+  forEachReferenceExpressWindow(items, concurrency, (window) => {
+    total += Math.max(...window.map((item) => SECONDS_PER_ITEM[item.kind]))
+  })
+  return total
 }
 
 export function estimateReferenceExpressCredits(

@@ -4,6 +4,7 @@ import {
   CAST_ITEM_CREDITS,
   SECONDS_PER_ITEM,
   estimateReferenceExpress,
+  estimateReferenceExpressSeconds,
   formatEstimatedDuration,
   formatReferenceExpressEstimate,
 } from '@/lib/vision/referenceExpress/estimate'
@@ -17,7 +18,12 @@ describe('a Reference Express run quotes itself before the click', () => {
     expect(SECONDS_PER_ITEM.cast).toBeGreaterThan(SECONDS_PER_ITEM.location)
   })
 
-  it('adds up a mixed scope', () => {
+  /**
+   * The worker draws locations and props two at a time, so the quote counts
+   * windows rather than items. Credits are still per item — running two at once
+   * does not make either of them free.
+   */
+  it('adds up a mixed scope the way the worker will run it', () => {
     const estimate = estimateReferenceExpress([
       { kind: 'cast' },
       { kind: 'location' },
@@ -27,9 +33,24 @@ describe('a Reference Express run quotes itself before the click', () => {
 
     expect(estimate.itemCount).toBe(4)
     expect(estimate.seconds).toBe(
-      SECONDS_PER_ITEM.cast + SECONDS_PER_ITEM.location + SECONDS_PER_ITEM.prop * 2
+      SECONDS_PER_ITEM.cast + SECONDS_PER_ITEM.location + SECONDS_PER_ITEM.prop
     )
     expect(estimate.credits).toBe(CAST_ITEM_CREDITS + IMAGE_CREDIT * 3)
+  })
+
+  it('quotes a serial run when concurrency is turned off', () => {
+    expect(
+      estimateReferenceExpressSeconds(
+        [{ kind: 'location' }, { kind: 'prop' }, { kind: 'prop' }],
+        1
+      )
+    ).toBe(SECONDS_PER_ITEM.location + SECONDS_PER_ITEM.prop * 2)
+  })
+
+  it('never pairs a cast portrait with the item after it', () => {
+    expect(
+      estimateReferenceExpressSeconds([{ kind: 'cast' }, { kind: 'cast' }], 4)
+    ).toBe(SECONDS_PER_ITEM.cast * 2)
   })
 
   it('quotes nothing for an empty scope', () => {

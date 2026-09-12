@@ -18,6 +18,14 @@ const ITEMS: ReferenceExpressItem[] = [
   { kind: 'location', targetId: 'l1', label: 'Dockyard', sourceFingerprint: 'bbbb' },
 ]
 
+/** Cast, then the contiguous non-cast tail the planner always produces. */
+const WIDE_ITEMS: ReferenceExpressItem[] = [
+  { kind: 'cast', targetId: 'c1', label: 'Mira', sourceFingerprint: 'aaaa' },
+  { kind: 'location', targetId: 'l1', label: 'Dockyard', sourceFingerprint: 'bbbb' },
+  { kind: 'location', targetId: 'l2', label: 'Bridge', sourceFingerprint: 'cccc' },
+  { kind: 'prop', targetId: 'p1', label: 'Lantern', sourceFingerprint: 'dddd' },
+]
+
 let row: Row
 
 vi.mock('@/models', () => ({}))
@@ -55,6 +63,7 @@ import { notifyUser, updateGenerationJob } from '@/lib/jobs/jobService'
 import { runReferenceExpressItem } from '@/lib/vision/referenceExpress/runItem'
 import { runReferenceExpressStep } from '@/lib/jobs/referenceExpressWorker'
 import { readReferenceExpressWorkerState } from '@/lib/jobs/referenceExpressWorkerState'
+import { resolveReferenceExpressWindow } from '@/lib/vision/referenceExpress/window'
 
 const mockRunItem = vi.mocked(runReferenceExpressItem)
 
@@ -308,5 +317,102 @@ describe('runReferenceExpressStep', () => {
       error: 'Job not found',
     })
     expect(GenerationJob.update).not.toHaveBeenCalled()
+  })
+})
+
+describe('resolveReferenceExpressWindow', () => {
+  it('gives a cast item the step to itself', () => {
+    expect(resolveReferenceExpressWindow(WIDE_ITEMS, 0, 3)).toBe(1)
+  })
+
+  it('batches the location and prop tail up to the cap', () => {
+    expect(resolveReferenceExpressWindow(WIDE_ITEMS, 1, 3)).toBe(3)
+    expect(resolveReferenceExpressWindow(WIDE_ITEMS, 1, 2)).toBe(2)
+  })
+
+  it('stops at the next cast item rather than mixing kinds', () => {
+    const interleaved: ReferenceExpressItem[] = [
+      WIDE_ITEMS[1]!,
+      WIDE_ITEMS[0]!,
+      WIDE_ITEMS[2]!,
+    ]
+    expect(resolveReferenceExpressWindow(interleaved, 0, 3)).toBe(1)
+  })
+
+  it('runs out at the end of the list', () => {
+    expect(resolveReferenceExpressWindow(WIDE_ITEMS, 3, 3)).toBe(1)
+    expect(resolveReferenceExpressWindow(WIDE_ITEMS, 4, 3)).toBe(0)
+  })
+})
+
+describe('runReferenceExpressStep concurrency', () => {
+  beforeEach(() => {
+    row.payload = { items: WIDE_ITEMS, itemCount: WIDE_ITEMS.length }
+  })
+
+  it('draws the location and prop tail together but never alongside cast', async () => {
+    await runReferenceExpressStep('job-1')
+
+    expect(await runReferenceExpressStep('job-1')).toEqual({ done: false, cursor: 1 })
+    expect(mockRunItem.mock.calls.map((call) => call[0]!.item.targetId)).toEqual(['c1'])
+
+    // Default cap is 2, so the three non-cast items take two more steps.
+    expect(await runReferenceExpressStep('job-1')).toEqual({ done: false, cursor: 3 })
+    expect(mockRunItem.mock.calls.map((call) => call[0]!.item.targetId)).toEqual([
+      'c1',
+      'l1',
+      'l2',
+    ])
+
+    expect(await runReferenceExpressStep('job-1')).toEqual({ done: true })
+    expect(row.result).toMatchObject({ total: 4, succeeded: 4 })
+  })
+
+  it('keeps results in item order even when the pool resolves out of order', async () => {
+    await runReferenceExpressStep('job-1')
+    await runReferenceExpressStep('job-1')
+
+    mockRunItem.mockImplementation(async ({ item }) => {
+      if (item.targetId === 'l1') await new Promise((resolve) => setTimeout(resolve, 5))
+      return succeeded(item)
+    })
+    await runReferenceExpressStep('job-1')
+
+    expect(worker()?.results.map((result) => result.targetId)).toEqual(['c1', 'l1', 'l2'])
+  })
+
+  /**
+   * The whole point of holding partial window results: a 429 on one image used
+   * to mean its siblings were redrawn on the retry, paying twice for work that
+   * had already succeeded.
+   */
+  it('does not redraw the siblings of an item that hit a rate limit', async () => {
+    await runReferenceExpressStep('job-1')
+    await runReferenceExpressStep('job-1')
+    mockRunItem.mockClear()
+
+    mockRunItem.mockImplementation(async ({ item }) => {
+      if (item.targetId === 'l2') {
+        throw Object.assign(new Error('429'), { status: 429 })
+      }
+      return succeeded(item)
+    })
+
+    const deferred = await runReferenceExpressStep('job-1')
+    expect(deferred).toMatchObject({ done: false, cursor: 1 })
+    expect(deferred.retryInMs).toBeGreaterThan(0)
+    expect(worker()).toMatchObject({ cursor: 1, attempt: 1 })
+    // Only the cast window has been committed; l1 is held aside for the retry.
+    expect(worker()?.results.map((result) => result.targetId)).toEqual(['c1'])
+    expect(Object.keys(worker()?.windowResults ?? {})).toEqual(['1'])
+
+    row.payload = { ...row.payload, _worker: { ...worker(), nextAttemptAt: null } }
+    mockRunItem.mockClear()
+    mockRunItem.mockImplementation(async ({ item }) => succeeded(item))
+
+    expect(await runReferenceExpressStep('job-1')).toEqual({ done: false, cursor: 3 })
+    expect(mockRunItem.mock.calls.map((call) => call[0]!.item.targetId)).toEqual(['l2'])
+    expect(worker()?.results.map((result) => result.targetId)).toEqual(['c1', 'l1', 'l2'])
+    expect(worker()?.windowResults).toEqual({})
   })
 })
