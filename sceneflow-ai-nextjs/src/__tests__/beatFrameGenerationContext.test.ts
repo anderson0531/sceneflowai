@@ -191,6 +191,114 @@ describe('resolveBeatFrameGenerationContext', () => {
     expect(resolved.characterNames).toContain('Elara Vance')
   })
 
+  it('does not fall back to scene-cast when the beat says no one is on camera', () => {
+    const scene = {
+      heading: 'INT. LIVING ROOM - NIGHT',
+      action: 'Someone moves through the dark apartment.',
+      beats: [
+        {
+          beatId: 'beat-insert',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'His hand closes around the brass doorknob.',
+          beatDirection: { shotType: 'Extreme Close-Up', castInFrame: [] },
+        },
+        {
+          beatId: 'beat-dialogue',
+          sequenceIndex: 1,
+          kind: 'dialogue',
+          character: 'Elara Vance',
+          characterId: 'c1',
+          line: 'I know you are here.',
+        },
+      ],
+    }
+    const resolved = resolveBeatFrameGenerationContext({
+      scene,
+      beat: scene.beats[0] as SceneBeat,
+      projectCharacters: characters,
+      locationReferences: [],
+      objectReferences: [],
+    })
+
+    expect(resolved.characterIds).toEqual([])
+    expect(resolved.characterNames).toEqual([])
+  })
+
+  it('casts exactly who the beat states, not who its prose names', () => {
+    const scene = { heading: 'INT. LAB - DAY' }
+    const resolved = resolveBeatFrameGenerationContext({
+      scene,
+      beat: actionBeat({
+        actionDescription: 'Elara and Marcus examine the console',
+        beatDirection: { shotType: 'Medium Shot', castInFrame: ['Marcus Thorne'] },
+      }),
+      projectCharacters: characters,
+      locationReferences: [],
+      objectReferences: [],
+    })
+
+    expect(resolved.characterIds).toEqual(['c2'])
+    expect(resolved.characterNames).toEqual(['Marcus Thorne'])
+  })
+
+  it('keeps a dialogue beat to its stated cast rather than its speaker', () => {
+    const scene = { heading: 'INT. OFFICE - DAY' }
+    const resolved = resolveBeatFrameGenerationContext({
+      scene,
+      beat: {
+        beatId: 'b-reaction',
+        sequenceIndex: 1,
+        kind: 'dialogue',
+        character: 'Marcus Thorne',
+        characterId: 'c2',
+        line: 'We need to move.',
+        beatDirection: { shotType: 'Close-Up', castInFrame: ['Elara Vance'] },
+      },
+      projectCharacters: characters,
+      locationReferences: [],
+      objectReferences: [],
+    })
+
+    expect(resolved.characterIds).toEqual(['c1'])
+  })
+
+  it('honours stated cast on a narration beat', () => {
+    const scene = { heading: 'EXT. RIDGE - DUSK' }
+    const resolved = resolveBeatFrameGenerationContext({
+      scene,
+      beat: {
+        beatId: 'b-narration',
+        sequenceIndex: 0,
+        kind: 'narration',
+        character: 'NARRATOR',
+        line: 'She had walked this ridge every evening for thirty years.',
+        beatDirection: { shotType: 'Wide Shot', castInFrame: ['Elara Vance'] },
+      },
+      projectCharacters: characters,
+      locationReferences: [],
+      objectReferences: [],
+    })
+
+    expect(resolved.characterIds).toEqual(['c1'])
+  })
+
+  it('drops a stated name the character library does not have', () => {
+    const scene = { heading: 'INT. LAB - DAY' }
+    const resolved = resolveBeatFrameGenerationContext({
+      scene,
+      beat: actionBeat({
+        actionDescription: 'Elara opens the fridge',
+        beatDirection: { shotType: 'Medium Shot', castInFrame: ['Piper Hayes'] },
+      }),
+      projectCharacters: characters,
+      locationReferences: [],
+      objectReferences: [],
+    })
+
+    expect(resolved.characterIds).toEqual([])
+  })
+
   it('detects multiple characters on action beats', () => {
     const scene = { heading: 'INT. LAB - DAY' }
     const resolved = resolveBeatFrameGenerationContext({

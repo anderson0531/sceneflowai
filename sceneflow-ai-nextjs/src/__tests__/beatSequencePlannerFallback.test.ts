@@ -306,6 +306,42 @@ describe('composePersistedBeatStillPrompt', () => {
     expect(first.match(/Props in frame:/g)).toHaveLength(1)
   })
 
+  it('says outright that an insert shot has nobody in it', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_gauge',
+      sequenceIndex: 4,
+      kind: 'action',
+      actionDescription:
+        'A brass pressure gauge redlines. Three heavy iron locking dogs scream against the metal.',
+      beatDirection: {
+        shotType: 'Extreme Close-Up',
+        blocking: 'The brass pressure needle shakes violently in the red zone.',
+        frozenMoment: 'Pressure gauge needle pinned to the maximum.',
+        keyProps: ['Heavy iron spanner'],
+        castInFrame: [],
+      },
+    })
+
+    expect(framing).toContain('No people in frame')
+    expect(framing).not.toMatch(/Cast in frame/)
+  })
+
+  it('closes the cast list so nobody else can join the frame', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_cast',
+      sequenceIndex: 5,
+      kind: 'action',
+      actionDescription: 'Piper Hayes braces against the bulkhead.',
+      beatDirection: {
+        shotType: 'Medium Shot',
+        castInFrame: ['Piper Hayes'],
+      },
+    })
+
+    expect(framing).toContain('Cast in frame: Piper Hayes — and no other people.')
+    expect(framing).not.toMatch(/No people in frame/)
+  })
+
   it('binds composed cast names to person tokens during still assembly', () => {
     const framing = composeBeatActionFraming({
       beatId: 'bt_4',

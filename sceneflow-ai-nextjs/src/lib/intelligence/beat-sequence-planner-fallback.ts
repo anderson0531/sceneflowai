@@ -245,6 +245,22 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
     parts.push(`Props in frame: ${unmentionedProps.join(', ')}.`)
   }
 
+  // Occupancy is stated rather than left to the prose. Prose says "she reaches
+  // for the lever" or says nothing about people at all, and an image model
+  // reading either one is free to decide how many people that means — which is
+  // how a close-up of a pressure gauge came back with a character mid-fall.
+  // The empty list is the load-bearing case: it is the only way to say that a
+  // frame of a gauge or a hatch has nobody standing in it.
+  const cast = direction?.castInFrame
+  if (Array.isArray(cast)) {
+    const named = cast.map((name) => name.trim()).filter(Boolean)
+    parts.push(
+      named.length === 0
+        ? 'No people in frame: no faces, no hands, no silhouettes, no figures.'
+        : `Cast in frame: ${named.join(', ')} — and no other people.`
+    )
+  }
+
   // Framing leads the description, unless the beat's own prose already names
   // this shot and would otherwise state it twice.
   const shot = [direction?.shotType?.trim(), direction?.cameraAngle?.trim()]

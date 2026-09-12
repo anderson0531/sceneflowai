@@ -2,7 +2,11 @@
  * Resolve auto-selected references for Pre-Vis beat storyboard frames.
  */
 
-import { findSceneObjects, matchObjectsBySelectedNames } from '@/lib/character/matching'
+import {
+  findSceneObjects,
+  libraryNamesFuzzyMatch,
+  matchObjectsBySelectedNames,
+} from '@/lib/character/matching'
 import {
   collectEntityMaskPhrases,
   detectCharactersInText,
@@ -234,9 +238,35 @@ function uniqueObjects<T extends { id?: string; name?: string }>(objects: T[]): 
 }
 
 /**
+ * Cast the beat states outright, matched onto project character rows.
+ *
+ * Nothing falls back here. A stated name the library does not have is a name
+ * with no reference image, and substituting the scene's cast for it is exactly
+ * what this gate exists to stop.
+ */
+function resolveDirectedCast(
+  names: string[],
+  projectCharacters: ResolveBeatFrameGenerationContextArgs['projectCharacters']
+): ResolveBeatFrameGenerationContextArgs['projectCharacters'] {
+  const candidates = projectCharacters.filter((c) => c.type !== 'narrator')
+  const matched: ResolveBeatFrameGenerationContextArgs['projectCharacters'] = []
+  for (const name of names) {
+    const stated = typeof name === 'string' ? name.trim() : ''
+    if (!stated) continue
+    const hit =
+      candidates.find((c) => (c.name || '').trim().toLowerCase() === stated.toLowerCase()) ??
+      candidates.find((c) => c.name && libraryNamesFuzzyMatch(stated, c.name))
+    if (hit) matched.push(hit)
+  }
+  return uniqueProjectCharacters(matched)
+}
+
+/**
  * When beat-scoped name detect misses (pronouns, "the man"), pull talent from
  * other beats, scene dialogue, and remaining scene text rather than generating
  * a people frame with no identity references.
+ *
+ * Only reached for beats whose direction does not state `castInFrame`.
  */
 function resolveSceneCastFallback(
   scene: Record<string, unknown>,
@@ -293,6 +323,16 @@ function resolveBeatCharacters(
   locationReferences: LocationReference[]
 ): Array<{ id?: string; name?: string; referenceImage?: string }> {
   if (isNoTalentSceneForFrames(scene)) return []
+
+  // Stated cast is the answer, not a hint — and the empty list is an answer
+  // too. Everything below exists because nothing used to say who was on
+  // camera; once the beat says it, guessing can only contradict the direction.
+  // Narration beats included: a narrated beat can still show someone, and the
+  // blanket exclusion below is only there for beats that never said.
+  const directedCast = beat.beatDirection?.castInFrame
+  if (Array.isArray(directedCast)) {
+    return resolveDirectedCast(directedCast, projectCharacters)
+  }
 
   if (isNarratorBeat(beat) || beat.kind === 'narration') {
     return []
