@@ -704,3 +704,120 @@ export function resolveAllSceneReferenceRequirements(
     })
   )
 }
+
+/** The slices of `project.metadata.visionPhase` every reference gate reads. */
+export type ProjectReferenceSources = {
+  scenes: Array<Record<string, any>>
+  characters: SceneRequirementCharacter[]
+  locationReferences: SceneRequirementLocation[]
+  objectReferences: SceneRequirementObject[]
+}
+
+export function readProjectReferenceSources(project: unknown): ProjectReferenceSources {
+  const visionPhase: Record<string, any> =
+    (project as { metadata?: Record<string, any> })?.metadata?.visionPhase ?? {}
+  const references: Record<string, any> = visionPhase.references ?? {}
+  const arrayOf = <T,>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : [])
+  const firstNonEmpty = <T,>(...values: unknown[]): T[] => {
+    for (const value of values) {
+      const array = arrayOf<T>(value)
+      if (array.length > 0) return array
+    }
+    return []
+  }
+
+  return {
+    // Storyboard scenes live in three places depending on the project's age;
+    // the gates have to read all of them or a flat-script project silently
+    // resolves zero scenes and every gate passes.
+    scenes: firstNonEmpty<Record<string, any>>(
+      visionPhase.script?.script?.scenes,
+      visionPhase.script?.scenes,
+      visionPhase.scenes
+    ),
+    characters: arrayOf(visionPhase.characters),
+    locationReferences: arrayOf(references.locationReferences),
+    objectReferences: arrayOf(references.objectReferences),
+  }
+}
+
+/**
+ * What the given scenes need, resolved from a project blob — the server-side
+ * form of the question the scene card asks. Omit `sceneIndices` to cover every
+ * scene, which is what a project-wide run is entitled to check.
+ */
+export function resolveProjectSceneRequirements(
+  project: unknown,
+  sceneIndices?: number[] | null
+): SceneReferenceRequirement[] {
+  const sources = readProjectReferenceSources(project)
+  if (sources.scenes.length === 0) return []
+
+  const wanted =
+    sceneIndices && sceneIndices.length > 0
+      ? [...new Set(sceneIndices)].filter(
+          (index) => Number.isInteger(index) && index >= 0 && index < sources.scenes.length
+        )
+      : sources.scenes.map((_, index) => index)
+
+  // Deduplicated across scenes, because a gate reports what is missing, not
+  // how many scenes are waiting on it.
+  const byKey = new Map<string, SceneReferenceRequirement>()
+  for (const sceneIndex of wanted) {
+    const scene = sources.scenes[sceneIndex]
+    const resolved = resolveSceneRequiredReferences({
+      scene,
+      sceneIndex,
+      characters: sources.characters,
+      locationReferences: sources.locationReferences,
+      objectReferences: sources.objectReferences,
+      overrides: (scene?.referenceOverrides as SceneReferenceOverrides | undefined) ?? null,
+    })
+    for (const requirement of resolved) {
+      const key = requirementKey(requirement)
+      if (!byKey.has(key)) byKey.set(key, requirement)
+    }
+  }
+  return [...byKey.values()]
+}
+
+/**
+ * What one beat's saved `referenceSelection` names.
+ *
+ * This is the narrowest scope a gate can have and the only non-heuristic one:
+ * the selection was resolved against the real catalog when the beat was
+ * planned, so it is exactly the set of images that frame will try to attach.
+ */
+export function resolveBeatReferenceRequirements(input: {
+  beat: Record<string, any> | null | undefined
+  scene: Record<string, any> | null | undefined
+  sceneIndex: number
+  characters?: SceneRequirementCharacter[] | null
+  locationReferences?: SceneRequirementLocation[] | null
+  objectReferences?: SceneRequirementObject[] | null
+}): SceneReferenceRequirement[] | null {
+  const selection = input.beat?.referenceSelection as
+    | {
+        characterIds?: string[]
+        locationRefId?: string | null
+        objectRefIds?: string[]
+        characterWardrobes?: Array<{ characterId?: string; wardrobeId?: string }>
+      }
+    | undefined
+  if (!selection) return null
+
+  // Resolving a synthetic one-beat scene reuses the whole priority ladder
+  // rather than restating it, so a beat-scoped gate and a scene-scoped gate
+  // cannot drift apart.
+  return resolveSceneRequiredReferences({
+    scene: {
+      ...(input.scene ?? {}),
+      beats: [{ beatId: input.beat?.beatId ?? 'beat', referenceSelection: selection }],
+    },
+    sceneIndex: input.sceneIndex,
+    characters: input.characters,
+    locationReferences: input.locationReferences,
+    objectReferences: input.objectReferences,
+    overrides: null,
+  })
+}

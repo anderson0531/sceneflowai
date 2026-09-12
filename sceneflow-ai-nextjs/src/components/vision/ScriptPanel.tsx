@@ -6848,7 +6848,6 @@ function SceneCard({
                     prompt={scenePrompt || scene.imagePrompt || ''}
                     characters={characters}
                     objectReferences={objectReferences}
-                    locationReferences={locationReferences}
                     sceneRequirements={sceneRequiredReferences}
                     selectedLanguage={selectedLanguage}
                     narrationVoice={narrationVoice}

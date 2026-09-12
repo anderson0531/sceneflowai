@@ -3,6 +3,7 @@ import {
   expressKindForRequirement,
   requirementKey,
   resolveAllSceneReferenceRequirements,
+  resolveBeatReferenceRequirements,
   resolveSceneRequiredReferences,
   selectUndrawnExpressableRequirements,
   type SceneReferenceRequirement,
@@ -482,6 +483,80 @@ describe('what Express References can actually draw', () => {
 
     expect(requirements.length).toBeGreaterThan(0)
     expect(selectUndrawnExpressableRequirements(requirements)).toEqual([])
+  })
+})
+
+describe('one beat is the narrowest scope a gate can have', () => {
+  const scene = {
+    heading: 'INT. SERVICE TUNNEL - NIGHT',
+    sceneNumber: 1,
+    action: 'PIPER edges past the rusted pipes, a brass lantern swinging from one hand.',
+    beats: [
+      {
+        beatId: 'b1',
+        referenceSelection: { characterIds: ['char-ruiz'], objectRefIds: ['obj-ledger'] },
+      },
+      {
+        beatId: 'b2',
+        referenceSelection: { characterIds: ['char-piper'], objectRefIds: [] },
+      },
+    ],
+  }
+
+  it('returns only what the beat itself names, not the rest of the scene', () => {
+    const requirements = resolveBeatReferenceRequirements({
+      beat: scene.beats[1],
+      scene,
+      sceneIndex: 0,
+      ...baseInput,
+    })!
+
+    expect(names(requirements, 'cast')).toEqual(['PIPER'])
+    expect(names(requirements, 'prop')).toEqual([])
+  })
+
+  it('trusts the beat over the script text, since the selection was resolved at plan time', () => {
+    const requirements = resolveBeatReferenceRequirements({
+      beat: scene.beats[0],
+      scene,
+      sceneIndex: 0,
+      ...baseInput,
+    })!
+
+    expect(names(requirements, 'cast')).toEqual(['RUIZ'])
+    expect(names(requirements, 'prop')).toEqual(['leather ledger'])
+    expect(byKind(requirements, 'cast')[0].source).toBe('beat-plan')
+  })
+
+  /**
+   * No selection means the beat was never planned, so there is nothing
+   * authoritative to gate on and the caller has to fall back to the scene.
+   */
+  it('returns null for a beat with no saved selection', () => {
+    expect(
+      resolveBeatReferenceRequirements({
+        beat: { beatId: 'b3' },
+        scene,
+        sceneIndex: 0,
+        ...baseInput,
+      })
+    ).toBeNull()
+    expect(
+      resolveBeatReferenceRequirements({ beat: null, scene, sceneIndex: 0, ...baseInput })
+    ).toBeNull()
+  })
+
+  it('still carries the wardrobe of whoever the beat puts on screen', () => {
+    const requirements = resolveBeatReferenceRequirements({
+      beat: scene.beats[1],
+      scene,
+      sceneIndex: 0,
+      ...baseInput,
+    })!
+
+    expect(byKind(requirements, 'wardrobe').map((entry) => entry.id)).toEqual([
+      'wd-piper-default',
+    ])
   })
 })
 

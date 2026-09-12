@@ -13,7 +13,10 @@
  * generate button, the client-side generate gates, and the server-side checks.
  */
 
-import type { SceneReferenceRequirement } from '@/lib/vision/sceneReferenceRequirements'
+import {
+  resolveProjectSceneRequirements,
+  type SceneReferenceRequirement,
+} from '@/lib/vision/sceneReferenceRequirements'
 
 export type ReferenceReadinessCharacter = {
   name?: string
@@ -124,20 +127,21 @@ export function resolveSceneReferenceReadiness(
   }
 }
 
-/** Read the reference slices out of a project's metadata blob. */
-export function resolveProjectReferenceReadiness(project: unknown): ReferenceReadiness {
-  const metadata = (project as { metadata?: Record<string, any> })?.metadata ?? {}
-  const visionPhase: Record<string, any> = metadata.visionPhase ?? {}
-  const references: Record<string, any> = visionPhase.references ?? {}
-  return resolveReferenceReadiness({
-    characters: Array.isArray(visionPhase.characters) ? visionPhase.characters : [],
-    locationReferences: Array.isArray(references.locationReferences)
-      ? references.locationReferences
-      : [],
-    objectReferences: Array.isArray(references.objectReferences)
-      ? references.objectReferences
-      : [],
-  })
+/**
+ * The server-side scene gate: are the references the given scenes need drawn?
+ *
+ * A project-wide check is the wrong question for a scene-level run — it makes
+ * one scene wait on the props of a scene it shares nothing with. Omitting
+ * `sceneIndices` covers every scene, which is what a project-wide run
+ * genuinely touches.
+ */
+export function resolveProjectSceneReferenceReadiness(
+  project: unknown,
+  sceneIndices?: number[] | null
+): ReferenceReadiness {
+  return resolveSceneReferenceReadiness(
+    resolveProjectSceneRequirements(project, sceneIndices)
+  )
 }
 
 const MAX_NAMED = 3

@@ -48,7 +48,7 @@ import type {
 import { runSceneExpressPreflight } from './sceneExpressPreflight'
 import {
   formatReferenceReadinessMessage,
-  resolveProjectReferenceReadiness,
+  resolveProjectSceneReferenceReadiness,
 } from '@/lib/vision/referenceReadiness'
 import { generateSceneDirection } from './generateDirection'
 import { generateSceneAudio, applyAudioAssetsToScene } from './generateAudio'
@@ -2079,11 +2079,17 @@ export async function runExpress(
 
   // An un-imaged reference row still gets named in the beat prompt, but has no
   // image to attach, so the model invents an appearance — a different one per
-  // frame. Refuse the whole run rather than produce frames that will not match.
+  // frame. Refuse the run rather than produce frames that will not match.
+  //
+  // Scoped to the scenes this run covers: a one-scene run has no business
+  // waiting on a prop that belongs to a scene it will not touch.
   if (!options.dialogueOnly) {
-    const readiness = resolveProjectReferenceReadiness(project)
+    const readiness = resolveProjectSceneReferenceReadiness(project, sceneIndices)
     if (!readiness.ready) {
-      const error = formatReferenceReadinessMessage(readiness)
+      const error = formatReferenceReadinessMessage(
+        readiness,
+        sceneIndices.length === scenes.length ? 'project' : 'scene'
+      )
       const perScene: ExpressPerSceneSummary[] = sceneIndices.map((idx: number) => {
         safeEmit(emit, {
           type: 'preflight-failed',

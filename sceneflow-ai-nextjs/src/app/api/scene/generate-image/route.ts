@@ -33,8 +33,13 @@ import { ensureDatabaseConnection } from '../../../../config/database'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
 import {
   formatReferenceReadinessMessage,
-  resolveProjectReferenceReadiness,
+  resolveSceneReferenceReadiness,
 } from '@/lib/vision/referenceReadiness'
+import {
+  readProjectReferenceSources,
+  resolveBeatReferenceRequirements,
+  resolveSceneRequiredReferences,
+} from '@/lib/vision/sceneReferenceRequirements'
 import {
   generateSceneImagePromptWithDeadline,
   detectSceneType,
@@ -2131,15 +2136,42 @@ export async function POST(req: NextRequest) {
     // A reference row with no image is still named by the beat planner, so the
     // model invents an appearance for it — and invents a different one on the
     // next frame. Refuse the frame instead of banking that inconsistency.
-    if (isBeatFrame && project) {
-      const readiness = resolveProjectReferenceReadiness(project)
+    //
+    // Scoped as tightly as the evidence allows: this beat's own saved
+    // `referenceSelection` is exactly what the frame will try to attach, so it
+    // is the right gate when present. Without one, fall back to the scene's
+    // resolved requirements — never the whole library, which would make this
+    // frame wait on references no frame in this scene will ever use.
+    if (isBeatFrame && project && resolvedScene) {
+      const sources = readProjectReferenceSources(project)
+      const beat = getSceneBeats(resolvedScene as Record<string, unknown>)[effectiveBeatIndex]
+      const requirements =
+        resolveBeatReferenceRequirements({
+          beat,
+          scene: resolvedScene,
+          sceneIndex: sceneIndex ?? 0,
+          characters: sources.characters,
+          locationReferences: sources.locationReferences,
+          objectReferences: sources.objectReferences,
+        }) ??
+        resolveSceneRequiredReferences({
+          scene: resolvedScene,
+          sceneIndex: sceneIndex ?? 0,
+          characters: sources.characters,
+          locationReferences: sources.locationReferences,
+          objectReferences: sources.objectReferences,
+          overrides: resolvedScene.referenceOverrides ?? null,
+        })
+
+      const readiness = resolveSceneReferenceReadiness(requirements)
       if (!readiness.ready) {
         return NextResponse.json(
           {
             success: false,
-            error: formatReferenceReadinessMessage(readiness),
+            error: formatReferenceReadinessMessage(readiness, 'scene'),
             code: 'MISSING_REFERENCE_IMAGES',
             missingCast: readiness.missingCast,
+            missingWardrobe: readiness.missingWardrobe,
             missingLocations: readiness.missingLocations,
             missingObjects: readiness.missingObjects,
           },

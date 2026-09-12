@@ -13,6 +13,14 @@ import {
 export interface ExpressGateResult {
   allowed: boolean
   reasons: string[]
+  /**
+   * Undrawn references are the only thing blocking.
+   *
+   * A project-wide run still has to wait — it touches every scene, so it needs
+   * every reference. A scene-level run does not: it draws the gaps its own
+   * scene has, which is a step rather than a stop.
+   */
+  blockedOnlyByReferences: boolean
 }
 
 /** Vision characters use `referenceImage`; some callers pass `referenceImageUrl`. */
@@ -105,7 +113,7 @@ export function canRunExpress(input: {
   }
 
   if (reasons.length === 0 && input.checklist.referencesReady !== false) {
-    return { allowed: true, reasons: [] }
+    return { allowed: true, reasons: [], blockedOnlyByReferences: false }
   }
 
   // An un-imaged reference is a hard stop, not a warning: every frame that
@@ -115,11 +123,13 @@ export function canRunExpress(input: {
     return {
       allowed: false,
       reasons: [...reasons, formatReferenceReadinessMessage(input.checklist.referenceReadiness)],
+      blockedOnlyByReferences: reasons.length === 0,
     }
   }
 
   return {
     allowed: input.softGate === true,
     reasons,
+    blockedOnlyByReferences: false,
   }
 }

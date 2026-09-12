@@ -85,8 +85,13 @@ function buildProject(sceneCount: number) {
           },
         ],
         references: {} as {
-          locationReferences?: Array<{ location?: string; imageUrl?: string }>
-          objectReferences?: Array<{ name?: string; imageUrl?: string }>
+          locationReferences?: Array<{
+            id?: string
+            location?: string
+            imageUrl?: string
+            sceneNumbers?: number[]
+          }>
+          objectReferences?: Array<{ id?: string; name?: string; imageUrl?: string }>
         },
         script: { script: { scenes } },
       },
@@ -185,10 +190,15 @@ describe('runExpress', () => {
     expect(imageCalls).toBe(3)
   })
 
-  it('refuses the run when a prop reference was never drawn', async () => {
+  it('refuses the run when a prop the scenes use was never drawn', async () => {
     const project = buildProject(2)
     project.metadata.visionPhase.references = {
-      objectReferences: [{ name: 'Heavy iron spanner' }],
+      objectReferences: [{ id: 'obj-spanner', name: 'heavy iron spanner' }],
+    }
+    // The gate reads the same matchers the frames will, so the prop only
+    // blocks once the script actually names it.
+    for (const scene of project.metadata.visionPhase.script.script.scenes) {
+      scene.action = 'ALICE lifts the heavy iron spanner.'
     }
     const events: ExpressEvent[] = []
 
@@ -208,7 +218,32 @@ describe('runExpress', () => {
     expect(preflightFailures).toHaveLength(2)
     expect(
       (preflightFailures[0] as { errors: string[] }).errors[0]
-    ).toContain('Heavy iron spanner')
+    ).toContain('heavy iron spanner')
+  })
+
+  /**
+   * The gate's scope has to equal the run's scope. A one-scene run that waits
+   * on a prop belonging to a scene it will not touch is the detour this work
+   * exists to remove.
+   */
+  it('lets a scene run when the undrawn prop belongs to another scene', async () => {
+    const project = buildProject(2)
+    project.metadata.visionPhase.references = {
+      objectReferences: [{ id: 'obj-spanner', name: 'heavy iron spanner' }],
+    }
+    project.metadata.visionPhase.script.script.scenes[1].action =
+      'ALICE lifts the heavy iron spanner.'
+
+    const result = await runExpress({
+      project,
+      options: { projectId: 'p1', mode: 'scene', sceneIndices: [0], regenerate: true },
+      baseUrl: 'http://localhost',
+      emit: () => {},
+    })
+
+    expect(result.failedScenes).toBe(0)
+    expect(result.successScenes).toBe(1)
+    expect(imageCalls).toBeGreaterThan(0)
   })
 
   it('lets a dialogue-only dub through — it draws nothing', async () => {

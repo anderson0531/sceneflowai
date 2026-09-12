@@ -38,7 +38,7 @@ import { countDraftStoryboardFrames } from '@/lib/storyboard/storyboardQuality'
 import { resolveFrameEditCharacterReferences } from '@/lib/vision/resolveFrameEditCharacterReferences'
 import {
   formatReferenceReadinessMessage,
-  resolveReferenceReadiness,
+  resolveSceneReferenceReadiness,
 } from '@/lib/vision/referenceReadiness'
 import type { SceneReferenceRequirement } from '@/lib/vision/sceneReferenceRequirements'
 import { cn } from '@/lib/utils'
@@ -60,7 +60,6 @@ export interface SceneStoryboardFrameViewerProps {
   prompt?: string
   characters?: any[]
   objectReferences?: Array<{ id: string; name: string; imageUrl: string; description?: string }>
-  locationReferences?: Array<{ location?: string; locationDisplay?: string; imageUrl?: string }>
   /**
    * What this scene needs drawn, resolved by the caller so the References tab
    * and the frame gate cannot disagree. Undrawn rows are named in the Express
@@ -329,7 +328,6 @@ export function SceneStoryboardFrameViewer({
   prompt = '',
   characters = [],
   objectReferences = [],
-  locationReferences = [],
   sceneRequirements = [],
   selectedLanguage = 'en',
   narrationVoice,
@@ -442,8 +440,9 @@ export function SceneStoryboardFrameViewer({
         narrationVoice,
         language: selectedLanguage,
         framesOnly: isFirstTimeFrameGeneration,
-        locationReferences,
-        objectReferences,
+        // Resolved once by the scene card and shared, so the References tab,
+        // this gate and the auto-chain cannot disagree about what is missing.
+        sceneRequirements,
       }),
     [
       scene,
@@ -452,52 +451,61 @@ export function SceneStoryboardFrameViewer({
       narrationVoice,
       selectedLanguage,
       isFirstTimeFrameGeneration,
-      locationReferences,
-      objectReferences,
+      sceneRequirements,
     ]
   )
-
-  /**
-   * Un-imaged references sink single-frame generation too, not just Express:
-   * the beat planner names the reference, nothing gets attached, and the model
-   * invents an appearance that will not match the next frame.
-   */
-  const referenceReadiness = useMemo(
-    () =>
-      resolveReferenceReadiness({
-        characters,
-        locationReferences,
-        objectReferences,
-      }),
-    [characters, locationReferences, objectReferences]
-  )
-  const referenceGateMessage = formatReferenceReadinessMessage(referenceReadiness)
 
   const missingSceneReferences = useMemo(
     () => sceneRequirements.filter((requirement) => !requirement.imageUrl?.trim()),
     [sceneRequirements]
   )
 
-  const sceneExpressDisabled =
-    isExpressRunning || (!expressGateBlocked && !sceneExpressPreflight.ok)
+  /**
+   * Un-imaged references sink single-frame generation too, not just Express:
+   * the beat planner names the reference, nothing gets attached, and the model
+   * invents an appearance that will not match the next frame.
+   *
+   * Scoped to this scene, because that is the scope of the runs it gates.
+   * Express Frames draws the gaps itself; a single frame has nowhere to put
+   * that step, so it still has to wait.
+   */
+  const referenceReadiness = useMemo(
+    () => resolveSceneReferenceReadiness(sceneRequirements),
+    [sceneRequirements]
+  )
+  const referenceGateMessage = formatReferenceReadinessMessage(referenceReadiness, 'scene')
 
-  const sceneExpressTooltip = !sceneExpressPreflight.ok
+  /**
+   * Express Frames draws this scene's missing references before the frames, so
+   * an undrawn reference is no longer a reason to refuse the run — the confirm
+   * dialog names what will be drawn and the overlay shows it happening.
+   */
+  const expressCanDrawMissingReferences = !!sceneExpressPreflight.blockedOnlyByReferences
+  const expressPreflightBlocks =
+    !sceneExpressPreflight.ok && !expressCanDrawMissingReferences
+
+  const sceneExpressDisabled =
+    isExpressRunning || (!expressGateBlocked && expressPreflightBlocks)
+
+  const sceneExpressTooltip = expressPreflightBlocks
     ? sceneExpressPreflight.errors[0]
-    : sceneExpressPreflight.nothingToDo
-      ? 'Scene complete — choose frames to regenerate'
-      : '~60s — Vertex AI — Direction (if needed) → Audio + beats in parallel'
+    : expressCanDrawMissingReferences
+      ? `${referenceGateMessage} Express draws them first.`
+      : sceneExpressPreflight.nothingToDo
+        ? 'Scene complete — choose frames to regenerate'
+        : '~60s — Vertex AI — Direction (if needed) → Audio + beats in parallel'
 
   const openExpressSceneDialog = useCallback(() => {
     if (expressGateBlocked && onExpressGateBlocked) {
       onExpressGateBlocked()
       return
     }
-    if (!sceneExpressPreflight.ok) {
+    if (expressPreflightBlocks) {
       toast.error(sceneExpressPreflight.errors[0])
       return
     }
     setExpressSceneDialogOpen(true)
-  }, [expressGateBlocked, onExpressGateBlocked, sceneExpressPreflight])
+  }, [expressGateBlocked, expressPreflightBlocks, onExpressGateBlocked, sceneExpressPreflight])
 
   const sceneExpressRunning =
     isExpressRunning &&
@@ -583,7 +591,8 @@ export function SceneStoryboardFrameViewer({
   const blockedByReferences = useCallback((): boolean => {
     if (referenceReadiness.ready) return false
     toast.error(referenceGateMessage, {
-      description: 'Open the Reference Library and use Generate to draw the missing references.',
+      description:
+        'Run Express Frames to draw them first, or draw them from the References tab.',
     })
     return true
   }, [referenceReadiness.ready, referenceGateMessage])
@@ -765,7 +774,7 @@ export function SceneStoryboardFrameViewer({
               <p className="text-[11px] leading-relaxed text-amber-200">
                 {referenceGateMessage}{' '}
                 <span className="text-amber-300/80">
-                  Open the Reference Library and use Generate to draw them.
+                  Express Frames draws them first; the References tab shows what is missing.
                 </span>
               </p>
             </div>

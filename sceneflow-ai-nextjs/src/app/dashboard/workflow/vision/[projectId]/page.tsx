@@ -15125,7 +15125,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onExpressSceneGenerate={handleExpressSceneGenerate}
                 onFinalizeStoryboardScene={handleFinalizeStoryboard}
                 expressStatus={expressStatus}
-                expressGateBlocked={!expressGate.allowed}
+                expressGateBlocked={!expressGate.allowed && !expressGate.blockedOnlyByReferences}
                 onExpressGateBlocked={() => {
                   const { toast } = require('sonner')
                   toast.error(expressGate.reasons[0] || 'Complete the Pre-Vis ready checklist before Express.')

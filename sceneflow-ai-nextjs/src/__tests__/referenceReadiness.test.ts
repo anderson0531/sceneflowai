@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   formatReferenceReadinessMessage,
-  resolveProjectReferenceReadiness,
+  resolveProjectSceneReferenceReadiness,
   resolveReferenceReadiness,
   resolveSceneReferenceReadiness,
 } from '@/lib/vision/referenceReadiness'
@@ -83,30 +83,91 @@ describe('resolveReferenceReadiness', () => {
   })
 })
 
-describe('resolveProjectReferenceReadiness', () => {
-  it('reads the three reference slices out of project metadata', () => {
-    const readiness = resolveProjectReferenceReadiness({
-      metadata: {
-        visionPhase: {
-          characters: [{ name: 'Piper Hayes' }],
-          references: {
-            locationReferences: [{ location: 'Terminal', imageUrl: 'https://cdn/term.png' }],
-            objectReferences: [{ name: 'Spanner' }],
+describe('resolveProjectSceneReferenceReadiness', () => {
+  const project = {
+    metadata: {
+      visionPhase: {
+        characters: [
+          { id: 'char-piper', name: 'PIPER' },
+          { id: 'char-ruiz', name: 'RUIZ', referenceImage: 'https://cdn/ruiz.png' },
+        ],
+        references: {
+          locationReferences: [
+            { id: 'loc-terminal', location: 'TERMINAL', imageUrl: 'https://cdn/term.png' },
+          ],
+          objectReferences: [{ id: 'obj-spanner', name: 'iron spanner' }],
+        },
+        script: {
+          script: {
+            scenes: [
+              {
+                sceneNumber: 1,
+                heading: 'INT. TERMINAL - DAY',
+                action: 'PIPER waits by the gantry.',
+              },
+              {
+                sceneNumber: 2,
+                heading: 'INT. TERMINAL - NIGHT',
+                action: 'RUIZ turns the iron spanner.',
+              },
+            ],
           },
         },
       },
-    })
+    },
+  }
 
-    expect(readiness.ready).toBe(false)
-    expect(readiness.missingCast).toEqual(['Piper Hayes'])
-    expect(readiness.missingLocations).toEqual([])
-    expect(readiness.missingObjects).toEqual(['Spanner'])
+  it('gates a scene on its own references, not the whole library', () => {
+    const readiness = resolveProjectSceneReferenceReadiness(project, [0])
+
+    expect(readiness.missingCast).toEqual(['PIPER'])
+    expect(readiness.missingObjects).toEqual([])
   })
 
-  it('treats a project with no vision phase as ready', () => {
-    expect(resolveProjectReferenceReadiness({}).ready).toBe(true)
-    expect(resolveProjectReferenceReadiness(null).ready).toBe(true)
-    expect(resolveProjectReferenceReadiness({ metadata: { visionPhase: {} } }).ready).toBe(true)
+  it('reports a different scene as ready when its own references are drawn', () => {
+    expect(resolveProjectSceneReferenceReadiness(project, [1]).missingCast).toEqual([])
+    expect(resolveProjectSceneReferenceReadiness(project, [1]).missingObjects).toEqual([
+      'iron spanner',
+    ])
+  })
+
+  it('covers every scene when no scope is given, since that is what a project run touches', () => {
+    const readiness = resolveProjectSceneReferenceReadiness(project)
+
+    expect(readiness.missingCast).toEqual(['PIPER'])
+    expect(readiness.missingObjects).toEqual(['iron spanner'])
+  })
+
+  it('reports each missing reference once however many scenes want it', () => {
+    const readiness = resolveProjectSceneReferenceReadiness(project, [0, 0, 1])
+
+    expect(readiness.missingCast).toEqual(['PIPER'])
+    expect(readiness.missingObjects).toEqual(['iron spanner'])
+  })
+
+  it('treats a project with no scenes as ready', () => {
+    expect(resolveProjectSceneReferenceReadiness({}).ready).toBe(true)
+    expect(resolveProjectSceneReferenceReadiness(null).ready).toBe(true)
+    expect(
+      resolveProjectSceneReferenceReadiness({ metadata: { visionPhase: {} } }).ready
+    ).toBe(true)
+  })
+
+  it('finds the scenes wherever the project keeps them', () => {
+    const visionPhase = project.metadata.visionPhase
+    const scenes = visionPhase.script.script.scenes
+
+    // A gate that cannot see the scenes reports nothing missing and passes, so
+    // every shape a project may be saved in has to resolve the same scenes.
+    const flatScript = { metadata: { visionPhase: { ...visionPhase, script: { scenes } } } }
+    const legacy = { metadata: { visionPhase: { ...visionPhase, script: {}, scenes } } }
+
+    for (const shape of [flatScript, legacy]) {
+      expect(resolveProjectSceneReferenceReadiness(shape, [0]).missingCast).toEqual(['PIPER'])
+      expect(resolveProjectSceneReferenceReadiness(shape).missingObjects).toEqual([
+        'iron spanner',
+      ])
+    }
   })
 })
 

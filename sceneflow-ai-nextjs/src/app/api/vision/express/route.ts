@@ -10,7 +10,7 @@ import { mergeExpressOrchestratedScenes } from '@/lib/audio/cleanupAudio'
 import { resolveStoryboardScenes } from '@/lib/storyboard/resolveStoryboardScenes'
 import {
   formatReferenceReadinessMessage,
-  resolveProjectReferenceReadiness,
+  resolveProjectSceneReferenceReadiness,
 } from '@/lib/vision/referenceReadiness'
 
 export const runtime = 'nodejs'
@@ -201,14 +201,22 @@ export async function POST(req: NextRequest) {
 
   // Fail before the SSE stream opens, so the client gets one clear error
   // instead of a per-scene preflight failure for every scene in the run.
+  //
+  // Scoped to the scenes the run covers, so the client's own scene-scoped
+  // check and this one reach the same verdict.
   if (!dialogueOnly) {
-    const readiness = resolveProjectReferenceReadiness(project)
+    const scopedIndices = Array.isArray(sceneIndices) ? sceneIndices : null
+    const readiness = resolveProjectSceneReferenceReadiness(project, scopedIndices)
     if (!readiness.ready) {
       return NextResponse.json(
         {
-          error: formatReferenceReadinessMessage(readiness),
+          error: formatReferenceReadinessMessage(
+            readiness,
+            scopedIndices?.length ? 'scene' : 'project'
+          ),
           code: 'MISSING_REFERENCE_IMAGES',
           missingCast: readiness.missingCast,
+          missingWardrobe: readiness.missingWardrobe,
           missingLocations: readiness.missingLocations,
           missingObjects: readiness.missingObjects,
         },

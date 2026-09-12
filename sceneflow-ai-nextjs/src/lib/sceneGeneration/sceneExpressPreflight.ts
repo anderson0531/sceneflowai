@@ -4,14 +4,19 @@
  */
 
 import { shouldScheduleStandaloneNarration, sceneHasNarratorInDialogue } from '../script/narration'
-import { resolveCharacterReferenceImageUrl } from '../production/productionReadinessGate'
 import { countStoryboardFramesNeedingGeneration } from '../storyboard/types'
 import {
   formatReferenceReadinessMessage,
-  resolveReferenceReadiness,
-  type ReferenceReadinessLocation,
-  type ReferenceReadinessObject,
+  resolveSceneReferenceReadiness,
 } from '../vision/referenceReadiness'
+import {
+  resolveSceneRequiredReferences,
+  type SceneReferenceOverrides,
+  type SceneReferenceRequirement,
+  type SceneRequirementCharacter,
+  type SceneRequirementLocation,
+  type SceneRequirementObject,
+} from '../vision/sceneReferenceRequirements'
 
 export interface SceneExpressPreflightInput {
   scene: Record<string, unknown>
@@ -29,13 +34,19 @@ export interface SceneExpressPreflightInput {
   /** Image-only Express pass — relax voice checks when direction/audio are already complete. */
   framesOnly?: boolean
   /**
-   * Project-wide prop and location references. Unlike the cast, these are not
-   * listed per scene, so any un-imaged row can end up named in this scene's
-   * frames — and a named reference with no image is drawn differently every
-   * time. Both groups must be complete before a scene generates.
+   * This scene's already-resolved requirements. The scene card holds them for
+   * its References tab, so passing them through keeps the tab, the gate and
+   * the auto-chain reading one answer. Omit them and they are resolved from
+   * the library slices below, which is what the server does.
    */
-  locationReferences?: ReferenceReadinessLocation[]
-  objectReferences?: ReferenceReadinessObject[]
+  sceneRequirements?: SceneReferenceRequirement[]
+  /**
+   * The whole library. Only the rows *this* scene needs are gated on: a named
+   * reference with no image is drawn differently in every frame, but a prop
+   * belonging to another scene is none of this scene's business.
+   */
+  locationReferences?: SceneRequirementLocation[]
+  objectReferences?: SceneRequirementObject[]
 }
 
 export interface SceneExpressPreflightResult {
@@ -43,6 +54,12 @@ export interface SceneExpressPreflightResult {
   errors: string[]
   /** True when scene has no direction/audio/image work for the target language. */
   nothingToDo?: boolean
+  /**
+   * Undrawn references are the only thing blocking. Express Frames draws them
+   * itself, so the scene card treats this as a step rather than a stop — but a
+   * single-frame generate, which has nowhere to put that step, still refuses.
+   */
+  blockedOnlyByReferences?: boolean
 }
 
 function sceneNeedsAudio(scene: Record<string, unknown>, language: string): boolean {
@@ -102,33 +119,33 @@ export function runSceneExpressPreflight(
     ? (scene.characters as string[])
     : []
 
-  const missingRefs: string[] = []
   const missingVoices: string[] = []
 
   for (const charName of sceneCharacterNames) {
     const char = characters.find((c) => c.name === charName)
     if (!char) continue
-    if (!resolveCharacterReferenceImageUrl(char)) {
-      missingRefs.push(charName)
-    }
     if (!char.voiceConfig) {
       missingVoices.push(charName)
     }
   }
 
-  if (missingRefs.length > 0) {
-    errors.push(
-      `Missing references: ${missingRefs.join(', ')} — add in Reference Library before Express.`
-    )
-  }
-
-  const libraryReadiness = resolveReferenceReadiness({
-    locationReferences,
-    objectReferences,
-  })
-  if (!libraryReadiness.ready) {
-    errors.push(formatReferenceReadinessMessage(libraryReadiness))
-  }
+  // One check for cast, wardrobe, locations and props, scoped to this scene —
+  // `scene.characters` is LLM script metadata and already disagrees with what
+  // frame generation resolves, so the requirement matchers answer instead.
+  const sceneReadiness = resolveSceneReferenceReadiness(
+    input.sceneRequirements ??
+      resolveSceneRequiredReferences({
+        scene,
+        sceneIndex: input.sceneIndex,
+        characters: characters as SceneRequirementCharacter[],
+        locationReferences,
+        objectReferences,
+        overrides: (scene.referenceOverrides as SceneReferenceOverrides | undefined) ?? null,
+      })
+  )
+  const referenceError = sceneReadiness.ready
+    ? null
+    : formatReferenceReadinessMessage(sceneReadiness, 'scene')
 
   const framesOnlyImagePreflight =
     !!framesOnly &&
@@ -153,8 +170,15 @@ export function runSceneExpressPreflight(
     }
   }
 
-  if (errors.length > 0) {
-    return { ok: false, errors }
+  // A voice or narration gap is a genuine stop and is named first; an undrawn
+  // reference is a step Express can take on the caller's behalf, so it goes
+  // last and is flagged as such.
+  if (errors.length > 0 || referenceError) {
+    return {
+      ok: false,
+      errors: referenceError ? [...errors, referenceError] : errors,
+      blockedOnlyByReferences: !!referenceError && errors.length === 0,
+    }
   }
 
   const nothingToDo = !sceneNeedsExpressWork(scene, language, regenerate)
