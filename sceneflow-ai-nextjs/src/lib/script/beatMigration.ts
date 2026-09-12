@@ -35,6 +35,7 @@ import {
 const BEAT_MIGRATION_FLAG = 'beatsMigratedAt'
 const START_FRAME_ONLY_MIGRATION_FLAG = 'startFrameOnlyMigrationAt'
 const BEAT_DIRECTION_MIGRATION_FLAG = 'beatDirectionMigratedAt'
+const BEAT_SET_CONTEXT_MIGRATION_FLAG = 'beatSetContextMigratedAt'
 const BEAT_DURATION_SEC = 8
 const MAX_DERIVED_BEATS = 12
 
@@ -625,24 +626,21 @@ function pickIndexedItem<T>(items: T[], beatIndex: number, totalBeats: number): 
   return items[Math.min(idx, items.length - 1)]
 }
 
-function buildLightingCue(direction: SceneDirectionShape | undefined, visualDescription: string): string {
-  const parts: string[] = []
-  if (direction?.lighting?.overallMood) parts.push(direction.lighting.overallMood)
-  if (direction?.lighting?.timeOfDay) parts.push(direction.lighting.timeOfDay)
-  if (direction?.lighting?.colorTemperature) parts.push(direction.lighting.colorTemperature)
-  if (visualDescription) parts.push(visualDescription)
-  return parts.join(', ').trim()
-}
-
+/**
+ * Where the beat is and what the air is like — not the scene's prop catalog.
+ *
+ * `scene.keyProps` lists the props present somewhere in the scene; which of
+ * them a given beat stages is the beat's business. Appending the list to a
+ * beat's `actionDescription` put props from the middle of a scene into the
+ * frames at both ends of it, and that text is the source every later prompt
+ * composes from.
+ */
 function buildSetContext(direction: SceneDirectionShape | undefined): string {
-  const parts: string[] = []
-  if (direction?.scene?.location) parts.push(direction.scene.location)
-  if (direction?.scene?.atmosphere) parts.push(direction.scene.atmosphere)
-  const props = direction?.scene?.keyProps
-  if (Array.isArray(props) && props.length > 0) {
-    parts.push(`Props: ${props.slice(0, 3).join(', ')}`)
-  }
-  return parts.filter(Boolean).join('. ').trim()
+  return [direction?.scene?.location, direction?.scene?.atmosphere]
+    .map((value) => value?.trim() || '')
+    .filter(Boolean)
+    .join('. ')
+    .trim()
 }
 
 /** Derive action beats from sceneDirection / visual fields for action-only scenes. */
@@ -663,7 +661,6 @@ export function deriveActionBeatsFromDirection(
   const blocking = String(direction?.talent?.blocking ?? '').trim()
   const emotionalBeat = String(direction?.talent?.emotionalBeat ?? '').trim()
   const setContext = buildSetContext(direction)
-  const lightingCue = buildLightingCue(direction, visualDescription)
   const sentences = sceneDescription
     ? sceneDescription.split(/(?<=[.!?])\s+/).filter((s) => s.trim().length > 8)
     : []
@@ -698,7 +695,10 @@ export function deriveActionBeatsFromDirection(
     const isBookendBeat = globalIndex === 0 || globalIndex === totalSpan - 1
     const actionParts = [`${shot}: ${momentText}`]
     if (setContext && isBookendBeat) actionParts.push(setContext)
-    if (lightingCue && isBookendBeat) actionParts.push(lightingCue)
+    // The scene's own visual description, but not the lighting grammar that
+    // used to ride along with it — that belongs to `beatDirection.lightingAccent`
+    // and the project lookbook, not to one beat's action text.
+    if (visualDescription && isBookendBeat) actionParts.push(visualDescription)
 
     beats.push({
       beatId: mintBeatId(),
@@ -1628,6 +1628,173 @@ export function migrateSceneBeatsToStartFrameOnly(
 
   if (!changed) return scene
   return applyBeatsToScene(scene, nextBeats)
+}
+
+const SET_CONTEXT_LABEL = /^(Props|Atmosphere|Lighting|Colou?r|Location|Set)\s*:\s*/i
+
+/**
+ * Is this clause scene-wide detail rather than this beat's staging?
+ *
+ * Matched against the scene's own direction so only text a previous pass
+ * copied out of it is removed — a writer who mentions the atmosphere in a
+ * beat's action keeps it.
+ */
+function isSceneSetContextClause(
+  clause: string,
+  direction: SceneDirectionShape | undefined
+): boolean {
+  const body = clause.replace(SET_CONTEXT_LABEL, '').trim().replace(/[.\s]+$/, '')
+  if (!body) return true
+
+  // Both dumps comma-joined their fields, and a field can itself contain a
+  // comma ("cold, teal-cyan accents"), so the clause is consumed value by
+  // value rather than split on the separator.
+  const fragments = [
+    direction?.lighting?.overallMood,
+    direction?.lighting?.timeOfDay,
+    direction?.lighting?.colorTemperature,
+    ...(direction?.scene?.keyProps ?? []),
+  ]
+    .map((value) => value?.trim())
+    .filter((value): value is string => !!value && value.length > 2)
+    .sort((a, b) => b.length - a.length)
+  if (fragments.length === 0) return false
+
+  let remaining = body
+  for (const fragment of fragments) {
+    remaining = remaining.replace(
+      new RegExp(fragment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'),
+      ''
+    )
+  }
+  return !/[\p{L}\p{N}]/u.test(remaining)
+}
+
+/**
+ * Remove scene-wide detail a previous pass dumped onto one beat, and anything
+ * it then said twice.
+ *
+ * Earlier versions of `buildSetContext` and `buildLightingCue` appended the
+ * scene's prop catalog and its lighting grammar to the first and last beat of
+ * every scene. That text lands in `actionDescription`, is copied into
+ * `beatDirection.frozenMoment`, and is re-matched into `beatDirection.keyProps`
+ * — so a beat framing one object asked the image model for three it never
+ * staged, on every regeneration. Idempotent, and a no-op for beats that were
+ * never dumped on.
+ */
+export function stripSceneSetContextFromText(
+  text: string | undefined,
+  direction: SceneDirectionShape | undefined
+): string {
+  const trimmed = text?.trim()
+  if (!trimmed) return ''
+
+  const clauses = trimmed.split(/(?<=[.!?])\s+/).filter((clause) => clause.trim())
+  const kept: string[] = []
+  const seen = new Set<string>()
+
+  for (const clause of clauses) {
+    if (isSceneSetContextClause(clause, direction)) continue
+    const key = clause
+      .replace(SET_CONTEXT_LABEL, '')
+      .trim()
+      .replace(/[.\s]+$/, '')
+      .toLowerCase()
+    if (key && seen.has(key)) continue
+    if (key) seen.add(key)
+    kept.push(clause.trim())
+  }
+
+  // Every clause was scene-level: the beat still needs its own text, so the
+  // original stands rather than being emptied out.
+  if (kept.length === 0) return trimmed
+  return kept.join(' ').replace(/\s{2,}/g, ' ').trim()
+}
+
+function stripSceneSetContextFromBeat(
+  beat: SceneBeat,
+  direction: SceneDirectionShape | undefined
+): SceneBeat {
+  const next = { ...beat }
+  let changed = false
+
+  const action = stripSceneSetContextFromText(beat.actionDescription, direction)
+  if (action && action !== beat.actionDescription?.trim()) {
+    next.actionDescription = action
+    changed = true
+  }
+
+  const moment = stripSceneSetContextFromText(beat.beatDirection?.frozenMoment, direction)
+  if (moment && moment !== beat.beatDirection?.frozenMoment?.trim()) {
+    next.beatDirection = { ...beat.beatDirection, frozenMoment: moment }
+    changed = true
+  }
+
+  // `collectKeyPropsForBeat` matched the dumped catalog back out of the action
+  // text, so the props it recorded have to go with it.
+  const keyProps = next.beatDirection?.keyProps
+  if (Array.isArray(keyProps) && keyProps.length > 0) {
+    const beatText = [next.actionDescription, next.line, next.beatDirection?.propInteraction]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+    const stillStaged = keyProps.filter((prop) => beatText.includes(prop.trim().toLowerCase()))
+    if (stillStaged.length !== keyProps.length) {
+      next.beatDirection = { ...next.beatDirection, keyProps: stillStaged }
+      changed = true
+    }
+  }
+
+  if (!changed) return beat
+
+  // A prompt composed from the old text no longer describes this direction.
+  delete next.storyboardImagePrompt
+  delete next.storyboardImagePromptDirectionKey
+  return next
+}
+
+/** Idempotent: drop dumped scene detail from every beat across all script scenes. */
+export function migrateProjectBeatSetContext(metadata: unknown): MigrateBeatsResult {
+  const empty: MigrateBeatsResult = {
+    metadata: (metadata && typeof metadata === 'object'
+      ? JSON.parse(JSON.stringify(metadata))
+      : {}) as Record<string, unknown>,
+    migratedSceneCount: 0,
+    changed: false,
+  }
+  if (!metadata || typeof metadata !== 'object') return empty
+
+  const cloned = JSON.parse(JSON.stringify(metadata)) as Record<string, unknown>
+  const visionPhase = cloned.visionPhase as Record<string, unknown> | undefined
+  if (!visionPhase) return empty
+
+  const scriptRoot = visionPhase.script as Record<string, unknown> | undefined
+  const nested = scriptRoot?.script as Record<string, unknown> | undefined
+  const scenes = (nested?.scenes ?? scriptRoot?.scenes) as unknown[]
+  if (!Array.isArray(scenes) || scenes.length === 0) return empty
+
+  let migratedSceneCount = 0
+  let changed = false
+
+  for (let i = 0; i < scenes.length; i++) {
+    const scene = scenes[i] as Record<string, unknown>
+    const beats = Array.isArray(scene.beats) ? (scene.beats as SceneBeat[]) : []
+    if (beats.length === 0) continue
+
+    const direction = getSceneDirection(scene)
+    const nextBeats = beats.map((beat) => stripSceneSetContextFromBeat(beat, direction))
+    if (nextBeats.every((beat, idx) => beat === beats[idx])) continue
+
+    scenes[i] = applyBeatsToScene(scene, nextBeats)
+    changed = true
+    migratedSceneCount++
+  }
+
+  if (changed) {
+    visionPhase[BEAT_SET_CONTEXT_MIGRATION_FLAG] = new Date().toISOString()
+  }
+
+  return { metadata: cloned, migratedSceneCount, changed }
 }
 
 export function isProjectBeatDirectionMigrated(metadata: unknown): boolean {

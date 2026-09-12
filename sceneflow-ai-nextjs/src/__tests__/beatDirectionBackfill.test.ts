@@ -6,6 +6,7 @@ import {
 import {
   isProjectBeatDirectionMigrated,
   migrateProjectBeatDirection,
+  migrateProjectBeatSetContext,
 } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
@@ -235,5 +236,116 @@ describe('migrateProjectBeatDirection', () => {
     expect(result.changed).toBe(false)
     expect(result.migratedSceneCount).toBe(0)
     expect(isProjectBeatDirectionMigrated(result.metadata)).toBe(false)
+  })
+})
+
+describe('migrateProjectBeatSetContext', () => {
+  /** A beat as an earlier bookend dump left it. */
+  function dumpedBeat(): SceneBeat {
+    return {
+      beatId: 'b1',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription:
+        'Insert Shot: The console housing sits open, wiring exposed. Abandoned Control Room. anxious. Props: Water-damaged leather journal, Brass energy core. cold, teal-cyan accents, cool',
+      beatDirection: {
+        shotType: 'Insert Shot',
+        frozenMoment:
+          'The console housing sits open, wiring exposed. Abandoned Control Room. anxious. Props: Water-damaged leather journal, Brass energy core. anxious',
+        keyProps: ['Water-damaged leather journal', 'Brass energy core'],
+      },
+      storyboardImagePrompt: 'Insert Shot. The console housing sits open. Props in frame: Brass energy core.',
+      storyboardImagePromptDirectionKey: 'stale-key',
+    }
+  }
+
+  function buildMetadata(beats: SceneBeat[]): Record<string, unknown> {
+    return {
+      visionPhase: {
+        script: {
+          script: {
+            scenes: [{ heading: 'INT. CONTROL ROOM - NIGHT', sceneDirection, beats }],
+          },
+        },
+      },
+    }
+  }
+
+  function firstBeat(metadata: unknown): SceneBeat {
+    return (metadata as any).visionPhase.script.script.scenes[0].beats[0]
+  }
+
+  it('drops the scene prop catalog and the lighting grammar from the beat', () => {
+    const result = migrateProjectBeatSetContext(buildMetadata([dumpedBeat()]))
+    const beat = firstBeat(result.metadata)
+
+    expect(result.changed).toBe(true)
+    expect(result.migratedSceneCount).toBe(1)
+    expect(beat.actionDescription).not.toMatch(/Props:/)
+    expect(beat.actionDescription).not.toMatch(/teal-cyan/)
+    expect(beat.beatDirection?.frozenMoment).not.toMatch(/Props:/)
+    expect(beat.beatDirection?.keyProps).toEqual([])
+  })
+
+  it('keeps the beat action and the set it stands in', () => {
+    const beat = firstBeat(migrateProjectBeatSetContext(buildMetadata([dumpedBeat()])).metadata)
+
+    expect(beat.actionDescription).toContain('The console housing sits open, wiring exposed')
+    expect(beat.actionDescription).toContain('Abandoned Control Room')
+  })
+
+  it('states a repeated clause once', () => {
+    const beat = firstBeat(migrateProjectBeatSetContext(buildMetadata([dumpedBeat()])).metadata)
+
+    expect(beat.beatDirection?.frozenMoment?.match(/anxious/g)).toHaveLength(1)
+  })
+
+  // The stored prompt was composed from the dumped text, so it no longer
+  // describes the direction and has to be recomposed on the next pass.
+  it('clears a still prompt composed from the dumped text', () => {
+    const beat = firstBeat(migrateProjectBeatSetContext(buildMetadata([dumpedBeat()])).metadata)
+
+    expect(beat.storyboardImagePrompt).toBeUndefined()
+    expect(beat.storyboardImagePromptDirectionKey).toBeUndefined()
+  })
+
+  it('is idempotent', () => {
+    const once = migrateProjectBeatSetContext(buildMetadata([dumpedBeat()]))
+    const twice = migrateProjectBeatSetContext(once.metadata)
+
+    expect(twice.changed).toBe(false)
+    expect(twice.migratedSceneCount).toBe(0)
+  })
+
+  it('leaves a beat that was never dumped on alone', () => {
+    const clean: SceneBeat = {
+      beatId: 'b2',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription: 'Elara lifts the Water-damaged leather journal toward the console.',
+      beatDirection: {
+        shotType: 'Medium Close-Up',
+        frozenMoment: 'Elara lifts the journal toward the console',
+        keyProps: ['Water-damaged leather journal'],
+      },
+      storyboardImagePrompt: 'Medium Close-Up. Elara lifts the journal.',
+    }
+    const result = migrateProjectBeatSetContext(buildMetadata([clean]))
+
+    expect(result.changed).toBe(false)
+    expect(firstBeat(result.metadata).storyboardImagePrompt).toBe(clean.storyboardImagePrompt)
+  })
+
+  it('keeps an atmosphere a writer put in the beat action', () => {
+    const authored: SceneBeat = {
+      beatId: 'b3',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription: 'Elara scans the room, anxious about what the readout will say.',
+    }
+    const result = migrateProjectBeatSetContext(buildMetadata([authored]))
+
+    expect(result.changed).toBe(false)
+    expect(firstBeat(result.metadata).actionDescription).toBe(authored.actionDescription)
   })
 })

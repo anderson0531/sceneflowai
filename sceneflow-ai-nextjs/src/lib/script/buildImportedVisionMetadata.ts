@@ -1,5 +1,6 @@
 import {
   migrateProjectToBeats,
+  migrateProjectBeatSetContext,
   migrateProjectBeatsToStartFrameOnly,
   embedCharacterIdsInSceneBeats,
   ensureSceneBeats,
@@ -131,7 +132,8 @@ export function buildImportedVisionMetadata(
     const segmentResult = migrateProjectToSegmented(interimMetadata)
     const beatResult = migrateProjectToBeats(segmentResult.metadata)
     const startFrameResult = migrateProjectBeatsToStartFrameOnly(beatResult.metadata)
-    metadataToPersist = startFrameResult.metadata as Record<string, unknown>
+    const setContextResult = migrateProjectBeatSetContext(startFrameResult.metadata)
+    metadataToPersist = setContextResult.metadata as Record<string, unknown>
   } catch (err) {
     console.warn('[buildImportedVisionMetadata] Migration failed; using flat shape', err)
   }

@@ -41,6 +41,7 @@ import {
   embedCharacterIdsInSceneBeats,
   migrateProjectToBeats,
   migrateProjectBeatDirection,
+  migrateProjectBeatSetContext,
   migrateProjectBeatsToStartFrameOnly,
 } from '@/lib/script/beatMigration'
 import {
@@ -847,6 +848,20 @@ export async function POST(request: NextRequest) {
           }
         } catch (bdErr) {
           console.warn('[Script Gen V2] Beat-direction backfill failed (non-blocking):', bdErr)
+        }
+
+        // Runs after the direction backfill, which copies a beat's action text
+        // into frozenMoment and re-matches the scene prop catalog out of it.
+        try {
+          const setContextResult = migrateProjectBeatSetContext(metadataToPersist)
+          metadataToPersist = setContextResult.metadata
+          if (setContextResult.changed) {
+            console.log('[Script Gen V2] Beat set-context cleanup:', {
+              migratedSceneCount: setContextResult.migratedSceneCount,
+            })
+          }
+        } catch (scErr) {
+          console.warn('[Script Gen V2] Beat set-context cleanup failed (non-blocking):', scErr)
         }
 
         // Duration is now DERIVED from the script the model actually wrote,
