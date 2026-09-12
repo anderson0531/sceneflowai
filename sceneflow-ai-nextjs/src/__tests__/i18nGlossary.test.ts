@@ -111,4 +111,23 @@ describe('glossary contents', () => {
     expect(GLOSSARY_TERMS).toContain('Series Studio')
     expect(GLOSSARY_TERMS).toContain('Production Studio')
   })
+
+  it('protects the Express actions, whose name is not the verb "to express"', () => {
+    for (const term of [
+      'Express References',
+      'Express Audio',
+      'Express Frames',
+      'Express Video',
+      'Express All',
+    ]) {
+      expect(GLOSSARY_TERMS).toContain(term)
+    }
+  })
+
+  it('keeps "Express All" intact rather than translating it as a verb phrase', () => {
+    const { protectedText, map } = protectGlossary('Express All — advanced (4)')
+
+    expect(protectedText).not.toContain('Express All')
+    expect(restoreGlossary('SFAI EXPRESS_ALL TERM — avanzado (4)', map)).toContain('Express All')
+  })
 })

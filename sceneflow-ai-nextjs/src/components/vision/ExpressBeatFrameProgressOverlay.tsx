@@ -256,13 +256,13 @@ export function ExpressBeatFrameProgressOverlay({
               id="express-beat-frame-progress-title"
               className="truncate text-xs font-semibold text-white"
             >
-              Express Scene {sceneNumber}
+              Express Frames
             </p>
             {!finished ? (
               <p className="mt-0.5 text-[11px] text-slate-400">
                 {currentPhase === 'references'
-                  ? 'Drawing the missing references first — you can keep editing'
-                  : 'Generating frames — you can keep editing'}
+                  ? `Scene ${sceneNumber} — drawing the missing references first`
+                  : `Scene ${sceneNumber} — you can keep editing`}
               </p>
             ) : preflightError ? (
               <p className="mt-0.5 text-[11px] text-rose-300">{preflightError}</p>

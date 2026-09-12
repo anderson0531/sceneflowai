@@ -5922,12 +5922,12 @@ function SceneCard({
                       {laneBusy ? (
                         <>
                           <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                          Generate All...
+                          Express All...
                         </>
                       ) : (
                         <>
                           <Zap className="w-3 h-3 mr-1" />
-                          Generate All
+                          Express All
                           {(!voicesReady || !hasNarrationVoice) && (
                             <span className="ml-1 text-amber-400">⚠</span>
                           )}
@@ -7029,12 +7029,12 @@ function SceneCard({
                               {isExpressAudioRunning ? (
                                 <>
                                   <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                  Generate Audio...
+                                  Express Audio...
                                 </>
                               ) : (
                                 <>
                                   <Sparkles className="w-3 h-3 mr-1" />
-                                  Generate Audio
+                                  Express Audio
                                   {(!voicesReady || !hasNarrationVoice) && (
                                     <span className="ml-1 text-amber-400">⚠</span>
                                   )}

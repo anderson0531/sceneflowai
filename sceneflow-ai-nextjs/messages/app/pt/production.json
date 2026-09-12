@@ -134,7 +134,7 @@
     "saveFailed": "Não foi possível salvar as alterações"
   },
   "express": {
-    "title": "Expressar todas as cenas (avançado)",
+    "title": "Express All — avançado",
     "description": "Executa Direção → Áudio → quadros de pré-visualização para cada cena em paralelo (até 3 por vez). Esta é uma corrida longa e com muitos créditos – o Express por cena em cada cartão de cena é recomendado para pontos de verificação.",
     "audioLanguage": "Idioma de áudio",
     "translateBadge": "traduzir",
@@ -167,10 +167,10 @@
     "costTotal": "Total: ~{credits} créditos",
     "costEstimateDisclaimer": "Apenas estimativas. O uso real depende da duração do diálogo e do número de fases que realmente precisam ser executadas.",
     "running": "Correndo…",
-    "generate": "Gerar"
+    "confirm": "Express All"
   },
   "expressAudio": {
-    "title": "Áudio Expresso",
+    "title": "Express Audio",
     "description": "Gere diálogos, efeitos sonoros e música para esta cena simultaneamente. O diálogo usa TTS, as batidas de ação usam áudio nativo Veo e a música usa Lyria.",
     "scope": "Escopo",
     "scopeMissing": "Faltando apenas",
@@ -190,7 +190,7 @@
     "sfxCredits": "Créditos SFX: {credits}. {hint}",
     "creditHint": "~{credits} créditos · até 8s contínuos",
     "running": "Correndo...",
-    "generateAudio": "Gerar áudio ({count})"
+    "confirm": "Express Audio ({count})"
   },
   "expressSfx": {
     "title": "Expresso Veo SFX",
@@ -211,7 +211,7 @@
     "generateSfx": "Gerar SFX ({count})"
   },
   "expressScene": {
-    "title": "Cena Expressa",
+    "title": "Express Frames",
     "description": "Escolha quais quadros de pré-visualização serão gerados ou regenerados. A regeneração dos quadros existentes atualiza apenas as imagens – a direção e o áudio permanecem inalterados.",
     "scope": "Escopo",
     "scopeMissing": "Faltando apenas",
@@ -228,11 +228,11 @@
     "close": "Fechar",
     "imageCredits": "Créditos da imagem (est.): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Correndo...",
-    "generateScene": "Gerar cena"
+    "confirm": "Express Frames"
   },
   "expressGenerateAll": {
-    "title": "Gerar tudo",
-    "description": "Execute quadros Express Audio e Express Scene em paralelo. Os padrões correspondem à seleção “somente ausente” de cada pipeline – ajuste o escopo se precisar regenerar.",
+    "title": "Express All",
+    "description": "Execute Express Audio e Express Frames em paralelo. Os padrões correspondem à seleção “somente ausente” de cada pipeline – ajuste o escopo se precisar regenerar.",
     "audioSection": "Áudio",
     "framesSection": "Molduras",
     "scope": "Escopo",
@@ -256,7 +256,7 @@
     "missing": "Ausente",
     "imageCredits": "Créditos da imagem (est.): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Correndo...",
-    "generateAll": "Gerar tudo"
+    "confirm": "Express All"
   },
   "retake": {
     "title": "Substituir a tomada existente?",

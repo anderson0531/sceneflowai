@@ -134,7 +134,7 @@
     "saveFailed": "无法保存更改"
   },
   "express": {
-    "title": "表达所有场景（高级）",
+    "title": "Express All — 高级",
     "description": "并行运行每个场景的方向 → 音频 → 视觉预览帧（一次最多 3 个）。这是一个漫长的、需要大量信用的运行——建议在检查点使用每个场景卡上的每个场景 Express。",
     "audioLanguage": "音频语言",
     "translateBadge": "翻译",
@@ -167,10 +167,10 @@
     "costTotal": "总计：~{credits} 学分",
     "costEstimateDisclaimer": "仅估计。实际使用取决于对话长度和实际需要运行的阶段数。",
     "running": "跑步…",
-    "generate": "产生"
+    "confirm": "Express All"
   },
   "expressAudio": {
-    "title": "快速音频",
+    "title": "Express Audio",
     "description": "同时为此场景生成对话、音效和音乐。对话使用 TTS，动作节拍使用 Veo 原生音频，音乐使用 Lyria。",
     "scope": "范围",
     "scopeMissing": "仅缺少",
@@ -190,7 +190,7 @@
     "sfxCredits": "SFX 积分：{credits}。 {hint}",
     "creditHint": "~{credits} 学分 · 连续长达 8 秒",
     "running": "跑步...",
-    "generateAudio": "生成音频 ({count})"
+    "confirm": "Express Audio ({count})"
   },
   "expressSfx": {
     "title": "Express Veo SFX",
@@ -211,7 +211,7 @@
     "generateSfx": "生成 SFX ({count})"
   },
   "expressScene": {
-    "title": "表达场景",
+    "title": "Express Frames",
     "description": "选择要生成或重新生成的预览帧。重新生成现有帧仅更新图像 - 方向和音频保持不变。",
     "scope": "范围",
     "scopeMissing": "仅缺少",
@@ -228,11 +228,11 @@
     "close": "关闭",
     "imageCredits": "图片来源（预计）：{credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "跑步...",
-    "generateScene": "生成场景"
+    "confirm": "Express Frames"
   },
   "expressGenerateAll": {
-    "title": "生成全部",
-    "description": "并行运行 Express Audio 和 Express Scene 帧。默认值与每个管道的“仅缺少”选择相匹配 - 如果需要重新生成，请调整范围。",
+    "title": "Express All",
+    "description": "并行运行 Express Audio 和 Express Frames。默认值与每个管道的“仅缺少”选择相匹配 - 如果需要重新生成，请调整范围。",
     "audioSection": "声音的",
     "framesSection": "镜框",
     "scope": "范围",
@@ -256,7 +256,7 @@
     "missing": "丢失的",
     "imageCredits": "图片来源（预计）：{credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "跑步...",
-    "generateAll": "生成全部"
+    "confirm": "Express All"
   },
   "retake": {
     "title": "替换现有的镜头？",

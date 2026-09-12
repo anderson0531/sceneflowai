@@ -134,7 +134,7 @@
     "saveFailed": "Impossible d’enregistrer les modifications"
   },
   "express": {
-    "title": "Exprimer toutes les scènes (avancé)",
+    "title": "Express All — avancé",
     "description": "Exécute Direction → Audio → images pré-visibles pour chaque scène en parallèle (jusqu'à 3 à la fois). Il s’agit d’un parcours long et gourmand en crédits – un Express par scène sur chaque carte de scène est recommandé pour les points de contrôle.",
     "audioLanguage": "Langue audio",
     "translateBadge": "traduire",
@@ -167,10 +167,10 @@
     "costTotal": "Total : ~Crédits {credits}",
     "costEstimateDisclaimer": "Estimations uniquement. L'utilisation réelle dépend de la durée du dialogue et du nombre de phases qui doivent réellement s'exécuter.",
     "running": "En cours d'exécution…",
-    "generate": "Générer"
+    "confirm": "Express All"
   },
   "expressAudio": {
-    "title": "Audio express",
+    "title": "Express Audio",
     "description": "Générez simultanément des dialogues, des effets sonores et de la musique pour cette scène. Le dialogue utilise TTS, les rythmes d'action utilisent l'audio natif Veo et la musique utilise Lyria.",
     "scope": "Portée",
     "scopeMissing": "Manquant seulement",
@@ -190,7 +190,7 @@
     "sfxCredits": "Crédits SFX : {credits}. {hint}",
     "creditHint": "~Crédits {credits} · jusqu'à 8 s en continu",
     "running": "En cours d'exécution...",
-    "generateAudio": "Générer de l'audio ({count})"
+    "confirm": "Express Audio ({count})"
   },
   "expressSfx": {
     "title": "Express Veo SFX",
@@ -211,7 +211,7 @@
     "generateSfx": "Générer SFX ({count})"
   },
   "expressScene": {
-    "title": "Scène express",
+    "title": "Express Frames",
     "description": "Choisissez les images pré-visibles à générer ou à régénérer. La régénération des images existantes met à jour uniquement les images – la direction et l’audio restent inchangés.",
     "scope": "Portée",
     "scopeMissing": "Manquant seulement",
@@ -228,11 +228,11 @@
     "close": "Fermer",
     "imageCredits": "Crédits image (est.) : {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "En cours d'exécution...",
-    "generateScene": "Générer une scène"
+    "confirm": "Express Frames"
   },
   "expressGenerateAll": {
-    "title": "Générer tout",
-    "description": "Exécutez les images Express Audio et Express Scene en parallèle. Les valeurs par défaut correspondent à la sélection « manquant uniquement » de chaque pipeline : ajustez la portée si vous devez régénérer.",
+    "title": "Express All",
+    "description": "Exécutez Express Audio et Express Frames en parallèle. Les valeurs par défaut correspondent à la sélection « manquant uniquement » de chaque pipeline : ajustez la portée si vous devez régénérer.",
     "audioSection": "Audio",
     "framesSection": "Cadres",
     "scope": "Portée",
@@ -256,7 +256,7 @@
     "missing": "Manquant",
     "imageCredits": "Crédits image (est.) : {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "En cours d'exécution...",
-    "generateAll": "Générer tout"
+    "confirm": "Express All"
   },
   "retake": {
     "title": "Remplacer la prise existante ?",

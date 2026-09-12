@@ -134,7 +134,7 @@
     "saveFailed": "No se pudieron guardar los cambios."
   },
   "express": {
-    "title": "Expresar todas las escenas (avanzado)",
+    "title": "Express All — avanzado",
     "description": "Ejecuta Dirección → Audio → cuadros previos para cada escena en paralelo (hasta 3 a la vez). Esta es una carrera larga y con mucho crédito: se recomienda Express por escena en cada tarjeta de escena para los puntos de control.",
     "audioLanguage": "Idioma de audio",
     "translateBadge": "traducir",
@@ -167,10 +167,10 @@
     "costTotal": "Total: ~{credits} créditos",
     "costEstimateDisclaimer": "Sólo estimaciones. El uso real depende de la duración del diálogo y del número de fases que realmente deben ejecutarse.",
     "running": "Correr…",
-    "generate": "Generar"
+    "confirm": "Express All"
   },
   "expressAudio": {
-    "title": "Audio exprés",
+    "title": "Express Audio",
     "description": "Genere diálogos, efectos de sonido y música para esta escena al mismo tiempo. Los diálogos usan TTS, los ritmos de acción usan audio nativo de Veo y la música usa Lyria.",
     "scope": "Alcance",
     "scopeMissing": "Sólo falta",
@@ -190,7 +190,7 @@
     "sfxCredits": "Créditos SFX: {credits}. {hint}",
     "creditHint": "~{credits} créditos · hasta 8s continuos",
     "running": "Correr...",
-    "generateAudio": "Generar audio ({count})"
+    "confirm": "Express Audio ({count})"
   },
   "expressSfx": {
     "title": "Efectos exprés Veo",
@@ -211,7 +211,7 @@
     "generateSfx": "Generar SFX ({count})"
   },
   "expressScene": {
-    "title": "Escena exprés",
+    "title": "Express Frames",
     "description": "Elija qué fotogramas previos generar o regenerar. La regeneración de fotogramas existentes actualiza solo las imágenes: la dirección y el audio no se modifican.",
     "scope": "Alcance",
     "scopeMissing": "Sólo falta",
@@ -228,11 +228,11 @@
     "close": "Cerrar",
     "imageCredits": "Créditos de imagen (est.): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Correr...",
-    "generateScene": "Generar escena"
+    "confirm": "Express Frames"
   },
   "expressGenerateAll": {
-    "title": "Generar todo",
-    "description": "Ejecute fotogramas de Express Audio y Express Scene en paralelo. Los valores predeterminados coinciden con la selección \"solo faltante\" de cada canalización; ajuste el alcance si necesita regenerar.",
+    "title": "Express All",
+    "description": "Ejecute Express Audio y Express Frames en paralelo. Los valores predeterminados coinciden con la selección \"solo faltante\" de cada canalización; ajuste el alcance si necesita regenerar.",
     "audioSection": "Audio",
     "framesSection": "Marcos",
     "scope": "Alcance",
@@ -256,7 +256,7 @@
     "missing": "Desaparecido",
     "imageCredits": "Créditos de imagen (est.): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Correr...",
-    "generateAll": "Generar todo"
+    "confirm": "Express All"
   },
   "retake": {
     "title": "¿Reemplazar la toma existente?",

@@ -134,7 +134,7 @@
     "saveFailed": "Änderungen konnten nicht gespeichert werden"
   },
   "express": {
-    "title": "Alle Szenen ausdrücken (erweitert)",
+    "title": "Express All — erweitert",
     "description": "Führt Richtung → Audio → Previs-Frames für jede Szene parallel aus (bis zu 3 gleichzeitig). Dies ist ein langer, kreditintensiver Lauf – für Kontrollpunkte wird eine Express-Karte pro Szene pro Szene empfohlen.",
     "audioLanguage": "Audiosprache",
     "translateBadge": "übersetzen",
@@ -167,10 +167,10 @@
     "costTotal": "Gesamt: ~{credits} Credits",
     "costEstimateDisclaimer": "Nur Schätzungen. Die tatsächliche Nutzung hängt von der Länge des Dialogs und der Anzahl der Phasen ab, die tatsächlich ausgeführt werden müssen.",
     "running": "Läuft…",
-    "generate": "Erzeugen"
+    "confirm": "Express All"
   },
   "expressAudio": {
-    "title": "Express-Audio",
+    "title": "Express Audio",
     "description": "Generieren Sie gleichzeitig Dialoge, Soundeffekte und Musik für diese Szene. Dialoge verwenden TTS, Action-Beats verwenden Veo-natives Audio und Musik verwendet Lyria.",
     "scope": "Umfang",
     "scopeMissing": "Fehlt nur",
@@ -190,7 +190,7 @@
     "sfxCredits": "SFX-Credits: {credits}. {hint}",
     "creditHint": "~{credits} Credits · bis zu 8 Sekunden ununterbrochen",
     "running": "Läuft...",
-    "generateAudio": "Audio generieren ({count})"
+    "confirm": "Express Audio ({count})"
   },
   "expressSfx": {
     "title": "Express Veo SFX",
@@ -211,7 +211,7 @@
     "generateSfx": "SFX generieren ({count})"
   },
   "expressScene": {
-    "title": "Express-Szene",
+    "title": "Express Frames",
     "description": "Wählen Sie aus, welche Pre-Vis-Frames generiert oder neu generiert werden sollen. Durch die Neugenerierung bestehender Frames werden nur Bilder aktualisiert – Richtung und Ton bleiben unverändert.",
     "scope": "Umfang",
     "scopeMissing": "Fehlt nur",
@@ -228,11 +228,11 @@
     "close": "Schließen",
     "imageCredits": "Bildnachweis (geschätzt): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Läuft...",
-    "generateScene": "Szene generieren"
+    "confirm": "Express Frames"
   },
   "expressGenerateAll": {
-    "title": "Alle generieren",
-    "description": "Führen Sie Express Audio- und Express Scene-Frames parallel aus. Die Standardwerte stimmen mit der Auswahl „Nur fehlend“ jeder Pipeline überein. Passen Sie den Bereich an, wenn Sie eine Neugenerierung benötigen.",
+    "title": "Express All",
+    "description": "Führen Sie Express Audio und Express Frames parallel aus. Die Standardwerte stimmen mit der Auswahl „Nur fehlend“ jeder Pipeline überein. Passen Sie den Bereich an, wenn Sie eine Neugenerierung benötigen.",
     "audioSection": "Audio",
     "framesSection": "Rahmen",
     "scope": "Umfang",
@@ -256,7 +256,7 @@
     "missing": "Fehlen",
     "imageCredits": "Bildnachweis (geschätzt): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Läuft...",
-    "generateAll": "Alle generieren"
+    "confirm": "Express All"
   },
   "retake": {
     "title": "Vorhandenen Take ersetzen?",

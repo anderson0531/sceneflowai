@@ -264,7 +264,7 @@ function buildStoryboardSlotFrameProps(
             }
           }
         : undefined,
-    generateLabel: useExpressGenerate ? 'Generate Scene' : undefined,
+    generateLabel: useExpressGenerate ? 'Express Frames' : undefined,
     useExpressGenerateIcon: useExpressGenerate,
   }
 }
@@ -793,7 +793,7 @@ export function SceneStoryboardFrameViewer({
                   onClick={openExpressSceneDialog}
                 >
                   <Zap className="w-3.5 h-3.5 mr-1.5" />
-                  Generate Scene
+                  Express Frames
                 </Button>
               )}
             </div>
@@ -844,7 +844,9 @@ export function SceneStoryboardFrameViewer({
                           onClick={openExpressSceneDialog}
                         >
                           <Zap className="w-3 h-3 mr-0.5" />
-                          {sceneExpressRunning ? `Generate ${expressElapsedSec}s` : 'Generate'}
+                          {sceneExpressRunning
+                            ? `Express Frames ${expressElapsedSec}s`
+                            : 'Express Frames'}
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">{sceneExpressTooltip}</TooltipContent>

@@ -31,6 +31,14 @@ export const GLOSSARY_TERMS = [
   'Final Cut',
   'Premiere',
   'Animatic',
+  // The four Express actions plus their umbrella. "Express" here is the name of
+  // a feature, not the verb — every locale had been given the verb sense, so
+  // the project-wide title read as "Articulate all scenes".
+  'Express References',
+  'Express Audio',
+  'Express Frames',
+  'Express Video',
+  'Express All',
   'Express Pre-vis',
   'Pre-vis',
   'Pre-Visualization Engine',

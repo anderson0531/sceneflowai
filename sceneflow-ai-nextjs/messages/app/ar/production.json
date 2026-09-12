@@ -134,7 +134,7 @@
     "saveFailed": "تعذر حفظ التغييرات"
   },
   "express": {
-    "title": "التعبير عن كافة المشاهد (متقدم)",
+    "title": "Express All — متقدم",
     "description": "تشغيل الاتجاه ← الصوت ← إطارات ما قبل الرؤية لكل مشهد بالتوازي (حتى 3 في المرة الواحدة). يعد هذا مسارًا طويلًا ومثقلًا بالائتمان - يوصى باستخدام Express لكل مشهد على كل بطاقة مشهد عند نقاط التفتيش.",
     "audioLanguage": "لغة صوتية",
     "translateBadge": "يترجم",
@@ -167,10 +167,10 @@
     "costTotal": "الإجمالي: ~{credits} الاعتمادات",
     "costEstimateDisclaimer": "تقديرات فقط. يعتمد الاستخدام الفعلي على طول الحوار وعدد المراحل التي تحتاج إلى التشغيل فعليًا.",
     "running": "جري…",
-    "generate": "يولد"
+    "confirm": "Express All"
   },
   "expressAudio": {
-    "title": "اكسبريس الصوت",
+    "title": "Express Audio",
     "description": "قم بإنشاء حوار ومؤثرات صوتية وموسيقى لهذا المشهد في نفس الوقت. يستخدم الحوار TTS، وتستخدم إيقاعات الحركة صوت Veo الأصلي، وتستخدم الموسيقى Lyria.",
     "scope": "نِطَاق",
     "scopeMissing": "مفقودة فقط",
@@ -190,7 +190,7 @@
     "sfxCredits": "اعتمادات SFX: {credits}. {hint}",
     "creditHint": "~ أرصدة {credits} · ما يصل إلى 8 ثوانٍ متواصلة",
     "running": "جري...",
-    "generateAudio": "توليد الصوت ({count})"
+    "confirm": "Express Audio ({count})"
   },
   "expressSfx": {
     "title": "اكسبريس فيو SFX",
@@ -211,7 +211,7 @@
     "generateSfx": "إنشاء SFX ({count})"
   },
   "expressScene": {
-    "title": "المشهد السريع",
+    "title": "Express Frames",
     "description": "اختر الإطارات المسبقة المراد إنشاؤها أو تجديدها. يؤدي تجديد الإطارات الموجودة إلى تحديث الصور فقط - ويتم ترك الاتجاه والصوت دون تغيير.",
     "scope": "نِطَاق",
     "scopeMissing": "مفقودة فقط",
@@ -228,11 +228,11 @@
     "close": "إغلاق",
     "imageCredits": "اعتمادات الصورة (تقديريًا): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "جري...",
-    "generateScene": "توليد المشهد"
+    "confirm": "Express Frames"
   },
   "expressGenerateAll": {
-    "title": "توليد الكل",
-    "description": "قم بتشغيل إطارات Express Audio وExpress Scene بالتوازي. تتطابق الإعدادات الافتراضية مع التحديد \"المفقود فقط\" لكل خط أنابيب - اضبط النطاق إذا كنت بحاجة إلى التجديد.",
+    "title": "Express All",
+    "description": "قم بتشغيل Express Audio وExpress Frames بالتوازي. تتطابق الإعدادات الافتراضية مع التحديد \"المفقود فقط\" لكل خط أنابيب - اضبط النطاق إذا كنت بحاجة إلى التجديد.",
     "audioSection": "صوتي",
     "framesSection": "إطارات",
     "scope": "نِطَاق",
@@ -256,7 +256,7 @@
     "missing": "مفتقد",
     "imageCredits": "اعتمادات الصورة (تقديريًا): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "جري...",
-    "generateAll": "توليد الكل"
+    "confirm": "Express All"
   },
   "retake": {
     "title": "هل تريد استبدال اللقطة الحالية؟",

@@ -279,7 +279,7 @@ export function ExpressAudioConfirmDialog({
             ) : (
               <>
                 <Sparkles className="w-4 h-4 mr-2" />
-                {t('generateAudio', { count: selectedIds.length })}
+                {t('confirm', { count: selectedIds.length })}
               </>
             )}
           </Button>

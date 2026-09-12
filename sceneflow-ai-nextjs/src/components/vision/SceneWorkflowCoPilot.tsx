@@ -35,8 +35,7 @@ export const guidanceContent: Record<WorkflowStep, {
     ],
     toolsAndTips: [
       'Pre-Vis ready checklist: assign voices and add references (shown in Pre-Visualization panel)',
-      'Express All Scenes: one project-level CTA for Direction → Audio → pre-vis frames',
-      'Express: one project-level CTA for Direction → Audio → Pre-vis frames',
+      'Express All: one project-level CTA for Direction → Audio → pre-vis frames',
       'Screening Room = live preview; Production Streams = finished MP4 exports',
     ],
     bestPractice: 'Assign voices and key references before running Express — the Pre-Vis panel shows what is missing.',

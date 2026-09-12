@@ -134,7 +134,7 @@
     "saveFailed": "ไม่สามารถบันทึกการเปลี่ยนแปลง"
   },
   "express": {
-    "title": "แสดงฉากทั้งหมด (ขั้นสูง)",
+    "title": "Express All — ขั้นสูง",
     "description": "เรียกใช้เฟรม Direction → → Audio pre-vis สำหรับทุกฉากแบบคู่ขนาน (สูงสุด 3 เฟรมต่อครั้ง) นี่เป็นการดำเนินการที่ยาวนานและมีเครดิตสูง — แนะนำให้ใช้ต่อฉากด่วนในแต่ละฉากสำหรับจุดตรวจ",
     "audioLanguage": "ภาษาเสียง",
     "translateBadge": "การแปล",
@@ -167,7 +167,7 @@
     "costTotal": "รวม: ~ เครดิต {credits}",
     "costEstimateDisclaimer": "ประมาณการเท่านั้นการใช้งานจริงขึ้นอยู่กับความยาวของบทสนทนาและจำนวนเฟสที่ต้องใช้งานจริง",
     "running": "กำลังดำเนินการ...",
-    "generate": "สร้าง"
+    "confirm": "Express All"
   },
   "expressAudio": {
     "title": "Express Audio",
@@ -190,7 +190,7 @@
     "sfxCredits": "เครดิต SFX: {credits} {hint}",
     "creditHint": "~ {credits} เครดิต · ต่อเนื่องสูงสุด 8 วินาที",
     "running": "กำลังรัน...",
-    "generateAudio": "สร้างเสียง ({count})"
+    "confirm": "Express Audio ({count})"
   },
   "expressSfx": {
     "title": "Express VEO SFX",
@@ -211,7 +211,7 @@
     "generateSfx": "สร้าง SFX ({count})"
   },
   "expressScene": {
-    "title": "ฉากด่วน",
+    "title": "Express Frames",
     "description": "เลือกกรอบก่อนการมองเห็นที่จะสร้างหรือสร้างใหม่การสร้างเฟรมที่มีอยู่ใหม่จะอัปเดตเฉพาะภาพเท่านั้น — ทิศทางและเสียงจะไม่เปลี่ยนแปลง",
     "scope": "ขอบเขต",
     "scopeMissing": "ไม่ครบเท่านั้น",
@@ -228,11 +228,11 @@
     "close": "ปิด",
     "imageCredits": "เครดิตภาพ (โดยประมาณ): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "กำลังรัน...",
-    "generateScene": "สร้างฉาก"
+    "confirm": "Express Frames"
   },
   "expressGenerateAll": {
-    "title": "สร้างทั้งหมด",
-    "description": "เรียกใช้เฟรม Express Audio และ Express Scene ในแบบคู่ขนานค่าเริ่มต้นตรงกับการเลือก \"ขาดเท่านั้น\" ของแต่ละท่อ — ปรับขอบเขตหากคุณต้องการสร้างใหม่",
+    "title": "Express All",
+    "description": "เรียกใช้ Express Audio และ Express Frames ในแบบคู่ขนานค่าเริ่มต้นตรงกับการเลือก \"ขาดเท่านั้น\" ของแต่ละท่อ — ปรับขอบเขตหากคุณต้องการสร้างใหม่",
     "audioSection": "เสียง",
     "framesSection": "กรอบ",
     "scope": "ขอบเขต",
@@ -256,7 +256,7 @@
     "missing": "สูญหาย",
     "imageCredits": "เครดิตภาพ (โดยประมาณ): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "กำลังรัน...",
-    "generateAll": "สร้างทั้งหมด"
+    "confirm": "Express All"
   },
   "retake": {
     "title": "ต้องการเปลี่ยนเทคที่มีอยู่ใช่ไหม",

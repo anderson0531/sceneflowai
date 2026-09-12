@@ -222,7 +222,7 @@
     "saveFailed": "Could not save your changes"
   },
   "express": {
-    "title": "Express All Scenes (advanced)",
+    "title": "Express All — advanced",
     "description": "Runs Direction → Audio → pre-vis frames for every scene in parallel (up to 3 at a time). This is a long, credit-heavy run — per-scene Express on each scene card is recommended for checkpoints.",
     "audioLanguage": "Audio language",
     "translateBadge": "translate",
@@ -255,7 +255,7 @@
     "costTotal": "Total: ~{credits} credits",
     "costEstimateDisclaimer": "Estimates only. Actual usage depends on dialogue length and the number of phases that actually need to run.",
     "running": "Running…",
-    "generate": "Generate"
+    "confirm": "Express All"
   },
   "expressAudio": {
     "title": "Express Audio",
@@ -278,7 +278,7 @@
     "sfxCredits": "SFX credits: {credits}. {hint}",
     "creditHint": "~{credits} credits · up to 8s continuous",
     "running": "Running...",
-    "generateAudio": "Generate Audio ({count})"
+    "confirm": "Express Audio ({count})"
   },
   "expressSfx": {
     "title": "Express Veo SFX",
@@ -299,7 +299,7 @@
     "generateSfx": "Generate SFX ({count})"
   },
   "expressScene": {
-    "title": "Express Scene",
+    "title": "Express Frames",
     "description": "Choose which pre-vis frames to generate or regenerate. Regenerating existing frames updates images only — direction and audio are left unchanged.",
     "scope": "Scope",
     "scopeMissing": "Missing only",
@@ -316,11 +316,11 @@
     "close": "Close",
     "imageCredits": "Image credits (est.): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Running...",
-    "generateScene": "Generate Scene"
+    "confirm": "Express Frames"
   },
   "expressGenerateAll": {
-    "title": "Generate All",
-    "description": "Run Express Audio and Express Scene frames in parallel. Defaults match each pipeline’s “missing only” selection — adjust scope if you need to regenerate.",
+    "title": "Express All",
+    "description": "Run Express Audio and Express Frames in parallel. Defaults match each pipeline’s “missing only” selection — adjust scope if you need to regenerate.",
     "audioSection": "Audio",
     "framesSection": "Frames",
     "scope": "Scope",
@@ -344,7 +344,7 @@
     "missing": "Missing",
     "imageCredits": "Image credits (est.): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Running...",
-    "generateAll": "Generate All"
+    "confirm": "Express All"
   },
   "retake": {
     "title": "Replace existing take?",
