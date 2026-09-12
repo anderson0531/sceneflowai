@@ -112,22 +112,24 @@ describe('glossary contents', () => {
     expect(GLOSSARY_TERMS).toContain('Production Studio')
   })
 
-  it('protects the Express actions, whose name is not the verb "to express"', () => {
+  it('protects the Agent actions, whose names are product terms', () => {
     for (const term of [
-      'Express References',
-      'Express Audio',
-      'Express Frames',
-      'Express Video',
-      'Express All',
+      'Reference Agent',
+      'Audio Agent',
+      'Frame Agent',
+      'Video Agent',
+      'Run All Agents',
     ]) {
       expect(GLOSSARY_TERMS).toContain(term)
     }
   })
 
-  it('keeps "Express All" intact rather than translating it as a verb phrase', () => {
-    const { protectedText, map } = protectGlossary('Express All — advanced (4)')
+  it('keeps "Run All Agents" intact rather than translating it as a verb phrase', () => {
+    const { protectedText, map } = protectGlossary('Run All Agents — advanced (4)')
 
-    expect(protectedText).not.toContain('Express All')
-    expect(restoreGlossary('SFAI EXPRESS_ALL TERM — avanzado (4)', map)).toContain('Express All')
+    expect(protectedText).not.toContain('Run All Agents')
+    expect(restoreGlossary('SFAI RUN_ALL_AGENTS TERM — avanzado (4)', map)).toContain(
+      'Run All Agents'
+    )
   })
 })

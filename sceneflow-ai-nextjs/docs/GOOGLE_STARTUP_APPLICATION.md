@@ -81,7 +81,7 @@ SERIES → BLUEPRINT → PRODUCTION → FINAL CUT → PREMIERE
 Structured treatments, beats, characters, Audience Resonance scoring, and collaborator review before heavy rendering.
 
 **2. Production (Script to Streams)**  
-Express storyboard, Beat Frames, Google Veo generation with native extension chains for longer dialogue, Mixer, and stream export.
+Frame Agent storyboard, Beat Frames, Google Veo generation with native extension chains for longer dialogue, Mixer, and stream export.
 
 **3. Final Cut (Assembly)**  
 Stitch approved Production streams into one master MP4—no timeline editing; creative changes stay in Production.

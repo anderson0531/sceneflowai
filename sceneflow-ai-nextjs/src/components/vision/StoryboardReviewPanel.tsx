@@ -132,7 +132,7 @@ export function StoryboardReviewPanel({
       {!allFramesReady && (
         <div className="flex items-start gap-2 text-xs text-amber-300/90">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-          <span>Generate all beat frames via Express before approving.</span>
+          <span>Generate all beat frames via Frame Agent before approving.</span>
         </div>
       )}
 

@@ -952,7 +952,7 @@ export function DirectorConsoleRoot({
     if (expressIds.length === 0) {
       import('sonner').then(({ toast }) => {
         toast.info(
-          'No eligible segments for Express — need beat references or a start Beat Frame, and not already rendering.'
+          'No eligible segments for Video Agent — need beat references or a start Beat Frame, and not already rendering.'
         )
       })
       return

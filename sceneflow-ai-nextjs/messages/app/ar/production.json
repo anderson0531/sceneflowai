@@ -134,8 +134,8 @@
     "saveFailed": "تعذر حفظ التغييرات"
   },
   "express": {
-    "title": "Express All — متقدم",
-    "description": "تشغيل الاتجاه ← الصوت ← إطارات ما قبل الرؤية لكل مشهد بالتوازي (حتى 3 في المرة الواحدة). يعد هذا مسارًا طويلًا ومثقلًا بالائتمان - يوصى باستخدام Express لكل مشهد على كل بطاقة مشهد عند نقاط التفتيش.",
+    "title": "Run All Agents — متقدم",
+    "description": "تشغيل الاتجاه ← الصوت ← إطارات ما قبل الرؤية لكل مشهد بالتوازي (حتى 3 في المرة الواحدة). يعد هذا مسارًا طويلًا ومثقلًا بالائتمان - يوصى باستخدام agents لكل مشهد على كل بطاقة مشهد عند نقاط التفتيش.",
     "audioLanguage": "لغة صوتية",
     "translateBadge": "يترجم",
     "audioLanguageHint": "سيتم إنشاء الحوار والسرد في {lang}. يتم ترك الصوت الموجود باللغات الأخرى دون تغيير.",
@@ -168,10 +168,10 @@
     "costTotal": "الإجمالي: ~{credits} الاعتمادات",
     "costEstimateDisclaimer": "تقديرات فقط. يعتمد الاستخدام الفعلي على طول الحوار وعدد المراحل التي تحتاج إلى التشغيل فعليًا.",
     "running": "جري…",
-    "confirm": "Express All"
+    "confirm": "Run All Agents"
   },
   "expressAudio": {
-    "title": "Express Audio",
+    "title": "Audio Agent",
     "description": "قم بإنشاء حوار ومؤثرات صوتية وموسيقى لهذا المشهد في نفس الوقت. يستخدم الحوار TTS، وتستخدم إيقاعات الحركة صوت Veo الأصلي، وتستخدم الموسيقى Lyria.",
     "scope": "نِطَاق",
     "scopeMissing": "مفقودة فقط",
@@ -191,10 +191,10 @@
     "sfxCredits": "اعتمادات SFX: {credits}. {hint}",
     "creditHint": "~ أرصدة {credits} · ما يصل إلى 8 ثوانٍ متواصلة",
     "running": "جري...",
-    "confirm": "Express Audio ({count})"
+    "confirm": "Audio Agent ({count})"
   },
   "expressScene": {
-    "title": "Express Frames",
+    "title": "Frame Agent",
     "description": "اختر الإطارات المسبقة المراد إنشاؤها أو تجديدها. يؤدي تجديد الإطارات الموجودة إلى تحديث الصور فقط - ويتم ترك الاتجاه والصوت دون تغيير.",
     "scope": "نِطَاق",
     "scopeMissing": "مفقودة فقط",
@@ -214,11 +214,11 @@
     "close": "إغلاق",
     "imageCredits": "اعتمادات الصورة (تقديريًا): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "جري...",
-    "confirm": "Express Frames"
+    "confirm": "Frame Agent"
   },
   "expressGenerateAll": {
-    "title": "Express All",
-    "description": "قم بتشغيل Express Audio وExpress Frames بالتوازي. تتطابق الإعدادات الافتراضية مع التحديد \"المفقود فقط\" لكل خط أنابيب - اضبط النطاق إذا كنت بحاجة إلى التجديد.",
+    "title": "Run All Agents",
+    "description": "قم بتشغيل Audio Agent وFrame Agent بالتوازي. تتطابق الإعدادات الافتراضية مع التحديد \"المفقود فقط\" لكل خط أنابيب - اضبط النطاق إذا كنت بحاجة إلى التجديد.",
     "audioSection": "صوتي",
     "framesSection": "إطارات",
     "scope": "نِطَاق",
@@ -242,7 +242,7 @@
     "missing": "مفتقد",
     "imageCredits": "اعتمادات الصورة (تقديريًا): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "جري...",
-    "confirm": "Express All"
+    "confirm": "Run All Agents"
   },
   "retake": {
     "title": "هل تريد استبدال اللقطة الحالية؟",
@@ -1366,7 +1366,7 @@
         "hint": "إطارات الدقة النهائية والفيديو، مع التخطيط لتلميع التوباز."
       },
       "express_sprint": {
-        "name": "اكسبريس سبرينت",
+        "name": "Agent Sprint",
         "hint": "مسار الدفعة المتزامنة. احتمالية تكرار أعلى - تكون تغييرات البرنامج النصي بعد الدفعة مكلفة."
       }
     },

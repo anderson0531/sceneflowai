@@ -50,7 +50,7 @@ export function ProductionReadyBanner({
         )}
       >
         <CheckCircle2 className="w-4 h-4 shrink-0" />
-        Pre-Vis ready — run Express on one scene or all scenes.
+        Pre-Vis ready — run agents on one scene or all scenes.
       </div>
     )
   }

@@ -298,7 +298,7 @@ export function SegmentFrameTimeline({
         }
       },
       {
-        message: `Express generating keyframes...`,
+        message: `Frame Agent is composing keyframes…`,
         estimatedDuration: segments.length * 35,
         operationType: 'keyframe-generation'
       }
@@ -334,7 +334,7 @@ export function SegmentFrameTimeline({
         }
       },
       {
-        message: `Express generating end frames (${targets.length})…`,
+        message: `Frame Agent is composing end frames (${targets.length})…`,
         estimatedDuration: targets.length * 25,
         operationType: 'keyframe-generation',
       }

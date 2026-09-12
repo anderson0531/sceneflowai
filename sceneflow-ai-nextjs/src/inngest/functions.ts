@@ -726,7 +726,7 @@ export const processReferenceExpress = inngest.createFunction(
       await step.sleep(`reference-gap-${i}`, '1500ms')
     }
 
-    return { ok: false, error: 'Reference Express exceeded its step budget' }
+    return { ok: false, error: 'Reference Agent exceeded its step budget' }
   }
 )
 

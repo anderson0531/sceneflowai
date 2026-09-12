@@ -256,7 +256,7 @@ export function ExpressBeatFrameProgressOverlay({
               id="express-beat-frame-progress-title"
               className="truncate text-xs font-semibold text-white"
             >
-              Express Frames
+              Frame Agent
             </p>
             {!finished ? (
               <p className="mt-0.5 text-[11px] text-slate-400">

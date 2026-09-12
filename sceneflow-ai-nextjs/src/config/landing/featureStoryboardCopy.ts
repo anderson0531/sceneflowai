@@ -154,7 +154,7 @@ export function buildFeatureStoryboardMessageItems(): FeatureStoryboardMessageIt
       keyFeatures: [...production.keyFeatures],
       screenshotSlot: "Insert screenshot: Production dashboard showing Writer's Room, Motion, and Pre-Vis",
       videoSlot:
-        'Insert 00:60 clip: Lock script → Express Pre-vis per scene → Motion Footage → Mixer → Streams',
+        'Insert 00:60 clip: Lock script → Pre-vis Agent per scene → Motion Footage → Mixer → Streams',
     },
     {
       id: 14,

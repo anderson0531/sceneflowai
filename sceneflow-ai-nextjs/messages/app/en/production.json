@@ -124,7 +124,7 @@
         "hint": "Final resolution frames and video, with Topaz planned for polish."
       },
       "express_sprint": {
-        "name": "Express Sprint",
+        "name": "Agent Sprint",
         "hint": "Concurrent batch path. Higher iteration contingency — script changes after batch are costly."
       }
     },
@@ -222,8 +222,8 @@
     "saveFailed": "Could not save your changes"
   },
   "express": {
-    "title": "Express All — advanced",
-    "description": "Runs Direction → Audio → pre-vis frames for every scene in parallel (up to 3 at a time). This is a long, credit-heavy run — per-scene Express on each scene card is recommended for checkpoints.",
+    "title": "Run All Agents — advanced",
+    "description": "Runs Direction → Audio → pre-vis frames for every scene in parallel (up to 3 at a time). This is a long, credit-heavy run — per-scene agents on each scene card are recommended for checkpoints.",
     "audioLanguage": "Audio language",
     "translateBadge": "translate",
     "audioLanguageHint": "Dialogue and narration will be generated in {lang}. Existing audio in other languages is left untouched.",
@@ -258,10 +258,10 @@
     "costTotal": "Total: ~{credits} credits",
     "costEstimateDisclaimer": "Estimates only. Actual usage depends on dialogue length and the number of phases that actually need to run.",
     "running": "Running…",
-    "confirm": "Express All"
+    "confirm": "Run All Agents"
   },
   "expressAudio": {
-    "title": "Express Audio",
+    "title": "Audio Agent",
     "description": "Generate dialogue, sound effects, and music for this scene concurrently. Dialogue uses TTS, action beats use Veo native audio, and music uses Lyria.",
     "scope": "Scope",
     "scopeMissing": "Missing only",
@@ -281,14 +281,14 @@
     "sfxCredits": "SFX credits: {credits}. {hint}",
     "creditHint": "~{credits} credits · up to 8s continuous",
     "running": "Running...",
-    "confirm": "Express Audio ({count})"
+    "confirm": "Audio Agent ({count})"
   },
   "expressScene": {
-    "title": "Express Frames",
+    "title": "Frame Agent",
     "description": "Choose which pre-vis frames to generate or regenerate. Regenerating existing frames updates images only — direction and audio are left unchanged.",
     "referencesTitle": "Drawn first",
     "referencesMissing": "This scene is missing {count, plural, one {# reference} other {# references}}. They will be drawn before the frames, so nothing invents its own appearance — adds {estimate}.",
-    "referencesNoneDrawable": "This scene is still missing references that Express cannot draw.",
+    "referencesNoneDrawable": "This scene is still missing references that Frame Agent cannot draw.",
     "referencesLibraryOnly": "{names} — wardrobe is drawn from the character’s own wardrobe pass, so open the Reference Library for {count, plural, one {it} other {those}}.",
     "referenceKindCast": "cast",
     "referenceKindWardrobe": "wardrobe",
@@ -315,11 +315,11 @@
     "close": "Close",
     "imageCredits": "Image credits (est.): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Running...",
-    "confirm": "Express Frames"
+    "confirm": "Frame Agent"
   },
   "expressGenerateAll": {
-    "title": "Express All",
-    "description": "Run Express Audio and Express Frames in parallel. Defaults match each pipeline’s “missing only” selection — adjust scope if you need to regenerate.",
+    "title": "Run All Agents",
+    "description": "Run Audio Agent and Frame Agent in parallel. Defaults match each pipeline’s “missing only” selection — adjust scope if you need to regenerate.",
     "audioSection": "Audio",
     "framesSection": "Frames",
     "scope": "Scope",
@@ -343,7 +343,7 @@
     "missing": "Missing",
     "imageCredits": "Image credits (est.): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Running...",
-    "confirm": "Express All"
+    "confirm": "Run All Agents"
   },
   "retake": {
     "title": "Replace existing take?",

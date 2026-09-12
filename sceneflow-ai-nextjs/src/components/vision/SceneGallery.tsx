@@ -171,7 +171,7 @@ export function SceneGallery({
   }, [])
 
   const handleExpressGateBlocked = useCallback(() => {
-    toast.error(expressGateReasons[0] || 'Complete the Pre-Vis ready checklist before Express.')
+    toast.error(expressGateReasons[0] || 'Complete the Pre-Vis ready checklist before running agents.')
     scrollToPreVisBanner()
   }, [expressGateReasons, scrollToPreVisBanner])
 
@@ -473,10 +473,10 @@ export function SceneGallery({
     >
       {mode !== 'screening' && (
       <div className="mb-4 rounded-lg border border-cyan-500/20 bg-cyan-500/5 px-4 py-3 text-sm text-cyan-100/90">
-        <p className="font-medium text-cyan-200">Recommended: Express scene by scene</p>
+        <p className="font-medium text-cyan-200">Recommended: agents scene by scene</p>
         <p className="text-xs text-cyan-100/70 mt-1">
-          Use Express on each scene card for checkpoints — avoids costly redos when characters or references change.
-          Project-wide Express All is available as an advanced option below.
+          Run agents on each scene card for checkpoints — avoids costly redos when characters or references change.
+          Project-wide Run All Agents is available as an advanced option below.
         </p>
       </div>
       )}
@@ -547,7 +547,7 @@ export function SceneGallery({
                       return
                     }
                     if (scenesNeedingExpress === 0) {
-                      toast.info('All scenes complete — open Express and enable Regenerate to redo.')
+                      toast.info('All scenes complete — open Run All Agents and enable Regenerate to redo.')
                       setExpressDialogOpen(true)
                       return
                     }
@@ -564,9 +564,9 @@ export function SceneGallery({
                   <span>
                     {isExpressRunning
                       ? expressProgress
-                        ? `Express All ${expressProgress.pct}%`
+                        ? `Run All Agents ${expressProgress.pct}%`
                         : 'Generating…'
-                      : `Express All — advanced (${scenesNeedingExpress})`}
+                      : `Run All Agents — advanced (${scenesNeedingExpress})`}
                   </span>
                   {isExpressRunning && expressProgress && (
                     <span
@@ -587,9 +587,9 @@ export function SceneGallery({
                 ) : isExpressRunning && expressProgress ? (
                   `Direction → Audio → Storyboard • ${storyboardBeatProgress.complete}/${storyboardBeatProgress.total} beats • ${expressElapsedSec}s elapsed`
                 ) : scenesNeedingExpress === 0 ? (
-                  'All scenes complete — open Express and enable Regenerate to redo'
+                  'All scenes complete — open Run All Agents and enable Regenerate to redo'
                 ) : (
-                  'Advanced: runs all scenes at once (~3–10+ min, higher credit cost). Prefer per-scene Express on scene cards.'
+                  'Advanced: runs all scenes at once (~3–10+ min, higher credit cost). Prefer per-scene agents on scene cards.'
                 )}
               </TooltipContent>
             </Tooltip>
@@ -597,7 +597,7 @@ export function SceneGallery({
           {mode !== 'screening' && draftFrameCount > 0 && !isExpressRunning && (
             <span className="flex items-center gap-1.5 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-2 py-1 text-[11px] text-emerald-300/90">
               <Sparkles className="w-3.5 h-3.5" />
-              {draftFrameCount} draft — choose Final in Express All
+              {draftFrameCount} draft — choose Final in Run All Agents
             </span>
           )}
           {mode !== 'screening' && isExpressRunning && expressProgress && (
@@ -701,7 +701,7 @@ export function SceneGallery({
 
       {scenes.length === 0 && (
         <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-6">
-          No scenes yet. Add scenes in the script workflow, then run Express to generate direction, audio, and storyboard frames.
+          No scenes yet. Add scenes in the script workflow, then run agents to generate direction, audio, and storyboard frames.
         </p>
       )}
 

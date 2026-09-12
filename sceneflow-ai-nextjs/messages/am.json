@@ -236,7 +236,7 @@
         "icon": "የፊልም ክላፐርቦርድ",
         "label": "የፊልም ምርት",
         "outcome": "ቀረጻ ከመጀመርዎ በፊት ሊያዩትና ሊሞክሩት የሚችሉት በይነተገናኝ አኒማቲክ (interactive animatic) ስክሪፕት",
-        "narrative": "ቀረጻ ከመጀመሩ በፊት የሚደረጉ የቅድመ-እይታ (previz) እና የተመልካች ሙከራዎች፣ ከዚህ በፊት ለሳምንታት የሚቆዩ የስቶሪቦርድ (storyboard) ዝግጅቶችን፣ ጊዜያዊ የድምፅ ቀረጻዎችን እና ውድ የሆኑ ግምታዊ ሙከራዎችን ይጠይቁ ነበር። SceneFlow ስክሪፕትዎን በ\"Express pre-vis\" አማካኝነት ወደ መስተጋብራዊ አኒማቲክ (interactive animatic) ይለውጠዋል፤ በዚህም በAudience Resonance ማሻሻያዎችን ማድረግ፣ በScreening Room ማሳየት እና ለምርቱ በጀት መመደብ የሚችሉት ታሪኩ በሚገባ ውጤታማ መሆኑ ሲረጋገጥ ብቻ ነው።",
+        "narrative": "ቀረጻ ከመጀመሩ በፊት የሚደረጉ የቅድመ-እይታ (previz) እና የተመልካች ሙከራዎች፣ ከዚህ በፊት ለሳምንታት የሚቆዩ የስቶሪቦርድ (storyboard) ዝግጅቶችን፣ ጊዜያዊ የድምፅ ቀረጻዎችን እና ውድ የሆኑ ግምታዊ ሙከራዎችን ይጠይቁ ነበር። SceneFlow ስክሪፕትዎን በ\"Pre-vis Agent\" አማካኝነት ወደ መስተጋብራዊ አኒማቲክ (interactive animatic) ይለውጠዋል፤ በዚህም በAudience Resonance ማሻሻያዎችን ማድረግ፣ በScreening Room ማሳየት እና ለምርቱ በጀት መመደብ የሚችሉት ታሪኩ በሚገባ ውጤታማ መሆኑ ሲረጋገጥ ብቻ ነው።",
         "useCases": [
           "የሙሉ ርዝመት እና ገለልተኛ ፊልሞች ቅድመ-ምስላዊነት (Previz)",
           "ለባለሀብቶች የሚቀርብ የአኒሜሽን ረቂቅ",
@@ -283,9 +283,9 @@
     "title": "በቅድሚያ በሪትም (Beat) ላይ የተመሰረተ የቪዲዮ ማቀናበሪያ ሂደት",
     "subtitle": "ከማመንጨትዎ በፊት ያጽድቁት — እንደ ቁማር ማሽን በዘፈቀደ የሚፈጠር መሆን የለበትም።",
     "intro": "በግምትና በሙከራ የሚደረግ የማመንጨት ሂደት የለም። SceneFlow ለመጨረሻው ቪዲዮ ክሬዲቶችን ከመጠቀሙ በፊት፣ ውጤቱን አስቀድመው ይመለከታሉ እንዲሁም ያጸድቃሉ።",
-    "description": "SceneFlow በእያንዳንዱ ደረጃ የእይታ ማረጋገጫ ሂደትን ያደራጃል፦ ለግምገማ Express Pre-vis፣ የአቀራረብ ቅርጽን (composition) ለመቆለፍ Beat Frames፣ ከዚያም በእያንዳንዱ 'ቢት' (beat) ላይ F2V። በዚህም፣ ከቁጥጥር ውጭ በሆኑ ለውጦች (drift) እና በስህተት በተፈጠሩ ምስሎች (hallucinations) ላይ ክሬዲት ከማባከንዎ በፊት የምስሉን ጥራት ያስተካክላሉ።",
+    "description": "SceneFlow በእያንዳንዱ ደረጃ የእይታ ማረጋገጫ ሂደትን ያደራጃል፦ ለግምገማ Pre-vis Agent፣ የአቀራረብ ቅርጽን (composition) ለመቆለፍ Beat Frames፣ ከዚያም በእያንዳንዱ 'ቢት' (beat) ላይ F2V። በዚህም፣ ከቁጥጥር ውጭ በሆኑ ለውጦች (drift) እና በስህተት በተፈጠሩ ምስሎች (hallucinations) ላይ ክሬዲት ከማባከንዎ በፊት የምስሉን ጥራት ያስተካክላሉ።",
     "steps": [
-      "Express Pre-vis — ለግምገማ የሚሆኑ የሙዚቃ ቅንብሮችን (beats) በደቂቃዎች ውስጥ ያጋሩ",
+      "Pre-vis Agent — ለግምገማ የሚሆኑ የሙዚቃ ቅንብሮችን (beats) በደቂቃዎች ውስጥ ያጋሩ",
       "Beat Frames — የቅንብር (composition) መጀመሪያ/መጨረሻን ከ Reference Library ቀጣይነት ጋር መቆለፍ",
       "F2V በቢት (per beat) — በዘፈኑ ምት ልክ፣ ከተረጋገጡ ፍሬሞች (frames) ቪዲዮ ይፍጠሩ፤ ያለአግባብ ከሚሰጡ አጠቃላይ መመሪያዎች (blind prompts) አይደለም።",
       "ቀጣይነት ያለው የEXT ሰንሰለት — ለረጅም የውይይት ክፍሎች የሚሆኑ፣ በስርዓቱ ውስጥ የተካተቱ የ+7 ሰከንድ የማራዘሚያ ደረጃዎች",
@@ -808,7 +808,7 @@
       "title": "በቅድሚያ በሪትም (Beat) ላይ የተመሰረተ የቪዲዮ ማቀናበሪያ ሂደት",
       "description": "ከF2V በፊት የቅድመ-ምስላዊ (pre-vis) ደረጃዎችን እና Beat Framesን ያጽድቁ፤ ይህም በስህተት የመነጩ (hallucination) እና ከታቀደው ራዕይ የሚያፈነግጡ ምስሎችን እንደገና የመፍጠር አስፈላጊነትን ይቀንሳል። ከግምገማ እስከ የመጨረሻው ክሊፕ ድረስ አንድ ወጥ እና የተደራጀ ሂደት ይኖርዎታል።",
       "keyFeatures": [
-        "ለግምገማ Express Pre-vis — ከባድ የሬንደር (render) ሂደት ከመጀመሩ በፊት ቢትሶቹን (beats) ያጋሩ",
+        "ለግምገማ Pre-vis Agent — ከባድ የሬንደር (render) ሂደት ከመጀመሩ በፊት ቢትሶቹን (beats) ያጋሩ",
         "Beat Frames የመቆለፊያ አወቃቀር — Reference Library ቀጣይነት",
         "F2V በቢት (per beat) — ከጸደቁ ፍሬሞች ቪዲዮ ማመንጨት",
         "ቀጣይነት ያላቸው የEXT (ከቤት ውጭ) ቅደም ተከተሎች — በአንድ የትረካ ክፍል (beat) ውስጥ ለሚደረጉ ረጅም ውይይቶች የሚሆኑ፣ በቀጥታ የሚተገበሩ የ+7 ሰከንድ እርምጃዎች",
@@ -917,7 +917,7 @@
           "Screening Room — የትዕይንት ቅድመ-እይታ፣ ዋና ስብስብ (master assembly)፣ የማሳያ ዝግጅቶች እና በዩቲዩብ ላይ ማተም"
         ],
         "screenshotSlot": "የስክሪን ምስል ያስገቡ፡ የስክሪፕት (Script)፣ የቀረጻ (Shoot) እና የቅድመ-እይታ (Pre-Vis) ትሮችን የሚያሳይ የምርት ዳሽቦርድ።",
-        "videoSlot": "የ60 ሰከንድ ክሊፕ አስገባ፡ ስክሪፕትን ማጽደቅ → ለእያንዳንዱ ትዕይንት Express Pre-vis → ቪዲዮ መቅረጽ → ሚክሰር → ስትሪሞች"
+        "videoSlot": "የ60 ሰከንድ ክሊፕ አስገባ፡ ስክሪፕትን ማጽደቅ → ለእያንዳንዱ ትዕይንት Pre-vis Agent → ቪዲዮ መቅረጽ → ሚክሰር → ስትሪሞች"
       },
       {
         "id": "14",
@@ -1047,7 +1047,7 @@
       "howWeScore": {
         "toggle": "How we score",
         "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
         "bullets": [
           "Scores Blueprint and script against your stated target audience",
           "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
@@ -1058,26 +1058,26 @@
     },
     "express": {
       "badge": "Hyper-Speed Production",
-      "title": "Sceneflow Express",
+      "title": "SceneFlow Agents",
       "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
-          "title": "Express Pre-Vis",
+          "title": "Pre-vis Agent",
           "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
-          "title": "Express Motion Video",
+          "title": "Video Agent",
           "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
           "time": "Minutes vs Days"
         },
         {
-          "title": "Express Delivery",
+          "title": "Delivery Agent",
           "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
           "time": "Minutes vs Weeks"
         }
       ],
-      "cta": "Start Express Rendering"
+      "cta": "Run Production Agents"
     }
   },
   "preVisEngine": {

@@ -285,9 +285,9 @@
     "title": "Flujo de trabajo de vídeo basado en el ritmo",
     "subtitle": "Aprueba antes de renderizar: nada de regeneración tipo máquina tragamonedas.",
     "intro": "Nada de generar contenido mediante prueba y error. Puedes previsualizar y aprobar el aspecto visual antes de que SceneFlow consuma créditos para el vídeo final.",
-    "description": "SceneFlow estructura la aprobación visual en cada etapa: Express Pre-vis para la revisión, Beat Frames para fijar la composición y, posteriormente, F2V por *beat*. Así, refinas la estética antes de consumir créditos en desviaciones y alucinaciones.",
+    "description": "SceneFlow estructura la aprobación visual en cada etapa: Pre-vis Agent para la revisión, Beat Frames para fijar la composición y, posteriormente, F2V por *beat*. Así, refinas la estética antes de consumir créditos en desviaciones y alucinaciones.",
     "steps": [
-      "Express Pre-vis — comparte pistas audiovisuales para su revisión en cuestión de minutos",
+      "Pre-vis Agent — comparte pistas audiovisuales para su revisión en cuestión de minutos",
       "Beat Frames — bloquear la composición de inicio/fin con la continuidad de Reference Library",
       "F2V por pulso: genera vídeo a partir de fotogramas aprobados, no de prompts a ciegas.",
       "Cadena de extensión continua: pasos de extensión nativos de +7 segundos para segmentos de diálogo largos.",
@@ -810,7 +810,7 @@
       "title": "Flujo de trabajo de vídeo basado en el ritmo",
       "description": "Aprueba los segmentos de previsualización y Beat Frames antes de la fase F2V: así se reducen las regeneraciones a ciegas causadas por alucinaciones y desviaciones visuales. Un flujo de trabajo estructurado desde la revisión hasta el clip final.",
       "keyFeatures": [
-        "Express Pre-vis para revisión: compartir los beats antes del renderizado pesado",
+        "Pre-vis Agent para revisión: compartir los beats antes del renderizado pesado",
         "Beat Frames composición de la esclusa — Reference Library continuidad",
         "F2V por pulso: genera vídeo a partir de fotogramas aprobados",
         "Cadenas EXT continuas: pasos nativos de +7 segundos para diálogos extensos dentro de un mismo *beat*.",
@@ -919,7 +919,7 @@
           "Screening Room — previsualización de escenas, montaje maestro, proyecciones y publicación en YouTube"
         ],
         "screenshotSlot": "Insertar captura de pantalla: Panel de producción que muestra las pestañas de Guion, Rodaje y Previsualización.",
-        "videoSlot": "Insertar clip de 60 segundos: Fijar guion → Express Pre-vis por escena → Rodaje → Mezclador → Emisiones"
+        "videoSlot": "Insertar clip de 60 segundos: Fijar guion → Pre-vis Agent por escena → Rodaje → Mezclador → Emisiones"
       },
       {
         "id": "14",
@@ -1049,7 +1049,7 @@
       "howWeScore": {
         "toggle": "How we score",
         "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
         "bullets": [
           "Scores Blueprint and script against your stated target audience",
           "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
@@ -1060,26 +1060,26 @@
     },
     "express": {
       "badge": "Hyper-Speed Production",
-      "title": "Sceneflow Express",
+      "title": "SceneFlow Agents",
       "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
-          "title": "Express Pre-Vis",
+          "title": "Pre-vis Agent",
           "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
-          "title": "Express Motion Video",
+          "title": "Video Agent",
           "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
           "time": "Minutes vs Days"
         },
         {
-          "title": "Express Delivery",
+          "title": "Delivery Agent",
           "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
           "time": "Minutes vs Weeks"
         }
       ],
-      "cta": "Start Express Rendering"
+      "cta": "Run Production Agents"
     }
   },
   "preVisEngine": {
@@ -1683,7 +1683,7 @@
             "description": "Organiza la generación simultánea de audio, fotogramas y vídeo en todas las escenas. Una producción de 30 latidos en ~30 minutos en lugar de horas de espera secuencial.",
             "learnMore": {
               "problem": "Generar un activo de producción de uno en uno convierte un solo proyecto en una espera de todo el día: pones en cola un clip, lo ves renderizar y luego lo repites cientos de veces mientras el impulso se evapora.",
-              "solution": "Express Generation aprovecha la nube dedicada de SceneFlow para ejecutar generaciones simultáneas de audio, fotogramas y video en toda su producción a la vez, en lugar de un trabajo lento tras otro.",
+              "solution": "Production Agents aprovecha la nube dedicada de SceneFlow para ejecutar generaciones simultáneas de audio, fotogramas y video en toda su producción a la vez, en lugar de un trabajo lento tras otro.",
               "outcome": "Una producción de 30 tiempos finaliza en aproximadamente 30 minutos en lugar de aproximadamente 2,5 horas, por lo que se repite el mismo día y se envía mientras la idea aún está en marcha."
             }
           },
@@ -1887,14 +1887,14 @@
             "id": "production-audio",
             "number": "4",
             "title": "Generar audio",
-            "description": "Genera diálogo, narración, SFX y música con Express Production en todas las escenas, Express Scene o beat by beat: voz en off de calidad nativa en más de 70 idiomas.",
+            "description": "Genera diálogo, narración, SFX y música con Run All Agents en todas las escenas, per-scene agents o beat by beat: voz en off de calidad nativa en más de 70 idiomas.",
             "imagePlaceholder": "Audio expreso: todas las escenas, escena única o ritmo a ritmo"
           },
           {
             "id": "production-frames",
             "number": "5",
             "title": "Generar y editar marcos",
-            "description": "Genere fotogramas beat con Express Production, Express Scene o beat by beat, luego edite cualquier fotograma con el Asistente de Director Inteligente (IAD); solo describa el cambio.",
+            "description": "Genere fotogramas beat con Run All Agents, per-scene agents o beat by beat, luego edite cualquier fotograma con el Asistente de Director Inteligente (IAD); solo describa el cambio.",
             "imagePlaceholder": "Batir fotogramas con ediciones de Intelligent Assistant Director"
           },
           {
@@ -1908,7 +1908,7 @@
             "id": "production-video",
             "number": "7",
             "title": "Generar vídeo",
-            "description": "Convierta los fotogramas aprobados en movimiento con Express Scene o ritmo a ritmo. Vuelve a tomar cualquier foto con el Subdirector Inteligente, sin interminables regeneraciones de máquinas tragamonedas.",
+            "description": "Convierta los fotogramas aprobados en movimiento con per-scene agents o ritmo a ritmo. Vuelve a tomar cualquier foto con el Subdirector Inteligente, sin interminables regeneraciones de máquinas tragamonedas.",
             "imagePlaceholder": "Generación de vídeo exprés con repeticiones de IAD"
           },
           {

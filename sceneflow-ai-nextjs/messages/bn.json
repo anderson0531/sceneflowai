@@ -285,9 +285,9 @@
     "title": "বিট-কেন্দ্রিক ভিডিও পাইপলাইন",
     "subtitle": "রেন্ডার করার আগেই অনুমোদন নিন — স্লট-মেশিনের মতো বারবার নতুন করে তৈরি করা নয়।",
     "intro": "অনুমান-নির্ভর বা বারবার পরীক্ষা-নিরীক্ষা করে ভিডিও তৈরির প্রয়োজন নেই। চূড়ান্ত ভিডিওর জন্য SceneFlow ক্রেডিট খরচ করার আগেই আপনি এর রূপ দেখে নিতে এবং অনুমোদন দিতে পারবেন।",
-    "description": "SceneFlow প্রতিটি ধাপে ভিজ্যুয়াল অনুমোদনের একটি কাঠামো তৈরি করে: পর্যালোচনার জন্য Express Pre-vis, কম্পোজিশন বা বিন্যাস চূড়ান্ত করার জন্য Beat Frames এবং এরপর প্রতিটি বিটের জন্য F2V। 'ড্রিফট' (drift) ও 'হ্যালুসিনেশন'-এর (hallucinations) পেছনে ক্রেডিট খরচ করার আগেই আপনি দৃশ্যরূপটি পরিমার্জন করে নিতে পারেন।",
+    "description": "SceneFlow প্রতিটি ধাপে ভিজ্যুয়াল অনুমোদনের একটি কাঠামো তৈরি করে: পর্যালোচনার জন্য Pre-vis Agent, কম্পোজিশন বা বিন্যাস চূড়ান্ত করার জন্য Beat Frames এবং এরপর প্রতিটি বিটের জন্য F2V। 'ড্রিফট' (drift) ও 'হ্যালুসিনেশন'-এর (hallucinations) পেছনে ক্রেডিট খরচ করার আগেই আপনি দৃশ্যরূপটি পরিমার্জন করে নিতে পারেন।",
     "steps": [
-      "Express Pre-vis — পর্যালোচনার জন্য কয়েক মিনিটের মধ্যেই অডিও-ভিজ্যুয়াল বিট শেয়ার করুন",
+      "Pre-vis Agent — পর্যালোচনার জন্য কয়েক মিনিটের মধ্যেই অডিও-ভিজ্যুয়াল বিট শেয়ার করুন",
       "Beat Frames — Reference Library ধারাবাহিকতা সহ শুরু/শেষ কম্পোজিশন লক করা",
       "প্রতি বিটে F2V — অন্ধ প্রম্পটের পরিবর্তে অনুমোদিত ফ্রেম থেকে ভিডিও তৈরি করুন।",
       "অবিচ্ছিন্ন EXT চেইন — দীর্ঘ সংলাপের অংশের জন্য নেটিভ +৭ সেকেন্ডের এক্সটেনশন ধাপ",
@@ -810,7 +810,7 @@
       "title": "বিট-কেন্দ্রিক ভিডিও পাইপলাইন",
       "description": "F2V-এর আগেই প্রি-ভিজ (pre-vis) বিট এবং Beat Frames অনুমোদন করে নিন—এর ফলে হ্যালুসিনেশন বা ভিজ্যুয়াল ড্রিফটের কারণে অন্ধভাবে বারবার জেনারেট করার প্রয়োজন কমবে। রিভিউ থেকে চূড়ান্ত ক্লিপ পর্যন্ত একটি সুবিন্যস্ত কর্মপ্রক্রিয়া নিশ্চিত হবে।",
       "keyFeatures": [
-        "পর্যালোচনার জন্য Express Pre-vis — ভারী রেন্ডারিংয়ের আগে বিটগুলো শেয়ার করুন",
+        "পর্যালোচনার জন্য Pre-vis Agent — ভারী রেন্ডারিংয়ের আগে বিটগুলো শেয়ার করুন",
         "Beat Frames লক বিন্যাস — Reference Library ধারাবাহিকতা",
         "প্রতি বিটে F2V — অনুমোদিত ফ্রেম থেকে ভিডিও তৈরি করুন",
         "অবিচ্ছিন্ন EXT চেইন — একটি বিটের মধ্যে দীর্ঘ সংলাপের জন্য নেটিভ +৭ সেকেন্ডের ধাপ",
@@ -919,7 +919,7 @@
           "Screening Room — দৃশ্য প্রিভিউ, মাস্টার অ্যাসেম্বলি, প্রদর্শনী এবং ইউটিউবে প্রকাশ"
         ],
         "screenshotSlot": "স্ক্রিনশট যুক্ত করুন: প্রোডাকশন ড্যাশবোর্ড, যাতে স্ক্রিপ্ট ট্যাব, শুট ট্যাব এবং প্রি-ভিস (Pre-Vis) দেখা যাচ্ছে।",
-        "videoSlot": "৬০-সেকেন্ডের ক্লিপ যুক্ত করুন: স্ক্রিপ্ট চূড়ান্ত করা → প্রতি দৃশ্যের জন্য Express Pre-vis → ফুটেজ ধারণ → মিক্সার → স্ট্রিম"
+        "videoSlot": "৬০-সেকেন্ডের ক্লিপ যুক্ত করুন: স্ক্রিপ্ট চূড়ান্ত করা → প্রতি দৃশ্যের জন্য Pre-vis Agent → ফুটেজ ধারণ → মিক্সার → স্ট্রিম"
       },
       {
         "id": "১৪",
@@ -1049,7 +1049,7 @@
       "howWeScore": {
         "toggle": "How we score",
         "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
         "bullets": [
           "Scores Blueprint and script against your stated target audience",
           "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
@@ -1060,26 +1060,26 @@
     },
     "express": {
       "badge": "Hyper-Speed Production",
-      "title": "Sceneflow Express",
+      "title": "SceneFlow Agents",
       "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
-          "title": "Express Pre-Vis",
+          "title": "Pre-vis Agent",
           "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
-          "title": "Express Motion Video",
+          "title": "Video Agent",
           "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
           "time": "Minutes vs Days"
         },
         {
-          "title": "Express Delivery",
+          "title": "Delivery Agent",
           "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
           "time": "Minutes vs Weeks"
         }
       ],
-      "cta": "Start Express Rendering"
+      "cta": "Run Production Agents"
     }
   },
   "preVisEngine": {

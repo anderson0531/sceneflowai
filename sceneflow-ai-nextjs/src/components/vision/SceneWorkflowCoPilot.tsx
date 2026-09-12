@@ -26,7 +26,7 @@ export const guidanceContent: Record<WorkflowStep, {
     title: "Writer's Room — Foundation",
     icon: <FileText className="w-5 h-5 text-sf-primary" />,
     goal: 'Finalize script, audio, and references before pre-vis and video production.',
-    whyItMatters: 'Foundation work happens here: writing, Audience Resonance Analysis, voice casting, and timeline prep. Lock the script when ready so Express and production stay stable.',
+    whyItMatters: 'Foundation work happens here: writing, Audience Resonance Analysis, voice casting, and timeline prep. Lock the script when ready so agents and production stay stable.',
     howItWorks: [
       "Edit narration, dialogue, and action in the Writer's Room",
       'Run Audience Resonance Analysis (aim for 85+) and apply targeted fixes with the Intelligent Assistant Writer',
@@ -35,19 +35,19 @@ export const guidanceContent: Record<WorkflowStep, {
     ],
     toolsAndTips: [
       'Pre-Vis ready checklist: assign voices and add references (shown in Pre-Visualization panel)',
-      'Express All: one project-level CTA for Direction → Audio → pre-vis frames',
+      'Run All Agents: one project-level CTA for Direction → Audio → pre-vis frames',
       'Screening Room = live preview; Production Streams = finished MP4 exports',
     ],
-    bestPractice: 'Assign voices and key references before running Express — the Pre-Vis panel shows what is missing.',
+    bestPractice: 'Assign voices and key references before running agents — the Pre-Vis panel shows what is missing.',
     tip: "You only see Writer's Room and Motion — Direction, pre-vis, and Beat Frames live inside those phases.",
   },
   directorsChair: {
     title: "Direction (in Writer's Room)",
     icon: <Film className="w-5 h-5 text-sf-primary" />,
     goal: 'Define cinematic direction that feeds pre-vis and Beat Frame generation.',
-    whyItMatters: 'Direction is generated automatically during Express or from the script. It drives camera, lighting, and blocking for consistent pre-vis frames.',
+    whyItMatters: 'Direction is generated automatically during an agent run or from the script. It drives camera, lighting, and blocking for consistent pre-vis frames.',
     howItWorks: [
-      'Express generates direction per scene, or generate manually from the script',
+      'Agents generate direction per scene, or generate manually from the script',
       'Review camera, lighting, talent blocking, and audio cues',
       'Edit direction before re-running pre-vis generation',
     ],
@@ -56,7 +56,7 @@ export const guidanceContent: Record<WorkflowStep, {
       'Changes to direction may require regenerating pre-vis frames',
     ],
     bestPractice: 'Confirm direction matches your vision before building pre-vis.',
-    tip: 'Direction is an input to Express, not a separate production phase.',
+    tip: 'Direction is an input to the agents, not a separate production phase.',
   },
   storyboardPreViz: {
     title: 'Pre-vis — Pre-visualization phase',
@@ -64,12 +64,12 @@ export const guidanceContent: Record<WorkflowStep, {
     goal: 'Build pre-vis frames for every beat and share for approval.',
     whyItMatters: 'Pre-vis frames are still images per beat — fast to change. Video and Beat Frames come later in Motion.',
     howItWorks: [
-      'Run Build Pre-vis (Express) at project level when script is locked',
+      'Run Build Pre-vis (agents) at project level when script is locked',
       'Review frames in the pre-vis gallery; share link for stakeholder approval',
       'Screening Room — Preview (live): pre-vis timed with audio (not exported MP4)',
     ],
     toolsAndTips: [
-      'Pre-vis Frame = still image for a beat (Express output)',
+      'Pre-vis Frame = still image for a beat (agent output)',
       'Approve pre-vis before opening Motion video work',
       'Gallery is the single pre-vis truth — video production lives in Motion',
     ],
@@ -80,10 +80,10 @@ export const guidanceContent: Record<WorkflowStep, {
     title: 'Beats (internal)',
     icon: <Layers className="w-5 h-5 text-sf-primary" />,
     goal: 'Understand how beats drive cuts — managed automatically in the beat-first pipeline.',
-    whyItMatters: 'Beats are script units (dialogue, narration, action). Express and production derive pre-vis frames and beat clips from them.',
+    whyItMatters: 'Beats are script units (dialogue, narration, action). Agents and production derive pre-vis frames and beat clips from them.',
     howItWorks: [
       'Beats are created from your script automatically',
-      'Pre-vis frames attach to beats via Express',
+      'Pre-vis frames attach to beats via Frame Agent'
       'Motion derives beat clips for Beat Frames and video generation',
     ],
     toolsAndTips: [

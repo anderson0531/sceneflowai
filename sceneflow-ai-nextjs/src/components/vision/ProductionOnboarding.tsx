@@ -43,7 +43,7 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
     id: 'script-tab',
     title: "Step 1 - Foundation (Writer's Room)",
     description:
-      'Optimize your script with the Intelligent Assistant Writer, run Audience Resonance Analysis (85+ target), generate audio, and assign voices. The Pre-Visualization panel shows what you need before Express.',
+      'Optimize your script with the Intelligent Assistant Writer, run Audience Resonance Analysis (85+ target), generate audio, and assign voices. The Pre-Visualization panel shows what you need before running agents.',
     icon: <FileText className="w-6 h-6" />,
     workflowStep: 'dialogueAction',
     tip: 'Pre-Vis ready requires character voices and at least one reference in the Reference Library.',
@@ -52,7 +52,7 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
     id: 'storyboard',
     title: 'Step 2 - Pre-vis',
     description:
-      'Use Express All for Direction → Audio → pre-vis frames in ~10 minutes. Review in the gallery, share for approval, and preview in Screening Room — Preview (live).',
+      'Use Run All Agents for Direction → Audio → pre-vis frames. Agents compose expert prompts and generate — a scene can take several minutes. Review in the gallery, share for approval, and preview in Screening Room — Preview (live).',
     icon: <Frame className="w-6 h-6" />,
     workflowStep: 'dialogueAction',
     tip: 'Pre-vis Frame = still image per beat. Screening Room is live preview — not an exported MP4.',

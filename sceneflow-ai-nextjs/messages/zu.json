@@ -236,7 +236,7 @@
         "icon": "ibhodi lokushaya isikhathi",
         "label": "Ukukhiqizwa Kwamafilimu",
         "outcome": "Umbhalo we-animatic esebenzisanayo ongayibuka futhi uyihlole ngaphambi kokuba uqale ukuqopha",
-        "narrative": "Ngaphambilini, ukwenza uhlaka oluyisibonelo (previz) nokuhlola imibono yezethameli kwakusho amasonto amaningi okudala imidwebo yendaba (storyboards), ukuqopha amazwi esikhashana, nokwenza izinqumo ezibizayo ezisekelwe ekuqageleni ngaphambi kokuba kuqale ukuthwetshulwa. I-SceneFlow iguqula umbhalo wakho ube yisibonelo esinyakazayo esisebenzisanayo (interactive animatic) kusetshenziswa i-Express pre-vis — yenze ibe ngcono nge-Audience Resonance, uyibonise nge-Screening Room, bese ukhupha imali kuphela uma indaba isisebenza kahle futhi yamukelekile.",
+        "narrative": "Ngaphambilini, ukwenza uhlaka oluyisibonelo (previz) nokuhlola imibono yezethameli kwakusho amasonto amaningi okudala imidwebo yendaba (storyboards), ukuqopha amazwi esikhashana, nokwenza izinqumo ezibizayo ezisekelwe ekuqageleni ngaphambi kokuba kuqale ukuthwetshulwa. I-SceneFlow iguqula umbhalo wakho ube yisibonelo esinyakazayo esisebenzisanayo (interactive animatic) kusetshenziswa i-Pre-vis Agent — yenze ibe ngcono nge-Audience Resonance, uyibonise nge-Screening Room, bese ukhupha imali kuphela uma indaba isisebenza kahle futhi yamukelekile.",
         "useCases": [
           "Ukubuka kuqala kwamafilimu amakhulu nawazimele",
           "Izithombe ezinyakazayo zokwethula umbono kubatshali-zimali",
@@ -283,9 +283,9 @@
     "title": "Inqubo Yokukhiqiza Ividiyo Eqala Ngesigqi",
     "subtitle": "Vumela ngaphambi kokukhiqiza umphumela — hhayi ukuvuselela okufana nomshini wokugembula.",
     "intro": "Akukho ukukhiqiza ngokulinganisa nokuhlola. Uyabuka kuqala bese uvumela ukubukeka kwayo ngaphambi kokuba i-SceneFlow isebenzise amakhredithi kuvidiyo yokugcina.",
-    "description": "I-SceneFlow ihlela inqubo yokugunyazwa kokubonakalayo esigabeni ngasinye: i-Express Pre-vis yokubuyekeza, i-Beat Frames yokukhiya ukwakheka, bese kuba yi-F2V ngesigqi ngasinye. Uyawulungisa umbonakalo ngaphambi kokuchitha amakhredithi ezintweni ezingahleliwe noma amaphutha okukhiqiza (hallucinations).",
+    "description": "I-SceneFlow ihlela inqubo yokugunyazwa kokubonakalayo esigabeni ngasinye: i-Pre-vis Agent yokubuyekeza, i-Beat Frames yokukhiya ukwakheka, bese kuba yi-F2V ngesigqi ngasinye. Uyawulungisa umbonakalo ngaphambi kokuchitha amakhredithi ezintweni ezingahleliwe noma amaphutha okukhiqiza (hallucinations).",
     "steps": [
-      "Express Pre-vis — yabelana ngemigqoqo yomculo enezithombe ukuze ibuyekezwe ngemizuzu embalwa",
+      "Pre-vis Agent — yabelana ngemigqoqo yomculo enezithombe ukuze ibuyekezwe ngemizuzu embalwa",
       "Beat Frames — vala ukwakheka kokuqala/kokuphela ngokuhambisana nokuqhubeka kwe-Reference Library",
       "I-F2V ngesigqi — khiqiza ividiyo usebenzisa ozimele (frames) abagunyaziwe, hhayi imiyalelo engacacile.",
       "Uchungechunge oluqhubekayo lwe-EXT — izinyathelo zokwandisa ezingama-secondu angu-7 (ezakhelwe ngaphakathi) zezigaba ezinde zezingxoxo",
@@ -808,7 +808,7 @@
       "title": "Inqubo Yokukhiqiza Ividiyo Eqala Ngesigqi",
       "description": "Vumela izigaba ze-pre-vis kanye ne-Beat Frames ngaphambi kwe-F2V — lokhu kunciphisa ukwenziwa kabusha okungenanjongo okubangelwa amaphutha ohlelo (njengokuzidaleela imininingwane engalungile noma ukuchezuka embonweni wokuqala). Indlela eyodwa ehlelekile kusukela ekubuyekezweni kuya esiqeshini sokugcina.",
       "keyFeatures": [
-        "Express Pre-vis ukuze kubuyekezwe — yabelana ngama-beat ngaphambi kokwenza i-render enzima",
+        "Pre-vis Agent ukuze kubuyekezwe — yabelana ngama-beat ngaphambi kokwenza i-render enzima",
         "Beat Frames ukwakheka kokukhiya — Reference Library ukuqhubeka",
         "I-F2V ngesigqi ngasinye — khiqiza ividiyo kusuka kuzinhlaka ezivunyiwe",
         "Uchungechunge oluqhubekayo lwe-EXT — izinyathelo ze-native +7s zezingxoxo ezinde ngaphakathi kwesigqi",
@@ -917,7 +917,7 @@
           "Screening Room — ukubuka kuqala izigcawu, ukuhlanganisa okuyinhloko, ukukhombisa umphakathi, kanye nokushicilela ku-YouTube"
         ],
         "screenshotSlot": "Faka isithombe-skrini: Ideshibhodi yokukhiqiza ebonisa ithebhu yombhalo (script), ithebhu yokudubula (shoot), kanye ne-Pre-Vis.",
-        "videoSlot": "Faka isiqeshana esingemizuzwana engu-60: Qinisekisa umbhalo → Express Pre-vis ngesigcawu ngasinye → Qopha izithombe/ividiyo → I-Mixer → Imifudlana yokusakaza"
+        "videoSlot": "Faka isiqeshana esingemizuzwana engu-60: Qinisekisa umbhalo → Pre-vis Agent ngesigcawu ngasinye → Qopha izithombe/ividiyo → I-Mixer → Imifudlana yokusakaza"
       },
       {
         "id": "14",
@@ -1047,7 +1047,7 @@
       "howWeScore": {
         "toggle": "How we score",
         "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
         "bullets": [
           "Scores Blueprint and script against your stated target audience",
           "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
@@ -1058,26 +1058,26 @@
     },
     "express": {
       "badge": "Hyper-Speed Production",
-      "title": "Sceneflow Express",
+      "title": "SceneFlow Agents",
       "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
-          "title": "Express Pre-Vis",
+          "title": "Pre-vis Agent",
           "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
-          "title": "Express Motion Video",
+          "title": "Video Agent",
           "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
           "time": "Minutes vs Days"
         },
         {
-          "title": "Express Delivery",
+          "title": "Delivery Agent",
           "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
           "time": "Minutes vs Weeks"
         }
       ],
-      "cta": "Start Express Rendering"
+      "cta": "Run Production Agents"
     }
   },
   "preVisEngine": {

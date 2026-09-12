@@ -285,9 +285,9 @@
     "title": "مسار عمل فيديو يرتكز على الإيقاع",
     "subtitle": "اعتمد العمل قبل المعالجة النهائية — لا تعتمد على إعادة التوليد العشوائي (مثل ماكينات القمار)",
     "intro": "لا حاجة لعمليات توليد تعتمد على التخمين والتجربة؛ إذ يمكنك معاينة المظهر والموافقة عليه قبل أن تستهلك SceneFlow الرصيد في إنتاج الفيديو النهائي.",
-    "description": "تُنظّم SceneFlow عملية الموافقة البصرية في كل مرحلة: Express Pre-vis للمراجعة، وBeat Frames لتثبيت التكوين البصري، ثم مرحلة F2V لكل إيقاع (beat). وبذلك، يمكنك ضبط المظهر بدقة قبل استنزاف الرصيد في معالجة الانحرافات (drift) والهلوسات البصرية.",
+    "description": "تُنظّم SceneFlow عملية الموافقة البصرية في كل مرحلة: Pre-vis Agent للمراجعة، وBeat Frames لتثبيت التكوين البصري، ثم مرحلة F2V لكل إيقاع (beat). وبذلك، يمكنك ضبط المظهر بدقة قبل استنزاف الرصيد في معالجة الانحرافات (drift) والهلوسات البصرية.",
     "steps": [
-      "Express Pre-vis — شارك مقاطع إيقاعية (مع عناصر مرئية) للمراجعة في غضون دقائق",
+      "Pre-vis Agent — شارك مقاطع إيقاعية (مع عناصر مرئية) للمراجعة في غضون دقائق",
       "Beat Frames — تثبيت بداية/نهاية التركيب مع استمرارية Reference Library",
       "تحويل الإطارات إلى فيديو (F2V) لكل نبضة — إنشاء الفيديو من إطارات معتمدة، وليس من أوامر نصية عشوائية.",
       "سلسلة تمديد (EXT) متصلة — خطوات تمديد أصلية بزيادات قدرها 7 ثوانٍ لمقاطع الحوار الطويلة.",
@@ -810,7 +810,7 @@
       "title": "مسار عمل فيديو يرتكز على الإيقاع",
       "description": "اعتمد مراحل التصور المسبق (pre-vis beats) وBeat Frames قبل مرحلة F2V؛ لتقليل عمليات إعادة التوليد العشوائية الناتجة عن \"الهلوسة\" والانحراف البصري. مسار عمل واحد ومنظم يمتد من مرحلة المراجعة وحتى المقطع النهائي.",
       "keyFeatures": [
-        "Express Pre-vis للمراجعة — مشاركة الإيقاعات قبل مرحلة الرندر (المعالجة) المكثفة",
+        "Pre-vis Agent للمراجعة — مشاركة الإيقاعات قبل مرحلة الرندر (المعالجة) المكثفة",
         "Beat Frames تركيبة القفل — Reference Library الاستمرارية",
         "F2V لكل نبضة — إنشاء فيديو من الإطارات المعتمدة",
         "سلاسل EXT متصلة — خطوات +7s أصلية للحوارات الطويلة ضمن وحدة درامية (beat)",
@@ -919,7 +919,7 @@
           "Screening Room — معاينة المشاهد، التجميع النهائي، العروض، والنشر على يوتيوب"
         ],
         "screenshotSlot": "أدرج لقطة شاشة: لوحة تحكم الإنتاج التي تعرض علامات التبويب: \"السيناريو\" (Script)، و\"التصوير\" (Shoot)، و\"التصور المسبق\" (Pre-Vis).",
-        "videoSlot": "إدراج مقطع مدته 60 ثانية: اعتماد النص النهائي → Express Pre-vis لكل مشهد → التصوير → جهاز المزج (Mixer) → البث"
+        "videoSlot": "إدراج مقطع مدته 60 ثانية: اعتماد النص النهائي → Pre-vis Agent لكل مشهد → التصوير → جهاز المزج (Mixer) → البث"
       },
       {
         "id": "14",
@@ -1049,7 +1049,7 @@
       "howWeScore": {
         "toggle": "How we score",
         "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
         "bullets": [
           "Scores Blueprint and script against your stated target audience",
           "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
@@ -1060,26 +1060,26 @@
     },
     "express": {
       "badge": "Hyper-Speed Production",
-      "title": "Sceneflow Express",
+      "title": "SceneFlow Agents",
       "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
-          "title": "Express Pre-Vis",
+          "title": "Pre-vis Agent",
           "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
-          "title": "Express Motion Video",
+          "title": "Video Agent",
           "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
           "time": "Minutes vs Days"
         },
         {
-          "title": "Express Delivery",
+          "title": "Delivery Agent",
           "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
           "time": "Minutes vs Weeks"
         }
       ],
-      "cta": "Start Express Rendering"
+      "cta": "Run Production Agents"
     }
   },
   "preVisEngine": {

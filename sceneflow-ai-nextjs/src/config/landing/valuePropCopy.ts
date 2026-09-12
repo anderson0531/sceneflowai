@@ -155,7 +155,7 @@ export const AUDIENCE_PATHS = [
     label: 'Film Production',
     outcome: 'Script to an interactive animatic you can screen and test before you shoot',
     narrative:
-      'Previz and audience testing used to mean weeks of storyboards, temp VO, and expensive guesswork before cameras roll. SceneFlow takes your script to an interactive animatic with Express pre-vis — optimize with Audience Resonance, screen it in the Screening Room, and commit budget only when the story lands.',
+      'Previz and audience testing used to mean weeks of storyboards, temp VO, and expensive guesswork before cameras roll. SceneFlow takes your script to an interactive animatic with the Pre-vis Agent — optimize with Audience Resonance, screen it in the Screening Room, and commit budget only when the story lands.',
     useCases: [
       'Feature & indie previz',
       'Investor pitch animatics',
@@ -183,9 +183,9 @@ export const ONE_TAKE_PIPELINE = {
   intro:
     'No guess-and-check generations. You preview and approve the look before SceneFlow spends credits on final video.',
   description:
-    'SceneFlow structures visual approval at every step: Express Pre-vis for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.',
+    'SceneFlow structures visual approval at every step: Pre-vis Agent for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.',
   steps: [
-    'Express Pre-vis — share audio-visual beats for review in minutes',
+    'Pre-vis Agent — share audio-visual beats for review after expert prompting',
     'Beat Frames — lock start/end composition with Reference Library continuity',
     'F2V per beat — generate video from approved frames, not blind prompts',
     'Continuous EXT chain — native +7s extension steps for long dialogue beats',

@@ -285,9 +285,9 @@
     "title": "以节拍为先的视频制作流程",
     "subtitle": "渲染前先确认——切勿像老虎机那样随机生成",
     "intro": "无需反复尝试生成。在 SceneFlow 消耗点数制作最终视频之前，您可以先预览并确认视觉效果。",
-    "description": "SceneFlow 在每个环节都构建了视觉确认流程：先通过 Express Pre-vis 进行审阅，利用 Beat Frames 锁定构图，随后针对每个节拍执行 F2V（帧到视频）生成。这样，您可以在因画面漂移或“幻觉”现象而消耗额度之前，先对视觉效果进行精细调整。",
+    "description": "SceneFlow 在每个环节都构建了视觉确认流程：先通过 Pre-vis Agent 进行审阅，利用 Beat Frames 锁定构图，随后针对每个节拍执行 F2V（帧到视频）生成。这样，您可以在因画面漂移或“幻觉”现象而消耗额度之前，先对视觉效果进行精细调整。",
     "steps": [
-      "Express Pre-vis — 分享音视频节拍，数分钟内即可完成审阅",
+      "Pre-vis Agent — 分享音视频节拍，数分钟内即可完成审阅",
       "Beat Frames — 锁定起始/结束组合，并保持 Reference Library 连续性",
       "逐拍 F2V —— 基于已确认的画面生成视频，而非盲目依赖提示词。",
       "连续扩展链——针对长对话片段的原生 +7秒扩展步骤",
@@ -810,7 +810,7 @@
       "title": "以节拍为先的视频制作流程",
       "description": "在进行 F2V（视频生成）之前，先确认预演（pre-vis）的关键节点与 Beat Frames —— 从而减少因模型“幻觉”或视觉偏差导致的盲目重生成。建立从审核到最终成片的规范化流程。",
       "keyFeatures": [
-        "Express Pre-vis 待审阅 —— 在进行耗时的渲染前分享节拍小样",
+        "Pre-vis Agent 待审阅 —— 在进行耗时的渲染前分享节拍小样",
         "Beat Frames 锁的构成 — Reference Library 连续性",
         "逐拍 F2V —— 基于已确认画面生成视频",
         "连续 EXT 链——针对同一节拍内长对话的原生 +7 秒步长",
@@ -919,7 +919,7 @@
           "Screening Room — 场景预览、总成剪辑、放映及 YouTube 发布"
         ],
         "screenshotSlot": "插入截图：显示“剧本”、“拍摄”和“预演”标签页的制作仪表盘",
-        "videoSlot": "插入 60 秒片段：锁定剧本 → 每场次 Express Pre-vis → 拍摄素材 → 混音台 → 推流"
+        "videoSlot": "插入 60 秒片段：锁定剧本 → 每场次 Pre-vis Agent → 拍摄素材 → 混音台 → 推流"
       },
       {
         "id": "14",
@@ -1049,7 +1049,7 @@
       "howWeScore": {
         "toggle": "How we score",
         "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
         "bullets": [
           "Scores Blueprint and script against your stated target audience",
           "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
@@ -1060,26 +1060,26 @@
     },
     "express": {
       "badge": "Hyper-Speed Production",
-      "title": "Sceneflow Express",
+      "title": "SceneFlow Agents",
       "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
-          "title": "Express Pre-Vis",
+          "title": "Pre-vis Agent",
           "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
-          "title": "Express Motion Video",
+          "title": "Video Agent",
           "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
           "time": "Minutes vs Days"
         },
         {
-          "title": "Express Delivery",
+          "title": "Delivery Agent",
           "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
           "time": "Minutes vs Weeks"
         }
       ],
-      "cta": "Start Express Rendering"
+      "cta": "Run Production Agents"
     }
   },
   "preVisEngine": {

@@ -285,9 +285,9 @@
     "title": "Beat-basierte Video-Pipeline",
     "subtitle": "Freigabe vor dem Rendern – statt Generierung nach dem Glücksspielprinzip",
     "intro": "Kein mühsames Ausprobieren nach dem Prinzip „Versuch und Irrtum“. Sie sehen sich eine Vorschau an und geben den Look frei, bevor SceneFlow Credits für das endgültige Video verbraucht.",
-    "description": "SceneFlow strukturiert die visuelle Freigabe in jedem Schritt: Express Pre-vis zur Durchsicht, Beat Frames zur Festlegung der Komposition, gefolgt von F2V pro Beat. Sie verfeinern den Look, bevor Sie Credits für Drift und Halluzinationen verbrauchen.",
+    "description": "SceneFlow strukturiert die visuelle Freigabe in jedem Schritt: Pre-vis Agent zur Durchsicht, Beat Frames zur Festlegung der Komposition, gefolgt von F2V pro Beat. Sie verfeinern den Look, bevor Sie Credits für Drift und Halluzinationen verbrauchen.",
     "steps": [
-      "Express Pre-vis — Audio-visuelle Beats in Minuten zur Begutachtung teilen",
+      "Pre-vis Agent — Audio-visuelle Beats in Minuten zur Begutachtung teilen",
       "Beat Frames — Fixierung der Start-/End-Zusammensetzung mit Reference Library-Kontinuität",
       "F2V pro Beat – Videos aus freigegebenen Frames generieren, statt aus blinden Prompts.",
       "Kontinuierliche EXT-Kette – native Erweiterungsschritte von +7 Sekunden für lange Dialogsequenzen",
@@ -810,7 +810,7 @@
       "title": "Beat-basierte Video-Pipeline",
       "description": "Freigabe der Pre-Vis-Sequenzen und von Beat Frames vor der F2V-Phase – weniger blinde Neu-Generierungen aufgrund von Halluzinationen oder visuellem Drift. Ein strukturierter Ablauf von der Sichtung bis zum fertigen Clip.",
       "keyFeatures": [
-        "Express Pre-vis zur Überprüfung – Beats vor dem aufwendigen Rendering teilen",
+        "Pre-vis Agent zur Überprüfung – Beats vor dem aufwendigen Rendering teilen",
         "Beat Frames Sperrenzusammensetzung — Reference Library Kontinuität",
         "F2V pro Beat – Video aus freigegebenen Einzelbildern generieren",
         "Durchgehende EXT-Ketten – native +7s-Schritte für lange Dialoge innerhalb eines Beats",
@@ -919,7 +919,7 @@
           "Screening Room — Szenenvorschau, Zusammenstellung des Masters, Vorführungen und Veröffentlichung auf YouTube"
         ],
         "screenshotSlot": "Screenshot einfügen: Produktions-Dashboard mit den Reitern „Skript“, „Dreh“ und „Pre-Vis“",
-        "videoSlot": "00:60-Clip einfügen: Skript fixieren → Express Pre-vis pro Szene → Aufnahmen drehen → Mixer → Streams"
+        "videoSlot": "00:60-Clip einfügen: Skript fixieren → Pre-vis Agent pro Szene → Aufnahmen drehen → Mixer → Streams"
       },
       {
         "id": "14",
@@ -1049,7 +1049,7 @@
       "howWeScore": {
         "toggle": "How we score",
         "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
         "bullets": [
           "Scores Blueprint and script against your stated target audience",
           "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
@@ -1060,26 +1060,26 @@
     },
     "express": {
       "badge": "Hyper-Speed Production",
-      "title": "Sceneflow Express",
+      "title": "SceneFlow Agents",
       "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
-          "title": "Express Pre-Vis",
+          "title": "Pre-vis Agent",
           "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
-          "title": "Express Motion Video",
+          "title": "Video Agent",
           "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
           "time": "Minutes vs Days"
         },
         {
-          "title": "Express Delivery",
+          "title": "Delivery Agent",
           "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
           "time": "Minutes vs Weeks"
         }
       ],
-      "cta": "Start Express Rendering"
+      "cta": "Run Production Agents"
     }
   },
   "preVisEngine": {
@@ -1683,7 +1683,7 @@
             "description": "Orchestrieren Sie die gleichzeitige Audio-, Frame- und Videoerzeugung über Szenen hinweg. Eine 30-Takt-Produktion in ~30 Minuten statt stundenlanges sequentielles Warten.",
             "learnMore": {
               "problem": "Das Generieren eines Produktions-Assets nach dem anderen verwandelt ein einzelnes Projekt in eine ganztägige Wartezeit — Sie stellen einen Clip in die Warteschlange, sehen sich das Rendering an und wiederholen ihn dann hunderte Male, während der Schwung verdunstet.",
-              "solution": "Express Generation nutzt die dedizierte Cloud von SceneFlow, um gleichzeitige Generationen von Audio, Frames und Video in Ihrer gesamten Produktion auf einmal auszuführen, anstatt einen langsamen Job nach dem anderen auszuführen.",
+              "solution": "Production Agents nutzt die dedizierte Cloud von SceneFlow, um gleichzeitige Generationen von Audio, Frames und Video in Ihrer gesamten Produktion auf einmal auszuführen, anstatt einen langsamen Job nach dem anderen auszuführen.",
               "outcome": "Eine 30-Takt-Produktion endet in etwa 30 Minuten statt in etwa 2,5 Stunden — Sie iterieren also am selben Tag und versenden, solange die Idee noch heiß ist."
             }
           },
@@ -1887,14 +1887,14 @@
             "id": "production-audio",
             "number": "4",
             "title": "Audio generieren",
-            "description": "Generieren Sie Dialoge, Erzählungen, SFX und Musik mit Express Production in allen Szenen, Express Scene oder Beat by Beat — Voiceover in muttersprachlicher Qualität in über 70Sprachen.",
+            "description": "Generieren Sie Dialoge, Erzählungen, SFX und Musik mit Run All Agents in allen Szenen, per-scene agents oder Beat by Beat — Voiceover in muttersprachlicher Qualität in über 70Sprachen.",
             "imagePlaceholder": "Express-Audio — alle Szenen, einzelne Szenen oder Beat-by-Beat"
           },
           {
             "id": "production-frames",
             "number": "5",
             "title": "Frames generieren und bearbeiten",
-            "description": "Generieren Sie Beat-Frames mit Express Production, Express Scene oder Beat by Beat und bearbeiten Sie dann jeden Frame mit dem Intelligent Assistant Director (IAD) — beschreiben Sie einfach die Änderung.",
+            "description": "Generieren Sie Beat-Frames mit Run All Agents, per-scene agents oder Beat by Beat und bearbeiten Sie dann jeden Frame mit dem Intelligent Assistant Director (IAD) — beschreiben Sie einfach die Änderung.",
             "imagePlaceholder": "Beat Frames mit Intelligent Assistant Director-Bearbeitungen"
           },
           {
@@ -1908,7 +1908,7 @@
             "id": "production-video",
             "number": "7",
             "title": "Video erstellen",
-            "description": "Verwandeln Sie zugelassene Rahmen in Bewegung mit Express Scene oder Beat by Beat. Wiederholen Sie jede Aufnahme mit dem Intelligent Assistant Director — keine endlosen Spielautomaten-Regenerationen.",
+            "description": "Verwandeln Sie zugelassene Rahmen in Bewegung mit per-scene agents oder Beat by Beat. Wiederholen Sie jede Aufnahme mit dem Intelligent Assistant Director — keine endlosen Spielautomaten-Regenerationen.",
             "imagePlaceholder": "Express-Videogenerierung mit IAD-Wiederholungen"
           },
           {
@@ -1984,7 +1984,7 @@
       },
       {
         "id": "video",
-        "label": "Full Motion Express Video-Renderings"
+        "label": "Full Motion Video Agent-Renderings"
       }
     ],
     "previewLabel": "Vorschau"

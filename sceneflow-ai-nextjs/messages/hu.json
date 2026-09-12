@@ -238,7 +238,7 @@
         "icon": "csapó",
         "label": "Filmgyártás",
         "outcome": "Forgatókönyv egy interaktív animatikhoz, amelyet a forgatás előtt levetíthet és tesztelhet.",
-        "narrative": "A forgatás előtti vizualizáció és a közönségtesztelés korábban hetekig tartó storyboard-készítést, ideiglenes narrációt és költséges találgatást jelentett. A SceneFlow az Express pre-vis technológia segítségével interaktív animatikká alakítja a forgatókönyvet: optimalizáljon a Audience Resonance eszközzel, vetítse le a Screening Room környezetében, és csak akkor különítsen el költségvetést, ha a történet már valóban működik.",
+        "narrative": "A forgatás előtti vizualizáció és a közönségtesztelés korábban hetekig tartó storyboard-készítést, ideiglenes narrációt és költséges találgatást jelentett. A SceneFlow az Pre-vis Agent technológia segítségével interaktív animatikká alakítja a forgatókönyvet: optimalizáljon a Audience Resonance eszközzel, vetítse le a Screening Room környezetében, és csak akkor különítsen el költségvetést, ha a történet már valóban működik.",
         "useCases": [
           "Nagyjátékfilmes és független filmes pre-vizualizáció",
           "Befektetői prezentációs animatikok",
@@ -285,9 +285,9 @@
     "title": "Ütemalapú videó-munkafolyamat",
     "subtitle": "Jóváhagyás renderelés előtt – nem pedig nyerőgépes újragenerálás",
     "intro": "Nincs több találgatáson alapuló próbálkozás. Mielőtt a SceneFlow krediteket használna fel a végleges videó elkészítésére, előnézetben megtekintheted és jóváhagyhatod a látványvilágot.",
-    "description": "Az SceneFlow minden lépésnél strukturálja a vizuális jóváhagyást: Express Pre-vis az ellenőrzéshez, Beat Frames a kompozíció rögzítéséhez, majd F2V ütemenként. Így finomíthatod a megjelenést, mielőtt krediteket pazarolnál el a driftre és a hallucinációkra.",
+    "description": "Az SceneFlow minden lépésnél strukturálja a vizuális jóváhagyást: Pre-vis Agent az ellenőrzéshez, Beat Frames a kompozíció rögzítéséhez, majd F2V ütemenként. Így finomíthatod a megjelenést, mielőtt krediteket pazarolnál el a driftre és a hallucinációkra.",
     "steps": [
-      "Express Pre-vis — ossz meg audiovizuális ütemeket véleményezésre percek alatt",
+      "Pre-vis Agent — ossz meg audiovizuális ütemeket véleményezésre percek alatt",
       "Beat Frames — kezdő/záró kompozíció rögzítése Reference Library folytonossággal",
       "Ütemenkénti F2V – videógenerálás jóváhagyott képkockákból, nem pedig vak promptok alapján.",
       "Folyamatos EXT-lánc – natív, 7 másodperces hosszabbítási lépések hosszú párbeszédszakaszokhoz",
@@ -810,7 +810,7 @@
       "title": "Ütemalapú videó-munkafolyamat",
       "description": "Hagyja jóvá a pre-viz szakaszokat és a Beat Frames-t az F2V előtt – így kevesebb lesz a „vakon” történő újragenerálás a hallucinációk és a vizuális elcsúszás miatt. Egyetlen strukturált folyamat a véleményezéstől a végleges klipig.",
       "keyFeatures": [
-        "Express Pre-vis véleményezésre – oszd meg a beateket a nagy erőforrásigényű renderelés előtt",
+        "Pre-vis Agent véleményezésre – oszd meg a beateket a nagy erőforrásigényű renderelés előtt",
         "Beat Frames zárolási összetétel — Reference Library folytonosság",
         "F2V ütemenként – videó generálása jóváhagyott képkockákból",
         "Folyamatos EXT-láncok – natív, +7 másodperces lépések hosszú párbeszédekhez egy adott jelenetszakaszon belül",
@@ -919,7 +919,7 @@
           "Screening Room — jelenetek előnézete, végleges összeállítás, vetítések és közzététel a YouTube-on"
         ],
         "screenshotSlot": "Képernyőkép beszúrása: a gyártási irányítópult, amelyen látható a forgatókönyv, a forgatás és az elővizualizáció (Pre-Vis) lapja.",
-        "videoSlot": "00:60-as klip beillesztése: Forgatókönyv véglegesítése → Express Pre-vis jelenetenként → Felvétel készítése → Keverő → Streamek"
+        "videoSlot": "00:60-as klip beillesztése: Forgatókönyv véglegesítése → Pre-vis Agent jelenetenként → Felvétel készítése → Keverő → Streamek"
       },
       {
         "id": "14",
@@ -1049,7 +1049,7 @@
       "howWeScore": {
         "toggle": "How we score",
         "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
         "bullets": [
           "Scores Blueprint and script against your stated target audience",
           "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
@@ -1060,26 +1060,26 @@
     },
     "express": {
       "badge": "Hyper-Speed Production",
-      "title": "Sceneflow Express",
+      "title": "SceneFlow Agents",
       "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
-          "title": "Express Pre-Vis",
+          "title": "Pre-vis Agent",
           "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
-          "title": "Express Motion Video",
+          "title": "Video Agent",
           "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
           "time": "Minutes vs Days"
         },
         {
-          "title": "Express Delivery",
+          "title": "Delivery Agent",
           "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
           "time": "Minutes vs Weeks"
         }
       ],
-      "cta": "Start Express Rendering"
+      "cta": "Run Production Agents"
     }
   },
   "preVisEngine": {

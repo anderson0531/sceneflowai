@@ -236,7 +236,7 @@
         "icon": "klapbord",
         "label": "Filmproduksie",
         "outcome": "Draaiboek vir 'n interaktiewe animatic wat jy kan vertoon en toets voordat jy skiet",
-        "narrative": "Voorvisualisering en gehoortoetsing het voorheen weke se storieborde, tydelike stemopnames en duur raaiwerk behels voordat die kameras begin rol het. SceneFlow omskep jou draaiboek in 'n interaktiewe animatic met Express-voorvisualisering — optimaliseer dit met Audience Resonance, vertoon dit in die Screening Room, en ken eers begroting toe wanneer die storie werklik tref.",
+        "narrative": "Voorvisualisering en gehoortoetsing het voorheen weke se storieborde, tydelike stemopnames en duur raaiwerk behels voordat die kameras begin rol het. SceneFlow omskep jou draaiboek in 'n interaktiewe animatic met Pre-vis Agent — optimaliseer dit met Audience Resonance, vertoon dit in die Screening Room, en ken eers begroting toe wanneer die storie werklik tref.",
         "useCases": [
           "Voorvisualisering vir rolprente en onafhanklike films",
           "Animasiesketse vir beleggersvoorleggings",
@@ -283,9 +283,9 @@
     "title": "Video-werkvloei gebaseer op die ritme",
     "subtitle": "Keur goed voordat jy weergee — nie die hergenerering van 'n dobbelmasjien nie",
     "intro": "Geen generering deur raai-en-toets nie. Jy bekyk 'n voorskou en keur die voorkoms goed voordat SceneFlow krediete aan die finale video bestee.",
-    "description": "SceneFlow struktureer visuele goedkeuring by elke stap: Express Pre-vis vir hersiening, Beat Frames om die komposisie vas te slaan, en dan F2V per maatslag. Jy verfyn die voorkoms voordat jy krediete verspil aan afwykings en hallusinasies.",
+    "description": "SceneFlow struktureer visuele goedkeuring by elke stap: Pre-vis Agent vir hersiening, Beat Frames om die komposisie vas te slaan, en dan F2V per maatslag. Jy verfyn die voorkoms voordat jy krediete verspil aan afwykings en hallusinasies.",
     "steps": [
-      "Express Pre-vis — deel oudiovisuele snitte binne minute vir hersiening",
+      "Pre-vis Agent — deel oudiovisuele snitte binne minute vir hersiening",
       "Beat Frames — sluit begin/einde van samestelling vas met Reference Library-kontinuïteit",
       "F2V per maatslag — genereer video vanaf goedgekeurde rame, nie blinde opdragte nie",
       "Deurlopende EXT-ketting — inheemse verlengingstappe van +7 sekondes vir lang dialoogsegmente",
@@ -808,7 +808,7 @@
       "title": "Video-werkvloei gebaseer op die ritme",
       "description": "Keur pre-vis-segmente en Beat Frames goed vóór F2V — dit lei tot minder blinde hergenererings as gevolg van hallusinasies en visuele afwyking. Een gestruktureerde proses van hersiening tot finale snit.",
       "keyFeatures": [
-        "Express Pre-vis vir hersiening — deel snitte voor swaar weergawe",
+        "Pre-vis Agent vir hersiening — deel snitte voor swaar weergawe",
         "Beat Frames sluitsamestelling — Reference Library kontinuïteit",
         "F2V per slag — genereer video vanaf goedgekeurde rame",
         "Deurlopende EXT-kettings — direkte +7s-stappe vir lang dialoog binne 'n 'beat'",
@@ -917,7 +917,7 @@
           "Screening Room — toneelvoorskou, samestelling van die meesterkopie, vertonings en publikasie op YouTube"
         ],
         "screenshotSlot": "Voeg skermskoot in: Produksie-kontroleskerm wat die Draaiboek-, Opname- en Voorvisualisering-oortjies toon.",
-        "videoSlot": "Voeg 00:60-snit in: Finaliseer draaiboek → Express Pre-vis per toneel → Neem beeldmateriaal op → Mengpaneel → Strome"
+        "videoSlot": "Voeg 00:60-snit in: Finaliseer draaiboek → Pre-vis Agent per toneel → Neem beeldmateriaal op → Mengpaneel → Strome"
       },
       {
         "id": "14",
@@ -1047,7 +1047,7 @@
       "howWeScore": {
         "toggle": "How we score",
         "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
         "bullets": [
           "Scores Blueprint and script against your stated target audience",
           "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
@@ -1058,26 +1058,26 @@
     },
     "express": {
       "badge": "Hyper-Speed Production",
-      "title": "Sceneflow Express",
+      "title": "SceneFlow Agents",
       "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
-          "title": "Express Pre-Vis",
+          "title": "Pre-vis Agent",
           "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
-          "title": "Express Motion Video",
+          "title": "Video Agent",
           "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
           "time": "Minutes vs Days"
         },
         {
-          "title": "Express Delivery",
+          "title": "Delivery Agent",
           "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
           "time": "Minutes vs Weeks"
         }
       ],
-      "cta": "Start Express Rendering"
+      "cta": "Run Production Agents"
     }
   },
   "preVisEngine": {

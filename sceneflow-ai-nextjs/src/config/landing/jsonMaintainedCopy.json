@@ -138,14 +138,14 @@
             "id": "production-audio",
             "number": "4",
             "title": "Generate audio",
-            "description": "Generate dialogue, narration, SFX, and music with Express Production across all scenes, Express Scene, or beat by beat — native-quality voiceover in 70+ languages.",
-            "imagePlaceholder": "Express audio — all scenes, single scene, or beat by beat"
+            "description": "Generate dialogue, narration, SFX, and music with Run All Agents across all scenes, Audio Agent per scene, or beat by beat — native-quality voiceover in 70+ languages.",
+            "imagePlaceholder": "Audio Agent — all scenes, single scene, or beat by beat"
           },
           {
             "id": "production-frames",
             "number": "5",
             "title": "Generate and edit frames",
-            "description": "Generate beat frames with Express Production, Express Scene, or beat by beat, then edit any frame with the Intelligent Assistant Director (IAD) — just describe the change.",
+            "description": "Generate beat frames with Run All Agents, Frame Agent per scene, or beat by beat, then edit any frame with the Intelligent Assistant Director (IAD) — just describe the change.",
             "imagePlaceholder": "Beat frames with Intelligent Assistant Director edits"
           },
           {
@@ -159,8 +159,8 @@
             "id": "production-video",
             "number": "7",
             "title": "Generate video",
-            "description": "Turn approved frames into motion with Express Scene or beat by beat. Retake any shot with the Intelligent Assistant Director — no endless slot-machine regenerations.",
-            "imagePlaceholder": "Express video generation with IAD retakes"
+            "description": "Turn approved frames into motion with Video Agent per scene or beat by beat. Retake any shot with the Intelligent Assistant Director — no endless slot-machine regenerations.",
+            "imagePlaceholder": "Video Agent generation with IAD retakes"
           },
           {
             "id": "production-mixer",
@@ -235,7 +235,7 @@
       },
       {
         "id": "video",
-        "label": "Full Motion Express Video Renders"
+        "label": "Full Motion Video Agent Renders"
       }
     ],
     "previewLabel": "Preview"
@@ -349,18 +349,18 @@
             "description": "Write natively in your story's language, then dub or lip-sync into 70+ more — auto-aligned to beat frames and published as multi-language audio tracks on a single YouTube video.",
             "learnMore": {
               "problem": "Reaching a global audience usually means re-recording voice talent, re-timing every scene, and rebuilding the project once per language — a cost and coordination nightmare that keeps most creators single-market.",
-              "solution": "Author dialogue and treatment natively in your story's language rather than translating English after the fact, then express-generate audio in 70+ languages, auto-aligned to your beat frames. Dialogue is rewritten to fit each dub's timing budget, and you can ship dubbed or lip-synced streams from the same approved cut.",
+              "solution": "Author dialogue and treatment natively in your story's language rather than translating English after the fact, then generate audio in 70+ languages, auto-aligned to your beat frames. Dialogue is rewritten to fit each dub's timing budget, and you can ship dubbed or lip-synced streams from the same approved cut.",
               "outcome": "Ship every story natively to 70+ markets from one production — multiply your reach and revenue without multiplying your workload."
             }
           },
           {
             "icon": "express",
-            "title": "Express Generation",
-            "description": "Orchestrate concurrent audio, frame, and video generation across scenes. A 30-beat production in ~30 minutes instead of hours of sequential waiting.",
+            "title": "Production Agents",
+            "description": "Audio Agent, Frame Agent, and Video Agent compose expert prompts from beat direction, attach the right references, and generate in parallel. A scene can take several minutes because the agent is doing the specialist work — not because the queue is slow.",
             "learnMore": {
-              "problem": "Generating a production one asset at a time turns a single project into an all-day wait — you queue a clip, watch it render, then repeat hundreds of times while momentum evaporates.",
-              "solution": "Express Generation taps SceneFlow's dedicated cloud to run concurrent generations of audio, frames, and video across your entire production at once, instead of one slow job after another.",
-              "outcome": "A 30-beat production finishes in about 30 minutes instead of roughly 2.5 hours — so you iterate the same day and ship while the idea is still hot."
+              "problem": "Writing every prompt and waiting on one asset at a time turns production into babysitting — you queue a clip, watch it render, then repeat while momentum evaporates.",
+              "solution": "Agents read the locked beat, build the prompt, attach identity and location refs, generate, and retry when the provider or likeness check fails — then hand you a reviewable beat.",
+              "outcome": "You direct and approve. The agents prompt and generate. Quality first; time is the cost of that quality."
             }
           },
           {

@@ -1608,7 +1608,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                       )}
                       {isExpressGeneratingReferences
                         ? 'Generating…'
-                        : `Express References (${referencesExpressStats.total})`}
+                        : `Reference Agent (${referencesExpressStats.total})`}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs text-xs">
@@ -1889,7 +1889,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
       <Dialog open={referenceExpressDialogOpen} onOpenChange={setReferenceExpressDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Express References</DialogTitle>
+            <DialogTitle>Reference Agent</DialogTitle>
             <DialogDescription>
               Batch-generate {referencesExpressStats.total} missing reference image
               {referencesExpressStats.total === 1 ? '' : 's'}:
@@ -1924,7 +1924,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600"
             >
               <Zap className="w-4 h-4 mr-1" />
-              Express References ({referencesExpressStats.total})
+              Reference Agent ({referencesExpressStats.total})
             </Button>
           </DialogFooter>
         </DialogContent>

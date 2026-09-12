@@ -236,7 +236,7 @@
         "icon": "สเลท (หรือ แผ่นตบ)",
         "label": "การผลิตภาพยนตร์",
         "outcome": "บทสำหรับแอนิเมติกแบบอินเทอร์แอคทีฟที่คุณสามารถนำไปฉายและทดสอบได้ก่อนเริ่มถ่ายทำจริง",
-        "narrative": "ในอดีต ขั้นตอน Previz และการทดสอบกับผู้ชมมักกินเวลานานหลายสัปดาห์ ทั้งการทำสตอรี่บอร์ด การบันทึกเสียงชั่วคราว (temp VO) และการคาดเดาที่ต้องแลกมาด้วยต้นทุนสูงก่อนเริ่มถ่ายทำจริง แต่ SceneFlow จะเปลี่ยนบทของคุณให้กลายเป็นแอนิเมติกแบบอินเทอร์แอคทีฟด้วยระบบ Express pre-vis ซึ่งช่วยให้คุณปรับปรุงงานได้ด้วย Audience Resonance นำไปฉายทดสอบใน Screening Room และตัดสินใจอนุมัติงบประมาณก็ต่อเมื่อมั่นใจแล้วว่าเรื่องราวสามารถสื่อสารออกมาได้อย่างลงตัว",
+        "narrative": "ในอดีต ขั้นตอน Previz และการทดสอบกับผู้ชมมักกินเวลานานหลายสัปดาห์ ทั้งการทำสตอรี่บอร์ด การบันทึกเสียงชั่วคราว (temp VO) และการคาดเดาที่ต้องแลกมาด้วยต้นทุนสูงก่อนเริ่มถ่ายทำจริง แต่ SceneFlow จะเปลี่ยนบทของคุณให้กลายเป็นแอนิเมติกแบบอินเทอร์แอคทีฟด้วยระบบ Pre-vis Agent ซึ่งช่วยให้คุณปรับปรุงงานได้ด้วย Audience Resonance นำไปฉายทดสอบใน Screening Room และตัดสินใจอนุมัติงบประมาณก็ต่อเมื่อมั่นใจแล้วว่าเรื่องราวสามารถสื่อสารออกมาได้อย่างลงตัว",
         "useCases": [
           "การทำ Previz สำหรับภาพยนตร์และภาพยนตร์อิสระ",
           "แอนิเมติกสำหรับนำเสนอต่อผู้ลงทุน",
@@ -283,9 +283,9 @@
     "title": "กระบวนการผลิตวิดีโอที่ยึดจังหวะเพลงเป็นหลัก",
     "subtitle": "อนุมัติก่อนเริ่มเรนเดอร์ — ไม่ใช่การสุ่มสร้างใหม่แบบตู้สล็อต",
     "intro": "ไม่ต้องใช้วิธีสุ่มลองผิดลองถูก คุณสามารถดูตัวอย่างและอนุมัติรูปแบบงานได้ก่อนที่ SceneFlow จะใช้เครดิตเพื่อสร้างวิดีโอฉบับสมบูรณ์",
-    "description": "SceneFlow จัดระบบขั้นตอนการอนุมัติงานภาพไว้อย่างชัดเจน: เริ่มจาก Express Pre-vis สำหรับการตรวจสอบ ตามด้วย Beat Frames เพื่อล็อกองค์ประกอบภาพ แล้วจึงทำ F2V ในแต่ละจังหวะ ช่วยให้คุณปรับแต่งรูปลักษณ์ของงานได้ก่อนที่จะต้องเสียเครดิตไปกับปัญหาภาพหลุดกรอบ (drift) หรือภาพที่ผิดเพี้ยนไปจากความเป็นจริง (hallucinations)",
+    "description": "SceneFlow จัดระบบขั้นตอนการอนุมัติงานภาพไว้อย่างชัดเจน: เริ่มจาก Pre-vis Agent สำหรับการตรวจสอบ ตามด้วย Beat Frames เพื่อล็อกองค์ประกอบภาพ แล้วจึงทำ F2V ในแต่ละจังหวะ ช่วยให้คุณปรับแต่งรูปลักษณ์ของงานได้ก่อนที่จะต้องเสียเครดิตไปกับปัญหาภาพหลุดกรอบ (drift) หรือภาพที่ผิดเพี้ยนไปจากความเป็นจริง (hallucinations)",
     "steps": [
-      "Express Pre-vis — แชร์บีตเพลงพร้อมภาพประกอบเพื่อขอคำแนะนำได้ภายในไม่กี่นาที",
+      "Pre-vis Agent — แชร์บีตเพลงพร้อมภาพประกอบเพื่อขอคำแนะนำได้ภายในไม่กี่นาที",
       "Beat Frames — ล็อกองค์ประกอบส่วนต้น/ส่วนท้ายด้วยความต่อเนื่องของ Reference Library",
       "F2V แบบรายจังหวะ — สร้างวิดีโอจากเฟรมที่ผ่านการอนุมัติ ไม่ใช่แค่การใช้คำสั่ง (prompt) แบบสุ่มเดา",
       "กระบวนการขยายระยะเวลาแบบต่อเนื่อง (Continuous EXT chain) — ขั้นตอนการขยายเวลาแบบ Native ครั้งละ 7 วินาที สำหรับช่วงบทสนทนาที่ยาว",
@@ -808,7 +808,7 @@
       "title": "กระบวนการผลิตวิดีโอที่ยึดจังหวะเพลงเป็นหลัก",
       "description": "อนุมัติลำดับภาพ Pre-vis และ Beat Frames ก่อนเริ่มขั้นตอน F2V — ช่วยลดการสร้างภาพใหม่แบบสุ่มสี่สุ่มห้าอันเกิดจากอาการ Hallucination หรือภาพที่หลุดจากแนวทางที่กำหนด (Visual Drift) พร้อมสร้างกระบวนการทำงานที่เป็นระบบขั้นตอนเดียว ตั้งแต่การตรวจสอบไปจนถึงคลิปวิดีโอฉบับสมบูรณ์",
       "keyFeatures": [
-        "Express Pre-vis สำหรับตรวจสอบ — แชร์บีตก่อนเริ่มกระบวนการเรนเดอร์ที่ใช้ทรัพยากรสูง",
+        "Pre-vis Agent สำหรับตรวจสอบ — แชร์บีตก่อนเริ่มกระบวนการเรนเดอร์ที่ใช้ทรัพยากรสูง",
         "Beat Frames การล็อกองค์ประกอบภาพ — Reference Library ความต่อเนื่อง",
         "F2V ต่อจังหวะ — สร้างวิดีโอจากเฟรมที่ผ่านการอนุมัติ",
         "ชุดคำสั่ง EXT แบบต่อเนื่อง — ขั้นตอน native +7s สำหรับบทสนทนายาวภายในจังหวะ (beat) เดียวกัน",
@@ -918,7 +918,7 @@
           "Screening Room — การดูตัวอย่างฉาก, การประกอบชิ้นงานฉบับสมบูรณ์, การฉายผลงาน และการเผยแพร่บน YouTube"
         ],
         "screenshotSlot": "แทรกภาพหน้าจอ: แผงควบคุมการผลิตที่แสดงแท็บ Script, แท็บ Shoot และ Pre-Vis",
-        "videoSlot": "แทรกคลิปความยาว 60 วินาที: ล็อกบท → Express Pre-vis ต่อฉาก → ถ่ายทำ → มิกเซอร์ → สตรีม"
+        "videoSlot": "แทรกคลิปความยาว 60 วินาที: ล็อกบท → Pre-vis Agent ต่อฉาก → ถ่ายทำ → มิกเซอร์ → สตรีม"
       },
       {
         "id": "14",
@@ -1048,7 +1048,7 @@
       "howWeScore": {
         "toggle": "How we score",
         "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
         "bullets": [
           "Scores Blueprint and script against your stated target audience",
           "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
@@ -1059,26 +1059,26 @@
     },
     "express": {
       "badge": "Hyper-Speed Production",
-      "title": "Sceneflow Express",
+      "title": "SceneFlow Agents",
       "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
-          "title": "Express Pre-Vis",
+          "title": "Pre-vis Agent",
           "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
-          "title": "Express Motion Video",
+          "title": "Video Agent",
           "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
           "time": "Minutes vs Days"
         },
         {
-          "title": "Express Delivery",
+          "title": "Delivery Agent",
           "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
           "time": "Minutes vs Weeks"
         }
       ],
-      "cta": "Start Express Rendering"
+      "cta": "Run Production Agents"
     }
   },
   "preVisEngine": {
@@ -1524,7 +1524,7 @@
             "id": "production-audio",
             "number": "4",
             "title": "สร้างเสียง",
-            "description": "สร้างบทสนทนาคำบรรยาย SFX และเพลงด้วย Express Production ในทุกฉาก Express Scene หรือเอาชนะด้วยจังหวะ — การพากย์เสียงคุณภาพระดับเจ้าของภาษาใน 70 + ภาษา",
+            "description": "สร้างบทสนทนาคำบรรยาย SFX และเพลงด้วย Run All Agents ในทุกฉาก per-scene agents หรือเอาชนะด้วยจังหวะ — การพากย์เสียงคุณภาพระดับเจ้าของภาษาใน 70 + ภาษา",
             "imagePlaceholder": "แสดงเสียง — ทุกฉากฉากเดียวหรือตามจังหวะ"
           },
           {
@@ -1545,7 +1545,7 @@
             "id": "production-video",
             "number": "7",
             "title": "สร้างวิดีโอ",
-            "description": "เปลี่ยนเฟรมที่ได้รับอนุมัติให้เป็นภาพเคลื่อนไหวด้วย Express Scene หรือ beat by beat ถ่ายภาพใหม่ด้วยผู้ช่วยผู้อำนวยการอัจฉริยะ — ไม่มีการสร้างสล็อตแมชชีนที่ไม่มีที่สิ้นสุด",
+            "description": "เปลี่ยนเฟรมที่ได้รับอนุมัติให้เป็นภาพเคลื่อนไหวด้วย per-scene agents หรือ beat by beat ถ่ายภาพใหม่ด้วยผู้ช่วยผู้อำนวยการอัจฉริยะ — ไม่มีการสร้างสล็อตแมชชีนที่ไม่มีที่สิ้นสุด",
             "imagePlaceholder": "สร้างวิดีโอด่วนด้วย IAD RETAKES"
           },
           {
@@ -1737,7 +1737,7 @@
             "description": "จัดเตรียมการสร้างเสียงเฟรมและวิดีโอพร้อมกันในทุกฉากการผลิต 30 ครั้งใน ~ 30 นาทีแทนที่จะรอเป็นชั่วโมงตามลำดับ",
             "learnMore": {
               "problem": "การสร้างการผลิตทีละสินทรัพย์ทำให้โครงการเดียวกลายเป็นการรอคอยตลอดทั้งวัน — คุณจัดคิวคลิปดูการแสดงผลจากนั้นทำซ้ำหลายร้อยครั้งในขณะที่โมเมนตัมระเหย",
-              "solution": "Express Generation แตะระบบคลาวด์เฉพาะของ SceneFlow เพื่อเรียกใช้เสียงเฟรมและวิดีโอในรุ่นที่เกิดขึ้นพร้อมกันในการผลิตทั้งหมดของคุณในครั้งเดียวแทนที่จะเป็นงานที่ช้าครั้งแล้วครั้งเล่า",
+              "solution": "Production Agents แตะระบบคลาวด์เฉพาะของ SceneFlow เพื่อเรียกใช้เสียงเฟรมและวิดีโอในรุ่นที่เกิดขึ้นพร้อมกันในการผลิตทั้งหมดของคุณในครั้งเดียวแทนที่จะเป็นงานที่ช้าครั้งแล้วครั้งเล่า",
               "outcome": "การผลิต 30 ครั้งจะเสร็จสิ้นในเวลาประมาณ 30 นาทีแทนที่จะเป็นประมาณ 2.5 ชั่วโมง — ดังนั้นคุณจึงทำซ้ำในวันเดียวกันและจัดส่งในขณะที่ไอเดียยังร้อนอยู่"
             }
           },

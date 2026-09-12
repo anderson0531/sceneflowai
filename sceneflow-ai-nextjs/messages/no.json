@@ -285,9 +285,9 @@
     "title": "Videoproduksjonsprosess med fokus på rytme",
     "subtitle": "Godkjenn før du rendrer – ikke generering som i en spilleautomat",
     "intro": "Ingen prøving og feiling. Du forhåndsviser og godkjenner utseendet før SceneFlow bruker kreditter på den endelige videoen.",
-    "description": "SceneFlow strukturerer visuell godkjenning i hvert trinn: Express Pre-vis for gjennomgang, Beat Frames for å låse komposisjonen, og deretter F2V per takt. Du finjusterer uttrykket før du bruker opp kreditter på avvik og hallusinasjoner.",
+    "description": "SceneFlow strukturerer visuell godkjenning i hvert trinn: Pre-vis Agent for gjennomgang, Beat Frames for å låse komposisjonen, og deretter F2V per takt. Du finjusterer uttrykket før du bruker opp kreditter på avvik og hallusinasjoner.",
     "steps": [
-      "Express Pre-vis — del audiovisuelle beats for gjennomgang på få minutter",
+      "Pre-vis Agent — del audiovisuelle beats for gjennomgang på få minutter",
       "Beat Frames — lås start-/slutt-sammensetning med Reference Library-kontinuitet",
       "F2V per takt – generer video fra godkjente bilder, ikke fra uklare tekstinstrukser",
       "Kontinuerlig EXT-kjede – innebygde utvidelsestrinn på +7 sekunder for lange dialogsekvenser",
@@ -810,7 +810,7 @@
       "title": "Videoproduksjonsprosess med fokus på rytme",
       "description": "Godkjenn pre-vis-sekvenser og Beat Frames før F2V – dette gir færre blindgenereringer som følge av hallusinasjoner og visuelt avvik. Én strukturert prosess fra gjennomgang til ferdig klipp.",
       "keyFeatures": [
-        "Express Pre-vis til gjennomgang – del beats før tung rendering",
+        "Pre-vis Agent til gjennomgang – del beats før tung rendering",
         "Beat Frames låssammensetning — Reference Library kontinuitet",
         "F2V per slag – generer video fra godkjente bilder",
         "Kontinuerlige EXT-kjeder – innebygde +7s-trinn for lange dialogpartier innenfor et «beat»",
@@ -919,7 +919,7 @@
           "Screening Room — forhåndsvisning av scener, sammensetting av master, visninger og publisering på YouTube"
         ],
         "screenshotSlot": "Sett inn skjermbilde: Produksjonsdashbord som viser fanene «Manus» og «Opptak», samt forhåndsvisning (Pre-Vis).",
-        "videoSlot": "Sett inn 60-sekundersklipp: Lås manus → Express Pre-vis per scene → Gjennomfør opptak → Mikser → Strømmer"
+        "videoSlot": "Sett inn 60-sekundersklipp: Lås manus → Pre-vis Agent per scene → Gjennomfør opptak → Mikser → Strømmer"
       },
       {
         "id": "14",
@@ -1049,7 +1049,7 @@
       "howWeScore": {
         "toggle": "How we score",
         "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
         "bullets": [
           "Scores Blueprint and script against your stated target audience",
           "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
@@ -1060,26 +1060,26 @@
     },
     "express": {
       "badge": "Hyper-Speed Production",
-      "title": "Sceneflow Express",
+      "title": "SceneFlow Agents",
       "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
-          "title": "Express Pre-Vis",
+          "title": "Pre-vis Agent",
           "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
-          "title": "Express Motion Video",
+          "title": "Video Agent",
           "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
           "time": "Minutes vs Days"
         },
         {
-          "title": "Express Delivery",
+          "title": "Delivery Agent",
           "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
           "time": "Minutes vs Weeks"
         }
       ],
-      "cta": "Start Express Rendering"
+      "cta": "Run Production Agents"
     }
   },
   "preVisEngine": {

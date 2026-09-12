@@ -285,9 +285,9 @@
     "title": "बीट-फ़र्स्ट वीडियो पाइपलाइन",
     "subtitle": "रेंडर करने से पहले मंज़ूरी लें — स्लॉट-मशीन की तरह बार-बार री-जनरेट न करें।",
     "intro": "इसमें अंदाज़े से काम नहीं होता। SceneFlow के फ़ाइनल वीडियो पर क्रेडिट खर्च करने से पहले आप उसका लुक देख सकते हैं और उसे मंज़ूरी दे सकते हैं।",
-    "description": "SceneFlow हर चरण पर विज़ुअल अप्रूवल की प्रक्रिया तय करता है: रिव्यू के लिए Express Pre-vis, कंपोज़िशन को लॉक करने के लिए Beat Frames, और फिर हर बीट पर F2V। ड्रिफ्ट और हैलुसिनेशन पर क्रेडिट्स खर्च करने से पहले आप लुक को बेहतर बनाते हैं।",
+    "description": "SceneFlow हर चरण पर विज़ुअल अप्रूवल की प्रक्रिया तय करता है: रिव्यू के लिए Pre-vis Agent, कंपोज़िशन को लॉक करने के लिए Beat Frames, और फिर हर बीट पर F2V। ड्रिफ्ट और हैलुसिनेशन पर क्रेडिट्स खर्च करने से पहले आप लुक को बेहतर बनाते हैं।",
     "steps": [
-      "Express Pre-vis — कुछ ही मिनटों में रिव्यू के लिए ऑडियो-विज़ुअल बीट्स शेयर करें",
+      "Pre-vis Agent — कुछ ही मिनटों में रिव्यू के लिए ऑडियो-विज़ुअल बीट्स शेयर करें",
       "Beat Frames — Reference Library निरंतरता के साथ स्टार्ट/एंड कंपोज़िशन को लॉक करें",
       "F2V प्रति बीट — बिना सोचे-समझे दिए गए प्रॉम्प्ट्स के बजाय, मंज़ूर किए गए फ़्रेम्स से वीडियो बनाएँ।",
       "लगातार EXT चेन — लंबे डायलॉग वाले हिस्सों के लिए नेटिव +7 सेकंड के एक्सटेंशन स्टेप्स",
@@ -810,7 +810,7 @@
       "title": "बीट-फ़र्स्ट वीडियो पाइपलाइन",
       "description": "F2V से पहले प्री-विज़ बीट्स और Beat Frames को मंज़ूरी दें — इससे हैलुसिनेशन और विज़ुअल ड्रिफ़्ट के कारण होने वाले बिना सोचे-समझे री-जेनरेशन कम होंगे। रिव्यू से लेकर फ़ाइनल क्लिप तक एक व्यवस्थित रास्ता।",
       "keyFeatures": [
-        "रिव्यू के लिए Express Pre-vis — हेवी रेंडर से पहले बीट्स शेयर करें",
+        "रिव्यू के लिए Pre-vis Agent — हेवी रेंडर से पहले बीट्स शेयर करें",
         "Beat Frames लॉक कंपोज़िशन — Reference Library निरंतरता",
         "F2V प्रति बीट — मंज़ूर किए गए फ़्रेम से वीडियो बनाएँ",
         "लगातार EXT चेन — एक बीट के अंदर लंबे डायलॉग के लिए नेटिव +7s स्टेप्स",
@@ -919,7 +919,7 @@
           "Screening Room — सीन प्रीव्यू, मास्टर असेंबली, स्क्रीनिंग और YouTube पर पब्लिश करना"
         ],
         "screenshotSlot": "स्क्रीनशॉट डालें: प्रोडक्शन डैशबोर्ड जिसमें स्क्रिप्ट टैब, शूट टैब और प्री-विज़ (Pre-Vis) दिख रहे हों।",
-        "videoSlot": "00:60 की क्लिप डालें: स्क्रिप्ट लॉक करें → हर सीन के लिए Express Pre-vis → फ़ुटेज शूट करें → मिक्सर → स्ट्रीम्स"
+        "videoSlot": "00:60 की क्लिप डालें: स्क्रिप्ट लॉक करें → हर सीन के लिए Pre-vis Agent → फ़ुटेज शूट करें → मिक्सर → स्ट्रीम्स"
       },
       {
         "id": "14",
@@ -1049,7 +1049,7 @@
       "howWeScore": {
         "toggle": "How we score",
         "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
         "bullets": [
           "Scores Blueprint and script against your stated target audience",
           "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
@@ -1060,26 +1060,26 @@
     },
     "express": {
       "badge": "Hyper-Speed Production",
-      "title": "Sceneflow Express",
+      "title": "SceneFlow Agents",
       "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
-          "title": "Express Pre-Vis",
+          "title": "Pre-vis Agent",
           "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
-          "title": "Express Motion Video",
+          "title": "Video Agent",
           "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
           "time": "Minutes vs Days"
         },
         {
-          "title": "Express Delivery",
+          "title": "Delivery Agent",
           "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
           "time": "Minutes vs Weeks"
         }
       ],
-      "cta": "Start Express Rendering"
+      "cta": "Run Production Agents"
     }
   },
   "preVisEngine": {
