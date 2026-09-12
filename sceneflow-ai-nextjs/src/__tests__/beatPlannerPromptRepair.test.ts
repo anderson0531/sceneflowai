@@ -131,6 +131,29 @@ describe('the fallback beat planner composes one shot and one period', () => {
     }
   })
 
+  it('does not restate a set the beat action already establishes', () => {
+    const plans = buildFallbackBeatPlans({
+      ...buildFallbackRequest(),
+      beats: [
+        {
+          beatId: 'b0',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Piper crosses the Vault antechamber. Cold sodium light',
+        },
+        {
+          beatId: 'b1',
+          sequenceIndex: 1,
+          kind: 'action',
+          actionDescription: 'Gideon sets the drill.',
+        },
+      ],
+    })
+
+    expect(plans[0].frozenMoment.match(/Vault antechamber/g)).toHaveLength(1)
+    expect(plans[0].frozenMoment.match(/Cold sodium light/g)).toHaveLength(1)
+  })
+
   it('keeps a colon the writer put in the action text', () => {
     const plans = buildFallbackBeatPlans({
       ...buildFallbackRequest(),
