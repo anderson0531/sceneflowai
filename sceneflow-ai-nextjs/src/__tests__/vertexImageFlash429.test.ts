@@ -171,6 +171,42 @@ describe('failFastOnRateLimit surrenders the lane on the first 429', () => {
     expect(delays).toEqual([])
   })
 
+  it('throws on the first 503 without retrying', async () => {
+    const delays = captureBackoffDelays()
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('upstream unavailable', { status: 503 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      generateVertexGeminiImage({
+        prompt: 'pressure gauge needle at redline',
+        modelTier: 'eco',
+        failFastOnRateLimit: true,
+      })
+    ).rejects.toThrow(/503/)
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(delays).toEqual([])
+  })
+
+  it('throws on timeout without eco fallback or inner retry', async () => {
+    const abortError = new Error('The operation was aborted')
+    abortError.name = 'AbortError'
+    const fetchMock = vi.fn().mockRejectedValue(abortError)
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      generateVertexGeminiImage({
+        prompt: 'empty hall, no figures',
+        modelTier: 'designer',
+        failFastOnRateLimit: true,
+      })
+    ).rejects.toThrow(/aborted/i)
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
   it('marks identity-ref fail-fast 429s as pool-retryable', async () => {
     const fetchMock = vi.fn().mockResolvedValueOnce(rateLimitResponse())
     vi.stubGlobal('fetch', fetchMock)

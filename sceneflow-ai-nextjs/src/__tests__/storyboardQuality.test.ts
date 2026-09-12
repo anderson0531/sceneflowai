@@ -143,6 +143,18 @@ describe('storyboardQuality', () => {
     ).toBe(false)
   })
 
+  it('default Final pass does not scale drafted frames up', () => {
+    expect(
+      beatFrameNeedsGeneration(
+        {
+          storyboardImageUrl: 'https://example.com/a.jpg',
+          storyboardImageTier: 'draft',
+        },
+        { storyboardQuality: 'final' }
+      )
+    ).toBe(false)
+  })
+
   /**
    * The Express Frames dialog sends one or the other, never both: a Final run
    * that also claimed `missingOnly` would look like an upgrade pass and quietly

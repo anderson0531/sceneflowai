@@ -19,6 +19,7 @@ import {
   filterStoryboardSlotsForExpressChecklist,
   type StoryboardFrameSlot,
 } from '@/lib/storyboard/types'
+import { slotEligibleForScope } from '@/lib/storyboard/expressBeatFrameProgress'
 import {
   resolveEffectiveStoryboardTier,
   type StoryboardQuality,
@@ -76,22 +77,6 @@ function slotIsFinal(slot: StoryboardFrameSlot): boolean {
   return !!slot.ownImageUrl && resolveEffectiveStoryboardTier(slot.imageTier) === 'final'
 }
 
-/**
- * Which frames the default scope covers.
- *
- * At Draft quality "outstanding" means no image at all. At Final it also means
- * a frame that was only ever drafted — upgrading those is the whole reason to
- * pick Final, and it is what the old `Finalize` button did.
- */
-function slotEligibleForScope(
-  slot: StoryboardFrameSlot,
-  scope: ExpressSceneScope,
-  quality: StoryboardQuality
-): boolean {
-  if (scope === 'selected') return !!slot.ownImageUrl
-  return quality === 'final' ? !slotIsFinal(slot) : !slot.ownImageUrl
-}
-
 export function ExpressSceneConfirmDialog({
   open,
   onOpenChange,
@@ -142,29 +127,19 @@ export function ExpressSceneConfirmDialog({
     [allSlots]
   )
 
-  /**
-   * A scene whose frames are all drawn but only at draft tier has nothing left
-   * to draft, so opening at Draft would show an empty selection and a disabled
-   * button. Upgrading is the only work left — offer it.
-   */
   useEffect(() => {
     if (!open) return
     setScope('missing')
-    const drawn = checklistSlots.filter((slot) => slot.ownImageUrl)
-    const onlyUpgradeLeft =
-      checklistSlots.length > 0 &&
-      drawn.length === checklistSlots.length &&
-      drawn.some((slot) => !slotIsFinal(slot))
-    setQuality(onlyUpgradeLeft ? 'final' : 'draft')
-  }, [open, checklistSlots])
+    setQuality('draft')
+  }, [open])
 
   useEffect(() => {
     if (!open) return
     const selected = checklistSlots
-      .filter((slot) => slotEligibleForScope(slot, scope, quality))
+      .filter((slot) => slotEligibleForScope(slot, scope))
       .map((slot) => slot.key)
     setSelectedFrameKeys(selected)
-  }, [open, scope, quality, checklistSlots])
+  }, [open, scope, checklistSlots])
 
   const selectedSet = useMemo(() => new Set(selectedFrameKeys), [selectedFrameKeys])
 
@@ -277,11 +252,7 @@ export function ExpressSceneConfirmDialog({
                       : 'bg-transparent text-amber-200/80 hover:bg-amber-900/30'
                   }`}
                 >
-                  {value === 'selected'
-                    ? t('scopeRegenerate')
-                    : quality === 'final'
-                      ? t('scopeNotFinal')
-                      : t('scopeMissing')}
+                  {value === 'selected' ? t('scopeRegenerate') : t('scopeMissing')}
                 </button>
               ))}
             </div>

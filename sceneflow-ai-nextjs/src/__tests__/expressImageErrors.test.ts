@@ -62,11 +62,14 @@ describe('isTransientExpressImageError', () => {
 
 describe('isExpressImageCanaryAbortError', () => {
   it.each([
-    [400],
     [401],
     [403],
   ])('returns true for HTTP %i', (status) => {
     expect(isExpressImageCanaryAbortError(err(`HTTP ${status}`, status))).toBe(true)
+  })
+
+  it('returns false for HTTP 400 so one bad prompt does not cancel siblings', () => {
+    expect(isExpressImageCanaryAbortError(err('HTTP 400', 400))).toBe(false)
   })
 
   it('returns false for transient gateway errors', () => {
@@ -76,8 +79,9 @@ describe('isExpressImageCanaryAbortError', () => {
     expect(isExpressImageCanaryAbortError(err('HTTP 429', 429))).toBe(false)
   })
 
-  it('returns true for content policy messages', () => {
-    expect(isExpressImageCanaryAbortError(err('blocked by content policy'))).toBe(true)
+  it('returns false for content policy so siblings can finish', () => {
+    expect(isExpressImageCanaryAbortError(err('blocked by content policy'))).toBe(false)
+    expect(isExpressImageCanaryAbortError(err('blocked by safety'))).toBe(false)
   })
 
   it('does not abort the beat pool for missing character reference images', () => {

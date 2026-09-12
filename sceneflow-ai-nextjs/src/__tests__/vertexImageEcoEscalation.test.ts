@@ -124,6 +124,20 @@ describe('flash-to-pro escalation for identity-ref frames', () => {
     expect(modelsCalled(fetchMock)).toEqual([GEMINI_IMAGE_MODELS.flash])
   })
 
+  it('does not escalate when failFastOnRateLimit is set', async () => {
+    const fetchMock = vi.fn().mockImplementation(() => safetyBlockResponse())
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      generateVertexGeminiImage({
+        ...animaticBeatOptions(),
+        failFastOnRateLimit: true,
+      })
+    ).rejects.toThrow(/IMAGE_SAFETY/)
+
+    expect(modelsCalled(fetchMock)).toEqual([GEMINI_IMAGE_MODELS.flash])
+  })
+
   it('does not spend a pro attempt once the caller deadline has passed', async () => {
     const fetchMock = vi.fn().mockImplementation(
       () =>

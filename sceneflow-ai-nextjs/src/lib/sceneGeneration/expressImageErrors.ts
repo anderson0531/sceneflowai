@@ -58,7 +58,7 @@ export function isTransientExpressImageError(err: unknown): boolean {
   return isRetryableError(err, status)
 }
 
-const CANARY_STATUS_CODES = new Set([400, 401, 403])
+const CANARY_STATUS_CODES = new Set([401, 403])
 
 const CANARY_MESSAGE_PATTERNS = [
   '403',
@@ -66,14 +66,14 @@ const CANARY_MESSAGE_PATTERNS = [
   'forbidden',
   'unauthorized',
   'permission denied',
-  'content policy',
-  'safety',
-  'blocked',
   'invalid api key',
   'invalid credentials',
 ] as const
 
-/** Auth/config/content-policy failures — abort pool on first occurrence (canary). */
+/**
+ * Auth/config failures — abort the remaining pool on first occurrence.
+ * Content policy, safety, and empty-image stay per-beat so siblings can finish.
+ */
 export function isExpressImageCanaryAbortError(err: unknown): boolean {
   if (isTransientExpressImageError(err)) {
     return false

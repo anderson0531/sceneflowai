@@ -88,7 +88,6 @@ export function beatFrameNeedsGeneration(
 ): boolean {
   const url = beat.storyboardImageUrl?.trim()
   const effectiveTier = resolveEffectiveStoryboardTier(beat.storyboardImageTier)
-  const targetQuality = ctx.storyboardQuality ?? 'draft'
 
   if (ctx.missingOnly) {
     return !url
@@ -101,8 +100,10 @@ export function beatFrameNeedsGeneration(
     return effectiveTier !== 'final'
   }
 
-  if (!url) return true
-  return effectiveTier !== targetQuality
+  // Default Express pass fills empty slots only. A quality mismatch is not
+  // "missing" — upgrading drafts to Final is an explicit finalizeOnly or
+  // selected regenerate, not a silent scale-up.
+  return !url
 }
 
 /** Whether a beat end frame should be generated for the current Express pass. */
@@ -118,7 +119,6 @@ export function beatEndFrameNeedsGeneration(
 
   const endUrl = beat.storyboardEndImageUrl?.trim()
   const effectiveTier = resolveEffectiveStoryboardTier(beat.storyboardEndImageTier)
-  const targetQuality = ctx.storyboardQuality ?? 'draft'
 
   if (ctx.missingOnly) {
     return !endUrl
@@ -131,8 +131,7 @@ export function beatEndFrameNeedsGeneration(
     return effectiveTier !== 'final'
   }
 
-  if (!endUrl) return true
-  return effectiveTier !== targetQuality
+  return !endUrl
 }
 
 export function dialogueFrameNeedsGeneration(
