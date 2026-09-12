@@ -17,6 +17,7 @@ import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
 import { applyDerivedSfxToScene } from '@/lib/script/deriveSfxFromSceneContent'
 import { generateSceneContentHash } from '@/lib/utils/contentHash'
 import { isValidStoryboardMediaUrl } from '@/lib/storyboard/mergeSceneMedia'
+import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 export const PRE_VIS_CONTENT_HASH_FIELD = 'preVisBasedOnContentHash'
@@ -141,15 +142,30 @@ export function syncPreVisToScript(
   let working = applyBeatsToScene(scene, beats)
   const beatsForPlanning = getSceneBeats(working)
 
+  const sceneNumber = options.sceneNumber ?? (Number(scene.sceneNumber) || 1)
   const plans = buildFallbackBeatPlans({
     scene: working,
     beats: beatsForPlanning,
-    sceneNumber: options.sceneNumber ?? (Number(scene.sceneNumber) || 1),
+    sceneNumber,
     totalScenes: options.totalScenes,
     filmContext: options.filmTitle ? { title: options.filmTitle } : undefined,
     artStyle: options.artStyle,
   })
+  // Planning fills direction gaps from the edited script; recomposing turns
+  // that into the prompts this sync exists to refresh. Forced, because a script
+  // edit moves the beat's prose without moving the direction the stored prompt
+  // is keyed to.
   working = applyBeatKeyframePlansToScene(working, plans)
+  working = applyBeatsToScene(
+    working,
+    getSceneBeats(working).map((beat) =>
+      syncBeatStillPromptToDirection(beat, {
+        sceneIndex: sceneNumber - 1,
+        artStyleAnchor: options.artStyle,
+        force: true,
+      })
+    )
+  )
 
   let imagesCleared = 0
   const updatedBeats = getSceneBeats(working).map((beat) => {

@@ -13,6 +13,7 @@ import {
 import {
   applyBeatKeyframePlansToScene,
   buildFallbackBeatPlans,
+  composeBeatActionFraming,
   composeBeatStillPrompt,
   ensureSceneMusicFromDirection,
   formatBeatPlannerReferenceCatalog,
@@ -47,6 +48,7 @@ export {
   storedPromptMatchesDirection,
   buildFallbackBeatPlans,
   applyBeatKeyframePlansToScene,
+  composeBeatActionFraming,
   composeBeatStillPrompt,
   ensureSceneMusicFromDirection,
   formatBeatPlannerReferenceCatalog,

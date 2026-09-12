@@ -18,6 +18,14 @@ export interface SyncBeatStillPromptOptions {
   lookbook?: ProjectLookbook
   sceneIndex?: number
   artStyleAnchor?: string
+  /**
+   * Recompose even when the stored prompt is keyed to the current direction.
+   *
+   * The composition also draws on the beat's own prose, so a script edit moves
+   * the frame without moving the direction, and the fingerprint alone cannot
+   * see it.
+   */
+  force?: boolean
 }
 
 /**
@@ -30,6 +38,7 @@ export function syncBeatStillPromptToDirection(
   options: SyncBeatStillPromptOptions = {}
 ): SceneBeat {
   if (
+    !options.force &&
     beat.storyboardImagePrompt?.trim() &&
     storedStillDirectionKeyMatches(beat.storyboardImagePromptDirectionKey, beat.beatDirection)
   ) {

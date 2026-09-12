@@ -18,10 +18,7 @@ import {
 import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPrompt'
-import {
-  beatStillDirectionFingerprint,
-  storedStillDirectionKeyMatches,
-} from '@/lib/script/beatDirectionFingerprint'
+import { storedStillDirectionKeyMatches } from '@/lib/script/beatDirectionFingerprint'
 import { formatSceneArcBlock, getSceneMovements } from '@/lib/script/sceneMovements'
 import type { BeatDirection, SceneBeat } from '@/lib/script/segmentTypes'
 
@@ -776,6 +773,18 @@ function mergePlannerDirectionIntoBeat(
   return merged
 }
 
+/**
+ * Write a plan's structured findings onto its beat: role, duration, and any
+ * direction facet the beat did not already state.
+ *
+ * The plan's prose is deliberately not written to `storyboardImagePrompt`. That
+ * field records what was last sent to the image model, and generation stamps it
+ * with the direction it describes. Writing planner wording there in advance
+ * made a hallucinated sentence look like a current, direction-keyed prompt
+ * before any frame existed to justify it. The planner's cinematography reaches
+ * the frame through the direction fields instead, where it is visible and
+ * editable on the scene card.
+ */
 export function applyBeatKeyframePlansToScene(
   scene: Record<string, unknown>,
   plans: BeatKeyframePlan[]
@@ -788,12 +797,6 @@ export function applyBeatKeyframePlansToScene(
     beats[plan.beatIndex] = {
       ...beat,
       beatRole: plan.beatRole,
-      storyboardImagePrompt: plan.prompt,
-      // The plan and the direction it merges are written together, so the
-      // prompt is keyed to the direction as it will be after this write.
-      storyboardImagePromptDirectionKey: beatStillDirectionFingerprint(
-        mergedDirection ?? beat.beatDirection
-      ),
       ...(plan.durationSeconds ? { durationSeconds: plan.durationSeconds } : {}),
       ...(mergedDirection ? { beatDirection: mergedDirection } : {}),
     }

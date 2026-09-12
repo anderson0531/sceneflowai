@@ -32,6 +32,7 @@ vi.mock('@/lib/intelligence/beat-sequence-planner', async () => {
     ensureSceneMusicFromDirection: vi.fn((scene: Record<string, unknown>) => scene),
     isTitleOrCinematicScene: () => false,
     asBeatRole: fallback.asBeatRole,
+    composeBeatActionFraming: fallback.composeBeatActionFraming,
     roleAllowsTypography: fallback.roleAllowsTypography,
     storedPromptMatchesDirection: fallback.storedPromptMatchesDirection,
   }
@@ -77,7 +78,7 @@ function buildBeats(): SceneBeat[] {
       sequenceIndex: 0,
       actionDescription: 'ALICE lifts the lantern.',
       beatDirection: direction('ALICE at the gate'),
-      storyboardImagePrompt: 'HAND-EDITED: Alice lifts the lantern, close.',
+      storyboardImagePrompt: 'LAST SENT: Alice lifts the lantern, close.',
       storyboardImagePromptDirectionKey: beatDirectionFingerprint(direction('ALICE at the gate')),
     },
     {
@@ -86,7 +87,7 @@ function buildBeats(): SceneBeat[] {
       sequenceIndex: 1,
       actionDescription: 'BOB steps out of the rain.',
       beatDirection: direction('BOB under the awning'),
-      storyboardImagePrompt: 'HAND-EDITED: Bob steps out of the rain, wide.',
+      storyboardImagePrompt: 'LAST SENT: Bob steps out of the rain, wide.',
       storyboardImagePromptDirectionKey: beatDirectionFingerprint(direction('BOB under the awning')),
     },
   ]
@@ -123,7 +124,7 @@ beforeEach(() => {
 })
 
 describe('a scoped run plans only the frame it was asked to render', () => {
-  it('reuses a current stored prompt and never calls the planner', async () => {
+  it('skips the planner for a beat whose direction has not moved', async () => {
     const beats = buildBeats()
 
     const plans = await runPlanner(beats, { selectedFrameKeys: ['bt_one'] })
@@ -131,7 +132,10 @@ describe('a scoped run plans only the frame it was asked to render', () => {
     expect(planBeatSequence).not.toHaveBeenCalled()
     expect(applyBeatKeyframePlansToScene).not.toHaveBeenCalled()
     expect([...plans.keys()]).toEqual([0])
-    expect(plans.get(0)!.prompt).toBe('HAND-EDITED: Alice lifts the lantern, close.')
+    // Composed from the direction, not read back from the last prompt sent —
+    // the reused plan feeds reference matching, and matching against wording
+    // the frame is no longer built from is how uninvolved cast got attached.
+    expect(plans.get(0)!.prompt).toBe('Medium Shot. ALICE at the gate. ALICE lifts the lantern.')
   })
 
   it('leaves a sibling beat byte-identical', async () => {
@@ -157,8 +161,8 @@ describe('a scoped run plans only the frame it was asked to render', () => {
     const planned = planBeatSequence.mock.calls[0][0].beats as SceneBeat[]
     expect(planned.map((b) => b.beatId)).toEqual(['bt_one'])
 
-    // Only the selected beat is written, so the sibling's hand-edited prompt
-    // survives a single-frame regen.
+    // Only the selected beat is written, so a single-frame regen cannot
+    // re-plan a sibling's direction out from under it.
     expect(applyBeatKeyframePlansToScene).toHaveBeenCalledTimes(1)
     const written = applyBeatKeyframePlansToScene.mock.calls[0][1] as Array<{ beatIndex: number }>
     expect(written.map((p) => p.beatIndex)).toEqual([0])
@@ -186,7 +190,9 @@ describe('a scoped run plans only the frame it was asked to render', () => {
     const plans = await runPlanner(beats, { selectedFrameKeys: ['bt_two-end'] })
 
     expect([...plans.keys()]).toEqual([1])
-    expect(plans.get(1)!.prompt).toBe('HAND-EDITED: Bob steps out of the rain, wide.')
+    expect(plans.get(1)!.prompt).toBe(
+      'Medium Shot. BOB under the awning. BOB steps out of the rain.'
+    )
   })
 })
 
