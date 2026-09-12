@@ -95,13 +95,27 @@ export function resolveSceneNumberForLocationMatch(
   return undefined
 }
 
+export type FindLocationReferenceOptions = {
+  /**
+   * Also return refs that have no image yet. Frame generation wants only the
+   * drawn ones — there is nothing to attach otherwise — but a scene's
+   * requirement list wants the undrawn ones most of all, since those are the
+   * gap to fill before the scene can be shot.
+   */
+  includeWithoutImages?: boolean
+}
+
 /** Location refs explicitly assigned to a scene via sceneNumbers. */
 export function findLocationReferencesAssignedToScene(
   locationRefs: LocationReference[],
-  sceneNumber: number
+  sceneNumber: number,
+  options: FindLocationReferenceOptions = {}
 ): LocationReference[] {
   return locationRefs.filter(
-    (ref) => !!ref.imageUrl && Array.isArray(ref.sceneNumbers) && ref.sceneNumbers.includes(sceneNumber)
+    (ref) =>
+      (options.includeWithoutImages || !!ref.imageUrl) &&
+      Array.isArray(ref.sceneNumbers) &&
+      ref.sceneNumbers.includes(sceneNumber)
   )
 }
 
@@ -111,10 +125,13 @@ export function findLocationReferencesAssignedToScene(
 export function findMatchingLocationReferences(
   scene: any,
   locationRefs: LocationReference[],
-  sceneIndex?: number
+  sceneIndex?: number,
+  options: FindLocationReferenceOptions = {}
 ): ResolvedLocationForFrames[] {
   if (!locationRefs?.length) return []
-  const withImages = locationRefs.filter((r) => r.imageUrl)
+  const withImages = options.includeWithoutImages
+    ? locationRefs
+    : locationRefs.filter((r) => r.imageUrl)
   if (!withImages.length) return []
 
   const sceneNumber = resolveSceneNumberForLocationMatch(scene, sceneIndex)
@@ -122,7 +139,7 @@ export function findMatchingLocationReferences(
   const seen = new Set<string>()
 
   if (sceneNumber !== undefined) {
-    for (const ref of findLocationReferencesAssignedToScene(withImages, sceneNumber)) {
+    for (const ref of findLocationReferencesAssignedToScene(withImages, sceneNumber, options)) {
       if (!seen.has(ref.id)) {
         seen.add(ref.id)
         matches.push(ref)
