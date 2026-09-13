@@ -201,6 +201,8 @@ function formatTime(seconds: number) {
 }
 
 const GALLERY_MUSIC_INTRO_FADE_STORAGE_KEY = 'sceneflow-gallery-music-intro-fade'
+/** Window for collapsing a run of slider commits, such as a held arrow key. */
+const SCENE_MIX_COMMIT_COALESCE_MS = 200
 
 function loadGalleryMusicIntroFade(): MusicIntroFadeConfig {
   if (typeof window === 'undefined') return DEFAULT_MUSIC_INTRO_FADE
@@ -317,20 +319,32 @@ export function AudioGalleryPlayer({
    * the viewer is still dragging.
    */
   const localMixEditedRef = useRef(false)
+  const commitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const onSceneMixChangeRef = useRef(onSceneMixChange)
   onSceneMixChangeRef.current = onSceneMixChange
 
-  /**
-   * Write the mix to project state. Called on slider commit (pointer release or
-   * keyboard step), never per dragged value: each save rebuilds scene state and
-   * PATCHes the scene, which is far too heavy to run while the animatic plays.
-   */
-  const commitSceneMix = useCallback(() => {
+  /** Write the mix to project state now. */
+  const flushSceneMix = useCallback(() => {
+    if (commitTimerRef.current) {
+      clearTimeout(commitTimerRef.current)
+      commitTimerRef.current = null
+    }
     const pending = pendingMixRef.current
     if (!pending?.dirty) return
     pending.dirty = false
     onSceneMixChangeRef.current?.(pending.sceneId, pending.language, pending.volumes)
   }, [])
+
+  /**
+   * Called on slider commit, never per dragged value: a save rebuilds scene
+   * state and PATCHes the scene, which is far too heavy to run while the
+   * animatic plays. A drag commits once, but a held arrow key commits per
+   * repeat, so the short delay collapses a keyboard run into one write.
+   */
+  const commitSceneMix = useCallback(() => {
+    if (commitTimerRef.current) clearTimeout(commitTimerRef.current)
+    commitTimerRef.current = setTimeout(flushSceneMix, SCENE_MIX_COMMIT_COALESCE_MS)
+  }, [flushSceneMix])
 
   const applyTrackVolume = useCallback(
     (track: 'dialogue' | 'music' | 'sfx', next: number) => {
@@ -357,7 +371,7 @@ export function AudioGalleryPlayer({
   useEffect(() => {
     const key = `${currentSceneId}:${selectedLanguage}`
     if (lastHydratedMixKeyRef.current !== key) {
-      commitSceneMix()
+      flushSceneMix()
       lastHydratedMixKeyRef.current = key
       localMixEditedRef.current = false
     } else if (localMixEditedRef.current) {
@@ -374,10 +388,10 @@ export function AudioGalleryPlayer({
     savedSceneMix.dialogue,
     savedSceneMix.music,
     savedSceneMix.sfx,
-    commitSceneMix,
+    flushSceneMix,
   ])
 
-  useEffect(() => () => commitSceneMix(), [commitSceneMix])
+  useEffect(() => () => flushSceneMix(), [flushSceneMix])
 
   const screeningPosterUrl = getScreeningPosterUrl(currentScene)
 

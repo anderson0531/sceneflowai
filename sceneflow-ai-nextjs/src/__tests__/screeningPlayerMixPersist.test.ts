@@ -41,13 +41,28 @@ describe('screening mix persists once per gesture', () => {
     // Three sliders (Dialogue, Music, SFX), each committing on release.
     expect(player.match(/onValueCommit=\{commitSceneMix\}/g)).toHaveLength(3)
     expect(player).not.toContain('SCENE_MIX_PERSIST_MS')
-    expect(player).not.toContain('setTimeout(() => {\n        persistTimerRef')
+
+    // The only timer left is the one that collapses a run of commits, so a
+    // drag schedules nothing until the viewer lets go.
+    const applyTrackVolume = readCallbackBody(
+      player,
+      'applyTrackVolume',
+      '[dialogueVolume, musicVolume, sfxVolume'
+    )
+    expect(applyTrackVolume).not.toContain('setTimeout')
+    expect(applyTrackVolume).not.toContain('onSceneMixChange')
   })
 
   it('does not re-seed the sliders from the value it just saved', () => {
     expect(player).toContain('localMixEditedRef')
     const hydrate = player.slice(player.indexOf('lastHydratedMixKeyRef.current !== key'))
     expect(hydrate.slice(0, hydrate.indexOf('}, ['))).toContain('localMixEditedRef.current')
+  })
+
+  it('saves a pending edit when the scene changes or the player closes', () => {
+    const hydrate = player.slice(player.indexOf('lastHydratedMixKeyRef.current !== key'))
+    expect(hydrate.slice(0, hydrate.indexOf('}, ['))).toContain('flushSceneMix()')
+    expect(player).toContain('useEffect(() => () => flushSceneMix(), [flushSceneMix])')
   })
 })
 
