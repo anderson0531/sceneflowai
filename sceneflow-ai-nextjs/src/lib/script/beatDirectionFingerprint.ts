@@ -58,7 +58,7 @@ const STILL_KEY_NAMES = new Set<string>([...STILL_FINGERPRINTED_KEYS, ...LIST_KE
  * `generateLegacyPreVisContentHash` replays to recognise pre-deploy pre-vis
  * stamps, and moving it would make every one of those scenes ask to be updated.
  */
-const STILL_FINGERPRINT_VERSION = 'still-v3'
+const STILL_FINGERPRINT_VERSION = 'still-v4'
 
 const VERSION_PREFIX_PATTERN = /^still-v\d+$/
 

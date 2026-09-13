@@ -10,7 +10,7 @@ const DIRECTION = {
 
 const CURRENT_KEY = beatStillDirectionFingerprint(DIRECTION)
 
-/** A key written before STILL_FINGERPRINT_VERSION was bumped to still-v3. */
+/** A key written before STILL_FINGERPRINT_VERSION was bumped to still-v4. */
 const PRE_BUMP_KEY = 'shotType=medium|cameraAngle=low angle|castInFrame=DR. CHEN|keyProps='
 
 function beat(overrides: Record<string, unknown> = {}) {

@@ -146,6 +146,8 @@ export interface SyncPreVisOptions {
   totalScenes?: number
   filmTitle?: string
   artStyle?: string
+  /** Stored project lookbook so refreshed `[STYLE]` matches generate-image. */
+  lookbook?: ProjectLookbook
 }
 
 export interface SyncPreVisResult {
@@ -205,6 +207,7 @@ export function syncPreVisToScript(
       syncBeatStillPromptToDirection(beat, {
         sceneIndex: sceneNumber - 1,
         artStyleAnchor: options.artStyle,
+        lookbook: options.lookbook,
         force: true,
       })
     )
@@ -274,7 +277,7 @@ export interface RefreshStillPromptsResult {
  */
 export function refreshSceneBeatStillPrompts(
   scene: Record<string, unknown>,
-  options: SyncPreVisOptions & { lookbook?: ProjectLookbook } = {}
+  options: SyncPreVisOptions = {}
 ): RefreshStillPromptsResult {
   const beats = getSceneBeats(scene)
   if (beats.length === 0) return { scene, promptsUpdated: 0 }

@@ -64,7 +64,10 @@ describe('syncBeatStillPromptToDirection', () => {
       },
     })
 
-    expect(next.storyboardImagePrompt).toContain('[SCENE COMPOSITION & BEAT]')
+    expect(next.storyboardImagePrompt).toContain('[TASK]')
+    expect(next.storyboardImagePrompt).toContain('[STILL]')
+    expect(next.storyboardImagePrompt).toContain('[EXCLUSIONS]')
+    expect(next.storyboardImagePrompt).not.toContain('[REFERENCES]\n')
     expect(isStructuredStillPrompt(next.storyboardImagePrompt!)).toBe(true)
     expect(parseStillPromptSource(next.storyboardImagePrompt!).actionFraming).toContain(
       'The journal fills the frame'
@@ -78,7 +81,6 @@ describe('syncBeatStillPromptToDirection', () => {
       beatDirection: {
         ...prior.beatDirection,
         cameraMovement: 'slow dolly in',
-        emotion: 'hypnotic awe',
         audioCue: 'proximity timer',
         transition: 'DISSOLVE',
       },
