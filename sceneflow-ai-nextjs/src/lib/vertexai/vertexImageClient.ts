@@ -10,6 +10,7 @@ import { fetchReferenceImageAsBase64 } from '@/lib/storage/fetchReferenceImage'
 import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalation'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import { priorityPaygoHeaders } from '@/lib/vertexai/priorityPaygo'
+import { runInVertexImageGate } from '@/lib/vertexai/vertexImageGate'
 import { getGeminiImageSafetySettings } from '@/lib/vertexai/safety'
 import { MAX_REFERENCE_IMAGES_ECO } from '@/lib/vision/referenceLimits'
 
@@ -409,16 +410,22 @@ export async function generateVertexGeminiImage(
 
   let response: Response
   try {
-    response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-        ...priorityPaygoHeaders(),
-      },
-      body: JSON.stringify(requestBody),
-      signal: controller.signal,
-    })
+    // The gate holds the dispatch and nothing else. Every backoff and retry
+    // below re-enters this function, so a slot spanning them would be waited
+    // on by the call holding it — and a frame sleeping out a 429 is not
+    // generating anyway, so it must not hold capacity a ready frame could use.
+    response = await runInVertexImageGate(() =>
+      fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+          ...priorityPaygoHeaders(),
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      })
+    )
   } catch (error) {
     clearTimeout(timeoutId)
     if (error instanceof Error && error.name === 'AbortError') {
@@ -451,8 +458,8 @@ export async function generateVertexGeminiImage(
     const errorText = await response.text()
     if (response.status === 429 && options.failFastOnRateLimit) {
       // Every sleep below is served while still holding the caller's image-lane
-      // slot, which on a 3-wide lane parks a third of the run on a frame that
-      // is doing nothing. Hand the slot back now; the caller re-queues.
+      // slot, which on a 2-wide lane parks half the run on a frame that is
+      // doing nothing. Hand the slot back now; the caller re-queues.
       console.warn(
         `[Vertex Gemini Image] Rate limit on ${model} — failing fast without eco fallback so the lane frees immediately`
       )
