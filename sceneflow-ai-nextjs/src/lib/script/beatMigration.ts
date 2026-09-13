@@ -3,7 +3,7 @@
  */
 
 import { toCanonicalName } from '@/lib/character/canonical'
-import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
+import { isCreditsScene, isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import {
   NARRATOR_CHARACTER,
   NARRATOR_CHARACTER_ID,
@@ -596,16 +596,6 @@ export function computeTargetBeatCount(scene: Record<string, unknown>): number {
   const duration =
     typeof scene.duration === 'number' && scene.duration > 0 ? scene.duration : BEAT_DURATION_SEC
   return Math.min(MAX_DERIVED_BEATS, Math.max(1, Math.round(duration / BEAT_DURATION_SEC)))
-}
-
-function isCreditsScene(scene: Record<string, unknown>): boolean {
-  if (scene.cinematicType === 'outro') return true
-  const heading = String(scene.heading ?? '').toLowerCase()
-  return (
-    heading.includes('credits') ||
-    heading.includes('outro') ||
-    heading.includes('end title')
-  )
 }
 
 /** Smarter beat target — avoids duration padding on dialogue/title scenes. */

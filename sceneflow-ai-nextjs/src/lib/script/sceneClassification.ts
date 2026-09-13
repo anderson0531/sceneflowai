@@ -21,6 +21,14 @@ export function isTitleOrCinematicScene(scene: Record<string, unknown>): boolean
   )
 }
 
+export function isCreditsScene(scene: Record<string, unknown>): boolean {
+  if (scene.cinematicType === 'outro') return true
+  const heading = String(scene.heading ?? '').toLowerCase()
+  return (
+    heading.includes('credits') || heading.includes('outro') || heading.includes('end title')
+  )
+}
+
 /**
  * Title/credits/abstract scenes should not attach cast reference images to storyboard frames.
  */
