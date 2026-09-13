@@ -105,6 +105,7 @@ Revisit once production traffic has a shape, then:
 | --- | --- | --- | --- |
 | Global endpoint | Free | None | Implemented |
 | Burst smoothing | Free | None | Implemented |
+| Process-wide concurrency ceiling | Free | None | Implemented |
 | Standard PayGo tier promotion | Free | None | Automatic with spend |
 | Priority PayGo | ~2x per-token | None | Implemented, flag off |
 | Provisioned Throughput | Fixed term fee | 1 week to 1 year, non-cancelable | Deferred to post-launch |
@@ -121,8 +122,33 @@ The app already layers retry and concurrency control, which stays unchanged:
 - Per-run lane caps, AIMD halving, and a regulator in `ExpressTrafficCop`.
 - `failFastOnRateLimit` on Express beat frames, so a rate-limited frame frees
   its lane slot immediately instead of sleeping through a retry ladder.
+- A process-wide ceiling on concurrent image generations in
+  [src/lib/vertexai/vertexImageGate.ts](../src/lib/vertexai/vertexImageGate.ts).
 
-One known gap, deliberately not addressed here: the traffic cop is per-run and
-in-process, so concurrent runs across Vercel instances have no shared view of
-total outbound rate. A distributed limiter would need Marketplace Redis. Worth
-doing only if 429s persist after the changes above.
+## Why the lane cap was not the whole cap
+
+`ExpressTrafficCop` is constructed per `runExpress` invocation and can only see
+that one run. Two overlapping Frame Agent runs build two cops, each correctly
+honoring its own cap, so the pair issues twice the intended number of calls. A
+manual frame regen posts straight to `/api/scene/generate-image` and is counted
+by neither. A run could therefore report a lane cap of two while more than
+twice that many generations were open — read as a broken limiter, when in fact
+every limiter present was working within the only scope it had.
+
+`vertexImageGate` closes that by counting at the single point every generation
+passes through, `generateVertexGeminiImage`. Two layers, different jobs: the
+gate is a hard ceiling and nothing else, while the cop keeps AIMD halving,
+cooldowns, the regulator, and the throttle events the UI renders. They share a
+default of 2 on purpose, so a single well-behaved run never queues at the gate
+and the gate only bites on traffic the cop cannot see.
+
+Note that fail-fast raised effective throughput without changing any cap: a
+rate-limited frame used to sleep 5s/15s/30s holding its slot and now releases
+it on the first 429, so the same two slots turn over far more often. Read
+`[Vertex Image Gate]` log lines for what is actually open, rather than
+inferring it from the configured lane cap.
+
+One known gap remains, deliberately not addressed: the gate is per process, so
+concurrent Vercel instances still have no shared view of total outbound rate. A
+distributed limiter would need Marketplace Redis. Worth doing only if 429s
+persist after the changes above.
