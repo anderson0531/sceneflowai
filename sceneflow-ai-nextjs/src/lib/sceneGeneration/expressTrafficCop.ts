@@ -32,6 +32,8 @@ export interface ExpressTrafficCopOptions {
   cooldownMs?: number
   /** 429 count within the run that triggers regulated mode. */
   rateLimitThreshold?: number
+  /** Minimum gap between dispatches per lane. Defaults to image-only staggering. */
+  minSpacingMs?: Partial<Record<ExpressLane, number>>
 }
 
 const EXPRESS_LANES: ExpressLane[] = ['text', 'image', 'audio']
@@ -52,9 +54,34 @@ export const DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY = 3
 /** Default TTS in-flight cap for Express Audio / Storyboard Express audio lane. */
 export const DEFAULT_EXPRESS_AUDIO_CONCURRENCY = 8
 
+/**
+ * Minimum gap between image-lane dispatches.
+ *
+ * Concurrency caps how many calls are open at once; they say nothing about how
+ * close together the calls start. Three scenes each opening their flash beats
+ * at the same instant is a nine-request spike inside one second, and a Vertex
+ * 429 is shared-pool contention, which a spike is the most efficient way to
+ * provoke. Staggering the starts turns the same nine calls into a ramp without
+ * lowering the cap, so a run is slower by roughly spacing x beats and no more.
+ * Set 0 to disable.
+ */
+export const DEFAULT_EXPRESS_IMAGE_MIN_SPACING_MS = 300
+
 function parsePositiveInt(value: string | undefined, fallback: number): number {
   const n = Number(value ?? fallback)
   return Number.isFinite(n) && n >= 1 ? Math.floor(n) : fallback
+}
+
+function parseNonNegativeInt(value: string | undefined, fallback: number): number {
+  const n = Number(value ?? fallback)
+  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : fallback
+}
+
+export function getExpressImageMinSpacingMs(): number {
+  return parseNonNegativeInt(
+    process.env.EXPRESS_IMAGE_MIN_SPACING_MS,
+    DEFAULT_EXPRESS_IMAGE_MIN_SPACING_MS
+  )
 }
 
 export function getExpressSceneConcurrency(): number {
@@ -95,6 +122,13 @@ interface LaneState {
   max: number
   initialMax: number
   cooldownUntil: number | null
+  /**
+   * When the next dispatch in this lane is allowed to start. Claimed ahead of
+   * the sleep so simultaneous acquirers each take their own slot in the ramp
+   * instead of all waking into the same millisecond.
+   */
+  nextDispatchAt: number
+  minSpacingMs: number
 }
 
 export class ExpressTrafficCop {
@@ -119,24 +153,35 @@ export class ExpressTrafficCop {
     this.onRegulator = options.onRegulator
     this.rateLimitThreshold = options.rateLimitThreshold ?? 3
     this.waiters = { text: [], image: [], audio: [] }
+    const spacingFor = (lane: ExpressLane): number => {
+      const override = options.minSpacingMs?.[lane]
+      if (override !== undefined) return Math.max(0, override)
+      return lane === 'image' ? getExpressImageMinSpacingMs() : 0
+    }
     this.lanes = {
       text: {
         inFlight: 0,
         max: defaultLaneMax('text', options.laneMax),
         initialMax: defaultLaneMax('text', options.laneMax),
         cooldownUntil: null,
+        nextDispatchAt: 0,
+        minSpacingMs: spacingFor('text'),
       },
       image: {
         inFlight: 0,
         max: defaultLaneMax('image', options.laneMax),
         initialMax: defaultLaneMax('image', options.laneMax),
         cooldownUntil: null,
+        nextDispatchAt: 0,
+        minSpacingMs: spacingFor('image'),
       },
       audio: {
         inFlight: 0,
         max: defaultLaneMax('audio', options.laneMax),
         initialMax: defaultLaneMax('audio', options.laneMax),
         cooldownUntil: null,
+        nextDispatchAt: 0,
+        minSpacingMs: spacingFor('audio'),
       },
     }
   }
@@ -244,6 +289,13 @@ export class ExpressTrafficCop {
 
       if (state.inFlight < state.max) {
         state.inFlight++
+        // The slot is taken before the stagger sleep, so the wait cannot be
+        // raced by another acquirer and `release` stays balanced either way.
+        if (state.minSpacingMs > 0) {
+          const startAt = Math.max(now, state.nextDispatchAt)
+          state.nextDispatchAt = startAt + state.minSpacingMs
+          if (startAt > now) await sleep(startAt - now)
+        }
         return
       }
 

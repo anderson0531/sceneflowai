@@ -3,8 +3,10 @@ import {
   ExpressTrafficCop,
   DEFAULT_EXPRESS_IMAGE_CONCURRENCY,
   DEFAULT_EXPRESS_AUDIO_CONCURRENCY,
+  DEFAULT_EXPRESS_IMAGE_MIN_SPACING_MS,
   getExpressImageConcurrency,
   getExpressAudioConcurrency,
+  getExpressImageMinSpacingMs,
 } from '@/lib/sceneGeneration/expressTrafficCop'
 
 describe('ExpressTrafficCop', () => {
@@ -13,6 +15,7 @@ describe('ExpressTrafficCop', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     delete process.env.EXPRESS_IMAGE_CONCURRENCY
+    delete process.env.EXPRESS_IMAGE_MIN_SPACING_MS
   })
 
   afterEach(() => {
@@ -119,6 +122,54 @@ describe('ExpressTrafficCop', () => {
 
     expect(cop.getSnapshot().image.max).toBe(2)
     expect(onThrottle).toHaveBeenCalledWith('image', 2, 1000)
+  })
+
+  it('spaces image dispatches so a wide burst does not land in one instant', async () => {
+    const cop = new ExpressTrafficCop({
+      laneMax: { image: 4 },
+      minSpacingMs: { image: 300 },
+    })
+
+    const dispatchedAt: number[] = []
+    const tasks = Array.from({ length: 4 }, () =>
+      cop.runInLane('image', async () => {
+        dispatchedAt.push(Date.now())
+      })
+    )
+
+    await vi.runAllTimersAsync()
+    await Promise.all(tasks)
+
+    expect(dispatchedAt).toHaveLength(4)
+    for (let i = 1; i < dispatchedAt.length; i++) {
+      expect(dispatchedAt[i] - dispatchedAt[i - 1]).toBeGreaterThanOrEqual(300)
+    }
+  })
+
+  it('does not space the text or audio lanes', async () => {
+    const cop = new ExpressTrafficCop({ laneMax: { audio: 4 } })
+
+    const dispatchedAt: number[] = []
+    const tasks = Array.from({ length: 4 }, () =>
+      cop.runInLane('audio', async () => {
+        dispatchedAt.push(Date.now())
+      })
+    )
+
+    await vi.runAllTimersAsync()
+    await Promise.all(tasks)
+
+    expect(new Set(dispatchedAt).size).toBe(1)
+  })
+
+  it('treats EXPRESS_IMAGE_MIN_SPACING_MS=0 as spacing disabled', () => {
+    process.env.EXPRESS_IMAGE_MIN_SPACING_MS = '0'
+    try {
+      expect(getExpressImageMinSpacingMs()).toBe(0)
+    } finally {
+      delete process.env.EXPRESS_IMAGE_MIN_SPACING_MS
+    }
+    expect(getExpressImageMinSpacingMs()).toBe(DEFAULT_EXPRESS_IMAGE_MIN_SPACING_MS)
   })
 
   it('regulates on identity-ref rate limit exhausted errors', async () => {
