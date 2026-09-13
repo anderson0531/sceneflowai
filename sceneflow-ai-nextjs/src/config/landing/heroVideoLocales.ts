@@ -87,6 +87,21 @@ export const HERO_VIDEO_BLOB_PATHS: Record<HeroVideoLocaleId, string> = {
   th: 'Hero Video (Thai).mp4',
 }
 
+/**
+ * Watermarked progressive files already on Blob (~35 MB). PR #248 pointed
+ * playback at 720p/1080p paths that were never uploaded; these are the
+ * files that used to play.
+ */
+export const HERO_VIDEO_WEB_READY_PATHS: Record<HeroVideoLocaleId, string> = {
+  en: 'landing/hero/sceneflow-hero-en.mp4',
+  es: 'landing/hero/sceneflow-hero-es.mp4',
+  pt: 'landing/hero/sceneflow-hero-pt.mp4',
+  hi: 'landing/hero/sceneflow-hero-hi.mp4',
+  zh: 'landing/hero/sceneflow-hero-zh.mp4',
+  ar: 'landing/hero/sceneflow-hero-ar.mp4',
+  th: 'landing/hero/sceneflow-hero-th.mp4',
+}
+
 /** 720p +faststart web encodes from the current 4K masters (encode-hero-web-mp4). */
 export const HERO_VIDEO_WEB_720P_PATHS: Record<HeroVideoLocaleId, string> = {
   en: 'landing/hero/sceneflow-hero-en-720p.mp4',
@@ -181,8 +196,8 @@ export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = (
     src: mp4Src,
     hlsSrc: produced?.hlsSrc,
     mp4Src: mp4Src || undefined,
-    mp4SrcMobile: mp4Src ? heroSrc(HERO_VIDEO_WEB_720P_PATHS[id]) : undefined,
-    mp4SrcHd: mp4Src ? heroSrc(HERO_VIDEO_WEB_1080P_PATHS[id]) : undefined,
+    mp4SrcMobile: mp4Src ? heroSrc(HERO_VIDEO_WEB_READY_PATHS[id]) : undefined,
+    mp4SrcHd: mp4Src ? heroSrc(HERO_VIDEO_WEB_READY_PATHS[id]) : undefined,
     poster: produced?.poster ?? (mp4Src ? getHeroVideoPosterUrl(id) : ''),
     available: Boolean(mp4Src),
   }
@@ -216,7 +231,11 @@ export function getHeroVideoLocalesAsVideoLocales(): VideoLocale[] {
 export type HeroPlaybackSources = {
   hlsSrc?: string
   mp4Src: string
-  /** Last-resort progressive file if the chosen web encode is not on Blob yet. */
+  /**
+   * Other web encode if the preferred rung 404s. Never the 4K Blob master —
+   * that file is 519 MB and is what made the landing hero hang after PR #248
+   * pointed at 720p/1080p paths that were not uploaded.
+   */
   mp4SrcFallback?: string
   poster: string
 }
@@ -224,8 +243,9 @@ export type HeroPlaybackSources = {
 /**
  * Resolve playback sources for the adaptive landing player.
  *
- * `context` selects 720p vs 1080p/4K. Theater should pass a desktop-like
- * context so fullscreen keeps the sharp encode.
+ * `context` selects 720p vs 1080p. Theater should pass a desktop-like
+ * context so fullscreen keeps the sharp encode. The 4K master is never
+ * returned here.
  */
 export function getHeroVideoPlaybackSources(
   id: HeroVideoLocaleId,
@@ -234,25 +254,35 @@ export function getHeroVideoPlaybackSources(
   const entry = getHeroVideoLocale(id)
   if (!entry?.available || !entry.src) return null
 
-  const master = entry.mp4Src ?? entry.src
   const lean = context ? prefersLeanHeroSource(context) : false
-  const cdnFallback = getHeroVideoFallbackMp4Url(id)
+  const web720 = getHeroVideoFallbackMp4Url(id) ?? entry.mp4SrcMobile
+  const web1080 = entry.mp4SrcHd
+  const preferred = lean ? web720 ?? web1080 : web1080 ?? web720
+  if (!preferred) return null
 
-  const mobileMp4 = cdnFallback ?? entry.mp4SrcMobile ?? master
-  const desktopMp4 = entry.mp4SrcHd ?? master
+  const fallback = preferred === web1080 ? web720 : web1080
 
   return {
     hlsSrc: getHeroVideoHlsUrl(id),
-    mp4Src: lean ? mobileMp4 : desktopMp4,
-    mp4SrcFallback: lean
-      ? master !== mobileMp4
-        ? master
-        : undefined
-      : master !== desktopMp4
-        ? master
-        : undefined,
+    mp4Src: preferred,
+    mp4SrcFallback: fallback && fallback !== preferred ? fallback : undefined,
     poster: entry.poster,
   }
+}
+
+/** True when a URL is one of the 4K Blob masters that must not play inline. */
+export function isHeroFourKMasterUrl(url: string | null | undefined): boolean {
+  if (!url) return false
+  const bare = url.split('#')[0] ?? ''
+  let decoded = bare
+  try {
+    decoded = decodeURIComponent(bare)
+  } catch {
+    // Keep the raw path if it is not a valid encoding.
+  }
+  return Object.values(HERO_VIDEO_BLOB_PATHS).some(
+    (path) => decoded.endsWith(path) || bare.includes(encodeURI(path))
+  )
 }
 
 export function getDefaultHeroVideoSrc(): string {

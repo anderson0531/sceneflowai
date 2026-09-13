@@ -51,6 +51,7 @@ describe('hero section copy and UI', () => {
     expect(hero).toContain('key-features')
     expect(hero).toContain('getVideoPreloadStrategy')
     expect(hero).toContain('useAdaptiveVideoSource')
+    expect(hero).toContain('networkReady && !isTheaterOpen')
     expect(hero).not.toContain('key={inlineVideoLocale}')
   })
 

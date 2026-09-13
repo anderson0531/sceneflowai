@@ -63,6 +63,7 @@ export function HeroSection() {
     useState<HeroVideoLocaleId>(syncedVideoLocale)
   const [videoPreload, setVideoPreload] = useState<VideoPreloadValue>('metadata')
   const [networkCtx, setNetworkCtx] = useState(HERO_NETWORK_CONTEXT_PENDING)
+  const [networkReady, setNetworkReady] = useState(false)
   const [isBuffering, setIsBuffering] = useState(true)
   const suppressTheaterOpenUntilRef = useRef(0)
 
@@ -82,13 +83,14 @@ export function HeroSection() {
       mp4Src: playbackSources.mp4Src,
       mp4SrcFallback: playbackSources.mp4SrcFallback,
     },
-    !isTheaterOpen
+    networkReady && !isTheaterOpen && Boolean(playbackSources.mp4Src)
   )
 
   useEffect(() => {
     const ctx = readHeroNetworkContext()
     setNetworkCtx(ctx)
     setVideoPreload(getVideoPreloadStrategy(ctx))
+    setNetworkReady(true)
   }, [])
 
   useEffect(() => {
