@@ -494,10 +494,9 @@ export function useTimelinePlayback({
         if (!audio.paused) audio.pause()
         return
       }
-      
-      const currentSceneDuration = sceneDurationRef.current
 
-      // Check if current time is within this clip's active window
+      // Reusing the tick-scoped duration. A second `const currentSceneDuration`
+      // here is TDZ for the earlier read in this same forEach callback.
       if (isClipPlaybackActive(clip, elapsed, currentSceneDuration)) {
         const audioDuration = audio.duration
         const audioTime = computeClipAudioTime(clip, elapsed, audioDuration)
