@@ -5,9 +5,23 @@
  * Properly cancels preload when done to prevent ghost audio
  */
 
+/**
+ * Encode a URL for loading without mangling one that is already encoded, which
+ * `encodeURI` alone would do by turning each `%` into `%25`.
+ */
+function encodeUrlOnce(url: string): string {
+  try {
+    return decodeURI(url) === url ? encodeURI(url) : url
+  } catch {
+    return url
+  }
+}
+
 export async function getAudioDuration(url: string): Promise<number> {
   return new Promise((resolve, reject) => {
     const audio = new Audio()
+    // Metadata is all we read; the default 'auto' buffers the whole file.
+    audio.preload = 'metadata'
     let resolved = false
     
     const cleanup = () => {
@@ -37,7 +51,7 @@ export async function getAudioDuration(url: string): Promise<number> {
     })
     
     // Set source and load - encode URL to handle filenames with spaces
-    audio.src = encodeURI(url)
+    audio.src = encodeUrlOnce(url)
     audio.load()
     
     // Timeout after 10 seconds

@@ -73,6 +73,13 @@ export interface UseTimelinePlaybackOptions {
   initialVolumes?: Partial<TrackVolumes>
   initialEnabled?: Partial<TrackEnabled>
   musicIntroFade?: MusicIntroFadeConfig
+  /**
+   * Per-frame multiplier (0–1) for music and SFX, evaluated inside the
+   * animation loop. Callers that duck the score under a fade to black supply it
+   * here instead of writing a track volume every frame, which would re-render
+   * the whole player 60 times a second.
+   */
+  trackDuck?: (elapsed: number) => number
   onPlaybackEnd?: () => void
   onTimeUpdate?: (time: number, segmentId?: string) => void
 }
@@ -124,19 +131,26 @@ function isClipPlaybackActive(
   return elapsed < clipEnd
 }
 
+/** Ducking follows the picture, so it covers the score and the effects on it. */
+function isDuckedTrack(trackType: AudioClip['trackType']): boolean {
+  return trackType === 'music' || trackType === 'sfx'
+}
+
 function computeEffectiveClipVolume(
   clip: AudioClip,
   elapsed: number,
   baseVolume: number,
-  musicIntroFade: MusicIntroFadeConfig | undefined
+  musicIntroFade: MusicIntroFadeConfig | undefined,
+  duck = 1
 ): number {
+  const duckedVolume = isDuckedTrack(clip.trackType) ? baseVolume * duck : baseVolume
   if (clip.trackType !== 'music' || !musicIntroFade?.enabled) {
-    return baseVolume
+    return duckedVolume
   }
   const fadeAnchor = clip.fadeAnchorTime ?? clip.startTime
   const sinceFadeStart = elapsed - fadeAnchor
   const multiplier = computeMusicIntroFadeMultiplier(sinceFadeStart, musicIntroFade)
-  return baseVolume * multiplier
+  return duckedVolume * multiplier
 }
 
 function syncAudioClipAtTime(
@@ -146,7 +160,8 @@ function syncAudioClipAtTime(
   trackEnabled: TrackEnabled,
   trackVolumes: TrackVolumes,
   musicIntroFade: MusicIntroFadeConfig | undefined,
-  sceneDuration: number
+  sceneDuration: number,
+  duck = 1
 ): void {
   const isEnabled = trackEnabled[clip.trackType]
   const baseVolume = trackVolumes[clip.trackType]
@@ -156,7 +171,7 @@ function syncAudioClipAtTime(
     return
   }
 
-  audio.volume = computeEffectiveClipVolume(clip, elapsed, baseVolume, musicIntroFade)
+  audio.volume = computeEffectiveClipVolume(clip, elapsed, baseVolume, musicIntroFade, duck)
 }
 
 // ============================================================================
@@ -170,6 +185,7 @@ export function useTimelinePlayback({
   initialVolumes = {},
   initialEnabled = {},
   musicIntroFade,
+  trackDuck,
   onPlaybackEnd,
   onTimeUpdate,
 }: UseTimelinePlaybackOptions): UseTimelinePlaybackReturn {
@@ -207,6 +223,7 @@ export function useTimelinePlayback({
   const onPlaybackEndRef = useRef(onPlaybackEnd)
   const onTimeUpdateRef = useRef(onTimeUpdate)
   const musicIntroFadeRef = useRef(musicIntroFade)
+  const trackDuckRef = useRef(trackDuck)
   
   // Refs for play/pause stability - prevents callback recreation on every currentTime change
   const isPlayingRef = useRef(isPlaying)
@@ -222,12 +239,14 @@ export function useTimelinePlayback({
   useEffect(() => { currentTimeRef.current = currentTime }, [currentTime])
   useEffect(() => { onTimeUpdateRef.current = onTimeUpdate }, [onTimeUpdate])
   useEffect(() => { musicIntroFadeRef.current = musicIntroFade }, [musicIntroFade])
+  useEffect(() => { trackDuckRef.current = trackDuck }, [trackDuck])
 
   const applyVolumesAtElapsed = useCallback((elapsed: number) => {
     const currentAudioClips = audioClipsRef.current
     const currentTrackEnabled = trackEnabledRef.current
     const currentTrackVolumes = trackVolumesRef.current
     const fadeConfig = musicIntroFadeRef.current
+    const duck = trackDuckRef.current?.(elapsed) ?? 1
 
     currentAudioClips.forEach((clip) => {
       const key = `${clip.id}:${clip.url}`
@@ -240,7 +259,8 @@ export function useTimelinePlayback({
         currentTrackEnabled,
         currentTrackVolumes,
         fadeConfig,
-        sceneDurationRef.current
+        sceneDurationRef.current,
+        duck
       )
     })
   }, [])
@@ -342,6 +362,7 @@ export function useTimelinePlayback({
     const currentTrackEnabled = trackEnabledRef.current
     const currentTrackVolumes = trackVolumesRef.current
     const fadeConfig = musicIntroFadeRef.current
+    const duck = trackDuckRef.current?.(elapsed) ?? 1
     
     // Check if playback should end
     if (elapsed >= currentSceneDuration) {
@@ -371,7 +392,7 @@ export function useTimelinePlayback({
       
       // Apply volume (0 if track disabled); music intro fade ramps per clip start
       audio.volume = isEnabled
-        ? computeEffectiveClipVolume(clip, elapsed, baseVolume, fadeConfig)
+        ? computeEffectiveClipVolume(clip, elapsed, baseVolume, fadeConfig, duck)
         : 0
       
       if (!isEnabled) {
@@ -515,18 +536,15 @@ export function useTimelinePlayback({
   // Track Volume/Enable Controls
   // ============================================================================
   
+  // Both bail out on an unchanged value so a repeated set does not allocate new
+  // track state and re-render the player for nothing.
   const setTrackVolume = useCallback((track: keyof TrackVolumes, volume: number) => {
-    setTrackVolumes(prev => ({
-      ...prev,
-      [track]: Math.max(0, Math.min(1, volume)),
-    }))
+    const next = Math.max(0, Math.min(1, volume))
+    setTrackVolumes(prev => (prev[track] === next ? prev : { ...prev, [track]: next }))
   }, [])
   
   const setTrackEnabled = useCallback((track: keyof TrackEnabled, enabled: boolean) => {
-    setTrackEnabledState(prev => ({
-      ...prev,
-      [track]: enabled,
-    }))
+    setTrackEnabledState(prev => (prev[track] === enabled ? prev : { ...prev, [track]: enabled }))
   }, [])
   
   // ============================================================================

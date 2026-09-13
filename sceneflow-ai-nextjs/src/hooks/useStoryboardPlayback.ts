@@ -4,7 +4,7 @@
  * Storyboard gallery playback — builds beat-first timeline and delegates to useTimelinePlayback.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import {
   buildBeatFirstPlaybackTimeline,
@@ -15,7 +15,7 @@ import {
   getCurrentStoryboardVisualFrame,
   type StoryboardVisualFrame,
 } from '@/lib/storyboard/types'
-import { computeFrameFadeOut } from '@/lib/storyboard/animaticSceneFade'
+import { computeFadeOutDuckMultiplier } from '@/lib/storyboard/animaticSceneFade'
 import type { BeatDirectionTransition } from '@/lib/script/segmentTypes'
 import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
 import {
@@ -31,6 +31,7 @@ import {
 } from '@/hooks/useTimelinePlayback'
 import { DEFAULT_MIXER_AUDIO_TRACKS } from '@/lib/scene/mixerSettings'
 import { effectiveScreeningTrackVolume } from '@/lib/scene/screeningTrackVolume'
+import { getAudioDuration } from '@/lib/audio/audioDuration'
 
 export interface UseStoryboardPlaybackOptions {
   scene: Record<string, unknown> | null | undefined
@@ -138,6 +139,8 @@ export function useStoryboardPlayback({
 }: UseStoryboardPlaybackOptions): UseStoryboardPlaybackReturn {
   const [dynamicDurations, setDynamicDurations] = useState<Record<string, number>>({})
   const fetchingUrls = useRef<Set<string>>(new Set())
+  const measuredDurationsRef = useRef<Record<string, number>>({})
+  const durationFlushRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sceneRef = useRef(scene)
   sceneRef.current = scene
 
@@ -163,36 +166,75 @@ export function useStoryboardPlayback({
   useEffect(() => {
     setDynamicDurations({})
     fetchingUrls.current.clear()
+    measuredDurationsRef.current = {}
+    if (durationFlushRef.current) {
+      clearTimeout(durationFlushRef.current)
+      durationFlushRef.current = null
+    }
   }, [sceneAudioRevision])
+
+  /**
+   * Measured lengths are coalesced into one state write per tick. A scene can
+   * carry a dozen clips, and applying each as it resolved re-rendered the whole
+   * player once per clip.
+   */
+  const recordMeasuredDuration = useCallback((url: string, duration: number) => {
+    measuredDurationsRef.current[url] = duration
+    if (durationFlushRef.current) return
+    durationFlushRef.current = setTimeout(() => {
+      durationFlushRef.current = null
+      const batch = measuredDurationsRef.current
+      measuredDurationsRef.current = {}
+      setDynamicDurations((curr) => {
+        let changed = false
+        const next = { ...curr }
+        for (const [batchUrl, batchDuration] of Object.entries(batch)) {
+          const prev = next[batchUrl]
+          if (prev != null && prev >= batchDuration) continue
+          next[batchUrl] = batchDuration
+          changed = true
+        }
+        return changed ? next : curr
+      })
+    }, 0)
+  }, [])
+
+  useEffect(
+    () => () => {
+      if (durationFlushRef.current) clearTimeout(durationFlushRef.current)
+    },
+    []
+  )
 
   useEffect(() => {
     const activeScene = sceneRef.current
     if (!activeScene) return
 
+    let cancelled = false
+
     collectSceneAudioUrls(activeScene, language).forEach((url) => {
       if (fetchingUrls.current.has(url)) return
       fetchingUrls.current.add(url)
 
-      try {
-        const audio = new Audio(url)
-        audio.addEventListener('loadedmetadata', () => {
-          if (!audio.duration || audio.duration === Infinity || Number.isNaN(audio.duration)) {
-            return
-          }
-          setDynamicDurations((curr) => {
-            const prev = curr[url]
-            if (prev != null && prev >= audio.duration) return curr
-            return { ...curr, [url]: audio.duration }
-          })
+      // `getAudioDuration` cancels the preload once metadata lands. Probing
+      // through a raw audio element left every clip buffering its whole file,
+      // and those ghost elements piled up each time a scene was revisited.
+      getAudioDuration(url)
+        .then((duration) => {
+          if (cancelled || !Number.isFinite(duration) || duration <= 0) return
+          recordMeasuredDuration(url, duration)
         })
-        audio.addEventListener('error', () => {
+        .catch(() => {
+          // A stale or missing clip keeps its authored duration; allow a retry.
+          fetchingUrls.current.delete(url)
           console.warn(`[useStoryboardPlayback] Failed to load audio metadata for URL: ${url}`)
         })
-      } catch (err) {
-        console.warn(`[useStoryboardPlayback] Failed to create Audio for URL: ${url}`, err)
-      }
     })
-  }, [sceneAudioRevision, language])
+
+    return () => {
+      cancelled = true
+    }
+  }, [sceneAudioRevision, language, recordMeasuredDuration])
 
   const beatPlayback = useMemo(() => {
     const activeScene = sceneRef.current
@@ -294,6 +336,13 @@ export function useStoryboardPlayback({
   // scored after music cues landed.
   const hasPlayableMusic = useMemo(() => collectSceneMusicUrls(scene).length > 0, [scene])
 
+  // Derived as booleans so a new scene object with the same audio does not
+  // re-run the enable effect, which allocates fresh track state on every call.
+  const hasPlayableSfx = useMemo(
+    () => Array.isArray(scene?.sfxAudio) && scene.sfxAudio.length > 0,
+    [scene]
+  )
+
   const effectiveDialogueVolume = effectiveScreeningTrackVolume({
     muted: isMuted,
     master: volume,
@@ -310,6 +359,20 @@ export function useStoryboardPlayback({
     trackVolume: sfxVolume,
   })
 
+  const visualFramesRef = useRef(visualFrames)
+  visualFramesRef.current = visualFrames
+
+  /**
+   * Runs inside the playback loop rather than through React state: writing a
+   * track volume per frame re-rendered the whole player 60 times a second.
+   */
+  const musicAndSfxDuck = useCallback((elapsed: number) => {
+    const frame = getCurrentStoryboardVisualFrame(visualFramesRef.current, elapsed)
+    if (!frame) return 1
+    const fadeOutSec = frame.transitionOut === 'fade' ? (frame.transitionOutSec ?? 0) : 0
+    return computeFadeOutDuckMultiplier(elapsed - frame.startTime, frame.duration, fadeOutSec)
+  }, [])
+
   const {
     isPlaying,
     currentTime,
@@ -324,6 +387,7 @@ export function useStoryboardPlayback({
     sceneDuration,
     audioClips: timelineAudioClips,
     visualClips,
+    trackDuck: musicAndSfxDuck,
     initialVolumes: {
       voiceover: effectiveDialogueVolume,
       dialogue: effectiveDialogueVolume,
@@ -334,7 +398,7 @@ export function useStoryboardPlayback({
       voiceover: true,
       dialogue: true,
       music: hasPlayableMusic,
-      sfx: Array.isArray(scene?.sfxAudio) && scene!.sfxAudio.length > 0,
+      sfx: hasPlayableSfx,
     },
     musicIntroFade,
     onPlaybackEnd,
@@ -362,33 +426,16 @@ export function useStoryboardPlayback({
   }, [clipTimelineKey, seekTo])
 
   useEffect(() => {
-    const frame = getCurrentStoryboardVisualFrame(visualFrames, currentTime)
-    // Music and SFX duck under a fade to black so the picture and the score
-    // reach the boundary together. A scene that cuts away has no black to duck
-    // under, so it stays at level right to the last sample.
-    const fadeOutSec = frame?.transitionOut === 'fade' ? (frame.transitionOutSec ?? 0) : 0
-    const duck =
-      frame && fadeOutSec > 0
-        ? 1 -
-          computeFrameFadeOut(currentTime - frame.startTime, frame.duration, fadeOutSec) * 0.75
-        : 1
     setTrackVolume('voiceover', effectiveDialogueVolume)
     setTrackVolume('dialogue', effectiveDialogueVolume)
-    setTrackVolume('music', effectiveMusicVolume * duck)
-    setTrackVolume('sfx', effectiveSfxVolume * duck)
-  }, [
-    effectiveDialogueVolume,
-    effectiveMusicVolume,
-    effectiveSfxVolume,
-    setTrackVolume,
-    visualFrames,
-    currentTime,
-  ])
+    setTrackVolume('music', effectiveMusicVolume)
+    setTrackVolume('sfx', effectiveSfxVolume)
+  }, [effectiveDialogueVolume, effectiveMusicVolume, effectiveSfxVolume, setTrackVolume])
 
   useEffect(() => {
     setTrackEnabled('music', hasPlayableMusic)
-    setTrackEnabled('sfx', Array.isArray(scene?.sfxAudio) && (scene?.sfxAudio?.length ?? 0) > 0)
-  }, [scene, hasPlayableMusic, setTrackEnabled])
+    setTrackEnabled('sfx', hasPlayableSfx)
+  }, [hasPlayableMusic, hasPlayableSfx, setTrackEnabled])
 
   const currentVisualFrame = useMemo(
     () => getCurrentStoryboardVisualFrame(visualFrames, currentTime),

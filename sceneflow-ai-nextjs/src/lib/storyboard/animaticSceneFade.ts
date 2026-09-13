@@ -24,6 +24,24 @@ export function computeFrameFadeOut(
   return Math.min(1, (timeIntoFrame - fadeStart) / fadeDurationSec)
 }
 
+/** How far music and SFX drop at the bottom of a fade to black. */
+const FADE_OUT_DUCK_DEPTH = 0.75
+
+/**
+ * Level multiplier (0–1) for music and SFX while a frame fades to black, so the
+ * picture and the score reach the boundary together. A frame that cuts away has
+ * no fade to duck under and stays at level.
+ */
+export function computeFadeOutDuckMultiplier(
+  timeIntoFrame: number,
+  frameDurationSec: number,
+  fadeDurationSec: number
+): number {
+  if (fadeDurationSec <= 0) return 1
+  const fadeOut = computeFrameFadeOut(timeIntoFrame, frameDurationSec, fadeDurationSec)
+  return 1 - fadeOut * FADE_OUT_DUCK_DEPTH
+}
+
 /**
  * Fade-from-black amount at the start of a scene frame.
  * Skip when idle poster already showed this start frame (press-play on same scene).
