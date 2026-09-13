@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useMemo, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   MapPin,
   Sparkles,
@@ -26,9 +27,14 @@ import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
-import { LocationReference } from '@/types/visionReferences'
+import { LocationReference, LocationVersion } from '@/types/visionReferences'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
+import { getSceneBeats } from '@/lib/script/beatMigration'
 import { LocationPromptBuilder, LocationPromptPayload } from './LocationPromptBuilder'
+import {
+  mergeLocationVersionSyncDiff,
+  type LocationVersionSyncDiff,
+} from '@/lib/vision/locationScriptSync'
 import {
   DeferredImageSkeleton,
   isDeferredImageUrl,
@@ -39,6 +45,31 @@ import { isDirectionStale } from '@/lib/utils/contentHash'
 
 // Scene heading regex for INT/EXT extraction
 const SCENE_CODE_REGEX = /^(INT\.\/EXT\.|EXT\.\/INT\.|INT\.\/EXT|EXT\.\/INT|INT\. |EXT\. |INT\/EXT|EXT\/INT|INT\.|EXT\.|INT|EXT)\s*(.*)$/i
+
+function buildScenesPayloadForLocationVersions(scenes: LocationLibraryProps['scenes']) {
+  return scenes.map((s, idx) => ({
+    sceneNumber: idx + 1,
+    heading: typeof s.heading === 'string' ? s.heading : s.heading?.text,
+    action: s.action,
+    visualDescription: s.visualDescription,
+    locationDescription: s.sceneDirection?.scene?.location,
+    atmosphere: s.sceneDirection?.scene?.atmosphere,
+    beats: (() => {
+      const beats = getSceneBeats(s as Record<string, unknown>)
+      return beats.length > 0
+        ? beats.map((b) => ({
+            beatId: b.beatId,
+            kind: b.kind,
+            actionDescription: b.actionDescription?.trim() || undefined,
+            frozenMoment: b.beatDirection?.frozenMoment,
+            propInteraction: b.beatDirection?.propInteraction,
+            lightingAccent: b.beatDirection?.lightingAccent,
+            blocking: b.beatDirection?.blocking,
+          }))
+        : undefined
+    })(),
+  }))
+}
 
 function locationHasOutdatedDirection(
   loc: LocationReference,
@@ -60,12 +91,35 @@ function locationHasOutdatedDirection(
   return false
 }
 
+function locationVersionGeneratingId(locationId: string, versionId: string): string {
+  return `${locationId}::${versionId}`
+}
+
+function scenesForLocation(
+  location: LocationReference,
+  scenes: LocationLibraryProps['scenes']
+): LocationLibraryProps['scenes'] {
+  const matched = scenes.filter((scene, idx) => {
+    const sceneNumber = idx + 1
+    if (location.sceneNumbers?.includes(sceneNumber)) return true
+    const heading = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text
+    if (!heading) return false
+    return extractLocation(heading) === location.location
+  })
+  return matched.length > 0 ? matched : scenes
+}
+
 interface LocationLibraryProps {
   /** Current location references */
   locationReferences: LocationReference[]
   /** All scenes from the script */
   scenes: Array<{
     heading?: string | { text?: string }
+    action?: string
+    visualDescription?: string
+    dialogue?: Array<{ character?: string; line?: string }>
+    beats?: unknown[]
+    segments?: unknown[]
     sceneDirection?: {
       scene?: {
         location?: string
@@ -90,6 +144,10 @@ interface LocationLibraryProps {
   onEditLocationImage?: (locationId: string, imageUrl: string) => void
   /** Callback to upload location reference image */
   onUploadLocationImage?: (locationId: string, file: File) => void
+  /** Generate a set-state version still from the base location image */
+  onGenerateLocationVersion?: (location: LocationReference, version: LocationVersion) => void
+  /** Upload an image onto a nested location version */
+  onUploadLocationVersionImage?: (locationId: string, versionId: string, file: File) => void
   /** Whether a location image is currently generating */
   generatingLocationId?: string | null
   /** Screenplay context for prompt builder enrichment */
@@ -164,10 +222,13 @@ export function LocationLibrary({
   onGenerateLocationImageWithPrompt,
   onEditLocationImage,
   onUploadLocationImage,
+  onGenerateLocationVersion,
+  onUploadLocationVersionImage,
   generatingLocationId,
   screenplayContext,
   splitLayout = false,
 }: LocationLibraryProps) {
+  const t = useTranslations('production.direction.locationLibrary')
   const [expandedLocationId, setExpandedLocationId] = useState<string | null>(null)
   const [editingDescriptionId, setEditingDescriptionId] = useState<string | null>(null)
   const [descriptionText, setDescriptionText] = useState('')
@@ -176,6 +237,7 @@ export function LocationLibrary({
   const [isExtracting, setIsExtracting] = useState(false)
   const [uploadingForId, setUploadingForId] = useState<string | null>(null)
   const [promptBuilderOpenFor, setPromptBuilderOpenFor] = useState<string | null>(null)
+  const [analyzingLocationId, setAnalyzingLocationId] = useState<string | null>(null)
 
   /**
    * Extract unique locations from all scene headings.
@@ -328,6 +390,135 @@ export function LocationLibrary({
       }
     }
     e.target.value = ''
+  }
+
+  const handleVersionFileUpload = async (
+    locationId: string,
+    versionId: string,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (onUploadLocationVersionImage) {
+      setUploadingForId(locationVersionGeneratingId(locationId, versionId))
+      try {
+        await onUploadLocationVersionImage(locationId, versionId, file)
+      } finally {
+        setUploadingForId(null)
+      }
+    }
+    e.target.value = ''
+  }
+
+  const handleSuggestVersions = async (location: LocationReference) => {
+    if (!isDisplayableImageUrl(location.imageUrl)) {
+      toast.info(t('baseImageRequired'))
+      return
+    }
+    if (scenes.length === 0) {
+      toast.error('No scenes available for analysis')
+      return
+    }
+    setAnalyzingLocationId(location.id)
+    try {
+      const response = await fetch('/api/vision/suggest-location-versions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: {
+            id: location.id,
+            location: location.location,
+            description: location.description,
+            existingVersions: (location.versions || []).map((v) => ({
+              name: v.name,
+              stateNotes: v.stateNotes,
+              sceneNumbers: v.sceneNumbers,
+            })),
+          },
+          scenes: buildScenesPayloadForLocationVersions(scenesForLocation(location, scenes)),
+          screenplayContext,
+        }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to suggest location versions')
+      const suggestions = Array.isArray(data.suggestions) ? data.suggestions : []
+      if (suggestions.length === 0) {
+        toast.info('No lasting set changes found')
+        return
+      }
+      const now = new Date().toISOString()
+      const existingNames = new Set((location.versions || []).map((v) => v.name.toLowerCase()))
+      const newVersions: LocationVersion[] = suggestions
+        .filter((s: { name?: string }) => s.name && !existingNames.has(String(s.name).toLowerCase()))
+        .map((s: any, i: number) => ({
+          id: `loc-ver-${Date.now()}-${i}`,
+          name: s.name,
+          stateNotes: s.stateNotes || '',
+          sceneNumbers: s.sceneNumbers || [],
+          appliesFrom: s.appliesFrom,
+          reason: s.reason,
+          createdAt: now,
+          needsImageRegen: true,
+        }))
+      if (newVersions.length === 0) {
+        toast.info('All suggested versions already exist')
+        return
+      }
+      onUpdateLocations(
+        mergedLocations.map((loc) =>
+          loc.id === location.id
+            ? { ...loc, versions: [...(loc.versions || []), ...newVersions] }
+            : loc
+        )
+      )
+      toast.success(t('suggestedCount', { count: newVersions.length }))
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to suggest location versions')
+    } finally {
+      setAnalyzingLocationId(null)
+    }
+  }
+
+  const handleSyncVersions = async (location: LocationReference) => {
+    if (!isDisplayableImageUrl(location.imageUrl)) {
+      toast.info(t('baseImageRequired'))
+      return
+    }
+    if (scenes.length === 0) {
+      toast.error('No scenes available for analysis')
+      return
+    }
+    setAnalyzingLocationId(location.id)
+    try {
+      const response = await fetch('/api/vision/sync-location-versions-from-script', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: {
+            id: location.id,
+            location: location.location,
+            description: location.description,
+            versions: location.versions || [],
+          },
+          scenes: buildScenesPayloadForLocationVersions(scenesForLocation(location, scenes)),
+          screenplayContext,
+        }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to sync location versions')
+      const diff = data.diff as LocationVersionSyncDiff
+      const { versions } = mergeLocationVersionSyncDiff(location.versions || [], diff)
+      onUpdateLocations(
+        mergedLocations.map((loc) =>
+          loc.id === location.id ? { ...loc, versions: versions as LocationVersion[] } : loc
+        )
+      )
+      toast.success(t('synced'))
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to sync location versions')
+    } finally {
+      setAnalyzingLocationId(null)
+    }
   }
 
   return (
@@ -678,6 +869,143 @@ export function LocationLibrary({
                       </div>
 
                       {!splitLayout && locationImagePanel}
+
+                      <div className="pt-2 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[11px] font-medium text-slate-300">{t('versions')}</p>
+                          <div className="flex gap-1">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleSuggestVersions(loc)
+                              }}
+                              disabled={
+                                analyzingLocationId === loc.id ||
+                                scenes.length === 0 ||
+                                !hasImage
+                              }
+                              className="text-[10px] px-1.5 py-0.5 rounded text-cyan-300 hover:bg-cyan-500/10 disabled:opacity-50"
+                            >
+                              {analyzingLocationId === loc.id ? t('analyzing') : t('suggestFromScript')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleSyncVersions(loc)
+                              }}
+                              disabled={
+                                analyzingLocationId === loc.id ||
+                                scenes.length === 0 ||
+                                !hasImage
+                              }
+                              className="text-[10px] px-1.5 py-0.5 rounded text-cyan-300 hover:bg-cyan-500/10 disabled:opacity-50"
+                            >
+                              {t('syncFromScript')}
+                            </button>
+                          </div>
+                        </div>
+                        {(loc.versions || []).length === 0 ? (
+                          <p className="text-[10px] text-slate-500">{t('noVersions')}</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {(loc.versions || []).map((version) => {
+                              const versionGenerating =
+                                generatingLocationId === locationVersionGeneratingId(loc.id, version.id)
+                              const versionUploading =
+                                uploadingForId === locationVersionGeneratingId(loc.id, version.id)
+                              const versionHasImage = isDisplayableImageUrl(version.imageUrl)
+                              return (
+                                <div
+                                  key={version.id}
+                                  className="rounded border border-slate-700 bg-slate-900/40 p-2 space-y-1.5"
+                                >
+                                  <div className="flex items-start gap-2">
+                                    <div className="w-16 h-10 rounded overflow-hidden bg-slate-800 flex-shrink-0">
+                                      {versionHasImage ? (
+                                        <img
+                                          src={version.imageUrl}
+                                          alt={version.name}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                          <ImageIcon className="w-4 h-4 text-slate-500" />
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-[11px] font-medium text-white truncate">{version.name}</p>
+                                      <p className="text-[10px] text-slate-400 line-clamp-2">
+                                        {version.stateNotes}
+                                      </p>
+                                      {version.appliesFrom && (
+                                        <p className="text-[10px] text-slate-500">
+                                          {t('appliesFrom', {
+                                            scene: version.appliesFrom.sceneNumber,
+                                            beat: version.appliesFrom.beatIndex + 1,
+                                          })}
+                                        </p>
+                                      )}
+                                      {version.needsImageRegen && (
+                                        <span className="text-[9px] text-amber-300">{t('needsRegen')}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-1.5">
+                                    <input
+                                      id={`location-version-upload-${version.id}`}
+                                      type="file"
+                                      accept="image/*"
+                                      className="hidden"
+                                      onChange={(e) => handleVersionFileUpload(loc.id, version.id, e)}
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        if (!isDisplayableImageUrl(loc.imageUrl)) {
+                                          toast.info(t('baseImageRequired'))
+                                          return
+                                        }
+                                        onGenerateLocationVersion?.(loc, version)
+                                      }}
+                                      disabled={versionGenerating || !onGenerateLocationVersion}
+                                      className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-600/40 text-indigo-100 hover:bg-indigo-600/70 disabled:opacity-50 flex items-center gap-1"
+                                    >
+                                      {versionGenerating ? (
+                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                      ) : (
+                                        <Zap className="w-3 h-3" />
+                                      )}
+                                      {t('generateFromBase')}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        document
+                                          .getElementById(`location-version-upload-${version.id}`)
+                                          ?.click()
+                                      }}
+                                      disabled={versionUploading || !onUploadLocationVersionImage}
+                                      className="text-[10px] px-1.5 py-0.5 rounded text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-50 flex items-center gap-1"
+                                    >
+                                      {versionUploading ? (
+                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                      ) : (
+                                        <Upload className="w-3 h-3" />
+                                      )}
+                                      {t('uploadVersion')}
+                                    </button>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
 
                       <div className="flex justify-end pt-1">
                         <button

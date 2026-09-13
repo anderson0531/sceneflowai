@@ -84,6 +84,11 @@ import {
   toBeatReferenceSelection,
 } from '@/lib/vision/beatFrameGenerationContext'
 import {
+  locationReferenceForGeneration,
+  patchLocationVersion,
+  withStaleVersionsAfterBaseChange,
+} from '@/lib/vision/locationVersionResolve'
+import {
   applyStartFrameUrlToProductionSegments,
   resolveEffectiveStartFrameUrl,
   shouldAttachBeatStartFrame,
@@ -327,7 +332,7 @@ import {
   upsertPublishingState,
 } from '@/lib/publish/publishingState'
 import type { PublishingLibraryTab } from '@/types/publishingAssets'
-import { VisualReference, VisualReferenceType, VisionReferencesPayload, LocationReference } from '@/types/visionReferences'
+import { VisualReference, VisualReferenceType, VisionReferencesPayload, LocationReference, LocationVersion } from '@/types/visionReferences'
 import type { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production/types'
 import { patchMixerTrackVolumes } from '@/lib/scene/screeningTrackVolume'
 import { applyIntelligentDefaults } from '@/lib/audio/anchoredTiming'
@@ -3087,6 +3092,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         name: string
         imageUrl?: string
         description?: string
+        boundVersionId?: string
       }>
       /** Scene direction for intelligent prompt building (avoids fallback to PromptEnhancer) */
       sceneDirection?: any
@@ -3269,7 +3275,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               ? (options.selectedLocationReferences || []).map(loc => ({
                   name: loc.name,
                   description: loc.description,
-                  imageUrl: loc.imageUrl
+                  imageUrl: loc.imageUrl,
+                  boundVersionId: loc.boundVersionId,
                 }))
               : undefined
           })
@@ -9952,7 +9959,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Update location with the generated image
       const updatedLocations = locationReferences.map(ref =>
         ref.id === location.id
-          ? { ...ref, imageUrl: result.imageUrl, generationPrompt: result.prompt }
+          ? withStaleVersionsAfterBaseChange({
+              ...ref,
+              imageUrl: result.imageUrl,
+              generationPrompt: result.prompt,
+            })
           : ref
       )
       setLocationReferences(updatedLocations)
@@ -10050,7 +10061,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       const updatedLocations = locationReferences.map(ref =>
         ref.id === location.id
-          ? { ...ref, imageUrl: result.imageUrl, generationPrompt: result.prompt }
+          ? withStaleVersionsAfterBaseChange({
+              ...ref,
+              imageUrl: result.imageUrl,
+              generationPrompt: result.prompt,
+            })
           : ref
       )
       setLocationReferences(updatedLocations)
@@ -10098,7 +10113,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Update location with the uploaded image
       const updatedLocations = locationReferences.map(ref =>
-        ref.id === locationId ? { ...ref, imageUrl } : ref
+        ref.id === locationId
+          ? withStaleVersionsAfterBaseChange({ ...ref, imageUrl })
+          : ref
       )
       setLocationReferences(updatedLocations)
       locationReferencesRef.current = updatedLocations
@@ -10109,6 +10126,123 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     } catch (error: any) {
       console.error('[handleUploadLocationImage] Error:', error)
       try { const { toast } = require('sonner'); toast.error('Failed to upload location image') } catch {}
+    }
+  }
+
+  const handleGenerateLocationVersion = async (
+    location: LocationReference,
+    version: LocationVersion
+  ) => {
+    if (!location?.id || !version?.id) return
+    if (!location.imageUrl) {
+      try { const { toast } = require('sonner'); toast.error('Generate the base location image first') } catch {}
+      return
+    }
+
+    setGeneratingLocationId(`${location.id}::${version.id}`)
+    const locationLabel = `${location.location} — ${version.name}`
+    overlayStore.show(
+      `Generating ${locationLabel} from base...`,
+      25,
+      'image-generation'
+    )
+
+    try {
+      overlayStore.setPhase(0)
+      overlayStore.setStatus(`Preparing set-state version for ${locationLabel}...`)
+
+      const response = await fetch('/api/vision/generate-location', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          locationName: location.location,
+          intExt: location.intExt,
+          timeOfDay: location.timeOfDay,
+          description: location.description,
+          baseImageUrl: location.imageUrl,
+          stateNotes: version.stateNotes,
+          versionId: version.id,
+        }),
+      })
+
+      overlayStore.setPhase(2)
+      overlayStore.setProgress(60)
+      overlayStore.setStatus('Rendering set-state version...')
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to generate location version')
+      }
+
+      const result = await response.json()
+      overlayStore.setPhase(3)
+      overlayStore.setProgress(85)
+      overlayStore.setStatus('Saving location version...')
+
+      const updatedLocations = locationReferences.map((ref) =>
+        ref.id === location.id
+          ? patchLocationVersion(ref, version.id, {
+              imageUrl: result.imageUrl,
+              generationPrompt: result.prompt,
+              needsImageRegen: false,
+            })
+          : ref
+      )
+      setLocationReferences(updatedLocations)
+      locationReferencesRef.current = updatedLocations
+      await persistLocationReferences(updatedLocations)
+
+      overlayStore.setProgress(100)
+      overlayStore.setStatus(`${locationLabel} generated!`)
+      await new Promise((resolve) => setTimeout(resolve, 800))
+      try { const { toast } = require('sonner'); toast.success(`Generated version for ${locationLabel}`) } catch {}
+    } catch (error: any) {
+      console.error('[handleGenerateLocationVersion] Error:', error)
+      try { const { toast } = require('sonner'); toast.error(error.message || 'Failed to generate location version') } catch {}
+    } finally {
+      overlayStore.hide()
+      setGeneratingLocationId(null)
+    }
+  }
+
+  const handleUploadLocationVersionImage = async (
+    locationId: string,
+    versionId: string,
+    file: File
+  ) => {
+    const location = locationReferences.find((ref) => ref.id === locationId)
+    if (!location) return
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('projectId', projectId)
+      formData.append('type', 'location-reference')
+
+      const uploadRes = await fetch('/api/upload/image', {
+        method: 'POST',
+        body: formData,
+      })
+      if (!uploadRes.ok) throw new Error('Upload failed')
+      const { imageUrl } = await uploadRes.json()
+      if (!imageUrl) throw new Error('Upload failed')
+
+      const updatedLocations = locationReferences.map((ref) =>
+        ref.id === locationId
+          ? patchLocationVersion(ref, versionId, {
+              imageUrl,
+              needsImageRegen: false,
+            })
+          : ref
+      )
+      setLocationReferences(updatedLocations)
+      locationReferencesRef.current = updatedLocations
+      await persistLocationReferences(updatedLocations)
+      try { const { toast } = require('sonner'); toast.success(`Uploaded version image for ${location.location}`) } catch {}
+    } catch (error: any) {
+      console.error('[handleUploadLocationVersionImage] Error:', error)
+      try { const { toast } = require('sonner'); toast.error('Failed to upload location version image') } catch {}
     }
   }
 
@@ -10678,7 +10812,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         explicitRefs?.locationReferences?.length
           ? explicitRefs.locationReferences
           : options.locationRefId
-            ? locationReferences.filter((l) => l.id === options.locationRefId)
+            ? locationReferences
+                .filter((l) => l.id === options.locationRefId)
+                .map((l) => locationReferenceForGeneration(l, options.locationVersionId))
             : []
 
       const objRefs =
@@ -15536,6 +15672,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         onGenerateLocationImage={handleGenerateLocationImage}
         onGenerateLocationImageWithPrompt={handleGenerateLocationImageWithPrompt}
         onUploadLocationImage={handleUploadLocationImage}
+        onGenerateLocationVersion={handleGenerateLocationVersion}
+        onUploadLocationVersionImage={handleUploadLocationVersionImage}
         generatingLocationId={generatingLocationId}
         onExpressGenerateReferences={handleExpressGenerateReferences}
         isExpressGeneratingReferences={isExpressGeneratingReferences}

@@ -5,6 +5,7 @@ import { getCreditCost } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
 import {
   generateLocationReferenceImage,
+  generateLocationVersionReferenceImage,
   ReferenceGenerationError,
   type ReferenceAspectRatio,
 } from '@/lib/vision/referenceExpress/generateReferenceImage'
@@ -49,6 +50,12 @@ interface GenerateLocationImageRequest {
   additionalDetails?: string
   /** Whether the prompt was composed in advanced/raw mode */
   rawMode?: boolean
+  /** Base location establishing shot — required to generate a set-state version. */
+  baseImageUrl?: string
+  /** Full post-change set state to bake into the version still. */
+  stateNotes?: string
+  /** Existing version id (storage path only). */
+  versionId?: string
 }
 
 /**
@@ -91,17 +98,48 @@ export async function POST(req: NextRequest) {
 
     const locale = await resolveRequestStoryLocale(req, { projectId: body.projectId })
 
-    const { imageUrl, prompt, creditCost } = await generateLocationReferenceImage({
-      userId,
-      projectId: body.projectId,
-      locationName: body.locationName,
-      intExt: body.intExt,
-      timeOfDay: body.timeOfDay,
-      description: body.description,
-      aspectRatio: body.aspectRatio,
-      locationPrompt: body.locationPrompt,
-      locale,
-    })
+    const isVersion =
+      Boolean(body.baseImageUrl?.trim()) || Boolean(body.stateNotes?.trim()) || Boolean(body.versionId)
+
+    if (isVersion && !body.baseImageUrl?.trim()) {
+      return NextResponse.json(
+        { error: 'A base location image is required to generate a set-state version' },
+        { status: 400 }
+      )
+    }
+    if (isVersion && !body.stateNotes?.trim()) {
+      return NextResponse.json(
+        { error: 'stateNotes is required to generate a set-state version' },
+        { status: 400 }
+      )
+    }
+
+    const { imageUrl, prompt, creditCost } = isVersion
+      ? await generateLocationVersionReferenceImage({
+          userId,
+          projectId: body.projectId,
+          locationName: body.locationName,
+          intExt: body.intExt,
+          timeOfDay: body.timeOfDay,
+          description: body.description,
+          aspectRatio: body.aspectRatio,
+          locationPrompt: body.locationPrompt,
+          locale,
+          baseImageUrl: body.baseImageUrl!,
+          stateNotes: body.stateNotes!,
+          versionId: body.versionId,
+        })
+      : await generateLocationReferenceImage({
+          userId,
+          projectId: body.projectId,
+          locationName: body.locationName,
+          intExt: body.intExt,
+          timeOfDay: body.timeOfDay,
+          description: body.description,
+          aspectRatio: body.aspectRatio,
+          locationPrompt: body.locationPrompt,
+          locale,
+        })
 
     console.log(`[Location Generation] Success: ${imageUrl}`)
 

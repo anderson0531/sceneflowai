@@ -30,6 +30,8 @@ export interface BeatSplitRecommendation {
 export interface BeatReferenceSelection {
   characterIds: string[]
   locationRefId?: string | null
+  /** Nested set-state version of `locationRefId`. Null/absent = base establishing shot. */
+  locationVersionId?: string | null
   objectRefIds: string[]
   characterWardrobes?: Array<{ characterId: string; wardrobeId: string }>
   resolvedAt?: string

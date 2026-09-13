@@ -113,6 +113,38 @@ describe('collectKlingElementSources bind elements', () => {
     })
   })
 
+  it('attaches a location version still instead of the intact base', () => {
+    const sources = collectKlingElementSources({
+      locationRefId: 'loc-alley',
+      locationVersionId: 'ver-blast',
+      locationReferences: [
+        {
+          id: 'loc-alley',
+          location: 'ALLEY',
+          locationDisplay: 'INT. ALLEY - NIGHT',
+          imageUrl: 'https://cdn.example.com/alley.jpg',
+          sourceSceneIndex: 0,
+          sourceSceneHeading: 'INT. ALLEY - NIGHT',
+          pinnedAt: '2026-01-01T00:00:00.000Z',
+          versions: [
+            {
+              id: 'ver-blast',
+              name: 'Blown storefront',
+              stateNotes: 'Storefront windows shattered',
+              imageUrl: 'https://cdn.example.com/alley-blast.jpg',
+              createdAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+        },
+      ],
+    })
+
+    expect(sources).toHaveLength(1)
+    expect(sources[0].imageUrl).toBe('https://cdn.example.com/alley-blast.jpg')
+    expect(sources[0].frontalImageUrl).toBe('https://cdn.example.com/alley-blast.jpg')
+    expect(sources[0].id).toBe('loc-alley')
+  })
+
   it('reuses cached wardrobe klingElementId without re-registering', () => {
     const sources = collectKlingElementSources({
       characters: [

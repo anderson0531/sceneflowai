@@ -27,6 +27,7 @@ export interface PreVisFramePromptContext {
   selectedWardrobes: Record<string, string>
   wardrobeTextOverrides: Record<string, string>
   locationRefId: string | null
+  locationVersionId: string | null
   objectRefIds: string[]
   warnings?: string[]
   beat?: SceneBeat
@@ -163,6 +164,7 @@ export function resolvePreVisFramePromptContext(args: {
       selectedWardrobes,
       wardrobeTextOverrides: buildWardrobeTextMap(selectedCharacterNames, projectCharacters, selectedWardrobes),
       locationRefId: null,
+      locationVersionId: null,
       objectRefIds: [],
     }
   }
@@ -233,6 +235,10 @@ export function resolvePreVisFramePromptContext(args: {
           filledWardrobes
         ),
         locationRefId: saved?.locationRefId ?? auto.locationRefId ?? null,
+        locationVersionId:
+          saved?.source === 'user'
+            ? saved.locationVersionId ?? null
+            : auto.locationVersionId ?? null,
         objectRefIds: saved?.objectRefIds?.length ? saved.objectRefIds : auto.objectRefIds,
         warnings: auto.warnings,
         beat,
@@ -267,6 +273,7 @@ export function resolvePreVisFramePromptContext(args: {
       selectedWardrobes,
       wardrobeTextOverrides: buildWardrobeTextMap(selectedCharacterNames, projectCharacters, selectedWardrobes),
       locationRefId: null,
+      locationVersionId: null,
       objectRefIds: [],
     }
   }
@@ -308,6 +315,7 @@ export function resolvePreVisFramePromptContext(args: {
     selectedWardrobes,
     wardrobeTextOverrides: buildWardrobeTextMap(selectedCharacterNames, projectCharacters, selectedWardrobes),
     locationRefId: null,
+    locationVersionId: null,
     objectRefIds: [],
   }
 }

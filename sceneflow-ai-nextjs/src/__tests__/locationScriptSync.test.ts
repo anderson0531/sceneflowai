@@ -1,0 +1,117 @@
+import { describe, expect, it } from 'vitest'
+import {
+  buildLocationVersionSyncDiff,
+  enrichSuggestionsWithBeatLocationState,
+  mergeLocationVersionSyncDiff,
+  accumulateStateNotes,
+} from '@/lib/vision/locationScriptSync'
+
+describe('locationScriptSync', () => {
+  const existing = [
+    {
+      id: 'ver-door',
+      name: 'Exploded front door',
+      stateNotes: 'Front door blown out, splinters on the floor',
+      sceneNumbers: [1],
+      appliesFrom: { sceneNumber: 1, beatIndex: 1, beatId: 'b1' },
+      imageUrl: 'https://blob.example/door.png',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    },
+    {
+      id: 'ver-flood',
+      name: 'Flooded kitchen',
+      stateNotes: 'Kitchen standing water around the island',
+      sceneNumbers: [4],
+      imageUrl: 'https://blob.example/flood.png',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    },
+  ]
+
+  it('matches suggestions by name before creating duplicates', () => {
+    const diff = buildLocationVersionSyncDiff('loc-1', 'FOYER', existing, [
+      {
+        name: 'exploded front door',
+        stateNotes: 'Front door blown out, splinters on the floor',
+        sceneNumbers: [1, 2],
+        reason: 'Same state, more scenes',
+      },
+    ])
+    expect(diff.creates).toHaveLength(0)
+    expect(diff.updates).toHaveLength(1)
+    expect(diff.updates[0].imageStale).toBe(false)
+    expect(diff.updates[0].patch.sceneNumbers).toEqual([1, 2])
+    expect(diff.obsolete.map((o) => o.versionId)).toContain('ver-flood')
+  })
+
+  it('marks image stale when stateNotes change', () => {
+    const diff = buildLocationVersionSyncDiff('loc-1', 'FOYER', existing, [
+      {
+        name: 'Exploded front door',
+        stateNotes: 'Front door blown out, foyer on fire, ceiling collapsed',
+        sceneNumbers: [1],
+        reason: 'Fire after the blast',
+      },
+      {
+        name: 'Flooded kitchen',
+        stateNotes: 'Kitchen standing water around the island',
+        sceneNumbers: [4],
+        reason: 'Unchanged',
+      },
+    ])
+    const door = diff.updates.find((u) => u.versionId === 'ver-door')
+    expect(door?.imageStale).toBe(true)
+    expect(door?.patch.stateNotes).toMatch(/fire/i)
+  })
+
+  it('creates new versions and soft-obsoletes unmatched without deleting images', () => {
+    const diff = buildLocationVersionSyncDiff('loc-1', 'FOYER', existing, [
+      {
+        name: 'Boarded windows',
+        stateNotes: 'Windows boarded with plywood',
+        sceneNumbers: [3],
+        reason: 'Time jump',
+      },
+    ])
+    expect(diff.creates).toHaveLength(1)
+    const { versions } = mergeLocationVersionSyncDiff(existing, diff)
+    const boarded = versions.find((v) => v.name === 'Boarded windows')
+    expect(boarded?.needsImageRegen).toBe(true)
+    const door = versions.find((v) => v.id === 'ver-door')
+    expect(door?.sceneNumbers).toEqual([])
+    expect(door?.imageUrl).toBe('https://blob.example/door.png')
+  })
+
+  it('accumulates earlier lasting damage into later state notes', () => {
+    const accumulated = accumulateStateNotes([
+      { stateNotes: 'Front door exploded, missing from the frame' },
+      { stateNotes: 'The room is on fire' },
+    ])
+    expect(accumulated[1].toLowerCase()).toContain('door')
+    expect(accumulated[1].toLowerCase()).toMatch(/fire/)
+  })
+
+  it('enriches missing stateNotes from beat text', () => {
+    const suggestions = enrichSuggestionsWithBeatLocationState(
+      [
+        {
+          name: 'Foyer aftermath',
+          stateNotes: '',
+          sceneNumbers: [1],
+          reason: 'Main look',
+        },
+      ],
+      [
+        {
+          sceneNumber: 1,
+          heading: 'INT. FOYER - NIGHT',
+          beats: [
+            { actionDescription: 'They enter.' },
+            { actionDescription: 'The front door explodes inward.' },
+          ],
+        },
+      ]
+    )
+    expect(suggestions[0].stateNotes).toMatch(/door/i)
+    expect(suggestions[0].appliesFrom?.beatIndex).toBe(1)
+  })
+})

@@ -56,6 +56,79 @@ describe('mapBeatReferenceSelectionForApi', () => {
     expect(payload.skipObjectAutoDetection).toBe(true)
   })
 
+  it('maps a location version still onto the parent location ref', () => {
+    const versioned: LocationReference[] = [
+      {
+        ...locations[0],
+        locationDisplay: 'INT. KITCHEN - DAY',
+        sourceSceneIndex: 0,
+        sourceSceneHeading: 'INT. KITCHEN - DAY',
+        pinnedAt: '2026-01-01T00:00:00.000Z',
+        versions: [
+          {
+            id: 'ver-blast',
+            name: 'Exploded fridge',
+            stateNotes: 'Refrigerator door blown off',
+            imageUrl: 'https://blob.example/kitchen-blast.jpg',
+            createdAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+      },
+    ]
+    const payload = mapBeatReferenceSelectionForApi(
+      {
+        characterIds: [],
+        locationRefId: 'loc-kitchen',
+        locationVersionId: 'ver-blast',
+        objectRefIds: [],
+        resolvedAt: '2026-06-09T12:00:00.000Z',
+      },
+      characters,
+      versioned,
+      objects
+    )
+    expect(payload.locationReferences).toHaveLength(1)
+    expect(payload.locationReferences[0].id).toBe('loc-kitchen')
+    expect(payload.locationReferences[0].imageUrl).toBe('https://blob.example/kitchen-blast.jpg')
+    expect(payload.locationReferences[0].boundVersionId).toBe('ver-blast')
+  })
+
+  it('keeps the parent establishing shot when the user binds the base version', () => {
+    const versioned: LocationReference[] = [
+      {
+        ...locations[0],
+        locationDisplay: 'INT. KITCHEN - DAY',
+        sourceSceneIndex: 0,
+        sourceSceneHeading: 'INT. KITCHEN - DAY',
+        pinnedAt: '2026-01-01T00:00:00.000Z',
+        versions: [
+          {
+            id: 'ver-blast',
+            name: 'Exploded fridge',
+            stateNotes: 'Refrigerator door blown off',
+            imageUrl: 'https://blob.example/kitchen-blast.jpg',
+            createdAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+      },
+    ]
+    const payload = mapBeatReferenceSelectionForApi(
+      {
+        characterIds: [],
+        locationRefId: 'loc-kitchen',
+        locationVersionId: null,
+        objectRefIds: [],
+        source: 'user',
+        resolvedAt: '2026-06-09T12:00:00.000Z',
+      },
+      characters,
+      versioned,
+      objects
+    )
+    expect(payload.locationReferences[0].imageUrl).toBe('https://blob.example/kitchen.jpg')
+    expect(payload.locationReferences[0].boundVersionId).toBeUndefined()
+  })
+
   it('disables location auto-detect when a location ref is provided', () => {
     const payload = mapBeatReferenceSelectionForApi(
       {

@@ -6,6 +6,7 @@ import {
   libraryAssetToCharacter,
   libraryAssetToLocation,
   characterToLibraryAttributes,
+  locationToLibraryAttributes,
   projectVisionFromLibraryAssets,
   MAX_ROSTER_ENTRIES,
 } from '@/lib/referenceLibrary/projection'
@@ -56,6 +57,39 @@ describe('referenceLibrary projection', () => {
     const attrs = characterToLibraryAttributes(char)
     expect(attrs.klingElementId).toBe('kling-abc')
     expect(attrs.voiceId).toBe('voice-1')
+  })
+
+  it('round-trips location versions through library attributes', () => {
+    const versions = [
+      {
+        id: 'ver-door',
+        name: 'Exploded front door',
+        stateNotes: 'Front door missing, debris on the floor',
+        appliesFrom: { sceneNumber: 1, beatIndex: 1 },
+        createdAt: '2026-01-01T00:00:00.000Z',
+      },
+    ]
+    const asset = makeAsset({
+      id: 'lib-loc-1',
+      kind: 'location',
+      name: 'FOYER',
+      description: 'Victorian foyer',
+      referenceImageUrl: 'https://example.com/foyer.png',
+      attributes: {
+        locationDisplay: 'INT. FOYER - NIGHT',
+        generationPrompt: 'Empty foyer establishing shot',
+        versions,
+      },
+    })
+
+    const loc = libraryAssetToLocation(asset)
+    expect(loc.libraryAssetId).toBe('lib-loc-1')
+    expect(loc.versions?.[0].id).toBe('ver-door')
+    expect(loc.versions?.[0].stateNotes).toMatch(/door/i)
+
+    const attrs = locationToLibraryAttributes(loc)
+    expect(attrs.versions).toEqual(versions)
+    expect(attrs.generationPrompt).toBe('Empty foyer establishing shot')
   })
 
   it('builds capped catalog prompt block', () => {

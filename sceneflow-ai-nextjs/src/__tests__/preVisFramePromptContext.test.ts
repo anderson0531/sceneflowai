@@ -82,6 +82,68 @@ describe('resolvePreVisFramePromptContext', () => {
     expect(ctx.visualSetup.shotType).toBeTruthy()
   })
 
+  const destroyedLab = {
+    id: 'loc-lab',
+    location: 'LAB',
+    locationDisplay: 'INT. LAB - DAY',
+    imageUrl: 'https://example.com/lab.jpg',
+    sourceSceneIndex: 0,
+    sourceSceneHeading: 'INT. LAB - DAY',
+    pinnedAt: '2026-01-01T00:00:00.000Z',
+    sceneNumbers: [1],
+    versions: [
+      {
+        id: 'ver-blast',
+        name: 'Destroyed consoles',
+        stateNotes: 'Lab consoles exploded, debris on the floor',
+        appliesFrom: { sceneNumber: 1, beatIndex: 0, beatId: 'beat-1' },
+        imageUrl: 'https://example.com/lab-blast.jpg',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      },
+    ],
+  }
+
+  it('auto-selects a sticky location version for the beat', () => {
+    const ctx = resolvePreVisFramePromptContext({
+      slot,
+      scene,
+      sceneIndex: 0,
+      projectCharacters: [{ id: 'c1', name: 'Alex', referenceImage: 'https://example.com/alex.jpg' }],
+      locationReferences: [destroyedLab],
+      objectReferences: [],
+    })
+    expect(ctx.locationRefId).toBe('loc-lab')
+    expect(ctx.locationVersionId).toBe('ver-blast')
+  })
+
+  it('honors a user pick of the intact base over the auto version', () => {
+    const ctx = resolvePreVisFramePromptContext({
+      slot,
+      scene: {
+        ...scene,
+        beats: [
+          {
+            ...scene.beats[0],
+            referenceSelection: {
+              characterIds: ['c1'],
+              locationRefId: 'loc-lab',
+              locationVersionId: null,
+              objectRefIds: [],
+              resolvedAt: '2026-06-09T12:00:00.000Z',
+              source: 'user',
+            },
+          },
+        ],
+      },
+      sceneIndex: 0,
+      projectCharacters: [{ id: 'c1', name: 'Alex', referenceImage: 'https://example.com/alex.jpg' }],
+      locationReferences: [destroyedLab],
+      objectReferences: [],
+    })
+    expect(ctx.locationRefId).toBe('loc-lab')
+    expect(ctx.locationVersionId).toBeNull()
+  })
+
   it('auto-selects wardrobe from scene.characterWardrobes on beat frames', () => {
     const ctx = resolvePreVisFramePromptContext({
       slot,

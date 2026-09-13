@@ -1052,9 +1052,25 @@
       "wardrobeOverride": "Wardrobe text override (optional — diptych ref image is sent when available)",
       "locationReference": "Location reference",
       "oneSelected": "1 selected",
+      "locationVersion": "Set version",
+      "locationVersionBase": "Base (intact)",
       "wardrobePlaceholder": "Full wardrobe description from reference library…",
       "generating": "Generating…",
       "generateWithDirect": "Generate with Direct"
+    },
+    "locationLibrary": {
+      "versions": "Set versions",
+      "suggestFromScript": "Suggest versions from script",
+      "syncFromScript": "Sync versions from script",
+      "generateFromBase": "Generate from base",
+      "needsRegen": "Needs new image",
+      "baseImageRequired": "Generate the base location image first",
+      "appliesFrom": "From scene {scene}, beat {beat}",
+      "noVersions": "No set versions yet — lasting damage or redress will appear here",
+      "analyzing": "Analyzing script…",
+      "suggestedCount": "Added {count, plural, one {# set version} other {# set versions}}",
+      "synced": "Synced set versions",
+      "uploadVersion": "Upload version image"
     }
   },
   "foundation": {

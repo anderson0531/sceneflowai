@@ -7,6 +7,7 @@ import { registerKlingElement, registerKlingElementMulti } from './klingDirectCl
 import { getKlingCapabilities } from './config'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
 import { toCharacterPromptAlias } from '@/lib/character/characterPromptAlias'
+import { locationReferenceForGeneration } from '@/lib/vision/locationVersionResolve'
 
 export type KlingElementSource = {
   id: string
@@ -139,6 +140,7 @@ export function collectKlingElementSources(args: {
   objectRefIds?: string[]
   locationReferences?: LocationReference[]
   locationRefId?: string | null
+  locationVersionId?: string | null
 }): KlingElementSource[] {
   const sources: KlingElementSource[] = []
   const {
@@ -149,6 +151,7 @@ export function collectKlingElementSources(args: {
     objectRefIds = [],
     locationReferences = [],
     locationRefId,
+    locationVersionId,
   } = args
 
   for (const charId of characterIds) {
@@ -209,17 +212,20 @@ export function collectKlingElementSources(args: {
 
   if (locationRefId) {
     const loc = locationReferences.find((l) => l.id === locationRefId)
-    if (loc?.imageUrl) {
-      sources.push({
-        id: loc.id,
-        name: loc.locationDisplay || loc.location,
-        imageUrl: loc.imageUrl,
-        frontalImageUrl: loc.imageUrl,
-        description: loc.description || loc.locationDisplay || loc.location,
-        tagId: 'o_106',
-        klingElementId: (loc as LocationReference & { klingElementId?: string }).klingElementId,
-        type: 'location',
-      })
+    if (loc) {
+      const mapped = locationReferenceForGeneration(loc, locationVersionId)
+      if (mapped.imageUrl) {
+        sources.push({
+          id: loc.id,
+          name: loc.locationDisplay || loc.location,
+          imageUrl: mapped.imageUrl,
+          frontalImageUrl: mapped.imageUrl,
+          description: loc.description || loc.locationDisplay || loc.location,
+          tagId: 'o_106',
+          klingElementId: (loc as LocationReference & { klingElementId?: string }).klingElementId,
+          type: 'location',
+        })
+      }
     }
   }
 

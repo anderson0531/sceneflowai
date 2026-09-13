@@ -17,7 +17,10 @@ import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibrar
 import { getCreditCost, IMAGE_CREDITS } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
 import { englishForModel } from '@/i18n/server/requestLocale'
-import { LOCATION_TURNAROUND_GENERATION_INSTRUCTION } from '@/lib/vision/locationReferencePrompts'
+import {
+  LOCATION_TURNAROUND_GENERATION_INSTRUCTION,
+  buildLocationVersionPrompt,
+} from '@/lib/vision/locationReferencePrompts'
 import {
   buildCharacterIdentityReferencePrompt,
   promptHasIdentityReferenceAnchor,
@@ -188,6 +191,99 @@ export async function generateLocationReferenceImage(
     provider: 'gemini',
     category: 'images',
     operation: `Location reference: ${locationName}`,
+  })
+
+  return { imageUrl, prompt, creditCost }
+}
+
+export type GenerateLocationVersionImageInput = GenerateLocationImageInput & {
+  baseImageUrl: string
+  stateNotes: string
+  versionId?: string
+}
+
+export async function generateLocationVersionReferenceImage(
+  input: GenerateLocationVersionImageInput
+): Promise<{ imageUrl: string; prompt: string; creditCost: number }> {
+  const {
+    userId,
+    projectId,
+    locationName,
+    intExt,
+    timeOfDay,
+    description,
+    aspectRatio = '16:9',
+    locationPrompt,
+    locale,
+    baseImageUrl,
+    stateNotes,
+    versionId,
+  } = input
+
+  if (!locationName) {
+    throw new ReferenceGenerationError('Missing required field: locationName', 400)
+  }
+  if (!baseImageUrl?.trim()) {
+    throw new ReferenceGenerationError(
+      'A base location image is required to generate a set-state version',
+      400
+    )
+  }
+  if (!stateNotes?.trim()) {
+    throw new ReferenceGenerationError('Missing required field: stateNotes', 400)
+  }
+
+  const creditCost = getCreditCost('IMAGE_GENERATION')
+
+  let prompt =
+    locationPrompt && locationPrompt.trim()
+      ? locationPrompt
+      : buildLocationVersionPrompt({
+          locationName,
+          stateNotes,
+          intExt,
+          timeOfDay,
+          description,
+        })
+
+  prompt = await englishForModel(prompt, locale.storyLocale, [
+    locationName,
+    ...locale.properNouns,
+  ])
+
+  const result = await generateImageWithGeminiStudio({
+    prompt,
+    aspectRatio,
+    negativePrompt:
+      'people, persons, humans, actors, characters, figures, silhouettes, faces, crowds, restored undamaged set, intact destroyed features',
+    referenceImages: [
+      {
+        imageUrl: baseImageUrl,
+        mimeType: 'image/jpeg',
+        name: `${locationName} base location`,
+      },
+    ],
+  })
+
+  if (!result.imageBase64) {
+    throw new ReferenceGenerationError(
+      'No image generated. Try adjusting the set-state notes.'
+    )
+  }
+
+  const safeName = locationName.toLowerCase().replace(/\s+/g, '-')
+  const versionSlug = (versionId || 'version').replace(/[^a-z0-9-]/gi, '').slice(0, 40)
+  const fileName = `scenes/location-${safeName}/versions/${versionSlug}-${Date.now()}.png`
+  const imageUrl = await uploadReferenceLibraryBase64Image(
+    result.imageBase64,
+    fileName,
+    projectId || 'default'
+  )
+
+  await CreditService.charge(userId, creditCost, 'ai_usage', null, {
+    provider: 'gemini',
+    category: 'images',
+    operation: `Location version: ${locationName}`,
   })
 
   return { imageUrl, prompt, creditCost }

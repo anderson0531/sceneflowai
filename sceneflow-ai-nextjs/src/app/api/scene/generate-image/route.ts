@@ -173,7 +173,9 @@ import {
 import {
   directedCastForBeat,
   resolveBeatFrameGenerationContext,
+  shouldUseExplicitBeatReferences,
 } from '@/lib/vision/beatFrameGenerationContext'
+import { locationReferenceForGeneration } from '@/lib/vision/locationVersionResolve'
 import {
   canStartLikenessRetry,
   canValidateLikeness,
@@ -1454,23 +1456,38 @@ export async function POST(req: NextRequest) {
       const beatsForLocation = getSceneBeats(resolvedScene as Record<string, unknown>)
       const beatForLocation = beatsForLocation[effectiveBeatIndex]
       if (beatForLocation) {
-        const autoCtx = resolveBeatFrameGenerationContext({
-          scene: resolvedScene as Record<string, unknown>,
-          beat: beatForLocation,
-          sceneIndex,
-          projectCharacters,
-          locationReferences: projectLocationRefs,
-          objectReferences: projectObjectRefs,
-        })
-        if (autoCtx.locationRefId) {
-          const autoLoc = projectLocationRefs.find(
-            (loc: { id?: string }) => loc.id === autoCtx.locationRefId
+        const pickLocation = (locationRefId?: string | null, versionId?: string | null) => {
+          if (!locationRefId) return null
+          const loc = projectLocationRefs.find(
+            (candidate: { id?: string }) => candidate.id === locationRefId
           )
-          if (autoLoc?.imageUrl) {
-            matchedLocationReference = autoLoc
+          if (!loc) return null
+          const mapped = locationReferenceForGeneration(loc, versionId)
+          return mapped.imageUrl ? mapped : null
+        }
+
+        if (shouldUseExplicitBeatReferences(beatForLocation)) {
+          matchedLocationReference = pickLocation(
+            beatForLocation.referenceSelection.locationRefId,
+            beatForLocation.referenceSelection.locationVersionId
+          )
+        }
+
+        if (!matchedLocationReference) {
+          const autoCtx = resolveBeatFrameGenerationContext({
+            scene: resolvedScene as Record<string, unknown>,
+            beat: beatForLocation,
+            sceneIndex,
+            projectCharacters,
+            locationReferences: projectLocationRefs,
+            objectReferences: projectObjectRefs,
+          })
+          matchedLocationReference = pickLocation(autoCtx.locationRefId, autoCtx.locationVersionId)
+          if (matchedLocationReference) {
             console.log('[Scene Image] Beat frame auto-selected location from scene assignment:', {
-              location: autoLoc.location,
+              location: matchedLocationReference.location,
               confidence: autoCtx.locationMatchConfidence,
+              versionId: autoCtx.locationVersionId,
               sceneIndex,
             })
           }
@@ -2937,7 +2954,7 @@ export async function POST(req: NextRequest) {
               cappedLocationEntry.sendIndex,
               locationToken
             )
-            geminiPrompt += `${buildLocationReferencePromptLine(locationName, cappedLocationEntry.sendIndex, locationLabel)} Use token ${locationToken} in the scene prompt. Environment: "${locationName}". Match lighting to the scene prompt Style section.\n\n`
+            geminiPrompt += `${buildLocationReferencePromptLine(locationName, cappedLocationEntry.sendIndex, locationLabel, { currentSetState: Boolean(cappedLocationReference.boundVersionId) })} Use token ${locationToken} in the scene prompt. Environment: "${locationName}". Match lighting to the scene prompt Style section.\n\n`
           }
 
           const scenePromptBody = stripReferenceImageMappingBlock(optimizedPrompt)

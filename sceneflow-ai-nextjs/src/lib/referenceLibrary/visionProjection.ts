@@ -3,7 +3,7 @@
  * Keep this module free of server-only / referenceTransfer imports.
  */
 
-import type { LocationReference, VisualReference } from '@/types/visionReferences'
+import type { LocationReference, LocationVersion, VisualReference } from '@/types/visionReferences'
 import type { VisionCharacter } from '@/types/vision'
 import type { ReferenceAssetRecord } from '@/types/referenceLibrary'
 
@@ -50,6 +50,7 @@ export function libraryAssetToLocation(asset: ReferenceAssetRecord): LocationRef
     description: asset.description || undefined,
     klingElementId: attrs.klingElementId,
     generationPrompt: attrs.generationPrompt,
+    versions: Array.isArray(attrs.versions) ? (attrs.versions as LocationVersion[]) : undefined,
   }
 }
 

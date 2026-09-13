@@ -16,6 +16,9 @@ import {
   shouldUseExplicitBeatReferences,
 } from '@/lib/vision/beatFrameGenerationContext'
 import {
+  locationReferenceForGeneration,
+} from '@/lib/vision/locationVersionResolve'
+import {
   buildCharacterReferenceEntries,
   buildLocationReferenceEntry,
   buildPropReferenceEntries,
@@ -89,6 +92,7 @@ export function resolveBeatVideoReferences(
     : {
         characterIds: beatContext.characterIds,
         locationRefId: beatContext.locationRefId,
+        locationVersionId: beatContext.locationVersionId,
         objectRefIds: beatContext.objectRefIds,
         characterWardrobes: beatContext.characterWardrobes,
       }
@@ -160,6 +164,9 @@ export function resolveBeatVideoReferences(
   const locationRef = selection.locationRefId
     ? locationReferences.find((l) => l.id === selection.locationRefId)
     : undefined
+  const mappedLocation = locationRef
+    ? locationReferenceForGeneration(locationRef, selection.locationVersionId)
+    : undefined
 
   const characterRefEntries = buildCharacterReferenceEntries(
     imageReferences,
@@ -171,7 +178,7 @@ export function resolveBeatVideoReferences(
   )
   const propRefEntries = buildPropReferenceEntries(objectImageReferences, characterRefEntries.length)
   const locationRefEntry = buildLocationReferenceEntry(
-    locationRef,
+    mappedLocation,
     characterRefEntries.length + propRefEntries.length
   )
 

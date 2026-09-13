@@ -18,22 +18,6 @@ import { getSceneBeats, isNarratorBeat } from '@/lib/script/beatMigration'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
 import { mentionsWord, propHeadNoun } from '@/lib/script/propNameMatch'
 import type { BeatReferenceSelection, SceneBeat } from '@/lib/script/segmentTypes'
-
-export function toBeatReferenceSelection(
-  ctx: Pick<
-    BeatReferenceSelection,
-    'characterIds' | 'locationRefId' | 'objectRefIds' | 'characterWardrobes'
-  > & { source?: BeatReferenceSelection['source'] }
-): BeatReferenceSelection {
-  return {
-    characterIds: ctx.characterIds,
-    locationRefId: ctx.locationRefId,
-    objectRefIds: ctx.objectRefIds,
-    characterWardrobes: ctx.characterWardrobes ?? [],
-    resolvedAt: new Date().toISOString(),
-    source: ctx.source ?? 'auto',
-  }
-}
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
 import {
   buildSceneStagingText,
@@ -43,6 +27,27 @@ import {
   resolveSceneNumberForLocationMatch,
 } from '@/lib/vision/frameGenerationContext'
 import { resolveWardrobeIdForCharacterInScene } from '@/lib/character/characterReferenceAssembly'
+import {
+  locationReferenceForGeneration,
+  resolveLocationVersionForBeat,
+} from '@/lib/vision/locationVersionResolve'
+
+export function toBeatReferenceSelection(
+  ctx: Pick<
+    BeatReferenceSelection,
+    'characterIds' | 'locationRefId' | 'locationVersionId' | 'objectRefIds' | 'characterWardrobes'
+  > & { source?: BeatReferenceSelection['source'] }
+): BeatReferenceSelection {
+  return {
+    characterIds: ctx.characterIds,
+    locationRefId: ctx.locationRefId,
+    locationVersionId: ctx.locationVersionId ?? null,
+    objectRefIds: ctx.objectRefIds,
+    characterWardrobes: ctx.characterWardrobes ?? [],
+    resolvedAt: new Date().toISOString(),
+    source: ctx.source ?? 'auto',
+  }
+}
 
 export type LocationMatchConfidence = 'assigned' | 'heading' | 'direction' | 'weak' | 'none'
 
@@ -519,6 +524,33 @@ export function resolveBeatFrameGenerationContext(
 
   const characterWardrobes = buildCharacterWardrobes(scene, characterIds, projectCharacters, sceneIndex)
 
+  const beats = getSceneBeats(scene)
+  const beatIndex = Math.max(
+    0,
+    beats.findIndex((b) => b.beatId === beat.beatId)
+  )
+  const sceneNumber = resolveSceneNumberForLocationMatch(scene, sceneIndex) ?? (sceneIndex ?? 0) + 1
+  const matchedLocation = locationPick.id
+    ? locationReferences.find((l) => l.id === locationPick.id)
+    : undefined
+  const locationVersion = matchedLocation
+    ? resolveLocationVersionForBeat(matchedLocation, {
+        sceneNumber,
+        beatIndex,
+        beatId: beat.beatId,
+      })
+    : null
+  if (locationVersion && !locationVersion.imageUrl) {
+    warnings.push(
+      `Location version "${locationVersion.name}" has no reference image yet — using the base establishing shot.`
+    )
+  }
+  if (locationVersion?.needsImageRegen) {
+    warnings.push(
+      `Location version "${locationVersion.name}" is stale — regenerate from the base location image.`
+    )
+  }
+
   const referenceProvenance: AttachedReferenceProvenance[] = [
     ...matchedChars.map((char) => ({
       kind: 'character' as const,
@@ -534,7 +566,9 @@ export function resolveBeatFrameGenerationContext(
           {
             kind: 'location' as const,
             name: locationPick.name || locationPick.id,
-            selector: `location-${locationPick.confidence}`,
+            selector: locationVersion
+              ? `location-${locationPick.confidence}-version`
+              : `location-${locationPick.confidence}`,
           },
         ]
       : []),
@@ -565,6 +599,7 @@ export function resolveBeatFrameGenerationContext(
   return {
     characterIds,
     locationRefId: locationPick.id,
+    locationVersionId: locationVersion?.id ?? null,
     objectRefIds,
     characterWardrobes,
     locationMatchConfidence: locationPick.confidence,
@@ -603,6 +638,9 @@ export function mapBeatReferenceSelectionForApi(
   const locationRef = selection.locationRefId
     ? locationReferences.find((l) => l.id === selection.locationRefId)
     : undefined
+  const mappedLocation = locationRef
+    ? locationReferenceForGeneration(locationRef, selection.locationVersionId)
+    : undefined
 
   const objects = selection.objectRefIds
     .map((id) => objectReferences.find((o) => o.id === id))
@@ -610,7 +648,7 @@ export function mapBeatReferenceSelectionForApi(
 
   return {
     selectedCharacters,
-    locationReferences: locationRef ? [locationRef] : [],
+    locationReferences: mappedLocation ? [mappedLocation] : [],
     objectReferences: objects,
     characterWardrobes: selection.characterWardrobes || [],
     characterSelectionExplicit: true,

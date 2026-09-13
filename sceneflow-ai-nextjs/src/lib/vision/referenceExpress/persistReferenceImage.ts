@@ -76,7 +76,21 @@ export async function persistReferenceImage(input: {
           kind === 'location'
             ? locationFingerprint(entry as LocationSource) !== expectedFingerprint
             : propFingerprint(entry as PropSource) !== expectedFingerprint
-        return { ...entry, ...patch }
+        return {
+          ...entry,
+          ...patch,
+          ...(kind === 'location' && typeof patch.imageUrl === 'string' && patch.imageUrl
+            ? {
+                versions: (
+                  Array.isArray((entry as { versions?: unknown }).versions)
+                    ? ((entry as { versions: Array<{ imageUrl?: string }> }).versions)
+                    : []
+                ).map((version) =>
+                  version?.imageUrl ? { ...version, needsImageRegen: true } : version
+                ),
+              }
+            : {}),
+        }
       })
       if (!saved) return { saved: false, staleSource: false }
 
