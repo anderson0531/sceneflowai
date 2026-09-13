@@ -4,6 +4,8 @@ import { join } from 'node:path'
 import {
   projectPutWouldExceedBodyLimit,
   slimProjectPutPayload,
+  stringifyProjectPut,
+  visionPhasePut,
   VERCEL_FUNCTION_BODY_LIMIT_BYTES,
 } from '@/lib/projects/slimProjectPutPayload'
 
@@ -114,5 +116,31 @@ describe('vision page slims every project PUT', () => {
 
   it('keeps production on the load-time migration that rewrites it', () => {
     expect(page).toMatch(/queuePersist\(\s*\{\s*metadata: finalMetadata,\s*persistProduction: true\s*\}/)
+  })
+
+  it('syncs Express references as a visionPhase patch, not the full metadata blob', () => {
+    const start = page.indexOf('const syncVisionReferencesForExpress')
+    const end = page.indexOf("throw new Error('Failed to sync references for Reference Agent')", start)
+    const fn = page.slice(start, end)
+    expect(fn).toContain("serializedProjectSave(")
+    expect(fn).toContain('visionPhasePut({')
+    expect(fn).toContain("'syncVisionReferencesForExpress'")
+    expect(fn).not.toContain('...existingMetadata')
+    expect(fn).not.toContain('JSON.stringify(payload)')
+  })
+})
+
+describe('visionPhasePut', () => {
+  it('sends only the fields this write is changing', () => {
+    const body = visionPhasePut({
+      characters: [{ name: 'Piper Hayes' }],
+      references: { objectReferences: [] },
+    })
+    const slimmed = slimProjectPutPayload(body)
+    expect(slimmed.metadata?.visionPhase).toEqual({
+      characters: [{ name: 'Piper Hayes' }],
+      references: { objectReferences: [] },
+    })
+    expect(JSON.parse(stringifyProjectPut(body)).metadata.visionPhase.production).toBeUndefined()
   })
 })

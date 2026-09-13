@@ -66,6 +66,22 @@ export function slimProjectPutPayload<T extends ProjectPutBody>(
   }
 }
 
+/** Fields this write is changing. The PUT deep-merge keeps everything else. */
+export function visionPhasePut(
+  fields: Record<string, unknown>,
+  options?: { persistProduction?: boolean }
+): ProjectPutBody {
+  return {
+    metadata: { visionPhase: fields },
+    ...(options?.persistProduction ? { persistProduction: true } : {}),
+  }
+}
+
+/** Slim, then stringify — for the project PUTs that still fetch instead of using the save queue. */
+export function stringifyProjectPut(body: ProjectPutBody): string {
+  return JSON.stringify(slimProjectPutPayload(body))
+}
+
 /** True when the stringified body is large enough that Vercel will 413 it. */
 export function projectPutWouldExceedBodyLimit(body: unknown): boolean {
   try {
