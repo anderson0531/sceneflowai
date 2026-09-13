@@ -87,15 +87,33 @@ import {
   PLAYER_THUMBNAIL_HEIGHT,
   PLAYER_THUMBNAIL_WIDTH,
 } from '@/lib/storyboard/playerStillSource'
+import {
+  noteScreeningDiagImageLoad,
+  noteScreeningDiagRender,
+  recordScreeningDiag,
+  setScreeningDiagPlayhead,
+} from '@/lib/storyboard/screeningPlayerDiagnostics'
 
 type PreVisPlaybackMode = 'animatic' | 'video' | 'stream' | 'promo'
+
+type SceneStripEntry = {
+  idx: number
+  thumbUrl?: string
+  hasSceneAudio: boolean
+}
 
 /**
  * Scene strip thumbnail. Sized so the optimizer returns a thumbnail-sized
  * bitmap — a raw `<img>` here decodes the stored 1K-2K still once per scene,
  * which is megabytes each for the whole project as soon as the strip mounts.
  */
-function SceneStripThumbnail({ url, alt }: { url: string; alt: string }) {
+const SceneStripThumbnail = React.memo(function SceneStripThumbnail({
+  url,
+  alt,
+}: {
+  url: string
+  alt: string
+}) {
   if (!canOptimizePlayerStill(url)) {
     warnUnoptimizedPlayerStill(url)
     return <img src={url} alt={alt} className="w-full h-full object-cover" />
@@ -109,7 +127,69 @@ function SceneStripThumbnail({ url, alt }: { url: string; alt: string }) {
       className="w-full h-full object-cover"
     />
   )
-}
+})
+
+/**
+ * Scene strip. Entries are derived once; this subtree does not re-render
+ * when the playhead ticks, so the 60fps path no longer walks every beat of
+ * every scene to rebuild thumbnails.
+ */
+const SceneStrip = React.memo(function SceneStrip({
+  entries,
+  currentSceneIndex,
+  isFullscreen,
+  onSelect,
+  size,
+}: {
+  entries: SceneStripEntry[]
+  currentSceneIndex: number
+  isFullscreen: boolean
+  onSelect: (idx: number) => void
+  size: 'screening' | 'gallery'
+}) {
+  const buttonSize =
+    size === 'screening'
+      ? isFullscreen
+        ? 'w-24 h-14'
+        : 'w-14 h-9'
+      : isFullscreen
+        ? 'w-24 h-14'
+        : 'w-16 h-10'
+
+  return (
+    <div
+      className={cn(
+        'flex gap-2 overflow-x-auto',
+        size === 'screening' ? 'pb-1 justify-start' : 'pb-2 justify-center'
+      )}
+    >
+      {entries.map((entry) => (
+        <button
+          key={entry.idx}
+          onClick={() => onSelect(entry.idx)}
+          className={cn(
+            'flex-shrink-0 rounded overflow-hidden border-2 transition-all relative',
+            buttonSize,
+            entry.idx === currentSceneIndex
+              ? 'border-emerald-500 ring-2 ring-emerald-500/30'
+              : 'border-transparent hover:border-gray-500'
+          )}
+        >
+          {entry.thumbUrl ? (
+            <SceneStripThumbnail url={entry.thumbUrl} alt={`Scene ${entry.idx + 1}`} />
+          ) : (
+            <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+              <span className="text-[10px] text-gray-400">{entry.idx + 1}</span>
+            </div>
+          )}
+          {entry.hasSceneAudio && (
+            <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-emerald-500" />
+          )}
+        </button>
+      ))}
+    </div>
+  )
+})
 
 function resolveSceneVideoUrl(
   scene: any,
@@ -421,7 +501,10 @@ export function AudioGalleryPlayer({
 
   useEffect(() => () => flushSceneMix(), [flushSceneMix])
 
-  const screeningPosterUrl = getScreeningPosterUrl(currentScene)
+  const screeningPosterUrl = useMemo(
+    () => getScreeningPosterUrl(currentScene),
+    [currentScene]
+  )
 
   const currentSceneVideoUrl = useMemo(
     () => resolveSceneVideoUrl(currentScene, currentSceneIndex, selectedLanguage, sceneProductionState, finalCutSelection),
@@ -469,6 +552,18 @@ export function AudioGalleryPlayer({
   const useMasterVideo = useStreamMaster || usePromoMaster
 
   const filmIndices = useMemo(() => filmSceneIndices(scenes), [scenes])
+
+  const sceneStripEntries = useMemo<SceneStripEntry[]>(() => {
+    const indices = playbackMode === 'video' ? videoSceneIndices : filmIndices
+    return indices.map((idx) => {
+      const scene = scenes[idx]
+      return {
+        idx,
+        thumbUrl: getScenePlayableThumbnailUrl(scene),
+        hasSceneAudio: sceneHasPlayablePreVisAudio(scene, selectedLanguage),
+      }
+    })
+  }, [scenes, selectedLanguage, playbackMode, videoSceneIndices, filmIndices])
 
   const useVideoForCurrentScene =
     playbackMode === 'video' && videoSceneIndices.includes(currentSceneIndex)
@@ -545,6 +640,24 @@ export function AudioGalleryPlayer({
 
   pausePlaybackRef.current = pause
   resetPlaybackRef.current = reset
+
+  noteScreeningDiagRender()
+
+  useEffect(() => {
+    setScreeningDiagPlayhead({
+      sceneIndex: currentSceneIndex,
+      beatIndex: currentVisualFrame?.dialogueIndex,
+      beatId: currentVisualFrame?.beatId,
+    })
+    if (!currentVisualFrame) return
+    recordScreeningDiag('beat-advance', {
+      sceneIndex: currentSceneIndex,
+      beatId: currentVisualFrame.beatId,
+      clipId: currentVisualFrame.clipId,
+      imageUrl: currentVisualFrame.imageUrl?.slice(0, 160),
+      startTime: currentVisualFrame.startTime,
+    })
+  }, [currentVisualFrame?.clipId, currentSceneIndex])
 
   /**
    * Stop the timeline before handing control back. A parent that unmounts the
@@ -976,6 +1089,17 @@ export function AudioGalleryPlayer({
           : undefined,
     }
     const layerAlt = isPrevious ? '' : imageAlt
+    const handleImageLoad = (img: HTMLImageElement) => {
+      noteScreeningDiagImageLoad({
+        url,
+        naturalWidth: img.naturalWidth,
+        naturalHeight: img.naturalHeight,
+        optimized: img.currentSrc.includes('/_next/image'),
+      })
+    }
+    const handleImageError = () => {
+      recordScreeningDiag('image-error', { url: url.slice(0, 160) })
+    }
 
     // Legacy projects carry base64 stills, and a still can come from a host the
     // optimizer is not configured for; both have to render as-is.
@@ -989,6 +1113,8 @@ export function AudioGalleryPlayer({
           aria-hidden={isPrevious}
           className={cn('absolute inset-0 w-full h-full', fitClass)}
           style={layerStyle}
+          onLoad={(e) => handleImageLoad(e.currentTarget)}
+          onError={handleImageError}
         />
       )
     }
@@ -1006,6 +1132,8 @@ export function AudioGalleryPlayer({
         loading="eager"
         className={fitClass}
         style={layerStyle}
+        onLoad={(e) => handleImageLoad(e.currentTarget)}
+        onError={handleImageError}
       />
     )
   }
@@ -1357,38 +1485,13 @@ export function AudioGalleryPlayer({
   )
 
   const sceneThumbnailsRow = (
-    <div className="flex gap-2 overflow-x-auto pb-1 justify-start">
-      {(playbackMode === 'video' ? videoSceneIndices : filmIndices).map((idx) => {
-        const scene = scenes[idx]
-        const hasSceneAudio = sceneHasPlayablePreVisAudio(scene, selectedLanguage)
-        const thumbUrl = getScenePlayableThumbnailUrl(scene)
-
-        return (
-          <button
-            key={idx}
-            onClick={() => goToScene(idx)}
-            className={cn(
-              'flex-shrink-0 rounded overflow-hidden border-2 transition-all relative',
-              isFullscreen ? 'w-24 h-14' : 'w-14 h-9',
-              idx === currentSceneIndex
-                ? 'border-emerald-500 ring-2 ring-emerald-500/30'
-                : 'border-transparent hover:border-gray-500'
-            )}
-          >
-            {thumbUrl ? (
-              <SceneStripThumbnail url={thumbUrl} alt={`Scene ${idx + 1}`} />
-            ) : (
-              <div className="w-full h-full bg-gray-700 flex items-center justify-center">
-                <span className="text-[10px] text-gray-400">{idx + 1}</span>
-              </div>
-            )}
-            {hasSceneAudio && (
-              <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-emerald-500" />
-            )}
-          </button>
-        )
-      })}
-    </div>
+    <SceneStrip
+      entries={sceneStripEntries}
+      currentSceneIndex={currentSceneIndex}
+      isFullscreen={isFullscreen}
+      onSelect={goToScene}
+      size="screening"
+    />
   )
 
   const playbackControlsBlock = (
@@ -1765,41 +1868,13 @@ export function AudioGalleryPlayer({
           "px-4 pb-4",
           isFullscreen && "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-8"
         )}>
-          <div className="flex gap-2 overflow-x-auto pb-2 justify-center">
-            {(playbackMode === 'video' ? videoSceneIndices : filmIndices).map(
-              (idx) => {
-              const scene = scenes[idx]
-              const hasSceneAudio = sceneHasPlayablePreVisAudio(scene, selectedLanguage)
-              const thumbUrl = getScenePlayableThumbnailUrl(scene)
-
-              return (
-                <button
-                  key={idx}
-                  onClick={() => goToScene(idx)}
-                  className={cn(
-                    "flex-shrink-0 rounded overflow-hidden border-2 transition-all relative",
-                    isFullscreen ? "w-24 h-14" : "w-16 h-10",
-                    idx === currentSceneIndex
-                      ? "border-emerald-500 ring-2 ring-emerald-500/30"
-                      : "border-transparent hover:border-gray-500"
-                  )}
-                >
-                  {thumbUrl ? (
-                    <SceneStripThumbnail url={thumbUrl} alt={`Scene ${idx + 1}`} />
-                  ) : (
-                    <div className="w-full h-full bg-gray-700 flex items-center justify-center">
-                      <span className="text-[10px] text-gray-400">{idx + 1}</span>
-                    </div>
-                  )}
-                  
-                  {/* Audio indicator dot */}
-                  {hasSceneAudio && (
-                    <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-emerald-500" />
-                  )}
-                </button>
-              )
-            })}
-          </div>
+          <SceneStrip
+            entries={sceneStripEntries}
+            currentSceneIndex={currentSceneIndex}
+            isFullscreen={isFullscreen}
+            onSelect={goToScene}
+            size="gallery"
+          />
         </div>
         )}
       </div>

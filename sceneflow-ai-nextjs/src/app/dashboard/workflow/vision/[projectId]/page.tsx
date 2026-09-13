@@ -74,6 +74,7 @@ import { invalidateChangedBeatFramesOnScene, applyDeepRestructureAssetClear, REV
 import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
 import type { StoryboardFrameSlot } from '@/lib/storyboard/types'
 import type { StoryboardQuality } from '@/lib/storyboard/storyboardQuality'
+import { enableScreeningPlayerDiagnostics } from '@/lib/storyboard/screeningPlayerDiagnostics'
 import {
   explicitBeatReferenceSelection,
   mapBeatReferenceSelectionForApi,
@@ -1441,6 +1442,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const lang = searchParams.get('lang')
     if (playback === 'stream' && lang) {
       setScreeningPlaybackHint({ mode: 'stream', language: lang })
+    }
+    if (searchParams.get('diag') === 'screening') {
+      enableScreeningPlayerDiagnostics()
     }
   }, [searchParams])
 

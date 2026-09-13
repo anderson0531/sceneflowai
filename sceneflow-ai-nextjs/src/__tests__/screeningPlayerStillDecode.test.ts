@@ -58,7 +58,11 @@ describe('the player decodes stills at the size it draws them', () => {
 
   it('draws both scene strips through a sized thumbnail', () => {
     expect(player).toContain("import NextImage from 'next/image'")
-    expect(player.match(/<SceneStripThumbnail url=\{thumbUrl\}/g)).toHaveLength(2)
+    expect(player).toContain('const SceneStrip = React.memo')
+    expect(player).toContain('const sceneStripEntries = useMemo')
+    expect(player).toContain('size="screening"')
+    expect(player).toContain('size="gallery"')
+    expect(player).toContain('<SceneStripThumbnail url={entry.thumbUrl}')
     expect(player).not.toContain('<img src={thumbUrl}')
     expect(player).not.toMatch(/<img\s+src=\{thumbUrl\}/)
 
@@ -119,8 +123,10 @@ describe('playback releases its audio when the page goes away', () => {
     expect(timeline).toContain('function releaseAudioElement')
     expect(timeline).toMatch(/audio\.src = ''\n {2}\/\/[^\n]*\n {2}audio\.load\(\)/)
     // Stale clips and unmount both go through the release path.
-    expect(timeline).toContain('if (audio) releaseAudioElement(audio)')
+    expect(timeline).toContain('releaseAudioElement(audio)')
+    expect(timeline).toContain('dropAudioElement')
     expect(timeline).toContain('releaseAllAudio()')
+    expect(timeline).toContain('selectLiveAudioClips')
   })
 
   it('stops a hidden page and a page that is unloading', () => {
@@ -139,8 +145,8 @@ describe('playback releases its audio when the page goes away', () => {
 
   it('invalidates in-flight play() promises so audio cannot restart', () => {
     const release = timeline.slice(
-      timeline.indexOf('const releaseAllAudio = useCallback'),
-      timeline.indexOf('// Create/update audio elements for clips')
+      timeline.indexOf('const dropAudioElement = useCallback'),
+      timeline.indexOf('const reconcileLiveAudio')
     )
     expect(release).toContain('playGenerationRef.current.set(key,')
   })
@@ -150,7 +156,7 @@ describe('playback releases its audio when the page goes away', () => {
       timeline.indexOf('const restoreAudioElements = () => {'),
       timeline.indexOf('const handleVisibilityChange = () => {')
     )
-    expect(listeners).toContain('audioClipsRef.current.forEach(ensureAudioElement)')
+    expect(listeners).toContain('reconcileLiveAudio(currentTimeRef.current)')
     expect(timeline).toContain("window.addEventListener('pageshow', restoreAudioElements)")
     expect(timeline).not.toMatch(/document\.hidden[\s\S]{0,200}play\(\)/)
   })
