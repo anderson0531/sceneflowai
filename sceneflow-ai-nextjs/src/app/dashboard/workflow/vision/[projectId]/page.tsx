@@ -24,6 +24,8 @@ import { waitForUiPaint } from '@/lib/ui/waitForUiPaint'
 import {
   projectPutWouldExceedBodyLimit,
   slimProjectPutPayload,
+  stringifyProjectPut,
+  visionPhasePut,
 } from '@/lib/projects/slimProjectPutPayload'
 import {
   applyScenePreservation,
@@ -897,7 +899,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       const response = await serializedProjectSave(
-        { metadata: syncedMetadata },
+        visionPhasePut({ characters: charactersToSave }),
         debugLabel || 'persistVisionCharacters'
       )
 
@@ -1545,7 +1547,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const response = await fetch(`/api/projects/${projectId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: stringifyProjectPut({
           metadata: {
             ...existingMetadata,
             visionPhase: {
@@ -1591,7 +1593,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const response = await fetch(`/api/projects/${projectId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          body: stringifyProjectPut({
             metadata: {
               ...existingMetadata,
               visionPhase: {
@@ -1665,7 +1667,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const response = await fetch(`/api/projects/${projectId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          body: stringifyProjectPut({
             metadata: nextMetadata,
           }),
         })
@@ -1695,7 +1697,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const response = await fetch(`/api/projects/${projectId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ metadata: metadataPatch }),
+          body: stringifyProjectPut({ metadata: metadataPatch }),
         })
         if (!response.ok) {
           throw new Error('Failed to save publishing metadata')
@@ -1967,7 +1969,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         await fetch(`/api/projects/${projectId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ metadata: nextMetadata })
+          body: stringifyProjectPut({ metadata: nextMetadata })
         })
       } catch (error) {
         console.error('[Bookmark] Failed to save bookmark', error)
@@ -2029,7 +2031,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         await fetch(`/api/projects/${projectId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          body: stringifyProjectPut({
             metadata: {
               ...existingMetadata,
               visionPhase: {
@@ -2084,7 +2086,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         await fetch(`/api/projects/${projectId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          body: stringifyProjectPut({
             metadata: {
               ...existingMetadata,
               visionPhase: {
@@ -2362,7 +2364,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const response = await fetch(`/api/projects/${projectId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: stringifyProjectPut(payload)
         })
         
         if (!response.ok) {
@@ -2410,7 +2412,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const response = await fetch(`/api/projects/${projectId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: stringifyProjectPut(payload)
         })
         
         if (!response.ok) {
@@ -2570,7 +2572,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const response = await fetch(`/api/projects/${projectId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: stringifyProjectPut(payload)
         })
 
         if (!response.ok) {
@@ -2638,7 +2640,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const response = await fetch(`/api/projects/${projectId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: stringifyProjectPut(payload)
         })
 
         if (!response.ok) {
@@ -2686,7 +2688,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const response = await fetch(`/api/projects/${projectId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          body: stringifyProjectPut({
             metadata: {
               ...existingMetadata,
               visionPhase: {
@@ -5552,7 +5554,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             await fetch(`/api/projects/${project.id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ metadata: nextMetadata }),
+              body: stringifyProjectPut({ metadata: nextMetadata }),
             })
             
             console.log('[Audio Clip Change] Persisted to database', { sceneIndex, trackType, clipId, changes })
@@ -5649,7 +5651,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               await fetch(`/api/projects/${project.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+                body: stringifyProjectPut({
                   metadata: {
                     ...currentMetadata,
                     visionPhase: nextVisionPhase,
@@ -8183,7 +8185,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       await fetch(`/api/projects/${projectId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: stringifyProjectPut({
           metadata: {
             ...metadata,
             visionPhase: {
@@ -9100,7 +9102,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       await fetch(`/api/projects/${projectId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: stringifyProjectPut({
           metadata: {
             ...existingMetadata,
             visionPhase: {
@@ -9583,7 +9585,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           await fetch(`/api/projects/${project?.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+            body: stringifyProjectPut({
               metadata: {
                 ...project?.metadata,
                 visionPhase: {
@@ -9642,7 +9644,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         await fetch(`/api/projects/${project?.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          body: stringifyProjectPut({
             metadata: {
               ...project?.metadata,
               visionPhase: {
@@ -9665,30 +9667,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const persistLocationReferences = async (updatedLocationRefs: LocationReference[]) => {
-    const existingMetadata = project?.metadata || {}
-    const existingVisionPhase = existingMetadata.visionPhase || {}
-
     const updatedReferences = {
       sceneReferences: sceneReferencesRef.current,
       objectReferences: objectReferencesRef.current,
       locationReferences: updatedLocationRefs
     }
 
-    const payload = {
-      metadata: {
-        ...existingMetadata,
-        visionPhase: {
-          ...existingVisionPhase,
-          references: updatedReferences
-        }
-      }
-    }
-
-    const response = await fetch(`/api/projects/${projectId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
+    const response = await serializedProjectSave(
+      visionPhasePut({ references: updatedReferences }),
+      'persistLocationReferences'
+    )
 
     if (!response.ok) {
       throw new Error('Failed to persist location references')
@@ -9713,30 +9701,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   /** Sync live reference library + cast to project metadata before Express (server resolver source). */
   const syncVisionReferencesForExpress = async () => {
     if (!projectId) return
-    const existingMetadata = project?.metadata || {}
-    const existingVisionPhase = existingMetadata.visionPhase || {}
     const updatedReferences = {
       sceneReferences: sceneReferencesRef.current,
       objectReferences: objectReferencesRef.current,
       locationReferences: locationReferencesRef.current,
     }
 
-    const payload = {
-      metadata: {
-        ...existingMetadata,
-        visionPhase: {
-          ...existingVisionPhase,
-          characters: charactersRef.current,
-          references: updatedReferences,
-        },
-      },
-    }
-
-    const response = await fetch(`/api/projects/${projectId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
+    const response = await serializedProjectSave(
+      visionPhasePut({
+        characters: charactersRef.current,
+        references: updatedReferences,
+      }),
+      'syncVisionReferencesForExpress'
+    )
 
     if (!response.ok) {
       throw new Error('Failed to sync references for Reference Agent')
