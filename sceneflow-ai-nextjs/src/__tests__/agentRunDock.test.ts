@@ -104,6 +104,30 @@ describe('agent batch runs report into the dock, not the blocking overlay', () =
 
     expect(handler).toContain("result.status === 'rejected'")
   })
+
+  it('reports Direct prompt-builder frames into the dock instead of freezing the gallery', () => {
+    const handler = readHandler(PAGE, 'const handleDirectFrameGenerate = async (options: PreVisDirectGenerationOptions) => {')
+    const page = readSource(PAGE)
+    const dock = readSource('src/components/vision/DirectFrameRunDock.tsx')
+
+    expect(handler).not.toContain('overlayStore')
+    expect(handler).toContain('setDirectFrameRun')
+    expect(handler).toContain('finishDirectFrameRun')
+    expect(handler).toContain('setPreVisDirectDialog(null)')
+    expect(page).toContain('<DirectFrameRunDock')
+    expect(dock).toContain('title="Direct"')
+    expect(dock).toContain('you can keep editing')
+  })
+
+  it('keeps beat Regen and Frame Agent on the Express dock, not the freeze overlay', () => {
+    const regen = readHandler(PAGE, 'const handleGenerateBeatFrameImage = async (')
+    const agent = readHandler(PAGE, 'const handleExpressSceneGenerate = useCallback(')
+
+    expect(regen).not.toContain('overlayStore')
+    expect(regen).toContain('handleExpressSceneGenerate')
+    expect(agent).not.toContain('overlayStore')
+    expect(agent).toContain('setExpressBeatFrameOverlay')
+  })
 })
 
 describe('expressProjectRunProgress', () => {

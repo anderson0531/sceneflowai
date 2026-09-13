@@ -179,6 +179,7 @@ import {
   type AudioAgentRunState,
 } from '@/components/vision/AudioAgentRunDock'
 import { DirectionRunDock } from '@/components/vision/DirectionRunDock'
+import { DirectFrameRunDock, type DirectFrameRunState } from '@/components/vision/DirectFrameRunDock'
 import {
   VideoAgentRunDock,
   type VideoAgentRunState,
@@ -336,7 +337,7 @@ import { sanitizeScriptScenes } from '@/lib/script/segmentScript'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { hydrateVisionStateFromFullProject } from '@/lib/vision/hydrateVisionProjectImages'
 import { uploadAssetViaAPI } from '@/lib/vision/uploads'
-import { appendStoryboardFrame, removeStoryboardFrame, findStoryboardFrame, getOrderedStoryboardFrames, enumerateStoryboardFrameSlots, beatFrameSlotKey } from '@/lib/storyboard/types'
+import { appendStoryboardFrame, removeStoryboardFrame, findStoryboardFrame, getOrderedStoryboardFrames, enumerateStoryboardFrameSlots, beatFrameSlotKey, storyboardGeneratingSlotKey } from '@/lib/storyboard/types'
 
 // Scene Analysis interface for score generation
 interface SceneAnalysis {
@@ -5936,6 +5937,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   } | null>(null)
 
   /**
+   * Direct prompt-builder frame. One generate-image call, reported in the dock
+   * so the gallery stays editable instead of sitting behind the freeze overlay.
+   */
+  const [directFrameRun, setDirectFrameRun] = useState<DirectFrameRunState | null>(null)
+
+  /**
    * Project animatic stitch. One long poll with no per-item progress, so it
    * reports as a single line rather than a row list — but it reports, instead
    * of being a toast the user scrolls past and then cannot check on.
@@ -5995,7 +6002,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     sceneIdx: number
     slot: StoryboardFrameSlot
   } | null>(null)
-  const [preVisDirectGenerating, setPreVisDirectGenerating] = useState(false)
   
   // Scene reference generation state (for Reference Library Scene tab)
   const [generatingSceneReferenceIndex, setGeneratingSceneReferenceIndex] = useState<number | null>(null)
@@ -10600,11 +10606,49 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
 
-    setPreVisDirectGenerating(true)
-    if (!batchGeneratingRef.current) {
-      overlayStore.show(`Direct — Scene ${sceneIndex + 1}`, 25, 'storyboard-production')
+    if (directFrameRun && !directFrameRun.finished) {
+      toast.info('Direct generation is already running')
+      return
     }
-    setGeneratingKeyframeSceneNumber(sceneIndex + 1)
+
+    const sceneNumber =
+      typeof scene.sceneNumber === 'number' ? scene.sceneNumber : sceneIndex + 1
+    const generatingKey = storyboardGeneratingSlotKey(sceneIndex, slot)
+    const startedAt = Date.now()
+    // Close the builder so the gallery stays editable; the dock reports the fetch.
+    setPreVisDirectDialog(null)
+    setDirectFrameRun({
+      visible: true,
+      sceneNumber,
+      label: slot.label,
+      generatingKey,
+      status: 'running',
+      finished: false,
+      startedAt,
+    })
+
+    const finishDirectFrameRun = (next: {
+      status: DirectFrameRunState['status']
+      error?: string
+    }) => {
+      setDirectFrameRun((prev) => {
+        if (!prev || prev.startedAt !== startedAt) return prev
+        const finishedRun = {
+          ...prev,
+          status: next.status,
+          error: next.error,
+          finished: true,
+        }
+        if (next.status !== 'error') {
+          window.setTimeout(() => {
+            setDirectFrameRun((current) =>
+              current?.startedAt === startedAt ? null : current
+            )
+          }, 1500)
+        }
+        return finishedRun
+      })
+    }
 
     try {
       const selectedChars = options.selectedCharacterNames
@@ -10745,15 +10789,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           `scene-${sceneIndex}`
         syncBeatStartFrameToProduction(sceneId, payload.beatId, data.imageUrl)
       }
-      setPreVisDirectDialog(null)
       toast.success('Frame generated with Direct')
+      finishDirectFrameRun({ status: 'done' })
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Direct generation failed'
       toast.error(message)
-    } finally {
-      setPreVisDirectGenerating(false)
-      if (!batchGeneratingRef.current) overlayStore.hide()
-      setGeneratingKeyframeSceneNumber(null)
+      finishDirectFrameRun({ status: 'error', error: message })
     }
   }
 
@@ -15298,6 +15339,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSaveEditedCustomFrame={handleSaveEditedCustomFrame}
                 onSaveEditedStoryboardScene={handleSaveEditedScene}
                 onDirectFrame={handleOpenDirectFrame}
+                generatingDirectSlotKey={
+                  directFrameRun && !directFrameRun.finished
+                    ? directFrameRun.generatingKey
+                    : null
+                }
                 onAddStoryboardFrame={handleAddStoryboardFrame}
                 onDeleteStoryboardFrame={handleDeleteStoryboardFrame}
                 onGenerateCustomFrame={handleGenerateCustomFrame}
@@ -16028,7 +16074,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           <PreVisFramePromptDialog
             open
             onOpenChange={(open) => {
-              if (!open && !preVisDirectGenerating) setPreVisDirectDialog(null)
+              if (!open) setPreVisDirectDialog(null)
             }}
             slot={preVisDirectDialog.slot}
             scene={scene}
@@ -16038,7 +16084,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             objectReferences={objectReferences}
             filmTitle={project?.title}
             lockedArtStyle={project?.metadata?.visionPhase?.artStyle as string | undefined}
-            isGenerating={preVisDirectGenerating}
             onGenerate={handleDirectFrameGenerate}
           />
         )
@@ -16328,6 +16373,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             items={directionRun.items}
             finished={directionRun.finished}
             onClose={() => setDirectionRun(null)}
+          />
+        )}
+
+        {directFrameRun?.visible && (
+          <DirectFrameRunDock
+            run={directFrameRun}
+            onClose={() => setDirectFrameRun(null)}
           />
         )}
 

@@ -234,6 +234,24 @@ export function beatFrameSlotKey(
   return frameRole === 'end' ? `${beatId}-end` : beatId
 }
 
+/**
+ * Local spinner key for one storyboard slot.
+ *
+ * Regen wrapGenerate and Direct both have to spell this the same way, or the
+ * Loader2 on the frame only appears for whichever button started the run.
+ */
+export function storyboardGeneratingSlotKey(
+  sceneIndex: number,
+  slot: Pick<StoryboardFrameSlot, 'kind' | 'beatId' | 'dialogueIndex' | 'customFrameId'>
+): string {
+  if (slot.kind === 'custom' && slot.customFrameId) {
+    return `custom-${sceneIndex}-${slot.customFrameId}`
+  }
+  if (slot.beatId) return `${sceneIndex}-beat-${slot.beatId}`
+  if (typeof slot.dialogueIndex === 'number') return `${sceneIndex}-${slot.dialogueIndex}`
+  return `${sceneIndex}-establishing`
+}
+
 function getRawBeatStoryboardUrl(
   scene: Record<string, unknown>,
   beat: SceneBeat
