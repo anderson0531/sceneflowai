@@ -18,6 +18,12 @@ import {
   diffSceneChanges,
 } from '@/lib/script/sceneDiffChanges'
 import { MAX_INSTRUCTIONS } from '@/lib/constants/scene-optimization'
+import {
+  hasStoredSceneBeatTarget,
+  resolveSceneTargetBeatCount,
+  SCENE_BEAT_TARGET_PRESETS,
+} from '@/lib/script/sceneBeatTarget'
+import { TARGET_BEATS_PER_SCENE } from '@/lib/script/sceneDecomposition'
 
 type RevisionDepth = 'light' | 'moderate' | 'deep'
 
@@ -94,6 +100,14 @@ export function SceneEditorModal({
 
   const [appliedRecommendationIds, setAppliedRecommendationIds] = useState<string[]>([])
   const [revisionDepth, setRevisionDepth] = useState<RevisionDepth>('moderate')
+  const [targetBeatCount, setTargetBeatCount] = useState(() => resolveSceneTargetBeatCount(scene))
+
+  // Whether the low target is the resolver's guess rather than an author's
+  // choice, which is worth saying so nobody wonders why this scene reads short.
+  // Derived from the scene, not from the live selection: picking a short preset
+  // on an ordinary scene is a decision, not an automatic one.
+  const isAutoShortenedScene =
+    !hasStoredSceneBeatTarget(scene) && resolveSceneTargetBeatCount(scene) < TARGET_BEATS_PER_SCENE
 
   const countInstructions = (text: string): number => {
     if (text.trim() === '') return 0
@@ -154,6 +168,9 @@ export function SceneEditorModal({
       setPreserveBeatFrames(false)
       setDeselectedChanges(new Set())
       setRevisionDepth('moderate')
+      // Not reset to a constant like the others: the scene's own target is the
+      // point of storing it, so reopening shows the choice that is in force.
+      setTargetBeatCount(resolveSceneTargetBeatCount(scene))
     }
   }, [isOpen, scene, initialInstructions])
 
@@ -186,6 +203,7 @@ export function SceneEditorModal({
           targetDemographic,
           preserveElements,
           revisionDepth,
+          targetBeatCount,
           context: {
             characters,
             previousScene,
@@ -377,6 +395,43 @@ export function SceneEditorModal({
                       </span>
                       <span className="block text-[11px] text-gray-500 dark:text-gray-400">
                         {depth.hint}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  How long should this scene be?
+                </h4>
+                <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                  Beats this scene is written to. Drop it for a title sequence or a
+                  stinger, where a full-length target only invents filler.
+                  {isAutoShortenedScene &&
+                    ' Set low automatically because this reads as a title or credits scene.'}
+                </p>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {SCENE_BEAT_TARGET_PRESETS.map((preset) => (
+                    <button
+                      key={preset.value}
+                      type="button"
+                      onClick={() => setTargetBeatCount(preset.value)}
+                      aria-pressed={targetBeatCount === preset.value}
+                      className={`rounded-lg border p-2 text-left transition-colors ${
+                        targetBeatCount === preset.value
+                          ? 'border-purple-500/60 bg-purple-500/10'
+                          : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                      }`}
+                    >
+                      <span className="block text-sm font-medium text-gray-800 dark:text-gray-200">
+                        {preset.label}
+                        <span className="ml-1 font-normal text-gray-500 dark:text-gray-400">
+                          {preset.value}
+                        </span>
+                      </span>
+                      <span className="block text-[11px] text-gray-500 dark:text-gray-400">
+                        {preset.hint}
                       </span>
                     </button>
                   ))}

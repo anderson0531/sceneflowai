@@ -18,11 +18,11 @@ export const DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY = 1
 
 /**
  * Draft beats run on flash, which has its own larger quota than the pro image
- * model, so three can be in flight without reproducing the 429 storm that
- * forced pro identity-ref frames back to sequential. Matches the flash image
- * lane — a higher number here would only queue inside the traffic cop.
+ * model, so two can be in flight without reproducing the 429 storm that forced
+ * pro identity-ref frames back to sequential. Matches the flash image lane — a
+ * higher number here would only queue inside the traffic cop.
  */
-export const DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY = 3
+export const DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY = 2
 
 /**
  * Attempts per beat before it is reported as failed.

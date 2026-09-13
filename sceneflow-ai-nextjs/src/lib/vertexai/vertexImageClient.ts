@@ -9,6 +9,8 @@ import { getVertexAIAuthToken } from '@/lib/vertexai/client'
 import { fetchReferenceImageAsBase64 } from '@/lib/storage/fetchReferenceImage'
 import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalation'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
+import { priorityPaygoHeaders } from '@/lib/vertexai/priorityPaygo'
+import { runInVertexImageGate } from '@/lib/vertexai/vertexImageGate'
 import { getGeminiImageSafetySettings } from '@/lib/vertexai/safety'
 import { MAX_REFERENCE_IMAGES_ECO } from '@/lib/vision/referenceLimits'
 
@@ -170,25 +172,40 @@ async function sleepRateLimitBackoff(
 
 function getVertexImageConfig() {
   const projectId = process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID
+  // Only the image-specific variable pins a region. VERTEX_LOCATION is set for
+  // text and Cloud SQL on every deployment, so treating it as a pin would keep
+  // image traffic regional everywhere and defeat the global default below.
+  const pinnedLocation = process.env.VERTEX_IMAGE_LOCATION?.trim()
   const location =
-    process.env.VERTEX_IMAGE_LOCATION ||
+    pinnedLocation ||
     process.env.VERTEX_LOCATION ||
     process.env.GCP_REGION ||
     'us-central1'
   if (!projectId) {
     throw new Error('VERTEX_PROJECT_ID or GCP_PROJECT_ID must be configured for image generation')
   }
-  return { projectId, location }
+  return { projectId, location, regionPinned: Boolean(pinnedLocation) }
 }
 
-/** Resolve Vertex location + endpoint for Gemini image models (Gemini 3 preview -> global only). */
+/**
+ * Resolve Vertex location + endpoint for Gemini image models.
+ *
+ * Global is the default for every Gemini image model, not just Gemini 3.
+ * A 429 here is Dynamic Shared Quota contention rather than a project limit,
+ * and the global endpoint answers it by routing each request to whichever
+ * region currently has capacity — Google's documented first remedy. Pinning
+ * `VERTEX_IMAGE_LOCATION` opts back into one region for data residency, which
+ * Gemini 3 image models cannot honor because they are global-only.
+ */
 export function resolveVertexGeminiImageEndpoint(args: {
   model: string
   projectId: string
   regionalLocation: string
+  regionPinned?: boolean
 }): { endpoint: string; effectiveLocation: string; apiVersion: string } {
   const isGemini3 = args.model.includes('gemini-3')
-  const effectiveLocation = isGemini3 ? 'global' : args.regionalLocation
+  const effectiveLocation =
+    isGemini3 || !args.regionPinned ? 'global' : args.regionalLocation
   const isPreview = args.model.includes('preview')
   const apiVersion = isPreview ? 'v1beta1' : 'v1'
   const baseUrl =
@@ -334,11 +351,12 @@ export async function generateVertexGeminiImage(
       process.env.VERTEX_GEMINI_IMAGE_PRO_MODEL || GEMINI_IMAGE_TIER_CONFIG.designer.model
   }
 
-  const { projectId, location } = getVertexImageConfig()
+  const { projectId, location, regionPinned } = getVertexImageConfig()
   const { endpoint, effectiveLocation } = resolveVertexGeminiImageEndpoint({
     model,
     projectId,
     regionalLocation: location,
+    regionPinned,
   })
 
   if (retryCount === 0) {
@@ -347,9 +365,13 @@ export async function generateVertexGeminiImage(
     )
   }
 
-  if (model.includes('gemini-3') && effectiveLocation === 'global') {
+  if (effectiveLocation === 'global') {
     console.log(
-      `[Vertex Gemini Image] Using global endpoint for ${model} (Gemini 3 image models are not regional)`
+      `[Vertex Gemini Image] Using global endpoint for ${model} (routes to the region with spare capacity)`
+    )
+  } else {
+    console.log(
+      `[Vertex Gemini Image] Using pinned region ${effectiveLocation} for ${model} (VERTEX_IMAGE_LOCATION set)`
     )
   }
 
@@ -388,15 +410,22 @@ export async function generateVertexGeminiImage(
 
   let response: Response
   try {
-    response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(requestBody),
-      signal: controller.signal,
-    })
+    // The gate holds the dispatch and nothing else. Every backoff and retry
+    // below re-enters this function, so a slot spanning them would be waited
+    // on by the call holding it — and a frame sleeping out a 429 is not
+    // generating anyway, so it must not hold capacity a ready frame could use.
+    response = await runInVertexImageGate(() =>
+      fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+          ...priorityPaygoHeaders(),
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      })
+    )
   } catch (error) {
     clearTimeout(timeoutId)
     if (error instanceof Error && error.name === 'AbortError') {
@@ -429,8 +458,8 @@ export async function generateVertexGeminiImage(
     const errorText = await response.text()
     if (response.status === 429 && options.failFastOnRateLimit) {
       // Every sleep below is served while still holding the caller's image-lane
-      // slot, which on a 3-wide lane parks a third of the run on a frame that
-      // is doing nothing. Hand the slot back now; the caller re-queues.
+      // slot, which on a 2-wide lane parks half the run on a frame that is
+      // doing nothing. Hand the slot back now; the caller re-queues.
       console.warn(
         `[Vertex Gemini Image] Rate limit on ${model} — failing fast without eco fallback so the lane frees immediately`
       )

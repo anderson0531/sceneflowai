@@ -32,25 +32,53 @@ describe('resolveVertexGeminiImageEndpoint', () => {
     expect(endpoint).not.toContain('v1beta1')
   })
 
-  it('keeps GA flash-image on regional endpoint', () => {
+  it('sends GA flash-image to global so 429s can route to a region with capacity', () => {
     const { endpoint, effectiveLocation, apiVersion } = resolveVertexGeminiImageEndpoint({
       model: 'gemini-2.5-flash-image',
       projectId,
       regionalLocation: 'us-central1',
     })
 
-    expect(effectiveLocation).toBe('us-central1')
+    expect(effectiveLocation).toBe('global')
     expect(apiVersion).toBe('v1')
     expect(endpoint).toBe(
-      'https://us-central1-aiplatform.googleapis.com/v1/projects/sceneflowai-test/locations/us-central1/publishers/google/models/gemini-2.5-flash-image:generateContent'
+      'https://aiplatform.googleapis.com/v1/projects/sceneflowai-test/locations/global/publishers/google/models/gemini-2.5-flash-image:generateContent'
+    )
+    expect(endpoint).not.toContain('us-central1')
+  })
+
+  it('honors an explicit region pin for non-Gemini-3 models', () => {
+    const { endpoint, effectiveLocation } = resolveVertexGeminiImageEndpoint({
+      model: 'gemini-2.5-flash-image',
+      projectId,
+      regionalLocation: 'us-east4',
+      regionPinned: true,
+    })
+
+    expect(effectiveLocation).toBe('us-east4')
+    expect(endpoint).toBe(
+      'https://us-east4-aiplatform.googleapis.com/v1/projects/sceneflowai-test/locations/us-east4/publishers/google/models/gemini-2.5-flash-image:generateContent'
     )
   })
 
-  it('respects explicit global regionalLocation for non-Gemini-3 models', () => {
+  it('keeps Gemini 3 global even when a region is pinned', () => {
+    const { effectiveLocation, endpoint } = resolveVertexGeminiImageEndpoint({
+      model: 'gemini-3-pro-image',
+      projectId,
+      regionalLocation: 'us-east4',
+      regionPinned: true,
+    })
+
+    expect(effectiveLocation).toBe('global')
+    expect(endpoint).not.toContain('us-east4')
+  })
+
+  it('resolves global when the pinned value is itself global', () => {
     const { endpoint, effectiveLocation } = resolveVertexGeminiImageEndpoint({
       model: 'gemini-2.5-flash-image',
       projectId,
       regionalLocation: 'global',
+      regionPinned: true,
     })
 
     expect(effectiveLocation).toBe('global')

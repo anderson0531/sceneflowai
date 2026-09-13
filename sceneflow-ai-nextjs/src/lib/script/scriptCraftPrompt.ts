@@ -83,10 +83,24 @@ export function buildLongformScriptLengthBlock(opts?: { chunked?: boolean }): st
  * Beat volume for scene revision. The revision prompt used to state only the
  * ceiling; a ceiling reads as a limit rather than a goal, which left rewrites
  * anchored on whatever length the scene already had.
+ *
+ * The "you have room to grow" framing is correct at the script-wide target and
+ * wrong below it. A scene set to 6 was set there because 20 produced invented
+ * business, so pushing it toward the ceiling is the failure to warn against,
+ * not the one to prevent — hence two blocks rather than one with the number
+ * swapped.
  */
-export function buildRevisionBeatVolumeBlock(): string {
-  return `BEAT VOLUME (TARGET IS ${TARGET_BEATS_PER_SCENE}, CEILING IS ${MAX_BEATS_PER_SCENE}):
-• Aim for ~${TARGET_BEATS_PER_SCENE} beats in the revised scene. A scene may grow up to ${MAX_BEATS_PER_SCENE} beats when the story earns it, but must never exceed that cap.
+export function buildRevisionBeatVolumeBlock(targetBeats = TARGET_BEATS_PER_SCENE): string {
+  if (targetBeats < TARGET_BEATS_PER_SCENE) {
+    return `BEAT VOLUME (TARGET IS ${targetBeats} FOR THIS SCENE, CEILING IS ${MAX_BEATS_PER_SCENE}):
+• Aim for ~${targetBeats} beats in the revised scene. This scene has been set deliberately short, below the ${TARGET_BEATS_PER_SCENE}-beat figure used elsewhere in the script.
+• Do NOT pad toward ${TARGET_BEATS_PER_SCENE}. A scene of this kind does not contain that much story, and beats invented to reach a number add nothing an audience will feel.
+• Going a beat or two over is acceptable when the story genuinely needs it. Going far over is not, and never exceed ${MAX_BEATS_PER_SCENE}.
+• Spend the beats you have on what is worth seeing. Fewer, stronger images beat a longer sequence of filler.
+• Intervening action beats only when they add NEW visual information — never to pad runtime.`
+  }
+  return `BEAT VOLUME (TARGET IS ${targetBeats}, CEILING IS ${MAX_BEATS_PER_SCENE}):
+• Aim for ~${targetBeats} beats in the revised scene. A scene may grow up to ${MAX_BEATS_PER_SCENE} beats when the story earns it, but must never exceed that cap.
 • The original beat count is NOT a target to match. Returning a thin scene because the original was thin is a failure, not a stylistic choice — and filling the ceiling is not the target either.
 • You have room to add the beats the story needs to land: reactions, reversals, and visual turns the original skipped.
 • Intervening action beats only when they add NEW visual information — never to pad runtime.`
