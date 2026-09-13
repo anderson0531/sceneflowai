@@ -16,6 +16,10 @@ import {
   type ProjectLookbook,
 } from '@/lib/intelligence/project-lookbook-fallback'
 import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
+import {
+  buildPolicySafePhrasingRules,
+  softenStillPhrasingForPolicy,
+} from '@/lib/generation/policySafePhrasing'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPrompt'
 import {
@@ -298,14 +302,35 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
       `[Beat Still] Beat ${beat.beatId} framed from frozenMoment; prose not staged: "${described}"`
     )
   }
-  appendFacet(parts, frozen || described)
+  // Direction written before the authoring prompts carried policy guidance
+  // still says what it says, and a still reading as harm to a person is refused
+  // outright rather than rendered. Beat frames run one attempt, so a refusal
+  // costs the frame entirely — the softening happens here, on the way in.
+  const policyChanges: string[] = []
+  const policySafe = (value?: string | null): string => {
+    const softened = softenStillPhrasingForPolicy(value)
+    policyChanges.push(...softened.changes)
+    return softened.text
+  }
+
+  appendFacet(parts, policySafe(frozen || described))
   // "Blocking" and "Prop handling" are stage-direction words, and direction
   // written under them reads as choreography: a move, or a run of them. A still
   // can only hold one position per body, so the label asks for one and the
   // reduction drops the stages that lead into it.
-  appendFacet(parts, reduceActionToSingleInstant(direction?.blocking), 'Body position')
-  appendFacet(parts, reduceActionToSingleInstant(direction?.propInteraction), 'Hands and props')
+  appendFacet(parts, policySafe(reduceActionToSingleInstant(direction?.blocking)), 'Body position')
+  appendFacet(
+    parts,
+    policySafe(reduceActionToSingleInstant(direction?.propInteraction)),
+    'Hands and props'
+  )
   appendFacet(parts, direction?.gaze, 'Gaze')
+
+  if (policyChanges.length > 0) {
+    console.log(
+      `[Beat Still] Beat ${beat.beatId} softened ${policyChanges.length} phrase(s) that draw image-safety refusals: ${policyChanges.join('; ')}`
+    )
+  }
 
   // A prop reference is only attached when the frame names it, so a directed
   // key prop that no other facet mentions has to be stated here.
@@ -424,6 +449,8 @@ CRITICAL RULES:
 8. The "prompt" field is Action/Framing ONLY: shot type, body blocking, who holds which named library prop, gaze. Do NOT write style dumps, lighting essays, exclusions, F2V, or start-frame language — the lookbook and code own those.
 9. Use EXACT character / prop / location labels from the REFERENCE LIBRARY. Do not invent objects that are not listed. Do not describe the visual appearance of library props or locations (reference images own appearance).
 10. When art style is photorealistic, keep action language photographic (no illustration, cartoon, or anime). Populate negativeAdditions with anti-illustration terms.
+
+11. ${buildPolicySafePhrasingRules()}
 
 Output JSON:
 {

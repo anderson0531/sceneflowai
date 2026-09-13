@@ -22,6 +22,7 @@ import { attachCoGeneratedSceneDirection } from '@/lib/sceneGeneration/attachRev
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { localeDirective } from '@/lib/prompts/localeDirective'
 import { classifyAiError } from '@/lib/errors/aiErrorClassification'
+import { buildPolicySafePhrasingRules } from '@/lib/generation/policySafePhrasing'
 import {
   buildRevisionBeatVolumeBlock,
   buildScriptCraftPromptBlock,
@@ -420,6 +421,8 @@ STRUCTURED BEATS RULES:
 - Dialogue beats use kind "dialogue" with character + line.
 - Narration beats use kind "narration" with character "NARRATOR" unless narrator is already a dialogue character.
 - Intervening action beats must add NEW visual information (insert, cutaway, geography, non-speaker reaction) — do NOT clone the speaker's blocking from an adjacent dialogue beat into a separate action frame.
+
+${buildPolicySafePhrasingRules()}
 
 REMEMBER: ALL dialogue/narration lines must include [emotional tags] at the beginning.
 

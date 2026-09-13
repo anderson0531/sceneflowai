@@ -26,6 +26,7 @@ import { withTimeout } from '@/lib/utils/retry'
 import {
   DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
 } from '@/lib/character/characterReferenceAssembly'
+import { buildPolicySafePhrasingRules } from '@/lib/generation/policySafePhrasing'
 import { LOCATION_TURNAROUND_USER_PROMPT_HINT } from '@/lib/vision/locationReferencePrompts'
 import { type ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
 import { composeBeatStillPrompt } from '@/lib/intelligence/beat-sequence-planner-fallback'
@@ -609,7 +610,9 @@ Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesth
 
 REFERENCE IMAGE BINDING: Do NOT emit a [REFERENCE IMAGE MAPPING] or [REFERENCES] section. Reference images are bound in code — use person [N], prop [N], and location [N] tokens from input in your composition text; never write library prop names that contain character names.
 
-9. FOREHEAD/TEMPLE INJURIES: When the beat describes a bruise, cut, or injury on the forehead or temple, preserve the character's reference hairstyle exactly — do NOT pull hair back or restyle to expose the injury. The injury must be visible without changing hair placement.`
+9. FOREHEAD/TEMPLE INJURIES: When the beat describes a bruise, cut, or injury on the forehead or temple, preserve the character's reference hairstyle exactly — do NOT pull hair back or restyle to expose the injury. The injury must be visible without changing hair placement.
+
+10. ${buildPolicySafePhrasingRules()}`
 }
 
 function buildSystemPrompt(): string {

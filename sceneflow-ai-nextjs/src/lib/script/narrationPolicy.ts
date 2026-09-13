@@ -4,6 +4,7 @@
  */
 
 import { toCanonicalName } from '@/lib/character/canonical'
+import { buildPolicySafePhrasingRules } from '@/lib/generation/policySafePhrasing'
 import {
   applyBeatsToScene,
   isNarratorBeat,
@@ -291,7 +292,9 @@ Rules:
 • Do NOT restate the scene direction verbatim — refine it for THIS beat.
 • Do NOT put dialogue content in beatDirection fields.
 • frozenMoment is a photograph, not a video: no temporal verbs ("pulses", "walks toward"). Describe the instant.
-• Keep values short: shotType is 1–4 words; blocking, gaze, propInteraction, audioCue, lightingAccent are one clause each; frozenMoment is one sentence.`
+• Keep values short: shotType is 1–4 words; blocking, gaze, propInteraction, audioCue, lightingAccent are one clause each; frozenMoment is one sentence.
+
+${buildPolicySafePhrasingRules()}`
 }
 
 /**
@@ -323,7 +326,8 @@ Every beat MUST include a "beatDirection" object with the fields below and NO ot
 Rules:
 • Do NOT put dialogue content in beatDirection fields.
 • Do NOT emit ${excluded} on beats — the direction pass supplies them.
-• frozenMoment must be visually distinct from the adjacent beats' frozenMoment.`
+• frozenMoment must be visually distinct from the adjacent beats' frozenMoment.
+• ${buildPolicySafePhrasingRules({ compact: true })}`
 }
 
 export function buildBeatDirectionSchemaExample(opts?: {
