@@ -23,6 +23,7 @@ import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
 import { mintLineId } from '@/lib/script/segmentScript'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import { MAX_BEATS_PER_SCENE } from '@/lib/script/sceneDecomposition'
+import { clampSceneBeatTarget, SCENE_BEAT_TARGET_KEY } from '@/lib/script/sceneBeatTarget'
 import { restampPreVisHashIfScriptCurrent } from '@/lib/storyboard/preVisSync'
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
 
@@ -366,12 +367,28 @@ function stampRevisionDepth(
   return { ...scene, [REVISION_DEPTH_SCENE_KEY]: revisionDepth }
 }
 
+/**
+ * Record the target the revision was written to, so the choice outlives it.
+ *
+ * Unlike `REVISION_DEPTH_SCENE_KEY`, which apply strips once it has decided
+ * how to treat assets, this is a real scene field: a title sequence set to six
+ * beats should still be six the next time anyone revises it.
+ */
+function stampSceneBeatTarget(
+  scene: Record<string, unknown>,
+  targetBeats?: number
+): Record<string, unknown> {
+  const clamped = clampSceneBeatTarget(targetBeats)
+  if (clamped === null) return scene
+  return { ...scene, [SCENE_BEAT_TARGET_KEY]: clamped }
+}
+
 export function finalizeStructuredRevisedScene(
   parsed: { beats: unknown[]; music?: unknown; sfx?: unknown },
   currentScene: Record<string, unknown>,
   preserveElements: PreserveElementInput[],
   context: { characters?: any[] },
-  options?: { revisionDepth?: RevisionDepth }
+  options?: { revisionDepth?: RevisionDepth; targetBeats?: number }
 ): Record<string, unknown> {
   const revisionDepth = options?.revisionDepth ?? 'moderate'
   const isDeep = revisionDepth === 'deep'
@@ -435,6 +452,7 @@ export function finalizeStructuredRevisedScene(
   ) as Record<string, unknown>
 
   finalScene = relinkSceneCharacterIds(finalScene, context?.characters)
+  finalScene = stampSceneBeatTarget(finalScene, options?.targetBeats)
 
   return stampRevisionDepth(finalScene, revisionDepth)
 }
@@ -444,7 +462,7 @@ export function finalizeFlatRevisedScene(
   currentScene: Record<string, unknown>,
   preserveElements: PreserveElementInput[],
   context: { characters?: any[] },
-  options?: { revisionDepth?: RevisionDepth }
+  options?: { revisionDepth?: RevisionDepth; targetBeats?: number }
 ): Record<string, unknown> {
   const revisionDepth = options?.revisionDepth ?? 'moderate'
   const isDeep = revisionDepth === 'deep'
@@ -486,6 +504,7 @@ export function finalizeFlatRevisedScene(
   ) as Record<string, unknown>
 
   finalScene = relinkSceneCharacterIds(finalScene, context?.characters)
+  finalScene = stampSceneBeatTarget(finalScene, options?.targetBeats)
 
   return stampRevisionDepth(finalScene, revisionDepth)
 }
