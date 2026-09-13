@@ -28,7 +28,10 @@ describe('useTimelinePlayback animate() TDZ', () => {
   })
 
   it('does not redeclare currentSceneDuration inside the audio forEach', () => {
-    const forEach = animate.slice(animate.indexOf('currentAudioClips.forEach'))
+    const forEach = animate
+      .slice(animate.indexOf('currentAudioClips.forEach'))
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/.*$/gm, '')
     expect(forEach).toContain('currentAudioClips.forEach')
     expect(forEach.match(/const currentSceneDuration/g) ?? []).toHaveLength(0)
   })
