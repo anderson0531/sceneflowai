@@ -28,6 +28,7 @@ import {
   countStoryboardFrameStats,
   enumerateStoryboardFrameSlots,
   sceneHasNoOwnedBeatImages,
+  storyboardGeneratingSlotKey,
   type StoryboardFrameSlot,
 } from '@/lib/storyboard/types'
 import { getSceneBeats } from '@/lib/script/beatMigration'
@@ -102,6 +103,8 @@ export interface SceneStoryboardFrameViewerProps {
   onSetScreeningPoster?: (slot: StoryboardFrameSlot | null) => void
   /** When true, skip accordion header — used inside the Writer's Room Pre-Vis panel */
   hideOuterChrome?: boolean
+  /** Direct prompt-builder run in flight — same spinner key Regen wrapGenerate uses. */
+  generatingDirectSlotKey?: string | null
 }
 
 interface StoryboardSlotHandlers {
@@ -111,6 +114,7 @@ interface StoryboardSlotHandlers {
   isGenerating: boolean
   generatingDialogueFrames: Set<string>
   generatingCustomFrames: Set<string>
+  generatingDirectSlotKey?: string | null
   onGenerate: (prompt: string) => Promise<void>
   onGenerateDialogueFrame?: (dialogueIndex: number) => Promise<void>
   onGenerateBeatFrame?: (beatId: string) => Promise<void>
@@ -150,6 +154,7 @@ function buildStoryboardSlotFrameProps(
     isGenerating,
     generatingDialogueFrames,
     generatingCustomFrames,
+    generatingDirectSlotKey,
     onGenerate,
     onGenerateDialogueFrame,
     onGenerateBeatFrame,
@@ -168,13 +173,13 @@ function buildStoryboardSlotFrameProps(
   const useExpressGenerate = !!routeGenerateToExpress
 
   if (slot.kind === 'custom') {
-    const genKey = `custom-${sceneIndex}-${slot.customFrameId}`
+    const genKey = storyboardGeneratingSlotKey(sceneIndex, slot)
     return {
       sceneIdx: sceneIndex,
       sceneNumber,
       imageUrl: slot.displayImageUrl,
       isPlaceholder: slot.isPlaceholder,
-      isGenerating: generatingCustomFrames.has(genKey),
+      isGenerating: generatingCustomFrames.has(genKey) || generatingDirectSlotKey === genKey,
       label: slot.label,
       imagePrompt: slot.storyboardImagePrompt,
       generateBlockedReason,
@@ -203,14 +208,19 @@ function buildStoryboardSlotFrameProps(
 
   const dialogueIdx = slot.dialogueIndex
   const beatId = slot.beatId
-  const useBeatFrame = !!beatId && (slot.kind === 'narration' || slot.kind === 'action')
+  // Any beat-backed slot is a beat frame, dialogue included. The old action/
+  // narration gate sent spoken beats down handleGenerateDialogueFrameImage,
+  // which froze the page and skipped the Express dock Regen already uses.
+  const useBeatFrame = !!beatId
+  const generatingKey = storyboardGeneratingSlotKey(sceneIndex, slot)
+  const isDirectGenerating = generatingDirectSlotKey === generatingKey
   const isGeneratingBeatFrame =
     useBeatFrame &&
-    generatingDialogueFrames.has(`${sceneIndex}-beat-${beatId}`)
+    (generatingDialogueFrames.has(`${sceneIndex}-beat-${beatId}`) || isDirectGenerating)
   const isGeneratingFrame =
     !useBeatFrame &&
     typeof dialogueIdx === 'number' &&
-    generatingDialogueFrames.has(`${sceneIndex}-${dialogueIdx}`)
+    (generatingDialogueFrames.has(`${sceneIndex}-${dialogueIdx}`) || isDirectGenerating)
   const isLegacyEstablishingOnly =
     !useBeatFrame && slot.kind === 'action' && typeof dialogueIdx !== 'number' && !beatId
 
@@ -220,7 +230,7 @@ function buildStoryboardSlotFrameProps(
     imageUrl: slot.isMissing ? undefined : slot.displayImageUrl,
     isPlaceholder: slot.isPlaceholder,
     isGenerating: isLegacyEstablishingOnly
-      ? isGenerating
+      ? isGenerating || isDirectGenerating
       : useBeatFrame
         ? isGeneratingBeatFrame
         : isGeneratingFrame,
@@ -362,6 +372,7 @@ export function SceneStoryboardFrameViewer({
   screeningPosterFrameKey,
   onSetScreeningPoster,
   hideOuterChrome = false,
+  generatingDirectSlotKey = null,
 }: SceneStoryboardFrameViewerProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [selectedFrameKey, setSelectedFrameKey] = useState<string | null>(null)
@@ -618,6 +629,7 @@ export function SceneStoryboardFrameViewer({
       isGenerating: isGeneratingScene,
       generatingDialogueFrames,
       generatingCustomFrames,
+      generatingDirectSlotKey,
       onGenerate: async (p) => {
         if (blockedByReferences()) return
         if (onGenerateScene) await onGenerateScene(p)
@@ -677,6 +689,7 @@ export function SceneStoryboardFrameViewer({
       isGeneratingScene,
       generatingDialogueFrames,
       generatingCustomFrames,
+      generatingDirectSlotKey,
       onGenerateScene,
       onGenerateDialogueFrame,
       onGenerateBeatFrame,

@@ -5,6 +5,7 @@ import {
   countStoryboardFramesNeedingGeneration,
   enumerateStoryboardFrameSlots,
   sceneHasNoOwnedBeatImages,
+  storyboardGeneratingSlotKey,
 } from '@/lib/storyboard/types'
 import { applyExpressStoryboardImageToScene, getStoryboardTimelineBeats } from '@/lib/script/beatMigration'
 
@@ -260,5 +261,18 @@ describe('storyboard frame slots', () => {
     expect(slots.every((s) => !s.ownImageUrl)).toBe(true)
     expect(slots.some((s) => s.isPlaceholder)).toBe(true)
     expect(sceneHasNoOwnedBeatImages(scene)).toBe(true)
+  })
+
+  it('spells Regen and Direct spinner keys the same way', () => {
+    expect(
+      storyboardGeneratingSlotKey(2, { kind: 'dialogue', beatId: 'bt_dlg' })
+    ).toBe('2-beat-bt_dlg')
+    expect(
+      storyboardGeneratingSlotKey(2, { kind: 'dialogue', dialogueIndex: 1 })
+    ).toBe('2-1')
+    expect(
+      storyboardGeneratingSlotKey(2, { kind: 'custom', customFrameId: 'fr_1' })
+    ).toBe('custom-2-fr_1')
+    expect(storyboardGeneratingSlotKey(2, { kind: 'action' })).toBe('2-establishing')
   })
 })

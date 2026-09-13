@@ -487,4 +487,26 @@ describe('frameType is decided by the beat, not by the button', () => {
     expect(dialogueBranch).toBeGreaterThan(beatBranch)
     expect(src.slice(beatBranch, dialogueBranch)).toContain("payload.frameType = 'beat'")
   })
+
+  it('quick regen on the storyboard treats any beat-backed slot as Express', () => {
+    const viewer = readFileSync(
+      join(process.cwd(), 'src/components/vision/SceneStoryboardFrameViewer.tsx'),
+      'utf8'
+    )
+    const promptCtx = readFileSync(
+      join(process.cwd(), 'src/lib/vision/resolvePreVisFramePromptContext.ts'),
+      'utf8'
+    )
+
+    // Same leftover gate Direct already dropped: spoken beats have kind
+    // 'dialogue' and a beatId, so the first icon used to freeze via the
+    // dialogue generate-image path instead of the Express dock.
+    expect(viewer).not.toMatch(
+      /!!beatId && \(slot\.kind === 'narration' \|\| slot\.kind === 'action'\)/
+    )
+    expect(viewer).toContain('const useBeatFrame = !!beatId')
+    expect(promptCtx).not.toMatch(
+      /!!beatId && \(slot\.kind === 'narration' \|\| slot\.kind === 'action'\)/
+    )
+  })
 })

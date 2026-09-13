@@ -168,8 +168,10 @@ export function resolvePreVisFramePromptContext(args: {
   }
 
   const beatId = slot.beatId
-  const useBeatFrame = !!beatId && (slot.kind === 'narration' || slot.kind === 'action')
-  if (useBeatFrame && beatId) {
+  // Any beat-backed slot is a beat frame, dialogue included. The old action/
+  // narration gate seeded spoken beats from the speaker line instead of the
+  // frozen moment and saved refs that Regen/Express use for the same beat.
+  if (beatId) {
     const beat = getSceneBeats(scene).find((b) => b.beatId === beatId)
     if (beat) {
       const beatVisualSetup = defaultVisualSetup(scene, lockedArtStyle, beat)

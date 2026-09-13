@@ -168,4 +168,45 @@ describe('resolvePreVisFramePromptContext', () => {
     expect(ctx.selectedCharacterNames).toEqual(['Alex'])
     expect(ctx.selectedWardrobes.Alex).toBe('w-lab')
   })
+
+  it('seeds a dialogue beat from the beat, not the speaker-only fallback', () => {
+    const dialogueSlot: StoryboardFrameSlot = {
+      key: 'bt_dlg',
+      label: 'Alex (Start)',
+      kind: 'dialogue',
+      beatId: 'bt_dlg',
+      dialogueIndex: 0,
+      isPlaceholder: false,
+      isMissing: false,
+    }
+    const ctx = resolvePreVisFramePromptContext({
+      slot: dialogueSlot,
+      scene: {
+        heading: 'INT. LAB - DAY',
+        dialogue: [{ character: 'Alex', line: 'Something is wrong.' }],
+        beats: [
+          {
+            beatId: 'bt_dlg',
+            kind: 'dialogue',
+            character: 'Alex',
+            line: 'Something is wrong.',
+            beatDirection: { frozenMoment: 'Alex at the console, eyes wide' },
+          },
+        ],
+      },
+      sceneIndex: 0,
+      projectCharacters: [
+        {
+          id: 'c1',
+          name: 'Alex',
+          referenceImage: 'https://example.com/alex.jpg',
+        },
+      ],
+      locationReferences: [],
+      objectReferences: [],
+    })
+    expect(ctx.seedPrompt).toContain('console')
+    expect(ctx.seedPrompt).not.toBe('Something is wrong.')
+    expect(ctx.beat?.beatId).toBe('bt_dlg')
+  })
 })
