@@ -29,7 +29,7 @@ export const SCENE_OPTIMIZATION_TEMPLATES: SceneOptimizationTemplate[] = [
     icon: '⏱️',
     label: 'Improve Pacing',
     description: 'Tighten or expand timing',
-    instruction: 'Improve the pacing of this scene. Tighten slow sections and expand moments that need more breathing room. Focus on the key beats.'
+    instruction: 'Improve the pacing of this scene. Tighten slow sections and expand moments that need more breathing room.'
   },
   {
     id: 'enhance-dialogue',
