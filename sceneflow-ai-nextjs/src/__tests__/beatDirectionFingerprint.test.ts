@@ -17,9 +17,13 @@ const stillDirection: BeatDirection = {
 const withVideoOnly: BeatDirection = {
   ...stillDirection,
   cameraMovement: 'handheld push-in',
-  emotion: 'resolute',
   audioCue: 'timer glitch',
   transition: 'CUT',
+}
+
+const withEmotion: BeatDirection = {
+  ...stillDirection,
+  emotion: 'resolute',
 }
 
 describe('beatStillDirectionFingerprint', () => {
@@ -29,6 +33,12 @@ describe('beatStillDirectionFingerprint', () => {
     )
     expect(beatDirectionFingerprint(withVideoOnly)).not.toBe(
       beatDirectionFingerprint(stillDirection)
+    )
+  })
+
+  it('changes when emotion changes, because stills now draw the face', () => {
+    expect(beatStillDirectionFingerprint(withEmotion)).not.toBe(
+      beatStillDirectionFingerprint(stillDirection)
     )
   })
 
@@ -84,9 +94,14 @@ describe('beatStillDirectionFingerprint', () => {
     ).toBe(false)
   })
 
+  it('stales the still when only emotion changes', () => {
+    const still = beatStillDirectionFingerprint(withEmotion)
+    expect(storedStillDirectionKeyMatches(still, stillDirection)).toBe(false)
+  })
+
   it('lifts the still slice out of a key that also carries video facets', () => {
     const still = beatStillDirectionFingerprint(withVideoOnly)
-    const withVideoFacets = `${still}|cameraMovement=handheld push-in|emotion=resolute`
+    const withVideoFacets = `${still}|cameraMovement=handheld push-in`
 
     expect(stillDirectionKeyFromStored(withVideoFacets)).toBe(still)
     expect(storedStillDirectionKeyMatches(withVideoFacets, withVideoOnly)).toBe(true)

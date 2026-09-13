@@ -20,6 +20,8 @@ describe('script inception ships beat direction contracts', () => {
     expect(block.toLowerCase()).toContain('shot')
     expect(block.toLowerCase()).toContain('emotion')
     expect(block.toLowerCase()).toContain('gaze')
+    expect(block).toMatch(/REQUIRED whenever castInFrame is non-empty/)
+    expect(block).toMatch(/jaw set/)
     expect(block).toMatch(/transition/i)
   })
 

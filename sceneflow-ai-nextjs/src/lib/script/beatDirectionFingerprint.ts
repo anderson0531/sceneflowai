@@ -1,10 +1,10 @@
 /**
  * Stable fingerprints of a beat's structured direction.
  *
- * Still prompts and pre-vis frames only consume shot / blocking / frozen-moment
- * facets. Video compile reads movement, emotion, audio, and transition live.
- * Those two sets must not share a key or a dolly/emotion edit would look like
- * a stale still prompt.
+ * Still prompts and pre-vis frames consume shot / blocking / frozen-moment /
+ * emotion facets. Video compile reads movement, audio, and transition live.
+ * Those two sets must not share a key or a dolly edit would look like a stale
+ * still prompt.
  *
  * Kept in its own module because the prompt composer is client-safe and must not
  * pull in the migration graph.
@@ -20,11 +20,11 @@ const STILL_FINGERPRINTED_KEYS: Array<keyof BeatDirection> = [
   'propInteraction',
   'lightingAccent',
   'frozenMoment',
+  'emotion',
 ]
 
 const VIDEO_ONLY_FINGERPRINTED_KEYS: Array<keyof BeatDirection> = [
   'cameraMovement',
-  'emotion',
   'audioCue',
   'transition',
 ]
@@ -58,7 +58,7 @@ const STILL_KEY_NAMES = new Set<string>([...STILL_FINGERPRINTED_KEYS, ...LIST_KE
  * `generateLegacyPreVisContentHash` replays to recognise pre-deploy pre-vis
  * stamps, and moving it would make every one of those scenes ask to be updated.
  */
-const STILL_FINGERPRINT_VERSION = 'still-v2'
+const STILL_FINGERPRINT_VERSION = 'still-v3'
 
 const VERSION_PREFIX_PATTERN = /^still-v\d+$/
 

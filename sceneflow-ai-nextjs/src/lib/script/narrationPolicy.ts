@@ -271,13 +271,13 @@ Field definitions:
 • "cameraAngle": angle for this beat (e.g., "eye-level", "low angle", "high angle", "Dutch angle", "worm's eye"). Only include when it deviates from the scene default.
 • "cameraMovement": motion for this beat (e.g., "static", "handheld push-in", "slow Steadicam creep", "whip pan", "rack focus"). Use "static" for a locked-off still.
 • "castInFrame": array of the character names visible on camera in THIS beat, exactly as spelled in the scene's character list. REQUIRED on every beat, and it is the only thing that decides who appears — nothing else is read for it. Use [] for a frame with no people in it (an insert of a gauge, a prop, an empty room). Do not list a character who is only spoken about, only heard, or merely present in the scene. NARRATOR is off-screen and never goes here.
-• "blocking": one clause describing where each named subject stands / body posture / physical action in THIS beat (e.g., "Piper braces her forearm against Gideon's chest, journal raised in her free hand; Gideon leans toward the core"). No paraphrasing of dialogue.
-• "emotion": single phrase naming the directed emotion / expression on the primary subject (e.g., "hypnotic awe", "panicked determination", "wry resignation"). Match the scene's talent arc but be beat-specific.
-• "gaze": who or what the subject looks at (e.g., "toward the glowing core", "into Gideon's eyes", "off-frame left toward the door"). Include when it matters for framing.
+• "blocking": one clause for the settled pose in THIS beat — weight, contact, hands, shoulders (e.g., "Piper braces her forearm against Gideon's chest, journal raised, her shoulders locked; Gideon leans toward the core, weight on his front foot"). Not empty stillness ("stands perfectly still") unless the beat is a true hold, and then name where the tension lives. One position per body. No paraphrasing of dialogue.
+• "emotion": visible face and body tells on the primary subject, not a two-word mood label (e.g., "sudden tension, jaw set, eyes widened", "hypnotic awe, mouth parted, eyes still", "panicked determination, jaw set, eyes wide"). Match the scene's talent arc but be beat-specific.
+• "gaze": who or what the subject looks at (e.g., "toward the glowing core", "into Gideon's eyes", "off-frame left toward the door"). REQUIRED whenever castInFrame is non-empty.
 • "keyProps": array of prop labels — SUBSET of the scene's Key Props — that are visible and relevant in THIS beat. Omit props not in this beat. Use the exact prop labels from the scene's Key Props list.
 • "propInteraction": how a character physically handles a listed prop this beat (e.g., "Piper grips the journal with both hands and holds it against Gideon's sternum"). Names must match keyProps entries.
 • "lightingAccent": per-beat lighting deviation from the scene's overall lighting (e.g., "teal accent from the core underlighting Gideon's face"). Omit when scene lighting is unchanged.
-• "frozenMoment": ONE SENTENCE naming the single frozen still this beat represents (e.g., "Piper stops Gideon mid-lean, journal pressed to his sternum, both faces edged in teal."). Prefer noun-first, concrete, one composition.
+• "frozenMoment": ONE SENTENCE naming the single frozen still this beat represents — pose plus what is readable on the face/body (e.g., "Piper stops Gideon mid-lean, journal pressed to his sternum, her jaw set, his eyes wide."). Prefer noun-first, concrete, one composition. Do not write "standing motionless" without the face and body that make the hold readable.
 • "audioCue": per-beat diegetic sound (e.g., "glitching proximity timer chirps twice", "rhythmic thrum of the core swells"). Only include for beats with a distinct in-scene sound; leave out generic ambience.
 • "transition": how this beat cuts into the NEXT beat. One of: "CUT", "CONTINUE", "DISSOLVE", "FADE", "MATCH_CUT". Default is "CUT".
 
@@ -292,7 +292,7 @@ Rules:
 • Do NOT restate the scene direction verbatim — refine it for THIS beat.
 • Do NOT put dialogue content in beatDirection fields.
 • frozenMoment is a photograph, not a video: no temporal verbs ("pulses", "walks toward"). Describe the instant.
-• Keep values short: shotType is 1–4 words; blocking, gaze, propInteraction, audioCue, lightingAccent are one clause each; frozenMoment is one sentence.
+• Keep values short: shotType is 1–4 words; gaze, propInteraction, audioCue, lightingAccent are one clause each; blocking is one clause that still names weight/hands/shoulders; emotion names visible tells; frozenMoment is one sentence that includes pose and face/body.
 
 ${buildPolicySafePhrasingRules()}`
 }
@@ -320,7 +320,7 @@ Every beat MUST include a "beatDirection" object with the fields below and NO ot
 
 • "castInFrame": array of the character names visible on camera in THIS beat, exactly as spelled in the scene's character list. It is the only thing that decides who appears. Use [] for a frame with no people in it. Never list NARRATOR.
 • "shotType": named shot for this beat, 1–4 words (e.g., "Wide Shot", "Medium Close-Up", "Insert Shot", "Over-the-Shoulder", "Two-Shot").
-• "frozenMoment": ONE SENTENCE naming the single frozen still this beat represents (e.g., "Piper halts Gideon mid-lean, journal pressed to his sternum."). Noun-first, concrete, one composition. It is a photograph, not a video: no temporal verbs ("pulses", "walks toward").
+• "frozenMoment": ONE SENTENCE naming the single frozen still this beat represents (e.g., "Piper halts Gideon mid-lean, journal pressed to his sternum, her jaw set."). Noun-first, concrete, one composition — pose plus what is readable on the face/body. It is a photograph, not a video: no temporal verbs ("pulses", "walks toward"). Do not write empty stillness ("standing motionless") without the face and body that make the hold readable.
 • "transition": how this beat cuts into the NEXT beat. One of: "CUT", "CONTINUE", "DISSOLVE", "FADE", "MATCH_CUT". Default is "CUT".${propFields}
 
 Rules:
@@ -338,20 +338,20 @@ export function buildBeatDirectionSchemaExample(opts?: {
     const props = opts.includeProps
       ? ', "keyProps": ["Water-damaged leather journal"], "propAssetIds": ["catalog-prop-id-if-known"]'
       : ''
-    return `"beatDirection": {"castInFrame": ["Piper Hayes", "Gideon Croft"], "shotType": "Medium Close-Up", "frozenMoment": "Piper halts Gideon mid-lean, journal pressed to his sternum.", "transition": "CUT"${props}}`
+    return `"beatDirection": {"castInFrame": ["Piper Hayes", "Gideon Croft"], "shotType": "Medium Close-Up", "frozenMoment": "Piper halts Gideon mid-lean, journal pressed to his sternum, her jaw set.", "transition": "CUT"${props}}`
   }
   return `"beatDirection": {
           "castInFrame": ["Piper Hayes", "Gideon Croft"],
           "shotType": "Medium Close-Up",
           "cameraAngle": "eye-level",
           "cameraMovement": "static",
-          "blocking": "Piper braces forearm across Gideon's chest, journal raised in her free hand",
-          "emotion": "desperate grounding",
+          "blocking": "Piper braces forearm across Gideon's chest, journal raised, her shoulders locked",
+          "emotion": "desperate grounding, jaw set, eyes locked",
           "gaze": "into Gideon's eyes",
           "keyProps": ["Water-damaged leather journal"],
           "propInteraction": "Piper grips the journal one-handed at Gideon's sternum",
           "lightingAccent": "teal accent from the core underlighting Gideon's cheek",
-          "frozenMoment": "Piper halts Gideon mid-lean, journal pressed to his sternum, both faces edged in teal.",
+          "frozenMoment": "Piper halts Gideon mid-lean, journal pressed to his sternum, her jaw set, his eyes wide.",
           "audioCue": "glitching proximity timer chirps twice",
           "transition": "CUT"
         }`

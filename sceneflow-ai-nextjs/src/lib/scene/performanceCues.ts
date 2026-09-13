@@ -61,6 +61,58 @@ const EMOTION_VISUAL: Record<string, string> = {
   furious: 'furious, enraged expression',
 }
 
+/** Face or body nouns — if the author already named these, do not invent more. */
+const FACE_BODY_TELL_PATTERN =
+  /\b(jaw|jaws|eyes?|eye|mouth|lips?|brow|brows|forehead|shoulders?|chin|teeth|nostrils?|cheeks?|pupils?|lids?)\b/i
+
+/**
+ * Visible still tells for short emotion labels. One instant: settled face and
+ * body, no motion verbs. Longest phrases first so "sudden tension" wins over
+ * "tension".
+ */
+const STILL_EMOTION_TELLS: Array<{ pattern: RegExp; tells: string }> = [
+  { pattern: /\bsudden tension\b/i, tells: 'eyes widened, jaw set, mouth tight, shoulders locked' },
+  { pattern: /\bhypnotic awe\b/i, tells: 'eyes wide and still, mouth parted, face slack' },
+  { pattern: /\bquiet dread\b/i, tells: 'eyes held, jaw tight, mouth closed, shoulders drawn' },
+  { pattern: /\bpanicked determination\b/i, tells: 'eyes wide, jaw set, mouth a hard line' },
+  { pattern: /\bwry resignation\b/i, tells: 'mouth a tight slant, eyes tired, brows lowered' },
+  { pattern: /\bdesperate grounding\b/i, tells: 'jaw set, eyes locked, mouth pressed shut' },
+  { pattern: /\b(awe|awed|awestruck)\b/i, tells: 'eyes wide, mouth parted, face slack' },
+  { pattern: /\b(dread|dreadful)\b/i, tells: 'eyes held, jaw tight, shoulders drawn' },
+  { pattern: /\b(tense|tension)\b/i, tells: 'jaw set, mouth tight, shoulders locked' },
+  { pattern: /\bresolute\b/i, tells: 'jaw set, eyes steady, mouth a firm line' },
+  { pattern: /\bterrified\b/i, tells: 'eyes wide, mouth open, brows raised' },
+  { pattern: /\b(scared|frightened|fearful)\b/i, tells: 'eyes wide, brows raised, mouth tight' },
+  { pattern: /\b(angry|furious|enraged)\b/i, tells: 'brows drawn, jaw clenched, mouth a hard line' },
+  { pattern: /\b(sad|grief|grieving)\b/i, tells: 'eyes downcast, mouth slack, brows drawn' },
+  { pattern: /\b(crying|tearful)\b/i, tells: 'eyes wet, mouth open, brows drawn' },
+  { pattern: /\b(exhausted|weary)\b/i, tells: 'lids heavy, mouth slack, shoulders dropped' },
+  { pattern: /\b(nervous|anxious)\b/i, tells: 'lips pressed, brows knit, jaw tight' },
+  { pattern: /\bthoughtful\b/i, tells: 'eyes unfocused, mouth closed, brows slightly knit' },
+  { pattern: /\b(cold|detached)\b/i, tells: 'eyes flat, jaw still, mouth a thin line' },
+  { pattern: /\bamused\b/i, tells: 'eyes lit, mouth a slight smile' },
+  { pattern: /\b(confident|composed)\b/i, tells: 'eyes steady, jaw easy, mouth closed' },
+  { pattern: /\b(firm|direct)\b/i, tells: 'eyes locked, jaw set, mouth a firm line' },
+]
+
+/**
+ * Turn a short directed-emotion label into face and body the still can draw.
+ *
+ * "sudden tension" names a feeling; the image model needs eyes, jaw, mouth,
+ * shoulders. Phrases that already name those stay as written.
+ */
+export function expandEmotionForStill(emotion: string): string {
+  const trimmed = emotion.trim().replace(/[.]+$/u, '')
+  if (!trimmed) return ''
+  if (FACE_BODY_TELL_PATTERN.test(trimmed)) return trimmed
+
+  for (const { pattern, tells } of STILL_EMOTION_TELLS) {
+    if (pattern.test(trimmed)) return `${trimmed} — ${tells}`
+  }
+
+  return trimmed
+}
+
 /** Action-prose keywords not always present in bracket cues. */
 const ACTION_EMOTION_PATTERNS: Array<{ pattern: RegExp; visual: string }> = [
   { pattern: /\b(crying|cries|sobbing|sobs|in tears|tearful)\b/i, visual: EMOTION_VISUAL.crying },
@@ -220,9 +272,9 @@ export function formatDirectedEmotionLine(
   emotion: string,
   label: 'Facial expression' | 'Directed emotion' = 'Facial expression'
 ): string {
-  const trimmed = emotion.trim()
-  if (!trimmed) return ''
-  return `${label}: ${trimmed}.`
+  const expanded = expandEmotionForStill(emotion)
+  if (!expanded) return ''
+  return `${label}: ${expanded}.`
 }
 
 /** A character the composed frame actually places, with its reference token. */
@@ -284,8 +336,9 @@ export function attributeBeatExpression(options: {
   if (!speaker) return { line: '', dropped: 'ambiguous-subject' }
 
   const label = [speaker.promptToken?.trim(), speaker.name?.trim()].filter(Boolean).join(' — ')
+  const expanded = expandEmotionForStill(emotion)
   return {
-    line: `Facial expression (${label}): ${emotion}.`,
+    line: `Facial expression (${label}): ${expanded}.`,
     attributedTo: speaker.name?.trim(),
   }
 }

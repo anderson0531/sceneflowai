@@ -301,6 +301,49 @@ describe('composePersistedBeatStillPrompt', () => {
     expect(framing).not.toMatch(/raises the spanner/)
   })
 
+  it('puts expanded face and body tells in Action/Framing, not a two-word mood footer', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_gideon',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription: 'Gideon flinches as the vault lights die.',
+      beatDirection: {
+        shotType: 'Medium Wide',
+        cameraAngle: 'eye-level',
+        frozenMoment: 'person [1] standing motionless in the dim vault',
+        blocking: 'person [1] stands perfectly still in the quiet room',
+        emotion: 'sudden tension',
+        castInFrame: ['Gideon Croft'],
+      },
+    })
+
+    expect(framing).toContain('standing motionless in the dim vault')
+    expect(framing).toContain('Body position: person [1] stands perfectly still')
+    expect(framing).toContain('Facial expression:')
+    expect(framing).toContain('sudden tension')
+    expect(framing).toMatch(/eyes widened/)
+    expect(framing).toMatch(/jaw set/)
+    expect(framing).not.toMatch(/flinches as the vault lights die/)
+    expect(framing).toContain('Cast in frame: Gideon Croft — and no other people.')
+  })
+
+  it('does not put an expression on an insert that places nobody', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_empty_face',
+      sequenceIndex: 4,
+      kind: 'action',
+      beatDirection: {
+        shotType: 'Extreme Close-Up',
+        frozenMoment: 'Pressure gauge needle pinned to the maximum.',
+        emotion: 'sudden tension',
+        castInFrame: [],
+      },
+    })
+
+    expect(framing).toContain('No people in frame')
+    expect(framing).not.toMatch(/Facial expression/)
+  })
+
   it('describes the beat from its prose when no frozen moment is directed', () => {
     const framing = composeBeatActionFraming({
       beatId: 'bt_prose',
@@ -518,10 +561,24 @@ describe('composePersistedBeatStillPrompt', () => {
       sequenceIndex: 0,
       kind: 'action' as const,
       actionDescription: 'Gideon hunches over the seismograph.',
-      beatDirection: { ...still, cameraMovement: 'dolly in', emotion: 'tense' },
+      beatDirection: { ...still, cameraMovement: 'dolly in' },
       storyboardImagePrompt: 'Medium Shot. Gideon at the bench.',
       storyboardImagePromptDirectionKey: beatStillDirectionFingerprint(still),
     }
     expect(storedPromptMatchesDirection(beat)).toBe(true)
+  })
+
+  it('storedPromptMatchesDirection treats an emotion edit as a stale still', () => {
+    const still = { shotType: 'Medium Shot', frozenMoment: 'Gideon at the bench' }
+    const beat = {
+      beatId: 'bt_1',
+      sequenceIndex: 0,
+      kind: 'action' as const,
+      actionDescription: 'Gideon hunches over the seismograph.',
+      beatDirection: { ...still, emotion: 'sudden tension' },
+      storyboardImagePrompt: 'Medium Shot. Gideon at the bench.',
+      storyboardImagePromptDirectionKey: beatStillDirectionFingerprint(still),
+    }
+    expect(storedPromptMatchesDirection(beat)).toBe(false)
   })
 })
