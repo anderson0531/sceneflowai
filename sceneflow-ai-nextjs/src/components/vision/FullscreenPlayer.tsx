@@ -126,6 +126,13 @@ function getClipAudioTime(clip: AudioTrackClipV2, timelineSec: number): number {
   return raw % fileLen
 }
 
+function releaseAudioElement(audio: HTMLAudioElement): void {
+  audio.pause()
+  audio.src = ''
+  // Clearing the source alone leaves the buffered data; the reload drops it.
+  audio.load()
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -698,31 +705,41 @@ export function FullscreenPlayer({
   // ============================================================================
   useEffect(() => {
     // Preload audio elements - only for clips with valid URLs
+    const liveKeys = new Set<string>()
     allAudioClips.forEach(clip => {
       if (!clip.url) return // Skip clips without URLs
       const audioKey = `${clip.id}:${clip.url}`
-      if (!audioRefs.current.has(audioKey)) {
+      liveKeys.add(audioKey)
+      const existing = audioRefs.current.get(audioKey)
+      if (!existing) {
         const audio = new Audio(clip.url)
         audio.preload = 'auto'
         if (clip.loop) {
           audio.loop = true
         }
         audioRefs.current.set(audioKey, audio)
-      } else if (clip.loop) {
-        const audio = audioRefs.current.get(audioKey)!
-        audio.loop = true
+        return
       }
+      existing.loop = Boolean(clip.loop)
     })
-    
-    return () => {
-      // Cleanup audio elements on unmount
-      audioRefs.current.forEach(audio => {
-        audio.pause()
-        audio.src = ''
-      })
-      audioRefs.current.clear()
-    }
+
+    // Release only the clips that left the timeline. Tearing the whole map down
+    // whenever this array changed identity re-downloaded every file, since each
+    // element preloads in full.
+    audioRefs.current.forEach((audio, key) => {
+      if (liveKeys.has(key)) return
+      releaseAudioElement(audio)
+      audioRefs.current.delete(key)
+    })
   }, [allAudioClips])
+
+  useEffect(() => {
+    const elements = audioRefs.current
+    return () => {
+      elements.forEach(releaseAudioElement)
+      elements.clear()
+    }
+  }, [])
   
   // ============================================================================
   // Reactively Update Audio Volumes (fixes volume control not affecting playback)
