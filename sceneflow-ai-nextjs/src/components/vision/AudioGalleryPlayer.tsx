@@ -9,6 +9,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import NextImage from 'next/image'
 import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Globe, X, Maximize, Minimize, Share2, ExternalLink, Film, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
@@ -80,8 +81,35 @@ import {
   type ProjectStream,
 } from '@/lib/streams/projectStreams'
 import { filmSceneIndices, isPromoCinematicScene } from '@/lib/publish/buildPromoScene'
+import {
+  canOptimizePlayerStill,
+  warnUnoptimizedPlayerStill,
+  PLAYER_THUMBNAIL_HEIGHT,
+  PLAYER_THUMBNAIL_WIDTH,
+} from '@/lib/storyboard/playerStillSource'
 
 type PreVisPlaybackMode = 'animatic' | 'video' | 'stream' | 'promo'
+
+/**
+ * Scene strip thumbnail. Sized so the optimizer returns a thumbnail-sized
+ * bitmap — a raw `<img>` here decodes the stored 1K-2K still once per scene,
+ * which is megabytes each for the whole project as soon as the strip mounts.
+ */
+function SceneStripThumbnail({ url, alt }: { url: string; alt: string }) {
+  if (!canOptimizePlayerStill(url)) {
+    warnUnoptimizedPlayerStill(url)
+    return <img src={url} alt={alt} className="w-full h-full object-cover" />
+  }
+  return (
+    <NextImage
+      src={url}
+      alt={alt}
+      width={PLAYER_THUMBNAIL_WIDTH}
+      height={PLAYER_THUMBNAIL_HEIGHT}
+      className="w-full h-full object-cover"
+    />
+  )
+}
 
 function resolveSceneVideoUrl(
   scene: any,
@@ -518,6 +546,18 @@ export function AudioGalleryPlayer({
   pausePlaybackRef.current = pause
   resetPlaybackRef.current = reset
 
+  /**
+   * Stop the timeline before handing control back. A parent that unmounts the
+   * player would tear the audio down anyway, but one that only hides it would
+   * leave the score playing behind a closed player.
+   */
+  const handleClose = useCallback(() => {
+    pause()
+    reset()
+    videoRef.current?.pause()
+    onClose?.()
+  }, [pause, reset, onClose])
+
   const displayImageUrl =
     currentVisualFrame?.imageUrl ?? getEstablishingFrameUrl(currentScene)
 
@@ -920,26 +960,52 @@ export function AudioGalleryPlayer({
   const renderSceneImage = (url: string, layer: 'current' | 'previous') => {
     const isPrevious = layer === 'previous'
     const fitClass = imageObjectFit === 'contain' ? 'object-contain' : 'object-cover'
+    // Keyed on the URL so a beat advance remounts the layer — the crossfade
+    // animations only restart on a fresh element.
+    const layerKey = isPrevious ? `prev-${url}` : `cur-${url}`
+    const layerStyle: React.CSSProperties = {
+      transform: isPrevious ? undefined : imageTransformCss,
+      // While playing, the Ken Burns transform is rewritten every animation
+      // frame, so a transition only makes the compositor interpolate toward a
+      // target that has already moved. Keep it for the paused nudge.
+      transition: isPrevious || isPlaying ? undefined : 'transform 0.2s ease-out',
+      animation: isPrevious
+        ? `galleryCrossfadeOut ${crossfadeDurationMs}ms ease-in-out forwards`
+        : crossfadeFromUrl
+          ? `galleryCrossfadeIn ${crossfadeDurationMs}ms ease-in-out forwards`
+          : undefined,
+    }
+    const layerAlt = isPrevious ? '' : imageAlt
+
+    // Legacy projects carry base64 stills, and a still can come from a host the
+    // optimizer is not configured for; both have to render as-is.
+    if (!canOptimizePlayerStill(url)) {
+      warnUnoptimizedPlayerStill(url)
+      return (
+        <img
+          key={layerKey}
+          src={url}
+          alt={layerAlt}
+          aria-hidden={isPrevious}
+          className={cn('absolute inset-0 w-full h-full', fitClass)}
+          style={layerStyle}
+        />
+      )
+    }
+
     return (
-      <img
-        key={isPrevious ? `prev-${url}` : `cur-${url}`}
+      <NextImage
+        key={layerKey}
         src={url}
-        alt={isPrevious ? '' : imageAlt}
+        alt={layerAlt}
         aria-hidden={isPrevious}
-        className={cn('w-full h-full', fitClass, isPrevious && 'absolute inset-0')}
-        style={{
-          transform: isPrevious ? undefined : imageTransformCss,
-          transition: isPrevious
-            ? undefined
-            : isPlaying
-              ? 'transform 0.1s linear'
-              : 'transform 0.2s ease-out',
-          animation: isPrevious
-            ? `galleryCrossfadeOut ${crossfadeDurationMs}ms ease-in-out forwards`
-            : crossfadeFromUrl
-              ? `galleryCrossfadeIn ${crossfadeDurationMs}ms ease-in-out forwards`
-              : undefined,
-        }}
+        fill
+        sizes="100vw"
+        // The stage is always on screen, and a lazy load would cost a frame at
+        // every beat advance.
+        loading="eager"
+        className={fitClass}
+        style={layerStyle}
       />
     )
   }
@@ -1200,7 +1266,7 @@ export function AudioGalleryPlayer({
         )}
         {onClose && !isFullscreen && (
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
           >
             <X className="w-4 h-4" />
@@ -1310,7 +1376,7 @@ export function AudioGalleryPlayer({
             )}
           >
             {thumbUrl ? (
-              <img src={thumbUrl} alt={`Scene ${idx + 1}`} className="w-full h-full object-cover" />
+              <SceneStripThumbnail url={thumbUrl} alt={`Scene ${idx + 1}`} />
             ) : (
               <div className="w-full h-full bg-gray-700 flex items-center justify-center">
                 <span className="text-[10px] text-gray-400">{idx + 1}</span>
@@ -1719,11 +1785,7 @@ export function AudioGalleryPlayer({
                   )}
                 >
                   {thumbUrl ? (
-                    <img
-                      src={thumbUrl}
-                      alt={`Scene ${idx + 1}`}
-                      className="w-full h-full object-cover"
-                    />
+                    <SceneStripThumbnail url={thumbUrl} alt={`Scene ${idx + 1}`} />
                   ) : (
                     <div className="w-full h-full bg-gray-700 flex items-center justify-center">
                       <span className="text-[10px] text-gray-400">{idx + 1}</span>
