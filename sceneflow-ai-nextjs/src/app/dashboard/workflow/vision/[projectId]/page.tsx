@@ -435,6 +435,18 @@ const isValidProjectId = (id: string | undefined | null): boolean => {
 const getSceneProductionKey = (scene: Scene, index: number): string =>
   (scene as any)?.sceneId || scene.id || `scene-${index}`
 
+/**
+ * Fold a segmentation result into a scene's existing production data.
+ *
+ * Segmentation only authors the beat list, so replacing the whole entry threw
+ * away everything else the scene had accumulated — including the mixer settings
+ * the Screening Room saves, which a backfill derive could land on top of.
+ */
+const mergeSegmentedProductionData = (
+  current: SceneProductionData | undefined,
+  next: SceneProductionData
+): SceneProductionData => (current ? { ...current, ...next } : next)
+
 // Helper function to normalize character names by removing screenplay annotations
 const normalizeCharacterName = (name: string): string => {
   if (!name) return ''
@@ -770,6 +782,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const sceneReferencesRef = useRef<VisualReference[]>([])
   const objectReferencesRef = useRef<VisualReference[]>([])
   const locationReferencesRef = useRef<LocationReference[]>([])
+  /**
+   * Written through synchronously by `applySceneProductionUpdate` so several
+   * updates batched into one tick still build on each other. Reading state
+   * through a ref is what lets that helper keep its setters and its save out
+   * of a `setState` updater, which React is free to re-run per render attempt.
+   */
+  const sceneProductionStateRef = useRef<Record<string, SceneProductionData>>({})
   const scriptRef = useRef<any>(null)
   const projectRef = useRef<any>(null)
   const charactersRef = useRef<any[]>([])
@@ -782,6 +801,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   useEffect(() => { sceneReferencesRef.current = sceneReferences }, [sceneReferences])
   useEffect(() => { objectReferencesRef.current = objectReferences }, [objectReferences])
   useEffect(() => { locationReferencesRef.current = locationReferences }, [locationReferences])
+  useEffect(() => { sceneProductionStateRef.current = sceneProductionState }, [sceneProductionState])
   
   // Script Review state - for Director and Audience review scoring
   const [directorReview, setDirectorReview] = useState<any>(null)
@@ -1271,8 +1291,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
         }
         
+        sceneProductionStateRef.current = cloned
         setSceneProductionState(cloned)
       } catch {
+        sceneProductionStateRef.current = productionScenes
         setSceneProductionState(productionScenes)
       }
     }
@@ -1725,6 +1747,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       string,
       SceneProductionData
     >
+    sceneProductionStateRef.current = scenes
     setSceneProductionState(scenes)
     setProject((prev) => {
       if (!prev) return prev
@@ -2154,7 +2177,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
   
   const persistSceneProduction = useCallback(
-    async (nextState: Record<string, SceneProductionData>, nextScenes: Scene[], changedSceneId?: string) => {
+    async (nextState: Record<string, SceneProductionData>, changedSceneId?: string) => {
       if (!project?.id) return
       
       // If we know which scene changed, use the lightweight endpoint
@@ -2201,30 +2224,45 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [project?.id, persistSceneProductionLightweight, setProject]
   )
 
+  /**
+   * Apply one scene's production data, mirror it onto the scene row, and save.
+   *
+   * The next state is read from `sceneProductionStateRef` rather than from a
+   * `setState` updater. React may call an updater once per render attempt, and
+   * the Screening Room drives state every animation frame while it plays, so an
+   * updater that also saved and set other state turned a single slider change
+   * into repeated scene rebuilds and repeated PATCHes of the whole scene.
+   */
   const applySceneProductionUpdate = useCallback(
-    (sceneId: string, updater: (current: SceneProductionData | undefined) => SceneProductionData | undefined) => {
-      setSceneProductionState((prev) => {
-        const nextSceneData = updater(prev[sceneId])
-        if (!nextSceneData) {
-          return prev
-        }
+    (
+      sceneId: string,
+      updater:
+        | SceneProductionData
+        | ((current: SceneProductionData | undefined) => SceneProductionData | undefined)
+    ) => {
+      const prev = sceneProductionStateRef.current
+      const nextSceneData = typeof updater === 'function' ? updater(prev[sceneId]) : updater
+      // Callers signal "nothing to do" by returning the current value untouched.
+      if (!nextSceneData || nextSceneData === prev[sceneId]) return
 
-        const nextState = { ...prev, [sceneId]: nextSceneData }
-        let nextScenesRef: Scene[] = []
+      const nextState = { ...prev, [sceneId]: nextSceneData }
+      sceneProductionStateRef.current = nextState
+      setSceneProductionState(nextState)
 
-        setScenes((prevScenes) => {
-          nextScenesRef = prevScenes.map((sceneEntry, index) => {
-            const key = getSceneProductionKey(sceneEntry as Scene, index)
-            const production = nextState[key] ?? (sceneEntry as any)?.productionData
-            return production ? { ...sceneEntry, productionData: production } : sceneEntry
-          })
-          return nextScenesRef
+      setScenes((prevScenes) => {
+        let changed = false
+        const nextScenes = prevScenes.map((sceneEntry, index) => {
+          const key = getSceneProductionKey(sceneEntry as Scene, index)
+          const production = nextState[key] ?? (sceneEntry as any)?.productionData
+          if (!production || (sceneEntry as any)?.productionData === production) return sceneEntry
+          changed = true
+          return { ...sceneEntry, productionData: production }
         })
-
-        // Pass the changed sceneId so we can use lightweight persist
-        void persistSceneProduction(nextState, nextScenesRef, sceneId)
-        return nextState
+        return changed ? nextScenes : prevScenes
       })
+
+      // Pass the changed sceneId so we can use lightweight persist
+      void persistSceneProduction(nextState, sceneId)
     },
     [persistSceneProduction]
   )
@@ -3322,7 +3360,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
         // Use applySceneProductionUpdate to update state and persist to DB
         console.log('[handleInitializeSceneProduction] Calling applySceneProductionUpdate for:', sceneId)
-        applySceneProductionUpdate(sceneId, () => productionData)
+        applySceneProductionUpdate(sceneId, (current) =>
+          mergeSegmentedProductionData(current, productionData)
+        )
 
         try {
           const { toast } = require('sonner')
@@ -3367,7 +3407,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           segments: data.segments || [],
           lastGeneratedAt: new Date().toISOString(),
         }
-        applySceneProductionUpdate(sceneId, () => productionData)
+        applySceneProductionUpdate(sceneId, (current) =>
+          mergeSegmentedProductionData(current, productionData)
+        )
         try {
           const { toast } = require('sonner')
           toast.success(`Created ${productionData.segments.length} production beats from Pre-Vis`)
@@ -3418,7 +3460,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       // Use applySceneProductionUpdate to update state and persist to DB
-      applySceneProductionUpdate(sceneId, () => productionData)
+      applySceneProductionUpdate(sceneId, (current) =>
+        mergeSegmentedProductionData(current, productionData)
+      )
 
       try {
         const { toast } = require('sonner')
@@ -4773,8 +4817,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
 
         await persistSceneProduction(
-          { ...sceneProductionState, [sceneId]: nextProduction },
-          [],
+          { ...sceneProductionStateRef.current, [sceneId]: nextProduction },
           sceneId
         )
 
