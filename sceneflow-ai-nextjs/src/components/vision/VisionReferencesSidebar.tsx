@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/textarea'
 import { CharacterLibrary, CharacterLibraryProps } from './CharacterLibrary'
 import { SceneImageFrame } from './SceneImageFrame'
-import { VisualReference, VisualReferenceType, ObjectCategory, LocationReference } from '@/types/visionReferences'
+import { VisualReference, VisualReferenceType, ObjectCategory, LocationReference, LocationVersion } from '@/types/visionReferences'
 import { BackdropGeneratorModal, SceneForBackdrop, CharacterForBackdrop } from './BackdropGeneratorModal'
 import { BackdropMode } from '@/lib/vision/backdropGenerator'
 import { ObjectSuggestionPanel, type AutoAddedObject } from './ObjectSuggestionPanel'
@@ -136,6 +136,8 @@ export interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps
   onGenerateLocationImageWithPrompt?: (payload: LocationPromptPayload) => void
   /** Callback to upload a location reference image */
   onUploadLocationImage?: (locationId: string, file: File) => void
+  onGenerateLocationVersion?: (location: LocationReference, version: LocationVersion) => void
+  onUploadLocationVersionImage?: (locationId: string, versionId: string, file: File) => void
   /** ID of location currently generating an image */
   generatingLocationId?: string | null
   /** Batch-generate missing cast, location, and prop reference images */
@@ -1229,6 +1231,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onGenerateLocationImage,
     onGenerateLocationImageWithPrompt,
     onUploadLocationImage,
+    onGenerateLocationVersion,
+    onUploadLocationVersionImage,
     generatingLocationId,
     onExpressGenerateReferences,
     isExpressGeneratingReferences = false,
@@ -1769,6 +1773,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               onGenerateLocationImageWithPrompt={onGenerateLocationImageWithPrompt}
               onEditLocationImage={handleEditLocationImage}
               onUploadLocationImage={onUploadLocationImage}
+              onGenerateLocationVersion={onGenerateLocationVersion}
+              onUploadLocationVersionImage={onUploadLocationVersionImage}
               generatingLocationId={generatingLocationId}
               screenplayContext={screenplayContext}
               splitLayout={splitLayout}

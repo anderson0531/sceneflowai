@@ -69,6 +69,7 @@ import {
   resolveAdvancedFramePromptBaseline,
   shouldInitializeFramePromptState,
 } from '@/lib/vision/framePromptBaseline'
+import { locationReferenceForGeneration } from '@/lib/vision/locationVersionResolve'
 import {
   LocationSettingSection,
   CharacterSelectionSection,
@@ -214,6 +215,7 @@ export function FramePromptDialog({
   frameResolverScene = null,
 }: FramePromptDialogProps) {
   const t = useTranslations('production.direction.framePrompt')
+  const tPreVis = useTranslations('production.direction.preVis')
   const tc = useTranslations('common.actions')
 
   // Try to get scene direction from context if not passed as prop
@@ -245,6 +247,7 @@ export function FramePromptDialog({
   
   // Location reference selection state
   const [selectedLocationRefIds, setSelectedLocationRefIds] = useState<string[]>([])
+  const [selectedLocationVersionIds, setSelectedLocationVersionIds] = useState<Record<string, string | null>>({})
   
   // Auto-matched location ref IDs from scene heading
   const [autoMatchedLocationRefIds, setAutoMatchedLocationRefIds] = useState<Set<string>>(new Set())
@@ -914,12 +917,16 @@ export function FramePromptDialog({
         description: obj.description,
       })),
       // Pass selected location references
-      selectedLocationReferences: selectedLocationRefs.map(loc => ({
-        id: loc.id,
-        name: loc.location,
-        imageUrl: loc.imageUrl,
-        description: loc.description,
-      })),
+      selectedLocationReferences: selectedLocationRefs.map(loc => {
+        const mapped = locationReferenceForGeneration(loc, selectedLocationVersionIds[loc.id])
+        return {
+          id: loc.id,
+          name: loc.location,
+          imageUrl: mapped.imageUrl,
+          description: loc.description,
+          boundVersionId: mapped.boundVersionId,
+        }
+      }),
       // Pass visual setup for prompt construction
       visualSetup: mode === 'guided' ? visualSetup : undefined,
       // Pass art style for generation
@@ -930,7 +937,7 @@ export function FramePromptDialog({
     }
 
     onGenerate(options)
-  }, [segment, frameType, customPrompt, buildNegativePrompt, usePreviousEndFrame, previousEndFrameUrl, onGenerate, selectedCharacters, characters, selectedWardrobes, objectReferences, selectedObjectRefIds, locationReferences, selectedLocationRefIds, mode, visualSetup, artStyle, modelTier, thinkingLevel, advancedBaselinePrompt])
+  }, [segment, frameType, customPrompt, buildNegativePrompt, usePreviousEndFrame, previousEndFrameUrl, onGenerate, selectedCharacters, characters, selectedWardrobes, objectReferences, selectedObjectRefIds, locationReferences, selectedLocationRefIds, selectedLocationVersionIds, mode, visualSetup, artStyle, modelTier, thinkingLevel, advancedBaselinePrompt])
 
   const isGenerateDisabled = useMemo(() => {
     if (isGenerating) return true
@@ -1233,6 +1240,14 @@ export function FramePromptDialog({
                                   ? prev.filter(id => id !== loc.id)
                                   : [...prev, loc.id]
                               )
+                              setSelectedLocationVersionIds((prev) => {
+                                if (isSelected) {
+                                  const next = { ...prev }
+                                  delete next[loc.id]
+                                  return next
+                                }
+                                return prev
+                              })
                             }}
                             className={cn(
                               'relative rounded-lg overflow-hidden border-2 transition-all aspect-video',
@@ -1265,6 +1280,54 @@ export function FramePromptDialog({
                         )
                       })}
                     </div>
+                    {selectedLocationRefIds.map((locId) => {
+                      const loc = locationReferences.find((l) => l.id === locId)
+                      if (!loc?.versions?.length) return null
+                      return (
+                        <div key={`versions-${loc.id}`} className="space-y-1">
+                          <p className="text-[10px] text-slate-400">
+                            {loc.location}: {tPreVis('locationVersion')}
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSelectedLocationVersionIds((prev) => ({ ...prev, [loc.id]: null }))
+                              }
+                              className={cn(
+                                'text-[10px] px-2 py-1 rounded border',
+                                !selectedLocationVersionIds[loc.id]
+                                  ? 'border-cyan-500 bg-cyan-500/20 text-cyan-200'
+                                  : 'border-slate-600 text-slate-400 hover:border-slate-400'
+                              )}
+                            >
+                              {tPreVis('locationVersionBase')}
+                            </button>
+                            {loc.versions.map((version) => (
+                              <button
+                                key={version.id}
+                                type="button"
+                                onClick={() =>
+                                  setSelectedLocationVersionIds((prev) => ({
+                                    ...prev,
+                                    [loc.id]: version.id,
+                                  }))
+                                }
+                                className={cn(
+                                  'text-[10px] px-2 py-1 rounded border max-w-[140px] truncate',
+                                  selectedLocationVersionIds[loc.id] === version.id
+                                    ? 'border-cyan-500 bg-cyan-500/20 text-cyan-200'
+                                    : 'border-slate-600 text-slate-400 hover:border-slate-400'
+                                )}
+                                title={version.stateNotes}
+                              >
+                                {version.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })}
                     <p className="text-[10px] text-slate-500">
                       Selected locations will be included as reference images for visual consistency.
                     </p>

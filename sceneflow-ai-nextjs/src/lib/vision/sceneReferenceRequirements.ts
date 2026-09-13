@@ -31,6 +31,13 @@ import {
   findMatchingLocationReferences,
   resolveSceneNumberForLocationMatch,
 } from '@/lib/vision/frameGenerationContext'
+import { getSceneBeats } from '@/lib/script/beatMigration'
+import {
+  isLocationVersionRequirementId,
+  locationVersionRequirementId,
+  parseLocationVersionRequirementId,
+  resolveLocationVersionForBeat,
+} from '@/lib/vision/locationVersionResolve'
 import type { ReferenceExpressKind } from '@/lib/vision/referenceExpress/types'
 
 export type SceneReferenceRequirementKind = 'cast' | 'wardrobe' | 'location' | 'prop'
@@ -81,6 +88,15 @@ export type SceneRequirementLocation = {
   imageUrl?: string
   description?: string
   sceneNumbers?: number[]
+  versions?: Array<{
+    id: string
+    name?: string
+    stateNotes?: string
+    imageUrl?: string
+    needsImageRegen?: boolean
+    sceneNumbers?: number[]
+    appliesFrom?: { sceneNumber: number; beatIndex: number; beatId?: string }
+  }>
 }
 
 export type SceneRequirementObject = {
@@ -165,7 +181,9 @@ export function selectUndrawnExpressableRequirements(
 ): SceneReferenceRequirement[] {
   return requirements.filter(
     (requirement) =>
-      !hasImage(requirement.imageUrl) && !!expressKindForRequirement(requirement.kind)
+      !hasImage(requirement.imageUrl) &&
+      !!expressKindForRequirement(requirement.kind) &&
+      !(requirement.kind === 'location' && isLocationVersionRequirementId(requirement.id))
   )
 }
 
@@ -204,6 +222,7 @@ type PlannedSelection = {
   locationRefIds: string[]
   objectRefIds: string[]
   characterWardrobes: Array<{ characterId: string; wardrobeId: string }>
+  locationVersions: Array<{ locationRefId: string; versionId: string }>
   /** True when every beat that will be shot carries a selection. */
   complete: boolean
 }
@@ -223,6 +242,8 @@ function collectPlannedSelection(scene: Record<string, any> | null | undefined):
   const locationRefIds = new Set<string>()
   const objectRefIds = new Set<string>()
   const wardrobes = new Map<string, string>()
+  const locationVersionPairs: Array<{ locationRefId: string; versionId: string }> = []
+  const seenVersionPairs = new Set<string>()
   let planned = 0
 
   for (const beat of shootable) {
@@ -234,6 +255,20 @@ function collectPlannedSelection(scene: Record<string, any> | null | undefined):
     }
     if (typeof selection.locationRefId === 'string' && selection.locationRefId.trim()) {
       locationRefIds.add(selection.locationRefId.trim())
+    }
+    if (
+      typeof selection.locationRefId === 'string' &&
+      selection.locationRefId.trim() &&
+      typeof selection.locationVersionId === 'string' &&
+      selection.locationVersionId.trim()
+    ) {
+      const locationRefId = selection.locationRefId.trim()
+      const versionId = selection.locationVersionId.trim()
+      const key = `${locationRefId}::${versionId}`
+      if (!seenVersionPairs.has(key)) {
+        seenVersionPairs.add(key)
+        locationVersionPairs.push({ locationRefId, versionId })
+      }
     }
     for (const id of selection.objectRefIds ?? []) {
       if (typeof id === 'string' && id.trim()) objectRefIds.add(id.trim())
@@ -253,6 +288,7 @@ function collectPlannedSelection(scene: Record<string, any> | null | undefined):
       characterId,
       wardrobeId,
     })),
+    locationVersions: locationVersionPairs,
     complete: planned > 0 && planned === shootable.length,
   }
 }
@@ -472,9 +508,33 @@ function resolveOne(input: SceneReferenceRequirementsInput): SceneReferenceRequi
     })
   }
 
+  const addLocationVersion = (
+    ref: SceneRequirementLocation,
+    version: NonNullable<SceneRequirementLocation['versions']>[number],
+    source: SceneReferenceRequirementSource
+  ) => {
+    if (!version?.id) return
+    const locationName = ref.location?.trim() || ref.locationDisplay?.trim() || 'Location'
+    const versionName = version.name?.trim() || 'Set version'
+    add({
+      kind: 'location',
+      id: locationVersionRequirementId(ref.id, version.id),
+      name: `${locationName} — ${versionName}`,
+      imageUrl: hasImage(version.imageUrl) ? version.imageUrl!.trim() : undefined,
+      source,
+      stale: version.needsImageRegen === true || undefined,
+    })
+  }
+
   for (const refId of plan.locationRefIds) {
     const ref = locationRefs.find((candidate) => candidate.id === refId)
     if (ref) addLocation(ref, 'beat-plan')
+  }
+
+  for (const pair of plan.locationVersions) {
+    const ref = locationRefs.find((candidate) => candidate.id === pair.locationRefId)
+    const version = (ref?.versions ?? []).find((candidate) => candidate.id === pair.versionId)
+    if (ref && version) addLocationVersion(ref, version, 'beat-plan')
   }
 
   if (useTextMatching) {
@@ -488,7 +548,7 @@ function resolveOne(input: SceneReferenceRequirementsInput): SceneReferenceRequi
     // The fuzzy pass runs only when nothing was assigned, matching
     // `findMatchingLocationReferences`' own preference for assignments.
     const hasLocation = [...collected.values()].some(
-      (requirement) => requirement.kind === 'location'
+      (requirement) => requirement.kind === 'location' && !isLocationVersionRequirementId(requirement.id)
     )
     if (!hasLocation) {
       for (const match of findMatchingLocationReferences(scene, locationRefs, sceneIndex, {
@@ -496,6 +556,47 @@ function resolveOne(input: SceneReferenceRequirementsInput): SceneReferenceRequi
       })) {
         const ref = locationRefs.find((candidate) => candidate.id === match.id)
         if (ref) addLocation(ref, 'detected')
+      }
+    }
+
+    const beats = getSceneBeats(scene)
+    const resolvedSceneNumber = sceneNumber ?? (scene ? sceneIndex + 1 : undefined)
+    if (resolvedSceneNumber !== undefined) {
+      const locationIdsOnScene = new Set(
+        [...collected.values()]
+          .filter(
+            (requirement) =>
+              requirement.kind === 'location' && !isLocationVersionRequirementId(requirement.id)
+          )
+          .map((requirement) => requirement.id)
+      )
+      for (const ref of locationRefs) {
+        if (!locationIdsOnScene.has(ref.id)) continue
+        const versions = ref.versions ?? []
+        if (versions.length === 0) continue
+        const seen = new Set<string>()
+        if (beats.length > 0) {
+          beats.forEach((beat, beatIndex) => {
+            const version = resolveLocationVersionForBeat(ref, {
+              sceneNumber: resolvedSceneNumber,
+              beatIndex,
+              beatId: beat.beatId,
+            })
+            if (version && !seen.has(version.id)) {
+              seen.add(version.id)
+              addLocationVersion(ref, version, 'detected')
+            }
+          })
+        } else {
+          for (const version of versions) {
+            if (
+              (version.sceneNumbers ?? []).includes(resolvedSceneNumber) ||
+              version.appliesFrom?.sceneNumber === resolvedSceneNumber
+            ) {
+              addLocationVersion(ref, version, 'scene-assigned')
+            }
+          }
+        }
       }
     }
   }
@@ -557,6 +658,24 @@ function applyOverrides(
     if (!id) continue
 
     if (kind === 'location') {
+      const versionRef = parseLocationVersionRequirementId(id)
+      if (versionRef) {
+        const parent = (input.locationReferences ?? []).find(
+          (candidate) => candidate?.id === versionRef.locationId
+        )
+        const version = (parent?.versions ?? []).find((candidate) => candidate.id === versionRef.versionId)
+        if (!parent || !version) continue
+        const locationName = parent.location?.trim() || parent.locationDisplay?.trim() || 'Location'
+        collected.set(key, {
+          kind,
+          id,
+          name: `${locationName} — ${version.name?.trim() || 'Set version'}`,
+          imageUrl: hasImage(version.imageUrl) ? version.imageUrl!.trim() : undefined,
+          source: 'scene-assigned',
+          stale: version.needsImageRegen === true || undefined,
+        })
+        continue
+      }
       const ref = (input.locationReferences ?? []).find((candidate) => candidate?.id === id)
       if (!ref) continue
       collected.set(key, {

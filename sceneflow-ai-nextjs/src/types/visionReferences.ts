@@ -70,6 +70,39 @@ export interface ObjectSuggestion {
 }
 
 /**
+ * First beat at which a location version's set state is visible.
+ * Sticky-forward: later beats at the same location keep this version until a
+ * newer version starts.
+ */
+export interface LocationVersionAppliesFrom {
+  /** 1-based scene number */
+  sceneNumber: number
+  /** 0-based beat index within the scene */
+  beatIndex: number
+  beatId?: string
+}
+
+/**
+ * A lasting set-state look of a location (exploded door, flooded room, etc.).
+ * Nested under the parent location the same way wardrobes hang off a character.
+ * Generated from the parent's base establishing shot so architecture stays locked.
+ */
+export interface LocationVersion {
+  id: string
+  name: string
+  /** Full post-change set state for image gen — accumulated from base, not a delta-only patch. */
+  stateNotes: string
+  sceneNumbers?: number[]
+  appliesFrom?: LocationVersionAppliesFrom
+  imageUrl?: string
+  generationPrompt?: string
+  /** Script sync marked set state changed — regenerate version image from the base. */
+  needsImageRegen?: boolean
+  reason?: string
+  createdAt: string
+}
+
+/**
  * Location reference for maintaining visual consistency across scenes at the same location.
  * Locations are intelligently extracted from script scene headings and deduplicated.
  * Users can generate, upload, or edit reference images for each location.
@@ -105,6 +138,13 @@ export interface LocationReference {
   klingElementId?: string
   /** The generation prompt used for the reference image */
   generationPrompt?: string
+  /** Lasting set-state variants generated from this location's base image. */
+  versions?: LocationVersion[]
+  /**
+   * Transient generation-time marker: `imageUrl` is a version still.
+   * Not a substitute for persisting `versions[]`.
+   */
+  boundVersionId?: string
 }
 
 export interface VisionReferencesPayload {

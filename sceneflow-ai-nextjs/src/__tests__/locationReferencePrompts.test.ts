@@ -3,7 +3,10 @@ import {
   LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION,
   LOCATION_TURNAROUND_GENERATION_INSTRUCTION,
   LOCATION_TURNAROUND_USER_PROMPT_HINT,
+  LOCATION_VERSION_CONSUMPTION_SUFFIX,
+  LOCATION_VERSION_GENERATION_INSTRUCTION,
   buildLocationReferencePromptLine,
+  buildLocationVersionPrompt,
 } from '@/lib/vision/locationReferencePrompts'
 
 describe('locationReferencePrompts', () => {
@@ -35,5 +38,24 @@ describe('locationReferencePrompts', () => {
     expect(line).toContain('Kitchen')
     expect(line.toLowerCase()).toContain('wide-angle')
     expect(line.toLowerCase()).toContain('match architectural layout')
+    expect(line).not.toContain('CURRENT set state')
+  })
+
+  it('version consumption suffix is attached only for current set-state stills', () => {
+    const line = buildLocationReferencePromptLine('Kitchen', 5, undefined, { currentSetState: true })
+    expect(line).toContain(LOCATION_VERSION_CONSUMPTION_SUFFIX)
+    expect(line.toLowerCase()).toContain('do not restore')
+  })
+
+  it('version generation prompt locks architecture to the base and bakes stateNotes', () => {
+    const prompt = buildLocationVersionPrompt({
+      locationName: 'FOYER',
+      stateNotes: 'Front door exploded, debris across the floor',
+    })
+    expect(prompt).toContain(LOCATION_TURNAROUND_GENERATION_INSTRUCTION)
+    expect(prompt).toContain(LOCATION_VERSION_GENERATION_INSTRUCTION)
+    expect(prompt).toMatch(/front door exploded/i)
+    expect(prompt.toLowerCase()).toContain('match architecture')
+    expect(prompt.toLowerCase()).toContain('no people')
   })
 })

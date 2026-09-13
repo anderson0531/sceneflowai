@@ -49,6 +49,7 @@ export interface PreVisDirectGenerationOptions {
   characterWardrobes: Array<{ characterId: string; wardrobeId: string }>
   wardrobeTextOverrides: Record<string, string>
   locationRefId: string | null
+  locationVersionId?: string | null
   objectRefIds: string[]
   beatReferenceSelection?: BeatReferenceSelection
   fromDialog: true
@@ -108,6 +109,7 @@ export function PreVisFramePromptDialog({
   const [selectedWardrobes, setSelectedWardrobes] = useState<Record<string, string>>({})
   const [wardrobeTextOverrides, setWardrobeTextOverrides] = useState<Record<string, string>>({})
   const [locationRefId, setLocationRefId] = useState<string | null>(null)
+  const [locationVersionId, setLocationVersionId] = useState<string | null>(null)
   const [objectRefIds, setObjectRefIds] = useState<string[]>([])
   const [locationSectionCollapsed, setLocationSectionCollapsed] = useState(false)
   const [propsSectionCollapsed, setPropsSectionCollapsed] = useState(true)
@@ -138,6 +140,7 @@ export function PreVisFramePromptDialog({
     setSelectedWardrobes(initialContext.selectedWardrobes)
     setWardrobeTextOverrides(initialContext.wardrobeTextOverrides)
     setLocationRefId(initialContext.locationRefId)
+    setLocationVersionId(initialContext.locationVersionId)
     setObjectRefIds(initialContext.objectRefIds)
   }, [open, initialContext])
 
@@ -160,12 +163,13 @@ export function PreVisFramePromptDialog({
     return {
       characterIds,
       locationRefId,
+      locationVersionId,
       objectRefIds,
       characterWardrobes,
       resolvedAt: new Date().toISOString(),
       source: 'user',
     }
-  }, [slot?.beatId, selectedCharacterNames, selectedWardrobes, locationRefId, objectRefIds, characters])
+  }, [slot?.beatId, selectedCharacterNames, selectedWardrobes, locationRefId, locationVersionId, objectRefIds, characters])
 
   const handleGenerateClick = () => {
     if (!slot) return
@@ -192,6 +196,7 @@ export function PreVisFramePromptDialog({
       characterWardrobes,
       wardrobeTextOverrides,
       locationRefId,
+      locationVersionId,
       objectRefIds,
       beatReferenceSelection: buildBeatReferenceSelection(),
       fromDialog: true,
@@ -298,6 +303,7 @@ export function PreVisFramePromptDialog({
                 )}
               </button>
               {!locationSectionCollapsed && (
+                <div className="space-y-2">
                 <div className="grid grid-cols-4 gap-2">
                   {locationsWithImages.map((loc) => {
                     const isSelected = locationRefId === loc.id
@@ -305,7 +311,19 @@ export function PreVisFramePromptDialog({
                       <button
                         key={loc.id}
                         type="button"
-                        onClick={() => setLocationRefId(isSelected ? null : loc.id)}
+                        onClick={() => {
+                          if (isSelected) {
+                            setLocationRefId(null)
+                            setLocationVersionId(null)
+                          } else {
+                            setLocationRefId(loc.id)
+                            setLocationVersionId(
+                              initialContext?.locationRefId === loc.id
+                                ? initialContext.locationVersionId
+                                : null
+                            )
+                          }
+                        }}
                         className={cn(
                           'relative rounded-lg overflow-hidden border-2 transition-all aspect-video',
                           isSelected
@@ -322,6 +340,44 @@ export function PreVisFramePromptDialog({
                       </button>
                     )
                   })}
+                </div>
+                {locationRefId && (
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-slate-400">{t('locationVersion')}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setLocationVersionId(null)}
+                        className={cn(
+                          'text-[10px] px-2 py-1 rounded border',
+                          !locationVersionId
+                            ? 'border-cyan-500 bg-cyan-500/20 text-cyan-200'
+                            : 'border-slate-600 text-slate-400 hover:border-slate-400'
+                        )}
+                      >
+                        {t('locationVersionBase')}
+                      </button>
+                      {(locationReferences.find((l) => l.id === locationRefId)?.versions || []).map(
+                        (version) => (
+                          <button
+                            key={version.id}
+                            type="button"
+                            onClick={() => setLocationVersionId(version.id)}
+                            className={cn(
+                              'text-[10px] px-2 py-1 rounded border max-w-[140px] truncate',
+                              locationVersionId === version.id
+                                ? 'border-cyan-500 bg-cyan-500/20 text-cyan-200'
+                                : 'border-slate-600 text-slate-400 hover:border-slate-400'
+                            )}
+                            title={version.stateNotes}
+                          >
+                            {version.name}
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
                 </div>
               )}
             </div>

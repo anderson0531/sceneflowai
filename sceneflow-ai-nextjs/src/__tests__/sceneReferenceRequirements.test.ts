@@ -8,6 +8,7 @@ import {
   selectUndrawnExpressableRequirements,
   type SceneReferenceRequirement,
 } from '@/lib/vision/sceneReferenceRequirements'
+import { locationVersionRequirementId } from '@/lib/vision/locationVersionResolve'
 
 const PIPER = {
   id: 'char-piper',
@@ -36,6 +37,15 @@ const TUNNEL = {
   sourceSceneHeading: 'INT. SERVICE TUNNEL - NIGHT',
   pinnedAt: '2026-01-01T00:00:00.000Z',
   sceneNumbers: [1],
+  versions: [
+    {
+      id: 'ver-collapse',
+      name: 'Collapsed ceiling',
+      stateNotes: 'Ceiling caved in, pipes hanging',
+      appliesFrom: { sceneNumber: 1, beatIndex: 1, beatId: 'b-collapse' },
+      needsImageRegen: true,
+    },
+  ],
 }
 
 const ATRIUM = {
@@ -90,9 +100,35 @@ describe('a scene asks only for the references it actually uses', () => {
     })
 
     expect(names(requirements, 'cast')).toEqual(['PIPER'])
-    expect(names(requirements, 'location')).toEqual(['SERVICE TUNNEL'])
+    expect(names(requirements, 'location')).toEqual(
+      expect.arrayContaining(['SERVICE TUNNEL'])
+    )
     expect(names(requirements, 'prop')).toEqual(['brass lantern'])
     expect(byKind(requirements, 'cast')[0].source).toBe('detected')
+  })
+
+  it('lists a set-state version as a stale location requirement', () => {
+    const requirements = resolveSceneRequiredReferences({
+      ...baseInput,
+      sceneIndex: 0,
+      scene: {
+        heading: 'INT. SERVICE TUNNEL - NIGHT',
+        sceneNumber: 1,
+        beats: [
+          { beatId: 'b0', kind: 'action', actionDescription: 'PIPER steps in.' },
+          {
+            beatId: 'b-collapse',
+            kind: 'action',
+            actionDescription: 'The ceiling collapses.',
+          },
+        ],
+      },
+    })
+    const versionId = locationVersionRequirementId('loc-tunnel', 'ver-collapse')
+    const versionReq = requirements.find((requirement) => requirement.id === versionId)
+    expect(versionReq?.name).toBe('SERVICE TUNNEL — Collapsed ceiling')
+    expect(versionReq?.stale).toBe(true)
+    expect(versionReq?.imageUrl).toBeUndefined()
   })
 
   it('leaves out the cast, location and props belonging to other scenes', () => {
@@ -454,6 +490,15 @@ describe('what Express References can actually draw', () => {
     ])
 
     expect(selected.map((entry) => entry.id)).toEqual(['char-ruiz', 'loc-tunnel'])
+  })
+
+  it('does not queue location versions for Reference Express', () => {
+    const versionId = locationVersionRequirementId('loc-tunnel', 'ver-collapse')
+    const selected = selectUndrawnExpressableRequirements([
+      requirement({ kind: 'location', id: 'loc-tunnel' }),
+      requirement({ kind: 'location', id: versionId, name: 'SERVICE TUNNEL — Collapsed ceiling' }),
+    ])
+    expect(selected.map((entry) => entry.id)).toEqual(['loc-tunnel'])
   })
 
   /**

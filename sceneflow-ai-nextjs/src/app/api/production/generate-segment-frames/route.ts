@@ -874,7 +874,7 @@ Render this scene in ${selectedStyle.name} style.`
         const locRefIndex =
           allReferenceImages.findIndex((ref) => ref.imageUrl === loc.imageUrl) + 1
         if (locRefIndex > 0) {
-          geminiPrompt += `\n\n${buildLocationReferencePromptLine(loc.name, locRefIndex)}`
+          geminiPrompt += `\n\n${buildLocationReferencePromptLine(loc.name, locRefIndex, undefined, { currentSetState: Boolean((loc as { boundVersionId?: string }).boundVersionId) })}`
         }
       }
       

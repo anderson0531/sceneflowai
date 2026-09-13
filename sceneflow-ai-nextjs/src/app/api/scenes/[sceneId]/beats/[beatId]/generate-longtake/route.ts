@@ -224,6 +224,7 @@ export async function POST(
         ((visionMeta.references as { locationReferences?: unknown })?.locationReferences as never[]) ||
         [],
       locationRefId: beat.referenceSelection?.locationRefId,
+      locationVersionId: beat.referenceSelection?.locationVersionId,
     })
     const resolvedElements = await resolveKlingElementsFromSources(elementSources, model)
     if (resolvedElements.newRegistrations.length) {

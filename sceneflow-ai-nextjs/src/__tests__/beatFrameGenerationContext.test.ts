@@ -53,6 +53,58 @@ describe('resolveBeatFrameGenerationContext', () => {
     expect(resolved.characterIds).toContain('c1')
   })
 
+  it('auto-selects a sticky location version after the change beat', () => {
+    const versioned: LocationReference[] = [
+      {
+        ...locations[0],
+        locationDisplay: 'INT. KITCHEN - DAY',
+        sourceSceneIndex: 0,
+        sourceSceneHeading: 'INT. KITCHEN - DAY',
+        pinnedAt: '2026-01-01T00:00:00.000Z',
+        versions: [
+          {
+            id: 'ver-blast',
+            name: 'Exploded fridge',
+            stateNotes: 'Refrigerator door blown off',
+            appliesFrom: { sceneNumber: 1, beatIndex: 1, beatId: 'beat-2' },
+            imageUrl: 'https://blob.example/kitchen-blast.jpg',
+            createdAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+      },
+    ]
+    const scene = {
+      heading: 'INT. KITCHEN - DAY',
+      beats: [
+        actionBeat({ beatId: 'beat-1', sequenceIndex: 0 }),
+        actionBeat({
+          beatId: 'beat-2',
+          sequenceIndex: 1,
+          actionDescription: 'The refrigerator explodes.',
+        }),
+      ],
+    }
+    const before = resolveBeatFrameGenerationContext({
+      scene,
+      beat: actionBeat({ beatId: 'beat-1' }),
+      sceneIndex: 0,
+      projectCharacters: characters,
+      locationReferences: versioned,
+      objectReferences: [],
+    })
+    const after = resolveBeatFrameGenerationContext({
+      scene,
+      beat: actionBeat({ beatId: 'beat-2', sequenceIndex: 1 }),
+      sceneIndex: 0,
+      projectCharacters: characters,
+      locationReferences: versioned,
+      objectReferences: [],
+    })
+    expect(before.locationRefId).toBe('loc-kitchen')
+    expect(before.locationVersionId).toBeNull()
+    expect(after.locationVersionId).toBe('ver-blast')
+  })
+
   it('auto-selects location from sceneNumbers assignment over heading match', () => {
     const assignedLocations: LocationReference[] = [
       {

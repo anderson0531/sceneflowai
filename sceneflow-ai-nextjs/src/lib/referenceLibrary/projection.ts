@@ -47,6 +47,7 @@ export function locationToLibraryAttributes(loc: LocationReference): ReferenceAs
     locationDisplay: loc.locationDisplay,
     klingElementId: loc.klingElementId,
     generationPrompt: loc.generationPrompt,
+    versions: loc.versions,
   }
 }
 

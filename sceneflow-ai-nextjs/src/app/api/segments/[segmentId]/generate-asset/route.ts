@@ -451,6 +451,7 @@ export async function POST(
               locationReferences:
                 projectForElements?.metadata?.visionPhase?.references?.locationReferences || [],
               locationRefId: beat.referenceSelection?.locationRefId,
+              locationVersionId: beat.referenceSelection?.locationVersionId,
             })
             const resolvedElements = await resolveKlingElementsFromSources(
               sources,
