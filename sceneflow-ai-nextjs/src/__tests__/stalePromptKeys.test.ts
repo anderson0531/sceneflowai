@@ -12,11 +12,15 @@ import {
 import { beatStillDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
 import { getSceneBeats, mintBeatId } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
+import {
+  PROJECT_LOOKBOOK_VERSION,
+  type ProjectLookbook,
+} from '@/lib/intelligence/project-lookbook-fallback'
 
 /**
  * The state this is all about: a beat whose stored prompt key was written by an
  * older composer. Nothing about the beat changed; the key it is compared
- * against did, when STILL_FINGERPRINT_VERSION was bumped to still-v3.
+ * against did, when STILL_FINGERPRINT_VERSION was bumped to still-v4.
  */
 const PRE_BUMP_KEY = 'shotType=medium|cameraAngle=low angle|castInFrame=DR. CHEN|keyProps='
 
@@ -155,8 +159,38 @@ describe('refreshSceneBeatStillPrompts', () => {
     expect(refreshed.storyboardImagePromptDirectionKey).toBe(
       beatStillDirectionFingerprint(beat.beatDirection)
     )
+    expect(refreshed.storyboardImagePrompt).toContain('[TASK]')
+    expect(refreshed.storyboardImagePrompt).toContain('[STILL]')
+    expect(refreshed.storyboardImagePrompt).toContain('[EXCLUSIONS]')
     expect(refreshed.storyboardImagePrompt?.trim()).toBeTruthy()
     expect(sceneHasStalePromptKeys(scene)).toBe(false)
+  })
+
+  it('folds the stored lookbook into [STYLE] so a refresh matches generate', () => {
+    const lookbook: ProjectLookbook = {
+      version: PROJECT_LOOKBOOK_VERSION,
+      fingerprint: 'deadbeef',
+      masterStyle: 'Rain-slick neo-noir, live-action photoreal',
+      colorPalette: 'Sodium orange against slate blue',
+      lightingGrammar: 'Single hard key from a practical, deep falloff',
+      lensAndFormat: 'Anamorphic 40mm, 2.39:1',
+      textureAndGrade: '35mm grain, crushed blacks',
+      negativeStyleTerms: ['illustration'],
+      generatedAt: '2026-01-01T00:00:00.000Z',
+    }
+    const beat = actionBeat({
+      storyboardImagePrompt: 'Medium shot, low angle. DR. CHEN tilts the sample.',
+      storyboardImagePromptDirectionKey: PRE_BUMP_KEY,
+    })
+    const { scene } = refreshSceneBeatStillPrompts(sceneWith([beat]), {
+      sceneNumber: 4,
+      lookbook,
+    })
+    const refreshed = getSceneBeats(scene)[0]
+
+    expect(refreshed.storyboardImagePrompt).toContain('[STYLE]')
+    expect(refreshed.storyboardImagePrompt).toContain('Rain-slick neo-noir')
+    expect(refreshed.storyboardImagePrompt).toContain('Anamorphic 40mm')
   })
 
   it('keeps the frame a refreshed prompt no longer describes', () => {

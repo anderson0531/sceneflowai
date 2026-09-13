@@ -21,7 +21,11 @@ import {
   softenStillPhrasingForPolicy,
 } from '@/lib/generation/policySafePhrasing'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
-import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPrompt'
+import { isExplicitDirectToCameraBeat } from '@/lib/character/characterReferenceAssembly'
+import {
+  actionFramingFromStoredPrompt,
+  assembleStructuredStillPrompt,
+} from '@/lib/imagen/structuredStillPrompt'
 import {
   normalizeStillFraming,
   normalizeStillShotType,
@@ -442,6 +446,10 @@ export const TITLE_BEAT_ACTION_LEAD_IN =
  * A lookbook only adds the style anchor. It is not a precondition: the
  * composition section has to be emitted either way so the result survives
  * `isStructuredStillPrompt` instead of being rewritten by the rules optimizer.
+ *
+ * The stored string is the send-format still (`[TASK]` / `[STILL]` / `[STYLE]` /
+ * `[EXCLUSIONS]`) so Pre-Vis can show the prompt the model will receive before
+ * Generate. Live `[REFERENCES]` are bound only when images are attached.
  */
 export function composePersistedBeatStillPrompt(args: {
   lookbook?: ProjectLookbook
@@ -461,13 +469,18 @@ export function composePersistedBeatStillPrompt(args: {
   const leadIn = args.actionLeadIn?.trim()
   const actionFraming =
     leadIn && !composed.includes(leadIn) ? `${asSentence(leadIn)} ${composed}` : composed
-  return composeBeatStillPrompt({
+  const seed = composeBeatStillPrompt({
     actionFraming,
     lookbook,
     sceneIndex: args.sceneIndex,
     artStyleAnchor: args.artStyleAnchor,
     lighting: beat.beatDirection?.lightingAccent,
     shotType: beat.beatDirection?.shotType,
+  })
+  if (!seed) return undefined
+  return assembleStructuredStillPrompt({
+    actionOrStructured: seed,
+    includeCandid: !isExplicitDirectToCameraBeat(beat),
   })
 }
 

@@ -72,6 +72,7 @@ import {
 } from '@/lib/scene/deriveSegmentsFromBeats'
 import { invalidateChangedBeatFramesOnScene, applyDeepRestructureAssetClear, REVISION_DEPTH_SCENE_KEY, type RevisionDepth } from '@/lib/script/structuredSceneRevision'
 import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
+import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
 import type { StoryboardFrameSlot } from '@/lib/storyboard/types'
 import type { StoryboardQuality } from '@/lib/storyboard/storyboardQuality'
 import { enableScreeningPlayerDiagnostics } from '@/lib/storyboard/screeningPlayerDiagnostics'
@@ -1208,6 +1209,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     () => resolveProjectArtStyle(project?.metadata),
     [project?.metadata]
   )
+
+  const projectLookbook = useMemo((): ProjectLookbook | undefined => {
+    const lookbook = (
+      project?.metadata as { visionPhase?: { lookbook?: ProjectLookbook } } | undefined
+    )?.visionPhase?.lookbook
+    return lookbook && typeof lookbook === 'object' && lookbook.masterStyle
+      ? lookbook
+      : undefined
+  }, [project?.metadata])
 
   const lockedAspectRatio = useMemo(
     () => resolveProjectAspectRatio(project?.metadata),
@@ -13572,12 +13582,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         ? refreshSceneBeatStillPrompts(scenes[sceneIndex], {
             sceneNumber: sceneIndex + 1,
             artStyle: lockedArtStyle,
+            lookbook: projectLookbook,
           })
         : syncPreVisToScript(scenes[sceneIndex], {
             sceneNumber: sceneIndex + 1,
             totalScenes: scenes.length,
             filmTitle: project?.title,
             artStyle: lockedArtStyle,
+            lookbook: projectLookbook,
           })
 
       if (promptsOnly && promptsUpdated === 0) {
@@ -13606,7 +13618,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           : `Updated ${promptsUpdated} frame prompt${promptsUpdated === 1 ? '' : 's'}. Run agents to regenerate images and audio.`
       )
     },
-    [script, project?.title, lockedArtStyle, persistVisionScriptScenes]
+    [script, project?.title, lockedArtStyle, projectLookbook, persistVisionScriptScenes]
   )
 
   /**
@@ -13628,6 +13640,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const result = refreshSceneBeatStillPrompts(scene, {
           sceneNumber: index + 1,
           artStyle: lockedArtStyle,
+          lookbook: projectLookbook,
         })
         if (result.promptsUpdated > 0) {
           promptsUpdated += result.promptsUpdated
@@ -13669,7 +13682,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       return promptsUpdated
     },
-    [script, lockedArtStyle, persistVisionScriptScenes]
+    [script, lockedArtStyle, projectLookbook, persistVisionScriptScenes]
   )
 
   /**

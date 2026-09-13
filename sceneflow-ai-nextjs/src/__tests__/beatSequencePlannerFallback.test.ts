@@ -222,7 +222,11 @@ describe('composePersistedBeatStillPrompt', () => {
     })
 
     expect(prompt).toBeDefined()
-    expect(prompt!.startsWith('[GLOBAL STYLE ANCHOR]')).toBe(true)
+    expect(prompt!.startsWith('[TASK]')).toBe(true)
+    expect(prompt).toContain('[STILL]')
+    expect(prompt).toContain('[STYLE]')
+    expect(prompt).toContain('[EXCLUSIONS]')
+    expect(prompt).not.toContain('[REFERENCES]\n')
     expect(prompt).toContain('Rain-slick neo-noir')
     const parsed = parseStillPromptSource(prompt!)
     expect(parsed.style?.trim()).toBeTruthy()

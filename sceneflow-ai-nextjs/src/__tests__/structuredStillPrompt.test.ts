@@ -15,6 +15,7 @@ import {
   replaceLibraryNamesWithTokens,
   actionFramingFromStoredPrompt,
   isStructuredStillPrompt,
+  parseStillPromptSource,
   promptReferencesLibraryItem,
   resolveLibraryItemPromptMatch,
   dropDuplicateHeadNounMatches,
@@ -31,6 +32,7 @@ import {
   buildPlannerSystemPrompt,
   buildPlannerUserPrompt,
   composeBeatStillPrompt,
+  composePersistedBeatStillPrompt,
 } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import { PROJECT_LOOKBOOK_VERSION } from '@/lib/intelligence/project-lookbook-fallback'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
@@ -234,6 +236,58 @@ describe('planner still vs video split', () => {
     const still = prompt.split(STILL_SECTION_STILL)[1]?.split(STILL_SECTION_STYLE)[0] ?? ''
     expect(still).toContain('sets the journal on the bench')
     expect(still).not.toContain('Anamorphic 40mm')
+  })
+
+  it('persisted still re-assembles with refs without rewriting Action/Framing', () => {
+    const persisted = composePersistedBeatStillPrompt({
+      lookbook: {
+        version: PROJECT_LOOKBOOK_VERSION,
+        fingerprint: 'cccc3333',
+        masterStyle: 'Rain-slick neo-noir, live-action photoreal',
+        colorPalette: 'Sodium orange against slate blue',
+        lightingGrammar: 'Single hard key from a practical, deep falloff',
+        lensAndFormat: 'Anamorphic 40mm, 2.39:1',
+        textureAndGrade: '35mm grain, crushed blacks',
+        negativeStyleTerms: ['illustration'],
+        generatedAt: '2026-01-01T00:00:00.000Z',
+      },
+      sceneIndex: 0,
+      beat: {
+        beatId: 'bt_1',
+        sequenceIndex: 0,
+        kind: 'action',
+        actionDescription: 'Ice crystals bloom across the rusted iron.',
+        beatDirection: {
+          shotType: 'Close-Up',
+          cameraAngle: 'eye-level',
+          frozenMoment: 'Ice crystals blooming across dark, rusted iron',
+          castInFrame: [],
+        },
+      },
+    })
+
+    expect(persisted).toBeDefined()
+    expect(persisted!.startsWith(STILL_SECTION_TASK)).toBe(true)
+    expect(persisted).not.toContain(`${STILL_SECTION_REFERENCES}\n`)
+
+    const before = parseStillPromptSource(persisted!)
+    const withRefs = assembleStructuredStillPrompt({
+      actionOrStructured: persisted!,
+      refs: [
+        {
+          kind: 'location',
+          token: 'location [1]',
+          name: 'FREIGHT TUNNEL VAULT - PNEUMATIC ACCESS',
+          roleLabel: 'library location',
+        },
+      ],
+      includeCandid: true,
+    })
+
+    expect(withRefs.startsWith(STILL_SECTION_REFERENCES)).toBe(true)
+    expect(withRefs).toContain('location [1] = FREIGHT TUNNEL VAULT - PNEUMATIC ACCESS')
+    expect(parseStillPromptSource(withRefs).actionFraming).toBe(before.actionFraming)
+    expect(parseStillPromptSource(withRefs).style).toBe(before.style)
   })
 
   it('video compiler stays motion-of-beat and does not use still sections', () => {
