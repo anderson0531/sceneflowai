@@ -9,6 +9,7 @@ import {
   isGeminiQuotaError,
 } from './geminiTextFallback'
 import { recordModelDowngrade } from './modelTelemetry'
+import { priorityPaygoHeaders } from './priorityPaygo'
 import { 
   getDefaultGeminiSafetySettings, 
   getImagenPersonGeneration,
@@ -230,7 +231,8 @@ async function generateTextWithModel(
       method: 'POST',
       headers: { 
         'Authorization': `Bearer ${accessToken}`, 
-        'Content-Type': 'application/json' 
+        'Content-Type': 'application/json',
+        ...priorityPaygoHeaders()
       },
       body: JSON.stringify(requestBody)
     },
@@ -361,7 +363,8 @@ export async function streamText(
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      ...priorityPaygoHeaders()
     },
     body: JSON.stringify(requestBody)
   });
@@ -504,7 +507,8 @@ export async function generateWithVision(
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...priorityPaygoHeaders()
       },
       body: JSON.stringify(requestBody)
     },
