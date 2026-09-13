@@ -22,8 +22,11 @@ import { attachCoGeneratedSceneDirection } from '@/lib/sceneGeneration/attachRev
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { localeDirective } from '@/lib/prompts/localeDirective'
 import { classifyAiError } from '@/lib/errors/aiErrorClassification'
-import { buildScriptCraftPromptBlock } from '@/lib/script/scriptCraftPrompt'
-import { MAX_BEATS_PER_SCENE } from '@/lib/script/sceneDecomposition'
+import {
+  buildRevisionBeatVolumeBlock,
+  buildScriptCraftPromptBlock,
+} from '@/lib/script/scriptCraftPrompt'
+import { MAX_BEATS_PER_SCENE, TARGET_BEATS_PER_SCENE } from '@/lib/script/sceneDecomposition'
 
 // Pro-tier revision with medium thinking can exceed the previous 120s ceiling.
 export const maxDuration = 300
@@ -218,9 +221,9 @@ async function generateRevisedScene({
   let revisionInstruction = ''
   
   const depthGuidance = {
-    light: 'Make targeted polish edits. Keep the core structure and flow intact. Focus on wording refinements.',
-    moderate: 'REWRITE the scene to fully address each issue. Make substantive changes to dialogue, action, and flow—not just surface-level rewording. Add, remove, and reorder beats as needed.',
-    deep: 'COMPLETELY RESTRUCTURE this scene. Rewrite from scratch if necessary to achieve the goals. Transform the dialogue, pacing, and visual storytelling. Do not be constrained by the original structure—reimagine how this scene should unfold.'
+    light: 'Make targeted polish edits. Keep the core structure and flow intact. Focus on wording refinements. Hold the beat count roughly where it is.',
+    moderate: `REWRITE the scene to fully address each issue. Make substantive changes to dialogue, action, and flow—not just surface-level rewording. Add, remove, and reorder beats as needed. Where the story needs more room, add beats toward the ~${TARGET_BEATS_PER_SCENE}-beat target.`,
+    deep: `COMPLETELY RESTRUCTURE this scene. Rewrite from scratch if necessary to achieve the goals. Transform the dialogue, pacing, and visual storytelling. Do not be constrained by the original structure—reimagine how this scene should unfold. A restructure may run well past the original beat count: write to the ~${TARGET_BEATS_PER_SCENE}-beat target, and up to ${MAX_BEATS_PER_SCENE} beats when the story earns it.`
   }[revisionDepth]
   
   if (revisionMode === 'recommendations' && selectedRecommendations.length > 0) {
@@ -279,7 +282,7 @@ For each recommendation, make the necessary STRUCTURAL or CONTENT changes. Do NO
     const cacheableContext = `${audienceContext}CURRENT SCENE (structured beats timeline — edit this directly):
 Heading: ${currentScene.heading || 'Untitled Scene'}
 
-BEATS (ordered timeline — keep beatId for kept/edited beats, omit for new beats, drop removed beats):
+BEATS (${currentBeats.length} in the current scene; ordered timeline — keep beatId for kept/edited beats, omit for new beats, drop removed beats):
 ${beatsText}
 
 Legacy flat fields (derived from beats — do not output these separately):
@@ -373,7 +376,7 @@ REWRITE REQUIREMENTS:
 5. REPLACE on-the-nose dialogue with subtext-rich alternatives
 6. CONVERT "telling" narration to "showing" through visual action beats
 7. Make dialogue natural and character-appropriate with EMOTIONAL TAGS
-8. The rewritten scene may be shorter OR longer than the original if that serves the story
+8. The rewritten scene may be shorter OR longer than the original if that serves the story — but a scene left well under the ~${TARGET_BEATS_PER_SCENE}-beat target is a shortfall, not a style choice
 
 Output the REWRITTEN scene as JSON with this exact structure:
 {
@@ -403,8 +406,10 @@ Output the REWRITTEN scene as JSON with this exact structure:
   "sfx": ["Sound effect 1", "Sound effect 2"]
 }
 
+${buildRevisionBeatVolumeBlock()}
+
 STRUCTURED BEATS RULES:
-- Return the FULL ordered beats[] array for the revised scene (MAX ${MAX_BEATS_PER_SCENE} beats — scenes cannot exceed this cap).
+- Return the FULL ordered beats[] array for the revised scene (~${TARGET_BEATS_PER_SCENE} beats is the target; MAX ${MAX_BEATS_PER_SCENE} beats — scenes cannot exceed this cap).
 - Keep beatId for beats you keep or edit; omit beatId for new beats; remove beats that should be deleted.
 - Every beat MUST include a "beatDirection" object with as many of the following fields as apply: castInFrame, shotType, cameraAngle, cameraMovement, blocking, emotion, gaze, keyProps (subset of scene Key Props), propInteraction, lightingAccent, frozenMoment, audioCue, transition (one of CUT|CONTINUE|DISSOLVE|FADE|MATCH_CUT).
 - "castInFrame" is REQUIRED on every beat and is the only thing that decides who appears on camera: the character names visible in THIS beat, spelled as in the scene's character list, or [] for a frame with no people in it. Never NARRATOR.
@@ -421,13 +426,15 @@ REMEMBER: ALL dialogue/narration lines must include [emotional tags] at the begi
 CRITICAL SUCCESS CRITERIA:
 - A successful rewrite will have DIFFERENT dialogue content, not just different wording
 - A successful rewrite will have STRUCTURAL changes (line order, beat placement, etc.)
-- If the recommendation says "condense" the result should have FEWER lines
+- If the recommendation says "condense" the affected beats should carry FEWER or tighter dialogue lines — condensing tightens the writing inside beats, it is not an instruction to cut the scene's beat count
 - If the recommendation says "add subtext" the result should have INDIRECT dialogue
 - Do NOT return a scene that could be described as "the same with minor polish"`
 
     // User delta: only the revision instruction changes between iterative calls
     const userPrompt = `REWRITE INSTRUCTIONS:
 ${revisionInstruction}
+
+BEAT COUNT: this scene currently has ${currentBeats.length} beats. The target is ~${TARGET_BEATS_PER_SCENE} and the hard cap is ${MAX_BEATS_PER_SCENE}. If it sits under the target, treat that gap as room you are free to use — not a length to preserve.
 
 ${preserveInstructions ? `PRESERVATION REQUIREMENTS: ${preserveInstructions}` : ''}
 ${languageBlock}
@@ -446,7 +453,11 @@ Now rewrite the scene following all the rules, constraints, and formatting requi
       cacheContextParts: [{ text: cacheableContext }],
       model: revisionModel,
       temperature: 0.7,
-      maxOutputTokens: 16384,
+      // On Gemini 3 the thinking budget shares maxOutputTokens. A scene rewritten
+      // to the beat target carries beatDirection on every beat, so the JSON alone
+      // runs several thousand tokens; the old 16384 left medium thinking close
+      // enough to the edge to truncate, which surfaces as a hard MAX_TOKENS error.
+      maxOutputTokens: 32768,
       thinkingLevel: 'medium',
       responseMimeType: 'application/json',
       cacheTtlMinutes: 60
@@ -511,7 +522,9 @@ Now rewrite the scene following all the rules, constraints, and formatting requi
   }
 
   if (isStructuredRevisionResponse(parsed)) {
-    console.log('[Scene Revision] Using structured beats response:', parsed.beats.length, 'beats')
+    console.log(
+      `[Scene Revision] Using structured beats response: ${currentBeats.length} beats in, ${parsed.beats.length} out (target ${TARGET_BEATS_PER_SCENE}, cap ${MAX_BEATS_PER_SCENE}, depth ${revisionDepth})`
+    )
     const finalized = finalizeStructuredRevisedScene(
       parsed,
       currentScene,

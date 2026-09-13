@@ -79,6 +79,19 @@ export function buildLongformScriptLengthBlock(opts?: { chunked?: boolean }): st
 • Intervening action beats only when they add NEW visual information — never to pad runtime.`
 }
 
+/**
+ * Beat volume for scene revision. The revision prompt used to state only the
+ * ceiling; a ceiling reads as a limit rather than a goal, which left rewrites
+ * anchored on whatever length the scene already had.
+ */
+export function buildRevisionBeatVolumeBlock(): string {
+  return `BEAT VOLUME (TARGET IS ${TARGET_BEATS_PER_SCENE}, CEILING IS ${MAX_BEATS_PER_SCENE}):
+• Aim for ~${TARGET_BEATS_PER_SCENE} beats in the revised scene. A scene may grow up to ${MAX_BEATS_PER_SCENE} beats when the story earns it, but must never exceed that cap.
+• The original beat count is NOT a target to match. Returning a thin scene because the original was thin is a failure, not a stylistic choice — and filling the ceiling is not the target either.
+• You have room to add the beats the story needs to land: reactions, reversals, and visual turns the original skipped.
+• Intervening action beats only when they add NEW visual information — never to pad runtime.`
+}
+
 export function buildScriptCraftPromptBlock(source: ScriptCraftSource): string {
   const priorities = parseScriptCraftPriorities(source?.scriptCraft)
   const notes = parseScriptCraftNotes(source?.scriptCraftNotes)
