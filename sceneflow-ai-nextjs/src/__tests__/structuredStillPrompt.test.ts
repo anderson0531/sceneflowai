@@ -172,6 +172,7 @@ describe('planner still vs video split', () => {
     expect(system).toMatch(/animatic/i)
     expect(system).not.toMatch(/F2V \(frame-to-video\) START frames/i)
     expect(system).toContain('Action/Framing ONLY')
+    expect(system).toMatch(/facial expression/i)
   })
 
   it('planner user prompt includes the reference catalog', () => {

@@ -16,7 +16,7 @@ import type { SceneBeat } from '@/lib/script/segmentTypes'
 /**
  * The state this is all about: a beat whose stored prompt key was written by an
  * older composer. Nothing about the beat changed; the key it is compared
- * against did, when STILL_FINGERPRINT_VERSION was bumped to still-v2.
+ * against did, when STILL_FINGERPRINT_VERSION was bumped to still-v3.
  */
 const PRE_BUMP_KEY = 'shotType=medium|cameraAngle=low angle|castInFrame=DR. CHEN|keyProps='
 

@@ -8,6 +8,7 @@ import {
   extractSceneStateFromAppearanceNotes,
   formatDirectedEmotionLine,
   inferEmotionFromActionProse,
+  expandEmotionForStill,
   resolveBeatDirectedEmotion,
   resolveDirectedEmotionForCharacter,
   resolveSceneAppearanceContinuity,
@@ -113,7 +114,7 @@ describe('beat directed emotion prompt helpers', () => {
 
   it('formatDirectedEmotionLine produces Facial expression guidance', () => {
     expect(formatDirectedEmotionLine('scared, frightened expression')).toBe(
-      'Facial expression: scared, frightened expression.'
+      'Facial expression: scared, frightened expression — eyes wide, brows raised, mouth tight.'
     )
   })
 
@@ -124,7 +125,9 @@ describe('beat directed emotion prompt helpers', () => {
         placedSubjects: [{ name: 'Piper Hayes', promptToken: 'person [1]' }],
         speakerName: 'Piper Hayes',
       })
-    ).toEqual({ line: 'Facial expression: quiet dread.' })
+    ).toEqual({
+      line: 'Facial expression: quiet dread — eyes held, jaw tight, mouth closed, shoulders drawn.',
+    })
   })
 
   it('binds the expression to the speaker when the frame holds two faces', () => {
@@ -138,7 +141,7 @@ describe('beat directed emotion prompt helpers', () => {
     })
 
     expect(attributed.line).toBe(
-      'Facial expression (person [2] — Professor Gideon Croft): quiet dread.'
+      'Facial expression (person [2] — Professor Gideon Croft): quiet dread — eyes held, jaw tight, mouth closed, shoulders drawn.'
     )
     expect(attributed.attributedTo).toBe('Professor Gideon Croft')
   })
@@ -179,6 +182,21 @@ describe('beat directed emotion prompt helpers', () => {
         beatAction: 'She slams the folder shut.',
       })
     ).toMatch(/sad/i)
+  })
+})
+
+describe('expandEmotionForStill', () => {
+  it('turns a short mood label into visible face and body tells', () => {
+    expect(expandEmotionForStill('sudden tension')).toBe(
+      'sudden tension — eyes widened, jaw set, mouth tight, shoulders locked'
+    )
+    expect(expandEmotionForStill('hypnotic awe')).toContain('mouth parted')
+  })
+
+  it('keeps a phrase that already names the face or body', () => {
+    expect(expandEmotionForStill('sudden tension, jaw set, eyes widened')).toBe(
+      'sudden tension, jaw set, eyes widened'
+    )
   })
 })
 
