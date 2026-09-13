@@ -201,7 +201,6 @@ function formatTime(seconds: number) {
 }
 
 const GALLERY_MUSIC_INTRO_FADE_STORAGE_KEY = 'sceneflow-gallery-music-intro-fade'
-const SCENE_MIX_PERSIST_MS = 300
 
 function loadGalleryMusicIntroFade(): MusicIntroFadeConfig {
   if (typeof window === 'undefined') return DEFAULT_MUSIC_INTRO_FADE
@@ -302,7 +301,8 @@ export function AudioGalleryPlayer({
     () => sceneMixerTrackVolumes(currentProductionData, selectedLanguage),
     [currentProductionData, selectedLanguage]
   )
-  const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const savedSceneMixRef = useRef(savedSceneMix)
+  savedSceneMixRef.current = savedSceneMix
   const pendingMixRef = useRef<{
     sceneId: string
     language: string
@@ -310,37 +310,27 @@ export function AudioGalleryPlayer({
     dirty: boolean
   } | null>(null)
   const lastHydratedMixKeyRef = useRef('')
+  /**
+   * Set on the first local slider edit of the hydrated scene and cleared only
+   * when the scene or language changes. Saving the mix round-trips through
+   * project state, so without this the arriving prop would overwrite the value
+   * the viewer is still dragging.
+   */
+  const localMixEditedRef = useRef(false)
   const onSceneMixChangeRef = useRef(onSceneMixChange)
   onSceneMixChangeRef.current = onSceneMixChange
 
-  const flushPendingSceneMix = useCallback(() => {
-    if (persistTimerRef.current) {
-      clearTimeout(persistTimerRef.current)
-      persistTimerRef.current = null
-    }
+  /**
+   * Write the mix to project state. Called on slider commit (pointer release or
+   * keyboard step), never per dragged value: each save rebuilds scene state and
+   * PATCHes the scene, which is far too heavy to run while the animatic plays.
+   */
+  const commitSceneMix = useCallback(() => {
     const pending = pendingMixRef.current
     if (!pending?.dirty) return
     pending.dirty = false
     onSceneMixChangeRef.current?.(pending.sceneId, pending.language, pending.volumes)
   }, [])
-
-  const scheduleSceneMixPersist = useCallback(
-    (volumes: Pick<ScreeningTrackVolumes, 'dialogue' | 'music' | 'sfx'>) => {
-      pendingMixRef.current = {
-        sceneId: currentSceneId,
-        language: selectedLanguage,
-        volumes,
-        dirty: true,
-      }
-      if (!onSceneMixChangeRef.current) return
-      if (persistTimerRef.current) clearTimeout(persistTimerRef.current)
-      persistTimerRef.current = setTimeout(() => {
-        persistTimerRef.current = null
-        flushPendingSceneMix()
-      }, SCENE_MIX_PERSIST_MS)
-    },
-    [currentSceneId, selectedLanguage, flushPendingSceneMix]
-  )
 
   const applyTrackVolume = useCallback(
     (track: 'dialogue' | 'music' | 'sfx', next: number) => {
@@ -353,36 +343,41 @@ export function AudioGalleryPlayer({
       if (track === 'dialogue') setDialogueVolume(clamped)
       if (track === 'music') setMusicVolume(clamped)
       if (track === 'sfx') setSfxVolume(clamped)
-      scheduleSceneMixPersist(nextVolumes)
+      localMixEditedRef.current = true
+      pendingMixRef.current = {
+        sceneId: currentSceneId,
+        language: selectedLanguage,
+        volumes: nextVolumes,
+        dirty: true,
+      }
     },
-    [dialogueVolume, musicVolume, sfxVolume, scheduleSceneMixPersist]
+    [dialogueVolume, musicVolume, sfxVolume, currentSceneId, selectedLanguage]
   )
 
   useEffect(() => {
     const key = `${currentSceneId}:${selectedLanguage}`
-    const sceneChanged = lastHydratedMixKeyRef.current !== key
-    if (sceneChanged) {
-      flushPendingSceneMix()
+    if (lastHydratedMixKeyRef.current !== key) {
+      commitSceneMix()
       lastHydratedMixKeyRef.current = key
-      setDialogueVolume(savedSceneMix.dialogue)
-      setMusicVolume(savedSceneMix.music)
-      setSfxVolume(savedSceneMix.sfx)
+      localMixEditedRef.current = false
+    } else if (localMixEditedRef.current) {
+      // Saved values that arrive after a local edit are this player's own echo.
       return
     }
-    if (pendingMixRef.current?.dirty) return
-    setDialogueVolume(savedSceneMix.dialogue)
-    setMusicVolume(savedSceneMix.music)
-    setSfxVolume(savedSceneMix.sfx)
+    const mix = savedSceneMixRef.current
+    setDialogueVolume(mix.dialogue)
+    setMusicVolume(mix.music)
+    setSfxVolume(mix.sfx)
   }, [
     currentSceneId,
     selectedLanguage,
     savedSceneMix.dialogue,
     savedSceneMix.music,
     savedSceneMix.sfx,
-    flushPendingSceneMix,
+    commitSceneMix,
   ])
 
-  useEffect(() => () => flushPendingSceneMix(), [flushPendingSceneMix])
+  useEffect(() => () => commitSceneMix(), [commitSceneMix])
 
   const screeningPosterUrl = getScreeningPosterUrl(currentScene)
 
@@ -1484,6 +1479,7 @@ export function AudioGalleryPlayer({
             <Slider
               value={[dialogueVolume * 100]}
               onValueChange={([val]) => applyTrackVolume('dialogue', val / 100)}
+              onValueCommit={commitSceneMix}
               max={100}
               step={1}
               className="w-16"
@@ -1493,6 +1489,7 @@ export function AudioGalleryPlayer({
             <Slider
               value={[musicVolume * 100]}
               onValueChange={([val]) => applyTrackVolume('music', val / 100)}
+              onValueCommit={commitSceneMix}
               max={100}
               step={1}
               className="w-16"
@@ -1502,6 +1499,7 @@ export function AudioGalleryPlayer({
             <Slider
               value={[sfxVolume * 100]}
               onValueChange={([val]) => applyTrackVolume('sfx', val / 100)}
+              onValueCommit={commitSceneMix}
               max={100}
               step={1}
               className="w-16"
