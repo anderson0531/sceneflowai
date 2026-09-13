@@ -42,14 +42,16 @@ const EXPRESS_LANES: ExpressLane[] = ['text', 'image', 'audio']
 export const DEFAULT_EXPRESS_IMAGE_CONCURRENCY = 1
 
 /**
- * Draft beats run on flash, whose quota tolerates three in flight.
+ * Draft beats run on flash, whose quota tolerates two in flight.
  *
- * Iterating on an animatic means regenerating frames over and over, so this is
- * the number that decides how long that loop takes. Two held without 429s, and
- * the lane halves itself on the first rate limit, so the cost of being one too
- * high is a slower run rather than failed frames.
+ * Three was tried and reverted. The reasoning for it — that a wider lane
+ * shortens the animatic iteration loop — held only while a rate-limited frame
+ * slept inside its slot. Fail-fast frees the slot on the first 429, so the
+ * same lane now turns over several times faster, and three concurrent starts
+ * against a shared quota pool spent the run provoking the contention it was
+ * meant to outrun.
  */
-export const DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY = 3
+export const DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY = 2
 
 /** Default TTS in-flight cap for Express Audio / Storyboard Express audio lane. */
 export const DEFAULT_EXPRESS_AUDIO_CONCURRENCY = 8

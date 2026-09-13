@@ -81,11 +81,12 @@ describe('usesFlashDraftTier', () => {
 })
 
 describe('animatic concurrency', () => {
-  it('runs three draft frames at once and keeps pro sequential', () => {
-    // Iterating on an animatic is repeated frame regeneration, so this number
-    // is what sets how long that loop takes.
-    expect(DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY).toBe(3)
-    expect(DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY).toBe(3)
+  it('runs two draft frames at once and keeps pro sequential', () => {
+    // Three was tried and reverted: once fail-fast stopped a rate-limited frame
+    // from sleeping in its slot, the lane turned over fast enough that a third
+    // concurrent start only bought more shared-quota contention.
+    expect(DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY).toBe(2)
+    expect(DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY).toBe(2)
     expect(DEFAULT_EXPRESS_IMAGE_CONCURRENCY).toBe(1)
     expect(DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY).toBe(1)
   })
