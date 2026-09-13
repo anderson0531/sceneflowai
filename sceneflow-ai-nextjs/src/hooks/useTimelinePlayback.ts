@@ -136,6 +136,19 @@ function isDuckedTrack(trackType: AudioClip['trackType']): boolean {
   return trackType === 'music' || trackType === 'sfx'
 }
 
+/** A clip's URL can change under a stable id, so both belong in the key. */
+function audioClipKey(clip: AudioClip): string {
+  return `${clip.id}:${clip.url}`
+}
+
+function releaseAudioElement(audio: HTMLAudioElement): void {
+  audio.pause()
+  audio.loop = false
+  audio.src = ''
+  // Clearing the source alone leaves the buffered data; the reload drops it.
+  audio.load()
+}
+
 function computeEffectiveClipVolume(
   clip: AudioClip,
   elapsed: number,
@@ -249,7 +262,7 @@ export function useTimelinePlayback({
     const duck = trackDuckRef.current?.(elapsed) ?? 1
 
     currentAudioClips.forEach((clip) => {
-      const key = `${clip.id}:${clip.url}`
+      const key = audioClipKey(clip)
       const audio = audioRefs.current.get(key)
       if (!audio) return
       syncAudioClipAtTime(
@@ -269,38 +282,43 @@ export function useTimelinePlayback({
   // Audio Element Management
   // ============================================================================
   
+  const ensureAudioElement = useCallback((clip: AudioClip): HTMLAudioElement => {
+    const key = audioClipKey(clip)
+    const existing = audioRefs.current.get(key)
+    if (existing) {
+      existing.loop = clip.loop ?? false
+      return existing
+    }
+    const audio = new Audio(clip.url)
+    audio.preload = 'auto'
+    audio.loop = clip.loop ?? false
+    audioRefs.current.set(key, audio)
+    return audio
+  }, [])
+
+  /** Drops every element; the bumped token stops an in-flight play() promise. */
+  const releaseAllAudio = useCallback(() => {
+    audioRefs.current.forEach((audio, key) => {
+      playGenerationRef.current.set(key, (playGenerationRef.current.get(key) ?? 0) + 1)
+      releaseAudioElement(audio)
+    })
+    audioRefs.current.clear()
+  }, [])
+
   // Create/update audio elements for clips
   useEffect(() => {
-    const existingKeys = new Set(audioRefs.current.keys())
-    const neededKeys = new Set<string>()
-    
-    audioClips.forEach(clip => {
-      const key = `${clip.id}:${clip.url}`
-      neededKeys.add(key)
-      
-      if (!audioRefs.current.has(key)) {
-        const audio = new Audio(clip.url)
-        audio.preload = 'auto'
-        audio.loop = clip.loop ?? false
-        audioRefs.current.set(key, audio)
-      } else {
-        const audio = audioRefs.current.get(key)!
-        audio.loop = clip.loop ?? false
-      }
-    })
+    const neededKeys = new Set(audioClips.map(audioClipKey))
+    audioClips.forEach(ensureAudioElement)
     
     // Remove stale audio elements
-    existingKeys.forEach(key => {
-      if (!neededKeys.has(key)) {
-        const audio = audioRefs.current.get(key)
-        if (audio) {
-          audio.pause()
-          audio.src = ''
-        }
-        audioRefs.current.delete(key)
-      }
+    Array.from(audioRefs.current.keys()).forEach(key => {
+      if (neededKeys.has(key)) return
+      const audio = audioRefs.current.get(key)
+      if (audio) releaseAudioElement(audio)
+      audioRefs.current.delete(key)
+      playGenerationRef.current.delete(key)
     })
-  }, [audioClips])
+  }, [audioClips, ensureAudioElement])
   
   // Cleanup on unmount
   useEffect(() => {
@@ -308,13 +326,50 @@ export function useTimelinePlayback({
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current)
       }
-      audioRefs.current.forEach(audio => {
-        audio.pause()
-        audio.src = ''
-      })
-      audioRefs.current.clear()
+      releaseAllAudio()
     }
-  }, [])
+  }, [releaseAllAudio])
+
+  /**
+   * Swiping away an installed PWA — or just backgrounding the tab — normally
+   * leaves the document alive, so React never unmounts and looping score plays
+   * on with nothing on screen. Stop and drop the audio whenever the page goes
+   * away, and rebuild the elements if the viewer returns. Never resume by
+   * ourselves: the viewer pressed play on a player they can no longer see.
+   */
+  useEffect(() => {
+    const stopForHiddenPage = () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+        animationRef.current = null
+      }
+      releaseAllAudio()
+      setIsPlaying(false)
+    }
+
+    const restoreAudioElements = () => {
+      audioClipsRef.current.forEach(ensureAudioElement)
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopForHiddenPage()
+        return
+      }
+      restoreAudioElements()
+    }
+
+    window.addEventListener('pagehide', stopForHiddenPage)
+    // Restores the elements a `pagehide` released when the page comes back out
+    // of the back/forward cache.
+    window.addEventListener('pageshow', restoreAudioElements)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      window.removeEventListener('pagehide', stopForHiddenPage)
+      window.removeEventListener('pageshow', restoreAudioElements)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [ensureAudioElement, releaseAllAudio])
   
   // ============================================================================
   // Visual Clip Selection
@@ -383,7 +438,7 @@ export function useTimelinePlayback({
     
     // Sync audio clips with drift correction
     currentAudioClips.forEach(clip => {
-      const key = `${clip.id}:${clip.url}`
+      const key = audioClipKey(clip)
       const audio = audioRefs.current.get(key)
       if (!audio) return
       
@@ -496,7 +551,7 @@ export function useTimelinePlayback({
     // If paused, seek audio elements directly
     if (!isPlayingRef.current) {
       audioClipsRef.current.forEach(clip => {
-        const key = `${clip.id}:${clip.url}`
+        const key = audioClipKey(clip)
         const audio = audioRefs.current.get(key)
         if (!audio) return
         

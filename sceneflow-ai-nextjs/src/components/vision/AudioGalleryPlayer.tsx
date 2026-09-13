@@ -546,6 +546,18 @@ export function AudioGalleryPlayer({
   pausePlaybackRef.current = pause
   resetPlaybackRef.current = reset
 
+  /**
+   * Stop the timeline before handing control back. A parent that unmounts the
+   * player would tear the audio down anyway, but one that only hides it would
+   * leave the score playing behind a closed player.
+   */
+  const handleClose = useCallback(() => {
+    pause()
+    reset()
+    videoRef.current?.pause()
+    onClose?.()
+  }, [pause, reset, onClose])
+
   const displayImageUrl =
     currentVisualFrame?.imageUrl ?? getEstablishingFrameUrl(currentScene)
 
@@ -1254,7 +1266,7 @@ export function AudioGalleryPlayer({
         )}
         {onClose && !isFullscreen && (
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
           >
             <X className="w-4 h-4" />
