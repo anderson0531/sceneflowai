@@ -25,6 +25,15 @@ import {
   computeClipAudioTime,
   loopingDrift,
 } from '@/lib/audio/loopingAudioSync'
+import {
+  audioClipKey,
+  isClipPlaybackActive,
+  selectLiveAudioClips,
+} from '@/lib/audio/audioClipWindow'
+import {
+  recordScreeningDiag,
+  setScreeningDiagAudioSnapshot,
+} from '@/lib/storyboard/screeningPlayerDiagnostics'
 
 // ============================================================================
 // Types
@@ -110,35 +119,22 @@ export interface UseTimelinePlaybackReturn {
 
 const DRIFT_THRESHOLD = 0.2 // Resync audio if drifts more than 200ms
 
-/** Whether a clip should be playing at the given timeline position. */
-function isClipPlaybackActive(
-  clip: AudioClip,
-  elapsed: number,
-  sceneDuration: number
-): boolean {
-  if (elapsed < clip.startTime) return false
-
-  const clipEnd = clip.startTime + clip.duration
-  if (clip.loop && clip.trackType === 'music') {
-    // Merged scene music: keep looping for the full scene (matches FullscreenPlayer).
-    if (clip.id === 'music-scene' || clip.id === 'music') {
-      return elapsed < sceneDuration
+function bufferedSeconds(audio: HTMLAudioElement): number {
+  try {
+    let total = 0
+    const ranges = audio.buffered
+    for (let i = 0; i < ranges.length; i++) {
+      total += ranges.end(i) - ranges.start(i)
     }
-    // Split runs (disabled beat gap): still respect the run window.
-    return elapsed < clipEnd
+    return total
+  } catch {
+    return 0
   }
-
-  return elapsed < clipEnd
 }
 
 /** Ducking follows the picture, so it covers the score and the effects on it. */
 function isDuckedTrack(trackType: AudioClip['trackType']): boolean {
   return trackType === 'music' || trackType === 'sfx'
-}
-
-/** A clip's URL can change under a stable id, so both belong in the key. */
-function audioClipKey(clip: AudioClip): string {
-  return `${clip.id}:${clip.url}`
 }
 
 function releaseAudioElement(audio: HTMLAudioElement): void {
@@ -253,6 +249,11 @@ export function useTimelinePlayback({
   useEffect(() => { onTimeUpdateRef.current = onTimeUpdate }, [onTimeUpdate])
   useEffect(() => { musicIntroFadeRef.current = musicIntroFade }, [musicIntroFade])
   useEffect(() => { trackDuckRef.current = trackDuck }, [trackDuck])
+  const ensureAudioElementRef = useRef<(clip: AudioClip) => HTMLAudioElement>(
+    (clip) => {
+      throw new Error(`ensureAudioElement used before init: ${clip.id}`)
+    }
+  )
 
   const applyVolumesAtElapsed = useCallback((elapsed: number) => {
     const currentAudioClips = audioClipsRef.current
@@ -293,33 +294,64 @@ export function useTimelinePlayback({
     audio.preload = 'auto'
     audio.loop = clip.loop ?? false
     audioRefs.current.set(key, audio)
+    recordScreeningDiag('audio-create', { key, live: audioRefs.current.size })
     return audio
+  }, [])
+  ensureAudioElementRef.current = ensureAudioElement
+
+  const dropAudioElement = useCallback((key: string) => {
+    const audio = audioRefs.current.get(key)
+    if (!audio) return
+    playGenerationRef.current.set(key, (playGenerationRef.current.get(key) ?? 0) + 1)
+    releaseAudioElement(audio)
+    audioRefs.current.delete(key)
+    playGenerationRef.current.delete(key)
+    recordScreeningDiag('audio-release', { key, live: audioRefs.current.size })
   }, [])
 
   /** Drops every element; the bumped token stops an in-flight play() promise. */
   const releaseAllAudio = useCallback(() => {
-    audioRefs.current.forEach((audio, key) => {
-      playGenerationRef.current.set(key, (playGenerationRef.current.get(key) ?? 0) + 1)
-      releaseAudioElement(audio)
+    Array.from(audioRefs.current.keys()).forEach(dropAudioElement)
+  }, [dropAudioElement])
+
+  const reconcileLiveAudio = useCallback((elapsed: number) => {
+    const live = selectLiveAudioClips(
+      audioClipsRef.current,
+      elapsed,
+      sceneDurationRef.current
+    )
+    const neededKeys = new Set(live.map(audioClipKey))
+    live.forEach(ensureAudioElement)
+    Array.from(audioRefs.current.keys()).forEach((key) => {
+      if (neededKeys.has(key)) return
+      dropAudioElement(key)
     })
-    audioRefs.current.clear()
+  }, [dropAudioElement, ensureAudioElement])
+
+  // Keep only the clips around the playhead — a 22-beat scene has ~45 clips,
+  // and creating an element for each of them at mount is the crash.
+  const playheadTick = Math.floor(currentTime)
+  useEffect(() => {
+    reconcileLiveAudio(currentTimeRef.current)
+  }, [audioClips, playheadTick, reconcileLiveAudio])
+  
+  useEffect(() => {
+    setScreeningDiagAudioSnapshot(() => {
+      let buffering = 0
+      let bufferedSec = 0
+      audioRefs.current.forEach((audio) => {
+        if (audio.readyState < 2) buffering += 1
+        bufferedSec += bufferedSeconds(audio)
+      })
+      return {
+        live: audioRefs.current.size,
+        buffering,
+        bufferedSec: Math.round(bufferedSec * 10) / 10,
+      }
+    })
+    return () => setScreeningDiagAudioSnapshot(null)
   }, [])
 
-  // Create/update audio elements for clips
-  useEffect(() => {
-    const neededKeys = new Set(audioClips.map(audioClipKey))
-    audioClips.forEach(ensureAudioElement)
-    
-    // Remove stale audio elements
-    Array.from(audioRefs.current.keys()).forEach(key => {
-      if (neededKeys.has(key)) return
-      const audio = audioRefs.current.get(key)
-      if (audio) releaseAudioElement(audio)
-      audioRefs.current.delete(key)
-      playGenerationRef.current.delete(key)
-    })
-  }, [audioClips, ensureAudioElement])
-  
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -348,7 +380,7 @@ export function useTimelinePlayback({
     }
 
     const restoreAudioElements = () => {
-      audioClipsRef.current.forEach(ensureAudioElement)
+      reconcileLiveAudio(currentTimeRef.current)
     }
 
     const handleVisibilityChange = () => {
@@ -369,7 +401,7 @@ export function useTimelinePlayback({
       window.removeEventListener('pageshow', restoreAudioElements)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [ensureAudioElement, releaseAllAudio])
+  }, [ensureAudioElement, reconcileLiveAudio, releaseAllAudio])
   
   // ============================================================================
   // Visual Clip Selection
@@ -439,8 +471,13 @@ export function useTimelinePlayback({
     // Sync audio clips with drift correction
     currentAudioClips.forEach(clip => {
       const key = audioClipKey(clip)
-      const audio = audioRefs.current.get(key)
-      if (!audio) return
+      let audio = audioRefs.current.get(key)
+      if (!audio) {
+        // The window can lag a seek by up to a second; create the clip we
+        // actually need so dialogue never goes silent.
+        if (!isClipPlaybackActive(clip, elapsed, currentSceneDuration)) return
+        audio = ensureAudioElementRef.current(clip)
+      }
       
       const isEnabled = currentTrackEnabled[clip.trackType]
       const baseVolume = currentTrackVolumes[clip.trackType]

@@ -32,6 +32,8 @@ import {
 import { DEFAULT_MIXER_AUDIO_TRACKS } from '@/lib/scene/mixerSettings'
 import { effectiveScreeningTrackVolume } from '@/lib/scene/screeningTrackVolume'
 import { getAudioDuration } from '@/lib/audio/audioDuration'
+import { AUDIO_PROBE_CONCURRENCY, runBoundedPool } from '@/lib/audio/audioProbePool'
+import { recordScreeningDiag } from '@/lib/storyboard/screeningPlayerDiagnostics'
 
 export interface UseStoryboardPlaybackOptions {
   scene: Record<string, unknown> | null | undefined
@@ -211,25 +213,40 @@ export function useStoryboardPlayback({
     if (!activeScene) return
 
     let cancelled = false
-
-    collectSceneAudioUrls(activeScene, language).forEach((url) => {
-      if (fetchingUrls.current.has(url)) return
+    const urls = collectSceneAudioUrls(activeScene, language).filter((url) => {
+      if (fetchingUrls.current.has(url)) return false
       fetchingUrls.current.add(url)
+      return true
+    })
 
-      // `getAudioDuration` cancels the preload once metadata lands. Probing
-      // through a raw audio element left every clip buffering its whole file,
-      // and those ghost elements piled up each time a scene was revisited.
-      getAudioDuration(url)
-        .then((duration) => {
+    recordScreeningDiag('scene-mount', {
+      beats: getSceneBeats(activeScene).length,
+      uniqueAudioUrls: urls.length,
+      probes: urls.length,
+    })
+
+    // Four probes at a time. A 22-beat scene used to open ~45 elements in one
+    // tick; each getAudioDuration call is its own Audio element.
+    void runBoundedPool(
+      urls,
+      AUDIO_PROBE_CONCURRENCY,
+      async (url) => {
+        if (cancelled) return
+        try {
+          // `getAudioDuration` cancels the preload once metadata lands. Probing
+          // through a raw audio element left every clip buffering its whole file,
+          // and those ghost elements piled up each time a scene was revisited.
+          const duration = await getAudioDuration(url)
           if (cancelled || !Number.isFinite(duration) || duration <= 0) return
           recordMeasuredDuration(url, duration)
-        })
-        .catch(() => {
+        } catch {
           // A stale or missing clip keeps its authored duration; allow a retry.
           fetchingUrls.current.delete(url)
           console.warn(`[useStoryboardPlayback] Failed to load audio metadata for URL: ${url}`)
-        })
-    })
+        }
+      },
+      () => cancelled
+    )
 
     return () => {
       cancelled = true
@@ -325,6 +342,17 @@ export function useStoryboardPlayback({
 
     return clips
   }, [voiceClips, visualFrames, sceneDuration, sceneAudioRevision, dynamicDurationKey])
+
+  useEffect(() => {
+    const clipsByTrack = { dialogue: 0, music: 0, sfx: 0, voiceover: 0 }
+    for (const clip of timelineAudioClips) {
+      clipsByTrack[clip.trackType] += 1
+    }
+    recordScreeningDiag('clips', {
+      total: timelineAudioClips.length,
+      ...clipsByTrack,
+    })
+  }, [timelineAudioClips])
 
   const visualClips = useMemo(
     () => storyboardFramesToVisualClips(visualFrames),
