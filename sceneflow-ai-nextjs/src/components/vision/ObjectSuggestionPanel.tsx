@@ -228,6 +228,7 @@ export function ObjectSuggestionPanel({
   onExpressGenerateReferences,
   isExpressGeneratingReferences = false,
 }: ObjectSuggestionPanelProps) {
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isUpdatingObjects, setIsUpdatingObjects] = useState(false)
   const [isObjectAgentRunning, setIsObjectAgentRunning] = useState(false)
   const [suggestions, setSuggestions] = useState<ObjectSuggestion[]>([])
