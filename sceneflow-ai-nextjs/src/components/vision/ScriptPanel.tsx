@@ -390,7 +390,7 @@ interface ScriptPanelProps {
   onToggleDashboard?: () => void
   // Assets dialog control
   onOpenAssets?: () => void
-  // Global keyframe generation state (for screen freeze)
+  // Global keyframe generation state (inline indicators; progress reports in the dock)
   isGeneratingKeyframe?: boolean
   generatingKeyframeSceneNumber?: number | null
   // Scene timeline filtering - only show selected scene when set

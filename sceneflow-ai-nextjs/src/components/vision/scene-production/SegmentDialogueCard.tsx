@@ -54,7 +54,6 @@ export interface SegmentDialogueCardProps {
   ) => void | Promise<void>
   generatingDialogue?: { sceneIdx: number; character?: string; dialogueIndex?: number; lineId?: string } | null
   setGeneratingDialogue?: (val: any) => void
-  overlayStore?: { show: (msg: string, n?: number) => void; hide: () => void }
 }
 
 export function SegmentDialogueCard({
@@ -70,7 +69,6 @@ export function SegmentDialogueCard({
   uploadAudio,
   generatingDialogue,
   setGeneratingDialogue,
-  overlayStore,
 }: SegmentDialogueCardProps) {
   const isNarrator = line.kind === 'narration'
 
@@ -146,7 +144,6 @@ export function SegmentDialogueCard({
       dialogueIndex: dialogueIndex ?? undefined,
       lineId: line.lineId,
     })
-    overlayStore?.show(audioUrl ? regenerateLabel : generateLabel, 15)
     try {
       if (isNarrator) {
         await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined, selectedLanguage)
@@ -161,10 +158,8 @@ export function SegmentDialogueCard({
       } else {
         toast.error('This dialogue line has no positional index yet.')
       }
-      overlayStore?.hide()
     } catch (error) {
       console.error('[SegmentDialogueCard] generation failed:', error)
-      overlayStore?.hide()
       toast.error(isNarrator ? 'Failed to regenerate narration' : 'Failed to regenerate dialogue')
     } finally {
       setGeneratingDialogue?.(null)

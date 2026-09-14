@@ -26,7 +26,7 @@ import {
 import { collectTopImpactIssues, firstHighImpactSceneIndex, sceneHasHighImpactIssue } from '@/lib/script/audienceResonance/highImpact'
 import { useStore } from '@/store/useStore'
 import { AnimatedScore, AnimatedProgressBar } from '@/components/ui/AnimatedScore'
-import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
+import { runWithAgentDock } from '@/store/useAgentRunStore'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { toast } from 'sonner'
 import {
@@ -721,7 +721,6 @@ export default function ScriptReviewModal({
   // State for inline revision with selectable recommendations
   const [selectedRecommendationIndices, setSelectedRecommendationIndices] = useState<Set<number>>(new Set())
   const [isRevising, setIsRevising] = useState(false)
-  const { execute } = useProcessWithOverlay()
 
   // Per-scene fix state
   const [fixingScenes, setFixingScenes] = useState<Set<number>>(new Set()) // scene numbers currently being fixed
@@ -1110,7 +1109,12 @@ export default function ScriptReviewModal({
     
     setIsOptimizingYouDirect(true)
     try {
-      await execute(async () => {
+      await runWithAgentDock({
+        id: 'script-optimize',
+        title: 'Script Agent',
+        subtitle: 'you can keep editing',
+        itemLabel: 'Custom direction',
+      }, async () => {
         let response = await fetch('/api/vision/optimize-script', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1142,7 +1146,7 @@ export default function ScriptReviewModal({
         const data = await response.json()
         
         if (data.optimizedScript) {
-          // Await so the processing overlay stays visible until DB write completes
+          // Await so the Script Agent dock stays active until DB write completes
           await onScriptOptimized(data.optimizedScript)
           toast.success('Script revised with your custom direction! Re-analyzing...')
           // Reset You Direct state after success
@@ -1159,7 +1163,7 @@ export default function ScriptReviewModal({
         } else {
           toast.message('No changes returned for the current instruction.')
         }
-      }, { message: 'Revising your script with custom direction...', estimatedDuration: 55, operationType: 'script-optimization' })
+      })
     } catch (error: any) {
       console.error('[You Direct] Error:', error)
       toast.error(error.message || 'Failed to revise script')
@@ -1231,8 +1235,12 @@ export default function ScriptReviewModal({
 
     setIsRevising(true)
     try {
-      await execute(
-        async () => {
+      await runWithAgentDock({
+        id: 'script-optimize',
+        title: 'Script Agent',
+        subtitle: 'you can keep editing',
+        itemLabel: `${selectedRecs.length} recommendation${selectedRecs.length > 1 ? 's' : ''}`,
+      }, async () => {
           let response = await fetch('/api/vision/optimize-script', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1269,7 +1277,7 @@ export default function ScriptReviewModal({
         const data = await response.json()
         
         if (data.optimizedScript) {
-          // Await so the processing overlay stays visible until DB write completes
+          // Await so the Script Agent dock stays active until DB write completes
           await onScriptOptimized(data.optimizedScript)
           toast.success(`Script revised with ${selectedRecs.length} recommendation${selectedRecs.length > 1 ? 's' : ''}! Re-analyzing...`)
           // Clear selections
@@ -1285,14 +1293,6 @@ export default function ScriptReviewModal({
         } else {
           throw new Error('No optimized script returned')
         }
-      }, { 
-        message: `Revising script with ${selectedRecs.length} recommendation${selectedRecs.length > 1 ? 's' : ''}...`, 
-        // Structural pre-pass (~20s) + batched optimization: ~4 scenes/batch, 2 parallel, ~25s/wave + overhead
-        // e.g. 17 scenes = 20s structural + 5 batches → 3 waves × 25s = 75s + 15s overhead = 110s
-        // With MAX_TOKENS retries possible, allow up to 300s
-        // + 30s for auto re-analysis
-        estimatedDuration: Math.min(330, Math.max(90, Math.ceil(Math.ceil((script?.scenes?.length || 10) / 4) / 2) * 25 + 65)),
-        operationType: 'script-optimization'
       })
     } catch (err: any) {
       console.error('[Script Revision] Error:', err)
@@ -1489,11 +1489,15 @@ export default function ScriptReviewModal({
     // Capture scene number before closing dialog (dialog state will be cleared)
     const sceneNumber = optimizeDialogScene.sceneNumber
     
-    // Close dialog immediately and show global animated processing toast
+    // Close dialog immediately; the dock reports the rewrite so the studio stays usable
     setOptimizeDialogOpen(false)
     
-    await execute(
-      async () => {
+    await runWithAgentDock({
+      id: `scene-revision:${sceneNumber}`,
+      title: 'Script Agent',
+      subtitle: 'you can keep editing',
+      itemLabel: `Scene ${sceneNumber}`,
+    }, async () => {
         const previousScene = sceneIndex > 0 ? script.scenes[sceneIndex - 1] : undefined
         const nextScene = sceneIndex < script.scenes.length - 1 ? script.scenes[sceneIndex + 1] : undefined
 
@@ -1541,11 +1545,6 @@ export default function ScriptReviewModal({
         } else {
           throw new Error('No optimized scene returned')
         }
-      },
-      {
-        message: `Rewriting Scene ${sceneNumber}...`,
-        estimatedDuration: 15000,
-        operationType: 'scene-revision'
       }
     )
   }

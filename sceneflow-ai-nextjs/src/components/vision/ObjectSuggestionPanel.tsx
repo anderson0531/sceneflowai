@@ -31,8 +31,15 @@ import {
   selectCanonicalNewObjects,
 } from '@/lib/vision/objectDuplicateClusters'
 import { cn } from '@/lib/utils'
-import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
 import { runObjectBatch } from '@/lib/vision/objectBatchGeneration'
+import type { AgentRunItem } from '@/components/vision/AgentRunDock'
+import {
+  failAgentRun,
+  finishAgentRun,
+  patchAgentRun,
+  setAgentRunItem,
+  startAgentRun,
+} from '@/store/useAgentRunStore'
 import { LibraryKindToolbar } from './LibraryKindToolbar'
 import { ObjectDuplicateMergeDialog } from './ObjectDuplicateMergeDialog'
 import { countObjectAgentItems } from '@/lib/vision/libraryKindAgents'
@@ -417,6 +424,13 @@ export function ObjectSuggestionPanel({
 
   const handleGenerate = useCallback(async (suggestion: ObjectSuggestion, prompt: string) => {
     setGeneratingIds(prev => new Set(prev).add(suggestion.id))
+    const runId = `object:${suggestion.id}`
+    startAgentRun({
+      id: runId,
+      title: 'Object',
+      subtitle: 'you can keep editing',
+      itemLabel: suggestion.name,
+    })
     
     try {
       const response = await fetch('/api/vision/generate-object', {
@@ -450,8 +464,10 @@ export function ObjectSuggestionPanel({
 
       // Remove from suggestions
       setSuggestions(prev => prev.filter(s => s.id !== suggestion.id))
+      finishAgentRun(runId, { subtitle: `${suggestion.name} ready` })
     } catch (err: any) {
       setError(err.message || 'Failed to generate object')
+      failAgentRun(runId, err.message || 'Failed to generate object')
     } finally {
       setGeneratingIds(prev => {
         const next = new Set(prev)
@@ -473,12 +489,35 @@ export function ObjectSuggestionPanel({
     setIsBatchGenerating(true)
     setBatchProgress(0)
     setError(null)
+    const batchRunId = 'object-batch'
+    const items: AgentRunItem[] = suggestionsToGenerate.map((suggestion) => ({
+      key: suggestion.id,
+      label: suggestion.name,
+      status: 'pending',
+    }))
+    startAgentRun({
+      id: batchRunId,
+      title: 'Object Agent',
+      subtitle: 'Generating key objects — you can keep editing',
+      items,
+    })
     
     const summary = await runObjectBatch(suggestionsToGenerate, {
-      onProgress: setBatchProgress,
-      onInFlightChange: names => setCurrentBatchItem(names.join(', ')),
+      onProgress: (percent) => {
+        setBatchProgress(percent)
+        patchAgentRun(batchRunId, { progressPct: percent })
+      },
+      onInFlightChange: names => {
+        setCurrentBatchItem(names.join(', '))
+        if (names.length > 0) {
+          patchAgentRun(batchRunId, {
+            subtitle: `Processing ${names.join(', ')} — you can keep editing`,
+          })
+        }
+      },
       generate: async suggestion => {
         setGeneratingIds(prev => new Set(prev).add(suggestion.id))
+        setAgentRunItem(batchRunId, suggestion.id, { status: 'running' })
 
         try {
           const response = await fetch('/api/vision/generate-object', {
@@ -509,9 +548,14 @@ export function ObjectSuggestionPanel({
             aiGenerated: true
           })
 
-          // Only a generated object leaves the list; a failed one keeps its
-          // place and its own Generate button, which is the retry.
           setSuggestions(prev => prev.filter(s => s.id !== suggestion.id))
+          setAgentRunItem(batchRunId, suggestion.id, { status: 'done' })
+        } catch (error) {
+          setAgentRunItem(batchRunId, suggestion.id, {
+            status: 'error',
+            error: error instanceof Error ? error.message : 'Failed',
+          })
+          throw error
         } finally {
           setGeneratingIds(prev => {
             const next = new Set(prev)
@@ -532,6 +576,15 @@ export function ObjectSuggestionPanel({
           ? `Could not generate ${target}. ${summary.firstError ?? 'Please try again.'}`
           : `${summary.failed} of ${summary.total} objects could not be generated — they are still listed below.`
       )
+      finishAgentRun(batchRunId, {
+        tone: summary.succeeded === 0 ? 'error' : 'warning',
+        subtitle:
+          summary.succeeded === 0
+            ? summary.firstError || 'Could not generate objects'
+            : `${summary.failed} of ${summary.total} objects failed`,
+      })
+    } else {
+      finishAgentRun(batchRunId, { subtitle: 'Key objects generated' })
     }
 
     setIsBatchGenerating(false)
@@ -570,22 +623,6 @@ export function ObjectSuggestionPanel({
 
   return (
     <>
-      {/* Processing Overlay for Key Objects Generation */}
-      <GeneratingOverlay
-        visible={isBatchGenerating || generatingIds.size > 0}
-        title={isBatchGenerating ? 'Generating Key Objects' : 'Generating Reference Image'}
-        progress={isBatchGenerating ? batchProgress : 50}
-        subtext={
-          isBatchGenerating 
-            ? // Unquoted: several objects are in flight at once, so this names
-              // a list as often as it names one item.
-              `Processing ${currentBatchItem || 'objects'}... ${batchProgress}% complete`
-            : generatingIds.size > 0 
-              ? 'Creating visual reference...'
-              : undefined
-        }
-      />
-
       <LibraryKindToolbar
         updateLabel="Update Objects"
         agentLabel={`Object Agent (${countObjectAgentItems(existingObjects)})`}

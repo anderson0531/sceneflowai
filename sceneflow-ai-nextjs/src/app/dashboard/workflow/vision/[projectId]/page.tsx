@@ -204,7 +204,14 @@ import {
   VideoAgentRunDock,
   type VideoAgentRunState,
 } from '@/components/vision/VideoAgentRunDock'
-import type { AudioAgentRunReport } from '@/lib/audio/audioAgentRunReport'
+import { AgentRunStoreDocks } from '@/components/vision/AgentRunStoreDocks'
+import type { AudioAgentRunReport, AudioRunItem } from '@/lib/audio/audioAgentRunReport'
+import {
+  failAgentRun,
+  finishAgentRun,
+  patchAgentRun,
+  startAgentRun,
+} from '@/store/useAgentRunStore'
 import type { VideoQueueRunReport } from '@/lib/video/videoQueueRunReport'
 import {
   buildExpressBeatFrameItems,
@@ -6276,26 +6283,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Batch image generation state
   const [isGeneratingAllImages, setIsGeneratingAllImages] = useState(false)
-  const [imageProgress, setImageProgress] = useState<{
-    scene: number
-    total: number
-    status: string
-    sceneHeading?: string
-    // Concurrent processing fields
-    inProgress?: number
-    pending?: number
-    inProgressScenes?: number[]
-    validScenesCount?: number
-    skippedScenesCount?: number
-    failedCount?: number
-  } | null>(null)
 
-  // Single keyframe generation state (for global screen freeze)
+  // Single keyframe generation state (inline indicators; progress reports in the dock)
   const [isGeneratingKeyframe, setIsGeneratingKeyframe] = useState(false)
   const [generatingKeyframeSceneNumber, setGeneratingKeyframeSceneNumber] = useState<number | null>(null)
   
-  // Batch generation state — when true, handleGenerateSceneImage suppresses per-scene overlays
-  // (SceneGallery's handleGenerateAll provides its own batch overlay via useProcessWithOverlay)
+  // Batch generation state — when true, per-scene frame docks are skipped because
+  // handleGenerateAllImages reports the whole batch into the dock stack.
   const batchGeneratingRef = useRef(false)
 
   const [preVisDirectDialog, setPreVisDirectDialog] = useState<{
@@ -9913,7 +9907,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
     
     setGeneratingSceneReferenceIndex(sceneIdx)
-    overlayStore.show(`Scene Reference - Scene ${sceneIdx + 1}`, 20, 'storyboard-production')
+    const runId = `scene-ref:${sceneIdx}`
+    startAgentRun({
+      id: runId,
+      title: 'Scene reference',
+      subtitle: 'you can keep editing',
+      itemLabel: `Scene ${sceneIdx + 1}`,
+    })
     
     try {
       // Build intelligent prompt using scene direction
@@ -9985,13 +9985,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
         
         try { const { toast } = require('sonner'); toast.success('Scene reference generated!') } catch {}
+        finishAgentRun(runId, { subtitle: `Scene ${sceneIdx + 1} reference ready` })
       }
     } catch (error: any) {
       console.error('[handleGenerateSceneReferenceImage] Error:', error)
       try { const { toast } = require('sonner'); toast.error(error.message || 'Failed to generate scene reference') } catch {}
+      failAgentRun(runId, error?.message || 'Failed to generate scene reference')
     } finally {
       setGeneratingSceneReferenceIndex(null)
-      overlayStore.hide()
     }
   }
 
@@ -10222,18 +10223,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     
     setGeneratingLocationId(location.id)
     
-    // Show animated overlay to prevent user disruption
     const locationLabel = location.location || 'Location'
-    overlayStore.show(
-      `Generating ${locationLabel} reference image...`,
-      25, // estimated ~25 seconds
-      'image-generation'
-    )
+    const runId = `location:${location.id}`
+    startAgentRun({
+      id: runId,
+      title: 'Location',
+      subtitle: 'you can keep editing',
+      itemLabel: locationLabel,
+    })
     
     try {
-      // Phase 1: Preparing prompt
-      overlayStore.setPhase(0)
-      overlayStore.setStatus(`Preparing prompt for ${locationLabel}...`)
+      patchAgentRun(runId, {
+        subtitle: `Preparing prompt for ${locationLabel}...`,
+        progressPct: 10,
+      })
       
       const response = await fetch('/api/vision/generate-location', {
         method: 'POST',
@@ -10253,10 +10256,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       })
       
-      // Phase 3: Rendering
-      overlayStore.setPhase(2)
-      overlayStore.setProgress(60)
-      overlayStore.setStatus('Rendering location image...')
+      patchAgentRun(runId, { subtitle: 'Rendering location image...', progressPct: 60 })
       
       if (!response.ok) {
         const error = await response.json()
@@ -10265,10 +10265,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       const result = await response.json()
       
-      // Phase 4: Enhancing
-      overlayStore.setPhase(3)
-      overlayStore.setProgress(85)
-      overlayStore.setStatus('Saving location reference...')
+      patchAgentRun(runId, { subtitle: 'Saving location reference...', progressPct: 85 })
       
       // Update location with the generated image
       const updatedLocations = locationReferences.map(ref =>
@@ -10286,19 +10283,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Persist
       await persistLocationReferences(updatedLocations)
       
-      // Phase 5: Complete
-      overlayStore.setProgress(100)
-      overlayStore.setStatus(`${locationLabel} image generated!`)
-      
-      // Brief pause so user sees success state
-      await new Promise(resolve => setTimeout(resolve, 800))
-      
+      finishAgentRun(runId, { subtitle: `${locationLabel} image generated` })
       try { const { toast } = require('sonner'); toast.success(`Generated image for ${locationLabel}`) } catch {}
     } catch (error: any) {
       console.error('[handleGenerateLocationImage] Error:', error)
       try { const { toast } = require('sonner'); toast.error(error.message || 'Failed to generate location image') } catch {}
+      failAgentRun(runId, error.message || 'Failed to generate location image')
     } finally {
-      overlayStore.hide()
       setGeneratingLocationId(null)
     }
   }
@@ -10342,15 +10333,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const locationLabel = version
       ? `${location.location} — ${version.name}`
       : location.location || 'Location'
-    overlayStore.show(
-      `Generating ${locationLabel} reference image...`,
-      25,
-      'image-generation'
-    )
+    const runId = `location:${version ? `${location.id}::${version.id}` : location.id}`
+    startAgentRun({
+      id: runId,
+      title: 'Location',
+      subtitle: 'you can keep editing',
+      itemLabel: locationLabel,
+    })
 
     try {
-      overlayStore.setPhase(0)
-      overlayStore.setStatus(`Preparing prompt for ${locationLabel}...`)
+      patchAgentRun(runId, {
+        subtitle: `Preparing prompt for ${locationLabel}...`,
+        progressPct: 10,
+      })
 
       const response = await fetch('/api/vision/generate-location', {
         method: 'POST',
@@ -10385,9 +10380,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       })
 
-      overlayStore.setPhase(2)
-      overlayStore.setProgress(60)
-      overlayStore.setStatus('Rendering location image...')
+      patchAgentRun(runId, { subtitle: 'Rendering location image...', progressPct: 60 })
 
       if (!response.ok) {
         const error = await response.json()
@@ -10396,9 +10389,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       const result = await response.json()
 
-      overlayStore.setPhase(3)
-      overlayStore.setProgress(85)
-      overlayStore.setStatus('Saving location reference...')
+      patchAgentRun(runId, { subtitle: 'Saving location reference...', progressPct: 85 })
 
       const updatedLocations = locationReferences.map((ref) => {
         if (ref.id !== location.id) return ref
@@ -10420,17 +10411,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       await persistLocationReferences(updatedLocations)
 
-      overlayStore.setProgress(100)
-      overlayStore.setStatus(`${locationLabel} image generated!`)
-
-      await new Promise(resolve => setTimeout(resolve, 800))
-
+      finishAgentRun(runId, { subtitle: `${locationLabel} image generated` })
       try { const { toast } = require('sonner'); toast.success(`Generated image for ${locationLabel}`) } catch {}
     } catch (error: any) {
       console.error('[handleGenerateLocationImageWithPrompt] Error:', error)
       try { const { toast } = require('sonner'); toast.error(error.message || 'Failed to generate location image') } catch {}
+      failAgentRun(runId, error.message || 'Failed to generate location image')
     } finally {
-      overlayStore.hide()
       setGeneratingLocationId(null)
     }
   }
@@ -10488,15 +10475,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     setGeneratingLocationId(`${location.id}::${version.id}`)
     const locationLabel = `${location.location} — ${version.name}`
-    overlayStore.show(
-      `Generating ${locationLabel} from base...`,
-      25,
-      'image-generation'
-    )
+    const runId = `location:${location.id}::${version.id}`
+    startAgentRun({
+      id: runId,
+      title: 'Location',
+      subtitle: 'you can keep editing',
+      itemLabel: locationLabel,
+    })
 
     try {
-      overlayStore.setPhase(0)
-      overlayStore.setStatus(`Preparing set-state version for ${locationLabel}...`)
+      patchAgentRun(runId, {
+        subtitle: `Preparing set-state version for ${locationLabel}...`,
+        progressPct: 10,
+      })
 
       const response = await fetch('/api/vision/generate-location', {
         method: 'POST',
@@ -10516,9 +10507,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }),
       })
 
-      overlayStore.setPhase(2)
-      overlayStore.setProgress(60)
-      overlayStore.setStatus('Rendering set-state version...')
+      patchAgentRun(runId, { subtitle: 'Rendering set-state version...', progressPct: 60 })
 
       if (!response.ok) {
         const error = await response.json()
@@ -10526,9 +10515,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       const result = await response.json()
-      overlayStore.setPhase(3)
-      overlayStore.setProgress(85)
-      overlayStore.setStatus('Saving location version...')
+      patchAgentRun(runId, { subtitle: 'Saving location version...', progressPct: 85 })
 
       const updatedLocations = locationReferences.map((ref) =>
         ref.id === location.id
@@ -10543,15 +10530,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       locationReferencesRef.current = updatedLocations
       await persistLocationReferences(updatedLocations)
 
-      overlayStore.setProgress(100)
-      overlayStore.setStatus(`${locationLabel} generated!`)
-      await new Promise((resolve) => setTimeout(resolve, 800))
+      finishAgentRun(runId, { subtitle: `${locationLabel} generated` })
       try { const { toast } = require('sonner'); toast.success(`Generated version for ${locationLabel}`) } catch {}
     } catch (error: any) {
       console.error('[handleGenerateLocationVersion] Error:', error)
       try { const { toast } = require('sonner'); toast.error(error.message || 'Failed to generate location version') } catch {}
+      failAgentRun(runId, error.message || 'Failed to generate location version')
     } finally {
-      overlayStore.hide()
       setGeneratingLocationId(null)
     }
   }
@@ -10749,10 +10734,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     
     console.log('[handleGenerateSceneImage] Scene description found, proceeding with generation...')
     
-    // Show global processing overlay for storyboard production
-    // Skip per-scene overlay when batch generating — SceneGallery provides its own batch overlay
+    const frameRunId = `gallery-frame:scene-${sceneIdx}`
     if (!batchGeneratingRef.current) {
-      overlayStore.show(`Storyboard Production - Scene ${sceneIdx + 1}`, 25, 'storyboard-production')
+      startAgentRun({
+        id: frameRunId,
+        title: 'Frame',
+        subtitle: 'you can keep editing',
+        itemLabel: `Scene ${sceneIdx + 1}`,
+      })
     }
     setGeneratingKeyframeSceneNumber(sceneIdx + 1)
     
@@ -10934,10 +10923,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const saved = await persistVisionScriptScenes(updatedScenes, 'handleGenerateSceneImage')
       if (!saved) {
         try { const { toast } = require('sonner'); toast.error('Scene image generated but failed to save') } catch {}
+        if (!batchGeneratingRef.current) {
+          finishAgentRun(frameRunId, {
+            tone: 'warning',
+            subtitle: `Scene ${sceneIdx + 1} generated but failed to save`,
+          })
+        }
         return
       }
       
       try { const { toast } = require('sonner'); toast.success('Scene image generated!') } catch {}
+      if (!batchGeneratingRef.current) {
+        finishAgentRun(frameRunId, { subtitle: `Scene ${sceneIdx + 1} — frame ready` })
+      }
     } catch (error) {
       console.error('Failed to generate scene image:', error)
       
@@ -10954,11 +10952,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       } else {
         try { const { toast } = require('sonner'); toast.error(`Failed to generate scene image: ${error.message}`, { duration: Infinity }) } catch {}
       }
-    } finally {
-      // Hide global processing overlay
       if (!batchGeneratingRef.current) {
-        overlayStore.hide()
+        failAgentRun(frameRunId, error instanceof Error ? error.message : 'Failed to generate scene image')
       }
+    } finally {
       setGeneratingKeyframeSceneNumber(null)
     }
   }
@@ -11320,8 +11317,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
 
+    const dialogueRunId = `gallery-frame:dialogue-${sceneIdx}-${dialogueIdx}`
     if (!batchGeneratingRef.current) {
-      overlayStore.show(`Dialogue frame — Scene ${sceneIdx + 1}, line ${dialogueIdx + 1}`, 25, 'storyboard-production')
+      startAgentRun({
+        id: dialogueRunId,
+        title: 'Frame',
+        subtitle: 'you can keep editing',
+        itemLabel: `Scene ${sceneIdx + 1}, line ${dialogueIdx + 1}`,
+      })
     }
     setGeneratingKeyframeSceneNumber(sceneIdx + 1)
 
@@ -11361,15 +11364,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const saved = await persistVisionScriptScenes(updatedScenes, 'handleGenerateDialogueFrameImage')
       if (!saved) {
         try { const { toast } = require('sonner'); toast.error('Dialogue frame generated but failed to save') } catch {}
+        if (!batchGeneratingRef.current) {
+          finishAgentRun(dialogueRunId, {
+            tone: 'warning',
+            subtitle: 'Dialogue frame generated but failed to save',
+          })
+        }
         return
       }
 
       try { const { toast } = require('sonner'); toast.success('Dialogue frame generated!') } catch {}
+      if (!batchGeneratingRef.current) {
+        finishAgentRun(dialogueRunId, { subtitle: `Scene ${sceneIdx + 1} — dialogue frame ready` })
+      }
     } catch (error: any) {
       console.error('Failed to generate dialogue frame:', error)
       try { const { toast } = require('sonner'); toast.error(error?.message || 'Failed to generate dialogue frame') } catch {}
+      if (!batchGeneratingRef.current) {
+        failAgentRun(dialogueRunId, error?.message || 'Failed to generate dialogue frame')
+      }
     } finally {
-      if (!batchGeneratingRef.current) overlayStore.hide()
       setGeneratingKeyframeSceneNumber(null)
     }
   }
@@ -11682,8 +11696,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
 
+    const customRunId = `gallery-frame:custom-${sceneIdx}-${frameId}`
     if (!batchGeneratingRef.current) {
-      overlayStore.show(`Custom frame — Scene ${sceneIdx + 1}`, 25, 'storyboard-production')
+      startAgentRun({
+        id: customRunId,
+        title: 'Frame',
+        subtitle: 'you can keep editing',
+        itemLabel: `Scene ${sceneIdx + 1} custom frame`,
+      })
     }
     setGeneratingKeyframeSceneNumber(sceneIdx + 1)
 
@@ -11730,11 +11750,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       await persistVisionScriptScenes(updatedScenes)
       try { const { toast } = require('sonner'); toast.success('Custom frame generated!') } catch {}
+      if (!batchGeneratingRef.current) {
+        finishAgentRun(customRunId, { subtitle: `Scene ${sceneIdx + 1} — custom frame ready` })
+      }
     } catch (error: any) {
       console.error('Failed to generate custom frame:', error)
       try { const { toast } = require('sonner'); toast.error(error?.message || 'Failed to generate custom frame') } catch {}
+      if (!batchGeneratingRef.current) {
+        failAgentRun(customRunId, error?.message || 'Failed to generate custom frame')
+      }
     } finally {
-      if (!batchGeneratingRef.current) overlayStore.hide()
       setGeneratingKeyframeSceneNumber(null)
     }
   }
@@ -12706,7 +12731,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
 
     setIsGeneratingAllImages(true)
-    setImageProgress({ scene: 0, total: script.script.scenes.length, status: 'starting' })
+    const batchRunId = 'gallery-batch-images'
+    const sceneCount = script.script.scenes.length
+    startAgentRun({
+      id: batchRunId,
+      title: 'Scene images',
+      subtitle: 'Generating scene stills — you can keep editing',
+      itemLabel: `${sceneCount} scenes`,
+      progressPct: 0,
+    })
+    let batchSettled = false
 
     try {
       const response = await fetch('/api/vision/generate-all-images', {
@@ -12742,30 +12776,37 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             const data = JSON.parse(line.slice(6))
 
             if (data.type === 'validation-complete') {
-              // Validation phase complete - show what will be processed
-              setImageProgress({
-                scene: 0,
-                total: data.totalScenes,
-                status: `Validated ${data.validScenes} scenes for generation`,
-                validScenesCount: data.validScenes,
-                skippedScenesCount: data.skippedScenes,
-                pending: data.validScenes
+              patchAgentRun(batchRunId, {
+                subtitle: `Validated ${data.validScenes} scenes for generation`,
+                progressPct: 4,
+                items: [
+                  {
+                    key: 'batch',
+                    label: `${data.validScenes} to generate` +
+                      (data.skippedScenes ? ` · ${data.skippedScenes} skipped` : ''),
+                    status: 'running',
+                  },
+                ],
               })
             } else if (data.type === 'progress') {
-              setImageProgress({
-                scene: data.scene,
-                total: data.total,
-                status: data.status,
-                sceneHeading: data.sceneHeading,
-                inProgress: data.inProgress,
-                pending: data.pending,
-                inProgressScenes: data.inProgressScenes,
-                failedCount: data.failedCount
+              const pct =
+                data.total > 0 ? Math.round((data.scene / data.total) * 100) : 0
+              const inFlight =
+                data.inProgressScenes && data.inProgressScenes.length > 0
+                  ? `Generating scenes ${data.inProgressScenes.join(', ')}`
+                  : data.sceneHeading || data.status || `Scene ${data.scene} of ${data.total}`
+              patchAgentRun(batchRunId, {
+                subtitle: `${inFlight} — you can keep editing`,
+                progressPct: Math.max(4, pct),
+                items: [
+                  {
+                    key: 'batch',
+                    label: data.status || `Scene ${data.scene} of ${data.total}`,
+                    status: 'running',
+                  },
+                ],
               })
             } else if (data.type === 'complete') {
-              setImageProgress(null)
-              
-              // Handle quota errors in completion
               if (data.quotaErrorDetected) {
                 const quotaErrorMsg = `⚠️ Google Cloud quota limit reached!\n\nGenerated ${data.generatedCount} of ${data.totalScenes} images before quota limit.\n\nFailed scenes: ${data.quotaErrorCount}\n\nSolutions:\n1. Wait and retry later\n2. Request quota increase from Google Cloud\n3. Use fewer images per batch\n\nDocumentation: https://cloud.google.com/vertex-ai/docs/quotas`
                 
@@ -12782,6 +12823,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     }
                   })
                 } catch {}
+                finishAgentRun(batchRunId, {
+                  tone: 'warning',
+                  subtitle: `Generated ${data.generatedCount} of ${data.totalScenes} before quota limit`,
+                })
               } else {
                 const skippedMsg = data.skipped?.length > 0
                   ? `\n\nSkipped ${data.skipped.length} scenes:\n${data.skipped.map((s: any) => `Scene ${s.scene}: ${s.reason}`).join('\n')}`
@@ -12793,7 +12838,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     duration: 8000
                   })
                 } catch {}
+                finishAgentRun(batchRunId, {
+                  subtitle: `Generated ${data.generatedCount} of ${data.totalScenes} scene images`,
+                })
               }
+              batchSettled = true
               
               // Reload project to get updated image URLs
               let retries = 3
@@ -12831,7 +12880,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               } else {
                 try { const { toast } = require('sonner'); toast.error(`Batch generation failed: ${data.error}`) } catch {}
               }
-              setImageProgress(null)
+              failAgentRun(batchRunId, data.error || 'Batch generation failed')
+              batchSettled = true
             }
           }
         }
@@ -12839,15 +12889,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     } catch (error: any) {
       console.error('Batch image generation error:', error)
       try { const { toast } = require('sonner'); toast.error('Failed to generate images') } catch {}
+      if (!batchSettled) {
+        failAgentRun(batchRunId, error?.message || 'Failed to generate images')
+      }
     } finally {
       setIsGeneratingAllImages(false)
-      setImageProgress(null)
     }
   }
 
   const handleExport = () => {
     console.log('Export Vision')
   }
+
 
   const handleShare = async () => {
     if (!project) {
@@ -13178,9 +13231,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   ) => {
     if (!script) return
 
-    overlayStore.show('Applying scene changes...', 18, 'scene-revision')
-    overlayStore.setStatus('Saving changes...')
-
     const updatedScenes = [...(script.script?.scenes || [])]
     const originalScene = updatedScenes[sceneIndex]
 
@@ -13309,9 +13359,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         void handleBackgroundDirectionGeneration(sceneIndex, persistedScene)
       }
 
-      overlayStore.setProgress(98)
-      overlayStore.setStatus('Updating scene…')
-
       setIsSceneEditorOpen(false)
       setEditingSceneIndex(null)
 
@@ -13326,8 +13373,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       await waitForUiPaint(250)
 
-      overlayStore.hide()
-
       try {
         const { toast } = require('sonner')
         if (allDeletedUrls.length > 0) {
@@ -13341,7 +13386,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // where stale data would be reloaded before DB write completed.
       // Local state update above is sufficient since saveScenesToDatabase was awaited.
     } catch (error) {
-      overlayStore.hide()
       console.error('[Vision] Failed to save scene changes:', error)
       try {
         const { toast } = require('sonner')
@@ -13416,12 +13460,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     // Get the CURRENT scene from state (has all audio references)
     const currentScene = script.script.scenes[sceneIndex]
-    
-    // Use the standard freeze screen overlay pattern
-    await execute(
-      async () => {
-        audioRegenInProgressRef.current = true
+    audioRegenInProgressRef.current = true
 
+    const runItems: AudioRunItem[] = []
+    const reportAudio = (finished: boolean, runError?: string) => {
+      handleAudioRunReport({
+        sceneIndex,
+        sceneLabel: `Scene ${sceneIndex + 1}`,
+        items: [...runItems],
+        finished,
+        ...(runError ? { runError } : {}),
+      })
+    }
+    const addAudioItem = (key: string, label: string, lane: AudioRunItem['lane']) => {
+      runItems.push({ key, label, lane, status: 'pending' })
+    }
+    const markAudioItem = (key: string, status: AudioRunItem['status'], error?: string) => {
+      const index = runItems.findIndex((item) => item.key === key)
+      if (index >= 0) {
+        runItems[index] = { ...runItems[index], status, ...(error ? { error } : {}) }
+      }
+      reportAudio(false)
+    }
+
+    try {
         // First, clear ALL existing audio from the scene
         // This removes all audio URLs from the scene object AND from dialogue items
         const { cleanedScene, deletedUrls } = clearAllSceneAudio(currentScene)
@@ -13489,11 +13551,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           toast.info(`No audio content to generate for Scene ${sceneIndex + 1}`)
           return
         }
+
+        for (const task of generationTasks) {
+          const key =
+            task.type === 'dialogue' ? `dialogue-${task.dialogueIndex}` : task.type
+          addAudioItem(key, task.label, task.type === 'music' ? 'music' : 'tts')
+        }
+        reportAudio(false)
         
         // Generate audio sequentially
         let successCount = 0
         for (let i = 0; i < generationTasks.length; i++) {
           const task = generationTasks[i]
+          const key =
+            task.type === 'dialogue' ? `dialogue-${task.dialogueIndex}` : task.type
+          markAudioItem(key, 'running')
           try {
             if (task.type === 'description' || task.type === 'narration' || task.type === 'dialogue') {
               // Pass cleanedScene directly to avoid stale state issues (language defaults to 'en')
@@ -13501,9 +13573,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             } else if (task.type === 'music') {
               await generateMusicForScene(sceneIndex, cleanedScene)
             }
+            markAudioItem(key, 'done')
             successCount++
           } catch (error) {
             console.error(`[Update Scene Audio] Failed to generate ${task.label}:`, error)
+            markAudioItem(
+              key,
+              'error',
+              error instanceof Error ? error.message : 'Failed'
+            )
           }
         }
         
@@ -13535,14 +13613,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // NOTE: Removed loadProject() - it was causing race condition where
         // state would be overwritten with stale data before all DB writes completed.
         // Each handleGenerateSceneAudio call updates state with functional updates.
-      },
-      {
-        title: `Updating Audio for Scene ${sceneIndex + 1}`,
-        estimatedDuration: 30, // Estimate 30 seconds for audio generation
-      }
-    ).finally(() => {
+        reportAudio(true)
+    } catch (error) {
+      console.error('[Update Scene Audio] Error:', error)
+      reportAudio(true, error instanceof Error ? error.message : 'Failed to regenerate audio')
+    } finally {
       audioRegenInProgressRef.current = false
-    })
+    }
   }
 
   /**
@@ -16489,55 +16566,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         />
       )}
 
-      {/* Image Generation Progress */}
-      {imageProgress && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-200 mb-4">
-              Generating Scene Images
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">
-                  {imageProgress.inProgressScenes && imageProgress.inProgressScenes.length > 0
-                    ? `Generating scenes ${imageProgress.inProgressScenes.join(', ')}`
-                    : `Scene ${imageProgress.scene} of ${imageProgress.total}`}
-                </span>
-                <span className="text-gray-400">
-                  {Math.round((imageProgress.scene / imageProgress.total) * 100)}%
-                </span>
-              </div>
-              <div className="w-full bg-gray-800 rounded-full h-2">
-                <div 
-                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${(imageProgress.scene / imageProgress.total) * 100}%` }}
-                />
-              </div>
-              {/* Show concurrent status */}
-              {(imageProgress.inProgress !== undefined || imageProgress.pending !== undefined) && (
-                <div className="flex gap-4 text-xs">
-                  {imageProgress.inProgress !== undefined && imageProgress.inProgress > 0 && (
-                    <span className="text-blue-400">⚡ {imageProgress.inProgress} in progress</span>
-                  )}
-                  {imageProgress.pending !== undefined && imageProgress.pending > 0 && (
-                    <span className="text-gray-500">⏳ {imageProgress.pending} pending</span>
-                  )}
-                  {imageProgress.failedCount !== undefined && imageProgress.failedCount > 0 && (
-                    <span className="text-yellow-400">⚠️ {imageProgress.failedCount} failed</span>
-                  )}
-                </div>
-              )}
-              {imageProgress.sceneHeading && (
-                <p className="text-xs text-gray-400 truncate">
-                  {imageProgress.sceneHeading}
-                </p>
-              )}
-              <p className="text-sm text-gray-400">Status: {imageProgress.status}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Share Modal */}
       {shareUrl && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -16859,6 +16887,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         end up with two cards on top of each other.
       */}
       <AgentDockStack>
+        <AgentRunStoreDocks />
         <BackgroundJobDock
           job={scriptAnalysisJob.job}
           title="Audience Resonance analysis"

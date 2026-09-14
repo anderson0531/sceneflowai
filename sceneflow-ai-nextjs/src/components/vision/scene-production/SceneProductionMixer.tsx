@@ -99,6 +99,12 @@ import {
 import { MixerTimeline } from './MixerTimeline'
 import { ProductionSectionHeader } from './ProductionSectionHeader'
 import { useOverlayStore } from '@/store/useOverlayStore'
+import {
+  failAgentRun,
+  finishAgentRun,
+  patchAgentRun,
+  startAgentRun,
+} from '@/store/useAgentRunStore'
 import type { AudioClipInfo } from './MixerTimeline'
 
 // =============================================================================
@@ -4284,12 +4290,15 @@ export function SceneProductionMixer({
     setRenderProgress(0)
     setRenderError(null)
     
-    // Show global processing overlay for server render
-    overlayStore.show(
-      'Cloud rendering in progress — please don\'t close this tab',
-      Math.max(60, Math.ceil(totalDuration * 1.5)),
-      'video-generation'
-    )
+    // Cloud render reports in the dock so other scenes stay reviewable.
+    // keepTabOpen: the fetch dies if this tab closes; it is not a GenerationJob.
+    startAgentRun({
+      id: 'scene-render:cloud',
+      title: 'Scene render',
+      subtitle: 'Cloud rendering',
+      itemLabel: `Scene ${sceneNumber}`,
+      keepTabOpen: true,
+    })
     
     try {
       let lipsyncedVideoBySegment: Record<string, string> = {}
@@ -4523,13 +4532,13 @@ export function SceneProductionMixer({
       console.error('[SceneProductionMixer] Render error:', err)
       setRenderError(err instanceof Error ? err.message : 'Unknown error')
       setRenderStatus('error')
-      overlayStore.hide()
+      failAgentRun('scene-render:cloud', err instanceof Error ? err.message : 'Render failed')
     }
   }, [
     renderedSegments, videoSegments, productionTarget.streamType, segmentAudioConfigs, audioTracks, playbackAudioUrls,
     dialogueClipConfigs,
     totalDuration, sceneId, projectId, sceneNumber, resolution, selectedLanguage,
-    textOverlays, displayOverlays, masterSegmentVolume, watermarkConfig, displayWatermarkConfig, overlayStore,
+    textOverlays, displayOverlays, masterSegmentVolume, watermarkConfig, displayWatermarkConfig,
     preserveBackgroundStem, includeSpeechStem, klingLipsyncEnabled, resolvedDialogueClips,
     measuredSegmentDurations, getPlaybackSegmentDuration, schedulePersistMixerSettings
   ])
@@ -4599,14 +4608,16 @@ export function SceneProductionMixer({
           // GCS signed URLs expire after 7 days; Vercel Blob URLs are permanent
           let persistentUrl = data.downloadUrl
           if (data.downloadUrl?.includes('storage.googleapis.com')) {
-            overlayStore.setStatus('Uploading to permanent storage...')
+            patchAgentRun('scene-render:cloud', {
+              subtitle: 'Uploading to permanent storage — keep this tab open',
+            })
             persistentUrl = await reuploadToVercelBlob(data.downloadUrl, 'ServerRender')
           }
           
           setRenderStatus('complete')
           setRenderProgress(100)
           setLastRenderedUrl(persistentUrl)
-          overlayStore.hide()
+          finishAgentRun('scene-render:cloud', { subtitle: 'Cloud render ready' })
           
           // Cache the video to IndexedDB for offline access
           try {
@@ -4624,13 +4635,13 @@ export function SceneProductionMixer({
         }
         
         if (data.status === 'FAILED') {
-          overlayStore.hide()
+          failAgentRun('scene-render:cloud', data.error || 'Render job failed')
           throw new Error(data.error || 'Render job failed')
         }
         
         const currentProgress = 40 + (data.progress || 0) * 0.6
         setRenderProgress(currentProgress)
-        overlayStore.setProgress(currentProgress)
+        patchAgentRun('scene-render:cloud', { progressPct: currentProgress })
       } catch (err) {
         console.warn('[SceneProductionMixer] Poll error:', err)
       }
@@ -5024,12 +5035,14 @@ export function SceneProductionMixer({
     setRenderProgress(0)
     setRenderError(null)
     
-    // Show global processing overlay for headless render
-    overlayStore.show(
-      'Pro Cloud rendering in progress — this may take a few minutes',
-      Math.max(120, Math.ceil(totalDuration * 3)),
-      'video-generation'
-    )
+    // Headless render reports in the dock; keep this tab open while it polls.
+    startAgentRun({
+      id: 'scene-render:headless',
+      title: 'Scene render',
+      subtitle: 'Pro Cloud rendering',
+      itemLabel: `Scene ${sceneNumber}`,
+      keepTabOpen: true,
+    })
     
     try {
       // Build segments for headless render
@@ -5225,12 +5238,12 @@ export function SceneProductionMixer({
       console.error('[SceneProductionMixer] Headless render error:', err)
       setRenderError(err instanceof Error ? err.message : 'Headless rendering failed')
       setRenderStatus('error')
-      overlayStore.hide()
+      failAgentRun('scene-render:headless', err instanceof Error ? err.message : 'Headless rendering failed')
     }
   }, [
     videoSegments, segmentAudioConfigs, audioTracks, playbackAudioUrls,
     totalDuration, resolution, textOverlays, masterSegmentVolume,
-    dialogueClipConfigs, watermarkConfig, overlayStore,
+    dialogueClipConfigs, watermarkConfig,
     preserveBackgroundStem, includeSpeechStem, productionTarget.language,
     measuredSegmentDurations, getPlaybackSegmentDuration, schedulePersistMixerSettings,
   ])
@@ -5257,14 +5270,16 @@ export function SceneProductionMixer({
           // Re-upload GCS signed URL to Vercel Blob for persistent storage
           let persistentUrl = outputUrl
           if (outputUrl?.includes('storage.googleapis.com')) {
-            overlayStore.setStatus('Uploading to permanent storage...')
+            patchAgentRun('scene-render:headless', {
+              subtitle: 'Uploading to permanent storage — keep this tab open',
+            })
             persistentUrl = await reuploadToVercelBlob(outputUrl, 'HeadlessRender')
           }
           
           setRenderStatus('complete')
           setRenderProgress(100)
           setLastRenderedUrl(persistentUrl)
-          overlayStore.hide()
+          finishAgentRun('scene-render:headless', { subtitle: 'Pro Cloud render ready' })
           
           // Cache the video to IndexedDB for offline access
           try {
@@ -5282,14 +5297,14 @@ export function SceneProductionMixer({
         }
         
         if (data.status === 'error' || data.status === 'failed') {
-          overlayStore.hide()
+          failAgentRun('scene-render:headless', data.error || 'Headless render job failed')
           throw new Error(data.error || 'Headless render job failed')
         }
         
         // Still processing
         const headlessProgress = 30 + Math.min(attempts, 60)
         setRenderProgress(headlessProgress)
-        overlayStore.setProgress(headlessProgress)
+        patchAgentRun('scene-render:headless', { progressPct: headlessProgress })
       } catch (err) {
         console.warn('[HeadlessRender] Poll error:', err)
       }
@@ -5301,7 +5316,6 @@ export function SceneProductionMixer({
     selectedLanguage,
     totalDuration,
     productionTarget.streamType,
-    overlayStore,
     projectId,
     sceneId,
   ])

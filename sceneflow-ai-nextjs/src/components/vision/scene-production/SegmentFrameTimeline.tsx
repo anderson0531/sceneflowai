@@ -29,7 +29,7 @@ import type {
   AnchorStatus 
 } from './types'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
-import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
+import { runWithAgentDock, startAgentRun, setAgentRunItem, finishAgentRun, failAgentRun } from '@/store/useAgentRunStore'
 
 // ============================================================================
 // Types
@@ -244,8 +244,6 @@ export function SegmentFrameTimeline({
     return prevSegment?.endFrameUrl || prevSegment?.references?.endFrameUrl || null
   }, [segments])
 
-  const { execute: executeWithOverlay } = useProcessWithOverlay()
-
   // Quick generate bypassing the dialog
   const quickGenerateFrame = useCallback(async (
     segment: SceneSegment,
@@ -253,21 +251,22 @@ export function SegmentFrameTimeline({
     frameType: 'start' | 'end' | 'both'
   ) => {
     const frameLabel = frameType === 'both' ? 'start + end frames' : `${frameType} frame`
-    await executeWithOverlay(
+    await runWithAgentDock(
+      {
+        id: `keyframe:${segment.segmentId}:${frameType}`,
+        title: 'Frame Agent',
+        subtitle: 'you can keep editing',
+        itemLabel: frameLabel,
+      },
       async () => {
         await onGenerateFrames(segment.segmentId, frameType, {
           usePreviousEndFrame: false, // Default to Camera Cut
           previousEndFrameUrl: frameType === 'start' && segmentIndex > 0 ? getPreviousEndFrame(segmentIndex) || undefined : undefined,
           sceneDirection,
         })
-      },
-      {
-        message: `Generating ${frameLabel}...`,
-        estimatedDuration: frameType === 'both' ? 45 : 25,
-        operationType: 'keyframe-generation'
       }
     )
-  }, [onGenerateFrames, executeWithOverlay, sceneDirection, getPreviousEndFrame])
+  }, [onGenerateFrames, sceneDirection, getPreviousEndFrame])
   
   const handleExpress = useCallback(async () => {
     // Process ALL segments sequentially for Express keyframe generation
@@ -276,12 +275,23 @@ export function SegmentFrameTimeline({
     // Using Promise.all across concurrent chains breaks this consistency since the previous
     // segment's end frame wouldn't be ready when the next segment starts.
 
-    await executeWithOverlay(
-      async () => {
+    const runId = 'keyframe-express'
+    startAgentRun({
+      id: runId,
+      title: 'Frame Agent',
+      subtitle: 'Composing keyframes — you can keep editing',
+      items: segments.map((segment, i) => ({
+        key: segment.segmentId,
+        label: `Beat ${i + 1}`,
+        status: 'pending',
+      })),
+    })
+    try {
         let lastEndFrameUrl: string | undefined = undefined
 
         for (let i = 0; i < segments.length; i++) {
           const segment = segments[i]
+          setAgentRunItem(runId, segment.segmentId, { status: 'running' })
           
           // If it's a continuation within the scene (not the first segment and not a CUT)
           const isContinuation = i > 0 && segment.transitionType !== 'CUT'
@@ -295,22 +305,31 @@ export function SegmentFrameTimeline({
           if (result && result.endFrameUrl) {
             lastEndFrameUrl = result.endFrameUrl
           }
+          setAgentRunItem(runId, segment.segmentId, { status: 'done' })
         }
-      },
-      {
-        message: `Frame Agent is composing keyframes…`,
-        estimatedDuration: segments.length * 35,
-        operationType: 'keyframe-generation'
-      }
-    )
-  }, [segments, onGenerateFrames, executeWithOverlay, sceneDirection])
+        finishAgentRun(runId, { subtitle: 'Keyframes ready' })
+    } catch (error) {
+      failAgentRun(runId, error instanceof Error ? error.message : 'Keyframe generation failed')
+      throw error
+    }
+  }, [segments, onGenerateFrames, sceneDirection])
 
   const handleExpressEndFrames = useCallback(async () => {
     const targets = segmentsNeedingEnd
     if (targets.length === 0) return
 
-    await executeWithOverlay(
-      async () => {
+    const runId = 'keyframe-express-end'
+    startAgentRun({
+      id: runId,
+      title: 'Frame Agent',
+      subtitle: `Composing ${targets.length} end frames — you can keep editing`,
+      items: targets.map((segment) => ({
+        key: segment.segmentId,
+        label: segment.segmentId,
+        status: 'pending',
+      })),
+    })
+    try {
         let lastEndFrameUrl: string | undefined = undefined
 
         for (let i = 0; i < segments.length; i++) {
@@ -318,6 +337,7 @@ export function SegmentFrameTimeline({
           if (!hasStartFrame(segment) || hasEndFrame(segment)) continue
 
           const isContinuation = i > 0 && segment.transitionType !== 'CUT'
+          setAgentRunItem(runId, segment.segmentId, { status: 'running' })
 
           const result = await onGenerateFrames(segment.segmentId, 'end', {
             usePreviousEndFrame: false,
@@ -331,15 +351,14 @@ export function SegmentFrameTimeline({
             lastEndFrameUrl =
               segment.endFrameUrl || segment.references?.endFrameUrl || undefined
           }
+          setAgentRunItem(runId, segment.segmentId, { status: 'done' })
         }
-      },
-      {
-        message: `Frame Agent is composing end frames (${targets.length})…`,
-        estimatedDuration: targets.length * 25,
-        operationType: 'keyframe-generation',
-      }
-    )
-  }, [segments, segmentsNeedingEnd, onGenerateFrames, executeWithOverlay, sceneDirection])
+        finishAgentRun(runId, { subtitle: 'End frames ready' })
+    } catch (error) {
+      failAgentRun(runId, error instanceof Error ? error.message : 'End frame generation failed')
+      throw error
+    }
+  }, [segments, segmentsNeedingEnd, onGenerateFrames, sceneDirection])
 
   // Handle delete segment
   const handleDeleteClick = useCallback((segmentId: string, index: number) => {
