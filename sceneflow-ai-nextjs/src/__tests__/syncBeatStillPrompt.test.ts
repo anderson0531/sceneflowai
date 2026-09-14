@@ -140,3 +140,37 @@ describe('syncBeatStillPromptToDirection', () => {
     expect(syncBeatStillPromptToDirection(next)).toBe(next)
   })
 })
+
+describe('isBeatFrameStale', () => {
+  it('does not treat missing content keys as stale', () => {
+    const direction = {
+      shotType: 'Close-Up',
+      frozenMoment: 'Elara stares at the core',
+    }
+    expect(
+      isBeatFrameStale(
+        actionBeat({
+          beatDirection: direction,
+          storyboardImagePromptDirectionKey: beatStillDirectionFingerprint(direction),
+          storyboardImageDirectionKey: beatStillDirectionFingerprint(direction),
+          storyboardImageContentKey: undefined,
+        })
+      )
+    ).toBe(false)
+  })
+
+  it('is stale when stamped beat prose moved after the last gen', () => {
+    const direction = {
+      shotType: 'Medium Shot',
+      frozenMoment: 'Elara raises the journal',
+    }
+    const beat = actionBeat({
+      beatDirection: direction,
+      storyboardImagePromptDirectionKey: beatStillDirectionFingerprint(direction),
+      storyboardImageDirectionKey: beatStillDirectionFingerprint(direction),
+      storyboardImageContentKey: 'action|Elara raises the journal.',
+      actionDescription: 'Elara slams the journal shut.',
+    })
+    expect(isBeatFrameStale(beat)).toBe(true)
+  })
+})

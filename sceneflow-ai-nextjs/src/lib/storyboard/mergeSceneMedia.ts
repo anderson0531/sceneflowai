@@ -27,11 +27,12 @@ const BEAT_STORYBOARD_URL_KEYS = [
  */
 const BEAT_STORYBOARD_PROMPT_KEYS = [
   'storyboardEndImagePrompt',
-  'storyboardImageDirectionKey',
 ] as const
 
 const STILL_PROMPT_KEY = 'storyboardImagePrompt'
 const STILL_PROMPT_DIRECTION_KEY = 'storyboardImagePromptDirectionKey'
+const STILL_IMAGE_DIRECTION_KEY = 'storyboardImageDirectionKey'
+const STILL_IMAGE_CONTENT_KEY = 'storyboardImageContentKey'
 
 const SCENE_IMAGE_URL_KEYS = [
   'imageUrl',
@@ -180,6 +181,25 @@ function pickStillPromptPair(
   return incoming
 }
 
+function pickBeatImageStamp(
+  incomingBeat: Record<string, unknown>,
+  canonBeat: Record<string, unknown>,
+  winnerUrl: string | undefined
+): { directionKey?: unknown; contentKey?: unknown } {
+  const incUrl = isValidStoryboardMediaUrl(incomingBeat.storyboardImageUrl)
+    ? String(incomingBeat.storyboardImageUrl).trim()
+    : undefined
+  const canUrl = isValidStoryboardMediaUrl(canonBeat.storyboardImageUrl)
+    ? String(canonBeat.storyboardImageUrl).trim()
+    : undefined
+  const source =
+    winnerUrl && canUrl === winnerUrl && incUrl !== winnerUrl ? canonBeat : incomingBeat
+  return {
+    directionKey: source[STILL_IMAGE_DIRECTION_KEY],
+    contentKey: source[STILL_IMAGE_CONTENT_KEY],
+  }
+}
+
 function mergeBeatMedia(canonBeat: any, incomingBeat: any): any {
   if (!incomingBeat) return canonBeat
   if (!canonBeat) return incomingBeat
@@ -204,6 +224,21 @@ function mergeBeatMedia(canonBeat: any, incomingBeat: any): any {
     merged[STILL_PROMPT_DIRECTION_KEY] = still.directionKey
   } else {
     delete merged[STILL_PROMPT_DIRECTION_KEY]
+  }
+
+  const winnerUrl = isValidStoryboardMediaUrl(merged.storyboardImageUrl)
+    ? String(merged.storyboardImageUrl).trim()
+    : undefined
+  const imageStamp = pickBeatImageStamp(incomingBeat, canonBeat, winnerUrl)
+  if (imageStamp.directionKey !== undefined) {
+    merged[STILL_IMAGE_DIRECTION_KEY] = imageStamp.directionKey
+  } else {
+    delete merged[STILL_IMAGE_DIRECTION_KEY]
+  }
+  if (imageStamp.contentKey !== undefined) {
+    merged[STILL_IMAGE_CONTENT_KEY] = imageStamp.contentKey
+  } else {
+    delete merged[STILL_IMAGE_CONTENT_KEY]
   }
 
   return merged

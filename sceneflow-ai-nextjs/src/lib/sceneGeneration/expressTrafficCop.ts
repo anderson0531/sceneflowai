@@ -12,6 +12,10 @@
 
 import { isRetryableError } from '../utils/retry'
 import { sleep } from '../utils/retry'
+import {
+  isExpressFailFastRateLimitError,
+  isExpressImageRateLimitError,
+} from './expressImageErrors'
 
 export type ExpressLane = 'text' | 'image' | 'audio'
 
@@ -193,7 +197,12 @@ export class ExpressTrafficCop {
     try {
       return await fn()
     } catch (err) {
-      if (isRetryableError(err)) {
+      const failFastImage429 =
+        isExpressFailFastRateLimitError(err) ||
+        (lane === 'image' && isExpressImageRateLimitError(err))
+      if (failFastImage429) {
+        this.reportRateLimit(lane, { cooldown: false, countTowardRegulator: false })
+      } else if (isRetryableError(err)) {
         this.reportRateLimit(lane)
       }
       throw err
@@ -202,19 +211,35 @@ export class ExpressTrafficCop {
     }
   }
 
-  reportRateLimit(lane: ExpressLane): void {
-    this.rateLimitCount += 1
-    this.lastRateLimitAt = Date.now()
+  reportRateLimit(
+    lane: ExpressLane,
+    options?: { cooldown?: boolean; countTowardRegulator?: boolean }
+  ): void {
+    const applyCooldown = options?.cooldown !== false
+    const countTowardRegulator = options?.countTowardRegulator !== false
+    if (countTowardRegulator) {
+      this.rateLimitCount += 1
+      this.lastRateLimitAt = Date.now()
+    }
 
     const state = this.lanes[lane]
     state.max = Math.max(1, Math.floor(state.max / 2))
-    state.cooldownUntil = Date.now() + (this.regulated ? this.regulatedCooldownMs : this.cooldownMs)
+    const cooldownMs = this.regulated ? this.regulatedCooldownMs : this.cooldownMs
+    if (applyCooldown) {
+      state.cooldownUntil = Date.now() + cooldownMs
+    }
     console.warn(
-      `[ExpressTrafficCop] ${lane} throttled to max=${state.max}, cooldown ${this.regulated ? this.regulatedCooldownMs : this.cooldownMs}ms (429 count=${this.rateLimitCount})`
+      `[ExpressTrafficCop] ${lane} throttled to max=${state.max}${
+        applyCooldown ? `, cooldown ${cooldownMs}ms` : ', no cooldown (fail-fast)'
+      } (429 count=${this.rateLimitCount})`
     )
-    this.onThrottle?.(lane, state.max, this.regulated ? this.regulatedCooldownMs : this.cooldownMs)
+    this.onThrottle?.(lane, state.max, applyCooldown ? cooldownMs : 0)
 
-    if (!this.regulated && this.rateLimitCount >= this.rateLimitThreshold) {
+    if (
+      countTowardRegulator &&
+      !this.regulated &&
+      this.rateLimitCount >= this.rateLimitThreshold
+    ) {
       this.engageRegulator('significant 429 burst')
     }
   }

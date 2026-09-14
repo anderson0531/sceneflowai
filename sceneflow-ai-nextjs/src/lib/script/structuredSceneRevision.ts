@@ -38,6 +38,7 @@ const BEAT_MEDIA_KEYS = [
   'storyboardImagePrompt',
   'storyboardImagePromptDirectionKey',
   'storyboardImageDirectionKey',
+  'storyboardImageContentKey',
   'storyboardImageTier',
   'storyboardEndImageUrl',
   'storyboardEndImageGcsPath',

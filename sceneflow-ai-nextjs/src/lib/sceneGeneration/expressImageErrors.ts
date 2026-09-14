@@ -102,13 +102,25 @@ export function isExpressImageRateLimitError(err: unknown): boolean {
   )
 }
 
+function expressErrorText(err: unknown): string {
+  const parts: string[] = [String((err as { message?: unknown })?.message || err || '')]
+  if (err && typeof err === 'object') {
+    const payload = (err as { payload?: { googleError?: unknown; error?: unknown } }).payload
+    if (payload?.googleError) parts.push(String(payload.googleError))
+    if (payload?.error) parts.push(String(payload.error))
+  }
+  return parts.join(' ').toLowerCase()
+}
+
+const IDENTITY_REF_RATE_LIMIT_MARKER = 'identity-ref rate limit exhausted'
+const RATE_LIMIT_FAILED_FAST_MARKER = 'rate limit failed fast'
+
 /**
  * Vertex already exhausted its identity-ref 429 ladder — outer scene retries must not
  * re-burst another full inner attempt×3 cycle.
  */
 export function isIdentityRefRateLimitExhausted(err: unknown): boolean {
-  const msg = String((err as { message?: unknown })?.message || err || '').toLowerCase()
-  return msg.includes('identity-ref rate limit exhausted')
+  return expressErrorText(err).includes(IDENTITY_REF_RATE_LIMIT_MARKER)
 }
 
 /**
@@ -116,14 +128,27 @@ export function isIdentityRefRateLimitExhausted(err: unknown): boolean {
  * Identity-ref 429 exhaustion already ran the inner ladder — do not re-burst.
  */
 export function isIdentityRefLadderExhausted(err: unknown): boolean {
-  const msg = String((err as { message?: unknown })?.message || err || '').toLowerCase()
-  if (!msg.includes('identity-ref rate limit exhausted')) return false
+  const msg = expressErrorText(err)
+  if (!msg.includes(IDENTITY_REF_RATE_LIMIT_MARKER)) return false
   return /after\s+3\s+(retries|attempts?)/.test(msg)
 }
 
+/**
+ * Express fail-fast 429: one Vertex attempt, then stamp. Do not sleep or re-queue.
+ */
+export function isExpressFailFastRateLimitError(err: unknown): boolean {
+  const msg = expressErrorText(err)
+  if (msg.includes(RATE_LIMIT_FAILED_FAST_MARKER)) return true
+  if (msg.includes('google cloud quota limit reached')) return true
+  if (msg.includes(IDENTITY_REF_RATE_LIMIT_MARKER) && /after\s+1\s+attempt/.test(msg)) {
+    return true
+  }
+  return false
+}
+
 export function isExpressBeatPoolRetryable(err: unknown): boolean {
-  // Fail-fast 1-attempt 429s are retryable. Only a finished 3-retry ladder is fatal.
   if (isIdentityRefLadderExhausted(err)) return false
+  if (isExpressFailFastRateLimitError(err)) return false
   return isTransientExpressImageError(err)
 }
 

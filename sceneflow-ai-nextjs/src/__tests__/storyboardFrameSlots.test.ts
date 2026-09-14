@@ -275,4 +275,25 @@ describe('storyboard frame slots', () => {
     ).toBe('custom-2-fr_1')
     expect(storyboardGeneratingSlotKey(2, { kind: 'action' })).toBe('2-establishing')
   })
+
+  it('does not suffix start-frame labels with (Start)', () => {
+    const scene = {
+      beats: [
+        {
+          beatId: 'bt_alex',
+          sequenceIndex: 0,
+          kind: 'dialogue',
+          character: 'Alex',
+          line: 'Something is wrong.',
+        },
+      ],
+    }
+    const startSlots = enumerateStoryboardFrameSlots(scene, undefined, { startFramesOnly: true })
+    expect(startSlots[0]?.label).toBe('Alex')
+    expect(startSlots[0]?.label).not.toContain('(Start)')
+
+    const withEnd = enumerateStoryboardFrameSlots(scene, undefined, { startFramesOnly: false })
+    const endSlot = withEnd.find((s) => s.frameRole === 'end')
+    expect(endSlot?.label).toBe('Alex (End)')
+  })
 })

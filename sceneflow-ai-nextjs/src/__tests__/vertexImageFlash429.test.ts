@@ -207,7 +207,7 @@ describe('failFastOnRateLimit surrenders the lane on the first 429', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
-  it('marks identity-ref fail-fast 429s as pool-retryable', async () => {
+  it('marks identity-ref fail-fast 429s as not pool-retryable', async () => {
     const fetchMock = vi.fn().mockResolvedValueOnce(rateLimitResponse())
     vi.stubGlobal('fetch', fetchMock)
 
@@ -224,6 +224,6 @@ describe('failFastOnRateLimit surrenders the lane on the first 429', () => {
     }
 
     expect(String((thrown as Error).message)).toContain(IDENTITY_REF_RATE_LIMIT_EXHAUSTED)
-    expect(isExpressBeatPoolRetryable(thrown)).toBe(true)
+    expect(isExpressBeatPoolRetryable(thrown)).toBe(false)
   })
 })
