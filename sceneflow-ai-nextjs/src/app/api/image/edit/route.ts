@@ -98,7 +98,9 @@ export async function POST(request: NextRequest) {
 
     const totalRefs = 1 + referenceImages.length
     const modelTier = totalRefs > 3 ? 'designer' : requestedTier
-    const identityRef = referenceImages.find((r) => r.imageUrl !== sourceImage)?.imageUrl
+    const extraRefs = referenceImages.filter(
+      (r) => r.imageUrl && r.imageUrl !== sourceImage
+    )
 
     console.log(`[Image Edit API] Vertex Gemini edit: "${instruction.substring(0, 50)}..."`)
 
@@ -109,7 +111,7 @@ export async function POST(request: NextRequest) {
     })
     const modelInstruction = await englishForModel(instruction.trim(), storyLocale, properNouns)
 
-    const dualRefInstruction = buildDualReferenceInstruction(referenceImages)
+    const dualRefInstruction = buildDualReferenceInstruction(extraRefs)
     const fullInstruction = dualRefInstruction
       ? `${dualRefInstruction}\n\n${modelInstruction}`
       : modelInstruction
@@ -117,7 +119,7 @@ export async function POST(request: NextRequest) {
     const result = await editImageWithGeminiStudio({
       sourceImage,
       instruction: fullInstruction,
-      referenceImage: identityRef,
+      referenceImages: extraRefs.map((r) => ({ imageUrl: r.imageUrl, name: r.name })),
       aspectRatio,
       imageSize,
       modelTier,

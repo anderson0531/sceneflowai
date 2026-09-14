@@ -40,7 +40,15 @@ import {
 } from '@/lib/storyboard/preVisSync'
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import { countDraftStoryboardFrames } from '@/lib/storyboard/storyboardQuality'
-import { resolveFrameEditCharacterReferences } from '@/lib/vision/resolveFrameEditCharacterReferences'
+import {
+  frameEditReferenceKeys,
+  listAllFrameEditCharacterReferences,
+  listFrameEditLocationStills,
+  resolveDefaultFrameEditLocationStillIds,
+  resolveDefaultFrameEditObjectIds,
+  resolveFrameEditCharacterReferences,
+} from '@/lib/vision/resolveFrameEditCharacterReferences'
+import type { LocationReference } from '@/types/visionReferences'
 import {
   formatReferenceReadinessMessage,
   resolveSceneReferenceReadiness,
@@ -65,6 +73,7 @@ export interface SceneStoryboardFrameViewerProps {
   prompt?: string
   characters?: any[]
   objectReferences?: Array<{ id: string; name: string; imageUrl: string; description?: string }>
+  locationReferences?: LocationReference[]
   /**
    * What this scene needs drawn, resolved by the caller so the References tab
    * and the frame gate cannot disagree. Undrawn rows are named in the Express
@@ -341,6 +350,7 @@ export function SceneStoryboardFrameViewer({
   prompt = '',
   characters = [],
   objectReferences = [],
+  locationReferences = [],
   sceneRequirements = [],
   selectedLanguage = 'en',
   narrationVoice,
@@ -450,9 +460,56 @@ export function SceneStoryboardFrameViewer({
         sceneIndex,
         characters: characters ?? [],
         slot: previewSlot,
+        locationReferences,
         objectReferences: objectReferences as never,
       }),
-    [editingFrame, scene, sceneIndex, characters, previewSlot, objectReferences]
+    [editingFrame, scene, sceneIndex, characters, previewSlot, locationReferences, objectReferences]
+  )
+
+  const allEditCharacterReferences = useMemo(
+    () =>
+      listAllFrameEditCharacterReferences({
+        scene,
+        sceneIndex,
+        characters: characters ?? [],
+      }),
+    [scene, sceneIndex, characters]
+  )
+
+  const editLocationStills = useMemo(
+    () => listFrameEditLocationStills(locationReferences),
+    [locationReferences]
+  )
+
+  const defaultEditCharRefKeys = useMemo(
+    () => frameEditReferenceKeys(editCharacterReferences),
+    [editCharacterReferences]
+  )
+
+  const defaultEditLocationIds = useMemo(
+    () =>
+      resolveDefaultFrameEditLocationStillIds({
+        editingFrame,
+        scene,
+        sceneIndex,
+        locationReferences,
+        slot: previewSlot,
+      }),
+    [editingFrame, scene, sceneIndex, locationReferences, previewSlot]
+  )
+
+  const defaultEditPropIds = useMemo(
+    () =>
+      resolveDefaultFrameEditObjectIds({
+        editingFrame,
+        scene,
+        sceneIndex,
+        objectReferences,
+        locationReferences,
+        characters: characters ?? [],
+        slot: previewSlot,
+      }),
+    [editingFrame, scene, sceneIndex, objectReferences, locationReferences, characters, previewSlot]
   )
 
   const sceneExpressPreflight = useMemo(
@@ -1080,7 +1137,15 @@ export function SceneStoryboardFrameViewer({
         imageType="scene"
         aspectRatio="16:9"
         objectReferences={objectReferences}
-        characterReferences={editCharacterReferences}
+        characterReferences={
+          allEditCharacterReferences.length > 0
+            ? allEditCharacterReferences
+            : editCharacterReferences
+        }
+        defaultSelectedCharRefKeys={defaultEditCharRefKeys}
+        locationStills={editLocationStills}
+        defaultSelectedLocationIds={defaultEditLocationIds}
+        defaultSelectedPropIds={defaultEditPropIds}
         onSave={(newImageUrl) => {
           if (!editingFrame) return
           if (editingFrame.kind === 'establishing' && onSaveEditedScene) {

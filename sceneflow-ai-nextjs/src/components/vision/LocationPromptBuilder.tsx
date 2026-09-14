@@ -8,8 +8,11 @@ import { Button } from '@/components/ui/Button'
 import { Copy, Check, Info, RotateCcw } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { artStylePresets } from '@/constants/artStylePresets'
-import { LocationReference } from '@/types/visionReferences'
-import { LOCATION_TURNAROUND_GENERATION_INSTRUCTION } from '@/lib/vision/locationReferencePrompts'
+import { LocationReference, LocationVersion } from '@/types/visionReferences'
+import {
+  LOCATION_TURNAROUND_GENERATION_INSTRUCTION,
+  buildLocationVersionPrompt,
+} from '@/lib/vision/locationReferencePrompts'
 
 export interface LocationPromptPayload {
   location: LocationReference
@@ -20,12 +23,17 @@ export interface LocationPromptPayload {
   lighting?: string
   additionalDetails?: string
   rawMode?: boolean
+  versionId?: string
 }
 
 interface LocationPromptBuilderProps {
   open: boolean
   onClose: () => void
   location?: LocationReference | null
+  /** Nested set-state version — seeds a structural-only prompt and writes back to that version. */
+  version?: LocationVersion | null
+  /** Object-library / scene Key Props names to strip from version seeds. */
+  catalogPropNames?: string[]
   isGenerating?: boolean
   onGenerateImage: (payload: LocationPromptPayload) => void
   /** Screenplay context for richer prompt generation */
@@ -41,6 +49,8 @@ export function LocationPromptBuilder({
   open,
   onClose,
   location,
+  version = null,
+  catalogPropNames,
   isGenerating = false,
   onGenerateImage,
   screenplayContext
@@ -67,6 +77,21 @@ export function LocationPromptBuilder({
     if (!open) return
     if (!location) {
       setBasePrompt('')
+      return
+    }
+
+    if (version) {
+      const constructed = buildLocationVersionPrompt({
+        locationName: location.location,
+        stateNotes: version.stateNotes,
+        intExt: location.intExt,
+        timeOfDay: location.timeOfDay,
+        description: location.description,
+        catalogPropNames,
+      })
+      setShotType('extreme-wide')
+      setBasePrompt(constructed)
+      if (!hasUserEditedAdvanced) setAdvancedPrompt(constructed)
       return
     }
 
@@ -128,7 +153,7 @@ export function LocationPromptBuilder({
     const constructed = parts.filter(Boolean).join('. ')
     setBasePrompt(constructed)
     if (!hasUserEditedAdvanced) setAdvancedPrompt(constructed)
-  }, [open, location, hasUserEditedAdvanced, screenplayContext])
+  }, [open, location, version, catalogPropNames, hasUserEditedAdvanced, screenplayContext])
 
   // Cleanup on close
   useEffect(() => {
@@ -216,7 +241,8 @@ export function LocationPromptBuilder({
       cameraAngle,
       lighting,
       additionalDetails,
-      rawMode: mode === 'advanced'
+      rawMode: mode === 'advanced',
+      versionId: version?.id,
     })
   }
 
@@ -251,7 +277,7 @@ export function LocationPromptBuilder({
       setAdvancedPrompt(basePrompt)
       setHasUserEditedAdvanced(false)
     } else {
-      setShotType('wide-shot')
+      setShotType('extreme-wide')
       setCameraAngle('eye-level')
       setLighting('natural')
       setArtStyle('')
@@ -260,15 +286,30 @@ export function LocationPromptBuilder({
   }
 
   const locationLabel = location?.location || 'Location'
+  const titleLabel = version ? `${locationLabel} — ${version.name}` : locationLabel
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl h-[85vh] bg-gray-900 text-white border-gray-700 flex flex-col overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="text-white">Location Prompt Builder — {locationLabel}</DialogTitle>
+          <DialogTitle className="text-white">Location Prompt Builder — {titleLabel}</DialogTitle>
         </DialogHeader>
 
-        {/* No-people info banner */}
+        {version ? (
+          <div className="mt-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+            <div className="flex items-start gap-2">
+              <Info className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-amber-200">
+                <p className="font-medium mb-1">Structural set changes only</p>
+                <p className="text-amber-300/80">
+                  Structural set changes only — beat props belong on the frame, not this still.
+                  Bake lasting architecture, doors, walls, floors, and set furniture. Ignore handheld
+                  objects a character will introduce.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
         <div className="mt-2 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
           <div className="flex items-start gap-2">
             <Info className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
@@ -282,6 +323,7 @@ export function LocationPromptBuilder({
             </div>
           </div>
         </div>
+        )}
 
         <div className="flex-1 overflow-y-auto px-0">
           <Tabs value={mode} onValueChange={(v) => setMode(v as 'guided' | 'advanced')} className="mt-2">
@@ -368,7 +410,11 @@ export function LocationPromptBuilder({
                 <Textarea
                   value={additionalDetails}
                   onChange={(e) => setAdditionalDetails(e.target.value)}
-                  placeholder="Weather, specific set dressing, color palette, architectural details..."
+                  placeholder={
+                    version
+                      ? 'Structural set changes only (doors, walls, flooding). Do not add beat props...'
+                      : 'Weather, specific set dressing, color palette, architectural details...'
+                  }
                   className="min-h-[90px]"
                 />
               </div>
@@ -445,7 +491,7 @@ export function LocationPromptBuilder({
           <div className="flex gap-2">
             <Button variant="outline" onClick={onClose} className="text-gray-300">Cancel</Button>
             <Button onClick={handleGenerate} disabled={isGenerating || !finalPrompt.trim()}>
-              {isGenerating ? 'Generating...' : 'Generate Location Image'}
+              {isGenerating ? 'Generating...' : version ? 'Generate Version Image' : 'Generate Location Image'}
             </Button>
           </div>
         </div>

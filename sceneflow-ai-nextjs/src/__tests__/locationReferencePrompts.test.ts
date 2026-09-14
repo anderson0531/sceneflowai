@@ -7,6 +7,7 @@ import {
   LOCATION_VERSION_GENERATION_INSTRUCTION,
   buildLocationReferencePromptLine,
   buildLocationVersionPrompt,
+  stripBeatPropsFromLocationStateNotes,
 } from '@/lib/vision/locationReferencePrompts'
 
 describe('locationReferencePrompts', () => {
@@ -57,5 +58,36 @@ describe('locationReferencePrompts', () => {
     expect(prompt).toMatch(/front door exploded/i)
     expect(prompt.toLowerCase()).toContain('match architecture')
     expect(prompt.toLowerCase()).toContain('no people')
+  })
+
+  it('strips handheld beat props such as unspooled drafting vellum from version prompts', () => {
+    const notes =
+      'Front door exploded, debris across the floor. A heavy roll of drafting vellum with vibrant violet ink schematics is unspooled across the damp flagstones. The floor is flooded.'
+    const cleaned = stripBeatPropsFromLocationStateNotes(notes, ['drafting vellum'])
+    expect(cleaned.toLowerCase()).not.toMatch(/vellum/)
+    expect(cleaned.toLowerCase()).not.toMatch(/unspooled/)
+    expect(cleaned).toMatch(/exploded/i)
+    expect(cleaned).toMatch(/flood/i)
+
+    const prompt = buildLocationVersionPrompt({
+      locationName: 'FOYER',
+      stateNotes: notes,
+      catalogPropNames: ['drafting vellum'],
+    })
+    expect(prompt).toContain(cleaned)
+    expect(prompt).not.toMatch(/unspooled/i)
+    expect(prompt).not.toMatch(/violet ink/i)
+    expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).toContain('handheld')
+    expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).toContain('keyprops')
+  })
+
+  it('stripBeatPropsFromLocationStateNotes keeps structural clauses only', () => {
+    const cleaned = stripBeatPropsFromLocationStateNotes(
+      'Windows boarded. Piper unrolls drafting vellum across the desk. Furniture overturned.',
+      ['drafting vellum']
+    )
+    expect(cleaned.toLowerCase()).toMatch(/windows boarded/)
+    expect(cleaned.toLowerCase()).toMatch(/furniture overturned/)
+    expect(cleaned.toLowerCase()).not.toMatch(/vellum/)
   })
 })

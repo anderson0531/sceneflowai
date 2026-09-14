@@ -4,6 +4,8 @@ import {
   resolveSegmentEditCharacterReferences,
   frameEditReferenceKeys,
   buildFrameEditReferenceImages,
+  appendUseTheseReferencesClause,
+  listFrameEditLocationStills,
 } from '@/lib/vision/resolveFrameEditCharacterReferences'
 
 const marcus = {
@@ -228,5 +230,68 @@ describe('buildFrameEditReferenceImages', () => {
     expect(images.some((i) => i.name?.toLowerCase().includes('identity'))).toBe(true)
     expect(images.some((i) => i.name?.toLowerCase().includes('wardrobe'))).toBe(true)
     expect(images.some((i) => i.propName === 'Briefcase')).toBe(true)
+  })
+
+  it('includes selected location stills', () => {
+    const images = buildFrameEditReferenceImages({
+      characterReferences: [],
+      selectedKeys: new Set(),
+      locationStills: [
+        {
+          id: 'loc-foyer',
+          name: 'FOYER',
+          imageUrl: 'https://example.com/foyer.png',
+        },
+        {
+          id: 'loc-foyer::ver-door',
+          name: 'FOYER — Exploded door',
+          imageUrl: 'https://example.com/foyer-door.png',
+        },
+      ],
+      selectedLocationIds: ['loc-foyer::ver-door'],
+    })
+    expect(images.some((i) => i.locationName?.includes('Exploded door'))).toBe(true)
+    expect(images.some((i) => i.imageUrl === 'https://example.com/foyer-door.png')).toBe(true)
+  })
+})
+
+describe('appendUseTheseReferencesClause', () => {
+  it('names selected refs on the edit instruction', () => {
+    const next = appendUseTheseReferencesClause('Make the lighting warmer', [
+      { name: 'Identity reference 1: Marcus' },
+      { name: 'Location reference 2: FOYER (extreme-wide establishing shot)' },
+    ])
+    expect(next).toContain('Make the lighting warmer')
+    expect(next).toContain('Use these references:')
+    expect(next).toContain('Marcus')
+    expect(next).toContain('FOYER')
+  })
+})
+
+describe('listFrameEditLocationStills', () => {
+  it('lists base and version stills', () => {
+    const stills = listFrameEditLocationStills([
+      {
+        id: 'loc-foyer',
+        location: 'FOYER',
+        locationDisplay: 'INT. FOYER - NIGHT',
+        imageUrl: 'https://example.com/foyer.png',
+        sourceSceneIndex: 0,
+        sourceSceneHeading: 'INT. FOYER - NIGHT',
+        pinnedAt: '2026-01-01T00:00:00.000Z',
+        versions: [
+          {
+            id: 'ver-door',
+            name: 'Exploded front door',
+            stateNotes: 'Front door missing',
+            imageUrl: 'https://example.com/door.png',
+            createdAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+      },
+    ])
+    expect(stills).toHaveLength(2)
+    expect(stills.some((s) => s.kind === 'base' && s.id === 'loc-foyer')).toBe(true)
+    expect(stills.some((s) => s.kind === 'version' && s.versionId === 'ver-door')).toBe(true)
   })
 })

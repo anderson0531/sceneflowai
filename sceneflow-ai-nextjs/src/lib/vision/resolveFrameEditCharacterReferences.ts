@@ -16,9 +16,12 @@ import {
 import { resolveBeatFrameGenerationContext } from '@/lib/vision/beatFrameGenerationContext'
 import {
   buildCharacterReferenceEntries,
+  buildLocationReferenceEntry,
   type PrioritizedReferenceImage,
 } from '@/lib/vision/referenceLimits'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
+import { locationVersionRequirementId } from '@/lib/vision/locationVersionResolve'
+import { findMatchingLocationReferences } from '@/lib/vision/frameGenerationContext'
 
 export interface FrameEditCharacterReference {
   characterName: string
@@ -440,13 +443,214 @@ export function frameEditReferenceKeys(
   return keys
 }
 
+export function listAllFrameEditCharacterReferences(args: {
+  scene: Record<string, unknown> | null
+  sceneIndex: number
+  characters: Array<Record<string, unknown>>
+}): FrameEditCharacterReference[] {
+  const { scene, sceneIndex, characters } = args
+  const characterNames = allProjectCharactersWithUsableReferences(characters)
+  const selectedWardrobes = fillSelectedWardrobesForCharacters(
+    characterNames,
+    characters,
+    scene || {},
+    sceneIndex
+  )
+  const characterWardrobes = characterWardrobesFromNames(
+    characterNames,
+    selectedWardrobes,
+    characters
+  )
+
+  const refs: FrameEditCharacterReference[] = []
+  const seen = new Set<string>()
+  for (const name of characterNames) {
+    if (!name || seen.has(name)) continue
+    seen.add(name)
+    const char = characters.find((c) => c.name === name)
+    if (!char) continue
+    const entry = buildRefsForCharacter(char, name, scene || {}, sceneIndex, characterWardrobes)
+    if (entry) refs.push(entry)
+  }
+  return refs
+}
+
+export interface FrameEditLocationStill {
+  id: string
+  locationId: string
+  versionId?: string
+  name: string
+  imageUrl: string
+  kind: 'base' | 'version'
+}
+
+export function listFrameEditLocationStills(
+  locations: LocationReference[] | undefined
+): FrameEditLocationStill[] {
+  const out: FrameEditLocationStill[] = []
+  for (const loc of locations || []) {
+    const locationName = loc.location || loc.locationDisplay || 'Location'
+    if (typeof loc.imageUrl === 'string' && loc.imageUrl.trim()) {
+      out.push({
+        id: loc.id,
+        locationId: loc.id,
+        name: locationName,
+        imageUrl: loc.imageUrl,
+        kind: 'base',
+      })
+    }
+    for (const version of loc.versions || []) {
+      if (typeof version.imageUrl !== 'string' || !version.imageUrl.trim()) continue
+      out.push({
+        id: locationVersionRequirementId(loc.id, version.id),
+        locationId: loc.id,
+        versionId: version.id,
+        name: `${locationName} — ${version.name}`,
+        imageUrl: version.imageUrl,
+        kind: 'version',
+      })
+    }
+  }
+  return out
+}
+
+function beatIdFromEditContext(
+  editingFrame: FrameEditEditingFrame | null,
+  slot?: StoryboardFrameSlot | null
+): string | undefined {
+  if (editingFrame?.kind === 'beat') return editingFrame.beatId
+  return slot?.beatId
+}
+
+export function resolveDefaultFrameEditLocationStillIds(args: {
+  editingFrame: FrameEditEditingFrame | null
+  scene: Record<string, unknown> | null
+  sceneIndex: number
+  locationReferences?: LocationReference[]
+  slot?: StoryboardFrameSlot | null
+}): string[] {
+  const stills = listFrameEditLocationStills(args.locationReferences)
+  if (stills.length === 0 || !args.scene) return []
+
+  const beatId = beatIdFromEditContext(args.editingFrame, args.slot)
+  const beat = beatId ? getSceneBeats(args.scene).find((b) => b.beatId === beatId) : undefined
+  const saved = beat?.referenceSelection
+
+  const pickStill = (locationRefId?: string | null, versionId?: string | null): string | null => {
+    if (!locationRefId) return null
+    if (versionId) {
+      const versionStillId = locationVersionRequirementId(locationRefId, versionId)
+      if (stills.some((still) => still.id === versionStillId)) return versionStillId
+    }
+    if (stills.some((still) => still.id === locationRefId)) return locationRefId
+    return null
+  }
+
+  if (saved?.locationRefId) {
+    const selected = pickStill(saved.locationRefId, saved.locationVersionId)
+    if (selected) return [selected]
+  }
+
+  if (beat) {
+    const auto = resolveBeatFrameGenerationContext({
+      scene: args.scene,
+      beat,
+      sceneIndex: args.sceneIndex,
+      projectCharacters: [],
+      locationReferences: args.locationReferences || [],
+      objectReferences: [],
+    })
+    const selected = pickStill(auto.locationRefId, auto.locationVersionId)
+    if (selected) return [selected]
+  }
+
+  const matched = findMatchingLocationReferences(
+    args.scene,
+    args.locationReferences || [],
+    args.sceneIndex
+  )
+  const first = matched[0]
+  if (first?.id) {
+    const selected = pickStill(first.id, null)
+    if (selected) return [selected]
+  }
+
+  return []
+}
+
+export function resolveDefaultFrameEditObjectIds(args: {
+  editingFrame: FrameEditEditingFrame | null
+  scene: Record<string, unknown> | null
+  sceneIndex: number
+  objectReferences?: Array<{ id: string; name: string; imageUrl?: string }>
+  locationReferences?: LocationReference[]
+  characters?: Array<Record<string, unknown>>
+  slot?: StoryboardFrameSlot | null
+}): string[] {
+  const objects = (args.objectReferences || []).filter(
+    (obj) => obj.id && typeof obj.imageUrl === 'string' && obj.imageUrl.trim()
+  )
+  if (objects.length === 0 || !args.scene) return []
+
+  const hasId = (id: string) => objects.some((obj) => obj.id === id)
+  const beatId = beatIdFromEditContext(args.editingFrame, args.slot)
+  const beat = beatId ? getSceneBeats(args.scene).find((b) => b.beatId === beatId) : undefined
+  const saved = beat?.referenceSelection
+
+  if (saved?.objectRefIds?.length) {
+    const fromSaved = saved.objectRefIds.filter(hasId)
+    if (fromSaved.length > 0) return fromSaved
+  }
+
+  if (beat) {
+    const auto = resolveBeatFrameGenerationContext({
+      scene: args.scene,
+      beat,
+      sceneIndex: args.sceneIndex,
+      projectCharacters: args.characters || [],
+      locationReferences: args.locationReferences || [],
+      objectReferences: objects as VisualReference[],
+    })
+    const fromAuto = auto.objectRefIds.filter(hasId)
+    if (fromAuto.length > 0) return fromAuto
+  }
+
+  const keyProps = (beat?.beatDirection?.keyProps || []).map((name) => name.toLowerCase())
+  if (keyProps.length === 0) return []
+  return objects
+    .filter((obj) => {
+      const name = obj.name.toLowerCase()
+      return keyProps.some((prop) => prop === name || prop.includes(name) || name.includes(prop))
+    })
+    .map((obj) => obj.id)
+}
+
+export function appendUseTheseReferencesClause(
+  instruction: string,
+  refs: Array<{ name?: string }>
+): string {
+  const names = refs.map((ref) => ref.name?.trim()).filter((name): name is string => Boolean(name))
+  const trimmed = instruction.trim()
+  if (names.length === 0) return trimmed
+  return `${trimmed}\n\nUse these references: ${names.join('; ')}.`
+}
+
 export function buildFrameEditReferenceImages(args: {
   characterReferences: FrameEditCharacterReference[]
   selectedKeys: Set<FrameEditReferenceSelectionKey>
   objectReferences?: Array<{ id: string; name: string; imageUrl: string }>
   selectedPropIds?: string[]
+  locationStills?: Array<{ id: string; name: string; imageUrl: string }>
+  selectedLocationIds?: string[]
 }): PrioritizedReferenceImage[] {
-  const { characterReferences, selectedKeys, objectReferences, selectedPropIds = [] } = args
+  const {
+    characterReferences,
+    selectedKeys,
+    objectReferences,
+    selectedPropIds = [],
+    locationStills = [],
+    selectedLocationIds = [],
+  } = args
   const imageRefs: Array<{
     imageUrl: string
     refRole: 'identity' | 'wardrobe' | 'wardrobe-diptych'
@@ -493,8 +697,22 @@ export function buildFrameEditReferenceImages(args: {
     buildWardrobeDiptychReferenceLabel
   )
 
+  const locationEntries: PrioritizedReferenceImage[] = []
+  let locationIndex = characterEntries.length
+  for (const locationId of selectedLocationIds) {
+    const still = locationStills.find((entry) => entry.id === locationId)
+    if (!still?.imageUrl) continue
+    const entry = buildLocationReferenceEntry(
+      { imageUrl: still.imageUrl, location: still.name, name: still.name },
+      locationIndex
+    )
+    if (!entry) continue
+    locationIndex++
+    locationEntries.push(entry)
+  }
+
   const propEntries: PrioritizedReferenceImage[] = []
-  let propIndex = characterEntries.length
+  let propIndex = characterEntries.length + locationEntries.length
   for (const propId of selectedPropIds) {
     const prop = objectReferences?.find((p) => p.id === propId)
     if (!prop?.imageUrl) continue
@@ -508,5 +726,5 @@ export function buildFrameEditReferenceImages(args: {
     })
   }
 
-  return [...characterEntries, ...propEntries]
+  return [...characterEntries, ...locationEntries, ...propEntries]
 }

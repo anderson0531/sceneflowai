@@ -35,6 +35,7 @@ export interface GeminiStudioEditOptions {
   sourceImage: string
   instruction: string
   referenceImage?: string
+  referenceImages?: Array<{ imageUrl: string; name?: string }>
   aspectRatio?: GeminiStudioImageOptions['aspectRatio']
   imageSize?: '1K' | '2K'
   editIntent?: 'default' | 'keyframeEnd' | 'preVisEdit'
@@ -71,6 +72,7 @@ export async function editImageWithGeminiStudio(
     sourceImage: options.sourceImage,
     instruction: options.instruction,
     referenceImage: options.referenceImage,
+    referenceImages: options.referenceImages,
     aspectRatio: options.aspectRatio,
     imageSize: options.imageSize,
     editIntent: options.editIntent,

@@ -47,6 +47,7 @@ import {
   libraryAssetToProp,
 } from '@/lib/referenceLibrary/visionProjection'
 import type { ReferenceAssetRecord } from '@/types/referenceLibrary'
+import { patchLocationVersion } from '@/lib/vision/locationVersionResolve'
 
 // Extended scene type for Scene tab that includes sceneDirection
 interface SceneWithDirection {
@@ -1333,6 +1334,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     type: 'scene' | 'object' | 'character' | 'location'
     characterId?: string
     locationId?: string
+    versionId?: string
   } | null>(null)
 
   // Handler for opening image edit modal
@@ -1348,8 +1350,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   }
 
   // Handler for location image edit (triggered from LocationLibrary)
-  const handleEditLocationImage = (locationId: string, imageUrl: string) => {
-    setEditingImageData({ url: imageUrl, referenceId: locationId, type: 'location', locationId })
+  const handleEditLocationImage = (locationId: string, imageUrl: string, versionId?: string) => {
+    setEditingImageData({ url: imageUrl, referenceId: locationId, type: 'location', locationId, versionId })
     setImageEditModalOpen(true)
   }
 
@@ -1360,10 +1362,16 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     if (editingImageData.type === 'character' && editingImageData.characterId && onEditCharacterImage) {
       onEditCharacterImage(editingImageData.characterId, newImageUrl)
     } else if (editingImageData.type === 'location' && editingImageData.locationId && onUpdateLocationReferences) {
-      // Update the location reference with the new edited image
-      const updatedLocations = (locationReferences || []).map(loc =>
-        loc.id === editingImageData.locationId ? { ...loc, imageUrl: newImageUrl } : loc
-      )
+      const updatedLocations = (locationReferences || []).map((loc) => {
+        if (loc.id !== editingImageData.locationId) return loc
+        if (editingImageData.versionId) {
+          return patchLocationVersion(loc, editingImageData.versionId, {
+            imageUrl: newImageUrl,
+            needsImageRegen: false,
+          })
+        }
+        return { ...loc, imageUrl: newImageUrl }
+      })
       onUpdateLocationReferences(updatedLocations)
     } else if ((editingImageData.type === 'scene' || editingImageData.type === 'object') && onUpdateReferenceImage) {
       onUpdateReferenceImage(editingImageData.type, editingImageData.referenceId, newImageUrl)
@@ -1808,6 +1816,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               onExpressGenerateReferences={onExpressGenerateReferences}
               isExpressGeneratingReferences={isExpressGeneratingReferences}
               getLatestLocations={getLatestLocations}
+              catalogPropNames={objectReferences.map((o) => o.name).filter(Boolean)}
             />
             </>
           )}

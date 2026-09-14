@@ -10306,6 +10306,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   /**
    * Generate a location reference image via AI with LocationPromptBuilder payload.
    * Forwards the user-composed prompt, art style, camera settings to the API.
+   * When `versionId` is set, patches that nested version instead of the base still.
    */
   const handleGenerateLocationImageWithPrompt = async (payload: {
     location: LocationReference
@@ -10316,23 +10317,41 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     lighting?: string
     additionalDetails?: string
     rawMode?: boolean
+    versionId?: string
   }) => {
     const { location } = payload
     if (!location?.id) return
-    
-    setGeneratingLocationId(location.id)
-    
-    const locationLabel = location.location || 'Location'
+
+    const version = payload.versionId
+      ? location.versions?.find((entry) => entry.id === payload.versionId)
+      : undefined
+    if (payload.versionId && !version) return
+    if (version && !location.imageUrl) {
+      try { const { toast } = require('sonner'); toast.error('Generate the base location image first') } catch {}
+      return
+    }
+
+    const catalogPropNames = (objectReferencesRef.current || [])
+      .map((obj) => obj.name)
+      .filter((name): name is string => Boolean(name?.trim()))
+
+    setGeneratingLocationId(
+      version ? `${location.id}::${version.id}` : location.id
+    )
+
+    const locationLabel = version
+      ? `${location.location} — ${version.name}`
+      : location.location || 'Location'
     overlayStore.show(
       `Generating ${locationLabel} reference image...`,
       25,
       'image-generation'
     )
-    
+
     try {
       overlayStore.setPhase(0)
       overlayStore.setStatus(`Preparing prompt for ${locationLabel}...`)
-      
+
       const response = await fetch('/api/vision/generate-location', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -10354,44 +10373,58 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             tone: project?.tone || project?.metadata?.filmTreatmentVariant?.tone_description,
             setting: project?.metadata?.filmTreatmentVariant?.setting,
             visualStyle: project?.metadata?.filmTreatmentVariant?.visual_style || project?.metadata?.filmTreatmentVariant?.style,
-          }
+          },
+          ...(version
+            ? {
+                baseImageUrl: location.imageUrl,
+                stateNotes: version.stateNotes,
+                versionId: version.id,
+                catalogPropNames,
+              }
+            : {}),
         })
       })
-      
+
       overlayStore.setPhase(2)
       overlayStore.setProgress(60)
       overlayStore.setStatus('Rendering location image...')
-      
+
       if (!response.ok) {
         const error = await response.json()
         throw new Error(error.error || 'Failed to generate location image')
       }
-      
+
       const result = await response.json()
-      
+
       overlayStore.setPhase(3)
       overlayStore.setProgress(85)
       overlayStore.setStatus('Saving location reference...')
-      
-      const updatedLocations = locationReferences.map(ref =>
-        ref.id === location.id
-          ? withStaleVersionsAfterBaseChange({
-              ...ref,
-              imageUrl: result.imageUrl,
-              generationPrompt: result.prompt,
-            })
-          : ref
-      )
+
+      const updatedLocations = locationReferences.map((ref) => {
+        if (ref.id !== location.id) return ref
+        if (version) {
+          return patchLocationVersion(ref, version.id, {
+            imageUrl: result.imageUrl,
+            generationPrompt: result.prompt,
+            needsImageRegen: false,
+          })
+        }
+        return withStaleVersionsAfterBaseChange({
+          ...ref,
+          imageUrl: result.imageUrl,
+          generationPrompt: result.prompt,
+        })
+      })
       setLocationReferences(updatedLocations)
       locationReferencesRef.current = updatedLocations
-      
+
       await persistLocationReferences(updatedLocations)
-      
+
       overlayStore.setProgress(100)
       overlayStore.setStatus(`${locationLabel} image generated!`)
-      
+
       await new Promise(resolve => setTimeout(resolve, 800))
-      
+
       try { const { toast } = require('sonner'); toast.success(`Generated image for ${locationLabel}`) } catch {}
     } catch (error: any) {
       console.error('[handleGenerateLocationImageWithPrompt] Error:', error)
@@ -10477,6 +10510,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           baseImageUrl: location.imageUrl,
           stateNotes: version.stateNotes,
           versionId: version.id,
+          catalogPropNames: (objectReferencesRef.current || [])
+            .map((obj) => obj.name)
+            .filter((name): name is string => Boolean(name?.trim())),
         }),
       })
 
