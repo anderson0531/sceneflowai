@@ -130,3 +130,42 @@ export function storedStillDirectionKeyMatches(
   if (storedKey === current) return true
   return stillDirectionKeyFromStored(storedKey) === current
 }
+
+/** Script prose that feeds the still prompt, independent of still-v4 direction. */
+export type BeatStillContentSource = {
+  kind?: string
+  actionDescription?: string
+  character?: string
+  line?: string
+  beatDirection?: BeatDirection | null
+}
+
+export function beatStillContentFingerprint(beat: BeatStillContentSource): string {
+  if (beat.kind === 'action') {
+    return `action|${(beat.actionDescription ?? '').trim()}`
+  }
+  return `${beat.kind ?? ''}|${(beat.character ?? '').trim().toUpperCase()}|${(beat.line ?? '').trim()}`
+}
+
+/**
+ * Keys to persist with a newly generated still. Missing `storyboardImageContentKey`
+ * on older rows must not be treated as stale — only a stored mismatch is.
+ */
+export function beatStillImageStamp(
+  beat: BeatStillContentSource,
+  options?: { imagePrompt?: string | null }
+): {
+  storyboardImageDirectionKey: string
+  storyboardImageContentKey: string
+  storyboardImagePromptDirectionKey?: string
+} {
+  const directionKey = beatStillDirectionFingerprint(beat.beatDirection)
+  const stamp = {
+    storyboardImageDirectionKey: directionKey,
+    storyboardImageContentKey: beatStillContentFingerprint(beat),
+  }
+  if (options?.imagePrompt?.trim()) {
+    return { ...stamp, storyboardImagePromptDirectionKey: directionKey }
+  }
+  return stamp
+}

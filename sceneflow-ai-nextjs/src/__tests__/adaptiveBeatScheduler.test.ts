@@ -418,7 +418,7 @@ describe('runAdaptiveBeatPool', () => {
     expect(ran.filter((n) => n === 1).length).toBeGreaterThanOrEqual(1)
   })
 
-  it('retries a fail-fast identity-ref 429 after one attempt', async () => {
+  it('does not retry a fail-fast identity-ref 429 even when maxAttempts is raised', async () => {
     let attempts = 0
     const failFast = new Error(
       'Vertex Gemini Image error 429: identity-ref rate limit exhausted after 1 attempt(s): RESOURCE_EXHAUSTED'
@@ -442,7 +442,8 @@ describe('runAdaptiveBeatPool', () => {
     await vi.runAllTimersAsync()
     const result = await promise
 
-    expect(attempts).toBe(2)
-    expect(result.succeeded.has(0)).toBe(true)
+    expect(attempts).toBe(1)
+    expect(result.failed.has(0)).toBe(true)
+    expect(result.succeeded.has(0)).toBe(false)
   })
 })

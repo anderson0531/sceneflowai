@@ -98,6 +98,40 @@ describe('mergeScenePreservingMedia', () => {
     expect(merged.imageUrl).toContain('1779527367355')
   })
 
+  it('moves storyboardImageDirectionKey with the image URL that won', () => {
+    const canonical = {
+      beats: [
+        {
+          beatId: 'bt_1',
+          kind: 'action',
+          actionDescription: 'Elara raises the journal.',
+          storyboardImageUrl:
+            'https://x.public.blob.vercel-storage.com/images/frames/p/server/1779527367355.jpeg',
+          storyboardImageDirectionKey: 'still-v4|shotType=Medium Shot',
+          storyboardImageContentKey: 'action|Elara raises the journal.',
+        },
+      ],
+    }
+    const incoming = {
+      beats: [
+        {
+          beatId: 'bt_1',
+          kind: 'action',
+          actionDescription: 'Elara raises the journal.',
+          storyboardImageUrl:
+            'https://x.public.blob.vercel-storage.com/images/frames/p/client/1779500000000.jpeg',
+          storyboardImageDirectionKey: 'still-v3|shotType=Wide Shot',
+          storyboardImageContentKey: 'action|Old prose',
+        },
+      ],
+    }
+
+    const merged = mergeScenePreservingMedia(canonical, incoming)
+    expect(merged.beats[0].storyboardImageUrl).toContain('1779527367355')
+    expect(merged.beats[0].storyboardImageDirectionKey).toBe('still-v4|shotType=Medium Shot')
+    expect(merged.beats[0].storyboardImageContentKey).toBe('action|Elara raises the journal.')
+  })
+
   it('merges per-line dialogueAudio preferring newer manual uploads', () => {
     const canonical = {
       id: 's1',

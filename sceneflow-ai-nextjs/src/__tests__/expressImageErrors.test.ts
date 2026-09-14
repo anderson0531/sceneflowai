@@ -4,6 +4,7 @@ import {
   CHARACTER_LIKENESS_MISMATCH_MESSAGE,
   isCharacterLikenessMismatchError,
   isExpressBeatPoolRetryable,
+  isExpressFailFastRateLimitError,
   isExpressImageCanaryAbortError,
   isExpressImageRateLimitError,
   isIdentityRefLadderExhausted,
@@ -160,7 +161,34 @@ describe('isExpressBeatPoolRetryable', () => {
       isExpressBeatPoolRetryable(
         err('Vertex Gemini Image error 429: identity-ref rate limit exhausted after 1 attempt(s)')
       )
+    ).toBe(false)
+    expect(
+      isExpressBeatPoolRetryable(
+        err('Vertex Gemini Image error 429: rate limit failed fast after 1 attempt(s)')
+      )
+    ).toBe(false)
+    expect(
+      isExpressBeatPoolRetryable(err('Google Cloud quota limit reached', 429))
+    ).toBe(false)
+  })
+})
+
+describe('isExpressFailFastRateLimitError', () => {
+  it('detects Vertex fail-fast markers and wrapped quota 429s', () => {
+    expect(
+      isExpressFailFastRateLimitError(
+        err('Vertex Gemini Image error 429: rate limit failed fast after 1 attempt(s)')
+      )
     ).toBe(true)
+    expect(
+      isExpressFailFastRateLimitError(
+        err('Vertex Gemini Image error 429: identity-ref rate limit exhausted after 1 attempt(s)')
+      )
+    ).toBe(true)
+    expect(isExpressFailFastRateLimitError(err('Google Cloud quota limit reached', 429))).toBe(
+      true
+    )
+    expect(isExpressFailFastRateLimitError(err('HTTP 504', 504))).toBe(false)
   })
 })
 

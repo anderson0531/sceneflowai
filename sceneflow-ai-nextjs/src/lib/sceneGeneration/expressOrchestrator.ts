@@ -18,7 +18,6 @@
 import { processWithConcurrency } from '../utils/concurrent-processor'
 import {
   getSceneExpressBeatConcurrency,
-  getSceneExpressBeatMaxAttempts,
   runAdaptiveBeatPool,
   type AdaptiveBeatPoolOptions,
   type AdaptiveBeatPoolResult,
@@ -54,7 +53,7 @@ import { generateSceneDirection } from './generateDirection'
 import { generateSceneAudio, applyAudioAssetsToScene } from './generateAudio'
 import { generateSceneImage } from './generateImage'
 import { usesFlashDraftTier } from './animaticImageModel'
-import { beatStillDirectionFingerprint } from '../script/beatDirectionFingerprint'
+import { beatStillImageStamp } from '../script/beatDirectionFingerprint'
 import { shouldScheduleStandaloneNarration } from '../script/narration'
 import {
   detectCharactersNamedInBeat,
@@ -627,7 +626,7 @@ function buildAdaptiveBeatPoolOptions(
     initialConcurrency: concurrency,
     maxConcurrency: concurrency,
     minConcurrency: 1,
-    maxAttempts: getSceneExpressBeatMaxAttempts(),
+    maxAttempts: 1,
     isRetryable: isExpressBeatPoolRetryable,
     isCanaryAbort: isExpressImageCanaryAbortError,
     onConcurrencyChange: (max, reason) => {
@@ -1328,17 +1327,8 @@ function writeBeatFrameToScene(
     storyboardImageUrl: result.imageUrl,
     storyboardImageTier: tier,
     ...(result.gcsPath ? { storyboardImageGcsPath: result.gcsPath } : {}),
-    // Stamped with the direction it describes, so a later direction edit
-    // recomposes the frame instead of replaying this wording.
-    ...(result.imagePrompt
-      ? {
-          storyboardImagePrompt: result.imagePrompt,
-          storyboardImagePromptDirectionKey: beatStillDirectionFingerprint(previous.beatDirection),
-          storyboardImageDirectionKey: beatStillDirectionFingerprint(previous.beatDirection),
-        }
-      : {
-          storyboardImageDirectionKey: beatStillDirectionFingerprint(previous.beatDirection),
-        }),
+    ...beatStillImageStamp(previous, { imagePrompt: result.imagePrompt }),
+    ...(result.imagePrompt ? { storyboardImagePrompt: result.imagePrompt } : {}),
   }
   const updated = applyBeatsToScene(scene, beats)
   Object.assign(scene, updated)

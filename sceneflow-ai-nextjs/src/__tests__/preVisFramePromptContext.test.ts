@@ -234,7 +234,7 @@ describe('resolvePreVisFramePromptContext', () => {
   it('seeds a dialogue beat from the beat, not the speaker-only fallback', () => {
     const dialogueSlot: StoryboardFrameSlot = {
       key: 'bt_dlg',
-      label: 'Alex (Start)',
+      label: 'Alex',
       kind: 'dialogue',
       beatId: 'bt_dlg',
       dialogueIndex: 0,

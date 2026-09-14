@@ -315,7 +315,7 @@ function buildBeatFrameSlot(
         ? 'Narrator'
         : String(beat.character || 'Dialogue')
 
-  const roleSuffix = frameRole === 'end' ? ' (End)' : ' (Start)'
+  const roleSuffix = frameRole === 'end' ? ' (End)' : ''
   const ownImageUrl = opts.ownImageUrl
   const displayImageUrl = opts.displayImageUrl
 

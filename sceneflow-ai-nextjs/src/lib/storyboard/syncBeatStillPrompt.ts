@@ -9,6 +9,7 @@ import {
 } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
 import {
+  beatStillContentFingerprint,
   beatStillDirectionFingerprint,
   storedStillDirectionKeyMatches,
 } from '@/lib/script/beatDirectionFingerprint'
@@ -67,10 +68,18 @@ export function syncBeatStillPromptToDirection(
   return next
 }
 
-/** True when a generated frame no longer matches the current still direction. */
+/** True when a generated frame no longer matches the current still or script. */
 export function isBeatFrameStale(beat: SceneBeat): boolean {
   if (!beat.storyboardImageUrl?.trim()) return false
   const imageKey = beat.storyboardImageDirectionKey ?? beat.storyboardImagePromptDirectionKey
-  if (imageKey === undefined) return false
-  return !storedStillDirectionKeyMatches(imageKey, beat.beatDirection)
+  if (imageKey !== undefined && !storedStillDirectionKeyMatches(imageKey, beat.beatDirection)) {
+    return true
+  }
+  if (
+    beat.storyboardImageContentKey !== undefined &&
+    beat.storyboardImageContentKey !== beatStillContentFingerprint(beat)
+  ) {
+    return true
+  }
+  return false
 }

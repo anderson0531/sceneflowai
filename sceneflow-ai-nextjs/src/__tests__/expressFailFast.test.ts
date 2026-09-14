@@ -61,4 +61,10 @@ describe('Frame Agent Express fail-fast contracts', () => {
     expect(src).toContain('options.failFastOnRateLimit ||')
     expect(src).toContain('!options.failFastOnRateLimit &&')
   })
+
+  it('Frame Agent pins the beat pool to one attempt', () => {
+    const src = readSource('src/lib/sceneGeneration/expressOrchestrator.ts')
+    expect(src).toContain('maxAttempts: 1')
+    expect(src).not.toContain('maxAttempts: getSceneExpressBeatMaxAttempts()')
+  })
 })

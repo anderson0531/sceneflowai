@@ -121,7 +121,8 @@ describe('ExpressTrafficCop', () => {
     ).rejects.toThrow('429')
 
     expect(cop.getSnapshot().image.max).toBe(2)
-    expect(onThrottle).toHaveBeenCalledWith('image', 2, 1000)
+    expect(onThrottle).toHaveBeenCalledWith('image', 2, 0)
+    expect(cop.getSnapshot().image.cooldownUntil).toBeNull()
   })
 
   it('spaces image dispatches so a wide burst does not land in one instant', async () => {
@@ -172,11 +173,12 @@ describe('ExpressTrafficCop', () => {
     expect(getExpressImageMinSpacingMs()).toBe(DEFAULT_EXPRESS_IMAGE_MIN_SPACING_MS)
   })
 
-  it('regulates on identity-ref rate limit exhausted errors', async () => {
+  it('does not sleep cooldown after identity-ref image 429s', async () => {
     const onThrottle = vi.fn()
     const cop = new ExpressTrafficCop({
       laneMax: { image: 4 },
       cooldownMs: 1000,
+      minSpacingMs: { image: 0 },
       onThrottle,
     })
 
@@ -189,6 +191,38 @@ describe('ExpressTrafficCop', () => {
     ).rejects.toThrow(/identity-ref rate limit exhausted/)
 
     expect(cop.getSnapshot().image.max).toBe(2)
-    expect(onThrottle).toHaveBeenCalled()
+    expect(cop.getSnapshot().image.cooldownUntil).toBeNull()
+    expect(onThrottle).toHaveBeenCalledWith('image', 2, 0)
+  })
+
+  it('does not sleep cooldown after a fail-fast image 429', async () => {
+    const onThrottle = vi.fn()
+    const cop = new ExpressTrafficCop({
+      laneMax: { image: 4 },
+      cooldownMs: 5000,
+      minSpacingMs: { image: 0 },
+      onThrottle,
+    })
+
+    await expect(
+      cop.runInLane('image', async () => {
+        throw new Error(
+          'Vertex Gemini Image error 429: rate limit failed fast after 1 attempt(s)'
+        )
+      })
+    ).rejects.toThrow(/failed fast/)
+
+    expect(cop.getSnapshot().image.max).toBe(2)
+    expect(cop.getSnapshot().image.cooldownUntil).toBeNull()
+    expect(onThrottle).toHaveBeenCalledWith('image', 2, 0)
+
+    let resolved = false
+    const pending = cop.runInLane('image', async () => {
+      resolved = true
+      return 'ok'
+    })
+    await vi.advanceTimersByTimeAsync(0)
+    await pending
+    expect(resolved).toBe(true)
   })
 })

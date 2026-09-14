@@ -43,8 +43,8 @@ export const IDENTITY_REF_RATE_LIMIT_EXHAUSTED =
 
 /**
  * Marker for a 429 surrendered on the first attempt rather than slept through.
- * Distinct from the exhausted ladder above: nothing has been spent yet, so the
- * caller's own queue is expected to bring this frame back.
+ * Distinct from the exhausted ladder above: the beat is stamped failed so
+ * sibling frames can finish; the user regenerates this still later.
  */
 export const RATE_LIMIT_FAILED_FAST = 'rate limit failed fast'
 
@@ -459,7 +459,8 @@ export async function generateVertexGeminiImage(
     if (response.status === 429 && options.failFastOnRateLimit) {
       // Every sleep below is served while still holding the caller's image-lane
       // slot, which on a 2-wide lane parks half the run on a frame that is
-      // doing nothing. Hand the slot back now; the caller re-queues.
+      // doing nothing. Hand the slot back now; Frame Agent stamps the error
+      // and continues sibling beats instead of waiting to retry.
       console.warn(
         `[Vertex Gemini Image] Rate limit on ${model} — failing fast without eco fallback so the lane frees immediately`
       )

@@ -17,6 +17,8 @@ import {
   applyExpressStoryboardImageErrorToScene,
 } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
+import { beatStillDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
+import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 
 describe('beatMigration', () => {
   it('flatSceneToBeats creates action, narration, and dialogue beats', () => {
@@ -514,5 +516,39 @@ describe('applyBeatStoryboardImageToScene', () => {
     expect((recovered.beats as SceneBeat[])[0].storyboardImageUrl).toBe(
       'https://example.com/ok.jpg'
     )
+  })
+
+  it('restamps still keys so a leftover Prompt Changed key does not survive a good gen', () => {
+    const scene = {
+      beats: [
+        {
+          beatId: 'bt_0',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Elara raises the journal.',
+          beatDirection: { shotType: 'Medium Shot', frozenMoment: 'Elara raises the journal' },
+          storyboardImageUrl: 'https://example.com/old.jpg',
+          storyboardImageDirectionKey: 'still-v3|shotType=Wide Shot',
+          storyboardImageContentKey: 'action|Old prose',
+        },
+      ],
+    }
+
+    const updated = applyBeatStoryboardImageToScene(
+      scene,
+      0,
+      'https://example.com/new.jpg',
+      { imageTier: 'final', imagePrompt: 'Medium shot: Elara raises the journal.' }
+    )
+    const beat = getSceneBeats(updated)[0]
+    expect(beat.storyboardImageTier).toBe('final')
+    expect(isBeatFrameStale(beat)).toBe(false)
+    expect(beat.storyboardImageDirectionKey).toBe(
+      beatStillDirectionFingerprint({
+        shotType: 'Medium Shot',
+        frozenMoment: 'Elara raises the journal',
+      })
+    )
+    expect(beat.storyboardImageContentKey).toBe('action|Elara raises the journal.')
   })
 })

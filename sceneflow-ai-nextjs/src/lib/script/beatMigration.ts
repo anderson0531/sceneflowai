@@ -21,6 +21,7 @@ import { mintLineId } from '@/lib/script/segmentScript'
 import { applyDerivedSfxToScene } from '@/lib/script/deriveSfxFromSceneContent'
 import { dedupeRedundantActionBeats } from '@/lib/script/actionBeatDedupe'
 import { backfillBeatDirectionsOnScene } from '@/lib/script/beatDirectionDerive'
+import { beatStillImageStamp } from '@/lib/script/beatDirectionFingerprint'
 import {
   applySceneMovements,
   ensureSceneMovements,
@@ -1201,10 +1202,13 @@ export function applyBeatStoryboardImageToScene(
     return applyBeatsToScene(scene, beats)
   }
 
+  const previous = beats[beatIndex]
+  const stamp = beatStillImageStamp(previous, { imagePrompt: extras?.imagePrompt })
   beats[beatIndex] = {
-    ...beats[beatIndex],
+    ...previous,
     storyboardImageUrl: imageUrl,
     storyboardImageError: undefined,
+    ...stamp,
     ...(extras?.imageTier ? { storyboardImageTier: extras.imageTier } : {}),
     ...(extras?.imageGcsPath
       ? { storyboardImageGcsPath: extras.imageGcsPath }
@@ -1428,6 +1432,7 @@ function clearBeatStoryboardFrames(beat: SceneBeat): SceneBeat {
   delete next.storyboardImagePrompt
   delete next.storyboardImagePromptDirectionKey
   delete next.storyboardImageDirectionKey
+  delete next.storyboardImageContentKey
   delete next.storyboardImageTier
   delete next.storyboardEndImageUrl
   delete next.storyboardEndImageGcsPath

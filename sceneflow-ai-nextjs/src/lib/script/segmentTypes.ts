@@ -188,6 +188,11 @@ export interface SceneBeat {
    * optional-regen stale (prompt may already have been auto-updated).
    */
   storyboardImageDirectionKey?: string
+  /**
+   * `beatStillContentFingerprint` of the beat prose the current still was
+   * generated from. Absent on older rows — missing must not look stale.
+   */
+  storyboardImageContentKey?: string
   storyboardImageGcsPath?: string
   /** draft = Express layout pass; final = hi-res for animatic & video */
   storyboardImageTier?: 'draft' | 'final'
