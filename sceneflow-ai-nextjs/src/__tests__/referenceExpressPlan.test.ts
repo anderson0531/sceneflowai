@@ -80,6 +80,30 @@ describe('planReferenceExpressItems', () => {
     expect(items[0]).toMatchObject({ targetId: '0', label: 'Character 1' })
   })
 
+  it('narrows to a single kind when the caller names it', () => {
+    const items = planReferenceExpressItems(
+      {
+        characters: [cast()],
+        locations: [location()],
+        props: [prop()],
+      },
+      ['cast']
+    )
+    expect(items.map((item) => item.kind)).toEqual(['cast'])
+  })
+
+  it('plans location-only and prop-only batches', () => {
+    const input = {
+      characters: [cast()],
+      locations: [location()],
+      props: [prop()],
+    }
+    expect(planReferenceExpressItems(input, ['location']).map((item) => item.kind)).toEqual([
+      'location',
+    ])
+    expect(planReferenceExpressItems(input, ['prop']).map((item) => item.kind)).toEqual(['prop'])
+  })
+
   it('drops references with no id, which cannot be written back', () => {
     const items = planReferenceExpressItems({
       characters: [],
@@ -202,6 +226,15 @@ describe('planSceneReferenceExpressItems', () => {
     )
 
     expect(items).toEqual([])
+  })
+
+  it('filters scene-scoped items to the named kinds', () => {
+    const items = planSceneReferenceExpressItems(input, {
+      sceneIndices: [0],
+      kinds: ['prop'],
+    })
+    expect(items.map((item) => item.kind)).toEqual(['prop'])
+    expect(items.map((item) => item.targetId)).toEqual(['p1'])
   })
 })
 

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-13T22:44:16.992Z",
+  "generatedAt": "2026-09-14T02:22:05.320Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -1545,6 +1545,11 @@
       "direction.locationLibrary.versions": "de5f2b7d7cd24401",
       "direction.locationLibrary.suggestFromScript": "1f0d6f691db9f6d1",
       "direction.locationLibrary.syncFromScript": "fbf87fabe950f741",
+      "direction.locationLibrary.update": "c1c1009d3f37ec05",
+      "direction.locationLibrary.updateLocations": "074294553e1d75ae",
+      "direction.locationLibrary.locationAgent": "73225516e466c5c5",
+      "direction.locationLibrary.updateSummary": "847b1313bc7909bc",
+      "direction.locationLibrary.updating": "dfe40efe921fe88e",
       "direction.locationLibrary.generateFromBase": "22d1a2b68b521021",
       "direction.locationLibrary.needsRegen": "13bfbfa97a641911",
       "direction.locationLibrary.baseImageRequired": "df1d054de731b74d",

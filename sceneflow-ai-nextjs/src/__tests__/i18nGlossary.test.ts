@@ -114,7 +114,10 @@ describe('glossary contents', () => {
 
   it('protects the Agent actions, whose names are product terms', () => {
     for (const term of [
-      'Reference Agent',
+      'Library Agent',
+      'Cast Agent',
+      'Location Agent',
+      'Object Agent',
       'Audio Agent',
       'Frame Agent',
       'Video Agent',

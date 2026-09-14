@@ -31,10 +31,20 @@ import { LocationReference, LocationVersion } from '@/types/visionReferences'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { LocationPromptBuilder, LocationPromptPayload } from './LocationPromptBuilder'
+import { type LocationVersionSyncDiff } from '@/lib/vision/locationScriptSync'
 import {
-  mergeLocationVersionSyncDiff,
-  type LocationVersionSyncDiff,
-} from '@/lib/vision/locationScriptSync'
+  applyLocationUpdateFromSyncDiff,
+  collectMissingExtractedLocations,
+  countLocationAgentItems,
+  idsMissingLocationBase,
+  locationVersionNeedsGeneration,
+  locationsThatGainedBase,
+  toLocationReferenceFromExtracted,
+} from '@/lib/vision/libraryKindAgents'
+import { LibraryKindToolbar } from './LibraryKindToolbar'
+import { patchLocationVersion } from '@/lib/vision/locationVersionResolve'
+import { runWithConcurrencyLimit } from '@/lib/utils/concurrency'
+import type { ReferenceExpressScope } from '@/lib/vision/referenceExpress/types'
 import {
   DeferredImageSkeleton,
   isDeferredImageUrl,
@@ -133,7 +143,7 @@ interface LocationLibraryProps {
     }
   }>
   /** Callback to update location references */
-  onUpdateLocations: (locations: LocationReference[]) => void
+  onUpdateLocations: (locations: LocationReference[]) => void | Promise<void>
   /** Callback to remove a location reference */
   onRemoveLocation: (locationId: string) => void
   /** Callback to generate location reference image (legacy — simple) */
@@ -159,6 +169,13 @@ interface LocationLibraryProps {
   }
   /** 50/50 image | controls layout for Reference Library dialog */
   splitLayout?: boolean
+  projectId?: string
+  onExpressGenerateReferences?: (
+    scope?: ReferenceExpressScope,
+    options?: { waitUntilDone?: boolean }
+  ) => Promise<unknown>
+  isExpressGeneratingReferences?: boolean
+  getLatestLocations?: () => LocationReference[]
 }
 
 /**
@@ -227,6 +244,10 @@ export function LocationLibrary({
   generatingLocationId,
   screenplayContext,
   splitLayout = false,
+  projectId,
+  onExpressGenerateReferences,
+  isExpressGeneratingReferences = false,
+  getLatestLocations,
 }: LocationLibraryProps) {
   const t = useTranslations('production.direction.locationLibrary')
   const [expandedLocationId, setExpandedLocationId] = useState<string | null>(null)
@@ -234,10 +255,11 @@ export function LocationLibrary({
   const [descriptionText, setDescriptionText] = useState('')
   const [expandedImageUrl, setExpandedImageUrl] = useState<string | null>(null)
   const [expandedImageName, setExpandedImageName] = useState<string>('')
-  const [isExtracting, setIsExtracting] = useState(false)
   const [uploadingForId, setUploadingForId] = useState<string | null>(null)
   const [promptBuilderOpenFor, setPromptBuilderOpenFor] = useState<string | null>(null)
   const [analyzingLocationId, setAnalyzingLocationId] = useState<string | null>(null)
+  const [isUpdatingLocations, setIsUpdatingLocations] = useState(false)
+  const [isLocationAgentRunning, setIsLocationAgentRunning] = useState(false)
   const [expandedVersionTarget, setExpandedVersionTarget] = useState<{
     locationId: string
     versionId: string
@@ -295,53 +317,91 @@ export function LocationLibrary({
     return Array.from(locationMap.values())
   }, [scenes])
 
-  /**
-   * Auto-extract locations from script and create LocationReference entries
-   * for any new locations not already in the references list.
-   * Implements "Automate" from "Automate, Guide, Control" — runs on button click.
-   */
-  const handleExtractLocations = useCallback(async () => {
-    if (extractedLocations.length === 0) {
-      toast.info('No locations found in script scene headings')
-      return
+  const extractMissingLocations = useCallback((): LocationReference[] => {
+    const missing = collectMissingExtractedLocations(
+      extractedLocations.map((loc) => ({
+        ...loc,
+        description: loc.description || '',
+      })),
+      locationReferences
+    )
+    return missing.map((loc, index) =>
+      toLocationReferenceFromExtracted(
+        loc,
+        `loc-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 9)}`
+      )
+    )
+  }, [extractedLocations, locationReferences])
+
+  const syncLocationVersions = async (
+    location: LocationReference
+  ): Promise<{
+    location: LocationReference
+    created: number
+    updated: number
+    stale: number
+  } | null> => {
+    if (!isDisplayableImageUrl(location.imageUrl)) return null
+    if (scenes.length === 0) return null
+    const response = await fetch('/api/vision/sync-location-versions-from-script', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: {
+          id: location.id,
+          location: location.location,
+          description: location.description,
+          versions: location.versions || [],
+        },
+        scenes: buildScenesPayloadForLocationVersions(scenesForLocation(location, scenes)),
+        screenplayContext,
+      }),
+    })
+    const data = await response.json()
+    if (!response.ok) throw new Error(data.error || 'Failed to sync location versions')
+    return applyLocationUpdateFromSyncDiff(location, data.diff as LocationVersionSyncDiff)
+  }
+
+  const handleUpdateLocations = useCallback(async (): Promise<LocationReference[] | null> => {
+    if (scenes.length === 0) {
+      toast.error('No scenes available for analysis')
+      return null
     }
-
-    setIsExtracting(true)
-
+    setIsUpdatingLocations(true)
     try {
-      const existingLocations = new Set(locationReferences.map(r => r.location))
-      const newLocations: LocationReference[] = []
+      const newLocations = extractMissingLocations()
+      let working: LocationReference[] = [...locationReferences, ...newLocations]
+      let created = 0
+      let updated = 0
+      let stale = 0
 
-      for (const loc of extractedLocations) {
-        if (existingLocations.has(loc.location)) continue
+      for (const loc of working) {
+        if (!isDisplayableImageUrl(loc.imageUrl)) continue
+        const result = await syncLocationVersions(loc)
+        if (!result) continue
+        working = working.map((row) => (row.id === loc.id ? result.location : row))
+        created += result.created
+        updated += result.updated
+        stale += result.stale
+      }
 
-        newLocations.push({
-          id: `loc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          location: loc.location,
-          locationDisplay: loc.headings[0] || loc.location,
-          imageUrl: '', // No image yet — user can generate or upload
-          sourceSceneIndex: loc.sceneNumbers[0] - 1,
-          sourceSceneHeading: loc.headings[0] || loc.location,
-          pinnedAt: new Date().toISOString(),
-          intExt: loc.intExt,
-          timeOfDay: loc.timeOfDay,
-          description: loc.description,
-          sceneNumbers: loc.sceneNumbers,
-          autoExtracted: true
+      await onUpdateLocations(working)
+      toast.success(
+        t('updateSummary', {
+          extracted: newLocations.length,
+          created,
+          updated,
+          stale,
         })
-      }
-
-      if (newLocations.length === 0) {
-        toast.info('All locations already extracted')
-      } else {
-        const updated = [...locationReferences, ...newLocations]
-        onUpdateLocations(updated)
-        toast.success(`Extracted ${newLocations.length} location(s) from script`)
-      }
+      )
+      return working
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update locations')
+      return null
     } finally {
-      setIsExtracting(false)
+      setIsUpdatingLocations(false)
     }
-  }, [extractedLocations, locationReferences, onUpdateLocations])
+  }, [extractMissingLocations, locationReferences, onUpdateLocations, scenes, screenplayContext, t])
 
   /**
    * Merge: update existing refs with latest scene numbers from extraction
@@ -371,12 +431,6 @@ export function LocationLibrary({
   const expandedVersion = expandedVersionLocation?.versions?.find(
     (version) => version.id === expandedVersionTarget?.versionId
   )
-
-  // Count of locations in script but not yet in references
-  const unextractedCount = useMemo(() => {
-    const existing = new Set(locationReferences.map(r => r.location))
-    return extractedLocations.filter(e => !existing.has(e.location)).length
-  }, [extractedLocations, locationReferences])
 
   const handleSaveDescription = (locationId: string) => {
     const updated = mergedLocations.map(loc =>
@@ -436,7 +490,7 @@ export function LocationLibrary({
     e.target.value = ''
   }
 
-  const handleSuggestVersions = async (location: LocationReference) => {
+  const handleUpdateOneLocation = async (location: LocationReference) => {
     if (!isDisplayableImageUrl(location.imageUrl)) {
       toast.info(t('baseImageRequired'))
       return
@@ -447,142 +501,164 @@ export function LocationLibrary({
     }
     setAnalyzingLocationId(location.id)
     try {
-      const response = await fetch('/api/vision/suggest-location-versions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          location: {
-            id: location.id,
-            location: location.location,
-            description: location.description,
-            existingVersions: (location.versions || []).map((v) => ({
-              name: v.name,
-              stateNotes: v.stateNotes,
-              sceneNumbers: v.sceneNumbers,
-            })),
-          },
-          scenes: buildScenesPayloadForLocationVersions(scenesForLocation(location, scenes)),
-          screenplayContext,
-        }),
-      })
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.error || 'Failed to suggest location versions')
-      const suggestions = Array.isArray(data.suggestions) ? data.suggestions : []
-      if (suggestions.length === 0) {
-        toast.info('No lasting set changes found')
-        return
-      }
-      const now = new Date().toISOString()
-      const existingNames = new Set((location.versions || []).map((v) => v.name.toLowerCase()))
-      const newVersions: LocationVersion[] = suggestions
-        .filter((s: { name?: string }) => s.name && !existingNames.has(String(s.name).toLowerCase()))
-        .map((s: any, i: number) => ({
-          id: `loc-ver-${Date.now()}-${i}`,
-          name: s.name,
-          stateNotes: s.stateNotes || '',
-          sceneNumbers: s.sceneNumbers || [],
-          appliesFrom: s.appliesFrom,
-          reason: s.reason,
-          createdAt: now,
-          needsImageRegen: true,
-        }))
-      if (newVersions.length === 0) {
-        toast.info('All suggested versions already exist')
-        return
-      }
-      onUpdateLocations(
-        mergedLocations.map((loc) =>
-          loc.id === location.id
-            ? { ...loc, versions: [...(loc.versions || []), ...newVersions] }
-            : loc
-        )
+      const result = await syncLocationVersions(location)
+      if (!result) return
+      await onUpdateLocations(
+        mergedLocations.map((loc) => (loc.id === location.id ? result.location : loc))
       )
-      toast.success(t('suggestedCount', { count: newVersions.length }))
+      toast.success(
+        t('updateSummary', {
+          extracted: 0,
+          created: result.created,
+          updated: result.updated,
+          stale: result.stale,
+        })
+      )
     } catch (error: any) {
-      toast.error(error.message || 'Failed to suggest location versions')
+      toast.error(error.message || 'Failed to update location')
     } finally {
       setAnalyzingLocationId(null)
     }
   }
 
-  const handleSyncVersions = async (location: LocationReference) => {
-    if (!isDisplayableImageUrl(location.imageUrl)) {
-      toast.info(t('baseImageRequired'))
-      return
+  const generatePendingLocationVersions = async (locations: LocationReference[]) => {
+    if (!projectId) return
+    const targets: Array<{ location: LocationReference; version: LocationVersion }> = []
+    for (const location of locations) {
+      for (const version of location.versions || []) {
+        if (locationVersionNeedsGeneration(location, version)) {
+          targets.push({ location, version })
+        }
+      }
     }
-    if (scenes.length === 0) {
-      toast.error('No scenes available for analysis')
-      return
-    }
-    setAnalyzingLocationId(location.id)
-    try {
-      const response = await fetch('/api/vision/sync-location-versions-from-script', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          location: {
-            id: location.id,
-            location: location.location,
+    if (targets.length === 0) return
+
+    const results = await runWithConcurrencyLimit(targets, 2, async ({ location, version }) => {
+      try {
+        const response = await fetch('/api/vision/generate-location', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId,
+            locationName: location.location,
+            intExt: location.intExt,
+            timeOfDay: location.timeOfDay,
             description: location.description,
-            versions: location.versions || [],
-          },
-          scenes: buildScenesPayloadForLocationVersions(scenesForLocation(location, scenes)),
-          screenplayContext,
-        }),
-      })
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.error || 'Failed to sync location versions')
-      const diff = data.diff as LocationVersionSyncDiff
-      const { versions } = mergeLocationVersionSyncDiff(location.versions || [], diff)
-      onUpdateLocations(
-        mergedLocations.map((loc) =>
-          loc.id === location.id ? { ...loc, versions: versions as LocationVersion[] } : loc
-        )
+            baseImageUrl: location.imageUrl,
+            stateNotes: version.stateNotes,
+            versionId: version.id,
+          }),
+        })
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok) {
+          throw new Error(data.error || `Failed to generate ${location.location} — ${version.name}`)
+        }
+        return {
+          ok: true as const,
+          locationId: location.id,
+          versionId: version.id,
+          imageUrl: data.imageUrl as string,
+          prompt: data.prompt as string | undefined,
+        }
+      } catch (error) {
+        console.error('[Location Agent] version generate:', error)
+        return { ok: false as const }
+      }
+    })
+
+    let next = [...locations]
+    let succeeded = 0
+    let failed = 0
+    for (const result of results) {
+      if (!result.ok) {
+        failed++
+        continue
+      }
+      next = next.map((loc) =>
+        loc.id === result.locationId
+          ? patchLocationVersion(loc, result.versionId, {
+              imageUrl: result.imageUrl,
+              generationPrompt: result.prompt,
+              needsImageRegen: false,
+            })
+          : loc
       )
-      toast.success(t('synced'))
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to sync location versions')
+      succeeded++
+    }
+    await onUpdateLocations(next)
+    if (succeeded > 0) {
+      toast.success(`Generated ${succeeded} set version still${succeeded === 1 ? '' : 's'}`)
+    }
+    if (failed > 0) {
+      toast.error(`${failed} set version still${failed === 1 ? '' : 's'} failed to generate`)
+    }
+  }
+
+  const handleLocationAgent = async () => {
+    if (!onExpressGenerateReferences) return
+    if (isExpressGeneratingReferences) {
+      await onExpressGenerateReferences({ kinds: ['location'] })
+      return
+    }
+    setIsLocationAgentRunning(true)
+    try {
+      const updated = await handleUpdateLocations()
+      if (!updated) return
+      // Snapshot *after* extract so newly added heading locations are included.
+      const idsMissingBase = idsMissingLocationBase(updated)
+      const result = (await onExpressGenerateReferences(
+        { kinds: ['location'] },
+        { waitUntilDone: true }
+      )) as { outcome?: string } | undefined
+      if (result && (result.outcome === 'already-running' || result.outcome === 'error')) {
+        return
+      }
+      let latest = getLatestLocations?.() ?? updated
+      const newlyBased = locationsThatGainedBase(latest, idsMissingBase)
+      if (newlyBased.length > 0) {
+        let working = [...latest]
+        for (const loc of newlyBased) {
+          try {
+            const synced = await syncLocationVersions(loc)
+            if (!synced) continue
+            working = working.map((row) => (row.id === loc.id ? synced.location : row))
+          } catch (error) {
+            console.error('[Location Agent] version sync after bases:', error)
+          }
+        }
+        await onUpdateLocations(working)
+        latest = working
+      }
+      await generatePendingLocationVersions(latest)
     } finally {
-      setAnalyzingLocationId(null)
+      setIsLocationAgentRunning(false)
     }
   }
 
   return (
     <TooltipProvider delayDuration={300}>
     <div className="space-y-3">
-      {/* Extract Locations CTA */}
-      <div className="flex items-center gap-2">
-        <Button
-          onClick={handleExtractLocations}
-          disabled={isExtracting || scenes.length === 0}
-          size="sm"
-          className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white border-0"
-        >
-          {isExtracting ? (
-            <>
-              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-              Extracting...
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-              {unextractedCount > 0
-                ? `Extract Locations (${unextractedCount} new)`
-                : mergedLocations.length > 0
-                  ? 'Re-scan Script'
-                  : `Scan Script (${scenes.length} scenes)`
-              }
-            </>
-          )}
-        </Button>
-      </div>
+      {scenes.length > 0 && (
+        <LibraryKindToolbar
+          updateLabel={t('updateLocations')}
+          agentLabel={t('locationAgent', { count: countLocationAgentItems(mergedLocations) })}
+          onUpdate={() => void handleUpdateLocations()}
+          onAgent={
+            onExpressGenerateReferences ? () => void handleLocationAgent() : undefined
+          }
+          isUpdating={isUpdatingLocations}
+          isAgentRunning={isLocationAgentRunning || isExpressGeneratingReferences}
+          updateTitle="Extract missing locations from scene headings and sync set versions from the script"
+          agentTitle="Update locations from the script, draw missing bases, then generate set-version stills from those bases"
+        />
+      )}
 
       {/* Location Cards */}
       {mergedLocations.length === 0 ? (
         <div className="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg py-6 text-center">
           <MapPin className="w-6 h-6 mx-auto mb-2 text-gray-400" />
           <p className="font-medium">No locations yet</p>
-          <p className="text-xs mt-1">Click "Scan Script" to extract locations from scene headings</p>
+          <p className="text-xs mt-1">Click &quot;Update Locations&quot; to extract locations from scene headings</p>
           <p className="text-xs text-gray-400 mt-2">Location references ensure visual consistency<br />across scenes at the same location</p>
         </div>
       ) : (
@@ -904,7 +980,7 @@ export function LocationLibrary({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                handleSuggestVersions(loc)
+                                void handleUpdateOneLocation(loc)
                               }}
                               disabled={
                                 analyzingLocationId === loc.id ||
@@ -913,22 +989,7 @@ export function LocationLibrary({
                               }
                               className="text-[10px] px-1.5 py-0.5 rounded text-cyan-300 hover:bg-cyan-500/10 disabled:opacity-50"
                             >
-                              {analyzingLocationId === loc.id ? t('analyzing') : t('suggestFromScript')}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleSyncVersions(loc)
-                              }}
-                              disabled={
-                                analyzingLocationId === loc.id ||
-                                scenes.length === 0 ||
-                                !hasImage
-                              }
-                              className="text-[10px] px-1.5 py-0.5 rounded text-cyan-300 hover:bg-cyan-500/10 disabled:opacity-50"
-                            >
-                              {t('syncFromScript')}
+                              {analyzingLocationId === loc.id ? t('analyzing') : t('update')}
                             </button>
                           </div>
                         </div>

@@ -27,6 +27,10 @@ import {
 import { cn } from '@/lib/utils'
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
 import { runObjectBatch } from '@/lib/vision/objectBatchGeneration'
+import { LibraryKindToolbar } from './LibraryKindToolbar'
+import { countObjectAgentItems } from '@/lib/vision/libraryKindAgents'
+import type { ReferenceExpressScope } from '@/lib/vision/referenceExpress/types'
+import { toast } from 'sonner'
 
 interface ObjectSuggestionPanelProps {
   /** Script scenes for analysis */
@@ -58,6 +62,11 @@ interface ObjectSuggestionPanelProps {
   onObjectsAutoAdded?: (objects: AutoAddedObject[]) => void | Promise<void>
   /** Compact mode for sidebar */
   compact?: boolean
+  onExpressGenerateReferences?: (
+    scope?: ReferenceExpressScope,
+    options?: { waitUntilDone?: boolean }
+  ) => Promise<unknown>
+  isExpressGeneratingReferences?: boolean
 }
 
 export interface AutoAddedObject {
@@ -66,6 +75,8 @@ export interface AutoAddedObject {
   importance: ObjectImportance
   beatCount: number
   sceneNumbers: number[]
+  description?: string
+  generationPrompt?: string
 }
 
 const CATEGORY_COLORS: Record<ObjectCategory, string> = {
@@ -213,9 +224,12 @@ export function ObjectSuggestionPanel({
   existingObjects, 
   onObjectGenerated,
   onObjectsAutoAdded,
-  compact = false 
+  compact = false,
+  onExpressGenerateReferences,
+  isExpressGeneratingReferences = false,
 }: ObjectSuggestionPanelProps) {
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [isUpdatingObjects, setIsUpdatingObjects] = useState(false)
+  const [isObjectAgentRunning, setIsObjectAgentRunning] = useState(false)
   const [suggestions, setSuggestions] = useState<ObjectSuggestion[]>([])
   const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
@@ -263,6 +277,89 @@ export function ObjectSuggestionPanel({
     )
   }, [recurringInBeats, existingObjects, onObjectsAutoAdded])
 
+  const fetchObjectSuggestions = useCallback(async (): Promise<ObjectSuggestion[]> => {
+    const response = await fetch('/api/vision/suggest-objects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        scenes: scenes.map((s, idx) => ({
+          sceneNumber: s.sceneNumber,
+          heading: s.heading,
+          action: s.action,
+          visualDescription: s.visualDescription,
+          description: s.description,
+          beats: slimSceneForObjectUsage(s, idx).beats
+        })),
+        existingObjects: existingObjects.map(o => o.name)
+      })
+    })
+
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error(data.error || 'Failed to analyze script')
+    }
+
+    const data = await response.json()
+    return (data.suggestions || []) as ObjectSuggestion[]
+  }, [scenes, existingObjects])
+
+  const addMissingSuggestionsAsRows = async (nextSuggestions: ObjectSuggestion[]) => {
+    if (!onObjectsAutoAdded) return 0
+    const existingNames = existingObjects.map((o) => o.name)
+    const missing = nextSuggestions.filter(
+      (suggestion) => !isAlreadyInLibrary(suggestion.name, existingNames)
+    )
+    if (missing.length === 0) return 0
+    await onObjectsAutoAdded(
+      missing.map((suggestion) => ({
+        name: suggestion.name,
+        category: suggestion.category,
+        importance: suggestion.importance,
+        beatCount: suggestion.beatCount || 0,
+        sceneNumbers: suggestion.sceneNumbers || [],
+        description: suggestion.description,
+        generationPrompt: suggestion.suggestedPrompt,
+      }))
+    )
+    return missing.length
+  }
+
+  const handleUpdateObjects = useCallback(async () => {
+    if (scenes.length === 0) return
+    setIsUpdatingObjects(true)
+    setError(null)
+    try {
+      const nextSuggestions = await fetchObjectSuggestions()
+      setHasAnalyzed(true)
+      const added = await addMissingSuggestionsAsRows(nextSuggestions)
+      setSuggestions(added > 0 ? [] : nextSuggestions)
+      if (nextSuggestions.length === 0) {
+        toast.info('No additional objects found in the script')
+      } else if (added === 0) {
+        toast.info('All suggested objects are already in the library')
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to analyze script for objects')
+    } finally {
+      setIsUpdatingObjects(false)
+    }
+  }, [scenes.length, fetchObjectSuggestions, existingObjects, onObjectsAutoAdded])
+
+  const handleObjectAgent = async () => {
+    if (!onExpressGenerateReferences) return
+    if (isExpressGeneratingReferences) {
+      await onExpressGenerateReferences({ kinds: ['prop'] })
+      return
+    }
+    setIsObjectAgentRunning(true)
+    try {
+      await handleUpdateObjects()
+      await onExpressGenerateReferences({ kinds: ['prop'] })
+    } finally {
+      setIsObjectAgentRunning(false)
+    }
+  }
+
   const analyzeScenesForObjects = useCallback(async () => {
     if (scenes.length === 0) return
     
@@ -270,36 +367,15 @@ export function ObjectSuggestionPanel({
     setError(null)
     
     try {
-      const response = await fetch('/api/vision/suggest-objects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          scenes: scenes.map((s, idx) => ({
-            sceneNumber: s.sceneNumber,
-            heading: s.heading,
-            action: s.action,
-            visualDescription: s.visualDescription,
-            description: s.description,
-            beats: slimSceneForObjectUsage(s, idx).beats
-          })),
-          existingObjects: existingObjects.map(o => o.name)
-        })
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to analyze script')
-      }
-
-      const data = await response.json()
-      setSuggestions(data.suggestions || [])
+      const nextSuggestions = await fetchObjectSuggestions()
+      setSuggestions(nextSuggestions)
       setHasAnalyzed(true)
     } catch (err: any) {
       setError(err.message || 'Failed to analyze script for objects')
     } finally {
       setIsAnalyzing(false)
     }
-  }, [scenes, existingObjects])
+  }, [scenes.length, fetchObjectSuggestions])
 
   const handleGenerate = useCallback(async (suggestion: ObjectSuggestion, prompt: string) => {
     setGeneratingIds(prev => new Set(prev).add(suggestion.id))
@@ -444,6 +520,19 @@ export function ObjectSuggestionPanel({
               : undefined
         }
       />
+
+      <LibraryKindToolbar
+        updateLabel="Update Objects"
+        agentLabel={`Object Agent (${countObjectAgentItems(existingObjects)})`}
+        onUpdate={() => void handleUpdateObjects()}
+        onAgent={
+          onExpressGenerateReferences ? () => void handleObjectAgent() : undefined
+        }
+        isUpdating={isUpdatingObjects}
+        isAgentRunning={isObjectAgentRunning || isExpressGeneratingReferences}
+        updateTitle="Scan the script and add missing objects to the library without spending image credits"
+        agentTitle="Add missing objects from the script, then draw their reference stills"
+      />
       
       <div className="border border-indigo-500/30 bg-indigo-500/5 rounded-lg overflow-hidden">
         {/* Header */}
@@ -480,12 +569,13 @@ export function ObjectSuggestionPanel({
           {!hasAnalyzed ? (
             <div className="text-center py-4">
               <p className="text-xs text-slate-400 mb-3">
-                Scan your script to identify key objects, vehicles, and set pieces that recur across beats.
+                Review extra suggestions to generate or dismiss. Update Objects is the primary way to add missing rows.
               </p>
               <Button
                 onClick={analyzeScenesForObjects}
                 disabled={isAnalyzing}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white border-0"
+                variant="outline"
+                className="border-indigo-500/40 text-indigo-300"
               >
                 {isAnalyzing ? (
                   <>
@@ -495,7 +585,7 @@ export function ObjectSuggestionPanel({
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 mr-2" />
-                    Get Key Objects
+                    Review suggestions
                   </>
                 )}
               </Button>

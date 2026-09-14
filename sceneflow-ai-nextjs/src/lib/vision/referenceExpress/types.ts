@@ -39,6 +39,12 @@ export type ReferenceExpressScope = {
    * a key the client invented.
    */
   itemKeys?: string[]
+  /**
+   * Limit the batch to these library kinds. Omit (or pass an empty list) to
+   * plan every missing still — Library Agent. Cast / Location / Object Agents
+   * pass a single kind.
+   */
+  kinds?: ReferenceExpressKind[]
 }
 
 export type ReferenceExpressItemResult = {
