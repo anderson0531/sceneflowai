@@ -13,14 +13,15 @@
  * empty: a media URL is adopted from the rejected payload when the newer side
  * has none for that field.
  *
- * Deliberately scalar-only. Positional arrays (`sfxAudio`) and per-language maps
- * (`dialogueAudio`, `narrationAudio`) would mean inserting entries the newer
- * script does not list, and an entry re-added under an id or index the newer
- * script has since reused is a worse outcome than a lost clip. Those keep the
- * newer script's values untouched.
+ * Scalar fields (`narrationAudioUrl`, frames) and per-language voice maps
+ * (`dialogueAudio`, `narrationAudio`) are filled the same way: empty slots
+ * only, matched by identity (`lineId` for map entries). Positional arrays
+ * (`sfxAudio`) are still skipped — inserting under a reused index is worse
+ * than a lost clip.
  */
 
 import { isValidStoryboardMediaUrl } from './mergeSceneMedia'
+import { mergeVoiceAudioMapsByLineId } from './mergeVoiceAudioMaps'
 
 const SCENE_MEDIA_KEYS = [
   'imageUrl',
@@ -159,6 +160,12 @@ function salvageScene(newerScene: Row, staleScene: Row, sceneLabel: string, fiel
       return merged
     })
     if (dialogueChanged) result = { ...result, dialogue: mergedDialogue }
+  }
+
+  const voice = mergeVoiceAudioMapsByLineId(result, staleScene)
+  if (voice.filled > 0) {
+    result = voice.scene
+    fields.push(...voice.fields.map((field) => `${sceneLabel}.${field}`))
   }
 
   return result

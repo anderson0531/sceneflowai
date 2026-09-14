@@ -95,7 +95,7 @@ describe('vision page slims every project PUT', () => {
   )
 
   it('runs the payload through slimProjectPutPayload before fetch', () => {
-    const slim = page.indexOf('const slimmed = slimProjectPutPayload(body)')
+    const slim = page.indexOf('const slimmed = slimProjectPutPayload(bodyToSend)')
     const stringify = page.indexOf('JSON.stringify(slimmed)')
     const fetchCall = page.indexOf('fetch(`/api/projects/${projectId}`')
     expect(slim).toBeGreaterThan(-1)

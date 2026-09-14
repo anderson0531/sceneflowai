@@ -188,6 +188,7 @@ export async function PUT(
 
     let project!: Project
     let mergedMetadata: Record<string, unknown> = {}
+    let staleScriptWriteBlocked = false
 
     await sequelize.transaction(async (transaction) => {
       const lockedProject = await Project.findByPk(id, {
@@ -285,6 +286,7 @@ export async function PUT(
                 : existingScript
             mergedMetadata.visionPhase.scriptUpdatedAt = existingScriptTimestamp
             scriptSafeguardTriggered = true
+            staleScriptWriteBlocked = true
           }
         }
         // Also preserve scriptUpdatedAt from incoming if it's newer
@@ -597,7 +599,11 @@ export async function PUT(
       timestamp: new Date().toISOString()
     })
     
-    return NextResponse.json({ success: true, project })
+    return NextResponse.json({
+      success: true,
+      project,
+      ...(staleScriptWriteBlocked ? { staleScriptWriteBlocked: true } : {}),
+    })
   } catch (error: any) {
     if (error?.message === 'PROJECT_NOT_FOUND') {
       console.error('[Projects PUT] Project not found:', id)

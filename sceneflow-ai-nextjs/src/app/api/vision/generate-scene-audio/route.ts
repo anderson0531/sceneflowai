@@ -1022,7 +1022,9 @@ async function updateSceneAudio(
     lineMeta,
     provider,
     sourceFingerprint,
-    updateScriptUpdatedAt: true,
+    // Voice persist is media, not a script edit. Bumping scriptUpdatedAt here
+    // races queued dialogue PUTs and the timestamp guard discards them.
+    updateScriptUpdatedAt: false,
   })
 
   console.log('[Update Scene Audio] Project updated successfully for language:', language)

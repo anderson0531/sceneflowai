@@ -28,6 +28,10 @@ import {
   visionPhasePut,
 } from '@/lib/projects/slimProjectPutPayload'
 import {
+  putResponseIndicatesStaleScriptWrite,
+  refreshQueuedScriptPut,
+} from '@/lib/projects/refreshQueuedScriptPut'
+import {
   applyScenePreservation,
   shouldRegenerateSceneDirection,
   shouldSkipBeatRederivation,
@@ -889,12 +893,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   const serializedProjectSave = useCallback(async (
     body: Record<string, any>,
-    debugLabel?: string
+    debugLabel?: string,
+    options?: { refreshLiveScript?: boolean; mintScriptUpdatedAt?: boolean }
   ): Promise<Response> => {
     // Chain onto the previous save so writes are sequential
     const resultPromise = saveQueueRef.current.then(async () => {
       const label = debugLabel || 'unknown'
-      const slimmed = slimProjectPutPayload(body)
+      let bodyToSend = body
+      if (options?.refreshLiveScript || options?.mintScriptUpdatedAt) {
+        bodyToSend = refreshQueuedScriptPut(body, {
+          liveScript: options.refreshLiveScript ? scriptRef.current : undefined,
+          replaceScript: Boolean(options.refreshLiveScript && scriptRef.current),
+        })
+      }
+      const slimmed = slimProjectPutPayload(bodyToSend)
       const payload = JSON.stringify(slimmed)
       if (projectPutWouldExceedBodyLimit(slimmed)) {
         console.warn(
@@ -909,6 +921,50 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           body: payload
         })
         console.log(`[SAVE-QUEUE] Completed save: ${label}, status=${response.status}`)
+        if (
+          response.ok &&
+          (options?.refreshLiveScript || options?.mintScriptUpdatedAt)
+        ) {
+          try {
+            const json = await response.clone().json()
+            const sentAt = bodyToSend?.metadata?.visionPhase?.scriptUpdatedAt as
+              | string
+              | undefined
+            if (putResponseIndicatesStaleScriptWrite(json, sentAt)) {
+              const serverScript = json.project?.metadata?.visionPhase?.script
+              const serverAt = json.project?.metadata?.visionPhase?.scriptUpdatedAt
+              if (serverScript) {
+                setScript(serverScript)
+                scriptRef.current = serverScript
+                setScriptEditedAt(Date.now())
+                const currentProject = projectRef.current
+                if (currentProject) {
+                  const refreshedProject = {
+                    ...currentProject,
+                    metadata: {
+                      ...currentProject.metadata,
+                      visionPhase: {
+                        ...currentProject.metadata?.visionPhase,
+                        script: serverScript,
+                        scenes: serverScript?.script?.scenes,
+                        ...(typeof serverAt === 'string'
+                          ? { scriptUpdatedAt: serverAt }
+                          : {}),
+                      },
+                    },
+                  }
+                  projectRef.current = refreshedProject
+                  setProject(refreshedProject)
+                }
+                toast.warning(
+                  'That script edit did not save because a newer copy was already stored. The editor was updated to match.'
+                )
+              }
+            }
+          } catch (error) {
+            console.warn(`[SAVE-QUEUE] ${label} could not inspect PUT response for stale script`, error)
+          }
+        }
         return response
       } catch (error) {
         console.error(`[SAVE-QUEUE] Failed save: ${label}`, error)
@@ -1017,7 +1073,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           },
         },
       },
-      debugLabel || 'persistVisionScriptScenes'
+      debugLabel || 'persistVisionScriptScenes',
+      { mintScriptUpdatedAt: true }
     )
 
     if (!response.ok) {
@@ -1406,7 +1463,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
         }
         
-        const response = await serializedProjectSave(payload, 'handleScriptChange')
+        const response = await serializedProjectSave(
+          payload,
+          'handleScriptChange',
+          { refreshLiveScript: true, mintScriptUpdatedAt: true }
+        )
         
         if (!response.ok) {
           console.error('[handleScriptChange] Failed to save script to database')
@@ -15388,7 +15449,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         console.log('[saveScenesToDatabase] Including deletedSceneIds:', deletedSceneIds)
       }
       
-      const response = await serializedProjectSave(payload, 'saveScenesToDatabase')
+      const response = await serializedProjectSave(
+        payload,
+        'saveScenesToDatabase',
+        { mintScriptUpdatedAt: true }
+      )
       
       if (!response.ok) {
         const errorText = await response.text()
@@ -16117,7 +16182,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
               const saveResponse = await serializedProjectSave({
                   metadata: metadataToPersist
-                }, 'onScriptOptimized')
+                }, 'onScriptOptimized', { mintScriptUpdatedAt: true })
               
               // Update project state to prevent stale metadata overwrites
               if (saveResponse.ok) {

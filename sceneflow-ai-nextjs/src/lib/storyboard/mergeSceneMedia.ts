@@ -10,6 +10,7 @@
 
 import { storedStillDirectionKeyMatches } from '@/lib/script/beatDirectionFingerprint'
 import type { BeatDirection } from '@/lib/script/segmentTypes'
+import { mergeVoiceAudioMapsByLineId } from '@/lib/storyboard/mergeVoiceAudioMaps'
 
 const DIALOGUE_STORYBOARD_URL_KEYS = ['storyboardImageUrl', 'storyboardImageGcsPath'] as const
 const DIALOGUE_STORYBOARD_PROMPT_KEYS = ['storyboardImagePrompt'] as const
@@ -782,7 +783,7 @@ export function mergeScenePreservingMedia(canonical: any, incoming: any): any {
     if (mergedSfx !== undefined) merged.sfx = mergedSfx
   }
 
-  return merged
+  return mergeVoiceAudioMapsByLineId(merged, canonical).scene
 }
 
 export interface MergeSceneArraysOptions {

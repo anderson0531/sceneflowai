@@ -185,6 +185,45 @@ describe('salvaging media from a rejected stale write', () => {
     expect(salvageStaleWriteMedia([], [scene({ imageUrl: STALE_FRAME })]).scenes).toEqual([])
   })
 
+  it('salvages dialogueAudio by lineId without dropping a URL the newer script already has', () => {
+    const newer = [
+      scene({
+        dialogueAudio: { en: [{ lineId: 'ln_1', audioUrl: 'https://blob.example.com/audio/paid.mp3' }] },
+      }),
+    ]
+    const stale = [
+      scene({
+        dialogueAudio: { en: [{ lineId: 'ln_1' }] },
+      }),
+    ]
+
+    const result = salvageStaleWriteMedia(newer, stale)
+
+    expect((result.scenes[0] as any).dialogueAudio.en[0].audioUrl).toBe(
+      'https://blob.example.com/audio/paid.mp3'
+    )
+    expect(result.salvaged).toBe(0)
+  })
+
+  it('adopts a dialogueAudio clip the newer script left empty, matched by lineId', () => {
+    const newer = [scene({ dialogueAudio: { en: [{ lineId: 'ln_1' }] } })]
+    const stale = [
+      scene({
+        dialogueAudio: {
+          en: [{ lineId: 'ln_1', audioUrl: 'https://blob.example.com/audio/paid.mp3' }],
+        },
+      }),
+    ]
+
+    const result = salvageStaleWriteMedia(newer, stale)
+
+    expect((result.scenes[0] as any).dialogueAudio.en[0].audioUrl).toBe(
+      'https://blob.example.com/audio/paid.mp3'
+    )
+    expect(result.salvaged).toBe(1)
+    expect(result.fields).toEqual(['scene[sc_1].dialogueAudio.en[ln_1]'])
+  })
+
   it('matches id-less scenes and beats by position', () => {
     const newer = [{ sceneNumber: 1, beats: [{ kind: 'action', actionDescription: 'A' }] }]
     const stale = [
