@@ -120,7 +120,7 @@ describe('vision page slims every project PUT', () => {
 
   it('syncs Express references as a visionPhase patch, not the full metadata blob', () => {
     const start = page.indexOf('const syncVisionReferencesForExpress')
-    const end = page.indexOf("throw new Error('Failed to sync references for Reference Agent')", start)
+    const end = page.indexOf("throw new Error('Failed to sync references for Library Agent')", start)
     const fn = page.slice(start, end)
     expect(fn).toContain("serializedProjectSave(")
     expect(fn).toContain('visionPhasePut({')

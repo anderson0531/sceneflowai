@@ -15,7 +15,13 @@ import {
   loadReferenceExpressContext,
   planSceneReferenceExpressItems,
 } from '@/lib/vision/referenceExpress/planItems'
-import type { ReferenceExpressScope } from '@/lib/vision/referenceExpress/types'
+import type {
+  ReferenceExpressKind,
+  ReferenceExpressScope,
+} from '@/lib/vision/referenceExpress/types'
+import { referenceExpressAgentLabel } from '@/lib/vision/libraryKindAgents'
+
+const EXPRESS_KINDS: readonly ReferenceExpressKind[] = ['cast', 'location', 'prop']
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -44,16 +50,24 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}))
-    const { projectId, sceneIndices, itemKeys } = body as {
+    const { projectId, sceneIndices, itemKeys, kinds } = body as {
       projectId?: string
       sceneIndices?: unknown
       itemKeys?: unknown
+      kinds?: unknown
     }
 
     if (!projectId) {
       return NextResponse.json({ error: 'projectId required' }, { status: 400 })
     }
 
+    const parsedKinds = Array.isArray(kinds)
+      ? [...new Set(
+          kinds.filter((kind): kind is ReferenceExpressKind =>
+            EXPRESS_KINDS.includes(kind as ReferenceExpressKind)
+          )
+        )]
+      : undefined
     const scope: ReferenceExpressScope = {
       sceneIndices: Array.isArray(sceneIndices)
         ? sceneIndices.filter((index): index is number => Number.isInteger(index) && index >= 0)
@@ -61,6 +75,7 @@ export async function POST(req: NextRequest) {
       itemKeys: Array.isArray(itemKeys)
         ? itemKeys.filter((key): key is string => typeof key === 'string' && !!key.trim())
         : undefined,
+      kinds: parsedKinds?.length ? parsedKinds : undefined,
     }
     const sceneScoped = !!scope.sceneIndices?.length
 
@@ -116,6 +131,8 @@ export async function POST(req: NextRequest) {
         // Recorded so the status card can name the scope. The worker reads
         // only `items` and `_worker`, so this stays informational.
         sceneIndices: sceneScoped ? scope.sceneIndices : undefined,
+        kinds: scope.kinds,
+        agentLabel: referenceExpressAgentLabel(scope.kinds),
       },
     })
 

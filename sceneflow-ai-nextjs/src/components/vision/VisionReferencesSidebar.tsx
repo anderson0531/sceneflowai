@@ -27,6 +27,7 @@ import {
 import { LocationLibrary } from './LocationLibrary'
 import { LocationPromptPayload } from './LocationPromptBuilder'
 import { ImageEditModal } from './ImageEditModal'
+import type { ReferenceExpressScope } from '@/lib/vision/referenceExpress/types'
 import { ReadinessProgress, calculateProductionReadiness, ProductionReadinessState } from '@/components/ui/StatusBadge'
 import { SceneReferenceCard } from './SceneReferenceCard'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -127,7 +128,7 @@ export interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps
   /** Location references for environment consistency */
   locationReferences?: LocationReference[]
   /** Callback to update all location references */
-  onUpdateLocationReferences?: (locations: LocationReference[]) => void
+  onUpdateLocationReferences?: (locations: LocationReference[]) => void | Promise<void>
   /** Callback to remove a location reference */
   onRemoveLocationReference?: (locationId: string) => void
   /** Callback to generate a location reference image */
@@ -140,9 +141,18 @@ export interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps
   onUploadLocationVersionImage?: (locationId: string, versionId: string, file: File) => void
   /** ID of location currently generating an image */
   generatingLocationId?: string | null
-  /** Batch-generate missing cast, location, and prop reference images */
-  onExpressGenerateReferences?: () => Promise<unknown>
+  /**
+   * Batch-generate missing reference images. Library Agent omits `kinds`;
+   * Cast / Location / Object Agents pass a single kind. Kind agents can wait
+   * until the batch lands so nested looks can be drawn from the new bases.
+   */
+  onExpressGenerateReferences?: (
+    scope?: ReferenceExpressScope,
+    options?: { waitUntilDone?: boolean }
+  ) => Promise<unknown>
   isExpressGeneratingReferences?: boolean
+  getLatestCharacters?: () => any[]
+  getLatestLocations?: () => LocationReference[]
   /** When true, hide the in-panel "Reference Library" heading (dialog provides its own) */
   hideTitle?: boolean
   /** Layout context for scroll/padding tweaks */
@@ -1236,6 +1246,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     generatingLocationId,
     onExpressGenerateReferences,
     isExpressGeneratingReferences = false,
+    getLatestCharacters,
+    getLatestLocations,
     hideTitle = false,
     layout = 'sidebar',
     initialTab,
@@ -1612,7 +1624,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                       )}
                       {isExpressGeneratingReferences
                         ? 'Generating…'
-                        : `Reference Agent (${referencesExpressStats.total})`}
+                        : `Library Agent (${referencesExpressStats.total})`}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs text-xs">
@@ -1750,6 +1762,9 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               layout={layout}
               showProTips={showProTips}
               screenplayContext={screenplayContext}
+              onExpressGenerateReferences={onExpressGenerateReferences}
+              isExpressGeneratingReferences={isExpressGeneratingReferences}
+              getLatestCharacters={getLatestCharacters}
             />
             </>
           )}
@@ -1778,6 +1793,10 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               generatingLocationId={generatingLocationId}
               screenplayContext={screenplayContext}
               splitLayout={splitLayout}
+              projectId={projectId}
+              onExpressGenerateReferences={onExpressGenerateReferences}
+              isExpressGeneratingReferences={isExpressGeneratingReferences}
+              getLatestLocations={getLatestLocations}
             />
             </>
           )}
@@ -1799,6 +1818,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                   existingObjects={objectReferences}
                   onObjectGenerated={onObjectGenerated}
                   onObjectsAutoAdded={onObjectsAutoAdded}
+                  onExpressGenerateReferences={onExpressGenerateReferences}
+                  isExpressGeneratingReferences={isExpressGeneratingReferences}
                   compact
                 />
               )}
@@ -1895,7 +1916,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
       <Dialog open={referenceExpressDialogOpen} onOpenChange={setReferenceExpressDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Reference Agent</DialogTitle>
+            <DialogTitle>Library Agent</DialogTitle>
             <DialogDescription>
               Batch-generate {referencesExpressStats.total} missing reference image
               {referencesExpressStats.total === 1 ? '' : 's'}:
@@ -1930,7 +1951,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600"
             >
               <Zap className="w-4 h-4 mr-1" />
-              Reference Agent ({referencesExpressStats.total})
+              Library Agent ({referencesExpressStats.total})
             </Button>
           </DialogFooter>
         </DialogContent>

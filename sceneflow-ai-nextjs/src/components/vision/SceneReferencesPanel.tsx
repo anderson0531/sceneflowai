@@ -267,7 +267,7 @@ export function SceneReferencesPanel({
               ) : (
                 <Sparkles className="w-3 h-3" />
               )}
-              Reference Agent
+              Library Agent
               <span className="opacity-80">({formatReferenceExpressEstimate(estimate)})</span>
             </button>
           )}
@@ -408,7 +408,7 @@ export function SceneReferencesPanel({
         <p className="text-[11px] text-gray-600 dark:text-gray-400 mt-2.5 flex items-start gap-1.5">
           <Shirt className="w-3 h-3 mt-0.5 shrink-0" />
           {missingWardrobeCount} wardrobe{missingWardrobeCount === 1 ? '' : 's'} still to draw.
-          Reference Agent covers cast, locations and props; wardrobe is drawn with its character
+          Library Agent covers cast, locations and props; wardrobe is drawn with its character
           in the Reference Library.
         </p>
       )}

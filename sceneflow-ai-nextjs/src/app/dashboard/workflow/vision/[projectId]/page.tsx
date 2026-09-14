@@ -148,6 +148,7 @@ import {
 } from '@/lib/production/productionReadinessGate'
 import { formatReferenceReadinessMessage } from '@/lib/vision/referenceReadiness'
 import type { ReferenceExpressScope } from '@/lib/vision/referenceExpress/types'
+import { referenceExpressAgentLabel } from '@/lib/vision/libraryKindAgents'
 import {
   resolveSceneRequiredReferences,
   selectUndrawnExpressableRequirements,
@@ -431,6 +432,11 @@ type ReferenceExpressStartOutcome =
   | { outcome: 'already-running' }
   | { outcome: 'nothing-to-do' }
   | { outcome: 'error'; error: string }
+
+type ReferenceExpressStartOptions = {
+  /** Kind agents wait for identity/base stills before nested wardrobe/version gen. */
+  waitUntilDone?: boolean
+}
 
 // UUID v4 validation regex - rejects placeholder IDs like 'new-project'
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -2731,6 +2737,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           createdAt,
           category: object.category,
           importance: object.importance,
+          description: object.description,
+          generationPrompt: object.generationPrompt,
           aiGenerated: false,
         }))
       if (additions.length === 0) return
@@ -2767,7 +2775,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
 
         toast.success(
-          `Added ${additions.length} recurring object${additions.length === 1 ? '' : 's'} to the Reference Library`
+          `Added ${additions.length} object${additions.length === 1 ? '' : 's'} to the Reference Library`
         )
       } catch (error) {
         console.error('[handleObjectsAutoAdded] Error saving references:', error)
@@ -6896,10 +6904,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const res = await fetch(`/api/projects/${projectId}?lite=true&_t=${Date.now()}`, {
         cache: 'no-store',
       })
-      if (!res.ok) return
+      if (!res.ok) {
+        return {
+          characters: charactersRef.current,
+          locationReferences: locationReferencesRef.current,
+          objectReferences: objectReferencesRef.current,
+        }
+      }
       const data = await res.json()
       const visionPhase = data?.project?.metadata?.visionPhase
-      if (!visionPhase) return
+      if (!visionPhase) {
+        return {
+          characters: charactersRef.current,
+          locationReferences: locationReferencesRef.current,
+          objectReferences: objectReferencesRef.current,
+        }
+      }
 
       const nextCharacters = visionPhase.characters
       if (Array.isArray(nextCharacters)) {
@@ -6940,6 +6960,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       })
     } catch (error) {
       console.error('[Reference Express] Failed to refresh references after job:', error)
+    }
+    return {
+      characters: charactersRef.current,
+      locationReferences: locationReferencesRef.current,
+      objectReferences: objectReferencesRef.current,
     }
   }, [projectId])
 
@@ -7053,11 +7078,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const failed = Number(result.failed ?? 0)
       const stale = Number(result.staleCount ?? 0)
 
+      const agentLabel =
+        typeof job.payload?.agentLabel === 'string' && job.payload.agentLabel.trim()
+          ? job.payload.agentLabel
+          : 'Library Agent'
+
       const details: string[] = []
       if (failed > 0) details.push(`${failed} failed — retry to fill the gaps.`)
       if (stale > 0) {
         details.push(
-          `${stale} changed while the batch ran, so those images may not match your latest edits. Re-run Reference Agent to refresh them.`
+          `${stale} changed while the batch ran, so those images may not match your latest edits. Re-run ${agentLabel} to refresh them.`
         )
       }
       const message = details.length
@@ -7065,9 +7095,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         : `All ${succeeded} reference image${succeeded === 1 ? '' : 's'} generated.`
 
       if (failed > 0 && succeeded === 0) {
-        toast.error('Reference Agent failed', { description: message, duration: 12000 })
+        toast.error(`${agentLabel} failed`, { description: message, duration: 12000 })
       } else if (failed > 0 || stale > 0) {
-        toast.warning('Reference Agent finished', { description: message, duration: 12000 })
+        toast.warning(`${agentLabel} finished`, { description: message, duration: 12000 })
       } else {
         toast.success('Reference images ready', { description: message, duration: 8000 })
       }
@@ -7083,22 +7113,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Whatever landed before the failure is already saved, so adopt it.
       void refreshReferencesFromServer()
 
+      const agentLabel =
+        typeof job.payload?.agentLabel === 'string' && job.payload.agentLabel.trim()
+          ? job.payload.agentLabel
+          : 'Library Agent'
+
       const cancelled =
         job.status === 'cancelled' ||
         (typeof job.error === 'string' && job.error.toLowerCase().includes('cancelled'))
       if (cancelled) {
-        toast.info('Reference Agent cancelled', {
+        toast.info(`${agentLabel} cancelled`, {
           description: 'Images generated so far were kept. You can start again anytime.',
           duration: 6000,
         })
         return
       }
-      toast.error('Reference Agent failed', {
+      toast.error(`${agentLabel} failed`, {
         description: job.error || 'Please try again.',
         duration: 10000,
       })
       notifyIfHidden({
-        title: 'Reference Agent failed',
+        title: `${agentLabel} failed`,
         body: job.error || 'Please try again.',
         tag: `reference-express-${job.id}`,
       })
@@ -9786,7 +9821,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     )
 
     if (!response.ok) {
-      throw new Error('Failed to sync references for Reference Agent')
+      throw new Error('Failed to sync references for Library Agent')
     }
 
     setProject((prev) => {
@@ -10277,12 +10312,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
    * editing while it runs.
    */
   const handleExpressGenerateReferences = async (
-    scope?: ReferenceExpressScope
+    scope?: ReferenceExpressScope,
+    options?: ReferenceExpressStartOptions
   ): Promise<ReferenceExpressStartOutcome> => {
     if (!projectId) return { outcome: 'error', error: 'No project loaded' }
 
+    const agentLabel = referenceExpressAgentLabel(scope?.kinds)
+
     if (referenceExpressJob.isActive) {
-      toast.info('Reference Agent is already running', {
+      toast.info(`${agentLabel} is already running`, {
         description: 'Watch the status card in the corner — you can keep working.',
       })
       return { outcome: 'already-running' }
@@ -10292,6 +10330,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     setIsExpressGeneratingReferences(true)
     try {
+      await syncVisionReferencesForExpress()
+
       const res = await fetch('/api/vision/references/express/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -10300,6 +10340,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           projectId,
           sceneIndices: scope?.sceneIndices,
           itemKeys: scope?.itemKeys,
+          kinds: scope?.kinds,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -10314,13 +10355,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return { outcome: 'nothing-to-do' }
       }
       if (!res.ok) {
-        throw new Error(data?.error || 'Failed to start Reference Agent')
+        throw new Error(data?.error || `Failed to start ${agentLabel}`)
       }
 
       referenceExpressJob.track(data.jobId, {
         status: data.status || 'queued',
         progress: 0,
-        payload: { itemCount: data.itemCount },
+        payload: { itemCount: data.itemCount, agentLabel },
       })
 
       // Tied to an explicit user action so the browser prompt has context.
@@ -10328,15 +10369,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       const count = Number(data.itemCount || 0)
       const sceneLabel = scope?.sceneIndices?.length === 1 ? ` for scene ${scope.sceneIndices[0] + 1}` : ''
-      toast.success('Reference Agent started', {
+      toast.success(`${agentLabel} started`, {
         description: `Generating ${count} reference image${count === 1 ? '' : 's'}${sceneLabel} in the background. Keep working — we'll notify you when they're ready.`,
         duration: 8000,
       })
+
+      if (options?.waitUntilDone) {
+        await referenceExpressJob.waitUntilSettled()
+        await refreshReferencesFromServer()
+      }
+
       return { outcome: 'started', itemCount: count }
     } catch (error) {
       console.error('[handleExpressGenerateReferences] Error:', error)
       const message =
-        error instanceof Error ? error.message : 'Failed to start Reference Agent'
+        error instanceof Error ? error.message : `Failed to start ${agentLabel}`
       toast.error(message)
       setIsExpressGeneratingReferences(false)
       return { outcome: 'error', error: message }
@@ -15677,6 +15724,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         generatingLocationId={generatingLocationId}
         onExpressGenerateReferences={handleExpressGenerateReferences}
         isExpressGeneratingReferences={isExpressGeneratingReferences}
+        getLatestCharacters={() => charactersRef.current}
+        getLatestLocations={() => locationReferencesRef.current}
       />
 
       <PublishingLibraryDialog
@@ -16503,7 +16552,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
         <BackgroundJobDock
           job={referenceExpressJob.job}
-          title="Reference Agent"
+          title={
+            typeof referenceExpressJob.job?.payload?.agentLabel === 'string' &&
+            referenceExpressJob.job.payload.agentLabel.trim()
+              ? String(referenceExpressJob.job.payload.agentLabel)
+              : 'Library Agent'
+          }
           activeLabel={
             referenceExpressJob.job?.status === 'queued'
               ? 'Queued'

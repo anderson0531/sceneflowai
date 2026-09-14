@@ -12,6 +12,7 @@ import {
 import {
   fingerprintSource,
   type ReferenceExpressItem,
+  type ReferenceExpressKind,
   type ReferenceExpressScope,
 } from './types'
 
@@ -120,6 +121,18 @@ export function propFingerprint(prop: PropSource): string {
 
 const hasImage = (url?: string): boolean => Boolean(url && url.trim())
 
+const EXPRESS_KINDS: readonly ReferenceExpressKind[] = ['cast', 'location', 'prop']
+
+export function filterExpressItemsByKinds(
+  items: ReferenceExpressItem[],
+  kinds?: ReferenceExpressKind[]
+): ReferenceExpressItem[] {
+  if (!kinds?.length) return items
+  const wanted = new Set(kinds.filter((kind) => EXPRESS_KINDS.includes(kind)))
+  if (wanted.size === 0) return items
+  return items.filter((item) => wanted.has(item.kind))
+}
+
 /**
  * Plan the batch: every reference still missing an image, cast first so
  * character identity exists before locations and props are drawn around it.
@@ -127,7 +140,8 @@ const hasImage = (url?: string): boolean => Boolean(url && url.trim())
  * Narrators are skipped — they have no on-screen appearance to render.
  */
 export function planReferenceExpressItems(
-  input: ReferenceExpressPlanInput
+  input: ReferenceExpressPlanInput,
+  kinds?: ReferenceExpressKind[]
 ): ReferenceExpressItem[] {
   const items: ReferenceExpressItem[] = []
 
@@ -164,7 +178,7 @@ export function planReferenceExpressItems(
     })
   })
 
-  return items
+  return filterExpressItemsByKinds(items, kinds)
 }
 
 /** Requirement cast ids fall back to the character name, so match on either. */
@@ -285,7 +299,11 @@ export function planSceneReferenceExpressItems(
 
   // No usable scene scope — the project-wide plan is the honest answer.
   if (sceneIndices.length === 0) {
-    return applyItemKeyFilter(planReferenceExpressItems(input), scope.itemKeys, input)
+    return applyItemKeyFilter(
+      planReferenceExpressItems(input, scope.kinds),
+      scope.itemKeys,
+      input
+    )
   }
 
   const wanted = scope.itemKeys?.length
@@ -310,7 +328,10 @@ export function planSceneReferenceExpressItems(
     }
   }
 
-  return planItemsForRequirements(input, [...requirements.values()])
+  return filterExpressItemsByKinds(
+    planItemsForRequirements(input, [...requirements.values()]),
+    scope.kinds
+  )
 }
 
 export type ReferenceExpressContext = ReferenceExpressPlanInput & {
