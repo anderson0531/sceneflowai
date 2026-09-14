@@ -133,7 +133,7 @@ export interface BeatDirection {
   castInFrame?: string[]
   /** Per-beat blocking: where subjects are and what their bodies do. */
   blocking?: string
-  /** Directed emotion / expression for this beat. */
+  /** Directed emotion / expression for each visible person, or a shared beat mood. */
   emotion?: string
   /** Who or what the subject looks at (target of gaze). */
   gaze?: string

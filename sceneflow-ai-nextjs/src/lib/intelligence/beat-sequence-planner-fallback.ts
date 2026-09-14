@@ -34,10 +34,11 @@ import {
 import { storedStillDirectionKeyMatches } from '@/lib/script/beatDirectionFingerprint'
 import { formatSceneArcBlock, getSceneMovements } from '@/lib/script/sceneMovements'
 import type { BeatDirection, SceneBeat } from '@/lib/script/segmentTypes'
+import { resolveBeatDirectedEmotion } from '@/lib/scene/performanceCues'
 import {
-  expandEmotionForStill,
-  resolveBeatDirectedEmotion,
-} from '@/lib/scene/performanceCues'
+  enrichActionFramingWithCastPerformance,
+  parseNamedCastEmotions,
+} from '@/lib/scene/castPerformanceFraming'
 
 function getSceneDirection(scene: Record<string, unknown>): Record<string, any> | undefined {
   const d = scene.sceneDirection
@@ -334,39 +335,10 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
   )
   appendFacet(parts, direction?.gaze, 'Gaze')
 
-  // Emotion used to ride along as a footer "Facial expression:" after [STILL].
-  // Action/Framing is what the model illustrates, so the face belongs here —
-  // expanded into eyes/jaw/mouth/shoulders when the author only named a feeling.
   const namedCast = Array.isArray(direction?.castInFrame)
     ? direction.castInFrame.map((name) => name.trim()).filter(Boolean)
     : undefined
   const emptyCast = Array.isArray(direction?.castInFrame) && (namedCast?.length ?? 0) === 0
-  if (!emptyCast) {
-    const expandedEmotion = expandEmotionForStill(
-      resolveBeatDirectedEmotion({
-        beatLine: beat.line,
-        beatAction: beat.actionDescription,
-        beatDirectionEmotion: direction?.emotion,
-      })
-    )
-    if (expandedEmotion) {
-      if (namedCast && namedCast.length > 1) {
-        const speaker = beat.character?.trim() ?? ''
-        const speakerLower = speaker.toLowerCase()
-        const match = speakerLower
-          ? namedCast.find((name) => {
-              const n = name.toLowerCase()
-              return n === speakerLower || n.includes(speakerLower) || speakerLower.includes(n)
-            })
-          : undefined
-        if (match) {
-          appendFacet(parts, expandedEmotion, `Facial expression (${match})`)
-        }
-      } else {
-        appendFacet(parts, expandedEmotion, 'Facial expression')
-      }
-    }
-  }
 
   if (policyChanges.length > 0) {
     console.log(
@@ -413,7 +385,22 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
     parts.unshift(asSentence(shot))
   }
 
-  return parts.join(' ')
+  const framing = parts.join(' ')
+  if (emptyCast) return framing
+
+  const resolvedEmotion = resolveBeatDirectedEmotion({
+    beatLine: beat.line,
+    beatAction: beat.actionDescription,
+    beatDirectionEmotion: direction?.emotion,
+  })
+  const namedEmotions = parseNamedCastEmotions(resolvedEmotion, namedCast ?? [])
+  return enrichActionFramingWithCastPerformance({
+    actionFraming: framing,
+    castNames: namedCast ?? [],
+    speakerName: beat.character,
+    defaultEmotion: namedEmotions.shared || (Object.keys(namedEmotions.byName).length ? '' : resolvedEmotion),
+    emotionsByName: namedEmotions.byName,
+  })
 }
 
 /**
@@ -497,7 +484,7 @@ CRITICAL RULES:
 5. Map direction.camera.shots to beats when provided (beat 0 → shot 0, etc.).
 6. Follow the narrative arc: opening → progression → climax → title_reveal (if title scene) → dissolve.
 7. "lighting" and "lensMm" place THIS beat inside the film's established grammar — a key-light accent and a focal length, never a new look. Derive both from the PROJECT LOOKBOOK. Leave a field empty rather than contradict the lookbook.
-8. The "prompt" field is Action/Framing ONLY: shot type, body blocking, who holds which named library prop, gaze, and directed facial expression (visible eyes/jaw/mouth/shoulders — not a two-word mood label). Do NOT write style dumps, lighting essays, exclusions, F2V, or start-frame language — the lookbook and code own those.
+8. The "prompt" field is Action/Framing ONLY: shot type (spatial when two or more people — both bodies fully in frame), body blocking with weight and contact for EACH visible character, who holds which named library prop, labeled gaze, and directed facial expression for EACH visible face (visible eyes/jaw/mouth/shoulders — not a two-word mood label, never under exclusions). Do NOT write style dumps, lighting essays, exclusions, F2V, or start-frame language — the lookbook and code own those.
 9. Use EXACT character / prop / location labels from the REFERENCE LIBRARY. Do not invent objects that are not listed. Do not describe the visual appearance of library props or locations (reference images own appearance).
 10. When art style is photorealistic, keep action language photographic (no illustration, cartoon, or anime). Populate negativeAdditions with anti-illustration terms.
 

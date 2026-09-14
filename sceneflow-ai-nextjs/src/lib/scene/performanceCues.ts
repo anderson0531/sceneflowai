@@ -292,31 +292,14 @@ export interface BeatExpressionAttribution {
   dropped?: 'ambiguous-subject'
 }
 
-function subjectNamed(
-  subjects: BeatExpressionSubject[],
-  speakerName: string
-): BeatExpressionSubject | undefined {
-  const speaker = speakerName.trim().toLowerCase()
-  if (!speaker) return undefined
-  const named = subjects.filter((subject) => subject.name?.trim())
-  return (
-    named.find((subject) => subject.name!.trim().toLowerCase() === speaker) ??
-    named.find((subject) => {
-      const name = subject.name!.trim().toLowerCase()
-      return name.includes(speaker) || speaker.includes(name)
-    })
-  )
-}
-
 /**
- * Put a beat's directed expression on one named face.
+ * Put a beat's directed expression on every placed face.
  *
  * A bare "Facial expression: quiet dread." is unambiguous in a single. In a
- * two-shot it is an instruction with two possible targets, and the model is
- * free to apply it to the wrong face or to both — which is what a dialogue
- * beat's direction asks for when the emotion belongs to whoever is speaking.
- * With no speaker to pin it to, no expression is better than the wrong one:
- * the identity references already carry a face.
+ * two-shot the identity references still copy a neutral face unless each
+ * visible person is named. Shared beat emotion applies to every placed
+ * subject; per-character cues belong in Action/Framing via
+ * `enrichActionFramingWithCastPerformance`.
  */
 export function attributeBeatExpression(options: {
   emotion?: string | null
@@ -330,17 +313,14 @@ export function attributeBeatExpression(options: {
     return { line: formatDirectedEmotionLine(emotion) }
   }
 
-  const speaker = options.speakerName?.trim()
-    ? subjectNamed(options.placedSubjects, options.speakerName)
-    : undefined
-  if (!speaker) return { line: '', dropped: 'ambiguous-subject' }
-
-  const label = [speaker.promptToken?.trim(), speaker.name?.trim()].filter(Boolean).join(' — ')
   const expanded = expandEmotionForStill(emotion)
-  return {
-    line: `Facial expression (${label}): ${expanded}.`,
-    attributedTo: speaker.name?.trim(),
-  }
+  if (!expanded) return { line: '' }
+
+  const lines = options.placedSubjects.map((subject) => {
+    const label = [subject.promptToken?.trim(), subject.name?.trim()].filter(Boolean).join(' — ')
+    return `Facial expression (${label}): ${expanded}.`
+  })
+  return { line: lines.join(' ') }
 }
 
 /** Per-character directed emotion block for beat frame prompts. */

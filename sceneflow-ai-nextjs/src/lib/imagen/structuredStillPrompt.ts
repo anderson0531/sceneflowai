@@ -22,6 +22,11 @@ import {
   nameMatchesLibrary,
   pickCanonicalObject,
 } from '@/lib/vision/objectDuplicateClusters'
+import {
+  enrichActionFramingWithCastPerformance,
+  formatExclusionParagraph,
+  recoverLeakedActionFromExclusions,
+} from '@/lib/scene/castPerformanceFraming'
 
 export const STILL_SECTION_REFERENCES = '[REFERENCES]'
 export const STILL_SECTION_TASK = '[TASK]'
@@ -108,6 +113,20 @@ export function joinPromptBlocks(...blocks: Array<string | false | null | undefi
     .map((block) => (typeof block === 'string' ? block.trim() : ''))
     .filter(Boolean)
     .join('\n\n')
+}
+
+/** Keep extra still lines inside [STILL], not after [EXCLUSIONS]. */
+export function injectBeforeStyleOrExclusions(prompt: string, block: string): string {
+  const insertion = block.trim()
+  if (!insertion) return prompt
+  if (prompt.includes(insertion)) return prompt
+  if (/\[STYLE\]/i.test(prompt)) {
+    return prompt.replace(/\[STYLE\]/i, `${insertion}\n\n[STYLE]`)
+  }
+  if (/\[EXCLUSIONS/i.test(prompt)) {
+    return prompt.replace(/\[EXCLUSIONS[^\]]*\]/i, `${insertion}\n\n$&`)
+  }
+  return joinPromptBlocks(prompt, insertion)
 }
 
 function extractSection(text: string, header: RegExp, nextHeaders: RegExp): string {
@@ -212,10 +231,20 @@ export function parseStillPromptSource(text: string): {
     actionFraming = extractActionFramingBody(withoutSections)
   }
 
+  const recovered = recoverLeakedActionFromExclusions(
+    exclusionsSection || exclusionsBoundaries
+  )
+  if (recovered.leakedAction) {
+    actionFraming = enrichActionFramingWithCastPerformance({
+      actionFraming: [actionFraming, recovered.leakedAction].filter(Boolean).join(' '),
+      castNames: [],
+    })
+  }
+
   return {
     actionFraming,
     style: styleSection || globalStyle,
-    exclusions: exclusionsSection || exclusionsBoundaries,
+    exclusions: recovered.exclusions,
   }
 }
 
@@ -658,8 +687,10 @@ function styleAlreadyHasPhotoreal(style: string): boolean {
  * what keeps re-assembly byte-stable.
  */
 function mergeExclusions(base: string, extra?: string): string {
-  const primary = base.trim()
-  const addition = extra?.trim()
+  const recoveredBase = recoverLeakedActionFromExclusions(base)
+  const recoveredExtra = recoverLeakedActionFromExclusions(extra ?? '')
+  const primary = formatExclusionParagraph(recoveredBase.exclusions)
+  const addition = formatExclusionParagraph(recoveredExtra.exclusions)
   if (!addition) return primary
   if (!primary) return addition
   if (primary.toLowerCase().includes(addition.toLowerCase())) return primary
@@ -675,7 +706,10 @@ export function assembleStructuredStillPrompt(input: {
 }): string {
   const refs = input.refs ?? []
   const parsed = parseStillPromptSource(input.actionOrStructured)
-  const actionFraming = replaceLibraryNamesWithTokens(parsed.actionFraming, refs)
+  const actionFraming = enrichActionFramingWithCastPerformance({
+    actionFraming: replaceLibraryNamesWithTokens(parsed.actionFraming, refs),
+    castNames: [],
+  })
 
   const stillLines = [STILL_PURPOSE_LINE]
   if (input.includeCandid) {

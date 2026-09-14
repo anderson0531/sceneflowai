@@ -79,6 +79,7 @@ import {
   formatStillReferencesLegend,
   isStructuredStillPrompt,
   joinPromptBlocks,
+  injectBeforeStyleOrExclusions,
   resolveLibraryItemPromptMatch,
   stillRefsFromAttachedImages,
   type LibraryItemPromptMatch,
@@ -128,10 +129,7 @@ import {
   mergeBeatFrameNegativePrompt,
 } from '@/lib/character/sceneCharacterHeadshot'
 import {
-  attributeBeatExpression,
-  buildBeatDirectedEmotionPromptSection,
   buildSceneAppearanceContinuityPromptSection,
-  formatDirectedEmotionLine,
   formatVisualExpressionCue,
   resolveBeatDirectedEmotion,
   resolveDirectedEmotionForCharacter,
@@ -139,6 +137,7 @@ import {
   stripAllCues,
   stripPromptMetaInstructions,
 } from '@/lib/scene/performanceCues'
+import { applyCastPerformanceToPrompt } from '@/lib/scene/castPerformanceFraming'
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
 import {
   buildLocationReferencePromptLine,
@@ -249,7 +248,13 @@ function appendSceneImagePromptModifiers(
   )
   const alreadyHasPhotoreal =
     /photorealistic|live-action|live action|photographed on real camera/i.test(optimizedPrompt)
-  if (photorealisticAnchor && !alreadyHasPhotoreal) {
+  const structured = isStructuredStillPrompt(optimizedPrompt)
+  const appendBlock = (block: string) => {
+    optimizedPrompt = structured
+      ? injectBeforeStyleOrExclusions(optimizedPrompt, block)
+      : joinPromptBlocks(optimizedPrompt, block)
+  }
+  if (photorealisticAnchor && !alreadyHasPhotoreal && !structured) {
     optimizedPrompt = joinPromptBlocks(optimizedPrompt, photorealisticAnchor)
   }
 
@@ -271,7 +276,7 @@ function appendSceneImagePromptModifiers(
     .filter((token): token is string => !!token)
   const hairCompositionLock = buildHairCompositionLock(ctx.fullSceneContext, personTokens)
   if (hairCompositionLock && !optimizedPrompt.includes('do not pull hair back')) {
-    optimizedPrompt = joinPromptBlocks(optimizedPrompt, hairCompositionLock)
+    appendBlock(hairCompositionLock)
   }
 
   const diptychCharacters = characterReferences.filter(
@@ -281,8 +286,7 @@ function appendSceneImagePromptModifiers(
     const perCharacterDiptychLines = diptychCharacters
       .map((cr: { name: string }) => buildWardrobeDiptychCharacterConsumptionLine(cr.name))
       .join('\n')
-    optimizedPrompt = joinPromptBlocks(
-      optimizedPrompt,
+    appendBlock(
       `${WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION}\n${perCharacterDiptychLines}`
     )
     console.log(
@@ -291,37 +295,25 @@ function appendSceneImagePromptModifiers(
   }
 
   if (ctx.isBeatFrame && characterReferences.length > 0) {
-    const directedEmotionSection = buildBeatDirectedEmotionPromptSection(
-      characterReferences.map((ref: { name: string; directedEmotion?: string }) => ({
-        name: ref.name,
-        emotion: ref.directedEmotion || '',
-      }))
-    )
-    if (directedEmotionSection && !optimizedPrompt.includes('Directed emotion:')) {
-      optimizedPrompt = joinPromptBlocks(optimizedPrompt, directedEmotionSection)
-    } else if (
-      ctx.beatDirectedEmotion &&
-      !optimizedPrompt.includes('Facial expression:') &&
-      !optimizedPrompt.includes('Directed emotion:')
-    ) {
-      const expression = attributeBeatExpression({
-        emotion: ctx.beatDirectedEmotion,
-        placedSubjects: characterReferences,
-        speakerName: ctx.beatSpeakerName,
-      })
-      if (expression.line) {
-        optimizedPrompt = joinPromptBlocks(optimizedPrompt, expression.line)
-        if (expression.attributedTo) {
-          console.log(
-            `[Scene Image] Beat expression "${ctx.beatDirectedEmotion}" bound to ${expression.attributedTo} — ${characterReferences.length} subjects in frame`
-          )
-        }
-      } else if (expression.dropped === 'ambiguous-subject') {
-        console.warn(
-          `[Scene Image] Beat expression "${ctx.beatDirectedEmotion}" names no speaker among ${characterReferences.length} placed subjects — dropped rather than letting the model pick a face`
-        )
-      }
+    const emotionsByName: Record<string, string> = {}
+    const tokensByName: Record<string, string> = {}
+    for (const ref of characterReferences) {
+      const name = typeof ref.name === 'string' ? ref.name.trim() : ''
+      if (!name) continue
+      const emotion = typeof ref.directedEmotion === 'string' ? ref.directedEmotion.trim() : ''
+      if (emotion) emotionsByName[name] = emotion
+      const token = typeof ref.promptToken === 'string' ? ref.promptToken.trim() : ''
+      if (token) tokensByName[name] = token
     }
+    optimizedPrompt = applyCastPerformanceToPrompt(optimizedPrompt, {
+      castNames: characterReferences
+        .map((ref: { name?: string }) => ref.name?.trim() ?? '')
+        .filter(Boolean),
+      emotionsByName,
+      tokensByName,
+      speakerName: ctx.beatSpeakerName,
+      defaultEmotion: ctx.beatDirectedEmotion,
+    })
 
     const continuitySection = buildSceneAppearanceContinuityPromptSection(
       characterReferences.map(
@@ -335,7 +327,7 @@ function appendSceneImagePromptModifiers(
       continuitySection &&
       !optimizedPrompt.includes('Scene appearance continuity')
     ) {
-      optimizedPrompt = joinPromptBlocks(optimizedPrompt, continuitySection)
+      appendBlock(continuitySection)
     }
   } else if (
     ctx.beatForEmotion?.line &&
@@ -345,7 +337,7 @@ function appendSceneImagePromptModifiers(
   ) {
     const expressionCue = formatVisualExpressionCue(ctx.beatForEmotion.line)
     if (expressionCue && !optimizedPrompt.includes('Facial expression:')) {
-      optimizedPrompt = joinPromptBlocks(optimizedPrompt, expressionCue)
+      appendBlock(expressionCue)
     }
   }
 
@@ -3062,17 +3054,6 @@ export async function POST(req: NextRequest) {
           geminiPrompt += `- Match character identity from identity reference images (bone structure, features, hair, skin tone, age, ethnicity — NOT facial expression)\n`
           geminiPrompt += `- ${ORIGINAL_ADULT_SUBJECT_REQUIREMENT}\n`
           geminiPrompt += `- ${EXPRESSION_OVERRIDE_INSTRUCTION}\n`
-          const beatDirectedEmotionSection = buildBeatDirectedEmotionPromptSection(
-            characterReferences.map((ref: { name: string; directedEmotion?: string }) => ({
-              name: ref.name,
-              emotion: ref.directedEmotion || '',
-            }))
-          )
-          if (beatDirectedEmotionSection) {
-            geminiPrompt += `- ${beatDirectedEmotionSection}\n`
-          } else if (beatDirectedEmotion) {
-            geminiPrompt += `- ${formatDirectedEmotionLine(beatDirectedEmotion, 'Directed emotion')}\n`
-          }
           const appearanceContinuitySection = buildSceneAppearanceContinuityPromptSection(
             characterReferences.map(
               (ref: { name: string; sceneAppearanceContinuity?: string }) => ({

@@ -166,7 +166,7 @@ describe('scene-image-intelligence prompts include beat direction authority', ()
     expect(user).toContain('Shot type: Insert Shot')
     expect(user).toContain('Camera angle: low angle')
     expect(user).toContain('Blocking: Elara leans into the console')
-    expect(user).toContain('Emotion (render on primary subject): hypnotic awe')
+    expect(user).toContain('Emotion (render on every visible face): hypnotic awe')
     expect(user).toContain('Gaze: toward the pulse')
     expect(user).toContain(
       'Beat key props (subset of scene props — only show these): Water-damaged leather journal'

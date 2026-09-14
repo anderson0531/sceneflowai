@@ -550,7 +550,7 @@ CRITICAL RULES:
 3. NO CONFLICTING TEXT WITH REFERENCES:
    - Use the provided Gender for each character as authoritative — never infer gender from the character's name
    - When an identity reference exists (person [N]), NEVER describe face, skin, ethnicity, age, gender, or body type in your action text — the reference image owns those structural traits, and code states them once in the [REFERENCES] legend
-   - FACIAL EXPRESSION / EMOTION is NOT owned by identity or wardrobe references — always render the beat's directed emotional state on the face; describe expression in [SCENE COMPOSITION & BEAT] using directedEmotion from input when provided
+   - FACIAL EXPRESSION / EMOTION is NOT owned by identity or wardrobe references — always render the beat's directed emotional state on EVERY visible face inside Action/Framing; never put emotion under [EXCLUSIONS]
    - When sceneAppearanceContinuity is provided for a character, ALWAYS preserve those visible marks (bruises, wounds, makeup wear) from the wardrobe reference / notes — do not drop them when emotion changes between beats
    - When hairDescription is provided in input for a character with an identity ref, DO include a concise Hair lock in [SCENE COMPOSITION & BEAT] or Subject section — e.g. "person [1], hair: swept-back dark auburn ponytail (match identity reference exactly)"
    - When a wardrobe reference exists (Ref Image [M]), NEVER describe outfit colors, garments, or accessories in text — the wardrobe reference owns clothing AND any visible scene-state marks present on that image
@@ -603,7 +603,7 @@ Palette & Grade: [omit this line unless the input names a grade]
 
 Then always:
 [SCENE COMPOSITION & BEAT]
-Action/Framing: [shot type + frozen action for THIS beat; use ONLY person [N] tokens for characters VISIBLE in this beat — never invent or renumber tokens; you MAY omit person [N] tokens for characters not on camera; never restate character names in parentheses after a person token; use prop [N] and location [N] tokens (not library names) for referenced props/locations; describe body blocking, gesture, what each character is physically doing, hand/prop interaction, and gaze target (where they look); include directed facial expression/emotion for each visible character — do NOT copy neutral expression from identity reference; characters are engaged in the action and NOT looking at the camera unless the beat is direct-to-camera address]
+Action/Framing: [shot type + frozen action for THIS beat; when two or more people are visible, state that both/all bodies are fully in frame rather than a coverage label alone; use ONLY person [N] tokens for characters VISIBLE in this beat — never invent or renumber tokens; you MAY omit person [N] tokens for characters not on camera; never restate character names in parentheses after a person token; use prop [N] and location [N] tokens (not library names) for referenced props/locations; for EACH visible person [N] describe body blocking (weight, contact with the floor or a surface, contact shadow, hands), gesture, hand/prop interaction, labeled gaze, and directed facial expression/emotion (eyes/jaw/mouth/shoulders) — do NOT copy the neutral expression from the identity reference; never put emotion or performance under [EXCLUSIONS]; characters are engaged in the action and NOT looking at the camera unless the beat is direct-to-camera address]
 
 [EXCLUSIONS & BOUNDARIES]
 Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, turnaround sheet layout, 2x2 grid output, 4-panel layout, split-screen output, multi-panel layout, diptych, reference sheet collage, faceless figures, or artistic blending of reference mediums. Maintain 100% photographic realism when art style is photorealistic. No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).
@@ -639,7 +639,7 @@ function appendBeatDirectionAuthorityBlock(request: SceneImageIntelligenceReques
     )
   }
   if (bd.blocking) lines.push(`Blocking: ${bd.blocking}`)
-  if (bd.emotion) lines.push(`Emotion (render on primary subject): ${bd.emotion}`)
+  if (bd.emotion) lines.push(`Emotion (render on every visible face): ${bd.emotion}`)
   if (bd.gaze) lines.push(`Gaze: ${bd.gaze}`)
   if (bd.keyProps && bd.keyProps.length > 0) {
     lines.push(`Beat key props (subset of scene props — only show these): ${bd.keyProps.join(', ')}`)

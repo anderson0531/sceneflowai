@@ -378,8 +378,9 @@ describe('composePersistedBeatStillPrompt', () => {
 
     expect(framing).not.toMatch(/you knew about the shaft/i)
     expect(framing).toContain('Two-Shot')
+    expect(framing).toMatch(/both Piper Hayes and Professor Gideon Croft fully in frame/)
     expect(framing).toContain('Body position: Piper Hayes squares up to Gideon Croft')
-    expect(framing).toContain('Gaze: locked on Gideon Croft')
+    expect(framing).toContain('Gaze (Piper Hayes): locked on Gideon Croft')
     expect(framing).toContain('Cast in frame: Piper Hayes, Professor Gideon Croft')
   })
 
@@ -513,6 +514,61 @@ describe('composePersistedBeatStillPrompt', () => {
 
     expect(framing).toContain('Cast in frame: Piper Hayes — and no other people.')
     expect(framing).not.toMatch(/No people in frame/)
+  })
+
+  it('grounds a two-shot person who is only a landmark and puts expanded faces on both', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_tunnel',
+      sequenceIndex: 6,
+      kind: 'dialogue',
+      character: 'Gideon Croft',
+      line: '[terrified] The ice is taking the tunnel.',
+      beatDirection: {
+        shotType: 'Two-Shot',
+        cameraAngle: 'low angle',
+        frozenMoment:
+          "The frozen spanner is wedged beside Piper Hayes's shoulder, blocking Piper Hayes's path.",
+        blocking:
+          'Gideon Croft has thrown himself onto the frozen concrete, fingers locked around the spanner',
+        emotion: 'terrified, horrified',
+        gaze: 'Down at Piper Hayes',
+        castInFrame: ['Piper Hayes', 'Gideon Croft'],
+        keyProps: ['Thirty-Inch Iron Rail Spanner'],
+      },
+    })
+
+    expect(framing).toMatch(
+      /Two-Shot, low angle:\s*both Piper Hayes and Gideon Croft fully in frame/i
+    )
+    expect(framing).toMatch(
+      /Piper Hayes stands on the set floor with full weight through both feet and a matching contact shadow/
+    )
+    expect(framing).toContain('Body position: Gideon Croft has thrown himself onto the frozen concrete')
+    expect(framing).toContain('Gaze (Gideon Croft): Down at Piper Hayes')
+    expect(framing).toMatch(/Facial expression \(Piper Hayes\):/)
+    expect(framing).toMatch(/Facial expression \(Gideon Croft\):/)
+    expect(framing).toMatch(/eyes wide/)
+    expect(framing).toMatch(/mouth open/)
+    expect(framing).not.toMatch(/Directed emotion:/)
+  })
+
+  it('does not drop the non-speaker face when beat emotion is shared', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_shared_face',
+      sequenceIndex: 7,
+      kind: 'action',
+      beatDirection: {
+        shotType: 'Two-Shot',
+        blocking: 'Gideon Croft braces on the spanner',
+        emotion: 'quiet dread',
+        castInFrame: ['Piper Hayes', 'Gideon Croft'],
+      },
+    })
+
+    expect(framing).toMatch(/Facial expression \(Piper Hayes\):/)
+    expect(framing).toMatch(/Facial expression \(Gideon Croft\):/)
+    expect(framing).toMatch(/quiet dread/)
+    expect(framing).not.toMatch(/dropped/)
   })
 
   it('binds composed cast names to person tokens during still assembly', () => {
