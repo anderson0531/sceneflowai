@@ -27,6 +27,7 @@ import {
   stringifyProjectPut,
   visionPhasePut,
 } from '@/lib/projects/slimProjectPutPayload'
+import { visionReferencesPutPayload } from '@/lib/projects/mergeVisionPhaseReferences'
 import {
   applyScenePreservation,
   shouldRegenerateSceneDirection,
@@ -919,6 +920,67 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     saveQueueRef.current = resultPromise.catch(() => null)
     return resultPromise
   }, [projectId])
+
+  const persistObjectLibrary = useCallback(
+    async (
+      objectReferences: VisualReference[],
+      options: {
+        objectDuplicateIgnores?: string[]
+        extraDroppedIds?: string[]
+        extraVisionPhase?: Record<string, unknown>
+        debugLabel: string
+      }
+    ): Promise<Response> => {
+      const previousObjectReferences = (
+        projectRef.current || project
+      )?.metadata?.visionPhase?.references?.objectReferences as VisualReference[] | undefined
+      const references = visionReferencesPutPayload({
+        sceneReferences: sceneReferencesRef.current,
+        objectReferences,
+        locationReferences: locationReferencesRef.current,
+        objectDuplicateIgnores: options.objectDuplicateIgnores,
+        previousObjectReferences,
+        extraDroppedIds: options.extraDroppedIds,
+      })
+      const persistedReferences = { ...references }
+      delete persistedReferences.droppedObjectReferenceIds
+
+      const currentProject = projectRef.current || project
+      const existingMetadata = currentProject?.metadata || {}
+      const existingVisionPhase = existingMetadata.visionPhase || {}
+      const nextMetadata = {
+        ...existingMetadata,
+        visionPhase: {
+          ...existingVisionPhase,
+          ...options.extraVisionPhase,
+          references: {
+            ...(existingVisionPhase.references || {}),
+            ...persistedReferences,
+          },
+        },
+      }
+
+      if (currentProject) {
+        const syncedProject = { ...currentProject, metadata: nextMetadata }
+        projectRef.current = syncedProject
+        setProject(syncedProject)
+      }
+
+      return serializedProjectSave(
+        {
+          metadata: {
+            ...nextMetadata,
+            visionPhase: {
+              ...nextMetadata.visionPhase,
+              references,
+            },
+          },
+        },
+        options.debugLabel
+      )
+    },
+    [project, serializedProjectSave]
+  )
 
   const persistVisionCharacters = useCallback(
     async (charactersToSave: any[], debugLabel?: string): Promise<Response> => {
@@ -2783,25 +2845,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setObjectReferences(updatedObjectRefs)
 
       try {
-        const existingMetadata = project?.metadata || {}
-        const existingVisionPhase = existingMetadata.visionPhase || {}
-
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: stringifyProjectPut({
-            metadata: {
-              ...existingMetadata,
-              visionPhase: {
-                ...existingVisionPhase,
-                references: {
-                  sceneReferences: sceneReferencesRef.current,
-                  objectReferences: updatedObjectRefs,
-                  locationReferences: locationReferencesRef.current
-                }
-              }
-            }
-          })
+        const response = await persistObjectLibrary(updatedObjectRefs, {
+          objectDuplicateIgnores: objectDuplicateIgnoresRef.current,
+          debugLabel: 'handleObjectsAutoAdded',
         })
 
         if (!response.ok) {
@@ -2816,7 +2862,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         console.error('[handleObjectsAutoAdded] Error saving references:', error)
       }
     },
-    [project, projectId]
+    [persistObjectLibrary]
   )
 
   const handleMergeObjects = useCallback(
@@ -2857,27 +2903,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setScript(nextScript)
 
       try {
-        const currentMetadata = (projectRef.current || project)?.metadata || {}
-        await serializedProjectSave(
-          {
-            metadata: {
-              ...currentMetadata,
-              visionPhase: {
-                ...currentMetadata?.visionPhase,
-                references: {
-                  sceneReferences: sceneReferencesRef.current,
-                  objectReferences: updatedObjectRefs,
-                  locationReferences: locationReferencesRef.current,
-                  objectDuplicateIgnores: nextIgnores,
-                  droppedObjectReferenceIds: duplicateIds,
-                },
-                scenes: updatedScenes,
-                script: { ...(currentScript?.script || {}), scenes: updatedScenes },
-              },
-            },
+        const response = await persistObjectLibrary(updatedObjectRefs, {
+          objectDuplicateIgnores: nextIgnores,
+          extraDroppedIds: duplicateIds,
+          extraVisionPhase: {
+            scenes: updatedScenes,
+            script: { ...(currentScript?.script || {}), scenes: updatedScenes },
           },
-          'handleMergeObjects'
-        )
+          debugLabel: 'handleMergeObjects',
+        })
+        if (!response.ok) {
+          console.error('[handleMergeObjects] Failed to save merged objects')
+          toast.error('Failed to merge objects')
+          return
+        }
         toast.success(
           `Merged ${duplicateIds.length} duplicate${duplicateIds.length === 1 ? '' : 's'} into ${keeper.name}`
         )
@@ -2886,7 +2925,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         toast.error('Failed to merge objects')
       }
     },
-    [project, serializedProjectSave]
+    [persistObjectLibrary]
   )
 
   const handleDeleteDuplicateObjects = useCallback(
@@ -2927,27 +2966,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setScript(nextScript)
 
       try {
-        const currentMetadata = (projectRef.current || project)?.metadata || {}
-        await serializedProjectSave(
-          {
-            metadata: {
-              ...currentMetadata,
-              visionPhase: {
-                ...currentMetadata?.visionPhase,
-                references: {
-                  sceneReferences: sceneReferencesRef.current,
-                  objectReferences: updatedObjectRefs,
-                  locationReferences: locationReferencesRef.current,
-                  objectDuplicateIgnores: nextIgnores,
-                  droppedObjectReferenceIds: droppedIds,
-                },
-                scenes: updatedScenes,
-                script: { ...(currentScript?.script || {}), scenes: updatedScenes },
-              },
-            },
+        const response = await persistObjectLibrary(updatedObjectRefs, {
+          objectDuplicateIgnores: nextIgnores,
+          extraDroppedIds: droppedIds,
+          extraVisionPhase: {
+            scenes: updatedScenes,
+            script: { ...(currentScript?.script || {}), scenes: updatedScenes },
           },
-          'handleDeleteDuplicateObjects'
-        )
+          debugLabel: 'handleDeleteDuplicateObjects',
+        })
+        if (!response.ok) {
+          console.error('[handleDeleteDuplicateObjects] Failed to save deleted objects')
+          toast.error('Failed to delete objects')
+          return
+        }
         toast.success(
           `Deleted ${droppedIds.length} object${droppedIds.length === 1 ? '' : 's'} from the library`
         )
@@ -2956,7 +2988,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         toast.error('Failed to delete objects')
       }
     },
-    [project, serializedProjectSave]
+    [persistObjectLibrary]
   )
 
   const handleIgnoreObjectDuplicates = useCallback(
@@ -2971,31 +3003,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setObjectDuplicateIgnores(nextIgnores)
 
       try {
-        const currentMetadata = (projectRef.current || project)?.metadata || {}
-        await serializedProjectSave(
-          {
-            metadata: {
-              ...currentMetadata,
-              visionPhase: {
-                ...currentMetadata?.visionPhase,
-                references: {
-                  sceneReferences: sceneReferencesRef.current,
-                  objectReferences: objectReferencesRef.current,
-                  locationReferences: locationReferencesRef.current,
-                  objectDuplicateIgnores: nextIgnores,
-                },
-              },
-            },
-          },
-          'handleIgnoreObjectDuplicates'
-        )
+        const response = await persistObjectLibrary(objectReferencesRef.current, {
+          objectDuplicateIgnores: nextIgnores,
+          debugLabel: 'handleIgnoreObjectDuplicates',
+        })
+        if (!response.ok) {
+          console.error('[handleIgnoreObjectDuplicates] Failed to save ignored pairs')
+          toast.error('Failed to ignore duplicate grouping')
+          return
+        }
         toast.success('Those names will stay separate')
       } catch (error) {
         console.error('[handleIgnoreObjectDuplicates] Failed to save ignored pairs', error)
         toast.error('Failed to ignore duplicate grouping')
       }
     },
-    [project, serializedProjectSave]
+    [persistObjectLibrary]
   )
 
   // Handler for inserting a backdrop segment at the beginning of a scene

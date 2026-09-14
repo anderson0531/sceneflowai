@@ -8,6 +8,7 @@ import { salvageStaleWriteMedia } from '@/lib/storyboard/staleWriteSalvage'
 import { upsertBeatSfxCueOnScene } from '@/lib/script/deriveSfxFromSceneContent'
 import { persistSceneAudioAtomic } from '@/lib/audio/persistSceneAudioAtomic'
 import { persistSceneSfxAudioAtomic } from '@/lib/sfx/persistSceneSfxAudio'
+import { mergeVisionPhaseReferences } from '@/lib/projects/mergeVisionPhaseReferences'
 
 // Increase timeout for large project updates
 export const maxDuration = 60 // 60 seconds timeout
@@ -464,103 +465,24 @@ export async function PUT(
           const incomingSceneRefs = incomingReferences?.sceneReferences || []
           const incomingObjectRefs = incomingReferences?.objectReferences || []
           const incomingLocationRefs = incomingReferences?.locationReferences || []
-          
-          // Create maps for quick lookup by ID
-          const existingSceneRefMap = new Map(existingSceneRefs.map((r: any) => [r.id, r]))
-          const existingObjectRefMap = new Map(existingObjectRefs.map((r: any) => [r.id, r]))
-          const existingLocationRefMap = new Map(existingLocationRefs.map((r: any) => [r.id, r]))
-          
-          // Merge scene references (backdrops): incoming takes precedence, preserve existing not in incoming
-          let mergedSceneRefs = incomingSceneRefs.map((incomingRef: any) => {
-            const existingRef = existingSceneRefMap.get(incomingRef.id)
-            if (existingRef) {
-              return {
-                ...existingRef,
-                ...incomingRef,
-                imageUrl: pickPersistedMediaUrl(incomingRef.imageUrl, existingRef.imageUrl),
-              }
-            }
-            return incomingRef
-          })
-          
-          // Preserve existing scene refs not in incoming (prevents deletion by stale state)
-          const incomingSceneRefIds = new Set(incomingSceneRefs.map((r: any) => r.id))
-          const preservedSceneRefs = existingSceneRefs.filter((r: any) => !incomingSceneRefIds.has(r.id))
-          if (preservedSceneRefs.length > 0) {
-            console.log('[Projects PUT] Preserving scene references not in incoming:', preservedSceneRefs.length)
-            mergedSceneRefs = [...mergedSceneRefs, ...preservedSceneRefs]
-          }
-          
-          // Merge object references (props): same logic
-          let mergedObjectRefs = incomingObjectRefs.map((incomingRef: any) => {
-            const existingRef = existingObjectRefMap.get(incomingRef.id)
-            if (existingRef) {
-              return {
-                ...existingRef,
-                ...incomingRef,
-                imageUrl: pickPersistedMediaUrl(incomingRef.imageUrl, existingRef.imageUrl),
-              }
-            }
-            return incomingRef
-          })
-          
-          // Preserve existing object refs not in incoming, unless this write
-          // explicitly dropped them (merge/delete from the duplicate reviewer).
-          const incomingObjectRefIds = new Set(incomingObjectRefs.map((r: any) => r.id))
-          const droppedObjectRefIds = new Set(
-            Array.isArray(incomingReferences?.droppedObjectReferenceIds)
-              ? incomingReferences.droppedObjectReferenceIds.map(String)
-              : []
+
+          const mergedReferences = mergeVisionPhaseReferences(
+            existingReferences,
+            incomingReferences,
+            pickPersistedMediaUrl
           )
-          const preservedObjectRefs = existingObjectRefs.filter(
-            (r: any) => !incomingObjectRefIds.has(r.id) && !droppedObjectRefIds.has(String(r.id))
-          )
-          if (preservedObjectRefs.length > 0) {
-            console.log('[Projects PUT] Preserving object references not in incoming:', preservedObjectRefs.length)
-            mergedObjectRefs = [...mergedObjectRefs, ...preservedObjectRefs]
-          }
-          
-          // Merge location references: incoming takes precedence, preserve existing not in incoming
-          let mergedLocationRefs = incomingLocationRefs.map((incomingRef: any) => {
-            const existingRef = existingLocationRefMap.get(incomingRef.id)
-            if (existingRef) {
-              return {
-                ...existingRef,
-                ...incomingRef,
-                imageUrl: pickPersistedMediaUrl(incomingRef.imageUrl, existingRef.imageUrl),
-              }
-            }
-            return incomingRef
-          })
-          
-          // Preserve existing location refs not in incoming
-          const incomingLocationRefIds = new Set(incomingLocationRefs.map((r: any) => r.id))
-          const preservedLocationRefs = existingLocationRefs.filter((r: any) => !incomingLocationRefIds.has(r.id))
-          if (preservedLocationRefs.length > 0) {
-            console.log('[Projects PUT] Preserving location references not in incoming:', preservedLocationRefs.length)
-            mergedLocationRefs = [...mergedLocationRefs, ...preservedLocationRefs]
-          }
-          
-          const nextIgnores = Array.isArray(incomingReferences?.objectDuplicateIgnores)
-            ? incomingReferences.objectDuplicateIgnores
-            : existingReferences.objectDuplicateIgnores
-          mergedMetadata.visionPhase.references = {
-            sceneReferences: mergedSceneRefs,
-            objectReferences: mergedObjectRefs,
-            locationReferences: mergedLocationRefs,
-            ...(Array.isArray(nextIgnores) ? { objectDuplicateIgnores: nextIgnores } : {}),
-          }
-          
+          mergedMetadata.visionPhase.references = mergedReferences
+
           console.log('[Projects PUT] Deep merged references:', {
             existingSceneRefs: existingSceneRefs.length,
             incomingSceneRefs: incomingSceneRefs.length,
-            mergedSceneRefs: mergedSceneRefs.length,
+            mergedSceneRefs: mergedReferences.sceneReferences?.length || 0,
             existingObjectRefs: existingObjectRefs.length,
             incomingObjectRefs: incomingObjectRefs.length,
-            mergedObjectRefs: mergedObjectRefs.length,
+            mergedObjectRefs: mergedReferences.objectReferences?.length || 0,
             existingLocationRefs: existingLocationRefs.length,
             incomingLocationRefs: incomingLocationRefs.length,
-            mergedLocationRefs: mergedLocationRefs.length
+            mergedLocationRefs: mergedReferences.locationReferences?.length || 0
           })
         }
       }
