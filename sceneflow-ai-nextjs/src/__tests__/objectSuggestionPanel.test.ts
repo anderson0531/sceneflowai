@@ -60,4 +60,32 @@ describe('ObjectSuggestionPanel Objects tab render', () => {
     expect(container.textContent).toContain('Review suggestions')
     expect(container.textContent).toContain('Update Objects')
   })
+
+  it('offers a duplicate checker when synonym object rows already exist', () => {
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    root = createRoot(container)
+
+    act(() => {
+      root.render(
+        React.createElement(ObjectSuggestionPanel, {
+          scenes: [
+            {
+              sceneNumber: 1,
+              heading: 'INT. RAIL YARD - NIGHT',
+              action: 'Elara lifts the spanner.',
+            },
+          ],
+          existingObjects: [
+            { id: 'a', type: 'object', name: 'Thirty-Inch Iron Rail Spanner' },
+            { id: 'b', type: 'object', name: 'Spud wrench' },
+          ],
+          onObjectGenerated: () => undefined,
+          onMergeObjects: () => undefined,
+        })
+      )
+    })
+
+    expect(container.textContent).toContain('Review duplicate objects (1)')
+  })
 })

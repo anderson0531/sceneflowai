@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { 
+  Copy,
   Sparkles, 
   Check, 
   X, 
@@ -20,14 +21,19 @@ import { ObjectSuggestion, ObjectCategory, ObjectImportance, VisualReference } f
 import {
   MIN_BEATS_FOR_LIBRARY,
   countObjectBeatReferences,
-  isAlreadyInLibrary,
   selectRecurringObjects,
   slimSceneForObjectUsage,
 } from '@/lib/vision/objectBeatUsage'
+import {
+  duplicateObjectGroups,
+  nameMatchesLibrary,
+  selectCanonicalNewObjects,
+} from '@/lib/vision/objectDuplicateClusters'
 import { cn } from '@/lib/utils'
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
 import { runObjectBatch } from '@/lib/vision/objectBatchGeneration'
 import { LibraryKindToolbar } from './LibraryKindToolbar'
+import { ObjectDuplicateMergeDialog } from './ObjectDuplicateMergeDialog'
 import { countObjectAgentItems } from '@/lib/vision/libraryKindAgents'
 import type { ReferenceExpressScope } from '@/lib/vision/referenceExpress/types'
 import { toast } from 'sonner'
@@ -60,6 +66,8 @@ interface ObjectSuggestionPanelProps {
    * library, without images. Called with only the entries that are missing.
    */
   onObjectsAutoAdded?: (objects: AutoAddedObject[]) => void | Promise<void>
+  /** Confirm-to-merge synonym rows already in the library */
+  onMergeObjects?: (primaryId: string, duplicateIds: string[]) => void | Promise<void>
   /** Compact mode for sidebar */
   compact?: boolean
   onExpressGenerateReferences?: (
@@ -227,6 +235,7 @@ export function ObjectSuggestionPanel({
   compact = false,
   onExpressGenerateReferences,
   isExpressGeneratingReferences = false,
+  onMergeObjects,
 }: ObjectSuggestionPanelProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isUpdatingObjects, setIsUpdatingObjects] = useState(false)
@@ -241,6 +250,13 @@ export function ObjectSuggestionPanel({
   const [isBatchGenerating, setIsBatchGenerating] = useState(false)
   const [batchProgress, setBatchProgress] = useState(0)
   const [currentBatchItem, setCurrentBatchItem] = useState<string>('')
+  const [mergeDialogOpen, setMergeDialogOpen] = useState(false)
+
+  const duplicateGroups = useMemo(
+    () => duplicateObjectGroups(existingObjects),
+    [existingObjects]
+  )
+  const duplicateCount = duplicateGroups.reduce((sum, group) => sum + group.length - 1, 0)
 
   // Objects the beat direction already names and handles more than once are a
   // fact of the script, not a guess, so they go into the library without a
@@ -258,14 +274,18 @@ export function ObjectSuggestionPanel({
   useEffect(() => {
     if (!onObjectsAutoAdded || recurringInBeats.length === 0) return
     const existingNames = existingObjects.map((o) => o.name)
-    const missing = recurringInBeats.filter(
-      (usage) =>
-        !autoAddedKeysRef.current.has(usage.key) &&
-        !isAlreadyInLibrary(usage.name, existingNames)
+    const pending = recurringInBeats.filter(
+      (usage) => !autoAddedKeysRef.current.has(usage.key)
     )
+    const missing = selectCanonicalNewObjects(pending, existingNames)
+    const acceptedNames = [...existingNames, ...missing.map((usage) => usage.name)]
+    for (const usage of pending) {
+      if (nameMatchesLibrary(usage.name, acceptedNames)) {
+        autoAddedKeysRef.current.add(usage.key)
+      }
+    }
     if (missing.length === 0) return
 
-    for (const usage of missing) autoAddedKeysRef.current.add(usage.key)
     setAutoAddedNames((prev) => [...prev, ...missing.map((usage) => usage.name)])
     void onObjectsAutoAdded(
       missing.map((usage) => ({
@@ -307,9 +327,7 @@ export function ObjectSuggestionPanel({
   const addMissingSuggestionsAsRows = async (nextSuggestions: ObjectSuggestion[]) => {
     if (!onObjectsAutoAdded) return 0
     const existingNames = existingObjects.map((o) => o.name)
-    const missing = nextSuggestions.filter(
-      (suggestion) => !isAlreadyInLibrary(suggestion.name, existingNames)
-    )
+    const missing = selectCanonicalNewObjects(nextSuggestions, existingNames)
     if (missing.length === 0) return 0
     await onObjectsAutoAdded(
       missing.map((suggestion) => ({
@@ -333,7 +351,11 @@ export function ObjectSuggestionPanel({
       const nextSuggestions = await fetchObjectSuggestions()
       setHasAnalyzed(true)
       const added = await addMissingSuggestionsAsRows(nextSuggestions)
-      setSuggestions(added > 0 ? [] : nextSuggestions)
+      const remaining = selectCanonicalNewObjects(
+        nextSuggestions,
+        existingObjects.map((o) => o.name)
+      )
+      setSuggestions(added > 0 ? [] : remaining)
       if (nextSuggestions.length === 0) {
         toast.info('No additional objects found in the script')
       } else if (added === 0) {
@@ -369,7 +391,12 @@ export function ObjectSuggestionPanel({
     
     try {
       const nextSuggestions = await fetchObjectSuggestions()
-      setSuggestions(nextSuggestions)
+      setSuggestions(
+        selectCanonicalNewObjects(
+          nextSuggestions,
+          existingObjects.map((o) => o.name)
+        )
+      )
       setHasAnalyzed(true)
     } catch (err: any) {
       setError(err.message || 'Failed to analyze script for objects')
@@ -502,7 +529,32 @@ export function ObjectSuggestionPanel({
   }, [suggestions, generatingIds, onObjectGenerated])
 
   // Don't show if no scenes
-  if (scenes.length === 0) return null
+  // Don't show the suggestion UI if there are no scenes — unless synonym
+  // rows are already in the library and need a merge checker.
+  if (scenes.length === 0) {
+    if (!onMergeObjects || duplicateCount === 0) return null
+    return (
+      <>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setMergeDialogOpen(true)}
+          className="h-7 text-xs text-amber-300 border-amber-500/40 hover:bg-amber-500/10"
+          title="Merge library rows that name the same physical object"
+        >
+          <Copy className="w-3.5 h-3.5 mr-1" />
+          Review duplicate objects ({duplicateCount})
+        </Button>
+        <ObjectDuplicateMergeDialog
+          open={mergeDialogOpen}
+          onOpenChange={setMergeDialogOpen}
+          groups={duplicateGroups}
+          onMerge={onMergeObjects}
+        />
+      </>
+    )
+  }
 
   return (
     <>
@@ -533,6 +585,21 @@ export function ObjectSuggestionPanel({
         isAgentRunning={isObjectAgentRunning || isExpressGeneratingReferences}
         updateTitle="Scan the script and add missing objects to the library without spending image credits"
         agentTitle="Add missing objects from the script, then draw their reference stills"
+        extra={
+          onMergeObjects && duplicateCount > 0 ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setMergeDialogOpen(true)}
+              className="h-7 text-xs text-amber-300 border-amber-500/40 hover:bg-amber-500/10"
+              title="Merge library rows that name the same physical object"
+            >
+              <Copy className="w-3.5 h-3.5 mr-1" />
+              Review duplicate objects ({duplicateCount})
+            </Button>
+          ) : null
+        }
       />
       
       <div className="border border-indigo-500/30 bg-indigo-500/5 rounded-lg overflow-hidden">
@@ -670,6 +737,15 @@ export function ObjectSuggestionPanel({
         </div>
       )}
       </div>
+
+      {onMergeObjects ? (
+        <ObjectDuplicateMergeDialog
+          open={mergeDialogOpen}
+          onOpenChange={setMergeDialogOpen}
+          groups={duplicateGroups}
+          onMerge={onMergeObjects}
+        />
+      ) : null}
     </>
   )
 }

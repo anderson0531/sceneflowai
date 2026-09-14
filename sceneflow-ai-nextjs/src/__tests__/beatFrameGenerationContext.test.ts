@@ -544,6 +544,35 @@ describe('resolveBeatFrameGenerationContext', () => {
     expect(resolved.objectRefIds).toContain('prop-journal')
   })
 
+  it('auto-selects one library row when keyProps name several wrench/spanner synonyms', () => {
+    const objectReferences: VisualReference[] = [
+      { id: 'prop-rail', type: 'object', name: 'Thirty-Inch Iron Rail Spanner' },
+      { id: 'prop-heavy', type: 'object', name: 'Heavy cast-iron spud wrench' },
+      { id: 'prop-industrial', type: 'object', name: 'Industrial cast-iron spanner wrench' },
+      { id: 'prop-spud', type: 'object', name: 'Spud wrench' },
+    ]
+    const resolved = resolveBeatFrameGenerationContext({
+      scene: { heading: 'INT. RAIL YARD - NIGHT' },
+      beat: actionBeat({
+        actionDescription: 'Elara swings the iron rail spanner at the coupling.',
+        beatDirection: {
+          keyProps: [
+            'Thirty-Inch Iron Rail Spanner',
+            'Heavy cast-iron spud wrench',
+            'Industrial cast-iron spanner wrench',
+            'Spud wrench',
+          ],
+        },
+      }),
+      projectCharacters: characters,
+      locationReferences: [],
+      objectReferences,
+    })
+
+    expect(resolved.objectRefIds).toEqual(['prop-rail'])
+    expect(resolved.objectNames).toEqual(['Thirty-Inch Iron Rail Spanner'])
+  })
+
   describe('prop attachment is beat-scoped', () => {
     const spanner: VisualReference[] = [
       {

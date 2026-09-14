@@ -2588,12 +2588,13 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // One mentioned object is one object. Several library labels matching the
-      // same head noun describe it several contradictory ways.
+      // One mentioned object is one object. Several library labels for the
+      // same tool — shared head nouns or wrench/spanner synonyms — describe it
+      // several contradictory ways.
       const { kept, dropped } = dropDuplicateHeadNounMatches(optimizedPrompt, namedProps)
       for (const entry of dropped) {
         console.log(
-          `[Scene Image] Dropping prop reference "${entry.item.name}" — shares a head noun with "${entry.keptInstead}", which the frame names more closely`
+          `[Scene Image] Dropping prop reference "${entry.item.name}" — same physical object as "${entry.keptInstead}", which the frame names more closely`
         )
       }
 

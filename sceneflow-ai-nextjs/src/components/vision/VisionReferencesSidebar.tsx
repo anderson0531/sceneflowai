@@ -94,6 +94,8 @@ export interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps
   }) => void
   /** Callback when objects recurring across beats are added to the library un-imaged */
   onObjectsAutoAdded?: (objects: AutoAddedObject[]) => void | Promise<void>
+  /** Confirm-to-merge synonym object rows already in the library */
+  onMergeObjects?: (primaryId: string, duplicateIds: string[]) => void | Promise<void>
   /** Callback to update a reference image after editing */
   onUpdateReferenceImage?: (type: 'scene' | 'object', referenceId: string, newImageUrl: string) => void
   /** Callback to edit a character's reference image */
@@ -1216,6 +1218,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onInsertBackdropSegment,
     onObjectGenerated,
     onObjectsAutoAdded,
+    onMergeObjects,
     onUpdateReferenceImage,
     onEditCharacterImage,
     showProductionReadiness = true,
@@ -1812,12 +1815,13 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                 onAddFromLibrary={handleAddPropFromLibrary}
               />
               {/* AI Object Suggestions Panel */}
-              {scenesForSuggestion.length > 0 && onObjectGenerated && (
+              {((scenesForSuggestion.length > 0 || objectReferences.length > 1) && onObjectGenerated) && (
                 <ObjectSuggestionPanel
                   scenes={scenesForSuggestion}
                   existingObjects={objectReferences}
                   onObjectGenerated={onObjectGenerated}
                   onObjectsAutoAdded={onObjectsAutoAdded}
+                  onMergeObjects={onMergeObjects}
                   onExpressGenerateReferences={onExpressGenerateReferences}
                   isExpressGeneratingReferences={isExpressGeneratingReferences}
                   compact
