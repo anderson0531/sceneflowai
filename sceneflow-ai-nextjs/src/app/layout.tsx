@@ -234,6 +234,11 @@ export default function RootLayout({
         {getLandingVideoCdnHost() ? (
           <link rel="preconnect" href={getLandingVideoCdnHost()} crossOrigin="anonymous" />
         ) : null}
+        <link
+          rel="preload"
+          as="image"
+          href="/landing/hero/sceneflow-hero-en-poster.jpg"
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}

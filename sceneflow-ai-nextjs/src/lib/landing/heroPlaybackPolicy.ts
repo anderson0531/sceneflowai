@@ -1,9 +1,8 @@
 /**
  * Device / network policy for the landing hero.
  *
- * Phones get a 720p file. Desktop keeps 1080p or the 4K master. Extra
- * resolution past 720p on a phone tile only helps if someone casts the page
- * to a large screen, which is not a normal visit.
+ * Phones and desktop both play the uploaded web encode (~35 MB). The 4K
+ * master is never attached to the inline tile.
  */
 
 export type HeroNetworkContext = {

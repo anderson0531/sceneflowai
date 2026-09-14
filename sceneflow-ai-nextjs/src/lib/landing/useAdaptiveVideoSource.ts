@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, type RefObject } from 'react'
+import { isHeroFourKMasterUrl } from '@/config/landing/heroVideoLocales'
 
 export type AdaptiveVideoSources = {
   hlsSrc?: string
@@ -47,6 +48,7 @@ export function useAdaptiveVideoSource(
 
     const loadMp4 = (url = mp4) => {
       destroyHls()
+      if (!url || isHeroFourKMasterUrl(url)) return
       if (stripHash(video.src) !== stripHash(url)) {
         video.src = url
         video.load()

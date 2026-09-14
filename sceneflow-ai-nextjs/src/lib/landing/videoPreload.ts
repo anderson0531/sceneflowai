@@ -1,5 +1,4 @@
 import {
-  prefersLeanHeroSource,
   readHeroNetworkContext,
   type HeroNetworkContext,
 } from '@/lib/landing/heroPlaybackPolicy'
@@ -8,8 +7,8 @@ import {
 export type VideoPreloadValue = 'auto' | 'metadata' | 'none'
 
 /**
- * Pick a conservative preload strategy for mobile and slow connections.
- * Desktop fast links may still use `auto` for smoother hero autoplay.
+ * Conservative preload for the inline hero. `auto` would pull the whole
+ * progressive file during first paint; metadata is enough for muted autoplay.
  */
 export function getVideoPreloadStrategy(
   options?: Partial<HeroNetworkContext>
@@ -22,8 +21,7 @@ export function getVideoPreloadStrategy(
   }
 
   if (ctx.saveData) return 'none'
-  if (prefersLeanHeroSource(ctx)) return 'metadata'
-  return 'auto'
+  return 'metadata'
 }
 
 /** Preload for modal players — defer until the surface is opened. */

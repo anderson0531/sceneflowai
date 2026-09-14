@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs'
+import path from 'path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   getVideoPreloadStrategy,
@@ -9,6 +11,7 @@ import {
   getHeroVideoHlsUrl,
   getHeroVideoFallbackMp4Url,
   getHeroVideoPlaybackSources,
+  isHeroFourKMasterUrl,
 } from '@/config/landing/heroVideoLocales'
 
 describe('videoPreload', () => {
@@ -30,10 +33,10 @@ describe('videoPreload', () => {
     ).toBe('metadata')
   })
 
-  it('uses auto on desktop fast connections', () => {
+  it('uses metadata on desktop fast connections instead of auto', () => {
     expect(
       getVideoPreloadStrategy({ isMobile: false, saveData: false, effectiveType: '4g' })
-    ).toBe('auto')
+    ).toBe('metadata')
   })
 
   it('defers modal preload until open', () => {
@@ -61,7 +64,7 @@ describe('hero video CDN config', () => {
     }
   })
 
-  it('serves 720p to phones and 1080p to desktop', () => {
+  it('plays the uploaded web encode, never the 4K master', () => {
     const mobile = getHeroVideoPlaybackSources('en', {
       isMobile: true,
       saveData: false,
@@ -73,10 +76,13 @@ describe('hero video CDN config', () => {
       effectiveType: '4g',
     })
 
-    expect(mobile?.mp4Src).toContain('sceneflow-hero-en-720p.mp4')
-    expect(mobile?.mp4SrcFallback).toContain('SceneFlow%20Hero%20Video.mp4')
-    expect(desktop?.mp4Src).toContain('sceneflow-hero-en-1080p.mp4')
-    expect(desktop?.mp4SrcFallback).toContain('SceneFlow%20Hero%20Video.mp4')
+    expect(mobile?.mp4Src).toContain('sceneflow-hero-en.mp4')
+    expect(mobile?.mp4Src).not.toContain('720p')
+    expect(isHeroFourKMasterUrl(mobile?.mp4Src)).toBe(false)
+    expect(isHeroFourKMasterUrl(mobile?.mp4SrcFallback)).toBe(false)
+    expect(desktop?.mp4Src).toContain('sceneflow-hero-en.mp4')
+    expect(isHeroFourKMasterUrl(desktop?.mp4Src)).toBe(false)
+    expect(isHeroFourKMasterUrl(desktop?.mp4SrcFallback)).toBe(false)
   })
 
   it('treats Save-Data and slow networks as lean even on desktop', () => {
@@ -106,6 +112,15 @@ describe('hero video CDN config', () => {
     })
     expect(mobile?.hlsSrc).toBe('https://media.example.com/hero/en/hls/manifest.m3u8')
     expect(mobile?.mp4Src).toBe('https://media.example.com/hero/en/hls/fallback-720p.mp4')
+  })
+})
+
+describe('landing layout first-paint hints', () => {
+  it('preloads the English poster next to the Blob preconnect', () => {
+    const layout = readFileSync(path.join(process.cwd(), 'src/app/layout.tsx'), 'utf8')
+    expect(layout).toContain('rel="preconnect" href={HERO_VIDEO_BLOB_HOST}')
+    expect(layout).toContain('rel="preload"')
+    expect(layout).toContain('/landing/hero/sceneflow-hero-en-poster.jpg')
   })
 })
 

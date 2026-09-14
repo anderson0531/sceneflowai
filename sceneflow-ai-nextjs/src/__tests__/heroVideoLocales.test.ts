@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   DEFAULT_HERO_VIDEO_LOCALE,
   HERO_VIDEO_BLOB_PATHS,
+  HERO_VIDEO_WEB_READY_PATHS,
   HERO_VIDEO_WEB_720P_PATHS,
   HERO_VIDEO_WEB_1080P_PATHS,
   HERO_VIDEO_LOCALES,
@@ -49,16 +50,21 @@ describe('Hero video locales', () => {
     expect(HERO_VIDEO_BLOB_PATHS.th).toBe('Hero Video (Thai).mp4')
   })
 
-  it('reserves 720p and 1080p web-encode paths from the live 4K masters', () => {
+  it('plays the uploaded watermarked web files, and keeps 720p/1080p paths reserved', () => {
     for (const locale of HERO_VIDEO_LOCALES) {
+      expect(HERO_VIDEO_WEB_READY_PATHS[locale.id]).toBe(
+        `landing/hero/sceneflow-hero-${locale.id}.mp4`
+      )
       expect(HERO_VIDEO_WEB_720P_PATHS[locale.id]).toBe(
         `landing/hero/sceneflow-hero-${locale.id}-720p.mp4`
       )
       expect(HERO_VIDEO_WEB_1080P_PATHS[locale.id]).toBe(
         `landing/hero/sceneflow-hero-${locale.id}-1080p.mp4`
       )
-      expect(locale.mp4SrcMobile).toContain(`sceneflow-hero-${locale.id}-720p.mp4`)
-      expect(locale.mp4SrcHd).toContain(`sceneflow-hero-${locale.id}-1080p.mp4`)
+      expect(locale.mp4SrcMobile).toContain(`sceneflow-hero-${locale.id}.mp4`)
+      expect(locale.mp4SrcHd).toContain(`sceneflow-hero-${locale.id}.mp4`)
+      expect(locale.mp4SrcMobile).not.toContain('720p')
+      expect(locale.mp4SrcHd).not.toContain('1080p')
     }
   })
 
