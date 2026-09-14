@@ -91,6 +91,11 @@ import {
   type ProjectLookbook,
 } from '../intelligence/project-lookbook'
 import { parseStillPromptSource } from '../imagen/structuredStillPrompt'
+import { directBeatStills } from '../intelligence/beat-still-director'
+import {
+  applyStillDirectorPatch,
+  shouldRunStillDirectorAuto,
+} from '../intelligence/beat-still-director-fallback'
 import {
   resolveStoryboardGeneration,
   beatFrameNeedsGeneration,
@@ -1551,6 +1556,116 @@ export async function planSceneBeatKeyframes(
   return beatPlansByIndex
 }
 
+async function runStillDirectorPhase(
+  ctx: SceneRunContext,
+  options: ExpressOptions,
+  project: any,
+  emit: ExpressEmit,
+  trafficCop: ExpressTrafficCop,
+  beatPlansByIndex: Map<number, BeatKeyframePlan>
+): Promise<void> {
+  const { sceneIndex, sceneNumber, scene } = ctx
+  safeEmit(emit, {
+    type: 'phase-start',
+    sceneIndex,
+    sceneNumber,
+    phase: 'still-direct',
+  })
+
+  try {
+    const genCtx = getBeatGenerationContext(options)
+    const selectedKeys = getSelectedFrameKeySet(options)
+    const beats = getSceneBeats(scene)
+    const eligible = beats
+      .map((beat, beatIndex) => ({ beat, beatIndex }))
+      .filter(({ beat }) => {
+        if (isBeatExcluded(beat)) return false
+        if (!isBeatStartSlotSelected(beat, selectedKeys)) return false
+        return shouldRunStillDirectorAuto(beat, {
+          needsNewStartFrame: beatFrameNeedsGeneration(beat, genCtx),
+          reusedStoredPrompt: Boolean(selectedKeys && storedPromptMatchesDirection(beat)),
+        })
+      })
+
+    if (eligible.length === 0) {
+      safeEmit(emit, {
+        type: 'phase-done',
+        sceneIndex,
+        sceneNumber,
+        phase: 'still-direct',
+        ok: true,
+        skipped: true,
+      })
+      return
+    }
+
+    const result = await trafficCop.runInLane('text', () =>
+      directBeatStills({
+        mode: 'optimize',
+        beats: eligible.map(({ beat, beatIndex }) => ({
+          beatIndex,
+          beat,
+          previousMoment:
+            beatIndex > 0 ? composeBeatActionFraming(beats[beatIndex - 1]) : undefined,
+          nextMoment:
+            beatIndex + 1 < beats.length
+              ? composeBeatActionFraming(beats[beatIndex + 1])
+              : undefined,
+        })),
+        catalog: buildExpressReferenceCatalog(project),
+      })
+    )
+
+    let nextBeats = [...beats]
+    for (const directed of result.patches) {
+      const current = nextBeats[directed.beatIndex]
+      if (!current) continue
+      const applied = applyStillDirectorPatch(current, directed.patch, {
+        generatedBy: 'director',
+        skipIfProtected: true,
+        lookbook: ctx.lookbook,
+        sceneIndex,
+      })
+      nextBeats[directed.beatIndex] = applied.beat
+      if (applied.skipped) continue
+      const previousPlan = beatPlansByIndex.get(directed.beatIndex)
+      beatPlansByIndex.set(directed.beatIndex, {
+        ...(previousPlan ?? reusedBeatPlan(applied.beat, directed.beatIndex)),
+        prompt: composeBeatActionFraming(applied.beat),
+        frozenMoment:
+          applied.beat.beatDirection?.frozenMoment ?? previousPlan?.frozenMoment ?? '',
+        shotType: applied.beat.beatDirection?.shotType ?? previousPlan?.shotType ?? '',
+      })
+    }
+    Object.assign(scene, applyBeatsToScene(scene, nextBeats))
+
+    safeEmit(emit, {
+      type: 'phase-done',
+      sceneIndex,
+      sceneNumber,
+      phase: 'still-direct',
+      ok: true,
+      ...(result.fallbackReason ? { degraded: result.fallbackReason } : {}),
+    })
+    console.log(
+      `[expressOrchestrator] Still director rewrote ${result.patches.length} beat(s) scene ${sceneNumber}` +
+        (result.fallbackReason ? ` — ${result.fallbackReason}` : '')
+    )
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err.message : String(err)
+    safeEmit(emit, {
+      type: 'phase-done',
+      sceneIndex,
+      sceneNumber,
+      phase: 'still-direct',
+      ok: true,
+      skipped: true,
+      degraded: error,
+    })
+    console.warn(`[expressOrchestrator] Still director failed, generating from composed direction: ${error}`)
+  }
+}
+
 async function generateLegacySceneImage(
   trafficCop: ExpressTrafficCop,
   params: Parameters<typeof generateSceneImage>[0]
@@ -1614,6 +1729,14 @@ async function runImagePhase(
         beats,
         artStyle
       )
+      await runStillDirectorPhase(
+        ctx,
+        options,
+        project,
+        emit,
+        trafficCop,
+        beatPlansByIndex
+      )
 
       const beatResult = await runBeatImages(
         ctx,
@@ -1623,7 +1746,7 @@ async function runImagePhase(
         authCookie,
         emit,
         trafficCop,
-        beats,
+        getSceneBeats(scene),
         artStyle,
         beatPlansByIndex,
         rateLimitedFailures

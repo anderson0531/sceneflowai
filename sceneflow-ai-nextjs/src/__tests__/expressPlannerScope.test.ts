@@ -51,6 +51,10 @@ vi.mock('@/lib/sceneGeneration/generateImage', () => ({
   generateSceneImage: vi.fn(),
 }))
 
+vi.mock('@/lib/intelligence/beat-still-director', () => ({
+  directBeatStills: vi.fn(async () => ({ patches: [], usedAI: false })),
+}))
+
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import {
   buildExpressReferenceCatalog,

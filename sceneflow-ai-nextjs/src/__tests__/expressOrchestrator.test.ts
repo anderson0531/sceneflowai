@@ -53,6 +53,14 @@ vi.mock('@/lib/intelligence/beat-sequence-planner', () => ({
   applyBeatKeyframePlansToScene: vi.fn((scene: Record<string, unknown>) => scene),
   ensureSceneMusicFromDirection: vi.fn((scene: Record<string, unknown>) => scene),
   isTitleOrCinematicScene: () => false,
+  composeBeatActionFraming: vi.fn(() => 'composed-framing'),
+  storedPromptMatchesDirection: vi.fn(() => false),
+  roleAllowsTypography: vi.fn(() => false),
+  asBeatRole: vi.fn((role: string) => role),
+}))
+
+vi.mock('@/lib/intelligence/beat-still-director', () => ({
+  directBeatStills: vi.fn(async () => ({ patches: [], usedAI: false })),
 }))
 
 import { runExpress } from '@/lib/sceneGeneration/expressOrchestrator'
@@ -158,6 +166,7 @@ describe('runExpress', () => {
     expect(directionStart).toBeDefined()
     expect(audioStart).toBeDefined()
     expect(imageStart).toBeDefined()
+    expect(scene0.some((s) => s.phase === 'still-direct')).toBe(true)
     expect((directionStart ?? 0)).toBeLessThan(audioStart ?? 0)
     expect((directionStart ?? 0)).toBeLessThan(imageStart ?? 0)
     expect(Math.abs((audioStart ?? 0) - (imageStart ?? 0))).toBeLessThan(50)

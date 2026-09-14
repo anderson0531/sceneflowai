@@ -93,6 +93,7 @@ export interface SceneStoryboardFrameViewerProps {
   onGenerateBeatFrame?: (beatId: string) => Promise<void>
   onGenerateBeatEndFrame?: (beatId: string) => Promise<void>
   onDirectFrame?: (slot: StoryboardFrameSlot) => void
+  onDirectorFrame?: (slot: StoryboardFrameSlot) => void
   onUploadDialogueFrame?: (dialogueIndex: number, file: File) => void
   onUploadBeatFrame?: (beatId: string, file: File) => void
   onUploadScene?: (file: File) => void
@@ -129,6 +130,7 @@ interface StoryboardSlotHandlers {
   onGenerateBeatFrame?: (beatId: string) => Promise<void>
   onGenerateBeatEndFrame?: (beatId: string) => Promise<void>
   onDirectFrame?: (slot: StoryboardFrameSlot) => void
+  onDirectorFrame?: (slot: StoryboardFrameSlot) => void
   onUploadDialogueFrame?: (dialogueIndex: number, file: File) => void
   onUploadBeatFrame?: (beatId: string, file: File) => void
   onEditFrame?: (frame: EditingFrame) => void
@@ -168,6 +170,7 @@ function buildStoryboardSlotFrameProps(
     onGenerateDialogueFrame,
     onGenerateBeatFrame,
     onDirectFrame,
+    onDirectorFrame,
     onUploadDialogueFrame,
     onUploadBeatFrame,
     onEditFrame,
@@ -194,6 +197,7 @@ function buildStoryboardSlotFrameProps(
       generateBlockedReason,
       onGenerate: () => void onGenerateCustomFrame?.(slot.customFrameId!),
       onDirect: onDirectFrame ? () => onDirectFrame(slot) : undefined,
+      onDirector: undefined,
       onUpload: (file) => onUploadCustomFrame?.(slot.customFrameId!, file),
       onEdit:
         slot.displayImageUrl && onEditFrame && slot.customFrameId
@@ -265,6 +269,8 @@ function buildStoryboardSlotFrameProps(
       }
     },
     onDirect: onDirectFrame ? () => onDirectFrame(slot) : undefined,
+    onDirector:
+      onDirectorFrame && useBeatFrame ? () => onDirectorFrame(slot) : undefined,
     onUpload: (file) => {
       if (useBeatFrame && onUploadBeatFrame && beatId) {
         onUploadBeatFrame(beatId, file)
@@ -365,6 +371,7 @@ export function SceneStoryboardFrameViewer({
   onGenerateBeatFrame,
   onGenerateBeatEndFrame,
   onDirectFrame,
+  onDirectorFrame,
   onUploadDialogueFrame,
   onUploadBeatFrame,
   onUploadScene,
@@ -711,6 +718,12 @@ export function SceneStoryboardFrameViewer({
             onDirectFrame(slot)
           }
         : undefined,
+      onDirectorFrame: onDirectorFrame
+        ? (slot) => {
+            if (blockedByReferences()) return
+            onDirectorFrame(slot)
+          }
+        : undefined,
       onUploadDialogueFrame,
       onUploadBeatFrame,
       onEditFrame: handleEditFrame,
@@ -751,6 +764,7 @@ export function SceneStoryboardFrameViewer({
       onGenerateDialogueFrame,
       onGenerateBeatFrame,
       onDirectFrame,
+      onDirectorFrame,
       onUploadDialogueFrame,
       onUploadBeatFrame,
       handleEditFrame,

@@ -25,6 +25,7 @@ export type ExpressOverlayPhase =
   | 'direction'
   | 'audio'
   | 'image-plan'
+  | 'still-direct'
   | 'image'
 export type ExpressOverlayPhaseMap = Record<ExpressOverlayPhase, ExpressPhaseStatus>
 
@@ -47,6 +48,7 @@ const PHASE_LABELS: Record<ExpressOverlayPhase, string> = {
   direction: 'Direction',
   audio: 'Audio',
   'image-plan': 'Image plan',
+  'still-direct': 'Directing stills',
   image: 'Beat frames',
 }
 
@@ -55,6 +57,7 @@ const PHASE_ORDER: ExpressOverlayPhase[] = [
   'direction',
   'audio',
   'image-plan',
+  'still-direct',
   'image',
 ]
 

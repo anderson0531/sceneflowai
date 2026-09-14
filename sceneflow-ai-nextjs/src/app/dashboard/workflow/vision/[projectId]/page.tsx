@@ -51,6 +51,7 @@ import { resolveStoryboardScenes, totalStoryboardMediaScore } from '@/lib/storyb
 import {
   isPreVisStale,
   refreshSceneBeatStillPrompts,
+  restampPreVisHashIfScriptCurrent,
   sceneHasStalePromptKeys,
   stampPreVisContentHash,
   syncPreVisToScript,
@@ -119,6 +120,14 @@ import {
   PreVisFramePromptDialog,
   type PreVisDirectGenerationOptions,
 } from '@/components/vision/PreVisFramePromptDialog'
+import {
+  BeatStillDirectorDialog,
+  type BeatStillDirectorSavePayload,
+} from '@/components/vision/BeatStillDirectorDialog'
+import {
+  applyStillDirectorPatchToScene,
+  type StillDirectorPatch,
+} from '@/lib/intelligence/beat-still-director-fallback'
 import { toast } from 'sonner'
 import { SceneImageQuotaToast } from '@/components/vision/SceneImageQuotaToast'
 import {
@@ -6296,6 +6305,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     sceneIdx: number
     slot: StoryboardFrameSlot
   } | null>(null)
+  const [preVisDirectorDialog, setPreVisDirectorDialog] = useState<{
+    sceneIdx: number
+    slot: StoryboardFrameSlot
+  } | null>(null)
   
   // Scene reference generation state (for Reference Library Scene tab)
   const [generatingSceneReferenceIndex, setGeneratingSceneReferenceIndex] = useState<number | null>(null)
@@ -11095,9 +11108,71 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     await handleGenerateBeatEndFrameImage(sceneIdx, beatId)
   }
 
+  const persistStillDirectorPatch = async (
+    sceneIndex: number,
+    beatId: string,
+    patch: StillDirectorPatch,
+    extraScene?: Record<string, unknown>
+  ): Promise<boolean> => {
+    const latestScript = scriptRef.current || script
+    const currentScene = extraScene ?? latestScript?.script?.scenes?.[sceneIndex]
+    if (!currentScene || !latestScript?.script) {
+      toast.error('Scene not found')
+      return false
+    }
+    const applied = applyStillDirectorPatchToScene(
+      currentScene as Record<string, unknown>,
+      beatId,
+      patch,
+      {
+        generatedBy: 'user',
+        lookbook: projectLookbook,
+        sceneIndex,
+        artStyleAnchor: lockedArtStyle,
+      }
+    )
+    const updatedScenes = [...(latestScript.script.scenes || [])]
+    updatedScenes[sceneIndex] = restampPreVisHashIfScriptCurrent(
+      currentScene as Record<string, unknown>,
+      applied.scene
+    )
+    const nextScript = {
+      ...latestScript,
+      script: { ...latestScript.script, scenes: updatedScenes },
+    }
+    scriptRef.current = nextScript
+    setScript(nextScript)
+    const saved = await persistVisionScriptScenes(updatedScenes, 'persistStillDirectorPatch')
+    if (!saved) {
+      toast.error('Failed to save directed still')
+      return false
+    }
+    return true
+  }
+
   const handleOpenDirectFrame = (sceneIdx: number, slot: StoryboardFrameSlot) => {
     if (blockedByMissingReferences()) return
     setPreVisDirectDialog({ sceneIdx, slot })
+  }
+
+  const handleOpenDirectorFrame = (sceneIdx: number, slot: StoryboardFrameSlot) => {
+    if (blockedByMissingReferences()) return
+    if (!slot.beatId) {
+      toast.info('Director is available on beat frames')
+      return
+    }
+    setPreVisDirectorDialog({ sceneIdx, slot })
+  }
+
+  const handleDirectorSave = async (payload: BeatStillDirectorSavePayload) => {
+    const dialog = preVisDirectorDialog
+    if (!dialog?.slot.beatId) return
+    const ok = await persistStillDirectorPatch(dialog.sceneIdx, dialog.slot.beatId, payload.patch)
+    if (!ok) return
+    toast.success('Still prompt saved')
+    if (payload.generate) {
+      void handleRequestGenerateBeatFrame(dialog.sceneIdx, dialog.slot.beatId)
+    }
   }
 
   const handleDirectFrameGenerate = async (options: PreVisDirectGenerationOptions) => {
@@ -11214,14 +11289,67 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         payload.frameType = 'beat'
         payload.beatId = slot.beatId
         payload.beatIndex = rawBeatIdx
+        let workingScene = scene as Record<string, unknown>
         if (options.beatReferenceSelection) {
-          const updatedScenes = [...(script.script.scenes || [])]
-          updatedScenes[sceneIndex] = applyBeatReferenceSelectionToScene(
-            updatedScenes[sceneIndex],
+          workingScene = applyBeatReferenceSelectionToScene(
+            workingScene,
             slot.beatId,
             options.beatReferenceSelection
           )
-          setScript({ ...script, script: { ...script.script, scenes: updatedScenes } })
+        }
+        try {
+          const rewriteResponse = await fetch('/api/scene/direct-beat-still', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              projectId,
+              sceneIndex,
+              beatId: slot.beatId,
+              mode: options.userDirection?.trim() ? 'rewrite' : 'optimize',
+              userDirection: options.userDirection,
+              visualSetup: options.visualSetup,
+              talentDirection: options.talentDirection,
+            }),
+          })
+          const rewriteData = await rewriteResponse.json()
+          if (rewriteResponse.ok && rewriteData.patch) {
+            const saved = await persistStillDirectorPatch(
+              sceneIndex,
+              slot.beatId,
+              rewriteData.patch as StillDirectorPatch,
+              workingScene
+            )
+            if (!saved) {
+              finishDirectFrameRun({ status: 'error', error: 'Failed to save directed still' })
+              return
+            }
+          } else if (options.beatReferenceSelection) {
+            const latestScript = scriptRef.current || script
+            const updatedScenes = [...(latestScript.script.scenes || [])]
+            updatedScenes[sceneIndex] = workingScene
+            const nextScript = {
+              ...latestScript,
+              script: { ...latestScript.script, scenes: updatedScenes },
+            }
+            scriptRef.current = nextScript
+            setScript(nextScript)
+          }
+        } catch (rewriteError) {
+          console.warn(
+            '[Direct Frame] Still rewrite failed, generating from composed direction:',
+            rewriteError
+          )
+          if (options.beatReferenceSelection) {
+            const latestScript = scriptRef.current || script
+            const updatedScenes = [...(latestScript.script.scenes || [])]
+            updatedScenes[sceneIndex] = workingScene
+            const nextScript = {
+              ...latestScript,
+              script: { ...latestScript.script, scenes: updatedScenes },
+            }
+            scriptRef.current = nextScript
+            setScript(nextScript)
+          }
         }
       } else if (slot.kind === 'custom' && slot.customFrameId) {
         payload.frameType = 'custom'
@@ -11243,7 +11371,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         throw new Error(data?.error || 'Direct generation failed')
       }
 
-      let updatedScenes = [...(script.script.scenes || [])]
+      const latestAfterGenerate = scriptRef.current || script
+      let updatedScenes = [...(latestAfterGenerate.script.scenes || [])]
       if (payload.frameType === 'beat' && typeof payload.beatIndex === 'number') {
         updatedScenes[sceneIndex] = stampPreVisContentHash(
           applyBeatStoryboardImageToScene(
@@ -11281,7 +11410,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         )
       }
 
-      setScript({ ...script, script: { ...script.script, scenes: updatedScenes } })
+      const nextScript = {
+        ...latestAfterGenerate,
+        script: { ...latestAfterGenerate.script, scenes: updatedScenes },
+      }
+      scriptRef.current = nextScript
+      setScript(nextScript)
       const saved = await persistVisionScriptScenes(updatedScenes, 'handleDirectFrameGenerate')
       if (
         saved &&
@@ -14316,6 +14450,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         phase === 'direction' ||
         phase === 'audio' ||
         phase === 'image-plan' ||
+        phase === 'still-direct' ||
         phase === 'image'
 
       const mapToExpressPhase = (phase: string): ExpressPhase | null => {
@@ -14384,6 +14519,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           direction: 'pending',
           audio: 'pending',
           'image-plan': 'pending',
+          'still-direct': 'pending',
           image: 'pending',
         },
         startedAt: Date.now(),
@@ -14682,6 +14818,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             direction: 'error',
                             audio: 'error',
                             'image-plan': 'error',
+                            'still-direct': 'error',
                             image: 'error',
                           },
                         }
@@ -15931,6 +16068,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSaveEditedCustomFrame={handleSaveEditedCustomFrame}
                 onSaveEditedStoryboardScene={handleSaveEditedScene}
                 onDirectFrame={handleOpenDirectFrame}
+                onDirectorFrame={handleOpenDirectorFrame}
                 generatingDirectSlotKey={
                   directFrameRun && !directFrameRun.finished
                     ? directFrameRun.generatingKey
@@ -16627,6 +16765,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onOpenChange={(open) => {
               if (!open) setPreVisDirectDialog(null)
             }}
+            projectId={projectId}
             slot={preVisDirectDialog.slot}
             scene={scene}
             sceneIndex={preVisDirectDialog.sceneIdx}
@@ -16636,6 +16775,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             filmTitle={project?.title}
             lockedArtStyle={project?.metadata?.visionPhase?.artStyle as string | undefined}
             onGenerate={handleDirectFrameGenerate}
+          />
+        )
+      })()}
+
+      {preVisDirectorDialog && (() => {
+        const scene = script?.script?.scenes?.[preVisDirectorDialog.sceneIdx]
+        if (!scene) return null
+        const beat =
+          getSceneBeats(scene as Record<string, unknown>).find(
+            (entry) => entry.beatId === preVisDirectorDialog.slot.beatId
+          ) ?? null
+        return (
+          <BeatStillDirectorDialog
+            open
+            onOpenChange={(open) => {
+              if (!open) setPreVisDirectorDialog(null)
+            }}
+            projectId={projectId}
+            sceneIndex={preVisDirectorDialog.sceneIdx}
+            beat={beat}
+            label={preVisDirectorDialog.slot.label}
+            onSave={handleDirectorSave}
           />
         )
       })()}

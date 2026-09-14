@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { DictationTextarea } from '@/components/ui/DictationTextarea'
-import { Loader2, MapPin, Check, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react'
+import { Loader2, MapPin, Check, ChevronDown, ChevronUp, AlertTriangle, Sparkles } from 'lucide-react'
 import {
   LocationSettingSection,
   CharacterSelectionSection,
@@ -33,7 +33,9 @@ import {
   resolvePreVisFramePromptContext,
   type PreVisFramePromptContext,
 } from '@/lib/vision/resolvePreVisFramePromptContext'
+import { composeBeatActionFraming } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 export interface PreVisDirectGenerationOptions {
   slot: StoryboardFrameSlot
@@ -58,6 +60,7 @@ export interface PreVisDirectGenerationOptions {
 export interface PreVisFramePromptDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  projectId?: string
   slot: StoryboardFrameSlot | null
   scene: Record<string, unknown> | null
   sceneIndex: number
@@ -73,6 +76,7 @@ export interface PreVisFramePromptDialogProps {
 export function PreVisFramePromptDialog({
   open,
   onOpenChange,
+  projectId,
   slot,
   scene,
   sceneIndex,
@@ -114,6 +118,7 @@ export function PreVisFramePromptDialog({
   const [locationSectionCollapsed, setLocationSectionCollapsed] = useState(false)
   const [propsSectionCollapsed, setPropsSectionCollapsed] = useState(true)
   const [talentSectionCollapsed, setTalentSectionCollapsed] = useState(false)
+  const [isSuggesting, setIsSuggesting] = useState(false)
 
   const initialContext = useMemo(() => {
     if (!open || !slot || !scene) return null
@@ -143,6 +148,48 @@ export function PreVisFramePromptDialog({
     setLocationVersionId(initialContext.locationVersionId)
     setObjectRefIds(initialContext.objectRefIds)
   }, [open, initialContext])
+
+  const compiledActionFraming = useMemo(() => {
+    if (initialContext?.beat) return composeBeatActionFraming(initialContext.beat)
+    return initialContext?.seedPrompt?.trim() || ''
+  }, [initialContext])
+
+  const handleSuggestRevisions = async () => {
+    if (!projectId || !slot?.beatId) {
+      toast.error('Suggestions are available on beat frames')
+      return
+    }
+    setIsSuggesting(true)
+    try {
+      const response = await fetch('/api/scene/direct-beat-still', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex,
+          beatId: slot.beatId,
+          mode: 'suggest',
+          visualSetup,
+          talentDirection,
+        }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data?.error || 'Suggest failed')
+      const notes =
+        typeof data.suggestedNotes === 'string' && data.suggestedNotes.trim()
+          ? data.suggestedNotes.trim()
+          : typeof data.actionFraming === 'string'
+            ? data.actionFraming.trim()
+            : ''
+      if (!notes) throw new Error('No suggestions returned')
+      setUserDirection(notes)
+      toast.success('Suggested revisions added to Direction')
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Suggest failed')
+    } finally {
+      setIsSuggesting(false)
+    }
+  }
 
   const buildBeatReferenceSelection = useCallback((): BeatReferenceSelection | undefined => {
     if (!slot?.beatId) return undefined
@@ -232,9 +279,40 @@ export function PreVisFramePromptDialog({
         )}
 
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-3 mt-3 space-y-3">
+          {compiledActionFraming && (
+            <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-3 space-y-1">
+              <p className="text-sm font-medium text-slate-200">{t('compiledFramingTitle')}</p>
+              <p className="text-[11px] text-slate-400">{t('compiledFramingHint')}</p>
+              <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
+                {compiledActionFraming}
+              </p>
+            </div>
+          )}
+
           <div className="rounded-lg border border-amber-700/40 bg-amber-950/20 p-3 space-y-2">
-            <p className="text-sm font-medium text-amber-100">{t('directionTitle')}</p>
-            <p className="text-[11px] text-amber-100/70">{t('directionHint')}</p>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-medium text-amber-100">{t('directionTitle')}</p>
+                <p className="text-[11px] text-amber-100/70">{t('directionHint')}</p>
+              </div>
+              {slot.beatId && projectId && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleSuggestRevisions()}
+                  disabled={isSuggesting || isGenerating}
+                  className="shrink-0 h-8 text-[11px]"
+                >
+                  {isSuggesting ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5 mr-1" />
+                  )}
+                  {isSuggesting ? t('suggesting') : t('suggestRevisions')}
+                </Button>
+              )}
+            </div>
             <DictationTextarea
               value={userDirection}
               onChange={setUserDirection}

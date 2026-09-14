@@ -40,7 +40,7 @@ export interface BeatReferenceSelection {
 }
 
 export type BeatDirectionTransition = 'CUT' | 'CONTINUE' | 'DISSOLVE' | 'FADE' | 'MATCH_CUT'
-export type BeatDirectionSource = 'llm' | 'planner' | 'derived' | 'user'
+export type BeatDirectionSource = 'llm' | 'planner' | 'derived' | 'user' | 'director'
 export type SceneMovementSource = 'llm' | 'derived' | 'user'
 export type SceneMusicCueSource = 'llm' | 'derived' | 'user'
 

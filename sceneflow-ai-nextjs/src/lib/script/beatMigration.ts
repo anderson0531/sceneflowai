@@ -78,6 +78,7 @@ const BEAT_DIRECTION_SOURCES: readonly BeatDirectionSource[] = [
   'planner',
   'derived',
   'user',
+  'director',
 ]
 
 function trimmedString(value: unknown): string | undefined {
