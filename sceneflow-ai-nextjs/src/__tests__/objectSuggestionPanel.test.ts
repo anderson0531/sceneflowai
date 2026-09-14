@@ -101,7 +101,26 @@ describe('ObjectSuggestionPanel Objects tab render', () => {
             {
               sceneNumber: 1,
               heading: 'INT. RAIL YARD - NIGHT',
-              action: 'Elara lifts the spanner and the journal.',
+              beats: [
+                {
+                  actionDescription: 'Elara lifts the spanner.',
+                  beatDirection: {
+                    keyProps: ['Thirty-Inch Iron Rail Spanner', 'Spud wrench'],
+                  },
+                },
+              ],
+            },
+            {
+              sceneNumber: 2,
+              heading: 'INT. STUDY - NIGHT',
+              beats: [
+                {
+                  actionDescription: 'Ink soaks the leather journal.',
+                  beatDirection: {
+                    keyProps: ['Water-damaged leather journal', 'Leather journal'],
+                  },
+                },
+              ],
             },
           ],
           existingObjects: [
@@ -133,6 +152,9 @@ describe('ObjectSuggestionPanel Objects tab render', () => {
     expect(dialog).toBeTruthy()
     expect(dialog?.className).toContain('max-h-[85vh]')
     expect(scroll?.className).toContain('overflow-y-auto')
+    expect(document.body.textContent).toContain('INT. RAIL YARD - NIGHT')
+    expect(document.body.textContent).toContain('INT. STUDY - NIGHT')
+    expect(document.body.textContent).toContain('Beat 1')
     expect(document.body.querySelectorAll('[data-testid="object-duplicate-group"]')).toHaveLength(2)
     expect(document.body.textContent).toContain('Thirty-Inch Iron Rail Spanner')
     expect(document.body.textContent).toContain('Water-damaged leather journal')

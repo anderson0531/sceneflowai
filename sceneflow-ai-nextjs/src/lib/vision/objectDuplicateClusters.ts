@@ -6,7 +6,7 @@
  * collapse even without a bridging "spanner wrench" label.
  */
 
-import { libraryNamesFuzzyMatch } from '@/lib/character/matching'
+import { libraryNamesFuzzyMatch, matchObjectsBySelectedNames } from '@/lib/character/matching'
 import { mentionsWord, propHeadNoun } from '@/lib/script/propNameMatch'
 import { isAlreadyInLibrary, normalizeObjectName } from '@/lib/vision/objectBeatUsage'
 
@@ -256,6 +256,161 @@ export function duplicateObjectGroups<T extends { name?: string; id?: string }>(
   ignoredPairs: Iterable<string> = []
 ): T[][] {
   return clusterByObjectName(items, ignoredPairs).filter((group) => group.length > 1)
+}
+
+/** Scene payload the beat-collision reviewer reads (heading is display-only). */
+export interface DuplicateObjectScene {
+  sceneNumber?: number
+  scene_number?: number
+  heading?: string | { text?: string }
+  beats?: unknown
+}
+
+export interface DuplicateBeatCollision<T> {
+  /** Sorted ids of the full library synonym cluster, shared across beats. */
+  clusterKey: string
+  members: T[]
+}
+
+export interface DuplicateBeatSection<T> {
+  beatIndex: number
+  beatId?: string
+  snippet: string
+  collisions: DuplicateBeatCollision<T>[]
+}
+
+export interface DuplicateSceneSection<T> {
+  sceneNumber: number
+  heading?: string
+  beats: DuplicateBeatSection<T>[]
+}
+
+export interface DuplicateObjectBeatGroupsResult<T> {
+  scenes: DuplicateSceneSection<T>[]
+  /** Synonym clusters that never collide on a beat prompt. */
+  unreferenced: T[][]
+}
+
+export function duplicateClusterKey(members: Array<{ id?: string }>): string {
+  return members.map((row) => row.id).filter(Boolean).sort().join('|')
+}
+
+function sceneHeadingOf(scene: DuplicateObjectScene): string | undefined {
+  if (typeof scene.heading === 'string') {
+    const heading = scene.heading.trim()
+    return heading || undefined
+  }
+  if (scene.heading && typeof scene.heading === 'object') {
+    const heading = String(scene.heading.text ?? '').trim()
+    return heading || undefined
+  }
+  return undefined
+}
+
+function beatSnippetOf(beat: Record<string, unknown>): string {
+  const action = typeof beat.actionDescription === 'string' ? beat.actionDescription : ''
+  const line = typeof beat.line === 'string' ? beat.line : ''
+  const text = (action || line).trim()
+  if (!text) return ''
+  return text.split(/\n/)[0].trim().slice(0, 160)
+}
+
+function beatKeyPropsOf(beat: Record<string, unknown>): string[] {
+  const direction = beat.beatDirection
+  if (!direction || typeof direction !== 'object') return []
+  const keyProps = (direction as { keyProps?: unknown }).keyProps
+  if (!Array.isArray(keyProps)) return []
+  return keyProps.map((entry) => String(entry ?? '')).filter(Boolean)
+}
+
+function beatObjectRefIdsOf(beat: Record<string, unknown>): string[] {
+  const selection = beat.referenceSelection
+  if (!selection || typeof selection !== 'object') return []
+  const ids = (selection as { objectRefIds?: unknown }).objectRefIds
+  if (!Array.isArray(ids)) return []
+  return ids.map((id) => String(id ?? '')).filter(Boolean)
+}
+
+function beatRecordsOf(scene: DuplicateObjectScene): Record<string, unknown>[] {
+  if (!Array.isArray(scene.beats)) return []
+  return scene.beats.filter(
+    (beat): beat is Record<string, unknown> => Boolean(beat) && typeof beat === 'object'
+  )
+}
+
+function membersAttachedToBeat<T extends { name?: string; id?: string }>(
+  cluster: T[],
+  beat: Record<string, unknown>
+): T[] {
+  const refIds = new Set(beatObjectRefIdsOf(beat))
+  const namedHits = new Set(
+    matchObjectsBySelectedNames(beatKeyPropsOf(beat), cluster).map((row) =>
+      String(row.id || row.name)
+    )
+  )
+  return cluster.filter((member) => {
+    const id = String(member.id ?? '')
+    if (id && refIds.has(id)) return true
+    return namedHits.has(id) || namedHits.has(String(member.name ?? ''))
+  })
+}
+
+/**
+ * Beats whose prompt would attach two or more synonym library rows, nested by
+ * scene. Name clusters that never collide on a beat stay in `unreferenced`.
+ */
+export function duplicateObjectBeatGroups<T extends { name?: string; id?: string }>(
+  objects: T[],
+  scenes: DuplicateObjectScene[] = [],
+  ignoredPairs: Iterable<string> = []
+): DuplicateObjectBeatGroupsResult<T> {
+  const clusters = duplicateObjectGroups(objects, ignoredPairs)
+  const collidedKeys = new Set<string>()
+  const sceneMap = new Map<number, DuplicateSceneSection<T>>()
+
+  scenes.forEach((scene, sceneIndex) => {
+    const sceneNumber = scene.sceneNumber ?? scene.scene_number ?? sceneIndex + 1
+    const heading = sceneHeadingOf(scene)
+    beatRecordsOf(scene).forEach((beat, beatIndex) => {
+      const collisions: DuplicateBeatCollision<T>[] = []
+      for (const cluster of clusters) {
+        const attached = membersAttachedToBeat(cluster, beat)
+        if (attached.length < 2) continue
+        const clusterKey = duplicateClusterKey(cluster)
+        collidedKeys.add(clusterKey)
+        collisions.push({ clusterKey, members: attached })
+      }
+      if (collisions.length === 0) return
+      let section = sceneMap.get(sceneNumber)
+      if (!section) {
+        section = { sceneNumber, heading, beats: [] }
+        sceneMap.set(sceneNumber, section)
+      }
+      section.beats.push({
+        beatIndex,
+        beatId: typeof beat.beatId === 'string' && beat.beatId ? beat.beatId : undefined,
+        snippet: beatSnippetOf(beat),
+        collisions,
+      })
+    })
+  })
+
+  const nested = [...sceneMap.values()].sort((a, b) => a.sceneNumber - b.sceneNumber)
+  for (const section of nested) {
+    section.beats.sort((a, b) => a.beatIndex - b.beatIndex)
+  }
+
+  return {
+    scenes: nested,
+    unreferenced: clusters.filter((cluster) => !collidedKeys.has(duplicateClusterKey(cluster))),
+  }
+}
+
+/** Review-button count: colliding beats plus leftover library clusters. */
+export function countDuplicateObjectReviewItems<T>(
+  groups: DuplicateObjectBeatGroupsResult<T>
+): number {
+  return groups.scenes.reduce((sum, scene) => sum + scene.beats.length, 0) + groups.unreferenced.length
 }
 
 export function rewriteKeyProps(
