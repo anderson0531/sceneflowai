@@ -3,12 +3,18 @@ import {
   collapseObjectClusters,
   clusterObjectNames,
   duplicateObjectGroups,
+  ignorePairsForGroup,
+  ignorePairsForObject,
+  mergeObjectDuplicateIgnores,
   mergeObjectRows,
   nameMatchesLibrary,
+  objectDuplicatePairKey,
   objectNamesMatch,
   pickCanonicalObject,
+  pruneObjectDuplicateIgnores,
   rewriteKeyProps,
   rewriteObjectRefIds,
+  rewriteScenesForObjectDelete,
   rewriteScenesForObjectMerge,
   selectCanonicalNewObjects,
   uniqueCanonicalNames,
@@ -108,6 +114,51 @@ describe('duplicateObjectGroups', () => {
     expect(groups).toHaveLength(1)
     expect(groups[0].map((row) => row.id).sort()).toEqual(['a', 'b'])
   })
+
+  it('splits a wrench cluster so an ignored name is no longer grouped', () => {
+    const items = WRENCH_FAMILY.map((name, index) => ({ id: `w${index}`, name }))
+    const groups = duplicateObjectGroups(items)
+    expect(groups).toHaveLength(1)
+
+    const spud = items.find((row) => row.name === 'Spud wrench')
+    expect(spud).toBeTruthy()
+    const ignored = ignorePairsForObject(groups[0], spud!.id)
+    expect(ignored).toContain(objectDuplicatePairKey(spud!.id, 'w0'))
+
+    const after = duplicateObjectGroups(items, ignored)
+    expect(after.every((group) => !group.some((row) => row.id === spud!.id))).toBe(true)
+    expect(
+      after.some((group) => group.some((row) => row.name === 'Thirty-Inch Iron Rail Spanner'))
+    ).toBe(true)
+  })
+
+  it('treats unsorted persisted pair keys as ignored', () => {
+    expect(
+      duplicateObjectGroups(
+        [
+          { id: 'a', name: 'Spud wrench' },
+          { id: 'b', name: 'Thirty-Inch Iron Rail Spanner' },
+        ],
+        ['b::a']
+      )
+    ).toEqual([])
+  })
+
+  it('drops a dismissed group from the review list', () => {
+    const items = WRENCH_FAMILY.map((name, index) => ({ id: `w${index}`, name }))
+    const groups = duplicateObjectGroups(items)
+    expect(duplicateObjectGroups(items, ignorePairsForGroup(groups[0]))).toEqual([])
+  })
+})
+
+describe('objectDuplicateIgnores', () => {
+  it('unions and sorts pair keys', () => {
+    expect(mergeObjectDuplicateIgnores(['b::a'], ['c::a'])).toEqual(['a::b', 'a::c'])
+  })
+
+  it('prunes pairs that mention a deleted object', () => {
+    expect(pruneObjectDuplicateIgnores(['a::b', 'a::c', 'b::c'], ['a'])).toEqual(['b::c'])
+  })
 })
 
 describe('uniqueCanonicalNames', () => {
@@ -189,5 +240,19 @@ describe('merge rewrites', () => {
       'prop-spanner',
       'prop-journal',
     ])
+  })
+
+  it('strips deleted object ids from beat selections when no keeper remains', () => {
+    const scenes = rewriteScenesForObjectDelete(
+      [
+        {
+          beats: [
+            { referenceSelection: { objectRefIds: ['prop-spud', 'prop-journal'] } },
+          ],
+        },
+      ],
+      ['prop-spud']
+    )
+    expect(scenes[0].beats[0].referenceSelection.objectRefIds).toEqual(['prop-journal'])
   })
 })

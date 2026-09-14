@@ -504,9 +504,17 @@ export async function PUT(
             return incomingRef
           })
           
-          // Preserve existing object refs not in incoming
+          // Preserve existing object refs not in incoming, unless this write
+          // explicitly dropped them (merge/delete from the duplicate reviewer).
           const incomingObjectRefIds = new Set(incomingObjectRefs.map((r: any) => r.id))
-          const preservedObjectRefs = existingObjectRefs.filter((r: any) => !incomingObjectRefIds.has(r.id))
+          const droppedObjectRefIds = new Set(
+            Array.isArray(incomingReferences?.droppedObjectReferenceIds)
+              ? incomingReferences.droppedObjectReferenceIds.map(String)
+              : []
+          )
+          const preservedObjectRefs = existingObjectRefs.filter(
+            (r: any) => !incomingObjectRefIds.has(r.id) && !droppedObjectRefIds.has(String(r.id))
+          )
           if (preservedObjectRefs.length > 0) {
             console.log('[Projects PUT] Preserving object references not in incoming:', preservedObjectRefs.length)
             mergedObjectRefs = [...mergedObjectRefs, ...preservedObjectRefs]
@@ -533,10 +541,14 @@ export async function PUT(
             mergedLocationRefs = [...mergedLocationRefs, ...preservedLocationRefs]
           }
           
+          const nextIgnores = Array.isArray(incomingReferences?.objectDuplicateIgnores)
+            ? incomingReferences.objectDuplicateIgnores
+            : existingReferences.objectDuplicateIgnores
           mergedMetadata.visionPhase.references = {
             sceneReferences: mergedSceneRefs,
             objectReferences: mergedObjectRefs,
-            locationReferences: mergedLocationRefs
+            locationReferences: mergedLocationRefs,
+            ...(Array.isArray(nextIgnores) ? { objectDuplicateIgnores: nextIgnores } : {}),
           }
           
           console.log('[Projects PUT] Deep merged references:', {

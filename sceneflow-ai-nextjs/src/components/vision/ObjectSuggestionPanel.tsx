@@ -68,6 +68,12 @@ interface ObjectSuggestionPanelProps {
   onObjectsAutoAdded?: (objects: AutoAddedObject[]) => void | Promise<void>
   /** Confirm-to-merge synonym rows already in the library */
   onMergeObjects?: (primaryId: string, duplicateIds: string[]) => void | Promise<void>
+  /** Drop library rows from a duplicate cluster, rewriting beat refs onto a keeper when one remains */
+  onDeleteDuplicateObjects?: (ids: string[], keeperId?: string) => void | Promise<void>
+  /** Persist pair keys so the checker does not regroup dismissed names */
+  onIgnoreObjectDuplicates?: (pairs: string[]) => void | Promise<void>
+  /** Sorted `idA::idB` pairs already marked not-a-duplicate */
+  objectDuplicateIgnores?: string[]
   /** Compact mode for sidebar */
   compact?: boolean
   onExpressGenerateReferences?: (
@@ -236,6 +242,9 @@ export function ObjectSuggestionPanel({
   onExpressGenerateReferences,
   isExpressGeneratingReferences = false,
   onMergeObjects,
+  onDeleteDuplicateObjects,
+  onIgnoreObjectDuplicates,
+  objectDuplicateIgnores = [],
 }: ObjectSuggestionPanelProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isUpdatingObjects, setIsUpdatingObjects] = useState(false)
@@ -253,8 +262,8 @@ export function ObjectSuggestionPanel({
   const [mergeDialogOpen, setMergeDialogOpen] = useState(false)
 
   const duplicateGroups = useMemo(
-    () => duplicateObjectGroups(existingObjects),
-    [existingObjects]
+    () => duplicateObjectGroups(existingObjects, objectDuplicateIgnores),
+    [existingObjects, objectDuplicateIgnores]
   )
   const duplicateCount = duplicateGroups.reduce((sum, group) => sum + group.length - 1, 0)
 
@@ -551,6 +560,8 @@ export function ObjectSuggestionPanel({
           onOpenChange={setMergeDialogOpen}
           groups={duplicateGroups}
           onMerge={onMergeObjects}
+          onDeleteObjects={onDeleteDuplicateObjects ?? (async () => undefined)}
+          onIgnorePairs={onIgnoreObjectDuplicates ?? (async () => undefined)}
         />
       </>
     )
@@ -744,6 +755,8 @@ export function ObjectSuggestionPanel({
           onOpenChange={setMergeDialogOpen}
           groups={duplicateGroups}
           onMerge={onMergeObjects}
+          onDeleteObjects={onDeleteDuplicateObjects ?? (async () => undefined)}
+          onIgnorePairs={onIgnoreObjectDuplicates ?? (async () => undefined)}
         />
       ) : null}
     </>
