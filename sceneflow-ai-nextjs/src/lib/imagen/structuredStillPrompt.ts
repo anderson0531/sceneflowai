@@ -17,6 +17,11 @@ import {
   propHeadNoun,
   propSignificantWords,
 } from '@/lib/script/propNameMatch'
+import {
+  clusterByObjectName,
+  nameMatchesLibrary,
+  pickCanonicalObject,
+} from '@/lib/vision/objectDuplicateClusters'
 
 export const STILL_SECTION_REFERENCES = '[REFERENCES]'
 export const STILL_SECTION_TASK = '[TASK]'
@@ -296,57 +301,58 @@ export function promptReferencesLibraryItem(
 }
 
 /**
- * Thin out library labels that only matched on a head noun they share.
+ * Thin out library labels that describe the same physical object.
  *
  * The head-noun rule is what keeps a reference attached when a frame writes
  * "the spanner" for a "Thirty-Inch Iron Rail Spanner". But a library holding
- * three similar objects — "Brass cylinder", "Machined brass cylinder",
- * "Olive-drab aluminum cylinder" — matches all three on "cylinder" from one
- * mention, so a beat with a single cylinder in it spent three reference slots
- * on contradictory designs of one object (production 2026-09-12).
+ * several similar objects — cylinders that share a noun, or wrench/spanner
+ * synonyms — matches all of them from one mention, so a beat spent several
+ * reference slots on contradictory designs of one object.
  *
  * The prose decides which one: whichever label has the most of its own
  * describing words in the text. A group where none of them do is a genuine tie,
  * and the first is kept so the object still has exactly one design.
+ * Labels the frame named in full stay; those are distinct props on purpose.
  */
 export function dropDuplicateHeadNounMatches<T extends { name?: string }>(
   prompt: string,
   matched: Array<{ item: T; match: LibraryItemPromptMatch }>
 ): { kept: T[]; dropped: Array<{ item: T; keptInstead: string }> } {
-  const groups = new Map<string, Array<{ item: T; match: LibraryItemPromptMatch }>>()
-  for (const entry of matched) {
-    const key = entry.match.basis === 'head-noun' ? propHeadNoun(entry.item.name ?? '') : ''
-    const groupKey = key ? `head:${key}` : `keep:${groups.size}`
-    if (!groups.has(groupKey)) groups.set(groupKey, [])
-    groups.get(groupKey)!.push(entry)
-  }
-
   const kept: T[] = []
   const dropped: Array<{ item: T; keptInstead: string }> = []
 
-  for (const group of groups.values()) {
-    if (group.length === 1) {
-      kept.push(group[0].item)
+  const fullyNamed = matched.filter((entry) => entry.match.basis === 'name')
+  const namedItems = fullyNamed.map((entry) => entry.item)
+  const namedNames = namedItems.map((item) => item.name ?? '').filter(Boolean)
+  kept.push(...namedItems)
+
+  const rest = matched.filter((entry) => entry.match.basis !== 'name')
+  const synonymOfNamed: T[] = []
+  const clusterable: T[] = []
+  for (const entry of rest) {
+    if (nameMatchesLibrary(entry.item.name ?? '', namedNames)) {
+      synonymOfNamed.push(entry.item)
+    } else {
+      clusterable.push(entry.item)
+    }
+  }
+
+  for (const item of synonymOfNamed) {
+    const keptInstead =
+      namedItems.find((named) => nameMatchesLibrary(item.name ?? '', [named.name ?? '']))?.name ?? ''
+    dropped.push({ item, keptInstead })
+  }
+
+  for (const cluster of clusterByObjectName(clusterable)) {
+    if (cluster.length === 1) {
+      kept.push(cluster[0])
       continue
     }
-
-    const scored = group.map((entry) => {
-      const name = entry.item.name ?? ''
-      const head = propHeadNoun(name)
-      const describing = propModifierWords(name, head)
-      return {
-        entry,
-        score: describing.filter((word) => mentionsWord(prompt, word)).length,
-      }
-    })
-
-    const best = scored.reduce((winner, candidate) =>
-      candidate.score > winner.score ? candidate : winner
-    )
-    kept.push(best.entry.item)
-    for (const candidate of scored) {
-      if (candidate.entry === best.entry) continue
-      dropped.push({ item: candidate.entry.item, keptInstead: best.entry.item.name ?? '' })
+    const winner = pickCanonicalObject(cluster, prompt)
+    kept.push(winner)
+    for (const item of cluster) {
+      if (item === winner) continue
+      dropped.push({ item, keptInstead: winner.name ?? '' })
     }
   }
 

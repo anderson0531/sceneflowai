@@ -27,6 +27,7 @@ import {
   resolveSceneNumberForLocationMatch,
 } from '@/lib/vision/frameGenerationContext'
 import { resolveWardrobeIdForCharacterInScene } from '@/lib/character/characterReferenceAssembly'
+import { collapseObjectClusters } from '@/lib/vision/objectDuplicateClusters'
 import {
   locationReferenceForGeneration,
   resolveLocationVersionForBeat,
@@ -514,12 +515,15 @@ export function resolveBeatFrameGenerationContext(
     objectReferences as any[]
   )
   const directedObjectIds = new Set(directedObjects.map((o) => String(o.id || o.name)))
-  const detectedObjects = uniqueObjects([
-    ...directedObjects,
-    ...findSceneObjects(matchText, objectReferences as any[], undefined, {
-      matchDescriptions: false,
-    }),
-  ])
+  const detectedObjects = collapseObjectClusters(
+    uniqueObjects([
+      ...directedObjects,
+      ...findSceneObjects(matchText, objectReferences as any[], undefined, {
+        matchDescriptions: false,
+      }),
+    ]),
+    matchText
+  )
   const objectRefIds = detectedObjects.map((o) => o.id).filter(Boolean) as string[]
 
   const characterWardrobes = buildCharacterWardrobes(scene, characterIds, projectCharacters, sceneIndex)

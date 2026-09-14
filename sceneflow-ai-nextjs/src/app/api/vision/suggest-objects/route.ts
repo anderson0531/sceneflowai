@@ -10,6 +10,7 @@ import {
   harvestKeyPropNames,
   normalizeObjectName,
 } from '@/lib/vision/objectBeatUsage'
+import { selectCanonicalNewObjects } from '@/lib/vision/objectDuplicateClusters'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -92,8 +93,9 @@ export async function POST(req: NextRequest) {
     const taggedNames = hasBeats ? harvestKeyPropNames(scenes) : []
     const taggedUsage = taggedNames.length > 0 ? countObjectBeatReferences(scenes, taggedNames) : []
     const recurringTagged = taggedUsage.filter((u) => u.beatCount >= MIN_BEATS_FOR_LIBRARY)
-    const taggedInventory = recurringTagged.length > 0
-      ? `\n\nOBJECTS THE BEAT DIRECTION ALREADY HANDLES (beat counts measured from the script — you MUST include every one of these in your suggestions, described for image generation):\n${recurringTagged
+    const recurringCanonical = selectCanonicalNewObjects(recurringTagged, existingObjects)
+    const taggedInventory = recurringCanonical.length > 0
+      ? `\n\nOBJECTS THE BEAT DIRECTION ALREADY HANDLES (beat counts measured from the script — you MUST include every one of these in your suggestions, described for image generation). One physical object is one name — reuse these labels; do not invent a synonym (spanner vs wrench, journal vs notebook):\n${recurringCanonical
           .map((u) => `- ${u.name} — ${u.beatCount} beats (scenes ${u.sceneNumbers.join(', ')})`)
           .join('\n')}`
       : ''
@@ -113,9 +115,10 @@ Identify 3-8 significant objects that:
 3. Would benefit from a clean reference image for the art department
 4. Are specific enough to generate (not generic items like "chair" unless it's a distinctive hero prop)
 5. Track EXACTLY which scene numbers each object appears in
+6. One physical object is ONE name. If the script or the already-added list already names it (even under a shorter or fancier spelling), reuse that name. Never invent a synonym or catalog variant for the same tool ("spanner" and "wrench", "spud wrench" and "iron rail spanner").
 
 For each object, provide:
-- name: Short, specific VISUAL name that does NOT include character names, location names, or possessives (e.g. "1893 Water-Damaged Leather Journal", "Brass Faraday Energy Core", "Rugged Military Laptop"). NEVER use forms like "Marcus's Vintage Pocket Watch" or "Arthur Pendelton's 1893 Journal" — ownership is stored separately, not in the prompt-facing name.
+- name: Short, specific VISUAL name that does NOT include character names, location names, or possessives (e.g. "1893 Water-Damaged Leather Journal", "Brass Faraday Energy Core", "Rugged Military Laptop"). NEVER use forms like "Marcus's Vintage Pocket Watch" or "Arthur Pendelton's 1893 Journal" — ownership is stored separately, not in the prompt-facing name. If an existing/tagged name already covers the object, copy that name exactly.
 - description: Detailed visual description for image generation (materials, colors, style, era, condition)
 - category: One of: prop, vehicle, set-piece, costume, technology, other
 - importance: One of: critical (plot device that drives the story), important (handled in 2+ beats), background (atmosphere only - AVOID these unless essential)
@@ -137,7 +140,7 @@ Respond with valid JSON only:
 }`
 
     const result = await generateText(analysisPrompt, {
-      temperature: 0.7,
+      temperature: 0.2,
       maxOutputTokens: 4096,
       responseMimeType: 'application/json',
       thinkingBudget: 0,       // Disable thinking — structured JSON extraction, not reasoning
@@ -188,10 +191,14 @@ Respond with valid JSON only:
 
     // Only show objects the script actually handles more than once, plus plot
     // devices, so single-appearance dressing never clutters the library.
-    const filteredSuggestions = suggestions.filter(s =>
+    const recurringOrCritical = suggestions.filter(s =>
       hasBeats
         ? (s.beatCount ?? 0) >= MIN_BEATS_FOR_LIBRARY || s.importance === 'critical'
         : s.sceneNumbers.length >= 2 || s.importance === 'critical'
+    )
+    const filteredSuggestions = selectCanonicalNewObjects(
+      recurringOrCritical,
+      existingObjects
     )
 
     // Sort by importance and confidence

@@ -1,6 +1,7 @@
 'use client'
 
 import { Loader2, RefreshCw, Zap } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/Button'
 
 export function LibraryKindToolbar({
@@ -14,6 +15,7 @@ export function LibraryKindToolbar({
   agentDisabled = false,
   updateTitle,
   agentTitle,
+  extra,
 }: {
   updateLabel: string
   agentLabel: string
@@ -25,6 +27,7 @@ export function LibraryKindToolbar({
   agentDisabled?: boolean
   updateTitle?: string
   agentTitle?: string
+  extra?: ReactNode
 }) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -62,6 +65,7 @@ export function LibraryKindToolbar({
           {isAgentRunning ? 'Generating…' : agentLabel}
         </Button>
       ) : null}
+      {extra}
     </div>
   )
 }

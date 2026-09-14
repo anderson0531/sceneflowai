@@ -122,6 +122,12 @@ import {
   updateCharacterInList,
 } from '@/lib/vision/updateCharacterReference'
 import { updateObjectReferenceInList } from '@/lib/vision/updateObjectReference'
+import {
+  mergeObjectRows,
+  objectNamesMatch,
+  rewriteScenesForObjectMerge,
+  selectCanonicalNewObjects,
+} from '@/lib/vision/objectDuplicateClusters'
 
 // Dynamic import to break TDZ initialization chain - ScriptPanel imports heavy scene-production modules
 const ScriptPanel = dynamic(
@@ -2661,27 +2667,51 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       generationPrompt: string;
       aiGenerated: boolean;
     }) => {
-      const newReference: VisualReference = {
-        id: crypto.randomUUID(),
-        type: 'object',
-        name: object.name,
-        description: object.description,
-        imageUrl: object.imageUrl,
-        createdAt: new Date().toISOString(),
-        category: object.category as any,
-        importance: object.importance as any,
-        generationPrompt: object.generationPrompt,
-        aiGenerated: object.aiGenerated,
-      }
-
-      // Use functional update to get CURRENT state (not stale closure)
-      // This fixes the batch generation issue where images were being overwritten
-      setObjectReferences(prev => {
-        const updatedObjectRefs = [...prev, newReference]
-        // Update ref immediately for database save
+      const existingMatch = objectReferencesRef.current.find((row) =>
+        objectNamesMatch(row.name, object.name)
+      )
+      if (existingMatch) {
+        if (existingMatch.imageUrl || !object.imageUrl) return
+        const updatedAt = new Date().toISOString()
+        const updatedObjectRefs = updateObjectReferenceInList(
+          objectReferencesRef.current,
+          existingMatch.id,
+          {
+            imageUrl: object.imageUrl,
+            description: object.description || existingMatch.description,
+            generationPrompt: object.generationPrompt || existingMatch.generationPrompt,
+            aiGenerated: object.aiGenerated,
+            updatedAt,
+          }
+        )
         objectReferencesRef.current = updatedObjectRefs
-        return updatedObjectRefs
-      })
+        setObjectReferences(updatedObjectRefs)
+      } else {
+        const newReference: VisualReference = {
+          id: crypto.randomUUID(),
+          type: 'object',
+          name: object.name,
+          description: object.description,
+          imageUrl: object.imageUrl,
+          createdAt: new Date().toISOString(),
+          category: object.category as any,
+          importance: object.importance as any,
+          generationPrompt: object.generationPrompt,
+          aiGenerated: object.aiGenerated,
+        }
+
+        // Use functional update to get CURRENT state (not stale closure)
+        // This fixes the batch generation issue where images were being overwritten
+        setObjectReferences(prev => {
+          if (prev.some((row) => objectNamesMatch(row.name, object.name))) {
+            objectReferencesRef.current = prev
+            return prev
+          }
+          const updatedObjectRefs = [...prev, newReference]
+          objectReferencesRef.current = updatedObjectRefs
+          return updatedObjectRefs
+        })
+      }
 
       // Save to database using refs for current state
       try {
@@ -2725,11 +2755,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (objects.length === 0) return
 
       const createdAt = new Date().toISOString()
-      const existingNames = new Set(
-        objectReferencesRef.current.map(o => o.name.trim().toLowerCase())
-      )
-      const additions: VisualReference[] = objects
-        .filter(object => !existingNames.has(object.name.trim().toLowerCase()))
+      const existingNames = objectReferencesRef.current.map((o) => o.name)
+      const additions: VisualReference[] = selectCanonicalNewObjects(objects, existingNames)
         .map((object) => ({
           id: crypto.randomUUID(),
           type: 'object',
@@ -2782,6 +2809,68 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     },
     [project, projectId]
+  )
+
+  const handleMergeObjects = useCallback(
+    async (primaryId: string, duplicateIds: string[]) => {
+      if (duplicateIds.length === 0) return
+      const current = objectReferencesRef.current
+      const primary = current.find((row) => row.id === primaryId)
+      if (!primary) {
+        toast.error('Primary object not found')
+        return
+      }
+
+      const duplicates = current
+        .filter((row) => duplicateIds.includes(row.id))
+        .map((row) => ({ id: row.id, name: row.name }))
+      const updatedObjectRefs = mergeObjectRows(current, primaryId, duplicateIds)
+      const keeper = updatedObjectRefs.find((row) => row.id === primaryId) || primary
+      const currentScript = scriptRef.current
+      const updatedScenes = rewriteScenesForObjectMerge(
+        currentScript?.script?.scenes || [],
+        { id: keeper.id, name: keeper.name },
+        duplicates
+      )
+      const nextScript = {
+        ...currentScript,
+        script: { ...currentScript?.script, scenes: updatedScenes },
+      }
+
+      objectReferencesRef.current = updatedObjectRefs
+      scriptRef.current = nextScript
+      setObjectReferences(updatedObjectRefs)
+      setScript(nextScript)
+
+      try {
+        const currentMetadata = (projectRef.current || project)?.metadata || {}
+        await serializedProjectSave(
+          {
+            metadata: {
+              ...currentMetadata,
+              visionPhase: {
+                ...currentMetadata?.visionPhase,
+                references: {
+                  sceneReferences: sceneReferencesRef.current,
+                  objectReferences: updatedObjectRefs,
+                  locationReferences: locationReferencesRef.current,
+                },
+                scenes: updatedScenes,
+                script: { ...(currentScript?.script || {}), scenes: updatedScenes },
+              },
+            },
+          },
+          'handleMergeObjects'
+        )
+        toast.success(
+          `Merged ${duplicateIds.length} duplicate${duplicateIds.length === 1 ? '' : 's'} into ${keeper.name}`
+        )
+      } catch (error) {
+        console.error('[handleMergeObjects] Failed to save merged objects', error)
+        toast.error('Failed to merge objects')
+      }
+    },
+    [project, serializedProjectSave]
   )
 
   // Handler for inserting a backdrop segment at the beginning of a scene
@@ -15696,6 +15785,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         onInsertBackdropSegment={handleInsertBackdropSegment}
         onObjectGenerated={handleObjectGenerated}
         onObjectsAutoAdded={handleObjectsAutoAdded}
+        onMergeObjects={handleMergeObjects}
         screenplayContext={{
           genre: project?.genre,
           tone: project?.tone || project?.metadata?.filmTreatmentVariant?.tone_description || project?.metadata?.filmTreatmentVariant?.tone,

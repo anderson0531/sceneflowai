@@ -516,6 +516,25 @@ describe('dropDuplicateHeadNounMatches', () => {
     expect(kept).toHaveLength(2)
     expect(dropped).toHaveLength(0)
   })
+
+  it('keeps one wrench/spanner synonym when the frame only names the tool', () => {
+    const wrenches = [
+      { name: 'Thirty-Inch Iron Rail Spanner' },
+      { name: 'Spud wrench' },
+      { name: 'Industrial cast-iron spanner wrench' },
+    ]
+    const headNoun = { matched: true as const, basis: 'head-noun' as const }
+    const { kept, dropped } = dropDuplicateHeadNounMatches(
+      'person [1] swings the iron rail spanner.',
+      wrenches.map((item) => ({ item, match: headNoun }))
+    )
+
+    expect(kept).toEqual([{ name: 'Thirty-Inch Iron Rail Spanner' }])
+    expect(dropped.map((entry) => entry.item.name)).toEqual([
+      'Spud wrench',
+      'Industrial cast-iron spanner wrench',
+    ])
+  })
 })
 
 describe('still prompt round-trips without consuming itself', () => {
