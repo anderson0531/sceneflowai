@@ -24,11 +24,14 @@ import {
   Save,
   Package,
   Users,
+  MapPin,
 } from 'lucide-react'
 import {
+  appendUseTheseReferencesClause,
   buildFrameEditReferenceImages,
   frameEditReferenceKeys,
   type FrameEditCharacterReference,
+  type FrameEditLocationStill,
   type FrameEditReferenceSelectionKey,
 } from '@/lib/vision/resolveFrameEditCharacterReferences'
 import { MAX_REFERENCE_IMAGES_ECO } from '@/lib/vision/referenceLimits'
@@ -47,10 +50,16 @@ interface ImageEditModalProps {
     imageUrl: string
     description: string
   }
-  /** Character identity + wardrobe refs for the frame cast */
+  /** Character identity + wardrobe refs (full library when provided) */
   characterReferences?: FrameEditCharacterReference[]
+  /** Beat-resolved character tiles to select by default */
+  defaultSelectedCharRefKeys?: FrameEditReferenceSelectionKey[]
   /** Object/prop references for visual consistency */
   objectReferences?: Array<{ id: string; name: string; imageUrl: string; description?: string }>
+  defaultSelectedPropIds?: string[]
+  /** Location base + version stills */
+  locationStills?: FrameEditLocationStill[]
+  defaultSelectedLocationIds?: string[]
   /** Output aspect ratio (defaults to 16:9 storyboard) */
   aspectRatio?: '16:9' | '9:16' | '1:1' | '4:3' | '3:4'
   /** Called when edit is saved with new image URL */
@@ -97,6 +106,13 @@ function ReferenceTile({
   )
 }
 
+function appendChipText(current: string, addition: string): string {
+  const trimmed = current.trim()
+  if (!trimmed) return addition
+  if (trimmed.includes(addition)) return trimmed
+  return `${trimmed.replace(/[. ]*$/, '')}. ${addition}`
+}
+
 export function ImageEditModal({
   open,
   onOpenChange,
@@ -104,7 +120,11 @@ export function ImageEditModal({
   imageType,
   subjectReference,
   characterReferences,
+  defaultSelectedCharRefKeys,
   objectReferences,
+  defaultSelectedPropIds,
+  locationStills,
+  defaultSelectedLocationIds,
   aspectRatio = '16:9',
   onSave,
   title,
@@ -114,20 +134,23 @@ export function ImageEditModal({
   const [showComparison, setShowComparison] = useState(false)
   const [instruction, setInstruction] = useState('')
   const [selectedPropIds, setSelectedPropIds] = useState<string[]>([])
+  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([])
   const [selectedCharRefKeys, setSelectedCharRefKeys] = useState<FrameEditReferenceSelectionKey[]>(
     []
   )
 
-  const defaultCharRefKeys = useMemo(
+  const fallbackCharRefKeys = useMemo(
     () => frameEditReferenceKeys(characterReferences ?? []),
     [characterReferences]
   )
 
   useEffect(() => {
     if (open) {
-      setSelectedCharRefKeys(defaultCharRefKeys)
+      setSelectedCharRefKeys(defaultSelectedCharRefKeys ?? fallbackCharRefKeys)
+      setSelectedPropIds(defaultSelectedPropIds ?? [])
+      setSelectedLocationIds(defaultSelectedLocationIds ?? [])
     }
-  }, [open, defaultCharRefKeys])
+  }, [open, defaultSelectedCharRefKeys, fallbackCharRefKeys, defaultSelectedPropIds, defaultSelectedLocationIds])
 
   const handleOpenChange = (openState: boolean) => {
     if (!openState) {
@@ -135,6 +158,7 @@ export function ImageEditModal({
       setShowComparison(false)
       setInstruction('')
       setSelectedPropIds([])
+      setSelectedLocationIds([])
       setSelectedCharRefKeys([])
     }
     onOpenChange(openState)
@@ -145,6 +169,63 @@ export function ImageEditModal({
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
     )
   }
+
+  const selectedObjectNames = useMemo(
+    () =>
+      (objectReferences || [])
+        .filter((ref) => selectedPropIds.includes(ref.id))
+        .map((ref) => ref.name)
+        .filter(Boolean),
+    [objectReferences, selectedPropIds]
+  )
+
+  const commonEditChips = useMemo(
+    () => [
+      {
+        id: 'photoreal',
+        label: 'Make more photorealistic / live-action',
+        text: 'Make this more photorealistic and live-action.',
+      },
+      {
+        id: 'add-object',
+        label: 'Add object',
+        text: selectedObjectNames[0]
+          ? `Add ${selectedObjectNames[0]} into the scene, matching lighting and perspective.`
+          : 'Add [object] into the scene, matching lighting and perspective.',
+      },
+      {
+        id: 'remove-object',
+        label: 'Remove object',
+        text: 'Remove the object from the scene, restoring the background naturally.',
+      },
+      {
+        id: 'lighting',
+        label: 'Fix lighting / exposure',
+        text: 'Fix lighting and exposure so the scene is evenly lit and cinematic.',
+      },
+      {
+        id: 'sharpen',
+        label: 'Sharpen details',
+        text: 'Sharpen details while preserving identity, wardrobe, and composition.',
+      },
+      {
+        id: 'match-refs',
+        label: 'Match selected identity / wardrobe refs',
+        text: 'Match the selected identity and wardrobe references exactly.',
+      },
+      {
+        id: 'remove-people',
+        label: 'Remove extra people',
+        text: 'Remove extra people who are not in the selected character references.',
+      },
+      {
+        id: 'ground',
+        label: 'Ground subjects',
+        text: 'Ground subjects: feet on the floor with realistic contact shadows.',
+      },
+    ],
+    [selectedObjectNames]
+  )
 
   const handleEdit = async () => {
     if (!instruction.trim()) {
@@ -160,6 +241,8 @@ export function ImageEditModal({
         selectedKeys,
         objectReferences,
         selectedPropIds,
+        locationStills,
+        selectedLocationIds,
       })
 
       const referenceImages = prioritizedRefs.map((ref) => ({
@@ -175,13 +258,18 @@ export function ImageEditModal({
           ? undefined
           : subjectReference
 
+      const instructionWithRefs = appendUseTheseReferencesClause(
+        instruction.trim(),
+        referenceImages
+      )
+
       const response = await fetch('/api/image/edit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mode: 'instruction',
           sourceImage: imageUrl,
-          instruction: instruction.trim(),
+          instruction: instructionWithRefs,
           subjectReference: legacySubject,
           referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
           aspectRatio,
@@ -245,7 +333,9 @@ export function ImageEditModal({
 
   const modalTitle = title || `Edit ${imageType.charAt(0).toUpperCase() + imageType.slice(1)} Image`
   const selectedRefCount =
-    selectedCharRefKeys.length + selectedPropIds.length
+    selectedCharRefKeys.length + selectedPropIds.length + selectedLocationIds.length
+  const objectsWithImages = (objectReferences || []).filter((ref) => ref.imageUrl)
+  const locationsWithImages = (locationStills || []).filter((still) => still.imageUrl)
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -321,6 +411,18 @@ export function ImageEditModal({
 
               <div className="space-y-2">
                 <Label className="text-slate-300">Direction</Label>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {commonEditChips.map((chip) => (
+                    <button
+                      key={chip.id}
+                      type="button"
+                      onClick={() => setInstruction((prev) => appendChipText(prev, chip.text))}
+                      className="text-[10px] px-2 py-1 rounded-full border border-slate-600 text-slate-300 hover:border-cyan-500 hover:text-cyan-200"
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
                 <DictationTextarea
                   value={instruction}
                   onChange={setInstruction}
@@ -402,6 +504,33 @@ export function ImageEditModal({
                   </div>
                 )}
 
+                {locationsWithImages.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    <Label className="text-slate-300 flex items-center gap-2">
+                      <MapPin className="w-3 h-3" />
+                      Location References
+                    </Label>
+                    <div className="grid grid-cols-4 gap-2 max-h-28 overflow-y-auto p-2 bg-slate-800 rounded border border-slate-700">
+                      {locationsWithImages.map((still) => (
+                        <ReferenceTile
+                          key={still.id}
+                          imageUrl={still.imageUrl}
+                          label={still.name}
+                          sublabel={still.kind === 'version' ? 'Set version' : 'Base'}
+                          selected={selectedLocationIds.includes(still.id)}
+                          onToggle={() =>
+                            setSelectedLocationIds((prev) =>
+                              prev.includes(still.id)
+                                ? prev.filter((id) => id !== still.id)
+                                : [...prev, still.id]
+                            )
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {selectedRefCount > 0 && (
                   <div className="flex items-center gap-2 p-2 bg-slate-800/80 rounded text-xs text-cyan-200/80">
                     <Check className="w-3 h-3 text-cyan-400 shrink-0" />
@@ -409,14 +538,14 @@ export function ImageEditModal({
                   </div>
                 )}
 
-                {objectReferences && objectReferences.length > 0 && (
+                {objectsWithImages.length > 0 && (
                   <div className="mt-3 space-y-2">
                     <Label className="text-slate-300 flex items-center gap-2">
                       <Package className="w-3 h-3" />
                       Include Objects for Consistency
                     </Label>
                     <div className="grid grid-cols-4 gap-2 max-h-28 overflow-y-auto p-2 bg-slate-800 rounded border border-slate-700">
-                      {objectReferences.map((ref) => (
+                      {objectsWithImages.map((ref) => (
                         <button
                           key={ref.id}
                           type="button"

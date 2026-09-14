@@ -56,6 +56,8 @@ interface GenerateLocationImageRequest {
   stateNotes?: string
   /** Existing version id (storage path only). */
   versionId?: string
+  /** Object-library / scene Key Props names to strip from version bake prompts. */
+  catalogPropNames?: string[]
 }
 
 /**
@@ -128,6 +130,7 @@ export async function POST(req: NextRequest) {
           baseImageUrl: body.baseImageUrl!,
           stateNotes: body.stateNotes!,
           versionId: body.versionId,
+          catalogPropNames: body.catalogPropNames,
         })
       : await generateLocationReferenceImage({
           userId,

@@ -103,11 +103,12 @@ DO NOT create a version for:
 - A door that opens and closes
 - Time of day or lightingAccent alone
 - A different location (new scene heading)
+- Beat keyProps, propInteraction, or objects a character handles or introduces (journals, vellum, tools, weapons). Those belong on the beat frame, not this still.
 
 RULES:
 1. The intact establishing shot is the BASE — do not suggest a version for the undamaged set.
 2. Group consecutive beats that share the same post-change state into one version.
-3. stateNotes must be the COMPLETE current set state at that point (door gone AND later fire), not a delta-only patch. stateNotes are used for reference image generation.
+3. stateNotes must be the COMPLETE current STRUCTURAL set state at that point (door gone AND later fire), not a delta-only patch. stateNotes are used for reference image generation. stateNotes must NOT include beat keyProps, propInteraction, or handheld objects a character introduces.
 4. appliesFrom is the first beat where this state is visible (sceneNumber 1-based, beatIndex 0-based). Later beats at this location keep this version until a newer version starts.
 5. If nothing lasting changes, return an empty suggestions array.
 

@@ -30,6 +30,7 @@ import { EditSegmentDialog } from './scene-production/EditSegmentDialog'
 import { ResetSegmentsConfirmDialog } from './scene-production/ResetSegmentsConfirmDialog'
 import { SegmentList } from './scene-production/SegmentList'
 import type { ScriptSegment } from '@/lib/script/segmentTypes'
+import type { LocationReference } from '@/types/visionReferences'
 import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import {
   resolveSfxDuration,
@@ -412,7 +413,7 @@ interface ScriptPanelProps {
   sceneReferences?: Array<{ id: string; name: string; description?: string; imageUrl?: string }>
   objectReferences?: Array<{ id: string; name: string; description?: string; imageUrl?: string }>
   // Location references for environment consistency in keyframe generation
-  locationReferences?: Array<{ id: string; location: string; locationDisplay: string; imageUrl: string; description?: string; sceneNumbers?: number[] }>
+  locationReferences?: LocationReference[]
   /** Draw the references a single scene needs, just in time, from its card. */
   onExpressSceneReferences?: (
     sceneIndex: number,
@@ -3932,7 +3933,7 @@ interface SceneCardProps {
   sceneReferences?: Array<{ id: string; name: string; description?: string; imageUrl?: string }>
   objectReferences?: Array<{ id: string; name: string; description?: string; imageUrl?: string }>
   // Location references for environment consistency in keyframe generation
-  locationReferences?: Array<{ id: string; location: string; locationDisplay: string; imageUrl: string; description?: string; sceneNumbers?: number[] }>
+  locationReferences?: LocationReference[]
   /** Draw the references this scene needs, just in time, without leaving the card. */
   onExpressSceneReferences?: (
     sceneIndex: number,
@@ -6383,6 +6384,7 @@ function SceneCard({
                     prompt={scenePrompt || scene.imagePrompt || ''}
                     characters={characters}
                     objectReferences={objectReferences}
+                    locationReferences={locationReferences}
                     sceneRequirements={sceneRequiredReferences}
                     selectedLanguage={selectedLanguage}
                     narrationVoice={narrationVoice}

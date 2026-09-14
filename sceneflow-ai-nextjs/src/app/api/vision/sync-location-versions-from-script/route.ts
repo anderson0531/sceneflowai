@@ -98,8 +98,8 @@ TASK: Produce the DISTINCT lasting set-state versions ${locationName} needs NOW 
 RESYNC RULES:
 1. Prefer updating an existing version (same name / same damage) with refreshed sceneNumbers and stateNotes over creating near-duplicates.
 2. Create a new version only for a clearly different lasting set state.
-3. stateNotes is the COMPLETE current set state (accumulated), used for image generation.
-4. Do NOT invent versions for lighting, camera, or people moving.
+3. stateNotes is the COMPLETE current STRUCTURAL set state (accumulated), used for image generation. stateNotes must NOT include beat keyProps, propInteraction, or objects a character handles or introduces (journals, vellum, tools, weapons). Those belong on the beat frame, not this still.
+4. Do NOT invent versions for lighting, camera, people moving, or handheld beat props.
 5. The intact base is not a version — omit it.
 6. appliesFrom is the first beat where this state is visible.
 

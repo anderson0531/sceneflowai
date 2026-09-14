@@ -20,6 +20,7 @@ import { englishForModel } from '@/i18n/server/requestLocale'
 import {
   LOCATION_TURNAROUND_GENERATION_INSTRUCTION,
   buildLocationVersionPrompt,
+  ensureLocationVersionPromptIsStructural,
 } from '@/lib/vision/locationReferencePrompts'
 import {
   buildCharacterIdentityReferencePrompt,
@@ -200,6 +201,8 @@ export type GenerateLocationVersionImageInput = GenerateLocationImageInput & {
   baseImageUrl: string
   stateNotes: string
   versionId?: string
+  /** Object-library / scene Key Props names to strip from version bake prompts. */
+  catalogPropNames?: string[]
 }
 
 export async function generateLocationVersionReferenceImage(
@@ -218,6 +221,7 @@ export async function generateLocationVersionReferenceImage(
     baseImageUrl,
     stateNotes,
     versionId,
+    catalogPropNames,
   } = input
 
   if (!locationName) {
@@ -237,13 +241,14 @@ export async function generateLocationVersionReferenceImage(
 
   let prompt =
     locationPrompt && locationPrompt.trim()
-      ? locationPrompt
+      ? ensureLocationVersionPromptIsStructural(locationPrompt, catalogPropNames)
       : buildLocationVersionPrompt({
           locationName,
           stateNotes,
           intExt,
           timeOfDay,
           description,
+          catalogPropNames,
         })
 
   prompt = await englishForModel(prompt, locale.storyLocale, [
