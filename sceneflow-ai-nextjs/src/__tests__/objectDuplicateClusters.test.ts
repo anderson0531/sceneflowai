@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   collapseObjectClusters,
   clusterObjectNames,
+  countDuplicateObjectReviewItems,
+  duplicateObjectBeatGroups,
   duplicateObjectGroups,
   ignorePairsForGroup,
   ignorePairsForObject,
@@ -148,6 +150,124 @@ describe('duplicateObjectGroups', () => {
     const items = WRENCH_FAMILY.map((name, index) => ({ id: `w${index}`, name }))
     const groups = duplicateObjectGroups(items)
     expect(duplicateObjectGroups(items, ignorePairsForGroup(groups[0]))).toEqual([])
+  })
+})
+
+describe('duplicateObjectBeatGroups', () => {
+  const objects = [
+    { id: 'a', name: 'Thirty-Inch Iron Rail Spanner' },
+    { id: 'b', name: 'Spud wrench' },
+    { id: 'c', name: 'Water-damaged leather journal' },
+    { id: 'd', name: 'Leather journal' },
+  ]
+
+  it('nests colliding beats under their scenes', () => {
+    const groups = duplicateObjectBeatGroups(objects, [
+      {
+        sceneNumber: 1,
+        heading: 'INT. RAIL YARD - NIGHT',
+        beats: [
+          {
+            actionDescription: 'Elara lifts the spanner.',
+            beatDirection: {
+              keyProps: ['Thirty-Inch Iron Rail Spanner', 'Spud wrench'],
+            },
+          },
+        ],
+      },
+      {
+        sceneNumber: 2,
+        heading: 'INT. STUDY - NIGHT',
+        beats: [
+          { actionDescription: 'She opens the journal.' },
+          {
+            actionDescription: 'Ink soaks the leather journal.',
+            beatDirection: {
+              keyProps: ['Water-damaged leather journal', 'Leather journal'],
+            },
+          },
+        ],
+      },
+    ])
+
+    expect(groups.scenes.map((scene) => scene.heading)).toEqual([
+      'INT. RAIL YARD - NIGHT',
+      'INT. STUDY - NIGHT',
+    ])
+    expect(groups.scenes[0].beats).toHaveLength(1)
+    expect(groups.scenes[0].beats[0].beatIndex).toBe(0)
+    expect(groups.scenes[1].beats).toHaveLength(1)
+    expect(groups.scenes[1].beats[0].beatIndex).toBe(1)
+    expect(groups.scenes[0].beats[0].snippet).toBe('Elara lifts the spanner.')
+    expect(groups.unreferenced).toEqual([])
+    expect(countDuplicateObjectReviewItems(groups)).toBe(2)
+  })
+
+  it('does not emit a card for a beat that tags only one wrench spelling', () => {
+    const groups = duplicateObjectBeatGroups(
+      [
+        { id: 'a', name: 'Thirty-Inch Iron Rail Spanner' },
+        { id: 'b', name: 'Spud wrench' },
+      ],
+      [
+        {
+          sceneNumber: 1,
+          beats: [
+            {
+              beatDirection: { keyProps: ['Spud wrench'] },
+            },
+          ],
+        },
+      ]
+    )
+    expect(groups.scenes).toEqual([])
+    expect(groups.unreferenced).toHaveLength(1)
+  })
+
+  it('attaches saved objectRefIds on a beat even without matching keyProps', () => {
+    const groups = duplicateObjectBeatGroups(
+      [
+        { id: 'a', name: 'Thirty-Inch Iron Rail Spanner' },
+        { id: 'b', name: 'Spud wrench' },
+      ],
+      [
+        {
+          sceneNumber: 3,
+          beats: [
+            {
+              referenceSelection: { objectRefIds: ['a', 'b'] },
+            },
+          ],
+        },
+      ]
+    )
+    expect(groups.scenes[0].beats[0].collisions[0].members.map((row) => row.id).sort()).toEqual([
+      'a',
+      'b',
+    ])
+  })
+
+  it('drops a beat collision when the pair is ignored', () => {
+    const items = [
+      { id: 'a', name: 'Thirty-Inch Iron Rail Spanner' },
+      { id: 'b', name: 'Spud wrench' },
+    ]
+    const scenes = [
+      {
+        sceneNumber: 1,
+        heading: 'INT. RAIL YARD - NIGHT',
+        beats: [
+          {
+            beatDirection: { keyProps: ['Thirty-Inch Iron Rail Spanner', 'Spud wrench'] },
+          },
+        ],
+      },
+    ]
+    const before = duplicateObjectBeatGroups(items, scenes)
+    expect(before.scenes).toHaveLength(1)
+    const ignored = ignorePairsForObject(before.scenes[0].beats[0].collisions[0].members, 'b')
+    const after = duplicateObjectBeatGroups(items, scenes, ignored)
+    expect(after.scenes).toEqual([])
   })
 })
 

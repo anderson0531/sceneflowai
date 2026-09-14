@@ -25,7 +25,8 @@ import {
   slimSceneForObjectUsage,
 } from '@/lib/vision/objectBeatUsage'
 import {
-  duplicateObjectGroups,
+  countDuplicateObjectReviewItems,
+  duplicateObjectBeatGroups,
   nameMatchesLibrary,
   selectCanonicalNewObjects,
 } from '@/lib/vision/objectDuplicateClusters'
@@ -261,11 +262,11 @@ export function ObjectSuggestionPanel({
   const [currentBatchItem, setCurrentBatchItem] = useState<string>('')
   const [mergeDialogOpen, setMergeDialogOpen] = useState(false)
 
-  const duplicateGroups = useMemo(
-    () => duplicateObjectGroups(existingObjects, objectDuplicateIgnores),
-    [existingObjects, objectDuplicateIgnores]
+  const duplicateReview = useMemo(
+    () => duplicateObjectBeatGroups(existingObjects, scenes, objectDuplicateIgnores),
+    [existingObjects, scenes, objectDuplicateIgnores]
   )
-  const duplicateCount = duplicateGroups.reduce((sum, group) => sum + group.length - 1, 0)
+  const duplicateCount = countDuplicateObjectReviewItems(duplicateReview)
 
   // Objects the beat direction already names and handles more than once are a
   // fact of the script, not a guess, so they go into the library without a
@@ -558,7 +559,7 @@ export function ObjectSuggestionPanel({
         <ObjectDuplicateMergeDialog
           open={mergeDialogOpen}
           onOpenChange={setMergeDialogOpen}
-          groups={duplicateGroups}
+          groups={duplicateReview}
           onMerge={onMergeObjects}
           onDeleteObjects={onDeleteDuplicateObjects ?? (async () => undefined)}
           onIgnorePairs={onIgnoreObjectDuplicates ?? (async () => undefined)}
@@ -753,7 +754,7 @@ export function ObjectSuggestionPanel({
         <ObjectDuplicateMergeDialog
           open={mergeDialogOpen}
           onOpenChange={setMergeDialogOpen}
-          groups={duplicateGroups}
+          groups={duplicateReview}
           onMerge={onMergeObjects}
           onDeleteObjects={onDeleteDuplicateObjects ?? (async () => undefined)}
           onIgnorePairs={onIgnoreObjectDuplicates ?? (async () => undefined)}
