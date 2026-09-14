@@ -104,9 +104,18 @@ export function clusterObjectNames(names: string[]): string[][] {
   return clusterItems([...richest.values()], objectNamesMatch)
 }
 
-export function clusterByObjectName<T extends { name?: string }>(items: T[]): T[][] {
+export function clusterByObjectName<T extends { name?: string; id?: string }>(
+  items: T[],
+  ignoredPairs: Iterable<string> = []
+): T[][] {
+  const ignored = new Set(mergeObjectDuplicateIgnores(undefined, ignoredPairs))
   const named = items.filter((item) => String(item.name ?? '').trim())
-  return clusterItems(named, (a, b) => objectNamesMatch(a.name ?? '', b.name ?? ''))
+  return clusterItems(named, (a, b) => {
+    const idA = String(a.id ?? '')
+    const idB = String(b.id ?? '')
+    if (idA && idB && ignored.has(objectDuplicatePairKey(idA, idB))) return false
+    return objectNamesMatch(a.name ?? '', b.name ?? '')
+  })
 }
 
 function modifierWords(name: string): string[] {
@@ -190,8 +199,63 @@ export function collapseObjectClusters<T extends { name?: string; imageUrl?: str
   return clusterByObjectName(objects).map((cluster) => pickCanonicalObject(cluster, beatText))
 }
 
-export function duplicateObjectGroups<T extends { name?: string }>(items: T[]): T[][] {
-  return clusterByObjectName(items).filter((group) => group.length > 1)
+/** Stable id pair key so ignored edges survive regrouping. */
+export function objectDuplicatePairKey(a: string, b: string): string {
+  return a < b ? `${a}::${b}` : `${b}::${a}`
+}
+
+export function mergeObjectDuplicateIgnores(
+  existing: Iterable<string> | undefined,
+  added: Iterable<string>
+): string[] {
+  const keys = new Set<string>()
+  for (const raw of [...(existing ?? []), ...added]) {
+    if (!raw) continue
+    const [left, right] = String(raw).split('::')
+    if (!left || !right || left === right) continue
+    keys.add(objectDuplicatePairKey(left, right))
+  }
+  return [...keys].sort()
+}
+
+/** Pairs that remove `objectId` from this cluster without deleting the row. */
+export function ignorePairsForObject<T extends { id: string }>(
+  group: T[],
+  objectId: string
+): string[] {
+  return group
+    .filter((row) => row.id && row.id !== objectId)
+    .map((row) => objectDuplicatePairKey(objectId, row.id))
+}
+
+/** Pairs that dismiss an entire false-positive cluster. */
+export function ignorePairsForGroup<T extends { id: string }>(group: T[]): string[] {
+  const pairs: string[] = []
+  for (let i = 0; i < group.length; i++) {
+    for (let j = i + 1; j < group.length; j++) {
+      pairs.push(objectDuplicatePairKey(group[i].id, group[j].id))
+    }
+  }
+  return pairs
+}
+
+/** Drop ignore edges that mention objects no longer in the library. */
+export function pruneObjectDuplicateIgnores(
+  ignores: Iterable<string> | undefined,
+  droppedIds: Iterable<string>
+): string[] {
+  const dropped = new Set([...droppedIds].filter(Boolean))
+  return [...(ignores ?? [])].filter((pair) => {
+    const [left, right] = pair.split('::')
+    return Boolean(left && right && !dropped.has(left) && !dropped.has(right))
+  })
+}
+
+export function duplicateObjectGroups<T extends { name?: string; id?: string }>(
+  items: T[],
+  ignoredPairs: Iterable<string> = []
+): T[][] {
+  return clusterByObjectName(items, ignoredPairs).filter((group) => group.length > 1)
 }
 
 export function rewriteKeyProps(
@@ -309,6 +373,33 @@ export function rewriteScenesForObjectMerge<T>(
     }
 
     return next as T
+  })
+}
+
+/** Drop saved objectRefIds with no remaining library row to rewrite onto. */
+export function rewriteScenesForObjectDelete<T>(scenes: T[], droppedIds: string[]): T[] {
+  if (!Array.isArray(scenes) || droppedIds.length === 0) return scenes
+  const dropped = new Set(droppedIds)
+  return scenes.map((scene) => {
+    if (!scene || typeof scene !== 'object') return scene
+    const record = scene as Record<string, unknown>
+    if (!Array.isArray(record.beats)) return scene
+    return {
+      ...record,
+      beats: record.beats.map((beat) => {
+        if (!beat || typeof beat !== 'object') return beat
+        const selection = (beat as { referenceSelection?: { objectRefIds?: unknown } })
+          .referenceSelection
+        if (!selection || !Array.isArray(selection.objectRefIds)) return beat
+        return {
+          ...(beat as Record<string, unknown>),
+          referenceSelection: {
+            ...selection,
+            objectRefIds: selection.objectRefIds.map(String).filter((id) => !dropped.has(id)),
+          },
+        }
+      }),
+    } as T
   })
 }
 

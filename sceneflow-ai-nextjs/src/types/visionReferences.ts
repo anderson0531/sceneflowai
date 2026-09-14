@@ -152,5 +152,15 @@ export interface VisionReferencesPayload {
   objectReferences: VisualReference[]
   /** Location references for environment/setting consistency */
   locationReferences?: LocationReference[]
+  /**
+   * Sorted `idA::idB` pairs the user marked not-a-duplicate. Cluster review
+   * skips these edges so false positives stay in the library without regrouping.
+   */
+  objectDuplicateIgnores?: string[]
+  /**
+   * PUT-only: object ids dropped by merge/delete. Not stored; tells the
+   * references merge not to resurrect those rows from existing metadata.
+   */
+  droppedObjectReferenceIds?: string[]
 }
 

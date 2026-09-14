@@ -96,6 +96,11 @@ export interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps
   onObjectsAutoAdded?: (objects: AutoAddedObject[]) => void | Promise<void>
   /** Confirm-to-merge synonym object rows already in the library */
   onMergeObjects?: (primaryId: string, duplicateIds: string[]) => void | Promise<void>
+  /** Drop library rows from a duplicate cluster */
+  onDeleteDuplicateObjects?: (ids: string[], keeperId?: string) => void | Promise<void>
+  /** Persist not-a-duplicate pair keys */
+  onIgnoreObjectDuplicates?: (pairs: string[]) => void | Promise<void>
+  objectDuplicateIgnores?: string[]
   /** Callback to update a reference image after editing */
   onUpdateReferenceImage?: (type: 'scene' | 'object', referenceId: string, newImageUrl: string) => void
   /** Callback to edit a character's reference image */
@@ -1219,6 +1224,9 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onObjectGenerated,
     onObjectsAutoAdded,
     onMergeObjects,
+    onDeleteDuplicateObjects,
+    onIgnoreObjectDuplicates,
+    objectDuplicateIgnores,
     onUpdateReferenceImage,
     onEditCharacterImage,
     showProductionReadiness = true,
@@ -1822,6 +1830,9 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                   onObjectGenerated={onObjectGenerated}
                   onObjectsAutoAdded={onObjectsAutoAdded}
                   onMergeObjects={onMergeObjects}
+                  onDeleteDuplicateObjects={onDeleteDuplicateObjects}
+                  onIgnoreObjectDuplicates={onIgnoreObjectDuplicates}
+                  objectDuplicateIgnores={objectDuplicateIgnores}
                   onExpressGenerateReferences={onExpressGenerateReferences}
                   isExpressGeneratingReferences={isExpressGeneratingReferences}
                   compact

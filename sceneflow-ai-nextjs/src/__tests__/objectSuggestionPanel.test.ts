@@ -88,4 +88,57 @@ describe('ObjectSuggestionPanel Objects tab render', () => {
 
     expect(container.textContent).toContain('Review duplicate objects (1)')
   })
+
+  it('lists every duplicate group in a scrollable review dialog', () => {
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    root = createRoot(container)
+
+    act(() => {
+      root.render(
+        React.createElement(ObjectSuggestionPanel, {
+          scenes: [
+            {
+              sceneNumber: 1,
+              heading: 'INT. RAIL YARD - NIGHT',
+              action: 'Elara lifts the spanner and the journal.',
+            },
+          ],
+          existingObjects: [
+            { id: 'a', type: 'object', name: 'Thirty-Inch Iron Rail Spanner' },
+            { id: 'b', type: 'object', name: 'Spud wrench' },
+            { id: 'c', type: 'object', name: 'Water-damaged leather journal' },
+            { id: 'd', type: 'object', name: 'Leather journal' },
+          ],
+          onObjectGenerated: () => undefined,
+          onMergeObjects: () => undefined,
+          onDeleteDuplicateObjects: () => undefined,
+          onIgnoreObjectDuplicates: () => undefined,
+        })
+      )
+    })
+
+    expect(container.textContent).toContain('Review duplicate objects (2)')
+
+    const reviewButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Review duplicate objects')
+    )
+    expect(reviewButton).toBeTruthy()
+    act(() => {
+      reviewButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+
+    const dialog = document.body.querySelector('[data-testid="object-duplicate-dialog"]')
+    const scroll = document.body.querySelector('[data-testid="object-duplicate-scroll"]')
+    expect(dialog).toBeTruthy()
+    expect(dialog?.className).toContain('max-h-[85vh]')
+    expect(scroll?.className).toContain('overflow-y-auto')
+    expect(document.body.querySelectorAll('[data-testid="object-duplicate-group"]')).toHaveLength(2)
+    expect(document.body.textContent).toContain('Thirty-Inch Iron Rail Spanner')
+    expect(document.body.textContent).toContain('Water-damaged leather journal')
+    expect(document.body.textContent).toContain('Delete')
+    expect(document.body.textContent).toContain('Not a duplicate')
+    expect(document.body.textContent).toContain('Ignore group')
+    expect(document.body.textContent).toContain('Merge group')
+  })
 })

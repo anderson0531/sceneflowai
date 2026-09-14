@@ -123,8 +123,11 @@ import {
 } from '@/lib/vision/updateCharacterReference'
 import { updateObjectReferenceInList } from '@/lib/vision/updateObjectReference'
 import {
+  mergeObjectDuplicateIgnores,
   mergeObjectRows,
   objectNamesMatch,
+  pruneObjectDuplicateIgnores,
+  rewriteScenesForObjectDelete,
   rewriteScenesForObjectMerge,
   selectCanonicalNewObjects,
 } from '@/lib/vision/objectDuplicateClusters'
@@ -793,6 +796,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [voiceAssignments, setVoiceAssignments] = useState<Record<string, any>>({})
   const [sceneReferences, setSceneReferences] = useState<VisualReference[]>([])
   const [objectReferences, setObjectReferences] = useState<VisualReference[]>([])
+  const [objectDuplicateIgnores, setObjectDuplicateIgnores] = useState<string[]>([])
   const [locationReferences, setLocationReferences] = useState<LocationReference[]>([])
   const [generatingLocationId, setGeneratingLocationId] = useState<string | null>(null)
   const [sceneProductionState, setSceneProductionState] = useState<Record<string, SceneProductionData>>({})
@@ -801,6 +805,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Refs to track latest state for async operations (avoids stale closure in batch operations)
   const sceneReferencesRef = useRef<VisualReference[]>([])
   const objectReferencesRef = useRef<VisualReference[]>([])
+  const objectDuplicateIgnoresRef = useRef<string[]>([])
   const locationReferencesRef = useRef<LocationReference[]>([])
   /**
    * Written through synchronously by `applySceneProductionUpdate` so several
@@ -820,6 +825,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Keep refs in sync with state (refs for sceneReferences/objectReferences/locationReferences)
   useEffect(() => { sceneReferencesRef.current = sceneReferences }, [sceneReferences])
   useEffect(() => { objectReferencesRef.current = objectReferences }, [objectReferences])
+  useEffect(() => { objectDuplicateIgnoresRef.current = objectDuplicateIgnores }, [objectDuplicateIgnores])
   useEffect(() => { locationReferencesRef.current = locationReferences }, [locationReferences])
   useEffect(() => { sceneProductionStateRef.current = sceneProductionState }, [sceneProductionState])
   
@@ -1512,10 +1518,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (references) {
       setSceneReferences(references.sceneReferences ?? [])
       setObjectReferences(references.objectReferences ?? [])
+      setObjectDuplicateIgnores(references.objectDuplicateIgnores ?? [])
       setLocationReferences(references.locationReferences ?? [])
     } else if (project) {
       setSceneReferences([])
       setObjectReferences([])
+      setObjectDuplicateIgnores([])
       setLocationReferences([])
     }
   }, [project])
@@ -2825,6 +2833,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         .filter((row) => duplicateIds.includes(row.id))
         .map((row) => ({ id: row.id, name: row.name }))
       const updatedObjectRefs = mergeObjectRows(current, primaryId, duplicateIds)
+      const nextIgnores = pruneObjectDuplicateIgnores(
+        objectDuplicateIgnoresRef.current,
+        duplicateIds
+      )
       const keeper = updatedObjectRefs.find((row) => row.id === primaryId) || primary
       const currentScript = scriptRef.current
       const updatedScenes = rewriteScenesForObjectMerge(
@@ -2838,8 +2850,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       objectReferencesRef.current = updatedObjectRefs
+      objectDuplicateIgnoresRef.current = nextIgnores
       scriptRef.current = nextScript
       setObjectReferences(updatedObjectRefs)
+      setObjectDuplicateIgnores(nextIgnores)
       setScript(nextScript)
 
       try {
@@ -2854,6 +2868,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   sceneReferences: sceneReferencesRef.current,
                   objectReferences: updatedObjectRefs,
                   locationReferences: locationReferencesRef.current,
+                  objectDuplicateIgnores: nextIgnores,
+                  droppedObjectReferenceIds: duplicateIds,
                 },
                 scenes: updatedScenes,
                 script: { ...(currentScript?.script || {}), scenes: updatedScenes },
@@ -2868,6 +2884,115 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       } catch (error) {
         console.error('[handleMergeObjects] Failed to save merged objects', error)
         toast.error('Failed to merge objects')
+      }
+    },
+    [project, serializedProjectSave]
+  )
+
+  const handleDeleteDuplicateObjects = useCallback(
+    async (ids: string[], keeperId?: string) => {
+      const droppedIds = [...new Set(ids.filter(Boolean))]
+      if (droppedIds.length === 0) return
+
+      const current = objectReferencesRef.current
+      const droppedRows = current.filter((row) => droppedIds.includes(row.id))
+      if (droppedRows.length === 0) return
+
+      const keeper = keeperId ? current.find((row) => row.id === keeperId) : undefined
+      const updatedObjectRefs = keeper
+        ? mergeObjectRows(current, keeper.id, droppedIds)
+        : current.filter((row) => !droppedIds.includes(row.id))
+      const nextIgnores = pruneObjectDuplicateIgnores(
+        objectDuplicateIgnoresRef.current,
+        droppedIds
+      )
+      const currentScript = scriptRef.current
+      const updatedScenes = keeper
+        ? rewriteScenesForObjectMerge(
+            currentScript?.script?.scenes || [],
+            { id: keeper.id, name: keeper.name },
+            droppedRows.map((row) => ({ id: row.id, name: row.name }))
+          )
+        : rewriteScenesForObjectDelete(currentScript?.script?.scenes || [], droppedIds)
+      const nextScript = {
+        ...currentScript,
+        script: { ...currentScript?.script, scenes: updatedScenes },
+      }
+
+      objectReferencesRef.current = updatedObjectRefs
+      objectDuplicateIgnoresRef.current = nextIgnores
+      scriptRef.current = nextScript
+      setObjectReferences(updatedObjectRefs)
+      setObjectDuplicateIgnores(nextIgnores)
+      setScript(nextScript)
+
+      try {
+        const currentMetadata = (projectRef.current || project)?.metadata || {}
+        await serializedProjectSave(
+          {
+            metadata: {
+              ...currentMetadata,
+              visionPhase: {
+                ...currentMetadata?.visionPhase,
+                references: {
+                  sceneReferences: sceneReferencesRef.current,
+                  objectReferences: updatedObjectRefs,
+                  locationReferences: locationReferencesRef.current,
+                  objectDuplicateIgnores: nextIgnores,
+                  droppedObjectReferenceIds: droppedIds,
+                },
+                scenes: updatedScenes,
+                script: { ...(currentScript?.script || {}), scenes: updatedScenes },
+              },
+            },
+          },
+          'handleDeleteDuplicateObjects'
+        )
+        toast.success(
+          `Deleted ${droppedIds.length} object${droppedIds.length === 1 ? '' : 's'} from the library`
+        )
+      } catch (error) {
+        console.error('[handleDeleteDuplicateObjects] Failed to save deleted objects', error)
+        toast.error('Failed to delete objects')
+      }
+    },
+    [project, serializedProjectSave]
+  )
+
+  const handleIgnoreObjectDuplicates = useCallback(
+    async (pairs: string[]) => {
+      const previous = mergeObjectDuplicateIgnores(objectDuplicateIgnoresRef.current, [])
+      const nextIgnores = mergeObjectDuplicateIgnores(objectDuplicateIgnoresRef.current, pairs)
+      if (nextIgnores.length === previous.length && nextIgnores.every((key, index) => key === previous[index])) {
+        return
+      }
+
+      objectDuplicateIgnoresRef.current = nextIgnores
+      setObjectDuplicateIgnores(nextIgnores)
+
+      try {
+        const currentMetadata = (projectRef.current || project)?.metadata || {}
+        await serializedProjectSave(
+          {
+            metadata: {
+              ...currentMetadata,
+              visionPhase: {
+                ...currentMetadata?.visionPhase,
+                references: {
+                  sceneReferences: sceneReferencesRef.current,
+                  objectReferences: objectReferencesRef.current,
+                  locationReferences: locationReferencesRef.current,
+                  objectDuplicateIgnores: nextIgnores,
+                },
+              },
+            },
+          },
+          'handleIgnoreObjectDuplicates'
+        )
+        toast.success('Those names will stay separate')
+      } catch (error) {
+        console.error('[handleIgnoreObjectDuplicates] Failed to save ignored pairs', error)
+        toast.error('Failed to ignore duplicate grouping')
       }
     },
     [project, serializedProjectSave]
@@ -7025,6 +7150,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (Array.isArray(references.objectReferences)) {
           objectReferencesRef.current = references.objectReferences
           setObjectReferences(references.objectReferences)
+        }
+        if (Array.isArray(references.objectDuplicateIgnores)) {
+          objectDuplicateIgnoresRef.current = references.objectDuplicateIgnores
+          setObjectDuplicateIgnores(references.objectDuplicateIgnores)
         }
       }
 
@@ -15786,6 +15915,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         onObjectGenerated={handleObjectGenerated}
         onObjectsAutoAdded={handleObjectsAutoAdded}
         onMergeObjects={handleMergeObjects}
+        onDeleteDuplicateObjects={handleDeleteDuplicateObjects}
+        onIgnoreObjectDuplicates={handleIgnoreObjectDuplicates}
+        objectDuplicateIgnores={objectDuplicateIgnores}
         screenplayContext={{
           genre: project?.genre,
           tone: project?.tone || project?.metadata?.filmTreatmentVariant?.tone_description || project?.metadata?.filmTreatmentVariant?.tone,
