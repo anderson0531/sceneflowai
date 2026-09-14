@@ -60,7 +60,7 @@ import {
   AddCharacterModal,
   useOrphanCharacters,
 } from "@/components/vision/AddCharacterModal";
-import { useOverlayStore } from "@/store/useOverlayStore";
+import { failAgentRun, finishAgentRun, patchAgentRun, startAgentRun } from "@/store/useAgentRunStore";
 import type {
   CharacterContext,
   ScreenplayContext,
@@ -1422,6 +1422,7 @@ const CharacterCard = ({
   const [castingDirectorText, setCastingDirectorText] = useState("");
   const [isGeneratingCasting, setIsGeneratingCasting] = useState(false);
   const [expandedWardrobeDescriptions, setExpandedWardrobeDescriptions] = useState<Set<string>>(new Set());
+  const [isEnhancingReference, setIsEnhancingReference] = useState(false);
 
   const toggleWardrobeDescription = (wardrobeId: string) => {
     setExpandedWardrobeDescriptions(prev => {
@@ -2859,14 +2860,6 @@ const CharacterCard = ({
     }
   };
 
-  // Overlay store for enhance progress
-  const overlayStore = useOverlayStore();
-
-  // Derived state: check if character enhancement is in progress
-  const isEnhancingReference =
-    overlayStore.isVisible &&
-    overlayStore.operationType === "character-enhance";
-
   // Handle enhancing the character reference image
   const handleEnhanceReference = async () => {
     if (!character.referenceImage) {
@@ -2881,10 +2874,16 @@ const CharacterCard = ({
       return;
     }
 
-    overlayStore.show("Analyzing portrait quality...", 10, "character-enhance");
+    const runId = `character-enhance:${characterId}`
+    setIsEnhancingReference(true);
+    startAgentRun({
+      id: runId,
+      title: 'Portrait enhance',
+      subtitle: 'you can keep editing',
+      itemLabel: character.name,
+    });
     try {
-      overlayStore.setProgress(25);
-      overlayStore.setStatus("Setting up studio lighting...");
+      patchAgentRun(runId, { subtitle: 'Setting up studio lighting...', progressPct: 25 });
       const response = await fetch("/api/character/enhance-reference", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2901,27 +2900,30 @@ const CharacterCard = ({
 
       const body = await readJsonSafe(response);
 
-      overlayStore.setProgress(70);
-      overlayStore.setStatus("Generating enhanced portrait...");
+      patchAgentRun(runId, { subtitle: 'Generating enhanced portrait...', progressPct: 70 });
 
       if (!response.ok) {
         if (body.code === "INSUFFICIENT_CREDITS") {
           toast.error(
             `Insufficient credits. Need ${body.required as number} credits.`,
           );
+          failAgentRun(runId, 'Insufficient credits');
           return;
         }
         if (body.code === "ALREADY_OPTIMIZED") {
           toast.info(
             "This image is already well-optimized. Try uploading a different source image.",
           );
+          finishAgentRun(runId, {
+            tone: 'warning',
+            subtitle: 'Already well-optimized',
+          });
           return;
         }
         throw new Error((body.error as string) || "Enhancement failed");
       }
 
-      overlayStore.setProgress(90);
-      overlayStore.setStatus("Applying final retouching...");
+      patchAgentRun(runId, { subtitle: 'Applying final retouching...', progressPct: 90 });
       const result = body as {
         enhancedImageUrl: string;
         visionDescription?: string | null;
@@ -2937,8 +2939,7 @@ const CharacterCard = ({
       setShowEnhanceConfirm(true);
       setEnhanceIterationCount(result.iterationCount);
 
-      overlayStore.setProgress(100);
-      overlayStore.setStatus("Portrait enhanced!");
+      finishAgentRun(runId, { subtitle: 'Portrait enhanced' });
       toast.success(
         `Enhanced to professional headshot! ${result.remainingIterations} iteration(s) remaining.`,
       );
@@ -2947,8 +2948,9 @@ const CharacterCard = ({
       toast.error(
         error instanceof Error ? error.message : "Enhancement failed",
       );
+      failAgentRun(runId, error instanceof Error ? error.message : 'Enhancement failed');
     } finally {
-      overlayStore.hide();
+      setIsEnhancingReference(false);
     }
   };
 

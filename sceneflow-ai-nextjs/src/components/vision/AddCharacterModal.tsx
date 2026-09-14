@@ -5,7 +5,7 @@ import { Users, Plus, AlertTriangle, Search, UserPlus, Sparkles } from 'lucide-r
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { detectCharacterChanges, normalizeCharacterName } from '@/lib/character/detection'
-import { useOverlayStore } from '@/store/useOverlayStore'
+import { failAgentRun, finishAgentRun, patchAgentRun, startAgentRun } from '@/store/useAgentRunStore'
 import { toast } from 'sonner'
 
 interface SuggestedCharacter {
@@ -111,7 +111,6 @@ export function AddCharacterModal({
   projectTitle,
   projectGenre
 }: AddCharacterModalProps) {
-  const overlayStore = useOverlayStore()
   const [customName, setCustomName] = useState('')
   const [customDescription, setCustomDescription] = useState('')
   const [showCustomForm, setShowCustomForm] = useState(false)
@@ -165,16 +164,19 @@ export function AddCharacterModal({
   
   const handleAddSuggested = async (char: SuggestedCharacter) => {
     setIsAdding(true)
-    
-    // Show casting overlay
-    overlayStore.show(`Casting ${char.name}...`, 15, 'character-generation')
+    const runId = `cast:${char.name}`
+    startAgentRun({
+      id: runId,
+      title: 'Cast',
+      subtitle: 'you can keep editing',
+      itemLabel: char.name,
+    })
     
     try {
       // Collect all dialogue and scene context for this character
       const { lines, sceneContext } = getCharacterDialogue(char.name)
       
-      overlayStore.setProgress(20)
-      overlayStore.setStatus('Analyzing character dialogue...')
+      patchAgentRun(runId, { subtitle: 'Analyzing character dialogue...', progressPct: 20 })
       
       // Call the AI to generate character description
       const response = await fetch('/api/character/generate-description', {
@@ -190,8 +192,7 @@ export function AddCharacterModal({
         })
       })
       
-      overlayStore.setProgress(60)
-      overlayStore.setStatus('Designing character appearance...')
+      patchAgentRun(runId, { subtitle: 'Designing character appearance...', progressPct: 60 })
       
       if (!response.ok) {
         const error = await response.json()
@@ -204,6 +205,10 @@ export function AddCharacterModal({
             appearanceDescription: '',
             description: `Character from script with ${char.dialogueCount} dialogue line${char.dialogueCount > 1 ? 's' : ''}`
           })
+          finishAgentRun(runId, {
+            tone: 'warning',
+            subtitle: `${char.name} added without AI profile`,
+          })
           onClose()
           return
         }
@@ -213,8 +218,7 @@ export function AddCharacterModal({
       const result = await response.json()
       const profile = result.profile
       
-      overlayStore.setProgress(90)
-      overlayStore.setStatus('Finalizing character profile...')
+      patchAgentRun(runId, { subtitle: 'Finalizing character profile...', progressPct: 90 })
       
       // Add character with AI-generated profile
       await onAddCharacter({
@@ -237,16 +241,14 @@ export function AddCharacterModal({
         voiceDescription: profile.voiceDescription
       })
       
-      overlayStore.setProgress(100)
-      overlayStore.setStatus('Character cast!')
-      
+      finishAgentRun(runId, { subtitle: `${char.name} has been cast` })
       toast.success(`${char.name} has been cast with AI-generated profile!`)
       onClose()
     } catch (error) {
       console.error('[AddCharacterModal] Error adding character:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to add character')
+      failAgentRun(runId, error instanceof Error ? error.message : 'Failed to add character')
     } finally {
-      overlayStore.hide()
       setIsAdding(false)
     }
   }

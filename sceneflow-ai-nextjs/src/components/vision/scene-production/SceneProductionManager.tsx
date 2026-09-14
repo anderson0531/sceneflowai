@@ -19,6 +19,7 @@ import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film, Clock, Sli
 import { AudioAssetsDialog, AudioTrackClip } from './AudioAssetsDialog'
 import { toast } from 'sonner'
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
+import { failAgentRun, finishAgentRun, patchAgentRun, startAgentRun } from '@/store/useAgentRunStore'
 import { cn } from '@/lib/utils'
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import { coerceDialogueLineText } from '@/lib/script/segmentScript'
@@ -345,6 +346,7 @@ export function SceneProductionManager({
   // useCallback hooks, because their dependency arrays are evaluated at render time.
   // If declared after the useCallback, the const destructuring hits TDZ in production builds.
   const [isInitializing, setIsInitializing] = useState(false)
+  const [freezeFirstBeats, setFreezeFirstBeats] = useState(false)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [showAudioAssetsDialog, setShowAudioAssetsDialog] = useState(false)
   const [showPasteDialog, setShowPasteDialog] = useState(false)
@@ -982,6 +984,20 @@ export function SceneProductionManager({
   const handleInitialize = async () => {
     setShowConfirmDialog(false)
     setShowInitialDialog(false)
+    const regenerating = Boolean(
+      productionData?.isSegmented && (productionData.segments?.length ?? 0) > 0
+    )
+    const runId = `beats-regenerate:${sceneId}`
+    if (regenerating) {
+      startAgentRun({
+        id: runId,
+        title: 'Beats',
+        subtitle: 'Regenerating beats — you can keep reviewing the production',
+        itemLabel: `Scene ${sceneNumber}`,
+      })
+    } else {
+      setFreezeFirstBeats(true)
+    }
     setIsInitializing(true)
     setGenerationProgress(10)
     
@@ -1008,7 +1024,11 @@ export function SceneProductionManager({
     
     // Simulate progress updates
     const progressInterval = setInterval(() => {
-      setGenerationProgress(prev => Math.min(prev + 5, 85))
+      setGenerationProgress((prev) => {
+        const next = Math.min(prev + 5, 85)
+        if (regenerating) patchAgentRun(runId, { progressPct: next })
+        return next
+      })
     }, 2000)
     
     try {
@@ -1017,12 +1037,19 @@ export function SceneProductionManager({
       toast.success('Beats generated successfully', {
         description: `Created intelligent video segments with cinematic prompts`
       })
+      if (regenerating) {
+        finishAgentRun(runId, { subtitle: 'Beats updated' })
+      }
     } catch (error) {
       console.error('[SceneProduction] Initialize failed', error)
       toast.error(error instanceof Error ? error.message : 'Failed to generate segments')
+      if (regenerating) {
+        failAgentRun(runId, error instanceof Error ? error.message : 'Failed to generate segments')
+      }
     } finally {
       clearInterval(progressInterval)
       setIsInitializing(false)
+      setFreezeFirstBeats(false)
       setGenerationProgress(0)
     }
   }
@@ -1717,9 +1744,9 @@ export function SceneProductionManager({
   }
   return (
     <>
-      {/* Freeze Screen Overlay during generation */}
+      {/* Freeze overlay only for the first beat build — the mixer does not exist yet. */}
       <GeneratingOverlay 
-        visible={isInitializing} 
+        visible={freezeFirstBeats} 
         title="Generating Intelligent Beats..." 
         progress={generationProgress}
         subtext="Analyzing dialogue, scene direction, and character blocking with Gemini 3.0"

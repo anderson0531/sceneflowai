@@ -21,7 +21,7 @@ export interface ObjectBatchTarget {
 export interface ObjectBatchOptions<T extends ObjectBatchTarget> {
   /** Generates one object. A rejection fails that object, never the batch. */
   generate: (target: T) => Promise<void>
-  /** Objects generating right now, in start order, for the progress overlay. */
+  /** Objects generating right now, in start order, for the agent dock. */
   onInFlightChange?: (names: string[]) => void
   /** Whole-batch completion, 0-100. */
   onProgress?: (percent: number) => void
@@ -39,11 +39,11 @@ export interface ObjectBatchSummary {
 /**
  * Generate a batch of object reference images a few at a time.
  *
- * A script can suggest dozens of props, which one-at-a-time turned into a wait
- * behind a blocking overlay that users abandon. Kept out of the panel so the
- * batch's rules can be tested without a DOM: the concurrency cap holds, a
- * failed object does not take the rest of the batch with it, and progress
- * still reaches 100% when some of them fail.
+ * A script can suggest dozens of props. Generating them one at a time used to
+ * freeze the studio. Progress now reports in the Object Agent dock. Kept out of
+ * the panel so the batch's rules can be tested without a DOM: the concurrency
+ * cap holds, a failed object does not take the rest of the batch with it, and
+ * progress still reaches 100% when some of them fail.
  */
 export async function runObjectBatch<T extends ObjectBatchTarget>(
   targets: T[],

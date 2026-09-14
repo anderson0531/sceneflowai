@@ -55,7 +55,6 @@ export interface SegmentListProps {
   ) => Promise<void> | void
   generatingDialogue?: { sceneIdx: number; character?: string; dialogueIndex?: number; lineId?: string } | null
   setGeneratingDialogue?: (val: any) => void
-  overlayStore?: { show: (msg: string, n?: number) => void; hide: () => void }
 }
 
 export function SegmentList(props: SegmentListProps) {
@@ -231,7 +230,6 @@ function SegmentCard({
                   uploadAudio={rest.uploadAudio}
                   generatingDialogue={rest.generatingDialogue}
                   setGeneratingDialogue={rest.setGeneratingDialogue}
-                  overlayStore={rest.overlayStore}
                 />
               ))}
             </div>
