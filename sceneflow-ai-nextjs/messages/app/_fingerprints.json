@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-13T22:26:33.550Z",
+  "generatedAt": "2026-09-13T22:44:16.992Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -1554,6 +1554,16 @@
       "direction.locationLibrary.suggestedCount": "d50bcab5c5beae1a",
       "direction.locationLibrary.synced": "b86753e08667746a",
       "direction.locationLibrary.uploadVersion": "3805abc6f29fe39e",
+      "direction.locationLibrary.expandVersion": "957d5d59c928bdc4",
+      "direction.locationLibrary.versionDetails": "c56ea933f049d56b",
+      "direction.locationLibrary.stateNotes": "8a6b5fe08d0d5ab3",
+      "direction.locationLibrary.usedInScenes": "2628c02b2f46aa83",
+      "direction.locationLibrary.analysis": "e70d8eb9050021ad",
+      "direction.locationLibrary.noVersionImage": "047022c0e6cb20db",
+      "direction.locationLibrary.regenerateFromBase": "925367eebc2a902b",
+      "direction.locationLibrary.generating": "d20a4476a0a85978",
+      "direction.locationLibrary.sceneChip": "c1a21c628aec5286",
+      "direction.locationLibrary.close": "7d9eb7acb13e2462",
       "foundation.reimagine.changeArtStyleTitle": "db623b9cb4ad6e63",
       "foundation.reimagine.changeArtStyleDescription": "05d86d9d611912c0",
       "foundation.reimagine.changeAspectRatioTitle": "9ee566436aff5413",

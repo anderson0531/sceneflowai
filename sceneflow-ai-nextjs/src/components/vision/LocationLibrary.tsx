@@ -24,7 +24,7 @@ import {
   Settings2
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
 import { LocationReference, LocationVersion } from '@/types/visionReferences'
@@ -238,6 +238,10 @@ export function LocationLibrary({
   const [uploadingForId, setUploadingForId] = useState<string | null>(null)
   const [promptBuilderOpenFor, setPromptBuilderOpenFor] = useState<string | null>(null)
   const [analyzingLocationId, setAnalyzingLocationId] = useState<string | null>(null)
+  const [expandedVersionTarget, setExpandedVersionTarget] = useState<{
+    locationId: string
+    versionId: string
+  } | null>(null)
 
   /**
    * Extract unique locations from all scene headings.
@@ -361,6 +365,13 @@ export function LocationLibrary({
     })
   }, [locationReferences, extractedLocations])
 
+  const expandedVersionLocation = expandedVersionTarget
+    ? mergedLocations.find((loc) => loc.id === expandedVersionTarget.locationId)
+    : undefined
+  const expandedVersion = expandedVersionLocation?.versions?.find(
+    (version) => version.id === expandedVersionTarget?.versionId
+  )
+
   // Count of locations in script but not yet in references
   const unextractedCount = useMemo(() => {
     const existing = new Set(locationReferences.map(r => r.location))
@@ -390,6 +401,21 @@ export function LocationLibrary({
       }
     }
     e.target.value = ''
+  }
+
+  const openVersionPreview = (locationId: string, versionId: string) => {
+    setExpandedVersionTarget({ locationId, versionId })
+  }
+
+  const handleGenerateVersionFromPreview = (
+    location: LocationReference,
+    version: LocationVersion
+  ) => {
+    if (!isDisplayableImageUrl(location.imageUrl)) {
+      toast.info(t('baseImageRequired'))
+      return
+    }
+    onGenerateLocationVersion?.(location, version)
   }
 
   const handleVersionFileUpload = async (
@@ -922,7 +948,15 @@ export function LocationLibrary({
                                   className="rounded border border-slate-700 bg-slate-900/40 p-2 space-y-1.5"
                                 >
                                   <div className="flex items-start gap-2">
-                                    <div className="w-16 h-10 rounded overflow-hidden bg-slate-800 flex-shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        openVersionPreview(loc.id, version.id)
+                                      }}
+                                      className="relative w-16 h-10 rounded overflow-hidden bg-slate-800 flex-shrink-0 group/thumb"
+                                      title={t('expandVersion')}
+                                    >
                                       {versionHasImage ? (
                                         <img
                                           src={version.imageUrl}
@@ -934,9 +968,27 @@ export function LocationLibrary({
                                           <ImageIcon className="w-4 h-4 text-slate-500" />
                                         </div>
                                       )}
-                                    </div>
+                                      <span className="absolute inset-0 bg-black/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
+                                        <Maximize2 className="w-3.5 h-3.5 text-white" />
+                                      </span>
+                                    </button>
                                     <div className="min-w-0 flex-1">
-                                      <p className="text-[11px] font-medium text-white truncate">{version.name}</p>
+                                      <div className="flex items-start gap-1">
+                                        <p className="text-[11px] font-medium text-white truncate flex-1">
+                                          {version.name}
+                                        </p>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            openVersionPreview(loc.id, version.id)
+                                          }}
+                                          className="p-0.5 rounded text-slate-500 hover:text-white hover:bg-slate-700 flex-shrink-0"
+                                          title={t('expandVersion')}
+                                        >
+                                          <Maximize2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
                                       <p className="text-[10px] text-slate-400 line-clamp-2">
                                         {version.stateNotes}
                                       </p>
@@ -1079,6 +1131,158 @@ export function LocationLibrary({
               />
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!expandedVersion && !!expandedVersionLocation}
+        onOpenChange={(open) => {
+          if (!open) setExpandedVersionTarget(null)
+        }}
+      >
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {expandedVersion && expandedVersionLocation && (() => {
+            const versionGenerating =
+              generatingLocationId ===
+              locationVersionGeneratingId(expandedVersionLocation.id, expandedVersion.id)
+            const versionUploading =
+              uploadingForId ===
+              locationVersionGeneratingId(expandedVersionLocation.id, expandedVersion.id)
+            const versionHasImage = isDisplayableImageUrl(expandedVersion.imageUrl)
+            const dialogUploadId = `location-version-preview-upload-${expandedVersion.id}`
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-cyan-500" />
+                    <span className="truncate">{expandedVersion.name}</span>
+                    {expandedVersion.needsImageRegen && (
+                      <span className="text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-normal">
+                        {t('needsRegen')}
+                      </span>
+                    )}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {t('versionDetails', { location: expandedVersionLocation.location })}
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4 items-start">
+                  <div className="relative aspect-video rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                    {versionHasImage ? (
+                      <img
+                        src={expandedVersion.imageUrl}
+                        alt={expandedVersion.name}
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 p-4 text-center">
+                        <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
+                        <span className="text-xs">{t('noVersionImage')}</span>
+                      </div>
+                    )}
+                    {versionGenerating && (
+                      <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
+                        <Loader2 className="w-8 h-8 animate-spin text-white mb-2" />
+                        <span className="text-xs text-white">{t('generating')}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-4 min-w-0 overflow-y-auto max-h-[50vh]">
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {t('stateNotes')}
+                      </h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 whitespace-pre-wrap">
+                        {expandedVersion.stateNotes || '—'}
+                      </p>
+                    </div>
+
+                    {expandedVersion.appliesFrom && (
+                      <p className="text-xs text-gray-500">
+                        {t('appliesFrom', {
+                          scene: expandedVersion.appliesFrom.sceneNumber,
+                          beat: expandedVersion.appliesFrom.beatIndex + 1,
+                        })}
+                      </p>
+                    )}
+
+                    {expandedVersion.reason && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                          <Sparkles className="w-4 h-4" />
+                          {t('analysis')}
+                        </h4>
+                        <p className="text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 italic">
+                          {expandedVersion.reason}
+                        </p>
+                      </div>
+                    )}
+
+                    {expandedVersion.sceneNumbers && expandedVersion.sceneNumbers.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {t('usedInScenes')}
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {expandedVersion.sceneNumbers.map((num) => (
+                            <span
+                              key={num}
+                              className="text-xs px-2 py-1 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400 rounded"
+                            >
+                              {t('sceneChip', { number: num })}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <DialogFooter className="flex flex-wrap gap-2">
+                  <input
+                    id={dialogUploadId}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) =>
+                      handleVersionFileUpload(expandedVersionLocation.id, expandedVersion.id, e)
+                    }
+                  />
+                  <Button
+                    onClick={() =>
+                      handleGenerateVersionFromPreview(expandedVersionLocation, expandedVersion)
+                    }
+                    disabled={versionGenerating || !onGenerateLocationVersion}
+                    className="bg-cyan-600 hover:bg-cyan-700 text-white"
+                  >
+                    {versionGenerating ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Zap className="w-4 h-4 mr-2" />
+                    )}
+                    {versionHasImage ? t('regenerateFromBase') : t('generateFromBase')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => document.getElementById(dialogUploadId)?.click()}
+                    disabled={versionUploading || !onUploadLocationVersionImage}
+                  >
+                    {versionUploading ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Upload className="w-4 h-4 mr-2" />
+                    )}
+                    {t('uploadVersion')}
+                  </Button>
+                  <Button variant="outline" onClick={() => setExpandedVersionTarget(null)}>
+                    {t('close')}
+                  </Button>
+                </DialogFooter>
+              </>
+            )
+          })()}
         </DialogContent>
       </Dialog>
     </div>

@@ -1070,7 +1070,17 @@
       "analyzing": "Analyzing script…",
       "suggestedCount": "Added {count, plural, one {# set version} other {# set versions}}",
       "synced": "Synced set versions",
-      "uploadVersion": "Upload version image"
+      "uploadVersion": "Upload version image",
+      "expandVersion": "Expand details",
+      "versionDetails": "{location} set version for film production",
+      "stateNotes": "Set state",
+      "usedInScenes": "Used in Scenes",
+      "analysis": "Analysis",
+      "noVersionImage": "No version still yet — generate from the base location and these set-state notes",
+      "regenerateFromBase": "Regenerate from base",
+      "generating": "Generating…",
+      "sceneChip": "Scene {number}",
+      "close": "Close"
     }
   },
   "foundation": {
