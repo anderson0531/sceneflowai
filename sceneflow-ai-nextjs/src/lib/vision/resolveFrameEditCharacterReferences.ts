@@ -728,3 +728,132 @@ export function buildFrameEditReferenceImages(args: {
 
   return [...characterEntries, ...locationEntries, ...propEntries]
 }
+
+export type FrameEditCorrectionTarget = {
+  kind: 'character' | 'location' | 'prop'
+  id: string
+  label: string
+  selectedKeys: FrameEditReferenceSelectionKey[]
+  selectedLocationIds: string[]
+  selectedPropIds: string[]
+}
+
+export function frameEditCorrectionTargetForCharacter(
+  ref: FrameEditCharacterReference
+): FrameEditCorrectionTarget | null {
+  const selectedKeys = frameEditReferenceKeys([ref])
+  if (selectedKeys.length === 0) return null
+  return {
+    kind: 'character',
+    id: ref.characterName,
+    label: ref.characterName,
+    selectedKeys,
+    selectedLocationIds: [],
+    selectedPropIds: [],
+  }
+}
+
+export function frameEditCorrectionTargetForLocation(still: {
+  id: string
+  name: string
+  imageUrl?: string
+}): FrameEditCorrectionTarget | null {
+  if (!still.imageUrl?.trim()) return null
+  return {
+    kind: 'location',
+    id: still.id,
+    label: still.name,
+    selectedKeys: [],
+    selectedLocationIds: [still.id],
+    selectedPropIds: [],
+  }
+}
+
+export function frameEditCorrectionTargetForProp(prop: {
+  id: string
+  name: string
+  imageUrl?: string
+}): FrameEditCorrectionTarget | null {
+  if (!prop.imageUrl?.trim()) return null
+  return {
+    kind: 'prop',
+    id: prop.id,
+    label: prop.name,
+    selectedKeys: [],
+    selectedLocationIds: [],
+    selectedPropIds: [prop.id],
+  }
+}
+
+/**
+ * One Vertex edit per subject. Characters in library order, then locations, then props.
+ */
+export function listFrameEditCorrectionTargets(args: {
+  characterReferences: FrameEditCharacterReference[]
+  selectedKeys: Iterable<FrameEditReferenceSelectionKey>
+  locationStills?: Array<{ id: string; name: string; imageUrl: string }>
+  selectedLocationIds?: string[]
+  objectReferences?: Array<{ id: string; name: string; imageUrl: string }>
+  selectedPropIds?: string[]
+}): FrameEditCorrectionTarget[] {
+  const selectedKeySet = new Set(args.selectedKeys)
+  const targets: FrameEditCorrectionTarget[] = []
+
+  for (const ref of args.characterReferences) {
+    const available = frameEditReferenceKeys([ref])
+    const selectedKeys = available.filter((key) => selectedKeySet.has(key))
+    if (selectedKeys.length === 0) continue
+    targets.push({
+      kind: 'character',
+      id: ref.characterName,
+      label: ref.characterName,
+      selectedKeys,
+      selectedLocationIds: [],
+      selectedPropIds: [],
+    })
+  }
+
+  for (const locationId of args.selectedLocationIds ?? []) {
+    const still = args.locationStills?.find((entry) => entry.id === locationId)
+    if (!still) continue
+    const target = frameEditCorrectionTargetForLocation(still)
+    if (target) targets.push(target)
+  }
+
+  for (const propId of args.selectedPropIds ?? []) {
+    const prop = args.objectReferences?.find((entry) => entry.id === propId)
+    if (!prop) continue
+    const target = frameEditCorrectionTargetForProp(prop)
+    if (target) targets.push(target)
+  }
+
+  return targets
+}
+
+export function buildFrameEditCorrectionInstruction(target: FrameEditCorrectionTarget): string {
+  if (target.kind === 'character') {
+    return `Correct only ${target.label} so face and outfit match the attached identity/wardrobe references. Leave every other person, the location, props, camera, and lighting unchanged.`
+  }
+  if (target.kind === 'location') {
+    return `Correct only the set to match the attached location reference. Leave every person and handheld prop unchanged.`
+  }
+  return `Correct only ${target.label} to match the attached prop reference. Leave people and the set unchanged.`
+}
+
+export function buildFrameEditImagesForCorrectionTarget(
+  target: FrameEditCorrectionTarget,
+  args: {
+    characterReferences: FrameEditCharacterReference[]
+    objectReferences?: Array<{ id: string; name: string; imageUrl: string }>
+    locationStills?: Array<{ id: string; name: string; imageUrl: string }>
+  }
+): PrioritizedReferenceImage[] {
+  return buildFrameEditReferenceImages({
+    characterReferences: args.characterReferences,
+    selectedKeys: new Set(target.selectedKeys),
+    objectReferences: args.objectReferences,
+    selectedPropIds: target.selectedPropIds,
+    locationStills: args.locationStills,
+    selectedLocationIds: target.selectedLocationIds,
+  })
+}

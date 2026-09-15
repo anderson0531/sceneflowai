@@ -6,6 +6,9 @@ import {
   buildFrameEditReferenceImages,
   appendUseTheseReferencesClause,
   listFrameEditLocationStills,
+  listFrameEditCorrectionTargets,
+  buildFrameEditCorrectionInstruction,
+  buildFrameEditImagesForCorrectionTarget,
 } from '@/lib/vision/resolveFrameEditCharacterReferences'
 
 const marcus = {
@@ -293,5 +296,89 @@ describe('listFrameEditLocationStills', () => {
     expect(stills).toHaveLength(2)
     expect(stills.some((s) => s.kind === 'base' && s.id === 'loc-foyer')).toBe(true)
     expect(stills.some((s) => s.kind === 'version' && s.versionId === 'ver-door')).toBe(true)
+  })
+})
+
+describe('listFrameEditCorrectionTargets', () => {
+  const piper = {
+    characterName: 'Piper Hayes',
+    identityImageUrl: 'https://example.com/piper-id.jpg',
+    wardrobeImageUrl: 'https://example.com/piper-wardrobe.jpg',
+  }
+  const gideon = {
+    characterName: 'Gideon Croft',
+    identityImageUrl: 'https://example.com/gideon-id.jpg',
+    wardrobeImageUrl: 'https://example.com/gideon-wardrobe.jpg',
+  }
+  const locationStills = [
+    { id: 'loc-tunnel', name: 'FREIGHT TUNNEL', imageUrl: 'https://example.com/tunnel.png' },
+  ]
+  const objectReferences = [
+    { id: 'prop-spanner', name: 'iron spanner', imageUrl: 'https://example.com/spanner.png' },
+  ]
+
+  it('orders one target per character, then location, then prop', () => {
+    const targets = listFrameEditCorrectionTargets({
+      characterReferences: [piper, gideon],
+      selectedKeys: [
+        'identity:Piper Hayes',
+        'wardrobe:Piper Hayes',
+        'identity:Gideon Croft',
+        'wardrobe:Gideon Croft',
+      ],
+      locationStills,
+      selectedLocationIds: ['loc-tunnel'],
+      objectReferences,
+      selectedPropIds: ['prop-spanner'],
+    })
+
+    expect(targets.map((t) => `${t.kind}:${t.id}`)).toEqual([
+      'character:Piper Hayes',
+      'character:Gideon Croft',
+      'location:loc-tunnel',
+      'prop:prop-spanner',
+    ])
+  })
+
+  it('names only that character in a character-step instruction', () => {
+    const targets = listFrameEditCorrectionTargets({
+      characterReferences: [piper, gideon],
+      selectedKeys: ['identity:Piper Hayes', 'wardrobe:Piper Hayes'],
+      locationStills,
+      selectedLocationIds: ['loc-tunnel'],
+    })
+    const piperTarget = targets.find((t) => t.kind === 'character' && t.id === 'Piper Hayes')
+    expect(piperTarget).toBeDefined()
+    const instruction = buildFrameEditCorrectionInstruction(piperTarget!)
+    expect(instruction).toContain('Piper Hayes')
+    expect(instruction).not.toMatch(/FREIGHT TUNNEL|Gideon|location reference/i)
+    expect(instruction).toMatch(/Leave every other person/i)
+  })
+
+  it('attaches only that character\'s images for a character step', () => {
+    const targets = listFrameEditCorrectionTargets({
+      characterReferences: [piper, gideon],
+      selectedKeys: [
+        'identity:Piper Hayes',
+        'wardrobe:Piper Hayes',
+        'identity:Gideon Croft',
+        'wardrobe:Gideon Croft',
+      ],
+      locationStills,
+      selectedLocationIds: ['loc-tunnel'],
+      objectReferences,
+      selectedPropIds: ['prop-spanner'],
+    })
+    const piperTarget = targets.find((t) => t.id === 'Piper Hayes')
+    expect(piperTarget).toBeDefined()
+    const images = buildFrameEditImagesForCorrectionTarget(piperTarget!, {
+      characterReferences: [piper, gideon],
+      objectReferences,
+      locationStills,
+    })
+    expect(images.some((i) => i.characterName === 'Piper Hayes')).toBe(true)
+    expect(images.some((i) => i.characterName === 'Gideon Croft')).toBe(false)
+    expect(images.some((i) => i.locationName)).toBe(false)
+    expect(images.some((i) => i.propName)).toBe(false)
   })
 })
