@@ -56,6 +56,14 @@ describe('reduceActionToSingleInstant', () => {
     expect(reduceActionToSingleInstant('')).toBe('')
     expect(reduceActionToSingleInstant(undefined)).toBe('')
   })
+
+  it('does not treat a prop move from coat to chest as a camera transition', () => {
+    expect(
+      reduceActionToSingleInstant(
+        'person [1] pulls the dispatch cylinder from under her coat to her chest with both hands'
+      )
+    ).toBe('person [1] pulls the dispatch cylinder from under her coat to her chest with both hands')
+  })
 })
 
 describe('normalizeStillCameraAngle', () => {

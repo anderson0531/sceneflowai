@@ -24,6 +24,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { StillPolicyModeControl } from '@/components/vision/StillPolicyModeControl'
+import type { StillPolicyMode } from '@/lib/generation/stillPolicy'
 import {
   Wand2,
   Image as ImageIcon,
@@ -191,6 +193,7 @@ export interface FrameGenerationOptions {
   modelTier?: 'eco' | 'designer' | 'director'
   /** Thinking level for complex prompts */
   thinkingLevel?: 'low' | 'high'
+  stillPolicyMode?: 'safety' | 'creative'
 }
 
 // ============================================================================
@@ -217,6 +220,7 @@ export function FramePromptDialog({
   const t = useTranslations('production.direction.framePrompt')
   const tPreVis = useTranslations('production.direction.preVis')
   const tc = useTranslations('common.actions')
+  const [stillPolicyMode, setStillPolicyMode] = useState<StillPolicyMode>('safety')
 
   // Try to get scene direction from context if not passed as prop
   const contextDirection = useSceneDirectionOptional()
@@ -934,10 +938,11 @@ export function FramePromptDialog({
       // Pass model tier and thinking level
       modelTier,
       thinkingLevel,
+      stillPolicyMode,
     }
 
     onGenerate(options)
-  }, [segment, frameType, customPrompt, buildNegativePrompt, usePreviousEndFrame, previousEndFrameUrl, onGenerate, selectedCharacters, characters, selectedWardrobes, objectReferences, selectedObjectRefIds, locationReferences, selectedLocationRefIds, selectedLocationVersionIds, mode, visualSetup, artStyle, modelTier, thinkingLevel, advancedBaselinePrompt])
+  }, [segment, frameType, customPrompt, buildNegativePrompt, usePreviousEndFrame, previousEndFrameUrl, onGenerate, selectedCharacters, characters, selectedWardrobes, objectReferences, selectedObjectRefIds, locationReferences, selectedLocationRefIds, selectedLocationVersionIds, mode, visualSetup, artStyle, modelTier, thinkingLevel, advancedBaselinePrompt, stillPolicyMode])
 
   const isGenerateDisabled = useMemo(() => {
     if (isGenerating) return true
@@ -1373,6 +1378,11 @@ export function FramePromptDialog({
                   thinkingLevel={thinkingLevel}
                   onThinkingLevelChange={setThinkingLevel}
                 />
+                <StillPolicyModeControl
+                  value={stillPolicyMode}
+                  onChange={setStillPolicyMode}
+                  disabled={isGenerating}
+                />
 
                 {/* Prompt Preview */}
                 <div className="space-y-2 p-3 rounded border border-slate-700 bg-slate-800/50">
@@ -1741,6 +1751,11 @@ export function FramePromptDialog({
                   thinkingLevel={thinkingLevel}
                   onThinkingLevelChange={setThinkingLevel}
                   compact={true}
+                />
+                <StillPolicyModeControl
+                  value={stillPolicyMode}
+                  onChange={setStillPolicyMode}
+                  disabled={isGenerating}
                 />
               </div>
             </ScrollArea>

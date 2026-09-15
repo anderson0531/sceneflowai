@@ -105,7 +105,6 @@ function escalateEcoRefusalToPro(
   reason: string
 ): Promise<VertexImageResult> | null {
   if (
-    options.failFastOnRateLimit ||
     !model.includes('flash-image') ||
     !hasIdentityReferenceImages(options) ||
     options.escalatedFromEcoTier ||
@@ -234,9 +233,9 @@ export interface GenerateVertexImageOptions {
   /**
    * Express fail-fast: one Vertex attempt, then throw.
    *
-   * Skips the 429 sleep ladder, timeout/503 inner retries, eco↔pro fallback,
-   * and flash→pro refusal escalation. The lane frees immediately so sibling
-   * frames can finish; the caller stamps the error for a later user regen.
+   * Skips the 429 sleep ladder, timeout/503 inner retries, and eco↔pro
+   * fallback. IMAGE_SAFETY still escalates flash→rewritten pro so Express
+   * exhausts Google before failing the frame.
    */
   failFastOnRateLimit?: boolean
   /** Internal: this call is already the pro retry of a refused eco request. */

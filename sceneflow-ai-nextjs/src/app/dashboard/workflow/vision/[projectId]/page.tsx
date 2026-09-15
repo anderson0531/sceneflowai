@@ -125,6 +125,13 @@ import {
   type BeatStillDirectorSavePayload,
 } from '@/components/vision/BeatStillDirectorDialog'
 import {
+  IMAGE_SAFETY_BOARD_MESSAGE,
+  IMAGE_SAFETY_CODE,
+  IMAGE_SAFETY_USER_MESSAGE,
+  isImageSafetyError,
+  type StillPolicyMode,
+} from '@/lib/generation/stillPolicy'
+import {
   applyStillDirectorPatchToScene,
   type StillDirectorPatch,
 } from '@/lib/intelligence/beat-still-director-fallback'
@@ -3399,6 +3406,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       modelTier?: 'eco' | 'designer' | 'director'
       /** Thinking level for prompt complexity */
       thinkingLevel?: 'low' | 'high'
+      stillPolicyMode?: 'safety' | 'creative'
     }): Promise<{ startFrameUrl?: string; endFrameUrl?: string } | void> => {
       const scene = script?.script?.scenes?.find((s: any) => 
         (s.id || s.sceneId || `scene-${script?.script?.scenes?.indexOf(s)}`) === sceneId
@@ -3425,11 +3433,44 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
         
         const fromDialog = options?.fromDialog === true
+        const stillPolicyMode = options?.stillPolicyMode
         const liveStartFrameUrl = resolveEffectiveStartFrameUrl(
           segment,
           scene as Record<string, unknown> | undefined,
           scene?.imageUrl
         )
+
+        const autoCharactersForStill =
+          stillPolicyMode && options?.selectedCharacters == null
+            ? characters
+                .filter((c) => c.referenceImage)
+                .map((c) => ({
+                  name: c.name,
+                  referenceImageUrl: c.referenceImage,
+                }))
+            : options?.selectedCharacters
+        const autoObjectsForStill =
+          stillPolicyMode && options?.selectedObjectReferences == null
+            ? objectReferences
+                .filter((o) => o.imageUrl)
+                .map((o) => ({
+                  id: o.id,
+                  name: o.name,
+                  imageUrl: o.imageUrl,
+                  description: o.description,
+                }))
+            : options?.selectedObjectReferences
+        const autoLocationsForStill =
+          stillPolicyMode && options?.selectedLocationReferences == null
+            ? locationReferences
+                .filter((l) => l.imageUrl)
+                .map((l) => ({
+                  id: l.id,
+                  name: l.location || l.locationDisplay || l.id,
+                  imageUrl: l.imageUrl,
+                  description: l.description,
+                }))
+            : options?.selectedLocationReferences
 
         const response = await fetch('/api/production/generate-segment-frames', {
           method: 'POST',
@@ -3437,6 +3478,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           body: JSON.stringify({
             sceneId,
             segmentId,
+            projectId,
+            stillPolicyMode,
             segmentIndex,
             actionPrompt: resolveQuickFrameActionPrompt(segment as any),
             duration: segment.endTime - segment.startTime,
@@ -3461,7 +3504,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             // Art style for frame generation
             artStyle: options?.artStyle,
             // Model quality tier for image generation cost control
-            modelTier: options?.modelTier || 'eco',
+            modelTier: options?.modelTier || (stillPolicyMode ? 'designer' : 'eco'),
             // Thinking level for prompt complexity
             thinkingLevel: options?.thinkingLevel || 'low',
             // Phase 8: Per-segment direction with keyframe-specific descriptions
@@ -3498,8 +3541,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             // Character data for identity lock
             // CRITICAL FIX: When fromDialog=true, the user explicitly chose which characters
             // to include (even if none). Only auto-populate for batch generation (fromDialog=false).
-            characters: fromDialog
-              ? (options.selectedCharacters || []).map(selected => {
+            characters: fromDialog || stillPolicyMode
+              ? (autoCharactersForStill || []).map(selected => {
                   const fullChar = characters.find(c => c.name === selected.name)
                   return {
                     name: selected.name,
@@ -3553,8 +3596,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             // Object references for prop consistency
             // CRITICAL FIX: When fromDialog=true, use EXACTLY what user selected (empty = none).
             // Only auto-detect for batch generation (fromDialog=false).
-            objectReferences: fromDialog
-              ? (options.selectedObjectReferences || []).map(obj => ({
+            objectReferences: fromDialog || stillPolicyMode
+              ? (autoObjectsForStill || []).map(obj => ({
                   name: obj.name,
                   description: obj.description,
                   category: 'prop' as const,
@@ -3570,8 +3613,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     imageUrl: obj.imageUrl
                   }))
                 : [],
-            locationReferences: fromDialog
-              ? (options.selectedLocationReferences || []).map(loc => ({
+            locationReferences: fromDialog || stillPolicyMode
+              ? (autoLocationsForStill || []).map(loc => ({
                   name: loc.name,
                   description: loc.description,
                   imageUrl: loc.imageUrl,
@@ -3583,6 +3626,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
         if (!response.ok) {
           const errorData = await response.json()
+          if (errorData?.code === IMAGE_SAFETY_CODE || isImageSafetyError(errorData?.error)) {
+            throw new Error(IMAGE_SAFETY_USER_MESSAGE)
+          }
           throw new Error(errorData.error || 'Failed to generate frames')
         }
 
@@ -11150,6 +11196,135 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     return true
   }
 
+  const persistBeatImageSafetyError = async (sceneIndex: number, beatIndex: number) => {
+    const latestScript = scriptRef.current || script
+    if (!latestScript?.script?.scenes?.[sceneIndex]) return
+    const updatedScenes = [...(latestScript.script.scenes || [])]
+    updatedScenes[sceneIndex] = applyExpressStoryboardImageErrorToScene(updatedScenes[sceneIndex], {
+      error: IMAGE_SAFETY_BOARD_MESSAGE,
+      beatIndex,
+    })
+    const nextScript = {
+      ...latestScript,
+      script: { ...latestScript.script, scenes: updatedScenes },
+    }
+    scriptRef.current = nextScript
+    setScript(nextScript)
+    await persistVisionScriptScenes(updatedScenes, 'persistBeatImageSafetyError')
+  }
+
+  const handleGenerateBeatStillWithPolicy = async (
+    sceneIndex: number,
+    slot: StoryboardFrameSlot,
+    stillPolicyMode: StillPolicyMode
+  ) => {
+    if (!slot.beatId) return
+    const scene = (scriptRef.current || script)?.script?.scenes?.[sceneIndex]
+    if (!scene) {
+      toast.error('Scene not found')
+      return
+    }
+
+    const rawBeatIdx = resolveRawBeatIndex(scene, { beatId: slot.beatId })
+    if (typeof rawBeatIdx !== 'number') {
+      toast.error('Beat not found')
+      return
+    }
+
+    const sceneNumber =
+      typeof scene.sceneNumber === 'number' ? scene.sceneNumber : sceneIndex + 1
+    const generatingKey = storyboardGeneratingSlotKey(sceneIndex, slot)
+    const startedAt = Date.now()
+    setPreVisDirectorDialog(null)
+    setDirectFrameRun({
+      visible: true,
+      sceneNumber,
+      label: slot.label,
+      generatingKey,
+      status: 'running',
+      finished: false,
+      startedAt,
+    })
+
+    const finishPolicyFrameRun = (next: {
+      status: DirectFrameRunState['status']
+      error?: string
+    }) => {
+      setDirectFrameRun((prev) => {
+        if (!prev || prev.startedAt !== startedAt) return prev
+        const finishedRun = {
+          ...prev,
+          status: next.status,
+          error: next.error,
+          finished: true,
+        }
+        if (next.status !== 'error') {
+          window.setTimeout(() => {
+            setDirectFrameRun((current) =>
+              current?.startedAt === startedAt ? null : current
+            )
+          }, 1500)
+        }
+        return finishedRun
+      })
+    }
+
+    try {
+      const response = await fetch('/api/scene/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex,
+          quality: imageQuality,
+          frameType: 'beat',
+          beatId: slot.beatId,
+          beatIndex: rawBeatIdx,
+          modelTier: 'designer',
+          stillPolicyMode,
+          regenerate: !!slot.ownImageUrl?.trim(),
+          ...GALLERY_MANUAL_GENERATE_OPTS,
+        }),
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        if (data?.code === IMAGE_SAFETY_CODE || isImageSafetyError(data?.error)) {
+          await persistBeatImageSafetyError(sceneIndex, rawBeatIdx)
+          throw new Error(IMAGE_SAFETY_USER_MESSAGE)
+        }
+        throw new Error(data?.error || 'Still generation failed')
+      }
+
+      const latestAfterGenerate = scriptRef.current || script
+      const updatedScenes = [...(latestAfterGenerate.script.scenes || [])]
+      updatedScenes[sceneIndex] = stampPreVisContentHash(
+        applyBeatStoryboardImageToScene(updatedScenes[sceneIndex], rawBeatIdx, data.imageUrl, {
+          imagePrompt: data.prompt || '',
+        })
+      )
+      const nextScript = {
+        ...latestAfterGenerate,
+        script: { ...latestAfterGenerate.script, scenes: updatedScenes },
+      }
+      scriptRef.current = nextScript
+      setScript(nextScript)
+      const saved = await persistVisionScriptScenes(updatedScenes, 'handleGenerateBeatStillWithPolicy')
+      if (saved && slot.beatId) {
+        const sceneId =
+          (scene.id as string) ||
+          (scene.sceneId as string) ||
+          `scene-${sceneIndex}`
+        syncBeatStartFrameToProduction(sceneId, slot.beatId, data.imageUrl)
+      }
+      toast.success('Frame generated')
+      finishPolicyFrameRun({ status: 'done' })
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Still generation failed'
+      toast.error(message)
+      finishPolicyFrameRun({ status: 'error', error: message })
+    }
+  }
+
   const handleOpenDirectFrame = (sceneIdx: number, slot: StoryboardFrameSlot) => {
     if (blockedByMissingReferences()) return
     setPreVisDirectDialog({ sceneIdx, slot })
@@ -11167,11 +11342,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const handleDirectorSave = async (payload: BeatStillDirectorSavePayload) => {
     const dialog = preVisDirectorDialog
     if (!dialog?.slot.beatId) return
-    const ok = await persistStillDirectorPatch(dialog.sceneIdx, dialog.slot.beatId, payload.patch)
-    if (!ok) return
-    toast.success('Still prompt saved')
+    if (payload.patch) {
+      const ok = await persistStillDirectorPatch(
+        dialog.sceneIdx,
+        dialog.slot.beatId,
+        payload.patch
+      )
+      if (!ok) return
+      toast.success('Still prompt saved')
+    }
     if (payload.generate) {
-      void handleRequestGenerateBeatFrame(dialog.sceneIdx, dialog.slot.beatId)
+      void handleGenerateBeatStillWithPolicy(
+        dialog.sceneIdx,
+        dialog.slot,
+        payload.stillPolicyMode
+      )
     }
   }
 
@@ -11277,6 +11462,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         locationReferences: locRefs,
         objectReferences: objRefs,
         skipObjectAutoDetection: explicitRefs?.skipObjectAutoDetection ?? true,
+        stillPolicyMode: options.stillPolicyMode,
       }
 
       // Any beat-backed slot is a beat frame, dialogue beats included. Routing
@@ -11368,6 +11554,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       })
       const data = await response.json()
       if (!response.ok) {
+        if (
+          payload.frameType === 'beat' &&
+          typeof payload.beatIndex === 'number' &&
+          (data?.code === IMAGE_SAFETY_CODE || isImageSafetyError(data?.error))
+        ) {
+          await persistBeatImageSafetyError(sceneIndex, payload.beatIndex as number)
+          throw new Error(IMAGE_SAFETY_USER_MESSAGE)
+        }
         throw new Error(data?.error || 'Direct generation failed')
       }
 

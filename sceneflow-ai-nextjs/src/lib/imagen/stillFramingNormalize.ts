@@ -196,7 +196,10 @@ export function reduceActionToSingleInstant(value?: string | null): string {
   if (!raw) return ''
 
   const terminator = raw.match(/[.!?]$/)?.[0] ?? ''
-  const reduced = reduceTransitionToEndState(raw.replace(/[.!?\s]+$/, ''))
+  // Camera from→to reduction does not belong on blocking or prop handling.
+  // `pulls the cylinder from under her coat to her chest` was collapsing to
+  // `her chest with both hands` because `chest` is also an angle keyword.
+  const reduced = raw.replace(/[.!?\s]+$/, '')
   const restore = (text: string) => `${text}${terminator}`
 
   const clauses = splitActionClauses(reduced)

@@ -44,6 +44,7 @@ interface KlingTaskResponse {
     element_id?: string
     task_result?: {
       videos?: Array<{ url?: string; id?: string }>
+      images?: Array<{ url?: string; id?: string }>
     }
   }
 }
@@ -678,5 +679,128 @@ export async function runKlingLipSync(videoUrl: string, audioUrl: string): Promi
 export async function downloadKlingVideoUrl(url: string): Promise<Buffer> {
   const res = await fetch(url)
   if (!res.ok) throw new Error(`Kling video download failed: ${res.status}`)
+  return Buffer.from(await res.arrayBuffer())
+}
+
+export type KlingOmniImageResolution = '1k' | '2k'
+
+export interface BuildKlingOmniImageBodyInput {
+  prompt: string
+  elementList?: Array<{ element_id: string }>
+  imageList?: Array<{ image: string }>
+  resolution?: KlingOmniImageResolution
+  aspectRatio?: string
+  n?: number
+  resultType?: 'single' | 'series'
+}
+
+/** Exported for unit tests — official POST /images/omni-image body. */
+export function buildKlingOmniImageBody(
+  input: BuildKlingOmniImageBodyInput
+): Record<string, unknown> {
+  const body: Record<string, unknown> = {
+    model_name: 'kling-v3-omni',
+    prompt: truncatePrompt(input.prompt),
+    aspect_ratio: input.aspectRatio || '16:9',
+    resolution: input.resolution === '2k' ? '2k' : '1k',
+    n: input.n ?? 1,
+    result_type: input.resultType ?? 'single',
+  }
+
+  if (input.elementList?.length) {
+    body.element_list = input.elementList.map((entry) => ({
+      element_id: entry.element_id,
+    }))
+  }
+  if (input.imageList?.length) {
+    body.image_list = input.imageList.map((entry) => ({ image: entry.image }))
+  }
+
+  if (getKlingWatermarkDefault()) {
+    body.watermark_info = { enabled: true }
+  }
+
+  return body
+}
+
+/** Exported for unit tests */
+export function extractKlingImageUrl(data: unknown): string | undefined {
+  if (!data || typeof data !== 'object') return undefined
+  const d = data as KlingTaskResponse['data']
+  const images = d?.task_result?.images
+  if (images?.[0]?.url) return images[0].url
+  return undefined
+}
+
+export async function pollKlingOmniImageTask(
+  taskId: string,
+  maxWaitSec = getKlingElementPollTimeoutSec(),
+  intervalMs = getKlingElementPollIntervalMs()
+): Promise<string> {
+  const deadline = Date.now() + maxWaitSec * 1000
+  const path = `/images/omni-image/${encodeURIComponent(taskId)}`
+
+  while (Date.now() < deadline) {
+    const json = await klingGet(path)
+    const status = json.data?.task_status
+
+    if (status === 'succeed') {
+      const imageUrl = extractKlingImageUrl(json.data)
+      if (!imageUrl) throw new Error('Kling omni-image task succeeded without image URL')
+      return imageUrl
+    }
+
+    if (status === 'failed') {
+      throw new Error(json.data?.task_status_msg || 'Kling omni-image generation failed')
+    }
+
+    await new Promise((r) => setTimeout(r, intervalMs))
+  }
+
+  throw new Error('Kling omni-image generation timed out')
+}
+
+export async function submitKlingOmniImage(input: {
+  prompt: string
+  elementList?: Array<{ element_id: string }>
+  imageList?: Array<{ image: string }>
+  resolution?: KlingOmniImageResolution
+  aspectRatio?: string
+}): Promise<{ taskId: string }> {
+  if (!hasDirectKlingCredentials()) {
+    throw new Error('Direct Kling credentials are not configured')
+  }
+
+  const resolvedImages: Array<{ image: string }> = []
+  for (const entry of input.imageList ?? []) {
+    resolvedImages.push({ image: await resolveImageForKling(entry.image) })
+  }
+
+  const body = buildKlingOmniImageBody({
+    prompt: input.prompt,
+    elementList: input.elementList,
+    imageList: resolvedImages.length ? resolvedImages : undefined,
+    resolution: input.resolution,
+    aspectRatio: input.aspectRatio,
+  })
+  const create = await klingRequest('/images/omni-image', body)
+  const taskId = create.data?.task_id
+  if (!taskId) {
+    throw new Error('Kling omni-image task created without task_id')
+  }
+  return { taskId }
+}
+
+export async function runKlingOmniImage(input: {
+  prompt: string
+  elementList?: Array<{ element_id: string }>
+  imageList?: Array<{ image: string }>
+  resolution?: KlingOmniImageResolution
+  aspectRatio?: string
+}): Promise<Buffer> {
+  const submit = await submitKlingOmniImage(input)
+  const imageUrl = await pollKlingOmniImageTask(submit.taskId)
+  const res = await fetch(imageUrl)
+  if (!res.ok) throw new Error(`Kling omni-image download failed: ${res.status}`)
   return Buffer.from(await res.arrayBuffer())
 }

@@ -1,4 +1,17 @@
 import { isRetryableError } from '../utils/retry'
+import {
+  IMAGE_SAFETY_BOARD_MESSAGE,
+  IMAGE_SAFETY_CODE,
+  IMAGE_SAFETY_USER_MESSAGE,
+  isImageSafetyError,
+} from '@/lib/generation/stillPolicy'
+
+export {
+  IMAGE_SAFETY_BOARD_MESSAGE,
+  IMAGE_SAFETY_CODE,
+  IMAGE_SAFETY_USER_MESSAGE,
+  isImageSafetyError,
+}
 
 /** Extract HTTP status from Scene Express image generation errors. */
 export function resolveExpressImageErrorStatus(err: unknown): number | undefined {
@@ -180,6 +193,9 @@ export function isCharacterLikenessMismatchError(err: unknown): boolean {
 
 /** Short overlay/tile copy — never dump Vertex payload text to the user. */
 export function formatExpressImageErrorForUser(err: unknown): string {
+  if (isImageSafetyError(err)) {
+    return IMAGE_SAFETY_BOARD_MESSAGE
+  }
   if (isCharacterLikenessMismatchError(err)) {
     return CHARACTER_LIKENESS_MISMATCH_MESSAGE
   }
@@ -191,7 +207,7 @@ export function formatExpressImageErrorForUser(err: unknown): string {
     return 'Reference image could not be loaded — retry this frame'
   }
   if (msg.toLowerCase().includes('content policy') || msg.toLowerCase().includes('safety')) {
-    return 'Blocked by content policy — edit prompt or retry'
+    return IMAGE_SAFETY_BOARD_MESSAGE
   }
   if (!msg) return 'Generation failed'
   return msg.length > 120 ? `${msg.slice(0, 117)}…` : msg

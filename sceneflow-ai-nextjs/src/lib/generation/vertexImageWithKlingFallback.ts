@@ -42,14 +42,17 @@ export async function generateImageWithVertexKlingFallback(
   const maxAttempts = options.policyMaxAttempts ?? getVeoPolicyMaxAttempts()
   let prompt = options.prompt
   let lastError = ''
+  let currentOptions: GenerateVertexImageOptions = { ...options }
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      const result = await generateVertexImage({ ...options, prompt })
+      const result = await generateVertexImage({ ...currentOptions, prompt })
       return {
         ...result,
         generationProvider: 'vertex',
-        wasPolicyFallback: attempt > 1,
+        // Creative Kling is the only still-policy fallback. Vertex rewrites
+        // stay on Google and must not look like a provider switch.
+        wasPolicyFallback: false,
         vertexAttempts: attempt,
       }
     } catch (e) {
@@ -62,6 +65,11 @@ export async function generateImageWithVertexKlingFallback(
         prompt = escalateImagePromptForRetry(prompt, attempt, {
           skipProductionStillFraming: options.skipProductionStillFraming,
         })
+        currentOptions = {
+          ...currentOptions,
+          prompt,
+          modelTier: 'designer',
+        }
       }
     }
   }

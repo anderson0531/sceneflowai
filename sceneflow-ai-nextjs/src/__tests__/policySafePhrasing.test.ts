@@ -73,7 +73,21 @@ describe('softenStillPhrasingForPolicy', () => {
     expect(text).toBe('Both spanners rest embedded in the wall.')
   })
 
-  it('returns clean direction byte-identical and reports no changes', () => {
+  it('rewrites pinning language that Vertex paints without identity refs', () => {
+    const { text } = softenStillPhrasingForPolicy(
+      'person [1] sits trapped against the wall; person [2] plants the spanner beside person [1]\'s shoulder to block her path.'
+    )
+
+    expect(text).toContain('spanner')
+    expect(text).toContain('seated against')
+    expect(text).not.toMatch(/trapped against/i)
+    expect(text).toContain('occupying the passage')
+    expect(text).not.toMatch(/block her path/i)
+    expect(text).toContain("against the wall at person [1]'s side")
+    expect(text).not.toMatch(/beside person \[1\]'s shoulder/i)
+  })
+
+  it('leaves an already-clean beat untouched', () => {
     const clean =
       "Elise's open hand is flat on the cold stone, the journal splayed beside it, pages lifting in the draft."
     const { text, changes } = softenStillPhrasingForPolicy(clean)

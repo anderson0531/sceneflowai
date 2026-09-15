@@ -430,6 +430,9 @@ interface ScriptPanelProps {
     negativePrompt?: string
     usePreviousEndFrame?: boolean
     previousEndFrameUrl?: string
+    stillPolicyMode?: 'safety' | 'creative'
+    fromDialog?: boolean
+    modelTier?: 'eco' | 'designer' | 'director'
   }) => Promise<{ startFrameUrl?: string; endFrameUrl?: string } | void>
   onEditFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
   onUploadFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', file: File) => void
@@ -3952,7 +3955,7 @@ interface SceneCardProps {
   onDismissStaleWarning?: (sceneIdx: number, stepKey: string) => void
   onSyncPreVisToScript?: (sceneIdx: number) => void | Promise<void>
   // Keyframe State Machine - Frame step handlers
-  onGenerateSegmentFrames?: (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both', options?: { customPrompt?: string; negativePrompt?: string; usePreviousEndFrame?: boolean }) => Promise<{ startFrameUrl?: string; endFrameUrl?: string } | void>
+  onGenerateSegmentFrames?: (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both', options?: { customPrompt?: string; negativePrompt?: string; usePreviousEndFrame?: boolean; stillPolicyMode?: 'safety' | 'creative'; fromDialog?: boolean; modelTier?: 'eco' | 'designer' | 'director' }) => Promise<{ startFrameUrl?: string; endFrameUrl?: string } | void>
   onEditFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
   onOpenFrameEditModal?: (sceneId: string, sceneIdx: number, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
   onUploadFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', file: File) => void
@@ -7744,6 +7747,17 @@ function SceneCard({
                           onGenerateLanguageStream={onGenerateLanguageStream}
                           isGeneratingAudio={isGeneratingAudio}
                           onSaveEditedKeyframe={onEditFrame}
+                          onRegenerateStill={
+                            onGenerateSegmentFrames
+                              ? (sceneId, segmentId, mode) => {
+                                  void onGenerateSegmentFrames(sceneId, segmentId, 'start', {
+                                    stillPolicyMode: mode,
+                                    fromDialog: true,
+                                    modelTier: 'designer',
+                                  })
+                                }
+                              : undefined
+                          }
                           onModerationReport={onModerationReport}
                           onVideoRunReport={onVideoRunReport}
                           onVideoRunCancelReady={onVideoRunCancelReady}

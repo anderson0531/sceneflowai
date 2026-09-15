@@ -5,6 +5,8 @@ import {
   buildKlingVideoBody,
   buildKlingExtendBody,
   buildKlingElementMultiBody,
+  buildKlingOmniImageBody,
+  extractKlingImageUrl,
   extractKlingVideoUrl,
   extractKlingVideoId,
   parseKlingWebhookPayload,
@@ -117,6 +119,31 @@ describe('klingDirectClient helpers', () => {
       duration: 12,
     })
     expect(long.body.duration).toBe('10')
+  })
+
+  it('builds official omni-image body with element_list and image_list', () => {
+    const body = buildKlingOmniImageBody({
+      prompt: '<<<elem_1>>> holds the spanner at <<<image_1>>>',
+      elementList: [{ element_id: 'elem_1' }],
+      imageList: [{ image: 'https://cdn.example.com/tunnel.jpg' }],
+      resolution: '2k',
+      aspectRatio: '16:9',
+    })
+    expect(body.model_name).toBe('kling-v3-omni')
+    expect(body.aspect_ratio).toBe('16:9')
+    expect(body.resolution).toBe('2k')
+    expect(body.n).toBe(1)
+    expect(body.result_type).toBe('single')
+    expect(body.element_list).toEqual([{ element_id: 'elem_1' }])
+    expect(body.image_list).toEqual([{ image: 'https://cdn.example.com/tunnel.jpg' }])
+  })
+
+  it('extracts the omni-image URL from task_result.images', () => {
+    expect(
+      extractKlingImageUrl({
+        task_result: { images: [{ url: 'https://cdn.example.com/still.png' }] },
+      })
+    ).toBe('https://cdn.example.com/still.png')
   })
 
   it('gates unsupported params for kling-v2.6', () => {

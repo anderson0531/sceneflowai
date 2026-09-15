@@ -3,6 +3,21 @@ import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import { generateImageWithVertexKlingFallback } from '@/lib/generation/vertexImageWithKlingFallback'
 import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalation'
+import {
+  ContentPolicyExhaustedError,
+  getKlingFallbackProvider,
+  isVertexContentPolicyError,
+} from '@/lib/generation/contentPolicy'
+import { generateKlingOmniStill } from '@/lib/kling/generateKlingOmniStill'
+import {
+  CREATIVE_KLING_UNAVAILABLE_CODE,
+  CREATIVE_KLING_UNAVAILABLE_MESSAGE,
+  IMAGE_SAFETY_CODE,
+  IMAGE_SAFETY_USER_MESSAGE,
+  parseStillPolicyMode,
+  resolveVertexStillPolicyAttempts,
+  shouldRejectIgnoredIdentityStill,
+} from '@/lib/generation/stillPolicy'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor, buildIdentityPromptToken, sanitizePromptForIdentityRefs, filterCharactersForPromptRefs, promptPlacesCharacter, stripReferenceImageMappingBlock } from '@/lib/imagen/promptOptimizer'
 import { ethnicityKeyFeature } from '@/lib/imagen/characterKeyFeatures'
@@ -645,7 +660,10 @@ export async function POST(req: NextRequest) {
       frameRole = 'start',
       startFrameUrl,
       regenerate = false,
+      stillPolicyMode: stillPolicyModeRaw,
     } = body
+
+    const stillPolicyMode = parseStillPolicyMode(stillPolicyModeRaw)
 
     logContext = {
       projectId,
@@ -2307,7 +2325,7 @@ export async function POST(req: NextRequest) {
       validation: any
       promptForResponse: string
       generationModelId: string
-      generationProvider: 'vertex' | 'fal'
+      generationProvider: 'vertex' | 'kling'
     } | null = null
 
     const promptModifierContext = {
@@ -2321,8 +2339,9 @@ export async function POST(req: NextRequest) {
       beatForEmotion,
     }
 
-    let generationModelId = 'fal-ai/kling-image/v3/text-to-image'
-    let generationProvider: 'vertex' | 'fal' = 'fal'
+    let generationModelId = 'gemini-image'
+    let generationProvider: 'vertex' | 'kling' = 'vertex'
+    let wasPolicyFallback = false
     let promptForResponse = stripReferenceImageMappingBlock(optimizedPrompt)
 
     const hairCompositionLock = buildHairCompositionLock(
@@ -3106,28 +3125,76 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          const vertexResult = await generateImageWithVertexKlingFallback({
-            prompt: geminiPrompt,
-            aspectRatio: '16:9',
-            imageSize: effectiveImageSize,
-            referenceImages: allReferenceImages,
-            ...(isBeatFrame ? {} : { negativePrompt: finalNegativePrompt }),
-            ...(effectiveImageTier ? { modelTier: effectiveImageTier } : {}),
-            failFastOnRateLimit: !!skipLikenessValidation,
-            requireAllReferenceImages: allReferenceImages.length > 0,
-            policyMaxAttempts: skipLikenessValidation ? 1 : undefined,
-            skipProductionStillFraming: isBeatFrame,
-            deadlineAt: imageDeadlineAt,
-          })
+          if (stillPolicyMode === 'creative') {
+            if (!getKlingFallbackProvider()) {
+              return NextResponse.json(
+                {
+                  success: false,
+                  error: CREATIVE_KLING_UNAVAILABLE_MESSAGE,
+                  code: CREATIVE_KLING_UNAVAILABLE_CODE,
+                },
+                { status: 422 }
+              )
+            }
+            const characterOrdinals = characterReferences
+              .map((ref: { name?: string; subjectOrdinal?: number }) => ({
+                name: String(ref.name || ''),
+                subjectOrdinal: ref.subjectOrdinal,
+              }))
+              .filter((entry: { name: string }) => Boolean(entry.name))
+            const klingResult = await generateKlingOmniStill({
+              prompt: geminiPrompt,
+              selectedReferences: selectedReferenceImages,
+              characterOrdinals,
+              characterLibrary: characterObjects,
+              characterWardrobes: effectiveCharacterWardrobes,
+              projectId,
+              resolution:
+                effectiveImageSize === '1K' || useFlashDraftTier ? '1k' : '2k',
+            })
+            base64Image = klingResult.imageBase64
+            generationModelId = klingResult.modelId
+            generationProvider = 'kling'
+            wasPolicyFallback = true
+            lastRoundPolicyRefusalRecovered = false
+            promptForResponse = geminiPrompt
+          } else {
+            const vertexPrompt =
+              stillPolicyMode === 'safety'
+                ? escalateImagePromptForRetry(geminiPrompt, 1, {
+                    skipProductionStillFraming: isBeatFrame,
+                  })
+                : geminiPrompt
+            if (stillPolicyMode === 'safety') {
+              promptForResponse = vertexPrompt
+            }
 
-          base64Image = vertexResult.imageBase64
-          generationModelId = vertexResult.modelId
-          generationProvider = vertexResult.generationProvider
-          lastRoundPolicyRefusalRecovered = vertexResult.policyRefusalRecovered === true
-          if (lastRoundPolicyRefusalRecovered) {
-            console.warn(
-              `[Scene Image] ⚠️  Frame was content-refused before it rendered; ${vertexResult.modelId} produced it from softened wording. Expect identity drift — the refused content is why references get ignored.`
-            )
+            const vertexResult = await generateImageWithVertexKlingFallback({
+              prompt: vertexPrompt,
+              aspectRatio: '16:9',
+              imageSize: effectiveImageSize,
+              referenceImages: allReferenceImages,
+              ...(isBeatFrame ? {} : { negativePrompt: finalNegativePrompt }),
+              ...(effectiveImageTier || stillPolicyMode === 'safety'
+                ? { modelTier: stillPolicyMode === 'safety' ? 'designer' : effectiveImageTier }
+                : {}),
+              failFastOnRateLimit: stillPolicyMode ? false : !!skipLikenessValidation,
+              requireAllReferenceImages: allReferenceImages.length > 0,
+              policyMaxAttempts: resolveVertexStillPolicyAttempts(stillPolicyMode),
+              skipProductionStillFraming: isBeatFrame,
+              deadlineAt: imageDeadlineAt,
+            })
+
+            base64Image = vertexResult.imageBase64
+            generationModelId = vertexResult.modelId
+            generationProvider = vertexResult.generationProvider
+            wasPolicyFallback = false
+            lastRoundPolicyRefusalRecovered = vertexResult.policyRefusalRecovered === true
+            if (lastRoundPolicyRefusalRecovered) {
+              console.warn(
+                `[Scene Image] ⚠️  Frame was content-refused before it rendered; ${vertexResult.modelId} produced it from softened wording. Expect identity drift — the refused content is why references get ignored.`
+              )
+            }
           }
         } else {
           console.log('[Scene Image] Using Vertex Imagen text-to-image (no reference images)')
@@ -3151,20 +3218,51 @@ export async function POST(req: NextRequest) {
               })
             : optimizedPrompt
           promptForResponse = imagenStill
-          const effectivePersonGeneration = effectiveExcludeCharacters
-            ? 'dont_allow'
-            : personGeneration || 'allow_adult'
-          base64Image = await generateImageWithGemini(imagenStill, {
-            aspectRatio: '16:9',
-            numberOfImages: 1,
-            imageSize: effectiveImageSize,
-            quality: effectiveImagenQuality,
-            personGeneration: effectivePersonGeneration,
-            negativePrompt: finalNegativePrompt,
-            deadlineAt: imageDeadlineAt,
-          })
-          generationModelId = GEMINI_IMAGE_MODELS.flash
-          generationProvider = 'vertex'
+          if (stillPolicyMode === 'creative') {
+            if (!getKlingFallbackProvider()) {
+              return NextResponse.json(
+                {
+                  success: false,
+                  error: CREATIVE_KLING_UNAVAILABLE_MESSAGE,
+                  code: CREATIVE_KLING_UNAVAILABLE_CODE,
+                },
+                { status: 422 }
+              )
+            }
+            const klingResult = await generateKlingOmniStill({
+              prompt: imagenStill,
+              selectedReferences: [],
+              projectId,
+              resolution:
+                effectiveImageSize === '1K' || useFlashDraftTier ? '1k' : '2k',
+            })
+            base64Image = klingResult.imageBase64
+            generationModelId = klingResult.modelId
+            generationProvider = 'kling'
+            wasPolicyFallback = true
+          } else {
+            const imagenPrompt =
+              stillPolicyMode === 'safety'
+                ? escalateImagePromptForRetry(imagenStill, 1, {
+                    skipProductionStillFraming: isBeatFrame,
+                  })
+                : imagenStill
+            if (stillPolicyMode === 'safety') promptForResponse = imagenPrompt
+            const effectivePersonGeneration = effectiveExcludeCharacters
+              ? 'dont_allow'
+              : personGeneration || 'allow_adult'
+            base64Image = await generateImageWithGemini(imagenPrompt, {
+              aspectRatio: '16:9',
+              numberOfImages: 1,
+              imageSize: effectiveImageSize,
+              quality: effectiveImagenQuality,
+              personGeneration: effectivePersonGeneration,
+              negativePrompt: finalNegativePrompt,
+              deadlineAt: imageDeadlineAt,
+            })
+            generationModelId = GEMINI_IMAGE_MODELS.flash
+            generationProvider = 'vertex'
+          }
         }
         
         // Success - break out of retry loop
@@ -3362,6 +3460,26 @@ export async function POST(req: NextRequest) {
     }
 
     if (
+      shouldRejectIgnoredIdentityStill({
+        policyRefusalRecovered: lastRoundPolicyRefusalRecovered,
+        hasIdentityRefs: charactersWithImages.length > 0,
+        likenessFailed: isGenuineLikenessFailure(validation),
+      })
+    ) {
+      console.warn(
+        '[Scene Image] Policy-recovered frame ignored identity references — failing uncharged'
+      )
+      return NextResponse.json(
+        {
+          success: false,
+          error: IMAGE_SAFETY_USER_MESSAGE,
+          code: IMAGE_SAFETY_CODE,
+        },
+        { status: 422 }
+      )
+    }
+
+    if (
       likenessRound === 0 &&
       isGenuineLikenessFailure(validation) &&
       (!skipLikenessValidation || expressBeatLikenessEligible)
@@ -3436,7 +3554,14 @@ export async function POST(req: NextRequest) {
         CREDIT_COST,
         'ai_usage',
         projectId || null,
-        { operation: 'kling_image_generate', sceneIndex, model: generationModelId }
+        {
+          operation:
+            generationProvider === 'kling' ? 'kling_image_generate' : 'vertex_image_generate',
+          sceneIndex,
+          model: generationModelId,
+          provider: generationProvider,
+          stillPolicyMode: stillPolicyMode ?? 'auto',
+        }
       )
       creditsCharged = CREDIT_COST
       console.log(`[Scene Image] Charged ${CREDIT_COST} credits to user ${userId}`)
@@ -3461,6 +3586,8 @@ export async function POST(req: NextRequest) {
       model: generationModelId,
       quality: quality,
       provider: generationProvider,
+      wasPolicyFallback,
+      stillPolicyMode: stillPolicyMode ?? null,
       storage: 'vercel-blob',
       // Include hashes for workflow sync tracking
       basedOnDirectionHash,
@@ -3521,6 +3648,35 @@ export async function POST(req: NextRequest) {
         retryable: true,
         documentation: 'https://cloud.google.com/vertex-ai/docs/quotas'
       }, { status: 429 })
+    }
+
+    if (
+      error instanceof ContentPolicyExhaustedError ||
+      error?.name === 'ContentPolicyExhaustedError' ||
+      isVertexContentPolicyError(error?.message)
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: IMAGE_SAFETY_USER_MESSAGE,
+          code: IMAGE_SAFETY_CODE,
+        },
+        { status: 422 }
+      )
+    }
+
+    if (
+      error?.message === CREATIVE_KLING_UNAVAILABLE_MESSAGE ||
+      error?.code === CREATIVE_KLING_UNAVAILABLE_CODE
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: CREATIVE_KLING_UNAVAILABLE_MESSAGE,
+          code: CREATIVE_KLING_UNAVAILABLE_CODE,
+        },
+        { status: 422 }
+      )
     }
     
     // Provide detailed error message to frontend

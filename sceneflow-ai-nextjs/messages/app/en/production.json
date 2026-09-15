@@ -1025,6 +1025,15 @@
       "optimizedForShot": "Optimized for this shot",
       "resetOptimizedSettings": "Reset"
     },
+    "stillPolicy": {
+      "safety": "Safety",
+      "creative": "Creative",
+      "safetyHint": "Rewrite for Google so the references can lock.",
+      "creativeHint": "Keep the beat as written. Generate with Kling.",
+      "creativeDisabled": "Creative is unavailable until Kling credentials are configured.",
+      "rewrittenPreview": "Safety rewrite (Google)",
+      "retryStill": "Retry still"
+    },
     "framePrompt": {
       "title": "Generate Frame",
       "titlePlural": "Generate Frames",
