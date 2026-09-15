@@ -99,6 +99,8 @@ export interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps
   onMergeObjects?: (primaryId: string, duplicateIds: string[]) => void | Promise<void>
   /** Drop library rows from a duplicate cluster */
   onDeleteDuplicateObjects?: (ids: string[], keeperId?: string) => void | Promise<void>
+  /** Remove every object still from this project library */
+  onDeleteAllObjectReferences?: () => void | Promise<void>
   /** Persist not-a-duplicate pair keys */
   onIgnoreObjectDuplicates?: (pairs: string[]) => void | Promise<void>
   objectDuplicateIgnores?: string[]
@@ -1226,6 +1228,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onObjectsAutoAdded,
     onMergeObjects,
     onDeleteDuplicateObjects,
+    onDeleteAllObjectReferences,
     onIgnoreObjectDuplicates,
     objectDuplicateIgnores,
     onUpdateReferenceImage,
@@ -1858,7 +1861,33 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                   <Plus className="w-4 h-4 mr-1" />
                   Add Object
                 </Button>
+                {objectReferences.length > 0 && onDeleteAllObjectReferences && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const count = objectReferences.length
+                      if (
+                        !window.confirm(
+                          `Remove all ${count} object reference${count === 1 ? '' : 's'} from this project? Beat prop links will be cleared. This cannot be undone.`
+                        )
+                      ) {
+                        return
+                      }
+                      void onDeleteAllObjectReferences()
+                    }}
+                    className="text-red-300 border-red-800/70 hover:bg-red-950/40"
+                  >
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Delete all
+                  </Button>
+                )}
               </div>
+              {objectReferences.length > 1 && (
+                <p className="text-[10px] text-slate-500">
+                  Delete all is a cleanup for libraries created before duplicate names were collapsed.
+                </p>
+              )}
               {objectReferences.length === 0 ? (
                 <div className="text-sm text-gray-500 border border-dashed border-gray-700/60 rounded-lg py-6 text-center">
                   No objects yet. Add objects or set pieces for this scene.
