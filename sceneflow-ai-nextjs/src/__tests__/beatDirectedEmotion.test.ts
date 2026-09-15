@@ -275,7 +275,11 @@ describe('generate-image beat frame acting and wardrobe regression guard', () =>
     expect(source).toMatch(/getMaxReferenceImagesForTier/)
     expect(source).toMatch(/groupByRole:\s*true/)
     expect(source).toMatch(/buildSubjectCountGuardrail/)
-    expect(source).toMatch(/modelTier:\s*effectiveImageTier/)
+    expect(source).toContain("modelTier: stillPolicyMode === 'safety' ? 'designer' : effectiveImageTier")
+    expect(source).toContain('consolidateBeatDualRefsIntoDiptychs')
+    expect(source).toContain('Assembled scene prompt preview')
+    expect(source).toContain('person [N] (Name)')
+    expect(source).not.toContain('using ONLY "person [N]" tokens')
   })
 
   it('keeps project characters at function scope for beat and custom frame paths', () => {

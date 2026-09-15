@@ -35,7 +35,22 @@ export const STILL_SECTION_STYLE = '[STYLE]'
 export const STILL_SECTION_EXCLUSIONS = '[EXCLUSIONS]'
 
 export const STILL_PURPOSE_LINE =
-  'Frozen animatic film still of this beat. Not a video start frame. No camera motion.'
+  'Cinematic live-action film still of this beat, photographed on 35mm. Not a video start frame. No camera motion.'
+
+/**
+ * Earlier purpose/task wordings that still live on stored beat prompts.
+ *
+ * Assembly re-emits the current lines; parse has to strip the literals a
+ * previous build wrote, or "Frozen animatic" leaks back into Action/Framing
+ * and fights the photoreal style block all over again.
+ */
+export const LEGACY_STILL_PURPOSE_LINES = [
+  'Frozen animatic film still of this beat. Not a video start frame. No camera motion.',
+] as const
+
+export const LEGACY_STILL_TASK_LINES = [
+  'Each subject has one head, two arms and two legs, each in exactly one position. Never duplicate, blur, streak or repeat a limb to imply movement.',
+] as const
 
 /**
  * The job, stated before the content it applies to.
@@ -48,11 +63,14 @@ export const STILL_PURPOSE_LINE =
  * prevent it, because a negative cannot outvote a positive instruction that
  * asks for movement. So the instruction to pick one instant has to be positive,
  * and it has to come before the beat text rather than after it.
+ *
+ * The anatomy line is affirmative on purpose. "Never duplicate a limb" primed
+ * Flash toward the anomaly it was trying to forbid (production 2026-09-15).
  */
 export const STILL_TASK_LINES = [
   'Produce one photograph of a single instant — a 1/500s exposure, everything in it simultaneous.',
   'Choose the most legible instant of the described action and render only that instant: the settled pose a viewer reads the whole action from, not the movement that produced it.',
-  'Each subject has one head, two arms and two legs, each in exactly one position. Never duplicate, blur, streak or repeat a limb to imply movement.',
+  'Each subject has one head, two arms and two legs, each in exactly one settled pose, with anatomically distinct silhouettes.',
   'A body in contact with a surface rests on it with its full weight, in contact along its length, with a matching contact shadow.',
   `Every token listed in ${STILL_SECTION_REFERENCES} appears in this frame and matches its reference image.`,
 ] as const
@@ -69,6 +87,12 @@ export interface StillPromptBoundRef {
   roleLabel: string
   /** Short observable traits, stated here and nowhere else in the prompt. */
   identityTraits?: string
+  /** 1-based send index of the identity portrait or identity+wardrobe composite. */
+  identitySendIndex?: number
+  /** 1-based send index of a separate wardrobe image, when dual refs remain. */
+  wardrobeSendIndex?: number
+  /** True when identity and wardrobe share one composite/diptych slot. */
+  isComposite?: boolean
 }
 
 export function buildPropPromptToken(sendIndex: number): string {
@@ -144,9 +168,11 @@ const NEXT_SECTION =
 /** Lines this module owns and re-emits, so they must never read back as action. */
 const STILL_BOILERPLATE_LINES = [
   STILL_PURPOSE_LINE,
+  ...LEGACY_STILL_PURPOSE_LINES,
   BEAT_FRAME_CANDID_ACTION_CONSTRAINT,
   ...LEGACY_BEAT_FRAME_CANDID_ACTION_CONSTRAINTS,
   ...STILL_TASK_LINES,
+  ...LEGACY_STILL_TASK_LINES,
 ]
 
 /** Prefixes of code-owned lines whose tail varies with the beat's references. */
@@ -592,9 +618,36 @@ export function formatUnboundRefsInFrameLine(
     : `Also in frame: ${tokens} — match each to its reference image.`
 }
 
+/**
+ * Bind a person token to the attached image(s) the model actually received.
+ *
+ * Action text uses `person [N]` only. Without this line the request never says
+ * that token is Gideon Croft, or which Reference image is the face. Retry lock
+ * already uses `person [N] (Name)`; the first pass has to as well.
+ */
+export function formatPersonReferenceLegendLine(ref: StillPromptBoundRef): string {
+  const named = `${ref.token} (${ref.name})`
+  const identityIdx = ref.identitySendIndex
+  const wardrobeIdx = ref.wardrobeSendIndex
+
+  let match: string
+  if (ref.isComposite && identityIdx != null) {
+    match = `matches Reference image ${identityIdx} (Identity and wardrobe composite)`
+  } else if (identityIdx != null && wardrobeIdx != null) {
+    match = `matches Reference image ${identityIdx} (Identity) and Reference image ${wardrobeIdx} (Wardrobe)`
+  } else if (identityIdx != null) {
+    match = `matches Reference image ${identityIdx} (Identity)`
+  } else {
+    match = 'matches its identity reference'
+  }
+
+  return ref.identityTraits ? `${named} ${match}: ${ref.identityTraits}` : `${named} ${match}`
+}
+
 export function formatStillReferencesLegend(refs: StillPromptBoundRef[]): string {
   if (refs.length === 0) return ''
   const lines = refs.map((ref) => {
+    if (ref.kind === 'person') return formatPersonReferenceLegendLine(ref)
     const entry = `${ref.token} = ${ref.name} — ${ref.roleLabel}`
     return ref.identityTraits ? `${entry}: ${ref.identityTraits}` : entry
   })
@@ -625,6 +678,28 @@ export function stillRefsFromAttachedImages(args: {
 }): StillPromptBoundRef[] {
   const refs: StillPromptBoundRef[] = []
   const seenPerson = new Set<string>()
+  const personSlots = new Map<
+    string,
+    { identitySendIndex?: number; wardrobeSendIndex?: number; isComposite: boolean }
+  >()
+
+  for (const entry of args.selected) {
+    if (!entry.characterName) continue
+    const slot = personSlots.get(entry.characterName) ?? {
+      identitySendIndex: undefined,
+      wardrobeSendIndex: undefined,
+      isComposite: false,
+    }
+    if (entry.refRole === 'wardrobe-diptych') {
+      slot.identitySendIndex = entry.sendIndex
+      slot.isComposite = true
+    } else if (entry.refRole === 'identity') {
+      slot.identitySendIndex = entry.sendIndex
+    } else if (entry.refRole === 'wardrobe') {
+      slot.wardrobeSendIndex = entry.sendIndex
+    }
+    personSlots.set(entry.characterName, slot)
+  }
 
   for (const entry of args.selected) {
     const sendIndex = entry.sendIndex
@@ -640,14 +715,18 @@ export function stillRefsFromAttachedImages(args: {
             ? buildIdentityPromptToken(sendIndex)
             : '')
       if (!token) continue
+      const slot = personSlots.get(entry.characterName)
       refs.push({
         kind: 'person',
         token,
         name: entry.characterName,
-        roleLabel: 'identity',
+        roleLabel: slot?.isComposite ? 'identity and wardrobe composite' : 'identity',
         identityTraits: char
           ? buildIdentityTraitsClause({ ...char, wordCap: args.identityTraitsWordCap })
           : undefined,
+        identitySendIndex: slot?.identitySendIndex,
+        wardrobeSendIndex: slot?.isComposite ? undefined : slot?.wardrobeSendIndex,
+        isComposite: slot?.isComposite,
       })
       continue
     }
