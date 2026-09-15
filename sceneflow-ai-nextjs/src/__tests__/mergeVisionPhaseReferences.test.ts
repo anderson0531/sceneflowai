@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   droppedReferenceIds,
+  mergeDroppedObjectReferenceIds,
   mergeVisionPhaseReferences,
   visionReferencesPutPayload,
 } from '@/lib/projects/mergeVisionPhaseReferences'
@@ -22,6 +23,12 @@ describe('droppedReferenceIds', () => {
   })
 })
 
+describe('mergeDroppedObjectReferenceIds', () => {
+  it('unions previous tombstones with this request', () => {
+    expect(mergeDroppedObjectReferenceIds(['a'], ['b'], ['a'])).toEqual(['a', 'b'])
+  })
+})
+
 describe('visionReferencesPutPayload', () => {
   it('adds droppedObjectReferenceIds when the object library shrank', () => {
     const payload = visionReferencesPutPayload({
@@ -38,19 +45,22 @@ describe('visionReferencesPutPayload', () => {
     expect(payload.droppedObjectReferenceIds).toEqual(['drop'])
   })
 
-  it('omits droppedObjectReferenceIds when nothing was removed', () => {
+  it('keeps previous tombstones even when this write only adds rows', () => {
     const payload = visionReferencesPutPayload({
       sceneReferences: [],
       objectReferences: [{ id: 'keep' }, { id: 'added' }],
       locationReferences: [],
       previousObjectReferences: [{ id: 'keep' }],
+      previousDroppedObjectReferenceIds: ['old-drop'],
+      replaceObjectReferences: true,
     })
-    expect(payload.droppedObjectReferenceIds).toBeUndefined()
+    expect(payload.droppedObjectReferenceIds).toEqual(['old-drop'])
+    expect(payload.replaceObjectReferences).toBe(true)
   })
 })
 
 describe('mergeVisionPhaseReferences', () => {
-  it('resurrects omitted object rows when drop ids are missing', () => {
+  it('resurrects omitted object rows when drop ids and replace are missing', () => {
     const merged = mergeVisionPhaseReferences(
       {
         objectReferences: [
@@ -85,9 +95,10 @@ describe('mergeVisionPhaseReferences', () => {
 
     expect(merged.objectReferences).toEqual([{ id: 'keep', name: 'Spud wrench' }])
     expect(merged.objectDuplicateIgnores).toEqual([])
+    expect(merged.droppedObjectReferenceIds).toEqual(['drop'])
   })
 
-  it('does not persist droppedObjectReferenceIds on the merged slice', () => {
+  it('persists droppedObjectReferenceIds as tombstones on the merged slice', () => {
     const merged = mergeVisionPhaseReferences(
       { objectReferences: [{ id: 'keep' }, { id: 'drop' }] },
       {
@@ -96,7 +107,7 @@ describe('mergeVisionPhaseReferences', () => {
       },
       pickIncoming
     )
-    expect(merged.droppedObjectReferenceIds).toBeUndefined()
+    expect(merged.droppedObjectReferenceIds).toEqual(['drop'])
   })
 
   it('drops every object id when Delete all sends an empty list plus drop ids', () => {
@@ -114,5 +125,60 @@ describe('mergeVisionPhaseReferences', () => {
       pickIncoming
     )
     expect(merged.objectReferences).toEqual([])
+    expect(merged.droppedObjectReferenceIds).toEqual(['a', 'b'])
+  })
+
+  it('does not resurrect tombstoned ids when a later PUT sends 33 rows without drop ids', () => {
+    const wiped = mergeVisionPhaseReferences(
+      {
+        objectReferences: Array.from({ length: 94 }, (_, index) => ({
+          id: `old-${index}`,
+          name: `Old ${index}`,
+        })),
+      },
+      {
+        objectReferences: [],
+        droppedObjectReferenceIds: Array.from({ length: 94 }, (_, index) => `old-${index}`),
+      },
+      pickIncoming
+    )
+    expect(wiped.objectReferences).toEqual([])
+    expect(wiped.droppedObjectReferenceIds).toHaveLength(94)
+
+    const rebuilt = mergeVisionPhaseReferences(
+      wiped,
+      {
+        objectReferences: Array.from({ length: 33 }, (_, index) => ({
+          id: `new-${index}`,
+          name: `New ${index}`,
+        })),
+      },
+      pickIncoming
+    )
+
+    expect(rebuilt.objectReferences).toHaveLength(33)
+    expect(rebuilt.objectReferences?.every((row) => String(row.id).startsWith('new-'))).toBe(true)
+    expect(rebuilt.droppedObjectReferenceIds).toHaveLength(94)
+  })
+
+  it('treats omitted ids as dropped when replaceObjectReferences is set', () => {
+    const merged = mergeVisionPhaseReferences(
+      {
+        objectReferences: [
+          { id: 'old-a', name: 'Spanner' },
+          { id: 'old-b', name: 'Journal' },
+        ],
+        droppedObjectReferenceIds: [],
+      },
+      {
+        objectReferences: [{ id: 'new-1', name: 'Brass core' }],
+        replaceObjectReferences: true,
+      },
+      pickIncoming
+    )
+
+    expect(merged.objectReferences).toEqual([{ id: 'new-1', name: 'Brass core' }])
+    expect(merged.droppedObjectReferenceIds).toEqual(['old-a', 'old-b'])
+    expect(merged.replaceObjectReferences).toBeUndefined()
   })
 })

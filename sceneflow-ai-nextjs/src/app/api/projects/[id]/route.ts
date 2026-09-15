@@ -482,6 +482,16 @@ export async function PUT(
             existingObjectRefs: existingObjectRefs.length,
             incomingObjectRefs: incomingObjectRefs.length,
             mergedObjectRefs: mergedReferences.objectReferences?.length || 0,
+            existingObjectTombstones: Array.isArray(existingReferences.droppedObjectReferenceIds)
+              ? existingReferences.droppedObjectReferenceIds.length
+              : 0,
+            incomingObjectTombstones: Array.isArray(incomingReferences?.droppedObjectReferenceIds)
+              ? incomingReferences.droppedObjectReferenceIds.length
+              : 0,
+            replaceObjectReferences: Boolean(incomingReferences?.replaceObjectReferences),
+            mergedObjectTombstones: Array.isArray(mergedReferences.droppedObjectReferenceIds)
+              ? mergedReferences.droppedObjectReferenceIds.length
+              : 0,
             existingLocationRefs: existingLocationRefs.length,
             incomingLocationRefs: incomingLocationRefs.length,
             mergedLocationRefs: mergedReferences.locationReferences?.length || 0

@@ -57,4 +57,37 @@ describe('hydrateVisionStateFromFullProject', () => {
     expect(hydrated.scenes[0].beats[0].storyboardImageUrl).toBe('https://blob.example/beat1.png')
     expect(hydrated.sceneReferences[0].imageUrl).toBe('https://blob.example/backdrop.png')
   })
+
+  it('keeps object tombstones when restoring lite image URLs', () => {
+    const fullProject = {
+      metadata: {
+        visionPhase: {
+          characters: [],
+          references: {
+            sceneReferences: [],
+            objectReferences: [{ id: 'new-1', name: 'Brass core', imageUrl: 'https://blob.example/core.png' }],
+            locationReferences: [],
+            droppedObjectReferenceIds: ['old-a', 'old-b'],
+            objectDuplicateIgnores: ['a::b'],
+          },
+        },
+      },
+    }
+
+    const current = {
+      characters: [],
+      script: null,
+      sceneReferences: [],
+      objectReferences: [{ id: 'new-1', name: 'Brass core', imageUrl: 'deferred' }],
+      locationReferences: [],
+    }
+
+    const hydrated = hydrateVisionStateFromFullProject(fullProject, current)
+    const references = (hydrated.projectMetadata as { visionPhase?: { references?: Record<string, unknown> } })
+      .visionPhase?.references
+
+    expect(hydrated.objectReferences[0].imageUrl).toBe('https://blob.example/core.png')
+    expect(references?.droppedObjectReferenceIds).toEqual(['old-a', 'old-b'])
+    expect(references?.objectDuplicateIgnores).toEqual(['a::b'])
+  })
 })
