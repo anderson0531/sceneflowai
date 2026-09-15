@@ -18,8 +18,17 @@ describe('object library delete persistence', () => {
     expect(page).toContain('visionReferencesPutPayload')
     expect(page).toContain('handleDeleteAllObjectReferences')
     expect(page).toContain('handleDeleteDuplicateObjects([referenceId])')
+    expect(page).toContain('replaceObjectReferences: true')
+    expect(page).toContain('objectTombstoneIdsRef')
+    expect(page).toContain("debugLabel: 'handleObjectGenerated'")
+    expect(page).not.toContain('delete persistedReferences.droppedObjectReferenceIds')
 
     const route = readSource('src/app/api/projects/[id]/route.ts')
     expect(route).toContain('mergeVisionPhaseReferences')
+    expect(route).toContain('mergedObjectTombstones')
+
+    const merge = readSource('src/lib/projects/mergeVisionPhaseReferences.ts')
+    expect(merge).toContain('replaceObjectReferences')
+    expect(merge).toContain('tombstones')
   })
 })

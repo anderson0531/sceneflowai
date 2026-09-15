@@ -27,7 +27,7 @@ import {
   stringifyProjectPut,
   visionPhasePut,
 } from '@/lib/projects/slimProjectPutPayload'
-import { visionReferencesPutPayload } from '@/lib/projects/mergeVisionPhaseReferences'
+import { mergeDroppedObjectReferenceIds, visionReferencesPutPayload } from '@/lib/projects/mergeVisionPhaseReferences'
 import {
   putResponseIndicatesStaleScriptWrite,
   refreshQueuedScriptPut,
@@ -834,6 +834,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const sceneReferencesRef = useRef<VisualReference[]>([])
   const objectReferencesRef = useRef<VisualReference[]>([])
   const objectDuplicateIgnoresRef = useRef<string[]>([])
+  const objectTombstoneIdsRef = useRef<string[]>([])
   const locationReferencesRef = useRef<LocationReference[]>([])
   /**
    * Written through synchronously by `applySceneProductionUpdate` so several
@@ -1010,9 +1011,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         debugLabel: string
       }
     ): Promise<Response> => {
-      const previousObjectReferences = (
-        projectRef.current || project
-      )?.metadata?.visionPhase?.references?.objectReferences as VisualReference[] | undefined
+      const currentProject = projectRef.current || project
+      const storedDropped = currentProject?.metadata?.visionPhase?.references
+        ?.droppedObjectReferenceIds as string[] | undefined
+      const previousDropped = mergeDroppedObjectReferenceIds(
+        objectTombstoneIdsRef.current,
+        storedDropped,
+        options.extraDroppedIds
+      )
+      const previousObjectReferences = currentProject?.metadata?.visionPhase?.references
+        ?.objectReferences as VisualReference[] | undefined
       const references = visionReferencesPutPayload({
         sceneReferences: sceneReferencesRef.current,
         objectReferences: nextObjectReferences,
@@ -1020,11 +1028,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         objectDuplicateIgnores: options.objectDuplicateIgnores,
         previousObjectReferences,
         extraDroppedIds: options.extraDroppedIds,
+        previousDroppedObjectReferenceIds: previousDropped,
+        replaceObjectReferences: true,
       })
+      objectTombstoneIdsRef.current = mergeDroppedObjectReferenceIds(
+        previousDropped,
+        references.droppedObjectReferenceIds
+      )
       const persistedReferences = { ...references }
-      delete persistedReferences.droppedObjectReferenceIds
+      delete persistedReferences.replaceObjectReferences
 
-      const currentProject = projectRef.current || project
       const existingMetadata = currentProject?.metadata || {}
       const existingVisionPhase = existingMetadata.visionPhase || {}
       const nextMetadata = {
@@ -1666,6 +1679,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setObjectReferences(references.objectReferences ?? [])
       setObjectDuplicateIgnores(references.objectDuplicateIgnores ?? [])
       setLocationReferences(references.locationReferences ?? [])
+      objectTombstoneIdsRef.current = mergeDroppedObjectReferenceIds(
+        objectTombstoneIdsRef.current,
+        references.droppedObjectReferenceIds
+      )
     } else if (project) {
       setSceneReferences([])
       setObjectReferences([])
@@ -2561,34 +2578,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       if (type === 'scene') {
         updatedSceneRefs = [...sceneReferences, newReference]
+        sceneReferencesRef.current = updatedSceneRefs
         setSceneReferences(updatedSceneRefs)
       } else {
         updatedObjectRefs = [...objectReferences, newReference]
+        objectReferencesRef.current = updatedObjectRefs
         setObjectReferences(updatedObjectRefs)
       }
       
-      // Save to database
       try {
-        const existingMetadata = project?.metadata || {}
-        const existingVisionPhase = existingMetadata.visionPhase || {}
-        
-        const payload = {
-          metadata: {
-            ...existingMetadata,
-            visionPhase: {
-              ...existingVisionPhase,
-              references: {
-                sceneReferences: updatedSceneRefs,
-                objectReferences: updatedObjectRefs
-              }
-            }
-          }
-        }
-        
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: stringifyProjectPut(payload)
+        const response = await persistObjectLibrary(objectReferencesRef.current, {
+          objectDuplicateIgnores: objectDuplicateIgnoresRef.current,
+          debugLabel: 'handleCreateReference',
         })
         
         if (!response.ok) {
@@ -2598,47 +2599,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         console.error('[handleCreateReference] Error saving reference:', error)
       }
     },
-    [project, projectId, sceneReferences, objectReferences]
+    [persistObjectLibrary, sceneReferences, objectReferences]
   )
 
   const handleRemoveReference = useCallback(
     async (type: VisualReferenceType, referenceId: string) => {
-      // Update local state
-      let updatedSceneRefs = sceneReferences
-      let updatedObjectRefs = objectReferences
-      
       if (type === 'scene') {
-        updatedSceneRefs = sceneReferences.filter((reference) => reference.id !== referenceId)
+        const updatedSceneRefs = sceneReferencesRef.current.filter((reference) => reference.id !== referenceId)
+        sceneReferencesRef.current = updatedSceneRefs
         setSceneReferences(updatedSceneRefs)
       } else {
-        updatedObjectRefs = objectReferences.filter((reference) => reference.id !== referenceId)
+        const updatedObjectRefs = objectReferencesRef.current.filter((reference) => reference.id !== referenceId)
+        objectReferencesRef.current = updatedObjectRefs
         setObjectReferences(updatedObjectRefs)
       }
-      
-      // Save to database
+
       try {
-        const existingMetadata = project?.metadata || {}
-        const existingVisionPhase = existingMetadata.visionPhase || {}
-        
-        const payload = {
-          metadata: {
-            ...existingMetadata,
-            visionPhase: {
-              ...existingVisionPhase,
-              references: {
-                sceneReferences: updatedSceneRefs,
-                objectReferences: updatedObjectRefs
-              }
-            }
-          }
-        }
-        
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: stringifyProjectPut(payload)
+        const extraDroppedIds = type === 'object' ? [referenceId] : undefined
+        const response = await persistObjectLibrary(objectReferencesRef.current, {
+          objectDuplicateIgnores: objectDuplicateIgnoresRef.current,
+          extraDroppedIds,
+          debugLabel: 'handleRemoveReference',
         })
-        
+
         if (!response.ok) {
           console.error('[handleRemoveReference] Failed to save reference removal to database')
         }
@@ -2646,7 +2629,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         console.error('[handleRemoveReference] Error saving reference removal:', error)
       }
     },
-    [project, projectId, sceneReferences, objectReferences]
+    [persistObjectLibrary]
   )
 
   // Handler for updating a reference image after editing
@@ -2680,41 +2663,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       try {
-        const existingMetadata = (projectRef.current || project)?.metadata || {}
-        const existingVisionPhase = existingMetadata.visionPhase || {}
-
-        const payload = {
-          metadata: {
-            ...existingMetadata,
-            visionPhase: {
-              ...existingVisionPhase,
-              references: {
-                sceneReferences: updatedSceneRefs,
-                objectReferences: updatedObjectRefs,
-                locationReferences: locationReferencesRef.current,
-              },
-            },
-          },
-        }
-
-        const response = await serializedProjectSave(
-          payload,
-          'handleUpdateReferenceImage'
-        )
+        const response = await persistObjectLibrary(updatedObjectRefs, {
+          objectDuplicateIgnores: objectDuplicateIgnoresRef.current,
+          debugLabel: 'handleUpdateReferenceImage',
+        })
 
         if (!response.ok) {
           console.error('[handleUpdateReferenceImage] Failed to save updated image to database')
         } else if (!options?.quiet) {
           toast.success(`${type === 'scene' ? 'Scene' : 'Object'} image updated`)
-        }
-
-        if (response.ok && projectRef.current) {
-          const syncedProject = {
-            ...projectRef.current,
-            metadata: payload.metadata,
-          }
-          projectRef.current = syncedProject
-          setProject(syncedProject)
         }
       } catch (error) {
         console.error('[handleUpdateReferenceImage] Error saving updated image:', error)
@@ -2723,7 +2680,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       }
     },
-    [project, serializedProjectSave]
+    [persistObjectLibrary]
   )
 
   // Handler for updating a character's reference image after editing
@@ -2777,26 +2734,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       // Save to database using refs for current state
       try {
-        const existingMetadata = project?.metadata || {}
-        const existingVisionPhase = existingMetadata.visionPhase || {}
-
-        const payload = {
-          metadata: {
-            ...existingMetadata,
-            visionPhase: {
-              ...existingVisionPhase,
-              references: {
-                sceneReferences: sceneReferencesRef.current,  // Use ref for current state
-                objectReferences: objectReferencesRef.current  // Use ref for current state
-              }
-            }
-          }
-        }
-
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: stringifyProjectPut(payload)
+        const response = await persistObjectLibrary(objectReferencesRef.current, {
+          objectDuplicateIgnores: objectDuplicateIgnoresRef.current,
+          debugLabel: 'handleBackdropGenerated',
         })
 
         if (!response.ok) {
@@ -2806,7 +2746,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         console.error('[handleBackdropGenerated] Error saving reference:', error)
       }
     },
-    [project, projectId]  // Removed sceneReferences, objectReferences - using refs instead
+    [persistObjectLibrary]
   )
 
   // Handler for when an object reference is generated via AI
@@ -2869,26 +2809,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       // Save to database using refs for current state
       try {
-        const existingMetadata = project?.metadata || {}
-        const existingVisionPhase = existingMetadata.visionPhase || {}
-
-        const payload = {
-          metadata: {
-            ...existingMetadata,
-            visionPhase: {
-              ...existingVisionPhase,
-              references: {
-                sceneReferences: sceneReferencesRef.current,  // Use ref for current state
-                objectReferences: objectReferencesRef.current  // Use ref for current state
-              }
-            }
-          }
-        }
-
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: stringifyProjectPut(payload)
+        const response = await persistObjectLibrary(objectReferencesRef.current, {
+          objectDuplicateIgnores: objectDuplicateIgnoresRef.current,
+          debugLabel: 'handleObjectGenerated',
         })
 
         if (!response.ok) {
@@ -2898,7 +2821,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         console.error('[handleObjectGenerated] Error saving reference:', error)
       }
     },
-    [project, projectId]  // Removed sceneReferences, objectReferences - using refs instead
+    [persistObjectLibrary]
   )
 
   // An object handled across several beats renders in every one of them, so it
@@ -7284,6 +7207,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           objectDuplicateIgnoresRef.current = references.objectDuplicateIgnores
           setObjectDuplicateIgnores(references.objectDuplicateIgnores)
         }
+        objectTombstoneIdsRef.current = mergeDroppedObjectReferenceIds(
+          objectTombstoneIdsRef.current,
+          references.droppedObjectReferenceIds
+        )
       }
 
       setProject((prev) => {
@@ -10126,50 +10053,48 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const persistLocationReferences = async (updatedLocationRefs: LocationReference[]) => {
-    const updatedReferences = {
-      sceneReferences: sceneReferencesRef.current,
-      objectReferences: objectReferencesRef.current,
-      locationReferences: updatedLocationRefs
-    }
-
-    const response = await serializedProjectSave(
-      visionPhasePut({ references: updatedReferences }),
-      'persistLocationReferences'
-    )
+    locationReferencesRef.current = updatedLocationRefs
+    const response = await persistObjectLibrary(objectReferencesRef.current, {
+      objectDuplicateIgnores: objectDuplicateIgnoresRef.current,
+      debugLabel: 'persistLocationReferences',
+    })
 
     if (!response.ok) {
       throw new Error('Failed to persist location references')
     }
-
-    // Keep project state in sync so subsequent saves (handleSaveProject) don't send stale references
-    setProject(prev => {
-      if (!prev) return prev
-      return {
-        ...prev,
-        metadata: {
-          ...prev.metadata,
-          visionPhase: {
-            ...prev.metadata?.visionPhase,
-            references: updatedReferences
-          }
-        }
-      }
-    })
   }
 
   /** Sync live reference library + cast to project metadata before Express (server resolver source). */
   const syncVisionReferencesForExpress = async () => {
     if (!projectId) return
-    const updatedReferences = {
+    const storedDropped = projectRef.current?.metadata?.visionPhase?.references
+      ?.droppedObjectReferenceIds as string[] | undefined
+    const previousDropped = mergeDroppedObjectReferenceIds(
+      objectTombstoneIdsRef.current,
+      storedDropped
+    )
+    const references = visionReferencesPutPayload({
       sceneReferences: sceneReferencesRef.current,
       objectReferences: objectReferencesRef.current,
       locationReferences: locationReferencesRef.current,
-    }
+      objectDuplicateIgnores: objectDuplicateIgnoresRef.current,
+      previousObjectReferences: projectRef.current?.metadata?.visionPhase?.references
+        ?.objectReferences,
+      extraDroppedIds: objectTombstoneIdsRef.current,
+      previousDroppedObjectReferenceIds: previousDropped,
+      replaceObjectReferences: true,
+    })
+    objectTombstoneIdsRef.current = mergeDroppedObjectReferenceIds(
+      previousDropped,
+      references.droppedObjectReferenceIds
+    )
+    const persistedReferences = { ...references }
+    delete persistedReferences.replaceObjectReferences
 
     const response = await serializedProjectSave(
       visionPhasePut({
         characters: charactersRef.current,
-        references: updatedReferences,
+        references,
       }),
       'syncVisionReferencesForExpress'
     )
@@ -10187,7 +10112,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           visionPhase: {
             ...prev.metadata?.visionPhase,
             characters: charactersRef.current,
-            references: updatedReferences,
+            references: persistedReferences,
           },
         },
       }
@@ -10199,7 +10124,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         visionPhase: {
           ...projectRef.current?.metadata?.visionPhase,
           characters: charactersRef.current,
-          references: updatedReferences,
+          references: persistedReferences,
         },
       },
     }

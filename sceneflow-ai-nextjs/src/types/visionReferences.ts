@@ -158,9 +158,14 @@ export interface VisionReferencesPayload {
    */
   objectDuplicateIgnores?: string[]
   /**
-   * PUT-only: object ids dropped by merge/delete. Not stored; tells the
-   * references merge not to resurrect those rows from existing metadata.
+   * Object ids dropped by merge/delete. Stored as tombstones so a later PUT
+   * of a smaller catalog cannot resurrect those rows. New library rows use
+   * new ids and are not blocked.
    */
   droppedObjectReferenceIds?: string[]
+  /**
+   * PUT-only: incoming objectReferences is the full library. Not stored.
+   */
+  replaceObjectReferences?: boolean
 }
 

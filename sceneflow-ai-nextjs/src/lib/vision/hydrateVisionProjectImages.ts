@@ -185,6 +185,12 @@ export function hydrateVisionStateFromFullProject(
         sceneReferences: mergeVisualReferences(current.sceneReferences, fullSceneRefs),
         objectReferences: mergeVisualReferences(current.objectReferences, fullObjectRefs),
         locationReferences: mergeLocationReferences(current.locationReferences, fullLocationRefs),
+        ...(Array.isArray(fullRefs.objectDuplicateIgnores)
+          ? { objectDuplicateIgnores: fullRefs.objectDuplicateIgnores }
+          : {}),
+        ...(Array.isArray(fullRefs.droppedObjectReferenceIds)
+          ? { droppedObjectReferenceIds: fullRefs.droppedObjectReferenceIds }
+          : {}),
       },
     },
   }

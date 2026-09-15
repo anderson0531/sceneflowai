@@ -1,6 +1,9 @@
 /**
  * Deep-merge visionPhase.references so a stale PUT cannot wipe library rows,
- * unless the writer explicitly dropped object ids (duplicate merge/delete).
+ * unless the writer dropped object ids or replaced the object list.
+ *
+ * Dropped object ids are stored as tombstones on the references slice so a
+ * later PUT of the new catalog cannot resurrect the previous rows.
  */
 
 export type VisionPhaseReferenceRow = {
@@ -15,6 +18,11 @@ export type VisionPhaseReferencesSlice = {
   locationReferences?: VisionPhaseReferenceRow[]
   objectDuplicateIgnores?: string[]
   droppedObjectReferenceIds?: string[]
+  /**
+   * PUT-only: incoming objectReferences is the full library. Omitted ids are
+   * tombstoned even when the client no longer remembers them.
+   */
+  replaceObjectReferences?: boolean
 }
 
 export type PickPersistedImageUrl = (incoming: unknown, existing: unknown) => string | undefined
@@ -23,27 +31,41 @@ function asRows(value: unknown): VisionPhaseReferenceRow[] {
   return Array.isArray(value) ? (value as VisionPhaseReferenceRow[]) : []
 }
 
+export function uniqueReferenceIds(ids: Iterable<string> | undefined): string[] {
+  return [...new Set([...(ids ?? [])].map(String).filter(Boolean))].sort()
+}
+
+export function mergeDroppedObjectReferenceIds(
+  existing: Iterable<string> | undefined,
+  incoming: Iterable<string> | undefined,
+  extra?: Iterable<string>
+): string[] {
+  return uniqueReferenceIds([...(existing ?? []), ...(incoming ?? []), ...(extra ?? [])])
+}
+
 function mergeRowList(
   existing: VisionPhaseReferenceRow[],
   incoming: VisionPhaseReferenceRow[],
   pickImageUrl: PickPersistedImageUrl,
   droppedIds?: Iterable<string>
 ): VisionPhaseReferenceRow[] {
+  const dropped = new Set(uniqueReferenceIds(droppedIds))
   const existingById = new Map(
     existing.filter((row) => row?.id).map((row) => [row.id as string, row])
   )
-  let merged = incoming.map((incomingRef) => {
-    const existingRef = incomingRef?.id ? existingById.get(incomingRef.id) : undefined
-    if (!existingRef) return incomingRef
-    return {
-      ...existingRef,
-      ...incomingRef,
-      imageUrl: pickImageUrl(incomingRef.imageUrl, existingRef.imageUrl),
-    }
-  })
+  let merged = incoming
+    .filter((row) => !row?.id || !dropped.has(String(row.id)))
+    .map((incomingRef) => {
+      const existingRef = incomingRef?.id ? existingById.get(incomingRef.id) : undefined
+      if (!existingRef) return incomingRef
+      return {
+        ...existingRef,
+        ...incomingRef,
+        imageUrl: pickImageUrl(incomingRef.imageUrl, existingRef.imageUrl),
+      }
+    })
 
   const incomingIds = new Set(incoming.map((row) => row?.id).filter(Boolean) as string[])
-  const dropped = new Set([...(droppedIds ?? [])].map(String).filter(Boolean))
   const preserved = existing.filter(
     (row) => row?.id && !incomingIds.has(row.id) && !dropped.has(String(row.id))
   )
@@ -61,13 +83,11 @@ export function droppedReferenceIds(
   const nextIds = new Set(
     (next ?? []).map((row) => String(row?.id ?? '')).filter(Boolean)
   )
-  return [
-    ...new Set(
-      (previous ?? [])
-        .map((row) => String(row?.id ?? ''))
-        .filter((id) => id && !nextIds.has(id))
-    ),
-  ]
+  return uniqueReferenceIds(
+    (previous ?? [])
+      .map((row) => String(row?.id ?? ''))
+      .filter((id) => id && !nextIds.has(id))
+  )
 }
 
 /**
@@ -81,11 +101,14 @@ export function visionReferencesPutPayload(args: {
   objectDuplicateIgnores?: string[]
   previousObjectReferences?: Array<{ id?: string }>
   extraDroppedIds?: string[]
+  previousDroppedObjectReferenceIds?: string[]
+  replaceObjectReferences?: boolean
 }): VisionPhaseReferencesSlice {
-  const dropped = [
-    ...droppedReferenceIds(args.previousObjectReferences, args.objectReferences),
-    ...(args.extraDroppedIds ?? []),
-  ].filter(Boolean)
+  const dropped = mergeDroppedObjectReferenceIds(
+    args.previousDroppedObjectReferenceIds,
+    droppedReferenceIds(args.previousObjectReferences, args.objectReferences),
+    args.extraDroppedIds
+  )
   return {
     sceneReferences: args.sceneReferences,
     objectReferences: args.objectReferences,
@@ -93,7 +116,8 @@ export function visionReferencesPutPayload(args: {
     ...(Array.isArray(args.objectDuplicateIgnores)
       ? { objectDuplicateIgnores: args.objectDuplicateIgnores }
       : {}),
-    ...(dropped.length > 0 ? { droppedObjectReferenceIds: [...new Set(dropped)] } : {}),
+    ...(dropped.length > 0 ? { droppedObjectReferenceIds: dropped } : {}),
+    ...(args.replaceObjectReferences ? { replaceObjectReferences: true } : {}),
   }
 }
 
@@ -108,6 +132,22 @@ export function mergeVisionPhaseReferences(
     ? incomingSlice.objectDuplicateIgnores
     : existingSlice.objectDuplicateIgnores
 
+  const existingObjectRefs = asRows(existingSlice.objectReferences)
+  const incomingObjectRefs = asRows(incomingSlice.objectReferences)
+  const incomingObjectIds = new Set(
+    incomingObjectRefs.map((row) => row?.id).filter(Boolean) as string[]
+  )
+  const omittedWhenReplace = incomingSlice.replaceObjectReferences
+    ? existingObjectRefs
+        .map((row) => String(row?.id ?? ''))
+        .filter((id) => id && !incomingObjectIds.has(id))
+    : []
+  const tombstones = mergeDroppedObjectReferenceIds(
+    existingSlice.droppedObjectReferenceIds,
+    incomingSlice.droppedObjectReferenceIds,
+    omittedWhenReplace
+  )
+
   return {
     sceneReferences: mergeRowList(
       asRows(existingSlice.sceneReferences),
@@ -115,10 +155,10 @@ export function mergeVisionPhaseReferences(
       pickImageUrl
     ),
     objectReferences: mergeRowList(
-      asRows(existingSlice.objectReferences),
-      asRows(incomingSlice.objectReferences),
+      existingObjectRefs,
+      incomingObjectRefs,
       pickImageUrl,
-      incomingSlice.droppedObjectReferenceIds
+      tombstones
     ),
     locationReferences: mergeRowList(
       asRows(existingSlice.locationReferences),
@@ -126,5 +166,6 @@ export function mergeVisionPhaseReferences(
       pickImageUrl
     ),
     ...(Array.isArray(nextIgnores) ? { objectDuplicateIgnores: nextIgnores } : {}),
+    ...(tombstones.length > 0 ? { droppedObjectReferenceIds: tombstones } : {}),
   }
 }
