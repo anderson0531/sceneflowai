@@ -84,6 +84,10 @@ describe('Google exhaust then fail — no auto-Kling, no Fal, no Hive', () => {
     expect(frame).toContain('Refs declined')
     expect(frame).toContain('References were declined')
     expect(frame).toContain('Open Director to retry as Safety or Creative')
+    expect(frame).toMatch(/from ['"]@\/components\/vision\/DeferredImageSkeleton['"]/)
+    expect(frame).toContain('isDisplayableImageUrl')
+    expect(frame).toContain('isDeferredImageUrl')
+    expect(frame).toContain('DeferredImageSkeleton')
   })
 })
 

@@ -8,6 +8,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { isStillPolicyImageError } from '@/lib/generation/stillPolicy'
+import {
+  DeferredImageSkeleton,
+  isDeferredImageUrl,
+  isDisplayableImageUrl,
+} from '@/components/vision/DeferredImageSkeleton'
 
 export interface SceneImageFrameProps {
   sceneIdx: number
