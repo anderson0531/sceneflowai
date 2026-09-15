@@ -1,6 +1,8 @@
 {
   "studio": {
     "title": "Production Studio",
+    "hideHeader": "Hide page title and description",
+    "showHeader": "Show page title and description",
     "script": "Script",
     "characters": "Characters",
     "scenes": "Scenes",

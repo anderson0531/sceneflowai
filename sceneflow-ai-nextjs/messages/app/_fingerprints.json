@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-14T23:38:08.232Z",
+  "generatedAt": "2026-09-15T00:53:09.084Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -685,6 +685,8 @@
     },
     "production": {
       "studio.title": "9155b26500696aeb",
+      "studio.hideHeader": "a991613a7e69bd33",
+      "studio.showHeader": "4f9d7e8fc507e3aa",
       "studio.script": "102acc10e67a297d",
       "studio.characters": "6fac39e2845bb812",
       "studio.scenes": "160c0535e5c3c137",
