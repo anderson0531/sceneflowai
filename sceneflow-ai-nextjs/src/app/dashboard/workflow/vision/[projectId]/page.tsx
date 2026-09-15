@@ -3324,21 +3324,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const handleUploadFrame = useCallback(
     async (sceneId: string, segmentId: string, frameType: 'start' | 'end', file: File) => {
       try {
-        const formData = new FormData()
-        formData.append('file', file)
-
-        const response = await fetch('/api/upload/image', {
-          method: 'POST',
-          body: formData
-        })
-
-        if (!response.ok) {
-          const error = await response.json()
-          throw new Error(error.error || 'Upload failed')
-        }
-
-        const data = await response.json()
-        const imageUrl = data.imageUrl
+        const imageUrl = await uploadAssetViaAPI(file, projectId)
 
         // Update the segment with the uploaded frame URL
         await handleEditFrame(sceneId, segmentId, frameType, imageUrl)
@@ -3349,7 +3335,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         toast.error(`Failed to upload frame: ${error.message}`)
       }
     },
-    [handleEditFrame]
+    [handleEditFrame, projectId]
   )
 
   // Keyframe State Machine: Generate frames for a specific segment
@@ -10490,18 +10476,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     
     try {
       // Upload via the blob upload utility
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('projectId', projectId)
-      formData.append('type', 'location-reference')
-      
-      const uploadRes = await fetch('/api/upload/image', {
-        method: 'POST',
-        body: formData
-      })
-      
-      if (!uploadRes.ok) throw new Error('Upload failed')
-      const { imageUrl } = await uploadRes.json()
+      const imageUrl = await uploadAssetViaAPI(file, projectId)
       if (!imageUrl) throw new Error('Upload failed')
       
       // Update location with the uploaded image
@@ -10518,7 +10493,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       try { const { toast } = require('sonner'); toast.success(`Uploaded image for ${location.location}`) } catch {}
     } catch (error: any) {
       console.error('[handleUploadLocationImage] Error:', error)
-      try { const { toast } = require('sonner'); toast.error('Failed to upload location image') } catch {}
+      try { const { toast } = require('sonner'); toast.error(error?.message || 'Failed to upload location image') } catch {}
     }
   }
 
@@ -10609,17 +10584,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (!location) return
 
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('projectId', projectId)
-      formData.append('type', 'location-reference')
-
-      const uploadRes = await fetch('/api/upload/image', {
-        method: 'POST',
-        body: formData,
-      })
-      if (!uploadRes.ok) throw new Error('Upload failed')
-      const { imageUrl } = await uploadRes.json()
+      const imageUrl = await uploadAssetViaAPI(file, projectId)
       if (!imageUrl) throw new Error('Upload failed')
 
       const updatedLocations = locationReferences.map((ref) =>
@@ -10636,7 +10601,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       try { const { toast } = require('sonner'); toast.success(`Uploaded version image for ${location.location}`) } catch {}
     } catch (error: any) {
       console.error('[handleUploadLocationVersionImage] Error:', error)
-      try { const { toast } = require('sonner'); toast.error('Failed to upload location version image') } catch {}
+      try { const { toast } = require('sonner'); toast.error(error?.message || 'Failed to upload location version image') } catch {}
     }
   }
 
@@ -11775,7 +11740,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     } catch (error) {
       console.error('[handleUploadBeatFrame] Error:', error)
-      try { const { toast } = require('sonner'); toast.error('Failed to upload beat frame') } catch {}
+      try {
+        const { toast } = require('sonner')
+        toast.error(error instanceof Error ? error.message : 'Failed to upload beat frame')
+      } catch {}
     }
   }
 

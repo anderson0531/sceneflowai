@@ -36,6 +36,7 @@ import {
   fetchActiveBlueprintShare,
 } from '@/lib/blueprint/createBlueprintShare'
 import { resolveBlueprintHeroImageUrl } from '@/lib/blueprint/resolveBlueprintHeroImage'
+import { uploadAssetViaAPI } from '@/lib/vision/uploads'
 import { resolveLoadedBlueprintVariants } from '@/lib/blueprint/resolveLoadedVariants'
 import type { ReimagineFoundationField } from '@/components/vision/ReimagineFoundationDialog'
 import { normalizeVariantFoundation } from '@/lib/treatment/blueprintFoundation'
@@ -1553,25 +1554,14 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                       onUpload={async (file) => {
                         setIsUploadingHero(true)
                         try {
-                          const formData = new FormData()
-                          formData.append('file', file)
-                          formData.append('projectId', projectId)
-                          
-                          const response = await fetch('/api/upload/image', {
-                            method: 'POST',
-                            body: formData
-                          })
-                          
-                          if (!response.ok) throw new Error('Upload failed')
-                          
-                          const data = await response.json()
-                          if (data.imageUrl) {
+                          const imageUrl = await uploadAssetViaAPI(file, projectId)
+                          if (imageUrl) {
                             const currentVariants = useGuideStore.getState().guide.treatmentVariants || []
                             const selectedId = useGuideStore.getState().guide.selectedTreatmentId
                             const targetId = selectedId || currentVariants[0]?.id
                             const updatedVariants = currentVariants.map((v: any) =>
                               v.id === targetId
-                                ? { ...v, heroImage: { url: data.imageUrl, status: 'ready' } }
+                                ? { ...v, heroImage: { url: imageUrl, status: 'ready' } }
                                 : v
                             )
                             setTreatmentVariants(updatedVariants)
@@ -1587,7 +1577,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                         } catch (error) {
                           console.error('Upload error:', error)
                           const { toast } = await import('sonner')
-                          toast.error(t('toast.heroUploadFailed'))
+                          toast.error(
+                            error instanceof Error ? error.message : t('toast.heroUploadFailed')
+                          )
                         } finally {
                           setIsUploadingHero(false)
                         }
