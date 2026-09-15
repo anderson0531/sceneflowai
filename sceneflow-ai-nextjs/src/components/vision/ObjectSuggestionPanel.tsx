@@ -30,6 +30,11 @@ import {
   nameMatchesLibrary,
   selectCanonicalNewObjects,
 } from '@/lib/vision/objectDuplicateClusters'
+import {
+  mergeNewObjectCandidates,
+  objectSuggestionsFromUsages,
+  shouldDeferObjectAutoAdd,
+} from '@/lib/vision/objectSuggestionMerge'
 import { cn } from '@/lib/utils'
 import { runObjectBatch } from '@/lib/vision/objectBatchGeneration'
 import type { AgentRunItem } from '@/components/vision/AgentRunDock'
@@ -286,9 +291,21 @@ export function ObjectSuggestionPanel({
   }, [scenes])
 
   const autoAddedKeysRef = useRef<Set<string>>(new Set())
+  const skipAutoAddUntilUpdateRef = useRef(false)
+  const previousObjectCountRef = useRef(existingObjects.length)
   const [autoAddedNames, setAutoAddedNames] = useState<string[]>([])
 
   useEffect(() => {
+    const nextCount = existingObjects.length
+    if (shouldDeferObjectAutoAdd(previousObjectCountRef.current, nextCount)) {
+      autoAddedKeysRef.current.clear()
+      skipAutoAddUntilUpdateRef.current = true
+    }
+    previousObjectCountRef.current = nextCount
+  }, [existingObjects])
+
+  useEffect(() => {
+    if (skipAutoAddUntilUpdateRef.current) return
     if (!onObjectsAutoAdded || recurringInBeats.length === 0) return
     const existingNames = existingObjects.map((o) => o.name)
     const pending = recurringInBeats.filter(
@@ -365,15 +382,24 @@ export function ObjectSuggestionPanel({
     setIsUpdatingObjects(true)
     setError(null)
     try {
+      const existingNames = existingObjects.map((o) => o.name)
       const nextSuggestions = await fetchObjectSuggestions()
-      setHasAnalyzed(true)
-      const added = await addMissingSuggestionsAsRows(nextSuggestions)
-      const remaining = selectCanonicalNewObjects(
+      const combined = mergeNewObjectCandidates(
+        objectSuggestionsFromUsages(recurringInBeats),
         nextSuggestions,
-        existingObjects.map((o) => o.name)
+        existingNames
       )
-      setSuggestions(added > 0 ? [] : remaining)
-      if (nextSuggestions.length === 0) {
+      setHasAnalyzed(true)
+      const added = await addMissingSuggestionsAsRows(combined)
+      skipAutoAddUntilUpdateRef.current = false
+      const acceptedNames = [...existingNames, ...combined.map((row) => row.name)]
+      for (const usage of recurringInBeats) {
+        if (nameMatchesLibrary(usage.name, acceptedNames)) {
+          autoAddedKeysRef.current.add(usage.key)
+        }
+      }
+      setSuggestions(added > 0 ? [] : combined)
+      if (combined.length === 0) {
         toast.info('No additional objects found in the script')
       } else if (added === 0) {
         toast.info('All suggested objects are already in the library')
@@ -383,7 +409,7 @@ export function ObjectSuggestionPanel({
     } finally {
       setIsUpdatingObjects(false)
     }
-  }, [scenes.length, fetchObjectSuggestions, existingObjects, onObjectsAutoAdded])
+  }, [scenes.length, fetchObjectSuggestions, existingObjects, onObjectsAutoAdded, recurringInBeats])
 
   const handleObjectAgent = async () => {
     if (!onExpressGenerateReferences) return
@@ -409,7 +435,8 @@ export function ObjectSuggestionPanel({
     try {
       const nextSuggestions = await fetchObjectSuggestions()
       setSuggestions(
-        selectCanonicalNewObjects(
+        mergeNewObjectCandidates(
+          objectSuggestionsFromUsages(recurringInBeats),
           nextSuggestions,
           existingObjects.map((o) => o.name)
         )
@@ -420,7 +447,7 @@ export function ObjectSuggestionPanel({
     } finally {
       setIsAnalyzing(false)
     }
-  }, [scenes.length, fetchObjectSuggestions])
+  }, [scenes.length, fetchObjectSuggestions, recurringInBeats, existingObjects])
 
   const handleGenerate = useCallback(async (suggestion: ObjectSuggestion, prompt: string) => {
     setGeneratingIds(prev => new Set(prev).add(suggestion.id))

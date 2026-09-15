@@ -164,3 +164,14 @@ describe('ObjectSuggestionPanel Objects tab render', () => {
     expect(document.body.textContent).toContain('Merge group')
   })
 })
+
+describe('ObjectSuggestionPanel Update Objects after Delete all', () => {
+  it('rebuilds from recurring beats and defers auto-add after a wipe', () => {
+    const source = readFileSync(PANEL_SOURCE, 'utf8')
+    expect(source).toContain('mergeNewObjectCandidates')
+    expect(source).toContain('objectSuggestionsFromUsages')
+    expect(source).toContain('shouldDeferObjectAutoAdd')
+    expect(source).toContain('skipAutoAddUntilUpdateRef')
+    expect(source).toContain('objectSuggestionsFromUsages(recurringInBeats)')
+  })
+})

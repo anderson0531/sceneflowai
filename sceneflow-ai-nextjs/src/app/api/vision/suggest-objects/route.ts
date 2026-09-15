@@ -11,6 +11,10 @@ import {
   normalizeObjectName,
 } from '@/lib/vision/objectBeatUsage'
 import { selectCanonicalNewObjects } from '@/lib/vision/objectDuplicateClusters'
+import {
+  mergeNewObjectCandidates,
+  objectSuggestionsFromUsages,
+} from '@/lib/vision/objectSuggestionMerge'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -95,10 +99,14 @@ export async function POST(req: NextRequest) {
     const recurringTagged = taggedUsage.filter((u) => u.beatCount >= MIN_BEATS_FOR_LIBRARY)
     const recurringCanonical = selectCanonicalNewObjects(recurringTagged, existingObjects)
     const taggedInventory = recurringCanonical.length > 0
-      ? `\n\nOBJECTS THE BEAT DIRECTION ALREADY HANDLES (beat counts measured from the script — you MUST include every one of these in your suggestions, described for image generation). One physical object is one name — reuse these labels; do not invent a synonym (spanner vs wrench, journal vs notebook):\n${recurringCanonical
+      ? `\n\nOBJECTS THE BEAT DIRECTION ALREADY HANDLES (beat counts measured from the script — this is the catalog; do not replace it with a short list). One physical object is one name — reuse these labels; do not invent a synonym (spanner vs wrench, journal vs notebook):\n${recurringCanonical
           .map((u) => `- ${u.name} — ${u.beatCount} beats (scenes ${u.sceneNumbers.join(', ')})`)
           .join('\n')}`
       : ''
+
+    const extraGuidance = recurringCanonical.length > 0
+      ? `The beat-direction inventory above is already decided by the script and will be added to the library automatically. Return ONLY additional objects that are not already named in that inventory or the already-added list (at most 3-8 extras). Skip extras that are synonyms of an inventory name.`
+      : `Identify 3-8 significant objects that need reference images.`
 
     // Use Vertex AI Gemini to analyze script for significant objects
     const analysisPrompt = `You are a production designer analyzing a film script to identify significant props, vehicles, set pieces, costumes, and technology items that need consistent visual reference images for production.
@@ -109,13 +117,15 @@ ${existingObjectsList}${taggedInventory}
 
 CRITICAL: Focus on RECURRING PROPS that are handled in MULTIPLE BEATS. A beat is one rendered shot, so an object held across several beats of a single scene needs a reference image just as much as one that crosses scenes. Items appearing in a single beat should NOT be included unless they are critical plot devices.
 
-Identify 3-8 significant objects that:
-1. MUST be handled in 2+ beats OR be critical to the plot (mark as "critical" importance)
+${extraGuidance}
+
+Each extra you return MUST:
+1. Be handled in 2+ beats OR be critical to the plot (mark as "critical" importance)
 2. Need visual consistency across production  
-3. Would benefit from a clean reference image for the art department
-4. Are specific enough to generate (not generic items like "chair" unless it's a distinctive hero prop)
+3. Benefit from a clean reference image for the art department
+4. Be specific enough to generate (not generic items like "chair" unless it's a distinctive hero prop)
 5. Track EXACTLY which scene numbers each object appears in
-6. One physical object is ONE name. If the script or the already-added list already names it (even under a shorter or fancier spelling), reuse that name. Never invent a synonym or catalog variant for the same tool ("spanner" and "wrench", "spud wrench" and "iron rail spanner").
+6. Use ONE name per physical object. If the script or the already-added list already names it (even under a shorter or fancier spelling), reuse that name. Never invent a synonym or catalog variant for the same tool ("spanner" and "wrench", "spud wrench" and "iron rail spanner").
 
 For each object, provide:
 - name: Short, specific VISUAL name that does NOT include character names, location names, or possessives (e.g. "1893 Water-Damaged Leather Journal", "Brass Faraday Energy Core", "Rugged Military Laptop"). NEVER use forms like "Marcus's Vintage Pocket Watch" or "Arthur Pendelton's 1893 Journal" — ownership is stored separately, not in the prompt-facing name. If an existing/tagged name already covers the object, copy that name exactly.
@@ -196,7 +206,16 @@ Respond with valid JSON only:
         ? (s.beatCount ?? 0) >= MIN_BEATS_FOR_LIBRARY || s.importance === 'critical'
         : s.sceneNumbers.length >= 2 || s.importance === 'critical'
     )
-    const filteredSuggestions = selectCanonicalNewObjects(
+    const scriptSuggestions = objectSuggestionsFromUsages(recurringCanonical, (usage) => ({
+      description: `${usage.name}, recurring production prop handled in ${usage.beatCount} beats.`,
+      suggestedPrompt: buildObjectPrompt(
+        usage.name,
+        'prop',
+        `${usage.name}, recurring production prop`
+      ),
+    }))
+    const filteredSuggestions = mergeNewObjectCandidates(
+      scriptSuggestions,
       recurringOrCritical,
       existingObjects
     )
