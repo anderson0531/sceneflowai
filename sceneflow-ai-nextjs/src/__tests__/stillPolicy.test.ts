@@ -39,8 +39,8 @@ describe('still policy helpers', () => {
     ).toBe(false)
   })
 
-  it('Safety rewrites once; auto exhausts first try plus rewritten pro', () => {
-    expect(resolveVertexStillPolicyAttempts('safety')).toBe(1)
+  it('Safety pre-rewrites then retries at level 2; auto exhausts first try plus rewritten pro', () => {
+    expect(resolveVertexStillPolicyAttempts('safety')).toBe(2)
     expect(resolveVertexStillPolicyAttempts(undefined)).toBe(2)
     expect(resolveVertexStillPolicyAttempts('creative')).toBe(2)
   })

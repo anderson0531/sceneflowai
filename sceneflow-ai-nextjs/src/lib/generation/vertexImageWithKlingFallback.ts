@@ -31,6 +31,7 @@ export interface VertexKlingImageResult extends VertexImageResult {
 // soften a refused prompt before spending its one pro attempt. Re-exported here
 // because this module is where callers expect to find it.
 export {
+  BEAT_POLICY_SECOND_PASS,
   IMAGE_SAFETY_ESCALATION,
   PRODUCTION_STILL_FRAMING,
   escalateImagePromptForRetry,
@@ -40,6 +41,8 @@ export async function generateImageWithVertexKlingFallback(
   options: GenerateVertexImageOptions
 ): Promise<VertexKlingImageResult> {
   const maxAttempts = options.policyMaxAttempts ?? getVeoPolicyMaxAttempts()
+  const basePrompt = options.policyBasePrompt ?? options.prompt
+  const escalationOffset = options.policyEscalationOffset ?? 0
   let prompt = options.prompt
   let lastError = ''
   let currentOptions: GenerateVertexImageOptions = { ...options }
@@ -62,7 +65,8 @@ export async function generateImageWithVertexKlingFallback(
         `[VertexImagePolicy] Attempt ${attempt}/${maxAttempts} blocked: ${lastError.slice(0, 180)}`
       )
       if (attempt < maxAttempts) {
-        prompt = escalateImagePromptForRetry(prompt, attempt, {
+        const nextEscalationLevel = escalationOffset + attempt
+        prompt = escalateImagePromptForRetry(basePrompt, nextEscalationLevel, {
           skipProductionStillFraming: options.skipProductionStillFraming,
         })
         currentOptions = {

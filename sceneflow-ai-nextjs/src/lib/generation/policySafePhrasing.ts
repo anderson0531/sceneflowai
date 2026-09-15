@@ -94,13 +94,20 @@ const POLICY_SOFTENING: Array<[RegExp, string]> = [
   // Restraint / pinning that Vertex paints without identity refs (production 2026-09-14).
   [/\btrapped against\b/gi, 'seated against'],
   [/\bto block (?:her|his|their) path\b/gi, 'occupying the passage'],
+  [/\bboxing (?:her|him|them) in\b/gi, 'occupying the narrow space beside them'],
+  [/\brests firmly against\b/gi, 'rests embedded in'],
+  [/\bpressed against\b/gi, 'rests embedded in'],
+  [/\bwide, terrified eyes\b/gi, 'wide, startled eyes'],
+  [/\bwide terrified eyes\b/gi, 'wide startled eyes'],
+  [/\bevaluates the intruder\b/gi, 'assesses the visitor'],
+  [/\bthe intruder\b/gi, 'the unexpected visitor'],
   [
     /\bbeside person \[(\d+)\]'s (?:shoulder|neck|head|throat)\b/gi,
     "against the wall at person [$1]'s side",
   ],
   [
     /\bbeside (?:her|his|their) (?:shoulder|neck|head|throat)\b/gi,
-    'against the wall at her side',
+    'beside their open hand',
   ],
 ]
 
@@ -125,11 +132,14 @@ export function softenStillPhrasingForPolicy(
   let next = original
   const changes: string[] = []
   for (const [pattern, replacement] of POLICY_SOFTENING) {
-    const matched = next.match(pattern)
+    // Global regexes drop capture groups in `match()`; clone without `g` for logging.
+    const logPattern = new RegExp(pattern.source, pattern.flags.replace('g', ''))
+    const matched = next.match(logPattern)
     if (!matched) continue
     const updated = next.replace(pattern, replacement)
     if (updated === next) continue
-    changes.push(`"${matched[0]}" -> "${replacement.replace(/\$1/g, matched[1] ?? '')}"`)
+    const after = replacement.replace(/\$(\d+)/g, (_, n) => matched[Number(n)] ?? '')
+    changes.push(`"${matched[0]}" -> "${after}"`)
     next = updated
   }
 

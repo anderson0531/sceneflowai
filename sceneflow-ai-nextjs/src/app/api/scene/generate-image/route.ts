@@ -3181,6 +3181,9 @@ export async function POST(req: NextRequest) {
               failFastOnRateLimit: stillPolicyMode ? false : !!skipLikenessValidation,
               requireAllReferenceImages: allReferenceImages.length > 0,
               policyMaxAttempts: resolveVertexStillPolicyAttempts(stillPolicyMode),
+              ...(stillPolicyMode === 'safety'
+                ? { policyBasePrompt: geminiPrompt, policyEscalationOffset: 1 }
+                : {}),
               skipProductionStillFraming: isBeatFrame,
               deadlineAt: imageDeadlineAt,
             })

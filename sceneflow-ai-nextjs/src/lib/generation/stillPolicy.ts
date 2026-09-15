@@ -63,8 +63,8 @@ export function shouldRejectIgnoredIdentityStill(args: {
   return args.policyRefusalRecovered && args.hasIdentityRefs && args.likenessFailed
 }
 
-/** Safety already rewrote; auto exhausts first try + one rewritten pro. */
+/** Safety pre-rewrites then retries at escalation level 2; auto exhausts first try + one rewritten pro. */
 export function resolveVertexStillPolicyAttempts(mode?: StillPolicyMode): number {
-  if (mode === 'safety') return 1
+  if (mode === 'safety') return 2
   return 2
 }
