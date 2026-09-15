@@ -137,6 +137,7 @@ import {
   EXPRESSION_OVERRIDE_INSTRUCTION,
   resolveCharacterReferencePair,
 } from '@/lib/character/characterReferenceAssembly'
+import { consolidateBeatDualRefsIntoDiptychs } from '@/lib/character/composeIdentityWardrobeDiptych'
 import {
   buildWardrobeDiptychCharacterConsumptionLine,
   DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT,
@@ -392,7 +393,7 @@ function logIdentityAnchors(
   for (const ref of stillRefs) {
     if (ref.kind !== 'person') continue
     if (ref.identityTraits) {
-      console.log(`[Scene Image] Identity anchor: ${ref.token} = ${ref.name} — ${ref.identityTraits}`)
+      console.log(`[Scene Image] Identity anchor: ${ref.token} (${ref.name}) — ${ref.identityTraits}`)
       continue
     }
     const char = characterReferences.find((cr) => cr.name === ref.name)
@@ -1551,7 +1552,7 @@ export async function POST(req: NextRequest) {
 
     const beatFrameHairLockNeeded =
       isBeatFrame && beatFrameNeedsHairLock(fullSceneContext, effectiveShotType)
-    const characterReferences = characterObjects.map((char: any, idx: number) => {
+    let characterReferences = characterObjects.map((char: any, idx: number) => {
       const resolvedGender = resolveVisualGender(char)
       // Prefer Gemini Vision description over manual description
       const rawDescription = char.visionDescription || char.appearanceDescription || 
@@ -1829,6 +1830,10 @@ export async function POST(req: NextRequest) {
         genderSource: resolvedGender.source,
       }
     })
+
+    if (isBeatFrame) {
+      characterReferences = await consolidateBeatDualRefsIntoDiptychs(characterReferences)
+    }
     
     // =========================================================================
     // PROMPT GENERATION: AI Intelligence → Rules-based fallback
@@ -2213,7 +2218,7 @@ export async function POST(req: NextRequest) {
       }, { status: 400 })
     }
 
-    console.log('[Scene Image] Optimized prompt preview:', optimizedPrompt.substring(0, 150))
+    console.log('[Scene Image] Pre-bind prompt preview:', optimizedPrompt.substring(0, 80))
 
     // Build character references using Blob URLs
     // Filter for characters that have reference images
@@ -2930,10 +2935,10 @@ export async function POST(req: NextRequest) {
             )
             if (hasAnyDiptych) {
               geminiPrompt +=
-                'Wardrobe diptych refs: LEFT panel = face/identity only; RIGHT panel = outfit/wardrobe only. Do not describe clothing in text — copy outfit from the RIGHT panel.\n\n'
+                'Wardrobe diptych refs: LEFT panel = face/identity only; RIGHT panel = outfit/wardrobe only. Do not describe clothing in text — copy outfit from the RIGHT panel. Scene text uses person [N]; identity is bound in [REFERENCES] as person [N] (Name) and must match this composite.\n\n'
             } else if (hasAnyDual) {
               geminiPrompt +=
-                'In the scene prompt, refer to characters with identity refs using ONLY "person [N]" tokens. Identity traits are stated once in the [REFERENCES] legend, so the action text needs no ethnicity, age, or appearance adjectives.\n\n'
+                'In the scene prompt, refer to characters with identity refs using "person [N]" tokens. Identity is bound in [REFERENCES] as person [N] (Name) and must match the labeled reference image(s). Do not restate ethnicity, age, or appearance adjectives in the action text.\n\n'
             } else if (hasIdentityOnly) {
               geminiPrompt +=
                 'Use identity reference(s) for face, hair, skin tone, age, ethnicity, and body proportions only. Ignore clothing in identity reference images — outfit must come from wardrobe text in the scene prompt.\n\n'
@@ -3000,6 +3005,10 @@ export async function POST(req: NextRequest) {
               joinPromptBlocks(formatStillReferencesLegend(stillRefs), remappedOptimizedPrompt)
           promptForResponse = structuredStill
           logIdentityAnchors(stillRefs, characterReferences)
+          console.log(
+            '[Scene Image] Assembled scene prompt preview:',
+            structuredStill.substring(0, 500)
+          )
           const distinctCharacterNamesForBinding = [
             ...new Set(cappedImageReferences.map((ref) => ref.characterName)),
           ]
@@ -3069,10 +3078,16 @@ export async function POST(req: NextRequest) {
           geminiPrompt += `SCENE PROMPT:\n${structuredStill}\n\n`
           
           geminiPrompt += `CRITICAL REQUIREMENTS:\n`
-          geminiPrompt += `- ${BEAT_FRAME_CANDID_ACTION_CONSTRAINT}\n`
+          if (!isBeatFrame) {
+            // Beat frames already state candid action, expression, dual-priority,
+            // and photoreal in [STILL]/[STYLE]/[EXCLUSIONS] plus the character
+            // preamble. Restating them here is what made Flash refuse, then
+            // recover on Pro looking like a Final frame (production 2026-09-15).
+            geminiPrompt += `- ${BEAT_FRAME_CANDID_ACTION_CONSTRAINT}\n`
+            geminiPrompt += `- ${EXPRESSION_OVERRIDE_INSTRUCTION}\n`
+          }
           geminiPrompt += `- Match character identity from identity reference images (bone structure, features, hair, skin tone, age, ethnicity — NOT facial expression)\n`
           geminiPrompt += `- ${ORIGINAL_ADULT_SUBJECT_REQUIREMENT}\n`
-          geminiPrompt += `- ${EXPRESSION_OVERRIDE_INSTRUCTION}\n`
           const appearanceContinuitySection = buildSceneAppearanceContinuityPromptSection(
             characterReferences.map(
               (ref: { name: string; sceneAppearanceContinuity?: string }) => ({
@@ -3100,7 +3115,7 @@ export async function POST(req: NextRequest) {
             if (wardrobeReminders.length > 0) {
               geminiPrompt += `- WARDROBE MUST BE EXACT: ${wardrobeReminders.join('; ')}\n`
             }
-            if (hasAnyDualRef) {
+            if (hasAnyDualRef && !isBeatFrame) {
               geminiPrompt += `- ${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}\n`
             }
             const wardrobeOnlyNames = characterReferences
@@ -3116,7 +3131,7 @@ export async function POST(req: NextRequest) {
             geminiPrompt +=
               '- Location background: match the wide-angle location reference for layout, furniture placement, and color palette\n'
           }
-          if ((artStyle || 'photorealistic').trim() === 'photorealistic') {
+          if (!isBeatFrame && (artStyle || 'photorealistic').trim() === 'photorealistic') {
             geminiPrompt +=
               '- Output must look like a live-action photograph or film frame, NOT illustration, NOT storyboard sketch, NOT cartoon or anime\n'
             const avoidTerms = getArtStyleNegativeTerms(artStyle)

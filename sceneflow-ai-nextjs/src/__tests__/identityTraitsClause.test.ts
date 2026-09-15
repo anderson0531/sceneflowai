@@ -154,8 +154,8 @@ describe('identity traits in the [REFERENCES] legend', () => {
     })
 
     expect(formatStillReferencesLegend(refs)).toContain(
-      'person [1] = Gideon Croft — identity: warm medium-brown skin, ' +
-        'tightly curled salt-and-pepper hair, short grizzled beard, early 50s'
+      'person [1] (Gideon Croft) matches Reference image 1 (Identity) and Reference image 2 (Wardrobe): ' +
+        'warm medium-brown skin, tightly curled salt-and-pepper hair, short grizzled beard, early 50s'
     )
   })
 
@@ -176,8 +176,10 @@ describe('identity traits in the [REFERENCES] legend', () => {
       characterReferences: [{ name: 'Piper Hayes', promptToken: 'person [1]', subjectOrdinal: 1 }],
     })
 
-    expect(formatStillReferencesLegend(refs)).toContain('person [1] = Piper Hayes — identity')
-    expect(formatStillReferencesLegend(refs)).not.toContain('identity:')
+    expect(formatStillReferencesLegend(refs)).toContain(
+      'person [1] (Piper Hayes) matches Reference image 1 (Identity)'
+    )
+    expect(formatStillReferencesLegend(refs)).not.toContain('Identity:')
   })
 })
 

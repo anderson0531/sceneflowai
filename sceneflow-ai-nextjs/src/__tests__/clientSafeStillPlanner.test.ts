@@ -27,6 +27,7 @@ const FORBIDDEN_SPECIFIERS = [
   '@/lib/storage/gcs',
   '@/lib/gemini/',
   '@/lib/character/sceneCharacterHeadshot',
+  '@/lib/character/composeIdentityWardrobeDiptych',
   '@/lib/generation/editImageWithVertexPolicyRetry',
   '@/lib/generation/vertexImageWithKlingFallback',
   '@google-cloud/storage',

@@ -11,6 +11,7 @@ import {
   STILL_PURPOSE_LINE,
   STILL_TASK_LINES,
   stillRefsFromAttachedImages,
+  formatStillReferencesLegend,
   bindLibraryNamesToTokens,
   replaceLibraryNamesWithTokens,
   actionFramingFromStoredPrompt,
@@ -58,7 +59,7 @@ describe('assembleStructuredStillPrompt', () => {
 
     expect(prompt).toContain(STILL_SECTION_REFERENCES)
     expect(prompt).toContain("prop [3] = Arthur Pendelton's 1893 Journal — library prop")
-    expect(prompt).toContain('person [1] = Vesper Vale — identity')
+    expect(prompt).toContain('person [1] (Vesper Vale) matches its identity reference')
     expect(prompt).toContain('interposing prop [3] between person [2]')
     expect(prompt).not.toContain("interposing Arthur Pendelton's 1893 Journal")
     expect(prompt).toContain(STILL_SECTION_STILL)
@@ -118,7 +119,11 @@ Strictly Avoid: Mannequin geometry.`,
 
     expect(refs).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ token: 'person [1]', name: 'Vesper Vale' }),
+        expect.objectContaining({
+          token: 'person [1]',
+          name: 'Vesper Vale',
+          identitySendIndex: 1,
+        }),
         expect.objectContaining({
           token: 'prop [3]',
           name: "Arthur Pendelton's 1893 Journal",
@@ -129,6 +134,62 @@ Strictly Avoid: Mannequin geometry.`,
         }),
       ])
     )
+  })
+
+  it('binds wardrobe send indices onto the person legend line', () => {
+    const refs = stillRefsFromAttachedImages({
+      selected: [
+        { sendIndex: 1, characterName: 'Gideon Croft', refRole: 'identity' },
+        { sendIndex: 2, characterName: 'Piper Hayes', refRole: 'identity' },
+        { sendIndex: 3, characterName: 'Gideon Croft', refRole: 'wardrobe' },
+        { sendIndex: 4, characterName: 'Piper Hayes', refRole: 'wardrobe' },
+      ],
+      characterReferences: [
+        { name: 'Gideon Croft', promptToken: 'person [1]', subjectOrdinal: 1 },
+        { name: 'Piper Hayes', promptToken: 'person [2]', subjectOrdinal: 2 },
+      ],
+    })
+
+    const legend = formatStillReferencesLegend(refs)
+    expect(legend).toContain(
+      'person [1] (Gideon Croft) matches Reference image 1 (Identity) and Reference image 3 (Wardrobe)'
+    )
+    expect(legend).toContain(
+      'person [2] (Piper Hayes) matches Reference image 2 (Identity) and Reference image 4 (Wardrobe)'
+    )
+  })
+
+  it('names a diptych slot as an identity and wardrobe composite', () => {
+    const refs = stillRefsFromAttachedImages({
+      selected: [
+        { sendIndex: 1, characterName: 'Gideon Croft', refRole: 'wardrobe-diptych' },
+        { sendIndex: 2, characterName: 'Piper Hayes', refRole: 'wardrobe-diptych' },
+      ],
+      characterReferences: [
+        { name: 'Gideon Croft', promptToken: 'person [1]', subjectOrdinal: 1 },
+        { name: 'Piper Hayes', promptToken: 'person [2]', subjectOrdinal: 2 },
+      ],
+    })
+
+    const legend = formatStillReferencesLegend(refs)
+    expect(legend).toContain(
+      'person [1] (Gideon Croft) matches Reference image 1 (Identity and wardrobe composite)'
+    )
+    expect(legend).toContain(
+      'person [2] (Piper Hayes) matches Reference image 2 (Identity and wardrobe composite)'
+    )
+  })
+
+  it('does not ask for cartoon animatic aesthetics or negative limb priming', () => {
+    const prompt = assembleStructuredStillPrompt({
+      actionOrStructured: 'person [1] stands in the vault.',
+      refs: [{ kind: 'person', token: 'person [1]', name: 'Gideon Croft', roleLabel: 'identity' }],
+    })
+    expect(prompt).toContain('Cinematic live-action film still')
+    expect(prompt).toContain('photographed on 35mm')
+    expect(prompt).toContain('anatomically distinct silhouettes')
+    expect(prompt).not.toContain('Frozen animatic')
+    expect(prompt).not.toMatch(/Never duplicate, blur, streak or repeat a limb/)
   })
 })
 
@@ -595,6 +656,21 @@ Action/Framing: person [1] raises prop [7] toward the hatch collar.`
       'person [1] raises prop [7] toward the hatch collar.'
     )
     expect(assemble(stored)).not.toContain('caught mid-action')
+  })
+
+  it('strips a stored Frozen animatic purpose line so it cannot fight photoreal style', () => {
+    const stored = `[REFERENCES]
+person [1] (Piper Hayes) matches its identity reference
+
+[STILL]
+Frozen animatic film still of this beat. Not a video start frame. No camera motion.
+Action/Framing: person [1] raises prop [7] toward the hatch collar.`
+
+    expect(actionFramingFromStoredPrompt(stored)).toBe(
+      'person [1] raises prop [7] toward the hatch collar.'
+    )
+    expect(assemble(stored)).toContain('Cinematic live-action film still')
+    expect(assemble(stored)).not.toContain('Frozen animatic')
   })
 
   it('recovers the beat action from an assembled still', () => {
