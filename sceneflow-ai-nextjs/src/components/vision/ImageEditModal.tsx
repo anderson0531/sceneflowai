@@ -28,9 +28,16 @@ import {
 } from 'lucide-react'
 import {
   appendUseTheseReferencesClause,
+  buildFrameEditCorrectionInstruction,
+  buildFrameEditImagesForCorrectionTarget,
   buildFrameEditReferenceImages,
+  frameEditCorrectionTargetForCharacter,
+  frameEditCorrectionTargetForLocation,
+  frameEditCorrectionTargetForProp,
   frameEditReferenceKeys,
+  listFrameEditCorrectionTargets,
   type FrameEditCharacterReference,
+  type FrameEditCorrectionTarget,
   type FrameEditLocationStill,
   type FrameEditReferenceSelectionKey,
 } from '@/lib/vision/resolveFrameEditCharacterReferences'
@@ -74,35 +81,51 @@ function ReferenceTile({
   sublabel,
   selected,
   onToggle,
+  onCorrect,
+  correctDisabled,
 }: {
   imageUrl: string
   label: string
   sublabel?: string
   selected: boolean
   onToggle: () => void
+  onCorrect?: () => void
+  correctDisabled?: boolean
 }) {
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className={`relative aspect-square rounded overflow-hidden border-2 transition-all ${
-        selected
-          ? 'border-cyan-500 ring-1 ring-cyan-500/50'
-          : 'border-slate-600 hover:border-slate-500'
-      }`}
-      title={label}
-    >
-      <img src={imageUrl} alt={label} className="w-full h-full object-cover" />
-      <div className="absolute inset-x-0 bottom-0 bg-black/70 px-1 py-0.5">
-        <div className="text-[8px] text-white truncate font-medium">{label}</div>
-        {sublabel && <div className="text-[7px] text-slate-300 truncate">{sublabel}</div>}
-      </div>
-      {selected && (
-        <div className="absolute top-0.5 right-0.5 w-3 h-3 bg-cyan-500 rounded-full flex items-center justify-center">
-          <Check className="w-2 h-2 text-white" />
+    <div className="relative">
+      <button
+        type="button"
+        onClick={onToggle}
+        className={`relative aspect-square w-full rounded overflow-hidden border-2 transition-all ${
+          selected
+            ? 'border-cyan-500 ring-1 ring-cyan-500/50'
+            : 'border-slate-600 hover:border-slate-500'
+        }`}
+        title={label}
+      >
+        <img src={imageUrl} alt={label} className="w-full h-full object-cover" />
+        <div className="absolute inset-x-0 bottom-0 bg-black/70 px-1 py-0.5">
+          <div className="text-[8px] text-white truncate font-medium">{label}</div>
+          {sublabel && <div className="text-[7px] text-slate-300 truncate">{sublabel}</div>}
         </div>
+        {selected && (
+          <div className="absolute top-0.5 right-0.5 w-3 h-3 bg-cyan-500 rounded-full flex items-center justify-center">
+            <Check className="w-2 h-2 text-white" />
+          </div>
+        )}
+      </button>
+      {onCorrect && (
+        <button
+          type="button"
+          onClick={onCorrect}
+          disabled={correctDisabled}
+          className="mt-1 w-full text-[9px] px-1 py-0.5 rounded border border-cyan-700/70 text-cyan-200 hover:border-cyan-400 disabled:opacity-50"
+        >
+          Correct
+        </button>
       )}
-    </button>
+    </div>
   )
 }
 
@@ -131,6 +154,7 @@ export function ImageEditModal({
 }: ImageEditModalProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null)
+  const [workingSourceUrl, setWorkingSourceUrl] = useState(imageUrl)
   const [showComparison, setShowComparison] = useState(false)
   const [instruction, setInstruction] = useState('')
   const [selectedPropIds, setSelectedPropIds] = useState<string[]>([])
@@ -138,6 +162,11 @@ export function ImageEditModal({
   const [selectedCharRefKeys, setSelectedCharRefKeys] = useState<FrameEditReferenceSelectionKey[]>(
     []
   )
+  const [correctionProgress, setCorrectionProgress] = useState<{
+    label: string
+    index: number
+    total: number
+  } | null>(null)
 
   const fallbackCharRefKeys = useMemo(
     () => frameEditReferenceKeys(characterReferences ?? []),
@@ -152,6 +181,15 @@ export function ImageEditModal({
     }
   }, [open, defaultSelectedCharRefKeys, fallbackCharRefKeys, defaultSelectedPropIds, defaultSelectedLocationIds])
 
+  useEffect(() => {
+    if (open) {
+      setWorkingSourceUrl(imageUrl)
+      setEditedImageUrl(null)
+      setShowComparison(false)
+      setCorrectionProgress(null)
+    }
+  }, [open, imageUrl])
+
   const handleOpenChange = (openState: boolean) => {
     if (!openState) {
       setEditedImageUrl(null)
@@ -160,6 +198,8 @@ export function ImageEditModal({
       setSelectedPropIds([])
       setSelectedLocationIds([])
       setSelectedCharRefKeys([])
+      setWorkingSourceUrl(imageUrl)
+      setCorrectionProgress(null)
     }
     onOpenChange(openState)
   }
@@ -209,11 +249,6 @@ export function ImageEditModal({
         text: 'Sharpen details while preserving identity, wardrobe, and composition.',
       },
       {
-        id: 'match-refs',
-        label: 'Match selected identity / wardrobe refs',
-        text: 'Match the selected identity and wardrobe references exactly.',
-      },
-      {
         id: 'remove-people',
         label: 'Remove extra people',
         text: 'Remove extra people who are not in the selected character references.',
@@ -226,6 +261,47 @@ export function ImageEditModal({
     ],
     [selectedObjectNames]
   )
+
+  const runFrameEdit = async (args: {
+    sourceImage: string
+    instruction: string
+    referenceImages: Array<{ imageUrl: string; name?: string }>
+  }): Promise<string> => {
+    const totalRefs = 1 + args.referenceImages.length
+    const modelTier = totalRefs > MAX_REFERENCE_IMAGES_ECO ? 'designer' : 'eco'
+
+    const legacySubject =
+      characterReferences?.length || args.referenceImages.length
+        ? undefined
+        : subjectReference
+
+    const response = await fetch('/api/image/edit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode: 'instruction',
+        sourceImage: args.sourceImage,
+        instruction: args.instruction,
+        subjectReference: legacySubject,
+        referenceImages: args.referenceImages.length > 0 ? args.referenceImages : undefined,
+        aspectRatio,
+        imageSize: '1K',
+        modelTier,
+        saveToBlob: true,
+        blobPrefix: `edited-${imageType}`,
+      }),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Edit failed')
+    }
+    if (typeof data.imageUrl !== 'string' || !data.imageUrl) {
+      throw new Error('Edit failed')
+    }
+    return data.imageUrl
+  }
 
   const handleEdit = async () => {
     if (!instruction.trim()) {
@@ -250,43 +326,19 @@ export function ImageEditModal({
         name: ref.name,
       }))
 
-      const totalRefs = 1 + referenceImages.length
-      const modelTier = totalRefs > MAX_REFERENCE_IMAGES_ECO ? 'designer' : 'eco'
-
-      const legacySubject =
-        characterReferences?.length || referenceImages.length
-          ? undefined
-          : subjectReference
-
       const instructionWithRefs = appendUseTheseReferencesClause(
         instruction.trim(),
         referenceImages
       )
 
-      const response = await fetch('/api/image/edit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mode: 'instruction',
-          sourceImage: imageUrl,
-          instruction: instructionWithRefs,
-          subjectReference: legacySubject,
-          referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
-          aspectRatio,
-          imageSize: '1K',
-          modelTier,
-          saveToBlob: true,
-          blobPrefix: `edited-${imageType}`,
-        }),
+      const imageResultUrl = await runFrameEdit({
+        sourceImage: workingSourceUrl || imageUrl,
+        instruction: instructionWithRefs,
+        referenceImages,
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Edit failed')
-      }
-
-      setEditedImageUrl(data.imageUrl)
+      setWorkingSourceUrl(imageResultUrl)
+      setEditedImageUrl(imageResultUrl)
       setShowComparison(true)
       toast.success('Image edited successfully!')
     } catch (error: unknown) {
@@ -298,6 +350,73 @@ export function ImageEditModal({
     }
   }
 
+  const runCorrectionTargets = async (targets: FrameEditCorrectionTarget[]) => {
+    if (targets.length === 0) {
+      toast.error('Select a reference to correct')
+      return
+    }
+
+    setIsProcessing(true)
+    let source = workingSourceUrl || imageUrl
+    let lastUrl: string | null = null
+    let failedLabel: string | null = null
+    try {
+      for (let i = 0; i < targets.length; i++) {
+        const target = targets[i]
+        setCorrectionProgress({ label: target.label, index: i + 1, total: targets.length })
+        const prioritizedRefs = buildFrameEditImagesForCorrectionTarget(target, {
+          characterReferences: characterReferences ?? [],
+          objectReferences,
+          locationStills,
+        })
+        const referenceImages = prioritizedRefs.map((ref) => ({
+          imageUrl: ref.imageUrl,
+          name: ref.name,
+        }))
+        const instructionWithRefs = appendUseTheseReferencesClause(
+          buildFrameEditCorrectionInstruction(target),
+          referenceImages
+        )
+        try {
+          lastUrl = await runFrameEdit({
+            sourceImage: source,
+            instruction: instructionWithRefs,
+            referenceImages,
+          })
+          source = lastUrl
+          setWorkingSourceUrl(lastUrl)
+        } catch (error: unknown) {
+          failedLabel = target.label
+          throw error
+        }
+      }
+      if (lastUrl) {
+        setEditedImageUrl(lastUrl)
+        setShowComparison(true)
+        toast.success(
+          targets.length === 1
+            ? `Corrected ${targets[0].label}`
+            : `Corrected ${targets.length} references`
+        )
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to edit image'
+      console.error('[ImageEditModal] Reference correction failed:', error)
+      if (lastUrl) {
+        setEditedImageUrl(lastUrl)
+        setShowComparison(true)
+      }
+      toast.error(failedLabel ? `Stopped at ${failedLabel}: ${message}` : message)
+    } finally {
+      setIsProcessing(false)
+      setCorrectionProgress(null)
+    }
+  }
+
+  const handleCorrectSelected = () => {
+    void runCorrectionTargets(selectedCorrectionTargets)
+  }
+
   const handleSave = useCallback(() => {
     if (editedImageUrl) {
       onSave(editedImageUrl)
@@ -306,10 +425,15 @@ export function ImageEditModal({
     }
   }, [editedImageUrl, onSave])
 
-  const handleDiscard = useCallback(() => {
-    setEditedImageUrl(null)
+  const handleEditAgain = useCallback(() => {
     setShowComparison(false)
   }, [])
+
+  const handleRevertToOriginal = useCallback(() => {
+    setEditedImageUrl(null)
+    setShowComparison(false)
+    setWorkingSourceUrl(imageUrl)
+  }, [imageUrl])
 
   const handleDownload = useCallback(async () => {
     if (!editedImageUrl) return
@@ -332,10 +456,34 @@ export function ImageEditModal({
   }, [editedImageUrl, imageType])
 
   const modalTitle = title || `Edit ${imageType.charAt(0).toUpperCase() + imageType.slice(1)} Image`
+  const sourceForEdit = workingSourceUrl || imageUrl
+  const hasWorkingChanges = sourceForEdit !== imageUrl
   const selectedRefCount =
     selectedCharRefKeys.length + selectedPropIds.length + selectedLocationIds.length
+  const selectedCorrectionTargets = useMemo(
+    () =>
+      listFrameEditCorrectionTargets({
+        characterReferences: characterReferences ?? [],
+        selectedKeys: selectedCharRefKeys,
+        locationStills,
+        selectedLocationIds,
+        objectReferences,
+        selectedPropIds,
+      }),
+    [
+      characterReferences,
+      selectedCharRefKeys,
+      locationStills,
+      selectedLocationIds,
+      objectReferences,
+      selectedPropIds,
+    ]
+  )
   const objectsWithImages = (objectReferences || []).filter((ref) => ref.imageUrl)
   const locationsWithImages = (locationStills || []).filter((still) => still.imageUrl)
+  const processingLabel = correctionProgress
+    ? `Correcting ${correctionProgress.label} (${correctionProgress.index} of ${correctionProgress.total})…`
+    : 'Processing...'
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -345,7 +493,7 @@ export function ImageEditModal({
           {modalTitle}
         </DialogTitle>
         <DialogDescription className="text-slate-400">
-          Type or speak a direction in natural language to edit this image with AI.
+          Type a direction, or Correct one reference at a time — the model typically updates a single subject per edit.
         </DialogDescription>
 
         {showComparison && editedImageUrl ? (
@@ -385,8 +533,11 @@ export function ImageEditModal({
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={handleDiscard} className="text-slate-300">
+              <Button variant="outline" onClick={handleRevertToOriginal} className="text-slate-300">
                 <RotateCcw className="w-4 h-4 mr-2" />
+                Revert to original
+              </Button>
+              <Button variant="outline" onClick={handleEditAgain} className="text-slate-300">
                 Edit Again
               </Button>
               <Button variant="outline" onClick={handleDownload} className="text-slate-300">
@@ -403,9 +554,11 @@ export function ImageEditModal({
           <div className="space-y-4 mt-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-slate-300">Source Image</Label>
+                <Label className="text-slate-300">
+                  Source Image{hasWorkingChanges ? ' (latest)' : ''}
+                </Label>
                 <div className="aspect-square bg-black rounded-lg overflow-hidden border border-slate-700">
-                  <img src={imageUrl} alt="Source" className="w-full h-full object-contain" />
+                  <img src={sourceForEdit} alt="Source" className="w-full h-full object-contain" />
                 </div>
               </div>
 
@@ -440,12 +593,25 @@ export function ImageEditModal({
                       <Users className="w-3 h-3" />
                       Character References
                     </Label>
-                    <div className="space-y-2 max-h-36 overflow-y-auto p-2 bg-slate-800 rounded border border-slate-700">
+                    <div className="space-y-2 max-h-52 overflow-y-auto p-2 bg-slate-800 rounded border border-slate-700">
                       {characterReferences.map((ref) => (
                         <div key={ref.characterName} className="space-y-1">
-                          <p className="text-[10px] font-medium text-cyan-200/90 truncate">
-                            {ref.characterName}
-                          </p>
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-[10px] font-medium text-cyan-200/90 truncate">
+                              {ref.characterName}
+                            </p>
+                            <button
+                              type="button"
+                              disabled={isProcessing || !frameEditCorrectionTargetForCharacter(ref)}
+                              onClick={() => {
+                                const target = frameEditCorrectionTargetForCharacter(ref)
+                                if (target) void runCorrectionTargets([target])
+                              }}
+                              className="shrink-0 text-[9px] px-1.5 py-0.5 rounded border border-cyan-700/70 text-cyan-200 hover:border-cyan-400 disabled:opacity-50"
+                            >
+                              Correct {ref.characterName}
+                            </button>
+                          </div>
                           <div className="grid grid-cols-4 gap-2">
                             {ref.wardrobeDiptychUrl ? (
                               <ReferenceTile
@@ -492,7 +658,7 @@ export function ImageEditModal({
                       ))}
                     </div>
                     <p className="text-[10px] text-slate-500">
-                      Selected references guide identity and outfit during the edit
+                      Correct one character per edit. Selected tiles are included in Correct selected and in typed directions.
                     </p>
                   </div>
                 )}
@@ -510,7 +676,7 @@ export function ImageEditModal({
                       <MapPin className="w-3 h-3" />
                       Location References
                     </Label>
-                    <div className="grid grid-cols-4 gap-2 max-h-28 overflow-y-auto p-2 bg-slate-800 rounded border border-slate-700">
+                    <div className="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto p-2 bg-slate-800 rounded border border-slate-700">
                       {locationsWithImages.map((still) => (
                         <ReferenceTile
                           key={still.id}
@@ -525,6 +691,11 @@ export function ImageEditModal({
                                 : [...prev, still.id]
                             )
                           }
+                          correctDisabled={isProcessing}
+                          onCorrect={() => {
+                            const target = frameEditCorrectionTargetForLocation(still)
+                            if (target) void runCorrectionTargets([target])
+                          }}
                         />
                       ))}
                     </div>
@@ -544,53 +715,97 @@ export function ImageEditModal({
                       <Package className="w-3 h-3" />
                       Include Objects for Consistency
                     </Label>
-                    <div className="grid grid-cols-4 gap-2 max-h-28 overflow-y-auto p-2 bg-slate-800 rounded border border-slate-700">
+                    <div className="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto p-2 bg-slate-800 rounded border border-slate-700">
                       {objectsWithImages.map((ref) => (
-                        <button
-                          key={ref.id}
-                          type="button"
-                          onClick={() =>
-                            setSelectedPropIds((prev) =>
-                              prev.includes(ref.id)
-                                ? prev.filter((id) => id !== ref.id)
-                                : [...prev, ref.id]
-                            )
-                          }
-                          className={`relative aspect-square rounded overflow-hidden border-2 transition-all ${
-                            selectedPropIds.includes(ref.id)
-                              ? 'border-purple-500 ring-1 ring-purple-500/50'
-                              : 'border-slate-600 hover:border-slate-500'
-                          }`}
-                          title={ref.name}
-                        >
-                          <img
-                            src={ref.imageUrl}
-                            alt={ref.name}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-x-0 bottom-0 bg-black/60 px-1 py-0.5">
-                            <div className="text-[8px] text-white truncate">{ref.name}</div>
-                          </div>
-                          {selectedPropIds.includes(ref.id) && (
-                            <div className="absolute top-0.5 right-0.5 w-3 h-3 bg-purple-500 rounded-full flex items-center justify-center">
-                              <Check className="w-2 h-2 text-white" />
+                        <div key={ref.id} className="relative">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelectedPropIds((prev) =>
+                                prev.includes(ref.id)
+                                  ? prev.filter((id) => id !== ref.id)
+                                  : [...prev, ref.id]
+                              )
+                            }
+                            className={`relative aspect-square w-full rounded overflow-hidden border-2 transition-all ${
+                              selectedPropIds.includes(ref.id)
+                                ? 'border-purple-500 ring-1 ring-purple-500/50'
+                                : 'border-slate-600 hover:border-slate-500'
+                            }`}
+                            title={ref.name}
+                          >
+                            <img
+                              src={ref.imageUrl}
+                              alt={ref.name}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-x-0 bottom-0 bg-black/60 px-1 py-0.5">
+                              <div className="text-[8px] text-white truncate">{ref.name}</div>
                             </div>
-                          )}
-                        </button>
+                            {selectedPropIds.includes(ref.id) && (
+                              <div className="absolute top-0.5 right-0.5 w-3 h-3 bg-purple-500 rounded-full flex items-center justify-center">
+                                <Check className="w-2 h-2 text-white" />
+                              </div>
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isProcessing}
+                            onClick={() => {
+                              const target = frameEditCorrectionTargetForProp(ref)
+                              if (target) void runCorrectionTargets([target])
+                            }}
+                            className="mt-1 w-full text-[9px] px-1 py-0.5 rounded border border-cyan-700/70 text-cyan-200 hover:border-cyan-400 disabled:opacity-50"
+                          >
+                            Correct
+                          </button>
+                        </div>
                       ))}
                     </div>
                     <p className="text-[10px] text-slate-500">
-                      Select props to maintain visual consistency in the edit
+                      Correct one prop per edit. Selected props are included in Correct selected.
                     </p>
                   </div>
                 )}
+
+                {hasWorkingChanges && (
+                  <button
+                    type="button"
+                    onClick={handleRevertToOriginal}
+                    disabled={isProcessing}
+                    className="text-[10px] text-slate-400 hover:text-slate-200 disabled:opacity-50"
+                  >
+                    Revert to original
+                  </button>
+                )}
+
+                <Button
+                  onClick={handleCorrectSelected}
+                  disabled={isProcessing || selectedCorrectionTargets.length === 0}
+                  variant="outline"
+                  className="w-full border-cyan-700 text-cyan-100 hover:bg-cyan-950/40"
+                >
+                  {isProcessing && correctionProgress ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      {processingLabel}
+                    </>
+                  ) : (
+                    <>
+                      Correct selected
+                      {selectedCorrectionTargets.length > 0
+                        ? ` (${selectedCorrectionTargets.length})`
+                        : ''}
+                    </>
+                  )}
+                </Button>
 
                 <Button
                   onClick={handleEdit}
                   disabled={isProcessing || !instruction.trim()}
                   className="w-full bg-purple-600 hover:bg-purple-700"
                 >
-                  {isProcessing ? (
+                  {isProcessing && !correctionProgress ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Processing...
