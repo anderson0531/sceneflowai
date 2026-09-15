@@ -41,6 +41,21 @@ import {
   parsePerformanceCue,
   stripAllCues,
 } from '@/lib/scene/performanceCues'
+import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalation'
+import {
+  ContentPolicyExhaustedError,
+  getKlingFallbackProvider,
+  isVertexContentPolicyError,
+} from '@/lib/generation/contentPolicy'
+import { generateKlingOmniStill } from '@/lib/kling/generateKlingOmniStill'
+import {
+  CREATIVE_KLING_UNAVAILABLE_CODE,
+  CREATIVE_KLING_UNAVAILABLE_MESSAGE,
+  IMAGE_SAFETY_CODE,
+  IMAGE_SAFETY_USER_MESSAGE,
+  parseStillPolicyMode,
+} from '@/lib/generation/stillPolicy'
+import type { PrioritizedReferenceImage } from '@/lib/vision/referenceLimits'
 
 export const maxDuration = 120 // 2 minutes for potentially generating both frames
 export const runtime = 'nodejs'
@@ -221,6 +236,11 @@ interface FrameGenerationRequest {
   
   // Thinking level for complex prompts
   thinkingLevel?: 'low' | 'high'
+
+  /** Director still-policy. Omit on automatic generation. */
+  stillPolicyMode?: 'safety' | 'creative'
+
+  projectId?: string
   
   // Phase 11: Segment content context for intelligent end frames
   segmentContent?: {
@@ -395,6 +415,8 @@ export async function POST(req: NextRequest) {
       modelTier = 'eco',
       // Thinking level: 'low' for fast iteration, 'high' for complex multi-character scenes
       thinkingLevel = 'low',
+      stillPolicyMode: stillPolicyModeRaw,
+      projectId,
       // Phase 11: Segment content context for intelligent end frames
       segmentContent,
       // Phase 11: Previous segment end frame for continuity chain
@@ -403,6 +425,8 @@ export async function POST(req: NextRequest) {
       sceneIndex,
       sceneRecord,
     } = body
+
+    const stillPolicyMode = parseStillPolicyMode(stillPolicyModeRaw)
 
     const mergedNegativePrompt = mergeBeatFrameNegativePrompt(negativePrompt)
 
@@ -878,16 +902,82 @@ Render this scene in ${selectedStyle.name} style.`
         }
       }
       
-      const result = await generateImageWithGeminiStudio({
-        prompt: geminiPrompt,
-        aspectRatio: aspectRatio as '16:9' | '9:16' | '1:1',
-        imageSize: modelTier === 'eco' ? '1K' : '2K',
-        referenceImages: allReferenceImages.length > 0 ? allReferenceImages : undefined,
-        modelTier,
-        thinkingLevel,
-        negativePrompt: mergedNegativePrompt
-      })
-      startImageDataUrl = result.imageBase64
+      const studioPrompt =
+        stillPolicyMode === 'safety'
+          ? escalateImagePromptForRetry(geminiPrompt, 1, { skipProductionStillFraming: true })
+          : geminiPrompt
+
+      if (stillPolicyMode === 'creative') {
+        if (!getKlingFallbackProvider()) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: CREATIVE_KLING_UNAVAILABLE_MESSAGE,
+              code: CREATIVE_KLING_UNAVAILABLE_CODE,
+            },
+            { status: 422 }
+          )
+        }
+        const klingRefs: PrioritizedReferenceImage[] = []
+        for (const c of charPool) {
+          if (c.referenceUrl) {
+            klingRefs.push({
+              imageUrl: c.referenceUrl,
+              name: c.name,
+              role: 'identity',
+              refRole: 'identity',
+              characterName: c.name,
+            })
+          }
+          if (c.wardrobeReferenceUrl) {
+            klingRefs.push({
+              imageUrl: c.wardrobeReferenceUrl,
+              name: `${c.name} wardrobe`,
+              role: 'wardrobe',
+              refRole: 'wardrobe',
+              characterName: c.name,
+            })
+          }
+        }
+        for (const loc of locationRefs) {
+          if (loc.imageUrl) {
+            klingRefs.push({
+              imageUrl: loc.imageUrl,
+              name: loc.name,
+              role: 'location',
+              locationName: loc.name,
+            })
+          }
+        }
+        for (const obj of objectReferences) {
+          if (obj.imageUrl) {
+            klingRefs.push({
+              imageUrl: obj.imageUrl,
+              name: obj.name,
+              role: 'prop-other',
+              propName: obj.name,
+            })
+          }
+        }
+        const klingResult = await generateKlingOmniStill({
+          prompt: geminiPrompt,
+          selectedReferences: klingRefs,
+          projectId,
+          resolution: modelTier === 'eco' ? '1k' : '2k',
+        })
+        startImageDataUrl = klingResult.imageBase64
+      } else {
+        const result = await generateImageWithGeminiStudio({
+          prompt: studioPrompt,
+          aspectRatio: aspectRatio as '16:9' | '9:16' | '1:1',
+          imageSize: modelTier === 'eco' ? '1K' : '2K',
+          referenceImages: allReferenceImages.length > 0 ? allReferenceImages : undefined,
+          modelTier: stillPolicyMode === 'safety' ? 'designer' : modelTier,
+          thinkingLevel,
+          negativePrompt: mergedNegativePrompt
+        })
+        startImageDataUrl = result.imageBase64
+      }
       
       // Upload to blob storage
       generatedStartFrameUrl = await uploadImageToBlob(
@@ -1112,6 +1202,21 @@ Render this scene in ${selectedStyle.name} style.`
     console.error('[Generate Frames] Error:', error)
     
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+
+    if (
+      error instanceof ContentPolicyExhaustedError ||
+      (error && typeof error === 'object' && (error as { name?: string }).name === 'ContentPolicyExhaustedError') ||
+      isVertexContentPolicyError(errorMessage)
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: IMAGE_SAFETY_USER_MESSAGE,
+          code: IMAGE_SAFETY_CODE,
+        },
+        { status: 422 }
+      )
+    }
     
     return NextResponse.json(
       { 

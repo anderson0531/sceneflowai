@@ -11,10 +11,14 @@ import { Clapperboard, Loader2, Save, Sparkles } from 'lucide-react'
 import { composeBeatActionFraming } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import type { StillDirectorPatch } from '@/lib/intelligence/beat-still-director-fallback'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
+import { StillPolicyModeControl } from '@/components/vision/StillPolicyModeControl'
+import type { StillPolicyMode } from '@/lib/generation/stillPolicy'
+import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalation'
 
 export interface BeatStillDirectorSavePayload {
-  patch: StillDirectorPatch
+  patch?: StillDirectorPatch | null
   generate: boolean
+  stillPolicyMode: StillPolicyMode
 }
 
 export interface BeatStillDirectorDialogProps {
@@ -46,22 +50,30 @@ export function BeatStillDirectorDialog({
   onSave,
 }: BeatStillDirectorDialogProps) {
   const t = useTranslations('production.direction.stillDirector')
+  const tp = useTranslations('production.direction.stillPolicy')
   const tc = useTranslations('common.actions')
   const [instruction, setInstruction] = useState('')
   const [isRewriting, setIsRewriting] = useState(false)
   const [patch, setPatch] = useState<StillDirectorPatch | null>(null)
   const [rewrittenFraming, setRewrittenFraming] = useState('')
+  const [stillPolicyMode, setStillPolicyMode] = useState<StillPolicyMode>('safety')
 
   const currentFraming = useMemo(
     () => (beat ? composeBeatActionFraming(beat) : ''),
     [beat]
   )
+  const safetyFraming = useMemo(() => {
+    const source = rewrittenFraming || currentFraming
+    if (!source) return ''
+    return escalateImagePromptForRetry(source, 1, { skipProductionStillFraming: true })
+  }, [rewrittenFraming, currentFraming])
 
   useEffect(() => {
     if (!open) {
       setInstruction('')
       setPatch(null)
       setRewrittenFraming('')
+      setStillPolicyMode('safety')
     }
   }, [open])
 
@@ -108,8 +120,8 @@ export function BeatStillDirectorDialog({
   }
 
   const handleSave = async (generate: boolean) => {
-    if (!patch) return
-    await onSave({ patch, generate })
+    if (!generate && !patch) return
+    await onSave({ patch: patch ?? null, generate, stillPolicyMode })
     onOpenChange(false)
   }
 
@@ -165,6 +177,21 @@ export function BeatStillDirectorDialog({
             </div>
           )}
 
+          <StillPolicyModeControl
+            value={stillPolicyMode}
+            onChange={setStillPolicyMode}
+            disabled={busy}
+          />
+
+          {stillPolicyMode === 'safety' && safetyFraming && (
+            <div className="space-y-1">
+              <Label className="text-slate-300">{tp('rewrittenPreview')}</Label>
+              <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-wrap rounded-lg border border-slate-700 bg-slate-800/40 p-3">
+                {safetyFraming}
+              </p>
+            </div>
+          )}
+
           <div className="flex flex-wrap justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
               {tc('cancel')}
@@ -185,8 +212,8 @@ export function BeatStillDirectorDialog({
               <Save className="w-4 h-4 mr-1" />
               {t('savePrompt')}
             </Button>
-            <Button onClick={() => void handleSave(true)} disabled={!patch || busy}>
-              {t('saveAndGenerate')}
+            <Button onClick={() => void handleSave(true)} disabled={busy}>
+              {patch ? t('saveAndGenerate') : tp('retryStill')}
             </Button>
           </div>
         </div>

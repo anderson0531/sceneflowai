@@ -239,13 +239,17 @@ describe('Still Director contracts', () => {
     expect(dialog).not.toContain('persistVision')
 
     const director = readSource('src/components/vision/BeatStillDirectorDialog.tsx')
-    expect(director).toContain('onSave({ patch, generate })')
+    expect(director).toContain('onSave({ patch: patch ?? null, generate, stillPolicyMode })')
+    expect(director).toContain("patch ? t('saveAndGenerate') : tp('retryStill')")
     expect(director).not.toContain('persistVision')
     expect(director).not.toContain('applyStillDirectorPatchToScene')
   })
 
   it('Direct Frame persist-before-generate stamps user direction and keeps no customPrompt', () => {
     const page = readSource('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
+    expect(page).toContain('handleGenerateBeatStillWithPolicy')
+    expect(page).toContain('if (payload.patch)')
+    expect(page).not.toContain('void handleRequestGenerateBeatFrame(dialog.sceneIdx')
     expect(page).toContain("generatedBy: 'user'")
     expect(page).toContain("mode: options.userDirection?.trim() ? 'rewrite' : 'optimize'")
     expect(page).toContain('persistStillDirectorPatch')
@@ -259,6 +263,8 @@ describe('Still Director contracts', () => {
     expect(rewriteIdx).toBeGreaterThan(-1)
     expect(imageIdx).toBeGreaterThan(rewriteIdx)
     expect(handler).not.toMatch(/customPrompt:/)
+    expect(handler).toContain('stillPolicyMode: options.stillPolicyMode')
+    expect(handler).toContain('IMAGE_SAFETY_USER_MESSAGE')
   })
 
   it('overlay labels are Direct Frame, Director, then Edit', () => {

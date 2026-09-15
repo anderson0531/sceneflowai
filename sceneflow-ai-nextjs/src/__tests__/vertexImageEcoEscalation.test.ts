@@ -124,8 +124,30 @@ describe('flash-to-pro escalation for identity-ref frames', () => {
     expect(modelsCalled(fetchMock)).toEqual([GEMINI_IMAGE_MODELS.flash])
   })
 
-  it('does not escalate when failFastOnRateLimit is set', async () => {
-    const fetchMock = vi.fn().mockImplementation(() => safetyBlockResponse())
+  it('escalates IMAGE_SAFETY to rewritten pro even when failFastOnRateLimit is set', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(safetyBlockResponse())
+      .mockResolvedValueOnce(imageResponse())
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await generateVertexGeminiImage({
+      ...animaticBeatOptions(),
+      failFastOnRateLimit: true,
+    })
+
+    expect(modelsCalled(fetchMock)).toEqual([GEMINI_IMAGE_MODELS.flash, GEMINI_IMAGE_MODELS.pro])
+    expect(result.imageBase64).toBe('aW1hZ2U=')
+    expect(result.policyRefusalRecovered).toBe(true)
+  })
+
+  it('does not sleep the 429 ladder when failFastOnRateLimit is set', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('RESOURCE_EXHAUSTED', {
+        status: 429,
+        headers: { 'Content-Type': 'text/plain' },
+      })
+    )
     vi.stubGlobal('fetch', fetchMock)
 
     await expect(
@@ -133,7 +155,7 @@ describe('flash-to-pro escalation for identity-ref frames', () => {
         ...animaticBeatOptions(),
         failFastOnRateLimit: true,
       })
-    ).rejects.toThrow(/IMAGE_SAFETY/)
+    ).rejects.toThrow(/rate limit failed fast|identity-ref rate limit exhausted/i)
 
     expect(modelsCalled(fetchMock)).toEqual([GEMINI_IMAGE_MODELS.flash])
   })

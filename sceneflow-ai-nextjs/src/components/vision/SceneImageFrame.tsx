@@ -7,11 +7,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import {
-  DeferredImageSkeleton,
-  isDeferredImageUrl,
-  isDisplayableImageUrl,
-} from '@/components/vision/DeferredImageSkeleton'
+import { isStillPolicyImageError } from '@/lib/generation/stillPolicy'
 
 export interface SceneImageFrameProps {
   sceneIdx: number
@@ -327,6 +323,7 @@ export function SceneImageFrame({
   const [expandOpen, setExpandOpen] = useState(false)
   const roleLabel = formatBeatRoleLabel(beatRole)
   const promptPreview = imagePrompt?.trim()
+  const policyError = isStillPolicyImageError(imageError)
   const useOverlayControls =
     compact ||
     alwaysShowControls ||
@@ -599,7 +596,7 @@ export function SceneImageFrame({
                 className="mb-1 rounded border border-rose-500/50 bg-rose-950/70 px-1.5 py-0.5 text-[9px] font-medium text-rose-200"
                 title={imageError}
               >
-                Failed
+                {policyError ? 'Refs declined' : 'Failed'}
               </span>
             ) : (
               <ImageIcon className="w-8 h-8 text-indigo-400/40 mb-1" />
@@ -627,7 +624,11 @@ export function SceneImageFrame({
               <ImageIcon className="w-12 h-12 text-indigo-400/50" />
             </div>
             <p className="text-sm text-gray-400 text-center mb-2">
-              {imageError ? 'Generation failed' : 'No scene reference yet'}
+              {imageError
+                ? policyError
+                  ? 'References were declined'
+                  : 'Generation failed'
+                : 'No scene reference yet'}
             </p>
             {imageError && (
               <p className="text-xs text-rose-300 text-center mb-3 max-w-xs" title={imageError}>
@@ -636,7 +637,9 @@ export function SceneImageFrame({
             )}
             <p className="text-xs text-gray-500 text-center mb-3 max-w-xs">
               {generateBlockedReason ||
-                'Create a reference image for scene consistency across production'}
+                (policyError
+                  ? 'Open Director to retry as Safety or Creative'
+                  : 'Create a reference image for scene consistency across production')}
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -657,6 +660,19 @@ export function SceneImageFrame({
                 )}
                 {generateLabel ?? 'Generate'}
               </Button>
+              {policyError && onDirector && (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDirector()
+                  }}
+                  disabled={isGenerating}
+                  className="bg-teal-600 hover:bg-teal-700"
+                >
+                  <Clapperboard className="w-4 h-4 mr-1" />
+                  Director
+                </Button>
+              )}
               <Button
                 variant="outline"
                 onClick={(e) => {

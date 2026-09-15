@@ -11,6 +11,7 @@ import {
   isIdentityRefRateLimitExhausted,
   isTransientExpressImageError,
   formatExpressImageErrorForUser,
+  IMAGE_SAFETY_BOARD_MESSAGE,
   resolveExpressImageErrorStatus,
 } from '@/lib/sceneGeneration/expressImageErrors'
 
@@ -222,6 +223,17 @@ describe('formatExpressImageErrorForUser', () => {
         err('Vertex Gemini Image error 429: identity-ref rate limit exhausted after 1 attempt(s)')
       )
     ).toBe('Rate limited — retry this frame')
+  })
+
+  it('maps IMAGE_SAFETY to the board overlay, not Generation failed', () => {
+    expect(
+      formatExpressImageErrorForUser(
+        err('Google rendered this still without the character references. Open Director to retry as Safety or Creative.', 422)
+      )
+    ).toBe(IMAGE_SAFETY_BOARD_MESSAGE)
+    expect(
+      formatExpressImageErrorForUser(err('Blocked by content policy', 422))
+    ).toBe(IMAGE_SAFETY_BOARD_MESSAGE)
   })
 
   it('maps missing reference downloads', () => {

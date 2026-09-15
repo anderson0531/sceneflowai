@@ -6,6 +6,7 @@ import {
   isKlingConfigured,
   isKlingAsyncEnabled,
   isKlingPrimaryEnabled,
+  isDirectKlingFallbackEnabled,
   getKlingDefaultModel,
 } from '@/lib/kling/config'
 
@@ -29,6 +30,7 @@ export async function GET() {
 
   return NextResponse.json({
     klingConfigured: isKlingConfigured(),
+    stillCreativeAvailable: isDirectKlingFallbackEnabled(),
     hasDirectKlingCredentials: hasDirectKlingCredentials(),
     klingPrimaryEnabled: isKlingPrimaryEnabled(),
     klingAsyncEnabled: isKlingAsyncEnabled(),

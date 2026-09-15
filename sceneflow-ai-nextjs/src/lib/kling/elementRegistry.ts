@@ -29,6 +29,7 @@ export type ResolvedKlingElements = {
   promptTags: string[]
   warnings: string[]
   newRegistrations: KlingElementRegistration[]
+  bindings: Array<{ sourceId: string; name: string; elementId: string }>
 }
 
 export type KlingElementRegistration = {
@@ -95,10 +96,12 @@ export async function resolveKlingElementsFromSources(
       promptTags: [],
       warnings: ['Model does not support Kling element_list'],
       newRegistrations: [],
+      bindings: [],
     }
   }
 
   const elementIds: string[] = []
+  const bindings: Array<{ sourceId: string; name: string; elementId: string }> = []
   const newRegistrations: KlingElementRegistration[] = []
   const limited = sources.slice(0, caps.maxElements)
 
@@ -106,6 +109,7 @@ export async function resolveKlingElementsFromSources(
     const { elementId, registration } = await ensureElementRegistered(source)
     if (elementId) {
       elementIds.push(elementId)
+      bindings.push({ sourceId: source.id, name: source.name, elementId })
       if (registration) newRegistrations.push(registration)
     } else {
       warnings.push(`Could not register element for ${source.name}`)
@@ -117,6 +121,7 @@ export async function resolveKlingElementsFromSources(
     promptTags: buildElementPromptTags(elementIds),
     warnings,
     newRegistrations,
+    bindings,
   }
 }
 

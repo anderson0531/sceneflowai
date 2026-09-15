@@ -90,6 +90,18 @@ const POLICY_SOFTENING: Array<[RegExp, string]> = [
   // Menace verb over a downed subject -> the same blocking, stated plainly.
   [/\blooms?\s+over\b/gi, 'stands over'],
   [/\blooming\s+over\b/gi, 'standing over'],
+
+  // Restraint / pinning that Vertex paints without identity refs (production 2026-09-14).
+  [/\btrapped against\b/gi, 'seated against'],
+  [/\bto block (?:her|his|their) path\b/gi, 'occupying the passage'],
+  [
+    /\bbeside person \[(\d+)\]'s (?:shoulder|neck|head|throat)\b/gi,
+    "against the wall at person [$1]'s side",
+  ],
+  [
+    /\bbeside (?:her|his|their) (?:shoulder|neck|head|throat)\b/gi,
+    'against the wall at her side',
+  ],
 ]
 
 export interface SoftenedStillPhrasing {

@@ -70,6 +70,8 @@ export interface GenerateSceneImageParams {
   skipLikenessValidation?: boolean
   /** Pre-resolved project lookbook from the Express run. */
   lookbook?: ProjectLookbook
+  /** Director still-policy: Safety (Vertex rewrite) or Creative (Kling Omni). Omit on Express auto. */
+  stillPolicyMode?: 'safety' | 'creative'
 }
 
 export class SceneImageGenerationError extends Error {
@@ -121,6 +123,7 @@ export async function generateSceneImage(
     lookbook,
     frameRole,
     startFrameUrl,
+    stillPolicyMode,
   } = params
 
   const headers: HeadersInit = {
@@ -171,6 +174,7 @@ export async function generateSceneImage(
       ...(animaticDraft ? { animaticDraft: true } : {}),
       ...(skipLikenessValidation ? { skipLikenessValidation: true } : {}),
       ...(lookbook ? { lookbook } : {}),
+      ...(stillPolicyMode ? { stillPolicyMode } : {}),
     }),
   })
 

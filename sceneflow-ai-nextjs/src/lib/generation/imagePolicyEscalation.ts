@@ -9,6 +9,7 @@
  */
 
 import { autoSanitizePrompt } from '@/utils/promptModerator'
+import { softenStillPhrasingForPolicy } from '@/lib/generation/policySafePhrasing'
 
 /** Second-pass replacements after the first PromptModerator sanitize. */
 export const IMAGE_SAFETY_ESCALATION: Array<[RegExp, string]> = [
@@ -32,6 +33,13 @@ export function escalateImagePromptForRetry(
   options?: { skipProductionStillFraming?: boolean }
 ): string {
   let next = prompt
+  const stillSoftened = softenStillPhrasingForPolicy(next)
+  if (stillSoftened.changes.length > 0) {
+    next = stillSoftened.text
+    console.log(
+      `[VertexImagePolicy] Softened still phrasing: ${stillSoftened.changes.join('; ')}`
+    )
+  }
   const sp = autoSanitizePrompt(next, { logChanges: true })
   if (sp.wasModified) next = sp.sanitizedPrompt
 

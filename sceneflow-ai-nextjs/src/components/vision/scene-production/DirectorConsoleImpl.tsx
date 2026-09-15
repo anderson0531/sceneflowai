@@ -240,6 +240,12 @@ export interface DirectorConsoleProps {
     frameType: 'start' | 'end',
     newFrameUrl: string
   ) => void
+  /** Retry this beat's start still as Safety (Google) or Creative (Kling). */
+  onRegenerateStill?: (
+    sceneId: string,
+    segmentId: string,
+    mode: 'safety' | 'creative'
+  ) => void
   /** User-initiated Hive validation report callback */
   onModerationReport?: (report: import('@/lib/moderation/moderationPipeline').ModerationReport) => void
   /** Character demographics for auto guide / Director dialog (falls back to scene.characters) */
@@ -339,6 +345,7 @@ export function DirectorConsoleRoot({
   onGenerateLanguageStream,
   isGeneratingAudio,
   onSaveEditedKeyframe,
+  onRegenerateStill,
   onModerationReport,
   guideCharacters,
   characters = [],
@@ -1909,6 +1916,11 @@ export function DirectorConsoleRoot({
           savedConfig={getQueueItem(selectedSegment.segmentId)?.config}
           projectId={projectId}
           onSaveEditedKeyframe={onSaveEditedKeyframe}
+          onRegenerateStill={
+            onRegenerateStill
+              ? (mode) => onRegenerateStill(sceneId, selectedSegment.segmentId, mode)
+              : undefined
+          }
           guideCharacters={effectiveGuideCharacters}
           readOnlyPrompts={beatFirstReadOnlyPrompts}
           characterReferences={characters}
