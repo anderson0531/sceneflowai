@@ -244,6 +244,10 @@ export interface GenerateVertexImageOptions {
   requireAllReferenceImages?: boolean
   /** Policy ladder attempts (used by vertexImageWithKlingFallback). */
   policyMaxAttempts?: number
+  /** Un-escalated prompt for policy retries (Safety passes the pre-rewritten prompt separately). */
+  policyBasePrompt?: string
+  /** Escalation steps already applied to `prompt` before the policy ladder (Safety: 1). */
+  policyEscalationOffset?: number
   /** Skip wardrobe “production still” framing on policy retries (scene/beat frames). */
   skipProductionStillFraming?: boolean
   /**

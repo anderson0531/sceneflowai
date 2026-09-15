@@ -18,6 +18,10 @@ import type { SceneBeat } from '@/lib/script/segmentTypes'
 const REFUSED_FROZEN_MOMENT =
   'A heavy iron spanner slams into the stone an inch from her fingers, showering sparks. Gideon looms over her, his eyes feral.'
 
+/** Refused on Safety retry 2026-09-15 after auto exhausted Google. */
+const PRODUCTION_SPANNER_BEAT =
+  "The heavy head of an iron spanner rests firmly against the brick inches from her shoulder, boxing her in. Gideon Croft stands over her, his jaw set, chest heaving as he evaluates the intruder with wide, terrified eyes."
+
 describe('softenStillPhrasingForPolicy', () => {
   it('rewrites every refusal trigger in the frame production refused', () => {
     const { text, changes } = softenStillPhrasingForPolicy(REFUSED_FROZEN_MOMENT)
@@ -108,6 +112,28 @@ describe('softenStillPhrasingForPolicy', () => {
     expect(changes).toHaveLength(1)
     expect(changes[0]).toContain('slams into')
     expect(changes[0]).toContain('rests embedded in')
+  })
+
+  it('logs capture groups for person-token shoulder rewrites', () => {
+    const { changes } = softenStillPhrasingForPolicy(
+      "person [2] plants the spanner beside person [1]'s shoulder."
+    )
+
+    expect(changes.some((c) => c.includes('person [1]'))).toBe(true)
+    expect(changes.some((c) => c.includes('person []'))).toBe(false)
+  })
+
+  it('softens the production spanner-at-shoulder beat that Safety still blocked', () => {
+    const { text } = softenStillPhrasingForPolicy(PRODUCTION_SPANNER_BEAT)
+
+    expect(text).toContain('spanner')
+    expect(text).toContain('Gideon Croft')
+    expect(text).not.toMatch(/inches from/i)
+    expect(text).not.toMatch(/boxing her in/i)
+    expect(text).not.toMatch(/terrified/i)
+    expect(text).not.toMatch(/the intruder/i)
+    expect(text).not.toMatch(/rests firmly against/i)
+    expect(text).toMatch(/open hand|embedded/i)
   })
 })
 

@@ -38,6 +38,18 @@ describe('escalateImagePromptForRetry', () => {
     })
     expect(next).not.toContain('wardrobe reference still')
   })
+
+  it('applies beat second-pass rewrites on level 2 for beat frames', () => {
+    const pinning =
+      "person [2] plants the spanner beside person [1]'s shoulder to block her path."
+    const level1 = escalateImagePromptForRetry(pinning, 1, { skipProductionStillFraming: true })
+    const level2 = escalateImagePromptForRetry(pinning, 2, { skipProductionStillFraming: true })
+
+    expect(level1).toContain("against the wall at person [1]'s side")
+    expect(level2).not.toBe(level1)
+    expect(level2).toMatch(/embedded in cracked brick beside person \[1\]'s open hand/i)
+    expect(level2).toContain('spanner')
+  })
 })
 
 describe('identity-ref jobs stay on pro under rate limit', () => {
@@ -60,6 +72,8 @@ describe('identity-ref jobs stay on pro under rate limit', () => {
     expect(src).toContain('IMAGE_SAFETY')
     expect(src).toContain('skipProductionStillFraming')
     expect(src).toContain('policyMaxAttempts')
+    expect(src).toContain('policyBasePrompt')
+    expect(src).toContain('policyEscalationOffset')
   })
 
   it('still treats IMAGE_SAFETY empty-image errors as policy', () => {

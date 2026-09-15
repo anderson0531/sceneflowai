@@ -1,7 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { readFileSync } from 'fs'
 import path from 'path'
-import { generateImageWithVertexKlingFallback } from '@/lib/generation/vertexImageWithKlingFallback'
+import {
+  escalateImagePromptForRetry,
+  generateImageWithVertexKlingFallback,
+} from '@/lib/generation/vertexImageWithKlingFallback'
 import { generateVertexImage } from '@/lib/vertexai/vertexImageClient'
 
 vi.mock('@/lib/vertexai/vertexImageClient', async () => {
@@ -122,5 +125,38 @@ describe('generateImageWithVertexKlingFallback designer retry', () => {
     expect(second?.modelTier).toBe('designer')
     expect(second?.prompt).not.toMatch(/trapped against/i)
     expect(second?.prompt.toLowerCase()).not.toContain('generatekling')
+  })
+
+  it('Safety retry escalates from base prompt at level 2 on beat frames', async () => {
+    const base =
+      "person [2] plants the spanner beside person [1]'s shoulder to block her path."
+    const level1 = escalateImagePromptForRetry(base, 1, { skipProductionStillFraming: true })
+
+    vi.mocked(generateVertexImage)
+      .mockRejectedValueOnce(
+        new Error(
+          'No image in Vertex Gemini Image response — blocked by safety (model=gemini-3-pro-image, finishReason=STOP)'
+        )
+      )
+      .mockResolvedValueOnce({
+        imageBase64: 'abc',
+        mimeType: 'image/png',
+        provider: 'vertex',
+        modelId: 'gemini-3-pro-image',
+      })
+
+    const result = await generateImageWithVertexKlingFallback({
+      prompt: level1,
+      policyBasePrompt: base,
+      policyEscalationOffset: 1,
+      policyMaxAttempts: 2,
+      skipProductionStillFraming: true,
+    })
+
+    expect(result.vertexAttempts).toBe(2)
+    expect(generateVertexImage).toHaveBeenCalledTimes(2)
+    const second = vi.mocked(generateVertexImage).mock.calls[1]?.[0]
+    expect(second?.prompt).toMatch(/embedded in cracked brick beside person \[1\]'s open hand/i)
+    expect(second?.prompt).not.toBe(level1)
   })
 })
