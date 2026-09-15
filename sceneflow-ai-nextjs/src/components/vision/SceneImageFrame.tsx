@@ -324,8 +324,6 @@ export function SceneImageFrame({
   const roleLabel = formatBeatRoleLabel(beatRole)
   const promptPreview = imagePrompt?.trim()
   const policyError = isStillPolicyImageError(imageError)
-  const roleLabel = formatBeatRoleLabel(beatRole)
-  const promptPreview = imagePrompt?.trim()
   const useOverlayControls =
     compact ||
     alwaysShowControls ||
