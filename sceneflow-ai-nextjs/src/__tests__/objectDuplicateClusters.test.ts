@@ -375,4 +375,20 @@ describe('merge rewrites', () => {
     )
     expect(scenes[0].beats[0].referenceSelection.objectRefIds).toEqual(['prop-journal'])
   })
+
+  it('clears every beat objectRefId when Delete all drops the whole library', () => {
+    const scenes = rewriteScenesForObjectDelete(
+      [
+        {
+          beats: [
+            { referenceSelection: { objectRefIds: ['prop-spud', 'prop-journal'] } },
+            { referenceSelection: { objectRefIds: ['prop-spanner'] } },
+          ],
+        },
+      ],
+      ['prop-spud', 'prop-journal', 'prop-spanner']
+    )
+    expect(scenes[0].beats[0].referenceSelection.objectRefIds).toEqual([])
+    expect(scenes[0].beats[1].referenceSelection.objectRefIds).toEqual([])
+  })
 })
