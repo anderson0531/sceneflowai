@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
-import { ImageIcon, Sparkles, Upload, Wand2, Loader2, CheckCircle2, RefreshCw, FolderPlus, Trash2, AlertTriangle, SlidersHorizontal, Maximize2, X, Zap } from 'lucide-react'
+import { ImageIcon, Sparkles, Upload, Wand2, Loader2, CheckCircle2, RefreshCw, FolderPlus, Trash2, AlertTriangle, SlidersHorizontal, Maximize2, X, Zap, Clapperboard } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -26,6 +26,8 @@ export interface SceneImageFrameProps {
   onGenerate: () => void
   /** Open Direct prompt builder for this frame. */
   onDirect?: () => void
+  /** Open Director — rewrite and save the still prompt. */
+  onDirector?: () => void
   onUpload: (file: File) => void
   onEdit?: (imageUrl: string) => void
   onDelete?: () => void
@@ -112,6 +114,7 @@ function CompactActionBar({
   isGenerating,
   onGenerate,
   onDirect,
+  onDirector,
   onUpload,
   onEdit,
   onDelete,
@@ -126,6 +129,7 @@ function CompactActionBar({
   isGenerating?: boolean
   onGenerate: () => void
   onDirect?: () => void
+  onDirector?: () => void
   onUpload: () => void
   onEdit?: (imageUrl: string) => void
   onDelete?: () => void
@@ -174,11 +178,26 @@ function CompactActionBar({
             onDirect()
           }}
           disabled={isGenerating || !!generateBlockedReason}
-          title={generateBlockedReason || 'Direct — prompt builder'}
+          title={generateBlockedReason || 'Direct Frame'}
           className="bg-amber-600/90 hover:bg-amber-500"
           size={buttonSize}
         >
           <SlidersHorizontal className={iconClass} />
+        </CompactIconButton>
+      )}
+
+      {onDirector && (
+        <CompactIconButton
+          onClick={(e) => {
+            e.stopPropagation()
+            onDirector()
+          }}
+          disabled={isGenerating || !!generateBlockedReason}
+          title={generateBlockedReason || 'Director'}
+          className="bg-teal-600/90 hover:bg-teal-500"
+          size={buttonSize}
+        >
+          <Clapperboard className={iconClass} />
         </CompactIconButton>
       )}
 
@@ -188,7 +207,7 @@ function CompactActionBar({
             e.stopPropagation()
             onEdit(imageUrl)
           }}
-          title="AI edit"
+          title="Edit"
           className="bg-purple-600/90 hover:bg-purple-500"
           size={buttonSize}
         >
@@ -280,6 +299,7 @@ export function SceneImageFrame({
   isGenerating = false,
   onGenerate,
   onDirect,
+  onDirector,
   onUpload,
   onEdit,
   onDelete,
@@ -460,6 +480,7 @@ export function SceneImageFrame({
                 isGenerating={isGenerating}
                 onGenerate={onGenerate}
                 onDirect={onDirect}
+                onDirector={onDirector}
                 onUpload={triggerUpload}
                 onEdit={onEdit}
                 onDelete={onDelete}
@@ -504,9 +525,23 @@ export function SceneImageFrame({
                         }}
                         disabled={isGenerating || !!generateBlockedReason}
                         className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
-                        title={generateBlockedReason || 'Direct — prompt builder'}
+                        title={generateBlockedReason || 'Direct Frame'}
                       >
                         <SlidersHorizontal className="w-5 h-5 text-white" />
+                      </button>
+                    )}
+
+                    {onDirector && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDirector()
+                        }}
+                        disabled={isGenerating || !!generateBlockedReason}
+                        className="p-3 bg-teal-600/80 hover:bg-teal-600 rounded-full transition-colors disabled:opacity-50"
+                        title={generateBlockedReason || 'Director'}
+                      >
+                        <Clapperboard className="w-5 h-5 text-white" />
                       </button>
                     )}
 
@@ -517,7 +552,7 @@ export function SceneImageFrame({
                           onEdit(imageUrl)
                         }}
                         className="p-3 bg-purple-600/80 hover:bg-purple-600 rounded-full transition-colors"
-                        title="Edit image"
+                        title="Edit"
                       >
                         <Wand2 className="w-5 h-5 text-white" />
                       </button>
@@ -575,6 +610,7 @@ export function SceneImageFrame({
                 isGenerating={isGenerating}
                 onGenerate={onGenerate}
                 onDirect={onDirect}
+                onDirector={onDirector}
                 onUpload={triggerUpload}
                 onDelete={onDelete}
                 sceneNumber={sceneNumber}

@@ -914,7 +914,10 @@ function mergePlannerDirectionIntoBeat(
   plan: BeatKeyframePlan
 ): BeatDirection | undefined {
   const existing = beat.beatDirection
-  const authored = existing?.generatedBy === 'llm' || existing?.generatedBy === 'user'
+  const authored =
+    existing?.generatedBy === 'llm' ||
+    existing?.generatedBy === 'user' ||
+    existing?.generatedBy === 'director'
 
   const planShotType = plan.shotType?.trim() || undefined
   const planFrozenMoment = plan.frozenMoment?.trim() || undefined

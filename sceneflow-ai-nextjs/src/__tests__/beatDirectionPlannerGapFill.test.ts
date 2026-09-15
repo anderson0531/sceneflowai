@@ -51,6 +51,25 @@ describe('applyBeatKeyframePlansToScene persists planner direction', () => {
     expect(nextBeat.beatDirection?.generatedBy).toBe('llm')
   })
 
+  it('does not overwrite director-authored shotType', () => {
+    const beat: SceneBeat = {
+      beatId: 'b1',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription: 'Elara enters the control room.',
+      beatDirection: {
+        shotType: 'Two-Shot',
+        generatedBy: 'director',
+      },
+    }
+    const scene = { beats: [beat] }
+    const updated = applyBeatKeyframePlansToScene(scene, [plan])
+    const [nextBeat] = getSceneBeats(updated)
+    expect(nextBeat.beatDirection?.shotType).toBe('Two-Shot')
+    expect(nextBeat.beatDirection?.frozenMoment).toBe('Elara faces the dormant console.')
+    expect(nextBeat.beatDirection?.generatedBy).toBe('director')
+  })
+
   it('does not overwrite user-authored fields', () => {
     const beat: SceneBeat = {
       beatId: 'b1',
