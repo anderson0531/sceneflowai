@@ -39,6 +39,38 @@ describe('still policy helpers', () => {
     ).toBe(false)
   })
 
+  it('rejects a Director Safety frame that ignored identity refs', () => {
+    expect(
+      shouldRejectIgnoredIdentityStill({
+        policyRefusalRecovered: false,
+        stillPolicyMode: 'safety',
+        hasIdentityRefs: true,
+        likenessFailed: true,
+      })
+    ).toBe(true)
+  })
+
+  it('keeps a Director Safety frame when likeness holds', () => {
+    expect(
+      shouldRejectIgnoredIdentityStill({
+        policyRefusalRecovered: false,
+        stillPolicyMode: 'safety',
+        hasIdentityRefs: true,
+        likenessFailed: false,
+      })
+    ).toBe(false)
+  })
+
+  it('keeps an auto frame with likeness failure when policy did not recover', () => {
+    expect(
+      shouldRejectIgnoredIdentityStill({
+        policyRefusalRecovered: false,
+        hasIdentityRefs: true,
+        likenessFailed: true,
+      })
+    ).toBe(false)
+  })
+
   it('Safety pre-rewrites then retries at level 2; auto exhausts first try plus rewritten pro', () => {
     expect(resolveVertexStillPolicyAttempts('safety')).toBe(2)
     expect(resolveVertexStillPolicyAttempts(undefined)).toBe(2)

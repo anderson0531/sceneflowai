@@ -54,13 +54,19 @@ export function isStillPolicyImageError(message: string | undefined | null): boo
 /**
  * A frame that only exists because RAI recovered, then failed likeness,
  * is the "composition-right / identity-wrong" case. Do not keep it.
+ *
+ * Director Safety pre-softens the prompt the same way and can produce the
+ * same drift without setting `policyRefusalRecovered`, so Safety runs are
+ * rejected here too when likeness confirms the wrong person.
  */
 export function shouldRejectIgnoredIdentityStill(args: {
   policyRefusalRecovered: boolean
+  stillPolicyMode?: StillPolicyMode
   hasIdentityRefs: boolean
   likenessFailed: boolean
 }): boolean {
-  return args.policyRefusalRecovered && args.hasIdentityRefs && args.likenessFailed
+  if (!args.hasIdentityRefs || !args.likenessFailed) return false
+  return args.policyRefusalRecovered || args.stillPolicyMode === 'safety'
 }
 
 /** Safety pre-rewrites then retries at escalation level 2; auto exhausts first try + one rewritten pro. */

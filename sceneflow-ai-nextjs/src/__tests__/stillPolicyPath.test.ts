@@ -27,6 +27,8 @@ describe('Google exhaust then fail — no auto-Kling, no Fal, no Hive', () => {
     expect(src).toContain("if (stillPolicyMode === 'creative')")
     expect(src).toContain('generateKlingOmniStill')
     expect(src).toContain('shouldRejectIgnoredIdentityStill')
+    expect(src).toContain('stillPolicyMode,')
+    expect(src).toContain('Director Safety frame ignored identity references')
     expect(src).toContain('IMAGE_SAFETY_CODE')
     expect(src).toContain('IMAGE_SAFETY_USER_MESSAGE')
     expect(src).toContain("generationProvider === 'kling' ? 'kling_image_generate'")
