@@ -948,22 +948,7 @@ export function CharacterLibrary({
     try {
       const synced = await handleUpdateAllWardrobesFromScript();
       if (!synced) return;
-      const result = (await onExpressGenerateReferences(
-        { kinds: ["cast"] },
-        { waitUntilDone: true },
-      )) as { outcome?: string } | undefined;
-      if (result && result.outcome === "already-running") return;
-      if (result && result.outcome === "error") return;
-      const latest = getLatestCharacters?.() ?? characters;
-      const { succeeded, failed } = await handleRegenerateAllStaleWardrobeImages(
-        latest,
-      );
-      if (succeeded > 0) {
-        toast.success(`Regenerated ${succeeded} wardrobe image(s)`);
-      }
-      if (failed > 0) {
-        toast.error(`${failed} wardrobe image(s) failed to regenerate`);
-      }
+      await onExpressGenerateReferences({ kinds: ["cast"] });
     } finally {
       setIsCastAgentRunning(false);
     }

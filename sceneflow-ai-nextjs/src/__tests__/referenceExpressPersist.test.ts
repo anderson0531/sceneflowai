@@ -15,6 +15,8 @@ import { persistReferenceImage } from '@/lib/vision/referenceExpress/persistRefe
 import {
   castFingerprint,
   locationFingerprint,
+  locationVersionFingerprint,
+  wardrobeFingerprint,
 } from '@/lib/vision/referenceExpress/planItems'
 
 const mockFindByPk = vi.mocked(Project.findByPk)
@@ -26,6 +28,15 @@ const DOCKYARD = {
   intExt: 'EXT',
   timeOfDay: 'NIGHT',
   description: 'Rusted cranes',
+  versions: [
+    {
+      id: 'v-door',
+      name: 'Door gone',
+      stateNotes: 'Door blown out',
+      imageUrl: '',
+      needsImageRegen: true,
+    },
+  ],
 }
 
 /** A project whose script and sibling references must survive every write. */
@@ -174,5 +185,63 @@ describe('persistReferenceImage', () => {
       'proj-1',
       expect.objectContaining({ lock: 'UPDATE' })
     )
+  })
+
+  it('writes a set-version still onto the nested row and clears needsImageRegen', async () => {
+    const project = fakeProject()
+    const version = DOCKYARD.versions[0]
+
+    const outcome = await persistReferenceImage({
+      projectId: 'proj-1',
+      kind: 'location',
+      targetId: 'l1',
+      versionId: 'v-door',
+      expectedFingerprint: locationVersionFingerprint(DOCKYARD, version),
+      patch: { imageUrl: 'https://cdn/door.png', generationPrompt: 'door gone' },
+    })
+
+    expect(outcome).toEqual({ saved: true, staleSource: false })
+    const location = project.metadata.visionPhase.references.locationReferences[0]
+    expect(location.imageUrl).toBeUndefined()
+    expect(location.versions[0]).toMatchObject({
+      id: 'v-door',
+      imageUrl: 'https://cdn/door.png',
+      needsImageRegen: false,
+    })
+  })
+
+  it('writes a wardrobe still onto the nested look', async () => {
+    const project = fakeProject()
+    project.metadata.visionPhase.characters[0] = {
+      ...MIRA,
+      wardrobes: [
+        {
+          id: 'wd-1',
+          name: 'Parka',
+          description: 'Grease-stained parka',
+          needsImageRegen: true,
+        },
+      ],
+    }
+
+    const outcome = await persistReferenceImage({
+      projectId: 'proj-1',
+      kind: 'cast',
+      targetId: 'c1',
+      wardrobeId: 'wd-1',
+      expectedFingerprint: wardrobeFingerprint({
+        name: 'Parka',
+        description: 'Grease-stained parka',
+      }),
+      patch: { fullBodyUrl: 'https://cdn/parka.png' },
+    })
+
+    expect(outcome).toEqual({ saved: true, staleSource: false })
+    expect(project.metadata.visionPhase.characters[0].referenceImage).toBeUndefined()
+    expect(project.metadata.visionPhase.characters[0].wardrobes[0]).toMatchObject({
+      id: 'wd-1',
+      fullBodyUrl: 'https://cdn/parka.png',
+      needsImageRegen: false,
+    })
   })
 })

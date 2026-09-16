@@ -30,6 +30,8 @@ let row: Row
 
 vi.mock('@/models', () => ({}))
 
+vi.mock('@/models/Project', () => ({ Project: { findByPk: vi.fn(async () => null) } }))
+
 vi.mock('@/models/GenerationJob', () => ({
   default: {
     findByPk: vi.fn(async () => ({ ...row })),
@@ -342,6 +344,21 @@ describe('resolveReferenceExpressWindow', () => {
   it('runs out at the end of the list', () => {
     expect(resolveReferenceExpressWindow(WIDE_ITEMS, 3, 3)).toBe(1)
     expect(resolveReferenceExpressWindow(WIDE_ITEMS, 4, 3)).toBe(0)
+  })
+
+  it('does not batch a location base with that location’s set version', () => {
+    const mixed: ReferenceExpressItem[] = [
+      { kind: 'location', targetId: 'l1', label: 'Dockyard', sourceFingerprint: 'b' },
+      {
+        kind: 'location',
+        targetId: 'l1',
+        versionId: 'v-door',
+        label: 'Dockyard — Door',
+        sourceFingerprint: 'v',
+      },
+    ]
+    expect(resolveReferenceExpressWindow(mixed, 0, 2)).toBe(1)
+    expect(resolveReferenceExpressWindow(mixed, 1, 2)).toBe(1)
   })
 })
 

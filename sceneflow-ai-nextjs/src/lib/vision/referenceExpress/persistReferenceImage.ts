@@ -5,7 +5,9 @@ import { resolveCharacterId } from '@/lib/vision/updateCharacterReference'
 import {
   castFingerprint,
   locationFingerprint,
+  locationVersionFingerprint,
   propFingerprint,
+  wardrobeFingerprint,
   type CastSource,
   type LocationSource,
   type PropSource,
@@ -34,8 +36,12 @@ export async function persistReferenceImage(input: {
   expectedFingerprint: string
   /** Fields to merge onto the target entry, and nothing else. */
   patch: Record<string, unknown>
+  /** Location set-version still — patch that nested row, not the base. */
+  versionId?: string
+  /** Cast wardrobe still — patch that nested look, not identity. */
+  wardrobeId?: string
 }): Promise<{ saved: boolean; staleSource: boolean }> {
-  const { projectId, kind, targetId, expectedFingerprint, patch } = input
+  const { projectId, kind, targetId, expectedFingerprint, patch, versionId, wardrobeId } = input
 
   return sequelize.transaction(async (transaction) => {
     const project = await Project.findByPk(projectId, {
@@ -56,6 +62,21 @@ export async function persistReferenceImage(input: {
         : []
       const nextCharacters = characters.map((character, index) => {
         if (resolveCharacterId(character, index) !== targetId) return character
+
+        if (wardrobeId) {
+          const wardrobes = Array.isArray(character.wardrobes) ? character.wardrobes : []
+          let wardrobeFound = false
+          const nextWardrobes = wardrobes.map((wardrobe) => {
+            if (wardrobe.id !== wardrobeId) return wardrobe
+            wardrobeFound = true
+            staleSource = wardrobeFingerprint(wardrobe) !== expectedFingerprint
+            return { ...wardrobe, ...patch, needsImageRegen: false }
+          })
+          if (!wardrobeFound) return character
+          saved = true
+          return { ...character, wardrobes: nextWardrobes }
+        }
+
         saved = true
         staleSource = castFingerprint(character) !== expectedFingerprint
         return { ...character, ...patch }
@@ -71,6 +92,23 @@ export async function persistReferenceImage(input: {
 
       const nextList = list.map((entry) => {
         if (entry?.id !== targetId) return entry
+
+        if (kind === 'location' && versionId) {
+          const location = entry as LocationSource
+          const versions = Array.isArray(location.versions) ? location.versions : []
+          let versionFound = false
+          const nextVersions = versions.map((version) => {
+            if (version.id !== versionId) return version
+            versionFound = true
+            staleSource =
+              locationVersionFingerprint(location, version) !== expectedFingerprint
+            return { ...version, ...patch, needsImageRegen: false }
+          })
+          if (!versionFound) return entry
+          saved = true
+          return { ...location, versions: nextVersions }
+        }
+
         saved = true
         staleSource =
           kind === 'location'

@@ -11,10 +11,14 @@ import {
 } from '@/lib/vision/sceneReferenceRequirements'
 import {
   fingerprintSource,
+  referenceExpressItemKey,
   type ReferenceExpressItem,
   type ReferenceExpressKind,
   type ReferenceExpressScope,
 } from './types'
+import {
+  parseLocationVersionRequirementId,
+} from '@/lib/vision/locationVersionResolve'
 
 export type CastSource = {
   id?: string
@@ -38,6 +42,7 @@ export type CastSource = {
     name?: string
     description?: string
     accessories?: string
+    appearanceNotes?: string
     isDefault?: boolean
     headshotUrl?: string
     fullBodyUrl?: string
@@ -58,6 +63,14 @@ export type LocationSource = {
   description?: string
   /** 1-based scenes this location was assigned to by the library. */
   sceneNumbers?: number[]
+  versions?: Array<{
+    id?: string
+    name?: string
+    stateNotes?: string
+    imageUrl?: string
+    generationPrompt?: string
+    needsImageRegen?: boolean
+  }>
   [key: string]: unknown
 }
 
@@ -110,6 +123,34 @@ export function locationFingerprint(location: LocationSource): string {
   ])
 }
 
+export function locationVersionFingerprint(
+  location: LocationSource,
+  version: { name?: string; stateNotes?: string }
+): string {
+  return fingerprintSource([
+    location.location,
+    location.intExt,
+    location.timeOfDay,
+    location.description,
+    version.name,
+    version.stateNotes,
+  ])
+}
+
+export function wardrobeFingerprint(wardrobe: {
+  name?: string
+  description?: string
+  accessories?: string
+  appearanceNotes?: string
+}): string {
+  return fingerprintSource([
+    wardrobe.name,
+    wardrobe.description,
+    wardrobe.accessories,
+    wardrobe.appearanceNotes,
+  ])
+}
+
 export function propFingerprint(prop: PropSource): string {
   return fingerprintSource([
     prop.name,
@@ -120,6 +161,50 @@ export function propFingerprint(prop: PropSource): string {
 }
 
 const hasImage = (url?: string): boolean => Boolean(url && url.trim())
+
+function wardrobeImageUrl(wardrobe: {
+  headshotUrl?: string
+  fullBodyUrl?: string
+  previewImageUrl?: string
+}): string | undefined {
+  for (const field of ['headshotUrl', 'fullBodyUrl', 'previewImageUrl'] as const) {
+    const value = wardrobe[field]
+    if (hasImage(value)) return value!.trim()
+  }
+  return undefined
+}
+
+function versionNeedsGeneration(
+  location: { imageUrl?: string },
+  version: { id?: string; stateNotes?: string; imageUrl?: string; needsImageRegen?: boolean }
+): boolean {
+  if (!version.id) return false
+  if (!hasImage(location.imageUrl)) return false
+  if (!version.stateNotes?.trim()) return false
+  return !hasImage(version.imageUrl) || !!version.needsImageRegen
+}
+
+function wardrobeNeedsGeneration(
+  character: CastSource,
+  wardrobe: NonNullable<CastSource['wardrobes']>[number],
+  mode: 'stale' | 'undrawn-or-stale'
+): boolean {
+  if (!wardrobe.id) return false
+  if (!hasImage(character.referenceImage)) return false
+  if (!wardrobe.description?.trim()) return false
+  if (mode === 'stale') return !!wardrobe.needsImageRegen
+  return !wardrobeImageUrl(wardrobe) || !!wardrobe.needsImageRegen
+}
+
+export function shouldIncludeNestedStills(scope: ReferenceExpressScope): boolean {
+  if (scope.includeNestedStills === true) return true
+  if (scope.includeNestedStills === false) return false
+  if (scope.sceneIndices?.length) return true
+  return (
+    scope.kinds?.length === 1 &&
+    (scope.kinds[0] === 'location' || scope.kinds[0] === 'cast')
+  )
+}
 
 const EXPRESS_KINDS: readonly ReferenceExpressKind[] = ['cast', 'location', 'prop']
 
@@ -138,12 +223,17 @@ export function filterExpressItemsByKinds(
  * character identity exists before locations and props are drawn around it.
  *
  * Narrators are skipped — they have no on-screen appearance to render.
+ * Project Library Agent stays bases-only. Location / Cast Agents pass
+ * `includeNestedStills` (or a single kind) so set versions and stale wardrobes
+ * join the same job.
  */
 export function planReferenceExpressItems(
   input: ReferenceExpressPlanInput,
-  kinds?: ReferenceExpressKind[]
+  kinds?: ReferenceExpressKind[],
+  options?: { includeNestedStills?: boolean }
 ): ReferenceExpressItem[] {
   const items: ReferenceExpressItem[] = []
+  const includeNested = options?.includeNestedStills === true
 
   input.characters.forEach((character, index) => {
     if (character.type === 'narrator') return
@@ -156,6 +246,24 @@ export function planReferenceExpressItems(
     })
   })
 
+  if (includeNested) {
+    input.characters.forEach((character, index) => {
+      if (character.type === 'narrator') return
+      const targetId = resolveCharacterId(character, index)
+      const characterName = character.name?.trim() || `Character ${index + 1}`
+      for (const wardrobe of character.wardrobes || []) {
+        if (!wardrobeNeedsGeneration(character, wardrobe, 'stale')) continue
+        items.push({
+          kind: 'cast',
+          targetId,
+          wardrobeId: wardrobe.id,
+          label: `${characterName} — ${wardrobe.name?.trim() || 'Wardrobe'}`,
+          sourceFingerprint: wardrobeFingerprint(wardrobe),
+        })
+      }
+    })
+  }
+
   input.locations.forEach((location) => {
     if (hasImage(location.imageUrl)) return
     if (!location.id) return
@@ -166,6 +274,16 @@ export function planReferenceExpressItems(
       sourceFingerprint: locationFingerprint(location),
     })
   })
+
+  if (includeNested) {
+    input.locations.forEach((location) => {
+      if (!location.id) return
+      for (const version of location.versions || []) {
+        if (!versionNeedsGeneration(location, version)) continue
+        items.push(locationVersionItem(location, version))
+      }
+    })
+  }
 
   input.props.forEach((prop) => {
     if (hasImage(prop.imageUrl)) return
@@ -179,6 +297,21 @@ export function planReferenceExpressItems(
   })
 
   return filterExpressItemsByKinds(items, kinds)
+}
+
+function locationVersionItem(
+  location: LocationSource,
+  version: NonNullable<LocationSource['versions']>[number]
+): ReferenceExpressItem {
+  const locationName = location.location?.trim() || location.locationDisplay?.trim() || 'Location'
+  const versionName = version.name?.trim() || 'Set version'
+  return {
+    kind: 'location',
+    targetId: location.id,
+    versionId: version.id,
+    label: `${locationName} — ${versionName}`,
+    sourceFingerprint: locationVersionFingerprint(location, version),
+  }
 }
 
 /** Requirement cast ids fall back to the character name, so match on either. */
@@ -199,8 +332,9 @@ function findCastIndex(characters: CastSource[], idOrName: string): number {
  * exists before locations and props are drawn around it — the same ordering the
  * project-wide plan uses.
  *
- * Wardrobe requirements are dropped: Reference Express draws cast, locations
- * and props, and wardrobe images come from the character's own wardrobe pass.
+ * Scene Ref Agent includes set versions and wardrobe looks used here. Versions
+ * and wardrobe whose parent still is still missing are skipped here and
+ * appended after that parent still lands in the same job.
  */
 function planItemsForRequirements(
   input: ReferenceExpressPlanInput,
@@ -209,7 +343,7 @@ function planItemsForRequirements(
   const items: ReferenceExpressItem[] = []
   const seen = new Set<string>()
   const push = (item: ReferenceExpressItem) => {
-    const key = `${item.kind}:${item.targetId}`
+    const key = referenceExpressItemKey(item)
     if (seen.has(key)) return
     seen.add(key)
     items.push(item)
@@ -221,7 +355,7 @@ function planItemsForRequirements(
     if (index < 0) continue
     const character = input.characters[index]
     if (character.type === 'narrator') continue
-    if (hasImage(character.referenceImage)) continue
+    if (hasImage(character.referenceImage) && !requirement.stale) continue
     push({
       kind: 'cast',
       targetId: resolveCharacterId(character, index),
@@ -231,9 +365,38 @@ function planItemsForRequirements(
   }
 
   for (const requirement of requirements) {
+    if (requirement.kind !== 'wardrobe') continue
+    const characterId = requirement.characterId || ''
+    const index = findCastIndex(input.characters, characterId || requirement.id)
+    if (index < 0) continue
+    const character = input.characters[index]
+    const wardrobe = (character.wardrobes || []).find((row) => row.id === requirement.id)
+    if (!wardrobe?.id) continue
+    if (!wardrobeNeedsGeneration(character, wardrobe, 'undrawn-or-stale')) continue
+    const characterName = character.name?.trim() || `Character ${index + 1}`
+    push({
+      kind: 'cast',
+      targetId: resolveCharacterId(character, index),
+      wardrobeId: wardrobe.id,
+      label: `${characterName} — ${wardrobe.name?.trim() || 'Wardrobe'}`,
+      sourceFingerprint: wardrobeFingerprint(wardrobe),
+    })
+  }
+
+  for (const requirement of requirements) {
     if (requirement.kind !== 'location') continue
+    const parsed = parseLocationVersionRequirementId(requirement.id)
+    if (parsed) {
+      const location = input.locations.find((row) => row.id === parsed.locationId)
+      const version = (location?.versions || []).find((row) => row.id === parsed.versionId)
+      if (!location?.id || !version) continue
+      if (!versionNeedsGeneration(location, version)) continue
+      push(locationVersionItem(location, version))
+      continue
+    }
     const location = input.locations.find((row) => row.id === requirement.id)
-    if (!location?.id || hasImage(location.imageUrl)) continue
+    if (!location?.id) continue
+    if (hasImage(location.imageUrl) && !requirement.stale) continue
     push({
       kind: 'location',
       targetId: location.id,
@@ -266,6 +429,7 @@ function applyItemKeyFilter(
   if (!itemKeys?.length) return items
   const wanted = new Set(itemKeys.map((key) => key.trim().toLowerCase()))
   return items.filter((item) => {
+    if (wanted.has(referenceExpressItemKey(item).toLowerCase())) return true
     if (wanted.has(`${item.kind}:${item.targetId}`.toLowerCase())) return true
     if (item.kind !== 'cast') return false
     const name = input.characters
@@ -274,6 +438,124 @@ function applyItemKeyFilter(
       .toLowerCase()
     return !!name && wanted.has(`cast:${name}`)
   })
+}
+
+function sceneRequirementVersionIds(
+  input: ReferenceExpressPlanInput,
+  scope: ReferenceExpressScope,
+  locationId: string
+): Set<string> | null {
+  const sceneIndices = scope.sceneIndices
+  if (!sceneIndices?.length || !input.scenes?.length) return null
+  const wanted = new Set<string>()
+  for (const sceneIndex of sceneIndices) {
+    const scene = input.scenes[sceneIndex]
+    if (!scene) continue
+    const resolved = resolveSceneRequiredReferences({
+      scene,
+      sceneIndex,
+      characters: input.characters,
+      locationReferences: input.locations,
+      objectReferences: input.props,
+      overrides: (scene?.referenceOverrides as SceneReferenceOverrides | undefined) ?? null,
+    })
+    for (const requirement of resolved) {
+      if (requirement.kind !== 'location') continue
+      const parsed = parseLocationVersionRequirementId(requirement.id)
+      if (parsed?.locationId === locationId) wanted.add(parsed.versionId)
+    }
+  }
+  return wanted
+}
+
+function sceneRequirementWardrobeIds(
+  input: ReferenceExpressPlanInput,
+  scope: ReferenceExpressScope,
+  characterId: string
+): Set<string> | null {
+  const sceneIndices = scope.sceneIndices
+  if (!sceneIndices?.length || !input.scenes?.length) return null
+  const wanted = new Set<string>()
+  for (const sceneIndex of sceneIndices) {
+    const scene = input.scenes[sceneIndex]
+    if (!scene) continue
+    const resolved = resolveSceneRequiredReferences({
+      scene,
+      sceneIndex,
+      characters: input.characters,
+      locationReferences: input.locations,
+      objectReferences: input.props,
+      overrides: (scene?.referenceOverrides as SceneReferenceOverrides | undefined) ?? null,
+    })
+    for (const requirement of resolved) {
+      if (requirement.kind !== 'wardrobe') continue
+      if (requirement.characterId === characterId || requirement.id) {
+        if (!requirement.characterId || requirement.characterId === characterId) {
+          wanted.add(requirement.id)
+        }
+      }
+    }
+  }
+  return wanted
+}
+
+/**
+ * After a new base or identity still lands, queue that row's nested stills so
+ * Location / Cast / Scene Ref Agent can keep going without a client wait.
+ */
+export function planFollowOnNestedItems(
+  item: ReferenceExpressItem,
+  input: ReferenceExpressPlanInput,
+  scope: ReferenceExpressScope = {}
+): ReferenceExpressItem[] {
+  if (!shouldIncludeNestedStills(scope)) return []
+
+  if (item.kind === 'location' && !item.versionId) {
+    const location = input.locations.find((row) => row.id === item.targetId)
+    if (!location?.id) return []
+    const wanted = sceneRequirementVersionIds(input, scope, location.id)
+    return (location.versions || [])
+      .filter((version) => {
+        if (!versionNeedsGeneration(location, version)) return false
+        if (wanted && !wanted.has(version.id!)) return false
+        return true
+      })
+      .map((version) => locationVersionItem(location, version))
+  }
+
+  if (item.kind === 'cast' && !item.wardrobeId) {
+    const index = input.characters.findIndex(
+      (character, idx) => resolveCharacterId(character, idx) === item.targetId
+    )
+    if (index < 0) return []
+    const character = input.characters[index]
+    const characterName = character.name?.trim() || `Character ${index + 1}`
+    const sceneScoped = !!scope.sceneIndices?.length
+    const wanted = sceneRequirementWardrobeIds(input, scope, item.targetId)
+    return (character.wardrobes || [])
+      .filter((wardrobe) => {
+        if (
+          !wardrobeNeedsGeneration(
+            character,
+            wardrobe,
+            sceneScoped ? 'undrawn-or-stale' : 'stale'
+          )
+        ) {
+          return false
+        }
+        if (wanted && !wanted.has(wardrobe.id!)) return false
+        return true
+      })
+      .map((wardrobe) => ({
+        kind: 'cast' as const,
+        targetId: item.targetId,
+        wardrobeId: wardrobe.id,
+        label: `${characterName} — ${wardrobe.name?.trim() || 'Wardrobe'}`,
+        sourceFingerprint: wardrobeFingerprint(wardrobe),
+      }))
+  }
+
+  return []
 }
 
 /**
@@ -300,7 +582,9 @@ export function planSceneReferenceExpressItems(
   // No usable scene scope — the project-wide plan is the honest answer.
   if (sceneIndices.length === 0) {
     return applyItemKeyFilter(
-      planReferenceExpressItems(input, scope.kinds),
+      planReferenceExpressItems(input, scope.kinds, {
+        includeNestedStills: shouldIncludeNestedStills(scope),
+      }),
       scope.itemKeys,
       input
     )

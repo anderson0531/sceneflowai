@@ -156,10 +156,8 @@ const hasImage = (url?: unknown): boolean =>
   typeof url === 'string' && url.trim().length > 0
 
 /**
- * Wardrobe is the one kind Reference Express cannot draw — a wardrobe image
- * comes from the character's own wardrobe pass. Listing it on the scene card
- * is useful; waiting on it is not, because nothing in the batch will ever
- * fill it.
+ * Kinds Scene Ref Agent / Frame Agent JIT can draw, including wardrobe looks
+ * and location set versions used in this scene.
  */
 const EXPRESS_KIND_BY_REQUIREMENT: Partial<
   Record<SceneReferenceRequirementKind, ReferenceExpressKind>
@@ -167,6 +165,7 @@ const EXPRESS_KIND_BY_REQUIREMENT: Partial<
   cast: 'cast',
   location: 'location',
   prop: 'prop',
+  wardrobe: 'cast',
 }
 
 export function expressKindForRequirement(
@@ -175,16 +174,27 @@ export function expressKindForRequirement(
   return EXPRESS_KIND_BY_REQUIREMENT[kind] ?? null
 }
 
+/** Quote the same worker windows Scene Ref Agent / Frame Agent JIT will use. */
+export function estimateItemForRequirement(
+  requirement: Pick<SceneReferenceRequirement, 'kind' | 'id'>
+): { kind: ReferenceExpressKind; versionId?: string } | null {
+  const kind = expressKindForRequirement(requirement.kind)
+  if (!kind) return null
+  if (requirement.kind === 'location') {
+    const parsed = parseLocationVersionRequirementId(requirement.id)
+    if (parsed) return { kind, versionId: parsed.versionId }
+  }
+  return { kind }
+}
+
 /** The rows an Express References run would actually draw for this scene. */
 export function selectUndrawnExpressableRequirements(
   requirements: SceneReferenceRequirement[]
 ): SceneReferenceRequirement[] {
-  return requirements.filter(
-    (requirement) =>
-      !hasImage(requirement.imageUrl) &&
-      !!expressKindForRequirement(requirement.kind) &&
-      !(requirement.kind === 'location' && isLocationVersionRequirementId(requirement.id))
-  )
+  return requirements.filter((requirement) => {
+    if (!expressKindForRequirement(requirement.kind)) return false
+    return !hasImage(requirement.imageUrl) || requirement.stale === true
+  })
 }
 
 /** Mirrors the narrator/voiceover exclusion inside `findSceneCharacters`. */

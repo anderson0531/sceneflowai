@@ -176,10 +176,11 @@ import {
   evaluateProductionReadyChecklist,
   canRunExpress,
 } from '@/lib/production/productionReadinessGate'
-import { formatReferenceReadinessMessage } from '@/lib/vision/referenceReadiness'
+import { formatReferenceReadinessMessage, resolveSceneReferenceReadiness } from '@/lib/vision/referenceReadiness'
 import type { ReferenceExpressScope } from '@/lib/vision/referenceExpress/types'
 import { referenceExpressAgentLabel } from '@/lib/vision/libraryKindAgents'
 import {
+  resolveBeatReferenceRequirements,
   resolveSceneRequiredReferences,
   selectUndrawnExpressableRequirements,
   type SceneReferenceOverrides,
@@ -1345,10 +1346,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   /**
-   * Every frame path — Express, a single beat, Direct — refuses to run until
-   * the whole Reference Library is drawn. A reference row with no image still
-   * gets named in the prompt but has nothing to attach, so the model invents an
-   * appearance, differently each time.
+   * Project Run All / Gallery Express waits on the whole library.
+   * Scene / beat / Direct paths use `blockedByMissingSceneReferences`.
    */
   const blockedByMissingReferences = useCallback((): boolean => {
     const readiness = productionReadyChecklist.referenceReadiness
@@ -1360,12 +1359,53 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     return true
   }, [productionReadyChecklist.referenceReadiness, openReferenceLibrary])
 
+  const focusSceneRefAgent = useCallback((sceneIndex: number) => {
+    setPendingSceneReferencesIndex(sceneIndex)
+    setSelectedSceneIndex?.(sceneIndex)
+  }, [])
+
+  const blockedByMissingSceneReferences = useCallback(
+    (sceneIndex: number, beat?: Record<string, any> | null): boolean => {
+      const scene = script?.script?.scenes?.[sceneIndex]
+      if (!scene) return false
+      const requirements =
+        (beat
+          ? resolveBeatReferenceRequirements({
+              beat,
+              scene,
+              sceneIndex,
+              characters,
+              locationReferences,
+              objectReferences,
+            })
+          : null) ??
+        resolveSceneRequiredReferences({
+          scene,
+          sceneIndex,
+          characters,
+          locationReferences,
+          objectReferences,
+          overrides:
+            (scene.referenceOverrides as SceneReferenceOverrides | undefined) ?? null,
+        })
+      const readiness = resolveSceneReferenceReadiness(requirements)
+      if (readiness.ready) return false
+      toast.error(formatReferenceReadinessMessage(readiness, 'scene'), {
+        description:
+          'Open this scene’s References tab and run Scene Ref Agent to draw the missing stills.',
+      })
+      focusSceneRefAgent(sceneIndex)
+      return true
+    },
+    [script, characters, locationReferences, objectReferences, focusSceneRefAgent]
+  )
+
   /**
    * The server runs the same reference check, so a client whose reference state
    * is stale still gets the real reason instead of a raw 422 body.
    */
   const reportMissingReferenceImages = useCallback(
-    (status: number, body: string): boolean => {
+    (status: number, body: string, sceneIndex?: number): boolean => {
       if (status !== 422) return false
       let parsed: { code?: string; error?: string } | null = null
       try {
@@ -1374,13 +1414,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return false
       }
       if (parsed?.code !== 'MISSING_REFERENCE_IMAGES') return false
+      if (sceneIndex != null) {
+        toast.error(parsed.error || 'Generate this scene’s reference images first.', {
+          description:
+            'Open this scene’s References tab and run Scene Ref Agent to draw the missing stills.',
+        })
+        focusSceneRefAgent(sceneIndex)
+        return true
+      }
       toast.error(parsed.error || 'Generate all reference images first.', {
         description: 'Opening the Reference Library — use Library Agent to draw the missing references.',
       })
       openReferenceLibrary()
       return true
     },
-    [openReferenceLibrary]
+    [openReferenceLibrary, focusSceneRefAgent]
   )
 
   const lockedArtStyle = useMemo(
@@ -6166,6 +6214,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     sceneIdx: number
     dialogueIndex: number
   } | null>(null)
+  const [pendingSceneReferencesIndex, setPendingSceneReferencesIndex] = useState<number | null>(
+    null
+  )
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false)
   
   // Generation lock mechanism to prevent race conditions
@@ -10595,7 +10646,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   ): Promise<ReferenceExpressStartOutcome> => {
     if (!projectId) return { outcome: 'error', error: 'No project loaded' }
 
-    const agentLabel = referenceExpressAgentLabel(scope?.kinds)
+    const agentLabel = referenceExpressAgentLabel(scope?.kinds, {
+      sceneScoped: !!scope?.sceneIndices?.length,
+    })
 
     if (referenceExpressJob.isActive) {
       toast.info(`${agentLabel} is already running`, {
@@ -10958,8 +11011,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
 
-    if (blockedByMissingReferences()) return
-
     const scene = script?.script?.scenes?.[sceneIdx]
     if (!scene) {
       try { const { toast } = require('sonner'); toast.error('Scene not found') } catch {}
@@ -10971,6 +11022,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       try { const { toast } = require('sonner'); toast.error('Beat not found') } catch {}
       return
     }
+
+    if (blockedByMissingSceneReferences(sceneIdx, getSceneBeats(scene)[rawBeatIdx])) return
 
     // Saved before the run, because Express reads the selection off the stored
     // beat — a choice just made in the reference dialog would otherwise be
@@ -11039,8 +11092,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
 
-    if (blockedByMissingReferences()) return
-
     const scene = script?.script?.scenes?.[sceneIdx]
     if (!scene) {
       try { const { toast } = require('sonner'); toast.error('Scene not found') } catch {}
@@ -11053,6 +11104,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       try { const { toast } = require('sonner'); toast.error('Beat not found') } catch {}
       return
     }
+
+    if (blockedByMissingSceneReferences(sceneIdx, beat)) return
 
     // Express interpolates the end frame from the start frame, so there has to
     // be one to interpolate from.
@@ -11245,12 +11298,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const handleOpenDirectFrame = (sceneIdx: number, slot: StoryboardFrameSlot) => {
-    if (blockedByMissingReferences()) return
+    const scene = script?.script?.scenes?.[sceneIdx]
+    const beat =
+      slot.beatId && scene
+        ? getSceneBeats(scene).find((row) => row.beatId === slot.beatId)
+        : undefined
+    if (blockedByMissingSceneReferences(sceneIdx, beat)) return
     setPreVisDirectDialog({ sceneIdx, slot })
   }
 
   const handleOpenDirectorFrame = (sceneIdx: number, slot: StoryboardFrameSlot) => {
-    if (blockedByMissingReferences()) return
+    const scene = script?.script?.scenes?.[sceneIdx]
+    const beat =
+      slot.beatId && scene
+        ? getSceneBeats(scene).find((row) => row.beatId === slot.beatId)
+        : undefined
+    if (blockedByMissingSceneReferences(sceneIdx, beat)) return
     if (!slot.beatId) {
       toast.info('Director is available on beat frames')
       return
@@ -11280,13 +11343,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const handleDirectFrameGenerate = async (options: PreVisDirectGenerationOptions) => {
-    if (blockedByMissingReferences()) return
     const { sceneIndex, slot } = options
     const scene = script?.script?.scenes?.[sceneIndex]
     if (!scene) {
       toast.error('Scene not found')
       return
     }
+    const beat =
+      slot.beatId
+        ? getSceneBeats(scene).find((row) => row.beatId === slot.beatId)
+        : undefined
+    if (blockedByMissingSceneReferences(sceneIndex, beat)) return
 
     if (directFrameRun && !directFrameRun.finished) {
       toast.info('Direct generation is already running')
@@ -14782,7 +14849,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const errText = await response.text().catch(() => '')
           console.error('[Scene Express] Request failed:', response.status, errText)
           setExpressBeatFrameOverlay(null)
-          if (reportMissingReferenceImages(response.status, errText)) return
+          if (reportMissingReferenceImages(response.status, errText, sceneIndex)) return
           toast.error(`Frame Agent failed: ${response.status} ${errText.slice(0, 120)}`)
           return
         }
@@ -15994,6 +16061,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onGenerateSceneAudio={handleGenerateSceneAudio}
                 pendingSpeakerAssign={pendingSpeakerAssign}
                 onPendingSpeakerAssignHandled={() => setPendingSpeakerAssign(null)}
+                pendingSceneReferencesIndex={pendingSceneReferencesIndex}
+                onPendingSceneReferencesHandled={() => setPendingSceneReferencesIndex(null)}
                 narrationVoice={narrationVoice}
                 onGenerateLanguageStream={handleGenerateLanguageStream}
                 isGeneratingAudio={isGeneratingAudio}

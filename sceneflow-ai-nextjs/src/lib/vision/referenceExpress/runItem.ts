@@ -11,6 +11,7 @@ import type { ObjectCategory, VisualReference } from '@/types/visionReferences'
 import {
   generateCastReferenceImage,
   generateLocationReferenceImage,
+  generateLocationVersionReferenceImage,
   generateObjectReferenceImage,
 } from './generateReferenceImage'
 import {
@@ -18,13 +19,18 @@ import {
   castFingerprint,
   loadReferenceExpressContext,
   locationFingerprint,
+  locationVersionFingerprint,
   propFingerprint,
+  wardrobeFingerprint,
   type CastSource,
   type LocationSource,
   type PropSource,
 } from './planItems'
 import { persistReferenceImage } from './persistReferenceImage'
 import type { ReferenceExpressItem, ReferenceExpressItemResult } from './types'
+import { generateAndUploadFullBodyWardrobe } from '@/lib/character/sceneCharacterHeadshot'
+import { CreditService } from '@/services/CreditService'
+import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
 
 const hasImage = (url?: string): boolean => Boolean(url && url.trim())
 
@@ -72,6 +78,11 @@ export async function runReferenceExpressItem(input: {
     )
     const character = index >= 0 ? (context.characters[index] as CastSource) : undefined
     if (!character) return skipped(item, 'missing')
+
+    if (item.wardrobeId) {
+      return runWardrobeItem({ userId, projectId, item, character })
+    }
+
     if (hasImage(character.referenceImage)) return skipped(item, 'already-generated')
 
     const usedFingerprint = castFingerprint(character)
@@ -152,6 +163,11 @@ export async function runReferenceExpressItem(input: {
       | LocationSource
       | undefined
     if (!location) return skipped(item, 'missing')
+
+    if (item.versionId) {
+      return runLocationVersionItem({ userId, projectId, item, location, locale })
+    }
+
     if (hasImage(location.imageUrl)) return skipped(item, 'already-generated')
 
     const usedFingerprint = locationFingerprint(location)
@@ -266,5 +282,135 @@ async function castingBriefFields(input: {
       (error as Error)?.message
     )
     return {}
+  }
+}
+
+function wardrobeLookUrl(wardrobe: NonNullable<CastSource['wardrobes']>[number]): string | undefined {
+  for (const field of ['headshotUrl', 'fullBodyUrl', 'previewImageUrl'] as const) {
+    const value = wardrobe[field]
+    if (hasImage(value)) return value!.trim()
+  }
+  return undefined
+}
+
+async function runWardrobeItem(input: {
+  userId: string
+  projectId: string
+  item: ReferenceExpressItem
+  character: CastSource
+}): Promise<ReferenceExpressItemResult> {
+  const { userId, projectId, item, character } = input
+  const wardrobe = (character.wardrobes || []).find((row) => row.id === item.wardrobeId)
+  if (!wardrobe?.id) return skipped(item, 'missing')
+  if (!hasImage(character.referenceImage)) return skipped(item, 'missing')
+  if (!wardrobe.description?.trim()) return skipped(item, 'missing')
+  if (wardrobeLookUrl(wardrobe) && !wardrobe.needsImageRegen) {
+    return skipped(item, 'already-generated')
+  }
+
+  const usedFingerprint = wardrobeFingerprint(wardrobe)
+  const uploadPath = `characters/${projectId}/${item.targetId}/wardrobes/${wardrobe.id}/full-body-${Date.now()}.png`
+
+  const generated = await generateAndUploadFullBodyWardrobe(
+    {
+      characterName: character.name || item.label,
+      identityReferenceUrl: character.referenceImage!.trim(),
+      wardrobeDescription: wardrobe.description,
+      wardrobeAccessories: wardrobe.accessories,
+      appearanceNotes: wardrobe.appearanceNotes,
+      appearanceDescription: character.appearanceDescription,
+      hairStyle: typeof character.hairStyle === 'string' ? character.hairStyle : undefined,
+      hairColor: typeof character.hairColor === 'string' ? character.hairColor : undefined,
+      existingFullBodyUrl: wardrobe.fullBodyUrl,
+      forceRegenerate: !!wardrobe.needsImageRegen || !!wardrobeLookUrl(wardrobe),
+    },
+    uploadPath
+  )
+
+  try {
+    await CreditService.charge(userId, IMAGE_CREDITS.SCENE_CHARACTER_HEADSHOT, 'ai_usage', projectId, {
+      operation: 'character_full_body_wardrobe',
+      characterId: item.targetId,
+      characterName: character.name,
+      wardrobeId: wardrobe.id,
+    })
+  } catch (chargeError: unknown) {
+    console.error('[ReferenceExpress] Failed to charge wardrobe credits:', chargeError)
+  }
+
+  const { saved, staleSource } = await persistReferenceImage({
+    projectId,
+    kind: 'cast',
+    targetId: item.targetId,
+    wardrobeId: wardrobe.id,
+    expectedFingerprint: usedFingerprint,
+    patch: {
+      fullBodyUrl: generated.imageUrl,
+      needsImageRegen: false,
+    },
+  })
+
+  if (!saved) return skipped(item, 'missing')
+  return {
+    kind: item.kind,
+    targetId: item.targetId,
+    label: `${character.name?.trim() || item.label} — ${wardrobe.name?.trim() || 'Wardrobe'}`,
+    status: 'succeeded',
+    imageUrl: generated.imageUrl,
+    ...(staleSource ? { staleSource } : {}),
+  }
+}
+
+async function runLocationVersionItem(input: {
+  userId: string
+  projectId: string
+  item: ReferenceExpressItem
+  location: LocationSource
+  locale: Awaited<ReturnType<typeof resolveStoryLocale>>
+}): Promise<ReferenceExpressItemResult> {
+  const { userId, projectId, item, location, locale } = input
+  const version = (location.versions || []).find((row) => row.id === item.versionId)
+  if (!version?.id) return skipped(item, 'missing')
+  if (!hasImage(location.imageUrl)) return skipped(item, 'missing')
+  if (!version.stateNotes?.trim()) return skipped(item, 'missing')
+  if (hasImage(version.imageUrl) && !version.needsImageRegen) {
+    return skipped(item, 'already-generated')
+  }
+
+  const usedFingerprint = locationVersionFingerprint(location, version)
+  const generated = await generateLocationVersionReferenceImage({
+    userId,
+    projectId,
+    locationName: location.location || location.locationDisplay || 'Location',
+    intExt: location.intExt,
+    timeOfDay: location.timeOfDay,
+    description: location.description,
+    locale,
+    baseImageUrl: location.imageUrl!.trim(),
+    stateNotes: version.stateNotes,
+    versionId: version.id,
+  })
+
+  const { saved, staleSource } = await persistReferenceImage({
+    projectId,
+    kind: 'location',
+    targetId: item.targetId,
+    versionId: version.id,
+    expectedFingerprint: usedFingerprint,
+    patch: {
+      imageUrl: generated.imageUrl,
+      generationPrompt: generated.prompt,
+      needsImageRegen: false,
+    },
+  })
+
+  if (!saved) return skipped(item, 'missing')
+  return {
+    kind: item.kind,
+    targetId: item.targetId,
+    label: item.label,
+    status: 'succeeded',
+    imageUrl: generated.imageUrl,
+    ...(staleSource ? { staleSource } : {}),
   }
 }

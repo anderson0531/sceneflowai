@@ -36,9 +36,9 @@ import {
   applyLocationUpdateFromSyncDiff,
   collectMissingExtractedLocations,
   countLocationAgentItems,
-  idsMissingLocationBase,
+  locationAgentCopyUnits,
+  locationCameraStatus,
   locationVersionNeedsGeneration,
-  locationsThatGainedBase,
   toLocationReferenceFromExtracted,
 } from '@/lib/vision/libraryKindAgents'
 import type { ReferenceExpressScope, ReferenceExpressKind } from '@/lib/vision/referenceExpress/types'
@@ -461,7 +461,6 @@ export function LocationLibrary({
     updated: number
     stale: number
   } | null> => {
-    if (!isDisplayableImageUrl(location.imageUrl)) return null
     if (scenes.length === 0) return null
     const response = await fetch('/api/vision/sync-location-versions-from-script', {
       method: 'POST',
@@ -496,7 +495,6 @@ export function LocationLibrary({
       let stale = 0
 
       for (const loc of working) {
-        if (!isDisplayableImageUrl(loc.imageUrl)) continue
         const result = await syncLocationVersions(loc)
         if (!result) continue
         working = working.map((row) => (row.id === loc.id ? result.location : row))
@@ -738,32 +736,7 @@ export function LocationLibrary({
     try {
       const updated = await handleUpdateLocations()
       if (!updated) return
-      // Snapshot *after* extract so newly added heading locations are included.
-      const idsMissingBase = idsMissingLocationBase(updated)
-      const result = (await onExpressGenerateReferences(
-        { kinds: ['location'] },
-        { waitUntilDone: true }
-      )) as { outcome?: string } | undefined
-      if (result && (result.outcome === 'already-running' || result.outcome === 'error')) {
-        return
-      }
-      let latest = getLatestLocations?.() ?? updated
-      const newlyBased = locationsThatGainedBase(latest, idsMissingBase)
-      if (newlyBased.length > 0) {
-        let working = [...latest]
-        for (const loc of newlyBased) {
-          try {
-            const synced = await syncLocationVersions(loc)
-            if (!synced) continue
-            working = working.map((row) => (row.id === loc.id ? synced.location : row))
-          } catch (error) {
-            console.error('[Location Agent] version sync after bases:', error)
-          }
-        }
-        await onUpdateLocations(working)
-        latest = working
-      }
-      await generatePendingLocationVersions(latest)
+      await onExpressGenerateReferences({ kinds: ['location'] })
     } finally {
       setIsLocationAgentRunning(false)
     }
@@ -777,6 +750,18 @@ export function LocationLibrary({
   )
 
   const locationAgentCount = countLocationAgentItems(mergedLocations)
+  const locationAgentUnits = locationAgentCopyUnits(mergedLocations)
+  const locationAgentLabel =
+    locationAgentCount === 0
+      ? t('locationAgent', { count: 0 })
+      : locationAgentUnits.bases === 0
+        ? t('runLocationAgentSetStills', { count: locationAgentUnits.versions })
+        : locationAgentUnits.versions === 0
+          ? t('runLocationAgentLocationStills', { count: locationAgentUnits.bases })
+          : t('runLocationAgentMixed', {
+              bases: locationAgentUnits.bases,
+              versions: locationAgentUnits.versions,
+            })
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -784,11 +769,7 @@ export function LocationLibrary({
       {scenes.length > 0 && (
         <LibraryKindToolbar
           updateLabel={t('updateLocations')}
-          agentLabel={
-            locationAgentCount > 0
-              ? t('runLocationAgentNeeded', { count: locationAgentCount })
-              : t('locationAgent', { count: locationAgentCount })
-          }
+          agentLabel={locationAgentLabel}
           onUpdate={() => void handleUpdateLocations()}
           onAgent={
             onExpressGenerateReferences ? () => void handleLocationAgent() : undefined
@@ -862,12 +843,31 @@ export function LocationLibrary({
                         </TooltipContent>
                       </Tooltip>
                     )}
-                    {/* Image status indicator */}
-                    {hasImage ? (
-                      <Camera className="w-3.5 h-3.5 text-green-400" />
-                    ) : (
-                      <Camera className="w-3.5 h-3.5 text-gray-500" />
-                    )}
+                    {(() => {
+                      const camera = locationCameraStatus(loc)
+                      const cameraClass =
+                        camera.status === 'ready'
+                          ? 'text-green-400'
+                          : camera.status === 'versions-pending'
+                            ? 'text-amber-400'
+                            : 'text-gray-500'
+                      const cameraTitle =
+                        camera.status === 'ready'
+                          ? t('cameraReady')
+                          : camera.status === 'versions-pending'
+                            ? t('cameraVersionsPending', { count: camera.pendingVersionCount })
+                            : t('cameraNoBase')
+                      return (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex" title={cameraTitle}>
+                              <Camera className={`w-3.5 h-3.5 ${cameraClass}`} />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>{cameraTitle}</TooltipContent>
+                        </Tooltip>
+                      )
+                    })()}
                     {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                   </div>
                 </button>

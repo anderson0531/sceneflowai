@@ -9,6 +9,8 @@ import {
   idsMissingLocationBase,
   kindAgentToolbarLabel,
   libraryTabForPrimaryAction,
+  locationAgentCopyUnits,
+  locationCameraStatus,
   locationVersionNeedsGeneration,
   locationsThatGainedBase,
   pendingKindAgentRunForAction,
@@ -27,6 +29,11 @@ describe('referenceExpressAgentLabel', () => {
     expect(referenceExpressAgentLabel(['cast', 'location', 'prop'])).toBe('Library Agent')
   })
 
+  it('names Scene Ref Agent for a scene-scoped run', () => {
+    expect(referenceExpressAgentLabel(undefined, { sceneScoped: true })).toBe('Scene Ref Agent')
+    expect(referenceExpressAgentLabel(['location'], { sceneScoped: true })).toBe('Location Agent')
+  })
+
   it('names the kind agents', () => {
     expect(referenceExpressAgentLabel(['cast'])).toBe('Cast Agent')
     expect(referenceExpressAgentLabel(['location'])).toBe('Location Agent')
@@ -34,7 +41,50 @@ describe('referenceExpressAgentLabel', () => {
   })
 })
 
-describe('kind agent counts', () => {
+describe('locationCameraStatus', () => {
+  it('is versions-pending when the base is ready and two set stills remain', () => {
+    const camera = locationCameraStatus({
+      imageUrl: 'https://cdn/foyer.png',
+      versions: [
+        { stateNotes: 'Door blown out', imageUrl: '' },
+        { stateNotes: 'Flooded', imageUrl: 'https://cdn/flood.png', needsImageRegen: true },
+        { stateNotes: '', imageUrl: '' },
+      ],
+    })
+    expect(camera).toEqual({ status: 'versions-pending', pendingVersionCount: 2 })
+    expect(
+      locationAgentCopyUnits([
+        {
+          imageUrl: 'https://cdn/foyer.png',
+          versions: [
+            { stateNotes: 'Door blown out', imageUrl: '' },
+            { stateNotes: 'Flooded', imageUrl: 'https://cdn/flood.png', needsImageRegen: true },
+          ],
+        },
+      ])
+    ).toEqual({ bases: 0, versions: 2 })
+  })
+
+  it('is missing-base even if versions exist', () => {
+    expect(
+      locationCameraStatus({
+        imageUrl: '',
+        versions: [{ stateNotes: 'Door gone', imageUrl: '' }],
+      })
+    ).toEqual({ status: 'missing-base', pendingVersionCount: 1 })
+  })
+
+  it('is ready when the base and all noted versions are drawn', () => {
+    expect(
+      locationCameraStatus({
+        imageUrl: 'https://cdn/foyer.png',
+        versions: [{ stateNotes: 'Flooded', imageUrl: 'https://cdn/flood.png' }],
+      })
+    ).toEqual({ status: 'ready', pendingVersionCount: 0 })
+  })
+})
+
+describe('kind agent item counts', () => {
   it('counts missing cast identity plus stale wardrobes', () => {
     expect(
       countCastAgentItems([
@@ -129,7 +179,8 @@ describe('summarizeLibraryRequiredActions', () => {
     })
     expect(summary.libraryMissingTotal).toBe(0)
     expect(summary.primaryAction).toBe('location')
-    expect(summary.reason).toBe('stale-location-versions')
+    expect(summary.reason).toBe('missing-location-versions')
+    expect(summary.reasonCount).toBe(2)
     expect(summary.locations).toEqual({
       missingBases: 0,
       missingVersions: 1,
@@ -160,7 +211,8 @@ describe('summarizeLibraryRequiredActions', () => {
       objectReferences: [],
     })
     expect(summary.primaryAction).toBe('location')
-    expect(summary.reason).toBe('stale-location-versions')
+    expect(summary.reason).toBe('missing-location-versions')
+    expect(summary.reasonCount).toBe(1)
     expect(summary.tabAttention.locations).toBe('stale')
   })
 

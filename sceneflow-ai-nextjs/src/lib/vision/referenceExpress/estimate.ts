@@ -42,7 +42,7 @@ const creditsForKind = (kind: ReferenceExpressKind): number =>
  * prop-heavy library, which is exactly the number the user decides on.
  */
 export function estimateReferenceExpressSeconds(
-  items: Array<Pick<ReferenceExpressItem, 'kind'>>,
+  items: Array<Pick<ReferenceExpressItem, 'kind' | 'versionId'>>,
   concurrency: number = DEFAULT_REFERENCE_EXPRESS_CONCURRENCY
 ): number {
   let total = 0
@@ -59,7 +59,7 @@ export function estimateReferenceExpressCredits(
 }
 
 export function estimateReferenceExpress(
-  items: Array<Pick<ReferenceExpressItem, 'kind'>>
+  items: Array<Pick<ReferenceExpressItem, 'kind' | 'versionId'>>
 ): ReferenceExpressEstimate {
   return {
     itemCount: items.length,

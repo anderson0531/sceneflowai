@@ -9,9 +9,16 @@ import { calculateBackoffDelay, isRetryableError } from '@/lib/utils/retry'
 import { runReferenceExpressItem } from '@/lib/vision/referenceExpress/runItem'
 import {
   summarizeItemResults,
+  referenceExpressItemKey,
   type ReferenceExpressItem,
   type ReferenceExpressItemResult,
+  type ReferenceExpressScope,
 } from '@/lib/vision/referenceExpress/types'
+import {
+  loadReferenceExpressContext,
+  planFollowOnNestedItems,
+  shouldIncludeNestedStills,
+} from '@/lib/vision/referenceExpress/planItems'
 import {
   getReferenceExpressMaxAttempts,
   isReferenceExpressLeaseHeld,
@@ -44,6 +51,62 @@ async function saveWorkerState(
 function readItems(payload: Record<string, unknown>): ReferenceExpressItem[] {
   const items = payload.items
   return Array.isArray(items) ? (items as ReferenceExpressItem[]) : []
+}
+
+function scopeFromPayload(payload: Record<string, unknown>): ReferenceExpressScope {
+  const sceneIndices = Array.isArray(payload.sceneIndices)
+    ? payload.sceneIndices.filter((index): index is number => Number.isInteger(index) && index >= 0)
+    : undefined
+  const kinds = Array.isArray(payload.kinds)
+    ? (payload.kinds as ReferenceExpressScope['kinds'])
+    : undefined
+  return {
+    sceneIndices,
+    kinds,
+    includeNestedStills:
+      payload.includeNestedStills === true ||
+      shouldIncludeNestedStills({ sceneIndices, kinds }),
+  }
+}
+
+async function appendFollowOnNestedItems(input: {
+  jobId: string
+  projectId: string
+  payload: Record<string, unknown>
+  items: ReferenceExpressItem[]
+  windowItems: Array<{ item: ReferenceExpressItem; result: ReferenceExpressItemResult }>
+}): Promise<ReferenceExpressItem[]> {
+  const { jobId, projectId, payload, items, windowItems } = input
+  const scope = scopeFromPayload(payload)
+  if (!shouldIncludeNestedStills(scope)) return items
+
+  const succeeded = windowItems.filter((row) => row.result.status === 'succeeded')
+  if (succeeded.length === 0) return items
+
+  const context = await loadReferenceExpressContext(projectId)
+  if (!context) return items
+
+  const existing = new Set(items.map((item) => referenceExpressItemKey(item)))
+  const followOns: ReferenceExpressItem[] = []
+  for (const row of succeeded) {
+    for (const followOn of planFollowOnNestedItems(row.item, context, scope)) {
+      const key = referenceExpressItemKey(followOn)
+      if (existing.has(key)) continue
+      existing.add(key)
+      followOns.push(followOn)
+    }
+  }
+  if (followOns.length === 0) return items
+
+  const nextItems = [...items, ...followOns]
+  await patchGenerationJobPayload(jobId, {
+    items: nextItems,
+    itemCount: nextItems.length,
+    castCount: nextItems.filter((item) => item.kind === 'cast').length,
+    locationCount: nextItems.filter((item) => item.kind === 'location').length,
+    propCount: nextItems.filter((item) => item.kind === 'prop').length,
+  })
+  return nextItems
 }
 
 async function failJob(
@@ -199,8 +262,19 @@ async function runCurrentWindow(
   ]
   const nextCursor = worker.cursor + windowSize
 
+  const nextItems = await appendFollowOnNestedItems({
+    jobId,
+    projectId,
+    payload,
+    items,
+    windowItems: Array.from({ length: windowSize }, (_, offset) => ({
+      item: items[worker.cursor + offset]!,
+      result: landed[String(worker.cursor + offset)]!,
+    })),
+  })
+
   await updateGenerationJob(jobId, {
-    progress: Math.round((nextCursor / items.length) * 100),
+    progress: Math.round((nextCursor / nextItems.length) * 100),
   })
   await saveWorkerState(jobId, {
     cursor: nextCursor,
@@ -211,7 +285,7 @@ async function runCurrentWindow(
     windowResults: {},
   })
 
-  if (nextCursor >= items.length) {
+  if (nextCursor >= nextItems.length) {
     return completeJob(jobId, userId, projectId, results)
   }
   return { done: false, cursor: nextCursor }
