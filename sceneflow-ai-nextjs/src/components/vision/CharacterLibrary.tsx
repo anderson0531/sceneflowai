@@ -166,7 +166,7 @@ export interface CharacterLibraryProps {
       appearanceNotes?: string;
       reason?: string;
       needsImageRegen?: boolean;
-      action?: "add" | "update" | "delete" | "setDefault";
+      action?: "add" | "update" | "delete";
     },
   ) => void;
   /** Callback to batch update wardrobes from script analysis */
@@ -451,7 +451,7 @@ interface CharacterCardProps {
       appearanceNotes?: string;
       reason?: string;
       needsImageRegen?: boolean;
-      action?: "add" | "update" | "delete" | "setDefault";
+      action?: "add" | "update" | "delete";
     },
   ) => void;
   /** Batch update wardrobes from script analysis */
@@ -2546,14 +2546,6 @@ const CharacterCard = ({
     });
   };
 
-  // Handle setting a wardrobe as default
-  const handleSetDefaultWardrobe = (wardrobeId: string) => {
-    onUpdateWardrobe?.(characterId, {
-      wardrobeId,
-      action: "setDefault",
-    });
-  };
-
   // Handle AI enhancement of a wardrobe description
   // Takes a vague description and generates a highly detailed, image-gen-optimized version
   const handleEnhanceWardrobe = async (wardrobeId: string) => {
@@ -2594,8 +2586,6 @@ const CharacterCard = ({
       };
 
       // Save the enhanced description directly
-      // The handler automatically syncs the legacy defaultWardrobe field
-      // when the updated wardrobe is the one marked isDefault
       onUpdateWardrobe?.(characterId, {
         defaultWardrobe: enhanced.description,
         wardrobeAccessories: enhanced.accessories || wardrobe.accessories,
@@ -4224,11 +4214,7 @@ const CharacterCard = ({
                     {wardrobes.map((w) => (
                       <div
                         key={w.id}
-                        className={`rounded-lg border overflow-hidden transition-colors ${
-                          w.isDefault
-                            ? "bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-700/50"
-                            : "bg-gray-50/50 dark:bg-gray-800/10 border-gray-200 dark:border-gray-700/50"
-                        }`}
+                        className="rounded-lg border overflow-hidden transition-colors bg-gray-50/50 dark:bg-gray-800/10 border-gray-200 dark:border-gray-700/50"
                       >
                         {splitLayout ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 items-start">
@@ -4241,11 +4227,6 @@ const CharacterCard = ({
                                   <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
                                     {w.name}
                                   </span>
-                                  {w.isDefault && (
-                                    <span className="text-[10px] px-1.5 py-0.5 bg-green-500/20 text-green-700 dark:text-green-400 rounded">
-                                      default
-                                    </span>
-                                  )}
                                   {w.sceneNumbers && w.sceneNumbers.length > 0 && (
                                     <span className="text-[10px] text-blue-700 dark:text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">
                                       Scenes {formatSceneRange(w.sceneNumbers)}
@@ -4377,11 +4358,6 @@ const CharacterCard = ({
                                   <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
                                     {w.name}
                                   </span>
-                                  {w.isDefault && (
-                                    <span className="text-[10px] px-1.5 py-0.5 bg-green-500/20 text-green-700 dark:text-green-400 rounded">
-                                      default
-                                    </span>
-                                  )}
                                   {w.sceneNumbers && w.sceneNumbers.length > 0 && (
                                     <span className="text-[10px] text-blue-700 dark:text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">
                                       Scenes {formatSceneRange(w.sceneNumbers)}
@@ -5181,21 +5157,6 @@ const CharacterCard = ({
                     <ImagePlus className="w-4 h-4 mr-2" />
                   )}
                   {(expandedWardrobe.fullBodyUrl || expandedWardrobe.headshotUrl) ? "Regenerate Image" : "Generate Image"}
-                </Button>
-              )}
-              {expandedWardrobe && !expandedWardrobe.isDefault && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    if (expandedWardrobe) {
-                      handleSetDefaultWardrobe(expandedWardrobe.id);
-                      setExpandedWardrobe(null);
-                    }
-                  }}
-                  className="border-green-500/50 text-green-600 dark:text-green-400 hover:bg-green-500/10"
-                >
-                  <Check className="w-4 h-4 mr-2" />
-                  Set as Default
                 </Button>
               )}
               <Button

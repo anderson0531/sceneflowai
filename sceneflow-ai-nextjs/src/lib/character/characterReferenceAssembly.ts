@@ -284,11 +284,11 @@ export function resolveWardrobeForCharacter(
   }
 
   if (!resolved) {
-    const fallback = (wardrobes as Record<string, unknown>[]).find((w) => w.isDefault === true) ?? null
+    const fallback = (wardrobes as Record<string, unknown>[])[0] ?? null
     if (fallback) {
       const charName = (character.name || charId) as string
       console.warn(
-        `[Wardrobe] No scene-specific wardrobe for ${charName} (sceneIndex=${sceneIndex ?? 'unknown'}); falling back to isDefault "${fallback.name ?? fallback.id}"`
+        `[Wardrobe] No scene-specific wardrobe for ${charName} (sceneIndex=${sceneIndex ?? 'unknown'}); falling back to first wardrobe "${fallback.name ?? fallback.id}"`
       )
       resolved = fallback
     }
@@ -300,10 +300,9 @@ export function resolveWardrobeForCharacter(
 type WardrobeScenePickerItem = {
   id: string
   sceneNumbers?: number[]
-  isDefault?: boolean
 }
 
-/** Wardrobes to show in scene pickers (sceneNumbers match, else isDefault, else all). */
+/** Wardrobes to show in scene pickers (sceneNumbers match, else all looks). */
 export function wardrobesForScene<T extends WardrobeScenePickerItem>(
   character: { wardrobes?: T[] },
   sceneIndex?: number
@@ -318,13 +317,10 @@ export function wardrobesForScene<T extends WardrobeScenePickerItem>(
   )
   if (sceneAssigned.length > 0) return sceneAssigned
 
-  const defaultWardrobe = wardrobes.find((w) => w.isDefault === true)
-  if (defaultWardrobe) return [defaultWardrobe]
-
   return wardrobes
 }
 
-/** Resolve wardrobe id for a character in the current scene (override → sceneNumbers → scene override → default). */
+/** Resolve wardrobe id for a character in the current scene (override → sceneNumbers → scene override → first). */
 export function resolveWardrobeIdForCharacterInScene(
   character: Record<string, unknown>,
   scene?: Record<string, unknown> | null,

@@ -6748,7 +6748,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     appearanceNotes?: string;
     reason?: string;
     needsImageRegen?: boolean;
-    action?: 'add' | 'update' | 'delete' | 'setDefault';
+    action?: 'add' | 'update' | 'delete';
   }) => {
     const runUpdate = async () => {
       try {
@@ -6815,21 +6815,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 : w
             )
           } else if (wardrobe.action === 'delete' && wardrobe.wardrobeId) {
-            const wasDefault = wardrobes.find(w => w.id === wardrobe.wardrobeId)?.isDefault
             wardrobes = wardrobes.filter(w => w.id !== wardrobe.wardrobeId)
-            if (wasDefault && wardrobes.length > 0) {
-              wardrobes[0].isDefault = true
-            }
-          } else if (wardrobe.action === 'setDefault' && wardrobe.wardrobeId) {
-            wardrobes = wardrobes.map(w => ({
-              ...w,
-              isDefault: w.id === wardrobe.wardrobeId
-            }))
           } else if (!wardrobe.action) {
-            const defaultWardrobeObj = wardrobes.find(w => w.isDefault)
-            if (defaultWardrobeObj) {
-              wardrobes = wardrobes.map(w => 
-                w.isDefault 
+            const firstWardrobe = wardrobes[0]
+            if (firstWardrobe) {
+              wardrobes = wardrobes.map((w, idx) =>
+                idx === 0
                   ? { ...w, description: wardrobe.defaultWardrobe || w.description, accessories: wardrobe.wardrobeAccessories || w.accessories }
                   : w
               )
@@ -6845,13 +6836,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           }
           
-          const defaultWdrb = wardrobes.find(w => w.isDefault)
+          const firstWardrobe = wardrobes[0]
           
           return { 
             ...char, 
             wardrobes,
-            defaultWardrobe: defaultWdrb?.description,
-            wardrobeAccessories: defaultWdrb?.accessories
+            defaultWardrobe: firstWardrobe?.description,
+            wardrobeAccessories: firstWardrobe?.accessories
           }
         })
         
@@ -6911,14 +6902,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }))
         
         // Get default wardrobe for legacy fields
-        const defaultWdrb = newWardrobes.find(w => w.isDefault)
+        const firstWardrobe = newWardrobes[0]
         
         return { 
           ...char, 
           wardrobes: newWardrobes,
           // Keep legacy fields in sync for backwards compatibility
-          defaultWardrobe: defaultWdrb?.description,
-          wardrobeAccessories: defaultWdrb?.accessories
+          defaultWardrobe: firstWardrobe?.description,
+          wardrobeAccessories: firstWardrobe?.accessories
         }
       })
       
@@ -7008,12 +6999,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             .map((w) => w.id)
           staleWardrobeIdsByCharacter[charId] = staleFromMerge
 
-          const defaultWdrb = wardrobes.find((w) => w.isDefault)
+          const firstWardrobe = wardrobes[0]
           return {
             ...char,
             wardrobes,
-            defaultWardrobe: defaultWdrb?.description,
-            wardrobeAccessories: defaultWdrb?.accessories,
+            defaultWardrobe: firstWardrobe?.description,
+            wardrobeAccessories: firstWardrobe?.accessories,
           }
         })
       }

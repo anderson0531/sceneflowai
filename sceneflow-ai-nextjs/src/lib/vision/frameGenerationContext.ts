@@ -305,7 +305,7 @@ function pickWardrobeDescriptionForCharacter(projectChar: any, scene: any): stri
     )
   }
   if (!resolved) {
-    resolved = wardrobes.find((w: any) => w.isDefault)
+    resolved = wardrobes[0]
   }
 
   if (resolved?.description) return resolved.description as string

@@ -384,7 +384,7 @@ describe('source fingerprints', () => {
     expect(castFingerprint(cast({ appearance: 'Shaved head' }))).not.toBe(before)
   })
 
-  it('reads the default wardrobe entry when no flat wardrobe is set', () => {
+  it('reads the first wardrobe entry when no flat wardrobe is set', () => {
     const withWardrobe = cast({
       wardrobes: [
         { description: 'Grease-stained parka', accessories: 'Fingerless gloves', isDefault: true },
@@ -393,7 +393,7 @@ describe('source fingerprints', () => {
     })
 
     expect(castFingerprint(withWardrobe)).not.toBe(castFingerprint(cast()))
-    // The non-default entry must not participate, or editing an unused outfit
+    // Later looks must not participate, or editing an unused outfit
     // would mark every generated portrait stale.
     expect(
       castFingerprint({

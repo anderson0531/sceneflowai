@@ -479,9 +479,8 @@ export function generateLinkingDescription(
  * Priority order:
  * 1. Scene-specific override (from sceneWardrobeOverrides)
  * 2. Wardrobe with matching sceneNumbers
- * 3. Default wardrobe (isDefault: true)
- * 4. First wardrobe in collection
- * 5. Legacy defaultWardrobe field
+ * 3. First wardrobe in collection
+ * 4. Legacy defaultWardrobe field
  * 
  * @param characterRef - Character reference with wardrobes
  * @param sceneNumber - Current scene number (1-based)
@@ -514,7 +513,7 @@ export function findWardrobeForScene(
     }
   }
   
-  // Priority 2-4: Check wardrobes collection
+  // Priority 2-3: Check wardrobes collection
   if (characterRef.wardrobes && characterRef.wardrobes.length > 0) {
     // Priority 2: Find wardrobe with matching sceneNumber
     if (sceneNumber) {
@@ -529,16 +528,7 @@ export function findWardrobeForScene(
       }
     }
     
-    // Priority 3: Default wardrobe
-    const defaultWardrobe = characterRef.wardrobes.find(w => w.isDefault)
-    if (defaultWardrobe) {
-      return {
-        description: defaultWardrobe.description,
-        accessories: defaultWardrobe.accessories
-      }
-    }
-    
-    // Priority 4: First wardrobe
+    // Priority 3: First wardrobe
     return {
       description: characterRef.wardrobes[0].description,
       accessories: characterRef.wardrobes[0].accessories

@@ -38,7 +38,6 @@ export interface CharacterForWardrobeResolution {
     name?: string
     description?: string
     accessories?: string
-    isDefault?: boolean
   }> | null
 }
 
@@ -67,8 +66,7 @@ export function resolveDefaultWardrobeDescription(
 ): string | undefined {
   const wardrobes = character.wardrobes
   if (Array.isArray(wardrobes) && wardrobes.length > 0) {
-    const defaultEntry =
-      wardrobes.find((w) => w.isDefault === true) ?? wardrobes[0]
+    const defaultEntry = wardrobes[0]
     const parts = [defaultEntry.description?.trim(), defaultEntry.accessories?.trim()].filter(
       Boolean
     ) as string[]

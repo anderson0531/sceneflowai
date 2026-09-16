@@ -60,7 +60,7 @@ function buildCharacterGroups(
       sceneWardrobeByName[char.name]
 
     const sceneWardrobesForChar = wardrobesForScene(
-      char as { wardrobes?: Array<{ id: string; sceneNumbers?: number[]; isDefault?: boolean; headshotUrl?: string; fullBodyUrl?: string; name?: string }> },
+      char as { wardrobes?: Array<{ id: string; sceneNumbers?: number[]; headshotUrl?: string; fullBodyUrl?: string; name?: string }> },
       sceneIndex
     )
     const wardrobesWithImages = sceneWardrobesForChar.filter((w) => wardrobeImageUrl(w as any))

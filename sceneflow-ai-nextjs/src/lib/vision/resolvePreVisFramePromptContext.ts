@@ -92,9 +92,7 @@ function buildWardrobeTextMap(
     const wardrobeId = selectedWardrobes[name]
     const wardrobe = wardrobeId
       ? (char.wardrobes as Array<{ id: string; description?: string }>).find((w) => w.id === wardrobeId)
-      : (char.wardrobes as Array<{ id: string; description?: string; isDefault?: boolean }>).find(
-          (w) => w.isDefault
-        )
+      : (char.wardrobes as Array<{ id: string; description?: string }>)[0]
     if (wardrobe?.description?.trim()) {
       overrides[name] = wardrobe.description.trim()
     }
