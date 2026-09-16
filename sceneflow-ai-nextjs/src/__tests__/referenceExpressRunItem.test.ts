@@ -30,6 +30,12 @@ vi.mock('@/lib/character/generateCastingBrief', () => ({
   generateCastingBrief: vi.fn(),
 }))
 
+vi.mock('@/lib/character/combinedCharacterRef', () => ({
+  composeUploadAndPersistCombinedCharacterRef: vi.fn(async () => 'https://cdn/mira-pip.jpg'),
+  recomposeCombinedCharacterRefsForCast: vi.fn(async () => undefined),
+  wardrobeExpectedFingerprint: vi.fn(() => 'fp'),
+}))
+
 vi.mock('@/lib/character/sceneCharacterHeadshot', () => ({
   generateAndUploadFullBodyWardrobe: vi.fn(),
 }))
@@ -57,15 +63,27 @@ vi.mock('@/lib/vision/referenceExpress/planItems', async (importOriginal) => ({
   })),
 }))
 
-import { castFingerprint } from '@/lib/vision/referenceExpress/planItems'
+import {
+  castFingerprint,
+  loadReferenceExpressContext,
+} from '@/lib/vision/referenceExpress/planItems'
 import { generateCastReferenceImage } from '@/lib/vision/referenceExpress/generateReferenceImage'
 import { persistReferenceImage } from '@/lib/vision/referenceExpress/persistReferenceImage'
 import { refreshCastingBriefForAppearance } from '@/lib/character/applyCastingBriefUpdate'
+import {
+  composeUploadAndPersistCombinedCharacterRef,
+  recomposeCombinedCharacterRefsForCast,
+} from '@/lib/character/combinedCharacterRef'
+import { generateAndUploadFullBodyWardrobe } from '@/lib/character/sceneCharacterHeadshot'
 import { runReferenceExpressItem } from '@/lib/vision/referenceExpress/runItem'
 
 const mockGenerate = vi.mocked(generateCastReferenceImage)
 const mockPersist = vi.mocked(persistReferenceImage)
 const mockBrief = vi.mocked(refreshCastingBriefForAppearance)
+const mockRecompose = vi.mocked(recomposeCombinedCharacterRefsForCast)
+const mockComposeCombined = vi.mocked(composeUploadAndPersistCombinedCharacterRef)
+const mockFullBody = vi.mocked(generateAndUploadFullBodyWardrobe)
+const mockLoadContext = vi.mocked(loadReferenceExpressContext)
 
 const CAST_ITEM: ReferenceExpressItem = {
   kind: 'cast',
@@ -112,6 +130,13 @@ describe('runReferenceExpressItem cast path', () => {
     await run()
 
     expect(order).toEqual(['image', 'brief-llm', 'brief'])
+    expect(mockRecompose).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectId: 'project-1',
+        characterId: 'c1',
+        identityUrl: 'https://cdn/mira.png',
+      })
+    )
   })
 
   it('compares the brief against the appearance the image write just stored', async () => {
@@ -167,5 +192,67 @@ describe('runReferenceExpressItem cast path', () => {
 
     expect(result).toMatchObject({ status: 'skipped', skippedReason: 'missing' })
     expect(mockBrief).not.toHaveBeenCalled()
+  })
+})
+
+describe('runReferenceExpressItem wardrobe path', () => {
+  it('persists combinedCharacterRefUrl after the full-body still', async () => {
+    mockLoadContext.mockResolvedValueOnce({
+      characters: [
+        {
+          ...CHARACTER,
+          referenceImage: 'https://cdn/mira-face.png',
+          wardrobes: [
+            {
+              id: 'w1',
+              name: 'Dock coat',
+              description: 'salt-stained canvas jacket',
+            },
+          ],
+        },
+      ],
+      locations: [],
+      props: [],
+      scenes: [],
+      screenplayContext: { genre: 'thriller' },
+    } as never)
+    mockFullBody.mockResolvedValueOnce({
+      imageUrl: 'https://cdn/mira-body.png',
+      prompt: 'wardrobe',
+      generated: true,
+    })
+
+    const result = await runReferenceExpressItem({
+      userId: 'user-1',
+      projectId: 'project-1',
+      item: {
+        kind: 'cast',
+        targetId: 'c1',
+        label: 'Mira — Dock coat',
+        sourceFingerprint: 'fp',
+        wardrobeId: 'w1',
+      },
+    })
+
+    expect(result.status).toBe('succeeded')
+    expect(result.imageUrl).toBe('https://cdn/mira-body.png')
+    expect(mockPersist).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectId: 'project-1',
+        kind: 'cast',
+        targetId: 'c1',
+        wardrobeId: 'w1',
+        patch: expect.objectContaining({ fullBodyUrl: 'https://cdn/mira-body.png' }),
+      })
+    )
+    expect(mockComposeCombined).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectId: 'project-1',
+        characterId: 'c1',
+        wardrobeId: 'w1',
+        identityUrl: 'https://cdn/mira-face.png',
+        wardrobeUrl: 'https://cdn/mira-body.png',
+      })
+    )
   })
 })

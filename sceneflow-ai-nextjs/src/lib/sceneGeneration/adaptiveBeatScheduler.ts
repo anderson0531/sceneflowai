@@ -17,12 +17,10 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
 export const DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY = 1
 
 /**
- * Draft beats run on flash, which has its own larger quota than the pro image
- * model, so two can be in flight without reproducing the 429 storm that forced
- * pro identity-ref frames back to sequential. Matches the flash image lane — a
- * higher number here would only queue inside the traffic cop.
+ * Draft beats stay sequential, matching the image lane. A wider pool only
+ * parked jobs in the traffic cop and made the overlay look like extra gens.
  */
-export const DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY = 2
+export const DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY = 1
 
 /**
  * Attempts per beat before it is reported as failed.
@@ -59,9 +57,7 @@ export function getSceneExpressBeatConcurrency(opts?: {
   flashAnimatic?: boolean
 }): number {
   return parsePositiveInt(
-    process.env.SCENE_EXPRESS_BEAT_CONCURRENCY ??
-      process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY ??
-      process.env.EXPRESS_IMAGE_CONCURRENCY,
+    process.env.SCENE_EXPRESS_BEAT_CONCURRENCY ?? process.env.EXPRESS_IMAGE_CONCURRENCY,
     opts?.flashAnimatic
       ? DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY
       : DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY

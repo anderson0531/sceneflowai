@@ -23,6 +23,8 @@ export interface CharacterWardrobe {
   headshotUrl?: string
   /** Mannequin outfit turnaround sheet (legacy; used when headshotUrl is absent) */
   fullBodyUrl?: string
+  /** Sharp-composed PiP card (full-body canvas + face badge). Beat frames attach this one URL. */
+  combinedCharacterRefUrl?: string
   sceneNumbers?: number[]
   /** Makeup, hair state, visible injuries/marks for this wardrobe look */
   appearanceNotes?: string

@@ -68,6 +68,10 @@ export interface DualRefForDiptychConsolidation {
   defaultWardrobe?: string
   wardrobeAccessories?: string
   wardrobeDescription?: string
+  /** Stored PiP Blob URL — skip per-beat compose. */
+  isStoredPip?: boolean
+  characterId?: string
+  wardrobeId?: string
 }
 
 export function isSixteenByNine(width: number, height: number): boolean {
@@ -285,7 +289,8 @@ export async function composeIdentityWardrobePipFromDiptychUrl(args: {
 
 function applyCombinedSlot<T extends DualRefForDiptychConsolidation>(
   ref: T,
-  composite: IdentityWardrobeDiptych
+  composite: IdentityWardrobeDiptych,
+  persistedUrl?: string
 ): T {
   const diptychReferenceId =
     ref.identityReferenceId ?? ref.wardrobeReferenceId ?? ref.diptychReferenceId ?? ref.referenceId
@@ -297,18 +302,21 @@ function applyCombinedSlot<T extends DualRefForDiptychConsolidation>(
       .replace(DUAL_WARDROBE_TEXT, COMBINED_WARDROBE_TEXT)
   }
 
+  const imageUrl = persistedUrl || composite.dataUrl
+
   return {
     ...ref,
     hasWardrobeDiptych: true,
     hasDualReferences: false,
     hasCostumeReference: true,
-    wardrobeDiptychImageUrl: composite.dataUrl,
+    isStoredPip: !!persistedUrl || ref.isStoredPip,
+    wardrobeDiptychImageUrl: imageUrl,
     diptychReferenceId,
     identityReferenceId: undefined,
     wardrobeReferenceId: undefined,
     identityImageUrl: undefined,
     wardrobeImageUrl: undefined,
-    imageUrl: composite.dataUrl,
+    imageUrl,
     description,
   }
 }
@@ -316,11 +324,20 @@ function applyCombinedSlot<T extends DualRefForDiptychConsolidation>(
 export interface ConsolidatePipDeps {
   composePair?: typeof composeIdentityWardrobeDiptych
   composeDiptych?: typeof composeIdentityWardrobePipFromDiptychUrl
+  /**
+   * Upload the composed card and persist `combinedCharacterRefUrl` on the wardrobe.
+   * Return the Blob URL so later beats skip compose. Tests may omit this.
+   */
+  persistCombined?: (args: {
+    ref: DualRefForDiptychConsolidation
+    composite: IdentityWardrobeDiptych
+  }) => Promise<string | null>
 }
 
 /**
- * For beat frames, replace identity+wardrobe pairs and stored two-panel sheets
- * with one PiP character slot. Fetch/compose failure keeps the original refs.
+ * For beat frames, replace identity+wardrobe pairs and leftover two-panel sheets
+ * with one PiP character slot. A stored combined Blob URL is left alone.
+ * Fetch/compose failure keeps the original refs.
  */
 export async function consolidateBeatCharacterRefsIntoPipBadges<
   T extends DualRefForDiptychConsolidation,
@@ -332,9 +349,26 @@ export async function consolidateBeatCharacterRefsIntoPipBadges<
     typeof depsOrCompose === 'function' ? { composePair: depsOrCompose } : depsOrCompose
   const composePair = deps.composePair ?? composeIdentityWardrobeDiptych
   const composeDiptych = deps.composeDiptych ?? composeIdentityWardrobePipFromDiptychUrl
+  const persistCombined = deps.persistCombined
+
+  const persistSlot = async (ref: T, composite: IdentityWardrobeDiptych): Promise<T> => {
+    const persistedUrl = persistCombined
+      ? await persistCombined({ ref, composite })
+      : null
+    return applyCombinedSlot(ref, composite, persistedUrl ?? undefined)
+  }
 
   return Promise.all(
     refs.map(async (ref) => {
+      const diptychUrl = ref.wardrobeDiptychImageUrl
+      if (
+        ref.isStoredPip &&
+        diptychUrl &&
+        !diptychUrl.startsWith('data:')
+      ) {
+        return ref
+      }
+
       if (
         ref.hasDualReferences &&
         !ref.hasWardrobeDiptych &&
@@ -355,10 +389,9 @@ export async function consolidateBeatCharacterRefsIntoPipBadges<
         console.log(
           `[Scene Image] ✓ Consolidated dual references for ${ref.name || 'character'} into a character reference`
         )
-        return applyCombinedSlot(ref, composite)
+        return persistSlot(ref, composite)
       }
 
-      const diptychUrl = ref.wardrobeDiptychImageUrl
       if (ref.hasWardrobeDiptych && diptychUrl && !diptychUrl.startsWith('data:')) {
         const composite = await composeDiptych({
           diptychUrl,
@@ -373,7 +406,7 @@ export async function consolidateBeatCharacterRefsIntoPipBadges<
         console.log(
           `[Scene Image] ✓ Converted combined character sheet for ${ref.name || 'character'} into a corner-badge reference`
         )
-        return applyCombinedSlot(ref, composite)
+        return persistSlot(ref, composite)
       }
 
       return ref

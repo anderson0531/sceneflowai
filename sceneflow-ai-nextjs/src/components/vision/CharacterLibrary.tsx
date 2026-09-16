@@ -161,6 +161,7 @@ export interface CharacterLibraryProps {
       previewImageUrl?: string;
       headshotUrl?: string;
       fullBodyUrl?: string;
+      combinedCharacterRefUrl?: string;
       sceneNumbers?: number[];
       appearanceNotes?: string;
       reason?: string;
@@ -257,6 +258,7 @@ interface CharacterWardrobe {
   previewImageUrl?: string; // Legacy: AI-generated preview of character in this outfit
   headshotUrl?: string; // 16:9 diptych: close-up face + full-body wardrobe
   fullBodyUrl?: string; // 1-row mannequin outfit turnaround (4 full-body views)
+  combinedCharacterRefUrl?: string; // Stored PiP character card
   sceneNumbers?: number[]; // Scenes where this outfit is used (from script analysis)
   appearanceNotes?: string; // Makeup, hair state, visible injuries/marks
   reason?: string; // AI explanation for why this outfit is needed
@@ -313,6 +315,7 @@ async function regenerateWardrobeImage(
     body: JSON.stringify({
       projectId,
       characterId,
+      wardrobeId: wardrobe.id,
       characterName: character.name,
       identityReferenceUrl: character.referenceImage,
       wardrobeDescription: wardrobe.description,
@@ -342,9 +345,10 @@ async function regenerateWardrobeImage(
     throw new Error((body.error as string) || "Failed to generate wardrobe image");
   }
 
-  const { imageUrl, fullBodyUrl } = body as {
+  const { imageUrl, fullBodyUrl, combinedCharacterRefUrl } = body as {
     imageUrl?: string;
     fullBodyUrl?: string;
+    combinedCharacterRefUrl?: string;
   };
   const resolvedUrl = fullBodyUrl || imageUrl;
   if (!resolvedUrl) {
@@ -354,6 +358,9 @@ async function regenerateWardrobeImage(
   await onUpdateWardrobe?.(characterId, {
     wardrobeId: wardrobe.id,
     fullBodyUrl: resolvedUrl,
+    ...(combinedCharacterRefUrl
+      ? { combinedCharacterRefUrl }
+      : {}),
     needsImageRegen: false,
     action: "update",
   });
@@ -2715,6 +2722,7 @@ const CharacterCard = ({
         body: JSON.stringify({
           projectId,
           characterId,
+          wardrobeId: wardrobe.id,
           characterName: character.name,
           identityReferenceUrl: character.referenceImage,
           wardrobeDescription: wardrobe.description,
@@ -2750,9 +2758,10 @@ const CharacterCard = ({
         );
       }
 
-      const { imageUrl, fullBodyUrl } = body as {
+      const { imageUrl, fullBodyUrl, combinedCharacterRefUrl } = body as {
         imageUrl?: string;
         fullBodyUrl?: string;
+        combinedCharacterRefUrl?: string;
       };
       const resolvedUrl = fullBodyUrl || imageUrl;
       if (!resolvedUrl) {
@@ -2762,6 +2771,7 @@ const CharacterCard = ({
       onUpdateWardrobe?.(characterId, {
         wardrobeId: wardrobe.id,
         fullBodyUrl: resolvedUrl,
+        ...(combinedCharacterRefUrl ? { combinedCharacterRefUrl } : {}),
         needsImageRegen: false,
         action: "update",
       });
@@ -2770,6 +2780,7 @@ const CharacterCard = ({
         setExpandedWardrobe({
           ...expandedWardrobe,
           fullBodyUrl: resolvedUrl,
+          ...(combinedCharacterRefUrl ? { combinedCharacterRefUrl } : {}),
           needsImageRegen: false,
         });
       }

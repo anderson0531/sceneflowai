@@ -23,11 +23,11 @@
 /**
  * Concurrent generations allowed per process.
  *
- * Two, matching the Express flash image lane. The gate and the lane agreeing
+ * One, matching the Express image lane. The gate and the lane agreeing
  * is the point: a single run should never queue here, so the gate only bites
  * when something the cop cannot see is also generating.
  */
-export const DEFAULT_VERTEX_IMAGE_MAX_CONCURRENCY = 2
+export const DEFAULT_VERTEX_IMAGE_MAX_CONCURRENCY = 1
 
 function parseNonNegativeInt(value: string | undefined, fallback: number): number {
   const n = Number(value ?? fallback)

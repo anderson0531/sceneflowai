@@ -36,6 +36,10 @@ function mergeWardrobeImages(liteWardrobes: any[] | undefined, fullWardrobes: an
       ...liteW,
       fullBodyUrl: pickImageUrl(liteW.fullBodyUrl, fullW.fullBodyUrl),
       headshotUrl: pickImageUrl(liteW.headshotUrl, fullW.headshotUrl),
+      combinedCharacterRefUrl: pickImageUrl(
+        liteW.combinedCharacterRefUrl,
+        fullW.combinedCharacterRefUrl
+      ),
       previewImageUrl: pickImageUrl(liteW.previewImageUrl, fullW.previewImageUrl),
     }
   })

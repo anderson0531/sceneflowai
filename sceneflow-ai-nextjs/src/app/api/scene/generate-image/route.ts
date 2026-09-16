@@ -143,6 +143,11 @@ import {
 } from '@/lib/character/characterReferenceAssembly'
 import { consolidateBeatCharacterRefsIntoPipBadges } from '@/lib/character/composeIdentityWardrobeDiptych'
 import {
+  persistCombinedCharacterRefUrl,
+  uploadCombinedCharacterRef,
+  wardrobeExpectedFingerprint,
+} from '@/lib/character/combinedCharacterRef'
+import {
   buildCombinedCharacterConsumptionLine,
   combinedCharacterReferenceInstruction,
   mergeBeatFrameNegativePrompt,
@@ -1650,6 +1655,7 @@ export async function POST(req: NextRequest) {
       const hasWardrobeOnlyReference = refPair.hasWardrobeOnlyReference
       const hasWardrobeReference = !!(wardrobeImageUrl || hasWardrobeDiptych)
       const hasCostumeReference = hasWardrobeReference
+      const isStoredPip = refPair.hasStoredCombinedCharacterRef
 
       if (hasWardrobeDiptych) {
         console.log(
@@ -1800,6 +1806,9 @@ export async function POST(req: NextRequest) {
         hasWardrobeDiptych,
         hasDualReferences,
         hasWardrobeOnlyReference,
+        isStoredPip,
+        characterId: charId,
+        wardrobeId: refPair.resolvedWardrobe?.id,
         subjectOrdinal,
         linkingDescription,
         promptToken,
@@ -1823,7 +1832,42 @@ export async function POST(req: NextRequest) {
     })
 
     if (isBeatFrame) {
-      characterReferences = await consolidateBeatCharacterRefsIntoPipBadges(characterReferences)
+      characterReferences = await consolidateBeatCharacterRefsIntoPipBadges(
+        characterReferences,
+        {
+          persistCombined: async ({ ref, composite }) => {
+            const characterId = ref.characterId?.trim()
+            const wardrobeId = ref.wardrobeId?.trim()
+            if (!projectId || !characterId || !wardrobeId) return null
+            const url = await uploadCombinedCharacterRef({
+              composite,
+              projectId,
+              characterId,
+              wardrobeId,
+            })
+            if (!url) return null
+            try {
+              const wardrobe = characterObjects.find(
+                (c: { id?: string; name?: string }) =>
+                  (c.id || c.name) === characterId
+              )?.wardrobes?.find((w: { id?: string }) => w.id === wardrobeId)
+              await persistCombinedCharacterRefUrl({
+                projectId,
+                characterId,
+                wardrobeId,
+                combinedCharacterRefUrl: url,
+                expectedFingerprint: wardrobeExpectedFingerprint(wardrobe || {}),
+              })
+            } catch (error) {
+              const reason = error instanceof Error ? error.message : String(error)
+              console.warn(
+                `[Scene Image] Combined character ref uploaded (${url}) but wardrobe persist failed: ${reason}`
+              )
+            }
+            return url
+          },
+        }
+      )
     }
     
     // =========================================================================
@@ -3518,7 +3562,7 @@ export async function POST(req: NextRequest) {
     if (
       likenessRound === 0 &&
       isGenuineLikenessFailure(validation) &&
-      (!skipLikenessValidation || expressBeatLikenessEligible)
+      !skipLikenessValidation
     ) {
       if (canStartLikenessRetry(remainingBudgetMs(), round0CostMs)) {
         firstLikenessRound = {
@@ -3563,11 +3607,10 @@ export async function POST(req: NextRequest) {
 
     if (
       expressBeatLikenessEligible &&
-      likenessRound >= 1 &&
       isGenuineLikenessFailure(validation)
     ) {
       console.warn(
-        '[Scene Image] Express beat likeness failed after identity escalation — failing uncharged'
+        '[Scene Image] Express beat likeness failed — failing uncharged without a second Vertex still'
       )
       return NextResponse.json(
         {

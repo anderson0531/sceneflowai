@@ -16,6 +16,7 @@ export interface ReferenceAssetAttributes {
   klingElementId?: string
   headshotUrl?: string
   fullBodyUrl?: string
+  combinedCharacterRefUrl?: string
   category?: string
   importance?: 'critical' | 'important' | 'minor'
   alwaysInclude?: boolean

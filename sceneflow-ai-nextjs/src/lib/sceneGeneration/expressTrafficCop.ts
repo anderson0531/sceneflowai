@@ -46,16 +46,11 @@ const EXPRESS_LANES: ExpressLane[] = ['text', 'image', 'audio']
 export const DEFAULT_EXPRESS_IMAGE_CONCURRENCY = 1
 
 /**
- * Draft beats run on flash, whose quota tolerates two in flight.
- *
- * Three was tried and reverted. The reasoning for it — that a wider lane
- * shortens the animatic iteration loop — held only while a rate-limited frame
- * slept inside its slot. Fail-fast frees the slot on the first 429, so the
- * same lane now turns over several times faster, and three concurrent starts
- * against a shared quota pool spent the run provoking the contention it was
- * meant to outrun.
+ * Draft beats used to run two-wide on flash. Identity-ref jobs on that lane
+ * 429ed, and a leftover default of 3 started a third child generate-image.
+ * Sequential is the intended cap for every still, including flash.
  */
-export const DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY = 2
+export const DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY = 1
 
 /** Default TTS in-flight cap for Express Audio / Storyboard Express audio lane. */
 export const DEFAULT_EXPRESS_AUDIO_CONCURRENCY = 8

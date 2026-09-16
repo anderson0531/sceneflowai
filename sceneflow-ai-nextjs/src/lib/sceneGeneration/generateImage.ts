@@ -3,8 +3,8 @@
  *
  * The existing image route does NOT write to the project metadata; it
  * generates the image, uploads to Blob, and returns the resulting URL.
- * That makes it safe to call from the Storyboard Express orchestrator in
- * parallel for multiple scenes — each call only mutates an in-memory
+ * That makes it safe to call from the Storyboard Express orchestrator for
+ * sequential beat frames — each call only mutates an in-memory
  * scene copy that the orchestrator will atomically persist at the end.
  */
 
@@ -86,6 +86,12 @@ export class SceneImageGenerationError extends Error {
   }
 }
 
+/**
+ * Child `/api/scene/generate-image` is capped at 300s. Aborting just under
+ * that frees the Express image-lane slot if the child hangs.
+ */
+export const SCENE_GENERATE_IMAGE_FETCH_TIMEOUT_MS = 295_000
+
 export async function generateSceneImage(
   params: GenerateSceneImageParams
 ): Promise<SceneImageResult> {
@@ -131,10 +137,19 @@ export async function generateSceneImage(
     ...(authCookie ? { Cookie: authCookie } : {}),
   }
 
-  const res = await fetch(`${baseUrl}/api/scene/generate-image`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
+  const controller = new AbortController()
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    SCENE_GENERATE_IMAGE_FETCH_TIMEOUT_MS
+  )
+
+  let res: Response
+  try {
+    res = await fetch(`${baseUrl}/api/scene/generate-image`, {
+      method: 'POST',
+      headers,
+      signal: controller.signal,
+      body: JSON.stringify({
       projectId,
       sceneIndex,
       quality,
@@ -176,7 +191,18 @@ export async function generateSceneImage(
       ...(lookbook ? { lookbook } : {}),
       ...(stillPolicyMode ? { stillPolicyMode } : {}),
     }),
-  })
+    })
+  } catch (error) {
+    clearTimeout(timeoutId)
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new SceneImageGenerationError(
+        `Scene image generation timed out after ${SCENE_GENERATE_IMAGE_FETCH_TIMEOUT_MS}ms`,
+        504
+      )
+    }
+    throw error
+  }
+  clearTimeout(timeoutId)
 
   let payload: any = null
   try {

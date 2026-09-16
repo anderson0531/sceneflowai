@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import sharp from 'sharp'
 import {
   COMBINED_CHARACTER_REF_HEIGHT,
@@ -160,6 +160,62 @@ describe('consolidateBeatCharacterRefsIntoPipBadges', () => {
     expect(refs[0].diptychReferenceId).toBe(1)
     expect(refs[0].description).not.toMatch(/RIGHT panel/i)
     expect(refs[0].description).toContain('character reference')
+  })
+
+  it('leaves a stored PiP Blob URL alone', async () => {
+    const refs = await consolidateBeatCharacterRefsIntoPipBadges(
+      [
+        {
+          name: 'Gideon Croft',
+          hasWardrobeDiptych: true,
+          isStoredPip: true,
+          wardrobeDiptychImageUrl: 'https://example.com/gideon-pip.jpg',
+          imageUrl: 'https://example.com/gideon-pip.jpg',
+        },
+      ],
+      {
+        composePair: async () => {
+          throw new Error('composePair should not run for a stored PiP')
+        },
+        composeDiptych: async () => {
+          throw new Error('composeDiptych should not run for a stored PiP')
+        },
+      }
+    )
+
+    expect(refs[0].wardrobeDiptychImageUrl).toBe('https://example.com/gideon-pip.jpg')
+    expect(refs[0].isStoredPip).toBe(true)
+  })
+
+  it('attaches a persisted Blob URL instead of a data URL', async () => {
+    const persistCombined = vi.fn(async () => 'https://blob.example/gideon-pip.jpg')
+    const refs = await consolidateBeatCharacterRefsIntoPipBadges(
+      [
+        {
+          name: 'Gideon Croft',
+          hasDualReferences: true,
+          identityImageUrl: 'https://example.com/gideon-face.jpg',
+          wardrobeImageUrl: 'https://example.com/gideon-wardrobe.jpg',
+          characterId: 'c1',
+          wardrobeId: 'w1',
+        },
+      ],
+      {
+        composePair: async () => ({
+          base64: 'aaa',
+          mimeType: 'image/jpeg',
+          dataUrl: 'data:image/jpeg;base64,aaa',
+          width: COMBINED_CHARACTER_REF_WIDTH,
+          height: COMBINED_CHARACTER_REF_HEIGHT,
+        }),
+        persistCombined,
+      }
+    )
+
+    expect(persistCombined).toHaveBeenCalledOnce()
+    expect(refs[0].wardrobeDiptychImageUrl).toBe('https://blob.example/gideon-pip.jpg')
+    expect(refs[0].isStoredPip).toBe(true)
+    expect(refs[0].hasDualReferences).toBe(false)
   })
 
   it('keeps dual refs when stitching fails', async () => {
