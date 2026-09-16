@@ -59,7 +59,7 @@ describe('assembleStructuredStillPrompt', () => {
 
     expect(prompt).toContain(STILL_SECTION_REFERENCES)
     expect(prompt).toContain("prop [3] = Arthur Pendelton's 1893 Journal — library prop")
-    expect(prompt).toContain('person [1] (Vesper Vale) matches its identity reference')
+    expect(prompt).toContain('person [1] (Vesper Vale) — matches its identity reference')
     expect(prompt).toContain('interposing prop [3] between person [2]')
     expect(prompt).not.toContain("interposing Arthur Pendelton's 1893 Journal")
     expect(prompt).toContain(STILL_SECTION_STILL)
@@ -152,32 +152,34 @@ Strictly Avoid: Mannequin geometry.`,
 
     const legend = formatStillReferencesLegend(refs)
     expect(legend).toContain(
-      'person [1] (Gideon Croft) matches Reference image 1 (Identity) and Reference image 3 (Wardrobe)'
+      'person [1] (Gideon Croft) — matches Reference image 1 (Identity) and Reference image 3 (Wardrobe)'
     )
     expect(legend).toContain(
-      'person [2] (Piper Hayes) matches Reference image 2 (Identity) and Reference image 4 (Wardrobe)'
+      'person [2] (Piper Hayes) — matches Reference image 2 (Identity) and Reference image 4 (Wardrobe)'
     )
   })
 
-  it('names a diptych slot as an identity and wardrobe composite', () => {
+  it('names a combined character slot without panel language', () => {
     const refs = stillRefsFromAttachedImages({
       selected: [
         { sendIndex: 1, characterName: 'Gideon Croft', refRole: 'wardrobe-diptych' },
         { sendIndex: 2, characterName: 'Piper Hayes', refRole: 'wardrobe-diptych' },
       ],
       characterReferences: [
-        { name: 'Gideon Croft', promptToken: 'person [1]', subjectOrdinal: 1 },
+        {
+          name: 'Gideon Croft',
+          promptToken: 'person [1]',
+          subjectOrdinal: 1,
+          wardrobeDescription: 'charcoal wool overcoat, scuffed boots',
+        },
         { name: 'Piper Hayes', promptToken: 'person [2]', subjectOrdinal: 2 },
       ],
     })
 
     const legend = formatStillReferencesLegend(refs)
-    expect(legend).toContain(
-      'person [1] (Gideon Croft) matches Reference image 1 (Identity and wardrobe composite)'
-    )
-    expect(legend).toContain(
-      'person [2] (Piper Hayes) matches Reference image 2 (Identity and wardrobe composite)'
-    )
+    expect(legend).toContain('person [1] (Gideon Croft), wearing charcoal wool overcoat, scuffed boots — matches Reference image 1')
+    expect(legend).toContain('person [2] (Piper Hayes) — matches Reference image 2')
+    expect(legend).not.toMatch(/LEFT|RIGHT|diptych|composite/i)
   })
 
   it('does not ask for cartoon animatic aesthetics or negative limb priming', () => {
@@ -187,9 +189,29 @@ Strictly Avoid: Mannequin geometry.`,
     })
     expect(prompt).toContain('Cinematic live-action film still')
     expect(prompt).toContain('photographed on 35mm')
+    expect(prompt).toContain('Unbroken single-camera frame')
+    expect(prompt).toContain('unified 16:9 cinematic perspective')
     expect(prompt).toContain('anatomically distinct silhouettes')
     expect(prompt).not.toContain('Frozen animatic')
     expect(prompt).not.toMatch(/Never duplicate, blur, streak or repeat a limb/)
+    expect(prompt.toLowerCase()).not.toMatch(/split-screen|diptych|two-panel|collage/)
+    expect(prompt).not.toContain('Continuous wide shot')
+  })
+
+  it('adds continuous wide shot only for wide/establishing direction', () => {
+    const wide = assembleStructuredStillPrompt({
+      actionOrStructured: 'person [1] stands in the vault.',
+      refs: [{ kind: 'person', token: 'person [1]', name: 'Gideon Croft', roleLabel: 'identity' }],
+      shotType: 'wide shot',
+    })
+    expect(wide).toContain('Continuous wide shot')
+
+    const close = assembleStructuredStillPrompt({
+      actionOrStructured: 'person [1] stands in the vault.',
+      refs: [{ kind: 'person', token: 'person [1]', name: 'Gideon Croft', roleLabel: 'identity' }],
+      shotType: 'close-up',
+    })
+    expect(close).not.toContain('Continuous wide shot')
   })
 })
 

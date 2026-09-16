@@ -3,9 +3,11 @@
  *
  * Dual refs (portrait + turnaround) consume two multimodal slots per person and
  * hit the eco Flash cap of 6 as soon as a two-hander also carries a location
- * and a prop — the lantern is the first thing dropped. Stitching LEFT=face /
- * RIGHT=outfit into one 16:9 card reuses the existing diptych consumption
- * instructions and leaves room for both props.
+ * and a prop. Combining them into one 16:9 card leaves room for both props.
+ *
+ * The composite is a full-body wardrobe canvas with a circular face badge in
+ * the corner — not a LEFT|RIGHT diptych. Side-by-side panels taught the still
+ * model to emit split frames.
  *
  * Isolated from client-safe still-prompt modules: this file imports `sharp`
  * and fetches Blob URLs, which must not enter the browser bundle.
@@ -14,19 +16,23 @@
 import sharp from 'sharp'
 import { fetchReferenceImageAsBase64 } from '@/lib/storage/fetchReferenceImage'
 
-export const IDENTITY_WARDROBE_DIPTYCH_WIDTH = 1920
-export const IDENTITY_WARDROBE_DIPTYCH_HEIGHT = 1080
+export const COMBINED_CHARACTER_REF_WIDTH = 1920
+export const COMBINED_CHARACTER_REF_HEIGHT = 1080
+/** @deprecated Use COMBINED_CHARACTER_REF_WIDTH. */
+export const IDENTITY_WARDROBE_DIPTYCH_WIDTH = COMBINED_CHARACTER_REF_WIDTH
+/** @deprecated Use COMBINED_CHARACTER_REF_HEIGHT. */
+export const IDENTITY_WARDROBE_DIPTYCH_HEIGHT = COMBINED_CHARACTER_REF_HEIGHT
 
-const PANEL_WIDTH = IDENTITY_WARDROBE_DIPTYCH_WIDTH / 2
 const LETTERBOX = { r: 20, g: 20, b: 20, alpha: 1 }
 
-export interface IdentityWardrobeDiptych {
-  base64: string
-  mimeType: 'image/jpeg'
-  dataUrl: string
-  width: number
-  height: number
-}
+/** ~17% of 1920×1080, within the 15–20% badge-area target. */
+const CANVAS_AREA = COMBINED_CHARACTER_REF_WIDTH * COMBINED_CHARACTER_REF_HEIGHT
+export const FACE_BADGE_AREA_RATIO = 0.17
+export const FACE_BADGE_DIAMETER = Math.round(
+  2 * Math.sqrt((CANVAS_AREA * FACE_BADGE_AREA_RATIO) / Math.PI)
+)
+export const FACE_BADGE_RING_PX = 10
+export const FACE_BADGE_PADDING_PX = 36
 
 const DUAL_WARDROBE_TEXT =
   ', wearing the outfit shown in their wardrobe reference image'
@@ -34,78 +40,15 @@ const DUAL_WARDROBE_TEXT =
 const DIPTYCH_WARDROBE_TEXT =
   ', copy outfit from the RIGHT panel of their wardrobe diptych reference only — do not describe clothing in text'
 
-/**
- * Stitch a portrait (cover, left) and a wardrobe sheet (contain, right) onto
- * a 16:9 canvas. `contain` on the wardrobe side keeps a multi-pose turnaround
- * from being cropped into a random panel.
- */
-export async function stitchIdentityWardrobeBuffers(
-  identityBuffer: Buffer,
-  wardrobeBuffer: Buffer
-): Promise<Buffer> {
-  const left = await sharp(identityBuffer)
-    .resize(PANEL_WIDTH, IDENTITY_WARDROBE_DIPTYCH_HEIGHT, {
-      fit: 'cover',
-      position: 'center',
-    })
-    .toBuffer()
+const COMBINED_WARDROBE_TEXT =
+  ', wearing the outfit shown in their character reference'
 
-  const right = await sharp(wardrobeBuffer)
-    .resize(PANEL_WIDTH, IDENTITY_WARDROBE_DIPTYCH_HEIGHT, {
-      fit: 'contain',
-      background: LETTERBOX,
-    })
-    .toBuffer()
-
-  return sharp({
-    create: {
-      width: IDENTITY_WARDROBE_DIPTYCH_WIDTH,
-      height: IDENTITY_WARDROBE_DIPTYCH_HEIGHT,
-      channels: 3,
-      background: { r: LETTERBOX.r, g: LETTERBOX.g, b: LETTERBOX.b },
-    },
-  })
-    .composite([
-      { input: left, left: 0, top: 0 },
-      { input: right, left: PANEL_WIDTH, top: 0 },
-    ])
-    .jpeg({ quality: 90 })
-    .toBuffer()
-}
-
-export async function composeIdentityWardrobeDiptych(args: {
-  identityUrl: string
-  wardrobeUrl: string
-  label?: string
-}): Promise<IdentityWardrobeDiptych | null> {
-  const tag = args.label ? ` for ${args.label}` : ''
-  try {
-    const identity = await fetchReferenceImageAsBase64(args.identityUrl, {
-      label: `${args.label || 'character'} identity`,
-    })
-    const wardrobe = await fetchReferenceImageAsBase64(args.wardrobeUrl, {
-      label: `${args.label || 'character'} wardrobe`,
-    })
-
-    const composed = await stitchIdentityWardrobeBuffers(
-      Buffer.from(identity.base64, 'base64'),
-      Buffer.from(wardrobe.base64, 'base64')
-    )
-    const base64 = composed.toString('base64')
-    return {
-      base64,
-      mimeType: 'image/jpeg',
-      dataUrl: `data:image/jpeg;base64,${base64}`,
-      width: IDENTITY_WARDROBE_DIPTYCH_WIDTH,
-      height: IDENTITY_WARDROBE_DIPTYCH_HEIGHT,
-    }
-  } catch (error) {
-    const reason = error instanceof Error ? error.message : String(error)
-    console.warn(
-      `[Scene Image] Failed to stitch identity+wardrobe diptych${tag}: ${reason}`
-    )
-    return null
-  }
+export interface IdentityWardrobeDiptych {
+  base64: string
+  mimeType: 'image/jpeg'
+  dataUrl: string
+  width: number
+  height: number
 }
 
 export interface DualRefForDiptychConsolidation {
@@ -124,66 +67,319 @@ export interface DualRefForDiptychConsolidation {
   hasCostumeReference?: boolean
   defaultWardrobe?: string
   wardrobeAccessories?: string
+  wardrobeDescription?: string
+}
+
+export function isSixteenByNine(width: number, height: number): boolean {
+  if (width < 8 || height < 8) return false
+  const ratio = width / height
+  return ratio > 1.6 && ratio < 1.95
+}
+
+function columnMean(
+  data: Buffer,
+  info: { width: number; height: number; channels: number },
+  x: number
+): [number, number, number] {
+  let r = 0
+  let g = 0
+  let b = 0
+  const channels = info.channels
+  for (let y = 0; y < info.height; y += 1) {
+    const i = (y * info.width + x) * channels
+    r += data[i]
+    g += data[i + 1]
+    b += data[i + 2]
+  }
+  const n = info.height
+  return [r / n, g / n, b / n]
+}
+
+function rgbDist(a: [number, number, number], b: [number, number, number]): number {
+  return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2])
 }
 
 /**
- * For beat frames, replace a surviving identity+wardrobe pair with one
- * composite slot. Fetch/stitch failure keeps the dual refs so the frame
- * still generates.
+ * Conservative vertical-seam detector for character sheets only.
+ * Location establishing shots must never go through this.
  */
-export async function consolidateBeatDualRefsIntoDiptychs<
+export async function hasVerticalCenterSeam(buffer: Buffer): Promise<boolean> {
+  const { data, info } = await sharp(buffer)
+    .resize(64, 36, { fit: 'fill' })
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true })
+
+  const mid = Math.floor(info.width / 2)
+  let neighborSum = 0
+  let neighborCount = 0
+  for (let x = 1; x < info.width; x += 1) {
+    if (x === mid) continue
+    neighborSum += rgbDist(
+      columnMean(data, info, x - 1),
+      columnMean(data, info, x)
+    )
+    neighborCount += 1
+  }
+  if (neighborCount === 0) return false
+  const avg = neighborSum / neighborCount
+  const center = rgbDist(columnMean(data, info, mid - 1), columnMean(data, info, mid))
+  return center > avg * 3 && center > 40
+}
+
+export async function looksLikeHorizontalDiptych(buffer: Buffer): Promise<boolean> {
+  const meta = await sharp(buffer).metadata()
+  const width = meta.width ?? 0
+  const height = meta.height ?? 0
+  if (!isSixteenByNine(width, height)) return false
+  return hasVerticalCenterSeam(buffer)
+}
+
+export async function splitHorizontalDiptychBuffer(
+  buffer: Buffer
+): Promise<{ identity: Buffer; wardrobe: Buffer }> {
+  const meta = await sharp(buffer).metadata()
+  const width = meta.width ?? COMBINED_CHARACTER_REF_WIDTH
+  const height = meta.height ?? COMBINED_CHARACTER_REF_HEIGHT
+  const mid = Math.floor(width / 2)
+  const identity = await sharp(buffer)
+    .extract({ left: 0, top: 0, width: mid, height })
+    .toBuffer()
+  const wardrobe = await sharp(buffer)
+    .extract({ left: mid, top: 0, width: width - mid, height })
+    .toBuffer()
+  return { identity, wardrobe }
+}
+
+async function circularFaceBadge(identityBuffer: Buffer, diameter: number): Promise<Buffer> {
+  const resized = await sharp(identityBuffer)
+    .resize(diameter, diameter, { fit: 'cover', position: 'centre' })
+    .ensureAlpha()
+    .toBuffer()
+
+  const radius = diameter / 2
+  const mask = Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${diameter}" height="${diameter}">` +
+      `<circle cx="${radius}" cy="${radius}" r="${radius}" fill="white"/></svg>`
+  )
+
+  return sharp(resized)
+    .composite([{ input: mask, blend: 'dest-in' }])
+    .png()
+    .toBuffer()
+}
+
+function badgeRingSvg(outer: number, innerDiameter: number): Buffer {
+  const cx = outer / 2
+  const outerR = outer / 2
+  const innerR = innerDiameter / 2 + 2
+  return Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${outer}" height="${outer}">` +
+      `<circle cx="${cx}" cy="${cx}" r="${outerR}" fill="#f4f1ea"/>` +
+      `<circle cx="${cx}" cy="${cx}" r="${innerR}" fill="#1a1a1a"/>` +
+      `</svg>`
+  )
+}
+
+/**
+ * Full-body wardrobe as the canvas, identity close-up as a circular corner badge.
+ * `contain` on the wardrobe keeps a multi-pose turnaround from being cropped
+ * into a random panel.
+ */
+export async function composeIdentityWardrobePipBuffers(
+  identityBuffer: Buffer,
+  wardrobeBuffer: Buffer
+): Promise<Buffer> {
+  const base = await sharp(wardrobeBuffer)
+    .resize(COMBINED_CHARACTER_REF_WIDTH, COMBINED_CHARACTER_REF_HEIGHT, {
+      fit: 'contain',
+      background: LETTERBOX,
+    })
+    .toBuffer()
+
+  const diameter = FACE_BADGE_DIAMETER
+  const ring = FACE_BADGE_RING_PX
+  const outer = diameter + ring * 2
+  const circular = await circularFaceBadge(identityBuffer, diameter)
+  const left = COMBINED_CHARACTER_REF_WIDTH - FACE_BADGE_PADDING_PX - outer
+  const top = FACE_BADGE_PADDING_PX
+
+  return sharp(base)
+    .composite([
+      { input: badgeRingSvg(outer, diameter), left, top },
+      { input: circular, left: left + ring, top: top + ring },
+    ])
+    .jpeg({ quality: 90 })
+    .toBuffer()
+}
+
+/** @deprecated PiP replaced the two-panel stitch; kept as an alias. */
+export const stitchIdentityWardrobeBuffers = composeIdentityWardrobePipBuffers
+
+export async function composePipFromDiptychBuffer(diptychBuffer: Buffer): Promise<Buffer> {
+  const { identity, wardrobe } = await splitHorizontalDiptychBuffer(diptychBuffer)
+  return composeIdentityWardrobePipBuffers(identity, wardrobe)
+}
+
+function toCompositeResult(composed: Buffer): IdentityWardrobeDiptych {
+  const base64 = composed.toString('base64')
+  return {
+    base64,
+    mimeType: 'image/jpeg',
+    dataUrl: `data:image/jpeg;base64,${base64}`,
+    width: COMBINED_CHARACTER_REF_WIDTH,
+    height: COMBINED_CHARACTER_REF_HEIGHT,
+  }
+}
+
+export async function composeIdentityWardrobeDiptych(args: {
+  identityUrl: string
+  wardrobeUrl: string
+  label?: string
+}): Promise<IdentityWardrobeDiptych | null> {
+  const tag = args.label ? ` for ${args.label}` : ''
+  try {
+    const identity = await fetchReferenceImageAsBase64(args.identityUrl, {
+      label: `${args.label || 'character'} identity`,
+    })
+    const wardrobe = await fetchReferenceImageAsBase64(args.wardrobeUrl, {
+      label: `${args.label || 'character'} wardrobe`,
+    })
+
+    const composed = await composeIdentityWardrobePipBuffers(
+      Buffer.from(identity.base64, 'base64'),
+      Buffer.from(wardrobe.base64, 'base64')
+    )
+    return toCompositeResult(composed)
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error)
+    console.warn(
+      `[Scene Image] Failed to compose identity+wardrobe character reference${tag}: ${reason}`
+    )
+    return null
+  }
+}
+
+export async function composeIdentityWardrobePipFromDiptychUrl(args: {
+  diptychUrl: string
+  label?: string
+}): Promise<IdentityWardrobeDiptych | null> {
+  const tag = args.label ? ` for ${args.label}` : ''
+  try {
+    const fetched = await fetchReferenceImageAsBase64(args.diptychUrl, {
+      label: `${args.label || 'character'} combined reference`,
+    })
+    const source = Buffer.from(fetched.base64, 'base64')
+    // Tagged wardrobe sheets are LEFT|RIGHT by contract. Always split, then
+    // reassemble as a corner badge so the still model never sees two panels.
+    const composed = await composePipFromDiptychBuffer(source)
+    return toCompositeResult(composed)
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error)
+    console.warn(
+      `[Scene Image] Failed to convert combined character sheet to PiP${tag}: ${reason}`
+    )
+    return null
+  }
+}
+
+function applyCombinedSlot<T extends DualRefForDiptychConsolidation>(
+  ref: T,
+  composite: IdentityWardrobeDiptych
+): T {
+  const diptychReferenceId =
+    ref.identityReferenceId ?? ref.wardrobeReferenceId ?? ref.diptychReferenceId ?? ref.referenceId
+
+  let description = ref.description
+  if (typeof description === 'string') {
+    description = description
+      .replace(DIPTYCH_WARDROBE_TEXT, COMBINED_WARDROBE_TEXT)
+      .replace(DUAL_WARDROBE_TEXT, COMBINED_WARDROBE_TEXT)
+  }
+
+  return {
+    ...ref,
+    hasWardrobeDiptych: true,
+    hasDualReferences: false,
+    hasCostumeReference: true,
+    wardrobeDiptychImageUrl: composite.dataUrl,
+    diptychReferenceId,
+    identityReferenceId: undefined,
+    wardrobeReferenceId: undefined,
+    identityImageUrl: undefined,
+    wardrobeImageUrl: undefined,
+    imageUrl: composite.dataUrl,
+    description,
+  }
+}
+
+export interface ConsolidatePipDeps {
+  composePair?: typeof composeIdentityWardrobeDiptych
+  composeDiptych?: typeof composeIdentityWardrobePipFromDiptychUrl
+}
+
+/**
+ * For beat frames, replace identity+wardrobe pairs and stored two-panel sheets
+ * with one PiP character slot. Fetch/compose failure keeps the original refs.
+ */
+export async function consolidateBeatCharacterRefsIntoPipBadges<
   T extends DualRefForDiptychConsolidation,
 >(
   refs: T[],
-  compose: typeof composeIdentityWardrobeDiptych = composeIdentityWardrobeDiptych
+  depsOrCompose: ConsolidatePipDeps | typeof composeIdentityWardrobeDiptych = {}
 ): Promise<T[]> {
+  const deps: ConsolidatePipDeps =
+    typeof depsOrCompose === 'function' ? { composePair: depsOrCompose } : depsOrCompose
+  const composePair = deps.composePair ?? composeIdentityWardrobeDiptych
+  const composeDiptych = deps.composeDiptych ?? composeIdentityWardrobePipFromDiptychUrl
+
   return Promise.all(
     refs.map(async (ref) => {
       if (
-        !ref.hasDualReferences ||
-        ref.hasWardrobeDiptych ||
-        !ref.identityImageUrl ||
-        !ref.wardrobeImageUrl
+        ref.hasDualReferences &&
+        !ref.hasWardrobeDiptych &&
+        ref.identityImageUrl &&
+        ref.wardrobeImageUrl
       ) {
-        return ref
-      }
-
-      const composite = await compose({
-        identityUrl: ref.identityImageUrl,
-        wardrobeUrl: ref.wardrobeImageUrl,
-        label: ref.name,
-      })
-      if (!composite) {
-        console.warn(
-          `[Scene Image] Composite stitch failed for ${ref.name || 'character'}; keeping dual references`
+        const composite = await composePair({
+          identityUrl: ref.identityImageUrl,
+          wardrobeUrl: ref.wardrobeImageUrl,
+          label: ref.name,
+        })
+        if (!composite) {
+          console.warn(
+            `[Scene Image] Combined character compose failed for ${ref.name || 'character'}; keeping dual references`
+          )
+          return ref
+        }
+        console.log(
+          `[Scene Image] ✓ Consolidated dual references for ${ref.name || 'character'} into a character reference`
         )
-        return ref
+        return applyCombinedSlot(ref, composite)
       }
 
-      const diptychReferenceId =
-        ref.identityReferenceId ?? ref.wardrobeReferenceId ?? ref.referenceId
-      console.log(
-        `[Scene Image] ✓ Consolidated dual references for ${ref.name || 'character'} into identity+wardrobe composite`
-      )
-
-      return {
-        ...ref,
-        hasWardrobeDiptych: true,
-        hasDualReferences: false,
-        hasCostumeReference: true,
-        wardrobeDiptychImageUrl: composite.dataUrl,
-        diptychReferenceId,
-        identityReferenceId: undefined,
-        wardrobeReferenceId: undefined,
-        identityImageUrl: undefined,
-        wardrobeImageUrl: undefined,
-        imageUrl: composite.dataUrl,
-        defaultWardrobe: undefined,
-        wardrobeAccessories: undefined,
-        description: typeof ref.description === 'string'
-          ? ref.description.replace(DUAL_WARDROBE_TEXT, DIPTYCH_WARDROBE_TEXT)
-          : ref.description,
+      const diptychUrl = ref.wardrobeDiptychImageUrl
+      if (ref.hasWardrobeDiptych && diptychUrl && !diptychUrl.startsWith('data:')) {
+        const composite = await composeDiptych({
+          diptychUrl,
+          label: ref.name,
+        })
+        if (!composite) {
+          console.warn(
+            `[Scene Image] Combined-sheet conversion failed for ${ref.name || 'character'}; keeping original sheet`
+          )
+          return ref
+        }
+        console.log(
+          `[Scene Image] ✓ Converted combined character sheet for ${ref.name || 'character'} into a corner-badge reference`
+        )
+        return applyCombinedSlot(ref, composite)
       }
+
+      return ref
     })
   )
 }
+
+/** @deprecated Use consolidateBeatCharacterRefsIntoPipBadges. */
+export const consolidateBeatDualRefsIntoDiptychs = consolidateBeatCharacterRefsIntoPipBadges

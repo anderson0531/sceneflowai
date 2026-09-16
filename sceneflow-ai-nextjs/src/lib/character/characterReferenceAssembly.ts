@@ -14,10 +14,8 @@ export const EXPRESSION_OVERRIDE_INSTRUCTION =
   'Identity references define bone structure, features, skin tone, hair, age, and ethnicity — NOT mood.'
 
 export const WARDROBE_ONLY_REFERENCE_INSTRUCTION =
-  'WARDROBE REFERENCE (SECONDARY): Full-body front-facing wardrobe reference — use for outfit colors, fabric, cut, fit, footwear, and accessories, AND for any visible scene-state marks present on this image (bruises, wounds, blood, makeup wear on hands/body/face). ' +
-  'Do NOT derive bone structure, base likeness, ethnicity, age, or photorealistic rendering style from this image — identity and photorealism come from the separate identity headshot reference. ' +
-  'Preserve wardrobe-visible injuries and makeup state across the frame; expression/mood still comes from beat direction. ' +
-  'Do NOT reproduce the neutral gray studio background or reference-sheet layout in the scene.'
+  'WARDROBE REFERENCE (SECONDARY): Full-body front-facing wardrobe — outfit colors, fabric, cut, fit, footwear, accessories, and visible scene-state marks (bruises, wounds, blood, makeup wear). ' +
+  'Identity, bone structure, and photorealism come from the identity reference. Expression comes from beat direction.'
 
 /** Legacy mannequin turnaround sheet instruction (back-compat). */
 export const LEGACY_MANNEQUIN_WARDROBE_REFERENCE_INSTRUCTION =
@@ -28,37 +26,30 @@ export const LEGACY_MANNEQUIN_WARDROBE_REFERENCE_INSTRUCTION =
 /** Global priority block injected before per-image lines when dual refs exist. */
 export const DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK =
   'DUAL REFERENCE PRIORITY: Identity reference = PRIMARY for face bone structure, hair base, skin tone, age, ethnicity, body proportions, and photorealistic human rendering at ALL shot distances (wide, medium, close). ' +
-  'Wardrobe reference = SECONDARY for outfit colors, fabric, cut, accessories, AND visible scene-state marks on hands/body/face (bruises, wounds, blood, makeup wear) — preserve those marks even in close-ups. ' +
-  'Facial expression/mood comes from beat direction, not the neutral reference pose. ' +
-  'Never adopt mannequin form, faceless figure, turnaround sheet layout, gray studio background, illustration, or cartoon style from the wardrobe image.'
+  'Wardrobe reference = SECONDARY for outfit colors, fabric, cut, accessories, AND visible scene-state marks on hands/body/face (bruises, wounds, blood, makeup wear). ' +
+  'Facial expression comes from beat direction.'
 
 const WIDE_SHOT_KEYWORDS = /\b(wide|establishing|full[- ]?body|long shot|master shot|extreme wide)\b/i
 
+export function isWideEstablishingShotType(shotType?: string | null): boolean {
+  return !!shotType && WIDE_SHOT_KEYWORDS.test(shotType)
+}
+
 /** Extra reinforcement for wide/establishing shots where wardrobe sheets visually dominate. */
 export function buildFramingAwareIdentityBlock(shotType?: string): string {
-  if (!shotType || !WIDE_SHOT_KEYWORDS.test(shotType)) {
+  if (!isWideEstablishingShotType(shotType)) {
     return ''
   }
   return (
-    'WIDE/ESTABLISHING SHOT: Characters must remain photorealistic humans matching their identity reference at full distance — ' +
-    'do NOT let the wardrobe mannequin sheet define body type, face structure, skin, or rendering style. ' +
-    'Extract outfit colors, garment shapes, and any visible scene-state marks (bruises, makeup wear) from the wardrobe reference.'
+    'WIDE/ESTABLISHING SHOT: Characters remain photorealistic humans matching their identity reference at full distance. ' +
+    'Outfit colors, garment shapes, and visible scene-state marks come from the wardrobe reference. ' +
+    'Continuous wide shot, unbroken single-camera frame, unified 16:9 cinematic perspective.'
   )
 }
 
 /** Negative prompt terms when dual refs + photorealistic mode. */
 export function buildDualReferenceNegativeTerms(): string {
-  return [
-    'mannequin',
-    'faceless figure',
-    'turnaround sheet',
-    'fashion illustration',
-    'cartoon',
-    'anime',
-    'storyboard sketch',
-    'illustrated character',
-    '3d render character',
-  ].join(', ')
+  return ['mannequin', 'faceless figure', 'fashion illustration', 'cartoon', 'anime'].join(', ')
 }
 
 export interface CharacterReferencePair {
@@ -414,7 +405,7 @@ export function buildWardrobeReferenceLabel(
 }
 
 export function buildWardrobeDiptychReferenceLabel(characterName: string): string {
-  return `Diptych ref: ${toCharacterPromptAlias(characterName)} — LEFT=identity face, RIGHT=wardrobe outfit`
+  return `Character reference: ${toCharacterPromptAlias(characterName)} — face and full-body wardrobe`
 }
 
 export function buildDualReferenceLabels(
@@ -504,7 +495,7 @@ export function buildWardrobeBindingSummary(
   const parts = bindings
     .map((entry) => {
       if (entry.isDiptych) {
-        return `person [${entry.subjectOrdinal}] = ${entry.characterName}: face/identity from diptych Ref [${entry.identitySendIndex}] (LEFT panel), outfit from diptych Ref [${entry.identitySendIndex}] (RIGHT panel)`
+        return `person [${entry.subjectOrdinal}] = ${entry.characterName}: face and outfit from Ref [${entry.identitySendIndex}]`
       }
       if (entry.wardrobeSendIndex != null) {
         return `person [${entry.subjectOrdinal}] = ${entry.characterName}: face/identity from Ref [${entry.identitySendIndex}], outfit from Ref [${entry.wardrobeSendIndex}]`

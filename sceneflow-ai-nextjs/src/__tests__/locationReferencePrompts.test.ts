@@ -23,7 +23,7 @@ describe('locationReferencePrompts', () => {
     expect(LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION.toLowerCase()).toContain('wide-angle')
     expect(LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION.toLowerCase()).toContain('match architectural layout')
     expect(LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION.toLowerCase()).toContain('color palette')
-    expect(LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION).toContain('ONE unified full-frame')
+    expect(LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION).toContain('unbroken single-camera frame')
     expect(LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION.toLowerCase()).not.toContain('exactly one panel')
     expect(LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION.toLowerCase()).not.toContain('forward')
   })

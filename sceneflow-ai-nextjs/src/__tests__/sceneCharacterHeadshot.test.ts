@@ -78,7 +78,7 @@ describe('scene character headshot generation settings', () => {
 })
 
 describe('buildSimplifiedBeatFramePrompt', () => {
-  it('uses person tokens, strict diptych panel roles, and emotion without wardrobe text', () => {
+  it('uses person tokens, combined character refs, and emotion without panel routing', () => {
     const prompt = buildSimplifiedBeatFramePrompt({
       beatAction: 'Sarah leans against the counter, arms crossed.',
       characters: [{ name: 'Sarah', referenceIndex: 1, emotion: 'defiant' }],
@@ -86,44 +86,46 @@ describe('buildSimplifiedBeatFramePrompt', () => {
     })
     expect(prompt).toContain('person [1]')
     expect(prompt).toContain('defiant')
-    expect(prompt).toMatch(/LEFT panel/i)
-    expect(prompt).toMatch(/RIGHT panel/i)
-    expect(prompt).toMatch(/copy outfit from the RIGHT panel/i)
-    expect(prompt).toMatch(/NEVER derive face/i)
-    expect(prompt).not.toMatch(/wearing/i)
+    expect(prompt).toContain('Unbroken single-camera frame')
+    expect(prompt).toContain('unified 16:9 cinematic perspective')
+    expect(prompt).toMatch(/same person/i)
+    expect(prompt).not.toMatch(/LEFT panel/i)
+    expect(prompt).not.toMatch(/RIGHT panel/i)
+    expect(prompt).not.toMatch(/diptych/i)
+    expect(prompt).not.toMatch(/NEVER derive/i)
   })
 })
 
-describe('WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION', () => {
-  it('is exported with strict left/right panel guidance', () => {
-    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/CRITICAL/i)
-    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/LEFT half.*identity/i)
-    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).not.toMatch(/injuries, expression/)
-    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/RIGHT half.*wardrobe/i)
-    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/NEVER derive face/i)
-    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/NEVER derive clothing/i)
+describe('COMBINED_CHARACTER_REFERENCE_INSTRUCTION', () => {
+  it('describes one person without panel routing', () => {
+    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/CHARACTER REFERENCE/i)
+    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/same person/i)
+    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/head-to-toe outfit/i)
+    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).not.toMatch(/LEFT/i)
+    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).not.toMatch(/RIGHT/i)
+    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).not.toMatch(/NEVER derive/i)
+    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).not.toMatch(/diptych/i)
   })
 })
 
 describe('buildWardrobeDiptychReferenceLabel', () => {
-  it('labels diptych refs with LEFT=identity and RIGHT=wardrobe', () => {
+  it('labels combined refs as face and full-body wardrobe', () => {
     expect(buildWardrobeDiptychReferenceLabel('Elara')).toBe(
-      'Diptych ref: Elara — LEFT=identity face, RIGHT=wardrobe outfit'
+      'Character reference: Char_Elara — face and full-body wardrobe'
     )
   })
 })
 
 describe('buildWardrobeDiptychCharacterConsumptionLine', () => {
-  it('returns per-character panel consumption guidance', () => {
+  it('returns per-character likeness and outfit guidance without panels', () => {
+    expect(buildWardrobeDiptychCharacterConsumptionLine('Elara')).toMatch(/same person/)
     expect(buildWardrobeDiptychCharacterConsumptionLine('Elara')).toMatch(
-      /LEFT panel for face\/identity only/
-    )
-    expect(buildWardrobeDiptychCharacterConsumptionLine('Elara')).toMatch(
-      /RIGHT panel for outfit/i
+      /head-to-toe outfit/
     )
     expect(buildWardrobeDiptychCharacterConsumptionLine('Elara', 1)).toMatch(
       /person \[1\].*only/i
     )
+    expect(buildWardrobeDiptychCharacterConsumptionLine('Elara')).not.toMatch(/LEFT|RIGHT/i)
   })
 })
 
@@ -224,7 +226,7 @@ describe('appearanceNotes on wardrobe reference generation', () => {
 describe('mergePhysicsNegativePrompt', () => {
   it('always includes physics terms and merges custom negatives', () => {
     const merged = mergePhysicsNegativePrompt('blurry, low quality')
-    expect(merged).toMatch(/floating chairs/i)
+    expect(merged).toMatch(/floating objects/i)
     expect(merged).toMatch(/blurry/i)
   })
 
@@ -236,13 +238,13 @@ describe('mergePhysicsNegativePrompt', () => {
 })
 
 describe('mergeBeatFrameNegativePrompt', () => {
-  it('includes diptych reproduction terms alongside physics negatives', () => {
+  it('includes physics quality terms without layout primes', () => {
     const merged = mergeBeatFrameNegativePrompt('blurry')
-    expect(merged).toMatch(/floating chairs/i)
-    expect(merged).toMatch(/diptych/i)
-    expect(merged).toMatch(/outfit in close-up/i)
+    expect(merged).toMatch(/floating objects/i)
+    expect(merged).toMatch(/deformed anatomy/i)
     expect(merged).toMatch(/blurry/i)
+    expect(merged.toLowerCase()).not.toMatch(/diptych/)
+    expect(merged.toLowerCase()).not.toMatch(/split-screen/)
     expect(DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT).toMatch(/split-screen output/i)
-    expect(DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT).toMatch(/mismatched identity between panels/i)
   })
 })

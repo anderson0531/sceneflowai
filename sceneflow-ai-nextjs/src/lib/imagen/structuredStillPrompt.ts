@@ -9,6 +9,7 @@
 import {
   BEAT_FRAME_CANDID_ACTION_CONSTRAINT,
   LEGACY_BEAT_FRAME_CANDID_ACTION_CONSTRAINTS,
+  isWideEstablishingShotType,
 } from '@/lib/character/characterReferenceAssembly'
 import { buildIdentityTraitsClause } from '@/lib/imagen/identityTraitsClause'
 import { buildIdentityPromptToken } from '@/lib/imagen/promptOptimizer'
@@ -35,7 +36,10 @@ export const STILL_SECTION_STYLE = '[STYLE]'
 export const STILL_SECTION_EXCLUSIONS = '[EXCLUSIONS]'
 
 export const STILL_PURPOSE_LINE =
-  'Cinematic live-action film still of this beat, photographed on 35mm. Not a video start frame. No camera motion.'
+  'Cinematic live-action film still of this beat, photographed on 35mm. Unbroken single-camera frame, unified 16:9 cinematic perspective. Not a video start frame. No camera motion.'
+
+export const STILL_WIDE_SPATIAL_LINE =
+  'Continuous wide shot — one unified 16:9 cinematic perspective.'
 
 /**
  * Earlier purpose/task wordings that still live on stored beat prompts.
@@ -46,6 +50,7 @@ export const STILL_PURPOSE_LINE =
  */
 export const LEGACY_STILL_PURPOSE_LINES = [
   'Frozen animatic film still of this beat. Not a video start frame. No camera motion.',
+  'Cinematic live-action film still of this beat, photographed on 35mm. Not a video start frame. No camera motion.',
 ] as const
 
 export const LEGACY_STILL_TASK_LINES = [
@@ -76,7 +81,7 @@ export const STILL_TASK_LINES = [
 ] as const
 
 export const DEFAULT_STILL_EXCLUSIONS =
-  'Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, turnaround sheet layout, 2x2 grid output, 4-panel layout, split-screen output, multi-panel layout, diptych, reference sheet collage, faceless figures, or artistic blending of reference mediums. Maintain 100% photographic realism when art style is photorealistic. No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).'
+  'Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, faceless figures, extra limbs, deformed anatomy. Maintain 100% photographic realism when art style is photorealistic. No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).'
 
 export type StillPromptRefKind = 'person' | 'prop' | 'location'
 
@@ -87,6 +92,8 @@ export interface StillPromptBoundRef {
   roleLabel: string
   /** Short observable traits, stated here and nowhere else in the prompt. */
   identityTraits?: string
+  /** Wardrobe/fabric/fit clause, folded into the same person line. */
+  wardrobeClause?: string
   /** 1-based send index of the identity portrait or identity+wardrobe composite. */
   identitySendIndex?: number
   /** 1-based send index of a separate wardrobe image, when dual refs remain. */
@@ -168,6 +175,7 @@ const NEXT_SECTION =
 /** Lines this module owns and re-emits, so they must never read back as action. */
 const STILL_BOILERPLATE_LINES = [
   STILL_PURPOSE_LINE,
+  STILL_WIDE_SPATIAL_LINE,
   ...LEGACY_STILL_PURPOSE_LINES,
   BEAT_FRAME_CANDID_ACTION_CONSTRAINT,
   ...LEGACY_BEAT_FRAME_CANDID_ACTION_CONSTRAINTS,
@@ -618,6 +626,16 @@ export function formatUnboundRefsInFrameLine(
     : `Also in frame: ${tokens} — match each to its reference image.`
 }
 
+export function formatWardrobeLegendClause(description?: string | null): string | undefined {
+  const trimmed = (description || '').trim()
+  if (!trimmed) return undefined
+  const withoutWearing = trimmed.replace(/^wearing\s+/i, '').replace(/\s+/g, ' ').trim()
+  if (!withoutWearing) return undefined
+  const first = withoutWearing.split(/[.!?]/)[0]?.trim() || withoutWearing
+  const words = first.split(/\s+/).filter(Boolean).slice(0, 18)
+  return words.length > 0 ? words.join(' ') : undefined
+}
+
 /**
  * Bind a person token to the attached image(s) the model actually received.
  *
@@ -630,9 +648,14 @@ export function formatPersonReferenceLegendLine(ref: StillPromptBoundRef): strin
   const identityIdx = ref.identitySendIndex
   const wardrobeIdx = ref.wardrobeSendIndex
 
+  const subjectParts = [named]
+  if (ref.identityTraits) subjectParts.push(ref.identityTraits)
+  if (ref.wardrobeClause) subjectParts.push(`wearing ${ref.wardrobeClause}`)
+  const subject = subjectParts.join(', ')
+
   let match: string
   if (ref.isComposite && identityIdx != null) {
-    match = `matches Reference image ${identityIdx} (Identity and wardrobe composite)`
+    match = `matches Reference image ${identityIdx}`
   } else if (identityIdx != null && wardrobeIdx != null) {
     match = `matches Reference image ${identityIdx} (Identity) and Reference image ${wardrobeIdx} (Wardrobe)`
   } else if (identityIdx != null) {
@@ -641,7 +664,7 @@ export function formatPersonReferenceLegendLine(ref: StillPromptBoundRef): strin
     match = 'matches its identity reference'
   }
 
-  return ref.identityTraits ? `${named} ${match}: ${ref.identityTraits}` : `${named} ${match}`
+  return `${subject} — ${match}`
 }
 
 export function formatStillReferencesLegend(refs: StillPromptBoundRef[]): string {
@@ -672,6 +695,8 @@ export function stillRefsFromAttachedImages(args: {
     visionDescription?: string | null
     hairStyle?: string
     hairColor?: string
+    wardrobeDescription?: string | null
+    defaultWardrobe?: string | null
   }>
   /** Widened on a likeness retry, where the short legend clause already failed. */
   identityTraitsWordCap?: number
@@ -720,9 +745,12 @@ export function stillRefsFromAttachedImages(args: {
         kind: 'person',
         token,
         name: entry.characterName,
-        roleLabel: slot?.isComposite ? 'identity and wardrobe composite' : 'identity',
+        roleLabel: slot?.isComposite ? 'character reference' : 'identity',
         identityTraits: char
           ? buildIdentityTraitsClause({ ...char, wordCap: args.identityTraitsWordCap })
+          : undefined,
+        wardrobeClause: char
+          ? formatWardrobeLegendClause(char.wardrobeDescription || char.defaultWardrobe)
           : undefined,
         identitySendIndex: slot?.identitySendIndex,
         wardrobeSendIndex: slot?.isComposite ? undefined : slot?.wardrobeSendIndex,
@@ -782,6 +810,7 @@ export function assembleStructuredStillPrompt(input: {
   photorealisticAnchor?: string
   includeCandid?: boolean
   exclusions?: string
+  shotType?: string
 }): string {
   const refs = input.refs ?? []
   const parsed = parseStillPromptSource(input.actionOrStructured)
@@ -791,6 +820,9 @@ export function assembleStructuredStillPrompt(input: {
   })
 
   const stillLines = [STILL_PURPOSE_LINE]
+  if (isWideEstablishingShotType(input.shotType)) {
+    stillLines.push(STILL_WIDE_SPATIAL_LINE)
+  }
   if (input.includeCandid) {
     stillLines.push(BEAT_FRAME_CANDID_ACTION_CONSTRAINT)
   }
