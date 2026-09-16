@@ -18,6 +18,21 @@ describe('buildSceneImageNegativePrompt', () => {
     expect(prompt).toMatch(/mannequin geometry/)
   })
 
+  it('omits typography primes when title text is allowed, even if extras name them', () => {
+    const prompt = buildSceneImageNegativePrompt({
+      allowTypography: true,
+      extraTerms: ['text overlay', 'centered typography', 'blurry'],
+    })
+    expect(prompt.toLowerCase()).not.toMatch(/text overlay/)
+    expect(prompt.toLowerCase()).not.toMatch(/typography/)
+    expect(prompt).toMatch(/blurry/)
+  })
+
+  it('keeps text overlay when typography is not allowed', () => {
+    const prompt = buildSceneImageNegativePrompt({ allowTypography: false })
+    expect(prompt).toMatch(/text overlay/)
+  })
+
   it('dedupes and caps the exclusion list', () => {
     const extras = Array.from({ length: 40 }, (_, i) => `artifact-${i}`)
     const prompt = buildSceneImageNegativePrompt({ extraTerms: extras })

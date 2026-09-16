@@ -11,6 +11,7 @@ import {
   LEGACY_BEAT_FRAME_CANDID_ACTION_CONSTRAINTS,
   isWideEstablishingShotType,
 } from '@/lib/character/characterReferenceAssembly'
+import { isDetailShot, isInsertOrExtremeCloseUp } from '@/lib/imagen/stillFramingNormalize'
 import { buildIdentityTraitsClause } from '@/lib/imagen/identityTraitsClause'
 import { buildIdentityPromptToken } from '@/lib/imagen/promptOptimizer'
 import {
@@ -72,16 +73,71 @@ export const LEGACY_STILL_TASK_LINES = [
  * The anatomy line is affirmative on purpose. "Never duplicate a limb" primed
  * Flash toward the anomaly it was trying to forbid (production 2026-09-15).
  */
-export const STILL_TASK_LINES = [
+export const STILL_TASK_INSTANT_LINES = [
   'Produce one photograph of a single instant — a 1/500s exposure, everything in it simultaneous.',
   'Choose the most legible instant of the described action and render only that instant: the settled pose a viewer reads the whole action from, not the movement that produced it.',
-  'Each subject has one head, two arms and two legs, each in exactly one settled pose, with anatomically distinct silhouettes.',
-  'A body in contact with a surface rests on it with its full weight, in contact along its length, with a matching contact shadow.',
-  `Every token listed in ${STILL_SECTION_REFERENCES} appears in this frame and matches its reference image.`,
 ] as const
 
+export const STILL_TASK_FULL_BODY_LINES = [
+  'Each subject has one head, two arms and two legs, each in exactly one settled pose, with anatomically distinct silhouettes.',
+  'A body in contact with a surface rests on it with its full weight, in contact along its length, with a matching contact shadow.',
+] as const
+
+export const STILL_TASK_INSERT_FRAMING_LINE =
+  'Tight macro framing; only the specified limb/hand enters the composition.'
+
+export const STILL_TASK_TOKEN_LINE =
+  `Every token listed in ${STILL_SECTION_REFERENCES} appears in this frame and matches its reference image.`
+
+export const STILL_TASK_DETAIL_TOKEN_LINE =
+  `Every person and prop token listed in ${STILL_SECTION_REFERENCES} appears in this frame and matches its reference image. Location is ambient lighting and color in shallow-focus background bokeh, not a second subject.`
+
+/**
+ * Shot-aware TASK body. Insert/ECU replace full-body anatomy with limb framing.
+ * Title/credit inserts skip the limb line so typography can be the subject.
+ */
+export function stillTaskLines(
+  shotType?: string | null,
+  options?: { allowTypography?: boolean }
+): string[] {
+  const lines: string[] = [...STILL_TASK_INSTANT_LINES]
+  if (isInsertOrExtremeCloseUp(shotType) && !options?.allowTypography) {
+    lines.push(STILL_TASK_INSERT_FRAMING_LINE)
+  } else if (!isInsertOrExtremeCloseUp(shotType)) {
+    lines.push(...STILL_TASK_FULL_BODY_LINES)
+  }
+  lines.push(
+    isDetailShot(shotType) && !options?.allowTypography
+      ? STILL_TASK_DETAIL_TOKEN_LINE
+      : STILL_TASK_TOKEN_LINE
+  )
+  return lines
+}
+
+export const STILL_TASK_LINES = stillTaskLines()
+
+export const DEFAULT_STILL_QUALITY_EXCLUSIONS =
+  'Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, faceless figures, extra limbs, deformed anatomy. Maintain 100% photographic realism when art style is photorealistic.'
+
+export const DEFAULT_STILL_TEXT_EXCLUSIONS =
+  'No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).'
+
 export const DEFAULT_STILL_EXCLUSIONS =
-  'Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, faceless figures, extra limbs, deformed anatomy. Maintain 100% photographic realism when art style is photorealistic. No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).'
+  `${DEFAULT_STILL_QUALITY_EXCLUSIONS} ${DEFAULT_STILL_TEXT_EXCLUSIONS}`
+
+function defaultStillExclusions(allowTypography?: boolean): string {
+  return allowTypography ? DEFAULT_STILL_QUALITY_EXCLUSIONS : DEFAULT_STILL_EXCLUSIONS
+}
+
+function stripTypographyExclusionLanguage(text: string): string {
+  return text
+    .replace(/\s*\(except centered title typography on title beats\)\.?/gi, '')
+    .replace(/\bNo dialogue captions, subtitles, or watermarks\.?/gi, '')
+    .replace(/\btext overlay\b/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+\./g, '.')
+    .trim()
+}
 
 export type StillPromptRefKind = 'person' | 'prop' | 'location'
 
@@ -180,6 +236,8 @@ const STILL_BOILERPLATE_LINES = [
   BEAT_FRAME_CANDID_ACTION_CONSTRAINT,
   ...LEGACY_BEAT_FRAME_CANDID_ACTION_CONSTRAINTS,
   ...STILL_TASK_LINES,
+  STILL_TASK_INSERT_FRAMING_LINE,
+  STILL_TASK_DETAIL_TOKEN_LINE,
   ...LEGACY_STILL_TASK_LINES,
 ]
 
@@ -361,6 +419,25 @@ export function promptReferencesLibraryItem(
   item: { name?: string; promptToken?: string }
 ): boolean {
   return resolveLibraryItemPromptMatch(prompt, item).matched
+}
+
+/** Match library items against Action/Framing only — not [REFERENCES] or mapping copy. */
+export function actionFramingForLibraryMatch(prompt: string): string {
+  const action = parseStillPromptSource(prompt).actionFraming.trim()
+  return action || prompt
+}
+
+function propsUsedInAction(
+  refs: StillPromptBoundRef[],
+  actionFraming: string
+): StillPromptBoundRef[] {
+  return refs.filter((ref) => {
+    if (ref.kind !== 'prop') return true
+    return promptReferencesLibraryItem(actionFraming, {
+      name: ref.name,
+      promptToken: ref.token,
+    })
+  })
 }
 
 /**
@@ -606,9 +683,15 @@ export function replaceLibraryNamesWithTokens(
  */
 export function formatUnboundRefsInFrameLine(
   refs: StillPromptBoundRef[],
-  actionFraming: string
+  actionFraming: string,
+  shotType?: string | null
 ): string {
-  const unbound = refs.filter((ref) => !actionFraming.includes(ref.token))
+  const unbound = refs.filter((ref) => {
+    if (actionFraming.includes(ref.token)) return false
+    // Detail shots consume location as bokeh, not a second subject.
+    if (ref.kind === 'location' && isDetailShot(shotType)) return false
+    return true
+  })
   if (unbound.length === 0) return ''
 
   const mismatched = unbound.filter((ref) => ref.kind !== 'location')
@@ -667,11 +750,17 @@ export function formatPersonReferenceLegendLine(ref: StillPromptBoundRef): strin
   return `${subject} — ${match}`
 }
 
-export function formatStillReferencesLegend(refs: StillPromptBoundRef[]): string {
+export function formatStillReferencesLegend(
+  refs: StillPromptBoundRef[],
+  shotType?: string | null
+): string {
   if (refs.length === 0) return ''
   const lines = refs.map((ref) => {
     if (ref.kind === 'person') return formatPersonReferenceLegendLine(ref)
     const entry = `${ref.token} = ${ref.name} — ${ref.roleLabel}`
+    if (ref.kind === 'location' && isDetailShot(shotType)) {
+      return `${entry}: match ambient lighting tone and color palette in shallow-focus background bokeh`
+    }
     return ref.identityTraits ? `${entry}: ${ref.identityTraits}` : entry
   })
   return `${STILL_SECTION_REFERENCES}\n${lines.join('\n')}`
@@ -811,13 +900,16 @@ export function assembleStructuredStillPrompt(input: {
   includeCandid?: boolean
   exclusions?: string
   shotType?: string
+  allowTypography?: boolean
 }): string {
-  const refs = input.refs ?? []
   const parsed = parseStillPromptSource(input.actionOrStructured)
+  const tokenizedAction = replaceLibraryNamesWithTokens(parsed.actionFraming, input.refs ?? [])
   const actionFraming = enrichActionFramingWithCastPerformance({
-    actionFraming: replaceLibraryNamesWithTokens(parsed.actionFraming, refs),
+    actionFraming: tokenizedAction,
     castNames: [],
+    shotType: input.shotType,
   })
+  const refs = propsUsedInAction(input.refs ?? [], actionFraming)
 
   const stillLines = [STILL_PURPOSE_LINE]
   if (isWideEstablishingShotType(input.shotType)) {
@@ -829,7 +921,7 @@ export function assembleStructuredStillPrompt(input: {
   if (actionFraming) {
     stillLines.push(`Action/Framing: ${actionFraming}`)
   }
-  const inFrameLine = formatUnboundRefsInFrameLine(refs, actionFraming)
+  const inFrameLine = formatUnboundRefsInFrameLine(refs, actionFraming, input.shotType)
   if (inFrameLine) {
     stillLines.push(inFrameLine)
   }
@@ -839,14 +931,19 @@ export function assembleStructuredStillPrompt(input: {
     style = joinPromptBlocks(style, input.photorealisticAnchor)
   }
 
-  const exclusions = mergeExclusions(
-    parsed.exclusions || DEFAULT_STILL_EXCLUSIONS,
+  const mergedExclusions = mergeExclusions(
+    parsed.exclusions || defaultStillExclusions(input.allowTypography),
     input.exclusions
   )
+  const exclusions = input.allowTypography
+    ? stripTypographyExclusionLanguage(mergedExclusions)
+    : mergedExclusions
 
   return joinPromptBlocks(
-    formatStillReferencesLegend(refs),
-    `${STILL_SECTION_TASK}\n${STILL_TASK_LINES.join('\n')}`,
+    formatStillReferencesLegend(refs, input.shotType),
+    `${STILL_SECTION_TASK}\n${stillTaskLines(input.shotType, {
+      allowTypography: input.allowTypography,
+    }).join('\n')}`,
     `${STILL_SECTION_STILL}\n${stillLines.join('\n')}`,
     style ? `${STILL_SECTION_STYLE}\n${style}` : '',
     `${STILL_SECTION_EXCLUSIONS}\n${exclusions}`

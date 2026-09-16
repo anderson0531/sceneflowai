@@ -5,6 +5,7 @@ import {
   LOCATION_TURNAROUND_USER_PROMPT_HINT,
   LOCATION_VERSION_CONSUMPTION_SUFFIX,
   LOCATION_VERSION_GENERATION_INSTRUCTION,
+  buildLocationConsumptionInstruction,
   buildLocationReferencePromptLine,
   buildLocationVersionPrompt,
   stripBeatPropsFromLocationStateNotes,
@@ -40,6 +41,32 @@ describe('locationReferencePrompts', () => {
     expect(line.toLowerCase()).toContain('wide-angle')
     expect(line.toLowerCase()).toContain('match architectural layout')
     expect(line).not.toContain('CURRENT set state')
+  })
+
+  it('attenuates location consumption on a close-up to lighting and palette bokeh', () => {
+    const instruction = buildLocationConsumptionInstruction({
+      shotType: 'Insert Shot',
+      promptToken: 'location [2]',
+    })
+    expect(instruction.toLowerCase()).toContain('shallow-focus background bokeh')
+    expect(instruction).toContain('location [2]')
+    expect(instruction.toLowerCase()).not.toContain('match architectural layout')
+
+    const line = buildLocationReferencePromptLine('TITLE SEQUENCE', 2, undefined, {
+      shotType: 'Extreme Close-Up',
+      promptToken: 'location [2]',
+    })
+    expect(line.toLowerCase()).toContain('bokeh')
+    expect(line.toLowerCase()).not.toContain('match architectural layout')
+  })
+
+  it('keeps architectural layout match on a two-shot', () => {
+    expect(buildLocationConsumptionInstruction({ shotType: 'Two-Shot' })).toBe(
+      LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION
+    )
+    expect(buildLocationConsumptionInstruction({ shotType: 'Medium Shot' })).toBe(
+      LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION
+    )
   })
 
   it('version consumption suffix is attached only for current set-state stills', () => {

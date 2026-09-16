@@ -207,19 +207,18 @@ describe('referenceLimits', () => {
     expect(mapping).toContain('PROP REFERENCES (2):')
     expect(mapping).toContain('Ref Image [4] = prop [4]')
     expect(mapping).toContain('Tiny lapel camera')
-    expect(mapping).toContain('Use token prop [4]')
+    expect(mapping).toContain('match shape, material, color, and design of prop [4]')
     expect(mapping).toContain('Ref Image [5] = prop [5]')
     expect(mapping).toContain('Coffee mug')
   })
 
-  it('buildPropReferenceMappingLines describes appearance without ordering an insertion', () => {
+  it('buildPropReferenceMappingLines describes appearance without a conditional insertion', () => {
     const mapping = buildPropReferenceMappingLines([
       { propName: 'Thirty-Inch Iron Rail Spanner', sendIndex: 7 },
     ])
-    expect(mapping).toMatch(/where the scene prompt already places it/i)
-    expect(mapping).toMatch(
-      /if the scene prompt does not use prop \[7\], the object is not in this frame/i
-    )
+    expect(mapping).toMatch(/match shape, material, color, and design of prop \[7\]/i)
+    expect(mapping).not.toMatch(/if the scene prompt does not use/i)
+    expect(mapping).not.toMatch(/This is not an instruction/i)
     expect(mapping).not.toMatch(/extract this prop/i)
   })
 

@@ -294,6 +294,7 @@ describe('the pressure gauge insert, assembled the way the image model sees it',
       actionOrStructured: composeFor({ name: 'gauge', beat }),
       refs,
       includeCandid: true,
+      shotType: beat.beatDirection?.shotType,
     })
   }
 

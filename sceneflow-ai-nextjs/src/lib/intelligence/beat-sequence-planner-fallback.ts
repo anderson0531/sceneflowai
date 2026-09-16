@@ -346,16 +346,6 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
     )
   }
 
-  // A prop reference is only attached when the frame names it, so a directed
-  // key prop that no other facet mentions has to be stated here.
-  const soFar = parts.join(' ').toLowerCase()
-  const unmentionedProps = (direction?.keyProps ?? [])
-    .map((prop) => prop.trim())
-    .filter((prop) => prop && !soFar.includes(prop.toLowerCase()))
-  if (unmentionedProps.length > 0) {
-    parts.push(`Props in frame: ${unmentionedProps.join(', ')}.`)
-  }
-
   // Occupancy is stated rather than left to the prose. Prose says "she reaches
   // for the lever" or says nothing about people at all, and an image model
   // reading either one is free to decide how many people that means — which is
@@ -381,6 +371,7 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
       `[Beat Still] Beat ${beat.beatId} ${rewrite.field} "${rewrite.from}" describes a camera move; a still cannot hold one — using "${rewrite.to}"`
     )
   }
+  const soFar = parts.join(' ').toLowerCase()
   if (shot && !soFar.includes(shot.toLowerCase())) {
     parts.unshift(asSentence(shot))
   }
@@ -400,6 +391,7 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
     speakerName: beat.character,
     defaultEmotion: namedEmotions.shared || (Object.keys(namedEmotions.byName).length ? '' : resolvedEmotion),
     emotionsByName: namedEmotions.byName,
+    shotType: direction?.shotType,
   })
 }
 
@@ -468,6 +460,8 @@ export function composePersistedBeatStillPrompt(args: {
   return assembleStructuredStillPrompt({
     actionOrStructured: seed,
     includeCandid: !isExplicitDirectToCameraBeat(beat),
+    shotType: beat.beatDirection?.shotType,
+    allowTypography: Boolean(leadIn),
   })
 }
 
@@ -484,8 +478,8 @@ CRITICAL RULES:
 5. Map direction.camera.shots to beats when provided (beat 0 → shot 0, etc.).
 6. Follow the narrative arc: opening → progression → climax → title_reveal (if title scene) → dissolve.
 7. "lighting" and "lensMm" place THIS beat inside the film's established grammar — a key-light accent and a focal length, never a new look. Derive both from the PROJECT LOOKBOOK. Leave a field empty rather than contradict the lookbook.
-8. The "prompt" field is Action/Framing ONLY: shot type (spatial when two or more people — both bodies fully in frame), body blocking with weight and contact for EACH visible character, who holds which named library prop, labeled gaze, and directed facial expression for EACH visible face (visible eyes/jaw/mouth/shoulders — not a two-word mood label, never under exclusions). Do NOT write style dumps, lighting essays, exclusions, F2V, or start-frame language — the lookbook and code own those.
-9. Use EXACT character / prop / location labels from the REFERENCE LIBRARY. Do not invent objects that are not listed. Do not describe the visual appearance of library props or locations (reference images own appearance).
+8. The "prompt" field is Action/Framing ONLY: shot type (spatial when two or more people — both bodies fully in frame; Insert/Extreme Close-Up: tight macro, only the specified limb/hand, no full-body floor contact), body blocking with weight and contact for EACH visible character on non-insert shots, who holds which named library prop, labeled gaze, and directed facial expression for EACH visible face (visible eyes/jaw/mouth/shoulders — not a two-word mood label, never under exclusions). Do NOT write style dumps, lighting essays, exclusions, F2V, or start-frame language — the lookbook and code own those.
+9. Use EXACT character / prop / location labels from the REFERENCE LIBRARY. Do not invent objects that are not listed. Do not describe the visual appearance of library props or locations (reference images own appearance). Omit a library prop from Action/Framing unless this beat actually uses it.
 10. When art style is photorealistic, keep action language photographic (no illustration, cartoon, or anime). Populate negativeAdditions with anti-illustration terms.
 
 11. ${buildPolicySafePhrasingRules()}
@@ -654,6 +648,17 @@ export function asBeatRole(value: unknown): BeatRole | undefined {
 /** Accepts a stored role, so an unrecognized or absent one forbids text. */
 export function roleAllowsTypography(role: string | undefined): boolean {
   return role === 'title_reveal' || role === 'credit'
+}
+
+/** Direct/regen omit allowTypography; derive it from the beat when the request is silent. */
+export function stillAllowsTypography(args: {
+  allowTypography?: boolean
+  beatRole?: string
+  overlayText?: string | null
+}): boolean {
+  if (args.allowTypography) return true
+  if (roleAllowsTypography(args.beatRole)) return true
+  return Boolean(args.overlayText?.trim())
 }
 
 export function inferBeatRole(

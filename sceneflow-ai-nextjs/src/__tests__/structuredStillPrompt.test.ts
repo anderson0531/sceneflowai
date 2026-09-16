@@ -10,6 +10,8 @@ import {
   STILL_SECTION_EXCLUSIONS,
   STILL_PURPOSE_LINE,
   STILL_TASK_LINES,
+  STILL_TASK_INSERT_FRAMING_LINE,
+  stillTaskLines,
   stillRefsFromAttachedImages,
   formatStillReferencesLegend,
   bindLibraryNamesToTokens,
@@ -213,6 +215,58 @@ Strictly Avoid: Mannequin geometry.`,
     })
     expect(close).not.toContain('Continuous wide shot')
   })
+
+  it('replaces full-body TASK anatomy with limb framing on insert shots', () => {
+    const insert = assembleStructuredStillPrompt({
+      actionOrStructured: 'Insert Shot. A hand holds prop [3].',
+      refs: [
+        { kind: 'person', token: 'person [1]', name: 'Gideon Croft', roleLabel: 'identity' },
+        { kind: 'prop', token: 'prop [3]', name: '1893 Induction Manifold', roleLabel: 'library prop' },
+      ],
+      shotType: 'Insert Shot',
+    })
+    expect(insert).toContain(STILL_TASK_INSERT_FRAMING_LINE)
+    expect(insert).not.toMatch(/two arms and two legs/)
+    expect(stillTaskLines('Insert Shot')).toContain(STILL_TASK_INSERT_FRAMING_LINE)
+    expect(stillTaskLines('Close-Up').join('\n')).toContain('two arms and two legs')
+    expect(stillTaskLines('Close-Up')).not.toContain(STILL_TASK_INSERT_FRAMING_LINE)
+    expect(stillTaskLines('Two-Shot').join('\n')).toContain('two arms and two legs')
+  })
+
+  it('keeps full-body TASK on a face close-up and uses location as bokeh', () => {
+    const close = assembleStructuredStillPrompt({
+      actionOrStructured: 'Close-Up. person [1] stares at the needle.',
+      refs: [
+        { kind: 'person', token: 'person [1]', name: 'Gideon Croft', roleLabel: 'identity' },
+        {
+          kind: 'location',
+          token: 'location [3]',
+          name: 'TITLE SEQUENCE',
+          roleLabel: 'library location',
+        },
+      ],
+      shotType: 'Close-Up',
+    })
+    expect(close).toContain('two arms and two legs')
+    expect(close).not.toContain(STILL_TASK_INSERT_FRAMING_LINE)
+    expect(close).toContain('shallow-focus background bokeh')
+    expect(close).not.toContain('Also in frame:')
+  })
+
+  it('strips title typography exclusions when typography is allowed', () => {
+    const prompt = assembleStructuredStillPrompt({
+      actionOrStructured: 'Insert Shot. Centered title typography over the dark terminal.',
+      shotType: 'Insert Shot',
+      allowTypography: true,
+      exclusions: 'text overlay, captions, subtitles',
+    })
+    const exclusions = prompt.split(STILL_SECTION_EXCLUSIONS)[1] ?? ''
+    expect(exclusions.toLowerCase()).not.toMatch(/text overlay/)
+    expect(exclusions.toLowerCase()).not.toMatch(/typography/)
+    expect(exclusions).not.toMatch(/No dialogue captions, subtitles, or watermarks/)
+    expect(prompt).not.toContain(STILL_TASK_INSERT_FRAMING_LINE)
+    expect(prompt).toContain('Centered title typography')
+  })
 })
 
 describe('applySceneImageAiResultToPrompt', () => {
@@ -258,6 +312,8 @@ describe('planner still vs video split', () => {
     expect(system).not.toMatch(/F2V \(frame-to-video\) START frames/i)
     expect(system).toContain('Action/Framing ONLY')
     expect(system).toMatch(/facial expression/i)
+    expect(system).toContain('Insert/Extreme Close-Up: tight macro, only the specified limb/hand')
+    expect(system).toContain('Omit a library prop from Action/Framing unless this beat actually uses it')
   })
 
   it('planner user prompt includes the reference catalog', () => {
@@ -510,7 +566,7 @@ describe('every [REFERENCES] token reaches the instruction body', () => {
     expect(text).not.toContain('prop [5]')
   })
 
-  it('states the refs the action never uses, so the legend instructs something', () => {
+  it('omits unused props from the legend instead of if/then-ing them into the frame', () => {
     const prompt = assembleStructuredStillPrompt({
       actionOrStructured:
         'Wide shot. person [1] sprawled across the damp flagstone floor, shielding prop [6].',
@@ -519,10 +575,26 @@ describe('every [REFERENCES] token reaches the instruction body', () => {
     })
 
     const still = prompt.split(STILL_SECTION_STILL)[1]?.split(STILL_SECTION_STYLE)[0] ?? prompt
-    expect(still).toContain('Also in frame: location [3], prop [4], prop [5]')
-    expect(still).toMatch(/match each to its reference image\./)
-    // prop [6] is already placed by the action, so it is not restated.
+    expect(still).toContain('Also in frame: location [3]')
+    expect(still).not.toMatch(/Also in frame:[^\n]*prop \[4\]/)
+    expect(still).not.toMatch(/Also in frame:[^\n]*prop \[5\]/)
+    expect(prompt).not.toContain('prop [4] = Brass cylinder')
+    expect(prompt).not.toContain('prop [5] = Machined brass cylinder')
+    expect(prompt).toContain('prop [6] = Olive-drab aluminum cylinder')
     expect(still).not.toMatch(/Also in frame:[^\n]*prop \[6\]/)
+  })
+
+  it('does not add location as a second subject on a detail shot', () => {
+    const prompt = assembleStructuredStillPrompt({
+      actionOrStructured: "Insert Shot. person [1]'s hand turns prop [6].",
+      refs: cylinderRefs,
+      shotType: 'Insert Shot',
+    })
+
+    expect(prompt).toContain(STILL_TASK_INSERT_FRAMING_LINE)
+    expect(prompt).not.toMatch(/two arms and two legs/)
+    expect(prompt).toContain('shallow-focus background bokeh')
+    expect(prompt).not.toContain('Also in frame:')
   })
 
   it('says nothing extra when the action already places every ref', () => {
@@ -547,7 +619,7 @@ describe('every [REFERENCES] token reaches the instruction body', () => {
       })
 
     const first = assembleWith('person [1] sprawled across the flagstone floor.')
-    expect(first).toContain('Also in frame:')
+    expect(first).toContain('Also in frame: location [3]')
     expect(assembleWith(first)).toBe(first)
     expect(first.match(/Also in frame:/g)).toHaveLength(1)
     expect(actionFramingFromStoredPrompt(first)).toBe(
@@ -796,12 +868,10 @@ describe('promptReferencesLibraryItem', () => {
       join(process.cwd(), 'src/app/api/scene/generate-image/route.ts'),
       'utf8'
     )
-    const dropsUnnamed = src.indexOf('resolveLibraryItemPromptMatch(optimizedPrompt')
+    const dropsUnnamed = src.indexOf('actionFramingForLibraryMatch(optimizedPrompt)')
     const buildsImages = src.indexOf('const objectImageReferences =')
     expect(dropsUnnamed).toBeGreaterThan(-1)
     expect(buildsImages).toBeGreaterThan(dropsUnnamed)
-    // The basis is logged, so a kept or dropped reference can be explained
-    // from a production log without re-deriving the match.
     expect(src).toMatch(/frame names it by \$\{match\.basis\}/)
   })
 })
@@ -899,7 +969,7 @@ describe('identity traits reach every reference-bearing frame', () => {
     // optimized prompt, which names the subject only as `person [N]`.
     expect(src).not.toMatch(/\}\)\s*\n\s*:\s*remappedOptimizedPrompt/)
     expect(src).toMatch(
-      /joinPromptBlocks\(formatStillReferencesLegend\(stillRefs\), remappedOptimizedPrompt\)/
+      /joinPromptBlocks\(\s*formatStillReferencesLegend\(stillRefs,\s*effectiveShotType\),\s*remappedOptimizedPrompt\s*\)/
     )
   })
 
@@ -908,5 +978,19 @@ describe('identity traits reach every reference-bearing frame', () => {
       'warm medium-brown skin, tightly curled salt-and-pepper hair, short grizzled beard, early 50s'
     )
     expect(gideonRefs(6)[0].identityTraits).toBe('warm medium-brown skin, short grizzled beard')
+  })
+})
+
+describe('generate-image Direct/regen still payload', () => {
+  it('derives allowTypography and skips caption exclusions on title beats', () => {
+    const src = readFileSync(
+      join(process.cwd(), 'src/app/api/scene/generate-image/route.ts'),
+      'utf8'
+    )
+    expect(src).toContain('stillAllowsTypography')
+    expect(src).toMatch(/if \(!allowTypography\) \{[\s\S]*?No dialogue captions, subtitles, or watermarks/)
+    expect(src).toContain('actionFramingForLibraryMatch(optimizedPrompt)')
+    expect(src).toContain('shallow-focus background bokeh')
+    expect(src).toContain('combinedCharacterReferenceInstruction(effectiveShotType)')
   })
 })

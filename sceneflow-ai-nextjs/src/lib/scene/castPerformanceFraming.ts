@@ -10,6 +10,7 @@
  */
 
 import { expandEmotionForStill } from '@/lib/scene/performanceCues'
+import { isInsertOrExtremeCloseUp } from '@/lib/imagen/stillFramingNormalize'
 
 const NAME_TITLE_PATTERN =
   /^(?:dr|doctor|prof|professor|mr|mrs|ms|miss|sir|madam|capt|captain|officer|det|detective|sgt|sergeant|lt|lieutenant|col|colonel|gen|general|father|mother|sister|brother|rev|reverend|judge|mayor|president|king|queen|lord|lady|uncle|aunt)\.?$/i
@@ -30,6 +31,8 @@ export interface CastPerformanceInput {
   defaultEmotion?: string | null
   /** person [N] tokens after still assembly, so regen can see tokenized bodies. */
   tokensByName?: Record<string, string>
+  /** Insert/ECU skip full-body floor-contact grounding. */
+  shotType?: string | null
 }
 
 function asSentence(value: string): string {
@@ -315,14 +318,18 @@ export function enrichActionFramingWithCastPerformance(input: CastPerformanceInp
   }
 
   // Ground before the occupancy two-shot line, which names everyone as in-frame
-  // without placing their weight.
-  for (const name of castNames) {
-    if (castMemberHasBodyClause(framing, name, tokenForName(name, input.tokensByName))) continue
-    framing = appendFacet(framing, groundingClause(name))
-  }
+  // without placing their weight. Insert/ECU frames only a limb — floor
+  // contact and "fully in frame" pull a standing body into a macro shot.
+  const limbInsert = isInsertOrExtremeCloseUp(input.shotType)
+  if (!limbInsert) {
+    for (const name of castNames) {
+      if (castMemberHasBodyClause(framing, name, tokenForName(name, input.tokensByName))) continue
+      framing = appendFacet(framing, groundingClause(name))
+    }
 
-  if (castNames.length >= 2) {
-    framing = expandSpatialTwoShot(framing, castNames)
+    if (castNames.length >= 2) {
+      framing = expandSpatialTwoShot(framing, castNames)
+    }
   }
 
   framing = labelGaze(framing, castNames, input.speakerName)

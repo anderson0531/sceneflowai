@@ -62,6 +62,13 @@ const ANGLE_CANONICAL: Array<[RegExp, string]> = [
 const DETAIL_SHOT_PATTERN =
   /\b(?:macro|insert|detail|extreme[- ]close|extreme[- ]cu|close[- ]?up|closeup|\becu\b|\bcu\b)\b/i
 
+/**
+ * Limb/object inserts where full-body anatomy fights the frame.
+ * A face Close-Up is a detail shot for location bokeh, but it still needs a head.
+ */
+const INSERT_OR_ECU_PATTERN =
+  /\b(?:macro|insert|extreme[- ]close|extreme[- ]cu|\becu\b|probe lens)\b/i
+
 /** Lens families that can only resolve one small subject. */
 const DETAIL_LENS_PATTERN = /\b(?:macro|probe lens|microscop\w*|extreme[- ]detail)\b/i
 
@@ -259,6 +266,11 @@ export function normalizeStillFraming(
 
 export function isDetailShot(shotType?: string | null): boolean {
   return DETAIL_SHOT_PATTERN.test(shotType ?? '')
+}
+
+/** Insert / Extreme Close-Up / Macro — not a face Close-Up. */
+export function isInsertOrExtremeCloseUp(shotType?: string | null): boolean {
+  return INSERT_OR_ECU_PATTERN.test(shotType ?? '')
 }
 
 /**

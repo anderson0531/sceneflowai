@@ -124,6 +124,19 @@ describe('exclusions repair', () => {
   })
 })
 
+describe('insert/ECU cast grounding', () => {
+  it('does not stand a body on the floor for a limb insert', () => {
+    const framing = enrichActionFramingWithCastPerformance({
+      actionFraming:
+        'Insert Shot. Gideon Croft\'s right hand turns the manifold. Cast in frame: Gideon Croft — and no other people.',
+      castNames: ['Gideon Croft'],
+      shotType: 'Insert Shot',
+    })
+    expect(framing).not.toMatch(/stands on the set floor/)
+    expect(framing).not.toMatch(/fully in frame/)
+  })
+})
+
 describe('applyCastPerformanceToPrompt', () => {
   it('rewrites only the Action/Framing line of a sectioned still', () => {
     const prompt = `[STILL]
