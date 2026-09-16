@@ -175,7 +175,7 @@ export const CONCURRENCY_DEFAULTS = {
 
 /** Vertex image quotas — override via env for staging/prod tuning. */
 export const VERTEX_IMAGE_CONCURRENCY = {
-  geminiFlashImage: Number(process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY ?? 3),
+  geminiFlashImage: Number(process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY ?? 1),
   imagen: Number(process.env.VERTEX_IMAGEN_CONCURRENCY ?? 3),
 } as const
 

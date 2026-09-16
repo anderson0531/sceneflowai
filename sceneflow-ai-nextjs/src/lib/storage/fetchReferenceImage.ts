@@ -2,11 +2,32 @@ import { get } from '@vercel/blob'
 
 export interface FetchReferenceImageOptions {
   label?: string
+  timeoutMs?: number
 }
 
 export interface FetchReferenceImageResult {
   base64: string
   mimeType: string
+}
+
+/** Blob/GCS/HTTP downloads must not hold a generate-image slot until the function is killed. */
+export const REFERENCE_IMAGE_FETCH_TIMEOUT_MS = 20_000
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(
+          () => reject(new Error(`timed out after ${timeoutMs}ms`)),
+          timeoutMs
+        )
+      }),
+    ])
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId)
+  }
 }
 
 function parseDataUrl(source: string): FetchReferenceImageResult | null {
@@ -70,10 +91,26 @@ async function streamToBuffer(stream: ReadableStream<Uint8Array>): Promise<Buffe
   return Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)))
 }
 
-async function fetchViaHttp(url: string): Promise<{ buffer: Buffer; mimeType: string }> {
-  const response = await fetch(url, {
-    headers: { Accept: 'image/*' },
-  })
+async function fetchViaHttp(
+  url: string,
+  timeoutMs = REFERENCE_IMAGE_FETCH_TIMEOUT_MS
+): Promise<{ buffer: Buffer; mimeType: string }> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+  let response: Response
+  try {
+    response = await fetch(url, {
+      headers: { Accept: 'image/*' },
+      signal: controller.signal,
+    })
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`timed out after ${timeoutMs}ms`)
+    }
+    throw error
+  } finally {
+    clearTimeout(timeoutId)
+  }
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`)
   }
@@ -82,12 +119,15 @@ async function fetchViaHttp(url: string): Promise<{ buffer: Buffer; mimeType: st
   return { buffer, mimeType }
 }
 
-async function fetchVercelBlob(url: string): Promise<{ buffer: Buffer; mimeType: string }> {
+async function fetchVercelBlob(
+  url: string,
+  timeoutMs = REFERENCE_IMAGE_FETCH_TIMEOUT_MS
+): Promise<{ buffer: Buffer; mimeType: string }> {
   const token = process.env.BLOB_READ_WRITE_TOKEN?.trim()
   const access = isPublicVercelBlobUrl(url) ? 'public' : 'private'
 
   if (token) {
-    const result = await get(url, { access, token })
+    const result = await withTimeout(get(url, { access, token }), timeoutMs)
     if (result?.statusCode === 200 && result.stream) {
       const buffer = await streamToBuffer(result.stream)
       return {
@@ -102,7 +142,7 @@ async function fetchVercelBlob(url: string): Promise<{ buffer: Buffer; mimeType:
     console.warn('[fetchReferenceImage] BLOB_READ_WRITE_TOKEN missing — falling back to plain fetch')
   }
 
-  return fetchViaHttp(url)
+  return fetchViaHttp(url, timeoutMs)
 }
 
 function formatDownloadError(url: string, label: string | undefined, reason: string): Error {
@@ -171,32 +211,34 @@ export async function fetchReferenceImageAsBase64(
   const dataUrl = parseDataUrl(trimmed)
   if (dataUrl) return dataUrl
 
+  const timeoutMs = options.timeoutMs ?? REFERENCE_IMAGE_FETCH_TIMEOUT_MS
+
   try {
     let buffer: Buffer
     let mimeType: string
 
     if (trimmed.startsWith('gs://')) {
       const { downloadImageAsBase64 } = await import('@/lib/storage/gcs')
-      const base64 = await downloadImageAsBase64(trimmed)
+      const base64 = await withTimeout(downloadImageAsBase64(trimmed), timeoutMs)
       return { base64, mimeType: 'image/jpeg' }
     }
 
     if (isVercelBlobUrl(trimmed)) {
-      const result = await fetchVercelBlob(trimmed)
+      const result = await fetchVercelBlob(trimmed, timeoutMs)
       buffer = result.buffer
       mimeType = result.mimeType
     } else if (isGcsHttpUrl(trimmed)) {
       const gsUri = gcsHttpToGsUri(trimmed)
       if (gsUri) {
         const { downloadImageAsBase64 } = await import('@/lib/storage/gcs')
-        const base64 = await downloadImageAsBase64(gsUri)
+        const base64 = await withTimeout(downloadImageAsBase64(gsUri), timeoutMs)
         return { base64, mimeType: 'image/jpeg' }
       }
-      const result = await fetchViaHttp(trimmed)
+      const result = await fetchViaHttp(trimmed, timeoutMs)
       buffer = result.buffer
       mimeType = result.mimeType
     } else {
-      const result = await fetchViaHttp(trimmed)
+      const result = await fetchViaHttp(trimmed, timeoutMs)
       buffer = result.buffer
       mimeType = result.mimeType
     }

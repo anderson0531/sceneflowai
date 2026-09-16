@@ -404,6 +404,7 @@ interface CharacterWardrobe {
   previewImageUrl?: string  // Generated preview image of character in this wardrobe (legacy)
   headshotUrl?: string  // Headshot preview (shoulders-up)
   fullBodyUrl?: string  // Full body preview (head-to-toe)
+  combinedCharacterRefUrl?: string  // Stored PiP character card
   sceneNumbers?: number[]  // Which scenes this wardrobe applies to
   appearanceNotes?: string  // Makeup, hair state, visible injuries/marks
   isDefault: boolean
@@ -6742,6 +6743,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     previewImageUrl?: string;
     headshotUrl?: string;
     fullBodyUrl?: string;
+    combinedCharacterRefUrl?: string;
     sceneNumbers?: number[];
     appearanceNotes?: string;
     reason?: string;
@@ -6800,6 +6802,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     ...(wardrobe.previewImageUrl ? { previewImageUrl: wardrobe.previewImageUrl } : {}),
                     ...(wardrobe.headshotUrl ? { headshotUrl: wardrobe.headshotUrl } : {}),
                     ...(wardrobe.fullBodyUrl ? { fullBodyUrl: wardrobe.fullBodyUrl, needsImageRegen: false } : {}),
+                    ...(wardrobe.combinedCharacterRefUrl
+                      ? { combinedCharacterRefUrl: wardrobe.combinedCharacterRefUrl }
+                      : {}),
                     ...(wardrobe.sceneNumbers ? { sceneNumbers: wardrobe.sceneNumbers } : {}),
                     ...(wardrobe.appearanceNotes !== undefined ? { appearanceNotes: wardrobe.appearanceNotes } : {}),
                     ...(wardrobe.reason ? { reason: wardrobe.reason } : {}),

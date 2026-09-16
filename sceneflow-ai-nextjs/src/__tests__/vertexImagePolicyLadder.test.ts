@@ -94,6 +94,8 @@ describe('nested 429 retry de-amplification', () => {
     expect(src).toContain('failFastOnRateLimit: stillPolicyMode ? false : !!skipLikenessValidation')
     expect(src).toContain('resolveVertexStillPolicyAttempts')
     expect(src).toContain('skipProductionStillFraming: isBeatFrame')
+    expect(src).toContain('isStoredPip')
+    expect(src).toContain('persistCombined')
   })
 })
 
@@ -103,7 +105,8 @@ describe('express beat likeness gate', () => {
     expect(src).toContain('expressBeatLikenessEligible')
     expect(src).toContain('shouldValidateCharacterLikeness')
     expect(src).toContain('CHARACTER_LIKENESS_MISMATCH_MESSAGE')
-    expect(src).toContain('likenessRound >= 1')
+    expect(src).toContain('failing uncharged without a second Vertex still')
+    expect(src).toContain('!skipLikenessValidation')
     expect(src).toContain('passedLookbook')
   })
 
@@ -112,5 +115,7 @@ describe('express beat likeness gate', () => {
     const wrapper = readSource('src/lib/sceneGeneration/generateImage.ts')
     expect(orchestrator).toContain('{ lookbook: ctx.lookbook }')
     expect(wrapper).toContain('lookbook?: ProjectLookbook')
+    expect(wrapper).toContain('SCENE_GENERATE_IMAGE_FETCH_TIMEOUT_MS')
+    expect(wrapper).toContain('controller.signal')
   })
 })

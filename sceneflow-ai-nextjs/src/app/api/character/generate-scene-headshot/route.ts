@@ -13,6 +13,10 @@ import {
   type SceneCharacterHeadshotInput,
 } from '@/lib/character/sceneCharacterHeadshot'
 import { buildFullBodyWardrobePrompt } from '@/lib/character/characterReferencePrompts'
+import {
+  composeUploadAndPersistCombinedCharacterRef,
+  wardrobeExpectedFingerprint,
+} from '@/lib/character/combinedCharacterRef'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -21,9 +25,38 @@ const CREDIT_COST = IMAGE_CREDITS.SCENE_CHARACTER_HEADSHOT
 
 type WardrobeReferenceMode = 'fullBody' | 'diptych'
 
+async function maybePersistCombinedRef(args: {
+  projectId?: string
+  characterId?: string
+  wardrobeId?: string
+  identityUrl: string
+  wardrobeUrl: string
+  characterName: string
+  wardrobe?: {
+    name?: string
+    description?: string
+    accessories?: string
+    appearanceNotes?: string
+  }
+}): Promise<string | undefined> {
+  const { projectId, characterId, wardrobeId, identityUrl, wardrobeUrl } = args
+  if (!projectId || !characterId || !wardrobeId) return undefined
+  const url = await composeUploadAndPersistCombinedCharacterRef({
+    projectId,
+    characterId,
+    wardrobeId,
+    identityUrl,
+    wardrobeUrl,
+    expectedFingerprint: wardrobeExpectedFingerprint(args.wardrobe || {}),
+    label: args.characterName,
+  })
+  return url ?? undefined
+}
+
 interface GenerateSceneHeadshotRequest extends SceneCharacterHeadshotInput, FullBodyWardrobeInput {
   projectId?: string
   characterId?: string
+  wardrobeId?: string
   uploadPath?: string
   forceRegenerate?: boolean
   /** fullBody (default) generates dedicated wardrobe image; diptych uses legacy 16:9 split panel */
@@ -52,6 +85,7 @@ export async function POST(req: NextRequest) {
     const {
       projectId,
       characterId,
+      wardrobeId,
       characterName,
       identityReferenceUrl,
       uploadPath,
@@ -86,10 +120,24 @@ export async function POST(req: NextRequest) {
 
       const cachedFullBody = forceRegenerate ? undefined : pickFullBodyWardrobeUrl(fullBodyInput)
       if (cachedFullBody) {
+        const combinedCharacterRefUrl = await maybePersistCombinedRef({
+          projectId,
+          characterId,
+          wardrobeId,
+          identityUrl: identityReferenceUrl.trim(),
+          wardrobeUrl: cachedFullBody,
+          characterName: characterName.trim(),
+          wardrobe: {
+            description: headshotFields.wardrobeDescription,
+            accessories: headshotFields.wardrobeAccessories,
+            appearanceNotes: headshotFields.appearanceNotes,
+          },
+        })
         return NextResponse.json({
           success: true,
           imageUrl: cachedFullBody,
           fullBodyUrl: cachedFullBody,
+          ...(combinedCharacterRefUrl ? { combinedCharacterRefUrl } : {}),
           prompt: buildFullBodyWardrobePrompt({
             characterName: fullBodyInput.characterName,
             appearanceDescription: fullBodyInput.appearanceDescription,
@@ -119,10 +167,25 @@ export async function POST(req: NextRequest) {
         console.error('[Scene Headshot] Failed to charge credits:', chargeError)
       }
 
+      const combinedCharacterRefUrl = await maybePersistCombinedRef({
+        projectId,
+        characterId,
+        wardrobeId,
+        identityUrl: identityReferenceUrl.trim(),
+        wardrobeUrl: result.imageUrl,
+        characterName: characterName.trim(),
+        wardrobe: {
+          description: headshotFields.wardrobeDescription,
+          accessories: headshotFields.wardrobeAccessories,
+          appearanceNotes: headshotFields.appearanceNotes,
+        },
+      })
+
       return NextResponse.json({
         success: true,
         imageUrl: result.imageUrl,
         fullBodyUrl: result.imageUrl,
+        ...(combinedCharacterRefUrl ? { combinedCharacterRefUrl } : {}),
         prompt: result.prompt,
         generated: result.generated,
         reusedExistingHeadshot: false,

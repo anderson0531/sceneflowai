@@ -165,6 +165,7 @@ export interface SeriesCharacterWardrobe {
   previewImageUrl?: string
   headshotUrl?: string
   fullBodyUrl?: string
+  combinedCharacterRefUrl?: string
   isDefault?: boolean
   sceneNumbers?: number[]
 }

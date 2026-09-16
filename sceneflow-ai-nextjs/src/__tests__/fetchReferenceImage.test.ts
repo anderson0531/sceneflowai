@@ -23,6 +23,7 @@ describe('fetchReferenceImageAsBase64', () => {
 
   afterEach(() => {
     global.fetch = originalFetch
+    vi.useRealTimers()
     if (originalToken === undefined) {
       delete process.env.BLOB_READ_WRITE_TOKEN
     } else {
@@ -97,6 +98,34 @@ describe('fetchReferenceImageAsBase64', () => {
     expect(mockGet).not.toHaveBeenCalled()
     expect(global.fetch).toHaveBeenCalled()
     expect(result.mimeType).toBe('image/png')
+  })
+
+  it('times out hung HTTP downloads', async () => {
+    vi.useFakeTimers()
+    global.fetch = vi.fn((_url, init) => {
+      return new Promise((_, reject) => {
+        const signal = (init as RequestInit | undefined)?.signal
+        const abort = () => {
+          const err = new Error('The operation was aborted.')
+          err.name = 'AbortError'
+          reject(err)
+        }
+        if (!signal) return
+        if (signal.aborted) {
+          abort()
+          return
+        }
+        signal.addEventListener('abort', abort, { once: true })
+      })
+    }) as typeof fetch
+
+    const pending = fetchReferenceImageAsBase64('https://example.com/slow.jpg', {
+      label: 'Slow',
+      timeoutMs: 50,
+    })
+    const expectation = expect(pending).rejects.toThrow(/timed out after 50ms/)
+    await vi.advanceTimersByTimeAsync(60)
+    await expectation
   })
 })
 

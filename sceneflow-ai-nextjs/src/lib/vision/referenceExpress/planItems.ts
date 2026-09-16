@@ -46,6 +46,7 @@ export type CastSource = {
     isDefault?: boolean
     headshotUrl?: string
     fullBodyUrl?: string
+    combinedCharacterRefUrl?: string
     previewImageUrl?: string
     sceneNumbers?: number[]
     needsImageRegen?: boolean
