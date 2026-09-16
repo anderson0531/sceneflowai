@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-16T00:24:09.009Z",
+  "generatedAt": "2026-09-16T01:37:30.802Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -1583,6 +1583,12 @@
       "direction.locationLibrary.updateLocations": "074294553e1d75ae",
       "direction.locationLibrary.locationAgent": "73225516e466c5c5",
       "direction.locationLibrary.runLocationAgentNeeded": "a98bc309b8610674",
+      "direction.locationLibrary.runLocationAgentSetStills": "4841b3d980954c10",
+      "direction.locationLibrary.runLocationAgentLocationStills": "39e3d9d4fc30d538",
+      "direction.locationLibrary.runLocationAgentMixed": "bcd0d7da74841d54",
+      "direction.locationLibrary.cameraNoBase": "5a3ad12a46b971d9",
+      "direction.locationLibrary.cameraVersionsPending": "e7859bd52375e40d",
+      "direction.locationLibrary.cameraReady": "948a51f3e690c194",
       "direction.locationLibrary.updateSummary": "847b1313bc7909bc",
       "direction.locationLibrary.updating": "dfe40efe921fe88e",
       "direction.locationLibrary.generateFromBase": "22d1a2b68b521021",
@@ -1650,7 +1656,7 @@
       "foundation.referenceLibrary.nextAction.missingLibraryBases": "16574bff29a18931",
       "foundation.referenceLibrary.nextAction.missingLocationBases": "6ab0b7dd67cba9f5",
       "foundation.referenceLibrary.nextAction.staleLocationVersions": "7780f55b0087ec4f",
-      "foundation.referenceLibrary.nextAction.missingLocationVersions": "4177eb09dd2d1d44",
+      "foundation.referenceLibrary.nextAction.missingLocationVersions": "eed56356dd79b8e7",
       "foundation.referenceLibrary.nextAction.missingCastIdentity": "37188cae5cab20b6",
       "foundation.referenceLibrary.nextAction.staleCastWardrobes": "f3ae991401f33b47",
       "foundation.referenceLibrary.nextAction.missingObjects": "73e7a1ff8afef37f",

@@ -29,6 +29,7 @@ import {
   formatReferenceExpressEstimate,
 } from '@/lib/vision/referenceExpress/estimate'
 import {
+  estimateItemForRequirement,
   expressKindForRequirement,
   type SceneReferenceRequirement,
   type SceneReferenceRequirementKind,
@@ -92,10 +93,9 @@ export function ExpressSceneConfirmDialog({
   const [selectedFrameKeys, setSelectedFrameKeys] = useState<string[]>([])
 
   /**
-   * Split rather than filtered: a wardrobe image comes from the character's
-   * own wardrobe pass, so it still has to be named here even though this run
-   * will not draw it. Silently omitting it is how a frame ends up inventing an
-   * outfit.
+   * Split rather than filtered: Scene Ref Agent draws cast, wardrobe, location
+   * bases, set versions, and props. Anything without an express kind still has
+   * to be named so a frame does not invent it.
    */
   const { drawableReferences, libraryOnlyReferences } = useMemo(() => {
     const drawable: SceneReferenceRequirement[] = []
@@ -110,9 +110,9 @@ export function ExpressSceneConfirmDialog({
   const referenceEstimate = useMemo(
     () =>
       estimateReferenceExpress(
-        drawableReferences.map((requirement) => ({
-          kind: expressKindForRequirement(requirement.kind)!,
-        }))
+        drawableReferences
+          .map((requirement) => estimateItemForRequirement(requirement))
+          .filter((item): item is NonNullable<typeof item> => !!item)
       ),
     [drawableReferences]
   )

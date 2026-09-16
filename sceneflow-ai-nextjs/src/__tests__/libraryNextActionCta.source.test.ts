@@ -26,6 +26,9 @@ describe('Reference Library next-action CTA wiring', () => {
     expect(readSource('src/components/vision/LocationLibrary.tsx')).toContain('handleLocationAgent')
     expect(readSource('src/components/vision/CharacterLibrary.tsx')).toContain('handleCastAgent')
     expect(readSource('src/components/vision/ObjectSuggestionPanel.tsx')).toContain('handleObjectAgent')
+
+    expect(readSource('src/components/vision/LocationLibrary.tsx')).not.toContain('waitUntilDone: true')
+    expect(readSource('src/components/vision/CharacterLibrary.tsx')).not.toContain('waitUntilDone: true')
   })
 
   it('sidebar banner sets pendingKindAgentRun and tab attention', () => {
@@ -50,7 +53,7 @@ describe('Reference Library next-action CTA wiring', () => {
     expect(toolbar).toContain('bg-amber-500')
 
     expect(readSource('src/components/vision/LocationLibrary.tsx')).toContain(
-      'runLocationAgentNeeded'
+      'runLocationAgentSetStills'
     )
     expect(readSource('src/components/vision/CharacterLibrary.tsx')).toContain(
       'kindAgentToolbarLabel'
@@ -60,11 +63,29 @@ describe('Reference Library next-action CTA wiring', () => {
     )
   })
 
-  it('missing-refs toast names Library Agent', () => {
+  it('missing-refs toast names Library Agent for project runs and Scene Ref Agent for scenes', () => {
     const page = readSource('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
     expect(page).toContain(
       'Opening the Reference Library — use Library Agent to draw the missing references.'
     )
+    expect(page).toContain(
+      'Open this scene’s References tab and run Scene Ref Agent to draw the missing stills.'
+    )
+    expect(page).toContain('blockedByMissingSceneReferences')
     expect(page).not.toContain('use Generate to draw the missing references')
+  })
+
+  it('does not call the project-wide reference gate from beat or Direct handlers', () => {
+    const page = readSource('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
+    const beatStart = page.indexOf('const handleGenerateBeatFrameImage')
+    const beatEnd = page.indexOf('const handleRequestGenerateBeatFrame')
+    const beatFn = page.slice(beatStart, beatEnd)
+    expect(beatFn).toContain('blockedByMissingSceneReferences')
+    expect(beatFn).not.toContain('blockedByMissingReferences()')
+
+    const directStart = page.indexOf('const handleOpenDirectFrame')
+    const directEnd = page.indexOf('const handleOpenDirectorFrame')
+    expect(page.slice(directStart, directEnd)).toContain('blockedByMissingSceneReferences')
+    expect(page.slice(directStart, directEnd)).not.toContain('blockedByMissingReferences()')
   })
 })

@@ -14,6 +14,7 @@ vi.mock('@/i18n/server/storyLocale', () => ({
 vi.mock('@/lib/vision/referenceExpress/generateReferenceImage', () => ({
   generateCastReferenceImage: vi.fn(),
   generateLocationReferenceImage: vi.fn(),
+  generateLocationVersionReferenceImage: vi.fn(),
   generateObjectReferenceImage: vi.fn(),
 }))
 
@@ -27,6 +28,14 @@ vi.mock('@/lib/character/applyCastingBriefUpdate', () => ({
 
 vi.mock('@/lib/character/generateCastingBrief', () => ({
   generateCastingBrief: vi.fn(),
+}))
+
+vi.mock('@/lib/character/sceneCharacterHeadshot', () => ({
+  generateAndUploadFullBodyWardrobe: vi.fn(),
+}))
+
+vi.mock('@/services/CreditService', () => ({
+  CreditService: { charge: vi.fn(), ensureCredits: vi.fn() },
 }))
 
 const CHARACTER = vi.hoisted(() => ({

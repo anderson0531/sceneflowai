@@ -23,7 +23,11 @@ export type ExtractedHeadingLocation = {
 
 const hasImage = (url?: string): boolean => Boolean(url && url.trim())
 
-export function referenceExpressAgentLabel(kinds?: ReferenceExpressKind[]): string {
+export function referenceExpressAgentLabel(
+  kinds?: ReferenceExpressKind[],
+  options?: { sceneScoped?: boolean }
+): string {
+  if (options?.sceneScoped && !kinds?.length) return 'Scene Ref Agent'
   if (!kinds?.length) return 'Library Agent'
   if (kinds.length === 1) {
     if (kinds[0] === 'cast') return 'Cast Agent'
@@ -65,21 +69,61 @@ export function locationVersionNeedsGeneration(
   return !hasImage(version.imageUrl) || !!version.needsImageRegen
 }
 
-export function countLocationAgentItems(
-  locations: Array<{
-    imageUrl?: string
-    versions?: Array<{ stateNotes?: string; imageUrl?: string; needsImageRegen?: boolean }>
-  }>
-): number {
+type LocationAgentRow = {
+  imageUrl?: string
+  versions?: Array<{ stateNotes?: string; imageUrl?: string; needsImageRegen?: boolean }>
+}
+
+function pendingVersionCountForLocation(location: LocationAgentRow): number {
+  let n = 0
+  for (const version of location.versions || []) {
+    if (!version.stateNotes?.trim()) continue
+    if (!hasImage(version.imageUrl) || version.needsImageRegen) n++
+  }
+  return n
+}
+
+export type LocationCameraStatus = 'missing-base' | 'versions-pending' | 'ready'
+
+export type LocationCameraStatusResult = {
+  status: LocationCameraStatus
+  pendingVersionCount: number
+}
+
+/**
+ * Collapsed-row camera: gray until the base exists, amber while drawable
+ * set versions remain, green only when the base and every noted version are done.
+ */
+export function locationCameraStatus(location: LocationAgentRow): LocationCameraStatusResult {
+  const pendingVersionCount = pendingVersionCountForLocation(location)
+  if (!hasImage(location.imageUrl)) {
+    return { status: 'missing-base', pendingVersionCount }
+  }
+  if (pendingVersionCount > 0) {
+    return { status: 'versions-pending', pendingVersionCount }
+  }
+  return { status: 'ready', pendingVersionCount: 0 }
+}
+
+export function countLocationAgentItems(locations: LocationAgentRow[]): number {
   let n = 0
   for (const location of locations) {
     if (!hasImage(location.imageUrl)) n++
-    for (const version of location.versions || []) {
-      if (!version.stateNotes?.trim()) continue
-      if (!hasImage(version.imageUrl) || version.needsImageRegen) n++
-    }
+    n += pendingVersionCountForLocation(location)
   }
   return n
+}
+
+/** Units for Location Agent button copy: bases vs set stills. */
+export function locationAgentCopyUnits(locations: LocationAgentRow[]): {
+  bases: number
+  versions: number
+} {
+  const breakdown = summarizeLocationBreakdown(locations)
+  return {
+    bases: breakdown.missingBases,
+    versions: breakdown.missingVersions + breakdown.staleVersions,
+  }
 }
 
 export function countObjectAgentItems(
@@ -243,13 +287,8 @@ export function summarizeLibraryRequiredActions(
     }
   } else if (locationCount > 0) {
     primaryAction = 'location'
-    if (locations.staleVersions > 0) {
-      reason = 'stale-location-versions'
-      reasonCount = locations.staleVersions
-    } else {
-      reason = 'missing-location-versions'
-      reasonCount = locations.missingVersions
-    }
+    reason = 'missing-location-versions'
+    reasonCount = locations.missingVersions + locations.staleVersions
   } else if (castCount > 0) {
     primaryAction = 'cast'
     if (cast.staleWardrobes > 0) {

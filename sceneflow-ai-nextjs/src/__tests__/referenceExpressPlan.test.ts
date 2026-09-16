@@ -6,6 +6,7 @@ vi.mock('@/models/Project', () => ({ Project: { findByPk: vi.fn() } }))
 import {
   castFingerprint,
   locationFingerprint,
+  planFollowOnNestedItems,
   planReferenceExpressItems,
   planSceneReferenceExpressItems,
   propFingerprint,
@@ -102,6 +103,67 @@ describe('planReferenceExpressItems', () => {
       'location',
     ])
     expect(planReferenceExpressItems(input, ['prop']).map((item) => item.kind)).toEqual(['prop'])
+  })
+
+  it('plans set versions only when the parent already has a base still', () => {
+    const based = location({
+      imageUrl: 'https://cdn/dock.png',
+      versions: [
+        { id: 'v-door', name: 'Door gone', stateNotes: 'Door blown out', imageUrl: '' },
+        { id: 'v-quiet', name: 'No notes', stateNotes: '', imageUrl: '' },
+      ],
+    })
+    const empty = location({
+      id: 'l2',
+      location: 'Atrium',
+      versions: [{ id: 'v-flood', name: 'Flooded', stateNotes: 'Standing water', imageUrl: '' }],
+    })
+    const withNested = planReferenceExpressItems(
+      { characters: [], locations: [based, empty], props: [] },
+      ['location'],
+      { includeNestedStills: true }
+    )
+    expect(withNested.map((item) => ({ id: item.targetId, versionId: item.versionId }))).toEqual([
+      { id: 'l2', versionId: undefined },
+      { id: 'l1', versionId: 'v-door' },
+    ])
+
+    const libraryOnly = planReferenceExpressItems({
+      characters: [],
+      locations: [based, empty],
+      props: [],
+    })
+    expect(libraryOnly.map((item) => item.versionId)).toEqual([undefined])
+    expect(libraryOnly.map((item) => item.targetId)).toEqual(['l2'])
+  })
+
+  it('plans stale wardrobes for Cast Agent and skips them for Library Agent', () => {
+    const mira = cast({
+      referenceImage: 'https://cdn/mira.png',
+      wardrobes: [
+        {
+          id: 'wd-1',
+          name: 'Parka',
+          description: 'Grease-stained parka',
+          needsImageRegen: true,
+        },
+      ],
+    })
+    const nested = planReferenceExpressItems(
+      { characters: [mira], locations: [], props: [] },
+      ['cast'],
+      { includeNestedStills: true }
+    )
+    expect(nested).toEqual([
+      expect.objectContaining({ kind: 'cast', targetId: 'c1', wardrobeId: 'wd-1' }),
+    ])
+
+    const libraryOnly = planReferenceExpressItems({
+      characters: [mira],
+      locations: [],
+      props: [],
+    })
+    expect(libraryOnly).toEqual([])
   })
 
   it('drops references with no id, which cannot be written back', () => {
@@ -235,6 +297,76 @@ describe('planSceneReferenceExpressItems', () => {
     })
     expect(items.map((item) => item.kind)).toEqual(['prop'])
     expect(items.map((item) => item.targetId)).toEqual(['p1'])
+  })
+
+  it('queues the one set version this scene uses, not unused library versions', () => {
+    const unused = Array.from({ length: 36 }, (_, i) => ({
+      id: `v-unused-${i}`,
+      name: `Unused ${i}`,
+      stateNotes: 'Later redress',
+      imageUrl: '',
+      sceneNumbers: [99],
+    }))
+    const dock = location({
+      imageUrl: 'https://cdn/dock.png',
+      versions: [
+        {
+          id: 'v-used',
+          name: 'Door gone',
+          stateNotes: 'Front door blown out',
+          imageUrl: '',
+          sceneNumbers: [1],
+        },
+        ...unused,
+      ],
+    })
+    const scoped = {
+      characters: [],
+      locations: [dock],
+      props: [],
+      scenes: [
+        {
+          heading: 'EXT. DOCKYARD - NIGHT',
+          sceneNumber: 1,
+          beats: [
+            {
+              beatId: 'b1',
+              referenceSelection: {
+                characterIds: [],
+                locationRefId: 'l1',
+                locationVersionId: 'v-used',
+                objectRefIds: [],
+              },
+            },
+          ],
+        },
+      ],
+    }
+    const sceneItems = planSceneReferenceExpressItems(scoped, { sceneIndices: [0] })
+    expect(sceneItems).toHaveLength(1)
+    expect(sceneItems[0]).toMatchObject({ kind: 'location', targetId: 'l1', versionId: 'v-used' })
+
+    const libraryItems = planReferenceExpressItems(scoped, ['location'], {
+      includeNestedStills: true,
+    })
+    expect(libraryItems.filter((item) => item.versionId).length).toBe(37)
+  })
+})
+
+describe('planFollowOnNestedItems', () => {
+  it('appends pending versions after a new base still lands', () => {
+    const loc = location({
+      imageUrl: 'https://cdn/dock.png',
+      versions: [
+        { id: 'v-door', name: 'Door gone', stateNotes: 'Door blown out', imageUrl: '' },
+      ],
+    })
+    const followOns = planFollowOnNestedItems(
+      { kind: 'location', targetId: 'l1', label: 'Dockyard', sourceFingerprint: 'x' },
+      { characters: [], locations: [loc], props: [] },
+      { kinds: ['location'], includeNestedStills: true }
+    )
+    expect(followOns.map((item) => item.versionId)).toEqual(['v-door'])
   })
 })
 

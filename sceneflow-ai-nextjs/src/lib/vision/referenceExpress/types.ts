@@ -21,6 +21,26 @@ export type ReferenceExpressItem = {
    * while the batch ran, which is reported rather than treated as an error.
    */
   sourceFingerprint: string
+  /**
+   * Location set-version still. Persist patches this nested row (and clears
+   * `needsImageRegen`) instead of the parent base `imageUrl`.
+   */
+  versionId?: string
+  /**
+   * Cast wardrobe still. Persist patches this nested look, not identity.
+   */
+  wardrobeId?: string
+}
+
+/** Stable identity for planning, de-dupe, and scene `itemKeys`. */
+export function referenceExpressItemKey(
+  item: Pick<ReferenceExpressItem, 'kind' | 'targetId' | 'versionId' | 'wardrobeId'>
+): string {
+  if (item.wardrobeId) return `wardrobe:${item.wardrobeId}`
+  if (item.kind === 'location' && item.versionId) {
+    return `location:${item.targetId}::${item.versionId}`
+  }
+  return `${item.kind}:${item.targetId}`
 }
 
 /**
@@ -45,6 +65,12 @@ export type ReferenceExpressScope = {
    * pass a single kind.
    */
   kinds?: ReferenceExpressKind[]
+  /**
+   * Include nested set versions (location) and wardrobe looks (cast).
+   * Kind agents and Scene Ref Agent set this; project Library Agent stays
+   * bases-only.
+   */
+  includeNestedStills?: boolean
 }
 
 export type ReferenceExpressItemResult = {

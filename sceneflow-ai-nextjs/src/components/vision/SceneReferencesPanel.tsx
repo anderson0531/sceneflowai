@@ -36,8 +36,8 @@ import {
   estimateReferenceExpress,
   formatReferenceExpressEstimate,
 } from '@/lib/vision/referenceExpress/estimate'
-import type { ReferenceExpressKind } from '@/lib/vision/referenceExpress/types'
 import {
+  estimateItemForRequirement,
   expressKindForRequirement,
   requirementKey,
   type SceneReferenceOverrides,
@@ -72,14 +72,13 @@ type GroupConfig = {
   kind: SceneReferenceRequirementKind
   label: string
   Icon: typeof Users
-  libraryTab: ReferenceLibraryTab
 }
 
 const GROUPS: GroupConfig[] = [
-  { kind: 'cast', label: 'Cast', Icon: Users, libraryTab: 'cast' },
-  { kind: 'wardrobe', label: 'Wardrobe', Icon: Shirt, libraryTab: 'cast' },
-  { kind: 'location', label: 'Locations', Icon: MapPin, libraryTab: 'locations' },
-  { kind: 'prop', label: 'Props', Icon: Package, libraryTab: 'object' },
+  { kind: 'cast', label: 'Cast', Icon: Users },
+  { kind: 'wardrobe', label: 'Wardrobe', Icon: Shirt },
+  { kind: 'location', label: 'Locations', Icon: MapPin },
+  { kind: 'prop', label: 'Props', Icon: Package },
 ]
 
 const SOURCE_LABEL: Record<SceneReferenceRequirementSource, string> = {
@@ -136,22 +135,22 @@ export function SceneReferencesPanel({
 }: SceneReferencesPanelProps) {
   const [addOpen, setAddOpen] = useState(false)
 
-  const missing = useMemo(
-    () => requirements.filter((requirement) => !hasImage(requirement.imageUrl)),
+  const pending = useMemo(
+    () =>
+      requirements.filter(
+        (requirement) => !hasImage(requirement.imageUrl) || requirement.stale === true
+      ),
     [requirements]
   )
 
-  /** Only the kinds Express can draw are quotable; wardrobe is called out separately. */
   const expressable = useMemo(
     () =>
-      missing
-        .map((requirement) => expressKindForRequirement(requirement.kind))
-        .filter((kind): kind is ReferenceExpressKind => !!kind)
-        .map((kind) => ({ kind })),
-    [missing]
+      pending
+        .map((requirement) => estimateItemForRequirement(requirement))
+        .filter((item): item is NonNullable<typeof item> => !!item),
+    [pending]
   )
   const estimate = useMemo(() => estimateReferenceExpress(expressable), [expressable])
-  const missingWardrobeCount = missing.length - expressable.length
 
   const removed = useMemo(() => new Set(overrides?.removed ?? []), [overrides?.removed])
 
@@ -227,7 +226,7 @@ export function SceneReferencesPanel({
     return rows
   }, [requirements, characters, locationReferences, objectReferences])
 
-  const drawnCount = requirements.length - missing.length
+  const drawnCount = requirements.filter((requirement) => hasImage(requirement.imageUrl)).length
   const busy = isExpressRunning
 
   return (
@@ -251,7 +250,7 @@ export function SceneReferencesPanel({
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          {missing.length > 0 && onExpressReferences && expressable.length > 0 && (
+          {pending.length > 0 && onExpressReferences && expressable.length > 0 && (
             <button
               type="button"
               onClick={(e) => {
@@ -267,7 +266,7 @@ export function SceneReferencesPanel({
               ) : (
                 <Sparkles className="w-3 h-3" />
               )}
-              Library Agent
+              Scene Ref Agent
               <span className="opacity-80">({formatReferenceExpressEstimate(estimate)})</span>
             </button>
           )}
@@ -295,10 +294,12 @@ export function SceneReferencesPanel({
         </p>
       ) : (
         <div className="space-y-3">
-          {GROUPS.map(({ kind, label, Icon, libraryTab }) => {
+          {GROUPS.map(({ kind, label, Icon }) => {
             const rows = requirements.filter((requirement) => requirement.kind === kind)
             if (rows.length === 0) return null
-            const groupMissing = rows.filter((row) => !hasImage(row.imageUrl)).length
+            const groupMissing = rows.filter(
+              (row) => !hasImage(row.imageUrl) || row.stale === true
+            ).length
 
             return (
               <div key={kind}>
@@ -314,6 +315,7 @@ export function SceneReferencesPanel({
                   {rows.map((requirement) => {
                     const key = requirementKey(requirement)
                     const drawn = hasImage(requirement.imageUrl)
+                    const needsDraw = !drawn || requirement.stale === true
                     const expressKind = expressKindForRequirement(requirement.kind)
 
                     return (
@@ -345,7 +347,7 @@ export function SceneReferencesPanel({
                             )}
                           </div>
                           <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
-                            {drawn ? 'Reference ready' : 'Not drawn yet'}
+                          {!needsDraw ? 'Reference ready' : drawn ? 'Needs a new still' : 'Not drawn yet'}
                             {requirement.alsoUsedInScenes?.length
                               ? ` · also needed by ${requirement.alsoUsedInScenes.length === 1 ? 'scene' : 'scenes'} ${formatSceneList(requirement.alsoUsedInScenes)}`
                               : ''}
@@ -353,7 +355,7 @@ export function SceneReferencesPanel({
                         </div>
 
                         <div className="flex items-center gap-1 shrink-0">
-                          {!drawn && expressKind && onExpressReferences && (
+                          {needsDraw && expressKind && onExpressReferences && (
                             <button
                               type="button"
                               onClick={(e) => {
@@ -365,19 +367,6 @@ export function SceneReferencesPanel({
                               title={`Draw just this reference (${formatReferenceExpressEstimate(estimateReferenceExpress([{ kind: expressKind }]))})`}
                             >
                               Draw
-                            </button>
-                          )}
-                          {!drawn && !expressKind && onOpenReferenceLibrary && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onOpenReferenceLibrary(libraryTab)
-                              }}
-                              className="text-[11px] px-2 py-1 rounded border border-cyan-300 dark:border-cyan-700 text-cyan-800 dark:text-cyan-200 hover:bg-cyan-100 dark:hover:bg-cyan-900/40"
-                              title="Wardrobe images are drawn with the character in the Reference Library"
-                            >
-                              Draw in Library
                             </button>
                           )}
                           {onOverridesChange && (
@@ -402,15 +391,6 @@ export function SceneReferencesPanel({
             )
           })}
         </div>
-      )}
-
-      {missingWardrobeCount > 0 && (
-        <p className="text-[11px] text-gray-600 dark:text-gray-400 mt-2.5 flex items-start gap-1.5">
-          <Shirt className="w-3 h-3 mt-0.5 shrink-0" />
-          {missingWardrobeCount} wardrobe{missingWardrobeCount === 1 ? '' : 's'} still to draw.
-          Library Agent covers cast, locations and props; wardrobe is drawn with its character
-          in the Reference Library.
-        </p>
       )}
 
       {onOverridesChange && (removed.size > 0 || addable.length > 0) && (

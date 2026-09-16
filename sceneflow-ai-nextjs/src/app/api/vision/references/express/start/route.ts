@@ -14,6 +14,7 @@ import {
 import {
   loadReferenceExpressContext,
   planSceneReferenceExpressItems,
+  shouldIncludeNestedStills,
 } from '@/lib/vision/referenceExpress/planItems'
 import type {
   ReferenceExpressKind,
@@ -77,6 +78,7 @@ export async function POST(req: NextRequest) {
         : undefined,
       kinds: parsedKinds?.length ? parsedKinds : undefined,
     }
+    scope.includeNestedStills = shouldIncludeNestedStills(scope)
     const sceneScoped = !!scope.sceneIndices?.length
 
     const { cancelledIds } = await cancelActiveJobsForProject({
@@ -132,7 +134,8 @@ export async function POST(req: NextRequest) {
         // only `items` and `_worker`, so this stays informational.
         sceneIndices: sceneScoped ? scope.sceneIndices : undefined,
         kinds: scope.kinds,
-        agentLabel: referenceExpressAgentLabel(scope.kinds),
+        includeNestedStills: scope.includeNestedStills === true,
+        agentLabel: referenceExpressAgentLabel(scope.kinds, { sceneScoped }),
       },
     })
 

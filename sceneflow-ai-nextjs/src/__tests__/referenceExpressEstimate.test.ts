@@ -53,6 +53,18 @@ describe('a Reference Express run quotes itself before the click', () => {
     ).toBe(SECONDS_PER_ITEM.cast * 2)
   })
 
+  it('does not quote a location base in the same window as a set version', () => {
+    expect(
+      estimateReferenceExpressSeconds(
+        [
+          { kind: 'location' },
+          { kind: 'location', versionId: 'v-door' },
+        ],
+        2
+      )
+    ).toBe(SECONDS_PER_ITEM.location * 2)
+  })
+
   it('quotes nothing for an empty scope', () => {
     expect(estimateReferenceExpress([])).toEqual({ itemCount: 0, seconds: 0, credits: 0 })
   })

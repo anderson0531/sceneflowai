@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  estimateItemForRequirement,
   expressKindForRequirement,
   requirementKey,
   resolveAllSceneReferenceRequirements,
@@ -16,7 +17,7 @@ const PIPER = {
   referenceImage: 'https://example.com/piper.png',
   wardrobes: [
     { id: 'wd-piper-default', name: 'Field jacket', isDefault: true, headshotUrl: 'https://example.com/wd1.png' },
-    { id: 'wd-piper-gala', name: 'Gala dress', isDefault: false, sceneNumbers: [2] },
+    { id: 'wd-piper-gala', name: 'Gala dress', isDefault: false, sceneNumbers: [2], headshotUrl: 'https://example.com/wd-gala.png' },
   ],
 }
 
@@ -471,14 +472,25 @@ describe('what Express References can actually draw', () => {
     ...over,
   })
 
-  it('maps the three kinds the reference batch generates', () => {
+  it('maps wardrobe to the cast batch and location versions to location', () => {
     expect(expressKindForRequirement('cast')).toBe('cast')
     expect(expressKindForRequirement('location')).toBe('location')
     expect(expressKindForRequirement('prop')).toBe('prop')
+    expect(expressKindForRequirement('wardrobe')).toBe('cast')
   })
 
-  it('excludes wardrobe, which is drawn by the character wardrobe pass', () => {
-    expect(expressKindForRequirement('wardrobe')).toBeNull()
+  it('carries versionId on estimate items so a base is not batched with a set still', () => {
+    const versionId = locationVersionRequirementId('loc-tunnel', 'ver-collapse')
+    expect(estimateItemForRequirement(requirement({ kind: 'location', id: 'loc-tunnel' }))).toEqual({
+      kind: 'location',
+    })
+    expect(estimateItemForRequirement(requirement({ kind: 'location', id: versionId }))).toEqual({
+      kind: 'location',
+      versionId: 'ver-collapse',
+    })
+    expect(estimateItemForRequirement(requirement({ kind: 'wardrobe', id: 'wd-piper-gala' }))).toEqual({
+      kind: 'cast',
+    })
   })
 
   it('selects only the undrawn rows a run would queue', () => {
@@ -492,25 +504,31 @@ describe('what Express References can actually draw', () => {
     expect(selected.map((entry) => entry.id)).toEqual(['char-ruiz', 'loc-tunnel'])
   })
 
-  it('does not queue location versions for Reference Express', () => {
+  it('queues location versions and wardrobe looks used in this scene', () => {
     const versionId = locationVersionRequirementId('loc-tunnel', 'ver-collapse')
     const selected = selectUndrawnExpressableRequirements([
       requirement({ kind: 'location', id: 'loc-tunnel' }),
       requirement({ kind: 'location', id: versionId, name: 'SERVICE TUNNEL — Collapsed ceiling' }),
-    ])
-    expect(selected.map((entry) => entry.id)).toEqual(['loc-tunnel'])
-  })
-
-  /**
-   * An undrawn wardrobe is a real gap, but no reference batch will ever fill
-   * it. Chaining on it would wait forever, so it is reported and skipped.
-   */
-  it('skips an undrawn wardrobe so a chained run cannot block on it', () => {
-    const selected = selectUndrawnExpressableRequirements([
       requirement({ kind: 'wardrobe', id: 'wd-piper-gala', characterId: 'char-piper' }),
     ])
+    expect(selected.map((entry) => entry.id)).toEqual([
+      'loc-tunnel',
+      versionId,
+      'wd-piper-gala',
+    ])
+  })
 
-    expect(selected).toEqual([])
+  it('queues a stale version that already has an image', () => {
+    const versionId = locationVersionRequirementId('loc-tunnel', 'ver-collapse')
+    const selected = selectUndrawnExpressableRequirements([
+      requirement({
+        kind: 'location',
+        id: versionId,
+        imageUrl: 'https://example.com/old.png',
+        stale: true,
+      }),
+    ])
+    expect(selected.map((entry) => entry.id)).toEqual([versionId])
   })
 
   it('finds nothing to draw once the scene is fully referenced', () => {
