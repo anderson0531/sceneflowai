@@ -165,6 +165,29 @@ export function isExpressBeatPoolRetryable(err: unknown): boolean {
   return isTransientExpressImageError(err)
 }
 
+/** Client aborted the Express SSE run. Remaining queued beats fail with this. */
+export const FRAME_AGENT_CANCELLED_CODE = 'FRAME_AGENT_CANCELLED'
+export const FRAME_AGENT_CANCELLED_MESSAGE = 'Frame Agent cancelled'
+
+export function createFrameAgentCancelledError(): Error & { code: string; status: number } {
+  const err = new Error(FRAME_AGENT_CANCELLED_MESSAGE) as Error & {
+    code: string
+    status: number
+  }
+  err.name = 'AbortError'
+  err.code = FRAME_AGENT_CANCELLED_CODE
+  err.status = 499
+  return err
+}
+
+export function isFrameAgentCancelledError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false
+  const e = err as { name?: string; code?: string; payload?: { code?: unknown }; message?: string }
+  if (e.code === FRAME_AGENT_CANCELLED_CODE) return true
+  if (e.payload?.code === FRAME_AGENT_CANCELLED_CODE) return true
+  return String(e.message || '').includes(FRAME_AGENT_CANCELLED_MESSAGE)
+}
+
 /** Stable code for a frame that rendered but the face is the wrong person. */
 export const CHARACTER_LIKENESS_MISMATCH_CODE = 'CHARACTER_LIKENESS_MISMATCH'
 

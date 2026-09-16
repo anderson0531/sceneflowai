@@ -7,6 +7,7 @@
  */
 
 import { calculateBackoffDelay, isRetryableError, sleep } from '../utils/retry'
+import { createFrameAgentCancelledError } from './expressImageErrors'
 
 function parsePositiveInt(value: string | undefined, fallback: number): number {
   const n = Number(value ?? fallback)
@@ -83,6 +84,8 @@ export interface AdaptiveBeatPoolOptions {
   onConcurrencyChange?: (next: number, reason: 'decrease' | 'increase') => void
   /** When true, abort the pool on the first non-retryable failure (canary). */
   abortOnNonRetryableCanary?: boolean
+  /** When aborted, stop scheduling and fail remaining queued beats. */
+  signal?: AbortSignal
 }
 
 export interface AdaptiveBeatPoolResult {
@@ -95,6 +98,14 @@ interface QueueEntry {
   beatIndex: number
   attempt: number
   readyAt: number
+}
+
+function waitForAbort(signal?: AbortSignal): Promise<void> {
+  if (!signal) return new Promise(() => {})
+  if (signal.aborted) return Promise.resolve()
+  return new Promise((resolve) => {
+    signal.addEventListener('abort', () => resolve(), { once: true })
+  })
 }
 
 export async function runAdaptiveBeatPool(
@@ -129,6 +140,7 @@ export async function runAdaptiveBeatPool(
   const isCanaryAbort =
     options.isCanaryAbort ?? ((err: unknown) => !isRetryable(err))
   const abortOnNonRetryableCanary = options.abortOnNonRetryableCanary ?? true
+  const runSignal = options.signal
 
   const succeeded = new Set<number>()
   const failed = new Map<number, unknown>()
@@ -151,6 +163,31 @@ export async function runAdaptiveBeatPool(
     attempt: 1,
     readyAt: 0,
   }))
+
+  const failRemainingQueued = (err: unknown): void => {
+    if (aborted) return
+    aborted = {
+      beatIndex: queue[0]?.beatIndex ?? beatIndices[0] ?? -1,
+      error: err,
+    }
+    for (const entry of queue) {
+      if (!succeeded.has(entry.beatIndex) && !failed.has(entry.beatIndex)) {
+        failed.set(entry.beatIndex, err)
+      }
+    }
+    queue.length = 0
+    stopScheduling = true
+  }
+
+  const applyRunAbort = () => {
+    failRemainingQueued(createFrameAgentCancelledError())
+  }
+  if (runSignal?.aborted) {
+    applyRunAbort()
+  } else {
+    runSignal?.addEventListener('abort', applyRunAbort, { once: true })
+  }
+  const abortedWait = waitForAbort(runSignal)
 
   const inFlight = new Set<Promise<void>>()
 
@@ -232,13 +269,13 @@ export async function runAdaptiveBeatPool(
       queue.sort((a, b) => a.readyAt - b.readyAt)
       const waitMs = Math.max(0, queue[0]!.readyAt - Date.now())
       if (waitMs > 0) {
-        await sleep(waitMs)
+        await Promise.race([sleep(waitMs), abortedWait])
         continue
       }
     }
 
     if (inFlight.size > 0) {
-      await Promise.race(inFlight)
+      await Promise.race(stopScheduling ? inFlight : [...inFlight, abortedWait])
     } else if (queue.length > 0) {
       // Yield when delayed entries are not yet ready (clock edge case).
       await Promise.resolve()

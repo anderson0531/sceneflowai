@@ -10,6 +10,10 @@
 
 import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook'
 import type { SceneImageResult } from './types'
+import {
+  FRAME_AGENT_CANCELLED_CODE,
+  FRAME_AGENT_CANCELLED_MESSAGE,
+} from './expressImageErrors'
 
 export interface GenerateSceneImageParams {
   projectId: string
@@ -72,6 +76,8 @@ export interface GenerateSceneImageParams {
   lookbook?: ProjectLookbook
   /** Director still-policy: Safety (Vertex rewrite) or Creative (Kling Omni). Omit on Express auto. */
   stillPolicyMode?: 'safety' | 'creative'
+  /** Abort the child generate-image fetch when the Express run is cancelled. */
+  signal?: AbortSignal
 }
 
 export class SceneImageGenerationError extends Error {
@@ -91,6 +97,29 @@ export class SceneImageGenerationError extends Error {
  * that frees the Express image-lane slot if the child hangs.
  */
 export const SCENE_GENERATE_IMAGE_FETCH_TIMEOUT_MS = 295_000
+
+/** Merge timeout + parent abort so cancel does not wait out the 295s child cap. */
+export function combineAbortSignals(
+  ...signals: Array<AbortSignal | undefined>
+): AbortSignal {
+  const live = signals.filter((signal): signal is AbortSignal => !!signal)
+  if (live.length === 0) {
+    return new AbortController().signal
+  }
+  if (live.length === 1) return live[0]!
+  const controller = new AbortController()
+  const abort = () => {
+    if (!controller.signal.aborted) controller.abort()
+  }
+  for (const signal of live) {
+    if (signal.aborted) {
+      abort()
+      break
+    }
+    signal.addEventListener('abort', abort, { once: true })
+  }
+  return controller.signal
+}
 
 export async function generateSceneImage(
   params: GenerateSceneImageParams
@@ -130,6 +159,7 @@ export async function generateSceneImage(
     frameRole,
     startFrameUrl,
     stillPolicyMode,
+    signal: parentSignal,
   } = params
 
   const headers: HeadersInit = {
@@ -142,13 +172,14 @@ export async function generateSceneImage(
     () => controller.abort(),
     SCENE_GENERATE_IMAGE_FETCH_TIMEOUT_MS
   )
+  const signal = combineAbortSignals(controller.signal, parentSignal)
 
   let res: Response
   try {
     res = await fetch(`${baseUrl}/api/scene/generate-image`, {
       method: 'POST',
       headers,
-      signal: controller.signal,
+      signal,
       body: JSON.stringify({
       projectId,
       sceneIndex,
@@ -195,6 +226,11 @@ export async function generateSceneImage(
   } catch (error) {
     clearTimeout(timeoutId)
     if (error instanceof Error && error.name === 'AbortError') {
+      if (parentSignal?.aborted) {
+        throw new SceneImageGenerationError(FRAME_AGENT_CANCELLED_MESSAGE, 499, {
+          code: FRAME_AGENT_CANCELLED_CODE,
+        })
+      }
       throw new SceneImageGenerationError(
         `Scene image generation timed out after ${SCENE_GENERATE_IMAGE_FETCH_TIMEOUT_MS}ms`,
         504

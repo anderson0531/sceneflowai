@@ -37,7 +37,9 @@ export interface ExpressBeatFrameProgressOverlayProps {
   startedAt: number | null
   finished?: boolean
   preflightError?: string
+  cancelled?: boolean
   onClose: () => void
+  onCancel?: () => void
   onRetryFailed?: (failedKeys: string[]) => void
   onDirectFailed?: (failedKeys: string[]) => void
   onAutoFailed?: (failedKeys: string[]) => void
@@ -66,7 +68,7 @@ const PHASE_ORDER: ExpressOverlayPhase[] = [
  *
  * Used to be a full-screen modal that locked the page. The SSE run still
  * happens in the open tab; this card only reports it so the user can keep
- * editing. Closing the tab still stops the stream.
+ * editing. Cancel aborts the stream without a reload.
  */
 export function ExpressBeatFrameProgressOverlay({
   visible,
@@ -76,7 +78,9 @@ export function ExpressBeatFrameProgressOverlay({
   startedAt,
   finished = false,
   preflightError,
+  cancelled = false,
   onClose,
+  onCancel,
   onRetryFailed,
   onDirectFailed,
   onAutoFailed,
@@ -147,7 +151,8 @@ export function ExpressBeatFrameProgressOverlay({
   const progressPct =
     totalFrames > 0 ? Math.round((completedFrames / totalFrames) * 100) : 0
 
-  const showClose = finished && (frameErrors || !!preflightError)
+  const showClose = finished && (frameErrors || !!preflightError || cancelled)
+  const showCancel = !finished && !!onCancel
 
   const dockPhases = useMemo(
     (): AgentRunPhase[] =>
@@ -165,9 +170,11 @@ export function ExpressBeatFrameProgressOverlay({
     ? 'running'
     : preflightError
       ? 'error'
-      : frameErrors
+      : cancelled
         ? 'warning'
-        : 'success'
+        : frameErrors
+          ? 'warning'
+          : 'success'
 
   const subtitle = !finished
     ? currentPhase === 'references'
@@ -175,9 +182,11 @@ export function ExpressBeatFrameProgressOverlay({
       : `Scene ${sceneNumber} — you can keep editing`
     : preflightError
       ? preflightError
-      : frameErrors
-        ? 'Some frames failed — retry to fill the gaps'
-        : 'Frames ready'
+      : cancelled
+        ? t('cancelled')
+        : frameErrors
+          ? 'Some frames failed — retry to fill the gaps'
+          : 'Frames ready'
 
   return (
     <AgentRunDock
@@ -205,7 +214,16 @@ export function ExpressBeatFrameProgressOverlay({
       onClose={showClose ? onClose : undefined}
       closeLabel={t('close')}
       footer={
-        showClose ? (
+        showCancel ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onCancel}
+            className="h-7 text-[11px]"
+          >
+            {t('cancel')}
+          </Button>
+        ) : showClose ? (
           <>
             {frameErrors && onRetryFailed && (
               <Button

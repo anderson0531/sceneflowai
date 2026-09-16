@@ -274,6 +274,7 @@ export async function POST(req: NextRequest) {
           baseUrl,
           authCookie,
           emit: send,
+          signal: req.signal,
           onSceneComplete: async (sceneIndex, summary) => {
             if (!summary.ok) return
             try {

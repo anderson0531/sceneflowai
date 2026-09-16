@@ -6236,9 +6236,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     startedAt: number | null
     finished: boolean
     preflightError?: string
+    cancelled?: boolean
     /** Carried so Retry failed re-runs at the quality the user chose. */
     quality: StoryboardQuality
   } | null>(null)
+  const expressAbortRef = useRef<AbortController | null>(null)
 
   /**
    * Project-wide Run All Agents run, reported into the dock stack.
@@ -14620,6 +14622,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (!projectId || !script?.script?.scenes?.[sceneIndex]) return
       if (isExpressRunning) return
 
+      const abortController = new AbortController()
+      expressAbortRef.current = abortController
+
       const sceneRecord = script.script.scenes[sceneIndex] as Record<string, unknown>
       const sceneNumber =
         typeof sceneRecord.sceneNumber === 'number' ? sceneRecord.sceneNumber : sceneIndex + 1
@@ -14660,15 +14665,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         )
       }
 
-      const finishBeatFrameOverlay = (opts?: { preflightError?: string }) => {
+      const finishBeatFrameOverlay = (opts?: { preflightError?: string; cancelled?: boolean }) => {
         setExpressBeatFrameOverlay((prev) => {
           if (!prev) return prev
           const next = {
             ...prev,
             finished: true,
             ...(opts?.preflightError ? { preflightError: opts.preflightError } : {}),
+            ...(opts?.cancelled ? { cancelled: true } : {}),
+            ...(opts?.cancelled
+              ? {
+                  items: prev.items.map((item) =>
+                    item.status === 'done'
+                      ? item
+                      : { ...item, status: 'error' as const, error: 'Cancelled' }
+                  ),
+                }
+              : {}),
           }
-          const shouldAutoClose = !opts?.preflightError && !hasFrameErrors(next.items)
+          const shouldAutoClose =
+            !opts?.preflightError && !opts?.cancelled && !hasFrameErrors(next.items)
           if (shouldAutoClose) {
             window.setTimeout(() => setExpressBeatFrameOverlay(null), 1500)
           }
@@ -14797,6 +14813,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             // `/api/vision/express` re-reads server-side, so the frame run
             // cannot start until the job settles.
             const settled = await referenceExpressJob.waitUntilSettled()
+            if (abortController.signal.aborted) {
+              finishBeatFrameOverlay({ cancelled: true })
+              return
+            }
             if (settled && settled.status !== 'completed') {
               updateOverlayPhase('references', 'error')
               finishBeatFrameOverlay({
@@ -14818,9 +14838,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
 
         await syncVisionReferencesForExpress()
+        if (abortController.signal.aborted) {
+          finishBeatFrameOverlay({ cancelled: true })
+          return
+        }
         const response = await fetch('/api/vision/express', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: abortController.signal,
           body: JSON.stringify({
             projectId,
             mode: 'scene',
@@ -15059,6 +15084,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           toast.error(lastSceneError.slice(0, 200))
         }
       } catch (err: any) {
+        const aborted =
+          abortController.signal.aborted ||
+          err?.name === 'AbortError' ||
+          err?.code === 'ABORT_ERR'
+        if (aborted) {
+          finishBeatFrameOverlay({ cancelled: true })
+          return
+        }
         console.error('[Scene Express] Unexpected error:', err)
         toast.error(`Frame Agent error: ${err?.message || String(err)}`)
         setExpressBeatFrameOverlay((prev) =>
@@ -15071,11 +15104,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             : prev
         )
       } finally {
+        if (expressAbortRef.current === abortController) {
+          expressAbortRef.current = null
+        }
         setIsExpressRunning(false)
         setExpressBeatFrameOverlay((prev) => {
           if (!prev || prev.finished) return prev
           const next = { ...prev, finished: true }
-          if (!hasFrameErrors(next.items) && !next.preflightError) {
+          if (!hasFrameErrors(next.items) && !next.preflightError && !next.cancelled) {
             window.setTimeout(() => setExpressBeatFrameOverlay(null), 1500)
           }
           return next
@@ -17333,7 +17369,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             startedAt={expressBeatFrameOverlay.startedAt}
             finished={expressBeatFrameOverlay.finished}
             preflightError={expressBeatFrameOverlay.preflightError}
+            cancelled={expressBeatFrameOverlay.cancelled}
             onClose={() => setExpressBeatFrameOverlay(null)}
+            onCancel={
+              expressBeatFrameOverlay.finished
+                ? undefined
+                : () => {
+                    expressAbortRef.current?.abort()
+                    void referenceExpressJob.cancel()
+                  }
+            }
             onRetryFailed={(failedKeys) => {
               const overlay = expressBeatFrameOverlay
               setExpressBeatFrameOverlay(null)

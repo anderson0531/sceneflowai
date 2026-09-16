@@ -398,6 +398,9 @@ export interface VisionGenerationOptions extends TextGenerationOptions {
   // Vision-specific options can be added here
 }
 
+/** Default wall clock for a vision generateContent call, matching generateText. */
+export const DEFAULT_GEMINI_VISION_TIMEOUT_MS = 90_000
+
 /**
  * Generate content with vision (image + text) using Gemini via Vertex AI
  * Replaces @google/generative-ai SDK for vision tasks
@@ -501,6 +504,9 @@ export async function generateWithVision(
   console.log(`[Vertex Gemini Vision] Generating with ${model}...`)
   console.log(`[Vertex Gemini Vision] Safety settings applied: ${requestBody.safetySettings.map((s: SafetySetting) => s.threshold).join(', ')}`)
   
+  const timeoutToUse = options.timeoutMs || DEFAULT_GEMINI_VISION_TIMEOUT_MS
+  const maxRetries = options.maxRetries ?? 3
+
   const response = await fetchWithRetry(
     endpoint,
     {
@@ -513,7 +519,8 @@ export async function generateWithVision(
       body: JSON.stringify(requestBody)
     },
     {
-      maxRetries: options.maxRetries ?? 3,
+      maxRetries,
+      timeoutMs: timeoutToUse,
       initialDelayMs: options.initialDelayMs ?? 1000,
       operationName: `Vertex Gemini Vision ${model}`,
     }

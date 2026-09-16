@@ -447,3 +447,57 @@ describe('runAdaptiveBeatPool', () => {
     expect(result.succeeded.has(0)).toBe(false)
   })
 })
+
+describe('runAdaptiveBeatPool abort signal', () => {
+  it('does not start remaining beats after the signal aborts', async () => {
+    const controller = new AbortController()
+    let started = 0
+
+    const result = await runAdaptiveBeatPool(
+      [0, 1, 2],
+      async (beatIndex) => {
+        started++
+        if (beatIndex === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 20))
+          controller.abort()
+          await new Promise((resolve) => setTimeout(resolve, 20))
+        }
+      },
+      {
+        initialConcurrency: 1,
+        maxConcurrency: 1,
+        maxAttempts: 1,
+        signal: controller.signal,
+      }
+    )
+
+    expect(started).toBe(1)
+    expect(result.succeeded.has(0)).toBe(true)
+    expect(result.failed.size).toBe(2)
+    expect(result.aborted?.error).toBeTruthy()
+    expect(String(result.aborted?.error)).toMatch(/cancelled/i)
+  })
+
+  it('fails the whole queue immediately when already aborted', async () => {
+    const controller = new AbortController()
+    controller.abort()
+    let started = 0
+
+    const result = await runAdaptiveBeatPool(
+      [0, 1],
+      async () => {
+        started++
+      },
+      {
+        initialConcurrency: 1,
+        maxConcurrency: 1,
+        maxAttempts: 1,
+        signal: controller.signal,
+      }
+    )
+
+    expect(started).toBe(0)
+    expect(result.succeeded.size).toBe(0)
+    expect(result.failed.size).toBe(2)
+  })
+})

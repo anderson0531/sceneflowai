@@ -136,6 +136,26 @@ describe('agent batch runs report into the dock, not the blocking overlay', () =
     expect(agent).toContain('setExpressBeatFrameOverlay')
   })
 
+  it('lets the Frame Agent dock cancel the Express SSE run without a reload', () => {
+    const overlay = readSource('src/components/vision/ExpressBeatFrameProgressOverlay.tsx')
+    const agent = readHandler(PAGE, 'const handleExpressSceneGenerate = useCallback(')
+    const page = readSource(PAGE)
+
+    expect(overlay).toContain('onCancel')
+    expect(overlay).toContain("t('cancel')")
+    expect(agent).toContain('AbortController')
+    expect(agent).toContain('signal: abortController.signal')
+    expect(agent).toContain("err?.name === 'AbortError'")
+    expect(agent).toContain('cancelled: true')
+    expect(page).toContain('expressAbortRef.current?.abort()')
+    expect(page).toContain('onCancel={')
+    expect(page).toContain("error: 'Cancelled'")
+    expect(readSource('src/app/api/vision/express/route.ts')).toContain('signal: req.signal')
+    expect(readSource('src/lib/sceneGeneration/expressOrchestrator.ts')).toContain(
+      '{ signal: ctx.signal }'
+    )
+  })
+
   it('reports gallery stills into the Frame dock instead of freezing the studio', () => {
     const scene = readHandler(PAGE, 'const handleGenerateSceneImage = async (')
     const dialogue = readHandler(PAGE, 'const handleGenerateDialogueFrameImage = async (')

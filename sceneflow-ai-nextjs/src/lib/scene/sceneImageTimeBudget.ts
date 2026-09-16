@@ -46,17 +46,23 @@ export function projectLikenessValidationCostMs(round0ValidationMs: number): num
 }
 
 /**
- * Round 0 always validates — its result is what decides whether to retry at
- * all. A retry's validation is skipped when it would not finish; the retry then
- * scores zero and loses to the measured first round, which is the safe outcome.
+ * Skip validation when the remaining wall clock cannot hold a vision pass.
+ *
+ * Round 0 used to always start, which let a slow still begin an unbounded
+ * Gemini call and stall the route until Vercel killed it. A skipped round 0
+ * keeps the generated still; a skipped retry scores zero and loses to the
+ * measured first round.
  */
 export function canValidateLikeness(
   likenessRound: number,
   remainingMs: number,
   round0ValidationMs: number
 ): boolean {
-  if (likenessRound === 0) return true
-  return remainingMs >= projectLikenessValidationCostMs(round0ValidationMs)
+  const neededMs =
+    likenessRound === 0
+      ? LIKENESS_VALIDATION_MIN_RESERVE_MS
+      : projectLikenessValidationCostMs(round0ValidationMs)
+  return remainingMs >= neededMs
 }
 
 /** Cap the retry's prompt step so it cannot eat the budget for the image. */
