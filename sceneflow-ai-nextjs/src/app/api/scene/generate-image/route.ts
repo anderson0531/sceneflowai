@@ -2408,6 +2408,8 @@ export async function POST(req: NextRequest) {
      * just restate who the person is.
      */
     let lastRoundPolicyRefusalRecovered = false
+    /** True when Director Safety pre-softened the Vertex prompt before send. */
+    let promptWasPolicySoftened = false
 
     do {
       const roundStart = Date.now()
@@ -3239,6 +3241,12 @@ export async function POST(req: NextRequest) {
                 : sanitizedGeminiPrompt
             if (stillPolicyMode === 'safety') {
               promptForResponse = vertexPrompt
+              promptWasPolicySoftened = vertexPrompt !== sanitizedGeminiPrompt
+              if (promptWasPolicySoftened) {
+                console.log(
+                  '[Scene Image] Director Safety pre-softened the composed prompt before Vertex'
+                )
+              }
             }
 
             const vertexResult = await generateImageWithVertexKlingFallback({
@@ -3547,12 +3555,15 @@ export async function POST(req: NextRequest) {
     if (
       shouldRejectIgnoredIdentityStill({
         policyRefusalRecovered: lastRoundPolicyRefusalRecovered,
+        stillPolicyMode,
         hasIdentityRefs: charactersWithImages.length > 0,
         likenessFailed: isGenuineLikenessFailure(validation),
       })
     ) {
       console.warn(
-        '[Scene Image] Policy-recovered frame ignored identity references — failing uncharged'
+        stillPolicyMode === 'safety' && !lastRoundPolicyRefusalRecovered
+          ? '[Scene Image] Director Safety frame ignored identity references — failing uncharged'
+          : '[Scene Image] Policy-recovered frame ignored identity references — failing uncharged'
       )
       return NextResponse.json(
         {
