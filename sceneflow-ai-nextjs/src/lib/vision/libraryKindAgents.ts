@@ -10,6 +10,7 @@ import {
   type LocationVersionSyncDiff,
 } from '@/lib/vision/locationScriptSync'
 import type { ReferenceExpressKind } from '@/lib/vision/referenceExpress/types'
+import { resolveReferenceReadiness } from '@/lib/vision/referenceReadiness'
 
 export type ExtractedHeadingLocation = {
   location: string
@@ -85,6 +86,246 @@ export function countObjectAgentItems(
   objects: Array<{ imageUrl?: string }>
 ): number {
   return objects.filter((object) => !hasImage(object.imageUrl)).length
+}
+
+export type LibraryPrimaryAction = 'library' | 'location' | 'cast' | 'object'
+
+export type LibraryActionReason =
+  | 'missing-library-bases'
+  | 'missing-location-bases'
+  | 'stale-location-versions'
+  | 'missing-location-versions'
+  | 'missing-cast-identity'
+  | 'stale-cast-wardrobes'
+  | 'missing-objects'
+
+export type LibraryTabAttention = 'missing' | 'stale' | 'ready'
+
+export type LibraryTabKey = 'cast' | 'locations' | 'object'
+
+export type LibraryRequiredActionsInput = {
+  characters?: Array<{
+    name?: string
+    type?: string
+    referenceImage?: string
+    referenceImageUrl?: string
+    wardrobes?: Array<{ needsImageRegen?: boolean }>
+  }> | null
+  locationReferences?: Array<{
+    location?: string
+    locationDisplay?: string
+    name?: string
+    imageUrl?: string
+    versions?: Array<{ stateNotes?: string; imageUrl?: string; needsImageRegen?: boolean }>
+  }> | null
+  objectReferences?: Array<{ name?: string; imageUrl?: string }> | null
+}
+
+export type LibraryRequiredActionsSummary = {
+  primaryAction: LibraryPrimaryAction | null
+  reason: LibraryActionReason | null
+  reasonCount: number
+  libraryMissingTotal: number
+  locationCount: number
+  castCount: number
+  objectCount: number
+  locations: {
+    missingBases: number
+    missingVersions: number
+    staleVersions: number
+  }
+  cast: {
+    missingIdentity: number
+    staleWardrobes: number
+  }
+  objects: {
+    missing: number
+  }
+  tabAttention: {
+    cast: LibraryTabAttention
+    locations: LibraryTabAttention
+    object: LibraryTabAttention
+  }
+}
+
+function tabAttention(missing: number, stale: number): LibraryTabAttention {
+  if (missing > 0) return 'missing'
+  if (stale > 0) return 'stale'
+  return 'ready'
+}
+
+function summarizeLocationBreakdown(
+  locations: NonNullable<LibraryRequiredActionsInput['locationReferences']>
+): LibraryRequiredActionsSummary['locations'] {
+  let missingBases = 0
+  let missingVersions = 0
+  let staleVersions = 0
+  for (const location of locations) {
+    if (!hasImage(location.imageUrl)) missingBases++
+    for (const version of location.versions || []) {
+      if (!version.stateNotes?.trim()) continue
+      if (!hasImage(version.imageUrl)) missingVersions++
+      else if (version.needsImageRegen) staleVersions++
+    }
+  }
+  return { missingBases, missingVersions, staleVersions }
+}
+
+function summarizeCastBreakdown(
+  characters: NonNullable<LibraryRequiredActionsInput['characters']>
+): LibraryRequiredActionsSummary['cast'] {
+  let missingIdentity = 0
+  let staleWardrobes = 0
+  for (const character of characters) {
+    if (character.type === 'narrator' || character.type === 'description') continue
+    if (!hasImage(character.referenceImage)) missingIdentity++
+    for (const wardrobe of character.wardrobes || []) {
+      if (wardrobe.needsImageRegen) staleWardrobes++
+    }
+  }
+  return { missingIdentity, staleWardrobes }
+}
+
+/**
+ * What the Reference Library should shout about next: missing stills that
+ * still gate frames (Library Agent), then leftover kind-agent work.
+ */
+export function summarizeLibraryRequiredActions(
+  input: LibraryRequiredActionsInput
+): LibraryRequiredActionsSummary {
+  const characters = input.characters ?? []
+  const locationReferences = input.locationReferences ?? []
+  const objectReferences = input.objectReferences ?? []
+
+  const readiness = resolveReferenceReadiness({
+    characters,
+    locationReferences,
+    objectReferences,
+  })
+  const locations = summarizeLocationBreakdown(locationReferences)
+  const cast = summarizeCastBreakdown(characters)
+  const objects = { missing: countObjectAgentItems(objectReferences) }
+  const locationCount = countLocationAgentItems(locationReferences)
+  const castCount = countCastAgentItems(characters)
+  const objectCount = objects.missing
+  const libraryMissingTotal = readiness.missingTotal
+
+  let primaryAction: LibraryPrimaryAction | null = null
+  let reason: LibraryActionReason | null = null
+  let reasonCount = 0
+
+  if (libraryMissingTotal > 0) {
+    primaryAction = 'library'
+    const onlyLocations =
+      readiness.missingCast.length === 0 &&
+      readiness.missingObjects.length === 0 &&
+      readiness.missingLocations.length > 0
+    const onlyCast =
+      readiness.missingLocations.length === 0 &&
+      readiness.missingObjects.length === 0 &&
+      readiness.missingCast.length > 0
+    const onlyObjects =
+      readiness.missingCast.length === 0 &&
+      readiness.missingLocations.length === 0 &&
+      readiness.missingObjects.length > 0
+    if (onlyLocations) {
+      reason = 'missing-location-bases'
+      reasonCount = readiness.missingLocations.length
+    } else if (onlyCast) {
+      reason = 'missing-cast-identity'
+      reasonCount = readiness.missingCast.length
+    } else if (onlyObjects) {
+      reason = 'missing-objects'
+      reasonCount = readiness.missingObjects.length
+    } else {
+      reason = 'missing-library-bases'
+      reasonCount = libraryMissingTotal
+    }
+  } else if (locationCount > 0) {
+    primaryAction = 'location'
+    if (locations.staleVersions > 0) {
+      reason = 'stale-location-versions'
+      reasonCount = locations.staleVersions
+    } else {
+      reason = 'missing-location-versions'
+      reasonCount = locations.missingVersions
+    }
+  } else if (castCount > 0) {
+    primaryAction = 'cast'
+    if (cast.staleWardrobes > 0) {
+      reason = 'stale-cast-wardrobes'
+      reasonCount = cast.staleWardrobes
+    } else {
+      reason = 'missing-cast-identity'
+      reasonCount = cast.missingIdentity
+    }
+  } else if (objectCount > 0) {
+    primaryAction = 'object'
+    reason = 'missing-objects'
+    reasonCount = objectCount
+  }
+
+  return {
+    primaryAction,
+    reason,
+    reasonCount,
+    libraryMissingTotal,
+    locationCount,
+    castCount,
+    objectCount,
+    locations,
+    cast,
+    objects,
+    tabAttention: {
+      cast: tabAttention(cast.missingIdentity, cast.staleWardrobes),
+      locations: tabAttention(
+        locations.missingBases + locations.missingVersions,
+        locations.staleVersions
+      ),
+      object: tabAttention(objects.missing, 0),
+    },
+  }
+}
+
+/** Left-to-right gating stills first, then leftover kind-agent work. */
+export function firstLibraryTabWithRequiredWork(
+  summary: LibraryRequiredActionsSummary
+): LibraryTabKey {
+  if (summary.cast.missingIdentity > 0) return 'cast'
+  if (summary.locations.missingBases > 0) return 'locations'
+  if (summary.objects.missing > 0) return 'object'
+  if (summary.locationCount > 0) return 'locations'
+  if (summary.castCount > 0) return 'cast'
+  if (summary.objectCount > 0) return 'object'
+  return 'cast'
+}
+
+export function libraryTabForPrimaryAction(
+  action: LibraryPrimaryAction | null,
+  summary: LibraryRequiredActionsSummary
+): LibraryTabKey {
+  if (action === 'cast') return 'cast'
+  if (action === 'location') return 'locations'
+  if (action === 'object') return 'object'
+  return firstLibraryTabWithRequiredWork(summary)
+}
+
+/** Kind agents run in the mounted tab; Library Agent runs from the parent. */
+export function pendingKindAgentRunForAction(
+  action: LibraryPrimaryAction | null
+): ReferenceExpressKind | null {
+  if (action === 'cast') return 'cast'
+  if (action === 'location') return 'location'
+  if (action === 'object') return 'prop'
+  return null
+}
+
+export function kindAgentToolbarLabel(
+  agentName: 'Cast Agent' | 'Location Agent' | 'Object Agent',
+  count: number
+): string {
+  if (count > 0) return `Run ${agentName} — ${count} needed`
+  return `${agentName} (${count})`
 }
 
 /** Ids whose bases are still empty — snapshot this *after* catalog extract. */

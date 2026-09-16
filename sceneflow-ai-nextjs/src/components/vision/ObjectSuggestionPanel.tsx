@@ -47,8 +47,9 @@ import {
 } from '@/store/useAgentRunStore'
 import { LibraryKindToolbar } from './LibraryKindToolbar'
 import { ObjectDuplicateMergeDialog } from './ObjectDuplicateMergeDialog'
-import { countObjectAgentItems } from '@/lib/vision/libraryKindAgents'
-import type { ReferenceExpressScope } from '@/lib/vision/referenceExpress/types'
+import { countObjectAgentItems, kindAgentToolbarLabel } from '@/lib/vision/libraryKindAgents'
+import type { ReferenceExpressKind, ReferenceExpressScope } from '@/lib/vision/referenceExpress/types'
+import { usePendingKindAgentRun } from './usePendingKindAgentRun'
 import { toast } from 'sonner'
 
 interface ObjectSuggestionPanelProps {
@@ -89,6 +90,8 @@ interface ObjectSuggestionPanelProps {
   objectDuplicateIgnores?: string[]
   /** Compact mode for sidebar */
   compact?: boolean
+  pendingKindAgentRun?: ReferenceExpressKind | null
+  onPendingKindAgentRunConsumed?: () => void
   onExpressGenerateReferences?: (
     scope?: ReferenceExpressScope,
     options?: { waitUntilDone?: boolean }
@@ -252,6 +255,8 @@ export function ObjectSuggestionPanel({
   onObjectGenerated,
   onObjectsAutoAdded,
   compact = false,
+  pendingKindAgentRun = null,
+  onPendingKindAgentRunConsumed,
   onExpressGenerateReferences,
   isExpressGeneratingReferences = false,
   onMergeObjects,
@@ -425,6 +430,13 @@ export function ObjectSuggestionPanel({
       setIsObjectAgentRunning(false)
     }
   }
+
+  usePendingKindAgentRun(
+    pendingKindAgentRun,
+    'prop',
+    handleObjectAgent,
+    onPendingKindAgentRunConsumed
+  )
 
   const analyzeScenesForObjects = useCallback(async () => {
     if (scenes.length === 0) return
@@ -652,13 +664,14 @@ export function ObjectSuggestionPanel({
     <>
       <LibraryKindToolbar
         updateLabel="Update Objects"
-        agentLabel={`Object Agent (${countObjectAgentItems(existingObjects)})`}
+        agentLabel={kindAgentToolbarLabel('Object Agent', countObjectAgentItems(existingObjects))}
         onUpdate={() => void handleUpdateObjects()}
         onAgent={
           onExpressGenerateReferences ? () => void handleObjectAgent() : undefined
         }
         isUpdating={isUpdatingObjects}
         isAgentRunning={isObjectAgentRunning || isExpressGeneratingReferences}
+        agentHasWork={countObjectAgentItems(existingObjects) > 0}
         updateTitle="Scan the script and add missing objects to the library without spending image credits"
         agentTitle="Add missing objects from the script, then draw their reference stills"
         extra={

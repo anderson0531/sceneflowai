@@ -4,11 +4,14 @@ import React from 'react'
 import { cn } from '@/lib/utils'
 import type { ProductAccent } from './ProductPageHeader'
 
+export type ProductTabAttention = 'missing' | 'stale' | 'ready'
+
 export interface ProductTabItem {
   key: string
   label: string
   icon?: React.ReactNode
   count?: number
+  attention?: ProductTabAttention
 }
 
 export interface ProductTabListProps {
@@ -31,6 +34,30 @@ const activePill: Record<ProductAccent, string> = {
   product: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
   series: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
   ready: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+}
+
+const attentionDotClass: Record<ProductTabAttention, string> = {
+  missing: 'bg-red-500',
+  stale: 'bg-amber-400',
+  ready: 'bg-emerald-500',
+}
+
+const attentionLabel: Record<ProductTabAttention, string> = {
+  missing: 'Missing reference images',
+  stale: 'Stale stills need refresh',
+  ready: 'No remaining agent work',
+}
+
+function TabAttentionDot({ attention }: { attention?: ProductTabAttention }) {
+  if (!attention) return null
+  return (
+    <span
+      className={cn('h-1.5 w-1.5 rounded-full shrink-0', attentionDotClass[attention])}
+      data-attention={attention}
+      title={attentionLabel[attention]}
+      aria-label={attentionLabel[attention]}
+    />
+  )
 }
 
 export function ProductTabList({
@@ -61,6 +88,7 @@ export function ProductTabList({
             >
               {tab.icon}
               {tab.label}
+              <TabAttentionDot attention={tab.attention} />
               {typeof tab.count === 'number' ? (
                 <span
                   className={cn(
@@ -113,6 +141,7 @@ export function ProductTabList({
                     })
                   : null}
                 <span>{tab.label}</span>
+                <TabAttentionDot attention={tab.attention} />
                 {typeof tab.count === 'number' ? (
                   <span
                     className={cn(

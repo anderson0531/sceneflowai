@@ -1354,7 +1354,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const readiness = productionReadyChecklist.referenceReadiness
     if (readiness.ready) return false
     toast.error(formatReferenceReadinessMessage(readiness), {
-      description: 'Opening the Reference Library — use Generate to draw the missing references.',
+      description: 'Opening the Reference Library — use Library Agent to draw the missing references.',
     })
     openReferenceLibrary()
     return true
@@ -1375,7 +1375,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       if (parsed?.code !== 'MISSING_REFERENCE_IMAGES') return false
       toast.error(parsed.error || 'Generate all reference images first.', {
-        description: 'Opening the Reference Library — use Generate to draw the missing references.',
+        description: 'Opening the Reference Library — use Library Agent to draw the missing references.',
       })
       openReferenceLibrary()
       return true
