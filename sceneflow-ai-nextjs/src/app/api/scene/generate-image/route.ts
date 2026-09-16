@@ -1606,16 +1606,16 @@ export async function POST(req: NextRequest) {
           }
         }
         
-        // Fallback to isDefault wardrobe from collection — this uses the richer
-        // wardrobe description from the collection instead of the legacy defaultWardrobe string
+        // Fallback to the first wardrobe in the collection — richer text than the
+        // legacy defaultWardrobe string, without a global isDefault flag.
         if (!foundSceneMatch) {
-          const defaultWardrobe = char.wardrobes.find(
-            (w: { isDefault?: boolean; description: string; accessories?: string; name?: string }) => w.isDefault
-          )
-          if (defaultWardrobe && defaultWardrobe.description) {
-            effectiveWardrobe = defaultWardrobe.description
-            effectiveAccessories = defaultWardrobe.accessories
-            console.log(`[Scene Image] Using isDefault wardrobe from collection for ${char.name}: "${defaultWardrobe.name}" (description: ${defaultWardrobe.description.substring(0, 60)}...)`)
+          const firstWardrobe = char.wardrobes[0] as
+            | { description?: string; accessories?: string; name?: string }
+            | undefined
+          if (firstWardrobe && firstWardrobe.description) {
+            effectiveWardrobe = firstWardrobe.description
+            effectiveAccessories = firstWardrobe.accessories
+            console.log(`[Scene Image] Using first wardrobe from collection for ${char.name}: "${firstWardrobe.name}" (description: ${firstWardrobe.description.substring(0, 60)}...)`)
           }
         }
       }

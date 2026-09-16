@@ -83,14 +83,14 @@ describe('buildFullBodyWardrobePrompt', () => {
 })
 
 describe('resolveDefaultWardrobeDescription', () => {
-  it('prefers isDefault wardrobe from collection', () => {
+  it('uses the first wardrobe in the collection', () => {
     const desc = resolveDefaultWardrobeDescription({
       wardrobes: [
-        { id: 'w1', description: 'Casual jeans', isDefault: false },
-        { id: 'w2', description: 'Navy blazer', isDefault: true },
+        { id: 'w1', description: 'Casual jeans' },
+        { id: 'w2', description: 'Navy blazer' },
       ],
     })
-    expect(desc).toBe('Navy blazer')
+    expect(desc).toBe('Casual jeans')
   })
 
   it('falls back to legacy defaultWardrobe', () => {

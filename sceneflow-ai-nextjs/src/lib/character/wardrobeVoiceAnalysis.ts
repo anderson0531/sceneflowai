@@ -61,15 +61,12 @@ export function resolveCharacterWardrobes(
   return []
 }
 
-/** Default wardrobe used for voice analysis (isDefault flag, else first with fullBodyUrl). */
+/** Wardrobe used for voice analysis (first look with an image URL, else first look). */
 export function getDefaultWardrobeForVoice(
   character: WardrobeVoiceCharacterInput,
 ): CharacterWardrobe | null {
   const wardrobes = resolveCharacterWardrobes(character)
   if (wardrobes.length === 0) return null
-
-  const explicitDefault = wardrobes.find((w) => w.isDefault)
-  if (explicitDefault) return explicitDefault
 
   const withTurnaround = wardrobes.find((w) => getWardrobeVoiceImageUrl(w))
   return withTurnaround ?? wardrobes[0] ?? null

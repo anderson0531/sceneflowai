@@ -65,28 +65,28 @@ describe('getWardrobeVoiceImageForCharacter', () => {
     expect(result).toBeNull()
   })
 
-  it('prefers isDefault wardrobe over others', () => {
+  it('prefers the first look that has an image URL', () => {
     const wardrobe = getDefaultWardrobeForVoice({
       wardrobes: [
         {
-          id: 'other',
+          id: 'first',
           name: 'Casual',
           description: 'Jeans',
           isDefault: false,
           createdAt: '2026-01-01',
-          fullBodyUrl: 'https://example.com/casual.jpg',
         },
         {
-          id: 'default',
+          id: 'with-image',
           name: 'Formal',
           description: 'Suit',
           isDefault: true,
           createdAt: '2026-01-01',
+          fullBodyUrl: 'https://example.com/formal.jpg',
         },
       ],
     })
-    expect(wardrobe?.id).toBe('default')
-    expect(getWardrobeVoiceImageUrl(wardrobe)).toBeNull()
+    expect(wardrobe?.id).toBe('with-image')
+    expect(getWardrobeVoiceImageUrl(wardrobe)).toBe('https://example.com/formal.jpg')
   })
 })
 

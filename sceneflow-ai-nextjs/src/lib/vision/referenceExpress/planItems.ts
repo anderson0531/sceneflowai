@@ -102,7 +102,7 @@ export function castAgeText(age?: string | number): string | undefined {
 
 /** Prompt inputs for a cast item, in the order `buildCharacterReferencePrompt` reads them. */
 export function castFingerprint(character: CastSource): string {
-  const defaultWardrobe = (character.wardrobes || []).find((w) => w?.isDefault)
+  const firstWardrobe = (character.wardrobes || [])[0]
   return fingerprintSource([
     character.name,
     character.description,
@@ -110,8 +110,8 @@ export function castFingerprint(character: CastSource): string {
     character.appearanceDescription,
     castAgeText(character.age),
     character.personality,
-    character.defaultWardrobe ?? defaultWardrobe?.description,
-    character.wardrobeAccessories ?? defaultWardrobe?.accessories,
+    character.defaultWardrobe ?? firstWardrobe?.description,
+    character.wardrobeAccessories ?? firstWardrobe?.accessories,
   ])
 }
 

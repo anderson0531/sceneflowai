@@ -253,7 +253,7 @@ describe('wardrobeScriptSync', () => {
     expect(a).not.toBe(b)
   })
 
-  it('preserves a single default after merge', () => {
+  it('does not rewrite isDefault flags during merge', () => {
     const diff = buildWardrobeSyncDiff('char-1', 'Piper', existing, [
       {
         name: 'Raincoat Escape',
@@ -270,6 +270,8 @@ describe('wardrobeScriptSync', () => {
         reason: 'unused',
       })),
     })
-    expect(wardrobes.filter((w) => w.isDefault)).toHaveLength(1)
+    expect(wardrobes.find((w) => w.id === existing[0].id)?.isDefault).toBe(true)
+    expect(wardrobes.find((w) => w.id === existing[1].id)?.isDefault).toBe(false)
+    expect(wardrobes.filter((w) => w.name === 'Raincoat Escape')[0]?.isDefault).toBe(false)
   })
 })

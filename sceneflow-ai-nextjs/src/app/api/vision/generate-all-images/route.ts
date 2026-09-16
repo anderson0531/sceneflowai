@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
           }
           
           // Auto-resolve wardrobe assignments for this scene
-          // Priority: scene-number match → isDefault → first wardrobe
+          // Priority: scene-number match → first wardrobe
           const sceneNum = i + 1
           const characterWardrobes: { characterId: string; wardrobeId: string }[] = []
           
@@ -175,12 +175,7 @@ export async function POST(request: NextRequest) {
               (w: any) => w.sceneNumbers && w.sceneNumbers.includes(sceneNum)
             )
             
-            // Priority 2: Default wardrobe
-            if (!resolvedWardrobe) {
-              resolvedWardrobe = char.wardrobes.find((w: any) => w.isDefault)
-            }
-            
-            // Priority 3: First wardrobe
+            // Priority 2: First wardrobe
             if (!resolvedWardrobe) {
               resolvedWardrobe = char.wardrobes[0]
             }

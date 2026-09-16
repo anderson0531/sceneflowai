@@ -409,28 +409,6 @@ export function mergeWardrobeSyncDiff(
     // New looks need images; caller regenerates via UI.
   }
 
-  // Ensure exactly one default
-  if (wardrobes.length > 0) {
-    const hasDefault = wardrobes.some((w) => w.isDefault)
-    if (!hasDefault) {
-      // Prefer a look that still has sceneNumbers
-      const withScenes = wardrobes.find((w) => (w.sceneNumbers?.length || 0) > 0)
-      const target = withScenes || wardrobes[0]
-      wardrobes = wardrobes.map((w) => ({
-        ...w,
-        isDefault: w.id === target.id,
-      }))
-    } else {
-      let seen = false
-      wardrobes = wardrobes.map((w) => {
-        if (!w.isDefault) return w
-        if (seen) return { ...w, isDefault: false }
-        seen = true
-        return w
-      })
-    }
-  }
-
   return { wardrobes, staleWardrobeIds }
 }
 

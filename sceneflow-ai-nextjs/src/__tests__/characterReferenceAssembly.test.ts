@@ -31,6 +31,35 @@ describe('characterReferenceAssembly', () => {
     ],
   }
 
+  it('uses the first wardrobe when no scene assignment matches', () => {
+    const pair = resolveCharacterReferencePair({
+      character: {
+        id: 'char-1',
+        name: 'Marcus',
+        referenceImage: 'https://example.com/portrait.jpg',
+        wardrobes: [
+          {
+            id: 'w-first',
+            name: 'Office suit',
+            description: 'Navy suit',
+            isDefault: false,
+            fullBodyUrl: 'https://example.com/suit.jpg',
+          },
+          {
+            id: 'w-flagged-default',
+            name: 'Casual',
+            description: 'Jeans',
+            isDefault: true,
+            fullBodyUrl: 'https://example.com/casual.jpg',
+          },
+        ],
+      },
+      includeWardrobeDiptych: true,
+    })
+    expect(pair.resolvedWardrobe?.id).toBe('w-first')
+    expect(pair.wardrobeUrl).toBe('https://example.com/suit.jpg')
+  })
+
   it('returns face-first dual references when identity and fullBodyUrl exist', () => {
     const pair = resolveCharacterReferencePair({ character: characterWithPortrait })
     expect(pair.identityUrl).toBe('https://example.com/portrait.jpg')
@@ -122,13 +151,18 @@ describe('characterReferenceAssembly', () => {
     expect(pair.wardrobeDiptychUrl).toBeUndefined()
   })
 
-  it('does not attach diptych for wrong scene when sceneNumbers do not match', () => {
+  it('does not steal a later scene-tagged look when sceneNumbers do not match', () => {
     const pair = resolveCharacterReferencePair({
       character: {
         id: 'char-1',
         name: 'Elara',
         referenceImage: 'https://example.com/portrait.jpg',
         wardrobes: [
+          {
+            id: 'w-first',
+            name: 'Casual',
+            isDefault: false,
+          },
           {
             id: 'w-scene',
             name: 'Scene 4 look',
@@ -141,6 +175,7 @@ describe('characterReferenceAssembly', () => {
       sceneIndex: 1,
       includeWardrobeDiptych: true,
     })
+    expect(pair.resolvedWardrobe?.id).toBe('w-first')
     expect(pair.wardrobeDiptychUrl).toBeUndefined()
     expect(pair.hasWardrobeDiptych).toBe(false)
   })
@@ -199,14 +234,14 @@ describe('characterReferenceAssembly', () => {
     expect(wardrobesForScene(char, 1).map((w) => w.id)).toEqual(['w2'])
   })
 
-  it('wardrobesForScene falls back to isDefault when no sceneNumbers match', () => {
+  it('wardrobesForScene returns all looks when no sceneNumbers match', () => {
     const char = {
       wardrobes: [
         { id: 'w1', sceneNumbers: [1], isDefault: false },
         { id: 'w2', isDefault: true },
       ],
     }
-    expect(wardrobesForScene(char, 1).map((w) => w.id)).toEqual(['w2'])
+    expect(wardrobesForScene(char, 1).map((w) => w.id)).toEqual(['w1', 'w2'])
   })
 
   it('wardrobesForScene returns all wardrobes when sceneIndex is undefined', () => {

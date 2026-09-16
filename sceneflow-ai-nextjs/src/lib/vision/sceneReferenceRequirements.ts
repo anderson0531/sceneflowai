@@ -378,8 +378,8 @@ function pickSceneWardrobe(
   ).find((entry) => entry?.characterId === key)
 
   // `resolveWardrobeForCharacter` owns the priority order, so ask it — but only
-  // when one of its explicit branches can hit. Its last resort logs a warning
-  // per call, and "this character wears their default outfit" is not a warning.
+  // when one of its explicit branches can hit. Unmatched looks use the first
+  // wardrobe without logging a missing-assignment warning.
   if (planned?.wardrobeId || assignedByNumber || sceneOverride?.wardrobeId) {
     const resolved = resolveWardrobeForCharacter(
       character as Record<string, unknown>,
@@ -399,7 +399,7 @@ function pickSceneWardrobe(
     }
   }
 
-  const fallback = wardrobes.find((w) => w.isDefault === true)
+  const fallback = wardrobes[0]
   return fallback ? { wardrobe: fallback, source: 'detected' } : null
 }
 
