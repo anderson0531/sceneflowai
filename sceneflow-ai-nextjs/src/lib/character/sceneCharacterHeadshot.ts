@@ -27,7 +27,9 @@ export const SCENE_CHARACTER_HEADSHOT_ANCHOR =
 
 export {
   COMBINED_CHARACTER_REFERENCE_INSTRUCTION,
+  COMBINED_CHARACTER_INSERT_INSTRUCTION,
   WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION,
+  combinedCharacterReferenceInstruction,
   buildCombinedCharacterConsumptionLine,
   buildWardrobeDiptychCharacterConsumptionLine,
 } from '@/lib/character/wardrobeDiptychConsumption'

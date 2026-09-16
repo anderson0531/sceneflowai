@@ -289,6 +289,11 @@ describe('buildPlannerSystemPrompt', () => {
     expect(system).toMatch(/Leave a field empty rather than contradict the lookbook/i)
   })
 
+  it('asks for insert/ECU exception instead of full-body floor contact', () => {
+    expect(system).toContain('Insert/Extreme Close-Up: tight macro, only the specified limb/hand')
+    expect(system).toContain('Omit a library prop from Action/Framing unless this beat actually uses it')
+  })
+
   it('requests the continuity fields in the output schema', () => {
     expect(system).toContain('"lighting"')
     expect(system).toContain('"lensMm"')

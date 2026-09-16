@@ -83,6 +83,7 @@ import {
 import {
   composePersistedBeatStillPrompt,
   TITLE_BEAT_ACTION_LEAD_IN,
+  stillAllowsTypography,
 } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import { applySceneImageAiResultToPrompt } from '@/lib/scene/sceneImageAiPromptApply'
 import {
@@ -97,6 +98,7 @@ import {
   joinPromptBlocks,
   injectBeforeStyleOrExclusions,
   resolveLibraryItemPromptMatch,
+  actionFramingForLibraryMatch,
   stillRefsFromAttachedImages,
   type LibraryItemPromptMatch,
 } from '@/lib/imagen/structuredStillPrompt'
@@ -142,7 +144,7 @@ import {
 import { consolidateBeatCharacterRefsIntoPipBadges } from '@/lib/character/composeIdentityWardrobeDiptych'
 import {
   buildCombinedCharacterConsumptionLine,
-  COMBINED_CHARACTER_REFERENCE_INSTRUCTION,
+  combinedCharacterReferenceInstruction,
   mergeBeatFrameNegativePrompt,
 } from '@/lib/character/sceneCharacterHeadshot'
 import {
@@ -159,6 +161,7 @@ import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/war
 import {
   buildLocationReferencePromptLine,
 } from '@/lib/vision/locationReferencePrompts'
+import { isDetailShot } from '@/lib/imagen/stillFramingNormalize'
 import {
   buildSubjectCountGuardrail,
   getMaxReferenceImagesForTier,
@@ -255,6 +258,7 @@ function appendSceneImagePromptModifiers(
     /** Whose face a beat-level expression belongs on, in a multi-subject frame. */
     beatSpeakerName?: string
     beatForEmotion?: { line?: string } | null
+    shotType?: string | null
   }
 ): string {
   let optimizedPrompt = basePrompt.trim()
@@ -315,6 +319,7 @@ function appendSceneImagePromptModifiers(
       tokensByName,
       speakerName: ctx.beatSpeakerName,
       defaultEmotion: ctx.beatDirectedEmotion,
+      shotType: ctx.shotType,
     })
 
     const continuitySection = buildSceneAppearanceContinuityPromptSection(
@@ -621,7 +626,7 @@ export async function POST(req: NextRequest) {
       locationReferences = [],  // NEW: Location references for environment consistency
       skipObjectAutoDetection = false,  // NEW: Skip auto-detection of objects (for batch mode)
       useAIPrompt = true,  // NEW: Use Gemini intelligence for prompt generation (default: true)
-      allowTypography = false,  // Title/credit beats may render on-screen text
+      allowTypography: requestedAllowTypography = false,  // Title/credit beats may render on-screen text
       frameType = 'establishing',  // 'establishing' | 'dialogue' | 'custom' | 'beat'
       dialogueIndex,  // Required when frameType === 'dialogue'
       beatIndex,  // Required when frameType === 'beat' (unless beatId is provided)
@@ -1510,6 +1515,11 @@ export async function POST(req: NextRequest) {
         : isDialogueFrame && dialogueResolvedBeat
           ? dialogueResolvedBeat
           : undefined
+    const allowTypography = stillAllowsTypography({
+      allowTypography: requestedAllowTypography,
+      beatRole: beatForEmotion?.beatRole,
+      overlayText: beatForEmotion?.overlayText,
+    })
     const projectCharactersForBeat = projectCharacters
     const beatSpeakerName =
       beatForEmotion?.character?.trim() ||
@@ -2188,6 +2198,7 @@ export async function POST(req: NextRequest) {
       beatDirectedEmotion,
       beatSpeakerName,
       beatForEmotion,
+      shotType: effectiveShotType,
     })
 
     // Validate we have a prompt to send to the model
@@ -2323,6 +2334,7 @@ export async function POST(req: NextRequest) {
       beatDirectedEmotion,
       beatSpeakerName,
       beatForEmotion,
+      shotType: effectiveShotType,
     }
 
     let generationModelId = 'gemini-image'
@@ -2567,7 +2579,10 @@ export async function POST(req: NextRequest) {
       const namedProps: Array<{ item: any; match: LibraryItemPromptMatch }> = []
       for (const obj of detectedObjectReferences) {
         if (!obj?.imageUrl) continue
-        const match = resolveLibraryItemPromptMatch(optimizedPrompt, obj)
+        const match = resolveLibraryItemPromptMatch(
+          actionFramingForLibraryMatch(optimizedPrompt),
+          obj
+        )
         if (match.matched) {
           console.log(
             `[Scene Image] Prop reference "${obj.name}" kept — frame names it by ${match.basis} ("${match.matchedTerm}")`
@@ -2783,7 +2798,7 @@ export async function POST(req: NextRequest) {
             const hasAnyDual = characterReferences.some((cr: any) => cr.hasDualReferences)
             const hasAnyDiptych = characterReferences.some((cr: any) => cr.hasWardrobeDiptych)
             if (hasAnyDiptych) {
-              geminiPrompt += `${COMBINED_CHARACTER_REFERENCE_INSTRUCTION}\n`
+              geminiPrompt += `${combinedCharacterReferenceInstruction(effectiveShotType)}\n`
             }
             if (hasAnyDual) {
               geminiPrompt += `${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}\n`
@@ -2810,7 +2825,8 @@ export async function POST(req: NextRequest) {
                 )}\n`
                 geminiPrompt += `  ${buildCombinedCharacterConsumptionLine(
                   ref.characterName,
-                  subjectOrdinal ?? identitySendIndexForChar ?? ref.referenceId
+                  subjectOrdinal ?? identitySendIndexForChar ?? ref.referenceId,
+                  effectiveShotType
                 )}\n`
                 geminiPrompt += `  ${buildIdentityLockLine(
                   ref.characterName,
@@ -2945,7 +2961,11 @@ export async function POST(req: NextRequest) {
               cappedLocationEntry.sendIndex,
               locationToken
             )
-            geminiPrompt += `${buildLocationReferencePromptLine(locationName, cappedLocationEntry.sendIndex, locationLabel, { currentSetState: Boolean(cappedLocationReference.boundVersionId) })} Use token ${locationToken} in the scene prompt. Environment: "${locationName}". Match lighting to the scene prompt Style section.\n\n`
+            geminiPrompt += `${buildLocationReferencePromptLine(locationName, cappedLocationEntry.sendIndex, locationLabel, {
+              currentSetState: Boolean(cappedLocationReference.boundVersionId),
+              shotType: effectiveShotType,
+              promptToken: locationToken,
+            })} Use token ${locationToken} in the scene prompt. Environment: "${locationName}". Match lighting to the scene prompt Style section.\n\n`
           }
 
           const scenePromptBody = stripReferenceImageMappingBlock(optimizedPrompt)
@@ -2971,13 +2991,17 @@ export async function POST(req: NextRequest) {
                 // a list of things not to draw instead of the identity lock.
                 exclusions: finalNegativePrompt,
                 shotType: effectiveShotType,
+                allowTypography,
               })
             : // Reference-first binding leaves `person [N]` as the only mention of
               // the subject, so the legend is the one place the request says what
               // that person looks like. Dialogue, establishing, and custom frames
               // need it as much as beats do — without it the model is free to
               // invent an ethnicity the portrait contradicts.
-              joinPromptBlocks(formatStillReferencesLegend(stillRefs), remappedOptimizedPrompt)
+              joinPromptBlocks(
+                formatStillReferencesLegend(stillRefs, effectiveShotType),
+                remappedOptimizedPrompt
+              )
           const structuredStill = isBeatFrame
             ? sanitizeBeatStillPrompt(structuredStillRaw)
             : structuredStillRaw
@@ -3103,11 +3127,14 @@ export async function POST(req: NextRequest) {
               geminiPrompt += `- WARDROBE-ONLY REFERENCE: ${wardrobeOnlyNames.join(', ')} — ${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION}\n`
             }
           }
-          geminiPrompt += `- No dialogue captions, subtitles, or watermarks\n`
+          if (!allowTypography) {
+            geminiPrompt += `- No dialogue captions, subtitles, or watermarks\n`
+          }
           geminiPrompt += `- Match props and environment to their reference images\n`
           if (cappedLocationReference?.imageUrl) {
-            geminiPrompt +=
-              '- Location background: match the wide-angle location reference for layout, furniture placement, and color palette\n'
+            geminiPrompt += isDetailShot(effectiveShotType)
+              ? '- Location background: match ambient lighting tone and color palette of the location reference in shallow-focus background bokeh\n'
+              : '- Location background: match the wide-angle location reference for layout, furniture placement, and color palette\n'
           }
           if (!isBeatFrame && (artStyle || 'photorealistic').trim() === 'photorealistic') {
             geminiPrompt +=
@@ -3222,6 +3249,7 @@ export async function POST(req: NextRequest) {
                 ),
                 includeCandid: !isExplicitDirectToCameraBeat(beatForEmotion),
                 shotType: effectiveShotType,
+                allowTypography,
               })
             : optimizedPrompt
           const imagenStill = isBeatFrame ? sanitizeBeatStillPrompt(imagenStillRaw) : imagenStillRaw

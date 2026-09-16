@@ -17,6 +17,9 @@ export const TYPOGRAPHY_NEGATIVE_TERMS = [
   'watermark',
 ]
 
+/** Extra exclusion phrases that prime on-screen type when listed as negatives. */
+const TYPOGRAPHY_PRIME_TERMS = ['text overlay', 'typography']
+
 /**
  * Layout words that prime split-frame output when listed as exclusions
  * (Gemini has no true negative field). Stripped from every beat still list.
@@ -97,6 +100,11 @@ function isStructuralLayoutPrime(term: string): boolean {
   return STRUCTURAL_LAYOUT_PRIME_TERMS.some((prime) => normalized.includes(prime))
 }
 
+function isTypographyPrime(term: string): boolean {
+  const normalized = term.toLowerCase()
+  return TYPOGRAPHY_PRIME_TERMS.some((prime) => normalized.includes(prime))
+}
+
 /** Drop identity-describing phrases from an exclusion list. */
 export function stripIdentityNegationTerms(
   terms: Array<string | null | undefined>
@@ -119,7 +127,9 @@ export function buildSceneImageNegativePrompt(input: {
     ...ESSENTIAL_QUALITY_NEGATIVE_TERMS,
     ...(input.allowTypography ? [] : TYPOGRAPHY_NEGATIVE_TERMS),
     ...(input.extraTerms ?? []),
-  ]).filter((term) => !isStructuralLayoutPrime(term))
+  ])
+    .filter((term) => !isStructuralLayoutPrime(term))
+    .filter((term) => !(input.allowTypography && isTypographyPrime(term)))
 
   const seen = new Set<string>()
   const unique: string[] = []

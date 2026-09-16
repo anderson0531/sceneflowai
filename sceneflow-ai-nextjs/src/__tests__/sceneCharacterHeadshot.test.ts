@@ -3,6 +3,7 @@ import {
   buildSceneCharacterHeadshotPrompt,
   buildSimplifiedBeatFramePrompt,
   buildWardrobeDiptychCharacterConsumptionLine,
+  buildCombinedCharacterConsumptionLine,
   buildWardrobeDiptychReferenceLabel,
   DIPTYCH_GENERATION_NEGATIVE_PROMPT,
   DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT,
@@ -15,6 +16,9 @@ import {
   SCENE_CHARACTER_HEADSHOT_IMAGE_SIZE,
   SCENE_CHARACTER_HEADSHOT_MODEL_TIER,
   shouldGenerateSceneHeadshot,
+  COMBINED_CHARACTER_REFERENCE_INSTRUCTION,
+  COMBINED_CHARACTER_INSERT_INSTRUCTION,
+  combinedCharacterReferenceInstruction,
   WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION,
 } from '@/lib/character/sceneCharacterHeadshot'
 
@@ -106,6 +110,19 @@ describe('COMBINED_CHARACTER_REFERENCE_INSTRUCTION', () => {
     expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).not.toMatch(/NEVER derive/i)
     expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).not.toMatch(/diptych/i)
   })
+
+  it('switches to limb consumption on insert/ECU', () => {
+    expect(combinedCharacterReferenceInstruction('Insert Shot')).toBe(
+      COMBINED_CHARACTER_INSERT_INSTRUCTION
+    )
+    expect(combinedCharacterReferenceInstruction('Extreme Close-Up')).toMatch(
+      /specified limb or hand/
+    )
+    expect(combinedCharacterReferenceInstruction('Close-Up')).toBe(
+      COMBINED_CHARACTER_REFERENCE_INSTRUCTION
+    )
+    expect(combinedCharacterReferenceInstruction('Two-Shot')).toMatch(/head-to-toe outfit/)
+  })
 })
 
 describe('buildWardrobeDiptychReferenceLabel', () => {
@@ -126,6 +143,15 @@ describe('buildWardrobeDiptychCharacterConsumptionLine', () => {
       /person \[1\].*only/i
     )
     expect(buildWardrobeDiptychCharacterConsumptionLine('Elara')).not.toMatch(/LEFT|RIGHT/i)
+  })
+
+  it('matches only the visible limb on an insert', () => {
+    expect(buildCombinedCharacterConsumptionLine('Gideon Croft', 1, 'Insert Shot')).toMatch(
+      /specified limb or hand/
+    )
+    expect(buildCombinedCharacterConsumptionLine('Gideon Croft', 1, 'Insert Shot')).not.toMatch(
+      /head-to-toe/
+    )
   })
 })
 

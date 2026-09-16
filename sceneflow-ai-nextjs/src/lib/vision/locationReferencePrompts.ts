@@ -6,6 +6,7 @@ import {
   LOCATION_STATE_KEYWORD_PATTERN,
   SET_PIECE_NOUN_PATTERN,
 } from '@/lib/vision/locationStateAnalysis'
+import { isDetailShot } from '@/lib/imagen/stillFramingNormalize'
 
 export const LOCATION_REFERENCE_ASPECT_RATIO = '16:9' as const
 
@@ -21,6 +22,27 @@ export const LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION =
   'LOCATION REFERENCE: Single wide-angle establishing shot of the environment. ' +
   'Match architectural layout, furniture placement, color palette, and spatial geometry from this reference. ' +
   'Render one unbroken single-camera frame. Match lighting to Global Style Anchor.'
+
+export const LOCATION_DETAIL_CONSUMPTION_INSTRUCTION =
+  'LOCATION REFERENCE: The attached plate is an extreme-wide establishing still of the environment. ' +
+  'For this close-up, match ambient lighting tone and color palette of the location in shallow-focus background bokeh. ' +
+  'Do not reproduce architectural layout or furniture placement as the frame.'
+
+export function buildLocationConsumptionInstruction(options?: {
+  shotType?: string | null
+  promptToken?: string
+}): string {
+  if (!isDetailShot(options?.shotType)) {
+    return LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION
+  }
+  const token = options?.promptToken?.trim()
+  if (!token) return LOCATION_DETAIL_CONSUMPTION_INSTRUCTION
+  return (
+    'LOCATION REFERENCE: The attached plate is an extreme-wide establishing still of the environment. ' +
+    `For this close-up, match ambient lighting tone and color palette of ${token} in shallow-focus background bokeh. ` +
+    'Do not reproduce architectural layout or furniture placement as the frame.'
+  )
+}
 
 /** Extra lock when the attached still is a post-change version, not the intact base. */
 export const LOCATION_VERSION_CONSUMPTION_SUFFIX =
@@ -208,9 +230,12 @@ export function buildLocationReferencePromptLine(
   locationName: string,
   referenceIndex: number,
   label?: string,
-  options?: { currentSetState?: boolean }
+  options?: { currentSetState?: boolean; shotType?: string | null; promptToken?: string }
 ): string {
   const heading = label ?? `Reference image ${referenceIndex}: LOCATION REFERENCE for "${locationName}"`
   const suffix = options?.currentSetState ? `\n  ${LOCATION_VERSION_CONSUMPTION_SUFFIX}` : ''
-  return `- ${heading}\n  ${LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION}${suffix}`
+  return `- ${heading}\n  ${buildLocationConsumptionInstruction({
+    shotType: options?.shotType,
+    promptToken: options?.promptToken,
+  })}${suffix}`
 }

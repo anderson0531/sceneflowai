@@ -3,6 +3,7 @@ import {
   buildFallbackBeatPlans,
   composeBeatActionFraming,
   composePersistedBeatStillPrompt,
+  stillAllowsTypography,
   storedPromptMatchesDirection,
 } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import {
@@ -284,8 +285,8 @@ describe('composePersistedBeatStillPrompt', () => {
       'Hands and props: Piper Hayes swings the Thirty-Inch Iron Rail Spanner'
     )
     expect(framing).toContain('Gaze: toward the hatch wheel')
-    // The spanner is already handled; only the untouched prop needs stating.
-    expect(framing).toContain('Props in frame: Violet Ink Drafting Vellum.')
+    expect(framing).not.toContain('Props in frame:')
+    expect(framing).not.toContain('Violet Ink Drafting Vellum')
     expect(framing.match(/Thirty-Inch Iron Rail Spanner/g)).toHaveLength(1)
   })
 
@@ -477,7 +478,7 @@ describe('composePersistedBeatStillPrompt', () => {
       })
     ).toBe(first)
     expect(first.match(/Body position:/g)).toHaveLength(1)
-    expect(first.match(/Props in frame:/g)).toHaveLength(1)
+    expect(first).not.toMatch(/Props in frame:/)
   })
 
   it('says outright that an insert shot has nobody in it', () => {
@@ -498,6 +499,8 @@ describe('composePersistedBeatStillPrompt', () => {
 
     expect(framing).toContain('No people in frame')
     expect(framing).not.toMatch(/Cast in frame/)
+    expect(framing).not.toContain('Heavy iron spanner')
+    expect(framing).not.toContain('Props in frame:')
   })
 
   it('closes the cast list so nobody else can join the frame', () => {
@@ -640,5 +643,28 @@ describe('composePersistedBeatStillPrompt', () => {
       storyboardImagePromptDirectionKey: beatStillDirectionFingerprint(still),
     }
     expect(storedPromptMatchesDirection(beat)).toBe(false)
+  })
+})
+
+describe('stillAllowsTypography', () => {
+  it('keeps an explicit request', () => {
+    expect(stillAllowsTypography({ allowTypography: true })).toBe(true)
+  })
+
+  it('derives from title/credit roles and overlay text', () => {
+    expect(stillAllowsTypography({ beatRole: 'title_reveal' })).toBe(true)
+    expect(stillAllowsTypography({ beatRole: 'credit' })).toBe(true)
+    expect(stillAllowsTypography({ overlayText: 'THE LAST VACUUM' })).toBe(true)
+    expect(stillAllowsTypography({ beatRole: 'opening' })).toBe(false)
+  })
+
+  it('still derives when Direct omitted the flag and the route defaulted it to false', () => {
+    expect(stillAllowsTypography({ allowTypography: false, beatRole: 'title_reveal' })).toBe(
+      true
+    )
+    expect(stillAllowsTypography({ allowTypography: false, overlayText: 'THE LAST VACUUM' })).toBe(
+      true
+    )
+    expect(stillAllowsTypography({ allowTypography: false, beatRole: 'opening' })).toBe(false)
   })
 })

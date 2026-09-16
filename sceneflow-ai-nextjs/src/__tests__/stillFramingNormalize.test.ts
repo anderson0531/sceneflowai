@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   isDetailShot,
+  isInsertOrExtremeCloseUp,
   normalizeStillCameraAngle,
   normalizeStillFraming,
   normalizeStillLens,
@@ -175,7 +176,16 @@ describe('lens normalization', () => {
   it('recognizes the shots a detail lens belongs on', () => {
     expect(isDetailShot('Extreme Close-Up')).toBe(true)
     expect(isDetailShot('Insert Shot')).toBe(true)
+    expect(isDetailShot('Close-Up')).toBe(true)
     expect(isDetailShot('Two-Shot')).toBe(false)
+  })
+
+  it('treats insert and ECU as limb-scale, not a face close-up', () => {
+    expect(isInsertOrExtremeCloseUp('Insert Shot')).toBe(true)
+    expect(isInsertOrExtremeCloseUp('Extreme Close-Up')).toBe(true)
+    expect(isInsertOrExtremeCloseUp('Macro (100mm)')).toBe(true)
+    expect(isInsertOrExtremeCloseUp('Close-Up')).toBe(false)
+    expect(isInsertOrExtremeCloseUp('Two-Shot')).toBe(false)
   })
 
   it('suppresses a detail lens on a shot that cannot hold one', () => {

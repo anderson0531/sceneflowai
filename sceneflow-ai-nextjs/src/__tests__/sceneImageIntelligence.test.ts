@@ -134,6 +134,10 @@ describe('scene image intelligence direction authority', () => {
     expect(system).toContain('you MAY omit person [N] tokens')
     expect(system).not.toContain('never invent, renumber, or skip ordinals')
     expect(system).toContain('prop [N]')
+    expect(system).toContain('INSERT / EXTREME CLOSE-UP')
+    expect(system).toContain('Tight macro framing; only the specified limb/hand enters the composition')
+    expect(system).toContain('shallow-focus background bokeh')
+    expect(system).toContain('Insert/Extreme Close-Up: only the specified limb/hand, no floor-contact anatomy')
   })
 
   it('user prompt surfaces scene description, talent, and key props as authoritative', () => {
