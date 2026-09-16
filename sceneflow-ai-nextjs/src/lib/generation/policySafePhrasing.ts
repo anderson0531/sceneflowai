@@ -19,7 +19,7 @@ const REJECTED_EXAMPLE =
   'A heavy iron spanner slams into the stone an inch from her fingers, showering sparks. Gideon looms over her, his eyes feral.'
 
 const ACCEPTED_EXAMPLE =
-  "The spanner's head is buried in cracked stone beside her open hand, dust still settling; Gideon stands over her, jaw set, chest heaving."
+  "The spanner's head is buried in cracked stone beside her open hand, dust still settling; Gideon stands beside her at eye level, jaw set, chest heaving."
 
 /**
  * Guidance for any model authoring beat direction or a still prompt.
@@ -29,17 +29,18 @@ const ACCEPTED_EXAMPLE =
  */
 export function buildPolicySafePhrasingRules(opts?: { compact?: boolean }): string {
   if (opts?.compact) {
-    return `PHYSICAL ACTION: the image model refuses a still that reads as real harm to a person, and a refused beat yields no frame. Name the settled result rather than the blow — an implement embedded, fallen, or gripped low reads as aftermath where the same implement mid-swing at a body is refused. Never aim an impact verb at a person or body part, and describe a face by its expression ("jaw set") rather than a predatory metaphor ("eyes feral"). Keep each prop's real name.`
+    return `PHYSICAL ACTION: the image model refuses a still that reads as real harm to a person, and a refused beat yields no frame. Name the settled result rather than the blow — an implement embedded, fallen, or gripped low reads as aftermath where the same implement mid-swing at a body is refused. Never aim an impact verb at a person or body part, never stage a standing figure over a seated person with an implement at their head, and describe a face by its expression ("jaw set") rather than a predatory metaphor ("eyes feral"). Keep each prop's real name.`
   }
   return `PHYSICAL ACTION — WRITE THE FRAME, NOT THE HARM:
 The image model's content filter cannot be configured off, and it refuses any still that reads as depicting real harm to a person. A refused beat produces no frame at all, so phrasing decides whether the shot exists. Keep the drama and change the instant you name:
 • Name the settled result, not the blow. An implement at rest — embedded, fallen, gripped low — reads as aftermath. The same implement mid-swing toward a body reads as an assault in progress and is refused.
 • Never aim an impact verb at a person or a body part, and do not measure a near miss against one. "slams into the stone an inch from her fingers" is refused; "buried in cracked stone beside her open hand" is not.
+• Do not stage a standing figure over a seated person with an implement at their head. Write equal eye-level, with the tool at rest away from the body.
 • Describe a face by its expression, not by a predatory or animal metaphor. "jaw set, chest heaving" passes where "eyes feral" does not.
 • Keep every prop's real name. A prop reference image is bound to the prop's own noun, so never soften "spanner" into "weapon" or "stage prop" — change the action around it instead.
 Rejected: "${REJECTED_EXAMPLE}"
 Accepted: "${ACCEPTED_EXAMPLE}"
-Same composition, same threat, same prop. The difference is that the strike has landed rather than being in progress.`
+Same two-shot and prop. The difference is aftermath at eye level, not a blow in progress or a figure standing over someone on the floor.`
 }
 
 /**
@@ -93,6 +94,12 @@ const POLICY_SOFTENING: Array<[RegExp, string]> = [
 
   // Restraint / pinning that Vertex paints without identity refs (production 2026-09-14).
   [/\btrapped against\b/gi, 'seated against'],
+  [/\bsits trapped on the floor\b/gi, 'sits on the floor'],
+  [/\btrapped on the floor\b/gi, 'seated on the floor'],
+  [/\bsits trapped\b/gi, 'sits'],
+  [/\bhunched defensively\b/gi, 'tense'],
+  [/\b(?:back|body)\s+pressed\s+(?:flat|firmly)\s+against\b/gi, 'seated against'],
+  [/\bpressed\s+(?:flat|firmly)\s+against\b/gi, 'seated against'],
   [/\bto block (?:her|his|their) path\b/gi, 'occupying the passage'],
   [/\bboxing (?:her|him|them) in\b/gi, 'occupying the narrow space beside them'],
   [/\brests firmly against\b/gi, 'rests embedded in'],
@@ -104,6 +111,10 @@ const POLICY_SOFTENING: Array<[RegExp, string]> = [
   [
     /\bbeside person \[(\d+)\]'s (?:shoulder|neck|head|throat)\b/gi,
     "against the wall at person [$1]'s side",
+  ],
+  [
+    /\bbeside (?!person \[\d+\])([A-Z][\w'-]+(?:\s+[A-Z][\w'-]+)*)'s (?:shoulder|neck|head|throat)\b/gi,
+    'beside their open hand',
   ],
   [
     /\bbeside (?:her|his|their) (?:shoulder|neck|head|throat)\b/gi,

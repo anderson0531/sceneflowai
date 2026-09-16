@@ -39,14 +39,15 @@ describe('escalateImagePromptForRetry', () => {
     expect(next).not.toContain('wardrobe reference still')
   })
 
-  it('applies beat second-pass rewrites on level 2 for beat frames', () => {
+  it('applies beat intimidation rewrites on the first Safety send for beat frames', () => {
     const pinning =
       "person [2] plants the spanner beside person [1]'s shoulder to block her path."
     const level1 = escalateImagePromptForRetry(pinning, 1, { skipProductionStillFraming: true })
     const level2 = escalateImagePromptForRetry(pinning, 2, { skipProductionStillFraming: true })
 
-    expect(level1).toContain("against the wall at person [1]'s side")
-    expect(level2).not.toBe(level1)
+    expect(level1).toMatch(/embedded in cracked brick beside person \[1\]'s open hand/i)
+    expect(level1).toContain('spanner')
+    expect(level1).not.toMatch(/beside person \[1\]'s shoulder/i)
     expect(level2).toMatch(/embedded in cracked brick beside person \[1\]'s open hand/i)
     expect(level2).toContain('spanner')
   })

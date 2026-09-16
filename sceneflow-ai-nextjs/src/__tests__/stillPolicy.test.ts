@@ -11,6 +11,12 @@ import {
 } from '@/lib/generation/stillPolicy'
 import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalation'
 
+/** Refused by Vertex IMAGE_SAFETY after Director Safety rewrite, 2026-09-16. */
+const PRODUCTION_INTIMIDATION_STILL = `Action/Framing: Two-Shot, low angle: both Piper Hayes and Gideon Croft fully in frame. Gideon leans his weight onto the heavy iron spanner planted against the brick wall beside Piper's shoulder, while she sits trapped on the floor cradling the dispatch cylinder. Body position: Piper sits on the floor screen-right, knees pulled up, back pressed flat against the brick wall; Gideon stands screen-left, leaning his torso forward, his weight planted through his extended right arm to hold the spanner against the wall beside her. Hands and props: Gideon's right hand grips the shaft of the Thirty-Inch Iron Rail Spanner, its head resting flush against the brick wall; Piper's hands tightly cradle An olive-drab dispatch cylinder with a cracked wax seal against her chest. Gaze: Gideon stares directly down at Piper; Piper looks up, meeting his gaze. Cast in frame: Piper Hayes, Gideon Croft — and no other people. Facial expression (Piper Hayes): eyes wide, lips slightly parted, shoulders hunched defensively. Facial expression (Gideon Croft): wide, alert eyes, jaw firmly set, chest inflated in a rigid posture.
+
+[STYLE]
+Palette & Grade: Stylized shift from Warm (Tungsten/Amber) to Cool/Toxic (Teal)`
+
 describe('still policy helpers', () => {
   it('parses Safety and Creative only', () => {
     expect(parseStillPolicyMode('safety')).toBe('safety')
@@ -94,8 +100,9 @@ describe('Safety rewrite vs Creative original', () => {
     expect(rewritten).toContain('spanner')
     expect(rewritten).toContain('seated against')
     expect(rewritten).toContain('occupying the passage')
-    expect(rewritten).toContain("person [1]'s side")
+    expect(rewritten).toMatch(/embedded in cracked brick beside person \[1\]'s open hand/i)
     expect(rewritten).not.toMatch(/trapped against/i)
+    expect(rewritten).not.toMatch(/beside person \[1\]'s shoulder/i)
   })
 
   it('IMAGE_SAFETY escalation may turn steel into stage prop, which Creative must not send', () => {
@@ -106,5 +113,26 @@ describe('Safety rewrite vs Creative original', () => {
     expect(rewritten.toLowerCase()).toContain('stage prop')
     expect(original.toLowerCase()).not.toContain('stage prop')
     expect(original).toContain('spanner')
+  })
+
+  it('Safety rewrite levels the refused Piper/Gideon intimidation still without renaming props', () => {
+    const original = PRODUCTION_INTIMIDATION_STILL
+    const rewritten = escalateImagePromptForRetry(original, 1, {
+      skipProductionStillFraming: true,
+    })
+    expect(rewritten).not.toMatch(/\btrapped\b/i)
+    expect(rewritten).not.toMatch(/hunched defensively/i)
+    expect(rewritten).not.toMatch(/beside Piper's shoulder/i)
+    expect(rewritten).not.toMatch(/\blow angle\b/i)
+    expect(rewritten).not.toMatch(/stares directly down/i)
+    expect(rewritten).not.toMatch(/Cool\/Toxic/i)
+    expect(rewritten).toContain('spanner')
+    expect(rewritten).toContain('dispatch cylinder')
+    expect(rewritten).toContain('Piper Hayes')
+    expect(rewritten).toContain('Gideon Croft')
+    expect(rewritten).toMatch(/eye-level angle/i)
+    expect(rewritten).toMatch(/kneels near the wall|stands braced beside|stands beside/i)
+    expect(rewritten).toMatch(/resting upright on the floor/i)
+    expect(rewritten).toMatch(/Cool\/Industrial/i)
   })
 })

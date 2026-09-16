@@ -24,12 +24,29 @@ export const PRODUCTION_STILL_FRAMING =
   'Generate a photorealistic film-production wardrobe reference still of an adult performer. Treat any marks or handheld items as costume makeup and safe stage props only — theatrical, non-graphic, suitable for a studio continuity board.'
 
 /**
- * Beat-frame second pass — Safety retry only.
+ * Beat-frame Safety pass — intimidation / confinement / tool-near-head.
  *
- * Beat frames skip `PRODUCTION_STILL_FRAMING`, so level 2 would otherwise match
- * level 1. These rewrites move props from body proximity to settled aftermath.
+ * Applied on the first Safety send (`failedAttempt >= 1`) because beat frames
+ * skip `PRODUCTION_STILL_FRAMING` and level 1 otherwise left a standing figure
+ * pinning a tool beside a seated person's head (production 2026-09-16).
+ * Keep library prop nouns: never rewrite "spanner" or "dispatch cylinder".
  */
 export const BEAT_POLICY_SECOND_PASS: Array<[RegExp, string]> = [
+  [/\blow angle\b/gi, 'eye-level angle'],
+  [/\bsits on the floor\b/gi, 'kneels near the wall'],
+  [/\b, knees pulled up\b/gi, ''],
+  [/\bleans (?:his|her|their) weight onto\b/gi, 'stands braced beside'],
+  [
+    /\b(?:his|her|their) weight planted through (?:his|her|their) extended (?:right |left )?arm to hold\b/gi,
+    'one hand resting on',
+  ],
+  [/\bplanted against the (?:brick )?wall beside\b/gi, 'resting upright on the floor beside'],
+  [/\bresting flush against the (?:brick )?wall\b/gi, 'resting upright on the floor'],
+  [/\bflush against the (?:brick )?wall\b/gi, 'resting upright on the floor'],
+  [
+    /\bthe spanner against the wall beside (?:her|him|them)\b/gi,
+    'the spanner resting upright on the floor',
+  ],
   [
     /\bagainst the wall at person \[(\d+)\]'s side\b/gi,
     "embedded in cracked brick beside person [$1]'s open hand",
@@ -38,7 +55,11 @@ export const BEAT_POLICY_SECOND_PASS: Array<[RegExp, string]> = [
     /\bagainst the wall at (?:her|his|their) side\b/gi,
     'embedded in cracked brick beside their open hand',
   ],
-  [/\bstands over (?:her|him|them)\b/gi, 'stands a step back, looking down at them'],
+  [/\bstares? (?:directly )?down at\b/gi, 'meets the gaze of'],
+  [/\blooks down at\b/gi, 'looks toward'],
+  [/\blooking down at\b/gi, 'looking toward'],
+  [/\bstands over (?:her|him|them)\b/gi, 'stands beside them'],
+  [/\bstands over\b/gi, 'stands beside'],
   [/\bterrified\b/gi, 'startled'],
   [/\bcornered\b/gi, 'seated'],
   [/\bboxing (?:her|him|them) in\b/gi, 'seated in the narrow space'],
@@ -46,6 +67,8 @@ export const BEAT_POLICY_SECOND_PASS: Array<[RegExp, string]> = [
     /\b(?:head of (?:an? )?)?(?:(?:iron|heavy) )?(?:\w+ )*spanner[^.]{0,80}(?:shoulder|neck|throat|person \[\d+\]'s side)\b/gi,
     "the spanner's head is buried in cracked stone beside their open hand, dust still settling",
   ],
+  [/\bCool\/(?:Toxic|hazardous)\b/gi, 'Cool/Industrial'],
+  [/\b\/Toxic\b/gi, '/Industrial'],
 ]
 
 /**
@@ -82,7 +105,7 @@ export function escalateImagePromptForRetry(
     }
   }
 
-  if (failedAttempt >= 2 && options?.skipProductionStillFraming) {
+  if (failedAttempt >= 1 && options?.skipProductionStillFraming) {
     let beatChanged = false
     for (const [re, replacement] of BEAT_POLICY_SECOND_PASS) {
       const updated = next.replace(re, replacement)
