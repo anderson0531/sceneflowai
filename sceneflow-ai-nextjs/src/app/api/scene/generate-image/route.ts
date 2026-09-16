@@ -92,6 +92,7 @@ import {
   buildLocationPromptToken,
   dropDuplicateHeadNounMatches,
   formatStillReferencesLegend,
+  formatWardrobeLegendClause,
   isStructuredStillPrompt,
   joinPromptBlocks,
   injectBeforeStyleOrExclusions,
@@ -99,6 +100,7 @@ import {
   stillRefsFromAttachedImages,
   type LibraryItemPromptMatch,
 } from '@/lib/imagen/structuredStillPrompt'
+import { sanitizeBeatStillPrompt } from '@/lib/imagen/sanitizeBeatStillPrompt'
 import {
   resolveFeaturedCharactersForValidation,
   isGenuineLikenessFailure,
@@ -137,11 +139,10 @@ import {
   EXPRESSION_OVERRIDE_INSTRUCTION,
   resolveCharacterReferencePair,
 } from '@/lib/character/characterReferenceAssembly'
-import { consolidateBeatDualRefsIntoDiptychs } from '@/lib/character/composeIdentityWardrobeDiptych'
+import { consolidateBeatCharacterRefsIntoPipBadges } from '@/lib/character/composeIdentityWardrobeDiptych'
 import {
-  buildWardrobeDiptychCharacterConsumptionLine,
-  DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT,
-  WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION,
+  buildCombinedCharacterConsumptionLine,
+  COMBINED_CHARACTER_REFERENCE_INSTRUCTION,
   mergeBeatFrameNegativePrompt,
 } from '@/lib/character/sceneCharacterHeadshot'
 import {
@@ -295,21 +296,6 @@ function appendSceneImagePromptModifiers(
     appendBlock(hairCompositionLock)
   }
 
-  const diptychCharacters = characterReferences.filter(
-    (cr: { hasWardrobeDiptych?: boolean }) => cr.hasWardrobeDiptych
-  )
-  if (diptychCharacters.length > 0) {
-    const perCharacterDiptychLines = diptychCharacters
-      .map((cr: { name: string }) => buildWardrobeDiptychCharacterConsumptionLine(cr.name))
-      .join('\n')
-    appendBlock(
-      `${WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION}\n${perCharacterDiptychLines}`
-    )
-    console.log(
-      `[Scene Image] Appended wardrobe diptych consumption for: ${diptychCharacters.map((cr: { name: string }) => cr.name).join(', ')}`
-    )
-  }
-
   if (ctx.isBeatFrame && characterReferences.length > 0) {
     const emotionsByName: Record<string, string> = {}
     const tokensByName: Record<string, string> = {}
@@ -375,6 +361,8 @@ type CharacterReferenceForTraits = {
   visionDescription?: string | null
   hairStyle?: string
   hairColor?: string
+  wardrobeDescription?: string | null
+  defaultWardrobe?: string | null
 }
 
 /**
@@ -1655,7 +1643,7 @@ export async function POST(req: NextRequest) {
 
       if (hasWardrobeDiptych) {
         console.log(
-          `[Scene Image] ✓ Wardrobe diptych for ${char.name}: LEFT=identity face, RIGHT=wardrobe outfit`
+          `[Scene Image] ✓ Combined character reference for ${char.name}: face + full-body wardrobe`
         )
       } else if (hasDualReferences) {
         console.log(
@@ -1725,20 +1713,12 @@ export async function POST(req: NextRequest) {
       // Build wardrobe description if available (using effective wardrobe, which may be overridden)
       // When a costume reference image exists, we minimize wardrobe text since the model sees it
       let wardrobeDescription = ''
-      if (effectiveWardrobe && !hasWardrobeReference) {
-        // No wardrobe image — full wardrobe text in prompt
+      if (effectiveWardrobe) {
         wardrobeDescription = `, wearing ${effectiveWardrobe}`
         if (effectiveAccessories) {
           wardrobeDescription += `, ${effectiveAccessories}`
         }
-        console.log(`[Scene Image] ${char.name} wardrobe (text): ${wardrobeDescription}`)
-      } else if (effectiveWardrobe && hasWardrobeDiptych) {
-        wardrobeDescription =
-          ', copy outfit from the RIGHT panel of their wardrobe diptych reference only — do not describe clothing in text'
-        console.log(`[Scene Image] ${char.name} wardrobe (diptych ref): text minimized`)
-      } else if (effectiveWardrobe && hasWardrobeReference) {
-        wardrobeDescription = ', wearing the outfit shown in their wardrobe reference image'
-        console.log(`[Scene Image] ${char.name} wardrobe (image ref): text minimized`)
+        console.log(`[Scene Image] ${char.name} wardrobe: ${wardrobeDescription}`)
       }
 
       const diptychReferenceId = wardrobeDiptychUrl ? ++gcsRefIndex : undefined
@@ -1805,6 +1785,7 @@ export async function POST(req: NextRequest) {
         hairColor: char.hairColor,
         defaultWardrobe: hasWardrobeReference ? undefined : effectiveWardrobe,
         wardrobeAccessories: hasWardrobeReference ? undefined : effectiveAccessories,
+        wardrobeDescription: effectiveWardrobe,
         hasCostumeReference,
         hasWardrobeDiptych,
         hasDualReferences,
@@ -1832,7 +1813,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (isBeatFrame) {
-      characterReferences = await consolidateBeatDualRefsIntoDiptychs(characterReferences)
+      characterReferences = await consolidateBeatCharacterRefsIntoPipBadges(characterReferences)
     }
     
     // =========================================================================
@@ -2558,15 +2539,8 @@ export async function POST(req: NextRequest) {
       negativePromptParts.push(styleNegativeTerms)
     }
     const hasAnyDualRef = characterReferences.some((cr: any) => cr.hasDualReferences)
-    const hasAnyDiptychRef = characterReferences.some((cr: any) => cr.hasWardrobeDiptych)
-    if (
-      hasAnyDualRef &&
-      (artStyle || 'photorealistic').trim() === 'photorealistic'
-    ) {
+    if (hasAnyDualRef && (artStyle || 'photorealistic').trim() === 'photorealistic') {
       negativePromptParts.push(buildDualReferenceNegativeTerms())
-    }
-    if (hasAnyDiptychRef) {
-      negativePromptParts.push(DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT)
     }
     if (aiNegativePromptAdditions.length) {
       negativePromptParts.push(...aiNegativePromptAdditions)
@@ -2809,7 +2783,7 @@ export async function POST(req: NextRequest) {
             const hasAnyDual = characterReferences.some((cr: any) => cr.hasDualReferences)
             const hasAnyDiptych = characterReferences.some((cr: any) => cr.hasWardrobeDiptych)
             if (hasAnyDiptych) {
-              geminiPrompt += `${WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION}\n`
+              geminiPrompt += `${COMBINED_CHARACTER_REFERENCE_INSTRUCTION}\n`
             }
             if (hasAnyDual) {
               geminiPrompt += `${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}\n`
@@ -2834,7 +2808,7 @@ export async function POST(req: NextRequest) {
                   ref.referenceId,
                   subjectOrdinal
                 )}\n`
-                geminiPrompt += `  ${buildWardrobeDiptychCharacterConsumptionLine(
+                geminiPrompt += `  ${buildCombinedCharacterConsumptionLine(
                   ref.characterName,
                   subjectOrdinal ?? identitySendIndexForChar ?? ref.referenceId
                 )}\n`
@@ -2935,7 +2909,7 @@ export async function POST(req: NextRequest) {
             )
             if (hasAnyDiptych) {
               geminiPrompt +=
-                'Wardrobe diptych refs: LEFT panel = face/identity only; RIGHT panel = outfit/wardrobe only. Do not describe clothing in text — copy outfit from the RIGHT panel. Scene text uses person [N]; identity is bound in [REFERENCES] as person [N] (Name) and must match this composite.\n\n'
+                'Scene text uses person [N]; identity and wardrobe are bound in [REFERENCES] as person [N] (Name) and must match the labeled character reference.\n\n'
             } else if (hasAnyDual) {
               geminiPrompt +=
                 'In the scene prompt, refer to characters with identity refs using "person [N]" tokens. Identity is bound in [REFERENCES] as person [N] (Name) and must match the labeled reference image(s). Do not restate ethnicity, age, or appearance adjectives in the action text.\n\n'
@@ -2983,7 +2957,7 @@ export async function POST(req: NextRequest) {
               ? { identityTraitsWordCap: IDENTITY_TRAITS_RETRY_WORD_CAP }
               : {}),
           })
-          const structuredStill = isBeatFrame
+          const structuredStillRaw = isBeatFrame
             ? assembleStructuredStillPrompt({
                 actionOrStructured: remappedOptimizedPrompt,
                 refs: stillRefs,
@@ -2996,6 +2970,7 @@ export async function POST(req: NextRequest) {
                 // negative prompt they are appended last, so the request ends on
                 // a list of things not to draw instead of the identity lock.
                 exclusions: finalNegativePrompt,
+                shotType: effectiveShotType,
               })
             : // Reference-first binding leaves `person [N]` as the only mention of
               // the subject, so the legend is the one place the request says what
@@ -3003,6 +2978,9 @@ export async function POST(req: NextRequest) {
               // need it as much as beats do — without it the model is free to
               // invent an ethnicity the portrait contradicts.
               joinPromptBlocks(formatStillReferencesLegend(stillRefs), remappedOptimizedPrompt)
+          const structuredStill = isBeatFrame
+            ? sanitizeBeatStillPrompt(structuredStillRaw)
+            : structuredStillRaw
           promptForResponse = structuredStill
           logIdentityAnchors(stillRefs, characterReferences)
           console.log(
@@ -3140,6 +3118,10 @@ export async function POST(req: NextRequest) {
             }
           }
 
+          if (isBeatFrame) {
+            geminiPrompt = sanitizeBeatStillPrompt(geminiPrompt)
+          }
+
           if (stillPolicyMode === 'creative') {
             if (!getKlingFallbackProvider()) {
               return NextResponse.json(
@@ -3174,12 +3156,15 @@ export async function POST(req: NextRequest) {
             lastRoundPolicyRefusalRecovered = false
             promptForResponse = geminiPrompt
           } else {
+            const sanitizedGeminiPrompt = isBeatFrame
+              ? sanitizeBeatStillPrompt(geminiPrompt)
+              : geminiPrompt
             const vertexPrompt =
               stillPolicyMode === 'safety'
-                ? escalateImagePromptForRetry(geminiPrompt, 1, {
+                ? escalateImagePromptForRetry(sanitizedGeminiPrompt, 1, {
                     skipProductionStillFraming: isBeatFrame,
                   })
-                : geminiPrompt
+                : sanitizedGeminiPrompt
             if (stillPolicyMode === 'safety') {
               promptForResponse = vertexPrompt
             }
@@ -3216,7 +3201,7 @@ export async function POST(req: NextRequest) {
           }
         } else {
           console.log('[Scene Image] Using Vertex Imagen text-to-image (no reference images)')
-          const imagenStill = isBeatFrame
+          const imagenStillRaw = isBeatFrame
             ? assembleStructuredStillPrompt({
                 actionOrStructured: optimizedPrompt,
                 refs: characterReferencesForImages
@@ -3227,14 +3212,19 @@ export async function POST(req: NextRequest) {
                     name: ref.name,
                     roleLabel: 'identity',
                     identityTraits: buildIdentityTraitsClause(ref),
+                    wardrobeClause: formatWardrobeLegendClause(
+                      ref.wardrobeDescription || ref.defaultWardrobe
+                    ),
                   })),
                 photorealisticAnchor: getPhotorealisticPromptAnchor(
                   resolvedGen.storyboardQuality,
                   artStyle
                 ),
                 includeCandid: !isExplicitDirectToCameraBeat(beatForEmotion),
+                shotType: effectiveShotType,
               })
             : optimizedPrompt
+          const imagenStill = isBeatFrame ? sanitizeBeatStillPrompt(imagenStillRaw) : imagenStillRaw
           promptForResponse = imagenStill
           if (stillPolicyMode === 'creative') {
             if (!getKlingFallbackProvider()) {

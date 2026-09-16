@@ -50,10 +50,10 @@ export function buildSceneImageDiptychLabel(
   sendIndex?: number,
   personTokenIndex?: number
 ): string {
-  return `${referencePrefix(sendIndex)}IDENTITY + WARDROBE of ${subjectSuffix(
+  return `${referencePrefix(sendIndex)}CHARACTER REFERENCE of ${subjectSuffix(
     characterName,
     personTokenIndex
-  )} — LEFT panel = face, RIGHT panel = outfit`
+  )} — face and full-body wardrobe of the same person`
 }
 
 export function buildSceneImagePropLabel(

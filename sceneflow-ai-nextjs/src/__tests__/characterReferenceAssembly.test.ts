@@ -301,7 +301,7 @@ describe('characterReferenceAssembly', () => {
     const terms = buildDualReferenceNegativeTerms()
     expect(terms).toContain('mannequin')
     expect(terms).toContain('cartoon')
-    expect(terms).toContain('turnaround sheet')
+    expect(terms).not.toContain('turnaround sheet')
   })
 
   it('identity instruction marks PRIMARY and wardrobe instruction marks SECONDARY', () => {

@@ -26,11 +26,13 @@ export const SCENE_CHARACTER_HEADSHOT_ANCHOR =
   'Photorealistic cinematic 16:9 character wardrobe reference diptych for scene beat consistency.'
 
 export {
+  COMBINED_CHARACTER_REFERENCE_INSTRUCTION,
   WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION,
+  buildCombinedCharacterConsumptionLine,
   buildWardrobeDiptychCharacterConsumptionLine,
 } from '@/lib/character/wardrobeDiptychConsumption'
 
-/** Negative terms to prevent beat frames from reproducing the reference diptych layout. */
+/** @deprecated Beat stills must not list layout primes; kept for legacy sheet generation tests. */
 export const DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT =
   'split-screen output, diptych, two-panel layout, reference sheet collage, side-by-side panels, outfit in close-up, face from full-body panel, mismatched identity between panels'
 
@@ -43,7 +45,7 @@ export { buildWardrobeDiptychReferenceLabel } from '@/lib/character/characterRef
 
 /** Negative terms targeting physics violations and object hallucinations. */
 export const PHYSICS_HALLUCINATION_NEGATIVE_PROMPT =
-  'floating objects, missing limbs, physically impossible anatomy, multiple limbs, floating chairs, sitting without a chair, chairs on tables, hallucinated objects, impossible physics, mutated bodies, deformed furniture, objects defying gravity, clipping geometry'
+  'floating objects, extra limbs, deformed anatomy, impossible physics'
 
 const MAKEUP_PATTERN =
   /\b(makeup|lipstick|eyeliner|mascara|foundation|contour|blush|cosmetic|smudged makeup|runny mascara)\b/i
@@ -165,11 +167,9 @@ export function mergePhysicsNegativePrompt(existing?: string | null): string {
   return [...new Set(parts.join(', ').split(/,\s*/).map((p) => p.trim()).filter(Boolean))].join(', ')
 }
 
-/** Merge physics + diptych reproduction negatives for beat frame generation. */
+/** Merge physics quality negatives for beat frame generation. Layout primes stay out. */
 export function mergeBeatFrameNegativePrompt(existing?: string | null): string {
-  return mergePhysicsNegativePrompt(
-    [DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT, existing].filter(Boolean).join(', ')
-  )
+  return mergePhysicsNegativePrompt(existing)
 }
 
 /** Build merged scene/appearance context for directive extraction. */
@@ -269,7 +269,7 @@ export function buildSimplifiedBeatFramePrompt(input: SimplifiedBeatFramePromptI
     .map((c) => `${c.name}: ${c.emotion!.trim()}`)
 
   const lines = [
-    `Cinematic film frame featuring ${subjects}.`,
+    `Cinematic film frame featuring ${subjects}. Unbroken single-camera frame, unified 16:9 cinematic perspective.`,
     `Action: ${action}`,
   ]
 
@@ -278,9 +278,8 @@ export function buildSimplifiedBeatFramePrompt(input: SimplifiedBeatFramePromptI
   }
 
   lines.push(
-    'Match each character from their wardrobe diptych reference: LEFT panel for face, hair, skin, makeup, and injuries ONLY; RIGHT panel for full-body wardrobe and accessories ONLY.',
-    'Do not describe clothing or costume in text — copy outfit from the RIGHT panel of each character diptych reference.',
-    'NEVER derive face/identity from the RIGHT panel. NEVER derive clothing from the LEFT panel.'
+    'Unbroken single-camera frame, unified 16:9 cinematic perspective.',
+    'Match each character from their character reference: same person — face, hair, and likeness; head-to-toe outfit, fabric, fit, and footwear.'
   )
 
   if (input.locationRefLine?.trim()) {

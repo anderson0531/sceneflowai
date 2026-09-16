@@ -20,8 +20,7 @@ export const LOCATION_TURNAROUND_GENERATION_INSTRUCTION =
 export const LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION =
   'LOCATION REFERENCE: Single wide-angle establishing shot of the environment. ' +
   'Match architectural layout, furniture placement, color palette, and spatial geometry from this reference. ' +
-  'Render ONE unified full-frame cinematic shot for this beat. Match lighting to Global Style Anchor. ' +
-  'Do NOT reproduce any multi-panel reference layout, 2x2 grid, split-screen, or collage in the output.'
+  'Render one unbroken single-camera frame. Match lighting to Global Style Anchor.'
 
 /** Extra lock when the attached still is a post-change version, not the intact base. */
 export const LOCATION_VERSION_CONSUMPTION_SUFFIX =

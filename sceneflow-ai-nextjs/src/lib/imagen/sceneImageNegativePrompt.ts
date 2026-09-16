@@ -14,16 +14,36 @@ export const TYPOGRAPHY_NEGATIVE_TERMS = [
   'text overlay',
   'captions',
   'subtitles',
-  'dialogue text',
-  'speech bubbles',
-  'text on image',
   'watermark',
-  'logo text',
-  'title cards',
-  'intertitles',
-  'written words',
-  'typography overlay',
 ]
+
+/**
+ * Layout words that prime split-frame output when listed as exclusions
+ * (Gemini has no true negative field). Stripped from every beat still list.
+ */
+export const STRUCTURAL_LAYOUT_PRIME_TERMS = [
+  'split-screen',
+  'diptych',
+  'two-panel',
+  'collage',
+  'multi-panel',
+  '2x2',
+  '4-panel',
+  'side-by-side',
+  'reference sheet',
+]
+
+export const ESSENTIAL_QUALITY_NEGATIVE_TERMS = [
+  'mannequin geometry',
+  'plastic skin',
+  'cartoon style',
+  '3D render',
+  'faceless figures',
+  'extra limbs',
+  'deformed anatomy',
+]
+
+export const MAX_SCENE_IMAGE_NEGATIVE_TERMS = 16
 
 /**
  * Phrases that describe the identity drift they were written to prevent.
@@ -72,6 +92,11 @@ function isIdentityNegation(term: string): boolean {
   return IDENTITY_NEGATION_TERMS.some((negation) => normalized.includes(negation))
 }
 
+function isStructuralLayoutPrime(term: string): boolean {
+  const normalized = term.toLowerCase()
+  return STRUCTURAL_LAYOUT_PRIME_TERMS.some((prime) => normalized.includes(prime))
+}
+
 /** Drop identity-describing phrases from an exclusion list. */
 export function stripIdentityNegationTerms(
   terms: Array<string | null | undefined>
@@ -91,9 +116,10 @@ export function buildSceneImageNegativePrompt(input: {
   extraTerms?: Array<string | null | undefined>
 }): string {
   const terms = stripIdentityNegationTerms([
+    ...ESSENTIAL_QUALITY_NEGATIVE_TERMS,
     ...(input.allowTypography ? [] : TYPOGRAPHY_NEGATIVE_TERMS),
     ...(input.extraTerms ?? []),
-  ])
+  ]).filter((term) => !isStructuralLayoutPrime(term))
 
   const seen = new Set<string>()
   const unique: string[] = []
@@ -102,6 +128,7 @@ export function buildSceneImageNegativePrompt(input: {
     if (seen.has(key)) continue
     seen.add(key)
     unique.push(term)
+    if (unique.length >= MAX_SCENE_IMAGE_NEGATIVE_TERMS) break
   }
 
   return unique.join(', ')

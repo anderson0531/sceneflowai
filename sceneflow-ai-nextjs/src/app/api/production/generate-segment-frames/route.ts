@@ -30,12 +30,17 @@ import {
 import { buildLocationReferenceLabel, buildLocationReferencePromptLine } from '@/lib/vision/locationReferencePrompts'
 import {
   buildSimplifiedBeatFramePrompt,
-  buildWardrobeDiptychCharacterConsumptionLine,
+  buildCombinedCharacterConsumptionLine,
   buildWardrobeDiptychReferenceLabel,
   mergeBeatFrameNegativePrompt,
   resolveSceneHeadshotsForBeatCharacters,
-  WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION,
+  COMBINED_CHARACTER_REFERENCE_INSTRUCTION,
 } from '@/lib/character/sceneCharacterHeadshot'
+import {
+  composeIdentityWardrobeDiptych,
+  composeIdentityWardrobePipFromDiptychUrl,
+} from '@/lib/character/composeIdentityWardrobeDiptych'
+import { sanitizeBeatStillPrompt } from '@/lib/imagen/sanitizeBeatStillPrompt'
 import {
   formatVisualExpressionCue,
   parsePerformanceCue,
@@ -729,11 +734,13 @@ export async function POST(req: NextRequest) {
           characters: simplifiedCharacters,
           artStyleSuffix: `Cinematic quality, 8K, ${selectedStyle.promptSuffix}`,
         })
-        const perCharacterDiptychLines = headshotChars
-          .map((c) => buildWardrobeDiptychCharacterConsumptionLine(c.name))
+        const perCharacterLines = headshotChars
+          .map((c) => buildCombinedCharacterConsumptionLine(c.name))
           .join('\n')
-        startFramePrompt = `${startFramePrompt}\n\n${WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION}\n${perCharacterDiptychLines}`
-        console.log('[Generate Frames] Using simplified beat frame prompt (wardrobe diptych reference-first)')
+        startFramePrompt = sanitizeBeatStillPrompt(
+          `${startFramePrompt}\n\n${COMBINED_CHARACTER_REFERENCE_INSTRUCTION}\n${perCharacterLines}`
+        )
+        console.log('[Generate Frames] Using simplified beat frame prompt (character reference-first)')
       }
 
       for (const c of charPool) {
@@ -745,6 +752,18 @@ export async function POST(req: NextRequest) {
           c.wardrobeReferenceUrl &&
           allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES
         ) {
+          const pip = await composeIdentityWardrobeDiptych({
+            identityUrl: c.referenceUrl,
+            wardrobeUrl: c.wardrobeReferenceUrl,
+            label: c.name,
+          })
+          if (pip) {
+            allReferenceImages.push({
+              imageUrl: pip.dataUrl,
+              name: buildWardrobeDiptychReferenceLabel(c.name),
+            })
+            continue
+          }
           allReferenceImages.push({
             imageUrl: c.referenceUrl,
             name: buildIdentityReferenceLabel(c.name),
@@ -759,8 +778,12 @@ export async function POST(req: NextRequest) {
         }
 
         if (sceneHeadshotUrl && allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES) {
+          const pip = await composeIdentityWardrobePipFromDiptychUrl({
+            diptychUrl: sceneHeadshotUrl,
+            label: c.name,
+          })
           allReferenceImages.push({
-            imageUrl: sceneHeadshotUrl,
+            imageUrl: pip?.dataUrl ?? sceneHeadshotUrl,
             name: buildWardrobeDiptychReferenceLabel(c.name),
           })
           continue
