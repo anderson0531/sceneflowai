@@ -5,10 +5,15 @@ import {
   countCastAgentItems,
   countLocationAgentItems,
   countObjectAgentItems,
+  firstLibraryTabWithRequiredWork,
   idsMissingLocationBase,
+  kindAgentToolbarLabel,
+  libraryTabForPrimaryAction,
   locationVersionNeedsGeneration,
   locationsThatGainedBase,
+  pendingKindAgentRunForAction,
   referenceExpressAgentLabel,
+  summarizeLibraryRequiredActions,
   toLocationReferenceFromExtracted,
 } from '@/lib/vision/libraryKindAgents'
 import {
@@ -59,6 +64,154 @@ describe('kind agent counts', () => {
     expect(
       countObjectAgentItems([{ imageUrl: '' }, { imageUrl: 'https://cdn/key.png' }])
     ).toBe(1)
+  })
+})
+
+describe('summarizeLibraryRequiredActions', () => {
+  it('picks Library Agent for missing bases that still gate frames', () => {
+    const summary = summarizeLibraryRequiredActions({
+      characters: [{ type: 'lead', name: 'Mira', referenceImage: '' }],
+      locationReferences: [
+        {
+          location: 'DOCK',
+          imageUrl: '',
+          versions: [{ stateNotes: 'Door gone', imageUrl: '', needsImageRegen: true }],
+        },
+      ],
+      objectReferences: [{ name: 'Key', imageUrl: '' }],
+    })
+    expect(summary.primaryAction).toBe('library')
+    expect(summary.reason).toBe('missing-library-bases')
+    expect(summary.libraryMissingTotal).toBe(3)
+    expect(summary.locations).toEqual({
+      missingBases: 1,
+      missingVersions: 1,
+      staleVersions: 0,
+    })
+    expect(summary.tabAttention).toEqual({
+      cast: 'missing',
+      locations: 'missing',
+      object: 'missing',
+    })
+    expect(firstLibraryTabWithRequiredWork(summary)).toBe('cast')
+  })
+
+  it('names only the missing location bases when that is the library work', () => {
+    const summary = summarizeLibraryRequiredActions({
+      characters: [{ type: 'lead', name: 'Mira', referenceImage: 'https://cdn/mira.png' }],
+      locationReferences: [{ location: 'FOYER', imageUrl: '' }],
+      objectReferences: [{ name: 'Key', imageUrl: 'https://cdn/key.png' }],
+    })
+    expect(summary.primaryAction).toBe('library')
+    expect(summary.reason).toBe('missing-location-bases')
+    expect(summary.reasonCount).toBe(1)
+    expect(firstLibraryTabWithRequiredWork(summary)).toBe('locations')
+  })
+
+  it('picks Location Agent for stale set versions after bases exist', () => {
+    const summary = summarizeLibraryRequiredActions({
+      characters: [{ type: 'lead', name: 'Mira', referenceImage: 'https://cdn/mira.png' }],
+      locationReferences: [
+        {
+          location: 'FOYER',
+          imageUrl: 'https://cdn/foyer.png',
+          versions: [
+            {
+              stateNotes: 'Door blown out',
+              imageUrl: 'https://cdn/door.png',
+              needsImageRegen: true,
+            },
+            { stateNotes: 'Flooded', imageUrl: '' },
+          ],
+        },
+      ],
+      objectReferences: [],
+    })
+    expect(summary.libraryMissingTotal).toBe(0)
+    expect(summary.primaryAction).toBe('location')
+    expect(summary.reason).toBe('stale-location-versions')
+    expect(summary.locations).toEqual({
+      missingBases: 0,
+      missingVersions: 1,
+      staleVersions: 1,
+    })
+    expect(summary.tabAttention.locations).toBe('missing')
+    expect(firstLibraryTabWithRequiredWork(summary)).toBe('locations')
+    expect(pendingKindAgentRunForAction(summary.primaryAction)).toBe('location')
+    expect(libraryTabForPrimaryAction(summary.primaryAction, summary)).toBe('locations')
+  })
+
+  it('marks the Locations tab amber when only set stills are stale', () => {
+    const summary = summarizeLibraryRequiredActions({
+      characters: [{ type: 'lead', name: 'Mira', referenceImage: 'https://cdn/mira.png' }],
+      locationReferences: [
+        {
+          location: 'FOYER',
+          imageUrl: 'https://cdn/foyer.png',
+          versions: [
+            {
+              stateNotes: 'Door blown out',
+              imageUrl: 'https://cdn/door.png',
+              needsImageRegen: true,
+            },
+          ],
+        },
+      ],
+      objectReferences: [],
+    })
+    expect(summary.primaryAction).toBe('location')
+    expect(summary.reason).toBe('stale-location-versions')
+    expect(summary.tabAttention.locations).toBe('stale')
+  })
+
+  it('picks Cast Agent for stale wardrobes after identity stills exist', () => {
+    const summary = summarizeLibraryRequiredActions({
+      characters: [
+        {
+          type: 'lead',
+          name: 'Mira',
+          referenceImage: 'https://cdn/mira.png',
+          wardrobes: [{ needsImageRegen: true }],
+        },
+      ],
+      locationReferences: [{ location: 'FOYER', imageUrl: 'https://cdn/foyer.png' }],
+      objectReferences: [],
+    })
+    expect(summary.primaryAction).toBe('cast')
+    expect(summary.reason).toBe('stale-cast-wardrobes')
+    expect(summary.cast).toEqual({ missingIdentity: 0, staleWardrobes: 1 })
+    expect(summary.tabAttention.cast).toBe('stale')
+    expect(summary.tabAttention.locations).toBe('ready')
+    expect(firstLibraryTabWithRequiredWork(summary)).toBe('cast')
+  })
+
+  it('hides the next action when nothing remains', () => {
+    const summary = summarizeLibraryRequiredActions({
+      characters: [{ type: 'lead', name: 'Mira', referenceImage: 'https://cdn/mira.png' }],
+      locationReferences: [{ location: 'FOYER', imageUrl: 'https://cdn/foyer.png' }],
+      objectReferences: [{ name: 'Key', imageUrl: 'https://cdn/key.png' }],
+    })
+    expect(summary.primaryAction).toBeNull()
+    expect(summary.reason).toBeNull()
+    expect(summary.tabAttention).toEqual({
+      cast: 'ready',
+      locations: 'ready',
+      object: 'ready',
+    })
+    expect(pendingKindAgentRunForAction(summary.primaryAction)).toBeNull()
+    expect(firstLibraryTabWithRequiredWork(summary)).toBe('cast')
+  })
+
+  it('maps Library Agent to a parent run rather than a kind-tab pending flag', () => {
+    expect(pendingKindAgentRunForAction('library')).toBeNull()
+    expect(pendingKindAgentRunForAction('object')).toBe('prop')
+  })
+})
+
+describe('kindAgentToolbarLabel', () => {
+  it('promotes a count into a Run CTA and stays quiet at 0', () => {
+    expect(kindAgentToolbarLabel('Location Agent', 3)).toBe('Run Location Agent — 3 needed')
+    expect(kindAgentToolbarLabel('Location Agent', 0)).toBe('Location Agent (0)')
   })
 })
 

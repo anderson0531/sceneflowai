@@ -41,10 +41,11 @@ import {
   locationsThatGainedBase,
   toLocationReferenceFromExtracted,
 } from '@/lib/vision/libraryKindAgents'
+import type { ReferenceExpressScope, ReferenceExpressKind } from '@/lib/vision/referenceExpress/types'
 import { LibraryKindToolbar } from './LibraryKindToolbar'
+import { usePendingKindAgentRun } from './usePendingKindAgentRun'
 import { patchLocationVersion } from '@/lib/vision/locationVersionResolve'
 import { runWithConcurrencyLimit } from '@/lib/utils/concurrency'
-import type { ReferenceExpressScope } from '@/lib/vision/referenceExpress/types'
 import {
   DeferredImageSkeleton,
   isDeferredImageUrl,
@@ -176,6 +177,8 @@ interface LocationLibraryProps {
   ) => Promise<unknown>
   isExpressGeneratingReferences?: boolean
   getLatestLocations?: () => LocationReference[]
+  pendingKindAgentRun?: ReferenceExpressKind | null
+  onPendingKindAgentRunConsumed?: () => void
   /** Object-library names used to strip beat props from version image prompts. */
   catalogPropNames?: string[]
 }
@@ -362,6 +365,8 @@ export function LocationLibrary({
   onExpressGenerateReferences,
   isExpressGeneratingReferences = false,
   getLatestLocations,
+  pendingKindAgentRun = null,
+  onPendingKindAgentRunConsumed,
   catalogPropNames: catalogPropNamesProp = [],
 }: LocationLibraryProps) {
   const t = useTranslations('production.direction.locationLibrary')
@@ -764,19 +769,33 @@ export function LocationLibrary({
     }
   }
 
+  usePendingKindAgentRun(
+    pendingKindAgentRun,
+    'location',
+    handleLocationAgent,
+    onPendingKindAgentRunConsumed
+  )
+
+  const locationAgentCount = countLocationAgentItems(mergedLocations)
+
   return (
     <TooltipProvider delayDuration={300}>
     <div className="space-y-3">
       {scenes.length > 0 && (
         <LibraryKindToolbar
           updateLabel={t('updateLocations')}
-          agentLabel={t('locationAgent', { count: countLocationAgentItems(mergedLocations) })}
+          agentLabel={
+            locationAgentCount > 0
+              ? t('runLocationAgentNeeded', { count: locationAgentCount })
+              : t('locationAgent', { count: locationAgentCount })
+          }
           onUpdate={() => void handleUpdateLocations()}
           onAgent={
             onExpressGenerateReferences ? () => void handleLocationAgent() : undefined
           }
           isUpdating={isUpdatingLocations}
           isAgentRunning={isLocationAgentRunning || isExpressGeneratingReferences}
+          agentHasWork={locationAgentCount > 0}
           updateTitle="Extract missing locations from scene headings and sync set versions from the script"
           agentTitle="Update locations from the script, draw missing bases, then generate set-version stills from those bases"
         />

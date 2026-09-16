@@ -103,8 +103,9 @@ import {
   refreshCastingBriefForAppearance,
 } from "@/lib/character/applyCastingBriefUpdate";
 import { LibraryKindToolbar } from "@/components/vision/LibraryKindToolbar";
-import { countCastAgentItems } from "@/lib/vision/libraryKindAgents";
-import type { ReferenceExpressScope } from "@/lib/vision/referenceExpress/types";
+import { countCastAgentItems, kindAgentToolbarLabel } from "@/lib/vision/libraryKindAgents";
+import type { ReferenceExpressKind, ReferenceExpressScope } from "@/lib/vision/referenceExpress/types";
+import { usePendingKindAgentRun } from "@/components/vision/usePendingKindAgentRun";
 
 /** Parse API response body without throwing on Vercel HTML/plain-text error pages (504, etc.). */
 async function readJsonSafe(res: Response): Promise<Record<string, unknown>> {
@@ -241,6 +242,8 @@ export interface CharacterLibraryProps {
   ) => Promise<unknown>;
   isExpressGeneratingReferences?: boolean;
   getLatestCharacters?: () => any[];
+  pendingKindAgentRun?: ReferenceExpressKind | null;
+  onPendingKindAgentRunConsumed?: () => void;
 }
 
 // Wardrobe item in collection with scene-aware tracking
@@ -524,6 +527,8 @@ export function CharacterLibrary({
   onExpressGenerateReferences,
   isExpressGeneratingReferences = false,
   getLatestCharacters,
+  pendingKindAgentRun = null,
+  onPendingKindAgentRunConsumed,
 }: CharacterLibraryProps) {
   const effectiveVoiceProvider =
     voiceAssignmentProvider ?? ttsProvider ?? "elevenlabs";
@@ -964,7 +969,15 @@ export function CharacterLibrary({
     }
   };
 
+  usePendingKindAgentRun(
+    pendingKindAgentRun,
+    "cast",
+    handleCastAgent,
+    onPendingKindAgentRunConsumed,
+  );
+
   const castAgentCount = countCastAgentItems(castCharacters);
+  const castAgentLabel = kindAgentToolbarLabel("Cast Agent", castAgentCount);
 
   return (
     <div
@@ -993,7 +1006,7 @@ export function CharacterLibrary({
           {scenes && scenes.length > 0 && castCharacters.length > 0 && (
             <LibraryKindToolbar
               updateLabel="Update Cast"
-              agentLabel={`Cast Agent (${castAgentCount})`}
+              agentLabel={castAgentLabel}
               onUpdate={() => void handleUpdateAllWardrobesFromScript()}
               onAgent={
                 onExpressGenerateReferences
@@ -1004,6 +1017,7 @@ export function CharacterLibrary({
               isAgentRunning={
                 isCastAgentRunning || isExpressGeneratingReferences
               }
+              agentHasWork={castAgentCount > 0}
               updateTitle="Rescan the script and update every character's scene looks"
               agentTitle="Update wardrobes from the script, then draw missing cast identity stills and stale looks"
             />
@@ -1015,7 +1029,7 @@ export function CharacterLibrary({
         <div className="mb-3">
           <LibraryKindToolbar
             updateLabel="Update Cast"
-            agentLabel={`Cast Agent (${castAgentCount})`}
+            agentLabel={castAgentLabel}
             onUpdate={() => void handleUpdateAllWardrobesFromScript()}
             onAgent={
               onExpressGenerateReferences
@@ -1026,6 +1040,7 @@ export function CharacterLibrary({
             isAgentRunning={
               isCastAgentRunning || isExpressGeneratingReferences
             }
+            agentHasWork={castAgentCount > 0}
             updateTitle="Rescan the script and update every character's scene looks"
             agentTitle="Update wardrobes from the script, then draw missing cast identity stills and stale looks"
           />

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo, useEffect, useRef } from 'react'
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
@@ -35,6 +35,14 @@ import { DetailedSceneDirection } from '@/types/scene-direction'
 import { buildObjectReferencePrompt } from '@/lib/vision/referenceExpressPrompts'
 import { resolveReferenceReadiness } from '@/lib/vision/referenceReadiness'
 import {
+  firstLibraryTabWithRequiredWork,
+  libraryTabForPrimaryAction,
+  pendingKindAgentRunForAction,
+  summarizeLibraryRequiredActions,
+} from '@/lib/vision/libraryKindAgents'
+import type { ReferenceExpressKind } from '@/lib/vision/referenceExpress/types'
+import { ReferenceLibraryNextActionBanner } from './ReferenceLibraryNextActionBanner'
+import {
   DeferredImageSkeleton,
   isDeferredImageUrl,
   isDisplayableImageUrl,
@@ -62,7 +70,10 @@ interface SceneWithDirection {
   imageUrl?: string
 }
 
-export interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'compact'> {
+export interface VisionReferencesSidebarProps extends Omit<
+  CharacterLibraryProps,
+  'compact' | 'pendingKindAgentRun' | 'onPendingKindAgentRunConsumed'
+> {
   /** Project ID for uploads */
   projectId?: string
   /** Series context — enables import/share with series reference library */
@@ -1502,29 +1513,6 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   }, [allScenes])
   const scenesWithoutImages = allScenes.length - scenesWithImages
 
-  const [castOpen, setCastOpen] = useState(false)
-  const [showProTips, setShowProTips] = useState(false)
-  const [activeReferenceTab, setActiveReferenceTab] = useState<'cast' | 'object' | 'locations'>(initialTab ?? 'cast')
-
-  useEffect(() => {
-    if (initialTab) {
-      setActiveReferenceTab(initialTab)
-    }
-  }, [initialTab])
-
-  useEffect(() => {
-    const handler = (e: CustomEvent<{ tab?: 'cast' | 'object' | 'locations' }>) => {
-      const tab = e.detail?.tab
-      if (tab === 'cast' || tab === 'object' || tab === 'locations') {
-        setActiveReferenceTab(tab)
-      }
-    }
-    window.addEventListener('reference-library:open-tab' as any, handler)
-    return () => window.removeEventListener('reference-library:open-tab' as any, handler)
-  }, [])
-  const [objectRegenerateTarget, setObjectRegenerateTarget] = useState<VisualReference | null>(null)
-  const [referenceExpressDialogOpen, setReferenceExpressDialogOpen] = useState(false)
-
   // Same counts that gate frame generation, so the button here clears the gate.
   const referencesExpressStats = useMemo(() => {
     const readiness = resolveReferenceReadiness({
@@ -1539,6 +1527,69 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
       total: readiness.missingTotal,
     }
   }, [characters, locationReferences, objectReferences])
+
+  const libraryRequiredActions = useMemo(
+    () =>
+      summarizeLibraryRequiredActions({
+        characters,
+        locationReferences,
+        objectReferences,
+      }),
+    [characters, locationReferences, objectReferences]
+  )
+
+  const [castOpen, setCastOpen] = useState(false)
+  const [showProTips, setShowProTips] = useState(false)
+  const [activeReferenceTab, setActiveReferenceTab] = useState<'cast' | 'object' | 'locations'>(
+    () => initialTab ?? firstLibraryTabWithRequiredWork(libraryRequiredActions)
+  )
+  const [pendingKindAgentRun, setPendingKindAgentRun] = useState<ReferenceExpressKind | null>(
+    null
+  )
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveReferenceTab(initialTab)
+    }
+  }, [initialTab])
+
+  const consumePendingKindAgentRun = useCallback(() => {
+    setPendingKindAgentRun(null)
+  }, [])
+
+  const handleRunPrimaryLibraryAction = useCallback(() => {
+    if (!libraryRequiredActions.primaryAction || !onExpressGenerateReferences) return
+    if (isExpressGeneratingReferences || pendingKindAgentRun) return
+    const tab = libraryTabForPrimaryAction(
+      libraryRequiredActions.primaryAction,
+      libraryRequiredActions
+    )
+    setActiveReferenceTab(tab)
+    const pending = pendingKindAgentRunForAction(libraryRequiredActions.primaryAction)
+    if (pending) {
+      setPendingKindAgentRun(pending)
+      return
+    }
+    void onExpressGenerateReferences()
+  }, [
+    libraryRequiredActions,
+    onExpressGenerateReferences,
+    isExpressGeneratingReferences,
+    pendingKindAgentRun,
+  ])
+
+  useEffect(() => {
+    const handler = (e: CustomEvent<{ tab?: 'cast' | 'object' | 'locations' }>) => {
+      const tab = e.detail?.tab
+      if (tab === 'cast' || tab === 'object' || tab === 'locations') {
+        setActiveReferenceTab(tab)
+      }
+    }
+    window.addEventListener('reference-library:open-tab' as any, handler)
+    return () => window.removeEventListener('reference-library:open-tab' as any, handler)
+  }, [])
+  const [objectRegenerateTarget, setObjectRegenerateTarget] = useState<VisualReference | null>(null)
+  const [referenceExpressDialogOpen, setReferenceExpressDialogOpen] = useState(false)
 
   // Reference tabs matching ScriptPanel folder tab style (Storyboard removed - handled in main panel)
   // Scene tab now shows allScenes count (per-scene references) instead of just manual sceneReferences
@@ -1720,12 +1771,20 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
           </div>
         )}
         
+        <ReferenceLibraryNextActionBanner
+          summary={libraryRequiredActions}
+          onRun={handleRunPrimaryLibraryAction}
+          disabled={!onExpressGenerateReferences}
+          isRunning={isExpressGeneratingReferences || pendingKindAgentRun != null}
+        />
+
         <ProductTabList
           tabs={referenceTabs.map((tab) => ({
             key: tab.key,
             label: tab.label,
             icon: tab.icon,
             count: tab.count,
+            attention: libraryRequiredActions.tabAttention[tab.key],
           }))}
           activeKey={activeReferenceTab}
           onChange={(key) => setActiveReferenceTab(key as 'cast' | 'object' | 'locations')}
@@ -1787,6 +1846,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               onExpressGenerateReferences={onExpressGenerateReferences}
               isExpressGeneratingReferences={isExpressGeneratingReferences}
               getLatestCharacters={getLatestCharacters}
+              pendingKindAgentRun={pendingKindAgentRun}
+              onPendingKindAgentRunConsumed={consumePendingKindAgentRun}
             />
             </>
           )}
@@ -1819,6 +1880,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               onExpressGenerateReferences={onExpressGenerateReferences}
               isExpressGeneratingReferences={isExpressGeneratingReferences}
               getLatestLocations={getLatestLocations}
+              pendingKindAgentRun={pendingKindAgentRun}
+              onPendingKindAgentRunConsumed={consumePendingKindAgentRun}
               catalogPropNames={objectReferences.map((o) => o.name).filter(Boolean)}
             />
             </>
@@ -1835,7 +1898,11 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                 onAddFromLibrary={handleAddPropFromLibrary}
               />
               {/* AI Object Suggestions Panel */}
-              {((scenesForSuggestion.length > 0 || objectReferences.length > 1) && onObjectGenerated) && (
+              {((scenesForSuggestion.length > 0 ||
+                objectReferences.length > 1 ||
+                libraryRequiredActions.objectCount > 0 ||
+                pendingKindAgentRun === 'prop') &&
+                onObjectGenerated) && (
                 <ObjectSuggestionPanel
                   scenes={scenesForSuggestion}
                   existingObjects={objectReferences}
@@ -1847,6 +1914,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                   objectDuplicateIgnores={objectDuplicateIgnores}
                   onExpressGenerateReferences={onExpressGenerateReferences}
                   isExpressGeneratingReferences={isExpressGeneratingReferences}
+                  pendingKindAgentRun={pendingKindAgentRun}
+                  onPendingKindAgentRunConsumed={consumePendingKindAgentRun}
                   compact
                 />
               )}

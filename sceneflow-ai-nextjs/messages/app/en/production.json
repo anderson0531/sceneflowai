@@ -1103,6 +1103,7 @@
       "update": "Update",
       "updateLocations": "Update Locations",
       "locationAgent": "Location Agent ({count})",
+      "runLocationAgentNeeded": "Run Location Agent — {count} needed",
       "updateSummary": "Extracted {extracted} · created {created} · updated {updated} · stale {stale}",
       "updating": "Updating…",
       "generateFromBase": "Generate from base",
@@ -1174,7 +1175,21 @@
       "noAssetsToReconcile": "No assets to reconcile.",
       "cancel": "Cancel",
       "applying": "Applying…",
-      "confirm": "Confirm"
+      "confirm": "Confirm",
+      "nextAction": {
+        "missingLibraryBases": "{count, plural, one {# reference still needs an image.} other {# references still need an image.}}",
+        "missingLocationBases": "{count, plural, one {# location still needs a reference image.} other {# locations still need a reference image.}}",
+        "staleLocationVersions": "Locations changed — run Location Agent to draw the new set stills.",
+        "missingLocationVersions": "{count, plural, one {# set version still needs a still.} other {# set versions still need stills.}}",
+        "missingCastIdentity": "{count, plural, one {# character still needs a reference image.} other {# characters still need a reference image.}}",
+        "staleCastWardrobes": "Looks changed — run Cast Agent to refresh wardrobe stills.",
+        "missingObjects": "{count, plural, one {# object still needs a reference image.} other {# objects still need a reference image.}}",
+        "runLibraryAgent": "Run Library Agent",
+        "runCastAgent": "Run Cast Agent",
+        "runLocationAgent": "Run Location Agent",
+        "runObjectAgent": "Run Object Agent",
+        "generating": "Generating…"
+      }
     },
     "beatReferences": {
       "title": "Review references — Scene {number}",
