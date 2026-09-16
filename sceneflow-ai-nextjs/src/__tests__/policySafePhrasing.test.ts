@@ -91,6 +91,29 @@ describe('softenStillPhrasingForPolicy', () => {
     expect(text).not.toMatch(/beside person \[1\]'s shoulder/i)
   })
 
+  it('rewrites character-name shoulder pinning, not only person tokens', () => {
+    const { text } = softenStillPhrasingForPolicy(
+      "Gideon plants the spanner beside Piper's shoulder."
+    )
+
+    expect(text).toContain('spanner')
+    expect(text).toContain('beside their open hand')
+    expect(text).not.toMatch(/beside Piper's shoulder/i)
+  })
+
+  it('rewrites trapped-on-floor, hunched defensively, and pressed-flat body contact', () => {
+    const { text } = softenStillPhrasingForPolicy(
+      'She sits trapped on the floor, shoulders hunched defensively, back pressed flat against the brick wall.'
+    )
+
+    expect(text).not.toMatch(/\btrapped\b/i)
+    expect(text).not.toMatch(/hunched defensively/i)
+    expect(text).not.toMatch(/pressed flat against/i)
+    expect(text).toMatch(/seated against/i)
+    expect(text).not.toMatch(/low angle/i)
+    expect(text).not.toMatch(/kneels near the wall/i)
+  })
+
   it('leaves an already-clean beat untouched', () => {
     const clean =
       "Elise's open hand is flat on the cold stone, the journal splayed beside it, pages lifting in the draft."
@@ -258,6 +281,9 @@ describe('buildPolicySafePhrasingRules', () => {
 
     expect(rules).toContain('slams into the stone an inch from her fingers')
     expect(rules).toContain('buried in cracked stone beside her open hand')
+    expect(rules).toContain('stands beside her at eye level')
+    expect(rules).not.toMatch(/stands over her/i)
+    expect(rules).toContain('Do not stage a standing figure over a seated person')
   })
 
   it('keeps the compact variant to a single line for the longform path', () => {

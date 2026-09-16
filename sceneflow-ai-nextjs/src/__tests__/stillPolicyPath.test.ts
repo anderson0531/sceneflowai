@@ -157,8 +157,11 @@ describe('generateImageWithVertexKlingFallback designer retry', () => {
 
     expect(result.vertexAttempts).toBe(2)
     expect(generateVertexImage).toHaveBeenCalledTimes(2)
+    expect(level1).toMatch(/embedded in cracked brick beside person \[1\]'s open hand/i)
+    const first = vi.mocked(generateVertexImage).mock.calls[0]?.[0]
     const second = vi.mocked(generateVertexImage).mock.calls[1]?.[0]
+    expect(first?.prompt).toMatch(/embedded in cracked brick beside person \[1\]'s open hand/i)
     expect(second?.prompt).toMatch(/embedded in cracked brick beside person \[1\]'s open hand/i)
-    expect(second?.prompt).not.toBe(level1)
+    expect(second?.prompt).toContain('spanner')
   })
 })
