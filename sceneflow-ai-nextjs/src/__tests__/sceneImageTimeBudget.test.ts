@@ -50,8 +50,12 @@ describe('canStartLikenessRetry', () => {
 })
 
 describe('canValidateLikeness', () => {
-  it('always validates the first round, whose score decides the retry', () => {
-    expect(canValidateLikeness(0, 1_000, 40_000)).toBe(true)
+  it('skips the first round when the remaining budget cannot hold a vision pass', () => {
+    expect(canValidateLikeness(0, 1_000, 40_000)).toBe(false)
+  })
+
+  it('validates the first round when the 20s floor still fits', () => {
+    expect(canValidateLikeness(0, LIKENESS_VALIDATION_MIN_RESERVE_MS, 0)).toBe(true)
   })
 
   it('skips the retry validation when it would not finish', () => {

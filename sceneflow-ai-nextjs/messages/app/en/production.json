@@ -315,6 +315,8 @@
     "direct": "Direct",
     "auto": "Auto",
     "close": "Close",
+    "cancel": "Cancel",
+    "cancelled": "Cancelled — already-drawn frames are kept",
     "imageCredits": "Image credits (est.): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Running...",
     "confirm": "Frame Agent"

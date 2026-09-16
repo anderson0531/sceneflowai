@@ -27,6 +27,8 @@ import {
   isExpressImageCanaryAbortError,
   isExpressImageRateLimitError,
   formatExpressImageErrorForUser,
+  FRAME_AGENT_CANCELLED_MESSAGE,
+  createFrameAgentCancelledError,
 } from './expressImageErrors'
 import {
   ExpressTrafficCop,
@@ -416,6 +418,8 @@ export interface RunExpressParams {
     sceneIndex: number,
     summary: ExpressPerSceneSummary
   ) => void | Promise<void>
+  /** Abort remaining work when the client cancels the Frame Agent SSE run. */
+  signal?: AbortSignal
 }
 
 interface SceneRunContext {
@@ -428,6 +432,8 @@ interface SceneRunContext {
   storySpine?: LookbookSceneSummary[]
   /** Last beat of the preceding scene, for continuity across the cut. */
   previousSceneLastBeat?: BeatPlannerContinuityAnchor
+  /** Same abort signal as the Express run. */
+  signal?: AbortSignal
 }
 
 function getScenes(project: any): { scenes: any[]; nested: boolean } {
@@ -622,7 +628,8 @@ function recordRateLimitedFailure(
 
 function buildAdaptiveBeatPoolOptions(
   emit: ExpressEmit,
-  options: ExpressOptions
+  options: ExpressOptions,
+  signal?: AbortSignal
 ): AdaptiveBeatPoolOptions {
   const concurrency = getSceneExpressBeatConcurrency({
     flashAnimatic: usesFlashAnimaticRun(options),
@@ -640,6 +647,7 @@ function buildAdaptiveBeatPoolOptions(
       }
     },
     abortOnNonRetryableCanary: true,
+    ...(signal ? { signal } : {}),
   }
 }
 
@@ -924,6 +932,9 @@ async function generateSingleBeatImage(
   artStyle: string,
   beatPlan?: BeatKeyframePlan
 ): Promise<{ imageUrl: string }> {
+  if (ctx.signal?.aborted) {
+    throw createFrameAgentCancelledError()
+  }
   const { sceneIndex, sceneNumber, scene } = ctx
   const imageParams = getExpressImageParams(options)
   const sceneExcludesCharacters = isStoryboardNoCharacterScene(scene, sceneNumber)
@@ -988,6 +999,7 @@ async function generateSingleBeatImage(
       animaticDraft: imageParams.animaticDraft,
       skipLikenessValidation: true,
       ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
+      ...(ctx.signal ? { signal: ctx.signal } : {}),
     })
   })
   await persistBeatFrame(scene, beatIdx, result, imageParams.storyboardQuality)
@@ -1022,6 +1034,9 @@ async function generateSingleBeatEndImage(
   artStyle: string,
   startFrameUrl: string
 ): Promise<{ imageUrl: string }> {
+  if (ctx.signal?.aborted) {
+    throw createFrameAgentCancelledError()
+  }
   const { sceneIndex, sceneNumber, scene } = ctx
   const imageParams = getExpressImageParams(options)
   const sceneExcludesCharacters = isStoryboardNoCharacterScene(scene, sceneNumber)
@@ -1081,6 +1096,7 @@ async function generateSingleBeatEndImage(
       animaticDraft: imageParams.animaticDraft,
       skipLikenessValidation: imageParams.skipLikenessValidation,
       ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
+      ...(ctx.signal ? { signal: ctx.signal } : {}),
     })
   })
 
@@ -1164,7 +1180,7 @@ async function runSupplementalEndFrames(
       )
       lastImageUrl = result.imageUrl
     },
-    buildAdaptiveBeatPoolOptions(emit, options)
+    buildAdaptiveBeatPoolOptions(emit, options, ctx.signal)
   )
 
   for (const [beatIdx, err] of pool.failed) {
@@ -1246,7 +1262,7 @@ async function runBeatImages(
         )
         lastImageUrl = result.imageUrl
       },
-      buildAdaptiveBeatPoolOptions(emit, options)
+      buildAdaptiveBeatPoolOptions(emit, options, ctx.signal)
     )
 
     for (const [beatIdx, err] of pool.failed) {
@@ -1796,6 +1812,7 @@ async function runImagePhase(
             skipLikenessValidation: true,
             useAIPrompt: false,
             ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
+            ...(ctx.signal ? { signal: ctx.signal } : {}),
           })
           scene.imageUrl = result.imageUrl
           lastImageUrl = result.imageUrl
@@ -1843,6 +1860,7 @@ async function runImagePhase(
             skipLikenessValidation: true,
             useAIPrompt: false,
             ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
+            ...(ctx.signal ? { signal: ctx.signal } : {}),
           })
           persistDialogueFrame(dialogueIdx, result, imageParams.storyboardQuality)
           lastImageUrl = result.imageUrl
@@ -1907,6 +1925,20 @@ async function runScene(
   const sceneMode = getExpressMode(options) === 'scene'
 
   safeEmit(emit, { type: 'scene-start', sceneIndex, sceneNumber })
+
+  if (ctx.signal?.aborted) {
+    const error = FRAME_AGENT_CANCELLED_MESSAGE
+    safeEmit(emit, { type: 'scene-done', sceneIndex, sceneNumber, ok: false, error })
+    return {
+      sceneIndex,
+      sceneNumber,
+      ok: false,
+      error,
+      phasesRun,
+      phasesSkipped,
+      phasesFailed: ['direction', 'audio', 'image'],
+    }
+  }
 
   if (sceneMode) {
     const visionPhase = project?.metadata?.visionPhase || {}
@@ -2193,7 +2225,7 @@ async function runScene(
 export async function runExpress(
   params: RunExpressParams
 ): Promise<ExpressResult> {
-  const { project, options, baseUrl, authCookie, emit, onSceneComplete } = params
+  const { project, options, baseUrl, authCookie, emit, onSceneComplete, signal } = params
   const { scenes } = getScenes(project)
 
   const sceneIndices =
@@ -2266,6 +2298,17 @@ export async function runExpress(
   const tasks = sceneIndices.map((idx: number) => ({
     id: idx,
     execute: async () => {
+      if (signal?.aborted) {
+        return {
+          sceneIndex: idx,
+          sceneNumber: idx + 1,
+          ok: false,
+          error: FRAME_AGENT_CANCELLED_MESSAGE,
+          phasesRun: [],
+          phasesSkipped: [],
+          phasesFailed: ['direction', 'audio', 'image'] as ExpressPhase[],
+        }
+      }
       const result = await runScene(
         {
           sceneIndex: idx,
@@ -2274,6 +2317,7 @@ export async function runExpress(
           lookbook,
           storySpine,
           previousSceneLastBeat: getPreviousSceneContinuityAnchor(scenes, idx),
+          ...(signal ? { signal } : {}),
         },
         options,
         project,

@@ -201,6 +201,7 @@ import {
 } from '@/lib/vision/beatFrameGenerationContext'
 import { locationReferenceForGeneration } from '@/lib/vision/locationVersionResolve'
 import {
+  LIKENESS_VALIDATION_MIN_RESERVE_MS,
   canStartLikenessRetry,
   canValidateLikeness,
   projectLikenessRetryCostMs,
@@ -3443,7 +3444,11 @@ export async function POST(req: NextRequest) {
     )
     if (!hasBudgetForValidation) {
       console.warn(
-        `[Scene Image] Skipping likeness validation on retry — ${remainingBudgetMs()}ms left, needs ~${projectLikenessValidationCostMs(round0ValidationMs)}ms`
+        `[Scene Image] Skipping likeness validation${likenessRound === 0 ? '' : ' on retry'} — ${remainingBudgetMs()}ms left, needs ~${
+          likenessRound === 0
+            ? LIKENESS_VALIDATION_MIN_RESERVE_MS
+            : projectLikenessValidationCostMs(round0ValidationMs)
+        }ms`
       )
     }
     // The validator scores facial structure, which a wide establishing frame

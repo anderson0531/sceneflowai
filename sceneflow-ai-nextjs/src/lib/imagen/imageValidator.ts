@@ -7,6 +7,8 @@ import {
   type LikenessMismatchKind,
   type LikenessShotScale,
 } from '@/lib/imagen/likenessMismatch'
+import { fetchReferenceImageAsBase64 } from '@/lib/storage/fetchReferenceImage'
+import { LIKENESS_VALIDATION_MIN_RESERVE_MS } from '@/lib/scene/sceneImageTimeBudget'
 
 /**
  * Confidence Thresholds:
@@ -35,6 +37,17 @@ export interface ValidateCharacterLikenessOptions {
   shotType?: string
 }
 
+/**
+ * Likeness is a gate, not a generation. A hung vision call used to stall
+ * Frame Agent until the 300s image route died; keep the still instead.
+ */
+export const LIKENESS_VISION_GEMINI_OPTIONS = {
+  temperature: 0.2,
+  timeoutMs: LIKENESS_VALIDATION_MIN_RESERVE_MS,
+  maxRetries: 0,
+  thinkingLevel: 'minimal' as const,
+}
+
 /** What the model can actually be held to at this distance. */
 function buildScaleGuidance(scale: LikenessShotScale): string {
   switch (scale) {
@@ -57,15 +70,15 @@ export async function validateCharacterLikeness(
 ): Promise<ValidationResult> {
   const shotScale = classifyShotScale(options.shotType)
 
-  // Fetch both images
-  const [generatedRes, referenceRes] = await Promise.all([
-    fetch(generatedImageUrl),
-    fetch(referenceImageUrl)
-  ])
-  
-  const [generatedBuffer, referenceBuffer] = await Promise.all([
-    generatedRes.arrayBuffer(),
-    referenceRes.arrayBuffer()
+  const [generatedImage, referenceImage] = await Promise.all([
+    fetchReferenceImageAsBase64(generatedImageUrl, {
+      label: 'generated frame',
+      timeoutMs: LIKENESS_VALIDATION_MIN_RESERVE_MS,
+    }),
+    fetchReferenceImageAsBase64(referenceImageUrl, {
+      label: characterName,
+      timeoutMs: LIKENESS_VALIDATION_MIN_RESERVE_MS,
+    }),
   ])
   
   const prompt = `Compare these two images of ${characterName}:
@@ -113,23 +126,24 @@ IMPORTANT:
 - Reserve "identity" for a genuine substitution — a recognisably different individual. Hair, age, or wardrobe drift on the same face is "surface"
 - Only mark "matches": true if confidence >= 85 and ethnicity matches`
 
-  const result = await generateWithVision([
-    {
-      inlineData: {
-        data: Buffer.from(referenceBuffer).toString('base64'),
-        mimeType: 'image/jpeg'
-      }
-    },
-    {
-      inlineData: {
-        data: Buffer.from(generatedBuffer).toString('base64'),
-        mimeType: 'image/png'
-      }
-    },
-    { text: prompt }
-  ], {
-    temperature: 0.2
-  })
+  const result = await generateWithVision(
+    [
+      {
+        inlineData: {
+          data: referenceImage.base64,
+          mimeType: referenceImage.mimeType,
+        },
+      },
+      {
+        inlineData: {
+          data: generatedImage.base64,
+          mimeType: generatedImage.mimeType,
+        },
+      },
+      { text: prompt },
+    ],
+    LIKENESS_VISION_GEMINI_OPTIONS
+  )
   
   const text = result.text
 
