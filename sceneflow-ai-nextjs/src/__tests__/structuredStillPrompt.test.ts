@@ -11,14 +11,19 @@ import {
   STILL_PURPOSE_LINE,
   STILL_TASK_LINES,
   STILL_TASK_INSERT_FRAMING_LINE,
+  STILL_TASK_OBJECT_INSERT_LINE,
+  STILL_TASK_LOCATION_NEARFIELD_LINE,
+  STILL_TASK_PROP_TOKEN_LINE,
   stillTaskLines,
   stillRefsFromAttachedImages,
+  stillRefsFromNamedLibrary,
   formatStillReferencesLegend,
   bindLibraryNamesToTokens,
   replaceLibraryNamesWithTokens,
   actionFramingFromStoredPrompt,
   isStructuredStillPrompt,
   parseStillPromptSource,
+  parseStillReferencesLegend,
   promptReferencesLibraryItem,
   resolveLibraryItemPromptMatch,
   dropDuplicateHeadNounMatches,
@@ -253,6 +258,86 @@ Strictly Avoid: Mannequin geometry.`,
     expect(close).not.toContain('Also in frame:')
   })
 
+  it('uses object-insert TASK occupancy on an empty-cast ECU and keeps location as near-field', () => {
+    const refs = stillRefsFromNamedLibrary({
+      props: [{ name: 'Brass pressure gauge', token: 'prop [2]' }],
+      locations: [
+        { name: 'FREIGHT TUNNEL VAULT - PNEUMATIC ACCESS', token: 'location [1]' },
+      ],
+      castInFrame: [],
+    })
+    const prompt = assembleStructuredStillPrompt({
+      actionOrStructured:
+        'Action/Framing: Extreme Close-Up. Pressure gauge needle pinned to the maximum. No people in frame.',
+      refs,
+      shotType: 'medium shot',
+    })
+
+    expect(prompt).toContain(STILL_SECTION_REFERENCES)
+    expect(prompt).toContain('location [1] = FREIGHT TUNNEL VAULT - PNEUMATIC ACCESS')
+    expect(prompt).toContain('prop [2] = Brass pressure gauge')
+    expect(prompt).toContain(STILL_TASK_OBJECT_INSERT_LINE)
+    expect(prompt).toContain(STILL_TASK_LOCATION_NEARFIELD_LINE)
+    expect(prompt).toContain(STILL_TASK_PROP_TOKEN_LINE)
+    expect(prompt).not.toContain(STILL_TASK_INSERT_FRAMING_LINE)
+    expect(prompt).not.toMatch(/two arms and two legs/)
+    expect(prompt).not.toMatch(/Every token listed in \[REFERENCES\] appears/)
+    expect(prompt).not.toMatch(/Gaze:/)
+    expect(prompt).not.toContain('Also in frame:')
+    expect(prompt).toContain('No people in frame')
+    expect(prompt.match(/No people in frame/g)).toHaveLength(1)
+    expect(prompt).toContain('near-field materials')
+    expect(prompt).not.toContain('shallow-focus background bokeh')
+  })
+
+  it('recovers a previous [REFERENCES] legend when assemble is called without refs', () => {
+    const stored = assembleStructuredStillPrompt({
+      actionOrStructured: 'Extreme Close-Up. Pressure gauge needle pinned. No people in frame.',
+      refs: [
+        {
+          kind: 'location',
+          token: 'location [1]',
+          name: 'FREIGHT TUNNEL VAULT - PNEUMATIC ACCESS',
+          roleLabel: 'library location',
+        },
+      ],
+      shotType: 'Extreme Close-Up',
+    })
+    const replayed = assembleStructuredStillPrompt({
+      actionOrStructured: stored,
+      shotType: 'Extreme Close-Up',
+    })
+
+    expect(parseStillReferencesLegend(replayed)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'location',
+          token: 'location [1]',
+          name: 'FREIGHT TUNNEL VAULT - PNEUMATIC ACCESS',
+        }),
+      ])
+    )
+    expect(replayed).toContain(STILL_SECTION_REFERENCES)
+    expect(replayed).toContain('location [1]')
+  })
+
+  it('unions overlapping Strictly Avoid terms into one paragraph', () => {
+    const prompt = assembleStructuredStillPrompt({
+      actionOrStructured: `Action/Framing: person [1] stands in the vault.
+
+[EXCLUSIONS]
+Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, faceless figures, extra limbs, deformed anatomy. Maintain 100% photographic realism when art style is photorealistic.`,
+      refs: [{ kind: 'person', token: 'person [1]', name: 'Gideon Croft', roleLabel: 'identity' }],
+      exclusions:
+        'mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, extra limbs, deformed anatomy',
+    })
+    const exclusions = prompt.split(STILL_SECTION_EXCLUSIONS)[1] ?? ''
+    expect(exclusions.match(/Strictly Avoid:/gi)).toHaveLength(1)
+    expect(exclusions.match(/mannequin geometry/gi)).toHaveLength(1)
+    expect(exclusions.match(/cartoon style/gi)).toHaveLength(1)
+    expect(exclusions.match(/3D render aesthetics/gi)).toHaveLength(1)
+  })
+
   it('strips title typography exclusions when typography is allowed', () => {
     const prompt = assembleStructuredStillPrompt({
       actionOrStructured: 'Insert Shot. Centered title typography over the dark terminal.',
@@ -312,7 +397,8 @@ describe('planner still vs video split', () => {
     expect(system).not.toMatch(/F2V \(frame-to-video\) START frames/i)
     expect(system).toContain('Action/Framing ONLY')
     expect(system).toMatch(/facial expression/i)
-    expect(system).toContain('Insert/Extreme Close-Up: tight macro, only the specified limb/hand')
+    expect(system).toContain('Insert/Extreme Close-Up of a limb: tight macro, only the specified limb/hand')
+    expect(system).toContain('Insert/Extreme Close-Up of an object with nobody in frame')
     expect(system).toContain('Omit a library prop from Action/Framing unless this beat actually uses it')
   })
 
@@ -991,6 +1077,9 @@ describe('generate-image Direct/regen still payload', () => {
     expect(src).toMatch(/if \(!allowTypography\) \{[\s\S]*?No dialogue captions, subtitles, or watermarks/)
     expect(src).toContain('actionFramingForLibraryMatch(optimizedPrompt)')
     expect(src).toContain('shallow-focus background bokeh')
+    expect(src).toContain('resolveEffectiveStillShotType')
+    expect(src).toContain('stillRefsFromNamedLibrary')
+    expect(src).toContain('shotType: effectiveShotType')
     expect(src).toContain('combinedCharacterReferenceInstruction(effectiveShotType)')
   })
 })

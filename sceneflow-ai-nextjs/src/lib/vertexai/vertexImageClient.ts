@@ -250,6 +250,9 @@ export interface GenerateVertexImageOptions {
   policyEscalationOffset?: number
   /** Skip wardrobe “production still” framing on policy retries (scene/beat frames). */
   skipProductionStillFraming?: boolean
+  /** Shot scale so a structured still can reassemble TASK occupancy after a policy rewrite. */
+  shotType?: string
+  allowTypography?: boolean
   /**
    * Absolute epoch-ms cutoff covering this call and every retry it makes.
    * Attempts are shortened to fit it and no further attempt starts past it.

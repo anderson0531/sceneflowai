@@ -14,6 +14,7 @@ import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallba
 import {
   assembleStructuredStillPrompt,
   buildPropPromptToken,
+  stillRefsFromNamedLibrary,
   type StillPromptBoundRef,
 } from '@/lib/imagen/structuredStillPrompt'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
@@ -289,6 +290,16 @@ describe('the pressure gauge insert, assembled the way the image model sees it',
         name,
         roleLabel: 'library prop',
       })),
+      ...(resolved.locationName
+        ? [
+            {
+              kind: 'location' as const,
+              token: 'location [1]',
+              name: resolved.locationName,
+              roleLabel: 'library location',
+            },
+          ]
+        : []),
     ]
     return assembleStructuredStillPrompt({
       actionOrStructured: composeFor({ name: 'gauge', beat }),
@@ -315,5 +326,36 @@ describe('the pressure gauge insert, assembled the way the image model sees it',
 
   it('still says which shot it is', () => {
     expect(assemble(PRESSURE_GAUGE_BEAT)).toContain('Extreme Close-Up')
+  })
+
+  it('persist and live assemble share [REFERENCES] and the object-insert TASK dialect', () => {
+    const refs = stillRefsFromNamedLibrary({
+      props: OBJECT_REFERENCES.map((item) => ({ name: item.name })),
+      locations: LOCATION_REFERENCES.map((item) => ({ name: item.location })),
+      castInFrame: PRESSURE_GAUGE_BEAT.beatDirection?.castInFrame,
+    })
+    const persisted = composePersistedBeatStillPrompt({
+      lookbook,
+      sceneIndex: 0,
+      beat: PRESSURE_GAUGE_BEAT,
+      refs,
+    })
+    const live = assemble(PRESSURE_GAUGE_BEAT)
+
+    expect(persisted).toBeDefined()
+    for (const prompt of [persisted!, live]) {
+      expect(prompt).toContain('[REFERENCES]')
+      expect(prompt).toContain('location [1]')
+      expect(prompt).not.toMatch(/two arms and two legs/)
+      expect(prompt).not.toMatch(/only the specified limb\/hand/)
+      expect(prompt).not.toMatch(/Gaze:/)
+      expect(prompt).toContain('No people in frame')
+      expect(prompt.match(/No people in frame/g)).toHaveLength(1)
+      expect(prompt).toContain('Tight macro framing of the named instrument')
+      expect(prompt).toContain('near-field materials')
+      expect(prompt).not.toMatch(/Every token listed in \[REFERENCES\] appears/)
+      expect(prompt).not.toContain('Also in frame:')
+      expect(prompt).not.toContain('shallow-focus background bokeh')
+    }
   })
 })

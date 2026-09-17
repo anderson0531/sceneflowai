@@ -5,6 +5,7 @@ import { composeBeatActionFraming } from '@/lib/intelligence/beat-sequence-plann
 import {
   applyStillDirectorPatch,
   applyStillDirectorPatchToScene,
+  buildStillDirectorSystemPrompt,
   mergeDirectOverlaysIntoPatch,
   parseStillDirectorPatch,
   shouldRunStillDirectorAuto,
@@ -278,5 +279,15 @@ describe('Still Director contracts', () => {
     expect(frame.indexOf("title={generateBlockedReason || 'Director'}")).toBeLessThan(
       frame.indexOf('title="Edit"')
     )
+  })
+})
+
+describe('buildStillDirectorSystemPrompt', () => {
+  it('does not invent Gaze on empty-cast object inserts', () => {
+    const system = buildStillDirectorSystemPrompt()
+    expect(system).toContain('Omit emotion and gaze when castInFrame is empty')
+    expect(system).toContain('Never write "Gaze: No characters"')
+    expect(system).toContain("describe the instrument's settled state, not a limb, hand, or face")
+    expect(system).not.toMatch(/mid-motion/)
   })
 })

@@ -238,6 +238,46 @@ describe('composePersistedBeatStillPrompt', () => {
     expect(parsed.actionFraming).not.toMatch(/Piper|gantry/)
   })
 
+  it('re-emits a previous [REFERENCES] legend after a Still Director rewrite', () => {
+    const previous = `[REFERENCES]
+location [1] = FREIGHT TUNNEL VAULT - PNEUMATIC ACCESS — library location: match near-field materials and the mounting surface from this reference; do not pull back to a wide establishing shot
+prop [2] = Brass pressure gauge — library prop
+
+[TASK]
+Produce one photograph of a single instant — a 1/500s exposure, everything in it simultaneous.
+
+[STILL]
+Action/Framing: Extreme Close-Up. Pressure gauge needle pinned to the maximum. No people in frame.
+
+[STYLE]
+Rain-slick neo-noir
+
+[EXCLUSIONS]
+Strictly Avoid: Mannequin geometry.`
+    const prompt = composePersistedBeatStillPrompt({
+      lookbook,
+      sceneIndex: 0,
+      beat: {
+        beatId: 'bt_gauge',
+        sequenceIndex: 0,
+        kind: 'action',
+        actionDescription: 'A brass pressure gauge redlines.',
+        beatDirection: {
+          shotType: 'Extreme Close-Up',
+          frozenMoment: 'Pressure gauge needle pinned to the maximum.',
+          castInFrame: [],
+        },
+        storyboardImagePrompt: previous,
+      },
+    })
+
+    expect(prompt).toContain('[REFERENCES]')
+    expect(prompt).toContain('location [1] = FREIGHT TUNNEL VAULT - PNEUMATIC ACCESS')
+    expect(prompt).toContain('prop [2] = Brass pressure gauge')
+    expect(prompt).not.toMatch(/two arms and two legs/)
+    expect(prompt).not.toMatch(/only the specified limb\/hand/)
+  })
+
   it('recomposes from direction when the stored prompt predates it', () => {
     const prompt = composePersistedBeatStillPrompt({
       lookbook,
@@ -501,6 +541,44 @@ describe('composePersistedBeatStillPrompt', () => {
     expect(framing).not.toMatch(/Cast in frame/)
     expect(framing).not.toContain('Heavy iron spanner')
     expect(framing).not.toContain('Props in frame:')
+    expect(framing).not.toMatch(/Gaze:/)
+    expect(framing).not.toMatch(/Hands and props:/)
+    expect(framing).not.toMatch(/Facial expression/)
+    expect(framing.match(/No people in frame/g)).toHaveLength(1)
+  })
+
+  it('skips empty-cast Hands/props that restate the frozen moment or name a hand', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_empty_hands',
+      sequenceIndex: 4,
+      kind: 'action',
+      beatDirection: {
+        shotType: 'Extreme Close-Up',
+        frozenMoment: 'Pressure gauge needle pinned to the maximum.',
+        propInteraction: 'Hands gripping the gauge bezel',
+        gaze: 'No characters in frame',
+        castInFrame: [],
+      },
+    })
+    expect(framing).not.toMatch(/Hands and props:/)
+    expect(framing).not.toMatch(/Gaze:/)
+    expect(framing).toContain('No people in frame')
+  })
+
+  it('keeps a real empty-cast prop placement that does not name a hand', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_empty_prop',
+      sequenceIndex: 4,
+      kind: 'action',
+      beatDirection: {
+        shotType: 'Extreme Close-Up',
+        frozenMoment: 'Pressure gauge needle pinned to the maximum.',
+        propInteraction: 'The brass pressure gauge is mounted on the vault iron.',
+        castInFrame: [],
+      },
+    })
+    expect(framing).toContain('Hands and props: The brass pressure gauge is mounted on the vault iron')
+    expect(framing).not.toMatch(/Gaze:/)
   })
 
   it('closes the cast list so nobody else can join the frame', () => {

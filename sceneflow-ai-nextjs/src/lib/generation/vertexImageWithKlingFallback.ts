@@ -68,6 +68,8 @@ export async function generateImageWithVertexKlingFallback(
         const nextEscalationLevel = escalationOffset + attempt
         prompt = escalateImagePromptForRetry(basePrompt, nextEscalationLevel, {
           skipProductionStillFraming: options.skipProductionStillFraming,
+          shotType: options.shotType,
+          allowTypography: options.allowTypography,
         })
         currentOptions = {
           ...currentOptions,

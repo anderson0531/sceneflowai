@@ -274,6 +274,66 @@ export function isInsertOrExtremeCloseUp(shotType?: string | null): boolean {
 }
 
 /**
+ * Coverage clause at the start of Action/Framing (`Extreme Close-Up, eye-level`).
+ * Ignores verbs like "inserts the key" later in the sentence.
+ */
+export function leadingShotClause(actionFraming?: string | null): string {
+  const text = (actionFraming ?? '').replace(/^\s*Action\/Framing:\s*/i, '').trim()
+  if (!text) return ''
+  const clause = (text.split(/[.\n]/)[0] ?? '').trim()
+  if (!clause) return ''
+  if (isInsertOrExtremeCloseUp(clause) || isDetailShot(clause)) return clause
+  if (
+    clause.length <= 80 &&
+    /\b(?:shot|close-?up|closeup|ecu|cu|insert|macro|wide|establishing)\b/i.test(clause)
+  ) {
+    return clause
+  }
+  return ''
+}
+
+export interface StillShotClass {
+  /** Best available shot phrase for TASK/legend (field, then leading Action clause). */
+  shotHint: string
+  isDetail: boolean
+  isInsertOrEcu: boolean
+}
+
+/**
+ * Shot class for TASK/legend. Action/Framing "Extreme Close-Up" wins over a
+ * stale request default of "medium shot".
+ */
+export function resolveStillShotClass(
+  shotType?: string | null,
+  actionFraming?: string | null
+): StillShotClass {
+  const field = shotType ?? ''
+  const lead = leadingShotClause(actionFraming)
+  const insertLead = isInsertOrExtremeCloseUp(lead)
+  const detailLead = isDetailShot(lead)
+  return {
+    shotHint: insertLead || detailLead ? lead || field : field || lead,
+    isInsertOrEcu: isInsertOrExtremeCloseUp(field) || insertLead,
+    isDetail: isDetailShot(field) || detailLead,
+  }
+}
+
+/** Overlay > beat direction > request > Action/Framing clause > kind fallback. */
+export function resolveEffectiveStillShotType(args: {
+  overlayShotType?: string | null
+  beatShotType?: string | null
+  requestShotType?: string | null
+  actionFraming?: string | null
+  kindFallback?: string | null
+}): string {
+  const overlay = args.overlayShotType?.trim() || ''
+  const beat = args.beatShotType?.trim() || ''
+  const request = args.requestShotType?.trim() || ''
+  const lead = leadingShotClause(args.actionFraming)
+  return overlay || beat || request || lead || args.kindFallback?.trim() || ''
+}
+
+/**
  * Drop the subject a lens note names.
  *
  * `lensChoice` is authored per scene and then promoted to the film's lens

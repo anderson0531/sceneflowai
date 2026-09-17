@@ -10,6 +10,9 @@ import {
   shouldRejectIgnoredIdentityStill,
 } from '@/lib/generation/stillPolicy'
 import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalation'
+import {
+  assembleStructuredStillPrompt,
+} from '@/lib/imagen/structuredStillPrompt'
 
 /** Refused by Vertex IMAGE_SAFETY after Director Safety rewrite, 2026-09-16. */
 const PRODUCTION_INTIMIDATION_STILL = `Action/Framing: Two-Shot, low angle: both Piper Hayes and Gideon Croft fully in frame. Gideon leans his weight onto the heavy iron spanner planted against the brick wall beside Piper's shoulder, while she sits trapped on the floor cradling the dispatch cylinder. Body position: Piper sits on the floor screen-right, knees pulled up, back pressed flat against the brick wall; Gideon stands screen-left, leaning his torso forward, his weight planted through his extended right arm to hold the spanner against the wall beside her. Hands and props: Gideon's right hand grips the shaft of the Thirty-Inch Iron Rail Spanner, its head resting flush against the brick wall; Piper's hands tightly cradle An olive-drab dispatch cylinder with a cracked wax seal against her chest. Gaze: Gideon stares directly down at Piper; Piper looks up, meeting his gaze. Cast in frame: Piper Hayes, Gideon Croft — and no other people. Facial expression (Piper Hayes): eyes wide, lips slightly parted, shoulders hunched defensively. Facial expression (Gideon Croft): wide, alert eyes, jaw firmly set, chest inflated in a rigid posture.
@@ -134,5 +137,51 @@ describe('Safety rewrite vs Creative original', () => {
     expect(rewritten).toMatch(/kneels near the wall|stands braced beside|stands beside/i)
     expect(rewritten).toMatch(/resting upright on the floor/i)
     expect(rewritten).toMatch(/Cool\/Industrial/i)
+  })
+
+  it('Safety first send on a structured still preserves [REFERENCES], prop nouns, and style', () => {
+    const still = assembleStructuredStillPrompt({
+      actionOrStructured: `Action/Framing: Extreme Close-Up. The steel pressure gauge needle pinned to the maximum. No people in frame.
+
+[STYLE]
+Palette & Grade: Stylized shift from Warm (Tungsten/Amber) to Cool/Toxic (Teal)`,
+      refs: [
+        {
+          kind: 'prop',
+          token: 'prop [2]',
+          name: 'Brass pressure gauge',
+          roleLabel: 'library prop',
+        },
+        {
+          kind: 'location',
+          token: 'location [1]',
+          name: 'FREIGHT TUNNEL VAULT - PNEUMATIC ACCESS',
+          roleLabel: 'library location',
+        },
+      ],
+      shotType: 'Extreme Close-Up',
+    })
+    const wrapped = `SCENE PROMPT:\n${still}\n\nCRITICAL REQUIREMENTS:\n- Match props and environment to their reference images`
+    const rewritten = escalateImagePromptForRetry(wrapped, 1, {
+      skipProductionStillFraming: true,
+      shotType: 'Extreme Close-Up',
+    })
+
+    expect(rewritten).toContain('[REFERENCES]')
+    expect(rewritten).toContain('location [1]')
+    expect(rewritten).toContain('prop [2]')
+    expect(rewritten).toContain('steel')
+    expect(rewritten.toLowerCase()).not.toContain('stage prop')
+    expect(rewritten).toContain('Cool/Toxic')
+    expect(rewritten).not.toContain('Cool/Industrial')
+    expect(rewritten).toContain('Tight macro framing of the named instrument')
+    expect(rewritten).not.toMatch(/only the specified limb\/hand/)
+
+    const afterRefusal = escalateImagePromptForRetry(wrapped, 2, {
+      skipProductionStillFraming: true,
+      shotType: 'Extreme Close-Up',
+    })
+    expect(afterRefusal).toContain('[REFERENCES]')
+    expect(afterRefusal.toLowerCase()).toContain('stage prop')
   })
 })

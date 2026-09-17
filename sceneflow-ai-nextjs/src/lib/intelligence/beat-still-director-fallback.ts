@@ -289,11 +289,12 @@ The current Action/Framing is often photographically ambiguous: same expression 
 HARD RULES:
 1. Do not change the story beat. Do not invent people, props, or locations. Use EXACT labels from the REFERENCE LIBRARY.
 2. One frozen instant — a 1/500s exposure. No temporal verbs (walking, turning, slamming). Name the settled pose, not the movement that produced it.
-3. Spatial: who is screen-left vs screen-right, who is nearer the camera, where each body plants weight, what each hand is doing, where each named prop sits or is held.
-4. Distinct acting: each visible face gets its own expression (eyes/jaw/mouth/shoulders), not a shared two-word mood.
+3. Spatial: who is screen-left vs screen-right, who is nearer the camera, where each body plants weight, what each hand is doing, where each named prop sits or is held. Skip spatial body rules when castInFrame is empty.
+4. Distinct acting: each visible face gets its own expression (eyes/jaw/mouth/shoulders), not a shared two-word mood. Omit emotion and gaze when castInFrame is empty. Never write "Gaze: No characters" or "Gaze: No people".
 5. Two-shots and group shots must keep every directed person fully in frame unless the shot type is a close-up or insert.
-6. Do NOT write style, lighting essays, exclusions, F2V, start-frame, or appearance of library refs — code owns those.
-7. ${buildPolicySafePhrasingRules()}
+6. Insert/Extreme Close-Up of a limb: only the specified limb/hand. Insert/Extreme Close-Up of an object with nobody in frame: describe the instrument's settled state, not a limb, hand, or face.
+7. Do NOT write style, lighting essays, exclusions, F2V, start-frame, or appearance of library refs — code owns those.
+8. ${buildPolicySafePhrasingRules()}
 
 Output JSON only:
 {
@@ -305,10 +306,10 @@ Output JSON only:
       "shotType": "Two-Shot",
       "cameraAngle": "low angle",
       "frozenMoment": "one-sentence frozen instant",
-      "blocking": "body positions, weight, contact",
-      "gaze": "who looks at whom",
-      "emotion": "Named: specific face/body tell; Other: different tell",
-      "propInteraction": "which hand or surface holds which named prop",
+      "blocking": "body positions, weight, contact — omit for empty-cast object inserts unless it names a settled instrument pose",
+      "gaze": "who looks at whom — omit when castInFrame is empty",
+      "emotion": "Named: specific face/body tell; Other: different tell — omit when castInFrame is empty",
+      "propInteraction": "which hand or surface holds which named prop — omit hands when nobody is in frame",
       "castInFrame": ["Exact Character Name"],
       "keyProps": ["Exact Prop Name"],
       "suggestedNotes": "bullet-like director notes a human can paste into Direction"
