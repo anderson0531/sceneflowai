@@ -1,6 +1,7 @@
 /**
  * Helpers for script location-version analysis — formats scene + beat
- * content and extracts lasting set-state changes (destruction, redress).
+ * content and extracts lasting set-state changes (destruction, redress,
+ * and reversible set-piece transitions such as a door shutting).
  */
 
 export interface LocationAnalysisBeatInput {
@@ -37,7 +38,30 @@ export const LOCATION_STATE_KEYWORD_PATTERN =
 
 /** Set-piece nouns so "explodes with anger" does not count as a location change. */
 export const SET_PIECE_NOUN_PATTERN =
-  /\b(doors?|windows?|walls?|ceilings?|roofs?|furniture|sofa|couch|table|chairs?|lights?|lamps?|chandeliers?|glass|pillars?|columns?|staircases?|stairs|fireplace|floors?|rooms?|set|building|house|storefront|facade|balcony|railing|beam|support)\b/i
+  /\b(doors?|windows?|walls?|ceilings?|roofs?|furniture|sofa|couch|table|chairs?|lights?|lamps?|chandeliers?|glass|pillars?|columns?|staircases?|stairs|fireplace|floors?|rooms?|set|building|house|storefront|facade|balcony|railing|beam|support|gates?)\b/i
+
+const APERTURE_NOUN = '(?:doors?|windows?|gates?|hatches?)'
+const APERTURE_ADJ = '(?:damn\\s+|goddamn\\s+|bloody\\s+|front\\s+|back\\s+|side\\s+|heavy\\s+)*'
+
+/**
+ * Door / window / gate opening or shutting — lasting set state, including
+ * spoken commands ("Shut the damn door") that never use explode/shatter.
+ */
+export const REVERSIBLE_APERTURE_PATTERN = new RegExp(
+  String.raw`\b(?:(?:shut|clos(?:e|es|ed|ing)|slam(?:s|med|ming)?|lock(?:s|ed|ing)?|unlock(?:s|ed|ing)?|open(?:s|ed|ing)?|swing(?:s|ing)?)\s+(?:the\s+)?${APERTURE_ADJ}${APERTURE_NOUN}|(?:the\s+)?${APERTURE_ADJ}${APERTURE_NOUN}\s+(?:is|are|stays?|remain(?:s)?)?\s*(?:shut|closed|open(?:ed)?|locked|unlocked|slammed))\b`,
+  'i'
+)
+
+const LIGHT_NOUN = '(?:lights?|lamps?|chandeliers?)'
+const LIGHT_ADJ = '(?:vault\\s+|room\\s+|house\\s+|practical\\s+|overhead\\s+|table\\s+)*'
+
+/**
+ * Practical fixtures going on/off. Mood "lighting" adjectives are not a match.
+ */
+export const PRACTICAL_LIGHTS_PATTERN = new RegExp(
+  String.raw`\b(?:(?:kill|cut|douse|switch(?:es|ed)?\s+off)\s+(?:the\s+)?${LIGHT_ADJ}${LIGHT_NOUN}|(?:the\s+)?${LIGHT_ADJ}${LIGHT_NOUN}\s+(?:go(?:es)?\s+)?(?:on|off|out|die|dies|died|dying|dead|blown))\b`,
+  'i'
+)
 
 export function resolveBeatActionText(beat: LocationAnalysisBeatInput): string {
   return (
@@ -51,9 +75,11 @@ export function resolveBeatActionText(beat: LocationAnalysisBeatInput): string {
 export function beatSetStateText(beat: LocationAnalysisBeatInput): string {
   return [
     resolveBeatActionText(beat),
+    beat.line,
     beat.frozenMoment,
     beat.propInteraction,
     beat.blocking,
+    beat.lightingAccent,
   ]
     .filter((part): part is string => Boolean(part?.trim()))
     .join(' ')
@@ -62,6 +88,9 @@ export function beatSetStateText(beat: LocationAnalysisBeatInput): string {
 export function beatHasLocationStateChange(text: string): boolean {
   const trimmed = (text || '').trim()
   if (!trimmed) return false
+  if (REVERSIBLE_APERTURE_PATTERN.test(trimmed) || PRACTICAL_LIGHTS_PATTERN.test(trimmed)) {
+    return true
+  }
   return LOCATION_STATE_KEYWORD_PATTERN.test(trimmed) && SET_PIECE_NOUN_PATTERN.test(trimmed)
 }
 
@@ -83,11 +112,13 @@ export function formatSceneForLocationVersionAnalysis(
     parts.push('Beats (in order — lasting set changes in an earlier beat must persist in later beats):')
     beats.forEach((beat, index) => {
       const action = resolveBeatActionText(beat)
+      const line = beat.line?.trim()
       const frozen = beat.frozenMoment?.trim()
       const props = beat.propInteraction?.trim()
       const lighting = beat.lightingAccent?.trim()
       const chunks = [
         action ? `action: ${action}` : '',
+        line ? `line: ${line}` : '',
         frozen ? `frozenMoment: ${frozen}` : '',
         props ? `propInteraction: ${props}` : '',
         lighting ? `lightingAccent: ${lighting}` : '',
@@ -123,7 +154,7 @@ export interface LocationStateBeatHit {
   notes: string
 }
 
-/** Beats whose action/frozen moment describe a lasting set-piece change. */
+/** Beats whose action, dialogue, or frozen moment describe a lasting set-piece change. */
 export function extractLocationStateHitsFromScene(
   scene: LocationAnalysisSceneInput
 ): LocationStateBeatHit[] {
@@ -149,12 +180,14 @@ export function distillLocationStateNotesFromText(text: string): string | undefi
   if (!text?.trim() || !beatHasLocationStateChange(text)) return undefined
 
   const phrases: string[] = []
-  const patterns: Array<{ re: RegExp; label?: string }> = [
+  const patterns: Array<{ re: RegExp }> = [
     { re: /(?:the\s+)?(?:front\s+)?doors?\s+(?:explod(?:e|es|ed)|blast(?:s|ed)|blow(?:s|n)\s+(?:out|apart|open)|shatter(?:s|ed))/i },
     { re: /(?:the\s+)?windows?\s+(?:shatter(?:s|ed)|explod(?:e|es|ed)|blow(?:s|n)\s+out)/i },
     { re: /(?:the\s+)?walls?\s+(?:collapse(?:s|d)|explod(?:e|es|ed)|cave[- ]?in)/i },
     { re: /(?:the\s+)?(?:room|set|building|house|storefront)\s+(?:is\s+)?(?:flooded|burning|burned|engulfed|gutted|wrecked|destroyed)/i },
     { re: /debris|rubble|boarded(?:\s+up)?|overturned\s+furniture|scorch(?:ed)?|charred|bullet[- ]?holes?/i },
+    { re: REVERSIBLE_APERTURE_PATTERN },
+    { re: PRACTICAL_LIGHTS_PATTERN },
   ]
 
   for (const { re } of patterns) {

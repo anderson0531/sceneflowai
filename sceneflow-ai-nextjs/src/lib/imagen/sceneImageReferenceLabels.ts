@@ -15,6 +15,7 @@
  */
 
 import { buildLocationPromptToken, buildPropPromptToken } from '@/lib/imagen/structuredStillPrompt'
+import { propScaleClause } from '@/lib/imagen/propScaleClause'
 
 function referencePrefix(sendIndex?: number): string {
   return sendIndex != null ? `Reference image ${sendIndex} — ` : ''
@@ -59,10 +60,12 @@ export function buildSceneImageDiptychLabel(
 export function buildSceneImagePropLabel(
   propName: string,
   sendIndex?: number,
-  promptToken?: string
+  promptToken?: string,
+  description?: string
 ): string {
   const token = promptToken || (sendIndex != null ? buildPropPromptToken(sendIndex) : '')
-  return `${referencePrefix(sendIndex)}PROP ${token ? `${token} ` : ''}(${propName})`
+  const scale = propScaleClause(description, propName)
+  return `${referencePrefix(sendIndex)}PROP ${token ? `${token} ` : ''}(${propName}): ${scale}`
 }
 
 export function buildSceneImageLocationLabel(

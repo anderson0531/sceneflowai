@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+  appendDirectedLocationVersion,
   buildLocationVersionSyncDiff,
   enrichSuggestionsWithBeatLocationState,
   mergeLocationVersionSyncDiff,
   accumulateStateNotes,
+  stampLocationVersionAppliesFrom,
 } from '@/lib/vision/locationScriptSync'
 
 describe('locationScriptSync', () => {
@@ -113,5 +115,61 @@ describe('locationScriptSync', () => {
     )
     expect(suggestions[0].stateNotes).toMatch(/door/i)
     expect(suggestions[0].appliesFrom?.beatIndex).toBe(1)
+  })
+
+  it('creates a version when the LLM omitted a dialogue shut-door hit', () => {
+    const suggestions = enrichSuggestionsWithBeatLocationState(
+      [],
+      [
+        {
+          sceneNumber: 1,
+          beats: [
+            { beatId: 'b0', actionDescription: 'The door stands open.' },
+            {
+              beatId: 'b10',
+              kind: 'dialogue',
+              line: '[wincing, defiant] Cleanup doesn\'t bleed. Shut the damn door.',
+            },
+          ],
+        },
+      ]
+    )
+    expect(suggestions).toHaveLength(1)
+    expect(suggestions[0].stateNotes).toMatch(/door/i)
+    expect(suggestions[0].appliesFrom?.beatId).toBe('b10')
+  })
+
+  it('appends a directed version that applies from the chosen beat', () => {
+    const location = {
+      id: 'loc-foyer',
+      location: 'FOYER',
+      locationDisplay: 'INT. FOYER - NIGHT',
+      imageUrl: 'https://blob.example/base.png',
+      sourceSceneIndex: 0,
+      sourceSceneHeading: 'INT. FOYER - NIGHT',
+      pinnedAt: '2026-01-01T00:00:00.000Z',
+      versions: [],
+    }
+    const { location: next, version } = appendDirectedLocationVersion(
+      location,
+      {
+        name: 'Door shut',
+        stateNotes: 'The door is shut.',
+        appliesFrom: { sceneNumber: 1, beatIndex: 9, beatId: 'b10' },
+      },
+      { versionId: 'loc-ver-directed-test' }
+    )
+    expect(next.versions).toHaveLength(1)
+    expect(version.needsImageRegen).toBe(true)
+    expect(version.appliesFrom).toEqual({ sceneNumber: 1, beatIndex: 9, beatId: 'b10' })
+    expect(stampLocationVersionAppliesFrom(location, 'missing', version.appliesFrom!).versions).toEqual(
+      []
+    )
+    const stamped = stampLocationVersionAppliesFrom(
+      { ...location, versions: [{ ...version, appliesFrom: undefined }] },
+      version.id,
+      { sceneNumber: 1, beatIndex: 9, beatId: 'b10' }
+    )
+    expect(stamped.versions?.[0].appliesFrom?.beatIndex).toBe(9)
   })
 })

@@ -58,4 +58,39 @@ describe('locationStateAnalysis', () => {
     expect(text).toContain('[Beat 0 id=k1]')
     expect(text).toContain('lasting set changes')
   })
+
+  it('treats a spoken shut-the-door command as a set-state change', () => {
+    const line = '[wincing, defiant] Cleanup doesn\'t bleed. Shut the damn door.'
+    expect(beatHasLocationStateChange(line)).toBe(true)
+    expect(distillLocationStateNotesFromText(line)).toMatch(/door/i)
+    expect(distillLocationStateNotesFromText(line)).toMatch(/shut/i)
+
+    const hits = extractLocationStateHitsFromScene({
+      sceneNumber: 1,
+      beats: [
+        { beatId: 'b9', actionDescription: 'The door stands open.' },
+        { beatId: 'b10', kind: 'dialogue', line },
+      ],
+    })
+    expect(hits).toHaveLength(1)
+    expect(hits[0].beatId).toBe('b10')
+    expect(hits[0].beatIndex).toBe(1)
+  })
+
+  it('treats practical lights going off as a set-state change', () => {
+    expect(beatHasLocationStateChange('The vault lights die.')).toBe(true)
+    expect(distillLocationStateNotesFromText('The vault lights die.')).toMatch(/lights/i)
+    expect(beatHasLocationStateChange('Moody lighting fills the room.')).toBe(false)
+  })
+
+  it('includes spoken lines in the LLM scene dump', () => {
+    const text = formatSceneForLocationVersionAnalysis(
+      {
+        sceneNumber: 1,
+        beats: [{ beatId: 'd1', kind: 'dialogue', line: 'Shut the damn door.' }],
+      },
+      'FOYER'
+    )
+    expect(text).toContain('line: Shut the damn door.')
+  })
 })

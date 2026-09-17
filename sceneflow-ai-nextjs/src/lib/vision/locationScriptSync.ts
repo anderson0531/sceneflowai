@@ -8,7 +8,11 @@ import {
   type LocationAnalysisSceneInput,
 } from '@/lib/vision/locationStateAnalysis'
 import { compareBeatPosition, versionStart } from '@/lib/vision/locationVersionResolve'
-import type { LocationVersion, LocationVersionAppliesFrom } from '@/types/visionReferences'
+import type {
+  LocationReference,
+  LocationVersion,
+  LocationVersionAppliesFrom,
+} from '@/types/visionReferences'
 
 export interface LocationVersionSuggestionLike {
   name: string
@@ -458,4 +462,61 @@ export function summarizeLocationVersionSyncDiff(diff: LocationVersionSyncDiff):
     obsoleteCount: diff.obsolete.length,
     staleImageCount: diff.updates.filter((u) => u.imageStale).length + diff.creates.length,
   }
+}
+
+export interface DirectedLocationVersionInput {
+  name: string
+  stateNotes: string
+  appliesFrom: LocationVersionAppliesFrom
+}
+
+/** User-directed set version. Sticky-forward from `appliesFrom` like script-sync versions. */
+export function appendDirectedLocationVersion(
+  location: LocationReference,
+  input: DirectedLocationVersionInput,
+  options?: { now?: string; versionId?: string }
+): { location: LocationReference; version: LocationVersion } {
+  const now = options?.now || new Date().toISOString()
+  const name = input.name.trim()
+  const stateNotes = input.stateNotes.trim()
+  const sceneNumber = input.appliesFrom.sceneNumber
+  const version: LocationVersion = {
+    id: options?.versionId || `loc-ver-directed-${Date.now()}`,
+    name,
+    stateNotes,
+    sceneNumbers: Number.isFinite(sceneNumber) && sceneNumber > 0 ? [sceneNumber] : [],
+    appliesFrom: { ...input.appliesFrom },
+    createdAt: now,
+    needsImageRegen: true,
+  }
+  return {
+    location: {
+      ...location,
+      versions: [...(location.versions || []), version],
+    },
+    version,
+  }
+}
+
+/** First generate that picks a version without appliesFrom starts it at this beat. */
+export function stampLocationVersionAppliesFrom(
+  location: LocationReference,
+  versionId: string,
+  appliesFrom: LocationVersionAppliesFrom
+): LocationReference {
+  const versions = (location.versions || []).map((version) => {
+    if (version.id !== versionId) return version
+    if (version.appliesFrom) return version
+    const sceneNumbers = Array.isArray(version.sceneNumbers) ? [...version.sceneNumbers] : []
+    if (
+      Number.isFinite(appliesFrom.sceneNumber) &&
+      appliesFrom.sceneNumber > 0 &&
+      !sceneNumbers.includes(appliesFrom.sceneNumber)
+    ) {
+      sceneNumbers.push(appliesFrom.sceneNumber)
+      sceneNumbers.sort((a, b) => a - b)
+    }
+    return { ...version, appliesFrom, sceneNumbers }
+  })
+  return { ...location, versions }
 }

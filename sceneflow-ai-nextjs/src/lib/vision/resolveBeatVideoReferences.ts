@@ -159,6 +159,7 @@ export function resolveBeatVideoReferences(
       imageUrl: obj.imageUrl!,
       name: obj.name || 'prop',
       importance: obj.importance,
+      description: obj.description,
     }))
 
   const locationRef = selection.locationRefId

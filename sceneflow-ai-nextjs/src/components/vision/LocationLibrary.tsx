@@ -31,7 +31,12 @@ import { LocationReference, LocationVersion } from '@/types/visionReferences'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { LocationPromptBuilder, LocationPromptPayload } from './LocationPromptBuilder'
-import { type LocationVersionSyncDiff } from '@/lib/vision/locationScriptSync'
+import {
+  DirectedLocationVersionDialog,
+  directedBeatOptionsFromScene,
+  type DirectedLocationBeatOption,
+} from './DirectedLocationVersionDialog'
+import { appendDirectedLocationVersion, type LocationVersionSyncDiff } from '@/lib/vision/locationScriptSync'
 import {
   applyLocationUpdateFromSyncDiff,
   collectMissingExtractedLocations,
@@ -72,6 +77,7 @@ function buildScenesPayloadForLocationVersions(scenes: LocationLibraryProps['sce
             beatId: b.beatId,
             kind: b.kind,
             actionDescription: b.actionDescription?.trim() || undefined,
+            line: b.line?.trim() || undefined,
             frozenMoment: b.beatDirection?.frozenMoment,
             propInteraction: b.beatDirection?.propInteraction,
             lightingAccent: b.beatDirection?.lightingAccent,
@@ -384,6 +390,8 @@ export function LocationLibrary({
     locationId: string
     versionId: string
   } | null>(null)
+  const [directedLocation, setDirectedLocation] = useState<LocationReference | null>(null)
+  const [directedSubmitting, setDirectedSubmitting] = useState(false)
 
   /**
    * Extract unique locations from all scene headings.
@@ -649,6 +657,41 @@ export function LocationLibrary({
       toast.error(error.message || 'Failed to update location')
     } finally {
       setAnalyzingLocationId(null)
+    }
+  }
+
+  const directedBeats = useMemo((): DirectedLocationBeatOption[] => {
+    if (!directedLocation) return []
+    const scoped = scenesForLocation(directedLocation, scenes)
+    return scoped.flatMap((scene) => {
+      const sceneNumber = scenes.indexOf(scene) + 1
+      return directedBeatOptionsFromScene(scene as Record<string, unknown>, sceneNumber || 1)
+    })
+  }, [directedLocation, scenes])
+
+  const handleDirectedVersionConfirm = async (payload: {
+    locationId: string
+    name: string
+    stateNotes: string
+    appliesFrom: { sceneNumber: number; beatIndex: number; beatId?: string }
+  }) => {
+    const loc = locationReferences.find((item) => item.id === payload.locationId)
+    if (!loc) return
+    setDirectedSubmitting(true)
+    try {
+      const { location: nextLoc, version } = appendDirectedLocationVersion(loc, payload)
+      const updated = locationReferences.map((item) => (item.id === loc.id ? nextLoc : item))
+      await onUpdateLocations(updated)
+      setDirectedLocation(null)
+      if (isDisplayableImageUrl(loc.imageUrl)) {
+        onGenerateLocationVersion?.(nextLoc, version)
+      } else {
+        toast.info(t('baseImageRequired'))
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to add directed set version')
+    } finally {
+      setDirectedSubmitting(false)
     }
   }
 
@@ -1128,6 +1171,16 @@ export function LocationLibrary({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation()
+                                setDirectedLocation(loc)
+                              }}
+                              className="text-[10px] px-1.5 py-0.5 rounded text-cyan-300 hover:bg-cyan-500/10"
+                            >
+                              {t('addDirectedVersion')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
                                 void handleUpdateOneLocation(loc)
                               }}
                               disabled={
@@ -1517,6 +1570,21 @@ export function LocationLibrary({
           })()}
         </DialogContent>
       </Dialog>
+      <DirectedLocationVersionDialog
+        open={!!directedLocation}
+        onOpenChange={(open) => {
+          if (!open) setDirectedLocation(null)
+        }}
+        locations={
+          directedLocation
+            ? [{ id: directedLocation.id, name: directedLocation.location }]
+            : []
+        }
+        defaultLocationId={directedLocation?.id}
+        beats={directedBeats}
+        isSubmitting={directedSubmitting}
+        onConfirm={handleDirectedVersionConfirm}
+      />
     </div>
     </TooltipProvider>
   )

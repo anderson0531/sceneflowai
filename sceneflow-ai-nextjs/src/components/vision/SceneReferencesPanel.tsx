@@ -20,6 +20,7 @@
  */
 
 import { useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   AlertTriangle,
   Image as ImageIcon,
@@ -60,6 +61,11 @@ import {
   type SceneRequirementLocation,
   type SceneRequirementObject,
 } from '@/lib/vision/sceneReferenceRequirements'
+import {
+  DirectedLocationVersionDialog,
+  type DirectedLocationBeatOption,
+} from './DirectedLocationVersionDialog'
+import type { DirectedLocationVersionInput } from '@/lib/vision/locationScriptSync'
 
 export interface SceneReferencesPanelProps {
   sceneNumber: number
@@ -78,6 +84,10 @@ export interface SceneReferencesPanelProps {
   characters?: SceneRequirementCharacter[]
   locationReferences?: SceneRequirementLocation[]
   objectReferences?: SceneRequirementObject[]
+  beats?: DirectedLocationBeatOption[]
+  onAddDirectedLocationVersion?: (
+    payload: DirectedLocationVersionInput & { locationId: string }
+  ) => void | Promise<void>
 }
 
 type GroupConfig = {
@@ -151,9 +161,14 @@ export function SceneReferencesPanel({
   characters = [],
   locationReferences = [],
   objectReferences = [],
+  beats = [],
+  onAddDirectedLocationVersion,
 }: SceneReferencesPanelProps) {
+  const tLocation = useTranslations('production.direction.locationLibrary')
   const [addOpen, setAddOpen] = useState(false)
   const [expanded, setExpanded] = useState<{ url: string; name: string } | null>(null)
+  const [directedOpen, setDirectedOpen] = useState(false)
+  const [directedSubmitting, setDirectedSubmitting] = useState(false)
 
   const pending = useMemo(
     () =>
@@ -313,6 +328,28 @@ export function SceneReferencesPanel({
 
     return rows
   }, [requirements, characters, locationReferences, objectReferences])
+
+  const directedLocations = useMemo(() => {
+    const fromScene = requirements
+      .filter(isLocationBase)
+      .map((requirement) => {
+        const library = locationReferences.find((ref) => ref.id === requirement.id)
+        return {
+          id: requirement.id,
+          name:
+            library?.location?.trim() ||
+            library?.locationDisplay?.trim() ||
+            requirement.name,
+        }
+      })
+    if (fromScene.length > 0) return fromScene
+    return locationReferences
+      .filter((ref) => ref?.id)
+      .map((ref) => ({
+        id: ref.id,
+        name: ref.location?.trim() || ref.locationDisplay?.trim() || 'Location',
+      }))
+  }, [requirements, locationReferences])
 
   const drawnCount = requirements.filter((requirement) => hasImage(requirement.imageUrl)).length
   const busy = isExpressRunning
@@ -583,9 +620,24 @@ export function SceneReferencesPanel({
         </div>
       )}
 
-      {onOverridesChange && (removed.size > 0 || addable.length > 0) && (
+      {(onAddDirectedLocationVersion && directedLocations.length > 0) ||
+      (onOverridesChange && (removed.size > 0 || addable.length > 0)) ? (
         <div className="flex items-center gap-2 mt-3 flex-wrap">
-          {addable.length > 0 && (
+          {onAddDirectedLocationVersion && directedLocations.length > 0 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setDirectedOpen(true)
+              }}
+              className="text-[11px] px-2 py-1 rounded border border-dashed border-cyan-300 dark:border-cyan-700 text-cyan-800 dark:text-cyan-200 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 flex items-center gap-1"
+              title={tLocation('directedVersionHint')}
+            >
+              <Plus className="w-3 h-3" />
+              {tLocation('addDirectedVersion')}
+            </button>
+          )}
+          {onOverridesChange && addable.length > 0 && (
             <Popover open={addOpen} onOpenChange={setAddOpen}>
               <PopoverTrigger asChild>
                 <button
@@ -651,6 +703,26 @@ export function SceneReferencesPanel({
             </button>
           )}
         </div>
+      ) : null}
+
+      {onAddDirectedLocationVersion && (
+        <DirectedLocationVersionDialog
+          open={directedOpen}
+          onOpenChange={setDirectedOpen}
+          locations={directedLocations}
+          defaultLocationId={directedLocations[0]?.id}
+          beats={beats}
+          isSubmitting={directedSubmitting}
+          onConfirm={async (payload) => {
+            setDirectedSubmitting(true)
+            try {
+              await onAddDirectedLocationVersion(payload)
+              setDirectedOpen(false)
+            } finally {
+              setDirectedSubmitting(false)
+            }
+          }}
+        />
       )}
 
       <Dialog open={!!expanded} onOpenChange={(open) => !open && setExpanded(null)}>

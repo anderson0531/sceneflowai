@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-16T09:53:31.900Z",
+  "generatedAt": "2026-09-17T03:45:25.076Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -1605,6 +1605,16 @@
       "direction.locationLibrary.expandVersion": "957d5d59c928bdc4",
       "direction.locationLibrary.versionDetails": "c56ea933f049d56b",
       "direction.locationLibrary.stateNotes": "8a6b5fe08d0d5ab3",
+      "direction.locationLibrary.directedVersionTitle": "cdb0d37651d6209b",
+      "direction.locationLibrary.directedVersionHint": "bd058e28f121998f",
+      "direction.locationLibrary.directedVersionLocation": "15b61974b2707a7b",
+      "direction.locationLibrary.directedVersionName": "dcd1d5223f73b3a9",
+      "direction.locationLibrary.directedVersionNamePlaceholder": "9f55db612455d993",
+      "direction.locationLibrary.directedVersionNotesPlaceholder": "a4649aa06ad4e22d",
+      "direction.locationLibrary.directedVersionStartBeat": "ad9406a883448c9e",
+      "direction.locationLibrary.directedVersionNoBeats": "1100ee66ae1752b2",
+      "direction.locationLibrary.directedVersionCreate": "8575fabb8fa63687",
+      "direction.locationLibrary.addDirectedVersion": "cdb0d37651d6209b",
       "direction.locationLibrary.usedInScenes": "2628c02b2f46aa83",
       "direction.locationLibrary.analysis": "e70d8eb9050021ad",
       "direction.locationLibrary.noVersionImage": "047022c0e6cb20db",

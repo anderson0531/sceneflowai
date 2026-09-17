@@ -29,6 +29,7 @@ import {
   formatExclusionParagraph,
   recoverLeakedActionFromExclusions,
 } from '@/lib/scene/castPerformanceFraming'
+import { propScaleClause } from '@/lib/imagen/propScaleClause'
 
 export const STILL_SECTION_REFERENCES = '[REFERENCES]'
 export const STILL_SECTION_TASK = '[TASK]'
@@ -104,6 +105,9 @@ export const STILL_TASK_LOCATION_NEARFIELD_LINE =
 export const STILL_TASK_PROP_TOKEN_LINE =
   `Every prop token listed in ${STILL_SECTION_REFERENCES} appears in this frame and matches its reference image.`
 
+export const STILL_TASK_PROP_SCALE_LINE =
+  'Held props keep the physical size described in [REFERENCES] relative to the character; do not enlarge a library-prop still to fill the frame.'
+
 export const STILL_TASK_DETAIL_TOKEN_LINE =
   `${STILL_TASK_PERSON_PROP_TOKEN_LINE} ${STILL_TASK_LOCATION_BOKEH_LINE}`
 
@@ -174,6 +178,7 @@ export function stillTaskLines(
   if (emptyCast && shot.isInsertOrEcu) {
     if (hasPropRefs) lines.push(STILL_TASK_PROP_TOKEN_LINE)
     if (hasLocationRef) lines.push(STILL_TASK_LOCATION_NEARFIELD_LINE)
+    if (hasPropRefs) lines.push(STILL_TASK_PROP_SCALE_LINE)
     return lines
   }
 
@@ -185,10 +190,12 @@ export function stillTaskLines(
     } else if (hasLocationRef) {
       lines.push(STILL_TASK_LOCATION_BOKEH_LINE)
     }
+    if (hasPropRefs) lines.push(STILL_TASK_PROP_SCALE_LINE)
     return lines
   }
 
   lines.push(STILL_TASK_TOKEN_LINE)
+  if (hasPropRefs) lines.push(STILL_TASK_PROP_SCALE_LINE)
   return lines
 }
 
@@ -226,6 +233,8 @@ export interface StillPromptBoundRef {
   roleLabel: string
   /** Short observable traits, stated here and nowhere else in the prompt. */
   identityTraits?: string
+  /** Library description; used to lock prop scale in the legend. */
+  description?: string
   /** Wardrobe/fabric/fit clause, folded into the same person line. */
   wardrobeClause?: string
   /** 1-based send index of the identity portrait or identity+wardrobe composite. */
@@ -321,6 +330,7 @@ const STILL_BOILERPLATE_LINES = [
   STILL_TASK_LOCATION_BOKEH_LINE,
   STILL_TASK_LOCATION_NEARFIELD_LINE,
   STILL_TASK_PROP_TOKEN_LINE,
+  STILL_TASK_PROP_SCALE_LINE,
   ...LEGACY_STILL_TASK_LINES,
 ]
 
@@ -846,6 +856,9 @@ export function formatStillReferencesLegend(
   const lines = refs.map((ref) => {
     if (ref.kind === 'person') return formatPersonReferenceLegendLine(ref)
     const entry = `${ref.token} = ${ref.name} — ${ref.roleLabel}`
+    if (ref.kind === 'prop') {
+      return `${entry}: ${propScaleClause(ref.description, ref.name)}`
+    }
     if (ref.kind === 'location' && emptyCast && shot.isInsertOrEcu) {
       return `${entry}: match near-field materials and the mounting surface from this reference; do not pull back to a wide establishing shot`
     }
@@ -973,6 +986,7 @@ export function stillRefsFromAttachedImages(args: {
     refRole?: string
     role?: string
     promptToken?: string
+    propDescription?: string
   }>
   characterReferences: Array<{
     name: string
@@ -1052,6 +1066,7 @@ export function stillRefsFromAttachedImages(args: {
         token: entry.promptToken || buildPropPromptToken(sendIndex as number),
         name: entry.propName,
         roleLabel: 'library prop',
+        description: entry.propDescription,
       })
       continue
     }
