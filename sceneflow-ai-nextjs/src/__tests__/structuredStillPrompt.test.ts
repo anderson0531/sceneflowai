@@ -225,10 +225,12 @@ Strictly Avoid: Mannequin geometry.`,
     expect(prompt).toContain('photographed on 35mm')
     expect(prompt).toContain('Unbroken single-camera frame')
     expect(prompt).toContain('unified 16:9 cinematic perspective')
+    expect(prompt).toContain('seamless single-layer optical exposure')
     expect(prompt).toContain('anatomically distinct silhouettes')
     expect(prompt).not.toContain('Frozen animatic')
     expect(prompt).not.toMatch(/Never duplicate, blur, streak or repeat a limb/)
     expect(prompt.toLowerCase()).not.toMatch(/split-screen|diptych|two-panel|collage/)
+    expect(prompt.toLowerCase()).not.toMatch(/picture-in-picture|inset frame/)
     expect(prompt).not.toContain('Continuous wide shot')
   })
 

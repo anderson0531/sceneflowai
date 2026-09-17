@@ -271,7 +271,7 @@ export function buildSimplifiedBeatFramePrompt(input: SimplifiedBeatFramePromptI
     .map((c) => `${c.name}: ${c.emotion!.trim()}`)
 
   const lines = [
-    `Cinematic film frame featuring ${subjects}. Unbroken single-camera frame, unified 16:9 cinematic perspective.`,
+    `Cinematic film frame featuring ${subjects}. Unbroken single-camera frame, unified 16:9 cinematic perspective, seamless single-layer optical exposure.`,
     `Action: ${action}`,
   ]
 
@@ -280,7 +280,7 @@ export function buildSimplifiedBeatFramePrompt(input: SimplifiedBeatFramePromptI
   }
 
   lines.push(
-    'Unbroken single-camera frame, unified 16:9 cinematic perspective.',
+    'Unbroken single-camera frame, unified 16:9 cinematic perspective, seamless single-layer optical exposure.',
     'Match each character from their character reference: same person — face, hair, and likeness; head-to-toe outfit, fabric, fit, and footwear.'
   )
 

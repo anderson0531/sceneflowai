@@ -18,6 +18,39 @@ describe('buildSceneImageNegativePrompt', () => {
     expect(prompt).toMatch(/mannequin geometry/)
   })
 
+  it('omits picture-in-picture layout primes even when they are passed as extras', () => {
+    const prompt = buildSceneImageNegativePrompt({
+      extraTerms: [
+        'picture-in-picture',
+        'pip',
+        'inset frame',
+        'inset window',
+        'floating portrait',
+        'circular frame',
+        'sub-frame',
+        'photo-in-photo',
+        'blurry',
+      ],
+    })
+    expect(prompt.toLowerCase()).not.toMatch(/picture-in-picture/)
+    expect(prompt.toLowerCase()).not.toMatch(/\bpip\b/)
+    expect(prompt.toLowerCase()).not.toMatch(/inset frame/)
+    expect(prompt.toLowerCase()).not.toMatch(/inset window/)
+    expect(prompt.toLowerCase()).not.toMatch(/floating portrait/)
+    expect(prompt.toLowerCase()).not.toMatch(/circular frame/)
+    expect(prompt.toLowerCase()).not.toMatch(/sub-frame/)
+    expect(prompt.toLowerCase()).not.toMatch(/photo-in-photo/)
+    expect(prompt).toMatch(/blurry/)
+  })
+
+  it('does not treat fabric piping as a layout prime', () => {
+    const prompt = buildSceneImageNegativePrompt({
+      extraTerms: ['piping', 'blurry'],
+    })
+    expect(prompt).toMatch(/piping/)
+    expect(prompt).toMatch(/blurry/)
+  })
+
   it('omits typography primes when title text is allowed, even if extras name them', () => {
     const prompt = buildSceneImageNegativePrompt({
       allowTypography: true,

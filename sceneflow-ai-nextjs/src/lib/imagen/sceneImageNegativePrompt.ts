@@ -34,6 +34,13 @@ export const STRUCTURAL_LAYOUT_PRIME_TERMS = [
   '4-panel',
   'side-by-side',
   'reference sheet',
+  'picture-in-picture',
+  'photo-in-photo',
+  'inset frame',
+  'inset window',
+  'floating portrait',
+  'circular frame',
+  'sub-frame',
 ]
 
 export const ESSENTIAL_QUALITY_NEGATIVE_TERMS = [
@@ -97,7 +104,10 @@ function isIdentityNegation(term: string): boolean {
 
 function isStructuralLayoutPrime(term: string): boolean {
   const normalized = term.toLowerCase()
-  return STRUCTURAL_LAYOUT_PRIME_TERMS.some((prime) => normalized.includes(prime))
+  if (STRUCTURAL_LAYOUT_PRIME_TERMS.some((prime) => normalized.includes(prime))) {
+    return true
+  }
+  return /\bpip\b/.test(normalized)
 }
 
 function isTypographyPrime(term: string): boolean {

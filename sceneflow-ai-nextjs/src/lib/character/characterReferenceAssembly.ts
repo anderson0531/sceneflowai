@@ -58,7 +58,10 @@ export interface CharacterReferencePair {
   /** Scene-matched 16:9 combined card or leftover LEFT|RIGHT sheet */
   wardrobeDiptychUrl?: string
   hasWardrobeDiptych: boolean
-  /** True when wardrobeDiptychUrl is a stored PiP, not a leftover two-panel sheet. */
+  /**
+   * Always false: stored PiP cards (`combinedCharacterRefUrl`) leak a circular
+   * inset into beat frames and are never attached.
+   */
   hasStoredCombinedCharacterRef: boolean
   hasDualReferences: boolean
   /** Wardrobe-only (no portrait): single turnaround drives both via legacy instruction */
@@ -79,7 +82,10 @@ export interface ResolveCharacterReferencePairArgs {
   characterWardrobes?: Array<{ characterId: string; wardrobeId: string }>
   /** When true (default), attach full-body wardrobe URL alongside identity when available. */
   includeWardrobeReferenceImages?: boolean
-  /** Attach scene-matched wardrobe diptych (headshotUrl) when available */
+  /**
+   * Last-resort leftover LEFT|RIGHT `headshotUrl` when there is no full-body
+   * still. Stored PiP cards are never attached.
+   */
   includeWardrobeDiptych?: boolean
 }
 
@@ -351,25 +357,18 @@ export function resolveCharacterReferencePair(
     sceneIndex
   )
   const fullBodyUrl = trimUrl(resolvedWardrobe?.fullBodyUrl)
-  const storedCombinedUrl = includeWardrobeDiptych
-    ? trimUrl(resolvedWardrobe?.combinedCharacterRefUrl)
-    : undefined
 
   // Face-first dual ref: dedicated identity headshot + full-body wardrobe image.
-  // A stored PiP already combines those, so do not also attach the pair.
+  // Stored PiP composites leak a circular inset into stills — never attach them.
   const wardrobeUrl =
-    !storedCombinedUrl && includeWardrobeReferenceImages && identityUrl && fullBodyUrl
-      ? fullBodyUrl
-      : undefined
+    includeWardrobeReferenceImages && identityUrl && fullBodyUrl ? fullBodyUrl : undefined
 
-  // Leftover LEFT|RIGHT sheet when no full-body and no stored PiP.
+  // Leftover LEFT|RIGHT sheet only when there is no full-body still to pair with.
   const wardrobeDiptychUrl =
-    storedCombinedUrl ||
-    (includeWardrobeDiptych && identityUrl && !fullBodyUrl
+    includeWardrobeDiptych && identityUrl && !fullBodyUrl
       ? trimUrl(resolvedWardrobe?.headshotUrl)
-      : undefined)
+      : undefined
   const hasWardrobeDiptych = !!wardrobeDiptychUrl
-  const hasStoredCombinedCharacterRef = !!storedCombinedUrl
 
   const hasDualReferences = !!(identityUrl && wardrobeUrl)
   const hasWardrobeOnlyReference = false
@@ -379,7 +378,7 @@ export function resolveCharacterReferencePair(
     wardrobeUrl,
     wardrobeDiptychUrl,
     hasWardrobeDiptych,
-    hasStoredCombinedCharacterRef,
+    hasStoredCombinedCharacterRef: false,
     hasDualReferences,
     hasWardrobeOnlyReference,
     resolvedWardrobe: resolvedWardrobe

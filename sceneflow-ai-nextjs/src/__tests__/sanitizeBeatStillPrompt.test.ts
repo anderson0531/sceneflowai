@@ -25,4 +25,19 @@ describe('sanitizeBeatStillPrompt', () => {
     expect(clean).not.toMatch(/RIGHT/i)
     expect(clean).toContain('person [1] (Piper Hayes) stands at the table.')
   })
+
+  it('strips picture-in-picture tokens from persisted still copy', () => {
+    const dirty =
+      'Render one seamless cinematic scene with picture-in-picture, pip, inset frame, ' +
+      'floating portrait, circular frame, sub-frame, and photo-in-photo overlays.'
+    const clean = sanitizeBeatStillPrompt(dirty)
+    expect(clean.toLowerCase()).not.toMatch(/picture-in-picture/)
+    expect(clean.toLowerCase()).not.toMatch(/\bpip\b/)
+    expect(clean.toLowerCase()).not.toMatch(/inset frame/)
+    expect(clean.toLowerCase()).not.toMatch(/floating portrait/)
+    expect(clean.toLowerCase()).not.toMatch(/circular frame/)
+    expect(clean.toLowerCase()).not.toMatch(/sub-frame/)
+    expect(clean.toLowerCase()).not.toMatch(/photo-in-photo/)
+    expect(clean).toMatch(/Render one seamless cinematic scene/i)
+  })
 })
