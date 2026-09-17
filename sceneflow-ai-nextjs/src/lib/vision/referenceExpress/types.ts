@@ -30,6 +30,11 @@ export type ReferenceExpressItem = {
    * Cast wardrobe still. Persist patches this nested look, not identity.
    */
   wardrobeId?: string
+  /**
+   * Per-row Gen/Regen from the scene card. Scene Ref Agent (no `itemKeys`)
+   * never sets this, so filled stills stay skipped in a batch.
+   */
+  forceRegenerate?: boolean
 }
 
 /** Stable identity for planning, de-dupe, and scene `itemKeys`. */

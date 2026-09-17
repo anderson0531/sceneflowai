@@ -339,15 +339,19 @@ function findCastIndex(characters: CastSource[], idOrName: string): number {
  */
 function planItemsForRequirements(
   input: ReferenceExpressPlanInput,
-  requirements: SceneReferenceRequirement[]
+  requirements: SceneReferenceRequirement[],
+  options?: { forceRegenerate?: boolean }
 ): ReferenceExpressItem[] {
   const items: ReferenceExpressItem[] = []
   const seen = new Set<string>()
+  const force = options?.forceRegenerate === true
+  const withForce = (item: ReferenceExpressItem): ReferenceExpressItem =>
+    force ? { ...item, forceRegenerate: true } : item
   const push = (item: ReferenceExpressItem) => {
     const key = referenceExpressItemKey(item)
     if (seen.has(key)) return
     seen.add(key)
-    items.push(item)
+    items.push(withForce(item))
   }
 
   for (const requirement of requirements) {
@@ -356,7 +360,7 @@ function planItemsForRequirements(
     if (index < 0) continue
     const character = input.characters[index]
     if (character.type === 'narrator') continue
-    if (hasImage(character.referenceImage) && !requirement.stale) continue
+    if (hasImage(character.referenceImage) && !requirement.stale && !force) continue
     push({
       kind: 'cast',
       targetId: resolveCharacterId(character, index),
@@ -373,7 +377,9 @@ function planItemsForRequirements(
     const character = input.characters[index]
     const wardrobe = (character.wardrobes || []).find((row) => row.id === requirement.id)
     if (!wardrobe?.id) continue
-    if (!wardrobeNeedsGeneration(character, wardrobe, 'undrawn-or-stale')) continue
+    if (!hasImage(character.referenceImage)) continue
+    if (!wardrobe.description?.trim()) continue
+    if (!force && !wardrobeNeedsGeneration(character, wardrobe, 'undrawn-or-stale')) continue
     const characterName = character.name?.trim() || `Character ${index + 1}`
     push({
       kind: 'cast',
@@ -391,13 +397,15 @@ function planItemsForRequirements(
       const location = input.locations.find((row) => row.id === parsed.locationId)
       const version = (location?.versions || []).find((row) => row.id === parsed.versionId)
       if (!location?.id || !version) continue
-      if (!versionNeedsGeneration(location, version)) continue
+      if (!hasImage(location.imageUrl)) continue
+      if (!version.stateNotes?.trim()) continue
+      if (!force && !versionNeedsGeneration(location, version)) continue
       push(locationVersionItem(location, version))
       continue
     }
     const location = input.locations.find((row) => row.id === requirement.id)
     if (!location?.id) continue
-    if (hasImage(location.imageUrl) && !requirement.stale) continue
+    if (hasImage(location.imageUrl) && !requirement.stale && !force) continue
     push({
       kind: 'location',
       targetId: location.id,
@@ -409,7 +417,8 @@ function planItemsForRequirements(
   for (const requirement of requirements) {
     if (requirement.kind !== 'prop') continue
     const prop = input.props.find((row) => row.id === requirement.id)
-    if (!prop?.id || hasImage(prop.imageUrl)) continue
+    if (!prop?.id) continue
+    if (hasImage(prop.imageUrl) && !force) continue
     push({
       kind: 'prop',
       targetId: prop.id,
@@ -614,7 +623,9 @@ export function planSceneReferenceExpressItems(
   }
 
   return filterExpressItemsByKinds(
-    planItemsForRequirements(input, [...requirements.values()]),
+    planItemsForRequirements(input, [...requirements.values()], {
+      forceRegenerate: !!wanted,
+    }),
     scope.kinds
   )
 }

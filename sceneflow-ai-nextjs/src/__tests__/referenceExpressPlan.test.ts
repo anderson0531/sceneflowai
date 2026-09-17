@@ -231,6 +231,31 @@ describe('planSceneReferenceExpressItems', () => {
     )
 
     expect(items.map((item) => item.targetId)).toEqual(['l1', 'p1'])
+    expect(items.every((item) => item.forceRegenerate !== true)).toBe(true)
+  })
+
+  it('force-regenerates a drawn row when the caller names it', () => {
+    const items = planSceneReferenceExpressItems(
+      { ...input, characters: [{ ...MIRA, referenceImage: 'https://cdn/mira.png' }, BO] },
+      { sceneIndices: [0], itemKeys: ['cast:c1'] }
+    )
+
+    expect(items).toHaveLength(1)
+    expect(items[0]).toMatchObject({
+      kind: 'cast',
+      targetId: 'c1',
+      forceRegenerate: true,
+    })
+  })
+
+  it('marks a named missing row as forceRegenerate without planning the rest of the scene', () => {
+    const items = planSceneReferenceExpressItems(input, {
+      sceneIndices: [0],
+      itemKeys: ['prop:p1'],
+    })
+
+    expect(items.map((item) => item.targetId)).toEqual(['p1'])
+    expect(items[0]?.forceRegenerate).toBe(true)
   })
 
   it('emits the same items and fingerprints the project-wide plan would', () => {
@@ -238,15 +263,6 @@ describe('planSceneReferenceExpressItems', () => {
     const projectWide = planReferenceExpressItems(input)
 
     expect(scoped).toEqual(projectWide)
-  })
-
-  it('narrows to single rows when the caller names them', () => {
-    const items = planSceneReferenceExpressItems(input, {
-      sceneIndices: [0],
-      itemKeys: ['prop:p1'],
-    })
-
-    expect(items.map((item) => item.targetId)).toEqual(['p1'])
   })
 
   it('matches a cast key given as the character name, since ids are optional', () => {
