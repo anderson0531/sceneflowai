@@ -39,7 +39,9 @@ import {
   sceneHasStalePromptKeys,
 } from '@/lib/storyboard/preVisSync'
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
-import { countDraftStoryboardFrames } from '@/lib/storyboard/storyboardQuality'
+import { countDraftStoryboardFrames, type StoryboardQuality } from '@/lib/storyboard/storyboardQuality'
+import { StoryboardQualityToggle } from './StoryboardQualityToggle'
+import { useTranslations } from 'next-intl'
 import {
   frameEditReferenceKeys,
   listAllFrameEditCharacterReferences,
@@ -115,6 +117,12 @@ export interface SceneStoryboardFrameViewerProps {
   hideOuterChrome?: boolean
   /** Direct prompt-builder run in flight — same spinner key Regen wrapGenerate uses. */
   generatingDirectSlotKey?: string | null
+  /**
+   * Session default for Frame Agent, one-click Regen, and Direct Frame.
+   * Dialogs may override per run without writing back here.
+   */
+  frameGenerationQuality?: StoryboardQuality
+  onFrameGenerationQualityChange?: (quality: StoryboardQuality) => void
 }
 
 interface StoryboardSlotHandlers {
@@ -390,7 +398,10 @@ export function SceneStoryboardFrameViewer({
   onSetScreeningPoster,
   hideOuterChrome = false,
   generatingDirectSlotKey = null,
+  frameGenerationQuality = 'draft',
+  onFrameGenerationQualityChange,
 }: SceneStoryboardFrameViewerProps) {
+  const tExpressScene = useTranslations('production.expressScene')
   const [collapsed, setCollapsed] = useState(false)
   const [selectedFrameKey, setSelectedFrameKey] = useState<string | null>(null)
   const [generatingDialogueFrames, setGeneratingDialogueFrames] = useState<Set<string>>(new Set())
@@ -781,6 +792,26 @@ export function SceneStoryboardFrameViewer({
     ]
   )
 
+  const qualityToggle = (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex">
+          <StoryboardQualityToggle
+            size="compact"
+            value={frameGenerationQuality}
+            onChange={onFrameGenerationQualityChange ?? (() => {})}
+            draftLabel={tExpressScene('qualityDraft')}
+            finalLabel={tExpressScene('qualityFinal')}
+            disabled={isExpressRunning}
+          />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs">
+        Default for Frame Agent, Regen, and Direct Frame
+      </TooltipContent>
+    </Tooltip>
+  )
+
   if (frameSlots.length === 0 && sceneBeats.length === 0) {
     return null
   }
@@ -880,19 +911,22 @@ export function SceneStoryboardFrameViewer({
             <div className="text-center py-6 text-gray-500 text-sm">
               <Camera className="w-8 h-8 mx-auto mb-2 text-gray-600" />
               <p>No pre-vis frames yet.</p>
-              {onExpressSceneGenerate && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="mt-3 border-amber-500/40 text-amber-300"
-                  disabled={sceneExpressDisabled}
-                  onClick={openExpressSceneDialog}
-                >
-                  <Zap className="w-3.5 h-3.5 mr-1.5" />
-                  Frame Agent
-                </Button>
-              )}
+              <div className="mt-3 flex flex-col items-center gap-2">
+                {qualityToggle}
+                {onExpressSceneGenerate && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="border-amber-500/40 text-amber-300"
+                    disabled={sceneExpressDisabled}
+                    onClick={openExpressSceneDialog}
+                  >
+                    <Zap className="w-3.5 h-3.5 mr-1.5" />
+                    Frame Agent
+                  </Button>
+                )}
+              </div>
             </div>
           ) : (
             <>
@@ -932,6 +966,7 @@ export function SceneStoryboardFrameViewer({
                       Update Frames
                     </Button>
                   )}
+                  {qualityToggle}
                   {onExpressSceneGenerate && (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -1137,6 +1172,7 @@ export function SceneStoryboardFrameViewer({
           scene={scene}
           isRunning={isExpressRunning}
           missingReferences={missingSceneReferences}
+          defaultQuality={frameGenerationQuality}
           onConfirm={(options) => {
             setExpressSceneDialogOpen(false)
             void onExpressSceneGenerate(options)

@@ -80,7 +80,10 @@ import { invalidateChangedBeatFramesOnScene, applyDeepRestructureAssetClear, REV
 import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
 import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
 import type { StoryboardFrameSlot } from '@/lib/storyboard/types'
-import type { StoryboardQuality } from '@/lib/storyboard/storyboardQuality'
+import {
+  resolveStoryboardGeneration,
+  type StoryboardQuality,
+} from '@/lib/storyboard/storyboardQuality'
 import { enableScreeningPlayerDiagnostics } from '@/lib/storyboard/screeningPlayerDiagnostics'
 import {
   explicitBeatReferenceSelection,
@@ -6226,6 +6229,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Storyboard Express state — driven by SSE events from /api/vision/express
   const [isExpressRunning, setIsExpressRunning] = useState(false)
   const [expressStatus, setExpressStatus] = useState<ExpressSceneStatusMap>({})
+  /** Session default for Frame Agent, Regen, and Direct Frame. Not persisted. */
+  const [frameGenerationQuality, setFrameGenerationQuality] = useState<StoryboardQuality>('draft')
   const [expressBeatFrameOverlay, setExpressBeatFrameOverlay] = useState<{
     visible: boolean
     sceneIndex: number
@@ -11046,7 +11051,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       scope: 'selected',
       includeEndFrames: false,
       selectedFrameKeys: [beatFrameSlotKey(beatId, 'start')],
-      quality: 'draft',
+      quality: frameGenerationQuality,
     })
   }
 
@@ -11116,7 +11121,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       scope: 'selected',
       includeEndFrames: true,
       selectedFrameKeys: [beatFrameSlotKey(beatId, 'end')],
-      quality: 'draft',
+      quality: frameGenerationQuality,
     })
   }
 
@@ -16297,6 +16302,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onUploadCustomFrame={handleUploadCustomFrame}
                 onUploadStoryboardScene={handleUploadScene}
                 onExpressSceneGenerate={handleExpressSceneGenerate}
+                frameGenerationQuality={frameGenerationQuality}
+                onFrameGenerationQualityChange={setFrameGenerationQuality}
                 expressStatus={expressStatus}
                 expressGateBlocked={!expressGate.allowed && !expressGate.blockedOnlyByReferences}
                 onExpressGateBlocked={() => {
@@ -16998,6 +17005,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             objectReferences={objectReferences}
             filmTitle={project?.title}
             lockedArtStyle={project?.metadata?.visionPhase?.artStyle as string | undefined}
+            defaultModelTier={
+              resolveStoryboardGeneration({ storyboardQuality: frameGenerationQuality }).modelTier
+            }
             onGenerate={handleDirectFrameGenerate}
           />
         )
