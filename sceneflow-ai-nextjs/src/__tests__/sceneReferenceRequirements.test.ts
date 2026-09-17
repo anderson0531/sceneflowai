@@ -623,6 +623,162 @@ describe('one beat is the narrowest scope a gate can have', () => {
   })
 })
 
+describe('wardrobe looks used across beats are unioned', () => {
+  it('lists every look the beats name, not only the last write', () => {
+    const requirements = resolveSceneRequiredReferences({
+      ...baseInput,
+      sceneIndex: 0,
+      scene: {
+        heading: 'INT. SERVICE TUNNEL - NIGHT',
+        sceneNumber: 1,
+        beats: [
+          {
+            beatId: 'b1',
+            sequenceIndex: 0,
+            referenceSelection: {
+              characterIds: ['char-piper'],
+              objectRefIds: [],
+              characterWardrobes: [{ characterId: 'char-piper', wardrobeId: 'wd-piper-default' }],
+            },
+          },
+          {
+            beatId: 'b2',
+            sequenceIndex: 1,
+            referenceSelection: {
+              characterIds: ['char-piper'],
+              objectRefIds: [],
+              characterWardrobes: [{ characterId: 'char-piper', wardrobeId: 'wd-piper-gala' }],
+            },
+          },
+        ],
+      },
+    })
+
+    expect(byKind(requirements, 'wardrobe').map((entry) => entry.id).sort()).toEqual([
+      'wd-piper-default',
+      'wd-piper-gala',
+    ])
+    expect(
+      requirements.find((entry) => entry.id === 'wd-piper-default')?.usedInBeats?.map((beat) => beat.beatNumber)
+    ).toEqual([1])
+    expect(
+      requirements.find((entry) => entry.id === 'wd-piper-gala')?.usedInBeats?.map((beat) => beat.beatNumber)
+    ).toEqual([2])
+  })
+})
+
+describe('location versions vs the base establishing shot', () => {
+  it('keeps explicit base beats off a later set-state version', () => {
+    const versionId = locationVersionRequirementId('loc-tunnel', 'ver-collapse')
+    const requirements = resolveSceneRequiredReferences({
+      ...baseInput,
+      sceneIndex: 0,
+      scene: {
+        heading: 'INT. SERVICE TUNNEL - NIGHT',
+        sceneNumber: 1,
+        beats: [
+          {
+            beatId: 'b1',
+            sequenceIndex: 0,
+            referenceSelection: {
+              characterIds: ['char-piper'],
+              locationRefId: 'loc-tunnel',
+              locationVersionId: null,
+              objectRefIds: [],
+            },
+          },
+          {
+            beatId: 'b2',
+            sequenceIndex: 1,
+            referenceSelection: {
+              characterIds: ['char-piper'],
+              locationRefId: 'loc-tunnel',
+              locationVersionId: 'ver-collapse',
+              objectRefIds: [],
+            },
+          },
+        ],
+      },
+    })
+
+    const base = requirements.find((entry) => entry.id === 'loc-tunnel')
+    const version = requirements.find((entry) => entry.id === versionId)
+    expect(base?.usedInBeats?.map((beat) => beat.beatNumber)).toEqual([1])
+    expect(version?.usedInBeats?.map((beat) => beat.beatNumber)).toEqual([2])
+    expect(version?.source).toBe('beat-plan')
+  })
+
+  it('still lists a sticky version when every beat has a selection that omits locationVersionId', () => {
+    const versionId = locationVersionRequirementId('loc-tunnel', 'ver-collapse')
+    const requirements = resolveSceneRequiredReferences({
+      ...baseInput,
+      sceneIndex: 0,
+      scene: {
+        heading: 'INT. SERVICE TUNNEL - NIGHT',
+        sceneNumber: 1,
+        beats: [
+          {
+            beatId: 'b0',
+            sequenceIndex: 0,
+            referenceSelection: {
+              characterIds: ['char-piper'],
+              locationRefId: 'loc-tunnel',
+              objectRefIds: [],
+            },
+          },
+          {
+            beatId: 'b-collapse',
+            sequenceIndex: 1,
+            referenceSelection: {
+              characterIds: ['char-piper'],
+              locationRefId: 'loc-tunnel',
+              objectRefIds: [],
+            },
+          },
+        ],
+      },
+    })
+
+    expect(requirements.find((entry) => entry.id === versionId)).toBeTruthy()
+    expect(
+      requirements.find((entry) => entry.id === 'loc-tunnel')?.usedInBeats?.map((beat) => beat.beatNumber)
+    ).toEqual([1])
+    expect(
+      requirements.find((entry) => entry.id === versionId)?.usedInBeats?.map((beat) => beat.beatNumber)
+    ).toEqual([2])
+  })
+})
+
+describe('usedInBeats follows the Beats tab numbering', () => {
+  it('uses sequenceIndex + 1 and skips excluded beats', () => {
+    const requirements = resolveSceneRequiredReferences({
+      ...baseInput,
+      sceneIndex: 0,
+      scene: {
+        heading: 'INT. SERVICE TUNNEL - NIGHT',
+        sceneNumber: 1,
+        beats: [
+          {
+            beatId: 'b1',
+            sequenceIndex: 4,
+            referenceSelection: { characterIds: ['char-piper'], objectRefIds: [] },
+          },
+          {
+            beatId: 'b2',
+            sequenceIndex: 5,
+            excluded: true,
+            referenceSelection: { characterIds: ['char-piper'], objectRefIds: ['obj-lantern'] },
+          },
+        ],
+      },
+    })
+
+    const piper = requirements.find((entry) => entry.id === 'char-piper')
+    expect(piper?.usedInBeats).toEqual([{ beatIndex: 0, beatNumber: 5, beatId: 'b1' }])
+    expect(requirements.find((entry) => entry.id === 'obj-lantern')).toBeUndefined()
+  })
+})
+
 describe('empty and malformed input', () => {
   it('returns nothing for a missing scene', () => {
     expect(resolveSceneRequiredReferences({ ...baseInput, scene: null, sceneIndex: 0 })).toEqual([])

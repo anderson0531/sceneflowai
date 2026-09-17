@@ -193,6 +193,41 @@ describe('runReferenceExpressItem cast path', () => {
     expect(result).toMatchObject({ status: 'skipped', skippedReason: 'missing' })
     expect(mockBrief).not.toHaveBeenCalled()
   })
+
+  it('skips an identity still that already exists', async () => {
+    mockLoadContext.mockResolvedValueOnce({
+      characters: [{ ...CHARACTER, referenceImage: 'https://cdn/old.png' }],
+      locations: [],
+      props: [],
+      scenes: [],
+      screenplayContext: { genre: 'thriller' },
+    } as never)
+
+    const result = await run()
+
+    expect(result).toMatchObject({ status: 'skipped', skippedReason: 'already-generated' })
+    expect(mockGenerate).not.toHaveBeenCalled()
+  })
+
+  it('redraws an identity still when forceRegenerate is set', async () => {
+    mockLoadContext.mockResolvedValueOnce({
+      characters: [{ ...CHARACTER, referenceImage: 'https://cdn/old.png' }],
+      locations: [],
+      props: [],
+      scenes: [],
+      screenplayContext: { genre: 'thriller' },
+    } as never)
+
+    const result = await runReferenceExpressItem({
+      userId: 'user-1',
+      projectId: 'project-1',
+      item: { ...CAST_ITEM, forceRegenerate: true },
+    })
+
+    expect(result.status).toBe('succeeded')
+    expect(result.imageUrl).toBe('https://cdn/mira.png')
+    expect(mockGenerate).toHaveBeenCalled()
+  })
 })
 
 describe('runReferenceExpressItem wardrobe path', () => {

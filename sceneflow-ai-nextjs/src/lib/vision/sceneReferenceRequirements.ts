@@ -31,7 +31,6 @@ import {
   findMatchingLocationReferences,
   resolveSceneNumberForLocationMatch,
 } from '@/lib/vision/frameGenerationContext'
-import { getSceneBeats } from '@/lib/script/beatMigration'
 import {
   isLocationVersionRequirementId,
   locationVersionRequirementId,
@@ -51,6 +50,15 @@ export type SceneReferenceRequirementKind = 'cast' | 'wardrobe' | 'location' | '
  */
 export type SceneReferenceRequirementSource = 'beat-plan' | 'scene-assigned' | 'detected'
 
+/** A shootable beat in this scene that uses the requirement. */
+export type SceneReferenceBeatUse = {
+  /** 0-based index in `scene.beats`. */
+  beatIndex: number
+  /** 1-based number shown on the Beats tab (`sequenceIndex + 1`). */
+  beatNumber: number
+  beatId?: string
+}
+
 export type SceneReferenceRequirement = {
   kind: SceneReferenceRequirementKind
   id: string
@@ -61,6 +69,8 @@ export type SceneReferenceRequirement = {
   stale?: boolean
   /** Other scenes that also need this — the amortisation signal. */
   alsoUsedInScenes?: number[]
+  /** Shootable beats in this scene that attach this still. */
+  usedInBeats?: SceneReferenceBeatUse[]
   /** Wardrobe rows only: who wears it, since wardrobes hang off a character. */
   characterId?: string
   characterName?: string
@@ -251,7 +261,8 @@ function collectPlannedSelection(scene: Record<string, any> | null | undefined):
   const characterIds = new Set<string>()
   const locationRefIds = new Set<string>()
   const objectRefIds = new Set<string>()
-  const wardrobes = new Map<string, string>()
+  const wardrobePairs: Array<{ characterId: string; wardrobeId: string }> = []
+  const seenWardrobePairs = new Set<string>()
   const locationVersionPairs: Array<{ locationRefId: string; versionId: string }> = []
   const seenVersionPairs = new Set<string>()
   let planned = 0
@@ -284,9 +295,13 @@ function collectPlannedSelection(scene: Record<string, any> | null | undefined):
       if (typeof id === 'string' && id.trim()) objectRefIds.add(id.trim())
     }
     for (const entry of selection.characterWardrobes ?? []) {
-      if (entry?.characterId && entry?.wardrobeId) {
-        wardrobes.set(String(entry.characterId), String(entry.wardrobeId))
-      }
+      if (!entry?.characterId || !entry?.wardrobeId) continue
+      const characterId = String(entry.characterId)
+      const wardrobeId = String(entry.wardrobeId)
+      const key = `${characterId}::${wardrobeId}`
+      if (seenWardrobePairs.has(key)) continue
+      seenWardrobePairs.add(key)
+      wardrobePairs.push({ characterId, wardrobeId })
     }
   }
 
@@ -294,10 +309,7 @@ function collectPlannedSelection(scene: Record<string, any> | null | undefined):
     characterIds: [...characterIds],
     locationRefIds: [...locationRefIds],
     objectRefIds: [...objectRefIds],
-    characterWardrobes: [...wardrobes].map(([characterId, wardrobeId]) => ({
-      characterId,
-      wardrobeId,
-    })),
+    characterWardrobes: wardrobePairs,
     locationVersions: locationVersionPairs,
     complete: planned > 0 && planned === shootable.length,
   }
@@ -411,6 +423,204 @@ function wardrobeImageUrl(wardrobe: Record<string, unknown>): string | undefined
   return undefined
 }
 
+function characterMatches(character: SceneRequirementCharacter, idOrName: string): boolean {
+  return findCharacter([character], idOrName) != null
+}
+
+function plannedWardrobeIdsForCharacter(
+  character: SceneRequirementCharacter,
+  plannedWardrobes: Array<{ characterId: string; wardrobeId: string }>
+): string[] {
+  const ids: string[] = []
+  const seen = new Set<string>()
+  for (const entry of plannedWardrobes) {
+    if (!characterMatches(character, entry.characterId)) continue
+    if (seen.has(entry.wardrobeId)) continue
+    seen.add(entry.wardrobeId)
+    ids.push(entry.wardrobeId)
+  }
+  return ids
+}
+
+function sceneBeats(scene: Record<string, any> | null | undefined): Array<Record<string, any>> {
+  return Array.isArray(scene?.beats) ? scene!.beats : []
+}
+
+function beatNumberOf(beat: Record<string, any>, beatIndex: number): number {
+  return (typeof beat.sequenceIndex === 'number' ? beat.sequenceIndex : beatIndex) + 1
+}
+
+/**
+ * Which nested set-state a beat uses.
+ *
+ * `locationVersionId: null` is an explicit base establishing shot and must not
+ * be sticky-overridden. Omitted / unplanned beats fall through to sticky-forward.
+ */
+function versionForBeat(
+  ref: SceneRequirementLocation,
+  beat: Record<string, any>,
+  beatIndex: number,
+  sceneNumber: number
+): NonNullable<SceneRequirementLocation['versions']>[number] | null {
+  const selection = beat?.referenceSelection as
+    | {
+        locationRefId?: string | null
+        locationVersionId?: string | null
+      }
+    | undefined
+
+  if (selection) {
+    const locationRefId =
+      typeof selection.locationRefId === 'string' ? selection.locationRefId.trim() : ''
+    if (locationRefId && locationRefId !== ref.id) return null
+    if (selection.locationRefId === null) return null
+    if (Object.prototype.hasOwnProperty.call(selection, 'locationVersionId')) {
+      const versionId = selection.locationVersionId
+      if (versionId === null || (typeof versionId === 'string' && !versionId.trim())) {
+        return null
+      }
+      if (typeof versionId === 'string' && versionId.trim()) {
+        return (ref.versions ?? []).find((candidate) => candidate.id === versionId.trim()) ?? null
+      }
+    }
+  }
+
+  return resolveLocationVersionForBeat(ref, {
+    sceneNumber,
+    beatIndex,
+    beatId: typeof beat?.beatId === 'string' ? beat.beatId : undefined,
+  })
+}
+
+function beatUsesLocation(beat: Record<string, any>, locationId: string): boolean | 'unplanned' {
+  const selection = beat?.referenceSelection
+  if (!selection) return 'unplanned'
+  if (typeof selection.locationRefId === 'string' && selection.locationRefId.trim()) {
+    return selection.locationRefId.trim() === locationId
+  }
+  if (selection.locationRefId === null) return false
+  return 'unplanned'
+}
+
+function characterInBeat(
+  beat: Record<string, any>,
+  character: SceneRequirementCharacter
+): boolean {
+  const selection = beat?.referenceSelection
+  if (selection) {
+    for (const id of selection.characterIds ?? []) {
+      if (typeof id === 'string' && characterMatches(character, id)) return true
+    }
+    return false
+  }
+
+  const castInFrame = beat?.beatDirection?.castInFrame
+  if (Array.isArray(castInFrame)) {
+    for (const name of castInFrame) {
+      if (typeof name === 'string' && characterMatches(character, name)) return true
+    }
+  }
+  if (typeof beat?.characterId === 'string' && characterMatches(character, beat.characterId)) {
+    return true
+  }
+  if (typeof beat?.character === 'string' && characterMatches(character, beat.character)) {
+    return true
+  }
+  return false
+}
+
+function beatUsesWardrobe(
+  beat: Record<string, any>,
+  character: SceneRequirementCharacter,
+  wardrobeId: string,
+  fallbackWardrobeId: string | undefined
+): boolean {
+  if (!characterInBeat(beat, character)) return false
+  const selection = beat?.referenceSelection
+  const entries = selection?.characterWardrobes
+  if (Array.isArray(entries) && entries.length > 0) {
+    const forThisCharacter = entries.filter(
+      (entry: { characterId?: string; wardrobeId?: string }) =>
+        entry?.characterId && characterMatches(character, String(entry.characterId))
+    )
+    if (forThisCharacter.length > 0) {
+      return forThisCharacter.some(
+        (entry: { wardrobeId?: string }) => String(entry.wardrobeId) === wardrobeId
+      )
+    }
+    return false
+  }
+  return fallbackWardrobeId === wardrobeId
+}
+
+function beatUsesProp(beat: Record<string, any>, prop: SceneRequirementObject): boolean {
+  const selection = beat?.referenceSelection
+  if (selection) {
+    return (selection.objectRefIds ?? []).some(
+      (id: unknown) => typeof id === 'string' && id === prop.id
+    )
+  }
+  const labels = Array.isArray(beat?.beatDirection?.keyProps) ? beat.beatDirection.keyProps : []
+  const names = labels.filter((label: unknown): label is string => typeof label === 'string')
+  return matchObjectsBySelectedNames(names, [prop]).length > 0
+}
+
+function beatsUsingRequirement(
+  scene: Record<string, any> | null | undefined,
+  sceneIndex: number,
+  requirement: SceneReferenceRequirement,
+  characters: SceneRequirementCharacter[],
+  locationRefs: SceneRequirementLocation[],
+  objectRefs: SceneRequirementObject[],
+  fallbackWardrobeByCharacter: Map<string, string>
+): SceneReferenceBeatUse[] {
+  const beats = sceneBeats(scene)
+  if (beats.length === 0) return []
+  const sceneNumber = resolveSceneNumberForLocationMatch(scene, sceneIndex) ?? sceneIndex + 1
+  const uses: SceneReferenceBeatUse[] = []
+
+  beats.forEach((beat, beatIndex) => {
+    if (beat?.excluded === true) return
+    let used = false
+
+    if (requirement.kind === 'cast') {
+      const character = findCharacter(characters, requirement.id)
+      used = character ? characterInBeat(beat, character) : false
+    } else if (requirement.kind === 'wardrobe') {
+      const character = findCharacter(characters, requirement.characterId || requirement.id)
+      const fallback = character
+        ? fallbackWardrobeByCharacter.get(characterKeyOf(character))
+        : undefined
+      used = character
+        ? beatUsesWardrobe(beat, character, requirement.id, fallback)
+        : false
+    } else if (requirement.kind === 'location') {
+      const parsed = parseLocationVersionRequirementId(requirement.id)
+      const locationId = parsed?.locationId ?? requirement.id
+      const locUse = beatUsesLocation(beat, locationId)
+      if (locUse === false) {
+        used = false
+      } else {
+        const ref = locationRefs.find((candidate) => candidate.id === locationId)
+        const version = ref ? versionForBeat(ref, beat, beatIndex, sceneNumber) : null
+        used = parsed ? version?.id === parsed.versionId : version == null
+      }
+    } else if (requirement.kind === 'prop') {
+      const prop = objectRefs.find((candidate) => candidate.id === requirement.id)
+      used = prop ? beatUsesProp(beat, prop) : false
+    }
+
+    if (!used) return
+    uses.push({
+      beatIndex,
+      beatNumber: beatNumberOf(beat, beatIndex),
+      ...(typeof beat.beatId === 'string' && beat.beatId ? { beatId: beat.beatId } : {}),
+    })
+  })
+
+  return uses
+}
+
 /**
  * Resolve the references one scene needs, ignoring cross-scene usage.
  * `resolveSceneRequiredReferences` layers `alsoUsedInScenes` on top.
@@ -477,32 +687,58 @@ function resolveOne(input: SceneReferenceRequirementsInput): SceneReferenceRequi
   }
 
   // Wardrobe hangs off whoever is actually in the scene, so it is resolved
-  // after the cast rather than alongside it.
+  // after the cast rather than alongside it. Union every look the beats name;
+  // if none are planned, keep the assigned / default pick so unplanned scenes
+  // still get a row.
+  const fallbackWardrobeByCharacter = new Map<string, string>()
+  const addWardrobeRequirement = (
+    character: SceneRequirementCharacter,
+    wardrobe: Record<string, unknown>,
+    source: SceneReferenceRequirementSource,
+    castId: string
+  ) => {
+    const wardrobeId = typeof wardrobe.id === 'string' ? wardrobe.id : ''
+    if (!wardrobeId) return
+    const characterName = character.name?.trim() || castId
+    const wardrobeName =
+      typeof wardrobe.name === 'string' && wardrobe.name.trim()
+        ? wardrobe.name.trim()
+        : 'Wardrobe'
+    add({
+      kind: 'wardrobe',
+      id: wardrobeId,
+      name: `${characterName} — ${wardrobeName}`,
+      imageUrl: wardrobeImageUrl(wardrobe),
+      source,
+      stale: wardrobe.needsImageRegen === true || undefined,
+      characterId: castId,
+      characterName,
+    })
+  }
+
   const castIds = [...collected.values()]
     .filter((requirement) => requirement.kind === 'cast')
     .map((requirement) => requirement.id)
   for (const castId of castIds) {
     const character = findCharacter(characters, castId)
     if (!character) continue
-    const pick = pickSceneWardrobe(character, scene, sceneIndex, plan.characterWardrobes)
-    if (!pick) continue
-    const wardrobeId = typeof pick.wardrobe.id === 'string' ? pick.wardrobe.id : ''
-    if (!wardrobeId) continue
-    const characterName = character.name?.trim() || castId
-    const wardrobeName =
-      typeof pick.wardrobe.name === 'string' && pick.wardrobe.name.trim()
-        ? pick.wardrobe.name.trim()
-        : 'Wardrobe'
-    add({
-      kind: 'wardrobe',
-      id: wardrobeId,
-      name: `${characterName} — ${wardrobeName}`,
-      imageUrl: wardrobeImageUrl(pick.wardrobe),
-      source: pick.source,
-      stale: pick.wardrobe.needsImageRegen === true || undefined,
-      characterId: castId,
-      characterName,
-    })
+    const fallbackPick = pickSceneWardrobe(character, scene, sceneIndex, [])
+    const fallbackId =
+      fallbackPick && typeof fallbackPick.wardrobe.id === 'string'
+        ? fallbackPick.wardrobe.id
+        : undefined
+    if (fallbackId) fallbackWardrobeByCharacter.set(characterKeyOf(character), fallbackId)
+
+    const plannedIds = plannedWardrobeIdsForCharacter(character, plan.characterWardrobes)
+    if (plannedIds.length > 0) {
+      const wardrobes = Array.isArray(character.wardrobes) ? character.wardrobes : []
+      for (const wardrobeId of plannedIds) {
+        const wardrobe = wardrobes.find((candidate) => candidate?.id === wardrobeId)
+        if (wardrobe) addWardrobeRequirement(character, wardrobe, 'beat-plan', castId)
+      }
+      continue
+    }
+    if (fallbackPick) addWardrobeRequirement(character, fallbackPick.wardrobe, fallbackPick.source, castId)
   }
 
   const addLocation = (
@@ -568,8 +804,12 @@ function resolveOne(input: SceneReferenceRequirementsInput): SceneReferenceRequi
         if (ref) addLocation(ref, 'detected')
       }
     }
+  }
 
-    const beats = getSceneBeats(scene)
+  // Set-state versions vs the base establishing shot — including sticky-forward
+  // when a complete beat plan omits `locationVersionId`. Explicit `null` stays base.
+  {
+    const beats = sceneBeats(scene)
     const resolvedSceneNumber = sceneNumber ?? (scene ? sceneIndex + 1 : undefined)
     if (resolvedSceneNumber !== undefined) {
       const locationIdsOnScene = new Set(
@@ -587,17 +827,23 @@ function resolveOne(input: SceneReferenceRequirementsInput): SceneReferenceRequi
         const seen = new Set<string>()
         if (beats.length > 0) {
           beats.forEach((beat, beatIndex) => {
-            const version = resolveLocationVersionForBeat(ref, {
-              sceneNumber: resolvedSceneNumber,
-              beatIndex,
-              beatId: beat.beatId,
-            })
-            if (version && !seen.has(version.id)) {
-              seen.add(version.id)
-              addLocationVersion(ref, version, 'detected')
-            }
+            if (beat?.excluded === true) return
+            const locUse = beatUsesLocation(beat, ref.id)
+            if (locUse === false) return
+            const version = versionForBeat(ref, beat, beatIndex, resolvedSceneNumber)
+            if (!version || seen.has(version.id)) return
+            seen.add(version.id)
+            const explicitId =
+              typeof beat?.referenceSelection?.locationVersionId === 'string'
+                ? beat.referenceSelection.locationVersionId.trim()
+                : ''
+            addLocationVersion(
+              ref,
+              version,
+              explicitId === version.id ? 'beat-plan' : locUse === true ? 'beat-plan' : 'detected'
+            )
           })
-        } else {
+        } else if (useTextMatching) {
           for (const version of versions) {
             if (
               (version.sceneNumbers ?? []).includes(resolvedSceneNumber) ||
@@ -643,9 +889,20 @@ function resolveOne(input: SceneReferenceRequirementsInput): SceneReferenceRequi
   applyOverrides(collected, input)
 
   const kindOrder: SceneReferenceRequirementKind[] = ['cast', 'wardrobe', 'location', 'prop']
-  return [...collected.values()].sort(
-    (a, b) => kindOrder.indexOf(a.kind) - kindOrder.indexOf(b.kind)
-  )
+  return [...collected.values()]
+    .map((requirement) => {
+      const usedInBeats = beatsUsingRequirement(
+        scene,
+        sceneIndex,
+        requirement,
+        characters,
+        locationRefs,
+        objectRefs,
+        fallbackWardrobeByCharacter
+      )
+      return usedInBeats.length ? { ...requirement, usedInBeats } : requirement
+    })
+    .sort((a, b) => kindOrder.indexOf(a.kind) - kindOrder.indexOf(b.kind))
 }
 
 function applyOverrides(

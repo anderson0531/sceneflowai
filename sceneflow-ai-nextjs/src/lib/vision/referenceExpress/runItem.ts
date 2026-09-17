@@ -88,7 +88,9 @@ export async function runReferenceExpressItem(input: {
       return runWardrobeItem({ userId, projectId, item, character })
     }
 
-    if (hasImage(character.referenceImage)) return skipped(item, 'already-generated')
+    if (hasImage(character.referenceImage) && !item.forceRegenerate) {
+      return skipped(item, 'already-generated')
+    }
 
     const usedFingerprint = castFingerprint(character)
     const prompt = buildCharacterReferencePrompt({
@@ -181,7 +183,9 @@ export async function runReferenceExpressItem(input: {
       return runLocationVersionItem({ userId, projectId, item, location, locale })
     }
 
-    if (hasImage(location.imageUrl)) return skipped(item, 'already-generated')
+    if (hasImage(location.imageUrl) && !item.forceRegenerate) {
+      return skipped(item, 'already-generated')
+    }
 
     const usedFingerprint = locationFingerprint(location)
 
@@ -221,7 +225,7 @@ export async function runReferenceExpressItem(input: {
     | PropSource
     | undefined
   if (!prop) return skipped(item, 'missing')
-  if (hasImage(prop.imageUrl)) return skipped(item, 'already-generated')
+  if (hasImage(prop.imageUrl) && !item.forceRegenerate) return skipped(item, 'already-generated')
 
   const usedFingerprint = propFingerprint(prop)
 
@@ -317,7 +321,7 @@ async function runWardrobeItem(input: {
   if (!wardrobe?.id) return skipped(item, 'missing')
   if (!hasImage(character.referenceImage)) return skipped(item, 'missing')
   if (!wardrobe.description?.trim()) return skipped(item, 'missing')
-  if (wardrobeLookUrl(wardrobe) && !wardrobe.needsImageRegen) {
+  if (wardrobeLookUrl(wardrobe) && !wardrobe.needsImageRegen && !item.forceRegenerate) {
     return skipped(item, 'already-generated')
   }
 
@@ -335,7 +339,10 @@ async function runWardrobeItem(input: {
       hairStyle: typeof character.hairStyle === 'string' ? character.hairStyle : undefined,
       hairColor: typeof character.hairColor === 'string' ? character.hairColor : undefined,
       existingFullBodyUrl: wardrobe.fullBodyUrl,
-      forceRegenerate: !!wardrobe.needsImageRegen || !!wardrobeLookUrl(wardrobe),
+      forceRegenerate:
+        item.forceRegenerate === true ||
+        !!wardrobe.needsImageRegen ||
+        !!wardrobeLookUrl(wardrobe),
     },
     uploadPath
   )
@@ -400,7 +407,7 @@ async function runLocationVersionItem(input: {
   if (!version?.id) return skipped(item, 'missing')
   if (!hasImage(location.imageUrl)) return skipped(item, 'missing')
   if (!version.stateNotes?.trim()) return skipped(item, 'missing')
-  if (hasImage(version.imageUrl) && !version.needsImageRegen) {
+  if (hasImage(version.imageUrl) && !version.needsImageRegen && !item.forceRegenerate) {
     return skipped(item, 'already-generated')
   }
 
