@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  LOCATION_OBJECT_INSERT_CONSUMPTION_INSTRUCTION,
   LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION,
   LOCATION_TURNAROUND_GENERATION_INSTRUCTION,
   LOCATION_TURNAROUND_USER_PROMPT_HINT,
@@ -67,6 +68,30 @@ describe('locationReferencePrompts', () => {
     expect(buildLocationConsumptionInstruction({ shotType: 'Medium Shot' })).toBe(
       LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION
     )
+  })
+
+  it('matches near-field materials on an empty-cast object insert instead of ignoring the plate', () => {
+    const instruction = buildLocationConsumptionInstruction({
+      shotType: 'Extreme Close-Up',
+      promptToken: 'location [1]',
+      emptyCast: true,
+    })
+    expect(instruction).toContain('location [1]')
+    expect(instruction.toLowerCase()).toContain('near-field materials')
+    expect(instruction.toLowerCase()).toContain('mounting surface')
+    expect(instruction.toLowerCase()).not.toContain('ignore architecture')
+    expect(instruction.toLowerCase()).not.toContain('shallow-focus background bokeh')
+    expect(instruction.toLowerCase()).not.toContain('match architectural layout')
+    expect(LOCATION_OBJECT_INSERT_CONSUMPTION_INSTRUCTION.toLowerCase()).toContain(
+      'near-field materials'
+    )
+
+    const fromAction = buildLocationConsumptionInstruction({
+      shotType: 'medium shot',
+      actionFraming: 'Extreme Close-Up. Pressure gauge needle pinned. No people in frame.',
+      promptToken: 'location [1]',
+    })
+    expect(fromAction.toLowerCase()).toContain('near-field materials')
   })
 
   it('version consumption suffix is attached only for current set-state stills', () => {

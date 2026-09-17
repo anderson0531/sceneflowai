@@ -572,10 +572,11 @@ CRITICAL RULES:
 5. STATIC IMAGE OPTIMIZATION:
    - Describe a FROZEN MOMENT — no dolly, pan, track, zoom
    - Remove all sound/audio and dialogue text (except title typography on title beats)
-   - Capture the single most dramatic INSTANT of the action mid-motion; preserve the physical performance (body posture, gesture, hand/prop interaction, weight, gaze direction). Do NOT reduce it to a neutral standing pose.
+   - Capture the single most dramatic settled INSTANT of the action; preserve the physical performance (body posture, gesture, hand/prop interaction, weight, gaze direction). Write the pose a viewer reads the whole action from. Do NOT reduce it to a neutral standing pose, and do not describe a series of positions.
 
 6. CAMERA AWARENESS: Subjects must appear unaware of the camera (no posing, no lens eye-contact, no red-carpet/headshot framing) unless the beat explicitly calls for direct-to-camera address.
-   - INSERT / EXTREME CLOSE-UP: do not write full-body anatomy, two legs, standing on the floor, or headshot framing. Tight macro framing; only the specified limb/hand enters the composition. Location is ambient lighting and color in shallow-focus background bokeh, not architectural layout.
+   - INSERT / EXTREME CLOSE-UP of a limb: do not write full-body anatomy, two legs, standing on the floor, or headshot framing. Tight macro framing; only the specified limb/hand enters the composition. Location is ambient lighting and color in shallow-focus background bokeh, not a second subject.
+   - INSERT / EXTREME CLOSE-UP of an object with nobody in frame: do not write limbs, hands, or faces. Fill the frame with the named instrument at one settled reading. Match the location reference for near-field materials and the mounting surface; do not pull back to a wide of the room.
 
 6b. STORY CONTINUITY: When a STORY CONTINUITY block is provided, this frame is one shot inside a continuous scene, not a standalone illustration of the scene.
    - Compose for the movement named there, not for the whole scene. SCENE CONTEXT is background only; the movement sentence and the beat action decide what is on camera.
@@ -604,7 +605,7 @@ Palette & Grade: [omit this line unless the input names a grade]
 
 Then always:
 [SCENE COMPOSITION & BEAT]
-Action/Framing: [shot type + frozen action for THIS beat; when two or more people are visible, state that both/all bodies are fully in frame rather than a coverage label alone unless the shot is Insert/Extreme Close-Up; use ONLY person [N] tokens for characters VISIBLE in this beat — never invent or renumber tokens; you MAY omit person [N] tokens for characters not on camera; never restate character names in parentheses after a person token; use prop [N] and location [N] tokens (not library names) for referenced props/locations; for EACH visible person [N] on a non-insert shot describe body blocking (weight, contact with the floor or a surface, contact shadow, hands), gesture, hand/prop interaction, labeled gaze, and directed facial expression/emotion (eyes/jaw/mouth/shoulders) — do NOT copy the neutral expression from the identity reference; Insert/Extreme Close-Up: only the specified limb/hand, no floor-contact anatomy; never put emotion or performance under [EXCLUSIONS]; characters are engaged in the action and NOT looking at the camera unless the beat is direct-to-camera address]
+Action/Framing: [shot type + frozen action for THIS beat; when two or more people are visible, state that both/all bodies are fully in frame rather than a coverage label alone unless the shot is Insert/Extreme Close-Up; use ONLY person [N] tokens for characters VISIBLE in this beat — never invent or renumber tokens; you MAY omit person [N] tokens for characters not on camera; never restate character names in parentheses after a person token; use prop [N] and location [N] tokens (not library names) for referenced props/locations; for EACH visible person [N] on a non-insert shot describe body blocking (weight, contact with the floor or a surface, contact shadow, hands), gesture, hand/prop interaction, labeled gaze, and directed facial expression/emotion (eyes/jaw/mouth/shoulders) — do NOT copy the neutral expression from the identity reference; Insert/Extreme Close-Up of a limb: only the specified limb/hand, no floor-contact anatomy; Insert/Extreme Close-Up of an object with no people: the named instrument only, no limbs or faces; never put emotion or performance under [EXCLUSIONS]; characters are engaged in the action and NOT looking at the camera unless the beat is direct-to-camera address]
 
 [EXCLUSIONS & BOUNDARIES]
 Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, faceless figures, extra limbs, deformed anatomy. Maintain 100% photographic realism when art style is photorealistic. No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).
@@ -640,8 +641,11 @@ function appendBeatDirectionAuthorityBlock(request: SceneImageIntelligenceReques
     )
   }
   if (bd.blocking) lines.push(`Blocking: ${bd.blocking}`)
-  if (bd.emotion) lines.push(`Emotion (render on every visible face): ${bd.emotion}`)
-  if (bd.gaze) lines.push(`Gaze: ${bd.gaze}`)
+  const emptyCast = Array.isArray(bd.castInFrame) && bd.castInFrame.length === 0
+  if (!emptyCast && bd.emotion) {
+    lines.push(`Emotion (render on every visible face): ${bd.emotion}`)
+  }
+  if (!emptyCast && bd.gaze) lines.push(`Gaze: ${bd.gaze}`)
   if (bd.keyProps && bd.keyProps.length > 0) {
     lines.push(`Beat key props (subset of scene props — only show these): ${bd.keyProps.join(', ')}`)
   }

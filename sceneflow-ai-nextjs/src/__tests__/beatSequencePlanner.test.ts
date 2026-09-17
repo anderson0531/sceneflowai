@@ -290,7 +290,8 @@ describe('buildPlannerSystemPrompt', () => {
   })
 
   it('asks for insert/ECU exception instead of full-body floor contact', () => {
-    expect(system).toContain('Insert/Extreme Close-Up: tight macro, only the specified limb/hand')
+    expect(system).toContain('Insert/Extreme Close-Up of a limb: tight macro, only the specified limb/hand')
+    expect(system).toContain('Insert/Extreme Close-Up of an object with nobody in frame: the named instrument only')
     expect(system).toContain('Omit a library prop from Action/Framing unless this beat actually uses it')
   })
 

@@ -25,6 +25,9 @@ import { isExplicitDirectToCameraBeat } from '@/lib/character/characterReference
 import {
   actionFramingFromStoredPrompt,
   assembleStructuredStillPrompt,
+  parseStillReferencesLegend,
+  STILL_EMPTY_CAST_LINE,
+  type StillPromptBoundRef,
 } from '@/lib/imagen/structuredStillPrompt'
 import {
   normalizeStillFraming,
@@ -191,6 +194,26 @@ function asSentence(value: string): string {
  * every facet has to be skipped when it is already present or a regenerated
  * frame would restate its own blocking and gaze each pass.
  */
+function isNullOccupancyGaze(value: string): boolean {
+  return /\bno (?:characters|people|one|person)\b/i.test(value)
+}
+
+function isTemporalMotionPhrase(value: string): boolean {
+  return /\b(?:shakes?|shaking|vibrat(?:e|es|ing)|violently|before the|about to|begins to|starts to)\b/i.test(
+    value
+  )
+}
+
+function namesHandsOrLimbs(value: string): boolean {
+  return /\b(?:hands?|fingers?|limb|arm|wrist|palm)\b/i.test(value)
+}
+
+function restatesFrozenMoment(value: string, frozen: string): boolean {
+  const facet = forComparison(value)
+  const moment = forComparison(frozen)
+  return Boolean(facet && moment && (facet === moment || facet.includes(moment) || moment.includes(facet)))
+}
+
 function appendFacet(parts: string[], value: string | undefined, label?: string): void {
   const trimmed = value?.trim()
   if (!trimmed) return
@@ -322,23 +345,42 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
     return softened.text
   }
 
+  const namedCast = Array.isArray(direction?.castInFrame)
+    ? direction.castInFrame.map((name) => name.trim()).filter(Boolean)
+    : undefined
+  const emptyCast = Array.isArray(direction?.castInFrame) && (namedCast?.length ?? 0) === 0
+
   appendFacet(parts, policySafe(frozen || described))
   // "Blocking" and "Prop handling" are stage-direction words, and direction
   // written under them reads as choreography: a move, or a run of them. A still
   // can only hold one position per body, so the label asks for one and the
   // reduction drops the stages that lead into it.
-  appendFacet(parts, policySafe(reduceActionToSingleInstant(direction?.blocking)), 'Body position')
-  appendFacet(
-    parts,
-    policySafe(reduceActionToSingleInstant(direction?.propInteraction)),
-    'Hands and props'
-  )
-  appendFacet(parts, direction?.gaze, 'Gaze')
+  const blocking = policySafe(reduceActionToSingleInstant(direction?.blocking))
+  const skipEmptyCastBlocking =
+    emptyCast &&
+    Boolean(frozen) &&
+    isTemporalMotionPhrase(blocking) &&
+    !isTemporalMotionPhrase(frozen)
+  if (!skipEmptyCastBlocking) {
+    appendFacet(parts, blocking, 'Body position')
+  }
 
-  const namedCast = Array.isArray(direction?.castInFrame)
-    ? direction.castInFrame.map((name) => name.trim()).filter(Boolean)
-    : undefined
-  const emptyCast = Array.isArray(direction?.castInFrame) && (namedCast?.length ?? 0) === 0
+  const propInteraction = policySafe(reduceActionToSingleInstant(direction?.propInteraction))
+  if (!emptyCast) {
+    appendFacet(parts, propInteraction, 'Hands and props')
+  } else if (
+    propInteraction &&
+    !restatesFrozenMoment(propInteraction, frozen) &&
+    !namesHandsOrLimbs(propInteraction) &&
+    !isNullOccupancyGaze(propInteraction)
+  ) {
+    appendFacet(parts, propInteraction, 'Hands and props')
+  }
+
+  const gaze = direction?.gaze?.trim() ?? ''
+  if (!(emptyCast || isNullOccupancyGaze(gaze))) {
+    appendFacet(parts, gaze, 'Gaze')
+  }
 
   if (policyChanges.length > 0) {
     console.log(
@@ -357,7 +399,7 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
     const named = cast.map((name) => name.trim()).filter(Boolean)
     parts.push(
       named.length === 0
-        ? 'No people in frame: no faces, no hands, no silhouettes, no figures.'
+        ? STILL_EMPTY_CAST_LINE
         : `Cast in frame: ${named.join(', ')} — and no other people.`
     )
   }
@@ -426,9 +468,10 @@ export const TITLE_BEAT_ACTION_LEAD_IN =
  * composition section has to be emitted either way so the result survives
  * `isStructuredStillPrompt` instead of being rewritten by the rules optimizer.
  *
- * The stored string is the send-format still (`[TASK]` / `[STILL]` / `[STYLE]` /
- * `[EXCLUSIONS]`) so Pre-Vis can show the prompt the model will receive before
- * Generate. Live `[REFERENCES]` are bound only when images are attached.
+ * The stored string is the send-format still (`[REFERENCES]` when the beat has
+ * bound library items, then `[TASK]` / `[STILL]` / `[STYLE]` / `[EXCLUSIONS]`)
+ * so Pre-Vis matches what the model will receive. Live send indices are bound
+ * when images are attached; persist may recover the previous legend.
  */
 export function composePersistedBeatStillPrompt(args: {
   lookbook?: ProjectLookbook
@@ -437,6 +480,7 @@ export function composePersistedBeatStillPrompt(args: {
   artStyleAnchor?: string
   /** Prepended inside the composition, for title and credit beats. */
   actionLeadIn?: string
+  refs?: StillPromptBoundRef[]
 }): string | undefined {
   const { lookbook, beat } = args
   if (!beat) return undefined
@@ -457,8 +501,13 @@ export function composePersistedBeatStillPrompt(args: {
     shotType: beat.beatDirection?.shotType,
   })
   if (!seed) return undefined
+  const refs =
+    args.refs && args.refs.length > 0
+      ? args.refs
+      : parseStillReferencesLegend(beat.storyboardImagePrompt)
   return assembleStructuredStillPrompt({
     actionOrStructured: seed,
+    refs,
     includeCandid: !isExplicitDirectToCameraBeat(beat),
     shotType: beat.beatDirection?.shotType,
     allowTypography: Boolean(leadIn),
@@ -478,7 +527,7 @@ CRITICAL RULES:
 5. Map direction.camera.shots to beats when provided (beat 0 → shot 0, etc.).
 6. Follow the narrative arc: opening → progression → climax → title_reveal (if title scene) → dissolve.
 7. "lighting" and "lensMm" place THIS beat inside the film's established grammar — a key-light accent and a focal length, never a new look. Derive both from the PROJECT LOOKBOOK. Leave a field empty rather than contradict the lookbook.
-8. The "prompt" field is Action/Framing ONLY: shot type (spatial when two or more people — both bodies fully in frame; Insert/Extreme Close-Up: tight macro, only the specified limb/hand, no full-body floor contact), body blocking with weight and contact for EACH visible character on non-insert shots, who holds which named library prop, labeled gaze, and directed facial expression for EACH visible face (visible eyes/jaw/mouth/shoulders — not a two-word mood label, never under exclusions). Do NOT write style dumps, lighting essays, exclusions, F2V, or start-frame language — the lookbook and code own those.
+8. The "prompt" field is Action/Framing ONLY: shot type (spatial when two or more people — both bodies fully in frame; Insert/Extreme Close-Up of a limb: tight macro, only the specified limb/hand, no full-body floor contact; Insert/Extreme Close-Up of an object with nobody in frame: the named instrument only, no limbs or faces), body blocking with weight and contact for EACH visible character on non-insert shots, who holds which named library prop, labeled gaze, and directed facial expression for EACH visible face (visible eyes/jaw/mouth/shoulders — not a two-word mood label, never under exclusions). Omit gaze and emotion when castInFrame is empty. Do NOT write style dumps, lighting essays, exclusions, F2V, or start-frame language — the lookbook and code own those.
 9. Use EXACT character / prop / location labels from the REFERENCE LIBRARY. Do not invent objects that are not listed. Do not describe the visual appearance of library props or locations (reference images own appearance). Omit a library prop from Action/Framing unless this beat actually uses it.
 10. When art style is photorealistic, keep action language photographic (no illustration, cartoon, or anime). Populate negativeAdditions with anti-illustration terms.
 

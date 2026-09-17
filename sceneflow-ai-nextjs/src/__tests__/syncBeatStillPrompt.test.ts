@@ -74,6 +74,36 @@ describe('syncBeatStillPromptToDirection', () => {
     )
   })
 
+  it('keeps the previous [REFERENCES] legend when still direction is rewritten', () => {
+    const prior = actionBeat({
+      storyboardImagePrompt: `[REFERENCES]
+location [1] = FREIGHT TUNNEL VAULT - PNEUMATIC ACCESS — library location
+prop [2] = Brass pressure gauge — library prop
+
+[TASK]
+Produce one photograph of a single instant — a 1/500s exposure, everything in it simultaneous.
+
+[STILL]
+Action/Framing: Extreme Close-Up. Pressure gauge needle pinned. No people in frame.
+
+[EXCLUSIONS]
+Strictly Avoid: Mannequin geometry.`,
+    })
+    const next = syncBeatStillPromptToDirection({
+      ...prior,
+      beatDirection: {
+        shotType: 'Extreme Close-Up',
+        frozenMoment: 'Pressure gauge needle pinned to the maximum.',
+        castInFrame: [],
+      },
+    })
+
+    expect(next.storyboardImagePrompt).toContain('[REFERENCES]')
+    expect(next.storyboardImagePrompt).toContain('location [1]')
+    expect(next.storyboardImagePrompt).toContain('prop [2] = Brass pressure gauge')
+    expect(next.storyboardImagePrompt).toContain('prop [2] needle pinned to the maximum')
+  })
+
   it('is a no-op for video-only direction edits', () => {
     const prior = actionBeat()
     const next = syncBeatStillPromptToDirection({

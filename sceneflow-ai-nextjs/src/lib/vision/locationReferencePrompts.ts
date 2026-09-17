@@ -6,7 +6,10 @@ import {
   LOCATION_STATE_KEYWORD_PATTERN,
   SET_PIECE_NOUN_PATTERN,
 } from '@/lib/vision/locationStateAnalysis'
-import { isDetailShot } from '@/lib/imagen/stillFramingNormalize'
+import {
+  isDetailShot,
+  resolveStillShotClass,
+} from '@/lib/imagen/stillFramingNormalize'
 
 export const LOCATION_REFERENCE_ASPECT_RATIO = '16:9' as const
 
@@ -28,14 +31,40 @@ export const LOCATION_DETAIL_CONSUMPTION_INSTRUCTION =
   'For this close-up, match ambient lighting tone and color palette of the location in shallow-focus background bokeh. ' +
   'Do not reproduce architectural layout or furniture placement as the frame.'
 
+export const LOCATION_OBJECT_INSERT_CONSUMPTION_INSTRUCTION =
+  'LOCATION REFERENCE: The attached plate is the set. ' +
+  'Match near-field materials, metal, paint, and the mounting surface around the subject from this reference. ' +
+  'Fill the frame with the named instrument. Do not pull back to a wide establishing shot of the whole room.'
+
+export function isObjectInsertLocationShot(options?: {
+  shotType?: string | null
+  actionFraming?: string | null
+  emptyCast?: boolean
+}): boolean {
+  const shot = resolveStillShotClass(options?.shotType, options?.actionFraming)
+  const emptyCast =
+    options?.emptyCast ?? /\bno people in frame\b/i.test(options?.actionFraming ?? '')
+  return emptyCast && shot.isInsertOrEcu
+}
+
 export function buildLocationConsumptionInstruction(options?: {
   shotType?: string | null
   promptToken?: string
+  actionFraming?: string | null
+  emptyCast?: boolean
 }): string {
-  if (!isDetailShot(options?.shotType)) {
+  const token = options?.promptToken?.trim()
+  if (isObjectInsertLocationShot(options)) {
+    if (!token) return LOCATION_OBJECT_INSERT_CONSUMPTION_INSTRUCTION
+    return (
+      'LOCATION REFERENCE: The attached plate is the set. ' +
+      `Match near-field materials, metal, paint, and the mounting surface around the subject from ${token}. ` +
+      'Fill the frame with the named instrument. Do not pull back to a wide establishing shot of the whole room.'
+    )
+  }
+  if (!isDetailShot(options?.shotType) && !resolveStillShotClass(options?.shotType, options?.actionFraming).isDetail) {
     return LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION
   }
-  const token = options?.promptToken?.trim()
   if (!token) return LOCATION_DETAIL_CONSUMPTION_INSTRUCTION
   return (
     'LOCATION REFERENCE: The attached plate is an extreme-wide establishing still of the environment. ' +
@@ -230,12 +259,20 @@ export function buildLocationReferencePromptLine(
   locationName: string,
   referenceIndex: number,
   label?: string,
-  options?: { currentSetState?: boolean; shotType?: string | null; promptToken?: string }
+  options?: {
+    currentSetState?: boolean
+    shotType?: string | null
+    promptToken?: string
+    actionFraming?: string | null
+    emptyCast?: boolean
+  }
 ): string {
   const heading = label ?? `Reference image ${referenceIndex}: LOCATION REFERENCE for "${locationName}"`
   const suffix = options?.currentSetState ? `\n  ${LOCATION_VERSION_CONSUMPTION_SUFFIX}` : ''
   return `- ${heading}\n  ${buildLocationConsumptionInstruction({
     shotType: options?.shotType,
     promptToken: options?.promptToken,
+    actionFraming: options?.actionFraming,
+    emptyCast: options?.emptyCast,
   })}${suffix}`
 }

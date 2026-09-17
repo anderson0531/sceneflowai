@@ -10,6 +10,16 @@
 
 import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { softenStillPhrasingForPolicy } from '@/lib/generation/policySafePhrasing'
+import {
+  assembleStructuredStillPrompt,
+  extractStructuredStillBody,
+  joinPromptBlocks,
+  parseStillPromptSource,
+  parseStillReferencesLegend,
+  replaceStructuredStillBody,
+  STILL_SECTION_EXCLUSIONS,
+  STILL_SECTION_STYLE,
+} from '@/lib/imagen/structuredStillPrompt'
 
 /** Second-pass replacements after the first PromptModerator sanitize. */
 export const IMAGE_SAFETY_ESCALATION: Array<[RegExp, string]> = [
@@ -71,16 +81,28 @@ export const BEAT_POLICY_SECOND_PASS: Array<[RegExp, string]> = [
   [/\b\/Toxic\b/gi, '/Industrial'],
 ]
 
-/**
- * Escalate a prompt after policy / IMAGE_SAFETY failure.
- * @param failedAttempt 1-based attempt that just failed
- */
-export function escalateImagePromptForRetry(
-  prompt: string,
+export interface EscalateImagePromptOptions {
+  skipProductionStillFraming?: boolean
+  /** Default: unstructured prompts at failedAttempt >= 1; structured stills at >= 2. */
+  applyDestructiveNouns?: boolean
+  shotType?: string
+  allowTypography?: boolean
+}
+
+function applyReplacements(text: string, rules: Array<[RegExp, string]>): string {
+  let next = text
+  for (const [re, replacement] of rules) {
+    next = next.replace(re, replacement)
+  }
+  return next
+}
+
+function softenActionText(
+  action: string,
   failedAttempt: number,
-  options?: { skipProductionStillFraming?: boolean }
+  options?: EscalateImagePromptOptions
 ): string {
-  let next = prompt
+  let next = action
   const stillSoftened = softenStillPhrasingForPolicy(next)
   if (stillSoftened.changes.length > 0) {
     next = stillSoftened.text
@@ -91,33 +113,72 @@ export function escalateImagePromptForRetry(
   const sp = autoSanitizePrompt(next, { logChanges: true })
   if (sp.wasModified) next = sp.sanitizedPrompt
 
-  if (failedAttempt >= 1) {
-    let changed = false
-    for (const [re, replacement] of IMAGE_SAFETY_ESCALATION) {
-      const updated = next.replace(re, replacement)
-      if (updated !== next) {
-        changed = true
-        next = updated
-      }
+  if (failedAttempt >= 1 && options?.skipProductionStillFraming) {
+    const updated = applyReplacements(next, BEAT_POLICY_SECOND_PASS)
+    if (updated !== next) {
+      next = updated
+      console.log('[VertexImagePolicy] Applied beat-frame second-pass policy rewrites')
     }
-    if (changed) {
+  }
+
+  const applyNouns =
+    options?.applyDestructiveNouns ??
+    (extractStructuredStillBody(action) ? failedAttempt >= 2 : failedAttempt >= 1)
+  if (applyNouns) {
+    const updated = applyReplacements(next, IMAGE_SAFETY_ESCALATION)
+    if (updated !== next) {
+      next = updated
       console.log('[VertexImagePolicy] Applied IMAGE_SAFETY escalation replacements')
     }
   }
 
-  if (failedAttempt >= 1 && options?.skipProductionStillFraming) {
-    let beatChanged = false
-    for (const [re, replacement] of BEAT_POLICY_SECOND_PASS) {
-      const updated = next.replace(re, replacement)
-      if (updated !== next) {
-        beatChanged = true
-        next = updated
-      }
-    }
-    if (beatChanged) {
-      console.log('[VertexImagePolicy] Applied beat-frame second-pass policy rewrites')
-    }
+  return next
+}
+
+/**
+ * Soften Action/Framing only, then reassemble so [REFERENCES] / TASK / STYLE stay intact.
+ */
+export function escalateStructuredStillForSafety(
+  still: string,
+  failedAttempt: number,
+  options?: EscalateImagePromptOptions
+): string {
+  const parsed = parseStillPromptSource(still)
+  const refs = parseStillReferencesLegend(still)
+  const action = softenActionText(parsed.actionFraming, failedAttempt, {
+    ...options,
+    applyDestructiveNouns: options?.applyDestructiveNouns ?? failedAttempt >= 2,
+  })
+  const seed = joinPromptBlocks(
+    parsed.style ? `${STILL_SECTION_STYLE}\n${parsed.style}` : '',
+    action ? `Action/Framing: ${action}` : '',
+    parsed.exclusions ? `${STILL_SECTION_EXCLUSIONS}\n${parsed.exclusions}` : ''
+  )
+  return assembleStructuredStillPrompt({
+    actionOrStructured: seed,
+    refs,
+    includeCandid: /Subjects absorbed in the action/i.test(still),
+    shotType: options?.shotType,
+    allowTypography: options?.allowTypography,
+  })
+}
+
+/**
+ * Escalate a prompt after policy / IMAGE_SAFETY failure.
+ * @param failedAttempt 1-based attempt that just failed
+ */
+export function escalateImagePromptForRetry(
+  prompt: string,
+  failedAttempt: number,
+  options?: EscalateImagePromptOptions
+): string {
+  const stillBody = extractStructuredStillBody(prompt)
+  if (stillBody && /\[(?:REFERENCES|TASK|STILL)\]/.test(stillBody)) {
+    const nextStill = escalateStructuredStillForSafety(stillBody, failedAttempt, options)
+    return replaceStructuredStillBody(prompt, nextStill)
   }
+
+  let next = softenActionText(prompt, failedAttempt, options)
 
   if (
     failedAttempt >= 2 &&

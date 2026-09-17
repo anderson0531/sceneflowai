@@ -7,6 +7,8 @@ import {
   normalizeStillLens,
   normalizeStillShotType,
   reduceActionToSingleInstant,
+  resolveEffectiveStillShotType,
+  resolveStillShotClass,
   stripLensSubjectNote,
   suppressDetailLensForShot,
 } from '@/lib/imagen/stillFramingNormalize'
@@ -186,6 +188,40 @@ describe('lens normalization', () => {
     expect(isInsertOrExtremeCloseUp('Macro (100mm)')).toBe(true)
     expect(isInsertOrExtremeCloseUp('Close-Up')).toBe(false)
     expect(isInsertOrExtremeCloseUp('Two-Shot')).toBe(false)
+  })
+
+  it('resolves TASK shot class from Action/Framing when the field is a stale medium shot', () => {
+    const shot = resolveStillShotClass(
+      'medium shot',
+      'Action/Framing: Extreme Close-Up, eye-level. Pressure gauge needle pinned to the maximum.'
+    )
+    expect(shot.isInsertOrEcu).toBe(true)
+    expect(shot.isDetail).toBe(true)
+    expect(shot.shotHint.toLowerCase()).toContain('extreme close-up')
+  })
+
+  it('prefers beatDirection.shotType over a missing request shotType', () => {
+    expect(
+      resolveEffectiveStillShotType({
+        beatShotType: 'Extreme Close-Up',
+        requestShotType: '',
+        kindFallback: 'medium shot',
+      })
+    ).toBe('Extreme Close-Up')
+    expect(
+      resolveEffectiveStillShotType({
+        overlayShotType: 'Two-Shot',
+        beatShotType: 'Extreme Close-Up',
+        requestShotType: 'medium shot',
+      })
+    ).toBe('Two-Shot')
+    expect(
+      resolveEffectiveStillShotType({
+        requestShotType: '',
+        actionFraming: 'Extreme Close-Up. The needle is pinned.',
+        kindFallback: 'medium shot',
+      })
+    ).toMatch(/Extreme Close-Up/i)
   })
 
   it('suppresses a detail lens on a shot that cannot hold one', () => {

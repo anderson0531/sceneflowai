@@ -137,7 +137,25 @@ describe('scene image intelligence direction authority', () => {
     expect(system).toContain('INSERT / EXTREME CLOSE-UP')
     expect(system).toContain('Tight macro framing; only the specified limb/hand enters the composition')
     expect(system).toContain('shallow-focus background bokeh')
-    expect(system).toContain('Insert/Extreme Close-Up: only the specified limb/hand, no floor-contact anatomy')
+    expect(system).toContain('Insert/Extreme Close-Up of a limb: only the specified limb/hand, no floor-contact anatomy')
+    expect(system).toContain('named instrument only, no limbs or faces')
+    expect(system).not.toContain('mid-motion')
+  })
+
+  it('omits Gaze and emotion on an empty-cast beat direction block', () => {
+    const prompt = buildSceneImageIntelligenceUserPrompt({
+      ...baseRequest,
+      beatDirection: {
+        shotType: 'Extreme Close-Up',
+        frozenMoment: 'Pressure gauge needle pinned to the maximum.',
+        gaze: 'No characters in frame',
+        emotion: 'Violent anticipation',
+        castInFrame: [],
+      },
+    })
+    expect(prompt).toContain('Cast in frame: NOBODY')
+    expect(prompt).not.toMatch(/Gaze: No characters/)
+    expect(prompt).not.toMatch(/Emotion \(render on every visible face\): Violent anticipation/)
   })
 
   it('user prompt surfaces scene description, talent, and key props as authoritative', () => {

@@ -97,9 +97,12 @@ import {
   isStructuredStillPrompt,
   joinPromptBlocks,
   injectBeforeStyleOrExclusions,
+  parseStillPromptSource,
   resolveLibraryItemPromptMatch,
   actionFramingForLibraryMatch,
+  stillActionHasEmptyCast,
   stillRefsFromAttachedImages,
+  stillRefsFromNamedLibrary,
   type LibraryItemPromptMatch,
 } from '@/lib/imagen/structuredStillPrompt'
 import { sanitizeBeatStillPrompt } from '@/lib/imagen/sanitizeBeatStillPrompt'
@@ -165,8 +168,9 @@ import { applyCastPerformanceToPrompt } from '@/lib/scene/castPerformanceFraming
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
 import {
   buildLocationReferencePromptLine,
+  isObjectInsertLocationShot,
 } from '@/lib/vision/locationReferencePrompts'
-import { isDetailShot } from '@/lib/imagen/stillFramingNormalize'
+import { resolveEffectiveStillShotType, resolveStillShotClass } from '@/lib/imagen/stillFramingNormalize'
 import {
   buildSubjectCountGuardrail,
   getMaxReferenceImagesForTier,
@@ -727,12 +731,16 @@ export async function POST(req: NextRequest) {
       )
     }
     
+    let overlayShotType = ''
     let effectiveShotType = shotType
     let effectiveCameraAngle = cameraAngle
     let effectiveLighting = lighting
     if (generationMode === 'direct' && visualSetup && typeof visualSetup === 'object') {
       const vs = visualSetup as Record<string, string>
-      if (vs.shotType) effectiveShotType = vs.shotType
+      if (vs.shotType) {
+        overlayShotType = vs.shotType
+        effectiveShotType = vs.shotType
+      }
       if (vs.cameraAngle) effectiveCameraAngle = vs.cameraAngle
       if (vs.lighting) effectiveLighting = vs.lighting
     }
@@ -1016,6 +1024,19 @@ export async function POST(req: NextRequest) {
           const beat = beats[effectiveBeatIndex]
           if (beat) {
             beatKindForIntelligence = beat.kind
+            effectiveShotType = resolveEffectiveStillShotType({
+              overlayShotType,
+              beatShotType: beat.beatDirection?.shotType,
+              requestShotType: shotType,
+              actionFraming: [
+                beat.beatDirection?.frozenMoment,
+                beat.actionDescription,
+                beat.storyboardImagePrompt,
+              ]
+                .filter(Boolean)
+                .join('. '),
+              kindFallback: effectiveShotType,
+            })
             // Null when the beat never stated its cast, which is the only case
             // the name-detection and scene-cast fallbacks below are for.
             const directedCast =
@@ -1912,6 +1933,28 @@ export async function POST(req: NextRequest) {
           sceneIndex: sceneIndex || 0,
           beat: beatForPromptCompose,
           actionLeadIn: allowTypography ? TITLE_BEAT_ACTION_LEAD_IN : undefined,
+          refs: stillRefsFromNamedLibrary({
+            people: characterReferences.map((ref: { name?: string; promptToken?: string }) => ({
+              name: ref.name,
+              token: ref.promptToken,
+            })),
+            props: detectedObjectReferences.map((obj: { name?: string; promptToken?: string }) => ({
+              name: obj.name,
+              token: obj.promptToken,
+            })),
+            locations: matchedLocationReference
+              ? [
+                  {
+                    name:
+                      matchedLocationReference.location ||
+                      matchedLocationReference.name ||
+                      'Location',
+                    token: matchedLocationReference.promptToken,
+                  },
+                ]
+              : [],
+            castInFrame: beatForPromptCompose.beatDirection?.castInFrame,
+          }),
         })
       : undefined
 
@@ -2488,6 +2531,8 @@ export async function POST(req: NextRequest) {
         // the identity harder against unchanged wording asks for the same answer.
         const softened = escalateImagePromptForRetry(optimizedPrompt, 1, {
           skipProductionStillFraming: isBeatFrame,
+          shotType: effectiveShotType,
+          allowTypography,
         })
         if (softened !== optimizedPrompt) {
           optimizedPrompt = softened
@@ -3012,6 +3057,18 @@ export async function POST(req: NextRequest) {
               currentSetState: Boolean(cappedLocationReference.boundVersionId),
               shotType: effectiveShotType,
               promptToken: locationToken,
+              actionFraming: beatForEmotion
+                ? [
+                    beatForEmotion.beatDirection?.shotType,
+                    beatForEmotion.beatDirection?.frozenMoment,
+                    beatForEmotion.actionDescription,
+                  ]
+                    .filter(Boolean)
+                    .join('. ')
+                : undefined,
+              emptyCast: Array.isArray(beatForEmotion?.beatDirection?.castInFrame)
+                ? beatForEmotion.beatDirection.castInFrame.length === 0
+                : undefined,
             })} Use token ${locationToken} in the scene prompt. Environment: "${locationName}". Match lighting to the scene prompt Style section.\n\n`
           }
 
@@ -3179,7 +3236,16 @@ export async function POST(req: NextRequest) {
           }
           geminiPrompt += `- Match props and environment to their reference images\n`
           if (cappedLocationReference?.imageUrl) {
-            geminiPrompt += isDetailShot(effectiveShotType)
+            const stillAction = parseStillPromptSource(structuredStill).actionFraming
+            const emptyCast = stillActionHasEmptyCast(stillAction)
+            const shot = resolveStillShotClass(effectiveShotType, stillAction)
+            geminiPrompt += isObjectInsertLocationShot({
+              shotType: effectiveShotType,
+              actionFraming: stillAction,
+              emptyCast,
+            })
+              ? '- Location: match near-field materials and the mounting surface from the location reference; do not pull back to a wide establishing shot\n'
+              : shot.isDetail
               ? '- Location background: match ambient lighting tone and color palette of the location reference in shallow-focus background bokeh\n'
               : '- Location background: match the wide-angle location reference for layout, furniture placement, and color palette\n'
           }
@@ -3237,6 +3303,8 @@ export async function POST(req: NextRequest) {
               stillPolicyMode === 'safety'
                 ? escalateImagePromptForRetry(sanitizedGeminiPrompt, 1, {
                     skipProductionStillFraming: isBeatFrame,
+                    shotType: effectiveShotType,
+                    allowTypography,
                   })
                 : sanitizedGeminiPrompt
             if (stillPolicyMode === 'safety') {
@@ -3265,6 +3333,8 @@ export async function POST(req: NextRequest) {
                 ? { policyBasePrompt: geminiPrompt, policyEscalationOffset: 1 }
                 : {}),
               skipProductionStillFraming: isBeatFrame,
+              shotType: effectiveShotType,
+              allowTypography,
               deadlineAt: imageDeadlineAt,
             })
 
@@ -3334,6 +3404,8 @@ export async function POST(req: NextRequest) {
               stillPolicyMode === 'safety'
                 ? escalateImagePromptForRetry(imagenStill, 1, {
                     skipProductionStillFraming: isBeatFrame,
+                    shotType: effectiveShotType,
+                    allowTypography,
                   })
                 : imagenStill
             if (stillPolicyMode === 'safety') promptForResponse = imagenPrompt

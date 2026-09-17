@@ -11,7 +11,7 @@ import {
   LEGACY_BEAT_FRAME_CANDID_ACTION_CONSTRAINTS,
   isWideEstablishingShotType,
 } from '@/lib/character/characterReferenceAssembly'
-import { isDetailShot, isInsertOrExtremeCloseUp } from '@/lib/imagen/stillFramingNormalize'
+import { resolveStillShotClass } from '@/lib/imagen/stillFramingNormalize'
 import { buildIdentityTraitsClause } from '@/lib/imagen/identityTraitsClause'
 import { buildIdentityPromptToken } from '@/lib/imagen/promptOptimizer'
 import {
@@ -86,31 +86,109 @@ export const STILL_TASK_FULL_BODY_LINES = [
 export const STILL_TASK_INSERT_FRAMING_LINE =
   'Tight macro framing; only the specified limb/hand enters the composition.'
 
+export const STILL_TASK_OBJECT_INSERT_LINE =
+  'Tight macro framing of the named instrument or surface; no people enter the composition.'
+
 export const STILL_TASK_TOKEN_LINE =
   `Every token listed in ${STILL_SECTION_REFERENCES} appears in this frame and matches its reference image.`
 
+export const STILL_TASK_PERSON_PROP_TOKEN_LINE =
+  `Every person and prop token listed in ${STILL_SECTION_REFERENCES} appears in this frame and matches its reference image.`
+
+export const STILL_TASK_LOCATION_BOKEH_LINE =
+  'Location is ambient lighting and color in shallow-focus background bokeh, not a second subject.'
+
+export const STILL_TASK_LOCATION_NEARFIELD_LINE =
+  'Match the location reference for near-field materials and the mounting surface around the subject. Do not pull back to a wide establishing shot of the whole room.'
+
+export const STILL_TASK_PROP_TOKEN_LINE =
+  `Every prop token listed in ${STILL_SECTION_REFERENCES} appears in this frame and matches its reference image.`
+
 export const STILL_TASK_DETAIL_TOKEN_LINE =
-  `Every person and prop token listed in ${STILL_SECTION_REFERENCES} appears in this frame and matches its reference image. Location is ambient lighting and color in shallow-focus background bokeh, not a second subject.`
+  `${STILL_TASK_PERSON_PROP_TOKEN_LINE} ${STILL_TASK_LOCATION_BOKEH_LINE}`
+
+export const STILL_EMPTY_CAST_LINE = 'No people in frame.'
+
+export interface StillTaskLineOptions {
+  allowTypography?: boolean
+  actionFraming?: string | null
+  emptyCast?: boolean
+  /** When omitted, occupancy is unknown and the generic token line is kept. */
+  refs?: StillPromptBoundRef[]
+}
+
+export function stillActionHasEmptyCast(actionFraming?: string | null): boolean {
+  return /\bno people in frame\b/i.test(actionFraming ?? '')
+}
 
 /**
- * Shot-aware TASK body. Insert/ECU replace full-body anatomy with limb framing.
- * Title/credit inserts skip the limb line so typography can be the subject.
+ * Shot-aware TASK body. Insert/ECU with a visible limb keep limb framing.
+ * Empty-cast object inserts do not ask for a hand. Title/credit inserts skip
+ * anatomy so typography can be the subject. Token lines are omitted when the
+ * caller knows there are no bound refs — never mention a missing [REFERENCES].
  */
 export function stillTaskLines(
   shotType?: string | null,
-  options?: { allowTypography?: boolean }
+  options?: StillTaskLineOptions
 ): string[] {
   const lines: string[] = [...STILL_TASK_INSTANT_LINES]
-  if (isInsertOrExtremeCloseUp(shotType) && !options?.allowTypography) {
-    lines.push(STILL_TASK_INSERT_FRAMING_LINE)
-  } else if (!isInsertOrExtremeCloseUp(shotType)) {
-    lines.push(...STILL_TASK_FULL_BODY_LINES)
+  const shot = resolveStillShotClass(shotType, options?.actionFraming)
+  const emptyCast =
+    options?.emptyCast ?? stillActionHasEmptyCast(options?.actionFraming)
+  const refsKnown = options?.refs !== undefined
+  const refs = options?.refs ?? []
+  const hasPersonRefs = refs.some((ref) => ref.kind === 'person')
+  const hasPropRefs = refs.some((ref) => ref.kind === 'prop')
+  const hasLocationRef = refs.some((ref) => ref.kind === 'location')
+
+  if (!options?.allowTypography) {
+    if (shot.isInsertOrEcu && emptyCast) {
+      lines.push(STILL_TASK_OBJECT_INSERT_LINE)
+    } else if (shot.isInsertOrEcu) {
+      lines.push(STILL_TASK_INSERT_FRAMING_LINE)
+    } else {
+      lines.push(...STILL_TASK_FULL_BODY_LINES)
+    }
   }
-  lines.push(
-    isDetailShot(shotType) && !options?.allowTypography
-      ? STILL_TASK_DETAIL_TOKEN_LINE
-      : STILL_TASK_TOKEN_LINE
-  )
+
+  if (!refsKnown) {
+    if (emptyCast && shot.isInsertOrEcu) {
+      lines.push(STILL_TASK_LOCATION_NEARFIELD_LINE)
+    } else {
+      lines.push(
+        shot.isDetail && !options?.allowTypography
+          ? STILL_TASK_DETAIL_TOKEN_LINE
+          : STILL_TASK_TOKEN_LINE
+      )
+    }
+    return lines
+  }
+
+  if (refs.length === 0) return lines
+
+  if (options?.allowTypography) {
+    lines.push(STILL_TASK_TOKEN_LINE)
+    return lines
+  }
+
+  if (emptyCast && shot.isInsertOrEcu) {
+    if (hasPropRefs) lines.push(STILL_TASK_PROP_TOKEN_LINE)
+    if (hasLocationRef) lines.push(STILL_TASK_LOCATION_NEARFIELD_LINE)
+    return lines
+  }
+
+  if (shot.isDetail) {
+    if (hasPersonRefs || hasPropRefs) {
+      lines.push(
+        hasLocationRef ? STILL_TASK_DETAIL_TOKEN_LINE : STILL_TASK_PERSON_PROP_TOKEN_LINE
+      )
+    } else if (hasLocationRef) {
+      lines.push(STILL_TASK_LOCATION_BOKEH_LINE)
+    }
+    return lines
+  }
+
+  lines.push(STILL_TASK_TOKEN_LINE)
   return lines
 }
 
@@ -237,7 +315,12 @@ const STILL_BOILERPLATE_LINES = [
   ...LEGACY_BEAT_FRAME_CANDID_ACTION_CONSTRAINTS,
   ...STILL_TASK_LINES,
   STILL_TASK_INSERT_FRAMING_LINE,
+  STILL_TASK_OBJECT_INSERT_LINE,
   STILL_TASK_DETAIL_TOKEN_LINE,
+  STILL_TASK_PERSON_PROP_TOKEN_LINE,
+  STILL_TASK_LOCATION_BOKEH_LINE,
+  STILL_TASK_LOCATION_NEARFIELD_LINE,
+  STILL_TASK_PROP_TOKEN_LINE,
   ...LEGACY_STILL_TASK_LINES,
 ]
 
@@ -686,10 +769,11 @@ export function formatUnboundRefsInFrameLine(
   actionFraming: string,
   shotType?: string | null
 ): string {
+  const shot = resolveStillShotClass(shotType, actionFraming)
   const unbound = refs.filter((ref) => {
     if (actionFraming.includes(ref.token)) return false
-    // Detail shots consume location as bokeh, not a second subject.
-    if (ref.kind === 'location' && isDetailShot(shotType)) return false
+    // Detail / object-insert shots consume location as environment, not a second subject.
+    if (ref.kind === 'location' && shot.isDetail) return false
     return true
   })
   if (unbound.length === 0) return ''
@@ -752,18 +836,132 @@ export function formatPersonReferenceLegendLine(ref: StillPromptBoundRef): strin
 
 export function formatStillReferencesLegend(
   refs: StillPromptBoundRef[],
-  shotType?: string | null
+  shotType?: string | null,
+  options?: { actionFraming?: string | null; emptyCast?: boolean }
 ): string {
   if (refs.length === 0) return ''
+  const shot = resolveStillShotClass(shotType, options?.actionFraming)
+  const emptyCast =
+    options?.emptyCast ?? stillActionHasEmptyCast(options?.actionFraming)
   const lines = refs.map((ref) => {
     if (ref.kind === 'person') return formatPersonReferenceLegendLine(ref)
     const entry = `${ref.token} = ${ref.name} — ${ref.roleLabel}`
-    if (ref.kind === 'location' && isDetailShot(shotType)) {
+    if (ref.kind === 'location' && emptyCast && shot.isInsertOrEcu) {
+      return `${entry}: match near-field materials and the mounting surface from this reference; do not pull back to a wide establishing shot`
+    }
+    if (ref.kind === 'location' && shot.isDetail) {
       return `${entry}: match ambient lighting tone and color palette in shallow-focus background bokeh`
     }
     return ref.identityTraits ? `${entry}: ${ref.identityTraits}` : entry
   })
   return `${STILL_SECTION_REFERENCES}\n${lines.join('\n')}`
+}
+
+/** Recover bound refs from a stored still so a rewrite does not drop [REFERENCES]. */
+export function parseStillReferencesLegend(text?: string | null): StillPromptBoundRef[] {
+  const trimmed = (text || '').trim()
+  if (!trimmed) return []
+  const body = extractSection(trimmed, /\[REFERENCES\]/i, NEXT_SECTION)
+  if (!body) return []
+
+  const refs: StillPromptBoundRef[] = []
+  for (const raw of body.split('\n')) {
+    const line = raw.trim()
+    if (!line) continue
+
+    const person = line.match(/^(person\s*\[\d+\])\s*\(([^)]+)\)/i)
+    if (person) {
+      refs.push({
+        kind: 'person',
+        token: normalizePromptToken(person[1]),
+        name: person[2].trim(),
+        roleLabel: 'identity',
+      })
+      continue
+    }
+
+    const personEq = line.match(
+      /^(person\s*\[\d+\])\s*=\s*(.+?)\s+—\s+([^:]+)(?::\s*.*)?$/i
+    )
+    if (personEq) {
+      refs.push({
+        kind: 'person',
+        token: normalizePromptToken(personEq[1]),
+        name: personEq[2].trim(),
+        roleLabel: personEq[3].trim() || 'identity',
+      })
+      continue
+    }
+
+    const named = line.match(
+      /^((?:prop|location)\s*\[\d+\])\s*=\s*(.+?)\s+—\s+([^:]+)(?::\s*.*)?$/i
+    )
+    if (!named) continue
+    const token = normalizePromptToken(named[1])
+    const kind: StillPromptRefKind = token.toLowerCase().startsWith('location')
+      ? 'location'
+      : 'prop'
+    refs.push({
+      kind,
+      token,
+      name: named[2].trim(),
+      roleLabel: named[3].trim() || (kind === 'location' ? 'library location' : 'library prop'),
+    })
+  }
+  return refs
+}
+
+function normalizePromptToken(token: string): string {
+  return token.replace(/\s+/g, ' ').replace(/^(person|prop|location)\s*\[/i, (_, kind) => `${kind.toLowerCase()} [`)
+}
+
+export function stillRefsFromNamedLibrary(args: {
+  people?: Array<{ name?: string; token?: string }>
+  props?: Array<{ name?: string; token?: string }>
+  locations?: Array<{ name?: string; token?: string }>
+  castInFrame?: string[] | null
+}): StillPromptBoundRef[] {
+  const refs: StillPromptBoundRef[] = []
+  const castInFrame = args.castInFrame
+  const castProvided = Array.isArray(castInFrame)
+  const cast = (castInFrame ?? []).map((name) => name.trim()).filter(Boolean)
+  const people = args.people ?? []
+  const namedPeople = castProvided
+    ? cast.map((name) => people.find((person) => person.name?.trim() === name) ?? { name })
+    : people.filter((person) => person.name?.trim())
+
+  namedPeople.forEach((person, index) => {
+    const name = person.name?.trim()
+    if (!name) return
+    refs.push({
+      kind: 'person',
+      token: person.token?.trim() || `person [${index + 1}]`,
+      name,
+      roleLabel: 'identity',
+    })
+  })
+
+  const props = (args.props ?? []).filter((item) => item.name?.trim())
+  props.forEach((item, index) => {
+    refs.push({
+      kind: 'prop',
+      token: item.token?.trim() || buildPropPromptToken(index + 1),
+      name: item.name!.trim(),
+      roleLabel: 'library prop',
+    })
+  })
+
+  const locations = (args.locations ?? []).filter((item) => item.name?.trim())
+  locations.forEach((item, index) => {
+    refs.push({
+      kind: 'location',
+      token: item.token?.trim() || buildLocationPromptToken(index + 1),
+      name: item.name!.trim(),
+      roleLabel: 'library location',
+    })
+  })
+
+  return refs
 }
 
 export function stillRefsFromAttachedImages(args: {
@@ -882,6 +1080,56 @@ function styleAlreadyHasPhotoreal(style: string): boolean {
  * already carries everything a previous pass added; the containment check is
  * what keeps re-assembly byte-stable.
  */
+function exclusionTermKey(term: string): string {
+  return term.toLowerCase().replace(/[.\s]+$/g, '').replace(/\s+/g, ' ').trim()
+}
+
+function unionExclusionTerms(terms: string[]): string[] {
+  const kept: string[] = []
+  for (const term of terms) {
+    const trimmed = term.replace(/[.\s]+$/g, '').trim()
+    if (!trimmed) continue
+    const key = exclusionTermKey(trimmed)
+    const existing = kept.findIndex((item) => {
+      const other = exclusionTermKey(item)
+      return other === key || other.includes(key) || key.includes(other)
+    })
+    if (existing === -1) {
+      kept.push(trimmed)
+      continue
+    }
+    if (trimmed.length > kept[existing].length) kept[existing] = trimmed
+  }
+  return kept
+}
+
+function parseExclusionBlock(text: string): { terms: string[]; tails: string[] } {
+  const terms: string[] = []
+  const tails: string[] = []
+  for (const raw of text.split(/\n+/)) {
+    const part = raw.trim()
+    if (!part) continue
+    const isAvoid = /^strictly avoid:/i.test(part)
+    const stripped = part.replace(/^strictly avoid:\s*/i, '')
+    if (isAvoid) {
+      const sentences = stripped.split(/(?<=\.)\s+/)
+      const first = sentences.shift() ?? ''
+      terms.push(...first.split(',').map((item) => item.trim()).filter(Boolean))
+      for (const sentence of sentences) {
+        const tail = sentence.trim()
+        if (tail) tails.push(tail)
+      }
+    } else {
+      tails.push(part)
+    }
+  }
+  return { terms, tails }
+}
+
+/**
+ * Fold caller exclusions into one Strictly Avoid paragraph, unioning terms
+ * instead of appending a second copy of mannequin/cartoon/anatomy.
+ */
 function mergeExclusions(base: string, extra?: string): string {
   const recoveredBase = recoverLeakedActionFromExclusions(base)
   const recoveredExtra = recoverLeakedActionFromExclusions(extra ?? '')
@@ -890,7 +1138,12 @@ function mergeExclusions(base: string, extra?: string): string {
   if (!addition) return primary
   if (!primary) return addition
   if (primary.toLowerCase().includes(addition.toLowerCase())) return primary
-  return `${primary}\n${addition}`
+
+  const parsed = parseExclusionBlock(`${primary}\n${addition}`)
+  const terms = unionExclusionTerms(parsed.terms)
+  const tails = unionExclusionTerms(parsed.tails)
+  const avoid = terms.length > 0 ? `Strictly Avoid: ${terms.join(', ')}.` : ''
+  return [avoid, ...tails].filter(Boolean).join(' ')
 }
 
 export function assembleStructuredStillPrompt(input: {
@@ -903,16 +1156,22 @@ export function assembleStructuredStillPrompt(input: {
   allowTypography?: boolean
 }): string {
   const parsed = parseStillPromptSource(input.actionOrStructured)
-  const tokenizedAction = replaceLibraryNamesWithTokens(parsed.actionFraming, input.refs ?? [])
+  const boundRefs =
+    input.refs && input.refs.length > 0
+      ? input.refs
+      : parseStillReferencesLegend(input.actionOrStructured)
+  const tokenizedAction = replaceLibraryNamesWithTokens(parsed.actionFraming, boundRefs)
   const actionFraming = enrichActionFramingWithCastPerformance({
     actionFraming: tokenizedAction,
     castNames: [],
     shotType: input.shotType,
   })
-  const refs = propsUsedInAction(input.refs ?? [], actionFraming)
+  const refs = propsUsedInAction(boundRefs, actionFraming)
+  const emptyCast = stillActionHasEmptyCast(actionFraming)
+  const shot = resolveStillShotClass(input.shotType, actionFraming)
 
   const stillLines = [STILL_PURPOSE_LINE]
-  if (isWideEstablishingShotType(input.shotType)) {
+  if (isWideEstablishingShotType(shot.shotHint || input.shotType)) {
     stillLines.push(STILL_WIDE_SPATIAL_LINE)
   }
   if (input.includeCandid) {
@@ -940,12 +1199,46 @@ export function assembleStructuredStillPrompt(input: {
     : mergedExclusions
 
   return joinPromptBlocks(
-    formatStillReferencesLegend(refs, input.shotType),
+    formatStillReferencesLegend(refs, input.shotType, { actionFraming, emptyCast }),
     `${STILL_SECTION_TASK}\n${stillTaskLines(input.shotType, {
       allowTypography: input.allowTypography,
+      actionFraming,
+      emptyCast,
+      refs,
     }).join('\n')}`,
     `${STILL_SECTION_STILL}\n${stillLines.join('\n')}`,
     style ? `${STILL_SECTION_STYLE}\n${style}` : '',
     `${STILL_SECTION_EXCLUSIONS}\n${exclusions}`
   )
+}
+
+const STRUCTURED_STILL_HEADER = /\[(?:REFERENCES|TASK|STILL)\]/
+
+/** Structured still body, including a `SCENE PROMPT:` wrapper if present. */
+export function extractStructuredStillBody(prompt: string): string {
+  const scene = prompt.indexOf('SCENE PROMPT:')
+  const search = scene >= 0 ? prompt.slice(scene) : prompt
+  const start = search.search(STRUCTURED_STILL_HEADER)
+  if (start < 0) return ''
+  const body = search.slice(start)
+  const crit = body.search(/\nCRITICAL REQUIREMENTS:/)
+  return (crit >= 0 ? body.slice(0, crit) : body).trim()
+}
+
+export function replaceStructuredStillBody(prompt: string, nextStill: string): string {
+  const replacement = nextStill.trim()
+  const sceneIdx = prompt.indexOf('SCENE PROMPT:')
+  const searchFrom = sceneIdx >= 0 ? sceneIdx : 0
+  const prefix = prompt.slice(0, searchFrom)
+  const rest = prompt.slice(searchFrom)
+  const stillStartRel = rest.search(STRUCTURED_STILL_HEADER)
+  if (stillStartRel < 0) {
+    if (sceneIdx >= 0) return `${prefix}${rest.trim()}\n${replacement}`
+    return replacement
+  }
+  const beforeStill = rest.slice(0, stillStartRel)
+  const fromStill = rest.slice(stillStartRel)
+  const crit = fromStill.search(/\nCRITICAL REQUIREMENTS:/)
+  const tail = crit >= 0 ? fromStill.slice(crit) : ''
+  return `${prefix}${beforeStill}${replacement}${tail}`
 }
