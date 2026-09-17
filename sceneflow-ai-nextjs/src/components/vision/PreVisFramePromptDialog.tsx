@@ -75,6 +75,11 @@ export interface PreVisFramePromptDialogProps {
   lockedArtStyle?: string
   isGenerating?: boolean
   onGenerate: (options: PreVisDirectGenerationOptions) => void
+  /**
+   * Seeds QualityModeSection when the dialog opens (eco for Draft, designer
+   * for Final). The user can still pick Designer/Director for this run.
+   */
+  defaultModelTier?: ModelTier
 }
 
 export function PreVisFramePromptDialog({
@@ -91,11 +96,12 @@ export function PreVisFramePromptDialog({
   lockedArtStyle,
   isGenerating = false,
   onGenerate,
+  defaultModelTier = 'eco',
 }: PreVisFramePromptDialogProps) {
   const t = useTranslations('production.direction.preVis')
   const tp = useTranslations('production.direction.stillPolicy')
   const tc = useTranslations('common.actions')
-  const [modelTier, setModelTier] = useState<ModelTier>('eco')
+  const [modelTier, setModelTier] = useState<ModelTier>(defaultModelTier)
   const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>('low')
   const [userDirection, setUserDirection] = useState('')
   const [visualSetup, setVisualSetup] = useState<PreVisFramePromptContext['visualSetup']>({
@@ -154,7 +160,8 @@ export function PreVisFramePromptDialog({
     setLocationVersionId(initialContext.locationVersionId)
     setObjectRefIds(initialContext.objectRefIds)
     setStillPolicyMode('safety')
-  }, [open, initialContext])
+    setModelTier(defaultModelTier)
+  }, [open, initialContext, defaultModelTier])
 
   const compiledActionFraming = useMemo(() => {
     if (initialContext?.beat) return composeBeatActionFraming(initialContext.beat)

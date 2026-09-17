@@ -12,7 +12,8 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Image as ImageIcon, Library, Loader, Sparkles, Zap } from 'lucide-react'
+import { Image as ImageIcon, Library, Loader, Zap } from 'lucide-react'
+import { StoryboardQualityToggle } from './StoryboardQualityToggle'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
 import {
   enumerateStoryboardFrameSlots,
@@ -72,6 +73,11 @@ interface ExpressSceneConfirmDialogProps {
    * front — it is the difference between a 60-second run and a five-minute one.
    */
   missingReferences?: SceneReferenceRequirement[]
+  /**
+   * Seeds the per-run quality control when the dialog opens. Changing quality
+   * here does not write back to the Frames toolbar default.
+   */
+  defaultQuality?: StoryboardQuality
 }
 
 function slotIsFinal(slot: StoryboardFrameSlot): boolean {
@@ -85,11 +91,12 @@ export function ExpressSceneConfirmDialog({
   isRunning = false,
   onConfirm,
   missingReferences = [],
+  defaultQuality = 'draft',
 }: ExpressSceneConfirmDialogProps) {
   const t = useTranslations('production.expressScene')
   const tCommon = useTranslations('common')
   const [scope, setScope] = useState<ExpressSceneScope>('missing')
-  const [quality, setQuality] = useState<StoryboardQuality>('draft')
+  const [quality, setQuality] = useState<StoryboardQuality>(defaultQuality)
   const [selectedFrameKeys, setSelectedFrameKeys] = useState<string[]>([])
 
   /**
@@ -130,8 +137,8 @@ export function ExpressSceneConfirmDialog({
   useEffect(() => {
     if (!open) return
     setScope('missing')
-    setQuality('draft')
-  }, [open])
+    setQuality(defaultQuality)
+  }, [open, defaultQuality])
 
   useEffect(() => {
     if (!open) return
@@ -212,24 +219,13 @@ export function ExpressSceneConfirmDialog({
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
               {t('quality')}
             </p>
-            <div className="inline-flex rounded-md border border-emerald-600/40 overflow-hidden">
-              {(['draft', 'final'] as StoryboardQuality[]).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  disabled={isRunning}
-                  onClick={() => setQuality(value)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
-                    quality === value
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-transparent text-emerald-200/80 hover:bg-emerald-900/30'
-                  }`}
-                >
-                  {value === 'final' && <Sparkles className="w-3 h-3" />}
-                  {value === 'draft' ? t('qualityDraft') : t('qualityFinal')}
-                </button>
-              ))}
-            </div>
+            <StoryboardQualityToggle
+              value={quality}
+              onChange={setQuality}
+              draftLabel={t('qualityDraft')}
+              finalLabel={t('qualityFinal')}
+              disabled={isRunning}
+            />
             <p className="text-[11px] text-emerald-200/70 mt-2">
               {quality === 'final' ? t('qualityFinalHint') : t('qualityDraftHint')}
             </p>
