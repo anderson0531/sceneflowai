@@ -84,11 +84,12 @@ export function matchCastName(
  */
 export function parseNamedCastEmotions(
   emotion: string | null | undefined,
-  castNames: string[]
+  castNames: string[],
+  tokensByName?: Record<string, string>
 ): { byName: Record<string, string>; shared: string } {
   const trimmed = emotion?.trim() ?? ''
   if (!trimmed) return { byName: {}, shared: '' }
-  if (castNames.length === 0) return { byName: {}, shared: trimmed }
+  if (castNames.length === 0 && !tokensByName) return { byName: {}, shared: trimmed }
 
   const chunks = trimmed
     .split(';')
@@ -99,13 +100,86 @@ export function parseNamedCastEmotions(
   for (const chunk of chunks) {
     const colon = chunk.indexOf(':')
     if (colon <= 0) continue
-    const match = matchCastName(chunk.slice(0, colon), castNames)
+    const match = matchCastNameOrToken(chunk.slice(0, colon), castNames, tokensByName)
     const value = chunk.slice(colon + 1).trim()
     if (!match || !value) continue
     byName[match] = value
     named += 1
   }
   return { byName, shared: named > 0 ? '' : trimmed }
+}
+
+function matchCastNameOrToken(
+  query: string | null | undefined,
+  castNames: string[],
+  tokensByName?: Record<string, string>
+): string | undefined {
+  const nameMatch = matchCastName(query, castNames)
+  if (nameMatch) return nameMatch
+  const q = query?.trim().toLowerCase()
+  if (!q || !tokensByName) return undefined
+  for (const [name, token] of Object.entries(tokensByName)) {
+    if (!token.trim()) continue
+    if (token.trim().toLowerCase() !== q) continue
+    return matchCastName(name, castNames) ?? name
+  }
+  return undefined
+}
+
+/**
+ * Drop a leftover `person [N]:` / `Name:` prefix from a facial-expression value
+ * so Piper does not inherit `person [1]: wide, unblinking eyes`. A prefix that
+ * names a *different* subject is treated as the other person's cue — return
+ * empty so it is not copied as the default.
+ */
+export function stripLeakedExpressionSubjectPrefix(
+  value: string,
+  options?: {
+    currentName?: string
+    currentToken?: string
+    castNames?: string[]
+    tokensByName?: Record<string, string>
+  }
+): string {
+  let next = value.trim()
+  if (!next) return ''
+
+  const person = next.match(/^(person\s*\[\d+\])\s*:\s*/i)
+  if (person) {
+    const prefixToken = person[1].replace(/\s+/g, ' ').toLowerCase()
+    const currentToken = options?.currentToken?.trim().replace(/\s+/g, ' ').toLowerCase()
+    if (currentToken && prefixToken !== currentToken) return ''
+    if (!currentToken) {
+      const mapped = matchCastNameOrToken(
+        person[1],
+        options?.castNames ?? [],
+        options?.tokensByName
+      )
+      if (!mapped) return ''
+      if (
+        options?.currentName &&
+        matchCastName(mapped, [options.currentName]) !== options.currentName
+      ) {
+        return ''
+      }
+    }
+    next = next.slice(person[0].length).trim()
+  }
+
+  const castNames = options?.castNames ?? []
+  const currentName = options?.currentName?.trim()
+  for (const name of castNames) {
+    const aliases = characterNameAliases(name)
+    for (const alias of aliases) {
+      const re = new RegExp(`^${escapeRegExp(alias)}\\s*:\\s*`, 'i')
+      if (!re.test(next)) continue
+      if (currentName && matchCastName(name, [currentName]) !== currentName) return ''
+      next = next.replace(re, '').trim()
+      break
+    }
+  }
+
+  return next
 }
 
 function emotionForCastMember(
@@ -305,8 +379,17 @@ export function enrichActionFramingWithCastPerformance(input: CastPerformanceInp
 
   const absorbed = absorbDirectedEmotionFooter(framing, castNames)
   framing = absorbed.framing
-  const emotionsByName = { ...absorbed.byName, ...(input.emotionsByName ?? {}) }
-  const defaultEmotion = input.defaultEmotion?.trim() || absorbed.shared
+  const parsedDefault = parseNamedCastEmotions(
+    input.defaultEmotion?.trim() || absorbed.shared,
+    [...castNames, ...Object.keys(input.emotionsByName ?? {})],
+    input.tokensByName
+  )
+  const emotionsByName = {
+    ...parsedDefault.byName,
+    ...absorbed.byName,
+    ...(input.emotionsByName ?? {}),
+  }
+  const defaultEmotion = parsedDefault.shared
   const expressionNames = castNames.length > 0 ? castNames : Object.keys(emotionsByName)
 
   if (castNames.length === 0 && expressionNames.length === 0) {
@@ -342,20 +425,39 @@ export function enrichActionFramingWithCastPerformance(input: CastPerformanceInp
   }
 
   for (const name of expressionNames) {
-    const emotion = emotionForCastMember(name, emotionsByName, defaultEmotion)
+    const token = tokenForName(name, input.tokensByName)
+    const rawEmotion = emotionForCastMember(name, emotionsByName, defaultEmotion)
+    const emotion = stripLeakedExpressionSubjectPrefix(rawEmotion, {
+      currentName: name,
+      currentToken: token,
+      castNames: expressionNames,
+      tokensByName: input.tokensByName,
+    })
     if (!emotion) continue
-    const expanded = expandEmotionForStill(emotion)
+    const expanded = stripLeakedExpressionSubjectPrefix(expandEmotionForStill(emotion), {
+      currentName: name,
+      currentToken: token,
+      castNames: expressionNames,
+      tokensByName: input.tokensByName,
+    })
     if (!expanded) continue
     if (expressionNames.length === 1) {
       if (unlabeledFacePresent || /\bFacial expression:/i.test(framing)) continue
       framing = appendFacet(framing, expanded, 'Facial expression')
       continue
     }
-    if (alreadyHasExpressionFor(framing, name, tokenForName(name, input.tokensByName))) continue
+    if (alreadyHasExpressionFor(framing, name, token)) continue
     framing = appendFacet(framing, expanded, `Facial expression (${name})`)
   }
 
-  return framing.replace(/\s+/g, ' ').trim()
+  return stripLeakedExpressionPrefixesInFraming(framing).replace(/\s+/g, ' ').trim()
+}
+
+function stripLeakedExpressionPrefixesInFraming(framing: string): string {
+  return framing.replace(
+    /\b(Facial expression(?:\s*\([^)]+\))?):\s*(?:person\s*\[\d+\]|[A-Z][A-Za-z.'-]+(?:\s+[A-Z][A-Za-z.'-]+){0,3})\s*:\s*/g,
+    '$1: '
+  )
 }
 
 /**

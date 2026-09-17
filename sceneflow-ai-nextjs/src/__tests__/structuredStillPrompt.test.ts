@@ -14,6 +14,8 @@ import {
   STILL_TASK_INSERT_FRAMING_LINE,
   STILL_TASK_OBJECT_INSERT_LINE,
   STILL_TASK_LOCATION_NEARFIELD_LINE,
+  STILL_TASK_LOCATION_ENVIRONMENT_LINE,
+  STILL_TASK_PERSON_PROP_TOKEN_LINE,
   STILL_TASK_PROP_TOKEN_LINE,
   stillTaskLines,
   stillRefsFromAttachedImages,
@@ -146,6 +148,38 @@ Strictly Avoid: Mannequin geometry.`,
     )
   })
 
+  it('keeps a stable location token when send index is later in the pack', () => {
+    const refs = stillRefsFromAttachedImages({
+      selected: [
+        { sendIndex: 1, characterName: 'Piper Hayes', refRole: 'wardrobe-diptych' },
+        { sendIndex: 2, characterName: 'Gideon Croft', refRole: 'wardrobe-diptych' },
+        {
+          sendIndex: 3,
+          propName: 'Thirty-Inch Iron Rail Spanner',
+          promptToken: 'prop [1]',
+        },
+        {
+          sendIndex: 5,
+          locationName: 'FREIGHT TUNNEL VAULT',
+          role: 'location',
+          promptToken: 'location [1]',
+        },
+      ],
+      characterReferences: [
+        { name: 'Piper Hayes', promptToken: 'person [1]', subjectOrdinal: 1 },
+        { name: 'Gideon Croft', promptToken: 'person [2]', subjectOrdinal: 2 },
+      ],
+    })
+
+    expect(refs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ token: 'location [1]', name: 'FREIGHT TUNNEL VAULT' }),
+        expect.objectContaining({ token: 'prop [1]' }),
+      ])
+    )
+    expect(refs.find((ref) => ref.kind === 'location')?.token).not.toBe('location [5]')
+  })
+
   it('locks prop scale in the legend and still parses tokens', () => {
     const refs = stillRefsFromAttachedImages({
       selected: [
@@ -244,6 +278,7 @@ Strictly Avoid: Mannequin geometry.`,
     const legend = formatStillReferencesLegend(refs)
     expect(legend).toContain('person [1] (Gideon Croft), wearing charcoal wool overcoat, scuffed boots — matches Reference image 1')
     expect(legend).toContain('person [2] (Piper Hayes) — matches Reference image 2')
+    expect(legend).not.toMatch(/\(Identity\)|\(Wardrobe\)/)
     expect(legend).not.toMatch(/LEFT|RIGHT|diptych|composite/i)
   })
 
@@ -768,6 +803,33 @@ describe('every [REFERENCES] token reaches the instruction body', () => {
     expect(prompt).not.toMatch(/two arms and two legs/)
     expect(prompt).toContain('shallow-focus background bokeh')
     expect(prompt).not.toContain('Also in frame:')
+  })
+
+  it('does not require the location plate as a second wide subject on a two-shot', () => {
+    const prompt = assembleStructuredStillPrompt({
+      actionOrStructured:
+        'Medium Two-Shot. person [1] interposes the journal between person [2] and the cage.',
+      refs: [
+        { kind: 'person', token: 'person [1]', name: 'Piper Hayes', roleLabel: 'identity' },
+        { kind: 'person', token: 'person [2]', name: 'Gideon Croft', roleLabel: 'identity' },
+        {
+          kind: 'location',
+          token: 'location [1]',
+          name: 'FREIGHT TUNNEL VAULT',
+          roleLabel: 'library location',
+        },
+      ],
+      shotType: 'Two-Shot',
+    })
+
+    expect(prompt).not.toContain('Also in frame: location [1]')
+    expect(prompt).toContain(STILL_TASK_LOCATION_ENVIRONMENT_LINE)
+    expect(prompt).toContain(STILL_TASK_PERSON_PROP_TOKEN_LINE)
+    expect(prompt).toContain(
+      'location [1] = FREIGHT TUNNEL VAULT — library location: match architecture, palette, and lighting as environment; not a second wide subject'
+    )
+    expect(prompt).not.toMatch(/LOCATION location \[1\].*extreme-wide establishing shot/)
+    expect(prompt).not.toMatch(/Also in frame: location \[1\]/)
   })
 
   it('says nothing extra when the action already places every ref', () => {

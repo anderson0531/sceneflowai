@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import { buildSceneImageLocationLabel } from '@/lib/imagen/sceneImageReferenceLabels'
 import {
   LOCATION_OBJECT_INSERT_CONSUMPTION_INSTRUCTION,
   LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION,
+  LOCATION_ENVIRONMENT_CONSUMPTION_INSTRUCTION,
   LOCATION_TURNAROUND_GENERATION_INSTRUCTION,
   LOCATION_TURNAROUND_USER_PROMPT_HINT,
   LOCATION_VERSION_CONSUMPTION_SUFFIX,
@@ -61,13 +63,29 @@ describe('locationReferencePrompts', () => {
     expect(line.toLowerCase()).not.toContain('match architectural layout')
   })
 
-  it('keeps architectural layout match on a two-shot', () => {
-    expect(buildLocationConsumptionInstruction({ shotType: 'Two-Shot' })).toBe(
+  it('keeps architectural layout match on a wide establishing shot', () => {
+    expect(buildLocationConsumptionInstruction({ shotType: 'Wide Shot' })).toBe(
       LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION
+    )
+    expect(buildLocationConsumptionInstruction({ shotType: 'Establishing Shot' })).toBe(
+      LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION
+    )
+  })
+
+  it('treats a two-shot or MCU as environment, not a second wide subject', () => {
+    expect(buildLocationConsumptionInstruction({ shotType: 'Two-Shot' })).toBe(
+      LOCATION_ENVIRONMENT_CONSUMPTION_INSTRUCTION
     )
     expect(buildLocationConsumptionInstruction({ shotType: 'Medium Shot' })).toBe(
-      LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION
+      LOCATION_ENVIRONMENT_CONSUMPTION_INSTRUCTION
     )
+    const mcu = buildLocationConsumptionInstruction({
+      shotType: 'Medium Close-Up',
+      promptToken: 'location [1]',
+    })
+    expect(mcu).toContain('location [1]')
+    expect(mcu.toLowerCase()).toContain('surrounding environment')
+    expect(mcu.toLowerCase()).not.toContain('extreme-wide establishing shot of the environment')
   })
 
   it('matches near-field materials on an empty-cast object insert instead of ignoring the plate', () => {
@@ -141,5 +159,22 @@ describe('locationReferencePrompts', () => {
     expect(cleaned.toLowerCase()).toMatch(/windows boarded/)
     expect(cleaned.toLowerCase()).toMatch(/furniture overturned/)
     expect(cleaned.toLowerCase()).not.toMatch(/vellum/)
+  })
+})
+
+describe('buildSceneImageLocationLabel', () => {
+  it('keeps extreme-wide wording on an establishing beat', () => {
+    expect(buildSceneImageLocationLabel('VAULT', 3, 'location [1]', { shotType: 'Wide Shot' })).toContain(
+      'extreme-wide establishing shot'
+    )
+  })
+
+  it('labels a two-shot plate as environment, not a second wide subject', () => {
+    const label = buildSceneImageLocationLabel('VAULT', 5, 'location [1]', {
+      shotType: 'Two-Shot',
+    })
+    expect(label).toContain('location [1]')
+    expect(label).toContain('environment plate')
+    expect(label).not.toContain('extreme-wide establishing shot')
   })
 })

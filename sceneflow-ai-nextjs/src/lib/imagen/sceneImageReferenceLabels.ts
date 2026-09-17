@@ -14,8 +14,13 @@
  * labels have to match that, not these.
  */
 
-import { buildLocationPromptToken, buildPropPromptToken } from '@/lib/imagen/structuredStillPrompt'
+import { isWideEstablishingShotType } from '@/lib/character/characterReferenceAssembly'
 import { propScaleClause } from '@/lib/imagen/propScaleClause'
+import { buildLocationPromptToken, buildPropPromptToken } from '@/lib/imagen/structuredStillPrompt'
+import {
+  isMediumCoverageLocationShot,
+  resolveStillShotClass,
+} from '@/lib/imagen/stillFramingNormalize'
 
 function referencePrefix(sendIndex?: number): string {
   return sendIndex != null ? `Reference image ${sendIndex} — ` : ''
@@ -71,10 +76,32 @@ export function buildSceneImagePropLabel(
 export function buildSceneImageLocationLabel(
   locationName: string,
   sendIndex?: number,
-  promptToken?: string
+  promptToken?: string,
+  options?: {
+    shotType?: string | null
+    actionFraming?: string | null
+    emptyCast?: boolean
+  }
 ): string {
   const token = promptToken || (sendIndex != null ? buildLocationPromptToken(sendIndex) : '')
+  const shot = resolveStillShotClass(options?.shotType, options?.actionFraming)
+  const emptyCast = options?.emptyCast ?? false
+  const hint = shot.shotHint || options?.shotType || ''
+  const asEnvironment =
+    (emptyCast && shot.isInsertOrEcu) ||
+    isMediumCoverageLocationShot(hint) ||
+    (!!hint.trim() && !shot.isDetail && !isWideEstablishingShotType(hint))
+  let dialect = 'extreme-wide establishing shot'
+  if (emptyCast && shot.isInsertOrEcu) {
+    dialect =
+      'environment plate — match near-field materials, not a wide establishing shot'
+  } else if (shot.isDetail && !isMediumCoverageLocationShot(hint)) {
+    dialect = 'environment plate — match lighting and palette in background bokeh'
+  } else if (asEnvironment) {
+    dialect =
+      'environment plate — match architecture, palette, and lighting; not a second wide subject'
+  }
   return `${referencePrefix(sendIndex)}LOCATION ${
     token ? `${token} ` : ''
-  }(${locationName}) — extreme-wide establishing shot`
+  }(${locationName}) — ${dialect}`
 }

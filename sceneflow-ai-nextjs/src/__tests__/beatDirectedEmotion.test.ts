@@ -274,6 +274,7 @@ describe('generate-image beat frame acting and wardrobe regression guard', () =>
     expect(source).toMatch(/resolveEffectiveImageTier/)
     expect(source).toMatch(/getMaxReferenceImagesForTier/)
     expect(source).toMatch(/groupByRole:\s*true/)
+    expect(source).toMatch(/locationLast:\s*isBeatFrame/)
     expect(source).toMatch(/buildSubjectCountGuardrail/)
     expect(source).toContain("modelTier: stillPolicyMode === 'safety' ? 'designer' : effectiveImageTier")
     expect(source).toContain('consolidateBeatCharacterRefsIntoPipBadges')

@@ -6,8 +6,10 @@ import {
   LOCATION_STATE_KEYWORD_PATTERN,
   SET_PIECE_NOUN_PATTERN,
 } from '@/lib/vision/locationStateAnalysis'
+import { isWideEstablishingShotType } from '@/lib/character/characterReferenceAssembly'
 import {
   isDetailShot,
+  isMediumCoverageLocationShot,
   resolveStillShotClass,
 } from '@/lib/imagen/stillFramingNormalize'
 
@@ -36,6 +38,11 @@ export const LOCATION_OBJECT_INSERT_CONSUMPTION_INSTRUCTION =
   'Match near-field materials, metal, paint, and the mounting surface around the subject from this reference. ' +
   'Fill the frame with the named instrument. Do not pull back to a wide establishing shot of the whole room.'
 
+export const LOCATION_ENVIRONMENT_CONSUMPTION_INSTRUCTION =
+  'LOCATION REFERENCE: The attached plate is the set, not a second wide establishing subject. ' +
+  'Match architectural layout, color palette, and lighting as the surrounding environment. ' +
+  'Do not copy the plate as an extreme-wide establishing shot or empty room.'
+
 export function isObjectInsertLocationShot(options?: {
   shotType?: string | null
   actionFraming?: string | null
@@ -62,7 +69,25 @@ export function buildLocationConsumptionInstruction(options?: {
       'Fill the frame with the named instrument. Do not pull back to a wide establishing shot of the whole room.'
     )
   }
-  if (!isDetailShot(options?.shotType) && !resolveStillShotClass(options?.shotType, options?.actionFraming).isDetail) {
+  const shot = resolveStillShotClass(options?.shotType, options?.actionFraming)
+  const hint = shot.shotHint || options?.shotType || ''
+  if (isMediumCoverageLocationShot(hint)) {
+    if (!token) return LOCATION_ENVIRONMENT_CONSUMPTION_INSTRUCTION
+    return (
+      'LOCATION REFERENCE: The attached plate is the set, not a second wide establishing subject. ' +
+      `Match architectural layout, color palette, and lighting of ${token} as the surrounding environment. ` +
+      `Do not copy ${token} as an extreme-wide establishing shot or empty room.`
+    )
+  }
+  if (!isDetailShot(options?.shotType) && !shot.isDetail) {
+    if (hint.trim() && !isWideEstablishingShotType(hint)) {
+      if (!token) return LOCATION_ENVIRONMENT_CONSUMPTION_INSTRUCTION
+      return (
+        'LOCATION REFERENCE: The attached plate is the set, not a second wide establishing subject. ' +
+        `Match architectural layout, color palette, and lighting of ${token} as the surrounding environment. ` +
+        `Do not copy ${token} as an extreme-wide establishing shot or empty room.`
+      )
+    }
     return LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION
   }
   if (!token) return LOCATION_DETAIL_CONSUMPTION_INSTRUCTION

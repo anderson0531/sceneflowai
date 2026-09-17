@@ -11,7 +11,7 @@ import {
   LEGACY_BEAT_FRAME_CANDID_ACTION_CONSTRAINTS,
   isWideEstablishingShotType,
 } from '@/lib/character/characterReferenceAssembly'
-import { resolveStillShotClass } from '@/lib/imagen/stillFramingNormalize'
+import { resolveStillShotClass, isMediumCoverageLocationShot } from '@/lib/imagen/stillFramingNormalize'
 import { buildIdentityTraitsClause } from '@/lib/imagen/identityTraitsClause'
 import { buildIdentityPromptToken } from '@/lib/imagen/promptOptimizer'
 import {
@@ -103,6 +103,9 @@ export const STILL_TASK_LOCATION_BOKEH_LINE =
 export const STILL_TASK_LOCATION_NEARFIELD_LINE =
   'Match the location reference for near-field materials and the mounting surface around the subject. Do not pull back to a wide establishing shot of the whole room.'
 
+export const STILL_TASK_LOCATION_ENVIRONMENT_LINE =
+  'Location is the surrounding environment — match architecture, palette, and lighting from the plate. Do not copy the plate as an extreme-wide establishing shot or empty room.'
+
 export const STILL_TASK_PROP_TOKEN_LINE =
   `Every prop token listed in ${STILL_SECTION_REFERENCES} appears in this frame and matches its reference image.`
 
@@ -126,6 +129,19 @@ export function stillActionHasEmptyCast(actionFraming?: string | null): boolean 
   return /\bno people in frame\b/i.test(actionFraming ?? '')
 }
 
+/** Two-shot / MCU / medium / detail: the plate is environment, not a wide subject. */
+export function consumesLocationAsEnvironment(
+  shotType?: string | null,
+  actionFraming?: string | null
+): boolean {
+  const shot = resolveStillShotClass(shotType, actionFraming)
+  const hint = shot.shotHint || shotType || ''
+  if (isMediumCoverageLocationShot(hint)) return true
+  if (shot.isDetail || shot.isInsertOrEcu) return true
+  if (!hint.trim()) return false
+  return !isWideEstablishingShotType(hint)
+}
+
 /**
  * Shot-aware TASK body. Insert/ECU with a visible limb keep limb framing.
  * Empty-cast object inserts do not ask for a hand. Title/credit inserts skip
@@ -145,6 +161,8 @@ export function stillTaskLines(
   const hasPersonRefs = refs.some((ref) => ref.kind === 'person')
   const hasPropRefs = refs.some((ref) => ref.kind === 'prop')
   const hasLocationRef = refs.some((ref) => ref.kind === 'location')
+  const asEnvironment = consumesLocationAsEnvironment(shotType, options?.actionFraming)
+  const mediumCoverage = isMediumCoverageLocationShot(shot.shotHint || shotType)
 
   if (!options?.allowTypography) {
     if (shot.isInsertOrEcu && emptyCast) {
@@ -159,12 +177,13 @@ export function stillTaskLines(
   if (!refsKnown) {
     if (emptyCast && shot.isInsertOrEcu) {
       lines.push(STILL_TASK_LOCATION_NEARFIELD_LINE)
+    } else if (shot.isDetail && !mediumCoverage && !options?.allowTypography) {
+      lines.push(STILL_TASK_DETAIL_TOKEN_LINE)
+    } else if (asEnvironment) {
+      lines.push(STILL_TASK_PERSON_PROP_TOKEN_LINE)
+      lines.push(STILL_TASK_LOCATION_ENVIRONMENT_LINE)
     } else {
-      lines.push(
-        shot.isDetail && !options?.allowTypography
-          ? STILL_TASK_DETAIL_TOKEN_LINE
-          : STILL_TASK_TOKEN_LINE
-      )
+      lines.push(STILL_TASK_TOKEN_LINE)
     }
     return lines
   }
@@ -183,7 +202,7 @@ export function stillTaskLines(
     return lines
   }
 
-  if (shot.isDetail) {
+  if (shot.isDetail && !mediumCoverage) {
     if (hasPersonRefs || hasPropRefs) {
       lines.push(
         hasLocationRef ? STILL_TASK_DETAIL_TOKEN_LINE : STILL_TASK_PERSON_PROP_TOKEN_LINE
@@ -191,6 +210,15 @@ export function stillTaskLines(
     } else if (hasLocationRef) {
       lines.push(STILL_TASK_LOCATION_BOKEH_LINE)
     }
+    if (hasPropRefs) lines.push(STILL_TASK_PROP_SCALE_LINE)
+    return lines
+  }
+
+  if (hasLocationRef && asEnvironment) {
+    if (hasPersonRefs || hasPropRefs) {
+      lines.push(STILL_TASK_PERSON_PROP_TOKEN_LINE)
+    }
+    lines.push(STILL_TASK_LOCATION_ENVIRONMENT_LINE)
     if (hasPropRefs) lines.push(STILL_TASK_PROP_SCALE_LINE)
     return lines
   }
@@ -346,12 +374,14 @@ const STILL_BOILERPLATE_LINES = [
   BEAT_FRAME_CANDID_ACTION_CONSTRAINT,
   ...LEGACY_BEAT_FRAME_CANDID_ACTION_CONSTRAINTS,
   ...STILL_TASK_LINES,
+  STILL_TASK_TOKEN_LINE,
   STILL_TASK_INSERT_FRAMING_LINE,
   STILL_TASK_OBJECT_INSERT_LINE,
   STILL_TASK_DETAIL_TOKEN_LINE,
   STILL_TASK_PERSON_PROP_TOKEN_LINE,
   STILL_TASK_LOCATION_BOKEH_LINE,
   STILL_TASK_LOCATION_NEARFIELD_LINE,
+  STILL_TASK_LOCATION_ENVIRONMENT_LINE,
   STILL_TASK_PROP_TOKEN_LINE,
   STILL_TASK_PROP_SCALE_LINE,
   ...LEGACY_STILL_TASK_LINES,
@@ -802,11 +832,12 @@ export function formatUnboundRefsInFrameLine(
   actionFraming: string,
   shotType?: string | null
 ): string {
-  const shot = resolveStillShotClass(shotType, actionFraming)
   const unbound = refs.filter((ref) => {
     if (actionFraming.includes(ref.token)) return false
-    // Detail / object-insert shots consume location as environment, not a second subject.
-    if (ref.kind === 'location' && shot.isDetail) return false
+    // Non-wide beats consume location as environment, not a second subject.
+    if (ref.kind === 'location' && consumesLocationAsEnvironment(shotType, actionFraming)) {
+      return false
+    }
     return true
   })
   if (unbound.length === 0) return ''
@@ -885,8 +916,15 @@ export function formatStillReferencesLegend(
     if (ref.kind === 'location' && emptyCast && shot.isInsertOrEcu) {
       return `${entry}: match near-field materials and the mounting surface from this reference; do not pull back to a wide establishing shot`
     }
-    if (ref.kind === 'location' && shot.isDetail) {
+    if (
+      ref.kind === 'location' &&
+      shot.isDetail &&
+      !isMediumCoverageLocationShot(shot.shotHint || shotType)
+    ) {
       return `${entry}: match ambient lighting tone and color palette in shallow-focus background bokeh`
+    }
+    if (ref.kind === 'location' && consumesLocationAsEnvironment(shotType, options?.actionFraming)) {
+      return `${entry}: match architecture, palette, and lighting as environment; not a second wide subject`
     }
     return ref.identityTraits ? `${entry}: ${ref.identityTraits}` : entry
   })

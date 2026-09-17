@@ -152,3 +152,22 @@ export function isGenuineLikenessFailure(
 ): boolean {
   return isHardIdentityMismatch(validation)
 }
+
+export type FeaturedLikenessValidation = Parameters<typeof isGenuineLikenessFailure>[0]
+
+/**
+ * Express talent beats must not charge for an unscored frame.
+ *
+ * A thrown / timed-out primary vision call leaves `validation` null, which is
+ * not a hard identity mismatch — so the previous gate treated TIMEOUT as a
+ * pass. Extra-subject timeouts stay warnings at the call site.
+ */
+export function shouldFailExpressBeatLikeness(args: {
+  eligible: boolean
+  validation: FeaturedLikenessValidation
+  primaryValidationError?: boolean
+}): boolean {
+  if (!args.eligible) return false
+  if (args.primaryValidationError) return true
+  return isGenuineLikenessFailure(args.validation)
+}

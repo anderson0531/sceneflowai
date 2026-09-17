@@ -452,16 +452,16 @@ describe('the route composes a beat frame from its direction', () => {
     expect(composed).toBeGreaterThan(stamp)
     expect(drop).toBeGreaterThan(composed)
     expect(routeSrc).toContain('promptToken: typeof obj.promptToken === \'string\' ? obj.promptToken : undefined')
+    expect(routeSrc).toContain(
+      'matchedLocationReference.promptToken || buildLocationPromptToken(1)'
+    )
   })
 
-  it('attaches the identity headshot beside a PiP card on Final only', () => {
-    expect(routeSrc).toContain(
-      'hasWardrobeDiptych && useFlashDraftTier ? undefined : refPair.identityUrl'
-    )
-    expect(routeSrc).toContain('const attachIdentityHeadshot =')
-    expect(routeSrc).toContain(
-      '(!useFlashDraftTier || !(ref.diptychReferenceId && ref.wardrobeDiptychImageUrl))'
-    )
+  it('does not attach a separate identity headshot when a PiP card is present', () => {
+    expect(routeSrc).toContain('const identitySlotUrl = hasWardrobeDiptych ? undefined : refPair.identityUrl')
+    expect(routeSrc).toContain('const identityImageUrl = refPair.identityUrl')
+    expect(routeSrc).not.toContain('const attachIdentityHeadshot =')
+    expect(routeSrc).not.toContain('Identity headshot beside combined character reference')
   })
 })
 
