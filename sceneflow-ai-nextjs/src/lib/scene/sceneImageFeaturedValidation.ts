@@ -30,10 +30,13 @@ function resolveGenerationIdentityReferenceUrl(
   characterObjects: CharacterObjectLike[]
 ): string | undefined {
   const charRef = characterReferences.find((ref) => ref.name === charName)
-  if (charRef?.wardrobeDiptychImageUrl) return charRef.wardrobeDiptychImageUrl
+  // Score the identity headshot, not the PiP composite. A 16:9 badge card
+  // contains a circular face and a full-body, which a two-shot validator
+  // can misread as the generated frame.
   if (charRef?.identityImageUrl) return charRef.identityImageUrl
   const charObj = characterObjects.find((char) => char.name === charName)
-  return charObj?.referenceImage
+  if (charObj?.referenceImage) return charObj.referenceImage
+  return charRef?.wardrobeDiptychImageUrl
 }
 
 export function resolveFeaturedCharactersForValidation(params: {

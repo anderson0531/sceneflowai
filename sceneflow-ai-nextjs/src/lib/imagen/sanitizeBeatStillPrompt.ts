@@ -5,7 +5,8 @@
  * still carry LEFT/RIGHT / diptych / NEVER-derive copy. Those phrases teach
  * the still model to emit a split frame. Strip them from positive text.
  * Picture-in-picture / inset tokens are stripped from [TASK]/[STILL] for the
- * same reason; [EXCLUSIONS] is left intact so PiP reproduction terms can stay.
+ * same reason. [EXCLUSIONS] is left intact — listing those terms as negatives
+ * primes Gemini to ignore the face badge; assembly no longer puts them there.
  *
  * Client-safe: string only, no sharp / Gemini / GCS.
  */

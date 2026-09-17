@@ -91,6 +91,27 @@ describe('resolveFeaturedCharactersForValidation', () => {
     expect(featured[0].name).toBe('Mia')
     expect(featured[0].referenceImageUrl).toBe('https://example.com/mia-identity.jpg')
   })
+
+  it('scores the identity headshot, not a stored PiP composite', () => {
+    const featured = resolveFeaturedCharactersForValidation({
+      characterObjects: [mia],
+      characterReferences: [
+        {
+          name: 'Mia',
+          promptToken: 'person [1]',
+          wardrobeDiptychImageUrl: 'https://example.com/mia-pip.jpg',
+        },
+      ],
+      optimizedPrompt: 'Action/Framing: person [1] waits at the vault door.',
+      fullSceneContext: 'Mia in the vault',
+      usedAIIntelligence: false,
+      aiResult: null,
+    })
+
+    expect(featured).toEqual([
+      { name: 'Mia', referenceImageUrl: 'https://example.com/mia-legacy.jpg' },
+    ])
+  })
 })
 
 describe('isGenuineLikenessFailure', () => {
