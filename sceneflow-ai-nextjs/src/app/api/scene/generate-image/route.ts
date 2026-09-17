@@ -110,6 +110,7 @@ import { sanitizeBeatStillPrompt } from '@/lib/imagen/sanitizeBeatStillPrompt'
 import {
   resolveFeaturedCharactersForValidation,
   isGenuineLikenessFailure,
+  shouldFailExpressBeatLikeness,
 } from '@/lib/scene/sceneImageFeaturedValidation'
 import {
   collectEntityMaskPhrases,
@@ -1679,10 +1680,10 @@ export async function POST(req: NextRequest) {
       })
       const hasWardrobeDiptych = refPair.hasWardrobeDiptych
       const wardrobeDiptychUrl = refPair.wardrobeDiptychUrl
-      // Flash already binds the PiP face badge. Pro treats the 16:9 card like a
-      // scene plate, so Final keeps the identity headshot as its own slot.
-      const identityImageUrl =
-        hasWardrobeDiptych && useFlashDraftTier ? undefined : refPair.identityUrl
+      // PiP is the Vertex slot. Keep the headshot URL on the object so likeness
+      // scores the portrait, not the 16:9 badge card.
+      const identitySlotUrl = hasWardrobeDiptych ? undefined : refPair.identityUrl
+      const identityImageUrl = refPair.identityUrl
       const wardrobeImageUrl = includeWardrobeReferenceImages ? refPair.wardrobeUrl : undefined
       const hasDualReferences = refPair.hasDualReferences
       const hasWardrobeOnlyReference = refPair.hasWardrobeOnlyReference
@@ -1770,7 +1771,7 @@ export async function POST(req: NextRequest) {
         console.log(`[Scene Image] ${char.name} wardrobe: ${wardrobeDescription}`)
       }
 
-      const identityReferenceId = identityImageUrl ? ++gcsRefIndex : undefined
+      const identityReferenceId = identitySlotUrl ? ++gcsRefIndex : undefined
       const diptychReferenceId = wardrobeDiptychUrl ? ++gcsRefIndex : undefined
       const wardrobeReferenceId = wardrobeImageUrl ? ++gcsRefIndex : undefined
       const hasReferenceImage = !!(diptychReferenceId || identityReferenceId || wardrobeReferenceId)
@@ -1945,6 +1946,13 @@ export async function POST(req: NextRequest) {
       ...obj,
       promptToken: obj.promptToken || buildPropPromptToken(index + 1),
     }))
+    if (matchedLocationReference) {
+      matchedLocationReference = {
+        ...matchedLocationReference,
+        promptToken:
+          matchedLocationReference.promptToken || buildLocationPromptToken(1),
+      }
+    }
     const persistedBeatPrompt = beatForPromptCompose
       ? composePersistedBeatStillPrompt({
           lookbook: projectLookbook,
@@ -2415,6 +2423,7 @@ export async function POST(req: NextRequest) {
     
     let imageUrl = ''
     let validation: any = null
+    let primaryLikenessUnscored = false
     let likenessRound = 0
     let shouldLikenessAutoRetry = false
     /** Measured cost of round 0, used to decide whether a retry can finish. */
@@ -2594,30 +2603,20 @@ export async function POST(req: NextRequest) {
     }> = []
 
     for (const ref of characterReferencesForImages) {
-      const attachIdentityHeadshot =
-        !!ref.identityReferenceId &&
-        !!ref.identityImageUrl &&
-        (!useFlashDraftTier || !(ref.diptychReferenceId && ref.wardrobeDiptychImageUrl))
-      if (attachIdentityHeadshot && ref.identityReferenceId && ref.identityImageUrl) {
-        if (ref.diptychReferenceId && ref.wardrobeDiptychImageUrl) {
-          console.log(
-            `[Scene Image] ✓ Identity headshot beside combined character reference for ${ref.name}`
-          )
-        }
-        imageReferences.push({
-          referenceId: ref.identityReferenceId,
-          imageUrl: ref.identityImageUrl,
-          subjectDescription: ref.subjectTextDescription || `${ref.name} identity`,
-          refRole: 'identity',
-          characterName: ref.name,
-        })
-      }
       if (ref.diptychReferenceId && ref.wardrobeDiptychImageUrl) {
         imageReferences.push({
           referenceId: ref.diptychReferenceId,
           imageUrl: ref.wardrobeDiptychImageUrl,
           subjectDescription: ref.subjectTextDescription || `${ref.name} wardrobe diptych`,
           refRole: 'wardrobe-diptych',
+          characterName: ref.name,
+        })
+      } else if (ref.identityReferenceId && ref.identityImageUrl) {
+        imageReferences.push({
+          referenceId: ref.identityReferenceId,
+          imageUrl: ref.identityImageUrl,
+          subjectDescription: ref.subjectTextDescription || `${ref.name} identity`,
+          refRole: 'identity',
           characterName: ref.name,
         })
       }
@@ -2835,6 +2834,22 @@ export async function POST(req: NextRequest) {
             }) for reference images`
           )
 
+          const locationShotOptions = {
+            shotType: effectiveShotType,
+            actionFraming: beatForEmotion
+              ? [
+                  beatForEmotion.beatDirection?.shotType,
+                  beatForEmotion.beatDirection?.frozenMoment,
+                  beatForEmotion.actionDescription,
+                ]
+                  .filter(Boolean)
+                  .join('. ')
+              : undefined,
+            emptyCast: Array.isArray(beatForEmotion?.beatDirection?.castInFrame)
+              ? beatForEmotion.beatDirection.castInFrame.length === 0
+              : undefined,
+          }
+
           const { selected: selectedReferenceImages, dropped: droppedReferenceImages, indexMap } =
             selectReferenceImagesInOrder(
               allPrioritizedRefs,
@@ -2844,8 +2859,10 @@ export async function POST(req: NextRequest) {
                 buildWardrobeLabel: buildSceneImageWardrobeLabel,
                 buildDiptychLabel: buildSceneImageDiptychLabel,
                 buildPropLabel: buildSceneImagePropLabel,
-                buildLocationLabel: buildSceneImageLocationLabel,
+                buildLocationLabel: (name, index, token) =>
+                  buildSceneImageLocationLabel(name, index, token, locationShotOptions),
                 groupByRole: true,
+                locationLast: isBeatFrame,
               }
             )
 
@@ -3074,24 +3091,15 @@ export async function POST(req: NextRequest) {
             const locationLabel = buildSceneImageLocationLabel(
               locationName,
               cappedLocationEntry.sendIndex,
-              locationToken
+              locationToken,
+              locationShotOptions
             )
             geminiPrompt += `${buildLocationReferencePromptLine(locationName, cappedLocationEntry.sendIndex, locationLabel, {
               currentSetState: Boolean(cappedLocationReference.boundVersionId),
-              shotType: effectiveShotType,
+              shotType: locationShotOptions.shotType,
               promptToken: locationToken,
-              actionFraming: beatForEmotion
-                ? [
-                    beatForEmotion.beatDirection?.shotType,
-                    beatForEmotion.beatDirection?.frozenMoment,
-                    beatForEmotion.actionDescription,
-                  ]
-                    .filter(Boolean)
-                    .join('. ')
-                : undefined,
-              emptyCast: Array.isArray(beatForEmotion?.beatDirection?.castInFrame)
-                ? beatForEmotion.beatDirection.castInFrame.length === 0
-                : undefined,
+              actionFraming: locationShotOptions.actionFraming,
+              emptyCast: locationShotOptions.emptyCast,
             })} Use token ${locationToken} in the scene prompt. Environment: "${locationName}". Match lighting to the scene prompt Style section.\n\n`
           }
 
@@ -3537,6 +3545,7 @@ export async function POST(req: NextRequest) {
 
     // Validate character likeness (optional - informational only; skipped during Express batch)
     validation = null
+    primaryLikenessUnscored = false
     // On a retry round the route is already deep into its budget, and an
     // unvalidated retry is discarded in favour of round 0 rather than risking
     // the function being killed mid-call.
@@ -3637,6 +3646,7 @@ export async function POST(req: NextRequest) {
             )
           }
         } catch (error) {
+          primaryLikenessUnscored = true
           console.error('[Scene Image] Validation failed:', error)
         }
       }
@@ -3717,11 +3727,16 @@ export async function POST(req: NextRequest) {
     } while (shouldLikenessAutoRetry)
 
     if (
-      expressBeatLikenessEligible &&
-      isGenuineLikenessFailure(validation)
+      shouldFailExpressBeatLikeness({
+        eligible: expressBeatLikenessEligible,
+        validation,
+        primaryValidationError: primaryLikenessUnscored,
+      })
     ) {
       console.warn(
-        '[Scene Image] Express beat likeness failed — failing uncharged without a second Vertex still'
+        primaryLikenessUnscored
+          ? '[Scene Image] Express beat likeness unscored (timeout/error) — failing uncharged without a second Vertex still'
+          : '[Scene Image] Express beat likeness failed — failing uncharged without a second Vertex still'
       )
       return NextResponse.json(
         {

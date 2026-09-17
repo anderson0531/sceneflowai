@@ -7,6 +7,7 @@ import {
   formatExclusionParagraph,
   parseNamedCastEmotions,
   recoverLeakedActionFromExclusions,
+  stripLeakedExpressionSubjectPrefix,
 } from '@/lib/scene/castPerformanceFraming'
 import { PHYSICS_HALLUCINATION_NEGATIVE_PROMPT } from '@/lib/character/sceneCharacterHeadshot'
 import { BEAT_FRAME_ANTI_POSE_NEGATIVE_PROMPT } from '@/lib/character/characterReferenceAssembly'
@@ -87,6 +88,21 @@ describe('enrichActionFramingWithCastPerformance', () => {
     expect(second.match(/Facial expression \(person \[1\]\)/g)).toHaveLength(1)
     expect(second.match(/Facial expression \(person \[2\]\)/g)).toHaveLength(1)
   })
+
+  it('does not copy another subject\'s labeled expression onto the other face', () => {
+    const framing = enrichActionFramingWithCastPerformance({
+      actionFraming:
+        'Two-Shot. person [1] and person [2] face each other. Facial expression (person [1]): wide, unblinking eyes, jaw set.',
+      castNames: ['Piper Hayes', 'Gideon Croft'],
+      tokensByName: { 'Piper Hayes': 'person [1]', 'Gideon Croft': 'person [2]' },
+      defaultEmotion: 'person [1]: wide, unblinking eyes, jaw set',
+    })
+
+    expect(framing).toMatch(/Facial expression \(person \[1\]\):/)
+    expect(framing).not.toMatch(/Facial expression \(Gideon Croft\):\s*person \[1\]:/)
+    expect(framing).not.toMatch(/Facial expression \(person \[2\]\):\s*person \[1\]:/)
+    expect(framing).not.toMatch(/Facial expression \(Piper Hayes\):\s*person \[1\]:/)
+  })
 })
 
 describe('parseNamedCastEmotions', () => {
@@ -107,6 +123,46 @@ describe('parseNamedCastEmotions', () => {
       byName: {},
       shared: 'terrified, horrified',
     })
+  })
+
+  it('maps person-token prefixes after tokenize', () => {
+    expect(
+      parseNamedCastEmotions(
+        'person [1]: wide, unblinking eyes; person [2]: mouth tight',
+        ['Piper Hayes', 'Gideon Croft'],
+        { 'Piper Hayes': 'person [1]', 'Gideon Croft': 'person [2]' }
+      )
+    ).toEqual({
+      byName: {
+        'Piper Hayes': 'wide, unblinking eyes',
+        'Gideon Croft': 'mouth tight',
+      },
+      shared: '',
+    })
+  })
+})
+
+describe('stripLeakedExpressionSubjectPrefix', () => {
+  it('strips a leftover person-token prefix and refuses a foreign subject cue', () => {
+    expect(
+      stripLeakedExpressionSubjectPrefix('person [1]: wide, unblinking eyes', {
+        currentName: 'Piper Hayes',
+        currentToken: 'person [1]',
+      })
+    ).toBe('wide, unblinking eyes')
+    expect(
+      stripLeakedExpressionSubjectPrefix('person [1]: wide, unblinking eyes', {
+        currentName: 'Gideon Croft',
+        currentToken: 'person [2]',
+        castNames: ['Piper Hayes', 'Gideon Croft'],
+      })
+    ).toBe('')
+    expect(
+      stripLeakedExpressionSubjectPrefix('Gideon Croft: wide, unblinking eyes', {
+        currentName: 'Piper Hayes',
+        castNames: ['Piper Hayes', 'Gideon Croft'],
+      })
+    ).toBe('')
   })
 })
 

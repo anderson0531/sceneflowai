@@ -273,6 +273,13 @@ export function isInsertOrExtremeCloseUp(shotType?: string | null): boolean {
   return INSERT_OR_ECU_PATTERN.test(shotType ?? '')
 }
 
+/** Two-shot / medium / MCU: the location plate is environment, not a wide subject. */
+export function isMediumCoverageLocationShot(shotType?: string | null): boolean {
+  return /\b(?:two[-\s]?shot|medium(?:[-\s](?:close[-\s]?up|cu|shot))?|mcu)\b/i.test(
+    shotType ?? ''
+  )
+}
+
 /**
  * Coverage clause at the start of Action/Framing (`Extreme Close-Up, eye-level`).
  * Ignores verbs like "inserts the key" later in the sentence.

@@ -444,6 +444,51 @@ describe('referenceLimits', () => {
     expect(indexMap.get(4)).toBe(4)
   })
 
+  it('sends location last on beat frames so in-action props sit before the plate', () => {
+    const refs = [
+      ref('identity', 'Piper PiP', undefined, {
+        characterName: 'Piper Hayes',
+        refRole: 'wardrobe-diptych',
+        imageUrl: 'https://example.com/piper-pip.jpg',
+      }),
+      ref('identity', 'Gideon PiP', undefined, {
+        characterName: 'Gideon Croft',
+        refRole: 'wardrobe-diptych',
+        imageUrl: 'https://example.com/gideon-pip.jpg',
+      }),
+      ref('location', 'Vault plate', undefined, {
+        locationName: 'FREIGHT TUNNEL VAULT',
+        promptToken: 'location [1]',
+        imageUrl: 'https://example.com/vault.jpg',
+      }),
+      ref('prop-critical', 'Spanner', 'critical', {
+        propName: 'Thirty-Inch Iron Rail Spanner',
+        promptToken: 'prop [1]',
+        imageUrl: 'https://example.com/spanner.jpg',
+      }),
+      ref('prop-important', 'Journal', 'important', {
+        propName: "Arthur Pendelton's 1893 Journal",
+        promptToken: 'prop [2]',
+        imageUrl: 'https://example.com/journal.jpg',
+      }),
+    ]
+
+    const { selected } = selectReferenceImagesInOrder(refs, 6, {
+      groupByRole: true,
+      locationLast: true,
+    })
+
+    expect(selected.map((r) => r.role)).toEqual([
+      'identity',
+      'identity',
+      'prop-critical',
+      'prop-important',
+      'location',
+    ])
+    expect(selected[4].promptToken).toBe('location [1]')
+    expect(selected[4].sendIndex).toBe(5)
+  })
+
   it('remapReferenceNumbersInPrompt preserves stable subject ordinals in person tokens', () => {
     const indexMap = new Map<number, number | null>([
       [1, 1],

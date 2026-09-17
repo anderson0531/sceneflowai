@@ -189,7 +189,7 @@ describe('consolidateBeatCharacterRefsIntoPipBadges', () => {
     expect(refs[0].isStoredPip).toBe(true)
   })
 
-  it('keeps a stored PiP identity headshot URL for Final attachment', async () => {
+  it('keeps a stored PiP identity headshot URL for likeness scoring', async () => {
     const refs = await consolidateBeatCharacterRefsIntoPipBadges(
       [
         {

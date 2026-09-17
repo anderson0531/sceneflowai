@@ -107,6 +107,8 @@ describe('express beat likeness gate', () => {
     expect(src).toContain('shouldValidateCharacterLikeness')
     expect(src).toContain('CHARACTER_LIKENESS_MISMATCH_MESSAGE')
     expect(src).toContain('failing uncharged without a second Vertex still')
+    expect(src).toContain('shouldFailExpressBeatLikeness')
+    expect(src).toContain('primaryLikenessUnscored')
     expect(src).toContain('!skipLikenessValidation')
     expect(src).toContain('passedLookbook')
   })

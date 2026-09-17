@@ -117,6 +117,12 @@ export interface ReferenceLabelOptions {
     description?: string
   ) => string
   buildLocationLabel?: (name: string, index: number, promptToken?: string) => string
+  /**
+   * Send location after in-action props (characters, props, location last).
+   * Cap priority still ranks location above extra props so the set plate is
+   * not the first thing dropped.
+   */
+  locationLast?: boolean
 }
 
 export type ReferenceIndexMap = Map<number, number | null>
@@ -128,6 +134,24 @@ const ROLE_PRIORITY: Record<ReferencePriorityRole, number> = {
   'prop-critical': 3,
   'prop-important': 4,
   'prop-other': 5,
+}
+
+/** Send-order ranks when a beat frame wants the location plate last. */
+const LOCATION_LAST_SEND_PRIORITY: Record<ReferencePriorityRole, number> = {
+  identity: 0,
+  wardrobe: 1,
+  'prop-critical': 2,
+  'prop-important': 3,
+  'prop-other': 4,
+  location: 5,
+}
+
+function sendOrderPriority(
+  role: ReferencePriorityRole,
+  locationLast?: boolean
+): number {
+  if (locationLast) return LOCATION_LAST_SEND_PRIORITY[role]
+  return ROLE_PRIORITY[role]
 }
 
 function propRole(importance?: string): ReferencePriorityRole {
@@ -210,12 +234,15 @@ export function selectReferenceImagesInOrder(
     maxCount
   )
   const keptUrls = new Set(priorityKept.map((r) => r.imageUrl))
+  const groupByRole = Boolean(labelOptions?.groupByRole)
+  const locationLast = Boolean(labelOptions?.locationLast)
 
   const selected = tagged
     .filter((r) => keptUrls.has(r.imageUrl))
     .sort((a, b) => {
-      if (labelOptions?.groupByRole) {
-        const roleDiff = ROLE_PRIORITY[a.role] - ROLE_PRIORITY[b.role]
+      if (groupByRole || locationLast) {
+        const roleDiff =
+          sendOrderPriority(a.role, locationLast) - sendOrderPriority(b.role, locationLast)
         if (roleDiff !== 0) return roleDiff
       }
       return (a.originalOrder ?? 0) - (b.originalOrder ?? 0)

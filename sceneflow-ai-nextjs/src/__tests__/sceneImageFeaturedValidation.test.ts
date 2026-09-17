@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   resolveFeaturedCharactersForValidation,
   isGenuineLikenessFailure,
+  shouldFailExpressBeatLikeness,
 } from '@/lib/scene/sceneImageFeaturedValidation'
 
 describe('resolveFeaturedCharactersForValidation', () => {
@@ -112,6 +113,28 @@ describe('resolveFeaturedCharactersForValidation', () => {
       { name: 'Mia', referenceImageUrl: 'https://example.com/mia-legacy.jpg' },
     ])
   })
+
+  it('prefers an explicit identity headshot URL even when a PiP card is attached', () => {
+    const featured = resolveFeaturedCharactersForValidation({
+      characterObjects: [mia],
+      characterReferences: [
+        {
+          name: 'Mia',
+          promptToken: 'person [1]',
+          identityImageUrl: 'https://example.com/mia-identity.jpg',
+          wardrobeDiptychImageUrl: 'https://example.com/mia-pip.jpg',
+        },
+      ],
+      optimizedPrompt: 'Action/Framing: person [1] waits at the vault door.',
+      fullSceneContext: 'Mia in the vault',
+      usedAIIntelligence: false,
+      aiResult: null,
+    })
+
+    expect(featured).toEqual([
+      { name: 'Mia', referenceImageUrl: 'https://example.com/mia-identity.jpg' },
+    ])
+  })
 })
 
 describe('isGenuineLikenessFailure', () => {
@@ -138,5 +161,45 @@ describe('isGenuineLikenessFailure', () => {
     expect(isGenuineLikenessFailure({ matches: false, confidence: 30 })).toBe(true)
     expect(isGenuineLikenessFailure({ matches: false, confidence: 70 })).toBe(false)
     expect(isGenuineLikenessFailure({ matches: true, confidence: 50 })).toBe(false)
+  })
+})
+
+describe('shouldFailExpressBeatLikeness', () => {
+  it('fails an Express talent beat when primary likeness times out or throws', () => {
+    expect(
+      shouldFailExpressBeatLikeness({
+        eligible: true,
+        validation: null,
+        primaryValidationError: true,
+      })
+    ).toBe(true)
+  })
+
+  it('fails an Express talent beat on a hard identity mismatch', () => {
+    expect(
+      shouldFailExpressBeatLikeness({
+        eligible: true,
+        validation: { matches: false, confidence: 30, mismatchKind: 'identity' },
+      })
+    ).toBe(true)
+  })
+
+  it('does not treat a null score as a fail unless the primary call errored', () => {
+    expect(
+      shouldFailExpressBeatLikeness({
+        eligible: true,
+        validation: null,
+      })
+    ).toBe(false)
+  })
+
+  it('ignores extra-subject timeouts on ineligible (non-Express) frames', () => {
+    expect(
+      shouldFailExpressBeatLikeness({
+        eligible: false,
+        validation: null,
+        primaryValidationError: true,
+      })
+    ).toBe(false)
   })
 })
