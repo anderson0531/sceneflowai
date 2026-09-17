@@ -2,7 +2,7 @@
  * Vertex image policy ladder — sanitize and retry on Vertex only.
  *
  * Production logs (2026-08-07): designer pro returned IMAGE_SAFETY, word sanitize
- * ran once, then a module-level 429 cooldown forced gemini-2.5-flash-image which
+ * ran once, then a module-level 429 cooldown forced the flash image model which
  * rate-limited and still hit IMAGE_SAFETY. This ladder escalates the prompt on
  * each policy failure; the image client keeps identity-ref jobs on pro.
  */

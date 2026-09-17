@@ -6,6 +6,7 @@ import {
   generateImageWithVertexKlingFallback,
 } from '@/lib/generation/vertexImageWithKlingFallback'
 import { generateVertexImage } from '@/lib/vertexai/vertexImageClient'
+import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 
 vi.mock('@/lib/vertexai/vertexImageClient', async () => {
   const actual = await vi.importActual<typeof import('@/lib/vertexai/vertexImageClient')>(
@@ -105,7 +106,7 @@ describe('generateImageWithVertexKlingFallback designer retry', () => {
     vi.mocked(generateVertexImage)
       .mockRejectedValueOnce(
         new Error(
-          'No image in Vertex Gemini Image response — blocked by safety (model=gemini-2.5-flash-image, finishReason=IMAGE_SAFETY)'
+          `No image in Vertex Gemini Image response — blocked by safety (model=${GEMINI_IMAGE_MODELS.flash}, finishReason=IMAGE_SAFETY)`
         )
       )
       .mockRejectedValueOnce(

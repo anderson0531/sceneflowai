@@ -34,7 +34,7 @@ describe('resolveVertexGeminiImageEndpoint', () => {
 
   it('sends GA flash-image to global so 429s can route to a region with capacity', () => {
     const { endpoint, effectiveLocation, apiVersion } = resolveVertexGeminiImageEndpoint({
-      model: 'gemini-2.5-flash-image',
+      model: GEMINI_IMAGE_MODELS.flash,
       projectId,
       regionalLocation: 'us-central1',
     })
@@ -42,12 +42,12 @@ describe('resolveVertexGeminiImageEndpoint', () => {
     expect(effectiveLocation).toBe('global')
     expect(apiVersion).toBe('v1')
     expect(endpoint).toBe(
-      'https://aiplatform.googleapis.com/v1/projects/sceneflowai-test/locations/global/publishers/google/models/gemini-2.5-flash-image:generateContent'
+      `https://aiplatform.googleapis.com/v1/projects/sceneflowai-test/locations/global/publishers/google/models/${GEMINI_IMAGE_MODELS.flash}:generateContent`
     )
     expect(endpoint).not.toContain('us-central1')
   })
 
-  it('honors an explicit region pin for non-Gemini-3 models', () => {
+  it('honors an explicit region pin for leftover Gemini 2.5 image ids', () => {
     const { endpoint, effectiveLocation } = resolveVertexGeminiImageEndpoint({
       model: 'gemini-2.5-flash-image',
       projectId,
@@ -59,6 +59,18 @@ describe('resolveVertexGeminiImageEndpoint', () => {
     expect(endpoint).toBe(
       'https://us-east4-aiplatform.googleapis.com/v1/projects/sceneflowai-test/locations/us-east4/publishers/google/models/gemini-2.5-flash-image:generateContent'
     )
+  })
+
+  it('keeps Gemini 3 Flash Image global even when a region is pinned', () => {
+    const { effectiveLocation, endpoint } = resolveVertexGeminiImageEndpoint({
+      model: GEMINI_IMAGE_MODELS.flash,
+      projectId,
+      regionalLocation: 'us-east4',
+      regionPinned: true,
+    })
+
+    expect(effectiveLocation).toBe('global')
+    expect(endpoint).not.toContain('us-east4')
   })
 
   it('keeps Gemini 3 global even when a region is pinned', () => {
@@ -75,7 +87,7 @@ describe('resolveVertexGeminiImageEndpoint', () => {
 
   it('resolves global when the pinned value is itself global', () => {
     const { endpoint, effectiveLocation } = resolveVertexGeminiImageEndpoint({
-      model: 'gemini-2.5-flash-image',
+      model: GEMINI_IMAGE_MODELS.flash,
       projectId,
       regionalLocation: 'global',
       regionPinned: true,
@@ -88,13 +100,15 @@ describe('resolveVertexGeminiImageEndpoint', () => {
 })
 
 describe('GEMINI_IMAGE_MODELS', () => {
-  it('pins pro to the GA Nano Banana Pro id from the Gateway snapshot', () => {
+  it('pins Draft flash to GA Nano Banana 2 and Final pro to Nano Banana Pro', () => {
+    expect(GEMINI_IMAGE_MODELS.flash).toBe('gemini-3.1-flash-image')
     expect(GEMINI_IMAGE_MODELS.pro).toBe('gemini-3-pro-image')
     expect(gatewayIds().has(GEMINI_IMAGE_MODELS.pro)).toBe(true)
     expect(gatewayIds().has(GEMINI_IMAGE_MODELS.flash)).toBe(true)
   })
 
-  it('does not use the retired preview pro image id', () => {
+  it('does not use retired preview image ids', () => {
     expect(GEMINI_IMAGE_MODELS.pro).not.toContain('preview')
+    expect(GEMINI_IMAGE_MODELS.flash).not.toContain('preview')
   })
 })
