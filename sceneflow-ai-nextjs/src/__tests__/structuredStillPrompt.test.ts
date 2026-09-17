@@ -194,6 +194,36 @@ Strictly Avoid: Mannequin geometry.`,
     )
   })
 
+  it('keeps the identity send index when a PiP card is also attached', () => {
+    const refs = stillRefsFromAttachedImages({
+      selected: [
+        { sendIndex: 1, characterName: 'Piper Hayes', refRole: 'identity' },
+        { sendIndex: 2, characterName: 'Gideon Croft', refRole: 'identity' },
+        { sendIndex: 3, characterName: 'Piper Hayes', refRole: 'wardrobe-diptych' },
+        { sendIndex: 4, characterName: 'Gideon Croft', refRole: 'wardrobe-diptych' },
+        {
+          sendIndex: 5,
+          propName: 'Thirty-Inch Iron Rail Spanner',
+          promptToken: 'prop [1]',
+        },
+      ],
+      characterReferences: [
+        { name: 'Piper Hayes', promptToken: 'person [1]', subjectOrdinal: 1 },
+        { name: 'Gideon Croft', promptToken: 'person [2]', subjectOrdinal: 2 },
+      ],
+    })
+
+    const legend = formatStillReferencesLegend(refs)
+    expect(legend).toContain(
+      'person [1] (Piper Hayes) — matches Reference image 1 (Identity) and Reference image 3 (Wardrobe)'
+    )
+    expect(legend).toContain(
+      'person [2] (Gideon Croft) — matches Reference image 2 (Identity) and Reference image 4 (Wardrobe)'
+    )
+    expect(legend).toContain('prop [1] = Thirty-Inch Iron Rail Spanner')
+    expect(legend).not.toMatch(/LEFT|RIGHT|diptych|composite/i)
+  })
+
   it('names a combined character slot without panel language', () => {
     const refs = stillRefsFromAttachedImages({
       selected: [
@@ -981,6 +1011,27 @@ describe('promptReferencesLibraryItem', () => {
     })
 
     expect(match).toEqual({ matched: true, basis: 'head-noun', matchedTerm: 'spanner' })
+  })
+
+  it('keeps a tokenized prop after compose replaced the catalog name', () => {
+    const match = resolveLibraryItemPromptMatch(
+      'person [2] rests his weight on the upright prop [1] planted firmly on the floor between them.',
+      {
+        name: 'Thirty-Inch Iron Rail Spanner',
+        promptToken: 'prop [1]',
+      }
+    )
+
+    expect(match).toEqual({ matched: true, basis: 'token', matchedTerm: 'prop [1]' })
+  })
+
+  it('drops a tokenized-away catalog name when the object has no promptToken', () => {
+    expect(
+      resolveLibraryItemPromptMatch(
+        'person [2] rests his weight on the upright prop [1] planted firmly on the floor.',
+        { name: 'Thirty-Inch Iron Rail Spanner' }
+      )
+    ).toEqual({ matched: false, basis: 'none' })
   })
 
   it('still rejects a prop the frame only shares decoration with', () => {

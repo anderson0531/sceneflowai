@@ -441,6 +441,28 @@ describe('the route composes a beat frame from its direction', () => {
     expect(routeSrc.slice(union, union + 200)).toContain('!directedCast')
     expect(routeSrc).toContain('const shouldFillCharacters =\n              !directedCast &&')
   })
+
+  it('stamps stable prop tokens before compose so the unnamed-prop drop can match them', () => {
+    const stamp = routeSrc.indexOf(
+      'promptToken: obj.promptToken || buildPropPromptToken(index + 1)'
+    )
+    const composed = routeSrc.indexOf('const persistedBeatPrompt = beatForPromptCompose')
+    const drop = routeSrc.indexOf('Dropping ${unnamedProps.length} prop reference(s) not named in the frame')
+    expect(stamp).toBeGreaterThan(-1)
+    expect(composed).toBeGreaterThan(stamp)
+    expect(drop).toBeGreaterThan(composed)
+    expect(routeSrc).toContain('promptToken: typeof obj.promptToken === \'string\' ? obj.promptToken : undefined')
+  })
+
+  it('attaches the identity headshot beside a PiP card on Final only', () => {
+    expect(routeSrc).toContain(
+      'hasWardrobeDiptych && useFlashDraftTier ? undefined : refPair.identityUrl'
+    )
+    expect(routeSrc).toContain('const attachIdentityHeadshot =')
+    expect(routeSrc).toContain(
+      '(!useFlashDraftTier || !(ref.diptychReferenceId && ref.wardrobeDiptychImageUrl))'
+    )
+  })
 })
 
 describe('frameType is decided by the beat, not by the button', () => {

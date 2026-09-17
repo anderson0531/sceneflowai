@@ -1039,11 +1039,15 @@ export function stillRefsFromAttachedImages(args: {
       wardrobeSendIndex: undefined,
       isComposite: false,
     }
-    if (entry.refRole === 'wardrobe-diptych') {
+    if (entry.refRole === 'identity') {
       slot.identitySendIndex = entry.sendIndex
-      slot.isComposite = true
-    } else if (entry.refRole === 'identity') {
-      slot.identitySendIndex = entry.sendIndex
+    } else if (entry.refRole === 'wardrobe-diptych') {
+      if (slot.identitySendIndex == null) {
+        slot.identitySendIndex = entry.sendIndex
+        slot.isComposite = true
+      } else {
+        slot.wardrobeSendIndex = entry.sendIndex
+      }
     } else if (entry.refRole === 'wardrobe') {
       slot.wardrobeSendIndex = entry.sendIndex
     }
