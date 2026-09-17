@@ -38,7 +38,7 @@ export const STILL_SECTION_STYLE = '[STYLE]'
 export const STILL_SECTION_EXCLUSIONS = '[EXCLUSIONS]'
 
 export const STILL_PURPOSE_LINE =
-  'Cinematic live-action film still of this beat, photographed on 35mm. Unbroken single-camera frame, unified 16:9 cinematic perspective. Not a video start frame. No camera motion.'
+  'Cinematic live-action film still of this beat, photographed on 35mm. Unbroken single-camera frame, unified 16:9 cinematic perspective, seamless single-layer optical exposure. Not a video start frame. No camera motion.'
 
 export const STILL_WIDE_SPATIAL_LINE =
   'Continuous wide shot — one unified 16:9 cinematic perspective.'
@@ -53,6 +53,7 @@ export const STILL_WIDE_SPATIAL_LINE =
 export const LEGACY_STILL_PURPOSE_LINES = [
   'Frozen animatic film still of this beat. Not a video start frame. No camera motion.',
   'Cinematic live-action film still of this beat, photographed on 35mm. Not a video start frame. No camera motion.',
+  'Cinematic live-action film still of this beat, photographed on 35mm. Unbroken single-camera frame, unified 16:9 cinematic perspective. Not a video start frame. No camera motion.',
 ] as const
 
 export const LEGACY_STILL_TASK_LINES = [

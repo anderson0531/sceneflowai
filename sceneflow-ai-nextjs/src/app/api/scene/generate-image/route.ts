@@ -144,12 +144,7 @@ import {
   EXPRESSION_OVERRIDE_INSTRUCTION,
   resolveCharacterReferencePair,
 } from '@/lib/character/characterReferenceAssembly'
-import { consolidateBeatCharacterRefsIntoPipBadges } from '@/lib/character/composeIdentityWardrobeDiptych'
-import {
-  persistCombinedCharacterRefUrl,
-  uploadCombinedCharacterRef,
-  wardrobeExpectedFingerprint,
-} from '@/lib/character/combinedCharacterRef'
+import { expandLeftoverDiptychSheetsIntoDualSlots } from '@/lib/character/composeIdentityWardrobeDiptych'
 import {
   buildCombinedCharacterConsumptionLine,
   combinedCharacterReferenceInstruction,
@@ -1660,7 +1655,8 @@ export async function POST(req: NextRequest) {
         }
       }
       
-      // Identity + wardrobe references — diptych replaces separate identity when available
+      // Identity + wardrobe as discrete slots. Leftover LEFT|RIGHT sheets are
+      // split later; stored PiP cards are never attached.
       const refPair = resolveCharacterReferencePair({
         character: char,
         scene: sceneData as Record<string, unknown>,
@@ -1669,19 +1665,18 @@ export async function POST(req: NextRequest) {
         includeWardrobeReferenceImages,
         includeWardrobeDiptych: includeWardrobeDiptych === true,
       })
-      const hasWardrobeDiptych = refPair.hasWardrobeDiptych
-      const wardrobeDiptychUrl = refPair.wardrobeDiptychUrl
-      const identityImageUrl = hasWardrobeDiptych ? undefined : refPair.identityUrl
+      const identityImageUrl = refPair.identityUrl
       const wardrobeImageUrl = includeWardrobeReferenceImages ? refPair.wardrobeUrl : undefined
+      const hasWardrobeDiptych = refPair.hasWardrobeDiptych && !wardrobeImageUrl
+      const wardrobeDiptychUrl = hasWardrobeDiptych ? refPair.wardrobeDiptychUrl : undefined
       const hasDualReferences = refPair.hasDualReferences
       const hasWardrobeOnlyReference = refPair.hasWardrobeOnlyReference
       const hasWardrobeReference = !!(wardrobeImageUrl || hasWardrobeDiptych)
       const hasCostumeReference = hasWardrobeReference
-      const isStoredPip = refPair.hasStoredCombinedCharacterRef
 
       if (hasWardrobeDiptych) {
         console.log(
-          `[Scene Image] ✓ Combined character reference for ${char.name}: face + full-body wardrobe`
+          `[Scene Image] ✓ Leftover wardrobe sheet for ${char.name} (will split to dual slots)`
         )
       } else if (hasDualReferences) {
         console.log(
@@ -1759,9 +1754,10 @@ export async function POST(req: NextRequest) {
         console.log(`[Scene Image] ${char.name} wardrobe: ${wardrobeDescription}`)
       }
 
-      const diptychReferenceId = wardrobeDiptychUrl ? ++gcsRefIndex : undefined
       const identityReferenceId = identityImageUrl ? ++gcsRefIndex : undefined
       const wardrobeReferenceId = wardrobeImageUrl ? ++gcsRefIndex : undefined
+      const diptychReferenceId =
+        wardrobeDiptychUrl && !wardrobeImageUrl ? ++gcsRefIndex : undefined
       const hasReferenceImage = !!(diptychReferenceId || identityReferenceId || wardrobeReferenceId)
       const referenceId = diptychReferenceId ?? identityReferenceId ?? wardrobeReferenceId
       
@@ -1828,7 +1824,6 @@ export async function POST(req: NextRequest) {
         hasWardrobeDiptych,
         hasDualReferences,
         hasWardrobeOnlyReference,
-        isStoredPip,
         characterId: charId,
         wardrobeId: refPair.resolvedWardrobe?.id,
         subjectOrdinal,
@@ -1853,44 +1848,9 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    if (isBeatFrame) {
-      characterReferences = await consolidateBeatCharacterRefsIntoPipBadges(
-        characterReferences,
-        {
-          persistCombined: async ({ ref, composite }) => {
-            const characterId = ref.characterId?.trim()
-            const wardrobeId = ref.wardrobeId?.trim()
-            if (!projectId || !characterId || !wardrobeId) return null
-            const url = await uploadCombinedCharacterRef({
-              composite,
-              projectId,
-              characterId,
-              wardrobeId,
-            })
-            if (!url) return null
-            try {
-              const wardrobe = characterObjects.find(
-                (c: { id?: string; name?: string }) =>
-                  (c.id || c.name) === characterId
-              )?.wardrobes?.find((w: { id?: string }) => w.id === wardrobeId)
-              await persistCombinedCharacterRefUrl({
-                projectId,
-                characterId,
-                wardrobeId,
-                combinedCharacterRefUrl: url,
-                expectedFingerprint: wardrobeExpectedFingerprint(wardrobe || {}),
-              })
-            } catch (error) {
-              const reason = error instanceof Error ? error.message : String(error)
-              console.warn(
-                `[Scene Image] Combined character ref uploaded (${url}) but wardrobe persist failed: ${reason}`
-              )
-            }
-            return url
-          },
-        }
-      )
-    }
+    characterReferences = await expandLeftoverDiptychSheetsIntoDualSlots(
+      characterReferences
+    )
     
     // =========================================================================
     // PROMPT GENERATION: AI Intelligence → Rules-based fallback

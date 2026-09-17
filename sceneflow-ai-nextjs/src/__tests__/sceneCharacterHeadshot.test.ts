@@ -92,6 +92,7 @@ describe('buildSimplifiedBeatFramePrompt', () => {
     expect(prompt).toContain('defiant')
     expect(prompt).toContain('Unbroken single-camera frame')
     expect(prompt).toContain('unified 16:9 cinematic perspective')
+    expect(prompt).toContain('seamless single-layer optical exposure')
     expect(prompt).toMatch(/same person/i)
     expect(prompt).not.toMatch(/LEFT panel/i)
     expect(prompt).not.toMatch(/RIGHT panel/i)

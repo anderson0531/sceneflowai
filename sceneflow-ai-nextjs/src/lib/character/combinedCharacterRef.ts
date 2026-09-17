@@ -1,8 +1,8 @@
 /**
  * Persist a sharp-composed PiP character card on the wardrobe.
  *
- * Beat frames attach this one Blob URL. Composing on every still is the
- * Frame Agent hang: two Blob fetches + sharp + a data URL, repeated per beat.
+ * @deprecated Beat frames attach identity + wardrobe as two slots. New PiP
+ * cards are no longer minted or sent. Helpers remain for leftover tests.
  */
 
 import { uploadImageToBlob } from '@/lib/storage/blob'

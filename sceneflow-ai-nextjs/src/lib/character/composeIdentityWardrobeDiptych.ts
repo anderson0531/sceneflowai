@@ -1,13 +1,10 @@
 /**
- * Runtime identity + wardrobe composite for beat-frame generation.
+ * Runtime identity + wardrobe helpers for beat-frame generation.
  *
- * Dual refs (portrait + turnaround) consume two multimodal slots per person and
- * hit the eco Flash cap of 6 as soon as a two-hander also carries a location
- * and a prop. Combining them into one 16:9 card leaves room for both props.
- *
- * The composite is a full-body wardrobe canvas with a circular face badge in
- * the corner — not a LEFT|RIGHT diptych. Side-by-side panels taught the still
- * model to emit split frames.
+ * Dual refs (portrait + full-body) are the beat-frame attachment path.
+ * Stored PiP cards (full-body canvas + circular face badge) leak a framed
+ * inset into stills and are no longer attached. Leftover LEFT|RIGHT sheets
+ * are split into two slots rather than recomposed as a badge.
  *
  * Isolated from client-safe still-prompt modules: this file imports `sharp`
  * and fetches Blob URLs, which must not enter the browser bundle.
@@ -153,6 +150,34 @@ export async function splitHorizontalDiptychBuffer(
     .extract({ left: mid, top: 0, width: width - mid, height })
     .toBuffer()
   return { identity, wardrobe }
+}
+
+async function jpegDataUrl(buffer: Buffer): Promise<string> {
+  const jpeg = await sharp(buffer).jpeg({ quality: 90 }).toBuffer()
+  return `data:image/jpeg;base64,${jpeg.toString('base64')}`
+}
+
+/** Split a leftover LEFT|RIGHT sheet into two JPEG data URLs. */
+export async function splitLeftoverDiptychUrl(args: {
+  diptychUrl: string
+  label?: string
+}): Promise<{ identityDataUrl: string; wardrobeDataUrl: string } | null> {
+  const tag = args.label ? ` for ${args.label}` : ''
+  try {
+    const fetched = await fetchReferenceImageAsBase64(args.diptychUrl, {
+      label: `${args.label || 'character'} leftover wardrobe sheet`,
+    })
+    const source = Buffer.from(fetched.base64, 'base64')
+    const { identity, wardrobe } = await splitHorizontalDiptychBuffer(source)
+    return {
+      identityDataUrl: await jpegDataUrl(identity),
+      wardrobeDataUrl: await jpegDataUrl(wardrobe),
+    }
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error)
+    console.warn(`[Scene Image] Failed to split leftover wardrobe sheet${tag}: ${reason}`)
+    return null
+  }
 }
 
 async function circularFaceBadge(identityBuffer: Buffer, diameter: number): Promise<Buffer> {
@@ -335,9 +360,8 @@ export interface ConsolidatePipDeps {
 }
 
 /**
- * For beat frames, replace identity+wardrobe pairs and leftover two-panel sheets
- * with one PiP character slot. A stored combined Blob URL is left alone.
- * Fetch/compose failure keeps the original refs.
+ * @deprecated Beat frames no longer compose PiP badges. Dual refs stay dual;
+ * leftover two-panel sheets go through `expandLeftoverDiptychSheetsIntoDualSlots`.
  */
 export async function consolidateBeatCharacterRefsIntoPipBadges<
   T extends DualRefForDiptychConsolidation,
@@ -410,6 +434,106 @@ export async function consolidateBeatCharacterRefsIntoPipBadges<
       }
 
       return ref
+    })
+  )
+}
+
+function applyDualSlotsFromLeftoverSheet<T extends DualRefForDiptychConsolidation>(
+  ref: T,
+  identityUrl: string,
+  wardrobeUrl: string
+): T {
+  const identityReferenceId =
+    ref.identityReferenceId ?? ref.diptychReferenceId ?? ref.referenceId
+  const wardrobeReferenceId =
+    ref.wardrobeReferenceId ??
+    ref.diptychReferenceId ??
+    (identityReferenceId != null ? identityReferenceId + 1 : undefined)
+
+  let description = ref.description
+  if (typeof description === 'string') {
+    description = description.replace(DIPTYCH_WARDROBE_TEXT, DUAL_WARDROBE_TEXT)
+  }
+
+  return {
+    ...ref,
+    hasWardrobeDiptych: false,
+    hasDualReferences: true,
+    hasCostumeReference: true,
+    isStoredPip: false,
+    wardrobeDiptychImageUrl: undefined,
+    diptychReferenceId: undefined,
+    identityReferenceId,
+    wardrobeReferenceId,
+    identityImageUrl: identityUrl,
+    wardrobeImageUrl: wardrobeUrl,
+    imageUrl: identityUrl,
+    description,
+  }
+}
+
+function dropLeftoverSheet<T extends DualRefForDiptychConsolidation>(ref: T): T {
+  return {
+    ...ref,
+    hasWardrobeDiptych: false,
+    isStoredPip: false,
+    wardrobeDiptychImageUrl: undefined,
+    diptychReferenceId: undefined,
+    imageUrl: ref.identityImageUrl ?? ref.wardrobeImageUrl ?? ref.imageUrl,
+  }
+}
+
+export interface ExpandLeftoverDiptychDeps {
+  splitDiptych?: typeof splitLeftoverDiptychUrl
+}
+
+/**
+ * Leftover LEFT|RIGHT sheets cannot go out as one image (split-screen leak)
+ * and must not be recomposed as a circular PiP badge (inset leak). Split them
+ * into identity + wardrobe slots. Prefer the original portrait for identity;
+ * use the RIGHT panel for wardrobe. Stored PiP URLs are dropped.
+ */
+export async function expandLeftoverDiptychSheetsIntoDualSlots<
+  T extends DualRefForDiptychConsolidation,
+>(
+  refs: T[],
+  deps: ExpandLeftoverDiptychDeps = {}
+): Promise<T[]> {
+  const splitDiptych = deps.splitDiptych ?? splitLeftoverDiptychUrl
+
+  return Promise.all(
+    refs.map(async (ref) => {
+      if (ref.hasDualReferences && ref.identityImageUrl && ref.wardrobeImageUrl) {
+        if (!ref.hasWardrobeDiptych && !ref.isStoredPip) return ref
+        return dropLeftoverSheet(ref)
+      }
+
+      if (ref.isStoredPip) {
+        console.warn(
+          `[Scene Image] Ignoring stored PiP character card for ${ref.name || 'character'}; using discrete identity/wardrobe slots`
+        )
+        return dropLeftoverSheet(ref)
+      }
+
+      const diptychUrl = ref.wardrobeDiptychImageUrl
+      if (!ref.hasWardrobeDiptych || !diptychUrl) return ref
+
+      const split = await splitDiptych({
+        diptychUrl,
+        label: ref.name,
+      })
+      if (!split) {
+        console.warn(
+          `[Scene Image] Leftover sheet split failed for ${ref.name || 'character'}; keeping identity only`
+        )
+        return dropLeftoverSheet(ref)
+      }
+
+      const identityUrl = ref.identityImageUrl || split.identityDataUrl
+      console.log(
+        `[Scene Image] ✓ Split leftover wardrobe sheet for ${ref.name || 'character'} into identity + wardrobe slots`
+      )
+      return applyDualSlotsFromLeftoverSheet(ref, identityUrl, split.wardrobeDataUrl)
     })
   )
 }

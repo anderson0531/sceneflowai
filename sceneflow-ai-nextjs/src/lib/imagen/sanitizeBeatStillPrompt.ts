@@ -4,6 +4,7 @@
  * Combined character refs used to be 16:9 diptychs, and persisted beat prompts
  * still carry LEFT/RIGHT / diptych / NEVER-derive copy. Those phrases teach
  * the still model to emit a split frame. Strip them from positive text.
+ * Picture-in-picture / inset tokens are stripped for the same reason.
  *
  * Client-safe: string only, no sharp / Gemini / GCS.
  */
@@ -34,6 +35,14 @@ const STRUCTURAL_TOKEN_PATTERNS: Array<{ pattern: RegExp; replacement: string }>
   { pattern: /\bside-by-side(?:\s+panels?)?\b/gi, replacement: '' },
   { pattern: /\breference sheet collage\b/gi, replacement: '' },
   { pattern: /\bmulti-panel(?:\s+layout)?\b/gi, replacement: '' },
+  { pattern: /\bpicture-in-picture\b/gi, replacement: '' },
+  { pattern: /\bphoto-in-photo\b/gi, replacement: '' },
+  { pattern: /\binset frame\b/gi, replacement: '' },
+  { pattern: /\binset window\b/gi, replacement: '' },
+  { pattern: /\bfloating portrait\b/gi, replacement: '' },
+  { pattern: /\bcircular frame\b/gi, replacement: '' },
+  { pattern: /\bsub-frame\b/gi, replacement: '' },
+  { pattern: /\bpip\b/gi, replacement: '' },
 ]
 
 function tidyPrompt(text: string): string {

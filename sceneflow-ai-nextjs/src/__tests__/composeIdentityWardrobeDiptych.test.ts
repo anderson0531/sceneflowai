@@ -14,6 +14,7 @@ import {
   looksLikeHorizontalDiptych,
   splitHorizontalDiptychBuffer,
   stitchIdentityWardrobeBuffers,
+  expandLeftoverDiptychSheetsIntoDualSlots,
 } from '@/lib/character/composeIdentityWardrobeDiptych'
 
 async function solidJpeg(width: number, height: number, color: { r: number; g: number; b: number }) {
@@ -277,6 +278,107 @@ describe('consolidateBeatCharacterRefsIntoPipBadges', () => {
     )
 
     expect(refs[0].wardrobeDiptychImageUrl).toBe('data:image/jpeg;base64,already')
+  })
+})
+
+describe('expandLeftoverDiptychSheetsIntoDualSlots', () => {
+  it('leaves dual identity + wardrobe refs alone', async () => {
+    const original = {
+      name: 'Gideon Croft',
+      hasDualReferences: true,
+      identityImageUrl: 'https://example.com/gideon-face.jpg',
+      wardrobeImageUrl: 'https://example.com/gideon-wardrobe.jpg',
+      identityReferenceId: 1,
+      wardrobeReferenceId: 2,
+    }
+
+    const refs = await expandLeftoverDiptychSheetsIntoDualSlots([original], {
+      splitDiptych: async () => {
+        throw new Error('splitDiptych should not run for dual refs')
+      },
+    })
+
+    expect(refs[0]).toEqual(original)
+  })
+
+  it('splits a leftover two-panel sheet into original identity + RIGHT wardrobe', async () => {
+    const refs = await expandLeftoverDiptychSheetsIntoDualSlots(
+      [
+        {
+          name: 'Julian Ward',
+          hasWardrobeDiptych: true,
+          identityImageUrl: 'https://example.com/julian-face.jpg',
+          wardrobeDiptychImageUrl: 'https://example.com/julian-diptych.jpg',
+          identityReferenceId: 1,
+          diptychReferenceId: 2,
+          description:
+            'Julian Ward, copy outfit from the RIGHT panel of their wardrobe diptych reference only — do not describe clothing in text',
+        },
+      ],
+      {
+        splitDiptych: async () => ({
+          identityDataUrl: 'data:image/jpeg;base64,left',
+          wardrobeDataUrl: 'data:image/jpeg;base64,right',
+        }),
+      }
+    )
+
+    expect(refs[0].hasDualReferences).toBe(true)
+    expect(refs[0].hasWardrobeDiptych).toBe(false)
+    expect(refs[0].identityImageUrl).toBe('https://example.com/julian-face.jpg')
+    expect(refs[0].wardrobeImageUrl).toBe('data:image/jpeg;base64,right')
+    expect(refs[0].wardrobeDiptychImageUrl).toBeUndefined()
+    expect(refs[0].identityReferenceId).toBe(1)
+    expect(refs[0].wardrobeReferenceId).toBe(2)
+    expect(refs[0].description).toContain('wardrobe reference image')
+    expect(refs[0].description).not.toMatch(/RIGHT panel/i)
+  })
+
+  it('drops a stored PiP card instead of attaching it', async () => {
+    const refs = await expandLeftoverDiptychSheetsIntoDualSlots(
+      [
+        {
+          name: 'Gideon Croft',
+          hasWardrobeDiptych: true,
+          isStoredPip: true,
+          identityImageUrl: 'https://example.com/gideon-face.jpg',
+          wardrobeImageUrl: 'https://example.com/gideon-wardrobe.jpg',
+          wardrobeDiptychImageUrl: 'https://example.com/gideon-pip.jpg',
+        },
+      ],
+      {
+        splitDiptych: async () => {
+          throw new Error('must not split a stored PiP card')
+        },
+      }
+    )
+
+    expect(refs[0].hasWardrobeDiptych).toBe(false)
+    expect(refs[0].isStoredPip).toBe(false)
+    expect(refs[0].wardrobeDiptychImageUrl).toBeUndefined()
+    expect(refs[0].identityImageUrl).toBe('https://example.com/gideon-face.jpg')
+    expect(refs[0].wardrobeImageUrl).toBe('https://example.com/gideon-wardrobe.jpg')
+  })
+
+  it('keeps identity only when leftover split fails', async () => {
+    const refs = await expandLeftoverDiptychSheetsIntoDualSlots(
+      [
+        {
+          name: 'Piper Hayes',
+          hasWardrobeDiptych: true,
+          identityImageUrl: 'https://example.com/piper-face.jpg',
+          wardrobeDiptychImageUrl: 'https://example.com/piper-diptych.jpg',
+        },
+      ],
+      {
+        splitDiptych: async () => null,
+      }
+    )
+
+    expect(refs[0].hasWardrobeDiptych).toBe(false)
+    expect(refs[0].wardrobeDiptychImageUrl).toBeUndefined()
+    expect(refs[0].identityImageUrl).toBe('https://example.com/piper-face.jpg')
+    expect(refs[0].wardrobeImageUrl).toBeUndefined()
   })
 })
 

@@ -130,13 +130,7 @@ describe('runReferenceExpressItem cast path', () => {
     await run()
 
     expect(order).toEqual(['image', 'brief-llm', 'brief'])
-    expect(mockRecompose).toHaveBeenCalledWith(
-      expect.objectContaining({
-        projectId: 'project-1',
-        characterId: 'c1',
-        identityUrl: 'https://cdn/mira.png',
-      })
-    )
+    expect(mockRecompose).not.toHaveBeenCalled()
   })
 
   it('compares the brief against the appearance the image write just stored', async () => {
@@ -231,7 +225,7 @@ describe('runReferenceExpressItem cast path', () => {
 })
 
 describe('runReferenceExpressItem wardrobe path', () => {
-  it('persists combinedCharacterRefUrl after the full-body still', async () => {
+  it('persists the full-body still without composing a PiP character card', async () => {
     mockLoadContext.mockResolvedValueOnce({
       characters: [
         {
@@ -280,14 +274,6 @@ describe('runReferenceExpressItem wardrobe path', () => {
         patch: expect.objectContaining({ fullBodyUrl: 'https://cdn/mira-body.png' }),
       })
     )
-    expect(mockComposeCombined).toHaveBeenCalledWith(
-      expect.objectContaining({
-        projectId: 'project-1',
-        characterId: 'c1',
-        wardrobeId: 'w1',
-        identityUrl: 'https://cdn/mira-face.png',
-        wardrobeUrl: 'https://cdn/mira-body.png',
-      })
-    )
+    expect(mockComposeCombined).not.toHaveBeenCalled()
   })
 })
