@@ -4,6 +4,7 @@ import {
   buildWardrobeReferenceLabel,
 } from '@/lib/character/characterReferenceAssembly'
 import { buildLocationReferenceLabel } from '@/lib/vision/locationReferencePrompts'
+import { propScaleClause } from '@/lib/imagen/propScaleClause'
 
 export const MAX_VERTEX_GEMINI_REFERENCE_IMAGES = 8
 export const MAX_REFERENCE_IMAGES_ECO = 3
@@ -94,6 +95,8 @@ export interface PrioritizedReferenceImage {
   originalOrder?: number
   /** Stable composition token (prop [N] / location [N]) independent of send index. */
   promptToken?: string
+  /** Library description; used to lock prop scale on the image label. */
+  propDescription?: string
   /** Person token index the scene prompt uses for this character. */
   subjectOrdinal?: number
 }
@@ -107,7 +110,12 @@ export interface ReferenceLabelOptions {
   buildIdentityLabel?: (name: string, index: number, personTokenIndex?: number) => string
   buildWardrobeLabel?: (name: string, index: number, personTokenIndex?: number) => string
   buildDiptychLabel?: (name: string, index?: number, personTokenIndex?: number) => string
-  buildPropLabel?: (name: string, index: number, promptToken?: string) => string
+  buildPropLabel?: (
+    name: string,
+    index: number,
+    promptToken?: string,
+    description?: string
+  ) => string
   buildLocationLabel?: (name: string, index: number, promptToken?: string) => string
 }
 
@@ -164,8 +172,13 @@ function applySendIndexLabel(
   }
   if (ref.propName) {
     return labelOptions?.buildPropLabel
-      ? labelOptions.buildPropLabel(ref.propName, sendIndex, ref.promptToken)
-      : `Prop reference ${sendIndex}: ${ref.propName}`
+      ? labelOptions.buildPropLabel(
+          ref.propName,
+          sendIndex,
+          ref.promptToken,
+          ref.propDescription
+        )
+      : `Prop reference ${sendIndex}: ${ref.propName}: ${propScaleClause(ref.propDescription, ref.propName)}`
   }
   if (ref.locationName) {
     return labelOptions?.buildLocationLabel
@@ -390,6 +403,7 @@ export function buildPropReferenceEntries(
     name: string
     importance?: string
     promptToken?: string
+    description?: string
   }>,
   startIndex: number
 ): PrioritizedReferenceImage[] {
@@ -406,6 +420,7 @@ export function buildPropReferenceEntries(
       provisionalIndex: refImageIndex,
       propName: obj.name,
       promptToken: obj.promptToken,
+      propDescription: obj.description,
     })
   }
 

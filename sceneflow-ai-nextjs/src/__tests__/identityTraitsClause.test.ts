@@ -158,7 +158,7 @@ describe('identity traits in the [REFERENCES] legend', () => {
     )
   })
 
-  it('leaves prop and location lines untouched', () => {
+  it('leaves prop and location lines without identity traits', () => {
     const legend = formatStillReferencesLegend([
       { kind: 'prop', token: 'prop [2]', name: 'Brass Sextant', roleLabel: 'library prop' },
       { kind: 'location', token: 'location [3]', name: 'Harbor Office', roleLabel: 'library location' },
@@ -166,7 +166,8 @@ describe('identity traits in the [REFERENCES] legend', () => {
 
     expect(legend).toContain('prop [2] = Brass Sextant — library prop')
     expect(legend).toContain('location [3] = Harbor Office — library location')
-    expect(legend).not.toContain(':')
+    expect(legend).not.toMatch(/prop \[2\].*warm medium-brown skin/i)
+    expect(legend).not.toMatch(/location \[3\]:/)
   })
 
   it('omits the clause when a character has no usable description', () => {

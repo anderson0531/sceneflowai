@@ -2713,6 +2713,7 @@ export async function POST(req: NextRequest) {
         imageUrl: obj.imageUrl,
         name: obj.name || 'prop',
         importance: obj.importance,
+        description: typeof obj.description === 'string' ? obj.description : undefined,
       }))
     
     if (objectImageReferences.length > 0) {

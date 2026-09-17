@@ -49,7 +49,7 @@ function buildObjectPrompt(name: string, category: ObjectCategory, description: 
 
   const baseStyle = categoryStyles[category] || categoryStyles.other
 
-  return `${description}. ${baseStyle}. High resolution, sharp focus, professional reference image for film production.`
+  return `${description}. ${baseStyle}. High resolution, sharp focus, professional reference image for film production. Show true real-world scale: handheld items stay handheld (include inches when known); set-pieces stay set-piece size. Do not crop so the object fills the frame as if it were larger.`
 }
 
 /**
@@ -129,7 +129,7 @@ Each extra you return MUST:
 
 For each object, provide:
 - name: Short, specific VISUAL name that does NOT include character names, location names, or possessives (e.g. "1893 Water-Damaged Leather Journal", "Brass Faraday Energy Core", "Rugged Military Laptop"). NEVER use forms like "Marcus's Vintage Pocket Watch" or "Arthur Pendelton's 1893 Journal" — ownership is stored separately, not in the prompt-facing name. If an existing/tagged name already covers the object, copy that name exactly.
-- description: Detailed visual description for image generation (materials, colors, style, era, condition)
+- description: Detailed visual description for image generation (materials, colors, style, era, condition). MUST include real-world scale: handheld vs set-piece, and inches when the script names a size (e.g. "12-inch metal canister, handheld").
 - category: One of: prop, vehicle, set-piece, costume, technology, other
 - importance: One of: critical (plot device that drives the story), important (handled in 2+ beats), background (atmosphere only - AVOID these unless essential)
 - sceneNumbers: Array of scene numbers where it appears

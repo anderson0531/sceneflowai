@@ -98,6 +98,10 @@ import {
   withStaleVersionsAfterBaseChange,
 } from '@/lib/vision/locationVersionResolve'
 import {
+  appendDirectedLocationVersion,
+  stampLocationVersionAppliesFrom,
+} from '@/lib/vision/locationScriptSync'
+import {
   applyStartFrameUrlToProductionSegments,
   resolveEffectiveStartFrameUrl,
   shouldAttachBeatStartFrame,
@@ -10583,6 +10587,33 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  const handleAddDirectedLocationVersion = async (
+    payload: {
+      locationId: string
+      name: string
+      stateNotes: string
+      appliesFrom: { sceneNumber: number; beatIndex: number; beatId?: string }
+    }
+  ) => {
+    const latest = locationReferencesRef.current
+    const loc = latest.find((ref) => ref.id === payload.locationId)
+    if (!loc) {
+      try { const { toast } = require('sonner'); toast.error('Location not found') } catch {}
+      return
+    }
+    const { location: nextLoc, version } = appendDirectedLocationVersion(loc, payload)
+    const updatedLocations = latest.map((ref) => (ref.id === loc.id ? nextLoc : ref))
+    setLocationReferences(updatedLocations)
+    try {
+      await persistLocationReferences(updatedLocations)
+    } catch (error: any) {
+      console.error('[handleAddDirectedLocationVersion] Error:', error)
+      try { const { toast } = require('sonner'); toast.error(error?.message || 'Failed to add directed set version') } catch {}
+      return
+    }
+    await handleGenerateLocationVersion(nextLoc, version)
+  }
+
   const handleUploadLocationVersionImage = async (
     locationId: string,
     versionId: string,
@@ -11403,6 +11434,36 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
 
     try {
+      const selectedVersionId =
+        options.beatReferenceSelection?.locationVersionId ?? options.locationVersionId
+      const selectedLocationId =
+        options.beatReferenceSelection?.locationRefId ?? options.locationRefId
+      if (selectedVersionId && selectedLocationId && slot.beatId) {
+        const latestLocations = locationReferencesRef.current
+        const loc = latestLocations.find((item) => item.id === selectedLocationId)
+        const version = loc?.versions?.find((item) => item.id === selectedVersionId)
+        if (loc && version && !version.appliesFrom) {
+          const beatIndex = resolveRawBeatIndex(scene, { beatId: slot.beatId }) ?? 0
+          const stamped = stampLocationVersionAppliesFrom(loc, selectedVersionId, {
+            sceneNumber,
+            beatIndex,
+            beatId: slot.beatId,
+          })
+          const updatedLocations = latestLocations.map((item) =>
+            item.id === loc.id ? stamped : item
+          )
+          setLocationReferences(updatedLocations)
+          try {
+            await persistLocationReferences(updatedLocations)
+          } catch (stampError) {
+            console.warn(
+              '[Direct Frame] Failed to stamp location version appliesFrom',
+              stampError
+            )
+          }
+        }
+      }
+
       const selectedChars = options.selectedCharacterNames
         .map((name) => characters.find((c) => c.name === name))
         .filter(Boolean)
@@ -16256,6 +16317,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onExpressSceneReferences={handleExpressSceneReferences}
                 isExpressGeneratingReferences={isExpressGeneratingReferences}
                 onOpenReferenceLibrary={openReferenceLibrary}
+                onAddDirectedLocationVersion={handleAddDirectedLocationVersion}
                 showDashboard={showDashboard}
                 onToggleDashboard={() => setShowDashboard(!showDashboard)}
                 isGeneratingKeyframe={isGeneratingKeyframe}

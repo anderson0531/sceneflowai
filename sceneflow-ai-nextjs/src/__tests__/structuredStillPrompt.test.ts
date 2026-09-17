@@ -66,6 +66,8 @@ describe('assembleStructuredStillPrompt', () => {
 
     expect(prompt).toContain(STILL_SECTION_REFERENCES)
     expect(prompt).toContain("prop [3] = Arthur Pendelton's 1893 Journal — library prop")
+    expect(prompt).toContain('do not enlarge to fill the frame')
+    expect(prompt).toContain('Held props keep the physical size described in [REFERENCES]')
     expect(prompt).toContain('person [1] (Vesper Vale) — matches its identity reference')
     expect(prompt).toContain('interposing prop [3] between person [2]')
     expect(prompt).not.toContain("interposing Arthur Pendelton's 1893 Journal")
@@ -141,6 +143,31 @@ Strictly Avoid: Mannequin geometry.`,
         }),
       ])
     )
+  })
+
+  it('locks prop scale in the legend and still parses tokens', () => {
+    const refs = stillRefsFromAttachedImages({
+      selected: [
+        {
+          sendIndex: 2,
+          propName: 'Canister',
+          propDescription: '12-inch stainless sample canister, handheld',
+        },
+      ],
+      characterReferences: [],
+    })
+    const legend = formatStillReferencesLegend(refs)
+    expect(legend).toContain('prop [2] = Canister — library prop')
+    expect(legend).toContain('12-inch')
+    expect(legend).toContain('do not enlarge to fill the frame')
+    expect(parseStillReferencesLegend(legend)).toEqual([
+      expect.objectContaining({
+        kind: 'prop',
+        token: 'prop [2]',
+        name: 'Canister',
+        roleLabel: 'library prop',
+      }),
+    ])
   })
 
   it('binds wardrobe send indices onto the person legend line', () => {
