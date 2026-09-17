@@ -317,8 +317,10 @@ function applyCombinedSlot<T extends DualRefForDiptychConsolidation>(
   composite: IdentityWardrobeDiptych,
   persistedUrl?: string
 ): T {
-  const diptychReferenceId =
-    ref.identityReferenceId ?? ref.wardrobeReferenceId ?? ref.diptychReferenceId ?? ref.referenceId
+  const keepIdentity = Boolean(ref.identityImageUrl)
+  const diptychReferenceId = keepIdentity
+    ? ref.wardrobeReferenceId ?? ref.diptychReferenceId ?? ref.referenceId
+    : ref.identityReferenceId ?? ref.wardrobeReferenceId ?? ref.diptychReferenceId ?? ref.referenceId
 
   let description = ref.description
   if (typeof description === 'string') {
@@ -337,9 +339,9 @@ function applyCombinedSlot<T extends DualRefForDiptychConsolidation>(
     isStoredPip: !!persistedUrl || ref.isStoredPip,
     wardrobeDiptychImageUrl: imageUrl,
     diptychReferenceId,
-    identityReferenceId: undefined,
+    identityReferenceId: keepIdentity ? ref.identityReferenceId : undefined,
     wardrobeReferenceId: undefined,
-    identityImageUrl: undefined,
+    identityImageUrl: keepIdentity ? ref.identityImageUrl : undefined,
     wardrobeImageUrl: undefined,
     imageUrl,
     description,

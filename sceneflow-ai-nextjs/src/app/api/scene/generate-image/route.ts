@@ -91,6 +91,7 @@ import {
   assignStableLibraryTokens,
   bindLibraryNamesToTokens,
   buildLocationPromptToken,
+  buildPropPromptToken,
   dropDuplicateHeadNounMatches,
   formatStillReferencesLegend,
   formatWardrobeLegendClause,
@@ -708,6 +709,13 @@ export async function POST(req: NextRequest) {
     const isDialogueFrame = frameType === 'dialogue'
     const isBeatFrame = frameType === 'beat'
     const isCustomFrame = frameType === 'custom'
+    // Draft/flash vs Final/pro must be known before character slots are built:
+    // Final attaches the identity headshot beside the PiP card; Draft does not.
+    const useFlashDraftTier = usesFlashDraftTier({
+      isBeatFrame,
+      resolvedModelTier,
+      animaticDraft,
+    })
     if (isDialogueFrame && (typeof dialogueIndex !== 'number' || dialogueIndex < 0)) {
       return NextResponse.json(
         { success: false, error: 'dialogueIndex is required when frameType is dialogue' },
@@ -1671,7 +1679,10 @@ export async function POST(req: NextRequest) {
       })
       const hasWardrobeDiptych = refPair.hasWardrobeDiptych
       const wardrobeDiptychUrl = refPair.wardrobeDiptychUrl
-      const identityImageUrl = hasWardrobeDiptych ? undefined : refPair.identityUrl
+      // Flash already binds the PiP face badge. Pro treats the 16:9 card like a
+      // scene plate, so Final keeps the identity headshot as its own slot.
+      const identityImageUrl =
+        hasWardrobeDiptych && useFlashDraftTier ? undefined : refPair.identityUrl
       const wardrobeImageUrl = includeWardrobeReferenceImages ? refPair.wardrobeUrl : undefined
       const hasDualReferences = refPair.hasDualReferences
       const hasWardrobeOnlyReference = refPair.hasWardrobeOnlyReference
@@ -1759,8 +1770,8 @@ export async function POST(req: NextRequest) {
         console.log(`[Scene Image] ${char.name} wardrobe: ${wardrobeDescription}`)
       }
 
-      const diptychReferenceId = wardrobeDiptychUrl ? ++gcsRefIndex : undefined
       const identityReferenceId = identityImageUrl ? ++gcsRefIndex : undefined
+      const diptychReferenceId = wardrobeDiptychUrl ? ++gcsRefIndex : undefined
       const wardrobeReferenceId = wardrobeImageUrl ? ++gcsRefIndex : undefined
       const hasReferenceImage = !!(diptychReferenceId || identityReferenceId || wardrobeReferenceId)
       const referenceId = diptychReferenceId ?? identityReferenceId ?? wardrobeReferenceId
@@ -1927,6 +1938,13 @@ export async function POST(req: NextRequest) {
         : project && (beatForPromptCompose || runsSceneIntelligence)
           ? await ensureProjectLookbook(project, artStyle)
           : undefined
+    // Stamp stable prop tokens before compose and the unnamed-prop drop.
+    // Compose tokenizes "iron spanner" to prop [1]; without this the drop
+    // cannot match catalog names against an already-tokenized action.
+    detectedObjectReferences = detectedObjectReferences.map((obj: any, index: number) => ({
+      ...obj,
+      promptToken: obj.promptToken || buildPropPromptToken(index + 1),
+    }))
     const persistedBeatPrompt = beatForPromptCompose
       ? composePersistedBeatStillPrompt({
           lookbook: projectLookbook,
@@ -2576,22 +2594,30 @@ export async function POST(req: NextRequest) {
     }> = []
 
     for (const ref of characterReferencesForImages) {
+      const attachIdentityHeadshot =
+        !!ref.identityReferenceId &&
+        !!ref.identityImageUrl &&
+        (!useFlashDraftTier || !(ref.diptychReferenceId && ref.wardrobeDiptychImageUrl))
+      if (attachIdentityHeadshot && ref.identityReferenceId && ref.identityImageUrl) {
+        if (ref.diptychReferenceId && ref.wardrobeDiptychImageUrl) {
+          console.log(
+            `[Scene Image] ✓ Identity headshot beside combined character reference for ${ref.name}`
+          )
+        }
+        imageReferences.push({
+          referenceId: ref.identityReferenceId,
+          imageUrl: ref.identityImageUrl,
+          subjectDescription: ref.subjectTextDescription || `${ref.name} identity`,
+          refRole: 'identity',
+          characterName: ref.name,
+        })
+      }
       if (ref.diptychReferenceId && ref.wardrobeDiptychImageUrl) {
         imageReferences.push({
           referenceId: ref.diptychReferenceId,
           imageUrl: ref.wardrobeDiptychImageUrl,
           subjectDescription: ref.subjectTextDescription || `${ref.name} wardrobe diptych`,
           refRole: 'wardrobe-diptych',
-          characterName: ref.name,
-        })
-        continue
-      }
-      if (ref.identityReferenceId && ref.identityImageUrl) {
-        imageReferences.push({
-          referenceId: ref.identityReferenceId,
-          imageUrl: ref.identityImageUrl,
-          subjectDescription: ref.subjectTextDescription || `${ref.name} identity`,
-          refRole: 'identity',
           characterName: ref.name,
         })
       }
@@ -2714,6 +2740,7 @@ export async function POST(req: NextRequest) {
         name: obj.name || 'prop',
         importance: obj.importance,
         description: typeof obj.description === 'string' ? obj.description : undefined,
+        promptToken: typeof obj.promptToken === 'string' ? obj.promptToken : undefined,
       }))
     
     if (objectImageReferences.length > 0) {
@@ -2730,11 +2757,6 @@ export async function POST(req: NextRequest) {
     // caller resolved to decides, so the prompt builder's Draft and a per-beat
     // regen land on the same model Express does instead of being forced to pro.
     // Routing to Vertex is unchanged either way — only the tier differs.
-    const useFlashDraftTier = usesFlashDraftTier({
-      isBeatFrame,
-      resolvedModelTier,
-      animaticDraft,
-    })
     const forceVertexGeminiImagePath = isBeatFrame || skipLikenessValidation
     const forceDesignerImagePath = forceVertexGeminiImagePath && !useFlashDraftTier
     const useVertexGeminiImage =

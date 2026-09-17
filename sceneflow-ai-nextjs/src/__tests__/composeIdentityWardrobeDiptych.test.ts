@@ -155,10 +155,11 @@ describe('consolidateBeatCharacterRefsIntoPipBadges', () => {
     expect(refs).toHaveLength(1)
     expect(refs[0].hasWardrobeDiptych).toBe(true)
     expect(refs[0].hasDualReferences).toBe(false)
-    expect(refs[0].identityImageUrl).toBeUndefined()
+    expect(refs[0].identityImageUrl).toBe('https://example.com/gideon-face.jpg')
+    expect(refs[0].identityReferenceId).toBe(1)
     expect(refs[0].wardrobeImageUrl).toBeUndefined()
     expect(refs[0].wardrobeDiptychImageUrl).toBe('data:image/jpeg;base64,aaa')
-    expect(refs[0].diptychReferenceId).toBe(1)
+    expect(refs[0].diptychReferenceId).toBe(2)
     expect(refs[0].description).not.toMatch(/RIGHT panel/i)
     expect(refs[0].description).toContain('character reference')
   })
@@ -186,6 +187,35 @@ describe('consolidateBeatCharacterRefsIntoPipBadges', () => {
 
     expect(refs[0].wardrobeDiptychImageUrl).toBe('https://example.com/gideon-pip.jpg')
     expect(refs[0].isStoredPip).toBe(true)
+  })
+
+  it('keeps a stored PiP identity headshot URL for Final attachment', async () => {
+    const refs = await consolidateBeatCharacterRefsIntoPipBadges(
+      [
+        {
+          name: 'Piper Hayes',
+          hasWardrobeDiptych: true,
+          isStoredPip: true,
+          identityImageUrl: 'https://example.com/piper-face.jpg',
+          identityReferenceId: 1,
+          diptychReferenceId: 2,
+          wardrobeDiptychImageUrl: 'https://example.com/piper-pip.jpg',
+        },
+      ],
+      {
+        composePair: async () => {
+          throw new Error('composePair should not run for a stored PiP')
+        },
+        composeDiptych: async () => {
+          throw new Error('composeDiptych should not run for a stored PiP')
+        },
+      }
+    )
+
+    expect(refs[0].identityImageUrl).toBe('https://example.com/piper-face.jpg')
+    expect(refs[0].identityReferenceId).toBe(1)
+    expect(refs[0].wardrobeDiptychImageUrl).toBe('https://example.com/piper-pip.jpg')
+    expect(refs[0].diptychReferenceId).toBe(2)
   })
 
   it('attaches a persisted Blob URL instead of a data URL', async () => {
