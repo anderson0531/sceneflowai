@@ -40,4 +40,16 @@ describe('sanitizeBeatStillPrompt', () => {
     expect(clean.toLowerCase()).not.toMatch(/photo-in-photo/)
     expect(clean).toMatch(/Render one seamless cinematic scene/i)
   })
+
+  it('leaves PiP reproduction terms under [EXCLUSIONS]', () => {
+    const dirty =
+      '[STILL]\nRender a picture-in-picture overlay.\n[EXCLUSIONS]\n' +
+      'Strictly Avoid: picture-in-picture, pip, inset frame, circular frame, collage.'
+    const clean = sanitizeBeatStillPrompt(dirty)
+    const stillBody = clean.split('[EXCLUSIONS]')[0] ?? clean
+    expect(stillBody.toLowerCase()).not.toMatch(/picture-in-picture/)
+    expect(clean).toMatch(/\[EXCLUSIONS\][\s\S]*picture-in-picture/)
+    expect(clean).toMatch(/\[EXCLUSIONS\][\s\S]*\bpip\b/)
+    expect(clean).toMatch(/\[EXCLUSIONS\][\s\S]*collage/)
+  })
 })

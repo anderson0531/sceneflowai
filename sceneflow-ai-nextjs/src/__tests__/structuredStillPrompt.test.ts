@@ -9,6 +9,7 @@ import {
   STILL_SECTION_STYLE,
   STILL_SECTION_EXCLUSIONS,
   STILL_PURPOSE_LINE,
+  PIP_REPRODUCTION_EXCLUSION_TERMS,
   STILL_TASK_LINES,
   STILL_TASK_INSERT_FRAMING_LINE,
   STILL_TASK_OBJECT_INSERT_LINE,
@@ -229,8 +230,16 @@ Strictly Avoid: Mannequin geometry.`,
     expect(prompt).toContain('anatomically distinct silhouettes')
     expect(prompt).not.toContain('Frozen animatic')
     expect(prompt).not.toMatch(/Never duplicate, blur, streak or repeat a limb/)
-    expect(prompt.toLowerCase()).not.toMatch(/split-screen|diptych|two-panel|collage/)
-    expect(prompt.toLowerCase()).not.toMatch(/picture-in-picture|inset frame/)
+    const stillBody = prompt.split('[EXCLUSIONS]')[0] ?? prompt
+    expect(stillBody.toLowerCase()).not.toMatch(/split-screen|diptych|two-panel/)
+    expect(stillBody.toLowerCase()).not.toMatch(/picture-in-picture|inset frame/)
+    expect(prompt).toContain('picture-in-picture')
+    expect(prompt).toContain('circular frame')
+    expect(prompt).toContain('split-screen output')
+    expect(prompt).toContain('collage')
+    for (const term of PIP_REPRODUCTION_EXCLUSION_TERMS) {
+      expect(prompt.toLowerCase()).toContain(term)
+    }
     expect(prompt).not.toContain('Continuous wide shot')
   })
 

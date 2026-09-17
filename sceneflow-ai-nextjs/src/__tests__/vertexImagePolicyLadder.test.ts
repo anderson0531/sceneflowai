@@ -95,7 +95,8 @@ describe('nested 429 retry de-amplification', () => {
     expect(src).toContain('failFastOnRateLimit: stillPolicyMode ? false : !!skipLikenessValidation')
     expect(src).toContain('resolveVertexStillPolicyAttempts')
     expect(src).toContain('skipProductionStillFraming: isBeatFrame')
-    expect(src).toContain('expandLeftoverDiptychSheetsIntoDualSlots')
+    expect(src).toContain('isStoredPip')
+    expect(src).toContain('persistCombined')
   })
 })
 

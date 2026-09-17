@@ -105,7 +105,7 @@ describe('characterReferenceAssembly', () => {
     expect(pair.resolvedWardrobe?.id).toBe('w-scene')
   })
 
-  it('ignores stored combinedCharacterRefUrl and keeps dual refs', () => {
+  it('prefers stored combinedCharacterRefUrl over dual refs', () => {
     const pair = resolveCharacterReferencePair({
       character: {
         id: 'char-1',
@@ -122,11 +122,11 @@ describe('characterReferenceAssembly', () => {
       },
       includeWardrobeDiptych: true,
     })
-    expect(pair.wardrobeUrl).toBe('https://example.com/full-body.jpg')
-    expect(pair.hasDualReferences).toBe(true)
-    expect(pair.wardrobeDiptychUrl).toBeUndefined()
-    expect(pair.hasStoredCombinedCharacterRef).toBe(false)
-    expect(pair.hasWardrobeDiptych).toBe(false)
+    expect(pair.wardrobeDiptychUrl).toBe('https://example.com/marcus-pip.jpg')
+    expect(pair.hasStoredCombinedCharacterRef).toBe(true)
+    expect(pair.hasWardrobeDiptych).toBe(true)
+    expect(pair.hasDualReferences).toBe(false)
+    expect(pair.wardrobeUrl).toBeUndefined()
   })
 
   it('prefers fullBodyUrl over diptych when both exist', () => {

@@ -4,7 +4,8 @@
  * Combined character refs used to be 16:9 diptychs, and persisted beat prompts
  * still carry LEFT/RIGHT / diptych / NEVER-derive copy. Those phrases teach
  * the still model to emit a split frame. Strip them from positive text.
- * Picture-in-picture / inset tokens are stripped for the same reason.
+ * Picture-in-picture / inset tokens are stripped from [TASK]/[STILL] for the
+ * same reason; [EXCLUSIONS] is left intact so PiP reproduction terms can stay.
  *
  * Client-safe: string only, no sharp / Gemini / GCS.
  */
@@ -61,12 +62,15 @@ function tidyPrompt(text: string): string {
 
 export function sanitizeBeatStillPrompt(prompt: string): string {
   if (!prompt) return prompt
-  let next = prompt
+  const exclusionsAt = prompt.search(/\[EXCLUSIONS\]/i)
+  const head = exclusionsAt === -1 ? prompt : prompt.slice(0, exclusionsAt)
+  const tail = exclusionsAt === -1 ? '' : prompt.slice(exclusionsAt)
+  let next = head
   for (const pattern of STRUCTURAL_SENTENCE_PATTERNS) {
     next = next.replace(pattern, ' ')
   }
   for (const { pattern, replacement } of STRUCTURAL_TOKEN_PATTERNS) {
     next = next.replace(pattern, replacement)
   }
-  return tidyPrompt(next)
+  return tidyPrompt(`${next}${tail}`)
 }
