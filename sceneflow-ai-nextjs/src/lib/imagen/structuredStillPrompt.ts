@@ -202,8 +202,25 @@ export function stillTaskLines(
 
 export const STILL_TASK_LINES = stillTaskLines()
 
+/** Layout artifacts the still must not copy from a PiP character card. */
+export const PIP_REPRODUCTION_EXCLUSION_TERMS = [
+  'picture-in-picture',
+  'pip',
+  'inset frame',
+  'circular frame',
+  'floating portrait',
+  'inset window',
+  'floating avatar',
+  'camera-in-camera',
+  'badge overlay',
+  'photo-in-photo',
+  'secondary sub-frame',
+  'split-screen output',
+  'collage',
+] as const
+
 export const DEFAULT_STILL_QUALITY_EXCLUSIONS =
-  'Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, faceless figures, extra limbs, deformed anatomy. Maintain 100% photographic realism when art style is photorealistic.'
+  `Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, faceless figures, extra limbs, deformed anatomy, ${PIP_REPRODUCTION_EXCLUSION_TERMS.join(', ')}. Maintain 100% photographic realism when art style is photorealistic.`
 
 export const DEFAULT_STILL_TEXT_EXCLUSIONS =
   'No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).'

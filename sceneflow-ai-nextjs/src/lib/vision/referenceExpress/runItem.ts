@@ -29,6 +29,11 @@ import {
 import { persistReferenceImage } from './persistReferenceImage'
 import type { ReferenceExpressItem, ReferenceExpressItemResult } from './types'
 import { generateAndUploadFullBodyWardrobe } from '@/lib/character/sceneCharacterHeadshot'
+import {
+  composeUploadAndPersistCombinedCharacterRef,
+  recomposeCombinedCharacterRefsForCast,
+  wardrobeExpectedFingerprint,
+} from '@/lib/character/combinedCharacterRef'
 import { CreditService } from '@/services/CreditService'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
 
@@ -125,6 +130,14 @@ export async function runReferenceExpressItem(input: {
     })
 
     if (!saved) return skipped(item, 'missing')
+
+    await recomposeCombinedCharacterRefsForCast({
+      projectId,
+      characterId: item.targetId,
+      identityUrl: generated.imageUrl,
+      characterName: character.name,
+      wardrobes: character.wardrobes,
+    })
 
     if (visionDescription) {
       const castingFields = await castingBriefFields({
@@ -358,6 +371,19 @@ async function runWardrobeItem(input: {
   })
 
   if (!saved) return skipped(item, 'missing')
+
+  const identityUrl = character.referenceImage?.trim()
+  if (identityUrl) {
+    await composeUploadAndPersistCombinedCharacterRef({
+      projectId,
+      characterId: item.targetId,
+      wardrobeId: wardrobe.id,
+      identityUrl,
+      wardrobeUrl: generated.imageUrl,
+      expectedFingerprint: wardrobeExpectedFingerprint(wardrobe),
+      label: character.name,
+    })
+  }
 
   return {
     kind: item.kind,
