@@ -233,14 +233,33 @@ Strictly Avoid: Mannequin geometry.`,
     const stillBody = prompt.split('[EXCLUSIONS]')[0] ?? prompt
     expect(stillBody.toLowerCase()).not.toMatch(/split-screen|diptych|two-panel/)
     expect(stillBody.toLowerCase()).not.toMatch(/picture-in-picture|inset frame/)
-    expect(prompt).toContain('picture-in-picture')
-    expect(prompt).toContain('circular frame')
-    expect(prompt).toContain('split-screen output')
-    expect(prompt).toContain('collage')
+    const exclusions = prompt.split('[EXCLUSIONS]')[1] ?? ''
+    expect(exclusions.toLowerCase()).not.toMatch(/picture-in-picture/)
+    expect(exclusions.toLowerCase()).not.toMatch(/circular frame/)
+    expect(exclusions.toLowerCase()).not.toMatch(/split-screen output/)
+    expect(exclusions.toLowerCase()).not.toMatch(/\bcollage\b/)
     for (const term of PIP_REPRODUCTION_EXCLUSION_TERMS) {
-      expect(prompt.toLowerCase()).toContain(term)
+      if (term === 'pip') {
+        expect(exclusions.toLowerCase()).not.toMatch(/\bpip\b/)
+        continue
+      }
+      expect(exclusions.toLowerCase()).not.toContain(term)
     }
     expect(prompt).not.toContain('Continuous wide shot')
+  })
+
+  it('strips persisted PiP layout primes out of [EXCLUSIONS] on re-assembly', () => {
+    const persisted = assembleStructuredStillPrompt({
+      actionOrStructured:
+        'person [1] stands in the vault.\n[EXCLUSIONS]\n' +
+        'Strictly Avoid: Mannequin geometry, picture-in-picture, circular frame, collage.',
+      refs: [{ kind: 'person', token: 'person [1]', name: 'Gideon Croft', roleLabel: 'identity' }],
+    })
+    const exclusions = persisted.split('[EXCLUSIONS]')[1] ?? ''
+    expect(exclusions.toLowerCase()).not.toMatch(/picture-in-picture/)
+    expect(exclusions.toLowerCase()).not.toMatch(/circular frame/)
+    expect(exclusions.toLowerCase()).not.toMatch(/\bcollage\b/)
+    expect(exclusions).toMatch(/Mannequin geometry/i)
   })
 
   it('adds continuous wide shot only for wide/establishing direction', () => {

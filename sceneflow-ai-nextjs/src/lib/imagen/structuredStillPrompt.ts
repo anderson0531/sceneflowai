@@ -202,7 +202,12 @@ export function stillTaskLines(
 
 export const STILL_TASK_LINES = stillTaskLines()
 
-/** Layout artifacts the still must not copy from a PiP character card. */
+/**
+ * Layout words that prime inset / split-frame output when listed as
+ * exclusions (Gemini has no true negative field). Named for the sanitizer
+ * and for stripping persisted `[EXCLUSIONS]` copy — never folded into the
+ * default still exclusion paragraph.
+ */
 export const PIP_REPRODUCTION_EXCLUSION_TERMS = [
   'picture-in-picture',
   'pip',
@@ -220,7 +225,7 @@ export const PIP_REPRODUCTION_EXCLUSION_TERMS = [
 ] as const
 
 export const DEFAULT_STILL_QUALITY_EXCLUSIONS =
-  `Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, faceless figures, extra limbs, deformed anatomy, ${PIP_REPRODUCTION_EXCLUSION_TERMS.join(', ')}. Maintain 100% photographic realism when art style is photorealistic.`
+  'Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, faceless figures, extra limbs, deformed anatomy. Maintain 100% photographic realism when art style is photorealistic.'
 
 export const DEFAULT_STILL_TEXT_EXCLUSIONS =
   'No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).'
@@ -1117,6 +1122,28 @@ function exclusionTermKey(term: string): string {
   return term.toLowerCase().replace(/[.\s]+$/g, '').replace(/\s+/g, ' ').trim()
 }
 
+function isPipReproductionExclusionTerm(term: string): boolean {
+  const normalized = term.toLowerCase()
+  for (const prime of PIP_REPRODUCTION_EXCLUSION_TERMS) {
+    if (prime === 'pip') {
+      if (/\bpip\b/.test(normalized)) return true
+      continue
+    }
+    if (normalized.includes(prime)) return true
+  }
+  return false
+}
+
+/** Drop layout primes from `[EXCLUSIONS]` so persisted #329 copy cannot re-prime Gemini. */
+function stripPipReproductionFromExclusions(text: string): string {
+  if (!text.trim()) return text
+  const parsed = parseExclusionBlock(text)
+  const terms = unionExclusionTerms(parsed.terms.filter((term) => !isPipReproductionExclusionTerm(term)))
+  const tails = unionExclusionTerms(parsed.tails.filter((term) => !isPipReproductionExclusionTerm(term)))
+  const avoid = terms.length > 0 ? `Strictly Avoid: ${terms.join(', ')}.` : ''
+  return [avoid, ...tails].filter(Boolean).join(' ')
+}
+
 function unionExclusionTerms(terms: string[]): string[] {
   const kept: string[] = []
   for (const term of terms) {
@@ -1168,15 +1195,21 @@ function mergeExclusions(base: string, extra?: string): string {
   const recoveredExtra = recoverLeakedActionFromExclusions(extra ?? '')
   const primary = formatExclusionParagraph(recoveredBase.exclusions)
   const addition = formatExclusionParagraph(recoveredExtra.exclusions)
-  if (!addition) return primary
-  if (!primary) return addition
-  if (primary.toLowerCase().includes(addition.toLowerCase())) return primary
-
-  const parsed = parseExclusionBlock(`${primary}\n${addition}`)
-  const terms = unionExclusionTerms(parsed.terms)
-  const tails = unionExclusionTerms(parsed.tails)
-  const avoid = terms.length > 0 ? `Strictly Avoid: ${terms.join(', ')}.` : ''
-  return [avoid, ...tails].filter(Boolean).join(' ')
+  let merged: string
+  if (!addition) {
+    merged = primary
+  } else if (!primary) {
+    merged = addition
+  } else if (primary.toLowerCase().includes(addition.toLowerCase())) {
+    merged = primary
+  } else {
+    const parsed = parseExclusionBlock(`${primary}\n${addition}`)
+    const terms = unionExclusionTerms(parsed.terms)
+    const tails = unionExclusionTerms(parsed.tails)
+    const avoid = terms.length > 0 ? `Strictly Avoid: ${terms.join(', ')}.` : ''
+    merged = [avoid, ...tails].filter(Boolean).join(' ')
+  }
+  return stripPipReproductionFromExclusions(merged)
 }
 
 export function assembleStructuredStillPrompt(input: {
