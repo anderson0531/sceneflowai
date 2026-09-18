@@ -156,11 +156,9 @@ export function isGenuineLikenessFailure(
 export type FeaturedLikenessValidation = Parameters<typeof isGenuineLikenessFailure>[0]
 
 /**
- * Express talent beats must not charge for an unscored frame.
- *
- * A thrown / timed-out primary vision call leaves `validation` null, which is
- * not a hard identity mismatch — so the previous gate treated TIMEOUT as a
- * pass. Extra-subject timeouts stay warnings at the call site.
+ * Express talent beats used to fail uncharged when the primary vision call
+ * timed out. Frame Agent now honors skipLikenessValidation and keeps the still.
+ * This helper remains for tests / any caller that still wants that gate.
  */
 export function shouldFailExpressBeatLikeness(args: {
   eligible: boolean

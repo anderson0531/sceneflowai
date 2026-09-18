@@ -780,6 +780,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [mounted, setMounted] = useState(false)
   const [project, setProject] = useState<Project | null>(null)
   const [script, setScript] = useState<any>(null)
+  /** Session default for Frame Agent, Regen, and Direct Frame. Not persisted. */
+  const [frameGenerationQuality, setFrameGenerationQuality] = useState<StoryboardQuality>('draft')
+  /** Session default: Standard (Google) or Creative (Kling). Not persisted. */
+  const [frameGenerationMode, setFrameGenerationMode] = useState<StillGenerationMode>('standard')
   // Series/Episode context for subtitle display
   const [seriesInfo, setSeriesInfo] = useState<{
     seriesTitle: string
@@ -3723,7 +3727,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         setGeneratingFramePhase(null)
       }
     },
-    [script?.script?.scenes, sceneProductionState, characters, objectReferences, locationReferences, applySceneProductionUpdate, lockedAspectRatio, syncProductionStartFrameToScript, frameGenerationQuality, frameGenerationMode]
+    [script?.script?.scenes, sceneProductionState, characters, objectReferences, locationReferences, applySceneProductionUpdate, lockedAspectRatio, syncProductionStartFrameToScript, frameGenerationQuality, frameGenerationMode, tStillPolicy]
   )
 
   const handleInitializeSceneProduction = useCallback(
@@ -6266,10 +6270,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Storyboard Express state — driven by SSE events from /api/vision/express
   const [isExpressRunning, setIsExpressRunning] = useState(false)
   const [expressStatus, setExpressStatus] = useState<ExpressSceneStatusMap>({})
-  /** Session default for Frame Agent, Regen, and Direct Frame. Not persisted. */
-  const [frameGenerationQuality, setFrameGenerationQuality] = useState<StoryboardQuality>('draft')
-  /** Session default: Standard (Google) or Creative (Kling). Not persisted. */
-  const [frameGenerationMode, setFrameGenerationMode] = useState<StillGenerationMode>('standard')
   const [expressBeatFrameOverlay, setExpressBeatFrameOverlay] = useState<{
     visible: boolean
     sceneIndex: number
