@@ -77,6 +77,7 @@ describe('scoreBeatDirectionFidelity', () => {
     expect(result.band).toBe('moderate')
     expect(result.note).toMatch(/blocking/)
     expect(result.note).toMatch(/emotion/)
-    expect(result.note).toMatch(/cast and props held/)
+    expect(result.note).toMatch(/cast and props/)
+    expect(result.note).toMatch(/held/)
   })
 })

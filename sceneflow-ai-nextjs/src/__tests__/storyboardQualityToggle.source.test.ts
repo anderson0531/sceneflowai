@@ -118,7 +118,10 @@ describe('Standard/Creative Frames toolbar default', () => {
     expect(viewer).toContain("tStillPolicy('creative')")
     expect(viewer).toContain("tStillPolicy('modeTooltip')")
     const qualityToggle = viewer.indexOf('const qualityToggle =')
-    const qualityBlock = viewer.slice(qualityToggle, viewer.indexOf('if (frameSlots.length === 0'))
+    const qualityBlock = viewer.slice(
+      qualityToggle,
+      viewer.indexOf('if (frameSlots.length === 0 && sceneBeats.length === 0')
+    )
     const draftIdx = qualityBlock.indexOf('<StoryboardQualityToggle')
     const modeIdx = qualityBlock.indexOf('<StoryboardGenerationModeToggle')
     expect(draftIdx).toBeGreaterThan(-1)
