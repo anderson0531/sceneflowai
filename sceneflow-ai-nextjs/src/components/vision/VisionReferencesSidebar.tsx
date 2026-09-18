@@ -811,13 +811,12 @@ function AddReferenceDialog({ open, onClose, onSubmit, onGenerateObject, type, i
     try {
       // Build a default prompt based on the name and description
       const basePrompt = description.trim() || name.trim()
-      const categoryHint = basePrompt.toLowerCase().includes('vehicle') ? 'vehicle' :
-                          basePrompt.toLowerCase().includes('costume') ? 'costume' :
-                          basePrompt.toLowerCase().includes('technology') ? 'technology' :
-                          'prop'
-      
-      const studioStyle = 'Professional product photography, clean studio lighting with soft shadows, centered composition, high resolution, sharp focus, 8K quality, production reference image.'
-      const prompt = `${basePrompt}. ${studioStyle}`
+      const prompt = buildObjectReferencePrompt({
+        id: 'draft',
+        type: 'object',
+        name: name.trim(),
+        description: basePrompt,
+      })
       
       setGeneratedPrompt(prompt)
     } finally {

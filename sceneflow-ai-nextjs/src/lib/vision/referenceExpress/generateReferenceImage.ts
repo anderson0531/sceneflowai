@@ -33,6 +33,10 @@ import {
   ENHANCE_IDENTITY_MODEL_TIER,
   enhanceIdentityImage,
 } from '@/lib/character/enhanceIdentityImage'
+import {
+  OBJECT_REFERENCE_NEGATIVE_PROMPT,
+  withObjectReferenceInstruction,
+} from '@/lib/vision/objectReferencePrompts'
 import type { ObjectCategory } from '@/types/visionReferences'
 
 export type ReferenceAspectRatio = '1:1' | '4:3' | '3:4' | '16:9' | '9:16'
@@ -298,37 +302,37 @@ export async function generateLocationVersionReferenceImage(
 // Props / objects
 // ---------------------------------------------------------------------------
 
-/** Build an optimized prompt for clean reference image generation. */
+/** Build an optimized prompt for an isolated object reference plate. */
 export function buildObjectImagePrompt(
   prompt: string,
   category: ObjectCategory = 'other',
   hasReference: boolean
 ): string {
   const studioModifiers = [
-    'Professional product photography',
-    'Clean studio lighting with soft shadows',
+    'Clean studio lighting',
+    'Plain neutral backdrop',
     'High resolution, sharp focus',
     'Centered composition',
-    '8K quality, production reference image',
   ]
 
   const categoryEnhancements: Record<ObjectCategory, string[]> = {
-    'prop': ['Hero prop presentation', 'Detailed texture visible', 'Museum quality display'],
-    'vehicle': ['3/4 angle automotive photography', 'Dramatic studio lighting', 'Showroom quality'],
-    'set-piece': ['Architectural detail photography', 'Environmental context minimal', 'Scale reference implied'],
-    'costume': ['Fashion photography on form', 'Fabric texture detailed', 'Full garment visible'],
-    'technology': ['Tech product showcase', 'Sleek modern presentation', 'Interface visible if applicable'],
-    'other': ['Professional reference photography', 'Clear subject isolation', 'Production quality'],
+    prop: ['Detailed texture visible', 'Subject isolation'],
+    vehicle: ['3/4 angle, entire vehicle visible'],
+    'set-piece': ['Architectural detail photography', 'Environmental context minimal'],
+    costume: ['On dress form', 'Fabric texture detailed', 'Full garment visible'],
+    technology: ['Entire device visible', 'Interface visible if applicable'],
+    other: ['Clear subject isolation'],
   }
 
   const enhancements = categoryEnhancements[category] || categoryEnhancements.other
+  const body = withObjectReferenceInstruction(prompt)
+  const extras = `${enhancements.join(', ')}. ${studioModifiers.join(', ')}.`
 
-  // With a reference image, focus on extracting/enhancing rather than creating.
   if (hasReference) {
-    return `Create a clean, studio-quality reference image based on the provided reference photo. ${prompt}. ${enhancements.join(', ')}. ${studioModifiers.join(', ')}. Remove background clutter, enhance clarity, professional product shot quality.`
+    return `Create a clean, studio-quality reference image based on the provided reference photo. ${body} ${extras} Remove background clutter, enhance clarity.`
   }
 
-  return `${prompt}. ${enhancements.join(', ')}. ${studioModifiers.join(', ')}.`
+  return `${body} ${extras}`
 }
 
 export type GenerateObjectImageInput = {
@@ -404,6 +408,7 @@ export async function generateObjectReferenceImage(
     modelTier: 'eco',
     imageSize: '2K',
     referenceImages,
+    negativePrompt: OBJECT_REFERENCE_NEGATIVE_PROMPT,
   })
 
   const safeName = name.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 50)
