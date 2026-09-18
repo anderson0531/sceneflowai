@@ -20,8 +20,12 @@ describe('objectReferencePrompts', () => {
     expect(OBJECT_REFERENCE_ISOLATION).toMatch(/isolated subject only/i)
     expect(OBJECT_REFERENCE_ISOLATION).toMatch(/do not add people, hands, tables/i)
     expect(OBJECT_REFERENCE_ISOLATION).toMatch(/not a scene/i)
-    expect(OBJECT_REFERENCE_SCALE_RULER).toMatch(/ruler or height\/width marks/i)
+    expect(OBJECT_REFERENCE_SCALE_RULER).toMatch(/ruler or height\/width/i)
+    expect(OBJECT_REFERENCE_SCALE_RULER).toMatch(/beside the object/i)
+    expect(OBJECT_REFERENCE_SCALE_RULER).toMatch(/never engrave, print, paint, or draw measurements/i)
+    expect(OBJECT_REFERENCE_SCALE_RULER).toMatch(/on the object itself/i)
     expect(OBJECT_REFERENCE_SCALE_RULER).toMatch(/nothing else/i)
+    expect(OBJECT_REFERENCE_SCALE_RULER).not.toMatch(/marks on the object are allowed/i)
     expect(OBJECT_REFERENCE_GENERATION_INSTRUCTION).toContain(OBJECT_REFERENCE_PURPOSE)
     expect(OBJECT_REFERENCE_GENERATION_INSTRUCTION).toContain(OBJECT_REFERENCE_REAL_WORLD_SCALE)
   })
@@ -36,6 +40,11 @@ describe('objectReferencePrompts', () => {
 
     const second = withObjectReferenceInstruction(first)
     expect(second).toBe(first)
+
+    const legacy = withObjectReferenceInstruction(
+      '12-inch bar. A simple ruler or height/width marks on the object are allowed so real-world size stays measurable.'
+    )
+    expect(legacy).not.toContain('Place a simple ruler')
   })
 
   it('buildObjectReferencePrompt no longer uses product-hero staging copy', () => {
@@ -54,6 +63,9 @@ describe('objectReferencePrompts', () => {
     expect(OBJECT_REFERENCE_NEGATIVE_PROMPT).toMatch(/people/)
     expect(OBJECT_REFERENCE_NEGATIVE_PROMPT).toMatch(/hands holding the object/)
     expect(OBJECT_REFERENCE_NEGATIVE_PROMPT).toMatch(/tables used as a set/)
+    expect(OBJECT_REFERENCE_NEGATIVE_PROMPT).toMatch(/measurements on the object/)
+    expect(OBJECT_REFERENCE_NEGATIVE_PROMPT).toMatch(/tick marks on the object/)
+    expect(OBJECT_REFERENCE_NEGATIVE_PROMPT).toMatch(/engraved scale on the object/)
     expect(OBJECT_REFERENCE_NEGATIVE_PROMPT).not.toMatch(/dress form|mannequin/)
   })
 
