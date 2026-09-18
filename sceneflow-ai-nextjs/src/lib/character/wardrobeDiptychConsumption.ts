@@ -14,7 +14,7 @@
 import { isInsertOrExtremeCloseUp } from '@/lib/imagen/stillFramingNormalize'
 
 export const COMBINED_CHARACTER_REFERENCE_INSTRUCTION =
-  'CHARACTER REFERENCE: same person — match face, hair, and likeness; match head-to-toe outfit, fabric, fit, and footwear.'
+  'CHARACTER REFERENCE: same person — match face, hair, and likeness from the face close-up and the standing figure in this photo; match head-to-toe outfit, fabric, fit, and footwear. Do not copy the character-card layout into the scene.'
 
 export const COMBINED_CHARACTER_INSERT_INSTRUCTION =
   'CHARACTER REFERENCE: same person — match the visible skin, fabric, and likeness of the specified limb or hand; do not pull a full body into the frame.'
@@ -41,8 +41,8 @@ export function buildCombinedCharacterConsumptionLine(
     )
   }
   return (
-    `${characterName} (${personPart}): same person — match face, hair, and likeness; ` +
-    `match head-to-toe outfit, fabric, fit, and footwear — outfit applies to ${personPart} only.`
+    `${characterName} (${personPart}): same person — match face, hair, and likeness from the face close-up and the standing figure; ` +
+    `match head-to-toe outfit, fabric, fit, and footwear — outfit applies to ${personPart} only. Do not copy the character-card layout into the scene.`
   )
 }
 

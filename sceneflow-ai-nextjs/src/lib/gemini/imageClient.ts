@@ -25,6 +25,8 @@ interface ImageGenerationOptions {
   skipFaceMesh?: boolean
   /** Absolute epoch-ms cutoff for the call and its retries. */
   deadlineAt?: number
+  /** Parent generate-image abort — forwarded to Vertex. */
+  signal?: AbortSignal
 }
 
 /**

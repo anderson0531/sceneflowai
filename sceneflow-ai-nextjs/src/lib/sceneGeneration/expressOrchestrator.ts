@@ -18,12 +18,14 @@
 import { processWithConcurrency } from '../utils/concurrent-processor'
 import {
   getSceneExpressBeatConcurrency,
+  getSceneExpressBeat429CooldownMs,
   runAdaptiveBeatPool,
   type AdaptiveBeatPoolOptions,
   type AdaptiveBeatPoolResult,
 } from './adaptiveBeatScheduler'
 import {
   isExpressBeatPoolRetryable,
+  isExpressFailFastRateLimitError,
   isExpressImageCanaryAbortError,
   isExpressImageRateLimitError,
   formatExpressImageErrorForUser,
@@ -647,6 +649,8 @@ function buildAdaptiveBeatPoolOptions(
       }
     },
     abortOnNonRetryableCanary: true,
+    cooldownMsAfterError: (err) =>
+      isExpressFailFastRateLimitError(err) ? getSceneExpressBeat429CooldownMs() : 0,
     ...(signal ? { signal } : {}),
   }
 }

@@ -1,13 +1,16 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import {
+  DEFAULT_SCENE_EXPRESS_BEAT_429_COOLDOWN_MS,
   DEFAULT_SCENE_EXPRESS_BEAT_BACKOFF_MS,
   DEFAULT_SCENE_EXPRESS_BEAT_MAX_BACKOFF_MS,
+  getSceneExpressBeat429CooldownMs,
   getSceneExpressBeatConcurrency,
   getSceneExpressBeatMaxAttempts,
   runAdaptiveBeatPool,
 } from '@/lib/sceneGeneration/adaptiveBeatScheduler'
 import {
   isExpressBeatPoolRetryable,
+  isExpressFailFastRateLimitError,
   isExpressImageCanaryAbortError,
   isTransientExpressImageError,
 } from '@/lib/sceneGeneration/expressImageErrors'
@@ -60,6 +63,12 @@ describe('getSceneExpressBeatConcurrency', () => {
   it('reads SCENE_EXPRESS_BEAT_CONCURRENCY env', () => {
     process.env.SCENE_EXPRESS_BEAT_CONCURRENCY = '5'
     expect(getSceneExpressBeatConcurrency()).toBe(5)
+  })
+
+  it('defaults 429 sibling cooldown to 15s', () => {
+    delete process.env.SCENE_EXPRESS_BEAT_429_COOLDOWN_MS
+    expect(getSceneExpressBeat429CooldownMs()).toBe(DEFAULT_SCENE_EXPRESS_BEAT_429_COOLDOWN_MS)
+    expect(DEFAULT_SCENE_EXPRESS_BEAT_429_COOLDOWN_MS).toBe(15_000)
   })
 })
 
@@ -354,6 +363,42 @@ describe('runAdaptiveBeatPool', () => {
     expect(result.succeeded.has(1)).toBe(true)
     expect(result.succeeded.has(2)).toBe(true)
     expect(ran).toEqual([0, 1, 2])
+  })
+
+  it('delays remaining beats after a fail-fast identity-ref 429', async () => {
+    const startedAt: number[] = []
+    const failFast = new Error(
+      'Vertex Gemini Image error 429: identity-ref rate limit exhausted after 1 attempt(s): RESOURCE_EXHAUSTED'
+    )
+    expect(isExpressFailFastRateLimitError(failFast)).toBe(true)
+
+    const promise = runAdaptiveBeatPool(
+      [0, 1],
+      async (beatIndex) => {
+        startedAt.push(Date.now())
+        if (beatIndex === 0) throw failFast
+      },
+      {
+        initialConcurrency: 1,
+        maxAttempts: 1,
+        isRetryable: isExpressBeatPoolRetryable,
+        isCanaryAbort: isExpressImageCanaryAbortError,
+        cooldownMsAfterError: (err) =>
+          isExpressFailFastRateLimitError(err) ? DEFAULT_SCENE_EXPRESS_BEAT_429_COOLDOWN_MS : 0,
+      }
+    )
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(startedAt).toHaveLength(1)
+
+    await vi.advanceTimersByTimeAsync(DEFAULT_SCENE_EXPRESS_BEAT_429_COOLDOWN_MS - 1)
+    expect(startedAt).toHaveLength(1)
+
+    await vi.advanceTimersByTimeAsync(1)
+    const result = await promise
+    expect(startedAt).toHaveLength(2)
+    expect(result.failed.has(0)).toBe(true)
+    expect(result.succeeded.has(1)).toBe(true)
   })
 
   it('does not retry identity-ref rate limit exhausted errors', async () => {

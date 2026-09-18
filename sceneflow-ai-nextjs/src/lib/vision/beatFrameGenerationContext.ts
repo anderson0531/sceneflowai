@@ -660,6 +660,43 @@ export function mapBeatReferenceSelectionForApi(
   }
 }
 
+/**
+ * Same verified payload Express and Direct Frame send: saved user selection
+ * when present, otherwise auto-resolved beat context.
+ */
+export function resolveVerifiedBeatRefsForApi(args: {
+  beat: SceneBeat
+  scene: Record<string, unknown>
+  sceneIndex?: number
+  projectCharacters: any[]
+  locationReferences: LocationReference[]
+  objectReferences: VisualReference[]
+  filmTitle?: string
+}): ReturnType<typeof mapBeatReferenceSelectionForApi> {
+  const selection = shouldUseExplicitBeatReferences(args.beat)
+    ? explicitBeatReferenceSelection({
+        beat: args.beat,
+        objectReferences: args.objectReferences,
+      })
+    : toBeatReferenceSelection(
+        resolveBeatFrameGenerationContext({
+          scene: args.scene,
+          beat: args.beat,
+          sceneIndex: args.sceneIndex,
+          projectCharacters: args.projectCharacters,
+          locationReferences: args.locationReferences,
+          objectReferences: args.objectReferences,
+          filmTitle: args.filmTitle,
+        })
+      )
+  return mapBeatReferenceSelectionForApi(
+    selection,
+    args.projectCharacters,
+    args.locationReferences,
+    args.objectReferences
+  )
+}
+
 export function shouldUseExplicitBeatReferences(
   beat: SceneBeat | undefined | null
 ): beat is SceneBeat & { referenceSelection: BeatReferenceSelection } {

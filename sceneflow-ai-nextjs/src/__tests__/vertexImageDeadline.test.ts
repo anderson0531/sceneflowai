@@ -112,4 +112,51 @@ describe('generateVertexGeminiImage deadlines', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
     expect(result.imageBase64).toBe('aW1hZ2U=')
   })
+
+  it('cancels the outbound Vertex fetch when the parent signal aborts', async () => {
+    const parent = new AbortController()
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) => {
+      return new Promise((_resolve, reject) => {
+        const onAbort = () => {
+          const err = new Error('The operation was aborted')
+          err.name = 'AbortError'
+          reject(err)
+        }
+        if (init?.signal?.aborted) {
+          onAbort()
+          return
+        }
+        init?.signal?.addEventListener('abort', onAbort, { once: true })
+      })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const pending = generateVertexGeminiImage({
+      prompt: 'a lantern on a workbench',
+      signal: parent.signal,
+    })
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled())
+    parent.abort()
+    await expect(pending).rejects.toThrow(/abortedByClient/)
+    expect(fetchMock.mock.calls[0]?.[1]).toEqual(
+      expect.objectContaining({
+        signal: expect.any(AbortSignal),
+      })
+    )
+  })
+
+  it('refuses to dispatch when the parent signal is already aborted', async () => {
+    const parent = new AbortController()
+    parent.abort()
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      generateVertexGeminiImage({
+        prompt: 'a lantern on a workbench',
+        signal: parent.signal,
+      })
+    ).rejects.toThrow(/abortedByClient/)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
 })
