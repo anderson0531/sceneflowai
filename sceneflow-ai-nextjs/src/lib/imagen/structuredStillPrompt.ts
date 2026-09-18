@@ -96,7 +96,7 @@ export const STILL_TASK_FULL_BODY_LINES = [
  * Gideon CU with chin tucked). Visible head, shoulders, and hands only.
  */
 export const STILL_TASK_FACE_CLOSE_UP_LINES = [
-  'The visible face and upper body match the identity reference — same bone structure, skin, and hair, including when the head is bowed or the eyes are down.',
+  'The visible face and upper body match the identity reference — same bone structure, skin, and hair from the face close-up in that photo. Do not copy a standing figure from the identity card.',
   'Visible hands keep one settled pose. Do not pull back to a standing full-length figure from the wardrobe or identity card.',
 ] as const
 
@@ -1157,7 +1157,10 @@ export function stillRefsFromAttachedImages(args: {
     if (entry.propName && (entry.promptToken || sendIndex != null)) {
       refs.push({
         kind: 'prop',
-        token: entry.promptToken || buildPropPromptToken(sendIndex as number),
+        token:
+          sendIndex != null
+            ? buildPropPromptToken(sendIndex)
+            : (entry.promptToken as string),
         name: entry.propName,
         roleLabel: 'library prop',
         description: entry.propDescription,
@@ -1168,7 +1171,10 @@ export function stillRefsFromAttachedImages(args: {
     if ((entry.locationName || entry.role === 'location') && (entry.promptToken || sendIndex != null)) {
       refs.push({
         kind: 'location',
-        token: entry.promptToken || buildLocationPromptToken(sendIndex as number),
+        token:
+          sendIndex != null
+            ? buildLocationPromptToken(sendIndex)
+            : (entry.promptToken as string),
         name: entry.locationName || 'Location',
         roleLabel: 'library location',
       })

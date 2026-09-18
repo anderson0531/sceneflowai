@@ -8,6 +8,7 @@ import {
   getMaxReferenceImagesForTier,
   prioritizeReferenceImages,
   remapReferenceNumbersInPrompt,
+  remapLibraryPromptTokens,
   resolveEffectiveImageTier,
   selectReferenceImagesInOrder,
   type PrioritizedReferenceImage,
@@ -485,8 +486,61 @@ describe('referenceLimits', () => {
       'prop-important',
       'location',
     ])
-    expect(selected[4].promptToken).toBe('location [1]')
+    expect(selected[4].promptToken).toBe('location [5]')
     expect(selected[4].sendIndex).toBe(5)
+    expect(selected[2].promptToken).toBe('prop [3]')
+    expect(selected[3].promptToken).toBe('prop [4]')
+  })
+
+  it('remapLibraryPromptTokens rewrites composed prop and location tokens to send index', () => {
+    const { selected, libraryTokenRewrites } = selectReferenceImagesInOrder(
+      [
+        ref('identity', 'Gideon identity', undefined, {
+          characterName: 'Gideon Croft',
+          refRole: 'identity',
+          promptToken: 'person [1]',
+        }),
+        ref('wardrobe', 'Gideon wardrobe', undefined, {
+          characterName: 'Gideon Croft',
+          refRole: 'wardrobe',
+        }),
+        ref('prop-critical', 'Workbench', 'critical', {
+          propName: 'Zinc workbench',
+          promptToken: 'prop [1]',
+        }),
+        ref('location', 'Vault plate', undefined, {
+          locationName: 'FREIGHT TUNNEL VAULT',
+          promptToken: 'location [1]',
+        }),
+      ],
+      8,
+      { groupByRole: true, locationLast: true }
+    )
+
+    expect(selected.map((r) => r.promptToken)).toEqual([
+      'person [1]',
+      undefined,
+      'prop [3]',
+      'location [4]',
+    ])
+    expect(libraryTokenRewrites).toEqual([
+      { from: 'prop [1]', to: 'prop [3]' },
+      { from: 'location [1]', to: 'location [4]' },
+    ])
+
+    const rewritten = remapLibraryPromptTokens(
+      'person [1] at location [1] rests a hand on prop [1].',
+      libraryTokenRewrites
+    )
+    expect(rewritten).toBe('person [1] at location [4] rests a hand on prop [3].')
+  })
+
+  it('remapLibraryPromptTokens does not rewrite location [10] when mapping location [1]', () => {
+    expect(
+      remapLibraryPromptTokens('location [1] beside location [10]', [
+        { from: 'location [1]', to: 'location [4]' },
+      ])
+    ).toBe('location [4] beside location [10]')
   })
 
   it('remapReferenceNumbersInPrompt preserves stable subject ordinals in person tokens', () => {

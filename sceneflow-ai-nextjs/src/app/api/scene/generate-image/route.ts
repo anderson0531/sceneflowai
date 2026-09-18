@@ -139,7 +139,8 @@ import {
   buildWardrobeReferencePromptLine,
   BEAT_FRAME_ANTI_POSE_NEGATIVE_PROMPT,
   buildWardrobeBindingSummary,
-  DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
+  dualReferencePriorityBlock,
+  sceneIdentityBindPreamble,
   EXPRESSION_OVERRIDE_INSTRUCTION,
   resolveCharacterReferencePair,
 } from '@/lib/character/characterReferenceAssembly'
@@ -173,6 +174,7 @@ import {
   buildPropReferenceEntries,
   buildPropReferenceMappingLines,
   remapReferenceNumbersInPrompt,
+  remapLibraryPromptTokens,
   resolveEffectiveImageTier,
   selectReferenceImagesInOrder,
   type VertexImageTier,
@@ -2830,7 +2832,12 @@ export async function POST(req: NextRequest) {
               : undefined,
           }
 
-          const { selected: selectedReferenceImages, dropped: droppedReferenceImages, indexMap } =
+          const {
+            selected: selectedReferenceImages,
+            dropped: droppedReferenceImages,
+            indexMap,
+            libraryTokenRewrites,
+          } =
             selectReferenceImagesInOrder(
               allPrioritizedRefs,
               referenceImageCap,
@@ -2913,7 +2920,7 @@ export async function POST(req: NextRequest) {
               geminiPrompt += `${combinedCharacterReferenceInstruction(effectiveShotType)}\n`
             }
             if (hasAnyDual) {
-              geminiPrompt += `${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}\n`
+              geminiPrompt += `${dualReferencePriorityBlock(effectiveShotType)}\n`
               const framingBlock = buildFramingAwareIdentityBlock(effectiveShotType)
               if (framingBlock) {
                 geminiPrompt += `${framingBlock}\n`
@@ -2960,7 +2967,8 @@ export async function POST(req: NextRequest) {
                     ref.characterName,
                     ref.referenceId,
                     subjectOrdinal
-                  )
+                  ),
+                  effectiveShotType
                 )}\n`
                 const hairLock =
                   matchingCharRef?.hairAnchor ?? matchingCharRef?.hairDescription
@@ -3035,19 +3043,12 @@ export async function POST(req: NextRequest) {
                 !cr.hasWardrobeOnlyReference &&
                 !cr.hasWardrobeDiptych
             )
-            if (hasAnyDiptych) {
-              geminiPrompt +=
-                'Scene text uses person [N]; identity and wardrobe are bound in [REFERENCES] as person [N] (Name) and must match the labeled character reference.\n\n'
-            } else if (hasAnyDual) {
-              geminiPrompt +=
-                'In the scene prompt, refer to characters with identity refs using "person [N]" tokens. The identity photo is the same person head-to-toe (face close-up and standing figure). Copy the face from it; copy garments from the wardrobe photo. Do not invent a different face. Do not copy the character-card layout into the scene.\n\n'
-            } else if (hasIdentityOnly) {
-              geminiPrompt +=
-                'The identity photo is the same person head-to-toe — copy face, hair, body, and likeness from it. If it shows a face close-up and a standing figure, both are that person. Outfit comes from wardrobe text in the scene prompt when no wardrobe photo is attached. Do not copy the character-card layout into the scene.\n\n'
-            } else {
-              geminiPrompt +=
-                'The character(s) MUST match the reference image(s) exactly — same face, ethnicity, age, hair, and facial features.\n\n'
-            }
+            geminiPrompt += sceneIdentityBindPreamble({
+              shotType: effectiveShotType,
+              hasDiptych: hasAnyDiptych,
+              hasDual: hasAnyDual,
+              hasIdentityOnly,
+            })
             geminiPrompt += `${EXPRESSION_OVERRIDE_INSTRUCTION}\n\n`
           }
           
@@ -3084,7 +3085,10 @@ export async function POST(req: NextRequest) {
           }
 
           const scenePromptBody = stripReferenceImageMappingBlock(optimizedPrompt)
-          const remappedOptimizedPrompt = remapReferenceNumbersInPrompt(scenePromptBody, indexMap)
+          const remappedOptimizedPrompt = remapLibraryPromptTokens(
+            remapReferenceNumbersInPrompt(scenePromptBody, indexMap),
+            libraryTokenRewrites
+          )
           const stillRefs = stillRefsFromAttachedImages({
             selected: selectedReferenceImages,
             characterReferences,
@@ -3228,7 +3232,7 @@ export async function POST(req: NextRequest) {
               geminiPrompt += `- WARDROBE MUST BE EXACT: ${wardrobeReminders.join('; ')}\n`
             }
             if (hasAnyDualRef && !isBeatFrame) {
-              geminiPrompt += `- ${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}\n`
+              geminiPrompt += `- ${dualReferencePriorityBlock(effectiveShotType)}\n`
             }
             const wardrobeOnlyNames = characterReferences
               .filter((cr: any) => cr.hasWardrobeOnlyReference)

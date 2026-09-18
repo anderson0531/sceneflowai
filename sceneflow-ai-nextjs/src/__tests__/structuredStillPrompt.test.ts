@@ -150,7 +150,7 @@ Strictly Avoid: Mannequin geometry.`,
     )
   })
 
-  it('keeps a stable location token when send index is later in the pack', () => {
+  it('binds location and prop tokens to send index when the library token started at 1', () => {
     const refs = stillRefsFromAttachedImages({
       selected: [
         { sendIndex: 1, characterName: 'Piper Hayes', refRole: 'wardrobe-diptych' },
@@ -175,11 +175,11 @@ Strictly Avoid: Mannequin geometry.`,
 
     expect(refs).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ token: 'location [1]', name: 'FREIGHT TUNNEL VAULT' }),
-        expect.objectContaining({ token: 'prop [1]' }),
+        expect.objectContaining({ token: 'location [5]', name: 'FREIGHT TUNNEL VAULT' }),
+        expect.objectContaining({ token: 'prop [3]' }),
       ])
     )
-    expect(refs.find((ref) => ref.kind === 'location')?.token).not.toBe('location [5]')
+    expect(refs.find((ref) => ref.kind === 'location')?.token).not.toBe('location [1]')
   })
 
   it('locks prop scale in the legend and still parses tokens', () => {
@@ -256,7 +256,7 @@ Strictly Avoid: Mannequin geometry.`,
     expect(legend).toContain(
       'person [2] (Gideon Croft) — matches Reference image 2 (Identity) and Reference image 4 (Wardrobe)'
     )
-    expect(legend).toContain('prop [1] = Thirty-Inch Iron Rail Spanner')
+    expect(legend).toContain('prop [5] = Thirty-Inch Iron Rail Spanner')
     expect(legend).not.toMatch(/LEFT|RIGHT|diptych|composite/i)
   })
 

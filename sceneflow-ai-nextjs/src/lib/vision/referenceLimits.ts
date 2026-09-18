@@ -93,7 +93,11 @@ export interface PrioritizedReferenceImage {
   propName?: string
   locationName?: string
   originalOrder?: number
-  /** Stable composition token (prop [N] / location [N]) independent of send index. */
+  /**
+   * Prompt token the still text uses for this plate.
+   * After `selectReferenceImagesInOrder`, prop/location tokens equal send index
+   * (`prop [3]`, `location [4]`) so `[N]` cannot mean both a person and a location.
+   */
   promptToken?: string
   /** Library description; used to lock prop scale on the image label. */
   propDescription?: string
@@ -126,6 +130,53 @@ export interface ReferenceLabelOptions {
 }
 
 export type ReferenceIndexMap = Map<number, number | null>
+
+/** Rewrite a composed `prop [1]` / `location [1]` token to the send-index token. */
+export interface LibraryPromptTokenRewrite {
+  from: string
+  to: string
+}
+
+function sendBoundLibraryToken(
+  ref: Pick<PrioritizedReferenceImage, 'propName' | 'locationName' | 'promptToken'>,
+  sendIndex: number
+): string | undefined {
+  if (ref.propName) return `prop [${sendIndex}]`
+  if (ref.locationName) return `location [${sendIndex}]`
+  return ref.promptToken
+}
+
+function replaceExactLibraryToken(text: string, from: string, to: string): string {
+  const match = from.match(/^(person|prop|location)\s*\[(\d+)\]$/i)
+  if (!match) return text.split(from).join(to)
+  const pattern = new RegExp(`\\b${match[1]}\\s*\\[${match[2]}\\](?!\\d)`, 'gi')
+  return text.replace(pattern, to)
+}
+
+/**
+ * Replace library `prop [N]` / `location [N]` tokens with send-index tokens.
+ * Two-phase so `location [1] → location [4]` cannot cascade into another rewrite.
+ */
+export function remapLibraryPromptTokens(
+  text: string,
+  rewrites: LibraryPromptTokenRewrite[]
+): string {
+  const actual = rewrites.filter((entry) => entry.from && entry.to && entry.from !== entry.to)
+  if (!text || actual.length === 0) return text
+
+  let result = text
+  const placeholders = actual.map((entry, index) => ({
+    ...entry,
+    token: `\u0000LIBTOK${index}\u0000`,
+  }))
+  for (const entry of placeholders) {
+    result = replaceExactLibraryToken(result, entry.from, entry.token)
+  }
+  for (const entry of placeholders) {
+    result = result.split(entry.token).join(entry.to)
+  }
+  return result
+}
 
 const ROLE_PRIORITY: Record<ReferencePriorityRole, number> = {
   identity: 0,
@@ -227,16 +278,15 @@ export function selectReferenceImagesInOrder(
   selected: PrioritizedReferenceImage[]
   dropped: PrioritizedReferenceImage[]
   indexMap: ReferenceIndexMap
+  libraryTokenRewrites: LibraryPromptTokenRewrite[]
 } {
   const tagged = refs.map((ref, originalOrder) => ({ ...ref, originalOrder }))
-  const { selected: priorityKept, dropped: priorityDropped } = prioritizeReferenceImages(
-    tagged,
-    maxCount
-  )
+  const { selected: priorityKept } = prioritizeReferenceImages(tagged, maxCount)
   const keptUrls = new Set(priorityKept.map((r) => r.imageUrl))
   const groupByRole = Boolean(labelOptions?.groupByRole)
   const locationLast = Boolean(labelOptions?.locationLast)
 
+  const libraryTokenRewrites: LibraryPromptTokenRewrite[] = []
   const selected = tagged
     .filter((r) => keptUrls.has(r.imageUrl))
     .sort((a, b) => {
@@ -249,10 +299,14 @@ export function selectReferenceImagesInOrder(
     })
     .map((ref, idx) => {
       const sendIndex = idx + 1
+      const promptToken = sendBoundLibraryToken(ref, sendIndex)
+      if (ref.promptToken && promptToken && ref.promptToken !== promptToken) {
+        libraryTokenRewrites.push({ from: ref.promptToken, to: promptToken })
+      }
+      const bound = { ...ref, sendIndex, promptToken }
       return {
-        ...ref,
-        sendIndex,
-        name: applySendIndexLabel(ref, sendIndex, labelOptions),
+        ...bound,
+        name: applySendIndexLabel(bound, sendIndex, labelOptions),
       }
     })
 
@@ -265,7 +319,7 @@ export function selectReferenceImagesInOrder(
     indexMap.set(ref.provisionalIndex, survivor?.sendIndex ?? null)
   }
 
-  return { selected, dropped, indexMap }
+  return { selected, dropped, indexMap, libraryTokenRewrites }
 }
 
 /**
@@ -412,8 +466,6 @@ export function buildPropReferenceMappingLines(
   if (!valid.length) return ''
   const lines = valid
     .map((p) => {
-      // The composition text already names the prop by its stable token; the
-      // mapping line has to use that same token, not the send index.
       const token = p.promptToken || `prop [${p.sendIndex}]`
       return (
         `- PROP REFERENCE (Ref Image [${p.sendIndex}] = ${token}): ${p.propName} — ` +
