@@ -14,9 +14,8 @@ import { runInVertexImageGate } from '@/lib/vertexai/vertexImageGate'
 import { getGeminiImageSafetySettings } from '@/lib/vertexai/safety'
 import { MAX_REFERENCE_IMAGES_ECO } from '@/lib/vision/referenceLimits'
 import { combineAbortSignals } from '@/lib/utils/abortSignals'
-import { isIdentityReferencePartName } from '@/lib/vertexai/identityReferencePartName'
 
-export { isIdentityReferencePartName }
+export { isIdentityReferencePartName } from '@/lib/vertexai/identityReferencePartName'
 
 export type VertexImageTier = 'eco' | 'designer' | 'director'
 export type VertexThinkingLevel = 'low' | 'high'
@@ -283,11 +282,6 @@ export interface GenerateVertexImageOptions {
    * Combined with the per-attempt timeout so Vertex stops when the child is cancelled.
    */
   signal?: AbortSignal
-  /**
-   * Internal: ULTRA_HIGH identity mediaResolution was rejected by Vertex.
-   * Retry stamps HIGH on every Pro plate, matching the documented 560-token cap.
-   */
-  disableUltraIdentityResolution?: boolean
 }
 
 export interface VertexImageResult {
@@ -305,22 +299,13 @@ export interface VertexImageResult {
   policyRefusalRecovered?: boolean
 }
 
-/** Flash and Pro both send labeled images-first. Pro also marks each plate HIGH. */
+/** Flash and Pro both send labeled images-first. Vertex Image rejects mediaResolution. */
 export type VertexImageReferenceLayout = 'flash' | 'pro'
-
-export const PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL = 'MEDIA_RESOLUTION_HIGH' as const
-/** Identity plates try ULTRA_HIGH first so a face CU can exceed the 560-token default. */
-export const PRO_IDENTITY_MEDIA_RESOLUTION_LEVEL = 'MEDIA_RESOLUTION_ULTRA_HIGH' as const
-
-export type VertexMediaResolutionLevel =
-  | typeof PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL
-  | typeof PRO_IDENTITY_MEDIA_RESOLUTION_LEVEL
 
 export type VertexTextPart = { text: string }
 
 export type VertexInlineImagePart = {
   inlineData: { mimeType: string; data: string }
-  mediaResolution?: { level: VertexMediaResolutionLevel }
 }
 
 export type VertexMultimodalPart = VertexTextPart | VertexInlineImagePart
@@ -387,22 +372,19 @@ async function resolveAttachedReferenceImages(
 }
 
 /**
- * Flash: labeled images lead, instruction text follows. Prompt-first caused
- * Flash to commit to a subject before it had seen the identity (right
- * composition, wrong person).
+ * Labeled images lead, instruction text follows. Prompt-first caused Flash
+ * to commit to a subject before it had seen the identity (right composition,
+ * wrong person). Unlabeled plates made `person [1]` and `location [1]` collide
+ * on image 1 (Gideon CU Final, 2026-09-18).
  *
- * Pro: the same labeled images-first bind, each plate at MEDIA_RESOLUTION_HIGH,
- * identity plates at ULTRA_HIGH (falls back to HIGH if Vertex rejects it),
- * then the prompt. Prompt-first plus a complete still script let thinking
- * illustrate the novel without the photos. Unlabeled HIGH plates made
- * `person [1]` and `location [1]` collide on image 1 (Gideon CU Final, 2026-09-18).
+ * Gemini 3 Pro Image 400s `mediaResolution` (`MediaResolution is not supported`
+ * for ULTRA_HIGH and HIGH). Identity lock is the face CU + landmark legend.
  */
 export async function buildMultimodalParts(
   fullPrompt: string,
   referenceImages?: VertexReferenceImage[],
   requireAllReferenceImages?: boolean,
-  layout: VertexImageReferenceLayout = 'flash',
-  identityMediaResolution: VertexMediaResolutionLevel = PRO_IDENTITY_MEDIA_RESOLUTION_LEVEL
+  _layout: VertexImageReferenceLayout = 'flash'
 ): Promise<VertexMultimodalPart[]> {
   if (!referenceImages?.length) return [{ text: fullPrompt }]
 
@@ -414,17 +396,7 @@ export async function buildMultimodalParts(
   const parts: VertexMultimodalPart[] = []
   for (const ref of attached) {
     parts.push({ text: ref.name ? `[${ref.name}]\n` : '' })
-    if (layout === 'pro') {
-      const identity = isIdentityReferencePartName(ref.name)
-      parts.push({
-        inlineData: { mimeType: ref.mimeType, data: ref.data },
-        mediaResolution: {
-          level: identity ? identityMediaResolution : PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL,
-        },
-      })
-    } else {
-      parts.push({ inlineData: { mimeType: ref.mimeType, data: ref.data } })
-    }
+    parts.push({ inlineData: { mimeType: ref.mimeType, data: ref.data } })
   }
   parts.push({ text: fullPrompt })
   return parts
@@ -576,15 +548,11 @@ export async function generateVertexGeminiImage(
   }
 
   const proLayout = usesProImageReferenceLayout(model)
-  const identityMediaResolution = options.disableUltraIdentityResolution
-    ? PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL
-    : PRO_IDENTITY_MEDIA_RESOLUTION_LEVEL
   const parts = await buildMultimodalParts(
     fullPrompt,
     options.referenceImages,
     options.requireAllReferenceImages,
-    proLayout ? 'pro' : 'flash',
-    identityMediaResolution
+    proLayout ? 'pro' : 'flash'
   )
   const effectiveImageSize = effectiveImageSizeForModel(model, options.imageSize)
 
@@ -592,7 +560,6 @@ export async function generateVertexGeminiImage(
     contents: [{ role: 'user', parts }],
     generationConfig: {
       responseModalities: ['TEXT', 'IMAGE'],
-      ...(proLayout ? { mediaResolution: PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL } : {}),
       ...(options.aspectRatio || effectiveImageSize
         ? {
             imageConfig: {
@@ -662,20 +629,6 @@ export async function generateVertexGeminiImage(
 
   if (!response.ok) {
     const errorText = await response.text()
-    if (
-      response.status === 400 &&
-      usesProImageReferenceLayout(model) &&
-      !options.disableUltraIdentityResolution &&
-      /media.?resolution|ULTRA_HIGH/i.test(errorText)
-    ) {
-      console.warn(
-        '[Vertex Gemini Image] ULTRA_HIGH identity mediaResolution rejected — retrying with HIGH'
-      )
-      return generateVertexGeminiImage(
-        { ...options, disableUltraIdentityResolution: true },
-        retryCount
-      )
-    }
     if (response.status === 429 && options.failFastOnRateLimit) {
       // Every sleep below is served while still holding the caller's image-lane
       // slot, which on a 2-wide lane parks half the run on a frame that is
