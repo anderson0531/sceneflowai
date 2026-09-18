@@ -19,6 +19,7 @@ import {
   isMediumCoverageLocationShot,
 } from '@/lib/imagen/stillFramingNormalize'
 import { buildIdentityPromptToken } from '@/lib/imagen/promptOptimizer'
+import { buildIdentityTraitsClause } from '@/lib/imagen/identityTraitsClause'
 import {
   mentionsWord,
   propHeadNoun,
@@ -777,6 +778,52 @@ function propAliasPatterns(
   return patterns
 }
 
+const FURNITURE_ALIAS_GROUPS = [
+  ['workbench', 'work-bench', 'table', 'desk', 'bench'],
+]
+
+function pluralizableNoun(term: string): string {
+  const escaped = escapeRegExp(term)
+  if (term.endsWith('s')) return escaped
+  if (term.endsWith('ch') || term.endsWith('sh')) return `${escaped}(?:es)?`
+  return `${escaped}s?`
+}
+
+/**
+ * When exactly one attached prop owns a head noun, rewrite that noun (and unique
+ * furniture synonyms like table↔workbench) to the send-index token so action
+ * copy that says "the workbench" still binds `prop [3]`.
+ */
+function uniquePropHeadNounPatterns(
+  refs: StillPromptBoundRef[]
+): Array<{ token: string; pattern: RegExp }> {
+  const props = refs.filter((ref) => ref.kind === 'prop' && ref.name.trim())
+  const byHead = new Map<string, StillPromptBoundRef[]>()
+  for (const ref of props) {
+    const head = propHeadNoun(ref.name)
+    if (!head) continue
+    const list = byHead.get(head) ?? []
+    list.push(ref)
+    byHead.set(head, list)
+  }
+
+  const patterns: Array<{ token: string; pattern: RegExp }> = []
+  for (const [head, owners] of byHead) {
+    if (owners.length !== 1) continue
+    const group = FURNITURE_ALIAS_GROUPS.find((aliases) => aliases.includes(head))
+    const aliases = (group ?? []).filter((alias) => {
+      if (alias === head) return false
+      return (byHead.get(alias)?.length ?? 0) === 0
+    })
+    const terms = [head, ...aliases].map(pluralizableNoun)
+    patterns.push({
+      token: owners[0].token,
+      pattern: new RegExp(`\\b(?:${terms.join('|')})\\b`, 'gi'),
+    })
+  }
+  return patterns
+}
+
 /** Ref names plus unambiguous person aliases, as name/token pairs. */
 function bindableNameTokenPairs(
   refs: StillPromptBoundRef[]
@@ -835,6 +882,9 @@ export function replaceLibraryNamesWithTokens(
 
   for (const alias of propAliasPatterns(refs).sort((a, b) => b.name.length - a.name.length)) {
     result = result.replace(alias.pattern, alias.token)
+  }
+  for (const head of uniquePropHeadNounPatterns(refs)) {
+    result = result.replace(head.pattern, head.token)
   }
   return result
 }
@@ -897,12 +947,15 @@ export function formatWardrobeLegendClause(description?: string | null): string 
 /**
  * Bind a person token to the attached image(s) the model actually received.
  *
- * Action text uses `person [N]` only. When identity/wardrobe images are
- * attached, do not restate ethnicity, hair, age, or outfit in this line —
- * that prose is a text-to-image substitute. Bind by send index:
- * `person [1] (Name) matches Reference image 1 (Identity) and Reference image 2 (Wardrobe)`.
+ * Action text uses `person [N]` only. Flash binds by send index — restating
+ * ethnicity, hair, age, or outfit next to those photos is a T2I substitute.
+ * Pro's 560-token plates need short vision-derived landmarks that must match
+ * Reference image N, not replace it.
  */
-export function formatPersonReferenceLegendLine(ref: StillPromptBoundRef): string {
+export function formatPersonReferenceLegendLine(
+  ref: StillPromptBoundRef,
+  options?: { includeAttachedIdentityTraits?: boolean }
+): string {
   const named = `${ref.token} (${ref.name})`
   const identityIdx = ref.identitySendIndex
   const wardrobeIdx = ref.wardrobeSendIndex
@@ -926,20 +979,37 @@ export function formatPersonReferenceLegendLine(ref: StillPromptBoundRef): strin
     match = 'matches its identity reference'
   }
 
+  if (
+    options?.includeAttachedIdentityTraits &&
+    boundToAttachedImage &&
+    ref.identityTraits &&
+    identityIdx != null
+  ) {
+    match += `; facial landmarks from Reference image ${identityIdx} — ${ref.identityTraits}`
+  }
+
   return `${subject} — ${match}`
 }
 
 export function formatStillReferencesLegend(
   refs: StillPromptBoundRef[],
   shotType?: string | null,
-  options?: { actionFraming?: string | null; emptyCast?: boolean }
+  options?: {
+    actionFraming?: string | null
+    emptyCast?: boolean
+    includeAttachedIdentityTraits?: boolean
+  }
 ): string {
   if (refs.length === 0) return ''
   const shot = resolveStillShotClass(shotType, options?.actionFraming)
   const emptyCast =
     options?.emptyCast ?? stillActionHasEmptyCast(options?.actionFraming)
   const lines = refs.map((ref) => {
-    if (ref.kind === 'person') return formatPersonReferenceLegendLine(ref)
+    if (ref.kind === 'person') {
+      return formatPersonReferenceLegendLine(ref, {
+        includeAttachedIdentityTraits: options?.includeAttachedIdentityTraits,
+      })
+    }
     const entry = `${ref.token} = ${ref.name} — ${ref.roleLabel}`
     if (ref.kind === 'prop') {
       return `${entry}: ${propScaleClause(ref.description, ref.name)}`
@@ -1091,8 +1161,13 @@ export function stillRefsFromAttachedImages(args: {
     wardrobeDescription?: string | null
     defaultWardrobe?: string | null
   }>
-  /** Unused for attached identity/wardrobe images — those bind by send index only. */
+  /** Unused for attached identity/wardrobe images unless Pro landmark lock is on. */
   identityTraitsWordCap?: number
+  /**
+   * Pro 560-token plates: put short vision-derived landmarks on the person
+   * legend line. Flash binds by send index only.
+   */
+  includeAttachedIdentityTraits?: boolean
 }): StillPromptBoundRef[] {
   const refs: StillPromptBoundRef[] = []
   const seenPerson = new Set<string>()
@@ -1143,9 +1218,15 @@ export function stillRefsFromAttachedImages(args: {
         token,
         name: entry.characterName,
         roleLabel: slot?.isComposite ? 'character reference' : 'identity',
-        // Attached portraits/wardrobe plates own identity and outfit. Restating
-        // ethnicity, hair, age, or wardrobe in the legend is a T2I substitute.
-        identityTraits: undefined,
+        identityTraits: args.includeAttachedIdentityTraits
+          ? buildIdentityTraitsClause({
+              appearanceDescription: char?.appearanceDescription,
+              visionDescription: char?.visionDescription,
+              hairStyle: char?.hairStyle,
+              hairColor: char?.hairColor,
+              wordCap: args.identityTraitsWordCap,
+            })
+          : undefined,
         wardrobeClause: undefined,
         identitySendIndex: slot?.identitySendIndex,
         wardrobeSendIndex: slot?.isComposite ? undefined : slot?.wardrobeSendIndex,
@@ -1297,6 +1378,7 @@ export function assembleStructuredStillPrompt(input: {
   exclusions?: string
   shotType?: string
   allowTypography?: boolean
+  includeAttachedIdentityTraits?: boolean
 }): string {
   const parsed = parseStillPromptSource(input.actionOrStructured)
   const boundRefs =
@@ -1342,7 +1424,11 @@ export function assembleStructuredStillPrompt(input: {
     : mergedExclusions
 
   return joinPromptBlocks(
-    formatStillReferencesLegend(refs, input.shotType, { actionFraming, emptyCast }),
+    formatStillReferencesLegend(refs, input.shotType, {
+      actionFraming,
+      emptyCast,
+      includeAttachedIdentityTraits: input.includeAttachedIdentityTraits,
+    }),
     `${STILL_SECTION_TASK}\n${stillTaskLines(input.shotType, {
       allowTypography: input.allowTypography,
       actionFraming,

@@ -14,6 +14,9 @@ import { runInVertexImageGate } from '@/lib/vertexai/vertexImageGate'
 import { getGeminiImageSafetySettings } from '@/lib/vertexai/safety'
 import { MAX_REFERENCE_IMAGES_ECO } from '@/lib/vision/referenceLimits'
 import { combineAbortSignals } from '@/lib/utils/abortSignals'
+import { isIdentityReferencePartName } from '@/lib/vertexai/identityReferencePartName'
+
+export { isIdentityReferencePartName }
 
 export type VertexImageTier = 'eco' | 'designer' | 'director'
 export type VertexThinkingLevel = 'low' | 'high'
@@ -280,6 +283,11 @@ export interface GenerateVertexImageOptions {
    * Combined with the per-attempt timeout so Vertex stops when the child is cancelled.
    */
   signal?: AbortSignal
+  /**
+   * Internal: ULTRA_HIGH identity mediaResolution was rejected by Vertex.
+   * Retry stamps HIGH on every Pro plate, matching the documented 560-token cap.
+   */
+  disableUltraIdentityResolution?: boolean
 }
 
 export interface VertexImageResult {
@@ -301,12 +309,18 @@ export interface VertexImageResult {
 export type VertexImageReferenceLayout = 'flash' | 'pro'
 
 export const PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL = 'MEDIA_RESOLUTION_HIGH' as const
+/** Identity plates try ULTRA_HIGH first so a face CU can exceed the 560-token default. */
+export const PRO_IDENTITY_MEDIA_RESOLUTION_LEVEL = 'MEDIA_RESOLUTION_ULTRA_HIGH' as const
+
+export type VertexMediaResolutionLevel =
+  | typeof PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL
+  | typeof PRO_IDENTITY_MEDIA_RESOLUTION_LEVEL
 
 export type VertexTextPart = { text: string }
 
 export type VertexInlineImagePart = {
   inlineData: { mimeType: string; data: string }
-  mediaResolution?: { level: typeof PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL }
+  mediaResolution?: { level: VertexMediaResolutionLevel }
 }
 
 export type VertexMultimodalPart = VertexTextPart | VertexInlineImagePart
@@ -356,6 +370,7 @@ async function resolveAttachedReferenceImages(
       continue
     }
     if (base64Data.includes(',')) base64Data = base64Data.split(',')[1] || base64Data
+
     attached.push({ mimeType, data: base64Data, name: ref.name })
   }
 
@@ -377,6 +392,7 @@ async function resolveAttachedReferenceImages(
  * composition, wrong person).
  *
  * Pro: the same labeled images-first bind, each plate at MEDIA_RESOLUTION_HIGH,
+ * identity plates at ULTRA_HIGH (falls back to HIGH if Vertex rejects it),
  * then the prompt. Prompt-first plus a complete still script let thinking
  * illustrate the novel without the photos. Unlabeled HIGH plates made
  * `person [1]` and `location [1]` collide on image 1 (Gideon CU Final, 2026-09-18).
@@ -385,7 +401,8 @@ export async function buildMultimodalParts(
   fullPrompt: string,
   referenceImages?: VertexReferenceImage[],
   requireAllReferenceImages?: boolean,
-  layout: VertexImageReferenceLayout = 'flash'
+  layout: VertexImageReferenceLayout = 'flash',
+  identityMediaResolution: VertexMediaResolutionLevel = PRO_IDENTITY_MEDIA_RESOLUTION_LEVEL
 ): Promise<VertexMultimodalPart[]> {
   if (!referenceImages?.length) return [{ text: fullPrompt }]
 
@@ -398,9 +415,12 @@ export async function buildMultimodalParts(
   for (const ref of attached) {
     parts.push({ text: ref.name ? `[${ref.name}]\n` : '' })
     if (layout === 'pro') {
+      const identity = isIdentityReferencePartName(ref.name)
       parts.push({
         inlineData: { mimeType: ref.mimeType, data: ref.data },
-        mediaResolution: { level: PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL },
+        mediaResolution: {
+          level: identity ? identityMediaResolution : PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL,
+        },
       })
     } else {
       parts.push({ inlineData: { mimeType: ref.mimeType, data: ref.data } })
@@ -480,12 +500,20 @@ function logPromptImageTokenUsage(
     )
     return
   }
+  const perRef =
+    referenceCount > 0 ? Math.round(imageTokens / referenceCount) : null
   console.log(
-    `[Vertex Gemini Image] Prompt IMAGE tokens: ${imageTokens} (refs=${referenceCount}, model=${model})`
+    `[Vertex Gemini Image] Prompt IMAGE tokens: ${imageTokens} (refs=${referenceCount}${
+      perRef != null ? `, perRef=${perRef}` : ''
+    }, model=${model})`
   )
   if (imageTokens === 0) {
     console.warn(
       `[Vertex Gemini Image] 0 IMAGE tokens with ${referenceCount} reference(s) attached — Vertex dropped the parts`
+    )
+  } else if (model.includes('pro-image') && perRef != null && perRef <= 560) {
+    console.warn(
+      `[Vertex Gemini Image] Pro IMAGE token density ${perRef}/ref — documented 560-token cap; identity lock relies on face crop + landmarks`
     )
   }
 }
@@ -547,11 +575,16 @@ export async function generateVertexGeminiImage(
     fullPrompt += `\n\nAVOID the following in the generated image: ${options.negativePrompt}`
   }
 
+  const proLayout = usesProImageReferenceLayout(model)
+  const identityMediaResolution = options.disableUltraIdentityResolution
+    ? PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL
+    : PRO_IDENTITY_MEDIA_RESOLUTION_LEVEL
   const parts = await buildMultimodalParts(
     fullPrompt,
     options.referenceImages,
     options.requireAllReferenceImages,
-    usesProImageReferenceLayout(model) ? 'pro' : 'flash'
+    proLayout ? 'pro' : 'flash',
+    identityMediaResolution
   )
   const effectiveImageSize = effectiveImageSizeForModel(model, options.imageSize)
 
@@ -559,6 +592,7 @@ export async function generateVertexGeminiImage(
     contents: [{ role: 'user', parts }],
     generationConfig: {
       responseModalities: ['TEXT', 'IMAGE'],
+      ...(proLayout ? { mediaResolution: PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL } : {}),
       ...(options.aspectRatio || effectiveImageSize
         ? {
             imageConfig: {
@@ -628,6 +662,20 @@ export async function generateVertexGeminiImage(
 
   if (!response.ok) {
     const errorText = await response.text()
+    if (
+      response.status === 400 &&
+      usesProImageReferenceLayout(model) &&
+      !options.disableUltraIdentityResolution &&
+      /media.?resolution|ULTRA_HIGH/i.test(errorText)
+    ) {
+      console.warn(
+        '[Vertex Gemini Image] ULTRA_HIGH identity mediaResolution rejected — retrying with HIGH'
+      )
+      return generateVertexGeminiImage(
+        { ...options, disableUltraIdentityResolution: true },
+        retryCount
+      )
+    }
     if (response.status === 429 && options.failFastOnRateLimit) {
       // Every sleep below is served while still holding the caller's image-lane
       // slot, which on a 2-wide lane parks half the run on a frame that is

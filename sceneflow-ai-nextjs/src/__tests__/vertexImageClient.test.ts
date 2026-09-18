@@ -10,6 +10,8 @@ import {
   usesProImageReferenceLayout,
   generateVertexGeminiImage,
   PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL,
+  PRO_IDENTITY_MEDIA_RESOLUTION_LEVEL,
+  isIdentityReferencePartName,
 } from '@/lib/vertexai/vertexImageClient'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 
@@ -282,7 +284,10 @@ function requestBodyFromFetch(fetchMock: ReturnType<typeof vi.fn>) {
   const init = fetchMock.mock.calls[0]?.[1] as { body: string }
   return JSON.parse(init.body) as {
     contents: [{ parts: Array<Record<string, unknown>> }]
-    generationConfig: { imageConfig?: { aspectRatio?: string; imageSize?: string } }
+    generationConfig: {
+      imageConfig?: { aspectRatio?: string; imageSize?: string }
+      mediaResolution?: string
+    }
   }
 }
 
@@ -366,6 +371,113 @@ describe('generateVertexGeminiImage request shape', () => {
       aspectRatio: '16:9',
       imageSize: '2K',
     })
+    expect(body.generationConfig.mediaResolution).toBe(PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL)
+  })
+
+  it('stamps ULTRA_HIGH on Pro identity plates and HIGH on wardrobe/prop/location', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(imageResponse())
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generateVertexGeminiImage({
+      prompt: 'SCENE PROMPT',
+      modelTier: 'designer',
+      referenceImages: [
+        {
+          base64Image: 'aaa',
+          mimeType: 'image/png',
+          name: 'Reference image 1 — IDENTITY of person [1] (Piper Hayes)',
+        },
+        {
+          base64Image: 'bbb',
+          mimeType: 'image/png',
+          name: 'Reference image 2 — WARDROBE of person [1] (Piper Hayes) — full-body outfit',
+        },
+        {
+          base64Image: 'ccc',
+          mimeType: 'image/png',
+          name: 'Reference image 3 — PROP prop [3] (Zinc workbench)',
+        },
+      ],
+    })
+
+    const parts = requestBodyFromFetch(fetchMock).contents[0].parts
+    expect(isIdentityReferencePartName('Reference image 1 — IDENTITY of person [1] (Piper Hayes)')).toBe(
+      true
+    )
+    expect(isIdentityReferencePartName('Identity reference: Char_Piper_Hayes')).toBe(true)
+    expect(
+      isIdentityReferencePartName(
+        'Reference image 2 — WARDROBE of person [1] (Piper Hayes) — full-body outfit'
+      )
+    ).toBe(false)
+    expect(parts[1]).toMatchObject({
+      mediaResolution: { level: PRO_IDENTITY_MEDIA_RESOLUTION_LEVEL },
+    })
+    expect(parts[3]).toMatchObject({
+      mediaResolution: { level: PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL },
+    })
+    expect(parts[5]).toMatchObject({
+      mediaResolution: { level: PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL },
+    })
+  })
+
+  it('retries Pro identity plates at HIGH when ULTRA_HIGH is rejected', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response('Request contains an invalid argument: MEDIA_RESOLUTION_ULTRA_HIGH', {
+          status: 400,
+        })
+      )
+      .mockResolvedValueOnce(imageResponse())
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generateVertexGeminiImage({
+      prompt: 'SCENE PROMPT',
+      modelTier: 'designer',
+      referenceImages: [
+        {
+          base64Image: 'aaa',
+          mimeType: 'image/png',
+          name: 'Reference image 1 — IDENTITY of person [1] (Piper Hayes)',
+        },
+      ],
+    })
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    const first = JSON.parse((fetchMock.mock.calls[0]?.[1] as { body: string }).body)
+    const second = JSON.parse((fetchMock.mock.calls[1]?.[1] as { body: string }).body)
+    expect(first.contents[0].parts[1].mediaResolution.level).toBe(PRO_IDENTITY_MEDIA_RESOLUTION_LEVEL)
+    expect(second.contents[0].parts[1].mediaResolution.level).toBe(PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL)
+  })
+
+  it('logs IMAGE tokens per ref and warns when Pro stays at 560', async () => {
+    const warn = vi.spyOn(console, 'warn')
+    const log = vi.spyOn(console, 'log')
+    const fetchMock = vi.fn().mockResolvedValue(
+      imageResponse({
+        usageMetadata: {
+          promptTokensDetails: [{ modality: 'IMAGE', tokenCount: 2240 }],
+        },
+      })
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generateVertexGeminiImage({
+      prompt: 'SCENE PROMPT',
+      modelTier: 'designer',
+      referenceImages: [
+        { base64Image: 'a', mimeType: 'image/jpeg', name: 'Reference image 1 — IDENTITY of person [1]' },
+        { base64Image: 'b', mimeType: 'image/jpeg', name: 'wardrobe' },
+        { base64Image: 'c', mimeType: 'image/jpeg', name: 'prop' },
+        { base64Image: 'd', mimeType: 'image/jpeg', name: 'location' },
+      ],
+    })
+
+    expect(log.mock.calls.some((call) => String(call[0]).includes('perRef=560'))).toBe(true)
+    expect(
+      warn.mock.calls.some((call) => String(call[0]).includes('Pro IMAGE token density 560/ref'))
+    ).toBe(true)
   })
 
   it('returns the last non-thought image when Pro emits thought drafts', async () => {
@@ -418,5 +530,26 @@ describe('generateVertexGeminiImage request shape', () => {
     })
 
     expect(warn.mock.calls.some((call) => String(call[0]).includes('0 IMAGE tokens'))).toBe(true)
+  })
+})
+
+describe('vertexImageClient bundle isolation', () => {
+  it('does not import sharp or composeIdentityWardrobeDiptych', () => {
+    const src = readFileSync(
+      path.join(process.cwd(), 'src/lib/vertexai/vertexImageClient.ts'),
+      'utf8'
+    )
+    expect(src).not.toContain('composeIdentityWardrobeDiptych')
+    expect(src).not.toMatch(/from ['"]sharp['"]/)
+    expect(src).toContain("from '@/lib/vertexai/identityReferencePartName'")
+  })
+
+  it('generate-image crops identity plates before Vertex so Pro stills keep the CU', () => {
+    const src = readFileSync(
+      path.join(process.cwd(), 'src/app/api/scene/generate-image/route.ts'),
+      'utf8'
+    )
+    expect(src).toContain('cropIdentityReferenceImagesForPro')
+    expect(src).toContain('vertexReferenceImages')
   })
 })

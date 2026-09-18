@@ -39,6 +39,7 @@ import {
 import {
   composeIdentityWardrobeDiptych,
   composeIdentityWardrobePipFromDiptychUrl,
+  cropIdentityReferenceImagesForPro,
 } from '@/lib/character/composeIdentityWardrobeDiptych'
 import { sanitizeBeatStillPrompt } from '@/lib/imagen/sanitizeBeatStillPrompt'
 import {
@@ -991,11 +992,15 @@ Render this scene in ${selectedStyle.name} style.`
         })
         startImageDataUrl = klingResult.imageBase64
       } else {
+        const studioReferenceImages =
+          modelTier !== 'eco' && allReferenceImages.length > 0
+            ? await cropIdentityReferenceImagesForPro(allReferenceImages)
+            : allReferenceImages
         const result = await generateImageWithGeminiStudio({
           prompt: studioPrompt,
           aspectRatio: aspectRatio as '16:9' | '9:16' | '1:1',
           imageSize: modelTier === 'eco' ? '1K' : '2K',
-          referenceImages: allReferenceImages.length > 0 ? allReferenceImages : undefined,
+          referenceImages: studioReferenceImages.length > 0 ? studioReferenceImages : undefined,
           modelTier,
           thinkingLevel,
           negativePrompt: mergedNegativePrompt

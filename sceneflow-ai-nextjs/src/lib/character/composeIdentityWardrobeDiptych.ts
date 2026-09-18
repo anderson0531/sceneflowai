@@ -8,10 +8,13 @@
  *
  * Isolated from client-safe still-prompt modules: this file imports `sharp`
  * and fetches Blob URLs, which must not enter the browser bundle.
+ * `vertexImageClient` must not import this module — sharp native binaries
+ * push video functions such as generate-continuous over Vercel's 250mb limit.
  */
 
 import sharp from 'sharp'
 import { fetchReferenceImageAsBase64 } from '@/lib/storage/fetchReferenceImage'
+import { isIdentityReferencePartName } from '@/lib/vertexai/identityReferencePartName'
 
 export const COMBINED_CHARACTER_REF_WIDTH = 1920
 export const COMBINED_CHARACTER_REF_HEIGHT = 1080
@@ -75,6 +78,191 @@ export function isSixteenByNine(width: number, height: number): boolean {
   if (width < 8 || height < 8) return false
   const ratio = width / height
   return ratio > 1.6 && ratio < 1.95
+}
+
+/** Edge length of the 1:1 identity CU Pro receives, so 560 visual tokens land on the face. */
+export const IDENTITY_PRO_CU_SIZE = 1024
+
+const PIP_RING_CREAM = { r: 244, g: 241, b: 234 }
+
+export function identityPlateNeedsFaceCrop(width: number, height: number): boolean {
+  if (width < 16 || height < 16) return false
+  return width / height > 1.15
+}
+
+export function pipBadgeExtractRegion(
+  width: number,
+  height: number
+): { left: number; top: number; width: number; height: number } | null {
+  if (!isSixteenByNine(width, height)) return null
+  const scale = Math.min(width / COMBINED_CHARACTER_REF_WIDTH, height / COMBINED_CHARACTER_REF_HEIGHT)
+  const diameter = Math.round(FACE_BADGE_DIAMETER * scale)
+  const ring = Math.round(FACE_BADGE_RING_PX * scale)
+  const padding = Math.round(FACE_BADGE_PADDING_PX * scale)
+  const outer = diameter + ring * 2
+  const left = width - padding - outer + ring
+  const top = padding + ring
+  if (left < 0 || top < 0 || left + diameter > width || top + diameter > height) return null
+  if (diameter < 16) return null
+  return { left, top, width: diameter, height: diameter }
+}
+
+function isNearCream(r: number, g: number, b: number): boolean {
+  return (
+    Math.abs(r - PIP_RING_CREAM.r) < 40 &&
+    Math.abs(g - PIP_RING_CREAM.g) < 40 &&
+    Math.abs(b - PIP_RING_CREAM.b) < 40
+  )
+}
+
+/**
+ * True when the plate is our 16:9 full-body canvas with a cream-ringed face badge
+ * in the top-right — leftover PiP cards that waste Pro's 560-token tile on wardrobe.
+ */
+export async function looksLikeComposedPipCard(buffer: Buffer): Promise<boolean> {
+  const meta = await sharp(buffer).metadata()
+  const width = meta.width ?? 0
+  const height = meta.height ?? 0
+  if (width !== COMBINED_CHARACTER_REF_WIDTH || height !== COMBINED_CHARACTER_REF_HEIGHT) {
+    return false
+  }
+  const diameter = FACE_BADGE_DIAMETER
+  const ring = FACE_BADGE_RING_PX
+  const outer = diameter + ring * 2
+  const left = COMBINED_CHARACTER_REF_WIDTH - FACE_BADGE_PADDING_PX - outer
+  const top = FACE_BADGE_PADDING_PX
+  const cx = left + Math.floor(outer / 2)
+  const samples: Array<[number, number]> = [
+    [left + 2, top + Math.floor(outer / 2)],
+    [cx, top + 2],
+    [left + outer - 3, top + Math.floor(outer / 2)],
+  ]
+  const { data, info } = await sharp(buffer)
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true })
+  let cream = 0
+  for (const [x, y] of samples) {
+    const i = (y * info.width + x) * info.channels
+    if (isNearCream(data[i], data[i + 1], data[i + 2])) cream += 1
+  }
+  return cream >= 2
+}
+
+export type IdentityProCropReason = 'pip-badge' | 'wide-portrait'
+
+/**
+ * Spend Pro's 560 visual tokens on a face CU.
+ *
+ * Square / 3:4 / 9:16 headshots already fill the tile — pass through.
+ * Leftover PiP badges are extracted from the cream-ringed corner.
+ * Other wide plates get a centre 1:1 cover crop (cinematic portraits).
+ */
+export async function cropIdentityPlateForPro(buffer: Buffer): Promise<{
+  buffer: Buffer
+  cropped: boolean
+  reason?: IdentityProCropReason
+  width: number
+  height: number
+}> {
+  const meta = await sharp(buffer).metadata()
+  const width = meta.width ?? 0
+  const height = meta.height ?? 0
+  if (!identityPlateNeedsFaceCrop(width, height)) {
+    return { buffer, cropped: false, width, height }
+  }
+
+  const pipRegion = pipBadgeExtractRegion(width, height)
+  if (pipRegion && (await looksLikeComposedPipCard(buffer))) {
+    const cropped = await sharp(buffer)
+      .extract(pipRegion)
+      .resize(IDENTITY_PRO_CU_SIZE, IDENTITY_PRO_CU_SIZE, {
+        fit: 'cover',
+        position: 'centre',
+      })
+      .jpeg({ quality: 92 })
+      .toBuffer()
+    return {
+      buffer: cropped,
+      cropped: true,
+      reason: 'pip-badge',
+      width: IDENTITY_PRO_CU_SIZE,
+      height: IDENTITY_PRO_CU_SIZE,
+    }
+  }
+
+  const cropped = await sharp(buffer)
+    .resize(IDENTITY_PRO_CU_SIZE, IDENTITY_PRO_CU_SIZE, {
+      fit: 'cover',
+      position: 'centre',
+    })
+    .jpeg({ quality: 92 })
+    .toBuffer()
+  return {
+    buffer: cropped,
+    cropped: true,
+    reason: 'wide-portrait',
+    width: IDENTITY_PRO_CU_SIZE,
+    height: IDENTITY_PRO_CU_SIZE,
+  }
+}
+
+export type CroppableIdentityReference = {
+  name?: string
+  imageUrl?: string
+  base64Image?: string
+  mimeType?: string
+}
+
+/**
+ * Crop IDENTITY-named plates to a face CU before Pro attach.
+ * Wardrobe / prop / location slots pass through. Call from stills routes
+ * that already import this module — never from vertexImageClient.
+ */
+export async function cropIdentityReferenceImagesForPro<T extends CroppableIdentityReference>(
+  refs: T[]
+): Promise<T[]> {
+  const croppedRefs: T[] = []
+  for (const ref of refs) {
+    if (!isIdentityReferencePartName(ref.name)) {
+      croppedRefs.push(ref)
+      continue
+    }
+    try {
+      let base64Data = ref.base64Image
+      let mimeType = ref.mimeType || 'image/jpeg'
+      if (!base64Data && ref.imageUrl) {
+        const downloaded = await fetchReferenceImageAsBase64(ref.imageUrl, { label: ref.name })
+        base64Data = downloaded.base64
+        mimeType = downloaded.mimeType
+      }
+      if (!base64Data) {
+        croppedRefs.push(ref)
+        continue
+      }
+      if (base64Data.includes(',')) base64Data = base64Data.split(',')[1] || base64Data
+      const cropped = await cropIdentityPlateForPro(Buffer.from(base64Data, 'base64'))
+      if (cropped.cropped) {
+        console.log(
+          `[Identity CU] Cropped identity plate to 1:1 CU (reason=${cropped.reason}, name=${ref.name})`
+        )
+        croppedRefs.push({
+          ...ref,
+          base64Image: cropped.buffer.toString('base64'),
+          mimeType: 'image/jpeg',
+        })
+        continue
+      }
+      croppedRefs.push(
+        ref.base64Image ? ref : { ...ref, base64Image: base64Data, mimeType }
+      )
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error)
+      console.warn(`[Identity CU] Identity CU crop skipped: ${reason}`)
+      croppedRefs.push(ref)
+    }
+  }
+  return croppedRefs
 }
 
 function columnMean(

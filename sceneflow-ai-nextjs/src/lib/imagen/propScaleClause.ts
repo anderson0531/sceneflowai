@@ -12,6 +12,20 @@ const HANDHELD_PATTERN = /\bhandheld\b/i
 export const PROP_SCALE_GENERIC =
   'match appearance from the still; keep handheld / real-world scale relative to the character; do not enlarge to fill the frame'
 
+export const PROP_SCALE_FURNITURE =
+  'match appearance from the still; keep furniture / set-piece scale relative to the character; do not enlarge to fill the frame'
+
+const FURNITURE_PATTERN =
+  /\b(workbench|work-bench|work bench|table|desk|bench|counter|countertop|shelf|shelves|cabinet|dresser|bed|sofa|couch|chair|stool|crate|trunk|chest)\b/i
+
+export function isFurnitureProp(
+  description?: string | null,
+  name?: string | null
+): boolean {
+  const text = [description, name].filter(Boolean).join(' ')
+  return FURNITURE_PATTERN.test(text)
+}
+
 export function extractPropScalePhrase(
   description?: string | null,
   name?: string | null
@@ -41,6 +55,9 @@ export function propScaleClause(
   name?: string | null
 ): string {
   const phrase = extractPropScalePhrase(description, name)
+  if (isFurnitureProp(description, name)) {
+    return PROP_SCALE_FURNITURE
+  }
   if (phrase && phrase !== 'handheld') {
     return `match appearance from the still; keep the described ${phrase} size relative to the character; do not enlarge to fill the frame`
   }

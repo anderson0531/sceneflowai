@@ -144,7 +144,10 @@ import {
   EXPRESSION_OVERRIDE_INSTRUCTION,
   resolveCharacterReferencePair,
 } from '@/lib/character/characterReferenceAssembly'
-import { expandLeftoverDiptychSheetsIntoDualSlots } from '@/lib/character/composeIdentityWardrobeDiptych'
+import {
+  cropIdentityReferenceImagesForPro,
+  expandLeftoverDiptychSheetsIntoDualSlots,
+} from '@/lib/character/composeIdentityWardrobeDiptych'
 import {
   buildCombinedCharacterConsumptionLine,
   combinedCharacterReferenceInstruction,
@@ -1758,7 +1761,24 @@ export async function POST(req: NextRequest) {
       ) {
         keyFeatures.push(ethnicityFeature)
       }
-      
+
+      if (keyFeatures.length === 0) {
+        const visionLandmarks = buildIdentityTraitsClause({
+          visionDescription: char.visionDescription,
+          appearanceDescription: char.appearanceDescription,
+          hairStyle: char.hairStyle,
+          hairColor: char.hairColor,
+        })
+        if (visionLandmarks) {
+          keyFeatures.push(
+            ...visionLandmarks
+              .split(',')
+              .map((part: string) => part.trim())
+              .filter(Boolean)
+          )
+        }
+      }
+
       console.log(`[Scene Image] Extracted key features for ${char.name}:`, keyFeatures)
 
       const appearanceSource =
@@ -3089,9 +3109,11 @@ export async function POST(req: NextRequest) {
             remapReferenceNumbersInPrompt(scenePromptBody, indexMap),
             libraryTokenRewrites
           )
+          const includeAttachedIdentityTraits = effectiveImageTier !== 'eco'
           const stillRefs = stillRefsFromAttachedImages({
             selected: selectedReferenceImages,
             characterReferences,
+            includeAttachedIdentityTraits,
           })
           const structuredStillRaw = isBeatFrame
             ? assembleStructuredStillPrompt({
@@ -3108,12 +3130,15 @@ export async function POST(req: NextRequest) {
                 exclusions: finalNegativePrompt,
                 shotType: effectiveShotType,
                 allowTypography,
+                includeAttachedIdentityTraits,
               })
             : // Reference-first binding leaves `person [N]` as the only mention of
               // the subject. The legend binds that token to the attached images;
-              // it must not restate face or outfit in prose.
+              // Pro adds short facial landmarks that must match Reference image 1.
               joinPromptBlocks(
-                formatStillReferencesLegend(stillRefs, effectiveShotType),
+                formatStillReferencesLegend(stillRefs, effectiveShotType, {
+                  includeAttachedIdentityTraits,
+                }),
                 remappedOptimizedPrompt
               )
           const structuredStill = isBeatFrame
@@ -3311,11 +3336,15 @@ export async function POST(req: NextRequest) {
               : geminiPrompt
             const vertexPrompt = sanitizedGeminiPrompt
 
+            const vertexReferenceImages =
+              effectiveImageTier !== 'eco'
+                ? await cropIdentityReferenceImagesForPro(allReferenceImages)
+                : allReferenceImages
             const vertexResult = await generateImageWithVertexKlingFallback({
               prompt: vertexPrompt,
               aspectRatio: '16:9',
               imageSize: effectiveImageSize,
-              referenceImages: allReferenceImages,
+              referenceImages: vertexReferenceImages,
               ...(isBeatFrame ? {} : { negativePrompt: finalNegativePrompt }),
               ...(effectiveImageTier ? { modelTier: effectiveImageTier } : {}),
               failFastOnRateLimit: !!skipLikenessValidation,

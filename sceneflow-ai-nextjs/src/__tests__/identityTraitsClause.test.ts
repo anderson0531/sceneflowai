@@ -160,6 +160,32 @@ describe('identity traits in the [REFERENCES] legend', () => {
     expect(formatStillReferencesLegend(refs)).not.toMatch(/skin|hair|beard|50s|overcoat/i)
   })
 
+  it('adds Pro facial landmarks that must match the identity plate', () => {
+    const refs = stillRefsFromAttachedImages({
+      selected: [
+        { sendIndex: 1, characterName: 'Gideon Croft', refRole: 'identity' },
+        { sendIndex: 2, characterName: 'Gideon Croft', refRole: 'wardrobe' },
+      ],
+      characterReferences: [
+        {
+          name: 'Gideon Croft',
+          promptToken: 'person [1]',
+          subjectOrdinal: 1,
+          visionDescription: GIDEON_VISION,
+          wardrobeDescription: 'charcoal wool overcoat, scuffed boots',
+        },
+      ],
+      includeAttachedIdentityTraits: true,
+    })
+
+    const legend = formatStillReferencesLegend(refs, undefined, {
+      includeAttachedIdentityTraits: true,
+    })
+    expect(legend).toContain('facial landmarks from Reference image 1')
+    expect(legend).toMatch(/medium-brown skin/)
+    expect(legend).not.toMatch(/overcoat/i)
+  })
+
   it('leaves prop and location lines without identity traits', () => {
     const legend = formatStillReferencesLegend([
       { kind: 'prop', token: 'prop [2]', name: 'Brass Sextant', roleLabel: 'library prop' },
