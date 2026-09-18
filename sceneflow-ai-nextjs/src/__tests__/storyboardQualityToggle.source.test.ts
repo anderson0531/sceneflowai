@@ -128,6 +128,21 @@ describe('Standard/Creative Frames toolbar default', () => {
     expect(modeIdx).toBeGreaterThan(draftIdx)
   })
 
+  it('declares session mode state before handleGenerateSegmentFrames', () => {
+    const page = readSource(PAGE)
+    const qualityIdx = page.indexOf(
+      "const [frameGenerationQuality, setFrameGenerationQuality] = useState<StoryboardQuality>('draft')"
+    )
+    const modeIdx = page.indexOf(
+      "const [frameGenerationMode, setFrameGenerationMode] = useState<StillGenerationMode>('standard')"
+    )
+    const handlerIdx = page.indexOf('const handleGenerateSegmentFrames')
+    expect(qualityIdx).toBeGreaterThan(-1)
+    expect(modeIdx).toBeGreaterThan(-1)
+    expect(handlerIdx).toBeGreaterThan(qualityIdx)
+    expect(handlerIdx).toBeGreaterThan(modeIdx)
+  })
+
   it('keeps session mode in page state and does not persist it', () => {
     const page = readSource(PAGE)
     expect(page).toContain(

@@ -101,15 +101,14 @@ describe('nested 429 retry de-amplification', () => {
 })
 
 describe('express beat likeness gate', () => {
-  it('validates talent beats with identity refs even when skipLikenessValidation is set', () => {
+  it('honors skipLikenessValidation and does not fail Express stills on Vision timeout', () => {
     const src = readSource('src/app/api/scene/generate-image/route.ts')
-    expect(src).toContain('expressBeatLikenessEligible')
     expect(src).toContain('shouldValidateCharacterLikeness')
-    expect(src).toContain('CHARACTER_LIKENESS_MISMATCH_MESSAGE')
-    expect(src).toContain('failing uncharged without a second Vertex still')
-    expect(src).toContain('shouldFailExpressBeatLikeness')
-    expect(src).toContain('primaryLikenessUnscored')
     expect(src).toContain('!skipLikenessValidation')
+    expect(src).not.toContain('expressBeatLikenessEligible')
+    expect(src).not.toContain('shouldFailExpressBeatLikeness')
+    expect(src).not.toContain('failing uncharged without a second Vertex still')
+    expect(src).not.toContain('primaryLikenessUnscored')
     expect(src).toContain('passedLookbook')
   })
 

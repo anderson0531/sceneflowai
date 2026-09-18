@@ -80,10 +80,6 @@ import {
   type ProjectLookbook,
 } from '@/lib/intelligence/project-lookbook'
 import {
-  CHARACTER_LIKENESS_MISMATCH_CODE,
-  CHARACTER_LIKENESS_MISMATCH_MESSAGE,
-} from '@/lib/sceneGeneration/expressImageErrors'
-import {
   composePersistedBeatStillPrompt,
   TITLE_BEAT_ACTION_LEAD_IN,
   stillAllowsTypography,
@@ -113,7 +109,6 @@ import { sanitizeBeatStillPrompt } from '@/lib/imagen/sanitizeBeatStillPrompt'
 import {
   resolveFeaturedCharactersForValidation,
   isGenuineLikenessFailure,
-  shouldFailExpressBeatLikeness,
 } from '@/lib/scene/sceneImageFeaturedValidation'
 import {
   collectEntityMaskPhrases,
@@ -2338,15 +2333,6 @@ export async function POST(req: NextRequest) {
     const charactersWithImages = characterObjects.filter((c: any) => c.referenceImage)
     const charactersWithoutImages = characterObjects.filter((c: any) => !c.referenceImage)
 
-    // Express passes skipLikenessValidation for throughput, but a talent beat with
-    // identity refs still needs a likeness gate — that is where credits were leaking.
-    const expressBeatLikenessEligible =
-      skipLikenessValidation &&
-      isBeatFrame &&
-      !effectiveExcludeCharacters &&
-      beatKindForIntelligence !== 'narration' &&
-      charactersWithImages.length > 0
-    
     console.log(`[Scene Image] Character reference status:`, {
       totalCharacters: characterObjects.length,
       withImages: charactersWithImages.length,
@@ -2430,7 +2416,6 @@ export async function POST(req: NextRequest) {
     
     let imageUrl = ''
     let validation: any = null
-    let primaryLikenessUnscored = false
     let likenessRound = 0
     let shouldLikenessAutoRetry = false
     /** Measured cost of round 0, used to decide whether a retry can finish. */
@@ -3523,7 +3508,6 @@ export async function POST(req: NextRequest) {
 
     // Validate character likeness (optional - informational only; skipped during Express batch)
     validation = null
-    primaryLikenessUnscored = false
     // On a retry round the route is already deep into its budget, and an
     // unvalidated retry is discarded in favour of round 0 rather than risking
     // the function being killed mid-call.
@@ -3549,7 +3533,7 @@ export async function POST(req: NextRequest) {
     const shouldValidateCharacterLikeness =
       characterObjects.length > 0 &&
       hasBudgetForValidation &&
-      (!skipLikenessValidation || expressBeatLikenessEligible)
+      !skipLikenessValidation
 
     if (shouldValidateCharacterLikeness) {
       console.log('[Scene Image] Validating character likeness...')
@@ -3624,7 +3608,6 @@ export async function POST(req: NextRequest) {
             )
           }
         } catch (error) {
-          primaryLikenessUnscored = true
           console.error('[Scene Image] Validation failed:', error)
         }
       }
@@ -3700,28 +3683,6 @@ export async function POST(req: NextRequest) {
 
     shouldLikenessAutoRetry = false
     } while (shouldLikenessAutoRetry)
-
-    if (
-      shouldFailExpressBeatLikeness({
-        eligible: expressBeatLikenessEligible,
-        validation,
-        primaryValidationError: primaryLikenessUnscored,
-      })
-    ) {
-      console.warn(
-        primaryLikenessUnscored
-          ? '[Scene Image] Express beat likeness unscored (timeout/error) — failing uncharged without a second Vertex still'
-          : '[Scene Image] Express beat likeness failed — failing uncharged without a second Vertex still'
-      )
-      return NextResponse.json(
-        {
-          success: false,
-          error: CHARACTER_LIKENESS_MISMATCH_MESSAGE,
-          code: CHARACTER_LIKENESS_MISMATCH_CODE,
-        },
-        { status: 422 }
-      )
-    }
 
     // Calculate workflow sync hashes for tracking staleness
     const basedOnDirectionHash = sceneData ? generateDirectionHash(sceneData) : undefined
