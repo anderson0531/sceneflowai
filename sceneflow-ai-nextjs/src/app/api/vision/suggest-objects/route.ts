@@ -15,6 +15,7 @@ import {
   mergeNewObjectCandidates,
   objectSuggestionsFromUsages,
 } from '@/lib/vision/objectSuggestionMerge'
+import { withObjectReferenceInstruction } from '@/lib/vision/objectReferencePrompts'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -37,19 +38,19 @@ interface SuggestObjectsRequest {
 /**
  * Object suggestion prompts optimized for clean reference image generation
  */
-function buildObjectPrompt(name: string, category: ObjectCategory, description: string): string {
+function buildObjectPrompt(_name: string, category: ObjectCategory, description: string): string {
   const categoryStyles: Record<ObjectCategory, string> = {
-    'prop': 'Product photography style, centered composition, soft shadows, clean white or neutral gray background',
-    'vehicle': 'Automotive photography style, 3/4 angle view, studio lighting, clean gradient background',
-    'set-piece': 'Architectural photography style, clean composition, professional lighting, minimal background',
-    'costume': 'Fashion photography style, on mannequin or flat lay, clean white background, detailed fabric texture',
-    'technology': 'Tech product photography style, sleek presentation, subtle reflections, dark gradient or white background',
-    'other': 'Professional product photography, centered subject, clean studio lighting, neutral background'
+    prop: 'Detailed texture visible, plain studio backdrop',
+    vehicle: '3/4 angle, entire vehicle visible, plain studio backdrop',
+    'set-piece': 'Architectural detail, isolated subject, minimal background',
+    costume: 'On dress form or flat lay, full garment visible, plain studio backdrop',
+    technology: 'Entire device visible, plain studio backdrop',
+    other: 'Isolated subject, plain studio backdrop',
   }
 
   const baseStyle = categoryStyles[category] || categoryStyles.other
 
-  return `${description}. ${baseStyle}. High resolution, sharp focus, professional reference image for film production. Show true real-world scale: handheld items stay handheld (include inches when known); set-pieces stay set-piece size. Do not crop so the object fills the frame as if it were larger.`
+  return withObjectReferenceInstruction(`${description}. ${baseStyle}`)
 }
 
 /**

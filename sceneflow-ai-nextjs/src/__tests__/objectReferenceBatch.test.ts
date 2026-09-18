@@ -26,6 +26,7 @@ vi.mock('@/i18n/server/requestLocale', () => ({
 
 import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { generateObjectReferenceImage } from '@/lib/vision/referenceExpress/generateReferenceImage'
+import { OBJECT_REFERENCE_NEGATIVE_PROMPT, OBJECT_REFERENCE_PURPOSE } from '@/lib/vision/objectReferencePrompts'
 import { CreditService } from '@/services/CreditService'
 import {
   OBJECT_BATCH_CONCURRENCY,
@@ -87,6 +88,18 @@ describe('object reference images generate on the flash tier', () => {
     const options = mockGenerateImage.mock.calls[0]![0]!
     expect(options.modelTier).toBe('eco')
     expect(options.referenceImages).toHaveLength(1)
+  })
+
+  it('sends an isolated reference plate, not a staged product-hero scene', async () => {
+    await generateObjectReferenceImage(input)
+
+    const options = mockGenerateImage.mock.calls[0]![0]!
+    expect(options.prompt).toContain(OBJECT_REFERENCE_PURPOSE)
+    expect(options.prompt).toMatch(/isolated subject only/i)
+    expect(options.prompt).toMatch(/ruler or height\/width marks/i)
+    expect(options.prompt).toMatch(/true real-world scale/i)
+    expect(options.prompt).not.toMatch(/hero prop|museum quality|showroom quality/i)
+    expect(options.negativePrompt).toBe(OBJECT_REFERENCE_NEGATIVE_PROMPT)
   })
 })
 
