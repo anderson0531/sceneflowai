@@ -275,23 +275,45 @@ export interface VertexImageResult {
   policyRefusalRecovered?: boolean
 }
 
-/**
- * Reference images lead, instruction text follows.
- *
- * Google's multimodal formula is [reference images] + [relationship
- * instruction] + [new scenario]. Sending the whole instruction first asked the
- * model to commit to a subject before it had seen the identity it was supposed
- * to reproduce, which is how a frame comes back with the right composition and
- * the wrong person.
- */
-export async function buildMultimodalParts(
-  fullPrompt: string,
-  referenceImages?: VertexReferenceImage[],
-  requireAllReferenceImages?: boolean
-): Promise<Array<{ text: string } | { inlineData: { mimeType: string; data: string } }>> {
-  if (!referenceImages?.length) return [{ text: fullPrompt }]
+/** Flash keeps labeled images-first. Pro uses Google's generate-with-refs shape. */
+export type VertexImageReferenceLayout = 'flash' | 'pro'
 
-  const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = []
+export const PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL = 'MEDIA_RESOLUTION_HIGH' as const
+
+export type VertexTextPart = { text: string }
+
+export type VertexInlineImagePart = {
+  inlineData: { mimeType: string; data: string }
+  mediaResolution?: { level: typeof PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL }
+}
+
+export type VertexMultimodalPart = VertexTextPart | VertexInlineImagePart
+
+export type VertexResponsePart = {
+  text?: string
+  thought?: boolean
+  inlineData?: { data?: string; mimeType?: string }
+  inline_data?: { data?: string; mime_type?: string }
+}
+
+export function usesProImageReferenceLayout(model: string): boolean {
+  return model.includes('pro-image')
+}
+
+export function effectiveImageSizeForModel(
+  model: string,
+  imageSize?: '1K' | '2K' | '4K'
+): '1K' | '2K' | '4K' | undefined {
+  return model.includes('flash-image') ? undefined : imageSize
+}
+
+type AttachedReferenceImage = { mimeType: string; data: string; name?: string }
+
+async function resolveAttachedReferenceImages(
+  referenceImages: VertexReferenceImage[],
+  requireAllReferenceImages?: boolean
+): Promise<AttachedReferenceImage[]> {
+  const attached: AttachedReferenceImage[] = []
 
   for (const ref of referenceImages) {
     let base64Data = ref.base64Image
@@ -312,24 +334,141 @@ export async function buildMultimodalParts(
       continue
     }
     if (base64Data.includes(',')) base64Data = base64Data.split(',')[1] || base64Data
-
-    parts.push({ text: ref.name ? `[${ref.name}]\n` : '' })
-    parts.push({ inlineData: { mimeType, data: base64Data } })
+    attached.push({ mimeType, data: base64Data, name: ref.name })
   }
 
-  const inlineCount = parts.filter((p) => 'inlineData' in p).length
   console.log(
-    `[Vertex Gemini Image] Attached ${inlineCount}/${referenceImages.length} reference image(s)`
+    `[Vertex Gemini Image] Attached ${attached.length}/${referenceImages.length} reference image(s)`
   )
-  if (requireAllReferenceImages && inlineCount < referenceImages.length) {
+  if (requireAllReferenceImages && attached.length < referenceImages.length) {
     throw new Error(
-      `Failed to attach all reference images (${inlineCount}/${referenceImages.length})`
+      `Failed to attach all reference images (${attached.length}/${referenceImages.length})`
     )
   }
 
-  parts.push({ text: fullPrompt })
+  return attached
+}
 
+/**
+ * Flash: labeled images lead, instruction text follows. Prompt-first caused
+ * Flash to commit to a subject before it had seen the identity (right
+ * composition, wrong person).
+ *
+ * Pro: Google's generate-with-refs shape — one text part, then consecutive
+ * unlabeled images at MEDIA_RESOLUTION_HIGH. Interleaved `[label]` parts plus
+ * a complete still script made Pro invent the whole frame from text.
+ */
+export async function buildMultimodalParts(
+  fullPrompt: string,
+  referenceImages?: VertexReferenceImage[],
+  requireAllReferenceImages?: boolean,
+  layout: VertexImageReferenceLayout = 'flash'
+): Promise<VertexMultimodalPart[]> {
+  if (!referenceImages?.length) return [{ text: fullPrompt }]
+
+  const attached = await resolveAttachedReferenceImages(
+    referenceImages,
+    requireAllReferenceImages
+  )
+
+  if (layout === 'pro') {
+    const parts: VertexMultimodalPart[] = [{ text: fullPrompt }]
+    for (const ref of attached) {
+      parts.push({
+        inlineData: { mimeType: ref.mimeType, data: ref.data },
+        mediaResolution: { level: PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL },
+      })
+    }
+    return parts
+  }
+
+  const parts: VertexMultimodalPart[] = []
+  for (const ref of attached) {
+    parts.push({ text: ref.name ? `[${ref.name}]\n` : '' })
+    parts.push({ inlineData: { mimeType: ref.mimeType, data: ref.data } })
+  }
+  parts.push({ text: fullPrompt })
   return parts
+}
+
+/**
+ * Prefer the last non-thought image. Pro thinking can emit interim composition
+ * tests; Google's last thought image is the final render only when no later
+ * non-thought image exists.
+ */
+export function pickGeneratedImageFromParts(parts: VertexResponsePart[]): {
+  imageBase64?: string
+  mimeType: string
+  text?: string
+} {
+  let lastAny: { data: string; mimeType: string } | undefined
+  let lastNonThought: { data: string; mimeType: string } | undefined
+  let text: string | undefined
+
+  for (const part of parts) {
+    const inline = part.inlineData || part.inline_data
+    if (inline?.data) {
+      const image = {
+        data: inline.data,
+        mimeType: inline.mimeType || inline.mime_type || 'image/png',
+      }
+      lastAny = image
+      if (!part.thought) lastNonThought = image
+    } else if (part.text && !part.thought) {
+      text = part.text
+    }
+  }
+
+  const picked = lastNonThought ?? lastAny
+  return {
+    imageBase64: picked?.data,
+    mimeType: picked?.mimeType ?? 'image/png',
+    text,
+  }
+}
+
+export function countPromptImageTokens(usageMetadata: unknown): number | null {
+  if (!usageMetadata || typeof usageMetadata !== 'object') return null
+  const meta = usageMetadata as Record<string, unknown>
+  const details = meta.promptTokensDetails ?? meta.prompt_tokens_details
+  if (!Array.isArray(details)) return null
+
+  let total = 0
+  let found = false
+  for (const entry of details) {
+    if (!entry || typeof entry !== 'object') continue
+    const rec = entry as Record<string, unknown>
+    const modality = String(rec.modality ?? '').toUpperCase()
+    if (modality !== 'IMAGE') continue
+    const count = Number(rec.tokenCount ?? rec.token_count)
+    if (!Number.isFinite(count)) continue
+    found = true
+    total += count
+  }
+  return found ? total : null
+}
+
+function logPromptImageTokenUsage(
+  usageMetadata: unknown,
+  model: string,
+  referenceCount: number
+): void {
+  if (referenceCount <= 0) return
+  const imageTokens = countPromptImageTokens(usageMetadata)
+  if (imageTokens == null) {
+    console.log(
+      `[Vertex Gemini Image] usageMetadata has no IMAGE promptTokensDetails (refs=${referenceCount}, model=${model})`
+    )
+    return
+  }
+  console.log(
+    `[Vertex Gemini Image] Prompt IMAGE tokens: ${imageTokens} (refs=${referenceCount}, model=${model})`
+  )
+  if (imageTokens === 0) {
+    console.warn(
+      `[Vertex Gemini Image] 0 IMAGE tokens with ${referenceCount} reference(s) attached — Vertex dropped the parts`
+    )
+  }
 }
 
 /**
@@ -389,9 +528,10 @@ export async function generateVertexGeminiImage(
   const parts = await buildMultimodalParts(
     fullPrompt,
     options.referenceImages,
-    options.requireAllReferenceImages
+    options.requireAllReferenceImages,
+    usesProImageReferenceLayout(model) ? 'pro' : 'flash'
   )
-  const effectiveImageSize = model.includes('flash-image') ? undefined : options.imageSize
+  const effectiveImageSize = effectiveImageSizeForModel(model, options.imageSize)
 
   const requestBody = {
     contents: [{ role: 'user', parts }],
@@ -548,6 +688,11 @@ export async function generateVertexGeminiImage(
   if (model.includes('pro-image')) proModelRateLimitedUntil = null
 
   const data = await response.json()
+  logPromptImageTokenUsage(
+    data.usageMetadata ?? data.usage_metadata,
+    model,
+    options.referenceImages?.length ?? 0
+  )
   if (data.promptFeedback?.blockReason) {
     const escalated = escalateEcoRefusalToPro(
       model,
@@ -573,20 +718,10 @@ export async function generateVertexGeminiImage(
   }
 
   const candidate = candidates[0]
-  const content = candidate.content
-  let imageBase64: string | undefined
-  let imageMimeType = 'image/png'
-  let responseText: string | undefined
-
-  for (const part of content?.parts || []) {
-    const inline = part.inlineData || part.inline_data
-    if (inline?.data) {
-      imageBase64 = inline.data
-      imageMimeType = inline.mimeType || inline.mime_type || 'image/png'
-    } else if (part.text && !part.thought) {
-      responseText = part.text
-    }
-  }
+  const picked = pickGeneratedImageFromParts(candidate.content?.parts || [])
+  const imageBase64 = picked.imageBase64
+  const imageMimeType = picked.mimeType
+  const responseText = picked.text
 
   if (!imageBase64) {
     const finishReason = String(
