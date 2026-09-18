@@ -8,10 +8,16 @@
 
 import {
   BEAT_FRAME_CANDID_ACTION_CONSTRAINT,
+  BEAT_FRAME_CANDID_ACTION_CONSTRAINT_FACE_CLOSE_UP,
   LEGACY_BEAT_FRAME_CANDID_ACTION_CONSTRAINTS,
+  beatFrameCandidActionConstraint,
   isWideEstablishingShotType,
 } from '@/lib/character/characterReferenceAssembly'
-import { resolveStillShotClass, isMediumCoverageLocationShot } from '@/lib/imagen/stillFramingNormalize'
+import {
+  isFaceCloseUpShot,
+  resolveStillShotClass,
+  isMediumCoverageLocationShot,
+} from '@/lib/imagen/stillFramingNormalize'
 import { buildIdentityPromptToken } from '@/lib/imagen/promptOptimizer'
 import {
   mentionsWord,
@@ -82,6 +88,16 @@ export const STILL_TASK_INSTANT_LINES = [
 export const STILL_TASK_FULL_BODY_LINES = [
   'Each subject has one head, two arms and two legs, each in exactly one settled pose, with anatomically distinct silhouettes.',
   'A body in contact with a surface rests on it with its full weight, in contact along its length, with a matching contact shadow.',
+] as const
+
+/**
+ * Face Close-Up occupancy. Full-body TASK lines pull the camera back toward
+ * the standing figure on the identity/wardrobe card (production 2026-09-18,
+ * Gideon CU with chin tucked). Visible head, shoulders, and hands only.
+ */
+export const STILL_TASK_FACE_CLOSE_UP_LINES = [
+  'The visible face and upper body match the identity reference — same bone structure, skin, and hair, including when the head is bowed or the eyes are down.',
+  'Visible hands keep one settled pose. Do not pull back to a standing full-length figure from the wardrobe or identity card.',
 ] as const
 
 export const STILL_TASK_INSERT_FRAMING_LINE =
@@ -168,7 +184,9 @@ export function stillTaskLines(
       lines.push(STILL_TASK_OBJECT_INSERT_LINE)
     } else if (shot.isInsertOrEcu) {
       lines.push(STILL_TASK_INSERT_FRAMING_LINE)
-    } else {
+    } else if (!emptyCast && isFaceCloseUpShot(shot.shotHint || shotType)) {
+      lines.push(...STILL_TASK_FACE_CLOSE_UP_LINES)
+    } else if (!emptyCast) {
       lines.push(...STILL_TASK_FULL_BODY_LINES)
     }
   }
@@ -371,6 +389,7 @@ const STILL_BOILERPLATE_LINES = [
   STILL_WIDE_SPATIAL_LINE,
   ...LEGACY_STILL_PURPOSE_LINES,
   BEAT_FRAME_CANDID_ACTION_CONSTRAINT,
+  BEAT_FRAME_CANDID_ACTION_CONSTRAINT_FACE_CLOSE_UP,
   ...LEGACY_BEAT_FRAME_CANDID_ACTION_CONSTRAINTS,
   ...STILL_TASK_LINES,
   STILL_TASK_TOKEN_LINE,
@@ -383,6 +402,7 @@ const STILL_BOILERPLATE_LINES = [
   STILL_TASK_LOCATION_ENVIRONMENT_LINE,
   STILL_TASK_PROP_TOKEN_LINE,
   STILL_TASK_PROP_SCALE_LINE,
+  ...STILL_TASK_FACE_CLOSE_UP_LINES,
   ...LEGACY_STILL_TASK_LINES,
 ]
 
@@ -1292,7 +1312,7 @@ export function assembleStructuredStillPrompt(input: {
     stillLines.push(STILL_WIDE_SPATIAL_LINE)
   }
   if (input.includeCandid) {
-    stillLines.push(BEAT_FRAME_CANDID_ACTION_CONSTRAINT)
+    stillLines.push(beatFrameCandidActionConstraint(shot.shotHint || input.shotType))
   }
   if (actionFraming) {
     stillLines.push(`Action/Framing: ${actionFraming}`)

@@ -273,6 +273,17 @@ export function isInsertOrExtremeCloseUp(shotType?: string | null): boolean {
   return INSERT_OR_ECU_PATTERN.test(shotType ?? '')
 }
 
+/**
+ * Face Close-Up / MCU: a head in frame. Not an insert, ECU, or macro of a
+ * limb or object. Close-Up is a detail shot for location bokeh, but a
+ * film-wide macro lens does not belong on it.
+ */
+export function isFaceCloseUpShot(shotType?: string | null): boolean {
+  if (!shotType?.trim()) return false
+  if (isInsertOrExtremeCloseUp(shotType)) return false
+  return /\b(?:medium[- ]?close[- ]?up|\bmcu\b|close[- ]?up|closeup|\bcu\b)\b/i.test(shotType)
+}
+
 /** Two-shot / medium / MCU: the location plate is environment, not a wide subject. */
 export function isMediumCoverageLocationShot(shotType?: string | null): boolean {
   return /\b(?:two[-\s]?shot|medium(?:[-\s](?:close[-\s]?up|cu|shot))?|mcu)\b/i.test(
@@ -372,6 +383,10 @@ export function stripLensSubjectNote(lensAndFormat?: string | null): string {
  * Remove a detail-lens clause from a shot that cannot hold one. A macro lens
  * does not frame two people in a tunnel, and asking for both leaves the model
  * to decide which instruction to honor.
+ *
+ * Face Close-Up is a detail shot for location bokeh, but a film-wide Macro
+ * 100mm (authored for inserts) turns the CU into a macro of the nearest prop.
+ * Keep Macro/probe only on insert / ECU, or when the beat states no shot scale.
  */
 export function suppressDetailLensForShot(
   lensAndFormat?: string | null,
@@ -379,7 +394,7 @@ export function suppressDetailLensForShot(
 ): string {
   const raw = tidy(lensAndFormat ?? '')
   if (!raw) return ''
-  if (!shotType?.trim() || isDetailShot(shotType)) return raw
+  if (!shotType?.trim() || isInsertOrExtremeCloseUp(shotType)) return raw
 
   const kept = raw
     .split(';')

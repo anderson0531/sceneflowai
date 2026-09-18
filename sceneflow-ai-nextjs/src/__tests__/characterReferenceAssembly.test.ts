@@ -4,6 +4,10 @@ import {
   buildDualReferenceLabels,
   buildDualReferenceNegativeTerms,
   buildFramingAwareIdentityBlock,
+  beatFrameCandidActionConstraint,
+  BEAT_FRAME_CANDID_ACTION_CONSTRAINT,
+  BEAT_FRAME_CANDID_ACTION_CONSTRAINT_FACE_CLOSE_UP,
+  CLOSE_UP_IDENTITY_FRAMING_BLOCK,
   buildIdentityReferencePromptLine,
   buildWardrobeBindingSummary,
   buildWardrobeReferencePromptLine,
@@ -396,9 +400,26 @@ describe('characterReferenceAssembly', () => {
     expect(DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK).toContain('photorealistic')
   })
 
-  it('buildFramingAwareIdentityBlock adds wide-shot reinforcement', () => {
+  it('buildFramingAwareIdentityBlock adds wide-shot and close-up reinforcement', () => {
     expect(buildFramingAwareIdentityBlock('wide shot')).toContain('WIDE/ESTABLISHING')
-    expect(buildFramingAwareIdentityBlock('medium close-up')).toBe('')
+    expect(buildFramingAwareIdentityBlock('medium shot')).toBe('')
+    expect(buildFramingAwareIdentityBlock('medium close-up')).toBe(CLOSE_UP_IDENTITY_FRAMING_BLOCK)
+    expect(buildFramingAwareIdentityBlock('Close-Up')).toContain('CLOSE-UP:')
+    expect(buildFramingAwareIdentityBlock('Close-Up')).toMatch(/head is bowed/)
+    expect(buildFramingAwareIdentityBlock('Close-Up')).toMatch(/garments only/)
+    expect(buildFramingAwareIdentityBlock('Close-Up')).toMatch(/do not invent a different face/i)
+    expect(buildFramingAwareIdentityBlock('Extreme Close-Up')).toBe('')
+  })
+
+  it('omits the headshot ban on face close-ups and keeps it on two-shots', () => {
+    expect(beatFrameCandidActionConstraint('Two-Shot')).toBe(BEAT_FRAME_CANDID_ACTION_CONSTRAINT)
+    expect(beatFrameCandidActionConstraint('Two-Shot')).toMatch(/headshot/)
+    expect(beatFrameCandidActionConstraint('Close-Up')).toBe(
+      BEAT_FRAME_CANDID_ACTION_CONSTRAINT_FACE_CLOSE_UP
+    )
+    expect(beatFrameCandidActionConstraint('Close-Up')).not.toMatch(/headshot/)
+    expect(beatFrameCandidActionConstraint('Close-Up')).toMatch(/no turnaround framing/)
+    expect(beatFrameCandidActionConstraint('medium close-up')).not.toMatch(/headshot/)
   })
 
   it('buildDualReferenceNegativeTerms includes anti-mannequin and anti-cartoon terms', () => {

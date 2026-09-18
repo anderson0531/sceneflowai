@@ -128,7 +128,7 @@ import {
   buildCharacterHairAnchor,
   buildCharacterHairDescription,
   beatFrameNeedsHairLock,
-  BEAT_FRAME_CANDID_ACTION_CONSTRAINT,
+  beatFrameCandidActionConstraint,
   isExplicitDirectToCameraBeat,
   buildDualReferenceNegativeTerms,
   buildFramingAwareIdentityBlock,
@@ -2809,9 +2809,9 @@ export async function POST(req: NextRequest) {
           }
 
           console.log(
-            `[Scene Image] Using Vertex Gemini Image (tier=${effectiveImageTier}${
-              useFlashDraftTier ? ', draft beat' : ''
-            }) for reference images`
+            `[Scene Image] Using Vertex Gemini Image (tier=${effectiveImageTier}, storyboardQuality=${resolvedGen.storyboardQuality}, model=${
+              effectiveImageTier === 'eco' ? GEMINI_IMAGE_MODELS.flash : GEMINI_IMAGE_MODELS.pro
+            }${useFlashDraftTier ? ', draft beat' : ''}) for reference images`
           )
 
           const locationShotOptions = {
@@ -3195,7 +3195,7 @@ export async function POST(req: NextRequest) {
             // and photoreal in [STILL]/[STYLE]/[EXCLUSIONS] plus the character
             // preamble. Restating them here is what made Flash refuse, then
             // recover on Pro looking like a Final frame (production 2026-09-15).
-            geminiPrompt += `- ${BEAT_FRAME_CANDID_ACTION_CONSTRAINT}\n`
+            geminiPrompt += `- ${beatFrameCandidActionConstraint(effectiveShotType)}\n`
             geminiPrompt += `- ${EXPRESSION_OVERRIDE_INSTRUCTION}\n`
           }
           geminiPrompt += `- Match character identity from identity reference images (bone structure, features, hair, skin tone, age, ethnicity — NOT facial expression)\n`

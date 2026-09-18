@@ -303,6 +303,11 @@ describe('formatLookbookStyleAnchor', () => {
     const insert = formatLookbookStyleAnchor(macroFilm, { beatShotType: 'Insert Shot' })
     expect(insert).toContain('Macro (100mm)')
     expect(insert).not.toMatch(/needle/i)
+
+    const closeUp = formatLookbookStyleAnchor(macroFilm, { beatShotType: 'Close-Up' })
+    expect(closeUp).not.toMatch(/macro/i)
+    expect(closeUp).not.toMatch(/needle/i)
+    expect(closeUp).toContain('16:9 framing')
   })
 
   it("includes the scene's sanctioned departure from the master look", () => {

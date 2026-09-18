@@ -13,6 +13,7 @@ import {
   STILL_TASK_LINES,
   STILL_TASK_INSERT_FRAMING_LINE,
   STILL_TASK_OBJECT_INSERT_LINE,
+  STILL_TASK_FACE_CLOSE_UP_LINES,
   STILL_TASK_LOCATION_NEARFIELD_LINE,
   STILL_TASK_LOCATION_ENVIRONMENT_LINE,
   STILL_TASK_PERSON_PROP_TOKEN_LINE,
@@ -374,12 +375,15 @@ Strictly Avoid: Mannequin geometry.`,
     expect(insert).toContain(STILL_TASK_INSERT_FRAMING_LINE)
     expect(insert).not.toMatch(/two arms and two legs/)
     expect(stillTaskLines('Insert Shot')).toContain(STILL_TASK_INSERT_FRAMING_LINE)
-    expect(stillTaskLines('Close-Up').join('\n')).toContain('two arms and two legs')
+    expect(stillTaskLines('Close-Up').join('\n')).not.toContain('two arms and two legs')
+    expect(stillTaskLines('Close-Up').join('\n')).toContain(
+      'visible face and upper body match the identity reference'
+    )
     expect(stillTaskLines('Close-Up')).not.toContain(STILL_TASK_INSERT_FRAMING_LINE)
     expect(stillTaskLines('Two-Shot').join('\n')).toContain('two arms and two legs')
   })
 
-  it('keeps full-body TASK on a face close-up and uses location as bokeh', () => {
+  it('uses head-and-shoulders TASK on a face close-up and location as bokeh', () => {
     const close = assembleStructuredStillPrompt({
       actionOrStructured: 'Close-Up. person [1] stares at the needle.',
       refs: [
@@ -392,11 +396,34 @@ Strictly Avoid: Mannequin geometry.`,
         },
       ],
       shotType: 'Close-Up',
+      includeCandid: true,
     })
-    expect(close).toContain('two arms and two legs')
+    expect(close).not.toMatch(/two arms and two legs/)
+    expect(close).toContain(STILL_TASK_FACE_CLOSE_UP_LINES[0])
+    expect(close).toContain(STILL_TASK_FACE_CLOSE_UP_LINES[1])
     expect(close).not.toContain(STILL_TASK_INSERT_FRAMING_LINE)
     expect(close).toContain('shallow-focus background bokeh')
     expect(close).not.toContain('Also in frame:')
+    expect(close).toContain('no posing, no lens eye-contact, no turnaround framing')
+    expect(close).not.toMatch(/no headshot or turnaround/)
+  })
+
+  it('is stable when a Close-Up candid still is re-assembled', () => {
+    const first = assembleStructuredStillPrompt({
+      actionOrStructured: 'Close-Up. person [1] sits with his head bowed.',
+      refs: [{ kind: 'person', token: 'person [1]', name: 'Gideon Croft', roleLabel: 'identity' }],
+      shotType: 'Close-Up',
+      includeCandid: true,
+    })
+    const second = assembleStructuredStillPrompt({
+      actionOrStructured: first,
+      refs: [{ kind: 'person', token: 'person [1]', name: 'Gideon Croft', roleLabel: 'identity' }],
+      shotType: 'Close-Up',
+      includeCandid: true,
+    })
+    expect(second).toBe(first)
+    expect(first.match(/Action\/Framing:/g)).toHaveLength(1)
+    expect(first.match(/Subjects absorbed in the action/g)).toHaveLength(1)
   })
 
   it('uses object-insert TASK occupancy on an empty-cast ECU and keeps location as near-field', () => {
@@ -975,6 +1002,7 @@ describe('still prompt round-trips without consuming itself', () => {
     expect(first.match(/Action\/Framing:/g)).toHaveLength(1)
     expect(first.match(/Not a video start frame/g)).toHaveLength(1)
     expect(first.match(/Subjects absorbed in the action/g)).toHaveLength(1)
+    expect(first).toMatch(/no headshot or turnaround framing/)
     expect(first.match(/Produce one photograph of a single instant/g)).toHaveLength(1)
   })
 
