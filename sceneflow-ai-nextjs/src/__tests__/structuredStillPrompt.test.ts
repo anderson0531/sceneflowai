@@ -18,6 +18,9 @@ import {
   STILL_TASK_LOCATION_ENVIRONMENT_LINE,
   STILL_TASK_PERSON_PROP_TOKEN_LINE,
   STILL_TASK_PROP_TOKEN_LINE,
+  STILL_TASK_PRO_LEAD,
+  STILL_TASK_PAIRED_PERSON_PROP_TOKEN_LINE,
+  STILL_TASK_PAIRED_PROP_SCALE_LINE,
   stillTaskLines,
   stillRefsFromAttachedImages,
   stillRefsFromNamedLibrary,
@@ -85,6 +88,47 @@ describe('assembleStructuredStillPrompt', () => {
     expect(prompt).toContain(STILL_SECTION_EXCLUSIONS)
   })
 
+  it('omits [REFERENCES] for Pro interleaved pairs and keeps role-stable tokens in TASK', () => {
+    const prompt = assembleStructuredStillPrompt({
+      actionOrStructured:
+        'A medium-shot captures person [1] resting a palm on the zinc workbench at location [1].',
+      refs: [
+        { kind: 'person', token: 'person [1]', name: 'Piper Hayes', roleLabel: 'identity' },
+        {
+          kind: 'prop',
+          token: 'prop [1]',
+          name: 'Zinc workbench',
+          roleLabel: 'library prop',
+        },
+        {
+          kind: 'location',
+          token: 'location [1]',
+          name: 'FREIGHT TUNNEL VAULT',
+          roleLabel: 'library location',
+        },
+      ],
+      photorealisticAnchor: 'live-action film still, photographed on real camera',
+      includeCandid: true,
+      shotType: 'medium shot',
+      omitReferencesSection: true,
+    })
+
+    expect(prompt).toContain(`${STILL_SECTION_TASK}\n${STILL_TASK_PRO_LEAD}`)
+    expect(prompt).toContain(STILL_TASK_PAIRED_PERSON_PROP_TOKEN_LINE)
+    expect(prompt).toContain(STILL_TASK_PAIRED_PROP_SCALE_LINE)
+    expect(prompt).toContain(STILL_TASK_LOCATION_ENVIRONMENT_LINE)
+    expect(prompt).toContain('Action/Framing:')
+    expect(prompt).toContain('person [1]')
+    expect(prompt).toContain('prop [1]')
+    expect(prompt).toContain('location [1]')
+    expect(prompt).not.toContain(STILL_SECTION_REFERENCES)
+    expect(prompt).not.toContain('Every token listed in [REFERENCES]')
+    expect(prompt).not.toContain('physical size described in [REFERENCES]')
+    expect(prompt).not.toContain('prop [3]')
+    expect(prompt).not.toContain('location [4]')
+    expect(prompt).not.toContain('not a second wide subject')
+  })
+
   it('does not glue candid prefix onto structured intelligence headers', () => {
     const mashed = assembleStructuredStillPrompt({
       actionOrStructured: `[GLOBAL STYLE ANCHOR]
@@ -146,6 +190,41 @@ Strictly Avoid: Mannequin geometry.`,
           token: 'location [4]',
           name: 'Faraday cage workshop',
         }),
+      ])
+    )
+  })
+
+  it('stillRefsFromAttachedImages keeps library tokens when preferLibraryPromptTokens is on', () => {
+    const refs = stillRefsFromAttachedImages({
+      selected: [
+        {
+          sendIndex: 1,
+          characterName: 'Piper Hayes',
+          refRole: 'identity',
+        },
+        {
+          sendIndex: 3,
+          propName: 'Zinc workbench',
+          promptToken: 'prop [1]',
+        },
+        {
+          sendIndex: 4,
+          locationName: 'FREIGHT TUNNEL VAULT',
+          role: 'location',
+          promptToken: 'location [1]',
+        },
+      ],
+      characterReferences: [
+        { name: 'Piper Hayes', promptToken: 'person [1]', subjectOrdinal: 1 },
+      ],
+      preferLibraryPromptTokens: true,
+    })
+
+    expect(refs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ token: 'person [1]', name: 'Piper Hayes' }),
+        expect.objectContaining({ token: 'prop [1]', name: 'Zinc workbench' }),
+        expect.objectContaining({ token: 'location [1]', name: 'FREIGHT TUNNEL VAULT' }),
       ])
     )
   })
@@ -1310,7 +1389,11 @@ describe('identity traits reach every reference-bearing frame', () => {
     expect(src).toMatch(
       /joinPromptBlocks\(\s*formatStillReferencesLegend\(stillRefs,\s*effectiveShotType/
     )
-    expect(src).toContain("includeAttachedIdentityTraits = effectiveImageTier !== 'eco'")
+    expect(src).toContain("useInterleavedProRefs = effectiveImageTier !== 'eco'")
+    expect(src).toContain('includeAttachedIdentityTraits = useInterleavedProRefs')
+    expect(src).toContain('omitReferencesSection: useInterleavedProRefs')
+    expect(src).toContain('buildInterleavedReferencePairCaptions')
+    expect(src).toContain('preserveLibraryPromptTokens: useInterleavedProRefs')
     expect(src).toContain('if (keyFeatures.length === 0)')
     expect(src).toContain('visionLandmarks')
   })

@@ -113,6 +113,15 @@ export const STILL_TASK_TOKEN_LINE =
 export const STILL_TASK_PERSON_PROP_TOKEN_LINE =
   `Every person and prop token listed in ${STILL_SECTION_REFERENCES} appears in this frame and matches its reference image.`
 
+/** Compact Pro TASK lead — descriptors already sit on the interleaved plates. */
+export const STILL_TASK_PRO_LEAD = 'Generate a cinematic 35mm live-action still.'
+
+export const STILL_TASK_PAIRED_TOKEN_LINE =
+  'Every person, prop, and location token in this task appears in this frame and matches its paired reference image.'
+
+export const STILL_TASK_PAIRED_PERSON_PROP_TOKEN_LINE =
+  'Every person and prop token in this task appears in this frame and matches its paired reference image.'
+
 export const STILL_TASK_LOCATION_BOKEH_LINE =
   'Location is ambient lighting and color in shallow-focus background bokeh, not a second subject.'
 
@@ -125,13 +134,21 @@ export const STILL_TASK_LOCATION_ENVIRONMENT_LINE =
 export const STILL_TASK_PROP_TOKEN_LINE =
   `Every prop token listed in ${STILL_SECTION_REFERENCES} appears in this frame and matches its reference image.`
 
+export const STILL_TASK_PAIRED_PROP_TOKEN_LINE =
+  'Every prop token in this task appears in this frame and matches its paired reference image.'
+
 export const STILL_TASK_PROP_SCALE_LINE =
   'Held props keep the physical size described in [REFERENCES] relative to the character; do not enlarge a library-prop still to fill the frame.'
+
+export const STILL_TASK_PAIRED_PROP_SCALE_LINE =
+  'Held props keep their described physical size relative to the character; do not enlarge a library-prop still to fill the frame.'
 
 export const STILL_TASK_DETAIL_TOKEN_LINE =
   `${STILL_TASK_PERSON_PROP_TOKEN_LINE} ${STILL_TASK_LOCATION_BOKEH_LINE}`
 
 export const STILL_EMPTY_CAST_LINE = 'No people in frame.'
+
+export type StillOccupancyMode = 'references-section' | 'paired'
 
 export interface StillTaskLineOptions {
   allowTypography?: boolean
@@ -139,6 +156,11 @@ export interface StillTaskLineOptions {
   emptyCast?: boolean
   /** When omitted, occupancy is unknown and the generic token line is kept. */
   refs?: StillPromptBoundRef[]
+  /**
+   * Pro interleaved plates already carry descriptors. Occupancy must not cite
+   * a `[REFERENCES]` section that is not in the request.
+   */
+  occupancyMode?: StillOccupancyMode
 }
 
 export function stillActionHasEmptyCast(actionFraming?: string | null): boolean {
@@ -179,6 +201,14 @@ export function stillTaskLines(
   const hasLocationRef = refs.some((ref) => ref.kind === 'location')
   const asEnvironment = consumesLocationAsEnvironment(shotType, options?.actionFraming)
   const mediumCoverage = isMediumCoverageLocationShot(shot.shotHint || shotType)
+  const pairedOccupancy = options?.occupancyMode === 'paired'
+  const allTokenLine = pairedOccupancy ? STILL_TASK_PAIRED_TOKEN_LINE : STILL_TASK_TOKEN_LINE
+  const personPropTokenLine = pairedOccupancy
+    ? STILL_TASK_PAIRED_PERSON_PROP_TOKEN_LINE
+    : STILL_TASK_PERSON_PROP_TOKEN_LINE
+  const propTokenLine = pairedOccupancy ? STILL_TASK_PAIRED_PROP_TOKEN_LINE : STILL_TASK_PROP_TOKEN_LINE
+  const propScaleLine = pairedOccupancy ? STILL_TASK_PAIRED_PROP_SCALE_LINE : STILL_TASK_PROP_SCALE_LINE
+  const detailTokenLine = `${personPropTokenLine} ${STILL_TASK_LOCATION_BOKEH_LINE}`
 
   if (!options?.allowTypography) {
     if (shot.isInsertOrEcu && emptyCast) {
@@ -196,12 +226,12 @@ export function stillTaskLines(
     if (emptyCast && shot.isInsertOrEcu) {
       lines.push(STILL_TASK_LOCATION_NEARFIELD_LINE)
     } else if (shot.isDetail && !mediumCoverage && !options?.allowTypography) {
-      lines.push(STILL_TASK_DETAIL_TOKEN_LINE)
+      lines.push(detailTokenLine)
     } else if (asEnvironment) {
-      lines.push(STILL_TASK_PERSON_PROP_TOKEN_LINE)
+      lines.push(personPropTokenLine)
       lines.push(STILL_TASK_LOCATION_ENVIRONMENT_LINE)
     } else {
-      lines.push(STILL_TASK_TOKEN_LINE)
+      lines.push(allTokenLine)
     }
     return lines
   }
@@ -209,40 +239,38 @@ export function stillTaskLines(
   if (refs.length === 0) return lines
 
   if (options?.allowTypography) {
-    lines.push(STILL_TASK_TOKEN_LINE)
+    lines.push(allTokenLine)
     return lines
   }
 
   if (emptyCast && shot.isInsertOrEcu) {
-    if (hasPropRefs) lines.push(STILL_TASK_PROP_TOKEN_LINE)
+    if (hasPropRefs) lines.push(propTokenLine)
     if (hasLocationRef) lines.push(STILL_TASK_LOCATION_NEARFIELD_LINE)
-    if (hasPropRefs) lines.push(STILL_TASK_PROP_SCALE_LINE)
+    if (hasPropRefs) lines.push(propScaleLine)
     return lines
   }
 
   if (shot.isDetail && !mediumCoverage) {
     if (hasPersonRefs || hasPropRefs) {
-      lines.push(
-        hasLocationRef ? STILL_TASK_DETAIL_TOKEN_LINE : STILL_TASK_PERSON_PROP_TOKEN_LINE
-      )
+      lines.push(hasLocationRef ? detailTokenLine : personPropTokenLine)
     } else if (hasLocationRef) {
       lines.push(STILL_TASK_LOCATION_BOKEH_LINE)
     }
-    if (hasPropRefs) lines.push(STILL_TASK_PROP_SCALE_LINE)
+    if (hasPropRefs) lines.push(propScaleLine)
     return lines
   }
 
   if (hasLocationRef && asEnvironment) {
     if (hasPersonRefs || hasPropRefs) {
-      lines.push(STILL_TASK_PERSON_PROP_TOKEN_LINE)
+      lines.push(personPropTokenLine)
     }
     lines.push(STILL_TASK_LOCATION_ENVIRONMENT_LINE)
-    if (hasPropRefs) lines.push(STILL_TASK_PROP_SCALE_LINE)
+    if (hasPropRefs) lines.push(propScaleLine)
     return lines
   }
 
-  lines.push(STILL_TASK_TOKEN_LINE)
-  if (hasPropRefs) lines.push(STILL_TASK_PROP_SCALE_LINE)
+  lines.push(allTokenLine)
+  if (hasPropRefs) lines.push(propScaleLine)
   return lines
 }
 
@@ -394,15 +422,20 @@ const STILL_BOILERPLATE_LINES = [
   ...LEGACY_BEAT_FRAME_CANDID_ACTION_CONSTRAINTS,
   ...STILL_TASK_LINES,
   STILL_TASK_TOKEN_LINE,
+  STILL_TASK_PRO_LEAD,
   STILL_TASK_INSERT_FRAMING_LINE,
   STILL_TASK_OBJECT_INSERT_LINE,
   STILL_TASK_DETAIL_TOKEN_LINE,
   STILL_TASK_PERSON_PROP_TOKEN_LINE,
+  STILL_TASK_PAIRED_TOKEN_LINE,
+  STILL_TASK_PAIRED_PERSON_PROP_TOKEN_LINE,
   STILL_TASK_LOCATION_BOKEH_LINE,
   STILL_TASK_LOCATION_NEARFIELD_LINE,
   STILL_TASK_LOCATION_ENVIRONMENT_LINE,
   STILL_TASK_PROP_TOKEN_LINE,
+  STILL_TASK_PAIRED_PROP_TOKEN_LINE,
   STILL_TASK_PROP_SCALE_LINE,
+  STILL_TASK_PAIRED_PROP_SCALE_LINE,
   ...STILL_TASK_FACE_CLOSE_UP_LINES,
   ...LEGACY_STILL_TASK_LINES,
 ]
@@ -1168,6 +1201,11 @@ export function stillRefsFromAttachedImages(args: {
    * legend line. Flash binds by send index only.
    */
   includeAttachedIdentityTraits?: boolean
+  /**
+   * Keep composed `prop [1]` / `location [1]` tokens instead of rewriting them
+   * to the image send index. Pro interleaved pairs use role-stable tokens.
+   */
+  preferLibraryPromptTokens?: boolean
 }): StillPromptBoundRef[] {
   const refs: StillPromptBoundRef[] = []
   const seenPerson = new Set<string>()
@@ -1238,8 +1276,9 @@ export function stillRefsFromAttachedImages(args: {
     if (entry.propName && (entry.promptToken || sendIndex != null)) {
       refs.push({
         kind: 'prop',
-        token:
-          sendIndex != null
+        token: args.preferLibraryPromptTokens
+          ? (entry.promptToken as string) || buildPropPromptToken(sendIndex as number)
+          : sendIndex != null
             ? buildPropPromptToken(sendIndex)
             : (entry.promptToken as string),
         name: entry.propName,
@@ -1252,8 +1291,9 @@ export function stillRefsFromAttachedImages(args: {
     if ((entry.locationName || entry.role === 'location') && (entry.promptToken || sendIndex != null)) {
       refs.push({
         kind: 'location',
-        token:
-          sendIndex != null
+        token: args.preferLibraryPromptTokens
+          ? (entry.promptToken as string) || buildLocationPromptToken(sendIndex as number)
+          : sendIndex != null
             ? buildLocationPromptToken(sendIndex)
             : (entry.promptToken as string),
         name: entry.locationName || 'Location',
@@ -1379,6 +1419,11 @@ export function assembleStructuredStillPrompt(input: {
   shotType?: string
   allowTypography?: boolean
   includeAttachedIdentityTraits?: boolean
+  /**
+   * Designer/director interleaved pairs: omit the `[REFERENCES]` wall (descriptors
+   * already sit on the plates) and do not cite that section from `[TASK]`.
+   */
+  omitReferencesSection?: boolean
 }): string {
   const parsed = parseStillPromptSource(input.actionOrStructured)
   const boundRefs =
@@ -1395,7 +1440,7 @@ export function assembleStructuredStillPrompt(input: {
   const emptyCast = stillActionHasEmptyCast(actionFraming)
   const shot = resolveStillShotClass(input.shotType, actionFraming)
 
-  const stillLines = [STILL_PURPOSE_LINE]
+  const stillLines = input.omitReferencesSection ? [] : [STILL_PURPOSE_LINE]
   if (isWideEstablishingShotType(shot.shotHint || input.shotType)) {
     stillLines.push(STILL_WIDE_SPATIAL_LINE)
   }
@@ -1424,17 +1469,25 @@ export function assembleStructuredStillPrompt(input: {
     : mergedExclusions
 
   return joinPromptBlocks(
-    formatStillReferencesLegend(refs, input.shotType, {
-      actionFraming,
-      emptyCast,
-      includeAttachedIdentityTraits: input.includeAttachedIdentityTraits,
-    }),
-    `${STILL_SECTION_TASK}\n${stillTaskLines(input.shotType, {
-      allowTypography: input.allowTypography,
-      actionFraming,
-      emptyCast,
-      refs,
-    }).join('\n')}`,
+    input.omitReferencesSection
+      ? ''
+      : formatStillReferencesLegend(refs, input.shotType, {
+          actionFraming,
+          emptyCast,
+          includeAttachedIdentityTraits: input.includeAttachedIdentityTraits,
+        }),
+    `${STILL_SECTION_TASK}\n${[
+      input.omitReferencesSection ? STILL_TASK_PRO_LEAD : '',
+      ...stillTaskLines(input.shotType, {
+        allowTypography: input.allowTypography,
+        actionFraming,
+        emptyCast,
+        refs,
+        occupancyMode: input.omitReferencesSection ? 'paired' : 'references-section',
+      }),
+    ]
+      .filter(Boolean)
+      .join('\n')}`,
     `${STILL_SECTION_STILL}\n${stillLines.join('\n')}`,
     style ? `${STILL_SECTION_STYLE}\n${style}` : '',
     `${STILL_SECTION_EXCLUSIONS}\n${exclusions}`

@@ -273,6 +273,11 @@ export function selectReferenceImagesInOrder(
   labelOptions?: ReferenceLabelOptions & {
     /** When true, group survivors by role (identity, wardrobe, location, props) for contiguous person tokens. */
     groupByRole?: boolean
+    /**
+     * Keep composed `prop [1]` / `location [1]` tokens so Pro interleaved pairs
+     * and action text stay role-stable. Flash remaps to send index.
+     */
+    preserveLibraryPromptTokens?: boolean
   }
 ): {
   selected: PrioritizedReferenceImage[]
@@ -285,6 +290,7 @@ export function selectReferenceImagesInOrder(
   const keptUrls = new Set(priorityKept.map((r) => r.imageUrl))
   const groupByRole = Boolean(labelOptions?.groupByRole)
   const locationLast = Boolean(labelOptions?.locationLast)
+  const preserveLibraryPromptTokens = Boolean(labelOptions?.preserveLibraryPromptTokens)
 
   const libraryTokenRewrites: LibraryPromptTokenRewrite[] = []
   const selected = tagged
@@ -299,8 +305,15 @@ export function selectReferenceImagesInOrder(
     })
     .map((ref, idx) => {
       const sendIndex = idx + 1
-      const promptToken = sendBoundLibraryToken(ref, sendIndex)
-      if (ref.promptToken && promptToken && ref.promptToken !== promptToken) {
+      const promptToken = preserveLibraryPromptTokens
+        ? ref.promptToken
+        : sendBoundLibraryToken(ref, sendIndex)
+      if (
+        !preserveLibraryPromptTokens &&
+        ref.promptToken &&
+        promptToken &&
+        ref.promptToken !== promptToken
+      ) {
         libraryTokenRewrites.push({ from: ref.promptToken, to: promptToken })
       }
       const bound = { ...ref, sendIndex, promptToken }

@@ -147,9 +147,9 @@ describe('buildMultimodalParts Flash vs Pro layouts', () => {
     )
 
     expect(parts).toEqual([
-      { text: '[person [1]]\n' },
+      { text: 'person [1]\n' },
       { inlineData: { mimeType: 'image/png', data: 'aaa' } },
-      { text: '[person [2]]\n' },
+      { text: 'person [2]\n' },
       { inlineData: { mimeType: 'image/png', data: 'bbb' } },
       { text: 'SCENE PROMPT' },
     ])
@@ -165,7 +165,7 @@ describe('buildMultimodalParts Flash vs Pro layouts', () => {
     expect(parts).toHaveLength(11)
     for (let i = 0; i < 5; i++) {
       expect(parts[i * 2]).toEqual({
-        text: `[Reference image ${i + 1} — CHARACTER REFERENCE of person [${i + 1}]]\n`,
+        text: `Reference image ${i + 1} — CHARACTER REFERENCE of person [${i + 1}]\n`,
       })
       expect(parts[i * 2 + 1]).toEqual({
         inlineData: { mimeType: 'image/jpeg', data: `ref${i}` },
@@ -181,8 +181,49 @@ describe('buildMultimodalParts Flash vs Pro layouts', () => {
     const parts = await buildMultimodalParts('PROMPT', [
       { base64Image: 'aaa', mimeType: 'image/png', name: 'person [1]' },
     ])
-    expect(parts[0]).toEqual({ text: '[person [1]]\n' })
+    expect(parts[0]).toEqual({ text: 'person [1]\n' })
     expect(parts.at(-1)).toEqual({ text: 'PROMPT' })
+  })
+
+  it('emits interleaved REFERENCE captions without wrapping extra brackets, then TASK', async () => {
+    const parts = await buildMultimodalParts(
+      '[TASK]\nGenerate a cinematic 35mm live-action still.',
+      [
+        {
+          base64Image: 'face',
+          mimeType: 'image/png',
+          name: '[REFERENCE: IDENTITY - person [1]] Facial reference for Piper Hayes: East Asian.',
+        },
+        {
+          base64Image: 'prop',
+          mimeType: 'image/png',
+          name: '[REFERENCE: PROP - prop [1]] Object reference: Zinc workbench',
+        },
+      ],
+      true,
+      'pro'
+    )
+
+    expect(parts).toEqual([
+      {
+        text: '[REFERENCE: IDENTITY - person [1]] Facial reference for Piper Hayes: East Asian.\n',
+      },
+      { inlineData: { mimeType: 'image/png', data: 'face' } },
+      { text: '[REFERENCE: PROP - prop [1]] Object reference: Zinc workbench\n' },
+      { inlineData: { mimeType: 'image/png', data: 'prop' } },
+      { text: '[TASK]\nGenerate a cinematic 35mm live-action still.' },
+    ])
+    expect(JSON.stringify(parts)).not.toContain('[[REFERENCE:')
+  })
+
+  it('sends an unlabeled plate as image only when the caption is empty', async () => {
+    const parts = await buildMultimodalParts('PROMPT', [
+      { base64Image: 'aaa', mimeType: 'image/png', name: '' },
+    ])
+    expect(parts).toEqual([
+      { inlineData: { mimeType: 'image/png', data: 'aaa' } },
+      { text: 'PROMPT' },
+    ])
   })
 })
 
@@ -322,9 +363,9 @@ describe('generateVertexGeminiImage request shape', () => {
     const body = requestBodyFromFetch(fetchMock)
     expect(String(fetchMock.mock.calls[0]?.[0])).toContain(GEMINI_IMAGE_MODELS.flash)
     expect(body.contents[0].parts).toEqual([
-      { text: '[person [1]]\n' },
+      { text: 'person [1]\n' },
       { inlineData: { mimeType: 'image/png', data: 'aaa' } },
-      { text: '[person [2]]\n' },
+      { text: 'person [2]\n' },
       { inlineData: { mimeType: 'image/png', data: 'bbb' } },
       { text: 'SCENE PROMPT' },
     ])
@@ -360,7 +401,7 @@ describe('generateVertexGeminiImage request shape', () => {
     expect(parts.slice(0, -1)).toHaveLength(10)
     for (let i = 0; i < 5; i++) {
       expect(parts[i * 2]).toEqual({
-        text: `[${fiveCharacterRefs()[i].name}]\n`,
+        text: `${fiveCharacterRefs()[i].name}\n`,
       })
       expect(parts[i * 2 + 1]).toEqual({
         inlineData: { mimeType: 'image/jpeg', data: fiveCharacterRefs()[i].base64Image },
@@ -386,6 +427,19 @@ describe('generateVertexGeminiImage request shape', () => {
     expect(isIdentityReferencePartName('Reference image 3 — PROP prop [3] (Zinc workbench)')).toBe(
       false
     )
+    expect(
+      isIdentityReferencePartName(
+        '[REFERENCE: IDENTITY - person [1]] Facial reference for Piper Hayes: East Asian'
+      )
+    ).toBe(true)
+    expect(
+      isIdentityReferencePartName(
+        '[REFERENCE: WARDROBE - person [1]] Outfit reference: Subterranean Arrival'
+      )
+    ).toBe(false)
+    expect(
+      isIdentityReferencePartName('[REFERENCE: PROP - prop [1]] Object reference: Zinc workbench')
+    ).toBe(false)
   })
 
   it('logs IMAGE tokens per ref and warns when Pro stays at 560', async () => {

@@ -543,6 +543,41 @@ describe('referenceLimits', () => {
     ).toBe('location [4] beside location [10]')
   })
 
+  it('preserveLibraryPromptTokens keeps composed prop/location tokens and skips rewrites', () => {
+    const { selected, libraryTokenRewrites } = selectReferenceImagesInOrder(
+      [
+        ref('identity', 'Piper identity', undefined, {
+          characterName: 'Piper Hayes',
+          refRole: 'identity',
+          promptToken: 'person [1]',
+        }),
+        ref('wardrobe', 'Piper wardrobe', undefined, {
+          characterName: 'Piper Hayes',
+          refRole: 'wardrobe',
+        }),
+        ref('prop-critical', 'Workbench', 'critical', {
+          propName: 'Zinc workbench',
+          promptToken: 'prop [1]',
+        }),
+        ref('location', 'Vault plate', undefined, {
+          locationName: 'FREIGHT TUNNEL VAULT',
+          promptToken: 'location [1]',
+        }),
+      ],
+      8,
+      { groupByRole: true, locationLast: true, preserveLibraryPromptTokens: true }
+    )
+
+    expect(selected.map((r) => r.promptToken)).toEqual([
+      'person [1]',
+      undefined,
+      'prop [1]',
+      'location [1]',
+    ])
+    expect(selected.map((r) => r.sendIndex)).toEqual([1, 2, 3, 4])
+    expect(libraryTokenRewrites).toEqual([])
+  })
+
   it('remapReferenceNumbersInPrompt preserves stable subject ordinals in person tokens', () => {
     const indexMap = new Map<number, number | null>([
       [1, 1],

@@ -379,6 +379,9 @@ async function resolveAttachedReferenceImages(
  *
  * Gemini 3 Pro Image 400s `mediaResolution` (`MediaResolution is not supported`
  * for ULTRA_HIGH and HIGH). Identity lock is the face CU + landmark legend.
+ *
+ * Caption text is emitted as-is. Wrapping `ref.name` in another `[...]` made
+ * Pro typeset `[person [1]]` / send-index HUD onto the still.
  */
 export async function buildMultimodalParts(
   fullPrompt: string,
@@ -395,7 +398,10 @@ export async function buildMultimodalParts(
 
   const parts: VertexMultimodalPart[] = []
   for (const ref of attached) {
-    parts.push({ text: ref.name ? `[${ref.name}]\n` : '' })
+    const caption = (ref.name || '').trim()
+    if (caption) {
+      parts.push({ text: caption.endsWith('\n') ? caption : `${caption}\n` })
+    }
     parts.push({ inlineData: { mimeType: ref.mimeType, data: ref.data } })
   }
   parts.push({ text: fullPrompt })
