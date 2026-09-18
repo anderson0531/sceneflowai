@@ -9,8 +9,6 @@ import {
   effectiveImageSizeForModel,
   usesProImageReferenceLayout,
   generateVertexGeminiImage,
-  PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL,
-  PRO_IDENTITY_MEDIA_RESOLUTION_LEVEL,
   isIdentityReferencePartName,
 } from '@/lib/vertexai/vertexImageClient'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
@@ -160,7 +158,7 @@ describe('buildMultimodalParts Flash vs Pro layouts', () => {
     }
   })
 
-  it('sends Pro refs as labeled HIGH-resolution images first, then the prompt', async () => {
+  it('sends Pro refs as labeled images first, then the prompt, without mediaResolution', async () => {
     const refs = fiveCharacterRefs()
     const parts = await buildMultimodalParts('SCENE PROMPT', refs, true, 'pro')
 
@@ -171,10 +169,12 @@ describe('buildMultimodalParts Flash vs Pro layouts', () => {
       })
       expect(parts[i * 2 + 1]).toEqual({
         inlineData: { mimeType: 'image/jpeg', data: `ref${i}` },
-        mediaResolution: { level: PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL },
       })
     }
     expect(parts[10]).toEqual({ text: 'SCENE PROMPT' })
+    for (const part of parts) {
+      expect(part).not.toHaveProperty('mediaResolution')
+    }
   })
 
   it('defaults to the Flash layout when layout is omitted', async () => {
@@ -332,7 +332,7 @@ describe('generateVertexGeminiImage request shape', () => {
     expect(body.generationConfig.imageConfig?.imageSize).toBeUndefined()
   })
 
-  it('sends Pro refs labeled images-first with HIGH mediaResolution and 2K imageSize', async () => {
+  it('sends Pro refs labeled images-first with 2K imageSize and no mediaResolution', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       imageResponse({
         usageMetadata: {
@@ -362,45 +362,18 @@ describe('generateVertexGeminiImage request shape', () => {
       expect(parts[i * 2]).toEqual({
         text: `[${fiveCharacterRefs()[i].name}]\n`,
       })
-      expect(parts[i * 2 + 1]).toMatchObject({
-        inlineData: { mimeType: 'image/jpeg' },
-        mediaResolution: { level: PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL },
+      expect(parts[i * 2 + 1]).toEqual({
+        inlineData: { mimeType: 'image/jpeg', data: fiveCharacterRefs()[i].base64Image },
       })
     }
     expect(body.generationConfig.imageConfig).toEqual({
       aspectRatio: '16:9',
       imageSize: '2K',
     })
-    expect(body.generationConfig.mediaResolution).toBe(PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL)
+    expect(body.generationConfig.mediaResolution).toBeUndefined()
   })
 
-  it('stamps ULTRA_HIGH on Pro identity plates and HIGH on wardrobe/prop/location', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(imageResponse())
-    vi.stubGlobal('fetch', fetchMock)
-
-    await generateVertexGeminiImage({
-      prompt: 'SCENE PROMPT',
-      modelTier: 'designer',
-      referenceImages: [
-        {
-          base64Image: 'aaa',
-          mimeType: 'image/png',
-          name: 'Reference image 1 — IDENTITY of person [1] (Piper Hayes)',
-        },
-        {
-          base64Image: 'bbb',
-          mimeType: 'image/png',
-          name: 'Reference image 2 — WARDROBE of person [1] (Piper Hayes) — full-body outfit',
-        },
-        {
-          base64Image: 'ccc',
-          mimeType: 'image/png',
-          name: 'Reference image 3 — PROP prop [3] (Zinc workbench)',
-        },
-      ],
-    })
-
-    const parts = requestBodyFromFetch(fetchMock).contents[0].parts
+  it('classifies identity labels separately from wardrobe and props', () => {
     expect(isIdentityReferencePartName('Reference image 1 — IDENTITY of person [1] (Piper Hayes)')).toBe(
       true
     )
@@ -410,45 +383,9 @@ describe('generateVertexGeminiImage request shape', () => {
         'Reference image 2 — WARDROBE of person [1] (Piper Hayes) — full-body outfit'
       )
     ).toBe(false)
-    expect(parts[1]).toMatchObject({
-      mediaResolution: { level: PRO_IDENTITY_MEDIA_RESOLUTION_LEVEL },
-    })
-    expect(parts[3]).toMatchObject({
-      mediaResolution: { level: PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL },
-    })
-    expect(parts[5]).toMatchObject({
-      mediaResolution: { level: PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL },
-    })
-  })
-
-  it('retries Pro identity plates at HIGH when ULTRA_HIGH is rejected', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        new Response('Request contains an invalid argument: MEDIA_RESOLUTION_ULTRA_HIGH', {
-          status: 400,
-        })
-      )
-      .mockResolvedValueOnce(imageResponse())
-    vi.stubGlobal('fetch', fetchMock)
-
-    await generateVertexGeminiImage({
-      prompt: 'SCENE PROMPT',
-      modelTier: 'designer',
-      referenceImages: [
-        {
-          base64Image: 'aaa',
-          mimeType: 'image/png',
-          name: 'Reference image 1 — IDENTITY of person [1] (Piper Hayes)',
-        },
-      ],
-    })
-
-    expect(fetchMock).toHaveBeenCalledTimes(2)
-    const first = JSON.parse((fetchMock.mock.calls[0]?.[1] as { body: string }).body)
-    const second = JSON.parse((fetchMock.mock.calls[1]?.[1] as { body: string }).body)
-    expect(first.contents[0].parts[1].mediaResolution.level).toBe(PRO_IDENTITY_MEDIA_RESOLUTION_LEVEL)
-    expect(second.contents[0].parts[1].mediaResolution.level).toBe(PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL)
+    expect(isIdentityReferencePartName('Reference image 3 — PROP prop [3] (Zinc workbench)')).toBe(
+      false
+    )
   })
 
   it('logs IMAGE tokens per ref and warns when Pro stays at 560', async () => {
@@ -542,6 +479,8 @@ describe('vertexImageClient bundle isolation', () => {
     expect(src).not.toContain('composeIdentityWardrobeDiptych')
     expect(src).not.toMatch(/from ['"]sharp['"]/)
     expect(src).toContain("from '@/lib/vertexai/identityReferencePartName'")
+    expect(src).not.toMatch(/MEDIA_RESOLUTION_/)
+    expect(src).not.toContain('disableUltraIdentityResolution')
   })
 
   it('generate-image crops identity plates before Vertex so Pro stills keep the CU', () => {
