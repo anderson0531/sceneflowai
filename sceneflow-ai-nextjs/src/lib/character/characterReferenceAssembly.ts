@@ -79,7 +79,7 @@ export interface ResolveCharacterReferencePairArgs {
   characterWardrobes?: Array<{ characterId: string; wardrobeId: string }>
   /** When true (default), attach full-body wardrobe URL alongside identity when available. */
   includeWardrobeReferenceImages?: boolean
-  /** Attach scene-matched wardrobe diptych (headshotUrl) when available */
+  /** Attach stored PiP combinedCharacterRefUrl. Vertex stills leave this off. */
   includeWardrobeDiptych?: boolean
 }
 
@@ -356,18 +356,22 @@ export function resolveCharacterReferencePair(
     : undefined
 
   // Face-first dual ref: dedicated identity headshot + full-body wardrobe image.
-  // A stored PiP already combines those, so do not also attach the pair.
+  // A stored PiP already combines those, so do not also attach the pair when
+  // the caller still wants the combined card (video). Vertex stills leave
+  // includeWardrobeDiptych off so dual slots stay dual.
   const wardrobeUrl =
     !storedCombinedUrl && includeWardrobeReferenceImages && identityUrl && fullBodyUrl
       ? fullBodyUrl
       : undefined
 
-  // Leftover LEFT|RIGHT sheet when no full-body and no stored PiP.
-  const wardrobeDiptychUrl =
-    storedCombinedUrl ||
-    (includeWardrobeDiptych && identityUrl && !fullBodyUrl
+  // Leftover LEFT|RIGHT sheet when no full-body and no stored PiP. Split later
+  // via expandLeftoverDiptychSheetsIntoDualSlots — still attach even when PiP
+  // compose is off, otherwise wardrobe is dropped.
+  const leftoverSheetUrl =
+    !storedCombinedUrl && identityUrl && !fullBodyUrl
       ? trimUrl(resolvedWardrobe?.headshotUrl)
-      : undefined)
+      : undefined
+  const wardrobeDiptychUrl = storedCombinedUrl || leftoverSheetUrl
   const hasWardrobeDiptych = !!wardrobeDiptychUrl
   const hasStoredCombinedCharacterRef = !!storedCombinedUrl
 

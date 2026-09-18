@@ -25,7 +25,6 @@ import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor, buildIdentityPromptToken, sanitizePromptForIdentityRefs, filterCharactersForPromptRefs, promptPlacesCharacter, stripReferenceImageMappingBlock } from '@/lib/imagen/promptOptimizer'
 import { ethnicityKeyFeature } from '@/lib/imagen/characterKeyFeatures'
 import {
-  IDENTITY_TRAITS_RETRY_WORD_CAP,
   buildIdentityEscalationBlock,
   buildIdentityTraitsClause,
 } from '@/lib/imagen/identityTraitsClause'
@@ -144,12 +143,7 @@ import {
   EXPRESSION_OVERRIDE_INSTRUCTION,
   resolveCharacterReferencePair,
 } from '@/lib/character/characterReferenceAssembly'
-import { consolidateBeatCharacterRefsIntoPipBadges } from '@/lib/character/composeIdentityWardrobeDiptych'
-import {
-  persistCombinedCharacterRefUrl,
-  uploadCombinedCharacterRef,
-  wardrobeExpectedFingerprint,
-} from '@/lib/character/combinedCharacterRef'
+import { expandLeftoverDiptychSheetsIntoDualSlots } from '@/lib/character/composeIdentityWardrobeDiptych'
 import {
   buildCombinedCharacterConsumptionLine,
   combinedCharacterReferenceInstruction,
@@ -381,13 +375,11 @@ type CharacterReferenceForTraits = {
 }
 
 /**
- * Report the identity anchor each subject actually got.
+ * Report how each subject is bound.
  *
- * With reference-first binding the prompt says `person [N]` and nothing else
- * about the subject, so the legend clause is the whole textual identity. The
- * old logs could not tell "traits omitted by design" from "traits missing
- * because no vision pass ever described this character" — which is how a frame
- * ships with a face the portrait contradicts and nothing in the log to show it.
+ * When identity/wardrobe images are attached, the legend binds by token only.
+ * Restating ethnicity/hair/age in prose is a text-to-image substitute Pro will
+ * illustrate instead of the photos. Traits belong on the T2I path, not here.
  */
 function logIdentityAnchors(
   stillRefs: Array<{ kind: string; token: string; name: string; identityTraits?: string }>,
@@ -401,10 +393,9 @@ function logIdentityAnchors(
     }
     const char = characterReferences.find((cr) => cr.name === ref.name)
     const describedBy = char?.visionDescription || char?.appearanceDescription
-    console.warn(
-      `[Scene Image] ⚠️  No identity anchor for ${ref.token} = ${ref.name} — ` +
-        `${describedBy ? 'description present but no observable traits parsed from it' : 'no vision or appearance description stored'}. ` +
-        'The reference image is the only identity signal in this request.'
+    console.log(
+      `[Scene Image] Identity bind: ${ref.token} (${ref.name}) — reference image owns identity` +
+        `${describedBy ? '; no text substitute' : ' (no stored vision/appearance description)'}.`
     )
   }
 }
@@ -653,7 +644,7 @@ export async function POST(req: NextRequest) {
       lookbook: passedLookbook,
       generationMode = 'default',
       includeWardrobeReferenceImages = true,
-      includeWardrobeDiptych = true,
+      includeWardrobeDiptych = false,
       fromDialog = false,
       negativePrompt,
       thinkingLevel,
@@ -1671,7 +1662,7 @@ export async function POST(req: NextRequest) {
         }
       }
       
-      // Identity + wardrobe references — diptych replaces separate identity when available
+      // Identity + wardrobe references — discrete slots, never a PiP badge card.
       const refPair = resolveCharacterReferencePair({
         character: char,
         scene: sceneData as Record<string, unknown>,
@@ -1682,9 +1673,7 @@ export async function POST(req: NextRequest) {
       })
       const hasWardrobeDiptych = refPair.hasWardrobeDiptych
       const wardrobeDiptychUrl = refPair.wardrobeDiptychUrl
-      // PiP is the Vertex slot. Keep the headshot URL on the object so likeness
-      // scores the portrait, not the 16:9 badge card.
-      const identitySlotUrl = hasWardrobeDiptych ? undefined : refPair.identityUrl
+      const identitySlotUrl = refPair.identityUrl
       const identityImageUrl = refPair.identityUrl
       const wardrobeImageUrl = includeWardrobeReferenceImages ? refPair.wardrobeUrl : undefined
       const hasDualReferences = refPair.hasDualReferences
@@ -1693,13 +1682,13 @@ export async function POST(req: NextRequest) {
       const hasCostumeReference = hasWardrobeReference
       const isStoredPip = refPair.hasStoredCombinedCharacterRef
 
-      if (hasWardrobeDiptych) {
-        console.log(
-          `[Scene Image] ✓ Combined character reference for ${char.name}: face + full-body wardrobe`
-        )
-      } else if (hasDualReferences) {
+      if (hasDualReferences) {
         console.log(
           `[Scene Image] ✓ Dual references for ${char.name}: identity portrait + wardrobe turnaround`
+        )
+      } else if (hasWardrobeDiptych && !isStoredPip) {
+        console.log(
+          `[Scene Image] ✓ Leftover wardrobe sheet for ${char.name} will be split into identity + wardrobe slots`
         )
       } else if (hasWardrobeOnlyReference) {
         console.log(
@@ -1709,9 +1698,15 @@ export async function POST(req: NextRequest) {
 
       console.log(`[Scene Image] Using ${char.visionDescription ? 'Gemini Vision' : 'manual'} description for ${char.name}`)
       
-      // Extract age and add explicit age clause
+      // Extract age and add explicit age clause only when there is no portrait
+      // to bind. Age in prose is a T2I substitute Pro will paint instead of the photo.
       const ageMatch = description.match(/\b(late\s*)?(\d{1,2})s?\b/i)
-      const ageClause = ageMatch ? ` Exact age: ${ageMatch[0]}.` : ''
+      const ageClause =
+        identityImageUrl || wardrobeDiptychUrl
+          ? ''
+          : ageMatch
+            ? ` Exact age: ${ageMatch[0]}.`
+            : ''
       
       // Extract key physical features to emphasize in prompt
       const keyFeatures: string[] = []
@@ -1762,10 +1757,12 @@ export async function POST(req: NextRequest) {
         buildCharacterHairDescription(char) ??
         (hairAnchor ? hairAnchor.replace(/ matching identity reference$/i, '') : undefined)
 
-      // Build wardrobe description if available (using effective wardrobe, which may be overridden)
-      // When a costume reference image exists, we minimize wardrobe text since the model sees it
+      // When a costume reference image exists, do not write the outfit in prose —
+      // Pro will illustrate the paragraph instead of the photo. Bind to the
+      // wardrobe slot; dual-ref consumption already says "outfit shown in their
+      // wardrobe reference."
       let wardrobeDescription = ''
-      if (effectiveWardrobe) {
+      if (effectiveWardrobe && !hasCostumeReference) {
         wardrobeDescription = `, wearing ${effectiveWardrobe}`
         if (effectiveAccessories) {
           wardrobeDescription += `, ${effectiveAccessories}`
@@ -1837,7 +1834,7 @@ export async function POST(req: NextRequest) {
         hairColor: char.hairColor,
         defaultWardrobe: hasWardrobeReference ? undefined : effectiveWardrobe,
         wardrobeAccessories: hasWardrobeReference ? undefined : effectiveAccessories,
-        wardrobeDescription: effectiveWardrobe,
+        wardrobeDescription: hasCostumeReference ? undefined : effectiveWardrobe,
         hasCostumeReference,
         hasWardrobeDiptych,
         hasDualReferences,
@@ -1868,42 +1865,14 @@ export async function POST(req: NextRequest) {
     })
 
     if (isBeatFrame) {
-      characterReferences = await consolidateBeatCharacterRefsIntoPipBadges(
-        characterReferences,
-        {
-          persistCombined: async ({ ref, composite }) => {
-            const characterId = ref.characterId?.trim()
-            const wardrobeId = ref.wardrobeId?.trim()
-            if (!projectId || !characterId || !wardrobeId) return null
-            const url = await uploadCombinedCharacterRef({
-              composite,
-              projectId,
-              characterId,
-              wardrobeId,
-            })
-            if (!url) return null
-            try {
-              const wardrobe = characterObjects.find(
-                (c: { id?: string; name?: string }) =>
-                  (c.id || c.name) === characterId
-              )?.wardrobes?.find((w: { id?: string }) => w.id === wardrobeId)
-              await persistCombinedCharacterRefUrl({
-                projectId,
-                characterId,
-                wardrobeId,
-                combinedCharacterRefUrl: url,
-                expectedFingerprint: wardrobeExpectedFingerprint(wardrobe || {}),
-              })
-            } catch (error) {
-              const reason = error instanceof Error ? error.message : String(error)
-              console.warn(
-                `[Scene Image] Combined character ref uploaded (${url}) but wardrobe persist failed: ${reason}`
-              )
-            }
-            return url
-          },
+      characterReferences = await expandLeftoverDiptychSheetsIntoDualSlots(characterReferences)
+      for (const ref of characterReferences) {
+        if (ref.identityReferenceId || ref.wardrobeReferenceId || ref.diptychReferenceId) {
+          console.log(
+            `[Scene Image] ${ref.name} diptychRef: ${ref.diptychReferenceId ?? 'none'}, identityRef: ${ref.identityReferenceId ?? 'none'}, wardrobeRef: ${ref.wardrobeReferenceId ?? 'none'}`
+          )
         }
-      )
+      }
     }
     
     // =========================================================================
@@ -3100,9 +3069,6 @@ export async function POST(req: NextRequest) {
           const stillRefs = stillRefsFromAttachedImages({
             selected: selectedReferenceImages,
             characterReferences,
-            ...(identityEscalationBlock
-              ? { identityTraitsWordCap: IDENTITY_TRAITS_RETRY_WORD_CAP }
-              : {}),
           })
           const structuredStillRaw = isBeatFrame
             ? assembleStructuredStillPrompt({
@@ -3121,10 +3087,8 @@ export async function POST(req: NextRequest) {
                 allowTypography,
               })
             : // Reference-first binding leaves `person [N]` as the only mention of
-              // the subject, so the legend is the one place the request says what
-              // that person looks like. Dialogue, establishing, and custom frames
-              // need it as much as beats do — without it the model is free to
-              // invent an ethnicity the portrait contradicts.
+              // the subject. The legend binds that token to the attached images;
+              // it must not restate face or outfit in prose.
               joinPromptBlocks(
                 formatStillReferencesLegend(stillRefs, effectiveShotType),
                 remappedOptimizedPrompt

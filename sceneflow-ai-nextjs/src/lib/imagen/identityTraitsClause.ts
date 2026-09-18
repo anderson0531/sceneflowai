@@ -1,17 +1,14 @@
 /**
- * One short identity clause for the `[REFERENCES]` legend.
+ * One short identity clause for text-to-image stills that have no portrait.
  *
- * Beat action names cast by `person [N]` token only, so without this nothing
- * in the request says what that person looks like and a frame that drifts off
- * the portrait has no text contradicting it. Traits are read from the
- * vision-derived description of the reference image — never from the
- * `ethnicity` field, whose labels ("neutral American") describe casting and
- * accent rather than appearance, and which rendered Gideon as a Caucasian man
- * with straight hair when it leaked into prompt text.
+ * When identity/wardrobe images are attached, the [REFERENCES] legend binds by
+ * token and send index only. Restating ethnicity, hair, or age next to those
+ * photos is a prose substitute Pro will illustrate instead of the plates.
+ * Traits stay on the no-ref T2I path and on the likeness retry lock.
  *
- * Only observable traits are emitted, so the clause agrees with the portrait
- * instead of competing with it, and it belongs in the legend alone: repeating
- * it in the action text is what "no appearance adjectives" exists to prevent.
+ * Traits are read from the vision-derived description of the reference image —
+ * never from the `ethnicity` field, whose labels ("neutral American") describe
+ * casting and accent rather than appearance.
  */
 
 import {

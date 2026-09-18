@@ -62,13 +62,19 @@ export function propSignificantWords(propName: string): string[] {
 
 /**
  * The noun a prop label ends on, which is the object itself. Decorators are
- * kept here: a prop can be named for its material ("Heavy Iron") and still
- * needs some noun to be recognized by.
+ * skipped when a better identifying noun exists, so "Roll of drafting vellum
+ * with violet ink" resolves to "vellum" rather than "ink". Decorators are
+ * kept as a last resort: a prop can be named for its material ("Heavy Iron")
+ * and still needs some noun to be recognized by.
  */
 export function propHeadNoun(propName: string): string {
   const words = labelWords(propName).filter(
     (word) => word.length >= 3 && !PROP_MATCH_STOP_WORDS.has(word)
   )
+  const identifying = words.filter(
+    (word) => word.length >= 4 && !PROP_DECORATOR_WORDS.has(word)
+  )
+  if (identifying.length > 0) return identifying[identifying.length - 1] ?? ''
   return words[words.length - 1] ?? ''
 }
 

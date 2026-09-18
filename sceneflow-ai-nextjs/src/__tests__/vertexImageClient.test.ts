@@ -158,18 +158,18 @@ describe('buildMultimodalParts Flash vs Pro layouts', () => {
     }
   })
 
-  it('sends Pro refs as prompt-first unlabeled HIGH-resolution images', async () => {
+  it('sends Pro refs as unlabeled HIGH-resolution images first, then the prompt', async () => {
     const refs = fiveCharacterRefs()
     const parts = await buildMultimodalParts('SCENE PROMPT', refs, true, 'pro')
 
-    expect(parts[0]).toEqual({ text: 'SCENE PROMPT' })
-    expect(parts.slice(1)).toHaveLength(5)
+    expect(parts.slice(0, 5)).toHaveLength(5)
     for (let i = 0; i < 5; i++) {
-      expect(parts[i + 1]).toEqual({
+      expect(parts[i]).toEqual({
         inlineData: { mimeType: 'image/jpeg', data: `ref${i}` },
         mediaResolution: { level: PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL },
       })
     }
+    expect(parts[5]).toEqual({ text: 'SCENE PROMPT' })
     expect(parts.some((part) => 'text' in part && part.text.startsWith('['))).toBe(false)
   })
 
@@ -325,7 +325,7 @@ describe('generateVertexGeminiImage request shape', () => {
     expect(body.generationConfig.imageConfig?.imageSize).toBeUndefined()
   })
 
-  it('sends Pro refs prompt-first with HIGH mediaResolution and 2K imageSize', async () => {
+  it('sends Pro refs images-first with HIGH mediaResolution and 2K imageSize', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       imageResponse({
         usageMetadata: {
@@ -349,9 +349,9 @@ describe('generateVertexGeminiImage request shape', () => {
     const body = requestBodyFromFetch(fetchMock)
     expect(String(fetchMock.mock.calls[0]?.[0])).toContain(GEMINI_IMAGE_MODELS.pro)
     const parts = body.contents[0].parts
-    expect(parts[0]).toEqual({ text: 'SCENE PROMPT' })
-    expect(parts.slice(1)).toHaveLength(5)
-    for (const part of parts.slice(1)) {
+    expect(parts.at(-1)).toEqual({ text: 'SCENE PROMPT' })
+    expect(parts.slice(0, -1)).toHaveLength(5)
+    for (const part of parts.slice(0, -1)) {
       expect(part).toMatchObject({
         inlineData: { mimeType: 'image/jpeg' },
         mediaResolution: { level: PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL },

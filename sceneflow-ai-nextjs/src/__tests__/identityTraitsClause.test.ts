@@ -137,7 +137,7 @@ describe('buildIdentityTraitsClause', () => {
 })
 
 describe('identity traits in the [REFERENCES] legend', () => {
-  it('states the traits once, on the person line', () => {
+  it('binds by token and reference image without restating face or outfit', () => {
     const refs = stillRefsFromAttachedImages({
       selected: [
         { sendIndex: 1, characterName: 'Gideon Croft', refRole: 'identity' },
@@ -149,13 +149,15 @@ describe('identity traits in the [REFERENCES] legend', () => {
           promptToken: 'person [1]',
           subjectOrdinal: 1,
           visionDescription: GIDEON_VISION,
+          wardrobeDescription: 'charcoal wool overcoat, scuffed boots',
         },
       ],
     })
 
     expect(formatStillReferencesLegend(refs)).toContain(
-      'person [1] (Gideon Croft), warm medium-brown skin, tightly curled salt-and-pepper hair, short grizzled beard, early 50s — matches Reference image 1 (Identity) and Reference image 2 (Wardrobe)'
+      'person [1] (Gideon Croft) — matches Reference image 1 (Identity) and Reference image 2 (Wardrobe)'
     )
+    expect(formatStillReferencesLegend(refs)).not.toMatch(/skin|hair|beard|50s|overcoat/i)
   })
 
   it('leaves prop and location lines without identity traits', () => {

@@ -186,12 +186,10 @@ function buildRefsForCharacter(
     sceneIndex,
     characterWardrobes,
     includeWardrobeReferenceImages: true,
-    includeWardrobeDiptych: true,
+    includeWardrobeDiptych: false,
   })
 
-  const identityImageUrl = refPair.hasWardrobeDiptych
-    ? undefined
-    : refPair.identityUrl
+  const identityImageUrl = refPair.identityUrl
   const wardrobeImageUrl = refPair.wardrobeUrl
   const wardrobeDiptychUrl = refPair.wardrobeDiptychUrl
 
