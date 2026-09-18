@@ -14,7 +14,9 @@ import { runInVertexImageGate } from '@/lib/vertexai/vertexImageGate'
 import { getGeminiImageSafetySettings } from '@/lib/vertexai/safety'
 import { MAX_REFERENCE_IMAGES_ECO } from '@/lib/vision/referenceLimits'
 import { combineAbortSignals } from '@/lib/utils/abortSignals'
-import { cropIdentityPlateForPro } from '@/lib/character/composeIdentityWardrobeDiptych'
+import { isIdentityReferencePartName } from '@/lib/vertexai/identityReferencePartName'
+
+export { isIdentityReferencePartName }
 
 export type VertexImageTier = 'eco' | 'designer' | 'director'
 export type VertexThinkingLevel = 'low' | 'high'
@@ -321,14 +323,6 @@ export type VertexInlineImagePart = {
   mediaResolution?: { level: VertexMediaResolutionLevel }
 }
 
-export function isIdentityReferencePartName(name?: string): boolean {
-  if (!name) return false
-  const lower = name.toLowerCase()
-  if (/\bwardrobe\b/.test(lower) && !/\bidentity\b/.test(lower)) return false
-  if (/\bprop\b/.test(lower) || /\blocation\b/.test(lower)) return false
-  return /\bidentity\b/.test(lower)
-}
-
 export type VertexMultimodalPart = VertexTextPart | VertexInlineImagePart
 
 export type VertexResponsePart = {
@@ -353,8 +347,7 @@ type AttachedReferenceImage = { mimeType: string; data: string; name?: string }
 
 async function resolveAttachedReferenceImages(
   referenceImages: VertexReferenceImage[],
-  requireAllReferenceImages?: boolean,
-  cropIdentityForPro?: boolean
+  requireAllReferenceImages?: boolean
 ): Promise<AttachedReferenceImage[]> {
   const attached: AttachedReferenceImage[] = []
 
@@ -377,22 +370,6 @@ async function resolveAttachedReferenceImages(
       continue
     }
     if (base64Data.includes(',')) base64Data = base64Data.split(',')[1] || base64Data
-
-    if (cropIdentityForPro && isIdentityReferencePartName(ref.name)) {
-      try {
-        const cropped = await cropIdentityPlateForPro(Buffer.from(base64Data, 'base64'))
-        if (cropped.cropped) {
-          base64Data = cropped.buffer.toString('base64')
-          mimeType = 'image/jpeg'
-          console.log(
-            `[Vertex Gemini Image] Cropped identity plate to 1:1 CU (reason=${cropped.reason}, name=${ref.name})`
-          )
-        }
-      } catch (error) {
-        const reason = error instanceof Error ? error.message : String(error)
-        console.warn(`[Vertex Gemini Image] Identity CU crop skipped: ${reason}`)
-      }
-    }
 
     attached.push({ mimeType, data: base64Data, name: ref.name })
   }
@@ -431,8 +408,7 @@ export async function buildMultimodalParts(
 
   const attached = await resolveAttachedReferenceImages(
     referenceImages,
-    requireAllReferenceImages,
-    layout === 'pro'
+    requireAllReferenceImages
   )
 
   const parts: VertexMultimodalPart[] = []

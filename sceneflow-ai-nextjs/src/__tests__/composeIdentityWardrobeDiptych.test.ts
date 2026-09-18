@@ -11,6 +11,7 @@ import {
   composePipFromDiptychBuffer,
   consolidateBeatCharacterRefsIntoPipBadges,
   cropIdentityPlateForPro,
+  cropIdentityReferenceImagesForPro,
   hasVerticalCenterSeam,
   identityPlateNeedsFaceCrop,
   IDENTITY_PRO_CU_SIZE,
@@ -459,5 +460,37 @@ describe('cropIdentityPlateForPro', () => {
     const i = (Math.floor(info.height / 2) * info.width + Math.floor(info.width / 2)) * info.channels
     expect(data[i]).toBeGreaterThan(120)
     expect(data[i + 1]).toBeLessThan(80)
+  })
+})
+
+describe('cropIdentityReferenceImagesForPro', () => {
+  it('crops IDENTITY plates and leaves wardrobe/prop/location alone', async () => {
+    const wide = await solidJpeg(1920, 800, { r: 40, g: 80, b: 180 })
+    const square = await solidJpeg(400, 400, { r: 10, g: 200, b: 10 })
+    const refs = await cropIdentityReferenceImagesForPro([
+      {
+        name: 'Reference image 1 — IDENTITY of person [1] (Piper Hayes)',
+        base64Image: wide.toString('base64'),
+        mimeType: 'image/jpeg',
+      },
+      {
+        name: 'Reference image 2 — WARDROBE of person [1] (Piper Hayes) — full-body outfit',
+        base64Image: square.toString('base64'),
+        mimeType: 'image/jpeg',
+      },
+      {
+        name: 'Reference image 3 — PROP prop [3] (Zinc workbench)',
+        imageUrl: 'https://example.com/workbench.jpg',
+      },
+    ])
+
+    expect(refs[0]?.base64Image).toBeTruthy()
+    expect(refs[0]?.base64Image).not.toBe(wide.toString('base64'))
+    const croppedMeta = await sharp(Buffer.from(refs[0]!.base64Image!, 'base64')).metadata()
+    expect(croppedMeta.width).toBe(IDENTITY_PRO_CU_SIZE)
+    expect(croppedMeta.height).toBe(IDENTITY_PRO_CU_SIZE)
+    expect(refs[1]?.base64Image).toBe(square.toString('base64'))
+    expect(refs[2]?.imageUrl).toBe('https://example.com/workbench.jpg')
+    expect(refs[2]?.base64Image).toBeUndefined()
   })
 })

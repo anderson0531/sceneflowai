@@ -144,7 +144,10 @@ import {
   EXPRESSION_OVERRIDE_INSTRUCTION,
   resolveCharacterReferencePair,
 } from '@/lib/character/characterReferenceAssembly'
-import { expandLeftoverDiptychSheetsIntoDualSlots } from '@/lib/character/composeIdentityWardrobeDiptych'
+import {
+  cropIdentityReferenceImagesForPro,
+  expandLeftoverDiptychSheetsIntoDualSlots,
+} from '@/lib/character/composeIdentityWardrobeDiptych'
 import {
   buildCombinedCharacterConsumptionLine,
   combinedCharacterReferenceInstruction,
@@ -3333,11 +3336,15 @@ export async function POST(req: NextRequest) {
               : geminiPrompt
             const vertexPrompt = sanitizedGeminiPrompt
 
+            const vertexReferenceImages =
+              effectiveImageTier !== 'eco'
+                ? await cropIdentityReferenceImagesForPro(allReferenceImages)
+                : allReferenceImages
             const vertexResult = await generateImageWithVertexKlingFallback({
               prompt: vertexPrompt,
               aspectRatio: '16:9',
               imageSize: effectiveImageSize,
-              referenceImages: allReferenceImages,
+              referenceImages: vertexReferenceImages,
               ...(isBeatFrame ? {} : { negativePrompt: finalNegativePrompt }),
               ...(effectiveImageTier ? { modelTier: effectiveImageTier } : {}),
               failFastOnRateLimit: !!skipLikenessValidation,

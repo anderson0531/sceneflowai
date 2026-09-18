@@ -8,10 +8,13 @@
  *
  * Isolated from client-safe still-prompt modules: this file imports `sharp`
  * and fetches Blob URLs, which must not enter the browser bundle.
+ * `vertexImageClient` must not import this module — sharp native binaries
+ * push video functions such as generate-continuous over Vercel's 250mb limit.
  */
 
 import sharp from 'sharp'
 import { fetchReferenceImageAsBase64 } from '@/lib/storage/fetchReferenceImage'
+import { isIdentityReferencePartName } from '@/lib/vertexai/identityReferencePartName'
 
 export const COMBINED_CHARACTER_REF_WIDTH = 1920
 export const COMBINED_CHARACTER_REF_HEIGHT = 1080
@@ -202,6 +205,64 @@ export async function cropIdentityPlateForPro(buffer: Buffer): Promise<{
     width: IDENTITY_PRO_CU_SIZE,
     height: IDENTITY_PRO_CU_SIZE,
   }
+}
+
+export type CroppableIdentityReference = {
+  name?: string
+  imageUrl?: string
+  base64Image?: string
+  mimeType?: string
+}
+
+/**
+ * Crop IDENTITY-named plates to a face CU before Pro attach.
+ * Wardrobe / prop / location slots pass through. Call from stills routes
+ * that already import this module — never from vertexImageClient.
+ */
+export async function cropIdentityReferenceImagesForPro<T extends CroppableIdentityReference>(
+  refs: T[]
+): Promise<T[]> {
+  const croppedRefs: T[] = []
+  for (const ref of refs) {
+    if (!isIdentityReferencePartName(ref.name)) {
+      croppedRefs.push(ref)
+      continue
+    }
+    try {
+      let base64Data = ref.base64Image
+      let mimeType = ref.mimeType || 'image/jpeg'
+      if (!base64Data && ref.imageUrl) {
+        const downloaded = await fetchReferenceImageAsBase64(ref.imageUrl, { label: ref.name })
+        base64Data = downloaded.base64
+        mimeType = downloaded.mimeType
+      }
+      if (!base64Data) {
+        croppedRefs.push(ref)
+        continue
+      }
+      if (base64Data.includes(',')) base64Data = base64Data.split(',')[1] || base64Data
+      const cropped = await cropIdentityPlateForPro(Buffer.from(base64Data, 'base64'))
+      if (cropped.cropped) {
+        console.log(
+          `[Identity CU] Cropped identity plate to 1:1 CU (reason=${cropped.reason}, name=${ref.name})`
+        )
+        croppedRefs.push({
+          ...ref,
+          base64Image: cropped.buffer.toString('base64'),
+          mimeType: 'image/jpeg',
+        })
+        continue
+      }
+      croppedRefs.push(
+        ref.base64Image ? ref : { ...ref, base64Image: base64Data, mimeType }
+      )
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error)
+      console.warn(`[Identity CU] Identity CU crop skipped: ${reason}`)
+      croppedRefs.push(ref)
+    }
+  }
+  return croppedRefs
 }
 
 function columnMean(

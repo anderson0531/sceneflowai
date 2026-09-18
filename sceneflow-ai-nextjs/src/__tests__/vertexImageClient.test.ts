@@ -404,6 +404,12 @@ describe('generateVertexGeminiImage request shape', () => {
     expect(isIdentityReferencePartName('Reference image 1 — IDENTITY of person [1] (Piper Hayes)')).toBe(
       true
     )
+    expect(isIdentityReferencePartName('Identity reference: Char_Piper_Hayes')).toBe(true)
+    expect(
+      isIdentityReferencePartName(
+        'Reference image 2 — WARDROBE of person [1] (Piper Hayes) — full-body outfit'
+      )
+    ).toBe(false)
     expect(parts[1]).toMatchObject({
       mediaResolution: { level: PRO_IDENTITY_MEDIA_RESOLUTION_LEVEL },
     })
@@ -524,5 +530,26 @@ describe('generateVertexGeminiImage request shape', () => {
     })
 
     expect(warn.mock.calls.some((call) => String(call[0]).includes('0 IMAGE tokens'))).toBe(true)
+  })
+})
+
+describe('vertexImageClient bundle isolation', () => {
+  it('does not import sharp or composeIdentityWardrobeDiptych', () => {
+    const src = readFileSync(
+      path.join(process.cwd(), 'src/lib/vertexai/vertexImageClient.ts'),
+      'utf8'
+    )
+    expect(src).not.toContain('composeIdentityWardrobeDiptych')
+    expect(src).not.toMatch(/from ['"]sharp['"]/)
+    expect(src).toContain("from '@/lib/vertexai/identityReferencePartName'")
+  })
+
+  it('generate-image crops identity plates before Vertex so Pro stills keep the CU', () => {
+    const src = readFileSync(
+      path.join(process.cwd(), 'src/app/api/scene/generate-image/route.ts'),
+      'utf8'
+    )
+    expect(src).toContain('cropIdentityReferenceImagesForPro')
+    expect(src).toContain('vertexReferenceImages')
   })
 })
