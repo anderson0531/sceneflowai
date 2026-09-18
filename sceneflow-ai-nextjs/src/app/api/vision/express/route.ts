@@ -27,6 +27,7 @@ interface ExpressRequest {
   regenerate?: boolean
   imageQuality?: string
   storyboardQuality?: 'draft' | 'final'
+  stillGenerationMode?: 'standard' | 'creative'
   finalizeOnly?: boolean
   mode?: 'batch' | 'scene'
   sceneIndices?: number[]
@@ -161,6 +162,7 @@ export async function POST(req: NextRequest) {
     regenerate = false,
     imageQuality,
     storyboardQuality,
+    stillGenerationMode,
     finalizeOnly = false,
     mode = 'batch',
     sceneIndices,
@@ -241,6 +243,7 @@ export async function POST(req: NextRequest) {
     regenerate,
     imageQuality,
     storyboardQuality,
+    stillGenerationMode,
     finalizeOnly: !!finalizeOnly,
     dialogueOnly: !!dialogueOnly,
     framesOnly: !!framesOnly,

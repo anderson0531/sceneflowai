@@ -240,11 +240,10 @@ export interface DirectorConsoleProps {
     frameType: 'start' | 'end',
     newFrameUrl: string
   ) => void
-  /** Retry this beat's start still as Safety (Google) or Creative (Kling). */
+  /** Retry this beat's start still using the Frames tab Standard | Creative mode. */
   onRegenerateStill?: (
     sceneId: string,
-    segmentId: string,
-    mode: 'safety' | 'creative'
+    segmentId: string
   ) => void
   /** User-initiated Hive validation report callback */
   onModerationReport?: (report: import('@/lib/moderation/moderationPipeline').ModerationReport) => void
@@ -1918,7 +1917,7 @@ export function DirectorConsoleRoot({
           onSaveEditedKeyframe={onSaveEditedKeyframe}
           onRegenerateStill={
             onRegenerateStill
-              ? (mode) => onRegenerateStill(sceneId, selectedSegment.segmentId, mode)
+              ? () => onRegenerateStill(sceneId, selectedSegment.segmentId)
               : undefined
           }
           guideCharacters={effectiveGuideCharacters}

@@ -74,8 +74,9 @@ export interface GenerateSceneImageParams {
   skipLikenessValidation?: boolean
   /** Pre-resolved project lookbook from the Express run. */
   lookbook?: ProjectLookbook
-  /** Director still-policy: Safety (Vertex rewrite) or Creative (Kling Omni). Omit on Express auto. */
-  stillPolicyMode?: 'safety' | 'creative'
+  /** Frames Standard (Vertex) or Creative (Kling Omni). Legacy `'safety'` maps to Standard. */
+  stillPolicyMode?: 'safety' | 'creative' | 'standard'
+  stillGenerationMode?: 'standard' | 'creative'
   /** Abort the child generate-image fetch when the Express run is cancelled. */
   signal?: AbortSignal
 }
@@ -159,6 +160,7 @@ export async function generateSceneImage(
     frameRole,
     startFrameUrl,
     stillPolicyMode,
+    stillGenerationMode,
     signal: parentSignal,
   } = params
 
@@ -220,7 +222,11 @@ export async function generateSceneImage(
       ...(animaticDraft ? { animaticDraft: true } : {}),
       ...(skipLikenessValidation ? { skipLikenessValidation: true } : {}),
       ...(lookbook ? { lookbook } : {}),
-      ...(stillPolicyMode ? { stillPolicyMode } : {}),
+      ...(stillGenerationMode
+        ? { stillGenerationMode, stillPolicyMode: stillGenerationMode }
+        : stillPolicyMode
+          ? { stillPolicyMode }
+          : {}),
     }),
     })
   } catch (error) {

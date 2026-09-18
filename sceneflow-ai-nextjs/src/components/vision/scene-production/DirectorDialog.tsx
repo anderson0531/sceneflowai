@@ -80,8 +80,6 @@ import {
 } from '@/lib/scene/segmentGuidePrompt'
 import { DirectionDialog } from './DirectionDialog'
 import { cn } from '@/lib/utils'
-import { StillPolicyModeControl } from '@/components/vision/StillPolicyModeControl'
-import type { StillPolicyMode } from '@/lib/generation/stillPolicy'
 import { ImageEditModal } from '@/components/vision/ImageEditModal'
 import { shouldInitializeDirectorDialogState } from '@/lib/vision/directorDialogState'
 import { resolveEffectiveStartFrameUrl } from '@/lib/vision/segmentConfigBuilder'
@@ -207,8 +205,8 @@ interface DirectorDialogProps {
   projectId?: string
   /** Initial Take surface. Saved Kling/aggregator configs still open Creative. */
   variant?: 'standard' | 'creative'
-  /** Retry this beat's start still as Safety (Google) or Creative (Kling). */
-  onRegenerateStill?: (mode: 'safety' | 'creative') => void
+  /** Retry this beat's start still using the Frames tab Standard | Creative mode. */
+  onRegenerateStill?: () => void
 }
 
 // Map internal mode names to VideoGenerationMethod
@@ -324,7 +322,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   )
   const [settingsUserEdited, setSettingsUserEdited] = useState(false)
   const [guidePrompt, setGuidePrompt] = useState('')
-  const [stillPolicyMode, setStillPolicyMode] = useState<StillPolicyMode>('safety')
 
   // Full API prompt preview / override
   const [apiPromptPreview, setApiPromptPreview] = useState('')
@@ -1050,7 +1047,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     if (!isOpen) {
       lastInitializedSegmentIdRef.current = null
       lastInitializedStartFrameUrlRef.current = null
-      setStillPolicyMode('safety')
     }
 
     wasOpenRef.current = isOpen
@@ -1651,16 +1647,12 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 )}
                 {onRegenerateStill && (
                   <div className="space-y-2">
-                    <StillPolicyModeControl
-                      value={stillPolicyMode}
-                      onChange={setStillPolicyMode}
-                    />
                     <Button
                       type="button"
                       size="sm"
                       variant="outline"
                       className="w-full text-[10px] h-7 border-teal-500/40 text-teal-200 hover:bg-teal-950/40"
-                      onClick={() => onRegenerateStill(stillPolicyMode)}
+                      onClick={() => onRegenerateStill()}
                     >
                       {tp('retryStill')}
                     </Button>
@@ -1674,16 +1666,12 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 <p className="text-xs mt-1 opacity-60">No reference image available</p>
                 {onRegenerateStill && (
                   <div className="space-y-2 w-full max-w-sm">
-                    <StillPolicyModeControl
-                      value={stillPolicyMode}
-                      onChange={setStillPolicyMode}
-                    />
                     <Button
                       type="button"
                       size="sm"
                       variant="outline"
                       className="w-full text-[10px] h-7 border-teal-500/40 text-teal-200 hover:bg-teal-950/40"
-                      onClick={() => onRegenerateStill(stillPolicyMode)}
+                      onClick={() => onRegenerateStill()}
                     >
                       {tp('retryStill')}
                     </Button>

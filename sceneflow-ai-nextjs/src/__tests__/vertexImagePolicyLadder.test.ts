@@ -92,7 +92,7 @@ describe('nested 429 retry de-amplification', () => {
     expect(src).toContain('isIdentityRefRateLimitExhausted')
     expect(src).toContain('skipping outer retry burst')
     expect(src).toContain('skipLikenessValidation || useVertexGeminiImage ? 1 : 4')
-    expect(src).toContain('failFastOnRateLimit: stillPolicyMode ? false : !!skipLikenessValidation')
+    expect(src).toContain('failFastOnRateLimit: !!skipLikenessValidation')
     expect(src).toContain('resolveVertexStillPolicyAttempts')
     expect(src).toContain('skipProductionStillFraming: isBeatFrame')
     expect(src).toContain('isStoredPip')

@@ -920,6 +920,15 @@ function sceneNeedsBeatImages(scene: any, options: ExpressOptions): boolean {
   }) > 0
 }
 
+function stillGenerationFields(options: ExpressOptions): Record<string, unknown> {
+  return options.stillGenerationMode
+    ? {
+        stillGenerationMode: options.stillGenerationMode,
+        stillPolicyMode: options.stillGenerationMode,
+      }
+    : {}
+}
+
 async function generateSingleBeatImage(
   ctx: SceneRunContext,
   options: ExpressOptions,
@@ -998,6 +1007,7 @@ async function generateSingleBeatImage(
       modelTier: imageParams.modelTier,
       animaticDraft: imageParams.animaticDraft,
       skipLikenessValidation: true,
+      ...stillGenerationFields(options),
       ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
       ...(ctx.signal ? { signal: ctx.signal } : {}),
     })
@@ -1095,6 +1105,7 @@ async function generateSingleBeatEndImage(
       modelTier: imageParams.modelTier,
       animaticDraft: imageParams.animaticDraft,
       skipLikenessValidation: imageParams.skipLikenessValidation,
+      ...stillGenerationFields(options),
       ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
       ...(ctx.signal ? { signal: ctx.signal } : {}),
     })
@@ -1811,6 +1822,7 @@ async function runImagePhase(
             modelTier: imageParams.modelTier,
             skipLikenessValidation: true,
             useAIPrompt: false,
+            ...stillGenerationFields(options),
             ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
             ...(ctx.signal ? { signal: ctx.signal } : {}),
           })
@@ -1859,6 +1871,7 @@ async function runImagePhase(
             modelTier: imageParams.modelTier,
             skipLikenessValidation: true,
             useAIPrompt: false,
+            ...stillGenerationFields(options),
             ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
             ...(ctx.signal ? { signal: ctx.signal } : {}),
           })

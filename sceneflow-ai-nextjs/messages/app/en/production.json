@@ -306,6 +306,11 @@
     "qualityFinal": "Final",
     "qualityDraftHint": "Fast layout frames for review.",
     "qualityFinalHint": "Hi-res frames for the animatic and video. Slower — run it once the frames are right.",
+    "generationMode": "Generation mode",
+    "modeStandard": "Standard",
+    "modeCreative": "Creative",
+    "modeStandardHint": "Google AI for this run.",
+    "modeCreativeHint": "Kling AI for this run. More permissive for content-sensitive stills.",
     "frames": "Frames",
     "noFrames": "No frames available for this scope.",
     "hasImage": "Has image",
@@ -1030,11 +1035,15 @@
     "stillPolicy": {
       "safety": "Safety",
       "creative": "Creative",
-      "safetyHint": "Rewrite for Google so the references can lock.",
-      "creativeHint": "Keep the beat as written. Generate with Kling.",
+      "standard": "Standard",
+      "safetyHint": "Rewrite Action/Framing so Google AI content filters are more likely to accept the still, without changing the story beat, characters, or named props.",
+      "creativeHint": "Generate with Kling AI. Keeps the beat prompt as written.",
+      "standardHint": "Generate with Google AI.",
+      "modeTooltip": "Standard uses Google AI. Creative uses Kling AI. Default for Frame Agent, Regen, Direct Frame, and Director generate.",
       "creativeDisabled": "Creative is unavailable until Kling credentials are configured.",
-      "rewrittenPreview": "Safety rewrite (Google)",
-      "retryStill": "Retry still"
+      "rewrittenPreview": "Safety rewrite (Google policies)",
+      "retryStill": "Retry still",
+      "openDirector": "Open Director"
     },
     "framePrompt": {
       "title": "Generate Frame",
@@ -1096,7 +1105,13 @@
       "chipInsert": "Insert on the prop",
       "chipInsertText": "Insert shot of the named prop filling the frame; no people.",
       "chipWeight": "Weight on the floor",
-      "chipWeightText": "Each standing body plants full weight through both feet with a matching contact shadow."
+      "chipWeightText": "Each standing body plants full weight through both feet with a matching contact shadow.",
+      "safetyOption": "Safety",
+      "safetyOptionTooltip": "When rewriting, rephrase the still so it conforms with Google AI content policies. Aftermath instead of harm in progress, no predatory metaphors, same characters and named props. Does not choose a generation model — use Standard or Creative on the Frames tab.",
+      "directionStrength": "Direction strength: {score}",
+      "directionStrengthStrong": "Matches the beat direction.",
+      "directionStrengthModerate": "Some direction drift — review before saving.",
+      "directionStrengthDrifted": "Possible direction drift — review before saving."
     },
     "locationLibrary": {
       "versions": "Set versions",

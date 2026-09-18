@@ -109,3 +109,52 @@ describe('Draft/Final seeds the three generation paths', () => {
     expect(page).toContain('onFrameGenerationQualityChange={setFrameGenerationQuality}')
   })
 })
+
+describe('Standard/Creative Frames toolbar default', () => {
+  it('places the compact Standard | Creative toggle next to Draft | Final', () => {
+    const viewer = readSource(VIEWER)
+    expect(viewer).toContain('<StoryboardGenerationModeToggle')
+    expect(viewer).toContain("tStillPolicy('standard')")
+    expect(viewer).toContain("tStillPolicy('creative')")
+    expect(viewer).toContain("tStillPolicy('modeTooltip')")
+    const qualityToggle = viewer.indexOf('const qualityToggle =')
+    const qualityBlock = viewer.slice(
+      qualityToggle,
+      viewer.indexOf('if (frameSlots.length === 0 && sceneBeats.length === 0')
+    )
+    const draftIdx = qualityBlock.indexOf('<StoryboardQualityToggle')
+    const modeIdx = qualityBlock.indexOf('<StoryboardGenerationModeToggle')
+    expect(draftIdx).toBeGreaterThan(-1)
+    expect(modeIdx).toBeGreaterThan(draftIdx)
+  })
+
+  it('keeps session mode in page state and does not persist it', () => {
+    const page = readSource(PAGE)
+    expect(page).toContain(
+      "const [frameGenerationMode, setFrameGenerationMode] = useState<StillGenerationMode>('standard')"
+    )
+    expect(page).toContain('Session default: Standard (Google) or Creative (Kling). Not persisted.')
+    expect(page).toContain('frameGenerationMode={frameGenerationMode}')
+    expect(page).toContain('onFrameGenerationModeChange={setFrameGenerationMode}')
+    expect(page).toContain('stillGenerationMode: frameGenerationMode')
+    expect(page).toContain('stillGenerationMode: generationMode')
+  })
+
+  it('confirm dialog seeds generation mode from the session without writing back', () => {
+    const dialog = readSource(CONFIRM)
+    const viewer = readSource(VIEWER)
+    expect(dialog).toContain('defaultGenerationMode?: StillGenerationMode')
+    expect(dialog).toContain('setGenerationMode(defaultGenerationMode)')
+    expect(dialog).toContain('<StoryboardGenerationModeToggle')
+    expect(dialog).not.toContain('onFrameGenerationModeChange')
+    expect(viewer).toContain('defaultGenerationMode={frameGenerationMode}')
+  })
+
+  it('lifts session mode through ScriptPanel to the Scene card viewer', () => {
+    const panel = readSource(SCRIPT_PANEL)
+    expect(panel).toContain('frameGenerationMode={frameGenerationMode}')
+    expect(panel).toContain('onFrameGenerationModeChange={onFrameGenerationModeChange}')
+    const page = readSource(PAGE)
+    expect(page).toContain('frameGenerationMode={frameGenerationMode}')
+  })
+})

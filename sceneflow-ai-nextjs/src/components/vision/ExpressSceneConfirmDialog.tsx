@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Image as ImageIcon, Library, Loader, Zap } from 'lucide-react'
 import { StoryboardQualityToggle } from './StoryboardQualityToggle'
+import { StoryboardGenerationModeToggle } from './StoryboardGenerationModeToggle'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
 import {
   enumerateStoryboardFrameSlots,
@@ -25,6 +26,7 @@ import {
   resolveEffectiveStoryboardTier,
   type StoryboardQuality,
 } from '@/lib/storyboard/storyboardQuality'
+import type { StillGenerationMode } from '@/lib/generation/stillPolicy'
 import {
   estimateReferenceExpress,
   formatReferenceExpressEstimate,
@@ -59,6 +61,7 @@ export interface ExpressSceneConfirmOptions {
    * different operation rather than the same one at a different quality.
    */
   quality: StoryboardQuality
+  generationMode?: StillGenerationMode
 }
 
 interface ExpressSceneConfirmDialogProps {
@@ -78,6 +81,7 @@ interface ExpressSceneConfirmDialogProps {
    * here does not write back to the Frames toolbar default.
    */
   defaultQuality?: StoryboardQuality
+  defaultGenerationMode?: StillGenerationMode
 }
 
 function slotIsFinal(slot: StoryboardFrameSlot): boolean {
@@ -92,11 +96,13 @@ export function ExpressSceneConfirmDialog({
   onConfirm,
   missingReferences = [],
   defaultQuality = 'draft',
+  defaultGenerationMode = 'standard',
 }: ExpressSceneConfirmDialogProps) {
   const t = useTranslations('production.expressScene')
   const tCommon = useTranslations('common')
   const [scope, setScope] = useState<ExpressSceneScope>('missing')
   const [quality, setQuality] = useState<StoryboardQuality>(defaultQuality)
+  const [generationMode, setGenerationMode] = useState<StillGenerationMode>(defaultGenerationMode)
   const [selectedFrameKeys, setSelectedFrameKeys] = useState<string[]>([])
 
   /**
@@ -138,7 +144,8 @@ export function ExpressSceneConfirmDialog({
     if (!open) return
     setScope('missing')
     setQuality(defaultQuality)
-  }, [open, defaultQuality])
+    setGenerationMode(defaultGenerationMode)
+  }, [open, defaultQuality, defaultGenerationMode])
 
   useEffect(() => {
     if (!open) return
@@ -228,6 +235,22 @@ export function ExpressSceneConfirmDialog({
             />
             <p className="text-[11px] text-emerald-200/70 mt-2">
               {quality === 'final' ? t('qualityFinalHint') : t('qualityDraftHint')}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+              {t('generationMode')}
+            </p>
+            <StoryboardGenerationModeToggle
+              value={generationMode}
+              onChange={setGenerationMode}
+              standardLabel={t('modeStandard')}
+              creativeLabel={t('modeCreative')}
+              disabled={isRunning}
+            />
+            <p className="text-[11px] text-teal-200/70 mt-2">
+              {generationMode === 'creative' ? t('modeCreativeHint') : t('modeStandardHint')}
             </p>
           </div>
 
@@ -334,6 +357,7 @@ export function ExpressSceneConfirmDialog({
                 includeEndFrames: false,
                 selectedFrameKeys,
                 quality,
+                generationMode,
               })
             }
             disabled={isRunning || nothingSelected}

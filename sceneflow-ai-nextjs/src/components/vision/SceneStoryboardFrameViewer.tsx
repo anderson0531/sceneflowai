@@ -41,6 +41,8 @@ import {
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import { countDraftStoryboardFrames, type StoryboardQuality } from '@/lib/storyboard/storyboardQuality'
 import { StoryboardQualityToggle } from './StoryboardQualityToggle'
+import { StoryboardGenerationModeToggle } from './StoryboardGenerationModeToggle'
+import type { StillGenerationMode } from '@/lib/generation/stillPolicy'
 import { useTranslations } from 'next-intl'
 import {
   frameEditReferenceKeys,
@@ -123,6 +125,8 @@ export interface SceneStoryboardFrameViewerProps {
    */
   frameGenerationQuality?: StoryboardQuality
   onFrameGenerationQualityChange?: (quality: StoryboardQuality) => void
+  frameGenerationMode?: StillGenerationMode
+  onFrameGenerationModeChange?: (mode: StillGenerationMode) => void
 }
 
 interface StoryboardSlotHandlers {
@@ -400,8 +404,11 @@ export function SceneStoryboardFrameViewer({
   generatingDirectSlotKey = null,
   frameGenerationQuality = 'draft',
   onFrameGenerationQualityChange,
+  frameGenerationMode = 'standard',
+  onFrameGenerationModeChange,
 }: SceneStoryboardFrameViewerProps) {
   const tExpressScene = useTranslations('production.expressScene')
+  const tStillPolicy = useTranslations('production.direction.stillPolicy')
   const [collapsed, setCollapsed] = useState(false)
   const [selectedFrameKey, setSelectedFrameKey] = useState<string | null>(null)
   const [generatingDialogueFrames, setGeneratingDialogueFrames] = useState<Set<string>>(new Set())
@@ -793,23 +800,42 @@ export function SceneStoryboardFrameViewer({
   )
 
   const qualityToggle = (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="inline-flex">
-          <StoryboardQualityToggle
-            size="compact"
-            value={frameGenerationQuality}
-            onChange={onFrameGenerationQualityChange ?? (() => {})}
-            draftLabel={tExpressScene('qualityDraft')}
-            finalLabel={tExpressScene('qualityFinal')}
-            disabled={isExpressRunning}
-          />
-        </span>
-      </TooltipTrigger>
-      <TooltipContent className="max-w-xs">
-        Default for Frame Agent, Regen, and Direct Frame
-      </TooltipContent>
-    </Tooltip>
+    <div className="flex items-center gap-1.5">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex">
+            <StoryboardQualityToggle
+              size="compact"
+              value={frameGenerationQuality}
+              onChange={onFrameGenerationQualityChange ?? (() => {})}
+              draftLabel={tExpressScene('qualityDraft')}
+              finalLabel={tExpressScene('qualityFinal')}
+              disabled={isExpressRunning}
+            />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs">
+          Default for Frame Agent, Regen, and Direct Frame
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex">
+            <StoryboardGenerationModeToggle
+              size="compact"
+              value={frameGenerationMode}
+              onChange={onFrameGenerationModeChange ?? (() => {})}
+              standardLabel={tStillPolicy('standard')}
+              creativeLabel={tStillPolicy('creative')}
+              disabled={isExpressRunning}
+            />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs">
+          {tStillPolicy('modeTooltip')}
+        </TooltipContent>
+      </Tooltip>
+    </div>
   )
 
   if (frameSlots.length === 0 && sceneBeats.length === 0) {
@@ -1173,6 +1199,7 @@ export function SceneStoryboardFrameViewer({
           isRunning={isExpressRunning}
           missingReferences={missingSceneReferences}
           defaultQuality={frameGenerationQuality}
+          defaultGenerationMode={frameGenerationMode}
           onConfirm={(options) => {
             setExpressSceneDialogOpen(false)
             void onExpressSceneGenerate(options)

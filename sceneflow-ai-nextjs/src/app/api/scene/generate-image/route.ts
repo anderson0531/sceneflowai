@@ -12,9 +12,12 @@ import { generateKlingOmniStill } from '@/lib/kling/generateKlingOmniStill'
 import {
   CREATIVE_KLING_UNAVAILABLE_CODE,
   CREATIVE_KLING_UNAVAILABLE_MESSAGE,
+  IMAGE_CONTENT_POLICY_CODE,
+  IMAGE_CONTENT_POLICY_USER_MESSAGE,
   IMAGE_SAFETY_CODE,
   IMAGE_SAFETY_USER_MESSAGE,
-  parseStillPolicyMode,
+  isCreativeStillGeneration,
+  parseStillGenerationMode,
   resolveVertexStillPolicyAttempts,
   shouldRejectIgnoredIdentityStill,
 } from '@/lib/generation/stillPolicy'
@@ -667,9 +670,13 @@ export async function POST(req: NextRequest) {
       startFrameUrl,
       regenerate = false,
       stillPolicyMode: stillPolicyModeRaw,
+      stillGenerationMode: stillGenerationModeRaw,
     } = body
 
-    const stillPolicyMode = parseStillPolicyMode(stillPolicyModeRaw)
+    const stillGenerationMode = parseStillGenerationMode(
+      stillGenerationModeRaw ?? stillPolicyModeRaw
+    )
+    const stillPolicyMode = stillGenerationMode
 
     logContext = {
       projectId,
@@ -3293,7 +3300,7 @@ export async function POST(req: NextRequest) {
             geminiPrompt = sanitizeBeatStillPrompt(geminiPrompt)
           }
 
-          if (stillPolicyMode === 'creative') {
+          if (isCreativeStillGeneration(stillGenerationMode)) {
             if (!getKlingFallbackProvider()) {
               return NextResponse.json(
                 {
@@ -3330,23 +3337,7 @@ export async function POST(req: NextRequest) {
             const sanitizedGeminiPrompt = isBeatFrame
               ? sanitizeBeatStillPrompt(geminiPrompt)
               : geminiPrompt
-            const vertexPrompt =
-              stillPolicyMode === 'safety'
-                ? escalateImagePromptForRetry(sanitizedGeminiPrompt, 1, {
-                    skipProductionStillFraming: isBeatFrame,
-                    shotType: effectiveShotType,
-                    allowTypography,
-                  })
-                : sanitizedGeminiPrompt
-            if (stillPolicyMode === 'safety') {
-              promptForResponse = vertexPrompt
-              promptWasPolicySoftened = vertexPrompt !== sanitizedGeminiPrompt
-              if (promptWasPolicySoftened) {
-                console.log(
-                  '[Scene Image] Director Safety pre-softened the composed prompt before Vertex'
-                )
-              }
-            }
+            const vertexPrompt = sanitizedGeminiPrompt
 
             const vertexResult = await generateImageWithVertexKlingFallback({
               prompt: vertexPrompt,
@@ -3354,15 +3345,10 @@ export async function POST(req: NextRequest) {
               imageSize: effectiveImageSize,
               referenceImages: allReferenceImages,
               ...(isBeatFrame ? {} : { negativePrompt: finalNegativePrompt }),
-              ...(effectiveImageTier || stillPolicyMode === 'safety'
-                ? { modelTier: stillPolicyMode === 'safety' ? 'designer' : effectiveImageTier }
-                : {}),
-              failFastOnRateLimit: stillPolicyMode ? false : !!skipLikenessValidation,
+              ...(effectiveImageTier ? { modelTier: effectiveImageTier } : {}),
+              failFastOnRateLimit: !!skipLikenessValidation,
               requireAllReferenceImages: allReferenceImages.length > 0,
-              policyMaxAttempts: resolveVertexStillPolicyAttempts(stillPolicyMode),
-              ...(stillPolicyMode === 'safety'
-                ? { policyBasePrompt: geminiPrompt, policyEscalationOffset: 1 }
-                : {}),
+              policyMaxAttempts: resolveVertexStillPolicyAttempts(stillGenerationMode),
               skipProductionStillFraming: isBeatFrame,
               shotType: effectiveShotType,
               allowTypography,
@@ -3408,7 +3394,7 @@ export async function POST(req: NextRequest) {
             : optimizedPrompt
           const imagenStill = isBeatFrame ? sanitizeBeatStillPrompt(imagenStillRaw) : imagenStillRaw
           promptForResponse = imagenStill
-          if (stillPolicyMode === 'creative') {
+          if (isCreativeStillGeneration(stillGenerationMode)) {
             if (!getKlingFallbackProvider()) {
               return NextResponse.json(
                 {
@@ -3431,15 +3417,7 @@ export async function POST(req: NextRequest) {
             generationProvider = 'kling'
             wasPolicyFallback = true
           } else {
-            const imagenPrompt =
-              stillPolicyMode === 'safety'
-                ? escalateImagePromptForRetry(imagenStill, 1, {
-                    skipProductionStillFraming: isBeatFrame,
-                    shotType: effectiveShotType,
-                    allowTypography,
-                  })
-                : imagenStill
-            if (stillPolicyMode === 'safety') promptForResponse = imagenPrompt
+            const imagenPrompt = imagenStill
             const effectivePersonGeneration = effectiveExcludeCharacters
               ? 'dont_allow'
               : personGeneration || 'allow_adult'
@@ -3660,15 +3638,12 @@ export async function POST(req: NextRequest) {
     if (
       shouldRejectIgnoredIdentityStill({
         policyRefusalRecovered: lastRoundPolicyRefusalRecovered,
-        stillPolicyMode,
         hasIdentityRefs: charactersWithImages.length > 0,
         likenessFailed: isGenuineLikenessFailure(validation),
       })
     ) {
       console.warn(
-        stillPolicyMode === 'safety' && !lastRoundPolicyRefusalRecovered
-          ? '[Scene Image] Director Safety frame ignored identity references — failing uncharged'
-          : '[Scene Image] Policy-recovered frame ignored identity references — failing uncharged'
+        '[Scene Image] Policy-recovered frame ignored identity references — failing uncharged'
       )
       return NextResponse.json(
         {
@@ -3765,7 +3740,7 @@ export async function POST(req: NextRequest) {
           sceneIndex,
           model: generationModelId,
           provider: generationProvider,
-          stillPolicyMode: stillPolicyMode ?? 'auto',
+          stillPolicyMode: stillGenerationMode ?? 'auto',
         }
       )
       creditsCharged = CREDIT_COST
@@ -3863,8 +3838,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: IMAGE_SAFETY_USER_MESSAGE,
-          code: IMAGE_SAFETY_CODE,
+          error: IMAGE_CONTENT_POLICY_USER_MESSAGE,
+          code: IMAGE_CONTENT_POLICY_CODE,
         },
         { status: 422 }
       )

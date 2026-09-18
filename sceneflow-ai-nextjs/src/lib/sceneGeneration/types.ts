@@ -38,6 +38,8 @@ export interface ExpressOptions {
   imageQuality?: string
   /** Storyboard frame quality: draft (Express default) or final (animatic/video). */
   storyboardQuality?: 'draft' | 'final'
+  /** Standard (Google) or Creative (Kling) still generation. */
+  stillGenerationMode?: 'standard' | 'creative'
   /** Upgrade pass — regenerate draft/missing frames at final quality only. */
   finalizeOnly?: boolean
   /** When true, Express also generates an end frame per beat (for FTV motion). Default false. */
