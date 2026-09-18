@@ -10,7 +10,10 @@ import {
   composeIdentityWardrobePipBuffers,
   composePipFromDiptychBuffer,
   consolidateBeatCharacterRefsIntoPipBadges,
+  cropIdentityPlateForPro,
   hasVerticalCenterSeam,
+  identityPlateNeedsFaceCrop,
+  IDENTITY_PRO_CU_SIZE,
   looksLikeHorizontalDiptych,
   splitHorizontalDiptychBuffer,
   stitchIdentityWardrobeBuffers,
@@ -420,5 +423,41 @@ describe('composeIdentityWardrobeDiptych', () => {
       label: 'Nobody',
     })
     expect(result).toBeNull()
+  })
+})
+
+describe('cropIdentityPlateForPro', () => {
+  it('passes through a square or 9:16 headshot', async () => {
+    expect(identityPlateNeedsFaceCrop(1024, 1024)).toBe(false)
+    expect(identityPlateNeedsFaceCrop(720, 1280)).toBe(false)
+    const square = await solidJpeg(400, 400, { r: 180, g: 40, b: 40 })
+    const result = await cropIdentityPlateForPro(square)
+    expect(result.cropped).toBe(false)
+    expect(result.buffer).toBe(square)
+  })
+
+  it('centre-crops a wide cinematic portrait to a 1:1 CU', async () => {
+    const wide = await solidJpeg(1920, 800, { r: 40, g: 80, b: 180 })
+    const result = await cropIdentityPlateForPro(wide)
+    expect(result.cropped).toBe(true)
+    expect(result.reason).toBe('wide-portrait')
+    const meta = await sharp(result.buffer).metadata()
+    expect(meta.width).toBe(IDENTITY_PRO_CU_SIZE)
+    expect(meta.height).toBe(IDENTITY_PRO_CU_SIZE)
+  })
+
+  it('extracts the PiP face badge instead of the full-body canvas', async () => {
+    const identity = await solidJpeg(400, 400, { r: 180, g: 40, b: 40 })
+    const wardrobe = await solidJpeg(800, 200, { r: 40, g: 80, b: 180 })
+    const pip = await composeIdentityWardrobePipBuffers(identity, wardrobe)
+
+    const result = await cropIdentityPlateForPro(pip)
+    expect(result.cropped).toBe(true)
+    expect(result.reason).toBe('pip-badge')
+
+    const { data, info } = await sharp(result.buffer).raw().toBuffer({ resolveWithObject: true })
+    const i = (Math.floor(info.height / 2) * info.width + Math.floor(info.width / 2)) * info.channels
+    expect(data[i]).toBeGreaterThan(120)
+    expect(data[i + 1]).toBeLessThan(80)
   })
 })

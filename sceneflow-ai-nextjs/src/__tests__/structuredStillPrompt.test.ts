@@ -772,6 +772,22 @@ describe('bindLibraryNamesToTokens', () => {
     ])
     expect(text).toBe('Gideon watches Gideon.')
   })
+
+  it('binds a unique workbench head noun and table synonym to the send-index token', () => {
+    const text = replaceLibraryNamesWithTokens(
+      'person [1] leans against the table, gaze down at the workbench.',
+      [
+        { kind: 'person', token: 'person [1]', name: 'Piper Hayes', roleLabel: 'identity' },
+        {
+          kind: 'prop',
+          token: 'prop [3]',
+          name: 'Zinc workbench',
+          roleLabel: 'library prop',
+        },
+      ]
+    )
+    expect(text).toBe('person [1] leans against the prop [3], gaze down at the prop [3].')
+  })
 })
 
 describe('every [REFERENCES] token reaches the instruction body', () => {
@@ -1292,8 +1308,11 @@ describe('identity traits reach every reference-bearing frame', () => {
     // optimized prompt, which names the subject only as `person [N]`.
     expect(src).not.toMatch(/\}\)\s*\n\s*:\s*remappedOptimizedPrompt/)
     expect(src).toMatch(
-      /joinPromptBlocks\(\s*formatStillReferencesLegend\(stillRefs,\s*effectiveShotType\),\s*remappedOptimizedPrompt\s*\)/
+      /joinPromptBlocks\(\s*formatStillReferencesLegend\(stillRefs,\s*effectiveShotType/
     )
+    expect(src).toContain("includeAttachedIdentityTraits = effectiveImageTier !== 'eco'")
+    expect(src).toContain('if (keyFeatures.length === 0)')
+    expect(src).toContain('visionLandmarks')
   })
 
   it('does not re-describe faces or outfits from text when identity images are attached', () => {
@@ -1303,6 +1322,33 @@ describe('identity traits reach every reference-bearing frame', () => {
     expect(formatStillReferencesLegend(gideonRefs())).toBe(
       '[REFERENCES]\nperson [1] (Gideon Croft) — matches Reference image 1 (Identity)'
     )
+  })
+
+  it('locks Pro stills with short vision landmarks that must match Reference image 1', () => {
+    const refs = stillRefsFromAttachedImages({
+      selected: [
+        { sendIndex: 1, characterName: 'Gideon Croft', refRole: 'identity' },
+        { sendIndex: 2, characterName: 'Gideon Croft', refRole: 'wardrobe' },
+      ],
+      characterReferences: [
+        {
+          name: 'Gideon Croft',
+          promptToken: 'person [1]',
+          subjectOrdinal: 1,
+          visionDescription: GIDEON_VISION,
+        },
+      ],
+      includeAttachedIdentityTraits: true,
+    })
+    expect(refs[0].identityTraits).toMatch(/medium-brown skin/)
+    expect(
+      formatStillReferencesLegend(refs, undefined, { includeAttachedIdentityTraits: true })
+    ).toContain(
+      'facial landmarks from Reference image 1 — warm medium-brown skin, tightly curled salt-and-pepper hair, short grizzled beard, early 50s'
+    )
+    expect(
+      formatStillReferencesLegend(refs, undefined, { includeAttachedIdentityTraits: true })
+    ).not.toMatch(/overcoat/i)
   })
 })
 

@@ -1,10 +1,12 @@
 /**
  * One short identity clause for text-to-image stills that have no portrait.
  *
- * When identity/wardrobe images are attached, the [REFERENCES] legend binds by
- * token and send index only. Restating ethnicity, hair, or age next to those
- * photos is a prose substitute Pro will illustrate instead of the plates.
- * Traits stay on the no-ref T2I path and on the likeness retry lock.
+ * When identity/wardrobe images are attached, Flash binds by token and send
+ * index only. Restating ethnicity, hair, or age next to those photos is a
+ * prose substitute Flash does not need. Pro's 560-token plates need the short
+ * vision-derived landmark clause on the legend (`includeAttachedIdentityTraits`)
+ * so downsampled faces still have textual anchors.
+ * Traits also stay on the no-ref T2I path and on the likeness retry lock.
  *
  * Traits are read from the vision-derived description of the reference image —
  * never from the `ethnicity` field, whose labels ("neutral American") describe

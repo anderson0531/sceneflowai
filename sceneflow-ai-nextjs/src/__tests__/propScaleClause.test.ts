@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { extractPropScalePhrase, propScaleClause, PROP_SCALE_GENERIC } from '@/lib/imagen/propScaleClause'
+import { extractPropScalePhrase, propScaleClause, PROP_SCALE_GENERIC, PROP_SCALE_FURNITURE } from '@/lib/imagen/propScaleClause'
 import { buildSceneImagePropLabel } from '@/lib/imagen/sceneImageReferenceLabels'
 import { buildObjectReferencePrompt } from '@/lib/vision/referenceExpressPrompts'
 import { readFileSync } from 'fs'
@@ -22,6 +22,12 @@ describe('propScaleClause', () => {
     expect(propScaleClause('Brushed steel canister with a red stripe', 'Canister')).toBe(
       PROP_SCALE_GENERIC
     )
+  })
+
+  it('does not call a workbench handheld', () => {
+    expect(propScaleClause(undefined, 'Zinc workbench')).toBe(PROP_SCALE_FURNITURE)
+    expect(propScaleClause('handheld zinc workbench', 'Zinc workbench')).toBe(PROP_SCALE_FURNITURE)
+    expect(propScaleClause(undefined, 'Zinc workbench')).not.toMatch(/handheld/)
   })
 
   it('reads a size from the name when description is empty', () => {
