@@ -89,6 +89,7 @@ import {
   explicitBeatReferenceSelection,
   mapBeatReferenceSelectionForApi,
   resolveBeatFrameGenerationContext,
+  resolveVerifiedBeatRefsForApi,
   shouldUseExplicitBeatReferences,
   toBeatReferenceSelection,
 } from '@/lib/vision/beatFrameGenerationContext'
@@ -11317,6 +11318,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
 
     try {
+      const beatForRefs = getSceneBeats(scene).find((row) => row.beatId === slot.beatId)
+      const verifiedRefs = beatForRefs
+        ? resolveVerifiedBeatRefsForApi({
+            beat: beatForRefs,
+            scene: scene as Record<string, unknown>,
+            sceneIndex,
+            projectCharacters: characters,
+            locationReferences,
+            objectReferences,
+            filmTitle: project?.title,
+          })
+        : null
+
       const response = await fetch('/api/scene/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -11333,6 +11347,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           stillGenerationMode: frameGenerationMode,
           stillPolicyMode: frameGenerationMode,
           regenerate: !!slot.ownImageUrl?.trim(),
+          ...(verifiedRefs
+            ? {
+                characterSelectionExplicit: true,
+                selectedCharacters: verifiedRefs.selectedCharacters,
+                characterWardrobes: verifiedRefs.characterWardrobes,
+                locationReferences: verifiedRefs.locationReferences,
+                objectReferences: verifiedRefs.objectReferences,
+                skipObjectAutoDetection: true,
+              }
+            : {}),
           ...GALLERY_MANUAL_GENERATE_OPTS,
         }),
       })

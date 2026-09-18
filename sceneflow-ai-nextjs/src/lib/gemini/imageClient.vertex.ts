@@ -63,6 +63,8 @@ interface ImageGenerationOptions {
   skipFaceMesh?: boolean
   /** Absolute epoch-ms cutoff for the call and its retries. */
   deadlineAt?: number
+  /** Parent generate-image abort — forwarded to Vertex so disconnect stops the model call. */
+  signal?: AbortSignal
 }
 
 const NO_PEOPLE_INSTRUCTION =
@@ -106,6 +108,7 @@ export async function generateImageWithGemini(
     ...(options.imageSize ? { imageSize: options.imageSize } : {}),
     ...(options.negativePrompt ? { negativePrompt: options.negativePrompt } : {}),
     ...(options.deadlineAt ? { deadlineAt: options.deadlineAt } : {}),
+    ...(options.signal ? { signal: options.signal } : {}),
     modelTier,
     ...(hasReferenceImages
       ? {

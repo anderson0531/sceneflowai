@@ -58,13 +58,15 @@ describe('Frame Agent Express fail-fast contracts', () => {
   it('Vertex fail-fast skips eco fallback and flash-to-pro escalation', () => {
     const src = readSource('src/lib/vertexai/vertexImageClient.ts')
     expect(src).toContain('if (options.failFastOnRateLimit) return false')
-    expect(src).toContain('options.failFastOnRateLimit ||')
     expect(src).toContain('!options.failFastOnRateLimit &&')
+    expect(src).toContain('VERTEX_IMAGE_ABORTED_BY_CLIENT')
   })
 
   it('Frame Agent pins the beat pool to one attempt', () => {
     const src = readSource('src/lib/sceneGeneration/expressOrchestrator.ts')
     expect(src).toContain('maxAttempts: 1')
     expect(src).not.toContain('maxAttempts: getSceneExpressBeatMaxAttempts()')
+    expect(src).toContain('cooldownMsAfterError')
+    expect(src).toContain('getSceneExpressBeat429CooldownMs')
   })
 })

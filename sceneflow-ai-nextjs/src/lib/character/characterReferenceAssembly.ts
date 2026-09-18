@@ -5,8 +5,11 @@
 import { toCharacterPromptAlias } from '@/lib/character/characterPromptAlias'
 
 export const CHARACTER_IDENTITY_REFERENCE_INSTRUCTION =
-  'IDENTITY REFERENCE (PRIMARY): Match face, hair, skin tone, age, ethnicity, body proportions, and photorealistic rendering style from this image exactly at all shot distances. ' +
-  'This image owns identity and realism — ignore clothing in this image if it differs from the scene wardrobe; outfit comes from the wardrobe reference or text.'
+  'IDENTITY REFERENCE (PRIMARY): This photo is the same person head-to-toe. ' +
+  'Match face, hair, skin tone, age, ethnicity, bone structure, and body from it exactly at all shot distances. ' +
+  'If the photo shows both a face close-up and a standing figure, both are that person — copy the face from the close-up and body identity from the standing figure. ' +
+  'Do not invent a different face. Outfit comes from the wardrobe reference when one is attached, otherwise from this photo. ' +
+  'Do not copy the character-card layout into the scene. This image owns identity and photorealism.'
 
 export const EXPRESSION_OVERRIDE_INSTRUCTION =
   'FACIAL EXPRESSION: Do NOT copy the neutral/posed expression from the identity or wardrobe reference. ' +
@@ -15,7 +18,7 @@ export const EXPRESSION_OVERRIDE_INSTRUCTION =
 
 export const WARDROBE_ONLY_REFERENCE_INSTRUCTION =
   'WARDROBE REFERENCE (SECONDARY): Full-body front-facing wardrobe — outfit colors, fabric, cut, fit, footwear, accessories, and visible scene-state marks (bruises, wounds, blood, makeup wear). ' +
-  'Identity, bone structure, and photorealism come from the identity reference. Expression comes from beat direction.'
+  'Garments only — never a different person. Identity, bone structure, and photorealism come from the identity reference. Expression comes from beat direction.'
 
 /** Legacy mannequin turnaround sheet instruction (back-compat). */
 export const LEGACY_MANNEQUIN_WARDROBE_REFERENCE_INSTRUCTION =
@@ -25,9 +28,10 @@ export const LEGACY_MANNEQUIN_WARDROBE_REFERENCE_INSTRUCTION =
 
 /** Global priority block injected before per-image lines when dual refs exist. */
 export const DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK =
-  'DUAL REFERENCE PRIORITY: Identity reference = PRIMARY for face bone structure, hair base, skin tone, age, ethnicity, body proportions, and photorealistic human rendering at ALL shot distances (wide, medium, close). ' +
-  'Wardrobe reference = SECONDARY for outfit colors, fabric, cut, accessories, AND visible scene-state marks on hands/body/face (bruises, wounds, blood, makeup wear). ' +
-  'Facial expression comes from beat direction.'
+  'DUAL REFERENCE PRIORITY: Identity reference = PRIMARY for the same person — face, hair, skin tone, age, ethnicity, body, and photorealistic rendering at ALL shot distances (wide, medium, close). ' +
+  'If that photo includes a face close-up and a standing figure, both are that person — copy the face from the close-up. ' +
+  'Wardrobe reference = SECONDARY for outfit colors, fabric, cut, accessories, AND visible scene-state marks on hands/body/face (bruises, wounds, blood, makeup wear) — garments only, never a different person. ' +
+  'Facial expression comes from beat direction. Do not copy the character-card layout into the scene.'
 
 const WIDE_SHOT_KEYWORDS = /\b(wide|establishing|full[- ]?body|long shot|master shot|extreme wide)\b/i
 

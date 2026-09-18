@@ -280,6 +280,19 @@ describe('Still Director contracts', () => {
     expect(handler).not.toContain('stillPolicyMode: options.stillPolicyMode')
   })
 
+  it('Director generate sends the same verified beat refs as Express', () => {
+    const page = readSource('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
+    const start = page.indexOf('const handleGenerateBeatStillWithPolicy')
+    const next = page.indexOf('const handleOpenDirectFrame')
+    const handler = page.slice(start, next > start ? next : undefined)
+    expect(handler).toContain('resolveVerifiedBeatRefsForApi')
+    expect(handler).toContain('characterSelectionExplicit: true')
+    expect(handler).toContain('skipObjectAutoDetection: true')
+    expect(handler).toContain('selectedCharacters: verifiedRefs.selectedCharacters')
+    expect(handler).toContain('objectReferences: verifiedRefs.objectReferences')
+    expect(handler).toContain('locationReferences: verifiedRefs.locationReferences')
+  })
+
   it('overlay labels are Direct Frame, Director, then Edit', () => {
     const frame = readSource('src/components/vision/SceneImageFrame.tsx')
     expect(frame).toContain("title={generateBlockedReason || 'Direct Frame'}")

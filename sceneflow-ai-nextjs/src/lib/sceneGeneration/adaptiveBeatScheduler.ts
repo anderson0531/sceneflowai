@@ -43,6 +43,13 @@ export function getSceneExpressBeatMaxAttempts(): number {
   )
 }
 
+export function getSceneExpressBeat429CooldownMs(): number {
+  return parseNonNegativeInt(
+    process.env.SCENE_EXPRESS_BEAT_429_COOLDOWN_MS,
+    DEFAULT_SCENE_EXPRESS_BEAT_429_COOLDOWN_MS
+  )
+}
+
 /**
  * Per-beat 429 backoff, laddering 5s/10s/20s across the retries above.
  *
@@ -53,6 +60,11 @@ export function getSceneExpressBeatMaxAttempts(): number {
  */
 export const DEFAULT_SCENE_EXPRESS_BEAT_BACKOFF_MS = 5_000
 export const DEFAULT_SCENE_EXPRESS_BEAT_MAX_BACKOFF_MS = 30_000
+/**
+ * After a fail-fast identity-ref 429, wait before the next beat so a hung
+ * sibling's Vertex call can drain instead of stacking another 429.
+ */
+export const DEFAULT_SCENE_EXPRESS_BEAT_429_COOLDOWN_MS = 15_000
 
 export function getSceneExpressBeatConcurrency(opts?: {
   flashAnimatic?: boolean
@@ -86,6 +98,11 @@ export interface AdaptiveBeatPoolOptions {
   abortOnNonRetryableCanary?: boolean
   /** When aborted, stop scheduling and fail remaining queued beats. */
   signal?: AbortSignal
+  /**
+   * After a non-retryable failure, delay remaining queued beats by this many ms
+   * so a hung sibling's Vertex call can drain before the next dispatch.
+   */
+  cooldownMsAfterError?: (err: unknown) => number
 }
 
 export interface AdaptiveBeatPoolResult {
@@ -233,6 +250,13 @@ export async function runAdaptiveBeatPool(
     }
 
     failed.set(beatIndex, err)
+    const cooldownMs = options.cooldownMsAfterError?.(err) ?? 0
+    if (cooldownMs > 0) {
+      const readyAt = Date.now() + cooldownMs
+      for (const entry of queue) {
+        entry.readyAt = Math.max(entry.readyAt, readyAt)
+      }
+    }
   }
 
   const runEntry = async (entry: QueueEntry): Promise<void> => {

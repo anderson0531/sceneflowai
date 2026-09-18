@@ -9,11 +9,14 @@
  */
 
 import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook'
+import { combineAbortSignals } from '@/lib/utils/abortSignals'
 import type { SceneImageResult } from './types'
 import {
   FRAME_AGENT_CANCELLED_CODE,
   FRAME_AGENT_CANCELLED_MESSAGE,
 } from './expressImageErrors'
+
+export { combineAbortSignals } from '@/lib/utils/abortSignals'
 
 export interface GenerateSceneImageParams {
   projectId: string
@@ -98,29 +101,6 @@ export class SceneImageGenerationError extends Error {
  * that frees the Express image-lane slot if the child hangs.
  */
 export const SCENE_GENERATE_IMAGE_FETCH_TIMEOUT_MS = 295_000
-
-/** Merge timeout + parent abort so cancel does not wait out the 295s child cap. */
-export function combineAbortSignals(
-  ...signals: Array<AbortSignal | undefined>
-): AbortSignal {
-  const live = signals.filter((signal): signal is AbortSignal => !!signal)
-  if (live.length === 0) {
-    return new AbortController().signal
-  }
-  if (live.length === 1) return live[0]!
-  const controller = new AbortController()
-  const abort = () => {
-    if (!controller.signal.aborted) controller.abort()
-  }
-  for (const signal of live) {
-    if (signal.aborted) {
-      abort()
-      break
-    }
-    signal.addEventListener('abort', abort, { once: true })
-  }
-  return controller.signal
-}
 
 export async function generateSceneImage(
   params: GenerateSceneImageParams

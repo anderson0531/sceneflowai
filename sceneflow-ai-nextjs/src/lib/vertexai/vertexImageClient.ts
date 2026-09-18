@@ -13,6 +13,7 @@ import { priorityPaygoHeaders } from '@/lib/vertexai/priorityPaygo'
 import { runInVertexImageGate } from '@/lib/vertexai/vertexImageGate'
 import { getGeminiImageSafetySettings } from '@/lib/vertexai/safety'
 import { MAX_REFERENCE_IMAGES_ECO } from '@/lib/vision/referenceLimits'
+import { combineAbortSignals } from '@/lib/utils/abortSignals'
 
 export type VertexImageTier = 'eco' | 'designer' | 'director'
 export type VertexThinkingLevel = 'low' | 'high'
@@ -50,6 +51,22 @@ export const RATE_LIMIT_FAILED_FAST = 'rate limit failed fast'
 
 /** Marker for a caller-supplied budget running out mid-ladder. */
 export const IMAGE_DEADLINE_EXCEEDED = 'image generation deadline exceeded'
+
+/** Parent generate-image / Express abort — stop Vertex, do not eco-fallback or retry. */
+export const VERTEX_IMAGE_ABORTED_BY_CLIENT = 'abortedByClient'
+
+export function isVertexImageAbortedByClient(err: unknown, signal?: AbortSignal): boolean {
+  if (signal?.aborted) return true
+  const msg = String((err as { message?: unknown })?.message || err || '')
+  return msg.includes(VERTEX_IMAGE_ABORTED_BY_CLIENT)
+}
+
+function throwAbortedByClient(model?: string): never {
+  console.warn(
+    `[Vertex Gemini Image] abortedByClient${model ? ` (model=${model})` : ''} — Vertex fetch cancelled`
+  )
+  throw new Error(`Vertex Gemini Image error: ${VERTEX_IMAGE_ABORTED_BY_CLIENT}`)
+}
 
 function deadlinePassed(deadlineAt?: number): boolean {
   return deadlineAt != null && Date.now() >= deadlineAt
@@ -258,6 +275,11 @@ export interface GenerateVertexImageOptions {
    * Attempts are shortened to fit it and no further attempt starts past it.
    */
   deadlineAt?: number
+  /**
+   * Parent generate-image request abort (client disconnect / Express timeout).
+   * Combined with the per-attempt timeout so Vertex stops when the child is cancelled.
+   */
+  signal?: AbortSignal
 }
 
 export interface VertexImageResult {
@@ -479,6 +501,9 @@ export async function generateVertexGeminiImage(
   options: GenerateVertexImageOptions,
   retryCount = 0
 ): Promise<VertexImageResult> {
+  if (options.signal?.aborted) {
+    throwAbortedByClient()
+  }
   if (deadlinePassed(options.deadlineAt)) {
     throw new Error(`Vertex Gemini Image error: ${IMAGE_DEADLINE_EXCEEDED}`)
   }
@@ -551,9 +576,10 @@ export async function generateVertexGeminiImage(
   }
 
   const accessToken = await getVertexAIAuthToken()
-  const controller = new AbortController()
+  const timeoutController = new AbortController()
   const requestTimeoutMs = requestTimeoutFor(options.deadlineAt)
-  const timeoutId = setTimeout(() => controller.abort(), requestTimeoutMs)
+  const timeoutId = setTimeout(() => timeoutController.abort(), requestTimeoutMs)
+  const requestSignal = combineAbortSignals(timeoutController.signal, options.signal)
 
   let response: Response
   try {
@@ -570,12 +596,15 @@ export async function generateVertexGeminiImage(
           ...priorityPaygoHeaders(),
         },
         body: JSON.stringify(requestBody),
-        signal: controller.signal,
+        signal: requestSignal,
       })
     )
   } catch (error) {
     clearTimeout(timeoutId)
     if (error instanceof Error && error.name === 'AbortError') {
+      if (options.signal?.aborted) {
+        throwAbortedByClient(model)
+      }
       if (model.includes('pro-image') && canFallbackToEcoTier(options)) {
         console.warn(
           `[Vertex Gemini Image] ${model} timed out after ${requestTimeoutMs}ms, falling back to ${GEMINI_IMAGE_TIER_CONFIG.eco.model}`

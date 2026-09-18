@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   mapBeatReferenceSelectionForApi,
+  resolveVerifiedBeatRefsForApi,
   shouldUseExplicitBeatReferences,
   unionBeatSelectionWithPromptText,
   toBeatReferenceSelection,
@@ -144,6 +145,38 @@ describe('mapBeatReferenceSelectionForApi', () => {
 
     const autoDetectLocations = payload.locationReferences.length === 0
     expect(autoDetectLocations).toBe(false)
+  })
+})
+
+describe('resolveVerifiedBeatRefsForApi', () => {
+  it('maps a saved user selection to the explicit generate-image payload', () => {
+    const beat: SceneBeat = {
+      beatId: 'b-director',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription: 'Elara opens the Briefcase.',
+      referenceSelection: {
+        characterIds: ['c1'],
+        locationRefId: 'loc-kitchen',
+        objectRefIds: ['obj-briefcase'],
+        characterWardrobes: [{ characterId: 'c1', wardrobeId: 'w1' }],
+        resolvedAt: '2026-06-09T12:00:00.000Z',
+        source: 'user',
+      },
+    }
+    const payload = resolveVerifiedBeatRefsForApi({
+      beat,
+      scene: { heading: 'INT. KITCHEN - DAY' },
+      projectCharacters: characters,
+      locationReferences: locations,
+      objectReferences: objects,
+    })
+    expect(payload.characterSelectionExplicit).toBe(true)
+    expect(payload.skipObjectAutoDetection).toBe(true)
+    expect(payload.selectedCharacters).toEqual(['c1'])
+    expect(payload.objectReferences.map((obj) => obj.id)).toEqual(['obj-briefcase'])
+    expect(payload.locationReferences[0]?.id).toBe('loc-kitchen')
+    expect(payload.characterWardrobes).toEqual([{ characterId: 'c1', wardrobeId: 'w1' }])
   })
 })
 

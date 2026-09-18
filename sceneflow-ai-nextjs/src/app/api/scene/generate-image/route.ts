@@ -195,6 +195,7 @@ import {
 import {
   directedCastForBeat,
   resolveBeatFrameGenerationContext,
+  resolveVerifiedBeatRefsForApi,
   shouldUseExplicitBeatReferences,
 } from '@/lib/vision/beatFrameGenerationContext'
 import { locationReferenceForGeneration } from '@/lib/vision/locationVersionResolve'
@@ -214,6 +215,7 @@ import {
   isTransientExpressImageError,
   resolveExpressImageErrorStatus,
 } from '@/lib/sceneGeneration/expressImageErrors'
+import { isVertexImageAbortedByClient } from '@/lib/vertexai/vertexImageClient'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300  // Two full generate + validate rounds must fit
@@ -704,7 +706,7 @@ export async function POST(req: NextRequest) {
     const isBeatFrame = frameType === 'beat'
     const isCustomFrame = frameType === 'custom'
     // Draft/flash vs Final/pro must be known before character slots are built:
-    // Final attaches the identity headshot beside the PiP card; Draft does not.
+    // Final sends discrete identity + wardrobe plates, never a PiP badge card.
     const useFlashDraftTier = usesFlashDraftTier({
       isBeatFrame,
       resolvedModelTier,
@@ -1523,6 +1525,23 @@ export async function POST(req: NextRequest) {
               versionId: autoCtx.locationVersionId,
               sceneIndex,
             })
+          }
+        }
+
+        if (detectedObjectReferences.length === 0 && !skipObjectAutoDetection) {
+          const hydrated = resolveVerifiedBeatRefsForApi({
+            beat: beatForLocation,
+            scene: resolvedScene as Record<string, unknown>,
+            sceneIndex,
+            projectCharacters,
+            locationReferences: projectLocationRefs,
+            objectReferences: projectObjectRefs,
+          })
+          if (hydrated.objectReferences.length > 0) {
+            detectedObjectReferences = hydrated.objectReferences
+            console.log(
+              `[Scene Image] Beat frame hydrated ${hydrated.objectReferences.length} object reference(s) from beat selection`
+            )
           }
         }
       }
@@ -3021,10 +3040,10 @@ export async function POST(req: NextRequest) {
                 'Scene text uses person [N]; identity and wardrobe are bound in [REFERENCES] as person [N] (Name) and must match the labeled character reference.\n\n'
             } else if (hasAnyDual) {
               geminiPrompt +=
-                'In the scene prompt, refer to characters with identity refs using "person [N]" tokens. Identity is bound in [REFERENCES] as person [N] (Name) and must match the labeled reference image(s). Do not restate ethnicity, age, or appearance adjectives in the action text.\n\n'
+                'In the scene prompt, refer to characters with identity refs using "person [N]" tokens. The identity photo is the same person head-to-toe (face close-up and standing figure). Copy the face from it; copy garments from the wardrobe photo. Do not invent a different face. Do not copy the character-card layout into the scene.\n\n'
             } else if (hasIdentityOnly) {
               geminiPrompt +=
-                'Use identity reference(s) for face, hair, skin tone, age, ethnicity, and body proportions only. Ignore clothing in identity reference images — outfit must come from wardrobe text in the scene prompt.\n\n'
+                'The identity photo is the same person head-to-toe — copy face, hair, body, and likeness from it. If it shows a face close-up and a standing figure, both are that person. Outfit comes from wardrobe text in the scene prompt when no wardrobe photo is attached. Do not copy the character-card layout into the scene.\n\n'
             } else {
               geminiPrompt +=
                 'The character(s) MUST match the reference image(s) exactly — same face, ethnicity, age, hair, and facial features.\n\n'
@@ -3302,6 +3321,7 @@ export async function POST(req: NextRequest) {
               shotType: effectiveShotType,
               allowTypography,
               deadlineAt: imageDeadlineAt,
+              signal: req.signal,
             })
 
             base64Image = vertexResult.imageBase64
@@ -3378,6 +3398,7 @@ export async function POST(req: NextRequest) {
               personGeneration: effectivePersonGeneration,
               negativePrompt: finalNegativePrompt,
               deadlineAt: imageDeadlineAt,
+              signal: req.signal,
             })
             generationModelId = GEMINI_IMAGE_MODELS.flash
             generationProvider = 'vertex'
@@ -3392,6 +3413,14 @@ export async function POST(req: NextRequest) {
       } catch (error: any) {
         const errorMessage = error?.message || String(error)
         console.error(`[Scene Image] Generation attempt ${generationAttempt} failed:`, errorMessage)
+
+        if (isVertexImageAbortedByClient(error, req.signal)) {
+          console.warn('[Scene Image] abortedByClient — stopping Vertex without retry', {
+            ...logContext,
+            elapsedMs: Date.now() - routeStart,
+          })
+          throw error
+        }
 
         const errorLower = errorMessage.toLowerCase()
         const isTransientError = isTransientExpressImageError(error)
@@ -3732,6 +3761,22 @@ export async function POST(req: NextRequest) {
       code: error.code,
       statusCode: error.statusCode
     })
+
+    if (isVertexImageAbortedByClient(error, req.signal)) {
+      console.warn('[Scene Image] abortedByClient', {
+        ...logContext,
+        elapsedMs: Date.now() - routeStart,
+      })
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Request aborted',
+          errorType: 'abortedByClient',
+          retryable: false,
+        },
+        { status: 499 }
+      )
+    }
     
     // Check if it's a quota error
     const isQuotaError = error.message?.includes('quota') || 
@@ -3742,6 +3787,7 @@ export async function POST(req: NextRequest) {
     if (isQuotaError) {
       console.warn('[Scene Image] Quota/rate limit — client may retry', {
         ...logContext,
+        errorType: 'rateLimited',
         googleError: error.message?.substring(0, 300),
         elapsedMs: Date.now() - routeStart,
       })

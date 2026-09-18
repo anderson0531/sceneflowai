@@ -110,6 +110,11 @@ describe('COMBINED_CHARACTER_REFERENCE_INSTRUCTION', () => {
     expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).not.toMatch(/RIGHT/i)
     expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).not.toMatch(/NEVER derive/i)
     expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).not.toMatch(/diptych/i)
+    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION.toLowerCase()).not.toMatch(
+      /picture-in-picture|\bpip\b|inset|circular/
+    )
+    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/face close-up/)
+    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/standing figure/)
   })
 
   it('switches to limb consumption on insert/ECU', () => {

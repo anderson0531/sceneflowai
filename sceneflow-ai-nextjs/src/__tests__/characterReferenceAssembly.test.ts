@@ -415,4 +415,22 @@ describe('characterReferenceAssembly', () => {
     expect(WARDROBE_ONLY_REFERENCE_INSTRUCTION).toMatch(/bruises/i)
     expect(DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK).toMatch(/visible scene-state marks/i)
   })
+
+  it('treats the identity photo as face and body of the same person without PiP leak words', () => {
+    const identity = CHARACTER_IDENTITY_REFERENCE_INSTRUCTION.toLowerCase()
+    const dual = DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK.toLowerCase()
+    const wardrobe = WARDROBE_ONLY_REFERENCE_INSTRUCTION.toLowerCase()
+    for (const text of [identity, dual]) {
+      expect(text).toMatch(/face close-up/)
+      expect(text).toMatch(/standing figure/)
+      expect(text).not.toMatch(/picture-in-picture/)
+      expect(text).not.toMatch(/\bpip\b/)
+      expect(text).not.toMatch(/inset/)
+      expect(text).not.toMatch(/circular/)
+    }
+    expect(identity).toMatch(/do not invent a different face/)
+    expect(identity).toMatch(/character-card layout/)
+    expect(wardrobe).toMatch(/garments only/)
+    expect(wardrobe).toMatch(/never a different person/)
+  })
 })
