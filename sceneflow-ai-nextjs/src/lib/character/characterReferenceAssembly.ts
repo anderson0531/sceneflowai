@@ -3,6 +3,7 @@
  */
 
 import { toCharacterPromptAlias } from '@/lib/character/characterPromptAlias'
+import { isFaceCloseUpShot } from '@/lib/imagen/stillFramingNormalize'
 
 export const CHARACTER_IDENTITY_REFERENCE_INSTRUCTION =
   'IDENTITY REFERENCE (PRIMARY): This photo is the same person head-to-toe. ' +
@@ -39,16 +40,24 @@ export function isWideEstablishingShotType(shotType?: string | null): boolean {
   return !!shotType && WIDE_SHOT_KEYWORDS.test(shotType)
 }
 
+export const CLOSE_UP_IDENTITY_FRAMING_BLOCK =
+  'CLOSE-UP: The face in frame is the identity reference — same bone structure, skin, hair, and likeness, including when the head is bowed or the eyes are down. ' +
+  'Wardrobe is garments only at the collar, shoulders, and any visible fabric. ' +
+  'Do not invent a different face to fit the pose. Do not pull a standing full-length figure from the identity or wardrobe card.'
+
 /** Extra reinforcement for wide/establishing shots where wardrobe sheets visually dominate. */
 export function buildFramingAwareIdentityBlock(shotType?: string): string {
-  if (!isWideEstablishingShotType(shotType)) {
-    return ''
+  if (isWideEstablishingShotType(shotType)) {
+    return (
+      'WIDE/ESTABLISHING SHOT: Characters remain photorealistic humans matching their identity reference at full distance. ' +
+      'Outfit colors, garment shapes, and visible scene-state marks come from the wardrobe reference. ' +
+      'Continuous wide shot, unbroken single-camera frame, unified 16:9 cinematic perspective.'
+    )
   }
-  return (
-    'WIDE/ESTABLISHING SHOT: Characters remain photorealistic humans matching their identity reference at full distance. ' +
-    'Outfit colors, garment shapes, and visible scene-state marks come from the wardrobe reference. ' +
-    'Continuous wide shot, unbroken single-camera frame, unified 16:9 cinematic perspective.'
-  )
+  if (isFaceCloseUpShot(shotType)) {
+    return CLOSE_UP_IDENTITY_FRAMING_BLOCK
+  }
+  return ''
 }
 
 /** Negative prompt terms when dual refs + photorealistic mode. */
@@ -181,6 +190,16 @@ export function beatFrameNeedsHairLock(sceneContext: string, shotType?: string):
  */
 export const BEAT_FRAME_CANDID_ACTION_CONSTRAINT =
   'Subjects absorbed in the action and unaware of the camera — no posing, no lens eye-contact, no headshot or turnaround framing.'
+
+/** Face CU already *is* a headshot scale; banning the word fights identity lock. */
+export const BEAT_FRAME_CANDID_ACTION_CONSTRAINT_FACE_CLOSE_UP =
+  'Subjects absorbed in the action and unaware of the camera — no posing, no lens eye-contact, no turnaround framing.'
+
+export function beatFrameCandidActionConstraint(shotType?: string | null): string {
+  return isFaceCloseUpShot(shotType)
+    ? BEAT_FRAME_CANDID_ACTION_CONSTRAINT_FACE_CLOSE_UP
+    : BEAT_FRAME_CANDID_ACTION_CONSTRAINT
+}
 
 /**
  * Earlier wordings of the line above.

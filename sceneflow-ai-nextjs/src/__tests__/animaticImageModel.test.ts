@@ -147,6 +147,9 @@ describe('draft tier wiring', () => {
       'const forceDesignerImagePath = forceVertexGeminiImagePath && !useFlashDraftTier'
     )
     expect(routeSource).toContain('allowEcoWithReferences: useFlashDraftTier')
+    expect(routeSource).toContain('storyboardQuality=${resolvedGen.storyboardQuality}')
+    expect(routeSource).toContain('GEMINI_IMAGE_MODELS.flash')
+    expect(routeSource).toContain("useFlashDraftTier ? ', draft beat' : ''")
   })
 
   it('does not reintroduce the flag-only check', () => {

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   isDetailShot,
+  isFaceCloseUpShot,
   isInsertOrExtremeCloseUp,
   normalizeStillCameraAngle,
   normalizeStillFraming,
@@ -190,6 +191,15 @@ describe('lens normalization', () => {
     expect(isInsertOrExtremeCloseUp('Two-Shot')).toBe(false)
   })
 
+  it('treats Close-Up and MCU as face coverage, not insert/macro', () => {
+    expect(isFaceCloseUpShot('Close-Up')).toBe(true)
+    expect(isFaceCloseUpShot('Medium Close-Up')).toBe(true)
+    expect(isFaceCloseUpShot('MCU')).toBe(true)
+    expect(isFaceCloseUpShot('Extreme Close-Up')).toBe(false)
+    expect(isFaceCloseUpShot('Insert Shot')).toBe(false)
+    expect(isFaceCloseUpShot('Two-Shot')).toBe(false)
+  })
+
   it('resolves TASK shot class from Action/Framing when the field is a stale medium shot', () => {
     const shot = resolveStillShotClass(
       'medium shot',
@@ -229,6 +239,8 @@ describe('lens normalization', () => {
       'shallow depth of field'
     )
     expect(suppressDetailLensForShot('Macro (100mm)', 'Insert Shot')).toBe('Macro (100mm)')
+    expect(suppressDetailLensForShot('Macro (100mm); 16:9 framing', 'Close-Up')).toBe('16:9 framing')
+    expect(suppressDetailLensForShot('Macro (100mm)', 'Medium Close-Up')).toBe('')
   })
 
   it('leaves the lens family alone when the beat states no shot scale', () => {
@@ -242,5 +254,11 @@ describe('lens normalization', () => {
     expect(
       normalizeStillLens('Macro (100mm) for extreme detail on the needle and ash', 'Insert Shot')
     ).toBe('Macro (100mm)')
+    expect(
+      normalizeStillLens('Macro (100mm) for extreme detail on the needle and ash', 'Close-Up')
+    ).toBe('')
+    expect(
+      normalizeStillLens('Macro (100mm) for extreme detail on the needle and ash; 16:9 framing', 'Close-Up')
+    ).toBe('16:9 framing')
   })
 })
