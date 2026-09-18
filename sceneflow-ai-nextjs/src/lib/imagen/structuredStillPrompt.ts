@@ -12,7 +12,6 @@ import {
   isWideEstablishingShotType,
 } from '@/lib/character/characterReferenceAssembly'
 import { resolveStillShotClass, isMediumCoverageLocationShot } from '@/lib/imagen/stillFramingNormalize'
-import { buildIdentityTraitsClause } from '@/lib/imagen/identityTraitsClause'
 import { buildIdentityPromptToken } from '@/lib/imagen/promptOptimizer'
 import {
   mentionsWord,
@@ -508,7 +507,7 @@ export function isStructuredStillPrompt(text: string): boolean {
 }
 
 /** How a prompt turned out to reference a library item, for logging. */
-export type LibraryItemMatchBasis = 'token' | 'name' | 'head-noun' | 'full-overlap' | 'none'
+export type LibraryItemMatchBasis = 'token' | 'name' | 'head-noun' | 'full-overlap' | 'partial-overlap' | 'none'
 
 export interface LibraryItemPromptMatch {
   matched: boolean
@@ -555,6 +554,14 @@ export function resolveLibraryItemPromptMatch(
   const words = propSignificantWords(name)
   if (words.length > 1 && words.every((word) => mentionsWord(text, word))) {
     return { matched: true, basis: 'full-overlap', matchedTerm: words.join(' ') }
+  }
+
+  // Frozen-moment nouns often drop catalog decoration ("roll of … with violet ink")
+  // but still name the object ("drafting vellum"). Two identifying words is enough;
+  // one would attach "roll" to any roll, or "rail" to a spanner.
+  const mentioned = words.filter((word) => mentionsWord(text, word))
+  if (mentioned.length >= 2) {
+    return { matched: true, basis: 'partial-overlap', matchedTerm: mentioned.join(' ') }
   }
 
   return { matched: false, basis: 'none' }
@@ -870,18 +877,22 @@ export function formatWardrobeLegendClause(description?: string | null): string 
 /**
  * Bind a person token to the attached image(s) the model actually received.
  *
- * Action text uses `person [N]` only. Without this line the request never says
- * that token is Gideon Croft, or which Reference image is the face. Retry lock
- * already uses `person [N] (Name)`; the first pass has to as well.
+ * Action text uses `person [N]` only. When identity/wardrobe images are
+ * attached, do not restate ethnicity, hair, age, or outfit in this line —
+ * that prose is a text-to-image substitute. Bind by send index:
+ * `person [1] (Name) matches Reference image 1 (Identity) and Reference image 2 (Wardrobe)`.
  */
 export function formatPersonReferenceLegendLine(ref: StillPromptBoundRef): string {
   const named = `${ref.token} (${ref.name})`
   const identityIdx = ref.identitySendIndex
   const wardrobeIdx = ref.wardrobeSendIndex
+  const boundToAttachedImage = identityIdx != null || wardrobeIdx != null
 
   const subjectParts = [named]
-  if (ref.identityTraits) subjectParts.push(ref.identityTraits)
-  if (ref.wardrobeClause) subjectParts.push(`wearing ${ref.wardrobeClause}`)
+  if (!boundToAttachedImage) {
+    if (ref.identityTraits) subjectParts.push(ref.identityTraits)
+    if (ref.wardrobeClause) subjectParts.push(`wearing ${ref.wardrobeClause}`)
+  }
   const subject = subjectParts.join(', ')
 
   let match: string
@@ -1060,7 +1071,7 @@ export function stillRefsFromAttachedImages(args: {
     wardrobeDescription?: string | null
     defaultWardrobe?: string | null
   }>
-  /** Widened on a likeness retry, where the short legend clause already failed. */
+  /** Unused for attached identity/wardrobe images — those bind by send index only. */
   identityTraitsWordCap?: number
 }): StillPromptBoundRef[] {
   const refs: StillPromptBoundRef[] = []
@@ -1112,12 +1123,10 @@ export function stillRefsFromAttachedImages(args: {
         token,
         name: entry.characterName,
         roleLabel: slot?.isComposite ? 'character reference' : 'identity',
-        identityTraits: char
-          ? buildIdentityTraitsClause({ ...char, wordCap: args.identityTraitsWordCap })
-          : undefined,
-        wardrobeClause: char
-          ? formatWardrobeLegendClause(char.wardrobeDescription || char.defaultWardrobe)
-          : undefined,
+        // Attached portraits/wardrobe plates own identity and outfit. Restating
+        // ethnicity, hair, age, or wardrobe in the legend is a T2I substitute.
+        identityTraits: undefined,
+        wardrobeClause: undefined,
         identitySendIndex: slot?.identitySendIndex,
         wardrobeSendIndex: slot?.isComposite ? undefined : slot?.wardrobeSendIndex,
         isComposite: slot?.isComposite,

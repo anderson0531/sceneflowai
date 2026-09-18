@@ -384,7 +384,7 @@ export function resolveFrameGenerationContext(args: ResolveFrameGenerationContex
       character: c,
       scene,
       includeWardrobeReferenceImages: true,
-      includeWardrobeDiptych: true,
+      includeWardrobeDiptych: false,
     })
     const resolvedWardrobe = resolveWardrobeForCharacter(c, scene)
     const wardrobeHeadshotUrl =

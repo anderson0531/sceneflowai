@@ -275,7 +275,7 @@ export interface VertexImageResult {
   policyRefusalRecovered?: boolean
 }
 
-/** Flash keeps labeled images-first. Pro uses Google's generate-with-refs shape. */
+/** Flash keeps labeled images-first. Pro sends unlabeled HIGH images, then the prompt. */
 export type VertexImageReferenceLayout = 'flash' | 'pro'
 
 export const PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL = 'MEDIA_RESOLUTION_HIGH' as const
@@ -354,9 +354,9 @@ async function resolveAttachedReferenceImages(
  * Flash to commit to a subject before it had seen the identity (right
  * composition, wrong person).
  *
- * Pro: Google's generate-with-refs shape — one text part, then consecutive
- * unlabeled images at MEDIA_RESOLUTION_HIGH. Interleaved `[label]` parts plus
- * a complete still script made Pro invent the whole frame from text.
+ * Pro: consecutive unlabeled images at MEDIA_RESOLUTION_HIGH, then the prompt.
+ * Prompt-first plus a complete still script let thinking illustrate the novel
+ * without the photos. Do not interleave `[label]` text parts.
  */
 export async function buildMultimodalParts(
   fullPrompt: string,
@@ -372,13 +372,14 @@ export async function buildMultimodalParts(
   )
 
   if (layout === 'pro') {
-    const parts: VertexMultimodalPart[] = [{ text: fullPrompt }]
+    const parts: VertexMultimodalPart[] = []
     for (const ref of attached) {
       parts.push({
         inlineData: { mimeType: ref.mimeType, data: ref.data },
         mediaResolution: { level: PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL },
       })
     }
+    parts.push({ text: fullPrompt })
     return parts
   }
 

@@ -21,6 +21,7 @@ import {
   stillRefsFromAttachedImages,
   stillRefsFromNamedLibrary,
   formatStillReferencesLegend,
+  formatPersonReferenceLegendLine,
   bindLibraryNamesToTokens,
   replaceLibraryNamesWithTokens,
   actionFramingFromStoredPrompt,
@@ -276,10 +277,28 @@ Strictly Avoid: Mannequin geometry.`,
     })
 
     const legend = formatStillReferencesLegend(refs)
-    expect(legend).toContain('person [1] (Gideon Croft), wearing charcoal wool overcoat, scuffed boots — matches Reference image 1')
+    expect(legend).toContain('person [1] (Gideon Croft) — matches Reference image 1')
     expect(legend).toContain('person [2] (Piper Hayes) — matches Reference image 2')
+    expect(legend).not.toMatch(/charcoal wool overcoat|scuffed boots/i)
     expect(legend).not.toMatch(/\(Identity\)|\(Wardrobe\)/)
     expect(legend).not.toMatch(/LEFT|RIGHT|diptych|composite/i)
+  })
+
+  it('does not restate face or outfit prose when the person is bound to attached images', () => {
+    expect(
+      formatPersonReferenceLegendLine({
+        kind: 'person',
+        token: 'person [1]',
+        name: 'Gideon Croft',
+        roleLabel: 'identity',
+        identityTraits: 'warm medium-brown skin, short grizzled beard, early 50s',
+        wardrobeClause: 'charcoal wool overcoat, scuffed boots',
+        identitySendIndex: 1,
+        wardrobeSendIndex: 2,
+      })
+    ).toBe(
+      'person [1] (Gideon Croft) — matches Reference image 1 (Identity) and Reference image 2 (Wardrobe)'
+    )
   })
 
   it('does not ask for cartoon animatic aesthetics or negative limb priming', () => {
@@ -1105,6 +1124,26 @@ describe('promptReferencesLibraryItem', () => {
     ).toEqual({ matched: false, basis: 'none' })
   })
 
+  it('keeps drafting vellum when the frozen moment names the object, not the catalog', () => {
+    expect(
+      resolveLibraryItemPromptMatch('A heavy roll of drafting vellum slides out.', {
+        name: 'Roll of drafting vellum with violet ink',
+      })
+    ).toEqual({ matched: true, basis: 'head-noun', matchedTerm: 'vellum' })
+  })
+
+  it('keeps a frozen-moment noun pair when the catalog head noun is absent', () => {
+    expect(
+      resolveLibraryItemPromptMatch('The drafting roll unspools across the table.', {
+        name: 'Roll of drafting vellum with violet ink',
+      })
+    ).toEqual({
+      matched: true,
+      basis: 'partial-overlap',
+      matchedTerm: 'roll drafting',
+    })
+  })
+
   it('reports the basis a token or full label matched on', () => {
     expect(
       resolveLibraryItemPromptMatch(prompt, {
@@ -1229,11 +1268,13 @@ describe('identity traits reach every reference-bearing frame', () => {
     )
   })
 
-  it('widens the legend clause when a likeness retry asks for it', () => {
-    expect(gideonRefs()[0].identityTraits).toBe(
-      'warm medium-brown skin, tightly curled salt-and-pepper hair, short grizzled beard, early 50s'
+  it('does not re-describe faces or outfits from text when identity images are attached', () => {
+    expect(gideonRefs()[0].identityTraits).toBeUndefined()
+    expect(gideonRefs()[0].wardrobeClause).toBeUndefined()
+    expect(gideonRefs(6)[0].identityTraits).toBeUndefined()
+    expect(formatStillReferencesLegend(gideonRefs())).toBe(
+      '[REFERENCES]\nperson [1] (Gideon Croft) — matches Reference image 1 (Identity)'
     )
-    expect(gideonRefs(6)[0].identityTraits).toBe('warm medium-brown skin, short grizzled beard')
   })
 })
 

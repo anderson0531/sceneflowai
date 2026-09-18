@@ -72,6 +72,50 @@ describe('characterReferenceAssembly', () => {
     expect(pair.resolvedWardrobe?.description).toBe('Navy suit')
   })
 
+  it('ignores stored PiP when includeWardrobeDiptych is off so dual slots stay dual', () => {
+    const pair = resolveCharacterReferencePair({
+      character: {
+        id: 'char-1',
+        name: 'Marcus',
+        referenceImage: 'https://example.com/portrait.jpg',
+        wardrobes: [
+          {
+            id: 'w1',
+            isDefault: true,
+            fullBodyUrl: 'https://example.com/full-body.jpg',
+            combinedCharacterRefUrl: 'https://example.com/marcus-pip.jpg',
+          },
+        ],
+      },
+    })
+    expect(pair.identityUrl).toBe('https://example.com/portrait.jpg')
+    expect(pair.wardrobeUrl).toBe('https://example.com/full-body.jpg')
+    expect(pair.hasDualReferences).toBe(true)
+    expect(pair.hasStoredCombinedCharacterRef).toBe(false)
+    expect(pair.wardrobeDiptychUrl).toBeUndefined()
+  })
+
+  it('still returns a leftover wardrobe sheet when includeWardrobeDiptych is off', () => {
+    const pair = resolveCharacterReferencePair({
+      character: {
+        id: 'char-1',
+        name: 'Elara',
+        referenceImage: 'https://example.com/portrait.jpg',
+        wardrobes: [
+          {
+            id: 'w-scene',
+            name: 'Scene 4 look',
+            headshotUrl: 'https://example.com/elara-diptych-scene4.jpg',
+            isDefault: true,
+          },
+        ],
+      },
+    })
+    expect(pair.wardrobeDiptychUrl).toBe('https://example.com/elara-diptych-scene4.jpg')
+    expect(pair.hasWardrobeDiptych).toBe(true)
+    expect(pair.hasDualReferences).toBe(false)
+  })
+
   it('returns scene-matched wardrobe diptych when includeWardrobeDiptych is set and no fullBodyUrl', () => {
     const pair = resolveCharacterReferencePair({
       character: {
