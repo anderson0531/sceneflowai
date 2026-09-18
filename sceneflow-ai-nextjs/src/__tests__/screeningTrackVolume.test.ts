@@ -4,9 +4,11 @@ import { describe, expect, it } from 'vitest'
 import { DEFAULT_MIXER_AUDIO_TRACKS } from '@/lib/scene/mixerSettings'
 import {
   clampUnitVolume,
+  effectiveScreeningDialogueVolume,
   effectiveScreeningTrackVolume,
   patchMixerTrackVolumes,
   sceneMixerTrackVolumes,
+  SCREENING_DIALOGUE_GAIN,
 } from '@/lib/scene/screeningTrackVolume'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
 
@@ -30,6 +32,33 @@ describe('effectiveScreeningTrackVolume', () => {
     expect(
       effectiveScreeningTrackVolume({ muted: false, master: 2, trackVolume: 0.5 })
     ).toBe(0.5)
+  })
+})
+
+describe('effectiveScreeningDialogueVolume', () => {
+  it('reaches full HTML volume at default Master 80% and Dialogue 100%', () => {
+    expect(SCREENING_DIALOGUE_GAIN).toBe(1.25)
+    expect(
+      effectiveScreeningDialogueVolume({ muted: false, master: 0.8, trackVolume: 1 })
+    ).toBe(1)
+  })
+
+  it('returns 0 when muted', () => {
+    expect(
+      effectiveScreeningDialogueVolume({ muted: true, master: 1, trackVolume: 1 })
+    ).toBe(0)
+  })
+
+  it('still scales with the dialogue slider below the cap', () => {
+    expect(
+      effectiveScreeningDialogueVolume({ muted: false, master: 0.8, trackVolume: 0.5 })
+    ).toBeCloseTo(0.5)
+  })
+
+  it('does not raise music: Master × track stays unboosted', () => {
+    expect(
+      effectiveScreeningTrackVolume({ muted: false, master: 0.8, trackVolume: 0.4 })
+    ).toBeCloseTo(0.32)
   })
 })
 
@@ -133,11 +162,12 @@ describe('screening scene mix source contract', () => {
     expect(src).not.toContain('DIALOGUE_VOLUME_BOOST')
   })
 
-  it('useStoryboardPlayback multiplies master by scene track volumes without a dialogue boost', () => {
+  it('useStoryboardPlayback applies SCREENING_DIALOGUE_GAIN on dialogue only', () => {
     const src = readFileSync(
       path.join(root, 'src/hooks/useStoryboardPlayback.ts'),
       'utf8'
     )
+    expect(src).toContain('effectiveScreeningDialogueVolume')
     expect(src).toContain('effectiveScreeningTrackVolume')
     expect(src).toContain('dialogueVolume')
     expect(src).toContain('sfxVolume')
@@ -150,9 +180,11 @@ describe('screening scene mix source contract', () => {
       'utf8'
     )
     expect(src).toContain('sceneMixerTrackVolumes')
+    expect(src).toContain('effectiveScreeningDialogueVolume')
     expect(src).toContain('effectiveScreeningTrackVolume')
     expect(src).toContain('sceneProductionData')
     expect(src).toContain('Scene {currentSceneIndex + 1} mix')
+    expect(src).not.toContain('DIALOGUE_VOLUME_BOOST')
   })
 
   it('SceneGallery wires screening mix persist to production data', () => {

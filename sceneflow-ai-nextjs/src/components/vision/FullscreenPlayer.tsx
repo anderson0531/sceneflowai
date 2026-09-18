@@ -25,6 +25,7 @@ import type { SceneProductionData } from '@/components/vision/scene-production/t
 import { DEFAULT_MIXER_AUDIO_TRACKS } from '@/lib/scene/mixerSettings'
 import {
   clampUnitVolume,
+  effectiveScreeningDialogueVolume,
   effectiveScreeningTrackVolume,
   patchMixerTrackVolumes,
   sceneMixerTrackVolumes,
@@ -610,11 +611,16 @@ export function FullscreenPlayer({
             : trackType === 'sfx'
               ? vols.sfx
               : 1
-    return effectiveScreeningTrackVolume({
+    const isSpeech =
+      trackType === 'voiceover' || trackType === 'description' || trackType === 'dialogue'
+    const args = {
       muted: isMutedRef.current,
       master: vols.master,
       trackVolume,
-    })
+    }
+    return isSpeech
+      ? effectiveScreeningDialogueVolume(args)
+      : effectiveScreeningTrackVolume(args)
   }, []) // No dependencies - always reads from refs
 
   const updateTrackVolume = useCallback((track: keyof TrackVolumes, value: number) => {

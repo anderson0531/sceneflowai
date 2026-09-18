@@ -30,7 +30,7 @@ import {
   type VisualClip,
 } from '@/hooks/useTimelinePlayback'
 import { DEFAULT_MIXER_AUDIO_TRACKS } from '@/lib/scene/mixerSettings'
-import { effectiveScreeningTrackVolume } from '@/lib/scene/screeningTrackVolume'
+import { effectiveScreeningTrackVolume, effectiveScreeningDialogueVolume } from '@/lib/scene/screeningTrackVolume'
 import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { AUDIO_PROBE_CONCURRENCY, runBoundedPool } from '@/lib/audio/audioProbePool'
 import { recordScreeningDiag } from '@/lib/storyboard/screeningPlayerDiagnostics'
@@ -380,7 +380,7 @@ export function useStoryboardPlayback({
     [scene]
   )
 
-  const effectiveDialogueVolume = effectiveScreeningTrackVolume({
+  const effectiveDialogueVolume = effectiveScreeningDialogueVolume({
     muted: isMuted,
     master: volume,
     trackVolume: dialogueVolume,
