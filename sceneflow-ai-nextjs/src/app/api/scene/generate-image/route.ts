@@ -102,8 +102,11 @@ import {
   stillActionHasEmptyCast,
   stillRefsFromAttachedImages,
   stillRefsFromNamedLibrary,
+  STILL_SECTION_TASK,
+  STILL_TASK_PRO_LEAD,
   type LibraryItemPromptMatch,
 } from '@/lib/imagen/structuredStillPrompt'
+import { buildInterleavedReferencePairCaptions } from '@/lib/imagen/interleavedReferencePair'
 import { sanitizeBeatStillPrompt } from '@/lib/imagen/sanitizeBeatStillPrompt'
 import {
   resolveFeaturedCharactersForValidation,
@@ -2852,6 +2855,7 @@ export async function POST(req: NextRequest) {
               : undefined,
           }
 
+          const useInterleavedProRefs = effectiveImageTier !== 'eco'
           const {
             selected: selectedReferenceImages,
             dropped: droppedReferenceImages,
@@ -2870,6 +2874,7 @@ export async function POST(req: NextRequest) {
                   buildSceneImageLocationLabel(name, index, token, locationShotOptions),
                 groupByRole: true,
                 locationLast: isBeatFrame,
+                preserveLibraryPromptTokens: useInterleavedProRefs,
               }
             )
 
@@ -2899,12 +2904,18 @@ export async function POST(req: NextRequest) {
               .join(', ')}`
           )
 
-          // Labels already carry the send index and the prompt token the text
-          // uses, so the attached image needs no second naming scheme.
-          const allReferenceImages = selectedReferenceImages.map((ref) => ({
-            imageUrl: ref.imageUrl,
-            name: ref.name,
-          }))
+          // Flash labels carry send index + prompt token. Pro plates use
+          // interleaved `[REFERENCE: ROLE - token]` captions instead, so thinking
+          // T2I does not typeset the send-index legend onto the still.
+          const allReferenceImages = useInterleavedProRefs
+            ? buildInterleavedReferencePairCaptions(
+                selectedReferenceImages,
+                characterReferences
+              )
+            : selectedReferenceImages.map((ref) => ({
+                imageUrl: ref.imageUrl,
+                name: ref.name,
+              }))
           const selectedReferenceUrls = new Set(selectedReferenceImages.map((ref) => ref.imageUrl))
           const cappedObjectImageReferences = objectImageReferences.filter((obj) =>
             selectedReferenceUrls.has(obj.imageUrl)
@@ -3105,15 +3116,16 @@ export async function POST(req: NextRequest) {
           }
 
           const scenePromptBody = stripReferenceImageMappingBlock(optimizedPrompt)
-          const remappedOptimizedPrompt = remapLibraryPromptTokens(
-            remapReferenceNumbersInPrompt(scenePromptBody, indexMap),
-            libraryTokenRewrites
-          )
-          const includeAttachedIdentityTraits = effectiveImageTier !== 'eco'
+          const remappedNumbers = remapReferenceNumbersInPrompt(scenePromptBody, indexMap)
+          const remappedOptimizedPrompt = useInterleavedProRefs
+            ? remappedNumbers
+            : remapLibraryPromptTokens(remappedNumbers, libraryTokenRewrites)
+          const includeAttachedIdentityTraits = useInterleavedProRefs
           const stillRefs = stillRefsFromAttachedImages({
             selected: selectedReferenceImages,
             characterReferences,
             includeAttachedIdentityTraits,
+            preferLibraryPromptTokens: useInterleavedProRefs,
           })
           const structuredStillRaw = isBeatFrame
             ? assembleStructuredStillPrompt({
@@ -3131,16 +3143,22 @@ export async function POST(req: NextRequest) {
                 shotType: effectiveShotType,
                 allowTypography,
                 includeAttachedIdentityTraits,
+                omitReferencesSection: useInterleavedProRefs,
               })
-            : // Reference-first binding leaves `person [N]` as the only mention of
-              // the subject. The legend binds that token to the attached images;
-              // Pro adds short facial landmarks that must match Reference image 1.
-              joinPromptBlocks(
-                formatStillReferencesLegend(stillRefs, effectiveShotType, {
-                  includeAttachedIdentityTraits,
-                }),
-                remappedOptimizedPrompt
-              )
+            : useInterleavedProRefs
+              ? joinPromptBlocks(
+                  `${STILL_SECTION_TASK}\n${STILL_TASK_PRO_LEAD}`,
+                  remappedOptimizedPrompt
+                )
+              : // Reference-first binding leaves `person [N]` as the only mention of
+                // the subject. The legend binds that token to the attached images;
+                // Flash matches by send index in [REFERENCES].
+                joinPromptBlocks(
+                  formatStillReferencesLegend(stillRefs, effectiveShotType, {
+                    includeAttachedIdentityTraits,
+                  }),
+                  remappedOptimizedPrompt
+                )
           const structuredStill = isBeatFrame
             ? sanitizeBeatStillPrompt(structuredStillRaw)
             : structuredStillRaw
@@ -3334,7 +3352,13 @@ export async function POST(req: NextRequest) {
             const sanitizedGeminiPrompt = isBeatFrame
               ? sanitizeBeatStillPrompt(geminiPrompt)
               : geminiPrompt
-            const vertexPrompt = sanitizedGeminiPrompt
+            const vertexPrompt = useInterleavedProRefs
+              ? joinPromptBlocks(
+                  identityEscalationBlock,
+                  subjectCountGuardrail,
+                  structuredStill
+                )
+              : sanitizedGeminiPrompt
 
             const vertexReferenceImages =
               effectiveImageTier !== 'eco'

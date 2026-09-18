@@ -42,6 +42,8 @@ import {
   cropIdentityReferenceImagesForPro,
 } from '@/lib/character/composeIdentityWardrobeDiptych'
 import { sanitizeBeatStillPrompt } from '@/lib/imagen/sanitizeBeatStillPrompt'
+import { applyInterleavedPairCaptionsToNamedImages } from '@/lib/imagen/interleavedReferencePair'
+import { STILL_SECTION_TASK, STILL_TASK_PRO_LEAD } from '@/lib/imagen/structuredStillPrompt'
 import {
   formatVisualExpressionCue,
   parsePerformanceCue,
@@ -671,7 +673,7 @@ export async function POST(req: NextRequest) {
       let startImageDataUrl: string
       
       // Collect all reference images: character portraits + scene image + prop references
-      const allReferenceImages: Array<{ imageUrl: string; name: string }> = []
+      let allReferenceImages: Array<{ imageUrl: string; name: string }> = []
       
       // CRITICAL: Detect no-talent scenes (title sequences, abstract visuals, VFX-only)
       const isNoTalentSegment = isNoTalentFromSceneDirection(sceneDirection)
@@ -871,6 +873,21 @@ export async function POST(req: NextRequest) {
           name: `Prop: ${prop.name}`
         })
       }
+
+      const useInterleavedProRefs = modelTier !== 'eco'
+      if (useInterleavedProRefs && allReferenceImages.length > 0) {
+        allReferenceImages = applyInterleavedPairCaptionsToNamedImages(allReferenceImages, {
+          characters: charPool.map((c) => ({
+            name: c.name,
+            appearance: c.appearance,
+            wardrobe: c.wardrobe,
+            hairStyle: c.hairStyle,
+            hairColor: c.hairColor,
+          })),
+          objects: objectReferences,
+          locations: locationRefs,
+        })
+      }
       
       console.log(`[Generate Frames] Using Gemini Studio with ${allReferenceImages.length} reference image(s)`)
       console.log(`[Generate Frames] References: ${allReferenceImages.map(r => r.name).join(', ') || 'none'}`)
@@ -921,13 +938,17 @@ Render this scene in ${selectedStyle.name} style.`
         }
       }
 
-      if (locationRefs.length > 0) {
+      if (!useInterleavedProRefs && locationRefs.length > 0) {
         const loc = locationRefs[0]
         const locRefIndex =
           allReferenceImages.findIndex((ref) => ref.imageUrl === loc.imageUrl) + 1
         if (locRefIndex > 0) {
           geminiPrompt += `\n\n${buildLocationReferencePromptLine(loc.name, locRefIndex, undefined, { currentSetState: Boolean((loc as { boundVersionId?: string }).boundVersionId) })}`
         }
+      }
+
+      if (useInterleavedProRefs && !geminiPrompt.includes(STILL_SECTION_TASK)) {
+        geminiPrompt = `${STILL_SECTION_TASK}\n${STILL_TASK_PRO_LEAD}\n\n${geminiPrompt}`
       }
       
       const studioPrompt = geminiPrompt
