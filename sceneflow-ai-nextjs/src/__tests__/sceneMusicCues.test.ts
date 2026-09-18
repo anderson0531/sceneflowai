@@ -334,6 +334,96 @@ describe('parsePersistedMusicCues', () => {
   })
 })
 
+describe('cue mix persist', () => {
+  it('round-trips volume and fades through parse and normalize', () => {
+    const cue: SceneMusicCue = {
+      cueId: buildMusicCueId(0, 1),
+      beatStart: 0,
+      beatEnd: 1,
+      description: 'Cinematic orchestral score, ominous mood, low strings, slow tempo',
+      intent: 'rising dread',
+      url: 'https://blob/cue.wav',
+      volume: 0.4,
+      fadeInSec: 2,
+      fadeOutSec: 3.5,
+      generatedBy: 'user',
+    }
+
+    const applied = applySceneMusicCues({}, [cue], beats(4))
+    const stored = applied.scene.sceneMusicCues as SceneMusicCue[]
+    expect(stored[0].volume).toBe(0.4)
+    expect(stored[0].fadeInSec).toBe(2)
+    expect(stored[0].fadeOutSec).toBe(3.5)
+
+    const reparsed = parsePersistedMusicCues(stored, beats(4))
+    expect(reparsed[0].volume).toBe(0.4)
+    expect(reparsed[0].fadeInSec).toBe(2)
+    expect(reparsed[0].fadeOutSec).toBe(3.5)
+
+    const reapplied = applySceneMusicCues(applied.scene, reparsed, applied.beats)
+    expect(JSON.stringify(reapplied.scene.sceneMusicCues)).toBe(JSON.stringify(stored))
+  })
+
+  it('keeps a silent cue (volume 0) and omits unity mix and zero fades', () => {
+    const applied = applySceneMusicCues(
+      {},
+      [
+        {
+          cueId: buildMusicCueId(0, 0),
+          beatStart: 0,
+          beatEnd: 0,
+          description: 'Cinematic orchestral score, ominous mood, low strings, slow tempo',
+          intent: 'rising dread',
+          volume: 0,
+          fadeInSec: 0,
+          fadeOutSec: 0,
+        },
+      ],
+      beats(2)
+    )
+    const stored = applied.scene.sceneMusicCues as SceneMusicCue[]
+    expect(stored[0].volume).toBe(0)
+    expect(stored[0].fadeInSec).toBeUndefined()
+    expect(stored[0].fadeOutSec).toBeUndefined()
+
+    const unity = applySceneMusicCues(
+      {},
+      [
+        {
+          cueId: buildMusicCueId(0, 0),
+          beatStart: 0,
+          beatEnd: 0,
+          description: 'Cinematic orchestral score, ominous mood, low strings, slow tempo',
+          intent: 'rising dread',
+          volume: 1,
+        },
+      ],
+      beats(2)
+    )
+    expect((unity.scene.sceneMusicCues as SceneMusicCue[])[0].volume).toBeUndefined()
+  })
+
+  it('clamps fades to MUSIC_FADE_MAX_SEC on parse', () => {
+    const cues = parsePersistedMusicCues(
+      [
+        {
+          cueId: 'cue-0-1',
+          beatStart: 0,
+          beatEnd: 1,
+          description: 'Cinematic orchestral score, ominous mood, slow tempo',
+          fadeInSec: 40,
+          fadeOutSec: -2,
+          volume: 2,
+        },
+      ],
+      beats(4)
+    )
+    expect(cues[0].fadeInSec).toBe(15)
+    expect(cues[0].fadeOutSec).toBeUndefined()
+    expect(cues[0].volume).toBeUndefined()
+  })
+})
+
 describe('getSceneMusicCues', () => {
   const arcBeats = [
     beat(0, { actionDescription: 'A menacing shadow stalks the corridor.' }),

@@ -105,6 +105,12 @@ export interface SceneMusicCue {
   generatedBy?: SceneMusicCueSource
   /** ISO timestamp of last write. */
   updatedAt?: string
+  /** Mix level 0–1. Absent means unity (1). */
+  volume?: number
+  /** Fade in from cue start, seconds. Absent or 0 means no fade. */
+  fadeInSec?: number
+  /** Fade out into cue end, seconds. Absent or 0 means no fade. */
+  fadeOutSec?: number
 }
 
 /**

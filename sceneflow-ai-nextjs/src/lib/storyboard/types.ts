@@ -39,6 +39,8 @@ const DEFAULT_CLIP_DURATION_SEC = 3
 export { SCENE_FADE_TO_BLACK_SEC }
 /** Silent establishing/action beat hold when no durationSeconds is stored. */
 const DEFAULT_ACTION_BEAT_DURATION_SEC = 4
+/** Pre-vis Screening Room: every still holds at least this long. Voice longer than this still wins. */
+export const ANIMATIC_MIN_FRAME_SEC = 10
 
 /** Storyboard image fields stored on each dialogue line object. */
 export interface DialogueStoryboardFrame {
@@ -1160,7 +1162,9 @@ export function buildStoryboardAudioRevision(
   if (Array.isArray(scene.sceneMusicCues)) {
     for (const entry of scene.sceneMusicCues as Array<Record<string, unknown>>) {
       if (!entry) continue
-      parts.push(`cue:${entry.cueId}:${entry.beatStart}-${entry.beatEnd}:${entry.url ?? ''}`)
+      parts.push(
+        `cue:${entry.cueId}:${entry.beatStart}-${entry.beatEnd}:${entry.url ?? ''}:${entry.volume ?? 1}:${entry.fadeInSec ?? 0}:${entry.fadeOutSec ?? 0}`
+      )
     }
   }
 
@@ -1358,6 +1362,11 @@ function resolveSilentBeatDuration(preVisAnimatic?: boolean): number {
   return preVisAnimatic ? DEFAULT_VEO_CLIP_DURATION : DEFAULT_CLIP_DURATION_SEC
 }
 
+function clampAnimaticFrameDuration(duration: number, preVisAnimatic?: boolean): number {
+  if (!preVisAnimatic) return duration
+  return Math.max(duration, ANIMATIC_MIN_FRAME_SEC)
+}
+
 /** Rebase playback times so the first voice clip starts at t=0. */
 function alignPlaybackTimelineToFirstVoice(
   voiceClips: StoryboardAudioClip[],
@@ -1512,7 +1521,10 @@ export function buildBeatFirstPlaybackTimeline(
     const isSceneEnd = beatIdx === beats.length - 1
 
     if (beat.kind === 'action') {
-      const duration = resolveActionBeatDuration(beat, preVisAnimatic)
+      const duration = clampAnimaticFrameDuration(
+        resolveActionBeatDuration(beat, preVisAnimatic),
+        preVisAnimatic
+      )
       const overlay = getBeatOverlayFields(beat)
       windows.push({
         beatId: beat.beatId,
@@ -1551,7 +1563,10 @@ export function buildBeatFirstPlaybackTimeline(
     const clipId = beatVoiceClipId(beat, effectiveDialogueIndex)
 
     if (!url) {
-      const duration = resolveSilentBeatDuration(preVisAnimatic)
+      const duration = clampAnimaticFrameDuration(
+        resolveSilentBeatDuration(preVisAnimatic),
+        preVisAnimatic
+      )
       const overlay = getBeatOverlayFields(beat)
       windows.push({
         beatId: beat.beatId,
@@ -1597,7 +1612,7 @@ export function buildBeatFirstPlaybackTimeline(
       beatId: beat.beatId,
       kind: beat.kind,
       startTime: currentStartTime,
-      duration,
+      duration: clampAnimaticFrameDuration(duration, preVisAnimatic),
       imageUrl,
       endImageUrl,
       isSceneEnd,
@@ -1610,7 +1625,7 @@ export function buildBeatFirstPlaybackTimeline(
       ...getBeatOverlayFields(beat),
     })
 
-    currentStartTime += duration + DIALOGUE_CLIP_BUFFER_SEC
+    currentStartTime += clampAnimaticFrameDuration(duration, preVisAnimatic) + DIALOGUE_CLIP_BUFFER_SEC
   }
 
   const transitionByBeatId = new Map(
