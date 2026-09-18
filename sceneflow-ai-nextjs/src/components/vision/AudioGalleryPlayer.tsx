@@ -630,12 +630,14 @@ export function AudioGalleryPlayer({
     isPlaying,
     currentTime,
     sceneDuration,
+    visualFrames,
     currentVisualFrame,
     hasVoiceAudio,
     pause,
     togglePlayback,
     seekTo,
     reset,
+    reportStillStatus,
   } = playback
 
   pausePlaybackRef.current = pause
@@ -673,6 +675,16 @@ export function AudioGalleryPlayer({
 
   const displayImageUrl =
     currentVisualFrame?.imageUrl ?? getEstablishingFrameUrl(currentScene)
+
+  const nextStillUrl = useMemo(() => {
+    if (!currentVisualFrame || visualFrames.length === 0) return undefined
+    const idx = visualFrames.findIndex((frame) => frame.clipId === currentVisualFrame.clipId)
+    if (idx < 0 || idx >= visualFrames.length - 1) return undefined
+    const url = visualFrames[idx + 1]?.imageUrl?.trim()
+    const currentUrl = currentVisualFrame.imageUrl?.trim()
+    if (!url || url === currentUrl) return undefined
+    return url
+  }, [currentVisualFrame, visualFrames])
 
   const screeningPosterMatchesPrimary =
     !!screeningPosterUrl &&
@@ -1090,6 +1102,7 @@ export function AudioGalleryPlayer({
     }
     const layerAlt = isPrevious ? '' : imageAlt
     const handleImageLoad = (img: HTMLImageElement) => {
+      reportStillStatus(url, true)
       noteScreeningDiagImageLoad({
         url,
         naturalWidth: img.naturalWidth,
@@ -1098,6 +1111,7 @@ export function AudioGalleryPlayer({
       })
     }
     const handleImageError = () => {
+      reportStillStatus(url, false)
       recordScreeningDiag('image-error', { url: url.slice(0, 160) })
     }
 
@@ -1429,6 +1443,16 @@ export function AudioGalleryPlayer({
         </>
       ) : inBeatVisual.primaryUrl ? (
         <>
+          {nextStillUrl && (
+            <img
+              src={nextStillUrl}
+              alt=""
+              aria-hidden
+              className="pointer-events-none absolute w-px h-px opacity-0 overflow-hidden"
+              onLoad={() => reportStillStatus(nextStillUrl, true)}
+              onError={() => reportStillStatus(nextStillUrl, false)}
+            />
+          )}
           {crossfadeFromUrl && renderSceneImage(crossfadeFromUrl, 'previous')}
           {renderSceneImage(
             showPosterStill ? screeningPosterUrl! : inBeatVisual.primaryUrl,

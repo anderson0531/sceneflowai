@@ -9,6 +9,56 @@ export function clampAudioPlaybackRate(rate: number | undefined): number {
   return Math.min(AUDIO_PLAYBACK_RATE_MAX, Math.max(AUDIO_PLAYBACK_RATE_MIN, rate))
 }
 
+/** Mix volume 0–1. Absent or invalid means unity. */
+export function resolveMusicCueVolume(volume: unknown): number {
+  if (typeof volume !== 'number' || !Number.isFinite(volume)) return 1
+  return Math.max(0, Math.min(1, volume))
+}
+
+/** Cue fade length in seconds, clamped to MUSIC_FADE_MAX_SEC. Absent or invalid means 0. */
+export function resolveMusicCueFadeSec(sec: unknown): number {
+  if (typeof sec !== 'number' || !Number.isFinite(sec) || sec <= 0) return 0
+  return Math.max(0, Math.min(MUSIC_FADE_MAX_SEC, sec))
+}
+
+/** Persist only non-default mix so existing cues stay loud with no fade. */
+export function musicCueMixFields(cue: {
+  volume?: number
+  fadeInSec?: number
+  fadeOutSec?: number
+}): { volume?: number; fadeInSec?: number; fadeOutSec?: number } {
+  const volume = resolveMusicCueVolume(cue.volume)
+  const fadeInSec = resolveMusicCueFadeSec(cue.fadeInSec)
+  const fadeOutSec = resolveMusicCueFadeSec(cue.fadeOutSec)
+  return {
+    ...(volume !== 1 ? { volume } : {}),
+    ...(fadeInSec > 0 ? { fadeInSec } : {}),
+    ...(fadeOutSec > 0 ? { fadeOutSec } : {}),
+  }
+}
+
+/** Cue volume × fade envelope over the clip window (0–1). */
+export function computeCueMusicGain(options: {
+  localTimeSec: number
+  playDurationSec: number
+  volume?: number
+  fadeInSec?: number
+  fadeOutSec?: number
+}): number {
+  const volume = resolveMusicCueVolume(options.volume)
+  const fadeInSec = resolveMusicCueFadeSec(options.fadeInSec)
+  const fadeOutSec = resolveMusicCueFadeSec(options.fadeOutSec)
+  return (
+    volume *
+    computeMusicVolumeMultiplier(
+      options.localTimeSec,
+      options.playDurationSec,
+      fadeInSec,
+      fadeOutSec
+    )
+  )
+}
+
 /** Volume multiplier (0–1) from fade-in / fade-out envelope relative to clip play window. */
 export function computeMusicVolumeMultiplier(
   localTimeSec: number,

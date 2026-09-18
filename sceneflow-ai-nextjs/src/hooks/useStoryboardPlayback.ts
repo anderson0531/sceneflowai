@@ -69,6 +69,7 @@ export interface UseStoryboardPlaybackReturn {
   togglePlayback: () => void
   seekTo: (time: number) => void
   reset: () => void
+  reportStillStatus: (url: string, ready: boolean) => void
 }
 
 function storyboardFramesToVisualClips(frames: StoryboardVisualFrame[]): VisualClip[] {
@@ -124,7 +125,12 @@ function collectSceneAudioUrls(
 }
 
 function buildClipTimelineKey(clips: TimelineAudioClip[]): string {
-  return clips.map((clip) => `${clip.id}|${clip.startTime}|${clip.duration}|${clip.url}`).join(';')
+  return clips
+    .map(
+      (clip) =>
+        `${clip.id}|${clip.startTime}|${clip.duration}|${clip.url}|${clip.volume ?? 1}|${clip.fadeInSec ?? 0}|${clip.fadeOutSec ?? 0}`
+    )
+    .join(';')
 }
 
 export function useStoryboardPlayback({
@@ -323,6 +329,9 @@ export function useStoryboardPlayback({
           trackType: 'music' as const,
           label: clip.label,
           loop: clip.loop,
+          volume: clip.volume,
+          fadeInSec: clip.fadeInSec,
+          fadeOutSec: clip.fadeOutSec,
         }))
       )
 
@@ -411,11 +420,13 @@ export function useStoryboardPlayback({
     reset,
     setTrackVolume,
     setTrackEnabled,
+    reportStillStatus,
   } = useTimelinePlayback({
     sceneDuration,
     audioClips: timelineAudioClips,
     visualClips,
     trackDuck: musicAndSfxDuck,
+    gateOnStillReady: true,
     initialVolumes: {
       voiceover: effectiveDialogueVolume,
       dialogue: effectiveDialogueVolume,
@@ -484,5 +495,6 @@ export function useStoryboardPlayback({
     togglePlayback,
     seekTo,
     reset,
+    reportStillStatus,
   }
 }

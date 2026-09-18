@@ -16,6 +16,7 @@
  */
 
 import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
+import { musicCueMixFields } from '@/lib/audio/loopingAudioSync'
 import type {
   MusicCueEntry,
   MusicCueExit,
@@ -512,6 +513,11 @@ export function parsePersistedMusicCues(
           ? generatedBy
           : 'derived',
       ...(typeof row.updatedAt === 'string' ? { updatedAt: row.updatedAt } : {}),
+      ...musicCueMixFields({
+        volume: typeof row.volume === 'number' ? row.volume : undefined,
+        fadeInSec: typeof row.fadeInSec === 'number' ? row.fadeInSec : undefined,
+        fadeOutSec: typeof row.fadeOutSec === 'number' ? row.fadeOutSec : undefined,
+      }),
     })
   }
 
@@ -594,6 +600,7 @@ function normalizeCueShape(cue: SceneMusicCue): SceneMusicCue {
     ...(cue.fileDuration && cue.fileDuration > 0 ? { fileDuration: cue.fileDuration } : {}),
     ...(cue.generatedBy ? { generatedBy: cue.generatedBy } : {}),
     ...(cue.updatedAt ? { updatedAt: cue.updatedAt } : {}),
+    ...musicCueMixFields(cue),
   }
 }
 

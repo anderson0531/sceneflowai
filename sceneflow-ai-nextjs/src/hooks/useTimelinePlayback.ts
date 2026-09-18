@@ -23,6 +23,7 @@ import {
 } from '@/lib/storyboard/musicIntroFade'
 import {
   computeClipAudioTime,
+  computeCueMusicGain,
   loopingDrift,
 } from '@/lib/audio/loopingAudioSync'
 import {
@@ -30,6 +31,12 @@ import {
   isClipPlaybackActive,
   selectLiveAudioClips,
 } from '@/lib/audio/audioClipWindow'
+import {
+  holdElapsedForUnreadyStill,
+  isAnimaticStillReady,
+  resolvePendingStillClip,
+  type StillGatedClip,
+} from '@/lib/storyboard/stillReadyGate'
 import {
   recordScreeningDiag,
   setScreeningDiagAudioSnapshot,
@@ -50,6 +57,10 @@ export interface AudioClip {
   trackType: 'voiceover' | 'dialogue' | 'music' | 'sfx'
   label?: string          // e.g., character name for dialogue
   loop?: boolean          // For background music
+  /** Cue mix 0–1. Absent means unity. Applied on music clips only. */
+  volume?: number
+  fadeInSec?: number
+  fadeOutSec?: number
 }
 
 export interface VisualClip {
@@ -89,6 +100,11 @@ export interface UseTimelinePlaybackOptions {
    * the whole player 60 times a second.
    */
   trackDuck?: (elapsed: number) => number
+  /**
+   * Animatic Screening Room: stall the clock until the current still has
+   * loaded (or failed / timed out). Production timelines leave this off.
+   */
+  gateOnStillReady?: boolean
   onPlaybackEnd?: () => void
   onTimeUpdate?: (time: number, segmentId?: string) => void
 }
@@ -111,6 +127,8 @@ export interface UseTimelinePlaybackReturn {
   setTrackVolume: (track: keyof TrackVolumes, volume: number) => void
   setTrackEnabled: (track: keyof TrackEnabled, enabled: boolean) => void
   reset: () => void
+  /** Mark a still URL decoded or failed so the still-ready gate can resume. */
+  reportStillStatus: (url: string, ready: boolean) => void
 }
 
 // ============================================================================
@@ -145,7 +163,7 @@ function releaseAudioElement(audio: HTMLAudioElement): void {
   audio.load()
 }
 
-function computeEffectiveClipVolume(
+export function computeEffectiveClipVolume(
   clip: AudioClip,
   elapsed: number,
   baseVolume: number,
@@ -153,13 +171,22 @@ function computeEffectiveClipVolume(
   duck = 1
 ): number {
   const duckedVolume = isDuckedTrack(clip.trackType) ? baseVolume * duck : baseVolume
-  if (clip.trackType !== 'music' || !musicIntroFade?.enabled) {
-    return duckedVolume
+  if (clip.trackType !== 'music') {
+    return Math.max(0, Math.min(1, duckedVolume))
   }
   const fadeAnchor = clip.fadeAnchorTime ?? clip.startTime
-  const sinceFadeStart = elapsed - fadeAnchor
-  const multiplier = computeMusicIntroFadeMultiplier(sinceFadeStart, musicIntroFade)
-  return duckedVolume * multiplier
+  const intro =
+    musicIntroFade?.enabled
+      ? computeMusicIntroFadeMultiplier(elapsed - fadeAnchor, musicIntroFade)
+      : 1
+  const cueGain = computeCueMusicGain({
+    localTimeSec: elapsed - clip.startTime,
+    playDurationSec: clip.duration,
+    volume: clip.volume,
+    fadeInSec: clip.fadeInSec,
+    fadeOutSec: clip.fadeOutSec,
+  })
+  return Math.max(0, Math.min(1, duckedVolume * cueGain * intro))
 }
 
 function syncAudioClipAtTime(
@@ -195,6 +222,7 @@ export function useTimelinePlayback({
   initialEnabled = {},
   musicIntroFade,
   trackDuck,
+  gateOnStillReady = false,
   onPlaybackEnd,
   onTimeUpdate,
 }: UseTimelinePlaybackOptions): UseTimelinePlaybackReturn {
@@ -233,6 +261,12 @@ export function useTimelinePlayback({
   const onTimeUpdateRef = useRef(onTimeUpdate)
   const musicIntroFadeRef = useRef(musicIntroFade)
   const trackDuckRef = useRef(trackDuck)
+  const visualClipsRef = useRef(visualClips)
+  const gateOnStillReadyRef = useRef(gateOnStillReady)
+  const stillReadyUrlsRef = useRef(new Set<string>())
+  const stillFailedUrlsRef = useRef(new Set<string>())
+  const pendingStillClipRef = useRef<StillGatedClip | null>(null)
+  const stillHoldStartedAtRef = useRef<number | null>(null)
   
   // Refs for play/pause stability - prevents callback recreation on every currentTime change
   const isPlayingRef = useRef(isPlaying)
@@ -249,6 +283,8 @@ export function useTimelinePlayback({
   useEffect(() => { onTimeUpdateRef.current = onTimeUpdate }, [onTimeUpdate])
   useEffect(() => { musicIntroFadeRef.current = musicIntroFade }, [musicIntroFade])
   useEffect(() => { trackDuckRef.current = trackDuck }, [trackDuck])
+  useEffect(() => { visualClipsRef.current = visualClips }, [visualClips])
+  useEffect(() => { gateOnStillReadyRef.current = gateOnStillReady }, [gateOnStillReady])
   const ensureAudioElementRef = useRef<(clip: AudioClip) => HTMLAudioElement>(
     (clip) => {
       throw new Error(`ensureAudioElement used before init: ${clip.id}`)
@@ -277,6 +313,17 @@ export function useTimelinePlayback({
         duck
       )
     })
+  }, [])
+
+  const reportStillStatus = useCallback((url: string, ready: boolean) => {
+    const trimmed = url.trim()
+    if (!trimmed) return
+    if (ready) {
+      stillReadyUrlsRef.current.add(trimmed)
+      stillFailedUrlsRef.current.delete(trimmed)
+    } else {
+      stillFailedUrlsRef.current.add(trimmed)
+    }
   }, [])
   
   // ============================================================================
@@ -441,7 +488,43 @@ export function useTimelinePlayback({
   // ============================================================================
   
   const animate = useCallback(() => {
-    const elapsed = (performance.now() - startTimeRef.current) / 1000
+    const nowMs = performance.now()
+    let elapsed = (nowMs - startTimeRef.current) / 1000
+    let holdingStill = false
+
+    if (gateOnStillReadyRef.current) {
+      const clips = visualClipsRef.current
+      const isReady = (clip: StillGatedClip) =>
+        isAnimaticStillReady(
+          clip.thumbnailUrl,
+          stillReadyUrlsRef.current,
+          stillFailedUrlsRef.current
+        )
+      const pending = resolvePendingStillClip(
+        elapsed,
+        clips,
+        pendingStillClipRef.current,
+        isReady
+      )
+      pendingStillClipRef.current = pending
+      const hold = holdElapsedForUnreadyStill({
+        elapsed,
+        pendingClipStartTime: pending?.startTime,
+        stillReady: !pending || isReady(pending),
+        holdStartedAtMs: stillHoldStartedAtRef.current,
+        nowMs,
+      })
+      stillHoldStartedAtRef.current = hold.holdStartedAtMs
+      holdingStill = hold.holding
+      if (hold.holding) {
+        startTimeRef.current += (elapsed - hold.elapsed) * 1000
+        elapsed = hold.elapsed
+      } else if (pending && !isReady(pending)) {
+        const url = pending.thumbnailUrl?.trim()
+        if (url) stillFailedUrlsRef.current.add(url)
+        pendingStillClipRef.current = null
+      }
+    }
     
     // Read current values from refs to avoid stale closures
     const currentSceneDuration = sceneDurationRef.current
@@ -502,6 +585,7 @@ export function useTimelinePlayback({
         const audioTime = computeClipAudioTime(clip, elapsed, audioDuration)
         
         if (audio.paused) {
+          if (holdingStill) return
           // Start playing from correct position; token guards against stale play().
           const nextGen = (playGenerationRef.current.get(key) ?? 0) + 1
           playGenerationRef.current.set(key, nextGen)
@@ -582,6 +666,8 @@ export function useTimelinePlayback({
     const newTime = Math.max(0, Math.min(currentSceneDuration, time))
     setCurrentTime(newTime)
     startTimeRef.current = performance.now() - newTime * 1000
+    pendingStillClipRef.current = null
+    stillHoldStartedAtRef.current = null
     
     // If playing, audio will resync on next animate frame
     // If paused, seek audio elements directly
@@ -610,12 +696,14 @@ export function useTimelinePlayback({
     if (!isPlayingRef.current) {
       applyVolumesAtElapsed(currentTimeRef.current)
     }
-  }, [trackVolumes, trackEnabled, musicIntroFade, applyVolumesAtElapsed])
+  }, [trackVolumes, trackEnabled, musicIntroFade, audioClips, applyVolumesAtElapsed])
   
   const reset = useCallback(() => {
     pause()
     setCurrentTime(0)
     startTimeRef.current = performance.now()
+    pendingStillClipRef.current = null
+    stillHoldStartedAtRef.current = null
     
     audioRefs.current.forEach(audio => {
       audio.pause()
@@ -672,6 +760,7 @@ export function useTimelinePlayback({
     setTrackVolume,
     setTrackEnabled,
     reset,
+    reportStillStatus,
   }
 }
 

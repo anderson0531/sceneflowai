@@ -401,6 +401,40 @@ describe('cue-scored scenes', () => {
     expect(clips[1].fadeAnchorTime).toBe(8)
   })
 
+  it('copies cue volume and fades onto the playback clips', () => {
+    const clips = buildStoryboardMusicClips(
+      buildCueScene({
+        cues: [
+          {
+            cueId: 'cue-0-1',
+            beatStart: 0,
+            beatEnd: 1,
+            description: 'Cinematic orchestral score, ominous mood, slow tempo',
+            intent: 'rising dread',
+            url: DREAD_URL,
+            volume: 0.25,
+            fadeInSec: 1.5,
+            fadeOutSec: 2,
+          },
+        ],
+      }),
+      cueFrames,
+      16
+    )
+
+    expect(clips).toHaveLength(1)
+    expect(clips[0].volume).toBe(0.25)
+    expect(clips[0].fadeInSec).toBe(1.5)
+    expect(clips[0].fadeOutSec).toBe(2)
+  })
+
+  it('omits unity mix so existing cues stay loud with no fade', () => {
+    const clips = buildStoryboardMusicClips(buildCueScene(), cueFrames, 16)
+    expect(clips[0].volume).toBeUndefined()
+    expect(clips[0].fadeInSec).toBeUndefined()
+    expect(clips[0].fadeOutSec).toBeUndefined()
+  })
+
   it('loops a cue only when it outruns its own file', () => {
     const scene = buildCueScene({
       cues: [

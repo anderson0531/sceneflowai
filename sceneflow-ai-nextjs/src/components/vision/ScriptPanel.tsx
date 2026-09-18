@@ -146,6 +146,7 @@ import {
   type SceneReferenceOverrides,
 } from '@/lib/vision/sceneReferenceRequirements'
 import {
+  applySceneMusicCues,
   estimateMusicCueDuration,
   formatMusicCueRange,
   isMusicCueScored,
@@ -4400,13 +4401,9 @@ function SceneCard({
     },
     [onReorderBeats, sceneBeatsForTabs, sceneIdx]
   )
-  // The scene's own track still plays under any music-enabled beat no cue
-  // covers, so it keeps its panel until a cue has claimed it.
-  const showLegacyMusicPanel =
-    !!scene.music &&
-    (sceneMusicCues.length === 0 ||
-      (!!scene.musicAudio &&
-        !sceneMusicCues.some((cue) => cue.url === scene.musicAudio)))
+  // Scene Track is the old single loop. Score cues replace it in the UI;
+  // leftover musicAudio still plays on music-enabled beats no cue covers.
+  const showLegacyMusicPanel = sceneMusicCues.length === 0 && !!scene.music
 
   const hasDirectionTab = !!(
     scene.visualDescription ||
@@ -4465,6 +4462,25 @@ function SceneCard({
         idx === sceneIdx ? { ...s, referenceOverrides: next } : s
       )
       onScriptChange({ ...script, script: { ...script.script, scenes: updatedScenes } })
+    },
+    [onScriptChange, script, scenes, sceneIdx]
+  )
+
+  const handleCueMixChange = useCallback(
+    (cueId: string, mix: { volume?: number; fadeInSec?: number; fadeOutSec?: number }) => {
+      if (!onScriptChange || !script || !Array.isArray(scenes)) return
+      const updatedScenes = [...scenes]
+      const current = { ...updatedScenes[sceneIdx] }
+      const beats = getSceneBeats(current)
+      const cues = parsePersistedMusicCues(current.sceneMusicCues, beats).map((cue) =>
+        cue.cueId === cueId ? { ...cue, ...mix } : cue
+      )
+      const applied = applySceneMusicCues(current, cues, beats)
+      updatedScenes[sceneIdx] = { ...applied.scene, beats: applied.beats }
+      onScriptChange({
+        ...script,
+        script: { ...script.script, scenes: updatedScenes },
+      })
     },
     [onScriptChange, script, scenes, sceneIdx]
   )
@@ -7342,6 +7358,7 @@ function SceneCard({
                       sceneNumber={sceneIdx + 1}
                       playingAudio={playingAudio}
                       onPlayAudio={onPlayAudio}
+                      onCueMixChange={onScriptChange ? handleCueMixChange : undefined}
                       onGenerateCue={(cueId) => {
                         // Rethrown by the handler so the batch action can stop;
                         // a single click has already shown its toast.

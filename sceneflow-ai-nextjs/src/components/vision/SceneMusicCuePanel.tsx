@@ -10,9 +10,21 @@
  */
 
 import { Download, Loader, Music, Pause, Play, RefreshCw, Sparkles } from 'lucide-react'
+import { Slider } from '@/components/ui/slider'
 import { AUDIO_CREDITS } from '@/lib/credits/creditCosts'
+import {
+  MUSIC_FADE_MAX_SEC,
+  resolveMusicCueFadeSec,
+  resolveMusicCueVolume,
+} from '@/lib/audio/loopingAudioSync'
 import { formatMusicCueRange, isMusicCueScored } from '@/lib/script/sceneMusicCues'
 import type { SceneMusicCue } from '@/lib/script/segmentTypes'
+
+export interface CueMixPatch {
+  volume?: number
+  fadeInSec?: number
+  fadeOutSec?: number
+}
 
 export interface SceneMusicCuePanelProps {
   cues: SceneMusicCue[]
@@ -22,6 +34,8 @@ export interface SceneMusicCuePanelProps {
   onGenerateCue?: (cueId: string) => void | Promise<void>
   onGenerateAllCues?: () => void | Promise<void>
   onDownloadCue?: (e: React.MouseEvent, cue: SceneMusicCue) => void
+  /** Patch volume / fade on a scored cue. Mix applies in the animatic, not preview Play. */
+  onCueMixChange?: (cueId: string, mix: CueMixPatch) => void
   /** Cue currently being generated, or `all` while the batch action runs. */
   generatingCueId?: string | null
   isGeneratingAll?: boolean
@@ -37,6 +51,7 @@ export function SceneMusicCuePanel({
   onGenerateCue,
   onGenerateAllCues,
   onDownloadCue,
+  onCueMixChange,
   generatingCueId,
   isGeneratingAll,
 }: SceneMusicCuePanelProps) {
@@ -201,6 +216,10 @@ export function SceneMusicCuePanel({
                     ' — loops to fill the cue'}
                 </p>
               )}
+
+              {scored && onCueMixChange && (
+                <CueMixSliders cue={cue} onChange={onCueMixChange} />
+              )}
             </div>
           )
         })}
@@ -208,3 +227,71 @@ export function SceneMusicCuePanel({
     </div>
   )
 }
+
+function CueMixSliders({
+  cue,
+  onChange,
+}: {
+  cue: SceneMusicCue
+  onChange: (cueId: string, mix: CueMixPatch) => void
+}) {
+  const volume = resolveMusicCueVolume(cue.volume)
+  const fadeInSec = resolveMusicCueFadeSec(cue.fadeInSec)
+  const fadeOutSec = resolveMusicCueFadeSec(cue.fadeOutSec)
+
+  return (
+    <div className="mt-2 space-y-1.5" onPointerDown={(e) => e.stopPropagation()}>
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] text-gray-500 uppercase w-16 shrink-0">Volume</span>
+        <Slider
+          value={[Math.round(volume * 100)]}
+          onValueChange={([v]) => onChange(cue.cueId, { volume: v / 100 })}
+          max={100}
+          step={1}
+          className="flex-1"
+          aria-label={`Volume for ${formatMusicCueRange(cue)}`}
+        />
+        <span className="text-xs text-gray-500 w-10 text-right font-mono tabular-nums">
+          {Math.round(volume * 100)}%
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] text-gray-500 uppercase w-16 shrink-0">Fade in</span>
+        <Slider
+          value={[Math.round(fadeInSec * 10) / 10]}
+          onValueChange={([v]) =>
+            onChange(cue.cueId, {
+              fadeInSec: Math.max(0, Math.min(MUSIC_FADE_MAX_SEC, v)),
+            })
+          }
+          max={MUSIC_FADE_MAX_SEC}
+          step={0.5}
+          className="flex-1"
+          aria-label={`Fade in for ${formatMusicCueRange(cue)}`}
+        />
+        <span className="text-xs text-gray-500 w-10 text-right font-mono tabular-nums">
+          {fadeInSec.toFixed(1)}s
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] text-gray-500 uppercase w-16 shrink-0">Fade out</span>
+        <Slider
+          value={[Math.round(fadeOutSec * 10) / 10]}
+          onValueChange={([v]) =>
+            onChange(cue.cueId, {
+              fadeOutSec: Math.max(0, Math.min(MUSIC_FADE_MAX_SEC, v)),
+            })
+          }
+          max={MUSIC_FADE_MAX_SEC}
+          step={0.5}
+          className="flex-1"
+          aria-label={`Fade out for ${formatMusicCueRange(cue)}`}
+        />
+        <span className="text-xs text-gray-500 w-10 text-right font-mono tabular-nums">
+          {fadeOutSec.toFixed(1)}s
+        </span>
+      </div>
+    </div>
+  )
+}
+

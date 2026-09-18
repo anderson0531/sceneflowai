@@ -2,6 +2,7 @@
  * Beat-aligned background music scheduling for storyboard gallery playback.
  */
 
+import { musicCueMixFields } from '@/lib/audio/loopingAudioSync'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
 import { isMusicCueScored, parsePersistedMusicCues } from '@/lib/script/sceneMusicCues'
@@ -21,6 +22,10 @@ export interface BeatAlignedMusicClip {
   trackType: 'music'
   label?: string
   loop?: boolean
+  /** Cue mix 0–1. Absent means unity. */
+  volume?: number
+  fadeInSec?: number
+  fadeOutSec?: number
 }
 
 export interface BuildBeatAlignedMusicClipsOptions {
@@ -182,6 +187,7 @@ export function buildBeatAlignedMusicClips(
         trackType: 'music',
         label: cue.intent?.trim() || 'Background Music',
         loop: duration > cueFileDuration,
+        ...musicCueMixFields(cue),
       })
     }
 
