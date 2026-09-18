@@ -14,9 +14,9 @@ export const OBJECT_REFERENCE_PURPOSE =
 export const OBJECT_REFERENCE_ISOLATION =
   'Isolated subject only. Do not add people, hands, tables, furniture, or other undirected objects. This is not a scene.'
 
-/** The one extra that helps later gens match size. Nothing else. */
+/** The one extra that helps later gens match size. Scale sits beside the subject, never on it. */
 export const OBJECT_REFERENCE_SCALE_RULER =
-  'A simple ruler or height/width marks on the object are allowed so real-world size stays measurable. Nothing else.'
+  'Place a simple ruler or height/width scale beside the object, on the backdrop, so real-world size stays measurable. Never engrave, print, paint, or draw measurements, tick marks, or inch/cm labels on the object itself. Nothing else.'
 
 export const OBJECT_REFERENCE_REAL_WORLD_SCALE =
   'Show true real-world scale: handheld items stay handheld (include inches when known); set-pieces stay set-piece size. Do not crop so the object fills the frame as if it were larger.'
@@ -34,11 +34,11 @@ export const OBJECT_REFERENCE_GENERATION_INSTRUCTION = [
 
 /** Vertex negative prompt: extras the plate must not invent. Dress form is allowed. */
 export const OBJECT_REFERENCE_NEGATIVE_PROMPT =
-  'people, persons, humans, hands holding the object, extra furniture, tables used as a set, scene staging'
+  'people, persons, humans, hands holding the object, extra furniture, tables used as a set, scene staging, measurements on the object, tick marks on the object, engraved scale on the object'
 
 const PURPOSE_RE = /to be used as a reference image for consistency/i
 const ISOLATION_RE = /isolated subject only|do not add people, hands, tables/i
-const RULER_RE = /ruler or height\/width marks/i
+const RULER_RE = /ruler or height\/width/i
 const SCALE_RE = /true real-world scale/i
 const STUDIO_RE = /plain neutral backdrop/i
 

@@ -96,7 +96,9 @@ describe('object reference images generate on the flash tier', () => {
     const options = mockGenerateImage.mock.calls[0]![0]!
     expect(options.prompt).toContain(OBJECT_REFERENCE_PURPOSE)
     expect(options.prompt).toMatch(/isolated subject only/i)
-    expect(options.prompt).toMatch(/ruler or height\/width marks/i)
+    expect(options.prompt).toMatch(/ruler or height\/width/i)
+    expect(options.prompt).toMatch(/beside the object/i)
+    expect(options.prompt).toMatch(/never engrave, print, paint, or draw measurements/i)
     expect(options.prompt).toMatch(/true real-world scale/i)
     expect(options.prompt).not.toMatch(/hero prop|museum quality|showroom quality/i)
     expect(options.negativePrompt).toBe(OBJECT_REFERENCE_NEGATIVE_PROMPT)
