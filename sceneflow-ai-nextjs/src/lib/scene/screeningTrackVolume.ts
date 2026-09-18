@@ -28,6 +28,13 @@ export function clampUnitVolume(value: number, fallback = 0): number {
   return Math.min(1, Math.max(0, value))
 }
 
+/**
+ * Screening Room / share player: Master × Dialogue still sits under the HTML
+ * 0–1 cap. 1.25 brings default Master 80% × Dialogue 100% to full level
+ * without raising the music bed.
+ */
+export const SCREENING_DIALOGUE_GAIN = 1.25
+
 /** Viewer overlay × scene track. Mute zeros every stem; mixer `enabled` is not mute. */
 export function effectiveScreeningTrackVolume(opts: {
   muted: boolean
@@ -36,6 +43,17 @@ export function effectiveScreeningTrackVolume(opts: {
 }): number {
   if (opts.muted) return 0
   return clampUnitVolume(opts.master) * clampUnitVolume(opts.trackVolume)
+}
+
+/** Dialogue/voiceover: Master × track × SCREENING_DIALOGUE_GAIN, clamped to 1. */
+export function effectiveScreeningDialogueVolume(opts: {
+  muted: boolean
+  master: number
+  trackVolume: number
+}): number {
+  return clampUnitVolume(
+    effectiveScreeningTrackVolume(opts) * SCREENING_DIALOGUE_GAIN
+  )
 }
 
 export function sceneMixerTrackVolumes(

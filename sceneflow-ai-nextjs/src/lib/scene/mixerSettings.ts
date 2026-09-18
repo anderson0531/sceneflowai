@@ -53,7 +53,7 @@ export const DEFAULT_MIXER_COLLAPSED_SECTIONS: SceneMixerCollapsedSections = {
 
 export const DEFAULT_MIXER_AUDIO_TRACKS: MixerAudioTracks = {
   narration: { enabled: false, volume: 0.8, startOffset: 0, startSegment: 0, endSegment: -1 },
-  dialogue: { enabled: false, volume: 0.9, startOffset: 0, startSegment: 0, endSegment: -1 },
+  dialogue: { enabled: false, volume: 1, startOffset: 0, startSegment: 0, endSegment: -1 },
   music: {
     enabled: false,
     volume: 0.4,
