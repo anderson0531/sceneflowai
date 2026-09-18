@@ -18,6 +18,7 @@ import {
   shouldGenerateSceneHeadshot,
   COMBINED_CHARACTER_REFERENCE_INSTRUCTION,
   COMBINED_CHARACTER_INSERT_INSTRUCTION,
+  COMBINED_CHARACTER_FACE_CLOSE_UP_INSTRUCTION,
   combinedCharacterReferenceInstruction,
   WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION,
 } from '@/lib/character/sceneCharacterHeadshot'
@@ -125,7 +126,10 @@ describe('COMBINED_CHARACTER_REFERENCE_INSTRUCTION', () => {
       /specified limb or hand/
     )
     expect(combinedCharacterReferenceInstruction('Close-Up')).toBe(
-      COMBINED_CHARACTER_REFERENCE_INSTRUCTION
+      COMBINED_CHARACTER_FACE_CLOSE_UP_INSTRUCTION
+    )
+    expect(combinedCharacterReferenceInstruction('Close-Up')).toMatch(
+      /do not copy a standing figure/i
     )
     expect(combinedCharacterReferenceInstruction('Two-Shot')).toMatch(/head-to-toe outfit/)
   })

@@ -11,7 +11,7 @@
  * layout language into the frame.
  */
 
-import { isInsertOrExtremeCloseUp } from '@/lib/imagen/stillFramingNormalize'
+import { isFaceCloseUpShot, isInsertOrExtremeCloseUp } from '@/lib/imagen/stillFramingNormalize'
 
 export const COMBINED_CHARACTER_REFERENCE_INSTRUCTION =
   'CHARACTER REFERENCE: same person — match face, hair, and likeness from the face close-up and the standing figure in this photo; match head-to-toe outfit, fabric, fit, and footwear. Do not copy the character-card layout into the scene.'
@@ -19,13 +19,16 @@ export const COMBINED_CHARACTER_REFERENCE_INSTRUCTION =
 export const COMBINED_CHARACTER_INSERT_INSTRUCTION =
   'CHARACTER REFERENCE: same person — match the visible skin, fabric, and likeness of the specified limb or hand; do not pull a full body into the frame.'
 
+export const COMBINED_CHARACTER_FACE_CLOSE_UP_INSTRUCTION =
+  'CHARACTER REFERENCE: same person — match face, hair, and likeness from the face close-up in this photo. Do not copy a standing figure or the character-card layout into the scene. Outfit is garments at the collar and shoulders only.'
+
 /** @deprecated Combined character refs no longer use panel routing. */
 export const WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION = COMBINED_CHARACTER_REFERENCE_INSTRUCTION
 
 export function combinedCharacterReferenceInstruction(shotType?: string | null): string {
-  return isInsertOrExtremeCloseUp(shotType)
-    ? COMBINED_CHARACTER_INSERT_INSTRUCTION
-    : COMBINED_CHARACTER_REFERENCE_INSTRUCTION
+  if (isInsertOrExtremeCloseUp(shotType)) return COMBINED_CHARACTER_INSERT_INSTRUCTION
+  if (isFaceCloseUpShot(shotType)) return COMBINED_CHARACTER_FACE_CLOSE_UP_INSTRUCTION
+  return COMBINED_CHARACTER_REFERENCE_INSTRUCTION
 }
 
 export function buildCombinedCharacterConsumptionLine(
@@ -38,6 +41,12 @@ export function buildCombinedCharacterConsumptionLine(
     return (
       `${characterName} (${personPart}): same person — match the visible skin, fabric, and likeness ` +
       `of the specified limb or hand from the character reference — only what enters the composition.`
+    )
+  }
+  if (isFaceCloseUpShot(shotType)) {
+    return (
+      `${characterName} (${personPart}): same person — match face, hair, and likeness from the face close-up; ` +
+      `do not copy a standing figure or character-card layout — garments at the collar and shoulders only, on ${personPart} only.`
     )
   }
   return (

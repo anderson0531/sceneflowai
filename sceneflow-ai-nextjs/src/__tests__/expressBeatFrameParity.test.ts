@@ -455,6 +455,10 @@ describe('the route composes a beat frame from its direction', () => {
     expect(routeSrc).toContain(
       'matchedLocationReference.promptToken || buildLocationPromptToken(1)'
     )
+    expect(routeSrc).toContain('remapLibraryPromptTokens(')
+    expect(routeSrc).toContain('libraryTokenRewrites')
+    expect(routeSrc).toContain('dualReferencePriorityBlock(effectiveShotType)')
+    expect(routeSrc).toContain('sceneIdentityBindPreamble({')
   })
 
   it('attaches identity and wardrobe as discrete slots, never a PiP badge card', () => {

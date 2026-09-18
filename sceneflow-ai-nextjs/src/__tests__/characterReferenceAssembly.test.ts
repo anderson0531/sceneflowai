@@ -12,7 +12,12 @@ import {
   buildWardrobeBindingSummary,
   buildWardrobeReferencePromptLine,
   CHARACTER_IDENTITY_REFERENCE_INSTRUCTION,
+  FACE_CLOSE_UP_IDENTITY_REFERENCE_INSTRUCTION,
   DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
+  FACE_CLOSE_UP_DUAL_REFERENCE_PRIORITY_BLOCK,
+  characterIdentityReferenceInstruction,
+  dualReferencePriorityBlock,
+  sceneIdentityBindPreamble,
   resolveCharacterReferencePair,
   resolveWardrobeIdForCharacterInScene,
   wardrobesForScene,
@@ -405,7 +410,8 @@ describe('characterReferenceAssembly', () => {
     expect(buildFramingAwareIdentityBlock('medium shot')).toBe('')
     expect(buildFramingAwareIdentityBlock('medium close-up')).toBe(CLOSE_UP_IDENTITY_FRAMING_BLOCK)
     expect(buildFramingAwareIdentityBlock('Close-Up')).toContain('CLOSE-UP:')
-    expect(buildFramingAwareIdentityBlock('Close-Up')).toMatch(/head is bowed/)
+    expect(buildFramingAwareIdentityBlock('Close-Up')).toMatch(/face close-up/)
+    expect(buildFramingAwareIdentityBlock('Close-Up')).not.toMatch(/head is bowed/)
     expect(buildFramingAwareIdentityBlock('Close-Up')).toMatch(/garments only/)
     expect(buildFramingAwareIdentityBlock('Close-Up')).toMatch(/do not invent a different face/i)
     expect(buildFramingAwareIdentityBlock('Extreme Close-Up')).toBe('')
@@ -453,5 +459,35 @@ describe('characterReferenceAssembly', () => {
     expect(identity).toMatch(/character-card layout/)
     expect(wardrobe).toMatch(/garments only/)
     expect(wardrobe).toMatch(/never a different person/)
+  })
+
+  it('treats a face close-up identity plate as the face, not the standing figure', () => {
+    expect(characterIdentityReferenceInstruction('Close-Up')).toBe(
+      FACE_CLOSE_UP_IDENTITY_REFERENCE_INSTRUCTION
+    )
+    expect(characterIdentityReferenceInstruction('Close-Up')).toMatch(/face plate/)
+    expect(characterIdentityReferenceInstruction('Close-Up')).toMatch(
+      /do not copy a standing full-length figure/i
+    )
+    expect(characterIdentityReferenceInstruction('Close-Up')).not.toMatch(
+      /copy the face from the close-up and body identity from the standing figure/i
+    )
+    expect(characterIdentityReferenceInstruction('Two-Shot')).toBe(
+      CHARACTER_IDENTITY_REFERENCE_INSTRUCTION
+    )
+    expect(dualReferencePriorityBlock('Close-Up')).toBe(FACE_CLOSE_UP_DUAL_REFERENCE_PRIORITY_BLOCK)
+    expect(dualReferencePriorityBlock('Wide Shot')).toBe(DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK)
+    expect(buildIdentityReferencePromptLine('Gideon Croft', 1, 1, undefined, 'Close-Up')).toContain(
+      FACE_CLOSE_UP_IDENTITY_REFERENCE_INSTRUCTION
+    )
+    expect(sceneIdentityBindPreamble({ hasDual: true, shotType: 'Close-Up' })).toMatch(
+      /face plate/
+    )
+    expect(sceneIdentityBindPreamble({ hasDual: true, shotType: 'Close-Up' })).toMatch(
+      /do not copy a standing figure/i
+    )
+    expect(sceneIdentityBindPreamble({ hasDual: true, shotType: 'Two-Shot' })).toMatch(
+      /head-to-toe/
+    )
   })
 })

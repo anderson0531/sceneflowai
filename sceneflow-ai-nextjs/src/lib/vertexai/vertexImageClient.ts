@@ -297,7 +297,7 @@ export interface VertexImageResult {
   policyRefusalRecovered?: boolean
 }
 
-/** Flash keeps labeled images-first. Pro sends unlabeled HIGH images, then the prompt. */
+/** Flash and Pro both send labeled images-first. Pro also marks each plate HIGH. */
 export type VertexImageReferenceLayout = 'flash' | 'pro'
 
 export const PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL = 'MEDIA_RESOLUTION_HIGH' as const
@@ -376,9 +376,10 @@ async function resolveAttachedReferenceImages(
  * Flash to commit to a subject before it had seen the identity (right
  * composition, wrong person).
  *
- * Pro: consecutive unlabeled images at MEDIA_RESOLUTION_HIGH, then the prompt.
- * Prompt-first plus a complete still script let thinking illustrate the novel
- * without the photos. Do not interleave `[label]` text parts.
+ * Pro: the same labeled images-first bind, each plate at MEDIA_RESOLUTION_HIGH,
+ * then the prompt. Prompt-first plus a complete still script let thinking
+ * illustrate the novel without the photos. Unlabeled HIGH plates made
+ * `person [1]` and `location [1]` collide on image 1 (Gideon CU Final, 2026-09-18).
  */
 export async function buildMultimodalParts(
   fullPrompt: string,
@@ -393,22 +394,17 @@ export async function buildMultimodalParts(
     requireAllReferenceImages
   )
 
-  if (layout === 'pro') {
-    const parts: VertexMultimodalPart[] = []
-    for (const ref of attached) {
+  const parts: VertexMultimodalPart[] = []
+  for (const ref of attached) {
+    parts.push({ text: ref.name ? `[${ref.name}]\n` : '' })
+    if (layout === 'pro') {
       parts.push({
         inlineData: { mimeType: ref.mimeType, data: ref.data },
         mediaResolution: { level: PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL },
       })
+    } else {
+      parts.push({ inlineData: { mimeType: ref.mimeType, data: ref.data } })
     }
-    parts.push({ text: fullPrompt })
-    return parts
-  }
-
-  const parts: VertexMultimodalPart[] = []
-  for (const ref of attached) {
-    parts.push({ text: ref.name ? `[${ref.name}]\n` : '' })
-    parts.push({ inlineData: { mimeType: ref.mimeType, data: ref.data } })
   }
   parts.push({ text: fullPrompt })
   return parts

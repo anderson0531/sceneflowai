@@ -12,6 +12,20 @@ export const CHARACTER_IDENTITY_REFERENCE_INSTRUCTION =
   'Do not invent a different face. Outfit comes from the wardrobe reference when one is attached, otherwise from this photo. ' +
   'Do not copy the character-card layout into the scene. This image owns identity and photorealism.'
 
+/** Face CU/MCU: the identity plate is a face, not a standing figure or PiP card. */
+export const FACE_CLOSE_UP_IDENTITY_REFERENCE_INSTRUCTION =
+  'IDENTITY REFERENCE (PRIMARY): This photo is the face plate for this person. ' +
+  'Copy bone structure, skin, hair, and likeness from the face close-up in this photo. ' +
+  'Do not copy a standing full-length figure or the character-card layout into the scene. ' +
+  'Do not invent a different face. Outfit comes from the wardrobe reference when one is attached — garments at the collar and shoulders only. ' +
+  'This image owns identity and photorealism.'
+
+export function characterIdentityReferenceInstruction(shotType?: string | null): string {
+  return isFaceCloseUpShot(shotType)
+    ? FACE_CLOSE_UP_IDENTITY_REFERENCE_INSTRUCTION
+    : CHARACTER_IDENTITY_REFERENCE_INSTRUCTION
+}
+
 export const EXPRESSION_OVERRIDE_INSTRUCTION =
   'FACIAL EXPRESSION: Do NOT copy the neutral/posed expression from the identity or wardrobe reference. ' +
   'Render the facial expression and emotional state described by the scene/beat direction. ' +
@@ -34,6 +48,58 @@ export const DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK =
   'Wardrobe reference = SECONDARY for outfit colors, fabric, cut, accessories, AND visible scene-state marks on hands/body/face (bruises, wounds, blood, makeup wear) — garments only, never a different person. ' +
   'Facial expression comes from beat direction. Do not copy the character-card layout into the scene.'
 
+export const FACE_CLOSE_UP_DUAL_REFERENCE_PRIORITY_BLOCK =
+  'DUAL REFERENCE PRIORITY: Identity reference = PRIMARY face plate — bone structure, skin, hair, and likeness from the face close-up. ' +
+  'Do not copy a standing figure or character-card layout from that photo. ' +
+  'Wardrobe reference = SECONDARY for garments at the collar, shoulders, and any visible fabric — never a different person. ' +
+  'Facial expression comes from beat direction.'
+
+export function dualReferencePriorityBlock(shotType?: string | null): string {
+  return isFaceCloseUpShot(shotType)
+    ? FACE_CLOSE_UP_DUAL_REFERENCE_PRIORITY_BLOCK
+    : DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK
+}
+
+/** Scene-prompt bind paragraph after per-image identity/wardrobe lines. */
+export function sceneIdentityBindPreamble(opts: {
+  shotType?: string | null
+  hasDiptych?: boolean
+  hasDual?: boolean
+  hasIdentityOnly?: boolean
+}): string {
+  if (opts.hasDiptych) {
+    return (
+      'Scene text uses person [N]; identity and wardrobe are bound in [REFERENCES] as person [N] (Name) and must match the labeled character reference.\n\n'
+    )
+  }
+  if (opts.hasDual) {
+    if (isFaceCloseUpShot(opts.shotType)) {
+      return (
+        'In the scene prompt, refer to characters with identity refs using "person [N]" tokens. ' +
+        'The identity photo is the face plate — copy bone structure, skin, and hair from the close-up. ' +
+        'Do not copy a standing figure or character-card layout. ' +
+        'Copy garments from the wardrobe photo at the collar and shoulders. Do not invent a different face.\n\n'
+      )
+    }
+    return (
+      'In the scene prompt, refer to characters with identity refs using "person [N]" tokens. The identity photo is the same person head-to-toe (face close-up and standing figure). Copy the face from it; copy garments from the wardrobe photo. Do not invent a different face. Do not copy the character-card layout into the scene.\n\n'
+    )
+  }
+  if (opts.hasIdentityOnly) {
+    if (isFaceCloseUpShot(opts.shotType)) {
+      return (
+        'The identity photo is the face plate — copy bone structure, skin, hair, and likeness from the close-up. ' +
+        'Do not copy a standing figure or character-card layout. ' +
+        'Outfit comes from wardrobe text in the scene prompt when no wardrobe photo is attached. Do not invent a different face.\n\n'
+      )
+    }
+    return (
+      'The identity photo is the same person head-to-toe — copy face, hair, body, and likeness from it. If it shows a face close-up and a standing figure, both are that person. Outfit comes from wardrobe text in the scene prompt when no wardrobe photo is attached. Do not copy the character-card layout into the scene.\n\n'
+    )
+  }
+  return 'The character(s) MUST match the reference image(s) exactly — same face, ethnicity, age, hair, and facial features.\n\n'
+}
+
 const WIDE_SHOT_KEYWORDS = /\b(wide|establishing|full[- ]?body|long shot|master shot|extreme wide)\b/i
 
 export function isWideEstablishingShotType(shotType?: string | null): boolean {
@@ -41,7 +107,8 @@ export function isWideEstablishingShotType(shotType?: string | null): boolean {
 }
 
 export const CLOSE_UP_IDENTITY_FRAMING_BLOCK =
-  'CLOSE-UP: The face in frame is the identity reference — same bone structure, skin, hair, and likeness, including when the head is bowed or the eyes are down. ' +
+  'CLOSE-UP: The face in frame is the identity reference — same bone structure, skin, hair, and likeness from the face close-up in that photo. ' +
+  'Keep enough of the face readable that those features can be matched. ' +
   'Wardrobe is garments only at the collar, shoulders, and any visible fabric. ' +
   'Do not invent a different face to fit the pose. Do not pull a standing full-length figure from the identity or wardrobe card.'
 
@@ -481,14 +548,15 @@ export function buildIdentityReferencePromptLine(
   characterName: string,
   referenceIndex: number,
   personTokenIndex?: number,
-  label?: string
+  label?: string,
+  shotType?: string | null
 ): string {
   const personBinding =
     personTokenIndex != null ? ` = person [${personTokenIndex}]` : ` for ${characterName}`
   const heading = label ?? `Reference image ${referenceIndex}: IDENTITY REFERENCE${personBinding}`
   return (
     `- ${heading}\n` +
-    `  ${CHARACTER_IDENTITY_REFERENCE_INSTRUCTION}\n` +
+    `  ${characterIdentityReferenceInstruction(shotType)}\n` +
     `  ${buildIdentityLockLine(characterName, referenceIndex, personTokenIndex)}`
   )
 }

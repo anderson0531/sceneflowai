@@ -158,19 +158,21 @@ describe('buildMultimodalParts Flash vs Pro layouts', () => {
     }
   })
 
-  it('sends Pro refs as unlabeled HIGH-resolution images first, then the prompt', async () => {
+  it('sends Pro refs as labeled HIGH-resolution images first, then the prompt', async () => {
     const refs = fiveCharacterRefs()
     const parts = await buildMultimodalParts('SCENE PROMPT', refs, true, 'pro')
 
-    expect(parts.slice(0, 5)).toHaveLength(5)
+    expect(parts).toHaveLength(11)
     for (let i = 0; i < 5; i++) {
-      expect(parts[i]).toEqual({
+      expect(parts[i * 2]).toEqual({
+        text: `[Reference image ${i + 1} — CHARACTER REFERENCE of person [${i + 1}]]\n`,
+      })
+      expect(parts[i * 2 + 1]).toEqual({
         inlineData: { mimeType: 'image/jpeg', data: `ref${i}` },
         mediaResolution: { level: PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL },
       })
     }
-    expect(parts[5]).toEqual({ text: 'SCENE PROMPT' })
-    expect(parts.some((part) => 'text' in part && part.text.startsWith('['))).toBe(false)
+    expect(parts[10]).toEqual({ text: 'SCENE PROMPT' })
   })
 
   it('defaults to the Flash layout when layout is omitted', async () => {
@@ -325,7 +327,7 @@ describe('generateVertexGeminiImage request shape', () => {
     expect(body.generationConfig.imageConfig?.imageSize).toBeUndefined()
   })
 
-  it('sends Pro refs images-first with HIGH mediaResolution and 2K imageSize', async () => {
+  it('sends Pro refs labeled images-first with HIGH mediaResolution and 2K imageSize', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       imageResponse({
         usageMetadata: {
@@ -350,13 +352,15 @@ describe('generateVertexGeminiImage request shape', () => {
     expect(String(fetchMock.mock.calls[0]?.[0])).toContain(GEMINI_IMAGE_MODELS.pro)
     const parts = body.contents[0].parts
     expect(parts.at(-1)).toEqual({ text: 'SCENE PROMPT' })
-    expect(parts.slice(0, -1)).toHaveLength(5)
-    for (const part of parts.slice(0, -1)) {
-      expect(part).toMatchObject({
+    expect(parts.slice(0, -1)).toHaveLength(10)
+    for (let i = 0; i < 5; i++) {
+      expect(parts[i * 2]).toEqual({
+        text: `[${fiveCharacterRefs()[i].name}]\n`,
+      })
+      expect(parts[i * 2 + 1]).toMatchObject({
         inlineData: { mimeType: 'image/jpeg' },
         mediaResolution: { level: PRO_REFERENCE_MEDIA_RESOLUTION_LEVEL },
       })
-      expect(part).not.toHaveProperty('text')
     }
     expect(body.generationConfig.imageConfig).toEqual({
       aspectRatio: '16:9',

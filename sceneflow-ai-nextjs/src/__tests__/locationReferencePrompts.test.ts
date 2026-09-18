@@ -164,16 +164,17 @@ describe('locationReferencePrompts', () => {
 
 describe('buildSceneImageLocationLabel', () => {
   it('keeps extreme-wide wording on an establishing beat', () => {
-    expect(buildSceneImageLocationLabel('VAULT', 3, 'location [1]', { shotType: 'Wide Shot' })).toContain(
+    expect(buildSceneImageLocationLabel('VAULT', 3, 'location [3]', { shotType: 'Wide Shot' })).toContain(
       'extreme-wide establishing shot'
     )
   })
 
   it('labels a two-shot plate as environment, not a second wide subject', () => {
-    const label = buildSceneImageLocationLabel('VAULT', 5, 'location [1]', {
+    const label = buildSceneImageLocationLabel('VAULT', 5, 'location [5]', {
       shotType: 'Two-Shot',
     })
-    expect(label).toContain('location [1]')
+    expect(label).toContain('location [5]')
+    expect(label).toContain('Reference image 5')
     expect(label).toContain('environment plate')
     expect(label).not.toContain('extreme-wide establishing shot')
   })
