@@ -11,7 +11,10 @@ import {
   isIdentityRefRateLimitExhausted,
   isTransientExpressImageError,
   formatExpressImageErrorForUser,
+  IMAGE_CONTENT_POLICY_BOARD_MESSAGE,
+  IMAGE_CONTENT_POLICY_CODE,
   IMAGE_SAFETY_BOARD_MESSAGE,
+  IMAGE_SAFETY_CODE,
   resolveExpressImageErrorStatus,
 } from '@/lib/sceneGeneration/expressImageErrors'
 
@@ -225,15 +228,26 @@ describe('formatExpressImageErrorForUser', () => {
     ).toBe('Rate limited — retry this frame')
   })
 
-  it('maps IMAGE_SAFETY to the board overlay, not Generation failed', () => {
+  it('maps IMAGE_SAFETY identity decline to the board overlay, not Generation failed', () => {
     expect(
       formatExpressImageErrorForUser(
-        err('Google rendered this still without the character references. Open Director to retry as Safety or Creative.', 422)
+        err('Google rendered this still without the character references. Use Director to rewrite the prompt, or switch Frames to Creative (Kling).', 422)
       )
     ).toBe(IMAGE_SAFETY_BOARD_MESSAGE)
     expect(
-      formatExpressImageErrorForUser(err('Blocked by content policy', 422))
+      formatExpressImageErrorForUser(Object.assign(err('refs declined', 422), { code: IMAGE_SAFETY_CODE }))
     ).toBe(IMAGE_SAFETY_BOARD_MESSAGE)
+  })
+
+  it('maps IMAGE_CONTENT_POLICY to the policy overlay, not identity copy', () => {
+    expect(
+      formatExpressImageErrorForUser(err('Blocked by content policy', 422))
+    ).toBe(IMAGE_CONTENT_POLICY_BOARD_MESSAGE)
+    expect(
+      formatExpressImageErrorForUser(
+        Object.assign(err('Vertex RAI exhausted', 422), { code: IMAGE_CONTENT_POLICY_CODE })
+      )
+    ).toBe(IMAGE_CONTENT_POLICY_BOARD_MESSAGE)
   })
 
   it('maps missing reference downloads', () => {

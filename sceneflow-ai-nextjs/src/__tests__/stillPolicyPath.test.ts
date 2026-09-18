@@ -23,24 +23,28 @@ function readSource(relativePath: string): string {
 }
 
 describe('Google exhaust then fail — no auto-Kling, no Fal, no Hive', () => {
-  it('generate-image exhausts Vertex, 422s IMAGE_SAFETY, and only calls Kling on Creative', () => {
+  it('generate-image exhausts Vertex, 422s IMAGE_CONTENT_POLICY, and only calls Kling on Creative', () => {
     const src = readSource('src/app/api/scene/generate-image/route.ts')
-    expect(src).toContain("if (stillPolicyMode === 'creative')")
+    expect(src).toContain('if (isCreativeStillGeneration(stillGenerationMode))')
     expect(src).toContain('generateKlingOmniStill')
     expect(src).toContain('shouldRejectIgnoredIdentityStill')
-    expect(src).toContain('stillPolicyMode,')
-    expect(src).toContain('Director Safety frame ignored identity references')
+    expect(src).toContain('stillGenerationMode,')
+    expect(src).toContain('Policy-recovered frame ignored identity references')
+    expect(src).toContain('IMAGE_CONTENT_POLICY_CODE')
+    expect(src).toContain('IMAGE_CONTENT_POLICY_USER_MESSAGE')
     expect(src).toContain('IMAGE_SAFETY_CODE')
     expect(src).toContain('IMAGE_SAFETY_USER_MESSAGE')
     expect(src).toContain("generationProvider === 'kling' ? 'kling_image_generate'")
     expect(src).toContain("provider: generationProvider")
-    expect(src).toContain("stillPolicyMode: stillPolicyMode ?? 'auto'")
+    expect(src).toContain("stillPolicyMode: stillGenerationMode ?? 'auto'")
     expect(src).toContain('resolveVertexStillPolicyAttempts')
+    expect(src).toContain('failFastOnRateLimit: !!skipLikenessValidation')
+    expect(src).not.toContain("modelTier: stillPolicyMode === 'safety' ? 'designer' : effectiveImageTier")
     expect(src).not.toMatch(/from ['"]@\/lib\/fal['"]/)
     expect(src).not.toContain('HiveModerationService')
     expect(src).not.toContain('klingSafetyGuard')
 
-    const creativeBlockStart = src.indexOf("if (stillPolicyMode === 'creative')")
+    const creativeBlockStart = src.indexOf('if (isCreativeStillGeneration(stillGenerationMode))')
     const creativeBlock = src.slice(creativeBlockStart, src.indexOf('} else {', creativeBlockStart))
     expect(creativeBlock).toContain('prompt: geminiPrompt')
     expect(creativeBlock).not.toContain('escalateImagePromptForRetry')
@@ -62,34 +66,36 @@ describe('Google exhaust then fail — no auto-Kling, no Fal, no Hive', () => {
     expect(src).not.toMatch(/from ['"]@\/lib\/fal['"]/)
   })
 
-  it('Director and Pre-Vis dialogs expose Safety | Creative copy', () => {
-    const control = readSource('src/components/vision/StillPolicyModeControl.tsx')
-    expect(control).toContain("onChange('safety')")
-    expect(control).toContain("onChange('creative')")
-    expect(control).toContain("t('safetyHint')")
-    expect(control).toContain("t('creativeHint')")
-
+  it('Director rewrite is Safety-only; Frames toolbar owns Standard | Creative', () => {
     const director = readSource('src/components/vision/scene-production/DirectorDialog.tsx')
-    expect(director).toContain('StillPolicyModeControl')
+    expect(director).not.toContain('StillPolicyModeControl')
     expect(director).toContain("tp('retryStill')")
     expect(director).toContain('No reference image available')
-    expect(director.split('StillPolicyModeControl').length - 1).toBeGreaterThanOrEqual(2)
+    expect(director).toContain("t('takeStandard')")
+    expect(director).toContain("t('takeCreative')")
 
     const frame = readSource('src/components/vision/scene-production/FramePromptDialog.tsx')
-    expect(frame).toContain('stillPolicyMode')
+    expect(frame).not.toContain('stillPolicyMode')
+    expect(frame).not.toContain('StillPolicyModeControl')
 
     const preVis = readSource('src/components/vision/PreVisFramePromptDialog.tsx')
-    expect(preVis).toContain('stillPolicyMode')
+    expect(preVis).not.toContain('stillPolicyMode')
+    expect(preVis).not.toContain('StillPolicyModeControl')
 
     const beatDirector = readSource('src/components/vision/BeatStillDirectorDialog.tsx')
-    expect(beatDirector).toContain('StillPolicyModeControl')
+    expect(beatDirector).not.toContain('StillPolicyModeControl')
+    expect(beatDirector).toContain("t('safetyOption')")
+    expect(beatDirector).toContain('policyCompliance: safety')
+    expect(beatDirector).toContain('scoreBeatDirectionFidelity')
   })
 
-  it('board overlay uses the declined-references copy, not Generation failed', () => {
+  it('board overlay uses policy vs declined-references copy, not Generation failed', () => {
     const frame = readSource('src/components/vision/SceneImageFrame.tsx')
     expect(frame).toContain('Refs declined')
+    expect(frame).toContain('Policy blocked')
     expect(frame).toContain('References were declined')
-    expect(frame).toContain('Open Director to retry as Safety or Creative')
+    expect(frame).toContain('Open Director to rewrite for Safety, or switch Frames to Creative')
+    expect(frame).toContain('Open Director to rewrite the prompt, or switch Frames to Creative')
     expect(frame).toMatch(/from ['"]@\/components\/vision\/DeferredImageSkeleton['"]/)
     expect(frame).toContain('isDisplayableImageUrl')
     expect(frame).toContain('isDeferredImageUrl')

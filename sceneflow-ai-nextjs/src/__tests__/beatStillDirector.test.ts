@@ -5,7 +5,9 @@ import { composeBeatActionFraming } from '@/lib/intelligence/beat-sequence-plann
 import {
   applyStillDirectorPatch,
   applyStillDirectorPatchToScene,
+  applyPolicyComplianceToPatch,
   buildStillDirectorSystemPrompt,
+  buildStillDirectorUserPrompt,
   mergeDirectOverlaysIntoPatch,
   parseStillDirectorPatch,
   shouldRunStillDirectorAuto,
@@ -230,6 +232,10 @@ describe('Still Director contracts', () => {
     expect(route).not.toContain('applyStillDirectorPatchToScene')
     expect(route).not.toContain('project.save')
     expect(route).not.toContain('project.update')
+    expect(route).toContain('policyCompliance')
+    expect(route).toContain('applyPolicyComplianceToPatch')
+    expect(route).toContain('scoreBeatDirectionFidelity')
+    expect(route).toContain('directionStrength:')
   })
 
   it('Suggest revisions fills Direction and does not persist until Generate / Save', () => {
@@ -240,8 +246,11 @@ describe('Still Director contracts', () => {
     expect(dialog).not.toContain('persistVision')
 
     const director = readSource('src/components/vision/BeatStillDirectorDialog.tsx')
-    expect(director).toContain('onSave({ patch: patch ?? null, generate, stillPolicyMode })')
+    expect(director).toContain('onSave({ patch: savePatch ?? null, generate })')
     expect(director).toContain("patch ? t('saveAndGenerate') : tp('retryStill')")
+    expect(director).toContain("t('safetyOption')")
+    expect(director).toContain('policyCompliance: safety')
+    expect(director).not.toContain('stillPolicyMode')
     expect(director).not.toContain('persistVision')
     expect(director).not.toContain('applyStillDirectorPatchToScene')
   })
@@ -264,8 +273,11 @@ describe('Still Director contracts', () => {
     expect(rewriteIdx).toBeGreaterThan(-1)
     expect(imageIdx).toBeGreaterThan(rewriteIdx)
     expect(handler).not.toMatch(/customPrompt:/)
-    expect(handler).toContain('stillPolicyMode: options.stillPolicyMode')
+    expect(handler).toContain('stillGenerationMode: frameGenerationMode')
+    expect(handler).toContain('IMAGE_CONTENT_POLICY_USER_MESSAGE')
     expect(handler).toContain('IMAGE_SAFETY_USER_MESSAGE')
+    expect(handler).toContain('toastStillPolicyFailure')
+    expect(handler).not.toContain('stillPolicyMode: options.stillPolicyMode')
   })
 
   it('overlay labels are Direct Frame, Director, then Edit', () => {
@@ -282,6 +294,20 @@ describe('Still Director contracts', () => {
   })
 })
 
+describe('applyPolicyComplianceToPatch', () => {
+  it('softens harm-in-progress wording and keeps named props', () => {
+    const next = applyPolicyComplianceToPatch({
+      frozenMoment: 'Piper sits trapped against the wall',
+      blocking: "Gideon plants the steel spanner beside Piper's shoulder",
+      emotion: 'Piper hunched defensively',
+    })
+    expect(next.frozenMoment).not.toMatch(/\btrapped\b/i)
+    expect(next.blocking).toContain('spanner')
+    expect(next.blocking).not.toMatch(/beside Piper's shoulder/i)
+    expect(next.emotion).not.toMatch(/hunched defensively/i)
+  })
+})
+
 describe('buildStillDirectorSystemPrompt', () => {
   it('does not invent Gaze on empty-cast object inserts', () => {
     const system = buildStillDirectorSystemPrompt()
@@ -289,5 +315,21 @@ describe('buildStillDirectorSystemPrompt', () => {
     expect(system).toContain('Never write "Gaze: No characters"')
     expect(system).toContain("describe the instrument's settled state, not a limb, hand, or face")
     expect(system).not.toMatch(/mid-motion/)
+  })
+})
+
+describe('buildStillDirectorUserPrompt', () => {
+  it('adds Safety compliance rules when policyCompliance is set', () => {
+    const withSafety = buildStillDirectorUserPrompt({
+      mode: 'rewrite',
+      beats: [],
+      policyCompliance: true,
+    })
+    const without = buildStillDirectorUserPrompt({
+      mode: 'rewrite',
+      beats: [],
+    })
+    expect(withSafety).toContain('SAFETY COMPLIANCE')
+    expect(without).not.toContain('SAFETY COMPLIANCE')
   })
 })

@@ -1,6 +1,7 @@
 /**
  * Creative still path: Direct Kling IMAGE 3.0 Omni.
- * Called only when stillPolicyMode is 'creative'. Never from Express auto.
+ * Called when stillGenerationMode is 'creative'. Frame Agent uses it when
+ * the Frames toolbar is set to Creative.
  *
  * No Hive. Do not import HiveModerationService or klingSafetyGuard.
  * Not Fal. Do not import @/lib/fal.

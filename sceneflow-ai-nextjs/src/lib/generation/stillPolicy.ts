@@ -1,76 +1,138 @@
 /**
- * Still-policy modes for beat frames.
+ * Still generation modes for beat frames.
  *
- * Automatic Frame Agent / Express never calls Kling. It exhausts Google
- * (flash, then one rewritten pro attempt) and fails visibly with IMAGE_SAFETY
- * when the still is empty or the identity refs were ignored.
+ * Frames toolbar Standard | Creative picks the model for every still:
+ * - Standard — Google Vertex
+ * - Creative — Direct Kling Omni Image
  *
- * Director then chooses:
- * - Safety — rewritten still on Vertex so RAI will lock the same refs
- * - Creative — original composed still on Direct Kling Omni Image
+ * Director Safety is a prompt rewrite (Google content-policy phrasing),
+ * not a generation mode. Legacy `stillPolicyMode: 'safety'` maps to Standard.
  */
 
-export type StillPolicyMode = 'safety' | 'creative'
+export type StillGenerationMode = 'standard' | 'creative'
+
+/** @deprecated Use StillGenerationMode. Legacy `'safety'` maps to `'standard'`. */
+export type StillPolicyMode = 'safety' | 'creative' | StillGenerationMode
 
 export const IMAGE_SAFETY_CODE = 'IMAGE_SAFETY'
+export const IMAGE_CONTENT_POLICY_CODE = 'IMAGE_CONTENT_POLICY'
 
 /** Toast / API error when Google painted the shot but declined the identity refs. */
 export const IMAGE_SAFETY_USER_MESSAGE =
-  'Google rendered this still without the character references. Open Director to retry as Safety or Creative.'
+  'Google rendered this still without the character references. Use Director to rewrite the prompt, or switch Frames to Creative (Kling).'
+
+export const IMAGE_SAFETY_TOAST_TITLE = 'Character references declined'
+
+export const IMAGE_SAFETY_TOAST_DESCRIPTION =
+  'Google rendered this still without the character references. Use Director to rewrite the prompt, or switch the Frames tab to Creative (Kling).'
 
 /** Board overlay — not "generation failed". */
 export const IMAGE_SAFETY_BOARD_MESSAGE =
-  'References were declined — retry as Safety or Creative in Director'
+  'References were declined — rewrite in Director, or switch Frames to Creative'
+
+/** Toast / API error when Vertex RAI refused the still entirely. */
+export const IMAGE_CONTENT_POLICY_USER_MESSAGE =
+  'This generation was rejected for a content policy violation. Use Director to rewrite the prompt for Google Safety compliance, or switch Frames to Creative (Kling).'
+
+export const IMAGE_CONTENT_POLICY_TOAST_TITLE = 'Generation rejected — content policy'
+
+export const IMAGE_CONTENT_POLICY_TOAST_DESCRIPTION =
+  'Google AI blocked this still. Use Director to rewrite the prompt for Safety compliance, or switch the Frames tab to Creative (Kling).'
+
+export const IMAGE_CONTENT_POLICY_BOARD_MESSAGE =
+  'Content policy — rewrite in Director, or switch Frames to Creative'
 
 export const CREATIVE_KLING_UNAVAILABLE_CODE = 'CREATIVE_KLING_UNAVAILABLE'
 
 export const CREATIVE_KLING_UNAVAILABLE_MESSAGE =
   'Creative is unavailable until Kling credentials are configured.'
 
-export function parseStillPolicyMode(value: unknown): StillPolicyMode | undefined {
-  if (value === 'safety' || value === 'creative') return value
+export function parseStillGenerationMode(value: unknown): StillGenerationMode | undefined {
+  if (value === 'creative') return 'creative'
+  if (value === 'standard' || value === 'safety') return 'standard'
   return undefined
 }
 
-export function isImageSafetyError(err: unknown): boolean {
-  if (err && typeof err === 'object') {
-    const e = err as { status?: unknown; code?: unknown; payload?: { code?: unknown } }
-    if (e.code === IMAGE_SAFETY_CODE) return true
-    if (e.payload?.code === IMAGE_SAFETY_CODE) return true
-  }
+/** @deprecated Use parseStillGenerationMode. */
+export function parseStillPolicyMode(value: unknown): StillGenerationMode | undefined {
+  return parseStillGenerationMode(value)
+}
 
-  const msg = String((err as { message?: unknown })?.message || err || '').toLowerCase()
+export function isCreativeStillGeneration(
+  mode?: StillGenerationMode | StillPolicyMode | null
+): boolean {
+  return mode === 'creative'
+}
+
+function errorCode(err: unknown): string | undefined {
+  if (!err || typeof err !== 'object') return undefined
+  const e = err as { code?: unknown; payload?: { code?: unknown } }
+  if (typeof e.code === 'string') return e.code
+  if (typeof e.payload?.code === 'string') return e.payload.code
+  return undefined
+}
+
+function errorMessage(err: unknown): string {
+  return String((err as { message?: unknown })?.message || err || '')
+}
+
+export function isImageSafetyError(err: unknown): boolean {
+  if (errorCode(err) === IMAGE_SAFETY_CODE) return true
+
+  const msg = errorMessage(err).toLowerCase()
   return (
     msg.includes('references were declined') ||
     msg.includes('without the character references')
   )
 }
 
+export function isImageContentPolicyError(err: unknown): boolean {
+  if (errorCode(err) === IMAGE_CONTENT_POLICY_CODE) return true
+
+  const msg = errorMessage(err).toLowerCase()
+  return (
+    msg.includes('rejected for a content policy') ||
+    msg.includes('content policy — rewrite in director') ||
+    msg.includes('generation rejected — content policy') ||
+    msg.includes('blocked this still')
+  )
+}
+
 export function isStillPolicyImageError(message: string | undefined | null): boolean {
   if (!message?.trim()) return false
-  return isImageSafetyError(new Error(message))
+  const err = new Error(message)
+  return isImageSafetyError(err) || isImageContentPolicyError(err)
 }
 
 /**
  * A frame that only exists because RAI recovered, then failed likeness,
  * is the "composition-right / identity-wrong" case. Do not keep it.
- *
- * Director Safety pre-softens the prompt the same way and can produce the
- * same drift without setting `policyRefusalRecovered`, so Safety runs are
- * rejected here too when likeness confirms the wrong person.
  */
 export function shouldRejectIgnoredIdentityStill(args: {
   policyRefusalRecovered: boolean
-  stillPolicyMode?: StillPolicyMode
+  stillPolicyMode?: StillPolicyMode | StillGenerationMode
   hasIdentityRefs: boolean
   likenessFailed: boolean
 }): boolean {
   if (!args.hasIdentityRefs || !args.likenessFailed) return false
-  return args.policyRefusalRecovered || args.stillPolicyMode === 'safety'
+  return args.policyRefusalRecovered
 }
 
-/** Safety pre-rewrites then retries at escalation level 2; auto exhausts first try + one rewritten pro. */
-export function resolveVertexStillPolicyAttempts(mode?: StillPolicyMode): number {
-  if (mode === 'safety') return 2
+/** Vertex still ladder: first try + one rewritten pro. Generation mode does not change the count. */
+export function resolveVertexStillPolicyAttempts(
+  _mode?: StillPolicyMode | StillGenerationMode
+): number {
   return 2
+}
+
+export function stillPolicyBoardMessage(err: unknown): string {
+  if (isImageContentPolicyError(err)) return IMAGE_CONTENT_POLICY_BOARD_MESSAGE
+  if (isImageSafetyError(err)) return IMAGE_SAFETY_BOARD_MESSAGE
+  return IMAGE_CONTENT_POLICY_BOARD_MESSAGE
+}
+
+export function stillPolicyUserMessage(err: unknown): string {
+  if (isImageContentPolicyError(err)) return IMAGE_CONTENT_POLICY_USER_MESSAGE
+  if (isImageSafetyError(err)) return IMAGE_SAFETY_USER_MESSAGE
+  return IMAGE_CONTENT_POLICY_USER_MESSAGE
 }

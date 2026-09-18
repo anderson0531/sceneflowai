@@ -436,7 +436,8 @@ interface ScriptPanelProps {
     negativePrompt?: string
     usePreviousEndFrame?: boolean
     previousEndFrameUrl?: string
-    stillPolicyMode?: 'safety' | 'creative'
+    stillPolicyMode?: 'safety' | 'creative' | 'standard'
+    stillGenerationMode?: 'standard' | 'creative'
     fromDialog?: boolean
     modelTier?: 'eco' | 'designer' | 'director'
   }) => Promise<{ startFrameUrl?: string; endFrameUrl?: string } | void>
@@ -519,6 +520,10 @@ interface ScriptPanelProps {
   /** Session default for Frame Agent, Regen, and Direct Frame on this project. */
   frameGenerationQuality?: StoryboardQuality
   onFrameGenerationQualityChange?: (quality: StoryboardQuality) => void
+  frameGenerationMode?: import('@/lib/generation/stillPolicy').StillGenerationMode
+  onFrameGenerationModeChange?: (
+    mode: import('@/lib/generation/stillPolicy').StillGenerationMode
+  ) => void
   expressStatus?: import('./SceneGallery').ExpressSceneStatusMap
   expressGateBlocked?: boolean
   onExpressGateBlocked?: () => void
@@ -914,7 +919,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateLanguageStream, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onExpressSceneReferences, isExpressGeneratingReferences = false, onOpenReferenceLibrary, onAddDirectedLocationVersion, onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, onJumpToImpactScene, onToggleAudienceRecommendation, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onAudioRunReport, onVideoRunReport, onVideoRunCancelReady, onApproveStoryboard, approvingStoryboardFor = null, onReorderBeats, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onDirectorFrame, generatingDirectSlotKey = null, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, frameGenerationQuality = 'draft', onFrameGenerationQualityChange, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled, pendingSceneReferencesIndex = null, onPendingSceneReferencesHandled,   projectStreams = [] }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateLanguageStream, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onExpressSceneReferences, isExpressGeneratingReferences = false, onOpenReferenceLibrary, onAddDirectedLocationVersion, onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, onJumpToImpactScene, onToggleAudienceRecommendation, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onAudioRunReport, onVideoRunReport, onVideoRunCancelReady, onApproveStoryboard, approvingStoryboardFor = null, onReorderBeats, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onDirectorFrame, generatingDirectSlotKey = null, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, frameGenerationQuality = 'draft', onFrameGenerationQualityChange, frameGenerationMode = 'standard', onFrameGenerationModeChange, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled, pendingSceneReferencesIndex = null, onPendingSceneReferencesHandled,   projectStreams = [] }: ScriptPanelProps) {
 
   const tStudio = useTranslations('production.studio')
   const tCommon = useTranslations('common')
@@ -3395,6 +3400,8 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       onExpressSceneGenerate={onExpressSceneGenerate}
                       frameGenerationQuality={frameGenerationQuality}
                       onFrameGenerationQualityChange={onFrameGenerationQualityChange}
+                      frameGenerationMode={frameGenerationMode}
+                      onFrameGenerationModeChange={onFrameGenerationModeChange}
                       expressStatus={expressStatus}
                       expressGateBlocked={expressGateBlocked}
                       onExpressGateBlocked={onExpressGateBlocked}
@@ -3971,7 +3978,7 @@ interface SceneCardProps {
   onDismissStaleWarning?: (sceneIdx: number, stepKey: string) => void
   onSyncPreVisToScript?: (sceneIdx: number) => void | Promise<void>
   // Keyframe State Machine - Frame step handlers
-  onGenerateSegmentFrames?: (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both', options?: { customPrompt?: string; negativePrompt?: string; usePreviousEndFrame?: boolean; stillPolicyMode?: 'safety' | 'creative'; fromDialog?: boolean; modelTier?: 'eco' | 'designer' | 'director' }) => Promise<{ startFrameUrl?: string; endFrameUrl?: string } | void>
+  onGenerateSegmentFrames?: (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both', options?: { customPrompt?: string; negativePrompt?: string; usePreviousEndFrame?: boolean; stillGenerationMode?: 'standard' | 'creative'; stillPolicyMode?: 'safety' | 'creative' | 'standard'; fromDialog?: boolean; modelTier?: 'eco' | 'designer' | 'director' }) => Promise<{ startFrameUrl?: string; endFrameUrl?: string } | void>
   onEditFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
   onOpenFrameEditModal?: (sceneId: string, sceneIdx: number, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
   onUploadFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', file: File) => void
@@ -4065,6 +4072,10 @@ interface SceneCardProps {
   /** Session default for Frame Agent, Regen, and Direct Frame on this project. */
   frameGenerationQuality?: StoryboardQuality
   onFrameGenerationQualityChange?: (quality: StoryboardQuality) => void
+  frameGenerationMode?: import('@/lib/generation/stillPolicy').StillGenerationMode
+  onFrameGenerationModeChange?: (
+    mode: import('@/lib/generation/stillPolicy').StillGenerationMode
+  ) => void
   expressStatus?: import('./SceneGallery').ExpressSceneStatusMap
   expressGateBlocked?: boolean
   onExpressGateBlocked?: () => void
@@ -4267,6 +4278,8 @@ function SceneCard({
   onExpressSceneGenerate,
   frameGenerationQuality = 'draft',
   onFrameGenerationQualityChange,
+  frameGenerationMode = 'standard',
+  onFrameGenerationModeChange,
   expressStatus,
   expressGateBlocked = false,
   onExpressGateBlocked,
@@ -6570,6 +6583,8 @@ function SceneCard({
                     }
                     frameGenerationQuality={frameGenerationQuality}
                     onFrameGenerationQualityChange={onFrameGenerationQualityChange}
+                    frameGenerationMode={frameGenerationMode}
+                    onFrameGenerationModeChange={onFrameGenerationModeChange}
                     onSyncPreVisToScript={
                       onSyncPreVisToScript ? () => onSyncPreVisToScript(sceneIdx) : undefined
                     }
@@ -7798,11 +7813,9 @@ function SceneCard({
                           onSaveEditedKeyframe={onEditFrame}
                           onRegenerateStill={
                             onGenerateSegmentFrames
-                              ? (sceneId, segmentId, mode) => {
+                              ? (sceneId, segmentId) => {
                                   void onGenerateSegmentFrames(sceneId, segmentId, 'start', {
-                                    stillPolicyMode: mode,
                                     fromDialog: true,
-                                    modelTier: 'designer',
                                   })
                                 }
                               : undefined

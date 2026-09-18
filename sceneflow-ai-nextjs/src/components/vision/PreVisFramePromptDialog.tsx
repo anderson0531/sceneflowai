@@ -34,11 +34,8 @@ import {
   type PreVisFramePromptContext,
 } from '@/lib/vision/resolvePreVisFramePromptContext'
 import { composeBeatActionFraming } from '@/lib/intelligence/beat-sequence-planner-fallback'
-import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-import { StillPolicyModeControl } from '@/components/vision/StillPolicyModeControl'
-import type { StillPolicyMode } from '@/lib/generation/stillPolicy'
-import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalation'
+import { cn } from '@/lib/utils'
 
 export interface PreVisDirectGenerationOptions {
   slot: StoryboardFrameSlot
@@ -58,7 +55,6 @@ export interface PreVisDirectGenerationOptions {
   objectRefIds: string[]
   beatReferenceSelection?: BeatReferenceSelection
   fromDialog: true
-  stillPolicyMode: StillPolicyMode
 }
 
 export interface PreVisFramePromptDialogProps {
@@ -99,7 +95,6 @@ export function PreVisFramePromptDialog({
   defaultModelTier = 'eco',
 }: PreVisFramePromptDialogProps) {
   const t = useTranslations('production.direction.preVis')
-  const tp = useTranslations('production.direction.stillPolicy')
   const tc = useTranslations('common.actions')
   const [modelTier, setModelTier] = useState<ModelTier>(defaultModelTier)
   const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>('low')
@@ -130,7 +125,6 @@ export function PreVisFramePromptDialog({
   const [propsSectionCollapsed, setPropsSectionCollapsed] = useState(true)
   const [talentSectionCollapsed, setTalentSectionCollapsed] = useState(false)
   const [isSuggesting, setIsSuggesting] = useState(false)
-  const [stillPolicyMode, setStillPolicyMode] = useState<StillPolicyMode>('safety')
 
   const initialContext = useMemo(() => {
     if (!open || !slot || !scene) return null
@@ -159,7 +153,6 @@ export function PreVisFramePromptDialog({
     setLocationRefId(initialContext.locationRefId)
     setLocationVersionId(initialContext.locationVersionId)
     setObjectRefIds(initialContext.objectRefIds)
-    setStillPolicyMode('safety')
     setModelTier(defaultModelTier)
   }, [open, initialContext, defaultModelTier])
 
@@ -167,15 +160,6 @@ export function PreVisFramePromptDialog({
     if (initialContext?.beat) return composeBeatActionFraming(initialContext.beat)
     return initialContext?.seedPrompt?.trim() || ''
   }, [initialContext])
-  const safetyFraming = useMemo(
-    () =>
-      compiledActionFraming
-        ? escalateImagePromptForRetry(compiledActionFraming, 1, {
-            skipProductionStillFraming: true,
-          })
-        : '',
-    [compiledActionFraming]
-  )
 
   const handleSuggestRevisions = async () => {
     if (!projectId || !slot?.beatId) {
@@ -270,7 +254,6 @@ export function PreVisFramePromptDialog({
       objectRefIds,
       beatReferenceSelection: buildBeatReferenceSelection(),
       fromDialog: true,
-      stillPolicyMode,
     })
   }
 
@@ -516,19 +499,6 @@ export function PreVisFramePromptDialog({
             onModelTierChange={setModelTier}
             onThinkingLevelChange={setThinkingLevel}
           />
-          <StillPolicyModeControl
-            value={stillPolicyMode}
-            onChange={setStillPolicyMode}
-            disabled={isGenerating}
-          />
-          {stillPolicyMode === 'safety' && safetyFraming && (
-            <div className="space-y-1">
-              <p className="text-[11px] text-slate-400">{tp('rewrittenPreview')}</p>
-              <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-wrap rounded-lg border border-slate-700 bg-slate-800/40 p-3">
-                {safetyFraming}
-              </p>
-            </div>
-          )}
         </div>
 
         <DialogFooter className="gap-2 flex-shrink-0">

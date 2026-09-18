@@ -1,15 +1,23 @@
 import { isRetryableError } from '../utils/retry'
 import {
+  IMAGE_CONTENT_POLICY_BOARD_MESSAGE,
+  IMAGE_CONTENT_POLICY_CODE,
+  IMAGE_CONTENT_POLICY_USER_MESSAGE,
   IMAGE_SAFETY_BOARD_MESSAGE,
   IMAGE_SAFETY_CODE,
   IMAGE_SAFETY_USER_MESSAGE,
+  isImageContentPolicyError,
   isImageSafetyError,
 } from '@/lib/generation/stillPolicy'
 
 export {
+  IMAGE_CONTENT_POLICY_BOARD_MESSAGE,
+  IMAGE_CONTENT_POLICY_CODE,
+  IMAGE_CONTENT_POLICY_USER_MESSAGE,
   IMAGE_SAFETY_BOARD_MESSAGE,
   IMAGE_SAFETY_CODE,
   IMAGE_SAFETY_USER_MESSAGE,
+  isImageContentPolicyError,
   isImageSafetyError,
 }
 
@@ -216,6 +224,9 @@ export function isCharacterLikenessMismatchError(err: unknown): boolean {
 
 /** Short overlay/tile copy — never dump Vertex payload text to the user. */
 export function formatExpressImageErrorForUser(err: unknown): string {
+  if (isImageContentPolicyError(err)) {
+    return IMAGE_CONTENT_POLICY_BOARD_MESSAGE
+  }
   if (isImageSafetyError(err)) {
     return IMAGE_SAFETY_BOARD_MESSAGE
   }
@@ -230,7 +241,7 @@ export function formatExpressImageErrorForUser(err: unknown): string {
     return 'Reference image could not be loaded — retry this frame'
   }
   if (msg.toLowerCase().includes('content policy') || msg.toLowerCase().includes('safety')) {
-    return IMAGE_SAFETY_BOARD_MESSAGE
+    return IMAGE_CONTENT_POLICY_BOARD_MESSAGE
   }
   if (!msg) return 'Generation failed'
   return msg.length > 120 ? `${msg.slice(0, 117)}…` : msg

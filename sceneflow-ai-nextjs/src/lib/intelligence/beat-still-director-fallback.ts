@@ -6,6 +6,7 @@
  * the server-only sibling.
  */
 
+import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalation'
 import { buildPolicySafePhrasingRules } from '@/lib/generation/policySafePhrasing'
 import {
   composeBeatActionFraming,
@@ -99,6 +100,8 @@ export interface DirectBeatStillRequest {
   catalog?: BeatSequenceReferenceCatalog
   userDirection?: string
   overlay?: StillDirectorOverlay
+  /** Rewrite Action/Framing to Google Gemini Image content-policy phrasing. */
+  policyCompliance?: boolean
 }
 
 export interface ApplyStillDirectorPatchOptions {
@@ -270,6 +273,22 @@ export function applyStillDirectorPatchToScene(
   return { scene: applyBeatsToScene(scene, nextBeats), skipped }
 }
 
+export function applyPolicyComplianceToPatch(patch: StillDirectorPatch): StillDirectorPatch {
+  const next: StillDirectorPatch = { ...patch }
+  const soften = (value?: string) => {
+    const trimmed = trimOrUndef(value)
+    if (!trimmed) return value
+    return escalateImagePromptForRetry(trimmed, 1, { skipProductionStillFraming: true })
+  }
+  for (const key of PATCH_STRING_KEYS) {
+    const softened = soften(next[key])
+    if (softened) next[key] = softened
+  }
+  const actionFraming = soften(next.actionFraming)
+  if (actionFraming) next.actionFraming = actionFraming
+  return next
+}
+
 export function previewActionFramingFromPatch(
   beat: SceneBeat,
   patch: StillDirectorPatch
@@ -332,6 +351,12 @@ export function buildStillDirectorUserPrompt(request: DirectBeatStillRequest): s
     parts.push(
       'Optimize each beat still for first-try photographic legibility. Keep the story beat. Thicken blocking, gaze, prop placement, and distinct faces.'
     )
+  }
+  if (request.policyCompliance) {
+    parts.push(
+      'SAFETY COMPLIANCE (authoritative): Rewrite so Google Gemini Image RAI will accept the still. Follow these rules. Keep the story beat. Keep EXACT library character and prop names — never substitute "stage prop" for a named prop.'
+    )
+    parts.push(buildPolicySafePhrasingRules())
   }
   parts.push('')
 

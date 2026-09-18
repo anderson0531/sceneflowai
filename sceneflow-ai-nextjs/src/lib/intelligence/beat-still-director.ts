@@ -22,6 +22,7 @@ export type {
 export {
   applyStillDirectorPatch,
   applyStillDirectorPatchToScene,
+  applyPolicyComplianceToPatch,
   isPlannerAuthoredDirectionSource,
   isProtectedStillDirectionSource,
   mergeDirectOverlaysIntoPatch,

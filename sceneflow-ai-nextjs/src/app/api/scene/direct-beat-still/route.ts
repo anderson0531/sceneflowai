@@ -8,10 +8,12 @@ import {
   mergeDirectOverlaysIntoPatch,
   parseStillDirectorPatch,
   previewActionFramingFromPatch,
+  applyPolicyComplianceToPatch,
   type StillDirectorMode,
   type StillDirectorOverlay,
 } from '@/lib/intelligence/beat-still-director-fallback'
 import { directBeatStills } from '@/lib/intelligence/beat-still-director'
+import { scoreBeatDirectionFidelity } from '@/lib/intelligence/beatDirectionFidelity'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
@@ -102,6 +104,7 @@ export async function POST(req: NextRequest) {
       : undefined
 
     const overlay = overlayFromBody(body)
+    const policyCompliance = body.policyCompliance === true
     const previous = beats[beatIndex - 1]
     const next = beats[beatIndex + 1]
     const visionPhase = project.metadata?.visionPhase || {}
@@ -140,31 +143,50 @@ export async function POST(req: NextRequest) {
         catalog,
         userDirection,
         overlay,
+        policyCompliance,
       })
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error)
       console.warn(`[direct-beat-still] Gemini failed: ${message}`)
       const overlayPatch = mergeDirectOverlaysIntoPatch({}, overlay)
-      const fallbackPatch = parseStillDirectorPatch(overlayPatch) ?? overlayPatch
+      let fallbackPatch = parseStillDirectorPatch(overlayPatch) ?? overlayPatch
+      if (policyCompliance) {
+        fallbackPatch = applyPolicyComplianceToPatch(fallbackPatch)
+      }
+      const actionFraming = previewActionFramingFromPatch(beat, fallbackPatch)
       return NextResponse.json({
         success: true,
         usedAI: false,
         fallbackReason: message,
         patch: fallbackPatch,
-        actionFraming: previewActionFramingFromPatch(beat, fallbackPatch),
+        actionFraming,
         suggestedNotes: userDirection?.trim() || undefined,
+        directionStrength: scoreBeatDirectionFidelity({
+          beat,
+          rewrittenFraming: actionFraming,
+          patch: fallbackPatch,
+        }),
       })
     }
 
     const directed = result.patches[0]
-    const patch = directed?.patch ?? mergeDirectOverlaysIntoPatch({}, overlay)
+    let patch = directed?.patch ?? mergeDirectOverlaysIntoPatch({}, overlay)
+    if (policyCompliance) {
+      patch = applyPolicyComplianceToPatch(patch)
+    }
+    const actionFraming = previewActionFramingFromPatch(beat, patch)
     return NextResponse.json({
       success: true,
       usedAI: result.usedAI,
       fallbackReason: result.fallbackReason,
       patch,
-      actionFraming: previewActionFramingFromPatch(beat, patch),
+      actionFraming,
       suggestedNotes: patch.suggestedNotes || userDirection?.trim() || undefined,
+      directionStrength: scoreBeatDirectionFidelity({
+        beat,
+        rewrittenFraming: actionFraming,
+        patch,
+      }),
     })
   } catch (error: unknown) {
     console.error('[direct-beat-still] Error:', error)

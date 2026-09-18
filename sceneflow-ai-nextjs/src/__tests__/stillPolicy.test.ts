@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
+  IMAGE_CONTENT_POLICY_BOARD_MESSAGE,
+  IMAGE_CONTENT_POLICY_CODE,
+  IMAGE_CONTENT_POLICY_USER_MESSAGE,
   IMAGE_SAFETY_BOARD_MESSAGE,
   IMAGE_SAFETY_CODE,
   IMAGE_SAFETY_USER_MESSAGE,
+  isImageContentPolicyError,
   isImageSafetyError,
   isStillPolicyImageError,
+  parseStillGenerationMode,
   parseStillPolicyMode,
   resolveVertexStillPolicyAttempts,
   shouldRejectIgnoredIdentityStill,
@@ -21,9 +26,10 @@ const PRODUCTION_INTIMIDATION_STILL = `Action/Framing: Two-Shot, low angle: both
 Palette & Grade: Stylized shift from Warm (Tungsten/Amber) to Cool/Toxic (Teal)`
 
 describe('still policy helpers', () => {
-  it('parses Safety and Creative only', () => {
-    expect(parseStillPolicyMode('safety')).toBe('safety')
-    expect(parseStillPolicyMode('creative')).toBe('creative')
+  it('parses Standard, Creative, and legacy Safety', () => {
+    expect(parseStillGenerationMode('standard')).toBe('standard')
+    expect(parseStillGenerationMode('creative')).toBe('creative')
+    expect(parseStillPolicyMode('safety')).toBe('standard')
     expect(parseStillPolicyMode('auto')).toBeUndefined()
     expect(parseStillPolicyMode(undefined)).toBeUndefined()
   })
@@ -48,7 +54,7 @@ describe('still policy helpers', () => {
     ).toBe(false)
   })
 
-  it('rejects a Director Safety frame that ignored identity refs', () => {
+  it('does not special-case legacy Safety mode for identity rejection', () => {
     expect(
       shouldRejectIgnoredIdentityStill({
         policyRefusalRecovered: false,
@@ -56,7 +62,7 @@ describe('still policy helpers', () => {
         hasIdentityRefs: true,
         likenessFailed: true,
       })
-    ).toBe(true)
+    ).toBe(false)
   })
 
   it('keeps a Director Safety frame when likeness holds', () => {
@@ -80,16 +86,25 @@ describe('still policy helpers', () => {
     ).toBe(false)
   })
 
-  it('Safety pre-rewrites then retries at level 2; auto exhausts first try plus rewritten pro', () => {
+  it('Safety rewrite and generation mode both exhaust first try plus rewritten pro', () => {
     expect(resolveVertexStillPolicyAttempts('safety')).toBe(2)
+    expect(resolveVertexStillPolicyAttempts('standard')).toBe(2)
     expect(resolveVertexStillPolicyAttempts(undefined)).toBe(2)
     expect(resolveVertexStillPolicyAttempts('creative')).toBe(2)
   })
 
-  it('recognizes the user toast and board overlay copy', () => {
+  it('recognizes identity IMAGE_SAFETY toast and board overlay copy', () => {
     expect(isImageSafetyError(new Error(IMAGE_SAFETY_USER_MESSAGE))).toBe(true)
     expect(isStillPolicyImageError(IMAGE_SAFETY_BOARD_MESSAGE)).toBe(true)
     expect(isImageSafetyError({ code: IMAGE_SAFETY_CODE })).toBe(true)
+    expect(isImageContentPolicyError(new Error(IMAGE_SAFETY_USER_MESSAGE))).toBe(false)
+  })
+
+  it('recognizes content-policy IMAGE_CONTENT_POLICY copy separately from identity', () => {
+    expect(isImageContentPolicyError(new Error(IMAGE_CONTENT_POLICY_USER_MESSAGE))).toBe(true)
+    expect(isStillPolicyImageError(IMAGE_CONTENT_POLICY_BOARD_MESSAGE)).toBe(true)
+    expect(isImageContentPolicyError({ code: IMAGE_CONTENT_POLICY_CODE })).toBe(true)
+    expect(isImageSafetyError(new Error(IMAGE_CONTENT_POLICY_USER_MESSAGE))).toBe(false)
   })
 })
 

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { isStillPolicyImageError } from '@/lib/generation/stillPolicy'
+import { isImageContentPolicyError, isStillPolicyImageError } from '@/lib/generation/stillPolicy'
 import {
   DeferredImageSkeleton,
   isDeferredImageUrl,
@@ -329,6 +329,7 @@ export function SceneImageFrame({
   const roleLabel = formatBeatRoleLabel(beatRole)
   const promptPreview = imagePrompt?.trim()
   const policyError = isStillPolicyImageError(imageError)
+  const contentPolicyError = isImageContentPolicyError(imageError)
   const useOverlayControls =
     compact ||
     alwaysShowControls ||
@@ -601,7 +602,7 @@ export function SceneImageFrame({
                 className="mb-1 rounded border border-rose-500/50 bg-rose-950/70 px-1.5 py-0.5 text-[9px] font-medium text-rose-200"
                 title={imageError}
               >
-                {policyError ? 'Refs declined' : 'Failed'}
+                {policyError ? (contentPolicyError ? 'Policy blocked' : 'Refs declined') : 'Failed'}
               </span>
             ) : (
               <ImageIcon className="w-8 h-8 text-indigo-400/40 mb-1" />
@@ -631,7 +632,9 @@ export function SceneImageFrame({
             <p className="text-sm text-gray-400 text-center mb-2">
               {imageError
                 ? policyError
-                  ? 'References were declined'
+                  ? contentPolicyError
+                    ? 'Content policy blocked this still'
+                    : 'References were declined'
                   : 'Generation failed'
                 : 'No scene reference yet'}
             </p>
@@ -643,7 +646,9 @@ export function SceneImageFrame({
             <p className="text-xs text-gray-500 text-center mb-3 max-w-xs">
               {generateBlockedReason ||
                 (policyError
-                  ? 'Open Director to retry as Safety or Creative'
+                  ? contentPolicyError
+                    ? 'Open Director to rewrite for Safety, or switch Frames to Creative'
+                    : 'Open Director to rewrite the prompt, or switch Frames to Creative'
                   : 'Create a reference image for scene consistency across production')}
             </p>
             <div className="flex items-center gap-2">

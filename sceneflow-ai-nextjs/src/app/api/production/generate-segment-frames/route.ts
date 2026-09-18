@@ -46,7 +46,6 @@ import {
   parsePerformanceCue,
   stripAllCues,
 } from '@/lib/scene/performanceCues'
-import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalation'
 import {
   ContentPolicyExhaustedError,
   getKlingFallbackProvider,
@@ -56,9 +55,10 @@ import { generateKlingOmniStill } from '@/lib/kling/generateKlingOmniStill'
 import {
   CREATIVE_KLING_UNAVAILABLE_CODE,
   CREATIVE_KLING_UNAVAILABLE_MESSAGE,
-  IMAGE_SAFETY_CODE,
-  IMAGE_SAFETY_USER_MESSAGE,
-  parseStillPolicyMode,
+  IMAGE_CONTENT_POLICY_CODE,
+  IMAGE_CONTENT_POLICY_USER_MESSAGE,
+  isCreativeStillGeneration,
+  parseStillGenerationMode,
 } from '@/lib/generation/stillPolicy'
 import type { PrioritizedReferenceImage } from '@/lib/vision/referenceLimits'
 
@@ -242,8 +242,9 @@ interface FrameGenerationRequest {
   // Thinking level for complex prompts
   thinkingLevel?: 'low' | 'high'
 
-  /** Director still-policy. Omit on automatic generation. */
-  stillPolicyMode?: 'safety' | 'creative'
+  /** Frames Standard | Creative generation mode. Legacy stillPolicyMode still accepted. */
+  stillPolicyMode?: 'safety' | 'creative' | 'standard'
+  stillGenerationMode?: 'standard' | 'creative'
 
   projectId?: string
   
@@ -421,6 +422,7 @@ export async function POST(req: NextRequest) {
       // Thinking level: 'low' for fast iteration, 'high' for complex multi-character scenes
       thinkingLevel = 'low',
       stillPolicyMode: stillPolicyModeRaw,
+      stillGenerationMode: stillGenerationModeRaw,
       projectId,
       // Phase 11: Segment content context for intelligent end frames
       segmentContent,
@@ -431,7 +433,9 @@ export async function POST(req: NextRequest) {
       sceneRecord,
     } = body
 
-    const stillPolicyMode = parseStillPolicyMode(stillPolicyModeRaw)
+    const stillGenerationMode = parseStillGenerationMode(
+      stillGenerationModeRaw ?? stillPolicyModeRaw
+    )
 
     const mergedNegativePrompt = mergeBeatFrameNegativePrompt(negativePrompt)
 
@@ -925,12 +929,9 @@ Render this scene in ${selectedStyle.name} style.`
         }
       }
       
-      const studioPrompt =
-        stillPolicyMode === 'safety'
-          ? escalateImagePromptForRetry(geminiPrompt, 1, { skipProductionStillFraming: true })
-          : geminiPrompt
+      const studioPrompt = geminiPrompt
 
-      if (stillPolicyMode === 'creative') {
+      if (isCreativeStillGeneration(stillGenerationMode)) {
         if (!getKlingFallbackProvider()) {
           return NextResponse.json(
             {
@@ -995,7 +996,7 @@ Render this scene in ${selectedStyle.name} style.`
           aspectRatio: aspectRatio as '16:9' | '9:16' | '1:1',
           imageSize: modelTier === 'eco' ? '1K' : '2K',
           referenceImages: allReferenceImages.length > 0 ? allReferenceImages : undefined,
-          modelTier: stillPolicyMode === 'safety' ? 'designer' : modelTier,
+          modelTier,
           thinkingLevel,
           negativePrompt: mergedNegativePrompt
         })
@@ -1234,8 +1235,8 @@ Render this scene in ${selectedStyle.name} style.`
       return NextResponse.json(
         {
           success: false,
-          error: IMAGE_SAFETY_USER_MESSAGE,
-          code: IMAGE_SAFETY_CODE,
+          error: IMAGE_CONTENT_POLICY_USER_MESSAGE,
+          code: IMAGE_CONTENT_POLICY_CODE,
         },
         { status: 422 }
       )

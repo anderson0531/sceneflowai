@@ -6,19 +6,26 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { Button } from '@/components/ui/Button'
 import { DictationTextarea } from '@/components/ui/DictationTextarea'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
 import { Clapperboard, Loader2, Save, Sparkles } from 'lucide-react'
 import { composeBeatActionFraming } from '@/lib/intelligence/beat-sequence-planner-fallback'
-import type { StillDirectorPatch } from '@/lib/intelligence/beat-still-director-fallback'
+import {
+  applyPolicyComplianceToPatch,
+  type StillDirectorPatch,
+} from '@/lib/intelligence/beat-still-director-fallback'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
-import { StillPolicyModeControl } from '@/components/vision/StillPolicyModeControl'
-import type { StillPolicyMode } from '@/lib/generation/stillPolicy'
 import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalation'
+import {
+  scoreBeatDirectionFidelity,
+  type DirectionFidelityScore,
+} from '@/lib/intelligence/beatDirectionFidelity'
+import { cn } from '@/lib/utils'
 
 export interface BeatStillDirectorSavePayload {
   patch?: StillDirectorPatch | null
   generate: boolean
-  stillPolicyMode: StillPolicyMode
 }
 
 export interface BeatStillDirectorDialogProps {
@@ -39,6 +46,45 @@ function appendChipText(current: string, addition: string): string {
   return `${trimmed.replace(/[. ]*$/, '')}. ${addition}`
 }
 
+function DirectionStrengthMeter({
+  score,
+  t,
+}: {
+  score: DirectionFidelityScore
+  t: ReturnType<typeof useTranslations>
+}) {
+  const bandHint =
+    score.band === 'strong'
+      ? t('directionStrengthStrong')
+      : score.band === 'moderate'
+        ? t('directionStrengthModerate')
+        : t('directionStrengthDrifted')
+  const barColor =
+    score.band === 'strong'
+      ? 'bg-emerald-500'
+      : score.band === 'moderate'
+        ? 'bg-amber-500'
+        : 'bg-rose-500'
+
+  return (
+    <div className="space-y-1.5 rounded-lg border border-slate-700 bg-slate-800/40 px-3 py-2">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[11px] font-medium text-slate-200">
+          {t('directionStrength', { score: score.score })}
+        </p>
+        <p className="text-[10px] text-slate-400">{bandHint}</p>
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-700">
+        <div
+          className={cn('h-full rounded-full transition-all', barColor)}
+          style={{ width: `${Math.max(4, Math.min(100, score.score))}%` }}
+        />
+      </div>
+      <p className="text-[11px] text-slate-400 leading-relaxed">{score.note}</p>
+    </div>
+  )
+}
+
 export function BeatStillDirectorDialog({
   open,
   onOpenChange,
@@ -56,7 +102,10 @@ export function BeatStillDirectorDialog({
   const [isRewriting, setIsRewriting] = useState(false)
   const [patch, setPatch] = useState<StillDirectorPatch | null>(null)
   const [rewrittenFraming, setRewrittenFraming] = useState('')
-  const [stillPolicyMode, setStillPolicyMode] = useState<StillPolicyMode>('safety')
+  const [safety, setSafety] = useState(false)
+  const [apiDirectionStrength, setApiDirectionStrength] = useState<DirectionFidelityScore | null>(
+    null
+  )
 
   const currentFraming = useMemo(
     () => (beat ? composeBeatActionFraming(beat) : ''),
@@ -68,12 +117,25 @@ export function BeatStillDirectorDialog({
     return escalateImagePromptForRetry(source, 1, { skipProductionStillFraming: true })
   }, [rewrittenFraming, currentFraming])
 
+  const displayedFraming = safety ? safetyFraming || rewrittenFraming : rewrittenFraming
+
+  const directionStrength = useMemo(() => {
+    if (!beat || !displayedFraming) return null
+    if (apiDirectionStrength && !safety) return apiDirectionStrength
+    return scoreBeatDirectionFidelity({
+      beat,
+      rewrittenFraming: displayedFraming,
+      patch,
+    })
+  }, [beat, displayedFraming, patch, apiDirectionStrength, safety])
+
   useEffect(() => {
     if (!open) {
       setInstruction('')
       setPatch(null)
       setRewrittenFraming('')
-      setStillPolicyMode('safety')
+      setSafety(false)
+      setApiDirectionStrength(null)
     }
   }, [open])
 
@@ -102,6 +164,7 @@ export function BeatStillDirectorDialog({
           beatId: beat.beatId,
           mode: instruction.trim() ? 'rewrite' : 'optimize',
           userDirection: instruction.trim() || undefined,
+          policyCompliance: safety || undefined,
         }),
       })
       const data = await response.json()
@@ -111,6 +174,11 @@ export function BeatStillDirectorDialog({
       setRewrittenFraming(
         typeof data.actionFraming === 'string' ? data.actionFraming : ''
       )
+      if (data.directionStrength && typeof data.directionStrength.score === 'number') {
+        setApiDirectionStrength(data.directionStrength as DirectionFidelityScore)
+      } else {
+        setApiDirectionStrength(null)
+      }
       toast.success('Prompt rewritten — save it before generating')
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : 'Rewrite failed')
@@ -121,7 +189,8 @@ export function BeatStillDirectorDialog({
 
   const handleSave = async (generate: boolean) => {
     if (!generate && !patch) return
-    await onSave({ patch: patch ?? null, generate, stillPolicyMode })
+    const savePatch = safety && patch ? applyPolicyComplianceToPatch(patch) : patch
+    await onSave({ patch: savePatch ?? null, generate })
     onOpenChange(false)
   }
 
@@ -177,19 +246,36 @@ export function BeatStillDirectorDialog({
             </div>
           )}
 
-          <StillPolicyModeControl
-            value={stillPolicyMode}
-            onChange={setStillPolicyMode}
-            disabled={busy}
-          />
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <label className="inline-flex items-center gap-2 text-xs text-slate-300 cursor-pointer w-fit">
+                  <Checkbox
+                    checked={safety}
+                    onCheckedChange={(checked) => setSafety(checked === true)}
+                    disabled={busy}
+                  />
+                  {t('safetyOption')}
+                </label>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">{t('safetyOptionTooltip')}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          {safety && (
+            <p className="text-[11px] text-slate-500">{tp('safetyHint')}</p>
+          )}
 
-          {stillPolicyMode === 'safety' && safetyFraming && (
+          {safety && safetyFraming && (
             <div className="space-y-1">
               <Label className="text-slate-300">{tp('rewrittenPreview')}</Label>
               <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-wrap rounded-lg border border-slate-700 bg-slate-800/40 p-3">
                 {safetyFraming}
               </p>
             </div>
+          )}
+
+          {directionStrength && displayedFraming && (
+            <DirectionStrengthMeter score={directionStrength} t={t} />
           )}
 
           <div className="flex flex-wrap justify-end gap-2">
