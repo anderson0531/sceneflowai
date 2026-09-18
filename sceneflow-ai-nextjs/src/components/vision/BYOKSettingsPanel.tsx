@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import type { BYOKSettings, VisionProject } from '@/types/vision'
 
 export interface BYOKSettingsPanelProps {
@@ -92,8 +93,8 @@ export function BYOKSettingsPanel({
                 <SelectContent>
                   {settings.imageProvider === 'google' && (
                     <>
-                      <SelectItem value="gemini-2.5-flash-image">Gemini 2.5 Flash Image</SelectItem>
-                      <SelectItem value="gemini-3-pro-image">Gemini 3 Pro Image</SelectItem>
+                      <SelectItem value={GEMINI_IMAGE_MODELS.flash}>Gemini 3.1 Flash Image</SelectItem>
+                      <SelectItem value={GEMINI_IMAGE_MODELS.pro}>Gemini 3 Pro Image</SelectItem>
                     </>
                   )}
                   {settings.imageProvider === 'openai' && (

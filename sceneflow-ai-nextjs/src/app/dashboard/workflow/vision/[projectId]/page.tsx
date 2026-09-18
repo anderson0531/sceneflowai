@@ -106,7 +106,7 @@ import {
   resolveEffectiveStartFrameUrl,
   shouldAttachBeatStartFrame,
 } from '@/lib/vision/segmentConfigBuilder'
-import { DEFAULT_VEO_CLIP_DURATION, MAX_VEO_VIDEO_CLIP_SECONDS } from '@/lib/config/modelConfig'
+import { DEFAULT_VEO_CLIP_DURATION, GEMINI_IMAGE_MODELS, MAX_VEO_VIDEO_CLIP_SECONDS } from '@/lib/config/modelConfig'
 import {
   findPreviousChainSegment,
   resolvePriorChainLastFrameUrl,
@@ -6330,7 +6330,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [showBYOKSettings, setShowBYOKSettings] = useState(false)
   const [byokSettings, setBYOKSettings] = useState<BYOKSettings>({
     imageProvider: 'google',
-    imageModel: 'gemini-2.5-flash-image',
+    imageModel: GEMINI_IMAGE_MODELS.flash,
     audioProvider: 'elevenlabs',
     audioModel: 'eleven_multilingual_v2',
     videoProvider: 'runway',

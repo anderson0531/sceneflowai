@@ -8,6 +8,7 @@ import {
   getGeminiSafetyThreshold,
 } from '@/lib/vertexai/safety'
 import { isVertexContentPolicyError } from '@/lib/generation/contentPolicy'
+import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 
 const ENV_KEYS = [
   'VERTEX_SAFETY_THRESHOLD',
@@ -66,7 +67,7 @@ describe('image soft-block policy detection', () => {
   it('treats empty-image safety messages as content policy', () => {
     expect(
       isVertexContentPolicyError(
-        'No image in Vertex Gemini Image response — blocked by safety (model=gemini-2.5-flash-image, finishReason=SAFETY)'
+        `No image in Vertex Gemini Image response — blocked by safety (model=${GEMINI_IMAGE_MODELS.flash}, finishReason=SAFETY)`
       )
     ).toBe(true)
     expect(

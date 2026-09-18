@@ -3,6 +3,7 @@ import OpenAI from 'openai'
 import { GoogleAuth } from 'google-auth-library'
 import { CreditService } from '@/services/CreditService'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
+import { resolveVertexGeminiImageEndpoint } from '@/lib/vertexai/vertexImageClient'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -97,7 +98,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         return { err: { status: 0, body: 'auth: empty access token' } }
       }
       // Imagen endpoints were retired 2026-06-30; use Gemini Image generateContent
-      const endpoint = `https://${gLocation}-aiplatform.googleapis.com/v1/projects/${gProject}/locations/${gLocation}/publishers/google/models/${GEMINI_IMAGE_MODELS.flash}:generateContent`
+      const { endpoint } = resolveVertexGeminiImageEndpoint({
+        model: GEMINI_IMAGE_MODELS.flash,
+        projectId: gProject,
+        regionalLocation: gLocation,
+      })
       const body = {
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {

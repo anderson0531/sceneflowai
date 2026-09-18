@@ -1,9 +1,10 @@
 /**
  * Which Gemini image model backs draft beat frames.
  *
- * Draft beats are storyboard coverage, not delivery frames. Flash is faster and
- * sits on a separate, larger quota than `gemini-3-pro-image`, whose ceiling was
- * failing beats outright even at image-lane concurrency 1.
+ * Draft beats are storyboard coverage, not delivery frames. Flash
+ * (`gemini-3.1-flash-image`) is faster and sits on a separate, larger quota
+ * than `gemini-3-pro-image`, whose ceiling was failing beats outright even at
+ * image-lane concurrency 1.
  *
  * Eligibility is read off the resolved tier, so every caller that asks for a
  * draft beat gets the draft model. It used to hang on an `animaticDraft` flag

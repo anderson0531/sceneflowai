@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
+import { resolveVertexGeminiImageEndpoint } from '@/lib/vertexai/vertexImageClient'
 
 export const runtime = 'nodejs'
 
@@ -60,7 +61,11 @@ export async function GET(_req: NextRequest) {
 
     // 4. Test the Gemini Image endpoint (Imagen endpoints were retired 2026-06-30)
     const model = GEMINI_IMAGE_MODELS.flash
-    const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
+    const { endpoint } = resolveVertexGeminiImageEndpoint({
+      model,
+      projectId,
+      regionalLocation: location,
+    })
     results.model = model
     results.testEndpoint = endpoint
 
@@ -91,7 +96,7 @@ export async function GET(_req: NextRequest) {
         if (testRes.status === 403) {
           results.hints.push(`IAM permission denied. Run: gcloud projects add-iam-policy-binding ${projectId} --member="serviceAccount:${results.serviceAccount}" --role="roles/aiplatform.user"`)
         } else if (testRes.status === 404) {
-          results.hints.push(`Model ${model} not found. Check that region ${location} serves Gemini Image.`)
+          results.hints.push(`Model ${model} not found. Gemini 3 image models are global-only; check that ${endpoint} is reachable.`)
         }
       } else {
         results.ok = true

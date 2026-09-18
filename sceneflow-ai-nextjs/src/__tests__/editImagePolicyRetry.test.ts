@@ -12,6 +12,7 @@ vi.mock('@/lib/vertexai/vertexImageClient', async () => {
   }
 })
 
+import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import { editVertexImage } from '@/lib/vertexai/vertexImageClient'
 import {
   EDIT_POLICY_USER_MESSAGE,
@@ -26,7 +27,7 @@ function readSource(relativePath: string): string {
 }
 
 const SAFETY_ERROR = new Error(
-  'No image in Vertex Gemini Image response — blocked by safety (model=gemini-2.5-flash-image, finishReason=IMAGE_SAFETY)'
+  `No image in Vertex Gemini Image response — blocked by safety (model=${GEMINI_IMAGE_MODELS.flash}, finishReason=IMAGE_SAFETY)`
 )
 
 describe('escalateEditInstructionForRetry', () => {

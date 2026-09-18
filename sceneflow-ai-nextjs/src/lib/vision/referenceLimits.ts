@@ -9,7 +9,7 @@ import { propScaleClause } from '@/lib/imagen/propScaleClause'
 export const MAX_VERTEX_GEMINI_REFERENCE_IMAGES = 8
 export const MAX_REFERENCE_IMAGES_ECO = 3
 /**
- * Express draft beats on `gemini-2.5-flash-image`.
+ * Express draft beats on `gemini-3.1-flash-image`.
  *
  * The eco cap of 3 is a Fal Kling element budget, and reusing it on Vertex
  * multimodal silently dropped wardrobe and location references the moment a
