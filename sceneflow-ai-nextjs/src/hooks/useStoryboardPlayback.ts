@@ -30,7 +30,7 @@ import {
   type VisualClip,
 } from '@/hooks/useTimelinePlayback'
 import { DEFAULT_MIXER_AUDIO_TRACKS } from '@/lib/scene/mixerSettings'
-import { effectiveScreeningTrackVolume, effectiveScreeningDialogueVolume } from '@/lib/scene/screeningTrackVolume'
+import { effectiveScreeningTrackVolume, effectiveScreeningDialogueVolume, screeningDialogueBeatBedGain } from '@/lib/scene/screeningTrackVolume'
 import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { AUDIO_PROBE_CONCURRENCY, runBoundedPool } from '@/lib/audio/audioProbePool'
 import { recordScreeningDiag } from '@/lib/storyboard/screeningPlayerDiagnostics'
@@ -407,7 +407,12 @@ export function useStoryboardPlayback({
     const frame = getCurrentStoryboardVisualFrame(visualFramesRef.current, elapsed)
     if (!frame) return 1
     const fadeOutSec = frame.transitionOut === 'fade' ? (frame.transitionOutSec ?? 0) : 0
-    return computeFadeOutDuckMultiplier(elapsed - frame.startTime, frame.duration, fadeOutSec)
+    const fadeDuck = computeFadeOutDuckMultiplier(
+      elapsed - frame.startTime,
+      frame.duration,
+      fadeOutSec
+    )
+    return fadeDuck * screeningDialogueBeatBedGain(frame.beatKind)
   }, [])
 
   const {

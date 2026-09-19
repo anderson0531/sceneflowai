@@ -29,7 +29,9 @@ import {
   effectiveScreeningTrackVolume,
   patchMixerTrackVolumes,
   sceneMixerTrackVolumes,
+  screeningDialogueBeatBedGain,
 } from '@/lib/scene/screeningTrackVolume'
+import { getSceneBeats } from '@/lib/script/beatMigration'
 
 // ============================================================================
 // Volume Settings Types & Persistence
@@ -143,6 +145,8 @@ interface VisualClip {
   segmentId: string
   /** Source beat, so beat-ranged data like music cues can be placed in time. */
   beatId?: string
+  /** Scene beat kind for Dialogue-beat music/SFX ducking. */
+  beatKind?: string
   thumbnailUrl?: string
   endThumbnailUrl?: string
   startTime: number
@@ -396,6 +400,7 @@ export function FullscreenPlayer({
   // Refs for volume state (to avoid stale closures in animation loop)
   const trackVolumesRef = useRef<TrackVolumes>(DEFAULT_VOLUMES)
   const isMutedRef = useRef(false)
+  const currentTimeRef = useRef(initialTime)
   
   // Keep refs in sync with state
   useEffect(() => {
@@ -405,6 +410,10 @@ export function FullscreenPlayer({
   useEffect(() => {
     isMutedRef.current = isMuted
   }, [isMuted])
+
+  useEffect(() => {
+    currentTimeRef.current = currentTime
+  }, [currentTime])
 
   const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingMixerRef = useRef<TrackVolumes | null>(null)
@@ -505,12 +514,25 @@ export function FullscreenPlayer({
     if (!scene || selectedLanguage === baselineLanguage) return null
     return analyzeSceneLML(scene, segments, selectedLanguage, baselineLanguage)
   }, [scene, segments, selectedLanguage, baselineLanguage])
+
+  const beatKindById = useMemo(() => {
+    const map = new Map<string, string>()
+    if (!scene) return map
+    for (const beat of getSceneBeats(scene)) {
+      if (beat.beatId) map.set(beat.beatId, beat.kind)
+    }
+    return map
+  }, [scene])
   
   const visualClips = useMemo<VisualClip[]>(() => {
     // Filter out any undefined or invalid segments first
     const validSegments = segments.filter((seg): seg is SegmentData => 
       seg != null && typeof seg.segmentId === 'string'
     )
+    const beatKindFor = (seg: SegmentData): string | undefined => {
+      const beatId = (seg as { beatId?: string }).beatId
+      return beatId ? beatKindById.get(beatId) : undefined
+    }
     
     // If LML analysis available, use per-segment elastic timing
     // Otherwise fall back to flat playback offset
@@ -522,6 +544,7 @@ export function FullscreenPlayer({
           id: seg.segmentId,
           segmentId: seg.segmentId,
           beatId: (seg as { beatId?: string }).beatId,
+          beatKind: beatKindFor(seg),
           thumbnailUrl: seg.references?.startFrameUrl || seg.activeAssetUrl || undefined,
           endThumbnailUrl: seg.references?.endFrameUrl || seg.endFrameUrl || undefined,
           startTime: cumulativeStart,
@@ -547,6 +570,7 @@ export function FullscreenPlayer({
         id: seg.segmentId,
         segmentId: seg.segmentId,
         beatId: (seg as { beatId?: string }).beatId,
+        beatKind: beatKindFor(seg),
         thumbnailUrl: seg.references?.startFrameUrl || seg.activeAssetUrl || undefined,
         endThumbnailUrl: seg.references?.endFrameUrl || seg.endFrameUrl || undefined,
         startTime: seg.startTime + cumulativeOffset,
@@ -555,7 +579,7 @@ export function FullscreenPlayer({
       cumulativeOffset += effectiveOffset
       return clip
     })
-  }, [segments, playbackOffset, selectedLanguage, baselineLanguage, lmlAnalysis])
+  }, [segments, playbackOffset, selectedLanguage, baselineLanguage, lmlAnalysis, beatKindById])
   
   const audioTracks = useMemo(() => {
     if (!scene) return null
@@ -599,7 +623,7 @@ export function FullscreenPlayer({
   // ============================================================================
   // Get Volume for Track Type (uses refs to avoid stale closures in animation loop)
   // ============================================================================
-  const getVolumeForTrack = useCallback((trackType: string): number => {
+  const getVolumeForTrack = useCallback((trackType: string, beatKind?: string): number => {
     const vols = trackVolumesRef.current
     const trackVolume =
       trackType === 'voiceover' || trackType === 'description'
@@ -618,9 +642,13 @@ export function FullscreenPlayer({
       master: vols.master,
       trackVolume,
     }
-    return isSpeech
+    const volume = isSpeech
       ? effectiveScreeningDialogueVolume(args)
       : effectiveScreeningTrackVolume(args)
+    if (trackType === 'music' || trackType === 'sfx') {
+      return clampUnitVolume(volume * screeningDialogueBeatBedGain(beatKind))
+    }
+    return volume
   }, []) // No dependencies - always reads from refs
 
   const updateTrackVolume = useCallback((track: keyof TrackVolumes, value: number) => {
@@ -751,16 +779,17 @@ export function FullscreenPlayer({
   // Reactively Update Audio Volumes (fixes volume control not affecting playback)
   // ============================================================================
   useEffect(() => {
+    const beatKind = getCurrentVisualClip(currentTimeRef.current)?.beatKind
     audioRefs.current.forEach((audio, key) => {
       // Extract clip ID from key format "clipId:url"
       const clipId = key.split(':')[0]
       const clip = allAudioClips.find(c => c.id === clipId)
       if (clip) {
         const trackType = getTrackTypeFromClip(clip)
-        audio.volume = getVolumeForTrack(trackType)
+        audio.volume = getVolumeForTrack(trackType, beatKind)
       }
     })
-  }, [trackVolumes, isMuted, allAudioClips, getVolumeForTrack, getTrackTypeFromClip])
+  }, [trackVolumes, isMuted, allAudioClips, getVolumeForTrack, getTrackTypeFromClip, getCurrentVisualClip])
   
   // ============================================================================
   // Cleanup animation on unmount
@@ -890,6 +919,7 @@ export function FullscreenPlayer({
         setCurrentTime(elapsed)
         
         // Sync audio clips
+        const currentVisual = getCurrentVisualClip(elapsed)
         allAudioClips.forEach(clip => {
           if (!clip.url) return // Skip clips without URLs
           const audioKey = `${clip.id}:${clip.url}`
@@ -898,7 +928,7 @@ export function FullscreenPlayer({
           if (audio) {
             // Apply per-track volume (derive type from clip id)
             const trackType = getTrackTypeFromClipId(clip.id, clip.label)
-            audio.volume = getVolumeForTrack(trackType)
+            audio.volume = getVolumeForTrack(trackType, currentVisual?.beatKind)
             
             if (isClipActiveAtTimeline(clip, elapsed)) {
               const audioTime = getClipAudioTime(clip, elapsed)
@@ -925,7 +955,6 @@ export function FullscreenPlayer({
         })
         
         // Get current visual clip for callback
-        const currentVisual = getCurrentVisualClip(elapsed)
         onPlayheadChange?.(elapsed, currentVisual?.segmentId)
         
         animationRef.current = requestAnimationFrame(animate)
@@ -944,11 +973,15 @@ export function FullscreenPlayer({
     startTimeRef.current = performance.now() - newTime * 1000
     
     // Sync audio to new position
+    const currentVisual = getCurrentVisualClip(newTime)
+    const beatKind = currentVisual?.beatKind
     allAudioClips.forEach(clip => {
       const audioKey = `${clip.id}:${clip.url}`
       const audio = audioRefs.current.get(audioKey)
       
       if (audio) {
+        const trackType = getTrackTypeFromClipId(clip.id, clip.label)
+        audio.volume = getVolumeForTrack(trackType, beatKind)
         if (isClipActiveAtTimeline(clip, newTime)) {
           audio.currentTime = getClipAudioTime(clip, newTime)
         } else if (!audio.paused) {
@@ -959,7 +992,7 @@ export function FullscreenPlayer({
     
     const currentVisual = getCurrentVisualClip(newTime)
     onPlayheadChange?.(newTime, currentVisual?.segmentId)
-  }, [sceneDuration, allAudioClips, getCurrentVisualClip, onPlayheadChange])
+  }, [sceneDuration, allAudioClips, getCurrentVisualClip, getVolumeForTrack, onPlayheadChange])
   
   // ============================================================================
   // Skip to Previous/Next Segment

@@ -95,6 +95,7 @@ describe('playback loop keeps per-frame audio work out of React state', () => {
 
   it('applies the fade-to-black duck in the animation loop', () => {
     expect(storyboard).toContain('trackDuck: musicAndSfxDuck')
+    expect(storyboard).toContain('screeningDialogueBeatBedGain(frame.beatKind)')
     expect(timeline).toContain('trackDuck?: (elapsed: number) => number')
     expect(timeline).toContain('trackDuckRef.current?.(elapsed) ?? 1')
   })

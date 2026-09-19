@@ -12,6 +12,7 @@ import {
 import { getSceneBeats, getStoryboardTimelineBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import type {
   BeatDirectionTransition,
+  BeatKind,
   BeatOverlayType,
   SceneBeat,
 } from '@/lib/script/segmentTypes'
@@ -112,6 +113,8 @@ export interface StoryboardVisualFrame {
   frameType: StoryboardFrameType
   dialogueIndex?: number
   beatId?: string
+  /** Scene beat kind so playback can duck beds only under Dialogue. */
+  beatKind?: BeatKind
   imageUrl?: string
   /** Optional end frame URL for in-beat cross-dissolve when present. */
   endImageUrl?: string
@@ -1477,7 +1480,7 @@ export function buildBeatFirstPlaybackTimeline(
   const voiceClips: StoryboardAudioClip[] = []
   const windows: Array<{
     beatId: string
-    kind: string
+    kind: BeatKind
     startTime: number
     duration: number
     imageUrl?: string
@@ -1679,6 +1682,7 @@ export function buildBeatFirstPlaybackTimeline(
     return {
       clipId: win.clipId,
       beatId: win.beatId,
+      beatKind: win.kind,
       frameType: win.kind === 'action' ? 'establishing' : 'dialogue',
       dialogueIndex: win.dialogueIndex,
       imageUrl: win.imageUrl,
@@ -1914,6 +1918,8 @@ export function buildBeatStoryboardVisualTimeline(
     frames.push({
       clipId: `beat-${i}`,
       frameType: kind === 'action' ? 'establishing' : 'dialogue',
+      beatId: beat.beatId,
+      beatKind: kind,
       imageUrl,
       startTime,
       duration,

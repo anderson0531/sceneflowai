@@ -336,11 +336,14 @@ describe('buildStoryboardVoiceClips', () => {
     expect(visualFrames[0].startTime).toBe(0)
     expect(visualFrames[0].imageUrl).toBe(ACTION_URL)
     expect(visualFrames[0].beatId).toBe('bt_action')
+    expect(visualFrames[0].beatKind).toBe('action')
     expect(visualFrames[1].startTime).toBeCloseTo(4.3, 1)
     expect(visualFrames[1].imageUrl).toBe(NARRATOR_BEAT_URL)
     expect(visualFrames[1].beatId).toBe('bt_narr')
+    expect(visualFrames[1].beatKind).toBe('narration')
     expect(visualFrames[1].dialogueIndex).toBe(0)
     expect(visualFrames[2].imageUrl).toBe('https://example.com/sarah-frame.jpg')
+    expect(visualFrames[2].beatKind).toBe('dialogue')
   })
 
   it('schedules narrator beat when audio is on dialogue line but missing from beat.audioUrl', () => {

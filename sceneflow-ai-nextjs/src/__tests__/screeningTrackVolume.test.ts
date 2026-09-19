@@ -9,8 +9,11 @@ import {
   patchMixerTrackVolumes,
   sceneMixerTrackVolumes,
   SCREENING_DIALOGUE_GAIN,
+  SCREENING_DIALOGUE_BEAT_BED_GAIN,
+  screeningDialogueBeatBedGain,
 } from '@/lib/scene/screeningTrackVolume'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
+import { computeFadeOutDuckMultiplier } from '@/lib/storyboard/animaticSceneFade'
 
 describe('effectiveScreeningTrackVolume', () => {
   it('returns 0 when muted regardless of master and track levels', () => {
@@ -59,6 +62,26 @@ describe('effectiveScreeningDialogueVolume', () => {
     expect(
       effectiveScreeningTrackVolume({ muted: false, master: 0.8, trackVolume: 0.4 })
     ).toBeCloseTo(0.32)
+  })
+})
+
+describe('screeningDialogueBeatBedGain', () => {
+  it('ducks music and SFX to 25% on Dialogue beats only', () => {
+    expect(SCREENING_DIALOGUE_BEAT_BED_GAIN).toBe(0.25)
+    expect(screeningDialogueBeatBedGain('dialogue')).toBe(0.25)
+    expect(screeningDialogueBeatBedGain('narration')).toBe(1)
+    expect(screeningDialogueBeatBedGain('action')).toBe(1)
+    expect(screeningDialogueBeatBedGain(undefined)).toBe(1)
+    expect(screeningDialogueBeatBedGain(null)).toBe(1)
+  })
+
+  it('stacks with fade-to-black duck', () => {
+    expect(
+      screeningDialogueBeatBedGain('dialogue') * computeFadeOutDuckMultiplier(6, 6, 1)
+    ).toBeCloseTo(0.0625)
+    expect(
+      screeningDialogueBeatBedGain('narration') * computeFadeOutDuckMultiplier(6, 6, 1)
+    ).toBeCloseTo(0.25)
   })
 })
 
@@ -171,6 +194,8 @@ describe('screening scene mix source contract', () => {
     expect(src).toContain('effectiveScreeningTrackVolume')
     expect(src).toContain('dialogueVolume')
     expect(src).toContain('sfxVolume')
+    expect(src).toContain('screeningDialogueBeatBedGain(frame.beatKind)')
+    expect(src).toContain('computeFadeOutDuckMultiplier')
     expect(src).not.toContain('DIALOGUE_VOLUME_BOOST')
   })
 
@@ -182,6 +207,7 @@ describe('screening scene mix source contract', () => {
     expect(src).toContain('sceneMixerTrackVolumes')
     expect(src).toContain('effectiveScreeningDialogueVolume')
     expect(src).toContain('effectiveScreeningTrackVolume')
+    expect(src).toContain('screeningDialogueBeatBedGain')
     expect(src).toContain('sceneProductionData')
     expect(src).toContain('Scene {currentSceneIndex + 1} mix')
     expect(src).not.toContain('DIALOGUE_VOLUME_BOOST')
