@@ -143,6 +143,15 @@ export const STILL_TASK_PROP_SCALE_LINE =
 export const STILL_TASK_PAIRED_PROP_SCALE_LINE =
   'Held props keep their described physical size relative to the character; do not enlarge a library-prop still to fill the frame.'
 
+/**
+ * Pro interleaved plates: occupancy says every token is in the frame; this
+ * line says those looks come from the attached plates, not invention.
+ * Affirmative and HUD-free — `[REFERENCES]` / send-index labels typeset onto
+ * the still (production 2026-09-18).
+ */
+export const STILL_TASK_PAIRED_PLATES_MANDATORY_LINE =
+  'The attached reference plates are required source material. Each person, prop, and location takes appearance from its paired plate.'
+
 export const STILL_TASK_DETAIL_TOKEN_LINE =
   `${STILL_TASK_PERSON_PROP_TOKEN_LINE} ${STILL_TASK_LOCATION_BOKEH_LINE}`
 
@@ -209,6 +218,12 @@ export function stillTaskLines(
   const propTokenLine = pairedOccupancy ? STILL_TASK_PAIRED_PROP_TOKEN_LINE : STILL_TASK_PROP_TOKEN_LINE
   const propScaleLine = pairedOccupancy ? STILL_TASK_PAIRED_PROP_SCALE_LINE : STILL_TASK_PROP_SCALE_LINE
   const detailTokenLine = `${personPropTokenLine} ${STILL_TASK_LOCATION_BOKEH_LINE}`
+  const commitTaskLines = () => {
+    if (pairedOccupancy && (!refsKnown || refs.length > 0)) {
+      lines.push(STILL_TASK_PAIRED_PLATES_MANDATORY_LINE)
+    }
+    return lines
+  }
 
   if (!options?.allowTypography) {
     if (shot.isInsertOrEcu && emptyCast) {
@@ -233,21 +248,21 @@ export function stillTaskLines(
     } else {
       lines.push(allTokenLine)
     }
-    return lines
+    return commitTaskLines()
   }
 
-  if (refs.length === 0) return lines
+  if (refs.length === 0) return commitTaskLines()
 
   if (options?.allowTypography) {
     lines.push(allTokenLine)
-    return lines
+    return commitTaskLines()
   }
 
   if (emptyCast && shot.isInsertOrEcu) {
     if (hasPropRefs) lines.push(propTokenLine)
     if (hasLocationRef) lines.push(STILL_TASK_LOCATION_NEARFIELD_LINE)
     if (hasPropRefs) lines.push(propScaleLine)
-    return lines
+    return commitTaskLines()
   }
 
   if (shot.isDetail && !mediumCoverage) {
@@ -257,7 +272,7 @@ export function stillTaskLines(
       lines.push(STILL_TASK_LOCATION_BOKEH_LINE)
     }
     if (hasPropRefs) lines.push(propScaleLine)
-    return lines
+    return commitTaskLines()
   }
 
   if (hasLocationRef && asEnvironment) {
@@ -266,12 +281,12 @@ export function stillTaskLines(
     }
     lines.push(STILL_TASK_LOCATION_ENVIRONMENT_LINE)
     if (hasPropRefs) lines.push(propScaleLine)
-    return lines
+    return commitTaskLines()
   }
 
   lines.push(allTokenLine)
   if (hasPropRefs) lines.push(propScaleLine)
-  return lines
+  return commitTaskLines()
 }
 
 export const STILL_TASK_LINES = stillTaskLines()
@@ -436,6 +451,7 @@ const STILL_BOILERPLATE_LINES = [
   STILL_TASK_PAIRED_PROP_TOKEN_LINE,
   STILL_TASK_PROP_SCALE_LINE,
   STILL_TASK_PAIRED_PROP_SCALE_LINE,
+  STILL_TASK_PAIRED_PLATES_MANDATORY_LINE,
   ...STILL_TASK_FACE_CLOSE_UP_LINES,
   ...LEGACY_STILL_TASK_LINES,
 ]
