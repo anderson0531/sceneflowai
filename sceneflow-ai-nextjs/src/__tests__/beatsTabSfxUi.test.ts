@@ -25,4 +25,22 @@ describe('Beats tab SFX UI', () => {
     expect(source).not.toContain('Re-generate SFX')
     expect(source).not.toContain('Veo...')
   })
+
+  it('shows Prompt changed / Ready on action beat headers and SFX controls', () => {
+    const panel = readSource('src/components/vision/ScriptPanel.tsx')
+    const controls = readSource('src/components/vision/ActionBeatSfxControls.tsx')
+    const badge = readSource('src/components/vision/BeatAudioStatusBadge.tsx')
+    const mixer = readSource('src/components/vision/scene-production/SegmentSfxCard.tsx')
+
+    expect(badge).toContain('Prompt changed')
+    expect(badge).toContain('Ready')
+    expect(badge).toContain('AlertTriangle')
+    expect(panel).toContain('actionBeatSfxIsStale')
+    expect(panel).toContain('<BeatAudioStatusBadge hasAudio={!!sfxAudioUrl} stale={sfxStale} />')
+    expect(controls).toContain('BeatAudioStatusBadge')
+    expect(controls).not.toContain('Audio Ready')
+    expect(mixer).toContain('BeatAudioStatusBadge')
+    expect(mixer).toContain('actionBeatSfxIsStale')
+    expect(mixer).not.toContain('Audio Ready')
+  })
 })

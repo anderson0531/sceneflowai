@@ -450,7 +450,17 @@ export function applyDerivedSfxToScene(
 
   return {
     ...scene,
-    sfx: merged.map(({ description, time, sourceBeatId, sourceLineId, sfxId, legacyIndex }, idx) => {
+    sfx: merged.map((cue, idx) => {
+      const {
+        description,
+        time,
+        sourceBeatId,
+        sourceLineId,
+        sfxId,
+        legacyIndex,
+        sourceFingerprint,
+        audioStale,
+      } = cue
       const bundle = resolveSfxAudioBundle(
         { description, time, sourceBeatId, sourceLineId, sfxId, legacyIndex: legacyIndex ?? idx },
         idx,
@@ -464,6 +474,8 @@ export function applyDerivedSfxToScene(
         ...(sfxId ? { sfxId } : {}),
         legacyIndex: legacyIndex ?? idx,
         ...(bundle?.url ? { audioUrl: bundle.url } : {}),
+        ...(sourceFingerprint ? { sourceFingerprint } : {}),
+        ...(audioStale === true ? { audioStale: true } : {}),
       }
     }),
     sfxAudio,

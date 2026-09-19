@@ -201,14 +201,26 @@ export function applyAudioSlotToScene(scene: any, payload: AudioSlotSavedPayload
   const sfx = [...updated.sfx]
   while (sfx.length <= sfxIndex) sfx.push(null)
   const sfxEntry = sfx[sfxIndex]
+  const sourceFingerprint = String(payload.beatContext?.beatDescription ?? '').trim()
+  const fingerprintFields = sourceFingerprint
+    ? { sourceFingerprint, audioStale: false }
+    : {}
   if (sfxEntry) {
     if (typeof sfxEntry === 'string') {
-      sfx[sfxIndex] = { description: sfxEntry, audioUrl: payload.audioUrl }
+      sfx[sfxIndex] = {
+        description: sfxEntry,
+        audioUrl: payload.audioUrl,
+        ...fingerprintFields,
+      }
     } else if (typeof sfxEntry === 'object') {
-      sfx[sfxIndex] = { ...(sfxEntry as object), audioUrl: payload.audioUrl }
+      sfx[sfxIndex] = {
+        ...(sfxEntry as object),
+        audioUrl: payload.audioUrl,
+        ...fingerprintFields,
+      }
     }
   } else if (payload.audioUrl) {
-    sfx[sfxIndex] = { audioUrl: payload.audioUrl }
+    sfx[sfxIndex] = { audioUrl: payload.audioUrl, ...fingerprintFields }
   }
   updated.sfx = sfx
 
