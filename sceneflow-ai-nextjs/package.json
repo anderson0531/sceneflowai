@@ -45,6 +45,7 @@
                 "youtube:hero-upload-pack": "node scripts/generate-hero-youtube-upload-pack.mjs",
                 "youtube:hero-posters": "node scripts/regenerate-hero-posters.mjs",
                 "landing:encode-hero-web": "node scripts/encode-hero-web-mp4.mjs",
+                "landing:publish-hero-public": "node scripts/publish-hero-public-assets.mjs",
                 "landing:transcode-hero": "npx tsx scripts/transcode-landing-videos.ts",
                 "landing:setup-hero-cdn": "bash scripts/setup-landing-video-cdn.sh",
                 "tts:calibrate-voices": "tsx scripts/calibrate-gemini-voices.ts"
