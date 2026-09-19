@@ -23,6 +23,10 @@ describe('object library delete persistence', () => {
     expect(page).toContain("debugLabel: 'handleObjectGenerated'")
     expect(page).not.toContain('delete persistedReferences.droppedObjectReferenceIds')
 
+    const persistStart = page.indexOf('const persistObjectLibrary = useCallback')
+    const persistEnd = page.indexOf('const persistVisionCharacters = useCallback')
+    expect(page.slice(persistStart, persistEnd)).toContain('visionPhasePut({')
+
     const route = readSource('src/app/api/projects/[id]/route.ts')
     expect(route).toContain('mergeVisionPhaseReferences')
     expect(route).toContain('mergedObjectTombstones')

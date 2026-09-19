@@ -543,6 +543,7 @@ describe('vertexImageClient bundle isolation', () => {
       'utf8'
     )
     expect(src).toContain('cropIdentityReferenceImagesForPro')
+    expect(src).toContain('overlayLocationScaleOnReferenceImages')
     expect(src).toContain('vertexReferenceImages')
   })
 })

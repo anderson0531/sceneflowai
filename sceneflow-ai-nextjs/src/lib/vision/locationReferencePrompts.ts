@@ -12,6 +12,7 @@ import {
   isMediumCoverageLocationShot,
   resolveStillShotClass,
 } from '@/lib/imagen/stillFramingNormalize'
+import { locationScaleClause } from '@/lib/imagen/locationScaleClause'
 
 export const LOCATION_REFERENCE_ASPECT_RATIO = '16:9' as const
 
@@ -59,42 +60,46 @@ export function buildLocationConsumptionInstruction(options?: {
   promptToken?: string
   actionFraming?: string | null
   emptyCast?: boolean
+  locationDescription?: string | null
+  locationName?: string | null
 }): string {
   const token = options?.promptToken?.trim()
+  const scaleLock = locationScaleClause(options?.locationDescription, options?.locationName)
+  const withScale = (instruction: string) => `${instruction} ${scaleLock}`
   if (isObjectInsertLocationShot(options)) {
-    if (!token) return LOCATION_OBJECT_INSERT_CONSUMPTION_INSTRUCTION
-    return (
+    if (!token) return withScale(LOCATION_OBJECT_INSERT_CONSUMPTION_INSTRUCTION)
+    return withScale(
       'LOCATION REFERENCE: The attached plate is the set. ' +
-      `Match near-field materials, metal, paint, and the mounting surface around the subject from ${token}. ` +
-      'Fill the frame with the named instrument. Do not pull back to a wide establishing shot of the whole room.'
+        `Match near-field materials, metal, paint, and the mounting surface around the subject from ${token}. ` +
+        'Fill the frame with the named instrument. Do not pull back to a wide establishing shot of the whole room.'
     )
   }
   const shot = resolveStillShotClass(options?.shotType, options?.actionFraming)
   const hint = shot.shotHint || options?.shotType || ''
   if (isMediumCoverageLocationShot(hint)) {
-    if (!token) return LOCATION_ENVIRONMENT_CONSUMPTION_INSTRUCTION
-    return (
+    if (!token) return withScale(LOCATION_ENVIRONMENT_CONSUMPTION_INSTRUCTION)
+    return withScale(
       'LOCATION REFERENCE: The attached plate is the set, not a second wide establishing subject. ' +
-      `Match architectural layout, color palette, and lighting of ${token} as the surrounding environment. ` +
-      `Do not copy ${token} as an extreme-wide establishing shot or empty room.`
+        `Match architectural layout, color palette, and lighting of ${token} as the surrounding environment. ` +
+        `Do not copy ${token} as an extreme-wide establishing shot or empty room.`
     )
   }
   if (!isDetailShot(options?.shotType) && !shot.isDetail) {
     if (hint.trim() && !isWideEstablishingShotType(hint)) {
-      if (!token) return LOCATION_ENVIRONMENT_CONSUMPTION_INSTRUCTION
-      return (
+      if (!token) return withScale(LOCATION_ENVIRONMENT_CONSUMPTION_INSTRUCTION)
+      return withScale(
         'LOCATION REFERENCE: The attached plate is the set, not a second wide establishing subject. ' +
-        `Match architectural layout, color palette, and lighting of ${token} as the surrounding environment. ` +
-        `Do not copy ${token} as an extreme-wide establishing shot or empty room.`
+          `Match architectural layout, color palette, and lighting of ${token} as the surrounding environment. ` +
+          `Do not copy ${token} as an extreme-wide establishing shot or empty room.`
       )
     }
-    return LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION
+    return withScale(LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION)
   }
-  if (!token) return LOCATION_DETAIL_CONSUMPTION_INSTRUCTION
-  return (
+  if (!token) return withScale(LOCATION_DETAIL_CONSUMPTION_INSTRUCTION)
+  return withScale(
     'LOCATION REFERENCE: The attached plate is an extreme-wide establishing still of the environment. ' +
-    `For this close-up, match ambient lighting tone and color palette of ${token} in shallow-focus background bokeh. ` +
-    'Do not reproduce architectural layout or furniture placement as the frame.'
+      `For this close-up, match ambient lighting tone and color palette of ${token} in shallow-focus background bokeh. ` +
+      'Do not reproduce architectural layout or furniture placement as the frame.'
   )
 }
 
@@ -290,6 +295,7 @@ export function buildLocationReferencePromptLine(
     promptToken?: string
     actionFraming?: string | null
     emptyCast?: boolean
+    locationDescription?: string | null
   }
 ): string {
   const heading = label ?? `Reference image ${referenceIndex}: LOCATION REFERENCE for "${locationName}"`
@@ -299,5 +305,7 @@ export function buildLocationReferencePromptLine(
     promptToken: options?.promptToken,
     actionFraming: options?.actionFraming,
     emptyCast: options?.emptyCast,
+    locationName,
+    locationDescription: options?.locationDescription,
   })}${suffix}`
 }

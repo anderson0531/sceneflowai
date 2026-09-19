@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildSceneImageLocationLabel } from '@/lib/imagen/sceneImageReferenceLabels'
+import { locationScaleClause } from '@/lib/imagen/locationScaleClause'
 import {
   LOCATION_OBJECT_INSERT_CONSUMPTION_INSTRUCTION,
   LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION,
@@ -21,6 +22,8 @@ describe('locationReferencePrompts', () => {
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).toContain('not a 2x2 grid')
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).toContain('not a multi-panel')
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).toContain('no people')
+    expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('ruler')
+    expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('scale ticks')
   })
 
   it('consumption instruction matches layout and palette from single reference', () => {
@@ -44,6 +47,8 @@ describe('locationReferencePrompts', () => {
     expect(line.toLowerCase()).toContain('wide-angle')
     expect(line.toLowerCase()).toContain('match architectural layout')
     expect(line).not.toContain('CURRENT set state')
+    expect(line.toLowerCase()).toContain('right-margin scale ticks')
+    expect(line.toLowerCase()).toContain('~7ft')
   })
 
   it('attenuates location consumption on a close-up to lighting and palette bokeh', () => {
@@ -65,19 +70,19 @@ describe('locationReferencePrompts', () => {
 
   it('keeps architectural layout match on a wide establishing shot', () => {
     expect(buildLocationConsumptionInstruction({ shotType: 'Wide Shot' })).toBe(
-      LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION
+      `${LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION} ${locationScaleClause()}`
     )
     expect(buildLocationConsumptionInstruction({ shotType: 'Establishing Shot' })).toBe(
-      LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION
+      `${LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION} ${locationScaleClause()}`
     )
   })
 
   it('treats a two-shot or MCU as environment, not a second wide subject', () => {
     expect(buildLocationConsumptionInstruction({ shotType: 'Two-Shot' })).toBe(
-      LOCATION_ENVIRONMENT_CONSUMPTION_INSTRUCTION
+      `${LOCATION_ENVIRONMENT_CONSUMPTION_INSTRUCTION} ${locationScaleClause()}`
     )
     expect(buildLocationConsumptionInstruction({ shotType: 'Medium Shot' })).toBe(
-      LOCATION_ENVIRONMENT_CONSUMPTION_INSTRUCTION
+      `${LOCATION_ENVIRONMENT_CONSUMPTION_INSTRUCTION} ${locationScaleClause()}`
     )
     const mcu = buildLocationConsumptionInstruction({
       shotType: 'Medium Close-Up',

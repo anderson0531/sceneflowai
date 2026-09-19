@@ -1087,15 +1087,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       return serializedProjectSave(
-        {
-          metadata: {
-            ...nextMetadata,
-            visionPhase: {
-              ...nextMetadata.visionPhase,
-              references,
-            },
-          },
-        },
+        visionPhasePut({
+          ...options.extraVisionPhase,
+          references,
+        }),
         options.debugLabel
       )
     },
@@ -2015,12 +2010,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   const reloadSceneProduction = useCallback(async () => {
-    const response = await fetch(`/api/projects/${projectId}`)
+    const response = await fetch(`/api/projects/${projectId}/production`)
     if (!response.ok) {
       throw new Error('Failed to reload scene production')
     }
     const data = await response.json()
-    const metadata = data.project?.metadata ?? data.metadata
+    const production = data.production ?? {}
+    const metadata = {
+      visionPhase: { production },
+    }
     const scenes = getSceneProductionStateFromMetadata(metadata) as Record<
       string,
       SceneProductionData
@@ -2031,7 +2029,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (!prev) return prev
       return {
         ...prev,
-        metadata: metadata ?? prev.metadata,
+        metadata: {
+          ...prev.metadata,
+          visionPhase: {
+            ...prev.metadata?.visionPhase,
+            production,
+          },
+        },
       }
     })
     return scenes
@@ -7109,6 +7113,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setIsHydratingImages(true)
       try {
         console.log('[VisionPage] Phase 2: hydrating deferred images...')
+        // Move leftover data URIs to Blob first. Project GET no longer echoes
+        // inline images (that 413s), so hydration has to read the migrated URLs.
+        try {
+          const migrateRes = await fetch(`/api/projects/${projectId}/media`, { method: 'POST' })
+          if (migrateRes.ok) {
+            const migrateData = await migrateRes.json()
+            console.log('[VisionPage] Phase 2: media migration complete:', migrateData.stats)
+            if (migrateData.stats?.migrated > 0) {
+              window.dispatchEvent(
+                new CustomEvent('mediaUpdated', {
+                  detail: { projectId, stats: migrateData.stats },
+                })
+              )
+            }
+          }
+        } catch (migrateErr) {
+          console.warn('[VisionPage] Phase 2: media migration failed (non-fatal):', migrateErr)
+        }
+
         const res = await fetch(`/api/projects/${projectId}?_t=${Date.now()}`, {
           cache: 'no-store',
           headers: {
@@ -7143,24 +7166,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         setProject(hydratedProject)
         projectRef.current = hydratedProject
         useStore.getState().setCurrentProject(hydratedProject)
-
-        // Migrate remaining base64 to blob storage so future reloads are fast
-        try {
-          const migrateRes = await fetch(`/api/projects/${projectId}/media`, { method: 'POST' })
-          if (migrateRes.ok) {
-            const migrateData = await migrateRes.json()
-            console.log('[VisionPage] Phase 2: media migration complete:', migrateData.stats)
-            if (migrateData.stats?.migrated > 0) {
-              window.dispatchEvent(
-                new CustomEvent('mediaUpdated', {
-                  detail: { projectId, stats: migrateData.stats },
-                })
-              )
-            }
-          }
-        } catch (migrateErr) {
-          console.warn('[VisionPage] Phase 2: media migration failed (non-fatal):', migrateErr)
-        }
 
         if (pendingPersistAfterHydrationRef.current) {
           pendingPersistAfterHydrationRef.current = false
@@ -7981,7 +7986,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     try {
       // Phase 1: lite mode strips base64 images for fast first paint
       const cacheBuster = `_t=${Date.now()}`
-      const res = await fetch(`/api/projects/${projectId}?lite=true&${cacheBuster}`, {
+      const projectFetch = fetch(`/api/projects/${projectId}?lite=true&${cacheBuster}`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -7989,6 +7994,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           'Expires': '0'
         }
       })
+      const productionFetch = fetch(`/api/projects/${projectId}/production`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
+      })
+      const [res, productionRes] = await Promise.all([projectFetch, productionFetch])
       
       if (!res.ok) {
         const errorText = await res.text()
@@ -8006,6 +8019,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const data = await res.json()
       
       const proj = data.project || data
+      if (productionRes.ok) {
+        try {
+          const productionData = await productionRes.json()
+          const production = productionData.production
+          if (production && typeof production === 'object') {
+            proj.metadata = {
+              ...proj.metadata,
+              visionPhase: {
+                ...proj.metadata?.visionPhase,
+                production,
+              },
+            }
+          }
+        } catch (productionError) {
+          console.warn('[Load Project] Production fetch failed (non-fatal):', productionError)
+        }
+      } else {
+        console.warn('[Load Project] Production GET skipped:', productionRes.status)
+      }
       const liteMode = !!data.liteMode
       const base64Size = typeof data.base64Size === 'number' ? data.base64Size : 0
       const skipLitePersist = liteMode && base64Size > 0

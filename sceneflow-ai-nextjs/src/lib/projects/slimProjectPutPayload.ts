@@ -90,3 +90,70 @@ export function projectPutWouldExceedBodyLimit(body: unknown): boolean {
     return false
   }
 }
+
+export interface SlimProjectResponseOptions {
+  /** Keep `visionPhase.production`. Default omits it — that blob is what 413s GET/PUT echoes. */
+  includeProduction?: boolean
+}
+
+/**
+ * Slim a project metadata blob for a Function *response*.
+ *
+ * Vercel 413s a body over 4.5MB on the way out as well as in. GET and PUT
+ * used to echo production takes plus any leftover data URIs; location persist
+ * then looked like a failed save even after the Blob upload succeeded.
+ */
+export function slimProjectResponseMetadata(
+  metadata: Record<string, any> | null | undefined,
+  options?: SlimProjectResponseOptions
+): Record<string, any> {
+  if (!metadata || typeof metadata !== 'object') return {}
+  const stripped = stripBase64FromMetadata(metadata) as Record<string, any>
+  const visionPhase = stripped.visionPhase
+  if (!visionPhase || typeof visionPhase !== 'object') return stripped
+
+  const nextVision: Record<string, any> = { ...visionPhase }
+  const canonicalScenes = nextVision.script?.script?.scenes
+  if (Array.isArray(canonicalScenes) && canonicalScenes.length > 0 && 'scenes' in nextVision) {
+    delete nextVision.scenes
+  }
+  if (!options?.includeProduction && 'production' in nextVision) {
+    delete nextVision.production
+  }
+
+  return {
+    ...stripped,
+    visionPhase: nextVision,
+  }
+}
+
+export interface CompactProjectPutAckArgs {
+  staleScriptWriteBlocked?: boolean
+  scriptUpdatedAt?: unknown
+  script?: unknown
+}
+
+/**
+ * PUT ack small enough to return. The Vision page only reads `ok`,
+ * `staleScriptWriteBlocked`, and the server script when a stale write was blocked.
+ */
+export function compactProjectPutAck(args: CompactProjectPutAckArgs): Record<string, unknown> {
+  const scriptUpdatedAt =
+    typeof args.scriptUpdatedAt === 'string' ? args.scriptUpdatedAt : undefined
+  const body: Record<string, unknown> = {
+    success: true,
+    ...(scriptUpdatedAt ? { scriptUpdatedAt } : {}),
+  }
+  if (!args.staleScriptWriteBlocked) return body
+
+  body.staleScriptWriteBlocked = true
+  body.project = {
+    metadata: {
+      visionPhase: {
+        ...(scriptUpdatedAt ? { scriptUpdatedAt } : {}),
+        ...(args.script != null ? { script: args.script } : {}),
+      },
+    },
+  }
+  return body
+}
