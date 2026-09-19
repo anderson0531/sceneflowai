@@ -1,3 +1,5 @@
+import { existsSync, statSync } from 'fs'
+import { join } from 'path'
 import { describe, it, expect, vi } from 'vitest'
 import {
   DEFAULT_HERO_VIDEO_LOCALE,
@@ -83,6 +85,23 @@ describe('public hero playback sources', () => {
       expect(sources.poster).toBe(`/images/hero-poster-${locale.id}.webp`)
     }
     expect(HERO_PUBLIC_POSTER_FALLBACK).toBe('/images/hero-poster.webp')
+  })
+
+  it('ships the public files the player requests, each under 95MB', () => {
+    const root = join(process.cwd(), 'public')
+    const maxBytes = 95 * 1024 * 1024
+
+    for (const locale of HERO_VIDEO_LOCALES) {
+      const sources = getHeroPublicVideoSources(locale.id)
+      for (const url of [sources.webmSrc, sources.mp4Src, sources.poster]) {
+        const file = join(root, url.slice(1))
+        expect(existsSync(file), file).toBe(true)
+        if (url.endsWith('.webp')) continue
+        expect(statSync(file).size, file).toBeLessThan(maxBytes)
+      }
+    }
+
+    expect(existsSync(join(root, HERO_PUBLIC_POSTER_FALLBACK.slice(1)))).toBe(true)
   })
 })
 
