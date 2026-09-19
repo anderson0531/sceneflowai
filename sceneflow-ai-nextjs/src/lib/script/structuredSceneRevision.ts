@@ -40,10 +40,14 @@ const BEAT_MEDIA_KEYS = [
   'storyboardImageDirectionKey',
   'storyboardImageContentKey',
   'storyboardImageTier',
+  'storyboardImageVersions',
+  'storyboardImageVersionId',
   'storyboardEndImageUrl',
   'storyboardEndImageGcsPath',
   'storyboardEndImagePrompt',
   'storyboardEndImageTier',
+  'storyboardEndImageVersions',
+  'storyboardEndImageVersionId',
 ] as const
 
 export function clearBeatStoryboardFrames(beat: SceneBeat): SceneBeat {
