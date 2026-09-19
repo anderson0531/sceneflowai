@@ -1,14 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { calculateBase64Size } from '@/lib/storage/mediaStorage'
 import {
   compactProjectPutAck,
+  fitProjectResponseMetadata,
   projectPutWouldExceedBodyLimit,
   slimProjectPutPayload,
   slimProjectResponseMetadata,
   stringifyProjectPut,
   visionPhasePut,
   VERCEL_FUNCTION_BODY_LIMIT_BYTES,
+  VERCEL_FUNCTION_RESPONSE_BUDGET_BYTES,
 } from '@/lib/projects/slimProjectPutPayload'
 
 const scenes = [
@@ -176,8 +179,10 @@ describe('project API slims GET/PUT echoes', () => {
 
   it('GET/PUT omit production and return a compact PUT ack', () => {
     expect(route).toContain('slimProjectResponseMetadata')
+    expect(route).toContain('fitProjectResponseMetadata')
     expect(route).toContain("searchParams.get('include') === 'production'")
     expect(route).toContain('compactProjectPutAck')
+    expect(route).toContain('truncated')
     expect(route).not.toMatch(/return NextResponse\.json\(\{\s*success: true,\s*project,/)
   })
 
@@ -216,6 +221,203 @@ describe('slimProjectResponseMetadata', () => {
     const metadata = fullMetadata()
     const slimmed = slimProjectResponseMetadata(metadata, { includeProduction: true })
     expect(slimmed.visionPhase.production).toEqual(metadata.visionPhase.production)
+  })
+
+  it('strips beat stills, end stills, version URLs, and combinedCharacterRefUrl data URIs', () => {
+    const dataUri = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAE='
+    const slimmed = slimProjectResponseMetadata({
+      visionPhase: {
+        characters: [{ name: 'Piper Hayes', combinedCharacterRefUrl: dataUri }],
+        script: {
+          script: {
+            scenes: [
+              {
+                id: 'sc_1',
+                beats: [
+                  {
+                    beatId: 'bt_1',
+                    storyboardImageUrl: dataUri,
+                    storyboardEndImageUrl: dataUri,
+                    storyboardImageVersions: [{ id: 'v1', url: dataUri, prompt: 'Wide shot.' }],
+                    storyboardEndImageVersions: [{ id: 'v2', url: dataUri }],
+                  },
+                ],
+                dialogue: [{ lineId: 'ln_1', storyboardImageUrl: dataUri }],
+                storyboardFrames: [{ id: 'fr_1', imageUrl: dataUri }],
+              },
+            ],
+          },
+        },
+      },
+    })
+    const scene = slimmed.visionPhase.script.script.scenes[0]
+    expect(slimmed.visionPhase.characters[0].combinedCharacterRefUrl).toBe('deferred')
+    expect(scene.beats[0].storyboardImageUrl).toBe('deferred')
+    expect(scene.beats[0].storyboardEndImageUrl).toBe('deferred')
+    expect(scene.beats[0].storyboardImageVersions[0].url).toBe('deferred')
+    expect(scene.beats[0].storyboardEndImageVersions[0].url).toBe('deferred')
+    expect(scene.dialogue[0].storyboardImageUrl).toBe('deferred')
+    expect(scene.storyboardFrames[0].imageUrl).toBe('deferred')
+  })
+
+  it('counts beat and combined-character data URIs in calculateBase64Size', () => {
+    const dataUri = `data:image/png;base64,${'A'.repeat(1200)}`
+    const size = calculateBase64Size({
+      visionPhase: {
+        characters: [{ combinedCharacterRefUrl: dataUri }],
+        script: {
+          script: {
+            scenes: [
+              {
+                beats: [
+                  {
+                    storyboardImageUrl: dataUri,
+                    storyboardImageVersions: [{ url: dataUri }],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    })
+    expect(size).toBeGreaterThan(0)
+  })
+
+  it('strips MediaVersion prompts and keeps restore identity fields', () => {
+    const slimmed = slimProjectResponseMetadata({
+      visionPhase: {
+        script: {
+          script: {
+            scenes: [
+              {
+                id: 'sc_1',
+                beats: [
+                  {
+                    beatId: 'bt_1',
+                    storyboardImageUrl: 'https://blob.example/still.jpg',
+                    storyboardImageVersions: [
+                      {
+                        id: 'v1',
+                        url: 'https://blob.example/still.jpg',
+                        createdAt: '2026-09-19T00:00:00.000Z',
+                        source: 'generate',
+                        prompt: 'A'.repeat(5000),
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    })
+    const version =
+      slimmed.visionPhase.script.script.scenes[0].beats[0].storyboardImageVersions[0]
+    expect(version).toEqual({
+      id: 'v1',
+      url: 'https://blob.example/still.jpg',
+      createdAt: '2026-09-19T00:00:00.000Z',
+      source: 'generate',
+    })
+    expect(version.prompt).toBeUndefined()
+  })
+})
+
+describe('fitProjectResponseMetadata', () => {
+  it('fits a 5MB version-prompt blob under the Function limit', () => {
+    const metadata = {
+      visionPhase: {
+        script: {
+          script: {
+            scenes: [
+              {
+                id: 'sc_1',
+                beats: [
+                  {
+                    beatId: 'bt_1',
+                    storyboardImageUrl: 'https://blob.example/still.jpg',
+                    beatDirection: { shotType: 'MCU' },
+                    storyboardImageVersions: [
+                      {
+                        id: 'v1',
+                        url: 'https://blob.example/still.jpg',
+                        createdAt: '2026-09-19T00:00:00.000Z',
+                        source: 'generate',
+                        prompt: 'p'.repeat(5 * 1024 * 1024),
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    }
+    const slimmed = slimProjectResponseMetadata(metadata)
+    const fitted = fitProjectResponseMetadata(slimmed)
+    const beat = fitted.metadata.visionPhase.script.script.scenes[0].beats[0]
+    expect(beat.storyboardImageUrl).toBe('https://blob.example/still.jpg')
+    expect(beat.beatDirection).toEqual({ shotType: 'MCU' })
+    expect(beat.storyboardImageVersions[0].prompt).toBeUndefined()
+    expect(fitted.bytes).toBeLessThan(VERCEL_FUNCTION_RESPONSE_BUDGET_BYTES)
+    expect(JSON.stringify({ success: true, project: { metadata: fitted.metadata } }).length).toBeLessThan(
+      VERCEL_FUNCTION_BODY_LIMIT_BYTES
+    )
+  })
+
+  it('drops version arrays before reviewHistory when URLs alone exceed the budget', () => {
+    const metadata = {
+      visionPhase: {
+        reviewHistory: [{ note: 'keep unless needed' }],
+        script: {
+          script: {
+            scenes: [
+              {
+                id: 'sc_1',
+                beats: [
+                  {
+                    beatId: 'bt_1',
+                    storyboardImageUrl: 'https://blob.example/still.jpg',
+                    beatDirection: { shotType: 'MCU' },
+                    storyboardImageVersions: [
+                      { id: 'v1', url: 'u'.repeat(Math.ceil(VERCEL_FUNCTION_RESPONSE_BUDGET_BYTES + 1024)) },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    }
+    const fitted = fitProjectResponseMetadata(metadata)
+    const beat = fitted.metadata.visionPhase.script.script.scenes[0].beats[0]
+    expect(fitted.omitted).toContain('versionArrays')
+    expect(fitted.omitted).not.toContain('reviewHistory')
+    expect(beat.storyboardImageVersions).toBeUndefined()
+    expect(beat.storyboardImageUrl).toBe('https://blob.example/still.jpg')
+    expect(beat.beatDirection).toEqual({ shotType: 'MCU' })
+    expect(fitted.metadata.visionPhase.reviewHistory).toEqual([{ note: 'keep unless needed' }])
+    expect(fitted.bytes).toBeLessThan(VERCEL_FUNCTION_RESPONSE_BUDGET_BYTES)
+  })
+
+  it('drops reviewHistory and translations if still over budget', () => {
+    const metadata = {
+      visionPhase: {
+        reviewHistory: { blob: 'r'.repeat(2 * 1024 * 1024) },
+        translations: { es: { blob: 't'.repeat(2 * 1024 * 1024) } },
+        script: { script: { scenes: [{ id: 'sc_1', beats: [{ beatId: 'bt_1', line: 'Hi.' }] }] } },
+      },
+    }
+    const fitted = fitProjectResponseMetadata(metadata, { budgetBytes: 50_000 })
+    expect(fitted.omitted).toEqual(['reviewHistory', 'translations'])
+    expect(fitted.metadata.visionPhase.reviewHistory).toBeUndefined()
+    expect(fitted.metadata.visionPhase.translations).toBeUndefined()
+    expect(fitted.metadata.visionPhase.script.script.scenes[0].beats[0].line).toBe('Hi.')
+    expect(fitted.bytes).toBeLessThan(50_000)
   })
 })
 

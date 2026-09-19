@@ -4,6 +4,7 @@ import { sequelize } from '@/config/database'
 import { calculateBase64Size } from '@/lib/storage/mediaStorage'
 import {
   compactProjectPutAck,
+  fitProjectResponseMetadata,
   slimProjectResponseMetadata,
 } from '@/lib/projects/slimProjectPutPayload'
 import { isValidStoryboardMediaUrl, mergeSceneArraysForPersistence } from '@/lib/storyboard/mergeSceneMedia'
@@ -35,8 +36,8 @@ export async function GET(
     const { id } = await params
     
     // lite=true is the historical first-paint flag. Responses always strip
-    // inline images and omit production unless ?include=production — that blob
-    // is what 413s Function payloads on this project.
+    // inline images, omit production unless ?include=production, drop still-
+    // version prompts, and fit under the 4.5MB Function cap.
     const searchParams = request.nextUrl.searchParams
     const liteMode = searchParams.get('lite') === 'true'
     const includeProduction = searchParams.get('include') === 'production'
@@ -75,11 +76,13 @@ export async function GET(
     if (base64Size > 0) {
       console.log(`[Projects GET] Stripping ${Math.round(base64Size / 1024)}KB of base64 data`)
     }
-    const metadata = slimProjectResponseMetadata(rawMetadata, { includeProduction })
-    
-    // Return project with formatted fields (matching /api/projects route format)
-    const response = NextResponse.json({ 
-      success: true, 
+    const slimmed = slimProjectResponseMetadata(rawMetadata, { includeProduction })
+    const fitted = fitProjectResponseMetadata(slimmed)
+    const metadata = fitted.metadata
+    const truncated = fitted.omitted.length > 0
+
+    const payload = {
+      success: true,
       project: {
         id: project.id,
         title: project.title,
@@ -92,11 +95,20 @@ export async function GET(
         completedSteps: Object.entries(project.step_progress || {})
           .filter(([_, v]) => v === 100)
           .map(([k]) => k),
-        metadata
+        metadata,
       },
-      // Include metadata size info when in lite mode
-      ...(liteMode && { base64Size, liteMode: true })
+      ...(truncated ? { truncated: true, omitted: fitted.omitted } : {}),
+      ...(liteMode && { base64Size, liteMode: true }),
+    }
+    const payloadBytes = JSON.stringify(payload).length
+    console.log('[Projects GET] bytes', payloadBytes, {
+      metadataBytes: fitted.bytes,
+      omitted: fitted.omitted,
+      liteMode,
+      includeProduction,
     })
+
+    const response = NextResponse.json(payload)
     
     // Add cache control headers to prevent any caching
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, private')
