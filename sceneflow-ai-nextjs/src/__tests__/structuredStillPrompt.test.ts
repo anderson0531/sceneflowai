@@ -21,6 +21,7 @@ import {
   STILL_TASK_PRO_LEAD,
   STILL_TASK_PAIRED_PERSON_PROP_TOKEN_LINE,
   STILL_TASK_PAIRED_PROP_SCALE_LINE,
+  STILL_TASK_PAIRED_PLATES_MANDATORY_LINE,
   stillTaskLines,
   stillRefsFromAttachedImages,
   stillRefsFromNamedLibrary,
@@ -29,6 +30,7 @@ import {
   bindLibraryNamesToTokens,
   replaceLibraryNamesWithTokens,
   actionFramingFromStoredPrompt,
+  extractActionFramingBody,
   isStructuredStillPrompt,
   parseStillPromptSource,
   parseStillReferencesLegend,
@@ -86,6 +88,7 @@ describe('assembleStructuredStillPrompt', () => {
     expect(prompt).not.toMatch(/title beats\)\.\s*live-action/)
     expect(prompt).toContain(STILL_SECTION_STYLE)
     expect(prompt).toContain(STILL_SECTION_EXCLUSIONS)
+    expect(prompt).not.toContain(STILL_TASK_PAIRED_PLATES_MANDATORY_LINE)
   })
 
   it('omits [REFERENCES] for Pro interleaved pairs and keeps role-stable tokens in TASK', () => {
@@ -115,6 +118,7 @@ describe('assembleStructuredStillPrompt', () => {
 
     expect(prompt).toContain(`${STILL_SECTION_TASK}\n${STILL_TASK_PRO_LEAD}`)
     expect(prompt).toContain(STILL_TASK_PAIRED_PERSON_PROP_TOKEN_LINE)
+    expect(prompt).toContain(STILL_TASK_PAIRED_PLATES_MANDATORY_LINE)
     expect(prompt).toContain(STILL_TASK_PAIRED_PROP_SCALE_LINE)
     expect(prompt).toContain(STILL_TASK_LOCATION_ENVIRONMENT_LINE)
     expect(prompt).toContain('Action/Framing:')
@@ -127,6 +131,33 @@ describe('assembleStructuredStillPrompt', () => {
     expect(prompt).not.toContain('prop [3]')
     expect(prompt).not.toContain('location [4]')
     expect(prompt).not.toContain('not a second wide subject')
+
+    const replayed = assembleStructuredStillPrompt({
+      actionOrStructured: prompt,
+      refs: [
+        { kind: 'person', token: 'person [1]', name: 'Piper Hayes', roleLabel: 'identity' },
+        {
+          kind: 'prop',
+          token: 'prop [1]',
+          name: 'Zinc workbench',
+          roleLabel: 'library prop',
+        },
+        {
+          kind: 'location',
+          token: 'location [1]',
+          name: 'FREIGHT TUNNEL VAULT',
+          roleLabel: 'library location',
+        },
+      ],
+      photorealisticAnchor: 'live-action film still, photographed on real camera',
+      includeCandid: true,
+      shotType: 'medium shot',
+      omitReferencesSection: true,
+    })
+    expect(replayed).toBe(prompt)
+    expect(actionFramingFromStoredPrompt(prompt)).not.toContain(
+      STILL_TASK_PAIRED_PLATES_MANDATORY_LINE
+    )
   })
 
   it('does not glue candid prefix onto structured intelligence headers', () => {
@@ -460,6 +491,20 @@ Strictly Avoid: Mannequin geometry.`,
     )
     expect(stillTaskLines('Close-Up')).not.toContain(STILL_TASK_INSERT_FRAMING_LINE)
     expect(stillTaskLines('Two-Shot').join('\n')).toContain('two arms and two legs')
+    expect(stillTaskLines('Two-Shot')).not.toContain(STILL_TASK_PAIRED_PLATES_MANDATORY_LINE)
+    expect(STILL_TASK_LINES).not.toContain(STILL_TASK_PAIRED_PLATES_MANDATORY_LINE)
+    expect(
+      stillTaskLines('Two-Shot', {
+        occupancyMode: 'paired',
+        refs: [{ kind: 'person', token: 'person [1]', name: 'Piper Hayes', roleLabel: 'identity' }],
+      })
+    ).toContain(STILL_TASK_PAIRED_PLATES_MANDATORY_LINE)
+    expect(stillTaskLines('Two-Shot', { occupancyMode: 'paired' })).toContain(
+      STILL_TASK_PAIRED_PLATES_MANDATORY_LINE
+    )
+    expect(stillTaskLines('Two-Shot', { occupancyMode: 'paired', refs: [] })).not.toContain(
+      STILL_TASK_PAIRED_PLATES_MANDATORY_LINE
+    )
   })
 
   it('uses head-and-shoulders TASK on a face close-up and location as bokeh', () => {
@@ -1147,6 +1192,18 @@ Action/Framing: person [1] raises prop [7] toward the hatch collar.`
   it('recovers the beat action from an assembled still', () => {
     expect(actionFramingFromStoredPrompt(assemble('person [1] raises prop [7].'))).toBe(
       'person [1] raises prop [7].'
+    )
+  })
+
+  it('strips the Pro paired-plate mandate so it cannot re-enter Action/Framing', () => {
+    const body = `${STILL_TASK_PAIRED_PLATES_MANDATORY_LINE}
+Action/Framing: ${STILL_TASK_PAIRED_PLATES_MANDATORY_LINE} person [1] raises prop [7] toward the hatch collar.`
+
+    expect(extractActionFramingBody(body)).toBe(
+      'person [1] raises prop [7] toward the hatch collar.'
+    )
+    expect(actionFramingFromStoredPrompt(`[STILL]\n${body}`)).toBe(
+      'person [1] raises prop [7] toward the hatch collar.'
     )
   })
 
