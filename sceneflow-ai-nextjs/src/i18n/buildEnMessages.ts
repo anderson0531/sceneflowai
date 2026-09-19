@@ -104,6 +104,8 @@ export function buildEnMessages() {
       playWithNarration: 'Play with narration',
       tapToHear: 'Tap to hear',
       fullscreen: 'Fullscreen',
+      pauseBackgroundVideo: 'Pause background video',
+      playBackgroundVideo: 'Play background video',
       heroVideoLanguages: Object.fromEntries(
         HERO_VIDEO_LOCALES.map((l) => [l.id, { label: l.label, nativeLabel: l.nativeLabel }])
       ),

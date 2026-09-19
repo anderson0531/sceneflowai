@@ -7,8 +7,8 @@ import {
   DEFAULT_LANDING_LOCALE,
   getLandingLocalePath,
   isLandingLocale,
-  LANDING_LOCALE_STORAGE_KEY,
 } from '@/i18n/locale'
+import { persistLandingLocale } from '@/i18n/persistLandingLocale'
 
 /** Switch landing UI locale while preserving hash. */
 export function useLandingLocale() {
@@ -19,10 +19,7 @@ export function useLandingLocale() {
     (nextLocale: string) => {
       if (!isLandingLocale(nextLocale) || nextLocale === locale) return
 
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(LANDING_LOCALE_STORAGE_KEY, nextLocale)
-        document.cookie = `sf-landing-locale=${nextLocale}; path=/; max-age=31536000; SameSite=Lax`
-      }
+      persistLandingLocale(nextLocale)
 
       const hash = typeof window !== 'undefined' ? window.location.hash : ''
       const nextPath = getLandingLocalePath(nextLocale, hash)

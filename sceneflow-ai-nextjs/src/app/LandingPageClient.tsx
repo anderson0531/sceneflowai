@@ -5,6 +5,7 @@ import { Header } from './components/Header'
 import { HeroSection } from './components/HeroSection'
 import { TwoModesSection } from '@/components/landing/TwoModesSection'
 import { LandingSectionCollapseProvider } from '@/components/landing/LandingSectionCollapse'
+import { PersistLandingLocale } from '@/components/i18n/PersistLandingLocale'
 
 const ProductionExamplesSection = dynamic(
   () => import('@/components/landing/ProductionExamplesSection'),
@@ -29,6 +30,7 @@ import { Footer } from './components/Footer'
 export default function LandingPageClient() {
   return (
     <div id="main-content" className="min-h-screen bg-gray-950 text-white overflow-x-hidden">
+      <PersistLandingLocale />
       <Header />
       <FloatingCTA />
       <ExitIntentPopup />

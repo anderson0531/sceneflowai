@@ -484,6 +484,8 @@
     "playWithNarration": "Play with narration",
     "tapToHear": "Tap to hear",
     "fullscreen": "Fullscreen",
+    "pauseBackgroundVideo": "Pause background video",
+    "playBackgroundVideo": "Play background video",
     "heroVideoLanguages": {
       "en": {
         "label": "English",

@@ -7,11 +7,11 @@ import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import {
   getHeroVideoLocale,
   getHeroVideoLocalesAsVideoLocales,
-  getHeroVideoPlaybackSources,
+  getHeroPublicVideoSources,
+  HERO_PUBLIC_POSTER_FALLBACK,
   type HeroVideoLocaleId,
 } from '@/config/landing/heroVideoLocales'
 import { getModalVideoPreload } from '@/lib/landing/videoPreload'
-import { useAdaptiveVideoSource } from '@/lib/landing/useAdaptiveVideoSource'
 import { cn } from '@/lib/utils'
 
 type HeroTheaterModalProps = {
@@ -36,21 +36,8 @@ export function HeroTheaterModal({
   const activeEntry = getHeroVideoLocale(activeLocale)
   const heroLocales = getHeroVideoLocalesAsVideoLocales()
   const playbackSources = useMemo(
-    () =>
-      activeEntry
-        ? getHeroVideoPlaybackSources(activeLocale, {
-            isMobile: false,
-            saveData: false,
-            effectiveType: '4g',
-          })
-        : null,
+    () => (activeEntry ? getHeroPublicVideoSources(activeLocale) : null),
     [activeEntry, activeLocale]
-  )
-
-  useAdaptiveVideoSource(
-    videoRef,
-    playbackSources ?? { mp4Src: '' },
-    open && Boolean(playbackSources?.mp4Src)
   )
 
   useEffect(() => {
@@ -83,7 +70,7 @@ export function HeroTheaterModal({
     if (!video || !playbackSources) return
 
     video.muted = isMuted
-    video.poster = playbackSources.poster
+    video.poster = playbackSources.poster || HERO_PUBLIC_POSTER_FALLBACK
     void video.play().catch(() => {})
   }, [open, activeLocale, playbackSources, isMuted])
 
@@ -109,6 +96,8 @@ export function HeroTheaterModal({
 
   if (!activeEntry || !playbackSources) return null
 
+  const poster = playbackSources.poster || HERO_PUBLIC_POSTER_FALLBACK
+
   return (
     <AnimatePresence>
       {open && (
@@ -126,12 +115,14 @@ export function HeroTheaterModal({
             exit={{ opacity: 0 }}
           >
             <video
+              key={activeLocale}
               ref={videoRef}
-              poster={playbackSources.poster}
+              poster={poster}
               loop
               playsInline
               preload={getModalVideoPreload(open)}
               muted={isMuted}
+              autoPlay
               className="absolute inset-0 h-full w-full object-contain"
               onClick={(e) => e.stopPropagation()}
               onPlay={() => setIsPlaying(true)}
@@ -139,7 +130,10 @@ export function HeroTheaterModal({
               onWaiting={() => setIsBuffering(true)}
               onCanPlay={() => setIsBuffering(false)}
               onPlaying={() => setIsBuffering(false)}
-            />
+            >
+              <source src={playbackSources.webmSrc} type="video/webm" />
+              <source src={playbackSources.mp4Src} type="video/mp4" />
+            </video>
 
             {isBuffering && (
               <div
@@ -165,7 +159,7 @@ export function HeroTheaterModal({
                 e.stopPropagation()
                 onClose()
               }}
-              className="absolute top-4 right-4 z-20 rounded-lg bg-black/50 border border-white/15 p-2 text-gray-200 hover:text-white hover:border-cyan-400/40 transition-colors"
+              className="absolute top-4 end-4 z-20 rounded-lg bg-black/50 border border-white/15 p-2 text-gray-200 hover:text-white hover:border-cyan-400/40 transition-colors"
               aria-label="Close fullscreen video"
             >
               <X className="w-6 h-6" />
