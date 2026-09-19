@@ -34,14 +34,17 @@ describe('salvaging media from a rejected stale write', () => {
     expect(result.fields).toEqual(['scene[sc_1].beat[bt_1].storyboardImageUrl'])
   })
 
-  it('never overwrites a frame the newer script already has', () => {
+  it('unions a rejected still into a filled slot without replacing a newer current', () => {
     const newer = [scene({ beats: [beat({ storyboardImageUrl: FRESH_FRAME })] })]
     const stale = [scene({ beats: [beat({ storyboardImageUrl: STALE_FRAME })] })]
 
     const result = salvageStaleWriteMedia(newer, stale)
 
-    expect(result.salvaged).toBe(0)
     expect((result.scenes[0] as any).beats[0].storyboardImageUrl).toBe(FRESH_FRAME)
+    expect(
+      (result.scenes[0] as any).beats[0].storyboardImageVersions.map((v: { url: string }) => v.url).sort()
+    ).toEqual([FRESH_FRAME, STALE_FRAME].sort())
+    expect(result.salvaged).toBeGreaterThan(0)
   })
 
   it('leaves the newer text alone even when the stale side disagrees', () => {
@@ -236,5 +239,19 @@ describe('salvaging media from a rejected stale write', () => {
     const result = salvageStaleWriteMedia(newer, stale)
 
     expect((result.scenes[0] as any).beats[0].storyboardImageUrl).toBe(STALE_FRAME)
+  })
+
+  it('adopts a newer rejected still as current even when the slot was filled', () => {
+    const older = 'https://blob.example.com/frames/1779527000000.jpeg'
+    const newerStill = 'https://blob.example.com/frames/1779527999999.jpeg'
+    const newer = [scene({ beats: [beat({ storyboardImageUrl: older })] })]
+    const stale = [scene({ beats: [beat({ storyboardImageUrl: newerStill })] })]
+
+    const result = salvageStaleWriteMedia(newer, stale)
+
+    expect((result.scenes[0] as any).beats[0].storyboardImageUrl).toBe(newerStill)
+    expect(
+      (result.scenes[0] as any).beats[0].storyboardImageVersions.map((v: { url: string }) => v.url).sort()
+    ).toEqual([older, newerStill].sort())
   })
 })

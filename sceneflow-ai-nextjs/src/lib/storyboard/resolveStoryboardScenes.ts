@@ -1,5 +1,13 @@
 import { validateAndCleanSceneAudio } from '@/lib/audio/cleanupAudio'
 import {
+  BEAT_END_STILL_SLOT,
+  BEAT_START_STILL_SLOT,
+  CUSTOM_FRAME_STILL_SLOT,
+  DIALOGUE_STILL_SLOT,
+  SCENE_STILL_SLOT,
+  stillVersionCount,
+} from '@/lib/storyboard/mediaVersions'
+import {
   auditStoryboardSceneMedia,
   isValidStoryboardMediaUrl,
   mergeScenePreservingMedia,
@@ -28,9 +36,16 @@ export function mediaRichnessScore(scene: any): number {
   }
   for (const beat of scene.beats || []) {
     if (isValidStoryboardMediaUrl(beat?.storyboardImageUrl)) score += 2
+    score += stillVersionCount(beat, BEAT_START_STILL_SLOT)
+    score += stillVersionCount(beat, BEAT_END_STILL_SLOT)
   }
   for (const frame of scene.storyboardFrames || []) {
     if (isValidStoryboardMediaUrl(frame?.imageUrl)) score += 1
+    score += stillVersionCount(frame, CUSTOM_FRAME_STILL_SLOT)
+  }
+  score += stillVersionCount(scene, SCENE_STILL_SLOT)
+  for (const line of scene.dialogue || []) {
+    score += stillVersionCount(line, DIALOGUE_STILL_SLOT)
   }
   return score
 }
@@ -85,15 +100,10 @@ export function resolveStoryboardScenes(project: {
         return
       }
 
-      if (score >= existing.score) {
-        // Later / richer copy is incoming — prefer its media (uploads, canonical script)
-        existing.scene = mergeScenePreservingMedia(existing.scene, scene)
-        existing.score = mediaRichnessScore(existing.scene)
-      } else {
-        // Keep richer existing media when the new snapshot is poorer
-        existing.scene = mergeScenePreservingMedia(scene, existing.scene)
-        existing.score = mediaRichnessScore(existing.scene)
-      }
+      // Later arrays (canonical script last) are incoming. Version union keeps
+      // both stills; current follows incoming unless it is empty/deferred.
+      existing.scene = mergeScenePreservingMedia(existing.scene, scene)
+      existing.score = mediaRichnessScore(existing.scene)
     })
   }
 

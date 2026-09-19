@@ -528,6 +528,10 @@ export interface SceneSegmentTake {
 export interface SceneSegmentReferences {
   startFrameUrl?: string | null
   endFrameUrl?: string | null
+  startFrameVersions?: import('@/lib/storyboard/mediaVersions').MediaVersion[]
+  startFrameVersionId?: string
+  endFrameVersions?: import('@/lib/storyboard/mediaVersions').MediaVersion[]
+  endFrameVersionId?: string
   // Enhanced reference data
   useSceneFrame?: boolean
   characterRefs?: string[] // Character names to use as references
@@ -554,6 +558,8 @@ export interface SceneSegment {
   assetType: SceneSegmentAssetType
   references: SceneSegmentReferences
   takes: SceneSegmentTake[]
+  /** Explicit restore pointer; fallback is the latest COMPLETE take. */
+  currentTakeId?: string
   // Shot Metadata
   shotType?: string
   cameraAngle?: string
@@ -975,6 +981,8 @@ export interface SceneProductionData {
   renderedAt?: string | null
   /** Multi-language production streams */
   productionStreams?: ProductionStream[]
+  /** Pinned stream restore; Final Cut screening override still wins when set. */
+  currentStreamId?: string
 }
 
 /**

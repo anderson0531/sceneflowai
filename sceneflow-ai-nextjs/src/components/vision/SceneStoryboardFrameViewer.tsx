@@ -103,6 +103,7 @@ export interface SceneStoryboardFrameViewerProps {
   onUploadScene?: (file: File) => void
   onSaveEditedScene?: (imageUrl: string) => void
   onSaveEditedBeatFrame?: (beatId: string, imageUrl: string) => void
+  onRestoreStillVersion?: (slot: StoryboardFrameSlot, versionId: string) => void
   onSaveBeatKenBurns?: (beatId: string, settings: BeatKenBurnsSettings) => void
   onSaveEditedDialogueFrame?: (dialogueIndex: number, imageUrl: string) => void
   onSaveEditedCustomFrame?: (customFrameId: string, imageUrl: string) => void
@@ -146,6 +147,7 @@ interface StoryboardSlotHandlers {
   onUploadDialogueFrame?: (dialogueIndex: number, file: File) => void
   onUploadBeatFrame?: (beatId: string, file: File) => void
   onEditFrame?: (frame: EditingFrame) => void
+  onRestoreStillVersion?: (slot: StoryboardFrameSlot, versionId: string) => void
   onUpload?: (file: File) => void
   onGenerateCustomFrame?: (frameId: string) => Promise<void>
   onUploadCustomFrame?: (frameId: string, file: File) => void
@@ -186,6 +188,7 @@ function buildStoryboardSlotFrameProps(
     onUploadDialogueFrame,
     onUploadBeatFrame,
     onEditFrame,
+    onRestoreStillVersion,
     onUpload,
     onGenerateCustomFrame,
     onUploadCustomFrame,
@@ -227,6 +230,12 @@ function buildStoryboardSlotFrameProps(
               if (slot.ownImageUrl && !window.confirm('Delete this storyboard frame?')) return
               void onDeleteStoryboardFrame(slot.customFrameId!)
             }
+          : undefined,
+      imageVersions: slot.imageVersions,
+      imageVersionId: slot.imageVersionId,
+      onRestoreVersion:
+        onRestoreStillVersion && slot.imageVersions && slot.imageVersions.length > 1
+          ? (versionId: string) => onRestoreStillVersion(slot, versionId)
           : undefined,
     }
   }
@@ -306,6 +315,12 @@ function buildStoryboardSlotFrameProps(
         : undefined,
     generateLabel: useExpressGenerate ? 'Frame Agent' : undefined,
     useExpressGenerateIcon: useExpressGenerate,
+    imageVersions: slot.imageVersions,
+    imageVersionId: slot.imageVersionId,
+    onRestoreVersion:
+      onRestoreStillVersion && slot.imageVersions && slot.imageVersions.length > 1
+        ? (versionId: string) => onRestoreStillVersion(slot, versionId)
+        : undefined,
   }
 }
 
@@ -389,6 +404,7 @@ export function SceneStoryboardFrameViewer({
   onUploadScene,
   onSaveEditedScene,
   onSaveEditedBeatFrame,
+  onRestoreStillVersion,
   onSaveBeatKenBurns,
   onSaveEditedDialogueFrame,
   onSaveEditedCustomFrame,
@@ -745,6 +761,7 @@ export function SceneStoryboardFrameViewer({
       onUploadDialogueFrame,
       onUploadBeatFrame,
       onEditFrame: handleEditFrame,
+      onRestoreStillVersion,
       onUpload: onUploadScene,
       onGenerateCustomFrame: onGenerateCustomFrame
         ? async (frameId) => {
@@ -786,6 +803,7 @@ export function SceneStoryboardFrameViewer({
       onUploadDialogueFrame,
       onUploadBeatFrame,
       handleEditFrame,
+      onRestoreStillVersion,
       onUploadScene,
       onGenerateCustomFrame,
       onUploadCustomFrame,

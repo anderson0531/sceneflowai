@@ -50,6 +50,10 @@ import {
 import { audioSourceFingerprintForSpoken } from '@/lib/audio/beatAudioStale'
 import { resolveStoryboardScenes, totalStoryboardMediaScore } from '@/lib/storyboard/resolveStoryboardScenes'
 import {
+  assignStillUrl,
+  CUSTOM_FRAME_STILL_SLOT,
+} from '@/lib/storyboard/mediaVersions'
+import {
   isPreVisStale,
   refreshSceneBeatStillPrompts,
   restampPreVisHashIfScriptCurrent,
@@ -106,6 +110,7 @@ import {
   applyStartFrameUrlToProductionSegments,
   resolveEffectiveStartFrameUrl,
   shouldAttachBeatStartFrame,
+  stampProductionFrameUrl,
 } from '@/lib/vision/segmentConfigBuilder'
 import { DEFAULT_VEO_CLIP_DURATION, GEMINI_IMAGE_MODELS, MAX_VEO_VIDEO_CLIP_SECONDS } from '@/lib/config/modelConfig'
 import {
@@ -1195,7 +1200,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         },
       },
       debugLabel || 'persistVisionScriptScenes',
-      { mintScriptUpdatedAt: true }
+      { refreshLiveScript: true, mintScriptUpdatedAt: true }
     )
 
     if (!response.ok) {
@@ -3270,16 +3275,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (!currentProduction?.segments) return
       
       const updatedSegments = currentProduction.segments.map(seg => {
-        if (seg.segmentId === segmentId) {
-          return {
-            ...seg,
-            references: {
-              ...seg.references,
-              endFrameUrl
-            }
-          }
-        }
-        return seg
+        if (seg.segmentId !== segmentId) return seg
+        return stampProductionFrameUrl(seg, 'end', endFrameUrl, 'generate')
       })
       
       const updatedData: SceneProductionData = {
@@ -3300,28 +3297,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (!currentProduction?.segments) return
       
       const updatedSegments = currentProduction.segments.map(seg => {
-        if (seg.segmentId === segmentId) {
-          if (frameType === 'start') {
-            return {
-              ...seg,
-              startFrameUrl: newFrameUrl,
-              references: {
-                ...seg.references,
-                startFrameUrl: newFrameUrl
-              }
-            }
-          } else {
-            return {
-              ...seg,
-              endFrameUrl: newFrameUrl,
-              references: {
-                ...seg.references,
-                endFrameUrl: newFrameUrl
-              }
-            }
-          }
-        }
-        return seg
+        if (seg.segmentId !== segmentId) return seg
+        return stampProductionFrameUrl(seg, frameType, newFrameUrl, 'edit')
       })
       
       const updatedData: SceneProductionData = {
@@ -4578,6 +4555,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               lastContentPolicyFailure: undefined,
               errorMessage: undefined,
               takes: [newTake, ...(segment.takes || [])],
+              currentTakeId: newTake.id,
                 references: {
                   ...segment.references,
                   startFrameUrl: resolvedStartFrameUrl || segment.references?.startFrameUrl,
@@ -4808,6 +4786,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                                 assetType: retryData.assetType,
                                 activeAssetUrl: retryData.assetUrl,
                                 takes: [newTake, ...(seg.takes || [])],
+                                currentTakeId: newTake.id,
                                 errorMessage: undefined,
                                 lastContentPolicyFailure: undefined, // Clear failure flag on success
                                 stemSeparation: retryData.stemSeparation
@@ -4998,6 +4977,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                                 assetType: retryData.assetType,
                                 activeAssetUrl: retryData.assetUrl,
                                 takes: [newTake, ...(seg.takes || [])],
+                                currentTakeId: newTake.id,
                                 errorMessage: undefined,
                                 stemSeparation: retryData.stemSeparation
                                   ? {
@@ -5173,6 +5153,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           
           const segments = current.segments.map((segment, idx) => {
             if (segment.segmentId === segmentId) {
+              const takeId = `${segmentId}-take-${Date.now()}`
               return {
                 ...segment,
                 status: 'COMPLETE' as const,
@@ -5183,7 +5164,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 isUserUpload: true,
                 takes: [
                   {
-                    id: `${segmentId}-take-${Date.now()}`,
+                    id: takeId,
                     createdAt: new Date().toISOString(),
                     assetUrl: assetUrl,
                     thumbnailUrl: file.type.startsWith('image') ? assetUrl : segment.activeAssetUrl,
@@ -5192,6 +5173,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   },
                   ...(segment.takes || []),
                 ],
+                currentTakeId: takeId,
               }
             }
             // Shift subsequent segments if this upload changed the timeline
@@ -5636,6 +5618,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             return {
               ...segment,
               activeAssetUrl: takeAssetUrl,
+              currentTakeId: takeId,
               thumbnailUrl: selectedTake?.thumbnailUrl || segment.thumbnailUrl,
             }
           }
@@ -5657,9 +5640,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const segments = current.segments.map((segment) => {
           if (segment.segmentId === segmentId) {
             const updatedTakes = (segment.takes || []).filter(t => t.id !== takeId)
+            const nextCurrent =
+              segment.currentTakeId === takeId
+                ? updatedTakes.find((t) => t.status === 'COMPLETE' || t.assetUrl === segment.activeAssetUrl)?.id
+                : segment.currentTakeId
             return {
               ...segment,
               takes: updatedTakes,
+              currentTakeId: nextCurrent,
             }
           }
           return segment
@@ -11743,11 +11731,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const frames = Array.isArray(sceneCopy.storyboardFrames) ? [...sceneCopy.storyboardFrames] : []
         const frameIdx = frames.findIndex((f: { id?: string }) => f.id === slot.customFrameId)
         if (frameIdx >= 0) {
-          frames[frameIdx] = {
+          frames[frameIdx] = assignStillUrl(
+          {
             ...frames[frameIdx],
-            imageUrl: data.imageUrl,
             imagePrompt: data.prompt || '',
-          }
+          },
+          CUSTOM_FRAME_STILL_SLOT,
+          data.imageUrl,
+          { source: 'generate', prompt: data.prompt || '' }
+        )
           sceneCopy.storyboardFrames = frames
         }
         updatedScenes[sceneIndex] = sceneCopy
@@ -11920,7 +11912,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const uploadedUrl = await uploadAssetViaAPI(file, projectId)
       const updatedScenes = script.script.scenes.map((s: any, idx: number) => {
         if (idx !== sceneIndex) return s
-        return applyBeatStoryboardImageToScene(s, rawBeatIdx, uploadedUrl)
+        return applyBeatStoryboardImageToScene(s, rawBeatIdx, uploadedUrl, { source: 'upload' })
       })
 
       setScript((prev: any) => ({
@@ -11960,7 +11952,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
 
     const updatedScenes = script.script.scenes.map((s: any, idx: number) =>
-      idx === sceneIndex ? applyBeatStoryboardImageToScene(s, rawBeatIdx, newImageUrl) : s
+      idx === sceneIndex ? applyBeatStoryboardImageToScene(s, rawBeatIdx, newImageUrl, { source: 'edit' }) : s
     )
 
     setScript((prev: any) => ({
@@ -11976,6 +11968,73 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     } catch (saveError) {
       console.error('[handleSaveEditedBeatFrame] Failed to save:', saveError)
       try { const { toast } = require('sonner'); toast.error('Failed to save edited beat frame') } catch {}
+    }
+  }
+
+  const handleRestoreStillVersion = async (
+    sceneIndex: number,
+    slot: StoryboardFrameSlot,
+    versionId: string
+  ) => {
+    if (!script?.script?.scenes) return
+    const scene = script.script.scenes[sceneIndex]
+    if (!scene) return
+
+    let updated = scene
+    if (slot.customFrameId) {
+      const frames = Array.isArray(scene.storyboardFrames) ? [...scene.storyboardFrames] : []
+      const frameIdx = frames.findIndex((frame: { id?: string }) => frame.id === slot.customFrameId)
+      if (frameIdx < 0) return
+      frames[frameIdx] = assignStillUrl(frames[frameIdx], CUSTOM_FRAME_STILL_SLOT, '', {
+        restoreVersionId: versionId,
+        source: 'restore',
+      })
+      updated = { ...scene, storyboardFrames: frames }
+    } else if (slot.beatId) {
+      const rawBeatIdx = resolveRawBeatIndex(scene, { beatId: slot.beatId })
+      if (rawBeatIdx === undefined) return
+      updated = applyBeatStoryboardImageToScene(scene, rawBeatIdx, '', {
+        restoreVersionId: versionId,
+        frameRole: slot.frameRole === 'end' ? 'end' : 'start',
+        source: 'restore',
+      })
+    } else if (typeof slot.dialogueIndex === 'number') {
+      updated = applyDialogueStoryboardImageToScene(scene, slot.dialogueIndex, '', {
+        restoreVersionId: versionId,
+        source: 'restore',
+      })
+    } else {
+      updated = applyEstablishingImageToScene(scene, '', {
+        restoreVersionId: versionId,
+        source: 'restore',
+      })
+    }
+
+    const updatedScenes = script.script.scenes.map((s: any, idx: number) =>
+      idx === sceneIndex ? stampPreVisContentHash(updated) : s
+    )
+    setScript((prev: any) => ({
+      ...prev,
+      script: { ...prev?.script, scenes: updatedScenes },
+    }))
+
+    try {
+      await persistVisionScriptScenes(updatedScenes, 'handleRestoreStillVersion')
+      if (slot.beatId && slot.frameRole !== 'end') {
+        const rawBeatIdx = resolveRawBeatIndex(updated, { beatId: slot.beatId })
+        const restoredUrl =
+          typeof rawBeatIdx === 'number'
+            ? getSceneBeats(updated)[rawBeatIdx]?.storyboardImageUrl
+            : undefined
+        if (restoredUrl) {
+          const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
+          syncBeatStartFrameToProduction(sceneId, slot.beatId, restoredUrl)
+        }
+      }
+      try { const { toast } = require('sonner'); toast.success('Restored previous still') } catch {}
+    } catch (error) {
+      console.error('[handleRestoreStillVersion] Failed to save:', error)
+      try { const { toast } = require('sonner'); toast.error('Failed to restore still') } catch {}
     }
   }
 
@@ -12093,7 +12152,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const frames = Array.isArray(sceneCopy.storyboardFrames) ? [...sceneCopy.storyboardFrames] : []
       const frameIdx = frames.findIndex((f: { id?: string }) => f.id === customFrameId)
       if (frameIdx >= 0) {
-        frames[frameIdx] = { ...frames[frameIdx], imageUrl: newImageUrl }
+        frames[frameIdx] = assignStillUrl(frames[frameIdx], CUSTOM_FRAME_STILL_SLOT, newImageUrl, {
+          source: 'edit',
+        })
         sceneCopy.storyboardFrames = frames
       }
       return sceneCopy
@@ -12228,11 +12289,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         : []
       const frameIdx = frames.findIndex((f) => f.id === frameId)
       if (frameIdx >= 0) {
-        frames[frameIdx] = {
-          ...frames[frameIdx],
-          imageUrl: data.imageUrl,
-          imagePrompt: data.prompt || '',
-        }
+          frames[frameIdx] = assignStillUrl(
+            { ...frames[frameIdx], imagePrompt: data.prompt || '' },
+            CUSTOM_FRAME_STILL_SLOT,
+            data.imageUrl,
+            { source: 'generate', prompt: data.prompt || '' }
+          )
         sceneCopy.storyboardFrames = frames
       }
       updatedScenes[sceneIdx] = sceneCopy
@@ -12271,7 +12333,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           : []
         const frameIdx = frames.findIndex((f: any) => f?.id === frameId)
         if (frameIdx >= 0) {
-          frames[frameIdx] = { ...frames[frameIdx], imageUrl: uploadedUrl }
+          frames[frameIdx] = assignStillUrl(frames[frameIdx], CUSTOM_FRAME_STILL_SLOT, uploadedUrl, {
+            source: 'upload',
+          })
           sceneCopy.storyboardFrames = frames
         }
         return sceneCopy
@@ -14144,7 +14208,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           imageGcsPath: params?.gcsPath,
           frameRole: params?.frameRole,
         })
-        return { ...prev, script: { ...prev.script, scenes } }
+        const next = { ...prev, script: { ...prev.script, scenes } }
+        scriptRef.current = next
+        return next
       })
     },
     []
@@ -14165,7 +14231,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           beatIndex: params.beatIndex,
           frameRole: params.frameRole,
         })
-        return { ...prev, script: { ...prev.script, scenes } }
+        const next = { ...prev, script: { ...prev.script, scenes } }
+        scriptRef.current = next
+        return next
       })
     },
     []
@@ -16463,6 +16531,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onUploadBeatFrame={handleUploadBeatFrame}
                 onUploadDialogueFrame={handleUploadDialogueFrame}
                 onSaveEditedBeatFrame={handleSaveEditedBeatFrame}
+                onRestoreStillVersion={handleRestoreStillVersion}
                 onSaveBeatKenBurns={handleSaveBeatKenBurns}
                 onSetScreeningPoster={handleSetScreeningPoster}
                 onSaveEditedDialogueFrame={handleSaveEditedDialogueFrame}

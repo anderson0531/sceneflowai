@@ -23,6 +23,14 @@ import { dedupeRedundantActionBeats } from '@/lib/script/actionBeatDedupe'
 import { backfillBeatDirectionsOnScene } from '@/lib/script/beatDirectionDerive'
 import { beatStillImageStamp } from '@/lib/script/beatDirectionFingerprint'
 import {
+  assignStillUrl,
+  BEAT_END_STILL_SLOT,
+  BEAT_START_STILL_SLOT,
+  DIALOGUE_STILL_SLOT,
+  SCENE_STILL_SLOT,
+  type MediaVersionSource,
+} from '@/lib/storyboard/mediaVersions'
+import {
   applySceneMovements,
   ensureSceneMovements,
   getSceneMovements,
@@ -903,6 +911,8 @@ export function beatsToLegacyFields(beats: SceneBeat[]): {
         storyboardImageUrl: beat.storyboardImageUrl,
         storyboardImagePrompt: beat.storyboardImagePrompt,
         storyboardImageGcsPath: beat.storyboardImageGcsPath,
+        storyboardImageVersions: beat.storyboardImageVersions,
+        storyboardImageVersionId: beat.storyboardImageVersionId,
         audioUrl: beat.audioUrl,
         duration: beat.durationSeconds,
       })
@@ -918,6 +928,8 @@ export function beatsToLegacyFields(beats: SceneBeat[]): {
       storyboardImageUrl: beat.storyboardImageUrl,
       storyboardImagePrompt: beat.storyboardImagePrompt,
       storyboardImageGcsPath: beat.storyboardImageGcsPath,
+      storyboardImageVersions: beat.storyboardImageVersions,
+      storyboardImageVersionId: beat.storyboardImageVersionId,
       audioUrl: beat.audioUrl,
       duration: beat.durationSeconds,
     })
@@ -1061,26 +1073,39 @@ export function reorderSceneBeats(
 export function applyEstablishingImageToScene(
   scene: Record<string, unknown>,
   imageUrl: string,
-  extras?: { imagePrompt?: string; imageGcsPath?: string }
+  extras?: {
+    imagePrompt?: string
+    imageGcsPath?: string
+    source?: MediaVersionSource
+    restoreVersionId?: string
+  }
 ): Record<string, unknown> {
-  const beats = getSceneBeats(scene).map((beat) =>
-    beat.kind === 'action'
-      ? {
-          ...beat,
-          storyboardImageUrl: imageUrl,
-          ...(extras?.imageGcsPath
-            ? { storyboardImageGcsPath: extras.imageGcsPath }
-            : {}),
-          ...(extras?.imagePrompt
-            ? { storyboardImagePrompt: extras.imagePrompt }
-            : {}),
-        }
-      : beat
-  )
+  const source = extras?.source ?? 'generate'
+  const beats = getSceneBeats(scene).map((beat) => {
+    if (beat.kind !== 'action') return beat
+    const stamped = assignStillUrl(beat as unknown as Record<string, unknown>, BEAT_START_STILL_SLOT, imageUrl, {
+      source,
+      prompt: extras?.imagePrompt,
+      restoreVersionId: extras?.restoreVersionId,
+    })
+    return {
+      ...stamped,
+      ...(extras?.imageGcsPath
+        ? { storyboardImageGcsPath: extras.imageGcsPath }
+        : {}),
+      ...(extras?.imagePrompt
+        ? { storyboardImagePrompt: extras.imagePrompt }
+        : {}),
+    } as SceneBeat
+  })
+  const withSceneStill = assignStillUrl(scene, SCENE_STILL_SLOT, imageUrl, {
+    source,
+    prompt: extras?.imagePrompt,
+    restoreVersionId: extras?.restoreVersionId,
+  })
   return applyBeatsToScene(
     {
-      ...scene,
-      imageUrl,
+      ...withSceneStill,
       ...(extras?.imagePrompt ? { imagePrompt: extras.imagePrompt } : {}),
       ...(extras?.imageGcsPath ? { imageGcsPath: extras.imageGcsPath } : {}),
     },
@@ -1148,21 +1173,35 @@ export function applyDialogueStoryboardImageToScene(
   scene: Record<string, unknown>,
   dialogueIndex: number,
   imageUrl: string,
-  extras?: { imagePrompt?: string; imageGcsPath?: string }
+  extras?: {
+    imagePrompt?: string
+    imageGcsPath?: string
+    source?: MediaVersionSource
+    restoreVersionId?: string
+  }
 ): Record<string, unknown> {
   const resolved = resolveDialogueBeat(scene, dialogueIndex)
   const beats = getSceneBeats(scene).map((beat, beatIndex) => {
     if (!resolved || beatIndex !== resolved.beatIndex) return beat
+    const stamped = assignStillUrl(
+      beat as unknown as Record<string, unknown>,
+      DIALOGUE_STILL_SLOT,
+      imageUrl,
+      {
+        source: extras?.source ?? 'generate',
+        prompt: extras?.imagePrompt,
+        restoreVersionId: extras?.restoreVersionId,
+      }
+    )
     return {
-      ...beat,
-      storyboardImageUrl: imageUrl,
+      ...stamped,
       ...(extras?.imageGcsPath
         ? { storyboardImageGcsPath: extras.imageGcsPath }
         : {}),
       ...(extras?.imagePrompt
         ? { storyboardImagePrompt: extras.imagePrompt }
         : {}),
-    }
+    } as SceneBeat
   })
 
   return applyBeatsToScene(scene, beats)
@@ -1173,6 +1212,8 @@ export interface BeatStoryboardImageExtras {
   imageGcsPath?: string
   imageTier?: 'draft' | 'final'
   frameRole?: 'start' | 'end'
+  source?: MediaVersionSource
+  restoreVersionId?: string
 }
 
 /** Persist a beat-index storyboard image to beats[] and legacy dialogue[]. */
@@ -1186,11 +1227,21 @@ export function applyBeatStoryboardImageToScene(
   if (!beats[beatIndex]) return scene
 
   const frameRole = extras?.frameRole ?? 'start'
+  const source = extras?.source ?? 'generate'
 
   if (frameRole === 'end') {
+    const stamped = assignStillUrl(
+      beats[beatIndex] as unknown as Record<string, unknown>,
+      BEAT_END_STILL_SLOT,
+      imageUrl,
+      {
+        source,
+        prompt: extras?.imagePrompt,
+        restoreVersionId: extras?.restoreVersionId,
+      }
+    )
     beats[beatIndex] = {
-      ...beats[beatIndex],
-      storyboardEndImageUrl: imageUrl,
+      ...stamped,
       storyboardEndImageError: undefined,
       ...(extras?.imageTier ? { storyboardEndImageTier: extras.imageTier } : {}),
       ...(extras?.imageGcsPath
@@ -1199,15 +1250,24 @@ export function applyBeatStoryboardImageToScene(
       ...(extras?.imagePrompt
         ? { storyboardEndImagePrompt: extras.imagePrompt }
         : {}),
-    }
+    } as SceneBeat
     return applyBeatsToScene(scene, beats)
   }
 
   const previous = beats[beatIndex]
   const stamp = beatStillImageStamp(previous, { imagePrompt: extras?.imagePrompt })
+  const withVersion = assignStillUrl(
+    previous as unknown as Record<string, unknown>,
+    BEAT_START_STILL_SLOT,
+    imageUrl,
+    {
+      source,
+      prompt: extras?.imagePrompt,
+      restoreVersionId: extras?.restoreVersionId,
+    }
+  )
   beats[beatIndex] = {
-    ...previous,
-    storyboardImageUrl: imageUrl,
+    ...withVersion,
     storyboardImageError: undefined,
     ...stamp,
     ...(extras?.imageTier ? { storyboardImageTier: extras.imageTier } : {}),
@@ -1217,13 +1277,17 @@ export function applyBeatStoryboardImageToScene(
     ...(extras?.imagePrompt
       ? { storyboardImagePrompt: extras.imagePrompt }
       : {}),
-  }
+  } as SceneBeat
 
-  const updated = applyBeatsToScene(scene, beats)
+  let updated = applyBeatsToScene(scene, beats)
   if (beatIndex === 0 && beats[0]?.kind === 'action') {
+    updated = assignStillUrl(updated, SCENE_STILL_SLOT, imageUrl, {
+      source,
+      prompt: extras?.imagePrompt,
+      restoreVersionId: extras?.restoreVersionId,
+    })
     return {
       ...updated,
-      imageUrl,
       ...(extras?.imagePrompt ? { imagePrompt: extras.imagePrompt } : {}),
       ...(extras?.imageGcsPath ? { imageGcsPath: extras.imageGcsPath } : {}),
     }
@@ -1291,6 +1355,7 @@ export function applyExpressStoryboardImageToScene(
         imageGcsPath,
         imageTier,
         frameRole,
+        source: 'express',
       }),
       storyboardStatus: 'pending_review',
     }
@@ -1300,20 +1365,26 @@ export function applyExpressStoryboardImageToScene(
     const dialogue = [...(Array.isArray(scene.dialogue) ? (scene.dialogue as unknown[]) : [])]
     const line = dialogue[dialogueIndex] as Record<string, unknown> | undefined
     if (line) {
-      dialogue[dialogueIndex] = {
-        ...line,
-        storyboardImageUrl: imageUrl,
-        ...(imageTier ? { storyboardImageTier: imageTier } : {}),
-        ...(imagePrompt ? { storyboardImagePrompt: imagePrompt } : {}),
-        ...(imageGcsPath ? { storyboardImageGcsPath: imageGcsPath } : {}),
-      }
+      dialogue[dialogueIndex] = assignStillUrl(
+        {
+          ...line,
+          ...(imageTier ? { storyboardImageTier: imageTier } : {}),
+          ...(imagePrompt ? { storyboardImagePrompt: imagePrompt } : {}),
+          ...(imageGcsPath ? { storyboardImageGcsPath: imageGcsPath } : {}),
+        },
+        DIALOGUE_STILL_SLOT,
+        imageUrl,
+        { source: 'express', prompt: imagePrompt }
+      )
     }
     return { ...scene, dialogue, storyboardStatus: 'pending_review' }
   }
 
   return {
-    ...scene,
-    imageUrl,
+    ...assignStillUrl(scene, SCENE_STILL_SLOT, imageUrl, {
+      source: 'express',
+      prompt: imagePrompt,
+    }),
     ...(imagePrompt ? { imagePrompt } : {}),
     ...(imageGcsPath ? { imageGcsPath } : {}),
   }

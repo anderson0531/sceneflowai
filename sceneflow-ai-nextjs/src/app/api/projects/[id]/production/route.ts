@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
+import { mergeSceneProductionData } from '@/lib/storyboard/mergeProductionMedia'
 
 // Increase timeout for production updates
 export const maxDuration = 30
@@ -48,11 +49,13 @@ export async function PATCH(
     const existingVisionPhase = existingMetadata.visionPhase || {}
     const existingProduction = existingVisionPhase.production || {}
     const existingProductionScenes = existingProduction.scenes || {}
+    const existingSceneData = existingProductionScenes[sceneId]
+    const mergedProductionData = mergeSceneProductionData(existingSceneData, productionData)
 
     // Update only the specific scene's production data
     const updatedProductionScenes = {
       ...existingProductionScenes,
-      [sceneId]: productionData
+      [sceneId]: mergedProductionData
     }
 
     // Build minimal update - only touch production.scenes

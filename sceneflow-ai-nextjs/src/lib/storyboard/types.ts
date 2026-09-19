@@ -20,6 +20,12 @@ import { NARRATOR_CHARACTER, NARRATOR_CHARACTER_ID } from '@/lib/script/segmentT
 import { generateAliases, toCanonicalName } from '@/lib/character/canonical'
 import { resolveStandaloneNarrationUrl } from '@/lib/script/narration'
 import { isValidStoryboardMediaUrl } from '@/lib/storyboard/mergeSceneMedia'
+import {
+  BEAT_END_STILL_SLOT,
+  BEAT_START_STILL_SLOT,
+  CUSTOM_FRAME_STILL_SLOT,
+  stillVersionsOnRow,
+} from '@/lib/storyboard/mediaVersions'
 import { buildStoryboardMusicClips, resolveSceneMusicFileDuration } from '@/lib/storyboard/musicPlayback'
 import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
 import { getBeatOverlayFields } from '@/lib/storyboard/beatCaption'
@@ -48,6 +54,8 @@ export interface DialogueStoryboardFrame {
   storyboardImagePrompt?: string
   storyboardImageGcsPath?: string
   storyboardImageTier?: 'draft' | 'final'
+  storyboardImageVersions?: import('@/lib/storyboard/mediaVersions').MediaVersion[]
+  storyboardImageVersionId?: string
 }
 
 export type StoryboardFrameType = 'establishing' | 'dialogue' | 'custom'
@@ -61,6 +69,8 @@ export interface SceneStoryboardFrame {
   imageUrl?: string
   imagePrompt?: string
   imageGcsPath?: string
+  imageVersions?: import('@/lib/storyboard/mediaVersions').MediaVersion[]
+  imageVersionId?: string
   durationSec?: number
   order: number
 }
@@ -221,6 +231,9 @@ export interface StoryboardFrameSlot {
   isMissing: boolean
   /** Last generation error when this slot has no image. */
   imageError?: string
+  /** Still history for restore (cap 10). */
+  imageVersions?: import('@/lib/storyboard/mediaVersions').MediaVersion[]
+  imageVersionId?: string
 }
 
 /**
@@ -348,6 +361,12 @@ function buildBeatFrameSlot(
     storyboardImagePrompt:
       frameRole === 'end' ? beat.storyboardEndImagePrompt : beat.storyboardImagePrompt,
     allowTypography: beat.beatRole === 'title_reveal' || beat.beatRole === 'credit',
+    imageVersions: stillVersionsOnRow(
+      beat as unknown as Record<string, unknown>,
+      frameRole === 'end' ? BEAT_END_STILL_SLOT : BEAT_START_STILL_SLOT
+    ),
+    imageVersionId:
+      frameRole === 'end' ? beat.storyboardEndImageVersionId : beat.storyboardImageVersionId,
   }
 }
 
@@ -454,6 +473,11 @@ export function enumerateStoryboardFrameSlots(
         displayImageUrl: ownImageUrl,
         isPlaceholder: false,
         isMissing: !ownImageUrl,
+        imageVersions: stillVersionsOnRow(
+          frame as unknown as Record<string, unknown>,
+          CUSTOM_FRAME_STILL_SLOT
+        ),
+        imageVersionId: frame.imageVersionId,
       })
     }
 

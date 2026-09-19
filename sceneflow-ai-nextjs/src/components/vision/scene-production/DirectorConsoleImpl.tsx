@@ -1109,6 +1109,12 @@ export function DirectorConsoleRoot({
         language: stream.language as ProductionLanguage,
         streamVersion: stream.streamVersion ?? 1,
       }
+      if (onProductionDataChange && productionData) {
+        onProductionDataChange({
+          ...productionData,
+          currentStreamId: stream.id,
+        })
+      }
       await persistFinalCutSelection(
         { ...base, perSceneOverrides: overrides },
         `Scene ${sceneNumber}: Screening Room will use Video v${stream.streamVersion ?? 1}`
@@ -1121,7 +1127,22 @@ export function DirectorConsoleRoot({
       sceneNumber,
       streamMatchesScreeningOverride,
       persistFinalCutSelection,
+      onProductionDataChange,
+      productionData,
     ]
+  )
+
+  const handleUseStreamVersion = useCallback(
+    (streamId: string) => {
+      if (!onProductionDataChange || !productionData) return
+      const stream = productionStreams.find((s) => s.id === streamId)
+      if (!stream || stream.status !== 'complete') return
+      onProductionDataChange({
+        ...productionData,
+        currentStreamId: stream.id,
+      })
+    },
+    [onProductionDataChange, productionData, productionStreams]
   )
   
   // Delete a production stream
@@ -1403,6 +1424,8 @@ export function DirectorConsoleRoot({
       finalCutSelection={finalCutSelection}
       onDesignateScreeningStream={handleDesignateScreeningStream}
       isDesignatingScreening={isDesignatingScreening}
+      onUseStreamVersion={handleUseStreamVersion}
+      currentStreamId={productionData?.currentStreamId}
       onStreamTypeChange={(streamType) =>
         setProductionTarget((prev) => ({ ...prev, streamType }))
       }
@@ -2025,6 +2048,21 @@ export function DirectorConsoleRoot({
           sceneImageUrl={sceneImageUrl}
           characters={scene?.characters}
           previousSegmentLastFrame={previousSegmentLastFrame}
+          onSelectTake={(take) => {
+            if (!onProductionDataChange || !productionData || !take.assetUrl) return
+            onProductionDataChange({
+              ...productionData,
+              segments: productionData.segments.map((seg) =>
+                seg.segmentId === editingVideoSegment.segmentId
+                  ? {
+                      ...seg,
+                      currentTakeId: take.id,
+                      activeAssetUrl: take.assetUrl,
+                    }
+                  : seg
+              ),
+            })
+          }}
           onGenerate={async (data) => {
             // Map VideoEditingDialog data to VideoGenerationConfig
             const segmentId = editingVideoSegment.segmentId

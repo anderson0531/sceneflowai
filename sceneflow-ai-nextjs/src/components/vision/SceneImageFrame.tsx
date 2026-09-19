@@ -13,6 +13,7 @@ import {
   isDeferredImageUrl,
   isDisplayableImageUrl,
 } from '@/components/vision/DeferredImageSkeleton'
+import type { MediaVersion } from '@/lib/storyboard/mediaVersions'
 
 export interface SceneImageFrameProps {
   sceneIdx: number
@@ -72,6 +73,9 @@ export interface SceneImageFrameProps {
    * the generate and Direct affordances are disabled and explain themselves.
    */
   generateBlockedReason?: string
+  imageVersions?: MediaVersion[]
+  imageVersionId?: string
+  onRestoreVersion?: (versionId: string) => void
 }
 
 function CompactIconButton({
@@ -322,6 +326,9 @@ export function SceneImageFrame({
   imageError,
   promptChanged = false,
   generateBlockedReason,
+  imageVersions,
+  imageVersionId,
+  onRestoreVersion,
 }: SceneImageFrameProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isHovering, setIsHovering] = useState(false)
@@ -772,6 +779,43 @@ export function SceneImageFrame({
             </p>
           )}
         </div>
+      )}
+
+      {imageVersions && imageVersions.length > 1 && onRestoreVersion && !compact && (
+        <div
+          className="flex gap-1 overflow-x-auto px-1.5 py-1 bg-slate-900/80 border-t border-slate-700/50"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {imageVersions.map((version, index) => {
+            const isCurrent = version.id === imageVersionId || version.url === imageUrl
+            return (
+              <button
+                key={version.id}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (!isCurrent) onRestoreVersion(version.id)
+                }}
+                className={`relative h-8 w-12 shrink-0 overflow-hidden rounded border ${
+                  isCurrent
+                    ? 'border-cyan-400 ring-1 ring-cyan-400/60'
+                    : 'border-slate-600 hover:border-slate-400'
+                }`}
+                title={`Restore version ${index + 1}`}
+              >
+                <img src={version.url} alt="" className="h-full w-full object-cover" />
+                <span className="absolute bottom-0 right-0 bg-black/70 px-0.5 text-[8px] text-white">
+                  v{index + 1}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+      {imageVersions && imageVersions.length > 1 && compact && (
+        <span className="absolute bottom-1 left-1 z-10 rounded bg-black/70 px-1 text-[8px] text-cyan-200">
+          v{imageVersions.length}
+        </span>
       )}
 
       {expandable && hasImage && (

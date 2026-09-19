@@ -94,6 +94,7 @@ describe('resolveStoryboardScenes', () => {
 
     const resolved = resolveStoryboardScenes({ script, visionPhaseScenes })
     expect(resolved[0].imageUrl).toContain('1779527367355')
+    expect(resolved[0].imageVersions.map((v: { url: string }) => v.url)).toHaveLength(2)
   })
 
   it('merges beat storyboardImageUrl from legacy visionPhase.scenes into script.script.scenes', () => {

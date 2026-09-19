@@ -1421,7 +1421,9 @@ export function SegmentStudio({
               </div>
               <div className="grid grid-cols-2 gap-2">
                 {(segment.takes || []).map((take, idx) => {
-                  const isActive = take.assetUrl === segment.activeAssetUrl
+                  const isActive =
+                    take.id === segment.currentTakeId ||
+                    (!segment.currentTakeId && take.assetUrl === segment.activeAssetUrl)
                   return (
                   <div
                     key={take.id}
@@ -1662,6 +1664,13 @@ export function SegmentStudio({
           onGenerate={handleVideoEditingGenerate}
           isGenerating={segment.status === 'GENERATING'}
           initialTab={videoEditingInitialTab}
+          onSelectTake={
+            onSelectTake
+              ? (take) => {
+                  if (take.assetUrl) onSelectTake(take.id, take.assetUrl)
+                }
+              : undefined
+          }
         />
       )}
 
