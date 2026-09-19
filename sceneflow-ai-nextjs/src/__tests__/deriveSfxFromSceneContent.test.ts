@@ -185,6 +185,42 @@ describe('deriveSfxFromSceneContent', () => {
     expect((updated.sfxAudio as string[])[0]).toBe('https://example.com/generated.mp3')
     expect((updated.sfx as unknown[]).length).toBeGreaterThan(0)
   })
+
+  it('keeps sourceFingerprint and audioStale on an existing beat-linked cue', () => {
+    const scene = {
+      duration: 30,
+      sceneDirection: marcusDirection,
+      sfx: [
+        {
+          description: 'Mouse clicks',
+          sourceBeatId: 'bt_a',
+          sfxId: 'sfx_a',
+          legacyIndex: 0,
+          sourceFingerprint: 'Clicks mouse rapidly',
+          audioStale: true,
+        },
+      ],
+      sfxAudio: ['https://example.com/generated.mp3'],
+      beats: [
+        {
+          beatId: 'bt_a',
+          kind: 'action' as const,
+          sequenceIndex: 0,
+          actionDescription: 'Clicks mouse rapidly, then pauses',
+        },
+      ],
+    }
+    const beats = deriveBeatsFromSceneContent(scene)
+    const updated = applyDerivedSfxToScene(scene, beats)
+    const cue = (updated.sfx as Array<Record<string, unknown>>).find(
+      (entry) => entry?.sfxId === 'sfx_a'
+    )
+    expect(cue?.sourceFingerprint).toBe('Clicks mouse rapidly')
+    expect(cue?.audioStale).toBe(true)
+    expect(cue?.audioUrl ?? (updated.sfxAudio as string[])[0]).toBe(
+      'https://example.com/generated.mp3'
+    )
+  })
 })
 
 describe('assignSfxToBeats', () => {

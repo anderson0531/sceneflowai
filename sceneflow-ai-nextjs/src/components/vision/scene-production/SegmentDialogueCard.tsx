@@ -1,6 +1,7 @@
 'use client'
 
-import { Download, Loader, Pause, Play, RefreshCw, Trash2, Upload, Volume2 } from 'lucide-react'
+import { Download, Loader, Pause, Play, RefreshCw, Trash2, Upload } from 'lucide-react'
+import { BeatAudioStatusBadge } from '@/components/vision/BeatAudioStatusBadge'
 import { toast } from 'sonner'
 import { saveAudioFile } from '@/lib/download/saveFile'
 import { findDialogueAudioForLine } from '@/components/vision/scene-production/audioTrackBuilder'
@@ -202,19 +203,11 @@ export function SegmentDialogueCard({
                 {voiceChip}
               </span>
             )}
-            {audioUrl && audioStale ? (
-              <span
-                className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded flex items-center gap-1"
-                title="Beat prompt changed after this audio was generated"
-              >
-                Prompt changed
-              </span>
-            ) : audioUrl ? (
-              <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
-                <Volume2 className="w-3 h-3" />
-                {audioDuration ? `${audioDuration.toFixed(1)}s` : 'Ready'}
-              </span>
-            ) : null}
+            <BeatAudioStatusBadge
+              hasAudio={!!audioUrl}
+              stale={audioStale}
+              readyLabel={audioDuration ? `${audioDuration.toFixed(1)}s` : 'Ready'}
+            />
           </div>
           <div className={bodyClasses}>
             {isNarrator ? lineWithoutParenthetical : `"${lineWithoutParenthetical}"`}

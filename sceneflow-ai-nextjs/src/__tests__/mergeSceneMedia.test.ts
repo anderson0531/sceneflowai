@@ -555,6 +555,42 @@ describe('applyAudioSlotToScene', () => {
     expect(updated.sfx[0]).toEqual({ audioUrl: 'https://example.com/slot0.mp3' })
   })
 
+  it('stamps sourceFingerprint from beatContext and clears audioStale', () => {
+    const scene = {
+      id: 's1',
+      sfx: [
+        {
+          description: 'Glass shatter',
+          sourceBeatId: 'bt_5',
+          audioStale: true,
+          sourceFingerprint: 'Old action text',
+        },
+      ],
+      sfxAudio: ['https://example.com/old.mp3'],
+      beats: [
+        {
+          beatId: 'bt_5',
+          kind: 'action',
+          actionDescription: 'Glass shatters on the floor.',
+        },
+      ],
+    }
+    const updated = applyAudioSlotToScene(scene, {
+      sceneIndex: 0,
+      audioType: 'sfx',
+      audioUrl: 'https://example.com/new.mp3',
+      sfxIndex: 0,
+      beatContext: {
+        beatId: 'bt_5',
+        beatDescription: 'Glass shatters on the floor.',
+      },
+    })
+    expect(updated.sfxAudio[0]).toBe('https://example.com/new.mp3')
+    expect(updated.sfx[0].audioUrl).toBe('https://example.com/new.mp3')
+    expect(updated.sfx[0].sourceFingerprint).toBe('Glass shatters on the floor.')
+    expect(updated.sfx[0].audioStale).toBe(false)
+  })
+
   it('writes music audio and duration fields', () => {
     const scene = { id: 's1' }
     const updated = applyAudioSlotToScene(scene, {

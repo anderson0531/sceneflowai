@@ -59,6 +59,7 @@ import {
   parseExpressAudioSelectedIds,
 } from '@/lib/audio/buildExpressAudioItems'
 import {
+  actionBeatSfxIsStale,
   audioSourceFingerprintForSpoken,
   isBeatAudioStale,
 } from '@/lib/audio/beatAudioStale'
@@ -156,6 +157,7 @@ import {
 } from '@/lib/script/sceneMusicCues'
 import type { SceneMusicCue } from '@/lib/script/segmentTypes'
 import { BeatSfxToggle } from '@/components/vision/BeatSfxToggle'
+import { BeatAudioStatusBadge } from '@/components/vision/BeatAudioStatusBadge'
 import { BeatExcludeToggle } from '@/components/vision/BeatExcludeToggle'
 import { BeatDirectionEditor } from '@/components/vision/BeatDirectionEditor'
 import { BeatCaptionControl } from '@/components/vision/BeatCaptionControl'
@@ -6860,15 +6862,14 @@ function SceneCard({
                             ...beatSfx.map((s) => s.description),
                             ...inlineSfx,
                           ]
-                          const hasBeatSfx =
-                            sfxLabels.length > 0 ||
-                            (() => {
-                              try {
-                                return !!readBeatSfxAudio(scene, resolveBeatSfxSlot(scene, beat))
-                              } catch {
-                                return false
-                              }
-                            })()
+                          let sfxAudioUrl: string | undefined
+                          try {
+                            sfxAudioUrl = readBeatSfxAudio(scene, resolveBeatSfxSlot(scene, beat))
+                          } catch {
+                            sfxAudioUrl = undefined
+                          }
+                          const hasBeatSfx = sfxLabels.length > 0 || !!sfxAudioUrl
+                          const sfxStale = actionBeatSfxIsStale(scene, beat, !!sfxAudioUrl)
                           return (
                             <SortableBeatRow
                               key={beat.beatId}
@@ -6899,6 +6900,7 @@ function SceneCard({
                                     Title
                                   </span>
                                 )}
+                                <BeatAudioStatusBadge hasAudio={!!sfxAudioUrl} stale={sfxStale} />
                                 {continuityBroken && <BeatContinuityWarning />}
                                 </div>
                                 <BeatExcludeToggle
@@ -7148,31 +7150,23 @@ function SceneCard({
                                       {chip}
                                     </span>
                                   )}
-                                  {dialogueAudioUrl &&
-                                    isBeatAudioStale({
-                                      hasAudio: true,
-                                      sourceFingerprint: audioEntry?.sourceFingerprint,
-                                      audioStale: audioEntry?.audioStale,
-                                      currentFingerprint: audioSourceFingerprintForSpoken({
-                                        kind: isNarrationBeat ? 'narration' : 'dialogue',
-                                        character: d.character ?? beat.character,
-                                        line: d.line ?? beat.line,
-                                        voiceDirection: d.voiceDirection ?? beat.voiceDirection,
-                                      }),
-                                    }) ? (
-                                    <span
-                                      className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded flex items-center gap-1"
-                                      title="Beat prompt changed after this audio was generated"
-                                    >
-                                      <AlertTriangle className="w-3 h-3" />
-                                      Prompt changed
-                                    </span>
-                                  ) : dialogueAudioUrl ? (
-                                    <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
-                                      <Volume2 className="w-3 h-3" />
-                                      Ready
-                                    </span>
-                                  ) : null}
+                                  <BeatAudioStatusBadge
+                                    hasAudio={!!dialogueAudioUrl}
+                                    stale={
+                                      !!dialogueAudioUrl &&
+                                      isBeatAudioStale({
+                                        hasAudio: true,
+                                        sourceFingerprint: audioEntry?.sourceFingerprint,
+                                        audioStale: audioEntry?.audioStale,
+                                        currentFingerprint: audioSourceFingerprintForSpoken({
+                                          kind: isNarrationBeat ? 'narration' : 'dialogue',
+                                          character: d.character ?? beat.character,
+                                          line: d.line ?? beat.line,
+                                          voiceDirection: d.voiceDirection ?? beat.voiceDirection,
+                                        }),
+                                      })
+                                    }
+                                  />
                                   {continuityBroken && <BeatContinuityWarning />}
                                   </div>
                                   <BeatExcludeToggle

@@ -1,11 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { Download, Loader2, Pause, Play, Sparkles, Trash2, Volume2, Waves } from 'lucide-react'
+import { Download, Loader2, Pause, Play, Sparkles, Trash2, Waves } from 'lucide-react'
 import { Volume2 as VolumeIcon } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { toast } from 'sonner'
 import { saveAudioFile } from '@/lib/download/saveFile'
+import { BeatAudioStatusBadge } from '@/components/vision/BeatAudioStatusBadge'
+import {
+  actionBeatSfxIsStale,
+  audioSourceFingerprintForAction,
+  isBeatAudioStale,
+} from '@/lib/audio/beatAudioStale'
+import { getSceneBeats } from '@/lib/script/beatMigration'
 import type { SegmentSFX } from '@/lib/script/segmentTypes'
 import {
   resolveAutoSfxDuration,
@@ -94,6 +101,25 @@ export function SegmentSfxCard({
   const isVeoAmbient = sfxSourceMeta?.source === 'veo'
   const showPartialVeoHint =
     !veoSfxCoversFullBeat(segmentDurationSeconds, durationPreset)
+
+  const cueRaw =
+    legacyIdx !== undefined && Array.isArray(scene?.sfx) ? scene.sfx[legacyIdx] : undefined
+  const cue =
+    cueRaw && typeof cueRaw === 'object' && !Array.isArray(cueRaw)
+      ? (cueRaw as { sourceFingerprint?: string; audioStale?: boolean })
+      : undefined
+  const sourceBeat = sfx.sourceBeatId
+    ? getSceneBeats(scene).find((beat) => beat.beatId === sfx.sourceBeatId)
+    : undefined
+  const sfxStale =
+    sourceBeat?.kind === 'action'
+      ? actionBeatSfxIsStale(scene, sourceBeat, !!audioUrl)
+      : isBeatAudioStale({
+          hasAudio: !!audioUrl,
+          sourceFingerprint: cue?.sourceFingerprint,
+          audioStale: cue?.audioStale,
+          currentFingerprint: audioSourceFingerprintForAction(sfx.description),
+        })
 
   const dispatchDelete = () => {
     if (legacyIdx === undefined) return
@@ -216,12 +242,7 @@ export function SegmentSfxCard({
           <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
             SFX {positionInSegment + 1}
           </span>
-          {audioUrl && (
-            <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
-              <Volume2 className="w-3 h-3" />
-              Audio Ready
-            </span>
-          )}
+          <BeatAudioStatusBadge hasAudio={!!audioUrl} stale={sfxStale} />
           {isVeoAmbient && (
             <span className="text-xs px-2 py-0.5 bg-violet-500/15 text-violet-600 dark:text-violet-300 rounded">
               Veo ambient
