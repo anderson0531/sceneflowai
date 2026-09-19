@@ -274,6 +274,53 @@ describe('beatMigration', () => {
     expect(beats[1].storyboardImageUrl).toBe('https://example.com/dialogue.jpg')
   })
 
+  it('hydrateBeatStoryboardMediaFromLegacy does not replace a beat still with a stale dialogue URL', () => {
+    const scene = {
+      dialogue: [
+        {
+          lineId: 'ln_1',
+          character: 'BOB',
+          line: 'Hello.',
+          storyboardImageUrl: 'https://example.com/original.jpg',
+          storyboardImageVersions: [
+            {
+              id: 'mv_old',
+              url: 'https://example.com/original.jpg',
+              createdAt: '2026-01-01T00:00:00.000Z',
+              source: 'generate',
+            },
+            {
+              id: 'mv_new',
+              url: 'https://example.com/regen.jpg',
+              createdAt: '2026-06-01T00:00:00.000Z',
+              source: 'generate',
+            },
+          ],
+        },
+      ],
+      beats: [
+        {
+          beatId: 'bt_b',
+          sequenceIndex: 0,
+          kind: 'dialogue' as const,
+          character: 'BOB',
+          line: 'Hello.',
+          lineId: 'ln_1',
+          storyboardImageUrl: 'https://example.com/regen.jpg',
+          storyboardImageVersionId: 'mv_new',
+        },
+      ],
+    }
+
+    const hydrated = hydrateBeatStoryboardMediaFromLegacy(scene, scene.beats as SceneBeat[])
+    expect(hydrated[0].storyboardImageUrl).toBe('https://example.com/regen.jpg')
+    expect(hydrated[0].storyboardImageVersionId).toBe('mv_new')
+    expect(hydrated[0].storyboardImageVersions?.map((v) => v.url)).toEqual([
+      'https://example.com/original.jpg',
+      'https://example.com/regen.jpg',
+    ])
+  })
+
   it('normalizeBeatsForProduction deduplicates beatIds', () => {
     const beats = normalizeBeatsForProduction([
       {
@@ -343,6 +390,106 @@ describe('beatMigration', () => {
     const beats = scenes[0].beats
     expect(beats[0].storyboardImageUrl).toBe('https://example.com/scene1-est.jpg')
     expect(beats[1].storyboardImageUrl).toBe('https://example.com/scene1-line.jpg')
+  })
+
+  it('migrateProjectToBeats keeps still version history on existing beats', () => {
+    const originalUrl =
+      'https://example.com/frames/original/1779500000000.jpeg'
+    const regenUrl = 'https://example.com/frames/regen/1779527367355.jpeg'
+    const versions = [
+      {
+        id: 'mv_old',
+        url: originalUrl,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        source: 'generate',
+      },
+      {
+        id: 'mv_new',
+        url: regenUrl,
+        createdAt: '2026-06-01T00:00:00.000Z',
+        source: 'generate',
+      },
+    ]
+
+    const metadata = {
+      visionPhase: {
+        script: {
+          script: {
+            scenes: [
+              {
+                id: 's1',
+                beats: [
+                  {
+                    beatId: 'bt_1',
+                    sequenceIndex: 0,
+                    kind: 'action',
+                    actionDescription: 'Wide digital void',
+                    storyboardImageUrl: regenUrl,
+                    storyboardImageVersionId: 'mv_new',
+                    storyboardImageVersions: versions,
+                    kenBurns: {
+                      enabled: true,
+                      start: { x: 0, y: 0, width: 1, height: 1 },
+                      end: { x: 0.1, y: 0, width: 0.8, height: 0.8 },
+                      easing: 'smooth',
+                    },
+                  },
+                  {
+                    beatId: 'bt_2',
+                    sequenceIndex: 1,
+                    kind: 'dialogue',
+                    character: 'BOB',
+                    line: 'Hi',
+                    lineId: 'ln_1',
+                    storyboardImageUrl: regenUrl,
+                    storyboardImageVersionId: 'mv_new',
+                    storyboardImageVersions: versions,
+                  },
+                ],
+                dialogue: [
+                  {
+                    lineId: 'ln_1',
+                    character: 'BOB',
+                    line: 'Hi',
+                    storyboardImageUrl: originalUrl,
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    }
+
+    const result = migrateProjectToBeats(metadata)
+    const visionPhase = result.metadata.visionPhase as Record<string, unknown>
+    const script = visionPhase.script as Record<string, unknown>
+    const nested = script.script as Record<string, unknown>
+    const scenes = nested.scenes as Array<{
+      beats: Array<{
+        storyboardImageUrl?: string
+        storyboardImageVersionId?: string
+        storyboardImageVersions?: Array<{ url: string }>
+        kenBurns?: { enabled?: boolean; easing?: string }
+      }>
+    }>
+    const [actionBeat, dialogueBeat] = scenes[0].beats
+
+    expect(actionBeat.storyboardImageUrl).toBe(regenUrl)
+    expect(actionBeat.storyboardImageVersionId).toBe('mv_new')
+    expect(actionBeat.storyboardImageVersions?.map((v) => v.url)).toEqual([
+      originalUrl,
+      regenUrl,
+    ])
+    expect(actionBeat.kenBurns?.enabled).toBe(true)
+    expect(actionBeat.kenBurns?.easing).toBe('smooth')
+
+    expect(dialogueBeat.storyboardImageUrl).toBe(regenUrl)
+    expect(dialogueBeat.storyboardImageVersionId).toBe('mv_new')
+    expect(dialogueBeat.storyboardImageVersions?.map((v) => v.url)).toEqual([
+      originalUrl,
+      regenUrl,
+    ])
   })
 })
 

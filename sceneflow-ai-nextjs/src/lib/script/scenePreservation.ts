@@ -18,10 +18,14 @@ const BEAT_FRAME_KEYS = [
   'storyboardImageDirectionKey',
   'storyboardImageContentKey',
   'storyboardImageTier',
+  'storyboardImageVersions',
+  'storyboardImageVersionId',
   'storyboardEndImageUrl',
   'storyboardEndImageGcsPath',
   'storyboardEndImagePrompt',
   'storyboardEndImageTier',
+  'storyboardEndImageVersions',
+  'storyboardEndImageVersionId',
 ] as const
 
 const DIALOGUE_LINE_FRAME_KEYS = [
@@ -29,6 +33,8 @@ const DIALOGUE_LINE_FRAME_KEYS = [
   'storyboardImageGcsPath',
   'storyboardImagePrompt',
   'storyboardImageTier',
+  'storyboardImageVersions',
+  'storyboardImageVersionId',
 ] as const
 
 function cloneJson<T>(value: T): T {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   isScriptWriterPut,
+  mergeLiveScriptWithQueuedMedia,
   putResponseIndicatesStaleScriptWrite,
   refreshQueuedScriptPut,
 } from '@/lib/projects/refreshQueuedScriptPut'
@@ -28,8 +29,102 @@ describe('refreshQueuedScriptPut', () => {
       nowIso: SEND_AT,
     })
 
-    expect(sent.metadata.visionPhase.script).toBe(LIVE_SCRIPT)
+    expect(sent.metadata.visionPhase.script).toEqual(LIVE_SCRIPT)
     expect(sent.metadata.visionPhase.scriptUpdatedAt).toBe(SEND_AT)
+  })
+
+  it('keeps queued still versions when the live script still points at the original', () => {
+    const originalUrl =
+      'https://x.public.blob.vercel-storage.com/images/frames/p/old/1779500000000.jpeg'
+    const regenUrl =
+      'https://x.public.blob.vercel-storage.com/images/frames/p/new/1779527367355-AbCdEf.jpeg'
+    const versions = [
+      {
+        id: 'mv_old',
+        url: originalUrl,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        source: 'generate',
+      },
+      {
+        id: 'mv_new',
+        url: regenUrl,
+        createdAt: '2026-06-01T00:00:00.000Z',
+        source: 'generate',
+      },
+    ]
+    const queuedScript = {
+      script: {
+        scenes: [
+          {
+            id: 's1',
+            heading: 'INT. LAB',
+            beats: [
+              {
+                beatId: 'bt_1',
+                kind: 'action',
+                actionDescription: 'Wide void',
+                storyboardImageUrl: regenUrl,
+                storyboardImageVersionId: 'mv_new',
+                storyboardImageVersions: versions,
+              },
+            ],
+          },
+        ],
+      },
+    }
+    const liveScript = {
+      script: {
+        scenes: [
+          {
+            id: 's1',
+            heading: 'INT. LAB — NIGHT',
+            beats: [
+              {
+                beatId: 'bt_1',
+                kind: 'action',
+                actionDescription: 'Wide void',
+                storyboardImageUrl: originalUrl,
+              },
+            ],
+          },
+        ],
+      },
+    }
+
+    const sent = refreshQueuedScriptPut(scriptPut(queuedScript), {
+      liveScript,
+      nowIso: SEND_AT,
+    })
+    const beat = sent.metadata.visionPhase.script.script.scenes[0].beats[0]
+
+    expect(sent.metadata.visionPhase.script.script.scenes[0].heading).toBe('INT. LAB — NIGHT')
+    expect(beat.storyboardImageUrl).toBe(regenUrl)
+    expect(beat.storyboardImageVersionId).toBe('mv_new')
+    expect(beat.storyboardImageVersions.map((v: { url: string }) => v.url).sort()).toEqual(
+      [originalUrl, regenUrl].sort()
+    )
+  })
+
+  it('mergeLiveScriptWithQueuedMedia does not revive a scene the live script deleted', () => {
+    const queuedScript = {
+      script: {
+        scenes: [
+          { id: 'keep', heading: 'A' },
+          { id: 'removed', heading: 'B' },
+        ],
+      },
+    }
+    const liveScript = {
+      script: {
+        scenes: [{ id: 'keep', heading: 'A-edited' }],
+      },
+    }
+
+    const merged = mergeLiveScriptWithQueuedMedia(liveScript, queuedScript) as {
+      script: { scenes: Array<{ id: string; heading: string }> }
+    }
+    expect(merged.script.scenes.map((scene) => scene.id)).toEqual(['keep'])
+    expect(merged.script.scenes[0].heading).toBe('A-edited')
   })
 
   it('mints a fresh timestamp without replacing script when asked', () => {

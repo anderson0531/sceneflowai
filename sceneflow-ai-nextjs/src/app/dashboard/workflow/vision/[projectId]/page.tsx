@@ -1180,6 +1180,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       ...currentScript,
       script: { ...currentScript.script, scenes: updatedScenes },
     }
+    // refreshLiveScript reads scriptRef at send time. The useEffect that
+    // mirrors `script` has not run yet, so without this the PUT replaces
+    // the versioned payload with the pre-generate snapshot.
+    scriptRef.current = updatedScript
 
     // Script, characters, and the timestamp — nothing else. Production has
     // its own PATCH, and `visionPhase.scenes` is rebuilt server-side from

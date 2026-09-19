@@ -246,6 +246,85 @@ function pickStoryboardString(...values: unknown[]): string | undefined {
   return undefined
 }
 
+/** Persisted still/audio/overlay fields `parseLlmBeats` does not copy. */
+const PERSISTED_BEAT_MEDIA_KEYS = [
+  'storyboardImageUrl',
+  'storyboardImageGcsPath',
+  'storyboardImagePrompt',
+  'storyboardImagePromptDirectionKey',
+  'storyboardImageDirectionKey',
+  'storyboardImageContentKey',
+  'storyboardImageTier',
+  'storyboardImageError',
+  'storyboardImageVersions',
+  'storyboardImageVersionId',
+  'storyboardEndImageUrl',
+  'storyboardEndImageGcsPath',
+  'storyboardEndImagePrompt',
+  'storyboardEndImageTier',
+  'storyboardEndImageError',
+  'storyboardEndImageVersions',
+  'storyboardEndImageVersionId',
+  'kenBurns',
+  'overlayText',
+  'overlayType',
+  'excluded',
+  'audioUrl',
+  'durationSeconds',
+  'voiceId',
+  'beatRole',
+  'musicEnabled',
+  'referenceSelection',
+] as const
+
+function pickPersistedBeatMedia(source: Record<string, unknown>): Partial<SceneBeat> {
+  const out: Record<string, unknown> = {}
+  for (const key of PERSISTED_BEAT_MEDIA_KEYS) {
+    const value = source[key]
+    if (value === undefined || value === null || value === '') continue
+    out[key] = value
+  }
+  return out as Partial<SceneBeat>
+}
+
+function overlayPersistedBeatFields(parsed: SceneBeat, source: unknown): SceneBeat {
+  if (!source || typeof source !== 'object') return parsed
+  return {
+    ...parsed,
+    ...pickPersistedBeatMedia(source as Record<string, unknown>),
+  }
+}
+
+function overlayMissingStillHistory(
+  beat: SceneBeat,
+  source: Record<string, unknown> | undefined
+): SceneBeat {
+  if (!source) return beat
+  const beatVersions = Array.isArray(beat.storyboardImageVersions)
+    ? beat.storyboardImageVersions
+    : undefined
+  const sourceVersions = Array.isArray(source.storyboardImageVersions)
+    ? (source.storyboardImageVersions as SceneBeat['storyboardImageVersions'])
+    : undefined
+  const nextVersions =
+    beatVersions && beatVersions.length > 0 ? beatVersions : sourceVersions
+  const beatVersionId =
+    typeof beat.storyboardImageVersionId === 'string' && beat.storyboardImageVersionId.trim()
+      ? beat.storyboardImageVersionId.trim()
+      : undefined
+  const sourceVersionId =
+    typeof source.storyboardImageVersionId === 'string' && source.storyboardImageVersionId.trim()
+      ? source.storyboardImageVersionId.trim()
+      : undefined
+  const nextVersionId = beatVersionId || sourceVersionId
+  if (nextVersions === beatVersions && nextVersionId === beatVersionId) return beat
+  return {
+    ...beat,
+    ...(nextVersions && nextVersions.length > 0 ? { storyboardImageVersions: nextVersions } : {}),
+    ...(nextVersionId ? { storyboardImageVersionId: nextVersionId } : {}),
+  }
+}
+
 /**
  * Copy storyboard media from legacy scene fields into beats when beats lack URLs.
  * Covers projects where images were generated on dialogue[] / imageUrl before beats[] existed.
@@ -281,18 +360,21 @@ export function hydrateBeatStoryboardMediaFromLegacy(
       if (beatIndex === 0 && isAutoLeadingEstablishingBeat(beat, scene, 0, beats)) {
         const sceneImageUrl = pickStoryboardString(scene.imageUrl)
         if (sceneImageUrl) {
-          return {
-            ...beat,
-            storyboardImageUrl: sceneImageUrl,
-            storyboardImageGcsPath: pickStoryboardString(
-              scene.imageGcsPath,
-              beat.storyboardImageGcsPath
-            ),
-            storyboardImagePrompt: pickStoryboardString(
-              scene.imagePrompt,
-              beat.storyboardImagePrompt
-            ),
-          }
+          return overlayMissingStillHistory(
+            {
+              ...beat,
+              storyboardImageUrl: sceneImageUrl,
+              storyboardImageGcsPath: pickStoryboardString(
+                scene.imageGcsPath,
+                beat.storyboardImageGcsPath
+              ),
+              storyboardImagePrompt: pickStoryboardString(
+                scene.imagePrompt,
+                beat.storyboardImagePrompt
+              ),
+            },
+            scene
+          )
         }
       }
 
@@ -313,28 +395,27 @@ export function hydrateBeatStoryboardMediaFromLegacy(
 
     const lineImageUrl = pickStoryboardString(lineEntry.storyboardImageUrl)
     const beatImageUrl = pickStoryboardString(beat.storyboardImageUrl)
-    // dialogue[].storyboardImageUrl wins when uploads/generation dual-write to legacy first.
-    const storyboardImageUrl = lineImageUrl || beatImageUrl
-    if (!storyboardImageUrl) return beat
+    // Fill from dialogue[] only when the beat has no still of its own. Preferring
+    // the legacy line URL overwrote a newer regen after parseLlmBeats dropped
+    // versions and left the dual-written dialogue pointer stale.
+    if (beatImageUrl) return overlayMissingStillHistory(beat, lineEntry)
+    if (!lineImageUrl) return overlayMissingStillHistory(beat, lineEntry)
 
-    return {
-      ...beat,
-      storyboardImageUrl,
-      storyboardImageGcsPath: pickStoryboardString(
-        lineImageUrl && lineImageUrl !== beatImageUrl
-          ? lineEntry.storyboardImageGcsPath
-          : undefined,
-        beat.storyboardImageGcsPath,
-        lineEntry.storyboardImageGcsPath
-      ),
-      storyboardImagePrompt: pickStoryboardString(
-        lineImageUrl && lineImageUrl !== beatImageUrl
-          ? lineEntry.storyboardImagePrompt
-          : undefined,
-        beat.storyboardImagePrompt,
-        lineEntry.storyboardImagePrompt
-      ),
-    }
+    return overlayMissingStillHistory(
+      {
+        ...beat,
+        storyboardImageUrl: lineImageUrl,
+        storyboardImageGcsPath: pickStoryboardString(
+          lineEntry.storyboardImageGcsPath,
+          beat.storyboardImageGcsPath
+        ),
+        storyboardImagePrompt: pickStoryboardString(
+          lineEntry.storyboardImagePrompt,
+          beat.storyboardImagePrompt
+        ),
+      },
+      lineEntry
+    )
   })
 }
 
@@ -514,6 +595,13 @@ function dialogueEntryToBeat(
     storyboardImageGcsPath:
       typeof entry.storyboardImageGcsPath === 'string'
         ? entry.storyboardImageGcsPath
+        : undefined,
+    storyboardImageVersions: Array.isArray(entry.storyboardImageVersions)
+      ? (entry.storyboardImageVersions as SceneBeat['storyboardImageVersions'])
+      : undefined,
+    storyboardImageVersionId:
+      typeof entry.storyboardImageVersionId === 'string' && entry.storyboardImageVersionId.trim()
+        ? entry.storyboardImageVersionId.trim()
         : undefined,
     audioUrl:
       typeof entry.audioUrl === 'string'
@@ -807,14 +895,27 @@ export function deriveBeatsFromSceneContent(scene: Record<string, unknown>): Sce
 
 function tryParseExistingBeats(scene: Record<string, unknown>): SceneBeat[] {
   if (!Array.isArray(scene.beats) || scene.beats.length === 0) return []
+  const raw = scene.beats as unknown[]
   const parsed =
-    typeof (scene.beats[0] as Record<string, unknown>)?.kind === 'string'
-      ? parseLlmBeats(scene.beats as unknown[])
-      : normalizeBeatsForProduction(scene.beats as SceneBeat[])
-  return parsed.filter((beat) => {
-    if (beat.kind === 'action') return !!beat.actionDescription?.trim()
-    return !!beat.line?.trim()
-  })
+    typeof (raw[0] as Record<string, unknown>)?.kind === 'string'
+      ? parseLlmBeats(raw)
+      : normalizeBeatsForProduction(raw as SceneBeat[])
+  const rawById = new Map<string, unknown>()
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const id = (item as { beatId?: unknown }).beatId
+    if (typeof id === 'string' && id.trim() && !rawById.has(id.trim())) {
+      rawById.set(id.trim(), item)
+    }
+  }
+  return parsed
+    .map((beat, index) =>
+      overlayPersistedBeatFields(beat, (beat.beatId && rawById.get(beat.beatId)) || raw[index])
+    )
+    .filter((beat) => {
+      if (beat.kind === 'action') return !!beat.actionDescription?.trim()
+      return !!beat.line?.trim()
+    })
 }
 
 /**
