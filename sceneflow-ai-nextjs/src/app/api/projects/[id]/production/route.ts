@@ -6,6 +6,48 @@ import { mergeSceneProductionData } from '@/lib/storyboard/mergeProductionMedia'
 // Increase timeout for production updates
 export const maxDuration = 30
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+/**
+ * GET production takes/streams without the rest of project metadata.
+ * Project GET omits this blob so the Function response stays under 4.5MB.
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    if (!id || !UUID_REGEX.test(id)) {
+      return NextResponse.json({ error: 'Invalid project ID format' }, { status: 400 })
+    }
+
+    await sequelize.authenticate()
+    const project = await Project.findByPk(id, { useMaster: true })
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    }
+
+    const production = (project.metadata as any)?.visionPhase?.production ?? {}
+    const response = NextResponse.json({
+      success: true,
+      projectId: id,
+      production,
+    })
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, private')
+    return response
+  } catch (error: any) {
+    console.error('[Projects GET Production] Error:', {
+      message: error?.message,
+      stack: error?.stack?.substring(0, 500),
+    })
+    return NextResponse.json(
+      { error: error?.message || 'Failed to load production data' },
+      { status: 500 }
+    )
+  }
+}
+
 /**
  * PATCH endpoint for updating only scene production data
  * This is a lightweight endpoint that only updates the production.scenes portion

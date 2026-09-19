@@ -130,6 +130,12 @@ export interface LocationReference {
   timeOfDay?: string
   /** AI-generated or user-edited description of the location */
   description?: string
+  /** Explicit architectural scale; parsed from description when omitted. */
+  canonicalScale?: {
+    figureHeightFt?: number
+    doorHeightFt?: number
+    ceilingHeightFt?: number
+  }
   /** Scene numbers (1-based) where this location appears */
   sceneNumbers?: number[]
   /** Whether this location was auto-extracted from script (vs manually pinned) */

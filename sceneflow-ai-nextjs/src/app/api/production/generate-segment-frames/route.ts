@@ -41,6 +41,7 @@ import {
   composeIdentityWardrobePipFromDiptychUrl,
   cropIdentityReferenceImagesForPro,
 } from '@/lib/character/composeIdentityWardrobeDiptych'
+import { overlayLocationScaleOnReferenceImages } from '@/lib/vision/locationScaleOverlay'
 import { sanitizeBeatStillPrompt } from '@/lib/imagen/sanitizeBeatStillPrompt'
 import { applyInterleavedPairCaptionsToNamedImages } from '@/lib/imagen/interleavedReferencePair'
 import { STILL_SECTION_TASK, STILL_TASK_PRO_LEAD } from '@/lib/imagen/structuredStillPrompt'
@@ -673,7 +674,15 @@ export async function POST(req: NextRequest) {
       let startImageDataUrl: string
       
       // Collect all reference images: character portraits + scene image + prop references
-      let allReferenceImages: Array<{ imageUrl: string; name: string }> = []
+      let allReferenceImages: Array<{
+        imageUrl: string
+        name: string
+        role?: string
+        locationName?: string
+        locationDescription?: string
+        base64Image?: string
+        mimeType?: string
+      }> = []
       
       // CRITICAL: Detect no-talent scenes (title sequences, abstract visuals, VFX-only)
       const isNoTalentSegment = isNoTalentFromSceneDirection(sceneDirection)
@@ -851,6 +860,9 @@ export async function POST(req: NextRequest) {
           allReferenceImages.push({
             imageUrl: loc.imageUrl!,
             name: buildLocationReferenceLabel(loc.name, allReferenceImages.length + 1),
+            role: 'location',
+            locationName: loc.name,
+            locationDescription: loc.description,
           })
         }
       }
@@ -943,7 +955,10 @@ Render this scene in ${selectedStyle.name} style.`
         const locRefIndex =
           allReferenceImages.findIndex((ref) => ref.imageUrl === loc.imageUrl) + 1
         if (locRefIndex > 0) {
-          geminiPrompt += `\n\n${buildLocationReferencePromptLine(loc.name, locRefIndex, undefined, { currentSetState: Boolean((loc as { boundVersionId?: string }).boundVersionId) })}`
+          geminiPrompt += `\n\n${buildLocationReferencePromptLine(loc.name, locRefIndex, undefined, {
+            currentSetState: Boolean((loc as { boundVersionId?: string }).boundVersionId),
+            locationDescription: loc.description,
+          })}`
         }
       }
 
@@ -1013,10 +1028,11 @@ Render this scene in ${selectedStyle.name} style.`
         })
         startImageDataUrl = klingResult.imageBase64
       } else {
-        const studioReferenceImages =
+        const studioReferenceImages = await overlayLocationScaleOnReferenceImages(
           modelTier !== 'eco' && allReferenceImages.length > 0
             ? await cropIdentityReferenceImagesForPro(allReferenceImages)
             : allReferenceImages
+        )
         const result = await generateImageWithGeminiStudio({
           prompt: studioPrompt,
           aspectRatio: aspectRatio as '16:9' | '9:16' | '1:1',

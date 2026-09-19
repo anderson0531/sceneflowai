@@ -101,6 +101,8 @@ export interface PrioritizedReferenceImage {
   promptToken?: string
   /** Library description; used to lock prop scale on the image label. */
   propDescription?: string
+  /** Location description; used to lock door/ceiling scale on the send-time overlay. */
+  locationDescription?: string
   /** Person token index the scene prompt uses for this character. */
   subjectOrdinal?: number
 }
@@ -524,6 +526,7 @@ export function buildLocationReferenceEntry(
     imageUrl: string
     location?: string
     name?: string
+    description?: string
     promptToken?: string
   } | null | undefined,
   startIndex: number
@@ -537,6 +540,7 @@ export function buildLocationReferenceEntry(
     role: 'location',
     provisionalIndex: refImageIndex,
     locationName,
+    locationDescription: location.description,
     promptToken: location.promptToken,
   }
 }

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
-import { stripBase64FromMetadata, calculateBase64Size } from '@/lib/storage/mediaStorage'
+import { calculateBase64Size } from '@/lib/storage/mediaStorage'
+import {
+  compactProjectPutAck,
+  slimProjectResponseMetadata,
+} from '@/lib/projects/slimProjectPutPayload'
 import { isValidStoryboardMediaUrl, mergeSceneArraysForPersistence } from '@/lib/storyboard/mergeSceneMedia'
 import { describeStaleScriptWrite } from '@/lib/storyboard/staleWriteDiff'
 import { salvageStaleWriteMedia } from '@/lib/storyboard/staleWriteSalvage'
@@ -30,9 +34,12 @@ export async function GET(
   try {
     const { id } = await params
     
-    // Check for lite mode - excludes large base64 images from response
+    // lite=true is the historical first-paint flag. Responses always strip
+    // inline images and omit production unless ?include=production — that blob
+    // is what 413s Function payloads on this project.
     const searchParams = request.nextUrl.searchParams
     const liteMode = searchParams.get('lite') === 'true'
+    const includeProduction = searchParams.get('include') === 'production'
     
     // Validate UUID format - reject placeholder IDs like 'new-project'
     if (!id || !UUID_REGEX.test(id)) {
@@ -63,17 +70,12 @@ export async function GET(
     // Reload to get fresh data from database
     await project.reload()
     
-    // Get metadata - optionally strip base64 data in lite mode
-    let metadata = project.metadata || {}
-    let base64Size = 0
-    
-    if (liteMode) {
-      base64Size = calculateBase64Size(metadata)
-      if (base64Size > 0) {
-        console.log(`[Projects GET] Lite mode: stripping ${Math.round(base64Size / 1024)}KB of base64 data`)
-        metadata = stripBase64FromMetadata(metadata)
-      }
+    const rawMetadata = project.metadata || {}
+    const base64Size = calculateBase64Size(rawMetadata)
+    if (base64Size > 0) {
+      console.log(`[Projects GET] Stripping ${Math.round(base64Size / 1024)}KB of base64 data`)
     }
+    const metadata = slimProjectResponseMetadata(rawMetadata, { includeProduction })
     
     // Return project with formatted fields (matching /api/projects route format)
     const response = NextResponse.json({ 
@@ -531,11 +533,15 @@ export async function PUT(
       timestamp: new Date().toISOString()
     })
     
-    return NextResponse.json({
-      success: true,
-      project,
-      ...(staleScriptWriteBlocked ? { staleScriptWriteBlocked: true } : {}),
-    })
+    return NextResponse.json(
+      compactProjectPutAck({
+        staleScriptWriteBlocked,
+        scriptUpdatedAt: (project.metadata as any)?.visionPhase?.scriptUpdatedAt,
+        script: staleScriptWriteBlocked
+          ? (project.metadata as any)?.visionPhase?.script
+          : undefined,
+      })
+    )
   } catch (error: any) {
     if (error?.message === 'PROJECT_NOT_FOUND') {
       console.error('[Projects PUT] Project not found:', id)

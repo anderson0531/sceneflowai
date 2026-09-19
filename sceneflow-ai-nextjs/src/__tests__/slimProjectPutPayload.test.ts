@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
+  compactProjectPutAck,
   projectPutWouldExceedBodyLimit,
   slimProjectPutPayload,
+  slimProjectResponseMetadata,
   stringifyProjectPut,
   visionPhasePut,
   VERCEL_FUNCTION_BODY_LIMIT_BYTES,
@@ -128,6 +130,18 @@ describe('vision page slims every project PUT', () => {
     expect(fn).not.toContain('...existingMetadata')
     expect(fn).not.toContain('JSON.stringify(payload)')
   })
+
+  it('persists the object and location library as a visionPhase patch', () => {
+    const start = page.indexOf('const persistObjectLibrary = useCallback')
+    const end = page.indexOf('const persistVisionCharacters = useCallback')
+    const fn = page.slice(start, end)
+    const saveCall = fn.slice(fn.indexOf('return serializedProjectSave'))
+    expect(saveCall).toContain('visionPhasePut({')
+    expect(saveCall).toContain('references,')
+    expect(saveCall).not.toContain('...nextMetadata')
+    expect(page).toContain("debugLabel: 'persistLocationReferences'")
+    expect(page).toContain('fetch(`/api/projects/${projectId}/production`')
+  })
 })
 
 describe('visionPhasePut', () => {
@@ -142,5 +156,92 @@ describe('visionPhasePut', () => {
       references: { objectReferences: [] },
     })
     expect(JSON.parse(stringifyProjectPut(body)).metadata.visionPhase.production).toBeUndefined()
+  })
+})
+
+describe('project API slims GET/PUT echoes', () => {
+  const route = readFileSync(join(process.cwd(), 'src/app/api/projects/[id]/route.ts'), 'utf8')
+  const productionRoute = readFileSync(
+    join(process.cwd(), 'src/app/api/projects/[id]/production/route.ts'),
+    'utf8'
+  )
+  const generateImage = readFileSync(
+    join(process.cwd(), 'src/app/api/scene/generate-image/route.ts'),
+    'utf8'
+  )
+  const generateFrames = readFileSync(
+    join(process.cwd(), 'src/app/api/production/generate-segment-frames/route.ts'),
+    'utf8'
+  )
+
+  it('GET/PUT omit production and return a compact PUT ack', () => {
+    expect(route).toContain('slimProjectResponseMetadata')
+    expect(route).toContain("searchParams.get('include') === 'production'")
+    expect(route).toContain('compactProjectPutAck')
+    expect(route).not.toMatch(/return NextResponse\.json\(\{\s*success: true,\s*project,/)
+  })
+
+  it('serves production on its own GET', () => {
+    expect(productionRoute).toContain('export async function GET')
+    expect(productionRoute).toContain('production')
+  })
+
+  it('overlays location scale at the same still send sites as identity crop', () => {
+    expect(generateImage).toContain('overlayLocationScaleOnReferenceImages')
+    expect(generateFrames).toContain('overlayLocationScaleOnReferenceImages')
+  })
+})
+
+describe('slimProjectResponseMetadata', () => {
+  it('strips base64, drops production, and drops the legacy scene mirror', () => {
+    const slimmed = slimProjectResponseMetadata({
+      ...fullMetadata(),
+      visionPhase: {
+        ...fullMetadata().visionPhase,
+        characters: [
+          {
+            name: 'Piper Hayes',
+            referenceImage: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAE=',
+          },
+        ],
+      },
+    })
+    expect(slimmed.visionPhase.production).toBeUndefined()
+    expect(slimmed.visionPhase.scenes).toBeUndefined()
+    expect(slimmed.visionPhase.script.script.scenes).toEqual(scenes)
+    expect(slimmed.visionPhase.characters[0].referenceImage).toBe('deferred')
+  })
+
+  it('keeps production when includeProduction is set', () => {
+    const metadata = fullMetadata()
+    const slimmed = slimProjectResponseMetadata(metadata, { includeProduction: true })
+    expect(slimmed.visionPhase.production).toEqual(metadata.visionPhase.production)
+  })
+})
+
+describe('compactProjectPutAck', () => {
+  it('returns a small success body without the project blob', () => {
+    expect(compactProjectPutAck({ scriptUpdatedAt: '2026-09-19T00:00:00.000Z' })).toEqual({
+      success: true,
+      scriptUpdatedAt: '2026-09-19T00:00:00.000Z',
+    })
+  })
+
+  it('includes the server script only when a stale write was blocked', () => {
+    const script = { script: { scenes: [{ id: 'kept' }] } }
+    const ack = compactProjectPutAck({
+      staleScriptWriteBlocked: true,
+      scriptUpdatedAt: '2026-09-19T00:00:00.000Z',
+      script,
+    })
+    expect(ack.staleScriptWriteBlocked).toBe(true)
+    expect(ack.project).toEqual({
+      metadata: {
+        visionPhase: {
+          scriptUpdatedAt: '2026-09-19T00:00:00.000Z',
+          script,
+        },
+      },
+    })
   })
 })

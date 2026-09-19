@@ -151,6 +151,7 @@ import {
   cropIdentityReferenceImagesForPro,
   expandLeftoverDiptychSheetsIntoDualSlots,
 } from '@/lib/character/composeIdentityWardrobeDiptych'
+import { overlayLocationScaleOnReferenceImages } from '@/lib/vision/locationScaleOverlay'
 import {
   buildCombinedCharacterConsumptionLine,
   combinedCharacterReferenceInstruction,
@@ -3112,6 +3113,7 @@ export async function POST(req: NextRequest) {
               promptToken: locationToken,
               actionFraming: locationShotOptions.actionFraming,
               emptyCast: locationShotOptions.emptyCast,
+              locationDescription: cappedLocationReference.description,
             })} Use token ${locationToken} in the scene prompt. Environment: "${locationName}". Match lighting to the scene prompt Style section.\n\n`
           }
 
@@ -3360,10 +3362,11 @@ export async function POST(req: NextRequest) {
                 )
               : sanitizedGeminiPrompt
 
-            const vertexReferenceImages =
+            const vertexReferenceImages = await overlayLocationScaleOnReferenceImages(
               effectiveImageTier !== 'eco'
                 ? await cropIdentityReferenceImagesForPro(allReferenceImages)
                 : allReferenceImages
+            )
             const vertexResult = await generateImageWithVertexKlingFallback({
               prompt: vertexPrompt,
               aspectRatio: '16:9',
