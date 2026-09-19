@@ -990,7 +990,6 @@ export function FullscreenPlayer({
       }
     })
     
-    const currentVisual = getCurrentVisualClip(newTime)
     onPlayheadChange?.(newTime, currentVisual?.segmentId)
   }, [sceneDuration, allAudioClips, getCurrentVisualClip, getVolumeForTrack, onPlayheadChange])
   

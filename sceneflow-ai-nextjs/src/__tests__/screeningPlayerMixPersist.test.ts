@@ -132,4 +132,13 @@ describe('players reuse audio elements across timeline changes', () => {
     expect(fullscreen).toContain('function releaseAudioElement')
     expect(fullscreen).toMatch(/audio\.src = ''\n {2}\/\/[^\n]*\n {2}audio\.load\(\)/)
   })
+
+  it('declares currentVisual once in seekTo', () => {
+    const seek = readCallbackBody(
+      fullscreen,
+      'seekTo',
+      '[sceneDuration, allAudioClips, getCurrentVisualClip, getVolumeForTrack'
+    )
+    expect(seek.match(/const currentVisual = getCurrentVisualClip/g)).toHaveLength(1)
+  })
 })
