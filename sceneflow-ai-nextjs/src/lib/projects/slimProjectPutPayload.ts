@@ -1,4 +1,4 @@
-import { stripBase64FromMetadata } from '@/lib/storage/mediaStorage'
+import { MEDIA_VERSION_LIST_KEYS, stripBase64FromMetadata } from '@/lib/storage/mediaStorage'
 
 /**
  * Drop the parts of a project PUT that have no business being re-sent.
@@ -23,11 +23,95 @@ import { stripBase64FromMetadata } from '@/lib/storage/mediaStorage'
  * script migration) pass `persistProduction: true`.
  */
 export const VERCEL_FUNCTION_BODY_LIMIT_BYTES = 4.5 * 1024 * 1024
+/** Leave room for the GET envelope (`success`, project fields, omitted flags). */
+export const VERCEL_FUNCTION_RESPONSE_HEADROOM_BYTES = 100 * 1024
+export const VERCEL_FUNCTION_RESPONSE_BUDGET_BYTES =
+  VERCEL_FUNCTION_BODY_LIMIT_BYTES - VERCEL_FUNCTION_RESPONSE_HEADROOM_BYTES
+
+export type ProjectResponseOmittedLayer =
+  | 'versionPrompts'
+  | 'versionArrays'
+  | 'reviewHistory'
+  | 'translations'
+
+export interface FitProjectResponseResult {
+  metadata: Record<string, any>
+  omitted: ProjectResponseOmittedLayer[]
+  bytes: number
+}
 
 export interface ProjectPutBody {
   metadata?: Record<string, any>
   persistProduction?: boolean
   [key: string]: unknown
+}
+
+function cloneJson<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value))
+}
+
+function jsonByteLength(value: unknown): number {
+  try {
+    return JSON.stringify(value).length
+  } catch {
+    return Number.POSITIVE_INFINITY
+  }
+}
+
+function visionScriptScenes(visionPhase: Record<string, any> | undefined): any[] {
+  const scenes = visionPhase?.script?.script?.scenes
+  return Array.isArray(scenes) ? scenes : []
+}
+
+function forEachStillHost(
+  metadata: Record<string, any>,
+  visit: (host: Record<string, any>) => void
+): void {
+  const vision = metadata.visionPhase
+  if (!vision || typeof vision !== 'object') return
+  for (const scene of visionScriptScenes(vision)) {
+    if (!scene || typeof scene !== 'object') continue
+    visit(scene)
+    for (const line of scene.dialogue || []) {
+      if (line && typeof line === 'object') visit(line)
+    }
+    for (const frame of scene.storyboardFrames || []) {
+      if (frame && typeof frame === 'object') visit(frame)
+    }
+    for (const beat of scene.beats || []) {
+      if (beat && typeof beat === 'object') visit(beat)
+    }
+  }
+}
+
+function stripMediaVersionPromptsInPlace(metadata: Record<string, any>): boolean {
+  let stripped = false
+  forEachStillHost(metadata, (host) => {
+    for (const key of MEDIA_VERSION_LIST_KEYS) {
+      const list = host[key]
+      if (!Array.isArray(list)) continue
+      host[key] = list.map((entry: unknown) => {
+        if (!entry || typeof entry !== 'object' || !('prompt' in entry)) return entry
+        stripped = true
+        const { prompt: _prompt, ...rest } = entry as Record<string, unknown>
+        return rest
+      })
+    }
+  })
+  return stripped
+}
+
+function dropMediaVersionArraysInPlace(metadata: Record<string, any>): boolean {
+  let dropped = false
+  forEachStillHost(metadata, (host) => {
+    for (const key of MEDIA_VERSION_LIST_KEYS) {
+      if (key in host) {
+        delete host[key]
+        dropped = true
+      }
+    }
+  })
+  return dropped
 }
 
 export function slimProjectPutPayload<T extends ProjectPutBody>(
@@ -102,6 +186,9 @@ export interface SlimProjectResponseOptions {
  * Vercel 413s a body over 4.5MB on the way out as well as in. GET and PUT
  * used to echo production takes plus any leftover data URIs; location persist
  * then looked like a failed save even after the Blob upload succeeded.
+ *
+ * GET also drops MediaVersion `prompt`s (they duplicate the live still prompt)
+ * so Frames restore still has id/url/createdAt/source.
  */
 export function slimProjectResponseMetadata(
   metadata: Record<string, any> | null | undefined,
@@ -121,10 +208,48 @@ export function slimProjectResponseMetadata(
     delete nextVision.production
   }
 
-  return {
+  const next = {
     ...stripped,
     visionPhase: nextVision,
   }
+  stripMediaVersionPromptsInPlace(next)
+  return next
+}
+
+/**
+ * Drop GET-only layers until metadata JSON fits under the Function budget.
+ * Never removes live beats, beatDirection, or current still URLs.
+ */
+export function fitProjectResponseMetadata(
+  metadata: Record<string, any> | null | undefined,
+  options?: { budgetBytes?: number }
+): FitProjectResponseResult {
+  const budget = options?.budgetBytes ?? VERCEL_FUNCTION_RESPONSE_BUDGET_BYTES
+  const next: Record<string, any> =
+    metadata && typeof metadata === 'object' ? cloneJson(metadata) : {}
+  const omitted: ProjectResponseOmittedLayer[] = []
+
+  const measure = () => jsonByteLength(next)
+
+  if (stripMediaVersionPromptsInPlace(next)) {
+    omitted.push('versionPrompts')
+  }
+
+  if (measure() >= budget && dropMediaVersionArraysInPlace(next)) {
+    omitted.push('versionArrays')
+  }
+
+  const vision = next.visionPhase
+  if (measure() >= budget && vision && typeof vision === 'object' && 'reviewHistory' in vision) {
+    delete vision.reviewHistory
+    omitted.push('reviewHistory')
+  }
+  if (measure() >= budget && vision && typeof vision === 'object' && 'translations' in vision) {
+    delete vision.translations
+    omitted.push('translations')
+  }
+
+  return { metadata: next, omitted, bytes: measure() }
 }
 
 export interface CompactProjectPutAckArgs {

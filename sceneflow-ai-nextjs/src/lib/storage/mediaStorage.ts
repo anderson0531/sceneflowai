@@ -423,6 +423,53 @@ export interface MigrationStats {
   bytesFreed: number
 }
 
+/** Append-only still history lists that can still hold a leftover data URI. */
+export const MEDIA_VERSION_LIST_KEYS = [
+  'storyboardImageVersions',
+  'storyboardEndImageVersions',
+  'imageVersions',
+] as const
+
+function scriptScenesFromVision(visionPhase: any): any[] {
+  const canonical = visionPhase?.script?.script?.scenes
+  if (Array.isArray(canonical)) return canonical
+  return Array.isArray(visionPhase?.scenes) ? visionPhase.scenes : []
+}
+
+function visitVersionUrls(
+  host: any,
+  visit: (entry: Record<string, any>) => void
+): void {
+  if (!host || typeof host !== 'object') return
+  for (const key of MEDIA_VERSION_LIST_KEYS) {
+    const list = host[key]
+    if (!Array.isArray(list)) continue
+    for (const entry of list) {
+      if (entry && typeof entry === 'object') visit(entry)
+    }
+  }
+}
+
+/** Scene, dialogue, custom-frame, and beat rows that own still URLs. */
+function visitSceneStillHosts(
+  scene: any,
+  visit: (host: any, urlKeys: readonly string[]) => void
+): void {
+  if (!scene || typeof scene !== 'object') return
+  visit(scene, ['imageUrl', 'sceneReferenceImageUrl'])
+  for (const line of scene.dialogue || []) {
+    if (line && typeof line === 'object') visit(line, ['storyboardImageUrl'])
+  }
+  for (const frame of scene.storyboardFrames || []) {
+    if (frame && typeof frame === 'object') visit(frame, ['imageUrl'])
+  }
+  for (const beat of scene.beats || []) {
+    if (beat && typeof beat === 'object') {
+      visit(beat, ['storyboardImageUrl', 'storyboardEndImageUrl'])
+    }
+  }
+}
+
 /**
  * Calculate the total size of base64 images in metadata
  */
@@ -434,6 +481,11 @@ export function calculateBase64Size(metadata: any): number {
       totalSize += getBase64Size(value)
     }
   }
+
+  const visitHost = (host: any, urlKeys: readonly string[]) => {
+    for (const key of urlKeys) checkAndAdd(host?.[key])
+    visitVersionUrls(host, (entry) => checkAndAdd(entry.url))
+  }
   
   // Check thumbnail
   checkAndAdd(metadata?.thumbnail)
@@ -444,6 +496,7 @@ export function calculateBase64Size(metadata: any): number {
   const characters = visionPhase.characters || []
   for (const char of characters) {
     checkAndAdd(char.referenceImage)
+    checkAndAdd(char.combinedCharacterRefUrl)
     for (const wardrobe of char.wardrobes || []) {
       checkAndAdd(wardrobe.fullBodyUrl)
       checkAndAdd(wardrobe.headshotUrl)
@@ -451,17 +504,8 @@ export function calculateBase64Size(metadata: any): number {
     }
   }
   
-  // Check scenes
-  const scenes = visionPhase.script?.script?.scenes || []
-  for (const scene of scenes) {
-    checkAndAdd(scene.imageUrl)
-    checkAndAdd(scene.sceneReferenceImageUrl)
-    for (const line of scene.dialogue || []) {
-      checkAndAdd(line?.storyboardImageUrl)
-    }
-    for (const frame of scene.storyboardFrames || []) {
-      checkAndAdd(frame?.imageUrl)
-    }
+  for (const scene of scriptScenesFromVision(visionPhase)) {
+    visitSceneStillHosts(scene, visitHost)
   }
   
   // Check references
@@ -491,6 +535,13 @@ export function stripBase64FromMetadata(metadata: any): any {
       obj[key] = 'deferred'
     }
   }
+
+  const visitHost = (host: any, urlKeys: readonly string[]) => {
+    for (const key of urlKeys) stripIfBase64(host, key)
+    visitVersionUrls(host, (entry) => {
+      if (isBase64DataUri(entry.url)) entry.url = 'deferred'
+    })
+  }
   
   // Strip thumbnail
   stripIfBase64(newMetadata, 'thumbnail')
@@ -501,6 +552,7 @@ export function stripBase64FromMetadata(metadata: any): any {
   const characters = visionPhase.characters || []
   for (const char of characters) {
     stripIfBase64(char, 'referenceImage')
+    stripIfBase64(char, 'combinedCharacterRefUrl')
     for (const wardrobe of char.wardrobes || []) {
       stripIfBase64(wardrobe, 'fullBodyUrl')
       stripIfBase64(wardrobe, 'headshotUrl')
@@ -508,17 +560,8 @@ export function stripBase64FromMetadata(metadata: any): any {
     }
   }
   
-  // Strip scene images
-  const scenes = visionPhase.script?.script?.scenes || []
-  for (const scene of scenes) {
-    stripIfBase64(scene, 'imageUrl')
-    stripIfBase64(scene, 'sceneReferenceImageUrl')
-    for (const line of scene.dialogue || []) {
-      stripIfBase64(line, 'storyboardImageUrl')
-    }
-    for (const frame of scene.storyboardFrames || []) {
-      stripIfBase64(frame, 'imageUrl')
-    }
+  for (const scene of scriptScenesFromVision(visionPhase)) {
+    visitSceneStillHosts(scene, visitHost)
   }
   
   // Strip reference images
