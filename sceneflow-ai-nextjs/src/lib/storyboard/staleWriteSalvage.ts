@@ -9,22 +9,23 @@
  * and dropping it costs the user the credits they already spent with no way to
  * tell which asset went missing.
  *
- * So the newer script stays authoritative and this only fills slots it left
- * empty: a media URL is adopted from the rejected payload when the newer side
- * has none for that field.
- *
- * Scalar fields (`narrationAudioUrl`, frames) and per-language voice maps
- * (`dialogueAudio`, `narrationAudio`) are filled the same way: empty slots
- * only, matched by identity (`lineId` for map entries). Positional arrays
- * (`sfxAudio`) are still skipped — inserting under a reused index is worse
- * than a lost clip.
+ * Stills are versioned: both URLs are kept, and a newer rejected still becomes
+ * current even when the slot was already filled. Audio and path fields still
+ * fill empty slots only.
  */
 
 import { isValidStoryboardMediaUrl } from './mergeSceneMedia'
 import { mergeVoiceAudioMapsByLineId } from './mergeVoiceAudioMaps'
+import {
+  BEAT_END_STILL_SLOT,
+  BEAT_START_STILL_SLOT,
+  CUSTOM_FRAME_STILL_SLOT,
+  DIALOGUE_STILL_SLOT,
+  SCENE_STILL_SLOT,
+  salvageStillSlot,
+} from './mediaVersions'
 
-const SCENE_MEDIA_KEYS = [
-  'imageUrl',
+const SCENE_PATH_AND_AUDIO_KEYS = [
   'imageGcsPath',
   'sceneReferenceImageUrl',
   'narrationAudioUrl',
@@ -32,17 +33,12 @@ const SCENE_MEDIA_KEYS = [
   'musicUrl',
 ] as const
 
-const BEAT_MEDIA_KEYS = [
-  'storyboardImageUrl',
-  'storyboardImageGcsPath',
-  'storyboardEndImageUrl',
-  'storyboardEndImageGcsPath',
-] as const
+const BEAT_PATH_KEYS = ['storyboardImageGcsPath', 'storyboardEndImageGcsPath'] as const
 
-const DIALOGUE_MEDIA_KEYS = ['storyboardImageUrl', 'storyboardImageGcsPath'] as const
+const DIALOGUE_PATH_KEYS = ['storyboardImageGcsPath'] as const
 
 export interface StaleWriteSalvageResult {
-  /** The newer scenes, with empty media slots filled from the rejected payload. */
+  /** The newer scenes, with rejected still versions unioned in. */
   scenes: unknown[]
   /** How many media fields were adopted. */
   salvaged: number
@@ -124,13 +120,8 @@ function matchRow(
 }
 
 function salvageScene(newerScene: Row, staleScene: Row, sceneLabel: string, fields: string[]): Row {
-  let result = fillEmptyMediaSlots(
-    newerScene,
-    staleScene,
-    SCENE_MEDIA_KEYS,
-    sceneLabel,
-    fields
-  )
+  let result = salvageStillSlot(newerScene, staleScene, SCENE_STILL_SLOT, sceneLabel, fields)
+  result = fillEmptyMediaSlots(result, staleScene, SCENE_PATH_AND_AUDIO_KEYS, sceneLabel, fields)
 
   const newerBeats = asRows(newerScene.beats)
   if (newerBeats.length > 0) {
@@ -140,7 +131,9 @@ function salvageScene(newerScene: Row, staleScene: Row, sceneLabel: string, fiel
     const mergedBeats = newerBeats.map((beat, index) => {
       const stale = matchRow(beat, 'beatId', staleBeatsById, staleBeats, index)
       const label = `${sceneLabel}.beat[${stringKey(beat, 'beatId') ?? index}]`
-      const merged = fillEmptyMediaSlots(beat, stale, BEAT_MEDIA_KEYS, label, fields)
+      let merged = salvageStillSlot(beat, stale, BEAT_START_STILL_SLOT, label, fields)
+      merged = salvageStillSlot(merged, stale, BEAT_END_STILL_SLOT, label, fields)
+      merged = fillEmptyMediaSlots(merged, stale, BEAT_PATH_KEYS, label, fields)
       if (merged !== beat) beatsChanged = true
       return merged
     })
@@ -155,11 +148,27 @@ function salvageScene(newerScene: Row, staleScene: Row, sceneLabel: string, fiel
     const mergedDialogue = newerDialogue.map((line, index) => {
       const stale = matchRow(line, 'lineId', staleDialogueById, staleDialogue, index)
       const label = `${sceneLabel}.dialogue[${stringKey(line, 'lineId') ?? index}]`
-      const merged = fillEmptyMediaSlots(line, stale, DIALOGUE_MEDIA_KEYS, label, fields)
+      let merged = salvageStillSlot(line, stale, DIALOGUE_STILL_SLOT, label, fields)
+      merged = fillEmptyMediaSlots(merged, stale, DIALOGUE_PATH_KEYS, label, fields)
       if (merged !== line) dialogueChanged = true
       return merged
     })
     if (dialogueChanged) result = { ...result, dialogue: mergedDialogue }
+  }
+
+  const newerFrames = asRows(newerScene.storyboardFrames)
+  if (newerFrames.length > 0) {
+    const staleFrames = asRows(staleScene.storyboardFrames)
+    const staleFramesById = indexRowsBy(staleFrames, 'id')
+    let framesChanged = false
+    const mergedFrames = newerFrames.map((frame, index) => {
+      const stale = matchRow(frame, 'id', staleFramesById, staleFrames, index)
+      const label = `${sceneLabel}.frame[${stringKey(frame, 'id') ?? index}]`
+      const merged = salvageStillSlot(frame, stale, CUSTOM_FRAME_STILL_SLOT, label, fields)
+      if (merged !== frame) framesChanged = true
+      return merged
+    })
+    if (framesChanged) result = { ...result, storyboardFrames: mergedFrames }
   }
 
   const voice = mergeVoiceAudioMapsByLineId(result, staleScene)
@@ -172,7 +181,7 @@ function salvageScene(newerScene: Row, staleScene: Row, sceneLabel: string, fiel
 }
 
 /**
- * Fill media slots the newer scenes left empty from the rejected payload.
+ * Union still versions from the rejected payload into the newer scenes.
  *
  * Iterates the newer scenes only: a scene present in the rejected payload but
  * gone from the database was deleted, and resurrecting it is exactly the revert

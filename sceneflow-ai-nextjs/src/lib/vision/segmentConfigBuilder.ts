@@ -23,6 +23,15 @@ import {
 } from '@/lib/vision/ftvPromptNormalize'
 import { resolvePreferredStoryboardUrl } from '@/lib/storyboard/mergeSceneMedia'
 import {
+  assignStillUrl,
+  BEAT_START_STILL_SLOT,
+  END_FRAME_STILL_SLOT,
+  START_FRAME_STILL_SLOT,
+  mediaRecencyMs,
+  stillVersionsOnRow,
+  type MediaVersionSource,
+} from '@/lib/storyboard/mediaVersions'
+import {
   resolveSegmentVideoReferences,
   type LabeledVideoReference,
 } from '@/lib/vision/resolveBeatVideoReferences'
@@ -441,25 +450,42 @@ export function segmentHasBatchGuideDialogue(segment: SceneSegment): boolean {
   )
 }
 
+/** Stamp a production start/end still as a versioned current pointer. */
+export function stampProductionFrameUrl(
+  segment: SceneSegment,
+  frameType: 'start' | 'end',
+  url: string,
+  source: MediaVersionSource = 'generate'
+): SceneSegment {
+  const trimmed = url.trim()
+  if (!trimmed) return segment
+  const spec = frameType === 'start' ? START_FRAME_STILL_SLOT : END_FRAME_STILL_SLOT
+  const refs = assignStillUrl(
+    { ...(segment.references || {}) } as Record<string, unknown>,
+    spec,
+    trimmed,
+    { source }
+  )
+  return {
+    ...segment,
+    ...(frameType === 'start' ? { startFrameUrl: trimmed } : { endFrameUrl: trimmed }),
+    references: refs as SceneSegment['references'],
+  }
+}
+
 /** Apply a beat-level start frame URL to all production segments for that beat. */
 export function applyStartFrameUrlToProductionSegments(
   segments: SceneSegment[],
   beatId: string,
-  newUrl: string
+  newUrl: string,
+  source: MediaVersionSource = 'generate'
 ): SceneSegment[] {
   const trimmed = newUrl.trim()
   if (!trimmed || !beatId.trim()) return segments
 
   return segments.map((seg) => {
     if (seg.beatId !== beatId) return seg
-    return {
-      ...seg,
-      startFrameUrl: trimmed,
-      references: {
-        ...seg.references,
-        startFrameUrl: trimmed,
-      },
-    }
+    return stampProductionFrameUrl(seg, 'start', trimmed, source)
   })
 }
 
@@ -484,13 +510,24 @@ export function resolveEffectiveStartFrameUrl(
     null
 
   let beatUrl: string | null = null
+  let beatRow: Record<string, unknown> | undefined
   if (beatId && scene) {
     const beat = getSceneBeats(scene).find((b) => b.beatId === beatId)
+    beatRow = beat as unknown as Record<string, unknown> | undefined
     beatUrl = beat?.storyboardImageUrl?.trim() || null
   }
 
   if (beatUrl && segmentUrl) {
     if (beatUrl === segmentUrl) return beatUrl
+    const beatAt = mediaRecencyMs(beatUrl, stillVersionsOnRow(beatRow, BEAT_START_STILL_SLOT))
+    const segmentAt = mediaRecencyMs(
+      segmentUrl,
+      stillVersionsOnRow(
+        segment.references as unknown as Record<string, unknown> | undefined,
+        START_FRAME_STILL_SLOT
+      )
+    )
+    if (beatAt && segmentAt) return beatAt >= segmentAt ? beatUrl : segmentUrl
     return resolvePreferredStoryboardUrl(segmentUrl, beatUrl) || segmentUrl || beatUrl
   }
   if (beatUrl) return beatUrl

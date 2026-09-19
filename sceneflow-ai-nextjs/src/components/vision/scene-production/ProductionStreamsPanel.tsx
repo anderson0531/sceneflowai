@@ -83,6 +83,9 @@ interface ProductionStreamsPanelProps {
   finalCutSelection?: FinalCutSelection | null
   /** Pin or clear this stream as the Screening Room video version */
   onDesignateScreeningStream?: (streamId: string) => void | Promise<void>
+  /** Restore this stream as the scene's current complete version without deleting others */
+  onUseStreamVersion?: (streamId: string) => void
+  currentStreamId?: string | null
   /** Whether a screening designation save is in progress */
   isDesignatingScreening?: boolean
   /** Disabled state */
@@ -366,6 +369,8 @@ function ProductionStreamCard({
   onRename,
   onDesignateScreening,
   isDesignatingScreening,
+  onUseVersion,
+  isCurrentVersion,
   disabled
 }: {
   stream: ProductionStream
@@ -380,6 +385,8 @@ function ProductionStreamCard({
   onRename?: (displayName: string) => void
   onDesignateScreening?: () => void
   isDesignatingScreening?: boolean
+  onUseVersion?: () => void
+  isCurrentVersion?: boolean
   disabled?: boolean
 }) {
   const statusConfig = STATUS_CONFIG[stream.status]
@@ -489,6 +496,11 @@ function ProductionStreamCard({
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-600/50 text-slate-300 font-medium">
               Version {stream.streamVersion ?? 1}
             </span>
+            {isCurrentVersion && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-200 border border-cyan-500/30 font-medium">
+                Using
+              </span>
+            )}
             {isScreeningVersion && (
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-200 border border-violet-500/30 font-medium">
                 Screening
@@ -556,6 +568,20 @@ function ProductionStreamCard({
             >
               <Download className="w-4 h-4" />
             </Button>
+            {onUseVersion && stream.status === 'complete' && stream.mp4Url && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onUseVersion}
+                disabled={disabled || isCurrentVersion}
+                className={`h-8 px-2 hover:bg-gray-700 ${
+                  isCurrentVersion ? 'text-cyan-300' : 'text-gray-400 hover:text-cyan-300'
+                }`}
+                title="Use this version"
+              >
+                {isCurrentVersion ? 'Using' : 'Use this version'}
+              </Button>
+            )}
             {onDesignateScreening && (
               <Button
                 size="sm"
@@ -654,6 +680,8 @@ export function ProductionStreamsPanel({
   finalCutSelection,
   onDesignateScreeningStream,
   isDesignatingScreening = false,
+  onUseStreamVersion,
+  currentStreamId,
   disabled = false
 }: ProductionStreamsPanelProps) {
   const [internalStreamTab, setInternalStreamTab] = useState<ProductionStreamType>('video')
@@ -860,6 +888,10 @@ export function ProductionStreamsPanel({
                   : undefined
               }
               isDesignatingScreening={isDesignatingScreening}
+              onUseVersion={
+                onUseStreamVersion ? () => onUseStreamVersion(stream.id) : undefined
+              }
+              isCurrentVersion={currentStreamId === stream.id}
               disabled={disabled}
             />
           ))}

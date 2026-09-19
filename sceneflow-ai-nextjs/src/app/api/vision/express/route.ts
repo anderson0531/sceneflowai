@@ -123,6 +123,7 @@ async function persistExpressScenes(
           : {}),
         artStyle: options.artStyle || freshVisionPhase.artStyle || 'photorealistic',
         scenes: mergedScenes,
+        scriptUpdatedAt: new Date().toISOString(),
         script: nested
           ? {
               ...freshVisionPhase.script,

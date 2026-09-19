@@ -240,6 +240,12 @@ export interface SceneBeat {
    * authoritative source by downstream prompt builders.
    */
   beatDirection?: BeatDirection
+  /** Append-only still history for the start frame. Current pointer is storyboardImageUrl. */
+  storyboardImageVersions?: import('@/lib/storyboard/mediaVersions').MediaVersion[]
+  storyboardImageVersionId?: string
+  /** Append-only still history for the optional end frame. */
+  storyboardEndImageVersions?: import('@/lib/storyboard/mediaVersions').MediaVersion[]
+  storyboardEndImageVersionId?: string
 }
 
 /**
@@ -263,6 +269,8 @@ export interface DialogueLine {
   storyboardImageUrl?: string
   storyboardImagePrompt?: string
   storyboardImageGcsPath?: string
+  storyboardImageVersions?: import('@/lib/storyboard/mediaVersions').MediaVersion[]
+  storyboardImageVersionId?: string
   /** draft = Express layout pass; final = hi-res for animatic & video */
   storyboardImageTier?: 'draft' | 'final'
 }

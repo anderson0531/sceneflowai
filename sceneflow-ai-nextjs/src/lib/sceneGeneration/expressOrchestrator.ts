@@ -57,7 +57,6 @@ import { generateSceneDirection } from './generateDirection'
 import { generateSceneAudio, applyAudioAssetsToScene } from './generateAudio'
 import { generateSceneImage } from './generateImage'
 import { usesFlashDraftTier } from './animaticImageModel'
-import { beatStillImageStamp } from '../script/beatDirectionFingerprint'
 import { shouldScheduleStandaloneNarration } from '../script/narration'
 import {
   detectCharactersNamedInBeat,
@@ -69,11 +68,14 @@ import {
 } from '../vision/beatFrameGenerationContext'
 import {
   applyBeatReferenceSelectionToScene,
+  applyBeatStoryboardImageToScene,
+  applyDialogueStoryboardImageToScene,
   getSceneBeats,
   applyBeatsToScene,
   isBeatExcluded,
 } from '../script/beatMigration'
 import { beatFrameSlotKey, countExpressFrameScope } from '../storyboard/types'
+import { assignStillUrl, DIALOGUE_STILL_SLOT, SCENE_STILL_SLOT } from '../storyboard/mediaVersions'
 import { stampPreVisContentHash } from '../storyboard/preVisSync'
 import type { BeatReferenceSelection, SceneBeat } from '../script/segmentTypes'
 import {
@@ -1354,24 +1356,13 @@ function writeBeatFrameToScene(
   result: { imageUrl: string; gcsPath?: string | null; imagePrompt?: string | null },
   tier: StoryboardQuality
 ): void {
-  const beats = getSceneBeats(scene)
-  if (!beats[beatIndex]) return
-  const previous = beats[beatIndex]
-  const { storyboardImageError: _cleared, ...rest } = previous
-  beats[beatIndex] = {
-    ...rest,
-    storyboardImageUrl: result.imageUrl,
-    storyboardImageTier: tier,
-    ...(result.gcsPath ? { storyboardImageGcsPath: result.gcsPath } : {}),
-    ...beatStillImageStamp(previous, { imagePrompt: result.imagePrompt }),
-    ...(result.imagePrompt ? { storyboardImagePrompt: result.imagePrompt } : {}),
-  }
-  const updated = applyBeatsToScene(scene, beats)
+  const updated = applyBeatStoryboardImageToScene(scene, beatIndex, result.imageUrl, {
+    imagePrompt: result.imagePrompt ?? undefined,
+    imageGcsPath: result.gcsPath ?? undefined,
+    imageTier: tier,
+    source: 'express',
+  })
   Object.assign(scene, updated)
-  if (beatIndex === 0 && beats[0]?.kind === 'action') {
-    scene.imageUrl = result.imageUrl
-    if (result.imagePrompt) scene.imagePrompt = result.imagePrompt
-  }
 }
 
 function writeBeatFrameErrorToScene(
@@ -1396,17 +1387,13 @@ function writeBeatEndFrameToScene(
   result: { imageUrl: string; gcsPath?: string | null; imagePrompt?: string | null },
   tier: StoryboardQuality
 ): void {
-  const beats = getSceneBeats(scene)
-  if (!beats[beatIndex]) return
-  beats[beatIndex] = {
-    ...beats[beatIndex],
-    storyboardEndImageUrl: result.imageUrl,
-    storyboardEndImageTier: tier,
-    storyboardEndImageError: undefined,
-    ...(result.gcsPath ? { storyboardEndImageGcsPath: result.gcsPath } : {}),
-    ...(result.imagePrompt ? { storyboardEndImagePrompt: result.imagePrompt } : {}),
-  }
-  const updated = applyBeatsToScene(scene, beats)
+  const updated = applyBeatStoryboardImageToScene(scene, beatIndex, result.imageUrl, {
+    frameRole: 'end',
+    imagePrompt: result.imagePrompt ?? undefined,
+    imageGcsPath: result.gcsPath ?? undefined,
+    imageTier: tier,
+    source: 'express',
+  })
   Object.assign(scene, updated)
 }
 
@@ -1802,13 +1789,17 @@ async function runImagePhase(
         tier: StoryboardQuality
       ) => {
         if (!Array.isArray(scene.dialogue)) scene.dialogue = []
-        scene.dialogue[idx] = {
-          ...scene.dialogue[idx],
-          storyboardImageUrl: result.imageUrl,
-          storyboardImageTier: tier,
-          ...(result.gcsPath ? { storyboardImageGcsPath: result.gcsPath } : {}),
-          ...(result.imagePrompt ? { storyboardImagePrompt: result.imagePrompt } : {}),
-        }
+        scene.dialogue[idx] = assignStillUrl(
+          {
+            ...scene.dialogue[idx],
+            storyboardImageTier: tier,
+            ...(result.gcsPath ? { storyboardImageGcsPath: result.gcsPath } : {}),
+            ...(result.imagePrompt ? { storyboardImagePrompt: result.imagePrompt } : {}),
+          },
+          DIALOGUE_STILL_SLOT,
+          result.imageUrl,
+          { source: 'express', prompt: result.imagePrompt ?? undefined }
+        )
       }
 
       if (needsEstablishing) {
@@ -1830,7 +1821,13 @@ async function runImagePhase(
             ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
             ...(ctx.signal ? { signal: ctx.signal } : {}),
           })
-          scene.imageUrl = result.imageUrl
+          Object.assign(
+            scene,
+            assignStillUrl(scene, SCENE_STILL_SLOT, result.imageUrl, {
+              source: 'express',
+              prompt: result.imagePrompt ?? undefined,
+            })
+          )
           lastImageUrl = result.imageUrl
           if (result.gcsPath) scene.imageGcsPath = result.gcsPath
           if (result.imagePrompt) scene.imagePrompt = result.imagePrompt

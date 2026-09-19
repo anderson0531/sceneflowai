@@ -85,7 +85,7 @@ describe('mergeScenePreservingMedia', () => {
     ).toBe(1779527367355)
   })
 
-  it('prefers newer blob URL when both valid', () => {
+  it('keeps incoming current when both valid and prefers history union', () => {
     const canonical = {
       imageUrl:
         'https://x.public.blob.vercel-storage.com/images/frames/p/old/1779500000000.jpeg',
@@ -96,6 +96,12 @@ describe('mergeScenePreservingMedia', () => {
     }
     const merged = mergeScenePreservingMedia(canonical, incoming)
     expect(merged.imageUrl).toContain('1779527367355')
+    expect(merged.imageVersions.map((v: { url: string }) => v.url).sort()).toEqual(
+      [
+        'https://x.public.blob.vercel-storage.com/images/frames/p/old/1779500000000.jpeg',
+        'https://x.public.blob.vercel-storage.com/images/frames/p/new/1779527367355.jpeg',
+      ].sort()
+    )
   })
 
   it('moves storyboardImageDirectionKey with the image URL that won', () => {
@@ -127,9 +133,12 @@ describe('mergeScenePreservingMedia', () => {
     }
 
     const merged = mergeScenePreservingMedia(canonical, incoming)
-    expect(merged.beats[0].storyboardImageUrl).toContain('1779527367355')
-    expect(merged.beats[0].storyboardImageDirectionKey).toBe('still-v4|shotType=Medium Shot')
-    expect(merged.beats[0].storyboardImageContentKey).toBe('action|Elara raises the journal.')
+    expect(merged.beats[0].storyboardImageUrl).toContain('1779500000000')
+    expect(merged.beats[0].storyboardImageDirectionKey).toBe('still-v3|shotType=Wide Shot')
+    expect(merged.beats[0].storyboardImageContentKey).toBe('action|Old prose')
+    expect(
+      merged.beats[0].storyboardImageVersions.map((v: { url: string }) => v.url)
+    ).toHaveLength(2)
   })
 
   it('merges per-line dialogueAudio preferring newer manual uploads', () => {
@@ -638,6 +647,9 @@ describe('mergeSceneArraysForPersistence', () => {
     const merged = mergeSceneArraysForPersistence(existing, incoming)
     expect(merged[0].beats[0].line).toBe('Updated')
     expect(merged[0].beats[0].storyboardImageUrl).toBeUndefined()
+    expect(
+      merged[0].beats[0].storyboardImageVersions.map((v: { url: string }) => v.url)
+    ).toEqual(['https://example.com/saved.jpg'])
   })
 
   it('preserves visionPhase.scenes dialogue frames when incoming legacy mirror omits them', () => {
@@ -754,7 +766,13 @@ describe('mergeExpressOrchestratedScenes', () => {
     const wrongMerge = mergeSceneArraysForPersistence(freshDb, orchestrated)
     const expressMerge = mergeExpressOrchestratedScenes(orchestrated, freshDb)
 
-    expect(wrongMerge[0].beats[0].storyboardImageUrl).toContain('1779527367355')
+    expect(wrongMerge[0].beats[0].storyboardImageUrl).toContain('1779500000000')
     expect(expressMerge[0].beats[0].storyboardImageUrl).toContain('1779500000000')
+    expect(
+      wrongMerge[0].beats[0].storyboardImageVersions.map((v: { url: string }) => v.url)
+    ).toHaveLength(2)
+    expect(
+      expressMerge[0].beats[0].storyboardImageVersions.map((v: { url: string }) => v.url)
+    ).toHaveLength(2)
   })
 })

@@ -96,6 +96,7 @@ export interface VideoEditingDialogProps {
     referenceImages?: Array<{ url: string; type: 'style' | 'character' }>
   }) => Promise<void>
   isGenerating?: boolean
+  onSelectTake?: (take: SceneSegmentTake) => void
 }
 
 // ============================================
@@ -1089,7 +1090,8 @@ function HistoryTab({ segment, onSelectTake }: HistoryTabProps) {
               key={take.id}
               className={cn(
                 "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
-                segment.activeAssetUrl === take.assetUrl
+                segment.activeAssetUrl === take.assetUrl ||
+                segment.currentTakeId === take.id
                   ? "border-sf-primary bg-sf-primary/5"
                   : "border-gray-200 dark:border-gray-700 hover:border-sf-primary/50"
               )}
@@ -1114,7 +1116,7 @@ function HistoryTab({ segment, onSelectTake }: HistoryTabProps) {
                   <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     Take {idx + 1}
                   </span>
-                  {segment.activeAssetUrl === take.assetUrl && (
+                  {(segment.activeAssetUrl === take.assetUrl || segment.currentTakeId === take.id) && (
                     <span className="text-[10px] px-1.5 py-0.5 bg-sf-primary/10 text-sf-primary rounded">
                       Active
                     </span>
@@ -1263,7 +1265,8 @@ export function VideoEditingDialog({
   characters = [],
   sceneImageUrl,
   onGenerate,
-  isGenerating = false
+  isGenerating = false,
+  onSelectTake,
 }: VideoEditingDialogProps) {
   const t = useTranslations('production.export.videoEditor')
   const tc = useTranslations('common.actions')
@@ -1496,7 +1499,7 @@ export function VideoEditingDialog({
           <div className="w-1/2 border-r border-gray-200 dark:border-gray-700 flex flex-col min-h-0">
             {/* Tab Navigation */}
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as VideoEditingTab)} className="flex flex-col h-full">
-              <TabsList className="mx-4 mt-4 mb-2 grid grid-cols-3 w-auto">
+              <TabsList className="mx-4 mt-4 mb-2 grid grid-cols-4 w-auto">
                 <TabsTrigger value="smart-prompt" className="gap-1.5">
                   <Wand2 className="w-3.5 h-3.5" />
                   {t('tabSmartPrompt')}
@@ -1508,6 +1511,10 @@ export function VideoEditingDialog({
                 <TabsTrigger value="extend" className="gap-1.5">
                   <Film className="w-3.5 h-3.5" />
                   {t('tabExtendVideo')}
+                </TabsTrigger>
+                <TabsTrigger value="history" className="gap-1.5">
+                  <History className="w-3.5 h-3.5" />
+                  History
                 </TabsTrigger>
               </TabsList>
               
@@ -1560,6 +1567,13 @@ export function VideoEditingDialog({
                     isExtractingFrames={isExtractingFrames}
                     setIsExtractingFrames={setIsExtractingFrames}
                     basePrompt={prompt || segment.generatedPrompt || ''}
+                  />
+                </TabsContent>
+
+                <TabsContent value="history" className="mt-0">
+                  <HistoryTab
+                    segment={segment}
+                    onSelectTake={onSelectTake}
                   />
                 </TabsContent>
               </div>

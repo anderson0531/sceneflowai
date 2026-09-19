@@ -206,7 +206,7 @@ describe('buildDraftVideoGenerationConfig', () => {
     )
     expect(method).toBe('REF')
     expect(config.videoProvider).toBe('vertex')
-    expect(config.duration).toBe(10)
+    expect(config.duration).toBe(6)
     expect(config.startFrameUrl).toBeNull()
     expect(config.useBeatFrameAsStart).toBe(false)
     expect(config.mode).toBe('REF')

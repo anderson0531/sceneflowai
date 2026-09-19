@@ -19,6 +19,7 @@ import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPromp
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { SceneSegment } from '@/components/vision/scene-production/types'
 import type { VideoGenerationMethod } from '@/components/vision/scene-production/types'
+import { unionRowsById } from '@/lib/storyboard/mediaVersions'
 
 function mintSegmentId(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -351,7 +352,8 @@ export function mergeDerivedSegmentsWithExisting(
       status: match.status ?? seg.status,
       assetType: match.assetType ?? seg.assetType,
       activeAssetUrl: match.activeAssetUrl ?? seg.activeAssetUrl,
-      takes: match.takes?.length ? match.takes : seg.takes,
+      takes: unionRowsById(seg.takes, match.takes, 'id'),
+      currentTakeId: match.currentTakeId || seg.currentTakeId,
       isUserUpload: match.isUserUpload,
       actualVideoDuration: match.actualVideoDuration ?? seg.actualVideoDuration,
       userEditedPrompt: match.userEditedPrompt ?? seg.userEditedPrompt,

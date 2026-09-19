@@ -10,17 +10,24 @@
 
 import { storedStillDirectionKeyMatches } from '@/lib/script/beatDirectionFingerprint'
 import type { BeatDirection } from '@/lib/script/segmentTypes'
+import {
+  BEAT_END_STILL_SLOT,
+  BEAT_START_STILL_SLOT,
+  CUSTOM_FRAME_STILL_SLOT,
+  DIALOGUE_STILL_SLOT,
+  SCENE_STILL_SLOT,
+  isUsableMediaUrl,
+  mediaBlobUrlTimestamp,
+  mergeStillSlot,
+  pickCurrentMediaUrl,
+} from '@/lib/storyboard/mediaVersions'
 import { mergeVoiceAudioMapsByLineId } from '@/lib/storyboard/mergeVoiceAudioMaps'
 
-const DIALOGUE_STORYBOARD_URL_KEYS = ['storyboardImageUrl', 'storyboardImageGcsPath'] as const
+export const isValidStoryboardMediaUrl = isUsableMediaUrl
+export const storyboardBlobUrlTimestamp = mediaBlobUrlTimestamp
+
 const DIALOGUE_STORYBOARD_PROMPT_KEYS = ['storyboardImagePrompt'] as const
 
-const BEAT_STORYBOARD_URL_KEYS = [
-  'storyboardImageUrl',
-  'storyboardImageGcsPath',
-  'storyboardEndImageUrl',
-  'storyboardEndImageGcsPath',
-] as const
 /**
  * `storyboardImagePrompt` and `storyboardImagePromptDirectionKey` are resolved
  * as a pair by `pickStillPromptPair`, not here: picking them independently let
@@ -35,51 +42,19 @@ const STILL_PROMPT_DIRECTION_KEY = 'storyboardImagePromptDirectionKey'
 const STILL_IMAGE_DIRECTION_KEY = 'storyboardImageDirectionKey'
 const STILL_IMAGE_CONTENT_KEY = 'storyboardImageContentKey'
 
-const SCENE_IMAGE_URL_KEYS = [
-  'imageUrl',
-  'imageGcsPath',
-  'imageGeneratedAt',
-  'imageSource',
-  'sceneReferenceImageUrl',
-] as const
 const SCENE_IMAGE_PROMPT_KEYS = ['imagePrompt'] as const
-
-const CUSTOM_FRAME_URL_KEYS = ['imageUrl', 'imageGcsPath'] as const
 const CUSTOM_FRAME_PROMPT_KEYS = ['imagePrompt'] as const
 
-/** True when a media URL is usable (not empty, not lite-mode placeholder). */
-export function isValidStoryboardMediaUrl(value: unknown): value is string {
-  if (typeof value !== 'string') return false
-  const trimmed = value.trim()
-  if (!trimmed || trimmed === 'deferred') return false
-  return true
-}
-
-/** Extract millisecond timestamp from Vercel blob paths like `.../1779527367355.jpeg`. */
-export function storyboardBlobUrlTimestamp(url: string): number {
-  const match = url.match(/(\d{13})\./)
-  return match ? parseInt(match[1], 10) : 0
-}
-
 function pickMediaUrl(incoming: unknown, canonical: unknown): string | undefined {
-  const inc = isValidStoryboardMediaUrl(incoming) ? incoming.trim() : undefined
-  const can = isValidStoryboardMediaUrl(canonical) ? canonical.trim() : undefined
-  if (inc && can) {
-    const ti = storyboardBlobUrlTimestamp(inc)
-    const tc = storyboardBlobUrlTimestamp(can)
-    if (ti && tc && ti !== tc) return ti > tc ? inc : can
-  }
-  if (inc) return inc
-  if (can) return can
-  return undefined
+  return pickCurrentMediaUrl(incoming, canonical)
 }
 
-/** Prefer the newer of two storyboard media URLs (blob timestamp when available). */
+/** Prefer incoming when valid; keep canonical when incoming is empty/deferred. */
 export function resolvePreferredStoryboardUrl(
   urlA?: unknown,
   urlB?: unknown
 ): string | undefined {
-  return pickMediaUrl(urlA, urlB)
+  return pickCurrentMediaUrl(urlA, urlB)
 }
 
 function pickPromptText(incoming: unknown, canonical: unknown): string | undefined {
@@ -112,11 +87,12 @@ function mergeDialogueLineMedia(canonLine: any, incomingLine: any): any {
   if (!canonLine) return incomingLine
 
   const merged = { ...incomingLine }
+  mergeStillSlot(merged, incomingLine, canonLine, DIALOGUE_STILL_SLOT)
   mergeMediaFields(
     merged,
     incomingLine,
     canonLine,
-    DIALOGUE_STORYBOARD_URL_KEYS,
+    ['storyboardImageGcsPath'],
     DIALOGUE_STORYBOARD_PROMPT_KEYS
   )
   return merged
@@ -205,18 +181,29 @@ function mergeBeatMedia(canonBeat: any, incomingBeat: any): any {
   if (!incomingBeat) return canonBeat
   if (!canonBeat) return incomingBeat
 
-  if (beatContentChanged(canonBeat, incomingBeat)) {
-    return { ...incomingBeat }
-  }
-
   const merged = { ...incomingBeat }
+  mergeStillSlot(merged, incomingBeat, canonBeat, BEAT_START_STILL_SLOT)
+  mergeStillSlot(merged, incomingBeat, canonBeat, BEAT_END_STILL_SLOT)
   mergeMediaFields(
     merged,
     incomingBeat,
     canonBeat,
-    BEAT_STORYBOARD_URL_KEYS,
+    ['storyboardImageGcsPath', 'storyboardEndImageGcsPath'],
     BEAT_STORYBOARD_PROMPT_KEYS
   )
+
+  if (beatContentChanged(canonBeat, incomingBeat)) {
+    // Keep version history, but do not re-attach a still that belongs to old prose.
+    if (!isUsableMediaUrl(incomingBeat.storyboardImageUrl)) {
+      delete merged.storyboardImageUrl
+      delete merged.storyboardImageVersionId
+    }
+    if (!isUsableMediaUrl(incomingBeat.storyboardEndImageUrl)) {
+      delete merged.storyboardEndImageUrl
+      delete merged.storyboardEndImageVersionId
+    }
+    return merged
+  }
 
   const still = pickStillPromptPair(incomingBeat, canonBeat, merged.beatDirection)
   if (still.prompt) merged[STILL_PROMPT_KEY] = still.prompt
@@ -283,11 +270,12 @@ function mergeStoryboardFrames(canonFrames: any[] | undefined, incomingFrames: a
     if (!canonFrame) return incomingFrame
 
     const merged = { ...incomingFrame }
+    mergeStillSlot(merged, incomingFrame, canonFrame, CUSTOM_FRAME_STILL_SLOT)
     mergeMediaFields(
       merged,
       incomingFrame,
       canonFrame,
-      CUSTOM_FRAME_URL_KEYS,
+      ['imageGcsPath'],
       CUSTOM_FRAME_PROMPT_KEYS
     )
     return merged
@@ -720,11 +708,12 @@ export function mergeScenePreservingMedia(canonical: any, incoming: any): any {
 
   const merged: any = { ...incoming }
 
+  mergeStillSlot(merged, incoming, canonical, SCENE_STILL_SLOT)
   mergeMediaFields(
     merged,
     incoming,
     canonical,
-    SCENE_IMAGE_URL_KEYS,
+    ['imageGcsPath', 'imageGeneratedAt', 'imageSource', 'sceneReferenceImageUrl'],
     SCENE_IMAGE_PROMPT_KEYS
   )
 

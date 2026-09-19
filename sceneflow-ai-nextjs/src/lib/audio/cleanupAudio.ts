@@ -983,12 +983,7 @@ export function mergeExpressOrchestratedScenes(
     const freshScene = findMatchingSceneInArray(freshDbScenes, orchScene, idx)
     if (!freshScene) return orchScene
 
-    const spread = {
-      ...freshScene,
-      ...orchScene,
-      sceneDirection: orchScene.sceneDirection || freshScene.sceneDirection,
-    }
-    const withMedia = mergeScenePreservingMedia(orchScene, spread)
+    const withMedia = mergeScenePreservingMedia(freshScene, orchScene)
     return mergeScenePreservingAudio(orchScene, withMedia)
   })
 
