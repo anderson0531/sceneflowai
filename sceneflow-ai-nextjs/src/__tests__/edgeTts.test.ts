@@ -9,8 +9,10 @@ import {
   getEdgeVoiceConfigForResolution,
   EDGE_VOICE_BY_LANG,
 } from '@/lib/tts/edgeTtsVoices'
-import { isEdgeTtsFallbackEnabled, isQuotaOrRateLimitError } from '@/lib/tts/edgeTtsFallback'
+import { isEdgeTtsFallbackEnabled, isQuotaOrRateLimitError, shouldFallbackToEdgeTts } from '@/lib/tts/edgeTtsFallback'
+import { GoogleTtsBlockedError } from '@/lib/tts/googleTtsPolicy'
 import { GoogleTtsRateLimitedError } from '@/lib/tts/googleTtsRetry'
+import { GoogleTtsTimeoutError } from '@/lib/tts/googleTtsTimeBudget'
 
 describe('edgeTtsVoices', () => {
   it('resolves Hindi male voice by default', () => {
@@ -187,5 +189,27 @@ describe('edgeTtsFallback', () => {
         })
       )
     ).toBe(true)
+  })
+
+  it('falls back to Edge on timeout, abort, and 503', () => {
+    expect(shouldFallbackToEdgeTts(new GoogleTtsTimeoutError(45_000))).toBe(true)
+    const abortErr = new Error('The operation was aborted')
+    abortErr.name = 'AbortError'
+    expect(shouldFallbackToEdgeTts(abortErr)).toBe(true)
+    expect(shouldFallbackToEdgeTts(new Error('Google TTS API error: 503 - unavailable'))).toBe(
+      true
+    )
+  })
+
+  it('does not fall back to Edge on Vertex content-policy blocks', () => {
+    expect(
+      shouldFallbackToEdgeTts(
+        new GoogleTtsBlockedError({
+          userMessage: 'Blocked',
+          tips: [],
+          action: 'enhance_dialogue_direct',
+        })
+      )
+    ).toBe(false)
   })
 })

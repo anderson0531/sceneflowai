@@ -1,4 +1,6 @@
+import { GoogleTtsBlockedError } from '@/lib/tts/googleTtsPolicy'
 import { GoogleTtsRateLimitedError } from '@/lib/tts/googleTtsRetry'
+import { GoogleTtsTimeoutError } from '@/lib/tts/googleTtsTimeBudget'
 
 /** When false, paid TTS failures are not retried with Edge (default: enabled). */
 export function isEdgeTtsFallbackEnabled(): boolean {
@@ -21,5 +23,24 @@ export function isQuotaOrRateLimitError(err: unknown): boolean {
     const status = (err as { status: number }).status
     if (status === 429 || status === 402 || status === 503) return true
   }
+  return false
+}
+
+export function isTtsTimeoutError(err: unknown): boolean {
+  if (err instanceof GoogleTtsTimeoutError) return true
+  if (err instanceof Error && err.name === 'AbortError') return true
+  const msg = err instanceof Error ? err.message : String(err)
+  return /timed?\s*out after|aborterror/i.test(msg)
+}
+
+/**
+ * Paid TTS failures that should still produce a line via Edge.
+ * Content-policy blocks stay on the paid path so the user can rephrase.
+ */
+export function shouldFallbackToEdgeTts(err: unknown): boolean {
+  if (err instanceof GoogleTtsBlockedError) return false
+  if (isQuotaOrRateLimitError(err) || isTtsTimeoutError(err)) return true
+  const msg = err instanceof Error ? err.message : String(err)
+  if (/\b503\b|service unavailable/i.test(msg)) return true
   return false
 }

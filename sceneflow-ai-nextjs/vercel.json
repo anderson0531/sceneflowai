@@ -100,6 +100,9 @@
     "src/app/api/vision/suggest-objects/route.ts": {
       "maxDuration": 60
     },
+    "src/app/api/vision/generate-scene-audio/route.ts": {
+      "maxDuration": 180
+    },
     "src/app/api/vision/review-script/route.ts": {
       "maxDuration": 180
     },
