@@ -4,6 +4,7 @@
  */
 
 import type { VideoLocale } from '@/config/landing/videoLocales'
+import { landingLocaleToVideoLocale } from '@/config/landing/videoLocales'
 import {
   heroHlsFallbackMp4Object,
   heroHlsManifestObject,
@@ -114,6 +115,35 @@ function heroSrc(path: string): string {
 }
 
 export const DEFAULT_HERO_VIDEO_LOCALE: HeroVideoLocaleId = 'en'
+
+/** Site-public progressive files for the full-viewport hero player. */
+export const HERO_PUBLIC_POSTER_FALLBACK = '/images/hero-poster.webp'
+
+export function getHeroPublicWebmUrl(locale: HeroVideoLocaleId): string {
+  return `/videos/hero-${locale}.webm`
+}
+
+export function getHeroPublicMp4Url(locale: HeroVideoLocaleId): string {
+  return `/videos/hero-${locale}.mp4`
+}
+
+export function getHeroPublicPosterUrl(locale: HeroVideoLocaleId): string {
+  return `/images/hero-poster-${locale}.webp`
+}
+
+export type HeroPublicVideoSources = {
+  webmSrc: string
+  mp4Src: string
+  poster: string
+}
+
+export function getHeroPublicVideoSources(locale: HeroVideoLocaleId): HeroPublicVideoSources {
+  return {
+    webmSrc: getHeroPublicWebmUrl(locale),
+    mp4Src: getHeroPublicMp4Url(locale),
+    poster: getHeroPublicPosterUrl(locale) || HERO_PUBLIC_POSTER_FALLBACK,
+  }
+}
 
 const HERO_VIDEO_LABELS: Record<HeroVideoLocaleId, { label: string; nativeLabel: string }> = {
   en: { label: 'English', nativeLabel: 'English' },
@@ -274,8 +304,7 @@ export function getAvailableHeroVideoLocales(): HeroVideoLocale[] {
 export function getSuggestedHeroLocaleFromBrowser(): HeroVideoLocaleId | null {
   if (typeof navigator === 'undefined') return null
 
-  const lang = navigator.language?.toLowerCase() ?? ''
-  const prefix = lang.split('-')[0]
+  const candidates = [...(navigator.languages ?? []), navigator.language].filter(Boolean)
 
   const map: Record<string, HeroVideoLocaleId> = {
     en: 'en',
@@ -287,7 +316,24 @@ export function getSuggestedHeroLocaleFromBrowser(): HeroVideoLocaleId | null {
     th: 'th',
   }
 
-  const id = map[prefix]
-  if (!id) return null
-  return getHeroVideoLocale(id)?.available ? id : null
+  for (const lang of candidates) {
+    const prefix = lang.toLowerCase().split('-')[0]
+    const id = map[prefix]
+    if (id && getHeroVideoLocale(id)?.available) return id
+  }
+
+  return null
+}
+
+/**
+ * Video dub for the hero player. Prefers the page locale (next-intl). Browser
+ * language is only used when that context is missing.
+ */
+export function resolveHeroVideoLocale(landingLocale?: string | null): HeroVideoLocaleId {
+  if (landingLocale) {
+    const mapped = landingLocaleToVideoLocale(landingLocale)
+    if (getHeroVideoLocale(mapped)?.available) return mapped
+  }
+
+  return getSuggestedHeroLocaleFromBrowser() ?? DEFAULT_HERO_VIDEO_LOCALE
 }

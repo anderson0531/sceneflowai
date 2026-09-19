@@ -50,8 +50,11 @@ describe('hero section copy and UI', () => {
     expect(hero).toContain('scrollToHowItWorks')
     expect(hero).toContain('key-features')
     expect(hero).toContain('getVideoPreloadStrategy')
-    expect(hero).toContain('useAdaptiveVideoSource')
-    expect(hero).not.toContain('key={inlineVideoLocale}')
+    expect(hero).toContain('HeroVideoBackground')
+    expect(hero).toContain('min-h-[100dvh]')
+    expect(hero).toContain('pauseBackgroundVideo')
+    expect(hero).not.toContain('useAdaptiveVideoSource')
+    expect(hero).not.toContain('role="button"')
   })
 
   it('offers launch-notification capture in the hero', () => {
@@ -66,5 +69,22 @@ describe('hero section copy and UI', () => {
     expect(hero).toContain("t('availabilityBadge')")
     expect(hero).toContain('className="flex flex-col items-center gap-3"')
     expect(hero).not.toContain('flex flex-col items-center gap-3 sm:flex-row')
+  })
+
+  it('extracts a dual-source background player and keeps theater on public files', () => {
+    const background = readFileSync(
+      join(ROOT, 'src/components/landing/HeroVideoBackground.tsx'),
+      'utf8'
+    )
+    const theater = readFileSync(join(ROOT, 'src/components/landing/HeroTheaterModal.tsx'), 'utf8')
+
+    expect(background).toContain('type="video/webm"')
+    expect(background).toContain('type="video/mp4"')
+    expect(background).toContain('playsInline')
+    expect(background).toContain('useReducedMotion')
+    expect(background).toContain('video.play().catch')
+    expect(theater).toContain('getHeroPublicVideoSources')
+    expect(theater).toContain('type="video/webm"')
+    expect(theater).not.toContain('useAdaptiveVideoSource')
   })
 })

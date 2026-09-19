@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import {
   CalendarClock,
   Play,
@@ -20,25 +20,20 @@ import {
 } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 import {
-  DEFAULT_HERO_VIDEO_LOCALE,
   HERO_VIDEO_UNMUTE_DISMISSED_KEY,
   getHeroVideoLocale,
   getHeroVideoLocalesAsVideoLocales,
-  getHeroVideoPlaybackSources,
+  resolveHeroVideoLocale,
   type HeroVideoLocaleId,
 } from '@/config/landing/heroVideoLocales'
-import { landingLocaleToVideoLocale } from '@/config/landing/videoLocales'
 import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import { HeroTheaterModal } from '@/components/landing/HeroTheaterModal'
+import { HeroVideoBackground } from '@/components/landing/HeroVideoBackground'
 import { NotifyCapture } from '@/components/landing/NotifyCapture'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { getVideoPreloadStrategy, type VideoPreloadValue } from '@/lib/landing/videoPreload'
-import { useAdaptiveVideoSource } from '@/lib/landing/useAdaptiveVideoSource'
-import {
-  HERO_NETWORK_CONTEXT_PENDING,
-  prefersLeanHeroSource,
-  readHeroNetworkContext,
-} from '@/lib/landing/heroPlaybackPolicy'
+import { readHeroNetworkContext } from '@/lib/landing/heroPlaybackPolicy'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 function readUnmuteDismissed(): boolean {
   if (typeof window === 'undefined') return false
@@ -51,10 +46,10 @@ export function HeroSection() {
   const pipelineSteps = t.raw('pipelineSteps') as string[]
   const chipIcons = [Link2, Film, Globe]
   const landingLocale = useLocale()
-  const syncedVideoLocale = landingLocaleToVideoLocale(landingLocale) as HeroVideoLocaleId
+  const syncedVideoLocale = resolveHeroVideoLocale(landingLocale)
+  const prefersReducedMotion = useReducedMotion()
   const videoRef = useRef<HTMLVideoElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [isPlaying, setIsPlaying] = useState(true)
+  const [isPlaying, setIsPlaying] = useState(!prefersReducedMotion)
   const [isMuted, setIsMuted] = useState(true)
   const [showUnmutePrompt, setShowUnmutePrompt] = useState(true)
   const [isTheaterOpen, setIsTheaterOpen] = useState(false)
@@ -62,38 +57,24 @@ export function HeroSection() {
   const [inlineVideoLocale, setInlineVideoLocale] =
     useState<HeroVideoLocaleId>(syncedVideoLocale)
   const [videoPreload, setVideoPreload] = useState<VideoPreloadValue>('metadata')
-  const [networkCtx, setNetworkCtx] = useState(HERO_NETWORK_CONTEXT_PENDING)
   const [isBuffering, setIsBuffering] = useState(true)
-  const suppressTheaterOpenUntilRef = useRef(0)
 
   const heroLocales = getHeroVideoLocalesAsVideoLocales()
-  const leanHero = prefersLeanHeroSource(networkCtx)
-  const playbackSources = useMemo(
-    () =>
-      getHeroVideoPlaybackSources(inlineVideoLocale, networkCtx) ??
-      getHeroVideoPlaybackSources(DEFAULT_HERO_VIDEO_LOCALE, networkCtx)!,
-    [inlineVideoLocale, networkCtx]
-  )
-
-  useAdaptiveVideoSource(
-    videoRef,
-    {
-      hlsSrc: playbackSources.hlsSrc,
-      mp4Src: playbackSources.mp4Src,
-      mp4SrcFallback: playbackSources.mp4SrcFallback,
-    },
-    !isTheaterOpen
-  )
+  const motionOffset = prefersReducedMotion ? 0 : undefined
+  const motionDuration = prefersReducedMotion ? 0 : undefined
 
   useEffect(() => {
     const ctx = readHeroNetworkContext()
-    setNetworkCtx(ctx)
     setVideoPreload(getVideoPreloadStrategy(ctx))
   }, [])
 
   useEffect(() => {
     setShowUnmutePrompt(!readUnmuteDismissed())
   }, [])
+
+  useEffect(() => {
+    if (prefersReducedMotion) setIsPlaying(false)
+  }, [prefersReducedMotion])
 
   useEffect(() => {
     const entry = getHeroVideoLocale(syncedVideoLocale)
@@ -104,15 +85,6 @@ export function HeroSection() {
     setIsBuffering(true)
   }, [syncedVideoLocale])
 
-  useEffect(() => {
-    const video = videoRef.current
-    if (!video || isTheaterOpen) return
-    video.poster = playbackSources.poster
-    if (isPlaying) {
-      void video.play().catch(() => {})
-    }
-  }, [playbackSources.poster, isPlaying, isTheaterOpen])
-
   const unmuteWithSound = useCallback(() => {
     const video = videoRef.current
     if (video) {
@@ -120,46 +92,26 @@ export function HeroSection() {
       void video.play().catch(() => {})
     }
     setIsMuted(false)
+    setIsPlaying(true)
     setShowUnmutePrompt(false)
     if (typeof window !== 'undefined') {
       localStorage.setItem(HERO_VIDEO_UNMUTE_DISMISSED_KEY, '1')
     }
   }, [])
 
-  const markSuppressTheaterOpen = useCallback(() => {
-    suppressTheaterOpenUntilRef.current = performance.now() + 500
+  const selectLocale = useCallback((id: HeroVideoLocaleId) => {
+    const entry = getHeroVideoLocale(id)
+    if (!entry?.available) return
+
+    setActiveLocale(id)
+    setInlineVideoLocale(id)
+    setIsBuffering(true)
+
+    const video = videoRef.current
+    if (video) {
+      void video.play().catch(() => {})
+    }
   }, [])
-
-  const shouldSuppressTheaterOpen = useCallback(() => {
-    return performance.now() < suppressTheaterOpenUntilRef.current
-  }, [])
-
-  const selectLocale = useCallback(
-    (id: HeroVideoLocaleId) => {
-      markSuppressTheaterOpen()
-      const entry = getHeroVideoLocale(id)
-      if (!entry?.available) return
-
-      setActiveLocale(id)
-      setInlineVideoLocale(id)
-      setIsBuffering(true)
-
-      const video = videoRef.current
-      if (video) {
-        void video.play().catch(() => {})
-      }
-    },
-    [markSuppressTheaterOpen]
-  )
-
-  const handleLanguageMenuOpenChange = useCallback(
-    (open: boolean) => {
-      if (!open) {
-        markSuppressTheaterOpen()
-      }
-    },
-    [markSuppressTheaterOpen]
-  )
 
   const scrollToCheckout = useCallback(() => {
     window.location.href = getSignupUrlForTier('explorer')
@@ -172,25 +124,10 @@ export function HeroSection() {
   const openTheater = useCallback(() => {
     const video = videoRef.current
     if (video) {
-      video.pause()
       video.muted = true
     }
     setIsTheaterOpen(true)
   }, [])
-
-  const tryOpenTheater = useCallback(() => {
-    if (shouldSuppressTheaterOpen()) return
-    openTheater()
-  }, [openTheater, shouldSuppressTheaterOpen])
-
-  const handleVideoContainerClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      const target = event.target as HTMLElement
-      if (target.closest('[data-hero-control]')) return
-      tryOpenTheater()
-    },
-    [tryOpenTheater]
-  )
 
   const closeTheater = useCallback(() => {
     setIsTheaterOpen(false)
@@ -201,19 +138,21 @@ export function HeroSection() {
     if (!video) return
 
     video.muted = isMuted
-    if (isPlaying) {
+    if (isPlaying && !prefersReducedMotion) {
       void video.play().catch(() => {})
     }
-  }, [activeLocale, isMuted, isPlaying])
+  }, [activeLocale, isMuted, isPlaying, prefersReducedMotion])
 
   const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause()
-      } else {
-        videoRef.current.play()
-      }
-      setIsPlaying(!isPlaying)
+    const video = videoRef.current
+    if (!video) return
+
+    if (isPlaying) {
+      video.pause()
+      setIsPlaying(false)
+    } else {
+      void video.play().catch(() => {})
+      setIsPlaying(true)
     }
   }
 
@@ -233,277 +172,228 @@ export function HeroSection() {
 
   return (
     <>
-      <section className="relative bg-gray-950 text-white pt-20 pb-16 sm:pt-24 sm:pb-20 lg:pt-28 lg:pb-24">
-        <div className="absolute inset-0 bg-grid-pattern opacity-[0.07]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-950 via-gray-950/80 to-transparent" />
+      <section
+        id="hero-video"
+        className="relative w-full min-h-[100dvh] bg-gray-950 text-white scroll-mt-24"
+      >
+        <div className="absolute inset-0 overflow-hidden">
+          <HeroVideoBackground
+            key={inlineVideoLocale}
+            locale={inlineVideoLocale}
+            videoRef={videoRef}
+            muted={isMuted}
+            shouldPlay={isPlaying && !isTheaterOpen}
+            preload={videoPreload}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => {
+              if (!isTheaterOpen) setIsPlaying(false)
+            }}
+            onWaiting={() => setIsBuffering(true)}
+            onCanPlay={() => {
+              setIsBuffering(false)
+              if (isPlaying && !isTheaterOpen && !prefersReducedMotion) {
+                void videoRef.current?.play().catch(() => {})
+              }
+            }}
+            onPlaying={() => setIsBuffering(false)}
+          />
+          <div className="pointer-events-none absolute inset-0 z-[1] bg-black/40" />
+          <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/80 via-black/25 to-black/35" />
+        </div>
 
-        <div className="relative container mx-auto px-4 z-10">
-          <motion.div
-            id="hero-video"
-            className="relative max-w-6xl mx-auto scroll-mt-24"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+        {isBuffering && !prefersReducedMotion && (
+          <div
+            className="pointer-events-none absolute inset-0 z-[2] flex items-center justify-center bg-black/20"
+            aria-hidden
           >
-            <div className="pointer-events-none absolute -inset-4 bg-gradient-to-r from-sf-brand-cyan/20 via-sf-brand-purple/15 to-sf-brand-cyan/10 rounded-3xl blur-2xl" />
+            <Loader2 className="h-10 w-10 animate-spin text-cyan-400/80" />
+          </div>
+        )}
 
-            <div
-              ref={containerRef}
-              className="relative z-10 rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl bg-black group cursor-pointer"
-              onClick={handleVideoContainerClick}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  const target = e.target as HTMLElement
-                  if (target.closest('[data-hero-control]')) return
-                  e.preventDefault()
-                  tryOpenTheater()
-                }
-              }}
-              role="button"
-              tabIndex={0}
-              aria-label="Expand hero video to fullscreen with sound"
-            >
-              <div className="relative aspect-video w-full h-full">
-                <video
-                  ref={videoRef}
-                  poster={playbackSources.poster}
-                  autoPlay={!leanHero}
-                  loop
-                  muted={isMuted}
-                  playsInline
-                  preload={videoPreload}
-                  className="absolute inset-0 h-full w-full object-cover"
-                  onPlay={() => setIsPlaying(true)}
-                  onPause={() => setIsPlaying(false)}
-                  onWaiting={() => setIsBuffering(true)}
-                  onCanPlay={() => {
-                    setIsBuffering(false)
-                    if (leanHero && isPlaying && !isTheaterOpen) {
-                      void videoRef.current?.play().catch(() => {})
-                    }
-                  }}
-                  onPlaying={() => setIsBuffering(false)}
-                />
-
-                {isBuffering && (
-                  <div
-                    className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40"
-                    aria-hidden
-                  >
-                    <Loader2 className="h-10 w-10 animate-spin text-cyan-400/80" />
-                  </div>
-                )}
-
-                <VideoLanguageControl
-                  locales={heroLocales}
-                  activeLocaleId={activeLocale}
-                  onSelect={(id) => selectLocale(id as HeroVideoLocaleId)}
-                  soonLabel={t('soon')}
-                  variant="overlay"
-                  align="start"
-                  markAsHeroControl
-                  onOpenChange={handleLanguageMenuOpenChange}
-                />
-
-                {isMuted && !isBuffering && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    {showUnmutePrompt ? (
-                      <button
-                        type="button"
-                        data-hero-control
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          unmuteWithSound()
-                        }}
-                        className="pointer-events-auto flex items-center gap-2 rounded-full bg-black/70 border border-cyan-400/40 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 animate-pulse hover:bg-black/85 hover:border-cyan-400/60 transition-colors"
-                      >
-                        <Volume2 className="h-5 w-5 text-cyan-400" aria-hidden />
-                        Play with narration
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        data-hero-control
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          unmuteWithSound()
-                        }}
-                        className="pointer-events-auto absolute bottom-14 right-3 flex items-center gap-1.5 rounded-full bg-black/60 border border-white/20 px-3 py-2 text-xs font-medium text-gray-200 hover:text-white hover:border-cyan-400/40 transition-colors"
-                        aria-label="Tap to hear narration"
-                      >
-                        <VolumeX className="h-4 w-4 text-cyan-400 animate-pulse" aria-hidden />
-                        Tap to hear
-                      </button>
+        <div className="relative z-10 flex min-h-[100dvh] flex-col justify-center px-4 pt-20 pb-28">
+          <div className="container mx-auto">
+            {pipelineSteps.length > 0 && (
+              <motion.div
+                className="flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm text-gray-300"
+                initial={{ opacity: 0, y: motionOffset ?? 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: motionDuration ?? 0.6, delay: prefersReducedMotion ? 0 : 0.2 }}
+                aria-label="Studio pipeline flow"
+              >
+                {pipelineSteps.map((step, index) => (
+                  <span key={step} className="inline-flex items-center gap-2">
+                    <span className="font-medium text-gray-100">{step}</span>
+                    {index < pipelineSteps.length - 1 && (
+                      <ChevronRight className="h-3.5 w-3.5 text-gray-400" aria-hidden />
                     )}
-                  </div>
-                )}
+                  </span>
+                ))}
+              </motion.div>
+            )}
 
+            <div className="max-w-4xl mx-auto text-center mt-8 lg:mt-10">
+              <motion.div
+                className="flex flex-col items-center gap-3"
+                initial={{ opacity: 0, y: motionOffset ?? 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: motionDuration ?? 0.8, delay: prefersReducedMotion ? 0 : 0.1 }}
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-300/90">
+                  {t('eyebrow')}
+                </p>
+                <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs font-semibold text-amber-200">
+                  <CalendarClock className="h-3.5 w-3.5" aria-hidden />
+                  {t('availabilityBadge')}
+                </span>
+              </motion.div>
+
+              <motion.h1
+                className="mt-5 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter leading-tight bg-gradient-to-r from-white via-gray-300 to-gray-400 text-transparent bg-clip-text"
+                initial={{ opacity: 0, y: motionOffset ?? 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: motionDuration ?? 0.8, delay: prefersReducedMotion ? 0 : 0.15 }}
+              >
+                {t('headline')}
+              </motion.h1>
+
+              <motion.p
+                className="mt-6 max-w-3xl mx-auto text-base sm:text-lg text-gray-100"
+                initial={{ opacity: 0, y: motionOffset ?? 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: motionDuration ?? 0.8, delay: prefersReducedMotion ? 0 : 0.25 }}
+              >
+                {t('subheadline')}
+              </motion.p>
+
+              <motion.div
+                className="mt-8 flex flex-col lg:flex-row items-stretch justify-center gap-3 max-w-5xl mx-auto"
+                initial={{ opacity: 0, y: motionOffset ?? 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: motionDuration ?? 0.8, delay: prefersReducedMotion ? 0 : 0.28 }}
+              >
+                {chips.map((chip, index) => {
+                  const Icon = chipIcons[index] ?? FileText
+                  return (
+                    <div
+                      key={chip.label}
+                      className="flex-1 rounded-xl border border-white/10 bg-slate-950/55 px-4 py-3 text-left backdrop-blur-sm"
+                    >
+                      <div className="mb-2 flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-500/20 bg-cyan-500/10">
+                          <Icon className="h-4 w-4 text-cyan-400" aria-hidden />
+                        </div>
+                        <p className="text-sm font-semibold text-white">{chip.label}</p>
+                      </div>
+                      <p className="text-sm text-gray-300 leading-relaxed">{chip.detail}</p>
+                    </div>
+                  )
+                })}
+              </motion.div>
+
+              <motion.div
+                className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+                initial={{ opacity: 0, y: motionOffset ?? 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: motionDuration ?? 0.8, delay: prefersReducedMotion ? 0 : 0.32 }}
+              >
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:opacity-90"
+                  onClick={scrollToCheckout}
+                >
+                  {t('ctaPrimaryLaunch')}
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full sm:w-auto border-purple-500/40 text-purple-200 hover:bg-purple-500/10"
+                  onClick={scrollToHowItWorks}
+                >
+                  {t('ctaSecondary')}
+                </Button>
+                {t('ctaSupportingLine') && (
+                  <p className="max-w-md text-sm text-gray-300">{t('ctaSupportingLine')}</p>
+                )}
+              </motion.div>
+
+              <motion.div
+                className="mt-10 flex justify-center border-t border-white/10 pt-8"
+                initial={{ opacity: 0, y: motionOffset ?? 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: motionDuration ?? 0.8, delay: prefersReducedMotion ? 0 : 0.36 }}
+              >
+                <NotifyCapture source="hero" />
+              </motion.div>
+            </div>
+          </div>
+        </div>
+
+        <div className="absolute inset-x-0 bottom-0 z-20 flex items-center gap-3 bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-10">
+          <VideoLanguageControl
+            locales={heroLocales}
+            activeLocaleId={activeLocale}
+            onSelect={(id) => selectLocale(id as HeroVideoLocaleId)}
+            soonLabel={t('soon')}
+            variant="inline"
+            align="start"
+            markAsHeroControl
+          />
+
+          <div className="ms-auto flex items-center gap-2">
+            {isMuted && !isBuffering && (
+              showUnmutePrompt ? (
                 <button
                   type="button"
                   data-hero-control
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    openTheater()
-                  }}
-                  className="absolute top-3 right-3 z-10 flex items-center gap-1.5 rounded-lg bg-black/50 border border-white/15 px-2.5 py-1.5 text-xs font-medium text-gray-200 hover:text-white hover:border-cyan-400/40 transition-colors"
-                  aria-label="Open fullscreen video"
+                  onClick={unmuteWithSound}
+                  className="flex items-center gap-2 rounded-full bg-black/70 border border-cyan-400/40 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 hover:bg-black/85 hover:border-cyan-400/60 transition-colors"
                 >
-                  <Maximize2 className="h-3.5 w-3.5" aria-hidden />
-                  <span className="hidden sm:inline">Fullscreen</span>
+                  <Volume2 className="h-4 w-4 text-cyan-400" aria-hidden />
+                  {t('playWithNarration')}
                 </button>
-
-                <div
+              ) : (
+                <button
+                  type="button"
                   data-hero-control
-                  className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-gradient-to-t from-black/80 to-transparent px-3 pb-3 pt-8"
+                  onClick={unmuteWithSound}
+                  className="flex items-center gap-1.5 rounded-full bg-black/60 border border-white/20 px-3 py-2 text-xs font-medium text-gray-200 hover:text-white hover:border-cyan-400/40 transition-colors"
+                  aria-label={t('tapToHear')}
                 >
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      togglePlay()
-                    }}
-                    className="text-white hover:text-cyan-400 transition p-1"
-                    aria-label={isPlaying ? 'Pause' : 'Play'}
-                  >
-                    {isPlaying ? (
-                      <Pause className="w-5 h-5" />
-                    ) : (
-                      <Play className="w-5 h-5" />
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      toggleMute()
-                    }}
-                    className="text-white hover:text-cyan-400 transition p-1"
-                    aria-label={isMuted ? 'Unmute' : 'Mute'}
-                  >
-                    {isMuted ? (
-                      <VolumeX className="w-5 h-5" />
-                    ) : (
-                      <Volume2 className="w-5 h-5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+                  <VolumeX className="h-4 w-4 text-cyan-400" aria-hidden />
+                  {t('tapToHear')}
+                </button>
+              )
+            )}
 
-          {pipelineSteps.length > 0 && (
-            <motion.div
-              className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm text-gray-400"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              aria-label="Studio pipeline flow"
+            <button
+              type="button"
+              data-hero-control
+              onClick={togglePlay}
+              className="text-white hover:text-cyan-400 transition p-1"
+              aria-label={isPlaying ? t('pauseBackgroundVideo') : t('playBackgroundVideo')}
             >
-              {pipelineSteps.map((step, index) => (
-                <span key={step} className="inline-flex items-center gap-2">
-                  <span className="font-medium text-gray-300">{step}</span>
-                  {index < pipelineSteps.length - 1 && (
-                    <ChevronRight className="h-3.5 w-3.5 text-gray-500" aria-hidden />
-                  )}
-                </span>
-              ))}
-            </motion.div>
-          )}
-
-          <div className="max-w-4xl mx-auto text-center mt-12 lg:mt-14">
-            <motion.div
-              className="flex flex-col items-center gap-3"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.1 }}
+              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+            </button>
+            <button
+              type="button"
+              data-hero-control
+              onClick={toggleMute}
+              className="text-white hover:text-cyan-400 transition p-1"
+              aria-label={isMuted ? 'Unmute' : 'Mute'}
             >
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-300/90">
-                {t('eyebrow')}
-              </p>
-              <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs font-semibold text-amber-200">
-                <CalendarClock className="h-3.5 w-3.5" aria-hidden />
-                {t('availabilityBadge')}
-              </span>
-            </motion.div>
-
-            <motion.h1
-              className="mt-5 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter leading-tight bg-gradient-to-r from-white via-gray-300 to-gray-400 text-transparent bg-clip-text"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.15 }}
+              {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+            </button>
+            <button
+              type="button"
+              data-hero-control
+              onClick={openTheater}
+              className="flex items-center gap-1.5 rounded-lg bg-black/50 border border-white/15 px-2.5 py-1.5 text-xs font-medium text-gray-200 hover:text-white hover:border-cyan-400/40 transition-colors"
+              aria-label={t('fullscreen')}
             >
-              {t('headline')}
-            </motion.h1>
-
-            <motion.p
-              className="mt-6 max-w-3xl mx-auto text-base sm:text-lg text-gray-300"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.25 }}
-            >
-              {t('subheadline')}
-            </motion.p>
-
-            <motion.div
-              className="mt-8 flex flex-col lg:flex-row items-stretch justify-center gap-3 max-w-5xl mx-auto"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.28 }}
-            >
-              {chips.map((chip, index) => {
-                const Icon = chipIcons[index] ?? FileText
-                return (
-                  <div
-                    key={chip.label}
-                    className="flex-1 rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-left"
-                  >
-                    <div className="mb-2 flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-500/20 bg-cyan-500/10">
-                        <Icon className="h-4 w-4 text-cyan-400" aria-hidden />
-                      </div>
-                      <p className="text-sm font-semibold text-white">{chip.label}</p>
-                    </div>
-                    <p className="text-sm text-gray-400 leading-relaxed">{chip.detail}</p>
-                  </div>
-                )
-              })}
-            </motion.div>
-
-            <motion.div
-              className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.32 }}
-            >
-              <Button
-                size="lg"
-                className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:opacity-90"
-                onClick={scrollToCheckout}
-              >
-                {t('ctaPrimaryLaunch')}
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="w-full sm:w-auto border-purple-500/40 text-purple-300 hover:bg-purple-500/10"
-                onClick={scrollToHowItWorks}
-              >
-                {t('ctaSecondary')}
-              </Button>
-              {t('ctaSupportingLine') && (
-                <p className="max-w-md text-sm text-gray-400">{t('ctaSupportingLine')}</p>
-              )}
-            </motion.div>
-
-            <motion.div
-              className="mt-10 flex justify-center border-t border-white/10 pt-8"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.36 }}
-            >
-              <NotifyCapture source="hero" />
-            </motion.div>
+              <Maximize2 className="h-3.5 w-3.5" aria-hidden />
+              <span className="hidden sm:inline">{t('fullscreen')}</span>
+            </button>
           </div>
         </div>
       </section>

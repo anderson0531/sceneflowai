@@ -1,14 +1,17 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import {
   DEFAULT_HERO_VIDEO_LOCALE,
+  HERO_PUBLIC_POSTER_FALLBACK,
   HERO_VIDEO_BLOB_PATHS,
   HERO_VIDEO_WEB_720P_PATHS,
   HERO_VIDEO_WEB_1080P_PATHS,
   HERO_VIDEO_LOCALES,
   getAvailableHeroVideoLocales,
   getDefaultHeroVideoSrc,
+  getHeroPublicVideoSources,
   getHeroVideoLocale,
   getHeroVideoLocalesAsVideoLocales,
+  resolveHeroVideoLocale,
 } from '@/config/landing/heroVideoLocales'
 import { VIDEO_LOCALE_ORDER } from '@/config/landing/videoLocales'
 
@@ -68,5 +71,35 @@ describe('Hero video locales', () => {
     for (const id of VIDEO_LOCALE_ORDER) {
       expect(locales.find((locale) => locale.id === id)?.available).toBe(true)
     }
+  })
+})
+
+describe('public hero playback sources', () => {
+  it('points every locale at WebM, MP4, and a localized poster', () => {
+    for (const locale of HERO_VIDEO_LOCALES) {
+      const sources = getHeroPublicVideoSources(locale.id)
+      expect(sources.webmSrc).toBe(`/videos/hero-${locale.id}.webm`)
+      expect(sources.mp4Src).toBe(`/videos/hero-${locale.id}.mp4`)
+      expect(sources.poster).toBe(`/images/hero-poster-${locale.id}.webp`)
+    }
+    expect(HERO_PUBLIC_POSTER_FALLBACK).toBe('/images/hero-poster.webp')
+  })
+})
+
+describe('resolveHeroVideoLocale', () => {
+  it('maps Chinese UI locales to the zh dub', () => {
+    expect(resolveHeroVideoLocale('zh-CN')).toBe('zh')
+    expect(resolveHeroVideoLocale('zh-TW')).toBe('zh')
+  })
+
+  it('falls back to the English dub for UI locales without a hero file', () => {
+    expect(resolveHeroVideoLocale('fr')).toBe('en')
+    expect(resolveHeroVideoLocale('ja')).toBe('en')
+  })
+
+  it('uses the page locale ahead of the browser language', () => {
+    const languages = vi.spyOn(navigator, 'language', 'get').mockReturnValue('es-MX')
+    expect(resolveHeroVideoLocale('th')).toBe('th')
+    languages.mockRestore()
   })
 })
