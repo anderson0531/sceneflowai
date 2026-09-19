@@ -48,6 +48,7 @@ import {
   type PreserveElement,
 } from '@/lib/audio/cleanupAudio'
 import { audioSourceFingerprintForSpoken } from '@/lib/audio/beatAudioStale'
+import { resolveLineVoiceDirection } from '@/lib/tts/dialogueDirectorNotes'
 import { resolveStoryboardScenes, totalStoryboardMediaScore } from '@/lib/storyboard/resolveStoryboardScenes'
 import {
   assignStillUrl,
@@ -13013,6 +13014,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // Skip server-side translation if we already have pre-translated text from stored translations
         // This prevents double-translation (translating already-translated text)
         skipTranslation: isPreTranslated,
+        voiceDirection: resolveLineVoiceDirection(dialogueLine, scene),
       }
 
       let response!: Response
@@ -13155,6 +13157,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 kind: 'narration',
                 character: characterName,
                 line: text,
+                voiceDirection: resolveLineVoiceDirection(dialogueLine, scene),
               }),
               audioStale: false,
             }
@@ -13236,6 +13239,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 kind: (dialogueLine as any)?.kind === 'narration' ? 'narration' : 'dialogue',
                 character: characterName,
                 line: text,
+                voiceDirection: resolveLineVoiceDirection(dialogueLine, scene),
               }),
               audioStale: false,
             }

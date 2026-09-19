@@ -86,7 +86,9 @@ export function formatBeatsForRevisionPrompt(beats: SceneBeat[]): string {
       if (beat.kind === 'action') {
         return `${index + 1}. [beatId:${beat.beatId}] action: ${beat.actionDescription ?? ''}${directionSummary}`
       }
-      return `${index + 1}. [beatId:${beat.beatId}] ${beat.kind} ${beat.character ?? ''}: ${beat.line ?? ''}${directionSummary}`
+      return `${index + 1}. [beatId:${beat.beatId}] ${beat.kind} ${beat.character ?? ''}: ${beat.line ?? ''}${
+        beat.voiceDirection ? `\n     voiceDirection — ${beat.voiceDirection}` : ''
+      }${directionSummary}`
     })
     .join('\n')
 }

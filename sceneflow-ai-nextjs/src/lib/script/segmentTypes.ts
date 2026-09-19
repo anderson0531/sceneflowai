@@ -173,6 +173,7 @@ export interface SceneBeat {
   character?: string
   characterId?: string
   line?: string
+  /** Actor-facing Gemini TTS brief for this take (not a 1–3 word tag). */
   voiceDirection?: string
   /** Silent visual beat description. */
   actionDescription?: string
@@ -263,7 +264,7 @@ export interface DialogueLine {
   line: string
   /** "narration" for narrator lines, "dialogue" otherwise. */
   kind: DialogueKind
-  /** Optional voice direction / emotion ("[frustrated, low]"). */
+  /** Actor-facing Gemini TTS brief for this take (not a 1–3 word tag). */
   voiceDirection?: string
   /** Per-line storyboard frame (speaker-focused cut). */
   storyboardImageUrl?: string

@@ -32,6 +32,7 @@ import { SegmentList } from './scene-production/SegmentList'
 import type { ScriptSegment } from '@/lib/script/segmentTypes'
 import type { LocationReference } from '@/types/visionReferences'
 import { coerceDialogueLineText } from '@/lib/script/segmentScript'
+import { dialogueDirectionDisplay } from '@/lib/scene/dialogueDirectionDisplay'
 import {
   resolveSfxDuration,
   type SfxDurationOverride,
@@ -4748,6 +4749,7 @@ function SceneCard({
                   kind: d.kind === 'narration' ? 'narration' : 'dialogue',
                   character: d.character,
                   line: d.line,
+                  voiceDirection: d.voiceDirection,
                 }),
               })
               if ((entry?.audioUrl || entry?.url) && !stale) return
@@ -6992,13 +6994,12 @@ function SceneCard({
                         })
                         const dialogueAudioUrl = audioEntry?.audioUrl || audioEntry?.url
                         const sceneKey = scene.id || scene.sceneId || `scene-${sceneIdx}`
-                        // Extract parenthetical voice direction from line (e.g., "(angrily) I'm fine")
                         const dialogueLineText = coerceDialogueLineText(d.line ?? d.text)
-                        const parentheticalMatch = dialogueLineText.match(/^\(([^)]+)\)\s*/)
-                        const parenthetical = parentheticalMatch?.[1]
-                        const lineWithoutParenthetical = parenthetical
-                          ? dialogueLineText.replace(/^\([^)]+\)\s*/, '')
-                          : dialogueLineText
+                        const { chip, spokenDisplay, brief } = dialogueDirectionDisplay(
+                          dialogueLineText,
+                          d.voiceDirection ?? beat.voiceDirection
+                        )
+                        const lineWithoutParenthetical = spokenDisplay
                         
                         const isNarrationBeat = beat.kind === 'narration'
                         const hasBeatSfx = (sfxByBeatId.get(beat.beatId)?.length ?? 0) > 0
@@ -7139,10 +7140,12 @@ function SceneCard({
                                       Excluded
                                     </span>
                                   )}
-                                  {/* Voice direction / parenthetical */}
-                                  {(parenthetical || d.voiceDirection || d.emotion) && (
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-700/40 text-slate-300 border border-slate-600/40 italic">
-                                      {parenthetical || d.voiceDirection || d.emotion}
+                                  {chip && (
+                                    <span
+                                      className="text-[10px] px-2 py-0.5 rounded-full bg-slate-700/40 text-slate-300 border border-slate-600/40 italic"
+                                      title={brief || chip}
+                                    >
+                                      {chip}
                                     </span>
                                   )}
                                   {dialogueAudioUrl &&
@@ -7154,6 +7157,7 @@ function SceneCard({
                                         kind: isNarrationBeat ? 'narration' : 'dialogue',
                                         character: d.character ?? beat.character,
                                         line: d.line ?? beat.line,
+                                        voiceDirection: d.voiceDirection ?? beat.voiceDirection,
                                       }),
                                     }) ? (
                                     <span
@@ -7199,6 +7203,11 @@ function SceneCard({
                                   )}
                                 </div>
                                 <div className="text-sm text-gray-200 leading-relaxed">"{lineWithoutParenthetical}"</div>
+                                {brief && (
+                                  <div className="text-[11px] text-slate-400 mt-1 leading-snug" title={brief}>
+                                    {brief}
+                                  </div>
+                                )}
                                 {audioEntry?.duration && (
                                   <span className="text-[10px] text-gray-500 mt-1">Duration: {audioEntry.duration.toFixed(1)}s</span>
                                 )}

@@ -9,6 +9,7 @@ import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
 import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { resolveStoryLocale } from '@/i18n/server/storyLocale'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
+import { DIALOGUE_PERFORMANCE_DIRECTION_RULES } from '@/lib/prompts/dialoguePerformanceDirection'
 import { ensureSceneBeats } from '@/lib/script/beatMigration'
 import { buildCharacterDialogueExamples } from '@/lib/character/characterNamingPrompt'
 
@@ -232,25 +233,7 @@ CRITICAL CHARACTER RULES:
 
 ${buildCharacterDialogueExamples(characters)}
 
-DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
-EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
-
-STYLE TAGS (In square brackets BEFORE text):
-Emotions: [happy], [sad], [angry], [fearful], [surprised], [disgusted], [neutral]
-Intensity: [very], [slightly], [extremely]
-Vocal Quality: [whispering], [shouting], [mumbling], [singing], [laughing], [crying], [gasping]
-Pace: [quickly], [slowly], [hesitantly], [confidently]
-
-PUNCTUATION & PACING:
-- Use ellipses (...) for pauses, trailing off, or hesitation
-- Use dashes (—) for interruptions or sudden stops
-- Use CAPS for EMPHASIS on specific words
-
-EXAMPLES:
-  * {"character": "BRIAN", "line": "[thoughtfully, slowly] I... I think you're right."}
-  * {"character": "SARAH", "line": "[very excited] This is AMAZING!"}
-
-CRITICAL: Every single dialogue line must start with at least one emotion/style tag in [brackets].
+${DIALOGUE_PERFORMANCE_DIRECTION_RULES}
 
 DIALOGUE NEGATIVE CONSTRAINTS (DO NOT DO THESE):
 - ❌ Do NOT create dialogue lines that only contain stage directions without spoken words
@@ -286,7 +269,7 @@ Generate a complete scene that EXPANDS (not changes) the outline. Return ONLY va
   "sceneNumber": ${sceneNumber},
   "heading": "INT. LOCATION - TIME",
   "action": "Detailed action description that MATCHES the synopsis and beat intent...",
-  "dialogue": [{"character": "NAME", "line": "dialogue that matches character voice"}],
+  "dialogue": [{"character": "NAME", "line": "[emotion] dialogue that matches character voice", "voiceDirection": "1-2 sentences of actor-facing direction for this take."}],
   "duration": ${outline.duration || 5},
   "visualDescription": "Specific camera angles, lighting, composition matching visual style...",
   "characters": ["CHARACTER_NAME"],

@@ -1,4 +1,5 @@
 import { isStructuredSystemInstruction } from '@/lib/tts/characterSystemInstruction'
+import { expandShortDeliveryCues, formatDirectorNotes } from '@/lib/tts/dialogueDirectorNotes'
 
 export type GeminiTtsAudioType = 'narration' | 'dialogue' | 'music' | 'sfx'
 
@@ -74,9 +75,7 @@ export function buildGeminiTtsPrompt(params: {
     if (promptLevel === 0) {
       sceneDirection =
         params.sceneDirection?.trim() ||
-        (deliveryCues.length > 0
-          ? `SCENE DIRECTION: Delivery cues: ${deliveryCues.join('; ')}.`
-          : '')
+        (deliveryCues.length > 0 ? formatDirectorNotes({ cues: deliveryCues }) : '')
     }
 
     // Scene direction yields before the persona; the persona is the identity.
@@ -92,9 +91,13 @@ export function buildGeminiTtsPrompt(params: {
     return [persona, sceneDirection, GUARD].filter((b) => b.length > 0).join('\n\n')
   }
 
-  const acting =
+  const actingBrief =
     promptLevel === 0 && deliveryCues.length > 0
-      ? ` Acting direction for this performance: ${deliveryCues.join('; ')}.`
+      ? expandShortDeliveryCues(deliveryCues) || deliveryCues.join('; ')
+      : ''
+  const acting =
+    actingBrief.length > 0
+      ? ` Acting direction for this performance: ${actingBrief.replace(/\s+/g, ' ').trim()}`
       : ''
 
   const profileBudget =

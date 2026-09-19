@@ -69,6 +69,7 @@ import { adaptPromptForLyria, LYRIA_MUSIC_PROMPT_RULES } from '@/lib/audio/lyria
 import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
 import { resolveStoryLocale } from '@/i18n/server/storyLocale'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
+import { DIALOGUE_PERFORMANCE_DIRECTION_RULES } from '@/lib/prompts/dialoguePerformanceDirection'
 import {
   buildFoundationPromptBlock,
   getArtStylePresetName,
@@ -1081,11 +1082,7 @@ WHAT TO CREATE:
 ✓ Emotional beats that resonate with the audience
 ✓ A cohesive narrative following the story/lesson beats
 
-DIALOGUE REQUIREMENTS:
-• Every dialogue line MUST start with emotion tags: [emotion, delivery]
-• Examples: [sadly, slowly], [excited, quickly], [whispering nervously], [teaching clearly, passionately]
-• Use ellipses (...) for pauses, dashes (—) for interruptions
-• Use CAPS for EMPHASIS on specific words
+${DIALOGUE_PERFORMANCE_DIRECTION_RULES}
 
 TECHNICAL REQUIREMENTS:
 • CHARACTER NAMES: Copy-paste EXACTLY from the whitelist above - no variations!
@@ -1130,7 +1127,7 @@ ${beatTimelineNarrationRules}
 • actionDescription format: shot type + subject + motion/mood (e.g., "Close-up: hands trembling on keyboard, shallow DOF, cool blue light")
 • One beat = one storyboard frame = one video segment — each action beat must be visually distinct from adjacent spoken beats (different subject, framing, or story information)
 • "action" beats use actionDescription only — NO spoken line, NO character field
-• "dialogue" beats must contain SPOKEN words with [emotion] tags — NO stage directions in line
+• "dialogue" beats must contain SPOKEN words with [emotion] tags and a "voiceDirection" acting brief — NO stage directions in line
 • beats[] order is the storyboard frame order (one frame per beat)
 
 ${beatDirectionRules}`
@@ -1263,6 +1260,7 @@ ${shared.narrationSchemaLine}
           "movementIndex": 0,
           "character": "Character Name",
           "line": "[emotion] Dialogue...",
+          "voiceDirection": "1-2 sentences of actor-facing direction for this take.",
           "beatDirection": {"castInFrame": ["Character Name"], "shotType": "Medium Close-Up", "frozenMoment": "Speaker mid-word, eyes locked on the listener.", "transition": "CUT"}
         },
         {

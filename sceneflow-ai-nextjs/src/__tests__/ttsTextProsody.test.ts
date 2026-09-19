@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   finalizeTextForGeminiTts,
   finalizeTextForGoogleTts,
+  extractBracketDeliveryHints,
   isGeminiMarkupTag,
   normalizePacingPunctuation,
   optimizeTextForGeminiTTS,
@@ -93,8 +94,36 @@ describe('markup tag allowlist', () => {
    */
   it('still strips stage directions the model would read aloud', () => {
     const result = optimizeTextForGeminiTTS('[exhausted, whispering] I cannot do this again.')
-    expect(result.text).toBe('I cannot do this again.')
-    expect(result.cues).toEqual(['exhausted', 'whispering'])
+    expect(result.text).toBe('[whispering] I cannot do this again.')
+    expect(result.cues).toEqual(['exhausted'])
+  })
+
+  it('keeps a prose director brief as one cue instead of comma-splitting it', () => {
+    const inner =
+      'Close-mic, private, strained. Argue with the numbers on leftover air'
+    expect(extractBracketDeliveryHints(`[${inner}] The differential holds.`)).toEqual([
+      inner,
+    ])
+    expect(extractBracketDeliveryHints('[slow, sad] I wish things were different.')).toEqual([
+      'slow',
+      'sad',
+    ])
+  })
+
+  it('does not inject emotion adjectives that Gemini would speak aloud', () => {
+    const result = optimizeTextForGeminiTTS(
+      '[obsessive, breathless] The differential holds... it has to hold this time.'
+    )
+    expect(result.text).toMatch(/The differential holds.*it has to hold this time/)
+    expect(result.text).not.toContain('[obsessive]')
+    expect(result.cues).toEqual(['obsessive', 'breathless'])
+  })
+
+  it('injects documented markup implied by voiceDirection', () => {
+    const result = optimizeTextForGeminiTTS('Do not tell anyone.', {
+      voiceDirection: 'Whisper this as quietly as you can, close-mic and private.',
+    })
+    expect(result.text).toBe('[whispering] Do not tell anyone.')
   })
 
   it('does not repeat an inline tag as a prompt cue', () => {

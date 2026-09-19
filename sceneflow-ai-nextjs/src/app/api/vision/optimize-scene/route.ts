@@ -5,6 +5,7 @@ import { sequelize } from '@/config/database'
 import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { localeDirective } from '@/lib/prompts/localeDirective'
+import { DIALOGUE_PERFORMANCE_DIRECTION_RULES } from '@/lib/prompts/dialoguePerformanceDirection'
 
 export const maxDuration = 300 // Increased for complex optimization
 export const runtime = 'nodejs'
@@ -177,25 +178,7 @@ WHAT UNSUCCESSFUL OPTIMIZATION LOOKS LIKE (AVOID):
 ✗ Same structure with minor adjective changes
 ✗ Keeping problematic narration with slightly different words
 
-DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
-EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
-
-STYLE TAGS (In square brackets BEFORE text):
-Emotions: [happy], [sad], [angry], [fearful], [surprised], [disgusted], [neutral]
-Intensity: [very], [slightly], [extremely]
-Vocal Quality: [whispering], [shouting], [mumbling], [singing], [laughing], [crying], [gasping]
-Pace: [quickly], [slowly], [hesitantly], [confidently]
-
-PUNCTUATION & PACING:
-- Use ellipses (...) for pauses, trailing off, or hesitation
-- Use dashes (—) for interruptions or sudden stops
-- Use CAPS for EMPHASIS on specific words
-
-EXAMPLES:
-  * {"character": "JOHN", "line": "[very excited] I can't believe it!"}
-  * {"character": "MARY", "line": "[whispering nervously] Don't tell anyone..."}
-
-CRITICAL: Every single dialogue line must start with at least one emotion/style tag in [brackets].
+${DIALOGUE_PERFORMANCE_DIRECTION_RULES}
 
 DIALOGUE NEGATIVE CONSTRAINTS (DO NOT DO THESE):
 - ❌ Do NOT create dialogue lines that only contain stage directions without spoken words
@@ -220,7 +203,7 @@ Return JSON with this exact structure:
     "action": "REWRITTEN action with show-don't-tell visual storytelling...",
     "narration": "REWRITTEN narration (or removed if converted to action)...",
     "dialogue": [
-      { "character": "CHARACTER NAME", "line": "[emotion tag] REWRITTEN dialogue with subtext..." }
+      { "character": "CHARACTER NAME", "line": "[emotion tag] REWRITTEN dialogue with subtext...", "voiceDirection": "1-2 sentences of actor-facing direction for this take." }
     ],
     "music": "Music description",
     "sfx": ["SFX description"]
@@ -235,7 +218,7 @@ Return JSON with this exact structure:
   ]
 }
 
-REMEMBER: ALL dialogue must include [emotional tags] at the beginning.
+REMEMBER: ALL dialogue must include compact [emotional tags] at the beginning AND a voiceDirection acting brief.
 
 LYRIA MUSIC RULES (for optimizedScene.music):
 - 10-20 words ONLY

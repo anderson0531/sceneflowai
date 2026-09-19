@@ -1,3 +1,5 @@
+import { formatDirectorNotes } from '@/lib/tts/dialogueDirectorNotes'
+
 /**
  * Structured System Instruction for Gemini-TTS.
  *
@@ -51,6 +53,8 @@ export type SceneDeliveryState = {
   location?: string
   /** Per-line acting cues, typically lifted from bracketed script directions. */
   cues?: string[]
+  /** Actor-facing Gemini TTS brief for this take (not the standing persona). */
+  voiceDirection?: string
 }
 
 /**
@@ -165,15 +169,20 @@ export function buildSceneDirection(state?: SceneDeliveryState): string {
   if (state.recipient?.trim()) parts.push(`Addressing ${state.recipient.trim()}`)
   if (state.location?.trim()) parts.push(`Location: ${state.location.trim()}`)
   if (state.urgency?.trim()) parts.push(`Urgency: ${state.urgency.trim()}`)
-  if (state.emotion?.trim()) parts.push(`Emotional state for this line: ${state.emotion.trim()}`)
 
-  const cues = (state.cues ?? [])
-    .map((c) => c.trim())
-    .filter((c) => c.length > 0)
-  if (cues.length > 0) parts.push(`Delivery cues: ${cues.join('; ')}`)
+  const directorNotes = formatDirectorNotes({
+    voiceDirection: state.voiceDirection,
+    cues: state.cues,
+    emotion: state.emotion,
+  })
 
-  if (parts.length === 0) return ''
-  return `SCENE DIRECTION: ${parts.map((p) => sentence(p)).join(' ')}`
+  const sceneBits = parts.map((p) => sentence(p)).join(' ')
+  if (!directorNotes && !sceneBits) return ''
+  if (directorNotes && sceneBits) {
+    return `SCENE DIRECTION: ${sceneBits}\n\n${directorNotes}`
+  }
+  if (directorNotes) return directorNotes
+  return `SCENE DIRECTION: ${sceneBits}`
 }
 
 /**

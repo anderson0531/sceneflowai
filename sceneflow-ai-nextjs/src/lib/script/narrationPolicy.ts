@@ -204,6 +204,7 @@ export function buildNarrationSchemaExample(
           "kind": "narration",
           "character": "NARRATOR",
           "line": "[calm, measured] Voiceover when appropriate...",
+          "voiceDirection": "Calm, measured documentary delivery. Even pace; let the image sit under the line.",
           "beatDirection": {"shotType": "Wide", "frozenMoment": "Landscape hold under narration; no speaker on-screen.", "transition": "CUT"}
         },`
   }
@@ -211,6 +212,7 @@ export function buildNarrationSchemaExample(
           "kind": "narration",
           "character": "NARRATOR",
           "line": "[calm, measured] Voiceover when appropriate...",
+          "voiceDirection": "Calm, measured documentary delivery. Even pace; let the image sit under the line.",
           "beatDirection": {"shotType": "Wide", "cameraMovement": "slow drift", "blocking": "on-screen subject continues silent action; NARRATOR off-screen", "frozenMoment": "Landscape hold under narration; no speaker on-screen.", "transition": "CUT"}
         },`
 }

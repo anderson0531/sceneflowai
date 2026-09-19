@@ -12,6 +12,11 @@ export function audioSourceFingerprintForSpoken(opts: {
   character?: string
   line?: string
   /**
+   * Actor-facing Gemini TTS brief. Appended only when present so fingerprints
+   * written before briefs existed stay byte-identical.
+   */
+  voiceDirection?: string
+  /**
    * Optional digest of the voice + prompt state the clip was rendered with.
    * Appended only when supplied, so fingerprints written before voice state
    * was tracked stay byte-identical and no existing library is invalidated.
@@ -25,8 +30,10 @@ export function audioSourceFingerprintForSpoken(opts: {
     character: opts.character,
     line: coerceDialogueLineText(opts.line),
   })
+  const brief = (opts.voiceDirection ?? '').trim()
+  const withBrief = brief ? `${base}|vd:${brief}` : base
   const voiceState = (opts.voiceStateHash ?? '').trim()
-  return voiceState ? `${base}||voice:${voiceState}` : base
+  return voiceState ? `${withBrief}||voice:${voiceState}` : withBrief
 }
 
 export function audioSourceFingerprintForAction(actionDescription?: string): string {
@@ -199,10 +206,22 @@ export function stampStaleBeatAudioOnScene(
 
   for (const beat of beats) {
     const canonicalBeat = canonicalById.get(beat.beatId)
-    const canonicalFp = canonicalBeat ? beatContentFingerprint(canonicalBeat) : undefined
 
     if (beat.kind === 'dialogue' || beat.kind === 'narration') {
-      const currentFp = beatContentFingerprint(beat)
+      const currentFp = audioSourceFingerprintForSpoken({
+        kind: beat.kind === 'narration' ? 'narration' : 'dialogue',
+        character: beat.character,
+        line: beat.line,
+        voiceDirection: beat.voiceDirection,
+      })
+      const canonicalFp = canonicalBeat
+        ? audioSourceFingerprintForSpoken({
+            kind: canonicalBeat.kind === 'narration' ? 'narration' : 'dialogue',
+            character: canonicalBeat.character,
+            line: canonicalBeat.line,
+            voiceDirection: canonicalBeat.voiceDirection,
+          })
+        : undefined
       let dialogueIndex = spokenCursor
       if (beat.lineId?.trim()) {
         const byLineId = dialogueLines.findIndex((entry) => entry?.lineId === beat.lineId)
@@ -239,6 +258,9 @@ export function stampStaleBeatAudioOnScene(
 
     if (beat.kind === 'action' && Array.isArray(next.sfx)) {
       const currentFp = audioSourceFingerprintForAction(beat.actionDescription)
+      const canonicalFp = canonicalBeat
+        ? audioSourceFingerprintForAction(canonicalBeat.actionDescription)
+        : undefined
       for (const cue of next.sfx as unknown[]) {
         if (!cue || typeof cue !== 'object' || Array.isArray(cue)) continue
         const rec = cue as Record<string, unknown>

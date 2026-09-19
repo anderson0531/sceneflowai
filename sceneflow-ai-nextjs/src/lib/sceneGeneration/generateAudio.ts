@@ -15,6 +15,7 @@ import { getBatchNarrationTtsText, sceneHasNarratorInDialogue } from '../../lib/
 import { processWithConcurrency } from '../utils/concurrent-processor'
 import { isRetryableError } from '../utils/retry'
 import { getExpressAudioConcurrency, type ExpressTrafficCop } from './expressTrafficCop'
+import { resolveLineVoiceDirection } from '../../lib/tts/dialogueDirectorNotes'
 import { audioSourceFingerprintForSpoken } from '../audio/beatAudioStale'
 import type { SceneAudioAsset, SceneAudioCounts, SceneAudioFailure, SceneAudioResult } from './types'
 
@@ -341,6 +342,7 @@ export async function generateSceneAudio(
         const sceneTranslation = storedTranslations?.[sceneIndex]
         const storedDialogueLine = sceneTranslation?.dialogue?.[dialogueIndex]
         const dialogueText = storedDialogueLine || dialogueLine.line
+        const voiceDirection = resolveLineVoiceDirection(dialogueLine, scene)
 
         const edgeVoiceConfig = character
           ? getEdgeVoiceConfigForResolution(character, language || 'en')
@@ -370,6 +372,7 @@ export async function generateSceneAudio(
                 characterGender,
                 skipTranslation: !!storedDialogueLine,
                 skipDbUpdate: true,
+                voiceDirection,
               }),
             })
 
@@ -521,6 +524,12 @@ export function applyAudioAssetsToScene(
         sourceFingerprint: audioSourceFingerprintForSpoken({
           kind: 'narration',
           line: getBatchNarrationTtsText(scene, undefined) || scene.narration,
+          voiceDirection: resolveLineVoiceDirection(
+            Array.isArray(scene.dialogue)
+              ? scene.dialogue.find((d: { kind?: string }) => d?.kind === 'narration')
+              : undefined,
+            scene
+          ),
         }),
         audioStale: false,
       }
@@ -546,6 +555,9 @@ export function applyAudioAssetsToScene(
           kind: asset.kind === 'narration' ? 'narration' : 'dialogue',
           character: asset.character,
           line: Array.isArray(scene.dialogue) ? scene.dialogue[idx]?.line : undefined,
+          voiceDirection: Array.isArray(scene.dialogue)
+            ? resolveLineVoiceDirection(scene.dialogue[idx], scene)
+            : undefined,
         }),
         audioStale: false,
       }

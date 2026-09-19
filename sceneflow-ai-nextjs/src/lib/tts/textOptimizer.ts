@@ -335,6 +335,75 @@ function extractEmotionCues(text: string): string[] {
   return [...new Set(cues)] // Remove duplicates
 }
 
+const SHORT_DELIVERY_LABEL_MAX_WORDS = 4
+
+/**
+ * True when a comma-separated bracket part is a compact delivery label
+ * (`slow`, `to herself`) rather than a prose acting brief.
+ */
+export function isShortDeliveryLabel(part: string): boolean {
+  const trimmed = part.replace(/\s+/g, ' ').trim()
+  if (!trimmed) return false
+  if (/[.!?;:]/.test(trimmed)) return false
+  const words = trimmed.split(' ').filter(Boolean)
+  return words.length > 0 && words.length <= SHORT_DELIVERY_LABEL_MAX_WORDS
+}
+
+/**
+ * Split a bracket into cue labels only when every comma-separated part is
+ * short. A prose director brief is kept as one cue so commas inside it are
+ * not shredded.
+ */
+export function splitBracketDeliveryParts(inner: string): string[] {
+  const trimmed = inner.replace(/\s+/g, ' ').trim()
+  if (!trimmed) return []
+  const parts = trimmed.split(',').map((p) => p.trim()).filter(Boolean)
+  if (parts.length <= 1) return parts.length ? [trimmed] : []
+  if (parts.every(isShortDeliveryLabel)) return parts
+  return [trimmed]
+}
+
+/**
+ * Google-documented markup implied by a direction string. At most one tag is
+ * injected (adjacent tags error). Non-speech (sigh/laugh) wins over style
+ * modifiers. Emotion adjectives like "obsessive" are never injected — those
+ * tags get spoken.
+ */
+const MARKUP_FROM_DIRECTION: Array<{ pattern: RegExp; tag: string; kind: 'nonspeech' | 'style' }> = [
+  { pattern: /\bsigh(?:s|ing|ed)?\b/i, tag: 'sigh', kind: 'nonspeech' },
+  { pattern: /\blaugh(?:s|ing|ed)?\b/i, tag: 'laughing', kind: 'nonspeech' },
+  { pattern: /\b(?:uh+m+|um+)\b/i, tag: 'uhm', kind: 'nonspeech' },
+  { pattern: /\bwhisper(?:ing|ed|s)?\b/i, tag: 'whispering', kind: 'style' },
+  { pattern: /\b(?:shout(?:ing|ed|s)?|yell(?:ing|ed|s)?)\b/i, tag: 'shouting', kind: 'style' },
+  { pattern: /\bsarcas(?:m|tic(?:ally)?)\b/i, tag: 'sarcasm', kind: 'style' },
+  { pattern: /\bextremely\s+fast\b|\brapid[- ]fire\b/i, tag: 'extremely fast', kind: 'style' },
+]
+
+export function documentedMarkupFromDirection(direction: string): string | null {
+  const text = direction.replace(/\s+/g, ' ').trim()
+  if (!text) return null
+  let nonspeech: string | null = null
+  let style: string | null = null
+  for (const { pattern, tag, kind } of MARKUP_FROM_DIRECTION) {
+    if (!pattern.test(text)) continue
+    if (kind === 'nonspeech' && !nonspeech) nonspeech = tag
+    if (kind === 'style' && !style) style = tag
+  }
+  return nonspeech || style
+}
+
+/** Prefix a documented markup tag when the direction implies it and none is present. */
+export function injectDocumentedMarkup(spoken: string, direction: string): string {
+  const text = spoken.replace(/\s+/g, ' ').trim()
+  if (!text) return spoken
+  const tag = documentedMarkupFromDirection(direction)
+  if (!tag) return text
+  if (new RegExp(`\\[\\s*${tag.replace(/\s+/g, '\\s+')}\\s*\\]`, 'i').test(text)) {
+    return text
+  }
+  return `[${tag}] ${text}`
+}
+
 /**
  * Capture bracketed delivery hints like `[tired, muttering]` before those brackets
  * are stripped from spoken text. Gemini-TTS steers delivery via `prompt`; cues
@@ -342,6 +411,7 @@ function extractEmotionCues(text: string): string[] {
  *
  * Documented markup tags are skipped — they stay inline in the spoken string,
  * so repeating them as prompt cues would double-apply the effect.
+ * Prose director briefs are kept whole (commas inside them are not shredded).
  */
 export function extractBracketDeliveryHints(text: string): string[] {
   const normalized = normalizePerformanceBracketChars(text || '')
@@ -352,7 +422,7 @@ export function extractBracketDeliveryHints(text: string): string[] {
     const inner = m[1].replace(/\s+/g, ' ').trim()
     if (!inner) continue
     if (isGeminiMarkupTag(inner)) continue
-    for (const part of inner.split(',')) {
+    for (const part of splitBracketDeliveryParts(inner)) {
       const p = part.trim()
       if (p.length > 0) hints.push(p)
     }
@@ -455,7 +525,10 @@ export function optimizeTextForTTS(input: string): OptimizedText {
  * markup tags survive inline, since those are the only bracket contents the
  * model interprets rather than speaks. See `generate-scene-audio` route.
  */
-export function optimizeTextForGeminiTTS(input: string): OptimizedText {
+export function optimizeTextForGeminiTTS(
+  input: string,
+  opts?: { voiceDirection?: string }
+): OptimizedText {
   const originalLength = input.length
   const bracketHints = extractBracketDeliveryHints(input)
   const emotionCues = extractEmotionCues(input)
@@ -472,6 +545,11 @@ export function optimizeTextForGeminiTTS(input: string): OptimizedText {
   optimized = normalizeWhitespace(optimized)
   optimized = normalizePacingPunctuation(optimized)
   optimized = trimEchoedPrefixTail(optimized)
+
+  const directionForMarkup = [opts?.voiceDirection, input, ...bracketHints]
+    .filter(Boolean)
+    .join(' ')
+  optimized = injectDocumentedMarkup(optimized, directionForMarkup)
 
   // A style tag that survived inline already steers delivery; repeating it as a
   // prompt cue would apply the effect twice.

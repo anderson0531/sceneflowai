@@ -21,6 +21,7 @@ import {
 import { attachCoGeneratedSceneDirection } from '@/lib/sceneGeneration/attachRevisedSceneDirection'
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { localeDirective } from '@/lib/prompts/localeDirective'
+import { DIALOGUE_PERFORMANCE_DIRECTION_RULES } from '@/lib/prompts/dialoguePerformanceDirection'
 import { classifyAiError } from '@/lib/errors/aiErrorClassification'
 import { buildPolicySafePhrasingRules } from '@/lib/generation/policySafePhrasing'
 import {
@@ -358,27 +359,7 @@ If the revision instructions require a new named character, a different plot out
   "suggestion": "For scene-level improvements, try: [suggest appropriate scene-level changes]"
 }
 
-DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
-EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
-
-STYLE TAGS (In square brackets BEFORE text):
-Emotions: [happy], [sad], [angry], [fearful], [surprised], [disgusted], [neutral]
-Intensity: [very], [slightly], [extremely]
-Vocal Quality: [whispering], [shouting], [mumbling], [singing], [laughing], [crying], [gasping]
-Pace: [quickly], [slowly], [hesitantly], [confidently]
-Combined: [very happy], [slightly angry], [extremely fearful]
-
-PUNCTUATION & PACING:
-- Use ellipses (...) for pauses, trailing off, or hesitation
-- Use dashes (—) for interruptions or sudden stops  
-- Use CAPS for EMPHASIS on specific words
-
-EXAMPLES:
-  * {"character": "JOHN", "line": "[very excited] I can't believe it! This changes EVERYTHING!"}
-  * {"character": "MARY", "line": "[whispering nervously] Don't tell anyone... It's our secret, okay?"}
-  * {"character": "JACK", "line": "[sadly, slowly] I wish things were different— but they're not."}
-
-CRITICAL: Every single dialogue line must start with at least one emotion/style tag in [brackets].
+${DIALOGUE_PERFORMANCE_DIRECTION_RULES}
 
 DIALOGUE NEGATIVE CONSTRAINTS (DO NOT DO THESE):
 - ❌ Do NOT create dialogue lines that only contain stage directions without spoken words
@@ -414,7 +395,7 @@ Output the REWRITTEN scene as JSON with this exact structure:
       "kind": "dialogue",
       "character": "CHARACTER NAME",
       "line": "[emotion] One sentence of dialogue",
-      "voiceDirection": "[emotion]",
+      "voiceDirection": "1-2 sentences of actor-facing direction for this take.",
       "beatDirection": {"castInFrame": ["CHARACTER NAME"], "shotType": "Medium Close-Up", "blocking": "speaker turns to face listener", "emotion": "guarded honesty", "gaze": "into listener's eyes", "frozenMoment": "Speaker mid-word.", "transition": "CUT"}
     },
     {
@@ -445,7 +426,7 @@ STRUCTURED BEATS RULES:
 
 ${buildPolicySafePhrasingRules()}
 
-REMEMBER: ALL dialogue/narration lines must include [emotional tags] at the beginning.
+REMEMBER: ALL dialogue/narration lines must include compact [emotion] tags at the beginning AND a voiceDirection acting brief.
 
 CRITICAL SUCCESS CRITERIA:
 - A successful rewrite will have DIFFERENT dialogue content, not just different wording
