@@ -35,6 +35,19 @@ export function clampUnitVolume(value: number, fallback = 0): number {
  */
 export const SCREENING_DIALOGUE_GAIN = 1.25
 
+/**
+ * Music/SFX duck while a Dialogue beat is on screen. Stacks with fade-to-black.
+ * Narration and action beats stay at mixer level.
+ */
+export const SCREENING_DIALOGUE_BEAT_BED_GAIN = 0.25
+
+/** 0.25 on Dialogue beats; 1 for narration, action, or unknown. */
+export function screeningDialogueBeatBedGain(
+  beatKind: string | null | undefined
+): number {
+  return beatKind === 'dialogue' ? SCREENING_DIALOGUE_BEAT_BED_GAIN : 1
+}
+
 /** Viewer overlay × scene track. Mute zeros every stem; mixer `enabled` is not mute. */
 export function effectiveScreeningTrackVolume(opts: {
   muted: boolean
