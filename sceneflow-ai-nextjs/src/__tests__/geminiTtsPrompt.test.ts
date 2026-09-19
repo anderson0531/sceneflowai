@@ -13,7 +13,7 @@ describe('buildGeminiTtsPrompt', () => {
       promptLevel: 0,
     })
     expect(prompt).toContain('Acting direction for this performance')
-    expect(prompt).toContain('grave nod')
+    expect(prompt).toMatch(/grave nod/i)
     expect(prompt).toContain('Character voice profile')
     expect(prompt).toContain(VOICE_PROFILE)
     expect(prompt).toContain('Speak only the words in the text field')

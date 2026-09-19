@@ -46,6 +46,36 @@ describe('beat audio stale detection', () => {
     ).toBe(true)
   })
 
+  it('marks stale when the acting brief changes and stays stable when it is absent', () => {
+    const withoutBrief = audioSourceFingerprintForSpoken({
+      kind: 'dialogue',
+      character: 'Elena',
+      line: '[obsessive, breathless] The differential holds.',
+    })
+    const withBrief = audioSourceFingerprintForSpoken({
+      kind: 'dialogue',
+      character: 'Elena',
+      line: '[obsessive, breathless] The differential holds.',
+      voiceDirection: 'Close-mic, private, strained.',
+    })
+    expect(withoutBrief).not.toContain('|vd:')
+    expect(withBrief).toContain('|vd:')
+    expect(
+      isBeatAudioStale({
+        hasAudio: true,
+        sourceFingerprint: withoutBrief,
+        currentFingerprint: withBrief,
+      })
+    ).toBe(true)
+    expect(
+      audioSourceFingerprintForSpoken({
+        kind: 'dialogue',
+        character: 'Elena',
+        line: '[obsessive, breathless] The differential holds.',
+      })
+    ).toBe(withoutBrief)
+  })
+
   it('uses audioStale flag when fingerprint is missing', () => {
     expect(
       isBeatAudioStale({

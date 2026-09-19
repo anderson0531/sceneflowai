@@ -7,6 +7,7 @@ import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
 import { ensureSceneBeats } from '@/lib/script/beatMigration'
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
+import { DIALOGUE_PERFORMANCE_DIRECTION_RULES } from '@/lib/prompts/dialoguePerformanceDirection'
 import { getGeminiProductModel } from '@/lib/config/modelConfig'
 
 export const maxDuration = 600 // 10min for large scripts with retries + parallel batches
@@ -1097,7 +1098,7 @@ Return ONLY valid JSON (no markdown):
       "action": "Physical actions and visual descriptions",
       "narration": "Brief narration (1 sentence max) or empty string \"\" if scene works without it",
       "dialogue": [
-        { "character": "NAME", "line": "[emotion] Dialogue text" }
+        { "character": "NAME", "line": "[emotion] Dialogue text", "voiceDirection": "1-2 sentences of actor-facing direction for this take." }
       ],
       "music": "Music description",
       "sfx": ["SFX items"],
@@ -1112,12 +1113,11 @@ Return ONLY valid JSON (no markdown):
 RULES:
 • Output ${batchScenes.length} scene(s) — you MAY add new dialogue lines or action beats WITHIN scenes
 • Duration may INCREASE for expanded scenes (add 5-15s per added beat)
-• All dialogue needs [emotion] tags
-• Emotion tags MUST be short and concise (1-3 words max, e.g., [sad] or [slow, sad]). Do NOT use complex conversational phrases like "[slower, a hint of sorrow]"
+${DIALOGUE_PERFORMANCE_DIRECTION_RULES}
 • NEVER use asterisks (*) or underscores (_) for emphasis in dialogue. Use ALL CAPS instead.
 • Escape quotes in JSON
 • Narration: 1 sentence max, or empty string "" if the scene works without it. Prefer showing through action over telling through narration
-• REWRITE dialogue substantially — don't just change emotion tags
+• REWRITE dialogue substantially — don't just change emotion tags or voiceDirection
 • LYRIA MUSIC RULES (for scene.music): 10-20 words ONLY, instrumental only, format [genre], [mood], [instruments], [tempo]; NO film titles, character names, visual sync, or narrative arcs`
 
   // Token budget: 3500 per scene + 5000 base

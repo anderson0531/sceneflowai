@@ -127,8 +127,10 @@ describe('buildSceneDirection', () => {
     expect(direction).toMatch(/^SCENE DIRECTION:/)
     expect(direction).toContain('Addressing the board')
     expect(direction).toContain('Urgency: high')
-    expect(direction).toContain('Emotional state for this line: suppressed anger')
-    expect(direction).toContain('Delivery cues: coldly; without looking up')
+    expect(direction).toContain('Emotional state for this line: Suppressed anger')
+    expect(direction).toContain("DIRECTOR'S NOTES:")
+    expect(direction).toMatch(/cold/i)
+    expect(direction).not.toContain('Delivery cues:')
   })
 
   it('is empty when the scene supplies nothing, so the persona is sent unchanged', () => {
@@ -187,8 +189,8 @@ describe('buildGeminiTtsPrompt', () => {
       sceneDirection,
     })
 
-    expect(prompt.indexOf('ROLE:')).toBeLessThan(prompt.indexOf('SCENE DIRECTION:'))
-    expect(prompt).toContain('suppressed anger')
+    expect(prompt.indexOf('ROLE:')).toBeLessThan(prompt.indexOf("DIRECTOR'S NOTES:"))
+    expect(prompt).toContain('Suppressed anger')
   })
 
   it('withholds generic prosody coaching that would fight the delivery rules', () => {
@@ -214,7 +216,7 @@ describe('buildGeminiTtsPrompt', () => {
       sceneDirection: buildSceneDirection({ emotion: 'suppressed anger' }),
     })
 
-    expect(prompt).not.toContain('SCENE DIRECTION:')
+    expect(prompt).not.toContain("DIRECTOR'S NOTES:")
     expect(prompt).toContain('ROLE:')
   })
 
@@ -228,7 +230,7 @@ describe('buildGeminiTtsPrompt', () => {
       promptLevel: 1,
     })
     expect(level1).toContain('ROLE:')
-    expect(level1).not.toContain('SCENE DIRECTION:')
+    expect(level1).not.toContain("DIRECTOR'S NOTES:")
 
     const level2 = buildGeminiTtsPrompt({
       audioType: 'dialogue',
@@ -237,7 +239,7 @@ describe('buildGeminiTtsPrompt', () => {
       promptLevel: 2,
     })
     expect(level2).not.toContain('ROLE:')
-    expect(level2).not.toContain('SCENE DIRECTION:')
+    expect(level2).not.toContain("DIRECTOR'S NOTES:")
     expect(level2).toMatch(/Speak only the words in the text field/)
   })
 

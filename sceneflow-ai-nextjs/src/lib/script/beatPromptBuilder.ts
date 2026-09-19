@@ -1,5 +1,6 @@
 import { Beat } from './beatExtractor'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
+import { DIALOGUE_PERFORMANCE_DIRECTION_RULES } from '@/lib/prompts/dialoguePerformanceDirection'
 
 export interface Character {
   name: string
@@ -22,7 +23,7 @@ export function buildBeatPrompt(
 ): string {
   const languageBlock = localeDirective(storyLocale, {
     properNouns: buildProperNounGlossary({ characters }, [treatment?.title]),
-    note: 'Scene headings keep the INT./EXT. prefix and time-of-day term in English. Dialogue emotion tags in square brackets stay in English.',
+    note: 'Scene headings keep the INT./EXT. prefix and time-of-day term in English. Dialogue emotion tags in square brackets and voiceDirection stay in English.',
   })
 
   const characterList = characters.length > 0
@@ -59,6 +60,7 @@ Scene Range: ${beat.startScene}-${beat.endScene} (${beat.sceneCount} scenes)
 3. Ensure smooth transition from "STORY SO FAR"
 4. Return ONLY valid JSON (no markdown, no explanations)
 ${languageBlock}
+${DIALOGUE_PERFORMANCE_DIRECTION_RULES}
 # DURATION ESTIMATION FORMULA (FOLLOW EXACTLY)
 Step 1: Count total words (narration + all dialogue)
 Step 2: audio_duration = (total_words / 150) * 60 seconds
@@ -78,7 +80,7 @@ Average ${Math.ceil(beat.targetDuration / beat.sceneCount)}s per scene = ~${Math
       "characters": ["Character Name 1"],
       "action": "SOUND of action. Character movement.\n\nSFX: Sound description\n\nMusic: Music description",
       "narration": "Captivating voiceover narration (1-2 sentences)",
-      "dialogue": [{"character": "CHARACTER NAME", "line": "[emotion] Dialogue text"}],
+      "dialogue": [{"character": "CHARACTER NAME", "line": "[emotion] Dialogue text", "voiceDirection": "1-2 sentences of actor-facing direction for this take."}],
       "visualDescription": "Cinematic shot description",
       "duration": 45,
       "sfx": [{"time": 0, "description": "Sound effect"}],

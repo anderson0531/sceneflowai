@@ -63,7 +63,8 @@ function dialogueLineAudioStatus(
   lineId: string | undefined,
   character: string | undefined,
   kind: 'dialogue' | 'narration',
-  line: string | undefined
+  line: string | undefined,
+  voiceDirection?: string
 ): { hasAudio: boolean; stale: boolean } {
   const entry = findDialogueAudioForLine(scene, {
     language: lang,
@@ -79,7 +80,12 @@ function dialogueLineAudioStatus(
     hasAudio: hasUrl,
     sourceFingerprint: entry?.sourceFingerprint,
     audioStale: entry?.audioStale,
-    currentFingerprint: audioSourceFingerprintForSpoken({ kind, character, line }),
+    currentFingerprint: audioSourceFingerprintForSpoken({
+      kind,
+      character,
+      line,
+      voiceDirection,
+    }),
   })
   return { hasAudio: hasUrl && !stale, stale }
 }
@@ -202,7 +208,11 @@ export function buildExpressAudioItems(
           beat.lineId,
           beat.character,
           'narration',
-          beat.line
+          beat.line,
+          beat.voiceDirection ||
+            (typeof dialogueLine?.voiceDirection === 'string'
+              ? dialogueLine.voiceDirection
+              : undefined)
         )
         const stale = narrationStatus.stale || dialogueStatus.stale
         items.push({
@@ -224,7 +234,11 @@ export function buildExpressAudioItems(
         beat.lineId ?? (dialogueLine?.lineId as string | undefined),
         beat.character ?? (dialogueLine?.character as string | undefined),
         beat.kind === 'narration' ? 'narration' : 'dialogue',
-        beat.line ?? (dialogueLine?.line as string | undefined)
+        beat.line ?? (dialogueLine?.line as string | undefined),
+        beat.voiceDirection ||
+          (typeof dialogueLine?.voiceDirection === 'string'
+            ? dialogueLine.voiceDirection
+            : undefined)
       )
       items.push({
         id: `dialogue-${dialogueIndex}`,

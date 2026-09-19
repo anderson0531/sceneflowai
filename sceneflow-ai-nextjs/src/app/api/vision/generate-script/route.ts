@@ -10,6 +10,7 @@ import { normalizeDialogueToProductionLineTargets } from '@/lib/script/segmentSc
 import { buildCharacterDialogueExamples } from '@/lib/character/characterNamingPrompt'
 import { resolveStoryLocale } from '@/i18n/server/storyLocale'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
+import { DIALOGUE_PERFORMANCE_DIRECTION_RULES } from '@/lib/prompts/dialoguePerformanceDirection'
 import {
   attachSceneDirectionsToScript,
   readScenesFromVisionMetadata,
@@ -237,7 +238,7 @@ CRITICAL: Return ONLY the JSON array, no other text.`
         { characters },
         properNouns.concat(filmTreatmentVariant.title)
       ),
-      note: 'Scene headings keep the INT./EXT. prefix and the time-of-day term in English; the location name itself follows the story language. Dialogue emotion tags in square brackets stay in English.',
+      note: 'Scene headings keep the INT./EXT. prefix and the time-of-day term in English; the location name itself follows the story language. Dialogue emotion tags in square brackets and voiceDirection stay in English.',
     })
     if (storyLocale !== 'en') {
       console.log(`[Script Gen] Authoring script in ${storyLocale}`)
@@ -336,33 +337,9 @@ CRITICAL DIALOGUE RULES:
 
 ${buildCharacterDialogueExamples(characters)}
 
-DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
-EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
+${DIALOGUE_PERFORMANCE_DIRECTION_RULES}
 Target dialogue lines to roughly ~15 seconds of spoken delivery (soft target, can be shorter/longer when the beat needs it).
 
-STYLE TAGS (In square brackets BEFORE text):
-- MUST BE SHORT AND CONCISE (1-3 words max).
-- Do not use complex, conversational phrases like "[slower, a hint of sorrow]". Use simple combinations instead.
-Emotions: [happy], [sad], [angry], [fearful], [surprised], [disgusted], [neutral]
-Intensity: [very], [slightly], [extremely]
-Vocal Quality: [whispering], [shouting], [mumbling], [singing], [laughing], [crying], [gasping]
-Pace: [quickly], [slowly], [hesitantly], [confidently]
-Combined Examples: [very happy], [slightly angry], [slow, sad], [confidently]
-
-PUNCTUATION & PACING:
-- Use ellipses (...) for pauses, trailing off, or hesitation
-- Use dashes (—) for interruptions or sudden stops  
-- Use CAPS for EMPHASIS on specific words (NEVER use asterisks * or underscores _ for emphasis)
-- Use commas (,) for natural breathing pauses
-
-EXAMPLES:
-  * {"character": "BRIAN ANDERSON SR", "line": "[very excited] I can't believe it! This changes EVERYTHING!"}
-  * {"character": "MINT", "line": "[whispering] Don't tell anyone... It's our secret, okay?"}
-  * {"character": "ERIC", "line": "[sad, slow] I wish things were different— but they're not."}
-  * {"character": "DR. MARTINEZ", "line": "[confident] The results are clear, and I'm afraid... they're not good."}
-  * {"character": "CHILD", "line": "[happy, quickly] Mommy, mommy! Look what I found!"}
-
-CRITICAL: Every single dialogue line must start with at least one simple emotion/style tag in [brackets].
 CRITICAL: Avoid micro-lines that are only short fragments; combine adjacent thoughts from the same speaker when natural.
 CRITICAL: Voiceover/narration timing is flexible and can be aligned later; optimize narration lines for coherence, not strict seconds.
 

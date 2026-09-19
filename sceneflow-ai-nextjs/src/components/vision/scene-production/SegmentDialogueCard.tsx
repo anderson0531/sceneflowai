@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { saveAudioFile } from '@/lib/download/saveFile'
 import { findDialogueAudioForLine } from '@/components/vision/scene-production/audioTrackBuilder'
 import { coerceDialogueLineText } from '@/lib/script/segmentScript'
+import { dialogueDirectionDisplay } from '@/lib/scene/dialogueDirectionDisplay'
 import {
   audioSourceFingerprintForSpoken,
   isBeatAudioStale,
@@ -100,6 +101,7 @@ export function SegmentDialogueCard({
       kind: isNarrator ? 'narration' : 'dialogue',
       character: line.character,
       line: line.line,
+      voiceDirection: line.voiceDirection,
     }),
   })
 
@@ -111,13 +113,12 @@ export function SegmentDialogueCard({
         (generatingDialogue.dialogueIndex ?? -1) === (dialogueIndex ?? -1)))
 
   const lineText = coerceDialogueLineText(line.line)
-  // Pull leading parenthetical voice direction off the body for chip display.
-  const parentheticalMatch = lineText.match(/^\(([^)]+)\)\s*/)
-  const parenthetical = parentheticalMatch?.[1]
-  const lineWithoutParenthetical = parenthetical
-    ? lineText.replace(/^\([^)]+\)\s*/, '')
-    : lineText
-  const voiceChip = parenthetical || line.voiceDirection
+  const { chip, spokenDisplay, brief } = dialogueDirectionDisplay(
+    lineText,
+    line.voiceDirection
+  )
+  const lineWithoutParenthetical = spokenDisplay
+  const voiceChip = chip
 
   const cardClasses = isNarrator
     ? 'p-3 bg-purple-900/20 rounded-lg border border-purple-700/30 hover:border-purple-600/50 transition-colors'
@@ -194,7 +195,10 @@ export function SegmentDialogueCard({
               </span>
             )}
             {voiceChip && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 italic">
+              <span
+                className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 italic"
+                title={brief || voiceChip}
+              >
                 {voiceChip}
               </span>
             )}
@@ -215,6 +219,11 @@ export function SegmentDialogueCard({
           <div className={bodyClasses}>
             {isNarrator ? lineWithoutParenthetical : `"${lineWithoutParenthetical}"`}
           </div>
+          {brief && (
+            <div className="text-[11px] text-slate-400 mt-1 leading-snug" title={brief}>
+              {brief}
+            </div>
+          )}
         </div>
         {audioUrl ? (
           <div className="flex items-center gap-2">

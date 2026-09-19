@@ -108,6 +108,8 @@ interface AudioGenerationRequest {
   /** Per-line dynamic state. Kept out of the persisted persona so the static
    *  system instruction stays identical across a character's dialogue tree. */
   sceneState?: SceneDeliveryState
+  /** Actor-facing Gemini TTS brief for this take. */
+  voiceDirection?: string
 }
 
 export async function POST(req: NextRequest) {
@@ -138,6 +140,7 @@ export async function POST(req: NextRequest) {
       edgeVoiceConfig: clientEdgeVoiceConfig,
       characterGender: clientCharacterGender,
       sceneState,
+      voiceDirection: requestedVoiceDirection,
     } = parsed
 
     // Log the request for debugging
@@ -240,10 +243,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 2: Optimize text for TTS (remove stage directions, clean up)
+    const voiceDirection =
+      [requestedVoiceDirection, sceneState?.voiceDirection]
+        .map((value) => (typeof value === 'string' ? value.trim() : ''))
+        .find((value) => value.length > 0) || undefined
+
     const useGeminiOptimizer =
       voiceConfig.provider === 'google' && voiceConfig.voiceId.startsWith('gemini-')
     const optimized = useGeminiOptimizer
-      ? optimizeTextForGeminiTTS(textToGenerate)
+      ? optimizeTextForGeminiTTS(textToGenerate, { voiceDirection })
       : optimizeTextForTTS(textToGenerate)
       
     console.log('[Scene Audio] Text optimization:', {
@@ -333,6 +341,7 @@ export async function POST(req: NextRequest) {
     // describing who the character is and the wrapper carries how this one lands.
     const sceneDirection = buildSceneDirection({
       ...(sceneState ?? {}),
+      voiceDirection: voiceDirection || sceneState?.voiceDirection,
       cues: [...(sceneState?.cues ?? []), ...optimized.cues],
     })
 
@@ -430,6 +439,7 @@ export async function POST(req: NextRequest) {
             kind: lineKind || (audioType === 'narration' ? 'narration' : 'dialogue'),
             character: characterName,
             line: text,
+            voiceDirection,
             voiceStateHash: stateFor(usedVoiceId, usedProvider),
           })
         : undefined
