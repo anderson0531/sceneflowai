@@ -24,8 +24,16 @@ import { matchCharacterRecord } from '../../../../lib/character/canonical'
 import type { EdgeVoiceConfig } from '../../../../types/vision'
 import {
   isEdgeTtsFallbackEnabled,
-  isQuotaOrRateLimitError,
+  shouldFallbackToEdgeTts,
 } from '../../../../lib/tts/edgeTtsFallback'
+import {
+  canAffordGoogleTtsRetry,
+  edgeTtsTimeoutMs,
+  googleTtsFetchTimeoutMs,
+  GoogleTtsTimeoutError,
+  remainingSceneAudioBudgetMs,
+  shouldSkipGoogleTtsForBudget,
+} from '../../../../lib/tts/googleTtsTimeBudget'
 import { buildGeminiTtsPrompt } from '../../../../lib/tts/geminiTtsPrompt'
 import {
   buildSceneDirection,
@@ -38,7 +46,7 @@ import { persistSceneAudioAtomic } from '../../../../lib/audio/persistSceneAudio
 import { audioSourceFingerprintForSpoken } from '../../../../lib/audio/beatAudioStale'
 import { characterStateHash } from '../../../../lib/tts/characterStateHash'
 
-export const maxDuration = 60
+export const maxDuration = 180
 export const runtime = 'nodejs'
 
 interface VoiceConfig {
@@ -113,6 +121,7 @@ interface AudioGenerationRequest {
 }
 
 export async function POST(req: NextRequest) {
+  const startedAtMs = Date.now()
   try {
     const parsed = (await req.json()) as AudioGenerationRequest & {
       text: string
@@ -401,7 +410,8 @@ export async function POST(req: NextRequest) {
         optimized.cues,
         characterGender,
         characterEdgeVoice,
-        sceneDirection
+        sceneDirection,
+        startedAtMs
       )
       audioBuffer = synthesis.buffer
       usedProvider = synthesis.provider
@@ -637,22 +647,31 @@ async function generateAudio(
   deliveryCues: string[] = [],
   characterGender?: string,
   characterEdgeVoice?: EdgeVoiceConfig,
-  sceneDirection?: string
+  sceneDirection?: string,
+  startedAtMs: number = Date.now()
 ): Promise<AudioSynthesisResult> {
   const primaryProvider: 'google' | 'elevenlabs' =
     voiceConfig.provider === 'elevenlabs' ? 'elevenlabs' : 'google'
 
   try {
+    if (shouldSkipGoogleTtsForBudget(remainingSceneAudioBudgetMs(startedAtMs))) {
+      throw new GoogleTtsTimeoutError(0)
+    }
     const buffer =
       voiceConfig.provider === 'elevenlabs'
-        ? await generateElevenLabsAudio(text, voiceConfig)
+        ? await generateElevenLabsAudio(
+            text,
+            voiceConfig,
+            googleTtsFetchTimeoutMs(remainingSceneAudioBudgetMs(startedAtMs))
+          )
         : await generateGoogleAudio(
             text,
             voiceConfig,
             language,
             audioType,
             deliveryCues,
-            sceneDirection
+            sceneDirection,
+            startedAtMs
           )
     return {
       buffer,
@@ -660,7 +679,7 @@ async function generateAudio(
       voiceId: voiceConfig.voiceId,
     }
   } catch (err) {
-    if (!isEdgeTtsFallbackEnabled() || !isQuotaOrRateLimitError(err)) {
+    if (!isEdgeTtsFallbackEnabled() || !shouldFallbackToEdgeTts(err)) {
       throw err
     }
     const edgeVoice = resolveEdgeVoiceForCharacter({
@@ -678,11 +697,17 @@ async function generateAudio(
         `[Scene Audio] Edge voice locale mismatch: stored ${storedVoiceId} for lang ${language}, using ${edgeVoice}`
       )
     }
+    const edgeTimeoutMs = edgeTtsTimeoutMs(remainingSceneAudioBudgetMs(startedAtMs))
     console.warn(
-      `[Scene Audio] Paid TTS failed (${primaryProvider}), falling back to Edge voice ${edgeVoice} (stored=${characterEdgeVoice?.voiceId ?? 'none'}, gender=${characterGender ?? 'unknown'}, lang=${language}):`,
+      `[Scene Audio] Paid TTS failed (${primaryProvider}), falling back to Edge voice ${edgeVoice} (stored=${characterEdgeVoice?.voiceId ?? 'none'}, gender=${characterGender ?? 'unknown'}, lang=${language}, timeoutMs=${edgeTimeoutMs}):`,
       err instanceof Error ? err.message : err
     )
-    const buffer = await synthesizeEdgeMp3({ text, voice: edgeVoice, language })
+    const buffer = await synthesizeEdgeMp3({
+      text,
+      voice: edgeVoice,
+      language,
+      timeoutMs: edgeTimeoutMs,
+    })
     return {
       buffer,
       provider: 'edge',
@@ -692,7 +717,11 @@ async function generateAudio(
   }
 }
 
-async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig): Promise<Buffer> {
+async function generateElevenLabsAudio(
+  text: string,
+  voiceConfig: VoiceConfig,
+  timeoutMs: number
+): Promise<Buffer> {
   const sanitizedText = finalizeTextForGoogleTts(text)
   if (!sanitizedText.trim()) {
     throw new Error('Text is empty after removing bracketed tags')
@@ -702,6 +731,7 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig): 
     voiceId: voiceConfig.voiceId,
     stability: voiceConfig.stability,
     similarityBoost: voiceConfig.similarityBoost,
+    timeoutMs,
   })
 }
 
@@ -782,7 +812,8 @@ async function generateGoogleAudio(
   language: string = 'en',
   audioType: AudioGenerationRequest['audioType'] = 'narration',
   deliveryCues: string[] = [],
-  sceneDirection?: string
+  sceneDirection?: string,
+  startedAtMs: number = Date.now()
 ): Promise<Buffer> {
   if (voiceConfig.provider !== 'google') {
     throw new Error('Internal error: Google TTS invoked for non-google voice config')
@@ -921,6 +952,11 @@ async function generateGoogleAudio(
   let policyAttempt = 0
 
   while (true) {
+    const remainingMs = remainingSceneAudioBudgetMs(startedAtMs)
+    if (shouldSkipGoogleTtsForBudget(remainingMs)) {
+      throw new GoogleTtsTimeoutError(googleTtsFetchTimeoutMs(remainingMs))
+    }
+
     if (isGemini) {
       const promptLevel = Math.min(policyAttempt, 2) as 0 | 1 | 2
       payload.input.prompt = buildGeminiTtsPrompt({
@@ -932,10 +968,48 @@ async function generateGoogleAudio(
       })
     }
 
-    response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
+    const timeoutMs = googleTtsFetchTimeoutMs(remainingMs)
+    const attemptStarted = Date.now()
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), timeoutMs)
+
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      })
+    } catch (err) {
+      const ms = Date.now() - attemptStarted
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.warn('[Google TTS] synthesize', {
+          ms,
+          timeoutMs,
+          status: 'aborted',
+          attempt429,
+          policyAttempt,
+        })
+        throw new GoogleTtsTimeoutError(timeoutMs)
+      }
+      console.warn('[Google TTS] synthesize', {
+        ms,
+        timeoutMs,
+        status: 'network_error',
+        attempt429,
+        policyAttempt,
+      })
+      throw err
+    } finally {
+      clearTimeout(timer)
+    }
+
+    console.log('[Google TTS] synthesize', {
+      ms: Date.now() - attemptStarted,
+      timeoutMs,
+      status: response.status,
+      attempt429,
+      policyAttempt,
     })
 
     if (response.ok) {
@@ -950,6 +1024,10 @@ async function generateGoogleAudio(
     if (violation) {
       if (policyAttempt < maxPolicyRetries) {
         const delayMs = backoffMsForPolicyAttempt(policyAttempt)
+        if (!canAffordGoogleTtsRetry(remainingSceneAudioBudgetMs(startedAtMs), delayMs)) {
+          console.warn('[Google TTS] Skipping policy retry — remaining budget too small')
+          throw new GoogleTtsBlockedError(violation)
+        }
         const nextPromptLevel = Math.min(policyAttempt + 1, 2)
         console.warn(
           `[Google TTS] Policy block — retry ${policyAttempt + 1}/${maxPolicyRetries} ` +
@@ -967,6 +1045,16 @@ async function generateGoogleAudio(
     const ratePayload = parseVertexTtsRateLimit(response.status, lastErrorText)
     if (is429 && attempt429 < max429Retries) {
       const delayMs = backoffMsFor429Attempt(attempt429, response.headers.get('retry-after'))
+      if (!canAffordGoogleTtsRetry(remainingSceneAudioBudgetMs(startedAtMs), delayMs)) {
+        console.warn('[Google TTS] Skipping 429 retry — remaining budget too small')
+        throw ratePayload
+          ? new GoogleTtsRateLimitedError(ratePayload)
+          : new GoogleTtsRateLimitedError({
+              userMessage:
+                "Google's speech service is temporarily overloaded or you've hit a throughput limit. Wait a few seconds and try again.",
+              tips: [],
+            })
+      }
       console.warn(
         `[Google TTS] Rate limited (429), retry ${attempt429 + 1}/${max429Retries} after ${delayMs}ms`
       )
