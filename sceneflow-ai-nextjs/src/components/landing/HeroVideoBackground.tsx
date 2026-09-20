@@ -59,7 +59,7 @@ export function HeroVideoBackground({
       muted={muted}
       playsInline
       preload={prefersReducedMotion ? 'none' : preload}
-      className="absolute inset-0 z-0 h-full w-full object-cover"
+      className="absolute inset-0 z-0 h-full w-full bg-black object-contain"
       onPlay={onPlay}
       onPause={onPause}
       onWaiting={onWaiting}

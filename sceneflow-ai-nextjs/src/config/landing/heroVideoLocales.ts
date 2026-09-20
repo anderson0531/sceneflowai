@@ -110,6 +110,17 @@ export const HERO_VIDEO_WEB_1080P_PATHS: Record<HeroVideoLocaleId, string> = {
   th: 'landing/hero/sceneflow-hero-th-1080p.mp4',
 }
 
+/** 1080p VP9 encodes from the live 4K masters (not the watermarked MP4s). */
+export const HERO_VIDEO_WEB_WEBM_PATHS: Record<HeroVideoLocaleId, string> = {
+  en: 'landing/hero/sceneflow-hero-en.webm',
+  es: 'landing/hero/sceneflow-hero-es.webm',
+  pt: 'landing/hero/sceneflow-hero-pt.webm',
+  hi: 'landing/hero/sceneflow-hero-hi.webm',
+  zh: 'landing/hero/sceneflow-hero-zh.webm',
+  ar: 'landing/hero/sceneflow-hero-ar.webm',
+  th: 'landing/hero/sceneflow-hero-th.webm',
+}
+
 function heroSrc(path: string): string {
   return `${BLOB_HOST}/${encodeURI(path)}#t=0.1`
 }
@@ -132,13 +143,14 @@ export function getHeroPublicPosterUrl(locale: HeroVideoLocaleId): string {
 }
 
 export type HeroPublicVideoSources = {
-  webmSrc?: string
+  webmSrc: string
   mp4Src: string
   poster: string
 }
 
 export function getHeroPublicVideoSources(locale: HeroVideoLocaleId): HeroPublicVideoSources {
   return {
+    webmSrc: getHeroPublicWebmUrl(locale),
     mp4Src: getHeroPublicMp4Url(locale),
     poster: getHeroPublicPosterUrl(locale) || HERO_PUBLIC_POSTER_FALLBACK,
   }

@@ -125,11 +125,11 @@ const nextConfig = {
     return [
       {
         source: `/videos/hero-:locale(${locale}).mp4`,
-        destination: `${blob}/landing/hero/sceneflow-hero-:locale.mp4`,
+        destination: `${blob}/landing/hero/sceneflow-hero-:locale-1080p.mp4`,
       },
       {
         source: `/videos/hero-:locale(${locale}).webm`,
-        destination: `${blob}/landing/hero/sceneflow-hero-:locale.mp4`,
+        destination: `${blob}/landing/hero/sceneflow-hero-:locale.webm`,
       },
     ];
   },

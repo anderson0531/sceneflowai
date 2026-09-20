@@ -1,32 +1,52 @@
 #!/usr/bin/env node
 /**
- * Publish locale-dubbed hero files into public/ for the full-viewport player.
+ * Encode locale-dubbed hero files from the live 4K Blob masters.
  *
- * Prefers the 1080p Blob web encode when it exists; otherwise downloads the
- * 4K Blob master and encodes 1080p. Writes:
+ * Always starts from HERO_VIDEO_BLOB_PATHS (4K). Do not use the older
+ * watermarked landing/hero/sceneflow-hero-{locale}.mp4 files.
+ *
+ * Writes gitignored local copies:
  *
  *   public/videos/hero-{locale}.mp4
  *   public/videos/hero-{locale}.webm
- *   public/images/hero-poster-{locale}.webp
- *   public/images/hero-poster.webp  (English copy)
+ *   public/images/hero-poster-{locale}.webp  (unless --skip-posters)
  *
- * Each video must stay under 95MB (GitHub 100MB hard limit).
+ * With --upload (BLOB_READ_WRITE_TOKEN required), also publishes:
+ *
+ *   landing/hero/sceneflow-hero-{locale}-1080p.mp4
+ *   landing/hero/sceneflow-hero-{locale}.webm
  *
  * Usage:
  *   node scripts/publish-hero-public-assets.mjs
  *   node scripts/publish-hero-public-assets.mjs --locale en
+ *   BLOB_READ_WRITE_TOKEN=... node scripts/publish-hero-public-assets.mjs --upload --skip-posters
+ *   BLOB_READ_WRITE_TOKEN=... node scripts/publish-hero-public-assets.mjs --upload-only
  */
 
-import { createWriteStream, copyFileSync, existsSync, mkdirSync, statSync, unlinkSync } from 'fs'
+import {
+  createWriteStream,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  statSync,
+  unlinkSync,
+} from 'fs'
 import { spawnSync } from 'child_process'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 import { Readable } from 'stream'
 import { pipeline } from 'stream/promises'
+import { put } from '@vercel/blob'
+import { config } from 'dotenv'
 import ffmpegStatic from 'ffmpeg-static'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
+
+config({ path: join(ROOT, '.env.local') })
+config({ path: join(ROOT, '.env.vercel.local') })
+
 const BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
 const MAX_VIDEO_BYTES = 95 * 1024 * 1024
 const POSTER_TIMESTAMP = '00:00:02'
@@ -53,11 +73,27 @@ const WEB_1080P = {
   th: 'landing/hero/sceneflow-hero-th-1080p.mp4',
 }
 
+/** Public WebM objects served via /videos/hero-{locale}.webm rewrites. */
+const WEB_WEBM = {
+  en: 'landing/hero/sceneflow-hero-en.webm',
+  es: 'landing/hero/sceneflow-hero-es.webm',
+  pt: 'landing/hero/sceneflow-hero-pt.webm',
+  hi: 'landing/hero/sceneflow-hero-hi.webm',
+  zh: 'landing/hero/sceneflow-hero-zh.webm',
+  ar: 'landing/hero/sceneflow-hero-ar.webm',
+  th: 'landing/hero/sceneflow-hero-th.webm',
+}
+
 const LOCALES = Object.keys(MASTERS)
 
 function parseArgs(argv) {
   const idx = argv.indexOf('--locale')
-  return { locale: idx >= 0 ? argv[idx + 1] : undefined }
+  return {
+    locale: idx >= 0 ? argv[idx + 1] : undefined,
+    upload: argv.includes('--upload') || argv.includes('--upload-only'),
+    uploadOnly: argv.includes('--upload-only'),
+    skipPosters: argv.includes('--skip-posters'),
+  }
 }
 
 function resolveFfmpeg() {
@@ -73,9 +109,12 @@ function formatBytes(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
 }
 
-async function blobExists(path) {
-  const res = await fetch(blobUrl(path), { method: 'HEAD' })
-  return res.ok
+function requireUploadToken() {
+  const token = process.env.BLOB_READ_WRITE_TOKEN
+  if (!token) {
+    throw new Error('BLOB_READ_WRITE_TOKEN is required for --upload')
+  }
+  return token
 }
 
 async function download(path, dest) {
@@ -104,7 +143,7 @@ function assertUnderLimit(filePath) {
   console.log(`  ${filePath} → ${formatBytes(size)}`)
   if (size >= MAX_VIDEO_BYTES) {
     throw new Error(
-      `${filePath} is ${formatBytes(size)} (>= 95MB). Re-encode leaner before committing.`
+      `${filePath} is ${formatBytes(size)} (>= 95MB). Re-encode leaner before publishing.`
     )
   }
 }
@@ -198,30 +237,57 @@ function extractPoster(inputPath, outputPath) {
   )
 }
 
+async function uploadPublicAsset(localPath, blobPath, contentType, token) {
+  const buffer = readFileSync(localPath)
+  console.log(`  Uploading ${blobPath} (${formatBytes(buffer.length)})`)
+  const blob = await put(blobPath, buffer, {
+    access: 'public',
+    token,
+    contentType,
+    allowOverwrite: true,
+    addRandomSuffix: false,
+  })
+  console.log(`  Uploaded ${blob.url}`)
+}
+
 async function resolveSource(locale) {
   const tmp = join(ROOT, 'tmp', 'hero-public', `${locale}-source.mp4`)
-  if (await blobExists(WEB_1080P[locale])) {
-    await download(WEB_1080P[locale], tmp)
-    return { path: tmp, cleanup: true }
-  }
-  console.log(`  1080p web encode missing; using 4K master`)
+  console.log(`  Using 4K master (not watermarked landing MP4)`)
   await download(MASTERS[locale], tmp)
   return { path: tmp, cleanup: true }
 }
 
-async function processLocale(locale) {
+async function processLocale(locale, { upload, uploadOnly, skipPosters, token }) {
   console.log(`\n=== ${locale} ===`)
   if (!MASTERS[locale]) throw new Error(`Unknown locale: ${locale}`)
 
-  const source = await resolveSource(locale)
   const mp4 = join(ROOT, 'public', 'videos', `hero-${locale}.mp4`)
   const webm = join(ROOT, 'public', 'videos', `hero-${locale}.webm`)
   const poster = join(ROOT, 'public', 'images', `hero-poster-${locale}.webp`)
 
+  if (uploadOnly) {
+    if (!existsSync(mp4) || !existsSync(webm)) {
+      throw new Error(`Missing local encodes for ${locale}: ${mp4} / ${webm}`)
+    }
+    assertUnderLimit(mp4)
+    assertUnderLimit(webm)
+    await uploadPublicAsset(mp4, WEB_1080P[locale], 'video/mp4', token)
+    await uploadPublicAsset(webm, WEB_WEBM[locale], 'video/webm', token)
+    return
+  }
+
+  const source = await resolveSource(locale)
+
   try {
     encodeMp4(source.path, mp4)
     encodeWebm(source.path, webm)
-    extractPoster(source.path, poster)
+    if (!skipPosters) {
+      extractPoster(source.path, poster)
+    }
+    if (upload) {
+      await uploadPublicAsset(mp4, WEB_1080P[locale], 'video/mp4', token)
+      await uploadPublicAsset(webm, WEB_WEBM[locale], 'video/webm', token)
+    }
   } finally {
     if (source.cleanup && existsSync(source.path)) {
       unlinkSync(source.path)
@@ -230,25 +296,29 @@ async function processLocale(locale) {
 }
 
 async function main() {
-  const { locale } = parseArgs(process.argv.slice(2))
+  const { locale, upload, uploadOnly, skipPosters } = parseArgs(process.argv.slice(2))
   const locales = locale ? [locale] : LOCALES
   if (locale && !MASTERS[locale]) {
     console.error(`Unknown locale: ${locale}`)
     process.exit(1)
   }
 
+  const token = upload ? requireUploadToken() : undefined
+
   mkdirSync(join(ROOT, 'public', 'videos'), { recursive: true })
   mkdirSync(join(ROOT, 'public', 'images'), { recursive: true })
 
   for (const code of locales) {
-    await processLocale(code)
+    await processLocale(code, { upload, uploadOnly, skipPosters, token })
   }
 
-  const enPoster = join(ROOT, 'public', 'images', 'hero-poster-en.webp')
-  const fallback = join(ROOT, 'public', 'images', 'hero-poster.webp')
-  if (existsSync(enPoster)) {
-    copyFileSync(enPoster, fallback)
-    console.log(`\nCopied English poster → ${fallback}`)
+  if (!skipPosters) {
+    const enPoster = join(ROOT, 'public', 'images', 'hero-poster-en.webp')
+    const fallback = join(ROOT, 'public', 'images', 'hero-poster.webp')
+    if (existsSync(enPoster)) {
+      copyFileSync(enPoster, fallback)
+      console.log(`\nCopied English poster → ${fallback}`)
+    }
   }
 
   console.log('\nDone.')

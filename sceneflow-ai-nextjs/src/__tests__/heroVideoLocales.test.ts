@@ -7,6 +7,7 @@ import {
   HERO_VIDEO_BLOB_PATHS,
   HERO_VIDEO_WEB_720P_PATHS,
   HERO_VIDEO_WEB_1080P_PATHS,
+  HERO_VIDEO_WEB_WEBM_PATHS,
   HERO_VIDEO_LOCALES,
   getAvailableHeroVideoLocales,
   getDefaultHeroVideoSrc,
@@ -54,13 +55,16 @@ describe('Hero video locales', () => {
     expect(HERO_VIDEO_BLOB_PATHS.th).toBe('Hero Video (Thai).mp4')
   })
 
-  it('reserves 720p and 1080p web-encode paths from the live 4K masters', () => {
+  it('reserves 720p, 1080p, and WebM web-encode paths from the live 4K masters', () => {
     for (const locale of HERO_VIDEO_LOCALES) {
       expect(HERO_VIDEO_WEB_720P_PATHS[locale.id]).toBe(
         `landing/hero/sceneflow-hero-${locale.id}-720p.mp4`
       )
       expect(HERO_VIDEO_WEB_1080P_PATHS[locale.id]).toBe(
         `landing/hero/sceneflow-hero-${locale.id}-1080p.mp4`
+      )
+      expect(HERO_VIDEO_WEB_WEBM_PATHS[locale.id]).toBe(
+        `landing/hero/sceneflow-hero-${locale.id}.webm`
       )
       expect(locale.mp4SrcMobile).toContain(`sceneflow-hero-${locale.id}-720p.mp4`)
       expect(locale.mp4SrcHd).toContain(`sceneflow-hero-${locale.id}-1080p.mp4`)
@@ -77,22 +81,32 @@ describe('Hero video locales', () => {
 })
 
 describe('public hero playback sources', () => {
-  it('points every locale at a same-origin MP4 path and a localized poster', () => {
+  it('points every locale at same-origin WebM + MP4 paths and a localized poster', () => {
     for (const locale of HERO_VIDEO_LOCALES) {
       const sources = getHeroPublicVideoSources(locale.id)
-      expect(sources.webmSrc).toBeUndefined()
+      expect(sources.webmSrc).toBe(`/videos/hero-${locale.id}.webm`)
       expect(sources.mp4Src).toBe(`/videos/hero-${locale.id}.mp4`)
       expect(sources.poster).toBe(`/images/hero-poster-${locale.id}.webp`)
     }
     expect(HERO_PUBLIC_POSTER_FALLBACK).toBe('/images/hero-poster.webp')
   })
 
-  it('rewrites hero MP4s to Blob so they are not packed into serverless functions', () => {
+  it('rewrites hero WebM and 1080p MP4s to Blob so they are not packed into serverless functions', () => {
     const config = readFileSync(join(process.cwd(), 'next.config.mjs'), 'utf8')
     expect(config).toContain('outputFileTracingExcludes')
     expect(config).toContain('public/videos/**/*.mp4')
     expect(config).toContain('/videos/hero-:locale')
-    expect(config).toContain('sceneflow-hero-:locale.mp4')
+    expect(config).toContain('sceneflow-hero-:locale.webm')
+    expect(config).toContain('sceneflow-hero-:locale-1080p.mp4')
+    expect(config).not.toContain('sceneflow-hero-:locale.mp4')
+  })
+
+  it('uploads latest WebM and 1080p MP4 from the 4K masters, not the watermarked files', () => {
+    const script = readFileSync(join(process.cwd(), 'scripts/publish-hero-public-assets.mjs'), 'utf8')
+    expect(script).toContain('--upload')
+    expect(script).toContain('landing/hero/sceneflow-hero-en.webm')
+    expect(script).toContain('landing/hero/sceneflow-hero-en-1080p.mp4')
+    expect(script).toContain('Using 4K master (not watermarked landing MP4)')
   })
 
   it('ships WebP posters the player requests', () => {
