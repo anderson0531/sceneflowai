@@ -4,10 +4,12 @@ import { join } from 'node:path'
 import { calculateBase64Size } from '@/lib/storage/mediaStorage'
 import {
   compactProjectPutAck,
+  fitProjectPutPayload,
   fitProjectResponseMetadata,
   projectPutWouldExceedBodyLimit,
   slimProjectPutPayload,
   slimProjectResponseMetadata,
+  splitScriptPutIntoFittingBatches,
   stringifyProjectPut,
   visionPhasePut,
   VERCEL_FUNCTION_BODY_LIMIT_BYTES,
@@ -99,22 +101,40 @@ describe('vision page slims every project PUT', () => {
     'utf8'
   )
 
-  it('runs the payload through slimProjectPutPayload before fetch', () => {
-    const slim = page.indexOf('const slimmed = slimProjectPutPayload(bodyToSend)')
-    const stringify = page.indexOf('JSON.stringify(slimmed)')
+  it('runs the payload through fitProjectPutPayload before fetch', () => {
+    const fit = page.indexOf('const fitted = fitProjectPutPayload(payloadBody)')
+    const stringify = page.indexOf('JSON.stringify(fitted.body)')
     const fetchCall = page.indexOf('fetch(`/api/projects/${projectId}`')
-    expect(slim).toBeGreaterThan(-1)
-    expect(stringify).toBeGreaterThan(slim)
+    expect(fit).toBeGreaterThan(-1)
+    expect(stringify).toBeGreaterThan(fit)
     expect(fetchCall).toBeGreaterThan(stringify)
   })
 
-  it('does not re-send production or the scene mirror on a script persist', () => {
+  it('does not fetch a project PUT that is still over 4.5MB after fit', () => {
+    const putOne = page.indexOf('const putOne = async')
+    const exceeds = page.indexOf('if (fitted.exceedsLimit)', putOne)
+    const synthetic = page.indexOf("status: 413", putOne)
+    const fetchCall = page.indexOf('fetch(`/api/projects/${projectId}`', putOne)
+    expect(putOne).toBeGreaterThan(-1)
+    expect(exceeds).toBeGreaterThan(putOne)
+    expect(synthetic).toBeGreaterThan(exceeds)
+    expect(fetchCall).toBeGreaterThan(synthetic)
+    expect(page).toContain('not sending (Vercel 413 over 4.5MB)')
+    expect(page).toContain('splitScriptPutIntoFittingBatches')
+  })
+
+  it('does not re-send production, characters, or the scene mirror on a script persist', () => {
     const persist = page.indexOf('const persistVisionScriptScenes = useCallback')
-    const saveCall = page.indexOf('serializedProjectSave(', persist)
-    const saveEnd = page.indexOf('debugLabel || \'persistVisionScriptScenes\'', saveCall)
-    const putBody = page.slice(saveCall, saveEnd)
-    expect(putBody).toContain('script: updatedScript')
+    const persistEnd = page.indexOf('}, [serializedProjectSave])', persist)
+    const persistFn = page.slice(persist, persistEnd)
+    expect(persistFn).toContain('persistSceneIdsForChangedScenes')
+    expect(persistFn).toContain('persistSceneIds')
+    const saveCall = persistFn.indexOf('serializedProjectSave(')
+    const optionsStart = persistFn.indexOf('{ refreshLiveScript:', saveCall)
+    const putBody = persistFn.slice(saveCall, optionsStart)
+    expect(putBody).toContain('script: putScript')
     expect(putBody).toContain('scriptUpdatedAt:')
+    expect(putBody).not.toContain('characters')
     expect(putBody).not.toContain('scenes: updatedScenes')
     expect(putBody).not.toContain('production:')
   })
@@ -418,6 +438,184 @@ describe('fitProjectResponseMetadata', () => {
     expect(fitted.metadata.visionPhase.translations).toBeUndefined()
     expect(fitted.metadata.visionPhase.script.script.scenes[0].beats[0].line).toBe('Hi.')
     expect(fitted.bytes).toBeLessThan(50_000)
+  })
+})
+
+describe('fitProjectPutPayload', () => {
+  it('strips MediaVersion prompts and keeps live still URL and beatDirection', () => {
+    const fitted = fitProjectPutPayload({
+      metadata: {
+        visionPhase: {
+          script: {
+            script: {
+              scenes: [
+                {
+                  id: 'sc_1',
+                  beats: [
+                    {
+                      beatId: 'bt_1',
+                      storyboardImageUrl: 'https://blob.example/still.jpg',
+                      beatDirection: { shotType: 'MCU' },
+                      storyboardImageVersions: [
+                        {
+                          id: 'v1',
+                          url: 'https://blob.example/still.jpg',
+                          createdAt: '2026-09-19T00:00:00.000Z',
+                          source: 'generate',
+                          prompt: 'A'.repeat(5000),
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      },
+    })
+    const beat = fitted.body.metadata?.visionPhase.script.script.scenes[0].beats[0]
+    expect(fitted.omitted).toContain('versionPrompts')
+    expect(fitted.exceedsLimit).toBe(false)
+    expect(beat.storyboardImageUrl).toBe('https://blob.example/still.jpg')
+    expect(beat.beatDirection).toEqual({ shotType: 'MCU' })
+    expect(beat.storyboardImageVersions[0].prompt).toBeUndefined()
+    expect(beat.storyboardImageVersions[0]).toEqual({
+      id: 'v1',
+      url: 'https://blob.example/still.jpg',
+      createdAt: '2026-09-19T00:00:00.000Z',
+      source: 'generate',
+    })
+  })
+
+  it('fits a 5MB version-prompt script PUT under the Function body limit', () => {
+    const fitted = fitProjectPutPayload({
+      metadata: {
+        visionPhase: {
+          script: {
+            script: {
+              scenes: [
+                {
+                  id: 'sc_1',
+                  beats: [
+                    {
+                      beatId: 'bt_1',
+                      storyboardImageUrl: 'https://blob.example/still.jpg',
+                      beatDirection: { shotType: 'MCU' },
+                      storyboardImageVersions: [
+                        {
+                          id: 'v1',
+                          url: 'https://blob.example/still.jpg',
+                          createdAt: '2026-09-19T00:00:00.000Z',
+                          source: 'generate',
+                          prompt: 'p'.repeat(5 * 1024 * 1024),
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      },
+    })
+    const beat = fitted.body.metadata?.visionPhase.script.script.scenes[0].beats[0]
+    expect(fitted.omitted).toContain('versionPrompts')
+    expect(fitted.exceedsLimit).toBe(false)
+    expect(fitted.bytes).toBeLessThan(VERCEL_FUNCTION_BODY_LIMIT_BYTES)
+    expect(beat.storyboardImageUrl).toBe('https://blob.example/still.jpg')
+    expect(beat.beatDirection).toEqual({ shotType: 'MCU' })
+    expect(beat.storyboardImageVersions[0].prompt).toBeUndefined()
+  })
+
+  it('drops version arrays when URLs alone exceed the budget', () => {
+    const fitted = fitProjectPutPayload(
+      {
+        metadata: {
+          visionPhase: {
+            script: {
+              script: {
+                scenes: [
+                  {
+                    id: 'sc_1',
+                    beats: [
+                      {
+                        beatId: 'bt_1',
+                        storyboardImageUrl: 'https://blob.example/still.jpg',
+                        beatDirection: { shotType: 'MCU' },
+                        storyboardImageVersions: [
+                          { id: 'v1', url: `https://blob.example/${'u'.repeat(8 * 1024)}` },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      { budgetBytes: 4_000 }
+    )
+    const beat = fitted.body.metadata?.visionPhase.script.script.scenes[0].beats[0]
+    expect(fitted.omitted).toContain('versionArrays')
+    expect(fitted.exceedsLimit).toBe(false)
+    expect(beat.storyboardImageVersions).toBeUndefined()
+    expect(beat.storyboardImageUrl).toBe('https://blob.example/still.jpg')
+    expect(beat.beatDirection).toEqual({ shotType: 'MCU' })
+  })
+})
+
+describe('splitScriptPutIntoFittingBatches', () => {
+  it('splits two scenes that fit alone but not together', () => {
+    const blob = 'x'.repeat(3_000)
+    const body = {
+      metadata: {
+        visionPhase: {
+          script: {
+            script: {
+              scenes: [
+                { id: 'sc_1', blob },
+                { id: 'sc_2', blob },
+              ],
+            },
+          },
+          scriptUpdatedAt: '2026-09-19T00:00:00.000Z',
+        },
+      },
+    }
+    const batches = splitScriptPutIntoFittingBatches(body, {
+      budgetBytes: 5_000,
+      nowIso: () => '2026-09-20T00:00:00.000Z',
+    })
+    expect(batches).toHaveLength(2)
+    expect(batches![0].metadata?.visionPhase.script.script.scenes.map((s: { id: string }) => s.id)).toEqual([
+      'sc_1',
+    ])
+    expect(batches![1].metadata?.visionPhase.script.script.scenes.map((s: { id: string }) => s.id)).toEqual([
+      'sc_2',
+    ])
+    expect(batches![0].metadata?.visionPhase.scriptUpdatedAt).toBe('2026-09-20T00:00:00.000Z')
+  })
+
+  it('returns null when a single scene cannot fit', () => {
+    const body = {
+      metadata: {
+        visionPhase: {
+          script: {
+            script: {
+              scenes: [
+                { id: 'sc_1', blob: 'x'.repeat(8_000) },
+                { id: 'sc_2', blob: 'y' },
+              ],
+            },
+          },
+          scriptUpdatedAt: '2026-09-19T00:00:00.000Z',
+        },
+      },
+    }
+    expect(splitScriptPutIntoFittingBatches(body, { budgetBytes: 1_000 })).toBeNull()
   })
 })
 

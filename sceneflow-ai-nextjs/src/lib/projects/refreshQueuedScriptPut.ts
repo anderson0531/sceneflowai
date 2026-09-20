@@ -20,6 +20,11 @@ export type RefreshQueuedScriptPutOptions = {
   nowIso?: string
   /** Replace `visionPhase.script` with `liveScript`. Default: true when liveScript is set. */
   replaceScript?: boolean
+  /**
+   * When set, keep only these scene ids after the live merge so a one-scene
+   * persist cannot re-inflate to the full script (Vercel 413).
+   */
+  persistSceneIds?: string[]
 }
 
 type VisionPhaseBody = {
@@ -30,7 +35,7 @@ type VisionPhaseBody = {
   [key: string]: unknown
 }
 
-function scriptScenes(script: unknown): any[] | undefined {
+export function scriptScenes(script: unknown): any[] | undefined {
   if (!script || typeof script !== 'object') return undefined
   const root = script as { script?: { scenes?: unknown }; scenes?: unknown }
   if (Array.isArray(root.script?.scenes)) return root.script.scenes
@@ -38,7 +43,7 @@ function scriptScenes(script: unknown): any[] | undefined {
   return undefined
 }
 
-function replaceScriptScenes(script: unknown, scenes: any[]): unknown {
+export function replaceScriptScenes(script: unknown, scenes: any[]): unknown {
   if (!script || typeof script !== 'object') {
     return { script: { scenes } }
   }
@@ -55,9 +60,70 @@ function replaceScriptScenes(script: unknown, scenes: any[]): unknown {
   return { ...root, scenes }
 }
 
-function sceneIdentity(scene: { id?: unknown; sceneId?: unknown }): string | undefined {
+export function sceneIdentity(scene: { id?: unknown; sceneId?: unknown }): string | undefined {
   const id = scene.id || scene.sceneId
   return typeof id === 'string' && id.trim() ? id.trim() : undefined
+}
+
+/**
+ * Callers copy the scene array and replace one index. Send only those new
+ * object identities. Length changes and bulk `.map()` rebuilds still send all.
+ */
+export function scenesToPersistForScriptPut(
+  previous: unknown[] | undefined,
+  next: unknown[]
+): unknown[] {
+  if (!Array.isArray(previous) || previous.length !== next.length || next.length === 0) {
+    return next
+  }
+  const changed = next.filter((scene, index) => scene !== previous[index])
+  if (changed.length === 0 || changed.length === next.length) return next
+  return changed
+}
+
+export function persistSceneIdsForChangedScenes(
+  previousScenes: unknown[] | undefined,
+  nextScenes: unknown[]
+): { scenes: unknown[]; persistSceneIds?: string[] } {
+  const scenes = scenesToPersistForScriptPut(previousScenes, nextScenes)
+  if (scenes === nextScenes) return { scenes: nextScenes }
+  const persistSceneIds: string[] = []
+  for (const scene of scenes) {
+    if (!scene || typeof scene !== 'object') return { scenes: nextScenes }
+    const id = sceneIdentity(scene as { id?: unknown; sceneId?: unknown })
+    if (!id) return { scenes: nextScenes }
+    persistSceneIds.push(id)
+  }
+  return { scenes, persistSceneIds }
+}
+
+export function scopeScriptPutToSceneIds<T extends VisionPhaseBody>(
+  body: T,
+  sceneIds: string[] | undefined
+): T {
+  if (!sceneIds || sceneIds.length === 0) return body
+  if (!isScriptWriterPut(body)) return body
+  const idSet = new Set(sceneIds)
+  const vision = body.metadata!.visionPhase as Record<string, unknown>
+  const scenes = scriptScenes(vision.script)
+  if (!Array.isArray(scenes) || scenes.length === 0) return body
+
+  const scoped = scenes.filter((scene) => {
+    const id = sceneIdentity(scene)
+    return Boolean(id && idSet.has(id))
+  })
+  if (scoped.length === 0 || scoped.length === scenes.length) return body
+
+  return {
+    ...body,
+    metadata: {
+      ...body.metadata,
+      visionPhase: {
+        ...vision,
+        script: replaceScriptScenes(vision.script, scoped),
+      },
+    },
+  }
 }
 
 /**
@@ -130,13 +196,15 @@ export function refreshQueuedScriptPut<T extends Record<string, any>>(
     nextVision.script = mergeLiveScriptWithQueuedMedia(options.liveScript, vision.script)
   }
 
-  return {
+  const refreshed = {
     ...body,
     metadata: {
       ...body.metadata,
       visionPhase: nextVision,
     },
   }
+
+  return scopeScriptPutToSceneIds(refreshed, options.persistSceneIds)
 }
 
 export function putResponseIndicatesStaleScriptWrite(

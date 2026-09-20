@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   isScriptWriterPut,
   mergeLiveScriptWithQueuedMedia,
+  persistSceneIdsForChangedScenes,
   putResponseIndicatesStaleScriptWrite,
   refreshQueuedScriptPut,
+  scenesToPersistForScriptPut,
 } from '@/lib/projects/refreshQueuedScriptPut'
 
 const QUEUED_SCRIPT = { script: { scenes: [{ id: 'old-block' }] } }
@@ -143,6 +145,60 @@ describe('refreshQueuedScriptPut', () => {
     const body = { metadata: { visionPhase: { characters: [] } } }
     expect(refreshQueuedScriptPut(body, { liveScript: LIVE_SCRIPT, nowIso: SEND_AT })).toBe(body)
     expect(isScriptWriterPut(body)).toBe(false)
+  })
+
+  it('keeps a scoped persist to the requested scene after live refresh', () => {
+    const queued = {
+      metadata: {
+        visionPhase: {
+          script: {
+            script: {
+              scenes: [{ id: 'sc_2', heading: 'TUNNEL — queued' }],
+            },
+          },
+          scriptUpdatedAt: QUEUED_AT,
+        },
+      },
+    }
+    const liveScript = {
+      script: {
+        scenes: [
+          { id: 'sc_1', heading: 'OPENING' },
+          { id: 'sc_2', heading: 'TUNNEL — live' },
+          { id: 'sc_3', heading: 'CLOSE' },
+        ],
+      },
+    }
+
+    const sent = refreshQueuedScriptPut(queued, {
+      liveScript,
+      nowIso: SEND_AT,
+      persistSceneIds: ['sc_2'],
+    })
+
+    expect(sent.metadata.visionPhase.scriptUpdatedAt).toBe(SEND_AT)
+    expect(sent.metadata.visionPhase.script.script.scenes).toEqual([
+      { id: 'sc_2', heading: 'TUNNEL — live' },
+    ])
+  })
+})
+
+describe('scenesToPersistForScriptPut', () => {
+  it('sends only the replaced scene identity', () => {
+    const previous = [{ id: 'sc_1' }, { id: 'sc_2' }, { id: 'sc_3' }]
+    const next = [previous[0], { id: 'sc_2', patched: true }, previous[2]]
+    expect(scenesToPersistForScriptPut(previous, next)).toEqual([{ id: 'sc_2', patched: true }])
+    expect(persistSceneIdsForChangedScenes(previous, next)).toEqual({
+      scenes: [{ id: 'sc_2', patched: true }],
+      persistSceneIds: ['sc_2'],
+    })
+  })
+
+  it('sends the full list when every scene is a new object', () => {
+    const previous = [{ id: 'sc_1' }, { id: 'sc_2' }]
+    const next = [{ id: 'sc_2' }, { id: 'sc_1' }]
+    expect(scenesToPersistForScriptPut(previous, next)).toBe(next)
+    expect(persistSceneIdsForChangedScenes(previous, next).persistSceneIds).toBeUndefined()
   })
 })
 

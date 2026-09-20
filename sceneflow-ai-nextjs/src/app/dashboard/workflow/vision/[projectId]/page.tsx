@@ -22,13 +22,14 @@ import { upload } from '@vercel/blob/client'
 import debounce from 'lodash/debounce'
 import { waitForUiPaint } from '@/lib/ui/waitForUiPaint'
 import {
-  projectPutWouldExceedBodyLimit,
-  slimProjectPutPayload,
+  fitProjectPutPayload,
+  splitScriptPutIntoFittingBatches,
   stringifyProjectPut,
   visionPhasePut,
 } from '@/lib/projects/slimProjectPutPayload'
 import { mergeDroppedObjectReferenceIds, visionReferencesPutPayload } from '@/lib/projects/mergeVisionPhaseReferences'
 import {
+  persistSceneIdsForChangedScenes,
   putResponseIndicatesStaleScriptWrite,
   refreshQueuedScriptPut,
 } from '@/lib/projects/refreshQueuedScriptPut'
@@ -948,82 +949,120 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const serializedProjectSave = useCallback(async (
     body: Record<string, any>,
     debugLabel?: string,
-    options?: { refreshLiveScript?: boolean; mintScriptUpdatedAt?: boolean }
+    options?: {
+      refreshLiveScript?: boolean
+      mintScriptUpdatedAt?: boolean
+      persistSceneIds?: string[]
+    }
   ): Promise<Response> => {
     // Chain onto the previous save so writes are sequential
     const resultPromise = saveQueueRef.current.then(async () => {
       const label = debugLabel || 'unknown'
       let bodyToSend = body
-      if (options?.refreshLiveScript || options?.mintScriptUpdatedAt) {
+      if (
+        options?.refreshLiveScript ||
+        options?.mintScriptUpdatedAt ||
+        options?.persistSceneIds?.length
+      ) {
         bodyToSend = refreshQueuedScriptPut(body, {
           liveScript: options.refreshLiveScript ? scriptRef.current : undefined,
           replaceScript: Boolean(options.refreshLiveScript && scriptRef.current),
+          persistSceneIds: options.persistSceneIds,
         })
       }
-      const slimmed = slimProjectPutPayload(bodyToSend)
-      const payload = JSON.stringify(slimmed)
-      if (projectPutWouldExceedBodyLimit(slimmed)) {
-        console.warn(
-          `[SAVE-QUEUE] ${label} payload is ${(payload.length / 1024 / 1024).toFixed(2)}MB — Vercel will 413 a body over 4.5MB`
-        )
-      }
-      console.log(`[SAVE-QUEUE] Starting save: ${label}`)
-      try {
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: payload
-        })
-        console.log(`[SAVE-QUEUE] Completed save: ${label}, status=${response.status}`)
-        if (
-          response.ok &&
-          (options?.refreshLiveScript || options?.mintScriptUpdatedAt)
-        ) {
-          try {
-            const json = await response.clone().json()
-            const sentAt = bodyToSend?.metadata?.visionPhase?.scriptUpdatedAt as
-              | string
-              | undefined
-            if (putResponseIndicatesStaleScriptWrite(json, sentAt)) {
-              const serverScript = json.project?.metadata?.visionPhase?.script
-              const serverAt = json.project?.metadata?.visionPhase?.scriptUpdatedAt
-              if (serverScript) {
-                setScript(serverScript)
-                scriptRef.current = serverScript
-                setScriptEditedAt(Date.now())
-                const currentProject = projectRef.current
-                if (currentProject) {
-                  const refreshedProject = {
-                    ...currentProject,
-                    metadata: {
-                      ...currentProject.metadata,
-                      visionPhase: {
-                        ...currentProject.metadata?.visionPhase,
-                        script: serverScript,
-                        scenes: serverScript?.script?.scenes,
-                        ...(typeof serverAt === 'string'
-                          ? { scriptUpdatedAt: serverAt }
-                          : {}),
-                      },
+
+      const inspectStaleScriptWrite = async (
+        response: Response,
+        sentBody: Record<string, any>,
+        batchLabel: string
+      ) => {
+        if (!response.ok) return
+        if (!options?.refreshLiveScript && !options?.mintScriptUpdatedAt) return
+        try {
+          const json = await response.clone().json()
+          const sentAt = sentBody?.metadata?.visionPhase?.scriptUpdatedAt as string | undefined
+          if (putResponseIndicatesStaleScriptWrite(json, sentAt)) {
+            const serverScript = json.project?.metadata?.visionPhase?.script
+            const serverAt = json.project?.metadata?.visionPhase?.scriptUpdatedAt
+            if (serverScript) {
+              setScript(serverScript)
+              scriptRef.current = serverScript
+              setScriptEditedAt(Date.now())
+              const currentProject = projectRef.current
+              if (currentProject) {
+                const refreshedProject = {
+                  ...currentProject,
+                  metadata: {
+                    ...currentProject.metadata,
+                    visionPhase: {
+                      ...currentProject.metadata?.visionPhase,
+                      script: serverScript,
+                      scenes: serverScript?.script?.scenes,
+                      ...(typeof serverAt === 'string' ? { scriptUpdatedAt: serverAt } : {}),
                     },
-                  }
-                  projectRef.current = refreshedProject
-                  setProject(refreshedProject)
+                  },
                 }
-                toast.warning(
-                  'That script edit did not save because a newer copy was already stored. The editor was updated to match.'
-                )
+                projectRef.current = refreshedProject
+                setProject(refreshedProject)
               }
+              toast.warning(
+                'That script edit did not save because a newer copy was already stored. The editor was updated to match.'
+              )
             }
-          } catch (error) {
-            console.warn(`[SAVE-QUEUE] ${label} could not inspect PUT response for stale script`, error)
           }
+        } catch (error) {
+          console.warn(`[SAVE-QUEUE] ${batchLabel} could not inspect PUT response for stale script`, error)
         }
-        return response
-      } catch (error) {
-        console.error(`[SAVE-QUEUE] Failed save: ${label}`, error)
-        throw error
       }
+
+      const putOne = async (payloadBody: Record<string, any>, batchLabel: string): Promise<Response> => {
+        const fitted = fitProjectPutPayload(payloadBody)
+        const payload = JSON.stringify(fitted.body)
+        if (fitted.exceedsLimit) {
+          console.error(
+            `[SAVE-QUEUE] ${batchLabel} payload is ${(payload.length / 1024 / 1024).toFixed(2)}MB after fit — not sending (Vercel 413 over 4.5MB)`
+          )
+          toast.error('This save is too large to store. Try generating fewer frames, then save again.')
+          return new Response(
+            JSON.stringify({ error: 'Payload too large', code: 'PROJECT_PUT_TOO_LARGE' }),
+            { status: 413, headers: { 'Content-Type': 'application/json' } }
+          )
+        }
+        if (fitted.omitted.length > 0) {
+          console.log(`[SAVE-QUEUE] ${batchLabel} omitted`, fitted.omitted)
+        }
+        console.log(`[SAVE-QUEUE] Starting save: ${batchLabel}`)
+        try {
+          const response = await fetch(`/api/projects/${projectId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+          })
+          console.log(`[SAVE-QUEUE] Completed save: ${batchLabel}, status=${response.status}`)
+          await inspectStaleScriptWrite(response, fitted.body, batchLabel)
+          return response
+        } catch (error) {
+          console.error(`[SAVE-QUEUE] Failed save: ${batchLabel}`, error)
+          throw error
+        }
+      }
+
+      const fitted = fitProjectPutPayload(bodyToSend)
+      if (fitted.exceedsLimit) {
+        const batches = splitScriptPutIntoFittingBatches(fitted.body)
+        if (batches && batches.length > 1) {
+          console.log(`[SAVE-QUEUE] ${label} splitting into ${batches.length} scene batches`)
+          let last: Response = await putOne(batches[0], `${label}#1/${batches.length}`)
+          if (!last.ok) return last
+          for (let i = 1; i < batches.length; i++) {
+            last = await putOne(batches[i], `${label}#${i + 1}/${batches.length}`)
+            if (!last.ok) return last
+          }
+          return last
+        }
+      }
+
+      return putOne(bodyToSend, label)
     })
     // Update the queue head (swallow rejections so the queue keeps moving)
     saveQueueRef.current = resultPromise.catch(() => null)
@@ -1173,34 +1212,38 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const currentProject = projectRef.current
     if (!currentScript?.script || !currentProject?.id) return false
 
-    const { characters: _staleCharacters, ...visionPhaseWithoutCharacters } =
-      currentProject.metadata?.visionPhase || {}
+    const previousScenes = currentScript.script.scenes || []
+    const { scenes: scenesToSend, persistSceneIds } = persistSceneIdsForChangedScenes(
+      previousScenes,
+      updatedScenes
+    )
 
     const updatedScript = {
       ...currentScript,
       script: { ...currentScript.script, scenes: updatedScenes },
     }
+    const putScript = persistSceneIds
+      ? { ...updatedScript, script: { ...updatedScript.script, scenes: scenesToSend } }
+      : updatedScript
     // refreshLiveScript reads scriptRef at send time. The useEffect that
     // mirrors `script` has not run yet, so without this the PUT replaces
     // the versioned payload with the pre-generate snapshot.
     scriptRef.current = updatedScript
 
-    // Script, characters, and the timestamp — nothing else. Production has
-    // its own PATCH, and `visionPhase.scenes` is rebuilt server-side from
-    // the canonical list. Re-sending either of those is what 413'd this
-    // project on a beat-frame save (production 2026-09-12).
+    // Script and timestamp only — one scene when callers replaced a single
+    // index. Production has its own PATCH; characters have persistVisionCharacters;
+    // omitted scenes stay in the DB via mergeSceneArraysForPersistence.
     const response = await serializedProjectSave(
       {
         metadata: {
           visionPhase: {
-            characters,
-            script: updatedScript,
+            script: putScript,
             scriptUpdatedAt: new Date().toISOString(),
           },
         },
       },
       debugLabel || 'persistVisionScriptScenes',
-      { refreshLiveScript: true, mintScriptUpdatedAt: true }
+      { refreshLiveScript: true, mintScriptUpdatedAt: true, persistSceneIds }
     )
 
     if (!response.ok) {
@@ -1211,8 +1254,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const syncedMetadata = {
       ...currentProject.metadata,
       visionPhase: {
-        ...visionPhaseWithoutCharacters,
-        characters,
+        ...currentProject.metadata?.visionPhase,
         script: updatedScript,
         scenes: updatedScenes,
         scriptUpdatedAt: new Date().toISOString(),
@@ -1223,7 +1265,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     setProject(syncedProject)
 
     return true
-  }, [characters, serializedProjectSave])
+  }, [serializedProjectSave])
 
   /** Reconcile script scenes from project metadata (same logic as loadProject media merge). */
   const rehydrateScriptFromProject = useCallback(async (
