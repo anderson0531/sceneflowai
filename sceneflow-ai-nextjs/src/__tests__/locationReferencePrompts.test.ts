@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { buildSceneImageLocationLabel } from '@/lib/imagen/sceneImageReferenceLabels'
+import {
+  buildSceneImageLocationLabel,
+  LOCATION_PLATE_NAMED_HARDWARE_CLAUSE,
+} from '@/lib/imagen/sceneImageReferenceLabels'
 import { locationScaleClause } from '@/lib/imagen/locationScaleClause'
 import {
   LOCATION_OBJECT_INSERT_CONSUMPTION_INSTRUCTION,
@@ -206,5 +209,17 @@ describe('buildSceneImageLocationLabel', () => {
     expect(label).toContain('Reference image 5')
     expect(label).toContain('environment plate')
     expect(label).not.toContain('extreme-wide establishing shot')
+    expect(label).not.toContain(LOCATION_PLATE_NAMED_HARDWARE_CLAUSE)
+  })
+
+  it('names built-in hardware on the location plate when the action turns a lockdown wheel', () => {
+    const label = buildSceneImageLocationLabel('FREIGHT TUNNEL VAULT - WORKBENCH', 4, 'location [1]', {
+      shotType: 'Medium Shot',
+      actionFraming:
+        'person [1] pulls down hard on the handle of prop [1] attached to the Massive brass lockdown wheel.',
+    })
+    expect(label).toContain('location [1]')
+    expect(label).toContain('environment plate')
+    expect(label).toContain(LOCATION_PLATE_NAMED_HARDWARE_CLAUSE)
   })
 })

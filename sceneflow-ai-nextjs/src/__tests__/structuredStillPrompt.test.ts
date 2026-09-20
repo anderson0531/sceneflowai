@@ -16,6 +16,7 @@ import {
   STILL_TASK_FACE_CLOSE_UP_LINES,
   STILL_TASK_LOCATION_NEARFIELD_LINE,
   STILL_TASK_LOCATION_ENVIRONMENT_LINE,
+  STILL_TASK_MOUNTED_FIXTURE_LINE,
   STILL_TASK_PERSON_PROP_TOKEN_LINE,
   STILL_TASK_PROP_TOKEN_LINE,
   STILL_TASK_PRO_LEAD,
@@ -29,6 +30,7 @@ import {
   formatPersonReferenceLegendLine,
   bindLibraryNamesToTokens,
   replaceLibraryNamesWithTokens,
+  bindMountedFixturesToLocationToken,
   actionFramingFromStoredPrompt,
   extractActionFramingBody,
   isStructuredStillPrompt,
@@ -1016,6 +1018,88 @@ describe('every [REFERENCES] token reaches the instruction body', () => {
     )
     expect(prompt).not.toMatch(/LOCATION location \[1\].*extreme-wide establishing shot/)
     expect(prompt).not.toMatch(/Also in frame: location \[1\]/)
+    expect(prompt).not.toContain(STILL_TASK_MOUNTED_FIXTURE_LINE)
+  })
+
+  it('binds a lockdown wheel in Action/Framing to the location plate', () => {
+    const action =
+      'Medium Shot, low angle. person [1] leans his entire body weight sideways, pulling down hard on the handle of a prop [1] attached to the Massive brass lockdown wheel. Body position: person [1] stands screen-center in profile, his knees bent and weight shifted onto his back foot, both hands gripping the handle of the prop [1]. Hands and props: Both hands grip the handle of the prop [1], which is engaged with the center of the Massive brass lockdown wheel. Gaze: Fixed intensely on the center of the Massive brass lockdown wheel. Cast in frame: person [1] — and no other people.'
+    const refs = [
+      { kind: 'person' as const, token: 'person [1]', name: 'Gideon Croft', roleLabel: 'identity' },
+      {
+        kind: 'prop' as const,
+        token: 'prop [1]',
+        name: 'Thirty-Inch Iron Rail Spanner',
+        roleLabel: 'library prop',
+      },
+      {
+        kind: 'location' as const,
+        token: 'location [1]',
+        name: 'FREIGHT TUNNEL VAULT - WORKBENCH',
+        roleLabel: 'library location',
+      },
+    ]
+
+    const prompt = assembleStructuredStillPrompt({
+      actionOrStructured: action,
+      refs,
+      includeCandid: true,
+      shotType: 'Medium Shot',
+      omitReferencesSection: true,
+    })
+
+    expect(prompt).toContain('Massive brass lockdown wheel already on location [1]')
+    expect(prompt.match(/already on location \[1\]/g)?.length).toBe(3)
+    expect(prompt).toContain(STILL_TASK_MOUNTED_FIXTURE_LINE)
+    expect(prompt).toContain(STILL_TASK_LOCATION_ENVIRONMENT_LINE)
+    expect(prompt).toContain('prop [1]')
+    expect(prompt).toContain(
+      'handle of a prop [1] attached to the Massive brass lockdown wheel already on location [1]'
+    )
+    expect(prompt).not.toContain('already on location [1] already on')
+
+    const replayed = assembleStructuredStillPrompt({
+      actionOrStructured: prompt,
+      refs,
+      includeCandid: true,
+      shotType: 'Medium Shot',
+      omitReferencesSection: true,
+    })
+    expect(replayed.match(/already on location \[1\]/g)?.length).toBe(3)
+    expect(replayed).toContain(STILL_TASK_MOUNTED_FIXTURE_LINE)
+  })
+
+  it('leaves a mounted-fixture phrase unbound when no location plate is attached', () => {
+    const prompt = assembleStructuredStillPrompt({
+      actionOrStructured:
+        'Medium Shot. person [1] pulls down hard on the Massive brass lockdown wheel.',
+      refs: [
+        { kind: 'person', token: 'person [1]', name: 'Gideon Croft', roleLabel: 'identity' },
+        {
+          kind: 'prop',
+          token: 'prop [1]',
+          name: 'Thirty-Inch Iron Rail Spanner',
+          roleLabel: 'library prop',
+        },
+      ],
+      shotType: 'Medium Shot',
+    })
+
+    expect(prompt).toContain('Massive brass lockdown wheel')
+    expect(prompt).not.toMatch(/already on location \[/)
+    expect(prompt).not.toContain(STILL_TASK_MOUNTED_FIXTURE_LINE)
+  })
+
+  it('bindMountedFixturesToLocationToken is idempotent and prefers the longest phrase', () => {
+    const once = bindMountedFixturesToLocationToken(
+      'Both hands grip the Massive brass lockdown wheel.',
+      'location [1]'
+    )
+    expect(once).toBe(
+      'Both hands grip the Massive brass lockdown wheel already on location [1].'
+    )
+    expect(bindMountedFixturesToLocationToken(once, 'location [1]')).toBe(once)
+    expect(bindMountedFixturesToLocationToken(once, 'location [4]')).toBe(once)
   })
 
   it('says nothing extra when the action already places every ref', () => {

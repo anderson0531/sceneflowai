@@ -104,7 +104,7 @@ DO NOT create a version for:
 - Time of day or lightingAccent alone
 - A different location (new scene heading)
 - Beat keyProps, propInteraction, or objects a character handles or introduces (journals, vellum, tools, weapons). Those belong on the beat frame, not this still.
-- Built-in architectural hardware that is always on the set (door wheels, hatch wheels, vault wheels, bolted valves). Those belong on the BASE establishing shot, not a version.
+- Built-in architectural hardware that is always on the set (door wheels, hatch wheels, vault wheels, lockdown wheels, bolted valves). Those belong on the BASE establishing shot, not a version.
 
 RULES:
 1. The intact establishing shot is the BASE — do not suggest a version for the undamaged set. Mounted hardware that is always present is part of the BASE, not a version.

@@ -36,6 +36,7 @@ import {
   recoverLeakedActionFromExclusions,
 } from '@/lib/scene/castPerformanceFraming'
 import { propScaleClause } from '@/lib/imagen/propScaleClause'
+import { extractMountedSetFixturePhrases } from '@/lib/vision/mountedSetFixtures'
 
 export const STILL_SECTION_REFERENCES = '[REFERENCES]'
 export const STILL_SECTION_TASK = '[TASK]'
@@ -131,6 +132,9 @@ export const STILL_TASK_LOCATION_NEARFIELD_LINE =
 export const STILL_TASK_LOCATION_ENVIRONMENT_LINE =
   'Location is the surrounding environment — match architecture, palette, and lighting from the plate. Do not copy the plate as an extreme-wide establishing shot or empty room.'
 
+export const STILL_TASK_MOUNTED_FIXTURE_LINE =
+  'Built-in hardware named in the action is already mounted on the location plate. Use that instance in its plate position. Do not invent a second copy in the foreground.'
+
 export const STILL_TASK_PROP_TOKEN_LINE =
   `Every prop token listed in ${STILL_SECTION_REFERENCES} appears in this frame and matches its reference image.`
 
@@ -189,6 +193,10 @@ export function consumesLocationAsEnvironment(
   return !isWideEstablishingShotType(hint)
 }
 
+export function actionNamesMountedSetFixture(actionFraming?: string | null): boolean {
+  return extractMountedSetFixturePhrases(actionFraming ?? '').length > 0
+}
+
 /**
  * Shot-aware TASK body. Insert/ECU with a visible limb keep limb framing.
  * Empty-cast object inserts do not ask for a hand. Title/credit inserts skip
@@ -219,6 +227,9 @@ export function stillTaskLines(
   const propScaleLine = pairedOccupancy ? STILL_TASK_PAIRED_PROP_SCALE_LINE : STILL_TASK_PROP_SCALE_LINE
   const detailTokenLine = `${personPropTokenLine} ${STILL_TASK_LOCATION_BOKEH_LINE}`
   const commitTaskLines = () => {
+    if (hasLocationRef && actionNamesMountedSetFixture(options?.actionFraming)) {
+      lines.push(STILL_TASK_MOUNTED_FIXTURE_LINE)
+    }
     if (pairedOccupancy && (!refsKnown || refs.length > 0)) {
       lines.push(STILL_TASK_PAIRED_PLATES_MANDATORY_LINE)
     }
@@ -447,6 +458,7 @@ const STILL_BOILERPLATE_LINES = [
   STILL_TASK_LOCATION_BOKEH_LINE,
   STILL_TASK_LOCATION_NEARFIELD_LINE,
   STILL_TASK_LOCATION_ENVIRONMENT_LINE,
+  STILL_TASK_MOUNTED_FIXTURE_LINE,
   STILL_TASK_PROP_TOKEN_LINE,
   STILL_TASK_PAIRED_PROP_TOKEN_LINE,
   STILL_TASK_PROP_SCALE_LINE,
@@ -934,6 +946,36 @@ export function replaceLibraryNamesWithTokens(
   }
   for (const head of uniquePropHeadNounPatterns(refs)) {
     result = result.replace(head.pattern, head.token)
+  }
+  return result
+}
+
+const ALREADY_BOUND_TO_LOCATION = /^\s+already on location \[\d+\]/i
+
+/**
+ * Point Action/Framing at the location plate for mounted set hardware.
+ *
+ * A lockdown wheel already lives on `location [N]`. Leaving the phrase unbound
+ * makes the model invent a second copy in the foreground.
+ */
+export function bindMountedFixturesToLocationToken(
+  text: string,
+  locationToken?: string | null
+): string {
+  const token = locationToken?.trim()
+  if (!text || !token) return text
+
+  const phrases = extractMountedSetFixturePhrases(text).sort((a, b) => b.length - a.length)
+  if (phrases.length === 0) return text
+
+  let result = text
+  for (const phrase of phrases) {
+    const pattern = new RegExp(`\\b${escapeRegExp(phrase)}\\b`, 'gi')
+    result = result.replace(pattern, (match: string, offset: number, full: string) => {
+      const after = full.slice(offset + match.length)
+      if (ALREADY_BOUND_TO_LOCATION.test(after)) return match
+      return `${match} already on ${token}`
+    })
   }
   return result
 }
@@ -1447,8 +1489,10 @@ export function assembleStructuredStillPrompt(input: {
       ? input.refs
       : parseStillReferencesLegend(input.actionOrStructured)
   const tokenizedAction = replaceLibraryNamesWithTokens(parsed.actionFraming, boundRefs)
+  const locationToken = boundRefs.find((ref) => ref.kind === 'location')?.token
+  const fixtureBoundAction = bindMountedFixturesToLocationToken(tokenizedAction, locationToken)
   const actionFraming = enrichActionFramingWithCastPerformance({
-    actionFraming: tokenizedAction,
+    actionFraming: fixtureBoundAction,
     castNames: [],
     shotType: input.shotType,
   })
