@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from 'fs'
+import { join } from 'path'
 import { describe, it, expect, vi } from 'vitest'
 import {
   DEFAULT_HERO_VIDEO_LOCALE,
@@ -75,14 +77,31 @@ describe('Hero video locales', () => {
 })
 
 describe('public hero playback sources', () => {
-  it('points every locale at WebM, MP4, and a localized poster', () => {
+  it('points every locale at a same-origin MP4 path and a localized poster', () => {
     for (const locale of HERO_VIDEO_LOCALES) {
       const sources = getHeroPublicVideoSources(locale.id)
-      expect(sources.webmSrc).toBe(`/videos/hero-${locale.id}.webm`)
+      expect(sources.webmSrc).toBeUndefined()
       expect(sources.mp4Src).toBe(`/videos/hero-${locale.id}.mp4`)
       expect(sources.poster).toBe(`/images/hero-poster-${locale.id}.webp`)
     }
     expect(HERO_PUBLIC_POSTER_FALLBACK).toBe('/images/hero-poster.webp')
+  })
+
+  it('rewrites hero MP4s to Blob so they are not packed into serverless functions', () => {
+    const config = readFileSync(join(process.cwd(), 'next.config.mjs'), 'utf8')
+    expect(config).toContain('outputFileTracingExcludes')
+    expect(config).toContain('public/videos/**/*.mp4')
+    expect(config).toContain('/videos/hero-:locale')
+    expect(config).toContain('sceneflow-hero-:locale.mp4')
+  })
+
+  it('ships WebP posters the player requests', () => {
+    const root = join(process.cwd(), 'public')
+    for (const locale of HERO_VIDEO_LOCALES) {
+      const poster = join(root, getHeroPublicVideoSources(locale.id).poster.slice(1))
+      expect(existsSync(poster), poster).toBe(true)
+    }
+    expect(existsSync(join(root, HERO_PUBLIC_POSTER_FALLBACK.slice(1)))).toBe(true)
   })
 })
 

@@ -1,11 +1,9 @@
-Place locale-dubbed hero files here. The landing player looks up:
+Hero video files are **not** committed here. Vercel NFT packed `public/videos/*.mp4` into serverless functions (618MB vs 250MB limit).
 
-- `hero-en.webm` / `hero-en.mp4`
-- `hero-es.webm` / `hero-es.mp4`
-- `hero-pt.webm` / `hero-pt.mp4`
-- `hero-hi.webm` / `hero-hi.mp4`
-- `hero-zh.webm` / `hero-zh.mp4`
-- `hero-ar.webm` / `hero-ar.mp4`
-- `hero-th.webm` / `hero-th.mp4`
+The player still requests `/videos/hero-{lang}.mp4`. `next.config.mjs` rewrites that to the public Blob file `landing/hero/sceneflow-hero-{lang}.mp4`.
 
-Posters live at `/images/hero-poster-{lang}.webp`, with `/images/hero-poster.webp` as the universal fallback.
+Posters stay in git at `/images/hero-poster-{lang}.webp`, with `/images/hero-poster.webp` as the universal fallback.
+
+To encode locally (gitignored):
+
+    npm run landing:publish-hero-public

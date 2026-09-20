@@ -131,7 +131,9 @@ export function HeroTheaterModal({
               onCanPlay={() => setIsBuffering(false)}
               onPlaying={() => setIsBuffering(false)}
             >
-              <source src={playbackSources.webmSrc} type="video/webm" />
+              {playbackSources.webmSrc ? (
+                <source src={playbackSources.webmSrc} type="video/webm" />
+              ) : null}
               <source src={playbackSources.mp4Src} type="video/mp4" />
             </video>
 

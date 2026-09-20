@@ -66,7 +66,7 @@ export function HeroVideoBackground({
       onCanPlay={onCanPlay}
       onPlaying={onPlaying}
     >
-      <source src={sources.webmSrc} type="video/webm" />
+      {sources.webmSrc ? <source src={sources.webmSrc} type="video/webm" /> : null}
       <source src={sources.mp4Src} type="video/mp4" />
     </video>
   )
