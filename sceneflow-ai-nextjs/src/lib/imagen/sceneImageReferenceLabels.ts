@@ -21,6 +21,10 @@ import {
   isMediumCoverageLocationShot,
   resolveStillShotClass,
 } from '@/lib/imagen/stillFramingNormalize'
+import { extractMountedSetFixturePhrases } from '@/lib/vision/mountedSetFixtures'
+
+export const LOCATION_PLATE_NAMED_HARDWARE_CLAUSE =
+  'built-in hardware in this plate is the named object — use it, do not invent a second copy'
 
 function referencePrefix(sendIndex?: number): string {
   return sendIndex != null ? `Reference image ${sendIndex} — ` : ''
@@ -100,6 +104,9 @@ export function buildSceneImageLocationLabel(
   } else if (asEnvironment) {
     dialect =
       'environment plate — match architecture, palette, and lighting; not a second wide subject'
+  }
+  if (extractMountedSetFixturePhrases(options?.actionFraming || '').length > 0) {
+    dialect = `${dialect}; ${LOCATION_PLATE_NAMED_HARDWARE_CLAUSE}`
   }
   return `${referencePrefix(sendIndex)}LOCATION ${
     token ? `${token} ` : ''

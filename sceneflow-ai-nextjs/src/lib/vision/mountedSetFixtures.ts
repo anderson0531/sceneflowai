@@ -4,27 +4,34 @@
  * position ("across the room", bolted to a vault door).
  *
  * Match qualified names only: door / hatch / vault / gate / bulkhead / airlock
- * wheels. Bare "wheel" (cart, steering) stays a normal prop.
+ * / lockdown / valve wheels, plus handwheels. Bare "wheel" (cart, steering)
+ * stays a normal prop.
  */
 
 import { extractLocation } from '@/lib/script/formatSceneHeading'
 
-const APERTURE = 'door|hatch|vault|gate|bulkhead|airlock'
+const MOUNT_KIND = 'door|hatch|vault|gate|bulkhead|airlock|lockdown|valve'
 const ADJ = 'heavy|frozen|jammed|iron|brass|steel|cast[- ]iron|rusted|massive|vault|hatch'
 
-/** "heavy door wheel", "hatch wheel", "vault door wheel" */
+/** "heavy door wheel", "hatch wheel", "massive brass lockdown wheel" */
 const QUALIFIED_WHEEL_PATTERN = new RegExp(
-  String.raw`\b((?:(?:${ADJ})\s+){0,3}(?:${APERTURE})(?:[- ](?:${APERTURE}))?[- ]wheels?)\b`,
+  String.raw`\b((?:(?:${ADJ})\s+){0,3}(?:${MOUNT_KIND})(?:[- ](?:${MOUNT_KIND}))?[- ]wheels?)\b`,
   'i'
 )
 
-/** "wheel of the vault door", "wheel on the iron hatch" */
+/** "wheel of the vault door", "wheel on a door", "wheel on the iron hatch" */
 const WHEEL_ON_APERTURE_PATTERN = new RegExp(
-  String.raw`\b(wheels?\s+(?:of|on)\s+(?:the\s+)?(?:(?:${ADJ})\s+){0,3}(?:${APERTURE})s?)\b`,
+  String.raw`\b(wheels?\s+(?:of|on)\s+(?:(?:the|a|an|this|that)\s+)?(?:(?:${ADJ})\s+){0,3}(?:${MOUNT_KIND})s?)\b`,
   'i'
 )
 
-const FIXTURE_PATTERNS = [QUALIFIED_WHEEL_PATTERN, WHEEL_ON_APERTURE_PATTERN]
+/** "handwheel", "brass hand-wheel" — always mounted hardware. */
+const HANDWHEEL_PATTERN = new RegExp(
+  String.raw`\b((?:(?:${ADJ})\s+){0,3}hand[- ]?wheels?)\b`,
+  'i'
+)
+
+const FIXTURE_PATTERNS = [QUALIFIED_WHEEL_PATTERN, WHEEL_ON_APERTURE_PATTERN, HANDWHEEL_PATTERN]
 
 export const MOUNTED_FIXTURE_DESCRIPTION_PREFIX =
   'Built-in set architecture (mounted in place)'

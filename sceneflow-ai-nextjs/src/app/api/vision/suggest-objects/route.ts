@@ -130,7 +130,7 @@ Each extra you return MUST:
 4. Be specific enough to generate (not generic items like "chair" unless it's a distinctive hero prop)
 5. Track EXACTLY which scene numbers each object appears in
 6. Use ONE name per physical object. If the script or the already-added list already names it (even under a shorter or fancier spelling), reuse that name. Never invent a synonym or catalog variant for the same tool ("spanner" and "wrench", "spud wrench" and "iron rail spanner").
-7. Do NOT suggest built-in architectural hardware that is part of the set (door wheels, hatch wheels, vault wheels, bolted valves). Those belong on the location establishing shot, not the object library.
+7. Do NOT suggest built-in architectural hardware that is part of the set (door wheels, hatch wheels, vault wheels, lockdown wheels, bolted valves). Those belong on the location establishing shot, not the object library.
 
 For each object, provide:
 - name: Short, specific VISUAL name that does NOT include character names, location names, or possessives (e.g. "1893 Water-Damaged Leather Journal", "Brass Faraday Energy Core", "Rugged Military Laptop"). NEVER use forms like "Marcus's Vintage Pocket Watch" or "Arthur Pendelton's 1893 Journal" — ownership is stored separately, not in the prompt-facing name. If an existing/tagged name already covers the object, copy that name exactly.

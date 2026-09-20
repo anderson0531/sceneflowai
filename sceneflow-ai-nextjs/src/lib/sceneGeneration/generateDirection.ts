@@ -432,7 +432,7 @@ Generate comprehensive technical direction suitable for professional film produc
   },
   "scene": {
     "location": "location description including built-in architecture, e.g., 'Messy apartment living room', 'Industrial vault with a heavy door wheel mounted across the room from the workbench'",
-    "keyProps": ["array of handheld/hero props only, e.g., 'A steaming coffee mug', 'A specific document on the desk'. Do not list door/hatch/vault wheels or other mounted architectural hardware"],
+    "keyProps": ["array of handheld/hero props only, e.g., 'A steaming coffee mug', 'A specific document on the desk'. Do not list door/hatch/vault/lockdown/valve wheels or other mounted architectural hardware"],
     "atmosphere": "atmospheric description, e.g., 'Hazy/Smoky', 'Clean & Minimalist', 'Cluttered & Chaotic'"
   },
   "talent": {

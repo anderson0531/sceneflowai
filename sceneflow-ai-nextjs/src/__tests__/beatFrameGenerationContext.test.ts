@@ -595,6 +595,31 @@ describe('resolveBeatFrameGenerationContext', () => {
     expect(resolved.objectNames).toEqual(['cast-iron wrench'])
   })
 
+  it('does not auto-attach a lockdown wheel object plate', () => {
+    const objectReferences: VisualReference[] = [
+      { id: 'prop-wheel', type: 'object', name: 'Massive brass lockdown wheel' },
+      { id: 'prop-spanner', type: 'object', name: 'Thirty-Inch Iron Rail Spanner' },
+    ]
+    const resolved = resolveBeatFrameGenerationContext({
+      scene: { heading: 'INT. FREIGHT TUNNEL VAULT - WORKBENCH - NIGHT' },
+      beat: actionBeat({
+        actionDescription:
+          'Gideon throws his entire body weight into the wrench. The brass wheel groans, frozen solid.',
+        beatDirection: {
+          keyProps: ['Massive brass lockdown wheel', 'Thirty-Inch Iron Rail Spanner'],
+          frozenMoment:
+            'Gideon leans his entire body weight sideways, pulling down hard on the handle of the Thirty-Inch Iron Rail Spanner attached to the Massive brass lockdown wheel.',
+        },
+      }),
+      projectCharacters: characters,
+      locationReferences: [],
+      objectReferences,
+    })
+
+    expect(resolved.objectRefIds).toEqual(['prop-spanner'])
+    expect(resolved.objectNames).toEqual(['Thirty-Inch Iron Rail Spanner'])
+  })
+
   describe('prop attachment is beat-scoped', () => {
     const spanner: VisualReference[] = [
       {

@@ -20,12 +20,22 @@ describe('isMountedSetFixtureName', () => {
     expect(isMountedSetFixtureName('gate wheel')).toBe(true)
   })
 
+  it('matches lockdown, valve, and handwheel hardware', () => {
+    expect(isMountedSetFixtureName('Massive brass lockdown wheel')).toBe(true)
+    expect(isMountedSetFixtureName('lockdown wheel')).toBe(true)
+    expect(isMountedSetFixtureName('valve wheel')).toBe(true)
+    expect(isMountedSetFixtureName('handwheel')).toBe(true)
+    expect(isMountedSetFixtureName('brass hand-wheel')).toBe(true)
+    expect(isMountedSetFixtureName('metal wheel on a door')).toBe(true)
+  })
+
   it('does not match bare wheels or unrelated wheels', () => {
     expect(isMountedSetFixtureName('wheel')).toBe(false)
     expect(isMountedSetFixtureName('wheels')).toBe(false)
     expect(isMountedSetFixtureName('steering wheel')).toBe(false)
     expect(isMountedSetFixtureName('wagon wheel')).toBe(false)
     expect(isMountedSetFixtureName('Thirty-Inch Iron Rail Spanner')).toBe(false)
+    expect(isMountedSetFixtureName('brass weight')).toBe(false)
   })
 })
 
@@ -42,6 +52,19 @@ describe('extractMountedSetFixturePhrases', () => {
       'He braces against the wheel on the vault door.'
     )
     expect(phrases.length).toBeGreaterThan(0)
+  })
+
+  it('pulls a lockdown wheel and a wheel on a door', () => {
+    expect(
+      extractMountedSetFixturePhrases(
+        'Both hands grip the handle engaged with the center of the Massive brass lockdown wheel.'
+      ).some((phrase) => /massive brass lockdown wheel/i.test(phrase))
+    ).toBe(true)
+    expect(
+      extractMountedSetFixturePhrases('He turns the metal wheel on a door.').some((phrase) =>
+        /wheel on a door/i.test(phrase)
+      )
+    ).toBe(true)
   })
 })
 
