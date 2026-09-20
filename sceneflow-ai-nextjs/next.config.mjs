@@ -42,6 +42,18 @@ const nextConfig = {
     "/api/sfx/generate-veo-audio": ["./node_modules/ffmpeg-static/ffmpeg"],
     "/api/tts/google/voice-clone": ["./node_modules/ffmpeg-static/ffmpeg"],
   },
+  // Hero MP4/WebM in public/ (or leftover local encodes) must not land in
+  // serverless NFT. Tracing the whole project with those files produced a
+  // 618MB function and failed the 250MB uncompressed limit.
+  outputFileTracingExcludes: {
+    "*": [
+      "public/videos/**/*.mp4",
+      "public/videos/**/*.webm",
+      "./public/videos/**",
+      "**/*.mp4",
+      "**/*.webm",
+    ],
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -104,6 +116,20 @@ const nextConfig = {
         source: "/embed/storyboard/:path*",
         destination: "/embed/pre-vis/:path*",
         permanent: true,
+      },
+    ];
+  },
+  async rewrites() {
+    const blob = "https://xxavfkdhdebrqida.public.blob.vercel-storage.com";
+    const locale = "en|es|pt|hi|zh|ar|th";
+    return [
+      {
+        source: `/videos/hero-:locale(${locale}).mp4`,
+        destination: `${blob}/landing/hero/sceneflow-hero-:locale.mp4`,
+      },
+      {
+        source: `/videos/hero-:locale(${locale}).webm`,
+        destination: `${blob}/landing/hero/sceneflow-hero-:locale.mp4`,
       },
     ];
   },

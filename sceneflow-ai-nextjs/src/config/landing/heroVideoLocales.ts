@@ -132,14 +132,13 @@ export function getHeroPublicPosterUrl(locale: HeroVideoLocaleId): string {
 }
 
 export type HeroPublicVideoSources = {
-  webmSrc: string
+  webmSrc?: string
   mp4Src: string
   poster: string
 }
 
 export function getHeroPublicVideoSources(locale: HeroVideoLocaleId): HeroPublicVideoSources {
   return {
-    webmSrc: getHeroPublicWebmUrl(locale),
     mp4Src: getHeroPublicMp4Url(locale),
     poster: getHeroPublicPosterUrl(locale) || HERO_PUBLIC_POSTER_FALLBACK,
   }

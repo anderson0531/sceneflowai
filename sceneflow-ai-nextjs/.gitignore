@@ -33,6 +33,11 @@ __pycache__/
 google-cloud-sdk/
 google-cloud-cli*.tar.gz
 
+# Hero video encodes are served from Vercel Blob via next.config rewrites.
+# Shipping them in public/ made serverless NFT 618MB (limit 250MB).
+/public/videos/*.mp4
+/public/videos/*.webm
+
 # debug
 npm-debug.log*
 yarn-debug.log*
