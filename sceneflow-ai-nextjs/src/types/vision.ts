@@ -35,6 +35,8 @@ export interface CharacterWardrobe {
   /** Script sync marked clothing/notes changed — regenerate wardrobe image */
   needsImageRegen?: boolean
   reason?: string
+  /** Directed image-generation prompt; Regen uses this when set. */
+  generationPrompt?: string
 }
 
 export interface SceneCharacterWardrobe {
@@ -156,6 +158,8 @@ export interface VisionCharacter {
   role?: 'protagonist' | 'main' | 'supporting'
   type?: 'character' | 'narrator' | 'description'
   referenceImage?: string
+  /** Directed identity-plate prompt; Regen uses this when set. */
+  imagePrompt?: string
   /** Cached Kling element_list ID for character consistency */
   klingElementId?: string
   appearanceDescription?: string

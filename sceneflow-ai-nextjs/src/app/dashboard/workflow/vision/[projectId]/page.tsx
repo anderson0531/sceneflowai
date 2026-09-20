@@ -2809,6 +2809,31 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [persistObjectLibrary]
   )
 
+  const handleSaveObjectPrompt = useCallback(
+    async (referenceId: string, prompt: string) => {
+      const updatedObjectRefs = updateObjectReferenceInList(
+        objectReferencesRef.current,
+        referenceId,
+        { generationPrompt: prompt }
+      )
+      objectReferencesRef.current = updatedObjectRefs
+      setObjectReferences(updatedObjectRefs)
+      try {
+        const response = await persistObjectLibrary(updatedObjectRefs, {
+          objectDuplicateIgnores: objectDuplicateIgnoresRef.current,
+          debugLabel: 'handleSaveObjectPrompt',
+        })
+        if (!response.ok) {
+          toast.error('Failed to save object prompt')
+        }
+      } catch (error) {
+        console.error('[handleSaveObjectPrompt]', error)
+        toast.error('Failed to save object prompt')
+      }
+    },
+    [persistObjectLibrary]
+  )
+
   // Handler for updating a character's reference image after editing
   const handleEditCharacterImage = useCallback(
     async (characterId: string, newImageUrl: string) => {
@@ -6835,6 +6860,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     appearanceNotes?: string;
     reason?: string;
     needsImageRegen?: boolean;
+    generationPrompt?: string;
     action?: 'add' | 'update' | 'delete';
   }) => {
     const runUpdate = async () => {
@@ -6897,6 +6923,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     ...(wardrobe.reason ? { reason: wardrobe.reason } : {}),
                     ...(wardrobe.needsImageRegen !== undefined
                       ? { needsImageRegen: wardrobe.needsImageRegen }
+                      : {}),
+                    ...(wardrobe.generationPrompt !== undefined
+                      ? { generationPrompt: wardrobe.generationPrompt }
                       : {}),
                   }
                 : w
@@ -9445,6 +9474,32 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const isObjectPayload = promptOrPayload && typeof promptOrPayload === 'object'
     const prompt: string = isObjectPayload ? (promptOrPayload.characterPrompt || '') : (promptOrPayload || '')
     if (!prompt?.trim()) return
+    const rawMode = isObjectPayload ? Boolean(promptOrPayload.rawMode) : false
+    const saveOnly = isObjectPayload ? Boolean(promptOrPayload.saveOnly) : false
+
+    if (saveOnly) {
+      const updatedCharacters = updateCharacterInList(
+        charactersRef.current,
+        characterId,
+        (char) => ({ ...char, imagePrompt: prompt })
+      )
+      try {
+        const saveResponse = await persistVisionCharacters(
+          updatedCharacters,
+          'handleSaveCharacterImagePrompt'
+        )
+        if (!saveResponse.ok) throw new Error(`Save failed: ${saveResponse.status}`)
+        if (!options?.quiet) {
+          try { toast.success('Prompt saved') } catch {}
+        }
+      } catch (saveError) {
+        console.error('[Character Save] Failed to save directed prompt:', saveError)
+        if (!options?.quiet) {
+          try { toast.error('Failed to save prompt') } catch {}
+        }
+      }
+      return
+    }
     
     try {
       const res = await fetch('/api/character/generate-image', {
@@ -9458,7 +9513,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           cameraAngle: isObjectPayload ? promptOrPayload.cameraAngle : undefined,
           lighting: isObjectPayload ? promptOrPayload.lighting : undefined,
           additionalDetails: isObjectPayload ? promptOrPayload.additionalDetails : undefined,
-          quality: imageQuality
+          quality: imageQuality,
+          rawMode,
         })
       })
       
@@ -10408,6 +10464,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           intExt: location.intExt,
           timeOfDay: location.timeOfDay,
           description: location.description,
+          locationPrompt: location.generationPrompt?.trim() || undefined,
           screenplayContext: {
             genre: project?.genre,
             tone: project?.tone || project?.metadata?.filmTreatmentVariant?.tone_description,
@@ -10648,6 +10705,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           intExt: location.intExt,
           timeOfDay: location.timeOfDay,
           description: location.description,
+          locationPrompt: version.generationPrompt?.trim() || undefined,
           baseImageUrl: location.imageUrl,
           stateNotes: version.stateNotes,
           versionId: version.id,
@@ -16783,6 +16841,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }}
         onDeleteAllObjectReferences={handleDeleteAllObjectReferences}
         onUpdateReferenceImage={handleUpdateReferenceImage}
+        onSaveObjectPrompt={handleSaveObjectPrompt}
         onEditCharacterImage={handleEditCharacterImage}
         onApplyEnhancedReference={handleApplyEnhancedReference}
         scenes={script?.script?.scenes || []}

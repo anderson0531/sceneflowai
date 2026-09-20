@@ -50,6 +50,7 @@ export type CastSource = {
     previewImageUrl?: string
     sceneNumbers?: number[]
     needsImageRegen?: boolean
+    generationPrompt?: string
   }>
   [key: string]: unknown
 }

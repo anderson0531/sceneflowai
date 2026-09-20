@@ -21,7 +21,8 @@ import {
   Sunrise,
   Camera,
   Zap,
-  Settings2
+  Settings2,
+  Clapperboard,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -31,6 +32,11 @@ import { LocationReference, LocationVersion } from '@/types/visionReferences'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { LocationPromptBuilder, LocationPromptPayload } from './LocationPromptBuilder'
+import { ReferenceStillDirectorDialog } from './ReferenceStillDirectorDialog'
+import {
+  seedLocationDirectorPrompt,
+  seedLocationVersionDirectorPrompt,
+} from '@/lib/intelligence/reference-still-director-fallback'
 import {
   DirectedLocationVersionDialog,
   directedBeatOptionsFromScene,
@@ -245,6 +251,7 @@ function LocationStillOverlay({
   alwaysVisible = false,
   onQuickGenerate,
   onPromptBuilder,
+  onDirector,
   onEdit,
   onUpload,
 }: {
@@ -255,6 +262,7 @@ function LocationStillOverlay({
   alwaysVisible?: boolean
   onQuickGenerate?: () => void
   onPromptBuilder?: () => void
+  onDirector?: () => void
   onEdit?: () => void
   onUpload?: () => void
 }) {
@@ -302,6 +310,24 @@ function LocationStillOverlay({
             </button>
           </TooltipTrigger>
           <TooltipContent>Open Prompt Builder</TooltipContent>
+        </Tooltip>
+      )}
+      {onDirector && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onDirector()
+              }}
+              disabled={isGenerating}
+              className="p-3 bg-teal-600/90 hover:bg-teal-500 rounded-full transition-colors disabled:opacity-50"
+            >
+              <Clapperboard className="w-5 h-5 text-white" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>Director</TooltipContent>
         </Tooltip>
       )}
       {showEdit && onEdit && (
@@ -383,6 +409,7 @@ export function LocationLibrary({
   const [expandedImageName, setExpandedImageName] = useState<string>('')
   const [uploadingForId, setUploadingForId] = useState<string | null>(null)
   const [promptBuilderOpenFor, setPromptBuilderOpenFor] = useState<PromptBuilderTarget | null>(null)
+  const [directorTarget, setDirectorTarget] = useState<PromptBuilderTarget | null>(null)
   const [analyzingLocationId, setAnalyzingLocationId] = useState<string | null>(null)
   const [isUpdatingLocations, setIsUpdatingLocations] = useState(false)
   const [isLocationAgentRunning, setIsLocationAgentRunning] = useState(false)
@@ -986,6 +1013,22 @@ export function LocationLibrary({
                           </TooltipTrigger>
                           <TooltipContent>Open Prompt Builder</TooltipContent>
                         </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setDirectorTarget({ locationId: loc.id })
+                              }}
+                              disabled={isGenerating}
+                              className="p-3 bg-teal-600/90 hover:bg-teal-500 rounded-full transition-colors disabled:opacity-50"
+                            >
+                              <Clapperboard className="w-5 h-5 text-white" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Director</TooltipContent>
+                        </Tooltip>
                         {onEditLocationImage && (
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -1079,6 +1122,22 @@ export function LocationLibrary({
                                 </button>
                               </TooltipTrigger>
                               <TooltipContent>Open Prompt Builder</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setDirectorTarget({ locationId: loc.id })
+                                  }}
+                                  disabled={isGenerating}
+                                  className="p-3 bg-teal-600/90 hover:bg-teal-500 rounded-full transition-colors disabled:opacity-50"
+                                >
+                                  <Clapperboard className="w-5 h-5 text-white" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>Director</TooltipContent>
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -1282,6 +1341,9 @@ export function LocationLibrary({
                                         showEdit={!!onEditLocationImage && !!version.imageUrl}
                                         onQuickGenerate={quickGenerateVersion}
                                         onPromptBuilder={openVersionPromptBuilder}
+                                        onDirector={() =>
+                                          setDirectorTarget({ locationId: loc.id, versionId: version.id })
+                                        }
                                         onEdit={() =>
                                           onEditLocationImage?.(loc.id, version.imageUrl!, version.id)
                                         }
@@ -1311,6 +1373,9 @@ export function LocationLibrary({
                                         showEdit={false}
                                         onQuickGenerate={quickGenerateVersion}
                                         onPromptBuilder={openVersionPromptBuilder}
+                                        onDirector={() =>
+                                          setDirectorTarget({ locationId: loc.id, versionId: version.id })
+                                        }
                                         onUpload={() =>
                                           document.getElementById(versionUploadId)?.click()
                                         }
@@ -1392,6 +1457,83 @@ export function LocationLibrary({
           }}
         />
       )}
+
+      {directorTarget && (() => {
+        const location =
+          mergedLocations.find((l) => l.id === directorTarget.locationId) || null
+        const version = directorTarget.versionId
+          ? location?.versions?.find((v) => v.id === directorTarget.versionId) || null
+          : null
+        if (!location) return null
+        const generatingId = version
+          ? locationVersionGeneratingId(location.id, version.id)
+          : location.id
+        return (
+          <ReferenceStillDirectorDialog
+            open
+            onOpenChange={(next) => {
+              if (!next) setDirectorTarget(null)
+            }}
+            projectId={projectId}
+            kind={version ? 'locationVersion' : 'location'}
+            label={version ? `${location.location} — ${version.name}` : location.location}
+            currentPrompt={
+              version
+                ? seedLocationVersionDirectorPrompt({
+                    storedPrompt: version.generationPrompt,
+                    locationName: location.location,
+                    stateNotes: version.stateNotes,
+                    intExt: location.intExt,
+                    timeOfDay: location.timeOfDay,
+                    description: location.description,
+                    catalogPropNames,
+                  })
+                : seedLocationDirectorPrompt({
+                    storedPrompt: location.generationPrompt,
+                    locationName: location.location,
+                    intExt: location.intExt,
+                    timeOfDay: location.timeOfDay,
+                    description: location.description,
+                  })
+            }
+            context={{
+              locationName: location.location,
+              intExt: location.intExt,
+              timeOfDay: location.timeOfDay,
+              description: location.description,
+              stateNotes: version?.stateNotes,
+            }}
+            isGenerating={generatingLocationId === generatingId}
+            onSave={async ({ prompt, generate }) => {
+              const next = mergedLocations.map((ref) => {
+                if (ref.id !== location.id) return ref
+                if (version) {
+                  return patchLocationVersion(ref, version.id, { generationPrompt: prompt })
+                }
+                return { ...ref, generationPrompt: prompt }
+              })
+              await onUpdateLocations(next)
+              if (!generate) return
+              const patched = next.find((ref) => ref.id === location.id)
+              if (!patched) return
+              if (onGenerateLocationImageWithPrompt) {
+                onGenerateLocationImageWithPrompt({
+                  location: patched,
+                  locationPrompt: prompt,
+                  versionId: version?.id,
+                })
+              } else if (version) {
+                onGenerateLocationVersion?.(patched, {
+                  ...version,
+                  generationPrompt: prompt,
+                })
+              } else {
+                onGenerateLocationImage?.(patched)
+              }
+            }}
+          />
+        )
+      })()}
 
       {/* Expanded Image Dialog */}
       <Dialog open={!!expandedImageUrl} onOpenChange={() => { setExpandedImageUrl(null); setExpandedImageName('') }}>
@@ -1488,6 +1630,12 @@ export function LocationLibrary({
                           )
                         }
                         onPromptBuilder={openVersionPromptBuilder}
+                        onDirector={() =>
+                          setDirectorTarget({
+                            locationId: expandedVersionLocation.id,
+                            versionId: expandedVersion.id,
+                          })
+                        }
                         onEdit={() =>
                           onEditLocationImage?.(
                             expandedVersionLocation.id,

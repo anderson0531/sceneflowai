@@ -12,6 +12,7 @@ describe('location version overlay + persistence source guards', () => {
     expect(src).toContain('version overlay: Prompt Builder + Edit')
     expect(src).toContain('Open Prompt Builder')
     expect(src).toContain('Edit Image')
+    expect(src).toContain('Director')
     expect(src).toContain('onEditLocationImage?.(loc.id, version.imageUrl!, version.id)')
     expect(src).toContain('max-h-[75vh]')
   })

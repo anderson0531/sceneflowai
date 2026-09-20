@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen, Wand2, Loader2, Upload, Copy, CheckCircle2, AlertCircle, LayoutGrid, MapPin, Zap, Settings2, Download, Share2 } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen, Wand2, Loader2, Upload, Copy, CheckCircle2, AlertCircle, LayoutGrid, MapPin, Zap, Settings2, Download, Share2, Clapperboard } from 'lucide-react'
 import { ReferenceTransferDialog } from '@/components/series/ReferenceTransferDialog'
 import type { ReferenceTransferDirection } from '@/types/series'
 import { toast } from 'sonner'
@@ -27,6 +27,8 @@ import {
 import { LocationLibrary } from './LocationLibrary'
 import { LocationPromptPayload } from './LocationPromptBuilder'
 import { ImageEditModal } from './ImageEditModal'
+import { ReferenceStillDirectorDialog } from './ReferenceStillDirectorDialog'
+import { seedObjectDirectorPrompt } from '@/lib/intelligence/reference-still-director-fallback'
 import type { ReferenceExpressScope } from '@/lib/vision/referenceExpress/types'
 import { ReadinessProgress, calculateProductionReadiness, ProductionReadinessState } from '@/components/ui/StatusBadge'
 import { SceneReferenceCard } from './SceneReferenceCard'
@@ -117,6 +119,8 @@ export interface VisionReferencesSidebarProps extends Omit<
   objectDuplicateIgnores?: string[]
   /** Callback to update a reference image after editing */
   onUpdateReferenceImage?: (type: 'scene' | 'object', referenceId: string, newImageUrl: string) => void
+  /** Persist a directed object generation prompt without generating. */
+  onSaveObjectPrompt?: (referenceId: string, prompt: string) => void | Promise<void>
   /** Callback to edit a character's reference image */
   onEditCharacterImage?: (characterId: string, imageUrl: string) => void
   /** Show production readiness progress section */
@@ -217,6 +221,7 @@ interface DraggableReferenceCardProps {
   onImageUploaded?: (referenceId: string, referenceType: 'scene' | 'object', imageUrl: string) => void
   /** Open prompt dialog for object reference regeneration (Objects tab) */
   onOpenObjectPromptDialog?: (reference: VisualReference) => void
+  onOpenObjectDirector?: (reference: VisualReference) => void
   /** 50/50 image | controls layout for Reference Library dialog */
   splitLayout?: boolean
 }
@@ -232,6 +237,7 @@ function DraggableReferenceCard({
   projectId,
   onImageUploaded,
   onOpenObjectPromptDialog,
+  onOpenObjectDirector,
   splitLayout = false,
 }: DraggableReferenceCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -427,6 +433,29 @@ function DraggableReferenceCard({
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>Open Prompt Builder</TooltipContent>
+                </Tooltip>
+              )}
+
+              {onOpenObjectDirector && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onPointerDown={(e) => {
+                        e.stopPropagation()
+                        e.preventDefault()
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onOpenObjectDirector(reference)
+                      }}
+                      disabled={isQuickGenerating || isUploading}
+                      className="p-3 bg-teal-600/90 hover:bg-teal-500 rounded-full transition-colors disabled:opacity-50"
+                    >
+                      <Clapperboard className="w-5 h-5 text-white" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Director</TooltipContent>
                 </Tooltip>
               )}
 
@@ -1242,6 +1271,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onIgnoreObjectDuplicates,
     objectDuplicateIgnores,
     onUpdateReferenceImage,
+    onSaveObjectPrompt,
     onEditCharacterImage,
     showProductionReadiness = true,
     allScenes = [],
@@ -1588,6 +1618,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     return () => window.removeEventListener('reference-library:open-tab' as any, handler)
   }, [])
   const [objectRegenerateTarget, setObjectRegenerateTarget] = useState<VisualReference | null>(null)
+  const [objectDirectorTarget, setObjectDirectorTarget] = useState<VisualReference | null>(null)
   const [referenceExpressDialogOpen, setReferenceExpressDialogOpen] = useState(false)
 
   // Reference tabs matching ScriptPanel folder tab style (Storyboard removed - handled in main panel)
@@ -1972,6 +2003,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                     projectId={projectId}
                     splitLayout={splitLayout}
                     onOpenObjectPromptDialog={(ref) => setObjectRegenerateTarget(ref)}
+                    onOpenObjectDirector={(ref) => setObjectDirectorTarget(ref)}
                     onImageUploaded={(refId, refType, imageUrl) => {
                       if (onUpdateReferenceImage) {
                         onUpdateReferenceImage(refType, refId, imageUrl)
@@ -1992,6 +2024,45 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
         onClose={() => setObjectRegenerateTarget(null)}
         onUpdateReferenceImage={onUpdateReferenceImage}
       />
+
+      {objectDirectorTarget && (
+        <ReferenceStillDirectorDialog
+          open
+          onOpenChange={(next) => {
+            if (!next) setObjectDirectorTarget(null)
+          }}
+          projectId={projectId}
+          kind="object"
+          label={objectDirectorTarget.name}
+          currentPrompt={seedObjectDirectorPrompt(objectDirectorTarget)}
+          context={{
+            name: objectDirectorTarget.name,
+            description: objectDirectorTarget.description,
+            category: objectDirectorTarget.category,
+          }}
+          onSave={async ({ prompt, generate }) => {
+            await onSaveObjectPrompt?.(objectDirectorTarget.id, prompt)
+            if (!generate || !onUpdateReferenceImage) return
+            const response = await fetch('/api/vision/generate-object', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: objectDirectorTarget.name,
+                description: objectDirectorTarget.description || '',
+                prompt,
+                category: objectDirectorTarget.category || 'other',
+              }),
+            })
+            const data = await response.json()
+            if (!response.ok) {
+              toast.error(data.error || 'Failed to generate image')
+              return
+            }
+            onUpdateReferenceImage('object', objectDirectorTarget.id, data.imageUrl)
+            toast.success('Object reference image updated')
+          }}
+        />
+      )}
 
       <AddReferenceDialog
         open={isDialogOpen}

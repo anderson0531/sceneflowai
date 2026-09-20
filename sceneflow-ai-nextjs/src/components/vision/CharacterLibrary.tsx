@@ -31,6 +31,7 @@ import {
   Camera,
   ImagePlus,
   Shield,
+  Clapperboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import {
@@ -55,6 +56,11 @@ import { upload } from "@vercel/blob/client";
 import { VoiceSelectionDialog } from "@/components/tts/VoiceSelectionDialog";
 import { VoiceDirectionEditor } from "@/components/tts/VoiceDirectionEditor";
 import { CharacterPromptBuilder } from "@/components/vision/CharacterPromptBuilder";
+import { ReferenceStillDirectorDialog } from "@/components/vision/ReferenceStillDirectorDialog";
+import {
+  seedCastDirectorPrompt,
+  seedWardrobeDirectorPrompt,
+} from "@/lib/intelligence/reference-still-director-fallback";
 import { buildCharacterIdentityReferencePromptFromCharacter } from "@/lib/character/characterReferencePrompts";
 import {
   AddCharacterModal,
@@ -166,6 +172,7 @@ export interface CharacterLibraryProps {
       appearanceNotes?: string;
       reason?: string;
       needsImageRegen?: boolean;
+      generationPrompt?: string;
       action?: "add" | "update" | "delete";
     },
   ) => void;
@@ -263,6 +270,7 @@ interface CharacterWardrobe {
   appearanceNotes?: string; // Makeup, hair state, visible injuries/marks
   reason?: string; // AI explanation for why this outfit is needed
   needsImageRegen?: boolean;
+  generationPrompt?: string;
 }
 
 function generateCharacterFallbackDescription(character: any): string {
@@ -331,6 +339,9 @@ async function regenerateWardrobeImage(
       existingFullBodyUrl: wardrobe.fullBodyUrl,
       forceRegenerate: !!wardrobe.fullBodyUrl,
       uploadPath,
+      ...(wardrobe.generationPrompt?.trim()
+        ? { promptOverride: wardrobe.generationPrompt.trim() }
+        : {}),
     }),
   });
 
@@ -360,6 +371,9 @@ async function regenerateWardrobeImage(
     fullBodyUrl: resolvedUrl,
     ...(combinedCharacterRefUrl
       ? { combinedCharacterRefUrl }
+      : {}),
+    ...(wardrobe.generationPrompt?.trim()
+      ? { generationPrompt: wardrobe.generationPrompt.trim() }
       : {}),
     needsImageRegen: false,
     action: "update",
@@ -451,6 +465,7 @@ interface CharacterCardProps {
       appearanceNotes?: string;
       reason?: string;
       needsImageRegen?: boolean;
+      generationPrompt?: string;
       action?: "add" | "update" | "delete";
     },
   ) => void;
@@ -486,6 +501,7 @@ interface CharacterCardProps {
   onToggleVoiceSection?: () => void;
   enableDrag?: boolean;
   onOpenCharacterPrompt?: () => void;
+  onDirectCast?: (payload: { prompt: string; generate: boolean }) => void | Promise<void>;
   // Screenplay context for AI wardrobe recommendations
   screenplayContext?: {
     genre?: string;
@@ -785,9 +801,14 @@ export function CharacterLibrary({
         onGenerate={async () => {
           setGeneratingChars((prev) => new Set(prev).add(charId));
           try {
-            const promptToUse =
-              buildCharacterIdentityReferencePromptFromCharacter(char);
-            await onGenerateCharacter(charId, promptToUse);
+            const stored = typeof char.imagePrompt === "string" ? char.imagePrompt.trim() : "";
+            const promptToUse = stored || buildCharacterIdentityReferencePromptFromCharacter(char);
+            await onGenerateCharacter(
+              charId,
+              stored
+                ? { characterPrompt: promptToUse, rawMode: true }
+                : promptToUse,
+            );
           } finally {
             setGeneratingChars((prev) => {
               const newSet = new Set(prev);
@@ -825,6 +846,26 @@ export function CharacterLibrary({
         onToggleVoiceSection={() => handleToggleVoiceSection(charId)}
         enableDrag={enableDrag}
         onOpenCharacterPrompt={() => setPromptBuilderOpenFor(charId)}
+        onDirectCast={async ({ prompt, generate }) => {
+          if (generate) {
+            setGeneratingChars((prev) => new Set(prev).add(charId));
+          }
+          try {
+            await onGenerateCharacter(charId, {
+              characterPrompt: prompt,
+              rawMode: true,
+              saveOnly: !generate,
+            });
+          } finally {
+            if (generate) {
+              setGeneratingChars((prev) => {
+                const next = new Set(prev);
+                next.delete(charId);
+                return next;
+              });
+            }
+          }
+        }}
         screenplayContext={screenplayContext}
         projectId={projectId}
         forceExpanded={cardOptions?.forceExpanded}
@@ -1386,6 +1427,7 @@ const CharacterCard = ({
   onToggleVoiceSection,
   enableDrag = false,
   onOpenCharacterPrompt,
+  onDirectCast,
   screenplayContext,
   projectId,
   forceExpanded = false,
@@ -1430,6 +1472,9 @@ const CharacterCard = ({
   const [isGeneratingCasting, setIsGeneratingCasting] = useState(false);
   const [expandedWardrobeDescriptions, setExpandedWardrobeDescriptions] = useState<Set<string>>(new Set());
   const [isEnhancingReference, setIsEnhancingReference] = useState(false);
+  const [directorTarget, setDirectorTarget] = useState<
+    { kind: "cast" } | { kind: "wardrobe"; wardrobeId: string } | null
+  >(null);
 
   const toggleWardrobeDescription = (wardrobeId: string) => {
     setExpandedWardrobeDescriptions(prev => {
@@ -1448,15 +1493,37 @@ const CharacterCard = ({
     variant: "split" | "stacked",
   ) => {
     const isGenerating = generatingWardrobeImageId === w.id;
+    const hasWardrobeImage = Boolean(w.fullBodyUrl || w.headshotUrl);
     const loadingOverlay = isGenerating ? (
-      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
         <Loader className="w-6 h-6 animate-spin text-white" />
       </div>
     ) : null;
+    const directorOverlay = (
+      <div
+        className={`absolute inset-0 z-10 bg-black/40 flex items-center justify-center gap-3 ${
+          hasWardrobeImage ? "opacity-0 group-hover:opacity-100 transition-opacity" : ""
+        }`}
+      >
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isGenerating) return;
+            setDirectorTarget({ kind: "wardrobe", wardrobeId: w.id });
+          }}
+          disabled={isGenerating}
+          className="p-3 bg-teal-600/90 hover:bg-teal-500 rounded-full transition-colors disabled:opacity-50"
+          title="Director"
+        >
+          <Clapperboard className="w-5 h-5 text-white" />
+        </button>
+      </div>
+    );
 
     if (variant === "split") {
       return (
-        <>
+        <div className="relative h-full w-full group">
           {w.fullBodyUrl ? (
             <img
               src={w.fullBodyUrl}
@@ -1479,40 +1546,36 @@ const CharacterCard = ({
               </span>
             </div>
           )}
+          {directorOverlay}
           {loadingOverlay}
-        </>
+        </div>
       );
     }
 
-    if (w.fullBodyUrl) {
-      return (
-        <div className="relative aspect-auto max-h-64 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    const imageSrc = w.fullBodyUrl || w.headshotUrl;
+    return (
+      <div
+        className={`relative group bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 ${
+          w.fullBodyUrl ? "aspect-auto max-h-64" : "aspect-video max-h-48"
+        }`}
+      >
+        {imageSrc ? (
           <img
-            src={w.fullBodyUrl}
+            src={imageSrc}
             alt={`${character.name} — ${w.name} wardrobe reference`}
-            className="w-full h-full object-contain"
+            className={`w-full h-full ${w.fullBodyUrl ? "object-contain" : "object-cover object-top"}`}
             loading="lazy"
           />
-          {loadingOverlay}
-        </div>
-      );
-    }
-
-    if (w.headshotUrl) {
-      return (
-        <div className="relative aspect-video max-h-48 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <img
-            src={w.headshotUrl}
-            alt={`${character.name} — ${w.name} wardrobe reference (legacy)`}
-            className="w-full h-full object-cover object-top"
-            loading="lazy"
-          />
-          {loadingOverlay}
-        </div>
-      );
-    }
-
-    return null;
+        ) : (
+          <div className="w-full min-h-[120px] flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 p-4 text-center">
+            <ImagePlus className="w-8 h-8 mb-2 opacity-50" />
+            <span className="text-xs">No wardrobe reference yet</span>
+          </div>
+        )}
+        {directorOverlay}
+        {loadingOverlay}
+      </div>
+    );
   };
   const [genderConfirmOpen, setGenderConfirmOpen] = useState(false);
   const [isAutoSelectingVoice, setIsAutoSelectingVoice] = useState(false);
@@ -2727,6 +2790,9 @@ const CharacterCard = ({
           existingFullBodyUrl: wardrobe.fullBodyUrl,
           forceRegenerate: !!wardrobe.fullBodyUrl,
           uploadPath,
+          ...(wardrobe.generationPrompt?.trim()
+            ? { promptOverride: wardrobe.generationPrompt.trim() }
+            : {}),
         }),
       });
 
@@ -2762,6 +2828,9 @@ const CharacterCard = ({
         wardrobeId: wardrobe.id,
         fullBodyUrl: resolvedUrl,
         ...(combinedCharacterRefUrl ? { combinedCharacterRefUrl } : {}),
+        ...(wardrobe.generationPrompt?.trim()
+          ? { generationPrompt: wardrobe.generationPrompt.trim() }
+          : {}),
         needsImageRegen: false,
         action: "update",
       });
@@ -3136,6 +3205,20 @@ const CharacterCard = ({
             <Wand2 className="w-5 h-5 text-white" />
           </button>
         )}
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isGenerating) return;
+            setDirectorTarget({ kind: "cast" });
+          }}
+          disabled={isGenerating}
+          className="p-3 bg-teal-600/90 hover:bg-teal-500 rounded-full transition-colors disabled:opacity-50"
+          title="Director"
+        >
+          <Clapperboard className="w-5 h-5 text-white" />
+        </button>
 
         {character.referenceImage && !imageError && onEditImage && (
           <button
@@ -5180,6 +5263,94 @@ const CharacterCard = ({
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        {directorTarget && (
+          <ReferenceStillDirectorDialog
+            open={!!directorTarget}
+            onOpenChange={(next) => {
+              if (!next) setDirectorTarget(null);
+            }}
+            projectId={projectId}
+            kind={directorTarget.kind}
+            label={
+              directorTarget.kind === "cast"
+                ? character.name || "Character"
+                : `${character.name} — ${
+                    (character.wardrobes || []).find(
+                      (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
+                    )?.name || "Wardrobe"
+                  }`
+            }
+            currentPrompt={
+              directorTarget.kind === "cast"
+                ? seedCastDirectorPrompt(character)
+                : seedWardrobeDirectorPrompt({
+                    storedPrompt: (character.wardrobes || []).find(
+                      (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
+                    )?.generationPrompt,
+                    characterName: character.name || "Character",
+                    appearanceDescription: character.appearanceDescription,
+                    hairStyle: character.hairStyle,
+                    hairColor: character.hairColor,
+                    wardrobeDescription: (character.wardrobes || []).find(
+                      (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
+                    )?.description,
+                    wardrobeAccessories: (character.wardrobes || []).find(
+                      (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
+                    )?.accessories,
+                    appearanceNotes: (character.wardrobes || []).find(
+                      (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
+                    )?.appearanceNotes,
+                  })
+            }
+            context={
+              directorTarget.kind === "cast"
+                ? {
+                    name: character.name,
+                    appearance: character.appearanceDescription,
+                  }
+                : {
+                    name: character.name,
+                    appearance: character.appearanceDescription,
+                    outfit: (character.wardrobes || []).find(
+                      (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
+                    )?.description,
+                    accessories: (character.wardrobes || []).find(
+                      (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
+                    )?.accessories,
+                    appearanceNotes: (character.wardrobes || []).find(
+                      (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
+                    )?.appearanceNotes,
+                  }
+            }
+            isGenerating={
+              directorTarget.kind === "cast"
+                ? isGenerating
+                : generatingWardrobeImageId === directorTarget.wardrobeId
+            }
+            onSave={async ({ prompt, generate }) => {
+              if (directorTarget.kind === "wardrobe") {
+                const wardrobe = (character.wardrobes || []).find(
+                  (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
+                );
+                onUpdateWardrobe?.(characterId, {
+                  wardrobeId: directorTarget.wardrobeId,
+                  action: "update",
+                  generationPrompt: prompt,
+                  defaultWardrobe: wardrobe?.description,
+                  wardrobeAccessories: wardrobe?.accessories,
+                });
+                if (generate && wardrobe) {
+                  await handleGenerateWardrobeImage({
+                    ...wardrobe,
+                    generationPrompt: prompt,
+                  });
+                }
+                return;
+              }
+              await onDirectCast?.({ prompt, generate });
+            }}
+          />
+        )}
       </div>
     </div>
   );
