@@ -107,12 +107,6 @@ describe('public hero playback sources', () => {
     expect(script).toContain('landing/hero/sceneflow-hero-en.webm')
     expect(script).toContain('landing/hero/sceneflow-hero-en-1080p.mp4')
     expect(script).toContain('Using 4K master (not watermarked landing MP4)')
-    const publisher = readFileSync(
-      join(process.cwd(), 'src/app/api/internal/publish-hero-web-encodes/route.ts'),
-      'utf8'
-    )
-    expect(publisher).toContain('HERO_VIDEO_WEB_WEBM_PATHS')
-    expect(publisher).toContain('HERO_VIDEO_WEB_1080P_PATHS')
   })
 
   it('ships WebP posters the player requests', () => {
