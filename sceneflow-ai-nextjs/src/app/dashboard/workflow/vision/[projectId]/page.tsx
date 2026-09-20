@@ -109,6 +109,10 @@ import {
   stampLocationVersionAppliesFrom,
 } from '@/lib/vision/locationScriptSync'
 import {
+  mountedFixturesForLocation,
+  withMountedFixturesInLocationDescription,
+} from '@/lib/vision/mountedSetFixtures'
+import {
   applyStartFrameUrlToProductionSegments,
   resolveEffectiveStartFrameUrl,
   shouldAttachBeatStartFrame,
@@ -10454,6 +10458,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         subtitle: `Preparing prompt for ${locationLabel}...`,
         progressPct: 10,
       })
+
+      const scenes = scriptRef.current?.script?.scenes ?? script?.script?.scenes ?? []
+      const fixtures = mountedFixturesForLocation(location, scenes)
+      const description = withMountedFixturesInLocationDescription(location.description, fixtures)
+      const storedPrompt = location.generationPrompt?.trim()
+      const locationPrompt = storedPrompt
+        ? withMountedFixturesInLocationDescription(storedPrompt, fixtures)
+        : undefined
       
       const response = await fetch('/api/vision/generate-location', {
         method: 'POST',
@@ -10463,8 +10475,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           locationName: location.location,
           intExt: location.intExt,
           timeOfDay: location.timeOfDay,
-          description: location.description,
-          locationPrompt: location.generationPrompt?.trim() || undefined,
+          description,
+          locationPrompt,
           screenplayContext: {
             genre: project?.genre,
             tone: project?.tone || project?.metadata?.filmTreatmentVariant?.tone_description,
@@ -10492,6 +10504,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               ...ref,
               imageUrl: result.imageUrl,
               generationPrompt: result.prompt,
+              description,
             })
           : ref
       )
@@ -10565,6 +10578,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         progressPct: 10,
       })
 
+      const scenes = scriptRef.current?.script?.scenes ?? script?.script?.scenes ?? []
+      const fixtures = mountedFixturesForLocation(location, scenes)
+      const description = withMountedFixturesInLocationDescription(location.description, fixtures)
+      const locationPrompt = version
+        ? payload.locationPrompt
+        : withMountedFixturesInLocationDescription(payload.locationPrompt, fixtures)
+
       const response = await fetch('/api/vision/generate-location', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -10573,8 +10593,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           locationName: location.location,
           intExt: location.intExt,
           timeOfDay: location.timeOfDay,
-          description: location.description,
-          locationPrompt: payload.locationPrompt,
+          description,
+          locationPrompt,
           artStyle: payload.artStyle,
           shotType: payload.shotType,
           cameraAngle: payload.cameraAngle,
@@ -10622,6 +10642,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           ...ref,
           imageUrl: result.imageUrl,
           generationPrompt: result.prompt,
+          description,
         })
       })
       setLocationReferences(updatedLocations)

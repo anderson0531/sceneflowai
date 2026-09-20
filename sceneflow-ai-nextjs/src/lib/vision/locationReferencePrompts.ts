@@ -13,6 +13,7 @@ import {
   resolveStillShotClass,
 } from '@/lib/imagen/stillFramingNormalize'
 import { locationScaleClause } from '@/lib/imagen/locationScaleClause'
+import { isMountedSetFixtureCatalogName } from '@/lib/vision/mountedSetFixtures'
 
 export const LOCATION_REFERENCE_ASPECT_RATIO = '16:9' as const
 
@@ -73,6 +74,8 @@ export function buildLocationBasePrompt(
 export const LOCATION_TURNAROUND_GENERATION_INSTRUCTION =
   'Single unified cinematic frame — extreme wide establishing shot of the location. ' +
   'One photograph capturing the full room/environment layout, furniture placement, and architectural features. ' +
+  'Include named built-in architectural hardware in its mounted position (hatch wheels, vault door wheels, bolted valves). ' +
+  'Do not add handheld props. ' +
   'NOT a 2x2 grid, NOT a multi-panel sheet, NOT split-screen, NOT a collage, NOT multiple camera angles. ' +
   'Empty scene with NO people or characters present.'
 
@@ -167,6 +170,7 @@ export const LOCATION_VERSION_GENERATION_INSTRUCTION =
   'materials, palette, and any furniture that is NOT listed as changed, exactly. ' +
   'Paint ONLY lasting structural set-state changes as the new source of truth: architecture, ' +
   'doors, windows, walls, floors, built-in or overturned set furniture (desks, chairs bolted to the room), ' +
+  'built-in hardware (hatch wheels, vault door wheels, bolted valves), ' +
   'flooding, debris that is the room, boarded windows, exploded or missing architectural features. ' +
   'Do NOT add handheld objects, beat keyProps, or objects a character will introduce ' +
   '(journals, vellum, tools, weapons, papers, bags). If the state notes name those, ignore them and leave the set empty of that object. ' +
@@ -200,7 +204,12 @@ function usableCatalogPropNames(catalogPropNames?: string[]): string[] {
   const names = Array.isArray(catalogPropNames) ? catalogPropNames : []
   return names
     .map((name) => name.trim())
-    .filter((name) => name.length >= 4 && !isSingleStructuralNoun(name))
+    .filter(
+      (name) =>
+        name.length >= 4 &&
+        !isSingleStructuralNoun(name) &&
+        !isMountedSetFixtureCatalogName(name)
+    )
 }
 
 function clauseMentionsCatalogProp(clause: string, catalogPropNames?: string[]): boolean {

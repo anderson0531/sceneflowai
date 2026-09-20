@@ -276,7 +276,7 @@ Field definitions:
 • "blocking": one clause for the settled pose of EVERY name in castInFrame — weight, contact surface, hands, shoulders (e.g., "Piper braces her forearm against Gideon's chest, journal raised, her feet planted; Gideon leans toward the core, weight on his front foot"). Do not leave a listed person without a body. Not empty stillness ("stands perfectly still") unless the beat is a true hold, and then name where the tension lives. One position per body. No paraphrasing of dialogue.
 • "emotion": visible face and body tells for EACH person in castInFrame, not a two-word mood on a primary subject (e.g., "Piper: sudden tension, jaw set, eyes widened; Gideon: quiet dread, eyes held, mouth closed"). Match the scene's talent arc but be beat-specific. Never put emotion in exclusions or negative-prompt text.
 • "gaze": who looks, and at what, labeled when two or more people are in frame (e.g., "Piper toward the glowing core", "Gideon into Piper's eyes"). REQUIRED whenever castInFrame is non-empty.
-• "keyProps": array of prop labels — SUBSET of the scene's Key Props — that are visible and relevant in THIS beat. Omit props not in this beat. Use the exact prop labels from the scene's Key Props list.
+• "keyProps": array of prop labels — SUBSET of the scene's Key Props — that are visible and relevant in THIS beat. Omit props not in this beat. Use the exact prop labels from the scene's Key Props list. Do not list built-in architectural hardware (door/hatch/vault wheels, bolted valves) — those belong in the location establishing shot / scene.location.
 • "propInteraction": how a character physically handles a listed prop this beat (e.g., "Piper grips the journal with both hands and holds it against Gideon's sternum"). Names must match keyProps entries.
 • "lightingAccent": per-beat lighting deviation from the scene's overall lighting (e.g., "teal accent from the core underlighting Gideon's face"). Omit when scene lighting is unchanged.
 • "frozenMoment": ONE SENTENCE naming the single frozen still this beat represents — pose plus what is readable on the face/body of EACH person in castInFrame (e.g., "Piper stops Gideon mid-lean, journal pressed to his sternum, her jaw set, his eyes wide."). Prefer noun-first, concrete, one composition. Do not write "standing motionless" without the face and body that make the hold readable.
@@ -289,7 +289,7 @@ Beat-kind requirements:
 • narration beats: populate castInFrame, shotType, cameraMovement, blocking (of on-screen subject, if any), gaze, lightingAccent, frozenMoment, audioCue, transition. NARRATOR is off-screen — do not name NARRATOR in blocking or castInFrame.
 
 Rules:
-• Do NOT invent prop names. keyProps MUST be a subset of scene "Key Props" — never a character name and never a possessive.
+• Do NOT invent prop names. keyProps MUST be a subset of scene "Key Props" — never a character name and never a possessive. Do not list built-in architectural hardware (door/hatch/vault wheels); put those in the location description.
 • castInFrame, blocking, gaze and frozenMoment must agree: do not describe a person in blocking, gaze or frozenMoment when castInFrame is [].
 • Do NOT restate the scene direction verbatim — refine it for THIS beat.
 • Do NOT put dialogue content in beatDirection fields.
@@ -310,7 +310,7 @@ ${buildPolicySafePhrasingRules()}`
 function buildCompactBeatDirectionPromptBlock(includeProps: boolean): string {
   const propFields = includeProps
     ? `
-• "keyProps": array of prop labels — SUBSET of the scene's Key Props — visible in THIS beat. Use the exact labels from the scene's Key Props list, never a character name. Omit when no listed prop appears.
+• "keyProps": array of prop labels — SUBSET of the scene's Key Props — visible in THIS beat. Use the exact labels from the scene's Key Props list, never a character name. Omit when no listed prop appears. Do not list door/hatch/vault wheels or other built-in architectural hardware.
 • "propAssetIds": catalog asset ids for the keyProps entries that match the reference catalog. Omit when there is no match.`
     : ''
   const excluded = includeProps

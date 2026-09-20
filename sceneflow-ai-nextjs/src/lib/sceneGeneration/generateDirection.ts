@@ -431,8 +431,8 @@ Generate comprehensive technical direction suitable for professional film produc
     "colorTemperature": "color temperature, e.g., 'Warm (Tungsten)', 'Cool (Daylight)', 'Stylized (e.g., blue/orange)'"
   },
   "scene": {
-    "location": "location description, e.g., 'Messy apartment living room', 'Sterile office environment'",
-    "keyProps": ["array of key props, e.g., 'A steaming coffee mug', 'A flickering neon sign', 'A specific document on the desk'"],
+    "location": "location description including built-in architecture, e.g., 'Messy apartment living room', 'Industrial vault with a heavy door wheel mounted across the room from the workbench'",
+    "keyProps": ["array of handheld/hero props only, e.g., 'A steaming coffee mug', 'A specific document on the desk'. Do not list door/hatch/vault wheels or other mounted architectural hardware"],
     "atmosphere": "atmospheric description, e.g., 'Hazy/Smoky', 'Clean & Minimalist', 'Cluttered & Chaotic'"
   },
   "talent": {

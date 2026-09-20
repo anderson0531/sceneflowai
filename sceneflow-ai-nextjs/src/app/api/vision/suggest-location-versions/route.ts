@@ -104,9 +104,10 @@ DO NOT create a version for:
 - Time of day or lightingAccent alone
 - A different location (new scene heading)
 - Beat keyProps, propInteraction, or objects a character handles or introduces (journals, vellum, tools, weapons). Those belong on the beat frame, not this still.
+- Built-in architectural hardware that is always on the set (door wheels, hatch wheels, vault wheels, bolted valves). Those belong on the BASE establishing shot, not a version.
 
 RULES:
-1. The intact establishing shot is the BASE — do not suggest a version for the undamaged set.
+1. The intact establishing shot is the BASE — do not suggest a version for the undamaged set. Mounted hardware that is always present is part of the BASE, not a version.
 2. Group consecutive beats that share the same post-change state into one version.
 3. stateNotes must be the COMPLETE current STRUCTURAL set state at that point (door gone AND later fire), not a delta-only patch. stateNotes are used for reference image generation. stateNotes must NOT include beat keyProps, propInteraction, or handheld objects a character introduces.
 4. appliesFrom is the first beat where this state is visible (sceneNumber 1-based, beatIndex 0-based). Later beats at this location keep this version until a newer version starts.

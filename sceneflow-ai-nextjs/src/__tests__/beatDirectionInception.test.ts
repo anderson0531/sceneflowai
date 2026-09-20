@@ -23,6 +23,13 @@ describe('script inception ships beat direction contracts', () => {
     expect(block).toMatch(/REQUIRED whenever castInFrame is non-empty/)
     expect(block).toMatch(/jaw set/)
     expect(block).toMatch(/transition/i)
+    expect(block).toContain('door/hatch/vault wheels')
+  })
+
+  it('scene direction does not catalog mounted wheels as keyProps', () => {
+    const source = readSource('src/lib/sceneGeneration/generateDirection.ts')
+    expect(source).toContain('Do not list door/hatch/vault wheels')
+    expect(source).toContain('heavy door wheel mounted across the room')
   })
 
   it('narration policy schema example inlines BeatDirection JSON snippet', () => {

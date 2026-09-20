@@ -187,7 +187,8 @@ describe('reference still director wiring', () => {
 
   it('Regen prefers stored directed prompts', () => {
     const page = readSource('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
-    expect(page).toContain('locationPrompt: location.generationPrompt?.trim() || undefined')
+    expect(page).toContain('location.generationPrompt?.trim()')
+    expect(page).toContain('withMountedFixturesInLocationDescription(storedPrompt, fixtures)')
     expect(page).toContain('locationPrompt: version.generationPrompt?.trim() || undefined')
     expect(page).toContain('saveOnly')
     expect(page).toContain('rawMode')

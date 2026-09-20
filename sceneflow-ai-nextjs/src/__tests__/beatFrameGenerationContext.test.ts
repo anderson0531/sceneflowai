@@ -573,6 +573,28 @@ describe('resolveBeatFrameGenerationContext', () => {
     expect(resolved.objectNames).toEqual(['Thirty-Inch Iron Rail Spanner'])
   })
 
+  it('does not auto-attach a mounted door wheel object plate', () => {
+    const objectReferences: VisualReference[] = [
+      { id: 'prop-wheel', type: 'object', name: 'heavy door wheel' },
+      { id: 'prop-wrench', type: 'object', name: 'cast-iron wrench' },
+    ]
+    const resolved = resolveBeatFrameGenerationContext({
+      scene: { heading: 'INT. VAULT - NIGHT' },
+      beat: actionBeat({
+        actionDescription: 'Gideon struggles with a heavy door wheel across the room.',
+        beatDirection: {
+          keyProps: ['heavy door wheel', 'cast-iron wrench'],
+        },
+      }),
+      projectCharacters: characters,
+      locationReferences: [],
+      objectReferences,
+    })
+
+    expect(resolved.objectRefIds).toEqual(['prop-wrench'])
+    expect(resolved.objectNames).toEqual(['cast-iron wrench'])
+  })
+
   describe('prop attachment is beat-scoped', () => {
     const spanner: VisualReference[] = [
       {

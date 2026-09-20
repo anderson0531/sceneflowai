@@ -15,6 +15,8 @@ describe('location version overlay + persistence source guards', () => {
     expect(src).toContain('Director')
     expect(src).toContain('onEditLocationImage?.(loc.id, version.imageUrl!, version.id)')
     expect(src).toContain('max-h-[75vh]')
+    expect(src).toContain('locationDescriptionWithMountedFixtures')
+    expect(src).toContain('mountedFixturesForLocation')
   })
 
   it('prompt builder seeds versions structurally and sends versionId', () => {
@@ -22,6 +24,8 @@ describe('location version overlay + persistence source guards', () => {
     expect(src).toContain('buildLocationVersionPrompt')
     expect(src).toContain('versionId: version?.id')
     expect(src).toContain('beat props belong on the frame')
+    expect(src).toContain('mountedFixtures')
+    expect(src).toContain('withMountedFixturesInLocationDescription')
   })
 
   it('page generate-with-prompt patches the version instead of the base still', () => {
@@ -29,6 +33,8 @@ describe('location version overlay + persistence source guards', () => {
     expect(src).toContain('versionId?: string')
     expect(src).toContain('patchLocationVersion(ref, version.id')
     expect(src).toMatch(/versionId: version\.id/)
+    expect(src).toContain('withMountedFixturesInLocationDescription')
+    expect(src).toContain('mountedFixturesForLocation')
   })
 
   it('sidebar save with versionId does not overwrite the base still', () => {
@@ -41,6 +47,8 @@ describe('location version overlay + persistence source guards', () => {
     const suggest = readSource('src/app/api/vision/suggest-location-versions/route.ts')
     const sync = readSource('src/app/api/vision/sync-location-versions-from-script/route.ts')
     expect(suggest).toContain('beat keyProps')
+    expect(suggest).toContain('BASE establishing shot')
+    expect(suggest).toContain('hatch wheels, vault wheels')
     expect(sync).toContain('beat keyProps')
   })
 
@@ -50,6 +58,13 @@ describe('location version overlay + persistence source guards', () => {
     expect(route).not.toContain('referenceImage: identityRef')
     const studio = readSource('src/lib/gemini/geminiStudioImageClient.ts')
     expect(studio).toContain('referenceImages: options.referenceImages')
+  })
+
+  it('Express location generation bakes mounted fixtures into the base description', () => {
+    const src = readSource('src/lib/vision/referenceExpress/runItem.ts')
+    expect(src).toContain('mountedFixturesForLocation')
+    expect(src).toContain('withMountedFixturesInLocationDescription')
+    expect(src).toContain('description,')
   })
 
   it('Edit Frame modal attaches selected names and common-edit chips', () => {
