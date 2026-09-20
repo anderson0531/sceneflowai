@@ -15,7 +15,6 @@ import {
   Film,
   Globe,
   Link2,
-  ChevronRight,
   Loader2,
 } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
@@ -43,7 +42,6 @@ function readUnmuteDismissed(): boolean {
 export function HeroSection() {
   const t = useTranslations('hero')
   const chips = t.raw('chips') as Array<{ label: string; detail: string }>
-  const pipelineSteps = t.raw('pipelineSteps') as string[]
   const chipIcons = [Link2, Film, Globe]
   const landingLocale = useLocale()
   const syncedVideoLocale = resolveHeroVideoLocale(landingLocale)
@@ -176,7 +174,7 @@ export function HeroSection() {
         id="hero-video"
         className="relative w-full min-h-[100dvh] bg-gray-950 text-white scroll-mt-24"
       >
-        <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-x-0 bottom-0 top-16 overflow-hidden lg:inset-0">
           <HeroVideoBackground
             key={inlineVideoLocale}
             locale={inlineVideoLocale}
@@ -210,28 +208,9 @@ export function HeroSection() {
           </div>
         )}
 
-        <div className="relative z-10 flex min-h-[100dvh] flex-col justify-center px-4 pt-20 pb-28">
+        <div className="relative z-10 flex min-h-[100dvh] flex-col justify-center px-4 pt-36 pb-16 lg:pt-40">
           <div className="container mx-auto">
-            {pipelineSteps.length > 0 && (
-              <motion.div
-                className="flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm text-gray-300"
-                initial={{ opacity: 0, y: motionOffset ?? 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: motionDuration ?? 0.6, delay: prefersReducedMotion ? 0 : 0.2 }}
-                aria-label="Studio pipeline flow"
-              >
-                {pipelineSteps.map((step, index) => (
-                  <span key={step} className="inline-flex items-center gap-2">
-                    <span className="font-medium text-gray-100">{step}</span>
-                    {index < pipelineSteps.length - 1 && (
-                      <ChevronRight className="h-3.5 w-3.5 text-gray-400" aria-hidden />
-                    )}
-                  </span>
-                ))}
-              </motion.div>
-            )}
-
-            <div className="max-w-4xl mx-auto text-center mt-8 lg:mt-10">
+            <div className="max-w-4xl mx-auto text-center">
               <motion.div
                 className="flex flex-col items-center gap-3"
                 initial={{ opacity: 0, y: motionOffset ?? 12 }}
@@ -329,7 +308,7 @@ export function HeroSection() {
           </div>
         </div>
 
-        <div className="absolute inset-x-0 bottom-0 z-20 flex items-center gap-3 bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-10">
+        <div className="absolute inset-x-0 top-16 z-20 flex items-center gap-3 bg-gradient-to-b from-black/80 to-transparent px-4 pt-3 pb-8 lg:top-20">
           <VideoLanguageControl
             locales={heroLocales}
             activeLocaleId={activeLocale}
