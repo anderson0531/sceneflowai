@@ -77,6 +77,8 @@ export interface FullBodyWardrobeInput {
   /** Existing full-body wardrobe URL — reused unless forceRegenerate */
   existingFullBodyUrl?: string
   forceRegenerate?: boolean
+  /** Directed prompt; when set, skip rebuild from outfit fields. */
+  promptOverride?: string
 }
 
 export interface SceneCharacterHeadshotInput {
@@ -368,7 +370,7 @@ export async function generateFullBodyWardrobeImage(
       hairColor: input.hairColor,
     })
 
-  const prompt = buildFullBodyWardrobePrompt({
+  const prompt = input.promptOverride?.trim() || buildFullBodyWardrobePrompt({
     characterName: input.characterName,
     appearanceDescription: input.appearanceDescription,
     wardrobeDescription: input.wardrobeDescription,

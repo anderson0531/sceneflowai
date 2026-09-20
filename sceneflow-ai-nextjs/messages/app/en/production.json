@@ -1113,6 +1113,75 @@
       "directionStrengthModerate": "Some direction drift — review before saving.",
       "directionStrengthDrifted": "Possible direction drift — review before saving."
     },
+    "referenceDirector": {
+      "title": "Director — {label}",
+      "description": "Rewrite this reference still prompt. Saved prompt is used on Regen. No image credits until you generate.",
+      "instructionPlaceholder": "Tighter headshot, keep the scar, studio gray, no scene action",
+      "currentPrompt": "Current prompt",
+      "rewrittenPrompt": "Rewritten prompt",
+      "rewrite": "Rewrite prompt",
+      "rewriting": "Rewriting…",
+      "savePrompt": "Save prompt",
+      "saveAndGenerate": "Save & generate",
+      "safetyOption": "Safety",
+      "safetyOptionTooltip": "When rewriting, rephrase the still so it conforms with Google AI content policies. Aftermath instead of harm in progress. Does not choose a generation model.",
+      "chips": {
+        "cast": {
+          "headshot": "9:16 headshot",
+          "headshotText": "Vertical 9:16 head-and-shoulders casting headshot, face dominant, eyes in the upper third.",
+          "neutral": "Neutral expression",
+          "neutralText": "Neutral relaxed expression, mouth closed, direct eye contact.",
+          "studio": "Studio gray",
+          "studioText": "Plain neutral gray studio backdrop, no props or scene dressing.",
+          "lens": "85mm portrait",
+          "lensText": "85mm portrait lens look, shallow depth of field, natural skin texture.",
+          "likeness": "No likeness",
+          "likenessText": "Original fictional adult — not a celebrity or recognizable likeness."
+        },
+        "wardrobe": {
+          "fullBody": "Head to feet",
+          "fullBodyText": "Full-length front-facing standing pose, head to feet visible including footwear.",
+          "emptyHands": "Empty hands",
+          "emptyHandsText": "Hands empty and visible at the sides. No handheld or story props.",
+          "sameFace": "Same face",
+          "sameFaceText": "Same real person as the identity reference — match the face exactly.",
+          "front": "Front-facing",
+          "frontText": "Single subject centered, entire outfit visible, no collage or turnaround sheet.",
+          "studio": "Studio gray",
+          "studioText": "Plain neutral gray studio backdrop matching the identity headshot."
+        },
+        "location": {
+          "wide": "Extreme wide",
+          "wideText": "Extreme wide establishing shot of the full location in one unbroken photograph.",
+          "empty": "Empty set",
+          "emptyText": "Empty scene with no people, silhouettes, or faces.",
+          "tod": "Time-of-day light",
+          "todText": "Match time-of-day lighting from the scene heading.",
+          "architecture": "Keep architecture",
+          "architectureText": "Keep architectural layout, furniture placement, and materials exact."
+        },
+        "locationVersion": {
+          "architecture": "Keep architecture",
+          "architectureText": "Same location as the base still — match architecture, layout, and materials exactly.",
+          "setState": "Bake set state",
+          "setStateText": "Paint only lasting structural set-state changes as the new source of truth.",
+          "empty": "Empty set",
+          "emptyText": "Empty scene with no people or characters present.",
+          "noProps": "No story props",
+          "noPropsText": "Do not add handheld beat props. Leave the set empty of those objects."
+        },
+        "object": {
+          "isolated": "Isolated studio",
+          "isolatedText": "Isolated subject only. Do not add people, hands, tables, or a staged scene.",
+          "entire": "Entire object",
+          "entireText": "Entire object visible, centered, sharp focus, no cropping of important parts.",
+          "scale": "Real-world scale",
+          "scaleText": "Show true real-world scale with a simple ruler beside the object, not on it.",
+          "studio": "Plain backdrop",
+          "studioText": "Clean studio lighting, plain neutral backdrop, high resolution."
+        }
+      }
+    },
     "locationLibrary": {
       "versions": "Set versions",
       "suggestFromScript": "Suggest versions from script",

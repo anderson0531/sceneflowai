@@ -92,11 +92,15 @@ export async function runReferenceExpressItem(input: {
       return skipped(item, 'already-generated')
     }
 
+    const storedPrompt =
+      typeof character.imagePrompt === 'string' ? character.imagePrompt.trim() : ''
+    const prompt = storedPrompt
+      ? storedPrompt
+      : buildCharacterReferencePrompt({
+          ...character,
+          age: castAgeText(character.age),
+        })
     const usedFingerprint = castFingerprint(character)
-    const prompt = buildCharacterReferencePrompt({
-      ...character,
-      age: castAgeText(character.age),
-    })
 
     const generated = await generateCastReferenceImage({
       userId,
@@ -104,6 +108,7 @@ export async function runReferenceExpressItem(input: {
       prompt,
       characterId: item.targetId,
       characterName: character.name,
+      rawMode: Boolean(storedPrompt),
     })
 
     const visionDescription = generated.visionDescription || undefined
@@ -196,6 +201,10 @@ export async function runReferenceExpressItem(input: {
       intExt: location.intExt,
       timeOfDay: location.timeOfDay,
       description: location.description,
+      locationPrompt:
+        typeof location.generationPrompt === 'string' && location.generationPrompt.trim()
+          ? location.generationPrompt
+          : undefined,
       locale,
     })
 
@@ -343,6 +352,7 @@ async function runWardrobeItem(input: {
         item.forceRegenerate === true ||
         !!wardrobe.needsImageRegen ||
         !!wardrobeLookUrl(wardrobe),
+      promptOverride: wardrobe.generationPrompt?.trim() || undefined,
     },
     uploadPath
   )
@@ -423,6 +433,10 @@ async function runLocationVersionItem(input: {
     baseImageUrl: location.imageUrl!.trim(),
     stateNotes: version.stateNotes,
     versionId: version.id,
+    locationPrompt:
+      typeof version.generationPrompt === 'string' && version.generationPrompt.trim()
+        ? version.generationPrompt
+        : undefined,
   })
 
   const { saved, staleSource } = await persistReferenceImage({

@@ -18,7 +18,7 @@ import { getCreditCost, IMAGE_CREDITS } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
 import { englishForModel } from '@/i18n/server/requestLocale'
 import {
-  LOCATION_TURNAROUND_GENERATION_INSTRUCTION,
+  buildLocationBasePrompt,
   buildLocationVersionPrompt,
   ensureLocationVersionPromptIsStructural,
 } from '@/lib/vision/locationReferencePrompts'
@@ -79,47 +79,7 @@ export function buildLocationPrompt(
   timeOfDay?: string,
   description?: string
 ): string {
-  const parts: string[] = []
-
-  if (description) {
-    parts.push(description)
-  } else {
-    parts.push(`${locationName} setting`)
-  }
-
-  if (intExt) {
-    const mapping: Record<string, string> = {
-      'INT': 'Interior scene',
-      'EXT': 'Exterior scene',
-      'INT/EXT': 'Interior/Exterior transitional scene',
-      'EXT/INT': 'Exterior/Interior transitional scene',
-    }
-    parts.push(mapping[intExt] || '')
-  }
-
-  if (timeOfDay) {
-    const lightingMap: Record<string, string> = {
-      'DAY': 'Natural daylight, bright ambient lighting',
-      'NIGHT': 'Nighttime atmosphere, artificial interior lighting or moonlight',
-      'MORNING': 'Early morning light, soft golden hour tones',
-      'EVENING': 'Evening atmosphere, warm golden lighting',
-      'SUNSET': 'Dramatic sunset lighting with warm orange and pink tones',
-      'SUNRISE': 'Sunrise atmosphere, soft warm golden light breaking through',
-      'DUSK': 'Twilight atmosphere, cool blue-purple tones with fading light',
-      'DAWN': 'Pre-dawn atmosphere, soft cool light with hint of warmth',
-    }
-    const lighting = lightingMap[timeOfDay.toUpperCase()]
-    if (lighting) parts.push(lighting)
-  }
-
-  parts.push(
-    LOCATION_TURNAROUND_GENERATION_INSTRUCTION,
-    'Cinematic production design, professional film set quality',
-    'High resolution, sharp focus, detailed textures',
-    'Film production location reference photograph for visual consistency across scenes'
-  )
-
-  return parts.filter(Boolean).join('. ') + '.'
+  return buildLocationBasePrompt(locationName, intExt, timeOfDay, description)
 }
 
 export type GenerateLocationImageInput = {

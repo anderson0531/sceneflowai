@@ -16,6 +16,59 @@ import { locationScaleClause } from '@/lib/imagen/locationScaleClause'
 
 export const LOCATION_REFERENCE_ASPECT_RATIO = '16:9' as const
 
+/**
+ * Client-safe seed for a location base establishing still.
+ * Matches the server composition used when no custom prompt is stored.
+ */
+export function buildLocationBasePrompt(
+  locationName: string,
+  intExt?: string,
+  timeOfDay?: string,
+  description?: string
+): string {
+  const parts: string[] = []
+
+  if (description) {
+    parts.push(description)
+  } else {
+    parts.push(`${locationName} setting`)
+  }
+
+  if (intExt) {
+    const mapping: Record<string, string> = {
+      INT: 'Interior scene',
+      EXT: 'Exterior scene',
+      'INT/EXT': 'Interior/Exterior transitional scene',
+      'EXT/INT': 'Exterior/Interior transitional scene',
+    }
+    parts.push(mapping[intExt] || '')
+  }
+
+  if (timeOfDay) {
+    const lightingMap: Record<string, string> = {
+      DAY: 'Natural daylight, bright ambient lighting',
+      NIGHT: 'Nighttime atmosphere, artificial interior lighting or moonlight',
+      MORNING: 'Early morning light, soft golden hour tones',
+      EVENING: 'Evening atmosphere, warm golden lighting',
+      SUNSET: 'Dramatic sunset lighting with warm orange and pink tones',
+      SUNRISE: 'Sunrise atmosphere, soft warm golden light breaking through',
+      DUSK: 'Twilight atmosphere, cool blue-purple tones with fading light',
+      DAWN: 'Pre-dawn atmosphere, soft cool light with hint of warmth',
+    }
+    const lighting = lightingMap[timeOfDay.toUpperCase()]
+    if (lighting) parts.push(lighting)
+  }
+
+  parts.push(
+    LOCATION_TURNAROUND_GENERATION_INSTRUCTION,
+    'Cinematic production design, professional film set quality',
+    'High resolution, sharp focus, detailed textures',
+    'Film production location reference photograph for visual consistency across scenes'
+  )
+
+  return parts.filter(Boolean).join('. ') + '.'
+}
+
 /** Generation: single extreme-wide establishing shot of the location. */
 export const LOCATION_TURNAROUND_GENERATION_INSTRUCTION =
   'Single unified cinematic frame — extreme wide establishing shot of the location. ' +

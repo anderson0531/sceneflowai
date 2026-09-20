@@ -62,6 +62,7 @@ interface GenerateSceneHeadshotRequest extends SceneCharacterHeadshotInput, Full
   /** fullBody (default) generates dedicated wardrobe image; diptych uses legacy 16:9 split panel */
   referenceMode?: WardrobeReferenceMode
   existingFullBodyUrl?: string
+  promptOverride?: string
 }
 
 export async function POST(req: NextRequest) {
@@ -116,6 +117,7 @@ export async function POST(req: NextRequest) {
         hairColor: headshotFields.hairColor,
         appearanceDescription: headshotFields.appearanceDescription,
         appearanceNotes: headshotFields.appearanceNotes,
+        promptOverride: headshotFields.promptOverride,
       }
 
       const cachedFullBody = forceRegenerate ? undefined : pickFullBodyWardrobeUrl(fullBodyInput)
