@@ -80,6 +80,8 @@ describe('hero section copy and UI', () => {
 
     expect(background).toContain('type="video/webm"')
     expect(background).toContain('type="video/mp4"')
+    expect(background).toContain('object-contain')
+    expect(background).not.toContain('object-cover')
     expect(background).toContain('playsInline')
     expect(background).toContain('useReducedMotion')
     expect(background).toContain('video.play().catch')
