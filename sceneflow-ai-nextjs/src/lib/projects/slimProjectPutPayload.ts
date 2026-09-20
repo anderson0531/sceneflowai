@@ -1,3 +1,7 @@
+import {
+  replaceScriptScenes,
+  scriptScenes,
+} from '@/lib/projects/refreshQueuedScriptPut'
 import { MEDIA_VERSION_LIST_KEYS, stripBase64FromMetadata } from '@/lib/storage/mediaStorage'
 
 /**
@@ -14,6 +18,10 @@ import { MEDIA_VERSION_LIST_KEYS, stripBase64FromMetadata } from '@/lib/storage/
  * - `visionPhase.scenes` is a legacy mirror of `script.script.scenes`. The
  *   PUT rebuilds it from the canonical list, so the client copy is a second
  *   full script in the same body.
+ *
+ * PUT also strips MediaVersion `prompt`s, and drops version arrays when the
+ * body is still over 4.5MB. The server unions omitted history with stored
+ * stills, so live `storyboardImageUrl` / `beatDirection` stay authoritative.
  *
  * Base64 data URIs are stripped as a last line of defence: they belong in
  * Blob, and a single wardrobe still stored inline is enough to 413 on its own.
@@ -34,10 +42,19 @@ export type ProjectResponseOmittedLayer =
   | 'reviewHistory'
   | 'translations'
 
+export type ProjectPutOmittedLayer = 'versionPrompts' | 'versionArrays'
+
 export interface FitProjectResponseResult {
   metadata: Record<string, any>
   omitted: ProjectResponseOmittedLayer[]
   bytes: number
+}
+
+export interface FitProjectPutResult<T extends ProjectPutBody = ProjectPutBody> {
+  body: Omit<T, 'persistProduction'>
+  omitted: ProjectPutOmittedLayer[]
+  bytes: number
+  exceedsLimit: boolean
 }
 
 export interface ProjectPutBody {
@@ -163,7 +180,7 @@ export function visionPhasePut(
 
 /** Slim, then stringify — for the project PUTs that still fetch instead of using the save queue. */
 export function stringifyProjectPut(body: ProjectPutBody): string {
-  return JSON.stringify(slimProjectPutPayload(body))
+  return JSON.stringify(fitProjectPutPayload(body).body)
 }
 
 /** True when the stringified body is large enough that Vercel will 413 it. */
@@ -173,6 +190,91 @@ export function projectPutWouldExceedBodyLimit(body: unknown): boolean {
   } catch {
     return false
   }
+}
+
+/**
+ * Slim a PUT, then drop MediaVersion prompts (and version arrays if still over
+ * 4.5MB). Merge-on-PUT keeps omitted version history and live still URLs.
+ */
+export function fitProjectPutPayload<T extends ProjectPutBody>(
+  body: T,
+  options?: { budgetBytes?: number }
+): FitProjectPutResult<T> {
+  const budget = options?.budgetBytes ?? VERCEL_FUNCTION_BODY_LIMIT_BYTES
+  const next = cloneJson(slimProjectPutPayload(body)) as Omit<T, 'persistProduction'>
+  const omitted: ProjectPutOmittedLayer[] = []
+  const metadata = next.metadata
+
+  if (metadata && typeof metadata === 'object') {
+    if (stripMediaVersionPromptsInPlace(metadata)) {
+      omitted.push('versionPrompts')
+    }
+    if (jsonByteLength(next) >= budget && dropMediaVersionArraysInPlace(metadata)) {
+      omitted.push('versionArrays')
+    }
+  }
+
+  const bytes = jsonByteLength(next)
+  return { body: next, omitted, bytes, exceedsLimit: bytes >= budget }
+}
+
+function visionPhaseScript(body: ProjectPutBody): unknown {
+  return body.metadata?.visionPhase?.script
+}
+
+function putBodyWithScenes(
+  body: ProjectPutBody,
+  scenes: any[],
+  scriptUpdatedAt: string
+): ProjectPutBody {
+  const vision = body.metadata?.visionPhase
+  if (!vision || typeof vision !== 'object') return body
+  return {
+    ...body,
+    metadata: {
+      ...body.metadata,
+      visionPhase: {
+        ...vision,
+        script: replaceScriptScenes(vision.script, scenes),
+        scriptUpdatedAt,
+      },
+    },
+  }
+}
+
+/**
+ * Split a still-too-large script PUT into scene batches that each fit.
+ * Returns null when the body is not a multi-scene script PUT, or when a
+ * single scene still exceeds the budget.
+ */
+export function splitScriptPutIntoFittingBatches(
+  body: ProjectPutBody,
+  options?: { budgetBytes?: number; nowIso?: () => string }
+): ProjectPutBody[] | null {
+  const budget = options?.budgetBytes ?? VERCEL_FUNCTION_BODY_LIMIT_BYTES
+  const scenes = scriptScenes(visionPhaseScript(body))
+  if (!Array.isArray(scenes) || scenes.length <= 1) return null
+
+  const timestamp = () => options?.nowIso?.() ?? new Date().toISOString()
+  const fits = (slice: any[]) => jsonByteLength(putBodyWithScenes(body, slice, timestamp())) < budget
+
+  const batches: ProjectPutBody[] = []
+  let current: any[] = []
+  for (const scene of scenes) {
+    const next = [...current, scene]
+    if (fits(next)) {
+      current = next
+      continue
+    }
+    if (current.length === 0) return null
+    batches.push(putBodyWithScenes(body, current, timestamp()))
+    current = [scene]
+    if (!fits(current)) return null
+  }
+  if (current.length > 0) {
+    batches.push(putBodyWithScenes(body, current, timestamp()))
+  }
+  return batches.length > 1 ? batches : null
 }
 
 export interface SlimProjectResponseOptions {
