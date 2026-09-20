@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import { X, Users, Star, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Settings2, Check, Square, CheckSquare, BarChart3, MessageSquare, ListChecks, Film, Sparkles, CheckCircle2, Edit, Mic, Eye, FileText, Lightbulb, Info, Clapperboard, Plus, Trash2, GripVertical, Play, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
@@ -667,6 +668,7 @@ export default function ScriptReviewModal({
   audienceDefinition: projectAudienceDefinition,
   onJumpToScene,
 }: ScriptReviewModalProps) {
+  const tStudio = useTranslations('production.studio')
   const [voices, setVoices] = useState<Voice[]>([])
   const [activeTab, setActiveTab] = useState<ReviewTab>('overview')
   
@@ -2267,7 +2269,7 @@ export default function ScriptReviewModal({
                                       </span>
                                       {sceneHasHighImpactIssue(scene) && (
                                         <Badge variant="destructive" className="text-[10px] uppercase tracking-wider">
-                                          High impact
+                                          {tStudio('highImpact')}
                                         </Badge>
                                       )}
                                     </div>

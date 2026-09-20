@@ -175,7 +175,11 @@ import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAudioUrl } from '@/lib/audio/languageDetection'
 import { cleanupScriptAudio } from '@/lib/audio/cleanupAudio'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
-import { recommendationId, sceneHasHighImpactIssue } from '@/lib/script/audienceResonance/highImpact'
+import {
+  recommendationId,
+  unappliedHighImpactRecommendations,
+} from '@/lib/script/audienceResonance/highImpact'
+import { HighImpactSceneBanner } from './HighImpactSceneBanner'
 import { WritersRoomTopImpactPanel } from './WritersRoomTopImpactPanel'
 import { uploadAssetViaAPI } from '@/lib/vision/uploads'
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
@@ -5113,7 +5117,18 @@ function SceneCard({
       ? 'from-sf-primary/35 via-sky-500/10 to-transparent'
       : 'from-fuchsia-400/35 via-amber-400/15 to-transparent'
 
-  const hasHighImpactIssue = sceneHasHighImpactIssue(scene.audienceAnalysis)
+  const highImpactRecommendations = unappliedHighImpactRecommendations(scene.audienceAnalysis)
+  const hasHighImpactIssue = highImpactRecommendations.length > 0
+  const recommendationsExpanded = expandedRecommendations?.has(sceneIdx) ?? false
+
+  const expandHighImpactRecommendations = () => {
+    setExpandedRecommendations?.((prev) => {
+      if (prev.has(sceneIdx)) return prev
+      const next = new Set(prev)
+      next.add(sceneIdx)
+      return next
+    })
+  }
 
   const selectionClasses = isSelected
     ? hasHighImpactIssue
@@ -5152,6 +5167,7 @@ function SceneCard({
     <div
       ref={cardRef}
       id={domId}
+      aria-label={hasHighImpactIssue ? tStudio('highImpactAria') : undefined}
       className={`relative overflow-hidden p-5 rounded-2xl border transition-all shadow-[0_15px_40px_rgba(8,8,20,0.35)] bg-slate-950/50 backdrop-blur ${selectionClasses} ${bookmarkClasses} ${recentlyUpdatedClasses} ${isOutline ? 'bg-amber-500/10 border-amber-300/40' : ''}`}
     >
       <div className={`pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br ${accentGradient} opacity-40`} />
@@ -5456,7 +5472,7 @@ function SceneCard({
                             })()}
                             {hasHighImpactIssue && (
                               <span className="flex items-center justify-center ml-0.5 h-4 px-1.5 text-[9px] font-bold uppercase tracking-wide bg-rose-500/30 text-rose-200 border border-rose-400/50 rounded-full">
-                                High impact
+                                {tStudio('highImpact')}
                               </span>
                             )}
                             {(scene.audienceAnalysis.recommendations?.length || 0) > 0 && (
@@ -5493,6 +5509,11 @@ function SceneCard({
                               </span>
                             </div>
                             <p className="text-[11px] text-gray-400 leading-relaxed">{scene.audienceAnalysis.notes}</p>
+                            {hasHighImpactIssue && (
+                              <p className="text-[11px] text-rose-200 leading-relaxed">
+                                {tStudio('highImpactScoreTooltip')}
+                              </p>
+                            )}
                           </div>
                         </TooltipContent>
                       </Tooltip>
@@ -5643,6 +5664,13 @@ function SceneCard({
             </div>
           )}
         </div>
+
+        {!isOutline && hasHighImpactIssue && !recommendationsExpanded && (
+          <HighImpactSceneBanner
+            recommendations={highImpactRecommendations}
+            onReview={expandHighImpactRecommendations}
+          />
+        )}
         
         {/* Expandable Recommendations Panel - Shows when user clicks the score badge */}
         <AnimatePresence>

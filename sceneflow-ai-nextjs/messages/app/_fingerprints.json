@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-20T04:43:51.772Z",
+  "generatedAt": "2026-09-20T06:37:18.169Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -773,6 +773,13 @@
       "studio.topImpactDialogTitle": "9ee67712a01c621a",
       "studio.topImpactDialogDescription": "9463541728e84892",
       "studio.topImpactAllClosed": "c36aa05847d82a3f",
+      "studio.highImpact": "94c39b83699e0272",
+      "studio.highImpactBannerTitle": "22e0ea7caf004394",
+      "studio.highImpactBannerBody": "4b53d2883cfbad54",
+      "studio.highImpactMoreCount": "ecccea94c62457a7",
+      "studio.highImpactReview": "aff0766a5290e117",
+      "studio.highImpactAria": "60629a7d4890a000",
+      "studio.highImpactScoreTooltip": "c852c36c7b227571",
       "studio.budgetTooltipView": "d9c5d37f43f454cb",
       "studio.budgetTooltipSet": "17b55feba78f9ad9",
       "studio.budgetDescription": "a00314a7c3ac8d6b",
