@@ -12,6 +12,7 @@ import {
   buildLocationConsumptionInstruction,
   buildLocationReferencePromptLine,
   buildLocationVersionPrompt,
+  buildLocationBasePrompt,
   stripBeatPropsFromLocationStateNotes,
 } from '@/lib/vision/locationReferencePrompts'
 
@@ -22,6 +23,8 @@ describe('locationReferencePrompts', () => {
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).toContain('not a 2x2 grid')
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).toContain('not a multi-panel')
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).toContain('no people')
+    expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).toContain('hatch wheels')
+    expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).toContain('mounted position')
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('ruler')
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('scale ticks')
   })
@@ -154,6 +157,7 @@ describe('locationReferencePrompts', () => {
     expect(prompt).not.toMatch(/violet ink/i)
     expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).toContain('handheld')
     expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).toContain('keyprops')
+    expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).toContain('hatch wheels')
   })
 
   it('stripBeatPropsFromLocationStateNotes keeps structural clauses only', () => {
@@ -164,6 +168,26 @@ describe('locationReferencePrompts', () => {
     expect(cleaned.toLowerCase()).toMatch(/windows boarded/)
     expect(cleaned.toLowerCase()).toMatch(/furniture overturned/)
     expect(cleaned.toLowerCase()).not.toMatch(/vellum/)
+  })
+
+  it('does not strip a hatch wheel from version notes even if the object catalog still lists it', () => {
+    const notes =
+      'Heavy hatch wheel mounted on the far vault door. The floor is flooded.'
+    const cleaned = stripBeatPropsFromLocationStateNotes(notes, ['hatch wheel', 'wheel'])
+    expect(cleaned.toLowerCase()).toMatch(/hatch wheel/)
+    expect(cleaned.toLowerCase()).toMatch(/vault door/)
+    expect(cleaned.toLowerCase()).toMatch(/flood/)
+  })
+
+  it('base location prompt includes mounted-architecture description', () => {
+    const prompt = buildLocationBasePrompt(
+      'VAULT',
+      'INT',
+      'NIGHT',
+      'Industrial vault. Built-in set architecture (mounted in place): heavy door wheel.'
+    )
+    expect(prompt.toLowerCase()).toContain('heavy door wheel')
+    expect(prompt).toContain(LOCATION_TURNAROUND_GENERATION_INSTRUCTION)
   })
 })
 

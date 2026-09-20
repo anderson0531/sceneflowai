@@ -64,6 +64,11 @@ import {
 } from '@/components/vision/DeferredImageSkeleton'
 import { ReferenceSplitPane } from './ReferenceSplitPane'
 import { isDirectionStale } from '@/lib/utils/contentHash'
+import {
+  filterScenesForLocation,
+  locationDescriptionWithMountedFixtures,
+  mountedFixturesForLocation,
+} from '@/lib/vision/mountedSetFixtures'
 
 // Scene heading regex for INT/EXT extraction
 const SCENE_CODE_REGEX = /^(INT\.\/EXT\.|EXT\.\/INT\.|INT\.\/EXT|EXT\.\/INT|INT\. |EXT\. |INT\/EXT|EXT\/INT|INT\.|EXT\.|INT|EXT)\s*(.*)$/i
@@ -122,13 +127,7 @@ function scenesForLocation(
   location: LocationReference,
   scenes: LocationLibraryProps['scenes']
 ): LocationLibraryProps['scenes'] {
-  const matched = scenes.filter((scene, idx) => {
-    const sceneNumber = idx + 1
-    if (location.sceneNumbers?.includes(sceneNumber)) return true
-    const heading = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text
-    if (!heading) return false
-    return extractLocation(heading) === location.location
-  })
+  const matched = filterScenesForLocation(location, scenes)
   return matched.length > 0 ? matched : scenes
 }
 
@@ -469,7 +468,10 @@ export function LocationLibrary({
       }
     })
 
-    return Array.from(locationMap.values())
+    return Array.from(locationMap.values()).map((loc) => ({
+      ...loc,
+      description: locationDescriptionWithMountedFixtures(loc, scenes),
+    }))
   }, [scenes])
 
   const extractMissingLocations = useCallback((): LocationReference[] => {
@@ -1437,6 +1439,16 @@ export function LocationLibrary({
               : null
           }
           catalogPropNames={catalogPropNames}
+          mountedFixtures={
+            promptBuilderOpenFor
+              ? mountedFixturesForLocation(
+                  mergedLocations.find((l) => l.id === promptBuilderOpenFor.locationId) || {
+                    location: '',
+                  },
+                  scenes
+                )
+              : []
+          }
           isGenerating={
             generatingLocationId ===
             (promptBuilderOpenFor.versionId
@@ -1485,7 +1497,7 @@ export function LocationLibrary({
                     stateNotes: version.stateNotes,
                     intExt: location.intExt,
                     timeOfDay: location.timeOfDay,
-                    description: location.description,
+                    description: locationDescriptionWithMountedFixtures(location, scenes),
                     catalogPropNames,
                   })
                 : seedLocationDirectorPrompt({
@@ -1493,14 +1505,14 @@ export function LocationLibrary({
                     locationName: location.location,
                     intExt: location.intExt,
                     timeOfDay: location.timeOfDay,
-                    description: location.description,
+                    description: locationDescriptionWithMountedFixtures(location, scenes),
                   })
             }
             context={{
               locationName: location.location,
               intExt: location.intExt,
               timeOfDay: location.timeOfDay,
-              description: location.description,
+              description: locationDescriptionWithMountedFixtures(location, scenes),
               stateNotes: version?.stateNotes,
             }}
             isGenerating={generatingLocationId === generatingId}

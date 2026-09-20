@@ -7,6 +7,7 @@
 
 import type { ObjectBeatUsage } from '@/lib/vision/objectBeatUsage'
 import { selectCanonicalNewObjects } from '@/lib/vision/objectDuplicateClusters'
+import { rejectMountedSetFixtures } from '@/lib/vision/mountedSetFixtures'
 import type {
   ObjectCategory,
   ObjectImportance,
@@ -30,7 +31,10 @@ export function mergeNewObjectCandidates<T extends { name: string }>(
   modelItems: T[],
   existingNames: string[]
 ): T[] {
-  return selectCanonicalNewObjects([...scriptItems, ...modelItems], existingNames)
+  return selectCanonicalNewObjects(
+    rejectMountedSetFixtures([...scriptItems, ...modelItems]),
+    existingNames
+  )
 }
 
 export function objectSuggestionFromUsage(
@@ -60,5 +64,7 @@ export function objectSuggestionsFromUsages(
   usages: ObjectBeatUsage[],
   extrasFor?: (usage: ObjectBeatUsage) => Partial<ObjectSuggestion>
 ): ObjectSuggestion[] {
-  return usages.map((usage) => objectSuggestionFromUsage(usage, extrasFor?.(usage)))
+  return rejectMountedSetFixtures(usages).map((usage) =>
+    objectSuggestionFromUsage(usage, extrasFor?.(usage))
+  )
 }

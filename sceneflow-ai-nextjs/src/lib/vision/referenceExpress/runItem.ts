@@ -28,6 +28,10 @@ import {
 } from './planItems'
 import { persistReferenceImage } from './persistReferenceImage'
 import type { ReferenceExpressItem, ReferenceExpressItemResult } from './types'
+import {
+  mountedFixturesForLocation,
+  withMountedFixturesInLocationDescription,
+} from '@/lib/vision/mountedSetFixtures'
 import { generateAndUploadFullBodyWardrobe } from '@/lib/character/sceneCharacterHeadshot'
 import {
   composeUploadAndPersistCombinedCharacterRef,
@@ -193,6 +197,13 @@ export async function runReferenceExpressItem(input: {
     }
 
     const usedFingerprint = locationFingerprint(location)
+    const scenes = context.scenes || []
+    const fixtures = mountedFixturesForLocation(location, scenes)
+    const description = withMountedFixturesInLocationDescription(location.description, fixtures)
+    const storedPrompt =
+      typeof location.generationPrompt === 'string' && location.generationPrompt.trim()
+        ? location.generationPrompt.trim()
+        : undefined
 
     const generated = await generateLocationReferenceImage({
       userId,
@@ -200,11 +211,10 @@ export async function runReferenceExpressItem(input: {
       locationName: location.location || location.locationDisplay || 'Location',
       intExt: location.intExt,
       timeOfDay: location.timeOfDay,
-      description: location.description,
-      locationPrompt:
-        typeof location.generationPrompt === 'string' && location.generationPrompt.trim()
-          ? location.generationPrompt
-          : undefined,
+      description,
+      locationPrompt: storedPrompt
+        ? withMountedFixturesInLocationDescription(storedPrompt, fixtures)
+        : undefined,
       locale,
     })
 
@@ -216,6 +226,7 @@ export async function runReferenceExpressItem(input: {
       patch: {
         imageUrl: generated.imageUrl,
         generationPrompt: generated.prompt,
+        description,
       },
     })
 

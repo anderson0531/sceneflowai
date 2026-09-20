@@ -28,6 +28,7 @@ import {
 } from '@/lib/vision/frameGenerationContext'
 import { resolveWardrobeIdForCharacterInScene } from '@/lib/character/characterReferenceAssembly'
 import { collapseObjectClusters } from '@/lib/vision/objectDuplicateClusters'
+import { isMountedSetFixtureName } from '@/lib/vision/mountedSetFixtures'
 import {
   locationReferenceForGeneration,
   resolveLocationVersionForBeat,
@@ -523,7 +524,7 @@ export function resolveBeatFrameGenerationContext(
       }),
     ]),
     matchText
-  )
+  ).filter((obj) => !isMountedSetFixtureName(obj.name))
   const objectRefIds = detectedObjects.map((o) => o.id).filter(Boolean) as string[]
 
   const characterWardrobes = buildCharacterWardrobes(scene, characterIds, projectCharacters, sceneIndex)
@@ -814,6 +815,7 @@ function detectObjectsNamedInText(
     if (!ref.imageUrl?.trim()) return false
     const name = ref.name?.trim()
     if (!name || name.length < 3) return false
+    if (isMountedSetFixtureName(name)) return false
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     return new RegExp(`\\b${escaped}\\b`, 'i').test(text)
   })

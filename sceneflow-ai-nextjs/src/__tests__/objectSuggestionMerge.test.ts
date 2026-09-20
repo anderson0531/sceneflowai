@@ -89,6 +89,28 @@ describe('mergeNewObjectCandidates', () => {
     expect(added).toHaveLength(1)
     expect(added[0].name).toBe('Brass Faraday Energy Core')
   })
+
+  it('drops mounted door/hatch wheels from script inventory and model extras', () => {
+    const script = objectSuggestionsFromUsages([
+      usage('heavy door wheel'),
+      usage('brass weight'),
+    ])
+    const model = [
+      {
+        id: 'model-hatch',
+        name: 'hatch wheel',
+        description: 'Iron hatch wheel.',
+        category: 'set-piece' as const,
+        importance: 'important' as const,
+        suggestedPrompt: 'hatch wheel',
+        sceneNumbers: [1],
+        confidence: 0.9,
+      },
+    ]
+
+    const added = mergeNewObjectCandidates(script, model, [])
+    expect(added.map((row) => row.name)).toEqual(['brass weight'])
+  })
 })
 
 describe('suggest-objects returns the script inventory', () => {
@@ -100,6 +122,8 @@ describe('suggest-objects returns the script inventory', () => {
     expect(route).toContain('mergeNewObjectCandidates')
     expect(route).toContain('objectSuggestionsFromUsages')
     expect(route).toContain('Return ONLY additional objects')
+    expect(route).toContain('rejectMountedSetFixtures')
+    expect(route).toContain('door wheels, hatch wheels, vault wheels')
     expect(route).not.toMatch(/Identify 3-8 significant objects that:/)
   })
 })

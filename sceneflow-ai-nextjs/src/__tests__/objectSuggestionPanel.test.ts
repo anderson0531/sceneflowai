@@ -173,5 +173,6 @@ describe('ObjectSuggestionPanel Update Objects after Delete all', () => {
     expect(source).toContain('shouldDeferObjectAutoAdd')
     expect(source).toContain('skipAutoAddUntilUpdateRef')
     expect(source).toContain('objectSuggestionsFromUsages(recurringInBeats)')
+    expect(source).toContain('rejectMountedSetFixtures')
   })
 })

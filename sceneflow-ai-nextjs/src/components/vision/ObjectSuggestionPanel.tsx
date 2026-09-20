@@ -35,6 +35,7 @@ import {
   objectSuggestionsFromUsages,
   shouldDeferObjectAutoAdd,
 } from '@/lib/vision/objectSuggestionMerge'
+import { rejectMountedSetFixtures } from '@/lib/vision/mountedSetFixtures'
 import { cn } from '@/lib/utils'
 import { runObjectBatch } from '@/lib/vision/objectBatchGeneration'
 import type { AgentRunItem } from '@/components/vision/AgentRunDock'
@@ -292,7 +293,7 @@ export function ObjectSuggestionPanel({
     const hasBeats = scenes.some((s) => Array.isArray(s.beats) && s.beats.length > 0)
     if (!hasBeats) return []
     const slim = scenes.map((s, idx) => slimSceneForObjectUsage(s, idx))
-    return selectRecurringObjects(countObjectBeatReferences(slim))
+    return rejectMountedSetFixtures(selectRecurringObjects(countObjectBeatReferences(slim)))
   }, [scenes])
 
   const autoAddedKeysRef = useRef<Set<string>>(new Set())

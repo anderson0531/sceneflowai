@@ -13,6 +13,7 @@ import {
   LOCATION_TURNAROUND_GENERATION_INSTRUCTION,
   buildLocationVersionPrompt,
 } from '@/lib/vision/locationReferencePrompts'
+import { withMountedFixturesInLocationDescription } from '@/lib/vision/mountedSetFixtures'
 
 export interface LocationPromptPayload {
   location: LocationReference
@@ -34,6 +35,8 @@ interface LocationPromptBuilderProps {
   version?: LocationVersion | null
   /** Object-library / scene Key Props names to strip from version seeds. */
   catalogPropNames?: string[]
+  /** Mounted architectural hardware harvested from beats at this location. */
+  mountedFixtures?: string[]
   isGenerating?: boolean
   onGenerateImage: (payload: LocationPromptPayload) => void
   /** Screenplay context for richer prompt generation */
@@ -51,6 +54,7 @@ export function LocationPromptBuilder({
   location,
   version = null,
   catalogPropNames,
+  mountedFixtures = [],
   isGenerating = false,
   onGenerateImage,
   screenplayContext
@@ -80,13 +84,18 @@ export function LocationPromptBuilder({
       return
     }
 
+    const description = withMountedFixturesInLocationDescription(
+      location.description,
+      mountedFixtures
+    )
+
     if (version) {
       const constructed = buildLocationVersionPrompt({
         locationName: location.location,
         stateNotes: version.stateNotes,
         intExt: location.intExt,
         timeOfDay: location.timeOfDay,
-        description: location.description,
+        description,
         catalogPropNames,
       })
       setShotType('extreme-wide')
@@ -98,8 +107,8 @@ export function LocationPromptBuilder({
     const parts: string[] = []
 
     // Location description or name
-    if (location.description) {
-      parts.push(location.description)
+    if (description) {
+      parts.push(description)
     } else {
       parts.push(`${location.location} setting`)
     }
@@ -153,7 +162,7 @@ export function LocationPromptBuilder({
     const constructed = parts.filter(Boolean).join('. ')
     setBasePrompt(constructed)
     if (!hasUserEditedAdvanced) setAdvancedPrompt(constructed)
-  }, [open, location, version, catalogPropNames, hasUserEditedAdvanced, screenplayContext])
+  }, [open, location, version, catalogPropNames, mountedFixtures, hasUserEditedAdvanced, screenplayContext])
 
   // Cleanup on close
   useEffect(() => {
