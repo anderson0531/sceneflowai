@@ -4,12 +4,14 @@ vi.mock('@/models', () => ({}))
 vi.mock('@/models/Project', () => ({ Project: { findByPk: vi.fn() } }))
 
 import {
+  canStartReferenceExpressJob,
   castFingerprint,
   locationFingerprint,
   planFollowOnNestedItems,
   planReferenceExpressItems,
   planSceneReferenceExpressItems,
   propFingerprint,
+  wantsLocationCatalogSync,
   type CastSource,
   type LocationSource,
   type PropSource,
@@ -465,5 +467,20 @@ describe('summarizeItemResults', () => {
       skipped: 1,
       staleCount: 1,
     })
+  })
+})
+
+describe('wantsLocationCatalogSync', () => {
+  it('is true only for a project-wide Location Agent', () => {
+    expect(wantsLocationCatalogSync({ kinds: ['location'] })).toBe(true)
+    expect(wantsLocationCatalogSync({ kinds: ['location'], sceneIndices: [0] })).toBe(false)
+    expect(wantsLocationCatalogSync({ kinds: ['cast'] })).toBe(false)
+    expect(wantsLocationCatalogSync({})).toBe(false)
+  })
+
+  it('lets Location Agent start with an empty image plan', () => {
+    expect(canStartReferenceExpressJob([], { kinds: ['location'] })).toBe(true)
+    expect(canStartReferenceExpressJob([], { kinds: ['prop'] })).toBe(false)
+    expect(canStartReferenceExpressJob(['item'], { kinds: ['prop'] })).toBe(true)
   })
 })

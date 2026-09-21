@@ -119,9 +119,14 @@ export function describeReferenceExpressResult(job: BackgroundJob): string {
     failed?: number
     skipped?: number
     staleCount?: number
+    nothingToGenerate?: boolean
   }
   const total = Number(result.total ?? job.payload?.itemCount ?? 0)
   const succeeded = Number(result.succeeded ?? 0)
+
+  if (result.nothingToGenerate && !total) {
+    return 'Locations already match the script — nothing to generate'
+  }
 
   if (!total) return 'Reference generation complete'
 

@@ -60,14 +60,20 @@ vi.mock('@/lib/vision/referenceExpress/runItem', () => ({
   runReferenceExpressItem: vi.fn(),
 }))
 
+vi.mock('@/lib/vision/referenceExpress/catalogSync', () => ({
+  runLocationCatalogSyncStep: vi.fn(),
+}))
+
 import GenerationJob from '@/models/GenerationJob'
 import { notifyUser, updateGenerationJob } from '@/lib/jobs/jobService'
 import { runReferenceExpressItem } from '@/lib/vision/referenceExpress/runItem'
+import { runLocationCatalogSyncStep } from '@/lib/vision/referenceExpress/catalogSync'
 import { runReferenceExpressStep } from '@/lib/jobs/referenceExpressWorker'
 import { readReferenceExpressWorkerState } from '@/lib/jobs/referenceExpressWorkerState'
 import { resolveReferenceExpressWindow } from '@/lib/vision/referenceExpress/window'
 
 const mockRunItem = vi.mocked(runReferenceExpressItem)
+const mockCatalogSync = vi.mocked(runLocationCatalogSyncStep)
 
 const worker = () => readReferenceExpressWorkerState(row.payload)
 
@@ -319,6 +325,69 @@ describe('runReferenceExpressStep', () => {
       error: 'Job not found',
     })
     expect(GenerationJob.update).not.toHaveBeenCalled()
+  })
+
+  it('starts a Location Agent catalog job even when no stills are planned yet', async () => {
+    row.payload = { items: [], itemCount: 0, catalogSync: 'location' }
+
+    expect(await runReferenceExpressStep('job-1')).toEqual({ done: false, cursor: 0 })
+    expect(row.status).toBe('processing')
+    expect(mockRunItem).not.toHaveBeenCalled()
+    expect(mockCatalogSync).not.toHaveBeenCalled()
+    expect(worker()).toMatchObject({
+      cursor: 0,
+      catalogSync: { status: 'pending', cursor: 0, locationIds: [] },
+    })
+  })
+
+  it('appends set stills after catalog sync and then generates them', async () => {
+    const still: ReferenceExpressItem = {
+      kind: 'location',
+      targetId: 'l1',
+      versionId: 'v-door',
+      label: 'Dockyard — Door gone',
+      sourceFingerprint: 'vvvv',
+    }
+    row.payload = { items: [], itemCount: 0, catalogSync: 'location' }
+
+    await runReferenceExpressStep('job-1')
+    mockCatalogSync.mockResolvedValueOnce({
+      kind: 'continue',
+      catalogSync: { status: 'done', cursor: 1, locationIds: ['l1'] },
+      items: [still],
+    })
+
+    expect(await runReferenceExpressStep('job-1')).toEqual({ done: false, cursor: 0 })
+    expect(mockRunItem).not.toHaveBeenCalled()
+    expect(row.payload.items).toEqual([still])
+    expect(worker()?.catalogSync?.status).toBe('done')
+
+    expect(await runReferenceExpressStep('job-1')).toEqual({ done: true })
+    expect(mockRunItem).toHaveBeenCalledOnce()
+    expect(mockRunItem.mock.calls[0]![0]!.item).toEqual(still)
+    expect(row.status).toBe('completed')
+    expect(row.result).toMatchObject({ total: 1, succeeded: 1, nothingToGenerate: false })
+  })
+
+  it('completes cleanly when catalog sync finds nothing to generate', async () => {
+    row.payload = { items: [], itemCount: 0, catalogSync: 'location' }
+
+    await runReferenceExpressStep('job-1')
+    mockCatalogSync.mockResolvedValueOnce({
+      kind: 'nothing-to-generate',
+      catalogSync: { status: 'done', cursor: 0, locationIds: [] },
+    })
+
+    expect(await runReferenceExpressStep('job-1')).toEqual({ done: true })
+    expect(mockRunItem).not.toHaveBeenCalled()
+    expect(row.status).toBe('completed')
+    expect(row.result).toMatchObject({ total: 0, nothingToGenerate: true })
+    expect(notifyUser).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Location Agent finished',
+        message: 'Locations already match the script — nothing to generate.',
+      })
+    )
   })
 })
 

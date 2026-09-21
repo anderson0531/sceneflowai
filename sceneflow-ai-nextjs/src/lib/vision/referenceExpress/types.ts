@@ -103,6 +103,8 @@ export type ReferenceExpressResult = {
   staleCount: number
   items: ReferenceExpressItemResult[]
   dispatch?: 'inngest' | 'step_worker'
+  /** Location Agent catalog found no missing stills after sync. */
+  nothingToGenerate?: boolean
 }
 
 export { fingerprintSource } from '@/lib/utils/fingerprint'

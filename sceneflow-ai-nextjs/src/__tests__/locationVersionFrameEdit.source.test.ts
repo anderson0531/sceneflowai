@@ -45,7 +45,7 @@ describe('location version overlay + persistence source guards', () => {
 
   it('suggest/sync stateNotes forbid beat keyProps', () => {
     const suggest = readSource('src/app/api/vision/suggest-location-versions/route.ts')
-    const sync = readSource('src/app/api/vision/sync-location-versions-from-script/route.ts')
+    const sync = readSource('src/lib/vision/syncLocationVersionsFromScript.ts')
     expect(suggest).toContain('beat keyProps')
     expect(suggest).toContain('BASE establishing shot')
     expect(suggest).toContain('hatch wheels, vault wheels')

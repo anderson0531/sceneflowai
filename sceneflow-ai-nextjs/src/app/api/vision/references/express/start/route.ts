@@ -15,6 +15,8 @@ import {
   loadReferenceExpressContext,
   planSceneReferenceExpressItems,
   shouldIncludeNestedStills,
+  wantsLocationCatalogSync,
+  canStartReferenceExpressJob,
 } from '@/lib/vision/referenceExpress/planItems'
 import type {
   ReferenceExpressKind,
@@ -93,7 +95,8 @@ export async function POST(req: NextRequest) {
     }
 
     const items = planSceneReferenceExpressItems(context, scope)
-    if (!items.length) {
+    const catalogSync = wantsLocationCatalogSync(scope) ? 'location' : undefined
+    if (!canStartReferenceExpressJob(items, scope)) {
       return NextResponse.json(
         {
           error: sceneScoped
@@ -106,18 +109,20 @@ export async function POST(req: NextRequest) {
     }
 
     const requiredCredits = estimateReferenceExpressCredits(items)
-    const hasCredits = await CreditService.ensureCredits(userId, requiredCredits)
-    if (!hasCredits) {
-      const breakdown = await CreditService.getCreditBreakdown(userId)
-      return NextResponse.json(
-        {
-          error: 'INSUFFICIENT_CREDITS',
-          message: `Generating ${items.length} reference images requires ${requiredCredits} credits. You have ${breakdown.total_credits}.`,
-          required: requiredCredits,
-          available: breakdown.total_credits,
-        },
-        { status: 402 }
-      )
+    if (requiredCredits > 0) {
+      const hasCredits = await CreditService.ensureCredits(userId, requiredCredits)
+      if (!hasCredits) {
+        const breakdown = await CreditService.getCreditBreakdown(userId)
+        return NextResponse.json(
+          {
+            error: 'INSUFFICIENT_CREDITS',
+            message: `Generating ${items.length} reference images requires ${requiredCredits} credits. You have ${breakdown.total_credits}.`,
+            required: requiredCredits,
+            available: breakdown.total_credits,
+          },
+          { status: 402 }
+        )
+      }
     }
 
     const { job, dispatched } = await createGenerationJob({
@@ -135,6 +140,7 @@ export async function POST(req: NextRequest) {
         sceneIndices: sceneScoped ? scope.sceneIndices : undefined,
         kinds: scope.kinds,
         includeNestedStills: scope.includeNestedStills === true,
+        catalogSync,
         agentLabel: referenceExpressAgentLabel(scope.kinds, { sceneScoped }),
       },
     })
@@ -153,6 +159,7 @@ export async function POST(req: NextRequest) {
         jobId: job.id,
         status: 'queued',
         itemCount: items.length,
+        catalogSync: catalogSync || null,
         estimatedSeconds: estimateReferenceExpressSeconds(items),
         estimatedCredits: requiredCredits,
         replacedPreviousCount: cancelledIds.length,

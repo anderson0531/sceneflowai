@@ -29,7 +29,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
 import { LocationReference, LocationVersion } from '@/types/visionReferences'
-import { extractLocation } from '@/lib/script/formatSceneHeading'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { LocationPromptBuilder, LocationPromptPayload } from './LocationPromptBuilder'
 import { ReferenceStillDirectorDialog } from './ReferenceStillDirectorDialog'
@@ -47,16 +46,15 @@ import {
   applyLocationUpdateFromSyncDiff,
   collectMissingExtractedLocations,
   countLocationAgentItems,
+  extractHeadingLocationsFromScenes,
   locationAgentCopyUnits,
   locationCameraStatus,
-  locationVersionNeedsGeneration,
   toLocationReferenceFromExtracted,
 } from '@/lib/vision/libraryKindAgents'
 import type { ReferenceExpressScope, ReferenceExpressKind } from '@/lib/vision/referenceExpress/types'
 import { LibraryKindToolbar } from './LibraryKindToolbar'
 import { usePendingKindAgentRun } from './usePendingKindAgentRun'
 import { patchLocationVersion } from '@/lib/vision/locationVersionResolve'
-import { runWithConcurrencyLimit } from '@/lib/utils/concurrency'
 import {
   DeferredImageSkeleton,
   isDeferredImageUrl,
@@ -69,9 +67,6 @@ import {
   locationDescriptionWithMountedFixtures,
   mountedFixturesForLocation,
 } from '@/lib/vision/mountedSetFixtures'
-
-// Scene heading regex for INT/EXT extraction
-const SCENE_CODE_REGEX = /^(INT\.\/EXT\.|EXT\.\/INT\.|INT\.\/EXT|EXT\.\/INT|INT\. |EXT\. |INT\/EXT|EXT\/INT|INT\.|EXT\.|INT|EXT)\s*(.*)$/i
 
 function buildScenesPayloadForLocationVersions(scenes: LocationLibraryProps['scenes']) {
   return scenes.map((s, idx) => ({
@@ -192,40 +187,6 @@ interface LocationLibraryProps {
   onPendingKindAgentRunConsumed?: () => void
   /** Object-library names used to strip beat props from version image prompts. */
   catalogPropNames?: string[]
-}
-
-/**
- * Extract INT/EXT and time of day from a scene heading
- */
-function parseSceneHeadingMeta(heading: string): { intExt?: 'INT' | 'EXT' | 'INT/EXT' | 'EXT/INT'; timeOfDay?: string } {
-  const match = heading.trim().toUpperCase().match(SCENE_CODE_REGEX)
-  if (!match) return {}
-
-  const codeRaw = match[1]?.toUpperCase().replace(/[\.\s]/g, '') || ''
-  const intExt = (['INT', 'EXT', 'INTEXT', 'EXTINT'].includes(codeRaw.replace('/', ''))
-    ? codeRaw.replace(/\./g, '').replace('INTEXT', 'INT/EXT').replace('EXTINT', 'EXT/INT') as 'INT' | 'EXT' | 'INT/EXT' | 'EXT/INT'
-    : undefined)
-
-  const remainder = match[2]?.trim() || ''
-  const parts = remainder.split(/\s+-\s+/)
-  let timeOfDay: string | undefined
-  if (parts.length > 1) {
-    const lastPart = parts[parts.length - 1]?.trim()
-    if (lastPart) {
-      const isModifier = 
-        /^(DAY|NIGHT|MORNING|EVENING|SUNSET|SUNRISE|DUSK|DAWN|CONTINUOUS|LATER|SAME|MOMENTS LATER)$/.test(lastPart) ||
-        /\bTO\b/.test(lastPart) || // e.g. DAY TO NIGHT
-        /LATER$/.test(lastPart) || // e.g. MONTHS LATER, YEARS LATER
-        /^(FLASHBACK|DREAM|MONTAGE)/.test(lastPart) || // sequence types
-        /^(19|20)\d{2}$/.test(lastPart); // Years like 1999, 2024
-      
-      if (isModifier) {
-        timeOfDay = lastPart
-      }
-    }
-  }
-
-  return { intExt, timeOfDay }
 }
 
 /**
@@ -411,7 +372,6 @@ export function LocationLibrary({
   const [directorTarget, setDirectorTarget] = useState<PromptBuilderTarget | null>(null)
   const [analyzingLocationId, setAnalyzingLocationId] = useState<string | null>(null)
   const [isUpdatingLocations, setIsUpdatingLocations] = useState(false)
-  const [isLocationAgentRunning, setIsLocationAgentRunning] = useState(false)
   const [expandedVersionTarget, setExpandedVersionTarget] = useState<{
     locationId: string
     versionId: string
@@ -419,60 +379,10 @@ export function LocationLibrary({
   const [directedLocation, setDirectedLocation] = useState<LocationReference | null>(null)
   const [directedSubmitting, setDirectedSubmitting] = useState(false)
 
-  /**
-   * Extract unique locations from all scene headings.
-   * Deduplicates by normalized location name and tracks scene numbers.
-   */
-  const extractedLocations = useMemo(() => {
-    const locationMap = new Map<string, {
-      location: string
-      intExt?: 'INT' | 'EXT' | 'INT/EXT' | 'EXT/INT'
-      timeOfDay?: string
-      headings: string[]
-      sceneNumbers: number[]
-      description?: string
-    }>()
-
-    scenes.forEach((scene, idx) => {
-      const headingText = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text
-      if (!headingText) return
-
-      const location = extractLocation(headingText)
-      if (!location) return
-
-      const existing = locationMap.get(location)
-      if (existing) {
-        existing.sceneNumbers.push(idx + 1)
-        if (!existing.headings.includes(headingText)) {
-          existing.headings.push(headingText)
-        }
-      } else {
-        const meta = parseSceneHeadingMeta(headingText)
-        // Try to build a description from scene direction
-        let description: string | undefined
-        if (scene.sceneDirection?.scene?.location) {
-          description = scene.sceneDirection.scene.location
-          if (scene.sceneDirection.scene.atmosphere) {
-            description += `. ${scene.sceneDirection.scene.atmosphere}`
-          }
-        }
-
-        locationMap.set(location, {
-          location,
-          intExt: meta.intExt,
-          timeOfDay: meta.timeOfDay,
-          headings: [headingText],
-          sceneNumbers: [idx + 1],
-          description
-        })
-      }
-    })
-
-    return Array.from(locationMap.values()).map((loc) => ({
-      ...loc,
-      description: locationDescriptionWithMountedFixtures(loc, scenes),
-    }))
-  }, [scenes])
+  const extractedLocations = useMemo(
+    () => extractHeadingLocationsFromScenes(scenes),
+    [scenes]
+  )
 
   const extractMissingLocations = useCallback((): LocationReference[] => {
     const missing = collectMissingExtractedLocations(
@@ -724,94 +634,9 @@ export function LocationLibrary({
     }
   }
 
-  const generatePendingLocationVersions = async (locations: LocationReference[]) => {
-    if (!projectId) return
-    const targets: Array<{ location: LocationReference; version: LocationVersion }> = []
-    for (const location of locations) {
-      for (const version of location.versions || []) {
-        if (locationVersionNeedsGeneration(location, version)) {
-          targets.push({ location, version })
-        }
-      }
-    }
-    if (targets.length === 0) return
-
-    const results = await runWithConcurrencyLimit(targets, 2, async ({ location, version }) => {
-      try {
-        const response = await fetch('/api/vision/generate-location', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            projectId,
-            locationName: location.location,
-            intExt: location.intExt,
-            timeOfDay: location.timeOfDay,
-            description: location.description,
-            baseImageUrl: location.imageUrl,
-            stateNotes: version.stateNotes,
-            versionId: version.id,
-            catalogPropNames,
-          }),
-        })
-        const data = await response.json().catch(() => ({}))
-        if (!response.ok) {
-          throw new Error(data.error || `Failed to generate ${location.location} — ${version.name}`)
-        }
-        return {
-          ok: true as const,
-          locationId: location.id,
-          versionId: version.id,
-          imageUrl: data.imageUrl as string,
-          prompt: data.prompt as string | undefined,
-        }
-      } catch (error) {
-        console.error('[Location Agent] version generate:', error)
-        return { ok: false as const }
-      }
-    })
-
-    let next = [...locations]
-    let succeeded = 0
-    let failed = 0
-    for (const result of results) {
-      if (!result.ok) {
-        failed++
-        continue
-      }
-      next = next.map((loc) =>
-        loc.id === result.locationId
-          ? patchLocationVersion(loc, result.versionId, {
-              imageUrl: result.imageUrl,
-              generationPrompt: result.prompt,
-              needsImageRegen: false,
-            })
-          : loc
-      )
-      succeeded++
-    }
-    await onUpdateLocations(next)
-    if (succeeded > 0) {
-      toast.success(`Generated ${succeeded} set version still${succeeded === 1 ? '' : 's'}`)
-    }
-    if (failed > 0) {
-      toast.error(`${failed} set version still${failed === 1 ? '' : 's'} failed to generate`)
-    }
-  }
-
   const handleLocationAgent = async () => {
     if (!onExpressGenerateReferences) return
-    if (isExpressGeneratingReferences) {
-      await onExpressGenerateReferences({ kinds: ['location'] })
-      return
-    }
-    setIsLocationAgentRunning(true)
-    try {
-      const updated = await handleUpdateLocations()
-      if (!updated) return
-      await onExpressGenerateReferences({ kinds: ['location'] })
-    } finally {
-      setIsLocationAgentRunning(false)
-    }
+    await onExpressGenerateReferences({ kinds: ['location'] })
   }
 
   usePendingKindAgentRun(
@@ -847,7 +672,7 @@ export function LocationLibrary({
             onExpressGenerateReferences ? () => void handleLocationAgent() : undefined
           }
           isUpdating={isUpdatingLocations}
-          isAgentRunning={isLocationAgentRunning || isExpressGeneratingReferences}
+          isAgentRunning={isExpressGeneratingReferences}
           agentHasWork={locationAgentCount > 0}
           updateTitle="Extract missing locations from scene headings and sync set versions from the script"
           agentTitle="Update locations from the script, draw missing bases, then generate set-version stills from those bases"

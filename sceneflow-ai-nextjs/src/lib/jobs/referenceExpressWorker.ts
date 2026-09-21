@@ -14,6 +14,7 @@ import {
   type ReferenceExpressItemResult,
   type ReferenceExpressScope,
 } from '@/lib/vision/referenceExpress/types'
+import { runLocationCatalogSyncStep } from '@/lib/vision/referenceExpress/catalogSync'
 import {
   loadReferenceExpressContext,
   planFollowOnNestedItems,
@@ -132,15 +133,30 @@ async function completeJob(
   jobId: string,
   userId: string,
   projectId: string,
-  results: ReferenceExpressItemResult[]
+  results: ReferenceExpressItemResult[],
+  options?: { nothingToGenerate?: boolean }
 ): Promise<ReferenceExpressStepOutcome> {
   const summary = summarizeItemResults(results)
+  const nothingToGenerate = options?.nothingToGenerate === true || summary.total === 0
 
   await updateGenerationJob(jobId, {
     status: 'completed',
     progress: 100,
-    result: { ...summary, items: results },
+    result: { ...summary, items: results, nothingToGenerate },
   })
+
+  if (options?.nothingToGenerate === true && summary.total === 0) {
+    await notifyUser({
+      userId,
+      projectId,
+      jobId,
+      type: 'job_completed',
+      title: 'Location Agent finished',
+      message: 'Locations already match the script — nothing to generate.',
+      metadata: { kind: 'reference_express', ...summary, nothingToGenerate: true },
+    })
+    return { done: true }
+  }
 
   const parts = [`Generated ${summary.succeeded} of ${summary.total} reference images.`]
   if (summary.failed) parts.push(`${summary.failed} failed.`)
@@ -174,6 +190,115 @@ async function completeJob(
  * the same budget reason. Items in the window that already landed are kept in
  * `windowResults`, so a rate limit on one image does not redraw its siblings.
  */
+async function runCatalogPhase(
+  jobId: string,
+  userId: string,
+  projectId: string,
+  payload: Record<string, unknown>,
+  worker: ReferenceExpressWorkerState
+): Promise<ReferenceExpressStepOutcome> {
+  if (!worker.catalogSync || worker.catalogSync.status === 'done') {
+    return runCurrentWindow(jobId, userId, projectId, payload, worker)
+  }
+
+  if (isReferenceExpressLeaseHeld(worker)) {
+    return { done: false, cursor: worker.cursor, inFlight: true }
+  }
+
+  const waitMs = millisUntilNextAttempt(worker)
+  if (waitMs > 0) {
+    return { done: false, cursor: worker.cursor, retryInMs: waitMs }
+  }
+
+  await saveWorkerState(jobId, { ...worker, inFlightAt: new Date().toISOString() })
+
+  const maxAttempts = getReferenceExpressMaxAttempts()
+  const attempt = worker.attempt + 1
+  const items = readItems(payload)
+
+  try {
+    const outcome = await runLocationCatalogSyncStep({
+      projectId,
+      catalogSync: worker.catalogSync,
+      items,
+    })
+
+    if (outcome.kind === 'nothing-to-generate') {
+      await patchGenerationJobPayload(jobId, {
+        items: [],
+        itemCount: 0,
+        locationCount: 0,
+        _worker: {
+          ...worker,
+          catalogSync: outcome.catalogSync,
+          attempt: 0,
+          nextAttemptAt: null,
+          inFlightAt: null,
+        },
+      })
+      return completeJob(jobId, userId, projectId, worker.results, { nothingToGenerate: true })
+    }
+
+    const nextItems = outcome.items ?? items
+    const sync = outcome.catalogSync
+    const progress =
+      sync.status === 'syncing' && sync.locationIds.length > 0
+        ? Math.round(5 + (sync.cursor / sync.locationIds.length) * 15)
+        : sync.status === 'done'
+          ? 20
+          : 5
+
+    await patchGenerationJobPayload(jobId, {
+      items: nextItems,
+      itemCount: nextItems.length,
+      locationCount: nextItems.filter((item) => item.kind === 'location').length,
+      castCount: nextItems.filter((item) => item.kind === 'cast').length,
+      propCount: nextItems.filter((item) => item.kind === 'prop').length,
+      _worker: {
+        ...worker,
+        catalogSync: sync,
+        attempt: 0,
+        nextAttemptAt: null,
+        inFlightAt: null,
+      },
+    })
+    await updateGenerationJob(jobId, { progress })
+    return { done: false, cursor: worker.cursor }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Location catalog sync failed'
+    if (isRetryableError(err, (err as { status?: number })?.status) && attempt < maxAttempts) {
+      const delay = calculateBackoffDelay(
+        attempt - 1,
+        REFERENCE_EXPRESS_BACKOFF_MS,
+        REFERENCE_EXPRESS_MAX_BACKOFF_MS
+      )
+      await saveWorkerState(jobId, {
+        ...worker,
+        attempt,
+        nextAttemptAt: new Date(Date.now() + delay).toISOString(),
+        inFlightAt: null,
+      })
+      return { done: false, cursor: worker.cursor, retryInMs: delay }
+    }
+    const catalog = worker.catalogSync
+    if (catalog.status === 'syncing') {
+      console.error(
+        `[ReferenceExpress] Location catalog sync failed for ${catalog.locationIds[catalog.cursor] || 'location'}:`,
+        message
+      )
+      await saveWorkerState(jobId, {
+        ...worker,
+        catalogSync: { ...catalog, cursor: catalog.cursor + 1 },
+        attempt: 0,
+        nextAttemptAt: null,
+        inFlightAt: null,
+      })
+      return { done: false, cursor: worker.cursor }
+    }
+    return failJob(jobId, userId, projectId, message)
+  }
+}
+
 async function runCurrentWindow(
   jobId: string,
   userId: string,
@@ -181,6 +306,10 @@ async function runCurrentWindow(
   payload: Record<string, unknown>,
   worker: ReferenceExpressWorkerState
 ): Promise<ReferenceExpressStepOutcome> {
+  if (worker.catalogSync && worker.catalogSync.status !== 'done') {
+    return runCatalogPhase(jobId, userId, projectId, payload, worker)
+  }
+
   if (isReferenceExpressLeaseHeld(worker)) {
     return { done: false, cursor: worker.cursor, inFlight: true }
   }
@@ -353,7 +482,12 @@ export async function runReferenceExpressStep(
     }
 
     const items = readItems(payload)
-    if (!items.length) {
+    const catalogSync =
+      payload.catalogSync === 'location'
+        ? { status: 'pending' as const, cursor: 0, locationIds: [] as string[] }
+        : undefined
+
+    if (!items.length && payload.catalogSync !== 'location') {
       return failJob(jobId, userId, projectId, 'No references needed generation')
     }
 
@@ -364,6 +498,7 @@ export async function runReferenceExpressStep(
       results: [],
       inFlightAt: null,
       windowResults: {},
+      catalogSync,
     })
     return { done: false, cursor: 0 }
   } catch (err: unknown) {
