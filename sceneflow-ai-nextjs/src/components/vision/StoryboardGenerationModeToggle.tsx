@@ -13,6 +13,7 @@ export interface StoryboardGenerationModeToggleProps {
   /** Toolbar height (`h-7 text-[10px]`) vs dialog (`text-xs py-1.5`). */
   size?: 'default' | 'compact'
   className?: string
+  ariaLabel?: string
 }
 
 /**
@@ -27,6 +28,7 @@ export function StoryboardGenerationModeToggle({
   disabled = false,
   size = 'default',
   className,
+  ariaLabel = 'Frame generation mode',
 }: StoryboardGenerationModeToggleProps) {
   const compact = size === 'compact'
   const creative = useStillCreativeAvailable()
@@ -40,7 +42,7 @@ export function StoryboardGenerationModeToggle({
         className
       )}
       role="group"
-      aria-label="Frame generation mode"
+      aria-label={ariaLabel}
     >
       {(['standard', 'creative'] as StillGenerationMode[]).map((option) => {
         const selected = value === option

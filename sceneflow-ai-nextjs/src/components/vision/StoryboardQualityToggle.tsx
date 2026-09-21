@@ -13,6 +13,7 @@ export interface StoryboardQualityToggleProps {
   /** Toolbar height (`h-7 text-[10px]`) vs dialog (`text-xs py-1.5`). */
   size?: 'default' | 'compact'
   className?: string
+  ariaLabel?: string
 }
 
 /**
@@ -27,6 +28,7 @@ export function StoryboardQualityToggle({
   disabled = false,
   size = 'default',
   className,
+  ariaLabel = 'Frame generation quality',
 }: StoryboardQualityToggleProps) {
   const compact = size === 'compact'
   return (
@@ -37,7 +39,7 @@ export function StoryboardQualityToggle({
         className
       )}
       role="group"
-      aria-label="Frame generation quality"
+      aria-label={ariaLabel}
     >
       {(['draft', 'final'] as StoryboardQuality[]).map((option) => {
         const selected = value === option

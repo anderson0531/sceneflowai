@@ -90,6 +90,10 @@ import {
   resolveStoryboardGeneration,
   type StoryboardQuality,
 } from '@/lib/storyboard/storyboardQuality'
+import type {
+  VideoGenerationMode,
+  VideoGenerationQuality,
+} from '@/lib/video/videoGenerationPolicy'
 import { enableScreeningPlayerDiagnostics } from '@/lib/storyboard/screeningPlayerDiagnostics'
 import {
   explicitBeatReferenceSelection,
@@ -796,6 +800,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [frameGenerationQuality, setFrameGenerationQuality] = useState<StoryboardQuality>('draft')
   /** Session default: Standard (Google) or Creative (Kling). Not persisted. */
   const [frameGenerationMode, setFrameGenerationMode] = useState<StillGenerationMode>('standard')
+  /** Session default for Video Agent and Take. Not persisted. */
+  const [videoGenerationQuality, setVideoGenerationQuality] = useState<VideoGenerationQuality>('draft')
+  /** Session default: Standard (Google Veo) or Creative (Kling). Not persisted. */
+  const [videoGenerationMode, setVideoGenerationMode] = useState<VideoGenerationMode>('standard')
   // Series/Episode context for subtitle display
   const [seriesInfo, setSeriesInfo] = useState<{
     seriesTitle: string
@@ -16848,6 +16856,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onFrameGenerationQualityChange={setFrameGenerationQuality}
                 frameGenerationMode={frameGenerationMode}
                 onFrameGenerationModeChange={setFrameGenerationMode}
+                videoGenerationQuality={videoGenerationQuality}
+                onVideoGenerationQualityChange={setVideoGenerationQuality}
+                videoGenerationMode={videoGenerationMode}
+                onVideoGenerationModeChange={setVideoGenerationMode}
                 expressStatus={expressStatus}
                 expressGateBlocked={!expressGate.allowed && !expressGate.blockedOnlyByReferences}
                 onExpressGateBlocked={() => {

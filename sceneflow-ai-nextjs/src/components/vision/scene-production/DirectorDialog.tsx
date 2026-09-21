@@ -111,6 +111,11 @@ import {
   type SceneFlowQualityTierId,
   type VideoEngineId,
 } from './videoEngineOptions'
+import {
+  resolveVideoGeneration,
+  type VideoGenerationMode,
+  type VideoGenerationQuality,
+} from '@/lib/video/videoGenerationPolicy'
 
 type AggregatorDisabledReason =
   | 'ok'
@@ -205,6 +210,9 @@ interface DirectorDialogProps {
   projectId?: string
   /** Initial Take surface. Saved Kling/aggregator configs still open Creative. */
   variant?: 'standard' | 'creative'
+  /** Session default from the Footage toolbar. Seeds Take when provided. */
+  videoGenerationQuality?: VideoGenerationQuality
+  videoGenerationMode?: VideoGenerationMode
   /** Retry this beat's start still using the Frames tab Standard | Creative mode. */
   onRegenerateStill?: () => void
 }
@@ -263,6 +271,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   savedConfig,
   projectId,
   variant = 'standard',
+  videoGenerationQuality,
+  videoGenerationMode,
   onRegenerateStill,
 }) => {
   const t = useTranslations('production.direction.director')
@@ -714,6 +724,22 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       segment.veoTimelineContinuation ||
       segment.generationMethod === 'EXT' ||
       segment.videoChain?.chainMethod === 'extension'
+    const inferred = inferEngineSelectionFromConfig(savedConfig ?? autoConfig)
+    // Declared before any read — using this after the const is TDZ in production
+    // (minified `Cannot access 'l' before initialization` on Take).
+    const nextTakeMode: 'standard' | 'creative' = videoGenerationMode
+      ? videoGenerationMode
+      : savedConfig?.videoProvider
+        ? savedConfig.videoProvider === 'vertex'
+          ? 'standard'
+          : 'creative'
+        : autoConfig.videoProvider === 'kling' || autoConfig.videoProvider === 'aggregator'
+          ? 'creative'
+          : variant
+    const policy = resolveVideoGeneration({
+      quality: videoGenerationQuality,
+      mode: nextTakeMode,
+    })
     const initialMode = isContinuation
       ? 'EXTEND'
       : nextTakeMode === 'standard'
@@ -732,7 +758,11 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       | '1080p'
       | '4k'
     setResolution(
-      normalizedResolution === '4k' ? '4k' : (normalizedResolution as '360p' | '720p' | '1080p')
+      videoGenerationQuality
+        ? policy.resolution
+        : normalizedResolution === '4k'
+          ? '4k'
+          : (normalizedResolution as '360p' | '720p' | '1080p')
     )
     if (!savedConfig && !settingsUserEdited) {
       setFrameRate(autoConfig.frameRate ?? 24)
@@ -740,23 +770,21 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       setOmniMultiShotEnabled(autoConfig.omniMultiShot ?? false)
       setOptimizedSettingsReason(autoConfig.optimizedSettingsReason ?? '')
     }
-    const inferred = inferEngineSelectionFromConfig(savedConfig ?? autoConfig)
-    const nextTakeMode: 'standard' | 'creative' = savedConfig?.videoProvider
-      ? savedConfig.videoProvider === 'vertex'
-        ? 'standard'
-        : 'creative'
-      : autoConfig.videoProvider === 'kling' || autoConfig.videoProvider === 'aggregator'
-        ? 'creative'
-        : variant
     setTakeMode(nextTakeMode)
     if (nextTakeMode === 'standard') {
       setSelectedEngine('natural-dialogue')
-      setQualityTierId('cinematic')
+      setQualityTierId(videoGenerationQuality === 'draft' ? 'standard' : 'cinematic')
     } else {
       setSelectedEngine(
         inferred.engineId === 'natural-dialogue' ? SCENEFLOW_ENGINE_ID : inferred.engineId
       )
-      setQualityTierId(inferred.qualityTierId)
+      setQualityTierId(
+        videoGenerationQuality
+          ? videoGenerationQuality === 'draft'
+            ? 'standard'
+            : 'cinematic'
+          : inferred.qualityTierId
+      )
     }
     const rawDuration = isContinuation ? 10 : autoConfig.duration
     const selection =
@@ -788,7 +816,18 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       savedConfig?.useBeatFrameAsStart ?? autoConfig.useBeatFrameAsStart ?? false
     )
     setApiPromptPreview('')
-  }, [autoConfig, savedConfig, lockedVideoAspect, batchGuideSeed, segment, autoResolvedRefs.entries, variant, settingsUserEdited])
+  }, [
+    autoConfig,
+    savedConfig,
+    lockedVideoAspect,
+    batchGuideSeed,
+    segment,
+    autoResolvedRefs.entries,
+    variant,
+    settingsUserEdited,
+    videoGenerationQuality,
+    videoGenerationMode,
+  ])
 
   const resolveStandardEffectiveMethod = useCallback(
     (uiMode: string): VideoGenerationMethod => {
@@ -871,6 +910,14 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const displayedApiPrompt = useCustomApiPrompt ? apiPromptOverride : apiPromptPreview
   const canGenerateWithCustomPrompt = !useCustomApiPrompt || apiPromptOverride.trim().length > 0
 
+  const sessionPolicy = resolveVideoGeneration({
+    quality: videoGenerationQuality,
+    mode: takeMode,
+  })
+  const applySessionPolicy =
+    videoGenerationQuality != null &&
+    (takeMode === 'standard' || (takeMode === 'creative' && isSceneFlowEngine))
+
   const appendAdvancedConfig = (config: VideoGenerationConfig): VideoGenerationConfig => ({
     ...config,
     useCustomApiPrompt,
@@ -878,8 +925,19 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     ...resolvedEngine,
     allowPolicyFallback: false,
     allowVeoFallback: false,
-    resolution: resolvedEngine.resolution ?? config.resolution,
-    qualityTier: resolvedEngine.qualityTier ?? config.qualityTier,
+    resolution: applySessionPolicy
+      ? sessionPolicy.resolution
+      : (resolvedEngine.resolution ?? config.resolution),
+    qualityTier: applySessionPolicy
+      ? sessionPolicy.qualityTier
+      : (resolvedEngine.qualityTier ?? config.qualityTier),
+    ...(applySessionPolicy
+      ? {
+          videoProvider: sessionPolicy.videoProvider,
+          klingModel: sessionPolicy.klingModel,
+          klingQuality: sessionPolicy.klingQuality,
+        }
+      : {}),
     cfgScale: isSceneFlowEngine ? cfgScale : undefined,
     sound: isSceneFlowEngine ? soundEnabled : undefined,
     watermarkEnabled: isSceneFlowEngine ? watermarkEnabled : undefined,
@@ -932,16 +990,28 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       setTakeMode(next)
       if (next === 'standard') {
         handleEngineChange('natural-dialogue')
+        const policy = resolveVideoGeneration({
+          quality: videoGenerationQuality,
+          mode: 'standard',
+        })
+        setResolution(policy.resolution)
         setMode((current) => {
           if (current === 'EXTEND') return current
           if (useBeatFrameAsStart) return current
           return referenceImages.length > 0 ? 'REFERENCE_IMAGES' : 'TEXT_TO_VIDEO'
         })
       } else {
-        handleEngineChange(SCENEFLOW_ENGINE_ID)
+        const tier: SceneFlowQualityTierId =
+          videoGenerationQuality === 'draft' ? 'standard' : 'cinematic'
+        setQualityTierId(tier)
+        setSelectedEngine(SCENEFLOW_ENGINE_ID)
+        const selection = { engineId: SCENEFLOW_ENGINE_ID, qualityTierId: tier } as const
+        setDuration((prev) => snapDurationForEngine(prev, selection))
+        const tierDef = SCENEFLOW_QUALITY_TIERS.find((entry) => entry.id === tier)
+        if (tierDef) setResolution(tierDef.resolution)
       }
     },
-    [handleEngineChange, referenceImages.length, useBeatFrameAsStart]
+    [handleEngineChange, referenceImages.length, useBeatFrameAsStart, videoGenerationQuality]
   )
 
   const aggregatorStatusBanner = aggregatorStatusMessage(aggregatorDiagnostics)
