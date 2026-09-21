@@ -285,7 +285,7 @@ import {
   BackgroundJobDock,
   describeReferenceExpressResult,
 } from '@/components/vision/BackgroundJobDock'
-import { slimPolishScene } from '@/lib/script/scenePolish'
+import { slimPolishScene } from '@/lib/script/scenePolish/formatPolishBeats'
 import {
   BackgroundAnalysisHandoffDialog,
   hasAcknowledgedAnalysisHandoff,

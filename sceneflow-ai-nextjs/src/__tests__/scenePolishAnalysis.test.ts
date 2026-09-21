@@ -250,7 +250,11 @@ describe('Scene polish wiring', () => {
     expect(start).toContain('status: 202')
 
     const route = readSource('src/app/api/vision/polish-scene/route.ts')
-    expect(route).toContain("./start/route")
+    expect(route).toContain("export const runtime = 'nodejs'")
+    expect(route).toContain("export const dynamic = 'force-dynamic'")
+    expect(route).toContain('export const maxDuration = 60')
+    expect(route).toContain("export { POST } from './start/route'")
+    expect(route).not.toMatch(/export \{[^}]*\b(runtime|dynamic|maxDuration)\b/)
 
     const vercel = readSource('vercel.json')
     expect(vercel).toContain('src/app/api/vision/polish-scene/start/route.ts')
@@ -266,6 +270,8 @@ describe('Scene polish wiring', () => {
 
   it('wires Polish from Vision into ScriptPanel and Co-Director', () => {
     const page = readSource('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
+    expect(page).toContain("from '@/lib/script/scenePolish/formatPolishBeats'")
+    expect(page).not.toMatch(/from '@\/lib\/script\/scenePolish'/)
     expect(page).toContain('onPolishScene={handlePolishScene}')
     expect(page).toContain("fetch('/api/vision/polish-scene/start'")
     expect(page).toContain("jobType: 'scene_polish'")
