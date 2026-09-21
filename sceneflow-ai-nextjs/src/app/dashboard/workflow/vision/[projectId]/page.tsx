@@ -285,6 +285,7 @@ import {
   BackgroundJobDock,
   describeReferenceExpressResult,
 } from '@/components/vision/BackgroundJobDock'
+import { slimPolishScene } from '@/lib/script/scenePolish'
 import {
   BackgroundAnalysisHandoffDialog,
   hasAcknowledgedAnalysisHandoff,
@@ -6196,7 +6197,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [isSceneEditorOpen, setIsSceneEditorOpen] = useState(false)
   const [sceneEditorInitialInstructions, setSceneEditorInitialInstructions] = useState<string>('')
   const [sceneEditorInitialRevisionDepth, setSceneEditorInitialRevisionDepth] = useState<RevisionDepth | undefined>(undefined)
-  const [polishingSceneIndex, setPolishingSceneIndex] = useState<number | null>(null)
+  const [revealPolishSceneIndex, setRevealPolishSceneIndex] = useState<number | null>(null)
   const [recentlyUpdatedSceneIndex, setRecentlyUpdatedSceneIndex] = useState<number | null>(null)
   const recentlyUpdatedSceneClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [focusedSceneIndex, setFocusedSceneIndex] = useState<number | null>(null)
@@ -7543,6 +7544,125 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       clearInterval(interval)
     }
   }, [scriptAnalysisJobActive, scriptAnalysisJobId])
+
+  const scenePolishJob = useBackgroundJob({
+    projectId,
+    jobType: 'scene_polish',
+    onCompleted: (job) => {
+      const sceneIndex = Number(job.result?.sceneIndex ?? job.payload?.sceneIndex)
+      const polishAnalysis = job.result?.polishAnalysis
+      if (Number.isInteger(sceneIndex) && sceneIndex >= 0 && polishAnalysis) {
+        setScript((prev: any) => {
+          if (!prev?.script?.scenes?.[sceneIndex]) return prev
+          const freshScenes = [...prev.script.scenes]
+          freshScenes[sceneIndex] = {
+            ...freshScenes[sceneIndex],
+            polishAnalysis: {
+              ...polishAnalysis,
+              appliedRecommendationIds:
+                (polishAnalysis as { appliedRecommendationIds?: string[] }).appliedRecommendationIds ||
+                freshScenes[sceneIndex].polishAnalysis?.appliedRecommendationIds ||
+                [],
+            },
+          }
+          return {
+            ...prev,
+            script: { ...prev.script, scenes: freshScenes },
+          }
+        })
+        setRevealPolishSceneIndex(sceneIndex)
+      }
+
+      const issueCount =
+        typeof job.result?.issueCount === 'number'
+          ? job.result.issueCount
+          : Array.isArray((polishAnalysis as { recommendations?: unknown[] } | undefined)?.recommendations)
+            ? (polishAnalysis as { recommendations: unknown[] }).recommendations.length
+            : 0
+      const stale = job.result?.stale === true
+      const message = stale
+        ? tStudio('polishStale')
+        : issueCount === 0
+          ? tStudio('polishSuccessAligned')
+          : tStudio('polishSuccess', { count: issueCount })
+
+      toast.success(tStudio('polishJobReady'), {
+        description: message,
+        duration: 10000,
+        action: {
+          label: tStudio('polishViewResults'),
+          onClick: () => {
+            if (Number.isInteger(sceneIndex)) setRevealPolishSceneIndex(sceneIndex)
+          },
+        },
+      })
+      notifyIfHidden({
+        title: tStudio('polishJobReady'),
+        body: message,
+        tag: `scene-polish-${job.id}`,
+      })
+    },
+    onFailed: (job) => {
+      const cancelled =
+        job.status === 'cancelled' ||
+        (typeof job.error === 'string' && job.error.toLowerCase().includes('cancelled'))
+      if (cancelled) {
+        toast.info(tStudio('polishJobCancelled'), {
+          description: tStudio('polishJobCancelledDescription'),
+          duration: 6000,
+        })
+        return
+      }
+      toast.error(tStudio('polishJobFailedTitle'), {
+        description: job.error || tStudio('polishFailed'),
+        duration: 10000,
+      })
+      notifyIfHidden({
+        title: tStudio('polishJobFailedTitle'),
+        body: job.error || tStudio('polishFailed'),
+        tag: `scene-polish-${job.id}`,
+      })
+    },
+  })
+
+  const polishingSceneIndex = useMemo(() => {
+    if (!scenePolishJob.isActive) return null
+    const idx = scenePolishJob.job?.payload?.sceneIndex
+    return typeof idx === 'number' && Number.isInteger(idx) ? idx : null
+  }, [scenePolishJob.isActive, scenePolishJob.job?.payload?.sceneIndex])
+
+  const scenePolishJobId = scenePolishJob.job?.id
+  const scenePolishJobActive = scenePolishJob.isActive
+  useEffect(() => {
+    if (!scenePolishJobActive || !scenePolishJobId) return
+
+    let cancelled = false
+    let inFlight = false
+
+    const advance = async () => {
+      if (cancelled || inFlight) return
+      inFlight = true
+      try {
+        await fetch('/api/vision/polish-scene/step', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ jobId: scenePolishJobId }),
+        })
+      } catch {
+        // The next tick retries; polling still reflects real job state.
+      } finally {
+        inFlight = false
+      }
+    }
+
+    void advance()
+    const interval = setInterval(advance, 5000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [scenePolishJobActive, scenePolishJobId])
 
   const referenceExpressJob = useBackgroundJob({
     projectId,
@@ -13982,75 +14102,53 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const currentScript = scriptRef.current || script
     if (!currentScript?.script?.scenes) return
 
-    setPolishingSceneIndex(sceneIndex)
-    try {
-      const scene = currentScript.script.scenes[sceneIndex]
-      if (!scene) {
-        throw new Error('Scene not found')
-      }
-
-      const response = await fetch('/api/vision/polish-scene', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          sceneIndex,
-          scene,
-          context: {
-            previousScene: currentScript.script.scenes[sceneIndex - 1],
-            nextScene: currentScript.script.scenes[sceneIndex + 1],
-          },
-        }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}))
-        throw new Error(typeof data.error === 'string' ? data.error : 'Failed to polish scene')
-      }
-
-      const data = await response.json()
-      const polishAnalysis = data.polishAnalysis
-      if (!polishAnalysis) {
-        throw new Error('Polish analysis was empty')
-      }
-
-      const latestScript = scriptRef.current || currentScript
-      const updatedScenes = [...latestScript.script.scenes]
-      updatedScenes[sceneIndex] = {
-        ...updatedScenes[sceneIndex],
-        polishAnalysis: {
-          ...polishAnalysis,
-          appliedRecommendationIds:
-            latestScript.script.scenes[sceneIndex]?.polishAnalysis?.appliedRecommendationIds || [],
-        },
-      }
-
-      await saveScenesToDatabase(updatedScenes)
-
-      setScript((prev: any) => {
-        if (!prev?.script?.scenes) return prev
-        const freshScenes = [...prev.script.scenes]
-        freshScenes[sceneIndex] = {
-          ...freshScenes[sceneIndex],
-          polishAnalysis: updatedScenes[sceneIndex].polishAnalysis,
-        }
-        return {
-          ...prev,
-          script: { ...prev.script, scenes: freshScenes },
-        }
-      })
-
-      const issueCount = typeof polishAnalysis.issueCount === 'number' ? polishAnalysis.issueCount : 0
-      toast.success(
-        issueCount === 0 ? tStudio('polishSuccessAligned') : tStudio('polishSuccess', { count: issueCount })
-      )
-    } catch (error) {
-      console.error('[Vision] Failed to polish scene:', error)
-      toast.error(error instanceof Error ? error.message : tStudio('polishFailed'))
-      throw error
-    } finally {
-      setPolishingSceneIndex(null)
+    const scene = currentScript.script.scenes[sceneIndex]
+    if (!scene) {
+      throw new Error('Scene not found')
     }
+
+    const slimScene = slimPolishScene(scene) ?? scene
+    const response = await fetch('/api/vision/polish-scene/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        projectId,
+        sceneIndex,
+        scene: slimScene,
+        context: {
+          previousScene: slimPolishScene(currentScript.script.scenes[sceneIndex - 1]),
+          nextScene: slimPolishScene(currentScript.script.scenes[sceneIndex + 1]),
+        },
+      }),
+    })
+
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      const message = typeof data.error === 'string' ? data.error : tStudio('polishFailed')
+      toast.error(message)
+      throw new Error(message)
+    }
+
+    scenePolishJob.track(data.jobId, {
+      status: data.status || 'queued',
+      progress: data.progress ?? 8,
+      payload: {
+        sceneIndex,
+        beatCount: data.beatCount,
+        activity: data.activity,
+      },
+    })
+    setRevealPolishSceneIndex(sceneIndex)
+    void ensureBrowserNotificationPermission()
+
+    const replaced = Number(data.replacedPreviousCount || 0) > 0
+    toast.success(replaced ? tStudio('polishJobRestarted') : tStudio('polishJobStarted'), {
+      description: replaced
+        ? tStudio('polishJobRestartedDescription')
+        : tStudio('polishJobStartedDescription'),
+      duration: 8000,
+    })
   }
 
   // Handler for immediate score updates from dialog (without closing it)
@@ -16685,6 +16783,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onEditSceneWithRecommendations={handleEditSceneWithRecommendations}
                 onPolishScene={handlePolishScene}
                 polishingSceneIndex={polishingSceneIndex}
+                revealPolishSceneIndex={revealPolishSceneIndex}
                 onTogglePolishRecommendation={handleTogglePolishRecommendation}
                 recentlyUpdatedSceneIndex={recentlyUpdatedSceneIndex}
                 focusedSceneIndex={focusedSceneIndex}
@@ -17854,6 +17953,39 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           onViewResult={() => {
             setShowReviewModal(true)
             scriptAnalysisJob.dismiss()
+          }}
+        />
+
+        <BackgroundJobDock
+          job={scenePolishJob.job}
+          title={tStudio('polish')}
+          activeLabel={
+            typeof scenePolishJob.job?.payload?.activity === 'string' &&
+            scenePolishJob.job.payload.activity.trim()
+              ? String(scenePolishJob.job.payload.activity)
+              : scenePolishJob.job?.status === 'queued'
+                ? tStudio('polishQueued')
+                : tStudio('polishWalkingBeats', {
+                    count: Number(scenePolishJob.job?.payload?.beatCount || 0),
+                  })
+          }
+          cancelLabel={tStudio('polishCancel')}
+          viewResultLabel={tStudio('polishViewResults')}
+          describeResult={(job) => {
+            const issueCount = Number(job.result?.issueCount ?? 0)
+            if (job.result?.stale === true) return tStudio('polishStale')
+            return issueCount === 0
+              ? tStudio('polishSuccessAligned')
+              : tStudio('polishSuccess', { count: issueCount })
+          }}
+          onDismiss={scenePolishJob.dismiss}
+          onCancel={() => void scenePolishJob.cancel()}
+          onViewResult={() => {
+            const idx = Number(
+              scenePolishJob.job?.result?.sceneIndex ?? scenePolishJob.job?.payload?.sceneIndex
+            )
+            if (Number.isInteger(idx) && idx >= 0) setRevealPolishSceneIndex(idx)
+            scenePolishJob.dismiss()
           }}
         />
 

@@ -811,4 +811,29 @@ describe('mergeExpressOrchestratedScenes', () => {
       expressMerge[0].beats[0].storyboardImageVersions.map((v: { url: string }) => v.url)
     ).toHaveLength(2)
   })
+
+  it('keeps a newer polishAnalysis when the incoming scene omitted it', () => {
+    const existing = [
+      {
+        id: 's1',
+        heading: 'INT. ENGINE ROOM',
+        polishAnalysis: {
+          notes: 'server',
+          analyzedAt: '2026-09-21T12:10:00.000Z',
+          issueCount: 1,
+          recommendations: [{ id: 'r1', text: 'Fix beat 2', priority: 'high', category: 'prop_state', beatIndices: [2] }],
+        },
+      },
+    ]
+    const incoming = [
+      {
+        id: 's1',
+        heading: 'INT. ENGINE ROOM - NIGHT',
+      },
+    ]
+    const merged = mergeSceneArraysForPersistence(existing, incoming)
+    expect(merged[0].heading).toBe('INT. ENGINE ROOM - NIGHT')
+    expect(merged[0].polishAnalysis.notes).toBe('server')
+    expect(merged[0].polishAnalysis.analyzedAt).toBe('2026-09-21T12:10:00.000Z')
+  })
 })

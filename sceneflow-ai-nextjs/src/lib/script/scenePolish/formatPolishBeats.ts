@@ -2,6 +2,63 @@ import { beatContentFingerprint, getSceneBeats } from '@/lib/script/beatMigratio
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { PolishRecommendation, PolishSceneInput, ScenePolishAnalysis } from './types'
 
+export function polishAnalyzedAtMs(
+  analysis: { analyzedAt?: string } | null | undefined
+): number {
+  if (!analysis?.analyzedAt) return 0
+  const t = new Date(analysis.analyzedAt).getTime()
+  return Number.isFinite(t) ? t : 0
+}
+
+/**
+ * Keep the newer polishAnalysis so a SAVE-QUEUE PUT cannot wipe a background
+ * job that finished while the client still held an older scene snapshot.
+ */
+export function pickNewerPolishAnalysis<T extends {
+  analyzedAt?: string
+  appliedRecommendationIds?: string[]
+}>(
+  incoming: T | null | undefined,
+  existing: T | null | undefined
+): T | undefined {
+  if (!incoming && !existing) return undefined
+  if (!incoming) return existing ?? undefined
+  if (!existing) return incoming
+  if (polishAnalyzedAtMs(existing) > polishAnalyzedAtMs(incoming)) {
+    return existing
+  }
+  const incomingIds = incoming.appliedRecommendationIds
+  const existingIds = existing.appliedRecommendationIds
+  if ((!incomingIds || incomingIds.length === 0) && existingIds && existingIds.length > 0) {
+    return { ...incoming, appliedRecommendationIds: existingIds }
+  }
+  return incoming
+}
+
+/** Beats + heading + description only — no frames, audio, or production media. */
+export function slimPolishScene(
+  scene: PolishSceneInput | null | undefined
+): PolishSceneInput | null {
+  if (!scene) return null
+  const heading = polishSceneHeading(scene)
+  const description = polishSceneDescription(scene)
+  const keyProps = polishSceneKeyProps(scene)
+  const beats = getSceneBeats(scene as Record<string, unknown>)
+  const id = typeof scene.id === 'string' ? scene.id : undefined
+  const sceneId = typeof scene.sceneId === 'string' ? scene.sceneId : undefined
+  return {
+    ...(id ? { id } : {}),
+    ...(sceneId ? { sceneId } : {}),
+    heading,
+    visualDescription: description,
+    sceneDirection: {
+      sceneDescription: description,
+      scene: { keyProps },
+    },
+    beats,
+  }
+}
+
 export function polishSceneHeading(scene: PolishSceneInput | null | undefined): string {
   const heading = scene?.heading
   if (typeof heading === 'string' && heading.trim()) return heading.trim()
@@ -97,10 +154,12 @@ export function scenePolishBeatFingerprint(scene: PolishSceneInput | null | unde
 }
 
 export function isPolishAnalysisStale(
-  analysis: { beatFingerprint?: string } | null | undefined,
+  analysis: { beatFingerprint?: string; stale?: boolean } | null | undefined,
   scene: PolishSceneInput | null | undefined
 ): boolean {
-  if (!analysis?.beatFingerprint) return false
+  if (!analysis) return false
+  if (analysis.stale) return true
+  if (!analysis.beatFingerprint) return false
   return analysis.beatFingerprint !== scenePolishBeatFingerprint(scene)
 }
 

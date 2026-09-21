@@ -24,9 +24,11 @@ const PRIORITIES: readonly PolishPriority[] = ['high', 'medium', 'low']
 /** Gemini 3 thinking shares this cap; 4k left high thinking with no room for JSON. */
 export const POLISH_MIN_OUTPUT_TOKENS = 16384
 export const POLISH_MAX_OUTPUT_TOKENS = 32768
-export const POLISH_TOKENS_PER_BEAT = 400
-export const POLISH_TIMEOUT_MS = 120000
+/** 28 beats * 800 = 22400, so long scenes lift the 16k thinking floor. */
+export const POLISH_TOKENS_PER_BEAT = 800
+export const POLISH_TIMEOUT_MS = 150000
 export const POLISH_BUDGET_ERROR = 'Polish ran out of output budget — retry'
+export const POLISH_EMPTY_ERROR = 'Polish returned no analysis — retry'
 
 export function polishOutputTokenBudget(beatCount: number): number {
   const scaled = Math.max(POLISH_MIN_OUTPUT_TOKENS, Math.max(0, beatCount) * POLISH_TOKENS_PER_BEAT)
@@ -183,6 +185,7 @@ export async function analyzeScenePolish(
   const beatCount = getSceneBeats(input.scene as Record<string, unknown>).length
   const maxOutputTokens = polishOutputTokenBudget(beatCount)
   const prompt = buildPolishPrompt(input)
+  const startedAt = Date.now()
   const result = await generateText(prompt, {
     model: getAudienceResonanceModel(),
     temperature: 0.1,
@@ -190,16 +193,40 @@ export async function analyzeScenePolish(
     thinkingLevel: 'high',
     responseMimeType: 'application/json',
     timeoutMs: POLISH_TIMEOUT_MS,
-    maxRetries: 1,
+    maxRetries: 0,
+  })
+  const durationMs = Date.now() - startedAt
+  const text = typeof result.text === 'string' ? result.text : ''
+  const usage = result.usageMetadata
+
+  console.info('[Scene Polish]', {
+    projectId: input.logContext?.projectId,
+    sceneIndex: input.logContext?.sceneIndex,
+    beatCount,
+    durationMs,
+    finishReason: result.finishReason ?? null,
+    textLen: text.length,
+    promptChars: prompt.length,
+    maxOutputTokens,
+    promptTokenCount: usage?.promptTokenCount ?? null,
+    candidatesTokenCount: usage?.candidatesTokenCount ?? null,
+    thoughtsTokenCount: usage?.thoughtsTokenCount ?? null,
+    modelId: result.modelId ?? null,
   })
 
   if (result.finishReason === 'SAFETY') {
     throw new Error('Scene polish was blocked by safety filters.')
   }
 
+  if (!text.trim()) {
+    throw new Error(
+      result.finishReason === 'MAX_TOKENS' ? POLISH_BUDGET_ERROR : POLISH_EMPTY_ERROR
+    )
+  }
+
   let parsed: ReturnType<typeof parsePolishAnalysis>
   try {
-    parsed = parsePolishAnalysis(result.text, input.scene)
+    parsed = parsePolishAnalysis(text, input.scene)
   } catch {
     if (result.finishReason === 'MAX_TOKENS') {
       throw new Error(POLISH_BUDGET_ERROR)
@@ -209,13 +236,17 @@ export async function analyzeScenePolish(
 
   // Truncation can repair to notes-only with an empty rec list. Do not treat that
   // as a successful aligned scene unless the notes say the timeline is aligned.
-  if (
-    result.finishReason === 'MAX_TOKENS' &&
-    parsed.recommendations.length === 0 &&
-    !isAlignedEmptyResult(parsed)
-  ) {
-    throw new Error(POLISH_BUDGET_ERROR)
+  if (parsed.recommendations.length === 0 && !isAlignedEmptyResult(parsed)) {
+    throw new Error(
+      result.finishReason === 'MAX_TOKENS' ? POLISH_BUDGET_ERROR : POLISH_EMPTY_ERROR
+    )
   }
+
+  console.info('[Scene Polish] parsed', {
+    projectId: input.logContext?.projectId,
+    sceneIndex: input.logContext?.sceneIndex,
+    issueCount: parsed.issueCount,
+  })
 
   return {
     ...parsed,

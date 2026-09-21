@@ -21,6 +21,7 @@ import {
   mergeStillSlot,
   pickCurrentMediaUrl,
 } from '@/lib/storyboard/mediaVersions'
+import { pickNewerPolishAnalysis } from '@/lib/script/scenePolish/formatPolishBeats'
 import { mergeVoiceAudioMapsByLineId } from '@/lib/storyboard/mergeVoiceAudioMaps'
 
 export const isValidStoryboardMediaUrl = isUsableMediaUrl
@@ -735,6 +736,10 @@ export function mergeScenePreservingMedia(canonical: any, incoming: any): any {
   merged.beats = mergeBeatsArray(canonical.beats, incoming.beats)
   merged.segments = mergeSegmentDialogueMedia(canonical.segments, incoming.segments)
   merged.dialogueAudio = mergeDialogueAudioField(canonical, incoming)
+
+  const keptPolish = pickNewerPolishAnalysis(incoming.polishAnalysis, canonical.polishAnalysis)
+  if (keptPolish) merged.polishAnalysis = keptPolish
+  else delete merged.polishAnalysis
 
   if (sceneSfxHasIdentityKeys(canonical, incoming)) {
     const canonSfxArr = Array.isArray(canonical.sfx) ? canonical.sfx : []
