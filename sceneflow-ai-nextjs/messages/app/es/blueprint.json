@@ -356,7 +356,7 @@
     "generate": {
       "title": "Paso 1 — Generar",
       "description": "Comienza a partir de un episodio de la serie, un concepto o un guión importado. Genera un tratamiento estructurado con logline, beats, personajes y tono.",
-      "tip": "Utilice Regenerate Blueprint para un reinicio completo; el Asistente para cambios de alcance."
+      "tip": "Utilice Regenerate Blueprint para un reinicio completo; el Co-Director para cambios de alcance."
     },
     "review": {
       "title": "Paso 2 — Revisión",
@@ -411,8 +411,8 @@
     "needScore": "Audience Resonance está por debajo de {target} (puntuación: {score})."
   },
   "assistantButton": {
-    "label": "Ayudante",
-    "scopedLabel": "Asistente — {scope}",
+    "label": "Co-Director",
+    "scopedLabel": "Co-Director — {scope}",
     "tooltip": "{brand} — describa el cambio en palabras sencillas y revise para usted"
   },
   "chips": {

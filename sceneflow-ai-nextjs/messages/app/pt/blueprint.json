@@ -356,7 +356,7 @@
     "generate": {
       "title": "Passo 1 — Gerar",
       "description": "Comece a partir de um episódio da série, conceito ou roteiro importado. Gere um tratamento estruturado com logline, beats, caracteres e tom.",
-      "tip": "Use Regenerate Blueprint para uma redefinição completa; o Assistente para alterações de escopo."
+      "tip": "Use Regenerate Blueprint para uma redefinição completa; o Co-Director para alterações de escopo."
     },
     "review": {
       "title": "Passo 2 — Revisão",
@@ -411,8 +411,8 @@
     "needScore": "Audience Resonance está abaixo de {target} (pontuação: {score})."
   },
   "assistantButton": {
-    "label": "Assistente",
-    "scopedLabel": "Assistente — {scope}",
+    "label": "Co-Director",
+    "scopedLabel": "Co-Director — {scope}",
     "tooltip": "{brand} — descreva a mudança em palavras simples e ela é revisada para você"
   },
   "chips": {

@@ -13,7 +13,7 @@ export const ASSISTANT = {
   full: 'Intelligent Assistant Director',
   abbr: 'IAD',
   /** Button and heading label everywhere in-app. Short enough for a chip. */
-  short: 'Assistant',
+  short: 'Co-Director',
   tooltip:
     'Intelligent Assistant Director — describe the change in plain words and it revises for you',
 } as const
@@ -26,12 +26,12 @@ export const ASSISTANT_FULL_WITH_ABBR = `${ASSISTANT.full} (${ASSISTANT.abbr})`
  * import these labels, and they should not pull in an icon library to do it.
  */
 
-/** Dialog title for an Assistant surface, e.g. "Assistant · Blueprint". */
+/** Dialog title for a Co-Director surface, e.g. "Co-Director · Blueprint". */
 export function assistantTitle(context: string): string {
   return `${ASSISTANT.short} · ${context}`
 }
 
-/** Accessible name for a scoped trigger, e.g. "Assistant — Beats & Runtime". */
+/** Accessible name for a scoped trigger, e.g. "Co-Director — Beats & Runtime". */
 export function assistantAriaLabel(scopeLabel?: string): string {
   return scopeLabel ? `${ASSISTANT.short} — ${scopeLabel}` : ASSISTANT.short
 }

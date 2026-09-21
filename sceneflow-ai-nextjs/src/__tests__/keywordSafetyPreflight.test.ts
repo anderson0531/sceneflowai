@@ -9,7 +9,7 @@ function readSource(relativePath: string): string {
 }
 
 describe('keyword content-safety preflight is gone from generate UIs', () => {
-  it('Assistant · Blueprint does not import the keyword moderator or alert', () => {
+  it('Co-Director · Blueprint does not import the keyword moderator or alert', () => {
     const dialog = readSource('src/components/blueprint/BlueprintRefineDialog.tsx')
     expect(dialog).not.toContain("from '@/utils/promptModerator'")
     expect(dialog).not.toContain('ContentPolicyAlert')
