@@ -14,8 +14,9 @@ import { runInVertexImageGate } from '@/lib/vertexai/vertexImageGate'
 import { getGeminiImageSafetySettings } from '@/lib/vertexai/safety'
 import { MAX_REFERENCE_IMAGES_ECO } from '@/lib/vision/referenceLimits'
 import { combineAbortSignals } from '@/lib/utils/abortSignals'
+import { identityPlatesNeed560Warn } from '@/lib/vertexai/identityReferencePartName'
 
-export { isIdentityReferencePartName } from '@/lib/vertexai/identityReferencePartName'
+export { identityPlatesNeed560Warn, isIdentityReferencePartName } from '@/lib/vertexai/identityReferencePartName'
 
 export type VertexImageTier = 'eco' | 'designer' | 'director'
 export type VertexThinkingLevel = 'low' | 'high'
@@ -239,6 +240,7 @@ export interface VertexReferenceImage {
   base64Image?: string
   mimeType?: string
   name?: string
+  proIdentityCrop?: 'cropped' | 'already-tight' | 'skipped'
 }
 
 export interface GenerateVertexImageOptions {
@@ -468,8 +470,9 @@ export function countPromptImageTokens(usageMetadata: unknown): number | null {
 function logPromptImageTokenUsage(
   usageMetadata: unknown,
   model: string,
-  referenceCount: number
+  referenceImages?: VertexReferenceImage[]
 ): void {
+  const referenceCount = referenceImages?.length ?? 0
   if (referenceCount <= 0) return
   const imageTokens = countPromptImageTokens(usageMetadata)
   if (imageTokens == null) {
@@ -489,7 +492,12 @@ function logPromptImageTokenUsage(
     console.warn(
       `[Vertex Gemini Image] 0 IMAGE tokens with ${referenceCount} reference(s) attached — Vertex dropped the parts`
     )
-  } else if (model.includes('pro-image') && perRef != null && perRef <= 560) {
+  } else if (
+    model.includes('pro-image') &&
+    perRef != null &&
+    perRef <= 560 &&
+    identityPlatesNeed560Warn(referenceImages)
+  ) {
     console.warn(
       `[Vertex Gemini Image] Pro IMAGE token density ${perRef}/ref — documented 560-token cap; identity lock relies on face crop + landmarks`
     )
@@ -724,7 +732,7 @@ export async function generateVertexGeminiImage(
   logPromptImageTokenUsage(
     data.usageMetadata ?? data.usage_metadata,
     model,
-    options.referenceImages?.length ?? 0
+    options.referenceImages
   )
   if (data.promptFeedback?.blockReason) {
     const escalated = escalateEcoRefusalToPro(

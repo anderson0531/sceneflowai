@@ -492,5 +492,27 @@ describe('cropIdentityReferenceImagesForPro', () => {
     expect(refs[1]?.base64Image).toBe(square.toString('base64'))
     expect(refs[2]?.imageUrl).toBe('https://example.com/workbench.jpg')
     expect(refs[2]?.base64Image).toBeUndefined()
+    expect(refs[0]?.proIdentityCrop).toBe('cropped')
+    expect(refs[1]?.proIdentityCrop).toBeUndefined()
+  })
+
+  it('logs pass-through dimensions when the identity plate is already tight', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const square = await solidJpeg(400, 400, { r: 180, g: 40, b: 40 })
+    const refs = await cropIdentityReferenceImagesForPro([
+      {
+        name: '[REFERENCE: IDENTITY - person [1]] Facial reference for Gideon Croft',
+        base64Image: square.toString('base64'),
+        mimeType: 'image/jpeg',
+      },
+    ])
+    expect(refs[0]?.proIdentityCrop).toBe('already-tight')
+    expect(refs[0]?.base64Image).toBe(square.toString('base64'))
+    expect(
+      log.mock.calls.some((call) =>
+        String(call[0]).includes('Identity plate already tight (400x400, reason=already-tight')
+      )
+    ).toBe(true)
+    log.mockRestore()
   })
 })

@@ -11,6 +11,7 @@ import {
   remapLibraryPromptTokens,
   resolveEffectiveImageTier,
   selectReferenceImagesInOrder,
+  omitWardrobePlatesForFaceCloseUp,
   type PrioritizedReferenceImage,
 } from '@/lib/vision/referenceLimits'
 
@@ -653,5 +654,57 @@ Action/Framing: person [1] holds the file.`
     expect(output).toContain('person [3]')
     expect(output).toContain('Refs 1, 2, 3, 4, 5')
     expect(output).not.toContain('ref 8')
+  })
+})
+
+describe('omitWardrobePlatesForFaceCloseUp', () => {
+  it('drops the wardrobe plate on a face CU when identity is attached', () => {
+    const refs = [
+      ref('identity', 'Gideon identity', undefined, {
+        characterName: 'Gideon Croft',
+        refRole: 'identity',
+      }),
+      ref('wardrobe', 'Gideon wardrobe', undefined, {
+        characterName: 'Gideon Croft',
+        refRole: 'wardrobe',
+      }),
+      ref('location', 'Vault', undefined, { locationName: 'Vault' }),
+    ]
+    const { kept, dropped } = omitWardrobePlatesForFaceCloseUp(refs, 'Close-Up')
+    expect(dropped.map((item) => item.refRole)).toEqual(['wardrobe'])
+    expect(kept.map((item) => item.role)).toEqual(['identity', 'location'])
+  })
+
+  it('keeps wardrobe on a two-shot and when identity is missing', () => {
+    const dual = [
+      ref('identity', 'Gideon identity', undefined, {
+        characterName: 'Gideon Croft',
+        refRole: 'identity',
+      }),
+      ref('wardrobe', 'Gideon wardrobe', undefined, {
+        characterName: 'Gideon Croft',
+        refRole: 'wardrobe',
+      }),
+    ]
+    expect(omitWardrobePlatesForFaceCloseUp(dual, 'Two-Shot').dropped).toEqual([])
+
+    const wardrobeOnly = [
+      ref('wardrobe', 'Gideon wardrobe', undefined, {
+        characterName: 'Gideon Croft',
+        refRole: 'wardrobe',
+      }),
+    ]
+    expect(omitWardrobePlatesForFaceCloseUp(wardrobeOnly, 'Close-Up').dropped).toEqual([])
+  })
+
+  it('does not drop a combined diptych plate', () => {
+    const refs = [
+      ref('identity', 'Gideon diptych', undefined, {
+        characterName: 'Gideon Croft',
+        refRole: 'wardrobe-diptych',
+      }),
+    ]
+    expect(omitWardrobePlatesForFaceCloseUp(refs, 'MCU').dropped).toEqual([])
+    expect(omitWardrobePlatesForFaceCloseUp(refs, 'MCU').kept).toEqual(refs)
   })
 })

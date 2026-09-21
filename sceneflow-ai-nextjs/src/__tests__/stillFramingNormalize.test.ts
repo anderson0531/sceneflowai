@@ -134,6 +134,12 @@ describe('normalizeStillFraming', () => {
     ])
   })
 
+  it('still records a shot-scale rewrite when the scale itself named a move', () => {
+    const { shot, rewrites } = normalizeStillFraming('Tracking Two-Shot', 'Eye-Level')
+    expect(shot).toBe('Two-Shot, eye-level angle')
+    expect(rewrites).toEqual([{ field: 'shotType', from: 'Tracking Two-Shot', to: 'Two-Shot' }])
+  })
+
   it('reports no rewrite for direction a still could already use', () => {
     const { shot, rewrites } = normalizeStillFraming('Medium Shot', 'low angle')
 
@@ -143,6 +149,21 @@ describe('normalizeStillFraming', () => {
 
   it('treats hyphens and case as authoring style rather than a rewrite', () => {
     expect(normalizeStillFraming('Medium Shot', 'Low-Angle').rewrites).toEqual([])
+  })
+
+  it('canonicalizes Eye-Level without calling it a camera move', () => {
+    const { shot, rewrites } = normalizeStillFraming('Close-Up', 'Eye-Level')
+    expect(shot).toBe('Close-Up, eye-level angle')
+    expect(rewrites).toEqual([])
+    expect(normalizeStillCameraAngle('Eye-Level')).toBe('eye-level angle')
+    expect(normalizeStillCameraAngle('Overhead')).toBe('overhead angle')
+  })
+
+  it('does not report mood-only angle canonicalization as a camera move', () => {
+    expect(normalizeStillFraming('Medium Shot', 'low-angle vulnerability').rewrites).toEqual([])
+    expect(normalizeStillFraming('Medium Shot', 'low-angle vulnerability').shot).toBe(
+      'Medium Shot, low angle'
+    )
   })
 
   it('does not state the angle twice when the shot scale already names it', () => {

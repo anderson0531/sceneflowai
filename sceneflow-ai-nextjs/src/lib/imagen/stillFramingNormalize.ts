@@ -114,6 +114,21 @@ function sameWording(a: string, b: string): boolean {
 }
 
 /**
+ * True when the field described a camera move a still cannot hold.
+ *
+ * Canonicalizing "Eye-Level" → "eye-level angle" is not a move — the warn that
+ * cites this helper must stay silent for that case (production 2026-09-21).
+ */
+export function stillFramingDescribesCameraMove(value: string): boolean {
+  const raw = tidy(value)
+  if (!raw) return false
+  if (HAS_CAMERA_MOTION.test(raw)) return true
+  if (TRANSITION_PATTERNS.some((pattern) => pattern.test(raw))) return true
+  const bare = raw.match(/^(.+?)\s+(?:to|then)\s+(.+)$/i)
+  return Boolean(bare && ANGLE_KEYWORD.test(bare[1]) && ANGLE_KEYWORD.test(bare[2]))
+}
+
+/**
  * One camera angle a photograph can be taken from, or nothing when the field
  * held only motion and mood.
  */
@@ -250,10 +265,10 @@ export function normalizeStillFraming(
   const shot = normalizeStillShotType(rawShot)
   const angle = normalizeStillCameraAngle(rawAngle)
 
-  if (rawShot && !sameWording(shot, rawShot)) {
+  if (rawShot && !sameWording(shot, rawShot) && stillFramingDescribesCameraMove(rawShot)) {
     rewrites.push({ field: 'shotType', from: rawShot, to: shot })
   }
-  if (rawAngle && !sameWording(angle, rawAngle)) {
+  if (rawAngle && !sameWording(angle, rawAngle) && stillFramingDescribesCameraMove(rawAngle)) {
     rewrites.push({ field: 'cameraAngle', from: rawAngle, to: angle })
   }
 
