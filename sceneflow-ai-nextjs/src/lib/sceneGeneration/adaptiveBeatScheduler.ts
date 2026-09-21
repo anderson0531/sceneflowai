@@ -14,14 +14,17 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
   return Number.isFinite(n) && n >= 1 ? Math.floor(n) : fallback
 }
 
-/** Runtime beat concurrency for Scene Express, aligned with the image lane. */
-export const DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY = 1
-
 /**
- * Draft beats stay sequential, matching the image lane. A wider pool only
- * parked jobs in the traffic cop and made the overlay look like extra gens.
+ * Hard cap for Frame Agent stills. The pool pins initial = max to this so
+ * AIMD cannot widen past two in-flight Vertex jobs.
  */
-export const DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY = 1
+export const FRAME_AGENT_STILL_CONCURRENCY = 2
+
+/** Runtime beat concurrency for Scene Express, aligned with the image lane. */
+export const DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY = FRAME_AGENT_STILL_CONCURRENCY
+
+/** Draft beats share the same two-wide cap as pro identity-ref frames. */
+export const DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY = FRAME_AGENT_STILL_CONCURRENCY
 
 /**
  * Attempts per beat before it is reported as failed.

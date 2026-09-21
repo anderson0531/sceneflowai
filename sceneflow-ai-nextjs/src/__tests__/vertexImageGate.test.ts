@@ -1,9 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import {
   DEFAULT_VERTEX_IMAGE_MAX_CONCURRENCY,
+  getSceneImageAdmissionSnapshot,
   getVertexImageGateSnapshot,
   getVertexImageMaxConcurrency,
   resetVertexImageGateForTests,
+  runInSceneImageAdmission,
   runInVertexImageGate,
 } from '@/lib/vertexai/vertexImageGate'
 
@@ -31,9 +33,9 @@ describe('vertexImageGate', () => {
     delete process.env.VERTEX_IMAGE_MAX_CONCURRENCY
   })
 
-  it('caps concurrent generations at one by default', () => {
-    expect(DEFAULT_VERTEX_IMAGE_MAX_CONCURRENCY).toBe(1)
-    expect(getVertexImageMaxConcurrency()).toBe(1)
+  it('caps concurrent generations at two by default', () => {
+    expect(DEFAULT_VERTEX_IMAGE_MAX_CONCURRENCY).toBe(2)
+    expect(getVertexImageMaxConcurrency()).toBe(2)
   })
 
   it('matches the Express flash image lane so a single run never queues', async () => {
@@ -43,7 +45,7 @@ describe('vertexImageGate', () => {
     expect(DEFAULT_VERTEX_IMAGE_MAX_CONCURRENCY).toBe(DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY)
   })
 
-  it('admits only one at a time and holds the rest', async () => {
+  it('admits two at a time and holds the rest', async () => {
     const gates = [deferred(), deferred(), deferred(), deferred()]
     let started = 0
 
@@ -55,13 +57,13 @@ describe('vertexImageGate', () => {
     )
 
     await tick()
-    expect(started).toBe(1)
-    expect(getVertexImageGateSnapshot().inFlight).toBe(1)
-    expect(getVertexImageGateSnapshot().waiting).toBe(3)
+    expect(started).toBe(2)
+    expect(getVertexImageGateSnapshot().inFlight).toBe(2)
+    expect(getVertexImageGateSnapshot().waiting).toBe(2)
 
     gates[0].resolve()
     await tick()
-    expect(started).toBe(2)
+    expect(started).toBe(3)
 
     gates[1].resolve()
     gates[2].resolve()
@@ -105,7 +107,7 @@ describe('vertexImageGate', () => {
     )
 
     await tick()
-    expect(order).toEqual([0])
+    expect(order).toEqual([0, 1])
 
     for (let i = 0; i < gates.length; i++) {
       gates[i].resolve()
@@ -173,18 +175,12 @@ describe('vertexImageGate', () => {
     expect(getVertexImageGateSnapshot().inFlight).toBe(0)
   })
 
-  it('would deadlock if a slot were held across a nested acquire', async () => {
+  it('is reentrant so fail-fast can hold a slot across nested generateContent', async () => {
     process.env.VERTEX_IMAGE_MAX_CONCURRENCY = '1'
 
     const nested = runInVertexImageGate(() => runInVertexImageGate(async () => 'inner'))
-    const settled = await Promise.race([
-      nested.then(() => 'resolved'),
-      tick().then(() => 'still waiting'),
-    ])
-
-    expect(settled).toBe('still waiting')
-    expect(getVertexImageGateSnapshot().inFlight).toBe(1)
-    resetVertexImageGateForTests()
+    await expect(nested).resolves.toBe('inner')
+    expect(getVertexImageGateSnapshot().inFlight).toBe(0)
   })
 
   it('counts generations that had to wait, so log lines can be trusted', async () => {
@@ -225,5 +221,79 @@ describe('vertexImageGate', () => {
   it('falls back to the default on a value that is not a number', () => {
     process.env.VERTEX_IMAGE_MAX_CONCURRENCY = 'lots'
     expect(getVertexImageMaxConcurrency()).toBe(DEFAULT_VERTEX_IMAGE_MAX_CONCURRENCY)
+  })
+
+  it('scene-image admission is a sibling lock at the same cap', async () => {
+    const gates = [deferred(), deferred(), deferred()]
+    let started = 0
+    const runs = gates.map((g) =>
+      runInSceneImageAdmission(async () => {
+        started++
+        await g.promise
+      })
+    )
+
+    await tick()
+    expect(started).toBe(2)
+    expect(getSceneImageAdmissionSnapshot().inFlight).toBe(2)
+    expect(getSceneImageAdmissionSnapshot().waiting).toBe(1)
+
+    gates[0].resolve()
+    gates[1].resolve()
+    gates[2].resolve()
+    await Promise.all(runs)
+    expect(getSceneImageAdmissionSnapshot().inFlight).toBe(0)
+  })
+
+  it('holds a fail-fast slot for the full attempt so a third caller waits', async () => {
+    const inner = deferred()
+    let nestedStarted = 0
+    let waiterStarted = false
+
+    const holds = Array.from({ length: 2 }, () =>
+      runInVertexImageGate(async () =>
+        runInVertexImageGate(async () => {
+          nestedStarted++
+          await inner.promise
+        })
+      )
+    )
+    const waiter = runInVertexImageGate(async () => {
+      waiterStarted = true
+    })
+
+    await tick()
+    expect(nestedStarted).toBe(2)
+    expect(waiterStarted).toBe(false)
+    expect(getVertexImageGateSnapshot().inFlight).toBe(2)
+    expect(getVertexImageGateSnapshot().waiting).toBe(1)
+
+    inner.resolve()
+    await Promise.all(holds)
+    await waiter
+    expect(waiterStarted).toBe(true)
+    expect(getVertexImageGateSnapshot().inFlight).toBe(0)
+  })
+
+  it('lets generate-image admission hold a slot while Vertex gate is acquired inside', async () => {
+    const inner = deferred()
+    let vertexStarted = false
+    const run = runInSceneImageAdmission(() =>
+      runInVertexImageGate(async () => {
+        vertexStarted = true
+        await inner.promise
+        return 'ok'
+      })
+    )
+
+    await tick()
+    expect(vertexStarted).toBe(true)
+    expect(getSceneImageAdmissionSnapshot().inFlight).toBe(1)
+    expect(getVertexImageGateSnapshot().inFlight).toBe(1)
+
+    inner.resolve()
+    await expect(run).resolves.toBe('ok')
+    expect(getSceneImageAdmissionSnapshot().inFlight).toBe(0)
+    expect(getVertexImageGateSnapshot().inFlight).toBe(0)
   })
 })

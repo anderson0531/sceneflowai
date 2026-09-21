@@ -173,6 +173,33 @@ export interface ExpressRateLimitedFailure {
   error?: string
 }
 
+export type ExpressFrameNode =
+  | { status: 'ok'; imageUrl?: string }
+  | {
+      status: 'failed'
+      code: number
+      payload: {
+        sceneIndex: number
+        beatIndex?: number
+        dialogueIndex?: number
+        frameRole?: 'start' | 'end'
+        prompt?: string
+      }
+    }
+
+export function expressFrameNodeKey(
+  sceneIndex: number,
+  opts: { beatIndex?: number; dialogueIndex?: number; frameRole?: 'start' | 'end' }
+): string {
+  if (typeof opts.beatIndex === 'number') {
+    return `scene:${sceneIndex}:beat:${opts.beatIndex}:${opts.frameRole ?? 'start'}`
+  }
+  if (typeof opts.dialogueIndex === 'number') {
+    return `scene:${sceneIndex}:dialogue:${opts.dialogueIndex}`
+  }
+  return `scene:${sceneIndex}:establishing`
+}
+
 export type ExpressEvent =
   | { type: 'start'; sceneCount: number }
   | { type: 'scene-start'; sceneIndex: number; sceneNumber: number }
@@ -204,6 +231,7 @@ export type ExpressEvent =
       successScenes: number
       failedScenes: number
       rateLimitedFailures?: ExpressRateLimitedFailure[]
+      frames?: Record<string, ExpressFrameNode>
     }
   | { type: 'error'; error: string }
 

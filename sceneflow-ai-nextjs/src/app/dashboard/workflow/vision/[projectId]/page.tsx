@@ -6355,6 +6355,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     generationMode: StillGenerationMode
   } | null>(null)
   const expressAbortRef = useRef<AbortController | null>(null)
+  const expressRunningRef = useRef(false)
 
   /**
    * Project-wide Run All Agents run, reported into the dock stack.
@@ -11247,7 +11248,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   ) => {
     // handleExpressSceneGenerate no-ops silently while a run is in flight, and
     // this button sits outside the progress overlay, so say so.
-    if (isExpressRunning) {
+    if (expressRunningRef.current || isExpressRunning) {
       try { const { toast } = require('sonner'); toast.info('A scene generation is already running') } catch {}
       return
     }
@@ -11329,7 +11330,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   /** End-frame regen, on the same scoped Express run as the start frame. */
   const handleGenerateBeatEndFrameImage = async (sceneIdx: number, beatId: string) => {
-    if (isExpressRunning) {
+    if (expressRunningRef.current || isExpressRunning) {
       try { const { toast } = require('sonner'); toast.info('A scene generation is already running') } catch {}
       return
     }
@@ -14433,8 +14434,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const handleExpressGenerate = useCallback(
     async (options: ExpressConfirmOptions) => {
       if (!projectId || !script?.script?.scenes?.length) return
-      if (isExpressRunning) return
+      if (expressRunningRef.current || isExpressRunning) return
       if (blockedByMissingReferences()) return
+
+      expressRunningRef.current = true
 
       const sceneCount = script.script.scenes.length
       const initial: ExpressSceneStatusMap = {}
@@ -14556,7 +14559,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         let buffer = ''
         let successScenes = 0
         let failedScenes = 0
-        let rateLimitToastShown = false
         let regulatorToastShown = false
         let rateLimitedFailureCount = 0
         let degradedToastShown = false
@@ -14627,18 +14629,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         beatIndex: event.beatIndex,
                         frameRole: event.frameRole ?? 'start',
                       })
-                    }
-                    const errLower = String(phaseError).toLowerCase()
-                    if (
-                      !rateLimitToastShown &&
-                      (event.rateLimited ||
-                        errLower.includes('429') ||
-                        errLower.includes('resource_exhausted') ||
-                        errLower.includes('quota') ||
-                        errLower.includes('rate limit'))
-                    ) {
-                      rateLimitToastShown = true
-                      toast.error(VERTEX_QUOTA_EXHAUSTED_USER_MESSAGE)
                     }
                   }
                   break
@@ -14807,6 +14797,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         finishProjectRun({ runError: err?.message || String(err) })
         toast.error(`Run All Agents error: ${err?.message || String(err)}`)
       } finally {
+        expressRunningRef.current = false
         setIsExpressRunning(false)
       }
     },
@@ -15053,8 +15044,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       options?: import('@/components/vision/ExpressSceneConfirmDialog').ExpressSceneConfirmOptions
     ) => {
       if (!projectId || !script?.script?.scenes?.[sceneIndex]) return
-      if (isExpressRunning) return
+      if (expressRunningRef.current || isExpressRunning) return
 
+      expressRunningRef.current = true
       const abortController = new AbortController()
       expressAbortRef.current = abortController
 
@@ -15316,7 +15308,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         let buffer = ''
         let successScenes = 0
         let failedScenes = 0
-        let rateLimitToastShown = false
         let regulatorToastShown = false
         let rateLimitedFailureCount = 0
         let scenePersisted = false
@@ -15421,17 +15412,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         frameRole: event.frameRole ?? 'start',
                       })
                     }
-                    const errLower = String(phaseError).toLowerCase()
-                    if (
-                      !rateLimitToastShown &&
-                      (event.rateLimited ||
-                        errLower.includes('429') ||
-                        errLower.includes('resource_exhausted') ||
-                        errLower.includes('rate limit'))
-                    ) {
-                      rateLimitToastShown = true
-                      toast.error('Vertex rate limited — wait ~60s and retry Frame Agent.')
-                    }
                   }
                   break
                 case 'frame-start':
@@ -15508,15 +15488,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           await refreshProjectScript()
         }
 
-        if (failedScenes === 0 && successScenes > 0) {
-          if (rateLimitedFailureCount > 0) {
-            toast.warning(
-              `Scene ${sceneIndex + 1} Frame Agent complete with ${rateLimitedFailureCount} rate-limited item${rateLimitedFailureCount === 1 ? '' : 's'}. Re-run with Only missing frames.`
-            )
-          } else {
-            toast.success(`Scene ${sceneIndex + 1} Frame Agent complete`)
-          }
-        } else if (failedScenes > 0 && lastSceneError && !rateLimitToastShown) {
+        if (rateLimitedFailureCount > 0) {
+          toast.warning(
+            `Scene ${sceneIndex + 1} Frame Agent complete with ${rateLimitedFailureCount} rate-limited frame${rateLimitedFailureCount === 1 ? '' : 's'}. Use Retry failed.`
+          )
+        } else if (failedScenes === 0 && successScenes > 0) {
+          toast.success(`Scene ${sceneIndex + 1} Frame Agent complete`)
+        } else if (failedScenes > 0 && lastSceneError) {
           toast.error(lastSceneError.slice(0, 200))
         }
       } catch (err: any) {
@@ -15540,6 +15518,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             : prev
         )
       } finally {
+        expressRunningRef.current = false
         if (expressAbortRef.current === abortController) {
           expressAbortRef.current = null
         }

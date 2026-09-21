@@ -17,36 +17,36 @@
 
 import { processWithConcurrency } from '../utils/concurrent-processor'
 import {
-  getSceneExpressBeatConcurrency,
-  getSceneExpressBeat429CooldownMs,
+  FRAME_AGENT_STILL_CONCURRENCY,
   runAdaptiveBeatPool,
   type AdaptiveBeatPoolOptions,
   type AdaptiveBeatPoolResult,
 } from './adaptiveBeatScheduler'
 import {
   isExpressBeatPoolRetryable,
-  isExpressFailFastRateLimitError,
   isExpressImageCanaryAbortError,
   isExpressImageRateLimitError,
   formatExpressImageErrorForUser,
   FRAME_AGENT_CANCELLED_MESSAGE,
   createFrameAgentCancelledError,
+  resolveExpressImageErrorStatus,
 } from './expressImageErrors'
 import {
   ExpressTrafficCop,
-  getExpressImageConcurrency,
   getExpressSceneConcurrency,
 } from './expressTrafficCop'
-import type {
-  ExpressEmit,
-  ExpressEvent,
-  ExpressMode,
-  ExpressOptions,
-  ExpressPerSceneSummary,
-  ExpressPhase,
-  ExpressRateLimitedFailure,
-  ExpressResult,
-  SceneAudioCounts,
+import {
+  expressFrameNodeKey,
+  type ExpressEmit,
+  type ExpressEvent,
+  type ExpressFrameNode,
+  type ExpressMode,
+  type ExpressOptions,
+  type ExpressPerSceneSummary,
+  type ExpressPhase,
+  type ExpressRateLimitedFailure,
+  type ExpressResult,
+  type SceneAudioCounts,
 } from './types'
 import { runSceneExpressPreflight } from './sceneExpressPreflight'
 import {
@@ -56,7 +56,6 @@ import {
 import { generateSceneDirection } from './generateDirection'
 import { generateSceneAudio, applyAudioAssetsToScene } from './generateAudio'
 import { generateSceneImage } from './generateImage'
-import { usesFlashDraftTier } from './animaticImageModel'
 import { shouldScheduleStandaloneNarration } from '../script/narration'
 import {
   detectCharactersNamedInBeat,
@@ -169,14 +168,6 @@ function getExpressImageParams(options: ExpressOptions) {
   })
   // Draft beats are animatic coverage — the image route may serve them from flash.
   return { ...gen, animaticDraft: gen.modelTier === 'eco', ...EXPRESS_SKIP_LIKENESS }
-}
-
-/** Draft beats on flash get a wider image lane than pro identity-ref frames. */
-function usesFlashAnimaticRun(options: ExpressOptions): boolean {
-  return usesFlashDraftTier({
-    isBeatFrame: true,
-    resolvedModelTier: getExpressImageParams(options).modelTier,
-  })
 }
 
 function getBeatGenerationContext(options: ExpressOptions) {
@@ -632,15 +623,12 @@ function recordRateLimitedFailure(
 
 function buildAdaptiveBeatPoolOptions(
   emit: ExpressEmit,
-  options: ExpressOptions,
+  _options: ExpressOptions,
   signal?: AbortSignal
 ): AdaptiveBeatPoolOptions {
-  const concurrency = getSceneExpressBeatConcurrency({
-    flashAnimatic: usesFlashAnimaticRun(options),
-  })
   return {
-    initialConcurrency: concurrency,
-    maxConcurrency: concurrency,
+    initialConcurrency: FRAME_AGENT_STILL_CONCURRENCY,
+    maxConcurrency: FRAME_AGENT_STILL_CONCURRENCY,
     minConcurrency: 1,
     maxAttempts: 1,
     isRetryable: isExpressBeatPoolRetryable,
@@ -651,9 +639,61 @@ function buildAdaptiveBeatPoolOptions(
       }
     },
     abortOnNonRetryableCanary: true,
-    cooldownMsAfterError: (err) =>
-      isExpressFailFastRateLimitError(err) ? getSceneExpressBeat429CooldownMs() : 0,
+    cooldownMsAfterError: () => 0,
     ...(signal ? { signal } : {}),
+  }
+}
+
+function recordFrameNodeFromEvent(
+  event: ExpressEvent,
+  scenes: any[],
+  frames: Record<string, ExpressFrameNode>
+): void {
+  if (event.type !== 'phase-done' || event.phase !== 'image') return
+  if (typeof event.beatIndex !== 'number' && typeof event.dialogueIndex !== 'number') {
+    if (!event.ok && !event.skipped) {
+      const key = expressFrameNodeKey(event.sceneIndex, {})
+      frames[key] = {
+        status: 'failed',
+        code: event.rateLimited ? 429 : resolveExpressImageErrorStatus(event.error) ?? 500,
+        payload: { sceneIndex: event.sceneIndex },
+      }
+    } else if (event.ok && event.imageUrl) {
+      frames[expressFrameNodeKey(event.sceneIndex, {})] = {
+        status: 'ok',
+        imageUrl: event.imageUrl,
+      }
+    }
+    return
+  }
+
+  const key = expressFrameNodeKey(event.sceneIndex, {
+    beatIndex: event.beatIndex,
+    dialogueIndex: event.dialogueIndex,
+    frameRole: event.frameRole,
+  })
+  if (event.ok) {
+    frames[key] = {
+      status: 'ok',
+      ...(event.imageUrl ? { imageUrl: event.imageUrl } : {}),
+    }
+    return
+  }
+
+  const beat =
+    typeof event.beatIndex === 'number'
+      ? getSceneBeats(scenes[event.sceneIndex])[event.beatIndex]
+      : undefined
+  frames[key] = {
+    status: 'failed',
+    code: event.rateLimited ? 429 : resolveExpressImageErrorStatus(event.error) ?? 500,
+    payload: {
+      sceneIndex: event.sceneIndex,
+      ...(typeof event.beatIndex === 'number' ? { beatIndex: event.beatIndex } : {}),
+      ...(typeof event.dialogueIndex === 'number' ? { dialogueIndex: event.dialogueIndex } : {}),
+      frameRole: event.frameRole ?? 'start',
+      ...(beat?.storyboardImagePrompt ? { prompt: beat.storyboardImagePrompt } : {}),
+    },
   }
 }
 
@@ -2183,7 +2223,7 @@ async function runScene(
     }
   }
 
-  const [aRes, iRes] = await Promise.all([
+  const [aSettled, iSettled] = await Promise.allSettled([
     runAudioPhase(
       ctx,
       options,
@@ -2205,6 +2245,14 @@ async function runScene(
       rateLimitedFailures
     ),
   ])
+  const aRes =
+    aSettled.status === 'fulfilled'
+      ? aSettled.value
+      : { ok: false, skipped: false, error: String(aSettled.reason) }
+  const iRes =
+    iSettled.status === 'fulfilled'
+      ? iSettled.value
+      : { ok: false, skipped: false, error: String(iSettled.reason) }
 
   if (aRes.skipped) phasesSkipped.push('audio')
   else if (aRes.ok) phasesRun.push('audio')
@@ -2239,8 +2287,13 @@ async function runScene(
 export async function runExpress(
   params: RunExpressParams
 ): Promise<ExpressResult> {
-  const { project, options, baseUrl, authCookie, emit, onSceneComplete, signal } = params
+  const { project, options, baseUrl, authCookie, emit: rawEmit, onSceneComplete, signal } = params
   const { scenes } = getScenes(project)
+  const frameNodes: Record<string, ExpressFrameNode> = {}
+  const emit: ExpressEmit = (event) => {
+    recordFrameNodeFromEvent(event, scenes, frameNodes)
+    rawEmit(event)
+  }
 
   const sceneIndices =
     options.sceneIndices && options.sceneIndices.length > 0
@@ -2299,7 +2352,7 @@ export async function runExpress(
 
   const trafficCop = new ExpressTrafficCop({
     laneMax: {
-      image: getExpressImageConcurrency({ flashAnimatic: usesFlashAnimaticRun(options) }),
+      image: FRAME_AGENT_STILL_CONCURRENCY,
     },
     onThrottle: (lane, max, cooldownMs) => {
       safeEmit(emit, { type: 'throttle', lane, max, cooldownMs })
@@ -2377,6 +2430,7 @@ export async function runExpress(
     successScenes,
     failedScenes,
     rateLimitedFailures: rateLimitedFailures.length > 0 ? rateLimitedFailures : undefined,
+    ...(Object.keys(frameNodes).length > 0 ? { frames: frameNodes } : {}),
   })
 
   return {

@@ -506,8 +506,26 @@ function logPromptImageTokenUsage(
 
 /**
  * Gemini Image on Vertex (multimodal generateContent).
+ *
+ * Fail-fast holds the process-wide slot for the whole attempt so a sibling
+ * cannot start another generateContent while this 429 is being stamped.
+ * Nested re-entry (IMAGE_SAFETY escalate, retryCount reset) is reentrant on
+ * the gate. Non-fail-fast still wraps only the outbound fetch so backoff
+ * sleeps do not occupy a slot.
  */
 export async function generateVertexGeminiImage(
+  options: GenerateVertexImageOptions,
+  retryCount = 0
+): Promise<VertexImageResult> {
+  if (options.failFastOnRateLimit && retryCount === 0) {
+    return runInVertexImageGate(() =>
+      generateVertexGeminiImageAttempt(options, retryCount)
+    )
+  }
+  return generateVertexGeminiImageAttempt(options, retryCount)
+}
+
+async function generateVertexGeminiImageAttempt(
   options: GenerateVertexImageOptions,
   retryCount = 0
 ): Promise<VertexImageResult> {

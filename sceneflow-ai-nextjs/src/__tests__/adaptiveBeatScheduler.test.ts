@@ -3,6 +3,7 @@ import {
   DEFAULT_SCENE_EXPRESS_BEAT_429_COOLDOWN_MS,
   DEFAULT_SCENE_EXPRESS_BEAT_BACKOFF_MS,
   DEFAULT_SCENE_EXPRESS_BEAT_MAX_BACKOFF_MS,
+  FRAME_AGENT_STILL_CONCURRENCY,
   getSceneExpressBeat429CooldownMs,
   getSceneExpressBeatConcurrency,
   getSceneExpressBeatMaxAttempts,
@@ -48,11 +49,12 @@ describe('getSceneExpressBeatConcurrency', () => {
     else process.env.SCENE_EXPRESS_BEAT_MAX_ATTEMPTS = prevAttempts
   })
 
-  it('defaults to 1 so identity-ref frames run sequentially', () => {
+  it('defaults to 2 so Frame Agent can run two identity-ref frames', () => {
     delete process.env.SCENE_EXPRESS_BEAT_CONCURRENCY
     delete process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY
     delete process.env.EXPRESS_IMAGE_CONCURRENCY
-    expect(getSceneExpressBeatConcurrency()).toBe(1)
+    expect(FRAME_AGENT_STILL_CONCURRENCY).toBe(2)
+    expect(getSceneExpressBeatConcurrency()).toBe(2)
   })
 
   it('defaults maxAttempts to 1 so Express fail-fast stamps the frame and continues', () => {
@@ -363,6 +365,103 @@ describe('runAdaptiveBeatPool', () => {
     expect(result.succeeded.has(1)).toBe(true)
     expect(result.succeeded.has(2)).toBe(true)
     expect(ran).toEqual([0, 1, 2])
+  })
+
+  it('does not AIMD-widen past two after a success streak', async () => {
+    let peak = 0
+    let inFlight = 0
+
+    const promise = runAdaptiveBeatPool(
+      [0, 1, 2, 3, 4, 5],
+      async () => {
+        inFlight++
+        peak = Math.max(peak, inFlight)
+        await Promise.resolve()
+        inFlight--
+      },
+      {
+        initialConcurrency: 2,
+        maxConcurrency: 2,
+        maxAttempts: 1,
+        successesToIncrease: 1,
+      }
+    )
+
+    await vi.runAllTimersAsync()
+    const result = await promise
+
+    expect(result.succeeded.size).toBe(6)
+    expect(peak).toBe(2)
+  })
+
+  it('fail-fast 429 on one in-flight beat does not cancel its sibling', async () => {
+    const started: number[] = []
+    const failFast = new Error(
+      'Vertex Gemini Image error 429: identity-ref rate limit exhausted after 1 attempt(s): RESOURCE_EXHAUSTED'
+    )
+    let releaseSibling!: () => void
+    const siblingHold = new Promise<void>((resolve) => {
+      releaseSibling = resolve
+    })
+
+    const promise = runAdaptiveBeatPool(
+      [0, 1, 2],
+      async (beatIndex) => {
+        started.push(beatIndex)
+        if (beatIndex === 0) throw failFast
+        if (beatIndex === 1) await siblingHold
+      },
+      {
+        initialConcurrency: 2,
+        maxConcurrency: 2,
+        maxAttempts: 1,
+        isRetryable: isExpressBeatPoolRetryable,
+        isCanaryAbort: isExpressImageCanaryAbortError,
+        cooldownMsAfterError: () => 0,
+      }
+    )
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(started).toEqual(expect.arrayContaining([0, 1, 2]))
+
+    releaseSibling()
+    await vi.runAllTimersAsync()
+    const result = await promise
+
+    expect(result.aborted).toBeUndefined()
+    expect(result.failed.has(0)).toBe(true)
+    expect(result.succeeded.has(1)).toBe(true)
+    expect(result.succeeded.has(2)).toBe(true)
+  })
+
+  it('starts the next queued beat immediately after a fail-fast 429', async () => {
+    const startedAt: number[] = []
+    const failFast = new Error(
+      'Vertex Gemini Image error 429: identity-ref rate limit exhausted after 1 attempt(s): RESOURCE_EXHAUSTED'
+    )
+
+    const promise = runAdaptiveBeatPool(
+      [0, 1],
+      async (beatIndex) => {
+        startedAt.push(Date.now())
+        if (beatIndex === 0) throw failFast
+      },
+      {
+        initialConcurrency: 1,
+        maxConcurrency: FRAME_AGENT_STILL_CONCURRENCY,
+        maxAttempts: 1,
+        isRetryable: isExpressBeatPoolRetryable,
+        isCanaryAbort: isExpressImageCanaryAbortError,
+        cooldownMsAfterError: () => 0,
+      }
+    )
+
+    await vi.advanceTimersByTimeAsync(1)
+    expect(startedAt).toHaveLength(2)
+    const result = await promise
+    expect(result.aborted).toBeUndefined()
+    expect(result.failed.has(0)).toBe(true)
+    expect(result.succeeded.has(1)).toBe(true)
   })
 
   it('delays remaining beats after a fail-fast identity-ref 429', async () => {

@@ -65,6 +65,7 @@ vi.mock('@/lib/intelligence/beat-still-director', () => ({
 
 import { runExpress } from '@/lib/sceneGeneration/expressOrchestrator'
 import { planBeatSequence } from '@/lib/intelligence/beat-sequence-planner'
+import { generateSceneImage } from '@/lib/sceneGeneration/generateImage'
 import type { ExpressEvent, ExpressPhase } from '@/lib/sceneGeneration/types'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 
@@ -141,6 +142,12 @@ describe('runExpress', () => {
     } else {
       process.env.EXPRESS_SCENE_CONCURRENCY = originalSceneConcurrency
     }
+    vi.mocked(generateSceneImage).mockImplementation(async (params: Record<string, unknown>) => {
+      imageCalls++
+      capturedImageCalls.push(params)
+      await new Promise((r) => setTimeout(r, 15))
+      return { imageUrl: `https://example.com/beat-${params.beatIndex ?? 0}.png` }
+    })
     vi.clearAllMocks()
   })
 
@@ -515,5 +522,58 @@ describe('runExpress', () => {
     expect(firstBeat.characterWardrobes).toBeUndefined()
     expect(firstBeat.skipObjectAutoDetection).toBe(true)
     expect(firstBeat.characterSelectionExplicit).toBe(true)
+  })
+
+  it('emits complete.frames with isolated ok and 429 nodes', async () => {
+    vi.mocked(generateSceneImage).mockImplementation(async (params: Record<string, unknown>) => {
+      imageCalls++
+      capturedImageCalls.push(params)
+      if (params.beatIndex === 1) {
+        throw new Error(
+          'Vertex Gemini Image error 429: identity-ref rate limit exhausted after 1 attempt(s): RESOURCE_EXHAUSTED'
+        )
+      }
+      return { imageUrl: `https://example.com/beat-${params.beatIndex ?? 0}.png` }
+    })
+
+    const project = buildProject(1)
+    const rawBeats = project.metadata.visionPhase.script.script.scenes[0].beats as Array<{
+      storyboardImagePrompt?: string
+    }>
+    rawBeats[1].storyboardImagePrompt = 'Beat 1 prompt'
+
+    const events: ExpressEvent[] = []
+    const result = await runExpress({
+      project,
+      options: { projectId: 'p1', mode: 'scene', sceneIndices: [0], regenerate: true },
+      baseUrl: 'http://localhost',
+      emit: (e) => events.push(e),
+    })
+
+    const complete = events.find((e) => e.type === 'complete')
+    expect(complete?.type).toBe('complete')
+    if (complete?.type !== 'complete') return
+
+    expect(complete.frames?.['scene:0:beat:0:start']).toEqual({
+      status: 'ok',
+      imageUrl: 'https://example.com/beat-0.png',
+    })
+    expect(complete.frames?.['scene:0:beat:1:start']).toEqual({
+      status: 'failed',
+      code: 429,
+      payload: {
+        sceneIndex: 0,
+        beatIndex: 1,
+        frameRole: 'start',
+        prompt: 'Beat 1 prompt',
+      },
+    })
+    expect(complete.frames?.['scene:0:beat:2:start']).toEqual({
+      status: 'ok',
+      imageUrl: 'https://example.com/beat-2.png',
+    })
+    expect(result.successScenes).toBe(0)
+    expect(result.failedScenes).toBe(1)
+    expect(capturedImageCalls.every((call) => call.skipLikenessValidation === true)).toBe(true)
   })
 })

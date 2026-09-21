@@ -6,7 +6,7 @@
  * When significant 429s occur, enters a regulated state with tighter global caps.
  *
  * Capacity ladder (EXPRESS_IMAGE_CONCURRENCY):
- * - Shared Vertex identity-ref: default 1 (sequential first-try; 2 was a 429 storm)
+ * - Shared Vertex identity-ref: default 2 (fail-fast + isolated siblings)
  * - Dedicated GCP / higher quota: set env to 6–12
  */
 
@@ -42,15 +42,14 @@ export interface ExpressTrafficCopOptions {
 
 const EXPRESS_LANES: ExpressLane[] = ['text', 'image', 'audio']
 
-/** Default image in-flight cap — sequential identity-ref jobs. */
-export const DEFAULT_EXPRESS_IMAGE_CONCURRENCY = 1
+/** Default image in-flight cap — two identity-ref jobs, fail-fast isolated. */
+export const DEFAULT_EXPRESS_IMAGE_CONCURRENCY = 2
 
 /**
- * Draft beats used to run two-wide on flash. Identity-ref jobs on that lane
- * 429ed, and a leftover default of 3 started a third child generate-image.
- * Sequential is the intended cap for every still, including flash.
+ * Draft beats share the same two-wide cap as pro identity-ref frames.
+ * Wider than 2 stacked 429s; Frame Agent pins the pool to this default.
  */
-export const DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY = 1
+export const DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY = 2
 
 /** Default TTS in-flight cap for Express Audio / Storyboard Express audio lane. */
 export const DEFAULT_EXPRESS_AUDIO_CONCURRENCY = 8

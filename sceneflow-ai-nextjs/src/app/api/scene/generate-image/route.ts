@@ -226,6 +226,7 @@ import {
   resolveExpressImageErrorStatus,
 } from '@/lib/sceneGeneration/expressImageErrors'
 import { isVertexImageAbortedByClient } from '@/lib/vertexai/vertexImageClient'
+import { runInSceneImageAdmission } from '@/lib/vertexai/vertexImageGate'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300  // Two full generate + validate rounds must fit
@@ -586,6 +587,10 @@ function stripClothingDescriptors(description: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  return runInSceneImageAdmission(() => postGenerateImage(req))
+}
+
+async function postGenerateImage(req: NextRequest) {
   let userId: string | null = null
   let creditsCharged = 0
   const CREDIT_COST = IMAGE_CREDITS.FAL_KLING_IMAGE // 12 credits per image

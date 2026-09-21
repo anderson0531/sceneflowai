@@ -81,23 +81,23 @@ describe('usesFlashDraftTier', () => {
 })
 
 describe('animatic concurrency', () => {
-  it('runs draft frames sequentially like pro identity-ref frames', () => {
-    expect(DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY).toBe(1)
-    expect(DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY).toBe(1)
-    expect(DEFAULT_EXPRESS_IMAGE_CONCURRENCY).toBe(1)
-    expect(DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY).toBe(1)
+  it('caps draft and pro identity-ref frames at two concurrent gens', () => {
+    expect(DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY).toBe(2)
+    expect(DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY).toBe(2)
+    expect(DEFAULT_EXPRESS_IMAGE_CONCURRENCY).toBe(2)
+    expect(DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY).toBe(2)
   })
 
-  it('keeps flash and pro image lanes sequential unless env overrides', () => {
+  it('keeps flash and pro image lanes at the two-wide default unless env overrides', () => {
     delete process.env.EXPRESS_IMAGE_CONCURRENCY
     expect(getExpressImageConcurrency()).toBe(DEFAULT_EXPRESS_IMAGE_CONCURRENCY)
-    expect(getExpressImageConcurrency({ flashAnimatic: false })).toBe(1)
+    expect(getExpressImageConcurrency({ flashAnimatic: false })).toBe(2)
     expect(getExpressImageConcurrency({ flashAnimatic: true })).toBe(
       DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY
     )
   })
 
-  it('keeps the flash beat pool sequential unless env overrides', () => {
+  it('keeps the flash beat pool at the two-wide default unless env overrides', () => {
     delete process.env.SCENE_EXPRESS_BEAT_CONCURRENCY
     delete process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY
     delete process.env.EXPRESS_IMAGE_CONCURRENCY
