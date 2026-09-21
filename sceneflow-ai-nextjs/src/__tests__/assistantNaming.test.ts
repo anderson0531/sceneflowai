@@ -45,7 +45,7 @@ describe('Assistant naming', () => {
   it('keeps the marketing name and a short in-app label', () => {
     expect(ASSISTANT.full).toBe('Intelligent Assistant Director')
     expect(ASSISTANT.abbr).toBe('IAD')
-    expect(ASSISTANT.short).toBe('Assistant')
+    expect(ASSISTANT.short).toBe('Co-Director')
     expect(ASSISTANT_FULL_WITH_ABBR).toBe('Intelligent Assistant Director (IAD)')
   })
 
@@ -58,10 +58,10 @@ describe('Assistant naming', () => {
   })
 
   it('builds dialog titles and accessible names from the short label', () => {
-    expect(assistantTitle('Blueprint')).toBe('Assistant · Blueprint')
-    expect(assistantTitle('Scene 3')).toBe('Assistant · Scene 3')
-    expect(assistantAriaLabel('Beats & Runtime')).toBe('Assistant — Beats & Runtime')
-    expect(assistantAriaLabel()).toBe('Assistant')
+    expect(assistantTitle('Blueprint')).toBe('Co-Director · Blueprint')
+    expect(assistantTitle('Scene 3')).toBe('Co-Director · Scene 3')
+    expect(assistantAriaLabel('Beats & Runtime')).toBe('Co-Director — Beats & Runtime')
+    expect(assistantAriaLabel()).toBe('Co-Director')
   })
 
   it('routes the Blueprint edit label through the shared constant', () => {
@@ -120,6 +120,14 @@ describe('Assistant naming', () => {
   it('keeps the marketing string in the English messages catalogue', () => {
     const messages = readSource('messages/en.json')
     expect(messages).toContain(ASSISTANT_FULL_WITH_ABBR)
+  })
+
+  it('keeps the short label in the English Blueprint catalogue', () => {
+    const catalog = JSON.parse(readSource('messages/app/en/blueprint.json')) as {
+      assistantButton: { label: string; scopedLabel: string }
+    }
+    expect(catalog.assistantButton.label).toBe(ASSISTANT.short)
+    expect(catalog.assistantButton.scopedLabel).toContain(ASSISTANT.short)
   })
 
   it('keeps the label module free of the icon library so API routes stay light', () => {

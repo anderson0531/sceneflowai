@@ -110,6 +110,8 @@ describe('glossary contents', () => {
     expect(GLOSSARY_TERMS).toContain('Blueprint Studio')
     expect(GLOSSARY_TERMS).toContain('Series Studio')
     expect(GLOSSARY_TERMS).toContain('Production Studio')
+    expect(GLOSSARY_TERMS).toContain('Intelligent Assistant Director')
+    expect(GLOSSARY_TERMS).toContain('Co-Director')
   })
 
   it('protects the Agent actions, whose names are product terms', () => {
@@ -126,6 +128,13 @@ describe('glossary contents', () => {
     ]) {
       expect(GLOSSARY_TERMS).toContain(term)
     }
+  })
+
+  it('keeps Co-Director intact rather than translating it as a role title', () => {
+    const { protectedText, map } = protectGlossary('Use the Co-Director for targeted edits instead.')
+
+    expect(protectedText).not.toContain('Co-Director')
+    expect(restoreGlossary(protectedText, map)).toContain('Co-Director')
   })
 
   it('keeps "Run All Agents" intact rather than translating it as a verb phrase', () => {

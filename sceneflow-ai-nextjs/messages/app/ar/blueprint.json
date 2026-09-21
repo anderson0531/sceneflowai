@@ -356,7 +356,7 @@
     "generate": {
       "title": "الخطوة 1 — إنشاء",
       "description": "ابدأ من حلقة مسلسل أو مفهوم أو نص مستورد. قم بإنشاء معالجة منظمة مع خط السجل والنبضات والشخصيات والنبرة.",
-      "tip": "استخدم إعادة إنشاء Blueprint لإعادة تعيين كاملة ؛ المساعد للتغييرات المحددة النطاق."
+      "tip": "استخدم إعادة إنشاء Blueprint لإعادة تعيين كاملة ؛ Co-Director للتغييرات المحددة النطاق."
     },
     "review": {
       "title": "الخطوة 2 — المراجعة",
@@ -411,8 +411,8 @@
     "needScore": "Audience Resonance أقل من {target} (النتيجة: {score})."
   },
   "assistantButton": {
-    "label": "المساعد",
-    "scopedLabel": "مساعد — {scope}",
+    "label": "Co-Director",
+    "scopedLabel": "Co-Director — {scope}",
     "tooltip": "{brand} — صف التغيير بكلمات بسيطة وراجعه لك"
   },
   "chips": {

@@ -356,7 +356,7 @@
     "generate": {
       "title": "ขั้นตอนที่ 1 — สร้าง",
       "description": "เริ่มจากซีรีส์คอนเซ็ปต์หรือสคริปต์ที่นำเข้าสร้างการรักษาที่มีโครงสร้างด้วย logline, beat, character และ tone",
-      "tip": "ใช้ Regenerate Blueprint สำหรับการรีเซ็ตแบบเต็ม; ผู้ช่วยสำหรับการเปลี่ยนแปลงที่กำหนดขอบเขต"
+      "tip": "ใช้ Regenerate Blueprint สำหรับการรีเซ็ตแบบเต็ม; Co-Director สำหรับการเปลี่ยนแปลงที่กำหนดขอบเขต"
     },
     "review": {
       "title": "ขั้นตอนที่ 2 — รีวิว",
@@ -411,8 +411,8 @@
     "needScore": "Audience Resonance ต่ำกว่า {target} (คะแนน: {score})"
   },
   "assistantButton": {
-    "label": "ผู้ช่วย",
-    "scopedLabel": "ผู้ช่วย — {scope}",
+    "label": "Co-Director",
+    "scopedLabel": "Co-Director — {scope}",
     "tooltip": "{brand} — อธิบายการเปลี่ยนแปลงในคำธรรมดาและแก้ไขให้คุณ"
   },
   "chips": {

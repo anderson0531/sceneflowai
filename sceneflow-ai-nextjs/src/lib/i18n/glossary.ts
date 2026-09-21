@@ -26,6 +26,8 @@ export const GLOSSARY_TERMS = [
   'Production Mixer',
   'Beat Frames',
   'Audience Resonance',
+  'Intelligent Assistant Director',
+  'Co-Director',
   'Screening Room',
   'Reference Library',
   'Final Cut',

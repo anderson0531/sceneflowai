@@ -100,7 +100,7 @@
   },
   "regenerate": {
     "sectionTitle": "Start over from scratch",
-    "sectionHint": "Regenerate replaces the entire Blueprint. Use the Assistant for targeted edits instead.",
+    "sectionHint": "Regenerate replaces the entire Blueprint. Use the Co-Director for targeted edits instead.",
     "confirmTitle": "Regenerate Blueprint?",
     "confirmDescription": "This will replace your current Blueprint with a new AI-generated treatment. Manual edits, resonance scores, and variant history for this blueprint will be lost. This cannot be undone.",
     "cancel": "Cancel",
@@ -448,7 +448,7 @@
     "generate": {
       "title": "Step 1 — Generate",
       "description": "Start from a series episode, concept, or imported script. Generate a structured treatment with logline, beats, characters, and tone.",
-      "tip": "Use Regenerate Blueprint for a full reset; the Assistant for scoped changes."
+      "tip": "Use Regenerate Blueprint for a full reset; the Co-Director for scoped changes."
     },
     "review": {
       "title": "Step 2 — Review",
@@ -503,8 +503,8 @@
     "needScore": "Audience Resonance is below {target} (score: {score})."
   },
   "assistantButton": {
-    "label": "Assistant",
-    "scopedLabel": "Assistant — {scope}",
+    "label": "Co-Director",
+    "scopedLabel": "Co-Director — {scope}",
     "tooltip": "{brand} — describe the change in plain words and it revises for you"
   },
   "chips": {

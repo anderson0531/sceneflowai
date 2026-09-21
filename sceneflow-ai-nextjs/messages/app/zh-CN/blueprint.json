@@ -356,7 +356,7 @@
     "generate": {
       "title": "第1步—生成",
       "description": "从系列剧集、概念或导入的脚本开始。使用对数线、节拍、字符和音调生成结构化治疗。",
-      "tip": "使用Regenerate Blueprint进行完全重置；使用Assistant进行范围更改。"
+      "tip": "使用Regenerate Blueprint进行完全重置；使用Co-Director进行范围更改。"
     },
     "review": {
       "title": "第2步—查看",
@@ -411,8 +411,8 @@
     "needScore": "Audience Resonance低于{target} （分数： {score} ）。"
   },
   "assistantButton": {
-    "label": "援助",
-    "scopedLabel": "助理— {scope}",
+    "label": "Co-Director",
+    "scopedLabel": "Co-Director — {scope}",
     "tooltip": "{brand} —用简单的词语描述变化，并为您修改"
   },
   "chips": {

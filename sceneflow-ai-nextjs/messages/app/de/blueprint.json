@@ -356,7 +356,7 @@
     "generate": {
       "title": "Schritt 1 — Generieren",
       "description": "Beginnen Sie mit einer Serienepisode, einem Konzept oder einem importierten Skript. Generieren Sie eine strukturierte Behandlung mit Logline, Beats, Charakteren und Ton.",
-      "tip": "Verwenden Sie Regenerate Blueprint für einen vollständigen Reset; den Assistenten für bereichsbezogene Änderungen."
+      "tip": "Verwenden Sie Regenerate Blueprint für einen vollständigen Reset; den Co-Director für bereichsbezogene Änderungen."
     },
     "review": {
       "title": "Schritt 2: Korrekturlesen",
@@ -411,8 +411,8 @@
     "needScore": "Audience Resonance liegt unter {target} (Score: {score})."
   },
   "assistantButton": {
-    "label": "Assistent/in",
-    "scopedLabel": "Assistent — {scope}",
+    "label": "Co-Director",
+    "scopedLabel": "Co-Director — {scope}",
     "tooltip": "{brand} — beschreiben Sie die Änderung in einfachen Worten und sie wird für Sie überarbeitet"
   },
   "chips": {
