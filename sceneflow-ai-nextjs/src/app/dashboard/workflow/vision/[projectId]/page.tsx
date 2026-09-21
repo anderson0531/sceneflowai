@@ -7579,10 +7579,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           : Array.isArray((polishAnalysis as { recommendations?: unknown[] } | undefined)?.recommendations)
             ? (polishAnalysis as { recommendations: unknown[] }).recommendations.length
             : 0
-      const stale = job.result?.stale === true
-      const message = stale
-        ? tStudio('polishStale')
-        : issueCount === 0
+      const message =
+        issueCount === 0
           ? tStudio('polishSuccessAligned')
           : tStudio('polishSuccess', { count: issueCount })
 
@@ -17973,7 +17971,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           viewResultLabel={tStudio('polishViewResults')}
           describeResult={(job) => {
             const issueCount = Number(job.result?.issueCount ?? 0)
-            if (job.result?.stale === true) return tStudio('polishStale')
             return issueCount === 0
               ? tStudio('polishSuccessAligned')
               : tStudio('polishSuccess', { count: issueCount })
