@@ -21,6 +21,18 @@ import {
 
 const PRIORITIES: readonly PolishPriority[] = ['high', 'medium', 'low']
 
+/** Gemini 3 thinking shares this cap; 4k left high thinking with no room for JSON. */
+export const POLISH_MIN_OUTPUT_TOKENS = 16384
+export const POLISH_MAX_OUTPUT_TOKENS = 32768
+export const POLISH_TOKENS_PER_BEAT = 400
+export const POLISH_TIMEOUT_MS = 120000
+export const POLISH_BUDGET_ERROR = 'Polish ran out of output budget — retry'
+
+export function polishOutputTokenBudget(beatCount: number): number {
+  const scaled = Math.max(POLISH_MIN_OUTPUT_TOKENS, Math.max(0, beatCount) * POLISH_TOKENS_PER_BEAT)
+  return Math.min(POLISH_MAX_OUTPUT_TOKENS, scaled)
+}
+
 export function isPolishCategory(value: unknown): value is PolishCategory {
   return typeof value === 'string' && (POLISH_CATEGORIES as readonly string[]).includes(value)
 }
@@ -161,28 +173,50 @@ export function parsePolishAnalysis(
   }
 }
 
+function isAlignedEmptyResult(parsed: { notes: string; recommendations: unknown[] }): boolean {
+  return parsed.recommendations.length === 0 && /align/i.test(parsed.notes)
+}
+
 export async function analyzeScenePolish(
   input: AnalyzeScenePolishInput
 ): Promise<ScenePolishAnalysis> {
+  const beatCount = getSceneBeats(input.scene as Record<string, unknown>).length
+  const maxOutputTokens = polishOutputTokenBudget(beatCount)
   const prompt = buildPolishPrompt(input)
   const result = await generateText(prompt, {
     model: getAudienceResonanceModel(),
     temperature: 0.1,
-    maxOutputTokens: 4000,
+    maxOutputTokens,
     thinkingLevel: 'high',
     responseMimeType: 'application/json',
-    timeoutMs: 60000,
+    timeoutMs: POLISH_TIMEOUT_MS,
     maxRetries: 1,
   })
 
   if (result.finishReason === 'SAFETY') {
     throw new Error('Scene polish was blocked by safety filters.')
   }
-  if (result.finishReason === 'MAX_TOKENS') {
-    throw new Error('Scene polish was truncated. Try a shorter scene.')
+
+  let parsed: ReturnType<typeof parsePolishAnalysis>
+  try {
+    parsed = parsePolishAnalysis(result.text, input.scene)
+  } catch {
+    if (result.finishReason === 'MAX_TOKENS') {
+      throw new Error(POLISH_BUDGET_ERROR)
+    }
+    throw new Error('Failed to parse scene polish JSON')
   }
 
-  const parsed = parsePolishAnalysis(result.text, input.scene)
+  // Truncation can repair to notes-only with an empty rec list. Do not treat that
+  // as a successful aligned scene unless the notes say the timeline is aligned.
+  if (
+    result.finishReason === 'MAX_TOKENS' &&
+    parsed.recommendations.length === 0 &&
+    !isAlignedEmptyResult(parsed)
+  ) {
+    throw new Error(POLISH_BUDGET_ERROR)
+  }
+
   return {
     ...parsed,
     beatFingerprint: scenePolishBeatFingerprint(input.scene),

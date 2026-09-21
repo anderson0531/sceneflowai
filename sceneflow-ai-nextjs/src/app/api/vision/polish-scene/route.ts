@@ -3,7 +3,7 @@ import { analyzeScenePolish } from '@/lib/script/scenePolish'
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { localeDirective } from '@/lib/prompts/localeDirective'
 
-export const maxDuration = 60
+export const maxDuration = 120
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {

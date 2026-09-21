@@ -16,7 +16,11 @@ import {
   isPolishAnalysisStale,
   parsePolishAnalysis,
   pendingPolishRecommendations,
+  polishOutputTokenBudget,
   scenePolishBeatFingerprint,
+  POLISH_BUDGET_ERROR,
+  POLISH_MIN_OUTPUT_TOKENS,
+  POLISH_TIMEOUT_MS,
 } from '@/lib/script/scenePolish'
 
 const ROOT = path.resolve(__dirname, '../..')
@@ -116,6 +120,15 @@ describe('Scene polish parser', () => {
       []
     )
   })
+
+  it('rejects incomplete JSON instead of inventing an empty rec list', () => {
+    expect(() =>
+      parsePolishAnalysis(
+        '{"notes": "Wrench pickup is out of order.", "recommendations": [{"text": "Beat 2',
+        wrenchScene()
+      )
+    ).toThrow('Failed to parse scene polish JSON')
+  })
 })
 
 describe('Scene polish prompt', () => {
@@ -150,6 +163,47 @@ describe('analyzeScenePolish', () => {
     expect(result).not.toHaveProperty('audienceAnalysis')
     expect(isPolishAnalysisStale(result, wrenchScene())).toBe(false)
   })
+
+  it('requests a thinking-aware output budget, not the 4k cap that truncated production scenes', async () => {
+    generateText.mockResolvedValue({
+      text: JSON.stringify(wrenchLlmJson),
+      finishReason: 'STOP',
+    })
+
+    await analyzeScenePolish({ scene: wrenchScene() })
+
+    expect(polishOutputTokenBudget(2)).toBe(POLISH_MIN_OUTPUT_TOKENS)
+    expect(polishOutputTokenBudget(30)).toBeGreaterThanOrEqual(POLISH_MIN_OUTPUT_TOKENS)
+    expect(generateText).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        maxOutputTokens: POLISH_MIN_OUTPUT_TOKENS,
+        thinkingLevel: 'high',
+        timeoutMs: POLISH_TIMEOUT_MS,
+      })
+    )
+  })
+
+  it('accepts complete JSON even when finishReason is MAX_TOKENS', async () => {
+    generateText.mockResolvedValue({
+      text: JSON.stringify(wrenchLlmJson),
+      finishReason: 'MAX_TOKENS',
+      modelId: 'gemini-3.8-flash',
+    })
+
+    const result = await analyzeScenePolish({ scene: wrenchScene() })
+    expect(result.issueCount).toBe(1)
+    expect(result.recommendations[0].category).toBe('prop_state')
+  })
+
+  it('does not treat truncated JSON as an empty aligned scene', async () => {
+    generateText.mockResolvedValue({
+      text: '{"notes": "Wrench pickup is out of order.", "recommendations": [{"text": "Beat 2',
+      finishReason: 'MAX_TOKENS',
+    })
+
+    await expect(analyzeScenePolish({ scene: wrenchScene() })).rejects.toThrow(POLISH_BUDGET_ERROR)
+  })
 })
 
 describe('Scene polish wiring', () => {
@@ -157,10 +211,15 @@ describe('Scene polish wiring', () => {
     const route = readSource('src/app/api/vision/polish-scene/route.ts')
     expect(route).toContain("from '@/lib/script/scenePolish'")
     expect(route).toContain('analyzeScenePolish')
+    expect(route).toContain('maxDuration = 120')
+
+    const vercel = readSource('vercel.json')
+    expect(vercel).toContain('src/app/api/vision/polish-scene/route.ts')
 
     const analyzer = readSource('src/lib/script/scenePolish/analyzeScenePolish.ts')
     expect(analyzer).toContain('getAudienceResonanceModel')
     expect(analyzer).not.toContain('audienceAnalysis')
+    expect(analyzer).not.toContain('Try a shorter scene')
   })
 
   it('wires Polish from Vision into ScriptPanel and Co-Director', () => {
