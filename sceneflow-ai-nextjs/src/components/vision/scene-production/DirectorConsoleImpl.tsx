@@ -35,7 +35,6 @@ import {
   Film,
   Loader2,
   Settings2,
-  Sparkles,
   Clapperboard,
   Mic2,
   Volume2,
@@ -51,6 +50,7 @@ import {
   ChevronRight,
   Wand2,
   ListVideo,
+  Zap,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -122,6 +122,24 @@ const ProductionStreamsPanel = dynamic(
   { ssr: false }
 )
 import { ProductionSectionHeader } from './ProductionSectionHeader'
+import { useTranslations } from 'next-intl'
+import { StoryboardQualityToggle } from '@/components/vision/StoryboardQualityToggle'
+import { StoryboardGenerationModeToggle } from '@/components/vision/StoryboardGenerationModeToggle'
+import {
+  VideoAgentConfirmDialog,
+  type VideoAgentConfirmOptions,
+  type VideoAgentBeatOption,
+} from '@/components/vision/VideoAgentConfirmDialog'
+import {
+  applyVideoGenerationToConfig,
+  resolveVideoGeneration,
+  type VideoGenerationMode,
+  type VideoGenerationQuality,
+} from '@/lib/video/videoGenerationPolicy'
+import {
+  SCENEFLOW_ENGINE_ID,
+  snapDurationForEngine,
+} from './videoEngineOptions'
 // Dynamic import for SceneProductionMixer to avoid TDZ with LocalRenderService chain
 const SceneProductionMixer = dynamic(
   () => import('./SceneProductionMixer').then(mod => ({ default: mod.SceneProductionMixer })),
@@ -281,6 +299,11 @@ export interface DirectorConsoleProps {
   onVideoRunReport?: import('@/lib/video/videoQueueRunReport').VideoQueueRunReporter
   /** Hand the page a cancel for the run it is now reporting. */
   onVideoRunCancelReady?: (cancel: () => void) => void
+  /** Session default for Video Agent and Take. Not persisted. */
+  videoGenerationQuality?: VideoGenerationQuality
+  onVideoGenerationQualityChange?: (quality: VideoGenerationQuality) => void
+  videoGenerationMode?: VideoGenerationMode
+  onVideoGenerationModeChange?: (mode: VideoGenerationMode) => void
 }
 
 /** Slots for splitting Video / Mixer / Streams across parent section cards (ScriptPanel). */
@@ -355,6 +378,10 @@ export function DirectorConsoleRoot({
   projectStreams,
   onVideoRunReport,
   onVideoRunCancelReady,
+  videoGenerationQuality = 'draft',
+  onVideoGenerationQualityChange,
+  videoGenerationMode = 'standard',
+  onVideoGenerationModeChange,
   children,
 }: DirectorConsoleProps & {
   children?: (slots: DirectorWorkflowSlots) => React.ReactNode
@@ -408,6 +435,8 @@ export function DirectorConsoleRoot({
     }
   }, [scene, effectiveGuideCharacters, normalizedSceneSfx, sceneIndex, characters, locationReferences, objectReferences])
 
+  const tVideoAgent = useTranslations('production.videoAgent')
+
   const videoGenerationAvailable = useMemo(
     () => segments.some(s => s.activeAssetUrl && s.status === 'COMPLETE'),
     [segments]
@@ -454,6 +483,7 @@ export function DirectorConsoleRoot({
   
   // Selected segment for DirectorDialog
   const [selectedSegment, setSelectedSegment] = useState<SceneSegment | null>(null)
+  const [videoAgentDialogOpen, setVideoAgentDialogOpen] = useState(false)
 
   // Retake confirmation when replacing a completed take via Take or Upload
   const [pendingRetakeAction, setPendingRetakeAction] = useState<PendingRetakeAction | null>(null)
@@ -952,86 +982,116 @@ export function DirectorConsoleRoot({
     ]
   )
 
-  // Handle batch render — Express queues segments with REF or I2V configs
-  const handleExpress = useCallback(() => {
-    const expressIds = queue
-      .filter((item) => {
-        const segment = segments.find((s) => s.segmentId === item.segmentId)
-        if (!segment) return false
-
-        const cfg = item.config
-        const resolvedStart =
-          resolveEffectiveStartFrameUrl(
-            segment,
-            scene as Record<string, unknown> | undefined,
-            sceneImageUrl
-          ) ||
-          (cfg.startFrameUrl && String(cfg.startFrameUrl).trim()) ||
-          segment.startFrameUrl?.trim() ||
-          segment.references?.startFrameUrl?.trim() ||
-          ''
-
-        const hasStartFrame = !!resolvedStart
-        const hasRefs =
-          (cfg.referenceImages?.length ?? 0) > 0 || cfg.mode === 'REF'
-        const isCompleteOrRendering =
-          item.status === 'complete' || item.status === 'rendering'
-
-        return (hasRefs || hasStartFrame) && !isCompleteOrRendering
-      })
-      .map((item) => item.segmentId)
-
-    if (expressIds.length === 0) {
-      import('sonner').then(({ toast }) => {
-        toast.info(
-          'No eligible segments for Video Agent — need beat references or a start Beat Frame, and not already rendering.'
-        )
-      })
-      return
-    }
-
-    for (const segmentId of expressIds) {
-      const item = queue.find((q) => q.segmentId === segmentId)
-      if (!item) continue
-      const segment = segments.find((s) => s.segmentId === segmentId)
+  // Handle batch render — Video Agent queues segments with REF or I2V configs
+  const segmentHasVideoAgentInputs = useCallback(
+    (item: DirectorQueueItem, segment: SceneSegment | undefined) => {
+      if (!segment) {
+        return { hasStartFrame: false, hasRefs: false, resolvedStart: '', eligible: false }
+      }
       const cfg = item.config
       const resolvedStart =
-        (segment &&
-          resolveEffectiveStartFrameUrl(
-            segment,
-            scene as Record<string, unknown> | undefined,
-            sceneImageUrl
-          )) ||
+        resolveEffectiveStartFrameUrl(
+          segment,
+          scene as Record<string, unknown> | undefined,
+          sceneImageUrl
+        ) ||
         (cfg.startFrameUrl && String(cfg.startFrameUrl).trim()) ||
-        segment?.startFrameUrl?.trim() ||
-        segment?.references?.startFrameUrl?.trim() ||
+        segment.startFrameUrl?.trim() ||
+        segment.references?.startFrameUrl?.trim() ||
         ''
       const hasStartFrame = !!resolvedStart
-      const hasRefs =
-        (cfg.referenceImages?.length ?? 0) > 0 || cfg.mode === 'REF'
-      const expressMethod = resolveExpressGenerationMethod(hasRefs, hasStartFrame)
+      const hasRefs = (cfg.referenceImages?.length ?? 0) > 0 || cfg.mode === 'REF'
+      return { hasStartFrame, hasRefs, resolvedStart, eligible: hasRefs || hasStartFrame }
+    },
+    [scene, sceneImageUrl]
+  )
 
-      updateConfig(segmentId, {
-        ...item.config,
-        videoProvider: 'kling',
-        klingModel: 'kling-v3-omni',
-        klingQuality: 'pro',
-        resolution: '1080p',
-        duration: 10,
+  const videoAgentBeats = useMemo<VideoAgentBeatOption[]>(
+    () =>
+      queue.map((item) => {
+        const segment = segments.find((s) => s.segmentId === item.segmentId)
+        const inputs = segmentHasVideoAgentInputs(item, segment)
+        return {
+          segmentId: item.segmentId,
+          sequenceIndex: item.sequenceIndex,
+          hasVideo: item.status === 'complete',
+          isRendering: item.status === 'rendering',
+          hasError: item.status === 'error',
+          eligible: inputs.eligible,
+        }
+      }),
+    [queue, segments, segmentHasVideoAgentInputs]
+  )
+
+  const applyVideoAgentPolicyToItem = useCallback(
+    (item: DirectorQueueItem, options: VideoAgentConfirmOptions) => {
+      const policy = resolveVideoGeneration({
+        quality: options.quality,
+        mode: options.generationMode,
+      })
+      const segment = segments.find((s) => s.segmentId === item.segmentId)
+      const inputs = segmentHasVideoAgentInputs(item, segment)
+      const expressMethod = resolveExpressGenerationMethod(inputs.hasRefs, inputs.hasStartFrame)
+      const selection =
+        policy.videoProvider === 'kling'
+          ? ({
+              engineId: SCENEFLOW_ENGINE_ID,
+              qualityTierId: options.quality === 'final' ? 'cinematic' : 'standard',
+            } as const)
+          : ({ engineId: 'natural-dialogue' } as const)
+      const duration = snapDurationForEngine(item.config.duration || 10, selection)
+      return applyVideoGenerationToConfig(item.config, policy, {
         mode: expressMethod,
         expressMode: true,
-        allowVeoFallback: false,
+        duration,
+        resolution: policy.resolution,
       })
-    }
+    },
+    [segments, segmentHasVideoAgentInputs]
+  )
 
-    processQueue({
-      mode: 'selected',
-      priority: 'sequence',
-      delayBetween: 500,
-      selectedIds: expressIds,
-      concurrency: 3,
-    })
-  }, [queue, segments, sceneImageUrl, processQueue, updateConfig])
+  const handleVideoAgentConfirm = useCallback(
+    (options: VideoAgentConfirmOptions) => {
+      const selected = new Set(options.selectedSegmentIds)
+      const expressIds = queue
+        .filter((item) => selected.has(item.segmentId) && item.status !== 'rendering')
+        .map((item) => item.segmentId)
+
+      if (expressIds.length === 0) {
+        import('sonner').then(({ toast }) => {
+          toast.info(
+            'No eligible segments for Video Agent — need beat references or a start Beat Frame, and not already rendering.'
+          )
+        })
+        return
+      }
+
+      const overrideConfigs = new Map<string, VideoGenerationConfig>()
+      for (const segmentId of expressIds) {
+        const item = queue.find((q) => q.segmentId === segmentId)
+        if (!item) continue
+        const nextConfig = applyVideoAgentPolicyToItem(item, options)
+        overrideConfigs.set(segmentId, nextConfig)
+        updateConfig(segmentId, nextConfig)
+      }
+
+      setVideoAgentDialogOpen(false)
+      processQueue({
+        mode: 'selected',
+        priority: 'sequence',
+        delayBetween: 500,
+        selectedIds: expressIds,
+        concurrency: 3,
+        overrideConfigs,
+      })
+    },
+    [queue, applyVideoAgentPolicyToItem, processQueue, updateConfig]
+  )
+
+  const handleOpenVideoAgent = useCallback(() => {
+    if (queue.length === 0) return
+    setVideoAgentDialogOpen(true)
+  }, [queue.length])
 
   // === Text Overlay Handlers ===
   
@@ -1574,7 +1634,41 @@ export function DirectorConsoleRoot({
     ) : null
 
   const generateControls = (
-    <div className="flex flex-wrap gap-2 justify-end">
+    <div className="flex flex-wrap gap-2 justify-end items-center">
+      <div className="flex items-center gap-1.5">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex">
+              <StoryboardQualityToggle
+                size="compact"
+                value={videoGenerationQuality}
+                onChange={onVideoGenerationQualityChange ?? (() => {})}
+                draftLabel={tVideoAgent('qualityDraft')}
+                finalLabel={tVideoAgent('qualityFinal')}
+                disabled={isRendering}
+                ariaLabel="Video generation quality"
+              />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs">{tVideoAgent('qualityTooltip')}</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex">
+              <StoryboardGenerationModeToggle
+                size="compact"
+                value={videoGenerationMode}
+                onChange={onVideoGenerationModeChange ?? (() => {})}
+                standardLabel={tVideoAgent('modeStandard')}
+                creativeLabel={tVideoAgent('modeCreative')}
+                disabled={isRendering}
+                ariaLabel="Video generation mode"
+              />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs">{tVideoAgent('modeTooltip')}</TooltipContent>
+        </Tooltip>
+      </div>
       {isRendering ? (
         <>
           <div className="flex items-center gap-2 text-sm text-slate-400">
@@ -1601,13 +1695,13 @@ export function DirectorConsoleRoot({
           <Button
             size="sm"
             variant="outline"
-            onClick={handleExpress}
+            onClick={handleOpenVideoAgent}
             disabled={queue.length === 0}
             className="border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/10 hover:border-indigo-400 shadow-md hover:shadow-lg transition-all"
-            title="Generate: batch-generate video for segments with beat references or a start Beat Frame"
+            title={tVideoAgent('toolbarTitle')}
           >
-            <Wand2 className="w-4 h-4 mr-2" />
-            Generate
+            <Zap className="w-4 h-4 mr-2" />
+            {tVideoAgent('toolbarButton')}
           </Button>
           {statusCounts.rendered > 0 && (
             <Button
@@ -1951,8 +2045,20 @@ export function DirectorConsoleRoot({
           locationReferences={locationReferences}
           projectAspectRatio={projectAspectRatio}
           sceneIndex={sceneIndex}
+          videoGenerationQuality={videoGenerationQuality}
+          videoGenerationMode={videoGenerationMode}
         />
       )}
+
+      <VideoAgentConfirmDialog
+        open={videoAgentDialogOpen}
+        onOpenChange={setVideoAgentDialogOpen}
+        beats={videoAgentBeats}
+        isRunning={isRendering}
+        onConfirm={handleVideoAgentConfirm}
+        defaultQuality={videoGenerationQuality}
+        defaultGenerationMode={videoGenerationMode}
+      />
 
       <RetakeConfirmDialog
         open={!!pendingRetakeAction}
