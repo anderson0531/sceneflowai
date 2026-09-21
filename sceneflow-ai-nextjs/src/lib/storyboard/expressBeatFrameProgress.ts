@@ -47,9 +47,11 @@ export interface BuildExpressBeatFrameItemsOptions {
 }
 
 function slotToItem(slot: StoryboardFrameSlot): ExpressBeatFrameItem {
+  const n = slot.beatNumber ?? (slot.beatIndex ?? 0) + 1
+  const roleSuffix = slot.frameRole === 'end' ? ' (End)' : ''
   return {
     key: slot.key,
-    label: slot.label,
+    label: `Beat ${n}${roleSuffix}`,
     beatIndex: slot.beatIndex ?? 0,
     frameRole: slot.frameRole ?? 'start',
     status: 'pending',
@@ -73,7 +75,9 @@ export function buildExpressBeatFrameItems(
   options: BuildExpressBeatFrameItemsOptions = {}
 ): ExpressBeatFrameItem[] {
   const allSlots = filterStoryboardSlotsForExpressChecklist(
-    enumerateStoryboardFrameSlots(scene),
+    enumerateStoryboardFrameSlots(scene, undefined, {
+      startFramesOnly: !options.includeEndFrames,
+    }),
     { includeEndFrames: options.includeEndFrames }
   )
 
