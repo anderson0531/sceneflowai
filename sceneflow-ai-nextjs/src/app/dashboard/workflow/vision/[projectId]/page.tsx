@@ -7514,6 +7514,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         succeeded?: number
         failed?: number
         staleCount?: number
+        nothingToGenerate?: boolean
       }
       const total = Number(result.total ?? job.payload?.itemCount ?? 0)
       const succeeded = Number(result.succeeded ?? 0)
@@ -7524,6 +7525,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         typeof job.payload?.agentLabel === 'string' && job.payload.agentLabel.trim()
           ? job.payload.agentLabel
           : 'Library Agent'
+
+      if (result.nothingToGenerate && succeeded === 0 && failed === 0) {
+        toast.success(`${agentLabel} finished`, {
+          description: 'Locations already match the script — nothing to generate.',
+          duration: 8000,
+        })
+        notifyIfHidden({
+          title: `${agentLabel} finished`,
+          body: 'Locations already match the script — nothing to generate.',
+          tag: `reference-express-${job.id}`,
+        })
+        return
+      }
 
       const details: string[] = []
       if (failed > 0) details.push(`${failed} failed — retry to fill the gaps.`)
@@ -10909,7 +10923,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       referenceExpressJob.track(data.jobId, {
         status: data.status || 'queued',
         progress: 0,
-        payload: { itemCount: data.itemCount, agentLabel },
+        payload: {
+          itemCount: data.itemCount,
+          agentLabel,
+          catalogSync: data.catalogSync,
+        },
       })
 
       // Tied to an explicit user action so the browser prompt has context.
@@ -10917,8 +10935,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       const count = Number(data.itemCount || 0)
       const sceneLabel = scope?.sceneIndices?.length === 1 ? ` for scene ${scope.sceneIndices[0] + 1}` : ''
+      const catalogSync = data.catalogSync === 'location'
+      const description = catalogSync
+        ? count > 0
+          ? `Updating locations from the script, then generating ${count} reference image${count === 1 ? '' : 's'}${sceneLabel} in the background. Keep working — we'll notify you when they're ready.`
+          : 'Updating locations from the script in the background. We\'ll generate any missing stills next.'
+        : `Generating ${count} reference image${count === 1 ? '' : 's'}${sceneLabel} in the background. Keep working — we'll notify you when they're ready.`
       toast.success(`${agentLabel} started`, {
-        description: `Generating ${count} reference image${count === 1 ? '' : 's'}${sceneLabel} in the background. Keep working — we'll notify you when they're ready.`,
+        description,
         duration: 8000,
       })
 
@@ -17720,11 +17744,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           activeLabel={
             referenceExpressJob.job?.status === 'queued'
               ? 'Queued'
-              : `Generating references${
-                  referenceExpressJob.job?.payload?.itemCount
-                    ? ` (${referenceExpressJob.job.payload.itemCount} items)`
-                    : ''
-                }`
+              : referenceExpressJob.job?.payload?.catalogSync === 'location' &&
+                  (referenceExpressJob.job.payload as { _worker?: { catalogSync?: { status?: string } } })
+                    ._worker?.catalogSync?.status !== 'done'
+                ? 'Updating locations from the script'
+                : `Generating references${
+                    referenceExpressJob.job?.payload?.itemCount
+                      ? ` (${referenceExpressJob.job.payload.itemCount} items)`
+                      : ''
+                  }`
           }
           cancelLabel="Cancel generation"
           describeResult={describeReferenceExpressResult}

@@ -2,6 +2,7 @@ import type {
   ReferenceExpressItem,
   ReferenceExpressItemResult,
 } from '@/lib/vision/referenceExpress/types'
+import type { LocationCatalogSyncState } from '@/lib/vision/referenceExpress/catalogSync'
 import {
   DEFAULT_REFERENCE_EXPRESS_CONCURRENCY,
   resolveReferenceExpressWindow,
@@ -82,6 +83,11 @@ export type ReferenceExpressWorkerState = {
    * siblings of the one image that hit a rate limit.
    */
   windowResults?: Record<string, ReferenceExpressItemResult>
+  /**
+   * Location Agent catalog phase. Image windows wait until this is `done`
+   * (or absent — Cast / Object / Library Agent).
+   */
+  catalogSync?: LocationCatalogSyncState
 }
 
 export function readReferenceExpressWorkerState(
@@ -101,6 +107,22 @@ export function readReferenceExpressWorkerState(
       state.windowResults && typeof state.windowResults === 'object'
         ? state.windowResults
         : {},
+    catalogSync: readCatalogSyncState(state.catalogSync),
+  }
+}
+
+function readCatalogSyncState(raw: unknown): LocationCatalogSyncState | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const state = raw as Partial<LocationCatalogSyncState>
+  if (state.status !== 'pending' && state.status !== 'syncing' && state.status !== 'done') {
+    return undefined
+  }
+  return {
+    status: state.status,
+    cursor: typeof state.cursor === 'number' ? state.cursor : 0,
+    locationIds: Array.isArray(state.locationIds)
+      ? state.locationIds.filter((id): id is string => typeof id === 'string')
+      : [],
   }
 }
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   applyLocationUpdateFromSyncDiff,
   collectMissingExtractedLocations,
+  extractHeadingLocationsFromScenes,
   countCastAgentItems,
   countLocationAgentItems,
   countObjectAgentItems,
@@ -333,6 +334,22 @@ describe('location Update uses sync merge', () => {
       expect.arrayContaining(['ver-door', 'ver-flood'])
     )
     expect(applied.location.versions).toHaveLength(3)
+  })
+
+  it('extracts unique heading locations with scene numbers and set notes', () => {
+    const extracted = extractHeadingLocationsFromScenes([
+      {
+        heading: 'EXT. DOCKYARD - NIGHT',
+        sceneDirection: { scene: { location: 'Rusted cranes', atmosphere: 'Fog' } },
+      },
+      { heading: { text: 'EXT. DOCKYARD - DAWN' } },
+      { heading: 'INT. ATRIUM - DAY' },
+    ])
+    expect(extracted.map((row) => row.location)).toEqual(['DOCKYARD', 'ATRIUM'])
+    expect(extracted[0]?.sceneNumbers).toEqual([1, 2])
+    expect(extracted[0]?.intExt).toBe('EXT')
+    expect(extracted[0]?.description).toMatch(/Rusted cranes/)
+    expect(extracted[1]?.sceneNumbers).toEqual([3])
   })
 
   it('extracts only heading locations that are not already in the library', () => {

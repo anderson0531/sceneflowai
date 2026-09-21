@@ -5,6 +5,7 @@ import type { CastingBriefVoiceConfig } from '@/lib/character/applyCastingBriefU
 import type { ScreenplayContext } from '@/lib/voiceRecommendation'
 import {
   requirementKey,
+  readProjectReferenceSources,
   resolveSceneRequiredReferences,
   type SceneReferenceOverrides,
   type SceneReferenceRequirement,
@@ -206,6 +207,18 @@ export function shouldIncludeNestedStills(scope: ReferenceExpressScope): boolean
     scope.kinds?.length === 1 &&
     (scope.kinds[0] === 'location' || scope.kinds[0] === 'cast')
   )
+}
+
+/** Project-wide Location Agent: catalog sync runs even when no stills are planned yet. */
+export function wantsLocationCatalogSync(scope: ReferenceExpressScope): boolean {
+  return scope.kinds?.length === 1 && scope.kinds[0] === 'location' && !scope.sceneIndices?.length
+}
+
+export function canStartReferenceExpressJob(
+  items: { length: number },
+  scope: ReferenceExpressScope
+): boolean {
+  return items.length > 0 || wantsLocationCatalogSync(scope)
 }
 
 const EXPRESS_KINDS: readonly ReferenceExpressKind[] = ['cast', 'location', 'prop']
@@ -645,18 +658,14 @@ export async function loadReferenceExpressContext(
 
   const metadata: Record<string, any> = project.metadata || {}
   const visionPhase: Record<string, any> = metadata.visionPhase || {}
-  const references: Record<string, any> = visionPhase.references || {}
+  const sources = readProjectReferenceSources(project)
   const treatment: Record<string, any> = metadata.filmTreatmentVariant || {}
 
   return {
-    characters: Array.isArray(visionPhase.characters) ? visionPhase.characters : [],
-    locations: Array.isArray(references.locationReferences)
-      ? references.locationReferences
-      : [],
-    props: Array.isArray(references.objectReferences) ? references.objectReferences : [],
-    scenes: Array.isArray(visionPhase.script?.script?.scenes)
-      ? visionPhase.script.script.scenes
-      : [],
+    characters: sources.characters,
+    locations: sources.locationReferences,
+    props: sources.objectReferences,
+    scenes: sources.scenes,
     screenplayContext: {
       genre: project.genre,
       tone: project.tone || treatment.tone_description || treatment.tone,

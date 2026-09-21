@@ -29,6 +29,11 @@ describe('Reference Library next-action CTA wiring', () => {
 
     expect(readSource('src/components/vision/LocationLibrary.tsx')).not.toContain('waitUntilDone: true')
     expect(readSource('src/components/vision/CharacterLibrary.tsx')).not.toContain('waitUntilDone: true')
+    const locationLibrary = readSource('src/components/vision/LocationLibrary.tsx')
+    expect(locationLibrary).not.toContain('await handleUpdateLocations()')
+    expect(locationLibrary).not.toContain('generatePendingLocationVersions')
+    expect(locationLibrary).not.toContain('isLocationAgentRunning')
+    expect(locationLibrary).toContain("onExpressGenerateReferences({ kinds: ['location'] })")
   })
 
   it('sidebar banner sets pendingKindAgentRun and tab attention', () => {
@@ -87,5 +92,16 @@ describe('Reference Library next-action CTA wiring', () => {
     const directEnd = page.indexOf('const handleOpenDirectorFrame')
     expect(page.slice(directStart, directEnd)).toContain('blockedByMissingSceneReferences')
     expect(page.slice(directStart, directEnd)).not.toContain('blockedByMissingReferences()')
+  })
+
+  it('Location Agent start queues catalogSync even when no stills are planned yet', () => {
+    const start = readSource('src/app/api/vision/references/express/start/route.ts')
+    expect(start).toContain('wantsLocationCatalogSync')
+    expect(start).toContain('canStartReferenceExpressJob')
+    expect(start).toContain("catalogSync")
+    expect(start).toContain("catalogSync: catalogSync || null")
+    const page = readSource('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
+    expect(page).toContain('Updating locations from the script')
+    expect(page).toContain('nothingToGenerate')
   })
 })

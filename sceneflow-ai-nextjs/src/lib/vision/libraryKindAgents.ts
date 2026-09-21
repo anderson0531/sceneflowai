@@ -4,11 +4,13 @@
  */
 
 import type { LocationReference, LocationVersion } from '@/types/visionReferences'
+import { extractLocation } from '@/lib/script/formatSceneHeading'
 import {
   mergeLocationVersionSyncDiff,
   summarizeLocationVersionSyncDiff,
   type LocationVersionSyncDiff,
 } from '@/lib/vision/locationScriptSync'
+import { locationDescriptionWithMountedFixtures } from '@/lib/vision/mountedSetFixtures'
 import type { ReferenceExpressKind } from '@/lib/vision/referenceExpress/types'
 import { resolveReferenceReadiness } from '@/lib/vision/referenceReadiness'
 
@@ -19,6 +21,118 @@ export type ExtractedHeadingLocation = {
   headings: string[]
   sceneNumbers: number[]
   description: string
+}
+
+export type HeadingLocationScene = {
+  heading?: string | { text?: string }
+  sceneDirection?: {
+    scene?: {
+      location?: string
+      atmosphere?: string
+      keyProps?: string[]
+    }
+  }
+  [key: string]: unknown
+}
+
+const SCENE_CODE_REGEX =
+  /^(INT\.\/EXT\.|EXT\.\/INT\.|INT\.\/EXT|EXT\.\/INT|INT\. |EXT\. |INT\/EXT|EXT\/INT|INT\.|EXT\.|INT|EXT)\s*(.*)$/i
+
+function headingText(scene: HeadingLocationScene): string {
+  const heading = scene.heading
+  if (typeof heading === 'string') return heading
+  return heading?.text || ''
+}
+
+function parseSceneHeadingMeta(heading: string): {
+  intExt?: LocationReference['intExt']
+  timeOfDay?: string
+} {
+  const match = heading.trim().toUpperCase().match(SCENE_CODE_REGEX)
+  if (!match) return {}
+
+  const codeRaw = match[1]?.toUpperCase().replace(/[\.\s]/g, '') || ''
+  const intExt = (
+    ['INT', 'EXT', 'INTEXT', 'EXTINT'].includes(codeRaw.replace('/', ''))
+      ? (codeRaw
+          .replace(/\./g, '')
+          .replace('INTEXT', 'INT/EXT')
+          .replace('EXTINT', 'EXT/INT') as LocationReference['intExt'])
+      : undefined
+  )
+
+  const remainder = match[2]?.trim() || ''
+  const parts = remainder.split(/\s+-\s+/)
+  let timeOfDay: string | undefined
+  if (parts.length > 1) {
+    const lastPart = parts[parts.length - 1]?.trim()
+    if (lastPart) {
+      const isModifier =
+        /^(DAY|NIGHT|MORNING|EVENING|SUNSET|SUNRISE|DUSK|DAWN|CONTINUOUS|LATER|SAME|MOMENTS LATER)$/.test(
+          lastPart
+        ) ||
+        /\bTO\b/.test(lastPart) ||
+        /LATER$/.test(lastPart) ||
+        /^(FLASHBACK|DREAM|MONTAGE)/.test(lastPart) ||
+        /^(19|20)\d{2}$/.test(lastPart)
+      if (isModifier) timeOfDay = lastPart
+    }
+  }
+  return { intExt, timeOfDay }
+}
+
+/** Unique heading locations from the script, with scene numbers and set notes. */
+export function extractHeadingLocationsFromScenes(
+  scenes: HeadingLocationScene[]
+): ExtractedHeadingLocation[] {
+  const locationMap = new Map<
+    string,
+    {
+      location: string
+      intExt?: LocationReference['intExt']
+      timeOfDay?: string
+      headings: string[]
+      sceneNumbers: number[]
+      description?: string
+    }
+  >()
+
+  scenes.forEach((scene, idx) => {
+    const text = headingText(scene)
+    if (!text) return
+    const location = extractLocation(text)
+    if (!location) return
+
+    const existing = locationMap.get(location)
+    if (existing) {
+      existing.sceneNumbers.push(idx + 1)
+      if (!existing.headings.includes(text)) existing.headings.push(text)
+      return
+    }
+
+    const meta = parseSceneHeadingMeta(text)
+    let description: string | undefined
+    if (scene.sceneDirection?.scene?.location) {
+      description = scene.sceneDirection.scene.location
+      if (scene.sceneDirection.scene.atmosphere) {
+        description += `. ${scene.sceneDirection.scene.atmosphere}`
+      }
+    }
+
+    locationMap.set(location, {
+      location,
+      intExt: meta.intExt,
+      timeOfDay: meta.timeOfDay,
+      headings: [text],
+      sceneNumbers: [idx + 1],
+      description,
+    })
+  })
+
+  return Array.from(locationMap.values()).map((loc) => ({
+    ...loc,
+    description: locationDescriptionWithMountedFixtures(loc, scenes),
+  }))
 }
 
 const hasImage = (url?: string): boolean => Boolean(url && url.trim())

@@ -12,6 +12,7 @@ vi.mock('@/config/database', () => ({
 
 import { Project } from '@/models/Project'
 import { persistReferenceImage } from '@/lib/vision/referenceExpress/persistReferenceImage'
+import { persistLocationCatalogPatch } from '@/lib/vision/referenceExpress/persistLocationCatalog'
 import {
   castFingerprint,
   locationFingerprint,
@@ -243,5 +244,63 @@ describe('persistReferenceImage', () => {
       fullBodyUrl: 'https://cdn/parka.png',
       needsImageRegen: false,
     })
+  })
+})
+
+describe('persistLocationCatalogPatch', () => {
+  it('appends a heading location without rewriting the script blob', async () => {
+    const project = fakeProject()
+    const script = project.metadata.visionPhase.script
+
+    const outcome = await persistLocationCatalogPatch({
+      projectId: 'proj-1',
+      append: [
+        {
+          id: 'l-atrium',
+          location: 'ATRIUM',
+          locationDisplay: 'INT. ATRIUM - DAY',
+          imageUrl: '',
+        },
+      ],
+    })
+
+    expect(outcome).toEqual({ saved: true })
+    expect(project.save).toHaveBeenCalledOnce()
+    expect(project.changed).toHaveBeenCalledWith('metadata', true)
+    expect(project.metadata.visionPhase.script).toBe(script)
+    expect(project.metadata.visionPhase.references.locationReferences).toEqual([
+      expect.objectContaining({ id: 'l1', location: 'Dockyard' }),
+      expect.objectContaining({ id: 'l-atrium', location: 'ATRIUM' }),
+    ])
+    expect(project.metadata.visionPhase.references.objectReferences).toHaveLength(2)
+  })
+
+  it('patches only that location’s versions', async () => {
+    const project = fakeProject()
+
+    await persistLocationCatalogPatch({
+      projectId: 'proj-1',
+      patchById: {
+        id: 'l1',
+        versions: [{ id: 'v-door', name: 'Door gone', stateNotes: 'Door blown out' }],
+      },
+    })
+
+    const location = project.metadata.visionPhase.references.locationReferences[0]
+    expect(location.location).toBe('Dockyard')
+    expect(location.versions).toEqual([
+      { id: 'v-door', name: 'Door gone', stateNotes: 'Door blown out' },
+    ])
+    expect(project.metadata.visionPhase.characters[0]).toEqual(MIRA)
+  })
+
+  it('does not save when the location id is missing', async () => {
+    const project = fakeProject()
+    const outcome = await persistLocationCatalogPatch({
+      projectId: 'proj-1',
+      patchById: { id: 'missing', versions: [] },
+    })
+    expect(outcome).toEqual({ saved: false })
+    expect(project.save).not.toHaveBeenCalled()
   })
 })

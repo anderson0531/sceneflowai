@@ -1,31 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { generateText } from '@/lib/vertexai/gemini'
-import { safeParseJsonFromText } from '@/lib/safeJson'
+import type { LocationAnalysisSceneInput } from '@/lib/vision/locationStateAnalysis'
+import { summarizeLocationVersionSyncDiff } from '@/lib/vision/locationScriptSync'
 import {
-  formatSceneForLocationVersionAnalysis,
-  type LocationAnalysisSceneInput,
-} from '@/lib/vision/locationStateAnalysis'
-import {
-  buildLocationVersionSyncDiff,
-  enrichSuggestionsWithBeatLocationState,
-  summarizeLocationVersionSyncDiff,
-  type ExistingLocationVersionLike,
-  type LocationVersionSuggestionLike,
-} from '@/lib/vision/locationScriptSync'
-import type { LocationVersionAppliesFrom } from '@/types/visionReferences'
+  analyzeLocationVersionsFromScript,
+  type LocationVersionSyncTarget,
+} from '@/lib/vision/syncLocationVersionsFromScript'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
 
 interface SyncLocationVersionsRequest {
-  location: {
-    id: string
-    location: string
-    description?: string
-    versions?: ExistingLocationVersionLike[]
-  }
+  location: LocationVersionSyncTarget
   scenes: LocationAnalysisSceneInput[]
   screenplayContext?: {
     genre?: string
@@ -33,17 +20,6 @@ interface SyncLocationVersionsRequest {
     setting?: string
     logline?: string
   }
-}
-
-function parseAppliesFrom(raw: unknown): LocationVersionAppliesFrom | undefined {
-  if (!raw || typeof raw !== 'object') return undefined
-  const rec = raw as Record<string, unknown>
-  const sceneNumber = Number(rec.sceneNumber)
-  const beatIndex = Number(rec.beatIndex)
-  if (!Number.isFinite(sceneNumber) || sceneNumber < 1) return undefined
-  if (!Number.isFinite(beatIndex) || beatIndex < 0) return undefined
-  const beatId = typeof rec.beatId === 'string' && rec.beatId.trim() ? rec.beatId.trim() : undefined
-  return { sceneNumber, beatIndex, beatId }
 }
 
 export async function POST(req: NextRequest) {
@@ -63,110 +39,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No scenes provided for analysis' }, { status: 400 })
     }
 
-    const locationName = location.location
-    const existing = location.versions || []
-    const sceneContext = scenes
-      .map((s) => formatSceneForLocationVersionAnalysis(s, locationName))
-      .join('\n\n---\n\n')
-
-    const existingList = existing.length
-      ? `\n\nEXISTING VERSIONS (prefer UPDATING these — match by name/state; remap sceneNumbers; only create when truly new):\n${existing
-          .map(
-            (v) =>
-              `- id=${v.id} name="${v.name}" scenes=[${(v.sceneNumbers || []).join(', ')}] notes="${(v.stateNotes || '').slice(0, 160)}"`
-          )
-          .join('\n')}`
-      : ''
-
-    const analysisPrompt = `You are a production designer and set-continuity supervisor RESYNCING set-state versions after a script edit for ${locationName}.
-
-LOCATION: ${locationName}
-Description: ${location.description || 'Not specified'}
-
-SCREENPLAY CONTEXT:
-Genre: ${screenplayContext?.genre || 'Drama'}
-Tone: ${screenplayContext?.tone || 'Neutral'}
-Setting: ${screenplayContext?.setting || 'Contemporary'}
-Logline: ${screenplayContext?.logline || 'Not specified'}
-
-SCENES AT THIS LOCATION (including beat-level detail):
-${sceneContext}
-${existingList}
-
-TASK: Produce the DISTINCT lasting set-state versions ${locationName} needs NOW based on the current script.
-
-RESYNC RULES:
-1. Prefer updating an existing version (same name / same damage) with refreshed sceneNumbers and stateNotes over creating near-duplicates.
-2. Create a new version only for a clearly different lasting set state.
-3. stateNotes is the COMPLETE current STRUCTURAL set state (accumulated), used for image generation. stateNotes must NOT include beat keyProps, propInteraction, or objects a character handles or introduces (journals, vellum, tools, weapons). Those belong on the beat frame, not this still.
-4. Lasting practical set changes DO include doors/windows/gates opening or shutting and practical lights/lamps going on or off — including when a character only says it ("Shut the damn door", "kill the lights"). Do NOT invent versions for mood lighting, camera, people walking, or handheld beat props.
-5. The intact base is not a version — omit it.
-6. appliesFrom is the first beat where this state is visible. Spoken commands count as that beat.
-
-For each DISTINCT version, provide name, stateNotes, sceneNumbers, appliesFrom, reason, confidence.
-
-Respond with valid JSON only:
-{
-  "suggestions": [
-    {
-      "name": "string",
-      "stateNotes": "string",
-      "sceneNumbers": [1],
-      "appliesFrom": { "sceneNumber": 1, "beatIndex": 1 },
-      "reason": "string",
-      "confidence": 0.9
-    }
-  ],
-  "analysis": "Brief overall analysis"
-}`
-
-    const result = await generateText(analysisPrompt, {
-      temperature: 0.5,
-      maxOutputTokens: 4096,
-      responseMimeType: 'application/json',
+    const result = await analyzeLocationVersionsFromScript({
+      location,
+      scenes,
+      screenplayContext,
     })
-
-    let suggestions: LocationVersionSuggestionLike[] = []
-    let analysis = ''
-
-    try {
-      const parsed = safeParseJsonFromText(result.text)
-      suggestions = (parsed.suggestions || []).map((s: any) => ({
-        name: s.name,
-        stateNotes: s.stateNotes || s.description || '',
-        sceneNumbers: s.sceneNumbers || [],
-        appliesFrom: parseAppliesFrom(s.appliesFrom),
-        reason: s.reason || '',
-        confidence: s.confidence || 0.7,
-      }))
-      analysis = parsed.analysis || ''
-    } catch (parseError) {
-      console.error('[Location Version Sync] Failed to parse AI response:', parseError)
-      console.error('[Location Version Sync] Raw response:', result.text)
-    }
-
-    suggestions = enrichSuggestionsWithBeatLocationState(suggestions, scenes, existing)
-
-    suggestions.sort((a, b) => {
-      const aFirst = a.appliesFrom?.sceneNumber ?? Math.min(...(a.sceneNumbers || [999]))
-      const bFirst = b.appliesFrom?.sceneNumber ?? Math.min(...(b.sceneNumbers || [999]))
-      if (aFirst !== bFirst) return aFirst - bFirst
-      return (a.appliesFrom?.beatIndex ?? 0) - (b.appliesFrom?.beatIndex ?? 0)
-    })
-
-    const diff = buildLocationVersionSyncDiff(
-      location.id,
-      locationName,
-      existing,
-      suggestions,
-      analysis
-    )
 
     return NextResponse.json({
       success: true,
-      diff,
-      totals: summarizeLocationVersionSyncDiff(diff),
-      analyzedScenes: scenes.length,
+      diff: result.diff,
+      totals: result.totals ?? summarizeLocationVersionSyncDiff(result.diff),
+      analyzedScenes: result.analyzedScenes,
     })
   } catch (error: any) {
     console.error('[Location Version Sync] Error:', error)
