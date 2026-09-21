@@ -68,10 +68,11 @@ export async function POST(
     const artStyleId = resolveProjectArtStyle(metadata)
 
     const deriveOptions = {
-      requireApproved: !skipApprovalCheck,
+      requireApproved: false,
       language: language ?? 'en',
       existingSegments,
     }
+    void skipApprovalCheck
 
     // extendBeatId accepted for backward compatibility but ignored (Kling-first: one beat = one segment).
     void extendBeatId
@@ -84,20 +85,24 @@ export async function POST(
       )
     }
 
-    const workingScene = result.updatedScene ?? scene
-    if (result.updatedScene) {
-      scenes[sceneIndex] = workingScene
-      const scriptRoot = visionPhase.script || {}
-      const nested = scriptRoot.script || {}
-      if (nested.scenes) {
-        visionPhase.script = { ...scriptRoot, script: { ...nested, scenes } }
-      } else {
-        visionPhase.script = { ...scriptRoot, scenes }
-      }
-      await project.update({
-        metadata: { ...metadata, visionPhase },
-      })
+    const workingScene = {
+      ...(result.updatedScene ?? scene),
+    } as Record<string, unknown>
+    if (workingScene.storyboardStatus !== 'approved') {
+      workingScene.storyboardStatus = 'approved'
+      workingScene.storyboardApprovedAt = new Date().toISOString()
     }
+    scenes[sceneIndex] = workingScene
+    const scriptRoot = visionPhase.script || {}
+    const nested = scriptRoot.script || {}
+    if (nested.scenes) {
+      visionPhase.script = { ...scriptRoot, script: { ...nested, scenes } }
+    } else {
+      visionPhase.script = { ...scriptRoot, scenes }
+    }
+    await project.update({
+      metadata: { ...metadata, visionPhase },
+    })
 
     const beats = getSceneBeats(workingScene)
     const sceneDirection =

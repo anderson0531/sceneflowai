@@ -77,4 +77,27 @@ describe('mergeSceneProductionData', () => {
     expect(merged.productionStreams?.map((stream) => stream.id)).toEqual(['s1', 's2'])
     expect(merged.currentStreamId).toBe('s2')
   })
+
+  it('drops segment ids missing from the incoming list and keeps takes on the survivor', () => {
+    const existing: SceneProductionData = {
+      isSegmented: true,
+      targetSegmentDuration: 8,
+      segments: [
+        segment({
+          segmentId: 'seg_keep',
+          beatId: 'bt_1',
+          takes: [{ id: 't1', createdAt: '2026-01-01T00:00:00.000Z', assetUrl: 'a.mp4', status: 'COMPLETE' }],
+        }),
+        segment({ segmentId: 'seg_orphan', beatId: 'bt_1' }),
+      ],
+    }
+    const incoming: SceneProductionData = {
+      isSegmented: true,
+      targetSegmentDuration: 8,
+      segments: [segment({ segmentId: 'seg_keep', beatId: 'bt_1', takes: [] })],
+    }
+    const merged = mergeSceneProductionData(existing, incoming)!
+    expect(merged.segments.map((row) => row.segmentId)).toEqual(['seg_keep'])
+    expect(merged.segments[0].takes.map((take) => take.id)).toEqual(['t1'])
+  })
 })

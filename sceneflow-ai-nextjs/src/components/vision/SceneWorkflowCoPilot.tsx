@@ -23,7 +23,7 @@ export const guidanceContent: Record<WorkflowStep, {
   tip: string
 }> = {
   dialogueAction: {
-    title: "Writer's Room — Foundation",
+    title: 'Direction through Streams',
     icon: <FileText className="w-5 h-5 text-sf-primary" />,
     goal: 'Finalize script, audio, and references before pre-vis and video production.',
     whyItMatters: 'Foundation work happens here: writing, Audience Resonance Analysis, voice casting, and timeline prep. Lock the script when ready so agents and production stay stable.',
@@ -39,7 +39,7 @@ export const guidanceContent: Record<WorkflowStep, {
       'Screening Room = live preview; Production Streams = finished MP4 exports',
     ],
     bestPractice: 'Assign voices and key references before running agents — the Pre-Vis panel shows what is missing.',
-    tip: "You only see Writer's Room and Motion — Direction, pre-vis, and Beat Frames live inside those phases.",
+    tip: 'One strip runs Direction, Beats, Music, References, Pre-Vis, Video, Mixer, and Streams.',
   },
   directorsChair: {
     title: "Direction (in Writer's Room)",
@@ -88,13 +88,13 @@ export const guidanceContent: Record<WorkflowStep, {
     ],
     toolsAndTips: [
       'Beat = script unit; Beat Frame = start/end pair for F2V',
-      "No separate Beats tab — work in Writer's Room and Motion only",
+      'Beats is a step on the same strip as Pre-Vis and Video',
     ],
     bestPractice: "Edit the script in the Writer's Room if beat boundaries need to change at the source.",
     tip: 'Segment Builder is not a user-facing step in the simplified workflow.',
   },
   callAction: {
-    title: 'Motion — Production phase',
+    title: 'Video, Mixer, and Streams',
     icon: <Clapperboard className="w-5 h-5 text-sf-primary" />,
     goal: 'Beat Frames → Mixer → Production Streams → Final Cut.',
     whyItMatters: 'This is canonical video production: Beat Frames for F2V, Director Console for beat video, Mixer for preview/export, Streams for finished MP4s.',
@@ -111,7 +111,7 @@ export const guidanceContent: Record<WorkflowStep, {
       'Baseline language drives timeline; other languages show duration delta',
     ],
     bestPractice: 'Complete Beat Frames before switching Output to Video. Gate video until start + end frames exist.',
-    tip: 'Do not use the gallery production panel — open Motion for video work.',
+    tip: 'Video uses the same Draft | Final and Standard | Creative controls as Pre-Vis.',
   },
 }
 

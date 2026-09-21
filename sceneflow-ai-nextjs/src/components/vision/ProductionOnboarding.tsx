@@ -35,13 +35,13 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
     id: 'welcome',
     title: `Welcome to ${STUDIO_DISPLAY_NAMES.production}`,
     description:
-      `SceneFlow is one continuous pipeline: Foundation → Pre-vis → ${STUDIO_DISPLAY_NAMES.production} → Final Cut. You work in two sections — Writer's Room and Motion — with a clear next step at every stage.`,
+      `SceneFlow is one continuous pipeline: Direction → Beats → Music → References → Pre-Vis → Video → Mixer → Streams, then Final Cut.`,
     icon: <Sparkles className="w-6 h-6" />,
     tip: 'The Production Progress dashboard and co-pilot always show where you are and what is next.',
   },
   {
     id: 'script-tab',
-    title: "Step 1 - Foundation (Writer's Room)",
+    title: 'Step 1 - Direction, Beats, and audio',
     description:
       'Optimize your script with the Intelligent Assistant Writer, run Audience Resonance Analysis (85+ target), generate audio, and assign voices. The Pre-Visualization panel shows what you need before running agents.',
     icon: <FileText className="w-6 h-6" />,
@@ -59,12 +59,12 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
   },
   {
     id: 'action-tab',
-    title: 'Step 3 - Production (Motion)',
+    title: 'Step 3 - Video',
     description:
-      'Beat Frames (start/end pairs for F2V) → Director Console video beats → Production Mixer → Production Streams — Export (MP4). One Output control syncs Animatic, Video, and language.',
+      'Video generates one clip per beat from the Pre-Vis start frame. Draft | Final and Standard | Creative match the Pre-Vis controls. Mixer and Streams follow on the same strip.',
     icon: <Clapperboard className="w-6 h-6" />,
     workflowStep: 'callAction',
-    tip: 'Do video work only in Motion — the pre-vis gallery no longer embeds a duplicate production panel.',
+    tip: 'Open the Video step on the same strip as Pre-Vis. Review is no longer a separate gate.',
   },
   {
     id: 'mixer-streams',

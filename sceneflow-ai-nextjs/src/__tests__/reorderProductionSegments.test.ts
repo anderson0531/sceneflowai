@@ -87,14 +87,14 @@ describe('needsProductionDerive', () => {
     expect(needsProductionDerive(moved, segments())).toBe(true)
   })
 
-  it('stays false for an unapproved scene', () => {
+  it('is true after a reorder even when pre-vis was never approved', () => {
     const moved = reorderSceneBeats(
       approvedScene({ storyboardStatus: 'pending_review' }),
       3,
       0
     )
 
-    expect(needsProductionDerive(moved, segments())).toBe(false)
+    expect(needsProductionDerive(moved, segments())).toBe(true)
   })
 })
 

@@ -66,12 +66,15 @@ export function mergeSceneProductionData(
   if (!existing) return incoming
   if (!incoming) return existing
 
-  const segments = unionRowsById(
-    incoming.segments,
-    existing.segments,
-    'segmentId',
-    mergeProductionSegment
-  )
+  // Incoming segments are the clip list. Matching ids still merge takes and stills.
+  // Ids that are not in the incoming list are dropped so a 1:1 re-derive cannot
+  // be undone by leftover dialogue-split rows. An omitted field leaves clips alone.
+  const segments = Array.isArray(incoming.segments)
+    ? incoming.segments.map((segment) => {
+        const previous = existing.segments?.find((row) => row.segmentId === segment.segmentId)
+        return previous ? mergeProductionSegment(segment, previous) : segment
+      })
+    : existing.segments
   const productionStreams = unionRowsById(
     incoming.productionStreams,
     existing.productionStreams,
