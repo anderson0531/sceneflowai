@@ -8,6 +8,7 @@ import {
   recommendationId,
   recommendationIsHighImpact,
   sceneHasHighImpactIssue,
+  unappliedHighImpactRecommendations,
 } from '@/lib/script/audienceResonance/highImpact'
 
 const ROOT = path.resolve(__dirname, '../..')
@@ -45,6 +46,21 @@ describe('High-impact audience resonance issues', () => {
       })
     ).toBe(false)
     expect(sceneHasHighImpactIssue({ recommendations: [rec], appliedRecommendationIds: [] })).toBe(true)
+  })
+
+  it('returns only unapplied high-impact recommendations', () => {
+    const high = { text: 'Raise the stakes', priority: 'high', pointsDeducted: 12 }
+    const alsoHigh = { text: 'Cut the prologue', pointsDeducted: 10 }
+    const low = { text: 'Tighten a line', priority: 'low', pointsDeducted: 2 }
+    const scene = {
+      recommendations: [high, alsoHigh, low],
+      appliedRecommendationIds: [recommendationId(high)],
+    }
+    expect(unappliedHighImpactRecommendations(scene).map((rec) => recommendationId(rec))).toEqual([
+      recommendationId(alsoHigh),
+    ])
+    expect(unappliedHighImpactRecommendations(null)).toEqual([])
+    expect(unappliedHighImpactRecommendations({ recommendations: [] })).toEqual([])
   })
 
   it('collects top impact issues sorted by points and can exclude applied', () => {
@@ -98,9 +114,16 @@ describe('High-impact audience resonance issues', () => {
     expect(modal).toContain('dialog-text-reset')
     expect(modal).not.toMatch(/<h3 className="font-semibold text-base/)
 
-    expect(panel).toContain('sceneHasHighImpactIssue')
+    expect(panel).toContain('unappliedHighImpactRecommendations')
+    expect(panel).toContain('HighImpactSceneBanner')
+    expect(panel).toContain("tStudio('highImpact')")
     expect(panel).toContain('focusedSceneIndex')
-    expect(panel).toContain('High impact')
+    expect(panel).not.toContain('High impact')
+
+    const banner = readSource('src/components/vision/HighImpactSceneBanner.tsx')
+    expect(banner).toContain('high-impact-scene-banner')
+    expect(banner).toContain("tStudio('highImpactReview')")
+    expect(modal).toContain("tStudio('highImpact')")
     expect(panel).toContain('<WritersRoomTopImpactPanel')
     expect(panel).toContain("tStudio('audienceResonance')")
     expect(panel).toContain('DialogContent')

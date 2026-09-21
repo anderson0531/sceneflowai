@@ -38,17 +38,25 @@ export function isRecommendationApplied(
   return appliedIds.includes(recommendationId(rec, fallbackIndex))
 }
 
+/** Unapplied recommendations that currently drive the scene-card rose outline. */
+export function unappliedHighImpactRecommendations(scene: {
+  recommendations?: unknown[]
+  appliedRecommendationIds?: string[]
+} | null | undefined): unknown[] {
+  const recs = scene?.recommendations
+  if (!Array.isArray(recs) || recs.length === 0) return []
+  const applied = scene?.appliedRecommendationIds
+  return recs.filter((rec, i) => {
+    if (isRecommendationApplied(rec, applied, i)) return false
+    return recommendationIsHighImpact(rec)
+  })
+}
+
 export function sceneHasHighImpactIssue(scene: {
   recommendations?: unknown[]
   appliedRecommendationIds?: string[]
 } | null | undefined): boolean {
-  const recs = scene?.recommendations
-  if (!Array.isArray(recs) || recs.length === 0) return false
-  const applied = scene?.appliedRecommendationIds
-  return recs.some((rec, i) => {
-    if (isRecommendationApplied(rec, applied, i)) return false
-    return recommendationIsHighImpact(rec)
-  })
+  return unappliedHighImpactRecommendations(scene).length > 0
 }
 
 /** 0-based scene index of the first high-impact scene, or null. */
