@@ -35,6 +35,8 @@ export type ScenePolishAnalysis = {
   optimizedAt?: string
   modelId?: string
   requestedModelId?: string
+  /** True when beats moved after this analysis was produced. */
+  stale?: boolean
 }
 
 export type PolishSceneInput = {
@@ -55,4 +57,5 @@ export type AnalyzeScenePolishInput = {
   previousScene?: PolishSceneInput | null
   nextScene?: PolishSceneInput | null
   languageBlock?: string
+  logContext?: { projectId?: string; sceneIndex?: number }
 }

@@ -110,7 +110,16 @@
       "maxDuration": 300
     },
     "src/app/api/vision/polish-scene/route.ts": {
-      "maxDuration": 120
+      "maxDuration": 60
+    },
+    "src/app/api/vision/polish-scene/start/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/vision/polish-scene/step/route.ts": {
+      "maxDuration": 180
+    },
+    "src/app/api/internal/jobs/scene-polish/step/route.ts": {
+      "maxDuration": 180
     },
     "src/app/api/admin/diagnostics/gemini-models/route.ts": {
       "maxDuration": 120

@@ -33,6 +33,7 @@ import {
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 import { runReferenceExpressStep } from '@/lib/jobs/referenceExpressWorker'
 import { getReferenceExpressMaxAttempts } from '@/lib/jobs/referenceExpressWorkerState'
+import { runScenePolishStep } from '@/lib/jobs/scenePolishWorker'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -87,6 +88,9 @@ export const processGenerationJob = inngest.createFunction(
     }
     if (jobType === 'reference_express') {
       return { ok: true, delegated: 'process-reference-express' }
+    }
+    if (jobType === 'scene_polish') {
+      return { ok: true, delegated: 'process-scene-polish' }
     }
 
     await step.run('mark-processing', async () => {
@@ -730,6 +734,28 @@ export const processReferenceExpress = inngest.createFunction(
   }
 )
 
+/**
+ * Scene Polish: one Gemini continuity pass, persisted onto that scene only.
+ */
+export const processScenePolish = inngest.createFunction(
+  {
+    id: 'process-scene-polish',
+    retries: 2,
+    triggers: [{ event: 'generation/job.queued', if: 'event.data.jobType == "scene_polish"' }],
+  },
+  async ({ event, step }) => {
+    const { jobId, projectId } = event.data as {
+      jobId: string
+      userId: string
+      projectId: string
+      payload: Record<string, unknown>
+    }
+
+    const outcome = await step.run('polish-scene', async () => runScenePolishStep(jobId))
+    return { ok: !outcome.error, projectId, ...outcome }
+  }
+)
+
 export const inngestFunctions = [
   processGenerationJob,
   processBatchGenerationJob,
@@ -737,4 +763,5 @@ export const inngestFunctions = [
   processScriptAnalysis,
   processBlueprintGuidedRevise,
   processReferenceExpress,
+  processScenePolish,
 ]

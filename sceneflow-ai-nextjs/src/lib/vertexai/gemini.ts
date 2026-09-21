@@ -103,6 +103,12 @@ export interface TextGenerationResult {
   requestedModelId?: string
   /** True when a fallback ran, i.e. output did not come from the asked-for model. */
   downgraded?: boolean
+  usageMetadata?: {
+    promptTokenCount?: number
+    candidatesTokenCount?: number
+    totalTokenCount?: number
+    thoughtsTokenCount?: number
+  }
 }
 
 type InternalTextGenerationOptions = TextGenerationOptions & {
@@ -281,6 +287,7 @@ async function generateTextWithModel(
     modelId: model,
     requestedModelId,
     downgraded: requestedModelId !== model,
+    usageMetadata: data.usageMetadata,
   };
 }
 

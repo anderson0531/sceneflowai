@@ -11,6 +11,7 @@ export type GenerationJobType =
   | 'reference_express'
   | 'kling_long_take'
   | 'script_analysis'
+  | 'scene_polish'
   | 'blueprint_guided_revise'
 
 export type GenerationJobStatus =

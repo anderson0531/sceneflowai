@@ -17,6 +17,9 @@ export {
   polishSceneHeading,
   polishSceneKeyProps,
   scenePolishBeatFingerprint,
+  slimPolishScene,
+  pickNewerPolishAnalysis,
+  polishAnalyzedAtMs,
 } from './formatPolishBeats'
 export {
   analyzeScenePolish,
@@ -25,8 +28,17 @@ export {
   parsePolishAnalysis,
   polishOutputTokenBudget,
   POLISH_BUDGET_ERROR,
+  POLISH_EMPTY_ERROR,
   POLISH_MIN_OUTPUT_TOKENS,
   POLISH_MAX_OUTPUT_TOKENS,
   POLISH_TIMEOUT_MS,
   POLISH_TOKENS_PER_BEAT,
 } from './analyzeScenePolish'
+export { applyPolishAnalysisToVisionPhase } from './applyPolishAnalysis'
+export {
+  polishActivityLabel,
+  POLISH_PROGRESS_QUEUED,
+  POLISH_PROGRESS_ANALYZING,
+  POLISH_PROGRESS_PERSISTING,
+  POLISH_PROGRESS_DONE,
+} from './polishJobConstants'
