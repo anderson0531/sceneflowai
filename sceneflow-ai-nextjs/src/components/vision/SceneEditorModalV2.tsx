@@ -7,6 +7,7 @@ import { Loader, Eye, Check, Undo, Redo } from 'lucide-react'
 import { ASSISTANT, assistantTitle } from '@/lib/constants/assistant'
 import { ASSISTANT_ICON as AssistantIcon } from '@/lib/constants/assistantIcon'
 import { InstructionsPanel, type InstructionsPanelAudienceAnalysis } from './InstructionsPanel'
+import type { ScenePolishAnalysis } from '@/lib/script/scenePolish/types'
 import { PreviewPanel } from './PreviewPanel'
 import { SceneComparisonPanel } from './SceneComparisonPanel'
 import { toast } from 'sonner'
@@ -48,6 +49,9 @@ interface SceneEditorModalProps {
   ) => void | Promise<void>
   initialInstructions?: string
   audienceAnalysis?: InstructionsPanelAudienceAnalysis | null
+  polishAnalysis?: ScenePolishAnalysis | null
+  /** When opening from Polish recs, default to light (keep structure). */
+  initialRevisionDepth?: RevisionDepth
   /** Target audience profile, so revisions are written for a specific audience. */
   targetDemographic?: string
   /** Story-level context that keeps edits consistent with the whole script. */
@@ -73,6 +77,8 @@ export function SceneEditorModal({
   onApplyChanges,
   initialInstructions = '',
   audienceAnalysis: audienceAnalysisProp,
+  polishAnalysis: polishAnalysisProp,
+  initialRevisionDepth,
   targetDemographic,
   logline,
   scriptTitle,
@@ -167,12 +173,12 @@ export function SceneEditorModal({
       setPreserveBeatDirection(false)
       setPreserveBeatFrames(false)
       setDeselectedChanges(new Set())
-      setRevisionDepth('moderate')
+      setRevisionDepth(initialRevisionDepth || 'moderate')
       // Not reset to a constant like the others: the scene's own target is the
       // point of storing it, so reopening shows the choice that is in force.
       setTargetBeatCount(resolveSceneTargetBeatCount(scene))
     }
-  }, [isOpen, scene, initialInstructions])
+  }, [isOpen, scene, initialInstructions, initialRevisionDepth])
 
   const handleGeneratePreview = async () => {
     if (!customInstruction.trim()) {
@@ -316,6 +322,8 @@ export function SceneEditorModal({
 
   const resolvedAudienceAnalysis =
     audienceAnalysisProp ?? scene?.audienceAnalysis ?? null
+  const resolvedPolishAnalysis =
+    polishAnalysisProp ?? scene?.polishAnalysis ?? null
 
   if (!scene) return null
 
@@ -363,6 +371,7 @@ export function SceneEditorModal({
                 instruction={customInstruction}
                 onInstructionChange={setCustomInstruction}
                 audienceAnalysis={resolvedAudienceAnalysis}
+                polishAnalysis={resolvedPolishAnalysis}
                 appliedRecommendationIds={appliedRecommendationIds}
                 onApplyRecommendation={(recText, recId) => {
                   appendInstruction(recText, recId)

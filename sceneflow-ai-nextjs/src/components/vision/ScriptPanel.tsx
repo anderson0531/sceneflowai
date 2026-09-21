@@ -22,6 +22,7 @@ import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX,
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { PRODUCTION_SECTION_DESCRIPTIONS, PRODUCTION_SECTION_LABELS } from '@/constants/productionSections'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
+import { ScenePolishBadge, ScenePolishPanel } from './ScenePolishPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
 import { SceneProductionDirector } from './scene-production/SceneProductionDirector'
 import { SegmentFrameTimeline } from './scene-production/SegmentFrameTimeline'
@@ -328,7 +329,14 @@ interface ScriptPanelProps {
   // NEW: Scene editing props
   onEditScene?: (sceneIndex: number) => void
   // NEW: Edit scene with pre-populated recommendations from analysis
-  onEditSceneWithRecommendations?: (sceneIndex: number, recommendations: string[]) => void
+  onEditSceneWithRecommendations?: (
+    sceneIndex: number,
+    recommendations: string[],
+    options?: { revisionDepth?: 'light' | 'moderate' | 'deep'; recSource?: 'audience' | 'polish' }
+  ) => void
+  onPolishScene?: (sceneIndex: number) => void | Promise<void>
+  polishingSceneIndex?: number | null
+  onTogglePolishRecommendation?: (sceneIndex: number, recId: string, applied: boolean) => void
   onUpdateSceneAudio?: (sceneIndex: number) => Promise<void>
   onDeleteSceneAudio?: (sceneIndex: number, audioType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx', dialogueIndex?: number, sfxIndex?: number, silent?: boolean) => void
   // NEW: Enhance scene context with AI-generated beat, character arc, and thematic context
@@ -928,7 +936,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateLanguageStream, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onExpressSceneReferences, isExpressGeneratingReferences = false, onOpenReferenceLibrary, onAddDirectedLocationVersion, onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, onJumpToImpactScene, onToggleAudienceRecommendation, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onAudioRunReport, onVideoRunReport, onVideoRunCancelReady, onApproveStoryboard, approvingStoryboardFor = null, onReorderBeats, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onRestoreStillVersion, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onDirectorFrame, generatingDirectSlotKey = null, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, frameGenerationQuality = 'draft', onFrameGenerationQualityChange, frameGenerationMode = 'standard', onFrameGenerationModeChange, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled, pendingSceneReferencesIndex = null, onPendingSceneReferencesHandled,   projectStreams = [] }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateLanguageStream, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onEditSceneWithRecommendations, onPolishScene, polishingSceneIndex = null, onTogglePolishRecommendation, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onExpressSceneReferences, isExpressGeneratingReferences = false, onOpenReferenceLibrary, onAddDirectedLocationVersion, onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, onJumpToImpactScene, onToggleAudienceRecommendation, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onAudioRunReport, onVideoRunReport, onVideoRunCancelReady, onApproveStoryboard, approvingStoryboardFor = null, onReorderBeats, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onRestoreStillVersion, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onDirectorFrame, generatingDirectSlotKey = null, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, frameGenerationQuality = 'draft', onFrameGenerationQualityChange, frameGenerationMode = 'standard', onFrameGenerationModeChange, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled, pendingSceneReferencesIndex = null, onPendingSceneReferencesHandled,   projectStreams = [] }: ScriptPanelProps) {
 
   const tStudio = useTranslations('production.studio')
   const tCommon = useTranslations('common')
@@ -1189,6 +1197,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
   
   // Expanded recommendations state per scene
   const [expandedRecommendations, setExpandedRecommendations] = useState<Set<number>>(new Set())
+  const [expandedPolish, setExpandedPolish] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     if (focusedSceneIndex == null || focusedSceneIndex < 0) return
@@ -3258,6 +3267,10 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       onAddScene={onAddScene}
                       onDeleteScene={onDeleteScene}
                       onEditScene={onEditScene}
+                      onEditSceneWithRecommendations={onEditSceneWithRecommendations}
+                      onPolishScene={onPolishScene}
+                      polishingSceneIndex={polishingSceneIndex}
+                      onTogglePolishRecommendation={onTogglePolishRecommendation}
                       onUpdateSceneAudio={onUpdateSceneAudio}
                       onDeleteSceneAudio={onDeleteSceneAudio}
                       onEnhanceSceneContext={onEnhanceSceneContext}
@@ -3366,6 +3379,8 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       getSuggestedOffsetForScene={getSuggestedOffsetForScene}
                       expandedRecommendations={expandedRecommendations}
                       setExpandedRecommendations={setExpandedRecommendations}
+                      expandedPolish={expandedPolish}
+                      setExpandedPolish={setExpandedPolish}
                       onAnalyzeScene={onAnalyzeScene}
                       analyzingSceneIndex={analyzingSceneIndex}
                       onOptimizeScene={onOptimizeScene}
@@ -3856,7 +3871,14 @@ interface SceneCardProps {
   onAddScene?: (afterIndex?: number) => void
   onDeleteScene?: (sceneIndex: number) => void
   onEditScene?: (sceneIndex: number) => void
-  onEditSceneWithRecommendations?: (sceneIndex: number) => void
+  onEditSceneWithRecommendations?: (
+    sceneIndex: number,
+    recommendations: string[],
+    options?: { revisionDepth?: 'light' | 'moderate' | 'deep'; recSource?: 'audience' | 'polish' }
+  ) => void
+  onPolishScene?: (sceneIndex: number) => void | Promise<void>
+  polishingSceneIndex?: number | null
+  onTogglePolishRecommendation?: (sceneIndex: number, recId: string, applied: boolean) => void
   onUpdateSceneAudio?: (sceneIndex: number) => Promise<void>
   // NEW: Delete specific audio from scene
   onDeleteSceneAudio?: (sceneIndex: number, audioType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx', dialogueIndex?: number, sfxIndex?: number, silent?: boolean) => void
@@ -4030,6 +4052,8 @@ interface SceneCardProps {
   // Per-scene audience analysis props
   expandedRecommendations?: Set<number>
   setExpandedRecommendations?: React.Dispatch<React.SetStateAction<Set<number>>>
+  expandedPolish?: Set<number>
+  setExpandedPolish?: React.Dispatch<React.SetStateAction<Set<number>>>
   onAnalyzeScene?: (sceneIndex: number) => Promise<void>
   analyzingSceneIndex?: number | null
   onOptimizeScene?: (sceneIndex: number, instruction: string, selectedRecommendations: string[]) => Promise<void>
@@ -4157,6 +4181,9 @@ function SceneCard({
   onDeleteScene,
   onEditScene,
   onEditSceneWithRecommendations,
+  onPolishScene,
+  polishingSceneIndex = null,
+  onTogglePolishRecommendation,
   onUpdateSceneAudio,
   onDeleteSceneAudio,
   onEnhanceSceneContext,
@@ -4250,6 +4277,8 @@ function SceneCard({
   getSuggestedOffsetForScene,
   expandedRecommendations,
   setExpandedRecommendations,
+  expandedPolish,
+  setExpandedPolish,
   onAnalyzeScene,
   productionReadiness,
   analyzingSceneIndex,
@@ -4312,6 +4341,19 @@ function SceneCard({
   const tStudio = useTranslations('production.studio')
   const tCommon = useTranslations('common')
   const isOutline = !scene.isExpanded && scene.summary
+  const handlePolishClick = async () => {
+    if (!onPolishScene) return
+    try {
+      await onPolishScene(sceneIdx)
+      setExpandedPolish?.((prev) => {
+        const next = new Set(prev ?? [])
+        next.add(sceneIdx)
+        return next
+      })
+    } catch {
+      // Page handler toasts the failure.
+    }
+  }
   const cardRef = useRef<HTMLDivElement>(null)
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(
     scene.workflowCompletions?.['callAction'] ? 'callAction' : 'dialogueAction'
@@ -5557,6 +5599,22 @@ function SceneCard({
                     )}
                   </div>
                 )}
+                    {onPolishScene && (
+                      <ScenePolishBadge
+                        analysis={scene.polishAnalysis}
+                        isPolishing={polishingSceneIndex === sceneIdx}
+                        onPolish={() => void handlePolishClick()}
+                        isExpanded={expandedPolish?.has(sceneIdx)}
+                        onToggleExpand={() => {
+                          setExpandedPolish?.((prev) => {
+                            const next = new Set(prev ?? [])
+                            if (next.has(sceneIdx)) next.delete(sceneIdx)
+                            else next.add(sceneIdx)
+                            return next
+                          })
+                        }}
+                      />
+                    )}
               </div>
             )}
             </div>
@@ -5818,7 +5876,8 @@ function SceneCard({
                           )
                         onEditSceneWithRecommendations(
                           sceneIdx,
-                          recommendations.map((rec: { text: string }) => rec.text)
+                          recommendations.map((rec: { text: string }) => rec.text),
+                          { recSource: 'audience' }
                         )
                       }}
                       className="h-8 text-xs bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-lg shadow-md"
@@ -5869,6 +5928,25 @@ function SceneCard({
             </motion.div>
           )}
         </AnimatePresence>
+
+        {!isOutline && scene.polishAnalysis && (
+          <ScenePolishPanel
+            scene={scene}
+            analysis={scene.polishAnalysis}
+            sceneIndex={sceneIdx}
+            isExpanded={expandedPolish?.has(sceneIdx) ?? false}
+            isPolishing={polishingSceneIndex === sceneIdx}
+            onPolish={() => void handlePolishClick()}
+            onToggleRecommendation={onTogglePolishRecommendation}
+            onEditWithRecommendations={(idx, recs) =>
+              onEditSceneWithRecommendations?.(idx, recs, {
+                revisionDepth: 'light',
+                recSource: 'polish',
+              })
+            }
+            onEditScene={onEditScene}
+          />
+        )}
 
         {/* Production Section Navigation - Segmented Tab Control */}
         {!isOutline && (
@@ -6118,6 +6196,32 @@ function SceneCard({
                       <span className="text-xs font-medium text-gray-400 ml-2">Quick Actions</span>
                     </div>
                     <div className="flex items-center gap-2 mr-2">
+                      {!isOutline && onPolishScene && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  void handlePolishClick()
+                                }}
+                                disabled={polishingSceneIndex === sceneIdx}
+                                className="px-3 py-1.5 text-xs font-medium rounded-md flex items-center gap-1.5 transition-all shadow-sm bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50"
+                              >
+                                {polishingSceneIndex === sceneIdx ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <Sparkles className="w-3 h-3" />
+                                )}
+                                {tStudio('polish')}
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                              {tStudio('polishRunTooltip')}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                       {/* Edit Script Button */}
                       {!isOutline && onEditScene && (
                         <TooltipProvider>
