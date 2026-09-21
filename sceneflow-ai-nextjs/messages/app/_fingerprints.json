@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-21T11:54:10.683Z",
+  "generatedAt": "2026-09-21T21:47:07.271Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -768,6 +768,12 @@
       "studio.audienceResonanceRunTooltip": "7771fa743d63aae2",
       "studio.audienceResonanceViewTooltip": "09e860eb02f57c4e",
       "studio.audienceResonanceCancel": "98fb59ae65417317",
+      "studio.recommendations": "0738ee00b61bc3af",
+      "studio.recommendationsTooltip": "546fdc5b773335ea",
+      "studio.recommendationsDialogTitle": "0738ee00b61bc3af",
+      "studio.recommendationsDialogDescription": "b59dda03edb9358f",
+      "studio.recommendationsArEmpty": "66d626bbbf628c70",
+      "studio.recommendationsPolishEmpty": "25ddac20407f2a6f",
       "studio.polish": "770341d6e89e04e8",
       "studio.polishTooltip": "ae2181dc6bf38a5b",
       "studio.polishRunTooltip": "a5f8bc31e7eb4855",

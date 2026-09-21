@@ -18,11 +18,14 @@ import { useTranslations } from 'next-intl'
 import { ASSISTANT } from '@/lib/constants/assistant'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, Square, CheckSquare, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2 } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2 } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { PRODUCTION_SECTION_DESCRIPTIONS, PRODUCTION_SECTION_LABELS } from '@/constants/productionSections'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
-import { ScenePolishBadge, ScenePolishPanel } from './ScenePolishPanel'
+import {
+  pendingRecommendationCount,
+  SceneRecommendationsDialog,
+} from './SceneRecommendationsDialog'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
 import { SceneProductionDirector } from './scene-production/SceneProductionDirector'
 import { SegmentFrameTimeline } from './scene-production/SegmentFrameTimeline'
@@ -891,7 +894,7 @@ function SortableBeatRow({
 }
 
 // Sortable Scene Card Wrapper for drag-and-drop
-function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onEditImage, totalScenes, onNavigateScene, scenes, script, onScriptChange, setEditingImageData, setImageEditModalOpen, getPlaybackOffsetForScene, handlePlaybackOffsetChange, getSuggestedOffsetForScene, expandedRecommendations, setExpandedRecommendations, onAnalyzeScene, analyzingSceneIndex, onOptimizeScene, optimizingSceneIndex, setOptimizeDialogScene, setOptimizeDialogOpen, onResyncAudioTiming, resyncingAudioSceneIndex, onResetSegments, ...props }: any) {
+function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onEditImage, totalScenes, onNavigateScene, scenes, script, onScriptChange, setEditingImageData, setImageEditModalOpen, getPlaybackOffsetForScene, handlePlaybackOffsetChange, getSuggestedOffsetForScene, onAnalyzeScene, analyzingSceneIndex, onOptimizeScene, optimizingSceneIndex, setOptimizeDialogScene, setOptimizeDialogOpen, onResyncAudioTiming, resyncingAudioSceneIndex, onResetSegments, ...props }: any) {
   const {
     attributes,
     listeners,
@@ -930,8 +933,6 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
         getPlaybackOffsetForScene={getPlaybackOffsetForScene}
         handlePlaybackOffsetChange={handlePlaybackOffsetChange}
         getSuggestedOffsetForScene={getSuggestedOffsetForScene}
-        expandedRecommendations={expandedRecommendations}
-        setExpandedRecommendations={setExpandedRecommendations}
         onAnalyzeScene={onAnalyzeScene}
         analyzingSceneIndex={analyzingSceneIndex}
         onOptimizeScene={onOptimizeScene}
@@ -1206,29 +1207,17 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
   } | null>(null)
   const [isLocalOptimizing, setIsLocalOptimizing] = useState(false)
   
-  // Expanded recommendations state per scene
-  const [expandedRecommendations, setExpandedRecommendations] = useState<Set<number>>(new Set())
-  const [expandedPolish, setExpandedPolish] = useState<Set<number>>(new Set())
+  const [recommendationsSceneIndex, setRecommendationsSceneIndex] = useState<number | null>(null)
 
   useEffect(() => {
     if (revealPolishSceneIndex == null || revealPolishSceneIndex < 0) return
-    setExpandedPolish((prev) => {
-      if (prev.has(revealPolishSceneIndex)) return prev
-      const next = new Set(prev)
-      next.add(revealPolishSceneIndex)
-      return next
-    })
+    setRecommendationsSceneIndex(revealPolishSceneIndex)
   }, [revealPolishSceneIndex])
 
   useEffect(() => {
     if (focusedSceneIndex == null || focusedSceneIndex < 0) return
     onSelectSceneIndex?.(focusedSceneIndex)
-    setExpandedRecommendations((prev) => {
-      if (prev.has(focusedSceneIndex)) return prev
-      const next = new Set(prev)
-      next.add(focusedSceneIndex)
-      return next
-    })
+    setRecommendationsSceneIndex(focusedSceneIndex)
   }, [focusedSceneIndex, onSelectSceneIndex])
   
   // Voice selection visibility state
@@ -3398,10 +3387,10 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       getPlaybackOffsetForScene={getPlaybackOffsetForScene}
                       handlePlaybackOffsetChange={handlePlaybackOffsetChange}
                       getSuggestedOffsetForScene={getSuggestedOffsetForScene}
-                      expandedRecommendations={expandedRecommendations}
-                      setExpandedRecommendations={setExpandedRecommendations}
-                      expandedPolish={expandedPolish}
-                      setExpandedPolish={setExpandedPolish}
+                      recommendationsOpen={recommendationsSceneIndex === idx}
+                      onRecommendationsOpenChange={(open: boolean) =>
+                        setRecommendationsSceneIndex(open ? idx : null)
+                      }
                       onAnalyzeScene={onAnalyzeScene}
                       analyzingSceneIndex={analyzingSceneIndex}
                       onOptimizeScene={onOptimizeScene}
@@ -3588,12 +3577,9 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
               // Close dialog on success
               setOptimizeDialogOpen(false)
               setOptimizeDialogScene(null)
-              // Collapse recommendations panel
-              setExpandedRecommendations(prev => {
-                const newSet = new Set(prev)
-                newSet.delete(optimizeDialogScene.sceneIndex)
-                return newSet
-              })
+              setRecommendationsSceneIndex((current) =>
+                current === optimizeDialogScene.sceneIndex ? null : current
+              )
               toast.success(`Scene ${optimizeDialogScene.sceneNumber} optimized!`)
             } catch (error) {
               console.error('[OptimizeScene] Failed:', error)
@@ -4075,10 +4061,8 @@ interface SceneCardProps {
   handlePlaybackOffsetChange?: (sceneId: string, sceneIdx: number, language: string, offset: number) => void
   getSuggestedOffsetForScene?: (scene: any) => number | undefined
   // Per-scene audience analysis props
-  expandedRecommendations?: Set<number>
-  setExpandedRecommendations?: React.Dispatch<React.SetStateAction<Set<number>>>
-  expandedPolish?: Set<number>
-  setExpandedPolish?: React.Dispatch<React.SetStateAction<Set<number>>>
+  recommendationsOpen?: boolean
+  onRecommendationsOpenChange?: (open: boolean) => void
   onAnalyzeScene?: (sceneIndex: number) => Promise<void>
   analyzingSceneIndex?: number | null
   onOptimizeScene?: (sceneIndex: number, instruction: string, selectedRecommendations: string[]) => Promise<void>
@@ -4305,10 +4289,8 @@ function SceneCard({
   getPlaybackOffsetForScene,
   handlePlaybackOffsetChange,
   getSuggestedOffsetForScene,
-  expandedRecommendations,
-  setExpandedRecommendations,
-  expandedPolish,
-  setExpandedPolish,
+  recommendationsOpen = false,
+  onRecommendationsOpenChange,
   onAnalyzeScene,
   productionReadiness,
   analyzingSceneIndex,
@@ -4379,11 +4361,7 @@ function SceneCard({
     if (!onPolishScene) return
     try {
       await onPolishScene(sceneIdx)
-      setExpandedPolish?.((prev) => {
-        const next = new Set(prev ?? [])
-        next.add(sceneIdx)
-        return next
-      })
+      onRecommendationsOpenChange?.(true)
     } catch {
       // Page handler toasts the failure.
     }
@@ -5497,31 +5475,17 @@ function SceneCard({
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              // Toggle recommendations expansion
-                              setExpandedRecommendations(prev => {
-                                const newSet = new Set(prev)
-                                if (newSet.has(sceneIdx)) {
-                                  newSet.delete(sceneIdx)
-                                } else {
-                                  newSet.add(sceneIdx)
-                                }
-                                return newSet
-                              })
-                            }}
-                            className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg font-semibold border transition-all cursor-pointer hover:scale-105 shadow-sm ${
+                          <span
+                            className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg font-semibold border shadow-sm ${
                               scene.audienceAnalysis.score >= 80 
-                                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50 hover:bg-emerald-500/30 hover:border-emerald-400/70' 
+                                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50' 
                                 : scene.audienceAnalysis.score >= 60 
-                                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50 hover:bg-cyan-500/30 hover:border-cyan-400/70' 
-                                  : 'bg-rose-500/20 text-rose-300 border-rose-400/50 hover:bg-rose-500/30 hover:border-rose-400/70'
+                                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50' 
+                                  : 'bg-rose-500/20 text-rose-300 border-rose-400/50'
                             }`}
                           >
                             <Users className="w-3.5 h-3.5" />
                             <span className="tabular-nums">{scene.audienceAnalysis.score}</span>
-                            {/* Score delta indicator */}
                             {scene.audienceAnalysis.previousScore !== undefined && scene.audienceAnalysis.previousScore !== scene.audienceAnalysis.score && (() => {
                               const delta = scene.audienceAnalysis.score - scene.audienceAnalysis.previousScore!
                               return (
@@ -5535,17 +5499,7 @@ function SceneCard({
                                 High impact
                               </span>
                             )}
-                            {(scene.audienceAnalysis.recommendations?.length || 0) > 0 && (
-                              <span className="flex items-center justify-center ml-0.5 h-4 min-w-4 px-1 text-[10px] font-bold bg-violet-500/40 text-violet-200 rounded-full">
-                                {scene.audienceAnalysis.recommendations.length}
-                              </span>
-                            )}
-                            {expandedRecommendations.has(sceneIdx) ? (
-                              <ChevronUp className="w-3 h-3 ml-0.5 opacity-70" />
-                            ) : (
-                              <ChevronDown className="w-3 h-3 ml-0.5 opacity-70" />
-                            )}
-                          </button>
+                          </span>
                         </TooltipTrigger>
                         <TooltipContent className="bg-gray-900/95 backdrop-blur-sm text-white border border-gray-700/50 max-w-xs shadow-xl">
                           <div className="space-y-2 p-1">
@@ -5633,22 +5587,31 @@ function SceneCard({
                     )}
                   </div>
                 )}
-                    {onPolishScene && (
-                      <ScenePolishBadge
-                        analysis={scene.polishAnalysis}
-                        isPolishing={polishingSceneIndex === sceneIdx}
-                        onPolish={() => void handlePolishClick()}
-                        isExpanded={expandedPolish?.has(sceneIdx)}
-                        onToggleExpand={() => {
-                          setExpandedPolish?.((prev) => {
-                            const next = new Set(prev ?? [])
-                            if (next.has(sceneIdx)) next.delete(sceneIdx)
-                            else next.add(sceneIdx)
-                            return next
-                          })
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onRecommendationsOpenChange?.(true)
                         }}
-                      />
-                    )}
+                        className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg font-medium border transition-all bg-violet-500/20 text-violet-200 border-violet-400/50 hover:bg-violet-500/30 hover:border-violet-400/70 shadow-sm"
+                      >
+                        <Lightbulb className="w-3 h-3" />
+                        <span>{tStudio('recommendations')}</span>
+                        {pendingRecommendationCount(scene.audienceAnalysis, scene.polishAnalysis) > 0 && (
+                          <span className="flex items-center justify-center h-4 min-w-4 px-1 text-[10px] font-bold bg-violet-500/40 text-violet-100 rounded-full tabular-nums">
+                            {pendingRecommendationCount(scene.audienceAnalysis, scene.polishAnalysis)}
+                          </span>
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-gray-900 text-white border border-gray-700">
+                      <p className="text-xs">{tStudio('recommendationsTooltip')}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             )}
             </div>
@@ -5736,247 +5699,35 @@ function SceneCard({
           )}
         </div>
         
-        {/* Expandable Recommendations Panel - Shows when user clicks the score badge */}
-        <AnimatePresence>
-          {expandedRecommendations.has(sceneIdx) && scene.audienceAnalysis && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden"
-            >
-              <div className="mt-3 p-4 bg-gradient-to-br from-gray-800/80 to-gray-900/80 border border-gray-700/60 rounded-xl shadow-lg backdrop-blur-sm">
-                {/* Analysis Metrics Grid */}
-                <div className="grid grid-cols-4 gap-2 mb-4">
-                  {[
-                    { label: 'Pacing', value: scene.audienceAnalysis.pacing, icon: '⚡' },
-                    { label: 'Tension', value: scene.audienceAnalysis.tension, icon: '🎭' },
-                    { label: 'Character', value: scene.audienceAnalysis.characterDevelopment, icon: '👤' },
-                    { label: 'Visual', value: scene.audienceAnalysis.visualPotential, icon: '🎬' },
-                  ].map((metric) => (
-                    <div key={metric.label} className="flex flex-col items-center p-2 bg-gray-800/50 rounded-lg border border-gray-700/40">
-                      <span className="text-sm mb-1">{metric.icon}</span>
-                      <span className="text-[10px] text-gray-400 uppercase tracking-wide">{metric.label}</span>
-                      <span className="text-xs font-medium text-gray-200 capitalize">{metric.value}</span>
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Notes */}
-                {scene.audienceAnalysis.notes && (
-                  <div className="mb-4 p-3 bg-gray-800/40 rounded-lg border-l-2 border-cyan-500/50">
-                    <p className="text-xs text-gray-300 leading-relaxed italic">
-                      "{scene.audienceAnalysis.notes}"
-                    </p>
-                  </div>
-                )}
-                
-                {/* Sync CTA - Show when scene was optimized after last analysis */}
-                {scene.audienceAnalysis.optimizedAt && 
-                 scene.audienceAnalysis.analyzedAt &&
-                 new Date(scene.audienceAnalysis.optimizedAt) > new Date(scene.audienceAnalysis.analyzedAt) && (
-                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-4 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                      <AlertTriangle className="w-4 h-4 text-amber-400" />
-                    </div>
-                    <span className="text-xs text-amber-200 flex-1">Scene optimized since last analysis - score may have changed</span>
-                    {onAnalyzeScene && (
-                      <Button
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onAnalyzeScene(sceneIdx)
-                        }}
-                        disabled={analyzingSceneIndex === sceneIdx}
-                        className="h-7 text-xs bg-amber-600 hover:bg-amber-500 text-white rounded-lg"
-                      >
-                        {analyzingSceneIndex === sceneIdx ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : (
-                          'Re-analyze'
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                )}
-                
-                {/* Recommendations */}
-                {(scene.audienceAnalysis.recommendations?.length || 0) > 0 && (
-                  <div className="space-y-3">
-                    <p className="text-xs font-semibold text-violet-300 flex items-center gap-2">
-                      <Lightbulb className="w-4 h-4" />
-                      Recommendations
-                    </p>
-                    <ul className="space-y-2">
-                      {scene.audienceAnalysis.recommendations.map((rec: string | { text: string; category?: string; impact?: string; priority?: string; pointsDeducted?: number }, rIdx: number) => {
-                        const recText =
-                          typeof rec === 'string'
-                            ? rec
-                            : typeof rec === 'object' && rec && typeof rec.text === 'string'
-                            ? rec.text
-                            : (() => {
-                                const line = coerceDialogueLineText((rec as any)?.line)
-                                if (line && typeof (rec as any)?.character === 'string') {
-                                  return `${(rec as any).character}: ${line}`
-                                }
-                                return line || String(rec)
-                              })()
-                        const recCategory = typeof rec === 'object' && rec?.category ? rec.category : null
-                        const recImpact = typeof rec === 'object' && rec?.impact ? rec.impact : null
-                        const recPriority = typeof rec === 'object' && rec?.priority ? rec.priority : null
-                        const recPointsDeducted = typeof rec === 'object' && rec?.pointsDeducted ? rec.pointsDeducted : null
-                        const recId = recommendationId(rec, rIdx)
-                        const isApplied = (scene.audienceAnalysis.appliedRecommendationIds || []).includes(recId)
-                        return (
-                          <li key={recId} className={`text-xs text-gray-300 flex gap-3 p-2.5 rounded-lg border transition-colors ${
-                            isApplied
-                              ? 'bg-emerald-950/30 border-emerald-500/20'
-                              : 'bg-gray-800/40 border-gray-700/30 hover:bg-gray-800/60'
-                          }`}>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onToggleAudienceRecommendation?.(sceneIdx, recId, !isApplied)
-                              }}
-                              className="flex-shrink-0 mt-0.5 text-gray-400 hover:text-white"
-                              aria-label={isApplied ? 'Reopen fix' : 'Mark fix applied'}
-                              aria-pressed={isApplied}
-                            >
-                              {isApplied ? (
-                                <CheckSquare className="w-4 h-4 text-emerald-400" />
-                              ) : (
-                                <Square className="w-4 h-4" />
-                              )}
-                            </button>
-                            <div className="flex-1 min-w-0">
-                              <span className={`leading-relaxed ${isApplied ? 'line-through opacity-60' : ''}`}>{recText}</span>
-                              {(recCategory || recImpact || recPriority || recPointsDeducted) && (
-                                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                                  {recPriority && (
-                                    <span className={`inline-flex items-center text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider ${
-                                      recPriority === 'high' ? 'bg-red-500/20 text-red-300 border border-red-500/30' :
-                                      recPriority === 'medium' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
-                                      'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                                    }`}>
-                                      {recPriority === 'high' ? '🚨' : recPriority === 'medium' ? '⚠️' : '💡'} {recPriority}
-                                    </span>
-                                  )}
-                                  {recPointsDeducted && (
-                                    <span className="inline-flex items-center text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider bg-red-500/20 text-red-300 border border-red-500/30">
-                                      -{recPointsDeducted} pts
-                                    </span>
-                                  )}
-                                  {recImpact && (
-                                    <span className={`inline-flex items-center text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider ${
-                                      recImpact === 'structural' 
-                                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' 
-                                        : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                                    }`}>
-                                      {recImpact === 'structural' ? '🔧' : '✨'} {recImpact}
-                                    </span>
-                                  )}
-                                  {recCategory && (
-                                    <span className="inline-flex items-center text-[9px] font-medium px-1.5 py-0.5 rounded bg-gray-700/50 text-gray-400 border border-gray-600/30">
-                                      {recCategory}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Action Buttons */}
-                <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-700/50">
-                  {onEditSceneWithRecommendations && (scene.audienceAnalysis.recommendations?.length || 0) > 0 && (
-                    <Button
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        // Extract recommendation texts
-                        const recommendations = (scene.audienceAnalysis.recommendations || [])
-                          .map((rec: string | { text: string }, i: number) => ({
-                            text: typeof rec === 'string' ? rec : rec?.text || String(rec),
-                            id: recommendationId(rec, i),
-                          }))
-                          .filter((rec: { id: string }) =>
-                            !(scene.audienceAnalysis.appliedRecommendationIds || []).includes(rec.id)
-                          )
-                        onEditSceneWithRecommendations(
-                          sceneIdx,
-                          recommendations.map((rec: { text: string }) => rec.text),
-                          { recSource: 'audience' }
-                        )
-                      }}
-                      className="h-8 text-xs bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-lg shadow-md"
-                    >
-                      <Pencil className="w-3.5 h-3.5 mr-1.5" />
-                      {ASSISTANT.short} &amp; Apply
-                    </Button>
-                  )}
-                  {onEditScene && !(onEditSceneWithRecommendations && (scene.audienceAnalysis.recommendations?.length || 0) > 0) && (
-                    <Button
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onEditScene(sceneIdx)
-                      }}
-                      className="h-8 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
-                    >
-                      <Pencil className="w-3.5 h-3.5 mr-1.5" />
-                      {ASSISTANT.short}
-                    </Button>
-                  )}
-                  {onAnalyzeScene && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onAnalyzeScene(sceneIdx)
-                      }}
-                      disabled={analyzingSceneIndex === sceneIdx}
-                      className="h-8 text-xs border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-400 rounded-lg"
-                    >
-                      {analyzingSceneIndex === sceneIdx ? (
-                        <>
-                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                          Analyzing...
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-                          Analyze
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {!isOutline && scene.polishAnalysis && (
-          <ScenePolishPanel
-            scene={scene}
-            analysis={scene.polishAnalysis}
+        {!isOutline && (
+          <SceneRecommendationsDialog
+            open={recommendationsOpen}
+            onOpenChange={(open) => onRecommendationsOpenChange?.(open)}
+            sceneNumber={sceneNumber}
+            sceneHeading={formattedHeading}
+            audienceAnalysis={scene.audienceAnalysis}
+            polishAnalysis={scene.polishAnalysis ?? null}
             sceneIndex={sceneIdx}
-            isExpanded={expandedPolish?.has(sceneIdx) ?? false}
+            isAnalyzing={analyzingSceneIndex === sceneIdx}
             isPolishing={polishingSceneIndex === sceneIdx}
-            onPolish={() => void handlePolishClick()}
-            onToggleRecommendation={onTogglePolishRecommendation}
-            onEditWithRecommendations={(idx, recs) =>
-              onEditSceneWithRecommendations?.(idx, recs, {
-                revisionDepth: 'light',
-                recSource: 'polish',
-              })
+            onAnalyze={onAnalyzeScene}
+            onPolish={onPolishScene ? () => void handlePolishClick() : undefined}
+            onToggleAudienceRecommendation={onToggleAudienceRecommendation}
+            onTogglePolishRecommendation={onTogglePolishRecommendation}
+            onEditWithAudienceRecommendations={
+              onEditSceneWithRecommendations
+                ? (idx, recs) =>
+                    onEditSceneWithRecommendations(idx, recs, { recSource: 'audience' })
+                : undefined
+            }
+            onEditWithPolishRecommendations={
+              onEditSceneWithRecommendations
+                ? (idx, recs) =>
+                    onEditSceneWithRecommendations(idx, recs, {
+                      revisionDepth: 'light',
+                      recSource: 'polish',
+                    })
+                : undefined
             }
             onEditScene={onEditScene}
           />

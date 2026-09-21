@@ -282,8 +282,8 @@ describe('Scene polish wiring', () => {
     expect(page).toContain("recSource?: 'audience' | 'polish'")
 
     const panel = readSource('src/components/vision/ScriptPanel.tsx')
-    expect(panel).toContain('ScenePolishBadge')
-    expect(panel).toContain('ScenePolishPanel')
+    expect(panel).toContain('SceneRecommendationsDialog')
+    expect(panel).not.toContain('ScenePolishBadge')
     expect(panel).toContain("recSource: 'polish'")
     expect(panel).toContain('revealPolishSceneIndex')
 
@@ -298,10 +298,13 @@ describe('Scene polish wiring', () => {
     const revise = readSource('src/app/api/vision/revise-scene/route.ts')
     expect(revise).toContain('When instructions name Beat N')
 
-    const polishPanel = readSource('src/components/vision/ScenePolishPanel.tsx')
-    expect(polishPanel).toContain("from '@/lib/script/scenePolish/formatPolishBeats'")
-    expect(polishPanel).not.toContain('analyzeScenePolish')
-    expect(polishPanel).not.toContain('vertexai/gemini')
+    const dialog = readSource('src/components/vision/SceneRecommendationsDialog.tsx')
+    expect(dialog).toContain("from '@/lib/script/scenePolish/formatPolishBeats'")
+    expect(dialog).not.toContain('analyzeScenePolish')
+    expect(dialog).not.toContain('vertexai/gemini')
+    expect(dialog).not.toContain('polishStale')
+    expect(dialog).not.toContain('polishReRun')
+    expect(dialog).not.toContain('isPolishAnalysisStale')
   })
 
   it('stamps polish appliedRecommendationIds on Co-Director apply', () => {
