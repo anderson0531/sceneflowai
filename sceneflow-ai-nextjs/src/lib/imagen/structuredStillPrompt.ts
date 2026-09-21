@@ -96,10 +96,22 @@ export const STILL_TASK_FULL_BODY_LINES = [
  * Face Close-Up occupancy. Full-body TASK lines pull the camera back toward
  * the standing figure on the identity/wardrobe card (production 2026-09-18,
  * Gideon CU with chin tucked). Visible head, shoulders, and hands only.
+ *
+ * Use these when the identity plate may still be a leftover PiP / character card.
  */
 export const STILL_TASK_FACE_CLOSE_UP_LINES = [
   'The visible face and upper body match the identity reference — same bone structure, skin, and hair from the face close-up in that photo. Do not copy a standing figure from the identity card.',
   'Visible hands keep one settled pose. Do not pull back to a standing full-length figure from the wardrobe or identity card.',
+] as const
+
+/**
+ * Face Close-Up when identity is a dedicated headshot (9:16 / 1:1), not a card.
+ * "Do not copy a standing figure from the identity card" taught Pro to ignore
+ * the identity plate and invent a face (production 2026-09-21, Gideon CU).
+ */
+export const STILL_TASK_FACE_CLOSE_UP_IDENTITY_PLATE_LINES = [
+  'The visible face and upper body match the IDENTITY plate — same bone structure, skin, and hair. Do not invent a different face.',
+  'Visible hands keep one settled pose. Do not pull back to a standing full-length figure.',
 ] as const
 
 export const STILL_TASK_INSERT_FRAMING_LINE =
@@ -156,6 +168,37 @@ export const STILL_TASK_PAIRED_PROP_SCALE_LINE =
 export const STILL_TASK_PAIRED_PLATES_MANDATORY_LINE =
   'The attached reference plates are required source material. Each person, prop, and location takes appearance from its paired plate.'
 
+/** HUD-free Pro identity lock — no send-index / `[REFERENCES]` (those typeset onto the still). */
+export const PAIRED_IDENTITY_LANDMARK_PREFIX = 'must match the IDENTITY plate'
+
+export function formatPairedIdentityLandmarkLine(ref: StillPromptBoundRef): string | undefined {
+  if (ref.kind !== 'person' || !ref.identityTraits?.trim()) return undefined
+  const named = ref.name?.trim() ? `${ref.token} (${ref.name})` : ref.token
+  let line = `${named} ${PAIRED_IDENTITY_LANDMARK_PREFIX} — ${ref.identityTraits.trim()}`
+  if (ref.wardrobeClause?.trim()) {
+    line += `. Garments at the collar and shoulders: ${ref.wardrobeClause.trim()}`
+  }
+  return line
+}
+
+export function formatPairedIdentityLandmarkLines(refs: StillPromptBoundRef[]): string[] {
+  return refs
+    .map((ref) => formatPairedIdentityLandmarkLine(ref))
+    .filter((line): line is string => Boolean(line))
+}
+
+export function faceCloseUpTaskLines(
+  refs?: StillPromptBoundRef[],
+  refsKnown?: boolean
+): readonly string[] {
+  const people = refs?.filter((ref) => ref.kind === 'person') ?? []
+  const dedicatedHeadshot =
+    refsKnown === true && people.length > 0 && people.every((ref) => !ref.isComposite)
+  return dedicatedHeadshot
+    ? STILL_TASK_FACE_CLOSE_UP_IDENTITY_PLATE_LINES
+    : STILL_TASK_FACE_CLOSE_UP_LINES
+}
+
 export const STILL_TASK_DETAIL_TOKEN_LINE =
   `${STILL_TASK_PERSON_PROP_TOKEN_LINE} ${STILL_TASK_LOCATION_BOKEH_LINE}`
 
@@ -174,6 +217,11 @@ export interface StillTaskLineOptions {
    * a `[REFERENCES]` section that is not in the request.
    */
   occupancyMode?: StillOccupancyMode
+  /**
+   * Pro 560-token plates: HUD-free IDENTITY landmark lines in TASK when the
+   * `[REFERENCES]` wall is omitted.
+   */
+  includeAttachedIdentityTraits?: boolean
 }
 
 export function stillActionHasEmptyCast(actionFraming?: string | null): boolean {
@@ -230,6 +278,13 @@ export function stillTaskLines(
     if (hasLocationRef && actionNamesMountedSetFixture(options?.actionFraming)) {
       lines.push(STILL_TASK_MOUNTED_FIXTURE_LINE)
     }
+    if (
+      options?.includeAttachedIdentityTraits &&
+      pairedOccupancy &&
+      refsKnown
+    ) {
+      lines.push(...formatPairedIdentityLandmarkLines(refs))
+    }
     if (pairedOccupancy && (!refsKnown || refs.length > 0)) {
       lines.push(STILL_TASK_PAIRED_PLATES_MANDATORY_LINE)
     }
@@ -242,7 +297,7 @@ export function stillTaskLines(
     } else if (shot.isInsertOrEcu) {
       lines.push(STILL_TASK_INSERT_FRAMING_LINE)
     } else if (!emptyCast && isFaceCloseUpShot(shot.shotHint || shotType)) {
-      lines.push(...STILL_TASK_FACE_CLOSE_UP_LINES)
+      lines.push(...faceCloseUpTaskLines(refs, refsKnown))
     } else if (!emptyCast) {
       lines.push(...STILL_TASK_FULL_BODY_LINES)
     }
@@ -465,11 +520,16 @@ const STILL_BOILERPLATE_LINES = [
   STILL_TASK_PAIRED_PROP_SCALE_LINE,
   STILL_TASK_PAIRED_PLATES_MANDATORY_LINE,
   ...STILL_TASK_FACE_CLOSE_UP_LINES,
+  ...STILL_TASK_FACE_CLOSE_UP_IDENTITY_PLATE_LINES,
   ...LEGACY_STILL_TASK_LINES,
 ]
 
 /** Prefixes of code-owned lines whose tail varies with the beat's references. */
-const STILL_BOILERPLATE_PREFIXES = [/^Also in frame:/i]
+const STILL_BOILERPLATE_PREFIXES = [
+  /^Also in frame:/i,
+  /^person \[\d+\](?: \([^)]+\))? must match the IDENTITY plate/i,
+  /^Garments at the collar and shoulders:/i,
+]
 
 /**
  * Recover the beat action from a `[STILL]` or `[SCENE COMPOSITION & BEAT]` body.
@@ -1323,7 +1383,12 @@ export function stillRefsFromAttachedImages(args: {
               wordCap: args.identityTraitsWordCap,
             })
           : undefined,
-        wardrobeClause: undefined,
+        wardrobeClause:
+          args.includeAttachedIdentityTraits && !slot?.isComposite && slot?.wardrobeSendIndex == null
+            ? formatWardrobeLegendClause(
+                char?.wardrobeDescription || char?.defaultWardrobe
+              )
+            : undefined,
         identitySendIndex: slot?.identitySendIndex,
         wardrobeSendIndex: slot?.isComposite ? undefined : slot?.wardrobeSendIndex,
         isComposite: slot?.isComposite,
@@ -1544,6 +1609,8 @@ export function assembleStructuredStillPrompt(input: {
         emptyCast,
         refs,
         occupancyMode: input.omitReferencesSection ? 'paired' : 'references-section',
+        includeAttachedIdentityTraits:
+          Boolean(input.omitReferencesSection && input.includeAttachedIdentityTraits),
       }),
     ]
       .filter(Boolean)

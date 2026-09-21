@@ -5,6 +5,7 @@ import {
 } from '@/lib/character/characterReferenceAssembly'
 import { buildLocationReferenceLabel } from '@/lib/vision/locationReferencePrompts'
 import { propScaleClause } from '@/lib/imagen/propScaleClause'
+import { isFaceCloseUpShot } from '@/lib/imagen/stillFramingNormalize'
 
 export const MAX_VERTEX_GEMINI_REFERENCE_IMAGES = 8
 export const MAX_REFERENCE_IMAGES_ECO = 3
@@ -211,6 +212,43 @@ function propRole(importance?: string): ReferencePriorityRole {
   if (importance === 'critical') return 'prop-critical'
   if (importance === 'important') return 'prop-important'
   return 'prop-other'
+}
+
+/**
+ * Face CU/MCU: a full-body wardrobe plate spends Pro's 560 visual tokens on a
+ * standing figure and outvotes the identity headshot. Keep identity (+ location/
+ * props). Outfit stays in TASK / identity-caption text.
+ */
+export function omitWardrobePlatesForFaceCloseUp<
+  T extends { refRole?: CharacterRefRole; characterName?: string }
+>(refs: T[], shotType?: string | null): { kept: T[]; dropped: T[] } {
+  if (!isFaceCloseUpShot(shotType)) {
+    return { kept: refs, dropped: [] }
+  }
+
+  const charactersWithIdentity = new Set(
+    refs
+      .filter(
+        (ref) => ref.refRole === 'identity' || ref.refRole === 'wardrobe-diptych'
+      )
+      .map((ref) => ref.characterName)
+      .filter((name): name is string => Boolean(name))
+  )
+
+  const kept: T[] = []
+  const dropped: T[] = []
+  for (const ref of refs) {
+    if (
+      ref.refRole === 'wardrobe' &&
+      ref.characterName &&
+      charactersWithIdentity.has(ref.characterName)
+    ) {
+      dropped.push(ref)
+      continue
+    }
+    kept.push(ref)
+  }
+  return { kept, dropped }
 }
 
 export function prioritizeReferenceImages(

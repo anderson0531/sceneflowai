@@ -14,6 +14,8 @@ import {
   STILL_TASK_INSERT_FRAMING_LINE,
   STILL_TASK_OBJECT_INSERT_LINE,
   STILL_TASK_FACE_CLOSE_UP_LINES,
+  STILL_TASK_FACE_CLOSE_UP_IDENTITY_PLATE_LINES,
+  PAIRED_IDENTITY_LANDMARK_PREFIX,
   STILL_TASK_LOCATION_NEARFIELD_LINE,
   STILL_TASK_LOCATION_ENVIRONMENT_LINE,
   STILL_TASK_MOUNTED_FIXTURE_LINE,
@@ -525,13 +527,34 @@ Strictly Avoid: Mannequin geometry.`,
       includeCandid: true,
     })
     expect(close).not.toMatch(/two arms and two legs/)
-    expect(close).toContain(STILL_TASK_FACE_CLOSE_UP_LINES[0])
-    expect(close).toContain(STILL_TASK_FACE_CLOSE_UP_LINES[1])
+    expect(close).toContain(STILL_TASK_FACE_CLOSE_UP_IDENTITY_PLATE_LINES[0])
+    expect(close).toContain(STILL_TASK_FACE_CLOSE_UP_IDENTITY_PLATE_LINES[1])
+    expect(close).not.toContain('identity card')
+    expect(close).not.toContain(STILL_TASK_FACE_CLOSE_UP_LINES[0])
     expect(close).not.toContain(STILL_TASK_INSERT_FRAMING_LINE)
     expect(close).toContain('shallow-focus background bokeh')
     expect(close).not.toContain('Also in frame:')
     expect(close).toContain('no posing, no lens eye-contact, no turnaround framing')
     expect(close).not.toMatch(/no headshot or turnaround/)
+  })
+
+  it('keeps identity-card CU language when the person plate is a composite diptych', () => {
+    const close = assembleStructuredStillPrompt({
+      actionOrStructured: 'Close-Up. person [1] stares at the needle.',
+      refs: [
+        {
+          kind: 'person',
+          token: 'person [1]',
+          name: 'Gideon Croft',
+          roleLabel: 'character reference',
+          isComposite: true,
+        },
+      ],
+      shotType: 'Close-Up',
+    })
+    expect(close).toContain(STILL_TASK_FACE_CLOSE_UP_LINES[0])
+    expect(close).toContain('identity card')
+    expect(close).not.toContain(STILL_TASK_FACE_CLOSE_UP_IDENTITY_PLATE_LINES[0])
   })
 
   it('is stable when a Close-Up candid still is re-assembled', () => {
@@ -1533,6 +1556,7 @@ describe('identity traits reach every reference-bearing frame', () => {
     expect(src).toContain("useInterleavedProRefs = effectiveImageTier !== 'eco'")
     expect(src).toContain('includeAttachedIdentityTraits = useInterleavedProRefs')
     expect(src).toContain('omitReferencesSection: useInterleavedProRefs')
+    expect(src).toContain('omitWardrobePlatesForFaceCloseUp')
     expect(src).toContain('buildInterleavedReferencePairCaptions')
     expect(src).toContain('preserveLibraryPromptTokens: useInterleavedProRefs')
     expect(src).toContain('if (keyFeatures.length === 0)')
@@ -1573,6 +1597,49 @@ describe('identity traits reach every reference-bearing frame', () => {
     expect(
       formatStillReferencesLegend(refs, undefined, { includeAttachedIdentityTraits: true })
     ).not.toMatch(/overcoat/i)
+  })
+
+  it('puts HUD-free IDENTITY landmarks on Pro TASK when the [REFERENCES] wall is omitted', () => {
+    const refs = stillRefsFromAttachedImages({
+      selected: [{ sendIndex: 1, characterName: 'Gideon Croft', refRole: 'identity' }],
+      characterReferences: [
+        {
+          name: 'Gideon Croft',
+          promptToken: 'person [1]',
+          subjectOrdinal: 1,
+          visionDescription: GIDEON_VISION,
+          wardrobeDescription: 'charcoal wool overcoat over a dark knit',
+        },
+      ],
+      includeAttachedIdentityTraits: true,
+    })
+    expect(refs[0].wardrobeClause).toMatch(/charcoal wool overcoat/i)
+
+    const prompt = assembleStructuredStillPrompt({
+      actionOrStructured: 'Close-Up. person [1] stares at the needle.',
+      refs,
+      shotType: 'Close-Up',
+      includeAttachedIdentityTraits: true,
+      omitReferencesSection: true,
+    })
+
+    expect(prompt).toContain(PAIRED_IDENTITY_LANDMARK_PREFIX)
+    expect(prompt).toContain('person [1] (Gideon Croft) must match the IDENTITY plate')
+    expect(prompt).toMatch(/medium-brown skin/)
+    expect(prompt).toContain('Garments at the collar and shoulders:')
+    expect(prompt).not.toContain('Reference image 1')
+    expect(prompt).not.toContain(STILL_SECTION_REFERENCES)
+    expect(prompt).toContain(STILL_TASK_FACE_CLOSE_UP_IDENTITY_PLATE_LINES[0])
+    expect(prompt).not.toContain('identity card')
+
+    const replayed = assembleStructuredStillPrompt({
+      actionOrStructured: prompt,
+      refs,
+      shotType: 'Close-Up',
+      includeAttachedIdentityTraits: true,
+      omitReferencesSection: true,
+    })
+    expect(replayed).toBe(prompt)
   })
 })
 

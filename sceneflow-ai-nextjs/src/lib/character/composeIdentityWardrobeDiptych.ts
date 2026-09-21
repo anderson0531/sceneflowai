@@ -212,6 +212,8 @@ export type CroppableIdentityReference = {
   imageUrl?: string
   base64Image?: string
   mimeType?: string
+  /** Stamped for Vertex so the 560/ref warn only fires on uncropped identity plates. */
+  proIdentityCrop?: 'cropped' | 'already-tight' | 'skipped'
 }
 
 /**
@@ -250,16 +252,21 @@ export async function cropIdentityReferenceImagesForPro<T extends CroppableIdent
           ...ref,
           base64Image: cropped.buffer.toString('base64'),
           mimeType: 'image/jpeg',
+          proIdentityCrop: 'cropped',
         })
         continue
       }
-      croppedRefs.push(
-        ref.base64Image ? ref : { ...ref, base64Image: base64Data, mimeType }
+      console.log(
+        `[Identity CU] Identity plate already tight (${cropped.width}x${cropped.height}, reason=already-tight, name=${ref.name})`
       )
+      croppedRefs.push({
+        ...(ref.base64Image ? ref : { ...ref, base64Image: base64Data, mimeType }),
+        proIdentityCrop: 'already-tight',
+      })
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error)
       console.warn(`[Identity CU] Identity CU crop skipped: ${reason}`)
-      croppedRefs.push(ref)
+      croppedRefs.push({ ...ref, proIdentityCrop: 'skipped' })
     }
   }
   return croppedRefs

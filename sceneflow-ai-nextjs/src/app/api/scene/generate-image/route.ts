@@ -184,6 +184,7 @@ import {
   remapLibraryPromptTokens,
   resolveEffectiveImageTier,
   selectReferenceImagesInOrder,
+  omitWardrobePlatesForFaceCloseUp,
   type VertexImageTier,
 } from '@/lib/vision/referenceLimits'
 import {
@@ -2857,6 +2858,16 @@ export async function POST(req: NextRequest) {
           }
 
           const useInterleavedProRefs = effectiveImageTier !== 'eco'
+          const { kept: refsForCap, dropped: cuWardrobeDropped } =
+            useInterleavedProRefs && !isCreativeStillGeneration(stillGenerationMode)
+              ? omitWardrobePlatesForFaceCloseUp(allPrioritizedRefs, effectiveShotType)
+              : { kept: allPrioritizedRefs, dropped: [] as typeof allPrioritizedRefs }
+          if (cuWardrobeDropped.length > 0) {
+            console.log(
+              `[Scene Image] Omitting ${cuWardrobeDropped.length} full-body wardrobe plate(s) on face close-up so Pro's 560-token slot stays on identity:`,
+              cuWardrobeDropped.map((r) => r.characterName).join(', ')
+            )
+          }
           const {
             selected: selectedReferenceImages,
             dropped: droppedReferenceImages,
@@ -2864,7 +2875,7 @@ export async function POST(req: NextRequest) {
             libraryTokenRewrites,
           } =
             selectReferenceImagesInOrder(
-              allPrioritizedRefs,
+              refsForCap,
               referenceImageCap,
               {
                 buildIdentityLabel: buildSceneImageIdentityLabel,

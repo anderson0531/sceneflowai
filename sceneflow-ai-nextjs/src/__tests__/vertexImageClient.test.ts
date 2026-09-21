@@ -9,6 +9,7 @@ import {
   effectiveImageSizeForModel,
   usesProImageReferenceLayout,
   generateVertexGeminiImage,
+  identityPlatesNeed560Warn,
   isIdentityReferencePartName,
 } from '@/lib/vertexai/vertexImageClient'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
@@ -469,6 +470,73 @@ describe('generateVertexGeminiImage request shape', () => {
     expect(
       warn.mock.calls.some((call) => String(call[0]).includes('Pro IMAGE token density 560/ref'))
     ).toBe(true)
+  })
+
+  it('does not warn at 560/ref when identity plates were already face-cropped', async () => {
+    const warn = vi.spyOn(console, 'warn')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        imageResponse({
+          usageMetadata: {
+            promptTokensDetails: [{ modality: 'IMAGE', tokenCount: 1120 }],
+          },
+        })
+      )
+    )
+
+    await generateVertexGeminiImage({
+      prompt: 'SCENE PROMPT',
+      modelTier: 'designer',
+      referenceImages: [
+        {
+          base64Image: 'a',
+          mimeType: 'image/jpeg',
+          name: '[REFERENCE: IDENTITY - person [1]] Facial reference for Gideon Croft',
+          proIdentityCrop: 'cropped',
+        },
+        {
+          base64Image: 'b',
+          mimeType: 'image/jpeg',
+          name: '[REFERENCE: LOCATION - location [1]] Environment reference: Vault',
+        },
+      ],
+    })
+
+    expect(
+      warn.mock.calls.some((call) => String(call[0]).includes('Pro IMAGE token density 560/ref'))
+    ).toBe(false)
+  })
+
+  it('does not warn at 560/ref when no identity plate is attached', async () => {
+    const warn = vi.spyOn(console, 'warn')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        imageResponse({
+          usageMetadata: {
+            promptTokensDetails: [{ modality: 'IMAGE', tokenCount: 560 }],
+          },
+        })
+      )
+    )
+
+    await generateVertexGeminiImage({
+      prompt: 'SCENE PROMPT',
+      modelTier: 'designer',
+      referenceImages: [
+        {
+          base64Image: 'b',
+          mimeType: 'image/jpeg',
+          name: '[REFERENCE: LOCATION - location [1]] Environment reference: Vault',
+        },
+      ],
+    })
+
+    expect(identityPlatesNeed560Warn([{ name: 'location' }])).toBe(false)
+    expect(
+      warn.mock.calls.some((call) => String(call[0]).includes('Pro IMAGE token density 560/ref'))
+    ).toBe(false)
   })
 
   it('returns the last non-thought image when Pro emits thought drafts', async () => {

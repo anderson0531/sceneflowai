@@ -6,6 +6,7 @@ import {
   buildIdentityTraitsClause,
 } from '@/lib/imagen/identityTraitsClause'
 import {
+  formatPairedIdentityLandmarkLine,
   formatStillReferencesLegend,
   stillRefsFromAttachedImages,
 } from '@/lib/imagen/structuredStillPrompt'
@@ -184,6 +185,28 @@ describe('identity traits in the [REFERENCES] legend', () => {
     expect(legend).toContain('facial landmarks from Reference image 1')
     expect(legend).toMatch(/medium-brown skin/)
     expect(legend).not.toMatch(/overcoat/i)
+  })
+
+  it('emits a HUD-free IDENTITY plate lock without a send-index legend', () => {
+    const identityOnly = stillRefsFromAttachedImages({
+      selected: [{ sendIndex: 1, characterName: 'Gideon Croft', refRole: 'identity' }],
+      characterReferences: [
+        {
+          name: 'Gideon Croft',
+          promptToken: 'person [1]',
+          subjectOrdinal: 1,
+          visionDescription: GIDEON_VISION,
+          wardrobeDescription: 'charcoal wool overcoat, scuffed boots',
+        },
+      ],
+      includeAttachedIdentityTraits: true,
+    })
+
+    const line = formatPairedIdentityLandmarkLine(identityOnly[0])
+    expect(line).toContain('person [1] (Gideon Croft) must match the IDENTITY plate')
+    expect(line).toMatch(/medium-brown skin/)
+    expect(line).toContain('Garments at the collar and shoulders:')
+    expect(line).not.toContain('Reference image')
   })
 
   it('leaves prop and location lines without identity traits', () => {
