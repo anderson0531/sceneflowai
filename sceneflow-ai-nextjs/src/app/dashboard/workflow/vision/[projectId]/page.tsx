@@ -6187,6 +6187,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const [editingSceneIndex, setEditingSceneIndex] = useState<number | null>(null)                                                                               
   const [isSceneEditorOpen, setIsSceneEditorOpen] = useState(false)
   const [sceneEditorInitialInstructions, setSceneEditorInitialInstructions] = useState<string>('')
+  const [sceneEditorInitialRevisionDepth, setSceneEditorInitialRevisionDepth] = useState<RevisionDepth | undefined>(undefined)
+  const [polishingSceneIndex, setPolishingSceneIndex] = useState<number | null>(null)
   const [recentlyUpdatedSceneIndex, setRecentlyUpdatedSceneIndex] = useState<number | null>(null)
   const recentlyUpdatedSceneClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [focusedSceneIndex, setFocusedSceneIndex] = useState<number | null>(null)
@@ -6220,9 +6222,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }, 4000)
   }, [])
 
-  const recIdsMatchingTexts = (scene: any, texts: string[]): string[] => {
+  const recIdsMatchingTexts = (
+    scene: any,
+    texts: string[],
+    source: 'audience' | 'polish' | 'all' = 'all'
+  ): string[] => {
     const wanted = new Set(texts.map((text) => text.trim().toLowerCase()).filter(Boolean))
-    const recs = scene?.audienceAnalysis?.recommendations || []
+    const recs = [
+      ...(source !== 'polish' ? scene?.audienceAnalysis?.recommendations || [] : []),
+      ...(source !== 'audience' ? scene?.polishAnalysis?.recommendations || [] : []),
+    ]
     return recs
       .map((rec: unknown, i: number) => ({
         id: recommendationId(rec, i),
@@ -6244,6 +6253,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       ...scene,
       audienceAnalysis: {
         ...scene.audienceAnalysis,
+        appliedRecommendationIds: Array.from(current),
+      },
+    }
+    const updatedScript = {
+      ...currentScript,
+      script: { ...currentScript.script, scenes },
+    }
+    setScript(updatedScript)
+    scriptRef.current = updatedScript
+    void saveScenesToDatabase(scenes)
+  }
+
+  const handleTogglePolishRecommendation = (sceneIndex: number, recId: string, applied: boolean) => {
+    const currentScript = scriptRef.current
+    if (!currentScript?.script?.scenes?.[sceneIndex]?.polishAnalysis) return
+    const scenes = [...currentScript.script.scenes]
+    const scene = scenes[sceneIndex]
+    const current = new Set(scene.polishAnalysis.appliedRecommendationIds || [])
+    if (applied) current.add(recId)
+    else current.delete(recId)
+    scenes[sceneIndex] = {
+      ...scene,
+      polishAnalysis: {
+        ...scene.polishAnalysis,
         appliedRecommendationIds: Array.from(current),
       },
     }
@@ -13904,9 +13937,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   // Scene editor handlers
-  const openSceneDirectWithInstruction = (sceneIndex: number, instruction: string) => {
+  const openSceneDirectWithInstruction = (
+    sceneIndex: number,
+    instruction: string,
+    revisionDepth?: RevisionDepth
+  ) => {
     setEditingSceneIndex(sceneIndex)
     setSceneEditorInitialInstructions(instruction)
+    setSceneEditorInitialRevisionDepth(revisionDepth)
     setIsSceneEditorOpen(true)
   }
 
@@ -13915,19 +13953,96 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   // Handler for Apply Recommendations - opens Edit dialog with pre-populated instructions
-  const handleEditSceneWithRecommendations = (sceneIndex: number, recommendations: string[]) => {
+  const handleEditSceneWithRecommendations = (
+    sceneIndex: number,
+    recommendations: string[],
+    options?: { revisionDepth?: RevisionDepth; recSource?: 'audience' | 'polish' }
+  ) => {
     const scene = scriptRef.current?.script?.scenes?.[sceneIndex]
     pendingAppliedRecIdsRef.current = {
       sceneIndex,
-      recIds: recIdsMatchingTexts(scene, recommendations),
+      recIds: recIdsMatchingTexts(scene, recommendations, options?.recSource ?? 'all'),
     }
     const formattedInstructions = recommendations
       .map((rec, idx) => `${idx + 1}. ${rec}`)
       .join('\n')
     
-    setEditingSceneIndex(sceneIndex)
-    setSceneEditorInitialInstructions(formattedInstructions)
-    setIsSceneEditorOpen(true)
+    openSceneDirectWithInstruction(sceneIndex, formattedInstructions, options?.revisionDepth)
+  }
+
+  const handlePolishScene = async (sceneIndex: number) => {
+    const currentScript = scriptRef.current || script
+    if (!currentScript?.script?.scenes) return
+
+    setPolishingSceneIndex(sceneIndex)
+    try {
+      const scene = currentScript.script.scenes[sceneIndex]
+      if (!scene) {
+        throw new Error('Scene not found')
+      }
+
+      const response = await fetch('/api/vision/polish-scene', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex,
+          scene,
+          context: {
+            previousScene: currentScript.script.scenes[sceneIndex - 1],
+            nextScene: currentScript.script.scenes[sceneIndex + 1],
+          },
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(typeof data.error === 'string' ? data.error : 'Failed to polish scene')
+      }
+
+      const data = await response.json()
+      const polishAnalysis = data.polishAnalysis
+      if (!polishAnalysis) {
+        throw new Error('Polish analysis was empty')
+      }
+
+      const latestScript = scriptRef.current || currentScript
+      const updatedScenes = [...latestScript.script.scenes]
+      updatedScenes[sceneIndex] = {
+        ...updatedScenes[sceneIndex],
+        polishAnalysis: {
+          ...polishAnalysis,
+          appliedRecommendationIds:
+            latestScript.script.scenes[sceneIndex]?.polishAnalysis?.appliedRecommendationIds || [],
+        },
+      }
+
+      await saveScenesToDatabase(updatedScenes)
+
+      setScript((prev: any) => {
+        if (!prev?.script?.scenes) return prev
+        const freshScenes = [...prev.script.scenes]
+        freshScenes[sceneIndex] = {
+          ...freshScenes[sceneIndex],
+          polishAnalysis: updatedScenes[sceneIndex].polishAnalysis,
+        }
+        return {
+          ...prev,
+          script: { ...prev.script, scenes: freshScenes },
+        }
+      })
+
+      const issueCount = typeof polishAnalysis.issueCount === 'number' ? polishAnalysis.issueCount : 0
+      toast.success(
+        issueCount === 0 ? tStudio('polishSuccessAligned') : tStudio('polishSuccess', { count: issueCount })
+      )
+    } catch (error) {
+      console.error('[Vision] Failed to polish scene:', error)
+      toast.error(error instanceof Error ? error.message : tStudio('polishFailed'))
+      throw error
+    } finally {
+      setPolishingSceneIndex(null)
+    }
   }
 
   // Handler for immediate score updates from dialog (without closing it)
@@ -14007,20 +14122,32 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
 
     let cleanedScene = applyScenePreservation(originalScene, audioCleanedScene, preserveElements)
+
+    const pending = pendingAppliedRecIdsRef.current
+    const pendingIds =
+      pending && pending.sceneIndex === sceneIndex ? pending.recIds : []
+    if (pending && pending.sceneIndex === sceneIndex) {
+      pendingAppliedRecIdsRef.current = null
+    }
     
     // Preserve audienceAnalysis from original scene and mark as optimized
     // so progressive analysis knows the scene was edited since last analysis
     if (originalScene?.audienceAnalysis) {
-      const pending = pendingAppliedRecIdsRef.current
-      const pendingIds =
-        pending && pending.sceneIndex === sceneIndex ? pending.recIds : []
-      if (pending && pending.sceneIndex === sceneIndex) {
-        pendingAppliedRecIdsRef.current = null
-      }
       cleanedScene.audienceAnalysis = {
         ...originalScene.audienceAnalysis,
         appliedRecommendationIds: mergeAppliedRecommendationIds(
           originalScene.audienceAnalysis.appliedRecommendationIds,
+          pendingIds
+        ),
+        optimizedAt: new Date().toISOString()
+      }
+    }
+
+    if (originalScene?.polishAnalysis) {
+      cleanedScene.polishAnalysis = {
+        ...originalScene.polishAnalysis,
+        appliedRecommendationIds: mergeAppliedRecommendationIds(
+          originalScene.polishAnalysis.appliedRecommendationIds,
           pendingIds
         ),
         optimizedAt: new Date().toISOString()
@@ -16548,6 +16675,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onReorderBeats={handleReorderBeats}
                 onEditScene={handleEditScene}
                 onEditSceneWithRecommendations={handleEditSceneWithRecommendations}
+                onPolishScene={handlePolishScene}
+                polishingSceneIndex={polishingSceneIndex}
+                onTogglePolishRecommendation={handleTogglePolishRecommendation}
                 recentlyUpdatedSceneIndex={recentlyUpdatedSceneIndex}
                 focusedSceneIndex={focusedSceneIndex}
                 onJumpToImpactScene={handleJumpToSceneFromReview}
@@ -17330,6 +17460,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             setIsSceneEditorOpen(false)
             setEditingSceneIndex(null)
             setSceneEditorInitialInstructions('')
+            setSceneEditorInitialRevisionDepth(undefined)
           }}
           scene={script.script.scenes[editingSceneIndex]}
           sceneIndex={editingSceneIndex}
@@ -17339,7 +17470,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           nextScene={editingSceneIndex < script.script.scenes.length - 1 ? script.script.scenes[editingSceneIndex + 1] : undefined}
           onApplyChanges={handleApplySceneChanges}
           initialInstructions={sceneEditorInitialInstructions}
+          initialRevisionDepth={sceneEditorInitialRevisionDepth}
           audienceAnalysis={editorAudienceAnalysis}
+          polishAnalysis={script.script.scenes[editingSceneIndex]?.polishAnalysis ?? null}
           targetDemographic={
             projectAudienceDefinition
               ? formatAudienceDefinitionForPrompt(projectAudienceDefinition)

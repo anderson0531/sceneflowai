@@ -423,6 +423,7 @@ STRUCTURED BEATS RULES:
 - Dialogue beats use kind "dialogue" with character + line.
 - Narration beats use kind "narration" with character "NARRATOR" unless narrator is already a dialogue character.
 - Intervening action beats must add NEW visual information (insert, cutaway, geography, non-speaker reaction) — do NOT clone the speaker's blocking from an adjacent dialogue beat into a separate action frame.
+- When instructions name Beat N, edit that numbered beat (and its beatDirection) to restore continuity. Carry prop, wardrobe, and spatial state forward into later beats — do not re-pick-up an object a character already holds, and do not reset blocking that the previous beat established.
 
 ${buildPolicySafePhrasingRules()}
 

@@ -124,6 +124,7 @@ export interface Scene {
     optimizedAt?: string
     previousScore?: number
   }
+  polishAnalysis?: import('@/lib/script/scenePolish/types').ScenePolishAnalysis
   [key: string]: any
 }
 

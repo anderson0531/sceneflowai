@@ -31,6 +31,8 @@ describe('normalizeFieldPath', () => {
 describe('classifyField', () => {
   it('classifies human-readable creative prose as display', () => {
     expect(classifyField('treatmentVariants[0].logline')).toBe('display')
+    expect(classifyField('scenes[0].polishAnalysis.notes')).toBe('display')
+    expect(classifyField('scenes[0].polishAnalysis.recommendations[0].reason')).toBe('display')
     expect(classifyField('beatSheet.2.summary')).toBe('display')
     expect(classifyField('characters[1].motivation')).toBe('display')
     expect(classifyField('production_bible.synopsis')).toBe('display')

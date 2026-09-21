@@ -11,6 +11,7 @@ import {
   normalizeRecommendation,
   type SceneRecommendation,
 } from '@/lib/constants/scene-optimization'
+import type { ScenePolishAnalysis } from '@/lib/script/scenePolish/types'
 
 export interface InstructionsPanelAudienceAnalysis {
   score?: number
@@ -25,6 +26,7 @@ interface InstructionsPanelProps {
   /** @deprecated Prefer audienceAnalysis.recommendations */
   recommendations?: string[]
   audienceAnalysis?: InstructionsPanelAudienceAnalysis | null
+  polishAnalysis?: ScenePolishAnalysis | null
   appliedRecommendationIds?: string[]
   onApplyRecommendation?: (recText: string, recId: string) => void
   canAddMoreInstructions?: boolean
@@ -67,6 +69,7 @@ export function InstructionsPanel({
   maxInstructions = MAX_INSTRUCTIONS,
   recommendations = [],
   audienceAnalysis,
+  polishAnalysis,
   appliedRecommendationIds = [],
   onApplyRecommendation,
   canAddMoreInstructions: canAddMoreProp
@@ -83,6 +86,11 @@ export function InstructionsPanel({
       .map((rec) => normalizeRecommendation(coerceRecommendationInput(rec)))
       .filter((rec) => rec.text.trim().length > 0)
   }, [audienceAnalysis?.recommendations, recommendations])
+
+  const polishRecs = useMemo(
+    () => (polishAnalysis?.recommendations ?? []).filter((rec) => rec.text.trim().length > 0),
+    [polishAnalysis?.recommendations]
+  )
 
   // Append instruction with numbered format
   const appendInstruction = (newText: string) => {
@@ -208,6 +216,80 @@ export function InstructionsPanel({
               Maximum {maxInstructions} instructions reached.
             </p>
           )}
+        </div>
+      )}
+
+      {polishRecs.length > 0 && (
+        <div className="rounded-lg p-3 border border-emerald-700/30 bg-emerald-950/20">
+          <h3 className="text-sm font-semibold flex items-center gap-2 mb-3 text-emerald-300">
+            <Sparkles className="w-4 h-4 text-emerald-400" />
+            Polish Recommendations
+            <span className="text-xs font-normal text-emerald-400/80">
+              ({polishRecs.length})
+            </span>
+          </h3>
+          {polishAnalysis?.notes && (
+            <p className="text-xs text-gray-400 leading-relaxed mb-3 line-clamp-2">
+              {polishAnalysis.notes}
+            </p>
+          )}
+          <ul className="space-y-2">
+            {polishRecs.map((rec, idx) => {
+              const recId = rec.id || `polish-${idx}`
+              const isApplied = appliedRecommendationIds.includes(recId)
+              return (
+                <li
+                  key={recId}
+                  className={`flex items-start gap-2 text-xs p-2.5 rounded-lg transition-colors ${
+                    isApplied
+                      ? 'bg-green-900/30 border border-green-700/50'
+                      : 'bg-gray-800/40 border border-gray-700/30 hover:bg-gray-800/60'
+                  }`}
+                >
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold flex-shrink-0 mt-0.5">
+                    {idx + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <span className={`text-gray-300 leading-relaxed block ${isApplied ? 'line-through opacity-60' : ''}`}>
+                      {rec.text}
+                    </span>
+                    <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                      {rec.beatIndices.map((n) => (
+                        <span
+                          key={`${recId}-beat-${n}`}
+                          className="inline-flex items-center text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider bg-emerald-500/20 text-emerald-200 border border-emerald-500/30"
+                        >
+                          Beat {n}
+                        </span>
+                      ))}
+                      <span className="inline-flex items-center text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider bg-gray-700/50 text-gray-400 border border-gray-600/30">
+                        {rec.priority}
+                      </span>
+                      <span className="inline-flex items-center text-[9px] font-medium px-1.5 py-0.5 rounded bg-gray-700/50 text-gray-400 border border-gray-600/30">
+                        {rec.category.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                  </div>
+                  {isApplied ? (
+                    <span className="flex items-center gap-1 text-green-400 text-[10px] font-medium flex-shrink-0">
+                      <Check className="w-3 h-3" />
+                      Added
+                    </span>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[10px] text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/30 flex-shrink-0"
+                      disabled={!canAddMore}
+                      onClick={() => onApplyRecommendation?.(rec.text, recId)}
+                    >
+                      + Add
+                    </Button>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
         </div>
       )}
 

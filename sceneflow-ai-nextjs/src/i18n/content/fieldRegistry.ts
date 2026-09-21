@@ -207,6 +207,9 @@ export const CONTENT_FIELDS: Record<string, FieldKind> = {
   'scenes[].audienceAnalysis.notes': 'display',
   'scenes[].audienceAnalysis.recommendations[]': 'display',
   'scenes[].audienceAnalysis.recommendations[].text': 'display',
+  'scenes[].polishAnalysis.notes': 'display',
+  'scenes[].polishAnalysis.recommendations[].text': 'display',
+  'scenes[].polishAnalysis.recommendations[].reason': 'display',
   'scenes[].imageUrl': 'opaque',
 
   // ── Production: segmented script (src/lib/script/segmentTypes.ts) ───────
