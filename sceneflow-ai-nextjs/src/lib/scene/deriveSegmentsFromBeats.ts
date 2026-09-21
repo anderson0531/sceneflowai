@@ -254,28 +254,35 @@ export function segmentOrderMatchesBeats(
   return beatOrder.join('|') === segmentOrder.join('|')
 }
 
+/** Exactly one production clip per active beat, in beat order, with no dialogue splits. */
+export function segmentsAreOnePerActiveBeat(
+  scene: Record<string, unknown>,
+  segments: SceneSegment[] | null | undefined
+): boolean {
+  const beatOrder = activeBeatIdOrder(scene)
+  const existing = segments ?? []
+  if (existing.length !== beatOrder.length) return false
+  return existing.every((segment, index) => {
+    if (segment.beatId !== beatOrder[index]) return false
+    const partIndex = segment.dialoguePortion?.partIndex ?? 0
+    const partCount = segment.dialoguePortion?.partCount ?? 1
+    return partIndex === 0 && partCount <= 1
+  })
+}
+
 /**
- * Whether production segments should be derived from beats for an approved scene.
- * Compares active (non-excluded) beat IDs to existing segment beatIds — not raw counts.
+ * Whether production segments should be rebuilt from beats.
+ * Requires a start frame on every active beat. Approval is not required.
+ * Extra clips on the same beat (legacy Veo splits or start/end pairs) count as stale.
  */
 export function needsProductionDerive(
   scene: Record<string, unknown>,
   segments: SceneSegment[] | null | undefined
 ): boolean {
-  if (!isStoryboardApproved(scene)) return false
-
   const activeBeats = getSceneBeats(scene).filter((beat) => !isBeatExcluded(beat))
   if (activeBeats.length === 0) return false
-
-  const existing = segments ?? []
-  if (existing.length === 0) return true
-
-  const segmentBeatIds = new Set(
-    existing.map((seg) => seg.beatId).filter((id): id is string => !!id)
-  )
-  if (activeBeats.some((beat) => !segmentBeatIds.has(beat.beatId))) return true
-
-  return !segmentOrderMatchesBeats(scene, existing)
+  if (activeBeats.some((beat) => !beat.storyboardImageUrl?.trim())) return false
+  return !segmentsAreOnePerActiveBeat(scene, segments)
 }
 
 /**
@@ -325,6 +332,24 @@ export function reorderSegmentsToMatchBeats(
   })
 }
 
+function existingSegmentScore(segment: SceneSegment): number {
+  let score = 0
+  if (segment.status === 'COMPLETE' && segment.assetType === 'video' && segment.activeAssetUrl) {
+    score += 100
+  } else if (segment.activeAssetUrl) {
+    score += 40
+  }
+  if ((segment.takes?.length ?? 0) > 0) score += 10
+  if ((segment.dialoguePortion?.partIndex ?? 0) === 0) score += 5
+  return score
+}
+
+/** One surviving row per beat. Prefer a completed video over the first split. */
+function preferExistingSegment(candidates: SceneSegment[]): SceneSegment | undefined {
+  if (candidates.length === 0) return undefined
+  return [...candidates].sort((a, b) => existingSegmentScore(b) - existingSegmentScore(a))[0]
+}
+
 /** Preserve generated/uploaded assets when re-deriving extension timing. */
 export function mergeDerivedSegmentsWithExisting(
   newSegments: SceneSegment[],
@@ -333,13 +358,13 @@ export function mergeDerivedSegmentsWithExisting(
   if (existing.length === 0) return newSegments
 
   return newSegments.map((seg) => {
-    const partIndex = seg.dialoguePortion?.partIndex ?? 0
-    const match = existing.find(
-      (existingSeg) =>
-        existingSeg.beatId === seg.beatId &&
-        (existingSeg.dialoguePortion?.partIndex ?? 0) === partIndex
-    )
+    const candidates = existing.filter((existingSeg) => existingSeg.beatId === seg.beatId)
+    const match = preferExistingSegment(candidates)
     if (!match) return seg
+    const takes = candidates.reduce(
+      (rows, candidate) => unionRowsById(rows, candidate.takes, 'id'),
+      seg.takes ?? []
+    )
 
     const preservedStart =
       match.startFrameUrl?.trim() ||
@@ -352,7 +377,7 @@ export function mergeDerivedSegmentsWithExisting(
       status: match.status ?? seg.status,
       assetType: match.assetType ?? seg.assetType,
       activeAssetUrl: match.activeAssetUrl ?? seg.activeAssetUrl,
-      takes: unionRowsById(seg.takes, match.takes, 'id'),
+      takes,
       currentTakeId: match.currentTakeId || seg.currentTakeId,
       isUserUpload: match.isUserUpload,
       actualVideoDuration: match.actualVideoDuration ?? seg.actualVideoDuration,
@@ -380,7 +405,7 @@ export function deriveSegmentsFromBeats(
 ): DeriveSegmentsResult {
   const errors: string[] = []
 
-  if (options?.requireApproved !== false && !isStoryboardApproved(scene)) {
+  if (options?.requireApproved === true && !isStoryboardApproved(scene)) {
     errors.push('Pre-vis must be approved before deriving segments')
     return { segments: [], errors }
   }

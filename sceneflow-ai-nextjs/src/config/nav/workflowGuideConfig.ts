@@ -56,7 +56,7 @@ export interface WorkflowGuidePhaseConfig {
 export const productionWorkflowGroups: WorkflowGroup[] = [
   {
     id: 'foundation-script',
-    title: "Foundation — Writer's Room",
+    title: 'Direction, Beats, and audio',
     icon: 'FileText',
     iconColor: 'text-blue-500',
     steps: [
@@ -93,7 +93,7 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
   },
   {
     id: 'production-shoot',
-    title: 'Production Studio — Motion',
+    title: 'Video, Mixer, and Streams',
     icon: 'Video',
     iconColor: 'text-red-500',
     steps: [

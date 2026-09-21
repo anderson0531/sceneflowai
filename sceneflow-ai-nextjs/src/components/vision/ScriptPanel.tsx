@@ -20,7 +20,6 @@ import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2 } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
-import { PRODUCTION_SECTION_DESCRIPTIONS, PRODUCTION_SECTION_LABELS } from '@/constants/productionSections'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import {
   pendingRecommendationCount,
@@ -118,7 +117,6 @@ import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData, SceneDirectionData } from '@/lib/types/reports'
 import { resolveSegmentEditCharacterReferences } from '@/lib/vision/resolveFrameEditCharacterReferences'
 import { flattenSceneToStoryboardFrames } from '@/lib/storyboard/types'
-import { StoryboardReviewPanel } from './StoryboardReviewPanel'
 import {
   findBrokenContinuityBeats,
   getSceneBeats,
@@ -4403,11 +4401,16 @@ function SceneCard({
     onPendingSpeakerAssignHandled?.()
   }, [pendingSpeakerAssign, sceneIdx, onPendingSpeakerAssignHandled])
 
-  type SceneScriptTab = 'direction' | 'narration' | 'previs' | 'beats' | 'music' | 'references'
-  const [activeSceneTab, setActiveSceneTab] = useState<SceneScriptTab>('direction')
-
-  type ShootTab = 'review' | 'video' | 'mixer' | 'streams'
-  const [activeShootTab, setActiveShootTab] = useState<ShootTab>('review')
+  type ProductionWorkflowTab =
+    | 'direction'
+    | 'beats'
+    | 'music'
+    | 'references'
+    | 'previs'
+    | 'video'
+    | 'mixer'
+    | 'streams'
+  const [activeSceneTab, setActiveSceneTab] = useState<ProductionWorkflowTab>('direction')
 
   const sceneBeatsForTabs = useMemo(() => getSceneBeats(scene), [scene])
   const excludedBeatCount = useMemo(
@@ -4578,24 +4581,14 @@ function SceneCard({
     setMusicPlayDuration(defaultMusicPlayDuration)
   }, [defaultMusicPlayDuration, sceneIdx])
 
-  const availableSceneTabs = useMemo(() => {
-    const tabs: SceneScriptTab[] = []
-    if (hasDirectionTab) tabs.push('direction')
-    if (hasBeatsTab) tabs.push('beats')
-    if (hasMusicTab) tabs.push('music')
-    // Ahead of Frames because it gates them.
-    if (hasReferencesTab) tabs.push('references')
-    if (hasPreVisTab) tabs.push('previs')
-    if (hasNarrationTab) tabs.push('narration')
-    return tabs
-  }, [hasDirectionTab, hasNarrationTab, hasPreVisTab, hasBeatsTab, hasMusicTab, hasReferencesTab])
+  const availableSceneTabs = useMemo<ProductionWorkflowTab[]>(
+    () => ['direction', 'beats', 'music', 'references', 'previs', 'video', 'mixer', 'streams'],
+    []
+  )
 
   useEffect(() => {
-    if (availableSceneTabs.length === 0) return
     if (!availableSceneTabs.includes(activeSceneTab)) {
-      setActiveSceneTab(
-        availableSceneTabs.includes('direction') ? 'direction' : availableSceneTabs[0]
-      )
+      setActiveSceneTab('direction')
     }
   }, [sceneIdx, availableSceneTabs, activeSceneTab])
 
@@ -4612,29 +4605,7 @@ function SceneCard({
     onPendingSceneReferencesHandled,
   ])
 
-  const showShootReview = useMemo(
-    () => isBeatFirstPipelineEnabled() && getSceneBeats(scene).length > 0 && !!onApproveStoryboard,
-    [scene, onApproveStoryboard]
-  )
   const hasShootSegments = !!(sceneProductionData?.segments && sceneProductionData.segments.length > 0)
-
-  const availableShootTabs = useMemo(() => {
-    const tabs: ShootTab[] = []
-    if (showShootReview) tabs.push('review')
-    if (hasShootSegments) {
-      tabs.push('video', 'mixer', 'streams')
-    }
-    return tabs
-  }, [showShootReview, hasShootSegments])
-
-  useEffect(() => {
-    if (availableShootTabs.length === 0) return
-    if (!availableShootTabs.includes(activeShootTab)) {
-      setActiveShootTab(
-        availableShootTabs.includes('review') ? 'review' : availableShootTabs[0]
-      )
-    }
-  }, [sceneIdx, availableShootTabs, activeShootTab])
 
   const [expressAudioDialogOpen, setExpressAudioDialogOpen] = useState(false)
   const [isExpressAudioRunning, setIsExpressAudioRunning] = useState(false)
@@ -4653,7 +4624,8 @@ function SceneCard({
         const thisSceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
         if (detail.sceneId !== thisSceneId) return
       }
-      setActiveWorkflowTab('callAction')
+      setActiveSceneTab('video')
+      setActiveWorkflowTab('dialogueAction')
       if (!isWorkflowOpen && onWorkflowOpenChange) onWorkflowOpenChange(true)
       requestAnimationFrame(() => {
         document.getElementById(`director-console-${scene.sceneId || scene.id || `scene-${sceneIdx}`}`)?.scrollIntoView({
@@ -5084,48 +5056,6 @@ function SceneCard({
       preVisPromptsOnly: !isPreVisStale(scene) && sceneHasStalePromptKeys(scene),
     }
   }, [scene, dismissedWarnings])
-  
-  // Determine status for each step (includes 'stale' for workflow sync warnings)
-  type StepStatus = 'complete' | 'stale' | 'in-progress' | 'todo' | 'locked'
-
-  const getStepStatus = (stepKey: keyof typeof stepCompletion): StepStatus => {
-    if (stepCompletion[stepKey]) {
-      // Check for staleness on completed steps
-      if (stepKey === 'directorsChair' && stepStaleness.directorsChair) return 'stale'
-      if (stepKey === 'storyboardPreViz' && stepStaleness.storyboardPreViz) return 'stale'
-      return 'complete'
-    }
-    if (activeWorkflowTab === stepKey) return 'in-progress'
-    if (!stepUnlocked[stepKey as keyof typeof stepUnlocked]) return 'locked'
-    return 'todo'
-  }
-
-  const chipClassByStatus: Record<StepStatus, string> = {
-    complete: 'bg-emerald-500/15 text-emerald-200 border border-emerald-400/40',
-    stale: 'bg-amber-500/15 text-amber-200 border border-amber-400/40',
-    'in-progress': 'bg-sf-primary/20 text-sf-primary border border-sf-primary/40',
-    todo: 'bg-white/5 text-slate-300 border border-white/10',
-    locked: 'bg-slate-800/60 text-slate-500 border border-white/10'
-  }
-
-  const chipDotClass: Record<StepStatus, string> = {
-    complete: 'bg-emerald-300',
-    stale: 'bg-amber-300',
-    'in-progress': 'bg-sf-primary',
-    todo: 'bg-slate-400',
-    locked: 'bg-slate-600'
-  }
-
-  const workflowTabs: Array<{ key: WorkflowStep; label: string; icon: React.ReactNode; description: string }> = useMemo(() => [
-    { key: 'dialogueAction', label: PRODUCTION_SECTION_LABELS.dialogueAction, icon: <FileText className="w-4 h-4" />, description: PRODUCTION_SECTION_DESCRIPTIONS.dialogueAction },
-    // Direction (directorsChair) is hidden - auto-generated from the script, accessible via Frame dialog and Export
-    // Frame (storyboardPreViz) merged into Motion for unified production workflow
-    { key: 'callAction', label: PRODUCTION_SECTION_LABELS.callAction, icon: <Clapperboard className="w-4 h-4" />, description: PRODUCTION_SECTION_DESCRIPTIONS.callAction }
-  ], [])
-  
-  // Update active workflow tab when completions change if we haven't manually switched
-  // By default we no longer auto-open the first incomplete step to prevent panel jumping,
-  // we just respect the initial state set above (either 'dialogueAction' or 'callAction').
   
   const handleExpand = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -5733,84 +5663,26 @@ function SceneCard({
           />
         )}
 
-        {/* Production Section Navigation - Segmented Tab Control */}
-        {!isOutline && (
-          <div className="w-full py-2 mb-3">
-            {/* Segmented Control Container */}
-            <div className="inline-flex w-full bg-gray-800/60 rounded-xl p-1.5 border border-gray-700/50">
-              {workflowTabs.map((tab) => {
-                const isActive = activeWorkflowTab === tab.key
-                const status = getStepStatus(tab.key)
-                const tooltipText = tab.key === 'dialogueAction'
-                  ? `Optimize the script with the ${ASSISTANT.full}, run Audience Resonance Analysis, and generate narration, dialogue, music & SFX audio`
-                  : 'Build storyboard keyframes, generate video beats & render final scene'
-                
-                return (
-                  <TooltipProvider key={tab.key} delayDuration={400}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setActiveWorkflowTab(tab.key)
-                            if (!isWorkflowOpen && onWorkflowOpenChange) {
-                              onWorkflowOpenChange(true)
-                            }
-                          }}
-                          className={`
-                            flex-1 flex items-center justify-center gap-2 lg:gap-3 px-3 lg:px-6 py-3 rounded-lg
-                            transition-all duration-200 ease-out relative
-                            ${isActive 
-                              ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25' 
-                              : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                            }
-                          `}
-                        >
-                          {/* Icon - always visible */}
-                          {React.cloneElement(tab.icon as React.ReactElement, { 
-                            className: `w-5 h-5 ${isActive ? 'text-white' : ''}` 
-                          })}
-                          
-                          {/* Large Section Title */}
-                          <span className={`
-                            text-lg lg:text-xl font-bold tracking-wide whitespace-nowrap
-                            ${isActive ? 'text-white' : ''}
-                          `}>
-                            {tab.label}
-                          </span>
-
-                          {/* Completion indicator dot */}
-                          {status === 'complete' && (
-                            <span className="absolute top-1.5 right-2 w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
-                          )}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-xs">
-                        <p className="text-xs">{tooltipText}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Next Step CTA Banner — contextual workflow guidance (Writer's Room only) */}
-        {!isOutline && isWorkflowOpen && activeWorkflowTab !== 'callAction' && (() => {
+        {!isOutline && isWorkflowOpen && (() => {
           const wfState: WorkflowState = buildWorkflowState(
             scene,
             sceneProductionData,
-            { activeTab: activeWorkflowTab as WorkflowState['activeTab'], language: selectedLanguage }
+            {
+              activeTab: activeSceneTab === 'video' || activeSceneTab === 'mixer' || activeSceneTab === 'streams'
+                ? 'callAction'
+                : 'dialogueAction',
+              language: selectedLanguage,
+            }
           )
           return (
             <WorkflowNextStepBanner
               workflowState={wfState}
               className="mt-2 mb-1"
               onAction={(actionId, targetTab) => {
-                if (targetTab && targetTab !== activeWorkflowTab) {
-                  setActiveWorkflowTab(targetTab as WorkflowStep)
-                }
+                if (targetTab === 'callAction') setActiveSceneTab('video')
+                if (targetTab === 'dialogueAction') setActiveSceneTab('direction')
                 if (!isWorkflowOpen && onWorkflowOpenChange) {
                   onWorkflowOpenChange(true)
                 }
@@ -5973,7 +5845,7 @@ function SceneCard({
                   )
                 })()}
                 
-                {activeWorkflowTab === 'dialogueAction' && (
+                {(
                   <div className="space-y-4">
                   {/* Quick Actions Bar */}
                   <div className="sticky top-0 z-10 p-2 -mx-4 -mt-4 mb-4 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 flex items-center justify-between">
@@ -6078,67 +5950,140 @@ function SceneCard({
                     </div>
                   )}
 
-                  {availableSceneTabs.length > 0 && (
+                  {(() => {
+                    const workflowSceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
+                    return (
+                    <DirectorWorkflow
+                      sceneId={workflowSceneId}
+                      sceneNumber={sceneNumber}
+                      projectId={projectId ?? ''}
+                      productionData={sceneProductionData ?? null}
+                      sceneImageUrl={scene.imageUrl}
+                      onOpenPreVis={() => setActiveSceneTab('previs')}
+                      scene={{
+                        ...scene,
+                        filmTitle: projectTitle || script?.title,
+                        logline: projectLogline || script?.logline,
+                        genre: script?.genre,
+                        tone: script?.tone,
+                        visualStyle: visualStyle,
+                        sceneHeading: scene.sceneHeading,
+                      }}
+                      guideCharacters={(characters || []).map((c) => ({
+                        name: c.name,
+                        age: (c as { age?: string }).age,
+                        gender: (c as { gender?: string }).gender,
+                        ethnicity: (c as { ethnicity?: string }).ethnicity,
+                      }))}
+                      characters={(characters || []).map((c) => ({
+                        name: c.name,
+                        referenceImage: (c as { referenceImage?: string }).referenceImage,
+                        description: c.description,
+                        wardrobes: (c as {
+                          wardrobes?: Array<{
+                            id: string
+                            name: string
+                            headshotUrl?: string
+                            fullBodyUrl?: string
+                            previewImageUrl?: string
+                          }>
+                        }).wardrobes?.map(w => ({
+                          id: w.id,
+                          name: w.name,
+                          headshotUrl: w.headshotUrl ?? w.previewImageUrl,
+                          fullBodyUrl: w.fullBodyUrl ?? w.previewImageUrl,
+                        })),
+                      }))}
+                      sceneReferences={sceneReferences}
+                      objectReferences={objectReferences}
+                      locationReferences={locationReferences}
+                      onGenerate={onSegmentGenerate || (async () => {})}
+                      onSegmentUpload={onSegmentUpload ? (segmentId, file) => onSegmentUpload(workflowSceneId, segmentId, file) : undefined}
+                      onRenderedSceneUrlChange={onRenderedSceneUrlChange ? (url) => onRenderedSceneUrlChange(workflowSceneId, url) : undefined}
+                      onProductionDataChange={onProductionDataChange ? (data) => onProductionDataChange(workflowSceneId, data) : undefined}
+                      sceneIndex={sceneIdx}
+                      onGenerateSceneAudio={onGenerateSceneAudio ? (idx, audioType, characterName, dialogueIndex, language) => onGenerateSceneAudio(idx, audioType, characterName, dialogueIndex, language) : undefined}
+                      onGenerateLanguageStream={onGenerateLanguageStream}
+                      isGeneratingAudio={isGeneratingAudio}
+                      onSaveEditedKeyframe={onEditFrame}
+                      onRegenerateStill={
+                        onGenerateSegmentFrames
+                          ? (sceneId, segmentId) => {
+                              void onGenerateSegmentFrames(sceneId, segmentId, 'start', {
+                                fromDialog: true,
+                              })
+                            }
+                          : undefined
+                      }
+                      onModerationReport={onModerationReport}
+                      onVideoRunReport={onVideoRunReport}
+                      onVideoRunCancelReady={onVideoRunCancelReady}
+                      videoGenerationQuality={videoGenerationQuality}
+                      onVideoGenerationQualityChange={onVideoGenerationQualityChange}
+                      videoGenerationMode={videoGenerationMode}
+                      onVideoGenerationModeChange={onVideoGenerationModeChange}
+                      projectAspectRatio={projectAspectRatio}
+                      projectStreams={projectStreams}
+                    >
+                    {(slots) => (
                     <Tabs
                       value={activeSceneTab}
-                      onValueChange={(v) => setActiveSceneTab(v as SceneScriptTab)}
+                      onValueChange={(v) => setActiveSceneTab(v as ProductionWorkflowTab)}
                       className="w-full"
                     >
                       <div className="overflow-x-auto pb-1 -mx-1 px-1">
                         <TabsList className="inline-flex h-auto w-max min-w-0 flex-nowrap gap-0.5 p-1">
-                          {hasDirectionTab && (
-                            <TabsTrigger value="direction" className="text-xs gap-1.5 px-2.5 py-1.5">
-                              <Film className="w-3.5 h-3.5 shrink-0" />
-                              Direction
-                            </TabsTrigger>
-                          )}
-                          {hasBeatsTab && (
-                            <TabsTrigger value="beats" className="text-xs gap-1.5 px-2.5 py-1.5">
-                              <List className="w-3.5 h-3.5 shrink-0" />
-                              Beats
+                          <TabsTrigger value="direction" className="text-xs gap-1.5 px-2.5 py-1.5">
+                            <Film className="w-3.5 h-3.5 shrink-0" />
+                            Direction
+                          </TabsTrigger>
+                          <TabsTrigger value="beats" className="text-xs gap-1.5 px-2.5 py-1.5">
+                            <List className="w-3.5 h-3.5 shrink-0" />
+                            Beats
+                            {sceneBeatsForTabs.length > 0 && (
                               <span className="text-[10px] opacity-60">
                                 ({sceneBeatsForTabs.length}
                                 {excludedBeatCount > 0 ? `, ${excludedBeatCount} ignored` : ''})
                               </span>
-                            </TabsTrigger>
-                          )}
-                          {hasMusicTab && (
-                            <TabsTrigger value="music" className="text-xs gap-1.5 px-2.5 py-1.5">
-                              <Music className="w-3.5 h-3.5 shrink-0" />
-                              Music
-                            </TabsTrigger>
-                          )}
-                          {hasReferencesTab && (
-                            <TabsTrigger value="references" className="text-xs gap-1.5 px-2.5 py-1.5">
-                              <Library className="w-3.5 h-3.5 shrink-0" />
-                              References
-                              {sceneRequiredReferences.length > 0 && (
-                                <span
-                                  className={`text-[10px] ${missingSceneReferenceCount > 0 ? 'text-amber-500' : 'opacity-60'}`}
-                                >
-                                  ({sceneRequiredReferences.length - missingSceneReferenceCount}/
-                                  {sceneRequiredReferences.length})
-                                </span>
-                              )}
-                            </TabsTrigger>
-                          )}
-                          {hasPreVisTab && (
-                            <TabsTrigger value="previs" className="text-xs gap-1.5 px-2.5 py-1.5">
-                              <Clapperboard className="w-3.5 h-3.5 shrink-0" />
-                              Frames
-                              {preVisFrameStats.total > 0 && (
-                                <span className="text-[10px] opacity-60">
-                                  ({preVisFrameStats.withImage}/{preVisFrameStats.total})
-                                </span>
-                              )}
-                            </TabsTrigger>
-                          )}
-                          {hasNarrationTab && (
-                            <TabsTrigger value="narration" className="text-xs gap-1.5 px-2.5 py-1.5">
-                              <Volume2 className="w-3.5 h-3.5 shrink-0" />
-                              Narration
-                            </TabsTrigger>
-                          )}
+                            )}
+                          </TabsTrigger>
+                          <TabsTrigger value="music" className="text-xs gap-1.5 px-2.5 py-1.5">
+                            <Music className="w-3.5 h-3.5 shrink-0" />
+                            Music
+                          </TabsTrigger>
+                          <TabsTrigger value="references" className="text-xs gap-1.5 px-2.5 py-1.5">
+                            <Library className="w-3.5 h-3.5 shrink-0" />
+                            References
+                            {sceneRequiredReferences.length > 0 && (
+                              <span
+                                className={`text-[10px] ${missingSceneReferenceCount > 0 ? 'text-amber-500' : 'opacity-60'}`}
+                              >
+                                ({sceneRequiredReferences.length - missingSceneReferenceCount}/
+                                {sceneRequiredReferences.length})
+                              </span>
+                            )}
+                          </TabsTrigger>
+                          <TabsTrigger value="previs" className="text-xs gap-1.5 px-2.5 py-1.5">
+                            <Clapperboard className="w-3.5 h-3.5 shrink-0" />
+                            Pre-Vis
+                            {preVisFrameStats.total > 0 && (
+                              <span className="text-[10px] opacity-60">
+                                ({preVisFrameStats.withImage}/{preVisFrameStats.total})
+                              </span>
+                            )}
+                          </TabsTrigger>
+                          <TabsTrigger value="video" className="text-xs gap-1.5 px-2.5 py-1.5">
+                            <Film className="w-3.5 h-3.5 shrink-0" />
+                            Video
+                          </TabsTrigger>
+                          <TabsTrigger value="mixer" className="text-xs gap-1.5 px-2.5 py-1.5">
+                            <Clapperboard className="w-3.5 h-3.5 shrink-0" />
+                            Mixer
+                          </TabsTrigger>
+                          <TabsTrigger value="streams" className="text-xs gap-1.5 px-2.5 py-1.5">
+                            <ListVideo className="w-3.5 h-3.5 shrink-0" />
+                            Streams
+                          </TabsTrigger>
                         </TabsList>
                       </div>
 
@@ -6236,9 +6181,9 @@ function SceneCard({
                   </TabsContent>
                   )}
 
-                  {/* Narration */}
+                  {/* Standalone narration lives on Beats when the scene has no beat list of its own. */}
                   {hasNarrationTab && (
-                  <TabsContent value="narration" className="mt-3 focus-visible:outline-none">
+                  <TabsContent value="beats" className="mt-3 focus-visible:outline-none">
                   {(() => {
                     const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
                     
@@ -7453,415 +7398,64 @@ function SceneCard({
                   </TabsContent>
                   )}
 
-                    </Tabs>
-                  )}
-
-                  </div>
-                )}
-
-                {activeWorkflowTab === 'directorsChair' && (
-                  <div className="space-y-4">
-                    <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Film className="w-4 h-4 text-purple-600 dark:text-purple-300" />
-                          <span className="text-xs font-semibold text-purple-700 dark:text-purple-200">Scene Direction</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {scene.sceneDirection && (
-                            <Button 
-                              size="sm"
-                              variant="ghost"
-                              className="h-6 text-xs text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:text-purple-300 dark:hover:bg-purple-800/50"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setDirectionBuilderOpen(true)
-                              }}
-                            >
-                              <Edit className="w-3 h-3 mr-1" />
-                              Edit
-                            </Button>
-                          )}
-                          <Button 
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 text-xs text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:text-purple-300 dark:hover:bg-purple-800/50"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setDirectionBuilderOpen(true)
-                            }}
-                            disabled={generatingDirectionFor === sceneIdx}
-                          >
-                            {generatingDirectionFor === sceneIdx ? (
-                              <>
-                                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                Generating...
-                              </>
-                            ) : scene.sceneDirection ? (
-                              <>
-                                <RefreshCw className="w-3 h-3 mr-1" />
-                                Regenerate
-                              </>
-                            ) : (
-                              <>
-                                <Sparkles className="w-3 h-3 mr-1" />
-                                Generate
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                      {scene.sceneDirection ? (
-                        <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                          {typeof scene.sceneDirection === 'string' ? (
-                            scene.sceneDirection
-                          ) : (
-                            <div className="space-y-3 mt-2">
-                              {scene.sceneDirection.scene && (
-                                <div className="bg-white/50 dark:bg-black/20 p-2 rounded">
-                                  <h4 className="font-semibold text-purple-700 dark:text-purple-300 text-xs uppercase mb-1">Visual</h4>
-                                  <p className="text-gray-700 dark:text-gray-300">{typeof scene.sceneDirection.scene === 'string' ? scene.sceneDirection.scene : JSON.stringify(scene.sceneDirection.scene)}</p>
-                                </div>
-                              )}
-                              {scene.sceneDirection.camera && (
-                                <div className="bg-white/50 dark:bg-black/20 p-2 rounded">
-                                  <h4 className="font-semibold text-purple-700 dark:text-purple-300 text-xs uppercase mb-1">Camera</h4>
-                                  <p className="text-gray-700 dark:text-gray-300">{typeof scene.sceneDirection.camera === 'string' ? scene.sceneDirection.camera : JSON.stringify(scene.sceneDirection.camera)}</p>
-                                </div>
-                              )}
-                              {scene.sceneDirection.lighting && (
-                                <div className="bg-white/50 dark:bg-black/20 p-2 rounded">
-                                  <h4 className="font-semibold text-purple-700 dark:text-purple-300 text-xs uppercase mb-1">Lighting</h4>
-                                  <p className="text-gray-700 dark:text-gray-300">{typeof scene.sceneDirection.lighting === 'string' ? scene.sceneDirection.lighting : JSON.stringify(scene.sceneDirection.lighting)}</p>
-                                </div>
-                              )}
-                              {scene.sceneDirection.audio && (
-                                <div className="bg-white/50 dark:bg-black/20 p-2 rounded">
-                                  <h4 className="font-semibold text-purple-700 dark:text-purple-300 text-xs uppercase mb-1">Audio</h4>
-                                  <p className="text-gray-700 dark:text-gray-300">{typeof scene.sceneDirection.audio === 'string' ? scene.sceneDirection.audio : JSON.stringify(scene.sceneDirection.audio)}</p>
-                                </div>
-                              )}
-                              {scene.sceneDirection.talent && (
-                                <div className="bg-white/50 dark:bg-black/20 p-2 rounded">
-                                  <h4 className="font-semibold text-purple-700 dark:text-purple-300 text-xs uppercase mb-1">Talent</h4>
-                                  <p className="text-gray-700 dark:text-gray-300">{typeof scene.sceneDirection.talent === 'string' ? scene.sceneDirection.talent : JSON.stringify(scene.sceneDirection.talent)}</p>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-center py-6 text-gray-500 dark:text-gray-400 text-sm italic">
-                          No scene direction generated yet.
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Scene Direction Builder Dialog */}
-                    <SceneDirectionBuilder
-                      open={directionBuilderOpen}
-                      onClose={() => setDirectionBuilderOpen(false)}
-                      scene={scene}
-                      existingDirection={scene.sceneDirection}
-                      onGenerate={() => {
-                        setDirectionBuilderOpen(false)
-                      }}
-                      isGenerating={generatingDirectionFor === sceneIdx}
-                    />
-                  </div>
-                )}
-
-
-                {activeWorkflowTab === 'callAction' && (
-                  <SceneDirectionProvider direction={scene.detailedDirection || scene.sceneDirection}>
-                  <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
-                    {/* Audio Not Generated Warning — soft gate instead of tab lock */}
-                    {!stepCompletion.dialogueAction && (() => {
-                      // Build specific list of missing audio
-                      const missing: string[] = []
-                      if (scene.narration?.trim()) {
-                        const narrUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
-                        if (!narrUrl) missing.push('Narration')
-                      }
-                      const dialogueLines = scene.dialogue || []
-                      if (dialogueLines.length > 0) {
-                        let dialogueAudioArray: any[] = []
-                        if (Array.isArray(scene.dialogueAudio)) {
-                          dialogueAudioArray = selectedLanguage === 'en' ? scene.dialogueAudio : []
-                        } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
-                          dialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
-                        }
-                        
-                        const missingCount = dialogueLines.filter((d: any, idx: number) => {
-                          const char = characters.find(c => c.name === d.character)
-                          if (!char?.voiceConfig) {
-                            return false // Skip lines without a voice assigned
-                          }
-                          return !dialogueAudioArray.find((a: any) => a?.dialogueIndex === idx && a?.audioUrl)
-                        }).length
-                        
-                        if (missingCount > 0) missing.push(`${missingCount} dialogue line${missingCount > 1 ? 's' : ''}`)
-                      }
-                      const missingText = missing.length > 0 ? missing.join(' and ') : 'Audio'
-                      return (
-                        <div className="flex items-center gap-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                          <Volume2 className="w-5 h-5 text-blue-400 flex-shrink-0" />
-                          <div className="flex-1">
-                            <p className="text-sm text-blue-200">{missingText} not generated yet — your animatic and renders will be silent.</p>
-                            <p className="text-xs text-blue-200/60 mt-0.5">Generate audio in the Writer&apos;s Room first for the best production quality.</p>
-                          </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setActiveWorkflowTab('dialogueAction')
-                            }}
-                            className="px-3 py-1.5 text-xs font-medium bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 rounded transition-colors whitespace-nowrap"
-                          >
-                            Go to Script
-                          </button>
-                        </div>
-                      )
-                    })()}
-                    {/* Scene Image Requirement Warning */}
-                    {sceneImageWarning.show && (
-                      <div className="flex items-center gap-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                        <svg className="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <div className="flex-1">
-                          <p className="text-sm text-amber-200">{sceneImageWarning.message}</p>
-                          <p className="text-xs text-amber-200/60 mt-0.5">
-                            Reference images help maintain character and scene consistency across video segments.
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={handleQuickGenerate}
-                            className="px-3 py-1.5 text-xs font-medium bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 rounded transition-colors"
-                          >
-                            Quick Generate
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onOpenPromptBuilder?.(sceneIdx)
-                            }}
-                            className="px-3 py-1.5 text-xs font-medium bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 rounded transition-colors flex items-center gap-1.5"
-                          >
-                            <Wand2 className="w-3.5 h-3.5" />
-                            Builder
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* ==================== SHOOT TABS: Review / Video / Mixer / Streams ==================== */}
-                    {availableShootTabs.length > 0 && !hasShootSegments && showShootReview && (
-                      <Tabs
-                        value={activeShootTab}
-                        onValueChange={(v) => setActiveShootTab(v as ShootTab)}
-                        className="w-full"
-                      >
-                        <div className="overflow-x-auto pb-1 -mx-1 px-1">
-                          <TabsList className="inline-flex h-auto w-max min-w-0 flex-nowrap gap-0.5 p-1">
-                            <TabsTrigger value="review" className="text-xs gap-1.5 px-2.5 py-1.5">
-                              <ImageIcon className="w-3.5 h-3.5 shrink-0" />
-                              Review
-                            </TabsTrigger>
-                          </TabsList>
-                        </div>
-                        <TabsContent value="review" className="mt-3 focus-visible:outline-none">
-                          <StoryboardReviewPanel
-                            scene={scene}
-                            sceneIndex={sceneIdx}
-                            onApprove={onApproveStoryboard!}
-                            isApproving={approvingStoryboardFor === sceneIdx}
-                            hideOuterChrome
-                          />
-                        </TabsContent>
-                      </Tabs>
-                    )}
-
-                    {hasShootSegments && (() => {
-                      const workflowSceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
-                      return (
-                        <DirectorWorkflow
-                          sceneId={workflowSceneId}
-                          sceneNumber={sceneNumber}
-                          projectId={projectId ?? ''}
-                          productionData={sceneProductionData ?? null}
-                          sceneImageUrl={scene.imageUrl}
-                          scene={{
-                            ...scene,
-                            filmTitle: projectTitle || script?.title,
-                            logline: projectLogline || script?.logline,
-                            genre: script?.genre,
-                            tone: script?.tone,
-                            visualStyle: visualStyle,
-                            sceneHeading: scene.sceneHeading,
-                          }}
-                          guideCharacters={(characters || []).map((c) => ({
-                            name: c.name,
-                            age: (c as { age?: string }).age,
-                            gender: (c as { gender?: string }).gender,
-                            ethnicity: (c as { ethnicity?: string }).ethnicity,
-                          }))}
-                          characters={(characters || []).map((c) => ({
-                            name: c.name,
-                            referenceImage: (c as { referenceImage?: string }).referenceImage,
-                            description: c.description,
-                            wardrobes: (c as {
-                              wardrobes?: Array<{
-                                id: string
-                                name: string
-                                headshotUrl?: string
-                                fullBodyUrl?: string
-                                previewImageUrl?: string
-                              }>
-                            }).wardrobes?.map(w => ({
-                              id: w.id,
-                              name: w.name,
-                              headshotUrl: w.headshotUrl ?? w.previewImageUrl,
-                              fullBodyUrl: w.fullBodyUrl ?? w.previewImageUrl,
-                            })),
-                          }))}
-                          sceneReferences={sceneReferences}
-                          objectReferences={objectReferences}
-                          locationReferences={locationReferences}
-                          onGenerate={onSegmentGenerate || (async () => {})}
-                          onSegmentUpload={onSegmentUpload ? (segmentId, file) => onSegmentUpload(workflowSceneId, segmentId, file) : undefined}
-                          onRenderedSceneUrlChange={onRenderedSceneUrlChange ? (url) => onRenderedSceneUrlChange(workflowSceneId, url) : undefined}
-                          onProductionDataChange={onProductionDataChange ? (data) => onProductionDataChange(workflowSceneId, data) : undefined}
-                          sceneIndex={sceneIdx}
-                          onGenerateSceneAudio={onGenerateSceneAudio ? (idx, audioType, characterName, dialogueIndex, language) => onGenerateSceneAudio(idx, audioType, characterName, dialogueIndex, language) : undefined}
-                          onGenerateLanguageStream={onGenerateLanguageStream}
-                          isGeneratingAudio={isGeneratingAudio}
-                          onSaveEditedKeyframe={onEditFrame}
-                          onRegenerateStill={
-                            onGenerateSegmentFrames
-                              ? (sceneId, segmentId) => {
-                                  void onGenerateSegmentFrames(sceneId, segmentId, 'start', {
-                                    fromDialog: true,
-                                  })
-                                }
-                              : undefined
-                          }
-                          onModerationReport={onModerationReport}
-                          onVideoRunReport={onVideoRunReport}
-                          onVideoRunCancelReady={onVideoRunCancelReady}
-                          videoGenerationQuality={videoGenerationQuality}
-                          onVideoGenerationQualityChange={onVideoGenerationQualityChange}
-                          videoGenerationMode={videoGenerationMode}
-                          onVideoGenerationModeChange={onVideoGenerationModeChange}
-                          projectAspectRatio={projectAspectRatio}
-                          projectStreams={projectStreams}
-                        >
-                          {(slots) => (
-                            <Tabs
-                              value={activeShootTab}
-                              onValueChange={(v) => setActiveShootTab(v as ShootTab)}
-                              className="w-full"
-                            >
-                              <div className="overflow-x-auto pb-1 -mx-1 px-1">
-                                <TabsList className="inline-flex h-auto w-max min-w-0 flex-nowrap gap-0.5 p-1">
-                                  {showShootReview && (
-                                    <TabsTrigger value="review" className="text-xs gap-1.5 px-2.5 py-1.5">
-                                      <ImageIcon className="w-3.5 h-3.5 shrink-0" />
-                                      Review
-                                    </TabsTrigger>
-                                  )}
-                                  <TabsTrigger value="video" className="text-xs gap-1.5 px-2.5 py-1.5">
-                                    <Film className="w-3.5 h-3.5 shrink-0" />
-                                    Video
-                                  </TabsTrigger>
-                                  {slots.mixerBody != null && (
-                                    <TabsTrigger value="mixer" className="text-xs gap-1.5 px-2.5 py-1.5">
-                                      <Clapperboard className="w-3.5 h-3.5 shrink-0" />
-                                      Mixer
-                                    </TabsTrigger>
-                                  )}
-                                  <TabsTrigger value="streams" className="text-xs gap-1.5 px-2.5 py-1.5">
-                                    <ListVideo className="w-3.5 h-3.5 shrink-0" />
-                                    Streams
-                                    {slots.streamCount > 0 && (
-                                      <span className="text-[10px] opacity-60">({slots.streamCount})</span>
-                                    )}
-                                  </TabsTrigger>
-                                </TabsList>
-                              </div>
-
-                              {showShootReview && (
-                                <TabsContent value="review" className="mt-3 focus-visible:outline-none">
-                                  <StoryboardReviewPanel
-                                    scene={scene}
-                                    sceneIndex={sceneIdx}
-                                    onApprove={onApproveStoryboard!}
-                                    isApproving={approvingStoryboardFor === sceneIdx}
-                                    hideOuterChrome
-                                  />
-                                </TabsContent>
-                              )}
-
                               <TabsContent value="video" className="mt-3 focus-visible:outline-none">
-                                {slots.videoSection}
-                              </TabsContent>
-
-                              {slots.mixerBody != null && (
-                                <TabsContent value="mixer" className="mt-3 focus-visible:outline-none">
-                                  <div id={`production-mixer-${workflowSceneId}`} className="scroll-mt-4">
-                                    {slots.mixerBody}
+                                {!stepCompletion.dialogueAction && (
+                                  <div className="mb-3 flex items-center gap-3 rounded-lg border border-blue-500/30 bg-blue-500/10 p-3">
+                                    <Volume2 className="h-5 w-5 flex-shrink-0 text-blue-400" />
+                                    <p className="text-sm text-blue-200">
+                                      Scene audio is not finished yet — animatic and renders will be silent until dialogue and narration are generated.
+                                    </p>
                                   </div>
-                                </TabsContent>
-                              )}
-
+                                )}
+                                {slots.videoSection}
+                                {!hasShootSegments && !isBeatFirstPipelineEnabled() && (
+                                  <SceneProductionDirector
+                                    sceneId={workflowSceneId}
+                                    sceneNumber={sceneNumber}
+                                    scene={scene}
+                                    projectId={projectId || ''}
+                                    productionData={sceneProductionData || null}
+                                    references={sceneProductionReferences || {}}
+                                    hasSceneDirection={!!scene.sceneDirection || !!scene.detailedDirection}
+                                    hasSceneImage={!!scene.imageUrl}
+                                    hasAudio={stepCompletion.dialogueAction}
+                                    onSegmentsCreated={async (segments) => {
+                                      if (onInitializeSceneProduction) {
+                                        await onInitializeSceneProduction(
+                                          workflowSceneId,
+                                          { targetDuration: segments.reduce((sum, s) => sum + s.duration, 0), segments }
+                                        )
+                                      }
+                                    }}
+                                    onNavigateToDirection={() => setActiveSceneTab('direction')}
+                                    onNavigateToImage={() => onGenerateImage?.(sceneIdx)}
+                                    onNavigateToAudio={() => setActiveSceneTab('beats')}
+                                  />
+                                )}
+                              </TabsContent>
+                              <TabsContent value="mixer" className="mt-3 focus-visible:outline-none">
+                                <div id={`production-mixer-${workflowSceneId}`} className="scroll-mt-4">
+                                  {slots.mixerBody ?? (
+                                    <p className="text-sm text-slate-400">Mixer opens after this scene has one video clip per beat.</p>
+                                  )}
+                                </div>
+                              </TabsContent>
                               <TabsContent value="streams" className="mt-3 focus-visible:outline-none overflow-hidden">
                                 {slots.streamsBody}
+                                {slots.streamCount > 0 && (
+                                  <p className="sr-only">{slots.streamCount} streams</p>
+                                )}
                               </TabsContent>
-                            </Tabs>
-                          )}
-                        </DirectorWorkflow>
-                      )
-                    })()}
-                    
-                    {/* Fallback: SceneProductionDirector when no segments yet (legacy pipeline only) */}
-                    {!(sceneProductionData?.segments && sceneProductionData.segments.length > 0) &&
-                      !isBeatFirstPipelineEnabled() && (
-                      <SceneProductionDirector
-                        sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
-                        sceneNumber={sceneNumber}
-                        scene={scene}
-                        projectId={projectId || ''}
-                        productionData={sceneProductionData || null}
-                        references={sceneProductionReferences || {}}
-                        hasSceneDirection={!!scene.sceneDirection || !!scene.detailedDirection}
-                        hasSceneImage={!!scene.imageUrl}
-                        hasAudio={stepCompletion.dialogueAction}
-                        onSegmentsCreated={async (segments) => {
-                          // Initialize production with the finalized segments
-                          if (onInitializeSceneProduction) {
-                            await onInitializeSceneProduction(
-                              scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                              { targetDuration: segments.reduce((sum, s) => sum + s.duration, 0), segments }
-                            )
-                          }
-                        }}
-                        onNavigateToDirection={() => {
-                          // Navigate to Directors Chair tab
-                          setActiveWorkflowTab('directorsChair')
-                        }}
-                        onNavigateToImage={() => {
-                          // Trigger scene image generation
-                          onGenerateImage?.(sceneIdx)
-                        }}
-                        onNavigateToAudio={() => {
-                          // Navigate to Writer's Room for audio generation
-                          setActiveWorkflowTab('dialogueAction')
-                        }}
-                      />
+
+                    </Tabs>
                     )}
+                    </DirectorWorkflow>
+                    )
+                  })()}
+
                   </div>
-                  </SceneDirectionProvider>
                 )}
+
               </div>
             </div>
           )}

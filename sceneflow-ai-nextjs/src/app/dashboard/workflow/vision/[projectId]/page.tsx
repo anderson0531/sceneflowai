@@ -3995,8 +3995,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     script.script.scenes.forEach((scene: Record<string, unknown>, idx: number) => {
       const sceneId = getSceneProductionKey(scene as Scene, idx)
-      if (scene.storyboardStatus !== 'approved') return
-
       const production = sceneProductionState[sceneId]
       if (!needsProductionDerive(scene, production?.segments)) return
       if (backfillDeriveAttemptedRef.current.has(sceneId)) return

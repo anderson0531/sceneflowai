@@ -59,12 +59,14 @@ describe('Production section labels', () => {
     expect(PRODUCTION_SECTION_DESCRIPTIONS.dialogueAction).not.toContain('Assistant Writer')
   })
 
-  it('renders the segmented tab labels from the shared constants', () => {
+  it('renders one continuous production strip', () => {
     const panel = readSource('src/components/vision/ScriptPanel.tsx')
 
-    expect(panel).toContain('PRODUCTION_SECTION_LABELS.dialogueAction')
-    expect(panel).toContain('PRODUCTION_SECTION_LABELS.callAction')
-    // Hardcoded labels would silently drift from the constants module.
+    expect(panel).toContain('Pre-Vis')
+    expect(panel).toContain('value="video"')
+    expect(panel).toContain('value="mixer"')
+    expect(panel).toContain('value="streams"')
+    expect(panel).not.toContain('StoryboardReviewPanel')
     expect(panel).not.toContain("label: 'Script'")
     expect(panel).not.toContain("label: 'Motion'")
   })
@@ -76,15 +78,15 @@ describe('Production section labels', () => {
     }
   })
 
-  it('names the sections in the workflow guide and co-pilot guidance', () => {
+  it('describes one production strip in the workflow guide and co-pilot', () => {
     const foundation = productionWorkflowGroups.find((group) => group.id === 'foundation-script')
-    expect(foundation?.title).toContain("Writer's Room")
+    expect(foundation?.title).toContain('Direction')
 
     const motion = productionWorkflowGroups.find((group) => group.id === 'production-shoot')
-    expect(motion?.title).toContain('Motion')
+    expect(motion?.title).toContain('Video')
 
-    expect(guidanceContent.dialogueAction.title).toContain("Writer's Room")
-    expect(guidanceContent.callAction.title).toContain('Motion')
+    expect(guidanceContent.dialogueAction.title).toContain('Direction')
+    expect(guidanceContent.callAction.title).toContain('Video')
   })
 
   it("reserves Writer's Room for the Production section, not the Blueprint entry point", () => {

@@ -67,7 +67,7 @@ describe('deriveSegmentsFromBeats', () => {
     })
   })
 
-  it('rejects derivation when storyboard is not approved', () => {
+  it('derives when frames exist even if pre-vis was never approved', () => {
     const scene = approvedScene([
       {
         beatId: 'bt_1',
@@ -78,6 +78,21 @@ describe('deriveSegmentsFromBeats', () => {
     ])
     scene.storyboardStatus = 'pending_review'
     const result = deriveSegmentsFromBeats(scene)
+    expect(result.errors).toHaveLength(0)
+    expect(result.segments).toHaveLength(1)
+  })
+
+  it('still rejects derivation when approval is explicitly required', () => {
+    const scene = approvedScene([
+      {
+        beatId: 'bt_1',
+        sequenceIndex: 0,
+        kind: 'action',
+        actionDescription: 'Test',
+      },
+    ])
+    scene.storyboardStatus = 'pending_review'
+    const result = deriveSegmentsFromBeats(scene, { requireApproved: true })
     expect(result.segments).toHaveLength(0)
     expect(result.errors[0]).toMatch(/approved/i)
   })
@@ -289,15 +304,77 @@ describe('mergeDerivedSegmentsWithExisting', () => {
     expect(merged[0].takes?.[0]?.assetUrl).toBe(uploadUrl)
     expect(merged[0].status).toBe('COMPLETE')
   })
+
+  it('keeps the completed clip when a beat was split into two segments', () => {
+    const scene = approvedScene([
+      {
+        beatId: 'bt_1',
+        sequenceIndex: 0,
+        kind: 'dialogue',
+        character: 'Sarah',
+        line: 'Hello.',
+        lineId: 'ln_1',
+      },
+    ])
+    const derived = deriveSegmentsFromBeats(scene).segments
+    const existing = [
+      {
+        ...derived[0],
+        segmentId: 'seg_part_0',
+        dialoguePortion: { lineId: 'ln_1', partIndex: 0, partCount: 2, excerpt: 'Hel' },
+        status: 'DRAFT' as const,
+      },
+      {
+        ...derived[0],
+        segmentId: 'seg_part_1',
+        dialoguePortion: { lineId: 'ln_1', partIndex: 1, partCount: 2, excerpt: 'lo' },
+        status: 'COMPLETE' as const,
+        assetType: 'video' as const,
+        activeAssetUrl: 'https://example.com/part1.mp4',
+        takes: [
+          {
+            id: 'take-1',
+            createdAt: '2026-01-01T00:00:00.000Z',
+            assetUrl: 'https://example.com/part1.mp4',
+            status: 'COMPLETE' as const,
+          },
+        ],
+      },
+    ]
+    const merged = mergeDerivedSegmentsWithExisting(derived, existing)
+    expect(merged).toHaveLength(1)
+    expect(merged[0].segmentId).toBe('seg_part_1')
+    expect(merged[0].activeAssetUrl).toBe('https://example.com/part1.mp4')
+  })
 })
 
 describe('needsProductionDerive', () => {
-  it('returns false when not storyboard-approved', () => {
+  it('returns true for a framed scene that was never approved and has no clips', () => {
     const scene = approvedScene([
       { beatId: 'bt_1', sequenceIndex: 0, kind: 'action', actionDescription: 'Test' },
     ])
     scene.storyboardStatus = 'pending_review'
-    expect(needsProductionDerive(scene, [])).toBe(false)
+    expect(needsProductionDerive(scene, [])).toBe(true)
+  })
+
+  it('returns true when one beat has two clips', () => {
+    const scene = approvedScene([
+      { beatId: 'bt_1', sequenceIndex: 0, kind: 'action', actionDescription: 'Test' },
+    ])
+    const [segment] = deriveSegmentsFromBeats(scene).segments
+    expect(
+      needsProductionDerive(scene, [
+        segment,
+        { ...segment, segmentId: 'seg_extra', dialoguePortion: { lineId: 'ln', partIndex: 1, partCount: 2, excerpt: 'x' } },
+      ])
+    ).toBe(true)
+  })
+
+  it('returns false when clips are already one per beat', () => {
+    const scene = approvedScene([
+      { beatId: 'bt_1', sequenceIndex: 0, kind: 'action', actionDescription: 'Test' },
+    ])
+    expect(needsProductionDerive(scene, deriveSegmentsFromBeats(scene).segments)).toBe(false)
   })
 
   it('returns true when approved scene has no segments', () => {

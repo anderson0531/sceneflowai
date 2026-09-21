@@ -149,10 +149,10 @@ import { useVideoQueue } from '@/hooks/useVideoQueue'
 import { forceDownload } from '@/lib/utils'
 import type { SceneAudioData } from './GuidePromptEditor'
 import type { GuideCharacterDemographic } from '@/lib/scene/segmentGuidePrompt'
-import { isBeatFirstPipelineEnabled, isStoryboardApproved } from '@/lib/script/beatMigration'
+import { getSceneBeats, isBeatExcluded, isBeatFirstPipelineEnabled } from '@/lib/script/beatMigration'
+import { BeatVideoGallery, type BeatVideoClip } from './BeatVideoGallery'
 import type { SegmentGuideContext } from '@/lib/vision/segmentConfigBuilder'
 import { resolveEffectiveStartFrameUrl, resolveExpressGenerationMethod } from '@/lib/vision/segmentConfigBuilder'
-import { buildVideoErrorGuidance } from '@/lib/generation/videoErrorGuidance'
 
 function getAspectRatioTailwindClass(ratio: BlueprintAspectRatio): string {
   switch (ratio) {
@@ -304,6 +304,8 @@ export interface DirectorConsoleProps {
   onVideoGenerationQualityChange?: (quality: VideoGenerationQuality) => void
   videoGenerationMode?: VideoGenerationMode
   onVideoGenerationModeChange?: (mode: VideoGenerationMode) => void
+  /** Jump the parent workflow strip to Pre-Vis. */
+  onOpenPreVis?: () => void
 }
 
 /** Slots for splitting Video / Mixer / Streams across parent section cards (ScriptPanel). */
@@ -320,15 +322,6 @@ export type DirectorWorkflowSlots = {
 
 export type DirectorWorkflowProps = DirectorConsoleProps & {
   children: (slots: DirectorWorkflowSlots) => React.ReactNode
-}
-
-// Method badge colors and labels
-const methodBadgeConfig: Record<VideoGenerationMethod, { label: string; className: string }> = {
-  FTV: { label: 'INTERP', className: 'bg-purple-500/20 text-purple-300 border-purple-500/50' },
-  I2V: { label: 'I2V', className: 'bg-blue-500/20 text-blue-300 border-blue-500/50' },
-  T2V: { label: 'T2V', className: 'bg-green-500/20 text-green-300 border-green-500/50' },
-  EXT: { label: 'EXT', className: 'bg-amber-500/20 text-amber-300 border-amber-500/50' },
-  REF: { label: 'REF', className: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50' },
 }
 
 // Status badge colors - Using film terminology
@@ -382,6 +375,7 @@ export function DirectorConsoleRoot({
   onVideoGenerationQualityChange,
   videoGenerationMode = 'standard',
   onVideoGenerationModeChange,
+  onOpenPreVis,
   children,
 }: DirectorConsoleProps & {
   children?: (slots: DirectorWorkflowSlots) => React.ReactNode
@@ -671,7 +665,7 @@ export function DirectorConsoleRoot({
     if (!isBeatFirstPipelineEnabled()) return
 
     const sceneRecord = scene as Record<string, unknown> | undefined
-    if (!sceneRecord || !isStoryboardApproved(sceneRecord)) return
+    if (!sceneRecord) return
     if (!sceneHasDialogueAudioForLanguage(language)) return
 
     const timeout = window.setTimeout(async () => {
@@ -1462,8 +1456,60 @@ export function DirectorConsoleRoot({
     total: queue.length,
   }
 
-  // No segments state
-  if (segments.length === 0) {
+  const videoClips = useMemo<BeatVideoClip[]>(() => {
+    const beats = getSceneBeats((scene as Record<string, unknown> | undefined) ?? null).filter(
+      (beat) => !isBeatExcluded(beat)
+    )
+    const used = new Set<string>()
+    const fromBeats = beats.map((beat, index) => {
+      const matches = segments.filter((segment) => segment.beatId === beat.beatId)
+      const segment =
+        matches.find(
+          (row) => row.status === 'COMPLETE' && row.assetType === 'video' && row.activeAssetUrl
+        ) ??
+        matches.find((row) => (row.dialoguePortion?.partIndex ?? 0) === 0) ??
+        matches[0]
+      if (segment) used.add(segment.segmentId)
+      const item = segment ? queue.find((entry) => entry.segmentId === segment.segmentId) : undefined
+      const thumbnail =
+        beat.storyboardImageUrl?.trim() ||
+        item?.thumbnailUrl ||
+        segment?.startFrameUrl ||
+        segment?.references?.startFrameUrl ||
+        undefined
+      const spoken = beat.kind === 'action' ? beat.actionDescription : beat.line
+      return {
+        key: beat.beatId,
+        beatNumber: index + 1,
+        label: (spoken || beat.kind || `Beat ${index + 1}`).replace(/\s+/g, ' ').trim(),
+        prompt: item?.config.prompt || segment?.userEditedPrompt || segment?.generatedPrompt,
+        thumbnailUrl: thumbnail,
+        hasStartFrame: !!thumbnail,
+        segment,
+        queueItem: item,
+      }
+    })
+    if (fromBeats.length > 0) return fromBeats
+    return queue
+      .filter((item) => !used.has(item.segmentId))
+      .map((item, index) => {
+        const segment = segments.find((row) => row.segmentId === item.segmentId)
+        return {
+          key: item.segmentId,
+          beatNumber: index + 1,
+          label: item.config.prompt || `Clip ${index + 1}`,
+          prompt: item.config.prompt,
+          thumbnailUrl: item.thumbnailUrl || undefined,
+          hasStartFrame: !!(item.thumbnailUrl || segment?.startFrameUrl),
+          segment,
+          queueItem: item,
+        }
+      })
+  }, [scene, segments, queue])
+
+  // No segments state — only when this console owns the whole layout.
+  // The production strip still needs Video / Mixer / Streams slots with zero clips.
+  if (segments.length === 0 && !children) {
     return (
       <div className="p-8 text-center">
         <Clapperboard className="w-16 h-16 mx-auto mb-4 text-slate-500 opacity-30" />
@@ -1720,229 +1766,37 @@ export function DirectorConsoleRoot({
   )
 
   const videoSection = (
-    <div id={`director-console-${sceneId}`} className="scroll-mt-4 space-y-4">
-      <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 p-2 sm:p-3 border-b border-gray-700/40">
-          <ProductionSectionHeader
-            icon={Film}
-            title="Footage"
-            badge={`${statusCounts.rendered}/${statusCounts.total}`}
-            rightHint="Generate video clips from Beat Frames using AI"
-            className="flex-1 min-w-0 border-0 p-0"
-          />
-          <div className="flex-shrink-0 px-1 sm:px-0">{generateControls}</div>
-        </div>
-        <div className="px-4 pb-4 pt-3 space-y-4 border-t border-gray-700/50">
-            {isRendering && (
-              <div className="space-y-2">
-                <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full transition-all duration-300 ${isRateLimitPaused ? 'bg-amber-500 animate-pulse' : 'bg-indigo-500'}`}
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-xs text-slate-500">
-                  <span>{completedCount} completed</span>
-                  {isRateLimitPaused && <span className="text-amber-400">⏸ Paused ({rateLimitCountdown}s)</span>}
-                  {failedCount > 0 && <span className="text-red-400">{failedCount} failed</span>}
-                  <span>{progress}%</span>
-                </div>
-              </div>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {queue.map((item) => {
-                const segment = segments.find(s => s.segmentId === item.segmentId)
-                if (!segment) return null
-                const methodConfig = methodBadgeConfig[item.config.mode] || methodBadgeConfig['I2V']
-                const statusConfig = getFootageBeatStatusConfig(item)
-                const StatusIcon = statusConfig.icon
-                const isCurrentlyRendering = currentSegmentId === item.segmentId
-                const isVideoInTheCan = item.status === 'complete'
-                const errorGuidance =
-                  item.status === 'error' ? buildVideoErrorGuidance(item.error) : null
-                return (
-                  <div
-                    key={item.segmentId}
-                    className={`
-                border rounded-lg p-4 transition-all 
-                hover:border-indigo-500/70 hover:bg-slate-800/50
-                ${isVideoInTheCan ? 'bg-emerald-900/10 border-emerald-500/30' : 'bg-slate-800/30 border-slate-700/50'}
-                ${selectedSegmentIds.has(item.segmentId) ? 'ring-4 ring-amber-500 bg-amber-500/10' : ''}
-                ${isCurrentlyRendering ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900' : ''}
-              `}
-                  >
-                    <div className="flex gap-4">
-                      <div className="flex-shrink-0 flex items-start pt-1">
-                        <Checkbox
-                          checked={selectedSegmentIds.has(item.segmentId)}
-                          onCheckedChange={(checked) => toggleSegmentSelection(item.segmentId, checked === true)}
-                          className="border-slate-500"
-                        />
-                      </div>
-                      <div className={`w-32 ${aspectClass} bg-black rounded overflow-hidden relative flex-shrink-0`}>
-                        {item.thumbnailUrl ? (
-                          <img src={item.thumbnailUrl} alt={`Beat ${item.sequenceIndex + 1}`} className="w-full h-full object-contain" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-slate-800">
-                            <Film className="w-8 h-8 text-slate-600" />
-                          </div>
-                        )}
-                        <Badge variant="outline" className={`absolute bottom-1 right-1 text-[10px] px-1.5 py-0 ${methodConfig.className}`}>
-                          {methodConfig.label}
-                        </Badge>
-                        {isCurrentlyRendering && (
-                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                            <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
-                          </div>
-                        )}
-                        {isVideoInTheCan && !isCurrentlyRendering && (
-                          <button
-                            className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/40 transition-colors group"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              const segmentIndex = segments.findIndex(s => s.segmentId === item.segmentId)
-                              if (segmentIndex >= 0) {
-                                setPlayFromSegmentIndex(segmentIndex)
-                                setIsScenePlayerOpen(true)
-                              }
-                            }}
-                            title="Play beat video"
-                          >
-                            <PlayCircle className="w-10 h-10 text-white/0 group-hover:text-white/90 transition-colors drop-shadow-lg" />
-                          </button>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start gap-2">
-                          <span className="font-semibold text-slate-200">Beat {item.sequenceIndex + 1}</span>
-                          <Badge variant="outline" className={`flex items-center gap-1 text-[10px] ${statusConfig.className}`}>
-                            <StatusIcon className={`w-3 h-3 ${item.status === 'rendering' || isCurrentlyRendering ? 'animate-spin' : ''}`} />
-                            {statusConfig.label}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-slate-400 mt-2 line-clamp-2">
-                          {item.config.prompt || 'No prompt configured'}
-                        </p>
-                        {errorGuidance && (
-                          <p className="text-xs text-amber-400/90 mt-1.5 leading-snug">
-                            {errorGuidance}
-                          </p>
-                        )}
-                        {beatFirstReadOnlyPrompts && (
-                          <p className="text-[10px] text-slate-500 mt-1">
-                            Auto-derived from direction — edit script or Pre-Vis to change
-                          </p>
-                        )}
-                        <div className="flex items-center gap-2 mt-2 text-xs text-slate-500">
-                          {segment.veoTimelineContinuation && (
-                            <>
-                              <span className="text-cyan-400/90">Auto Veo extension</span>
-                              <span>•</span>
-                            </>
-                          )}
-                          <span>
-                            {segment.isUserUpload && segment.actualVideoDuration
-                              ? `${Math.round(segment.actualVideoDuration)}s`
-                              : `${item.config.duration}s`}
-                          </span>
-                          <span>•</span>
-                          <span>{item.config.aspectRatio}</span>
-                        </div>
-                      </div>
-                      <div className="flex-shrink-0 flex items-center gap-1">
-                        {onSegmentUpload && (
-                          <>
-                            <input
-                              type="file"
-                              accept="video/*"
-                              className="hidden"
-                              id={`upload-video-${item.segmentId}`}
-                              onChange={(e) => {
-                                const file = e.target.files?.[0]
-                                if (file) {
-                                  onSegmentUpload(item.segmentId, file)
-                                }
-                                e.target.value = ''
-                              }}
-                            />
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-slate-500 hover:text-slate-300"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleRequestUpload(item.segmentId)
-                                  }}
-                                >
-                                  <Upload className="w-4 h-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Upload Video</TooltipContent>
-                            </Tooltip>
-                          </>
-                        )}
-                        {onModerationReport &&
-                          projectId &&
-                          segment.isUserUpload &&
-                          segment.assetType === 'video' &&
-                          segment.activeAssetUrl &&
-                          item.status === 'complete' && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span>
-                                <ModerationValidateButton
-                                  projectId={projectId}
-                                  stage="fal_video"
-                                  source="segment_asset"
-                                  resourceId={item.segmentId}
-                                  label="Validate"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 px-2 text-slate-500 hover:text-indigo-300"
-                                  onReport={onModerationReport}
-                                />
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              Validate uploaded video with Hive (credit charge)
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-xs bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700 px-2"
-                          onClick={() => handleRequestTake(segment)}
-                        >
-                          <Settings2 className="w-3.5 h-3.5 mr-1" />
-                          Take ({segment.takes?.length || 1})
-                        </Button>
-                        {item.status === 'complete' &&
-                          segment.assetType === 'video' &&
-                          segment.activeAssetUrl && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-xs bg-indigo-950/40 border-indigo-500/40 text-indigo-200 hover:bg-indigo-900/40 px-2"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setRetakeSegment(segment)
-                              }}
-                            >
-                              <Wand2 className="w-3.5 h-3.5 mr-1" />
-                              Retake
-                            </Button>
-                          )}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-        </div>
-      </div>
+    <div id={`director-console-${sceneId}`} className="scroll-mt-4">
+      <BeatVideoGallery
+        clips={videoClips}
+        toolbar={generateControls}
+        aspectClass={aspectClass}
+        isRendering={isRendering}
+        progress={progress}
+        completedCount={completedCount}
+        failedCount={failedCount}
+        isRateLimitPaused={isRateLimitPaused}
+        rateLimitCountdown={rateLimitCountdown}
+        readOnlyPrompts={beatFirstReadOnlyPrompts}
+        renderedCount={statusCounts.rendered}
+        totalCount={videoClips.length || statusCounts.total}
+        onOpenPreVis={onOpenPreVis}
+        onPlay={(segment) => {
+          const segmentIndex = segments.findIndex((row) => row.segmentId === segment.segmentId)
+          if (segmentIndex >= 0) {
+            setPlayFromSegmentIndex(segmentIndex)
+            setIsScenePlayerOpen(true)
+          }
+        }}
+        onTake={handleRequestTake}
+        onUpload={onSegmentUpload}
+        onRetake={(segment) => setRetakeSegment(segment)}
+        onGenerateClip={(segment) => {
+          const item = queue.find((entry) => entry.segmentId === segment.segmentId)
+          if (!item) return
+          handleGenerateFromDialog(segment.segmentId, item.config)
+        }}
+      />
     </div>
   )
 
