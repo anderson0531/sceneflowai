@@ -160,7 +160,7 @@ import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import { resolveEffectiveStoryboardTier } from '@/lib/storyboard/storyboardQuality'
 import { BeatVideoGallery, type BeatVideoClip } from './BeatVideoGallery'
 import type { SegmentGuideContext } from '@/lib/vision/segmentConfigBuilder'
-import { resolveEffectiveStartFrameUrl, resolveExpressGenerationMethod } from '@/lib/vision/segmentConfigBuilder'
+import { resolveEffectiveStartFrameUrl, resolveExpressGenerationMethod, STANDARD_TAKE_DURATION_SECONDS } from '@/lib/vision/segmentConfigBuilder'
 import { CONCURRENCY_DEFAULTS } from '@/lib/utils/concurrent-processor'
 
 function getAspectRatioTailwindClass(ratio: BlueprintAspectRatio): string {
@@ -1002,7 +1002,7 @@ export function DirectorConsoleRoot({
           negativePrompt: '',
           aspectRatio: videoAspectRatio,
           resolution: '1080p' as const,
-          duration: 8,
+          duration: STANDARD_TAKE_DURATION_SECONDS,
           startFrameUrl: resolvedStartFrameUrl || null,
           endFrameUrl: null,
           sourceVideoUrl: null,

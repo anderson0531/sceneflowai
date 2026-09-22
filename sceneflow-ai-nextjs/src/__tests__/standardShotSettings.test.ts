@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { optimizeStandardOmniSettings } from '@/lib/intelligence/standard-shot-settings'
+import {
+  optimizeStandardOmniSettings,
+  STANDARD_TAKE_DURATION_SECONDS,
+} from '@/lib/intelligence/standard-shot-settings'
 
 describe('optimizeStandardOmniSettings', () => {
   it('defaults to ingredients (REF) when refs resolve', () => {
@@ -49,5 +52,25 @@ describe('optimizeStandardOmniSettings', () => {
     })
     expect(result.method).toBe('EXT')
     expect(result.duration).toBe(10)
+  })
+
+  it('defaults Draft/Final Standard takes to 10s even for quiet or short dialogue beats', () => {
+    expect(STANDARD_TAKE_DURATION_SECONDS).toBe(10)
+    const quiet = optimizeStandardOmniSettings({
+      segment: { shotType: 'medium shot' },
+      ingredientCount: 0,
+    })
+    const shortDialogue = optimizeStandardOmniSettings({
+      segment: { dialogueLines: [{ line: 'Hi.' }] },
+      ingredientCount: 1,
+      spokenDurationSeconds: 2,
+    })
+    const action = optimizeStandardOmniSettings({
+      segment: { action: 'A chase through the streets.', cameraMovement: 'tracking' },
+      ingredientCount: 0,
+    })
+    expect(quiet.duration).toBe(10)
+    expect(shortDialogue.duration).toBe(10)
+    expect(action.duration).toBe(10)
   })
 })
