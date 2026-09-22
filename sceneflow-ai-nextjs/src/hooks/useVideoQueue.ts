@@ -27,6 +27,7 @@ import type {
 } from '@/components/vision/scene-production/types'
 import type { SegmentGuideContext, SegmentConfigResult } from '@/lib/vision/segmentConfigBuilder'
 import { resolveEffectiveStartFrameUrl, shouldAttachBeatStartFrame } from '@/lib/vision/segmentConfigBuilder'
+import { deriveClipQueueStatus } from '@/lib/storyboard/mediaVersions'
 import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 import {
   isVeoChainContinuation,
@@ -277,6 +278,7 @@ export function useVideoQueue(
         id: s.segmentId,
         status: s.status,
         asset: s.activeAssetUrl?.slice(-20), // Last 20 chars of URL for change detection
+        take: `${s.currentTakeId || ''}:${(s.takes || []).map((take) => take.id).join('|')}`,
         prompt: s.generatedPrompt,
       }))
     )
@@ -332,30 +334,9 @@ export function useVideoQueue(
         config = { ...config, startFrameUrl: liveStartFrameUrl }
       }
       
-      // Determine status
-      // A segment is 'complete' if:
-      // 1. Status is COMPLETE with a video asset, OR
-      // 2. Has an activeAssetUrl that looks like a video (fallback for data inconsistencies)
-      let status: DirectorQueueItem['status'] = 'queued'
-      const hasVideoAsset = segment.activeAssetUrl && (
-        segment.assetType === 'video' || 
-        segment.activeAssetUrl.includes('.mp4') ||
-        segment.activeAssetUrl.includes('video')
-      )
-      
-      if (segment.status === 'COMPLETE' && hasVideoAsset) {
-        status = 'complete'
-      } else if (segment.status === 'COMPLETE' && segment.activeAssetUrl) {
-        // Fallback: if status is COMPLETE with any asset, consider it complete
-        status = 'complete'
-      } else if (config.approvalStatus === 'rendered') {
-        // If user marked as rendered (In the Can), treat as complete even if segment status is inconsistent
-        status = 'complete'
-      } else if (segment.status === 'GENERATING') {
-        status = 'rendering'
-      } else if (segment.status === 'ERROR') {
-        status = 'error'
-      }
+      // A stored take or video URL counts as complete even if segment.status was cleared.
+      // GENERATING stays rendering so an in-progress retake is not hidden by older takes.
+      const status = deriveClipQueueStatus(segment, config.approvalStatus)
       
       return {
         segmentId: segment.segmentId,

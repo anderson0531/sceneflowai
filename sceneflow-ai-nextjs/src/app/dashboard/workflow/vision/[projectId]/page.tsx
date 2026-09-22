@@ -52,6 +52,7 @@ import { audioSourceFingerprintForSpoken } from '@/lib/audio/beatAudioStale'
 import { resolveLineVoiceDirection } from '@/lib/tts/dialogueDirectorNotes'
 import { resolveStoryboardScenes, totalStoryboardMediaScore } from '@/lib/storyboard/resolveStoryboardScenes'
 import {
+  appendSegmentTake,
   assignStillUrl,
   CUSTOM_FRAME_STILL_SLOT,
 } from '@/lib/storyboard/mediaVersions'
@@ -4693,7 +4694,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 : {}),
               lastContentPolicyFailure: undefined,
               errorMessage: undefined,
-              takes: [newTake, ...(segment.takes || [])],
+              takes: appendSegmentTake(segment.takes, newTake),
               currentTakeId: newTake.id,
                 references: {
                   ...segment.references,
@@ -4924,7 +4925,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                                 status: 'COMPLETE' as const,
                                 assetType: retryData.assetType,
                                 activeAssetUrl: retryData.assetUrl,
-                                takes: [newTake, ...(seg.takes || [])],
+                                takes: appendSegmentTake(seg.takes, newTake),
                                 currentTakeId: newTake.id,
                                 errorMessage: undefined,
                                 lastContentPolicyFailure: undefined, // Clear failure flag on success
@@ -5115,7 +5116,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                                 status: 'COMPLETE' as const,
                                 assetType: retryData.assetType,
                                 activeAssetUrl: retryData.assetUrl,
-                                takes: [newTake, ...(seg.takes || [])],
+                                takes: appendSegmentTake(seg.takes, newTake),
                                 currentTakeId: newTake.id,
                                 errorMessage: undefined,
                                 stemSeparation: retryData.stemSeparation
@@ -5307,17 +5308,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 endTime: newEndTime,
                 actualVideoDuration: actualVideoDuration,
                 isUserUpload: true,
-                takes: [
-                  {
-                    id: takeId,
-                    createdAt: new Date().toISOString(),
-                    assetUrl: assetUrl,
-                    thumbnailUrl: file.type.startsWith('image') ? assetUrl : segment.activeAssetUrl,
-                    status: 'COMPLETE' as const,
-                    notes: `User upload${actualVideoDuration ? ` (${actualVideoDuration.toFixed(1)}s)` : ''}`,
-                  },
-                  ...(segment.takes || []),
-                ],
+                takes: appendSegmentTake(segment.takes, {
+                  id: takeId,
+                  createdAt: new Date().toISOString(),
+                  assetUrl: assetUrl,
+                  thumbnailUrl: file.type.startsWith('image')
+                    ? assetUrl
+                    : segment.activeAssetUrl || undefined,
+                  status: 'COMPLETE' as const,
+                  notes: `User upload${actualVideoDuration ? ` (${actualVideoDuration.toFixed(1)}s)` : ''}`,
+                }),
                 currentTakeId: takeId,
               }
             }

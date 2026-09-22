@@ -14,6 +14,13 @@ import {
   type VideoClipFacts,
   type VideoQualityFilter,
 } from '@/lib/vision/videoClipFilters'
+import {
+  isVideoLikeUrl,
+  listPlayableTakes,
+  resolveLiveTake,
+  segmentHasPlayableVideo,
+  type PlayableTake,
+} from '@/lib/storyboard/mediaVersions'
 
 function clipStatus(item?: DirectorQueueItem): { label: string; className: string } | null {
   if (!item) return null
@@ -27,6 +34,25 @@ function clipStatus(item?: DirectorQueueItem): { label: string; className: strin
     return { label: 'Error', className: 'border-red-500/40 bg-red-500/15 text-red-200' }
   }
   return { label: 'Ready', className: 'border-slate-500/40 bg-slate-500/15 text-slate-300' }
+}
+
+function TakeVersionThumb({ version }: { version: PlayableTake }) {
+  const thumb = version.thumbnailUrl?.trim()
+  if (thumb && !isVideoLikeUrl(thumb)) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={thumb} alt="" className="h-full w-full object-cover" />
+    )
+  }
+  return (
+    <video
+      src={version.url}
+      className="pointer-events-none h-full w-full object-cover"
+      muted
+      playsInline
+      preload="metadata"
+    />
+  )
 }
 
 export interface BeatVideoClip {
@@ -69,6 +95,8 @@ interface BeatVideoGalleryProps {
   onDirection?: (segment: SceneSegment) => void
   /** Edit a completed clip. */
   onEditClip?: (segment: SceneSegment) => void
+  /** Restore a stored take as the live clip. */
+  onRestoreTake?: (segmentId: string, takeId: string) => void
   onOpenPreVis?: () => void
   generatingClipId?: string | null
   videoGenerationLocked?: boolean
@@ -95,6 +123,7 @@ export function BeatVideoGallery({
   onDirectVideo,
   onDirection,
   onEditClip,
+  onRestoreTake,
   onOpenPreVis,
   generatingClipId,
   videoGenerationLocked = false,
@@ -111,10 +140,10 @@ export function BeatVideoGallery({
       clips.map((clip) => ({
         key: clip.key,
         status:
-          clip.queueItem?.status === 'complete'
-            ? 'complete'
-            : clip.queueItem?.status === 'rendering'
-              ? 'rendering'
+          clip.queueItem?.status === 'rendering'
+            ? 'rendering'
+            : clip.queueItem?.status === 'complete' || segmentHasPlayableVideo(clip.segment)
+              ? 'complete'
               : clip.queueItem?.status === 'error'
                 ? 'error'
                 : 'queued',
@@ -144,14 +173,24 @@ export function BeatVideoGallery({
 
   const preview = visibleClips.find((clip) => clip.key === selectedKey) ?? visibleClips[0]
   const previewStatus = clipStatus(preview?.queueItem)
-  const previewComplete = preview?.queueItem?.status === 'complete'
   const previewSegment = preview?.segment
-  const previewVideoUrl =
-    previewComplete &&
-    previewSegment?.assetType === 'video' &&
-    previewSegment.activeAssetUrl?.trim()
-      ? previewSegment.activeAssetUrl
-      : undefined
+  const playableTakes = previewSegment
+    ? listPlayableTakes(previewSegment.takes, previewSegment.activeAssetUrl)
+    : []
+  const liveTake = previewSegment
+    ? resolveLiveTake(
+        previewSegment.takes,
+        previewSegment.currentTakeId,
+        previewSegment.activeAssetUrl
+      )
+    : undefined
+  const previewVideoUrl = liveTake?.url
+  const previewHasClip = !!previewVideoUrl
+  const versionStrip = [...playableTakes].sort((a, b) => {
+    const aTime = Date.parse(a.createdAt || '')
+    const bTime = Date.parse(b.createdAt || '')
+    return (Number.isFinite(aTime) ? aTime : 0) - (Number.isFinite(bTime) ? bTime : 0)
+  })
 
   useEffect(() => {
     setIsPreviewPlaying(false)
@@ -259,7 +298,8 @@ export function BeatVideoGallery({
               <p className="col-span-2 text-[10px] text-slate-500 px-1">No clips match these filters.</p>
             ) : null}
             {visibleClips.map((clip) => {
-              const complete = clip.queueItem?.status === 'complete'
+              const complete =
+                clip.queueItem?.status === 'complete' || segmentHasPlayableVideo(clip.segment)
               return (
                 <button
                   key={clip.key}
@@ -328,7 +368,7 @@ export function BeatVideoGallery({
                   sceneIdx={0}
                   sceneNumber={preview.beatNumber}
                   label="Start frame"
-                  generateTitle={previewComplete ? 'Regenerate' : 'Generate video'}
+                  generateTitle={previewHasClip ? 'Regenerate' : 'Generate video'}
                   directTitle="Direct Video"
                   directorTitle="Direction"
                   uploadTitle="Upload"
@@ -346,10 +386,7 @@ export function BeatVideoGallery({
                   onDirector={onDirection ? () => onDirection(previewSegment) : undefined}
                   onUpload={(file) => onUpload?.(previewSegment.segmentId, file)}
                   onEdit={
-                    onEditClip &&
-                    previewComplete &&
-                    previewSegment.assetType === 'video' &&
-                    previewSegment.activeAssetUrl
+                    onEditClip && previewHasClip
                       ? () => onEditClip(previewSegment)
                       : undefined
                   }
@@ -365,6 +402,38 @@ export function BeatVideoGallery({
                       <span className="text-xs text-gray-500">No start frame</span>
                     </div>
                   )}
+                </div>
+              )}
+              {previewSegment && versionStrip.length > 1 && (
+                <div
+                  className="flex gap-1 overflow-x-auto px-1.5 py-1 bg-slate-900/80 border-t border-slate-700/50"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  {versionStrip.map((version, index) => {
+                    const isCurrent =
+                      version.id === previewSegment.currentTakeId || version.url === previewVideoUrl
+                    return (
+                      <button
+                        key={version.id}
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          if (!isCurrent) onRestoreTake?.(previewSegment.segmentId, version.id)
+                        }}
+                        className={`relative h-8 w-12 shrink-0 overflow-hidden rounded border ${
+                          isCurrent
+                            ? 'border-cyan-400 ring-1 ring-cyan-400/60'
+                            : 'border-slate-600 hover:border-slate-400'
+                        }`}
+                        title={`Restore version ${index + 1}`}
+                      >
+                        <TakeVersionThumb version={version} />
+                        <span className="absolute bottom-0 right-0 bg-black/70 px-0.5 text-[8px] text-white">
+                          v{index + 1}
+                        </span>
+                      </button>
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -464,7 +533,7 @@ export function BeatVideoGallery({
                         onClick={() => onGenerateClip(previewSegment)}
                       >
                         <Wand2 className="mr-1 h-3 w-3" />
-                        {previewComplete ? 'Regenerate video' : 'Generate video'}
+                        {previewHasClip ? 'Regenerate video' : 'Generate video'}
                       </Button>
                     )}
                     {onDirection && (
@@ -518,7 +587,7 @@ export function BeatVideoGallery({
                         </Button>
                       </>
                     )}
-                    {onRetake && previewComplete && previewSegment.assetType === 'video' && previewSegment.activeAssetUrl && (
+                    {onRetake && previewHasClip && (
                       <Button
                         type="button"
                         size="sm"

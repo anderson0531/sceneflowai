@@ -157,6 +157,11 @@ import {
   isVideoGenerationUnlocked,
 } from '@/lib/script/beatMigration'
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
+import {
+  applyVideoTakeSelection,
+  healMissingVideoPointer,
+  segmentHasPlayableVideo,
+} from '@/lib/storyboard/mediaVersions'
 import { resolveEffectiveStoryboardTier } from '@/lib/storyboard/storyboardQuality'
 import { BeatVideoGallery, type BeatVideoClip } from './BeatVideoGallery'
 import {
@@ -712,6 +717,13 @@ export function DirectorConsoleRoot({
       .join('\u001e')
   }, [scene])
 
+  const missingVideoPointerKey = useMemo(() => {
+    return (productionData?.segments ?? [])
+      .filter((segment) => !segment.activeAssetUrl?.trim() && (segment.takes?.length ?? 0) > 0)
+      .map((segment) => segment.segmentId)
+      .join(',')
+  }, [productionData?.segments])
+
   useEffect(() => {
     const current = productionDataRef.current
     const currentScene = sceneRecordRef.current as Record<string, unknown> | undefined
@@ -719,12 +731,19 @@ export function DirectorConsoleRoot({
     const nextSegments = refreshProductionSegmentVideoPrompts(current.segments, currentScene, {
       artStyleId,
     })
-    if (!nextSegments) return
+    const base = nextSegments ?? current.segments
+    let healedAny = false
+    const healed = base.map((segment) => {
+      const next = healMissingVideoPointer(segment)
+      if (next !== segment) healedAny = true
+      return next
+    })
+    if (!nextSegments && !healedAny) return
     onProductionDataChange({
       ...current,
-      segments: nextSegments,
+      segments: healed,
     })
-  }, [beatVideoDirectionKey, productionData?.segments?.length, onProductionDataChange, artStyleId])
+  }, [beatVideoDirectionKey, productionData?.segments?.length, missingVideoPointerKey, onProductionDataChange, artStyleId])
 
   useEffect(() => {
     const language = productionTarget.language
@@ -1615,6 +1634,16 @@ export function DirectorConsoleRoot({
     total: queue.length,
   }
 
+  const handleRestoreVideoTake = useCallback((segmentId: string, takeId: string) => {
+    if (!onProductionDataChange || !productionData) return
+    onProductionDataChange({
+      ...productionData,
+      segments: productionData.segments.map((segment) =>
+        segment.segmentId === segmentId ? applyVideoTakeSelection(segment, takeId) : segment
+      ),
+    })
+  }, [onProductionDataChange, productionData])
+
   const videoClips = useMemo<BeatVideoClip[]>(() => {
     const beats = getSceneBeats((scene as Record<string, unknown> | undefined) ?? null).filter(
       (beat) => !isBeatExcluded(beat)
@@ -1623,9 +1652,7 @@ export function DirectorConsoleRoot({
     const fromBeats = beats.map((beat, index) => {
       const matches = segments.filter((segment) => segment.beatId === beat.beatId)
       const segment =
-        matches.find(
-          (row) => row.status === 'COMPLETE' && row.assetType === 'video' && row.activeAssetUrl
-        ) ??
+        matches.find((row) => segmentHasPlayableVideo(row)) ??
         matches.find((row) => (row.dialoguePortion?.partIndex ?? 0) === 0) ??
         matches[0]
       if (segment) used.add(segment.segmentId)
@@ -1973,6 +2000,7 @@ export function DirectorConsoleRoot({
         onDirectVideo={(segment) => handleRequestTake(segment, false)}
         onDirection={handleOpenVideoDirection}
         onEditClip={(segment) => setEditingVideoSegment(segment)}
+        onRestoreTake={handleRestoreVideoTake}
       />
     </div>
   )
@@ -2216,16 +2244,12 @@ export function DirectorConsoleRoot({
           characters={scene?.characters}
           previousSegmentLastFrame={previousSegmentLastFrame}
           onSelectTake={(take) => {
-            if (!onProductionDataChange || !productionData || !take.assetUrl) return
+            if (!onProductionDataChange || !productionData) return
             onProductionDataChange({
               ...productionData,
               segments: productionData.segments.map((seg) =>
                 seg.segmentId === editingVideoSegment.segmentId
-                  ? {
-                      ...seg,
-                      currentTakeId: take.id,
-                      activeAssetUrl: take.assetUrl,
-                    }
+                  ? applyVideoTakeSelection(seg, take.id)
                   : seg
               ),
             })

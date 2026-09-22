@@ -498,3 +498,251 @@ export function resolveCurrentTakeId(
   )[0]
   return latest?.id
 }
+
+/** A stored beat-video take the Videos tab can preview or restore. */
+export interface PlayableTake {
+  id: string
+  url: string
+  thumbnailUrl?: string
+  createdAt: string
+  status?: string
+  durationSec?: number
+  /** True when this row was inferred from activeAssetUrl and is not yet stored. */
+  backfill?: boolean
+}
+
+export interface TakeRow {
+  id?: string
+  assetUrl?: string | null
+  videoUrl?: string | null
+  thumbnailUrl?: string
+  createdAt?: string
+  status?: string
+  durationSec?: number
+}
+
+export interface VideoPointerSegment {
+  status?: string
+  assetType?: string | null
+  activeAssetUrl?: string | null
+  currentTakeId?: string
+  actualVideoDuration?: number
+  takes?: TakeRow[]
+}
+
+function isProbablyStillUrl(url: string): boolean {
+  return /\.(jpe?g|png|webp|gif)(?:\?|$)/i.test(url)
+}
+
+/** Non-still media URL. Extensionless blob paths count so stored clips stay recoverable. */
+export function isVideoLikeUrl(url: string): boolean {
+  if (!isUsableMediaUrl(url)) return false
+  return !isProbablyStillUrl(url.trim())
+}
+
+function takeTime(take: { createdAt?: string }): number {
+  const parsed = Date.parse(take.createdAt || '')
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+function backfillTakeId(url: string): string {
+  let hash = 0
+  for (let i = 0; i < url.length; i++) {
+    hash = (hash * 31 + url.charCodeAt(i)) | 0
+  }
+  return `backfill_${(hash >>> 0).toString(36)}`
+}
+
+/** COMPLETE, uploaded, or legacy `done`. Missing status still counts as a stored clip. */
+export function isStoredTakeComplete(status?: string): boolean {
+  if (!status) return true
+  return status === 'COMPLETE' || status === 'UPLOADED' || status === 'done'
+}
+
+/** Prefer an explicit video URL, then a non-still asset URL. */
+export function takeMediaUrl(
+  take: { assetUrl?: string | null; videoUrl?: string | null } | null | undefined
+): string | undefined {
+  if (!take) return undefined
+  const video = typeof take.videoUrl === 'string' ? take.videoUrl.trim() : ''
+  if (isVideoLikeUrl(video)) return video
+  const asset = typeof take.assetUrl === 'string' ? take.assetUrl.trim() : ''
+  if (isVideoLikeUrl(asset)) return asset
+  return undefined
+}
+
+/**
+ * Playable takes in stored order, plus one backfill when activeAssetUrl is a
+ * video that is not already in the list. Does not trim history.
+ */
+export function listPlayableTakes(
+  takes: TakeRow[] | undefined,
+  activeAssetUrl?: string | null
+): PlayableTake[] {
+  const rows = Array.isArray(takes) ? takes : []
+  const listed: PlayableTake[] = []
+  const seenUrls = new Set<string>()
+  for (const row of rows) {
+    const url = takeMediaUrl(row)
+    if (!url || seenUrls.has(url)) continue
+    seenUrls.add(url)
+    const thumbnail = typeof row.thumbnailUrl === 'string' ? row.thumbnailUrl.trim() : ''
+    listed.push({
+      id: row.id?.trim() || backfillTakeId(url),
+      url,
+      createdAt: row.createdAt?.trim() || new Date(0).toISOString(),
+      ...(thumbnail && isUsableMediaUrl(thumbnail) ? { thumbnailUrl: thumbnail } : {}),
+      ...(row.status ? { status: row.status } : {}),
+      ...(typeof row.durationSec === 'number' ? { durationSec: row.durationSec } : {}),
+    })
+  }
+
+  const active = typeof activeAssetUrl === 'string' ? activeAssetUrl.trim() : ''
+  if (isVideoLikeUrl(active) && !seenUrls.has(active)) {
+    const blobTs = mediaBlobUrlTimestamp(active)
+    listed.push({
+      id: backfillTakeId(active),
+      url: active,
+      createdAt: blobTs ? new Date(blobTs).toISOString() : new Date(0).toISOString(),
+      status: 'COMPLETE',
+      backfill: true,
+    })
+  }
+  return listed
+}
+
+/**
+ * Live clip: currentTakeId, else the active URL, else the latest stored take.
+ * Complete takes win over in-progress rows when no pointer matches.
+ */
+export function resolveLiveTake(
+  takes: TakeRow[] | undefined,
+  currentTakeId?: string | null,
+  activeAssetUrl?: string | null
+): PlayableTake | undefined {
+  const listed = listPlayableTakes(takes, activeAssetUrl)
+  if (listed.length === 0) return undefined
+  if (currentTakeId) {
+    const byId = listed.find((take) => take.id === currentTakeId)
+    if (byId) return byId
+  }
+  const active = typeof activeAssetUrl === 'string' ? activeAssetUrl.trim() : ''
+  if (active) {
+    const byUrl = listed.find((take) => take.url === active)
+    if (byUrl) return byUrl
+  }
+  const complete = listed.filter((take) => isStoredTakeComplete(take.status))
+  const pool = complete.length > 0 ? complete : listed
+  return [...pool].sort((a, b) => takeTime(b) - takeTime(a))[0]
+}
+
+function resolveHealTake(
+  takes: TakeRow[] | undefined,
+  currentTakeId?: string | null
+): PlayableTake | undefined {
+  const complete = listPlayableTakes(takes, undefined).filter(
+    (take) => !take.backfill && isStoredTakeComplete(take.status)
+  )
+  if (complete.length === 0) return undefined
+  if (currentTakeId) {
+    const byId = complete.find((take) => take.id === currentTakeId)
+    if (byId) return byId
+  }
+  return [...complete].sort((a, b) => takeTime(b) - takeTime(a))[0]
+}
+
+/** True when the segment already points at a video or still has a stored take URL. */
+export function segmentHasPlayableVideo(segment: VideoPointerSegment | null | undefined): boolean {
+  if (!segment) return false
+  const url = typeof segment.activeAssetUrl === 'string' ? segment.activeAssetUrl.trim() : ''
+  if (url && (segment.assetType === 'video' || isVideoLikeUrl(url))) return true
+  return listPlayableTakes(segment.takes, undefined).length > 0
+}
+
+/**
+ * Queue status for the Videos tab. A stored take or video URL is complete even
+ * when segment.status was cleared. In-progress generation stays rendering.
+ */
+export function deriveClipQueueStatus(
+  segment: VideoPointerSegment,
+  approvalStatus?: string
+): 'complete' | 'rendering' | 'error' | 'queued' {
+  if (segment.status === 'GENERATING') return 'rendering'
+  if (segmentHasPlayableVideo(segment)) return 'complete'
+  if (segment.status === 'COMPLETE' && segment.activeAssetUrl?.trim()) return 'complete'
+  if (approvalStatus === 'rendered') return 'complete'
+  if (segment.status === 'ERROR') return 'error'
+  return 'queued'
+}
+
+/**
+ * Fill a missing activeAssetUrl from a stored complete take.
+ * Leaves a different existing URL alone, including a non-video pointer.
+ */
+export function healMissingVideoPointer<T extends VideoPointerSegment>(segment: T): T {
+  if (segment.status === 'GENERATING') return segment
+  const current = typeof segment.activeAssetUrl === 'string' ? segment.activeAssetUrl.trim() : ''
+  if (current) return segment
+  const live = resolveHealTake(segment.takes, segment.currentTakeId)
+  if (!live) return segment
+  return {
+    ...segment,
+    activeAssetUrl: live.url,
+    currentTakeId: live.id,
+    assetType: 'video',
+    status: 'COMPLETE',
+    ...(typeof live.durationSec === 'number' ? { actualVideoDuration: live.durationSec } : {}),
+  }
+}
+
+/** Prepend a take and keep the newest MEDIA_VERSION_CAP rows. */
+export function appendSegmentTake<T extends { id?: string }>(takes: T[] | undefined, next: T): T[] {
+  const existing = Array.isArray(takes) ? takes : []
+  const nextId = typeof next.id === 'string' ? next.id.trim() : ''
+  const rest = nextId ? existing.filter((row) => row.id !== nextId) : existing
+  const combined = [next, ...rest]
+  if (combined.length <= MEDIA_VERSION_CAP) return combined
+  return combined.slice(0, MEDIA_VERSION_CAP)
+}
+
+/** Point the segment at a stored or backfilled take and persist that row. */
+export function applyVideoTakeSelection<T extends VideoPointerSegment>(segment: T, takeId: string): T {
+  const selected = listPlayableTakes(segment.takes, segment.activeAssetUrl).find(
+    (take) => take.id === takeId
+  )
+  if (selected) {
+    let takes = segment.takes ?? []
+    const stored = takes.some((row) => row.id === selected.id || takeMediaUrl(row) === selected.url)
+    if (!stored) {
+      takes = appendSegmentTake(takes, {
+        id: selected.id,
+        createdAt: selected.createdAt,
+        assetUrl: selected.url,
+        status: 'COMPLETE',
+        ...(selected.thumbnailUrl ? { thumbnailUrl: selected.thumbnailUrl } : {}),
+        ...(selected.durationSec != null ? { durationSec: selected.durationSec } : {}),
+      })
+    }
+    return {
+      ...segment,
+      takes,
+      currentTakeId: selected.id,
+      activeAssetUrl: selected.url,
+      assetType: 'video',
+      status: 'COMPLETE',
+      ...(selected.durationSec != null ? { actualVideoDuration: selected.durationSec } : {}),
+    }
+  }
+
+  const raw = (segment.takes ?? []).find((row) => row.id === takeId)
+  const rawUrl =
+    (typeof raw?.assetUrl === 'string' && raw.assetUrl.trim()) ||
+    (typeof raw?.videoUrl === 'string' && raw.videoUrl.trim()) ||
+    ''
+  if (!isUsableMediaUrl(rawUrl)) return segment
+  return {
+    ...segment,
+    currentTakeId: takeId,
+    activeAssetUrl: rawUrl,
+  }
+}
