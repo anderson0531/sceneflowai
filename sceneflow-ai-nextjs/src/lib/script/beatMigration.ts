@@ -1450,16 +1450,15 @@ export function applyExpressStoryboardImageToScene(
     params
 
   if (typeof beatIndex === 'number') {
-    return {
-      ...applyBeatStoryboardImageToScene(scene, beatIndex, imageUrl, {
+    return applyExpressStoryboardStatus(
+      applyBeatStoryboardImageToScene(scene, beatIndex, imageUrl, {
         imagePrompt,
         imageGcsPath,
         imageTier,
         frameRole,
         source: 'express',
-      }),
-      storyboardStatus: 'pending_review',
-    }
+      })
+    )
   }
 
   if (typeof dialogueIndex === 'number') {
@@ -1478,7 +1477,7 @@ export function applyExpressStoryboardImageToScene(
         { source: 'express', prompt: imagePrompt }
       )
     }
-    return { ...scene, dialogue, storyboardStatus: 'pending_review' }
+    return applyExpressStoryboardStatus({ ...scene, dialogue })
   }
 
   return {
@@ -1696,6 +1695,67 @@ export function getStoryboardStatus(
 
 export function isStoryboardApproved(scene: Record<string, unknown> | null | undefined): boolean {
   return getStoryboardStatus(scene) === 'approved'
+}
+
+/** Every active (non-excluded) beat has a start-frame still. */
+export function sceneHasCompletePreVisFrames(
+  scene: Record<string, unknown> | null | undefined
+): boolean {
+  if (!scene) return false
+  const beats = getSceneBeats(scene).filter((beat) => !isBeatExcluded(beat))
+  return beats.length > 0 && beats.every((beat) => Boolean(beat.storyboardImageUrl?.trim()))
+}
+
+/**
+ * Video Agent may generate when Pre-Vis is approved, or when a cinematic
+ * bookend (title / outro / promo) already has a start frame on every beat.
+ */
+export function isVideoGenerationUnlocked(
+  scene: Record<string, unknown> | null | undefined
+): boolean {
+  if (isStoryboardApproved(scene)) return true
+  if (!scene) return false
+  return isTitleOrCinematicScene(scene) && sceneHasCompletePreVisFrames(scene)
+}
+
+/** Stamp approved when a bookend is unlocked by complete frames. */
+export function stampApprovedIfVideoUnlocked(
+  scene: Record<string, unknown>
+): { scene: Record<string, unknown>; stamped: boolean } {
+  if (isStoryboardApproved(scene)) return { scene, stamped: false }
+  if (!isVideoGenerationUnlocked(scene)) return { scene, stamped: false }
+  return {
+    scene: {
+      ...scene,
+      storyboardStatus: 'approved',
+      storyboardApprovedAt: new Date().toISOString(),
+    },
+    stamped: true,
+  }
+}
+
+/**
+ * After Express writes a still: bookends with complete frames become approved;
+ * everything else waits in pending_review.
+ */
+export function applyExpressStoryboardStatus(
+  scene: Record<string, unknown>
+): Record<string, unknown> {
+  if (isTitleOrCinematicScene(scene) && sceneHasCompletePreVisFrames(scene)) {
+    return {
+      ...scene,
+      storyboardStatus: 'approved',
+      storyboardApprovedAt:
+        typeof scene.storyboardApprovedAt === 'string' && scene.storyboardApprovedAt.trim()
+          ? scene.storyboardApprovedAt
+          : new Date().toISOString(),
+    }
+  }
+  return {
+    ...scene,
+    storyboardStatus: 'pending_review',
+    storyboardApprovedAt: undefined,
+  }
 }
 
 export function sceneBeatsNeedStoryboard(scene: Record<string, unknown>): boolean {

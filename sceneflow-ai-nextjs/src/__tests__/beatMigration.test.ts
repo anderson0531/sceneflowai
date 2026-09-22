@@ -4,6 +4,10 @@ import {
   beatsToLegacyFields,
   normalizeBeatsForProduction,
   isStoryboardApproved,
+  isVideoGenerationUnlocked,
+  sceneHasCompletePreVisFrames,
+  stampApprovedIfVideoUnlocked,
+  applyExpressStoryboardStatus,
   ensureSceneBeats,
   getSceneBeats,
   getStoryboardTimelineBeats,
@@ -191,6 +195,144 @@ describe('beatMigration', () => {
     expect(isStoryboardApproved({ storyboardStatus: 'approved' })).toBe(true)
     expect(isStoryboardApproved({ storyboardStatus: 'pending_review' })).toBe(false)
     expect(isStoryboardApproved({})).toBe(false)
+  })
+
+  it('unlocks video when Pre-Vis is approved', () => {
+    expect(isVideoGenerationUnlocked({ storyboardStatus: 'approved' })).toBe(true)
+  })
+
+  it('unlocks cinematic bookends once every active beat has a start frame', () => {
+    const title = {
+      cinematicType: 'title',
+      storyboardStatus: 'pending_review',
+      beats: [
+        {
+          beatId: 'bt_0',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Title card',
+          storyboardImageUrl: 'https://example.com/title-1.jpg',
+        },
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 1,
+          kind: 'action',
+          actionDescription: 'Logo',
+          storyboardImageUrl: 'https://example.com/title-2.jpg',
+        },
+      ],
+    }
+    expect(sceneHasCompletePreVisFrames(title)).toBe(true)
+    expect(isVideoGenerationUnlocked(title)).toBe(true)
+
+    const outro = {
+      heading: 'INT. CREDITS - DAY',
+      cinematicType: 'outro',
+      beats: [
+        {
+          beatId: 'bt_c0',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Credits',
+          storyboardImageUrl: 'https://example.com/credits.jpg',
+        },
+      ],
+    }
+    expect(isVideoGenerationUnlocked(outro)).toBe(true)
+  })
+
+  it('keeps dramatic pending_review scenes locked even with complete frames', () => {
+    const scene = {
+      heading: 'INT. LAB - NIGHT',
+      storyboardStatus: 'pending_review',
+      beats: [
+        {
+          beatId: 'bt_0',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Wide',
+          storyboardImageUrl: 'https://example.com/lab.jpg',
+        },
+      ],
+    }
+    expect(sceneHasCompletePreVisFrames(scene)).toBe(true)
+    expect(isVideoGenerationUnlocked(scene)).toBe(false)
+  })
+
+  it('keeps title sequences locked while a beat is missing a frame', () => {
+    const title = {
+      cinematicType: 'title',
+      beats: [
+        {
+          beatId: 'bt_0',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Title card',
+          storyboardImageUrl: 'https://example.com/title-1.jpg',
+        },
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 1,
+          kind: 'action',
+          actionDescription: 'Logo',
+        },
+      ],
+    }
+    expect(sceneHasCompletePreVisFrames(title)).toBe(false)
+    expect(isVideoGenerationUnlocked(title)).toBe(false)
+  })
+
+  it('stamps approved when a bookend is unlocked by complete frames', () => {
+    const title = {
+      cinematicType: 'title',
+      storyboardStatus: 'pending_review',
+      beats: [
+        {
+          beatId: 'bt_0',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Title card',
+          storyboardImageUrl: 'https://example.com/title-1.jpg',
+        },
+      ],
+    }
+    const { scene, stamped } = stampApprovedIfVideoUnlocked(title)
+    expect(stamped).toBe(true)
+    expect(scene.storyboardStatus).toBe('approved')
+    expect(typeof scene.storyboardApprovedAt).toBe('string')
+
+    const already = stampApprovedIfVideoUnlocked({
+      ...title,
+      storyboardStatus: 'approved',
+    })
+    expect(already.stamped).toBe(false)
+  })
+
+  it('approves cinematic bookends after Express lands the last frame', () => {
+    const title = {
+      cinematicType: 'title',
+      beats: [
+        {
+          beatId: 'bt_0',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Title card',
+          storyboardImageUrl: 'https://example.com/title-1.jpg',
+        },
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 1,
+          kind: 'action',
+          actionDescription: 'Logo',
+        },
+      ],
+    }
+    const first = applyExpressStoryboardImageToScene(title, {
+      imageUrl: 'https://example.com/title-2.jpg',
+      beatIndex: 1,
+    })
+    expect(first.storyboardStatus).toBe('approved')
+    expect(applyExpressStoryboardStatus(title).storyboardStatus).toBe('pending_review')
   })
 
   it('ensureSceneBeats preserves LLM beats with kind field', () => {

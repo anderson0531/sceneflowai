@@ -70,6 +70,8 @@ interface BeatVideoGalleryProps {
   onEditClip?: (segment: SceneSegment) => void
   onOpenPreVis?: () => void
   generatingClipId?: string | null
+  videoGenerationLocked?: boolean
+  videoGenerationLockReason?: string
 }
 
 export function BeatVideoGallery({
@@ -95,6 +97,8 @@ export function BeatVideoGallery({
   onEditClip,
   onOpenPreVis,
   generatingClipId,
+  videoGenerationLocked = false,
+  videoGenerationLockReason,
 }: BeatVideoGalleryProps) {
   const [selectedKey, setSelectedKey] = useState<string | null>(clips[0]?.key ?? null)
   const [attention, setAttention] = useState<VideoAttentionFilter>('all')
@@ -279,6 +283,7 @@ export function BeatVideoGallery({
                   alwaysShowControls
                   showBorder={false}
                   isGenerating={generatingClipId === previewSegment.segmentId}
+                  generateBlockedReason={videoGenerationLockReason}
                   onGenerate={() => onGenerateClip?.(previewSegment)}
                   onDirect={onDirectVideo ? () => onDirectVideo(previewSegment) : undefined}
                   onDirector={onDirection ? () => onDirection(previewSegment) : undefined}
@@ -356,6 +361,18 @@ export function BeatVideoGallery({
                     )}
                   </div>
                 )}
+                {preview.hasStartFrame && videoGenerationLocked && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <p className="text-xs text-amber-300">
+                      {videoGenerationLockReason || 'Approve Pre-Vis before generating video'}
+                    </p>
+                    {onOpenPreVis && (
+                      <Button type="button" size="sm" variant="outline" className="h-7 text-[10px]" onClick={onOpenPreVis}>
+                        Open Pre-Vis
+                      </Button>
+                    )}
+                  </div>
+                )}
                 {previewSegment && preview.hasStartFrame && (
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     {previewComplete && onPlay && (
@@ -376,6 +393,8 @@ export function BeatVideoGallery({
                         size="sm"
                         variant="outline"
                         className="h-7 border-indigo-500/40 text-[10px] text-indigo-200"
+                        disabled={videoGenerationLocked}
+                        title={videoGenerationLockReason}
                         onClick={() => onGenerateClip(previewSegment)}
                       >
                         <Wand2 className="mr-1 h-3 w-3" />

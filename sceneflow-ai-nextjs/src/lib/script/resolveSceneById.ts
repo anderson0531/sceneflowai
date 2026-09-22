@@ -54,3 +54,22 @@ export function findSceneById(
 
   return { scene: null, index: -1 }
 }
+
+/** Write scenes back onto nested or flat visionPhase.script. */
+export function assignVisionScriptScenes(
+  visionPhase: Record<string, unknown>,
+  scenes: Record<string, unknown>[]
+): Record<string, unknown> {
+  const scriptRoot = { ...((visionPhase.script || {}) as Record<string, unknown>) }
+  const nested = scriptRoot.script as Record<string, unknown> | undefined
+  if (nested && Array.isArray(nested.scenes)) {
+    return {
+      ...visionPhase,
+      script: { ...scriptRoot, script: { ...nested, scenes } },
+    }
+  }
+  return {
+    ...visionPhase,
+    script: { ...scriptRoot, scenes },
+  }
+}

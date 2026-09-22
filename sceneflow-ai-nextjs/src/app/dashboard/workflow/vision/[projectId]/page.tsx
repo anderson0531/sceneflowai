@@ -75,7 +75,7 @@ import {
   ensureSceneBeats,
   getSceneBeats,
   isBeatFirstPipelineEnabled,
-  isStoryboardApproved,
+  isVideoGenerationUnlocked,
   reorderSceneBeats,
   resolveRawBeatIndex,
 } from '@/lib/script/beatMigration'
@@ -4247,7 +4247,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           (s: { id?: string; sceneId?: string }, i: number) =>
             (s.id || s.sceneId || `scene-${i}`) === sceneId
         )
-        if (gateScene && !isStoryboardApproved(gateScene as Record<string, unknown>)) {
+        if (gateScene && !isVideoGenerationUnlocked(gateScene as Record<string, unknown>)) {
           const message = 'Pre-vis must be approved before video generation'
           applySceneProductionUpdate(sceneId, (current) => {
             if (!current) return current
