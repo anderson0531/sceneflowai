@@ -314,48 +314,58 @@ async function generateVideoWithOmniInteractions(
     background: requestBody.background,
   }))
 
+  const formatInteractionsHttpError = (status: number, errorText: string): string => {
+    let errorMsg = `Vertex AI Interactions error ${status}: ${errorText}`
+    try {
+      const parsed = JSON.parse(errorText) as unknown
+      const rai = formatVeoRaiDetailsFromPayload(parsed)
+      if (rai) errorMsg += `\n\nResponsible AI / safety detail:\n${rai}`
+    } catch {
+      /* not JSON */
+    }
+    return errorMsg
+  }
+
   try {
     let response = await postOmniInteraction(omniBuildOptions)
+    let strippedUnsupported = false
 
-    if (!response.ok && response.status === 400 && !omniBuildOptions.omitSafetySettings) {
+    if (!response.ok && response.status === 400 && !strippedUnsupported) {
       const errorText = await response.text()
       const lower = errorText.toLowerCase()
-      if (
+      const safetyHit =
         lower.includes('safety_settings') ||
-        (lower.includes('unknown parameter') && lower.includes('safety'))
-      ) {
-        console.warn(
-          '[Omni Video] Interactions 400 with safety_settings — retrying without safety_settings'
-        )
-        const retryOptions = { ...omniBuildOptions, omitSafetySettings: true }
-        requestBody = await buildOmniInteractionRequestBody(model, prompt, retryOptions)
-        response = await postOmniInteraction(retryOptions)
-      } else {
-        console.error('[Omni Video] Error response:', errorText)
-        let errorMsg = `Vertex AI Interactions error ${response.status}: ${errorText}`
-        try {
-          const parsed = JSON.parse(errorText) as unknown
-          const rai = formatVeoRaiDetailsFromPayload(parsed)
-          if (rai) errorMsg += `\n\nResponsible AI / safety detail:\n${rai}`
-        } catch {
-          /* not JSON */
-        }
-        return { status: 'FAILED', error: errorMsg }
+        (lower.includes('unknown') && lower.includes('safety'))
+      const deliveryHit =
+        lower.includes('delivery') ||
+        lower.includes('unknown parameter') ||
+        lower.includes('unknown field') ||
+        lower.includes('unknown name')
+      // A non-safety 400 is not final until delivery is omitted. Safety is
+      // dropped only when the error names it. frame_rate, thinking_level, and
+      // multi_shot are never sent.
+      strippedUnsupported = true
+      const retryOptions = {
+        ...omniBuildOptions,
+        omitSafetySettings: safetyHit || omniBuildOptions.omitSafetySettings === true,
+        omitDelivery: deliveryHit || !safetyHit,
       }
+      console.warn(
+        `[Omni Video] Interactions 400 — retrying without ${[
+          retryOptions.omitSafetySettings ? 'safety_settings' : null,
+          retryOptions.omitDelivery ? 'delivery' : null,
+        ]
+          .filter(Boolean)
+          .join(' and ')}`
+      )
+      requestBody = await buildOmniInteractionRequestBody(model, prompt, retryOptions)
+      response = await postOmniInteraction(retryOptions)
     }
 
     if (!response.ok) {
       const errorText = await response.text()
       console.error('[Omni Video] Error response:', errorText)
-      let errorMsg = `Vertex AI Interactions error ${response.status}: ${errorText}`
-      try {
-        const parsed = JSON.parse(errorText) as unknown
-        const rai = formatVeoRaiDetailsFromPayload(parsed)
-        if (rai) errorMsg += `\n\nResponsible AI / safety detail:\n${rai}`
-      } catch {
-        /* not JSON */
-      }
-      return { status: 'FAILED', error: errorMsg }
+      return { status: 'FAILED', error: formatInteractionsHttpError(response.status, errorText) }
     }
 
     const data = (await response.json()) as Record<string, unknown>

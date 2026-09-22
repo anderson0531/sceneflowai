@@ -12,6 +12,7 @@ import {
   SegmentVideoRateLimitError,
   KlingSafetyGuardBlockedError,
 } from '@/lib/video/generateSegmentVideo'
+import { runInVideoGenerationGate } from '@/lib/video/videoGenerationGate'
 import { getAggregatorCreditsForModel } from '@/lib/aggregator/modelRegistry'
 import { isAggregatorEnabled } from '@/lib/aggregator/config'
 import { buildAggregatorRouteProbeResult, buildRoutingTrace } from '@/lib/aggregator/routeProbe'
@@ -479,7 +480,7 @@ export async function POST(
         }
       }
 
-      const videoResult = await generateSegmentVideoCore({
+      const videoResult = await runInVideoGenerationGate(() => generateSegmentVideoCore({
         segmentId,
         projectId,
         sceneId,
@@ -536,7 +537,7 @@ export async function POST(
         allowVeoFallback: allowVeoFallback === true,
         expressMode: expressMode === true,
         useBeatFrameAsStart: useBeatFrameAsStart === true,
-      })
+      }))
 
       assetUrl = videoResult.assetUrl
       assetType = videoResult.assetType
@@ -869,6 +870,8 @@ export async function POST(
         },
         { status: 422 }
       )
+    } else if (errorMessage.includes('Vertex AI Interactions error 400')) {
+      statusCode = 400
     } else if (errorMessage.includes('Invalid JSON payload') || errorMessage.includes('INVALID_ARGUMENT')) {
       errorMessage = 'API Error: Invalid request format. Please try a different generation method.'
     } else if (errorMessage.includes('quota') || errorMessage.includes('RESOURCE_EXHAUSTED')) {

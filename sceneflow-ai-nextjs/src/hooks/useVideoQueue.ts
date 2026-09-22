@@ -17,6 +17,7 @@
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
+import { CONCURRENCY_DEFAULTS } from '@/lib/utils/concurrent-processor'
 import type { 
   SceneSegment, 
   VideoGenerationConfig,
@@ -242,6 +243,7 @@ export function useVideoQueue(
   // state value as it stood when processQueue was built, so a mid-run Cancel
   // never reached the loop it was meant to stop.
   const cancelRequestedRef = useRef(false)
+  const renderingRef = useRef(false)
 
   // Reporting goes through refs so the loop keeps reporting after a re-render
   // hands it a new callback, and after the console that owns it unmounts.
@@ -405,8 +407,16 @@ export function useVideoQueue(
       return
     }
     
+    if (renderingRef.current) {
+      toast.info('A video generation is already running. Wait for it to finish.')
+      return
+    }
+
     const { mode, priority, delayBetween, selectedIds, overrideConfigs } = options
-    const requestedConcurrency = options.concurrency || 1
+    const requestedConcurrency = Math.min(
+      options.concurrency || 1,
+      CONCURRENCY_DEFAULTS.VIDEO_GENERATION
+    )
     const chainInBatch = queue.some((item) => {
       const seg = segments.find((s) => s.segmentId === item.segmentId)
       return seg && segmentHasVeoChain(seg)
@@ -459,6 +469,7 @@ export function useVideoQueue(
       return
     }
     
+    renderingRef.current = true
     setIsRendering(true)
     setProgress(0)
     setCompletedCount(0)
@@ -712,21 +723,26 @@ export function useVideoQueue(
       }
     }
     
-    // Start workers
-    const workers = Array.from({ length: Math.min(concurrency, itemsToProcess.length) }, () => worker())
-    await Promise.all(workers)
-    
-    setProgress(100)
-    setCurrentSegmentId(null)
-    setIsRendering(false)
-    report(true)
-    
-    if (cancelRequestedRef.current) {
-      toast.info(`Video Agent cancelled after ${completed} segment${completed === 1 ? '' : 's'}`)
-    } else if (failed === 0) {
-      toast.success(`Successfully rendered ${completed} segments!`)
-    } else {
-      toast.warning(`Rendered ${completed} segments, ${failed} failed`)
+    try {
+      // Start workers
+      const workers = Array.from({ length: Math.min(concurrency, itemsToProcess.length) }, () => worker())
+      await Promise.all(workers)
+
+      setProgress(100)
+      setCurrentSegmentId(null)
+      report(true)
+
+      if (cancelRequestedRef.current) {
+        toast.info(`Video Agent cancelled after ${completed} segment${completed === 1 ? '' : 's'}`)
+      } else if (failed === 0) {
+        toast.success(`Successfully rendered ${completed} segments!`)
+      } else {
+        toast.warning(`Rendered ${completed} segments, ${failed} failed`)
+      }
+    } finally {
+      renderingRef.current = false
+      setCurrentSegmentId(null)
+      setIsRendering(false)
     }
   }, [queue, sceneId, onGenerate, segments, getSegments, segmentGuideContext, sceneImageUrl])
   
