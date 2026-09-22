@@ -69,6 +69,7 @@ import {
   applyBeatReferenceSelectionToScene,
   applyBeatStoryboardImageToScene,
   applyDialogueStoryboardImageToScene,
+  applyExpressStoryboardStatus,
   getSceneBeats,
   applyBeatsToScene,
   isBeatExcluded,
@@ -1812,8 +1813,7 @@ async function runImagePhase(
       hadFailure = beatResult.hadFailure
       lastError = beatResult.lastError
       lastImageUrl = beatResult.lastImageUrl ?? lastImageUrl
-      scene.storyboardStatus = 'pending_review'
-      scene.storyboardApprovedAt = undefined
+      Object.assign(scene, applyExpressStoryboardStatus(scene))
     } else {
       const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
       const imageParams = getExpressImageParams(options)

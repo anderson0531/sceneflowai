@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { findSceneById, getVisionScriptScenes } from '@/lib/script/resolveSceneById'
+import { findSceneById, getVisionScriptScenes, assignVisionScriptScenes } from '@/lib/script/resolveSceneById'
 
 describe('resolveSceneById', () => {
   const scenes = [
@@ -44,5 +44,18 @@ describe('resolveSceneById', () => {
     }
     expect(getVisionScriptScenes(visionPhase)).toHaveLength(1)
     expect(getVisionScriptScenes(visionPhase)[0].id).toBe('nested-1')
+  })
+
+  it('writes scenes back onto nested visionPhase.script', () => {
+    const visionPhase = {
+      script: {
+        script: {
+          scenes: [{ id: 'nested-1' }],
+        },
+      },
+    }
+    const next = assignVisionScriptScenes(visionPhase, [{ id: 'nested-2' }])
+    const nested = (next.script as { script: { scenes: Array<{ id: string }> } }).script
+    expect(nested.scenes).toEqual([{ id: 'nested-2' }])
   })
 })

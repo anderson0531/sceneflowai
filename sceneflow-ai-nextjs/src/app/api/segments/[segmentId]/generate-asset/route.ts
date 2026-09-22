@@ -20,7 +20,8 @@ import { CreditService } from '@/services/CreditService'
 import { VIDEO_CREDITS, getKlingCreditsForGeneration } from '@/lib/credits/creditCosts'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { isBeatFirstPipelineEnabled, isStoryboardApproved, getSceneBeats } from '@/lib/script/beatMigration'
+import { isBeatFirstPipelineEnabled, getSceneBeats } from '@/lib/script/beatMigration'
+import { enforceVideoGenerationUnlock } from '@/lib/script/enforceVideoGenerationUnlock'
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
 import {
   parsePersistedMusicCues,
@@ -265,19 +266,9 @@ export async function POST(
     if (isBeatFirstPipelineEnabled()) {
       await sequelize.authenticate()
       const project = await Project.findByPk(projectId)
-      const scenes = getVisionScriptScenes(
-        project?.metadata?.visionPhase as Record<string, unknown> | undefined
-      )
-      const { scene: sceneRecord } = findSceneById(scenes, sceneId)
-      if (sceneRecord && !isStoryboardApproved(sceneRecord as Record<string, unknown>)) {
-        return NextResponse.json(
-          {
-            error: 'Pre-vis must be approved before video generation',
-            code: 'STORYBOARD_NOT_APPROVED',
-          },
-          { status: 403 }
-        )
-      }
+      const unlock = await enforceVideoGenerationUnlock(project, sceneId)
+      if (!unlock.ok) return unlock.response
+      const sceneRecord = unlock.scene
 
       if (beatId && sceneRecord && (genType === 'T2V' || genType === 'I2V')) {
         const beats = getSceneBeats(sceneRecord as Record<string, unknown>)

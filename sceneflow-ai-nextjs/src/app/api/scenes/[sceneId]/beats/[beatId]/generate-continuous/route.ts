@@ -3,7 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
-import { isBeatFirstPipelineEnabled, isStoryboardApproved, getSceneBeats } from '@/lib/script/beatMigration'
+import { isBeatFirstPipelineEnabled, getSceneBeats } from '@/lib/script/beatMigration'
+import { enforceVideoGenerationUnlock } from '@/lib/script/enforceVideoGenerationUnlock'
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
 import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
@@ -76,14 +77,9 @@ export async function POST(
       return NextResponse.json({ error: 'Scene not found' }, { status: 404 })
     }
 
-    if (isBeatFirstPipelineEnabled() && !isStoryboardApproved(matchedScene as Record<string, unknown>)) {
-      return NextResponse.json(
-        {
-          error: 'Pre-vis must be approved before video generation',
-          code: 'STORYBOARD_NOT_APPROVED',
-        },
-        { status: 403 }
-      )
+    if (isBeatFirstPipelineEnabled()) {
+      const unlock = await enforceVideoGenerationUnlock(project, sceneId)
+      if (!unlock.ok) return unlock.response
     }
 
     const beats = getSceneBeats(matchedScene as Record<string, unknown>)
