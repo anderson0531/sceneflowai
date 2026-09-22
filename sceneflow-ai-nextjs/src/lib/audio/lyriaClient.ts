@@ -52,30 +52,35 @@ export function selectLyriaModel(generationSec: number): Lyria3Model {
 /**
  * Scene/cue play length the generator should try to match.
  *
- * `musicDuration` is what the Play duration control was set to and wins
- * outright. Otherwise the beat timeline decides: it is what the animatic
- * actually plays, whereas `scene.duration` is the script LLM's estimate,
- * written before the beats were laid out and frequently half the real length —
- * which is how a two-minute scene asked for a thirty-second track.
+ * The beat timeline is what the Screening Room plays. A stored `musicDuration`
+ * is often the 30-second Clip that was generated last time, and letting it win
+ * is how a two-minute scene kept asking for another 30-second track.
+ * `musicDuration` is only the request when the scene has no beats.
  */
 export function resolveMusicRequestDuration(scene: {
   musicDuration?: unknown
   duration?: unknown
   beats?: unknown
 }): number {
-  if (typeof scene.musicDuration === 'number' && scene.musicDuration > 0) {
-    return scene.musicDuration
-  }
   const beatTimeline = Array.isArray(scene.beats)
-    ? estimateSceneBeatDuration(scene.beats as SceneBeat[])
+    ? estimateSceneBeatDuration(scene.beats as SceneBeat[], scene as Record<string, unknown>)
     : 0
   if (beatTimeline > 0) {
     return beatTimeline
+  }
+  if (typeof scene.musicDuration === 'number' && scene.musicDuration > 0) {
+    return scene.musicDuration
   }
   if (typeof scene.duration === 'number' && scene.duration > 0) {
     return scene.duration
   }
   return DEFAULT_REQUESTED_DURATION_SEC
+}
+
+function formatUnderscoreClock(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
 }
 
 /**
@@ -84,7 +89,10 @@ export function resolveMusicRequestDuration(scene: {
  */
 export function buildLyria3Prompt(adaptedBody: string, generationSec: number): string {
   const seconds = clampGenerationDuration(generationSec)
-  const prefix = `Create a ${seconds}-second instrumental film underscore, no vocals, no lyrics.`
+  const span = `0:00-${formatUnderscoreClock(seconds)}`
+  const prefix =
+    `Create a ${seconds}-second instrumental film underscore, no vocals, no lyrics. ` +
+    `[${span}] continuous instrumental underscore for the full ${seconds} seconds.`
   const body = adaptedBody.trim()
   return body ? `${prefix} ${body}` : prefix
 }

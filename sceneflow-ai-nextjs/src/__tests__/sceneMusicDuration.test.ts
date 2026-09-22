@@ -3,7 +3,9 @@ import { applyAudioAssetsToScene } from '@/lib/sceneGeneration/generateAudio'
 import type { SceneAudioResult } from '@/lib/sceneGeneration/types'
 import {
   DEFAULT_REQUESTED_DURATION_SEC,
+  LYRIA_3_PRO_MODEL,
   resolveMusicRequestDuration,
+  selectLyriaModel,
 } from '@/lib/audio/lyriaClient'
 import {
   deriveSceneMusicCues,
@@ -13,6 +15,7 @@ import {
   buildBeatAlignedMusicClips,
   resolveSceneMusicFileDuration,
 } from '@/lib/storyboard/musicPlayback'
+import { buildBeatFirstPlaybackTimeline } from '@/lib/storyboard/types'
 import {
   mergeSceneTrustingIncomingAudio,
   mergeScenePreservingAudio,
@@ -111,24 +114,109 @@ describe('the requested music length follows the beat timeline', () => {
   }
 
   it('sums measured beats, assuming the animatic hold for unmeasured ones', () => {
-    expect(estimateSceneBeatDuration(timedBeats(15, 8))).toBe(120)
+    expect(estimateSceneBeatDuration(timedBeats(15, 8))).toBe(155)
     expect(estimateSceneBeatDuration([])).toBe(0)
     expect(
       estimateSceneBeatDuration([
         { beatId: 'b0', sequenceIndex: 0, kind: 'action', durationSeconds: 10 },
         { beatId: 'b1', sequenceIndex: 1, kind: 'action' },
       ])
-    ).toBe(14)
+    ).toBe(21)
   })
 
   it('prefers the beat timeline over the script’s own duration estimate', () => {
-    expect(resolveMusicRequestDuration({ duration: 40, beats: timedBeats(15, 8) })).toBe(120)
+    expect(resolveMusicRequestDuration({ duration: 40, beats: timedBeats(15, 8) })).toBe(155)
   })
 
-  it('still lets the Play duration control win outright', () => {
-    expect(
-      resolveMusicRequestDuration({ musicDuration: 95, duration: 40, beats: timedBeats(15, 8) })
-    ).toBe(95)
+  it('does not let a stored 30-second musicDuration override the beat span', () => {
+    const beats = timedBeats(10, 8)
+    const span = resolveMusicRequestDuration({
+      musicDuration: 30,
+      duration: 40,
+      beats,
+    })
+    expect(span).toBe(estimateSceneBeatDuration(beats))
+    expect(span).toBeGreaterThan(30)
+    expect(selectLyriaModel(span)).toBe(LYRIA_3_PRO_MODEL)
+  })
+
+  it('uses a measured voice clip when it is longer than the animatic hold', () => {
+    const voiceUrl = 'https://example.com/maya.mp3'
+    const beats: SceneBeat[] = [
+      {
+        beatId: 'b0',
+        sequenceIndex: 0,
+        kind: 'dialogue',
+        character: 'Maya',
+        line: 'I am not going anywhere.',
+        lineId: 'ln_1',
+        audioUrl: voiceUrl,
+        durationSeconds: 18,
+      },
+    ]
+    const scene = {
+      beats,
+      dialogue: [
+        {
+          lineId: 'ln_1',
+          character: 'Maya',
+          line: 'I am not going anywhere.',
+          kind: 'dialogue',
+          audioUrl: voiceUrl,
+          duration: 18,
+        },
+      ],
+    }
+    const { visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', {}, {
+      preVisAnimatic: true,
+    })
+    const play = Math.round(visualFrames[0].startTime + visualFrames[0].duration)
+    expect(play).toBeGreaterThanOrEqual(18)
+    expect(estimateSceneBeatDuration(beats, scene)).toBe(play)
+  })
+
+  it('matches the Screening Room timeline for beats 1-10', () => {
+    const beats = timedBeats(10, 8)
+    const scene = { beats }
+    const { visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', {}, {
+      preVisAnimatic: true,
+    })
+    const first = visualFrames[0]
+    const last = visualFrames[visualFrames.length - 1]
+    const play = Math.round(last.startTime + last.duration - first.startTime)
+    expect(estimateSceneBeatDuration(beats, scene)).toBe(play)
+    expect(selectLyriaModel(play)).toBe(LYRIA_3_PRO_MODEL)
+  })
+
+  it('does not loop a cue whose file covers that timeline', () => {
+    const beats = timedBeats(10, 8).map((beat) => ({ ...beat, musicEnabled: true }))
+    const play = estimateSceneBeatDuration(beats)
+    const scene = {
+      beats,
+      sceneMusicCues: [
+        {
+          cueId: 'cue-1',
+          beatStart: 0,
+          beatEnd: 9,
+          description: 'Cinematic strings, slow, ominous',
+          intent: 'dread',
+          url: MUSIC_URL,
+          fileDuration: play,
+          generatedBy: 'llm' as const,
+        },
+      ],
+    }
+    const { visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', {}, {
+      preVisAnimatic: true,
+    })
+    const clips = buildBeatAlignedMusicClips(scene, visualFrames, {
+      musicUrl: '',
+      sceneDuration: play,
+      cues: scene.sceneMusicCues,
+      dynamicDurations: { [MUSIC_URL]: play },
+    })
+    expect(clips.length).toBeGreaterThan(0)
+    expect(clips.every((clip) => clip.loop === false)).toBe(true)
   })
 
   it('falls back to the script estimate for a scene with no beats', () => {

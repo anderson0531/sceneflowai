@@ -9,7 +9,9 @@
  * asked for, with the cost shown before the click.
  */
 
-import { Download, Loader, Music, Pause, Play, RefreshCw, Sparkles } from 'lucide-react'
+import { useState } from 'react'
+import { useTranslations } from 'next-intl'
+import { Clapperboard, Download, Loader, Music, Pause, Play, RefreshCw, Sparkles } from 'lucide-react'
 import { Slider } from '@/components/ui/slider'
 import { AUDIO_CREDITS } from '@/lib/credits/creditCosts'
 import {
@@ -17,8 +19,15 @@ import {
   resolveMusicCueFadeSec,
   resolveMusicCueVolume,
 } from '@/lib/audio/loopingAudioSync'
-import { formatMusicCueRange, isMusicCueScored } from '@/lib/script/sceneMusicCues'
-import type { SceneMusicCue } from '@/lib/script/segmentTypes'
+import {
+  estimateMusicCueDuration,
+  formatMusicCueRange,
+  isMusicCueScored,
+} from '@/lib/script/sceneMusicCues'
+import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
+import { clampGenerationDuration } from '@/lib/audio/lyriaClient'
+import { MusicCueDirectorDialog } from '@/components/vision/MusicCueDirectorDialog'
+import type { MusicCueDirectionPatch } from '@/lib/intelligence/music-cue-director-fallback'
 
 export interface CueMixPatch {
   volume?: number
@@ -39,6 +48,16 @@ export interface SceneMusicCuePanelProps {
   /** Cue currently being generated, or `all` while the batch action runs. */
   generatingCueId?: string | null
   isGeneratingAll?: boolean
+  projectId?: string
+  sceneIndex?: number
+  /** Scene record, so the director can match the Screening Room length of the cue. */
+  scene?: Record<string, unknown>
+  beats?: SceneBeat[]
+  onSaveCueDirection?: (
+    cueId: string,
+    patch: MusicCueDirectionPatch,
+    score: boolean
+  ) => void | Promise<void>
 }
 
 const MUSIC_CREDITS = AUDIO_CREDITS.MUSIC_TRACK
@@ -54,7 +73,14 @@ export function SceneMusicCuePanel({
   onCueMixChange,
   generatingCueId,
   isGeneratingAll,
+  projectId,
+  sceneIndex,
+  scene,
+  beats,
+  onSaveCueDirection,
 }: SceneMusicCuePanelProps) {
+  const t = useTranslations('production.direction.musicDirector')
+  const [directingCueId, setDirectingCueId] = useState<string | null>(null)
   if (cues.length === 0) return null
 
   const unscored = cues.filter((cue) => !isMusicCueScored(cue))
@@ -135,6 +161,20 @@ export function SceneMusicCuePanel({
                 </span>
 
                 <div className="ml-auto flex items-center gap-1 shrink-0">
+                  {projectId && onSaveCueDirection && sceneIndex !== undefined && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setDirectingCueId(cue.cueId)
+                      }}
+                      disabled={busy}
+                      className="text-[10px] px-2 py-0.5 rounded-full border border-teal-700/50 text-teal-800 dark:text-teal-200 hover:bg-teal-900/20 inline-flex items-center gap-1 disabled:opacity-50"
+                    >
+                      <Clapperboard className="w-3 h-3" />
+                      {t('open')}
+                    </button>
+                  )}
                   {scored && cue.url && (
                     <>
                       <button
@@ -207,6 +247,9 @@ export function SceneMusicCuePanel({
               <p className="text-xs text-gray-700 dark:text-gray-300 italic leading-relaxed">
                 {cue.description}
               </p>
+              {beats && beats.length > 0 && (
+                <CueSpanNote cue={cue} beats={beats} scene={scene} />
+              )}
 
               {scored && typeof cue.fileDuration === 'number' && cue.fileDuration > 0 && (
                 <p className="text-[10px] text-gray-500 mt-1">
@@ -224,7 +267,69 @@ export function SceneMusicCuePanel({
           )
         })}
       </div>
+      {projectId && onSaveCueDirection && sceneIndex !== undefined && (
+        <MusicCueDirectorDialog
+          open={!!directingCueId}
+          onOpenChange={(next) => {
+            if (!next) setDirectingCueId(null)
+          }}
+          projectId={projectId}
+          sceneIndex={sceneIndex}
+          cue={cues.find((cue) => cue.cueId === directingCueId) ?? null}
+          label={
+            directingCueId
+              ? formatMusicCueRange(
+                  cues.find((cue) => cue.cueId === directingCueId) as SceneMusicCue
+                )
+              : ''
+          }
+          playSeconds={
+            directingCueId && beats
+              ? estimateMusicCueDuration(
+                  cues.find((cue) => cue.cueId === directingCueId) as SceneMusicCue,
+                  beats,
+                  scene
+                )
+              : 0
+          }
+          generationSeconds={clampGenerationDuration(
+            directingCueId && beats
+              ? estimateMusicCueDuration(
+                  cues.find((cue) => cue.cueId === directingCueId) as SceneMusicCue,
+                  beats,
+                  scene
+                )
+              : 0
+          )}
+          creditCost={MUSIC_CREDITS}
+          onSave={(patch, score) => {
+            if (!directingCueId) return
+            return onSaveCueDirection(directingCueId, patch, score)
+          }}
+        />
+      )}
     </div>
+  )
+}
+
+function CueSpanNote({
+  cue,
+  beats,
+  scene,
+}: {
+  cue: SceneMusicCue
+  beats: SceneBeat[]
+  scene?: Record<string, unknown>
+}) {
+  const t = useTranslations('production.direction.musicDirector')
+  const playSeconds = estimateMusicCueDuration(cue, beats, scene)
+  const generationSeconds = clampGenerationDuration(playSeconds)
+  return (
+    <p className="text-[10px] text-gray-500 mt-1">
+      {playSeconds > generationSeconds
+        ? t('durationCapped', { play: playSeconds, generation: generationSeconds })
+        : t('duration', { seconds: generationSeconds })}
+    </p>
   )
 }
 

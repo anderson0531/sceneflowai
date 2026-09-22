@@ -14431,12 +14431,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (!music) return
     
     const description = typeof music === 'string' ? music : music.description
-    const duration =
-      typeof scene.musicDuration === 'number' && scene.musicDuration > 0
-        ? scene.musicDuration
-        : typeof scene.duration === 'number' && scene.duration > 0
-          ? scene.duration
-          : 30
+    const { resolveMusicRequestDuration } = await import('@/lib/audio/lyriaClient')
+    const { getSceneBeats } = await import('@/lib/script/beatMigration')
+    const duration = resolveMusicRequestDuration({
+      beats: getSceneBeats(scene),
+      duration: scene.duration,
+    })
     
     console.log(`[Update Scene Audio] Generating music for Scene ${sceneIndex + 1}...`)
     
