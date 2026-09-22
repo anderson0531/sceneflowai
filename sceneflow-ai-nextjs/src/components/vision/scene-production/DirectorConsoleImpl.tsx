@@ -150,6 +150,8 @@ import { forceDownload } from '@/lib/utils'
 import type { SceneAudioData } from './GuidePromptEditor'
 import type { GuideCharacterDemographic } from '@/lib/scene/segmentGuidePrompt'
 import { getSceneBeats, isBeatExcluded, isBeatFirstPipelineEnabled } from '@/lib/script/beatMigration'
+import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
+import { resolveEffectiveStoryboardTier } from '@/lib/storyboard/storyboardQuality'
 import { BeatVideoGallery, type BeatVideoClip } from './BeatVideoGallery'
 import { ImageEditModal } from '@/components/vision/ImageEditModal'
 import type { SegmentGuideContext } from '@/lib/vision/segmentConfigBuilder'
@@ -1506,6 +1508,10 @@ export function DirectorConsoleRoot({
         hasStartFrame: !!thumbnail,
         segment,
         queueItem: item,
+        imageTier: beat.storyboardImageUrl?.trim()
+          ? resolveEffectiveStoryboardTier(beat.storyboardImageTier)
+          : undefined,
+        promptChanged: isBeatFrameStale(beat) || !!segment?.isStale,
       }
     })
     if (fromBeats.length > 0) return fromBeats
@@ -1522,6 +1528,7 @@ export function DirectorConsoleRoot({
           hasStartFrame: !!(item.thumbnailUrl || segment?.startFrameUrl),
           segment,
           queueItem: item,
+          promptChanged: !!segment?.isStale,
         }
       })
   }, [scene, segments, queue])

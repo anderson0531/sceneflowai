@@ -686,6 +686,51 @@ export function ensureSceneMusicCues(
   return applySceneMusicCues(scene, cues, beats)
 }
 
+/**
+ * Beats the scene Score switch controls.
+ *
+ * Cues are the score. With none, the switch covers every beat that can play
+ * the scene's own track.
+ */
+export function scoreToggleBeatIds(beats: SceneBeat[], cues: SceneMusicCue[]): string[] {
+  if (cues.length === 0) return beats.map((beat) => beat.beatId)
+  const ids: string[] = []
+  beats.forEach((beat, index) => {
+    if (cues.some((cue) => index >= cue.beatStart && index <= cue.beatEnd)) {
+      ids.push(beat.beatId)
+    }
+  })
+  return ids
+}
+
+/**
+ * True when every beat the Score switch controls is on.
+ *
+ * A cued beat with an unset flag plays the score. An uncued beat stays off
+ * until `musicEnabled` is explicitly true.
+ */
+export function isSceneScoreEnabled(beats: SceneBeat[], cues: SceneMusicCue[]): boolean {
+  const ids = new Set(scoreToggleBeatIds(beats, cues))
+  const targets = beats.filter((beat) => ids.has(beat.beatId))
+  if (targets.length === 0) return false
+  const cued = cues.length > 0
+  return targets.every((beat) => (cued ? beat.musicEnabled !== false : beat.musicEnabled === true))
+}
+
+/** Write `musicEnabled` on the named beats. Other beats are left as they are. */
+export function setBeatsMusicEnabled(
+  beats: SceneBeat[],
+  beatIds: Iterable<string>,
+  enabled: boolean
+): SceneBeat[] {
+  const ids = new Set(beatIds)
+  return beats.map((beat) =>
+    ids.has(beat.beatId) && beat.musicEnabled !== enabled
+      ? { ...beat, musicEnabled: enabled }
+      : beat
+  )
+}
+
 /** The cue scoring a beat, if any. */
 export function resolveBeatMusicCue(
   cues: SceneMusicCue[],

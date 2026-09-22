@@ -1,12 +1,19 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { Camera, Film, PlayCircle, Settings2, Upload, Wand2 } from 'lucide-react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { AlertTriangle, Camera, Film, PlayCircle, Settings2, Upload, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { SceneImageFrame } from '@/components/vision/SceneImageFrame'
+import { StatusFilterBar } from '@/components/vision/StatusFilterBar'
 import type { SceneSegment } from './types'
 import type { DirectorQueueItem } from '@/hooks/useVideoQueue'
+import {
+  videoMatchesFilters,
+  type VideoAttentionFilter,
+  type VideoClipFacts,
+  type VideoQualityFilter,
+} from '@/lib/vision/videoClipFilters'
 
 function clipStatus(item?: DirectorQueueItem): { label: string; className: string } | null {
   if (!item) return null
@@ -32,6 +39,9 @@ export interface BeatVideoClip {
   hasStartFrame: boolean
   segment?: SceneSegment
   queueItem?: DirectorQueueItem
+  /** Pre-Vis frame tier for this beat. Clips do not store their own Draft | Final. */
+  imageTier?: 'draft' | 'final'
+  promptChanged?: boolean
 }
 
 interface BeatVideoGalleryProps {
@@ -89,18 +99,46 @@ export function BeatVideoGallery({
   generatingStillBeatId,
 }: BeatVideoGalleryProps) {
   const [selectedKey, setSelectedKey] = useState<string | null>(clips[0]?.key ?? null)
+  const [attention, setAttention] = useState<VideoAttentionFilter>('all')
+  const [quality, setQuality] = useState<VideoQualityFilter>('all')
+
+  const clipFacts = useMemo<VideoClipFacts[]>(
+    () =>
+      clips.map((clip) => ({
+        key: clip.key,
+        status:
+          clip.queueItem?.status === 'complete'
+            ? 'complete'
+            : clip.queueItem?.status === 'rendering'
+              ? 'rendering'
+              : clip.queueItem?.status === 'error'
+                ? 'error'
+                : 'queued',
+        promptChanged: !!clip.promptChanged,
+        imageTier: clip.imageTier,
+      })),
+    [clips]
+  )
+  const visibleClips = useMemo(
+    () =>
+      clips.filter((clip) => {
+        const facts = clipFacts.find((entry) => entry.key === clip.key)
+        return facts ? videoMatchesFilters(facts, attention, quality) : true
+      }),
+    [clips, clipFacts, attention, quality]
+  )
 
   useEffect(() => {
-    if (clips.length === 0) {
+    if (visibleClips.length === 0) {
       setSelectedKey(null)
       return
     }
-    if (!clips.some((clip) => clip.key === selectedKey)) {
-      setSelectedKey(clips[0].key)
+    if (!visibleClips.some((clip) => clip.key === selectedKey)) {
+      setSelectedKey(visibleClips[0].key)
     }
-  }, [clips, selectedKey])
+  }, [visibleClips, selectedKey])
 
-  const preview = clips.find((clip) => clip.key === selectedKey) ?? clips[0]
+  const preview = visibleClips.find((clip) => clip.key === selectedKey) ?? visibleClips[0]
   const previewStatus = clipStatus(preview?.queueItem)
   const previewComplete = preview?.queueItem?.status === 'complete'
   const previewSegment = preview?.segment
@@ -131,6 +169,52 @@ export function BeatVideoGallery({
         </div>
       )}
 
+      {clips.length > 0 && (
+        <div className="space-y-2">
+          <StatusFilterBar
+            label="Show"
+            chips={(
+              [
+                ['all', 'All'],
+                ['needs_action', 'Needs action'],
+                ['in_the_can', 'In the Can'],
+                ['prompt_changed', 'Prompt changed'],
+                ['error', 'Error'],
+                ['no_clip', 'No clip'],
+              ] as Array<[VideoAttentionFilter, string]>
+            ).map(([id, label]) => ({
+              id,
+              label,
+              active: attention === id,
+              count:
+                id === 'all'
+                  ? clipFacts.length
+                  : clipFacts.filter((facts) => videoMatchesFilters(facts, id, quality)).length,
+            }))}
+            onSelect={(id) => setAttention(id as VideoAttentionFilter)}
+          />
+          <StatusFilterBar
+            label="Quality"
+            chips={(
+              [
+                ['all', 'All'],
+                ['final', 'Final'],
+                ['draft', 'Draft'],
+              ] as Array<[VideoQualityFilter, string]>
+            ).map(([id, label]) => ({
+              id,
+              label,
+              active: quality === id,
+              count:
+                id === 'all'
+                  ? clipFacts.length
+                  : clipFacts.filter((facts) => videoMatchesFilters(facts, attention, id)).length,
+            }))}
+            onSelect={(id) => setQuality(id as VideoQualityFilter)}
+          />
+        </div>
+      )}
+
       {clips.length === 0 ? (
         <div className="text-center py-6 text-gray-500 text-sm">
           <Film className="w-8 h-8 mx-auto mb-2 text-gray-600" />
@@ -139,7 +223,10 @@ export function BeatVideoGallery({
       ) : (
         <div className="relative">
           <div className="absolute left-0 top-0 bottom-0 w-[30%] grid grid-cols-2 content-start gap-2 overflow-y-auto overscroll-contain pr-1">
-            {clips.map((clip) => {
+            {visibleClips.length === 0 ? (
+              <p className="col-span-2 text-[10px] text-slate-500 px-1">No clips match these filters.</p>
+            ) : null}
+            {visibleClips.map((clip) => {
               const complete = clip.queueItem?.status === 'complete'
               return (
                 <button
@@ -223,6 +310,22 @@ export function BeatVideoGallery({
                   {previewStatus && (
                     <span className={cn('rounded border px-1.5 py-0.5 text-[10px]', previewStatus.className)}>
                       {previewStatus.label}
+                    </span>
+                  )}
+                  {preview.promptChanged && (
+                    <span className="flex items-center gap-0.5 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] text-amber-300">
+                      <AlertTriangle className="h-2.5 w-2.5" />
+                      Prompt changed
+                    </span>
+                  )}
+                  {preview.imageTier === 'final' && (
+                    <span className="rounded-full bg-emerald-500/25 px-1.5 py-0.5 text-[10px] text-emerald-300">
+                      Final
+                    </span>
+                  )}
+                  {preview.imageTier === 'draft' && (
+                    <span className="rounded-full bg-gray-500/25 px-1.5 py-0.5 text-[10px] text-gray-300">
+                      Draft
                     </span>
                   )}
                 </div>

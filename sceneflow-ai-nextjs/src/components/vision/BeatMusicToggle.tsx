@@ -3,8 +3,13 @@
 import { Music } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { getSceneBeats } from '@/lib/script/beatMigration'
-import { formatMusicCueRange, isMusicCueScored } from '@/lib/script/sceneMusicCues'
+import {
+  formatMusicCueRange,
+  isMusicCueScored,
+  setBeatsMusicEnabled,
+} from '@/lib/script/sceneMusicCues'
 import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
+import { isBeatMusicEnabled, isCuedBeatMusicEnabled } from '@/lib/storyboard/musicPlayback'
 
 export interface BeatMusicToggleProps {
   beat: SceneBeat
@@ -26,16 +31,14 @@ export function BeatMusicToggle({
   cue,
   className,
 }: BeatMusicToggleProps) {
-  const enabled = beat.musicEnabled === true
+  const enabled = cue ? isCuedBeatMusicEnabled(beat) : isBeatMusicEnabled(beat)
 
   const handleChange = (checked: boolean) => {
     if (!onScriptChange) return
 
     const updatedScenes = [...scenes]
     const scene = { ...updatedScenes[sceneIdx] }
-    scene.beats = getSceneBeats(scene).map((entry) =>
-      entry.beatId === beat.beatId ? { ...entry, musicEnabled: checked } : entry
-    )
+    scene.beats = setBeatsMusicEnabled(getSceneBeats(scene), [beat.beatId], checked)
     updatedScenes[sceneIdx] = scene
 
     onScriptChange({

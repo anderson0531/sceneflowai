@@ -214,7 +214,11 @@ export interface SceneBeat {
   splitRecommendation?: BeatSplitRecommendation
   /** Stable line id when this beat maps to a dialogue/narration line. */
   lineId?: string
-  /** When true, background music plays for this beat's timeline window. Default: off. */
+  /**
+   * Background music for this beat's timeline window.
+   * Unset on a beat a cue covers plays the score; explicit false opts out.
+   * Beats outside every cue stay off until this is true.
+   */
   musicEnabled?: boolean
   /** When true, SFX linked to this beat is skipped during playback. Default: play. */
   sfxMuted?: boolean

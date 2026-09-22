@@ -144,6 +144,8 @@ import {
   stripInlineSfxLinesFromActionText,
 } from '@/lib/script/deriveSfxFromSceneContent'
 import { BeatMusicToggle } from '@/components/vision/BeatMusicToggle'
+import { SceneScoreToggle } from '@/components/vision/SceneScoreToggle'
+import { StatusFilterBar } from '@/components/vision/StatusFilterBar'
 import { SceneMusicCuePanel } from '@/components/vision/SceneMusicCuePanel'
 import { SceneReferencesPanel } from '@/components/vision/SceneReferencesPanel'
 import { directedBeatOptionsFromScene } from '@/components/vision/DirectedLocationVersionDialog'
@@ -158,10 +160,23 @@ import {
   estimateMusicCueDuration,
   formatMusicCueRange,
   isMusicCueScored,
+  isSceneScoreEnabled,
   parsePersistedMusicCues,
   resolveBeatMusicCue,
+  scoreToggleBeatIds,
+  setBeatsMusicEnabled,
 } from '@/lib/script/sceneMusicCues'
 import type { SceneMusicCue } from '@/lib/script/segmentTypes'
+import {
+  beatFilterCharacters,
+  beatListFiltersActive,
+  beatMatchesFilters,
+  DEFAULT_BEAT_LIST_FILTERS,
+  type BeatAttentionFilter,
+  type BeatListFacts,
+  type BeatListFilterState,
+  type BeatTypeFilter,
+} from '@/lib/vision/beatListFilters'
 import { BeatSfxToggle } from '@/components/vision/BeatSfxToggle'
 import { BeatAudioStatusBadge } from '@/components/vision/BeatAudioStatusBadge'
 import { BeatExcludeToggle } from '@/components/vision/BeatExcludeToggle'
@@ -4436,7 +4451,130 @@ function SceneCard({
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
-  const canReorderBeats = !!onReorderBeats && sceneBeatsForTabs.length > 1
+  const [beatListFilters, setBeatListFilters] = useState<BeatListFilterState>(DEFAULT_BEAT_LIST_FILTERS)
+  const beatFacts = useMemo(() => {
+    const sceneSfxList = Array.isArray(scene.sfx) ? scene.sfx : []
+    const sfxCountByBeatId = new Map<string, number>()
+    sceneSfxList.forEach((raw: unknown) => {
+      const entry =
+        typeof raw === 'string'
+          ? { description: raw.trim() }
+          : (raw as { description?: string; sourceBeatId?: string })
+      const description = String(entry?.description ?? (typeof raw === 'string' ? raw : '')).trim()
+      const beatId = typeof entry?.sourceBeatId === 'string' ? entry.sourceBeatId : ''
+      if (!description || !beatId) return
+      sfxCountByBeatId.set(beatId, (sfxCountByBeatId.get(beatId) ?? 0) + 1)
+    })
+    const inlineSfxCount = (actionText?: string) => {
+      if (!actionText?.trim()) return 0
+      return actionText
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => /^SFX:/i.test(line) && line.replace(/^SFX:\s*/i, '').trim()).length
+    }
+    const dialogueLines = Array.isArray(scene.dialogue) ? scene.dialogue : []
+    let spokenBeatCursor = 0
+    return sceneBeatsForTabs.map((beat): BeatListFacts => {
+      if (beat.kind === 'action') {
+        const linked = sfxCountByBeatId.get(beat.beatId) ?? 0
+        const inline = linked === 0 && sceneSfxList.length === 0 ? inlineSfxCount(beat.actionDescription) : 0
+        let sfxAudioUrl: string | undefined
+        try {
+          sfxAudioUrl = readBeatSfxAudio(scene, resolveBeatSfxSlot(scene, beat))
+        } catch {
+          sfxAudioUrl = undefined
+        }
+        const hasAudio = !!sfxAudioUrl
+        return {
+          beatId: beat.beatId,
+          kind: 'action',
+          excluded: beat.excluded === true,
+          hasAudio,
+          promptChanged: actionBeatSfxIsStale(scene, beat, hasAudio),
+          needsSpeaker: false,
+          tracksSfx: linked > 0 || inline > 0 || hasAudio,
+        }
+      }
+      let dialogueIndex = spokenBeatCursor
+      if (beat.lineId?.trim()) {
+        const byLineId = dialogueLines.findIndex(
+          (entry: { lineId?: string }) => entry?.lineId === beat.lineId
+        )
+        if (byLineId >= 0) dialogueIndex = byLineId
+      }
+      spokenBeatCursor = Math.max(spokenBeatCursor + 1, dialogueIndex + 1)
+      const line = dialogueLines[dialogueIndex] ?? {
+        character: beat.character,
+        line: beat.line,
+        lineId: beat.lineId,
+        kind: beat.kind,
+        characterId: beat.characterId,
+        voiceDirection: beat.voiceDirection,
+      }
+      const audioEntry = findDialogueAudioForLine(scene, {
+        language: selectedLanguage,
+        lineId: line.lineId,
+        dialogueIndex,
+        character: line.character,
+      })
+      const hasAudio = !!(audioEntry?.audioUrl || audioEntry?.url)
+      const kind = beat.kind === 'narration' ? 'narration' : 'dialogue'
+      return {
+        beatId: beat.beatId,
+        kind,
+        character: String(line.character ?? beat.character ?? '').trim() || undefined,
+        excluded: beat.excluded === true,
+        hasAudio,
+        promptChanged:
+          hasAudio &&
+          isBeatAudioStale({
+            hasAudio: true,
+            sourceFingerprint: audioEntry?.sourceFingerprint,
+            audioStale: audioEntry?.audioStale,
+            currentFingerprint: audioSourceFingerprintForSpoken({
+              kind,
+              character: line.character ?? beat.character,
+              line: line.line ?? beat.line,
+              voiceDirection: line.voiceDirection ?? beat.voiceDirection,
+            }),
+          }),
+        needsSpeaker: dialogueSpeakerNeedsAssignment({
+          characters: characters as any[],
+          characterId: line.characterId ?? beat.characterId,
+          characterName: line.character ?? beat.character,
+          kind: line.kind ?? beat.kind,
+          narrationVoice,
+        }),
+        tracksSfx: false,
+      }
+    })
+  }, [scene, sceneBeatsForTabs, selectedLanguage, characters, narrationVoice])
+  const beatFactsById = useMemo(
+    () => new Map(beatFacts.map((facts) => [facts.beatId, facts])),
+    [beatFacts]
+  )
+  const beatFiltersActive = beatListFiltersActive(beatListFilters)
+  const visibleBeatCount = beatFacts.filter((facts) => beatMatchesFilters(facts, beatListFilters)).length
+  const sceneScoreOn = isSceneScoreEnabled(sceneBeatsForTabs, sceneMusicCues)
+  const handleSceneScoreChange = useCallback(
+    (checked: boolean) => {
+      if (!onScriptChange || !script || !Array.isArray(scenes)) return
+      const ids = scoreToggleBeatIds(sceneBeatsForTabs, sceneMusicCues)
+      const updatedScenes = scenes.map((entry: any, index: number) => {
+        if (index !== sceneIdx) return entry
+        return {
+          ...entry,
+          beats: setBeatsMusicEnabled(getSceneBeats(entry), ids, checked),
+        }
+      })
+      onScriptChange({
+        ...script,
+        script: { ...script.script, scenes: updatedScenes },
+      })
+    },
+    [onScriptChange, script, scenes, sceneIdx, sceneMusicCues, sceneBeatsForTabs]
+  )
+  const canReorderBeats = !!onReorderBeats && sceneBeatsForTabs.length > 1 && !beatFiltersActive
   const [brokenContinuityBeatIds, setBrokenContinuityBeatIds] = useState<Set<string>>(
     () => new Set()
   )
@@ -6555,6 +6693,13 @@ function SceneCard({
                     return (
                     <div className="p-4 rounded-lg bg-slate-900/40 border border-slate-700/50">
                       <div className="flex items-center justify-end gap-2 mb-3 flex-wrap">
+                        {hasSceneMusic && (
+                          <SceneScoreToggle
+                            className="mr-auto"
+                            checked={sceneScoreOn}
+                            onCheckedChange={handleSceneScoreChange}
+                          />
+                        )}
                         {(() => {
                           const hasAudioContent =
                             (Array.isArray(scene.dialogue) && scene.dialogue.length > 0) ||
@@ -6710,17 +6855,136 @@ function SceneCard({
                         </div>
                         )}
                       </div>
+                      {(() => {
+                        const attentionChips: Array<{ id: BeatAttentionFilter; label: string }> = [
+                          { id: 'all', label: 'All' },
+                          { id: 'needs_action', label: 'Needs action' },
+                          { id: 'ready', label: 'Ready' },
+                          { id: 'prompt_changed', label: 'Prompt changed' },
+                          { id: 'no_audio', label: 'No audio' },
+                          { id: 'needs_speaker', label: 'Needs speaker' },
+                        ]
+                        const typeChips: Array<{ id: BeatTypeFilter; label: string }> = [
+                          { id: 'all', label: 'All' },
+                          { id: 'action', label: 'Action' },
+                          { id: 'dialogue', label: 'Dialogue' },
+                        ]
+                        if (beatFacts.some((facts) => facts.kind === 'narration')) {
+                          typeChips.push({ id: 'narration', label: 'Narration' })
+                        }
+                        const characters = beatFilterCharacters(beatFacts)
+                        return (
+                          <div className="space-y-2 mb-3">
+                            <StatusFilterBar
+                              label="Show"
+                              chips={attentionChips.map((chip) => ({
+                                id: chip.id,
+                                label: chip.label,
+                                active: beatListFilters.attention === chip.id,
+                                count:
+                                  chip.id === 'all'
+                                    ? beatFacts.length
+                                    : beatFacts.filter((facts) =>
+                                        beatMatchesFilters(facts, {
+                                          ...beatListFilters,
+                                          attention: chip.id,
+                                        })
+                                      ).length,
+                              }))}
+                              onSelect={(id) =>
+                                setBeatListFilters((current) => ({
+                                  ...current,
+                                  attention: id as BeatAttentionFilter,
+                                }))
+                              }
+                            />
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <StatusFilterBar
+                                label="Type"
+                                chips={typeChips.map((chip) => ({
+                                  id: chip.id,
+                                  label: chip.label,
+                                  active: beatListFilters.type === chip.id,
+                                  count:
+                                    chip.id === 'all'
+                                      ? beatFacts.length
+                                      : beatFacts.filter((facts) =>
+                                          beatMatchesFilters(facts, {
+                                            ...beatListFilters,
+                                            type: chip.id,
+                                          })
+                                        ).length,
+                                }))}
+                                onSelect={(id) =>
+                                  setBeatListFilters((current) => ({
+                                    ...current,
+                                    type: id as BeatTypeFilter,
+                                  }))
+                                }
+                              />
+                              {characters.length > 1 && (
+                                <label className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                                  Character
+                                  <select
+                                    value={beatListFilters.character}
+                                    onClick={(event) => event.stopPropagation()}
+                                    onChange={(event) =>
+                                      setBeatListFilters((current) => ({
+                                        ...current,
+                                        character: event.target.value,
+                                      }))
+                                    }
+                                    className="max-w-[12rem] truncate rounded-md border border-slate-600/50 bg-slate-900/60 px-2 py-0.5 text-[10px] text-slate-200"
+                                    aria-label="Filter beats by character"
+                                  >
+                                    <option value="all">All</option>
+                                    {characters.map((name) => (
+                                      <option key={name} value={name}>
+                                        {name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })()}
                       <DndContext
                         sensors={beatDragSensors}
                         collisionDetection={closestCenter}
                         onDragEnd={handleBeatDragEnd}
                       >
                       <SortableContext
-                        items={timelineBeats.map((beat) => beat.beatId)}
+                        items={timelineBeats
+                          .filter((beat) => {
+                            const facts = beatFactsById.get(beat.beatId)
+                            return !facts || beatMatchesFilters(facts, beatListFilters)
+                          })
+                          .map((beat) => beat.beatId)}
                         strategy={verticalListSortingStrategy}
                       >
                       <div className="space-y-3">
+                      {visibleBeatCount === 0 && (
+                        <div className="flex items-center justify-between gap-2 rounded-md border border-slate-700/50 px-3 py-2">
+                          <p className="text-xs text-slate-400">No beats match these filters.</p>
+                          <button
+                            type="button"
+                            className="text-[10px] text-slate-200 underline"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              setBeatListFilters(DEFAULT_BEAT_LIST_FILTERS)
+                            }}
+                          >
+                            Clear filters
+                          </button>
+                        </div>
+                      )}
                       {timelineBeats.map((beat, beatIndex) => {
+                        const beatFactsForCard = beatFactsById.get(beat.beatId)
+                        if (beatFactsForCard && !beatMatchesFilters(beatFactsForCard, beatListFilters)) {
+                          return null
+                        }
                         const beatNumber =
                           (typeof beat.sequenceIndex === 'number' ? beat.sequenceIndex : beatIndex) + 1
                         const continuityBroken = brokenContinuityBeatIds.has(beat.beatId)
