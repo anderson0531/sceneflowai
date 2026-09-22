@@ -4,9 +4,10 @@ import { authOptions } from '@/lib/auth'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { isBeatFirstPipelineEnabled, isStoryboardApproved, getSceneBeats } from '@/lib/script/beatMigration'
-import { compileBeatVideoPrompt } from '@/lib/scene/beatVideoPromptCompiler'
-import { resolveVisualGender } from '@/lib/character/visualGender'
+import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
 import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
+import type { DetailedSceneDirection } from '@/types/scene-direction'
+import { resolveBeatVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
 import {
   findSceneById,
   getVisionScriptScenes,
@@ -50,7 +51,7 @@ export async function POST(
     const body = (await req.json()) as GenerateContinuousBody
     const { projectId, guidePrompt, aspectRatio, qualityTier, videoProvider } = body
     const chainVideoProvider: 'kling' | 'vertex' =
-      videoProvider === 'vertex' ? 'vertex' : 'kling'
+      videoProvider === 'kling' ? 'kling' : 'vertex'
 
     if (!projectId) {
       return NextResponse.json({ error: 'projectId is required' }, { status: 400 })
@@ -105,20 +106,29 @@ export async function POST(
     }
 
     const artStyleId = resolveProjectArtStyle(metadata)
-    const characters = (visionPhase as { characters?: Array<Record<string, unknown>> }).characters || []
-    const beatCharacter = beat.character?.trim()
-    const charRecord = beatCharacter
-      ? characters.find((c) => {
-          const name = String(c.name || '').toLowerCase()
-          const target = beatCharacter.toLowerCase()
-          return name === target || name.includes(target) || target.includes(name)
-        })
-      : undefined
-    const resolvedGender = charRecord ? resolveVisualGender(charRecord as never) : null
-    const compiled = compileBeatVideoPrompt(beat, {
-      artStyleId,
-      characterGender: resolvedGender?.isAuthoritative ? resolvedGender.gender : null,
-      characterName: beatCharacter,
+    const characters =
+      (visionPhase as { characters?: Array<Record<string, unknown>> }).characters || []
+    const sceneDirection =
+      (matchedScene as { sceneDirection?: unknown; detailedDirection?: unknown }).sceneDirection ??
+      (matchedScene as { detailedDirection?: unknown }).detailedDirection ??
+      null
+    const compiled = compileBeatVideoPromptFromDirection(
+      beat,
+      sceneDirection as DetailedSceneDirection | null,
+      { artStyleId }
+    )
+    const locationReferences =
+      ((visionPhase as { references?: { locationReferences?: unknown[] } }).references
+        ?.locationReferences || []) as never[]
+    const objectReferences =
+      ((visionPhase as { references?: { objectReferences?: unknown[] } }).references
+        ?.objectReferences || []) as never[]
+    const resolvedRefs = resolveBeatVideoReferences({
+      scene: matchedScene,
+      beat,
+      projectCharacters: characters,
+      locationReferences,
+      objectReferences,
     })
     const sceneImageUrl =
       typeof (matchedScene as { imageUrl?: string }).imageUrl === 'string'
@@ -141,10 +151,13 @@ export async function POST(
 
     for (let i = 0; i < chainSegments.length; i++) {
       const segment = chainSegments[i]
-      const isContinuation = i > 0 || segment.veoTimelineContinuation === true
+      const hasRefs = resolvedRefs.urlList.length > 0
       const method =
-        segment.generationMethod ||
-        (isContinuation ? 'EXT' : segment.references?.endFrameUrl ? 'FTV' : 'I2V')
+        i > 0 && previousVeoRef
+          ? 'EXT'
+          : hasRefs
+            ? 'REF'
+            : 'T2V'
 
       const prompt =
         segment.userEditedPrompt ||
@@ -154,9 +167,12 @@ export async function POST(
           : compiled.prompt)
 
       const startFrameUrl =
-        segment.startFrameUrl ||
-        segment.references?.startFrameUrl ||
-        (segment.sequenceIndex === 0 && sceneImageUrl ? sceneImageUrl : undefined)
+        method === 'EXT'
+          ? segment.startFrameUrl ||
+            segment.references?.startFrameUrl ||
+            previousLastFrameUrl ||
+            undefined
+          : undefined
 
       const result = await generateSegmentVideoCore({
         segmentId: segment.segmentId,
@@ -168,7 +184,15 @@ export async function POST(
         genType: method === 'T2V' ? 'T2V' : 'I2V',
         generationMethod: method,
         startFrameUrl,
-        endFrameUrl: segment.endFrameUrl || segment.references?.endFrameUrl,
+        referenceImages:
+          method === 'REF'
+            ? resolvedRefs.labeledRefs.map((ref) => ({
+                url: ref.url,
+                type: ref.type,
+                name: ref.name,
+                role: ref.role,
+              }))
+            : undefined,
         previousSegmentVeoRef: previousVeoRef,
         previousSegmentAssetUrl: previousAssetUrl,
         previousSegmentLastFrameUrl: previousLastFrameUrl,
@@ -177,11 +201,10 @@ export async function POST(
         totalSegments: allSegments.length,
         duration: Math.round(segment.endTime - segment.startTime),
         aspectRatio: aspectRatio || '16:9',
-        resolution: method === 'EXT' ? '720p' : '720p',
+        resolution: '720p',
         qualityTier,
         guidePrompt,
-        requireVeoRefForExt:
-          isContinuation && method === 'EXT' && chainVideoProvider === 'vertex',
+        requireVeoRefForExt: i > 0 && method === 'EXT' && chainVideoProvider === 'vertex',
         videoProvider: chainVideoProvider,
         existingStemSourceAudioUrl: segment.stemSeparation?.sourceAudioUrl,
         existingStemSourceHash: segment.stemSeparation?.sourceHash,

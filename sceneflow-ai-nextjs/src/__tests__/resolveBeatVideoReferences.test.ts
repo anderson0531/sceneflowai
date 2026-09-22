@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolveBeatVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
+import { resolveBeatElementSelection, resolveBeatVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { LocationReference } from '@/types/visionReferences'
 
@@ -64,6 +64,16 @@ describe('resolveBeatVideoReferences', () => {
     expect(resolved.urlList.length).toBeGreaterThanOrEqual(2)
     expect(resolved.labeledRefs.some((r) => r.name.includes('Elara'))).toBe(true)
     expect(resolved.labeledRefs.some((r) => r.role === 'location')).toBe(true)
+
+    const elements = resolveBeatElementSelection({
+      scene,
+      beat,
+      projectCharacters: characters,
+      locationReferences: locations,
+      objectReferences: objects,
+    })
+    expect(elements.characterIds.length).toBeGreaterThan(0)
+    expect(elements.locationRefId).toBe('loc-kitchen')
   })
 
   it('respects max reference cap', () => {

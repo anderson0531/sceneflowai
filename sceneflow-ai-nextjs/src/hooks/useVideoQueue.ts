@@ -549,7 +549,7 @@ export function useVideoQueue(
         
         try {
           let batchMethod = config.mode
-          const isKlingProvider = (config.videoProvider ?? 'kling') === 'kling'
+          const isKlingProvider = config.videoProvider === 'kling'
           if (liveSegment && isVeoChainContinuation(liveSegment)) {
             const veoRef = resolveVeoRefForExtension(liveSegments, liveSegment)
             if (veoRef) {
@@ -641,7 +641,7 @@ export function useVideoQueue(
               qualityTier: config.qualityTier,
               apiPromptOverride: config.useCustomApiPrompt ? config.apiPromptOverride : undefined,
               allowPolicyFallback: config.allowPolicyFallback === true,
-              videoProvider: config.videoProvider ?? 'kling',
+              videoProvider: config.videoProvider,
               videoModel: config.videoModel,
               klingModel: config.klingModel,
               klingQuality: config.klingQuality,

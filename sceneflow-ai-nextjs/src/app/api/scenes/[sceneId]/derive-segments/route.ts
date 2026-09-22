@@ -136,6 +136,8 @@ export async function POST(
       segments,
       segmentCount: segments.length,
       artStyleId,
+      storyboardStatus: workingScene.storyboardStatus,
+      storyboardApprovedAt: workingScene.storyboardApprovedAt,
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err)

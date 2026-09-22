@@ -75,6 +75,7 @@ import {
   ensureSceneBeats,
   getSceneBeats,
   isBeatFirstPipelineEnabled,
+  isStoryboardApproved,
   reorderSceneBeats,
   resolveRawBeatIndex,
 } from '@/lib/script/beatMigration'
@@ -94,6 +95,7 @@ import type {
   VideoGenerationMode,
   VideoGenerationQuality,
 } from '@/lib/video/videoGenerationPolicy'
+import { resolveVideoGeneration } from '@/lib/video/videoGenerationPolicy'
 import { enableScreeningPlayerDiagnostics } from '@/lib/storyboard/screeningPlayerDiagnostics'
 import {
   explicitBeatReferenceSelection,
@@ -3875,6 +3877,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         applySceneProductionUpdate(sceneId, (current) =>
           mergeSegmentedProductionData(current, productionData)
         )
+        if (data.storyboardStatus === 'approved') {
+          const currentScript = scriptRef.current ?? script
+          const sceneList = currentScript?.script?.scenes
+          if (Array.isArray(sceneList)) {
+            const sceneIndex = sceneList.findIndex(
+              (s: { id?: string; sceneId?: string }, i: number) =>
+                (s.id || s.sceneId || `scene-${i}`) === sceneId
+            )
+            if (sceneIndex >= 0 && sceneList[sceneIndex]?.storyboardStatus !== 'approved') {
+              const updatedScript = JSON.parse(JSON.stringify(currentScript))
+              updatedScript.script.scenes[sceneIndex] = {
+                ...updatedScript.script.scenes[sceneIndex],
+                storyboardStatus: 'approved',
+                storyboardApprovedAt: data.storyboardApprovedAt,
+              }
+              await handleScriptChange(updatedScript)
+            }
+          }
+        }
         try {
           const { toast } = require('sonner')
           toast.success(`Created ${productionData.segments.length} production beats from Pre-Vis`)
@@ -3934,7 +3955,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         toast.success(`Scene split into ${productionData.segments.length} blocks.`)
       } catch {}
     },
-    [project?.id, applySceneProductionUpdate, script?.script?.scenes, sceneProductionState]
+    [project?.id, applySceneProductionUpdate, script?.script?.scenes, sceneProductionState, handleScriptChange, script]
   )
 
   const handleApproveStoryboard = useCallback(
@@ -4220,6 +4241,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         throw new Error('Project must be loaded before generating assets.')
       }
 
+      if (isBeatFirstPipelineEnabled()) {
+        const gateScenes = script?.script?.scenes ?? []
+        const gateScene = gateScenes.find(
+          (s: { id?: string; sceneId?: string }, i: number) =>
+            (s.id || s.sceneId || `scene-${i}`) === sceneId
+        )
+        if (gateScene && !isStoryboardApproved(gateScene as Record<string, unknown>)) {
+          const message = 'Pre-vis must be approved before video generation'
+          applySceneProductionUpdate(sceneId, (current) => {
+            if (!current) return current
+            const segments = current.segments.map((segment) =>
+              segment.segmentId === segmentId
+                ? { ...segment, status: 'ERROR' as const, errorMessage: message }
+                : segment
+            )
+            return { ...current, segments }
+          })
+          try {
+            toast.error(message)
+          } catch {}
+          throw new Error(message)
+        }
+      }
+
       // Update status to GENERATING
       applySceneProductionUpdate(sceneId, (current) => {
         if (!current) return current
@@ -4317,6 +4362,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (!prompt) {
           throw new Error('Beat prompt is required')
         }
+
+        const sessionVideo = resolveVideoGeneration({
+          quality: videoGenerationQuality,
+          mode: videoGenerationMode,
+        })
+        const videoProvider = options?.videoProvider ?? sessionVideo.videoProvider
         
         // Debug: Log which prompt source is being used
         console.log('[Segment Generate] Prompt source:', {
@@ -4326,11 +4377,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           promptLength: prompt.length,
           promptPreview: prompt.substring(0, 100) + '...',
           generationMethod: options?.generationMethod,
-          videoProvider: options?.videoProvider ?? 'vertex',
+          videoProvider,
           videoModel: options?.videoModel,
         })
-
-        const videoProvider = options?.videoProvider ?? 'kling'
         const isContinuation =
           segment.veoTimelineContinuation ||
           segment.generationMethod === 'EXT' ||
@@ -4427,7 +4476,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             existingStemJobId: segment.stemSeparation?.jobId,
             apiPromptOverride: options?.apiPromptOverride,
             allowPolicyFallback: options?.allowPolicyFallback === true,
-            videoProvider: options?.videoProvider ?? 'kling',
+            videoProvider,
             videoModel: options?.videoModel,
             klingModel: options?.klingModel,
             klingQuality: options?.klingQuality,
@@ -4473,6 +4522,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             throw new Error('Session expired. Please refresh the page and sign in again.')
           }
           if (response.status === 403) {
+            if (errorData?.code === 'STORYBOARD_NOT_APPROVED') {
+              throw new Error(errorMessage)
+            }
             throw new Error('You do not have permission to generate assets.')
           }
           if (response.status === 422) {
@@ -4966,8 +5018,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   }
                 }
               })
-              return // Skip the standard content policy toast below
-            }
+              // FTV toast is the user-facing message; still fail the queue item.
+            } else {
 
             toast.error('Content policy violation', {
               description: 'Your prompt was flagged by safety filters. Auto-fix replaces sensitive terms with cinematic alternatives.',
@@ -5154,13 +5206,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 }
               }
             })
+            }
+          } else if (
+            errorMessage.includes('Pre-vis must be approved')
+          ) {
+            toast.error(errorMessage)
           } else {
             toast.error('Generation failed - click beat for details')
           }
         } catch {}
+        throw error
       }
     },
-    [applySceneProductionUpdate, project?.id, sceneProductionState, script]
+    [applySceneProductionUpdate, project?.id, sceneProductionState, script, videoGenerationQuality, videoGenerationMode]
   )
 
   const handleSegmentUpload = useCallback(

@@ -62,14 +62,14 @@ interface BeatVideoGalleryProps {
   onUpload?: (segmentId: string, file: File) => void
   onRetake?: (segment: SceneSegment) => void
   onGenerateClip?: (segment: SceneSegment) => void
+  /** Open the video pre-flight dialog (Direct Video). */
+  onDirectVideo?: (segment: SceneSegment) => void
+  /** Open the video dialog on the direction prompt. */
+  onDirection?: (segment: SceneSegment) => void
+  /** Edit a completed clip. */
+  onEditClip?: (segment: SceneSegment) => void
   onOpenPreVis?: () => void
-  /** Pre-Vis still actions for the selected beat image. */
-  onRegenerateStill?: (beatId: string) => void
-  onDirectStill?: (beatId: string) => void
-  onDirectorStill?: (beatId: string) => void
-  onUploadStill?: (beatId: string, file: File) => void
-  onEditStill?: (beatId: string, imageUrl: string) => void
-  generatingStillBeatId?: string | null
+  generatingClipId?: string | null
 }
 
 export function BeatVideoGallery({
@@ -90,13 +90,11 @@ export function BeatVideoGallery({
   onUpload,
   onRetake,
   onGenerateClip,
+  onDirectVideo,
+  onDirection,
+  onEditClip,
   onOpenPreVis,
-  onRegenerateStill,
-  onDirectStill,
-  onDirectorStill,
-  onUploadStill,
-  onEditStill,
-  generatingStillBeatId,
+  generatingClipId,
 }: BeatVideoGalleryProps) {
   const [selectedKey, setSelectedKey] = useState<string | null>(clips[0]?.key ?? null)
   const [attention, setAttention] = useState<VideoAttentionFilter>('all')
@@ -264,28 +262,33 @@ export function BeatVideoGallery({
               Start frame
             </p>
             <div className="overflow-hidden rounded-lg border border-slate-700/40 bg-gray-800/50">
-              {preview?.beatId && (onRegenerateStill || onDirectStill || onDirectorStill || onUploadStill || onEditStill) ? (
+              {preview?.thumbnailUrl && previewSegment ? (
                 <SceneImageFrame
                   sceneIdx={0}
                   sceneNumber={preview.beatNumber}
                   label="Start frame"
-                  generateTitle={
-                    preview.thumbnailUrl ? 'Regenerate start frame' : 'Generate start frame'
-                  }
+                  generateTitle={previewComplete ? 'Regenerate' : 'Generate video'}
+                  directTitle="Direct Video"
+                  directorTitle="Direction"
+                  uploadTitle="Upload"
+                  uploadAccept="video/*"
                   imageUrl={preview.thumbnailUrl}
                   imagePrompt={preview.prompt}
                   showControls
                   controlsVariant="comfortable"
                   alwaysShowControls
                   showBorder={false}
-                  isGenerating={generatingStillBeatId === preview.beatId}
-                  onGenerate={() => onRegenerateStill?.(preview.beatId!)}
-                  onDirect={onDirectStill ? () => onDirectStill(preview.beatId!) : undefined}
-                  onDirector={onDirectorStill ? () => onDirectorStill(preview.beatId!) : undefined}
-                  onUpload={(file) => onUploadStill?.(preview.beatId!, file)}
+                  isGenerating={generatingClipId === previewSegment.segmentId}
+                  onGenerate={() => onGenerateClip?.(previewSegment)}
+                  onDirect={onDirectVideo ? () => onDirectVideo(previewSegment) : undefined}
+                  onDirector={onDirection ? () => onDirection(previewSegment) : undefined}
+                  onUpload={(file) => onUpload?.(previewSegment.segmentId, file)}
                   onEdit={
-                    onEditStill && preview.thumbnailUrl
-                      ? (url) => onEditStill(preview.beatId!, url)
+                    onEditClip &&
+                    previewComplete &&
+                    previewSegment.assetType === 'video' &&
+                    previewSegment.activeAssetUrl
+                      ? () => onEditClip(previewSegment)
                       : undefined
                   }
                 />

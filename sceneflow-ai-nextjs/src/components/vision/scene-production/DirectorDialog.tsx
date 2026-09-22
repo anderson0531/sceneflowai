@@ -215,6 +215,8 @@ interface DirectorDialogProps {
   videoGenerationMode?: VideoGenerationMode
   /** Retry this beat's start still using the Frames tab Standard | Creative mode. */
   onRegenerateStill?: () => void
+  /** Scroll the visual prompt into view when the dialog opens. */
+  focusPrompt?: boolean
 }
 
 // Map internal mode names to VideoGenerationMethod
@@ -274,6 +276,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   videoGenerationQuality,
   videoGenerationMode,
   onRegenerateStill,
+  focusPrompt = false,
 }) => {
   const t = useTranslations('production.direction.director')
   const tp = useTranslations('production.direction.stillPolicy')
@@ -294,6 +297,16 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   }, [scene, guideCharacters, sceneIndex, filmTitle, characterReferences, locationReferences, objectReferences])
 
   const lockedVideoAspect = toVideoAspectRatio(projectAspectRatio)
+
+  useEffect(() => {
+    if (!isOpen || !focusPrompt) return
+    const timer = window.setTimeout(() => {
+      const el = document.getElementById('director-dialog-visual-prompt')
+      el?.scrollIntoView({ block: 'center' })
+      if (el instanceof HTMLTextAreaElement) el.focus()
+    }, 50)
+    return () => window.clearTimeout(timer)
+  }, [isOpen, focusPrompt, segment.segmentId])
 
   // Get auto-drafted config (includes batch guidePrompt when dialogue is assigned)
   const { config: autoConfig, methodLabel, methodReason } = useSegmentConfig(
@@ -1807,6 +1820,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 </p>
               )}
               <Textarea 
+                id="director-dialog-visual-prompt"
                 value={visualPrompt}
                 onChange={(e) => {
                   if (readOnlyPrompts) return

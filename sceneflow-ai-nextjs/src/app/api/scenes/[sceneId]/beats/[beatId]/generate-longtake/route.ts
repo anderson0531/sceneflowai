@@ -29,6 +29,7 @@ import {
   resolveKlingElementsFromSources,
 } from '@/lib/kling/elementRegistry'
 import type { KlingLongTakeJobPayload } from '@/lib/kling/longTakeOrchestrator'
+import { resolveBeatElementSelection } from '@/lib/vision/resolveBeatVideoReferences'
 import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 export const maxDuration = 60
@@ -212,23 +213,34 @@ export async function POST(
       segment.references?.startFrameUrl?.trim() ||
       (segment.sequenceIndex === 0 ? sceneImageUrl : undefined)
 
+    const elementSelection = resolveBeatElementSelection({
+      scene: matchedScene,
+      beat,
+      projectCharacters: (visionMeta.characters as Array<{ id?: string; name?: string }>) || [],
+      locationReferences:
+        ((visionMeta.references as { locationReferences?: unknown[] })?.locationReferences ||
+          []) as never[],
+      objectReferences:
+        ((visionMeta.references as { objectReferences?: unknown[] })?.objectReferences ||
+          []) as never[],
+    })
     const elementSources = collectKlingElementSources({
       characters: (visionMeta.characters as never[]) || [],
-      characterIds: beat.referenceSelection?.characterIds || [],
-      characterWardrobes: beat.referenceSelection?.characterWardrobes || [],
+      characterIds: elementSelection.characterIds,
+      characterWardrobes: elementSelection.characterWardrobes,
       objectReferences:
         ((visionMeta.references as { objectReferences?: unknown })?.objectReferences as never[]) ||
         [],
-      objectRefIds: beat.referenceSelection?.objectRefIds || [],
+      objectRefIds: elementSelection.objectRefIds,
       locationReferences:
         ((visionMeta.references as { locationReferences?: unknown })?.locationReferences as never[]) ||
         [],
-      locationRefId: beat.referenceSelection?.locationRefId,
-      locationVersionId: beat.referenceSelection?.locationVersionId,
+      locationRefId: elementSelection.locationRefId,
+      locationVersionId: elementSelection.locationVersionId,
     })
     const resolvedElements = await resolveKlingElementsFromSources(elementSources, model)
     if (resolvedElements.newRegistrations.length) {
-      await persistKlingElementIdsToProject(projectId, resolvedElements.newRegistrations)
+      await persistKlingElementIdsToProject(body.projectId, resolvedElements.newRegistrations)
     }
     const elementList = resolvedElements.elementIds
     // A typed prompt arrives in the creator's language; Kling needs English.
