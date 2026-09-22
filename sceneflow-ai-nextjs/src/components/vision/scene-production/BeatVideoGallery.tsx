@@ -22,6 +22,36 @@ import {
   type PlayableTake,
 } from '@/lib/storyboard/mediaVersions'
 
+const videoShowLabels: Record<VideoAttentionFilter, string> = {
+  all: 'All',
+  needs_action: 'Needs action',
+  in_the_can: 'In the Can',
+  prompt_changed: 'Prompt changed',
+  error: 'Error',
+  no_clip: 'No clip',
+}
+
+const videoShowTooltips: Record<VideoAttentionFilter, string> = {
+  all: 'Every clip in this scene.',
+  needs_action: 'Clips that are unfinished, or whose prompt changed.',
+  in_the_can: 'Clips that finished rendering.',
+  prompt_changed: 'Clips whose prompt changed after the render.',
+  error: 'Clips that failed to render.',
+  no_clip: 'Beats that are still waiting on a clip.',
+}
+
+const videoQualityLabels: Record<VideoQualityFilter, string> = {
+  all: 'All',
+  final: 'Final',
+  draft: 'Draft',
+}
+
+const videoQualityTooltips: Record<VideoQualityFilter, string> = {
+  all: 'Final and draft pre-vis frames.',
+  final: 'Clips whose pre-vis frame is final.',
+  draft: 'Clips whose pre-vis frame is a draft.',
+}
+
 function clipStatus(item?: DirectorQueueItem): { label: string; className: string } | null {
   if (!item) return null
   if (item.status === 'complete') {
@@ -241,49 +271,63 @@ export function BeatVideoGallery({
       )}
 
       {clips.length > 0 && (
-        <div className="space-y-2">
-          <StatusFilterBar
-            label="Show"
-            chips={(
-              [
-                ['all', 'All'],
-                ['needs_action', 'Needs action'],
-                ['in_the_can', 'In the Can'],
-                ['prompt_changed', 'Prompt changed'],
-                ['error', 'Error'],
-                ['no_clip', 'No clip'],
-              ] as Array<[VideoAttentionFilter, string]>
-            ).map(([id, label]) => ({
-              id,
-              label,
-              active: attention === id,
-              count:
-                id === 'all'
-                  ? clipFacts.length
-                  : clipFacts.filter((facts) => videoMatchesFilters(facts, id, quality)).length,
-            }))}
-            onSelect={(id) => setAttention(id as VideoAttentionFilter)}
-          />
-          <StatusFilterBar
-            label="Quality"
-            chips={(
-              [
-                ['all', 'All'],
-                ['final', 'Final'],
-                ['draft', 'Draft'],
-              ] as Array<[VideoQualityFilter, string]>
-            ).map(([id, label]) => ({
-              id,
-              label,
-              active: quality === id,
-              count:
-                id === 'all'
-                  ? clipFacts.length
-                  : clipFacts.filter((facts) => videoMatchesFilters(facts, attention, id)).length,
-            }))}
-            onSelect={(id) => setQuality(id as VideoQualityFilter)}
-          />
-        </div>
+        <StatusFilterBar
+          activeSummary={[
+            attention === 'all' ? '' : videoShowLabels[attention],
+            quality === 'all' ? '' : videoQualityLabels[quality],
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+          onClear={() => {
+            setAttention('all')
+            setQuality('all')
+          }}
+          groups={[
+            {
+              label: 'Show',
+              onSelect: (id) => setAttention(id as VideoAttentionFilter),
+              chips: (
+                [
+                  ['all', 'All'],
+                  ['needs_action', 'Needs action'],
+                  ['in_the_can', 'In the Can'],
+                  ['prompt_changed', 'Prompt changed'],
+                  ['error', 'Error'],
+                  ['no_clip', 'No clip'],
+                ] as Array<[VideoAttentionFilter, string]>
+              ).map(([id, label]) => ({
+                id,
+                label,
+                tooltip: videoShowTooltips[id],
+                active: attention === id,
+                count:
+                  id === 'all'
+                    ? clipFacts.length
+                    : clipFacts.filter((facts) => videoMatchesFilters(facts, id, quality)).length,
+              })),
+            },
+            {
+              label: 'Quality',
+              onSelect: (id) => setQuality(id as VideoQualityFilter),
+              chips: (
+                [
+                  ['all', 'All'],
+                  ['final', 'Final'],
+                  ['draft', 'Draft'],
+                ] as Array<[VideoQualityFilter, string]>
+              ).map(([id, label]) => ({
+                id,
+                label,
+                tooltip: videoQualityTooltips[id],
+                active: quality === id,
+                count:
+                  id === 'all'
+                    ? clipFacts.length
+                    : clipFacts.filter((facts) => videoMatchesFilters(facts, attention, id)).length,
+              })),
+            },
+          ]}
+        />
       )}
 
       {clips.length === 0 ? (

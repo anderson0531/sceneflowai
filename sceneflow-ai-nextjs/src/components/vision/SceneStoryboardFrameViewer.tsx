@@ -71,6 +71,40 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { FrameMotionEditor } from './FrameMotionEditor'
 import type { BeatKenBurnsSettings } from '@/lib/storyboard/kenBurnsFrame'
 
+const frameShowLabels: Record<FrameAttentionFilter, string> = {
+  all: 'All',
+  needs_action: 'Needs action',
+  final: 'Final',
+  draft: 'Draft',
+  prompt_changed: 'Prompt changed',
+  missing: 'Missing',
+  placeholder: 'Placeholder',
+}
+
+const frameShowTooltips: Record<FrameAttentionFilter, string> = {
+  all: 'Every frame in this scene.',
+  needs_action: 'Frames that are missing, still a draft, or out of date.',
+  final: 'Frames approved as final.',
+  draft: 'Frames generated as a draft.',
+  prompt_changed: 'Frames whose prompt changed after the image was made.',
+  missing: 'Frames with no image yet.',
+  placeholder: 'Frames still using a stand-in image.',
+}
+
+const frameTypeLabels: Record<FrameTypeFilter, string> = {
+  all: 'All',
+  action: 'Action',
+  dialogue: 'Dialogue',
+  narration: 'Narration',
+}
+
+const frameTypeTooltips: Record<FrameTypeFilter, string> = {
+  all: 'Action, dialogue, and narration frames.',
+  action: 'Frames for beats with no spoken line.',
+  dialogue: 'Frames for beats spoken by a character.',
+  narration: 'Frames for voiceover beats.',
+}
+
 type EditingFrame =
   | { kind: 'establishing'; sceneIndex: number; imageUrl: string }
   | { kind: 'beat'; sceneIndex: number; beatId: string; imageUrl: string }
@@ -1090,53 +1124,67 @@ export function SceneStoryboardFrameViewer({
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <StatusFilterBar
-                  label="Show"
-                  chips={(
-                    [
-                      ['all', 'All'],
-                      ['needs_action', 'Needs action'],
-                      ['final', 'Final'],
-                      ['draft', 'Draft'],
-                      ['prompt_changed', 'Prompt changed'],
-                      ['missing', 'Missing'],
-                      ['placeholder', 'Placeholder'],
-                    ] as Array<[FrameAttentionFilter, string]>
-                  ).map(([id, label]) => ({
-                    id,
-                    label,
-                    active: frameAttention === id,
-                    count:
-                      id === 'all'
-                        ? frameFacts.length
-                        : frameFacts.filter((facts) => frameMatchesFilters(facts, id, frameType)).length,
-                  }))}
-                  onSelect={(id) => setFrameAttention(id as FrameAttentionFilter)}
-                />
-                <StatusFilterBar
-                  label="Type"
-                  chips={(
-                    [
-                      ['all', 'All'],
-                      ['action', 'Action'],
-                      ['dialogue', 'Dialogue'],
-                      ...(frameFacts.some((facts) => facts.kind === 'narration')
-                        ? [['narration', 'Narration'] as [FrameTypeFilter, string]]
-                        : []),
-                    ] as Array<[FrameTypeFilter, string]>
-                  ).map(([id, label]) => ({
-                    id,
-                    label,
-                    active: frameType === id,
-                    count:
-                      id === 'all'
-                        ? frameFacts.length
-                        : frameFacts.filter((facts) => frameMatchesFilters(facts, frameAttention, id)).length,
-                  }))}
-                  onSelect={(id) => setFrameType(id as FrameTypeFilter)}
-                />
-              </div>
+              <StatusFilterBar
+                activeSummary={[
+                  frameAttention === 'all' ? '' : frameShowLabels[frameAttention],
+                  frameType === 'all' ? '' : frameTypeLabels[frameType],
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+                onClear={() => {
+                  setFrameAttention('all')
+                  setFrameType('all')
+                }}
+                groups={[
+                  {
+                    label: 'Show',
+                    onSelect: (id) => setFrameAttention(id as FrameAttentionFilter),
+                    chips: (
+                      [
+                        ['all', 'All'],
+                        ['needs_action', 'Needs action'],
+                        ['final', 'Final'],
+                        ['draft', 'Draft'],
+                        ['prompt_changed', 'Prompt changed'],
+                        ['missing', 'Missing'],
+                        ['placeholder', 'Placeholder'],
+                      ] as Array<[FrameAttentionFilter, string]>
+                    ).map(([id, label]) => ({
+                      id,
+                      label,
+                      tooltip: frameShowTooltips[id],
+                      active: frameAttention === id,
+                      count:
+                        id === 'all'
+                          ? frameFacts.length
+                          : frameFacts.filter((facts) => frameMatchesFilters(facts, id, frameType)).length,
+                    })),
+                  },
+                  {
+                    label: 'Type',
+                    onSelect: (id) => setFrameType(id as FrameTypeFilter),
+                    chips: (
+                      [
+                        ['all', 'All'],
+                        ['action', 'Action'],
+                        ['dialogue', 'Dialogue'],
+                        ...(frameFacts.some((facts) => facts.kind === 'narration')
+                          ? [['narration', 'Narration'] as [FrameTypeFilter, string]]
+                          : []),
+                      ] as Array<[FrameTypeFilter, string]>
+                    ).map(([id, label]) => ({
+                      id,
+                      label,
+                      tooltip: frameTypeTooltips[id],
+                      active: frameType === id,
+                      count:
+                        id === 'all'
+                          ? frameFacts.length
+                          : frameFacts.filter((facts) => frameMatchesFilters(facts, frameAttention, id)).length,
+                    })),
+                  },
+                ]}
+              />
 
               <div className="relative">
                 <div

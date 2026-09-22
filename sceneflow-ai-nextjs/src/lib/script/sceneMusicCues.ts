@@ -31,12 +31,30 @@ import type {
 } from '@/lib/script/segmentTypes'
 
 /**
- * Upper bound on cues per scene.
+ * A generated cue covers at most this many beats.
  *
- * Each cue is its own generated track, and a scene that changes music five
- * times stops reading as scored and starts reading as restless.
+ * A score stretched across a long run gives every beat the same emotion and
+ * the same track. Three beats is the longest custom score, so a passage of
+ * ten beats becomes several cues. Each cue is still asked for the Screening
+ * Room length of the beats it covers.
  */
-export const MAX_MUSIC_CUES = 4
+export const MAX_BEATS_PER_MUSIC_CUE = 3
+
+/**
+ * How many movements may carry music.
+ *
+ * File count is separate. A scored stretch is split into short cues, and a
+ * scene that changes music on every movement stops reading as scored.
+ */
+export const MAX_SCORED_MOVEMENTS = 4
+
+/**
+ * Upper bound on cue files per scene.
+ *
+ * A three-beat split can produce one file per beat, and a scene never holds
+ * more beats than MAX_BEATS_PER_SCENE (30).
+ */
+export const MAX_MUSIC_CUES = 30
 
 /** Descriptions shorter than this are not a music brief. */
 const MIN_DESCRIPTION_LENGTH = 8
@@ -183,6 +201,104 @@ function coerceExit(value: unknown): MusicCueExit | undefined {
 }
 
 /**
+ * Contiguous windows of at most three beats.
+ *
+ * The Screening Room hold is at least ten seconds, so three beats already
+ * run to about half a minute and Lyria is asked for that length. Splitting
+ * again to force a 30-second Clip would undo the three-beat score.
+ */
+function clipWindows(
+  beatStart: number,
+  beatEnd: number
+): Array<{ start: number; end: number }> {
+  const windows: Array<{ start: number; end: number }> = []
+  let cursor = beatStart
+  while (cursor <= beatEnd) {
+    const end = Math.min(beatEnd, cursor + MAX_BEATS_PER_MUSIC_CUE - 1)
+    windows.push({ start: cursor, end })
+    cursor = end + 1
+  }
+  return windows
+}
+
+function scoreEmotion(text: string): { profile: MusicProfile | undefined; hits: number } {
+  const hits = new Map<string, number>()
+  for (const { pattern, family } of EMOTION_LEXICON) {
+    const matches = text.match(new RegExp(pattern.source, 'gi'))
+    if (matches) hits.set(family, (hits.get(family) ?? 0) + matches.length)
+  }
+
+  let family: string | undefined
+  let best = 0
+  // Ties resolve toward the lexicon's own order, which runs strongest first.
+  for (const { family: candidate } of EMOTION_LEXICON) {
+    const count = hits.get(candidate) ?? 0
+    if (count > best) {
+      best = count
+      family = candidate
+    }
+  }
+
+  return {
+    profile: family ? MUSIC_PROFILES[family] : undefined,
+    hits: best,
+  }
+}
+
+function emotionTextForBeats(beats: SceneBeat[], start: number, end: number): string {
+  const parts: string[] = []
+  for (let index = start; index <= end; index++) {
+    const beat = beats[index]
+    if (!beat) continue
+    if (beat.beatDirection?.emotion) parts.push(beat.beatDirection.emotion)
+    if (beat.voiceDirection) parts.push(beat.voiceDirection)
+    if (beat.actionDescription) parts.push(beat.actionDescription)
+  }
+  return parts.filter(Boolean).join(' ')
+}
+
+/**
+ * Break one planned cue into Clip-sized scores.
+ *
+ * Derived windows re-read the beats they cover. When that emotion differs
+ * from the stretch they were cut from, the window takes that profile. The
+ * other windows keep the parent brief, with the entrance on the first and
+ * the exit on the last so the pieces hand off.
+ */
+function splitCueForClip(
+  cue: SceneMusicCue,
+  beats: SceneBeat[],
+  parentFamily?: string
+): SceneMusicCue[] {
+  const windows = clipWindows(cue.beatStart, cue.beatEnd)
+  return windows.map((window, index) => {
+    const local =
+      cue.generatedBy === 'derived'
+        ? scoreEmotion(emotionTextForBeats(beats, window.start, window.end)).profile
+        : undefined
+    const diverges = local && parentFamily && local.family !== parentFamily ? local : undefined
+    const isFirst = index === 0
+    const isLast = index === windows.length - 1
+    const entry = diverges ? diverges.entry : windows.length > 1 && !isFirst ? 'fade' : cue.entry
+    const exit = diverges ? diverges.exit : windows.length > 1 && !isLast ? 'fade' : cue.exit
+    return {
+      cueId: buildMusicCueId(window.start, window.end),
+      beatStart: window.start,
+      beatEnd: window.end,
+      description: diverges ? adaptPromptForLyria(diverges.brief) : cue.description,
+      intent: diverges ? diverges.intent : cue.intent,
+      ...(entry ? { entry } : {}),
+      ...(exit ? { exit } : {}),
+      ...(cue.generatedBy ? { generatedBy: cue.generatedBy } : {}),
+    }
+  })
+}
+
+function capCueCount(cues: SceneMusicCue[]): SceneMusicCue[] {
+  return cues.slice(0, MAX_MUSIC_CUES)
+}
+
+/**
  * Drop cues that fall outside the beat list, overlap an earlier cue, or run
  * backwards. Overlapping cues would stack two tracks over the same beats.
  */
@@ -197,7 +313,6 @@ function sanitizeRanges(cues: SceneMusicCue[], beatCount: number): SceneMusicCue
     if (beatStart <= lastEnd) continue
     kept.push({ ...cue, beatStart, beatEnd, cueId: buildMusicCueId(beatStart, beatEnd) })
     lastEnd = beatEnd
-    if (kept.length >= MAX_MUSIC_CUES) break
   }
 
   return kept
@@ -256,13 +371,15 @@ export function planSceneMusicCues(
     parsed.some((entry) => entry.beatEnd === beats.length)
   const shift = oneBased ? 1 : 0
 
-  return sanitizeRanges(
-    parsed.map((entry) => ({
-      ...entry.cue,
-      beatStart: entry.beatStart - shift,
-      beatEnd: entry.beatEnd - shift,
-    })),
-    beats.length
+  return capCueCount(
+    sanitizeRanges(
+      parsed.map((entry) => ({
+        ...entry.cue,
+        beatStart: entry.beatStart - shift,
+        beatEnd: entry.beatEnd - shift,
+      })),
+      beats.length
+    ).flatMap((cue) => splitCueForClip(cue, beats))
   )
 }
 
@@ -294,29 +411,11 @@ function chargeMovements(
   beats: SceneBeat[]
 ): MovementCharge[] {
   return movements.map((movement) => {
-    const text = movementEmotionText(movement, beats)
-    const hits = new Map<string, number>()
-    for (const { pattern, family } of EMOTION_LEXICON) {
-      const matches = text.match(new RegExp(pattern.source, 'gi'))
-      if (matches) hits.set(family, (hits.get(family) ?? 0) + matches.length)
-    }
-
-    let family: string | undefined
-    let best = 0
-    // Ties resolve toward the lexicon's own order, which runs strongest first.
-    for (const { family: candidate } of EMOTION_LEXICON) {
-      const count = hits.get(candidate) ?? 0
-      if (count > best) {
-        best = count
-        family = candidate
-      }
-    }
-
-    const profile = family ? MUSIC_PROFILES[family] : undefined
+    const scored = scoreEmotion(movementEmotionText(movement, beats))
     return {
       movement,
-      profile,
-      charge: profile ? profile.charge + Math.min(2, best - 1) : 0,
+      profile: scored.profile,
+      charge: scored.profile ? scored.profile.charge + Math.min(2, scored.hits - 1) : 0,
     }
   })
 }
@@ -332,7 +431,10 @@ export function musicCueBudget(movementCount: number): number {
   if (movementCount <= 0) return 0
   if (movementCount === 1) return 1
   if (movementCount === 2) return 1
-  return Math.min(MAX_MUSIC_CUES, Math.min(movementCount - 1, Math.ceil(movementCount / 2)))
+  return Math.min(
+    MAX_SCORED_MOVEMENTS,
+    Math.min(movementCount - 1, Math.ceil(movementCount / 2))
+  )
 }
 
 /**
@@ -457,10 +559,10 @@ export function deriveSceneMusicCues(
 
   const sceneBrief = sceneMusicDescription(scene)
 
-  return sanitizeRanges(
-    ranges.map((range, index) => {
-      const brief = index === 0 && sceneBrief ? sceneBrief : range.profile.brief
-      return {
+  const built = ranges.map((range, index) => {
+    const brief = index === 0 && sceneBrief ? sceneBrief : range.profile.brief
+    return {
+      cue: {
         cueId: buildMusicCueId(range.start, range.end),
         beatStart: range.start,
         beatEnd: range.end,
@@ -469,9 +571,17 @@ export function deriveSceneMusicCues(
         entry: range.profile.entry,
         exit: range.profile.exit,
         generatedBy: 'derived' as const,
-      }
-    }),
-    beats.length
+      },
+      family: range.profile.family,
+    }
+  })
+  const familyById = new Map(built.map((entry) => [entry.cue.cueId, entry.family]))
+
+  return capCueCount(
+    sanitizeRanges(
+      built.map((entry) => entry.cue),
+      beats.length
+    ).flatMap((cue) => splitCueForClip(cue, beats, familyById.get(cue.cueId)))
   )
 }
 
@@ -763,7 +873,8 @@ export function formatMusicCueSteer(cue: SceneMusicCue | undefined): string {
  *
  * This is the play span we ask Lyria 3 to match (the route caps generation at
  * 184s). A beat with no measured length uses the animatic hold, and a spoken
- * beat with a voice clip uses that clip when it is longer.
+ * beat with a voice clip uses that clip when it is longer. A cue is at most
+ * three beats, so this span is that short run, not the whole scene.
  */
 export function estimateMusicCueDuration(
   cue: SceneMusicCue,

@@ -37,7 +37,7 @@ import { resolveContentIntentFromMetadata, buildPacingPhilosophyBlock } from '@/
 import { migrateProjectToSegmented } from '@/lib/script/migrateToSegmented'
 import { normalizeDialogueToProductionLineTargets } from '@/lib/script/segmentScript'
 import { MAX_SCENE_MOVEMENTS } from '@/lib/script/sceneMovements'
-import { MAX_MUSIC_CUES } from '@/lib/script/sceneMusicCues'
+import { MAX_BEATS_PER_MUSIC_CUE, MAX_MUSIC_CUES } from '@/lib/script/sceneMusicCues'
 import {
   ensureSceneBeats,
   embedCharacterIdsInSceneBeats,
@@ -1106,8 +1106,9 @@ SCENE ARC → BEATS (PLAN BEFORE YOU WRITE):
 • Across a movement boundary the story must visibly turn — that turn is why the boundary is there.
 
 SCORING THE SCENE ("musicCues" — OPTIONAL, WRITE ONLY WHERE MUSIC EARNS ITS PLACE):
-• A cue is a contiguous run of beats that plays under score, with "beatStart"/"beatEnd" as 0-based INCLUSIVE indices into beats[]. Cues must not overlap. At most ${MAX_MUSIC_CUES} per scene.
-• Score for CONTRAST, not for coverage. A cue that runs the whole scene marks nothing, because there is no silence for it to stand against. Most scenes want ONE or TWO cues; many want none at all.
+• A cue is a contiguous run of beats that plays under score, with "beatStart"/"beatEnd" as 0-based INCLUSIVE indices into beats[]. Cues must not overlap. Each cue covers at most ${MAX_BEATS_PER_MUSIC_CUE} beats. At most ${MAX_MUSIC_CUES} cues per scene.
+• A scored passage longer than ${MAX_BEATS_PER_MUSIC_CUE} beats is several back-to-back cues, not one long cue. Each of those cues has its own "intent" and "description", so the score can move with the emotion inside the passage — beats 0–2, then 3–5, then 6–8, then 9, never one cue from 0 through 9.
+• Score for CONTRAST, not for coverage. A cue that runs the whole scene marks nothing, because there is no silence for it to stand against. Most scenes want ONE or TWO scored passages; many want none at all. A passage may be several short cues.
 • Leave the scene's quietest work dry. Procedural exchanges, interrogations, and two people negotiating usually play harder without music under them.
 • Start a cue ON a turn — the beat where the audience learns something, loses ground, or sees the situation change. Music entering at that instant is what makes the turn land; music already playing through it does not.
 • OPENING ACTION is the one place a cue may start on beat 0: when the scene opens on a run of action beats with nobody speaking, the music IS the entrance, and dropping it out as the first line lands is itself the turn. Only when the opening is wordless — an opening built on dialogue takes the contrast rule above.
