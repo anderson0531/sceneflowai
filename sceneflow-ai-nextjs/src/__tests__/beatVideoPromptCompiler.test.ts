@@ -92,6 +92,56 @@ describe('compileBeatVideoPromptFromDirection', () => {
     expect(result.prompt).toBe(fallback.prompt)
   })
 
+  it('compiles a motion prompt from user beat direction and leaves the scene bundle behind', () => {
+    const directed: SceneBeat = {
+      ...dialogueBeat,
+      beatDirection: {
+        generatedBy: 'user',
+        shotType: 'Medium Close-Up',
+        cameraMovement: 'push-in',
+        blocking: 'screen-left, weight on the back foot',
+        frozenMoment: 'Sarah plants her feet at the doorway.',
+        emotion: 'rising panic',
+      },
+    }
+    const direction: DetailedSceneDirection = {
+      camera: { shots: [], angle: '', movement: 'Dolly in', lensChoice: '', focus: '' },
+      lighting: {
+        overallMood: 'Low-Key',
+        timeOfDay: '',
+        keyLight: '',
+        fillLight: '',
+        backlight: '',
+        practicals: '',
+        colorTemperature: '',
+      },
+      scene: { location: '', keyProps: [], atmosphere: '' },
+      talent: { blocking: '', keyActions: [], emotionalBeat: '' },
+      audio: { priorities: '', considerations: '' },
+      segmentPromptBundle: [
+        {
+          timelineIndex: 0,
+          kind: 'dialogue',
+          character: 'SARAH',
+          lineText: 'We need to leave now.',
+          segmentDirectionSummary: 'Urgent escape beat.',
+          startFramePrompt: '',
+          endFramePrompt: '',
+          videoPrompt: 'Sarah turns sharply toward the exit with rising panic.',
+        },
+      ],
+    }
+
+    const result = compileBeatVideoPromptFromDirection(directed, direction)
+    expect(result.prompt).toContain('We need to leave now.')
+    expect(result.prompt).toContain('Sarah plants her feet at the doorway.')
+    expect(result.prompt).toContain('push-in')
+    expect(result.prompt).toContain('screen-left, weight on the back foot')
+    expect(result.prompt).toContain('Natural cinematic motion')
+    expect(result.prompt).not.toContain('turns sharply toward the exit')
+    expect(result.prompt).not.toContain('Urgent escape beat')
+  })
+
   it('skips redundant segmentDirectionSummary when it duplicates videoPrompt', () => {
     const direction: DetailedSceneDirection = {
       camera: { shots: [], angle: '', movement: 'Dolly in', lensChoice: '', focus: '' },

@@ -213,8 +213,82 @@ export function compileBeatVideoPrompt(
   return { prompt: prompt.trim(), negativePrompt }
 }
 
+const DIRECTION_OWNED_SOURCES = new Set(['user', 'planner', 'director'])
+
 /**
- * Prefer scene direction segmentPromptBundle video prompts; fall back to beat compiler.
+ * A Frame Direction save, the beat editor, and the planner write `generatedBy`.
+ * Those records are the clip's source. An older scene-bundle video prompt is
+ * only the core when direction was not written for this beat.
+ */
+export function beatDirectionOwnsVideoPrompt(beat: SceneBeat): boolean {
+  const source = beat.beatDirection?.generatedBy
+  return !!source && DIRECTION_OWNED_SOURCES.has(source)
+}
+
+function withoutTrailingStyle(prompt: string, styleSuffix: string): string {
+  if (!styleSuffix) return prompt.trim()
+  const trimmed = prompt.trim()
+  if (!trimmed.endsWith(styleSuffix)) return trimmed
+  return trimmed.slice(0, -styleSuffix.length).replace(/[.\s]+$/, '')
+}
+
+/**
+ * Motion prompt for a beat whose direction is the source of truth.
+ * Still generation keeps its own frozen-frame composer.
+ */
+function compileOwnedBeatVideoPrompt(
+  beat: SceneBeat,
+  sceneDirection: DetailedSceneDirection | null | undefined,
+  options: {
+    artStyleId?: string
+    excerpt?: string
+    musicCue?: SceneMusicCue
+  } | undefined,
+  styleSuffix: string,
+  styleNegative: string,
+  steer: string
+): BeatVideoPromptResult {
+  const base = compileBeatVideoPrompt(beat, {
+    artStyleId: options?.artStyleId,
+    excerpt: options?.excerpt,
+  })
+  let core = withoutTrailingStyle(base.prompt, styleSuffix)
+  const direction = beat.beatDirection
+  const facets = [
+    direction?.shotType,
+    direction?.cameraAngle,
+    direction?.cameraMovement,
+    direction?.blocking,
+    direction?.emotion,
+    direction?.gaze,
+    direction?.propInteraction,
+    direction?.lightingAccent,
+    direction?.frozenMoment,
+    direction?.keyProps?.filter(Boolean).join(', '),
+    direction?.castInFrame?.filter(Boolean).join(', '),
+  ]
+  for (const facet of facets) {
+    const piece = facet?.trim()
+    if (!piece || tokenAlreadyInPrompt(piece, core)) continue
+    core = normalizePromptJoin(core, piece)
+  }
+  if (!/cinematic motion/i.test(core)) {
+    core = normalizePromptJoin(core, 'Natural cinematic motion')
+  }
+  const hints = sceneDirectionMotionHints(sceneDirection, core)
+  if (hints) core = normalizePromptJoin(core, hints)
+  return {
+    prompt: normalizePromptJoin(core, steer, styleSuffix),
+    negativePrompt: `${BASE_NEGATIVES}, ${styleNegative}`,
+  }
+}
+
+/**
+ * Clip prompt from the current beat.
+ *
+ * User, planner, and director writes compile a motion prompt from the beat
+ * (spoken line or action, plus the direction facets). A scene-bundle
+ * videoPrompt is the core only when this beat has no such write.
  */
 export function compileBeatVideoPromptFromDirection(
   beat: SceneBeat,
@@ -230,6 +304,17 @@ export function compileBeatVideoPromptFromDirection(
   const styleSuffix = getArtStylePromptSuffix(artStyleId)
   const styleNegative = getArtStyleNegativeTerms(artStyleId)
   const steer = formatMusicCueSteer(options?.musicCue)
+  if (beatDirectionOwnsVideoPrompt(beat)) {
+    return compileOwnedBeatVideoPrompt(
+      beat,
+      sceneDirection,
+      options,
+      styleSuffix,
+      styleNegative,
+      steer
+    )
+  }
+
   const entry = findBundleEntryForBeat(
     beat,
     sceneDirection?.segmentPromptBundle

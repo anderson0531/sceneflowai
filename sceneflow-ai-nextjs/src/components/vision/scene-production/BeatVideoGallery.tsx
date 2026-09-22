@@ -260,12 +260,18 @@ export function BeatVideoGallery({
           </div>
 
           <div className="ml-[calc(30%+0.75rem)] flex min-w-0 flex-col gap-2">
+            <p className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
+              Start frame
+            </p>
             <div className="overflow-hidden rounded-lg border border-slate-700/40 bg-gray-800/50">
               {preview?.beatId && (onRegenerateStill || onDirectStill || onDirectorStill || onUploadStill || onEditStill) ? (
                 <SceneImageFrame
                   sceneIdx={0}
                   sceneNumber={preview.beatNumber}
-                  label=""
+                  label="Start frame"
+                  generateTitle={
+                    preview.thumbnailUrl ? 'Regenerate start frame' : 'Generate start frame'
+                  }
                   imageUrl={preview.thumbnailUrl}
                   imagePrompt={preview.prompt}
                   showControls
@@ -370,7 +376,7 @@ export function BeatVideoGallery({
                         onClick={() => onGenerateClip(previewSegment)}
                       >
                         <Wand2 className="mr-1 h-3 w-3" />
-                        {previewComplete ? 'Regenerate' : 'Generate'}
+                        {previewComplete ? 'Regenerate video' : 'Generate video'}
                       </Button>
                     )}
                     {onTake && (

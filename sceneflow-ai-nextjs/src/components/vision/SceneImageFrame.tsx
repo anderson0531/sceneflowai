@@ -62,6 +62,8 @@ export interface SceneImageFrameProps {
   expandable?: boolean
   /** Override empty-state primary button label (e.g. Generate Scene). */
   generateLabel?: string
+  /** Override the still-generate control title (e.g. Generate start frame). */
+  generateTitle?: string
   /** Use Zap icon instead of Sparkles on the empty-state generate button. */
   useExpressGenerateIcon?: boolean
   /** Persisted generation error when this frame failed Express/manual gen. */
@@ -128,6 +130,7 @@ function CompactActionBar({
   alwaysVisible = false,
   controlsVariant = 'compact',
   generateBlockedReason,
+  generateTitle,
 }: {
   hasImage: boolean
   imageUrl?: string | null
@@ -143,6 +146,7 @@ function CompactActionBar({
   alwaysVisible?: boolean
   controlsVariant?: 'compact' | 'comfortable'
   generateBlockedReason?: string
+  generateTitle?: string
 }) {
   const iconClass =
     controlsVariant === 'comfortable' ? 'w-5 h-5 text-white' : 'w-3.5 h-3.5 text-white'
@@ -163,7 +167,11 @@ function CompactActionBar({
           onGenerate()
         }}
         disabled={isGenerating || !!generateBlockedReason}
-        title={generateBlockedReason || (hasImage ? 'Regenerate' : 'Generate')}
+        title={
+          generateBlockedReason ||
+          generateTitle ||
+          (hasImage ? 'Regenerate' : 'Generate')
+        }
         className="bg-indigo-600/90 hover:bg-indigo-500"
         size={buttonSize}
       >
@@ -322,6 +330,7 @@ export function SceneImageFrame({
   promptLineClamp,
   expandable = false,
   generateLabel,
+  generateTitle,
   useExpressGenerateIcon = false,
   imageError,
   promptChanged = false,
@@ -499,6 +508,7 @@ export function SceneImageFrame({
                 alwaysVisible={alwaysShowControls}
                 controlsVariant={controlsVariant}
                 generateBlockedReason={generateBlockedReason}
+                generateTitle={generateTitle}
               />
             ) : showControls && !useOverlayControls ? (
               <AnimatePresence>
@@ -518,7 +528,7 @@ export function SceneImageFrame({
                       }}
                       disabled={isGenerating || !!generateBlockedReason}
                       className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
-                      title={generateBlockedReason || 'Generate new image'}
+                      title={generateBlockedReason || generateTitle || 'Generate new image'}
                     >
                       {isGenerating ? (
                         <Loader2 className="w-5 h-5 text-white animate-spin" />
@@ -627,6 +637,7 @@ export function SceneImageFrame({
                 alwaysVisible
                 controlsVariant={controlsVariant}
                 generateBlockedReason={generateBlockedReason}
+                generateTitle={generateTitle}
               />
             )}
           </div>
