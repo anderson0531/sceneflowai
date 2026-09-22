@@ -39,6 +39,13 @@ import {
   sceneHasStalePromptKeys,
 } from '@/lib/storyboard/preVisSync'
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
+import {
+  frameMatchesFilters,
+  type FrameAttentionFilter,
+  type FrameListFacts,
+  type FrameTypeFilter,
+} from '@/lib/vision/frameListFilters'
+import { StatusFilterBar } from '@/components/vision/StatusFilterBar'
 import { countDraftStoryboardFrames, type StoryboardQuality } from '@/lib/storyboard/storyboardQuality'
 import { StoryboardQualityToggle } from './StoryboardQualityToggle'
 import { StoryboardGenerationModeToggle } from './StoryboardGenerationModeToggle'
@@ -427,6 +434,8 @@ export function SceneStoryboardFrameViewer({
   const tStillPolicy = useTranslations('production.direction.stillPolicy')
   const [collapsed, setCollapsed] = useState(false)
   const [selectedFrameKey, setSelectedFrameKey] = useState<string | null>(null)
+  const [frameAttention, setFrameAttention] = useState<FrameAttentionFilter>('all')
+  const [frameType, setFrameType] = useState<FrameTypeFilter>('all')
   const [generatingDialogueFrames, setGeneratingDialogueFrames] = useState<Set<string>>(new Set())
   const [generatingCustomFrames, setGeneratingCustomFrames] = useState<Set<string>>(new Set())
   const [expressSceneDialogOpen, setExpressSceneDialogOpen] = useState(false)
@@ -472,6 +481,28 @@ export function SceneStoryboardFrameViewer({
     },
     [sceneBeats]
   )
+  const frameFacts = useMemo<FrameListFacts[]>(
+    () =>
+      frameSlots.map((slot) => ({
+        key: slot.key,
+        kind: slot.kind,
+        imageTier: slot.imageTier,
+        isMissing: slot.isMissing,
+        isPlaceholder: slot.isPlaceholder,
+        promptChanged: slotPromptChanged(slot),
+        hasImageError: !!slot.imageError?.trim(),
+        hasOwnImage: !!slot.ownImageUrl,
+      })),
+    [frameSlots, slotPromptChanged]
+  )
+  const visibleFrameSlots = useMemo(
+    () =>
+      frameSlots.filter((slot) => {
+        const facts = frameFacts.find((entry) => entry.key === slot.key)
+        return facts ? frameMatchesFilters(facts, frameAttention, frameType) : true
+      }),
+    [frameSlots, frameFacts, frameAttention, frameType]
+  )
   const isFirstTimeFrameGeneration = useMemo(
     () => sceneHasNoOwnedBeatImages(scene),
     [scene]
@@ -483,10 +514,17 @@ export function SceneStoryboardFrameViewer({
     setSelectedFrameKey(frameSlots[0]?.key ?? null)
   }, [sceneKey, frameSlots])
 
+  useEffect(() => {
+    if (visibleFrameSlots.length === 0) return
+    if (!visibleFrameSlots.some((slot) => slot.key === selectedFrameKey)) {
+      setSelectedFrameKey(visibleFrameSlots[0].key)
+    }
+  }, [visibleFrameSlots, selectedFrameKey])
+
   const previewSlot = useMemo(() => {
-    if (frameSlots.length === 0) return null
-    return frameSlots.find((slot) => slot.key === selectedFrameKey) ?? frameSlots[0]
-  }, [frameSlots, selectedFrameKey])
+    if (visibleFrameSlots.length === 0) return null
+    return visibleFrameSlots.find((slot) => slot.key === selectedFrameKey) ?? visibleFrameSlots[0]
+  }, [visibleFrameSlots, selectedFrameKey])
 
   const previewBeatKenBurns = useMemo(() => {
     if (!previewSlot?.beatId) return undefined
@@ -1052,6 +1090,54 @@ export function SceneStoryboardFrameViewer({
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <StatusFilterBar
+                  label="Show"
+                  chips={(
+                    [
+                      ['all', 'All'],
+                      ['needs_action', 'Needs action'],
+                      ['final', 'Final'],
+                      ['draft', 'Draft'],
+                      ['prompt_changed', 'Prompt changed'],
+                      ['missing', 'Missing'],
+                      ['placeholder', 'Placeholder'],
+                    ] as Array<[FrameAttentionFilter, string]>
+                  ).map(([id, label]) => ({
+                    id,
+                    label,
+                    active: frameAttention === id,
+                    count:
+                      id === 'all'
+                        ? frameFacts.length
+                        : frameFacts.filter((facts) => frameMatchesFilters(facts, id, frameType)).length,
+                  }))}
+                  onSelect={(id) => setFrameAttention(id as FrameAttentionFilter)}
+                />
+                <StatusFilterBar
+                  label="Type"
+                  chips={(
+                    [
+                      ['all', 'All'],
+                      ['action', 'Action'],
+                      ['dialogue', 'Dialogue'],
+                      ...(frameFacts.some((facts) => facts.kind === 'narration')
+                        ? [['narration', 'Narration'] as [FrameTypeFilter, string]]
+                        : []),
+                    ] as Array<[FrameTypeFilter, string]>
+                  ).map(([id, label]) => ({
+                    id,
+                    label,
+                    active: frameType === id,
+                    count:
+                      id === 'all'
+                        ? frameFacts.length
+                        : frameFacts.filter((facts) => frameMatchesFilters(facts, frameAttention, id)).length,
+                  }))}
+                  onSelect={(id) => setFrameType(id as FrameTypeFilter)}
+                />
+              </div>
+
               <div className="relative">
                 <div
                   ref={thumbnailScrollRef}
@@ -1059,7 +1145,10 @@ export function SceneStoryboardFrameViewer({
                   onPointerDown={handleThumbnailPointerDown}
                   onClickCapture={handleThumbnailClickCapture}
                 >
-                  {frameSlots.map((slot) => (
+                  {visibleFrameSlots.length === 0 ? (
+                    <p className="col-span-2 text-[10px] text-slate-500 px-1">No frames match these filters.</p>
+                  ) : null}
+                  {visibleFrameSlots.map((slot) => (
                     <div key={slot.key} className="relative w-full">
                       <SceneImageFrame
                         {...buildStoryboardSlotFrameProps(
