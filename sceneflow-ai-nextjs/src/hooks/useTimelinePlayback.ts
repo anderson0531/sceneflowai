@@ -35,6 +35,7 @@ import {
   holdElapsedForUnreadyStill,
   isAnimaticStillReady,
   resolvePendingStillClip,
+  stillReadyTimeoutSec,
   type StillGatedClip,
 } from '@/lib/storyboard/stillReadyGate'
 import {
@@ -513,6 +514,7 @@ export function useTimelinePlayback({
         stillReady: !pending || isReady(pending),
         holdStartedAtMs: stillHoldStartedAtRef.current,
         nowMs,
+        timeoutSec: stillReadyTimeoutSec(pending?.startTime),
       })
       stillHoldStartedAtRef.current = hold.holdStartedAtMs
       holdingStill = hold.holding

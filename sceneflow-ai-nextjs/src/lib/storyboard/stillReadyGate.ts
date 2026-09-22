@@ -3,12 +3,25 @@
  *
  * Stage images remount per beat; audio used to start on the clock while the
  * new still was still loading. Holding elapsed (and skipping new clip starts)
- * keeps picture and sound together. Empty URLs and a short timeout fail open
- * so a broken still cannot freeze the room.
+ * keeps picture and sound together. Empty URLs fail open immediately. Beat 1
+ * waits longer than later cuts, then both fail open so a broken still cannot
+ * freeze the room.
  */
 
-export const ANIMATIC_STILL_READY_TIMEOUT_SEC = 2.5
+/** Beat 1 may wait out a cold optimizer fetch before any audio starts. */
+export const ANIMATIC_OPENING_STILL_READY_TIMEOUT_SEC = 8
+/** Later beats hold the previous frame, then fail open so a broken URL cannot freeze the room. */
+export const ANIMATIC_LATER_STILL_READY_TIMEOUT_SEC = 4
+export const ANIMATIC_STILL_READY_TIMEOUT_SEC = ANIMATIC_LATER_STILL_READY_TIMEOUT_SEC
 export const STILL_HOLD_EPSILON_SEC = 0.001
+
+/** Opening frame (start at 0) uses the longer hold. Every later cut uses the shorter one. */
+export function stillReadyTimeoutSec(pendingClipStartTime: number | undefined): number {
+  if (pendingClipStartTime == null || pendingClipStartTime <= STILL_HOLD_EPSILON_SEC) {
+    return ANIMATIC_OPENING_STILL_READY_TIMEOUT_SEC
+  }
+  return ANIMATIC_LATER_STILL_READY_TIMEOUT_SEC
+}
 
 export interface StillGatedClip {
   id: string
@@ -67,7 +80,7 @@ export function holdElapsedForUnreadyStill(input: {
   nowMs: number
   timeoutSec?: number
 }): { elapsed: number; holding: boolean; holdStartedAtMs: number | null } {
-  const timeoutSec = input.timeoutSec ?? ANIMATIC_STILL_READY_TIMEOUT_SEC
+  const timeoutSec = input.timeoutSec ?? stillReadyTimeoutSec(input.pendingClipStartTime)
   if (input.stillReady || input.pendingClipStartTime === undefined) {
     return { elapsed: input.elapsed, holding: false, holdStartedAtMs: null }
   }

@@ -2,12 +2,15 @@ import { readFileSync } from 'fs'
 import path from 'path'
 import { describe, expect, it } from 'vitest'
 import {
+  ANIMATIC_LATER_STILL_READY_TIMEOUT_SEC,
+  ANIMATIC_OPENING_STILL_READY_TIMEOUT_SEC,
   ANIMATIC_STILL_READY_TIMEOUT_SEC,
   STILL_HOLD_EPSILON_SEC,
   findVisualClipAtTime,
   holdElapsedForUnreadyStill,
   isAnimaticStillReady,
   resolvePendingStillClip,
+  stillReadyTimeoutSec,
   type StillGatedClip,
 } from '@/lib/storyboard/stillReadyGate'
 
@@ -64,6 +67,30 @@ describe('holdElapsedForUnreadyStill', () => {
     expect(held.elapsed).toBeCloseTo(10 - STILL_HOLD_EPSILON_SEC, 8)
   })
 
+  it('keeps holding beat 1 past the old 2.5s cap', () => {
+    const held = holdElapsedForUnreadyStill({
+      elapsed: 3,
+      pendingClipStartTime: 0,
+      stillReady: false,
+      holdStartedAtMs: 0,
+      nowMs: 3000,
+    })
+    expect(held.holding).toBe(true)
+    expect(held.elapsed).toBe(0)
+  })
+
+  it('fails open on beat 1 after the opening timeout', () => {
+    const held = holdElapsedForUnreadyStill({
+      elapsed: 3,
+      pendingClipStartTime: 0,
+      stillReady: false,
+      holdStartedAtMs: 0,
+      nowMs: ANIMATIC_OPENING_STILL_READY_TIMEOUT_SEC * 1000 + 1,
+    })
+    expect(held.holding).toBe(false)
+    expect(held.elapsed).toBe(3)
+  })
+
   it('fails open after the timeout so a broken URL cannot freeze the room', () => {
     const held = holdElapsedForUnreadyStill({
       elapsed: 10.05,
@@ -105,19 +132,32 @@ describe('resolvePendingStillClip', () => {
   })
 })
 
+describe('stillReadyTimeoutSec', () => {
+  it('gives beat 1 the long hold and later beats the short one', () => {
+    expect(stillReadyTimeoutSec(0)).toBe(ANIMATIC_OPENING_STILL_READY_TIMEOUT_SEC)
+    expect(stillReadyTimeoutSec(undefined)).toBe(ANIMATIC_OPENING_STILL_READY_TIMEOUT_SEC)
+    expect(stillReadyTimeoutSec(10)).toBe(ANIMATIC_LATER_STILL_READY_TIMEOUT_SEC)
+    expect(ANIMATIC_STILL_READY_TIMEOUT_SEC).toBe(ANIMATIC_LATER_STILL_READY_TIMEOUT_SEC)
+  })
+})
+
 describe('still-ready gate wiring', () => {
-  it('Screening Room reports still load/error and preloads the next frame', () => {
+  it('Screening Room reports still load/error and preloads the display bitmap', () => {
     const player = readSource('src/components/vision/AudioGalleryPlayer.tsx')
-    expect(player).toContain('reportStillStatus(url, true)')
+    expect(player).toContain('noteStillDecoded(url)')
     expect(player).toContain('reportStillStatus(url, false)')
-    expect(player).toContain('nextStillUrl')
-    expect(player).toContain('onLoad={() => reportStillStatus(nextStillUrl, true)}')
+    expect(player).toContain('preloadPlayerStill')
+    expect(player).toContain('selectPlayerPreloadUrls')
+    expect(player).not.toContain('nextStillUrl')
+    expect(player).toContain('holdOpeningFrame')
+    expect(player).toContain('Loading frame…')
   })
 
   it('animatic playback stalls the clock until the still is ready', () => {
     const timeline = readSource('src/hooks/useTimelinePlayback.ts')
     expect(timeline).toContain('gateOnStillReady')
     expect(timeline).toContain('holdElapsedForUnreadyStill')
+    expect(timeline).toContain('stillReadyTimeoutSec(pending?.startTime)')
     expect(timeline).toContain('if (holdingStill) return')
     const storyboard = readSource('src/hooks/useStoryboardPlayback.ts')
     expect(storyboard).toContain('gateOnStillReady: true')
