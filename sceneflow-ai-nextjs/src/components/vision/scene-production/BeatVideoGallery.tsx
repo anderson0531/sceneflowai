@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, Camera, Film, PlayCircle, Settings2, Upload, Wand2 } from 'lucide-react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { AlertTriangle, Camera, Film, Pause, PlayCircle, Settings2, Upload, Wand2 } from 'lucide-react''
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { SceneImageFrame } from '@/components/vision/SceneImageFrame'
@@ -57,6 +57,7 @@ interface BeatVideoGalleryProps {
   readOnlyPrompts?: boolean
   renderedCount: number
   totalCount: number
+  /** Unused for selected-beat preview (plays inline). Play Beats still opens SceneVideoPlayer. */
   onPlay?: (segment: SceneSegment) => void
   onTake?: (segment: SceneSegment) => void
   onUpload?: (segmentId: string, file: File) => void
@@ -87,7 +88,6 @@ export function BeatVideoGallery({
   readOnlyPrompts = false,
   renderedCount,
   totalCount,
-  onPlay,
   onTake,
   onUpload,
   onRetake,
@@ -103,6 +103,8 @@ export function BeatVideoGallery({
   const [selectedKey, setSelectedKey] = useState<string | null>(clips[0]?.key ?? null)
   const [attention, setAttention] = useState<VideoAttentionFilter>('all')
   const [quality, setQuality] = useState<VideoQualityFilter>('all')
+  const [isPreviewPlaying, setIsPreviewPlaying] = useState(false)
+  const previewVideoRef = useRef<HTMLVideoElement>(null)
 
   const clipFacts = useMemo<VideoClipFacts[]>(
     () =>
@@ -144,6 +146,34 @@ export function BeatVideoGallery({
   const previewStatus = clipStatus(preview?.queueItem)
   const previewComplete = preview?.queueItem?.status === 'complete'
   const previewSegment = preview?.segment
+  const previewVideoUrl =
+    previewComplete &&
+    previewSegment?.assetType === 'video' &&
+    previewSegment.activeAssetUrl?.trim()
+      ? previewSegment.activeAssetUrl
+      : undefined
+
+  useEffect(() => {
+    setIsPreviewPlaying(false)
+    const el = previewVideoRef.current
+    if (!el) return
+    el.pause()
+    try {
+      el.currentTime = 0
+    } catch {
+      /* metadata may not be ready yet */
+    }
+  }, [selectedKey, previewVideoUrl])
+
+  const togglePreviewPlayback = () => {
+    const el = previewVideoRef.current
+    if (!el || !previewVideoUrl) return
+    if (el.paused) {
+      void el.play()
+      return
+    }
+    el.pause()
+  }
 
   return (
     <div id="beat-video-gallery" className="space-y-3">
@@ -263,10 +293,37 @@ export function BeatVideoGallery({
 
           <div className="ml-[calc(30%+0.75rem)] flex min-w-0 flex-col gap-2">
             <p className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
-              Start frame
+              {previewVideoUrl ? 'Clip preview' : 'Start frame'}
             </p>
             <div className="overflow-hidden rounded-lg border border-slate-700/40 bg-gray-800/50">
-              {preview?.thumbnailUrl && previewSegment ? (
+              {previewVideoUrl ? (
+                <div className={cn('relative bg-black', aspectClass)}>
+                  <video
+                    key={previewVideoUrl}
+                    ref={previewVideoRef}
+                    src={previewVideoUrl}
+                    poster={preview?.thumbnailUrl}
+                    className="pointer-events-none h-full w-full object-contain"
+                    playsInline
+                    preload="metadata"
+                    onEnded={() => setIsPreviewPlaying(false)}
+                    onPlay={() => setIsPreviewPlaying(true)}
+                    onPause={() => setIsPreviewPlaying(false)}
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-0 z-10 flex items-center justify-center"
+                    onClick={togglePreviewPlayback}
+                    aria-label={isPreviewPlaying ? 'Pause clip preview' : 'Play clip preview'}
+                  >
+                    {!isPreviewPlaying && (
+                      <span className="rounded-full bg-black/60 p-3 text-white shadow-lg">
+                        <PlayCircle className="h-12 w-12" />
+                      </span>
+                    )}
+                  </button>
+                </div>
+              ) : preview?.thumbnailUrl && previewSegment ? (
                 <SceneImageFrame
                   sceneIdx={0}
                   sceneNumber={preview.beatNumber}
@@ -375,16 +432,20 @@ export function BeatVideoGallery({
                 )}
                 {previewSegment && preview.hasStartFrame && (
                   <div className="mt-2 flex flex-wrap items-center gap-2">
-                    {previewComplete && onPlay && (
+                    {previewVideoUrl && (
                       <Button
                         type="button"
                         size="sm"
                         variant="outline"
                         className="h-7 text-[10px]"
-                        onClick={() => onPlay(previewSegment)}
+                        onClick={togglePreviewPlayback}
                       >
-                        <PlayCircle className="mr-1 h-3 w-3" />
-                        Play
+                        {isPreviewPlaying ? (
+                          <Pause className="mr-1 h-3 w-3" />
+                        ) : (
+                          <PlayCircle className="mr-1 h-3 w-3" />
+                        )}
+                        {isPreviewPlaying ? 'Pause' : 'Play'}
                       </Button>
                     )}
                     {onGenerateClip && (

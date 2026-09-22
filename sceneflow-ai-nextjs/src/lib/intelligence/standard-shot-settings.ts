@@ -5,11 +5,13 @@
 
 import type { VideoGenerationMethod } from '@/components/vision/scene-production/types'
 import {
-  clampToVeoClipDuration,
   type GeminiThinkingLevel,
   type VeoClipDuration,
 } from '@/lib/config/modelConfig'
 import { detectSceneType } from '@/lib/intelligence/scene-direction-metadata'
+
+/** Omni Flash Standard clips are 10s (`resolveVideoModel` routes duration 10 to Omni). */
+export const STANDARD_TAKE_DURATION_SECONDS: VeoClipDuration = 10
 
 export type OmniVideoResolution = '360p' | '720p' | '1080p' | '4k'
 
@@ -89,13 +91,7 @@ export function optimizeStandardOmniSettings(
     method = 'REF'
   }
 
-  let duration: VeoClipDuration = 10
-  if (method === 'EXT') {
-    duration = 10
-  } else {
-    const base = input.spokenDurationSeconds ?? (actionHeavy || multiShot ? 8 : 6)
-    duration = clampToVeoClipDuration(base)
-  }
+  const duration: VeoClipDuration = STANDARD_TAKE_DURATION_SECONDS
 
   let resolution: OmniVideoResolution = '720p'
   if (sceneType === 'establishing') {

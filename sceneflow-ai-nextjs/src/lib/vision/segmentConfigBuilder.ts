@@ -40,8 +40,7 @@ import type { VisualReference } from '@/types/visionReferences'
 import { optimizeStandardOmniSettings } from '@/lib/intelligence/standard-shot-settings'
 import { isOmniInteractionContinuationRef } from '@/lib/config/modelConfig'
 
-/** Omni Flash Standard clips are 10s (`resolveVideoModel` routes duration 10 to Omni). */
-export const STANDARD_TAKE_DURATION_SECONDS = 10 as const
+export { STANDARD_TAKE_DURATION_SECONDS } from '@/lib/intelligence/standard-shot-settings'
 
 /** Scene script + audio fields used to auto-build Veo guide text for batch generate */
 export type SegmentGuideContext = {
