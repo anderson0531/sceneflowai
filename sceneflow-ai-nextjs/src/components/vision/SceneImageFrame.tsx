@@ -64,6 +64,16 @@ export interface SceneImageFrameProps {
   generateLabel?: string
   /** Override the still-generate control title (e.g. Generate start frame). */
   generateTitle?: string
+  /** Amber control title. Pre-Vis default is Direct Frame; Video passes Direct Video. */
+  directTitle?: string
+  /** Teal control title. Pre-Vis default is Director; Video passes Direction. */
+  directorTitle?: string
+  /** Purple edit control title. */
+  editTitle?: string
+  /** Upload control title. */
+  uploadTitle?: string
+  /** File picker filter. Pre-Vis stays image/*; Video passes video/*. */
+  uploadAccept?: string
   /** Use Zap icon instead of Sparkles on the empty-state generate button. */
   useExpressGenerateIcon?: boolean
   /** Persisted generation error when this frame failed Express/manual gen. */
@@ -131,6 +141,10 @@ function CompactActionBar({
   controlsVariant = 'compact',
   generateBlockedReason,
   generateTitle,
+  directTitle,
+  directorTitle,
+  editTitle,
+  uploadTitle,
 }: {
   hasImage: boolean
   imageUrl?: string | null
@@ -147,6 +161,10 @@ function CompactActionBar({
   controlsVariant?: 'compact' | 'comfortable'
   generateBlockedReason?: string
   generateTitle?: string
+  directTitle?: string
+  directorTitle?: string
+  editTitle?: string
+  uploadTitle?: string
 }) {
   const iconClass =
     controlsVariant === 'comfortable' ? 'w-5 h-5 text-white' : 'w-3.5 h-3.5 text-white'
@@ -191,7 +209,7 @@ function CompactActionBar({
             onDirect()
           }}
           disabled={isGenerating || !!generateBlockedReason}
-          title={generateBlockedReason || 'Direct Frame'}
+          title={generateBlockedReason || directTitle || 'Direct Frame'}
           className="bg-amber-600/90 hover:bg-amber-500"
           size={buttonSize}
         >
@@ -206,7 +224,7 @@ function CompactActionBar({
             onDirector()
           }}
           disabled={isGenerating || !!generateBlockedReason}
-          title={generateBlockedReason || 'Director'}
+          title={generateBlockedReason || directorTitle || 'Director'}
           className="bg-teal-600/90 hover:bg-teal-500"
           size={buttonSize}
         >
@@ -220,7 +238,7 @@ function CompactActionBar({
             e.stopPropagation()
             onEdit(imageUrl)
           }}
-          title="Edit"
+          title={editTitle || 'Edit'}
           className="bg-purple-600/90 hover:bg-purple-500"
           size={buttonSize}
         >
@@ -247,7 +265,7 @@ function CompactActionBar({
           e.stopPropagation()
           onUpload()
         }}
-        title="Upload"
+        title={uploadTitle || 'Upload'}
         className="bg-emerald-600/90 hover:bg-emerald-500"
         size={buttonSize}
       >
@@ -331,6 +349,11 @@ export function SceneImageFrame({
   expandable = false,
   generateLabel,
   generateTitle,
+  directTitle,
+  directorTitle,
+  editTitle,
+  uploadTitle,
+  uploadAccept = 'image/*',
   useExpressGenerateIcon = false,
   imageError,
   promptChanged = false,
@@ -363,7 +386,13 @@ export function SceneImageFrame({
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      if (!file.type.startsWith('image/')) {
+      const expectsVideo = uploadAccept.includes('video')
+      if (expectsVideo) {
+        if (!file.type.startsWith('video/')) {
+          toast.error('Please select a video file')
+          return
+        }
+      } else if (!file.type.startsWith('image/')) {
         toast.error('Please select an image file')
         return
       }
@@ -404,7 +433,7 @@ export function SceneImageFrame({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept={uploadAccept}
         className="hidden"
         onChange={handleFileSelect}
       />
@@ -509,6 +538,10 @@ export function SceneImageFrame({
                 controlsVariant={controlsVariant}
                 generateBlockedReason={generateBlockedReason}
                 generateTitle={generateTitle}
+                directTitle={directTitle}
+                directorTitle={directorTitle}
+                editTitle={editTitle}
+                uploadTitle={uploadTitle}
               />
             ) : showControls && !useOverlayControls ? (
               <AnimatePresence>
@@ -545,7 +578,7 @@ export function SceneImageFrame({
                         }}
                         disabled={isGenerating || !!generateBlockedReason}
                         className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
-                        title={generateBlockedReason || 'Direct Frame'}
+                        title={generateBlockedReason || directTitle || 'Direct Frame'}
                       >
                         <SlidersHorizontal className="w-5 h-5 text-white" />
                       </button>
@@ -559,7 +592,7 @@ export function SceneImageFrame({
                         }}
                         disabled={isGenerating || !!generateBlockedReason}
                         className="p-3 bg-teal-600/80 hover:bg-teal-600 rounded-full transition-colors disabled:opacity-50"
-                        title={generateBlockedReason || 'Director'}
+                        title={generateBlockedReason || directorTitle || 'Director'}
                       >
                         <Clapperboard className="w-5 h-5 text-white" />
                       </button>
@@ -572,7 +605,7 @@ export function SceneImageFrame({
                           onEdit(imageUrl)
                         }}
                         className="p-3 bg-purple-600/80 hover:bg-purple-600 rounded-full transition-colors"
-                        title="Edit"
+                        title={editTitle || 'Edit'}
                       >
                         <Wand2 className="w-5 h-5 text-white" />
                       </button>
@@ -597,7 +630,7 @@ export function SceneImageFrame({
                         triggerUpload()
                       }}
                       className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors"
-                      title="Upload image"
+                      title={uploadTitle || 'Upload image'}
                     >
                       <Upload className="w-5 h-5 text-white" />
                     </button>
@@ -638,6 +671,10 @@ export function SceneImageFrame({
                 controlsVariant={controlsVariant}
                 generateBlockedReason={generateBlockedReason}
                 generateTitle={generateTitle}
+                directTitle={directTitle}
+                directorTitle={directorTitle}
+                editTitle={editTitle}
+                uploadTitle={uploadTitle}
               />
             )}
           </div>

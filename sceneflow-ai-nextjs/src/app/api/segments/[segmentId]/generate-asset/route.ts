@@ -38,7 +38,11 @@ import type { StemSeparationResult } from '@/lib/audio/stemSeparation'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { extractVeoRaiDetailsFromErrorString } from '@/lib/vertexai/safety'
 import { normalizeReferenceImages, shouldRelabelRefs, type VeoReferenceImage } from '@/lib/video/normalizeReferenceImages'
-import { resolveBeatVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
+import { resolveBeatVideoReferences, resolveBeatElementSelection } from '@/lib/vision/resolveBeatVideoReferences'
+import {
+  findSceneById,
+  getVisionScriptScenes,
+} from '@/lib/script/resolveSceneById'
 import {
   collectKlingElementSources,
   injectElementTagsIntoPrompt,
@@ -203,9 +207,9 @@ export async function POST(
     const resolvedVideoProvider =
       videoProvider === 'aggregator'
         ? 'aggregator'
-        : videoProvider === 'vertex'
-          ? 'vertex'
-          : 'kling'
+        : videoProvider === 'kling'
+          ? 'kling'
+          : 'vertex'
 
     if (
       routeProbe === true &&
@@ -261,14 +265,10 @@ export async function POST(
     if (isBeatFirstPipelineEnabled()) {
       await sequelize.authenticate()
       const project = await Project.findByPk(projectId)
-      const scenes =
-        project?.metadata?.visionPhase?.script?.script?.scenes ||
-        project?.metadata?.visionPhase?.script?.scenes ||
-        []
-      const sceneRecord = scenes.find(
-        (s: { id?: string; sceneNumber?: number }, idx: number) =>
-          s?.id === sceneId || String(s?.sceneNumber) === sceneId || String(idx) === sceneId
+      const scenes = getVisionScriptScenes(
+        project?.metadata?.visionPhase as Record<string, unknown> | undefined
       )
+      const { scene: sceneRecord } = findSceneById(scenes, sceneId)
       if (sceneRecord && !isStoryboardApproved(sceneRecord as Record<string, unknown>)) {
         return NextResponse.json(
           {
@@ -314,14 +314,10 @@ export async function POST(
       try {
         await sequelize.authenticate()
         const projectForRefs = await Project.findByPk(projectId)
-        const scenesForRefs =
-          projectForRefs?.metadata?.visionPhase?.script?.script?.scenes ||
-          projectForRefs?.metadata?.visionPhase?.script?.scenes ||
-          []
-        const sceneForRefs = scenesForRefs.find(
-          (s: { id?: string; sceneNumber?: number }, idx: number) =>
-            s?.id === sceneId || String(s?.sceneNumber) === sceneId || String(idx) === sceneId
+        const scenesForRefs = getVisionScriptScenes(
+          projectForRefs?.metadata?.visionPhase as Record<string, unknown> | undefined
         )
+        const { scene: sceneForRefs } = findSceneById(scenesForRefs, sceneId)
         const beats = sceneForRefs ? getSceneBeats(sceneForRefs as Record<string, unknown>) : []
         const beat = beats.find((b) => b.beatId === beatId)
         if (beat && sceneForRefs) {
@@ -423,36 +419,40 @@ export async function POST(
         try {
           await sequelize.authenticate()
           const projectForElements = await Project.findByPk(projectId)
-          const scenesForElements =
-            projectForElements?.metadata?.visionPhase?.script?.script?.scenes ||
-            projectForElements?.metadata?.visionPhase?.script?.scenes ||
-            []
-          const sceneForElements = scenesForElements.find(
-            (s: { id?: string; sceneNumber?: number }, idx: number) =>
-              s?.id === sceneId || String(s?.sceneNumber) === sceneId || String(idx) === sceneId
+          const scenesForElements = getVisionScriptScenes(
+            projectForElements?.metadata?.visionPhase as Record<string, unknown> | undefined
           )
+          const { scene: sceneForElements } = findSceneById(scenesForElements, sceneId)
           const beats = sceneForElements
             ? getSceneBeats(sceneForElements as Record<string, unknown>)
             : []
           const beat = beats.find((b) => b.beatId === beatId)
-          if (beat) {
-            const beatCharacterIds =
-              beat.referenceSelection?.characterIds?.length
-                ? beat.referenceSelection.characterIds
-                : beat.characterId
-                  ? [beat.characterId]
-                  : []
+          if (beat && sceneForElements) {
+            const visionMeta = (projectForElements?.metadata?.visionPhase || {}) as Record<
+              string,
+              unknown
+            >
+            const references = (visionMeta.references || {}) as {
+              objectReferences?: unknown[]
+              locationReferences?: unknown[]
+            }
+            const elementSelection = resolveBeatElementSelection({
+              scene: sceneForElements,
+              beat,
+              projectCharacters:
+                (visionMeta.characters as Array<{ id?: string; name?: string }>) || [],
+              locationReferences: (references.locationReferences || []) as never[],
+              objectReferences: (references.objectReferences || []) as never[],
+            })
             const sources = collectKlingElementSources({
-              characters: projectForElements?.metadata?.visionPhase?.characters || [],
-              characterIds: beatCharacterIds,
-              characterWardrobes: beat.referenceSelection?.characterWardrobes || [],
-              objectReferences:
-                projectForElements?.metadata?.visionPhase?.references?.objectReferences || [],
-              objectRefIds: beat.referenceSelection?.objectRefIds || [],
-              locationReferences:
-                projectForElements?.metadata?.visionPhase?.references?.locationReferences || [],
-              locationRefId: beat.referenceSelection?.locationRefId,
-              locationVersionId: beat.referenceSelection?.locationVersionId,
+              characters: (visionMeta.characters as never[]) || [],
+              characterIds: elementSelection.characterIds,
+              characterWardrobes: elementSelection.characterWardrobes,
+              objectReferences: (references.objectReferences || []) as never[],
+              objectRefIds: elementSelection.objectRefIds,
+              locationReferences: (references.locationReferences || []) as never[],
+              locationRefId: elementSelection.locationRefId,
+              locationVersionId: elementSelection.locationVersionId,
             })
             const resolvedElements = await resolveKlingElementsFromSources(
               sources,
@@ -599,6 +599,17 @@ export async function POST(
           videoModel: creditsModelId,
           generationProvider: 'aggregator',
           ...(modelUpgraded ? { modelUpgraded: true, selectedVideoModel: videoModel } : {}),
+        })
+      }
+
+      if (generationProvider === 'vertex' && !wasPolicyFallback) {
+        const vertexCredits =
+          qualityTier === 'premium' ? VIDEO_CREDITS.VEO_FAST : VIDEO_CREDITS.VEO_LITE
+        await CreditService.charge(String(session.user.id), vertexCredits, 'ai_usage', projectId, {
+          operation: 'vertex_video',
+          segmentId,
+          generationProvider: 'vertex',
+          qualityTier: qualityTier || 'fast',
         })
       }
 

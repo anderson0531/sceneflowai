@@ -347,16 +347,16 @@ describe('Still Director contracts', () => {
     expect(handler).toContain('locationReferences: verifiedRefs.locationReferences')
   })
 
-  it('overlay labels are Direct Frame, Director, then Edit', () => {
+  it('overlay defaults are Direct Frame, Director, then Edit', () => {
     const frame = readSource('src/components/vision/SceneImageFrame.tsx')
-    expect(frame).toContain("title={generateBlockedReason || 'Direct Frame'}")
-    expect(frame).toContain("title={generateBlockedReason || 'Director'}")
-    expect(frame).toContain('title="Edit"')
+    expect(frame).toContain("title={generateBlockedReason || directTitle || 'Direct Frame'}")
+    expect(frame).toContain("title={generateBlockedReason || directorTitle || 'Director'}")
+    expect(frame).toContain("title={editTitle || 'Edit'}")
     expect(frame).not.toContain('AI edit')
     expect(frame).not.toContain('Direct — prompt builder')
     expect(frame.indexOf('onDirect') ).toBeLessThan(frame.indexOf('onDirector'))
-    expect(frame.indexOf("title={generateBlockedReason || 'Director'}")).toBeLessThan(
-      frame.indexOf('title="Edit"')
+    expect(frame.indexOf("title={generateBlockedReason || directorTitle || 'Director'}")).toBeLessThan(
+      frame.indexOf("title={editTitle || 'Edit'}")
     )
   })
 })

@@ -56,6 +56,54 @@ export type ResolveBeatVideoReferencesArgs = {
   filmTitle?: string
 }
 
+/** Cast, location, and key props used for both Omni REF and Kling elements. */
+export function resolveBeatElementSelection(args: ResolveBeatVideoReferencesArgs): {
+  characterIds: string[]
+  characterWardrobes: Array<{ characterId: string; wardrobeId: string }>
+  objectRefIds: string[]
+  locationRefId?: string | null
+  locationVersionId?: string | null
+} {
+  const { scene, beat, sceneIndex, projectCharacters, locationReferences, objectReferences, filmTitle } =
+    args
+  if (!beat) {
+    return { characterIds: [], characterWardrobes: [], objectRefIds: [] }
+  }
+
+  const beatContext = resolveBeatFrameGenerationContext({
+    scene,
+    beat,
+    sceneIndex,
+    projectCharacters,
+    locationReferences,
+    objectReferences,
+    filmTitle,
+  })
+  const selection = shouldUseExplicitBeatReferences(beat)
+    ? beat.referenceSelection
+    : {
+        characterIds: beatContext.characterIds,
+        locationRefId: beatContext.locationRefId,
+        locationVersionId: beatContext.locationVersionId,
+        objectRefIds: beatContext.objectRefIds,
+        characterWardrobes: beatContext.characterWardrobes,
+      }
+
+  const characterIds = selection.characterIds?.length
+    ? [...selection.characterIds]
+    : beat.characterId
+      ? [beat.characterId]
+      : []
+
+  return {
+    characterIds,
+    characterWardrobes: selection.characterWardrobes ?? beatContext.characterWardrobes ?? [],
+    objectRefIds: selection.objectRefIds ?? [],
+    locationRefId: selection.locationRefId,
+    locationVersionId: selection.locationVersionId,
+  }
+}
+
 function findCharacterById(
   id: string,
   projectCharacters: ResolveBeatVideoReferencesArgs['projectCharacters']

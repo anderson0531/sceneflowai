@@ -281,7 +281,7 @@ export function validateMethodForContext(
         return {
           valid: false,
           error: 'REF requires at least one reference image',
-          suggestion: context.hasSceneImage ? 'I2V' : 'T2V',
+          suggestion: 'T2V',
         }
       }
       break
@@ -334,7 +334,17 @@ export function getMethodWithFallback(
     }
   }
   
-  // For other methods (REF, EXT), use suggestion or fall back to AUTO
+  // Explicit beat-first REF/T2V must not be rewritten to I2V because a scene image exists.
+  if (requestedMethod === 'REF' || requestedMethod === 'T2V') {
+    return {
+      method: 'T2V',
+      confidence: 0.7,
+      reasoning: `${validation.error || 'Beat-first method'}. Keeping text-to-video instead of animating a scene image.`,
+      warnings: validation.error ? [validation.error] : undefined,
+    }
+  }
+
+  // EXT without a Veo ref may use the suggested method. REF/T2V never reach this branch.
   if (validation.suggestion) {
     const fallbackResult = selectOptimalMethod(context)
     return {
