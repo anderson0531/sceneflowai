@@ -83,10 +83,13 @@ import {
 import { filmSceneIndices, isPromoCinematicScene } from '@/lib/publish/buildPromoScene'
 import {
   canOptimizePlayerStill,
+  playerStageSizes,
+  selectPlayerPreloadUrls,
   warnUnoptimizedPlayerStill,
   PLAYER_THUMBNAIL_HEIGHT,
   PLAYER_THUMBNAIL_WIDTH,
 } from '@/lib/storyboard/playerStillSource'
+import { preloadPlayerStill } from '@/lib/storyboard/playerStillPreload'
 import {
   noteScreeningDiagImageLoad,
   noteScreeningDiagRender,
@@ -266,7 +269,7 @@ interface AudioGalleryPlayerProps {
   expandHref?: string
   /** Landing full-width embed: use full pane width for scene image and controls. */
   fullWidthEmbed?: boolean
-  /** Landing use-case embed: show Screening Room title + Animatic/Video/Stream toolbar. */
+  /** Landing use-case embed: show Screening Room title + Pre-Vis/Video/Stream toolbar. */
   landingEmbedToolbar?: boolean
   /** Trigger full-project cloud animatic render (matches player timeline). */
   onGenVideo?: (language: string) => void | Promise<void>
@@ -364,6 +367,7 @@ export function AudioGalleryPlayer({
 }: AudioGalleryPlayerProps) {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
   const [playbackMode, setPlaybackMode] = useState<PreVisPlaybackMode>('animatic')
+  const [decodedStillUrls, setDecodedStillUrls] = useState<ReadonlySet<string>>(() => new Set())
   const [volume, setVolume] = useState(0.8)
   const initialSceneMix = sceneMixerTrackVolumes(
     sceneProductionState?.[resolveGallerySceneId(scenes[0], 0)],
@@ -640,6 +644,27 @@ export function AudioGalleryPlayer({
     reportStillStatus,
   } = playback
 
+  const noteStillDecoded = useCallback(
+    (url: string) => {
+      reportStillStatus(url, true)
+      const trimmed = url.trim()
+      if (!trimmed) return
+      setDecodedStillUrls((prev) => {
+        if (prev.has(trimmed)) return prev
+        const next = new Set(prev)
+        next.add(trimmed)
+        return next
+      })
+    },
+    [reportStillStatus]
+  )
+
+  const stageSizes = playerStageSizes({
+    isFullscreen,
+    screeningLayout: screeningLayout && !isFullscreen,
+    sharedOrEmbed: (isSharedView || embedMode) && !isFullscreen,
+  })
+
   pausePlaybackRef.current = pause
   resetPlaybackRef.current = reset
 
@@ -676,15 +701,34 @@ export function AudioGalleryPlayer({
   const displayImageUrl =
     currentVisualFrame?.imageUrl ?? getEstablishingFrameUrl(currentScene)
 
-  const nextStillUrl = useMemo(() => {
-    if (!currentVisualFrame || visualFrames.length === 0) return undefined
-    const idx = visualFrames.findIndex((frame) => frame.clipId === currentVisualFrame.clipId)
-    if (idx < 0 || idx >= visualFrames.length - 1) return undefined
-    const url = visualFrames[idx + 1]?.imageUrl?.trim()
-    const currentUrl = currentVisualFrame.imageUrl?.trim()
-    if (!url || url === currentUrl) return undefined
-    return url
+  const preloadUrls = useMemo(() => {
+    const start = currentVisualFrame
+      ? Math.max(
+          0,
+          visualFrames.findIndex((frame) => frame.clipId === currentVisualFrame.clipId)
+        )
+      : 0
+    return selectPlayerPreloadUrls(visualFrames.slice(start).map((frame) => frame.imageUrl))
   }, [currentVisualFrame, visualFrames])
+
+  const preloadKey = preloadUrls.join('\n')
+
+  useEffect(() => {
+    if (playbackMode !== 'animatic' || preloadUrls.length === 0) return
+    let cancelled = false
+    for (const url of preloadUrls) {
+      preloadPlayerStill(url, stageSizes)
+        .then(() => {
+          if (!cancelled) noteStillDecoded(url)
+        })
+        .catch(() => {
+          if (!cancelled) reportStillStatus(url, false)
+        })
+    }
+    return () => {
+      cancelled = true
+    }
+  }, [playbackMode, preloadKey, stageSizes, noteStillDecoded, reportStillStatus, preloadUrls])
 
   const screeningPosterMatchesPrimary =
     !!screeningPosterUrl &&
@@ -1003,8 +1047,14 @@ export function AudioGalleryPlayer({
     ? Math.max(videoDuration, 0.1)
     : sceneDuration
 
+  const openingStillUrl = visualFrames[0]?.imageUrl?.trim()
+  const openingStillReady = !openingStillUrl || decodedStillUrls.has(openingStillUrl)
+  const holdOpeningFrame = effectiveIsPlaying && effectiveCurrentTime < 0.1 && !openingStillReady
+
   const showPosterStill =
-    !effectiveIsPlaying && effectiveCurrentTime < 0.1 && !!screeningPosterUrl
+    !!screeningPosterUrl &&
+    effectiveCurrentTime < 0.1 &&
+    (!effectiveIsPlaying || holdOpeningFrame)
 
   const toggleEffectivePlayback = useCallback(() => {
     if (useMasterVideo || useVideoForCurrentScene) {
@@ -1102,7 +1152,7 @@ export function AudioGalleryPlayer({
     }
     const layerAlt = isPrevious ? '' : imageAlt
     const handleImageLoad = (img: HTMLImageElement) => {
-      reportStillStatus(url, true)
+      noteStillDecoded(url)
       noteScreeningDiagImageLoad({
         url,
         naturalWidth: img.naturalWidth,
@@ -1140,7 +1190,7 @@ export function AudioGalleryPlayer({
         alt={layerAlt}
         aria-hidden={isPrevious}
         fill
-        sizes="100vw"
+        sizes={stageSizes}
         // The stage is always on screen, and a lazy load would cost a frame at
         // every beat advance.
         loading="eager"
@@ -1207,10 +1257,10 @@ export function AudioGalleryPlayer({
                     : 'text-gray-400 hover:text-white'
                 )}
               >
-                Animatic
+                Pre-Vis
               </button>
             </TooltipTrigger>
-            <TooltipContent>Storyboard frames with synced audio</TooltipContent>
+            <TooltipContent>Pre-Vis frames with synced audio</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -1323,7 +1373,7 @@ export function AudioGalleryPlayer({
             className="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
           >
             <ExternalLink className="w-3 h-3" />
-            Animatic
+            Pre-Vis
           </a>
         )}
         {(onShare || onShareStream) && !isSharedView && (
@@ -1443,20 +1493,15 @@ export function AudioGalleryPlayer({
         </>
       ) : inBeatVisual.primaryUrl ? (
         <>
-          {nextStillUrl && (
-            <img
-              src={nextStillUrl}
-              alt=""
-              aria-hidden
-              className="pointer-events-none absolute w-px h-px opacity-0 overflow-hidden"
-              onLoad={() => reportStillStatus(nextStillUrl, true)}
-              onError={() => reportStillStatus(nextStillUrl, false)}
-            />
-          )}
           {crossfadeFromUrl && renderSceneImage(crossfadeFromUrl, 'previous')}
           {renderSceneImage(
             showPosterStill ? screeningPosterUrl! : inBeatVisual.primaryUrl,
             'current'
+          )}
+          {holdOpeningFrame && !showPosterStill && (
+            <div className="absolute inset-0 z-[3] flex items-center justify-center bg-black">
+              <span className="text-sm text-gray-400">Loading frame…</span>
+            </div>
           )}
           {inBeatVisual.fadeBlack > 0 && effectiveIsPlaying && (
             <div

@@ -3,8 +3,14 @@ import path from 'path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   canOptimizePlayerStill,
+  playerStageSizes,
   resetPlayerStillWarnings,
+  selectPlayerPreloadUrls,
   warnUnoptimizedPlayerStill,
+  PLAYER_FULLSCREEN_STAGE_SIZES,
+  PLAYER_GALLERY_STAGE_SIZES,
+  PLAYER_SCREENING_STAGE_SIZES,
+  PLAYER_SHARE_STAGE_SIZES,
   PLAYER_THUMBNAIL_HEIGHT,
   PLAYER_THUMBNAIL_WIDTH,
 } from '@/lib/storyboard/playerStillSource'
@@ -32,6 +38,38 @@ describe('canOptimizePlayerStill', () => {
     expect(canOptimizePlayerStill('/scene/still.jpg')).toBe(false)
     expect(canOptimizePlayerStill('')).toBe(false)
     expect(canOptimizePlayerStill(undefined)).toBe(false)
+  })
+})
+
+describe('playerStageSizes', () => {
+  it('matches the box each player actually draws', () => {
+    expect(
+      playerStageSizes({ isFullscreen: true, screeningLayout: true, sharedOrEmbed: true })
+    ).toBe(PLAYER_FULLSCREEN_STAGE_SIZES)
+    expect(
+      playerStageSizes({ isFullscreen: false, screeningLayout: true, sharedOrEmbed: false })
+    ).toBe(PLAYER_SCREENING_STAGE_SIZES)
+    expect(
+      playerStageSizes({ isFullscreen: false, screeningLayout: false, sharedOrEmbed: true })
+    ).toBe(PLAYER_SHARE_STAGE_SIZES)
+    expect(
+      playerStageSizes({ isFullscreen: false, screeningLayout: false, sharedOrEmbed: false })
+    ).toBe(PLAYER_GALLERY_STAGE_SIZES)
+  })
+})
+
+describe('selectPlayerPreloadUrls', () => {
+  it('takes the first three distinct stills from the playhead', () => {
+    expect(
+      selectPlayerPreloadUrls([
+        'https://cdn/a.jpg',
+        ' https://cdn/a.jpg ',
+        'https://cdn/b.jpg',
+        undefined,
+        'https://cdn/c.jpg',
+        'https://cdn/d.jpg',
+      ])
+    ).toEqual(['https://cdn/a.jpg', 'https://cdn/b.jpg', 'https://cdn/c.jpg'])
   })
 })
 
@@ -76,14 +114,15 @@ describe('the player decodes stills at the size it draws them', () => {
     expect(PLAYER_THUMBNAIL_WIDTH * PLAYER_THUMBNAIL_HEIGHT * 4).toBeLessThan(64 * 1024)
   })
 
-  it('sizes the stage still to the viewport instead of the stored resolution', () => {
+  it('sizes the stage still to the box it draws instead of the stored resolution', () => {
     const stage = player.slice(
       player.indexOf('const renderSceneImage ='),
       player.indexOf('/** Public share / landing embed')
     )
     expect(stage).toContain('<NextImage')
     expect(stage).toContain('fill')
-    expect(stage).toContain('sizes="100vw"')
+    expect(stage).toContain('sizes={stageSizes}')
+    expect(stage).not.toContain('sizes="100vw"')
     // Lazy loading the on-screen stage would cost a frame at every beat.
     expect(stage).toContain('loading="eager"')
   })

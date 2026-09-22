@@ -17,6 +17,45 @@
 export const PLAYER_THUMBNAIL_WIDTH = 96
 export const PLAYER_THUMBNAIL_HEIGHT = 56
 
+/** How many stills to decode ahead of the playhead, including the current frame. */
+export const PLAYER_STILL_PRELOAD_COUNT = 3
+
+/** In-platform screening stage is ~75% of the workspace; stay sharp enough to judge the cut. */
+export const PLAYER_SCREENING_STAGE_SIZES = '(max-width: 1280px) 75vw, 1280px'
+/** Share / embed stage is max-w-4xl. */
+export const PLAYER_SHARE_STAGE_SIZES = '(max-width: 896px) 100vw, 896px'
+/** In-app gallery strip beside the scene list. */
+export const PLAYER_GALLERY_STAGE_SIZES = '500px'
+export const PLAYER_FULLSCREEN_STAGE_SIZES = '100vw'
+
+export function playerStageSizes(input: {
+  isFullscreen: boolean
+  screeningLayout: boolean
+  sharedOrEmbed: boolean
+}): string {
+  if (input.isFullscreen) return PLAYER_FULLSCREEN_STAGE_SIZES
+  if (input.screeningLayout) return PLAYER_SCREENING_STAGE_SIZES
+  if (input.sharedOrEmbed) return PLAYER_SHARE_STAGE_SIZES
+  return PLAYER_GALLERY_STAGE_SIZES
+}
+
+/** Distinct still URLs starting at the playhead, capped at the preload window. */
+export function selectPlayerPreloadUrls(
+  urls: Array<string | null | undefined>,
+  limit = PLAYER_STILL_PRELOAD_COUNT
+): string[] {
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const raw of urls) {
+    const url = raw?.trim()
+    if (!url || seen.has(url)) continue
+    seen.add(url)
+    out.push(url)
+    if (out.length >= limit) break
+  }
+  return out
+}
+
 /** Mirrors the `images.remotePatterns` entries in `next.config.mjs`. */
 function isOptimizerHost(hostname: string): boolean {
   const host = hostname.toLowerCase()

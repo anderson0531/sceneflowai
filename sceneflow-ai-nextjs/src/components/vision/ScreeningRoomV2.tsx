@@ -256,7 +256,7 @@ export function ScreeningRoomV2({
               >
                 <option value="auto">Auto</option>
                 <option value="video">Video</option>
-                <option value="animatic">Animatic</option>
+                <option value="animatic">Pre-Vis</option>
               </select>
             ) : null}
             <button
