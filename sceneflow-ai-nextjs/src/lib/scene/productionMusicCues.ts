@@ -13,6 +13,7 @@ import {
   isMusicCueScored,
   parsePersistedMusicCues,
 } from '@/lib/script/sceneMusicCues'
+import { musicCueMixFields } from '@/lib/audio/loopingAudioSync'
 import {
   DEFAULT_MUSIC_FILE_DURATION_SEC,
   isCuedBeatMusicEnabled,
@@ -37,6 +38,10 @@ export interface ProductionMusicCueClip {
   loop: boolean
   /** Real length of the generated file, for loop math downstream. */
   actualDuration: number
+  /** Cue mix 0–1. Absent means unity. */
+  volume?: number
+  fadeInSec?: number
+  fadeOutSec?: number
 }
 
 function segmentStart(segment: MusicCueSegment): number {
@@ -110,6 +115,7 @@ export function buildProductionMusicCueClips(
       label: cue.intent?.trim() || 'Background Music',
       loop: duration > fileDuration,
       actualDuration: fileDuration,
+      ...musicCueMixFields(cue),
     })
   }
 

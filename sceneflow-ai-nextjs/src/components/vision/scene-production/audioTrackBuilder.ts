@@ -732,12 +732,14 @@ export function buildAudioTracksForLanguage(
     startTime: clip.startTime,
     duration: clip.duration,
     label: clip.label,
-    volume: 0.6,
+    volume: 0.6 * (clip.volume ?? 1),
     language: 'all',
     source: 'scene' as AudioClipSource,
     scenePropertyPath: 'sceneMusicCues',
     loop: clip.loop,
     actualDuration: clip.actualDuration,
+    fadeInSec: clip.fadeInSec,
+    fadeOutSec: clip.fadeOutSec,
   }))
 
   const musicUrl = scene.musicAudio || scene.music?.url || scene.musicUrl

@@ -1084,6 +1084,8 @@ export interface AudioTrackClipV2 {
   durationDelta?: number      // Difference: actualDuration - baselineDuration
   /** When true, HTMLAudioElement loops (background music). Timeline `duration` may exceed file length. */
   loop?: boolean
+  fadeInSec?: number
+  fadeOutSec?: number
 }
 
 /**

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { AlertTriangle, Camera, Film, Pause, PlayCircle, Settings2, Upload, Wand2 } from 'lucide-react'
+import { AlertTriangle, Camera, Clapperboard, Film, Pause, PlayCircle, Settings2, Upload, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { SceneImageFrame } from '@/components/vision/SceneImageFrame'
@@ -65,7 +65,7 @@ interface BeatVideoGalleryProps {
   onGenerateClip?: (segment: SceneSegment) => void
   /** Open the video pre-flight dialog (Direct Video). */
   onDirectVideo?: (segment: SceneSegment) => void
-  /** Open the video dialog on the direction prompt. */
+  /** Open Video Direction — rewrite and save the video prompt only. */
   onDirection?: (segment: SceneSegment) => void
   /** Edit a completed clip. */
   onEditClip?: (segment: SceneSegment) => void
@@ -403,9 +403,14 @@ export function BeatVideoGallery({
                 {preview.prompt?.trim() && (
                   <p className="mt-1.5 text-xs leading-relaxed text-slate-400">{preview.prompt.trim()}</p>
                 )}
-                {readOnlyPrompts && preview.segment && (
+                {readOnlyPrompts && preview.segment && !preview.segment.userEditedPrompt && (
                   <p className="mt-1 text-[10px] text-slate-500">
-                    Auto-derived from direction — edit script or Pre-Vis to change
+                    Auto-derived from direction — use Direction to change this clip's video prompt
+                  </p>
+                )}
+                {preview.segment?.userEditedPrompt && (
+                  <p className="mt-1 text-[10px] text-teal-500/80">
+                    Video prompt saved from Direction
                   </p>
                 )}
                 {!preview.hasStartFrame && (
@@ -460,6 +465,18 @@ export function BeatVideoGallery({
                       >
                         <Wand2 className="mr-1 h-3 w-3" />
                         {previewComplete ? 'Regenerate video' : 'Generate video'}
+                      </Button>
+                    )}
+                    {onDirection && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-7 border-teal-500/40 text-[10px] text-teal-200"
+                        onClick={() => onDirection(previewSegment)}
+                      >
+                        <Clapperboard className="mr-1 h-3 w-3" />
+                        Direction
                       </Button>
                     )}
                     {onTake && (

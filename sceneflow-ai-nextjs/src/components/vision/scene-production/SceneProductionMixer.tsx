@@ -22,13 +22,17 @@ import {
   computeClipAudioTime,
   loopingDrift,
   clampAudioPlaybackRate,
-  computeMusicVolumeMultiplier,
+  computeCueMusicGain,
   MUSIC_FADE_MAX_SEC,
 } from '@/lib/audio/loopingAudioSync'
 import {
-  getMusicTrackTiming,
   isMusicActiveInBeatWindow,
 } from '@/lib/scene/mixerMusicTiming'
+import {
+  mixerMusicClipsToRenderPayload,
+  resolveMixerMusicClips,
+  type MixerMusicClip,
+} from '@/lib/scene/mixerScoreMusic'
 import { DEFAULT_MUSIC_FILE_DURATION_SEC } from '@/lib/storyboard/musicPlayback'
 import { toast } from 'sonner'
 import { 
@@ -228,22 +232,6 @@ function dialogueClipWallDuration(sourceSeconds: number | undefined, playbackRat
   return src / clampDialoguePlaybackRate(playbackRate)
 }
 
-function musicClipRenderOptions(
-  musicConfig: AudioTrackConfig
-): {
-  loop?: boolean
-  fadeInSec?: number
-  fadeOutSec?: number
-  playbackRate?: number
-} {
-  return {
-    loop: musicConfig.loop !== false,
-    fadeInSec: musicConfig.fadeInSec ?? 0,
-    fadeOutSec: musicConfig.fadeOutSec ?? 0,
-    playbackRate: clampAudioPlaybackRate(musicConfig.playbackRate),
-  }
-}
-
 // Duplicate constant to avoid module-level import (keep in sync with LocalRenderService.ts)
 const LOCAL_RENDER_MAX_DURATION = 300
 
@@ -374,6 +362,11 @@ export interface SceneAudioAssets {
   musicFileDuration?: number
   /** Music description */
   music?: string | { description?: string }
+  /**
+   * Scene record with beats + sceneMusicCues so Mixer can schedule Score
+   * against the playback timeline. Absent means legacy musicAudio only.
+   */
+  scoreScene?: Record<string, unknown>
   /** SFX entries (global, not language-specific) */
   sfx?: Array<{
     audioUrl?: string
@@ -614,6 +607,7 @@ function ScenePreviewPlayer({
     narrationDuration?: number
     dialogue: Array<{ id?: string; audioUrl?: string; duration?: number; startTime?: number }>
     music?: string
+    musicClips?: MixerMusicClip[]
     sfx: Array<{ audioUrl?: string; duration?: number; startTime?: number }>
   }
   totalDuration: number // max(metadata video, audio) from parent — scrubber uses max of this and measured video
@@ -636,7 +630,7 @@ function ScenePreviewPlayer({
   measuredSegmentDurations: Record<string, number>
   onMeasuredDurationsChange: (durations: Record<string, number>) => void
   onPlaybackTimeChange?: (time: number) => void
-  /** Probed WAV length for modulo loop sync */
+  /** Probed WAV length for modulo loop sync (legacy single-track fallback). */
   musicFileDuration?: number
   /** When set, jump preview to this beat (e.g. from Beat Trim panel) */
   focusBeatSegmentId?: string | null
@@ -645,7 +639,7 @@ function ScenePreviewPlayer({
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const narrationRef = useRef<HTMLAudioElement>(null)
-  const musicRef = useRef<HTMLAudioElement>(null)
+  const musicRefsById = useRef<Map<string, HTMLAudioElement | null>>(new Map())
   const dialogueRefsById = useRef<Map<string, HTMLAudioElement | null>>(new Map())
   
   const [isPlaying, setIsPlaying] = useState(false)
@@ -845,7 +839,10 @@ function ScenePreviewPlayer({
           const audioEndTime = Math.max(
             narrEnd,
             ...dialogueEnds,
-            audioTracks.music.enabled && currentAudioUrls.music ? totalDuration : 0
+            audioTracks.music.enabled &&
+              (currentAudioUrls.musicClips?.length || currentAudioUrls.music)
+              ? totalDuration
+              : 0
           )
           
           if (audioEndTime > timelineVideoDuration && currentTime < audioEndTime) {
@@ -984,64 +981,63 @@ function ScenePreviewPlayer({
       narrationRef.current.pause()
     }
     
-    // Music sync - uses segment range
-    if (musicRef.current && audioTracks.music.enabled) {
-      const musicCfg = audioTracks.music
-      const loop = musicCfg.loop !== false
+    // Music sync — Score cues (or a single legacy clip) placed on the mixer timeline
+    const musicClips = currentAudioUrls.musicClips ?? []
+    const musicCfg = audioTracks.music
+    if (musicCfg.enabled && musicClips.length > 0) {
       const rate = clampAudioPlaybackRate(musicCfg.playbackRate)
-      if (Math.abs(musicRef.current.playbackRate - rate) > 0.01) {
-        musicRef.current.playbackRate = rate
-      }
-
-      const musicStartTime = getSegmentStartTime(musicCfg.startSegment)
-      const effectiveEndSegment =
-        musicCfg.endSegment === -1
-          ? segments.length - 1
-          : Math.min(musicCfg.endSegment, segments.length - 1)
-      const musicEndTime =
-        getSegmentStartTime(effectiveEndSegment) +
-        getPlaybackSegmentDuration(segments[effectiveEndSegment])
-      const musicPlayDuration = Math.max(0, musicEndTime - musicStartTime)
-      const fadeIn = musicCfg.fadeInSec ?? 0
-      const fadeOut = musicCfg.fadeOutSec ?? 0
-
-      const musicLocalTime = currentTime - musicStartTime
-      const withinWindow = isMusicActiveInBeatWindow(
-        currentTime,
-        musicStartTime,
-        musicEndTime,
-        isPlaying
-      )
-
-      if (withinWindow) {
-        const expectedAudioTime = loop
+      const activeIds = new Set<string>()
+      musicClips.forEach((clip) => {
+        const audioEl = musicRefsById.current.get(clip.id)
+        if (!audioEl) return
+        if (Math.abs(audioEl.playbackRate - rate) > 0.01) {
+          audioEl.playbackRate = rate
+        }
+        const musicEndTime = clip.startTime + clip.duration
+        const withinWindow = isMusicActiveInBeatWindow(
+          currentTime,
+          clip.startTime,
+          musicEndTime,
+          isPlaying
+        )
+        if (!withinWindow) {
+          if (!audioEl.paused) audioEl.pause()
+          return
+        }
+        activeIds.add(clip.id)
+        const musicLocalTime = currentTime - clip.startTime
+        const fileDuration =
+          clip.actualDuration > 0 ? clip.actualDuration : musicFileDuration
+        const expectedAudioTime = clip.loop
           ? computeClipAudioTime(
               { startTime: 0, trimStart: 0, loop: true },
               musicLocalTime * rate,
-              musicFileDuration
+              fileDuration
             )
-          : Math.min(musicLocalTime * rate, musicFileDuration)
-        const drift = loop
-          ? loopingDrift(expectedAudioTime, musicRef.current.currentTime, musicFileDuration)
-          : Math.abs(musicRef.current.currentTime - expectedAudioTime)
+          : Math.min(musicLocalTime * rate, fileDuration)
+        const drift = clip.loop
+          ? loopingDrift(expectedAudioTime, audioEl.currentTime, fileDuration)
+          : Math.abs(audioEl.currentTime - expectedAudioTime)
         if (drift > 0.85) {
-          musicRef.current.currentTime = expectedAudioTime
+          audioEl.currentTime = expectedAudioTime
         }
-        const volMult = computeMusicVolumeMultiplier(
-          musicLocalTime,
-          musicPlayDuration,
-          fadeIn,
-          fadeOut
-        )
-        musicRef.current.volume = isMuted ? 0 : musicCfg.volume * volMult
-        if (musicRef.current.paused) {
-          musicRef.current.play().catch(() => {})
+        const gain = computeCueMusicGain({
+          localTimeSec: musicLocalTime,
+          playDurationSec: clip.duration,
+          volume: clip.volume,
+          fadeInSec: clip.fadeInSec,
+          fadeOutSec: clip.fadeOutSec,
+        })
+        audioEl.volume = isMuted ? 0 : Math.max(0, Math.min(1, musicCfg.volume * gain))
+        if (audioEl.paused) {
+          audioEl.play().catch(() => {})
         }
-      } else {
-        musicRef.current.pause()
-      }
-    } else if (musicRef.current) {
-      musicRef.current.pause()
+      })
+      musicRefsById.current.forEach((el, id) => {
+        if (el && !activeIds.has(id) && !el.paused) el.pause()
+      })
+    } else {
+      musicRefsById.current.forEach((el) => el?.pause())
     }
     
     // Dialogue sync — refs keyed by clip id so order matches layout after sort/regeneration
@@ -1196,10 +1192,13 @@ function ScenePreviewPlayer({
         narrationRef.current.pause()
         narrationRef.current.src = ''
       }
-      if (musicRef.current) {
-        musicRef.current.pause()
-        musicRef.current.src = ''
-      }
+      musicRefsById.current.forEach(el => {
+        if (el) {
+          el.pause()
+          el.src = ''
+        }
+      })
+      musicRefsById.current.clear()
       dialogueRefsById.current.forEach(el => {
         if (el) {
           el.pause()
@@ -1236,7 +1235,7 @@ function ScenePreviewPlayer({
     if (isPlaying) {
       video.pause()
       narrationRef.current?.pause()
-      musicRef.current?.pause()
+      musicRefsById.current.forEach(el => el?.pause())
       dialogueRefsById.current.forEach(el => el?.pause())
       if (audioTimerRef.current) {
         cancelAnimationFrame(audioTimerRef.current as unknown as number)
@@ -1705,9 +1704,17 @@ function ScenePreviewPlayer({
       {currentAudioUrls.narration && (
         <audio ref={narrationRef} src={currentAudioUrls.narration} preload="auto" />
       )}
-      {currentAudioUrls.music && (
-        <audio ref={musicRef} src={currentAudioUrls.music} preload="auto" />
-      )}
+      {(currentAudioUrls.musicClips ?? []).map((clip) => (
+        <audio
+          key={clip.id}
+          ref={el => {
+            if (el) musicRefsById.current.set(clip.id, el)
+            else musicRefsById.current.delete(clip.id)
+          }}
+          src={clip.url}
+          preload="auto"
+        />
+      ))}
       {/* Dialogue audio elements - one per clip */}
       {currentAudioUrls.dialogue.map((clip, idx) => {
         if (!clip?.audioUrl) return null
@@ -1753,6 +1760,7 @@ function AudioTrackRow({
   onToggleCollapse,
   onRegenerate,
   isRegenerating,
+  scoreMode = false,
 }: {
   type: 'narration' | 'dialogue' | 'music' | 'sfx'
   label: string
@@ -1782,6 +1790,8 @@ function AudioTrackRow({
   onToggleCollapse?: () => void
   onRegenerate?: () => void
   isRegenerating?: boolean
+  /** Score cues own beat coverage, loop, and fades — hide Mixer copies. */
+  scoreMode?: boolean
 }) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(false)
@@ -1930,7 +1940,7 @@ function AudioTrackRow({
       {config.enabled && hasAudio && !isCollapsed && (
         <div className="flex flex-col gap-3 px-4 pb-4 pt-3 border-t border-gray-700/50">
           {/* Beat Range Selector */}
-          {segmentCount && segmentCount > 0 && (
+          {!scoreMode && segmentCount && segmentCount > 0 && (
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-gray-500 uppercase w-16">Beats</span>
               <div className="flex items-center gap-1 flex-wrap">
@@ -2003,6 +2013,8 @@ function AudioTrackRow({
           {/* Music: repeat, fade, speed */}
           {type === 'music' && (
             <>
+              {!scoreMode && (
+                <>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 text-gray-500 w-16 shrink-0">
                   <Repeat className="w-3 h-3" />
@@ -2055,6 +2067,8 @@ function AudioTrackRow({
                   {(config.fadeOutSec ?? 0).toFixed(1)}s
                 </span>
               </div>
+                </>
+              )}
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between gap-2">
@@ -3842,7 +3856,7 @@ export function SceneProductionMixer({
   }, [audioAssets, selectedLanguage, resolvedDialogueClips, normalizedSceneSfx])
 
   /** Dialogue start/duration from timeline drags override layout engine for preview + render. */
-  const playbackAudioUrls = useMemo(() => {
+  const dialoguePlaybackAudioUrls = useMemo(() => {
     if (currentAudioUrls.dialogue.length === 0) return currentAudioUrls
     
     // Build a map of dialogue clip id -> segment index
@@ -3901,7 +3915,7 @@ export function SceneProductionMixer({
 
   /** Timeline bars reflect wall-clock span (source duration / playback rate). */
   const dialogueClipsForTimeline = useMemo(() => {
-    return playbackAudioUrls.dialogue.map((c, idx) => {
+    return dialoguePlaybackAudioUrls.dialogue.map((c, idx) => {
       const key = dialogueClipConfigKey(c, idx)
       const sourceDur = probedDurations[key] ?? c.duration ?? 3
       const rate = clampDialoguePlaybackRate(dialogueClipConfigs[key]?.playbackRate)
@@ -3915,7 +3929,7 @@ export function SceneProductionMixer({
         playbackRate: rate,
       }
     })
-  }, [playbackAudioUrls.dialogue, dialogueClipConfigs, probedDurations])
+  }, [dialoguePlaybackAudioUrls.dialogue, dialogueClipConfigs, probedDurations])
 
   const segmentDurationsForTimeline = useMemo(() => {
     const map: Record<string, number> = {}
@@ -3927,16 +3941,16 @@ export function SceneProductionMixer({
 
   const dialogueAudioProbeKey = useMemo(
     () =>
-      playbackAudioUrls.dialogue
+      dialoguePlaybackAudioUrls.dialogue
         .filter(d => d.audioUrl && d.id)
         .map(d => `${d.id}:${d.audioUrl}`)
         .join('|'),
-    [playbackAudioUrls.dialogue]
+    [dialoguePlaybackAudioUrls.dialogue]
   )
 
   useEffect(() => {
     if (!dialogueAudioProbeKey) return
-    const clips = playbackAudioUrls.dialogue.filter(
+    const clips = dialoguePlaybackAudioUrls.dialogue.filter(
       (d): d is typeof d & { audioUrl: string; id: string } => !!d.audioUrl && !!d.id
     )
     const cleaners: Array<() => void> = []
@@ -4102,6 +4116,39 @@ export function SceneProductionMixer({
     if (videoSegments.length > 0) return videoSegments
     return renderedSegments
   }, [videoSegments, renderedSegments])
+
+  const mixerMusic = useMemo(
+    () =>
+      resolveMixerMusicClips({
+        scene: audioAssets.scoreScene,
+        segments: previewSegments,
+        getPlaybackSegmentDuration,
+        musicConfig: audioTracks.music,
+        legacyMusicUrl: audioAssets.musicAudio,
+        musicFileDuration:
+          probedDurations.music ??
+          audioAssets.musicFileDuration ??
+          DEFAULT_MUSIC_FILE_DURATION_SEC,
+      }),
+    [
+      audioAssets.scoreScene,
+      audioAssets.musicAudio,
+      audioAssets.musicFileDuration,
+      previewSegments,
+      getPlaybackSegmentDuration,
+      audioTracks.music,
+      probedDurations.music,
+    ]
+  )
+
+  const playbackAudioUrls = useMemo(
+    () => ({
+      ...dialoguePlaybackAudioUrls,
+      music: mixerMusic.clips[0]?.url ?? dialoguePlaybackAudioUrls.music,
+      musicClips: mixerMusic.clips,
+    }),
+    [dialoguePlaybackAudioUrls, mixerMusic]
+  )
 
   const nonEnglishBeatsMissingBackgroundStem = useMemo(() => {
     if (productionTarget.language === 'en') return 0
@@ -4410,19 +4457,11 @@ export function SceneProductionMixer({
           }))
       }
       
-      if (audioTracks.music.enabled && playbackAudioUrls.music) {
-        const musicTiming = getMusicTrackTiming(
-          audioTracks.music,
-          previewSegments,
-          getPlaybackSegmentDuration
+      if (audioTracks.music.enabled && (playbackAudioUrls.musicClips?.length ?? 0) > 0) {
+        audioTracksPayload.music = mixerMusicClipsToRenderPayload(
+          playbackAudioUrls.musicClips!,
+          audioTracks.music
         )
-        audioTracksPayload.music = [{
-          url: playbackAudioUrls.music,
-          startTime: musicTiming.startTime,
-          duration: musicTiming.duration || totalDuration,
-          volume: audioTracks.music.volume,
-          ...musicClipRenderOptions(audioTracks.music),
-        }]
       }
       
       if (audioTracks.sfx.enabled && playbackAudioUrls.sfx.length > 0) {
@@ -4798,20 +4837,15 @@ export function SceneProductionMixer({
         })
       }
       
-      if (audioTracks.music.enabled && playbackAudioUrls.music) {
-        const musicTiming = getMusicTrackTiming(
-          audioTracks.music,
-          previewSegments,
-          getPlaybackSegmentDuration
+      if (audioTracks.music.enabled && (playbackAudioUrls.musicClips?.length ?? 0) > 0) {
+        mixerMusicClipsToRenderPayload(playbackAudioUrls.musicClips!, audioTracks.music).forEach(
+          (clip) => {
+            audioClips.push({
+              ...clip,
+              type: 'music',
+            })
+          }
         )
-        audioClips.push({
-          url: playbackAudioUrls.music,
-          startTime: musicTiming.startTime,
-          duration: musicTiming.duration || Math.max(0, totalDuration - musicTiming.startTime),
-          volume: audioTracks.music.volume,
-          type: 'music',
-          ...musicClipRenderOptions(audioTracks.music),
-        })
       }
       
       if (audioTracks.sfx.enabled && playbackAudioUrls.sfx.length > 0) {
@@ -5115,20 +5149,15 @@ export function SceneProductionMixer({
         })
       }
       
-      if (audioTracks.music.enabled && playbackAudioUrls.music) {
-        const musicTiming = getMusicTrackTiming(
-          audioTracks.music,
-          previewSegments,
-          getPlaybackSegmentDuration
+      if (audioTracks.music.enabled && (playbackAudioUrls.musicClips?.length ?? 0) > 0) {
+        mixerMusicClipsToRenderPayload(playbackAudioUrls.musicClips!, audioTracks.music).forEach(
+          (clip) => {
+            audioClips.push({
+              ...clip,
+              type: 'music',
+            })
+          }
         )
-        audioClips.push({
-          url: playbackAudioUrls.music,
-          startTime: musicTiming.startTime,
-          duration: musicTiming.duration || Math.max(0, totalDuration - musicTiming.startTime),
-          volume: audioTracks.music.volume,
-          type: 'music',
-          ...musicClipRenderOptions(audioTracks.music),
-        })
       }
       
       if (audioTracks.sfx.enabled && playbackAudioUrls.sfx.length > 0) {
@@ -6491,28 +6520,42 @@ export function SceneProductionMixer({
               
               <AudioTrackRow
                 type="music"
-                label="Background Music"
+                label={mixerMusic.usingScore ? 'Score' : 'Background Music'}
                 icon={Music}
                 config={audioTracks.music}
                 onConfigChange={(c) => updateTrackConfig('music', c)}
                 audioUrl={playbackAudioUrls.music}
                 videoTotalDuration={videoTotalDuration}
-                audioDuration={musicFileDuration}
+                audioDuration={
+                  mixerMusic.usingScore
+                    ? mixerMusic.clips.reduce((sum, clip) => sum + clip.duration, 0)
+                    : musicFileDuration
+                }
                 segmentCount={previewSegments.length}
-                subtitle={(() => {
-                  const desc =
-                    typeof audioAssets.music === 'string'
-                      ? audioAssets.music.slice(0, 50)
-                      : audioAssets.music?.description?.slice(0, 50)
-                  const clipInfo =
-                    musicFileDuration > 0 && videoTotalDuration > 0
-                      ? `~${Math.round(musicFileDuration)}s clip · plays for ${Math.round(videoTotalDuration)}s`
-                      : musicFileDuration > 0
-                        ? `~${Math.round(musicFileDuration)}s clip`
-                        : ''
-                  return [desc, clipInfo].filter(Boolean).join(' · ').slice(0, 80) || undefined
-                })()}
-                hasAudio={!!playbackAudioUrls.music}
+                clipCount={mixerMusic.clips.length > 1 ? mixerMusic.clips.length : undefined}
+                scoreMode={mixerMusic.usingScore}
+                subtitle={
+                  mixerMusic.usingScore
+                    ? mixerMusic.clips
+                        .map((clip) => clip.label)
+                        .filter(Boolean)
+                        .join(' · ')
+                        .slice(0, 80) || `${mixerMusic.clips.length} cues`
+                    : (() => {
+                        const desc =
+                          typeof audioAssets.music === 'string'
+                            ? audioAssets.music.slice(0, 50)
+                            : audioAssets.music?.description?.slice(0, 50)
+                        const clipInfo =
+                          musicFileDuration > 0 && videoTotalDuration > 0
+                            ? `~${Math.round(musicFileDuration)}s clip · plays for ${Math.round(videoTotalDuration)}s`
+                            : musicFileDuration > 0
+                              ? `~${Math.round(musicFileDuration)}s clip`
+                              : ''
+                        return [desc, clipInfo].filter(Boolean).join(' · ').slice(0, 80) || undefined
+                      })()
+                }
+                hasAudio={mixerMusic.clips.length > 0}
                 disabled={isRendering}
                 isCollapsed={collapsedSections.music}
                 onToggleCollapse={() => toggleSection('music')}

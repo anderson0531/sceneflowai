@@ -159,6 +159,14 @@ import {
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import { resolveEffectiveStoryboardTier } from '@/lib/storyboard/storyboardQuality'
 import { BeatVideoGallery, type BeatVideoClip } from './BeatVideoGallery'
+import {
+  BeatVideoDirectorDialog,
+  type BeatVideoDirectorSavePayload,
+} from '@/components/vision/BeatVideoDirectorDialog'
+import {
+  applyVideoDirectorPromptToProduction,
+  resolveCurrentVideoPrompt,
+} from '@/lib/intelligence/beat-video-director-fallback'
 import type { SegmentGuideContext } from '@/lib/vision/segmentConfigBuilder'
 import { resolveEffectiveStartFrameUrl, resolveExpressGenerationMethod, STANDARD_TAKE_DURATION_SECONDS } from '@/lib/vision/segmentConfigBuilder'
 import { CONCURRENCY_DEFAULTS } from '@/lib/utils/concurrent-processor'
@@ -504,6 +512,7 @@ export function DirectorConsoleRoot({
 
   // Intelligent retake dialog for completed video clips
   const [retakeSegment, setRetakeSegment] = useState<SceneSegment | null>(null)
+  const [videoDirectorSegment, setVideoDirectorSegment] = useState<SceneSegment | null>(null)
   
   // Beat for VideoEditingDialog (editing completed videos)
   const [editingVideoSegment, setEditingVideoSegment] = useState<SceneSegment | null>(null)
@@ -844,6 +853,69 @@ export function DirectorConsoleRoot({
       overrideConfigs: new Map([[segmentId, config]]),
     })
   }, [updateConfig, processQueue, videoGenerationUnlocked, onOpenPreVis])
+
+  const handleOpenVideoDirection = useCallback((segment: SceneSegment) => {
+    setVideoDirectorSegment(segment)
+  }, [])
+
+  const handleSaveVideoDirection = useCallback(
+    async ({ prompt, generate }: BeatVideoDirectorSavePayload) => {
+      const segment = videoDirectorSegment
+      if (!segment) return
+      const trimmed = prompt.trim()
+      if (!trimmed) return
+
+      if (onProductionDataChange && productionData) {
+        onProductionDataChange({
+          ...productionData,
+          segments: applyVideoDirectorPromptToProduction(
+            productionData.segments,
+            segment.segmentId,
+            trimmed
+          ),
+        })
+      }
+
+      const existingConfig = getQueueItem(segment.segmentId)?.config
+      const updatedConfig: VideoGenerationConfig = {
+        ...(existingConfig ?? {
+          mode: 'I2V' as VideoGenerationMethod,
+          prompt: trimmed,
+          motionPrompt: trimmed,
+          visualPrompt: trimmed,
+          negativePrompt: '',
+          aspectRatio: videoAspectRatio,
+          resolution: '1080p' as const,
+          duration: STANDARD_TAKE_DURATION_SECONDS,
+          startFrameUrl: segment.references?.startFrameUrl || segment.startFrameUrl || null,
+          endFrameUrl: null,
+          sourceVideoUrl: null,
+          approvalStatus: 'user-approved' as const,
+          confidence: 100,
+        }),
+        prompt: trimmed,
+        motionPrompt: trimmed,
+        visualPrompt: trimmed,
+      }
+      updateConfig(segment.segmentId, updatedConfig)
+      void import('sonner').then(({ toast }) => {
+        toast.success('Video prompt saved')
+      })
+
+      if (generate) {
+        handleGenerateFromDialog(segment.segmentId, updatedConfig)
+      }
+    },
+    [
+      videoDirectorSegment,
+      onProductionDataChange,
+      productionData,
+      getQueueItem,
+      videoAspectRatio,
+      updateConfig,
+      handleGenerateFromDialog,
+    ]
+  )
 
   const handleRequestTake = useCallback(
     (segment: SceneSegment, focusPrompt = false) => {
@@ -1667,6 +1739,7 @@ export function DirectorConsoleRoot({
           musicDuration: (scene as { musicDuration?: number })?.musicDuration,
           musicFileDuration: (scene as { musicFileDuration?: number })?.musicFileDuration,
           sfx: normalizedSceneSfx,
+          scoreScene: scene as Record<string, unknown> | undefined,
         }}
         textOverlays={textOverlays}
         onTextOverlaysChange={handleTextOverlaysChange}
@@ -1898,7 +1971,7 @@ export function DirectorConsoleRoot({
         }}
         generatingClipId={isRendering ? currentSegmentId : null}
         onDirectVideo={(segment) => handleRequestTake(segment, false)}
-        onDirection={(segment) => handleRequestTake(segment, true)}
+        onDirection={handleOpenVideoDirection}
         onEditClip={(segment) => setEditingVideoSegment(segment)}
       />
     </div>
@@ -2008,6 +2081,35 @@ export function DirectorConsoleRoot({
           focusPrompt={dialogFocusPrompt}
         />
       )}
+
+      <BeatVideoDirectorDialog
+        open={!!videoDirectorSegment}
+        onOpenChange={(open) => {
+          if (!open) setVideoDirectorSegment(null)
+        }}
+        projectId={projectId}
+        sceneIndex={sceneIndex ?? 0}
+        beatId={videoDirectorSegment?.beatId}
+        label={
+          videoDirectorSegment
+            ? videoClips.find((clip) => clip.segment?.segmentId === videoDirectorSegment.segmentId)
+                ?.label || `Beat ${videoDirectorSegment.sequenceIndex + 1}`
+            : ''
+        }
+        currentPrompt={
+          videoDirectorSegment
+            ? resolveCurrentVideoPrompt(videoDirectorSegment) ||
+              getQueueItem(videoDirectorSegment.segmentId)?.config.prompt ||
+              ''
+            : ''
+        }
+        isGenerating={
+          !!videoDirectorSegment &&
+          isRendering &&
+          currentSegmentId === videoDirectorSegment.segmentId
+        }
+        onSave={handleSaveVideoDirection}
+      />
 
       <VideoAgentConfirmDialog
         open={videoAgentDialogOpen}
