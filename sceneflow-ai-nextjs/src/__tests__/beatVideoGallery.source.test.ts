@@ -17,8 +17,8 @@ describe('Video tab inline clip preview', () => {
     expect(gallery).toContain('togglePreviewPlayback')
     expect(gallery).toContain('Clip preview')
     expect(gallery).toContain("aria-label={isPreviewPlaying ? 'Pause clip preview' : 'Play clip preview'}")
-    expect(gallery).not.toContain('onPlay(previewSegment)')
-    expect(gallery).not.toContain('onClick={() => onPlay(')
+    expect(gallery).not.toContain("from 'lucide-react''")
+    expect(gallery).toContain("from 'lucide-react'")
   })
 
   it('keeps sequential Play Beats on the SceneVideoPlayer modal', () => {

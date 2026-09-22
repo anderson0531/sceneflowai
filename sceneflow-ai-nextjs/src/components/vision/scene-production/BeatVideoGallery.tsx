@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { AlertTriangle, Camera, Film, Pause, PlayCircle, Settings2, Upload, Wand2 } from 'lucide-react''
+import { AlertTriangle, Camera, Film, Pause, PlayCircle, Settings2, Upload, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { SceneImageFrame } from '@/components/vision/SceneImageFrame'
