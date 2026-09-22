@@ -8,6 +8,7 @@ import type {
   BeatDirectionTransition,
   SceneBeat,
 } from '@/lib/script/segmentTypes'
+import { refreshSceneSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
 import { restampPreVisHashIfScriptCurrent } from '@/lib/storyboard/preVisSync'
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
 import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
@@ -139,9 +140,15 @@ export function BeatDirectionEditor({
         lookbook: promptComposition?.lookbook,
       })
     })
+    const edited = beats.find((entry) => entry.beatId === beat.beatId)
+    const withBeats = applyBeatsToScene(scene, beats)
     updatedScenes[sceneIdx] = restampPreVisHashIfScriptCurrent(
       scene,
-      applyBeatsToScene(scene, beats)
+      edited
+        ? refreshSceneSegmentVideoPrompts(withBeats, edited, {
+            artStyleId: promptComposition?.artStyleAnchor,
+          })
+        : withBeats
     )
 
     onScriptChange({

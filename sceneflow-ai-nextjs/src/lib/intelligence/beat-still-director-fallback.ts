@@ -24,6 +24,7 @@ import type {
   BeatDirectionSource,
   SceneBeat,
 } from '@/lib/script/segmentTypes'
+import { refreshSceneSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
 
 export type StillDirectorMode = 'optimize' | 'suggest' | 'rewrite'
@@ -270,7 +271,17 @@ export function applyStillDirectorPatchToScene(
     skipped = applied.skipped
     return applied.beat
   })
-  return { scene: applyBeatsToScene(scene, nextBeats), skipped }
+  const withBeats = applyBeatsToScene(scene, nextBeats)
+  const edited = nextBeats.find((entry) => entry.beatId === beatId)
+  return {
+    scene:
+      !skipped && edited
+        ? refreshSceneSegmentVideoPrompts(withBeats, edited, {
+            artStyleId: options.artStyleAnchor,
+          })
+        : withBeats,
+    skipped,
+  }
 }
 
 export function applyPolicyComplianceToPatch(patch: StillDirectorPatch): StillDirectorPatch {

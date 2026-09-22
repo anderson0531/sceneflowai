@@ -6095,6 +6095,7 @@ function SceneCard({
                       sceneId={workflowSceneId}
                       sceneNumber={sceneNumber}
                       projectId={projectId ?? ''}
+                      artStyleId={promptComposition.artStyleAnchor}
                       productionData={sceneProductionData ?? null}
                       sceneImageUrl={scene.imageUrl}
                       onOpenPreVis={() => setActiveSceneTab('previs')}

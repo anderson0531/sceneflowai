@@ -277,6 +277,7 @@ export function useVideoQueue(
         id: s.segmentId,
         status: s.status,
         asset: s.activeAssetUrl?.slice(-20), // Last 20 chars of URL for change detection
+        prompt: s.generatedPrompt,
       }))
     )
     

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'fs'
 import { join } from 'path'
+import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
 import { composeBeatActionFraming } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import {
   applyStillDirectorPatch,
@@ -138,6 +139,59 @@ describe('applyStillDirectorPatch', () => {
     expect(first.beatDirection).toBeUndefined()
     expect(second.beatDirection?.frozenMoment).toBe('Piper waits, weight on both feet.')
     expect(second.beatDirection?.generatedBy).toBe('user')
+  })
+
+  it('writes beat direction, a frozen still prompt, and a separate motion video prompt', () => {
+    const scene = {
+      beats: [
+        beat({
+          beatDirection: { cameraMovement: 'slow push-in', generatedBy: 'llm' },
+        }),
+      ],
+      segments: [
+        {
+          beatId: 'bt_still',
+          generatedPrompt: 'Sarah turns sharply toward the exit with rising panic.',
+          videoPrompt: 'Sarah turns sharply toward the exit with rising panic.',
+        },
+        {
+          beatId: 'bt_still',
+          userEditedPrompt: 'Keep this clip wording.',
+          generatedPrompt: 'old',
+          videoPrompt: 'old',
+        },
+      ],
+    }
+    const frozen =
+      'Gideon screen-right leans his weight on the spanner; Piper is nearer camera.'
+    const { scene: next } = applyStillDirectorPatchToScene(
+      scene,
+      'bt_still',
+      {
+        shotType: 'Two-Shot',
+        frozenMoment: frozen,
+        blocking: 'Gideon screen-right, Piper screen-left.',
+      },
+      { generatedBy: 'director' }
+    )
+    const [directed] = getSceneBeats(next)
+    expect(directed.beatDirection?.generatedBy).toBe('director')
+    expect(directed.beatDirection?.frozenMoment).toBe(frozen)
+    expect(directed.storyboardImagePrompt).toContain(frozen)
+    expect(directed.storyboardImagePrompt).not.toContain('Natural cinematic motion')
+
+    const video = compileBeatVideoPromptFromDirection(directed, null)
+    expect(video.prompt).toContain(frozen)
+    expect(video.prompt).toContain('slow push-in')
+    expect(video.prompt).toContain('Natural cinematic motion')
+    expect(video.prompt).not.toBe(directed.storyboardImagePrompt)
+
+    const segments = (next as { segments: Array<Record<string, string>> }).segments
+    expect(segments[0].generatedPrompt).toBe(video.prompt)
+    expect(segments[0].videoPrompt).toBe(video.prompt)
+    expect(segments[0].generatedPrompt).not.toContain('turns sharply toward the exit')
+    expect(segments[1].userEditedPrompt).toBe('Keep this clip wording.')
+    expect(segments[1].generatedPrompt).toBe('old')
   })
 })
 

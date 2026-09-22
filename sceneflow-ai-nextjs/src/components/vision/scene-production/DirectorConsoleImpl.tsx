@@ -149,6 +149,7 @@ import { useVideoQueue } from '@/hooks/useVideoQueue'
 import { forceDownload } from '@/lib/utils'
 import type { SceneAudioData } from './GuidePromptEditor'
 import type { GuideCharacterDemographic } from '@/lib/scene/segmentGuidePrompt'
+import { refreshProductionSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
 import { getSceneBeats, isBeatExcluded, isBeatFirstPipelineEnabled } from '@/lib/script/beatMigration'
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import { resolveEffectiveStoryboardTier } from '@/lib/storyboard/storyboardQuality'
@@ -247,6 +248,8 @@ export interface DirectorConsoleProps {
   onRenderedSceneUrlChange?: (url: string | null) => void
   /** Persist production data (including production streams) to database */
   onProductionDataChange?: (data: SceneProductionData) => void
+  /** Project art style id, so a refreshed clip prompt matches video generation. */
+  artStyleId?: string
   /** Scene index (0-based) for audio generation API calls */
   sceneIndex?: number
   /** Generate audio for a specific scene, audio type, and language */
@@ -367,6 +370,7 @@ export function DirectorConsoleRoot({
   onSegmentUpload,
   onRenderedSceneUrlChange,
   onProductionDataChange,
+  artStyleId,
   sceneIndex,
   onGenerateSceneAudio,
   onGenerateLanguageStream,
@@ -673,6 +677,49 @@ export function DirectorConsoleRoot({
     },
     [scene?.dialogueAudio]
   )
+
+  const productionDataRef = useRef(productionData)
+  productionDataRef.current = productionData
+  const sceneRecordRef = useRef(scene)
+  sceneRecordRef.current = scene
+
+  const beatVideoDirectionKey = useMemo(() => {
+    const beats = getSceneBeats((scene as Record<string, unknown> | undefined) ?? null)
+    return beats
+      .map((entry) =>
+        [
+          entry.beatId,
+          entry.beatDirection?.generatedBy ?? '',
+          entry.beatDirection?.updatedAt ?? '',
+          entry.beatDirection?.frozenMoment ?? '',
+          entry.beatDirection?.blocking ?? '',
+          entry.beatDirection?.shotType ?? '',
+          entry.beatDirection?.cameraAngle ?? '',
+          entry.beatDirection?.cameraMovement ?? '',
+          entry.beatDirection?.emotion ?? '',
+          entry.beatDirection?.gaze ?? '',
+          entry.beatDirection?.propInteraction ?? '',
+          entry.beatDirection?.lightingAccent ?? '',
+          (entry.beatDirection?.keyProps ?? []).join(','),
+          (entry.beatDirection?.castInFrame ?? []).join(','),
+        ].join('\u001f')
+      )
+      .join('\u001e')
+  }, [scene])
+
+  useEffect(() => {
+    const current = productionDataRef.current
+    const currentScene = sceneRecordRef.current as Record<string, unknown> | undefined
+    if (!onProductionDataChange || !current?.segments?.length || !currentScene) return
+    const nextSegments = refreshProductionSegmentVideoPrompts(current.segments, currentScene, {
+      artStyleId,
+    })
+    if (!nextSegments) return
+    onProductionDataChange({
+      ...current,
+      segments: nextSegments,
+    })
+  }, [beatVideoDirectionKey, productionData?.segments?.length, onProductionDataChange, artStyleId])
 
   useEffect(() => {
     const language = productionTarget.language
@@ -1819,7 +1866,12 @@ export function DirectorConsoleRoot({
         onRetake={(segment) => setRetakeSegment(segment)}
         onGenerateClip={(segment) => {
           const item = queue.find((entry) => entry.segmentId === segment.segmentId)
-          if (!item) return
+          if (!item) {
+            void import('sonner').then(({ toast }) => {
+              toast.error('This clip is not in the video queue.')
+            })
+            return
+          }
           handleGenerateFromDialog(segment.segmentId, item.config)
         }}
         generatingStillBeatId={
