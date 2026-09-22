@@ -147,6 +147,7 @@ import { BeatMusicToggle } from '@/components/vision/BeatMusicToggle'
 import { SceneScoreToggle } from '@/components/vision/SceneScoreToggle'
 import { StatusFilterBar } from '@/components/vision/StatusFilterBar'
 import { SceneMusicCuePanel } from '@/components/vision/SceneMusicCuePanel'
+import { BeatPerformanceDirectorControl } from '@/components/vision/BeatPerformanceDirectorDialog'
 import { SceneReferencesPanel } from '@/components/vision/SceneReferencesPanel'
 import { directedBeatOptionsFromScene } from '@/components/vision/DirectedLocationVersionDialog'
 import type { DirectedLocationVersionInput } from '@/lib/vision/locationScriptSync'
@@ -167,6 +168,8 @@ import {
   setBeatsMusicEnabled,
 } from '@/lib/script/sceneMusicCues'
 import type { SceneMusicCue } from '@/lib/script/segmentTypes'
+import { resolveMusicRequestDuration } from '@/lib/audio/lyriaClient'
+import { applyMusicCueDirection } from '@/lib/intelligence/music-cue-director-fallback'
 import {
   beatFilterCharacters,
   beatListFiltersActive,
@@ -1993,12 +1996,13 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     const music = scene?.music
     if (!music) return false
 
-    const duration =
-      durationSeconds ??
-      (typeof scene.musicDuration === 'number' && scene.musicDuration > 0
-        ? scene.musicDuration
-        : undefined) ??
-      (typeof scene.duration === 'number' && scene.duration > 0 ? scene.duration : 30)
+    const beats = getSceneBeats(scene)
+    const span = resolveMusicRequestDuration({
+      beats,
+      duration: scene.duration,
+      musicDuration: beats.length > 0 ? undefined : durationSeconds ?? scene.musicDuration,
+    })
+    const duration = beats.length > 0 ? span : (durationSeconds ?? span)
 
     setGeneratingMusic(sceneIdx)
     try {
@@ -2049,7 +2053,11 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
    * Each cue is its own Lyria track saved onto that cue, so regenerating one
    * stretch of the scene leaves the rest of the score untouched.
    */
-  const generateMusicCue = async (sceneIdx: number, cueId: string) => {
+  const generateMusicCue = async (
+    sceneIdx: number,
+    cueId: string,
+    brief?: { description?: string }
+  ) => {
     const scene = scenes[sceneIdx]
     if (!scene) return
 
@@ -2062,12 +2070,12 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
       return
     }
 
-    const duration = estimateMusicCueDuration(cue, beats)
+    const duration = estimateMusicCueDuration(cue, beats, scene)
     setGeneratingMusicCue({ sceneIdx, cueId })
     try {
       const { generateMusicTrack } = await import('@/lib/audio/musicClient')
       const data = await generateMusicTrack({
-        text: cue.description,
+        text: brief?.description?.trim() || cue.description,
         duration,
         saveToBlob: true,
         projectId: projectId || 'temp',
@@ -3929,7 +3937,11 @@ interface SceneCardProps {
   // Functions for generating and saving audio
   generateMusic?: (sceneIdx: number, durationSeconds?: number) => Promise<boolean>
   /** Score one music cue, saving the track onto that cue. */
-  generateMusicCue?: (sceneIdx: number, cueId: string) => Promise<void>
+  generateMusicCue?: (
+    sceneIdx: number,
+    cueId: string,
+    brief?: { description?: string }
+  ) => Promise<void>
   /** Score every cue in the scene that has no track yet. */
   generateAllMusicCues?: (sceneIdx: number) => Promise<void>
   generatingMusicCue?: { sceneIdx: number; cueId: string } | null
@@ -4695,7 +4707,36 @@ function SceneCard({
     [onScriptChange, script, scenes, sceneIdx]
   )
 
+  const handleSaveCueDirection = useCallback(
+    async (
+      cueId: string,
+      patch: { description: string; intent: string },
+      score: boolean
+    ) => {
+      if (!onScriptChange || !script || !Array.isArray(scenes)) return
+      const current = scenes[sceneIdx]
+      if (!current) return
+      const applied = applyMusicCueDirection(current, cueId, patch)
+      const updatedScenes = [...scenes]
+      updatedScenes[sceneIdx] = applied.scene
+      await onScriptChange({
+        ...script,
+        script: { ...script.script, scenes: updatedScenes },
+      })
+      if (score) {
+        await generateMusicCue?.(sceneIdx, cueId, { description: patch.description })
+      }
+    },
+    [onScriptChange, script, scenes, sceneIdx, generateMusicCue]
+  )
+
   const defaultMusicPlayDuration = useMemo(() => {
+    if (sceneBeatsForTabs.length > 0) {
+      return resolveMusicRequestDuration({
+        beats: sceneBeatsForTabs,
+        duration: scene.duration,
+      })
+    }
     if (typeof scene.musicDuration === 'number' && scene.musicDuration > 0) {
       return scene.musicDuration
     }
@@ -4711,7 +4752,7 @@ function SceneCard({
       if (total > 0) return Math.ceil(total)
     }
     return 30
-  }, [scene.musicDuration, scene.duration, sceneProductionData?.segments])
+  }, [scene.musicDuration, scene.duration, sceneProductionData?.segments, sceneBeatsForTabs])
 
   const [musicPlayDuration, setMusicPlayDuration] = useState(defaultMusicPlayDuration)
 
@@ -7045,6 +7086,23 @@ function SceneCard({
                                 onPlayAudio={onPlayAudio}
                                 onSaveSfxAudio={onSaveSfxAudio}
                               />
+                              <div className="mt-3 flex items-center">
+                                <BeatPerformanceDirectorControl
+                                  beat={beat}
+                                  label={`Beat ${beatNumber}`}
+                                  sceneIdx={sceneIdx}
+                                  scenes={scenes}
+                                  script={script}
+                                  projectId={projectId}
+                                  onScriptChange={onScriptChange}
+                                  onGenerateStill={
+                                    onGenerateBeatFrame
+                                      ? (beatId) => onGenerateBeatFrame(sceneIdx, beatId)
+                                      : undefined
+                                  }
+                                  promptComposition={promptComposition}
+                                />
+                              </div>
                               <BeatDirectionEditor
                                 beat={beat}
                                 sceneIdx={sceneIdx}
@@ -7052,7 +7110,7 @@ function SceneCard({
                                 script={script}
                                 onScriptChange={onScriptChange}
                                 promptComposition={promptComposition}
-                                className="mt-3"
+                                className="mt-2"
                               />
                               <BeatCaptionControl
                                 beat={beat}
@@ -7429,6 +7487,23 @@ function SceneCard({
                             </div>
                             )}
                             </div>
+                            <div className="mt-3 flex items-center">
+                              <BeatPerformanceDirectorControl
+                                beat={beat}
+                                label={`Beat ${beatNumber}`}
+                                sceneIdx={sceneIdx}
+                                scenes={scenes}
+                                script={script}
+                                projectId={projectId}
+                                onScriptChange={onScriptChange}
+                                onGenerateStill={
+                                  onGenerateBeatFrame
+                                    ? (beatId) => onGenerateBeatFrame(sceneIdx, beatId)
+                                    : undefined
+                                }
+                                promptComposition={promptComposition}
+                              />
+                            </div>
                             <BeatDirectionEditor
                               beat={beat}
                               sceneIdx={sceneIdx}
@@ -7436,7 +7511,7 @@ function SceneCard({
                               script={script}
                               onScriptChange={onScriptChange}
                               promptComposition={promptComposition}
-                              className="mt-3"
+                              className="mt-2"
                             />
                             <BeatCaptionControl
                               beat={beat}
@@ -7496,6 +7571,11 @@ function SceneCard({
                           : null
                       }
                       isGeneratingAll={generatingAllCuesFor === sceneIdx}
+                      projectId={projectId}
+                      sceneIndex={sceneIdx}
+                      scene={scene}
+                      beats={sceneBeatsForTabs}
+                      onSaveCueDirection={handleSaveCueDirection}
                     />
                     {showLegacyMusicPanel && (
                     <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
@@ -7636,6 +7716,12 @@ function SceneCard({
                             max={600}
                             step={1}
                             value={musicPlayDuration}
+                            readOnly={sceneBeatsForTabs.length > 0}
+                            title={
+                              sceneBeatsForTabs.length > 0
+                                ? 'Score length follows the beats in the Screening Room'
+                                : undefined
+                            }
                             onChange={(e) => {
                               const next = parseInt(e.target.value, 10)
                               if (Number.isFinite(next) && next >= 5) {

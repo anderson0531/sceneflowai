@@ -567,12 +567,12 @@ describe('cue helpers', () => {
     expect(formatMusicCueSteer(undefined)).toBe('')
   })
 
-  it('sums the covered beats to estimate how long the cue plays', () => {
-    const measured = beats(8, (index) => (index >= 3 && index <= 6 ? { durationSeconds: 5 } : {}))
-    expect(estimateMusicCueDuration(cue, measured)).toBe(20)
+  it('sums the covered beats using the Screening Room hold', () => {
+    const measured = beats(8, (index) => (index >= 3 && index <= 6 ? { durationSeconds: 12 } : {}))
+    expect(estimateMusicCueDuration(cue, measured)).toBe(49)
   })
 
-  it('falls back to a default hold for beats with no measured length', () => {
-    expect(estimateMusicCueDuration(cue, beats(8))).toBe(16)
+  it('uses the animatic minimum when a beat has no measured length', () => {
+    expect(estimateMusicCueDuration(cue, beats(8))).toBe(41)
   })
 })

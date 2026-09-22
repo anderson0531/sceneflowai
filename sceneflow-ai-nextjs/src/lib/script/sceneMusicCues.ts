@@ -17,6 +17,10 @@
 
 import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
 import { musicCueMixFields } from '@/lib/audio/loopingAudioSync'
+import {
+  screeningCueSeconds,
+  screeningSceneSeconds,
+} from '@/lib/script/screeningBeatHold'
 import type {
   MusicCueEntry,
   MusicCueExit,
@@ -755,50 +759,34 @@ export function formatMusicCueSteer(cue: SceneMusicCue | undefined): string {
 }
 
 /**
- * Fallback beat length when a beat has no measured duration, matching the
- * animatic's own default hold for an action beat.
- */
-const ASSUMED_BEAT_DURATION_SEC = 4
-
-/**
- * How long the cue plays, summed from the beats it covers.
+ * How long the cue plays in the Screening Room, summed from the beats it covers.
  *
- * This is the play span we ask Lyria 3 to match (capped at 184s). If the
- * generated file is still shorter, the mixer loops or trims to this length.
+ * This is the play span we ask Lyria 3 to match (the route caps generation at
+ * 184s). A beat with no measured length uses the animatic hold, and a spoken
+ * beat with a voice clip uses that clip when it is longer.
  */
 export function estimateMusicCueDuration(
   cue: SceneMusicCue,
-  beats: SceneBeat[]
+  beats: SceneBeat[],
+  scene?: Record<string, unknown>,
+  dynamicDurations?: Record<string, number>
 ): number {
-  let total = 0
-  for (let index = cue.beatStart; index <= cue.beatEnd; index++) {
-    const beat = beats[index]
-    if (!beat) continue
-    total +=
-      typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0
-        ? beat.durationSeconds
-        : ASSUMED_BEAT_DURATION_SEC
-  }
-  return total > 0 ? Math.round(total) : ASSUMED_BEAT_DURATION_SEC
+  return screeningCueSeconds(cue, beats, scene, dynamicDurations)
 }
 
 /**
- * The scene's running time as its beats actually lay it out, or 0 with none.
+ * The scene's running time as the Screening Room lays the beats out, or 0 with none.
  *
  * `scene.duration` is the script LLM's guess written before beats existed and
  * is routinely wrong by a factor of two. The beat timeline is what the animatic
  * plays, so it is what a track has to cover.
  */
-export function estimateSceneBeatDuration(beats: SceneBeat[]): number {
-  if (beats.length === 0) return 0
-  let total = 0
-  for (const beat of beats) {
-    total +=
-      typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0
-        ? beat.durationSeconds
-        : ASSUMED_BEAT_DURATION_SEC
-  }
-  return Math.round(total)
+export function estimateSceneBeatDuration(
+  beats: SceneBeat[],
+  scene?: Record<string, unknown>,
+  dynamicDurations?: Record<string, number>
+): number {
+  return screeningSceneSeconds(beats, scene, dynamicDurations)
 }
 
 /** Human label for a cue's beat span, 1-based for the UI. */

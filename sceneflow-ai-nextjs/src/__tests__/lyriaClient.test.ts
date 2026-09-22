@@ -72,7 +72,7 @@ describe('buildLyria3Prompt', () => {
   it('asks Pro for an instrumental track of the requested length', () => {
     const prompt = buildLyria3Prompt('Cinematic orchestral score, ominous strings, slow tempo', 120)
     expect(prompt).toBe(
-      'Create a 120-second instrumental film underscore, no vocals, no lyrics. Cinematic orchestral score, ominous strings, slow tempo'
+      'Create a 120-second instrumental film underscore, no vocals, no lyrics. [0:00-2:00] continuous instrumental underscore for the full 120 seconds. Cinematic orchestral score, ominous strings, slow tempo'
     )
   })
 
