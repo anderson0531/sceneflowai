@@ -151,8 +151,10 @@ import type { SceneAudioData } from './GuidePromptEditor'
 import type { GuideCharacterDemographic } from '@/lib/scene/segmentGuidePrompt'
 import { getSceneBeats, isBeatExcluded, isBeatFirstPipelineEnabled } from '@/lib/script/beatMigration'
 import { BeatVideoGallery, type BeatVideoClip } from './BeatVideoGallery'
+import { ImageEditModal } from '@/components/vision/ImageEditModal'
 import type { SegmentGuideContext } from '@/lib/vision/segmentConfigBuilder'
 import { resolveEffectiveStartFrameUrl, resolveExpressGenerationMethod } from '@/lib/vision/segmentConfigBuilder'
+import { CONCURRENCY_DEFAULTS } from '@/lib/utils/concurrent-processor'
 
 function getAspectRatioTailwindClass(ratio: BlueprintAspectRatio): string {
   switch (ratio) {
@@ -306,6 +308,14 @@ export interface DirectorConsoleProps {
   onVideoGenerationModeChange?: (mode: VideoGenerationMode) => void
   /** Jump the parent workflow strip to Pre-Vis. */
   onOpenPreVis?: () => void
+  /** Pre-Vis still actions, keyed by beat, shown on the Video tab image. */
+  onRegenerateBeatStill?: (beatId: string) => void
+  onDirectBeatStill?: (beatId: string) => void
+  onDirectorBeatStill?: (beatId: string) => void
+  onUploadBeatStill?: (beatId: string, file: File) => void
+  onSaveEditedBeatStill?: (beatId: string, url: string) => void
+  /** `${sceneIndex}-beat-${beatId}` while Direct Frame is generating. */
+  generatingStillKey?: string | null
 }
 
 /** Slots for splitting Video / Mixer / Streams across parent section cards (ScriptPanel). */
@@ -376,6 +386,12 @@ export function DirectorConsoleRoot({
   videoGenerationMode = 'standard',
   onVideoGenerationModeChange,
   onOpenPreVis,
+  onRegenerateBeatStill,
+  onDirectBeatStill,
+  onDirectorBeatStill,
+  onUploadBeatStill,
+  onSaveEditedBeatStill,
+  generatingStillKey = null,
   children,
 }: DirectorConsoleProps & {
   children?: (slots: DirectorWorkflowSlots) => React.ReactNode
@@ -478,6 +494,8 @@ export function DirectorConsoleRoot({
   // Selected segment for DirectorDialog
   const [selectedSegment, setSelectedSegment] = useState<SceneSegment | null>(null)
   const [videoAgentDialogOpen, setVideoAgentDialogOpen] = useState(false)
+  const [editingBeatStill, setEditingBeatStill] = useState<{ beatId: string; imageUrl: string } | null>(null)
+  const [regeneratingStillBeatId, setRegeneratingStillBeatId] = useState<string | null>(null)
 
   // Retake confirmation when replacing a completed take via Take or Upload
   const [pendingRetakeAction, setPendingRetakeAction] = useState<PendingRetakeAction | null>(null)
@@ -1075,7 +1093,7 @@ export function DirectorConsoleRoot({
         priority: 'sequence',
         delayBetween: 500,
         selectedIds: expressIds,
-        concurrency: 3,
+        concurrency: CONCURRENCY_DEFAULTS.VIDEO_GENERATION,
         overrideConfigs,
       })
     },
@@ -1480,6 +1498,7 @@ export function DirectorConsoleRoot({
       const spoken = beat.kind === 'action' ? beat.actionDescription : beat.line
       return {
         key: beat.beatId,
+        beatId: beat.beatId,
         beatNumber: index + 1,
         label: (spoken || beat.kind || `Beat ${index + 1}`).replace(/\s+/g, ' ').trim(),
         prompt: item?.config.prompt || segment?.userEditedPrompt || segment?.generatedPrompt,
@@ -1796,6 +1815,30 @@ export function DirectorConsoleRoot({
           if (!item) return
           handleGenerateFromDialog(segment.segmentId, item.config)
         }}
+        generatingStillBeatId={
+          regeneratingStillBeatId ||
+          (generatingStillKey?.startsWith(`${sceneIndex ?? 0}-beat-`)
+            ? generatingStillKey.slice(`${sceneIndex ?? 0}-beat-`.length)
+            : null)
+        }
+        onRegenerateStill={
+          onRegenerateBeatStill
+            ? (beatId) => {
+                setRegeneratingStillBeatId(beatId)
+                void Promise.resolve(onRegenerateBeatStill(beatId)).finally(() => {
+                  setRegeneratingStillBeatId((current) => (current === beatId ? null : current))
+                })
+              }
+            : undefined
+        }
+        onDirectStill={onDirectBeatStill}
+        onDirectorStill={onDirectorBeatStill}
+        onUploadStill={onUploadBeatStill}
+        onEditStill={
+          onSaveEditedBeatStill
+            ? (beatId, imageUrl) => setEditingBeatStill({ beatId, imageUrl })
+            : undefined
+        }
       />
     </div>
   )
@@ -1903,6 +1946,36 @@ export function DirectorConsoleRoot({
           videoGenerationMode={videoGenerationMode}
         />
       )}
+
+      <ImageEditModal
+        open={!!editingBeatStill}
+        onOpenChange={(open) => {
+          if (!open) setEditingBeatStill(null)
+        }}
+        imageUrl={editingBeatStill?.imageUrl ?? ''}
+        imageType="scene"
+        aspectRatio={projectAspectRatio === '9:16' ? '9:16' : '16:9'}
+        title="Edit"
+        characterReferences={characters
+          .filter((character) => character.referenceImage)
+          .map((character) => ({
+            characterName: character.name,
+            identityImageUrl: character.referenceImage,
+          }))}
+        objectReferences={objectReferences
+          .filter((objectRef) => objectRef.imageUrl)
+          .map((objectRef) => ({
+            id: objectRef.id,
+            name: objectRef.name,
+            imageUrl: objectRef.imageUrl as string,
+            description: objectRef.description,
+          }))}
+        onSave={(url) => {
+          if (!editingBeatStill || !onSaveEditedBeatStill) return
+          onSaveEditedBeatStill(editingBeatStill.beatId, url)
+          setEditingBeatStill(null)
+        }}
+      />
 
       <VideoAgentConfirmDialog
         open={videoAgentDialogOpen}

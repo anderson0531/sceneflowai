@@ -38,10 +38,14 @@ export interface OmniInteractionBuildOptions {
   personGeneration?: ImagenPersonGeneration
   /** When true, omit safety_settings (retry after 400 from preview endpoint). */
   omitSafetySettings?: boolean
-  /** When true, omit thinking_level (retry after 400 from preview endpoint). */
+  /**
+   * Legacy retry flags. Interactions does not accept thinking_level or frame_rate;
+   * they are never written onto the request.
+   */
   omitThinkingLevel?: boolean
-  /** When true, omit frame_rate (retry after 400 from preview endpoint). */
   omitFrameRate?: boolean
+  /** When true, omit response_format.delivery (retry after 400 naming delivery). */
+  omitDelivery?: boolean
   startFrame?: string
   lastFrame?: string
   referenceImages?: OmniReferenceImage[]
@@ -335,25 +339,23 @@ export async function buildOmniInteractionRequestBody(
   const responseFormat: Record<string, unknown> = {
     type: 'video',
     aspect_ratio: options.aspectRatio || '16:9',
-    delivery: 'inline',
+  }
+  if (!options.omitDelivery) {
+    responseFormat.delivery = 'inline'
   }
 
   if (options.durationSeconds != null) {
     responseFormat.duration = formatOmniDuration(options.durationSeconds)
   }
   responseFormat.resolution = normalizeOmniResolution(options.resolution)
-  if (options.frameRate != null && !options.omitFrameRate) {
-    responseFormat.frame_rate = options.frameRate
-  }
 
+  // frame_rate, thinking_level, and multi_shot are not in the Interactions
+  // video schema. Sending them returns 400. Multi-shot direction stays in the
+  // prompt text (see buildOmniInteractionInput).
   const generationConfig: Record<string, unknown> = {
     video_config: {
       task,
-      ...(options.omniMultiShot ? { multi_shot: true } : {}),
     },
-  }
-  if (options.thinkingLevel && !options.omitThinkingLevel) {
-    generationConfig.thinking_level = options.thinkingLevel
   }
 
   const body: Record<string, unknown> = {

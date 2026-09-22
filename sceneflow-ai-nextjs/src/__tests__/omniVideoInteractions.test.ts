@@ -90,24 +90,43 @@ describe('omniVideoInteractions helpers', () => {
     const body = await buildOmniInteractionRequestBody(
       'gemini-omni-1.1-flash-preview',
       'A cinematic sunset over the ocean.',
-      { aspectRatio: '16:9', durationSeconds: 10, resolution: '1080p', frameRate: 24, thinkingLevel: 'low' }
+      {
+        aspectRatio: '16:9',
+        durationSeconds: 10,
+        resolution: '1080p',
+        frameRate: 24,
+        thinkingLevel: 'low',
+        omniMultiShot: true,
+      }
     )
 
     expect(body.model).toBe('gemini-omni-1.1-flash-preview')
     expect(body.background).toBe(true)
-    expect(body.input).toBe('A cinematic sunset over the ocean.')
+    expect(body.input).toContain('A cinematic sunset over the ocean.')
+    expect(body.input).toContain('Cinematic multi-shot sequence')
     expect(body.generation_config).toEqual({
       video_config: { task: 'text_to_video' },
-      thinking_level: 'low',
     })
+    expect(JSON.stringify(body)).not.toContain('frame_rate')
+    expect(JSON.stringify(body)).not.toContain('thinking_level')
+    expect(JSON.stringify(body)).not.toContain('multi_shot')
     expect(body.response_format).toEqual({
       type: 'video',
       aspect_ratio: '16:9',
       delivery: 'inline',
       duration: '10s',
       resolution: '1080p',
-      frame_rate: 24,
     })
+  })
+
+  it('omits delivery when omitDelivery is set', async () => {
+    const body = await buildOmniInteractionRequestBody(
+      'gemini-omni-1.1-flash-preview',
+      'A cinematic sunset over the ocean.',
+      { omitDelivery: true }
+    )
+    const format = body.response_format as Record<string, unknown>
+    expect(format.delivery).toBeUndefined()
   })
 
   it('includes labeled reference text parts in multimodal input', async () => {

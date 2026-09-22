@@ -5960,6 +5960,44 @@ function SceneCard({
                       productionData={sceneProductionData ?? null}
                       sceneImageUrl={scene.imageUrl}
                       onOpenPreVis={() => setActiveSceneTab('previs')}
+                      onRegenerateBeatStill={
+                        onGenerateBeatFrame
+                          ? (beatId) => {
+                              void onGenerateBeatFrame(sceneIdx, beatId)
+                            }
+                          : undefined
+                      }
+                      onDirectBeatStill={
+                        onDirectFrame
+                          ? (beatId) => {
+                              const slot = enumerateStoryboardFrameSlots(scene).find(
+                                (entry) => entry.beatId === beatId && entry.frameRole !== 'end'
+                              )
+                              if (slot) onDirectFrame(sceneIdx, slot)
+                            }
+                          : undefined
+                      }
+                      onDirectorBeatStill={
+                        onDirectorFrame
+                          ? (beatId) => {
+                              const slot = enumerateStoryboardFrameSlots(scene).find(
+                                (entry) => entry.beatId === beatId && entry.frameRole !== 'end'
+                              )
+                              if (slot) onDirectorFrame(sceneIdx, slot)
+                            }
+                          : undefined
+                      }
+                      onUploadBeatStill={
+                        onUploadBeatFrame
+                          ? (beatId, file) => onUploadBeatFrame(sceneIdx, beatId, file)
+                          : undefined
+                      }
+                      onSaveEditedBeatStill={
+                        onSaveEditedBeatFrame
+                          ? (beatId, url) => onSaveEditedBeatFrame(sceneIdx, beatId, url)
+                          : undefined
+                      }
+                      generatingStillKey={generatingDirectSlotKey}
                       scene={{
                         ...scene,
                         filmTitle: projectTitle || script?.title,
