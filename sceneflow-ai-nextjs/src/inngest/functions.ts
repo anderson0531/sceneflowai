@@ -1,5 +1,7 @@
+import { NonRetriableError } from 'inngest'
 import { inngest } from '@/inngest/client'
-import { withRetry } from '@/lib/utils/retry'
+import { withRetry, isRetryableError } from '@/lib/utils/retry'
+import { shouldReplayInternalGenerateAsset } from '@/lib/gemini/vertexRateLimit'
 import {
   notifyUser,
   updateGenerationJob,
@@ -52,8 +54,12 @@ async function callInternalApi(path: string, body: Record<string, unknown>) {
       })
       if (res.status === 429) {
         const data = await res.json().catch(() => ({}))
-        const err = new Error(data.error || 'Rate limited')
-        ;(err as any).status = 429
+        const message = data.error || 'Rate limited'
+        if (!shouldReplayInternalGenerateAsset(path, res.status)) {
+          throw new NonRetriableError(message)
+        }
+        const err = new Error(message) as Error & { status: number }
+        err.status = 429
         throw err
       }
       if (!res.ok) {
@@ -62,7 +68,19 @@ async function callInternalApi(path: string, body: Record<string, unknown>) {
       }
       return res.json()
     },
-    { maxRetries: 5, initialDelayMs: 2000, maxDelayMs: 60000, operationName: `internal ${path}` }
+    {
+      maxRetries: 5,
+      initialDelayMs: 2000,
+      maxDelayMs: 60000,
+      operationName: `internal ${path}`,
+      isRetryable: (error, status) => {
+        if (error instanceof NonRetriableError || error?.name === 'NonRetriableError') return false
+        if (typeof status === 'number' && !shouldReplayInternalGenerateAsset(path, status)) {
+          return false
+        }
+        return isRetryableError(error, status)
+      },
+    }
   )
 }
 

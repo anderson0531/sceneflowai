@@ -35,7 +35,17 @@ import {
   type GeminiVideoResult
 } from './geminiStudioVideoClient'
 
-import type { VeoClipDuration } from '@/lib/config/modelConfig'
+import {
+  DEFAULT_VIDEO_QUALITY,
+  getVertexLocation,
+  isOmniVideoModel,
+  resolveVideoModel,
+  type VeoClipDuration,
+} from '@/lib/config/modelConfig'
+import {
+  isVertexBurstRateLimitMessage,
+  isVertexRateLimitMessage,
+} from '@/lib/gemini/vertexRateLimit'
 
 // ============================================================================
 // Types
@@ -81,6 +91,8 @@ interface RegionQuotaState {
   isQuotaExhausted: boolean
   /** Timestamp when quota resets (midnight) */
   quotaResetsAt: number | null
+  /** Last Vertex quota/429 body, returned while this location stays unavailable */
+  lastLimitError: string | null
 }
 
 interface ProjectQuotaState {
@@ -158,6 +170,7 @@ function initQuotaState(projectId: string, region: string): RegionQuotaState {
       rateLimitedUntil: null,
       isQuotaExhausted: false,
       quotaResetsAt: null,
+      lastLimitError: null,
     }
   }
   return quotaState[projectId].regions[region]
@@ -199,17 +212,19 @@ function isRegionAvailable(projectId: string, region: string): boolean {
 }
 
 /** Mark a region as rate limited */
-function markRegionRateLimited(projectId: string, region: string): void {
+function markRegionRateLimited(projectId: string, region: string, error?: string): void {
   const state = getQuotaState(projectId, region)
   state.isRateLimited = true
   state.rateLimitedUntil = Date.now() + RATE_LIMIT_CONFIG.RATE_LIMIT_COOLDOWN_MS
+  if (error) state.lastLimitError = error
   console.log(`[Production Video] Region ${region} (${projectId}) rate limited until ${new Date(state.rateLimitedUntil).toISOString()}`)
 }
 
 /** Mark a region as quota exhausted */
-function markRegionQuotaExhausted(projectId: string, region: string): void {
+function markRegionQuotaExhausted(projectId: string, region: string, error?: string): void {
   const state = getQuotaState(projectId, region)
   state.isQuotaExhausted = true
+  if (error) state.lastLimitError = error
   
   // Reset at midnight PT (UTC-8)
   const now = new Date()
@@ -256,23 +271,39 @@ export function resetProductionVideoQuotaStateForTests(): void {
 }
 
 /**
- * Select the best available project/region combination.
- * Endpoints in `exclude` are never chosen. Last-resort (wait out a rate limit)
- * is only used on the first attempt of a generation, not during failover.
+ * Locations this request will actually call.
+ * Gemini Omni Interactions always uses the global endpoint, ignoring VEO_REGIONS.
+ */
+function quotaLocationsForRequest(options: VideoGenerationOptions): string[] {
+  const quality = options.quality === 'standard' ? 'premium' : (options.quality || DEFAULT_VIDEO_QUALITY)
+  const hasReferenceImages =
+    !options.startFrame && (options.referenceImages?.length ?? 0) > 0
+  const model = resolveVideoModel(quality, {
+    durationSeconds: options.durationSeconds,
+    sourceVideo: options.sourceVideo,
+    hasReferenceImages,
+    preferOmni: options.preferOmni,
+  })
+  if (isOmniVideoModel(model)) return [getVertexLocation(model)]
+  return getConfiguredRegions()
+}
+
+/**
+ * Select a free project/location. Rate-limited endpoints are skipped.
+ * This request does not wait out a cooldown and call the same endpoint again.
  */
 function selectBestEndpoint(
   exclude: ReadonlySet<string> = new Set(),
-  allowLastResort = true
+  locations: string[] = getConfiguredRegions()
 ): SelectedEndpoint | null {
   const projectIds = getConfiguredProjectIds()
-  const regions = getConfiguredRegions()
+  const regions = locations.length > 0 ? locations : getConfiguredRegions()
   
   if (projectIds.length === 0) {
     console.error('[Production Video] No project IDs configured')
     return null
   }
   
-  // First pass: find a fully available endpoint
   for (const projectId of projectIds) {
     for (const region of regions) {
       if (exclude.has(endpointKey(projectId, region))) continue
@@ -282,28 +313,27 @@ function selectBestEndpoint(
     }
   }
 
-  if (!allowLastResort) return null
-  
-  // Second pass: find a rate-limited but not quota-exhausted endpoint
-  // (We'll wait for rate limit to clear)
-  for (const projectId of projectIds) {
-    for (const region of regions) {
-      if (exclude.has(endpointKey(projectId, region))) continue
-      const state = getQuotaState(projectId, region)
-      if (!state.isQuotaExhausted) {
-        return { projectId, region, isLastResort: true }
-      }
-    }
-  }
-  
-  // All endpoints exhausted
   return null
 }
 
-/** Get status summary for all endpoints */
-export function getEndpointStatus(): Record<string, Record<string, { available: boolean; rateLimited: boolean; quotaExhausted: boolean }>> {
+/** Previous quota error for a location that is still unavailable. */
+function rememberedLimitError(locations: string[]): string | undefined {
+  for (const projectId of getConfiguredProjectIds()) {
+    for (const region of locations) {
+      const state = quotaState[projectId]?.regions[region]
+      if (!state?.lastLimitError) continue
+      if (!isRegionAvailable(projectId, region)) return state.lastLimitError
+    }
+  }
+  return undefined
+}
+
+/** Get status summary for all endpoints. Pass Omni's `['global']` when that is the call. */
+export function getEndpointStatus(
+  locations?: string[]
+): Record<string, Record<string, { available: boolean; rateLimited: boolean; quotaExhausted: boolean }>> {
   const projectIds = getConfiguredProjectIds()
-  const regions = getConfiguredRegions()
+  const regions = locations?.length ? locations : getConfiguredRegions()
   const status: Record<string, Record<string, { available: boolean; rateLimited: boolean; quotaExhausted: boolean }>> = {}
   
   for (const projectId of projectIds) {
@@ -371,9 +401,11 @@ export async function generateProductionVideo(
 ): Promise<ProductionVideoResult> {
   const { forceProvider, forceRegion, forceProjectId, triedEndpoints, ...videoOptions } = options
   const tried = triedEndpoints ?? new Set<string>()
+  const quotaLocations = quotaLocationsForRequest(videoOptions)
   
   console.log('[Production Video] Starting video generation...')
   console.log('[Production Video] Configured regions:', getConfiguredRegions())
+  console.log('[Production Video] Quota locations:', quotaLocations)
   console.log('[Production Video] Configured projects:', getConfiguredProjectIds().length)
   console.log('[Production Video] Note: Gemini API does not support video - Vertex AI only')
   
@@ -418,30 +450,22 @@ export async function generateProductionVideo(
     // Select endpoint
     let selectedEndpoint: SelectedEndpoint | null = null
     
-    if (forceProjectId && forceRegion) {
-      const forcedKey = endpointKey(forceProjectId, forceRegion)
+    const omniQuotaLocation = quotaLocations.length === 1 && quotaLocations[0] === 'global'
+      ? 'global'
+      : null
+
+    if (forceProjectId && (forceRegion || omniQuotaLocation)) {
+      const forcedRegion = omniQuotaLocation ?? forceRegion!
+      const forcedKey = endpointKey(forceProjectId, forcedRegion)
       selectedEndpoint = tried.has(forcedKey)
         ? null
-        : { projectId: forceProjectId, region: forceRegion, isLastResort: false }
+        : { projectId: forceProjectId, region: forcedRegion, isLastResort: false }
     } else {
-      // Failover never waits out a cooldown and retries an endpoint already tried.
-      selectedEndpoint = selectBestEndpoint(tried, tried.size === 0)
+      selectedEndpoint = selectBestEndpoint(tried, quotaLocations)
     }
     
     if (selectedEndpoint) {
       const { projectId, region, isLastResort } = selectedEndpoint
-      
-      // If this is last resort (rate limited but not quota exhausted), wait for cooldown
-      if (isLastResort) {
-        const state = getQuotaState(projectId, region)
-        if (state.rateLimitedUntil) {
-          const waitMs = state.rateLimitedUntil - Date.now()
-          if (waitMs > 0 && waitMs < 120000) { // Wait up to 2 minutes
-            console.log(`[Production Video] Waiting ${Math.ceil(waitMs / 1000)}s for rate limit cooldown...`)
-            await new Promise(resolve => setTimeout(resolve, waitMs))
-          }
-        }
-      }
       
       console.log(`[Production Video] Using Vertex AI: ${region} (${projectId})`)
       
@@ -457,37 +481,31 @@ export async function generateProductionVideo(
         
         const result = await generateVideoWithVeo(prompt, videoOptions)
         
-        if (result.status === 'FAILED') {
-          const rateLimited =
-            result.error?.includes('429') || result.error?.toLowerCase().includes('rate limit')
-          const quotaExhausted =
-            result.error?.includes('quota') || result.error?.includes('RESOURCE_EXHAUSTED')
-
-          if (rateLimited || quotaExhausted) {
-            if (rateLimited) markRegionRateLimited(projectId, region)
-            else markRegionQuotaExhausted(projectId, region)
-
-            const nextTried = new Set(tried)
-            nextTried.add(endpointKey(projectId, region))
-            const nextEndpoint = selectBestEndpoint(nextTried, false)
-            if (!nextEndpoint) {
-              return failoverVideoResult(result.error, projectId, region)
-            }
-
-            return generateProductionVideo(prompt, {
-              ...options,
-              forceProjectId: undefined,
-              forceRegion: undefined,
-              triedEndpoints: nextTried,
-            })
+        if (result.status === 'FAILED' && isVertexRateLimitMessage(result.error)) {
+          // 429 / too_many_requests is a short cooldown even when the body says "quota".
+          if (isVertexBurstRateLimitMessage(result.error)) {
+            markRegionRateLimited(projectId, region, result.error)
+          } else {
+            markRegionQuotaExhausted(projectId, region, result.error)
           }
-          
-          // NOTE: Content policy violations cannot fallback to Gemini API
-          // Veo video generation models are ONLY available on Vertex AI
-          // The Gemini API (generativelanguage.googleapis.com) does not support video generation
-          // So we just return the error - the caller should handle it appropriately
+
+          const nextTried = new Set(tried)
+          nextTried.add(endpointKey(projectId, region))
+          const nextEndpoint = selectBestEndpoint(nextTried, quotaLocations)
+          if (!nextEndpoint) {
+            return failoverVideoResult(result.error, projectId, region)
+          }
+
+          return generateProductionVideo(prompt, {
+            ...options,
+            forceProjectId: undefined,
+            forceRegion: undefined,
+            triedEndpoints: nextTried,
+          })
         }
-        
+
+        // Content policy and other failures return as-is. Veo is Vertex-only,
+        // so a policy block is not retried against another region here.
         return {
           ...result,
           provider: 'vertex',
@@ -502,6 +520,13 @@ export async function generateProductionVideo(
       }
     }
     
+    const remembered = rememberedLimitError(quotaLocations)
+    if (remembered) {
+      console.log('[Production Video] Quota cooldown active; not sending another video request')
+      const projectId = getConfiguredProjectIds()[0] || ''
+      return failoverVideoResult(remembered, projectId, quotaLocations[0] || 'global')
+    }
+
     console.log('[Production Video] No Vertex AI endpoints available')
   }
   
