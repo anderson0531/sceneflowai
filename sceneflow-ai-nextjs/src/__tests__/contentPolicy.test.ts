@@ -31,8 +31,17 @@ describe('contentPolicy', () => {
     expect(isVertexContentPolicyError('quota exceeded')).toBe(false)
   })
 
-  it('detects bare safety-blocked errors via isContentBlockedError', () => {
+  it('detects safety-filter and prohibited-content blocks', () => {
     expect(isVertexContentPolicyError('Request blocked by safety systems')).toBe(true)
+    expect(isVertexContentPolicyError('The prompt is blocked due to prohibited contents')).toBe(true)
+  })
+
+  it('does not treat generic Omni transport errors as content policy', () => {
+    expect(isVertexContentPolicyError('Vertex AI Interactions error 400: Unknown field delivery')).toBe(false)
+    expect(isVertexContentPolicyError('Invalid request content')).toBe(false)
+    expect(isVertexContentPolicyError('Video generation timed out after 240 seconds')).toBe(false)
+    expect(isVertexContentPolicyError('Omni interaction status check failed: 404')).toBe(false)
+    expect(isVertexContentPolicyError('quota exceeded')).toBe(false)
   })
 
   it('defaults policy max attempts to 3', () => {

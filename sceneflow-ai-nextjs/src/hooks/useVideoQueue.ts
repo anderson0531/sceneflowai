@@ -42,6 +42,9 @@ import type {
   VideoRunItemStatus,
 } from '@/lib/video/videoQueueRunReport'
 
+/** How many times one beat may be pushed back after a 429 before the queue stops retrying it. */
+const MAX_RATE_LIMIT_REQUEUES_PER_BEAT = 2
+
 export interface VideoQueueState {
   /** All queue items with their configs */
   queue: DirectorQueueItem[]
@@ -463,6 +466,7 @@ export function useVideoQueue(
     let currentIndex = 0
     let completed = 0
     let failed = 0
+    const rateLimitRequeues = new Map<string, number>()
 
     const runItems = new Map<string, VideoRunItem>(
       itemsToProcess.map((item, idx) => [
@@ -682,10 +686,16 @@ export function useVideoQueue(
             pausedFor = 0
             
             if (!cancelRequestedRef.current) {
-              toast.info('Rate limit cleared. Resuming queue...')
-              // Push item back to process later
-              itemsToProcess.push(item)
-              continue
+              const requeues = rateLimitRequeues.get(item.segmentId) ?? 0
+              if (requeues < MAX_RATE_LIMIT_REQUEUES_PER_BEAT) {
+                rateLimitRequeues.set(item.segmentId, requeues + 1)
+                toast.info('Rate limit cleared. Resuming queue...')
+                itemsToProcess.push(item)
+                continue
+              }
+              failed++
+              setFailedCount(failed)
+              markItem(item.segmentId, 'error', 'Rate limit persisted after retries')
             }
           } else {
             failed++

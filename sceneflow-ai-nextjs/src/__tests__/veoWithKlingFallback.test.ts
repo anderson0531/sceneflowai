@@ -178,6 +178,42 @@ describe('generateVideoWithVeoKlingFallback', () => {
     expect(result.wasPolicyFallback).toBe(true)
   })
 
+  it('does not start another Vertex attempt for a non-policy Omni 400', async () => {
+    vi.mocked(generateProductionVideo).mockResolvedValue({
+      status: 'FAILED',
+      error: 'Vertex AI Interactions error 400: Unknown field delivery',
+    })
+
+    const result = await generateVideoWithVeoKlingFallback({
+      prompt: 'a quiet street at dusk',
+      method: 'I2V',
+      allowPolicyFallback: false,
+      videoOptions: { durationSeconds: 8, aspectRatio: '16:9' },
+    })
+
+    expect(generateProductionVideo).toHaveBeenCalledTimes(1)
+    expect(result.status).toBe('FAILED')
+    expect(result.vertexAttempts).toBe(1)
+  })
+
+  it('does not start another Vertex attempt when the interaction has no video file', async () => {
+    vi.mocked(generateProductionVideo).mockResolvedValue({
+      status: 'COMPLETED',
+      operationName: 'interaction:abc',
+    })
+
+    const result = await generateVideoWithVeoKlingFallback({
+      prompt: 'a quiet street at dusk',
+      method: 'I2V',
+      videoOptions: { durationSeconds: 8, aspectRatio: '16:9' },
+    })
+
+    expect(generateProductionVideo).toHaveBeenCalledTimes(1)
+    expect(waitForProductionVideoCompletion).not.toHaveBeenCalled()
+    expect(result.status).toBe('FAILED')
+    expect(result.error).toMatch(/downloadable file/)
+  })
+
   it('does not invoke Kling when allowPolicyFallback is false', async () => {
     vi.mocked(generateProductionVideo).mockResolvedValue({
       status: 'FAILED',

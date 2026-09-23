@@ -2,8 +2,6 @@
  * Unified Vertex / Veo content-policy detection for retry ladders and Kling fallback.
  */
 
-import { isContentBlockedError } from '@/lib/vertexai/safety'
-
 export class ContentPolicyExhaustedError extends Error {
   readonly attempts: number
   readonly lastError: string
@@ -35,16 +33,19 @@ const POLICY_MARKERS = [
   'no image in vertex gemini image response',
   'finishreason=safety',
   'finishreason=image_safety',
+  'prohibited content',
+  'support code',
 ]
 
 /**
  * True when an error message indicates Vertex/Veo RAI or Gemini-branded policy rejection.
+ * Generic substrings such as "content", "blocked", or "safety" are not enough — Omni
+ * transport errors often include those words and must not start another generation.
  */
 export function isVertexContentPolicyError(message: string | undefined | null): boolean {
   if (!message?.trim()) return false
   const low = message.toLowerCase()
-  if (POLICY_MARKERS.some((m) => low.includes(m))) return true
-  return isContentBlockedError(new Error(message))
+  return POLICY_MARKERS.some((m) => low.includes(m))
 }
 
 /** @deprecated Use isVertexContentPolicyError */
