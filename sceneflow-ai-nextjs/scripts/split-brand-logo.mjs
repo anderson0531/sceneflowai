@@ -1,14 +1,12 @@
 #!/usr/bin/env node
 /**
- * Generate brand assets from SFAI LOGO.jpg (circular badge).
+ * Generate brand assets from the film-strip infinity JPEG.
  *
- * The source is a square badge with SceneFlow on the top arc, the clapper in
- * the center, and a caption along the lower rim. Keep the top portion only,
- * then scale it to cover each square size from the top so the ring stays in
- * frame and the caption is gone.
+ * The source is a landscape cyan-to-purple infinity on navy. Header badges
+ * stay landscape (`contain` on navy). Square icons (favicon, PWA, Open Graph)
+ * are also `contain` on navy so both loops stay in frame.
  *
  * Usage:
- *   curl -o tmp/brand/SFAI-LOGO.jpg "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/SFAI%20LOGO.jpg"
  *   node scripts/split-brand-logo.mjs
  */
 
@@ -19,41 +17,42 @@ import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
-const SRC = join(ROOT, 'tmp/brand/SFAI-LOGO.jpg')
+const SRC = join(ROOT, 'public/brand/sf-infinity-source.jpg')
 const BRAND = join(ROOT, 'public/brand')
+const NAVY = { r: 5, g: 10, b: 24, alpha: 1 }
 
-/** Top fraction of the source. Caption glyphs on the 600px JPEG start at y=511. */
-const CAPTION_CROP_RATIO = 500 / 600
+const PNG = { compressionLevel: 9, palette: false }
 
-async function croppedBadge(size) {
-  const meta = await sharp(SRC).metadata()
-  const width = meta.width
-  const height = meta.height
-  const cropHeight = Math.max(1, Math.round(height * CAPTION_CROP_RATIO))
-
+function contain(width, height) {
   return sharp(SRC)
-    .extract({ left: 0, top: 0, width, height: cropHeight })
-    .resize(size, size, { fit: 'cover', position: 'top' })
-    .png({ compressionLevel: 9, palette: false })
+    .resize(width, height, { fit: 'contain', background: NAVY })
+    .png(PNG)
 }
 
 async function run() {
-  mkdirSync(join(ROOT, 'tmp/brand'), { recursive: true })
   mkdirSync(BRAND, { recursive: true })
   mkdirSync(join(ROOT, 'public/icons'), { recursive: true })
 
-  const outputs = [
-    { out: join(BRAND, 'sf-badge.png'), size: 88 },
-    { out: join(BRAND, 'sf-badge@2x.png'), size: 176 },
+  const landscape = [
+    { out: join(BRAND, 'sf-badge.png'), width: 81, height: 44 },
+    { out: join(BRAND, 'sf-badge@2x.png'), width: 162, height: 88 },
+  ]
+  const square = [
     { out: join(BRAND, 'sf-logo-lockup.png'), size: 512 },
     { out: join(ROOT, 'public/apple-touch-icon.png'), size: 180 },
-    { out: join(ROOT, 'public/icons/icon-192x192.png'), size: 192 },
-    { out: join(ROOT, 'public/icons/icon-152x152.png'), size: 152 },
     { out: join(ROOT, 'public/favicon-32.png'), size: 32 },
+    ...[72, 96, 128, 144, 152, 192, 384, 512].map((size) => ({
+      out: join(ROOT, 'public/icons', `icon-${size}x${size}.png`),
+      size,
+    })),
   ]
 
-  for (const { out, size } of outputs) {
-    await (await croppedBadge(size)).toFile(out)
+  for (const { out, width, height } of landscape) {
+    await contain(width, height).toFile(out)
+    console.log('Wrote', out)
+  }
+  for (const { out, size } of square) {
+    await contain(size, size).toFile(out)
     console.log('Wrote', out)
   }
 }

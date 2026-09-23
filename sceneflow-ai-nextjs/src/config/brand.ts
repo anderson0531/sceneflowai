@@ -1,5 +1,5 @@
 /**
- * SceneFlow brand tokens — aligned with SFAI logo (cyan/navy cyber-cinematic).
+ * SceneFlow brand tokens — film-strip infinity (cyan-to-purple on navy).
  * Wordmark styling mirrors SceneProductionMixer / landing hero palette.
  */
 
@@ -9,16 +9,16 @@ export const BRAND = {
   badge: {
     src: '/brand/sf-badge.png',
     src2x: '/brand/sf-badge@2x.png',
-    /** Display size at 1x (use @2x asset for retina) */
-    width: 44,
+    /** Landscape 1x display size (use @2x asset for retina) */
+    width: 81,
     height: 44,
   },
   badgeApp: {
-    width: 36,
+    width: 66,
     height: 36,
   },
   badgeCompact: {
-    width: 40,
+    width: 73,
     height: 40,
   },
   lockup: {

@@ -24,7 +24,7 @@ function LogoBadge({ variant }: { variant: BrandVariant }) {
       alt=""
       width={width}
       height={height}
-      className="shrink-0 rounded-full object-cover"
+      className="shrink-0 object-contain"
       style={{ width, height }}
       priority
       aria-hidden
