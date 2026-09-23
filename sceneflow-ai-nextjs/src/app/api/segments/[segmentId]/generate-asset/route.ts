@@ -22,6 +22,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { isBeatFirstPipelineEnabled, getSceneBeats } from '@/lib/script/beatMigration'
 import { enforceVideoGenerationUnlock } from '@/lib/script/enforceVideoGenerationUnlock'
+import type { SceneBeat } from '@/lib/script/segmentTypes'
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
 import {
   parsePersistedMusicCues,
@@ -38,8 +39,12 @@ import {
 import type { StemSeparationResult } from '@/lib/audio/stemSeparation'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { extractVeoRaiDetailsFromErrorString } from '@/lib/vertexai/safety'
-import { normalizeReferenceImages, shouldRelabelRefs, type VeoReferenceImage } from '@/lib/video/normalizeReferenceImages'
-import { resolveBeatVideoReferences, resolveBeatElementSelection } from '@/lib/vision/resolveBeatVideoReferences'
+import { normalizeReferenceImages, type VeoReferenceImage } from '@/lib/video/normalizeReferenceImages'
+import {
+  resolveBeatVideoReferences,
+  resolveBeatElementSelection,
+  shouldReplaceClientVideoReferences,
+} from '@/lib/vision/resolveBeatVideoReferences'
 import {
   findSceneById,
   getVisionScriptScenes,
@@ -263,17 +268,28 @@ export async function POST(
       )
     }
 
+    let cachedProject: Awaited<ReturnType<typeof Project.findByPk>> | null = null
+    let cachedScene: Record<string, unknown> | undefined
+    let cachedBeat: SceneBeat | undefined
+
     if (isBeatFirstPipelineEnabled()) {
       await sequelize.authenticate()
       const project = await Project.findByPk(projectId)
       const unlock = await enforceVideoGenerationUnlock(project, sceneId)
       if (!unlock.ok) return unlock.response
       const sceneRecord = unlock.scene
+      cachedProject = project
+      if (sceneRecord) cachedScene = sceneRecord as Record<string, unknown>
 
-      if (beatId && sceneRecord && (genType === 'T2V' || genType === 'I2V')) {
+      if (
+        beatId &&
+        sceneRecord &&
+        (genType === 'T2V' || genType === 'I2V' || generationMethod === 'REF')
+      ) {
         const beats = getSceneBeats(sceneRecord as Record<string, unknown>)
         const beatIndex = beats.findIndex((b) => b.beatId === beatId)
         const beat = beatIndex >= 0 ? beats[beatIndex] : undefined
+        cachedBeat = beat
         if (beat) {
           const artStyleId = resolveProjectArtStyle(project?.metadata)
           const sceneDirection =
@@ -301,41 +317,61 @@ export async function POST(
       }
     }
 
-    if (beatId && projectId && shouldRelabelRefs(referenceImages)) {
+    if (beatId && projectId) {
       try {
-        await sequelize.authenticate()
-        const projectForRefs = await Project.findByPk(projectId)
-        const scenesForRefs = getVisionScriptScenes(
-          projectForRefs?.metadata?.visionPhase as Record<string, unknown> | undefined
-        )
-        const { scene: sceneForRefs } = findSceneById(scenesForRefs, sceneId)
-        const beats = sceneForRefs ? getSceneBeats(sceneForRefs as Record<string, unknown>) : []
-        const beat = beats.find((b) => b.beatId === beatId)
-        if (beat && sceneForRefs) {
-          const resolved = resolveBeatVideoReferences({
-            scene: sceneForRefs as Record<string, unknown>,
-            beat,
-            projectCharacters:
-              projectForRefs?.metadata?.visionPhase?.characters ||
-              projectForRefs?.metadata?.characters ||
-              [],
-            locationReferences:
-              projectForRefs?.metadata?.visionPhase?.references?.locationReferences || [],
-            objectReferences:
-              projectForRefs?.metadata?.visionPhase?.references?.objectReferences || [],
-          })
-          if (resolved.labeledRefs.length > 0) {
-            referenceImages = resolved.labeledRefs.map(
-              (ref): VeoReferenceImage => ({
-                url: ref.url,
-                type: ref.type,
-                name: ref.name,
-                role: ref.role,
-              })
+        let projectForRefs = cachedProject
+        let sceneForRefs = cachedScene
+        let beat = cachedBeat
+        const knownAndKept =
+          !!beat &&
+          !!sceneForRefs &&
+          !shouldReplaceClientVideoReferences(beat, referenceImages)
+        if (!knownAndKept) {
+          if (!beat || !sceneForRefs || !projectForRefs) {
+            await sequelize.authenticate()
+            projectForRefs = await Project.findByPk(projectId)
+            const scenesForRefs = getVisionScriptScenes(
+              projectForRefs?.metadata?.visionPhase as Record<string, unknown> | undefined
             )
-            console.log(
-              `[Segment Asset Generation] Server-resolved ${referenceImages.length} labeled REF image(s) for beat ${beatId}`
-            )
+            const found = findSceneById(scenesForRefs, sceneId)
+            sceneForRefs = found.scene
+              ? (found.scene as Record<string, unknown>)
+              : undefined
+            const beats = sceneForRefs ? getSceneBeats(sceneForRefs) : []
+            beat = beats.find((b) => b.beatId === beatId)
+          }
+          if (
+            beat &&
+            sceneForRefs &&
+            projectForRefs &&
+            shouldReplaceClientVideoReferences(beat, referenceImages)
+          ) {
+            const resolved = resolveBeatVideoReferences({
+              scene: sceneForRefs,
+              beat,
+              projectCharacters:
+                projectForRefs?.metadata?.visionPhase?.characters ||
+                projectForRefs?.metadata?.characters ||
+                [],
+              locationReferences:
+                projectForRefs?.metadata?.visionPhase?.references?.locationReferences || [],
+              objectReferences:
+                projectForRefs?.metadata?.visionPhase?.references?.objectReferences || [],
+            })
+            const userLockedReferences = beat.referenceSelection?.source === 'user'
+            if (userLockedReferences || resolved.labeledRefs.length > 0) {
+              referenceImages = resolved.labeledRefs.map(
+                (ref): VeoReferenceImage => ({
+                  url: ref.url,
+                  type: ref.type,
+                  name: ref.name,
+                  role: ref.role,
+                })
+              )
+              console.log(
+                `[Segment Asset Generation] Server-resolved ${referenceImages.length} labeled REF image(s) for beat ${beatId}`
+              )
+            }
           }
         }
       } catch (relabelError) {

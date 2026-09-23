@@ -200,6 +200,12 @@ export function normalizeBeatDirection(raw: unknown): BeatDirection | undefined 
   const audioCue = trimmedString(b.audioCue ?? b.audio_cue ?? b.sfx)
   if (audioCue) direction.audioCue = audioCue
 
+  const framePrompt = trimmedString(b.framePrompt ?? b.frame_prompt)
+  if (framePrompt) direction.framePrompt = framePrompt
+
+  const videoPrompt = trimmedString(b.videoPrompt ?? b.video_prompt)
+  if (videoPrompt) direction.videoPrompt = videoPrompt
+
   const transition = normalizeTransition(b.transition)
   if (transition) direction.transition = transition
 

@@ -12,6 +12,26 @@ export function getArtStylePromptSuffix(artStyleId?: string | null): string {
   return preset?.promptSuffix ?? ''
 }
 
+/**
+ * Motion suffix for video prompts.
+ *
+ * The still preset says "cinematic film still" and "8K, sharp focus", which
+ * tells a video model to freeze a photograph. Video keeps the look and asks
+ * for motion instead.
+ */
+export function getArtStyleVideoPromptSuffix(artStyleId?: string | null): string {
+  const still = getArtStylePromptSuffix(artStyleId)
+  const parts = still
+    .replace(/cinematic film still/gi, 'cinematic motion')
+    .split(',')
+    .map((part) => part.trim())
+    .filter((part) => {
+      const token = part.toLowerCase()
+      return token !== '8k' && token !== 'sharp focus'
+    })
+  return parts.join(', ')
+}
+
 export function getArtStyleNegativeTerms(artStyleId?: string | null): string {
   const id = artStyleId?.trim() || 'photorealistic'
   if (id === 'photorealistic') {

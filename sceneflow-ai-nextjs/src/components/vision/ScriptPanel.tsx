@@ -7153,6 +7153,9 @@ function SceneCard({
                                 script={script}
                                 onScriptChange={onScriptChange}
                                 promptComposition={promptComposition}
+                                characters={characters}
+                                locationReferences={locationReferences}
+                                objectReferences={objectReferences}
                                 className="mt-2"
                               />
                               <BeatCaptionControl
@@ -7554,6 +7557,9 @@ function SceneCard({
                               script={script}
                               onScriptChange={onScriptChange}
                               promptComposition={promptComposition}
+                              characters={characters}
+                              locationReferences={locationReferences}
+                              objectReferences={objectReferences}
                               className="mt-2"
                             />
                             <BeatCaptionControl

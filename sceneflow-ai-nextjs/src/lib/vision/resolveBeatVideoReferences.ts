@@ -15,6 +15,7 @@ import {
   resolveBeatFrameGenerationContext,
   shouldUseExplicitBeatReferences,
 } from '@/lib/vision/beatFrameGenerationContext'
+import { shouldRelabelRefs } from '@/lib/video/normalizeReferenceImages'
 import {
   locationReferenceForGeneration,
 } from '@/lib/vision/locationVersionResolve'
@@ -169,11 +170,32 @@ export function resolveBeatVideoReferences(
       includeWardrobeDiptych: true,
     })
 
+    const sentDiptych = !refPair.identityUrl && !!refPair.wardrobeDiptychUrl
     characterMeta.push({
       name: char.name,
       hasDualReferences: refPair.hasDualReferences,
-      hasWardrobeDiptych: refPair.hasWardrobeDiptych,
+      hasWardrobeDiptych: sentDiptych,
     })
+
+    // Identity is the face the library shot. A wardrobe plate or combined sheet
+    // never replaces it: the Take dialog works because it sends referenceImage,
+    // and automatic takes have to do the same. The combined sheet is only the
+    // stand-in when the character has no identity image.
+    if (refPair.identityUrl) {
+      imageReferences.push({
+        imageUrl: refPair.identityUrl,
+        refRole: 'identity',
+        characterName: char.name,
+      })
+      if (refPair.wardrobeUrl && refPair.wardrobeUrl !== refPair.identityUrl) {
+        imageReferences.push({
+          imageUrl: refPair.wardrobeUrl,
+          refRole: 'wardrobe',
+          characterName: char.name,
+        })
+      }
+      continue
+    }
 
     if (refPair.hasWardrobeDiptych && refPair.wardrobeDiptychUrl) {
       imageReferences.push({
@@ -184,13 +206,6 @@ export function resolveBeatVideoReferences(
       continue
     }
 
-    if (refPair.identityUrl) {
-      imageReferences.push({
-        imageUrl: refPair.identityUrl,
-        refRole: 'identity',
-        characterName: char.name,
-      })
-    }
     if (refPair.wardrobeUrl) {
       imageReferences.push({
         imageUrl: refPair.wardrobeUrl,
@@ -267,6 +282,17 @@ export function resolveBeatVideoReferences(
     urlList: selected.map((r) => r.imageUrl),
     warnings,
   }
+}
+
+/**
+ * User-saved beat references replace whatever the client attached.
+ * Otherwise only unlabeled client urls are rebuilt on the server.
+ */
+export function shouldReplaceClientVideoReferences(
+  beat: SceneBeat | null | undefined,
+  clientRefs: Parameters<typeof shouldRelabelRefs>[0]
+): boolean {
+  return shouldUseExplicitBeatReferences(beat) || shouldRelabelRefs(clientRefs)
 }
 
 /** Resolve references for a segment using its beatId. */
