@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - Creare de videoclipuri asistată de IA",
+    "title": "SceneFlow Studio - Creare de videoclipuri asistată de IA",
     "description": "Transformă-ți ideile în videoclipuri profesionale cu automatizarea fluxului de lucru bazată pe inteligență artificială."
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "Susținut de Google Cloud cu Vertex AI, stocare în cloud și instrumente de traducere",
-      "footnote": "SceneFlow AI rulează pe o infrastructură scalabilă Google Cloud, concepută pentru creșterea startup-urilor și pentru a răspunde așteptărilor companiilor mari."
+      "footnote": "SceneFlow Studio rulează pe o infrastructură scalabilă Google Cloud, concepută pentru creșterea startup-urilor și pentru a răspunde așteptărilor companiilor mari."
     },
     "trustSafeguardLink": "Încredere stratificată: siguranța Google Vertex plus mecanismele de protecție, validarea și proveniența SceneFlow — consultați secțiunea „Încredere și siguranță” de mai jos.",
     "attribution": "— Echipa de inginerie SceneFlow"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "De la idee la videoclip publicat",
     "securePayments": "Plăți securizate procesate de Whop, comerciantul nostru oficial",
     "morLine": "Plățile sigure, calculul impozitelor și conformitatea sunt gestionate de Whop, comerciantul nostru înregistrat, în numele Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. Toate drepturile rezervate.",
+    "copyright": "© 2026 SceneFlow Studio. Toate drepturile rezervate.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, Statele Unite • Contact: support@sceneflowai.studio",
     "poweredBy": "Inteligență susținută de Google · Orchestrată pe Google Cloud"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "Renunță"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "Pauză",
     "play": "Redare",
     "mute": "Mut",

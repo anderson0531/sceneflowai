@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Burn "SceneFlow AI Studio" into hero MP4s (Production Mixer style) and upload to Vercel Blob.
+ * Burn "SceneFlow Studio" into hero MP4s (Production Mixer style) and upload to Vercel Blob.
  *
  * Matches DEFAULT_WATERMARK_CONFIG in SceneProductionMixer.tsx:
  * Inter 500, 3% of video height, white @ 60% opacity, text shadow, bottom-right, 60px padding.
@@ -36,7 +36,7 @@ const BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
 
 /** Mirrors DEFAULT_WATERMARK_CONFIG in SceneProductionMixer.tsx */
 const WATERMARK = {
-  text: 'SceneFlow AI Studio',
+  text: 'SceneFlow Studio',
   fontSizePercent: 3,
   fontWeight: 500,
   color: '#FFFFFF',

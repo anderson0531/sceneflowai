@@ -39,7 +39,7 @@ export function EvolutionCTA() {
             Stop stacking tabs. Stop watching tutorials. Stop wishing you had time.
           </p>
           <p className="text-lg text-gray-400 mb-10 max-w-2xl mx-auto">
-            SceneFlow AI transforms your ideas into professional short-form videos in minutes—not days. 
+            SceneFlow Studio transforms your ideas into professional short-form videos in minutes—not days. 
             The tools you need, the quality you want, the speed you deserve.
           </p>
 

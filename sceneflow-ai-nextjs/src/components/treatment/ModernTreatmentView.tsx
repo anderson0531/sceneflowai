@@ -469,7 +469,7 @@ export function ModernTreatmentView({
       {/* ============================================ */}
       <footer className="pt-8 pb-4 px-2 sm:px-4 border-t border-slate-700/50">
         <div className="flex items-center justify-between text-xs text-slate-500">
-          <span>SceneFlow AI: Accelerate Your Vision</span>
+          <span>SceneFlow Studio: Accelerate Your Vision</span>
           {date && <span>{date}</span>}
         </div>
       </footer>

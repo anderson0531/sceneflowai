@@ -35,7 +35,7 @@ export const useStoryAnalysis = (currentStoryData: any) => {
 
       if (autoAppliedCount > 0) {
         // Notification is handled by the mutation service
-        console.log(`SceneFlow AI automatically optimized ${autoAppliedCount} aspects of your story.`);
+        console.log(`SceneFlow Studio automatically optimized ${autoAppliedCount} aspects of your story.`);
       }
       setRecommendations(updatedData);
     } else {

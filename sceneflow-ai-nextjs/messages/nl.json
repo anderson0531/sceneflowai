@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - Videoproductie met AI",
+    "title": "SceneFlow Studio - Videoproductie met AI",
     "description": "Zet je ideeën om in professionele video's met workflowautomatisering op basis van AI."
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "Mogelijk gemaakt door Google Cloud met Vertex AI, cloudopslag en vertaaltools",
-      "footnote": "SceneFlow AI draait op schaalbare Google Cloud-infrastructuur, ontworpen voor de groei van startups en de verwachtingen van grote ondernemingen."
+      "footnote": "SceneFlow Studio draait op schaalbare Google Cloud-infrastructuur, ontworpen voor de groei van startups en de verwachtingen van grote ondernemingen."
     },
     "trustSafeguardLink": "Gelaagd vertrouwen: Google Vertex-beveiliging plus SceneFlow-vangrails, validatie en herkomst — zie 'Vertrouwen en veiligheid' hieronder.",
     "attribution": "— Het SceneFlow-engineeringteam"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "Van idee naar gepubliceerde video",
     "securePayments": "Veilige betalingen verwerkt door Whop, onze Merchant of Record",
     "morLine": "Veilige betalingen, belastingberekening en naleving worden afgehandeld door Whop, onze Merchant of Record, namens Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. Alle rechten voorbehouden.",
+    "copyright": "© 2026 SceneFlow Studio. Alle rechten voorbehouden.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, Verenigde Staten • Contact: support@sceneflowai.studio",
     "poweredBy": "Door Google aangedreven intelligentie · Georkestreerd op Google Cloud"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "Afwijzen"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "Pauze",
     "play": "Afspelen",
     "mute": "Dempen",

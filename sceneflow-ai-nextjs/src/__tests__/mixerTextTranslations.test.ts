@@ -131,7 +131,7 @@ describe('mixer text translations', () => {
     const english = {
       enabled: true,
       type: 'text' as const,
-      text: 'SceneFlow AI Studio',
+      text: 'SceneFlow Studio',
       textStyle: {
         fontFamily: 'Inter',
         fontSize: 3,
@@ -145,7 +145,7 @@ describe('mixer text translations', () => {
       padding: 60,
     }
     const spanish = { ...english, text: undefined }
-    expect(resolveWatermarkText(spanish, 'es', english)).toBe('SceneFlow AI Studio')
+    expect(resolveWatermarkText(spanish, 'es', english)).toBe('SceneFlow Studio')
   })
 
   it('autoTranslateMixerTextOverlays skips edited entries', async () => {
@@ -217,7 +217,7 @@ describe('mixer text translations', () => {
           watermarkConfig: {
             enabled: true,
             type: 'text',
-            text: 'SceneFlow AI Studio',
+            text: 'SceneFlow Studio',
           },
         },
       },

@@ -59,7 +59,7 @@ export function getEffectiveNarrationVoices(): NarrationVoice[] {
   return [...customVoices, ...defaultVoices]
 }
 
-/** SceneFlow AI Creator narrator (fixed ElevenLabs voice ID). */
+/** SceneFlow Studio Creator narrator (fixed ElevenLabs voice ID). */
 export function resolveSceneFlowCreatorVoice(): NarrationVoice {
   return sceneFlowCreatorNarrationVoice(SCENEFLOW_CREATOR_VOICE_ID)
 }

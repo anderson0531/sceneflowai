@@ -6,7 +6,7 @@ import Image from 'next/image'
 
 const testimonials = [
   {
-    quote: "As a solo creator, SceneFlow AI gave me the tools to produce content I never thought possible. What used to take weeks now takes hours.",
+    quote: "As a solo creator, SceneFlow Studio gave me the tools to produce content I never thought possible. What used to take weeks now takes hours.",
     author: "Alex Chen",
     role: "Indie Filmmaker",
     avatar: "AC",

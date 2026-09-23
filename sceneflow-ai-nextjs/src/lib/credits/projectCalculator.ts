@@ -1,5 +1,5 @@
 /**
- * SceneFlow AI - Project Cost Calculator
+ * SceneFlow Studio - Project Cost Calculator
  * 
  * Comprehensive calculator for estimating project costs across all production parameters.
  * Provides strategy comparisons between subscription + top-ups vs pay-as-you-go.

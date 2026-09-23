@@ -399,7 +399,7 @@ export async function POST(
         type: wmType,
         text:
           wmType === 'text'
-            ? (body.watermark.text?.trim() || 'SceneFlow AI Studio')
+            ? (body.watermark.text?.trim() || 'SceneFlow Studio')
             : body.watermark.text,
         imageUrl: body.watermark.imageUrl,
         anchor: body.watermark.anchor as SceneRenderWatermark['anchor'],

@@ -52,7 +52,7 @@ const Footer = dynamic(
 /**
  * Evolution Landing Page
  * 
- * A focused landing page telling the SceneFlow AI evolution story
+ * A focused landing page telling the SceneFlow Studio evolution story
  * from the original Hookify AI concept to the production-ready platform.
  * 
  * Optimized for:

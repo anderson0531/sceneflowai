@@ -62,7 +62,7 @@ export function ProjectHub() {
           </div>
           <h3 className="text-xl font-semibold text-white mb-3">No Production Projects Yet</h3>
           <p className="text-gray-400 mb-6 max-w-md mx-auto">
-            Start your first video project to begin your creative journey with SceneFlow AI.
+            Start your first video project to begin your creative journey with SceneFlow Studio.
           </p>
           <Link href="/dashboard/studio/new-project">
             <Button className="bg-blue-500 hover:bg-blue-600 text-white">

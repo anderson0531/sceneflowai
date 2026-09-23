@@ -4,7 +4,7 @@
  */
 
 export const BRAND = {
-  name: 'SceneFlow AI Studio',
+  name: 'SceneFlow Studio',
   shortName: 'SceneFlow',
   badge: {
     src: '/brand/sf-badge.png',

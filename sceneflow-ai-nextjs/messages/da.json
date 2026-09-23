@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - AI-drevet videoproduktion",
+    "title": "SceneFlow Studio - AI-drevet videoproduktion",
     "description": "Forvandl dine idéer til professionelle videoer med AI-drevet workflow-automatisering"
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "Drevet af Google Cloud med Vertex AI, cloud-lagring og oversættelsesværktøjer",
-      "footnote": "SceneFlow AI kører på en skalerbar Google Cloud-infrastruktur, der er designet til vækst hos startups og til at imødekomme store virksomheders forventninger."
+      "footnote": "SceneFlow Studio kører på en skalerbar Google Cloud-infrastruktur, der er designet til vækst hos startups og til at imødekomme store virksomheders forventninger."
     },
     "trustSafeguardLink": "Tillid i flere lag: Google Vertex-sikkerhed samt SceneFlow-sikkerhedsmekanismer, validering og herkomst – se Tillid og sikkerhed nedenfor.",
     "attribution": "— SceneFlow-ingeniørteamet"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "Fra idé til offentliggjort video",
     "securePayments": "Sikre betalinger behandlet af Whop, vores registrerede forhandler",
     "morLine": "Sikre betalinger, skatteberegning og overholdelse håndteres af Whop, vores registrerede forhandler, på vegne af Life Focus, LLC.",
-    "copyright": "©2026 SceneFlow AI. Alle rettigheder forbeholdes.",
+    "copyright": "©2026 SceneFlow Studio. Alle rettigheder forbeholdes.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, USA • Kontakt: support@sceneflowai.studio",
     "poweredBy": "Google-drevet intelligens · Orkestreret på Google Cloud"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "Afvis"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "Pause",
     "play": "Afspil",
     "mute": "Slå lyd fra",

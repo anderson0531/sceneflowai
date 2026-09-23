@@ -19,7 +19,7 @@ export { SCENEFLOW_WATERMARK_STORAGE_KEY }
 /** Mirrors DEFAULT_WATERMARK_CONFIG (enabled by default). */
 const DEFAULT_WATERMARK_FOR_API = {
   type: 'text' as const,
-  text: 'SceneFlow AI Studio',
+  text: 'SceneFlow Studio',
   imageUrl: '',
   anchor: 'bottom-right' as const,
   padding: 60,

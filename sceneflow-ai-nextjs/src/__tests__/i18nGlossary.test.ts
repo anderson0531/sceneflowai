@@ -21,10 +21,10 @@ describe('glossary protection', () => {
   })
 
   it('matches the longest term first so short terms do not shadow long ones', () => {
-    const { protectedText, map } = protectGlossary('SceneFlow AI Studio is here')
-    // A greedy "SceneFlow" match would leave " AI Studio" dangling as prose.
-    expect(protectedText).not.toContain('AI Studio')
-    expect(restoreGlossary(protectedText, map)).toBe('SceneFlow AI Studio is here')
+    const { protectedText, map } = protectGlossary('SceneFlow Studio is here')
+    // A greedy "SceneFlow" match would leave " Studio" dangling as prose.
+    expect(protectedText).not.toContain(' Studio')
+    expect(restoreGlossary(protectedText, map)).toBe('SceneFlow Studio is here')
   })
 
   it('survives an engine injecting whitespace into the placeholder', () => {

@@ -1,5 +1,5 @@
 /**
- * SceneFlow AI - Profit Guardrails Configuration
+ * SceneFlow Studio - Profit Guardrails Configuration
  * 
  * This file defines the guardrails that protect profit margins and encourage upgrades.
  * All limits are designed to achieve 40-60% profit margins.

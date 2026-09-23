@@ -123,7 +123,7 @@ export function FounderSection() {
                 </p>
                 <p className="text-gray-300 leading-relaxed mt-4">
                   He holds a Master of Science in Organizational Dynamics from the University of Pennsylvania and a BS in IT from Drexel University.
-                  With SceneFlow AI, Brian is leveraging his deep expertise in cloud-native architecture and AI-powered 
+                  With SceneFlow Studio, Brian is leveraging his deep expertise in cloud-native architecture and AI-powered 
                   productivity to <span className="text-purple-400 font-medium">democratize professional video production</span>.
                 </p>
               </div>
@@ -162,7 +162,7 @@ export function FounderSection() {
           className="text-center mt-12 max-w-3xl mx-auto"
         >
           <blockquote className="text-xl sm:text-2xl text-gray-300 italic">
-            &ldquo;SceneFlow AI is the commercial showcase for Google&apos;s generative AI video capabilities. 
+            &ldquo;SceneFlow Studio is the commercial showcase for Google&apos;s generative AI video capabilities. 
             Our success directly validates Veo 3.1, Imagen 3, and Gemini 3.1 Pro as production-ready creative tools.&rdquo;
           </blockquote>
           <p className="text-gray-500 mt-4">— Brian Anderson, Founder</p>

@@ -103,7 +103,7 @@ export default function InstallPrompt() {
           <div>
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm">
-                <div className="font-semibold">Install SceneFlow AI</div>
+                <div className="font-semibold">Install SceneFlow Studio</div>
                 <div className="text-sf-text-secondary">Get a faster, app-like experience.</div>
               </div>
               <div className="flex gap-2">
@@ -134,7 +134,7 @@ export default function InstallPrompt() {
         {isIOS && (
           <div>
             <div className="text-sm">
-              <div className="font-semibold mb-1">Add SceneFlow AI to Home Screen</div>
+              <div className="font-semibold mb-1">Add SceneFlow Studio to Home Screen</div>
               <div className="text-sf-text-secondary">
                 Open the Share menu and tap "Add to Home Screen".
               </div>

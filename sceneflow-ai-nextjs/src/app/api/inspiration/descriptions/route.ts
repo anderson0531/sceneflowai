@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     const locale = body.locale || 'en'
     const platform = body.platform || 'YouTube'
     const title = body.projectTitle || 'Untitled project'
-    const synopsis = body.synopsis?.trim() || `A video created with SceneFlow AI.`
+    const synopsis = body.synopsis?.trim() || `A video created with SceneFlow Studio.`
 
     const description = appendSceneFlowCta(
       `${synopsis}\n\nOptimized for ${platform}.`,

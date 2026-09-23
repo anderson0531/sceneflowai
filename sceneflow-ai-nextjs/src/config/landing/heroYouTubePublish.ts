@@ -120,7 +120,7 @@ const LANDING_COPY: Record<HeroVideoLocaleId, LandingYouTubeCopy> = {
   }),
 }
 
-const BASE_TAGS = ['SceneFlow', 'SceneFlow AI', 'AI video', 'video production', 'video studio']
+const BASE_TAGS = ['SceneFlow', 'SceneFlow Studio', 'AI video', 'video production', 'video studio']
 
 const LOCALE_TAGS: Record<HeroVideoLocaleId, string[]> = {
   en: ['English'],
@@ -177,7 +177,7 @@ export function truncateYouTubeTitle(title: string, max = 100): string {
 
 export function buildHeroYouTubeTitle(locale: HeroVideoLocaleId): string {
   const { headline } = LANDING_COPY[locale]
-  return truncateYouTubeTitle(`SceneFlow AI Studio — ${headline}`)
+  return truncateYouTubeTitle(`SceneFlow Studio — ${headline}`)
 }
 
 export function buildHeroYouTubeDescription(locale: HeroVideoLocaleId): string {

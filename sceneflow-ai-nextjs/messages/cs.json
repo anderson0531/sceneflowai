@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI – Tvorba videa s využitím AI",
+    "title": "SceneFlow Studio – Tvorba videa s využitím AI",
     "description": "Proměňte své nápady v profesionální videa díky automatizaci pracovních postupů řízené umělou inteligencí."
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "Využívá Google Cloud s Vertex AI, cloudovým úložištěm a nástroji pro překlad",
-      "footnote": "SceneFlow AI běží na škálovatelné infrastruktuře Google Cloud, která je navržena s ohledem na růst startupů i požadavky velkých podniků."
+      "footnote": "SceneFlow Studio běží na škálovatelné infrastruktuře Google Cloud, která je navržena s ohledem na růst startupů i požadavky velkých podniků."
     },
     "trustSafeguardLink": "Vícevrstvá důvěra: zabezpečení Google Vertex a k tomu ochranné mechanismy (guardrails), validace a doložení původu (provenance) – viz část Důvěra a bezpečnost níže.",
     "attribution": "— Technický tým SceneFlow"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "Od nápadu k publikovanému videu",
     "securePayments": "Bezpečné platby zpracovávané Whop, naším obchodním partnerem",
     "morLine": "Bezpečné platby, výpočet daní a dodržování předpisů zpracovává Whop, náš obchodník záznamu, jménem společnosti Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. Všechna práva vyhrazena.",
+    "copyright": "© 2026 SceneFlow Studio. Všechna práva vyhrazena.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, Spojené státy • Kontakt: support@sceneflowai.studio",
     "poweredBy": "Inteligence poháněná Googlem · Orchestrováno na Google Cloud"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "Zamítnout"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "Pozastavit",
     "play": "Přehrát",
     "mute": "Ztlumit",

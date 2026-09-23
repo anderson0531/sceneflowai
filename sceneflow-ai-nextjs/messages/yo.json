@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - Ṣíṣe Fídíò pẹ̀lú Agbára AI",
+    "title": "SceneFlow Studio - Ṣíṣe Fídíò pẹ̀lú Agbára AI",
     "description": "Sọ awọn ero rẹ di awọn fidio ti o ni didara giga pẹlu eto ṣiṣe iṣẹ laifọwọyi ti o n lo imọ-ẹrọ AI."
   },
   "nav": {
@@ -1027,7 +1027,7 @@
     },
     "partnership": {
       "poweredBy": "Ṣiṣẹ́ rẹ̀ dá lórí Google Cloud pẹ̀lú Vertex AI, ibi-ìpamọ́ lórí ẹ̀rọ ayélujára (Cloud Storage), àti àwọn irin-iṣẹ́ ìtumọ̀",
-      "footnote": "SceneFlow AI n ṣiṣẹ́ lórí ètò-ìpìlẹ̀ Google Cloud tí a lè mú gbòòrò sí i, èyí tí a ṣe fún ìdàgbàsókè àwọn ilé-iṣẹ́ tuntun àti láti pàdé àwọn ìfojúsùn àwọn ilé-iṣẹ́ ńláńlá."
+      "footnote": "SceneFlow Studio n ṣiṣẹ́ lórí ètò-ìpìlẹ̀ Google Cloud tí a lè mú gbòòrò sí i, èyí tí a ṣe fún ìdàgbàsókè àwọn ilé-iṣẹ́ tuntun àti láti pàdé àwọn ìfojúsùn àwọn ilé-iṣẹ́ ńláńlá."
     },
     "trustSafeguardLink": "Igbagbọ ti o ni ipele: Aabo Google Vertex pẹlu awọn ilana aabo SceneFlow, ijẹrisi, ati orisun — wo apakan Igbagbọ & Aabo ni isalẹ.",
     "attribution": "— Ẹgbẹ́ Onímọ̀-ẹ̀rọ SceneFlow"
@@ -1155,7 +1155,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1366,7 +1366,7 @@
     "taglineSub": "Láti Orí Èrò dé Fídíò tí a ti gbé jáde",
     "securePayments": "Awọn sisanwo ti o ni aabo ti Whop n ṣakoso, ẹni ti o n ṣe iṣẹ́ olutaja fun wa",
     "morLine": "Ṣíṣe àwọn ìsanwó tó ní ààbò, ṣíṣe ìṣirò owó-orí, àti ríi dájú pé a tẹ̀lé àwọn òfin àti ìlànà jẹ́ iṣẹ́ tí Whop—ẹni tí ó jẹ́ Olùtajà tí a forúkọ rẹ̀ sílẹ̀ fún irú iṣẹ́ yìí—ń ṣe fún Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. Gbogbo ẹtọ́ wa ni a dáàbò bo.",
+    "copyright": "© 2026 SceneFlow Studio. Gbogbo ẹtọ́ wa ni a dáàbò bo.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • Kan si: support@sceneflowai.studio",
     "poweredBy": "Ti a fi agbara fun nipasẹ Google Cloud"
   },
@@ -1377,7 +1377,7 @@
     "dismiss": "Tu silẹ"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "Dúró díẹ̀",
     "play": "Ṣeré",
     "mute": "Pa ohùn",

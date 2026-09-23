@@ -74,7 +74,7 @@ export function MobileRestrictionGuard({ children }: MobileRestrictionGuardProps
         {/* Logo */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
-            SceneFlow AI
+            SceneFlow Studio
           </h1>
         </div>
 
@@ -83,7 +83,7 @@ export function MobileRestrictionGuard({ children }: MobileRestrictionGuardProps
           Larger Screen Required
         </h2>
         <p className="text-gray-400 mb-6 leading-relaxed">
-          SceneFlow AI&apos;s professional video production tools are designed for 
+          SceneFlow Studio&apos;s professional video production tools are designed for 
           <span className="text-cyan-400 font-medium"> tablet</span> or 
           <span className="text-cyan-400 font-medium"> desktop</span> screens 
           to give you the best creative experience.

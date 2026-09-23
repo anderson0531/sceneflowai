@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - AI 기반 동영상 제작",
+    "title": "SceneFlow Studio - AI 기반 동영상 제작",
     "description": "AI 기반 워크플로 자동화로 아이디어를 전문가급 영상으로 바꿔보세요."
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "Google Cloud(Vertex AI, 클라우드 스토리지 및 번역 도구 포함) 기반",
-      "footnote": "SceneFlow AI는 스타트업의 성장과 엔터프라이즈급 요구 사항을 모두 충족하도록 설계된 확장 가능한 Google Cloud 인프라에서 구동됩니다."
+      "footnote": "SceneFlow Studio는 스타트업의 성장과 엔터프라이즈급 요구 사항을 모두 충족하도록 설계된 확장 가능한 Google Cloud 인프라에서 구동됩니다."
     },
     "trustSafeguardLink": "다층적 신뢰: Google Vertex 안전 기능에 SceneFlow 가드레일, 검증 및 출처 확인을 결합 — 아래의 '신뢰 및 안전(Trust & Safety)' 섹션 참조.",
     "attribution": "— SceneFlow 엔지니어링 팀"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "아이디어부터 게시된 동영상까지",
     "securePayments": "기록 판매자인 Whop이 처리한 안전한 결제",
     "morLine": "안전한 결제, 세금 계산 및 규정 준수는 Life Focus, LLC를 대신하여 기록 판매자인 Whop이 처리합니다.",
-    "copyright": "© 2026 SceneFlow AI. 모든 권리 보유.",
+    "copyright": "© 2026 SceneFlow Studio. 모든 권리 보유.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • 연락처: support@sceneflowai.studio",
     "poweredBy": "Google 기반 인텔리전스 · Google Cloud에서 오케스트레이션"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "무시하기"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "일시 정지",
     "play": "재생",
     "mute": "음소거",

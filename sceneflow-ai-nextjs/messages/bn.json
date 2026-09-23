@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - এআই-চালিত ভিডিও তৈরি",
+    "title": "SceneFlow Studio - এআই-চালিত ভিডিও তৈরি",
     "description": "এআই-চালিত ওয়ার্কফ্লো অটোমেশনের মাধ্যমে আপনার ধারণাগুলোকে পেশাদার ভিডিওতে রূপান্তর করুন।"
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "Google Cloud (সাথে Vertex AI, ক্লাউড স্টোরেজ এবং অনুবাদ টুলিং) দ্বারা চালিত",
-      "footnote": "SceneFlow AI একটি স্কেলেবল Google Cloud অবকাঠামোর ওপর পরিচালিত হয়, যা স্টার্টআপের প্রবৃদ্ধি এবং বড় প্রতিষ্ঠানের প্রত্যাশা পূরণের উপযোগী করে তৈরি করা হয়েছে।"
+      "footnote": "SceneFlow Studio একটি স্কেলেবল Google Cloud অবকাঠামোর ওপর পরিচালিত হয়, যা স্টার্টআপের প্রবৃদ্ধি এবং বড় প্রতিষ্ঠানের প্রত্যাশা পূরণের উপযোগী করে তৈরি করা হয়েছে।"
     },
     "trustSafeguardLink": "স্তরবিন্যস্ত আস্থা: Google Vertex-এর নিরাপত্তা ব্যবস্থা এবং সেই সাথে SceneFlow গার্ডরেল, যাচাইকরণ ও উৎস-নির্ণয় (provenance) — নিচে ‘আস্থা ও নিরাপত্তা’ (Trust & Safety) অংশটি দেখুন।",
     "attribution": "— SceneFlow ইঞ্জিনিয়ারিং টিম"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "আইডিয়া থেকে শুরু করে প্রকাশিত ভিডিও",
     "securePayments": "Whop দ্বারা প্রক্রিয়াকৃত নিরাপদ পেমেন্ট, আমাদের রেকর্ডের মার্চেন্ট",
     "morLine": "নিরাপদ পেমেন্ট, ট্যাক্স গণনা এবং সম্মতি লাইফ ফোকাস, এলএলসির পক্ষ থেকে আমাদের রেকর্ডের মার্চেন্ট Whop দ্বারা পরিচালিত হয় ।",
-    "copyright": "© 2026 SceneFlow AI. সর্বস্বত্ব সংরক্ষিত ।",
+    "copyright": "© 2026 SceneFlow Studio. সর্বস্বত্ব সংরক্ষিত ।",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • যোগাযোগ: support@sceneflowai.studio",
     "poweredBy": "Google-চালিত বুদ্ধিমত্তা · SFAIGOOGLE-এ অর্কেস্ট্রেটেড_CLOUDTERM"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "খারিজ করুন"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "বিরতি",
     "play": "চালান",
     "mute": "নিঃশব্দ",

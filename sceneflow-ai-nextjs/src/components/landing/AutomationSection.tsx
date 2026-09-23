@@ -163,7 +163,7 @@ export default function AutomationSection() {
           
           {/* Subtitle */}
           <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
-            Stop copy-pasting between AI tools. SceneFlow AI automates every generation step—
+            Stop copy-pasting between AI tools. SceneFlow Studio automates every generation step—
             from character portraits to final video—so you focus on <span className="text-white font-medium">creative direction</span>, not tedious workflows.
           </p>
         </motion.div>

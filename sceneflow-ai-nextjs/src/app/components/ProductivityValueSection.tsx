@@ -286,7 +286,7 @@ const CostTab = ({ scenario }: { scenario: Scenario }) => {
         </div>
       </div>
 
-      {/* SceneFlow AI */}
+      {/* SceneFlow Studio */}
       <div className="bg-emerald-500/5 rounded-2xl p-6 border border-emerald-500/20 relative">
         <div className="absolute -top-3 right-4 px-3 py-1 bg-emerald-500 text-black text-xs font-bold rounded-full">
           ALL-IN-ONE
@@ -294,7 +294,7 @@ const CostTab = ({ scenario }: { scenario: Scenario }) => {
         
         <div className="flex items-center gap-2 mb-4">
           <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-          <h4 className="text-lg font-bold text-white" translate="no">SceneFlow AI</h4>
+          <h4 className="text-lg font-bold text-white" translate="no">SceneFlow Studio</h4>
         </div>
         
         <div className="space-y-3 mb-4">
@@ -467,11 +467,11 @@ const ExpertiseTab = () => {
           </div>
         </div>
 
-        {/* SceneFlow AI */}
+        {/* SceneFlow Studio */}
         <div className="bg-emerald-500/5 rounded-2xl p-6 border border-emerald-500/20">
           <div className="flex items-center gap-2 mb-4">
             <Brain className="w-5 h-5 text-emerald-400" />
-            <h4 className="text-lg font-bold text-white" translate="no">SceneFlow AI Co-Pilot</h4>
+            <h4 className="text-lg font-bold text-white" translate="no">SceneFlow Studio Co-Pilot</h4>
           </div>
           
           <div className="space-y-3 mb-4">
@@ -507,7 +507,7 @@ const ExpertiseTab = () => {
       <div className="text-center mt-8 p-4 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-xl border border-cyan-500/20">
         <Sparkles className="w-6 h-6 text-cyan-400 mx-auto mb-2" />
         <p className="text-white font-medium">
-          <span translate="no">SceneFlow AI</span> bridges the expertise gap
+          <span translate="no">SceneFlow Studio</span> bridges the expertise gap
         </p>
         <p className="text-sm text-gray-400 mt-1">
           Professional-quality output without years of tool mastery
@@ -568,7 +568,7 @@ export default function ProductivityValueSection() {
             </span>
           </h2>
           <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-            Beyond cost savings—see how <span translate="no">SceneFlow AI</span> saves time and eliminates the expertise gap
+            Beyond cost savings—see how <span translate="no">SceneFlow Studio</span> saves time and eliminates the expertise gap
           </p>
         </motion.div>
 

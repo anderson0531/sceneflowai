@@ -16,7 +16,7 @@ export const SCENEFLOW_WATERMARK_STORAGE_KEY = 'sceneflow-watermark-config'
 export const DEFAULT_WATERMARK_CONFIG: WatermarkConfig = {
   enabled: true,
   type: 'text',
-  text: 'SceneFlow AI Studio',
+  text: 'SceneFlow Studio',
   textStyle: {
     fontFamily: 'Inter',
     fontSize: 3,

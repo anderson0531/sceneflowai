@@ -101,7 +101,7 @@ export function EvolutionHero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
           >
-            SceneFlow AI transforms your creative vision into production-ready YouTube videos 
+            SceneFlow Studio transforms your creative vision into production-ready YouTube videos 
             using the same AI technology powering Hollywood&apos;s virtual production studios.
           </motion.p>
 

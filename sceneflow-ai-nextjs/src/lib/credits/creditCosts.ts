@@ -1,7 +1,7 @@
 /**
  * Credit Costs Configuration
  * 
- * SceneFlow AI SceneCredit Currency System
+ * SceneFlow Studio SceneCredit Currency System
  * 
  * Exchange Rate: $1.00 USD = 100 Credits
  * Credit Value: 1 Credit = $0.01 (1 cent)
@@ -1082,7 +1082,7 @@ export function estimateStorageSize(
 // =============================================================================
 
 /**
- * Individual tool costs for comparison with SceneFlow AI
+ * Individual tool costs for comparison with SceneFlow Studio
  * Updated: December 2025
  */
 export const COMPETITOR_TOOLS = {
@@ -1204,7 +1204,7 @@ export const TOTAL_TOOL_LEARNING_HOURS = Object.values(COMPETITOR_TOOLS).reduce(
 // =============================================================================
 
 /**
- * SceneFlow AI automation features with time savings
+ * SceneFlow Studio automation features with time savings
  * Each feature replaces manual workflow with one-click automation
  */
 export const AUTOMATION_FEATURES = {

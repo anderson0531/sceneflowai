@@ -1,5 +1,5 @@
 // AI Agent Manager Service
-// This service manages all AI agents in the SceneFlow AI system
+// This service manages all AI agents in the SceneFlow Studio system
 
 import {
   AIAgent,

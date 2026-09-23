@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - Tạo video bằng AI",
+    "title": "SceneFlow Studio - Tạo video bằng AI",
     "description": "Biến ý tưởng của bạn thành video chuyên nghiệp với quy trình làm việc tự động hóa được hỗ trợ bởi AI."
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "Được vận hành bởi Google Cloud kết hợp với Vertex AI, dịch vụ lưu trữ đám mây và công cụ dịch thuật.",
-      "footnote": "SceneFlow AI vận hành trên cơ sở hạ tầng Google Cloud có khả năng mở rộng, được thiết kế nhằm đáp ứng nhu cầu tăng trưởng của các công ty khởi nghiệp cũng như các yêu cầu khắt khe của doanh nghiệp."
+      "footnote": "SceneFlow Studio vận hành trên cơ sở hạ tầng Google Cloud có khả năng mở rộng, được thiết kế nhằm đáp ứng nhu cầu tăng trưởng của các công ty khởi nghiệp cũng như các yêu cầu khắt khe của doanh nghiệp."
     },
     "trustSafeguardLink": "Cơ chế tin cậy đa lớp: tính năng an toàn của Google Vertex kết hợp với các rào chắn (guardrails), quy trình xác thực và thông tin về nguồn gốc (provenance) — xem phần Tin cậy & An toàn bên dưới.",
     "attribution": "— Đội ngũ Kỹ thuật SceneFlow"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "Từ ý tưởng đến video đã xuất bản",
     "securePayments": "Thanh toán an toàn được xử lý bởi Whop, Đơn vị chấp nhận thẻ của chúng tôi",
     "morLine": "Các khoản thanh toán an toàn, tính toán thuế và tuân thủ được xử lý bởi Whop, Merchant of Record của chúng tôi, thay mặt cho Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. Bảo lưu mọi quyền.",
+    "copyright": "© 2026 SceneFlow Studio. Bảo lưu mọi quyền.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, Hoa Kỳ • Liên hệ: support@sceneflowai.studio",
     "poweredBy": "Trí thông minh do Google cung cấp · Được phối hợp trên Google Cloud"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "Bỏ qua"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "Tạm dừng",
     "play": "Phát",
     "mute": "Tắt tiếng",

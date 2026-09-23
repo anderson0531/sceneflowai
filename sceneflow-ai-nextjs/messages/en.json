@@ -424,7 +424,7 @@
     ]
   },
   "metadata": {
-    "title": "SceneFlow AI - AI-Powered Video Creation",
+    "title": "SceneFlow Studio - AI-Powered Video Creation",
     "description": "Transform your ideas into professional videos with AI-powered workflow automation"
   },
   "nav": {
@@ -1878,7 +1878,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -2102,7 +2102,7 @@
     "taglineSub": "From Idea to Published Video",
     "securePayments": "Secure payments processed by Whop, our Merchant of Record",
     "morLine": "Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. All rights reserved.",
+    "copyright": "© 2026 SceneFlow Studio. All rights reserved.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • Contact: support@sceneflowai.studio",
     "poweredBy": "Google-powered intelligence · Orchestrated on Google Cloud"
   },
@@ -2113,7 +2113,7 @@
     "dismiss": "Dismiss"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "Pause",
     "play": "Play",
     "mute": "Mute",

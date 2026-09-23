@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI – Tekoälypohjainen videoiden luominen",
+    "title": "SceneFlow Studio – Tekoälypohjainen videoiden luominen",
     "description": "Muuta ideasi ammattimaisiksi videoiksi tekoälypohjaisen työnkulun automatisoinnin avulla."
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "Käyttää teknologioita Google Cloud ja Vertex AI sekä pilvitallennustilaa ja käännöstyökaluja",
-      "footnote": "SceneFlow AI toimii skaalautuvassa Google Cloud-infrastruktuurissa, joka on suunniteltu vastaamaan sekä startup-yritysten kasvutarpeisiin että suuryritysten vaatimuksiin."
+      "footnote": "SceneFlow Studio toimii skaalautuvassa Google Cloud-infrastruktuurissa, joka on suunniteltu vastaamaan sekä startup-yritysten kasvutarpeisiin että suuryritysten vaatimuksiin."
     },
     "trustSafeguardLink": "Kerroksittainen luottamus: Google Vertexin turvatoiminnot sekä SceneFlow-suojamekanismit, validointi ja alkuperätiedot – katso kohta Luottamus ja turvallisuus jäljempänä.",
     "attribution": "— SceneFlow-kehitystiimi"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "Ideasta julkaistuun videoon",
     "securePayments": "Rekisterinpitäjämme Whop käsittelee suojatut maksut",
     "morLine": "Tietuekauppiaamme Whop hoitaa suojatut maksut, verojen laskennan ja vaatimustenmukaisuuden Life Focus, LLC: n puolesta.",
-    "copyright": "© 2026 SceneFlow AI. Kaikki oikeudet pidätetään.",
+    "copyright": "© 2026 SceneFlow Studio. Kaikki oikeudet pidätetään.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, Yhdysvallat • Ota yhteyttä: support@sceneflowai.studio",
     "poweredBy": "Google-pohjainen älykkyys · Järjestetty Google Cloud-palvelussa"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "Hylkää"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "Tauko",
     "play": "Pelaa",
     "mute": "Mykistä",

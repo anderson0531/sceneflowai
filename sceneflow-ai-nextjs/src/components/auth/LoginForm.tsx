@@ -55,7 +55,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       <div className="bg-gray-900/50 backdrop-blur-md rounded-2xl p-8 border border-gray-800/50">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
-          <p className="text-gray-400">Sign in to your SceneFlow AI account</p>
+          <p className="text-gray-400">Sign in to your SceneFlow Studio account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

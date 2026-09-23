@@ -67,7 +67,7 @@ const SITE_DESCRIPTION = 'Transform your ideas into professional videos with AI-
 const structuredData = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
-  name: 'SceneFlow AI',
+  name: 'SceneFlow Studio',
   applicationCategory: 'MultimediaApplication',
   operatingSystem: 'Web',
   description:
@@ -76,7 +76,7 @@ const structuredData = {
   image: `${SITE_URL}/brand/sf-logo-lockup.png`,
   author: {
     '@type': 'Organization',
-    name: 'SceneFlow AI',
+    name: 'SceneFlow Studio',
   },
   offers: [
     {
@@ -161,11 +161,11 @@ const organizationStructuredData = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'SceneFlow AI - AI-Powered Video Creation',
-    template: '%s | SceneFlow AI',
+    default: 'SceneFlow Studio - AI-Powered Video Creation',
+    template: '%s | SceneFlow Studio',
   },
   description: SITE_DESCRIPTION,
-  applicationName: 'SceneFlow AI',
+  applicationName: 'SceneFlow Studio',
   manifest: '/manifest.json',
   formatDetection: {
     telephone: false,
@@ -173,7 +173,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'SceneFlow AI',
+    title: 'SceneFlow Studio',
   },
   icons: {
     icon: [
@@ -190,15 +190,15 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
-    siteName: 'SceneFlow AI',
-    title: 'SceneFlow AI',
+    siteName: 'SceneFlow Studio',
+    title: 'SceneFlow Studio',
     description: SITE_DESCRIPTION,
     url: SITE_URL,
     images: ['/brand/sf-logo-lockup.png'],
   },
   twitter: {
     card: 'summary',
-    title: 'SceneFlow AI',
+    title: 'SceneFlow Studio',
     description: SITE_DESCRIPTION,
     creator: '@sceneflowai',
     images: ['/brand/sf-logo-lockup.png'],
@@ -207,7 +207,7 @@ export const metadata: Metadata = {
     'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'default',
-    'apple-mobile-web-app-title': 'SceneFlow AI',
+    'apple-mobile-web-app-title': 'SceneFlow Studio',
     'msapplication-config': '/icons/browserconfig.xml',
     'msapplication-TileColor': '#050A18',
     'msapplication-tap-highlight': 'no',

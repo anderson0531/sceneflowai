@@ -1,6 +1,6 @@
 /** Shared legal entity and contact constants for landing-page legal documents. */
 export const LEGAL_COMPANY_NAME = 'Life Focus, LLC'
-export const LEGAL_SERVICE_NAME = 'SceneFlow AI'
+export const LEGAL_SERVICE_NAME = 'SceneFlow Studio'
 export const LEGAL_LAST_UPDATED = 'July 31, 2026'
 export const LEGAL_WEBSITE = 'https://sceneflowai.studio'
 export const LEGAL_ADDRESS = '2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States'

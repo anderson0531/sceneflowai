@@ -1,5 +1,5 @@
 // AI Adaptability Framework Types
-// This file defines the core interfaces for making SceneFlow AI adaptable to continuous AI improvements
+// This file defines the core interfaces for making SceneFlow Studio adaptable to continuous AI improvements
 
 export interface PromptInstruction {
   id: string;

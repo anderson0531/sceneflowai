@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - Penghasilan Video Berkuasa AI",
+    "title": "SceneFlow Studio - Penghasilan Video Berkuasa AI",
     "description": "Ubah idea anda menjadi video profesional dengan automasi aliran kerja berkuasa AI"
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "Dikuasakan oleh Google Cloud dengan Vertex AI, Storan Awan, dan alat terjemahan",
-      "footnote": "SceneFlow AI beroperasi pada infrastruktur Google Cloud yang boleh diskala, direka bentuk untuk pertumbuhan syarikat pemula dan memenuhi jangkaan perusahaan."
+      "footnote": "SceneFlow Studio beroperasi pada infrastruktur Google Cloud yang boleh diskala, direka bentuk untuk pertumbuhan syarikat pemula dan memenuhi jangkaan perusahaan."
     },
     "trustSafeguardLink": "Kepercayaan berlapis: keselamatan Google Vertex serta mekanisme kawalan (guardrails), pengesahan, dan asal usul SceneFlow — lihat Kepercayaan & Keselamatan di bawah.",
     "attribution": "— Pasukan Kejuruteraan SceneFlow"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "Daripada Idea kepada Video yang Diterbitkan",
     "securePayments": "Bayaran selamat diproses oleh Whop, Pedagang Rekod kami",
     "morLine": "Bayaran selamat, pengiraan cukai, dan pematuhan dikendalikan oleh Whop, Pedagang Rekod kami, bagi pihak Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. Hak cipta terpelihara.",
+    "copyright": "© 2026 SceneFlow Studio. Hak cipta terpelihara.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, Amerika Syarikat • Hubungi: support@sceneflowai.studio",
     "poweredBy": "Kepintaran berkuasa Google · Didalangi oleh Google Cloud"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "Singkir"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "Jeda",
     "play": "Main",
     "mute": "Senyapkan",

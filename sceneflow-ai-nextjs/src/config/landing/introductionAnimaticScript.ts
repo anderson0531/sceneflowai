@@ -60,7 +60,7 @@ export const INTRO_ANIMATIC_STYLE_LOCK =
   'SceneFlow introduction animatic storyboard frame, 16:9, cinematic dark editorial style, deep navy and slate background, cyan and violet accent light, soft volumetric glow, illustrated semi-realistic rendering, generous negative space, confident and modern. No text overlays, watermarks, captions, or readable interface copy in frame.'
 
 export const INTRO_ANIMATIC_META = {
-  title: 'SceneFlow AI — Introduction',
+  title: 'SceneFlow Studio — Introduction',
   format:
     'Illustrated animatic — one storyboard frame per narration line; Ken Burns motion, cross-dissolve 0.5s between beats',
   narrator: 'Single narrator, warm and confident, documentary-explainer register',
@@ -415,14 +415,14 @@ export const INTRO_ANIMATIC_BEATS: IntroAnimaticBeat[] = [
     durationSeconds: 5,
     motion: 'Hold',
     framePrompt: 'LOGO_CARD centered, faint haze settling. Style lock.',
-    onScreenText: 'SceneFlow AI Studio · sceneflowai.studio',
+    onScreenText: 'SceneFlow Studio · sceneflowai.studio',
     narration: {
-      en: 'SceneFlow AI. Envision the story. We handle the pipeline.',
-      es: 'SceneFlow AI. Imagina la historia. Nosotros nos encargamos del proceso.',
-      pt: 'SceneFlow AI. Imagine a história. Nós cuidamos da produção.',
-      zh: 'SceneFlow AI。你构想故事，我们负责生产。',
-      ar: 'SceneFlow AI — تصوَّر القصة، ونحن نتولى الإنتاج.',
-      th: 'SceneFlow AI จินตนาการเรื่องราว เราจัดการกระบวนการผลิต',
+      en: 'SceneFlow Studio. Envision the story. We handle the pipeline.',
+      es: 'SceneFlow Studio. Imagina la historia. Nosotros nos encargamos del proceso.',
+      pt: 'SceneFlow Studio. Imagine a história. Nós cuidamos da produção.',
+      zh: 'SceneFlow Studio。你构想故事，我们负责生产。',
+      ar: 'SceneFlow Studio — تصوَّر القصة، ونحن نتولى الإنتاج.',
+      th: 'SceneFlow Studio จินตนาการเรื่องราว เราจัดการกระบวนการผลิต',
     },
   },
 ]

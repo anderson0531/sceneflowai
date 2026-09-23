@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - AIを活用した動画制作",
+    "title": "SceneFlow Studio - AIを活用した動画制作",
     "description": "AIを活用したワークフローの自動化で、アイデアをプロ品質の動画に。"
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "Google Cloud（Vertex AI、クラウドストレージ、および翻訳ツールを併用）を基盤としています",
-      "footnote": "SceneFlow AIは、スタートアップの成長とエンタープライズ企業の期待に応えるよう設計された、スケーラブルなGoogle Cloudインフラストラクチャ上で稼働します。"
+      "footnote": "SceneFlow Studioは、スタートアップの成長とエンタープライズ企業の期待に応えるよう設計された、スケーラブルなGoogle Cloudインフラストラクチャ上で稼働します。"
     },
     "trustSafeguardLink": "多層的な信頼：Google Vertexの安全性に加え、SceneFlowのガードレール、検証、および来歴（プロベナンス） — 以下の「信頼と安全性」を参照してください。",
     "attribution": "— SceneFlow エンジニアリングチーム"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "アイデアから公開されたビデオへ",
     "securePayments": "登録業者であるWhopが処理する安全な支払い",
     "morLine": "安全な支払い、税金の計算、およびコンプライアンスは、Life Focus, LLCに代わって、登録商人であるWhopによって処理されます。",
-    "copyright": "© 2026 SceneFlow AI.無断複写・転載を禁じます。",
+    "copyright": "© 2026 SceneFlow Studio.無断複写・転載を禁じます。",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C 200, Austin, TX 78757, United States •連絡先: support@sceneflowai.studio",
     "poweredBy": "Google搭載のインテリジェンス· Google Cloudでオーケストレーション"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "却下"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "一時停止",
     "play": "再生",
     "mute": "ミュート",

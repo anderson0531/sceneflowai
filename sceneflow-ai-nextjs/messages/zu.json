@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - Ukwenziwa kwamavidiyo kusetshenziswa i-AI",
+    "title": "SceneFlow Studio - Ukwenziwa kwamavidiyo kusetshenziswa i-AI",
     "description": "Guqula imibono yakho ibe amavidiyo asezingeni eliphezulu usebenzisa uhlelo oluzenzakalelayo lokusebenza olusekelwe kubuchwepheshe be-AI."
   },
   "nav": {
@@ -1027,7 +1027,7 @@
     },
     "partnership": {
       "poweredBy": "Inikwe amandla yi-Google Cloud kanye ne-Vertex AI, Isitoreji Samafu, kanye namathuluzi okuhumusha",
-      "footnote": "I-SceneFlow AI isebenza engqalasizindeni ye-Google Cloud engakwazi ukukhula ngokwezidingo, eyenzelwe ukukhula kwamabhizinisi asaqala kanye nezidingo zamabhizinisi amakhulu."
+      "footnote": "I-SceneFlow Studio isebenza engqalasizindeni ye-Google Cloud engakwazi ukukhula ngokwezidingo, eyenzelwe ukukhula kwamabhizinisi asaqala kanye nezidingo zamabhizinisi amakhulu."
     },
     "trustSafeguardLink": "Ukwethenjwa okunezendlalelo: Ukuphepha kwe-Google Vertex kanye nezindlela zokuvikela ze-SceneFlow, ukuqinisekisa, kanye nomthombo — bheka isigaba esithi Ukwethenjwa Nokuphepha ngezansi.",
     "attribution": "— Ithimba Lezobunjiniyela le-SceneFlow"
@@ -1155,7 +1155,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1366,7 +1366,7 @@
     "taglineSub": "Kusukela emcabangweni kuya kuvidiyo eshicilelwe",
     "securePayments": "Izinkokhelo eziphephile ezicutshungulwa yi-Whop, umhlinzeki wethu osemthethweni wokwamukela izinkokhelo",
     "morLine": "Izinkokhelo eziphephile, ukubalwa kwentela, kanye nokuhambisana nemithetho kuphathwa yi-Whop, okuyiyo inhlangano yethu ebhalisiwe yokuqhuba ukuthengiselana (Merchant of Record), egameni le-Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. Wonke amalungelo agodliwe.",
+    "copyright": "© 2026 SceneFlow Studio. Wonke amalungelo agodliwe.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • Xhumana no: support@sceneflowai.studio",
     "poweredBy": "Inikwe amandla yi-Google Cloud"
   },
@@ -1377,7 +1377,7 @@
     "dismiss": "Chitha"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "Misa okwesikhashana",
     "play": "Dlala",
     "mute": "Thulisa",
