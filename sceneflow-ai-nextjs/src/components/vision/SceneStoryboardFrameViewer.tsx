@@ -1186,13 +1186,16 @@ export function SceneStoryboardFrameViewer({
                 ]}
               />
 
-              <div className="relative">
+              <div className="flex flex-col items-start gap-3 lg:flex-row">
                 <div
                   ref={thumbnailScrollRef}
-                  className="absolute left-0 top-0 bottom-0 w-[30%] grid grid-cols-2 content-start gap-2 overflow-y-auto overscroll-contain pr-1 cursor-grab active:cursor-grabbing"
+                  aria-label="Beat frames"
+                  className="w-full max-w-[280px] shrink-0 max-h-[40vh] cursor-grab overflow-y-auto overscroll-contain rounded-lg border border-slate-700/50 bg-slate-900/40 p-1.5 active:cursor-grabbing lg:w-[280px] lg:max-h-[min(72vh,40rem)] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded [&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:hover:bg-gray-500"
+                  style={{ scrollbarWidth: 'thin', scrollbarColor: '#4b5563 #1f2937' }}
                   onPointerDown={handleThumbnailPointerDown}
                   onClickCapture={handleThumbnailClickCapture}
                 >
+                  <div className="grid grid-cols-2 content-start gap-2">
                   {visibleFrameSlots.length === 0 ? (
                     <p className="col-span-2 text-[10px] text-slate-500 px-1">No frames match these filters.</p>
                   ) : null}
@@ -1220,9 +1223,10 @@ export function SceneStoryboardFrameViewer({
                       )}
                     </div>
                   ))}
+                  </div>
                 </div>
 
-                <div className="ml-[calc(30%+0.75rem)] flex flex-col gap-2 min-w-0">
+                <div className="sticky top-2 flex w-full min-w-0 flex-1 flex-col gap-2 self-start lg:w-auto">
                   <div className="rounded-lg overflow-hidden bg-gray-800/50 border border-slate-700/40">
                     <div className="relative overflow-hidden">
                       {previewSlot ? (
