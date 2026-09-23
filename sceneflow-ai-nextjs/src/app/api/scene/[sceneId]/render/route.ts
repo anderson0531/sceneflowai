@@ -445,6 +445,7 @@ export async function POST(
       segmentAudioVolume,
       textOverlays: textOverlays.length > 0 ? textOverlays : undefined,
       watermark,
+      encodeQuality: body.encodeQuality === 'draft' ? 'draft' : 'delivery',
     }
     
     console.log(`[SceneRender] Job spec created:`, {
@@ -454,6 +455,7 @@ export async function POST(
       textOverlays: textOverlays.length,
       hasWatermark: !!watermark,
       watermarkType: watermark?.type,
+      encodeQuality: body.encodeQuality === 'draft' ? 'draft' : 'delivery',
       totalDuration,
       resolution: body.resolution,
     })

@@ -68,6 +68,7 @@ import {
 } from '@/lib/storyboard/kenBurnsFrame'
 import { StoryboardImageEffectControl } from '@/components/vision/StoryboardImageEffectControl'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
+import { ScreeningBeatPreview } from '@/components/vision/scene-production/ScreeningBeatPreview'
 import type { FinalCutSelection } from '@/lib/types/finalCut'
 import {
   clampUnitVolume,
@@ -81,6 +82,11 @@ import {
   type ProjectStream,
 } from '@/lib/streams/projectStreams'
 import { filmSceneIndices, isPromoCinematicScene } from '@/lib/publish/buildPromoScene'
+import { listIncludedBeatVideos } from '@/lib/scene/mixerBeatInclude'
+import {
+  defaultPlayerWatermarkVisible,
+  type ScreeningReviewMode,
+} from '@/lib/scene/screeningReviewModes'
 import {
   canOptimizePlayerStill,
   playerStageSizes,
@@ -97,7 +103,7 @@ import {
   setScreeningDiagPlayhead,
 } from '@/lib/storyboard/screeningPlayerDiagnostics'
 
-type PreVisPlaybackMode = 'animatic' | 'video' | 'stream' | 'promo'
+type PreVisPlaybackMode = ScreeningReviewMode
 
 type SceneStripEntry = {
   idx: number
@@ -209,6 +215,19 @@ function resolveSceneVideoUrl(
     language,
     finalCutSelection
   )
+}
+
+function getBeatSceneIndices(
+  scenes: any[],
+  sceneProductionState?: Record<string, SceneProductionData>
+): number[] {
+  return scenes
+    .map((scene, idx) => {
+      if (isPromoCinematicScene(scene)) return -1
+      const sceneId = scene?.id || scene?.sceneId || `scene-${idx}`
+      return listIncludedBeatVideos(sceneProductionState?.[sceneId]?.segments).length > 0 ? idx : -1
+    })
+    .filter((idx) => idx >= 0)
 }
 
 function getVideoSceneIndices(
@@ -367,6 +386,10 @@ export function AudioGalleryPlayer({
 }: AudioGalleryPlayerProps) {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
   const [playbackMode, setPlaybackMode] = useState<PreVisPlaybackMode>('animatic')
+  const [playerWatermarkVisible, setPlayerWatermarkVisible] = useState(true)
+  const watermarkModeRef = useRef<PreVisPlaybackMode>('animatic')
+  const [beatAutoPlay, setBeatAutoPlay] = useState(false)
+  const beatAutoPlayOnAdvanceRef = useRef(false)
   const [decodedStillUrls, setDecodedStillUrls] = useState<ReadonlySet<string>>(() => new Set())
   const [volume, setVolume] = useState(0.8)
   const initialSceneMix = sceneMixerTrackVolumes(
@@ -515,6 +538,12 @@ export function AudioGalleryPlayer({
     [currentScene, currentSceneIndex, selectedLanguage, sceneProductionState, finalCutSelection]
   )
 
+  const beatSceneIndices = useMemo(
+    () => getBeatSceneIndices(scenes, sceneProductionState),
+    [scenes, sceneProductionState]
+  )
+  const hasAnyBeatVideo = beatSceneIndices.length > 0
+
   const hasAnySceneVideo = useMemo(
     () =>
       scenes.some((scene, idx) =>
@@ -558,7 +587,12 @@ export function AudioGalleryPlayer({
   const filmIndices = useMemo(() => filmSceneIndices(scenes), [scenes])
 
   const sceneStripEntries = useMemo<SceneStripEntry[]>(() => {
-    const indices = playbackMode === 'video' ? videoSceneIndices : filmIndices
+    const indices =
+      playbackMode === 'video'
+        ? videoSceneIndices
+        : playbackMode === 'beats'
+          ? beatSceneIndices
+          : filmIndices
     return indices.map((idx) => {
       const scene = scenes[idx]
       return {
@@ -567,7 +601,7 @@ export function AudioGalleryPlayer({
         hasSceneAudio: sceneHasPlayablePreVisAudio(scene, selectedLanguage),
       }
     })
-  }, [scenes, selectedLanguage, playbackMode, videoSceneIndices, filmIndices])
+  }, [scenes, selectedLanguage, playbackMode, videoSceneIndices, beatSceneIndices, filmIndices])
 
   const useVideoForCurrentScene =
     playbackMode === 'video' && videoSceneIndices.includes(currentSceneIndex)
@@ -579,6 +613,12 @@ export function AudioGalleryPlayer({
   const goToScene = useCallback(
     (index: number) => {
       if (index >= 0 && index < scenes.length) {
+        if (beatAutoPlayOnAdvanceRef.current) {
+          beatAutoPlayOnAdvanceRef.current = false
+          setBeatAutoPlay(true)
+        } else {
+          setBeatAutoPlay(false)
+        }
         pausePlaybackRef.current()
         resetPlaybackRef.current()
         if (videoRef.current) {
@@ -595,18 +635,28 @@ export function AudioGalleryPlayer({
   )
 
   const goToNextScene = useCallback(() => {
-    if (playbackMode === 'video') {
-      const next = findNextVideoSceneIndex(videoSceneIndices, currentSceneIndex)
+    if (playbackMode === 'video' || playbackMode === 'beats') {
+      const indices = playbackMode === 'beats' ? beatSceneIndices : videoSceneIndices
+      const next = findNextVideoSceneIndex(indices, currentSceneIndex)
       if (next != null) goToScene(next)
       return
     }
     if (playbackMode === 'stream' || playbackMode === 'promo') return
     const nextFilm = filmIndices.find((idx) => idx > currentSceneIndex)
     if (nextFilm != null) goToScene(nextFilm)
-  }, [playbackMode, videoSceneIndices, currentSceneIndex, goToScene, filmIndices])
+  }, [playbackMode, videoSceneIndices, beatSceneIndices, currentSceneIndex, goToScene, filmIndices])
+
+  const handleBeatPlaybackComplete = useCallback(() => {
+    if (!autoAdvanceRef.current) return false
+    const next = findNextVideoSceneIndex(beatSceneIndices, currentSceneIndex)
+    if (next == null) return false
+    beatAutoPlayOnAdvanceRef.current = true
+    goToScene(next)
+    return true
+  }, [beatSceneIndices, currentSceneIndex, goToScene])
 
   const handlePlaybackEnd = useCallback(() => {
-    if (playbackMode === 'stream' || playbackMode === 'promo') return
+    if (playbackMode === 'beats' || playbackMode === 'stream' || playbackMode === 'promo') return
     if (autoAdvanceRef.current) {
       setTimeout(() => {
         goToNextScene()
@@ -899,15 +949,16 @@ export function AudioGalleryPlayer({
   }, [inBeatVisual.primaryUrl, inBeatVisual.overlayUrl, arrivingDissolveMs, screeningPosterUrl])
 
   const goToPrevScene = useCallback(() => {
-    if (playbackMode === 'video') {
-      const prev = findPrevVideoSceneIndex(videoSceneIndices, currentSceneIndex)
+    if (playbackMode === 'video' || playbackMode === 'beats') {
+      const indices = playbackMode === 'beats' ? beatSceneIndices : videoSceneIndices
+      const prev = findPrevVideoSceneIndex(indices, currentSceneIndex)
       if (prev != null) goToScene(prev)
       return
     }
     if (playbackMode === 'stream' || playbackMode === 'promo') return
     const prevFilm = [...filmIndices].reverse().find((idx) => idx < currentSceneIndex)
     if (prevFilm != null) goToScene(prevFilm)
-  }, [playbackMode, videoSceneIndices, currentSceneIndex, goToScene, filmIndices])
+  }, [playbackMode, videoSceneIndices, beatSceneIndices, currentSceneIndex, goToScene, filmIndices])
 
   const sceneDisplay = useMemo(
     () =>
@@ -940,13 +991,22 @@ export function AudioGalleryPlayer({
   }, [screeningPlaybackHint, onLanguageChange, onScreeningPlaybackHintConsumed])
 
   useEffect(() => {
+    if (watermarkModeRef.current === playbackMode) return
+    watermarkModeRef.current = playbackMode
+    setPlayerWatermarkVisible(defaultPlayerWatermarkVisible(playbackMode))
+  }, [playbackMode])
+
+  useEffect(() => {
     if (playbackMode === 'video' && !hasAnySceneVideo) {
       setPlaybackMode('animatic')
     }
-  }, [playbackMode, hasAnySceneVideo])
+    if (playbackMode === 'beats' && !hasAnyBeatVideo) {
+      setPlaybackMode('animatic')
+    }
+  }, [playbackMode, hasAnySceneVideo, hasAnyBeatVideo])
 
   useEffect(() => {
-    if (playbackMode !== 'animatic' && playbackMode !== 'video') return
+    if (playbackMode !== 'animatic' && playbackMode !== 'video' && playbackMode !== 'beats') return
     if (!isPromoCinematicScene(scenes[currentSceneIndex])) return
     const firstFilm = filmIndices[0]
     if (firstFilm != null && firstFilm !== currentSceneIndex) {
@@ -976,25 +1036,26 @@ export function AudioGalleryPlayer({
   ])
 
   useEffect(() => {
-    if (playbackMode !== 'video' || videoSceneIndices.length === 0) return
-    if (!videoSceneIndices.includes(currentSceneIndex)) {
-      const target = findNearestForwardVideoSceneIndex(videoSceneIndices, currentSceneIndex)
+    const indices = playbackMode === 'video' ? videoSceneIndices : playbackMode === 'beats' ? beatSceneIndices : null
+    if (!indices || indices.length === 0) return
+    if (!indices.includes(currentSceneIndex)) {
+      const target = findNearestForwardVideoSceneIndex(indices, currentSceneIndex)
       if (target != null && target !== currentSceneIndex) {
         setCurrentSceneIndex(target)
         onSceneChange?.(target)
       }
     }
-  }, [playbackMode, videoSceneIndices, currentSceneIndex, onSceneChange])
+  }, [playbackMode, videoSceneIndices, beatSceneIndices, currentSceneIndex, onSceneChange])
 
   useEffect(() => {
-    if (useMasterVideo || useVideoForCurrentScene) {
+    if (useMasterVideo || useVideoForCurrentScene || playbackMode === 'beats') {
       pause()
       reset()
     } else if (videoRef.current) {
       videoRef.current.pause()
       setVideoPlaying(false)
     }
-  }, [useMasterVideo, useVideoForCurrentScene, currentSceneIndex, currentSceneVideoUrl, pause, reset])
+  }, [useMasterVideo, useVideoForCurrentScene, playbackMode, currentSceneIndex, currentSceneVideoUrl, pause, reset])
 
   useEffect(() => {
     if (!shouldAutoPlayVideoRef.current || (!useVideoForCurrentScene && !useMasterVideo)) return
@@ -1266,6 +1327,29 @@ export function AudioGalleryPlayer({
             <TooltipTrigger asChild>
               <button
                 type="button"
+                onClick={() => hasAnyBeatVideo && setPlaybackMode('beats')}
+                disabled={!hasAnyBeatVideo}
+                className={cn(
+                  'px-2 py-0.5 rounded text-[11px] font-medium transition-colors',
+                  playbackMode === 'beats'
+                    ? 'bg-sky-600 text-white'
+                    : 'text-gray-400 hover:text-white',
+                  !hasAnyBeatVideo && 'opacity-40 cursor-not-allowed hover:text-gray-400'
+                )}
+              >
+                Video
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {hasAnyBeatVideo
+                ? 'Play beat videos continuously, the same way the Mixer previews them'
+                : 'Generate beat videos in the Mixer to enable Video review'}
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
                 onClick={() => hasAnySceneVideo && setPlaybackMode('video')}
                 disabled={!hasAnySceneVideo}
                 className={cn(
@@ -1276,13 +1360,13 @@ export function AudioGalleryPlayer({
                   !hasAnySceneVideo && 'opacity-40 cursor-not-allowed hover:text-gray-400'
                 )}
               >
-                Video
+                Rough Cut
               </button>
             </TooltipTrigger>
             <TooltipContent>
               {hasAnySceneVideo
-                ? 'Play completed scene videos back-to-back'
-                : 'Render at least one scene video to enable Video mode'}
+                ? 'Play rendered scenes back-to-back and review transitions before the final master'
+                : 'Render at least one scene to enable Rough Cut'}
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -1299,13 +1383,13 @@ export function AudioGalleryPlayer({
                   streamReadyLanguages.length === 0 && 'opacity-40 cursor-not-allowed hover:text-gray-400'
                 )}
               >
-                Stream
+                Final
               </button>
             </TooltipTrigger>
             <TooltipContent>
               {streamReadyLanguages.length > 0
-                ? 'Play stitched master MP4 for the selected language'
-                : 'Render a language master in Streams to enable Stream mode'}
+                ? 'Screen the finished language master before shipping'
+                : 'Render a language master in Streams to enable Final'}
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -1332,13 +1416,28 @@ export function AudioGalleryPlayer({
             </TooltipContent>
           </Tooltip>
         </div>
+        <button
+          type="button"
+          onClick={() => setPlayerWatermarkVisible((visible) => !visible)}
+          className={cn(
+            'px-2 py-0.5 rounded text-[11px] font-medium border transition-colors',
+            playerWatermarkVisible
+              ? 'border-white/20 bg-white/10 text-white'
+              : 'border-white/10 text-gray-500 hover:text-gray-300'
+          )}
+          aria-pressed={playerWatermarkVisible}
+        >
+          Watermark
+        </button>
         <span className="text-xs text-gray-400 bg-gray-800 px-2 py-0.5 rounded">
           {playbackMode === 'promo'
             ? 'Promo trailer'
             : playbackMode === 'stream'
-            ? 'Language master'
+            ? 'Final'
             : playbackMode === 'video'
-            ? `Video ${videoScenePosition} of ${videoSceneIndices.length}`
+            ? `Rough Cut ${videoScenePosition} of ${videoSceneIndices.length}`
+            : playbackMode === 'beats'
+            ? `Video ${Math.max(1, beatSceneIndices.indexOf(currentSceneIndex) + 1)} of ${beatSceneIndices.length}`
             : `Scene ${filmIndices.indexOf(currentSceneIndex) >= 0 ? filmIndices.indexOf(currentSceneIndex) + 1 : currentSceneIndex + 1} of ${filmIndices.length || scenes.length}`}
         </span>
       </div>
@@ -1524,6 +1623,7 @@ export function AudioGalleryPlayer({
           <span className="text-sm">No image</span>
         </div>
       )}
+      {playerWatermarkVisible && (
       <div className="absolute bottom-4 right-4 z-[3] pointer-events-none select-none opacity-70">
         <span
           className="inline-block rounded-md bg-black/25 px-2.5 py-1 text-white font-bold tracking-widest uppercase backdrop-blur-[2px] drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]"
@@ -1532,6 +1632,7 @@ export function AudioGalleryPlayer({
           SceneFlow AI Studio
         </span>
       </div>
+      )}
       {showOverlayLanguage && (
         <div className="absolute top-3 left-3 z-10 pointer-events-auto">
           <GroupedLanguageSelector
@@ -1566,6 +1667,7 @@ export function AudioGalleryPlayer({
   const playbackControlsBlock = (
     <>
       <div className={cn('mt-3', (isFullscreen || sharedCompact) && 'mt-0', useScreeningLayout && 'mt-0')}>
+        {playbackMode !== 'beats' && (
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xs text-gray-400 w-10">{formatTime(effectiveCurrentTime)}</span>
           <div
@@ -1584,6 +1686,7 @@ export function AudioGalleryPlayer({
           </div>
           <span className="text-xs text-gray-400 w-10">{formatTime(effectiveDuration)}</span>
         </div>
+        )}
 
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
@@ -1594,6 +1697,8 @@ export function AudioGalleryPlayer({
                   disabled={
                     playbackMode === 'video'
                       ? findPrevVideoSceneIndex(videoSceneIndices, currentSceneIndex) == null
+                      : playbackMode === 'beats'
+                        ? findPrevVideoSceneIndex(beatSceneIndices, currentSceneIndex) == null
                       : currentSceneIndex === 0
                   }
                   className={cn(
@@ -1607,6 +1712,7 @@ export function AudioGalleryPlayer({
               <TooltipContent>Previous scene</TooltipContent>
             </Tooltip>
 
+            {playbackMode !== 'beats' && (
             <button
               onClick={toggleEffectivePlayback}
               className={cn(
@@ -1620,6 +1726,7 @@ export function AudioGalleryPlayer({
                 <Play className={cn('text-white ml-0.5', isFullscreen ? 'w-6 h-6' : 'w-5 h-5')} />
               )}
             </button>
+            )}
 
             <Tooltip>
               <TooltipTrigger asChild>
@@ -1628,6 +1735,8 @@ export function AudioGalleryPlayer({
                   disabled={
                     playbackMode === 'video'
                       ? findNextVideoSceneIndex(videoSceneIndices, currentSceneIndex) == null
+                      : playbackMode === 'beats'
+                        ? findNextVideoSceneIndex(beatSceneIndices, currentSceneIndex) == null
                       : currentSceneIndex === scenes.length - 1
                   }
                   className={cn(
@@ -1846,9 +1955,23 @@ export function AudioGalleryPlayer({
             <>
               <div className="flex w-[75%] min-w-0 flex-col min-h-0 gap-2 self-stretch">
                 <div className="flex flex-1 min-h-0 items-center justify-center">
-                  <div className="relative w-full max-h-full aspect-video rounded-lg overflow-hidden bg-black shadow-xl">
-                    {videoStageContent}
-                  </div>
+                  {playbackMode === 'beats' ? (
+                    <div className="w-full">
+                      <ScreeningBeatPreview
+                        key={`${currentSceneId}:${selectedLanguage}`}
+                        scene={currentScene}
+                        productionData={currentProductionData}
+                        language={selectedLanguage}
+                        showWatermark={playerWatermarkVisible}
+                        autoPlay={beatAutoPlay}
+                        onPlaybackComplete={handleBeatPlaybackComplete}
+                      />
+                    </div>
+                  ) : (
+                    <div className="relative w-full max-h-full aspect-video rounded-lg overflow-hidden bg-black shadow-xl">
+                      {videoStageContent}
+                    </div>
+                  )}
                 </div>
                 <div className="shrink-0 px-1">{sceneThumbnailsRow}</div>
               </div>
@@ -1860,7 +1983,7 @@ export function AudioGalleryPlayer({
                   totalScenes={scenes.length}
                   playerLabels={playerLabels}
                 />
-                {!hasAudio && !useVideoForCurrentScene && (
+                {!hasAudio && !useVideoForCurrentScene && playbackMode !== 'beats' && (
                   <p className="text-xs text-amber-400 shrink-0">No audio generated for this scene</p>
                 )}
                 <div className="mt-auto flex flex-col gap-2 shrink-0 min-h-0">
@@ -1870,6 +1993,24 @@ export function AudioGalleryPlayer({
             </>
           ) : (
             <>
+              {playbackMode === 'beats' ? (
+                <div
+                  className={cn(
+                    'w-full flex-shrink-0',
+                    isFullscreen ? 'max-w-7xl' : landingWide ? 'max-w-none' : sharedCompact ? 'max-w-3xl sm:max-w-4xl' : 'max-w-[500px]'
+                  )}
+                >
+                  <ScreeningBeatPreview
+                    key={`${currentSceneId}:${selectedLanguage}`}
+                    scene={currentScene}
+                    productionData={currentProductionData}
+                    language={selectedLanguage}
+                    showWatermark={playerWatermarkVisible}
+                    autoPlay={beatAutoPlay}
+                    onPlaybackComplete={handleBeatPlaybackComplete}
+                  />
+                </div>
+              ) : (
               <div
                 className={cn(
                   'relative rounded-lg overflow-hidden bg-black flex-shrink-0 w-full',
@@ -1884,6 +2025,7 @@ export function AudioGalleryPlayer({
               >
                 {videoStageContent}
               </div>
+              )}
 
               {isFullscreen && !sharedCompact && !embedMode && (
                 <PreVisSceneInfoPanel
@@ -1921,7 +2063,7 @@ export function AudioGalleryPlayer({
                       totalScenes={scenes.length}
                       playerLabels={playerLabels}
                     />
-                    {!hasAudio && !useVideoForCurrentScene && (
+                    {!hasAudio && !useVideoForCurrentScene && playbackMode !== 'beats' && (
                       <p className="text-xs text-amber-400 mt-2">No audio generated for this scene</p>
                     )}
                   </div>
