@@ -57,14 +57,12 @@ import {
   Trash2,
   X,
   Zap,
-  Server,
   Monitor,
   ChevronDown,
   ChevronUp,
   Maximize2,
   Minimize2,
   Video,
-  Coins,
   PanelRightClose,
   PanelRightOpen,
   Languages,
@@ -78,7 +76,6 @@ import {
   EyeOff,
   Scissors,
 } from 'lucide-react'
-import { upload } from '@vercel/blob/client'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
@@ -102,27 +99,10 @@ import {
 } from '@/lib/streams/projectStreams'
 import { MixerTimeline } from './MixerTimeline'
 import { ProductionSectionHeader } from './ProductionSectionHeader'
-import { useOverlayStore } from '@/store/useOverlayStore'
-import {
-  failAgentRun,
-  finishAgentRun,
-  patchAgentRun,
-  startAgentRun,
-} from '@/store/useAgentRunStore'
+import type { SceneRenderQueuedInfo } from '@/lib/video/sceneRenderQueue'
 import type { AudioClipInfo } from './MixerTimeline'
 
 // =============================================================================
-// IMPORTANT: TDZ Prevention - Do NOT import LocalRenderService at module level
-// =============================================================================
-// The circular import chain (DirectorConsole → SceneProductionMixer → LocalRenderService)
-// causes TDZ errors in production builds. We use dynamic imports and duplicated constants.
-// =============================================================================
-
-// Types can be imported statically (they're erased at compile time)
-import type {
-  LocalRenderConfig,
-  LocalRenderProgress,
-} from '@/lib/video/LocalRenderService'
 import type {
   ProductionStreamType,
   ProductionTarget,
@@ -232,43 +212,7 @@ function dialogueClipWallDuration(sourceSeconds: number | undefined, playbackRat
   return src / clampDialoguePlaybackRate(playbackRate)
 }
 
-// Duplicate constant to avoid module-level import (keep in sync with LocalRenderService.ts)
-const LOCAL_RENDER_MAX_DURATION = 300
-
-// Lazy-loaded cache for LocalRenderService functions
-let _localRenderServiceCache: {
-  getLocalRenderService: () => import('@/lib/video/LocalRenderService').LocalRenderService
-  isLocalRenderSupported: () => { supported: boolean; reason?: string }
-} | null = null
-
-// Dynamic import helper for LocalRenderService functions
-const getLocalRenderFunctions = async () => {
-  if (!_localRenderServiceCache) {
-    const mod = await import('@/lib/video/LocalRenderService')
-    _localRenderServiceCache = {
-      getLocalRenderService: mod.getLocalRenderService,
-      isLocalRenderSupported: mod.isLocalRenderSupported,
-    }
-  }
-  return _localRenderServiceCache
-}
-
-// Synchronous check for local render support (used in useMemo)
-// Returns false if module not yet loaded, true check happens async
-const checkLocalRenderSupport = (): { supported: boolean; reason?: string } => {
-  if (_localRenderServiceCache) {
-    return _localRenderServiceCache.isLocalRenderSupported()
-  }
-  // Module not loaded yet - return safe default, will be updated when loaded
-  return { supported: false, reason: 'Checking browser capabilities...' }
-}
-
-import {
-  determineRenderStrategy,
-  getRenderModeOptions,
-  type RenderMode,
-  type RenderContext,
-} from '@/lib/video/RenderStrategyRouter'
+import { type RenderMode } from '@/lib/video/RenderStrategyRouter'
 
 // NOTE: IndexedDB functions are imported dynamically to avoid SSR bundling issues
 // Use: const { storeVideo } = await import('@/lib/storage/indexedDB')
@@ -396,6 +340,8 @@ interface SceneProductionMixerProps {
   textOverlays?: TextOverlay[]
   /** Callback when text overlays change */
   onTextOverlaysChange?: (overlays: TextOverlay[]) => void
+  /** Cloud or headless render was accepted and can be tracked outside this panel. */
+  onSceneRenderQueued?: (info: SceneRenderQueuedInfo) => void
   /** Callback when render completes successfully */
   onRenderComplete?: (
     downloadUrl: string,
@@ -3094,10 +3040,9 @@ export function SceneProductionMixer({
   textOverlays: externalTextOverlays,
   onTextOverlaysChange,
   onRenderComplete,
+  onSceneRenderQueued,
   onProductionStreamsChange,
   isGeneratingBeats,
-  userTier = 'pro',
-  remainingServerRenders = Infinity,
   sceneIndex,
   onGenerateSceneAudio,
   onGenerateLanguageStream,
@@ -3503,6 +3448,7 @@ export function SceneProductionMixer({
   const [renderStatus, setRenderStatus] = useState<RenderStatus>('idle')
   const [renderProgress, setRenderProgress] = useState(0)
   const [renderError, setRenderError] = useState<string | null>(null)
+  const [isQueueingRender, setIsQueueingRender] = useState(false)
   // Initialize from persisted production data if available
   const [lastRenderedUrl, setLastRenderedUrl] = useState<string | null>(
     productionData?.renderedSceneUrl || null
@@ -4037,24 +3983,6 @@ export function SceneProductionMixer({
   // === Render Mode State (Local vs Server) ===
   const selectedRenderMode: RenderMode = 'auto'
   const [activeRenderMode, setActiveRenderMode] = useState<ActiveRenderMode>('server')
-  const [localRenderProgress, setLocalRenderProgress] = useState<LocalRenderProgress | null>(null)
-  
-  // === Global Processing Overlay ===
-  const overlayStore = useOverlayStore()
-  
-  // Check if local rendering is supported in this browser (async load)
-  const [localRenderSupportCheck, setLocalRenderSupportCheck] = useState<{ supported: boolean; reason?: string }>(
-    { supported: false, reason: 'Checking browser capabilities...' }
-  )
-  
-  // Load LocalRenderService on mount to check browser support
-  useEffect(() => {
-    getLocalRenderFunctions().then(({ isLocalRenderSupported }) => {
-      setLocalRenderSupportCheck(isLocalRenderSupported())
-    })
-  }, [])
-  
-  const localRenderSupported = localRenderSupportCheck.supported
   
   // === Derived Data ===
 
@@ -4208,49 +4136,6 @@ export function SceneProductionMixer({
     return Math.round((stretch - 1) * 100)
   }, [productionTarget.language, maxAudioDuration, videoTotalDuration])
   
-  const audioTrackCount = useMemo(() => {
-    let count = 0
-    if (audioTracks.narration.enabled) count += 1
-    if (audioTracks.dialogue.enabled) count += 1
-    if (audioTracks.music.enabled) count += 1
-    if (audioTracks.sfx.enabled) count += 1
-    if (Object.values(segmentAudioConfigs).some(c => c.includeAudio)) count += 1
-    return count
-  }, [audioTracks, segmentAudioConfigs])
-  
-  const renderContext = useMemo<RenderContext>(() => ({
-    duration: totalDuration,
-    resolution,
-    segmentCount: renderedSegments.length,
-    audioTrackCount,
-    hasTextOverlays: textOverlays.length > 0,
-    textOverlayCount: textOverlays.length,
-    hasWatermark: watermarkConfig.enabled,
-    userTier,
-    remainingServerRenders,
-    userPreference: selectedRenderMode,
-  }), [
-    totalDuration,
-    resolution,
-    renderedSegments.length,
-    audioTrackCount,
-    textOverlays.length,
-    watermarkConfig.enabled,
-    userTier,
-    remainingServerRenders,
-    selectedRenderMode,
-  ])
-  
-  // Get available render options based on context
-  const renderOptions = useMemo(() => {
-    return getRenderModeOptions(renderContext)
-  }, [renderContext])
-  
-  // Determine which strategy will be used
-  const renderStrategy = useMemo(() => {
-    return determineRenderStrategy(renderContext)
-  }, [renderContext])
-  
   // Get language label
   const languageLabel = useMemo(() => {
     return SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name || selectedLanguage.toUpperCase()
@@ -4332,20 +4217,9 @@ export function SceneProductionMixer({
       return
     }
     
-    setRenderStatus('preparing')
     setActiveRenderMode('server')
-    setRenderProgress(0)
     setRenderError(null)
-    
-    // Cloud render reports in the dock so other scenes stay reviewable.
-    // keepTabOpen: the fetch dies if this tab closes; it is not a GenerationJob.
-    startAgentRun({
-      id: 'scene-render:cloud',
-      title: 'Scene render',
-      subtitle: 'Cloud rendering',
-      itemLabel: `Scene ${sceneNumber}`,
-      keepTabOpen: true,
-    })
+    setIsQueueingRender(true)
     
     try {
       let lipsyncedVideoBySegment: Record<string, string> = {}
@@ -4493,10 +4367,6 @@ export function SceneProductionMixer({
         }
       }
       
-      setRenderStatus('rendering')
-      setRenderProgress(20)
-      
-      // Call render API
       const response = await fetch(`/api/scene/${sceneId}/render`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -4504,6 +4374,8 @@ export function SceneProductionMixer({
           projectId,
           sceneId,
           sceneNumber,
+          languageLabel,
+          streamType: productionTarget.streamType === 'animatic' ? 'animatic' : 'video',
           resolution,
           audioConfig: {
             includeNarration: audioTracks.narration.enabled,
@@ -4556,30 +4428,49 @@ export function SceneProductionMixer({
         }),
       })
       
+      if (response.status === 409) {
+        toast.info('A scene render is already running', {
+          description: "We'll notify you when it finishes.",
+        })
+        return
+      }
+
       if (!response.ok) {
         const data = await response.json().catch(() => ({}))
         throw new Error(data.error || `Render failed: ${response.status}`)
       }
       
       const result = await response.json()
-      setRenderProgress(40)
-      
-      // Poll for job status
-      await pollJobStatus(result.jobId)
+      if (!result.generationJobId) {
+        throw new Error(result.error || 'Scene render did not start a background job')
+      }
+
+      onSceneRenderQueued?.({
+        generationJobId: result.generationJobId,
+        sceneId,
+        sceneNumber,
+        language: selectedLanguage,
+        languageLabel,
+        streamType: productionTarget.streamType === 'animatic' ? 'animatic' : 'video',
+        durationSeconds: totalDuration,
+        mode: 'cloud',
+      })
       
     } catch (err) {
       console.error('[SceneProductionMixer] Render error:', err)
       setRenderError(err instanceof Error ? err.message : 'Unknown error')
       setRenderStatus('error')
-      failAgentRun('scene-render:cloud', err instanceof Error ? err.message : 'Render failed')
+    } finally {
+      setIsQueueingRender(false)
     }
   }, [
     renderedSegments, videoSegments, productionTarget.streamType, segmentAudioConfigs, audioTracks, playbackAudioUrls,
     dialogueClipConfigs,
-    totalDuration, sceneId, projectId, sceneNumber, resolution, selectedLanguage,
+    totalDuration, sceneId, projectId, sceneNumber, resolution, selectedLanguage, languageLabel,
     textOverlays, displayOverlays, masterSegmentVolume, watermarkConfig, displayWatermarkConfig,
     preserveBackgroundStem, includeSpeechStem, klingLipsyncEnabled, resolvedDialogueClips,
-    measuredSegmentDurations, getPlaybackSegmentDuration, schedulePersistMixerSettings
+    measuredSegmentDurations, getPlaybackSegmentDuration, schedulePersistMixerSettings,
+    onSceneRenderQueued,
   ])
 
   /**
@@ -4594,468 +4485,6 @@ export function SceneProductionMixer({
     await forceDownload(lastRenderedUrl, filename)
   }, [lastRenderedUrl, activeRenderMode, sceneNumber, selectedLanguage])
   
-  // Re-upload a GCS signed URL to Vercel Blob for persistent storage
-  // GCS signed URLs expire after 7 days. Vercel Blob URLs are permanent.
-  const reuploadToVercelBlob = async (gcsUrl: string, label: string): Promise<string> => {
-    try {
-      // Fetch through our proxy to bypass CORS
-      const proxyUrl = `/api/proxy-video?url=${encodeURIComponent(gcsUrl)}`
-      console.log(`[${label}] Fetching render via proxy for Vercel Blob re-upload...`)
-      const response = await fetch(proxyUrl)
-      if (!response.ok) {
-        throw new Error(`Proxy fetch failed: ${response.status}`)
-      }
-      const blob = await response.blob()
-      const filename = `renders/scene-${sceneNumber}-${selectedLanguage}-${Date.now()}.mp4`
-      const videoFile = new File([blob], filename, { type: blob.type || 'video/mp4' })
-      console.log(`[${label}] Re-uploading ${(videoFile.size / 1024 / 1024).toFixed(1)}MB to Vercel Blob...`)
-      const uploadedBlob = await upload(
-        filename,
-        videoFile,
-        {
-          access: 'public',
-          handleUploadUrl: '/api/segments/upload-video-url',
-        }
-      )
-      console.log(`[${label}] Persistent URL: ${uploadedBlob.url}`)
-      return uploadedBlob.url
-    } catch (err) {
-      console.warn(`[${label}] Vercel Blob re-upload failed, using GCS URL:`, err)
-      return gcsUrl // Fallback to original GCS URL
-    }
-  }
-
-  // Poll job status
-  const pollJobStatus = async (jobId: string) => {
-    const maxAttempts = 120
-    let attempts = 0
-    
-    while (attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 5000))
-      attempts++
-      
-      try {
-        const response = await fetch(`/api/scene/${sceneId}/render?jobId=${jobId}`)
-        if (!response.ok) continue
-        
-        const data = await response.json()
-        
-        if (data.status === 'COMPLETED') {
-          setRenderProgress(95)
-          
-          // Re-upload GCS signed URL to Vercel Blob for persistent storage
-          // GCS signed URLs expire after 7 days; Vercel Blob URLs are permanent
-          let persistentUrl = data.downloadUrl
-          if (data.downloadUrl?.includes('storage.googleapis.com')) {
-            patchAgentRun('scene-render:cloud', {
-              subtitle: 'Uploading to permanent storage — keep this tab open',
-            })
-            persistentUrl = await reuploadToVercelBlob(data.downloadUrl, 'ServerRender')
-          }
-          
-          setRenderStatus('complete')
-          setRenderProgress(100)
-          setLastRenderedUrl(persistentUrl)
-          finishAgentRun('scene-render:cloud', { subtitle: 'Cloud render ready' })
-          
-          // Cache the video to IndexedDB for offline access
-          try {
-            const { cacheVideoFromUrl } = await import('@/lib/storage/indexedDB')
-            await cacheVideoFromUrl(projectId, sceneId, selectedLanguage, persistentUrl)
-            console.log('[ServerRender] Video cached to IndexedDB')
-          } catch (cacheError) {
-            console.warn('[ServerRender] Failed to cache video to IndexedDB:', cacheError)
-          }
-          
-          onRenderComplete?.(persistentUrl, selectedLanguage, productionTarget.streamType, {
-            durationSeconds: totalDuration,
-          })
-          return
-        }
-        
-        if (data.status === 'FAILED') {
-          failAgentRun('scene-render:cloud', data.error || 'Render job failed')
-          throw new Error(data.error || 'Render job failed')
-        }
-        
-        const currentProgress = 40 + (data.progress || 0) * 0.6
-        setRenderProgress(currentProgress)
-        patchAgentRun('scene-render:cloud', { progressPct: currentProgress })
-      } catch (err) {
-        console.warn('[SceneProductionMixer] Poll error:', err)
-      }
-    }
-    
-    throw new Error('Render job timed out')
-  }
-  
-  // === Local Render Handler ===
-  const handleLocalRender = useCallback(async () => {
-    schedulePersistMixerSettings.flush()
-    const sourceSegments = videoSegments
-    console.log('[LocalRender] Checking segments:', {
-      totalSegments: segments.length,
-      videoSegmentsCount: videoSegments.length,
-      sourceSegmentsCount: sourceSegments.length,
-      streamType: productionTarget.streamType,
-      renderedSegmentsCount: renderedSegments.length,
-      segments: segments.map(s => ({
-        id: s.segmentId,
-        status: s.status,
-        assetType: s.assetType,
-        hasUrl: !!s.activeAssetUrl,
-        url: s.activeAssetUrl?.substring(0, 50)
-      }))
-    })
-    
-    if (sourceSegments.length === 0) {
-      // Provide helpful context about what segments exist
-      const completeSegments = segments.filter(s => s.status === 'COMPLETE' && s.activeAssetUrl)
-      const imageSegments = completeSegments.filter(s => s.assetType === 'image')
-      
-      let errorMessage =
-        'No video segments available for Video render mode. '
-      if (imageSegments.length > 0) {
-        errorMessage += `Found ${imageSegments.length} image-only segment(s) — upload or generate video content.`
-      } else if (completeSegments.length > 0) {
-        errorMessage += `Found ${completeSegments.length} segment(s) but they don't appear to be video. Check that your uploaded files are video format (mp4, webm, mov).`
-      } else {
-        errorMessage += 'Generate or upload video content first.'
-      }
-      setRenderError(errorMessage)
-      return
-    }
-    
-    // Validate duration is finite and positive
-    if (!Number.isFinite(totalDuration) || totalDuration <= 0) {
-      console.error('[LocalRender] Invalid duration:', totalDuration, { videoTotalDuration, maxAudioDuration })
-      setRenderError('Invalid video duration. Please check that your video segment has valid timing information.')
-      return
-    }
-    
-    if (!localRenderSupported) {
-      setRenderError(localRenderSupportCheck.reason || 'Local rendering is not supported in this browser')
-      return
-    }
-    
-    const localResolution = resolution
-    
-    setRenderStatus('preparing')
-    setActiveRenderMode('local')
-    setRenderProgress(0)
-    setRenderError(null)
-    
-    // Show global processing overlay
-    overlayStore.show(
-      'Rendering video — please don\'t close this tab',
-      Math.max(30, Math.ceil(totalDuration * 2)), // Estimate: ~2x video duration
-      'video-generation'
-    )
-    
-    try {
-      const useStemDubbingPolicy = productionTarget.language !== 'en' && preserveBackgroundStem
-      const segmentsForLocal = sourceSegments.map((seg, idx) => {
-        const duration = seg.actualVideoDuration ?? (seg.endTime - seg.startTime)
-        const audioConfig = segmentAudioConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0 }
-        const hasBackgroundStem = !!seg.stemSeparation?.backgroundStemUrl
-        const embedAudio = resolveSegmentEmbedAudioForRender(audioConfig, masterSegmentVolume, {
-          useStemDubbingPolicy,
-          includeSpeechStem,
-          hasBackgroundStem,
-        })
-        const localAssetType: 'video' | 'image' = (seg.assetType || 'video') as 'video' | 'image'
-        const endFrameUrl = undefined
-        console.log('[LocalRender] Segment config:', {
-          segmentId: seg.segmentId,
-          actualVideoDuration: seg.actualVideoDuration,
-          imageDuration: seg.imageDuration,
-          startTime: seg.startTime,
-          endTime: seg.endTime,
-          calculatedDuration: duration,
-          isUserUpload: seg.isUserUpload,
-          assetType: localAssetType,
-          includeVideoAudio: embedAudio.includeVideoAudio,
-          hasEndFrame: !!endFrameUrl,
-          volume: embedAudio.audioVolume,
-        })
-        const sourceDur = resolveSegmentSourceDurationSec(
-          seg,
-          measuredSegmentDurations[seg.segmentId]
-        )
-        const trimWin = resolveVideoTrimWindow(seg, sourceDur)
-        return {
-          segmentId: seg.segmentId,
-          assetUrl: seg.activeAssetUrl!,
-          assetType: localAssetType,
-          startTime: (() => {
-            let segStart = 0
-            for (let i = 0; i < Math.min(idx, sourceSegments.length); i++) {
-              segStart += getPlaybackSegmentDuration(sourceSegments[i])
-            }
-            return segStart
-          })(),
-          duration: getPlaybackSegmentDuration(seg),
-          endFrameUrl,
-          volume: embedAudio.audioVolume,
-          includeVideoAudio: embedAudio.includeVideoAudio,
-          watermarkCropPercent: seg.watermarkCropPercent,
-          videoTrimInSec: trimWin.inSec > 0.001 ? trimWin.inSec : undefined,
-          videoTrimOutSec: trimWin.isTrimmed ? trimWin.outSec : undefined,
-        }
-      })
-      
-      console.log('[LocalRender] Total duration for render:', totalDuration)
-      console.log('[LocalRender] Segments for local render:', segmentsForLocal)
-      
-      const audioClips: LocalRenderConfig['audioClips'] = []
-      
-      if (audioTracks.narration.enabled && playbackAudioUrls.narration) {
-        audioClips.push({
-          url: playbackAudioUrls.narration,
-          startTime: audioTracks.narration.startOffset,
-          duration: playbackAudioUrls.narrationDuration || Math.max(0, totalDuration - audioTracks.narration.startOffset),
-          volume: audioTracks.narration.volume,
-          type: 'narration',
-        })
-      }
-      
-      if (audioTracks.dialogue.enabled && playbackAudioUrls.dialogue.length > 0) {
-        playbackAudioUrls.dialogue.forEach((clip, idx) => {
-          if (!clip.audioUrl) return
-          const clipConfig = dialogueClipConfigs[dialogueClipConfigKey(clip, idx)]
-          if (clipConfig?.enabled === false) return
-          const startTime = audioTracks.dialogue.startOffset + mixerDialogueStart(clip, idx, 2)
-          const pr = clampDialoguePlaybackRate(clipConfig?.playbackRate)
-          audioClips.push({
-            url: clip.audioUrl,
-            startTime,
-            duration: clip.duration || Math.max(0, totalDuration - startTime),
-            volume: (clipConfig?.volume ?? 1.0) * audioTracks.dialogue.volume,
-            type: 'dialogue',
-            playbackRate: pr,
-          })
-        })
-      }
-      
-      if (audioTracks.music.enabled && (playbackAudioUrls.musicClips?.length ?? 0) > 0) {
-        mixerMusicClipsToRenderPayload(playbackAudioUrls.musicClips!, audioTracks.music).forEach(
-          (clip) => {
-            audioClips.push({
-              ...clip,
-              type: 'music',
-            })
-          }
-        )
-      }
-      
-      if (audioTracks.sfx.enabled && playbackAudioUrls.sfx.length > 0) {
-        playbackAudioUrls.sfx.forEach(s => {
-          if (!s.audioUrl) return
-          const startTime = audioTracks.sfx.startOffset + (s.startTime ?? 0)
-          audioClips.push({
-            url: s.audioUrl,
-            startTime,
-            duration: s.duration || Math.max(0, totalDuration - startTime),
-            volume: audioTracks.sfx.volume,
-            type: 'sfx',
-          })
-        })
-      }
-
-      if (useStemDubbingPolicy && audioTracks.sfx.enabled) {
-        videoSegments.forEach(seg => {
-          const audioConfig = segmentAudioConfigs[seg.segmentId]
-          if (!isBeatEmbedAudioIncluded(audioConfig)) return
-          const backgroundStemUrl = seg.stemSeparation?.backgroundStemUrl
-          if (!backgroundStemUrl) return
-          audioClips.push({
-            url: backgroundStemUrl,
-            startTime: seg.startTime,
-            duration: Math.max(0, seg.endTime - seg.startTime),
-            volume: 1.0,
-            type: 'sfx',
-          })
-        })
-      }
-      
-      const { getLocalRenderService } = await getLocalRenderFunctions()
-      const renderService = getLocalRenderService()
-      
-      setRenderStatus('rendering')
-      
-      // Debug: Log watermark config being passed to render
-      console.log('[SceneProductionMixer] Starting local render with watermark:', {
-        enabled: watermarkConfig.enabled,
-        type: watermarkConfig.type,
-        text: watermarkConfig.text,
-        anchor: watermarkConfig.anchor,
-        padding: watermarkConfig.padding,
-      })
-      
-      const localWatermark =
-        watermarkConfig.enabled
-          ? {
-              type: watermarkConfig.type,
-              text: watermarkConfig.text,
-              imageUrl: watermarkConfig.imageUrl || undefined,
-              anchor: watermarkConfig.anchor,
-              padding: watermarkConfig.padding,
-              textStyle: {
-                fontFamily: watermarkConfig.textStyle.fontFamily,
-                fontSize: watermarkConfig.textStyle.fontSize,
-                fontWeight: watermarkConfig.textStyle.fontWeight,
-                color: watermarkConfig.textStyle.color,
-                opacity: watermarkConfig.textStyle.opacity,
-                textShadow: watermarkConfig.textStyle.textShadow,
-              },
-              imageStyle: {
-                width: watermarkConfig.imageStyle.width,
-                opacity: watermarkConfig.imageStyle.opacity,
-              },
-            }
-          : undefined
-
-      const renderResult = await renderService.render({
-        segments: segmentsForLocal,
-        audioClips,
-        textOverlays: textOverlays.map((overlay) => ({
-          id: overlay.id,
-          text: overlay.text,
-          subtext: overlay.subtext,
-          position: {
-            x: overlay.position.x,
-            y: overlay.position.y,
-            anchor: overlay.position.anchor,
-          },
-          style: {
-            fontFamily: overlay.style.fontFamily,
-            fontSize: overlay.style.fontSize,
-            fontWeight: overlay.style.fontWeight,
-            color: overlay.style.color,
-            backgroundColor: overlay.style.backgroundColor,
-            backgroundOpacity: overlay.style.backgroundOpacity,
-            textShadow: overlay.style.textShadow,
-          },
-          timing: {
-            startTime: overlay.timing.startTime,
-            duration: overlay.timing.duration,
-            fadeInMs: overlay.timing.fadeInMs,
-            fadeOutMs: overlay.timing.fadeOutMs,
-          },
-        })),
-        watermark: localWatermark,
-        resolution: localResolution,
-        fps: 30,
-        totalDuration,
-        }, (progress) => {
-          setLocalRenderProgress(progress)
-          setRenderProgress(progress.progress)
-          // Update global overlay with real progress
-          overlayStore.setProgress(progress.progress)
-          if (progress.phase === 'preparing') {
-            overlayStore.setStatus('Preparing assets...')
-          } else if (progress.phase === 'rendering' && progress.currentFrame !== undefined && progress.totalFrames) {
-            overlayStore.setStatus(`Rendering frame ${progress.currentFrame + 1}/${progress.totalFrames}`)
-          } else if (progress.phase === 'encoding') {
-            overlayStore.setStatus('Encoding video...')
-          }
-        })
-      
-      if (!renderResult.success || !renderResult.blobUrl || !renderResult.blob) {
-        throw new Error(renderResult.error || 'Local render failed')
-      }
-      
-      // Validate blob has content (0-byte blobs indicate render failure)
-      if (renderResult.blob.size === 0) {
-        throw new Error('Render produced empty video. This can happen if video assets failed to load (CORS issues) or if segments have invalid durations.')
-      }
-      
-      // Upload the rendered video to persistent blob storage
-      // This is critical - the local blob: URL is only valid during the browser session
-      setRenderStatus('rendering')
-      setRenderProgress(95)
-      
-      let persistentUrl: string
-      try {
-        console.log('[SceneProductionMixer] Uploading rendered video to blob storage...')
-        const filename = `scene-${sceneNumber}-${selectedLanguage}-${Date.now()}.webm`
-        // Convert Blob to File for proper content-length header in upload
-        const videoFile = new File([renderResult.blob], filename, { 
-          type: renderResult.blob.type || 'video/webm' 
-        })
-        console.log('[SceneProductionMixer] Video file size:', videoFile.size, 'bytes')
-        const uploadedBlob = await upload(
-          `renders/${filename}`,
-          videoFile,
-          {
-            access: 'public',
-            handleUploadUrl: '/api/segments/upload-video-url',
-          }
-        )
-        persistentUrl = uploadedBlob.url
-        console.log('[SceneProductionMixer] Uploaded to:', persistentUrl)
-        
-        // Revoke the temporary blob URL to free memory
-        const { LocalRenderService } = await import('@/lib/video/LocalRenderService')
-        LocalRenderService.revokeBlobUrl(renderResult.blobUrl)
-      } catch (uploadError) {
-        console.error('[SceneProductionMixer] Failed to upload to blob storage, using local URL:', uploadError)
-        // Fallback to local blob URL (will be lost on refresh)
-        persistentUrl = renderResult.blobUrl
-      }
-      
-      setRenderStatus('complete')
-      setRenderProgress(100)
-      setLastRenderedUrl(persistentUrl)
-      
-      // Hide global processing overlay
-      overlayStore.hide()
-      
-      // Show success toast with download action (no auto-download)
-      toast.success('Video render complete!', {
-        description: 'Your scene video is ready for download.',
-        duration: 10000,
-        action: {
-          label: 'Download',
-          onClick: () => {
-            const a = document.createElement('a')
-            a.href = persistentUrl
-            a.download = `scene-${sceneNumber}-${selectedLanguage}-${Date.now()}.webm`
-            document.body.appendChild(a)
-            a.click()
-            document.body.removeChild(a)
-          }
-        }
-      })
-      
-      // Cache the video to IndexedDB for offline access and persistence
-      try {
-        const { storeVideo } = await import('@/lib/storage/indexedDB')
-        await storeVideo(projectId, sceneId, selectedLanguage, renderResult.blob, persistentUrl)
-        console.log('[SceneProductionMixer] Video cached to IndexedDB')
-      } catch (cacheError) {
-        console.warn('[SceneProductionMixer] Failed to cache video to IndexedDB:', cacheError)
-      }
-      
-      onRenderComplete?.(persistentUrl, selectedLanguage, productionTarget.streamType, {
-        durationSeconds: renderResult.duration ?? totalDuration,
-      })
-      
-    } catch (err) {
-      console.error('[SceneProductionMixer] Local render error:', err)
-      setRenderError(err instanceof Error ? err.message : 'Local rendering failed')
-      setRenderStatus('error')
-      // Hide global processing overlay on error
-      overlayStore.hide()
-    }
-  }, [
-    productionTarget.streamType, previewSegments, videoSegments, segments, segmentAudioConfigs, audioTracks, playbackAudioUrls,
-    totalDuration, videoTotalDuration, maxAudioDuration, resolution, selectedLanguage, 
-    textOverlays, masterSegmentVolume, localRenderSupported, localRenderSupportCheck.reason,
-    dialogueClipConfigs, sceneNumber, onRenderComplete, watermarkConfig, overlayStore,
-    schedulePersistMixerSettings,
-  ])
-  
   // === Headless Render Handler (GCP Cloud Run) ===
   const handleHeadlessRender = useCallback(async () => {
     schedulePersistMixerSettings.flush()
@@ -5064,19 +4493,9 @@ export function SceneProductionMixer({
       return
     }
     
-    setRenderStatus('preparing')
     setActiveRenderMode('headless')
-    setRenderProgress(0)
     setRenderError(null)
-    
-    // Headless render reports in the dock; keep this tab open while it polls.
-    startAgentRun({
-      id: 'scene-render:headless',
-      title: 'Scene render',
-      subtitle: 'Pro Cloud rendering',
-      itemLabel: `Scene ${sceneNumber}`,
-      keepTabOpen: true,
-    })
+    setIsQueueingRender(true)
     
     try {
       // Build segments for headless render
@@ -5174,9 +4593,6 @@ export function SceneProductionMixer({
         })
       }
       
-      setRenderStatus('rendering')
-      setRenderProgress(10)
-      
       console.log('[HeadlessRender] Starting Pro Cloud render:', {
         segments: segmentsForHeadless.length,
         audioClips: audioClips.length,
@@ -5246,145 +4662,67 @@ export function SceneProductionMixer({
           resolution: headlessResolution,
           fps: 30,
           totalDuration,
+          projectId,
+          sceneId,
+          sceneNumber,
+          language: selectedLanguage,
+          languageLabel,
+          streamType: productionTarget.streamType === 'animatic' ? 'animatic' : 'video',
           ...(headlessWatermark ? { watermark: headlessWatermark } : {}),
         }),
       })
       
+      if (response.status === 409) {
+        toast.info('A scene render is already running', {
+          description: "We'll notify you when it finishes.",
+        })
+        return
+      }
+
       if (!response.ok) {
         const data = await response.json().catch(() => ({}))
         throw new Error(data.error || `Headless render failed: ${response.status}`)
       }
       
       const result = await response.json()
-      setRenderProgress(30)
-      
-      console.log('[HeadlessRender] Job created:', result.jobId)
-      
-      // Poll for job completion
-      await pollHeadlessJobStatus(result.jobId)
+      if (!result.generationJobId) {
+        throw new Error(result.error || 'Headless render did not start a background job')
+      }
+
+      onSceneRenderQueued?.({
+        generationJobId: result.generationJobId,
+        sceneId,
+        sceneNumber,
+        language: selectedLanguage,
+        languageLabel,
+        streamType: productionTarget.streamType === 'animatic' ? 'animatic' : 'video',
+        durationSeconds: totalDuration,
+        mode: 'headless',
+      })
       
     } catch (err) {
       console.error('[SceneProductionMixer] Headless render error:', err)
       setRenderError(err instanceof Error ? err.message : 'Headless rendering failed')
       setRenderStatus('error')
-      failAgentRun('scene-render:headless', err instanceof Error ? err.message : 'Headless rendering failed')
+    } finally {
+      setIsQueueingRender(false)
     }
   }, [
     videoSegments, segmentAudioConfigs, audioTracks, playbackAudioUrls,
     totalDuration, resolution, textOverlays, masterSegmentVolume,
     dialogueClipConfigs, watermarkConfig,
     preserveBackgroundStem, includeSpeechStem, productionTarget.language,
+    productionTarget.streamType,
     measuredSegmentDurations, getPlaybackSegmentDuration, schedulePersistMixerSettings,
+    projectId, sceneId, sceneNumber, selectedLanguage, languageLabel, onSceneRenderQueued,
   ])
   
-  // Poll headless job status
-  const pollHeadlessJobStatus = useCallback(async (jobId: string) => {
-    const maxAttempts = 180 // 15 minutes at 5s intervals
-    let attempts = 0
-    
-    while (attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 5000))
-      attempts++
-      
-      try {
-        const response = await fetch(`/api/render/headless?jobId=${jobId}`)
-        if (!response.ok) continue
-        
-        const data = await response.json()
-        
-        if (data.status === 'complete') {
-          const outputUrl = data.outputUrl || data.publicUrl
-          setRenderProgress(95)
-          
-          // Re-upload GCS signed URL to Vercel Blob for persistent storage
-          let persistentUrl = outputUrl
-          if (outputUrl?.includes('storage.googleapis.com')) {
-            patchAgentRun('scene-render:headless', {
-              subtitle: 'Uploading to permanent storage — keep this tab open',
-            })
-            persistentUrl = await reuploadToVercelBlob(outputUrl, 'HeadlessRender')
-          }
-          
-          setRenderStatus('complete')
-          setRenderProgress(100)
-          setLastRenderedUrl(persistentUrl)
-          finishAgentRun('scene-render:headless', { subtitle: 'Pro Cloud render ready' })
-          
-          // Cache the video to IndexedDB for offline access
-          try {
-            const { cacheVideoFromUrl } = await import('@/lib/storage/indexedDB')
-            await cacheVideoFromUrl(projectId, sceneId, selectedLanguage, persistentUrl)
-            console.log('[HeadlessRender] Video cached to IndexedDB')
-          } catch (cacheError) {
-            console.warn('[HeadlessRender] Failed to cache video to IndexedDB:', cacheError)
-          }
-          
-          onRenderComplete?.(persistentUrl, selectedLanguage, productionTarget.streamType, {
-            durationSeconds: totalDuration,
-          })
-          return
-        }
-        
-        if (data.status === 'error' || data.status === 'failed') {
-          failAgentRun('scene-render:headless', data.error || 'Headless render job failed')
-          throw new Error(data.error || 'Headless render job failed')
-        }
-        
-        // Still processing
-        const headlessProgress = 30 + Math.min(attempts, 60)
-        setRenderProgress(headlessProgress)
-        patchAgentRun('scene-render:headless', { progressPct: headlessProgress })
-      } catch (err) {
-        console.warn('[HeadlessRender] Poll error:', err)
-      }
-    }
-    
-    throw new Error('Headless render job timed out')
-  }, [
-    onRenderComplete,
-    selectedLanguage,
-    totalDuration,
-    productionTarget.streamType,
-    projectId,
-    sceneId,
-  ])
-  
-  // === Smart Render Handler (routes to local, server, or headless) ===
+  // Mixer Render always queues the cloud MP4. The browser WebM encoder is not
+  // a fallback: it freezes the studio and can stretch beat 1 across the timeline.
   const handleSmartRender = useCallback(async () => {
-    const hasBurnIns = textOverlays.length > 0 || watermarkConfig.enabled
-    const audioLongerThanVideo = maxAudioDuration > videoTotalDuration + 0.1
-
-    // Single-selector flow: always route burn-ins through standard cloud render.
-    // This avoids hard dependency on optional headless Cloud Run infrastructure.
-    if (hasBurnIns) {
-      setActiveRenderMode('server')
-      await handleRender()
-      return
-    }
-
-    if (selectedRenderMode === 'auto' && audioLongerThanVideo) {
-      setActiveRenderMode('server')
-      await handleRender()
-      return
-    }
-
-    if (renderStrategy.mode === 'local') {
-      await handleLocalRender()
-    } else {
-      setActiveRenderMode('server')
-      await handleRender()
-    }
-  }, [
-    selectedRenderMode,
-    renderStrategy,
-    handleLocalRender,
-    handleRender,
-    productionTarget.streamType,
-    textOverlays.length,
-    watermarkConfig.enabled,
-    maxAudioDuration,
-    videoTotalDuration,
-  ])
+    setActiveRenderMode('server')
+    await handleRender()
+  }, [handleRender])
   
   // === Render ===
   
@@ -6637,7 +5975,7 @@ export function SceneProductionMixer({
                     <Progress value={renderProgress} className="h-2" />
                   </div>
                   <span className="text-sm text-gray-400">
-                    {Math.round(renderProgress)}% {activeRenderMode === 'local' && localRenderProgress?.phase ? `(${localRenderProgress.phase})` : activeRenderMode === 'headless' ? '(Pro Cloud)' : ''}
+                    {Math.round(renderProgress)}%{activeRenderMode === 'headless' ? ' (Pro Cloud)' : ''}
                   </span>
                 </div>
               )}
@@ -6667,7 +6005,7 @@ export function SceneProductionMixer({
               {/* Smart Render Button */}
               <Button
                 onClick={handleSmartRender}
-                disabled={isRendering || !hasRenderablePreview}
+                disabled={isRendering || isQueueingRender || !hasRenderablePreview}
                 size="lg"
                 className={`px-6 whitespace-nowrap min-w-[160px] ${
                   selectedRenderMode === 'local' 
@@ -6684,7 +6022,7 @@ export function SceneProductionMixer({
                     : `Broadcast (MP4): server export at ${resolution} for delivery-grade output`
                 }
               >
-                {isRendering ? (
+                {isRendering || isQueueingRender ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Rendering...
@@ -6768,7 +6106,7 @@ export function SceneProductionMixer({
                   <div className="flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-gray-400" />
                     <span className="text-gray-300">Auto:</span>
-                    <span>Will use {renderStrategy.mode === 'local' ? 'Quick Export' : 'Final Render'} based on video complexity</span>
+                    <span>Renders a cloud MP4 in the background and notifies you when it is ready</span>
                   </div>
                 )}
               </div>

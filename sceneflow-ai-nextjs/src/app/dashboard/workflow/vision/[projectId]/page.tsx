@@ -297,6 +297,8 @@ import {
   ensureBrowserNotificationPermission,
   notifyIfHidden,
 } from '@/lib/notifications/browserNotification'
+import { promoteCompletedSceneRender } from '@/lib/video/promoteRenderToBlob'
+import type { SceneRenderQueuedInfo } from '@/lib/video/sceneRenderQueue'
 import {
   getProjectStreams,
   type ProjectStream,
@@ -7852,6 +7854,134 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       clearInterval(interval)
     }
   }, [referenceExpressJobActive, referenceExpressJobId])
+
+  const sceneRenderJob = useBackgroundJob({
+    projectId,
+    jobType: 'scene_render',
+    onCompleted: (job) => {
+      void (async () => {
+        try {
+          await promoteCompletedSceneRender(job)
+        } catch (error) {
+          console.error('[Scene render] Failed to save a permanent copy:', error)
+        }
+        try {
+          await reloadSceneProduction()
+        } catch (error) {
+          console.error('[Scene render] Failed to reload production:', error)
+        }
+
+        const sceneNumber = job.payload?.sceneNumber
+        const language =
+          typeof job.payload?.language === 'string' ? job.payload.language : 'en'
+        const message =
+          typeof sceneNumber === 'number'
+            ? `Scene ${sceneNumber} is ready to watch.`
+            : 'Your scene is ready to watch.'
+
+        toast.success('Scene render ready', {
+          description: message,
+          duration: 10000,
+          action: {
+            label: 'View stream',
+            onClick: () => {
+              void reloadSceneProduction()
+                .catch(() => undefined)
+                .finally(() => handlePreviewStream(language))
+            },
+          },
+        })
+        notifyIfHidden({
+          title: 'Scene render ready',
+          body: message,
+          tag: `scene-render-${job.id}`,
+        })
+      })()
+    },
+    onFailed: (job) => {
+      const cancelled =
+        job.status === 'cancelled' ||
+        (typeof job.error === 'string' && job.error.toLowerCase().includes('cancelled'))
+      if (cancelled) return
+      toast.error('Scene render failed', {
+        description: job.error || 'Please try again.',
+        duration: 10000,
+      })
+      notifyIfHidden({
+        title: 'Scene render failed',
+        body: job.error || 'Please try again.',
+        tag: `scene-render-${job.id}`,
+      })
+    },
+  })
+
+  const handleSceneRenderQueued = useCallback(
+    (info: SceneRenderQueuedInfo) => {
+      sceneRenderJob.track(info.generationJobId, {
+        status: 'processing',
+        progress: 5,
+        payload: {
+          sceneId: info.sceneId,
+          sceneNumber: info.sceneNumber,
+          language: info.language,
+          languageLabel: info.languageLabel,
+          streamType: info.streamType,
+          durationSeconds: info.durationSeconds,
+          mode: info.mode,
+        },
+      })
+      void ensureBrowserNotificationPermission()
+      toast.success("Keep working — we'll notify you when the render is ready.", {
+        duration: 8000,
+      })
+    },
+    [sceneRenderJob]
+  )
+
+  // A finished render stores a signed URL immediately. If this visit is the
+  // first time the studio is open after that, copy it to permanent storage.
+  useEffect(() => {
+    if (!projectId) return
+    let cancelled = false
+
+    const promoteFinishedRenders = async () => {
+      try {
+        const res = await fetch(`/api/jobs?projectId=${encodeURIComponent(projectId)}`, {
+          credentials: 'include',
+        })
+        if (!res.ok || cancelled) return
+        const data = await res.json()
+        const pending = (data.jobs || []).filter(
+          (job: {
+            job_type?: string
+            status?: string
+            result?: { promoted?: boolean; downloadUrl?: string }
+          }) =>
+            job.job_type === 'scene_render' &&
+            job.status === 'completed' &&
+            job.result?.promoted !== true &&
+            typeof job.result?.downloadUrl === 'string'
+        )
+        let promoted = false
+        for (const job of pending) {
+          if (cancelled) return
+          try {
+            promoted = (await promoteCompletedSceneRender(job)) || promoted
+          } catch (error) {
+            console.error('[Scene render] Failed to save a permanent copy:', error)
+          }
+        }
+        if (promoted && !cancelled) await reloadSceneProduction()
+      } catch (error) {
+        console.error('[Scene render] Failed to promote a finished render:', error)
+      }
+    }
+
+    void promoteFinishedRenders()
+    return () => {
+      cancelled = true
+    }
+  }, [projectId, reloadSceneProduction])
 
   const startScriptAnalysis = useCallback(
     async (targetDemographic?: string) => {
@@ -16981,6 +17111,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onAudioRunReport={handleAudioRunReport}
                 onVideoRunReport={handleVideoRunReport}
                 onVideoRunCancelReady={handleVideoRunCancelReady}
+                onSceneRenderQueued={handleSceneRenderQueued}
                 onGenerateBeatFrame={handleRequestGenerateBeatFrame}
                 onGenerateDialogueFrame={handleGenerateDialogueFrameImage}
                 onUploadBeatFrame={handleUploadBeatFrame}
@@ -18067,6 +18198,35 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           describeResult={describeReferenceExpressResult}
           onDismiss={referenceExpressJob.dismiss}
           onCancel={() => void referenceExpressJob.cancel()}
+        />
+
+        <BackgroundJobDock
+          job={sceneRenderJob.job}
+          title="Scene render"
+          activeLabel={
+            sceneRenderJob.job?.status === 'queued' ? 'Queued' : 'Rendering the scene'
+          }
+          viewResultLabel="View stream"
+          preventDismissWhileActive
+          describeResult={(job) => {
+            const sceneNumber = job.payload?.sceneNumber
+            return typeof sceneNumber === 'number'
+              ? `Scene ${sceneNumber} is ready to watch`
+              : 'Scene render is ready to watch'
+          }}
+          onDismiss={sceneRenderJob.dismiss}
+          onViewResult={() => {
+            const language =
+              typeof sceneRenderJob.job?.payload?.language === 'string'
+                ? sceneRenderJob.job.payload.language
+                : 'en'
+            void reloadSceneProduction()
+              .catch(() => undefined)
+              .finally(() => {
+                handlePreviewStream(language)
+                sceneRenderJob.dismiss()
+              })
+          }}
         />
 
         {directionRun?.visible && (

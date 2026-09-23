@@ -24,6 +24,7 @@ export function BackgroundJobDock({
   cancelLabel = 'Cancel analysis',
   describeResult,
   className,
+  preventDismissWhileActive = false,
 }: {
   job: BackgroundJob | null
   title: string
@@ -37,6 +38,8 @@ export function BackgroundJobDock({
   /** Completion summary line. Defaults to Audience Resonance's scene coverage. */
   describeResult?: (job: BackgroundJob) => string
   className?: string
+  /** Hide the close button until the job settles. Used when dismiss would drop the completion toast. */
+  preventDismissWhileActive?: boolean
 }) {
   if (!job) return null
 
@@ -72,7 +75,7 @@ export function BackgroundJobDock({
         )
       }
       progressPct={isActive ? Math.max(4, progress) : undefined}
-      onClose={handleClose}
+      onClose={preventDismissWhileActive && isActive ? undefined : handleClose}
       closeLabel={isActive && onCancel ? cancelLabel : 'Dismiss'}
       className={className}
     >

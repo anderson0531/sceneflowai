@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { Storage } from '@google-cloud/storage'
+import { recordSceneRenderCallback } from '@/lib/jobs/sceneRenderJob'
 
 // =============================================================================
 // Helper: Get Storage client with credentials
@@ -104,6 +105,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     })
     
     console.log(`[HeadlessCallback API] Status updated: ${statusFile}`)
+
+    await recordSceneRenderCallback({
+      renderJobId: jobId,
+      phase: body.success ? 'completed' : 'failed',
+      progress: 100,
+      downloadUrl: body.outputUrl,
+      error: body.error,
+    })
     
     return NextResponse.json({
       success: true,

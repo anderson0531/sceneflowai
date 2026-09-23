@@ -21,6 +21,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Storage } from '@google-cloud/storage'
 import { v4 as uuidv4 } from 'uuid'
 import crypto from 'crypto'
+import { getSessionUserId } from '@/lib/auth/sessionUser'
+import {
+  findActiveSceneRenderJobId,
+  trackSceneRender,
+} from '@/lib/jobs/sceneRenderJob'
 
 // =============================================================================
 // Helper: Get Storage client with credentials
@@ -197,6 +202,12 @@ interface HeadlessRenderRequest {
   fps: number
   totalDuration: number
   callbackUrl?: string
+  projectId?: string
+  sceneId?: string
+  sceneNumber?: number
+  language?: string
+  languageLabel?: string
+  streamType?: 'video' | 'animatic'
   metadata?: {
     seriesId?: string
     episodeId?: string
@@ -207,9 +218,11 @@ interface HeadlessRenderRequest {
 interface HeadlessRenderResponse {
   success: boolean
   jobId?: string
+  generationJobId?: string
   jobSpecPath?: string
   outputPath?: string
   error?: string
+  code?: string
 }
 
 // =============================================================================
@@ -265,6 +278,22 @@ export async function POST(request: NextRequest): Promise<NextResponse<HeadlessR
         },
         { status: 503 }
       )
+    }
+
+    const accountUserId = body.projectId ? await getSessionUserId() : null
+    if (body.projectId && accountUserId) {
+      const activeId = await findActiveSceneRenderJobId(accountUserId, body.projectId)
+      if (activeId) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'A scene render is already running',
+            code: 'SCENE_RENDER_ACTIVE',
+            generationJobId: activeId,
+          },
+          { status: 409 }
+        )
+      }
     }
 
     // Generate unique job ID
@@ -361,9 +390,32 @@ export async function POST(request: NextRequest): Promise<NextResponse<HeadlessR
     
     console.log(`[HeadlessRender API] Cloud Run Job triggered successfully: ${executionName}`)
 
+    let generationJobId: string | undefined
+    if (accountUserId && body.projectId && body.sceneId) {
+      try {
+        generationJobId = await trackSceneRender({
+          userId: accountUserId,
+          projectId: body.projectId,
+          payload: {
+            renderJobId: jobId,
+            sceneId: body.sceneId,
+            sceneNumber: body.sceneNumber ?? 0,
+            language: body.language || 'en',
+            languageLabel: body.languageLabel || body.language || 'en',
+            streamType: body.streamType === 'animatic' ? 'animatic' : 'video',
+            durationSeconds: body.totalDuration,
+            mode: 'headless',
+          },
+        })
+      } catch (trackError) {
+        console.error('[HeadlessRender API] Failed to track background job:', trackError)
+      }
+    }
+
     return NextResponse.json({
       success: true,
       jobId,
+      generationJobId,
       executionName,
       jobSpecPath: `gs://${GCS_RENDER_BUCKET}/${jobSpecPath}`,
       outputPath: `gs://${GCS_RENDER_BUCKET}/${outputPath}`,
