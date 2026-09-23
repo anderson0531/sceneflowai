@@ -321,6 +321,8 @@ export interface DirectorConsoleProps {
    * and the cancel button cannot both live inside it.
    */
   onVideoRunReport?: import('@/lib/video/videoQueueRunReport').VideoQueueRunReporter
+  /** Mixer cloud render was accepted; the page docks it and notifies on completion. */
+  onSceneRenderQueued?: (info: import('@/lib/video/sceneRenderQueue').SceneRenderQueuedInfo) => void
   /** Hand the page a cancel for the run it is now reporting. */
   onVideoRunCancelReady?: (cancel: () => void) => void
   /** Session default for Video Agent and Take. Not persisted. */
@@ -395,6 +397,7 @@ export function DirectorConsoleRoot({
   projectAspectRatio = '16:9',
   projectStreams,
   onVideoRunReport,
+  onSceneRenderQueued,
   onVideoRunCancelReady,
   videoGenerationQuality = 'draft',
   onVideoGenerationQualityChange,
@@ -1814,6 +1817,7 @@ export function DirectorConsoleRoot({
           })
         }}
         projectStreams={projectStreams}
+        onSceneRenderQueued={onSceneRenderQueued}
         onRenderComplete={(downloadUrl, language, streamType = productionTarget.streamType, meta) => {
           setRenderedSceneUrl(downloadUrl)
           const languageInfo = SUPPORTED_LANGUAGES.find(l => l.code === language)

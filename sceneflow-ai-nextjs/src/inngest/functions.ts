@@ -92,6 +92,10 @@ export const processGenerationJob = inngest.createFunction(
     if (jobType === 'scene_polish') {
       return { ok: true, delegated: 'process-scene-polish' }
     }
+    if (jobType === 'scene_render') {
+      // Cloud Run encodes the video. This job only tracks it.
+      return { ok: true, delegated: 'cloud-run' }
+    }
 
     await step.run('mark-processing', async () => {
       await updateGenerationJob(jobId, { status: 'processing', progress: 5 })

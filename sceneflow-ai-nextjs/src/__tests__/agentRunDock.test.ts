@@ -251,24 +251,47 @@ describe('nested Production Studio agents report into the dock, not a freeze ove
     expect(source).toContain("title: 'Frame Agent'")
   })
 
-  it('reports mixer cloud and headless renders into a Scene render dock', () => {
+  it('queues mixer cloud and headless renders as a scene_render job', () => {
     const cloud = readHandler(MIXER, 'const handleRender = useCallback(async () => {')
     const headless = readHandler(MIXER, 'const handleHeadlessRender = useCallback(async () => {')
 
     for (const handler of [cloud, headless]) {
       expect(handler).not.toContain('overlayStore.show')
-      expect(handler).toContain('startAgentRun')
-      expect(handler).toContain("title: 'Scene render'")
-      expect(handler).toContain('keepTabOpen: true')
+      expect(handler).not.toContain('startAgentRun')
+      expect(handler).not.toContain('keepTabOpen')
+      expect(handler).toContain('onSceneRenderQueued?.(')
+      expect(handler).toContain('A scene render is already running')
+      expect(handler).not.toContain("setRenderStatus('preparing')")
+      expect(handler).not.toContain("setRenderStatus('rendering')")
     }
+    expect(cloud).toContain("mode: 'cloud'")
+    expect(headless).toContain("mode: 'headless'")
   })
 
-  it('still freezes the tab for browser-local mixer encode', () => {
-    const handler = readHandler(MIXER, 'const handleLocalRender = useCallback(async () => {')
+  it('always queues the cloud render from the mixer button, even with the watermark off', () => {
+    const mixer = readSource(MIXER)
+    const smart = readHandler(MIXER, 'const handleSmartRender = useCallback(async () => {')
 
-    expect(handler).toContain('overlayStore.show')
-    expect(handler).toContain("'video-generation'")
-    expect(handler).not.toContain('startAgentRun')
+    expect(mixer).not.toContain('const handleLocalRender')
+    expect(mixer).not.toContain('LocalRenderService')
+    expect(mixer).not.toContain('overlayStore.show')
+    expect(smart).toContain('await handleRender()')
+    expect(smart).not.toContain('handleLocalRender')
+    expect(smart).not.toContain('overlayStore.show')
+    expect(smart).not.toContain('watermarkConfig')
+  })
+
+  it('docks scene render on the vision page and keeps the completion toast', () => {
+    const page = readSource(PAGE)
+    const dockStart = page.indexOf('title="Scene render"')
+    expect(dockStart).toBeGreaterThan(-1)
+    const dock = page.slice(dockStart, page.indexOf('directionRun?.visible', dockStart))
+
+    expect(page).toContain("jobType: 'scene_render'")
+    expect(page).toContain("Keep working — we'll notify you when the render is ready.")
+    expect(dock).toContain('preventDismissWhileActive')
+    expect(dock).toContain('View stream')
+    expect(dock).not.toContain('onCancel')
   })
 
   it('freezes only the first beat build and docks regenerate', () => {

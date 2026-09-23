@@ -566,6 +566,9 @@ export interface CreateSceneRenderJobRequest {
   }>
   /** Burn-in watermark (same shape as Scene Production Mixer POST body) */
   watermark?: SceneRenderWatermark | null
+  /** Display name stored on the background job and the production stream. */
+  languageLabel?: string
+  streamType?: 'video' | 'animatic'
 }
 
 /** Map Mixer POST segment payload to FFmpeg job-spec video segment. */

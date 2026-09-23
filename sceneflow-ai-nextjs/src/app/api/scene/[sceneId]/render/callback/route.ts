@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getJobStatus, setJobStatus, updateJobStatus } from '@/lib/render/jobStatusStore'
 import { getSignedDownloadUrl } from '@/lib/gcs/renderStorage'
+import { recordSceneRenderCallback } from '@/lib/jobs/sceneRenderJob'
 
 interface RenderCallbackPayload {
   jobId: string
@@ -87,12 +88,30 @@ export async function POST(
       console.log(`[SceneRenderCallback] Created job ${payload.jobId} with status ${payload.status}`)
     }
     
-    // Log completion/failure
+    // Log completion/failure and settle the background job the studio polls.
     if (payload.status === 'COMPLETED') {
       console.log(`[SceneRenderCallback] ✅ Job ${payload.jobId} completed successfully`)
       console.log(`[SceneRenderCallback] Download URL: ${payload.outputUrl}`)
+      await recordSceneRenderCallback({
+        renderJobId: payload.jobId,
+        phase: 'completed',
+        progress: payload.progress,
+        downloadUrl,
+      })
     } else if (payload.status === 'FAILED') {
       console.error(`[SceneRenderCallback] ❌ Job ${payload.jobId} failed: ${payload.error}`)
+      await recordSceneRenderCallback({
+        renderJobId: payload.jobId,
+        phase: 'failed',
+        progress: payload.progress,
+        error: payload.error,
+      })
+    } else {
+      await recordSceneRenderCallback({
+        renderJobId: payload.jobId,
+        phase: 'progress',
+        progress: payload.progress,
+      })
     }
     
     return NextResponse.json({

@@ -31,6 +31,11 @@ import { RENDER_DEFAULTS, toSceneRenderVideoSegment } from '@/lib/video/renderTy
 import { uploadJobSpec, getOutputPath, getRenderBucket, getSignedDownloadUrl } from '@/lib/gcs/renderStorage'
 import { isCloudRunJobsEnabled } from '@/lib/video/CloudRunJobsService'
 import { getJobStatus, getJobStatusAsync, setJobStatus } from '@/lib/render/jobStatusStore'
+import { getSessionUserId } from '@/lib/auth/sessionUser'
+import {
+  findActiveSceneRenderJobId,
+  trackSceneRender,
+} from '@/lib/jobs/sceneRenderJob'
 
 // Credit cost constants
 const SERVER_RENDER_CREDITS_PER_MINUTE = 5
@@ -191,6 +196,21 @@ export async function POST(
         { error: 'No video segments provided' },
         { status: 400 }
       )
+    }
+
+    const accountUserId = await getSessionUserId()
+    if (accountUserId && body.projectId) {
+      const activeId = await findActiveSceneRenderJobId(accountUserId, body.projectId)
+      if (activeId) {
+        return NextResponse.json(
+          {
+            error: 'A scene render is already running',
+            code: 'SCENE_RENDER_ACTIVE',
+            generationJobId: activeId,
+          },
+          { status: 409 }
+        )
+      }
     }
     
     // 2. Calculate credit cost based on total duration
@@ -541,9 +561,32 @@ export async function POST(
       throw triggerError
     }
     
+    let generationJobId: string | undefined
+    if (accountUserId && body.projectId) {
+      try {
+        generationJobId = await trackSceneRender({
+          userId: accountUserId,
+          projectId: body.projectId,
+          payload: {
+            renderJobId: jobId,
+            sceneId,
+            sceneNumber: body.sceneNumber,
+            language: body.audioConfig.language || 'en',
+            languageLabel: body.languageLabel || body.audioConfig.language || 'en',
+            streamType: body.streamType === 'animatic' ? 'animatic' : 'video',
+            durationSeconds: totalDuration,
+            mode: 'cloud',
+          },
+        })
+      } catch (trackError) {
+        console.error('[SceneRender] Failed to track background job:', trackError)
+      }
+    }
+
     return NextResponse.json({
       success: true,
       jobId,
+      generationJobId,
       status: 'PROCESSING',
       message: 'Scene render job started successfully',
       estimatedDuration: totalDuration,
