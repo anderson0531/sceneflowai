@@ -6,12 +6,28 @@ import { applyBeatsToScene, getSceneBeats } from '@/lib/script/beatMigration'
 import type {
   BeatDirection,
   BeatDirectionTransition,
+  BeatReferenceSelection,
   SceneBeat,
 } from '@/lib/script/segmentTypes'
+import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
 import { refreshSceneSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
+import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
+import {
+  beatStillDirectionFingerprint,
+} from '@/lib/script/beatDirectionFingerprint'
 import { restampPreVisHashIfScriptCurrent } from '@/lib/storyboard/preVisSync'
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
+import {
+  composeBeatActionFraming,
+  composePersistedBeatStillPrompt,
+} from '@/lib/intelligence/beat-sequence-planner-fallback'
 import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
+import {
+  resolveBeatElementSelection,
+} from '@/lib/vision/resolveBeatVideoReferences'
+import { shouldUseExplicitBeatReferences } from '@/lib/vision/beatFrameGenerationContext'
+import type { LocationReference, VisualReference } from '@/types/visionReferences'
+import type { DetailedSceneDirection } from '@/types/scene-direction'
 
 export interface BeatDirectionEditorProps {
   beat: SceneBeat
@@ -32,6 +48,38 @@ export interface BeatDirectionEditorProps {
     artStyleAnchor?: string
     lookbook?: ProjectLookbook
   }
+  /** Library rows the beat can attach. Identity is `referenceImage`. */
+  characters?: DirectionCharacter[]
+  locationReferences?: DirectionLocation[]
+  objectReferences?: DirectionObject[]
+}
+
+export interface DirectionCharacter {
+  id?: string
+  name: string
+  referenceImage?: string
+  type?: string
+  wardrobes?: Array<{
+    id: string
+    name: string
+    fullBodyUrl?: string
+    headshotUrl?: string
+    combinedCharacterRefUrl?: string
+    isDefault?: boolean
+  }>
+}
+
+export interface DirectionLocation {
+  id: string
+  location?: string
+  name?: string
+  imageUrl?: string
+}
+
+export interface DirectionObject {
+  id: string
+  name: string
+  imageUrl?: string
 }
 
 const SHOT_TYPE_OPTIONS = [
@@ -68,6 +116,33 @@ const TRANSITION_OPTIONS: Array<{ value: '' | BeatDirectionTransition; label: st
   { value: 'FADE', label: 'FADE' },
   { value: 'MATCH_CUT', label: 'MATCH_CUT' },
 ]
+
+function characterKey(character: DirectionCharacter): string {
+  return character.id?.trim() || character.name
+}
+
+function stripPromptOverrides(direction: BeatDirection | undefined): BeatDirection | undefined {
+  if (!direction) return undefined
+  const next = { ...direction }
+  delete next.framePrompt
+  delete next.videoPrompt
+  return next
+}
+
+function selectionFromBeat(
+  beat: SceneBeat,
+  resolved: ReturnType<typeof resolveBeatElementSelection>
+): BeatReferenceSelection {
+  if (shouldUseExplicitBeatReferences(beat)) return beat.referenceSelection
+  return {
+    characterIds: resolved.characterIds,
+    objectRefIds: resolved.objectRefIds,
+    locationRefId: resolved.locationRefId ?? null,
+    locationVersionId: resolved.locationVersionId ?? null,
+    characterWardrobes: resolved.characterWardrobes,
+    source: 'auto',
+  }
+}
 
 function trimOrUndef(value: string): string | undefined {
   const trimmed = value.trim()
@@ -109,6 +184,9 @@ export function BeatDirectionEditor({
   readOnly,
   className,
   promptComposition,
+  characters = [],
+  locationReferences = [],
+  objectReferences = [],
 }: BeatDirectionEditorProps) {
   const [expanded, setExpanded] = useState(false)
   const direction = beat.beatDirection
@@ -117,39 +195,161 @@ export function BeatDirectionEditor({
     () => readSceneCharacterNames(scenes[sceneIdx]),
     [scenes, sceneIdx]
   )
+  const sceneRecord = scenes[sceneIdx] as Record<string, unknown> | undefined
+  const sceneDirection = (sceneRecord?.sceneDirection ??
+    sceneRecord?.detailedDirection ??
+    null) as DetailedSceneDirection | null
 
-  const persist = (next: BeatDirection | undefined) => {
+  const framePreview = useMemo(() => {
+    if (direction?.framePrompt?.trim()) return direction.framePrompt.trim()
+    const stripped: SceneBeat = { ...beat, beatDirection: stripPromptOverrides(beat.beatDirection) }
+    return (
+      composePersistedBeatStillPrompt({
+        beat: stripped,
+        sceneIndex: sceneIdx,
+        artStyleAnchor: promptComposition?.artStyleAnchor,
+        lookbook: promptComposition?.lookbook,
+      }) ||
+      beat.storyboardImagePrompt?.trim() ||
+      composeBeatActionFraming(stripped)
+    )
+  }, [beat, direction?.framePrompt, sceneIdx, promptComposition])
+
+  const videoPreview = useMemo(() => {
+    if (direction?.videoPrompt?.trim()) return direction.videoPrompt.trim()
+    const beats = getSceneBeats(sceneRecord ?? {})
+    const index = beats.findIndex((entry) => entry.beatId === beat.beatId)
+    const cue = resolveBeatMusicCue(
+      parsePersistedMusicCues(sceneRecord?.sceneMusicCues, beats),
+      index
+    )
+    const stripped: SceneBeat = { ...beat, beatDirection: stripPromptOverrides(beat.beatDirection) }
+    return compileBeatVideoPromptFromDirection(stripped, sceneDirection, {
+      artStyleId: promptComposition?.artStyleAnchor,
+      ...(cue ? { musicCue: cue } : {}),
+    }).prompt
+  }, [beat, direction?.videoPrompt, sceneRecord, sceneDirection, promptComposition?.artStyleAnchor])
+
+  const [frameDraft, setFrameDraft] = useState(framePreview)
+  const [videoDraft, setVideoDraft] = useState(videoPreview)
+  const [frameSource, setFrameSource] = useState(framePreview)
+  const [videoSource, setVideoSource] = useState(videoPreview)
+  if (frameSource !== framePreview && frameDraft === frameSource) {
+    setFrameSource(framePreview)
+    setFrameDraft(framePreview)
+  }
+  if (videoSource !== videoPreview && videoDraft === videoSource) {
+    setVideoSource(videoPreview)
+    setVideoDraft(videoPreview)
+  }
+
+  const resolvedSelection = useMemo(
+    () =>
+      resolveBeatElementSelection({
+        scene: sceneRecord ?? {},
+        beat,
+        sceneIndex: sceneIdx,
+        projectCharacters: characters,
+        locationReferences: locationReferences as LocationReference[],
+        objectReferences: objectReferences as VisualReference[],
+      }),
+    [sceneRecord, beat, sceneIdx, characters, locationReferences, objectReferences]
+  )
+  const referenceSelection = useMemo(
+    () => selectionFromBeat(beat, resolvedSelection),
+    [beat, resolvedSelection]
+  )
+
+  const persist = (
+    next: BeatDirection | undefined,
+    options?: {
+      refreshPrompts?: 'recompute' | 'keep' | 'rebuild'
+      referenceSelection?: BeatReferenceSelection | null
+    }
+  ) => {
     if (!onScriptChange) return
+    const refreshPrompts = options?.refreshPrompts ?? 'keep'
+    const keptFrame = refreshPrompts === 'keep' ? next?.framePrompt?.trim() : ''
     const updatedScenes = [...scenes]
     const scene = { ...updatedScenes[sceneIdx] }
     const beats = getSceneBeats(scene).map((entry) => {
       if (entry.beatId !== beat.beatId) return entry
-      const patched = { ...entry }
-      if (next && Object.keys(next).length > 0) {
+      const patched: SceneBeat = { ...entry }
+      const directionForSave =
+        refreshPrompts === 'keep' ? next : stripPromptOverrides(next)
+      if (directionForSave && Object.keys(directionForSave).length > 0) {
         patched.beatDirection = {
-          ...next,
+          ...directionForSave,
           generatedBy: 'user',
           updatedAt: new Date().toISOString(),
         }
       } else {
         delete patched.beatDirection
       }
+      if (options?.referenceSelection !== undefined) {
+        if (options.referenceSelection) patched.referenceSelection = options.referenceSelection
+        else delete patched.referenceSelection
+      }
       return syncBeatStillPromptToDirection(patched, {
         sceneIndex: sceneIdx,
         artStyleAnchor: promptComposition?.artStyleAnchor,
         lookbook: promptComposition?.lookbook,
+        force: refreshPrompts === 'recompute' || refreshPrompts === 'rebuild',
       })
     })
     const edited = beats.find((entry) => entry.beatId === beat.beatId)
-    const withBeats = applyBeatsToScene(scene, beats)
-    updatedScenes[sceneIdx] = restampPreVisHashIfScriptCurrent(
-      scene,
-      edited
-        ? refreshSceneSegmentVideoPrompts(withBeats, edited, {
-            artStyleId: promptComposition?.artStyleAnchor,
-          })
-        : withBeats
-    )
+    let withBeats = applyBeatsToScene(scene, beats)
+    if (edited) {
+      withBeats = refreshSceneSegmentVideoPrompts(withBeats, edited, {
+        artStyleId: promptComposition?.artStyleAnchor,
+      })
+    }
+    if (keptFrame) {
+      const restored = getSceneBeats(withBeats).map((entry) => {
+        if (entry.beatId !== beat.beatId) return entry
+        const beatDirection = entry.beatDirection
+          ? { ...entry.beatDirection, framePrompt: keptFrame }
+          : entry.beatDirection
+        return {
+          ...entry,
+          beatDirection,
+          storyboardImagePrompt: keptFrame,
+          storyboardImagePromptDirectionKey: beatStillDirectionFingerprint(beatDirection),
+        }
+      })
+      withBeats = applyBeatsToScene(withBeats, restored)
+    }
+    if (refreshPrompts === 'recompute' && edited?.beatDirection) {
+      const segments = Array.isArray(withBeats.segments)
+        ? (withBeats.segments as Array<{
+            beatId?: string
+            videoPrompt?: string | null
+            userEditedPrompt?: string | null
+          }>)
+        : []
+      const segment = segments.find(
+        (row) =>
+          row.beatId === beat.beatId &&
+          !(typeof row.userEditedPrompt === 'string' && row.userEditedPrompt.trim())
+      )
+      const framePrompt = edited.storyboardImagePrompt?.trim()
+      const videoPrompt = segment?.videoPrompt?.trim()
+      if (framePrompt || videoPrompt) {
+        const storedBeats = getSceneBeats(withBeats).map((entry) => {
+          if (entry.beatId !== beat.beatId || !entry.beatDirection) return entry
+          return {
+            ...entry,
+            beatDirection: {
+              ...entry.beatDirection,
+              ...(framePrompt ? { framePrompt } : {}),
+              ...(videoPrompt ? { videoPrompt } : {}),
+            },
+          }
+        })
+        withBeats = applyBeatsToScene(withBeats, storedBeats)
+      }
+    }
+    updatedScenes[sceneIdx] = restampPreVisHashIfScriptCurrent(scene, withBeats)
 
     onScriptChange({
       ...script,
@@ -170,7 +370,7 @@ export function BeatDirectionEditor({
     } else {
       next[field] = value
     }
-    persist(Object.keys(next).length > 0 ? next : undefined)
+    persist(Object.keys(next).length > 0 ? next : undefined, { refreshPrompts: 'recompute' })
   }
 
   /**
@@ -185,7 +385,28 @@ export function BeatDirectionEditor({
     } else {
       next.castInFrame = value
     }
-    persist(Object.keys(next).length > 0 ? next : undefined)
+    persist(Object.keys(next).length > 0 ? next : undefined, { refreshPrompts: 'recompute' })
+  }
+
+  const commitPrompt = (field: 'framePrompt' | 'videoPrompt', draft: string, preview: string) => {
+    const nextText = draft.trim()
+    if (!nextText) return
+    const stored = direction?.[field]?.trim() ?? ''
+    if (nextText === stored || (!stored && nextText === preview.trim())) return
+    const next: BeatDirection = { ...(direction ?? {}) }
+    next[field] = nextText
+    persist(next, { refreshPrompts: 'keep' })
+  }
+
+  const saveReferences = (next: BeatReferenceSelection) => {
+    persist(direction, {
+      refreshPrompts: 'keep',
+      referenceSelection: {
+        ...next,
+        source: 'user',
+        resolvedAt: new Date().toISOString(),
+      },
+    })
   }
 
   const castInFrame = direction?.castInFrame
@@ -405,6 +626,226 @@ export function BeatDirectionEditor({
               </select>
             </label>
           </div>
+
+          <div className="space-y-2 border-t border-gray-800 pt-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] uppercase text-gray-500">Frame prompt</span>
+              {!readOnly && (
+                <button
+                  type="button"
+                  className="text-[10px] underline text-gray-400 hover:text-gray-200"
+                  onClick={() => persist(direction, { refreshPrompts: 'rebuild' })}
+                >
+                  Rebuild from fields
+                </button>
+              )}
+            </div>
+            <textarea
+              className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 min-h-[72px]"
+              value={frameDraft}
+              onChange={(e) => setFrameDraft(e.target.value)}
+              onBlur={() => {
+                if (!frameDraft.trim()) {
+                  setFrameDraft(framePreview)
+                  return
+                }
+                commitPrompt('framePrompt', frameDraft, framePreview)
+              }}
+              disabled={readOnly}
+              placeholder="Still prompt sent for this beat"
+            />
+            <label className="flex flex-col gap-1">
+              <span className="text-[10px] uppercase text-gray-500">Video prompt</span>
+              <textarea
+                className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 min-h-[72px]"
+                value={videoDraft}
+                onChange={(e) => setVideoDraft(e.target.value)}
+                onBlur={() => {
+                  if (!videoDraft.trim()) {
+                    setVideoDraft(videoPreview)
+                    return
+                  }
+                  commitPrompt('videoPrompt', videoDraft, videoPreview)
+                }}
+                disabled={readOnly}
+                placeholder="Clip prompt sent for this beat"
+              />
+            </label>
+          </div>
+
+          {(characters.length > 0 || locationReferences.length > 0 || objectReferences.length > 0) && (
+            <div className="space-y-2 border-t border-gray-800 pt-2">
+              <span className="text-[10px] uppercase text-gray-500">References</span>
+              {characters
+                .filter((character) => character.type !== 'narrator' && character.name.trim())
+                .filter((character) => {
+                  const key = characterKey(character)
+                  const selected =
+                    referenceSelection.characterIds.includes(key) ||
+                    referenceSelection.characterIds.includes(character.name)
+                  if (selected) return true
+                  return sceneCharacterNames.some(
+                    (name) => name.toLowerCase() === character.name.toLowerCase()
+                  )
+                })
+                .map((character) => {
+                  const key = characterKey(character)
+                  const checked =
+                    referenceSelection.characterIds.includes(key) ||
+                    referenceSelection.characterIds.includes(character.name)
+                  const wardrobeId =
+                    referenceSelection.characterWardrobes?.find(
+                      (row) => row.characterId === key || row.characterId === character.name
+                    )?.wardrobeId ?? ''
+                  return (
+                    <div key={key} className="flex flex-wrap items-center gap-2">
+                      <label className="flex items-center gap-1.5">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={readOnly}
+                          onChange={(e) => {
+                            const characterIds = e.target.checked
+                              ? [...new Set([...referenceSelection.characterIds, key])]
+                              : referenceSelection.characterIds.filter(
+                                  (id) => id !== key && id !== character.name
+                                )
+                            const characterWardrobes = (
+                              referenceSelection.characterWardrobes ?? []
+                            ).filter(
+                              (row) =>
+                                row.characterId !== key &&
+                                row.characterId !== character.name &&
+                                characterIds.includes(row.characterId)
+                            )
+                            saveReferences({
+                              ...referenceSelection,
+                              characterIds,
+                              characterWardrobes,
+                            })
+                          }}
+                        />
+                        <span>{character.name}</span>
+                        <span className="text-[10px] text-gray-500">
+                          {character.referenceImage ? 'identity' : 'no identity image'}
+                        </span>
+                      </label>
+                      {checked && (character.wardrobes?.length ?? 0) > 0 && (
+                        <select
+                          className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
+                          value={wardrobeId}
+                          disabled={readOnly}
+                          onChange={(e) => {
+                            const others = (referenceSelection.characterWardrobes ?? []).filter(
+                              (row) => row.characterId !== key && row.characterId !== character.name
+                            )
+                            saveReferences({
+                              ...referenceSelection,
+                              characterIds: referenceSelection.characterIds.includes(key)
+                                ? referenceSelection.characterIds
+                                : [...referenceSelection.characterIds, key],
+                              characterWardrobes: e.target.value
+                                ? [...others, { characterId: key, wardrobeId: e.target.value }]
+                                : others,
+                            })
+                          }}
+                        >
+                          <option value="">Wardrobe</option>
+                          {character.wardrobes?.map((wardrobe) => (
+                            <option key={wardrobe.id} value={wardrobe.id}>
+                              {wardrobe.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  )
+                })}
+              {locationReferences.length > 0 && (
+                <label className="flex flex-col gap-1">
+                  <span className="text-[10px] uppercase text-gray-500">Location</span>
+                  <select
+                    className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
+                    value={referenceSelection.locationRefId ?? ''}
+                    disabled={readOnly}
+                    onChange={(e) =>
+                      saveReferences({
+                        ...referenceSelection,
+                        locationRefId: e.target.value || null,
+                        locationVersionId: null,
+                      })
+                    }
+                  >
+                    <option value="">None</option>
+                    {locationReferences.map((location) => (
+                      <option key={location.id} value={location.id}>
+                        {location.location || location.name || location.id}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {objectReferences.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] uppercase text-gray-500">Props</span>
+                  {objectReferences
+                    .filter(
+                      (object) =>
+                        referenceSelection.objectRefIds.includes(object.id) ||
+                        (direction?.keyProps ?? []).some(
+                          (name) => name.toLowerCase() === object.name.toLowerCase()
+                        )
+                    )
+                    .map((object) => {
+                      const checked = referenceSelection.objectRefIds.includes(object.id)
+                      return (
+                        <label key={object.id} className="flex items-center gap-1.5">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            disabled={readOnly}
+                            onChange={(e) => {
+                              const objectRefIds = e.target.checked
+                                ? [...new Set([...referenceSelection.objectRefIds, object.id])]
+                                : referenceSelection.objectRefIds.filter((id) => id !== object.id)
+                              saveReferences({ ...referenceSelection, objectRefIds })
+                            }}
+                          />
+                          <span>{object.name}</span>
+                        </label>
+                      )
+                    })}
+                  {objectReferences.some(
+                    (object) => !referenceSelection.objectRefIds.includes(object.id)
+                  ) && (
+                    <select
+                      className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
+                      value=""
+                      disabled={readOnly}
+                      onChange={(e) => {
+                        if (!e.target.value) return
+                        saveReferences({
+                          ...referenceSelection,
+                          objectRefIds: [
+                            ...new Set([...referenceSelection.objectRefIds, e.target.value]),
+                          ],
+                        })
+                      }}
+                    >
+                      <option value="">Add prop</option>
+                      {objectReferences
+                        .filter((object) => !referenceSelection.objectRefIds.includes(object.id))
+                        .map((object) => (
+                          <option key={object.id} value={object.id}>
+                            {object.name}
+                          </option>
+                        ))}
+                    </select>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {direction?.generatedBy && (
             <div className="flex items-center justify-between text-[10px] text-gray-500">

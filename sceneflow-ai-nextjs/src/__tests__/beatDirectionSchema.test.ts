@@ -22,6 +22,16 @@ describe('normalizeBeatDirection', () => {
     ).toBeUndefined()
   })
 
+  it('keeps a director-authored frame prompt and video prompt', () => {
+    const d = normalizeBeatDirection({
+      shotType: 'Wide Shot',
+      framePrompt: '  Frame of the vault.  ',
+      videoPrompt: 'Dolly in on the engine. No spoken dialogue.',
+    })
+    expect(d?.framePrompt).toBe('Frame of the vault.')
+    expect(d?.videoPrompt).toBe('Dolly in on the engine. No spoken dialogue.')
+  })
+
   it('trims whitespace and drops empty strings', () => {
     const d = normalizeBeatDirection({
       shotType: '  Medium Wide  ',

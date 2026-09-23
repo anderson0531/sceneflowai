@@ -155,6 +155,16 @@ export interface BeatDirection {
   audioCue?: string
   /** Transition INTO the next beat. */
   transition?: BeatDirectionTransition
+  /**
+   * Still prompt the frame model receives. When set, generation sends this
+   * text. When absent, the still composer builds it from the fields above.
+   */
+  framePrompt?: string
+  /**
+   * Clip prompt the video model receives. When set, video compile returns this
+   * text instead of rebuilding from the fields above.
+   */
+  videoPrompt?: string
   /** Provenance of this direction record. */
   generatedBy?: BeatDirectionSource
   /** ISO timestamp of last write. */

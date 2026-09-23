@@ -38,15 +38,24 @@ export function syncBeatStillPromptToDirection(
   beat: SceneBeat,
   options: SyncBeatStillPromptOptions = {}
 ): SceneBeat {
-  if (
-    !options.force &&
-    beat.storyboardImagePrompt?.trim() &&
+  const frameOverride = beat.beatDirection?.framePrompt?.trim()
+  const facetsMatch =
+    !!beat.storyboardImagePrompt?.trim() &&
     storedStillDirectionKeyMatches(beat.storyboardImagePromptDirectionKey, beat.beatDirection)
-  ) {
+
+  if (!options.force && facetsMatch) {
+    if (frameOverride && beat.storyboardImagePrompt !== frameOverride) {
+      return { ...beat, storyboardImagePrompt: frameOverride }
+    }
     return beat
   }
 
   const next: SceneBeat = { ...beat }
+  if (next.beatDirection?.framePrompt) {
+    const direction = { ...next.beatDirection }
+    delete direction.framePrompt
+    next.beatDirection = direction
+  }
   if (next.storyboardImageUrl?.trim() && next.storyboardImageDirectionKey === undefined) {
     next.storyboardImageDirectionKey = next.storyboardImagePromptDirectionKey ?? ''
   }

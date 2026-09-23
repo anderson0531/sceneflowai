@@ -1975,7 +1975,10 @@ async function postGenerateImage(req: NextRequest) {
           matchedLocationReference.promptToken || buildLocationPromptToken(1),
       }
     }
-    const persistedBeatPrompt = beatForPromptCompose
+    const directedFramePrompt = beatForPromptCompose?.beatDirection?.framePrompt?.trim()
+    const persistedBeatPrompt = directedFramePrompt
+      ? directedFramePrompt
+      : beatForPromptCompose
       ? composePersistedBeatStillPrompt({
           lookbook: projectLookbook,
           sceneIndex: sceneIndex || 0,

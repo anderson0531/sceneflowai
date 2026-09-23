@@ -183,7 +183,8 @@ describe('applyStillDirectorPatch', () => {
     const video = compileBeatVideoPromptFromDirection(directed, null)
     expect(video.prompt).toContain(frozen)
     expect(video.prompt).toContain('slow push-in')
-    expect(video.prompt).toContain('Natural cinematic motion')
+    expect(video.prompt).toContain('No spoken dialogue')
+    expect(video.prompt).not.toContain('Natural cinematic motion')
     expect(video.prompt).not.toBe(directed.storyboardImagePrompt)
 
     const segments = (next as { segments: Array<Record<string, string>> }).segments

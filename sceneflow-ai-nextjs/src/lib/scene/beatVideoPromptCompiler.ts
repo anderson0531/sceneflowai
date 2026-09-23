@@ -6,9 +6,14 @@
  * sound like. The score is generated separately and mixed under the clip, and
  * a cue spans several beats while each clip is a few seconds, so asking the
  * model for music would seam the score at every cut and bake it in unmixable.
+ *
+ * The compiled string is one motion direction plus a fidelity close. It names
+ * the shot, who may appear, which objects exist, and whether anyone speaks.
+ * A second scene-level camera is left off when this beat already has a shot
+ * or a move, so the model is not asked to dolly and establish at once.
  */
 
-import { getArtStyleNegativeTerms, getArtStylePromptSuffix } from '@/lib/vision/artStyle'
+import { getArtStyleNegativeTerms, getArtStyleVideoPromptSuffix } from '@/lib/vision/artStyle'
 import { parsePerformanceCue } from '@/lib/scene/performanceCues'
 import {
   correctPronounsToGender,
@@ -36,9 +41,20 @@ const BASE_NEGATIVES = [
   'temporal inconsistency',
 ].join(', ')
 
+const SILENT_NEGATIVES = 'dialogue, talking, lip sync'
+
 export interface BeatVideoPromptResult {
   prompt: string
   negativePrompt: string
+}
+
+export interface CompileBeatVideoPromptOptions {
+  artStyleId?: string
+  excerpt?: string
+  characterGender?: CharacterGender | null
+  characterName?: string
+  /** Cue scoring this beat, if any; enters as tonal direction, never as audio. */
+  musicCue?: SceneMusicCue
 }
 
 function normalizeLine(text: string): string {
@@ -71,10 +87,6 @@ function findBundleEntryForBeat(
   }
 
   return undefined
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 /** Join prompt segments with single periods; collapse double periods. */
@@ -111,106 +123,210 @@ function tokenAlreadyInPrompt(token: string, videoPrompt: string): boolean {
   return v.includes(t)
 }
 
+function beatDirectsCamera(beat: SceneBeat): boolean {
+  const direction = beat.beatDirection
+  return Boolean(direction?.shotType?.trim() || direction?.cameraMovement?.trim())
+}
+
 function sceneDirectionMotionHints(
-  direction?: DetailedSceneDirection | null,
-  videoPrompt?: string
+  direction: DetailedSceneDirection | null | undefined,
+  videoPrompt: string,
+  omitCamera: boolean
 ): string {
   if (!direction) return ''
-  const prompt = videoPrompt ?? ''
   const parts: string[] = []
   const camera = direction.camera
-  if (camera?.movement && !tokenAlreadyInPrompt(String(camera.movement), prompt)) {
-    parts.push(String(camera.movement))
-  }
-  if (camera?.shots?.[0] && !tokenAlreadyInPrompt(String(camera.shots[0]), prompt)) {
-    parts.push(String(camera.shots[0]))
+  if (!omitCamera) {
+    if (camera?.movement && !tokenAlreadyInPrompt(String(camera.movement), videoPrompt)) {
+      parts.push(String(camera.movement))
+    }
+    if (camera?.shots?.[0] && !tokenAlreadyInPrompt(String(camera.shots[0]), videoPrompt)) {
+      parts.push(String(camera.shots[0]))
+    }
   }
   if (
     direction.lighting?.overallMood &&
-    !tokenAlreadyInPrompt(String(direction.lighting.overallMood), prompt)
+    !tokenAlreadyInPrompt(String(direction.lighting.overallMood), videoPrompt)
   ) {
     parts.push(String(direction.lighting.overallMood))
   }
   // Omit talent.emotionalBeat — often trigger salad and duplicates mood in videoPrompt
   if (
     direction.veoOptimization?.motionQuality &&
-    !tokenAlreadyInPrompt(String(direction.veoOptimization.motionQuality), prompt)
+    !tokenAlreadyInPrompt(String(direction.veoOptimization.motionQuality), videoPrompt)
   ) {
     parts.push(`${direction.veoOptimization.motionQuality} motion`)
   }
   return parts.slice(0, 2).filter(Boolean).join(', ')
 }
 
+function pushClause(clauses: string[], existing: string, label: string, value?: string) {
+  const piece = value?.trim()
+  if (!piece) return
+  if (tokenAlreadyInPrompt(piece, existing)) return
+  const clause = `${label}: ${piece}`
+  if (tokenAlreadyInPrompt(clause, existing)) return
+  clauses.push(clause)
+}
+
+/** Shot, movement, blocking, and the rest, as clauses of one direction. */
+function directionClauses(beat: SceneBeat, existing: string): string[] {
+  const direction = beat.beatDirection
+  if (!direction) return []
+  const clauses: string[] = []
+  pushClause(clauses, existing, 'Shot', direction.shotType)
+  pushClause(clauses, existing, 'Angle', direction.cameraAngle)
+  pushClause(clauses, existing, 'Camera', direction.cameraMovement)
+  pushClause(clauses, existing, 'Blocking', direction.blocking)
+  pushClause(clauses, existing, 'Emotion', direction.emotion)
+  pushClause(clauses, existing, 'Gaze', direction.gaze)
+  pushClause(clauses, existing, 'Prop interaction', direction.propInteraction)
+  const props = direction.keyProps?.map((name) => name.trim()).filter(Boolean) ?? []
+  if (props.length > 0) pushClause(clauses, existing, 'Props', props.join(', '))
+  pushClause(clauses, existing, 'Lighting', direction.lightingAccent)
+  pushClause(clauses, existing, 'End on', direction.frozenMoment)
+  pushClause(clauses, existing, 'Sound', direction.audioCue)
+  return clauses
+}
+
+function spokenLineOf(beat: SceneBeat, excerpt?: string): string {
+  const raw = excerpt ?? beat.line ?? ''
+  return parsePerformanceCue(raw).spokenText.replace(/"/g, "'").trim()
+}
+
 /**
- * Beat-scoped hints derived from `beat.beatDirection` (shot/movement/blocking).
- * Prefer these over scene-wide motion hints because they are authored for
- * THIS beat.
+ * Who may appear, which objects exist, and whether anyone speaks.
+ * Built only from fields this beat actually has.
  */
-function beatDirectionMotionHints(
+export function beatVideoFidelityClose(
   beat: SceneBeat,
-  videoPrompt?: string
+  options?: { spokenLine?: string }
 ): string {
-  const d = beat.beatDirection
-  if (!d) return ''
-  const prompt = videoPrompt ?? ''
   const parts: string[] = []
-  if (d.cameraMovement && !tokenAlreadyInPrompt(d.cameraMovement, prompt)) {
-    parts.push(d.cameraMovement)
+  const cast = beat.beatDirection?.castInFrame
+  if (Array.isArray(cast)) {
+    const names = cast.map((name) => name.trim()).filter(Boolean)
+    parts.push(
+      names.length === 0
+        ? 'No people in frame'
+        : `Only these people are visible: ${names.join(', ')}. No other people`
+    )
   }
-  if (d.shotType && !tokenAlreadyInPrompt(d.shotType, prompt)) {
-    parts.push(d.shotType)
+
+  const props = beat.beatDirection?.keyProps
+  if (Array.isArray(props)) {
+    const names = props.map((name) => name.trim()).filter(Boolean)
+    parts.push(
+      names.length === 0
+        ? 'Do not add objects'
+        : `Only these objects: ${names.join(', ')}. Do not add other objects`
+    )
   }
-  if (d.blocking && !tokenAlreadyInPrompt(d.blocking, prompt)) {
-    parts.push(d.blocking)
+
+  const statedAction = (
+    beat.kind === 'action'
+      ? beat.actionDescription
+      : beat.beatDirection?.blocking || beat.actionDescription
+  )?.trim()
+  if (statedAction) {
+    parts.push(`The only action is: ${statedAction.replace(/\.+$/, '')}`)
   }
-  if (d.emotion && !tokenAlreadyInPrompt(d.emotion, prompt)) {
-    parts.push(d.emotion)
+
+  if (beat.kind === 'dialogue') {
+    const line = (options?.spokenLine ?? spokenLineOf(beat)).trim()
+    if (line) parts.push(`The only spoken line is: "${line}"`)
+  } else {
+    parts.push('No spoken dialogue')
   }
-  return parts.slice(0, 3).filter(Boolean).join(', ')
+
+  return parts.join('. ')
+}
+
+function videoNegatives(beat: SceneBeat, styleNegative: string): string {
+  const silent = beat.kind === 'dialogue' ? '' : `, ${SILENT_NEGATIVES}`
+  return `${BASE_NEGATIVES}, ${styleNegative}${silent}`
+}
+
+function leadForBeat(beat: SceneBeat, options?: CompileBeatVideoPromptOptions): string {
+  if (beat.kind === 'action') {
+    return beat.actionDescription?.trim() || 'Scene action'
+  }
+  if (beat.kind === 'narration') {
+    return 'Atmospheric visual scene supporting voiceover mood. Subtle environmental motion. No on-screen text'
+  }
+
+  const character = beat.character ?? 'Character'
+  const speakerAlias = toCharacterPromptAlias(character)
+  const parsed = parsePerformanceCue(options?.excerpt ?? beat.line ?? '')
+  let cleanLine = parsed.spokenText.replace(/"/g, "'")
+  if (options?.characterGender) {
+    cleanLine = correctPronounsToGender(cleanLine, options.characterGender, {
+      characterName: options.characterName ?? character,
+    })
+  }
+  const delivery = parsed.deliveryProse ? ` Delivery: ${parsed.deliveryProse}` : ''
+  return `${speakerAlias} speaks naturally: "${cleanLine}".${delivery}`
+}
+
+function withMotionWhenUnstated(beat: SceneBeat, core: string): string {
+  if (beat.kind === 'dialogue') return core
+  if (beat.beatDirection?.cameraMovement?.trim()) return core
+  if (/cinematic motion/i.test(core)) return core
+  return normalizePromptJoin(core, 'Natural cinematic motion')
+}
+
+function finishVideoPrompt(args: {
+  core: string
+  beat: SceneBeat
+  steer: string
+  styleSuffix: string
+  styleNegative: string
+  spokenLine?: string
+}): BeatVideoPromptResult {
+  let core = args.core.trim()
+  if (args.steer && !tokenAlreadyInPrompt(args.steer, core)) {
+    core = normalizePromptJoin(core, args.steer)
+  }
+  const fidelity = beatVideoFidelityClose(args.beat, { spokenLine: args.spokenLine })
+  if (fidelity && !tokenAlreadyInPrompt(fidelity, core)) {
+    core = normalizePromptJoin(core, fidelity)
+  }
+  const style = args.styleSuffix.trim()
+  const prompt =
+    style && !tokenAlreadyInPrompt(style, core) ? normalizePromptJoin(core, style) : core
+  return {
+    prompt,
+    negativePrompt: videoNegatives(args.beat, args.styleNegative),
+  }
+}
+
+function applySceneHints(
+  core: string,
+  beat: SceneBeat,
+  sceneDirection?: DetailedSceneDirection | null
+): string {
+  const hints = sceneDirectionMotionHints(sceneDirection, core, beatDirectsCamera(beat))
+  return hints ? normalizePromptJoin(core, hints) : core
 }
 
 export function compileBeatVideoPrompt(
   beat: SceneBeat,
-  options?: {
-    artStyleId?: string
-    excerpt?: string
-    characterGender?: CharacterGender | null
-    characterName?: string
-    /** Cue scoring this beat, if any; enters as tonal direction, never as audio. */
-    musicCue?: SceneMusicCue
-  }
+  options?: CompileBeatVideoPromptOptions
 ): BeatVideoPromptResult {
   const artStyleId = options?.artStyleId ?? 'photorealistic'
-  const styleSuffix = getArtStylePromptSuffix(artStyleId)
+  const styleSuffix = getArtStyleVideoPromptSuffix(artStyleId)
   const styleNegative = getArtStyleNegativeTerms(artStyleId)
-  const line = options?.excerpt ?? beat.line ?? ''
   const steer = formatMusicCueSteer(options?.musicCue)
-  const steerSuffix = steer ? `${steer}. ` : ''
-
-  let prompt = ''
-  if (beat.kind === 'action') {
-    prompt = `${beat.actionDescription ?? 'Scene action'}. Natural cinematic motion. ${steerSuffix}${styleSuffix}`
-  } else if (beat.kind === 'narration') {
-    prompt = `Atmospheric visual scene supporting voiceover mood. Subtle environmental motion. No on-screen text. ${steerSuffix}${styleSuffix}`
-  } else {
-    const character = beat.character ?? 'Character'
-    const speakerAlias = toCharacterPromptAlias(character)
-    const parsed = parsePerformanceCue(line)
-    let cleanLine = parsed.spokenText.replace(/"/g, "'")
-    if (options?.characterGender) {
-      cleanLine = correctPronounsToGender(cleanLine, options.characterGender, {
-        characterName: options.characterName ?? character,
-      })
-    }
-    const deliverySuffix = parsed.deliveryProse
-      ? ` Delivery: ${parsed.deliveryProse}.`
-      : ''
-    prompt = `${speakerAlias} speaks naturally: "${cleanLine}".${deliverySuffix} Subtle facial expression and body language. ${steerSuffix}${styleSuffix}`
-  }
-
-  const negativePrompt = `${BASE_NEGATIVES}, ${styleNegative}`
-
-  return { prompt: prompt.trim(), negativePrompt }
+  const spokenLine = beat.kind === 'dialogue' ? spokenLineOf(beat, options?.excerpt) : undefined
+  const core = withMotionWhenUnstated(beat, leadForBeat(beat, options))
+  return finishVideoPrompt({
+    core,
+    beat,
+    steer,
+    styleSuffix,
+    styleNegative,
+    spokenLine,
+  })
 }
 
 const DIRECTION_OWNED_SOURCES = new Set(['user', 'planner', 'director'])
@@ -225,13 +341,6 @@ export function beatDirectionOwnsVideoPrompt(beat: SceneBeat): boolean {
   return !!source && DIRECTION_OWNED_SOURCES.has(source)
 }
 
-function withoutTrailingStyle(prompt: string, styleSuffix: string): string {
-  if (!styleSuffix) return prompt.trim()
-  const trimmed = prompt.trim()
-  if (!trimmed.endsWith(styleSuffix)) return trimmed
-  return trimmed.slice(0, -styleSuffix.length).replace(/[.\s]+$/, '')
-}
-
 /**
  * Motion prompt for a beat whose direction is the source of truth.
  * Still generation keeps its own frozen-frame composer.
@@ -239,71 +348,51 @@ function withoutTrailingStyle(prompt: string, styleSuffix: string): string {
 function compileOwnedBeatVideoPrompt(
   beat: SceneBeat,
   sceneDirection: DetailedSceneDirection | null | undefined,
-  options: {
-    artStyleId?: string
-    excerpt?: string
-    musicCue?: SceneMusicCue
-  } | undefined,
+  options: CompileBeatVideoPromptOptions | undefined,
   styleSuffix: string,
   styleNegative: string,
   steer: string
 ): BeatVideoPromptResult {
-  const base = compileBeatVideoPrompt(beat, {
-    artStyleId: options?.artStyleId,
-    excerpt: options?.excerpt,
+  const spokenLine = beat.kind === 'dialogue' ? spokenLineOf(beat, options?.excerpt) : undefined
+  const lead = leadForBeat(beat, options)
+  const clauses = directionClauses(beat, lead)
+  let core = clauses.length > 0 ? normalizePromptJoin(lead, clauses.join('. ')) : lead
+  core = withMotionWhenUnstated(beat, core)
+  core = applySceneHints(core, beat, sceneDirection)
+  return finishVideoPrompt({
+    core,
+    beat,
+    steer,
+    styleSuffix,
+    styleNegative,
+    spokenLine,
   })
-  let core = withoutTrailingStyle(base.prompt, styleSuffix)
-  const direction = beat.beatDirection
-  const facets = [
-    direction?.shotType,
-    direction?.cameraAngle,
-    direction?.cameraMovement,
-    direction?.blocking,
-    direction?.emotion,
-    direction?.gaze,
-    direction?.propInteraction,
-    direction?.lightingAccent,
-    direction?.frozenMoment,
-    direction?.keyProps?.filter(Boolean).join(', '),
-    direction?.castInFrame?.filter(Boolean).join(', '),
-  ]
-  for (const facet of facets) {
-    const piece = facet?.trim()
-    if (!piece || tokenAlreadyInPrompt(piece, core)) continue
-    core = normalizePromptJoin(core, piece)
-  }
-  if (!/cinematic motion/i.test(core)) {
-    core = normalizePromptJoin(core, 'Natural cinematic motion')
-  }
-  const hints = sceneDirectionMotionHints(sceneDirection, core)
-  if (hints) core = normalizePromptJoin(core, hints)
-  return {
-    prompt: normalizePromptJoin(core, steer, styleSuffix),
-    negativePrompt: `${BASE_NEGATIVES}, ${styleNegative}`,
-  }
 }
 
 /**
  * Clip prompt from the current beat.
  *
- * User, planner, and director writes compile a motion prompt from the beat
- * (spoken line or action, plus the direction facets). A scene-bundle
- * videoPrompt is the core only when this beat has no such write.
+ * A saved `beatDirection.videoPrompt` is the clip text. Otherwise user,
+ * planner, and director writes compile one motion direction from the beat.
+ * A scene-bundle videoPrompt is the core only when this beat has no such write.
  */
 export function compileBeatVideoPromptFromDirection(
   beat: SceneBeat,
   sceneDirection?: DetailedSceneDirection | null,
-  options?: {
-    artStyleId?: string
-    excerpt?: string
-    /** Cue scoring this beat, if any; enters as tonal direction, never as audio. */
-    musicCue?: SceneMusicCue
-  }
+  options?: CompileBeatVideoPromptOptions
 ): BeatVideoPromptResult {
   const artStyleId = options?.artStyleId ?? 'photorealistic'
-  const styleSuffix = getArtStylePromptSuffix(artStyleId)
+  const styleSuffix = getArtStyleVideoPromptSuffix(artStyleId)
   const styleNegative = getArtStyleNegativeTerms(artStyleId)
   const steer = formatMusicCueSteer(options?.musicCue)
+  const stored = beat.beatDirection?.videoPrompt?.trim()
+  if (stored) {
+    return {
+      prompt: stored,
+      negativePrompt: videoNegatives(beat, styleNegative),
+    }
+  }
+
   if (beatDirectionOwnsVideoPrompt(beat)) {
     return compileOwnedBeatVideoPrompt(
       beat,
@@ -315,10 +404,8 @@ export function compileBeatVideoPromptFromDirection(
     )
   }
 
-  const entry = findBundleEntryForBeat(
-    beat,
-    sceneDirection?.segmentPromptBundle
-  )
+  const spokenLine = beat.kind === 'dialogue' ? spokenLineOf(beat, options?.excerpt) : undefined
+  const entry = findBundleEntryForBeat(beat, sceneDirection?.segmentPromptBundle)
 
   if (entry?.videoPrompt?.trim()) {
     let core = entry.videoPrompt.trim()
@@ -326,44 +413,31 @@ export function compileBeatVideoPromptFromDirection(
     if (summary && !isRedundantSummary(summary, core)) {
       core = normalizePromptJoin(summary, core)
     }
-    const beatHints = beatDirectionMotionHints(beat, core)
-    if (beatHints) core = normalizePromptJoin(core, beatHints)
-    const hints = sceneDirectionMotionHints(sceneDirection, core)
-    if (hints) core = normalizePromptJoin(core, hints)
-    return {
-      prompt: normalizePromptJoin(core, steer, styleSuffix),
-      negativePrompt: `${BASE_NEGATIVES}, ${styleNegative}`,
-    }
+    const clauses = directionClauses(beat, core)
+    if (clauses.length > 0) core = normalizePromptJoin(core, clauses.join('. '))
+    core = withMotionWhenUnstated(beat, core)
+    core = applySceneHints(core, beat, sceneDirection)
+    return finishVideoPrompt({
+      core,
+      beat,
+      steer,
+      styleSuffix,
+      styleNegative,
+      spokenLine,
+    })
   }
 
-  if (beat.kind === 'action') {
-    const action = beat.actionDescription ?? 'Scene action'
-    const beatHints = beatDirectionMotionHints(beat, action)
-    let core = beatHints ? normalizePromptJoin(action, beatHints) : action
-    const hints = sceneDirectionMotionHints(sceneDirection, core)
-    core = hints
-      ? normalizePromptJoin(core, hints)
-      : normalizePromptJoin(core, 'Natural cinematic motion')
-    return {
-      prompt: normalizePromptJoin(core, steer, styleSuffix),
-      negativePrompt: `${BASE_NEGATIVES}, ${styleNegative}`,
-    }
-  }
-
-  // The fallback already carries the steer, so it is stripped along with the
-  // style suffix and re-joined in order rather than appearing twice.
-  const fallback = compileBeatVideoPrompt(beat, options)
-  const beatHints = beatDirectionMotionHints(beat, fallback.prompt)
-  const hints = sceneDirectionMotionHints(sceneDirection, fallback.prompt)
-  if (!beatHints && !hints) return fallback
-
-  const tail = steer ? `\\. ${escapeRegExp(steer)}\\. ` : '\\. '
-  const withoutStyle = fallback.prompt.replace(
-    new RegExp(`${tail}${escapeRegExp(styleSuffix)}$`),
-    ''
-  )
-  return {
-    prompt: normalizePromptJoin(withoutStyle, beatHints, hints, steer, styleSuffix),
-    negativePrompt: fallback.negativePrompt,
-  }
+  const lead = leadForBeat(beat, options)
+  const clauses = directionClauses(beat, lead)
+  let core = clauses.length > 0 ? normalizePromptJoin(lead, clauses.join('. ')) : lead
+  core = withMotionWhenUnstated(beat, core)
+  core = applySceneHints(core, beat, sceneDirection)
+  return finishVideoPrompt({
+    core,
+    beat,
+    steer,
+    styleSuffix,
+    styleNegative,
+    spokenLine,
+  })
 }

@@ -53,6 +53,9 @@ describe('compileBeatVideoPromptFromDirection prefers beat direction over scene 
     expect(result.prompt).toContain('handheld push-in')
     expect(result.prompt).toContain('Insert Shot')
     expect(result.prompt).toContain('brings the journal to her chest')
+    expect(result.prompt).toContain('No spoken dialogue')
+    expect(result.prompt).not.toContain('Slow drift')
+    expect(result.prompt).not.toContain('Wide')
   })
 
   it('adds beat emotion to dialogue beats even without a bundle match', () => {

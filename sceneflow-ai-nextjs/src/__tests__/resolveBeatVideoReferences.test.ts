@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolveBeatElementSelection, resolveBeatVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
+import { resolveBeatElementSelection, resolveBeatVideoReferences, shouldReplaceClientVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { LocationReference } from '@/types/visionReferences'
 
@@ -62,6 +62,8 @@ describe('resolveBeatVideoReferences', () => {
     })
 
     expect(resolved.urlList.length).toBeGreaterThanOrEqual(2)
+    expect(resolved.urlList).toContain('https://blob.example/elara.jpg')
+    expect(resolved.urlList).toContain('https://blob.example/elara-wardrobe.jpg')
     expect(resolved.labeledRefs.some((r) => r.name.includes('Elara'))).toBe(true)
     expect(resolved.labeledRefs.some((r) => r.role === 'location')).toBe(true)
 
@@ -102,5 +104,91 @@ describe('resolveBeatVideoReferences', () => {
     })
 
     expect(resolved.refs.length).toBeLessThanOrEqual(8)
+  })
+
+  it('keeps the identity image when a wardrobe sheet is also stored', () => {
+    const beat: SceneBeat = {
+      beatId: 'beat-sheet',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription: 'Elara Vance watches the engine.',
+    }
+    const resolved = resolveBeatVideoReferences({
+      scene: { heading: 'INT. KITCHEN - DAY', beats: [beat] },
+      beat,
+      projectCharacters: [
+        {
+          ...characters[0],
+          wardrobes: [
+            {
+              id: 'w-sheet',
+              name: 'Sheet',
+              combinedCharacterRefUrl: 'https://blob.example/elara-sheet.jpg',
+              isDefault: true,
+            },
+          ],
+        },
+      ],
+      locationReferences: locations,
+      objectReferences: objects,
+    })
+
+    expect(resolved.urlList).toContain('https://blob.example/elara.jpg')
+    expect(resolved.urlList).not.toContain('https://blob.example/elara-sheet.jpg')
+  })
+
+  it('sends the user reference selection instead of whoever the prose names', () => {
+    const beat: SceneBeat = {
+      beatId: 'beat-user-ref',
+      sequenceIndex: 0,
+      kind: 'dialogue',
+      character: 'Elara Vance',
+      line: 'This coffee is perfect.',
+      referenceSelection: {
+        characterIds: ['c2'],
+        objectRefIds: [],
+        locationRefId: null,
+        source: 'user',
+        resolvedAt: '2026-09-23T00:00:00.000Z',
+      },
+    }
+    const resolved = resolveBeatVideoReferences({
+      scene: { heading: 'INT. KITCHEN - DAY', beats: [beat] },
+      beat,
+      projectCharacters: [
+        ...characters,
+        {
+          id: 'c2',
+          name: 'Marcus Hale',
+          referenceImage: 'https://blob.example/marcus.jpg',
+        },
+      ],
+      locationReferences: locations,
+      objectReferences: objects,
+    })
+
+    expect(resolved.urlList).toContain('https://blob.example/marcus.jpg')
+    expect(resolved.urlList).not.toContain('https://blob.example/elara.jpg')
+    expect(
+      shouldReplaceClientVideoReferences(beat, [
+        {
+          url: 'https://blob.example/elara-wardrobe.jpg',
+          type: 'character',
+          name: 'Elara wardrobe',
+        },
+      ])
+    ).toBe(true)
+    expect(
+      shouldReplaceClientVideoReferences(
+        { ...beat, referenceSelection: undefined },
+        [
+          {
+            url: 'https://blob.example/elara.jpg',
+            type: 'character',
+            name: 'Elara Vance',
+          },
+        ]
+      )
+    ).toBe(false)
   })
 })

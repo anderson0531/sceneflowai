@@ -137,9 +137,72 @@ describe('compileBeatVideoPromptFromDirection', () => {
     expect(result.prompt).toContain('Sarah plants her feet at the doorway.')
     expect(result.prompt).toContain('push-in')
     expect(result.prompt).toContain('screen-left, weight on the back foot')
-    expect(result.prompt).toContain('Natural cinematic motion')
+    expect(result.prompt).toContain('The only spoken line is')
+    expect(result.prompt).not.toContain('Natural cinematic motion')
+    expect(result.prompt).not.toContain('Dolly in')
+    expect(result.prompt).not.toContain('film still')
     expect(result.prompt).not.toContain('turns sharply toward the exit')
     expect(result.prompt).not.toContain('Urgent escape beat')
+  })
+
+  it('returns a saved video prompt as the clip text', () => {
+    const directed: SceneBeat = {
+      ...actionBeat,
+      beatDirection: {
+        generatedBy: 'user',
+        shotType: 'Wide Shot',
+        videoPrompt: 'Hold on the doorway. No one enters.',
+      },
+    }
+    const result = compileBeatVideoPromptFromDirection(directed, null)
+    expect(result.prompt).toBe('Hold on the doorway. No one enters.')
+  })
+
+  it('closes an action beat without inviting dialogue or a second camera', () => {
+    const directed: SceneBeat = {
+      ...actionBeat,
+      beatDirection: {
+        generatedBy: 'user',
+        shotType: 'Medium Tracking Shot',
+        cameraMovement: 'Dolly In fast',
+        castInFrame: [],
+        keyProps: ['copper induction engine'],
+      },
+    }
+    const direction: DetailedSceneDirection = {
+      camera: {
+        shots: ['Wide Establishing Shot'],
+        angle: '',
+        movement: 'Dynamic Steadicam push-ins',
+        lensChoice: '',
+        focus: '',
+      },
+      lighting: {
+        overallMood: 'Hard & Dramatic',
+        timeOfDay: '',
+        keyLight: '',
+        fillLight: '',
+        backlight: '',
+        practicals: '',
+        colorTemperature: '',
+      },
+      scene: { location: '', keyProps: [], atmosphere: '' },
+      talent: { blocking: '', keyActions: [], emotionalBeat: '' },
+      audio: { priorities: '', considerations: '' },
+    }
+    const result = compileBeatVideoPromptFromDirection(directed, direction)
+    expect(result.prompt).toContain('Dolly In fast')
+    expect(result.prompt).toContain('Medium Tracking Shot')
+    expect(result.prompt).toContain('No people in frame')
+    expect(result.prompt).toContain('copper induction engine')
+    expect(result.prompt).toContain('No spoken dialogue')
+    expect(result.prompt).toContain('The only action is')
+    expect(result.prompt).not.toContain('Wide Establishing Shot')
+    expect(result.prompt).not.toContain('Steadicam')
+    expect(result.prompt).not.toContain('film still')
+    expect(result.prompt).not.toContain('speaks naturally')
+    expect(result.negativePrompt).toContain('dialogue')
+    expect(result.negativePrompt).toContain('lip sync')
   })
 
   it('skips redundant segmentDirectionSummary when it duplicates videoPrompt', () => {
