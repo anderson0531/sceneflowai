@@ -342,6 +342,8 @@ describe('the cue policy names the opening-action pattern', () => {
     )
 
     expect(route).toContain('Score for CONTRAST, not for coverage')
+    expect(route).toContain('Each cue covers at most ${MAX_BEATS_PER_MUSIC_CUE} beats')
+    expect(route).toContain('several back-to-back cues')
     expect(route).toContain('OPENING ACTION is the one place a cue may start on beat 0')
     expect(route).toMatch(/an opening built on dialogue takes the contrast rule/i)
   })

@@ -6860,6 +6860,20 @@ function SceneCard({
                         )}
                       </div>
                       {(() => {
+                        const showTooltips: Record<BeatAttentionFilter, string> = {
+                          all: 'Every beat in this scene.',
+                          needs_action: 'Beats still missing audio, a speaker, or another required step.',
+                          ready: 'Beats whose audio is in sync and ready to move on.',
+                          prompt_changed: 'Beats whose prompt changed after the last render.',
+                          no_audio: 'Spoken beats, or action beats that carry sound, with no audio yet.',
+                          needs_speaker: 'Dialogue or narration that has no voice assigned.',
+                        }
+                        const typeTooltips: Record<BeatTypeFilter, string> = {
+                          all: 'Action, dialogue, and narration.',
+                          action: 'Beats with no spoken line.',
+                          dialogue: 'Beats spoken by a character.',
+                          narration: 'Voiceover beats.',
+                        }
                         const attentionChips: Array<{ id: BeatAttentionFilter; label: string }> = [
                           { id: 'all', label: 'All' },
                           { id: 'needs_action', label: 'Needs action' },
@@ -6877,80 +6891,102 @@ function SceneCard({
                           typeChips.push({ id: 'narration', label: 'Narration' })
                         }
                         const characters = beatFilterCharacters(beatFacts)
+                        const activeSummary = [
+                          beatListFilters.attention === 'all'
+                            ? ''
+                            : attentionChips.find((chip) => chip.id === beatListFilters.attention)?.label,
+                          beatListFilters.type === 'all'
+                            ? ''
+                            : typeChips.find((chip) => chip.id === beatListFilters.type)?.label,
+                          beatListFilters.character === 'all' ? '' : beatListFilters.character,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')
+                        const countFor = (
+                          attention: BeatAttentionFilter,
+                          type: BeatTypeFilter
+                        ) =>
+                          beatFacts.filter((facts) =>
+                            beatMatchesFilters(facts, { ...beatListFilters, attention, type })
+                          ).length
                         return (
-                          <div className="space-y-2 mb-3">
+                          <div className="mb-3">
                             <StatusFilterBar
-                              label="Show"
-                              chips={attentionChips.map((chip) => ({
-                                id: chip.id,
-                                label: chip.label,
-                                active: beatListFilters.attention === chip.id,
-                                count:
-                                  chip.id === 'all'
-                                    ? beatFacts.length
-                                    : beatFacts.filter((facts) =>
-                                        beatMatchesFilters(facts, {
-                                          ...beatListFilters,
-                                          attention: chip.id,
-                                        })
-                                      ).length,
-                              }))}
-                              onSelect={(id) =>
-                                setBeatListFilters((current) => ({
-                                  ...current,
-                                  attention: id as BeatAttentionFilter,
-                                }))
-                              }
-                            />
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <StatusFilterBar
-                                label="Type"
-                                chips={typeChips.map((chip) => ({
-                                  id: chip.id,
-                                  label: chip.label,
-                                  active: beatListFilters.type === chip.id,
-                                  count:
-                                    chip.id === 'all'
-                                      ? beatFacts.length
-                                      : beatFacts.filter((facts) =>
-                                          beatMatchesFilters(facts, {
-                                            ...beatListFilters,
-                                            type: chip.id,
-                                          })
-                                        ).length,
-                                }))}
-                                onSelect={(id) =>
-                                  setBeatListFilters((current) => ({
-                                    ...current,
-                                    type: id as BeatTypeFilter,
-                                  }))
-                                }
-                              />
+                              activeSummary={activeSummary}
+                              onClear={() => setBeatListFilters(DEFAULT_BEAT_LIST_FILTERS)}
+                              groups={[
+                                {
+                                  label: 'Show',
+                                  onSelect: (id) =>
+                                    setBeatListFilters((current) => ({
+                                      ...current,
+                                      attention: id as BeatAttentionFilter,
+                                    })),
+                                  chips: attentionChips.map((chip) => ({
+                                    id: chip.id,
+                                    label: chip.label,
+                                    tooltip: showTooltips[chip.id],
+                                    active: beatListFilters.attention === chip.id,
+                                    count:
+                                      chip.id === 'all'
+                                        ? beatFacts.length
+                                        : countFor(chip.id, beatListFilters.type),
+                                  })),
+                                },
+                                {
+                                  label: 'Type',
+                                  onSelect: (id) =>
+                                    setBeatListFilters((current) => ({
+                                      ...current,
+                                      type: id as BeatTypeFilter,
+                                    })),
+                                  chips: typeChips.map((chip) => ({
+                                    id: chip.id,
+                                    label: chip.label,
+                                    tooltip: typeTooltips[chip.id],
+                                    active: beatListFilters.type === chip.id,
+                                    count:
+                                      chip.id === 'all'
+                                        ? beatFacts.length
+                                        : countFor(beatListFilters.attention, chip.id),
+                                  })),
+                                },
+                              ]}
+                            >
                               {characters.length > 1 && (
-                                <label className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                                  Character
-                                  <select
-                                    value={beatListFilters.character}
-                                    onClick={(event) => event.stopPropagation()}
-                                    onChange={(event) =>
-                                      setBeatListFilters((current) => ({
-                                        ...current,
-                                        character: event.target.value,
-                                      }))
-                                    }
-                                    className="max-w-[12rem] truncate rounded-md border border-slate-600/50 bg-slate-900/60 px-2 py-0.5 text-[10px] text-slate-200"
-                                    aria-label="Filter beats by character"
-                                  >
-                                    <option value="all">All</option>
-                                    {characters.map((name) => (
-                                      <option key={name} value={name}>
-                                        {name}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </label>
+                                <div className="space-y-1">
+                                  <p className="text-[10px] uppercase tracking-wide text-slate-500">
+                                    Character
+                                  </p>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <select
+                                        value={beatListFilters.character}
+                                        onClick={(event) => event.stopPropagation()}
+                                        onChange={(event) =>
+                                          setBeatListFilters((current) => ({
+                                            ...current,
+                                            character: event.target.value,
+                                          }))
+                                        }
+                                        className="h-7 w-full truncate rounded-full border border-slate-600/50 bg-slate-800/60 px-3 text-xs text-slate-200"
+                                        aria-label="Filter beats by character"
+                                      >
+                                        <option value="all">All</option>
+                                        {characters.map((name) => (
+                                          <option key={name} value={name}>
+                                            {name}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right" className="max-w-[16rem] text-left">
+                                      Lines spoken by this character.
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </div>
                               )}
-                            </div>
+                            </StatusFilterBar>
                           </div>
                         )
                       })()}

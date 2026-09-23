@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
+import { MAX_BEATS_PER_SCENE } from '@/lib/script/sceneDecomposition'
 import {
+  MAX_BEATS_PER_MUSIC_CUE,
   MAX_MUSIC_CUES,
+  MAX_SCORED_MOVEMENTS,
   adoptLegacySceneTrack,
   applySceneMusicCues,
   buildMusicCueId,
@@ -43,7 +46,7 @@ describe('planSceneMusicCues', () => {
       [
         {
           beatStart: 2,
-          beatEnd: 5,
+          beatEnd: 4,
           intent: 'rising dread',
           description:
             'Cinematic orchestral score, ominous mood, low strings and sub-bass drone, slow tempo',
@@ -55,9 +58,9 @@ describe('planSceneMusicCues', () => {
     )
 
     expect(cues).toHaveLength(1)
-    expect(cues[0].cueId).toBe(buildMusicCueId(2, 5))
+    expect(cues[0].cueId).toBe(buildMusicCueId(2, 4))
     expect(cues[0].beatStart).toBe(2)
-    expect(cues[0].beatEnd).toBe(5)
+    expect(cues[0].beatEnd).toBe(4)
     expect(cues[0].intent).toBe('rising dread')
     expect(cues[0].entry).toBe('fade')
     expect(cues[0].exit).toBe('tail')
@@ -87,14 +90,14 @@ describe('planSceneMusicCues', () => {
   it('drops a cue that overlaps one already placed', () => {
     const cues = planSceneMusicCues(
       [
-        { beatStart: 0, beatEnd: 3, description: 'Ambient score, uneasy mood, slow tempo' },
+        { beatStart: 0, beatEnd: 2, description: 'Ambient score, uneasy mood, slow tempo' },
         { beatStart: 2, beatEnd: 4, description: 'Orchestral score, urgent mood, fast tempo' },
       ],
       beats(8)
     )
 
     expect(cues).toHaveLength(1)
-    expect(cues[0].beatEnd).toBe(3)
+    expect(cues[0].beatEnd).toBe(2)
   })
 
   it('clamps a cue running past the last beat', () => {
@@ -106,14 +109,94 @@ describe('planSceneMusicCues', () => {
     expect(cues[0].beatEnd).toBe(7)
   })
 
-  it('caps the plan at MAX_MUSIC_CUES', () => {
+  it('keeps short cues past the old four-cue ceiling', () => {
     const raw = Array.from({ length: 8 }, (_, index) => ({
       beatStart: index * 2,
       beatEnd: index * 2 + 1,
       description: 'Ambient score, uneasy mood, slow tempo',
     }))
 
-    expect(planSceneMusicCues(raw, beats(20))).toHaveLength(MAX_MUSIC_CUES)
+    expect(planSceneMusicCues(raw, beats(20))).toHaveLength(8)
+  })
+
+  it('caps the plan at MAX_MUSIC_CUES', () => {
+    const raw = Array.from({ length: 40 }, (_, index) => ({
+      beatStart: index,
+      beatEnd: index,
+      description: 'Ambient score, uneasy mood, slow tempo',
+    }))
+
+    expect(MAX_MUSIC_CUES).toBe(MAX_BEATS_PER_SCENE)
+    expect(planSceneMusicCues(raw, beats(40))).toHaveLength(MAX_MUSIC_CUES)
+  })
+
+  it('splits a ten-beat score into windows of at most three beats', () => {
+    const cues = planSceneMusicCues(
+      [
+        {
+          beatStart: 0,
+          beatEnd: 9,
+          intent: 'rising dread',
+          description:
+            'Cinematic orchestral score, ominous mood, low strings and sub-bass drone, slow tempo',
+          entry: 'hard',
+          exit: 'tail',
+        },
+      ],
+      beats(10)
+    )
+
+    expect(MAX_BEATS_PER_MUSIC_CUE).toBe(3)
+    expect(cues.map((cue) => [cue.beatStart, cue.beatEnd])).toEqual([
+      [0, 2],
+      [3, 5],
+      [6, 8],
+      [9, 9],
+    ])
+    expect(cues[0].entry).toBe('hard')
+    expect(cues[0].exit).toBe('fade')
+    expect(cues[1].entry).toBe('fade')
+    expect(cues[1].exit).toBe('fade')
+    expect(cues[3].entry).toBe('fade')
+    expect(cues[3].exit).toBe('tail')
+    expect(cues.every((cue) => cue.intent === 'rising dread')).toBe(true)
+    expect(cues.every((cue) => cue.beatEnd - cue.beatStart + 1 <= MAX_BEATS_PER_MUSIC_CUE)).toBe(
+      true
+    )
+  })
+
+  it('keeps three long beats together and asks for their Screening Room length', () => {
+    const timed = beats(4, () => ({ durationSeconds: 12 }))
+    const cues = planSceneMusicCues(
+      [
+        {
+          beatStart: 0,
+          beatEnd: 3,
+          description: 'Ambient score, uneasy mood, slow tempo',
+          entry: 'hard',
+          exit: 'tail',
+        },
+      ],
+      timed
+    )
+
+    expect(cues.map((cue) => [cue.beatStart, cue.beatEnd])).toEqual([
+      [0, 2],
+      [3, 3],
+    ])
+    expect(estimateMusicCueDuration(cues[0], timed)).toBeGreaterThan(30)
+    expect(estimateMusicCueDuration(cues[1], timed)).toBeGreaterThanOrEqual(12)
+  })
+
+  it('keeps one long beat as a single cue and asks for its full hold', () => {
+    const timed = beats(1, () => ({ durationSeconds: 45 }))
+    const cues = planSceneMusicCues(
+      [{ beatStart: 0, beatEnd: 0, description: 'Ambient score, uneasy mood, slow tempo' }],
+      timed
+    )
+
+    expect(cues).toHaveLength(1)
+    expect(estimateMusicCueDuration(cues[0], timed)).toBeGreaterThanOrEqual(45)
   })
 
   it('ignores entries with no usable brief', () => {
@@ -144,8 +227,9 @@ describe('musicCueBudget', () => {
     }
   })
 
-  it('never exceeds MAX_MUSIC_CUES', () => {
-    expect(musicCueBudget(20)).toBe(MAX_MUSIC_CUES)
+  it('never scores more movements than the contrast cap', () => {
+    expect(musicCueBudget(20)).toBe(MAX_SCORED_MOVEMENTS)
+    expect(MAX_SCORED_MOVEMENTS).toBeLessThan(MAX_MUSIC_CUES)
   })
 })
 
@@ -227,6 +311,35 @@ describe('deriveSceneMusicCues', () => {
     expect(cues).toHaveLength(1)
     expect(cues[0].beatStart).toBe(1)
     expect(cues[0].intent).toBe('grief settling in')
+  })
+
+  it('gives a later window its own score when the emotion turns', () => {
+    const dreadThenGrief = [
+      beat(0, { actionDescription: 'A menacing shadow stalks the corridor.' }),
+      beat(1, { actionDescription: 'The ominous threat closes in, full of dread.' }),
+      beat(2, { actionDescription: 'Fear holds the room.' }),
+      beat(3, { actionDescription: 'Grief settles over her.' }),
+      beat(4, { actionDescription: 'She is devastated, mourning what she lost.' }),
+      beat(5, { actionDescription: 'Tears mark the sorrow she cannot hide.' }),
+    ]
+    const arc = [
+      movement(
+        0,
+        0,
+        5,
+        'A menacing ominous threat stalks them in dread and fear.'
+      ),
+    ]
+
+    const cues = deriveSceneMusicCues({}, dreadThenGrief, arc)
+
+    expect(cues.map((cue) => [cue.beatStart, cue.beatEnd])).toEqual([
+      [0, 2],
+      [3, 5],
+    ])
+    expect(cues[0].intent).toBe('rising dread')
+    expect(cues[1].intent).toBe('grief settling in')
+    expect(cues[1].description).not.toBe(cues[0].description)
   })
 })
 
@@ -331,6 +444,30 @@ describe('parsePersistedMusicCues', () => {
     expect(cues[0].beatEnd).toBe(5)
     expect(cues[0].cueId).toBe('cue-4-9')
     expect(cues[0].url).toBe('https://blob/cue.wav')
+  })
+
+  it('leaves a saved plan intact even when a cue is longer than three beats', () => {
+    const saved = [
+      {
+        cueId: 'cue-0-9',
+        beatStart: 0,
+        beatEnd: 9,
+        description: 'Cinematic orchestral score, ominous mood, slow tempo',
+      },
+    ]
+
+    const cues = parsePersistedMusicCues(saved, beats(10))
+    expect(cues).toHaveLength(1)
+    expect(cues[0].beatStart).toBe(0)
+    expect(cues[0].beatEnd).toBe(9)
+
+    const withAudio = parsePersistedMusicCues(
+      [{ ...saved[0], url: 'https://blob/paid-for.wav' }],
+      beats(10)
+    )
+    expect(withAudio).toHaveLength(1)
+    expect(withAudio[0].beatEnd).toBe(9)
+    expect(withAudio[0].url).toBe('https://blob/paid-for.wav')
   })
 })
 
