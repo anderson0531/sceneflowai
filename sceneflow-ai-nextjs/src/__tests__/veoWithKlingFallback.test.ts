@@ -214,6 +214,32 @@ describe('generateVideoWithVeoKlingFallback', () => {
     expect(result.error).toMatch(/downloadable file/)
   })
 
+  it('polls an accepted Omni interaction every 20 seconds', async () => {
+    vi.mocked(generateProductionVideo).mockResolvedValue({
+      status: 'QUEUED',
+      operationName: 'interaction:abc',
+    })
+    vi.mocked(waitForProductionVideoCompletion).mockResolvedValue({
+      status: 'COMPLETED',
+      operationName: 'interaction:abc',
+      videoUrl: 'data:video/mp4;base64,AAAA',
+    })
+
+    const result = await generateVideoWithVeoKlingFallback({
+      prompt: 'a quiet street at dusk',
+      method: 'T2V',
+      videoOptions: { durationSeconds: 8, aspectRatio: '16:9' },
+    })
+
+    expect(waitForProductionVideoCompletion).toHaveBeenCalledWith(
+      'interaction:abc',
+      'vertex',
+      240,
+      20
+    )
+    expect(result.status).toBe('COMPLETED')
+  })
+
   it('does not invoke Kling when allowPolicyFallback is false', async () => {
     vi.mocked(generateProductionVideo).mockResolvedValue({
       status: 'FAILED',

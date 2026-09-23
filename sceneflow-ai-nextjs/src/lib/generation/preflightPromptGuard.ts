@@ -193,6 +193,7 @@ async function rewriteWithFlash(
       maxOutputTokens: 1024,
       timeoutMs: 8000,
       thinkingLevel: 'minimal',
+      maxRetries: 0,
     })
 
     const parsed = JSON.parse(result.text.replace(/```json\s*|\s*```/g, '').trim()) as {

@@ -5,6 +5,7 @@ import {
   isVertexBurstRateLimitMessage,
   isVertexQuotaExhaustedMessage,
   isVertexRateLimitMessage,
+  parseVertexRetryAfterSeconds,
   shouldReplayInternalGenerateAsset,
 } from '@/lib/gemini/vertexRateLimit'
 
@@ -30,6 +31,24 @@ describe('classifyVertexRateLimitHttp', () => {
     expect(isVertexBurstRateLimitMessage(VERTEX_INTERACTIONS_TOO_MANY_REQUESTS)).toBe(true)
     expect(isVertexQuotaExhaustedMessage(VERTEX_INTERACTIONS_TOO_MANY_REQUESTS)).toBe(false)
     expect(classifyVertexRateLimitHttp('content policy blocked this prompt')).toBeNull()
+  })
+})
+
+describe('parseVertexRetryAfterSeconds', () => {
+  it('prefers the Retry-After header, then a body field, then 60 seconds', () => {
+    expect(
+      parseVertexRetryAfterSeconds(
+        '45',
+        JSON.stringify({ error: { code: 'too_many_requests', retryAfter: 15 } })
+      )
+    ).toBe(45)
+    expect(
+      parseVertexRetryAfterSeconds(
+        null,
+        JSON.stringify({ error: { code: 'too_many_requests', retryAfter: 30 } })
+      )
+    ).toBe(30)
+    expect(parseVertexRetryAfterSeconds(null, '{"error":{"code":"too_many_requests"}}')).toBe(60)
   })
 })
 

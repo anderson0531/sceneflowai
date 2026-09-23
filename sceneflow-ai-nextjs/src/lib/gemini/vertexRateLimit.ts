@@ -7,6 +7,9 @@
 
 export const VERTEX_RATE_LIMIT_RETRY_AFTER_SECONDS = 60
 
+/** Baseline gap between Omni interaction status checks. */
+export const OMNI_STATUS_POLL_INTERVAL_SECONDS = 20
+
 const INTERACTIONS_429 =
   'Vertex AI Interactions error 429: {"error":{"message":"Resource has been exhausted (e.g. check quota).","code":"too_many_requests"}}'
 
@@ -64,6 +67,61 @@ export function classifyVertexRateLimitHttp(
     isRateLimited: true,
     headers: { 'Retry-After': String(retryAfter) },
   }
+}
+
+function positiveRetrySeconds(value: unknown): number | undefined {
+  const parsed = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN
+  if (!Number.isFinite(parsed) || parsed <= 0) return undefined
+  return Math.min(Math.ceil(parsed), 240)
+}
+
+function retryAfterFromRecord(record: Record<string, unknown>): number | undefined {
+  return (
+    positiveRetrySeconds(record.retryAfter) ??
+    positiveRetrySeconds(record.retry_after) ??
+    positiveRetrySeconds(record['Retry-After'])
+  )
+}
+
+/**
+ * Wait before the next Omni status poll.
+ * Prefer Google's Retry-After header, then a retryAfter field in the body.
+ */
+export function parseVertexRetryAfterSeconds(
+  retryAfterHeader: string | null | undefined,
+  bodyText?: string | null,
+  fallbackSeconds = VERTEX_RATE_LIMIT_RETRY_AFTER_SECONDS
+): number {
+  const header = retryAfterHeader?.trim()
+  if (header) {
+    const seconds = positiveRetrySeconds(header)
+    if (seconds != null) return seconds
+    const when = Date.parse(header)
+    if (!Number.isNaN(when)) {
+      const delta = Math.ceil((when - Date.now()) / 1000)
+      if (delta > 0) return Math.min(delta, 240)
+    }
+  }
+
+  if (bodyText?.trim()) {
+    try {
+      const parsed = JSON.parse(bodyText) as unknown
+      if (parsed && typeof parsed === 'object') {
+        const record = parsed as Record<string, unknown>
+        const direct = retryAfterFromRecord(record)
+        if (direct != null) return direct
+        const error = record.error
+        if (error && typeof error === 'object') {
+          const nested = retryAfterFromRecord(error as Record<string, unknown>)
+          if (nested != null) return nested
+        }
+      }
+    } catch {
+      /* body is not JSON */
+    }
+  }
+
+  return fallbackSeconds
 }
 
 /** generate-asset 429s are surfaced once. Inngest must not replay them. */
