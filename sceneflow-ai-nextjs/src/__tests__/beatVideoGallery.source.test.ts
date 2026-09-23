@@ -7,7 +7,19 @@ function readSource(relativePath: string): string {
 }
 
 const GALLERY = 'src/components/vision/scene-production/BeatVideoGallery.tsx'
+const FRAMES = 'src/components/vision/SceneStoryboardFrameViewer.tsx'
 const CONSOLE = 'src/components/vision/scene-production/DirectorConsoleImpl.tsx'
+
+function expectScrollableBeatPanel(source: string, label: string) {
+  expect(source).toContain(`aria-label="${label}"`)
+  expect(source).toContain('max-h-[40vh]')
+  expect(source).toContain('lg:max-h-[min(72vh,40rem)]')
+  expect(source).toContain('overflow-y-auto')
+  expect(source).toContain('grid grid-cols-2 content-start gap-2')
+  expect(source).toContain('sticky top-2')
+  expect(source).not.toContain('absolute left-0 top-0 bottom-0')
+  expect(source).not.toContain('ml-[calc(30%+0.75rem)]')
+}
 
 describe('Video tab inline clip preview', () => {
   it('plays the selected complete clip in the preview pane instead of onPlay', () => {
@@ -23,6 +35,11 @@ describe('Video tab inline clip preview', () => {
     expect(gallery).toContain("aria-label={isPreviewPlaying ? 'Pause clip preview' : 'Play clip preview'}")
     expect(gallery).not.toContain("from 'lucide-react''")
     expect(gallery).toContain("from 'lucide-react'")
+  })
+
+  it('scrolls beat cards in a panel beside a sticky preview', () => {
+    expectScrollableBeatPanel(readSource(GALLERY), 'Beat clips')
+    expectScrollableBeatPanel(readSource(FRAMES), 'Beat frames')
   })
 
   it('keeps sequential Play Beats on the SceneVideoPlayer modal', () => {
