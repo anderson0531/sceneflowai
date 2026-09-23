@@ -28,11 +28,11 @@ import {
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 
-const productDescription = `# SceneFlow AI - Product Description
+const productDescription = `# SceneFlow Studio - Product Description
 
 ## Executive Summary
 
-**SceneFlow AI** is an AI-powered video production platform that transforms creative concepts into production-ready video content. From initial idea to final cut, SceneFlow AI provides an end-to-end workflow that combines advanced AI capabilities with professional filmmaking tools.
+**SceneFlow Studio** is an AI-powered video production platform that transforms creative concepts into production-ready video content. From initial idea to final cut, SceneFlow Studio provides an end-to-end workflow that combines advanced AI capabilities with professional filmmaking tools.
 
 **Mission**: Democratize video production by putting the power of a full production studio in the hands of every creator.
 
@@ -46,7 +46,7 @@ const productDescription = `# SceneFlow AI - Product Description
 Traditional video production is expensive, time-consuming, and requires specialized skills across multiple disciplines—writing, directing, cinematography, editing, and post-production.
 
 ### The Solution
-SceneFlow AI provides an integrated platform that:
+SceneFlow Studio provides an integrated platform that:
 - **Generates** professional scripts from simple concepts
 - **Creates** stunning visuals using AI image and video generation
 - **Produces** natural voiceovers with AI voice synthesis
@@ -281,7 +281,7 @@ Create and manage multi-episode video series with AI-generated reference library
 
 ---
 
-*SceneFlow AI - Where stories come to life.*
+*SceneFlow Studio - Where stories come to life.*
 
 **Website**: https://sceneflowai.studio
 **Version**: 2.47
@@ -355,13 +355,13 @@ export default function ProductDescriptionPage() {
           
           <h1 className="text-5xl lg:text-6xl font-bold mb-6">
             <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 bg-clip-text text-transparent">
-              SceneFlow AI
+              SceneFlow Studio
             </span>
           </h1>
           
           <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
             Transform creative concepts into production-ready video content. From initial idea to final cut, 
-            SceneFlow AI provides an end-to-end workflow that combines advanced AI with professional filmmaking tools.
+            SceneFlow Studio provides an end-to-end workflow that combines advanced AI with professional filmmaking tools.
           </p>
           
           <div className="flex items-center justify-center gap-4">
@@ -596,7 +596,7 @@ export default function ProductDescriptionPage() {
           <div className="bg-gradient-to-br from-amber-900/30 to-orange-900/20 rounded-2xl p-12 border border-amber-700/30">
             <h2 className="text-3xl font-bold mb-4">Ready to Transform Your Video Production?</h2>
             <p className="text-gray-400 mb-8 max-w-2xl mx-auto">
-              Join thousands of creators using SceneFlow AI to bring their stories to life.
+              Join thousands of creators using SceneFlow Studio to bring their stories to life.
             </p>
             <div className="flex items-center justify-center gap-4">
               <Link href="/dashboard">
@@ -620,7 +620,7 @@ export default function ProductDescriptionPage() {
 
         {/* Footer */}
         <footer className="text-center text-gray-500 text-sm pt-8 border-t border-gray-800">
-          <p>SceneFlow AI - Where stories come to life.</p>
+          <p>SceneFlow Studio - Where stories come to life.</p>
           <p className="mt-2">Version 2.47 • February 2026</p>
         </footer>
       </div>

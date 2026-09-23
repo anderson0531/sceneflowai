@@ -4,7 +4,7 @@ export type CuratedVoice = { id: string; key: CuratedKey; name: string }
 
 export const SCENEFLOW_CREATOR_DISPLAY_NAME = 'SceneFlow Creator'
 
-/** ElevenLabs voice ID for SceneFlow AI Creator (signature narrator). */
+/** ElevenLabs voice ID for SceneFlow Studio Creator (signature narrator). */
 export const SCENEFLOW_CREATOR_VOICE_ID = '2WZUpLnG1rGcQpTL3sVC'
 
 const DEFAULT_CURATED_VOICE_IDS: Partial<Record<CuratedKey, string>> = {

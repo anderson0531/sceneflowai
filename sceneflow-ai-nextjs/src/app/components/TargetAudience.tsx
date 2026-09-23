@@ -67,7 +67,7 @@ export function TargetAudience() {
         >
           <h2 className="text-5xl font-bold mb-6">Built for Every Creator</h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            SceneFlow AI's complete 6-step workflow is designed to serve creators at every level, from beginners to professionals, across all video production needs.
+            SceneFlow Studio's complete 6-step workflow is designed to serve creators at every level, from beginners to professionals, across all video production needs.
           </p>
         </motion.div>
         

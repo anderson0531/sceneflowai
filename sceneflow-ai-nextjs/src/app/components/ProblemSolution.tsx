@@ -58,7 +58,7 @@ export function ProblemSolution() {
                 </div>
                 
                 <div>
-                  <p className="text-gray-500 text-xs md:text-sm uppercase tracking-wider mb-2">SceneFlow AI</p>
+                  <p className="text-gray-500 text-xs md:text-sm uppercase tracking-wider mb-2">SceneFlow Studio</p>
                   <p className="text-lg md:text-xl lg:text-2xl font-semibold text-cyan-400">{item.solution}</p>
                 </div>
               </div>

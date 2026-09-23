@@ -417,7 +417,7 @@ def build_watermark_text_filter(
     Build FFmpeg drawtext filter for a text watermark (applied to entire video).
     """
     # .get('text', default) returns None if JSON had "text": null — coalesce for a visible burn-in
-    raw_text = watermark.get('text') or 'SceneFlow AI Studio'
+    raw_text = watermark.get('text') or 'SceneFlow Studio'
     text = escape_drawtext(str(raw_text))
     anchor = watermark.get('anchor', 'bottom-right')
     padding = watermark.get('padding', 60)

@@ -19,7 +19,7 @@ const contactChannels = [
       icon: HelpCircle,
       title: 'Support and General Inquiries',
       email: LEGAL_SUPPORT_EMAIL,
-      description: 'Help with using SceneFlow AI, technical issues, feature questions, privacy requests, and billing.',
+      description: 'Help with using SceneFlow Studio, technical issues, feature questions, privacy requests, and billing.',
       responseTime: 'Within 24 hours',
       color: 'purple'
     },

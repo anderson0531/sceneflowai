@@ -62,12 +62,12 @@ const helpSections: HelpSection[] = [
     id: 'getting-started',
     title: 'Getting Started',
     icon: <Home className="w-5 h-5" />,
-    description: 'Learn the basics of SceneFlow AI and get up and running quickly.',
+    description: 'Learn the basics of SceneFlow Studio and get up and running quickly.',
     articles: [
       {
         id: 'welcome',
-        title: 'Welcome to SceneFlow AI',
-        content: 'SceneFlow AI is an AI-powered video production platform that helps you create professional video content from concept to final cut. Our workflow guides you through five phases: Series Studio, Blueprint Studio, Production Studio, Final Cut, and Premiere.',
+        title: 'Welcome to SceneFlow Studio',
+        content: 'SceneFlow Studio is an AI-powered video production platform that helps you create professional video content from concept to final cut. Our workflow guides you through five phases: Series Studio, Blueprint Studio, Production Studio, Final Cut, and Premiere.',
         steps: [
           'Start with your idea or concept in Blueprint Studio Studio phase',
           'Develop your script, characters, and visuals in Production',
@@ -97,7 +97,7 @@ const helpSections: HelpSection[] = [
       {
         id: 'navigation',
         title: 'Navigating the Interface',
-        content: 'Learn how to navigate SceneFlow AI efficiently.',
+        content: 'Learn how to navigate SceneFlow Studio efficiently.',
         steps: [
           'Use the left sidebar for workflow navigation',
           'The top bar shows your current project and credits',
@@ -113,9 +113,9 @@ const helpSections: HelpSection[] = [
     videos: [
       {
         id: 'intro-overview',
-        title: 'SceneFlow AI Overview',
+        title: 'SceneFlow Studio Overview',
         duration: '3:45',
-        description: 'A complete tour of SceneFlow AI and what you can create.'
+        description: 'A complete tour of SceneFlow Studio and what you can create.'
       },
       {
         id: 'quick-start-video',
@@ -134,7 +134,7 @@ const helpSections: HelpSection[] = [
       {
         id: 'dashboard-overview',
         title: 'Dashboard Overview',
-        content: 'The Dashboard is your home base in SceneFlow AI. Here you can see your active projects, monitor credits, and quickly access key features.',
+        content: 'The Dashboard is your home base in SceneFlow Studio. Here you can see your active projects, monitor credits, and quickly access key features.',
         steps: [
           'View your most recent projects in the Active Projects section',
           'Monitor your credit balance in the Budget Health widget',
@@ -671,7 +671,7 @@ const helpSections: HelpSection[] = [
         id: 'settings-tour',
         title: 'Settings & Preferences Guide',
         duration: '4:00',
-        description: 'Configure SceneFlow AI to work your way.'
+        description: 'Configure SceneFlow Studio to work your way.'
       }
     ]
   }
@@ -858,7 +858,7 @@ export default function HelpPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold">Help Center</h1>
-              <p className="text-sf-text-secondary">Learn how to use SceneFlow AI effectively</p>
+              <p className="text-sf-text-secondary">Learn how to use SceneFlow Studio effectively</p>
             </div>
           </div>
           

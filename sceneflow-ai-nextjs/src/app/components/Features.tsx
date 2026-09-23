@@ -32,7 +32,7 @@ export function Features() {
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold">A New Way to Create</h2>
           <p className="text-lg text-gray-400 mt-4">
-            SceneFlow AI provides a complete 6-step workflow to take your ideas from concept to final video.
+            SceneFlow Studio provides a complete 6-step workflow to take your ideas from concept to final video.
           </p>
         </div>
 

@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI – MI-alapú videókészítés",
+    "title": "SceneFlow Studio – MI-alapú videókészítés",
     "description": "Alakítsa ötleteit professzionális videókká mesterséges intelligencián alapuló munkafolyamat-automatizálással."
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "Működtetője: Google Cloud, Vertex AI, felhőalapú tárhely és fordítási eszközök",
-      "footnote": "A SceneFlow AI olyan skálázható Google Cloud infrastruktúrán fut, amelyet a startupok növekedéséhez és a nagyvállalati elvárásokhoz terveztek."
+      "footnote": "A SceneFlow Studio olyan skálázható Google Cloud infrastruktúrán fut, amelyet a startupok növekedéséhez és a nagyvállalati elvárásokhoz terveztek."
     },
     "trustSafeguardLink": "Rétegzett bizalom: Google Vertex-biztonság, kiegészítve a SceneFlow-korlátokkal, érvényesítéssel és származási adatokkal – lásd alább a „Bizalom és biztonság” részt.",
     "attribution": "— Az SceneFlow mérnöki csapata"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "Az ötlettől a közzétett videóig",
     "securePayments": "A Whop, a nyilvántartó kereskedőnk által feldolgozott biztonságos fizetések",
     "morLine": "A biztonságos kifizetéseket, az adószámítást és a megfelelést az Whop, a nyilvántartó kereskedőnk kezeli a Life Focus, LLC nevében.",
-    "copyright": "© 2026 SceneFlow AI. Minden jog fenntartva.",
+    "copyright": "© 2026 SceneFlow Studio. Minden jog fenntartva.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, Egyesült Államok • Kapcsolat: support@sceneflowai.studio",
     "poweredBy": "Google által működtetett intelligencia · Google Cloud-en hangszerelve"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "Elvetés"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "Szünet",
     "play": "Lejátszás",
     "mute": "Némítás",

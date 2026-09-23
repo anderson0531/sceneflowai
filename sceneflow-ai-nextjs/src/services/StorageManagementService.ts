@@ -1,5 +1,5 @@
 /**
- * SceneFlow AI - Storage Management Service
+ * SceneFlow Studio - Storage Management Service
  * 
  * Handles storage operations including:
  * - Storage usage tracking and breakdown

@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - በሰው ሰራሽ አስተውሎት (AI) የሚከናወን የቪዲዮ ዝግጅት",
+    "title": "SceneFlow Studio - በሰው ሰራሽ አስተውሎት (AI) የሚከናወን የቪዲዮ ዝግጅት",
     "description": "በአርቴፊሻል ኢንተለጀንስ (AI) የሚደገፍ የስራ ሂደት አውቶሜሽን በመጠቀም፣ ሀሳቦችዎን ወደ ፕሮፌሽናል ቪዲዮዎች ይለውጡ።"
   },
   "nav": {
@@ -1027,7 +1027,7 @@
     },
     "partnership": {
       "poweredBy": "በGoogle Cloud (ከVertex AI፣ ከደመና ማከማቻ እና ከትርጉም መሣሪያዎች ጋር) የሚሰራ",
-      "footnote": "SceneFlow AI የሚሰራው፣ ለአዳዲስ ጀማሪ ኩባንያዎች (startups) እድገት እና ለትላልቅ ድርጅቶች ፍላጎቶች ተብሎ በተዘጋጀውና እንደ አስፈላጊነቱ ሊሰፋ በሚችል Google Cloud መሠረተ ልማት ላይ ነው።"
+      "footnote": "SceneFlow Studio የሚሰራው፣ ለአዳዲስ ጀማሪ ኩባንያዎች (startups) እድገት እና ለትላልቅ ድርጅቶች ፍላጎቶች ተብሎ በተዘጋጀውና እንደ አስፈላጊነቱ ሊሰፋ በሚችል Google Cloud መሠረተ ልማት ላይ ነው።"
     },
     "trustSafeguardLink": "ባለብዙ ደረጃ እምነት፡ የGoogle Vertex ደህንነት ከSceneFlow የመከላከያ እርምጃዎች (guardrails)፣ ማረጋገጫ እና የመነሻ ምንጭ መረጃ (provenance) ጋር — ከዚህ በታች ያለውን 'እምነት እና ደህንነት' (Trust & Safety) ክፍል ይመልከቱ።",
     "attribution": "— የSceneFlow የምህንድስና ቡድን"
@@ -1155,7 +1155,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1366,7 +1366,7 @@
     "taglineSub": "ከሃሳብ እስከ ታተመ ቪዲዮ",
     "securePayments": "የክፍያ ሂደቱ የሚከናወነው በይፋዊ የክፍያ ወኪላችን Whop አማካኝነት ሲሆን፣ ክፍያዎቹም ደህንነታቸው የተጠበቀ ናቸው።",
     "morLine": "ደህንነቱ የተጠበቀ ክፍያ፣ የታክስ ስሌት እና የደንብ ተገዢነት ጉዳዮች በLife Focus, LLC ስም፣ በይፋዊ የክፍያ ተቀባይ ወኪላችን (Merchant of Record) በሆነው Whop ይከናወናሉ።",
-    "copyright": "© 2026 SceneFlow AI። መብቶቹ በህግ የተጠበቁ ናቸው።",
+    "copyright": "© 2026 SceneFlow Studio። መብቶቹ በህግ የተጠበቁ ናቸው።",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • አድራሻ፦ support@sceneflowai.studio",
     "poweredBy": "በ Google Cloud የሚሰራ"
   },
@@ -1377,7 +1377,7 @@
     "dismiss": "አሰናብት"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "አፍታ አቁም",
     "play": "አጫውት",
     "mute": "ድምፅ አጥፋ",

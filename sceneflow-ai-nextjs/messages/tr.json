@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - Yapay Zeka Destekli Video Oluşturma",
+    "title": "SceneFlow Studio - Yapay Zeka Destekli Video Oluşturma",
     "description": "Yapay zeka destekli iş akışı otomasyonuyla fikirlerinizi profesyonel videolara dönüştürün."
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "Vertex AI, Bulut Depolama ve çeviri araçları ile Google Cloud tarafından desteklenmektedir",
-      "footnote": "SceneFlow AI, startup büyümesi ve kurumsal beklentiler için tasarlanmış ölçeklenebilir bir Google Cloud altyapısı üzerinde çalışır."
+      "footnote": "SceneFlow Studio, startup büyümesi ve kurumsal beklentiler için tasarlanmış ölçeklenebilir bir Google Cloud altyapısı üzerinde çalışır."
     },
     "trustSafeguardLink": "Katmanlı güven: Google Vertex güvenliği ve buna ek olarak SceneFlow koruma bariyerleri, doğrulama ve köken bilgisi — aşağıda yer alan Güven ve Güvenlik bölümüne bakın.",
     "attribution": "— SceneFlow Mühendislik Ekibi"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "Fikirden Yayınlanan Videoya",
     "securePayments": "Kayıtlı Tüccarımız Whop tarafından işlenen güvenli ödemeler",
     "morLine": "Güvenli ödemeler, vergi hesaplaması ve uyumluluk, Life Focus, LLC adına Kayıtlı Tüccarımız Whop tarafından gerçekleştirilir.",
-    "copyright": "© 2026 SceneFlow AI. Tüm hakları saklıdır.",
+    "copyright": "© 2026 SceneFlow Studio. Tüm hakları saklıdır.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, ABD • İletişim: support@sceneflowai.studio",
     "poweredBy": "Google destekli zeka · Google Cloud'de düzenlenmiştir"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "Yok say"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "Duraklat",
     "play": "Oyna",
     "mute": "Sessize al",

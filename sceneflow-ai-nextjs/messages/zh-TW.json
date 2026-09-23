@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - AI 驅動的影片創作",
+    "title": "SceneFlow Studio - AI 驅動的影片創作",
     "description": "利用 AI 驅動的自動化工作流程，將您的創意轉化為專業影片。"
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "由 Google Cloud 結合 Vertex AI、雲端儲存及翻譯工具提供支援",
-      "footnote": "SceneFlow AI 運行於可擴展的 Google Cloud 基礎架構之上，該架構專為支援新創企業成長及滿足大型企業需求而設計。"
+      "footnote": "SceneFlow Studio 運行於可擴展的 Google Cloud 基礎架構之上，該架構專為支援新創企業成長及滿足大型企業需求而設計。"
     },
     "trustSafeguardLink": "多層次信任：Google Vertex 安全機制，加上 SceneFlow 防護機制、驗證與來源追溯 —— 詳見下方的「信任與安全」章節。",
     "attribution": "— SceneFlow 工程團隊"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "從構想到已發佈的影片",
     "securePayments": "由我們的記錄商家Whop處理的安全付款",
     "morLine": "安全付款、稅務計算和合規性由我們的記錄商家Whop代表Life Focus, LLC處理。",
-    "copyright": "© 2026 SceneFlow AI。版權所有。",
+    "copyright": "© 2026 SceneFlow Studio。版權所有。",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States •聯系方式： support@sceneflowai.studio",
     "poweredBy": "Google驅動的情報·在Google Cloud上編排"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "關閉"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "暫停",
     "play": "播放",
     "mute": "靜音",

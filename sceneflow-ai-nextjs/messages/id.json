@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - Pembuatan Video Berbasis AI",
+    "title": "SceneFlow Studio - Pembuatan Video Berbasis AI",
     "description": "Ubah ide Anda menjadi video profesional dengan otomatisasi alur kerja berbasis AI."
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "Didukung oleh Google Cloud dengan Vertex AI, Penyimpanan Cloud, dan perangkat penerjemahan",
-      "footnote": "SceneFlow AI berjalan pada infrastruktur Google Cloud yang dapat disesuaikan skalanya, yang dirancang untuk mendukung pertumbuhan startup serta memenuhi ekspektasi perusahaan berskala besar."
+      "footnote": "SceneFlow Studio berjalan pada infrastruktur Google Cloud yang dapat disesuaikan skalanya, yang dirancang untuk mendukung pertumbuhan startup serta memenuhi ekspektasi perusahaan berskala besar."
     },
     "trustSafeguardLink": "Kepercayaan berlapis: keamanan Google Vertex ditambah mekanisme pengaman (guardrails), validasi, dan provenans SceneFlow — lihat bagian Kepercayaan & Keamanan di bawah ini.",
     "attribution": "— Tim Teknik SceneFlow"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "Dari Gagasan ke Video yang Dipublikasikan",
     "securePayments": "Pembayaran aman diproses oleh Whop, Merchant of Record kami",
     "morLine": "Pembayaran yang aman, perhitungan pajak, dan kepatuhan ditangani oleh Whop, Merchant of Record kami, atas nama Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. Hak cipta dilindungi undang - undang.",
+    "copyright": "© 2026 SceneFlow Studio. Hak cipta dilindungi undang - undang.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, Amerika Serikat • Kontak: support@sceneflowai.studio",
     "poweredBy": "Kecerdasan bertenaga Google · Didalangi oleh Google Cloud"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "Tutup"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "Jeda",
     "play": "Mainkan",
     "mute": "Bisukan",

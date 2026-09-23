@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - สร้างวิดีโอด้วย AI",
+    "title": "SceneFlow Studio - สร้างวิดีโอด้วย AI",
     "description": "เปลี่ยนไอเดียของคุณเป็นวิดีโอระดับมืออาชีพด้วยระบบอัตโนมัติที่ขับเคลื่อนด้วย AI"
   },
   "nav": {
@@ -1028,7 +1028,7 @@
     },
     "partnership": {
       "poweredBy": "ขับเคลื่อนโดย Google Cloud ร่วมกับ Vertex AI, Cloud Storage และเครื่องมือช่วยแปล",
-      "footnote": "SceneFlow AI ทำงานบนโครงสร้างพื้นฐาน Google Cloud ที่สามารถขยายขีดความสามารถได้ ซึ่งได้รับการออกแบบมาเพื่อรองรับการเติบโตของสตาร์ทอัพและตอบโจทย์ความคาดหวังขององค์กรธุรกิจขนาดใหญ่"
+      "footnote": "SceneFlow Studio ทำงานบนโครงสร้างพื้นฐาน Google Cloud ที่สามารถขยายขีดความสามารถได้ ซึ่งได้รับการออกแบบมาเพื่อรองรับการเติบโตของสตาร์ทอัพและตอบโจทย์ความคาดหวังขององค์กรธุรกิจขนาดใหญ่"
     },
     "trustSafeguardLink": "ความน่าเชื่อถือแบบหลายชั้น: ระบบความปลอดภัยของ Google Vertex ผสานกับมาตรการควบคุม (guardrails) การตรวจสอบความถูกต้อง และข้อมูลที่มาของข้อมูล (provenance) ตามที่ระบุในหัวข้อ Trust & Safety ด้านล่าง",
     "attribution": "— ทีมวิศวกร SceneFlow"
@@ -1156,7 +1156,7 @@
     "byok": {
       "title": "นำกุญแจมาเอง",
       "badge": "แผนโปรและสตูดิโอ",
-      "description": "มีคีย์ API สำหรับ Vertex AI หรือ ElevenLabs อยู่แล้วใช่ไหมใช้กับ SceneFlow AI และประหยัดสูงสุด 80% สำหรับเครดิตแพลตฟอร์ม",
+      "description": "มีคีย์ API สำหรับ Vertex AI หรือ ElevenLabs อยู่แล้วใช่ไหมใช้กับ SceneFlow Studio และประหยัดสูงสุด 80% สำหรับเครดิตแพลตฟอร์ม",
       "savingsHighlight": "รับเครดิตแพลตฟอร์ม 80%",
       "benefits": [
         {
@@ -1367,7 +1367,7 @@
     "taglineSub": "จากไอเดียสู่การเผยแพร่วิดีโอ",
     "securePayments": "ชำระเงินอย่างปลอดภัยผ่าน Whop ซึ่งเป็น Merchant of Record ของเรา",
     "morLine": "การชำระเงินที่ปลอดภัย การคำนวณภาษี และการปฏิบัติตามกฎระเบียบ ดำเนินการโดย Whop ซึ่งเป็น Merchant of Record ของเรา ในนามของ Life Focus, LLC",
-    "copyright": "© 2026 SceneFlow AI สงวนลิขสิทธิ์",
+    "copyright": "© 2026 SceneFlow Studio สงวนลิขสิทธิ์",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • ติดต่อ: support@sceneflowai.studio",
     "poweredBy": "ขับเคลื่อนโดย Google Cloud"
   },
@@ -1378,7 +1378,7 @@
     "dismiss": "ยกเลิก"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "หยุดชั่วคราว",
     "play": "เล่น",
     "mute": "ปิดเสียง",

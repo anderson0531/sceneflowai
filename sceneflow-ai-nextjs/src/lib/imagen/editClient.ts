@@ -1,5 +1,5 @@
 /**
- * Image Editing Client for SceneFlow AI
+ * Image Editing Client for SceneFlow Studio
  *
  * Vertex AI Imagen endpoints (including `imagen-3.0-capability-001`) were retired on
  * 2026-06-30, so editing now runs on Gemini Image via `editVertexImage`:

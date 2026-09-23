@@ -15,7 +15,7 @@ describe('Hero YouTube publish metadata', () => {
   it('keeps titles within YouTube limit and uses SceneFlow prefix', () => {
     for (const bundle of HERO_YOUTUBE_PUBLISH_BUNDLES) {
       expect(bundle.title.length).toBeLessThanOrEqual(100)
-      expect(bundle.title).toMatch(/^SceneFlow AI Studio — /)
+      expect(bundle.title).toMatch(/^SceneFlow Studio — /)
     }
   })
 

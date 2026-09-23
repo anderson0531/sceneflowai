@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - KI-gedrewe videoskepping",
+    "title": "SceneFlow Studio - KI-gedrewe videoskepping",
     "description": "Verander jou idees in professionele video's met KI-gedrewe werkvloei-outomatisering."
   },
   "nav": {
@@ -1027,7 +1027,7 @@
     },
     "partnership": {
       "poweredBy": "Aangedryf deur Google Cloud met Vertex AI, wolkberging en vertaalhulpmiddels",
-      "footnote": "SceneFlow AI loop op skaalbare Google Cloud-infrastruktuur wat ontwerp is vir die groei van nuwe ondernemings en die verwagtinge van groot ondernemings."
+      "footnote": "SceneFlow Studio loop op skaalbare Google Cloud-infrastruktuur wat ontwerp is vir die groei van nuwe ondernemings en die verwagtinge van groot ondernemings."
     },
     "trustSafeguardLink": "Gelaagde vertroue: Google Vertex-veiligheid plus SceneFlow-beskermingsmaatreëls, -validasie en -herkoms — sien Vertroue en Veiligheid hieronder.",
     "attribution": "— Die SceneFlow-ingenieursspan"
@@ -1155,7 +1155,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1366,7 +1366,7 @@
     "taglineSub": "Van idee tot gepubliseerde video",
     "securePayments": "Veilige betalings verwerk deur Whop, ons handelaar van rekord",
     "morLine": "Veilige betalings, belastingberekening en nakoming word deur Whop – ons aangewese handelaar – namens Life Focus, LLC hanteer.",
-    "copyright": "© 2026 SceneFlow AI. Alle regte voorbehou.",
+    "copyright": "© 2026 SceneFlow Studio. Alle regte voorbehou.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • Kontak: support@sceneflowai.studio",
     "poweredBy": "Aangedryf deur Google Cloud"
   },
@@ -1377,7 +1377,7 @@
     "dismiss": "Verwerp"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "Pouse",
     "play": "Speel",
     "mute": "Stom",

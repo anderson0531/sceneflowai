@@ -1629,7 +1629,7 @@ export function AudioGalleryPlayer({
           className="inline-block rounded-md bg-black/25 px-2.5 py-1 text-white font-bold tracking-widest uppercase backdrop-blur-[2px] drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]"
           style={{ fontSize: isFullscreen ? '1.5rem' : '0.875rem' }}
         >
-          SceneFlow AI Studio
+          SceneFlow Studio
         </span>
       </div>
       )}

@@ -7,7 +7,7 @@ type Props = {
   /** When set, the brand is a link (e.g. `/` on public pages, `/dashboard` in the app). */
   href?: string
   className?: string
-  /** Text color classes for the SceneFlow + Studio portions */
+  /** Text color classes for the SceneFlow and Studio portions */
   nameClassName?: string
   variant?: BrandVariant
   /** Hide wordmark (badge only) */
@@ -52,7 +52,6 @@ function StudioWordmark({
       style={{ fontFamily: BRAND.wordmark.fontFamily }}
     >
       <span>SceneFlow</span>{' '}
-      <span className="sf-wordmark-ai">AI</span>{' '}
       <span
         className={cn(
           'font-medium text-gray-500 dark:text-gray-400',

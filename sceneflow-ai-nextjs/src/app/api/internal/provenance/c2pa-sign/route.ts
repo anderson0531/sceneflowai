@@ -71,7 +71,7 @@ async function tryEmbedC2paManifest(
       actions: [
         {
           action: 'c2pa.created',
-          softwareAgent: 'SceneFlow AI',
+          softwareAgent: 'SceneFlow Studio',
           digitalSourceType: 'http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia',
         },
       ],

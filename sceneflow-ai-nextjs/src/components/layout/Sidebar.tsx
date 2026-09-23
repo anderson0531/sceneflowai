@@ -370,7 +370,7 @@ export function Sidebar() {
           <div className="p-6 border-t border-gray-200 dark:border-gray-700/50 bg-gray-50 dark:bg-gray-800/30">
             <div className="text-center">
               <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                {`SceneFlow AI${process.env.NEXT_PUBLIC_APP_VERSION ? ` v${process.env.NEXT_PUBLIC_APP_VERSION}` : ''}`}
+                {`SceneFlow Studio${process.env.NEXT_PUBLIC_APP_VERSION ? ` v${process.env.NEXT_PUBLIC_APP_VERSION}` : ''}`}
               </p>
             </div>
           </div>

@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - יצירת סרטונים מבוססת בינה מלאכותית",
+    "title": "SceneFlow Studio - יצירת סרטונים מבוססת בינה מלאכותית",
     "description": "הפכו את הרעיונות שלכם לסרטונים מקצועיים באמצעות אוטומציה של תהליכי עבודה המבוססת על בינה מלאכותית."
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "מופעל על ידי Google Cloud בשילוב עם Vertex AI, אחסון בענן וכלי תרגום",
-      "footnote": "SceneFlow AI פועלת על גבי תשתית Google Cloud ניתנת להרחבה, שתוכננה הן עבור צמיחת סטארטאפים והן עבור הציפיות של ארגונים גדולים."
+      "footnote": "SceneFlow Studio פועלת על גבי תשתית Google Cloud ניתנת להרחבה, שתוכננה הן עבור צמיחת סטארטאפים והן עבור הציפיות של ארגונים גדולים."
     },
     "trustSafeguardLink": "אמון רב-שכבתי: מנגנוני הבטיחות של Google Vertex בתוספת מנגנוני הגנה (guardrails), אימות ומקוריות (provenance) מסוג SceneFlow — ראו \"אמון ובטיחות\" להלן.",
     "attribution": "— צוות ההנדסה של SceneFlow"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "מרעיון לסרטון שפורסם",
     "securePayments": "תשלומים מאובטחים מעובדים על ידי Whop, סוחר הרשומות שלנו",
     "morLine": "תשלומים מאובטחים, חישוב מס ותאימות מטופלים על ידי Whop, סוחר הרשומות שלנו, מטעם Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. כל הזכויות שמורות.",
+    "copyright": "© 2026 SceneFlow Studio. כל הזכויות שמורות.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • צור קשר: support@sceneflowai.studio",
     "poweredBy": "מודיעין המופעל על ידי Google · מתוזמר ב - Google Cloud"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "שחרור"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "השהיה",
     "play": "נגן",
     "mute": "השתק",

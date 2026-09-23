@@ -1,5 +1,5 @@
 """
-SceneFlow AI Video Renderer for GCP Cloud Run Jobs
+SceneFlow Studio Video Renderer for GCP Cloud Run Jobs
 
 This script:
 1. Reads job specification from GCS
@@ -569,7 +569,7 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
             log("Watermark image download failed; falling back to text watermark", 'WARN')
             wm_for_cmd = dict(watermark)
             wm_for_cmd['type'] = 'text'
-            wm_for_cmd['text'] = wm_for_cmd.get('text') or 'SceneFlow AI Studio'
+            wm_for_cmd['text'] = wm_for_cmd.get('text') or 'SceneFlow Studio'
     
     send_callback(callback_url, job_id, 'PROCESSING', 50)
     

@@ -23,7 +23,7 @@ const HERO_NARRATION_EN = `You already have the story in your head. But turning 
 
 What if one studio carried you from first concept all the way to a publish-ready master — with a clear path at every step, instead of creative chaos?
 
-SceneFlow AI is that studio. Start in Blueprint — shape your logline, beats, and characters, test audience resonance, and approve the story before you spend heavy credits on production.
+SceneFlow Studio is that studio. Start in Blueprint — shape your logline, beats, and characters, test audience resonance, and approve the story before you spend heavy credits on production.
 
 Then move into Production the beat-first way: review your Express storyboard, lock Beat Frames for continuity, and only then generate video — so you're refining the look, not gambling on random regenerations.
 
@@ -59,7 +59,7 @@ const HERO_NARRATION_BY_LOCALE = {
 
 क्या होगा अगर एक स्टूडियो आपको पहले कॉन्सेप्ट से लेकर पब्लिश-रेडी मास्टर तक ले जाए — हर कदम पर साफ रास्ते के साथ, बजाय रचनात्मक अराजकता के?
 
-SceneFlow AI वही स्टूडियो है। Blueprint में शुरू करें — अपनी लॉगलाइन, बीट्स और कैरेक्टर्स को आकार दें, ऑडियंस रेज़ोनेंस टेस्ट करें, और भारी प्रोडक्शन क्रेडिट खर्च करने से पहले कहानी को मंज़ूर करें।
+SceneFlow Studio वही स्टूडियो है। Blueprint में शुरू करें — अपनी लॉगलाइन, बीट्स और कैरेक्टर्स को आकार दें, ऑडियंस रेज़ोनेंस टेस्ट करें, और भारी प्रोडक्शन क्रेडिट खर्च करने से पहले कहानी को मंज़ूर करें।
 
 फिर Production में beat-first तरीके से आगे बढ़ें: Express storyboard की समीक्षा करें, Beat Frames को कंटिन्युटी के लिए लॉक करें, और तभी वीडियो जनरेट करें — ताकि आप लुक को refine करें, random regenerations पर दांव न लगाएं।
 
@@ -71,7 +71,7 @@ SceneFlow AI वही स्टूडियो है। Blueprint में �
 
 E se um estúdio te levasse do primeiro conceito até um master pronto para publicar — com um caminho claro em cada etapa, em vez de caos criativo?
 
-O SceneFlow AI é esse estúdio. Comece no Blueprint — defina sua logline, beats e personagens, teste a ressonância com o público e aprove a história antes de gastar créditos pesados em produção.
+O SceneFlow Studio é esse estúdio. Comece no Blueprint — defina sua logline, beats e personagens, teste a ressonância com o público e aprove a história antes de gastar créditos pesados em produção.
 
 Depois avance para Production do jeito beat-first: revise seu storyboard Express, trave Beat Frames para continuidade e só então gere o vídeo — para refinar o visual, não apostar em regenerações aleatórias.
 

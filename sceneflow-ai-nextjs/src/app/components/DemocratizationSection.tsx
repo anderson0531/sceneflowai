@@ -38,7 +38,7 @@ export function DemocratizationSection() {
             </h2>
             
             <p className="text-base md:text-lg lg:text-xl text-gray-400 mb-8">
-              Stop juggling multiple tools and subscriptions. SceneFlow AI combines every step of video production into one seamless workflow.
+              Stop juggling multiple tools and subscriptions. SceneFlow Studio combines every step of video production into one seamless workflow.
             </p>
             
             <div className="space-y-4">

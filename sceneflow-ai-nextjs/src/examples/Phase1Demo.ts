@@ -529,7 +529,7 @@ export function demoStoreIntegration() {
  * Main demo function that runs all demonstrations
  */
 export async function runPhase1Demo() {
-  console.log('🎬 SceneFlow AI - Phase 1 Demo');
+  console.log('🎬 SceneFlow Studio - Phase 1 Demo');
   console.log('================================');
   console.log('Foundation & Core Architecture');
   console.log('');

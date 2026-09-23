@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - Criação de vídeo com IA",
+    "title": "SceneFlow Studio - Criação de vídeo com IA",
     "description": "Transforme suas ideias em vídeos profissionais com automação de fluxo de trabalho impulsionada por IA"
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "Desenvolvido com Google Cloud e Vertex AI, armazenamento em nuvem e ferramentas de tradução",
-      "footnote": "O SceneFlow AI opera em uma infraestrutura Google Cloud escalável, projetada para o crescimento de startups e para atender às expectativas de grandes empresas."
+      "footnote": "O SceneFlow Studio opera em uma infraestrutura Google Cloud escalável, projetada para o crescimento de startups e para atender às expectativas de grandes empresas."
     },
     "trustSafeguardLink": "Confiança em camadas: segurança do Google Vertex mais mecanismos de proteção (guardrails), validação e procedência do SceneFlow — consulte \"Confiança e Segurança\" abaixo.",
     "attribution": "— A equipe de engenharia do SceneFlow"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "Da ideia ao vídeo publicado",
     "securePayments": "Pagamentos seguros processados pela Whop, o nosso Merchant of Record",
     "morLine": "Pagamentos seguros, cálculo de impostos e conformidade são tratados pela Whop, nosso Comerciante Registrado, em nome da Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. Todos os direitos reservados.",
+    "copyright": "© 2026 SceneFlow Studio. Todos os direitos reservados.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, Estados Unidos • Contato: support@sceneflowai.studio",
     "poweredBy": "Inteligência com tecnologia Google · Orquestrado em Google Cloud"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "Dispensar"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "Pausa",
     "play": "Reproduzir",
     "mute": "Mudo",

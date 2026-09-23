@@ -1,5 +1,5 @@
 /**
- * SceneFlow AI Credit System
+ * SceneFlow Studio Credit System
  * 
  * A comprehensive credit-based billing system with:
  * - Operation-based credit costs (Imagen, Veo, ElevenLabs, Render)

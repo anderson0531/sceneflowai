@@ -260,7 +260,7 @@ export const SceneDirectionRenderer = React.forwardRef<HTMLDivElement, RendererP
       ))}
       </div>
       <div className="report-footer">
-        <span>SceneFlow AI: Accelerate Your Vision</span>
+        <span>SceneFlow Studio: Accelerate Your Vision</span>
         <span>Page <span className="page-number"></span></span>
       </div>
     </div>

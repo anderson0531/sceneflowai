@@ -43,9 +43,9 @@ export interface VerificationResult {
 
 // Consent phrase templates with placeholders
 const CONSENT_TEMPLATES = [
-  'I, {actorName}, consent to having my voice cloned by {userName} on SceneFlow AI. Verification code: {code}.',
-  'This is {actorName}. I authorize {userName} to create an AI voice clone of my voice on SceneFlow AI. Code: {code}.',
-  'I am {actorName} and I give permission for {userName} to clone my voice using SceneFlow AI. Verification: {code}.',
+  'I, {actorName}, consent to having my voice cloned by {userName} on SceneFlow Studio. Verification code: {code}.',
+  'This is {actorName}. I authorize {userName} to create an AI voice clone of my voice on SceneFlow Studio. Code: {code}.',
+  'I am {actorName} and I give permission for {userName} to clone my voice using SceneFlow Studio. Verification: {code}.',
 ]
 
 /**
@@ -97,7 +97,7 @@ export class VoiceVerificationService {
    */
   static generateSelfAttestationPhrase(userName: string): ConsentPhraseResult {
     const verificationCode = generateVerificationCode()
-    const phrase = `I, ${userName}, consent to clone my own voice on SceneFlow AI. Code: ${verificationCode}.`
+    const phrase = `I, ${userName}, consent to clone my own voice on SceneFlow Studio. Code: ${verificationCode}.`
     
     const expiresAt = new Date()
     expiresAt.setMinutes(expiresAt.getMinutes() + 60)

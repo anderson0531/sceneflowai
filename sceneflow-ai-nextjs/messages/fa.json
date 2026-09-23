@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - ساخت ویدیو با هوش مصنوعی",
+    "title": "SceneFlow Studio - ساخت ویدیو با هوش مصنوعی",
     "description": "ایده‌های خود را با اتوماسیون گردش کار مبتنی بر هوش مصنوعی به ویدیوهای حرفه‌ای تبدیل کنید."
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "مبتنی بر Google Cloud به همراه Vertex AI، فضای ذخیره‌سازی ابری و ابزارهای ترجمه",
-      "footnote": "SceneFlow AI بر روی زیرساخت مقیاس‌پذیر Google Cloud اجرا می‌شود که برای رشد استارتاپ‌ها و برآورده‌سازی انتظارات سازمان‌های بزرگ طراحی شده است."
+      "footnote": "SceneFlow Studio بر روی زیرساخت مقیاس‌پذیر Google Cloud اجرا می‌شود که برای رشد استارتاپ‌ها و برآورده‌سازی انتظارات سازمان‌های بزرگ طراحی شده است."
     },
     "trustSafeguardLink": "اعتماد چندلایه: قابلیت‌های ایمنی Google Vertex به همراه چارچوب‌های حفاظتی (guardrails)، اعتبارسنجی و تعیین منشأ SceneFlow — به بخش «اعتماد و ایمنی» در ادامه مراجعه کنید.",
     "attribution": "— تیم مهندسی SceneFlow"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "از ایده تا انتشار ویدئو",
     "securePayments": "پرداخت‌های امن پردازش‌شده توسط SFAIWOPTERM، فروشنده‌ی اسناد ما",
     "morLine": "پرداخت‌های امن، محاسبه مالیات و انطباق با قوانین توسط Whop، فروشنده سوابق ما، به نمایندگی از Life Focus, LLC انجام می‌شود.",
-    "copyright": "© 2026 SceneFlow AI. تمامی حقوق محفوظ است.",
+    "copyright": "© 2026 SceneFlow Studio. تمامی حقوق محفوظ است.",
     "address": "شرکت لایف فوکوس • خیابان اندرسون غربی، پلاک ۲۹۰۰، واحد C200، آستین، تگزاس ۷۸۷۵۷، ایالات متحده • تماس: support@sceneflowai.studio",
     "poweredBy": "هوش مبتنی بر گوگل · هماهنگ‌شده در Google Cloud"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "مخفی شود"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "مکث",
     "play": "پخش",
     "mute": "بی‌صدا",

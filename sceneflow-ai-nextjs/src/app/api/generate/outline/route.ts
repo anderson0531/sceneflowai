@@ -7,7 +7,7 @@ export const maxDuration = 300
 type Role = 'system' | 'user'
 interface Message { role: Role; content: string }
 
-const SYSTEM_PROMPT = `You are the SceneFlow AI Outline Generator, acting as an expert Assistant Director and Script Supervisor. Your task is to analyze a concept treatment and break it down into a comprehensive, production-ready scene-by-scene outline.
+const SYSTEM_PROMPT = `You are the SceneFlow Studio Outline Generator, acting as an expert Assistant Director and Script Supervisor. Your task is to analyze a concept treatment and break it down into a comprehensive, production-ready scene-by-scene outline.
 
 RULES:
 1. Identify major narrative beats and divide the story into individual scenes.

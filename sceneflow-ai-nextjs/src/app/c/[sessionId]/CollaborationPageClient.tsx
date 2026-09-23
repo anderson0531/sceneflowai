@@ -148,7 +148,7 @@ export default function CollaborationPageClient({ params }: { params: Promise<{ 
     <div className="min-h-screen bg-gray-950 text-white p-4">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">SceneFlow AI — Collaboration Review</h1>
+          <h1 className="text-2xl font-semibold">SceneFlow Studio — Collaboration Review</h1>
           <a href="/" className="text-sm text-blue-400 hover:underline">Create your own</a>
         </div>
         {loading && (
@@ -295,8 +295,8 @@ export default function CollaborationPageClient({ params }: { params: Promise<{ 
         <ChatWindow sessionId={sessionId} reviewer={reviewer} role="collaborator" context={text.startsWith('#Variant') ? text : undefined} />
         <div className="max-w-4xl mx-auto mt-6">
           <div className="rounded border border-gray-800 bg-gray-900/60 p-4 flex items-center justify-between">
-            <div className="text-sm text-gray-300">Create your own collaboration review in minutes with SceneFlow AI.</div>
-            <a href="/" className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 text-sm">Try SceneFlow AI</a>
+            <div className="text-sm text-gray-300">Create your own collaboration review in minutes with SceneFlow Studio.</div>
+            <a href="/" className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 text-sm">Try SceneFlow Studio</a>
           </div>
         </div>
         {/* Overall feedback removed by request */}

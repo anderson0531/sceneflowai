@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - Paglikha ng Video gamit ang AI",
+    "title": "SceneFlow Studio - Paglikha ng Video gamit ang AI",
     "description": "Gawing mga propesyonal na video ang iyong mga ideya gamit ang workflow automation na pinapagana ng AI."
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "Pinapagana ng Google Cloud kasama ang Vertex AI, Cloud Storage, at mga kagamitan sa pagsasalin",
-      "footnote": "Ang SceneFlow AI ay tumatakbo sa scalable na imprastrukturang Google Cloud na idinisenyo para sa paglago ng mga startup at sa mga inaasahan ng malalaking negosyo."
+      "footnote": "Ang SceneFlow Studio ay tumatakbo sa scalable na imprastrukturang Google Cloud na idinisenyo para sa paglago ng mga startup at sa mga inaasahan ng malalaking negosyo."
     },
     "trustSafeguardLink": "Pinag-ipatong na tiwala: seguridad ng Google Vertex kasama ang mga guardrail, pagpapatunay, at provenance ng SceneFlow — tingnan ang Trust & Safety sa ibaba.",
     "attribution": "— Ang Engineering Team ng SceneFlow"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1379,7 +1379,7 @@
     "dismiss": "Balewalain"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "Huminto",
     "play": "Maglaro",
     "mute": "I-mute",

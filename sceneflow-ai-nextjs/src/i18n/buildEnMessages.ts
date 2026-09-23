@@ -67,7 +67,7 @@ export function buildEnMessages() {
   return {
     ...JSON_MAINTAINED_COPY,
     metadata: {
-      title: 'SceneFlow AI - AI-Powered Video Creation',
+      title: 'SceneFlow Studio - AI-Powered Video Creation',
       description:
         'Transform your ideas into professional videos with AI-powered workflow automation',
     },
@@ -295,7 +295,7 @@ export function buildEnMessages() {
       taglineSub: 'From Idea to Published Video',
       securePayments: 'Secure payments processed by Whop, our Merchant of Record',
       morLine: MOR_FOOTER_LINE,
-      copyright: '© 2026 SceneFlow AI. All rights reserved.',
+      copyright: '© 2026 SceneFlow Studio. All rights reserved.',
       address: LEGAL_FOOTER_ADDRESS,
       poweredBy: 'Google-powered intelligence · Orchestrated on Google Cloud',
     },
@@ -306,7 +306,7 @@ export function buildEnMessages() {
       dismiss: 'Dismiss',
     },
     common: {
-      watermark: 'SceneFlow AI Studio',
+      watermark: 'SceneFlow Studio',
       pause: 'Pause',
       play: 'Play',
       mute: 'Mute',

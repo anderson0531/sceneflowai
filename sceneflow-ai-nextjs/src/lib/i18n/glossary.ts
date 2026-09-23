@@ -16,8 +16,7 @@
 
 /** Product and vendor names that must never be translated. */
 export const GLOSSARY_TERMS = [
-  'SceneFlow AI Studio',
-  'SceneFlow AI',
+  'SceneFlow Studio',
   'SceneFlow',
   'Blueprint Studio',
   'Series Studio',
@@ -77,7 +76,7 @@ export interface ProtectedText {
 /**
  * Replace glossary terms with placeholders.
  *
- * Longest match first, so "SceneFlow AI Studio" is not shadowed by "SceneFlow".
+ * Longest match first, so "SceneFlow Studio" is not shadowed by "SceneFlow".
  * `extraTerms` carries per-request names, e.g. characters and locations from a
  * series bible.
  */

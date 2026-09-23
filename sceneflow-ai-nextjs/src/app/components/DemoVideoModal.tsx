@@ -87,7 +87,7 @@ export function DemoVideoModal({ open, onClose }: DemoVideoModalProps) {
               {/* YouTube iframe embed */}
               <iframe
                 src={youtubeEmbedUrl}
-                title="SceneFlow AI What's Possible Reel"
+                title="SceneFlow Studio What's Possible Reel"
                 className="w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                 allowFullScreen
@@ -98,7 +98,7 @@ export function DemoVideoModal({ open, onClose }: DemoVideoModalProps) {
             
             {/* Subtle branding */}
             <p className="text-center text-gray-500 text-xs mt-3">
-              SceneFlow AI Studio • What&apos;s Possible Reel
+              SceneFlow Studio • What&apos;s Possible Reel
             </p>
           </motion.div>
         </motion.div>

@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - Δημιουργία βίντεο με τη βοήθεια της τεχνητής νοημοσύνης",
+    "title": "SceneFlow Studio - Δημιουργία βίντεο με τη βοήθεια της τεχνητής νοημοσύνης",
     "description": "Μετατρέψτε τις ιδέες σας σε επαγγελματικά βίντεο με αυτοματοποίηση ροής εργασιών που βασίζεται στην τεχνητή νοημοσύνη."
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "Υποστηρίζεται από το Google Cloud με το Vertex AI, αποθήκευση στο cloud και εργαλεία μετάφρασης",
-      "footnote": "Το SceneFlow AI λειτουργεί σε κλιμακώσιμη υποδομή Google Cloud, σχεδιασμένη για την ανάπτυξη νεοφυών επιχειρήσεων και τις απαιτήσεις μεγάλων οργανισμών."
+      "footnote": "Το SceneFlow Studio λειτουργεί σε κλιμακώσιμη υποδομή Google Cloud, σχεδιασμένη για την ανάπτυξη νεοφυών επιχειρήσεων και τις απαιτήσεις μεγάλων οργανισμών."
     },
     "trustSafeguardLink": "Επίπεδα εμπιστοσύνης: Μηχανισμοί ασφάλειας του Google Vertex σε συνδυασμό με δικλείδες ασφαλείας, επικύρωση και τεκμηρίωση προέλευσης (provenance) — βλ. «Εμπιστοσύνη και Ασφάλεια» παρακάτω.",
     "attribution": "— Η ομάδα μηχανικών της SceneFlow"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "Από την ιδέα στο δημοσιευμένο βίντεο",
     "securePayments": "Ασφαλείς πληρωμές που υποβάλλονται σε επεξεργασία από την Whop, τον Έμπορο Αρχείων μας",
     "morLine": "Οι ασφαλείς πληρωμές, ο υπολογισμός του φόρου και η συμμόρφωση διεκπεραιώνονται από την Whop, τον Έμπορο Αρχείων μας, για λογαριασμό της Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. Με την επιφύλαξη παντός δικαιώματος.",
+    "copyright": "© 2026 SceneFlow Studio. Με την επιφύλαξη παντός δικαιώματος.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, Ηνωμένες Πολιτείες • Επικοινωνία: support@sceneflowai.studio",
     "poweredBy": "Google-powered intelligence · Ενορχηστρωμένη στο Google Cloud"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "Απόρριψη"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "Παύση",
     "play": "Αναπαραγωγή",
     "mute": "Σίγαση",

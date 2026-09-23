@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - AI-Powered Video Creation",
+    "title": "SceneFlow Studio - AI-Powered Video Creation",
     "description": "AI-संचालित वर्कफ़्लो ऑटोमेशन के साथ अपने विचारों को पेशेवर वीडियो में बदलें"
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "Vertex AI, क्लाउड स्टोरेज और ट्रांसलेशन टूलिंग के साथ Google Cloud द्वारा संचालित",
-      "footnote": "SceneFlow AI स्केलेबल Google Cloud इंफ्रास्ट्रक्चर पर चलता है, जिसे स्टार्टअप की ग्रोथ और एंटरप्राइज़ की उम्मीदों को ध्यान में रखकर बनाया गया है।"
+      "footnote": "SceneFlow Studio स्केलेबल Google Cloud इंफ्रास्ट्रक्चर पर चलता है, जिसे स्टार्टअप की ग्रोथ और एंटरप्राइज़ की उम्मीदों को ध्यान में रखकर बनाया गया है।"
     },
     "trustSafeguardLink": "लेयर्ड ट्रस्ट: Google Vertex सुरक्षा के साथ-साथ SceneFlow गार्डरेल्स, वैलिडेशन और प्रोवेनेंस — नीचे 'ट्रस्ट और सुरक्षा' देखें।",
     "attribution": "— SceneFlow इंजीनियरिंग टीम"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "आइडिया से पब्लिश किए गए वीडियो तक",
     "securePayments": "Whop, हमारे मर्चेंट ऑफ़ रिकॉर्ड द्वारा प्रोसेस किए गए सुरक्षित भुगतान",
     "morLine": "Life Focus, LLC की ओर से सुरक्षित भुगतान, टैक्स गणना और अनुपालन को Whop, हमारे मर्चेंट ऑफ़ रिकॉर्ड द्वारा संभाला जाता है।",
-    "copyright": "© 2026 SceneFlow AI. सर्वाधिकार सुरक्षित।",
+    "copyright": "© 2026 SceneFlow Studio. सर्वाधिकार सुरक्षित।",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • संपर्क करें: support@sceneflowai.studio",
     "poweredBy": "Google संचालित बुद्धि · Google Cloud पर ऑर्केस्ट्रेटेड"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "खारिज करना"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "रोकें",
     "play": "खेलें",
     "mute": "म्यूट",

@@ -91,7 +91,7 @@ export function SolutionSection() {
           </div>
 
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
-            SceneFlow AI is your{' '}
+            SceneFlow Studio is your{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400">
               AI-powered production studio
             </span>

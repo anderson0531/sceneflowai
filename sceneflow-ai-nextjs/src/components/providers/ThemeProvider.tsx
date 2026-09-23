@@ -6,7 +6,7 @@ import { ReactNode } from 'react'
 /**
  * ThemeProvider - Forces dark mode only
  * 
- * SceneFlow AI uses a dark-only theme to match industry standards
+ * SceneFlow Studio uses a dark-only theme to match industry standards
  * for video production tools (Premiere, DaVinci, Final Cut).
  * Dark interfaces reduce eye strain during long editing sessions.
  * 

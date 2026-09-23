@@ -30,8 +30,8 @@ export function getBrandBadgeUrl(): string {
   return `${getAppBaseUrl()}${BRAND.badge.src}`
 }
 
-export const DEFAULT_RESEND_FROM = `SceneFlow AI Studio <${LEGAL_SUPPORT_EMAIL}>`
-export const RESEND_ONBOARDING_FROM = 'SceneFlow AI Studio <onboarding@resend.dev>'
+export const DEFAULT_RESEND_FROM = `SceneFlow Studio <${LEGAL_SUPPORT_EMAIL}>`
+export const RESEND_ONBOARDING_FROM = 'SceneFlow Studio <onboarding@resend.dev>'
 
 function fromAddressKey(from: string): string {
   const match = from.match(/<([^>]+)>/)

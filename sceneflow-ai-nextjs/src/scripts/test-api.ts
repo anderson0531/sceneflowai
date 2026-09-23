@@ -1,7 +1,7 @@
 #!/usr/bin/env ts-node
 
 /**
- * API Testing Script for SceneFlow AI
+ * API Testing Script for SceneFlow Studio
  * 
  * This script tests the API endpoints for provider management and video generation
  * 
@@ -23,7 +23,7 @@ interface TestResult {
 }
 
 async function testAPI(): Promise<void> {
-  console.log('🧪 Testing SceneFlow AI API Endpoints...\n')
+  console.log('🧪 Testing SceneFlow Studio API Endpoints...\n')
 
   const results: TestResult[] = []
 

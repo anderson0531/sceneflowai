@@ -31,7 +31,7 @@ describe('legal document consistency', () => {
 
   it('exports the expected legal entity, MoR, and contact emails', () => {
     expect(LEGAL_COMPANY_NAME).toBe('Life Focus, LLC')
-    expect(LEGAL_SERVICE_NAME).toBe('SceneFlow AI')
+    expect(LEGAL_SERVICE_NAME).toBe('SceneFlow Studio')
     expect(WHOP_MOR_NAME).toBe('Whop')
     expect(LEGAL_SUPPORT_EMAIL).toBe('support@sceneflowai.studio')
     expect(LEGAL_ABUSE_EMAIL).toBe('abuse@sceneflowai.studio')

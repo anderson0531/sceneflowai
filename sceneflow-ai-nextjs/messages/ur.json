@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - مصنوعی ذہانت (AI) پر مبنی ویڈیو کی تخلیق",
+    "title": "SceneFlow Studio - مصنوعی ذہانت (AI) پر مبنی ویڈیو کی تخلیق",
     "description": "AI پر مبنی ورک فلو آٹومیشن کے ذریعے اپنے خیالات کو پیشہ ورانہ ویڈیوز میں تبدیل کریں۔"
   },
   "nav": {
@@ -1029,7 +1029,7 @@
     },
     "partnership": {
       "poweredBy": "Google Cloud اور Vertex AI، کلاؤڈ اسٹوریج اور ترجمے کے ٹولز کے ذریعے تقویت یافتہ",
-      "footnote": "SceneFlow AI قابلِ توسیع Google Cloud انفراسٹرکچر پر چلتا ہے جسے اسٹارٹ اپ کی ترقی اور بڑے کاروباری اداروں کی توقعات کے مطابق ڈیزائن کیا گیا ہے۔"
+      "footnote": "SceneFlow Studio قابلِ توسیع Google Cloud انفراسٹرکچر پر چلتا ہے جسے اسٹارٹ اپ کی ترقی اور بڑے کاروباری اداروں کی توقعات کے مطابق ڈیزائن کیا گیا ہے۔"
     },
     "trustSafeguardLink": "تہہ دار اعتماد: Google Vertex کی حفاظتی خصوصیات کے ساتھ ساتھ SceneFlow گارڈ ریلز، توثیق اور ماخذ کی تصدیق — نیچے ’اعتماد اور تحفظ‘ (Trust & Safety) ملاحظہ کریں۔",
     "attribution": "— SceneFlow انجینئرنگ ٹیم"
@@ -1157,7 +1157,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
       "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
@@ -1368,7 +1368,7 @@
     "taglineSub": "آئیڈیا سے شائع شدہ ویڈیو تک",
     "securePayments": "Whop، ہمارے مرچنٹ آف ریکارڈ کے ذریعہ پراسیس کردہ محفوظ ادائیگیاں",
     "morLine": "لائف فوکس، LLC کی جانب سے محفوظ ادائیگیاں، ٹیکس کا حساب کتاب اور تعمیل Whop، ہمارے مرچنٹ آف ریکارڈ کے ذریعے کی جاتی ہے ۔",
-    "copyright": "© 2026 SceneFlow AI ۔ جملہ حقوق محفوظ ہیں ۔",
+    "copyright": "© 2026 SceneFlow Studio ۔ جملہ حقوق محفوظ ہیں ۔",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • رابطہ کریں: support@sceneflowai.studio",
     "poweredBy": "گوگل سے چلنے والی انٹیلی جنس · Google Cloud پر منظم"
   },
@@ -1379,7 +1379,7 @@
     "dismiss": "برخاست"
   },
   "common": {
-    "watermark": "SceneFlow AI Studio",
+    "watermark": "SceneFlow Studio",
     "pause": "وقفہ",
     "play": "چلائیں",
     "mute": "خاموش",

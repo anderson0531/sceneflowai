@@ -266,7 +266,7 @@ export default function TrustSafetyPage() {
           </section>
 
           <section className="bg-gradient-to-r from-purple-900/30 to-cyan-900/30 rounded-xl p-6 border border-purple-700/50">
-            <h2 className="text-2xl font-semibold text-white mb-4">Summary: SceneFlow AI Guardrails</h2>
+            <h2 className="text-2xl font-semibold text-white mb-4">Summary: SceneFlow Studio Guardrails</h2>
             <div className="space-y-4 text-gray-300">
               <div className="flex items-start gap-3">
                 <span className="text-green-400 font-bold">✓</span>

@@ -88,7 +88,7 @@ export const StoryboardRenderer = React.forwardRef<HTMLDivElement, RendererProps
       </div>
       </div>
       <div className="report-footer">
-        <span>SceneFlow AI: Accelerate Your Vision</span>
+        <span>SceneFlow Studio: Accelerate Your Vision</span>
         <span>Page <span className="page-number"></span></span>
       </div>
     </div>

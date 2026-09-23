@@ -35,7 +35,7 @@ export const PRICING_LANDING_COPY = {
     title: 'Bring Your Own Key',
     badge: 'Pro & Studio Plans',
     description:
-      'Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.',
+      'Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.',
     savingsHighlight: '80% on platform credits',
     benefits: [
       {
