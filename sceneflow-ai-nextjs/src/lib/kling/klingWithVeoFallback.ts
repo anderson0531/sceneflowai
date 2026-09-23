@@ -429,4 +429,4 @@ export async function generateVideoWithKlingVeoFallback(
   }
 }
 
-export { getKlingPollIntervalMs, getKlingPollTimeoutSec }
+export { getKlingPollIntervalMs, getKlingPollTimeoutSec } from './config'
