@@ -169,7 +169,7 @@ export function delay(ms: number): Promise<void> {
 export const CONCURRENCY_DEFAULTS = {
   IMAGE_GENERATION: 3,
   AUDIO_GENERATION: 2,
-  VIDEO_GENERATION: 2,
+  VIDEO_GENERATION: 1,
   API_CALLS: 5
 } as const
 

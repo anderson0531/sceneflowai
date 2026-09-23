@@ -28,6 +28,7 @@ import {
   normalizeOmniResolution,
   resolveOmniPreviousInteractionId,
 } from '@/lib/gemini/omniVideoInteractions'
+import { parseVertexRetryAfterSeconds } from '@/lib/gemini/vertexRateLimit'
 
 /**
  * Get Google OAuth2 Bearer token for Vertex AI
@@ -201,6 +202,8 @@ interface VideoGenerationResult {
   veoVideoRefExpiry?: string
   error?: string
   estimatedWaitSeconds?: number
+  /** Seconds to wait before the next poll after a 429 status check. */
+  retryAfterSeconds?: number
 }
 
 /**
@@ -448,6 +451,20 @@ async function checkOmniInteractionStatus(
     if (!response.ok) {
       const errorText = await response.text()
       console.error('[Omni Video] Status check error:', errorText)
+      if (response.status === 429) {
+        const retryAfterSeconds = parseVertexRetryAfterSeconds(
+          response.headers.get('retry-after'),
+          errorText
+        )
+        console.warn(
+          `[Omni Video] Status check rate limited (429). Next poll in ${retryAfterSeconds}s`
+        )
+        return {
+          status: 'PROCESSING',
+          operationName,
+          retryAfterSeconds,
+        }
+      }
       return {
         status: 'FAILED',
         error: `Omni interaction status check failed: ${response.status}`,
@@ -1123,8 +1140,13 @@ export async function waitForVideoCompletion(
       return status
     }
 
-    // Wait before next poll
-    await new Promise(resolve => setTimeout(resolve, pollIntervalSeconds * 1000))
+    const waitSeconds =
+      typeof status.retryAfterSeconds === 'number' && status.retryAfterSeconds > 0
+        ? status.retryAfterSeconds
+        : pollIntervalSeconds
+    const remainingMs = maxWaitMs - (Date.now() - startTime)
+    if (remainingMs <= 0) break
+    await new Promise(resolve => setTimeout(resolve, Math.min(waitSeconds * 1000, remainingMs)))
   }
 
   return {

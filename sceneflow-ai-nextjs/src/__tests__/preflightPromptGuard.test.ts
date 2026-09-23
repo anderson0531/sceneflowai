@@ -71,5 +71,26 @@ describe('preflightPromptGuard', () => {
 
     expect(result.prompt).toBe(original)
     expect(result.wasRewritten).toBe(false)
+    expect(generateText).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ maxRetries: 0 })
+    )
+  })
+
+  it('keeps the original prompt when the flash rewrite is rate limited', async () => {
+    vi.mocked(generateText).mockRejectedValue(
+      new Error('HTTP 429: Resource exhausted. Please try again later.')
+    )
+
+    const original = 'Desperate defiance during interrogation.'
+    const result = await neutralizePromptForVeo({ prompt: original })
+
+    expect(generateText).toHaveBeenCalledTimes(1)
+    expect(generateText).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ maxRetries: 0 })
+    )
+    expect(result.prompt).toBe(original)
+    expect(result.wasRewritten).toBe(false)
   })
 })

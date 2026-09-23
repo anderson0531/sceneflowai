@@ -21,6 +21,8 @@ import { runKlingVideo } from '@/lib/kling/klingDirectClient'
 import { KLING_FALLBACK_MODEL_FAMILY } from '@/lib/kling/config'
 import type { VideoGenerationMethod } from '@/lib/vision/intelligentMethodSelection'
 import { neutralizeReferenceConflictPrompt } from '@/lib/gemini/neutralizeReferenceConflictPrompt'
+import { isOmniInteractionOperation } from '@/lib/gemini/omniVideoInteractions'
+import { OMNI_STATUS_POLL_INTERVAL_SECONDS } from '@/lib/gemini/vertexRateLimit'
 import { filterRefsForPolicyRetry } from '@/lib/video/normalizeReferenceImages'
 
 export type GenerationProvider = 'vertex' | 'kling'
@@ -171,7 +173,15 @@ async function runVertexAttempt(
     return { ...start, status: 'FAILED', error: 'Missing operation name' }
   }
 
-  return waitForProductionVideoCompletion(start.operationName, 'vertex', 240, 10)
+  const pollIntervalSeconds = isOmniInteractionOperation(start.operationName)
+    ? OMNI_STATUS_POLL_INTERVAL_SECONDS
+    : 10
+  return waitForProductionVideoCompletion(
+    start.operationName,
+    'vertex',
+    240,
+    pollIntervalSeconds
+  )
 }
 
 async function runKlingVideoFallback(
