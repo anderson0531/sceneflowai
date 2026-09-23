@@ -48,6 +48,11 @@ export interface ProductionVideoOptions extends VideoGenerationOptions {
   forceRegion?: string
   /** Force a specific project ID (overrides automatic selection) */
   forceProjectId?: string
+  /**
+   * Endpoints already attempted in this generation (`projectId:region`).
+   * Failover will not call the same endpoint again.
+   */
+  triedEndpoints?: ReadonlySet<string>
 }
 
 export interface ProductionVideoResult extends VideoGenerationResult {
@@ -239,8 +244,26 @@ interface SelectedEndpoint {
   isLastResort: boolean
 }
 
-/** Select the best available project/region combination */
-function selectBestEndpoint(): SelectedEndpoint | null {
+function endpointKey(projectId: string, region: string): string {
+  return `${projectId}:${region}`
+}
+
+/** Clear in-memory quota bookkeeping. Tests only. */
+export function resetProductionVideoQuotaStateForTests(): void {
+  for (const key of Object.keys(quotaState)) {
+    delete quotaState[key]
+  }
+}
+
+/**
+ * Select the best available project/region combination.
+ * Endpoints in `exclude` are never chosen. Last-resort (wait out a rate limit)
+ * is only used on the first attempt of a generation, not during failover.
+ */
+function selectBestEndpoint(
+  exclude: ReadonlySet<string> = new Set(),
+  allowLastResort = true
+): SelectedEndpoint | null {
   const projectIds = getConfiguredProjectIds()
   const regions = getConfiguredRegions()
   
@@ -252,16 +275,20 @@ function selectBestEndpoint(): SelectedEndpoint | null {
   // First pass: find a fully available endpoint
   for (const projectId of projectIds) {
     for (const region of regions) {
+      if (exclude.has(endpointKey(projectId, region))) continue
       if (isRegionAvailable(projectId, region)) {
         return { projectId, region, isLastResort: false }
       }
     }
   }
+
+  if (!allowLastResort) return null
   
   // Second pass: find a rate-limited but not quota-exhausted endpoint
   // (We'll wait for rate limit to clear)
   for (const projectId of projectIds) {
     for (const region of regions) {
+      if (exclude.has(endpointKey(projectId, region))) continue
       const state = getQuotaState(projectId, region)
       if (!state.isQuotaExhausted) {
         return { projectId, region, isLastResort: true }
@@ -323,11 +350,27 @@ function useGeminiAsPrimary(): boolean {
  * Vertex AI is the default for stability. Gemini API can be enabled for
  * testing or when video extension (V2V) features become available.
  */
+function failoverVideoResult(
+  error: string | undefined,
+  projectId: string,
+  region: string
+): ProductionVideoResult {
+  return {
+    status: 'FAILED',
+    error: error || 'All video generation endpoints exhausted. Please try again later.',
+    provider: 'vertex',
+    region,
+    projectId,
+    wasFailover: true,
+  }
+}
+
 export async function generateProductionVideo(
   prompt: string,
   options: ProductionVideoOptions = {}
 ): Promise<ProductionVideoResult> {
-  const { forceProvider, forceRegion, forceProjectId, ...videoOptions } = options
+  const { forceProvider, forceRegion, forceProjectId, triedEndpoints, ...videoOptions } = options
+  const tried = triedEndpoints ?? new Set<string>()
   
   console.log('[Production Video] Starting video generation...')
   console.log('[Production Video] Configured regions:', getConfiguredRegions())
@@ -376,9 +419,13 @@ export async function generateProductionVideo(
     let selectedEndpoint: SelectedEndpoint | null = null
     
     if (forceProjectId && forceRegion) {
-      selectedEndpoint = { projectId: forceProjectId, region: forceRegion, isLastResort: false }
+      const forcedKey = endpointKey(forceProjectId, forceRegion)
+      selectedEndpoint = tried.has(forcedKey)
+        ? null
+        : { projectId: forceProjectId, region: forceRegion, isLastResort: false }
     } else {
-      selectedEndpoint = selectBestEndpoint()
+      // Failover never waits out a cooldown and retries an endpoint already tried.
+      selectedEndpoint = selectBestEndpoint(tried, tried.size === 0)
     }
     
     if (selectedEndpoint) {
@@ -411,18 +458,28 @@ export async function generateProductionVideo(
         const result = await generateVideoWithVeo(prompt, videoOptions)
         
         if (result.status === 'FAILED') {
-          // Check for rate limit error
-          if (result.error?.includes('429') || result.error?.toLowerCase().includes('rate limit')) {
-            markRegionRateLimited(projectId, region)
-            // Try next endpoint
-            return generateProductionVideo(prompt, { ...options, forceProjectId: undefined, forceRegion: undefined })
-          }
-          
-          // Check for quota exhaustion
-          if (result.error?.includes('quota') || result.error?.includes('RESOURCE_EXHAUSTED')) {
-            markRegionQuotaExhausted(projectId, region)
-            // Try next endpoint
-            return generateProductionVideo(prompt, { ...options, forceProjectId: undefined, forceRegion: undefined })
+          const rateLimited =
+            result.error?.includes('429') || result.error?.toLowerCase().includes('rate limit')
+          const quotaExhausted =
+            result.error?.includes('quota') || result.error?.includes('RESOURCE_EXHAUSTED')
+
+          if (rateLimited || quotaExhausted) {
+            if (rateLimited) markRegionRateLimited(projectId, region)
+            else markRegionQuotaExhausted(projectId, region)
+
+            const nextTried = new Set(tried)
+            nextTried.add(endpointKey(projectId, region))
+            const nextEndpoint = selectBestEndpoint(nextTried, false)
+            if (!nextEndpoint) {
+              return failoverVideoResult(result.error, projectId, region)
+            }
+
+            return generateProductionVideo(prompt, {
+              ...options,
+              forceProjectId: undefined,
+              forceRegion: undefined,
+              triedEndpoints: nextTried,
+            })
           }
           
           // NOTE: Content policy violations cannot fallback to Gemini API

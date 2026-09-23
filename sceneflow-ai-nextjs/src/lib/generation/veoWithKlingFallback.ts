@@ -242,18 +242,16 @@ export async function generateVideoWithVeoKlingFallback(
         }
       }
 
-      if (result.status === 'FAILED' && result.error) {
-        lastError = result.error
-        if (!isVertexContentPolicyError(result.error)) {
-          return {
-            status: 'FAILED',
-            error: result.error,
-            generationProvider: 'vertex',
-            wasPolicyFallback: false,
-            vertexAttempts,
-          }
-        }
+      const policyError =
+        result.status === 'FAILED' &&
+        typeof result.error === 'string' &&
+        result.error.length > 0 &&
+        isVertexContentPolicyError(result.error)
 
+      // Only a confirmed RAI block starts another Omni job. Timeouts, 400s,
+      // quota errors, and a completed interaction with no file stop here.
+      if (policyError && result.error) {
+        lastError = result.error
         policyBlocked = true
         if (fastFallback) break
 
@@ -268,6 +266,19 @@ export async function generateVideoWithVeoKlingFallback(
           prompt = next.prompt
           options = next.options
           continue
+        }
+      } else {
+        const error =
+          result.error ||
+          (result.status === 'COMPLETED'
+            ? 'Vertex video completed without a downloadable file'
+            : `Vertex video generation ended with status ${result.status}`)
+        return {
+          status: 'FAILED',
+          error,
+          generationProvider: 'vertex',
+          wasPolicyFallback: false,
+          vertexAttempts,
         }
       }
     } catch (e) {

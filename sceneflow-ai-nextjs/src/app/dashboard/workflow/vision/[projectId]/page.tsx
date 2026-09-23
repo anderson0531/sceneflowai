@@ -1383,6 +1383,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Track if we've done initial production state load to avoid resetting during active generation
   const hasInitializedProductionState = useRef(false)
+  // One in-flight generate-asset call per beat. A second click must not start another Omni job.
+  const segmentGenerateInFlightRef = useRef(new Set<string>())
   
   // Calculate production readiness for workflow guards
   const productionReadiness = useMemo(() => {
@@ -4244,6 +4246,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         throw new Error('Project must be loaded before generating assets.')
       }
 
+      const inFlightKey = `${sceneId}:${segmentId}`
+      if (segmentGenerateInFlightRef.current.has(inFlightKey)) {
+        const message = 'Video generation is already running for this beat.'
+        toast.info(message)
+        throw new Error(message)
+      }
+      segmentGenerateInFlightRef.current.add(inFlightKey)
+
+      try {
       if (isBeatFirstPipelineEnabled()) {
         const gateScenes = script?.script?.scenes ?? []
         const gateScene = gateScenes.find(
@@ -5219,6 +5230,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
         } catch {}
         throw error
+      }
+      } finally {
+        segmentGenerateInFlightRef.current.delete(inFlightKey)
       }
     },
     [applySceneProductionUpdate, project?.id, sceneProductionState, script, videoGenerationQuality, videoGenerationMode]
