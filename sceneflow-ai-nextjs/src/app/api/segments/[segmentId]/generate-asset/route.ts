@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { getEndpointStatus } from '@/lib/gemini/productionVideoClient'
+import { classifyVertexRateLimitHttp } from '@/lib/gemini/vertexRateLimit'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import {
   generateSegmentVideoCore,
@@ -435,7 +436,7 @@ export async function POST(
         console.log('[Segment Asset Generation] Using Gemini Omni Flash for video generation')
         console.log(
           '[Segment Asset Generation] Endpoint status:',
-          JSON.stringify(getEndpointStatus())
+          JSON.stringify(getEndpointStatus(['global']))
         )
       }
 
@@ -757,13 +758,15 @@ export async function POST(
     }
 
     if (error instanceof SegmentVideoRateLimitError) {
+      const classified = classifyVertexRateLimitHttp(error.message)
+      const retryAfter = classified?.retryAfter ?? error.retryAfter
       return NextResponse.json(
         {
           error: error.message,
-          retryAfter: error.retryAfter,
+          retryAfter,
           isRateLimited: true,
         },
-        { status: 429 }
+        { status: 429, headers: { 'Retry-After': String(retryAfter) } }
       )
     }
 
@@ -794,12 +797,23 @@ export async function POST(
     let errorMessage = error.message || 'Failed to generate asset'
     let statusCode = 500
     let retryAfter: number | undefined = undefined
-    
-    // Check for rate limit errors first - return 429 not 500
-    if (errorMessage.toLowerCase().includes('rate limit')) {
-      statusCode = 429
-      retryAfter = 60
-      errorMessage = 'Rate limit exceeded. Please wait 60 seconds and try again.'
+
+    const vertexRateLimit = classifyVertexRateLimitHttp(errorMessage)
+    if (vertexRateLimit) {
+      return NextResponse.json(
+        {
+          error: vertexRateLimit.error,
+          retryAfter: vertexRateLimit.retryAfter,
+          isRateLimited: true,
+          routingTrace: buildRoutingTrace(
+            requestBody.videoProvider === 'aggregator' ? 'aggregator' : 'vertex',
+            requestBody.videoProvider === 'aggregator' && isAggregatorEnabled()
+              ? 'aggregator'
+              : 'vertex'
+          ),
+        },
+        { status: vertexRateLimit.status, headers: vertexRateLimit.headers }
+      )
     }
     
     // Extract cleaner error from Vertex AI JSON responses
@@ -912,8 +926,6 @@ export async function POST(
       statusCode = 400
     } else if (errorMessage.includes('Invalid JSON payload') || errorMessage.includes('INVALID_ARGUMENT')) {
       errorMessage = 'API Error: Invalid request format. Please try a different generation method.'
-    } else if (errorMessage.includes('quota') || errorMessage.includes('RESOURCE_EXHAUSTED')) {
-      errorMessage = 'Rate limit reached. Please wait a moment and try again.'
     } else if (errorMessage.includes('timeout') || errorMessage.includes('DEADLINE_EXCEEDED')) {
       errorMessage = 'Request timed out. The video generation is taking too long. Please try again.'
     }

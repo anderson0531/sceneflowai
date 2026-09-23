@@ -22,6 +22,7 @@ import {
 } from '@/lib/vision/intelligentMethodSelection'
 import { getQualityForMethod, DEFAULT_VEO_CLIP_DURATION, type VeoClipDuration } from '@/lib/config/modelConfig'
 import { sanitizeOmniRefLabel } from '@/lib/gemini/cleanOmniRefPrompt'
+import { isVertexRateLimitMessage, VERTEX_RATE_LIMIT_RETRY_AFTER_SECONDS } from '@/lib/gemini/vertexRateLimit'
 import { neutralizeReferenceConflictPrompt } from '@/lib/gemini/neutralizeReferenceConflictPrompt'
 import { veoRefsToPrioritized } from '@/lib/video/normalizeReferenceImages'
 import { isVeoVideoRefValid } from '@/lib/gemini/geminiStudioVideoClient'
@@ -51,12 +52,19 @@ import type {
   KlingCreativePreset,
 } from '@/lib/kling/types'
 import { resolveKlingApiModelName } from '@/lib/kling/types'
+
 export class SegmentVideoRateLimitError extends Error {
   retryAfter: number
-  constructor(message: string, retryAfter = 60) {
+  constructor(message: string, retryAfter = VERTEX_RATE_LIMIT_RETRY_AFTER_SECONDS) {
     super(message)
     this.name = 'SegmentVideoRateLimitError'
     this.retryAfter = retryAfter
+  }
+}
+
+function throwIfVertexRateLimited(message: string): void {
+  if (isVertexRateLimitMessage(message)) {
+    throw new SegmentVideoRateLimitError(message, VERTEX_RATE_LIMIT_RETRY_AFTER_SECONDS)
   }
 }
 
@@ -677,9 +685,7 @@ export async function generateSegmentVideoCore(
 
             if (genResult.status === 'FAILED') {
               const veoErr = genResult.error || 'Vertex fallback failed'
-              if (veoErr.toLowerCase().includes('rate limit')) {
-                throw new SegmentVideoRateLimitError(veoErr, 60)
-              }
+              throwIfVertexRateLimited(veoErr)
               if (!aggregatorEligible) {
                 throw new Error(
                   `${formatAdvancedKlingFailureMessage(directError)} Vertex fallback: ${veoErr}`
@@ -695,9 +701,7 @@ export async function generateSegmentVideoCore(
             finalVeoRefExpiry = genResult.veoVideoRefExpiry
           } else {
             const err = directError
-            if (err.toLowerCase().includes('rate limit')) {
-              throw new SegmentVideoRateLimitError(err, 60)
-            }
+            throwIfVertexRateLimited(err)
             if (!aggregatorEligible) {
               throw new Error(formatAdvancedKlingFailureMessage(err))
             }
@@ -741,9 +745,7 @@ export async function generateSegmentVideoCore(
 
     if (genResult.status === 'FAILED') {
       const err = genResult.error || 'Video generation failed'
-      if (err.toLowerCase().includes('rate limit')) {
-        throw new SegmentVideoRateLimitError(err, 60)
-      }
+      throwIfVertexRateLimited(err)
       throw new Error(err)
     }
 

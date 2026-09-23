@@ -42,8 +42,8 @@ import type {
   VideoRunItemStatus,
 } from '@/lib/video/videoQueueRunReport'
 
-/** How many times one beat may be pushed back after a 429 before the queue stops retrying it. */
-const MAX_RATE_LIMIT_REQUEUES_PER_BEAT = 2
+/** One cooldown, then the beat fails. A exhausted quota must not loop. */
+const MAX_RATE_LIMIT_REQUEUES_PER_BEAT = 1
 
 export interface VideoQueueState {
   /** All queue items with their configs */
