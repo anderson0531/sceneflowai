@@ -1341,6 +1341,10 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     sceneIdx: number
     cueId: string
   } | null>(null)
+  const [uploadingMusicCue, setUploadingMusicCue] = useState<{
+    sceneIdx: number
+    cueId: string
+  } | null>(null)
   const [generatingAllCuesFor, setGeneratingAllCuesFor] = useState<number | null>(null)
   const [audioTracks, setAudioTracks] = useState<AudioTrack[]>([])
   const [isPlayingMixed, setIsPlayingMixed] = useState(false)
@@ -2112,6 +2116,78 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     } finally {
       setGeneratingMusicCue(null)
     }
+  }
+
+  /**
+   * Replace one cue's track with a user-uploaded audio file.
+   *
+   * The file is stored on that cue the same way a Lyria score is, so the Mixer
+   * and Screening Room play the upload for those beats and leave the rest of
+   * the scene's score untouched.
+   */
+  const uploadMusicCue = async (sceneIdx: number, cueId: string) => {
+    if (!projectId) {
+      toast.error('Project not loaded — cannot upload audio')
+      return
+    }
+
+    const scene = scenes[sceneIdx]
+    if (!scene) return
+
+    const beats = getSceneBeats(scene)
+    const cue = parsePersistedMusicCues(scene.sceneMusicCues, beats).find(
+      (entry) => entry.cueId === cueId
+    )
+    if (!cue) {
+      toast.error('Music cue not found')
+      return
+    }
+
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'audio/mp3,audio/wav,audio/ogg,audio/webm,audio/mpeg,audio/mp4,audio/x-m4a'
+
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (!file) return
+
+      const toastId = toast.loading(`Uploading ${formatMusicCueRange(cue)}...`)
+      setUploadingMusicCue({ sceneIdx, cueId })
+      try {
+        const audioUrl = await uploadAssetViaAPI(file, projectId)
+        const duration = estimateMusicCueDuration(cue, beats, scene)
+        let fileDuration: number | undefined
+        try {
+          const measured = await getAudioDuration(audioUrl)
+          if (Number.isFinite(measured) && measured > 0) {
+            fileDuration = measured
+          }
+        } catch (error) {
+          console.warn('[Music Cue Upload] Could not measure clip length:', error)
+        }
+
+        await saveSceneAudio(
+          sceneIdx,
+          'music',
+          audioUrl,
+          undefined,
+          undefined,
+          undefined,
+          duration,
+          fileDuration,
+          cueId
+        )
+        toast.success(`Uploaded ${formatMusicCueRange(cue)}`, { id: toastId })
+      } catch (error: unknown) {
+        console.error('[Music Cue Upload] Error:', error)
+        const message = error instanceof Error ? error.message : 'Failed to upload audio'
+        toast.error(`Failed to upload cue: ${message}`, { id: toastId })
+      } finally {
+        setUploadingMusicCue(null)
+      }
+    }
+
+    input.click()
   }
 
   /**
@@ -3319,6 +3395,8 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       generateAllMusicCues={generateAllMusicCues}
                       generatingMusicCue={generatingMusicCue}
                       generatingAllCuesFor={generatingAllCuesFor}
+                      uploadMusicCue={uploadMusicCue}
+                      uploadingMusicCue={uploadingMusicCue}
                       uploadAudio={uploadAudio}
                       onSaveSfxAudio={saveSceneAudio}
                       generatingDirectionFor={generatingDirectionFor}
@@ -3946,6 +4024,9 @@ interface SceneCardProps {
   generateAllMusicCues?: (sceneIdx: number) => Promise<void>
   generatingMusicCue?: { sceneIdx: number; cueId: string } | null
   generatingAllCuesFor?: number | null
+  /** Replace one cue's track with an uploaded audio file. */
+  uploadMusicCue?: (sceneIdx: number, cueId: string) => void | Promise<void>
+  uploadingMusicCue?: { sceneIdx: number; cueId: string } | null
   /** Persist a generated SFX URL through the project PATCH path. */
   onSaveSfxAudio?: (
     sceneIdx: number,
@@ -4238,6 +4319,8 @@ function SceneCard({
   generateAllMusicCues,
   generatingMusicCue,
   generatingAllCuesFor,
+  uploadMusicCue,
+  uploadingMusicCue,
   onSaveSfxAudio,
   uploadAudio,
   generatingDirectionFor,
@@ -7565,12 +7648,24 @@ function SceneCard({
                           track: 'music',
                         })
                       }
+                      onUploadCue={
+                        uploadMusicCue
+                          ? (cueId) => {
+                              void uploadMusicCue(sceneIdx, cueId)
+                            }
+                          : undefined
+                      }
                       generatingCueId={
                         generatingMusicCue?.sceneIdx === sceneIdx
                           ? generatingMusicCue.cueId
                           : null
                       }
                       isGeneratingAll={generatingAllCuesFor === sceneIdx}
+                      uploadingCueId={
+                        uploadingMusicCue?.sceneIdx === sceneIdx
+                          ? uploadingMusicCue.cueId
+                          : null
+                      }
                       projectId={projectId}
                       sceneIndex={sceneIdx}
                       scene={scene}
