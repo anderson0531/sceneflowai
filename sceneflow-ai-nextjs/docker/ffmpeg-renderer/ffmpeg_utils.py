@@ -21,6 +21,15 @@ RESOLUTIONS = {
     '4K': {'width': 3840, 'height': 2160},
 }
 
+# Scene-stitch encode. Delivery is the historical default. Draft is opt-in.
+ENCODE_QUALITY_SETTINGS = {
+    'delivery': {'preset': 'medium', 'crf': '23'},
+    'draft': {'preset': 'veryfast', 'crf': '28'},
+}
+
+# Requested fps must match probed fps this closely before stream copy is safe.
+FPS_MATCH_TOLERANCE = 0.01
+
 # Ken Burns effect parameters
 # We scale images 2x to allow for pan/zoom headroom
 SCALE_FACTOR = 2
@@ -933,6 +942,275 @@ def run_ffmpeg(cmd: List[str], timeout: int = 3600) -> bool:
 # Video Concatenation Functions (for scene-level renders)
 # ============================================================================
 
+def resolve_encode_settings(encode_quality: Optional[str]) -> Tuple[str, str]:
+    """Return libx264 preset and CRF. Unknown values fall back to delivery."""
+    quality = encode_quality if encode_quality in ENCODE_QUALITY_SETTINGS else 'delivery'
+    spec = ENCODE_QUALITY_SETTINGS[quality]
+    return spec['preset'], spec['crf']
+
+
+def parse_frame_rate(rate: Any) -> Optional[float]:
+    """Parse an ffprobe frame rate (`24/1`, `30000/1001`, or a number)."""
+    if rate is None:
+        return None
+    if isinstance(rate, (int, float)):
+        value = float(rate)
+        return value if value > 0 else None
+    text = str(rate).strip()
+    if not text or text == '0/0':
+        return None
+    if '/' in text:
+        num, den = text.split('/', 1)
+        try:
+            numerator = float(num)
+            denominator = float(den)
+        except ValueError:
+            return None
+        if denominator == 0:
+            return None
+        value = numerator / denominator
+        return value if value > 0 else None
+    try:
+        value = float(text)
+    except ValueError:
+        return None
+    return value if value > 0 else None
+
+
+def _rates_match(left: float, right: float) -> bool:
+    return abs(left - right) <= FPS_MATCH_TOLERANCE
+
+
+def _segment_video_filter_reason(segment: Dict[str, Any]) -> Optional[str]:
+    """Reason this beat needs a video filter, or None when the frames can be copied."""
+    trim_in = float(segment.get('videoTrimInSec') or 0)
+    if trim_in > 0.001 or segment.get('videoTrimOutSec') is not None:
+        return 'trim'
+    pause = float(segment.get('pauseDuration') or 0)
+    if pause > 0.001:
+        return 'pause'
+    if clamp_watermark_crop_percent(segment.get('watermarkCropPercent')) is not None:
+        return 'watermark crop'
+    return None
+
+
+def _audio_signature(probe: Optional[Dict[str, Any]]) -> Optional[Tuple[str, int, int]]:
+    if not probe or not probe.get('audio_codec'):
+        return None
+    return (
+        str(probe.get('audio_codec')),
+        int(probe.get('sample_rate') or 0),
+        int(probe.get('channels') or 0),
+    )
+
+
+def video_stream_copy_block_reason(
+    video_segments: List[Dict[str, Any]],
+    probes: List[Optional[Dict[str, Any]]],
+    resolution: str = '1080p',
+    fps: int = 24,
+    text_overlays: Optional[List[Dict[str, Any]]] = None,
+    watermark: Optional[Dict[str, Any]] = None,
+    include_segment_audio: bool = True,
+) -> Optional[str]:
+    """
+    First reason the concat demuxer cannot copy video.
+
+    None means every beat shares codec, pixel format, frame rate, and size,
+    that size matches the requested resolution, and no video filter or
+    per-segment audio rebuild is required.
+    """
+    if not video_segments:
+        return 'no segments'
+    if len(probes) != len(video_segments):
+        return 'probe count'
+    if text_overlays:
+        return 'text overlay'
+    if watermark and watermark.get('type'):
+        return 'watermark'
+
+    target = RESOLUTIONS.get(resolution, RESOLUTIONS['1080p'])
+    target_w = int(target['width'])
+    target_h = int(target['height'])
+    target_fps = float(fps)
+    reference: Optional[Tuple[str, str, float]] = None
+
+    for index, (segment, probe) in enumerate(zip(video_segments, probes)):
+        filter_reason = _segment_video_filter_reason(segment)
+        if filter_reason:
+            return f'segment {index} {filter_reason}'
+        if not probe:
+            return f'segment {index} probe failed'
+        codec = probe.get('codec')
+        width = probe.get('width')
+        height = probe.get('height')
+        pix_fmt = probe.get('pix_fmt')
+        rate = probe.get('fps')
+        if not codec or not width or not height or not pix_fmt or rate is None:
+            return f'segment {index} incomplete probe'
+        if int(width) != target_w or int(height) != target_h:
+            return (
+                f'segment {index} resolution {int(width)}x{int(height)} '
+                f'!= {target_w}x{target_h}'
+            )
+        if not _rates_match(float(rate), target_fps):
+            return f'segment {index} fps {rate} != {target_fps}'
+        signature = (str(codec), str(pix_fmt), float(rate))
+        if reference is None:
+            reference = signature
+        elif signature[0] != reference[0] or signature[1] != reference[1] or not _rates_match(signature[2], reference[2]):
+            return f'segment {index} does not match segment 0'
+
+        source = segment.get('audioSource', 'original')
+        if include_segment_audio and source == 'voiceover':
+            return f'segment {index} voiceover'
+        if include_segment_audio and source not in ('original', 'none'):
+            return f'segment {index} audio source {source}'
+
+    if include_segment_audio:
+        sources = [segment.get('audioSource', 'original') for segment in video_segments]
+        if len(set(sources)) > 1:
+            return 'mixed per-segment audio sources'
+        if sources and sources[0] == 'none':
+            return 'muted segment audio'
+        volumes = [float(segment.get('audioVolume', 1.0)) for segment in video_segments]
+        if volumes and max(volumes) - min(volumes) > 1e-4:
+            return 'per-segment volume'
+
+    signatures = [_audio_signature(probe) for probe in probes]
+    if include_segment_audio and any(signature is None for signature in signatures):
+        return 'missing segment audio'
+    if len({repr(signature) for signature in signatures}) > 1:
+        return 'audio streams differ'
+    return None
+
+
+def full_stream_copy_block_reason(
+    video_segments: List[Dict[str, Any]],
+    probes: List[Optional[Dict[str, Any]]],
+    audio_clips: Optional[List[Dict[str, Any]]] = None,
+    include_segment_audio: bool = True,
+    segment_audio_volume: float = 1.0,
+) -> Optional[str]:
+    """
+    Extra reason `-c copy` cannot keep audio as well as video.
+
+    None means the concat demuxer can copy both streams. A reason here still
+    allows video copy with an audio re-encode when video copy itself is allowed.
+    """
+    if audio_clips:
+        return 'overlay audio'
+    if not include_segment_audio:
+        return 'segment audio excluded'
+    try:
+        global_volume = float(segment_audio_volume)
+    except (TypeError, ValueError):
+        global_volume = 1.0
+    if abs(global_volume - 1.0) > 1e-4:
+        return 'segment audio volume'
+    for index, segment in enumerate(video_segments):
+        if segment.get('audioSource', 'original') != 'original':
+            return f'segment {index} audio source'
+        if abs(float(segment.get('audioVolume', 1.0)) - 1.0) > 1e-4:
+            return f'segment {index} volume'
+    for index, probe in enumerate(probes):
+        if _audio_signature(probe) is None:
+            return f'segment {index} missing audio stream'
+    return None
+
+
+def _overlay_audio_filter(input_idx: int, clip: Dict[str, Any], label: str) -> str:
+    delay_ms = int(float(clip.get('startTime', 0) or 0) * 1000)
+    volume = clip.get('volume', 1.0)
+    playback_rate = clip.get('playbackRate', 1.0) or 1.0
+    tempo = build_atempo_filter_chain(float(playback_rate))
+    chain = [f'adelay={delay_ms}|{delay_ms}']
+    if tempo:
+        chain.append(tempo)
+    chain.append(f'volume={volume}')
+    chain.append('aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo')
+    return f'[{input_idx}:a]{",".join(chain)}{label}'
+
+
+def write_concat_list(paths: List[str], list_path: str) -> None:
+    """Write an FFmpeg concat-demuxer list. Paths are escaped for single quotes."""
+    with open(list_path, 'w', encoding='utf-8') as handle:
+        for path in paths:
+            escaped = path.replace("'", r"'\''")
+            handle.write(f"file '{escaped}'\n")
+
+
+def build_stream_copy_ffmpeg_command(
+    concat_list_path: str,
+    audio_clips: List[Dict[str, Any]],
+    output_path: str,
+    temp_dir: str,
+    include_segment_audio: bool = True,
+    segment_audio_volume: float = 1.0,
+    segment_audio_gain: float = 1.0,
+    full_copy: bool = False,
+) -> List[str]:
+    """
+    Concat with the demuxer.
+
+    `full_copy` copies video and audio. Otherwise video is copied and audio is
+    mixed/re-encoded (or dropped).
+    """
+    if full_copy:
+        return [
+            'ffmpeg', '-y',
+            '-f', 'concat', '-safe', '0', '-i', concat_list_path,
+            '-c', 'copy',
+            '-movflags', '+faststart',
+            output_path,
+        ]
+
+    cmd = ['ffmpeg', '-y', '-f', 'concat', '-safe', '0', '-i', concat_list_path]
+    for clip in audio_clips:
+        audio_path = os.path.join(temp_dir, 'assets', clip['localFile'])
+        cmd.extend(['-i', audio_path])
+
+    filter_parts: List[str] = []
+    mix_inputs: List[str] = []
+    if include_segment_audio:
+        try:
+            global_volume = float(segment_audio_volume)
+        except (TypeError, ValueError):
+            global_volume = 1.0
+        applied = global_volume * float(segment_audio_gain)
+        filter_parts.append(
+            f'[0:a]volume={applied},'
+            'aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo[src_audio]'
+        )
+        mix_inputs.append('[src_audio]')
+
+    for index, clip in enumerate(audio_clips):
+        label = f'[overlay_a{index}]'
+        filter_parts.append(_overlay_audio_filter(1 + index, clip, label))
+        mix_inputs.append(label)
+
+    if len(mix_inputs) > 1:
+        filter_parts.append(
+            f'{"".join(mix_inputs)}amix=inputs={len(mix_inputs)}:duration=longest:normalize=0[outa]'
+        )
+        audio_output = '[outa]'
+    elif len(mix_inputs) == 1:
+        audio_output = mix_inputs[0]
+    else:
+        audio_output = None
+
+    if filter_parts:
+        cmd.extend(['-filter_complex', ';'.join(filter_parts)])
+
+    cmd.extend(['-map', '0:v', '-c:v', 'copy'])
+    if audio_output:
+        cmd.extend(['-map', audio_output, '-c:a', 'aac', '-b:a', '192k'])
+    else:
+        cmd.append('-an')
+    cmd.extend(['-movflags', '+faststart', output_path])
+    return cmd
+
+
 def build_concat_ffmpeg_command(
     video_segments: List[Dict[str, Any]],
     audio_clips: List[Dict[str, Any]],
@@ -944,6 +1222,7 @@ def build_concat_ffmpeg_command(
     segment_audio_volume: float = 1.0,
     text_overlays: Optional[List[Dict[str, Any]]] = None,
     watermark: Optional[Dict[str, Any]] = None,
+    encode_quality: Optional[str] = None,
 ) -> List[str]:
     """
     Build FFmpeg command for concatenating video segments with audio mixing.
@@ -962,10 +1241,12 @@ def build_concat_ffmpeg_command(
         segment_audio_volume: Volume level for segment audio (0.0 to 1.0)
         text_overlays: List of text overlays to burn into the video
         watermark: Watermark specification to burn into the video
+        encode_quality: 'delivery' (medium/CRF 23) or 'draft' (veryfast/CRF 28)
     
     Returns:
         FFmpeg command as list of arguments
     """
+    preset, crf = resolve_encode_settings(encode_quality)
     res = RESOLUTIONS.get(resolution, RESOLUTIONS['1080p'])
     width, height = res['width'], res['height']
     
@@ -1213,8 +1494,8 @@ def build_concat_ffmpeg_command(
     # Output settings
     cmd.extend([
         '-c:v', 'libx264',
-        '-preset', 'medium',
-        '-crf', '23',
+        '-preset', preset,
+        '-crf', crf,
         '-pix_fmt', 'yuv420p',
     ])
     

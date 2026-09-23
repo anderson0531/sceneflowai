@@ -20,11 +20,23 @@ import sys
 import json
 import time
 import hashlib
+import subprocess
 import requests
-from typing import Dict, Any, Optional
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, Any, List, Optional
 from urllib.parse import urlparse
 from google.cloud import storage
-from ffmpeg_utils import build_ffmpeg_command, build_concat_ffmpeg_command, run_ffmpeg
+from ffmpeg_utils import (
+    build_ffmpeg_command,
+    build_concat_ffmpeg_command,
+    build_stream_copy_ffmpeg_command,
+    full_stream_copy_block_reason,
+    parse_frame_rate,
+    resolve_encode_settings,
+    run_ffmpeg,
+    video_stream_copy_block_reason,
+    write_concat_list,
+)
 
 # Constants
 TEMP_DIR = '/tmp'
@@ -103,6 +115,77 @@ def download_from_url(url: str, local_path: str) -> bool:
     except Exception as e:
         log(f"Failed to download {url[:60]}...: {e}", 'ERROR')
         return False
+
+
+def probe_media(path: str) -> Optional[Dict[str, Any]]:
+    """Read video and audio stream facts needed for stream-copy eligibility."""
+    cmd = [
+        'ffprobe', '-v', 'error',
+        '-show_entries', 'stream=codec_type,codec_name,width,height,pix_fmt,avg_frame_rate,sample_rate,channels',
+        '-of', 'json',
+        path,
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+    except Exception as exc:
+        log(f"ffprobe failed for {path}: {exc}", 'WARN')
+        return None
+    if result.returncode != 0:
+        log(f"ffprobe error for {path}: {result.stderr}", 'WARN')
+        return None
+    try:
+        payload = json.loads(result.stdout or '{}')
+    except json.JSONDecodeError:
+        return None
+
+    video_stream = None
+    audio_stream = None
+    for stream in payload.get('streams') or []:
+        if stream.get('codec_type') == 'video' and video_stream is None:
+            video_stream = stream
+        elif stream.get('codec_type') == 'audio' and audio_stream is None:
+            audio_stream = stream
+    if not video_stream:
+        return None
+    return {
+        'codec': video_stream.get('codec_name'),
+        'width': video_stream.get('width'),
+        'height': video_stream.get('height'),
+        'pix_fmt': video_stream.get('pix_fmt'),
+        'fps': parse_frame_rate(video_stream.get('avg_frame_rate')),
+        'audio_codec': audio_stream.get('codec_name') if audio_stream else None,
+        'sample_rate': audio_stream.get('sample_rate') if audio_stream else None,
+        'channels': audio_stream.get('channels') if audio_stream else None,
+    }
+
+
+def download_assets_parallel(jobs: List[Dict[str, Any]], max_workers: int = 8) -> List[Optional[str]]:
+    """
+    Download assets concurrently. Each job is {url, asset_type, index}.
+    Empty URLs stay None. Results keep input order.
+    """
+    results: List[Optional[str]] = [None] * len(jobs)
+    pending = [
+        (index, job)
+        for index, job in enumerate(jobs)
+        if job.get('url')
+    ]
+    if not pending:
+        return results
+    workers = max(1, min(max_workers, len(pending)))
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        future_map = {
+            pool.submit(download_asset, job['url'], job['asset_type'], job['index']): index
+            for index, job in pending
+        }
+        for future in as_completed(future_map):
+            index = future_map[future]
+            try:
+                results[index] = future.result()
+            except Exception as exc:
+                log(f"Download task failed: {exc}", 'ERROR')
+                results[index] = None
+    return results
 
 
 def download_asset(url: str, asset_type: str, index: int) -> Optional[str]:
@@ -281,7 +364,9 @@ def main():
         segment_audio_volume = job_spec.get('segmentAudioVolume', 1.0)
         text_overlays = job_spec.get('textOverlays', [])
         watermark = job_spec.get('watermark')
+        encode_quality = job_spec.get('encodeQuality') or 'delivery'
         log(f"Video Segments: {len(video_segments)}")
+        log(f"Encode quality: {encode_quality}")
         
         # Debug: Log per-segment audio settings from job spec
         for i, seg in enumerate(video_segments):
@@ -303,7 +388,7 @@ def main():
             log(f"  Watermark anchor: {watermark.get('anchor')}")
         render_video_concatenation(job_id, video_segments, audio_clips, output_path_gcs, 
                                    resolution, fps, callback_url, include_segment_audio, segment_audio_volume,
-                                   text_overlays, watermark)
+                                   text_overlays, watermark, encode_quality)
     else:
         # Ken Burns mode (for project renders with images)
         segments = job_spec.get('segments', [])
@@ -390,7 +475,8 @@ def render_ken_burns(job_id: str, segments: list, audio_clips: list,
 def render_video_concatenation(job_id: str, video_segments: list, audio_clips: list,
                                output_path_gcs: str, resolution: str, fps: int, callback_url: str,
                                include_segment_audio: bool = True, segment_audio_volume: float = 1.0,
-                               text_overlays: list = None, watermark: dict = None):
+                               text_overlays: list = None, watermark: dict = None,
+                               encode_quality: str = 'delivery'):
     """Render by concatenating video segments with audio mixing, text overlays, and watermark."""
     
     if text_overlays is None:
@@ -401,46 +487,67 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
     
     # Download all assets
     log("=== Downloading Assets (Concatenation Mode) ===")
-    
-    # Download video segments
+
+    download_jobs = []
+    video_job_at = []
+    voiceover_job_at = {}
     for i, segment in enumerate(video_segments):
         video_url = segment.get('videoUrl', '')
         if not video_url:
             log(f"Video segment {i} has no videoUrl", 'ERROR')
             send_callback(callback_url, job_id, 'FAILED', 0, error=f"Segment {i} missing video")
             sys.exit(1)
-        
-        local_file = download_asset(video_url, 'video', i)
-        if not local_file:
-            log(f"Failed to download video for segment {i}", 'ERROR')
-            send_callback(callback_url, job_id, 'FAILED', 0, error=f"Failed to download video {i}")
-            sys.exit(1)
-        
-        segment['localFile'] = local_file
-        
-        # Download voiceover audio if segment uses voiceover audio source
+        video_job_at.append(len(download_jobs))
+        download_jobs.append({'url': video_url, 'asset_type': 'video', 'index': i})
         audio_source = segment.get('audioSource', 'original')
         voiceover_url = segment.get('voiceoverUrl', '')
         if audio_source == 'voiceover' and voiceover_url:
-            voiceover_file = download_asset(voiceover_url, 'voiceover', i)
-            if voiceover_file:
-                segment['voiceoverLocalFile'] = voiceover_file
-                log(f"Downloaded voiceover for segment {i}")
-            else:
-                log(f"Failed to download voiceover for segment {i}, falling back to original", 'WARN')
-                segment['audioSource'] = 'original'
-    
-    log(f"Downloaded {len(video_segments)} video segments")
-    send_callback(callback_url, job_id, 'PROCESSING', 30)
-    
-    # Download audio
+            voiceover_job_at[i] = len(download_jobs)
+            download_jobs.append({'url': voiceover_url, 'asset_type': 'voiceover', 'index': i})
+
+    audio_job_at = []
     for i, clip in enumerate(audio_clips):
         audio_url = clip.get('url', '')
         if not audio_url:
             log(f"Audio clip {i} has no URL, skipping", 'WARN')
+            audio_job_at.append(None)
             continue
-        
-        local_file = download_asset(audio_url, 'audio', i)
+        audio_job_at.append(len(download_jobs))
+        download_jobs.append({'url': audio_url, 'asset_type': 'audio', 'index': i})
+
+    watermark_job_at = None
+    if watermark and watermark.get('type') == 'image' and watermark.get('imageUrl'):
+        watermark_job_at = len(download_jobs)
+        download_jobs.append({'url': watermark['imageUrl'], 'asset_type': 'image', 'index': 997})
+
+    downloaded = download_assets_parallel(download_jobs)
+
+    for i, segment in enumerate(video_segments):
+        local_file = downloaded[video_job_at[i]]
+        if not local_file:
+            log(f"Failed to download video for segment {i}", 'ERROR')
+            send_callback(callback_url, job_id, 'FAILED', 0, error=f"Failed to download video {i}")
+            sys.exit(1)
+        segment['localFile'] = local_file
+        voiceover_index = voiceover_job_at.get(i)
+        if voiceover_index is None:
+            continue
+        voiceover_file = downloaded[voiceover_index]
+        if voiceover_file:
+            segment['voiceoverLocalFile'] = voiceover_file
+            log(f"Downloaded voiceover for segment {i}")
+        else:
+            log(f"Failed to download voiceover for segment {i}, falling back to original", 'WARN')
+            segment['audioSource'] = 'original'
+    
+    log(f"Downloaded {len(video_segments)} video segments")
+    send_callback(callback_url, job_id, 'PROCESSING', 30)
+
+    for i, clip in enumerate(audio_clips):
+        job_index = audio_job_at[i]
+        if job_index is None:
+            continue
+        local_file = downloaded[job_index]
         if local_file:
             clip['localFile'] = local_file
         else:
@@ -452,8 +559,8 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
     
     # Download image watermark asset (text watermarks need no extra file)
     wm_for_cmd = watermark
-    if watermark and watermark.get('type') == 'image' and watermark.get('imageUrl'):
-        wm_file = download_asset(watermark['imageUrl'], 'image', 997)
+    if watermark_job_at is not None:
+        wm_file = downloaded[watermark_job_at]
         if wm_file:
             wm_for_cmd = dict(watermark)
             wm_for_cmd['localFile'] = wm_file
@@ -468,25 +575,73 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
     
     # Build and run FFmpeg command for video concatenation
     log("=== Starting FFmpeg Render (Concatenation) ===")
+    preset, crf = resolve_encode_settings(encode_quality)
+    log(f"Encode settings: quality={encode_quality if encode_quality in ('delivery', 'draft') else 'delivery'} preset={preset} crf={crf}")
     if text_overlays:
         log(f"Text overlays to apply: {len(text_overlays)}")
         for i, overlay in enumerate(text_overlays):
             log(f"  Overlay {i}: text='{overlay.get('text', '')[:30]}...', startTime={overlay.get('startTime', 0)}")
     
     output_file = os.path.join(OUTPUT_DIR, f"{job_id}.mp4")
-    
-    ffmpeg_cmd = build_concat_ffmpeg_command(
-        video_segments=video_segments,
-        audio_clips=audio_clips_with_files,
-        output_path=output_file,
+
+    probes = [
+        probe_media(os.path.join(ASSETS_DIR, segment['localFile']))
+        for segment in video_segments
+    ]
+    copy_block = video_stream_copy_block_reason(
+        video_segments,
+        probes,
         resolution=resolution,
         fps=fps,
-        temp_dir=TEMP_DIR,
-        include_segment_audio=include_segment_audio,
-        segment_audio_volume=segment_audio_volume,
         text_overlays=text_overlays,
         watermark=wm_for_cmd,
+        include_segment_audio=include_segment_audio,
     )
+    if copy_block:
+        log(f"Stream copy rejected: {copy_block}")
+        ffmpeg_cmd = build_concat_ffmpeg_command(
+            video_segments=video_segments,
+            audio_clips=audio_clips_with_files,
+            output_path=output_file,
+            resolution=resolution,
+            fps=fps,
+            temp_dir=TEMP_DIR,
+            include_segment_audio=include_segment_audio,
+            segment_audio_volume=segment_audio_volume,
+            text_overlays=text_overlays,
+            watermark=wm_for_cmd,
+            encode_quality=encode_quality,
+        )
+    else:
+        full_block = full_stream_copy_block_reason(
+            video_segments,
+            probes,
+            audio_clips=audio_clips_with_files,
+            include_segment_audio=include_segment_audio,
+            segment_audio_volume=segment_audio_volume,
+        )
+        segment_gain = 1.0
+        if include_segment_audio and video_segments:
+            segment_gain = float(video_segments[0].get('audioVolume', 1.0))
+        if full_block:
+            log(f"Video stream copy with audio re-encode ({full_block})")
+        else:
+            log("Full stream copy")
+        concat_list_path = os.path.join(TEMP_DIR, f"{job_id}-concat.txt")
+        write_concat_list(
+            [os.path.join(ASSETS_DIR, segment['localFile']) for segment in video_segments],
+            concat_list_path,
+        )
+        ffmpeg_cmd = build_stream_copy_ffmpeg_command(
+            concat_list_path=concat_list_path,
+            audio_clips=audio_clips_with_files,
+            output_path=output_file,
+            temp_dir=TEMP_DIR,
+            include_segment_audio=include_segment_audio,
+            segment_audio_volume=segment_audio_volume,
+            segment_audio_gain=segment_gain,
+            full_copy=full_block is None,
+        )
     
     log(f"FFmpeg command length: {len(ffmpeg_cmd)} args")
     send_callback(callback_url, job_id, 'PROCESSING', 60)

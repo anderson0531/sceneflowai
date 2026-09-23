@@ -421,12 +421,20 @@ export interface SceneRenderJobSpec {
   textOverlays?: SceneRenderTextOverlay[]
   /** Watermark to burn into the video (full duration) */
   watermark?: SceneRenderWatermark
+  /**
+   * Scene-stitch encode. Omitted or `delivery` keeps medium / CRF 23.
+   * `draft` uses a faster preset for iteration exports.
+   */
+  encodeQuality?: SceneEncodeQuality
 }
 
 /**
  * Watermark specification for FFmpeg drawtext/overlay filter
  * Applied to entire video duration
  */
+/** Delivery keeps the historical x264 settings. Draft is an opt-in faster export. */
+export type SceneEncodeQuality = 'delivery' | 'draft'
+
 export interface SceneRenderWatermark {
   /** Watermark type */
   type: 'text' | 'image'
@@ -569,6 +577,8 @@ export interface CreateSceneRenderJobRequest {
   /** Display name stored on the background job and the production stream. */
   languageLabel?: string
   streamType?: 'video' | 'animatic'
+  /** Omitted means delivery. Draft is the Mixer iteration export. */
+  encodeQuality?: SceneEncodeQuality
 }
 
 /** Map Mixer POST segment payload to FFmpeg job-spec video segment. */
