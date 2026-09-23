@@ -8,7 +8,7 @@
         "scripts": {
                 "dev": "next dev --turbo",
                 "dev:memory": "NODE_OPTIONS='--max-old-space-size=3072' next dev --turbopack",
-                "build": "next build",
+                "build": "next build --webpack",
                 "build:memory": "NODE_OPTIONS='--max-old-space-size=3072' next build",
                 "build:analyze": "ANALYZE=1 next build",
                 "start": "next start",

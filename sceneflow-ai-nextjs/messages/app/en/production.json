@@ -1188,8 +1188,8 @@
     },
     "beatDirector": {
       "title": "Director — {label}",
-      "description": "Direct this beat's line or action, and the emotion the frame and video are generated from. No image credits until you generate.",
-      "instructionPlaceholder": "Quieter, she almost doesn't say it. Keep the cup in her hand.",
+      "description": "Rewrite this beat's line or action. The frame and the clip stay as they are.",
+      "instructionPlaceholder": "She says she is not going anywhere, almost under her breath.",
       "currentBeat": "Current beat",
       "rewrittenBeat": "Rewritten beat",
       "rewrittenDirection": "Beat direction for frame and video",
@@ -1205,7 +1205,7 @@
       "chipHold": "Hold the feeling",
       "chipHoldText": "Hold one emotion through the beat. Don't let it flip halfway.",
       "chipAction": "Clearer action",
-      "chipActionText": "Name the physical action so a camera can see it in one instant."
+      "chipActionText": "Name the physical action in one sentence."
     },
     "musicDirector": {
       "title": "Direct score — {label}",

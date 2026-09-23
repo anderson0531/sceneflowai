@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-22T22:44:14.881Z",
+  "generatedAt": "2026-09-23T01:33:01.614Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -1663,8 +1663,8 @@
       "direction.stillDirector.directionStrengthModerate": "0fffd2e96133d2ee",
       "direction.stillDirector.directionStrengthDrifted": "01dda5491f7ab70c",
       "direction.beatDirector.title": "fffd8553242d57c9",
-      "direction.beatDirector.description": "fb3b3ee5cc0fbe92",
-      "direction.beatDirector.instructionPlaceholder": "44c141a19ce447b3",
+      "direction.beatDirector.description": "c6f199dedd6e6017",
+      "direction.beatDirector.instructionPlaceholder": "18ed36dc5bb4d250",
       "direction.beatDirector.currentBeat": "16617a532e15956b",
       "direction.beatDirector.rewrittenBeat": "31d24e133cd505e4",
       "direction.beatDirector.rewrittenDirection": "35c2c66f14e093b1",
@@ -1680,7 +1680,7 @@
       "direction.beatDirector.chipHold": "d28647e6a06cae57",
       "direction.beatDirector.chipHoldText": "9c7fdbd70af611a3",
       "direction.beatDirector.chipAction": "5124b2419e3da51f",
-      "direction.beatDirector.chipActionText": "256f1a700aa07e88",
+      "direction.beatDirector.chipActionText": "263a1a6db0b0190a",
       "direction.musicDirector.title": "d6c0fb9f8971d106",
       "direction.musicDirector.description": "d5e1008a6438ae1f",
       "direction.musicDirector.instructionPlaceholder": "5832c23768bee044",

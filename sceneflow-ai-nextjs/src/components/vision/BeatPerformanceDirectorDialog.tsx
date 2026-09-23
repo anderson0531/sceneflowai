@@ -11,7 +11,6 @@ import { Clapperboard, Loader2, Save, Sparkles } from 'lucide-react'
 import type { BeatPerformancePatch } from '@/lib/intelligence/beat-performance-director-fallback'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import { applyBeatPerformanceDirectorToScene } from '@/lib/intelligence/beat-performance-director-fallback'
-import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
 
 export interface BeatPerformanceDirectorControlProps {
   beat: SceneBeat
@@ -21,11 +20,6 @@ export interface BeatPerformanceDirectorControlProps {
   script: { script?: { scenes?: unknown[] } } | null | undefined
   projectId?: string
   onScriptChange?: (script: unknown) => void | Promise<void>
-  onGenerateStill?: (beatId: string) => void | Promise<void>
-  promptComposition?: {
-    artStyleAnchor?: string
-    lookbook?: ProjectLookbook
-  }
 }
 
 function appendChipText(current: string, addition: string): string {
@@ -50,8 +44,6 @@ export function BeatPerformanceDirectorControl({
   script,
   projectId,
   onScriptChange,
-  onGenerateStill,
-  promptComposition,
 }: BeatPerformanceDirectorControlProps) {
   const t = useTranslations('production.direction.beatDirector')
   const tc = useTranslations('common.actions')
@@ -61,14 +53,12 @@ export function BeatPerformanceDirectorControl({
   const [isSaving, setIsSaving] = useState(false)
   const [patch, setPatch] = useState<BeatPerformancePatch | null>(null)
   const [rewrittenProse, setRewrittenProse] = useState('')
-  const [rewrittenFraming, setRewrittenFraming] = useState('')
 
   useEffect(() => {
     if (!open) {
       setInstruction('')
       setPatch(null)
       setRewrittenProse('')
-      setRewrittenFraming('')
     }
   }, [open])
 
@@ -103,8 +93,7 @@ export function BeatPerformanceDirectorControl({
       if (!data.patch) throw new Error('No rewrite returned')
       setPatch(data.patch as BeatPerformancePatch)
       setRewrittenProse(typeof data.prose === 'string' ? data.prose : '')
-      setRewrittenFraming(typeof data.actionFraming === 'string' ? data.actionFraming : '')
-      toast.success('Beat rewritten — save it before generating')
+      toast.success('Beat rewritten — save it')
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : 'Rewrite failed')
     } finally {
@@ -112,18 +101,13 @@ export function BeatPerformanceDirectorControl({
     }
   }
 
-  const handleSave = async (generate: boolean) => {
+  const handleSave = async () => {
     if (!patch || !onScriptChange || !script?.script) return
     const scene = scenes[sceneIdx]
     if (!scene) return
     setIsSaving(true)
     try {
-      const applied = applyBeatPerformanceDirectorToScene(scene, beat.beatId, patch, {
-        generatedBy: 'user',
-        lookbook: promptComposition?.lookbook,
-        sceneIndex: sceneIdx,
-        artStyleAnchor: promptComposition?.artStyleAnchor,
-      })
+      const applied = applyBeatPerformanceDirectorToScene(scene, beat.beatId, patch)
       if (!applied.applied) {
         toast.error('Beat not found')
         return
@@ -134,11 +118,8 @@ export function BeatPerformanceDirectorControl({
         ...script,
         script: { ...script.script, scenes: updatedScenes },
       })
-      toast.success('Beat direction saved')
+      toast.success(beat.kind === 'action' ? 'Action saved' : 'Line saved')
       setOpen(false)
-      if (generate && onGenerateStill) {
-        await onGenerateStill(beat.beatId)
-      }
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : 'Save failed')
     } finally {
@@ -209,15 +190,6 @@ export function BeatPerformanceDirectorControl({
               </div>
             )}
 
-            {rewrittenFraming && (
-              <div className="space-y-1">
-                <Label className="text-slate-300">{t('rewrittenDirection')}</Label>
-                <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-wrap rounded-lg border border-slate-700 bg-slate-800/40 p-3">
-                  {rewrittenFraming}
-                </p>
-              </div>
-            )}
-
             <div className="flex flex-wrap justify-end gap-2">
               <Button variant="outline" onClick={() => setOpen(false)} disabled={busy}>
                 {tc('cancel')}
@@ -230,12 +202,9 @@ export function BeatPerformanceDirectorControl({
                 )}
                 {isRewriting ? t('rewriting') : t('rewrite')}
               </Button>
-              <Button variant="outline" onClick={() => void handleSave(false)} disabled={!patch || busy}>
+              <Button onClick={() => void handleSave()} disabled={!patch || busy}>
                 <Save className="w-4 h-4 mr-1" />
                 {t('save')}
-              </Button>
-              <Button onClick={() => void handleSave(true)} disabled={!patch || busy || !onGenerateStill}>
-                {t('saveAndGenerate')}
               </Button>
             </div>
           </div>

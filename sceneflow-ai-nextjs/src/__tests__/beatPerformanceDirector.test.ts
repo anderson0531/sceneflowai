@@ -33,11 +33,14 @@ function spokenBeat(): SceneBeat {
 }
 
 describe('beat performance director', () => {
-  it('tells the model that user notes own the line and emotion, not the story or the cast', () => {
+  it('tells the model to rewrite the line or the action, not the frame', () => {
     const system = buildBeatPerformanceSystemPrompt()
-    expect(system).toContain('authoritative for the line, the action, and the emotion')
+    expect(system).toContain('spoken line and its delivery')
+    expect(system).toContain('action description')
     expect(system).toContain('Do not change the story')
-    expect(system).toContain('Keep cast labels exactly')
+    expect(system).toContain('Do not rename the speaker')
+    expect(system).not.toContain('frozenMoment')
+    expect(system).not.toContain('castInFrame')
 
     const user = buildBeatPerformanceUserPrompt({
       mode: 'rewrite',
@@ -48,11 +51,10 @@ describe('beat performance director', () => {
     })
     expect(user).toContain('She is furious')
     expect(user).toContain('Maya decides to stay')
-    expect(user).toContain('do not override the story or the cast labels')
+    expect(user).toContain('do not override the story or who is speaking')
   })
 
-  it('drops a cast label the scene does not have', () => {
-    const scene = { characters: [{ name: 'Maya' }] }
+  it('keeps the line and ignores frame fields the model still returns', () => {
     const patch = parseBeatPerformancePatch(
       {
         line: 'I am not going anywhere.',
@@ -62,18 +64,25 @@ describe('beat performance director', () => {
         castInFrame: ['Maya', 'Stranger'],
       },
       spokenBeat(),
-      scene
+      { characters: [{ name: 'Maya' }] }
     )
-    expect(patch?.line).toBe('I am not going anywhere.')
-    expect(patch?.direction.emotion).toBe('fury, jaw tight')
-    expect(patch?.direction.castInFrame).toEqual(['Maya'])
+    expect(patch).toEqual({
+      line: 'I am not going anywhere.',
+      voiceDirection: 'Through her teeth.',
+    })
   })
 
-  it('saves the line, the emotion, the still prompt, and the video prompt', () => {
+  it('saves the line and leaves the frame, the still, and the video prompt alone', () => {
     const scene = {
       characters: [{ name: 'Maya' }],
       dialogue: [{ lineId: 'ln_1', character: 'Maya', line: 'We should leave.', kind: 'dialogue' }],
-      beats: [spokenBeat()],
+      beats: [
+        {
+          ...spokenBeat(),
+          storyboardImageUrl: 'https://example.com/still.jpg',
+          storyboardImagePrompt: 'Old still.',
+        },
+      ],
       segments: [
         {
           beatId: 'bt_line',
@@ -82,44 +91,60 @@ describe('beat performance director', () => {
         },
       ],
     }
-    const { scene: next, proseChanged } = applyBeatPerformanceDirectorToScene(
-      scene,
-      'bt_line',
-      {
-        line: 'I am not going anywhere.',
-        voiceDirection: 'Through her teeth.',
-        direction: {
-          emotion: 'fury, jaw tight',
-          frozenMoment: 'Maya plants both hands on the table.',
-          castInFrame: ['Stranger'],
-        },
-      },
-      { generatedBy: 'user' }
-    )
+    const { scene: next, proseChanged } = applyBeatPerformanceDirectorToScene(scene, 'bt_line', {
+      line: 'I am not going anywhere.',
+      voiceDirection: 'Through her teeth.',
+    })
 
     const [beat] = getSceneBeats(next)
     expect(proseChanged).toBe(true)
     expect(beat.character).toBe('Maya')
     expect(beat.line).toBe('I am not going anywhere.')
     expect(beat.voiceDirection).toBe('Through her teeth.')
-    expect(beat.beatDirection?.emotion).toBe('fury, jaw tight')
-    expect(beat.beatDirection?.generatedBy).toBe('user')
+    expect(beat.beatDirection?.emotion).toBe('calm')
+    expect(beat.beatDirection?.generatedBy).toBe('llm')
     expect(beat.beatDirection?.castInFrame).toEqual(['Maya'])
-    expect(beat.storyboardImageUrl).toBeUndefined()
-    expect(beat.storyboardImagePrompt).toContain('Maya plants both hands on the table')
-    const dialogue = next.dialogue as Array<{ line?: string; lineId?: string }>
+    expect(beat.storyboardImageUrl).toBe('https://example.com/still.jpg')
+    expect(beat.storyboardImagePrompt).toBe('Old still.')
+    const dialogue = next.dialogue as Array<{ line?: string; lineId?: string; voiceDirection?: string }>
     expect(dialogue[0]?.lineId).toBe('ln_1')
     expect(dialogue[0]?.line).toBe('I am not going anywhere.')
+    expect(dialogue[0]?.voiceDirection).toBe('Through her teeth.')
     const segments = next.segments as Array<{ videoPrompt?: string }>
-    expect(segments[0]?.videoPrompt).toContain('I am not going anywhere.')
-    expect(segments[0]?.videoPrompt).toContain('fury, jaw tight')
+    expect(segments[0]?.videoPrompt).toBe('Old clip.')
+  })
+
+  it('saves an action description without writing a spoken line', () => {
+    const action: SceneBeat = {
+      beatId: 'bt_action',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription: 'She sets the cup down.',
+      beatDirection: { shotType: 'Wide Shot', emotion: 'calm', generatedBy: 'llm' },
+      storyboardImagePrompt: 'Old still.',
+    }
+    const scene = { beats: [action], action: 'She sets the cup down.' }
+    const { scene: next } = applyBeatPerformanceDirectorToScene(scene, 'bt_action', {
+      actionDescription: 'She shoves the cup away.',
+      line: 'This line must not land on an action beat.',
+    })
+    const [beat] = getSceneBeats(next)
+    expect(beat.actionDescription).toBe('She shoves the cup away.')
+    expect(beat.line).toBeUndefined()
+    expect(beat.beatDirection?.shotType).toBe('Wide Shot')
+    expect(beat.storyboardImagePrompt).toBe('Old still.')
+    expect(next.action).toBe('She shoves the cup away.')
   })
 
   it('is opened from the beat list and does not write the database in the route', () => {
     const panel = readSource('src/components/vision/ScriptPanel.tsx')
+    const dialog = readSource('src/components/vision/BeatPerformanceDirectorDialog.tsx')
     const route = readSource('src/app/api/scene/direct-beat/route.ts')
     expect(panel).toContain('BeatPerformanceDirectorControl')
+    expect(dialog).not.toContain('onGenerateStill')
+    expect(dialog).not.toContain('saveAndGenerate')
     expect(route).toContain('directBeatPerformance')
+    expect(route).not.toContain('actionFraming')
     expect(route).not.toContain('project.save')
     expect(route).not.toContain('persistVisionScriptScenes')
   })

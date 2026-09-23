@@ -1,5 +1,5 @@
 /**
- * Beat performance director — Gemini rewrite of a line or action plus beat direction.
+ * Beat performance director — Gemini rewrite of one line or one action description.
  */
 
 import 'server-only'

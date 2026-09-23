@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
 import {
-  MAX_MUSIC_CUES,
   adoptLegacySceneTrack,
   applySceneMusicCues,
   buildMusicCueId,
@@ -12,7 +11,6 @@ import {
   formatMusicCueSteer,
   getSceneMusicCues,
   isMusicCueScored,
-  musicCueBudget,
   parsePersistedMusicCues,
   planSceneMusicCues,
   resolveBeatMusicCue,
@@ -106,14 +104,22 @@ describe('planSceneMusicCues', () => {
     expect(cues[0].beatEnd).toBe(7)
   })
 
-  it('caps the plan at MAX_MUSIC_CUES', () => {
+  it('keeps every non-overlapping cue the model assigned, including a whole-scene cue', () => {
     const raw = Array.from({ length: 8 }, (_, index) => ({
       beatStart: index * 2,
       beatEnd: index * 2 + 1,
       description: 'Ambient score, uneasy mood, slow tempo',
     }))
 
-    expect(planSceneMusicCues(raw, beats(20))).toHaveLength(MAX_MUSIC_CUES)
+    expect(planSceneMusicCues(raw, beats(20))).toHaveLength(8)
+
+    const wholeScene = planSceneMusicCues(
+      [{ beatStart: 0, beatEnd: 19, description: 'Ambient score, uneasy mood, slow tempo' }],
+      beats(20)
+    )
+    expect(wholeScene).toHaveLength(1)
+    expect(wholeScene[0].beatStart).toBe(0)
+    expect(wholeScene[0].beatEnd).toBe(19)
   })
 
   it('ignores entries with no usable brief', () => {
@@ -126,26 +132,6 @@ describe('planSceneMusicCues', () => {
     )
 
     expect(cues).toHaveLength(0)
-  })
-})
-
-describe('musicCueBudget', () => {
-  it('scores nothing when the scene has no movements', () => {
-    expect(musicCueBudget(0)).toBe(0)
-  })
-
-  it('scores the only movement of a single-movement scene', () => {
-    expect(musicCueBudget(1)).toBe(1)
-  })
-
-  it('leaves at least one movement dry once a scene has more than one', () => {
-    for (const count of [2, 3, 4, 5, 6, 10]) {
-      expect(musicCueBudget(count)).toBeLessThan(count)
-    }
-  })
-
-  it('never exceeds MAX_MUSIC_CUES', () => {
-    expect(musicCueBudget(20)).toBe(MAX_MUSIC_CUES)
   })
 })
 

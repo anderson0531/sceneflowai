@@ -128,7 +128,6 @@ export async function POST(req: NextRequest) {
       fallbackReason,
       patch,
       prose: preview.prose,
-      actionFraming: preview.framing,
     })
   } catch (error: unknown) {
     console.error('[direct-beat] Error:', error)

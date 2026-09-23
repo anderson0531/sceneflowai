@@ -226,7 +226,7 @@ describe('the requested music length follows the beat timeline', () => {
   })
 })
 
-describe('an opening that plays wordless can carry the cue', () => {
+describe('derived cues score every charged movement', () => {
   function movement(
     index: number,
     beatStart: number,
@@ -236,15 +236,6 @@ describe('an opening that plays wordless can carry the cue', () => {
     return { index, summary, beatStart, beatEnd, generatedBy: 'derived' }
   }
 
-  /**
-   * Two movements, so the budget is one cue and exactly one of them wins.
-   *
-   * The opening reads a single dread word and the second movement two
-   * violence words, which puts the later movement ahead on its own charge
-   * plus the turn into it. The opening only takes the cue if it is credited
-   * with the turn out of silence, so switching beat 0's kind is the whole
-   * difference between the two outcomes below.
-   */
   const OPENING_SUMMARY = 'A shape crosses the corridor.'
   const OPENING_ACTION = 'The menace closes in.'
   const LATER_SUMMARY = 'He strikes her down.'
@@ -274,28 +265,31 @@ describe('an opening that plays wordless can carry the cue', () => {
     }
   }
 
-  it('scores a wordless opening on the turn out of silence', () => {
+  it('scores a wordless charged opening and the later turn', () => {
     const { beats, movements } = scene('action')
 
     const cues = deriveSceneMusicCues({}, beats, movements)
 
-    expect(cues.map((cue) => cue.beatStart)).toEqual([0])
+    expect(cues.map((cue) => [cue.beatStart, cue.beatEnd])).toEqual([
+      [0, 0],
+      [1, 1],
+    ])
   })
 
-  it('leaves an opening built on dialogue to the contrast rule', () => {
+  it('scores a charged opening built on dialogue', () => {
     const { beats, movements } = scene('dialogue')
 
     const cues = deriveSceneMusicCues({}, beats, movements)
 
-    expect(cues.map((cue) => cue.beatStart)).toEqual([1])
+    expect(cues.map((cue) => cue.beatStart)).toEqual([0, 1])
   })
 
-  it('treats an opening under narration as spoken', () => {
+  it('scores a charged opening under narration', () => {
     const { beats, movements } = scene('narration')
 
     const cues = deriveSceneMusicCues({}, beats, movements)
 
-    expect(cues.map((cue) => cue.beatStart)).toEqual([1])
+    expect(cues.map((cue) => cue.beatStart)).toEqual([0, 1])
   })
 
   it('does not score a wordless opening that carries no emotion at all', () => {
@@ -318,7 +312,7 @@ describe('an opening that plays wordless can carry the cue', () => {
     expect(cues.map((cue) => cue.beatStart)).toEqual([1])
   })
 
-  it('still leaves a movement dry rather than scoring the whole scene', () => {
+  it('scores every charged movement, including when that covers the whole scene', () => {
     const { beats, movements } = scene('action')
 
     const cues = deriveSceneMusicCues({}, beats, movements)
@@ -328,12 +322,12 @@ describe('an opening that plays wordless can carry the cue', () => {
       )
     )
 
-    expect(scoredBeats.size).toBeLessThan(beats.length)
+    expect(scoredBeats.size).toBe(beats.length)
   })
 })
 
-describe('the cue policy names the opening-action pattern', () => {
-  it('is stated alongside the contrast rule in the script prompt', async () => {
+describe('the script prompt lets the model assign cue ranges', () => {
+  it('states that a cue may cover every beat and that there is no cue-count cap', async () => {
     const { readFileSync } = await import('fs')
     const { join } = await import('path')
     const route = readFileSync(
@@ -341,8 +335,9 @@ describe('the cue policy names the opening-action pattern', () => {
       'utf8'
     )
 
-    expect(route).toContain('Score for CONTRAST, not for coverage')
-    expect(route).toContain('OPENING ACTION is the one place a cue may start on beat 0')
-    expect(route).toMatch(/an opening built on dialogue takes the contrast rule/i)
+    expect(route).toContain('no maximum number of beats in a cue and no maximum number of cues')
+    expect(route).toContain('every beat in the scene')
+    expect(route).not.toContain('Score for CONTRAST, not for coverage')
+    expect(route).not.toContain('OPENING ACTION is the one place a cue may start on beat 0')
   })
 })

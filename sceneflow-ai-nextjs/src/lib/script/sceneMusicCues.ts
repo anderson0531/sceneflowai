@@ -11,8 +11,10 @@
  *
  * Cues are placed by the script LLM when available (`generatedBy: 'llm'`) and
  * derived from the scene's movements otherwise, so scripts written before cues
- * existed still get scored. A cue that has already been generated is never
- * recomputed: its audio is the scene's, and re-planning would orphan it.
+ * existed still get scored. The model assigns as many non-overlapping cues as
+ * the scene earns, including one cue across every beat. A cue that has already
+ * been generated is never recomputed: its audio is the scene's, and
+ * re-planning would orphan it.
  */
 
 import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
@@ -29,14 +31,6 @@ import type {
   SceneMusicCue,
   SceneMusicCueSource,
 } from '@/lib/script/segmentTypes'
-
-/**
- * Upper bound on cues per scene.
- *
- * Each cue is its own generated track, and a scene that changes music five
- * times stops reading as scored and starts reading as restless.
- */
-export const MAX_MUSIC_CUES = 4
 
 /** Descriptions shorter than this are not a music brief. */
 const MIN_DESCRIPTION_LENGTH = 8
@@ -197,7 +191,6 @@ function sanitizeRanges(cues: SceneMusicCue[], beatCount: number): SceneMusicCue
     if (beatStart <= lastEnd) continue
     kept.push({ ...cue, beatStart, beatEnd, cueId: buildMusicCueId(beatStart, beatEnd) })
     lastEnd = beatEnd
-    if (kept.length >= MAX_MUSIC_CUES) break
   }
 
   return kept
@@ -322,68 +315,14 @@ function chargeMovements(
 }
 
 /**
- * How many of a scene's movements should carry music.
+ * Score every movement that carries an emotion.
  *
- * Scoring every movement is the same mistake as scoring none: with nothing
- * unscored to cut against, the music stops marking anything. Scenes of three
- * or more movements always keep at least one dry.
+ * A procedural stretch with no emotional charge stays dry. Adjacent movements
+ * that reach for the same music are merged later into one cue. Nothing here
+ * drops a charged movement to hit a count, and a cue may run the whole scene.
  */
-export function musicCueBudget(movementCount: number): number {
-  if (movementCount <= 0) return 0
-  if (movementCount === 1) return 1
-  if (movementCount === 2) return 1
-  return Math.min(MAX_MUSIC_CUES, Math.min(movementCount - 1, Math.ceil(movementCount / 2)))
-}
-
-/**
- * Whether a movement plays with nobody speaking over it.
- *
- * An opening that turns straight from silence into action is a recognized place
- * to score — the music is the scene's entrance, and a run of opening action
- * beats is exactly what it can carry. Narration counts as spoken: a voiceover
- * is already holding the audience's ear.
- */
-function isActionOnlyMovement(movement: SceneMovement, beats: SceneBeat[]): boolean {
-  let sawBeat = false
-  for (let index = movement.beatStart; index <= movement.beatEnd; index++) {
-    const beat = beats[index]
-    if (!beat) continue
-    sawBeat = true
-    if (beat.kind === 'dialogue' || beat.kind === 'narration') return false
-  }
-  return sawBeat
-}
-
-/**
- * Place cues on the movements whose emotion is strongest or whose arrival is
- * the sharpest turn from the movement before it — where a composer scores.
- *
- * `openingScoresAsTurn` is the opening-action pattern: an action-only opening
- * is credited with the full turn out of silence, so a hard entrance can
- * outrank a mid-scene swing of the same charge. It never guarantees the
- * opening a cue — a movement with no emotional charge is still filtered out,
- * and the budget still leaves at least one movement dry.
- */
-function selectMovementsToScore(
-  charges: MovementCharge[],
-  budget: number,
-  openingScoresAsTurn: boolean
-): MovementCharge[] {
-  const scored = charges
-    .map((entry, index) => {
-      // An opening built on dialogue is weighed on its own charge alone:
-      // otherwise every such scene scores its first exchange and the climax it
-      // was building toward plays dry.
-      const previous =
-        index > 0 ? charges[index - 1].charge : openingScoresAsTurn ? 0 : entry.charge
-      const turn = Math.abs(entry.charge - previous)
-      return { entry, index, weight: entry.charge * 2 + turn }
-    })
-    .filter((row) => row.entry.profile && row.weight > 0)
-    .sort((a, b) => b.weight - a.weight || a.index - b.index)
-    .slice(0, budget)
-
-  return scored.sort((a, b) => a.index - b.index).map((row) => row.entry)
+function selectMovementsToScore(charges: MovementCharge[]): MovementCharge[] {
+  return charges.filter((entry) => entry.profile && entry.charge > 0)
 }
 
 /**
@@ -443,12 +382,7 @@ export function deriveSceneMusicCues(
   if (beats.length === 0 || movements.length === 0) return []
 
   const charges = chargeMovements(movements, beats)
-  const budget = musicCueBudget(movements.length)
-  const selected = selectMovementsToScore(
-    charges,
-    budget,
-    isActionOnlyMovement(movements[0], beats)
-  )
+  const selected = selectMovementsToScore(charges)
   if (selected.length === 0) return []
 
   const ranges = mergeAdjacentSameFamily(
@@ -543,7 +477,7 @@ export function parsePersistedMusicCues(
     kept.push({ ...cue, beatEnd: Math.max(cue.beatStart, cue.beatEnd) })
     lastEnd = kept[kept.length - 1].beatEnd
   }
-  return kept.slice(0, MAX_MUSIC_CUES)
+  return kept
 }
 
 /** True once a cue holds a generated track. */

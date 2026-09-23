@@ -7178,12 +7178,6 @@ function SceneCard({
                                   script={script}
                                   projectId={projectId}
                                   onScriptChange={onScriptChange}
-                                  onGenerateStill={
-                                    onGenerateBeatFrame
-                                      ? (beatId) => onGenerateBeatFrame(sceneIdx, beatId)
-                                      : undefined
-                                  }
-                                  promptComposition={promptComposition}
                                 />
                               </div>
                               <BeatDirectionEditor
@@ -7579,12 +7573,6 @@ function SceneCard({
                                 script={script}
                                 projectId={projectId}
                                 onScriptChange={onScriptChange}
-                                onGenerateStill={
-                                  onGenerateBeatFrame
-                                    ? (beatId) => onGenerateBeatFrame(sceneIdx, beatId)
-                                    : undefined
-                                }
-                                promptComposition={promptComposition}
                               />
                             </div>
                             <BeatDirectionEditor
