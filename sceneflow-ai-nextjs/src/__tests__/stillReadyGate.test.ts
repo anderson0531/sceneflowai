@@ -176,4 +176,10 @@ describe('still-ready gate wiring', () => {
     expect(score).toContain('Fade out')
     expect(score).toContain('CueMixSliders')
   })
+
+  it('exposes an upload control on Score cue rows', () => {
+    const score = readSource('src/components/vision/SceneMusicCuePanel.tsx')
+    expect(score).toContain('onUploadCue')
+    expect(score).toContain('title="Upload cue"')
+  })
 })
