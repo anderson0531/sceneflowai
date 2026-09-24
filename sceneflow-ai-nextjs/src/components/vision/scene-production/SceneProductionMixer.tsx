@@ -167,6 +167,8 @@ import {
   filterMixerIncludedSegments,
   isMixerBeatIncluded,
   listIncludedBeatVideos,
+  listMixerBeatRows,
+  type MixerBeatRow,
 } from '@/lib/scene/mixerBeatInclude'
 import {
   anySegmentEmbedAudioIncluded,
@@ -1199,27 +1201,28 @@ function DialogueLineControls({
  * SegmentBeatVideoControls - Include/exclude beat videos from mixer preview and render
  */
 function SegmentBeatVideoControls({
-  segments,
+  rows,
   onBeatIncludeChange,
   onBeatIncludeAll,
   disabled,
   isCollapsed = false,
   onToggleCollapse,
 }: {
-  segments: SceneSegment[]
+  rows: MixerBeatRow[]
   onBeatIncludeChange: (segmentId: string, included: boolean) => void
   onBeatIncludeAll: (included: boolean) => void
   disabled?: boolean
   isCollapsed?: boolean
   onToggleCollapse?: () => void
 }) {
-  if (segments.length === 0) return null
+  if (rows.length === 0) return null
 
-  const allIncluded = segments.every((s) => isMixerBeatIncluded(s))
-  const excludedCount = segments.filter((s) => !isMixerBeatIncluded(s)).length
+  const togglable = rows.filter((row) => row.segment)
+  const allIncluded = togglable.length > 0 && togglable.every((row) => isMixerBeatIncluded(row.segment!))
+  const excludedCount = rows.filter((row) => !row.segment || !isMixerBeatIncluded(row.segment)).length
 
   const toggleSegment = (segmentId: string) => {
-    const seg = segments.find((s) => s.segmentId === segmentId)
+    const seg = rows.find((row) => row.segment?.segmentId === segmentId)?.segment
     if (!seg) return
     onBeatIncludeChange(segmentId, !isMixerBeatIncluded(seg))
   }
@@ -1245,7 +1248,7 @@ function SegmentBeatVideoControls({
           <Video className="w-4 h-4 text-cyan-400" />
           <span className="text-xs text-gray-400 uppercase tracking-wide">Beat Video</span>
           <span className="text-xs text-gray-500">
-            {segments.length} beats
+            {rows.length} beats
             {excludedCount > 0 ? ` · ${excludedCount} excluded` : ''}
           </span>
         </div>
@@ -1266,11 +1269,12 @@ function SegmentBeatVideoControls({
           <p className="text-[11px] text-gray-500 leading-relaxed">
             Excluded beats stay in your project but are hidden from preview and scene render.
           </p>
-          {segments.map((seg, i) => {
-            const included = isMixerBeatIncluded(seg)
+          {rows.map((row, i) => {
+            const seg = row.segment
+            const included = !!seg && isMixerBeatIncluded(seg)
             return (
               <div
-                key={seg.segmentId}
+                key={row.beatId}
                 className={cn(
                   'flex items-center gap-2 p-2 rounded transition-colors border',
                   included
@@ -1279,30 +1283,34 @@ function SegmentBeatVideoControls({
                 )}
               >
                 <button
-                  onClick={() => toggleSegment(seg.segmentId)}
-                  disabled={disabled}
+                  onClick={() => seg && toggleSegment(seg.segmentId)}
+                  disabled={disabled || !seg}
                   className={cn(
                     'w-10 h-8 rounded text-xs font-medium transition-colors flex-shrink-0 flex items-center justify-center',
                     included
                       ? 'bg-cyan-600/30 text-cyan-200 hover:bg-cyan-600/40'
                       : 'bg-gray-600/40 text-gray-400 hover:bg-gray-600/60'
                   )}
-                  title={included ? 'Exclude from mixer' : 'Include in mixer'}
+                  title={seg ? (included ? 'Exclude from mixer' : 'Include in mixer') : 'This beat has no clip yet'}
                 >
                   {included ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
                 <div className="flex-1 min-w-0">
                   <span className="text-xs text-gray-300 font-medium">Beat #{i + 1}</span>
-                  {!included && (
+                  {!seg ? (
+                    <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-500">
+                      No clip
+                    </span>
+                  ) : !included ? (
                     <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-500">
                       Excluded
                     </span>
-                  )}
+                  ) : null}
                 </div>
                 <Switch
                   checked={included}
-                  onCheckedChange={(checked) => onBeatIncludeChange(seg.segmentId, checked)}
-                  disabled={disabled}
+                  onCheckedChange={(checked) => seg && onBeatIncludeChange(seg.segmentId, checked)}
+                  disabled={disabled || !seg}
                 />
               </div>
             )
@@ -1921,9 +1929,22 @@ export function SceneProductionMixer({
     [audioAssets.sfx]
   )
 
+  const mixerBeatRows = useMemo(
+    () => listMixerBeatRows(audioAssets.scoreScene, segments),
+    [audioAssets.scoreScene, segments]
+  )
+
+  const mixerBeatSegments = useMemo(
+    () =>
+      mixerBeatRows
+        .map((row) => row.segment)
+        .filter((segment): segment is SceneSegment => !!segment),
+    [mixerBeatRows]
+  )
+
   const mixerIncludedSegments = useMemo(
-    () => filterMixerIncludedSegments(segments),
-    [segments]
+    () => filterMixerIncludedSegments(mixerBeatSegments),
+    [mixerBeatSegments]
   )
 
   /** Minimal scene shape for shared audio layout (segment dialogueLineIds + multi-lang audio). */
@@ -2050,18 +2071,14 @@ export function SceneProductionMixer({
 
   const handleMixerBeatIncludeAll = useCallback(
     (included: boolean) => {
-      const ids = new Set(
-        segments
-          .filter((s) => s.status === 'COMPLETE' && s.activeAssetUrl)
-          .map((s) => s.segmentId)
-      )
+      const ids = new Set(mixerBeatSegments.map((segment) => segment.segmentId))
       onSegmentsChange?.(
         segments.map((seg) =>
           ids.has(seg.segmentId) ? { ...seg, mixerBeatIncluded: included } : seg
         )
       )
     },
-    [segments, onSegmentsChange]
+    [mixerBeatSegments, segments, onSegmentsChange]
   )
 
   const [selectedTrimSegmentId, setSelectedTrimSegmentId] = useState<string | null>(null)
@@ -2840,13 +2857,13 @@ export function SceneProductionMixer({
   
   // Rendered segments (includes both video and image assets)
   const renderedSegments = useMemo(() => {
-    return filterMixerIncludedSegments(completeRenderableSegments)
-  }, [completeRenderableSegments])
+    return filterMixerIncludedSegments(mixerBeatSegments)
+  }, [mixerBeatSegments])
   
   // Video-only segments for Video render mode (excludes image-only segments)
   const videoSegments = useMemo(
-    () => listIncludedBeatVideos(completeRenderableSegments),
-    [completeRenderableSegments]
+    () => listIncludedBeatVideos(mixerBeatSegments),
+    [mixerBeatSegments]
   )
 
   const canMixerStitchRender = videoSegments.length > 0
@@ -4478,9 +4495,9 @@ export function SceneProductionMixer({
                 )}
               </div>
               
-              {productionTarget.streamType !== 'animatic' && completeRenderableSegments.length > 0 && (
+              {productionTarget.streamType !== 'animatic' && mixerBeatRows.length > 0 && (
                 <SegmentBeatVideoControls
-                  segments={completeRenderableSegments}
+                  rows={mixerBeatRows}
                   onBeatIncludeChange={handleMixerBeatIncludeChange}
                   onBeatIncludeAll={handleMixerBeatIncludeAll}
                   disabled={isRendering || !onSegmentsChange}
@@ -4738,7 +4755,7 @@ export function SceneProductionMixer({
                 {productionTarget.streamType !== 'animatic' && (
                   <div className="max-w-md mx-auto text-left">
                     <SegmentBeatVideoControls
-                      segments={completeRenderableSegments}
+                      rows={mixerBeatRows}
                       onBeatIncludeChange={handleMixerBeatIncludeChange}
                       onBeatIncludeAll={handleMixerBeatIncludeAll}
                       disabled={isRendering || !onSegmentsChange}

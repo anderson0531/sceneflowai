@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { loadProjectProduction } from '@/lib/projects/loadProjectRead'
+import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
+import { findSceneById, getVisionScriptScenes } from '@/lib/script/resolveSceneById'
 import { mergeSceneProductionData } from '@/lib/storyboard/mergeProductionMedia'
 
 // Increase timeout for production updates
@@ -91,7 +93,18 @@ export async function PATCH(
     const existingProduction = existingVisionPhase.production || {}
     const existingProductionScenes = existingProduction.scenes || {}
     const existingSceneData = existingProductionScenes[sceneId]
-    const mergedProductionData = mergeSceneProductionData(existingSceneData, productionData)
+    const scriptScene = findSceneById(
+      getVisionScriptScenes(existingVisionPhase as Record<string, unknown>),
+      sceneId
+    ).scene
+    const preserveBeatIds = scriptScene
+      ? getSceneBeats(scriptScene)
+          .filter((beat) => isBeatExcluded(beat))
+          .map((beat) => beat.beatId)
+      : []
+    const mergedProductionData = mergeSceneProductionData(existingSceneData, productionData, {
+      preserveBeatIds,
+    })
 
     // Update only the specific scene's production data
     const updatedProductionScenes = {

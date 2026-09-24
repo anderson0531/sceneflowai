@@ -473,4 +473,22 @@ describe('needsProductionDerive', () => {
     expect(result.warnings?.some((warning) => warning.includes('bt_2'))).toBe(true)
     expect(needsProductionDerive(scene, result.segments.slice(0, 1))).toBe(true)
   })
+
+  it('keeps the stored clip for a beat that is excluded from the active list', () => {
+    const beats: SceneBeat[] = [
+      { beatId: 'bt_1', sequenceIndex: 0, kind: 'action', actionDescription: 'Stay' },
+      { beatId: 'bt_6', sequenceIndex: 1, kind: 'action', actionDescription: 'Parked', excluded: true },
+    ]
+    const scene = approvedScene(beats)
+    const stored = deriveSegmentsFromBeats(approvedScene(beats.map((beat) => ({ ...beat, excluded: false })))).segments
+    const upload = {
+      ...stored[1],
+      activeAssetUrl: 'https://cdn.example/upload.mp4',
+      assetType: 'video' as const,
+      status: 'COMPLETE' as const,
+    }
+    const derived = deriveSegmentsFromBeats(scene, { existingSegments: [stored[0], upload] })
+    expect(derived.segments.map((segment) => segment.beatId)).toEqual(['bt_1', 'bt_6'])
+    expect(derived.segments[1].activeAssetUrl).toBe('https://cdn.example/upload.mp4')
+  })
 })

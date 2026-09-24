@@ -75,6 +75,7 @@ import {
   applyExpressStoryboardImageToScene,
   ensureSceneBeats,
   getSceneBeats,
+  isBeatExcluded,
   isBeatFirstPipelineEnabled,
   reorderSceneBeats,
   resolveRawBeatIndex,
@@ -4016,6 +4017,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   const backfillDeriveAttemptedRef = useRef<Set<string>>(new Set())
+  const mixerIncludeHealedRef = useRef<Set<string>>(new Set())
+  const previousExcludedBeatIdsRef = useRef<Map<string, Set<string>>>(new Map())
 
   useEffect(() => {
     if (!project?.id || !script?.script?.scenes || !isBeatFirstPipelineEnabled()) return
@@ -4057,16 +4060,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const sceneId = getSceneProductionKey(scene as Scene, idx)
       const production = sceneProductionState[sceneId]
       if (!production?.segments?.length) return
-      const restored = restoreIncludedMixerBeats(
-        production.segments,
-        activeBeatIdOrder(scene)
+      const included = activeBeatIdOrder(scene)
+      const excluded = new Set(
+        getSceneBeats(scene).filter((beat) => isBeatExcluded(beat)).map((beat) => beat.beatId)
       )
-      if (!restored.changed) return
+      const previous = previousExcludedBeatIdsRef.current.get(sceneId)
+      previousExcludedBeatIdsRef.current.set(sceneId, excluded)
+      const justIncluded = previous ? included.filter((beatId) => previous.has(beatId)) : []
+      const needsLoadHeal =
+        !production.mixerLegacyIncludeHealedAt && !mixerIncludeHealedRef.current.has(sceneId)
+      if (!needsLoadHeal && justIncluded.length === 0) return
+      const ids = needsLoadHeal ? included : justIncluded
+      mixerIncludeHealedRef.current.add(sceneId)
+      const restored = restoreIncludedMixerBeats(production.segments, ids)
+      if (!needsLoadHeal && !restored.changed) return
       applySceneProductionUpdate(sceneId, (current) => {
         if (!current?.segments) return current
-        const again = restoreIncludedMixerBeats(current.segments, activeBeatIdOrder(scene))
-        if (!again.changed) return current
-        return { ...current, segments: again.segments }
+        const again = restoreIncludedMixerBeats(current.segments, ids)
+        if (!needsLoadHeal && !again.changed) return current
+        return {
+          ...current,
+          segments: again.segments,
+          mixerLegacyIncludeHealedAt:
+            current.mixerLegacyIncludeHealedAt || new Date().toISOString(),
+        }
       })
     })
   }, [script?.script?.scenes, sceneProductionState, applySceneProductionUpdate])

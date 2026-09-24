@@ -100,7 +100,8 @@ function findPreviousProductionSegment(
 
 export function mergeSceneProductionData(
   existing: SceneProductionData | undefined,
-  incoming: SceneProductionData | undefined
+  incoming: SceneProductionData | undefined,
+  options?: { preserveBeatIds?: Iterable<string> }
 ): SceneProductionData | undefined {
   if (!existing) return incoming
   if (!incoming) return existing
@@ -120,7 +121,15 @@ export function mergeSceneProductionData(
           segmentId: previous.segmentId,
         }
       })
-    : existing.segments
+      : existing.segments
+  const preserveBeatIds = new Set(options?.preserveBeatIds ?? [])
+  const incomingBeatIds = new Set(
+    (segments ?? []).map((segment) => segment.beatId).filter((beatId): beatId is string => !!beatId)
+  )
+  const preserved = (existing?.segments ?? []).filter((segment) => {
+    const beatId = segment.beatId?.trim()
+    return !!beatId && preserveBeatIds.has(beatId) && !incomingBeatIds.has(beatId) && !used.has(segment.segmentId)
+  })
   const productionStreams = unionRowsById(
     incoming.productionStreams,
     existing.productionStreams,
@@ -130,7 +139,7 @@ export function mergeSceneProductionData(
   return {
     ...existing,
     ...incoming,
-    segments,
+    segments: segments ? [...segments, ...preserved] : segments,
     productionStreams:
       productionStreams.length > 0 ? productionStreams : existing.productionStreams,
     currentStreamId: incoming.currentStreamId || existing.currentStreamId,

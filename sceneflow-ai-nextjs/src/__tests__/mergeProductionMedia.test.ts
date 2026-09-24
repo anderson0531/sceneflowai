@@ -130,6 +130,30 @@ describe('mergeSceneProductionData', () => {
     expect(merged.segments[0].mixerBeatIncluded).toBeUndefined()
   })
 
+  it('keeps an excluded beat segment when the incoming list omits it', () => {
+    const existing: SceneProductionData = {
+      isSegmented: true,
+      targetSegmentDuration: 8,
+      segments: [
+        segment({ segmentId: 'seg_1', beatId: 'bt_1' }),
+        segment({
+          segmentId: 'seg_6',
+          beatId: 'bt_6',
+          activeAssetUrl: 'https://cdn.example/upload.mp4',
+          takes: [{ id: 'up_1', createdAt: '2026-01-01T00:00:00.000Z', assetUrl: 'https://cdn.example/upload.mp4', status: 'COMPLETE' }],
+        }),
+      ],
+    }
+    const incoming: SceneProductionData = {
+      isSegmented: true,
+      targetSegmentDuration: 8,
+      segments: [segment({ segmentId: 'seg_1', beatId: 'bt_1' })],
+    }
+    const merged = mergeSceneProductionData(existing, incoming, { preserveBeatIds: ['bt_6'] })!
+    expect(merged.segments.map((row) => row.segmentId)).toEqual(['seg_1', 'seg_6'])
+    expect(merged.segments[1].activeAssetUrl).toBe('https://cdn.example/upload.mp4')
+  })
+
   it('keeps the stored clip when a re-derive mints a new id for the same beat', () => {
     const existing: SceneProductionData = {
       isSegmented: true,
