@@ -4,6 +4,7 @@ import {
   applyBeatSplitAndDerive,
   mergeDerivedSegmentsWithExisting,
   needsProductionDerive,
+  productionDeriveAttemptKey,
 } from '@/lib/scene/deriveSegmentsFromBeats'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
@@ -401,6 +402,34 @@ describe('needsProductionDerive', () => {
     const segments = deriveSegmentsFromBeats(scene).segments
     expect(segments).toHaveLength(1)
     expect(needsProductionDerive(scene, segments)).toBe(false)
+  })
+
+  it('restores an included beat missing from the stored segments', () => {
+    const beats: SceneBeat[] = Array.from({ length: 6 }, (_, index) => ({
+      beatId: `bt_${index + 1}`,
+      sequenceIndex: index,
+      kind: 'action' as const,
+      actionDescription: `Beat ${index + 1}`,
+    }))
+    const scene = approvedScene(beats)
+    const derived = deriveSegmentsFromBeats(scene).segments
+    const stored = derived.slice(0, 5)
+    const staleSixth = { ...derived[5], mixerBeatIncluded: false }
+
+    expect(needsProductionDerive(scene, stored)).toBe(true)
+
+    const merged = deriveSegmentsFromBeats(scene, {
+      existingSegments: [...stored, staleSixth],
+    }).segments
+    expect(merged.map((segment) => segment.beatId)).toEqual(beats.map((beat) => beat.beatId))
+    expect(merged[5].mixerBeatIncluded).not.toBe(false)
+
+    const excluded = approvedScene(
+      beats.map((beat, index) => (index === 5 ? { ...beat, excluded: true } : beat))
+    )
+    expect(productionDeriveAttemptKey('scene-1', scene)).not.toBe(
+      productionDeriveAttemptKey('scene-1', excluded)
+    )
   })
 
   it('returns true when an active beat is missing from segments', () => {

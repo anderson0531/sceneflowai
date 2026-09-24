@@ -6162,7 +6162,7 @@ function SceneCard({
                             {sceneBeatsForTabs.length > 0 && (
                               <span className="text-[10px] opacity-60">
                                 ({sceneBeatsForTabs.length}
-                                {excludedBeatCount > 0 ? `, ${excludedBeatCount} ignored` : ''})
+                                {excludedBeatCount > 0 ? `, ${excludedBeatCount} excluded` : ''})
                               </span>
                             )}
                           </TabsTrigger>
