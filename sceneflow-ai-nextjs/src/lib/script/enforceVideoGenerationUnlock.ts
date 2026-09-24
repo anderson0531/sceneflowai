@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import {
   isBeatFirstPipelineEnabled,
-  isVideoGenerationUnlocked,
   stampApprovedIfVideoUnlocked,
 } from '@/lib/script/beatMigration'
 import {
@@ -25,8 +24,8 @@ interface ProjectLike {
 }
 
 /**
- * Beat-first video routes: 403 unless unlocked, and stamp bookend scenes
- * approved when complete frames are what unlocked them.
+ * Beat-first video routes look up the scene and stamp bookends that already
+ * have every frame. Pre-Vis approval is not required to generate a clip.
  */
 export async function enforceVideoGenerationUnlock(
   project: ProjectLike | null | undefined,
@@ -42,9 +41,6 @@ export async function enforceVideoGenerationUnlock(
 
   if (!isBeatFirstPipelineEnabled()) {
     return { ok: true, scene }
-  }
-  if (scene && !isVideoGenerationUnlocked(scene)) {
-    return { ok: false, response: storyboardNotApprovedResponse() }
   }
   if (!scene || !project || index < 0) {
     return { ok: true, scene }

@@ -154,7 +154,6 @@ import {
   getSceneBeats,
   isBeatExcluded,
   isBeatFirstPipelineEnabled,
-  isVideoGenerationUnlocked,
 } from '@/lib/script/beatMigration'
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import {
@@ -173,7 +172,7 @@ import {
   resolveCurrentVideoPrompt,
 } from '@/lib/intelligence/beat-video-director-fallback'
 import type { SegmentGuideContext } from '@/lib/vision/segmentConfigBuilder'
-import { resolveEffectiveStartFrameUrl, resolveExpressGenerationMethod, STANDARD_TAKE_DURATION_SECONDS } from '@/lib/vision/segmentConfigBuilder'
+import { resolveEffectiveStartFrameUrl, resolveExpressGenerationMethod, resolveF2VFrameUrls, f2vStartFromPreviousEnd, STANDARD_TAKE_DURATION_SECONDS } from '@/lib/vision/segmentConfigBuilder'
 import { CONCURRENCY_DEFAULTS } from '@/lib/utils/concurrent-processor'
 
 function getAspectRatioTailwindClass(ratio: BlueprintAspectRatio): string {
@@ -332,6 +331,11 @@ export interface DirectorConsoleProps {
   onVideoGenerationModeChange?: (mode: VideoGenerationMode) => void
   /** Jump the parent workflow strip to Pre-Vis. */
   onOpenPreVis?: () => void
+  /** Generate dedicated F2V start and end frames. Does not replace the beat still. */
+  onGenerateF2VFrames?: (
+    segmentId: string,
+    options: { usePreviousEndFrame: boolean }
+  ) => void
   /** Shared beat selection with Direction, Audio, and Pre-Vis. */
   selectedBeatId?: string | null
   onSelectBeat?: (beatId: string) => void
@@ -407,6 +411,7 @@ export function DirectorConsoleRoot({
   videoGenerationMode = 'standard',
   onVideoGenerationModeChange,
   onOpenPreVis,
+  onGenerateF2VFrames,
   selectedBeatId = null,
   onSelectBeat,
   children,
@@ -417,12 +422,6 @@ export function DirectorConsoleRoot({
   // productionData?.segments || [] creates a new array reference each render
   const segments = productionData?.segments ?? EMPTY_SEGMENTS
   const beatFirstReadOnlyPrompts = isBeatFirstPipelineEnabled()
-  const videoGenerationUnlocked =
-    !beatFirstReadOnlyPrompts ||
-    isVideoGenerationUnlocked((scene as Record<string, unknown> | undefined) ?? null)
-  const videoGenerationLockReason = videoGenerationUnlocked
-    ? undefined
-    : 'Approve Pre-Vis before generating video'
   const aspectClass = getAspectRatioTailwindClass(projectAspectRatio)
   const videoAspectRatio = toVideoAspectRatio(projectAspectRatio)
 
@@ -864,13 +863,6 @@ export function DirectorConsoleRoot({
   // Handle generate from dialog - saves config and triggers single segment generation
   // Pass config via overrideConfigs to bypass React state async timing issues
   const handleGenerateFromDialog = useCallback((segmentId: string, config: VideoGenerationConfig) => {
-    if (!videoGenerationUnlocked) {
-      void import('sonner').then(({ toast }) => {
-        toast.error('Approve Pre-Vis before generating video')
-      })
-      onOpenPreVis?.()
-      return
-    }
     updateConfig(segmentId, config)
     processQueue({
       mode: 'selected',
@@ -879,7 +871,7 @@ export function DirectorConsoleRoot({
       selectedIds: [segmentId],
       overrideConfigs: new Map([[segmentId, config]]),
     })
-  }, [updateConfig, processQueue, videoGenerationUnlocked, onOpenPreVis])
+  }, [updateConfig, processQueue])
 
   const handleOpenVideoDirection = useCallback((segment: SceneSegment) => {
     setVideoDirectorSegment(segment)
@@ -1173,10 +1165,10 @@ export function DirectorConsoleRoot({
         hasStartFrame,
         hasRefs,
         resolvedStart,
-        eligible: videoGenerationUnlocked && (hasRefs || hasStartFrame),
+        eligible: hasRefs || hasStartFrame,
       }
     },
-    [scene, sceneImageUrl, videoGenerationUnlocked]
+    [scene, sceneImageUrl]
   )
 
   const videoAgentBeats = useMemo<VideoAgentBeatOption[]>(
@@ -1262,16 +1254,9 @@ export function DirectorConsoleRoot({
   )
 
   const handleOpenVideoAgent = useCallback(() => {
-    if (!videoGenerationUnlocked) {
-      void import('sonner').then(({ toast }) => {
-        toast.error('Approve Pre-Vis before generating video')
-      })
-      onOpenPreVis?.()
-      return
-    }
     if (queue.length === 0) return
     setVideoAgentDialogOpen(true)
-  }, [queue.length, videoGenerationUnlocked, onOpenPreVis])
+  }, [queue.length])
 
   // === Text Overlay Handlers ===
   
@@ -1665,6 +1650,19 @@ export function DirectorConsoleRoot({
         matches[0]
       if (segment) used.add(segment.segmentId)
       const item = segment ? queue.find((entry) => entry.segmentId === segment.segmentId) : undefined
+      const f2v = segment
+        ? resolveF2VFrameUrls(segment, scene as Record<string, unknown> | undefined)
+        : { startFrameUrl: null, endFrameUrl: null }
+      const previousBeat = index > 0 ? beats[index - 1] : undefined
+      const previousSegment = previousBeat
+        ? segments.find((row) => row.beatId === previousBeat.beatId)
+        : undefined
+      const previousEndFrameUrl = f2vStartFromPreviousEnd(
+        previousSegment
+          ? resolveF2VFrameUrls(previousSegment, scene as Record<string, unknown> | undefined)
+              .endFrameUrl
+          : null
+      )
       const thumbnail =
         beat.storyboardImageUrl?.trim() ||
         item?.thumbnailUrl ||
@@ -1680,6 +1678,9 @@ export function DirectorConsoleRoot({
         prompt: item?.config.prompt || segment?.userEditedPrompt || segment?.generatedPrompt,
         thumbnailUrl: thumbnail,
         hasStartFrame: !!thumbnail,
+        f2vStartUrl: f2v.startFrameUrl,
+        f2vEndUrl: f2v.endFrameUrl,
+        previousEndFrameUrl,
         segment,
         queueItem: item,
         imageTier: beat.storyboardImageUrl?.trim()
@@ -1944,9 +1945,9 @@ export function DirectorConsoleRoot({
             size="sm"
             variant="outline"
             onClick={handleOpenVideoAgent}
-            disabled={queue.length === 0 || !videoGenerationUnlocked}
+            disabled={queue.length === 0}
             className="border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/10 hover:border-indigo-400 shadow-md hover:shadow-lg transition-all"
-            title={videoGenerationLockReason || tVideoAgent('toolbarTitle')}
+            title={tVideoAgent('toolbarTitle')}
           >
             <Zap className="w-4 h-4 mr-2" />
             {tVideoAgent('toolbarButton')}
@@ -1983,8 +1984,23 @@ export function DirectorConsoleRoot({
         renderedCount={statusCounts.rendered}
         totalCount={videoClips.length || statusCounts.total}
         onOpenPreVis={onOpenPreVis}
-        videoGenerationLocked={!videoGenerationUnlocked}
-        videoGenerationLockReason={videoGenerationLockReason}
+        onGenerateF2VFrames={onGenerateF2VFrames}
+        onGenerateF2VClip={(segment) => {
+          const item = queue.find((entry) => entry.segmentId === segment.segmentId)
+          const frames = resolveF2VFrameUrls(segment, scene as Record<string, unknown> | undefined)
+          if (!item || !frames.startFrameUrl || !frames.endFrameUrl) {
+            void import('sonner').then(({ toast }) => {
+              toast.error('Generate start and end frames for frame-to-video first.')
+            })
+            return
+          }
+          handleGenerateFromDialog(segment.segmentId, {
+            ...item.config,
+            mode: 'FTV',
+            startFrameUrl: frames.startFrameUrl,
+            endFrameUrl: frames.endFrameUrl,
+          })
+        }}
         onPlay={(segment) => {
           const segmentIndex = segments.findIndex((row) => row.segmentId === segment.segmentId)
           if (segmentIndex >= 0) {

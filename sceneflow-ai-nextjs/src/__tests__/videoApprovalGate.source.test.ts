@@ -28,22 +28,20 @@ describe('video generation unlock wiring', () => {
     expect(longtake).not.toContain('isStoryboardApproved(')
   })
 
-  it('Video Agent generate is gated on isVideoGenerationUnlocked', () => {
+  it('Video Agent and the clip gallery do not require Pre-Vis approval', () => {
     const consoleSrc = readSource(CONSOLE)
     const gallery = readSource(GALLERY)
-    expect(consoleSrc).toContain('isVideoGenerationUnlocked')
-    expect(consoleSrc).toContain('videoGenerationLocked={!videoGenerationUnlocked}')
-    expect(consoleSrc).toContain('Approve Pre-Vis before generating video')
-    expect(gallery).toContain('videoGenerationLocked')
-    expect(gallery).toContain('disabled={videoGenerationLocked}')
-    expect(gallery).toContain('Approve Pre-Vis before generating video')
+    expect(consoleSrc).not.toContain('isVideoGenerationUnlocked')
+    expect(consoleSrc).not.toContain('Approve Pre-Vis before generating video')
+    expect(gallery).not.toContain('Approve Pre-Vis before generating video')
+    expect(gallery).toContain('Generate start and end frames')
+    expect(gallery).toContain('Use previous end frame')
   })
 
-  it('client generate-asset 403 keeps STORYBOARD_NOT_APPROVED and unlocks title bookends', () => {
+  it('client generate does not block on Pre-Vis approval', () => {
     const page = readSource(PAGE)
-    expect(page).toContain('isVideoGenerationUnlocked')
-    expect(page).toContain('gateScene && !isVideoGenerationUnlocked')
-    expect(page).toContain("errorData?.code === 'STORYBOARD_NOT_APPROVED'")
+    expect(page).not.toContain('gateScene && !isVideoGenerationUnlocked')
+    expect(page).not.toContain('Pre-vis must be approved before video generation')
   })
 
   it('Express stamps bookend storyboard status through applyExpressStoryboardStatus', () => {

@@ -451,6 +451,7 @@ interface ScriptPanelProps {
     customPrompt?: string
     negativePrompt?: string
     usePreviousEndFrame?: boolean
+    keepBeatStill?: boolean
     previousEndFrameUrl?: string
     stillPolicyMode?: 'safety' | 'creative' | 'standard'
     stillGenerationMode?: 'standard' | 'creative'
@@ -6064,6 +6065,17 @@ function SceneCard({
                       productionData={sceneProductionData ?? null}
                       sceneImageUrl={scene.imageUrl}
                       onOpenPreVis={() => setActiveSceneTab('previs')}
+                      onGenerateF2VFrames={
+                        onGenerateSegmentFrames
+                          ? (segmentId, options) => {
+                              void onGenerateSegmentFrames(workflowSceneId, segmentId, 'both', {
+                                usePreviousEndFrame: options.usePreviousEndFrame,
+                                keepBeatStill: true,
+                                fromDialog: true,
+                              })
+                            }
+                          : undefined
+                      }
                       selectedBeatId={selectedBeatId}
                       onSelectBeat={setSelectedBeatId}
                       scene={{

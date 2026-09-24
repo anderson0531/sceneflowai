@@ -94,6 +94,10 @@ export interface BeatVideoClip {
   prompt?: string
   thumbnailUrl?: string
   hasStartFrame: boolean
+  /** Dedicated frame-to-video frames. Not the beat still. */
+  f2vStartUrl?: string | null
+  f2vEndUrl?: string | null
+  previousEndFrameUrl?: string | null
   segment?: SceneSegment
   queueItem?: DirectorQueueItem
   /** Pre-Vis frame tier for this beat. Clips do not store their own Draft | Final. */
@@ -130,8 +134,12 @@ interface BeatVideoGalleryProps {
   onRestoreTake?: (segmentId: string, takeId: string) => void
   onOpenPreVis?: () => void
   generatingClipId?: string | null
-  videoGenerationLocked?: boolean
-  videoGenerationLockReason?: string
+  onGenerateF2VFrames?: (
+    segmentId: string,
+    options: { usePreviousEndFrame: boolean }
+  ) => void
+  onGenerateF2VClip?: (segment: SceneSegment) => void
+  generatingF2VFrames?: boolean
   /** Shared beat selection with Direction, Audio, and Pre-Vis. */
   selectedBeatId?: string | null
   onSelectBeat?: (beatId: string) => void
@@ -158,10 +166,10 @@ export function BeatVideoGallery({
   onDirection,
   onEditClip,
   onRestoreTake,
-  onOpenPreVis,
   generatingClipId,
-  videoGenerationLocked = false,
-  videoGenerationLockReason,
+  onGenerateF2VFrames,
+  onGenerateF2VClip,
+  generatingF2VFrames = false,
   selectedBeatId = null,
   onSelectBeat,
 }: BeatVideoGalleryProps) {
@@ -169,6 +177,7 @@ export function BeatVideoGallery({
   const [attention, setAttention] = useState<VideoAttentionFilter>('all')
   const [quality, setQuality] = useState<VideoQualityFilter>('all')
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(false)
+  const [usePreviousEndFrame, setUsePreviousEndFrame] = useState(false)
   const previewVideoRef = useRef<HTMLVideoElement>(null)
 
   const clipFacts = useMemo<VideoClipFacts[]>(
@@ -405,7 +414,7 @@ export function BeatVideoGallery({
                 <SceneImageFrame
                   sceneIdx={0}
                   sceneNumber={preview.beatNumber}
-                  label="Start frame"
+                  label="Beat still"
                   generateTitle={previewHasClip ? 'Regenerate' : 'Generate video'}
                   directTitle="Direct Video"
                   directorTitle="Direction"
@@ -418,7 +427,6 @@ export function BeatVideoGallery({
                   alwaysShowControls
                   showBorder={false}
                   isGenerating={generatingClipId === previewSegment.segmentId}
-                  generateBlockedReason={videoGenerationLockReason}
                   onGenerate={() => onGenerateClip?.(previewSegment)}
                   onDirect={onDirectVideo ? () => onDirectVideo(previewSegment) : undefined}
                   onDirector={onDirection ? () => onDirection(previewSegment) : undefined}
@@ -520,29 +528,56 @@ export function BeatVideoGallery({
                     Video prompt saved from Direction
                   </p>
                 )}
-                {!preview.hasStartFrame && (
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <p className="text-xs text-amber-300">Generate a start frame in Pre-Vis before this clip.</p>
-                    {onOpenPreVis && (
-                      <Button type="button" size="sm" variant="outline" className="h-7 text-[10px]" onClick={onOpenPreVis}>
-                        Open Stills
-                      </Button>
-                    )}
-                  </div>
-                )}
-                {preview.hasStartFrame && videoGenerationLocked && (
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <p className="text-xs text-amber-300">
-                      {videoGenerationLockReason || 'Approve Pre-Vis before generating video'}
+                {previewSegment && onGenerateF2VFrames && (
+                  <div className="mt-2 space-y-2">
+                    <p className="text-[10px] uppercase tracking-wide text-slate-500">Frame-to-video</p>
+                    <p className="text-xs text-slate-400">
+                      {preview.f2vStartUrl && preview.f2vEndUrl
+                        ? 'Start and end frames are ready for this clip.'
+                        : 'The beat still illustrates the beat. Generate a start frame and an end frame when you want frame-to-video.'}
                     </p>
-                    {onOpenPreVis && (
-                      <Button type="button" size="sm" variant="outline" className="h-7 text-[10px]" onClick={onOpenPreVis}>
-                        Open Stills
-                      </Button>
+                    {preview.previousEndFrameUrl && (
+                      <label className="flex items-center gap-2 text-xs text-slate-300">
+                        <input
+                          type="checkbox"
+                          checked={usePreviousEndFrame}
+                          onChange={(event) => setUsePreviousEndFrame(event.target.checked)}
+                        />
+                        Use previous end frame
+                      </label>
                     )}
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[10px]"
+                        disabled={generatingF2VFrames}
+                        onClick={() =>
+                          onGenerateF2VFrames(previewSegment.segmentId, {
+                            usePreviousEndFrame: Boolean(preview.previousEndFrameUrl) && usePreviousEndFrame,
+                          })
+                        }
+                      >
+                        {preview.f2vStartUrl && preview.f2vEndUrl
+                          ? 'Regenerate start and end frames'
+                          : 'Generate start and end frames'}
+                      </Button>
+                      {onGenerateF2VClip && preview.f2vStartUrl && preview.f2vEndUrl && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-7 border-indigo-500/40 text-[10px] text-indigo-200"
+                          onClick={() => onGenerateF2VClip(previewSegment)}
+                        >
+                          Generate frame-to-video
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 )}
-                {previewSegment && preview.hasStartFrame && (
+                {previewSegment && (
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     {previewVideoUrl && (
                       <Button
@@ -566,8 +601,6 @@ export function BeatVideoGallery({
                         size="sm"
                         variant="outline"
                         className="h-7 border-indigo-500/40 text-[10px] text-indigo-200"
-                        disabled={videoGenerationLocked}
-                        title={videoGenerationLockReason}
                         onClick={() => onGenerateClip(previewSegment)}
                       >
                         <Wand2 className="mr-1 h-3 w-3" />

@@ -14,7 +14,7 @@ function mockProject(scenes: Record<string, unknown>[]) {
 }
 
 describe('enforceVideoGenerationUnlock', () => {
-  it('403s dramatic scenes that are not approved', async () => {
+  it('allows dramatic scenes that are still pending Pre-Vis review', async () => {
     const project = mockProject([
       {
         id: 'scene-lab',
@@ -32,11 +32,9 @@ describe('enforceVideoGenerationUnlock', () => {
       },
     ])
     const result = await enforceVideoGenerationUnlock(project, 'scene-lab')
-    expect(result.ok).toBe(false)
-    if (!result.ok) {
-      expect(result.response.status).toBe(403)
-      const body = await result.response.json()
-      expect(body.code).toBe('STORYBOARD_NOT_APPROVED')
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.scene?.storyboardStatus).toBe('pending_review')
     }
   })
 

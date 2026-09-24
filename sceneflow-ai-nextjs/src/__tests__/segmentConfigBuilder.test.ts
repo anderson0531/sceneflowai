@@ -4,7 +4,9 @@ import {
   applyStartFrameUrlToProductionSegments,
   buildDraftVideoGenerationConfig,
   detectRecommendedMethod,
+  f2vStartFromPreviousEnd,
   resolveEffectiveStartFrameUrl,
+  resolveF2VFrameUrls,
   resolveSegmentFrameUrls,
   shouldAttachBeatStartFrame,
 } from '@/lib/vision/segmentConfigBuilder'
@@ -91,6 +93,50 @@ describe('resolveEffectiveStartFrameUrl', () => {
     expect(
       resolveEffectiveStartFrameUrl(segment, null, 'https://example.com/scene.jpg')
     ).toBe('https://example.com/scene.jpg')
+  })
+})
+
+describe('resolveF2VFrameUrls', () => {
+  it('ignores a start URL that is the beat still', () => {
+    const segment = makeSegment({
+      startFrameUrl: LIVE_BEAT_URL,
+      endFrameUrl: LIVE_BEAT_URL,
+      references: {
+        startFrameUrl: LIVE_BEAT_URL,
+        endFrameUrl: LIVE_BEAT_URL,
+        characterIds: [],
+        sceneRefIds: [],
+        objectRefIds: [],
+      },
+    })
+    expect(resolveF2VFrameUrls(segment, sceneWithLiveBeat)).toEqual({
+      startFrameUrl: null,
+      endFrameUrl: null,
+    })
+  })
+
+  it('keeps dedicated start and end frames', () => {
+    const segment = makeSegment({
+      startFrameUrl: NEWER_SEGMENT_URL,
+      endFrameUrl: 'https://example.com/end-frame.jpg',
+      references: {
+        startFrameUrl: NEWER_SEGMENT_URL,
+        endFrameUrl: 'https://example.com/end-frame.jpg',
+        characterIds: [],
+        sceneRefIds: [],
+        objectRefIds: [],
+      },
+    })
+    expect(resolveF2VFrameUrls(segment, sceneWithLiveBeat)).toEqual({
+      startFrameUrl: NEWER_SEGMENT_URL,
+      endFrameUrl: 'https://example.com/end-frame.jpg',
+    })
+  })
+
+  it('uses the previous beat end frame as this beat start frame', () => {
+    const previousEnd = 'https://example.com/previous-end.jpg'
+    expect(f2vStartFromPreviousEnd(previousEnd)).toBe(previousEnd)
+    expect(f2vStartFromPreviousEnd('  ')).toBeNull()
   })
 })
 
