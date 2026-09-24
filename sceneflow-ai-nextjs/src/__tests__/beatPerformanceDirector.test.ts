@@ -116,7 +116,7 @@ describe('beat performance director', () => {
   })
 
   it('is opened from the beat list and does not write the database in the route', () => {
-    const panel = readSource('src/components/vision/ScriptPanel.tsx')
+    const panel = readSource('src/components/vision/scene-production/SceneAudioWorkbench.tsx')
     const route = readSource('src/app/api/scene/direct-beat/route.ts')
     expect(panel).toContain('BeatPerformanceDirectorControl')
     expect(route).toContain('directBeatPerformance')

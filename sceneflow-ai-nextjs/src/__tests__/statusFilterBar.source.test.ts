@@ -20,7 +20,7 @@ describe('on-demand status filters', () => {
   })
 
   it('explains every Beats, Pre-Vis, and Video option', () => {
-    const beats = readSource('src/components/vision/ScriptPanel.tsx')
+    const beats = readSource('src/components/vision/scene-production/SceneAudioWorkbench.tsx')
     const frames = readSource('src/components/vision/SceneStoryboardFrameViewer.tsx')
     const video = readSource('src/components/vision/scene-production/BeatVideoGallery.tsx')
 
