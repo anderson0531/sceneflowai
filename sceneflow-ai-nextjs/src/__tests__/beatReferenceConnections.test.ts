@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { composeBeatActionFraming } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import {
+  alignDirectionToConnectedObjects,
   connectObjectReference,
   disconnectObjectReference,
   objectReferenceClause,
@@ -66,6 +67,40 @@ describe('composeBeatActionFraming connected props', () => {
 
     expect(framing).toContain('Sepia photograph')
     expect(framing).toContain('Props: Framed Photo of Sarah')
+  })
+})
+
+describe('alignDirectionToConnectedObjects', () => {
+  it('rewrites Sepia photograph to Framed Photo of Sarah and leaves the workbench', () => {
+    const aligned = alignDirectionToConnectedObjects(
+      {
+        shotType: 'Insert Shot',
+        cameraAngle: 'high angle',
+        frozenMoment:
+          "person's soot-stained index finger rests motionless against the glass edge of the Sepia photograph.",
+        propInteraction:
+          "person's right index finger presses against the glass of the Sepia photograph, which lies flat on the Zinc workbench.",
+        keyProps: ['Sepia photograph', 'Zinc workbench', 'Framed Photo of Sarah'],
+      },
+      ['Framed Photo of Sarah', 'Zinc workbench']
+    )
+
+    expect(aligned?.frozenMoment).toContain('Framed Photo of Sarah')
+    expect(aligned?.frozenMoment).not.toContain('Sepia photograph')
+    expect(aligned?.propInteraction).toContain('Framed Photo of Sarah')
+    expect(aligned?.propInteraction).toContain('Zinc workbench')
+    expect(aligned?.keyProps).toEqual(['Zinc workbench', 'Framed Photo of Sarah'])
+
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_photo',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription: 'A finger rests on the glass edge of the Sepia photograph.',
+      beatDirection: aligned,
+    })
+    expect(framing).toContain('Framed Photo of Sarah')
+    expect(framing).not.toContain('Sepia photograph')
+    expect(framing).toContain('Zinc workbench')
   })
 })
 
