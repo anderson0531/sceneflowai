@@ -45,10 +45,14 @@ describe('Video tab inline clip preview', () => {
     expectScrollableBeatPanel(readSource(FRAMES), 'Beat frames')
   })
 
-  it('keeps sequential Play Beats on the SceneVideoPlayer modal', () => {
+  it('opens Screening Room Video for the scene instead of SceneVideoPlayer', () => {
     const consoleSrc = readSource(CONSOLE)
-    expect(consoleSrc).toContain('Play Beats ({statusCounts.rendered})')
-    expect(consoleSrc).toContain('setIsScenePlayerOpen(true)')
-    expect(consoleSrc).toContain('<SceneVideoPlayer')
+    const frames = readSource(FRAMES)
+    expect(consoleSrc).toContain('Play Scene')
+    expect(consoleSrc).toContain('onPlayScene')
+    expect(consoleSrc).not.toContain('<SceneVideoPlayer')
+    expect(consoleSrc).not.toContain('Play Beats')
+    expect(frames).toContain('Play Pre-Vis')
+    expect(frames).toContain('onPlayPreVis')
   })
 })

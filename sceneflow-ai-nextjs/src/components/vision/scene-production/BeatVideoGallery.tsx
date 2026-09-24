@@ -118,7 +118,7 @@ interface BeatVideoGalleryProps {
   readOnlyPrompts?: boolean
   renderedCount: number
   totalCount: number
-  /** Unused for selected-beat preview (plays inline). Play Beats still opens SceneVideoPlayer. */
+  /** Unused. Selected-beat preview plays inline. Play Scene opens Screening Room. */
   onPlay?: (segment: SceneSegment) => void
   onTake?: (segment: SceneSegment) => void
   onUpload?: (segmentId: string, file: File) => void
