@@ -6065,6 +6065,7 @@ function SceneCard({
                   {(() => {
                     const workflowSceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
                     return (
+                    <>
                     <DirectorWorkflow
                       sceneId={workflowSceneId}
                       sceneNumber={sceneNumber}
@@ -6756,7 +6757,7 @@ function SceneCard({
                         }}
                         beat={sceneBeatsForTabs.find((beat) => beat.beatId === directBeatId)!}
                         sceneIdx={sceneIdx}
-                        scenes={scenes}
+                        scenes={scenes ?? []}
                         script={script}
                         onScriptChange={onScriptChange}
                         promptComposition={promptComposition}
@@ -6766,6 +6767,7 @@ function SceneCard({
                         projectId={projectId}
                       />
                     )}
+                    </>
                     )
                   })()}
 
