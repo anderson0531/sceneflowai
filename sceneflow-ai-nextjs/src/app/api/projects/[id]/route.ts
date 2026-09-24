@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
+import { loadProjectForRead } from '@/lib/projects/loadProjectRead'
 import { calculateBase64Size } from '@/lib/storage/mediaStorage'
 import {
   compactProjectPutAck,
@@ -52,25 +53,12 @@ export async function GET(
     }
     
     await sequelize.authenticate()
-    
-    // Force fresh read from database - bypass any Sequelize caching
-    // Use raw query to ensure we always get the latest data
-    const project = await Project.findByPk(id, {
-      // Disable Sequelize's internal caching
-      rejectOnEmpty: false,
-      // Force a fresh read
-      lock: false,
-      // Don't use transaction cache
-      useMaster: true
-    })
-    
+
+    const project = await loadProjectForRead(id, { includeProduction })
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
-    
-    // Reload to get fresh data from database
-    await project.reload()
-    
+
     const rawMetadata = project.metadata || {}
     const base64Size = calculateBase64Size(rawMetadata)
     if (base64Size > 0) {
@@ -115,34 +103,7 @@ export async function GET(
     response.headers.set('Pragma', 'no-cache')
     response.headers.set('Expires', '0')
     response.headers.set('X-Content-Type-Options', 'nosniff')
-    
-    // Log direction data for debugging intermittent issues
-    const visionPhase = project.metadata?.visionPhase || {}
-    const scenes = visionPhase?.script?.script?.scenes || []
-    const scenesWithDirection = scenes.filter((s: any) => !!s.sceneDirection)
-    const characters = visionPhase?.characters || []
-    
-    console.log('[Projects GET] Loaded project:', {
-      id: project.id,
-      title: project.title,
-      // Script status
-      scriptGenerated: !!visionPhase.scriptGenerated,
-      hasScript: !!visionPhase?.script,
-      hasScriptScript: !!visionPhase?.script?.script,
-      totalScenes: scenes.length,
-      scenesWithDirection: scenesWithDirection.length,
-      // Character status
-      charactersGenerated: !!visionPhase.charactersGenerated,
-      charactersCount: characters.length,
-      charactersWithRefImage: characters.filter((c: any) => !!c.referenceImage).length,
-      characterDetails: characters.map((c: any) => ({
-        name: c.name,
-        hasRefImage: !!c.referenceImage,
-        refImagePrefix: c.referenceImage ? c.referenceImage.substring(0, 40) : 'none'
-      })),
-      timestamp: new Date().toISOString()
-    })
-    
+
     return response
   } catch (error: any) {
     console.error('[Projects GET by ID] Error:', {

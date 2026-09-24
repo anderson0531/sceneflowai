@@ -8445,7 +8445,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     try {
       // Phase 1: lite mode strips base64 images for fast first paint
       const cacheBuster = `_t=${Date.now()}`
-      const projectFetch = fetch(`/api/projects/${projectId}?lite=true&${cacheBuster}`, {
+      const res = await fetch(`/api/projects/${projectId}?lite=true&${cacheBuster}`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -8453,20 +8453,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           'Expires': '0'
         }
       })
-      const productionFetch = fetch(`/api/projects/${projectId}/production`, {
+
+      if (!res.ok) {
+        const errorText = await res.text()
+        console.error('[Load Project] Error response:', errorText)
+        throw new Error(`Failed to load project: ${res.status} ${res.statusText}`)
+      }
+
+      const productionRes = await fetch(`/api/projects/${projectId}/production`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           Pragma: 'no-cache',
         },
       })
-      const [res, productionRes] = await Promise.all([projectFetch, productionFetch])
-      
-      if (!res.ok) {
-        const errorText = await res.text()
-        console.error('[Load Project] Error response:', errorText)
-        throw new Error(`Failed to load project: ${res.status} ${res.statusText}`)
-      }
       
       const contentType = res.headers.get('content-type')
       if (!contentType?.includes('application/json')) {
