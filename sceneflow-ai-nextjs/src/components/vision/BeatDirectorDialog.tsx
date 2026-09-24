@@ -52,6 +52,7 @@ export interface BeatDirectorDialogProps {
   onVideoDraft: (value: string) => void
   onCommitFrame: () => void
   onCommitVideo: () => void
+  onUpdatePrompts: () => void
   onToggleObject: (object: DirectorObject, connect: boolean) => void
   onToggleObjectOnBeat: (
     object: DirectorObject,
@@ -92,6 +93,7 @@ export function BeatDirectorDialog({
   onVideoDraft,
   onCommitFrame,
   onCommitVideo,
+  onUpdatePrompts,
   onToggleObject,
   onToggleObjectOnBeat,
   onSelectLocation,
@@ -334,6 +336,17 @@ export function BeatDirectorDialog({
         )}
 
         <section className="grid gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-[11px] uppercase tracking-wide text-slate-500">Prompts</h3>
+            <button
+              type="button"
+              className="rounded border border-teal-800/80 px-2 py-1 text-[11px] text-teal-200 hover:bg-teal-950/40 disabled:opacity-50"
+              disabled={readOnly}
+              onClick={onUpdatePrompts}
+            >
+              Update still and clip prompts
+            </button>
+          </div>
           <label className="flex flex-col gap-1 text-xs">
             <span className="text-[10px] uppercase text-slate-500">Still prompt</span>
             <textarea

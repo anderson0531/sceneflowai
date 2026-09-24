@@ -377,6 +377,14 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
     appendFacet(parts, propInteraction, 'Hands and props')
   }
 
+  const stated = parts.join(' ').toLowerCase()
+  const propNames = (direction?.keyProps ?? [])
+    .map((name) => name.trim())
+    .filter((name) => name && !stated.includes(name.toLowerCase()))
+  if (propNames.length > 0) {
+    appendFacet(parts, propNames.join(', '), 'Props')
+  }
+
   const gaze = direction?.gaze?.trim() ?? ''
   if (!(emptyCast || isNullOccupancyGaze(gaze))) {
     appendFacet(parts, gaze, 'Gaze')
