@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useMemo, useState } from 'react'
-import { Camera, PlayCircle } from 'lucide-react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import { BeatDirectionEditor } from '@/components/vision/BeatDirectionEditor'
 import type { DirectionCharacter, DirectionLocation, DirectionObject } from '@/components/vision/BeatDirectionEditor'
 import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
@@ -9,8 +9,8 @@ import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
 import { resolveLiveTake, segmentHasPlayableVideo } from '@/lib/storyboard/mediaVersions'
 import type { SceneSegment } from './types'
+import { BeatStillClipViewer } from './BeatStillClipViewer'
 import { SceneBeatStage, type SceneBeatStageItem } from './SceneBeatStage'
-import { cn } from '@/lib/utils'
 
 interface SceneDirectionWorkbenchProps {
   scene: any
@@ -60,7 +60,7 @@ export function SceneDirectionWorkbench({
   locationReferences,
   objectReferences,
 }: SceneDirectionWorkbenchProps) {
-  const [view, setView] = useState<'still' | 'clip'>('still')
+  const [descriptionOpen, setDescriptionOpen] = useState(false)
   const sceneDir = scene.sceneDirection as DetailedSceneDirection | undefined
   const prose = scene.visualDescription || scene.action || scene.summary || scene.heading
   const description = sceneDir?.sceneDescription || prose
@@ -94,19 +94,27 @@ export function SceneDirectionWorkbench({
       ? selected.sequenceIndex
       : beats.findIndex((beat) => beat.beatId === selected.beatId)) + 1
 
-  const showClip = view === 'clip' && !!clipUrl
-
   return (
     <div className="space-y-3">
       {(description || sceneDir) && (
-        <div className="space-y-2 rounded-lg border border-slate-700/50 bg-slate-950/40 p-3">
+        <div className="rounded-lg border border-slate-700/50 bg-slate-950/40">
+          <button
+            type="button"
+            className="flex w-full items-center gap-1.5 px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-400/80"
+            onClick={() => setDescriptionOpen((open) => !open)}
+            aria-expanded={descriptionOpen}
+          >
+            {descriptionOpen ? (
+              <ChevronDown className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5" />
+            )}
+            {descriptionOpen ? 'Scene description' : 'Show scene description'}
+          </button>
+          {descriptionOpen && (
+          <div className="space-y-2 px-3 pb-3">
           {description && (
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-400/80">
-                Scene description
-              </p>
-              <p className="mt-1 text-sm leading-relaxed text-slate-200">{description}</p>
-            </div>
+            <p className="text-sm leading-relaxed text-slate-200">{description}</p>
           )}
           {sceneDir && (
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -142,6 +150,8 @@ export function SceneDirectionWorkbench({
               />
             </div>
           )}
+          </div>
+          )}
         </div>
       )}
 
@@ -156,69 +166,11 @@ export function SceneDirectionWorkbench({
           selectedId={selected?.beatId ?? null}
           onSelect={onSelectBeat}
           stage={
-            <div className="overflow-hidden rounded-lg border border-slate-700/40 bg-gray-800/50">
-              <div className="flex items-center justify-between gap-2 border-b border-slate-700/40 px-2 py-1.5">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                  {showClip ? 'Clip' : 'Still'}
-                  {beatNumber ? ` · Beat ${beatNumber}` : ''}
-                </p>
-                {clipUrl && (
-                  <div className="flex overflow-hidden rounded border border-slate-600/60 text-[10px]">
-                    <button
-                      type="button"
-                      className={cn(
-                        'px-2 py-0.5',
-                        view === 'still' ? 'bg-slate-700 text-slate-100' : 'text-slate-400'
-                      )}
-                      onClick={() => setView('still')}
-                    >
-                      Still
-                    </button>
-                    <button
-                      type="button"
-                      className={cn(
-                        'px-2 py-0.5',
-                        view === 'clip' ? 'bg-slate-700 text-slate-100' : 'text-slate-400'
-                      )}
-                      onClick={() => setView('clip')}
-                    >
-                      Clip
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="relative aspect-video bg-black">
-                {showClip ? (
-                  <video
-                    key={clipUrl}
-                    src={clipUrl}
-                    poster={stillUrl}
-                    className="h-full w-full object-contain"
-                    controls
-                    playsInline
-                    preload="metadata"
-                  />
-                ) : stillUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={stillUrl} alt="" className="h-full w-full object-contain" />
-                ) : (
-                  <div className="flex h-full flex-col items-center justify-center">
-                    <Camera className="mb-2 h-8 w-8 text-gray-600" />
-                    <span className="text-xs text-gray-500">No still yet</span>
-                  </div>
-                )}
-                {!showClip && clipUrl && (
-                  <button
-                    type="button"
-                    className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-[10px] text-white"
-                    onClick={() => setView('clip')}
-                  >
-                    <PlayCircle className="h-3.5 w-3.5" />
-                    Play clip
-                  </button>
-                )}
-              </div>
-            </div>
+            <BeatStillClipViewer
+              stillUrl={stillUrl}
+              clipUrl={clipUrl}
+              beatNumber={beatNumber || undefined}
+            />
           }
           detail={
             selected ? (

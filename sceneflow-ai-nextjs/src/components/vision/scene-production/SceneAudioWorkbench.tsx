@@ -62,11 +62,14 @@ import {
   type BeatTypeFilter,
 } from '@/lib/vision/beatListFilters'
 import type { ProjectStream } from '@/lib/streams/projectStreams'
+import { resolveLiveTake, segmentHasPlayableVideo } from '@/lib/storyboard/mediaVersions'
 import { findDialogueAudioForLine } from './audioTrackBuilder'
+import { BeatStillClipViewer } from './BeatStillClipViewer'
+import { SceneBeatStage, type SceneBeatStageItem } from './SceneBeatStage'
+import type { SceneSegment } from './types'
 
 type CaptionTranslations = React.ComponentProps<typeof BeatCaptionControl>['storedTranslations']
 type SaveCaptionTranslations = React.ComponentProps<typeof BeatCaptionControl>['onSaveTranslations']
-import { SceneBeatStage, type SceneBeatStageItem } from './SceneBeatStage'
 
 async function downloadSceneAudioFile(
   e: React.MouseEvent,
@@ -116,6 +119,7 @@ export interface SceneAudioWorkbenchProps {
   sceneIdx: number
   sceneNumber: number
   beats: SceneBeat[]
+  segments?: SceneSegment[]
   selectedBeatId: string | null
   onSelectBeat: (beatId: string) => void
   onReorder?: (fromBeatId: string, toBeatId: string) => void
@@ -441,6 +445,7 @@ export function SceneAudioWorkbench(props: SceneAudioWorkbenchProps & { onSaveSf
               beats={beats}
               scene={scene}
               sceneIdx={sceneIdx}
+              segments={props.segments}
               selectedLanguage={selectedLanguage}
               playingAudio={props.playingAudio}
               onPlayAudio={props.onPlayAudio}
@@ -775,6 +780,7 @@ function AudioStage({
   beats,
   scene,
   sceneIdx,
+  segments,
   selectedLanguage,
   playingAudio,
   onPlayAudio,
@@ -783,6 +789,7 @@ function AudioStage({
   beats: SceneBeat[]
   scene: any
   sceneIdx: number
+  segments?: SceneSegment[]
   selectedLanguage: string
   playingAudio?: string | null
   onPlayAudio?: SceneAudioWorkbenchProps['onPlayAudio']
@@ -811,31 +818,31 @@ function AudioStage({
   }
   const sceneKey = scene.id || scene.sceneId || `scene-${sceneIdx}`
   const beatNumber = (typeof beat.sequenceIndex === 'number' ? beat.sequenceIndex : beats.indexOf(beat)) + 1
+  const segment =
+    segments?.find((row) => row.beatId === beat.beatId && segmentHasPlayableVideo(row)) ??
+    segments?.find((row) => row.beatId === beat.beatId)
+  const clipUrl = segment
+    ? resolveLiveTake(segment.takes, segment.currentTakeId, segment.activeAssetUrl)?.url
+    : undefined
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-700/40 bg-gray-800/50">
-      <p className="border-b border-slate-700/40 px-2 py-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-400">
-        Beat {beatNumber} · {audioUrl ? 'Audio' : 'Still'}
-      </p>
-      <div className="relative aspect-video bg-black">
-        {still ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={still} alt="" className="h-full w-full object-contain" />
-        ) : (
-          <div className="flex h-full items-center justify-center text-xs text-slate-500">No still yet</div>
-        )}
-        {audioUrl && (
+    <BeatStillClipViewer
+      stillUrl={still}
+      clipUrl={clipUrl}
+      beatNumber={beatNumber > 0 ? beatNumber : undefined}
+      stillOverlay={
+        audioUrl ? (
           <button
             type="button"
             className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/70 px-3 py-2 text-sm text-white"
-            onClick={() => onPlayAudio?.(audioUrl!, label, sceneKey)}
+            onClick={() => onPlayAudio?.(audioUrl, label, sceneKey)}
           >
             {playingAudio === audioUrl ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             {playingAudio === audioUrl ? 'Pause' : `Play ${label}`}
           </button>
-        )}
-      </div>
-    </div>
+        ) : null
+      }
+    />
   )
 }
 

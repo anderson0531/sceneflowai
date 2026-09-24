@@ -525,7 +525,7 @@ export function BeatVideoGallery({
                     <p className="text-xs text-amber-300">Generate a start frame in Pre-Vis before this clip.</p>
                     {onOpenPreVis && (
                       <Button type="button" size="sm" variant="outline" className="h-7 text-[10px]" onClick={onOpenPreVis}>
-                        Open Pre-Vis
+                        Open Stills
                       </Button>
                     )}
                   </div>
@@ -537,7 +537,7 @@ export function BeatVideoGallery({
                     </p>
                     {onOpenPreVis && (
                       <Button type="button" size="sm" variant="outline" className="h-7 text-[10px]" onClick={onOpenPreVis}>
-                        Open Pre-Vis
+                        Open Stills
                       </Button>
                     )}
                   </div>
