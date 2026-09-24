@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { Loader, Eye, Check, Undo, Redo } from 'lucide-react'
-import { ASSISTANT, assistantTitle } from '@/lib/constants/assistant'
+import { ASSISTANT } from '@/lib/constants/assistant'
 import { ASSISTANT_ICON as AssistantIcon } from '@/lib/constants/assistantIcon'
 import { InstructionsPanel, type InstructionsPanelAudienceAnalysis } from './InstructionsPanel'
 import type { ScenePolishAnalysis } from '@/lib/script/scenePolish/types'
@@ -335,7 +335,7 @@ export function SceneEditorModal({
             <div>
               <DialogTitle className="flex items-center gap-2">
                 <AssistantIcon className="w-5 h-5 text-cyan-400" />
-                {assistantTitle(`Scene ${sceneIndex + 1}`)}
+                {`Scene Director · Scene ${sceneIndex + 1}`}
               </DialogTitle>
               <DialogDescription>
                 {typeof scene.heading === 'string' ? scene.heading : (scene.heading?.text || 'Untitled Scene')}
@@ -377,6 +377,20 @@ export function SceneEditorModal({
                   appendInstruction(recText, recId)
                 }}
                 canAddMoreInstructions={canAddMoreInstructions}
+                preserveElements={{
+                  dialogueBeats: preserveDialogueBeats,
+                  actionBeats: preserveActionBeats,
+                  music: preserveMusic,
+                  sceneDirection: preserveSceneDirection,
+                  beatDirection: preserveBeatDirection,
+                  beatFrames: preserveBeatFrames,
+                  onDialogueBeatsChange: setPreserveDialogueBeats,
+                  onActionBeatsChange: setPreserveActionBeats,
+                  onMusicChange: setPreserveMusic,
+                  onSceneDirectionChange: setPreserveSceneDirection,
+                  onBeatDirectionChange: setPreserveBeatDirection,
+                  onBeatFramesChange: setPreserveBeatFrames,
+                }}
               />
 
               <div className="border-t pt-4">
@@ -447,70 +461,6 @@ export function SceneEditorModal({
                 </div>
               </div>
 
-              <div className="border-t pt-4">
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                  Preserve Elements
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={preserveDialogueBeats}
-                        onChange={(e) => setPreserveDialogueBeats(e.target.checked)}
-                        className="rounded"
-                      />
-                      Dialogue beats (+ audio)
-                    </label>
-                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={preserveActionBeats}
-                        onChange={(e) => setPreserveActionBeats(e.target.checked)}
-                        className="rounded"
-                      />
-                      Action beats (+ SFX audio)
-                    </label>
-                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={preserveMusic}
-                        onChange={(e) => setPreserveMusic(e.target.checked)}
-                        className="rounded"
-                      />
-                      Music
-                    </label>
-                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={preserveSceneDirection}
-                        onChange={(e) => setPreserveSceneDirection(e.target.checked)}
-                        className="rounded"
-                      />
-                      Scene direction
-                    </label>
-                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={preserveBeatDirection}
-                        onChange={(e) => setPreserveBeatDirection(e.target.checked)}
-                        className="rounded"
-                      />
-                      Beat direction (shot, blocking, emotion…)
-                    </label>
-                    <label className="flex items-center gap-2 text-sm cursor-pointer sm:col-span-2">
-                      <input
-                        type="checkbox"
-                        checked={preserveBeatFrames}
-                        onChange={(e) => setPreserveBeatFrames(e.target.checked)}
-                        className="rounded"
-                      />
-                      Beat frames (start/end storyboard images)
-                    </label>
-                  </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    Preserved items keep their script text, audio, direction, and frame images unchanged through the edit.
-                  </p>
-                </div>
             </div>
           </div>
         ) : (

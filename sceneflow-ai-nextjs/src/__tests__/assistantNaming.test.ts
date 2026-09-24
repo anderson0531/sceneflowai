@@ -110,11 +110,16 @@ describe('Assistant naming', () => {
     expect(button).toContain('aria-label')
   })
 
-  it('titles both dialogs from the shared helper', () => {
+  it('titles the Blueprint dialog from the shared helper', () => {
     expect(readSource('src/components/blueprint/BlueprintRefineDialog.tsx')).toContain(
       "assistantTitle('Blueprint')"
     )
-    expect(readSource('src/components/vision/SceneEditorModalV2.tsx')).toContain('assistantTitle(')
+  })
+
+  it('titles the scene revision dialog Scene Director', () => {
+    const modal = readSource('src/components/vision/SceneEditorModalV2.tsx')
+    expect(modal).toContain('Scene Director · Scene')
+    expect(modal).not.toContain('assistantTitle(')
   })
 
   it('keeps the marketing string in the English messages catalogue', () => {
