@@ -101,43 +101,44 @@ export interface DirectionObject {
   sceneNumbers?: number[]
 }
 
-const SHOT_TYPE_OPTIONS = [
-  '',
-  'Extreme Close-Up',
-  'Close-Up',
-  'Medium Close-Up',
-  'Medium Shot',
-  'Medium Wide',
-  'Wide Shot',
-  'Extreme Wide Shot',
-  'Two-Shot',
-  'Over-the-Shoulder',
-  'Insert Shot',
-  'Point of View',
-  'Center Composition',
-]
+const TRANSITION_LABEL: Record<BeatDirectionTransition, string> = {
+  CUT: 'Cut',
+  CONTINUE: 'Continue',
+  DISSOLVE: 'Dissolve',
+  FADE: 'Fade',
+  MATCH_CUT: 'Match cut',
+}
 
-const CAMERA_ANGLE_OPTIONS = [
-  '',
-  'eye-level',
-  'low angle',
-  'high angle',
-  'Dutch angle',
-  "bird's eye",
-  "worm's eye",
-]
+function DirectionChip({ children }: { children: string }) {
+  return (
+    <span className="rounded-full border border-slate-700/70 bg-slate-900/70 px-2.5 py-0.5 text-[11px] leading-5 text-slate-200">
+      {children}
+    </span>
+  )
+}
 
-const TRANSITION_OPTIONS: Array<{ value: '' | BeatDirectionTransition; label: string }> = [
-  { value: '', label: 'Default (CUT)' },
-  { value: 'CUT', label: 'CUT' },
-  { value: 'CONTINUE', label: 'CONTINUE' },
-  { value: 'DISSOLVE', label: 'DISSOLVE' },
-  { value: 'FADE', label: 'FADE' },
-  { value: 'MATCH_CUT', label: 'MATCH_CUT' },
-]
+function DirectionFact({ label, value }: { label: string; value?: string }) {
+  if (!value?.trim()) return null
+  return (
+    <div className="min-w-0">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
+      <p className="mt-1 text-sm leading-relaxed text-slate-200">{value}</p>
+    </div>
+  )
+}
 
-function characterKey(character: DirectionCharacter): string {
-  return character.id?.trim() || character.name
+function ReferenceChip({ name, imageUrl }: { name: string; imageUrl?: string }) {
+  return (
+    <span className="inline-flex max-w-full items-center gap-2 rounded-md border border-slate-700/70 bg-slate-900/50 px-2 py-1 text-xs text-slate-200">
+      {imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={imageUrl} alt="" className="h-6 w-6 shrink-0 rounded object-cover bg-slate-800" />
+      ) : (
+        <span className="h-6 w-6 shrink-0 rounded bg-slate-800" />
+      )}
+      <span className="truncate">{name}</span>
+    </span>
+  )
 }
 
 function stripPromptOverrides(direction: BeatDirection | undefined): BeatDirection | undefined {
@@ -161,31 +162,6 @@ function selectionFromBeat(
     characterWardrobes: resolved.characterWardrobes,
     source: 'auto',
   }
-}
-
-function trimOrUndef(value: string): string | undefined {
-  const trimmed = value.trim()
-  return trimmed ? trimmed : undefined
-}
-
-function parseChipInput(value: string): string[] | undefined {
-  const parts = value
-    .split(/[,\n]+/)
-    .map((part) => part.trim())
-    .filter(Boolean)
-  return parts.length > 0 ? parts : undefined
-}
-
-/** Names the scene lists, for suggesting valid cast. NARRATOR is never on camera. */
-function readSceneCharacterNames(scene: any): string[] {
-  const raw = Array.isArray(scene?.characters) ? scene.characters : []
-  const names: string[] = []
-  for (const entry of raw) {
-    const name = typeof entry === 'string' ? entry : typeof entry?.name === 'string' ? entry.name : ''
-    const trimmed = name.trim()
-    if (trimmed && !/^narrator$/i.test(trimmed)) names.push(trimmed)
-  }
-  return names
 }
 
 function summarizeDirection(direction: BeatDirection | undefined): string {
@@ -221,10 +197,7 @@ export function BeatDirectionEditor({
   const open = layout === 'board' || expanded
   const direction = beat.beatDirection
   const summary = useMemo(() => summarizeDirection(direction), [direction])
-  const sceneCharacterNames = useMemo(
-    () => readSceneCharacterNames(scenes[sceneIdx]),
-    [scenes, sceneIdx]
-  )
+  const [promptsOpen, setPromptsOpen] = useState(false)
   const sceneRecord = scenes[sceneIdx] as Record<string, unknown> | undefined
   const sceneDirection = (sceneRecord?.sceneDirection ??
     sceneRecord?.detailedDirection ??
@@ -259,19 +232,6 @@ export function BeatDirectionEditor({
       ...(cue ? { musicCue: cue } : {}),
     }).prompt
   }, [beat, direction?.videoPrompt, sceneRecord, sceneDirection, promptComposition?.artStyleAnchor])
-
-  const [frameDraft, setFrameDraft] = useState(framePreview)
-  const [videoDraft, setVideoDraft] = useState(videoPreview)
-  const [frameSource, setFrameSource] = useState(framePreview)
-  const [videoSource, setVideoSource] = useState(videoPreview)
-  if (frameSource !== framePreview && frameDraft === frameSource) {
-    setFrameSource(framePreview)
-    setFrameDraft(framePreview)
-  }
-  if (videoSource !== videoPreview && videoDraft === videoSource) {
-    setVideoSource(videoPreview)
-    setVideoDraft(videoPreview)
-  }
 
   const resolvedSelection = useMemo(
     () =>
@@ -390,55 +350,6 @@ export function BeatDirectionEditor({
     })
   }
 
-  const updateField = <K extends keyof BeatDirection>(
-    field: K,
-    value: BeatDirection[K] | undefined
-  ) => {
-    const next: BeatDirection = { ...(direction ?? {}) }
-    if (value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) {
-      delete next[field]
-    } else {
-      next[field] = value
-    }
-    persist(Object.keys(next).length > 0 ? next : undefined, { refreshPrompts: 'recompute' })
-  }
-
-  /**
-   * Cast needs its own setter: an empty list is "nobody on camera", which
-   * `updateField` would drop as an absence. Absent means the beat predates the
-   * field and its cast is still guessed from prose.
-   */
-  const setCastInFrame = (value: string[] | undefined) => {
-    const next: BeatDirection = { ...(direction ?? {}) }
-    if (value === undefined) {
-      delete next.castInFrame
-    } else {
-      next.castInFrame = value
-    }
-    persist(Object.keys(next).length > 0 ? next : undefined, { refreshPrompts: 'recompute' })
-  }
-
-  const commitPrompt = (field: 'framePrompt' | 'videoPrompt', draft: string, preview: string) => {
-    const nextText = draft.trim()
-    if (!nextText) return
-    const stored = direction?.[field]?.trim() ?? ''
-    if (nextText === stored || (!stored && nextText === preview.trim())) return
-    const next: BeatDirection = { ...(direction ?? {}) }
-    next[field] = nextText
-    persist(next, { refreshPrompts: 'keep' })
-  }
-
-  const saveReferences = (next: BeatReferenceSelection) => {
-    persist(direction, {
-      refreshPrompts: 'keep',
-      referenceSelection: {
-        ...next,
-        source: 'user',
-        resolvedAt: new Date().toISOString(),
-      },
-    })
-  }
-
   const sceneNumber =
     (typeof sceneRecord?.scene_number === 'number' ? sceneRecord.scene_number : undefined) ??
     (typeof sceneRecord?.sceneNumber === 'number' ? sceneRecord.sceneNumber : undefined) ??
@@ -490,6 +401,8 @@ export function BeatDirectionEditor({
       'emotion',
       'propInteraction',
       'lightingAccent',
+      'cameraMovement',
+      'audioCue',
     ] as const
     for (const key of textKeys) {
       const value = patch[key]?.trim()
@@ -500,6 +413,7 @@ export function BeatDirectionEditor({
     }
     if (Array.isArray(patch.castInFrame)) next.castInFrame = patch.castInFrame
     if (patch.keyProps && patch.keyProps.length > 0) next.keyProps = patch.keyProps
+    if (patch.transition) next.transition = patch.transition
     persist(directionAlignedToSelection(next, referenceSelection), {
       refreshPrompts: 'recompute',
     })
@@ -552,12 +466,37 @@ export function BeatDirectionEditor({
   }
 
   const castInFrame = direction?.castInFrame
-  const castListId = `cast-in-frame-${beat.beatId}`
-
-  const sectionTitle = (label: string) =>
-    layout === 'board' ? (
-      <p className="pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">{label}</p>
-    ) : null
+  const cameraChips = [
+    direction?.shotType,
+    direction?.cameraAngle,
+    direction?.cameraMovement,
+    direction?.transition ? TRANSITION_LABEL[direction.transition] : undefined,
+  ].filter((value): value is string => !!value?.trim())
+  const connectedCast = characters.filter(
+    (character) =>
+      character.type !== 'narrator' &&
+      (referenceSelection.characterIds.includes(character.id || '') ||
+        referenceSelection.characterIds.includes(character.name))
+  )
+  const connectedLocation = locationReferences.find(
+    (location) => location.id === referenceSelection.locationRefId
+  )
+  const connectedObjects = objectReferences.filter((object) =>
+    referenceSelection.objectRefIds.includes(object.id)
+  )
+  const hasReferences =
+    connectedCast.length > 0 || !!connectedLocation || connectedObjects.length > 0
+  const hasStructuredDirection =
+    cameraChips.length > 0 ||
+    !!direction?.frozenMoment?.trim() ||
+    !!direction?.blocking?.trim() ||
+    !!direction?.emotion?.trim() ||
+    !!direction?.gaze?.trim() ||
+    !!direction?.lightingAccent?.trim() ||
+    !!direction?.propInteraction?.trim() ||
+    !!direction?.audioCue?.trim() ||
+    (direction?.keyProps?.length ?? 0) > 0 ||
+    castInFrame !== undefined
 
   const directButton = (
     <button
@@ -644,430 +583,106 @@ export function BeatDirectionEditor({
       {directorDialog}
 
       {open && (
-        <div className={layout === 'board' ? 'space-y-3 p-3 text-xs' : 'space-y-2 px-3 pb-3 pt-1 text-xs'}>
-          {sectionTitle('Camera')}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <label className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase text-gray-500">Shot</span>
-              <select
-                className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
-                value={direction?.shotType ?? ''}
-                onChange={(e) => updateField('shotType', trimOrUndef(e.target.value))}
-                disabled={readOnly}
-              >
-                {SHOT_TYPE_OPTIONS.map((option) => (
-                  <option key={option || 'default'} value={option}>
-                    {option || '—'}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase text-gray-500">Camera angle</span>
-              <select
-                className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
-                value={direction?.cameraAngle ?? ''}
-                onChange={(e) => updateField('cameraAngle', trimOrUndef(e.target.value))}
-                disabled={readOnly}
-              >
-                {CAMERA_ANGLE_OPTIONS.map((option) => (
-                  <option key={option || 'default'} value={option}>
-                    {option || '—'}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase text-gray-500">Camera movement</span>
-              <input
-                className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
-                value={direction?.cameraMovement ?? ''}
-                onChange={(e) => updateField('cameraMovement', trimOrUndef(e.target.value))}
-                disabled={readOnly}
-                placeholder="e.g., static, slow push-in"
-              />
-            </label>
-          </div>
+        <div className={layout === 'board' ? 'space-y-4 p-3' : 'space-y-4 px-3 pb-3 pt-1'}>
+          {direction?.frozenMoment?.trim() ? (
+            <p className="text-sm leading-relaxed text-slate-100">{direction.frozenMoment.trim()}</p>
+          ) : !hasStructuredDirection ? (
+            <p className="text-sm leading-relaxed text-slate-400">
+              No direction yet. Use Direct Beat to describe the shot.
+            </p>
+          ) : null}
 
-          {sectionTitle('Performance')}
-          <label className="flex flex-col gap-1">
-            <span className="text-[10px] uppercase text-gray-500">
-              Cast in frame (comma-separated; decides who the image model draws)
-            </span>
-            <input
-              className="bg-gray-900 border border-gray-700 rounded px-2 py-1 disabled:opacity-50"
-              list={castListId}
-              value={(castInFrame ?? []).join(', ')}
-              onChange={(e) => setCastInFrame(parseChipInput(e.target.value) ?? [])}
-              disabled={readOnly || castInFrame?.length === 0}
-              placeholder={
-                sceneCharacterNames.length > 0
-                  ? sceneCharacterNames.join(', ')
-                  : 'Character names as spelled in the scene'
-              }
-            />
-            <datalist id={castListId}>
-              {sceneCharacterNames.map((name) => (
-                <option key={name} value={name} />
+          {cameraChips.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {cameraChips.map((chip) => (
+                <DirectionChip key={chip}>{chip}</DirectionChip>
               ))}
-            </datalist>
-          </label>
-
-          <div className="flex flex-wrap items-center gap-3 text-[10px] text-gray-500">
-            <label className="flex items-center gap-1.5">
-              <input
-                type="checkbox"
-                checked={castInFrame?.length === 0}
-                onChange={(e) => setCastInFrame(e.target.checked ? [] : undefined)}
-                disabled={readOnly}
-              />
-              <span>No one on camera</span>
-            </label>
-            {castInFrame === undefined && (
-              <span>Not stated — cast is guessed from the beat text</span>
-            )}
-          </div>
-
-          <label className="flex flex-col gap-1">
-            <span className="text-[10px] uppercase text-gray-500">Blocking</span>
-            <input
-              className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
-              value={direction?.blocking ?? ''}
-              onChange={(e) => updateField('blocking', trimOrUndef(e.target.value))}
-              disabled={readOnly}
-              placeholder="One clause naming positions / body posture"
-            />
-          </label>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <label className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase text-gray-500">Emotion</span>
-              <input
-                className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
-                value={direction?.emotion ?? ''}
-                onChange={(e) => updateField('emotion', trimOrUndef(e.target.value))}
-                disabled={readOnly}
-                placeholder="e.g., hypnotic awe"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase text-gray-500">Gaze</span>
-              <input
-                className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
-                value={direction?.gaze ?? ''}
-                onChange={(e) => updateField('gaze', trimOrUndef(e.target.value))}
-                disabled={readOnly}
-                placeholder="e.g., toward the glowing core"
-              />
-            </label>
-          </div>
-
-          {sectionTitle('World')}
-          <label className="flex flex-col gap-1">
-            <span className="text-[10px] uppercase text-gray-500">
-              Key props (comma-separated; must exist in scene Key Props)
-            </span>
-            <input
-              className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
-              value={(direction?.keyProps ?? []).join(', ')}
-              onChange={(e) => updateField('keyProps', parseChipInput(e.target.value))}
-              disabled={readOnly}
-              placeholder="Water-damaged leather journal, Brass energy core"
-            />
-          </label>
-
-          <label className="flex flex-col gap-1">
-            <span className="text-[10px] uppercase text-gray-500">Object interaction</span>
-            <input
-              className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
-              value={direction?.propInteraction ?? ''}
-              onChange={(e) => updateField('propInteraction', trimOrUndef(e.target.value))}
-              disabled={readOnly}
-              placeholder="e.g., grips journal one-handed at Gideon's sternum"
-            />
-          </label>
-
-          <label className="flex flex-col gap-1">
-            <span className="text-[10px] uppercase text-gray-500">Lighting accent</span>
-            <input
-              className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
-              value={direction?.lightingAccent ?? ''}
-              onChange={(e) => updateField('lightingAccent', trimOrUndef(e.target.value))}
-              disabled={readOnly}
-              placeholder="e.g., teal accent underlighting Gideon's face"
-            />
-          </label>
-
-          <label className="flex flex-col gap-1">
-            <span className="text-[10px] uppercase text-gray-500">Frozen moment</span>
-            <textarea
-              className="bg-gray-900 border border-gray-700 rounded px-2 py-1 min-h-[52px]"
-              value={direction?.frozenMoment ?? ''}
-              onChange={(e) => updateField('frozenMoment', trimOrUndef(e.target.value))}
-              disabled={readOnly}
-              placeholder="One sentence describing the still"
-            />
-          </label>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <label className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase text-gray-500">Audio cue</span>
-              <input
-                className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
-                value={direction?.audioCue ?? ''}
-                onChange={(e) => updateField('audioCue', trimOrUndef(e.target.value))}
-                disabled={readOnly}
-                placeholder="e.g., glitching proximity timer chirps twice"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase text-gray-500">Transition into next beat</span>
-              <select
-                className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
-                value={direction?.transition ?? ''}
-                onChange={(e) =>
-                  updateField(
-                    'transition',
-                    (e.target.value || undefined) as BeatDirectionTransition | undefined
-                  )
-                }
-                disabled={readOnly}
-              >
-                {TRANSITION_OPTIONS.map((option) => (
-                  <option key={option.value || 'default'} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <div className="space-y-2 border-t border-gray-800 pt-2">
-            {sectionTitle('Prompts')}
-            <div className="flex min-w-0 flex-col items-stretch gap-1">
-              <span className="text-[10px] uppercase text-gray-500">Frame prompt</span>
             </div>
-            <textarea
-              className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 min-h-[72px]"
-              value={frameDraft}
-              onChange={(e) => setFrameDraft(e.target.value)}
-              onBlur={() => {
-                if (!frameDraft.trim()) {
-                  setFrameDraft(framePreview)
-                  return
-                }
-                commitPrompt('framePrompt', frameDraft, framePreview)
-              }}
-              disabled={readOnly}
-              placeholder="Still prompt sent for this beat"
-            />
-            <label className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase text-gray-500">Video prompt</span>
-              <textarea
-                className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 min-h-[72px]"
-                value={videoDraft}
-                onChange={(e) => setVideoDraft(e.target.value)}
-                onBlur={() => {
-                  if (!videoDraft.trim()) {
-                    setVideoDraft(videoPreview)
-                    return
-                  }
-                  commitPrompt('videoPrompt', videoDraft, videoPreview)
-                }}
-                disabled={readOnly}
-                placeholder="Clip prompt sent for this beat"
-              />
-            </label>
-          </div>
+          )}
 
-          {(characters.length > 0 || locationReferences.length > 0 || objectReferences.length > 0) && (
-            <div className="space-y-2 border-t border-gray-800 pt-2">
-              <span className="text-[10px] uppercase text-gray-500">References</span>
-              {characters
-                .filter((character) => character.type !== 'narrator' && character.name.trim())
-                .filter((character) => {
-                  const key = characterKey(character)
-                  const selected =
-                    referenceSelection.characterIds.includes(key) ||
-                    referenceSelection.characterIds.includes(character.name)
-                  if (selected) return true
-                  return sceneCharacterNames.some(
-                    (name) => name.toLowerCase() === character.name.toLowerCase()
-                  )
-                })
-                .map((character) => {
-                  const key = characterKey(character)
-                  const checked =
-                    referenceSelection.characterIds.includes(key) ||
-                    referenceSelection.characterIds.includes(character.name)
-                  const wardrobeId =
-                    referenceSelection.characterWardrobes?.find(
-                      (row) => row.characterId === key || row.characterId === character.name
-                    )?.wardrobeId ?? ''
-                  return (
-                    <div key={key} className="flex flex-wrap items-center gap-2">
-                      <label className="flex items-center gap-1.5">
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          disabled={readOnly}
-                          onChange={(e) => {
-                            const characterIds = e.target.checked
-                              ? [...new Set([...referenceSelection.characterIds, key])]
-                              : referenceSelection.characterIds.filter(
-                                  (id) => id !== key && id !== character.name
-                                )
-                            const characterWardrobes = (
-                              referenceSelection.characterWardrobes ?? []
-                            ).filter(
-                              (row) =>
-                                row.characterId !== key &&
-                                row.characterId !== character.name &&
-                                characterIds.includes(row.characterId)
-                            )
-                            saveReferences({
-                              ...referenceSelection,
-                              characterIds,
-                              characterWardrobes,
-                            })
-                          }}
-                        />
-                        <span>{character.name}</span>
-                        <span className="text-[10px] text-gray-500">
-                          {character.referenceImage ? 'identity' : 'no identity image'}
-                        </span>
-                      </label>
-                      {checked && (character.wardrobes?.length ?? 0) > 0 && (
-                        <select
-                          className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
-                          value={wardrobeId}
-                          disabled={readOnly}
-                          onChange={(e) => {
-                            const others = (referenceSelection.characterWardrobes ?? []).filter(
-                              (row) => row.characterId !== key && row.characterId !== character.name
-                            )
-                            saveReferences({
-                              ...referenceSelection,
-                              characterIds: referenceSelection.characterIds.includes(key)
-                                ? referenceSelection.characterIds
-                                : [...referenceSelection.characterIds, key],
-                              characterWardrobes: e.target.value
-                                ? [...others, { characterId: key, wardrobeId: e.target.value }]
-                                : others,
-                            })
-                          }}
-                        >
-                          <option value="">Wardrobe</option>
-                          {character.wardrobes?.map((wardrobe) => (
-                            <option key={wardrobe.id} value={wardrobe.id}>
-                              {wardrobe.name}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </div>
-                  )
-                })}
-              {locationReferences.length > 0 && (
-                <label className="flex flex-col gap-1">
-                  <span className="text-[10px] uppercase text-gray-500">Location</span>
-                  <select
-                    className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
-                    value={referenceSelection.locationRefId ?? ''}
-                    disabled={readOnly}
-                    onChange={(e) =>
-                      saveReferences({
-                        ...referenceSelection,
-                        locationRefId: e.target.value || null,
-                        locationVersionId: null,
-                      })
-                    }
-                  >
-                    <option value="">None</option>
-                    {locationReferences.map((location) => (
-                      <option key={location.id} value={location.id}>
-                        {location.location || location.name || location.id}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-              {objectReferences.length > 0 && (
-                <div className="flex flex-col gap-1">
-                  <span className="text-[10px] uppercase text-gray-500">Props</span>
-                  {objectReferences
-                    .filter(
-                      (object) =>
-                        referenceSelection.objectRefIds.includes(object.id) ||
-                        (direction?.keyProps ?? []).some(
-                          (name) => name.toLowerCase() === object.name.toLowerCase()
-                        )
-                    )
-                    .map((object) => {
-                      const checked = referenceSelection.objectRefIds.includes(object.id)
-                      return (
-                        <label key={object.id} className="flex items-center gap-1.5">
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            disabled={readOnly}
-                            onChange={(e) => {
-                              const objectRefIds = e.target.checked
-                                ? [...new Set([...referenceSelection.objectRefIds, object.id])]
-                                : referenceSelection.objectRefIds.filter((id) => id !== object.id)
-                              saveReferences({ ...referenceSelection, objectRefIds })
-                            }}
-                          />
-                          <span>{object.name}</span>
-                        </label>
-                      )
-                    })}
-                  {objectReferences.some(
-                    (object) => !referenceSelection.objectRefIds.includes(object.id)
-                  ) && (
-                    <select
-                      className="bg-gray-900 border border-gray-700 rounded px-2 py-1"
-                      value=""
-                      disabled={readOnly}
-                      onChange={(e) => {
-                        if (!e.target.value) return
-                        saveReferences({
-                          ...referenceSelection,
-                          objectRefIds: [
-                            ...new Set([...referenceSelection.objectRefIds, e.target.value]),
-                          ],
-                        })
-                      }}
-                    >
-                      <option value="">Add prop</option>
-                      {objectReferences
-                        .filter((object) => !referenceSelection.objectRefIds.includes(object.id))
-                        .map((object) => (
-                          <option key={object.id} value={object.id}>
-                            {object.name}
-                          </option>
-                        ))}
-                    </select>
-                  )}
+          {castInFrame !== undefined && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Cast</p>
+              {castInFrame.length === 0 ? (
+                <p className="text-sm text-slate-300">No one on camera.</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {castInFrame.map((name) => (
+                    <DirectionChip key={name}>{name}</DirectionChip>
+                  ))}
                 </div>
               )}
             </div>
           )}
+          {castInFrame === undefined && hasStructuredDirection && (
+            <p className="text-xs text-slate-500">Cast follows the beat text.</p>
+          )}
 
-          {direction?.generatedBy && (
-            <div className="flex items-center justify-between text-[10px] text-gray-500">
-              <span>Source: {direction.generatedBy}</span>
-              {!readOnly && (
-                <button
-                  type="button"
-                  className="underline hover:text-red-300"
-                  onClick={() => persist(undefined)}
-                >
-                  Clear direction
-                </button>
-              )}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <DirectionFact label="Blocking" value={direction?.blocking} />
+            <DirectionFact label="Emotion" value={direction?.emotion} />
+            <DirectionFact label="Gaze" value={direction?.gaze} />
+            <DirectionFact label="Lighting" value={direction?.lightingAccent} />
+            <DirectionFact label="Interaction" value={direction?.propInteraction} />
+            <DirectionFact label="Audio" value={direction?.audioCue} />
+          </div>
+
+          {(direction?.keyProps?.length ?? 0) > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Props</p>
+              <div className="flex flex-wrap gap-1.5">
+                {direction?.keyProps?.map((name) => (
+                  <DirectionChip key={name}>{name}</DirectionChip>
+                ))}
+              </div>
             </div>
           )}
+
+          {hasReferences && (
+            <div className="space-y-1.5 border-t border-slate-800 pt-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">References</p>
+              <div className="flex flex-wrap gap-2">
+                {connectedCast.map((character) => (
+                  <ReferenceChip
+                    key={character.id || character.name}
+                    name={character.name}
+                    imageUrl={character.referenceImage}
+                  />
+                ))}
+                {connectedLocation && (
+                  <ReferenceChip
+                    name={connectedLocation.location || connectedLocation.name || 'Location'}
+                    imageUrl={connectedLocation.imageUrl}
+                  />
+                )}
+                {connectedObjects.map((object) => (
+                  <ReferenceChip key={object.id} name={object.name} imageUrl={object.imageUrl} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="border-t border-slate-800 pt-2">
+            <button
+              type="button"
+              className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 hover:text-slate-200"
+              onClick={() => setPromptsOpen((prev) => !prev)}
+              aria-expanded={promptsOpen}
+            >
+              {promptsOpen ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" />
+              )}
+              Frame and clip prompts
+            </button>
+            {promptsOpen && (
+              <div className="mt-2 space-y-3">
+                <DirectionFact label="Frame prompt" value={framePreview} />
+                <DirectionFact label="Clip prompt" value={videoPreview} />
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

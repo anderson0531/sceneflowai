@@ -254,6 +254,34 @@ describe('patch parsing and overlays', () => {
     expect(patch?.shotType).toBe('Medium Shot')
   })
 
+  it('parses movement, audio, and a known transition', () => {
+    const patch = parseStillDirectorPatch({
+      cameraMovement: 'slow push-in',
+      audioCue: 'timer chirps twice',
+      transition: 'match cut',
+    })
+    expect(patch?.cameraMovement).toBe('slow push-in')
+    expect(patch?.audioCue).toBe('timer chirps twice')
+    expect(patch?.transition).toBe('MATCH_CUT')
+    expect(parseStillDirectorPatch({ transition: 'weird-unknown' })?.transition).toBeUndefined()
+  })
+
+  it('writes movement, audio, and transition onto the beat', () => {
+    const { beat: next } = applyStillDirectorPatch(
+      beat({ beatDirection: { shotType: 'Wide Shot', transition: 'CUT' } }),
+      {
+        cameraMovement: 'slow push-in',
+        audioCue: 'timer chirps twice',
+        transition: 'DISSOLVE',
+      },
+      { generatedBy: 'director' }
+    )
+    expect(next.beatDirection?.shotType).toBe('Wide Shot')
+    expect(next.beatDirection?.cameraMovement).toBe('slow push-in')
+    expect(next.beatDirection?.audioCue).toBe('timer chirps twice')
+    expect(next.beatDirection?.transition).toBe('DISSOLVE')
+  })
+
   it('folds Direct Frame overlays only into omitted fields', () => {
     const merged = mergeDirectOverlaysIntoPatch(
       { shotType: 'Two-Shot', blocking: 'Piper nearer camera.' },
@@ -383,6 +411,9 @@ describe('buildStillDirectorSystemPrompt', () => {
     expect(system).toContain('Never write "Gaze: No characters"')
     expect(system).toContain("describe the instrument's settled state, not a limb, hand, or face")
     expect(system).not.toMatch(/mid-motion/)
+    expect(system).toContain('"cameraMovement"')
+    expect(system).toContain('"audioCue"')
+    expect(system).toContain('"transition": "CUT"')
   })
 })
 
