@@ -447,4 +447,30 @@ describe('needsProductionDerive', () => {
     const segments = deriveSegmentsFromBeats(scene).segments.slice(0, 1)
     expect(needsProductionDerive(scene, segments)).toBe(true)
   })
+
+  it('derives a segment for an included beat that has no still', () => {
+    const scene = {
+      storyboardStatus: 'approved' as const,
+      beats: [
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 0,
+          kind: 'action' as const,
+          actionDescription: 'Has a still',
+          storyboardImageUrl: 'https://example.com/frame.jpg',
+        },
+        {
+          beatId: 'bt_2',
+          sequenceIndex: 1,
+          kind: 'action' as const,
+          actionDescription: 'Still missing',
+        },
+      ],
+    }
+    const result = deriveSegmentsFromBeats(scene)
+    expect(result.errors).toHaveLength(0)
+    expect(result.segments.map((segment) => segment.beatId)).toEqual(['bt_1', 'bt_2'])
+    expect(result.warnings?.some((warning) => warning.includes('bt_2'))).toBe(true)
+    expect(needsProductionDerive(scene, result.segments.slice(0, 1))).toBe(true)
+  })
 })

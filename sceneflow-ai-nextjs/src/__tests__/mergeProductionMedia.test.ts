@@ -100,4 +100,33 @@ describe('mergeSceneProductionData', () => {
     expect(merged.segments.map((row) => row.segmentId)).toEqual(['seg_keep'])
     expect(merged.segments[0].takes.map((take) => take.id)).toEqual(['t1'])
   })
+
+  it('drops trim and a mixer exclusion when the incoming segment sends null', () => {
+    const existing: SceneProductionData = {
+      isSegmented: true,
+      targetSegmentDuration: 8,
+      segments: [
+        segment({
+          videoTrimInSec: 1.5,
+          videoTrimOutSec: 6,
+          mixerBeatIncluded: false,
+        }),
+      ],
+    }
+    const incoming: SceneProductionData = {
+      isSegmented: true,
+      targetSegmentDuration: 8,
+      segments: [
+        segment({
+          videoTrimInSec: null,
+          videoTrimOutSec: null,
+          mixerBeatIncluded: null,
+        }),
+      ],
+    }
+    const merged = mergeSceneProductionData(existing, incoming)!
+    expect(merged.segments[0].videoTrimInSec).toBeUndefined()
+    expect(merged.segments[0].videoTrimOutSec).toBeUndefined()
+    expect(merged.segments[0].mixerBeatIncluded).toBeUndefined()
+  })
 })

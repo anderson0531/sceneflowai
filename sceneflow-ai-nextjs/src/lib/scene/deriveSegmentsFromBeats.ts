@@ -284,7 +284,7 @@ export function segmentsAreOnePerActiveBeat(
 
 /**
  * Whether production segments should be rebuilt from beats.
- * Requires a start frame on every active beat. Approval is not required.
+ * A missing still does not block this: the Mixer still needs a row for that beat.
  * Extra clips on the same beat (legacy Veo splits or start/end pairs) count as stale.
  */
 export function needsProductionDerive(
@@ -293,7 +293,6 @@ export function needsProductionDerive(
 ): boolean {
   const activeBeats = getSceneBeats(scene).filter((beat) => !isBeatExcluded(beat))
   if (activeBeats.length === 0) return false
-  if (activeBeats.some((beat) => !beat.storyboardImageUrl?.trim())) return false
   return !segmentsAreOnePerActiveBeat(scene, segments)
 }
 
@@ -440,12 +439,14 @@ export function deriveSegmentsFromBeats(
   }
 
   const missingFrames = activeBeats.filter((b) => !b.storyboardImageUrl?.trim())
-  if (missingFrames.length > 0) {
-    errors.push(
-      `${missingFrames.length} beat(s) missing storyboard frames: ${missingFrames.map((b) => b.beatId).join(', ')}`
-    )
-    return { segments: [], errors }
-  }
+  const warnings = [
+    ...collectDraftStoryboardFrameWarnings(scene),
+    ...(missingFrames.length > 0
+      ? [
+          `${missingFrames.length} beat(s) missing storyboard frames: ${missingFrames.map((b) => b.beatId).join(', ')}`,
+        ]
+      : []),
+  ]
 
   const language = options?.language ?? 'en'
   const segments: SceneSegment[] = []
@@ -468,8 +469,6 @@ export function deriveSegmentsFromBeats(
   const mergedSegments = options?.existingSegments?.length
     ? mergeDerivedSegmentsWithExisting(segments, options.existingSegments)
     : segments
-
-  const warnings = collectDraftStoryboardFrameWarnings(scene)
 
   return {
     segments: mergedSegments,
