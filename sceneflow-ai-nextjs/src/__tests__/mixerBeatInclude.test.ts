@@ -3,6 +3,7 @@ import {
   filterMixerIncludedSegments,
   isMixerBeatIncluded,
   listIncludedBeatVideos,
+  listMixerBeatRows,
   restoreIncludedMixerBeats,
 } from '@/lib/scene/mixerBeatInclude'
 
@@ -38,6 +39,46 @@ describe('mixerBeatInclude', () => {
     expect(listIncludedBeatVideos(segments).map((segment) => segment.segmentId)).toEqual([
       'video',
       'upload',
+    ])
+  })
+
+  it('lists a direction-included beat that only has an uploaded take', () => {
+    const scene = {
+      beats: [
+        { beatId: 'bt_1', sequenceIndex: 0, kind: 'action', actionDescription: 'One' },
+        { beatId: 'bt_6', sequenceIndex: 5, kind: 'action', actionDescription: 'Six', excluded: false },
+        { beatId: 'bt_hidden', sequenceIndex: 6, kind: 'action', actionDescription: 'Hidden', excluded: true },
+      ],
+    }
+    const segments = [
+      {
+        segmentId: 'seg_1',
+        beatId: 'bt_1',
+        status: 'COMPLETE',
+        assetType: 'video',
+        activeAssetUrl: 'https://cdn.example/one.mp4',
+      },
+      {
+        segmentId: 'seg_6',
+        beatId: 'bt_6',
+        status: 'DRAFT',
+        assetType: null,
+        activeAssetUrl: null,
+        takes: [{ assetUrl: 'https://cdn.example/upload.mp4', status: 'COMPLETE' }],
+      },
+      {
+        segmentId: 'seg_hidden',
+        beatId: 'bt_hidden',
+        status: 'COMPLETE',
+        assetType: 'video',
+        activeAssetUrl: 'https://cdn.example/hidden.mp4',
+      },
+    ] as Parameters<typeof listMixerBeatRows>[1]
+    const rows = listMixerBeatRows(scene, segments)
+    expect(rows.map((row) => row.beatId)).toEqual(['bt_1', 'bt_6'])
+    expect(listIncludedBeatVideos(rows.map((row) => row.segment).filter(Boolean) as NonNullable<(typeof rows)[number]['segment']>[]).map((segment) => segment.segmentId)).toEqual([
+      'seg_1',
+      'seg_6',
     ])
   })
 

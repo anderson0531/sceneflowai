@@ -1,4 +1,6 @@
 import type { SceneSegment } from '@/components/vision/scene-production/types'
+import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
+import { segmentHasPlayableVideo } from '@/lib/storyboard/mediaVersions'
 
 /** Included when undefined or true; excluded only when explicitly false. */
 export function isMixerBeatIncluded(
@@ -46,10 +48,39 @@ export function isMixerVideoAsset(
   return false
 }
 
-/** Included beats that already have a completed video, in mixer order. */
+export interface MixerBeatRow {
+  beatId: string
+  segment?: SceneSegment
+}
+
+/** Direction-included beats in script order, each matched to its clip when one exists. */
+export function listMixerBeatRows(
+  scene: Record<string, unknown> | null | undefined,
+  segments: SceneSegment[] | null | undefined
+): MixerBeatRow[] {
+  const beats = getSceneBeats(scene ?? null).filter((beat) => !isBeatExcluded(beat))
+  const rows = segments ?? []
+  return beats.map((beat) => {
+    const matches = rows.filter((segment) => segment.beatId === beat.beatId)
+    const segment =
+      matches.find((row) => segmentHasPlayableVideo(row)) ??
+      matches.find((row) => (row.dialoguePortion?.partIndex ?? 0) === 0) ??
+      matches[0]
+    return segment ? { beatId: beat.beatId, segment } : { beatId: beat.beatId }
+  })
+}
+
+function segmentHasMixerVideo(segment: SceneSegment): boolean {
+  if (!segmentHasPlayableVideo(segment)) return false
+  if (isMixerVideoAsset(segment)) return true
+  const take = segment.takes?.find((row) => row.videoUrl || row.assetUrl)
+  return isMixerVideoAsset({
+    assetType: segment.assetType,
+    activeAssetUrl: take?.videoUrl || take?.assetUrl || null,
+  })
+}
+
+/** Included beats that already have a playable video, including an uploaded take. */
 export function listIncludedBeatVideos(segments: SceneSegment[] | null | undefined): SceneSegment[] {
-  const complete = (segments ?? []).filter(
-    (segment) => segment.status === 'COMPLETE' && !!segment.activeAssetUrl
-  )
-  return filterMixerIncludedSegments(complete.filter(isMixerVideoAsset))
+  return filterMixerIncludedSegments((segments ?? []).filter(segmentHasMixerVideo))
 }

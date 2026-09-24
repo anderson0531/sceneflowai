@@ -469,9 +469,21 @@ export function deriveSegmentsFromBeats(
   const mergedSegments = options?.existingSegments?.length
     ? mergeDerivedSegmentsWithExisting(segments, options.existingSegments)
     : segments
+  const activeIds = new Set(mergedSegments.map((segment) => segment.beatId).filter(Boolean))
+  const preservedExcluded: SceneSegment[] = []
+  const seenExcluded = new Set<string>()
+  for (const beat of beats) {
+    if (!isBeatExcluded(beat) || !beat.beatId || activeIds.has(beat.beatId) || seenExcluded.has(beat.beatId)) {
+      continue
+    }
+    const kept = (options?.existingSegments ?? []).find((segment) => segment.beatId === beat.beatId)
+    if (!kept) continue
+    seenExcluded.add(beat.beatId)
+    preservedExcluded.push(kept)
+  }
 
   return {
-    segments: mergedSegments,
+    segments: [...mergedSegments, ...preservedExcluded],
     errors,
     ...(warnings.length ? { warnings } : {}),
   }

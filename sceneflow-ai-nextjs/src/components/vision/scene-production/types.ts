@@ -983,6 +983,11 @@ export interface SceneProductionData {
   productionStreams?: ProductionStream[]
   /** Pinned stream restore; Final Cut screening override still wins when set. */
   currentStreamId?: string
+  /**
+   * Set after the one-time heal of mixerBeatIncluded left over from Direction exclude.
+   * Later Mixer excludes are left alone.
+   */
+  mixerLegacyIncludeHealedAt?: string
 }
 
 /**
