@@ -1,6 +1,5 @@
 'use client'
 
-import { ASSISTANT } from '@/lib/constants/assistant'
 import { recommendationId } from '@/lib/script/audienceResonance/highImpact'
 import { pendingPolishRecommendations } from '@/lib/script/scenePolish/formatPolishBeats'
 import type { ScenePolishAnalysis } from '@/lib/script/scenePolish/types'
@@ -251,7 +250,7 @@ export function SceneRecommendationsDialog({
                       className="h-8 text-xs bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-lg"
                     >
                       <Pencil className="w-3.5 h-3.5 mr-1.5" />
-                      {ASSISTANT.short} &amp; Apply
+                      Direct Scene &amp; Apply
                     </Button>
                   )}
                   {onEditScene && pendingAudience.length === 0 && (
@@ -261,7 +260,7 @@ export function SceneRecommendationsDialog({
                       className="h-8 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
                     >
                       <Pencil className="w-3.5 h-3.5 mr-1.5" />
-                      {ASSISTANT.short}
+                      Direct Scene
                     </Button>
                   )}
                   {onAnalyze && (
@@ -392,7 +391,7 @@ export function SceneRecommendationsDialog({
                       className="h-8 text-xs bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg"
                     >
                       <Pencil className="w-3.5 h-3.5 mr-1.5" />
-                      {ASSISTANT.short} &amp; Apply
+                      Direct Scene &amp; Apply
                     </Button>
                   )}
                   {onEditScene && pendingPolish.length === 0 && (
@@ -402,7 +401,7 @@ export function SceneRecommendationsDialog({
                       className="h-8 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
                     >
                       <Pencil className="w-3.5 h-3.5 mr-1.5" />
-                      {ASSISTANT.short}
+                      Direct Scene
                     </Button>
                   )}
                 </div>

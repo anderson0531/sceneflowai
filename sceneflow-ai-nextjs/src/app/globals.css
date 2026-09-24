@@ -102,6 +102,15 @@
     margin-bottom: 0 !important;
   }
 
+  [role='dialog'] :is(h1, h2, h3, h4, h5, h6) {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: 0;
+    margin-bottom: 0.35rem;
+    overflow-wrap: anywhere;
+  }
+
   h4 {
     font-weight: 600;
     font-size: clamp(1.25rem, 1.5vw + 0.5rem, 1.875rem); /* 20px → 30px */
