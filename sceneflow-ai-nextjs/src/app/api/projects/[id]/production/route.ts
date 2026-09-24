@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
+import { loadProjectProduction } from '@/lib/projects/loadProjectRead'
 import { mergeSceneProductionData } from '@/lib/storyboard/mergeProductionMedia'
 
 // Increase timeout for production updates
@@ -23,12 +24,10 @@ export async function GET(
     }
 
     await sequelize.authenticate()
-    const project = await Project.findByPk(id, { useMaster: true })
-    if (!project) {
+    const production = await loadProjectProduction(id)
+    if (!production) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
-
-    const production = (project.metadata as any)?.visionPhase?.production ?? {}
     const response = NextResponse.json({
       success: true,
       projectId: id,

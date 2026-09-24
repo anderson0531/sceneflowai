@@ -619,6 +619,40 @@ describe('splitScriptPutIntoFittingBatches', () => {
   })
 })
 
+describe('loadProjectRead SQL', () => {
+  const source = readFileSync(
+    join(process.cwd(), 'src/lib/projects/loadProjectRead.ts'),
+    'utf8'
+  )
+  const projectRoute = readFileSync(
+    join(process.cwd(), 'src/app/api/projects/[id]/route.ts'),
+    'utf8'
+  )
+  const productionRoute = readFileSync(
+    join(process.cwd(), 'src/app/api/projects/[id]/production/route.ts'),
+    'utf8'
+  )
+
+  it('omits production in the lite read and selects only that key for production', () => {
+    expect(source).toContain("metadata #- '{visionPhase,production}' AS metadata")
+    expect(source).toContain("metadata->'visionPhase'->'production' AS production")
+    expect(source).not.toContain('findByPk')
+  })
+
+  it('project GET uses the lite read and does not reload the full row', () => {
+    const getHandler = projectRoute.slice(0, projectRoute.indexOf('export async function PUT'))
+    expect(getHandler).toContain('loadProjectForRead')
+    expect(getHandler).not.toContain('project.reload')
+    expect(getHandler).not.toContain('findByPk')
+  })
+
+  it('production GET reads only the production projection', () => {
+    const getHandler = productionRoute.slice(0, productionRoute.indexOf('export async function PATCH'))
+    expect(getHandler).toContain('loadProjectProduction')
+    expect(getHandler).not.toContain('findByPk')
+  })
+})
+
 describe('compactProjectPutAck', () => {
   it('returns a small success body without the project blob', () => {
     expect(compactProjectPutAck({ scriptUpdatedAt: '2026-09-19T00:00:00.000Z' })).toEqual({
