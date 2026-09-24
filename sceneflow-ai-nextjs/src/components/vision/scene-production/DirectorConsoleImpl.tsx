@@ -332,6 +332,9 @@ export interface DirectorConsoleProps {
   onVideoGenerationModeChange?: (mode: VideoGenerationMode) => void
   /** Jump the parent workflow strip to Pre-Vis. */
   onOpenPreVis?: () => void
+  /** Shared beat selection with Direction, Audio, and Pre-Vis. */
+  selectedBeatId?: string | null
+  onSelectBeat?: (beatId: string) => void
 }
 
 /** Slots for splitting Video / Mixer / Streams across parent section cards (ScriptPanel). */
@@ -404,6 +407,8 @@ export function DirectorConsoleRoot({
   videoGenerationMode = 'standard',
   onVideoGenerationModeChange,
   onOpenPreVis,
+  selectedBeatId = null,
+  onSelectBeat,
   children,
 }: DirectorConsoleProps & {
   children?: (slots: DirectorWorkflowSlots) => React.ReactNode
@@ -2005,6 +2010,8 @@ export function DirectorConsoleRoot({
         onDirection={handleOpenVideoDirection}
         onEditClip={(segment) => setEditingVideoSegment(segment)}
         onRestoreTake={handleRestoreVideoTake}
+        selectedBeatId={selectedBeatId}
+        onSelectBeat={onSelectBeat}
       />
     </div>
   )

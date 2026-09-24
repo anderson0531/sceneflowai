@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   AlertTriangle,
   Camera,
@@ -23,6 +23,7 @@ import {
   type ExpressSceneConfirmOptions,
 } from './ExpressSceneConfirmDialog'
 import { SceneImageFrame, type SceneImageFrameProps } from './SceneImageFrame'
+import { SceneBeatStage } from './scene-production/SceneBeatStage'
 import type { ExpressPhaseStatus, ExpressSceneStatus } from './SceneGallery'
 import {
   countStoryboardFrameStats,
@@ -169,6 +170,9 @@ export interface SceneStoryboardFrameViewerProps {
   onFrameGenerationQualityChange?: (quality: StoryboardQuality) => void
   frameGenerationMode?: StillGenerationMode
   onFrameGenerationModeChange?: (mode: StillGenerationMode) => void
+  /** Shared beat selection with Direction, Audio, and Video. */
+  selectedBeatId?: string | null
+  onSelectBeat?: (beatId: string) => void
 }
 
 interface StoryboardSlotHandlers {
@@ -365,8 +369,6 @@ function buildStoryboardSlotFrameProps(
   }
 }
 
-const THUMBNAIL_DRAG_THRESHOLD_PX = 5
-
 function formatBeatRoleLabel(beatRole?: string): string | null {
   if (!beatRole) return null
   if (beatRole === 'title_reveal') return 'Title'
@@ -463,6 +465,8 @@ export function SceneStoryboardFrameViewer({
   onFrameGenerationQualityChange,
   frameGenerationMode = 'standard',
   onFrameGenerationModeChange,
+  selectedBeatId = null,
+  onSelectBeat,
 }: SceneStoryboardFrameViewerProps) {
   const tExpressScene = useTranslations('production.expressScene')
   const tStillPolicy = useTranslations('production.direction.stillPolicy')
@@ -476,14 +480,6 @@ export function SceneStoryboardFrameViewer({
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [motionEditorOpen, setMotionEditorOpen] = useState(false)
   const [editingFrame, setEditingFrame] = useState<EditingFrame | null>(null)
-  const thumbnailScrollRef = useRef<HTMLDivElement>(null)
-  const thumbnailDragRef = useRef<{
-    pointerId: number
-    startY: number
-    startScrollTop: number
-    isDragging: boolean
-  } | null>(null)
-  const thumbnailDidDragRef = useRef(false)
 
   const frameSlots = useMemo(
     () => enumerateStoryboardFrameSlots(scene, undefined, { startFramesOnly: true }),
@@ -550,10 +546,21 @@ export function SceneStoryboardFrameViewer({
 
   useEffect(() => {
     if (visibleFrameSlots.length === 0) return
-    if (!visibleFrameSlots.some((slot) => slot.key === selectedFrameKey)) {
-      setSelectedFrameKey(visibleFrameSlots[0].key)
-    }
-  }, [visibleFrameSlots, selectedFrameKey])
+    if (visibleFrameSlots.some((slot) => slot.key === selectedFrameKey)) return
+    const current = frameSlots.find((slot) => slot.key === selectedFrameKey)
+    if (current?.beatId && current.beatId === selectedBeatId) return
+    setSelectedFrameKey(visibleFrameSlots[0].key)
+  }, [visibleFrameSlots, selectedFrameKey, frameSlots, selectedBeatId])
+
+  useEffect(() => {
+    if (!selectedBeatId) return
+    const current = frameSlots.find((slot) => slot.key === selectedFrameKey)
+    if (current?.beatId === selectedBeatId) return
+    const match =
+      frameSlots.find((slot) => slot.beatId === selectedBeatId && slot.frameRole !== 'end') ??
+      frameSlots.find((slot) => slot.beatId === selectedBeatId)
+    if (match && match.key !== selectedFrameKey) setSelectedFrameKey(match.key)
+  }, [selectedBeatId, frameSlots, selectedFrameKey])
 
   const previewSlot = useMemo(() => {
     if (visibleFrameSlots.length === 0) return null
@@ -711,59 +718,6 @@ export function SceneStoryboardFrameViewer({
   const handleEditFrame = useCallback((frame: EditingFrame) => {
     setEditingFrame(frame)
     setEditModalOpen(true)
-  }, [])
-
-  const handleThumbnailPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.button !== 0) return
-    const el = thumbnailScrollRef.current
-    if (!el) return
-
-    const state = {
-      pointerId: e.pointerId,
-      startY: e.clientY,
-      startScrollTop: el.scrollTop,
-      isDragging: false,
-    }
-    thumbnailDragRef.current = state
-    thumbnailDidDragRef.current = false
-
-    const onMove = (ev: PointerEvent) => {
-      if (ev.pointerId !== state.pointerId || !thumbnailScrollRef.current) return
-      const deltaY = ev.clientY - state.startY
-      if (!state.isDragging && Math.abs(deltaY) < THUMBNAIL_DRAG_THRESHOLD_PX) return
-      if (!state.isDragging) {
-        state.isDragging = true
-        thumbnailDidDragRef.current = true
-        document.body.style.userSelect = 'none'
-        thumbnailScrollRef.current.style.cursor = 'grabbing'
-      }
-      ev.preventDefault()
-      thumbnailScrollRef.current.scrollTop = state.startScrollTop - deltaY
-    }
-
-    const onUp = (ev: PointerEvent) => {
-      if (ev.pointerId !== state.pointerId) return
-      thumbnailDragRef.current = null
-      document.body.style.userSelect = ''
-      if (thumbnailScrollRef.current) {
-        thumbnailScrollRef.current.style.cursor = ''
-      }
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-      window.removeEventListener('pointercancel', onUp)
-    }
-
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
-    window.addEventListener('pointercancel', onUp)
-  }, [])
-
-  const handleThumbnailClickCapture = useCallback((e: React.MouseEvent) => {
-    if (thumbnailDidDragRef.current) {
-      e.preventDefault()
-      e.stopPropagation()
-      thumbnailDidDragRef.current = false
-    }
   }, [])
 
   const wrapGenerate = useCallback(
@@ -1186,45 +1140,28 @@ export function SceneStoryboardFrameViewer({
                 ]}
               />
 
-              <div className="flex flex-col items-start gap-3 lg:flex-row">
-                <div
-                  ref={thumbnailScrollRef}
-                  aria-label="Beat frames"
-                  className="w-full max-w-[280px] shrink-0 max-h-[40vh] cursor-grab overflow-y-auto overscroll-contain rounded-lg border border-slate-700/50 bg-slate-900/40 p-1.5 active:cursor-grabbing lg:w-[280px] lg:max-h-[min(72vh,40rem)] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded [&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:hover:bg-gray-500"
-                  style={{ scrollbarWidth: 'thin', scrollbarColor: '#4b5563 #1f2937' }}
-                  onPointerDown={handleThumbnailPointerDown}
-                  onClickCapture={handleThumbnailClickCapture}
-                >
-                  <div className="grid grid-cols-2 content-start gap-2">
-                  {visibleFrameSlots.length === 0 ? (
-                    <p className="col-span-2 text-[10px] text-slate-500 px-1">No frames match these filters.</p>
-                  ) : null}
-                  {visibleFrameSlots.map((slot) => (
-                    <div key={slot.key} className="relative w-full">
-                      <SceneImageFrame
-                        {...buildStoryboardSlotFrameProps(
-                          slot,
-                          slotHandlers,
-                          slotPromptChanged(slot)
-                        )}
-                        showControls={false}
-                        compact
-                        showBorder
-                        isSelected={selectedFrameKey === slot.key}
-                        onSelect={() => setSelectedFrameKey(slot.key)}
-                      />
-                      {screeningPosterFrameKey === slot.key && (
-                        <span
-                          className="absolute top-1 right-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600/90 text-white shadow-sm"
-                          title="Screening Room poster"
-                        >
-                          <MonitorPlay className="w-2.5 h-2.5" />
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                  </div>
-                </div>
+              <SceneBeatStage
+                railLabel="Beat frames"
+                items={visibleFrameSlots.map((slot) => ({
+                  id: slot.key,
+                  beatNumber: slot.beatNumber,
+                  imageUrl: slot.displayImageUrl,
+                  caption:
+                    screeningPosterFrameKey === slot.key
+                      ? 'Poster'
+                      : slot.frameRole === 'end'
+                        ? 'End'
+                        : undefined,
+                  status: slot.isMissing ? 'attention' : slot.displayImageUrl ? 'ready' : 'idle',
+                  ariaLabel: slot.label || `Beat ${slot.beatNumber ?? ''}`,
+                }))}
+                selectedId={selectedFrameKey}
+                onSelect={(id) => {
+                  setSelectedFrameKey(id)
+                  const slot = visibleFrameSlots.find((entry) => entry.key === id)
+                  if (slot?.beatId) onSelectBeat?.(slot.beatId)
+                }}
+              >
 
                 <div className="sticky top-2 flex w-full min-w-0 flex-1 flex-col gap-2 self-start lg:w-auto">
                   <div className="rounded-lg overflow-hidden bg-gray-800/50 border border-slate-700/40">
@@ -1344,7 +1281,7 @@ export function SceneStoryboardFrameViewer({
                     </div>
                   )}
                 </div>
-              </div>
+              </SceneBeatStage>
             </>
           )}
         </div>

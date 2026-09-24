@@ -18,7 +18,7 @@ import { useTranslations } from 'next-intl'
 import { ASSISTANT } from '@/lib/constants/assistant'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2 } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2 } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import {
@@ -34,18 +34,13 @@ import { ResetSegmentsConfirmDialog } from './scene-production/ResetSegmentsConf
 import { SegmentList } from './scene-production/SegmentList'
 import type { ScriptSegment } from '@/lib/script/segmentTypes'
 import type { LocationReference } from '@/types/visionReferences'
-import { coerceDialogueLineText } from '@/lib/script/segmentScript'
-import { dialogueDirectionDisplay } from '@/lib/scene/dialogueDirectionDisplay'
 import {
   resolveSfxDuration,
   type SfxDurationOverride,
 } from '@/lib/elevenlabs/sfxDuration'
 import { dispatchExpressVeoSfx } from '@/lib/sfx/clientExpressVeoSfx'
 import { listSelectableActionBeats } from '@/lib/sfx/resolveExpressVeoSfxItems'
-import {
-  ActionBeatSfxControls,
-  type ExpressBeatSfxStatus,
-} from '@/components/vision/ActionBeatSfxControls'
+import { type ExpressBeatSfxStatus } from '@/components/vision/ActionBeatSfxControls'
 import {
   ExpressAudioConfirmDialog,
   type ExpressAudioConfirmOptions,
@@ -122,15 +117,7 @@ import {
   getSceneBeats,
   isBeatFirstPipelineEnabled,
 } from '@/lib/script/beatMigration'
-import {
-  assignDialogueSpeakerToScene,
-  type AssignableSpeaker,
-} from '@/lib/script/assignDialogueSpeaker'
-import {
-  dialogueSpeakerNeedsAssignment,
-  isNarratorDialogueSpeaker,
-} from '@/lib/character/dialogueTtsVoice'
-import { toCanonicalName } from '@/lib/character/canonical'
+import { dialogueSpeakerNeedsAssignment } from '@/lib/character/dialogueTtsVoice'
 import {
   countStoryboardFrameStats,
   enumerateStoryboardFrameSlots,
@@ -141,11 +128,7 @@ import { isBeatSfxMuted } from '@/lib/storyboard/sfxPlayback'
 import {
   readBeatSfxAudio,
   resolveBeatSfxSlot,
-  stripInlineSfxLinesFromActionText,
 } from '@/lib/script/deriveSfxFromSceneContent'
-import { BeatMusicToggle } from '@/components/vision/BeatMusicToggle'
-import { SceneScoreToggle } from '@/components/vision/SceneScoreToggle'
-import { StatusFilterBar } from '@/components/vision/StatusFilterBar'
 import { SceneMusicCuePanel } from '@/components/vision/SceneMusicCuePanel'
 import { BeatPerformanceDirectorControl } from '@/components/vision/BeatPerformanceDirectorDialog'
 import { SceneReferencesPanel } from '@/components/vision/SceneReferencesPanel'
@@ -180,12 +163,8 @@ import {
   type BeatListFilterState,
   type BeatTypeFilter,
 } from '@/lib/vision/beatListFilters'
-import { BeatSfxToggle } from '@/components/vision/BeatSfxToggle'
-import { BeatAudioStatusBadge } from '@/components/vision/BeatAudioStatusBadge'
-import { BeatExcludeToggle } from '@/components/vision/BeatExcludeToggle'
-import { BeatDirectionEditor } from '@/components/vision/BeatDirectionEditor'
-import { BeatCaptionControl } from '@/components/vision/BeatCaptionControl'
-import { SceneTransitionSelect } from '@/components/vision/SceneTransitionSelect'
+import { SceneAudioWorkbench, SceneNarrationAudioCard } from '@/components/vision/scene-production/SceneAudioWorkbench'
+import { SceneDirectionWorkbench } from '@/components/vision/scene-production/SceneDirectionWorkbench'
 import { ExportDialog } from './ExportDialog'
 import { isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
 import { isPreVisStale, sceneHasStalePromptKeys } from '@/lib/storyboard/preVisSync'
@@ -841,72 +820,6 @@ function BlueprintBeatGroupHeader({
           </button>
         </div>
       )}
-    </div>
-  )
-}
-
-/**
- * Badge on a beat whose CONTINUE join was broken by a reorder.
- *
- * The beat asks to continue straight out of the beat above it, and its frames
- * were shot against a different one. Nothing is regenerated automatically —
- * frames cost credits — so the user is told which join to re-shoot.
- */
-function BeatContinuityWarning() {
-  return (
-    <span
-      className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-500/40 flex items-center gap-1 shrink-0"
-      title="This beat continues from the beat above it, but that is now a different shot. Re-check or re-shoot its frames."
-    >
-      <AlertTriangle className="w-3 h-3" />
-      Continuity
-    </span>
-  )
-}
-
-/**
- * Drag-to-reorder wrapper for one row of the beats list.
- *
- * Keyed by `beatId` rather than position so the beat's frames, video and audio
- * follow it. The grip sits outside the card so the card's own controls — the
- * per-beat toggles, the direction editor, the caption fields — stay clickable.
- */
-function SortableBeatRow({
-  beatId,
-  beatNumber,
-  disabled,
-  children,
-}: {
-  beatId: string
-  beatNumber: number
-  disabled?: boolean
-  children: React.ReactNode
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: beatId,
-    disabled,
-  })
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`flex items-start gap-1 ${isDragging ? 'relative z-10 opacity-80' : ''}`}
-    >
-      {!disabled && (
-        <button
-          type="button"
-          {...attributes}
-          {...listeners}
-          onClick={(e) => e.stopPropagation()}
-          className="mt-3 shrink-0 p-1 rounded text-gray-600 hover:text-gray-200 hover:bg-slate-700/60 cursor-grab active:cursor-grabbing touch-none"
-          title="Drag to reorder — frames, video and audio move with the beat"
-          aria-label={`Reorder beat ${beatNumber}`}
-        >
-          <GripVertical className="w-3.5 h-3.5" />
-        </button>
-      )}
-      <div className="min-w-0 flex-1">{children}</div>
     </div>
   )
 }
@@ -4446,6 +4359,15 @@ function SceneCard({
   const [activeSceneTab, setActiveSceneTab] = useState<ProductionWorkflowTab>('direction')
 
   const sceneBeatsForTabs = useMemo(() => getSceneBeats(scene), [scene])
+  const [selectedBeatId, setSelectedBeatId] = useState<string | null>(
+    () => getSceneBeats(scene)[0]?.beatId ?? null
+  )
+  useEffect(() => {
+    setSelectedBeatId((current) => {
+      if (current && sceneBeatsForTabs.some((beat) => beat.beatId === current)) return current
+      return sceneBeatsForTabs[0]?.beatId ?? null
+    })
+  }, [scene.id, scene.sceneId, sceneIdx, sceneBeatsForTabs])
   const excludedBeatCount = useMemo(
     () => sceneBeatsForTabs.filter((beat) => beat.excluded === true).length,
     [sceneBeatsForTabs]
@@ -4465,10 +4387,6 @@ function SceneCard({
     return map
   }, [sceneBeatsForTabs, sceneMusicCues])
 
-  const beatDragSensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  )
   const [beatListFilters, setBeatListFilters] = useState<BeatListFilterState>(DEFAULT_BEAT_LIST_FILTERS)
   const beatFacts = useMemo(() => {
     const sceneSfxList = Array.isArray(scene.sfx) ? scene.sfx : []
@@ -6146,6 +6064,8 @@ function SceneCard({
                       productionData={sceneProductionData ?? null}
                       sceneImageUrl={scene.imageUrl}
                       onOpenPreVis={() => setActiveSceneTab('previs')}
+                      selectedBeatId={selectedBeatId}
+                      onSelectBeat={setSelectedBeatId}
                       scene={{
                         ...scene,
                         filmTitle: projectTitle || script?.title,
@@ -6225,8 +6145,8 @@ function SceneCard({
                             Direction
                           </TabsTrigger>
                           <TabsTrigger value="beats" className="text-xs gap-1.5 px-2.5 py-1.5">
-                            <List className="w-3.5 h-3.5 shrink-0" />
-                            Beats
+                            <Volume2 className="w-3.5 h-3.5 shrink-0" />
+                            Audio
                             {sceneBeatsForTabs.length > 0 && (
                               <span className="text-[10px] opacity-60">
                                 ({sceneBeatsForTabs.length}
@@ -6277,231 +6197,39 @@ function SceneCard({
                   {/* Direction */}
                   {hasDirectionTab && (
                   <TabsContent value="direction" className="mt-3 focus-visible:outline-none">
-                  {(() => {
-                    const sceneDescription = scene.visualDescription || scene.action || scene.summary || scene.heading
-                    const sceneDir = scene.sceneDirection
-                    const hasDirection = !!sceneDir
-
-                    return (
-                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                        <div className="space-y-3">
-                            {/* Scene Description — plain-language narrative of what happens */}
-                            {hasDirection && sceneDir.sceneDescription && (
-                              <div className="text-sm text-gray-200 leading-relaxed bg-slate-800/50 rounded-md p-3 border border-slate-700/50">
-                                <span className="text-[10px] uppercase tracking-wider text-cyan-400/80 font-semibold block mb-1.5">Scene Description</span>
-                                {sceneDir.sceneDescription}
-                              </div>
-                            )}
-                            {/* Show visual description as the base */}
-                            {sceneDescription && (
-                              <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
-                                "{sceneDescription}"
-                              </div>
-                            )}
-                            {/* Show detailed direction sections */}
-                            {hasDirection && (
-                              <div className="pt-2 border-t border-blue-200 dark:border-blue-700 space-y-2">
-                                {sceneDir.scene?.atmosphere && (
-                                  <div className="text-xs">
-                                    <span className="font-semibold text-blue-600 dark:text-blue-400">Atmosphere:</span>
-                                    <span className="ml-1 text-gray-600 dark:text-gray-400">{sceneDir.scene.atmosphere}</span>
-                                  </div>
-                                )}
-                                {sceneDir.scene?.location && (
-                                  <div className="text-xs">
-                                    <span className="font-semibold text-blue-600 dark:text-blue-400">Location:</span>
-                                    <span className="ml-1 text-gray-600 dark:text-gray-400">{sceneDir.scene.location}</span>
-                                  </div>
-                                )}
-                                {sceneDir.scene?.keyProps && sceneDir.scene.keyProps.length > 0 && (
-                                  <div className="text-xs">
-                                    <span className="font-semibold text-blue-600 dark:text-blue-400">Key Objects:</span>
-                                    <span className="ml-1 text-gray-600 dark:text-gray-400">{sceneDir.scene.keyProps.join(', ')}</span>
-                                  </div>
-                                )}
-                                {sceneDir.camera && (
-                                  <div className="text-xs">
-                                    <span className="font-semibold text-purple-600 dark:text-purple-400">Camera:</span>
-                                    <span className="ml-1 text-gray-600 dark:text-gray-400">
-                                      {[
-                                        sceneDir.camera.shots?.join(', '),
-                                        sceneDir.camera.angle,
-                                        sceneDir.camera.movement
-                                      ].filter(Boolean).join(' • ')}
-                                    </span>
-                                  </div>
-                                )}
-                                {sceneDir.lighting && (
-                                  <div className="text-xs">
-                                    <span className="font-semibold text-amber-600 dark:text-amber-400">Lighting:</span>
-                                    <span className="ml-1 text-gray-600 dark:text-gray-400">
-                                      {[
-                                        sceneDir.lighting.overallMood,
-                                        sceneDir.lighting.timeOfDay,
-                                        sceneDir.lighting.colorTemperature
-                                      ].filter(Boolean).join(' • ')}
-                                    </span>
-                                  </div>
-                                )}
-                                {sceneDir.talent && (
-                                  <div className="text-xs">
-                                    <span className="font-semibold text-green-600 dark:text-green-400">Talent:</span>
-                                    <span className="ml-1 text-gray-600 dark:text-gray-400">
-                                      {sceneDir.talent.emotionalBeat || sceneDir.talent.blocking}
-                                    </span>
-                                  </div>
-                                )}
-                                {sceneDir.audio && (
-                                  <div className="text-xs">
-                                    <span className="font-semibold text-pink-600 dark:text-pink-400">Audio:</span>
-                                    <span className="ml-1 text-gray-600 dark:text-gray-400">
-                                      {sceneDir.audio.priorities || sceneDir.audio.considerations}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                      </div>
-                    )
-                  })()}
+                    <SceneDirectionWorkbench
+                      scene={scene}
+                      sceneIdx={sceneIdx}
+                      scenes={scenes}
+                      script={script}
+                      onScriptChange={onScriptChange}
+                      beats={sceneBeatsForTabs}
+                      selectedBeatId={selectedBeatId}
+                      onSelectBeat={setSelectedBeatId}
+                      segments={sceneProductionData?.segments}
+                      promptComposition={promptComposition}
+                      characters={characters}
+                      locationReferences={locationReferences}
+                      objectReferences={objectReferences}
+                    />
                   </TabsContent>
                   )}
 
-                  {/* Standalone narration lives on Beats when the scene has no beat list of its own. */}
-                  {hasNarrationTab && (
+                  {/* Standalone narration lives on Audio when the scene has no beat list of its own. */}
+                  {hasNarrationTab && !hasBeatsTab && (
                   <TabsContent value="beats" className="mt-3 focus-visible:outline-none">
-                  {(() => {
-                    const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
-                    
-                    return (
-                    <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                      <div className="flex items-center justify-end gap-2 mb-2">
-                        {narrationUrl && (
-                          <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1 mr-auto">
-                            <Volume2 className="w-3 h-3" />
-                            {scene.narrationAudio?.[selectedLanguage]?.duration 
-                              ? `${scene.narrationAudio[selectedLanguage].duration.toFixed(1)}s`
-                              : 'Ready'}
-                          </span>
-                        )}
-                        {narrationUrl ? (
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onPlayAudio?.(narrationUrl, 'narration', scene.id || scene.sceneId || `scene-${sceneIdx}`)
-                              }}
-                              className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
-                              title="Play Narration"
-                            >
-                              {playingAudio === narrationUrl ? (
-                                <Pause className="w-4 h-4" />
-                              ) : (
-                                <Play className="w-4 h-4" />
-                              )}
-                            </button>
-                            <button
-                              onClick={async (e) => {
-                                e.stopPropagation()
-                                setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
-                                try {
-                                  await onGenerateSceneAudio?.(sceneIdx, 'narration', undefined, undefined, selectedLanguage)
-                                } catch (error) {
-                                  console.error('[ScriptPanel] Narration regeneration failed:', error)
-                                  toast.error('Failed to regenerate narration')
-                                } finally {
-                                  setGeneratingDialogue?.(null)
-                                }
-                              }}
-                              disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__'}
-                              className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded disabled:opacity-50"
-                              title="Regenerate Narration Audio"
-                            >
-                              {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__' ? (
-                                <Loader className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <RefreshCw className="w-4 h-4" />
-                              )}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                void downloadSceneAudioFile(e, narrationUrl, {
-                                  sceneNumber: sceneIdx + 1,
-                                  track: 'narration',
-                                })
-                              }}
-                              className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
-                              title="Download Narration"
-                            >
-                              <Download className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                if (confirm('Delete narration audio? You can regenerate it later.')) {
-                                  onDeleteSceneAudio?.(sceneIdx, 'narration')
-                                }
-                              }}
-                              className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
-                              title="Delete Narration Audio"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                uploadAudio?.(sceneIdx, 'narration')
-                              }}
-                              className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
-                              title="Upload Narration Audio"
-                            >
-                              <Upload className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={async (e) => {
-                                e.stopPropagation()
-                                setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
-                                try {
-                                  await onGenerateSceneAudio?.(sceneIdx, 'narration', undefined, undefined, selectedLanguage)
-                                } catch (error) {
-                                  console.error('[ScriptPanel] Narration generation failed:', error)
-                                  toast.error('Failed to generate narration')
-                                } finally {
-                                  setGeneratingDialogue?.(null)
-                                }
-                              }}
-                              disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__'}
-                              className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
-                            >
-                              {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__' ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : null}
-                              Generate Audio
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                uploadAudio?.(sceneIdx, 'narration')
-                              }}
-                              className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
-                              title="Upload Narration Audio"
-                            >
-                              <Upload className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
-                        "{scene.narration}"
-                      </div>
-                    </div>
-                  )
-                  })()}
+                    <SceneNarrationAudioCard
+                      scene={scene}
+                      sceneIdx={sceneIdx}
+                      selectedLanguage={selectedLanguage}
+                      playingAudio={playingAudio}
+                      onPlayAudio={onPlayAudio}
+                      onGenerateSceneAudio={onGenerateSceneAudio}
+                      generatingDialogue={generatingDialogue}
+                      setGeneratingDialogue={setGeneratingDialogue}
+                      uploadAudio={uploadAudio}
+                      onDeleteSceneAudio={onDeleteSceneAudio}
+                    />
                   </TabsContent>
                   )}
 
@@ -6539,6 +6267,8 @@ function SceneCard({
                   <TabsContent value="previs" className="mt-3 focus-visible:outline-none">
                   <SceneStoryboardFrameViewer
                     hideOuterChrome
+                    selectedBeatId={selectedBeatId}
+                    onSelectBeat={setSelectedBeatId}
                     scene={scene}
                     sceneIndex={sceneIdx}
                     sceneNumber={sceneNumber}
@@ -6668,928 +6398,73 @@ function SceneCard({
                   </TabsContent>
                   )}
 
-                  {/* Beats */}
+                  {/* Audio */}
                   {hasBeatsTab && (
-                  <TabsContent value="beats" className="mt-3 focus-visible:outline-none">
-                  {(() => {
-                    const timelineBeats = sceneBeatsForTabs
-                    const sceneSfxList = Array.isArray(scene.sfx) ? scene.sfx : []
-                    const sfxByBeatId = new Map<string, Array<{ description: string; idx: number }>>()
-                    sceneSfxList.forEach((raw: unknown, idx: number) => {
-                      const entry =
-                        typeof raw === 'string'
-                          ? { description: raw.trim() }
-                          : (raw as { description?: string; sourceBeatId?: string })
-                      const description = String(
-                        entry?.description ?? (typeof raw === 'string' ? raw : '')
-                      ).trim()
-                      const beatId = entry?.sourceBeatId
-                      if (!description || !beatId) return
-                      const list = sfxByBeatId.get(beatId) ?? []
-                      list.push({ description, idx })
-                      sfxByBeatId.set(beatId, list)
-                    })
-                    const parseInlineBeatSfx = (actionText?: string) => {
-                      if (!actionText?.trim()) return [] as string[]
-                      return actionText
-                        .split('\n')
-                        .map((line) => line.trim())
-                        .filter((line) => /^SFX:/i.test(line))
-                        .map((line) => line.replace(/^SFX:\s*/i, '').trim())
-                        .filter(Boolean)
-                    }
-                    const hasSceneMusic =
-                      !!(scene.musicAudio || scene.music?.url) || sceneMusicCues.length > 0
-                    let spokenBeatCursor = 0
-                    return (
-                    <div className="p-4 rounded-lg bg-slate-900/40 border border-slate-700/50">
-                      <div className="flex items-center justify-end gap-2 mb-3 flex-wrap">
-                        {hasSceneMusic && (
-                          <SceneScoreToggle
-                            className="mr-auto"
-                            checked={sceneScoreOn}
-                            onCheckedChange={handleSceneScoreChange}
-                          />
-                        )}
-                        {(() => {
-                          const hasAudioContent =
-                            (Array.isArray(scene.dialogue) && scene.dialogue.length > 0) ||
-                            !!String(scene.narration || '').trim() ||
-                            !!scene.music ||
-                            hasSelectableActionBeats
-                          if (!hasAudioContent) return null
-
-                          const voicesReady = productionReadiness?.isAudioReady ?? true
-                          const hasNarrationVoice = productionReadiness?.hasNarrationVoice ?? true
-                          const missingVoices = productionReadiness?.charactersMissingVoices || []
-                          const isDisabled =
-                            isExpressAudioRunning || !voicesReady || !hasNarrationVoice
-
-                          const button = (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              className="h-7 text-xs border-violet-400/60 text-violet-200 hover:bg-violet-900/30"
-                              disabled={isDisabled}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                if (!isExpressAudioRunning && voicesReady && hasNarrationVoice) {
-                                  setExpressAudioDialogOpen(true)
-                                }
-                              }}
-                            >
-                              {isExpressAudioRunning ? (
-                                <>
-                                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                  Audio Agent...
-                                </>
-                              ) : (
-                                <>
-                                  <Sparkles className="w-3 h-3 mr-1" />
-                                  Audio Agent
-                                  {(!voicesReady || !hasNarrationVoice) && (
-                                    <span className="ml-1 text-amber-400">⚠</span>
-                                  )}
-                                </>
-                              )}
-                            </Button>
-                          )
-
-                          if (!voicesReady || !hasNarrationVoice) {
-                            return (
-                              <TooltipProvider delayDuration={200}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>{button}</TooltipTrigger>
-                                  <TooltipContent side="bottom" className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-xs">
-                                    <div className="space-y-1">
-                                      <p className="font-medium text-amber-400 flex items-center gap-1.5">
-                                        <AlertTriangle className="w-3.5 h-3.5" />
-                                        Voice Setup Required
-                                      </p>
-                                      {!hasNarrationVoice && (
-                                        <p className="text-xs text-gray-300">• Assign a narrator voice</p>
-                                      )}
-                                      {missingVoices.length > 0 && (
-                                        <p className="text-xs text-gray-300">
-                                          • Assign voices to: {missingVoices.slice(0, 3).join(', ')}
-                                          {missingVoices.length > 3 && ` +${missingVoices.length - 3} more`}
-                                        </p>
-                                      )}
-                                      <p className="text-[10px] text-gray-500 pt-1">
-                                        Set up voices in the Reference Library
-                                      </p>
-                                    </div>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            )
-                          }
-
-                          return button
-                        })()}
-                        {/* Voice Casting Quick View — dialogue characters only */}
-                        {scene.dialogue && scene.dialogue.length > 0 && (
-                        <div className="flex items-center gap-1">
-                          {(() => {
-                            // Get dialogue audio array for current language
-                            let castingDialogueAudioArray: any[] = []
-                            if (Array.isArray(scene.dialogueAudio)) {
-                              castingDialogueAudioArray = scene.dialogueAudio
-                            } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
-                              castingDialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
-                            }
-                            return Array.from(new Set(scene.dialogue.map((d: any) => d.character))).slice(0, 4).map((character: any) => {
-                            const charDialogues = scene.dialogue.filter((d: any) => d.character === character)
-                            const charAudioReady = charDialogues.filter((d: any, idx: number) => {
-                              const dialogueIndex = scene.dialogue.findIndex((dd: any, i: number) => dd === d && i <= idx)
-                              const audioEntry = castingDialogueAudioArray.find((a: any) => 
-                                a.character === character && a.dialogueIndex === dialogueIndex
-                              )
-                              return audioEntry?.audioUrl
-                            }).length
-                            const allReady = charAudioReady === charDialogues.length
-                            
-                            return (
-                            <TooltipProvider key={character}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full border flex items-center gap-0.5 ${
-                                    allReady 
-                                      ? 'bg-blue-600/30 text-blue-200 border-blue-500/40' 
-                                      : charAudioReady > 0
-                                      ? 'bg-yellow-800/50 text-yellow-300 border-yellow-600/30'
-                                      : 'bg-slate-700/40 text-slate-300 border-slate-600/40'
-                                  }`}>
-                                    {character?.slice(0, 2)?.toUpperCase() || '??'}
-                                    <span className="text-[8px] opacity-70">({charDialogues.length})</span>
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent className="bg-gray-900 text-white border border-gray-700">
-                                  <p className="text-xs font-medium">{character}</p>
-                                  <p className="text-[10px] text-gray-400">{charDialogues.length} {charDialogues.length === 1 ? 'line' : 'lines'} • {charAudioReady} audio ready</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )})
-                          })()}
-                          {Array.from(new Set(scene.dialogue.map((d: any) => d.character))).length > 4 && (
-                            <span className="text-[10px] text-gray-500">+{Array.from(new Set(scene.dialogue.map((d: any) => d.character))).length - 4}</span>
-                          )}
-                          {/* Resync Audio Timing Button */}
-                          {onResyncAudioTiming && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      onResyncAudioTiming(sceneIdx, selectedLanguage)
-                                    }}
-                                    disabled={resyncingAudioSceneIndex === sceneIdx}
-                                    className="ml-2 p-1 rounded hover:bg-blue-900/30 text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50"
-                                  >
-                                    {resyncingAudioSceneIndex === sceneIdx ? (
-                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                    ) : (
-                                      <RefreshCw className="w-3.5 h-3.5" />
-                                    )}
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent className="bg-gray-900 text-white border border-gray-700">
-                                  <p className="text-xs">Resync audio timing</p>
-                                  <p className="text-[10px] text-gray-400">Recalculate start times after edits</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-                        )}
-                      </div>
-                      {(() => {
-                        const showTooltips: Record<BeatAttentionFilter, string> = {
-                          all: 'Every beat in this scene.',
-                          needs_action: 'Beats still missing audio, a speaker, or another required step.',
-                          ready: 'Beats whose audio is in sync and ready to move on.',
-                          prompt_changed: 'Beats whose prompt changed after the last render.',
-                          no_audio: 'Spoken beats, or action beats that carry sound, with no audio yet.',
-                          needs_speaker: 'Dialogue or narration that has no voice assigned.',
-                        }
-                        const typeTooltips: Record<BeatTypeFilter, string> = {
-                          all: 'Action, dialogue, and narration.',
-                          action: 'Beats with no spoken line.',
-                          dialogue: 'Beats spoken by a character.',
-                          narration: 'Voiceover beats.',
-                        }
-                        const attentionChips: Array<{ id: BeatAttentionFilter; label: string }> = [
-                          { id: 'all', label: 'All' },
-                          { id: 'needs_action', label: 'Needs action' },
-                          { id: 'ready', label: 'Ready' },
-                          { id: 'prompt_changed', label: 'Prompt changed' },
-                          { id: 'no_audio', label: 'No audio' },
-                          { id: 'needs_speaker', label: 'Needs speaker' },
-                        ]
-                        const typeChips: Array<{ id: BeatTypeFilter; label: string }> = [
-                          { id: 'all', label: 'All' },
-                          { id: 'action', label: 'Action' },
-                          { id: 'dialogue', label: 'Dialogue' },
-                        ]
-                        if (beatFacts.some((facts) => facts.kind === 'narration')) {
-                          typeChips.push({ id: 'narration', label: 'Narration' })
-                        }
-                        const characters = beatFilterCharacters(beatFacts)
-                        const activeSummary = [
-                          beatListFilters.attention === 'all'
-                            ? ''
-                            : attentionChips.find((chip) => chip.id === beatListFilters.attention)?.label,
-                          beatListFilters.type === 'all'
-                            ? ''
-                            : typeChips.find((chip) => chip.id === beatListFilters.type)?.label,
-                          beatListFilters.character === 'all' ? '' : beatListFilters.character,
-                        ]
-                          .filter(Boolean)
-                          .join(' · ')
-                        const countFor = (
-                          attention: BeatAttentionFilter,
-                          type: BeatTypeFilter
-                        ) =>
-                          beatFacts.filter((facts) =>
-                            beatMatchesFilters(facts, { ...beatListFilters, attention, type })
-                          ).length
-                        return (
-                          <div className="mb-3">
-                            <StatusFilterBar
-                              activeSummary={activeSummary}
-                              onClear={() => setBeatListFilters(DEFAULT_BEAT_LIST_FILTERS)}
-                              groups={[
-                                {
-                                  label: 'Show',
-                                  onSelect: (id) =>
-                                    setBeatListFilters((current) => ({
-                                      ...current,
-                                      attention: id as BeatAttentionFilter,
-                                    })),
-                                  chips: attentionChips.map((chip) => ({
-                                    id: chip.id,
-                                    label: chip.label,
-                                    tooltip: showTooltips[chip.id],
-                                    active: beatListFilters.attention === chip.id,
-                                    count:
-                                      chip.id === 'all'
-                                        ? beatFacts.length
-                                        : countFor(chip.id, beatListFilters.type),
-                                  })),
-                                },
-                                {
-                                  label: 'Type',
-                                  onSelect: (id) =>
-                                    setBeatListFilters((current) => ({
-                                      ...current,
-                                      type: id as BeatTypeFilter,
-                                    })),
-                                  chips: typeChips.map((chip) => ({
-                                    id: chip.id,
-                                    label: chip.label,
-                                    tooltip: typeTooltips[chip.id],
-                                    active: beatListFilters.type === chip.id,
-                                    count:
-                                      chip.id === 'all'
-                                        ? beatFacts.length
-                                        : countFor(beatListFilters.attention, chip.id),
-                                  })),
-                                },
-                              ]}
-                            >
-                              {characters.length > 1 && (
-                                <div className="space-y-1">
-                                  <p className="text-[10px] uppercase tracking-wide text-slate-500">
-                                    Character
-                                  </p>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <select
-                                        value={beatListFilters.character}
-                                        onClick={(event) => event.stopPropagation()}
-                                        onChange={(event) =>
-                                          setBeatListFilters((current) => ({
-                                            ...current,
-                                            character: event.target.value,
-                                          }))
-                                        }
-                                        className="h-7 w-full truncate rounded-full border border-slate-600/50 bg-slate-800/60 px-3 text-xs text-slate-200"
-                                        aria-label="Filter beats by character"
-                                      >
-                                        <option value="all">All</option>
-                                        {characters.map((name) => (
-                                          <option key={name} value={name}>
-                                            {name}
-                                          </option>
-                                        ))}
-                                      </select>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="right" className="max-w-[16rem] text-left">
-                                      Lines spoken by this character.
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </div>
-                              )}
-                            </StatusFilterBar>
-                          </div>
-                        )
-                      })()}
-                      <DndContext
-                        sensors={beatDragSensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={handleBeatDragEnd}
-                      >
-                      <SortableContext
-                        items={timelineBeats
-                          .filter((beat) => {
-                            const facts = beatFactsById.get(beat.beatId)
-                            return !facts || beatMatchesFilters(facts, beatListFilters)
-                          })
-                          .map((beat) => beat.beatId)}
-                        strategy={verticalListSortingStrategy}
-                      >
-                      <div className="space-y-3">
-                      {visibleBeatCount === 0 && (
-                        <div className="flex items-center justify-between gap-2 rounded-md border border-slate-700/50 px-3 py-2">
-                          <p className="text-xs text-slate-400">No beats match these filters.</p>
-                          <button
-                            type="button"
-                            className="text-[10px] text-slate-200 underline"
-                            onClick={(event) => {
-                              event.stopPropagation()
-                              setBeatListFilters(DEFAULT_BEAT_LIST_FILTERS)
-                            }}
-                          >
-                            Clear filters
-                          </button>
-                        </div>
-                      )}
-                      {timelineBeats.map((beat, beatIndex) => {
-                        const beatFactsForCard = beatFactsById.get(beat.beatId)
-                        if (beatFactsForCard && !beatMatchesFilters(beatFactsForCard, beatListFilters)) {
-                          return null
-                        }
-                        const beatNumber =
-                          (typeof beat.sequenceIndex === 'number' ? beat.sequenceIndex : beatIndex) + 1
-                        const continuityBroken = brokenContinuityBeatIds.has(beat.beatId)
-                        if (beat.kind === 'action') {
-                          const beatSfx = sfxByBeatId.get(beat.beatId) ?? []
-                          const inlineSfx =
-                            beatSfx.length === 0 && sceneSfxList.length === 0
-                              ? parseInlineBeatSfx(beat.actionDescription)
-                              : []
-                          const sfxLabels = [
-                            ...beatSfx.map((s) => s.description),
-                            ...inlineSfx,
-                          ]
-                          let sfxAudioUrl: string | undefined
-                          try {
-                            sfxAudioUrl = readBeatSfxAudio(scene, resolveBeatSfxSlot(scene, beat))
-                          } catch {
-                            sfxAudioUrl = undefined
-                          }
-                          const hasBeatSfx = sfxLabels.length > 0 || !!sfxAudioUrl
-                          const sfxStale = actionBeatSfxIsStale(scene, beat, !!sfxAudioUrl)
-                          return (
-                            <SortableBeatRow
-                              key={beat.beatId}
-                              beatId={beat.beatId}
-                              beatNumber={beatNumber}
-                              disabled={!canReorderBeats}
-                            >
-                            <div
-                              className={`p-3 bg-amber-950/35 rounded-lg border border-amber-500/45 hover:border-amber-400/55 transition-colors ${
-                                beat.excluded ? 'opacity-50' : ''
-                              }`}
-                            >
-                              <div className="flex items-center gap-2 mb-1.5">
-                                <div className="flex items-center gap-2 min-w-0">
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-900/50 text-amber-100 border border-amber-700/40 font-medium tabular-nums shrink-0">
-                                  Beat {beatNumber}
-                                </span>
-                                <span className="text-xs font-semibold uppercase tracking-wide text-amber-300">
-                                  Action
-                                </span>
-                                {beat.excluded && (
-                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-300 border border-gray-500/30">
-                                    Excluded
-                                  </span>
-                                )}
-                                {beat.beatRole === 'title_reveal' && (
-                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
-                                    Title
-                                  </span>
-                                )}
-                                <BeatAudioStatusBadge hasAudio={!!sfxAudioUrl} stale={sfxStale} />
-                                {continuityBroken && <BeatContinuityWarning />}
-                                </div>
-                                <BeatExcludeToggle
-                                  beat={beat}
-                                  sceneIdx={sceneIdx}
-                                  scenes={scenes}
-                                  script={script}
-                                  onScriptChange={onScriptChange}
-                                />
-                                {hasSceneMusic && (
-                                  <BeatMusicToggle
-                                    beat={beat}
-                                    sceneIdx={sceneIdx}
-                                    scenes={scenes}
-                                    script={script}
-                                    onScriptChange={onScriptChange}
-                                    cue={musicCueByBeatId.get(beat.beatId)}
-                                  />
-                                )}
-                                {hasBeatSfx && (
-                                  <BeatSfxToggle
-                                    beat={beat}
-                                    sceneIdx={sceneIdx}
-                                    scenes={scenes}
-                                    script={script}
-                                    onScriptChange={onScriptChange}
-                                  />
-                                )}
-                              </div>
-                              <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">
-                                {stripInlineSfxLinesFromActionText(beat.actionDescription) ||
-                                  'No action description'}
-                              </p>
-                              <ActionBeatSfxControls
-                                beat={beat}
-                                scene={scene}
-                                sceneIdx={sceneIdx}
-                                projectId={projectId}
-                                segmentDurationSeconds={scene.duration}
-                                playingAudio={playingAudio}
-                                expressStatus={expressBeatStatus[beat.beatId]}
-                                isExpressRunning={isExpressAudioRunning}
-                                onPlayAudio={onPlayAudio}
-                                onSaveSfxAudio={onSaveSfxAudio}
-                              />
-                              <div className="mt-3 flex items-center">
-                                <BeatPerformanceDirectorControl
-                                  beat={beat}
-                                  label={`Beat ${beatNumber}`}
-                                  sceneIdx={sceneIdx}
-                                  scenes={scenes}
-                                  script={script}
-                                  projectId={projectId}
-                                  onScriptChange={onScriptChange}
-                                  onGenerateStill={
-                                    onGenerateBeatFrame
-                                      ? (beatId) => onGenerateBeatFrame(sceneIdx, beatId)
-                                      : undefined
-                                  }
-                                  promptComposition={promptComposition}
-                                />
-                              </div>
-                              <BeatDirectionEditor
-                                beat={beat}
-                                sceneIdx={sceneIdx}
-                                scenes={scenes}
-                                script={script}
-                                onScriptChange={onScriptChange}
-                                promptComposition={promptComposition}
-                                characters={characters}
-                                locationReferences={locationReferences}
-                                objectReferences={objectReferences}
-                                className="mt-2"
-                              />
-                              <BeatCaptionControl
-                                beat={beat}
-                                sceneIdx={sceneIdx}
-                                selectedLanguage={selectedLanguage}
-                                scenes={scenes}
-                                script={script}
-                                projectStreams={projectStreams}
-                                storedTranslations={storedTranslations}
-                                onScriptChange={onScriptChange}
-                                onSaveTranslations={onSaveTranslations}
-                              />
-                            </div>
-                            </SortableBeatRow>
-                          )
-                        }
-
-                        const dialogueLines = Array.isArray(scene.dialogue) ? scene.dialogue : []
-                        let dialogueIndex = spokenBeatCursor
-                        if (beat.lineId?.trim()) {
-                          const byLineId = dialogueLines.findIndex(
-                            (entry: { lineId?: string }) => entry?.lineId === beat.lineId
-                          )
-                          if (byLineId >= 0) dialogueIndex = byLineId
-                        }
-                        spokenBeatCursor = Math.max(spokenBeatCursor + 1, dialogueIndex + 1)
-                        const d = dialogueLines[dialogueIndex] ?? {
-                          character: beat.character,
-                          line: beat.line,
-                          lineId: beat.lineId,
-                          kind: beat.kind,
-                          characterId: beat.characterId,
-                        }
-                        const i = dialogueIndex
-                        const audioEntry = findDialogueAudioForLine(scene, {
-                          language: selectedLanguage,
-                          lineId: d.lineId,
-                          dialogueIndex: i,
-                          character: d.character,
-                        })
-                        const dialogueAudioUrl = audioEntry?.audioUrl || audioEntry?.url
-                        const sceneKey = scene.id || scene.sceneId || `scene-${sceneIdx}`
-                        const dialogueLineText = coerceDialogueLineText(d.line ?? d.text)
-                        const { chip, spokenDisplay, brief } = dialogueDirectionDisplay(
-                          dialogueLineText,
-                          d.voiceDirection ?? beat.voiceDirection
-                        )
-                        const lineWithoutParenthetical = spokenDisplay
-                        
-                        const isNarrationBeat = beat.kind === 'narration'
-                        const hasBeatSfx = (sfxByBeatId.get(beat.beatId)?.length ?? 0) > 0
-                        const speakerNeedsAssign = dialogueSpeakerNeedsAssignment({
-                          characters: characters as any[],
-                          characterId: d.characterId ?? beat.characterId,
-                          characterName: d.character ?? beat.character,
-                          kind: d.kind ?? beat.kind,
-                          narrationVoice,
-                        })
-                        const speakerSelectValue = (() => {
-                          if (
-                            isNarratorDialogueSpeaker({
-                              kind: d.kind ?? beat.kind,
-                              characterId: d.characterId ?? beat.characterId,
-                              characterName: d.character ?? beat.character,
-                            })
-                          ) {
-                            return '__narrator__'
-                          }
-                          const id = d.characterId || beat.characterId
-                          if (id && (characters as any[]).some((c) => c.id === id)) return String(id)
-                          const name = d.character || beat.character
-                          const byName = (characters as any[]).find(
-                            (c) =>
-                              typeof c?.name === 'string' &&
-                              toCanonicalName(c.name) === toCanonicalName(String(name || ''))
-                          )
-                          return byName?.id ? String(byName.id) : ''
-                        })()
-                        const focusSpeakerSelect =
-                          pendingSpeakerAssign?.sceneIdx === sceneIdx &&
-                          pendingSpeakerAssign?.dialogueIndex === i
-                        
-                        return (
-                          <SortableBeatRow
-                            key={beat.beatId}
-                            beatId={beat.beatId}
-                            beatNumber={beatNumber}
-                            disabled={!canReorderBeats}
-                          >
-                          <div
-                            className={`p-3 rounded-lg border transition-colors ${
-                              isNarrationBeat
-                                ? 'bg-indigo-900/20 border-indigo-700/30 hover:border-indigo-600/40'
-                                : 'bg-blue-900/30 border-blue-500/45 hover:border-blue-400/55'
-                            } ${beat.excluded ? 'opacity-50' : ''} ${
-                              focusSpeakerSelect ? 'ring-2 ring-amber-400/70' : ''
-                            }`}
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1.5">
-                                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-700/50 text-slate-300 border border-slate-600/40 font-medium tabular-nums shrink-0">
-                                    Beat {beatNumber}
-                                  </span>
-                                  <label className="sr-only" htmlFor={`speaker-assign-${sceneIdx}-${beat.beatId}`}>
-                                    Assign speaker
-                                  </label>
-                                  <select
-                                    id={`speaker-assign-${sceneIdx}-${beat.beatId}`}
-                                    data-speaker-assign={`${sceneIdx}:${i}`}
-                                    value={speakerSelectValue}
-                                    onClick={(e) => e.stopPropagation()}
-                                    onChange={(e) => {
-                                      e.stopPropagation()
-                                      if (!onScriptChange || !script || !Array.isArray(scenes)) return
-                                      const raw = e.target.value
-                                      if (!raw) return
-                                      let speaker: AssignableSpeaker
-                                      if (raw === '__narrator__') {
-                                        speaker = { kind: 'narrator' }
-                                      } else {
-                                        const match = (characters as any[]).find((c) => c.id === raw)
-                                        if (!match?.id || !match?.name) {
-                                          toast.error('Could not find that character in the cast')
-                                          return
-                                        }
-                                        speaker = {
-                                          kind: 'character',
-                                          id: String(match.id),
-                                          name: String(match.name),
-                                        }
-                                      }
-                                      const updatedScenes = scenes.map((s: any, idx: number) => {
-                                        if (idx !== sceneIdx) return s
-                                        return assignDialogueSpeakerToScene(s, {
-                                          beatId: beat.beatId,
-                                          dialogueIndex: i,
-                                          lineId: d.lineId || beat.lineId,
-                                          speaker,
-                                        })
-                                      })
-                                      onScriptChange({
-                                        ...script,
-                                        script: { ...script.script, scenes: updatedScenes },
-                                      })
-                                      toast.success(
-                                        speaker.kind === 'narrator'
-                                          ? 'Line assigned to Narrator'
-                                          : `Line assigned to ${speaker.name}`
-                                      )
-                                    }}
-                                    className={`max-w-[14rem] truncate text-sm font-semibold rounded-md border bg-slate-900/60 px-2 py-0.5 ${
-                                      isNarrationBeat ? 'text-indigo-200 border-indigo-600/40' : 'text-blue-200 border-blue-600/40'
-                                    } ${
-                                      speakerNeedsAssign
-                                        ? 'border-amber-500/70 text-amber-200'
-                                        : ''
-                                    }`}
-                                    title={
-                                      speakerNeedsAssign
-                                        ? 'Speaker isn’t linked to a cast voice — pick a character'
-                                        : 'Assign character to this line'
-                                    }
-                                  >
-                                    {speakerNeedsAssign && !speakerSelectValue && (
-                                      <option value="">Assign speaker…</option>
-                                    )}
-                                    <option value="__narrator__">Narration (Narrator)</option>
-                                    {(characters as any[])
-                                      .filter((c) => c?.type !== 'narrator')
-                                      .map((c) => (
-                                        <option key={c.id || c.name} value={c.id || ''}>
-                                          {c.name}
-                                          {c.voiceConfig ? '' : ' (no voice)'}
-                                        </option>
-                                      ))}
-                                  </select>
-                                  {speakerNeedsAssign && (
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0">
-                                      Needs speaker
-                                    </span>
-                                  )}
-                                  {beat.excluded && (
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-300 border border-gray-500/30">
-                                      Excluded
-                                    </span>
-                                  )}
-                                  {chip && (
-                                    <span
-                                      className="text-[10px] px-2 py-0.5 rounded-full bg-slate-700/40 text-slate-300 border border-slate-600/40 italic"
-                                      title={brief || chip}
-                                    >
-                                      {chip}
-                                    </span>
-                                  )}
-                                  <BeatAudioStatusBadge
-                                    hasAudio={!!dialogueAudioUrl}
-                                    stale={
-                                      !!dialogueAudioUrl &&
-                                      isBeatAudioStale({
-                                        hasAudio: true,
-                                        sourceFingerprint: audioEntry?.sourceFingerprint,
-                                        audioStale: audioEntry?.audioStale,
-                                        currentFingerprint: audioSourceFingerprintForSpoken({
-                                          kind: isNarrationBeat ? 'narration' : 'dialogue',
-                                          character: d.character ?? beat.character,
-                                          line: d.line ?? beat.line,
-                                          voiceDirection: d.voiceDirection ?? beat.voiceDirection,
-                                        }),
-                                      })
-                                    }
-                                  />
-                                  {continuityBroken && <BeatContinuityWarning />}
-                                  </div>
-                                  <BeatExcludeToggle
-                                    beat={beat}
-                                    sceneIdx={sceneIdx}
-                                    scenes={scenes}
-                                    script={script}
-                                    onScriptChange={onScriptChange}
-                                  />
-                                  {hasSceneMusic && (
-                                    <BeatMusicToggle
-                                      beat={beat}
-                                      sceneIdx={sceneIdx}
-                                      scenes={scenes}
-                                      script={script}
-                                      onScriptChange={onScriptChange}
-                                      cue={musicCueByBeatId.get(beat.beatId)}
-                                    />
-                                  )}
-                                  {hasBeatSfx && (
-                                    <BeatSfxToggle
-                                      beat={beat}
-                                      sceneIdx={sceneIdx}
-                                      scenes={scenes}
-                                      script={script}
-                                      onScriptChange={onScriptChange}
-                                    />
-                                  )}
-                                </div>
-                                <div className="text-sm text-gray-200 leading-relaxed">"{lineWithoutParenthetical}"</div>
-                                {brief && (
-                                  <div className="text-[11px] text-slate-400 mt-1 leading-snug" title={brief}>
-                                    {brief}
-                                  </div>
-                                )}
-                                {audioEntry?.duration && (
-                                  <span className="text-[10px] text-gray-500 mt-1">Duration: {audioEntry.duration.toFixed(1)}s</span>
-                                )}
-                              </div>
-                            {dialogueAudioUrl ? (
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    onPlayAudio?.(dialogueAudioUrl, d.character, sceneKey)
-                                  }}
-                                  className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
-                                  title="Play Dialogue"
-                                >
-                                  {playingAudio === dialogueAudioUrl ? (
-                                    <Pause className="w-4 h-4" />
-                                  ) : (
-                                    <Play className="w-4 h-4" />
-                                  )}
-                                </button>
-                                <button
-                                  onClick={async (e) => {
-                                    e.stopPropagation()
-                                    if (!onGenerateSceneAudio) return
-                                    
-                                    setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
-                                    try {
-                                      await onGenerateSceneAudio?.(sceneIdx, 'dialogue', d.character, i, selectedLanguage)
-                                    } catch (error) {
-                                      console.error('[ScriptPanel] Dialogue regeneration failed:', error)
-                                      toast.error('Failed to regenerate dialogue')
-                                    } finally {
-                                      setGeneratingDialogue?.(null)
-                                    }
-                                  }}
-                                  disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i}
-                                  className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-50"
-                                  title="Regenerate Dialogue Audio"
-                                >
-                                  {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i ? (
-                                    <Loader className="w-4 h-4 animate-spin" />
-                                  ) : (
-                                    <RefreshCw className="w-4 h-4" />
-                                  )}
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    void downloadSceneAudioFile(e, audioEntry.audioUrl, {
-                                      sceneNumber: sceneIdx + 1,
-                                      track: 'dialogue',
-                                      character: d.character,
-                                      index: i,
-                                    })
-                                  }}
-                                  className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
-                                  title="Download Dialogue"
-                                >
-                                  <Download className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    if (confirm(`Delete ${d.character}'s dialogue audio? You can regenerate it later.`)) {
-                                      onDeleteSceneAudio?.(sceneIdx, 'dialogue', i)
-                                    }
-                                  }}
-                                  className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
-                                  title="Delete Dialogue Audio"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    uploadAudio?.(sceneIdx, 'dialogue', undefined, i, d.character)
-                                  }}
-                                  className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
-                                  title="Upload Dialogue Audio"
-                                >
-                                  <Upload className="w-4 h-4" />
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={async (e) => {
-                                    e.stopPropagation()
-                                    if (!onGenerateSceneAudio) {
-                                      console.error('[ScriptPanel] onGenerateSceneAudio is not defined!')
-                                      return
-                                    }
-                                    
-                                    setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
-                                    try {
-                                      await onGenerateSceneAudio?.(sceneIdx, 'dialogue', d.character, i, selectedLanguage)
-                                    } catch (error) {
-                                      console.error('[ScriptPanel] Dialogue generation failed:', error)
-                                      toast.error(`Failed to generate dialogue for ${d.character}`)
-                                    } finally {
-                                      setGeneratingDialogue?.(null)
-                                    }
-                                  }}
-                                  disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i}
-                                  className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50"
-                                >
-                                  {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i ? (
-                                    <div className="flex items-center gap-1">
-                                      <Loader className="w-3 h-3 animate-spin" />
-                                      Generating...
-                                    </div>
-                                  ) : (
-                                    'Generate'
-                                  )}
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  uploadAudio?.(sceneIdx, 'dialogue', undefined, i, d.character)
-                                }}
-                                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
-                                title="Upload Dialogue Audio"
-                              >
-                                <Upload className="w-4 h-4" />
-                              </button>
-                            </div>
-                            )}
-                            </div>
-                            <div className="mt-3 flex items-center">
-                              <BeatPerformanceDirectorControl
-                                beat={beat}
-                                label={`Beat ${beatNumber}`}
-                                sceneIdx={sceneIdx}
-                                scenes={scenes}
-                                script={script}
-                                projectId={projectId}
-                                onScriptChange={onScriptChange}
-                                onGenerateStill={
-                                  onGenerateBeatFrame
-                                    ? (beatId) => onGenerateBeatFrame(sceneIdx, beatId)
-                                    : undefined
-                                }
-                                promptComposition={promptComposition}
-                              />
-                            </div>
-                            <BeatDirectionEditor
-                              beat={beat}
-                              sceneIdx={sceneIdx}
-                              scenes={scenes}
-                              script={script}
-                              onScriptChange={onScriptChange}
-                              promptComposition={promptComposition}
-                              characters={characters}
-                              locationReferences={locationReferences}
-                              objectReferences={objectReferences}
-                              className="mt-2"
-                            />
-                            <BeatCaptionControl
-                              beat={beat}
-                              sceneIdx={sceneIdx}
-                              selectedLanguage={selectedLanguage}
-                              scenes={scenes}
-                              script={script}
-                              projectStreams={projectStreams}
-                              storedTranslations={storedTranslations}
-                              onScriptChange={onScriptChange}
-                              onSaveTranslations={onSaveTranslations}
-                            />
-                          </div>
-                          </SortableBeatRow>
-                        )
-                      })}
-                      </div>
-                      </SortableContext>
-                      </DndContext>
-                      <SceneTransitionSelect
+                  <TabsContent value="beats" className="mt-3 focus-visible:outline-none space-y-3">
+                    {hasNarrationTab && (
+                      <SceneNarrationAudioCard
+                        scene={scene}
                         sceneIdx={sceneIdx}
-                        scenes={scenes}
-                        script={script}
-                        onScriptChange={onScriptChange}
-                        className="mt-4 pt-3 border-t border-slate-700/50"
+                        selectedLanguage={selectedLanguage}
+                        playingAudio={playingAudio}
+                        onPlayAudio={onPlayAudio}
+                        onGenerateSceneAudio={onGenerateSceneAudio}
+                        generatingDialogue={generatingDialogue}
+                        setGeneratingDialogue={setGeneratingDialogue}
+                        uploadAudio={uploadAudio}
+                        onDeleteSceneAudio={onDeleteSceneAudio}
                       />
-                    </div>
-                    )
-                  })()}
+                    )}
+                    <SceneAudioWorkbench
+                      scene={scene}
+                      sceneIdx={sceneIdx}
+                      sceneNumber={sceneNumber}
+                      beats={sceneBeatsForTabs}
+                      selectedBeatId={selectedBeatId}
+                      onSelectBeat={setSelectedBeatId}
+                      onReorder={
+                        canReorderBeats
+                          ? (fromBeatId, toBeatId) =>
+                              handleBeatDragEnd({ active: { id: fromBeatId }, over: { id: toBeatId } })
+                          : undefined
+                      }
+                      selectedLanguage={selectedLanguage}
+                      playingAudio={playingAudio}
+                      onPlayAudio={onPlayAudio}
+                      onGenerateSceneAudio={onGenerateSceneAudio}
+                      generatingDialogue={generatingDialogue}
+                      setGeneratingDialogue={setGeneratingDialogue}
+                      uploadAudio={uploadAudio}
+                      onDeleteSceneAudio={onDeleteSceneAudio}
+                      onSaveSfxAudio={onSaveSfxAudio}
+                      characters={characters}
+                      narrationVoice={narrationVoice}
+                      script={script}
+                      scenes={scenes}
+                      onScriptChange={onScriptChange}
+                      promptComposition={promptComposition}
+                      projectId={projectId}
+                      onGenerateBeatFrame={onGenerateBeatFrame}
+                      projectStreams={projectStreams}
+                      storedTranslations={storedTranslations}
+                      onSaveTranslations={onSaveTranslations}
+                      expressBeatStatus={expressBeatStatus}
+                      isExpressAudioRunning={isExpressAudioRunning}
+                      beatListFilters={beatListFilters}
+                      setBeatListFilters={setBeatListFilters}
+                      beatFacts={beatFacts}
+                      productionReadiness={productionReadiness}
+                      onOpenAudioAgent={() => setExpressAudioDialogOpen(true)}
+                      hasSelectableActionBeats={hasSelectableActionBeats}
+                      sceneMusicCues={sceneMusicCues}
+                      musicCueByBeatId={musicCueByBeatId}
+                      sceneScoreOn={sceneScoreOn}
+                      onSceneScoreChange={handleSceneScoreChange}
+                      onResyncAudioTiming={onResyncAudioTiming}
+                      resyncingAudioSceneIndex={resyncingAudioSceneIndex}
+                      brokenContinuityBeatIds={brokenContinuityBeatIds}
+                      pendingSpeakerAssign={pendingSpeakerAssign}
+                    />
                   </TabsContent>
                   )}
 

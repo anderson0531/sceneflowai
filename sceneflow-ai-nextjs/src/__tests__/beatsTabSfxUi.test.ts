@@ -6,9 +6,12 @@ function readSource(relative: string): string {
   return readFileSync(path.join(process.cwd(), relative), 'utf8')
 }
 
+const AUDIO = 'src/components/vision/scene-production/SceneAudioWorkbench.tsx'
+
 describe('Beats tab SFX UI', () => {
   it('does not render SFX: tag pills on action beats', () => {
-    const source = readSource('src/components/vision/ScriptPanel.tsx')
+    const source = readSource(AUDIO)
+    expect(readSource('src/components/vision/ScriptPanel.tsx')).not.toContain('SFX: {label')
     expect(source).not.toContain('SFX: {label')
     expect(source).toContain('stripInlineSfxLinesFromActionText')
     expect(source).toContain('bg-amber-950/35')
@@ -27,7 +30,7 @@ describe('Beats tab SFX UI', () => {
   })
 
   it('shows Prompt changed / Ready on action beat headers and SFX controls', () => {
-    const panel = readSource('src/components/vision/ScriptPanel.tsx')
+    const panel = readSource(AUDIO)
     const controls = readSource('src/components/vision/ActionBeatSfxControls.tsx')
     const badge = readSource('src/components/vision/BeatAudioStatusBadge.tsx')
     const mixer = readSource('src/components/vision/scene-production/SegmentSfxCard.tsx')

@@ -52,6 +52,8 @@ export interface BeatDirectionEditorProps {
   characters?: DirectionCharacter[]
   locationReferences?: DirectionLocation[]
   objectReferences?: DirectionObject[]
+  /** `board` is the open Direction-tab layout. `accordion` stays collapsed until opened. */
+  layout?: 'accordion' | 'board'
 }
 
 export interface DirectionCharacter {
@@ -187,8 +189,10 @@ export function BeatDirectionEditor({
   characters = [],
   locationReferences = [],
   objectReferences = [],
+  layout = 'accordion',
 }: BeatDirectionEditorProps) {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(layout === 'board')
+  const open = layout === 'board' || expanded
   const direction = beat.beatDirection
   const summary = useMemo(() => summarizeDirection(direction), [direction])
   const sceneCharacterNames = useMemo(
@@ -412,27 +416,41 @@ export function BeatDirectionEditor({
   const castInFrame = direction?.castInFrame
   const castListId = `cast-in-frame-${beat.beatId}`
 
-  return (
-    <div className={`rounded-md border border-gray-700/60 bg-black/20 ${className ?? ''}`}>
-      <button
-        type="button"
-        onClick={() => setExpanded((prev) => !prev)}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left"
-        aria-expanded={expanded}
-      >
-        <span className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-gray-400">
-          {expanded ? (
-            <ChevronDown className="w-3.5 h-3.5" />
-          ) : (
-            <ChevronRight className="w-3.5 h-3.5" />
-          )}
-          Direction
-        </span>
-        <span className="text-xs text-gray-300 truncate">{summary}</span>
-      </button>
+  const sectionTitle = (label: string) =>
+    layout === 'board' ? (
+      <p className="pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">{label}</p>
+    ) : null
 
-      {expanded && (
-        <div className="px-3 pb-3 pt-1 space-y-2 text-xs">
+  return (
+    <div
+      className={
+        layout === 'board'
+          ? `rounded-lg border border-slate-700/50 bg-slate-950/40 ${className ?? ''}`
+          : `rounded-md border border-gray-700/60 bg-black/20 ${className ?? ''}`
+      }
+    >
+      {layout === 'accordion' && (
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left"
+          aria-expanded={expanded}
+        >
+          <span className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-gray-400">
+            {expanded ? (
+              <ChevronDown className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronRight className="w-3.5 h-3.5" />
+            )}
+            Direction
+          </span>
+          <span className="text-xs text-gray-300 truncate">{summary}</span>
+        </button>
+      )}
+
+      {open && (
+        <div className={layout === 'board' ? 'space-y-3 p-3 text-xs' : 'space-y-2 px-3 pb-3 pt-1 text-xs'}>
+          {sectionTitle('Camera')}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <label className="flex flex-col gap-1">
               <span className="text-[10px] uppercase text-gray-500">Shot</span>
@@ -476,6 +494,7 @@ export function BeatDirectionEditor({
             </label>
           </div>
 
+          {sectionTitle('Performance')}
           <label className="flex flex-col gap-1">
             <span className="text-[10px] uppercase text-gray-500">
               Cast in frame (comma-separated; decides who the image model draws)
@@ -548,6 +567,7 @@ export function BeatDirectionEditor({
             </label>
           </div>
 
+          {sectionTitle('World')}
           <label className="flex flex-col gap-1">
             <span className="text-[10px] uppercase text-gray-500">
               Key props (comma-separated; must exist in scene Key Props)
@@ -628,6 +648,7 @@ export function BeatDirectionEditor({
           </div>
 
           <div className="space-y-2 border-t border-gray-800 pt-2">
+            {sectionTitle('Prompts')}
             <div className="flex items-center justify-between gap-2">
               <span className="text-[10px] uppercase text-gray-500">Frame prompt</span>
               {!readOnly && (

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { SceneImageFrame } from '@/components/vision/SceneImageFrame'
 import { StatusFilterBar } from '@/components/vision/StatusFilterBar'
+import { SceneBeatStage } from '@/components/vision/scene-production/SceneBeatStage'
 import type { SceneSegment } from './types'
 import type { DirectorQueueItem } from '@/hooks/useVideoQueue'
 import {
@@ -131,6 +132,9 @@ interface BeatVideoGalleryProps {
   generatingClipId?: string | null
   videoGenerationLocked?: boolean
   videoGenerationLockReason?: string
+  /** Shared beat selection with Direction, Audio, and Pre-Vis. */
+  selectedBeatId?: string | null
+  onSelectBeat?: (beatId: string) => void
 }
 
 export function BeatVideoGallery({
@@ -158,6 +162,8 @@ export function BeatVideoGallery({
   generatingClipId,
   videoGenerationLocked = false,
   videoGenerationLockReason,
+  selectedBeatId = null,
+  onSelectBeat,
 }: BeatVideoGalleryProps) {
   const [selectedKey, setSelectedKey] = useState<string | null>(clips[0]?.key ?? null)
   const [attention, setAttention] = useState<VideoAttentionFilter>('all')
@@ -196,10 +202,17 @@ export function BeatVideoGallery({
       setSelectedKey(null)
       return
     }
-    if (!visibleClips.some((clip) => clip.key === selectedKey)) {
-      setSelectedKey(visibleClips[0].key)
-    }
-  }, [visibleClips, selectedKey])
+    if (visibleClips.some((clip) => clip.key === selectedKey)) return
+    const current = clips.find((clip) => clip.key === selectedKey)
+    if (current && (current.beatId || current.key) === selectedBeatId) return
+    setSelectedKey(visibleClips[0].key)
+  }, [visibleClips, selectedKey, clips, selectedBeatId])
+
+  useEffect(() => {
+    if (!selectedBeatId) return
+    const match = visibleClips.find((clip) => (clip.beatId || clip.key) === selectedBeatId)
+    if (match && match.key !== selectedKey) setSelectedKey(match.key)
+  }, [selectedBeatId, visibleClips, selectedKey])
 
   const preview = visibleClips.find((clip) => clip.key === selectedKey) ?? visibleClips[0]
   const previewStatus = clipStatus(preview?.queueItem)
@@ -336,51 +349,26 @@ export function BeatVideoGallery({
           <p>No beats to generate yet.</p>
         </div>
       ) : (
-        <div className="flex flex-col items-start gap-3 lg:flex-row">
-          <div
-            aria-label="Beat clips"
-            className="w-full max-w-[280px] shrink-0 max-h-[40vh] overflow-y-auto overscroll-contain rounded-lg border border-slate-700/50 bg-slate-900/40 p-1.5 lg:w-[280px] lg:max-h-[min(72vh,40rem)] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded [&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:hover:bg-gray-500"
-            style={{ scrollbarWidth: 'thin', scrollbarColor: '#4b5563 #1f2937' }}
-          >
-            <div className="grid grid-cols-2 content-start gap-2">
-            {visibleClips.length === 0 ? (
-              <p className="col-span-2 text-[10px] text-slate-500 px-1">No clips match these filters.</p>
-            ) : null}
-            {visibleClips.map((clip) => {
-              const complete =
-                clip.queueItem?.status === 'complete' || segmentHasPlayableVideo(clip.segment)
-              return (
-                <button
-                  key={clip.key}
-                  type="button"
-                  onClick={() => setSelectedKey(clip.key)}
-                  className={cn(
-                    'relative aspect-video overflow-hidden rounded border bg-slate-900 text-left',
-                    selectedKey === clip.key
-                      ? 'border-indigo-400 ring-2 ring-indigo-500/50'
-                      : 'border-slate-700 hover:border-slate-500'
-                  )}
-                >
-                  {clip.thumbnailUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={clip.thumbnailUrl} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <Film className="h-4 w-4 text-slate-600" />
-                    </div>
-                  )}
-                  <span className="absolute bottom-1 left-1 rounded bg-black/70 px-1 text-[10px] text-slate-200">
-                    {clip.beatNumber}
-                  </span>
-                  {complete && (
-                    <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-emerald-400" />
-                  )}
-                </button>
-              )
-            })}
-            </div>
-          </div>
-
+        <SceneBeatStage
+          railLabel="Beat clips"
+          items={visibleClips.map((clip) => {
+            const complete =
+              clip.queueItem?.status === 'complete' || segmentHasPlayableVideo(clip.segment)
+            return {
+              id: clip.key,
+              beatNumber: clip.beatNumber,
+              imageUrl: clip.thumbnailUrl,
+              status: complete ? 'ready' as const : clip.queueItem?.status === 'error' ? 'attention' as const : 'idle' as const,
+              ariaLabel: clip.label || `Beat ${clip.beatNumber}`,
+            }
+          })}
+          selectedId={selectedKey}
+          onSelect={(id) => {
+            setSelectedKey(id)
+            const clip = visibleClips.find((entry) => entry.key === id)
+            if (clip) onSelectBeat?.(clip.beatId || clip.key)
+          }}
+        >
           <div className="sticky top-2 flex w-full min-w-0 flex-1 flex-col gap-2 self-start lg:w-auto">
             <p className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
               {previewVideoUrl ? 'Clip preview' : 'Start frame'}
@@ -653,7 +641,7 @@ export function BeatVideoGallery({
               </div>
             )}
           </div>
-        </div>
+        </SceneBeatStage>
       )}
     </div>
   )

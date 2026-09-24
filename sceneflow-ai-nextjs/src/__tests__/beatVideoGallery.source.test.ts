@@ -11,11 +11,14 @@ const FRAMES = 'src/components/vision/SceneStoryboardFrameViewer.tsx'
 const CONSOLE = 'src/components/vision/scene-production/DirectorConsoleImpl.tsx'
 
 function expectScrollableBeatPanel(source: string, label: string) {
-  expect(source).toContain(`aria-label="${label}"`)
-  expect(source).toContain('max-h-[40vh]')
-  expect(source).toContain('lg:max-h-[min(72vh,40rem)]')
-  expect(source).toContain('overflow-y-auto')
-  expect(source).toContain('grid grid-cols-2 content-start gap-2')
+  const stage = readSource('src/components/vision/scene-production/SceneBeatStage.tsx')
+  expect(source).toContain('SceneBeatStage')
+  expect(source).toContain(`railLabel="${label}"`)
+  expect(stage).toContain('aria-label={railLabel}')
+  expect(stage).toContain('max-h-[40vh]')
+  expect(stage).toContain('lg:max-h-[min(72vh,40rem)]')
+  expect(stage).toContain('overflow-y-auto')
+  expect(stage).toContain('grid grid-cols-2 content-start gap-2')
   expect(source).toContain('sticky top-2')
   expect(source).not.toContain('absolute left-0 top-0 bottom-0')
   expect(source).not.toContain('ml-[calc(30%+0.75rem)]')
