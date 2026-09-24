@@ -84,6 +84,9 @@ export interface StillDirectorPatch {
   emotion?: string
   propInteraction?: string
   lightingAccent?: string
+  cameraMovement?: string
+  audioCue?: string
+  transition?: BeatDirection['transition']
   castInFrame?: string[]
   keyProps?: string[]
 }
@@ -123,6 +126,8 @@ const PATCH_STRING_KEYS = [
   'emotion',
   'propInteraction',
   'lightingAccent',
+  'cameraMovement',
+  'audioCue',
 ] as const
 
 function trimOrUndef(value?: string | null): string | undefined {
@@ -172,6 +177,9 @@ export function parseStillDirectorPatch(raw: unknown): StillDirectorPatch | unde
     emotion: record.emotion,
     propInteraction: record.propInteraction,
     lightingAccent: record.lightingAccent ?? record.lighting,
+    cameraMovement: record.cameraMovement,
+    audioCue: record.audioCue,
+    transition: record.transition,
     castInFrame: record.castInFrame,
     keyProps: record.keyProps,
   })
@@ -242,6 +250,7 @@ export function applyStillDirectorPatch(
   if (Array.isArray(patch.keyProps) && patch.keyProps.length > 0) {
     nextDirection.keyProps = patch.keyProps
   }
+  if (patch.transition) nextDirection.transition = patch.transition
   nextDirection.generatedBy = options.generatedBy
   nextDirection.updatedAt = new Date().toISOString()
 
@@ -324,7 +333,8 @@ HARD RULES:
 5. Two-shots and group shots must keep every directed person fully in frame unless the shot type is a close-up or insert.
 6. Insert/Extreme Close-Up of a limb: only the specified limb/hand. Insert/Extreme Close-Up of an object with nobody in frame: describe the instrument's settled state, not a limb, hand, or face.
 7. Do NOT write style, lighting essays, exclusions, F2V, start-frame, or appearance of library refs — code owns those.
-8. ${buildPolicySafePhrasingRules()}
+8. Include cameraMovement, audioCue, and transition only when the user note or the current beat calls for them. transition must be one of CUT, CONTINUE, DISSOLVE, FADE, MATCH_CUT. Omit a field to leave it unchanged.
+9. ${buildPolicySafePhrasingRules()}
 
 Output JSON only:
 {
@@ -342,6 +352,9 @@ Output JSON only:
       "propInteraction": "which hand or surface holds which named prop — omit hands when nobody is in frame",
       "castInFrame": ["Exact Character Name"],
       "keyProps": ["Exact Prop Name"],
+      "cameraMovement": "slow push-in",
+      "audioCue": "timer chirps twice",
+      "transition": "CUT",
       "suggestedNotes": "bullet-like director notes a human can paste into Direction"
     }
   ]
@@ -420,6 +433,10 @@ export function buildStillDirectorUserPrompt(request: DirectBeatStillRequest): s
         gaze: direction.gaze,
         emotion: direction.emotion,
         propInteraction: direction.propInteraction,
+        lightingAccent: direction.lightingAccent,
+        cameraMovement: direction.cameraMovement,
+        audioCue: direction.audioCue,
+        transition: direction.transition,
         castInFrame: direction.castInFrame,
         keyProps: direction.keyProps,
       })}`)

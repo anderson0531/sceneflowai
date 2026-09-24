@@ -39,4 +39,18 @@ describe('shared scene beat stage', () => {
     expect(panel).toContain('SceneAudioWorkbench')
     expect(panel).toContain('selectedBeatId')
   })
+
+  it('keeps the direction board free of direction inputs', () => {
+    const editor = readSource('src/components/vision/BeatDirectionEditor.tsx')
+    expect(editor).toContain('Direct Beat')
+    expect(editor).toContain('No direction yet. Use Direct Beat to describe the shot.')
+    expect(editor).not.toContain('<input')
+    expect(editor).not.toContain('<select')
+    expect(editor).not.toContain('<textarea')
+    const dialog = readSource('src/components/vision/BeatDirectorDialog.tsx')
+    expect(dialog).toContain('<input')
+    expect(dialog).toContain('<select')
+    expect(dialog).toContain('DictationTextarea')
+    expect(dialog).toContain('cameraMovement')
+  })
 })

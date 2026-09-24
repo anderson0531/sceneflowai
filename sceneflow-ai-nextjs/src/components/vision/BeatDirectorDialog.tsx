@@ -71,17 +71,32 @@ function StillMark({ imageUrl }: { imageUrl?: string }) {
   )
 }
 
+const TRANSITION_LABEL: Record<string, string> = {
+  CUT: 'Cut',
+  CONTINUE: 'Continue',
+  DISSOLVE: 'Dissolve',
+  FADE: 'Fade',
+  MATCH_CUT: 'Match cut',
+}
+
 function previewLines(patch: StillDirectorPatch): Array<{ label: string; value: string }> {
   const rows: Array<{ label: string; value: string }> = []
   const add = (label: string, value?: string) => {
     if (value?.trim()) rows.push({ label, value: value.trim() })
   }
+  add('Frozen moment', patch.frozenMoment || patch.actionFraming)
   add('Shot', patch.shotType)
   add('Angle', patch.cameraAngle)
+  add('Movement', patch.cameraMovement)
+  add('Transition', patch.transition ? TRANSITION_LABEL[patch.transition] ?? patch.transition : undefined)
+  add('Cast', patch.castInFrame?.join(', '))
   add('Blocking', patch.blocking)
-  add('Frozen moment', patch.frozenMoment || patch.actionFraming)
-  add('Props', patch.keyProps?.join(', '))
   add('Emotion', patch.emotion)
+  add('Gaze', patch.gaze)
+  add('Lighting', patch.lightingAccent)
+  add('Props', patch.keyProps?.join(', '))
+  add('Interaction', patch.propInteraction)
+  add('Audio', patch.audioCue)
   return rows
 }
 
