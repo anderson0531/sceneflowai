@@ -540,6 +540,37 @@ export function resolveEffectiveStartFrameUrl(
   return masterSceneFrame || null
 }
 
+/**
+ * Frames sent to frame-to-video. The beat still illustrates the beat and is
+ * not a clip start or end frame, even when a segment URL was copied from it.
+ */
+export function resolveF2VFrameUrls(
+  segment: SceneSegment,
+  scene?: Record<string, unknown> | null
+): { startFrameUrl: string | null; endFrameUrl: string | null } {
+  const beatId = segment.beatId?.trim()
+  let beatStill: string | null = null
+  if (beatId && scene) {
+    const beat = getSceneBeats(scene).find((row) => row.beatId === beatId)
+    beatStill = beat?.storyboardImageUrl?.trim() || null
+  }
+  const dedicated = (url?: string | null) => {
+    const trimmed = url?.trim() || null
+    if (!trimmed || (beatStill && trimmed === beatStill)) return null
+    return trimmed
+  }
+  return {
+    startFrameUrl: dedicated(segment.startFrameUrl || segment.references?.startFrameUrl),
+    endFrameUrl: dedicated(segment.endFrameUrl || segment.references?.endFrameUrl),
+  }
+}
+
+/** Opening frame for a continuous clip: the previous beat's end frame. */
+export function f2vStartFromPreviousEnd(previousEndUrl?: string | null): string | null {
+  const trimmed = previousEndUrl?.trim()
+  return trimmed || null
+}
+
 /** Resolved URLs passed to Veo (segment fields + first-segment scene master frame). */
 export function resolveSegmentFrameUrls(
   segment: SceneSegment,

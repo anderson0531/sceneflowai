@@ -76,7 +76,6 @@ import {
   ensureSceneBeats,
   getSceneBeats,
   isBeatFirstPipelineEnabled,
-  isVideoGenerationUnlocked,
   reorderSceneBeats,
   resolveRawBeatIndex,
 } from '@/lib/script/beatMigration'
@@ -3440,6 +3439,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       customPrompt?: string
       negativePrompt?: string
       usePreviousEndFrame?: boolean
+      /** F2V frames stay on the clip. Do not copy them onto the beat still. */
+      keepBeatStill?: boolean
       previousEndFrameUrl?: string
       /** Whether this came from the dialog (user made explicit selections) */
       fromDialog?: boolean
@@ -3589,6 +3590,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             customPrompt: options?.customPrompt,
             negativePrompt: options?.negativePrompt,
             usePreviousEndFrame: options?.usePreviousEndFrame,
+            ...(options?.usePreviousEndFrame ? { startTransitionMode: 'continuous' as const } : {}),
             // NEW: Visual setup for prompt construction (from guided mode)
             visualSetup: options?.visualSetup,
             // Art style for frame generation
@@ -3768,6 +3770,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
 
         if (
+          !options?.keepBeatStill &&
           segment.beatId &&
           (frameType === 'start' || frameType === 'both') &&
           data.startFrameUrl
@@ -4255,30 +4258,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       segmentGenerateInFlightRef.current.add(inFlightKey)
 
       try {
-      if (isBeatFirstPipelineEnabled()) {
-        const gateScenes = script?.script?.scenes ?? []
-        const gateScene = gateScenes.find(
-          (s: { id?: string; sceneId?: string }, i: number) =>
-            (s.id || s.sceneId || `scene-${i}`) === sceneId
-        )
-        if (gateScene && !isVideoGenerationUnlocked(gateScene as Record<string, unknown>)) {
-          const message = 'Pre-vis must be approved before video generation'
-          applySceneProductionUpdate(sceneId, (current) => {
-            if (!current) return current
-            const segments = current.segments.map((segment) =>
-              segment.segmentId === segmentId
-                ? { ...segment, status: 'ERROR' as const, errorMessage: message }
-                : segment
-            )
-            return { ...current, segments }
-          })
-          try {
-            toast.error(message)
-          } catch {}
-          throw new Error(message)
-        }
-      }
-
       // Update status to GENERATING
       applySceneProductionUpdate(sceneId, (current) => {
         if (!current) return current

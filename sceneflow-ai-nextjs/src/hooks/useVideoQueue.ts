@@ -26,7 +26,7 @@ import type {
   VideoGenerationMethod,
 } from '@/components/vision/scene-production/types'
 import type { SegmentGuideContext, SegmentConfigResult } from '@/lib/vision/segmentConfigBuilder'
-import { resolveEffectiveStartFrameUrl, shouldAttachBeatStartFrame } from '@/lib/vision/segmentConfigBuilder'
+import { resolveEffectiveStartFrameUrl, resolveF2VFrameUrls, shouldAttachBeatStartFrame } from '@/lib/vision/segmentConfigBuilder'
 import { deriveClipQueueStatus } from '@/lib/storyboard/mediaVersions'
 import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 import {
@@ -556,6 +556,10 @@ export function useVideoQueue(
             }
           }
 
+          const f2vFrames =
+            batchMethod === 'FTV' && liveSegment
+              ? resolveF2VFrameUrls(liveSegment, segmentGuideContext?.fullScene)
+              : null
           const liveStart = liveSegment
             ? resolveEffectiveStartFrameUrl(
                 liveSegment,
@@ -563,10 +567,12 @@ export function useVideoQueue(
                 sceneImageUrl
               )
             : undefined
-          let startUrl = shouldAttachBeatStartFrame(config)
-            ? liveStart ??
-              (config.startFrameUrl?.trim() ? config.startFrameUrl : undefined)
-            : undefined
+          let startUrl = f2vFrames
+            ? f2vFrames.startFrameUrl ?? undefined
+            : shouldAttachBeatStartFrame(config)
+              ? liveStart ??
+                (config.startFrameUrl?.trim() ? config.startFrameUrl : undefined)
+              : undefined
           if (
             liveSegment &&
             isKlingProvider &&
@@ -576,9 +582,21 @@ export function useVideoQueue(
             const priorLastFrame = resolvePriorChainLastFrameUrl(liveSegments, liveSegment)
             if (priorLastFrame) startUrl = priorLastFrame
           }
-          const endUrl = config.endFrameUrl?.trim() ? config.endFrameUrl : undefined
+          const endUrl = f2vFrames
+            ? f2vFrames.endFrameUrl ?? undefined
+            : config.endFrameUrl?.trim()
+              ? config.endFrameUrl
+              : undefined
+          if (f2vFrames && (!startUrl || !endUrl)) {
+            const frameError = 'Generate start and end frames for frame-to-video first.'
+            toast.error(frameError)
+            failed++
+            setFailedCount(failed)
+            markItem(item.segmentId, 'error', frameError)
+            continue
+          }
           if (batchMethod === 'FTV') {
-            batchMethod = startUrl ? 'I2V' : 'T2V'
+            batchMethod = 'I2V'
           }
 
           const genType: 'T2V' | 'I2V' =
