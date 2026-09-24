@@ -6,10 +6,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
+import { assertProjectAccess, getAuthenticatedUserId } from '@/lib/projectAccess'
 import { generateText } from '@/lib/vertexai/gemini'
 import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { getSceneProductionStateFromMetadata } from '@/lib/final-cut/projectProductionState'
@@ -148,8 +146,8 @@ async function synthesizeNarrationTts(opts: {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    const ownerUserId = await getAuthenticatedUserId(request)
+    if (!ownerUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -170,13 +168,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'projectId is required' }, { status: 400 })
     }
 
-    const project = await Project.findByPk(projectId)
-    if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    const access = await assertProjectAccess(projectId, ownerUserId)
+    if (!access.ok) {
+      const error =
+        access.status === 403
+          ? 'You do not have permission to update this project'
+          : access.error
+      return NextResponse.json({ error }, { status: access.status })
     }
-    if (project.user_id !== session.user.id) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const project = access.project
 
     let metadata = { ...(project.metadata || {}) } as Record<string, unknown>
     const clientScenes = Array.isArray(body.scenes) ? body.scenes : null

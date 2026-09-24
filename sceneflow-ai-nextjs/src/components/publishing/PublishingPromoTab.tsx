@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { planPromoTrailer, DEFAULT_TRAILER_SEC } from '@/lib/publish/trailerPlanner'
+import { resolvePromoBeatMedia } from '@/lib/publish/promoBeatMedia'
 import { getPublishingState, upsertPublishingState } from '@/lib/publish/publishingState'
 import { findPromoSceneIndex, isPromoCinematicScene } from '@/lib/publish/buildPromoScene'
 import type { PromoTrailerBeatPlan, PromoTrailerAsset } from '@/types/publishingAssets'
@@ -36,6 +37,13 @@ export interface PublishingPromoTabProps {
   onPreviewPromo?: () => void
   /** Focus the promo scene in Studio / Director Console. */
   onOpenPromoInStudio?: (sceneId: string) => void
+  /** Generate a 9:16 clip for a source beat that has a Studio segment. */
+  onGenerateBeatClip?: (input: {
+    sceneId: string
+    segmentId: string
+    frameUrl?: string
+    durationSec?: number
+  }) => Promise<void>
 }
 
 const TARGET_OPTIONS = [30, 45, 60] as const
@@ -52,6 +60,7 @@ export function PublishingPromoTab({
   onScriptScenesUpdated,
   onPreviewPromo,
   onOpenPromoInStudio,
+  onGenerateBeatClip,
 }: PublishingPromoTabProps) {
   const [targetDuration, setTargetDuration] = useState<(typeof TARGET_OPTIONS)[number]>(
     DEFAULT_TRAILER_SEC
@@ -62,6 +71,8 @@ export function PublishingPromoTab({
   const [narrating, setNarrating] = useState(false)
   const [composing, setComposing] = useState(false)
   const [rendering, setRendering] = useState(false)
+  const [generatingBeatKey, setGeneratingBeatKey] = useState<string | null>(null)
+  const [brokenBeatKeys, setBrokenBeatKeys] = useState<Set<string>>(() => new Set())
 
   const publishingState = useMemo(() => getPublishingState(metadata), [metadata])
   const trailer = publishingState.promo?.trailer
@@ -80,6 +91,66 @@ export function PublishingPromoTab({
     const idx = findPromoSceneIndex(scenes)
     return idx >= 0 ? (scenes[idx] as Record<string, unknown>) : null
   }, [scenes])
+
+  const timelineBeats = useMemo(() => {
+    if (beatPlan.length > 0) return beatPlan
+    const stored = promoScene?.promoBeatPlan
+    return Array.isArray(stored) ? (stored as PromoTrailerBeatPlan[]) : []
+  }, [beatPlan, promoScene])
+
+  const timelineRows = useMemo(
+    () =>
+      timelineBeats.map((beat) => ({
+        beat,
+        key: `${beat.sceneIndex}-${beat.beatId}`,
+        media: resolvePromoBeatMedia(beat, sceneProductionState),
+      })),
+    [timelineBeats, sceneProductionState]
+  )
+
+  const readyClipCount = timelineRows.filter(
+    (row) => row.media.hasClip && !brokenBeatKeys.has(row.key)
+  ).length
+
+  const markBeatBroken = useCallback((key: string) => {
+    setBrokenBeatKeys((prev) => {
+      if (prev.has(key)) return prev
+      const next = new Set(prev)
+      next.add(key)
+      return next
+    })
+  }, [])
+
+  const handleGenerateBeatClip = useCallback(
+    async (
+      key: string,
+      beat: PromoTrailerBeatPlan,
+      segmentId: string | undefined,
+      frameUrl: string | undefined
+    ) => {
+      if (!segmentId || !onGenerateBeatClip) return
+      setGeneratingBeatKey(key)
+      try {
+        await onGenerateBeatClip({
+          sceneId: beat.sceneId,
+          segmentId,
+          frameUrl,
+          durationSec: beat.durationSec ?? Math.max(0, beat.endSec - beat.startSec),
+        })
+        setBrokenBeatKeys((prev) => {
+          if (!prev.has(key)) return prev
+          const next = new Set(prev)
+          next.delete(key)
+          return next
+        })
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Clip generation failed')
+      } finally {
+        setGeneratingBeatKey(null)
+      }
+    },
+    [onGenerateBeatClip]
+  )
 
   const sceneScores = useMemo(() => {
     const review = (metadata as { audienceReview?: { sceneScores?: Record<number, number> } })
@@ -394,31 +465,86 @@ export function PublishingPromoTab({
           </Button>
         ) : null}
 
-        {(beatPlan.length > 0 ||
-          (Array.isArray(promoScene?.promoBeatPlan) &&
-            (promoScene!.promoBeatPlan as unknown[]).length > 0)) && (
+        {timelineRows.length > 0 && (
           <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-2">
-              Beat timeline (
-              {beatPlan.length ||
-                (promoScene?.promoBeatPlan as PromoTrailerBeatPlan[] | undefined)?.length ||
-                0}{' '}
-              beats)
+            <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">
+              Beat timeline ({timelineRows.length} beats)
             </p>
-            <div className="flex flex-wrap gap-1">
-              {(beatPlan.length
-                ? beatPlan
-                : ((promoScene?.promoBeatPlan as PromoTrailerBeatPlan[]) || [])
-              ).map((beat) => (
-                <span
-                  key={`${beat.sceneIndex}-${beat.beatId}`}
-                  className="text-[10px] px-2 py-0.5 rounded bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-200"
-                  title={beat.label}
-                >
-                  S{beat.sceneIndex + 1} · {beat.durationSec ?? beat.endSec - beat.startSec}s
-                  {beat.videoUrl ? ' · clip' : beat.frameUrl ? ' · frame' : ''}
-                </span>
-              ))}
+            <p className="text-[11px] text-zinc-400 mb-2">
+              {readyClipCount} of {timelineRows.length} clips
+            </p>
+            <div className="flex flex-col gap-1.5">
+              {timelineRows.map(({ beat, key, media }) => {
+                const broken = brokenBeatKeys.has(key)
+                const hasClip = media.hasClip && !broken
+                const durationSec = beat.durationSec ?? beat.endSec - beat.startSec
+                const showImage = Boolean(media.thumbnailUrl) && !broken
+                const showVideo = !showImage && Boolean(media.videoUrl) && !broken
+                const generating = generatingBeatKey === key
+                return (
+                  <div
+                    key={key}
+                    className="flex items-center gap-2 rounded border border-fuchsia-500/20 bg-fuchsia-500/5 px-2 py-1.5"
+                    title={beat.label}
+                  >
+                    <div className="h-12 w-8 shrink-0 overflow-hidden rounded bg-zinc-900">
+                      {showImage ? (
+                        <img
+                          src={media.thumbnailUrl}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          onError={() => markBeatBroken(key)}
+                        />
+                      ) : showVideo ? (
+                        <video
+                          src={media.videoUrl}
+                          muted
+                          playsInline
+                          preload="metadata"
+                          className="h-full w-full object-cover"
+                          onError={() => markBeatBroken(key)}
+                        />
+                      ) : null}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] text-fuchsia-100">
+                        S{beat.sceneIndex + 1} · {durationSec}s
+                        <span className="ml-2 text-zinc-500">{hasClip ? 'Clip' : 'Missing'}</span>
+                      </p>
+                      {beat.label ? (
+                        <p className="truncate text-[10px] text-zinc-500">{beat.label}</p>
+                      ) : null}
+                    </div>
+                    {!hasClip ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 shrink-0 px-2 text-[10px]"
+                        disabled={!media.segmentId || !onGenerateBeatClip || generating}
+                        title={
+                          media.segmentId
+                            ? 'Generate clip'
+                            : 'This beat needs a Studio segment first'
+                        }
+                        onClick={() =>
+                          void handleGenerateBeatClip(
+                            key,
+                            beat,
+                            media.segmentId,
+                            media.thumbnailUrl || beat.frameUrl
+                          )
+                        }
+                      >
+                        {generating ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          'Generate'
+                        )}
+                      </Button>
+                    ) : null}
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}

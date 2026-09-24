@@ -31,6 +31,12 @@ export interface PublishingManagerProps {
   onPreviewPromo?: () => void
   onScriptScenesUpdated?: (scenes: unknown[]) => void
   onOpenPromoInStudio?: (sceneId: string) => void
+  onGenerateBeatClip?: (input: {
+    sceneId: string
+    segmentId: string
+    frameUrl?: string
+    durationSec?: number
+  }) => Promise<void>
   layout?: 'dialog' | 'inline'
   hideTitle?: boolean
   initialTab?: PublishingLibraryTab
@@ -51,6 +57,7 @@ export function PublishingManager({
   onPreviewPromo,
   onScriptScenesUpdated,
   onOpenPromoInStudio,
+  onGenerateBeatClip,
   layout = 'inline',
   hideTitle = false,
   initialTab,
@@ -169,6 +176,7 @@ export function PublishingManager({
             onScriptScenesUpdated={onScriptScenesUpdated}
             onPreviewPromo={onPreviewPromo}
             onOpenPromoInStudio={onOpenPromoInStudio}
+            onGenerateBeatClip={onGenerateBeatClip}
           />
         ) : null}
         {activeTab === 'youtube' ? (
