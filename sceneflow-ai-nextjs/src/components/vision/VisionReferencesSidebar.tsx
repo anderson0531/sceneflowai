@@ -25,6 +25,13 @@ import {
   slimSceneForObjectUsage,
 } from '@/lib/vision/objectBeatUsage'
 import { LocationLibrary } from './LocationLibrary'
+import { ReferenceLibraryLookupBar } from './ReferenceLibraryLookupBar'
+import {
+  filterLocationReferences,
+  filterObjectReferences,
+  libraryFilterEmptyMessage,
+  type LibrarySceneFilter,
+} from '@/lib/vision/referenceLibraryLookup'
 import { LocationPromptPayload } from './LocationPromptBuilder'
 import { ImageEditModal } from './ImageEditModal'
 import { ReferenceStillDirectorDialog } from './ReferenceStillDirectorDialog'
@@ -1536,6 +1543,16 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     )
   }, [scenesForSuggestion, objectReferences])
 
+  const visibleLocations = useMemo(
+    () => filterLocationReferences(locationReferences, locationQuery, locationSceneFilter),
+    [locationReferences, locationQuery, locationSceneFilter]
+  )
+  const visibleObjects = useMemo(
+    () => filterObjectReferences(objectReferences, scenesForSuggestion, objectQuery, objectSceneFilter),
+    [objectReferences, scenesForSuggestion, objectQuery, objectSceneFilter]
+  )
+  const locationFilterActive = locationQuery.trim().length > 0 || locationSceneFilter !== 'all'
+
   // Calculate scenes with/without images for storyboard tab
   const scenesWithImages = useMemo(() => {
     return allScenes.filter(s => !!s.imageUrl).length
@@ -1572,6 +1589,10 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   const [activeReferenceTab, setActiveReferenceTab] = useState<'cast' | 'object' | 'locations'>(
     () => initialTab ?? firstLibraryTabWithRequiredWork(libraryRequiredActions)
   )
+  const [locationQuery, setLocationQuery] = useState('')
+  const [locationSceneFilter, setLocationSceneFilter] = useState<LibrarySceneFilter>('all')
+  const [objectQuery, setObjectQuery] = useState('')
+  const [objectSceneFilter, setObjectSceneFilter] = useState<LibrarySceneFilter>('all')
   const [pendingKindAgentRun, setPendingKindAgentRun] = useState<ReferenceExpressKind | null>(
     null
   )
@@ -1892,8 +1913,21 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               linkedAssetIds={linkedAssetIds}
               onAddFromLibrary={handleAddLocationFromLibrary}
             />
+            <ReferenceLibraryLookupBar
+              kind="locations"
+              query={locationQuery}
+              onQueryChange={setLocationQuery}
+              filter={locationSceneFilter}
+              onFilterChange={setLocationSceneFilter}
+              scenes={scenes}
+            />
+            {locationFilterActive && visibleLocations.length === 0 ? (
+              <div className="text-sm text-gray-500 border border-dashed border-gray-700/60 rounded-lg py-6 text-center">
+                {libraryFilterEmptyMessage('locations', locationSceneFilter, locationQuery)}
+              </div>
+            ) : (
             <LocationLibrary
-              locationReferences={locationReferences}
+              locationReferences={visibleLocations}
               scenes={allScenes}
               onUpdateLocations={(locations) => onUpdateLocationReferences?.(locations)}
               onRemoveLocation={(id) => onRemoveLocationReference?.(id)}
@@ -1914,6 +1948,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               onPendingKindAgentRunConsumed={consumePendingKindAgentRun}
               catalogPropNames={objectReferences.map((o) => o.name).filter(Boolean)}
             />
+            )}
             </>
           )}
           
@@ -1926,6 +1961,14 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                 kind="prop"
                 linkedAssetIds={linkedAssetIds}
                 onAddFromLibrary={handleAddPropFromLibrary}
+              />
+              <ReferenceLibraryLookupBar
+                kind="objects"
+                query={objectQuery}
+                onQueryChange={setObjectQuery}
+                filter={objectSceneFilter}
+                onFilterChange={setObjectSceneFilter}
+                scenes={scenes}
               />
               {/* AI Object Suggestions Panel */}
               {((scenesForSuggestion.length > 0 ||
@@ -1991,8 +2034,12 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                 <div className="text-sm text-gray-500 border border-dashed border-gray-700/60 rounded-lg py-6 text-center">
                   No objects yet. Add objects or set pieces for this scene.
                 </div>
+              ) : visibleObjects.length === 0 ? (
+                <div className="text-sm text-gray-500 border border-dashed border-gray-700/60 rounded-lg py-6 text-center">
+                  {libraryFilterEmptyMessage('objects', objectSceneFilter, objectQuery)}
+                </div>
               ) : (
-                objectReferences.map((reference) => (
+                visibleObjects.map((reference) => (
                   <DraggableReferenceCard
                     key={reference.id}
                     reference={reference}
