@@ -1,33 +1,19 @@
 #!/usr/bin/env node
 /**
- * Generate brand assets from the film-strip infinity JPEG.
- *
- * The source is a landscape cyan-to-purple infinity on navy. Header badges
- * stay landscape (`contain` on navy). Square icons (favicon, PWA, Open Graph)
- * are also `contain` on navy so both loops stay in frame.
+ * Generate brand assets from the film-strip infinity JPEG (transparent PNGs).
  *
  * Usage:
  *   node scripts/split-brand-logo.mjs
  */
 
-import sharp from 'sharp'
 import { mkdirSync } from 'fs'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
+import { writeInfinityLogoPng } from './lib/infinityLogoPng.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
-const SRC = join(ROOT, 'public/brand/sf-infinity-source.jpg')
 const BRAND = join(ROOT, 'public/brand')
-const NAVY = { r: 5, g: 10, b: 24, alpha: 1 }
-
-const PNG = { compressionLevel: 9, palette: false }
-
-function contain(width, height) {
-  return sharp(SRC)
-    .resize(width, height, { fit: 'contain', background: NAVY })
-    .png(PNG)
-}
 
 async function run() {
   mkdirSync(BRAND, { recursive: true })
@@ -48,11 +34,11 @@ async function run() {
   ]
 
   for (const { out, width, height } of landscape) {
-    await contain(width, height).toFile(out)
+    await writeInfinityLogoPng(out, width, height)
     console.log('Wrote', out)
   }
   for (const { out, size } of square) {
-    await contain(size, size).toFile(out)
+    await writeInfinityLogoPng(out, size, size)
     console.log('Wrote', out)
   }
 }
