@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/dialog'
 import {
   AlertTriangle,
-  CheckSquare,
   Lightbulb,
   Loader2,
   Pencil,
@@ -171,9 +170,9 @@ export function SceneRecommendationsDialog({
                   </div>
                 )}
 
-                {audienceRecs.length > 0 && (
+                {pendingAudience.length > 0 && (
                   <ul className="space-y-2">
-                    {audienceRecs.map((rec, rIdx) => {
+                    {pendingAudience.map((rec, rIdx) => {
                       const recText = audienceRecommendationText(rec)
                       const recCategory = typeof rec === 'object' && rec?.category ? rec.category : null
                       const recImpact = typeof rec === 'object' && rec?.impact ? rec.impact : null
@@ -181,31 +180,22 @@ export function SceneRecommendationsDialog({
                       const recPointsDeducted =
                         typeof rec === 'object' && rec?.pointsDeducted ? rec.pointsDeducted : null
                       const recId = recommendationId(rec, rIdx)
-                      const isApplied = (audienceAnalysis.appliedRecommendationIds || []).includes(recId)
                       return (
                         <li
                           key={recId}
-                          className={`text-xs text-gray-300 flex gap-3 p-2.5 rounded-lg border transition-colors ${
-                            isApplied
-                              ? 'bg-emerald-950/30 border-emerald-500/20'
-                              : 'bg-gray-800/40 border-gray-700/30'
-                          }`}
+                          className="text-xs text-gray-300 flex gap-3 p-2.5 rounded-lg border transition-colors bg-gray-800/40 border-gray-700/30"
                         >
                           <button
                             type="button"
-                            onClick={() => onToggleAudienceRecommendation?.(sceneIndex, recId, !isApplied)}
+                            onClick={() => onToggleAudienceRecommendation?.(sceneIndex, recId, true)}
                             className="flex-shrink-0 mt-0.5 text-gray-400 hover:text-white"
-                            aria-label={isApplied ? 'Reopen fix' : 'Mark fix applied'}
-                            aria-pressed={isApplied}
+                            aria-label="Mark fix applied"
+                            aria-pressed={false}
                           >
-                            {isApplied ? (
-                              <CheckSquare className="w-4 h-4 text-emerald-400" />
-                            ) : (
-                              <Square className="w-4 h-4" />
-                            )}
+                            <Square className="w-4 h-4" />
                           </button>
                           <div className="flex-1 min-w-0">
-                            <span className={`leading-relaxed ${isApplied ? 'line-through opacity-60' : ''}`}>
+                            <span className="leading-relaxed">
                               {recText}
                             </span>
                             {(recCategory || recImpact || recPriority || recPointsDeducted) && (
@@ -334,35 +324,26 @@ export function SceneRecommendationsDialog({
                   </div>
                 )}
 
-                {(polishAnalysis.recommendations?.length || 0) > 0 && (
+                {pendingPolish.length > 0 && (
                   <ul className="space-y-2">
-                    {polishAnalysis.recommendations.map((rec, rIdx) => {
+                    {pendingPolish.map((rec, rIdx) => {
                       const recId = rec.id || recommendationId(rec, rIdx)
-                      const isApplied = (polishAnalysis.appliedRecommendationIds || []).includes(recId)
                       return (
                         <li
                           key={recId}
-                          className={`text-xs text-gray-300 flex gap-3 p-2.5 rounded-lg border ${
-                            isApplied
-                              ? 'bg-emerald-950/30 border-emerald-500/20'
-                              : 'bg-gray-800/40 border-gray-700/30'
-                          }`}
+                          className="text-xs text-gray-300 flex gap-3 p-2.5 rounded-lg border bg-gray-800/40 border-gray-700/30"
                         >
                           <button
                             type="button"
-                            onClick={() => onTogglePolishRecommendation?.(sceneIndex, recId, !isApplied)}
+                            onClick={() => onTogglePolishRecommendation?.(sceneIndex, recId, true)}
                             className="flex-shrink-0 mt-0.5 text-gray-400 hover:text-white"
-                            aria-label={isApplied ? 'Reopen fix' : 'Mark fix applied'}
-                            aria-pressed={isApplied}
+                            aria-label="Mark fix applied"
+                            aria-pressed={false}
                           >
-                            {isApplied ? (
-                              <CheckSquare className="w-4 h-4 text-emerald-400" />
-                            ) : (
-                              <Square className="w-4 h-4" />
-                            )}
+                            <Square className="w-4 h-4" />
                           </button>
                           <div className="flex-1 min-w-0">
-                            <span className={`leading-relaxed ${isApplied ? 'line-through opacity-60' : ''}`}>
+                            <span className="leading-relaxed">
                               {rec.text}
                             </span>
                             <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">

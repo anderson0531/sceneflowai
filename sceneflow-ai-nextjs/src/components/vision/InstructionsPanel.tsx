@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { DictationTextarea } from '@/components/ui/DictationTextarea'
-import { Wand2, Edit, Zap, Heart, Eye, Target, Lightbulb, Trash2, Sparkles, Check, ChevronDown, ChevronRight, Shield } from 'lucide-react'
+import { Wand2, Edit, Zap, Heart, Eye, Target, Lightbulb, Trash2, Sparkles, ChevronDown, ChevronRight, Shield } from 'lucide-react'
 import { 
   SCENE_OPTIMIZATION_TEMPLATES, 
   countInstructions,
@@ -150,11 +150,15 @@ export function InstructionsPanel({
     return raw
       .map((rec) => normalizeRecommendation(coerceRecommendationInput(rec)))
       .filter((rec) => rec.text.trim().length > 0)
-  }, [audienceAnalysis?.recommendations, recommendations])
+      .filter((rec) => !appliedRecommendationIds.includes(rec.id || ''))
+  }, [audienceAnalysis?.recommendations, recommendations, appliedRecommendationIds])
 
   const polishRecs = useMemo(
-    () => (polishAnalysis?.recommendations ?? []).filter((rec) => rec.text.trim().length > 0),
-    [polishAnalysis?.recommendations]
+    () =>
+      (polishAnalysis?.recommendations ?? []).filter(
+        (rec) => rec.text.trim().length > 0 && !appliedRecommendationIds.includes(rec.id || '')
+      ),
+    [polishAnalysis?.recommendations, appliedRecommendationIds]
   )
 
   const mergedRecs = useMemo(() => {
@@ -243,22 +247,17 @@ export function InstructionsPanel({
             ) : (
               <ul className="space-y-2">
                 {mergedRecs.map((item, idx) => {
-                  const isApplied = appliedRecommendationIds.includes(item.id)
                   const text = item.rec.text
                   return (
                     <li
                       key={item.id}
-                      className={`flex items-start gap-2 rounded-lg p-2.5 text-xs transition-colors ${
-                        isApplied
-                          ? 'border border-green-700/50 bg-green-900/30'
-                          : 'border border-gray-700/30 bg-gray-800/40 hover:bg-gray-800/60'
-                      }`}
+                      className="flex items-start gap-2 rounded-lg border border-gray-700/30 bg-gray-800/40 p-2.5 text-xs transition-colors hover:bg-gray-800/60"
                     >
                       <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-[10px] font-bold text-emerald-400">
                         {idx + 1}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <span className={`block leading-relaxed text-gray-300 ${isApplied ? 'line-through opacity-60' : ''}`}>
+                        <span className="block leading-relaxed text-gray-300">
                           {text}
                         </span>
                         {item.source === 'polish' ? (
@@ -282,22 +281,15 @@ export function InstructionsPanel({
                           <AudienceBadges rec={item.rec} />
                         )}
                       </div>
-                      {isApplied ? (
-                        <span className="flex flex-shrink-0 items-center gap-1 text-[10px] font-medium text-green-400">
-                          <Check className="h-3 w-3" />
-                          Added
-                        </span>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 flex-shrink-0 px-2 text-[10px] text-emerald-400 hover:bg-emerald-900/30 hover:text-emerald-300"
-                          disabled={!canAddMore}
-                          onClick={() => onApplyRecommendation?.(text, item.id)}
-                        >
-                          + Add
-                        </Button>
-                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 flex-shrink-0 px-2 text-[10px] text-emerald-400 hover:bg-emerald-900/30 hover:text-emerald-300"
+                        disabled={!canAddMore}
+                        onClick={() => onApplyRecommendation?.(text, item.id)}
+                      >
+                        + Add
+                      </Button>
                     </li>
                   )
                 })}

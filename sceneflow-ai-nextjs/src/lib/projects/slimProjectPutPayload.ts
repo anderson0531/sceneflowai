@@ -31,6 +31,10 @@ import { MEDIA_VERSION_LIST_KEYS, stripBase64FromMetadata } from '@/lib/storage/
  * script migration) pass `persistProduction: true`.
  */
 export const VERCEL_FUNCTION_BODY_LIMIT_BYTES = 4.5 * 1024 * 1024
+/** Leave room under the request cap so UTF-8 and headers do not 413 a body measured at the edge. */
+export const VERCEL_FUNCTION_REQUEST_HEADROOM_BYTES = 256 * 1024
+export const VERCEL_FUNCTION_REQUEST_BUDGET_BYTES =
+  VERCEL_FUNCTION_BODY_LIMIT_BYTES - VERCEL_FUNCTION_REQUEST_HEADROOM_BYTES
 /** Leave room for the GET envelope (`success`, project fields, omitted flags). */
 export const VERCEL_FUNCTION_RESPONSE_HEADROOM_BYTES = 100 * 1024
 export const VERCEL_FUNCTION_RESPONSE_BUDGET_BYTES =
@@ -69,7 +73,7 @@ function cloneJson<T>(value: T): T {
 
 function jsonByteLength(value: unknown): number {
   try {
-    return JSON.stringify(value).length
+    return new TextEncoder().encode(JSON.stringify(value)).length
   } catch {
     return Number.POSITIVE_INFINITY
   }
@@ -186,7 +190,7 @@ export function stringifyProjectPut(body: ProjectPutBody): string {
 /** True when the stringified body is large enough that Vercel will 413 it. */
 export function projectPutWouldExceedBodyLimit(body: unknown): boolean {
   try {
-    return JSON.stringify(body).length >= VERCEL_FUNCTION_BODY_LIMIT_BYTES
+    return new TextEncoder().encode(JSON.stringify(body)).length >= VERCEL_FUNCTION_BODY_LIMIT_BYTES
   } catch {
     return false
   }
@@ -200,7 +204,7 @@ export function fitProjectPutPayload<T extends ProjectPutBody>(
   body: T,
   options?: { budgetBytes?: number }
 ): FitProjectPutResult<T> {
-  const budget = options?.budgetBytes ?? VERCEL_FUNCTION_BODY_LIMIT_BYTES
+  const budget = options?.budgetBytes ?? VERCEL_FUNCTION_REQUEST_BUDGET_BYTES
   const next = cloneJson(slimProjectPutPayload(body)) as Omit<T, 'persistProduction'>
   const omitted: ProjectPutOmittedLayer[] = []
   const metadata = next.metadata
@@ -251,7 +255,7 @@ export function splitScriptPutIntoFittingBatches(
   body: ProjectPutBody,
   options?: { budgetBytes?: number; nowIso?: () => string }
 ): ProjectPutBody[] | null {
-  const budget = options?.budgetBytes ?? VERCEL_FUNCTION_BODY_LIMIT_BYTES
+  const budget = options?.budgetBytes ?? VERCEL_FUNCTION_REQUEST_BUDGET_BYTES
   const scenes = scriptScenes(visionPhaseScript(body))
   if (!Array.isArray(scenes) || scenes.length <= 1) return null
 
