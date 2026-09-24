@@ -1191,8 +1191,8 @@ export function SceneStoryboardFrameViewer({
                 }}
               >
 
-                <div className="sticky top-2 flex w-full min-w-0 flex-1 flex-col gap-2 self-start lg:w-auto">
-                  <div className="rounded-lg overflow-hidden bg-gray-800/50 border border-slate-700/40">
+                <div className="sticky top-2 flex w-full min-w-0 max-w-full flex-1 flex-col gap-2 self-start lg:min-w-[40rem]">
+                  <div className="w-full rounded-lg overflow-hidden bg-gray-800/50 border border-slate-700/40">
                     <div className="relative overflow-hidden">
                       {previewSlot ? (
                         <SceneImageFrame
@@ -1207,6 +1207,8 @@ export function SceneStoryboardFrameViewer({
                           controlsVariant="comfortable"
                           showBorder={false}
                           expandable
+                          className="w-full"
+                          directorTitle="Direct Still"
                         />
                       ) : (
                         <div className="aspect-video flex flex-col items-center justify-center">

@@ -89,7 +89,7 @@ describe('buildVideoDirectorSystemPrompt', () => {
 })
 
 describe('Videos Direction wiring', () => {
-  it('opens BeatVideoDirectorDialog instead of the generate dialog', () => {
+  it('opens Direct Beat from the clip gallery instead of rewriting only the video prompt', () => {
     const consoleSrc = readFileSync(
       path.resolve(
         __dirname,
@@ -97,9 +97,14 @@ describe('Videos Direction wiring', () => {
       ),
       'utf8'
     )
-    expect(consoleSrc).toContain('BeatVideoDirectorDialog')
-    expect(consoleSrc).toContain('onDirection={handleOpenVideoDirection}')
-    expect(consoleSrc).toContain('applyVideoDirectorPromptToProduction')
+    const panel = readFileSync(
+      path.resolve(__dirname, '../components/vision/ScriptPanel.tsx'),
+      'utf8'
+    )
+    expect(consoleSrc).toContain('onDirectBeat={onDirectBeat}')
+    expect(consoleSrc).not.toContain('BeatVideoDirectorDialog')
     expect(consoleSrc).not.toContain('onDirection={(segment) => handleRequestTake(segment, true)}')
+    expect(panel).toContain('layout="dialog"')
+    expect(panel).toContain('onDirectBeat={setDirectBeatId}')
   })
 })

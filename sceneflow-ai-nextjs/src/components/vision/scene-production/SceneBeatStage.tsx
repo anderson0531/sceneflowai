@@ -253,7 +253,7 @@ export function SceneBeatStage({
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         {rail}
       </DndContext>
-      <div className="sticky top-2 flex w-full min-w-0 flex-1 flex-col gap-2 self-start lg:w-auto">
+      <div className="sticky top-2 flex w-full min-w-0 max-w-full flex-1 flex-col gap-2 self-start lg:min-w-[40rem]">
         {items.length === 0 && empty ? empty : stage}
         {children}
         {detail}

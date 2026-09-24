@@ -165,6 +165,7 @@ import {
 } from '@/lib/vision/beatListFilters'
 import { SceneAudioWorkbench, SceneNarrationAudioCard } from '@/components/vision/scene-production/SceneAudioWorkbench'
 import { SceneDirectionWorkbench } from '@/components/vision/scene-production/SceneDirectionWorkbench'
+import { BeatDirectionEditor } from '@/components/vision/BeatDirectionEditor'
 import { ExportDialog } from './ExportDialog'
 import { isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
 import { isPreVisStale, sceneHasStalePromptKeys } from '@/lib/storyboard/preVisSync'
@@ -4366,6 +4367,7 @@ function SceneCard({
   const [activeSceneTab, setActiveSceneTab] = useState<ProductionWorkflowTab>('direction')
 
   const sceneBeatsForTabs = useMemo(() => getSceneBeats(scene), [scene])
+  const [directBeatId, setDirectBeatId] = useState<string | null>(null)
   const [selectedBeatId, setSelectedBeatId] = useState<string | null>(
     () => getSceneBeats(scene)[0]?.beatId ?? null
   )
@@ -6076,17 +6078,7 @@ function SceneCard({
                           ? () => onOpenScreeningRoom(sceneIdx, 'beats')
                           : undefined
                       }
-                      onGenerateF2VFrames={
-                        onGenerateSegmentFrames
-                          ? (segmentId, options) => {
-                              void onGenerateSegmentFrames(workflowSceneId, segmentId, 'both', {
-                                usePreviousEndFrame: options.usePreviousEndFrame,
-                                keepBeatStill: true,
-                                fromDialog: true,
-                              })
-                            }
-                          : undefined
-                      }
+                      onDirectBeat={setDirectBeatId}
                       selectedBeatId={selectedBeatId}
                       onSelectBeat={setSelectedBeatId}
                       scene={{
@@ -6755,6 +6747,25 @@ function SceneCard({
                     </Tabs>
                     )}
                     </DirectorWorkflow>
+                    {directBeatId && sceneBeatsForTabs.some((beat) => beat.beatId === directBeatId) && (
+                      <BeatDirectionEditor
+                        layout="dialog"
+                        directorOpen
+                        onDirectorOpenChange={(open) => {
+                          if (!open) setDirectBeatId(null)
+                        }}
+                        beat={sceneBeatsForTabs.find((beat) => beat.beatId === directBeatId)!}
+                        sceneIdx={sceneIdx}
+                        scenes={scenes}
+                        script={script}
+                        onScriptChange={onScriptChange}
+                        promptComposition={promptComposition}
+                        characters={characters}
+                        locationReferences={locationReferences}
+                        objectReferences={objectReferences}
+                        projectId={projectId}
+                      />
+                    )}
                     )
                   })()}
 
