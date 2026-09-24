@@ -288,7 +288,8 @@ describe('Scene polish wiring', () => {
     expect(panel).toContain('revealPolishSceneIndex')
 
     const instructions = readSource('src/components/vision/InstructionsPanel.tsx')
-    expect(instructions).toContain('Polish Recommendations')
+    expect(instructions).toContain('Recommendations')
+    expect(instructions).not.toContain('Polish Recommendations')
     expect(instructions).toContain('polishAnalysis')
 
     const modal = readSource('src/components/vision/SceneEditorModalV2.tsx')
