@@ -7,6 +7,25 @@ export function isMixerBeatIncluded(
   return segment.mixerBeatIncluded !== false
 }
 
+/**
+ * Direction Include is the source of truth. A stored `mixerBeatIncluded: false`
+ * left over from an earlier exclude must not hide the beat in the Mixer.
+ */
+export function restoreIncludedMixerBeats<T extends Pick<SceneSegment, 'beatId' | 'mixerBeatIncluded'>>(
+  segments: T[],
+  includedBeatIds: Iterable<string>
+): { segments: T[]; changed: boolean } {
+  const included = new Set(includedBeatIds)
+  let changed = false
+  const next = segments.map((segment) => {
+    if (!segment.beatId || !included.has(segment.beatId)) return segment
+    if (segment.mixerBeatIncluded !== false) return segment
+    changed = true
+    return { ...segment, mixerBeatIncluded: true }
+  })
+  return { segments: changed ? next : segments, changed }
+}
+
 export function filterMixerIncludedSegments<T extends Pick<SceneSegment, 'mixerBeatIncluded'>>(
   segments: T[]
 ): T[] {

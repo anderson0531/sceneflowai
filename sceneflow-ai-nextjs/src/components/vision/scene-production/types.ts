@@ -731,13 +731,13 @@ export interface SceneSegment {
   /** Uniform frame crop % (2–10) for uploaded videos; preserves aspect ratio */
   watermarkCropPercent?: number
 
-  /** When false, beat video is hidden from mixer preview and scene render (asset is not deleted). */
-  mixerBeatIncluded?: boolean
+  /** When false, beat video is hidden from mixer preview and scene render (asset is not deleted). Null clears a stored exclusion. */
+  mixerBeatIncluded?: boolean | null
 
-  /** Seconds into source MP4 where beat playback begins (default 0). */
-  videoTrimInSec?: number
-  /** Seconds into source MP4 where beat playback ends (omit = end of file). */
-  videoTrimOutSec?: number
+  /** Seconds into source MP4 where beat playback begins (default 0). Null clears a stored trim. */
+  videoTrimInSec?: number | null
+  /** Seconds into source MP4 where beat playback ends (omit = end of file). Null clears a stored trim. */
+  videoTrimOutSec?: number | null
 
   // ===========================================================================
   // Lean Multi-Language (LML) Elastic Segment Fields

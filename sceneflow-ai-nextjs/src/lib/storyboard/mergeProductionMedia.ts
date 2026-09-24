@@ -45,7 +45,7 @@ export function mergeProductionSegment(
     incoming.activeAssetUrl ?? existing.activeAssetUrl
   )
   const currentTake = takes.find((take) => take.id === currentTakeId)
-  return {
+  const merged: SceneSegment = {
     ...existing,
     ...incoming,
     takes,
@@ -57,6 +57,17 @@ export function mergeProductionSegment(
       existing.activeAssetUrl,
     references: refs as SceneSegmentReferences,
   }
+  // JSON drops undefined, so a cleared trim or include flag arrives as null.
+  // Null means the stored value must not come back on the next load.
+  const clearable = incoming as SceneSegment & {
+    videoTrimInSec?: number | null
+    videoTrimOutSec?: number | null
+    mixerBeatIncluded?: boolean | null
+  }
+  if (clearable.videoTrimInSec === null) delete merged.videoTrimInSec
+  if (clearable.videoTrimOutSec === null) delete merged.videoTrimOutSec
+  if (clearable.mixerBeatIncluded === null) delete merged.mixerBeatIncluded
+  return merged
 }
 
 export function mergeSceneProductionData(

@@ -3,6 +3,7 @@ import {
   filterMixerIncludedSegments,
   isMixerBeatIncluded,
   listIncludedBeatVideos,
+  restoreIncludedMixerBeats,
 } from '@/lib/scene/mixerBeatInclude'
 
 describe('mixerBeatInclude', () => {
@@ -37,6 +38,20 @@ describe('mixerBeatInclude', () => {
     expect(listIncludedBeatVideos(segments).map((segment) => segment.segmentId)).toEqual([
       'video',
       'upload',
+    ])
+  })
+
+  it('restores a stale mixer exclusion when the beat is included', () => {
+    const segments = [
+      { segmentId: 'kept', beatId: 'bt_1', mixerBeatIncluded: false },
+      { segmentId: 'still-out', beatId: 'bt_2', mixerBeatIncluded: false },
+    ]
+    const restored = restoreIncludedMixerBeats(segments, ['bt_1'])
+    expect(restored.changed).toBe(true)
+    expect(restored.segments[0].mixerBeatIncluded).toBe(true)
+    expect(restored.segments[1].mixerBeatIncluded).toBe(false)
+    expect(filterMixerIncludedSegments(restored.segments).map((segment) => segment.segmentId)).toEqual([
+      'kept',
     ])
   })
 })

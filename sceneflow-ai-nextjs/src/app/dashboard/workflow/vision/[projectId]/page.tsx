@@ -82,8 +82,10 @@ import {
 import {
   needsProductionDerive,
   productionDeriveAttemptKey,
+  activeBeatIdOrder,
   reorderSegmentsToMatchBeats,
 } from '@/lib/scene/deriveSegmentsFromBeats'
+import { restoreIncludedMixerBeats } from '@/lib/scene/mixerBeatInclude'
 import { invalidateChangedBeatFramesOnScene, applyDeepRestructureAssetClear, REVISION_DEPTH_SCENE_KEY, type RevisionDepth } from '@/lib/script/structuredSceneRevision'
 import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
 import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
@@ -4046,6 +4048,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     sceneProductionState,
     handleInitializeSceneProduction,
   ])
+
+  useEffect(() => {
+    if (!script?.script?.scenes) return
+    script.script.scenes.forEach((scene: Record<string, unknown>, idx: number) => {
+      const sceneId = getSceneProductionKey(scene as Scene, idx)
+      const production = sceneProductionState[sceneId]
+      if (!production?.segments?.length) return
+      const restored = restoreIncludedMixerBeats(
+        production.segments,
+        activeBeatIdOrder(scene)
+      )
+      if (!restored.changed) return
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current?.segments) return current
+        const again = restoreIncludedMixerBeats(current.segments, activeBeatIdOrder(scene))
+        if (!again.changed) return current
+        return { ...current, segments: again.segments }
+      })
+    })
+  }, [script?.script?.scenes, sceneProductionState, applySceneProductionUpdate])
 
   const handleSegmentPromptChange = useCallback(
     (sceneId: string, segmentId: string, prompt: string) => {

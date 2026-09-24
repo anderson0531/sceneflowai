@@ -2080,8 +2080,8 @@ export function SceneProductionMixer({
           s.segmentId === segmentId
             ? {
                 ...s,
-                videoTrimInSec: inSec > 0.001 ? inSec : undefined,
-                videoTrimOutSec: outSec < source - 0.001 ? outSec : undefined,
+                videoTrimInSec: inSec > 0.001 ? inSec : null,
+                videoTrimOutSec: outSec < source - 0.001 ? outSec : null,
               }
             : s
         )
@@ -2095,7 +2095,7 @@ export function SceneProductionMixer({
       onSegmentsChange?.(
         segments.map((seg) =>
           seg.segmentId === segmentId
-            ? { ...seg, videoTrimInSec: undefined, videoTrimOutSec: undefined }
+            ? { ...seg, videoTrimInSec: null, videoTrimOutSec: null }
             : seg
         )
       )
