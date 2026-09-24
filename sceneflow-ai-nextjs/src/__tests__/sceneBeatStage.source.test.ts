@@ -17,6 +17,17 @@ describe('shared scene beat stage', () => {
     expect(panel).not.toMatch(/>\s*Beats\s*</)
   })
 
+  it('starts the still viewer and scene description closed', () => {
+    const viewer = readSource('src/components/vision/scene-production/BeatStillClipViewer.tsx')
+    expect(viewer).toContain('useState(false)')
+    expect(viewer).toContain('Show still')
+    expect(viewer).toContain('Hide')
+    expect(direction).toContain('BeatStillClipViewer')
+    expect(direction).toContain('useState(false)')
+    expect(direction).toContain('Show scene description')
+    expect(audio).toContain('BeatStillClipViewer')
+  })
+
   it('mounts beat direction on Direction and not on Audio', () => {
     expect(direction).toContain('BeatDirectionEditor')
     expect(direction).toContain('layout="board"')

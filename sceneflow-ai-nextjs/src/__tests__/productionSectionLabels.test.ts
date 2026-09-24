@@ -62,7 +62,8 @@ describe('Production section labels', () => {
   it('renders one continuous production strip', () => {
     const panel = readSource('src/components/vision/ScriptPanel.tsx')
 
-    expect(panel).toContain('Pre-Vis')
+    expect(panel).toContain('Stills')
+    expect(panel).toContain('Clips')
     expect(panel).toContain('value="video"')
     expect(panel).toContain('value="mixer"')
     expect(panel).toContain('value="streams"')

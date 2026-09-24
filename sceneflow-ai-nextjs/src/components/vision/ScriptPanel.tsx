@@ -6172,7 +6172,7 @@ function SceneCard({
                           </TabsTrigger>
                           <TabsTrigger value="previs" className="text-xs gap-1.5 px-2.5 py-1.5">
                             <Clapperboard className="w-3.5 h-3.5 shrink-0" />
-                            Pre-Vis
+                            Stills
                             {preVisFrameStats.total > 0 && (
                               <span className="text-[10px] opacity-60">
                                 ({preVisFrameStats.withImage}/{preVisFrameStats.total})
@@ -6181,7 +6181,7 @@ function SceneCard({
                           </TabsTrigger>
                           <TabsTrigger value="video" className="text-xs gap-1.5 px-2.5 py-1.5">
                             <Film className="w-3.5 h-3.5 shrink-0" />
-                            Video
+                            Clips
                           </TabsTrigger>
                           <TabsTrigger value="mixer" className="text-xs gap-1.5 px-2.5 py-1.5">
                             <Clapperboard className="w-3.5 h-3.5 shrink-0" />
@@ -6420,6 +6420,7 @@ function SceneCard({
                       sceneIdx={sceneIdx}
                       sceneNumber={sceneNumber}
                       beats={sceneBeatsForTabs}
+                      segments={sceneProductionData?.segments}
                       selectedBeatId={selectedBeatId}
                       onSelectBeat={setSelectedBeatId}
                       onReorder={
