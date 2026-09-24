@@ -70,6 +70,34 @@ export function mergeProductionSegment(
   return merged
 }
 
+function existingClipScore(segment: SceneSegment): number {
+  let score = 0
+  if (segment.status === 'COMPLETE' && segment.assetType === 'video' && segment.activeAssetUrl) {
+    score += 100
+  } else if (segment.activeAssetUrl) {
+    score += 40
+  }
+  if ((segment.takes?.length ?? 0) > 0) score += 10
+  if ((segment.dialoguePortion?.partIndex ?? 0) === 0) score += 5
+  return score
+}
+
+/** Prefer the same segmentId; otherwise the strongest clip already stored on that beat. */
+function findPreviousProductionSegment(
+  incoming: SceneSegment,
+  existing: SceneSegment[] | undefined,
+  used: Set<string>
+): SceneSegment | undefined {
+  const rows = existing ?? []
+  const byId = rows.find((row) => row.segmentId === incoming.segmentId && !used.has(row.segmentId))
+  if (byId) return byId
+  const beatId = incoming.beatId?.trim()
+  if (!beatId) return undefined
+  const candidates = rows.filter((row) => row.beatId === beatId && !used.has(row.segmentId))
+  if (candidates.length === 0) return undefined
+  return [...candidates].sort((a, b) => existingClipScore(b) - existingClipScore(a))[0]
+}
+
 export function mergeSceneProductionData(
   existing: SceneProductionData | undefined,
   incoming: SceneProductionData | undefined
@@ -78,12 +106,19 @@ export function mergeSceneProductionData(
   if (!incoming) return existing
 
   // Incoming segments are the clip list. Matching ids still merge takes and stills.
-  // Ids that are not in the incoming list are dropped so a 1:1 re-derive cannot
-  // be undone by leftover dialogue-split rows. An omitted field leaves clips alone.
+  // A re-derive that minted new ids still keeps the stored clip when beatId matches.
+  // Ids that are not in the incoming list are dropped so leftover dialogue-split
+  // rows cannot undo a 1:1 beat list. An omitted field leaves clips alone.
+  const used = new Set<string>()
   const segments = Array.isArray(incoming.segments)
     ? incoming.segments.map((segment) => {
-        const previous = existing.segments?.find((row) => row.segmentId === segment.segmentId)
-        return previous ? mergeProductionSegment(segment, previous) : segment
+        const previous = findPreviousProductionSegment(segment, existing.segments, used)
+        if (!previous) return segment
+        used.add(previous.segmentId)
+        return {
+          ...mergeProductionSegment(segment, previous),
+          segmentId: previous.segmentId,
+        }
       })
     : existing.segments
   const productionStreams = unionRowsById(

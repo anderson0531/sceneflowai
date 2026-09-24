@@ -86,6 +86,7 @@ import {
   reorderSegmentsToMatchBeats,
 } from '@/lib/scene/deriveSegmentsFromBeats'
 import { restoreIncludedMixerBeats } from '@/lib/scene/mixerBeatInclude'
+import { mergeSceneProductionData } from '@/lib/storyboard/mergeProductionMedia'
 import { invalidateChangedBeatFramesOnScene, applyDeepRestructureAssetClear, REVISION_DEPTH_SCENE_KEY, type RevisionDepth } from '@/lib/script/structuredSceneRevision'
 import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
 import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
@@ -537,7 +538,7 @@ const getSceneProductionKey = (scene: Scene, index: number): string =>
 const mergeSegmentedProductionData = (
   current: SceneProductionData | undefined,
   next: SceneProductionData
-): SceneProductionData => (current ? { ...current, ...next } : next)
+): SceneProductionData => mergeSceneProductionData(current, next) ?? next
 
 // Helper function to normalize character names by removing screenplay annotations
 const normalizeCharacterName = (name: string): string => {
@@ -3871,7 +3872,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             body: JSON.stringify({
               projectId: project.id,
               language: 'en',
-              existingSegments: sceneProductionState[sceneId]?.segments ?? [],
+              existingSegments: sceneProductionStateRef.current[sceneId]?.segments ?? [],
             }),
           }
         )
@@ -3966,7 +3967,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         toast.success(`Scene split into ${productionData.segments.length} blocks.`)
       } catch {}
     },
-    [project?.id, applySceneProductionUpdate, script?.script?.scenes, sceneProductionState, handleScriptChange, script]
+    [project?.id, applySceneProductionUpdate, script?.script?.scenes, handleScriptChange, script]
   )
 
   const handleApproveStoryboard = useCallback(
@@ -4028,7 +4029,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     script.script.scenes.forEach((scene: Record<string, unknown>, idx: number) => {
       const sceneId = getSceneProductionKey(scene as Scene, idx)
       const production = sceneProductionState[sceneId]
-      if (!needsProductionDerive(scene, production?.segments)) return
+      if (!production) return
+      if (!needsProductionDerive(scene, production.segments)) return
       const attemptKey = productionDeriveAttemptKey(sceneId, scene)
       if (backfillDeriveAttemptedRef.current.has(attemptKey)) return
 

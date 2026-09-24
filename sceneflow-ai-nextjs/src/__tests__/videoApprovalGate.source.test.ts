@@ -55,4 +55,12 @@ describe('video generation unlock wiring', () => {
     expect(page).toContain("if (data.storyboardStatus === 'approved')")
     expect(page).toContain('storyboardStatus: \'approved\'')
   })
+
+  it('auto-derive waits for this scene production and sends stored clips', () => {
+    const page = readSource(PAGE)
+    expect(page).toContain('if (!production) return')
+    expect(page).toContain('existingSegments: sceneProductionStateRef.current[sceneId]?.segments ?? []')
+    expect(page).toContain('mergeSceneProductionData')
+    expect(page).not.toContain('existingSegments: sceneProductionState[sceneId]?.segments ?? []')
+  })
 })

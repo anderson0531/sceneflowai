@@ -129,4 +129,39 @@ describe('mergeSceneProductionData', () => {
     expect(merged.segments[0].videoTrimOutSec).toBeUndefined()
     expect(merged.segments[0].mixerBeatIncluded).toBeUndefined()
   })
+
+  it('keeps the stored clip when a re-derive mints a new id for the same beat', () => {
+    const existing: SceneProductionData = {
+      isSegmented: true,
+      targetSegmentDuration: 8,
+      segments: [
+        segment({
+          segmentId: 'seg_stored',
+          beatId: 'bt_1',
+          takes: [{ id: 't1', createdAt: '2026-01-01T00:00:00.000Z', assetUrl: 'a.mp4', status: 'COMPLETE' }],
+          currentTakeId: 't1',
+          activeAssetUrl: 'a.mp4',
+        }),
+      ],
+    }
+    const incoming: SceneProductionData = {
+      isSegmented: true,
+      targetSegmentDuration: 8,
+      segments: [
+        segment({
+          segmentId: 'seg_fresh',
+          beatId: 'bt_1',
+          status: 'DRAFT',
+          assetType: null,
+          takes: [],
+          activeAssetUrl: undefined,
+        }),
+      ],
+    }
+    const merged = mergeSceneProductionData(existing, incoming)!
+    expect(merged.segments).toHaveLength(1)
+    expect(merged.segments[0].segmentId).toBe('seg_stored')
+    expect(merged.segments[0].activeAssetUrl).toBe('a.mp4')
+    expect(merged.segments[0].takes.map((take) => take.id)).toEqual(['t1'])
+  })
 })
