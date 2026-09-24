@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, ChevronRight, Clapperboard } from 'lucide-react'
 import { BeatDirectorDialog } from '@/components/vision/BeatDirectorDialog'
+import { BeatExcludeToggle } from '@/components/vision/BeatExcludeToggle'
 import { applyBeatsToScene, getSceneBeats } from '@/lib/script/beatMigration'
 import type {
   BeatDirection,
@@ -613,10 +614,28 @@ export function BeatDirectionEditor({
             </span>
             <span className="text-xs text-gray-300 truncate">{summary}</span>
           </button>
+          <BeatExcludeToggle
+            beat={beat}
+            sceneIdx={sceneIdx}
+            scenes={scenes}
+            script={script}
+            onScriptChange={onScriptChange}
+            readOnly={readOnly}
+          />
           {directButton}
         </div>
       ) : (
-        <div className="flex justify-end px-3 pt-3">{directButton}</div>
+        <div className="flex items-center justify-end gap-2 px-3 pt-3">
+          <BeatExcludeToggle
+            beat={beat}
+            sceneIdx={sceneIdx}
+            scenes={scenes}
+            script={script}
+            onScriptChange={onScriptChange}
+            readOnly={readOnly}
+          />
+          {directButton}
+        </div>
       )}
       <BeatDirectorDialog
         open={directorOpen}

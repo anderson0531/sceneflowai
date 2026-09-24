@@ -214,7 +214,7 @@ export interface DeriveSegmentsOptions {
 }
 
 /** The running order segments have to match: active beats, in beat order. */
-function activeBeatIdOrder(scene: Record<string, unknown>): string[] {
+export function activeBeatIdOrder(scene: Record<string, unknown>): string[] {
   return getSceneBeats(scene)
     .filter((beat) => !isBeatExcluded(beat))
     .map((beat) => beat.beatId)
@@ -229,6 +229,18 @@ function segmentBeatIdOrder(segments: SceneSegment[]): string[] {
     order.push(segment.beatId)
   }
   return order
+}
+
+/**
+ * Auto-derive attempt identity. Include and exclude change the active beat
+ * list, so each set is allowed its own derive. A scene-only key would keep
+ * the Mixer on the shorter list after a beat is included again.
+ */
+export function productionDeriveAttemptKey(
+  sceneId: string,
+  scene: Record<string, unknown>
+): string {
+  return `${sceneId}::${activeBeatIdOrder(scene).join('|')}`
 }
 
 /**
@@ -394,7 +406,12 @@ export function mergeDerivedSegmentsWithExisting(
       watermarkCropPercent: match.watermarkCropPercent ?? seg.watermarkCropPercent,
       videoTrimInSec: match.videoTrimInSec ?? seg.videoTrimInSec,
       videoTrimOutSec: match.videoTrimOutSec ?? seg.videoTrimOutSec,
-      mixerBeatIncluded: match.mixerBeatIncluded ?? seg.mixerBeatIncluded,
+      // Derived rows are the included beats. A false left from when this beat
+      // was excluded must not hide it in the Mixer again.
+      mixerBeatIncluded:
+        match.mixerBeatIncluded === false
+          ? true
+          : (match.mixerBeatIncluded ?? seg.mixerBeatIncluded),
     }
   })
 }

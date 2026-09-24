@@ -81,6 +81,7 @@ import {
 } from '@/lib/script/beatMigration'
 import {
   needsProductionDerive,
+  productionDeriveAttemptKey,
   reorderSegmentsToMatchBeats,
 } from '@/lib/scene/deriveSegmentsFromBeats'
 import { invalidateChangedBeatFramesOnScene, applyDeepRestructureAssetClear, REVISION_DEPTH_SCENE_KEY, type RevisionDepth } from '@/lib/script/structuredSceneRevision'
@@ -4026,15 +4027,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const sceneId = getSceneProductionKey(scene as Scene, idx)
       const production = sceneProductionState[sceneId]
       if (!needsProductionDerive(scene, production?.segments)) return
-      if (backfillDeriveAttemptedRef.current.has(sceneId)) return
+      const attemptKey = productionDeriveAttemptKey(sceneId, scene)
+      if (backfillDeriveAttemptedRef.current.has(attemptKey)) return
 
-      backfillDeriveAttemptedRef.current.add(sceneId)
+      backfillDeriveAttemptedRef.current.add(attemptKey)
       void handleInitializeSceneProduction(sceneId, {
         targetDuration: DEFAULT_VEO_CLIP_DURATION,
         deriveFromBeats: true,
       }).catch((err) => {
         console.warn('[VisionPage] Backfill derive-segments failed for', sceneId, err)
-        backfillDeriveAttemptedRef.current.delete(sceneId)
+        backfillDeriveAttemptedRef.current.delete(attemptKey)
       })
     })
   }, [

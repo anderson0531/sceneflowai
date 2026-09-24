@@ -20,7 +20,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ActionBeatSfxControls, type ExpressBeatSfxStatus } from '@/components/vision/ActionBeatSfxControls'
 import { BeatAudioStatusBadge } from '@/components/vision/BeatAudioStatusBadge'
 import { BeatCaptionControl } from '@/components/vision/BeatCaptionControl'
-import { BeatExcludeToggle } from '@/components/vision/BeatExcludeToggle'
 import { BeatMusicToggle } from '@/components/vision/BeatMusicToggle'
 import { BeatPerformanceDirectorControl } from '@/components/vision/BeatPerformanceDirectorDialog'
 import { BeatSfxToggle } from '@/components/vision/BeatSfxToggle'
@@ -925,7 +924,6 @@ function ActionBeatAudio(
           <BeatAudioStatusBadge hasAudio={!!sfxAudioUrl} stale={sfxStale} />
           {continuityBroken && <BeatContinuityWarning />}
         </div>
-        <BeatExcludeToggle beat={beat} sceneIdx={sceneIdx} scenes={props.scenes ?? []} script={props.script} onScriptChange={props.onScriptChange} />
         {hasSceneMusic && (
           <BeatMusicToggle
             beat={beat}
@@ -1175,7 +1173,6 @@ function SpokenBeatAudio(
               />
               {continuityBroken && <BeatContinuityWarning />}
             </div>
-            <BeatExcludeToggle beat={beat} sceneIdx={sceneIdx} scenes={props.scenes ?? []} script={props.script} onScriptChange={props.onScriptChange} />
             {hasSceneMusic && (
               <BeatMusicToggle
                 beat={beat}
