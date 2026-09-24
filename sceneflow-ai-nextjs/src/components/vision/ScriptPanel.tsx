@@ -5610,7 +5610,7 @@ function SceneCard({
                               className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg font-medium border transition-all bg-gray-700/40 text-gray-300 border-gray-600/50 hover:bg-gray-700/60 hover:border-gray-500/70 hover:text-white shadow-sm"
                             >
                               <Pencil className="w-3 h-3" />
-                              <span>{ASSISTANT.short}</span>
+                              <span>Direct Scene</span>
                             </button>
                           </TooltipTrigger>
                           <TooltipContent className="bg-gray-900 text-white border border-gray-700">
@@ -5996,7 +5996,7 @@ function SceneCard({
                                 className="px-3 py-1.5 text-xs font-medium rounded-md flex items-center gap-1.5 transition-all shadow-sm bg-blue-600 hover:bg-blue-500 text-white"
                               >
                                 <Edit className="w-3 h-3" />
-                                {ASSISTANT.short}
+                                Direct Scene
                               </button>
                             </TooltipTrigger>
                             <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">{ASSISTANT.tooltip}</TooltipContent>
@@ -6223,6 +6223,7 @@ function SceneCard({
                       characters={characters}
                       locationReferences={locationReferences}
                       objectReferences={objectReferences}
+                      projectId={projectId}
                     />
                   </TabsContent>
                   )}
