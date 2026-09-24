@@ -1,8 +1,11 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Clapperboard, ImageOff } from 'lucide-react'
+import { Clapperboard, ImageOff, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
+import { DictationTextarea } from '@/components/ui/DictationTextarea'
+import type { StillDirectorPatch } from '@/lib/intelligence/beat-still-director-fallback'
 import type { BeatReferenceSelection, SceneBeat } from '@/lib/script/segmentTypes'
 import {
   filterLocationReferences,
@@ -10,7 +13,6 @@ import {
   librarySceneOptions,
   type LibrarySceneFilter,
 } from '@/lib/vision/referenceLibraryLookup'
-import { findBeatsMentioningObject } from '@/lib/vision/beatReferenceConnections'
 
 export interface DirectorCharacter {
   id?: string
@@ -40,40 +42,47 @@ export interface BeatDirectorDialogProps {
   onOpenChange: (open: boolean) => void
   beat: SceneBeat
   sceneNumber: number
+  sceneIndex: number
   scenes: Array<Record<string, unknown>>
+  projectId?: string
   readOnly?: boolean
   characters: DirectorCharacter[]
   locationReferences: DirectorLocation[]
   objectReferences: DirectorObject[]
   referenceSelection: BeatReferenceSelection
-  frameDraft: string
-  videoDraft: string
-  onFrameDraft: (value: string) => void
-  onVideoDraft: (value: string) => void
-  onCommitFrame: () => void
-  onCommitVideo: () => void
-  onUpdatePrompts: () => void
+  onSaveDirection: (patch: StillDirectorPatch) => void
   onToggleObject: (object: DirectorObject, connect: boolean) => void
-  onToggleObjectOnBeat: (
-    object: DirectorObject,
-    target: { sceneIndex: number; beatId: string },
-    connect: boolean
-  ) => void
   onSelectLocation: (locationRefId: string | null, locationVersionId: string | null) => void
 }
+
+type ReferenceTab = 'cast' | 'locations' | 'objects'
 
 function StillMark({ imageUrl }: { imageUrl?: string }) {
   if (imageUrl) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={imageUrl} alt="" className="h-8 w-8 rounded object-cover bg-slate-800" />
+      <img src={imageUrl} alt="" className="h-8 w-8 shrink-0 rounded object-cover bg-slate-800" />
     )
   }
   return (
-    <span className="flex h-8 w-8 items-center justify-center rounded bg-slate-800 text-slate-500">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-slate-800 text-slate-500">
       <ImageOff className="h-3.5 w-3.5" />
     </span>
   )
+}
+
+function previewLines(patch: StillDirectorPatch): Array<{ label: string; value: string }> {
+  const rows: Array<{ label: string; value: string }> = []
+  const add = (label: string, value?: string) => {
+    if (value?.trim()) rows.push({ label, value: value.trim() })
+  }
+  add('Shot', patch.shotType)
+  add('Angle', patch.cameraAngle)
+  add('Blocking', patch.blocking)
+  add('Frozen moment', patch.frozenMoment || patch.actionFraming)
+  add('Props', patch.keyProps?.join(', '))
+  add('Emotion', patch.emotion)
+  return rows
 }
 
 export function BeatDirectorDialog({
@@ -81,130 +90,188 @@ export function BeatDirectorDialog({
   onOpenChange,
   beat,
   sceneNumber,
+  sceneIndex,
   scenes,
+  projectId,
   readOnly,
   characters,
   locationReferences,
   objectReferences,
   referenceSelection,
-  frameDraft,
-  videoDraft,
-  onFrameDraft,
-  onVideoDraft,
-  onCommitFrame,
-  onCommitVideo,
-  onUpdatePrompts,
+  onSaveDirection,
   onToggleObject,
-  onToggleObjectOnBeat,
   onSelectLocation,
 }: BeatDirectorDialogProps) {
+  const [instruction, setInstruction] = useState('')
+  const [preview, setPreview] = useState<StillDirectorPatch | null>(null)
+  const [previewing, setPreviewing] = useState(false)
   const [query, setQuery] = useState('')
   const [scope, setScope] = useState<LibrarySceneFilter>(sceneNumber)
-  const [focusObjectId, setFocusObjectId] = useState<string | null>(null)
+  const [tab, setTab] = useState<ReferenceTab>('locations')
 
   const sceneOptions = useMemo(() => librarySceneOptions(scenes), [scenes])
-  const lookupScenes = scenes
   const visibleLocations = useMemo(
     () => filterLocationReferences(locationReferences, query, scope),
     [locationReferences, query, scope]
   )
   const visibleObjects = useMemo(
-    () => filterObjectReferences(objectReferences, lookupScenes, query, scope),
-    [objectReferences, lookupScenes, query, scope]
+    () => filterObjectReferences(objectReferences, scenes, query, scope),
+    [objectReferences, scenes, query, scope]
   )
 
   const selectedLocation = locationReferences.find(
     (location) => location.id === referenceSelection.locationRefId
   )
-  const focusObject =
-    objectReferences.find((object) => object.id === focusObjectId) ??
-    objectReferences.find((object) => referenceSelection.objectRefIds.includes(object.id))
-  const otherBeats = useMemo(() => {
-    if (!focusObject) return []
-    return findBeatsMentioningObject(scenes, focusObject.id, focusObject.name, beat.beatId)
-  }, [focusObject, scenes, beat.beatId])
-
-  const prose = (beat.line || beat.actionDescription || '').trim()
   const cast = characters.filter(
     (character) =>
       character.type !== 'narrator' &&
       (referenceSelection.characterIds.includes(character.id || '') ||
         referenceSelection.characterIds.includes(character.name))
   )
+  const connectedObjects = objectReferences.filter((object) =>
+    referenceSelection.objectRefIds.includes(object.id)
+  )
+  const lines = preview ? previewLines(preview) : []
+
+  const previewDirection = async () => {
+    const note = instruction.trim()
+    if (!note) {
+      toast.error('Write or dictate a direction note first.')
+      return
+    }
+    if (!projectId) {
+      toast.error('Project is still loading.')
+      return
+    }
+    setPreviewing(true)
+    try {
+      const response = await fetch('/api/scene/direct-beat-still', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex,
+          beatId: beat.beatId,
+          mode: 'rewrite',
+          userDirection: note,
+        }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Direction preview failed')
+      setPreview((data.patch ?? {}) as StillDirectorPatch)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Direction preview failed')
+    } finally {
+      setPreviewing(false)
+    }
+  }
+
+  const saveDirection = () => {
+    if (!preview) return
+    onSaveDirection(preview)
+    setInstruction('')
+    setPreview(null)
+    onOpenChange(false)
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl min-w-0 max-h-[90vh] overflow-x-hidden overflow-y-auto bg-slate-900 border-slate-700 text-slate-100">
-        <DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
-          <Clapperboard className="w-5 h-5 text-teal-400" />
-          Direct Scene {sceneNumber}
+      <DialogContent className="flex w-[min(48rem,calc(100vw-2rem))] max-w-none min-w-0 max-h-[90vh] flex-col gap-3 overflow-x-hidden overflow-y-auto bg-slate-900 border-slate-700 text-slate-100">
+        <DialogTitle className="flex min-w-0 items-center gap-2 break-words text-base font-semibold text-white">
+          <Clapperboard className="h-4 w-4 shrink-0 text-teal-400" />
+          Direct Beat · Scene {sceneNumber} · Beat {beat.sequenceIndex + 1}
         </DialogTitle>
-        <DialogDescription className="text-slate-400">
-          {beat.kind ? `${beat.kind} · ` : ''}
-          {prose || 'Connect library references so this beat’s direction, still, and clip stay consistent.'}
+        <DialogDescription className="min-w-0 break-words text-sm text-slate-400">
+          Type or dictate how this beat should be directed. Preview the direction, then save it.
+          Still and clip prompts update with the save.
         </DialogDescription>
 
-        <section className="space-y-2">
-          <h3 className="text-[11px] uppercase tracking-wide text-slate-500">Connected references</h3>
-          <div className="flex flex-wrap gap-2">
+        <label className="flex min-w-0 flex-col gap-1 text-xs">
+          <span className="text-[10px] uppercase text-slate-500">Direction note</span>
+          <DictationTextarea
+            value={instruction}
+            onChange={setInstruction}
+            rows={4}
+            disabled={readOnly || previewing}
+            placeholder="Describe the shot, action, or change you want."
+            className="min-w-0"
+          />
+        </label>
+        <button
+          type="button"
+          className="inline-flex w-fit items-center gap-1 rounded border border-teal-800/80 px-3 py-1.5 text-xs text-teal-100 hover:bg-teal-950/40 disabled:opacity-50"
+          disabled={readOnly || previewing}
+          onClick={() => void previewDirection()}
+        >
+          {previewing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+          Preview direction
+        </button>
+
+        {lines.length > 0 && (
+          <div className="min-w-0 space-y-1 rounded border border-slate-700 bg-slate-950/70 p-3">
+            <p className="text-[10px] uppercase tracking-wide text-slate-500">Direction preview</p>
+            {lines.map((row) => (
+              <p key={row.label} className="break-words text-xs text-slate-200">
+                <span className="text-slate-500">{row.label}. </span>
+                {row.value}
+              </p>
+            ))}
+            <button
+              type="button"
+              className="mt-2 rounded bg-teal-700 px-3 py-1.5 text-xs text-white hover:bg-teal-600 disabled:opacity-50"
+              disabled={readOnly}
+              onClick={saveDirection}
+            >
+              Save direction
+            </button>
+          </div>
+        )}
+
+        <div className="min-w-0 space-y-2">
+          <p className="text-[10px] uppercase tracking-wide text-slate-500">Connected references</p>
+          <div className="flex min-w-0 flex-wrap gap-2">
             {cast.map((character) => (
               <span
                 key={character.id || character.name}
-                className="flex items-center gap-2 rounded-md border border-slate-700 bg-slate-800/60 px-2 py-1 text-xs"
+                className="flex max-w-full items-center gap-2 rounded-md border border-slate-700 bg-slate-800/60 px-2 py-1 text-xs"
               >
                 <StillMark imageUrl={character.referenceImage} />
-                <span>{character.name}</span>
-                <span className="text-[10px] text-slate-500">
-                  {character.referenceImage ? 'still' : 'no still'}
-                </span>
+                <span className="truncate">{character.name}</span>
               </span>
             ))}
             {selectedLocation && (
-              <span className="flex items-center gap-2 rounded-md border border-slate-700 bg-slate-800/60 px-2 py-1 text-xs">
-                <StillMark
-                  imageUrl={
-                    selectedLocation.versions?.find(
-                      (version) => version.id === referenceSelection.locationVersionId
-                    )?.imageUrl || selectedLocation.imageUrl
-                  }
-                />
-                <span>{selectedLocation.location || selectedLocation.name}</span>
-                <span className="text-[10px] text-slate-500">location</span>
+              <span className="flex max-w-full items-center gap-2 rounded-md border border-slate-700 bg-slate-800/60 px-2 py-1 text-xs">
+                <StillMark imageUrl={selectedLocation.imageUrl} />
+                <span className="truncate">{selectedLocation.location || selectedLocation.name}</span>
               </span>
             )}
-            {objectReferences
-              .filter((object) => referenceSelection.objectRefIds.includes(object.id))
-              .map((object) => (
-                <button
-                  key={object.id}
-                  type="button"
-                  onClick={() => setFocusObjectId(object.id)}
-                  className="flex items-center gap-2 rounded-md border border-teal-800/70 bg-slate-800/60 px-2 py-1 text-xs"
-                >
-                  <StillMark imageUrl={object.imageUrl} />
-                  <span>{object.name}</span>
-                  <span className="text-[10px] text-slate-500">
-                    {object.imageUrl ? 'still' : 'no still'}
-                  </span>
-                </button>
-              ))}
-            {cast.length === 0 && !selectedLocation && referenceSelection.objectRefIds.length === 0 && (
+            {connectedObjects.map((object) => (
+              <span
+                key={object.id}
+                className="flex max-w-full items-center gap-2 rounded-md border border-teal-800/70 bg-slate-800/60 px-2 py-1 text-xs"
+              >
+                <StillMark imageUrl={object.imageUrl} />
+                <span className="truncate">{object.name}</span>
+              </span>
+            ))}
+            {cast.length === 0 && !selectedLocation && connectedObjects.length === 0 && (
               <p className="text-xs text-slate-500">No references connected to this beat yet.</p>
             )}
           </div>
-        </section>
+        </div>
 
-        <section className="space-y-2">
-          <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="min-w-0 space-y-2">
+          <p className="text-[10px] uppercase tracking-wide text-slate-500">Reference library</p>
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
             <input
-              className="flex-1 bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-sm"
+              className="min-w-0 flex-1 rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search locations and objects"
               disabled={readOnly}
             />
             <select
-              className="bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-sm"
+              className="rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm"
               value={scope === 'all' || scope === 'unassigned' ? scope : String(scope)}
               onChange={(event) => {
                 const value = event.target.value
@@ -225,18 +292,45 @@ export function BeatDirectorDialog({
               <option value="unassigned">Unassigned</option>
             </select>
           </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1">
-              <p className="text-[10px] uppercase text-slate-500">Locations</p>
-              {visibleLocations.length === 0 ? (
+          <div className="flex gap-1">
+            {([
+              ['cast', 'Cast'],
+              ['locations', 'Locations'],
+              ['objects', 'Objects'],
+            ] as const).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                className={`rounded px-2 py-1 text-xs ${
+                  tab === id ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-200'
+                }`}
+                onClick={() => setTab(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="max-h-48 min-w-0 space-y-1 overflow-y-auto overflow-x-hidden rounded border border-slate-800 p-2">
+            {tab === 'cast' &&
+              (cast.length === 0 ? (
+                <p className="text-xs text-slate-500">Cast comes from the beat direction.</p>
+              ) : (
+                cast.map((character) => (
+                  <div key={character.id || character.name} className="flex min-w-0 items-center gap-2 text-xs">
+                    <StillMark imageUrl={character.referenceImage} />
+                    <span className="truncate">{character.name}</span>
+                  </div>
+                ))
+              ))}
+            {tab === 'locations' &&
+              (visibleLocations.length === 0 ? (
                 <p className="text-xs text-slate-500">No locations in this view.</p>
               ) : (
                 visibleLocations.map((location) => {
                   const selected = referenceSelection.locationRefId === location.id
                   const versionId = selected ? referenceSelection.locationVersionId ?? '' : ''
                   return (
-                    <div key={location.id} className="flex items-center gap-2 text-xs">
+                    <div key={location.id} className="flex min-w-0 items-center gap-2 text-xs">
                       <input
                         type="radio"
                         name={`beat-location-${beat.beatId}`}
@@ -245,10 +339,10 @@ export function BeatDirectorDialog({
                         onChange={() => onSelectLocation(location.id, null)}
                       />
                       <StillMark imageUrl={location.imageUrl} />
-                      <span className="truncate">{location.location || location.name}</span>
+                      <span className="min-w-0 truncate">{location.location || location.name}</span>
                       {(location.versions?.length ?? 0) > 0 && (
                         <select
-                          className="ml-auto bg-slate-950 border border-slate-700 rounded px-1 py-0.5"
+                          className="ml-auto max-w-[40%] rounded border border-slate-700 bg-slate-950 px-1 py-0.5"
                           value={versionId}
                           disabled={readOnly}
                           onChange={(event) =>
@@ -266,106 +360,39 @@ export function BeatDirectorDialog({
                     </div>
                   )
                 })
-              )}
-              {selectedLocation && (
-                <button
-                  type="button"
-                  className="text-[11px] text-slate-400 underline"
-                  disabled={readOnly}
-                  onClick={() => onSelectLocation(null, null)}
-                >
-                  Clear location
-                </button>
-              )}
-            </div>
-            <div className="space-y-1">
-              <p className="text-[10px] uppercase text-slate-500">Objects</p>
-              {visibleObjects.length === 0 ? (
+              ))}
+            {tab === 'objects' &&
+              (visibleObjects.length === 0 ? (
                 <p className="text-xs text-slate-500">No objects in this view.</p>
               ) : (
                 visibleObjects.map((object) => {
                   const checked = referenceSelection.objectRefIds.includes(object.id)
                   return (
-                    <label key={object.id} className="flex items-center gap-2 text-xs">
+                    <label key={object.id} className="flex min-w-0 items-center gap-2 text-xs">
                       <input
                         type="checkbox"
                         checked={checked}
                         disabled={readOnly}
-                        onChange={(event) => {
-                          setFocusObjectId(object.id)
-                          onToggleObject(object, event.target.checked)
-                        }}
+                        onChange={(event) => onToggleObject(object, event.target.checked)}
                       />
                       <StillMark imageUrl={object.imageUrl} />
-                      <span className="truncate">{object.name}</span>
+                      <span className="min-w-0 truncate">{object.name}</span>
                     </label>
                   )
                 })
-              )}
-            </div>
+              ))}
+            {tab === 'locations' && selectedLocation && (
+              <button
+                type="button"
+                className="text-[11px] text-slate-400 underline"
+                disabled={readOnly}
+                onClick={() => onSelectLocation(null, null)}
+              >
+                Clear location
+              </button>
+            )}
           </div>
-        </section>
-
-        {focusObject && otherBeats.length > 0 && (
-          <section className="space-y-1">
-            <h3 className="text-[11px] uppercase tracking-wide text-slate-500">
-              Other beats that name {focusObject.name}
-            </h3>
-            {otherBeats.map((row) => (
-              <label key={`${row.sceneIndex}-${row.beatId}`} className="flex items-start gap-2 text-xs">
-                <input
-                  type="checkbox"
-                  className="mt-0.5"
-                  checked={row.connected}
-                  disabled={readOnly}
-                  onChange={(event) =>
-                    onToggleObjectOnBeat(
-                      focusObject,
-                      { sceneIndex: row.sceneIndex, beatId: row.beatId },
-                      event.target.checked
-                    )
-                  }
-                />
-                <span>
-                  <span className="text-slate-400">Scene {row.sceneNumber} · </span>
-                  {row.label}
-                </span>
-              </label>
-            ))}
-          </section>
-        )}
-
-        <section className="grid min-w-0 gap-2">
-          <h3 className="text-[11px] uppercase tracking-wide text-slate-500">Prompts</h3>
-          <button
-            type="button"
-            className="w-full whitespace-normal rounded border border-teal-800/80 px-2 py-1 text-left text-[11px] text-teal-200 hover:bg-teal-950/40 disabled:opacity-50"
-            disabled={readOnly}
-            onClick={onUpdatePrompts}
-          >
-            Update still and clip prompts
-          </button>
-          <label className="flex flex-col gap-1 text-xs">
-            <span className="text-[10px] uppercase text-slate-500">Still prompt</span>
-            <textarea
-              className="min-h-[88px] rounded border border-slate-700 bg-slate-950 px-2 py-1"
-              value={frameDraft}
-              disabled={readOnly}
-              onChange={(event) => onFrameDraft(event.target.value)}
-              onBlur={onCommitFrame}
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-xs">
-            <span className="text-[10px] uppercase text-slate-500">Clip prompt</span>
-            <textarea
-              className="min-h-[88px] rounded border border-slate-700 bg-slate-950 px-2 py-1"
-              value={videoDraft}
-              disabled={readOnly}
-              onChange={(event) => onVideoDraft(event.target.value)}
-              onBlur={onCommitVideo}
-            />
-          </label>
-        </section>
+        </div>
       </DialogContent>
     </Dialog>
   )

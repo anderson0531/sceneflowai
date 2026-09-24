@@ -29,6 +29,7 @@ interface SceneDirectionWorkbenchProps {
   characters?: DirectionCharacter[]
   locationReferences?: DirectionLocation[]
   objectReferences?: DirectionObject[]
+  projectId?: string
 }
 
 function joinParts(parts: Array<string | undefined | null>): string {
@@ -59,6 +60,7 @@ export function SceneDirectionWorkbench({
   characters,
   locationReferences,
   objectReferences,
+  projectId,
 }: SceneDirectionWorkbenchProps) {
   const [descriptionOpen, setDescriptionOpen] = useState(false)
   const sceneDir = scene.sceneDirection as DetailedSceneDirection | undefined
@@ -185,6 +187,7 @@ export function SceneDirectionWorkbench({
                 characters={characters}
                 locationReferences={locationReferences}
                 objectReferences={objectReferences}
+                projectId={projectId}
               />
             ) : null
           }

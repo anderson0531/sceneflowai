@@ -11,6 +11,7 @@ import type {
   BeatReferenceSelection,
   SceneBeat,
 } from '@/lib/script/segmentTypes'
+import type { StillDirectorPatch } from '@/lib/intelligence/beat-still-director-fallback'
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
 import { refreshSceneSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
 import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
@@ -63,6 +64,7 @@ export interface BeatDirectionEditorProps {
   objectReferences?: DirectionObject[]
   /** `board` is the open Direction-tab layout. `accordion` stays collapsed until opened. */
   layout?: 'accordion' | 'board'
+  projectId?: string
 }
 
 export interface DirectionCharacter {
@@ -202,6 +204,7 @@ export function BeatDirectionEditor({
   locationReferences = [],
   objectReferences = [],
   layout = 'accordion',
+  projectId,
 }: BeatDirectionEditorProps) {
   const [expanded, setExpanded] = useState(layout === 'board')
   const [directorOpen, setDirectorOpen] = useState(false)
@@ -455,19 +458,6 @@ export function BeatDirectionEditor({
     })
   }
 
-  const selectionForBeat = (targetSceneIdx: number, target: SceneBeat): BeatReferenceSelection => {
-    if (target.beatId === beat.beatId && targetSceneIdx === sceneIdx) return referenceSelection
-    const resolved = resolveBeatElementSelection({
-      scene: scenes[targetSceneIdx] ?? {},
-      beat: target,
-      sceneIndex: targetSceneIdx,
-      projectCharacters: characters,
-      locationReferences: locationReferences as LocationReference[],
-      objectReferences: objectReferences as VisualReference[],
-    })
-    return selectionFromBeat(target, resolved)
-  }
-
   const namesForSelection = (selection: BeatReferenceSelection): string[] =>
     selection.objectRefIds
       .map((id) => objectReferences.find((object) => object.id === id)?.name?.trim())
@@ -479,9 +469,29 @@ export function BeatDirectionEditor({
   ): BeatDirection | undefined =>
     alignDirectionToConnectedObjects(nextDirection, namesForSelection(selection)) ?? nextDirection
 
-  const rebuildPromptsFromConnections = () => {
-    persist(directionAlignedToSelection(direction, referenceSelection), {
-      refreshPrompts: 'rebuild',
+  const saveDirectionPreview = (patch: StillDirectorPatch) => {
+    const next: BeatDirection = { ...(direction ?? {}) }
+    const textKeys = [
+      'shotType',
+      'cameraAngle',
+      'frozenMoment',
+      'blocking',
+      'gaze',
+      'emotion',
+      'propInteraction',
+      'lightingAccent',
+    ] as const
+    for (const key of textKeys) {
+      const value = patch[key]?.trim()
+      if (value) next[key] = value
+    }
+    if (!next.frozenMoment?.trim() && patch.actionFraming?.trim()) {
+      next.frozenMoment = patch.actionFraming.trim()
+    }
+    if (Array.isArray(patch.castInFrame)) next.castInFrame = patch.castInFrame
+    if (patch.keyProps && patch.keyProps.length > 0) next.keyProps = patch.keyProps
+    persist(directionAlignedToSelection(next, referenceSelection), {
+      refreshPrompts: 'recompute',
     })
   }
 
@@ -507,44 +517,6 @@ export function BeatDirectionEditor({
         {
           sceneIndex: sceneIdx,
           beatId: beat.beatId,
-          direction: directionAlignedToSelection(next.direction, next.selection),
-          referenceSelection: next.selection,
-        },
-      ],
-      { rebuildPrompts: true }
-    )
-  }
-
-  const toggleObjectOnBeat = (
-    object: DirectionObject,
-    target: { sceneIndex: number; beatId: string },
-    connect: boolean
-  ) => {
-    const sceneBeats = getSceneBeats(scenes[target.sceneIndex] ?? {})
-    const targetBeat = sceneBeats.find((entry) => entry.beatId === target.beatId)
-    if (!targetBeat) return
-    const resolvedAt = new Date().toISOString()
-    const selection = selectionForBeat(target.sceneIndex, targetBeat)
-    const next = connect
-      ? connectObjectReference({
-          direction: targetBeat.beatDirection,
-          selection,
-          objectId: object.id,
-          objectName: object.name,
-          resolvedAt,
-        })
-      : disconnectObjectReference({
-          direction: targetBeat.beatDirection,
-          selection,
-          objectId: object.id,
-          objectName: object.name,
-          resolvedAt,
-        })
-    writeConnection(
-      [
-        {
-          sceneIndex: target.sceneIndex,
-          beatId: target.beatId,
           direction: directionAlignedToSelection(next.direction, next.selection),
           referenceSelection: next.selection,
         },
@@ -584,7 +556,7 @@ export function BeatDirectionEditor({
       onClick={() => setDirectorOpen(true)}
     >
       <Clapperboard className="w-3.5 h-3.5" />
-      Direct
+      Direct Beat
     </button>
   )
 
@@ -642,21 +614,16 @@ export function BeatDirectionEditor({
         onOpenChange={setDirectorOpen}
         beat={beat}
         sceneNumber={sceneNumber}
+        sceneIndex={sceneIdx}
         scenes={scenes}
+        projectId={projectId}
         readOnly={readOnly}
         characters={characters}
         locationReferences={locationReferences}
         objectReferences={objectReferences}
         referenceSelection={referenceSelection}
-        frameDraft={frameDraft}
-        videoDraft={videoDraft}
-        onFrameDraft={setFrameDraft}
-        onVideoDraft={setVideoDraft}
-        onCommitFrame={() => commitPrompt('framePrompt', frameDraft, framePreview)}
-        onCommitVideo={() => commitPrompt('videoPrompt', videoDraft, videoPreview)}
-        onUpdatePrompts={rebuildPromptsFromConnections}
+        onSaveDirection={saveDirectionPreview}
         onToggleObject={toggleObject}
-        onToggleObjectOnBeat={toggleObjectOnBeat}
         onSelectLocation={selectLocation}
       />
 
@@ -863,15 +830,6 @@ export function BeatDirectionEditor({
             {sectionTitle('Prompts')}
             <div className="flex min-w-0 flex-col items-stretch gap-1">
               <span className="text-[10px] uppercase text-gray-500">Frame prompt</span>
-              {!readOnly && (
-                <button
-                  type="button"
-                  className="w-full whitespace-normal text-left text-[10px] underline text-gray-400 hover:text-gray-200"
-                  onClick={rebuildPromptsFromConnections}
-                >
-                  Update still and clip prompts
-                </button>
-              )}
             </div>
             <textarea
               className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 min-h-[72px]"
