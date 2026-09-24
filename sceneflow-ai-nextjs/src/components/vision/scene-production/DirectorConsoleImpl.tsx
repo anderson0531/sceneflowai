@@ -58,9 +58,6 @@ import type {
   VideoGenerationConfig,
   VideoGenerationMethod,
   SceneProductionData,
-  SelectedAudioTracks,
-  AudioTrackTimingSettings,
-  SceneAudioConfig,
   ProductionStream,
   ProductionStreamType,
   TextOverlay,
@@ -102,10 +99,6 @@ import {
 // this shared dependency, it reorders const declarations causing 'Cannot access eJ before initialization'.
 const VideoEditingDialog = dynamic(
   () => import('./VideoEditingDialogV2').then(mod => ({ default: mod.VideoEditingDialog })),
-  { ssr: false }
-)
-const SceneVideoPlayer = dynamic(
-  () => import('./SceneVideoPlayer').then(mod => ({ default: mod.SceneVideoPlayer })),
   { ssr: false }
 )
 // Dynamic import for SceneRenderDialog - shared between DirectorConsole and ScriptPanel chunks
@@ -163,14 +156,6 @@ import {
 } from '@/lib/storyboard/mediaVersions'
 import { resolveEffectiveStoryboardTier } from '@/lib/storyboard/storyboardQuality'
 import { BeatVideoGallery, type BeatVideoClip } from './BeatVideoGallery'
-import {
-  BeatVideoDirectorDialog,
-  type BeatVideoDirectorSavePayload,
-} from '@/components/vision/BeatVideoDirectorDialog'
-import {
-  applyVideoDirectorPromptToProduction,
-  resolveCurrentVideoPrompt,
-} from '@/lib/intelligence/beat-video-director-fallback'
 import type { SegmentGuideContext } from '@/lib/vision/segmentConfigBuilder'
 import { resolveEffectiveStartFrameUrl, resolveExpressGenerationMethod, resolveF2VFrameUrls, f2vStartFromPreviousEnd, STANDARD_TAKE_DURATION_SECONDS } from '@/lib/vision/segmentConfigBuilder'
 import { CONCURRENCY_DEFAULTS } from '@/lib/utils/concurrent-processor'
@@ -209,31 +194,9 @@ import { upload } from '@vercel/blob/client'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { getNextProductionStreamVersion, getProductionStreamDisplayName } from './defaults'
 
-// Default audio track selection state
-const DEFAULT_AUDIO_TRACKS: SelectedAudioTracks = {
-  narration: true,
-  dialogue: true,
-  music: false,
-  sfx: false,
-}
-
-// Default timing settings
-const DEFAULT_TIMING: AudioTrackTimingSettings = {
-  startTime: 0,
-  duration: 30,
-}
-
 // Stable empty segments reference to prevent TDZ render loops
 // Using a module-level constant guarantees the same reference for the app's lifecycle
 const EMPTY_SEGMENTS: SceneSegment[] = []
-
-// Audio track timing state type
-interface AudioTrackTimingState {
-  narration: AudioTrackTimingSettings
-  dialogue: AudioTrackTimingSettings
-  music: AudioTrackTimingSettings
-  sfx: AudioTrackTimingSettings
-}
 
 export interface DirectorConsoleProps {
   sceneId: string
@@ -331,11 +294,10 @@ export interface DirectorConsoleProps {
   onVideoGenerationModeChange?: (mode: VideoGenerationMode) => void
   /** Jump the parent workflow strip to Pre-Vis. */
   onOpenPreVis?: () => void
-  /** Generate dedicated F2V start and end frames. Does not replace the beat still. */
-  onGenerateF2VFrames?: (
-    segmentId: string,
-    options: { usePreviousEndFrame: boolean }
-  ) => void
+  /** Open Screening Room Video for this scene. */
+  onPlayScene?: () => void
+  /** Open Direct Beat for this clip so beat direction stays the prompt source. */
+  onDirectBeat?: (beatId: string) => void
   /** Shared beat selection with Direction, Audio, and Pre-Vis. */
   selectedBeatId?: string | null
   onSelectBeat?: (beatId: string) => void
@@ -411,7 +373,8 @@ export function DirectorConsoleRoot({
   videoGenerationMode = 'standard',
   onVideoGenerationModeChange,
   onOpenPreVis,
-  onGenerateF2VFrames,
+  onPlayScene,
+  onDirectBeat,
   selectedBeatId = null,
   onSelectBeat,
   children,
@@ -524,7 +487,6 @@ export function DirectorConsoleRoot({
 
   // Intelligent retake dialog for completed video clips
   const [retakeSegment, setRetakeSegment] = useState<SceneSegment | null>(null)
-  const [videoDirectorSegment, setVideoDirectorSegment] = useState<SceneSegment | null>(null)
   
   // Beat for VideoEditingDialog (editing completed videos)
   const [editingVideoSegment, setEditingVideoSegment] = useState<SceneSegment | null>(null)
@@ -553,9 +515,6 @@ export function DirectorConsoleRoot({
   const deselectAllBeats = useCallback(() => {
     setSelectedSegmentIds(new Set())
   }, [])
-  
-  // Scene video player modal state
-  const [isScenePlayerOpen, setIsScenePlayerOpen] = useState(false)
   
   // Production Streams panel collapsed by default (expand when user needs exports)
   const [streamsCollapsed, setStreamsCollapsed] = useState(true)
@@ -615,22 +574,8 @@ export function DirectorConsoleRoot({
     (productionData?.textOverlays as TextOverlay[]) || []
   )
   
-  // Segment-specific playback: start player at this segment index
-  const [playFromSegmentIndex, setPlayFromSegmentIndex] = useState<number>(0)
-  
   // Cinematic Elements dialog state - opens for inserting new cinematic segment
   const [cinematicDialogSegmentIndex, setCinematicDialogSegmentIndex] = useState<number | null>(null)
-  
-  // Audio track selection for video playback overlay
-  const [selectedAudioTracks, setSelectedAudioTracks] = useState<SelectedAudioTracks>(DEFAULT_AUDIO_TRACKS)
-  
-  // Audio track timing settings
-  const [audioTrackTiming, setAudioTrackTiming] = useState<AudioTrackTimingState>({
-    narration: { ...DEFAULT_TIMING },
-    dialogue: { ...DEFAULT_TIMING },
-    music: { ...DEFAULT_TIMING },
-    sfx: { ...DEFAULT_TIMING },
-  })
   
   // Persist mixerCollapsed to localStorage
   useEffect(() => {
@@ -833,25 +778,6 @@ export function DirectorConsoleRoot({
     return previousSegment.references?.endFrameUrl || null
   }, [editingVideoSegment, segments])
   
-  // Update track timing
-  const updateTrackTiming = useCallback((track: keyof AudioTrackTimingState, field: 'startTime' | 'duration', value: number) => {
-    setAudioTrackTiming(prev => ({
-      ...prev,
-      [track]: {
-        ...prev[track],
-        [field]: Math.max(0, value),
-      },
-    }))
-  }, [])
-  
-  // Toggle individual audio track
-  const toggleAudioTrack = useCallback((track: keyof SelectedAudioTracks) => {
-    setSelectedAudioTracks(prev => ({
-      ...prev,
-      [track]: !prev[track]
-    }))
-  }, [])
-  
   // Handle saving config from dialog
   const handleSaveConfig = useCallback((config: VideoGenerationConfig) => {
     if (selectedSegment) {
@@ -872,69 +798,6 @@ export function DirectorConsoleRoot({
       overrideConfigs: new Map([[segmentId, config]]),
     })
   }, [updateConfig, processQueue])
-
-  const handleOpenVideoDirection = useCallback((segment: SceneSegment) => {
-    setVideoDirectorSegment(segment)
-  }, [])
-
-  const handleSaveVideoDirection = useCallback(
-    async ({ prompt, generate }: BeatVideoDirectorSavePayload) => {
-      const segment = videoDirectorSegment
-      if (!segment) return
-      const trimmed = prompt.trim()
-      if (!trimmed) return
-
-      if (onProductionDataChange && productionData) {
-        onProductionDataChange({
-          ...productionData,
-          segments: applyVideoDirectorPromptToProduction(
-            productionData.segments,
-            segment.segmentId,
-            trimmed
-          ),
-        })
-      }
-
-      const existingConfig = getQueueItem(segment.segmentId)?.config
-      const updatedConfig: VideoGenerationConfig = {
-        ...(existingConfig ?? {
-          mode: 'I2V' as VideoGenerationMethod,
-          prompt: trimmed,
-          motionPrompt: trimmed,
-          visualPrompt: trimmed,
-          negativePrompt: '',
-          aspectRatio: videoAspectRatio,
-          resolution: '1080p' as const,
-          duration: STANDARD_TAKE_DURATION_SECONDS,
-          startFrameUrl: segment.references?.startFrameUrl || segment.startFrameUrl || null,
-          endFrameUrl: null,
-          sourceVideoUrl: null,
-          approvalStatus: 'user-approved' as const,
-          confidence: 100,
-        }),
-        prompt: trimmed,
-        motionPrompt: trimmed,
-        visualPrompt: trimmed,
-      }
-      updateConfig(segment.segmentId, updatedConfig)
-      void import('sonner').then(({ toast }) => {
-        toast.success('Video prompt saved')
-      })
-
-      if (generate) {
-        handleGenerateFromDialog(segment.segmentId, updatedConfig)
-      }
-    },
-    [
-      videoDirectorSegment,
-      onProductionDataChange,
-      productionData,
-      getQueueItem,
-      videoAspectRatio,
-      updateConfig,
-      handleGenerateFromDialog,
-    ]
-  )
 
   const handleRequestTake = useCallback(
     (segment: SceneSegment, focusPrompt = false) => {
@@ -1952,15 +1815,15 @@ export function DirectorConsoleRoot({
             <Zap className="w-3 h-3 mr-1" />
             {tVideoAgent('toolbarButton')}
           </Button>
-          {statusCounts.rendered > 0 && (
+          {statusCounts.rendered > 0 && onPlayScene && (
             <Button
               size="sm"
               variant="outline"
-              onClick={() => setIsScenePlayerOpen(true)}
+              onClick={onPlayScene}
               className="h-7 px-2 text-[10px] font-medium bg-emerald-600/20 border-emerald-500/50 text-emerald-300 hover:bg-emerald-600/30"
             >
               <Film className="w-3 h-3 mr-1" />
-              Play Clips ({statusCounts.rendered})
+              Play Scene
             </Button>
           )}
         </>
@@ -1984,30 +1847,6 @@ export function DirectorConsoleRoot({
         renderedCount={statusCounts.rendered}
         totalCount={videoClips.length || statusCounts.total}
         onOpenPreVis={onOpenPreVis}
-        onGenerateF2VFrames={onGenerateF2VFrames}
-        onGenerateF2VClip={(segment) => {
-          const item = queue.find((entry) => entry.segmentId === segment.segmentId)
-          const frames = resolveF2VFrameUrls(segment, scene as Record<string, unknown> | undefined)
-          if (!item || !frames.startFrameUrl || !frames.endFrameUrl) {
-            void import('sonner').then(({ toast }) => {
-              toast.error('Generate start and end frames for frame-to-video first.')
-            })
-            return
-          }
-          handleGenerateFromDialog(segment.segmentId, {
-            ...item.config,
-            mode: 'FTV',
-            startFrameUrl: frames.startFrameUrl,
-            endFrameUrl: frames.endFrameUrl,
-          })
-        }}
-        onPlay={(segment) => {
-          const segmentIndex = segments.findIndex((row) => row.segmentId === segment.segmentId)
-          if (segmentIndex >= 0) {
-            setPlayFromSegmentIndex(segmentIndex)
-            setIsScenePlayerOpen(true)
-          }
-        }}
         onTake={handleRequestTake}
         onUpload={onSegmentUpload}
         onRetake={(segment) => setRetakeSegment(segment)}
@@ -2023,7 +1862,7 @@ export function DirectorConsoleRoot({
         }}
         generatingClipId={isRendering ? currentSegmentId : null}
         onDirectVideo={(segment) => handleRequestTake(segment, false)}
-        onDirection={handleOpenVideoDirection}
+        onDirectBeat={onDirectBeat}
         onEditClip={(segment) => setEditingVideoSegment(segment)}
         onRestoreTake={handleRestoreVideoTake}
         selectedBeatId={selectedBeatId}
@@ -2137,35 +1976,6 @@ export function DirectorConsoleRoot({
         />
       )}
 
-      <BeatVideoDirectorDialog
-        open={!!videoDirectorSegment}
-        onOpenChange={(open) => {
-          if (!open) setVideoDirectorSegment(null)
-        }}
-        projectId={projectId}
-        sceneIndex={sceneIndex ?? 0}
-        beatId={videoDirectorSegment?.beatId}
-        label={
-          videoDirectorSegment
-            ? videoClips.find((clip) => clip.segment?.segmentId === videoDirectorSegment.segmentId)
-                ?.label || `Beat ${videoDirectorSegment.sequenceIndex + 1}`
-            : ''
-        }
-        currentPrompt={
-          videoDirectorSegment
-            ? resolveCurrentVideoPrompt(videoDirectorSegment) ||
-              getQueueItem(videoDirectorSegment.segmentId)?.config.prompt ||
-              ''
-            : ''
-        }
-        isGenerating={
-          !!videoDirectorSegment &&
-          isRendering &&
-          currentSegmentId === videoDirectorSegment.segmentId
-        }
-        onSave={handleSaveVideoDirection}
-      />
-
       <VideoAgentConfirmDialog
         open={videoAgentDialogOpen}
         onOpenChange={setVideoAgentDialogOpen}
@@ -2201,64 +2011,6 @@ export function DirectorConsoleRoot({
           onSubmitRetake={handleSubmitRetake}
         />
       )}
-      
-      {/* SceneVideoPlayer Modal */}
-      <SceneVideoPlayer
-        segments={segments}
-        sceneNumber={sceneNumber}
-        isOpen={isScenePlayerOpen}
-        onClose={() => {
-          setIsScenePlayerOpen(false)
-          setPlayFromSegmentIndex(0)
-        }}
-        startAtSegment={playFromSegmentIndex}
-        audioTracks={selectedAudioTracks}
-        sceneAudio={{
-          narrationUrl: scene?.narrationAudioUrl,
-          musicUrl: scene?.musicAudio,
-          // Collect dialogue audio URLs
-          dialogueUrls: scene?.dialogueAudio?.en?.map(d => d?.audioUrl).filter(Boolean) || [],
-          // Collect SFX audio URLs
-          sfxUrls: normalizedSceneSfx
-            .filter(
-              (s): s is { audioUrl: string } =>
-                typeof s === 'object' && !!s && typeof (s as { audioUrl?: string }).audioUrl === 'string'
-            )
-            .map((s) => s.audioUrl),
-        }}
-        audioConfig={{
-          narration: scene?.narrationAudioUrl ? {
-            url: scene.narrationAudioUrl,
-            startTime: audioTrackTiming.narration.startTime,
-            duration: audioTrackTiming.narration.duration,
-            volume: 0.8,
-          } : undefined,
-          music: scene?.musicAudio ? {
-            url: scene.musicAudio,
-            startTime: audioTrackTiming.music.startTime,
-            duration: audioTrackTiming.music.duration,
-            volume: 0.5,
-            loop: false,
-          } : undefined,
-          dialogue: scene?.dialogueAudio?.en?.filter(d => d?.audioUrl).map((d, i) => ({
-            url: d.audioUrl!,
-            startTime: audioTrackTiming.dialogue.startTime + (i * 2), // Stagger dialogue lines
-            duration: audioTrackTiming.dialogue.duration,
-            volume: 0.9,
-          })),
-          sfx: normalizedSceneSfx
-            .filter(
-              (s): s is { audioUrl: string } =>
-                typeof s === 'object' && !!s && typeof (s as { audioUrl?: string }).audioUrl === 'string'
-            )
-            .map((s, i) => ({
-              url: s.audioUrl,
-              startTime: audioTrackTiming.sfx.startTime + i * 1,
-              duration: audioTrackTiming.sfx.duration,
-              volume: 0.6,
-            })),
-        } as SceneAudioConfig}
-      />
       
       {/* VideoEditingDialog for editing completed segment videos */}
       {editingVideoSegment && (

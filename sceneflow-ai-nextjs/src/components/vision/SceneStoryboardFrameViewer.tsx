@@ -11,6 +11,7 @@ import {
   Loader,
   Move,
   MonitorPlay,
+  Play,
   Plus,
   RefreshCw,
   Sparkles,
@@ -160,6 +161,8 @@ export interface SceneStoryboardFrameViewerProps {
   onSetScreeningPoster?: (slot: StoryboardFrameSlot | null) => void
   /** When true, skip accordion header — used inside the Writer's Room Pre-Vis panel */
   hideOuterChrome?: boolean
+  /** Open Screening Room Pre-Vis for this scene. */
+  onPlayPreVis?: () => void
   /** Direct prompt-builder run in flight — same spinner key Regen wrapGenerate uses. */
   generatingDirectSlotKey?: string | null
   /**
@@ -460,6 +463,7 @@ export function SceneStoryboardFrameViewer({
   screeningPosterFrameKey,
   onSetScreeningPoster,
   hideOuterChrome = false,
+  onPlayPreVis,
   generatingDirectSlotKey = null,
   frameGenerationQuality = 'draft',
   onFrameGenerationQualityChange,
@@ -983,6 +987,18 @@ export function SceneStoryboardFrameViewer({
               <p>No pre-vis frames yet.</p>
               <div className="mt-3 flex flex-col items-center gap-2">
                 {qualityToggle}
+                {onPlayPreVis && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="border-emerald-500/50 text-emerald-300"
+                    onClick={onPlayPreVis}
+                  >
+                    <Play className="w-3.5 h-3.5 mr-1.5" />
+                    Play Pre-Vis
+                  </Button>
+                )}
                 {onExpressSceneGenerate && (
                   <Button
                     type="button"
@@ -1037,6 +1053,18 @@ export function SceneStoryboardFrameViewer({
                     </Button>
                   )}
                   {qualityToggle}
+                  {onPlayPreVis && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-[10px] border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10"
+                      onClick={onPlayPreVis}
+                    >
+                      <Play className="w-3 h-3 mr-0.5" />
+                      Play Pre-Vis
+                    </Button>
+                  )}
                   {onExpressSceneGenerate && (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -1163,8 +1191,8 @@ export function SceneStoryboardFrameViewer({
                 }}
               >
 
-                <div className="sticky top-2 flex w-full min-w-0 flex-1 flex-col gap-2 self-start lg:w-auto">
-                  <div className="rounded-lg overflow-hidden bg-gray-800/50 border border-slate-700/40">
+                <div className="sticky top-2 flex w-full min-w-0 max-w-full flex-1 flex-col gap-2 self-start lg:min-w-[40rem]">
+                  <div className="w-full rounded-lg overflow-hidden bg-gray-800/50 border border-slate-700/40">
                     <div className="relative overflow-hidden">
                       {previewSlot ? (
                         <SceneImageFrame
@@ -1179,6 +1207,8 @@ export function SceneStoryboardFrameViewer({
                           controlsVariant="comfortable"
                           showBorder={false}
                           expandable
+                          className="w-full"
+                          directorTitle="Direct Still"
                         />
                       ) : (
                         <div className="aspect-video flex flex-col items-center justify-center">

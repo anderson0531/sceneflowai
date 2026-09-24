@@ -20,7 +20,7 @@ export { SegmentPairCard } from './SegmentPairCard'
 export { SegmentFrameTimeline } from './SegmentFrameTimeline'
 
 // Director's Console Components
-// NOTE: DirectorDialog, SceneVideoPlayer are imported directly by DirectorConsole, not via barrel
+// NOTE: DirectorDialog is imported directly by DirectorConsole, not via barrel
 // NOTE: DirectorConsole MUST be imported dynamically to avoid TDZ errors:
 //   const DirectorConsole = dynamic(() => import('./scene-production/DirectorConsole').then(mod => ({ default: mod.DirectorConsole })), { ssr: false })
 export { GuidePromptEditor } from './GuidePromptEditor'

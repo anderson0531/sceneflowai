@@ -127,8 +127,8 @@ interface SceneGalleryProps {
   projectStreams?: ProjectStream[]
   /** Share a rendered stream master from Screening Room stream mode. */
   onShareStream?: (language: string) => void | Promise<void>
-  /** One-shot hint to open Screening Room in stream or promo mode for a language. */
-  screeningPlaybackHint?: { mode: 'stream' | 'promo'; language: string } | null
+  /** One-shot hint to open Screening Room on a mode, language, and scene. */
+  screeningPlaybackHint?: import('@/lib/scene/screeningReviewModes').ScreeningPlaybackHint | null
   onScreeningPlaybackHintConsumed?: () => void
   /** Rendered promo trailer MP4 URL for Screening Room Promo mode. */
   promoTrailerUrl?: string | null

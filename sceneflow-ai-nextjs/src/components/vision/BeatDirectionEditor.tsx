@@ -62,9 +62,12 @@ export interface BeatDirectionEditorProps {
   characters?: DirectionCharacter[]
   locationReferences?: DirectionLocation[]
   objectReferences?: DirectionObject[]
-  /** `board` is the open Direction-tab layout. `accordion` stays collapsed until opened. */
-  layout?: 'accordion' | 'board'
+  /** `board` is the open Direction-tab layout. `accordion` stays collapsed until opened. `dialog` mounts only Direct Beat. */
+  layout?: 'accordion' | 'board' | 'dialog'
   projectId?: string
+  /** Controlled Direct Beat dialog. Used by the Clips tab, where this editor is dialog-only. */
+  directorOpen?: boolean
+  onDirectorOpenChange?: (open: boolean) => void
 }
 
 export interface DirectionCharacter {
@@ -205,9 +208,16 @@ export function BeatDirectionEditor({
   objectReferences = [],
   layout = 'accordion',
   projectId,
+  directorOpen: directorOpenProp,
+  onDirectorOpenChange,
 }: BeatDirectionEditorProps) {
   const [expanded, setExpanded] = useState(layout === 'board')
-  const [directorOpen, setDirectorOpen] = useState(false)
+  const [directorOpenInternal, setDirectorOpenInternal] = useState(false)
+  const directorOpen = directorOpenProp ?? directorOpenInternal
+  const setDirectorOpen = (open: boolean) => {
+    onDirectorOpenChange?.(open)
+    if (directorOpenProp === undefined) setDirectorOpenInternal(open)
+  }
   const open = layout === 'board' || expanded
   const direction = beat.beatDirection
   const summary = useMemo(() => summarizeDirection(direction), [direction])
@@ -560,6 +570,28 @@ export function BeatDirectionEditor({
     </button>
   )
 
+  const directorDialog = (
+    <BeatDirectorDialog
+      open={directorOpen}
+      onOpenChange={setDirectorOpen}
+      beat={beat}
+      sceneNumber={sceneNumber}
+      sceneIndex={sceneIdx}
+      scenes={scenes}
+      projectId={projectId}
+      readOnly={readOnly}
+      characters={characters}
+      locationReferences={locationReferences}
+      objectReferences={objectReferences}
+      referenceSelection={referenceSelection}
+      onSaveDirection={saveDirectionPreview}
+      onToggleObject={toggleObject}
+      onSelectLocation={selectLocation}
+    />
+  )
+
+  if (layout === 'dialog') return directorDialog
+
   return (
     <div
       className={
@@ -609,23 +641,7 @@ export function BeatDirectionEditor({
           {directButton}
         </div>
       )}
-      <BeatDirectorDialog
-        open={directorOpen}
-        onOpenChange={setDirectorOpen}
-        beat={beat}
-        sceneNumber={sceneNumber}
-        sceneIndex={sceneIdx}
-        scenes={scenes}
-        projectId={projectId}
-        readOnly={readOnly}
-        characters={characters}
-        locationReferences={locationReferences}
-        objectReferences={objectReferences}
-        referenceSelection={referenceSelection}
-        onSaveDirection={saveDirectionPreview}
-        onToggleObject={toggleObject}
-        onSelectLocation={selectLocation}
-      />
+      {directorDialog}
 
       {open && (
         <div className={layout === 'board' ? 'space-y-3 p-3 text-xs' : 'space-y-2 px-3 pb-3 pt-1 text-xs'}>

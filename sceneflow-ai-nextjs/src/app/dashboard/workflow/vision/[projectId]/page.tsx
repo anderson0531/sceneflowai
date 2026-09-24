@@ -865,10 +865,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [productionView, setProductionView] = useState<ProductionViewMode>(() =>
     parseProductionView(searchParams)
   )
-  const [screeningPlaybackHint, setScreeningPlaybackHint] = useState<{
-    mode: 'stream' | 'promo'
-    language: string
-  } | null>(null)
+  const [screeningPlaybackHint, setScreeningPlaybackHint] = useState<
+    import('@/lib/scene/screeningReviewModes').ScreeningPlaybackHint | null
+  >(null)
   const [isGenVideoRunning, setIsGenVideoRunning] = useState(false)
   const [showDashboard, setShowDashboard] = useState(false)
   const [showNavigationWarning, setShowNavigationWarning] = useState(false)
@@ -1770,12 +1769,33 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     setProductionViewWithUrl('screening')
   }, [setProductionViewWithUrl])
 
+  const openScreeningRoomAtScene = useCallback(
+    (sceneIndex: number, mode: 'animatic' | 'beats') => {
+      setScreeningPlaybackHint({ mode, sceneIndex })
+      setProductionView('screening')
+      const newParams = new URLSearchParams(searchParams.toString())
+      newParams.set('view', 'screening')
+      newParams.set('playback', mode)
+      newParams.set('scene', String(sceneIndex))
+      newParams.delete('lang')
+      window.history.replaceState({}, '', `${pathname}?${newParams}`)
+    },
+    [pathname, searchParams]
+  )
+
   useEffect(() => {
     setProductionView(parseProductionView(searchParams))
     const playback = searchParams.get('playback')
     const lang = searchParams.get('lang')
     if (playback === 'stream' && lang) {
       setScreeningPlaybackHint({ mode: 'stream', language: lang })
+    }
+    if (playback === 'beats' || playback === 'animatic') {
+      const scene = Number(searchParams.get('scene'))
+      setScreeningPlaybackHint({
+        mode: playback,
+        sceneIndex: Number.isFinite(scene) && scene >= 0 ? scene : 0,
+      })
     }
     if (searchParams.get('diag') === 'screening') {
       enableScreeningPlayerDiagnostics()
@@ -17038,6 +17058,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   />
                 }
                 onPlayScript={() => openScreeningRoomFromVisionUi()}
+                onOpenScreeningRoom={openScreeningRoomAtScene}
                 onAddScene={handleAddScene}
                 onDeleteScene={handleDeleteScene}
                 onReorderScenes={handleReorderScenes}

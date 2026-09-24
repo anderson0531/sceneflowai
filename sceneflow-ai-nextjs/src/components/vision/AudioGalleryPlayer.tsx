@@ -311,8 +311,8 @@ interface AudioGalleryPlayerProps {
   projectStreams?: ProjectStream[]
   /** Share rendered stream master (stream playback mode). */
   onShareStream?: (language: string) => void | Promise<void>
-  /** One-shot open hint from Streams / Promo tab preview. */
-  screeningPlaybackHint?: { mode: 'stream' | 'promo'; language: string } | null
+  /** One-shot open hint from Production or Streams. */
+  screeningPlaybackHint?: import('@/lib/scene/screeningReviewModes').ScreeningPlaybackHint | null
   onScreeningPlaybackHintConsumed?: () => void
   /** Rendered 9:16 promo trailer MP4 (Publishing → Promo). */
   promoTrailerUrl?: string | null
@@ -384,11 +384,34 @@ export function AudioGalleryPlayer({
   promoTrailerUrl,
   onSceneMixChange,
 }: AudioGalleryPlayerProps) {
-  const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
-  const [playbackMode, setPlaybackMode] = useState<PreVisPlaybackMode>('animatic')
+  const [currentSceneIndex, setCurrentSceneIndex] = useState(() =>
+    typeof screeningPlaybackHint?.sceneIndex === 'number' && screeningPlaybackHint.sceneIndex >= 0
+      ? screeningPlaybackHint.sceneIndex
+      : 0
+  )
+  const [playbackMode, setPlaybackMode] = useState<PreVisPlaybackMode>(() => {
+    const mode = screeningPlaybackHint?.mode
+    if (
+      mode === 'animatic' ||
+      mode === 'beats' ||
+      mode === 'video' ||
+      mode === 'stream' ||
+      mode === 'promo'
+    ) {
+      return mode
+    }
+    return 'animatic'
+  })
   const [playerWatermarkVisible, setPlayerWatermarkVisible] = useState(true)
   const watermarkModeRef = useRef<PreVisPlaybackMode>('animatic')
-  const [beatAutoPlay, setBeatAutoPlay] = useState(false)
+  const [beatAutoPlay, setBeatAutoPlay] = useState(
+    () => screeningPlaybackHint?.mode === 'beats'
+  )
+  const pendingPreVisPlayRef = useRef<number | null>(
+    screeningPlaybackHint?.mode === 'animatic'
+      ? (screeningPlaybackHint.sceneIndex ?? 0)
+      : null
+  )
   const beatAutoPlayOnAdvanceRef = useRef(false)
   const [decodedStillUrls, setDecodedStillUrls] = useState<ReadonlySet<string>>(() => new Set())
   const [volume, setVolume] = useState(0.8)
@@ -687,6 +710,7 @@ export function AudioGalleryPlayer({
     visualFrames,
     currentVisualFrame,
     hasVoiceAudio,
+    play,
     pause,
     togglePlayback,
     seekTo,
@@ -978,17 +1002,41 @@ export function AudioGalleryPlayer({
 
   useEffect(() => {
     if (!screeningPlaybackHint) return
-    if (screeningPlaybackHint.mode === 'stream') {
+    const { mode, language, sceneIndex } = screeningPlaybackHint
+    if (typeof sceneIndex === 'number' && sceneIndex >= 0) {
+      setCurrentSceneIndex(sceneIndex)
+    }
+    if (mode === 'stream') {
       setPlaybackMode('stream')
-      onLanguageChange(screeningPlaybackHint.language)
+      if (language) onLanguageChange(language)
       onScreeningPlaybackHintConsumed?.()
       return
     }
-    if (screeningPlaybackHint.mode === 'promo') {
+    if (mode === 'promo') {
       setPlaybackMode('promo')
+      onScreeningPlaybackHintConsumed?.()
+      return
+    }
+    if (mode === 'beats') {
+      setPlaybackMode('beats')
+      setBeatAutoPlay(true)
+      onScreeningPlaybackHintConsumed?.()
+      return
+    }
+    if (mode === 'animatic') {
+      setPlaybackMode('animatic')
+      pendingPreVisPlayRef.current = typeof sceneIndex === 'number' && sceneIndex >= 0 ? sceneIndex : 0
       onScreeningPlaybackHintConsumed?.()
     }
   }, [screeningPlaybackHint, onLanguageChange, onScreeningPlaybackHintConsumed])
+
+  useEffect(() => {
+    const target = pendingPreVisPlayRef.current
+    if (target == null) return
+    if (playbackMode !== 'animatic' || currentSceneIndex !== target) return
+    pendingPreVisPlayRef.current = null
+    play()
+  }, [playbackMode, currentSceneIndex, play])
 
   useEffect(() => {
     if (watermarkModeRef.current === playbackMode) return
