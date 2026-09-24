@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { Button } from '@/components/ui/Button'
 import { DictationTextarea } from '@/components/ui/DictationTextarea'
-import { Wand2, Edit, Zap, Heart, Eye, Target, Lightbulb, Trash2, Sparkles, Check } from 'lucide-react'
+import { Wand2, Edit, Zap, Heart, Eye, Target, Lightbulb, Trash2, Sparkles } from 'lucide-react'
 import { 
   SCENE_OPTIMIZATION_TEMPLATES, 
   countInstructions,
@@ -85,11 +85,15 @@ export function InstructionsPanel({
     return raw
       .map((rec) => normalizeRecommendation(coerceRecommendationInput(rec)))
       .filter((rec) => rec.text.trim().length > 0)
-  }, [audienceAnalysis?.recommendations, recommendations])
+      .filter((rec) => !appliedRecommendationIds.includes(rec.id || ''))
+  }, [audienceAnalysis?.recommendations, recommendations, appliedRecommendationIds])
 
   const polishRecs = useMemo(
-    () => (polishAnalysis?.recommendations ?? []).filter((rec) => rec.text.trim().length > 0),
-    [polishAnalysis?.recommendations]
+    () =>
+      (polishAnalysis?.recommendations ?? []).filter(
+        (rec) => rec.text.trim().length > 0 && !appliedRecommendationIds.includes(rec.id || '')
+      ),
+    [polishAnalysis?.recommendations, appliedRecommendationIds]
   )
 
   // Append instruction with numbered format
@@ -134,7 +138,6 @@ export function InstructionsPanel({
           <ul className="space-y-2">
             {normalizedRecs.map((rec, idx) => {
               const recId = rec.id || `rec-${idx}`
-              const isApplied = appliedRecommendationIds.includes(recId)
               const recPriority = rec.priority
               const recCategory = rec.category
               const recImpact = (rec as SceneRecommendation & { impact?: string }).impact
@@ -143,17 +146,13 @@ export function InstructionsPanel({
               return (
                 <li 
                   key={recId} 
-                  className={`flex items-start gap-2 text-xs p-2.5 rounded-lg transition-colors ${
-                    isApplied 
-                      ? 'bg-green-900/30 border border-green-700/50' 
-                      : 'bg-gray-800/40 border border-gray-700/30 hover:bg-gray-800/60'
-                  }`}
+                  className="flex items-start gap-2 text-xs p-2.5 rounded-lg transition-colors bg-gray-800/40 border border-gray-700/30 hover:bg-gray-800/60"
                 >
                   <span className="flex items-center justify-center w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 text-[10px] font-bold flex-shrink-0 mt-0.5">
                     {idx + 1}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <span className={`text-gray-300 leading-relaxed block ${isApplied ? 'line-through opacity-60' : ''}`}>
+                    <span className="text-gray-300 leading-relaxed block">
                       {rec.text}
                     </span>
                     {(recPriority || recCategory || recImpact || recPointsDeducted) && (
@@ -191,22 +190,15 @@ export function InstructionsPanel({
                       </div>
                     )}
                   </div>
-                  {isApplied ? (
-                    <span className="flex items-center gap-1 text-green-400 text-[10px] font-medium flex-shrink-0">
-                      <Check className="w-3 h-3" />
-                      Added
-                    </span>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 px-2 text-[10px] text-violet-400 hover:text-violet-300 hover:bg-violet-900/30 flex-shrink-0"
-                      disabled={!canAddMore}
-                      onClick={() => onApplyRecommendation?.(rec.text, recId)}
-                    >
-                      + Add
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-[10px] text-violet-400 hover:text-violet-300 hover:bg-violet-900/30 flex-shrink-0"
+                    disabled={!canAddMore}
+                    onClick={() => onApplyRecommendation?.(rec.text, recId)}
+                  >
+                    + Add
+                  </Button>
                 </li>
               )
             })}
@@ -236,21 +228,16 @@ export function InstructionsPanel({
           <ul className="space-y-2">
             {polishRecs.map((rec, idx) => {
               const recId = rec.id || `polish-${idx}`
-              const isApplied = appliedRecommendationIds.includes(recId)
               return (
                 <li
                   key={recId}
-                  className={`flex items-start gap-2 text-xs p-2.5 rounded-lg transition-colors ${
-                    isApplied
-                      ? 'bg-green-900/30 border border-green-700/50'
-                      : 'bg-gray-800/40 border border-gray-700/30 hover:bg-gray-800/60'
-                  }`}
+                  className="flex items-start gap-2 text-xs p-2.5 rounded-lg transition-colors bg-gray-800/40 border border-gray-700/30 hover:bg-gray-800/60"
                 >
                   <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold flex-shrink-0 mt-0.5">
                     {idx + 1}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <span className={`text-gray-300 leading-relaxed block ${isApplied ? 'line-through opacity-60' : ''}`}>
+                    <span className="text-gray-300 leading-relaxed block">
                       {rec.text}
                     </span>
                     <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
@@ -270,22 +257,15 @@ export function InstructionsPanel({
                       </span>
                     </div>
                   </div>
-                  {isApplied ? (
-                    <span className="flex items-center gap-1 text-green-400 text-[10px] font-medium flex-shrink-0">
-                      <Check className="w-3 h-3" />
-                      Added
-                    </span>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 px-2 text-[10px] text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/30 flex-shrink-0"
-                      disabled={!canAddMore}
-                      onClick={() => onApplyRecommendation?.(rec.text, recId)}
-                    >
-                      + Add
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-[10px] text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/30 flex-shrink-0"
+                    disabled={!canAddMore}
+                    onClick={() => onApplyRecommendation?.(rec.text, recId)}
+                  >
+                    + Add
+                  </Button>
                 </li>
               )
             })}

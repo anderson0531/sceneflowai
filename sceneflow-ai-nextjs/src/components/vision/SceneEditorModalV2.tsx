@@ -31,6 +31,7 @@ type RevisionDepth = 'light' | 'moderate' | 'deep'
 interface SceneEditorApplyOptions {
   preserveElements?: PreserveElement[]
   revisionDepth?: RevisionDepth
+  appliedRecommendationIds?: string[]
 }
 
 interface SceneEditorModalProps {
@@ -285,6 +286,7 @@ export function SceneEditorModal({
       await onApplyChanges(sceneIndex, revisedSceneWithMetadata, {
         preserveElements: buildPreserveElements(),
         revisionDepth,
+        appliedRecommendationIds,
       })
     } finally {
       setIsApplying(false)

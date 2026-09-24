@@ -14412,7 +14412,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const handleApplySceneChanges = async (
     sceneIndex: number,
     revisedScene: any,
-    options?: { preserveElements?: PreserveElement[]; revisionDepth?: RevisionDepth }
+    options?: {
+      preserveElements?: PreserveElement[]
+      revisionDepth?: RevisionDepth
+      appliedRecommendationIds?: string[]
+    }
   ) => {
     if (!script) return
 
@@ -14450,8 +14454,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     let cleanedScene = applyScenePreservation(originalScene, audioCleanedScene, preserveElements)
 
     const pending = pendingAppliedRecIdsRef.current
-    const pendingIds =
-      pending && pending.sceneIndex === sceneIndex ? pending.recIds : []
+    const pendingIds = [
+      ...(pending && pending.sceneIndex === sceneIndex ? pending.recIds : []),
+      ...(options?.appliedRecommendationIds || []),
+    ]
     if (pending && pending.sceneIndex === sceneIndex) {
       pendingAppliedRecIdsRef.current = null
     }
@@ -14459,23 +14465,38 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     // Preserve audienceAnalysis from original scene and mark as optimized
     // so progressive analysis knows the scene was edited since last analysis
     if (originalScene?.audienceAnalysis) {
+      const appliedRecommendationIds = mergeAppliedRecommendationIds(
+        originalScene.audienceAnalysis.appliedRecommendationIds,
+        pendingIds
+      )
+      const recommendations = Array.isArray(originalScene.audienceAnalysis.recommendations)
+        ? originalScene.audienceAnalysis.recommendations.filter(
+            (rec: unknown, index: number) => !appliedRecommendationIds.includes(recommendationId(rec, index))
+          )
+        : originalScene.audienceAnalysis.recommendations
       cleanedScene.audienceAnalysis = {
         ...originalScene.audienceAnalysis,
-        appliedRecommendationIds: mergeAppliedRecommendationIds(
-          originalScene.audienceAnalysis.appliedRecommendationIds,
-          pendingIds
-        ),
+        recommendations,
+        appliedRecommendationIds,
         optimizedAt: new Date().toISOString()
       }
     }
 
     if (originalScene?.polishAnalysis) {
+      const appliedRecommendationIds = mergeAppliedRecommendationIds(
+        originalScene.polishAnalysis.appliedRecommendationIds,
+        pendingIds
+      )
+      const recommendations = Array.isArray(originalScene.polishAnalysis.recommendations)
+        ? originalScene.polishAnalysis.recommendations.filter(
+            (rec: { id?: string }, index: number) =>
+              !appliedRecommendationIds.includes(rec?.id || recommendationId(rec, index))
+          )
+        : originalScene.polishAnalysis.recommendations
       cleanedScene.polishAnalysis = {
         ...originalScene.polishAnalysis,
-        appliedRecommendationIds: mergeAppliedRecommendationIds(
-          originalScene.polishAnalysis.appliedRecommendationIds,
-          pendingIds
-        ),
+        recommendations,
+        appliedRecommendationIds,
         optimizedAt: new Date().toISOString()
       }
     }
@@ -16770,8 +16791,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         console.warn('[saveScenesToDatabase] Segment/beat re-derivation failed; persisting flat shape only', segErr)
       }
 
+      const derivedScript = metadataToPersist?.visionPhase?.script
+      const derivedScenes = derivedScript?.script?.scenes || mergedScenes
+      const { scenes: scenesToSend, persistSceneIds } = persistSceneIdsForChangedScenes(
+        canonicalScenes,
+        derivedScenes
+      )
+      const putScript = persistSceneIds
+        ? {
+            ...derivedScript,
+            script: { ...derivedScript?.script, scenes: scenesToSend },
+          }
+        : derivedScript
+      // refreshLiveScript reads scriptRef at send time. Callers often set
+      // React state only after this save returns, so the ref has to carry the
+      // derived script or the PUT would replace it with the pre-edit snapshot.
+      scriptRef.current = derivedScript
+
       const payload: Record<string, any> = {
-        metadata: metadataToPersist,
+        metadata: {
+          visionPhase: {
+            script: putScript,
+            scriptUpdatedAt,
+          },
+        },
       }
       
       // Signal to the server which scenes were intentionally deleted.
@@ -16785,7 +16828,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const response = await serializedProjectSave(
         payload,
         'saveScenesToDatabase',
-        { mintScriptUpdatedAt: true }
+        { refreshLiveScript: true, mintScriptUpdatedAt: true, persistSceneIds }
       )
       
       if (!response.ok) {

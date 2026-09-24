@@ -139,6 +139,20 @@ describe('vision page slims every project PUT', () => {
     expect(putBody).not.toContain('production:')
   })
 
+  it('sends only the derived script from saveScenesToDatabase', () => {
+    const start = page.indexOf('const saveScenesToDatabase = async')
+    const end = page.indexOf('const getUserId = () =>', start)
+    const fn = page.slice(start, end)
+    expect(fn).toContain('persistSceneIdsForChangedScenes')
+    expect(fn).toContain('script: putScript')
+    expect(fn).toContain('scriptUpdatedAt')
+    expect(fn).toContain('persistSceneIds')
+    const payloadStart = fn.indexOf('const payload')
+    const payloadSlice = fn.slice(payloadStart, fn.indexOf('serializedProjectSave', payloadStart))
+    expect(payloadSlice).toContain('script: putScript')
+    expect(payloadSlice).not.toContain('metadataToPersist')
+  })
+
   it('keeps production on the load-time migration that rewrites it', () => {
     expect(page).toMatch(/queuePersist\(\s*\{\s*metadata: finalMetadata,\s*persistProduction: true\s*\}/)
   })
@@ -442,6 +456,15 @@ describe('fitProjectResponseMetadata', () => {
 })
 
 describe('fitProjectPutPayload', () => {
+  it('counts UTF-8 bytes, not JavaScript string length', () => {
+    const fitted = fitProjectPutPayload(
+      { metadata: { visionPhase: { note: '你'.repeat(100) } } },
+      { budgetBytes: 150 }
+    )
+    expect(fitted.bytes).toBeGreaterThan(150)
+    expect(fitted.exceedsLimit).toBe(true)
+  })
+
   it('strips MediaVersion prompts and keeps live still URL and beatDirection', () => {
     const fitted = fitProjectPutPayload({
       metadata: {
