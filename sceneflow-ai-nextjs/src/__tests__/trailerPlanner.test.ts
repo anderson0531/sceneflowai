@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { planPromoTrailer } from '@/lib/publish/trailerPlanner'
+import { resolvePromoBeatMedia } from '@/lib/publish/promoBeatMedia'
 import {
   buildPromoSceneFromPlan,
   isPromoCinematicScene,
@@ -222,6 +223,119 @@ describe('buildPromoSceneFromPlan', () => {
     const twice = upsertPromoSceneInScenes(once, { ...scene, action: 'refreshed' })
     expect(twice.filter((s) => isPromoCinematicScene(s)).length).toBe(1)
     expect(filmSceneIndices(twice)).toEqual([0])
+  })
+})
+
+describe('resolvePromoBeatMedia', () => {
+  const beat = {
+    sceneId: 'scene-0',
+    beatId: 'b0',
+    sceneIndex: 0,
+    startSec: 0,
+    endSec: 6,
+    durationSec: 6,
+    score: 80,
+    frameUrl: 'https://example.com/frame.png',
+    videoUrl: 'https://example.com/stale.mp4',
+  }
+
+  it('uses the live clip and its take thumbnail', () => {
+    const media = resolvePromoBeatMedia(beat, {
+      'scene-0': {
+        segments: [
+          {
+            segmentId: 'seg-1',
+            beatId: 'b0',
+            assetType: 'video',
+            activeAssetUrl: 'https://example.com/live.mp4',
+            takes: [
+              {
+                assetUrl: 'https://example.com/live.mp4',
+                thumbnailUrl: 'https://example.com/thumb.jpg',
+                status: 'COMPLETE',
+              },
+            ],
+          },
+        ],
+      },
+    })
+    expect(media).toEqual({
+      segmentId: 'seg-1',
+      hasClip: true,
+      videoUrl: 'https://example.com/live.mp4',
+      thumbnailUrl: 'https://example.com/thumb.jpg',
+    })
+  })
+
+  it('returns the storyboard frame when the segment has no clip', () => {
+    const media = resolvePromoBeatMedia(
+      { ...beat, videoUrl: undefined },
+      {
+        'scene-0': {
+          segments: [
+            {
+              segmentId: 'seg-1',
+              beatId: 'b0',
+              assetType: 'image',
+              activeAssetUrl: null,
+              startFrameUrl: 'https://example.com/start.jpg',
+            },
+          ],
+        },
+      }
+    )
+    expect(media.hasClip).toBe(false)
+    expect(media.videoUrl).toBeUndefined()
+    expect(media.segmentId).toBe('seg-1')
+    expect(media.thumbnailUrl).toBe('https://example.com/frame.png')
+  })
+
+  it('ignores a stale plan clip when the live segment has no video', () => {
+    const media = resolvePromoBeatMedia(beat, {
+      'scene-0': {
+        segments: [{ segmentId: 'seg-1', beatId: 'b0', activeAssetUrl: null, takes: [] }],
+      },
+    })
+    expect(media.hasClip).toBe(false)
+    expect(media.videoUrl).toBeUndefined()
+    expect(media.thumbnailUrl).toBe('https://example.com/frame.png')
+  })
+
+  it('keeps the snapshot clip when no segment exists', () => {
+    const media = resolvePromoBeatMedia(beat, {})
+    expect(media).toEqual({
+      hasClip: true,
+      videoUrl: 'https://example.com/stale.mp4',
+      thumbnailUrl: undefined,
+    })
+  })
+
+  it('falls back to scene index keys and has no segment when production is empty', () => {
+    const empty = resolvePromoBeatMedia(
+      { ...beat, videoUrl: undefined },
+      { 'scene-0': { segments: [] } }
+    )
+    expect(empty.hasClip).toBe(false)
+    expect(empty.segmentId).toBeUndefined()
+    expect(empty.thumbnailUrl).toBe('https://example.com/frame.png')
+
+    const byIndex = resolvePromoBeatMedia(
+      { ...beat, sceneId: 'missing-id', videoUrl: undefined },
+      {
+        'scene-0': {
+          segments: [
+            {
+              segmentId: 'seg-idx',
+              beatId: 'b0',
+              assetType: 'video',
+              activeAssetUrl: 'https://example.com/idx.mp4',
+            },
+          ],
+        },
+      }
+    )
+    expect(byIndex.segmentId).toBe('seg-idx')
+    expect(byIndex.videoUrl).toBe('https://example.com/idx.mp4')
   })
 })
 

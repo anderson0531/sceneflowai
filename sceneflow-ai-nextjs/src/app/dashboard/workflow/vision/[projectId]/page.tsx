@@ -17402,6 +17402,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           setPublishingLibraryOpen(false)
           setProductionViewWithUrl('studio')
         }}
+        onGenerateBeatClip={async ({ sceneId, segmentId, frameUrl, durationSec }) => {
+          const hasFrame = Boolean(frameUrl?.trim())
+          await handleSegmentGenerate(sceneId, segmentId, hasFrame ? 'I2V' : 'T2V', {
+            startFrameUrl: frameUrl,
+            duration: durationSec,
+            aspectRatio: '9:16',
+            generationMethod: hasFrame ? 'I2V' : 'T2V',
+          })
+        }}
       />
       
       {/* Generation Progress Indicator */}
