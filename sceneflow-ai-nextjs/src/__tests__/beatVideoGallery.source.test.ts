@@ -36,6 +36,9 @@ describe('Video tab inline clip preview', () => {
     expect(gallery).toContain('Clip preview')
     expect(gallery).not.toContain('previewComplete &&')
     expect(gallery).toContain("aria-label={isPreviewPlaying ? 'Pause clip preview' : 'Play clip preview'}")
+    expect(gallery).toContain('max-w-md')
+    expect(gallery).toContain('object-contain')
+    expect(gallery).toContain("aria-label={isPreviewFullscreen ? 'Exit fullscreen' : 'View fullscreen'}")
     expect(gallery).not.toContain("from 'lucide-react''")
     expect(gallery).toContain("from 'lucide-react'")
   })
@@ -45,9 +48,9 @@ describe('Video tab inline clip preview', () => {
     expectScrollableBeatPanel(readSource(FRAMES), 'Beat frames')
   })
 
-  it('keeps sequential Play Beats on the SceneVideoPlayer modal', () => {
+  it('keeps sequential Play Clips on the SceneVideoPlayer modal', () => {
     const consoleSrc = readSource(CONSOLE)
-    expect(consoleSrc).toContain('Play Beats ({statusCounts.rendered})')
+    expect(consoleSrc).toContain('Play Clips ({statusCounts.rendered})')
     expect(consoleSrc).toContain('setIsScenePlayerOpen(true)')
     expect(consoleSrc).toContain('<SceneVideoPlayer')
   })

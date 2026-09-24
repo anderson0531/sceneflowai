@@ -126,12 +126,13 @@ describe('Video Agent confirm runs resolveVideoGeneration', () => {
     expect(consoleSrc).not.toContain('>Generate</Button>')
   })
 
-  it('labels the Footage batch button Video Agent', () => {
+  it('labels the Footage batch button Clips Agent', () => {
     const consoleSrc = readSource(CONSOLE)
     expect(consoleSrc).toContain("tVideoAgent('toolbarButton')")
     expect(consoleSrc).toContain('handleOpenVideoAgent')
     expect(readSource(CONFIRM)).toContain("{t('confirm')}")
-    expect(readSource('messages/app/en/production.json')).toContain('"confirm": "Video Agent"')
+    expect(readSource('messages/app/en/production.json')).toContain('"confirm": "Clips Agent"')
+    expect(readSource('messages/app/en/production.json')).toContain('"toolbarButton": "Clips Agent"')
   })
 
   it('resolver matrix matches the Footage policy', () => {

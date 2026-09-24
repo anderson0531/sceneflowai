@@ -396,7 +396,7 @@
     "confirm": "Run All Agents"
   },
   "videoAgent": {
-    "title": "Video Agent",
+    "title": "Clips Agent",
     "description": "Choose which beat videos to generate. Regenerating existing takes adds a new take and consumes credits.",
     "quality": "Video quality",
     "qualityDraft": "Draft",
@@ -423,9 +423,9 @@
     "failed": "Failed",
     "videoCredits": "Video credits (est.): {credits} ({count, plural, one {# beat} other {# beats}})",
     "running": "Running...",
-    "confirm": "Video Agent",
-    "toolbarButton": "Video Agent",
-    "toolbarTitle": "Video Agent: batch-generate video for beats with references or a start Beat Frame"
+    "confirm": "Clips Agent",
+    "toolbarButton": "Clips Agent",
+    "toolbarTitle": "Clips Agent: batch-generate video for beats with references or a start Beat Frame"
   },
   "retake": {
     "title": "Replace existing take?",

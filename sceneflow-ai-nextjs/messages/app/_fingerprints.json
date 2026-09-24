@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-22T22:44:14.881Z",
+  "generatedAt": "2026-09-24T11:53:35.244Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -1040,7 +1040,7 @@
       "expressGenerateAll.imageCredits": "8698b76b3f90a497",
       "expressGenerateAll.running": "4977a7e5bb3675c4",
       "expressGenerateAll.confirm": "311b290a6c2e8927",
-      "videoAgent.title": "5429b1df5a4b6e43",
+      "videoAgent.title": "2d82a577b0323ef1",
       "videoAgent.description": "d389aff765a009a4",
       "videoAgent.quality": "b8c237eb0d10bc61",
       "videoAgent.qualityDraft": "ebf12ef47cf575b3",
@@ -1067,9 +1067,9 @@
       "videoAgent.failed": "031a8f0f659df890",
       "videoAgent.videoCredits": "2cd73966bfe97950",
       "videoAgent.running": "4977a7e5bb3675c4",
-      "videoAgent.confirm": "5429b1df5a4b6e43",
-      "videoAgent.toolbarButton": "5429b1df5a4b6e43",
-      "videoAgent.toolbarTitle": "5a3b671fd3798c68",
+      "videoAgent.confirm": "2d82a577b0323ef1",
+      "videoAgent.toolbarButton": "2d82a577b0323ef1",
+      "videoAgent.toolbarTitle": "8d45052f80048fc7",
       "retake.title": "7d365f8db64afb38",
       "retake.description": "a945ebc1edb22cf4",
       "retake.continue": "31fbef162594de01",

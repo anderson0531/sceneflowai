@@ -1,9 +1,8 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
-import { ImageIcon, Sparkles, Upload, Wand2, Loader2, CheckCircle2, RefreshCw, FolderPlus, Trash2, AlertTriangle, SlidersHorizontal, Maximize2, X, Zap, Clapperboard } from 'lucide-react'
+import React, { useEffect, useState, useRef } from 'react'
+import { ImageIcon, Sparkles, Upload, Wand2, Loader2, CheckCircle2, RefreshCw, FolderPlus, Trash2, AlertTriangle, SlidersHorizontal, Maximize2, Minimize2, Zap, Clapperboard } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -58,8 +57,10 @@ export interface SceneImageFrameProps {
   alwaysShowControls?: boolean
   /** Max lines for prompt preview in footer (hero uses more). */
   promptLineClamp?: number
-  /** Show expand button + full-size lightbox (hero preview). */
+  /** Show a fullscreen control and keep the preview from filling the section. */
   expandable?: boolean
+  /** Show the whole frame inside the preview instead of cropping it. */
+  containMedia?: boolean
   /** Override empty-state primary button label (e.g. Generate Scene). */
   generateLabel?: string
   /** Override the still-generate control title (e.g. Generate start frame). */
@@ -347,6 +348,7 @@ export function SceneImageFrame({
   alwaysShowControls = false,
   promptLineClamp,
   expandable = false,
+  containMedia = false,
   generateLabel,
   generateTitle,
   directTitle,
@@ -364,7 +366,8 @@ export function SceneImageFrame({
 }: SceneImageFrameProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isHovering, setIsHovering] = useState(false)
-  const [expandOpen, setExpandOpen] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const stageRef = useRef<HTMLDivElement>(null)
   const roleLabel = formatBeatRoleLabel(beatRole)
   const promptPreview = imagePrompt?.trim()
   const policyError = isStillPolicyImageError(imageError)
@@ -405,6 +408,23 @@ export function SceneImageFrame({
     fileInputRef.current?.click()
   }
 
+  useEffect(() => {
+    if (!expandable) return
+    const onChange = () => setIsFullscreen(document.fullscreenElement === stageRef.current)
+    document.addEventListener('fullscreenchange', onChange)
+    return () => document.removeEventListener('fullscreenchange', onChange)
+  }, [expandable])
+
+  const toggleFullscreen = () => {
+    const stage = stageRef.current
+    if (!stage) return
+    if (document.fullscreenElement === stage) {
+      void document.exitFullscreen()
+      return
+    }
+    void stage.requestFullscreen()
+  }
+
   return (
     <div
       className={`group relative overflow-hidden rounded-lg ${
@@ -438,7 +458,16 @@ export function SceneImageFrame({
         onChange={handleFileSelect}
       />
 
-      <div className="relative aspect-video bg-slate-800/50">
+      <div
+        ref={stageRef}
+        className={`relative bg-black ${
+          expandable
+            ? `mx-auto aspect-video w-full max-w-md max-h-[min(36vh,16rem)] ${
+                isFullscreen ? 'h-screen w-screen max-h-none max-w-none' : ''
+              }`
+            : 'aspect-video bg-slate-800/50'
+        }`}
+      >
         {isDeferred ? (
           <DeferredImageSkeleton className="w-full h-full" label={`Loading ${label}`} />
         ) : hasImage ? (
@@ -449,7 +478,7 @@ export function SceneImageFrame({
               alt={`Scene ${sceneNumber} reference`}
               loading={compact ? 'lazy' : 'eager'}
               decoding="async"
-              className="w-full h-full object-cover"
+              className={`w-full h-full ${expandable || containMedia ? 'object-contain' : 'object-cover'}`}
             />
 
             {expandable && (
@@ -459,20 +488,20 @@ export function SceneImageFrame({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation()
-                      setExpandOpen(true)
+                      toggleFullscreen()
                     }}
-                    className={`absolute top-2 left-2 z-20 p-1.5 rounded-md bg-black/50 text-white transition-opacity hover:bg-black/70 ${
-                      alwaysShowControls
+                    className={`absolute bottom-2 right-2 z-20 p-1.5 rounded-md bg-black/50 text-white transition-opacity hover:bg-black/70 ${
+                      alwaysShowControls || isFullscreen
                         ? 'opacity-100'
                         : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'
                     }`}
-                    aria-label="Expand image"
+                    aria-label={isFullscreen ? 'Exit fullscreen' : 'View fullscreen'}
                   >
-                    <Maximize2 className="w-4 h-4" />
+                    {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="text-xs">
-                  Expand image
+                  {isFullscreen ? 'Exit fullscreen' : 'View fullscreen'}
                 </TooltipContent>
               </Tooltip>
             )}
@@ -866,40 +895,6 @@ export function SceneImageFrame({
         </span>
       )}
 
-      {expandable && hasImage && (
-        <Dialog open={expandOpen} onOpenChange={setExpandOpen}>
-          <DialogContent
-            className="max-w-[90vw] max-h-[90vh] p-0 border-none bg-black"
-            aria-describedby={undefined}
-          >
-            <DialogTitle className="sr-only">
-              Scene {sceneNumber}{label ? ` — ${label}` : ''}
-            </DialogTitle>
-            <button
-              type="button"
-              onClick={() => setExpandOpen(false)}
-              className="absolute top-4 right-4 z-10 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
-              aria-label="Close expanded image"
-            >
-              <X className="w-5 h-5 text-white" />
-            </button>
-            <div className="flex flex-col items-center justify-center w-full min-h-[50vh] p-4 pt-12">
-              <img
-                src={imageUrl!}
-                alt={`Scene ${sceneNumber}${label ? ` — ${label}` : ''}`}
-                className="max-w-full max-h-[85vh] object-contain rounded-lg"
-              />
-              {(label || roleLabel) && (
-                <p className="mt-3 text-sm text-slate-300 text-center">
-                  {roleLabel && <span className="text-slate-400 mr-2">{roleLabel}</span>}
-                  {label}
-                  <span className="text-slate-500 ml-2">· Scene {sceneNumber}</span>
-                </p>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   )
 }

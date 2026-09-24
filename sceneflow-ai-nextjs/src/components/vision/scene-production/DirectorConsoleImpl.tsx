@@ -1946,10 +1946,10 @@ export function DirectorConsoleRoot({
             variant="outline"
             onClick={handleOpenVideoAgent}
             disabled={queue.length === 0}
-            className="border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/10 hover:border-indigo-400 shadow-md hover:shadow-lg transition-all"
+            className="h-7 px-2 text-[10px] font-medium border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/10 hover:border-indigo-400 shadow-md hover:shadow-lg transition-all"
             title={tVideoAgent('toolbarTitle')}
           >
-            <Zap className="w-4 h-4 mr-2" />
+            <Zap className="w-3 h-3 mr-1" />
             {tVideoAgent('toolbarButton')}
           </Button>
           {statusCounts.rendered > 0 && (
@@ -1957,10 +1957,10 @@ export function DirectorConsoleRoot({
               size="sm"
               variant="outline"
               onClick={() => setIsScenePlayerOpen(true)}
-              className="bg-emerald-600/20 border-emerald-500/50 text-emerald-300 hover:bg-emerald-600/30"
+              className="h-7 px-2 text-[10px] font-medium bg-emerald-600/20 border-emerald-500/50 text-emerald-300 hover:bg-emerald-600/30"
             >
-              <Film className="w-4 h-4 mr-2" />
-              Play Beats ({statusCounts.rendered})
+              <Film className="w-3 h-3 mr-1" />
+              Play Clips ({statusCounts.rendered})
             </Button>
           )}
         </>
