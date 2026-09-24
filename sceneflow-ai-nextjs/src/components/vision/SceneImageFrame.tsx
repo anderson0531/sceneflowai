@@ -88,6 +88,7 @@ export interface SceneImageFrameProps {
   imageVersions?: MediaVersion[]
   imageVersionId?: string
   onRestoreVersion?: (versionId: string) => void
+  className?: string
 }
 
 function CompactIconButton({
@@ -361,6 +362,7 @@ export function SceneImageFrame({
   imageVersions,
   imageVersionId,
   onRestoreVersion,
+  className,
 }: SceneImageFrameProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isHovering, setIsHovering] = useState(false)
@@ -409,9 +411,9 @@ export function SceneImageFrame({
     <div
       className={`group relative overflow-hidden rounded-lg ${
         showBorder ? 'border border-slate-700/50' : ''
-      } ${compact ? 'w-full' : ''} ${
+      } ${compact || className?.includes('w-full') ? 'w-full' : ''} ${
         isSelected ? 'ring-2 ring-sf-primary border-sf-primary/60' : ''
-      } ${onSelect ? 'cursor-pointer' : ''}`}
+      } ${onSelect ? 'cursor-pointer' : ''} ${className ?? ''}`}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       onClick={(e) => {

@@ -126,20 +126,14 @@ interface BeatVideoGalleryProps {
   onGenerateClip?: (segment: SceneSegment) => void
   /** Open the video pre-flight dialog (Direct Video). */
   onDirectVideo?: (segment: SceneSegment) => void
-  /** Open Video Direction — rewrite and save the video prompt only. */
-  onDirection?: (segment: SceneSegment) => void
+  /** Open Direct Beat so beat direction stays the source of the still and clip prompts. */
+  onDirectBeat?: (beatId: string) => void
   /** Edit a completed clip. */
   onEditClip?: (segment: SceneSegment) => void
   /** Restore a stored take as the live clip. */
   onRestoreTake?: (segmentId: string, takeId: string) => void
   onOpenPreVis?: () => void
   generatingClipId?: string | null
-  onGenerateF2VFrames?: (
-    segmentId: string,
-    options: { usePreviousEndFrame: boolean }
-  ) => void
-  onGenerateF2VClip?: (segment: SceneSegment) => void
-  generatingF2VFrames?: boolean
   /** Shared beat selection with Direction, Audio, and Pre-Vis. */
   selectedBeatId?: string | null
   onSelectBeat?: (beatId: string) => void
@@ -163,13 +157,10 @@ export function BeatVideoGallery({
   onRetake,
   onGenerateClip,
   onDirectVideo,
-  onDirection,
+  onDirectBeat,
   onEditClip,
   onRestoreTake,
   generatingClipId,
-  onGenerateF2VFrames,
-  onGenerateF2VClip,
-  generatingF2VFrames = false,
   selectedBeatId = null,
   onSelectBeat,
 }: BeatVideoGalleryProps) {
@@ -177,7 +168,6 @@ export function BeatVideoGallery({
   const [attention, setAttention] = useState<VideoAttentionFilter>('all')
   const [quality, setQuality] = useState<VideoQualityFilter>('all')
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(false)
-  const [usePreviousEndFrame, setUsePreviousEndFrame] = useState(false)
   const previewVideoRef = useRef<HTMLVideoElement>(null)
 
   const clipFacts = useMemo<VideoClipFacts[]>(
@@ -378,13 +368,13 @@ export function BeatVideoGallery({
             if (clip) onSelectBeat?.(clip.beatId || clip.key)
           }}
         >
-          <div className="sticky top-2 flex w-full min-w-0 flex-1 flex-col gap-2 self-start lg:w-auto">
+          <div className="sticky top-2 flex w-full min-w-0 max-w-full flex-1 flex-col gap-2 self-start lg:min-w-[40rem]">
             <p className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
               {previewVideoUrl ? 'Clip preview' : 'Start frame'}
             </p>
             <div className="overflow-hidden rounded-lg border border-slate-700/40 bg-gray-800/50">
               {previewVideoUrl ? (
-                <div className={cn('relative bg-black', aspectClass)}>
+                <div className={cn('relative w-full bg-black', aspectClass)}>
                   <video
                     key={previewVideoUrl}
                     ref={previewVideoRef}
@@ -417,9 +407,10 @@ export function BeatVideoGallery({
                   label="Beat still"
                   generateTitle={previewHasClip ? 'Regenerate' : 'Generate video'}
                   directTitle="Direct Video"
-                  directorTitle="Direction"
+                  directorTitle="Direct Beat"
                   uploadTitle="Upload"
                   uploadAccept="video/*"
+                  className="w-full"
                   imageUrl={preview.thumbnailUrl}
                   imagePrompt={preview.prompt}
                   showControls
@@ -429,7 +420,11 @@ export function BeatVideoGallery({
                   isGenerating={generatingClipId === previewSegment.segmentId}
                   onGenerate={() => onGenerateClip?.(previewSegment)}
                   onDirect={onDirectVideo ? () => onDirectVideo(previewSegment) : undefined}
-                  onDirector={onDirection ? () => onDirection(previewSegment) : undefined}
+                  onDirector={
+                    onDirectBeat && preview.beatId
+                      ? () => onDirectBeat(preview.beatId)
+                      : undefined
+                  }
                   onUpload={(file) => onUpload?.(previewSegment.segmentId, file)}
                   onEdit={
                     onEditClip && previewHasClip
@@ -438,7 +433,7 @@ export function BeatVideoGallery({
                   }
                 />
               ) : (
-                <div className={cn('relative bg-black', aspectClass)}>
+                <div className={cn('relative w-full bg-black', aspectClass)}>
                   {preview?.thumbnailUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={preview.thumbnailUrl} alt="" className="h-full w-full object-contain" />
@@ -486,99 +481,8 @@ export function BeatVideoGallery({
 
             {preview && (
               <div className="px-1 pb-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="shrink-0 rounded-full border border-slate-600/40 bg-slate-700/50 px-1.5 py-0.5 text-[10px] font-medium text-slate-300">
-                    Beat {preview.beatNumber}
-                  </span>
-                  <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-200" title={preview.label}>
-                    {preview.label}
-                  </p>
-                  {previewStatus && (
-                    <span className={cn('rounded border px-1.5 py-0.5 text-[10px]', previewStatus.className)}>
-                      {previewStatus.label}
-                    </span>
-                  )}
-                  {preview.promptChanged && (
-                    <span className="flex items-center gap-0.5 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] text-amber-300">
-                      <AlertTriangle className="h-2.5 w-2.5" />
-                      Prompt changed
-                    </span>
-                  )}
-                  {preview.imageTier === 'final' && (
-                    <span className="rounded-full bg-emerald-500/25 px-1.5 py-0.5 text-[10px] text-emerald-300">
-                      Final
-                    </span>
-                  )}
-                  {preview.imageTier === 'draft' && (
-                    <span className="rounded-full bg-gray-500/25 px-1.5 py-0.5 text-[10px] text-gray-300">
-                      Draft
-                    </span>
-                  )}
-                </div>
-                {preview.prompt?.trim() && (
-                  <p className="mt-1.5 text-xs leading-relaxed text-slate-400">{preview.prompt.trim()}</p>
-                )}
-                {readOnlyPrompts && preview.segment && !preview.segment.userEditedPrompt && (
-                  <p className="mt-1 text-[10px] text-slate-500">
-                    Auto-derived from direction — use Direction to change this clip's video prompt
-                  </p>
-                )}
-                {preview.segment?.userEditedPrompt && (
-                  <p className="mt-1 text-[10px] text-teal-500/80">
-                    Video prompt saved from Direction
-                  </p>
-                )}
-                {previewSegment && onGenerateF2VFrames && (
-                  <div className="mt-2 space-y-2">
-                    <p className="text-[10px] uppercase tracking-wide text-slate-500">Frame-to-video</p>
-                    <p className="text-xs text-slate-400">
-                      {preview.f2vStartUrl && preview.f2vEndUrl
-                        ? 'Start and end frames are ready for this clip.'
-                        : 'The beat still illustrates the beat. Generate a start frame and an end frame when you want frame-to-video.'}
-                    </p>
-                    {preview.previousEndFrameUrl && (
-                      <label className="flex items-center gap-2 text-xs text-slate-300">
-                        <input
-                          type="checkbox"
-                          checked={usePreviousEndFrame}
-                          onChange={(event) => setUsePreviousEndFrame(event.target.checked)}
-                        />
-                        Use previous end frame
-                      </label>
-                    )}
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-7 text-[10px]"
-                        disabled={generatingF2VFrames}
-                        onClick={() =>
-                          onGenerateF2VFrames(previewSegment.segmentId, {
-                            usePreviousEndFrame: Boolean(preview.previousEndFrameUrl) && usePreviousEndFrame,
-                          })
-                        }
-                      >
-                        {preview.f2vStartUrl && preview.f2vEndUrl
-                          ? 'Regenerate start and end frames'
-                          : 'Generate start and end frames'}
-                      </Button>
-                      {onGenerateF2VClip && preview.f2vStartUrl && preview.f2vEndUrl && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="h-7 border-indigo-500/40 text-[10px] text-indigo-200"
-                          onClick={() => onGenerateF2VClip(previewSegment)}
-                        >
-                          Generate frame-to-video
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                )}
                 {previewSegment && (
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
                     {previewVideoUrl && (
                       <Button
                         type="button"
@@ -607,17 +511,15 @@ export function BeatVideoGallery({
                         {previewHasClip ? 'Regenerate video' : 'Generate video'}
                       </Button>
                     )}
-                    {onDirection && (
-                      <Button
+                    {onDirectBeat && preview.beatId && (
+                      <button
                         type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-7 border-teal-500/40 text-[10px] text-teal-200"
-                        onClick={() => onDirection(previewSegment)}
+                        className="inline-flex h-7 items-center gap-1 rounded border border-teal-800/80 px-2 text-[11px] text-teal-200 hover:bg-teal-950/40"
+                        onClick={() => onDirectBeat(preview.beatId!)}
                       >
-                        <Clapperboard className="mr-1 h-3 w-3" />
-                        Direction
-                      </Button>
+                        <Clapperboard className="h-3.5 w-3.5" />
+                        Direct Beat
+                      </button>
                     )}
                     {onTake && (
                       <Button
@@ -670,6 +572,43 @@ export function BeatVideoGallery({
                       </Button>
                     )}
                   </div>
+                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="shrink-0 rounded-full border border-slate-600/40 bg-slate-700/50 px-1.5 py-0.5 text-[10px] font-medium text-slate-300">
+                    Beat {preview.beatNumber}
+                  </span>
+                  <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-200" title={preview.label}>
+                    {preview.label}
+                  </p>
+                  {previewStatus && (
+                    <span className={cn('rounded border px-1.5 py-0.5 text-[10px]', previewStatus.className)}>
+                      {previewStatus.label}
+                    </span>
+                  )}
+                  {preview.promptChanged && (
+                    <span className="flex items-center gap-0.5 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] text-amber-300">
+                      <AlertTriangle className="h-2.5 w-2.5" />
+                      Prompt changed
+                    </span>
+                  )}
+                  {preview.imageTier === 'final' && (
+                    <span className="rounded-full bg-emerald-500/25 px-1.5 py-0.5 text-[10px] text-emerald-300">
+                      Final
+                    </span>
+                  )}
+                  {preview.imageTier === 'draft' && (
+                    <span className="rounded-full bg-gray-500/25 px-1.5 py-0.5 text-[10px] text-gray-300">
+                      Draft
+                    </span>
+                  )}
+                </div>
+                {preview.prompt?.trim() && (
+                  <p className="mt-1.5 text-xs leading-relaxed text-slate-400">{preview.prompt.trim()}</p>
+                )}
+                {readOnlyPrompts && preview.segment && (
+                  <p className="mt-1 text-[10px] text-slate-500">
+                    Auto-derived from direction — use Direct Beat to change this clip's video prompt
+                  </p>
                 )}
               </div>
             )}
