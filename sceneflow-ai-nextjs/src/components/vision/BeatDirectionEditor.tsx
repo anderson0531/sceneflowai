@@ -28,6 +28,7 @@ import {
 } from '@/lib/vision/resolveBeatVideoReferences'
 import { shouldUseExplicitBeatReferences } from '@/lib/vision/beatFrameGenerationContext'
 import {
+  alignDirectionToConnectedObjects,
   connectLocationReference,
   connectObjectReference,
   disconnectObjectReference,
@@ -466,6 +467,23 @@ export function BeatDirectionEditor({
     return selectionFromBeat(target, resolved)
   }
 
+  const namesForSelection = (selection: BeatReferenceSelection): string[] =>
+    selection.objectRefIds
+      .map((id) => objectReferences.find((object) => object.id === id)?.name?.trim())
+      .filter((name): name is string => !!name)
+
+  const directionAlignedToSelection = (
+    nextDirection: BeatDirection | undefined,
+    selection: BeatReferenceSelection
+  ): BeatDirection | undefined =>
+    alignDirectionToConnectedObjects(nextDirection, namesForSelection(selection)) ?? nextDirection
+
+  const rebuildPromptsFromConnections = () => {
+    persist(directionAlignedToSelection(direction, referenceSelection), {
+      refreshPrompts: 'rebuild',
+    })
+  }
+
   const toggleObject = (object: DirectionObject, connect: boolean) => {
     const resolvedAt = new Date().toISOString()
     const next = connect
@@ -488,7 +506,7 @@ export function BeatDirectionEditor({
         {
           sceneIndex: sceneIdx,
           beatId: beat.beatId,
-          direction: next.direction,
+          direction: directionAlignedToSelection(next.direction, next.selection),
           referenceSelection: next.selection,
         },
       ],
@@ -526,7 +544,7 @@ export function BeatDirectionEditor({
         {
           sceneIndex: target.sceneIndex,
           beatId: target.beatId,
-          direction: next.direction,
+          direction: directionAlignedToSelection(next.direction, next.selection),
           referenceSelection: next.selection,
         },
       ],
@@ -617,7 +635,7 @@ export function BeatDirectionEditor({
         onVideoDraft={setVideoDraft}
         onCommitFrame={() => commitPrompt('framePrompt', frameDraft, framePreview)}
         onCommitVideo={() => commitPrompt('videoPrompt', videoDraft, videoPreview)}
-        onUpdatePrompts={() => persist(direction, { refreshPrompts: 'rebuild' })}
+        onUpdatePrompts={rebuildPromptsFromConnections}
         onToggleObject={toggleObject}
         onToggleObjectOnBeat={toggleObjectOnBeat}
         onSelectLocation={selectLocation}
@@ -824,13 +842,13 @@ export function BeatDirectionEditor({
 
           <div className="space-y-2 border-t border-gray-800 pt-2">
             {sectionTitle('Prompts')}
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-col items-stretch gap-1">
               <span className="text-[10px] uppercase text-gray-500">Frame prompt</span>
               {!readOnly && (
                 <button
                   type="button"
-                  className="text-[10px] underline text-gray-400 hover:text-gray-200"
-                  onClick={() => persist(direction, { refreshPrompts: 'rebuild' })}
+                  className="w-full whitespace-normal text-left text-[10px] underline text-gray-400 hover:text-gray-200"
+                  onClick={rebuildPromptsFromConnections}
                 >
                   Update still and clip prompts
                 </button>

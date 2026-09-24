@@ -134,7 +134,7 @@ export function BeatDirectorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-700 text-slate-100">
+      <DialogContent className="max-w-3xl min-w-0 max-h-[90vh] overflow-x-hidden overflow-y-auto bg-slate-900 border-slate-700 text-slate-100">
         <DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
           <Clapperboard className="w-5 h-5 text-teal-400" />
           Direct Scene {sceneNumber}
@@ -335,18 +335,16 @@ export function BeatDirectorDialog({
           </section>
         )}
 
-        <section className="grid gap-2">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="text-[11px] uppercase tracking-wide text-slate-500">Prompts</h3>
-            <button
-              type="button"
-              className="rounded border border-teal-800/80 px-2 py-1 text-[11px] text-teal-200 hover:bg-teal-950/40 disabled:opacity-50"
-              disabled={readOnly}
-              onClick={onUpdatePrompts}
-            >
-              Update still and clip prompts
-            </button>
-          </div>
+        <section className="grid min-w-0 gap-2">
+          <h3 className="text-[11px] uppercase tracking-wide text-slate-500">Prompts</h3>
+          <button
+            type="button"
+            className="w-full whitespace-normal rounded border border-teal-800/80 px-2 py-1 text-left text-[11px] text-teal-200 hover:bg-teal-950/40 disabled:opacity-50"
+            disabled={readOnly}
+            onClick={onUpdatePrompts}
+          >
+            Update still and clip prompts
+          </button>
           <label className="flex flex-col gap-1 text-xs">
             <span className="text-[10px] uppercase text-slate-500">Still prompt</span>
             <textarea
