@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { AlertTriangle, Camera, Clapperboard, Film, Pause, PlayCircle, Settings2, Upload, Wand2 } from 'lucide-react'
+import { AlertTriangle, Camera, Clapperboard, Film, Maximize2, Minimize2, Pause, PlayCircle, Settings2, Upload, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { SceneImageFrame } from '@/components/vision/SceneImageFrame'
@@ -118,7 +118,7 @@ interface BeatVideoGalleryProps {
   readOnlyPrompts?: boolean
   renderedCount: number
   totalCount: number
-  /** Unused for selected-beat preview (plays inline). Play Beats still opens SceneVideoPlayer. */
+  /** Unused for selected-beat preview (plays inline). Play Clips still opens SceneVideoPlayer. */
   onPlay?: (segment: SceneSegment) => void
   onTake?: (segment: SceneSegment) => void
   onUpload?: (segmentId: string, file: File) => void
@@ -177,8 +177,10 @@ export function BeatVideoGallery({
   const [attention, setAttention] = useState<VideoAttentionFilter>('all')
   const [quality, setQuality] = useState<VideoQualityFilter>('all')
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(false)
+  const [isPreviewFullscreen, setIsPreviewFullscreen] = useState(false)
   const [usePreviousEndFrame, setUsePreviousEndFrame] = useState(false)
   const previewVideoRef = useRef<HTMLVideoElement>(null)
+  const previewStageRef = useRef<HTMLDivElement>(null)
 
   const clipFacts = useMemo<VideoClipFacts[]>(
     () =>
@@ -255,6 +257,22 @@ export function BeatVideoGallery({
       /* metadata may not be ready yet */
     }
   }, [selectedKey, previewVideoUrl])
+
+  useEffect(() => {
+    const onChange = () => setIsPreviewFullscreen(document.fullscreenElement === previewStageRef.current)
+    document.addEventListener('fullscreenchange', onChange)
+    return () => document.removeEventListener('fullscreenchange', onChange)
+  }, [])
+
+  const togglePreviewFullscreen = () => {
+    const stage = previewStageRef.current
+    if (!stage) return
+    if (document.fullscreenElement === stage) {
+      void document.exitFullscreen()
+      return
+    }
+    void stage.requestFullscreen()
+  }
 
   const togglePreviewPlayback = () => {
     const el = previewVideoRef.current
@@ -382,9 +400,30 @@ export function BeatVideoGallery({
             <p className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
               {previewVideoUrl ? 'Clip preview' : 'Start frame'}
             </p>
-            <div className="overflow-hidden rounded-lg border border-slate-700/40 bg-gray-800/50">
+            <div
+              ref={previewStageRef}
+              className={cn(
+                'relative mx-auto w-full max-w-md overflow-hidden rounded-lg border border-slate-700/40 bg-gray-800/50',
+                isPreviewFullscreen && 'flex h-screen max-w-none items-center justify-center bg-black'
+              )}
+            >
+              <button
+                type="button"
+                className="absolute bottom-2 right-2 z-30 rounded-md bg-black/60 p-1.5 text-white hover:bg-black/80"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  togglePreviewFullscreen()
+                }}
+                aria-label={isPreviewFullscreen ? 'Exit fullscreen' : 'View fullscreen'}
+              >
+                {isPreviewFullscreen ? (
+                  <Minimize2 className="h-4 w-4" />
+                ) : (
+                  <Maximize2 className="h-4 w-4" />
+                )}
+              </button>
               {previewVideoUrl ? (
-                <div className={cn('relative bg-black', aspectClass)}>
+                <div className={cn('relative max-h-[min(36vh,16rem)] bg-black', aspectClass, isPreviewFullscreen && 'h-screen max-h-none w-full')}>
                   <video
                     key={previewVideoUrl}
                     ref={previewVideoRef}
@@ -426,6 +465,7 @@ export function BeatVideoGallery({
                   controlsVariant="comfortable"
                   alwaysShowControls
                   showBorder={false}
+                  containMedia
                   isGenerating={generatingClipId === previewSegment.segmentId}
                   onGenerate={() => onGenerateClip?.(previewSegment)}
                   onDirect={onDirectVideo ? () => onDirectVideo(previewSegment) : undefined}
@@ -438,7 +478,7 @@ export function BeatVideoGallery({
                   }
                 />
               ) : (
-                <div className={cn('relative bg-black', aspectClass)}>
+                <div className={cn('relative max-h-[min(36vh,16rem)] bg-black', aspectClass, isPreviewFullscreen && 'h-screen max-h-none w-full')}>
                   {preview?.thumbnailUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={preview.thumbnailUrl} alt="" className="h-full w-full object-contain" />

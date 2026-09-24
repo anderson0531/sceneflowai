@@ -37,6 +37,7 @@ export const GLOSSARY_TERMS = [
   'Audio Agent',
   'Frame Agent',
   'Video Agent',
+  'Clips Agent',
   'Run All Agents',
   'Library Agent',
   'Scene Ref Agent',

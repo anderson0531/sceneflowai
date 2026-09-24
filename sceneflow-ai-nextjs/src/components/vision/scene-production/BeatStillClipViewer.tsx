@@ -1,8 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
-import { Camera, ChevronDown, ChevronRight } from 'lucide-react'
+import React, { useEffect, useRef, useState } from 'react'
+import { Camera, ChevronDown, ChevronRight, Maximize2, Minimize2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+/** Fits the section without filling it, so the whole frame stays on screen. */
+const PREVIEW_STAGE =
+  'relative mx-auto aspect-video w-full max-w-md max-h-[min(36vh,16rem)] bg-black'
 
 interface BeatStillClipViewerProps {
   stillUrl?: string
@@ -25,7 +29,25 @@ export function BeatStillClipViewer({
 }: BeatStillClipViewerProps) {
   const [viewerOpen, setViewerOpen] = useState(false)
   const [view, setView] = useState<'still' | 'clip'>('still')
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const stageRef = useRef<HTMLDivElement>(null)
   const showClip = view === 'clip' && !!clipUrl
+
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(document.fullscreenElement === stageRef.current)
+    document.addEventListener('fullscreenchange', onChange)
+    return () => document.removeEventListener('fullscreenchange', onChange)
+  }, [])
+
+  const toggleFullscreen = () => {
+    const stage = stageRef.current
+    if (!stage) return
+    if (document.fullscreenElement === stage) {
+      void document.exitFullscreen()
+      return
+    }
+    void stage.requestFullscreen()
+  }
 
   if (!viewerOpen) {
     return (
@@ -85,7 +107,10 @@ export function BeatStillClipViewer({
           </button>
         </div>
       </div>
-      <div className="relative aspect-video bg-black">
+      <div
+        ref={stageRef}
+        className={cn(PREVIEW_STAGE, isFullscreen && 'max-h-none max-w-none h-screen w-screen')}
+      >
         {showClip ? (
           <video
             key={clipUrl}
@@ -100,12 +125,20 @@ export function BeatStillClipViewer({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={stillUrl} alt="" className="h-full w-full object-contain" />
         ) : (
-          <div className="flex h-full flex-col items-center justify-center">
+          <div className="flex h-full min-h-[8rem] flex-col items-center justify-center">
             <Camera className="mb-2 h-8 w-8 text-gray-600" />
             <span className="text-xs text-gray-500">No still yet</span>
           </div>
         )}
         {!showClip && stillOverlay}
+        <button
+          type="button"
+          className="absolute right-2 top-2 z-20 rounded-md bg-black/60 p-1.5 text-white hover:bg-black/80"
+          onClick={toggleFullscreen}
+          aria-label={isFullscreen ? 'Exit fullscreen' : 'View fullscreen'}
+        >
+          {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+        </button>
       </div>
     </div>
   )
