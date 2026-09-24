@@ -1,7 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, Clapperboard } from 'lucide-react'
+import { BeatDirectorDialog } from '@/components/vision/BeatDirectorDialog'
 import { applyBeatsToScene, getSceneBeats } from '@/lib/script/beatMigration'
 import type {
   BeatDirection,
@@ -26,6 +27,12 @@ import {
   resolveBeatElementSelection,
 } from '@/lib/vision/resolveBeatVideoReferences'
 import { shouldUseExplicitBeatReferences } from '@/lib/vision/beatFrameGenerationContext'
+import {
+  connectLocationReference,
+  connectObjectReference,
+  disconnectObjectReference,
+} from '@/lib/vision/beatReferenceConnections'
+import { applyBeatDirectionSelections } from '@/lib/vision/applyBeatDirectionSelection'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
 
@@ -76,12 +83,15 @@ export interface DirectionLocation {
   location?: string
   name?: string
   imageUrl?: string
+  sceneNumbers?: number[]
+  versions?: Array<{ id: string; name: string; imageUrl?: string }>
 }
 
 export interface DirectionObject {
   id: string
   name: string
   imageUrl?: string
+  sceneNumbers?: number[]
 }
 
 const SHOT_TYPE_OPTIONS = [
@@ -192,6 +202,7 @@ export function BeatDirectionEditor({
   layout = 'accordion',
 }: BeatDirectionEditorProps) {
   const [expanded, setExpanded] = useState(layout === 'board')
+  const [directorOpen, setDirectorOpen] = useState(false)
   const open = layout === 'board' || expanded
   const direction = beat.beatDirection
   const summary = useMemo(() => summarizeDirection(direction), [direction])
@@ -413,6 +424,124 @@ export function BeatDirectionEditor({
     })
   }
 
+  const sceneNumber =
+    (typeof sceneRecord?.scene_number === 'number' ? sceneRecord.scene_number : undefined) ??
+    (typeof sceneRecord?.sceneNumber === 'number' ? sceneRecord.sceneNumber : undefined) ??
+    sceneIdx + 1
+
+  const writeConnection = (
+    updates: Array<{
+      sceneIndex: number
+      beatId: string
+      direction: BeatDirection | undefined
+      referenceSelection: BeatReferenceSelection
+    }>
+  ) => {
+    if (!onScriptChange || readOnly) return
+    const nextScenes = applyBeatDirectionSelections(scenes, updates, {
+      artStyleAnchor: promptComposition?.artStyleAnchor,
+      lookbook: promptComposition?.lookbook,
+    })
+    onScriptChange({
+      ...script,
+      script: {
+        ...script.script,
+        scenes: nextScenes,
+      },
+    })
+  }
+
+  const selectionForBeat = (targetSceneIdx: number, target: SceneBeat): BeatReferenceSelection => {
+    if (target.beatId === beat.beatId && targetSceneIdx === sceneIdx) return referenceSelection
+    const resolved = resolveBeatElementSelection({
+      scene: scenes[targetSceneIdx] ?? {},
+      beat: target,
+      sceneIndex: targetSceneIdx,
+      projectCharacters: characters,
+      locationReferences: locationReferences as LocationReference[],
+      objectReferences: objectReferences as VisualReference[],
+    })
+    return selectionFromBeat(target, resolved)
+  }
+
+  const toggleObject = (object: DirectionObject, connect: boolean) => {
+    const resolvedAt = new Date().toISOString()
+    const next = connect
+      ? connectObjectReference({
+          direction,
+          selection: referenceSelection,
+          objectId: object.id,
+          objectName: object.name,
+          resolvedAt,
+        })
+      : disconnectObjectReference({
+          direction,
+          selection: referenceSelection,
+          objectId: object.id,
+          objectName: object.name,
+          resolvedAt,
+        })
+    writeConnection([
+      {
+        sceneIndex: sceneIdx,
+        beatId: beat.beatId,
+        direction: next.direction,
+        referenceSelection: next.selection,
+      },
+    ])
+  }
+
+  const toggleObjectOnBeat = (
+    object: DirectionObject,
+    target: { sceneIndex: number; beatId: string },
+    connect: boolean
+  ) => {
+    const sceneBeats = getSceneBeats(scenes[target.sceneIndex] ?? {})
+    const targetBeat = sceneBeats.find((entry) => entry.beatId === target.beatId)
+    if (!targetBeat) return
+    const resolvedAt = new Date().toISOString()
+    const selection = selectionForBeat(target.sceneIndex, targetBeat)
+    const next = connect
+      ? connectObjectReference({
+          direction: targetBeat.beatDirection,
+          selection,
+          objectId: object.id,
+          objectName: object.name,
+          resolvedAt,
+        })
+      : disconnectObjectReference({
+          direction: targetBeat.beatDirection,
+          selection,
+          objectId: object.id,
+          objectName: object.name,
+          resolvedAt,
+        })
+    writeConnection([
+      {
+        sceneIndex: target.sceneIndex,
+        beatId: target.beatId,
+        direction: next.direction,
+        referenceSelection: next.selection,
+      },
+    ])
+  }
+
+  const selectLocation = (locationRefId: string | null, locationVersionId: string | null) => {
+    writeConnection([
+      {
+        sceneIndex: sceneIdx,
+        beatId: beat.beatId,
+        direction,
+        referenceSelection: connectLocationReference(
+          referenceSelection,
+          locationRefId,
+          locationVersionId,
+          new Date().toISOString()
+        ),
+      },
+    ])
+  }
+
   const castInFrame = direction?.castInFrame
   const castListId = `cast-in-frame-${beat.beatId}`
 
@@ -420,6 +549,17 @@ export function BeatDirectionEditor({
     layout === 'board' ? (
       <p className="pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">{label}</p>
     ) : null
+
+  const directButton = (
+    <button
+      type="button"
+      className="inline-flex items-center gap-1 rounded border border-teal-800/80 px-2 py-1 text-[11px] text-teal-200 hover:bg-teal-950/40"
+      onClick={() => setDirectorOpen(true)}
+    >
+      <Clapperboard className="w-3.5 h-3.5" />
+      Direct
+    </button>
+  )
 
   return (
     <div
@@ -429,24 +569,50 @@ export function BeatDirectionEditor({
           : `rounded-md border border-gray-700/60 bg-black/20 ${className ?? ''}`
       }
     >
-      {layout === 'accordion' && (
-        <button
-          type="button"
-          onClick={() => setExpanded((prev) => !prev)}
-          className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left"
-          aria-expanded={expanded}
-        >
-          <span className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-gray-400">
-            {expanded ? (
-              <ChevronDown className="w-3.5 h-3.5" />
-            ) : (
-              <ChevronRight className="w-3.5 h-3.5" />
-            )}
-            Direction
-          </span>
-          <span className="text-xs text-gray-300 truncate">{summary}</span>
-        </button>
+      {layout === 'accordion' ? (
+        <div className="flex items-center gap-2 px-3 py-2">
+          <button
+            type="button"
+            onClick={() => setExpanded((prev) => !prev)}
+            className="min-w-0 flex-1 flex items-center justify-between gap-2 text-left"
+            aria-expanded={expanded}
+          >
+            <span className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-gray-400">
+              {expanded ? (
+                <ChevronDown className="w-3.5 h-3.5" />
+              ) : (
+                <ChevronRight className="w-3.5 h-3.5" />
+              )}
+              Direction
+            </span>
+            <span className="text-xs text-gray-300 truncate">{summary}</span>
+          </button>
+          {directButton}
+        </div>
+      ) : (
+        <div className="flex justify-end px-3 pt-3">{directButton}</div>
       )}
+      <BeatDirectorDialog
+        open={directorOpen}
+        onOpenChange={setDirectorOpen}
+        beat={beat}
+        sceneNumber={sceneNumber}
+        scenes={scenes}
+        readOnly={readOnly}
+        characters={characters}
+        locationReferences={locationReferences}
+        objectReferences={objectReferences}
+        referenceSelection={referenceSelection}
+        frameDraft={frameDraft}
+        videoDraft={videoDraft}
+        onFrameDraft={setFrameDraft}
+        onVideoDraft={setVideoDraft}
+        onCommitFrame={() => commitPrompt('framePrompt', frameDraft, framePreview)}
+        onCommitVideo={() => commitPrompt('videoPrompt', videoDraft, videoPreview)}
+        onToggleObject={toggleObject}
+        onToggleObjectOnBeat={toggleObjectOnBeat}
+        onSelectLocation={selectLocation}
+      />
 
       {open && (
         <div className={layout === 'board' ? 'space-y-3 p-3 text-xs' : 'space-y-2 px-3 pb-3 pt-1 text-xs'}>
