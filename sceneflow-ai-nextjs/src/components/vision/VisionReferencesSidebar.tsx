@@ -1543,6 +1543,14 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     )
   }, [scenesForSuggestion, objectReferences])
 
+  // Declared before the filter memos. Reading these consts earlier is a
+  // temporal-dead-zone crash in production (`Cannot access '…' before initialization`)
+  // when the Reference Library dialog first renders.
+  const [locationQuery, setLocationQuery] = useState('')
+  const [locationSceneFilter, setLocationSceneFilter] = useState<LibrarySceneFilter>('all')
+  const [objectQuery, setObjectQuery] = useState('')
+  const [objectSceneFilter, setObjectSceneFilter] = useState<LibrarySceneFilter>('all')
+
   const visibleLocations = useMemo(
     () => filterLocationReferences(locationReferences, locationQuery, locationSceneFilter),
     [locationReferences, locationQuery, locationSceneFilter]
@@ -1589,10 +1597,6 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   const [activeReferenceTab, setActiveReferenceTab] = useState<'cast' | 'object' | 'locations'>(
     () => initialTab ?? firstLibraryTabWithRequiredWork(libraryRequiredActions)
   )
-  const [locationQuery, setLocationQuery] = useState('')
-  const [locationSceneFilter, setLocationSceneFilter] = useState<LibrarySceneFilter>('all')
-  const [objectQuery, setObjectQuery] = useState('')
-  const [objectSceneFilter, setObjectSceneFilter] = useState<LibrarySceneFilter>('all')
   const [pendingKindAgentRun, setPendingKindAgentRun] = useState<ReferenceExpressKind | null>(
     null
   )
