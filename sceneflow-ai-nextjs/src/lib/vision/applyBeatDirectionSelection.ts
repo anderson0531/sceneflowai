@@ -7,6 +7,14 @@ import { refreshSceneSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt
 import { applyBeatsToScene, getSceneBeats } from '@/lib/script/beatMigration'
 import { beatStillDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
 import type { BeatDirection, BeatReferenceSelection, SceneBeat } from '@/lib/script/segmentTypes'
+
+function stripPromptOverrides(direction: BeatDirection | undefined): BeatDirection | undefined {
+  if (!direction) return undefined
+  const next = { ...direction }
+  delete next.framePrompt
+  delete next.videoPrompt
+  return next
+}
 import { restampPreVisHashIfScriptCurrent } from '@/lib/storyboard/preVisSync'
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
 import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
@@ -25,6 +33,8 @@ export function applyBeatDirectionSelections(
     artStyleAnchor?: string
     lookbook?: ProjectLookbook
     updatedAt?: string
+    /** Drop still and clip overrides and recompose them from the saved direction. */
+    rebuildPrompts?: boolean
   } = {}
 ): Array<Record<string, unknown>> {
   const byScene = new Map<number, BeatDirectionSelectionUpdate[]>()
@@ -40,13 +50,16 @@ export function applyBeatDirectionSelections(
     if (!batch?.length) return scene
     let withBeats: Record<string, unknown> = scene
     for (const update of batch) {
-      const keptFrame = update.direction?.framePrompt?.trim() ?? ''
+      const directionForSave = options.rebuildPrompts
+        ? stripPromptOverrides(update.direction)
+        : update.direction
+      const keptFrame = options.rebuildPrompts ? '' : directionForSave?.framePrompt?.trim() ?? ''
       const beats = getSceneBeats(withBeats).map((entry) => {
         if (entry.beatId !== update.beatId) return entry
         const patched: SceneBeat = { ...entry }
-        if (update.direction && Object.keys(update.direction).length > 0) {
+        if (directionForSave && Object.keys(directionForSave).length > 0) {
           patched.beatDirection = {
-            ...update.direction,
+            ...directionForSave,
             generatedBy: 'user',
             updatedAt,
           }
@@ -59,6 +72,7 @@ export function applyBeatDirectionSelections(
           sceneIndex,
           artStyleAnchor: options.artStyleAnchor,
           lookbook: options.lookbook,
+          force: options.rebuildPrompts,
         })
       })
       const edited = beats.find((entry) => entry.beatId === update.beatId)

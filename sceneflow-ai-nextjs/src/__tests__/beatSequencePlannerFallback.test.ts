@@ -326,7 +326,7 @@ Strictly Avoid: Mannequin geometry.`
     )
     expect(framing).toContain('Gaze: toward the hatch wheel')
     expect(framing).not.toContain('Props in frame:')
-    expect(framing).not.toContain('Violet Ink Drafting Vellum')
+    expect(framing).toContain('Props: Violet Ink Drafting Vellum')
     expect(framing.match(/Thirty-Inch Iron Rail Spanner/g)).toHaveLength(1)
   })
 
@@ -539,7 +539,7 @@ Strictly Avoid: Mannequin geometry.`
 
     expect(framing).toContain('No people in frame')
     expect(framing).not.toMatch(/Cast in frame/)
-    expect(framing).not.toContain('Heavy iron spanner')
+    expect(framing).toContain('Props: Heavy iron spanner')
     expect(framing).not.toContain('Props in frame:')
     expect(framing).not.toMatch(/Gaze:/)
     expect(framing).not.toMatch(/Hands and props:/)

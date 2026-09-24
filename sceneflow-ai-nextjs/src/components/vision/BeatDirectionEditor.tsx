@@ -435,12 +435,14 @@ export function BeatDirectionEditor({
       beatId: string
       direction: BeatDirection | undefined
       referenceSelection: BeatReferenceSelection
-    }>
+    }>,
+    options?: { rebuildPrompts?: boolean }
   ) => {
     if (!onScriptChange || readOnly) return
     const nextScenes = applyBeatDirectionSelections(scenes, updates, {
       artStyleAnchor: promptComposition?.artStyleAnchor,
       lookbook: promptComposition?.lookbook,
+      rebuildPrompts: options?.rebuildPrompts,
     })
     onScriptChange({
       ...script,
@@ -481,14 +483,17 @@ export function BeatDirectionEditor({
           objectName: object.name,
           resolvedAt,
         })
-    writeConnection([
-      {
-        sceneIndex: sceneIdx,
-        beatId: beat.beatId,
-        direction: next.direction,
-        referenceSelection: next.selection,
-      },
-    ])
+    writeConnection(
+      [
+        {
+          sceneIndex: sceneIdx,
+          beatId: beat.beatId,
+          direction: next.direction,
+          referenceSelection: next.selection,
+        },
+      ],
+      { rebuildPrompts: true }
+    )
   }
 
   const toggleObjectOnBeat = (
@@ -516,14 +521,17 @@ export function BeatDirectionEditor({
           objectName: object.name,
           resolvedAt,
         })
-    writeConnection([
-      {
-        sceneIndex: target.sceneIndex,
-        beatId: target.beatId,
-        direction: next.direction,
-        referenceSelection: next.selection,
-      },
-    ])
+    writeConnection(
+      [
+        {
+          sceneIndex: target.sceneIndex,
+          beatId: target.beatId,
+          direction: next.direction,
+          referenceSelection: next.selection,
+        },
+      ],
+      { rebuildPrompts: true }
+    )
   }
 
   const selectLocation = (locationRefId: string | null, locationVersionId: string | null) => {
@@ -609,6 +617,7 @@ export function BeatDirectionEditor({
         onVideoDraft={setVideoDraft}
         onCommitFrame={() => commitPrompt('framePrompt', frameDraft, framePreview)}
         onCommitVideo={() => commitPrompt('videoPrompt', videoDraft, videoPreview)}
+        onUpdatePrompts={() => persist(direction, { refreshPrompts: 'rebuild' })}
         onToggleObject={toggleObject}
         onToggleObjectOnBeat={toggleObjectOnBeat}
         onSelectLocation={selectLocation}
@@ -823,7 +832,7 @@ export function BeatDirectionEditor({
                   className="text-[10px] underline text-gray-400 hover:text-gray-200"
                   onClick={() => persist(direction, { refreshPrompts: 'rebuild' })}
                 >
-                  Rebuild from fields
+                  Update still and clip prompts
                 </button>
               )}
             </div>

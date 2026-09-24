@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { composeBeatActionFraming } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import {
   connectObjectReference,
   disconnectObjectReference,
@@ -46,6 +47,25 @@ describe('connectObjectReference', () => {
     expect(connected.direction.framePrompt).toBeUndefined()
     expect(connected.direction.videoPrompt).toBeUndefined()
     expect(connected.direction.keyProps).toEqual(['Framed photo'])
+  })
+})
+
+describe('composeBeatActionFraming connected props', () => {
+  it('names Framed Photo of Sarah when the action still says Sepia photograph', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_photo',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription: 'A finger rests on the glass edge of the Sepia photograph.',
+      beatDirection: {
+        shotType: 'Insert Shot',
+        cameraAngle: 'high angle',
+        keyProps: ['Framed Photo of Sarah'],
+      },
+    })
+
+    expect(framing).toContain('Sepia photograph')
+    expect(framing).toContain('Props: Framed Photo of Sarah')
   })
 })
 
