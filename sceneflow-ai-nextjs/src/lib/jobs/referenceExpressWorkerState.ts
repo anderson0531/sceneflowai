@@ -123,6 +123,7 @@ function readCatalogSyncState(raw: unknown): LocationCatalogSyncState | undefine
     locationIds: Array.isArray(state.locationIds)
       ? state.locationIds.filter((id): id is string => typeof id === 'string')
       : [],
+    catalogOnly: state.catalogOnly === true,
   }
 }
 

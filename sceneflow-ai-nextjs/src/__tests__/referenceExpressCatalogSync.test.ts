@@ -116,7 +116,7 @@ describe('runLocationCatalogSyncStep', () => {
         scenes: [{ heading: 'EXT. DOCKYARD - NIGHT' }],
         screenplayContext: {},
       })
-      .mockResolvedValueOnce({
+      .mockResolvedValue({
         characters: [],
         locations: [withVersion],
         props: [],
@@ -138,6 +138,12 @@ describe('runLocationCatalogSyncStep', () => {
     if (outcome.kind !== 'continue') return
     expect(outcome.catalogSync.status).toBe('done')
     expect(outcome.items?.some((item: ReferenceExpressItem) => item.versionId)).toBe(true)
+    expect(persistPatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectId: 'proj-1',
+        locationScriptFingerprint: expect.any(String),
+      })
+    )
   })
 
   it('completes cleanly when catalog sync finds nothing to generate', async () => {

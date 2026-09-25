@@ -484,7 +484,12 @@ export async function runReferenceExpressStep(
     const items = readItems(payload)
     const catalogSync =
       payload.catalogSync === 'location'
-        ? { status: 'pending' as const, cursor: 0, locationIds: [] as string[] }
+        ? {
+            status: 'pending' as const,
+            cursor: 0,
+            locationIds: [] as string[],
+            catalogOnly: payload.catalogOnly === true,
+          }
         : undefined
 
     if (!items.length && payload.catalogSync !== 'location') {

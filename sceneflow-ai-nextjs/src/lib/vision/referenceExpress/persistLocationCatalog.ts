@@ -13,9 +13,12 @@ export async function persistLocationCatalogPatch(input: {
   projectId: string
   append?: Array<Record<string, unknown>>
   patchById?: { id: string; versions: unknown[] }
+  locationScriptFingerprint?: string
 }): Promise<{ saved: boolean }> {
-  const { projectId, append, patchById } = input
-  if ((!append || append.length === 0) && !patchById) return { saved: false }
+  const { projectId, append, patchById, locationScriptFingerprint } = input
+  if ((!append || append.length === 0) && !patchById && !locationScriptFingerprint) {
+    return { saved: false }
+  }
 
   return sequelize.transaction(async (transaction) => {
     const project = await Project.findByPk(projectId, {
@@ -51,6 +54,11 @@ export async function persistLocationCatalogPatch(input: {
         return { ...entry, versions: patchById.versions }
       })
       if (!found) return { saved: false }
+    }
+
+    if (locationScriptFingerprint && references.locationScriptFingerprint !== locationScriptFingerprint) {
+      references.locationScriptFingerprint = locationScriptFingerprint
+      saved = true
     }
 
     if (!saved) return { saved: false }

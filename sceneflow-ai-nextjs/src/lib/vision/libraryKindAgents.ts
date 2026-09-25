@@ -4,7 +4,9 @@
  */
 
 import type { LocationReference, LocationVersion } from '@/types/visionReferences'
+import { getSceneBeats } from '@/lib/script/beatMigration'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
+import { fingerprintSource } from '@/lib/utils/fingerprint'
 import {
   mergeLocationVersionSyncDiff,
   summarizeLocationVersionSyncDiff,
@@ -137,15 +139,35 @@ export function extractHeadingLocationsFromScenes(
 
 const hasImage = (url?: string): boolean => Boolean(url && url.trim())
 
+/** Heading locations plus beat text that can change a lasting set state. */
+export function locationScriptFingerprint(scenes: HeadingLocationScene[]): string {
+  const parts: string[] = []
+  scenes.forEach((scene, index) => {
+    parts.push(`scene:${index + 1}`)
+    parts.push(headingText(scene))
+    for (const beat of getSceneBeats(scene)) {
+      parts.push(beat.beatId)
+      parts.push(beat.actionDescription)
+      parts.push(beat.line)
+      parts.push(beat.beatDirection?.frozenMoment)
+    }
+  })
+  return fingerprintSource(parts)
+}
+
 export function referenceExpressAgentLabel(
   kinds?: ReferenceExpressKind[],
-  options?: { sceneScoped?: boolean }
+  options?: { sceneScoped?: boolean; locationScoped?: boolean }
 ): string {
   if (options?.sceneScoped && !kinds?.length) return 'Scene Ref Agent'
   if (!kinds?.length) return 'Library Agent'
   if (kinds.length === 1) {
     if (kinds[0] === 'cast') return 'Cast Agent'
-    if (kinds[0] === 'location') return 'Location Agent'
+    if (kinds[0] === 'location') {
+      return options?.locationScoped || options?.sceneScoped
+        ? 'Location Agent'
+        : 'All Locations Agent'
+    }
     if (kinds[0] === 'prop') return 'Object Agent'
   }
   return 'Library Agent'

@@ -119,6 +119,7 @@ describe('glossary contents', () => {
       'Scene Ref Agent',
       'Library Agent',
       'Cast Agent',
+      'All Locations Agent',
       'Location Agent',
       'Object Agent',
       'Audio Agent',

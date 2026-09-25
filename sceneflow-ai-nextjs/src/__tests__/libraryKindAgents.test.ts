@@ -15,6 +15,7 @@ import {
   locationVersionNeedsGeneration,
   locationsThatGainedBase,
   pendingKindAgentRunForAction,
+  locationScriptFingerprint,
   referenceExpressAgentLabel,
   summarizeLibraryRequiredActions,
   toLocationReferenceFromExtracted,
@@ -23,6 +24,25 @@ import {
   buildLocationVersionSyncDiff,
 } from '@/lib/vision/locationScriptSync'
 import type { LocationReference } from '@/types/visionReferences'
+
+describe('locationScriptFingerprint', () => {
+  it('changes when a beat line that can alter the set changes', () => {
+    const base = [
+      {
+        heading: 'INT. FOYER - NIGHT',
+        beats: [{ beatId: 'b1', line: 'Shut the door', actionDescription: 'She reaches' }],
+      },
+    ]
+    const edited = [
+      {
+        heading: 'INT. FOYER - NIGHT',
+        beats: [{ beatId: 'b1', line: 'Open the door', actionDescription: 'She reaches' }],
+      },
+    ]
+    expect(locationScriptFingerprint(base)).not.toBe(locationScriptFingerprint(edited))
+    expect(locationScriptFingerprint(base)).toBe(locationScriptFingerprint(base))
+  })
+})
 
 describe('referenceExpressAgentLabel', () => {
   it('names Library Agent when kinds are omitted', () => {
@@ -37,7 +57,8 @@ describe('referenceExpressAgentLabel', () => {
 
   it('names the kind agents', () => {
     expect(referenceExpressAgentLabel(['cast'])).toBe('Cast Agent')
-    expect(referenceExpressAgentLabel(['location'])).toBe('Location Agent')
+    expect(referenceExpressAgentLabel(['location'])).toBe('All Locations Agent')
+    expect(referenceExpressAgentLabel(['location'], { locationScoped: true })).toBe('Location Agent')
     expect(referenceExpressAgentLabel(['prop'])).toBe('Object Agent')
   })
 })

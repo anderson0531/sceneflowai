@@ -15,6 +15,7 @@ export function LibraryKindToolbar({
   updateDisabled = false,
   agentDisabled = false,
   agentHasWork = false,
+  showUpdate = true,
   updateTitle,
   agentTitle,
   extra,
@@ -28,12 +29,14 @@ export function LibraryKindToolbar({
   updateDisabled?: boolean
   agentDisabled?: boolean
   agentHasWork?: boolean
+  showUpdate?: boolean
   updateTitle?: string
   agentTitle?: string
   extra?: ReactNode
 }) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
+      {showUpdate ? (
       <Button
         type="button"
         variant="outline"
@@ -50,6 +53,7 @@ export function LibraryKindToolbar({
         )}
         {updateLabel}
       </Button>
+      ) : null}
       {onAgent ? (
         <Button
           type="button"
