@@ -6216,6 +6216,9 @@ function SceneCard({
                       sceneId={workflowSceneId}
                       sceneNumber={sceneNumber}
                       projectId={projectId ?? ''}
+                      scenes={scenes}
+                      script={script}
+                      onScriptChange={onScriptChange}
                       artStyleId={promptComposition.artStyleAnchor}
                       productionData={sceneProductionData ?? null}
                       sceneImageUrl={scene.imageUrl}

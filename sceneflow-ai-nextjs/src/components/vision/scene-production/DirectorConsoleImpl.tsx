@@ -276,6 +276,10 @@ export interface DirectorConsoleProps {
   projectAspectRatio?: BlueprintAspectRatio
   /** Project-level configured language streams (visionPhase.streams). */
   projectStreams?: import('@/lib/streams/projectStreams').ProjectStream[]
+  /** Script scenes, so the Mixer can save the end-of-scene transition. */
+  scenes?: any[]
+  script?: any
+  onScriptChange?: (script: any) => void
   /**
    * Report a Video Agent batch up to an owner that outlives this console.
    *
@@ -365,6 +369,9 @@ export function DirectorConsoleRoot({
   locationReferences = [],
   projectAspectRatio = '16:9',
   projectStreams,
+  scenes,
+  script,
+  onScriptChange,
   onVideoRunReport,
   onSceneRenderQueued,
   onVideoRunCancelReady,
@@ -1686,6 +1693,9 @@ export function DirectorConsoleRoot({
           })
         }}
         projectStreams={projectStreams}
+        scenes={scenes}
+        script={script}
+        onScriptChange={onScriptChange}
         onSceneRenderQueued={onSceneRenderQueued}
         onRenderComplete={(downloadUrl, language, streamType = productionTarget.streamType, meta) => {
           setRenderedSceneUrl(downloadUrl)

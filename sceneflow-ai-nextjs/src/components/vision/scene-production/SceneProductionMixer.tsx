@@ -34,6 +34,11 @@ import {
   type MixerMusicClip,
 } from '@/lib/scene/mixerScoreMusic'
 import { DEFAULT_MUSIC_FILE_DURATION_SEC } from '@/lib/storyboard/musicPlayback'
+import {
+  resolveMixerSceneEnd,
+  sceneOpeningFrameUrl,
+} from '@/lib/storyboard/transitions'
+import { SceneTransitionSelect } from '@/components/vision/SceneTransitionSelect'
 import { toast } from 'sonner'
 import { 
   Play, 
@@ -383,6 +388,10 @@ interface SceneProductionMixerProps {
   onMixerSettingsChange?: (payload: MixerSettingsPersistPayload) => void
   /** Project-level configured language streams (visionPhase.streams). */
   projectStreams?: ProjectStream[]
+  /** Script scenes, so the end-of-scene join can be saved on transitionToNext. */
+  scenes?: any[]
+  script?: any
+  onScriptChange?: (script: any) => void
 }
 
 // ============================================================================
@@ -809,6 +818,8 @@ function AudioTrackRow({
                   className="scale-90"
                 />
               </div>
+                </>
+              )}
 
               <div className="flex items-center gap-2">
                 <span className="text-[10px] text-gray-500 uppercase w-16 shrink-0">Fade In</span>
@@ -849,8 +860,6 @@ function AudioTrackRow({
                   {(config.fadeOutSec ?? 0).toFixed(1)}s
                 </span>
               </div>
-                </>
-              )}
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between gap-2">
@@ -1895,6 +1904,9 @@ export function SceneProductionMixer({
   onSegmentsChange,
   onMixerSettingsChange,
   projectStreams,
+  scenes,
+  script,
+  onScriptChange,
 }: SceneProductionMixerProps) {
   const selectedLanguage = productionTarget.language
   const isEnglish = selectedLanguage === 'en'
@@ -2983,6 +2995,18 @@ export function SceneProductionMixer({
   
   // Derive sceneIdx from sceneIndex prop or sceneNumber (1-based → 0-based)
   const effectiveSceneIdx = sceneIndex ?? (sceneNumber - 1)
+
+  const nextScene = scenes?.[effectiveSceneIdx + 1]
+  const nextSceneFrameUrl = sceneOpeningFrameUrl(nextScene)
+  const sceneEnd = useMemo(
+    () =>
+      resolveMixerSceneEnd(
+        scenes?.[effectiveSceneIdx]?.transitionToNext,
+        !!nextSceneFrameUrl
+      ),
+    [scenes, effectiveSceneIdx, nextSceneFrameUrl]
+  )
+  const timelineDuration = totalDuration + sceneEnd.holdSec
   
   // === Language Audio Generation Handler ===
   // Generates dialogue audio for the current scene in a specific language
@@ -3091,7 +3115,7 @@ export function SceneProductionMixer({
           projectId,
           sceneId,
           language: selectedLanguage,
-          durationSeconds: Math.ceil(totalDuration),
+          durationSeconds: Math.ceil(timelineDuration),
         })
       }
 
@@ -3257,6 +3281,16 @@ export function SceneProductionMixer({
             timing: overlay.timing,
           })),
           // Include watermark config for FFmpeg burning
+          sceneEndTransition:
+            sceneEnd.effect === 'cut'
+              ? undefined
+              : {
+                  effect: sceneEnd.effect,
+                  durationSec: sceneEnd.durationSec,
+                  holdSec: sceneEnd.holdSec,
+                  nextFrameUrl:
+                    sceneEnd.effect === 'dissolve' ? nextSceneFrameUrl ?? undefined : undefined,
+                },
           watermark: displayWatermarkConfig.enabled ? {
             type: displayWatermarkConfig.type,
             text: displayWatermarkConfig.text,
@@ -3311,7 +3345,7 @@ export function SceneProductionMixer({
     textOverlays, displayOverlays, masterSegmentVolume, watermarkConfig, displayWatermarkConfig,
     preserveBackgroundStem, includeSpeechStem, klingLipsyncEnabled, resolvedDialogueClips,
     measuredSegmentDurations, getPlaybackSegmentDuration, schedulePersistMixerSettings,
-    onSceneRenderQueued,
+    onSceneRenderQueued, sceneEnd, nextSceneFrameUrl,
   ])
 
   /**
@@ -3644,7 +3678,9 @@ export function SceneProductionMixer({
                 audioTracks={audioTracks}
                 currentAudioUrls={playbackAudioUrls}
                 dialogueClipConfigs={dialogueClipConfigs}
-                totalDuration={totalDuration}
+                totalDuration={timelineDuration}
+                sceneEnd={sceneEnd}
+                nextSceneFrameUrl={sceneEnd.effect === 'dissolve' ? nextSceneFrameUrl : null}
                 isMuted={isMuted}
                 onToggleMute={() => setIsMuted(prev => !prev)}
                 segmentAudioConfigs={segmentAudioConfigs}
@@ -3664,6 +3700,7 @@ export function SceneProductionMixer({
                 }}
                 onDeleteOverlay={deleteOverlay}
                 musicFileDuration={musicFileDuration}
+                scoreStemFade={mixerMusic.usingScore}
                 focusBeatSegmentId={focusBeatSegmentId}
                 onFocusBeatHandled={() => setFocusBeatSegmentId(null)}
               />
@@ -3683,7 +3720,13 @@ export function SceneProductionMixer({
                     </button>
                     <Clock className="w-4 h-4 text-blue-400" />
                     <span className="text-sm font-medium text-white">Timeline</span>
-                    <span className="text-xs text-gray-500 truncate">Visual: {formatTime(videoTotalDuration)} | Total: {formatTime(totalDuration)}</span>
+                    <span className="text-xs text-gray-500 truncate">Visual: {formatTime(videoTotalDuration)} | Total: {formatTime(timelineDuration)}</span>
+                    <SceneTransitionSelect
+                      sceneIdx={effectiveSceneIdx}
+                      scenes={scenes}
+                      script={script}
+                      onScriptChange={onScriptChange}
+                    />
                   </div>
                   {onSegmentsChange && audioTracks.dialogue.enabled && (
                     <Button
@@ -3706,7 +3749,7 @@ export function SceneProductionMixer({
                   <div className="px-3 pb-3">
                     <MixerTimeline
                       videoTotalDuration={videoTotalDuration}
-                      timelineDuration={totalDuration}
+                      timelineDuration={timelineDuration}
                       textOverlays={textOverlays}
                       onTextOverlayChange={updateOverlay}
                       segments={previewSegments}

@@ -35,8 +35,8 @@ export function SceneTransitionSelect({
   className,
 }: SceneTransitionSelectProps) {
   const scene = scenes?.[sceneIdx]
+  if (!scene) return null
   const nextScene = scenes?.[sceneIdx + 1]
-  if (!scene || !nextScene) return null
 
   const current: BeatDirectionTransition = scene.transitionToNext ?? 'FADE'
   const readOnly = !onScriptChange
@@ -60,18 +60,22 @@ export function SceneTransitionSelect({
     <label
       className={`flex items-center gap-2 text-[11px] text-gray-400 ${className ?? ''}`}
       onClick={(e) => e.stopPropagation()}
-      title="Plays in the Screening Room and in the exported animatic"
+      title="Plays in the Mixer, the rendered scene, the Screening Room, and the animatic"
     >
       <Film className="w-3 h-3 text-gray-500" />
       <span className="whitespace-nowrap">
-        To scene {sceneIdx + 2}
+        {nextScene ? `To scene ${sceneIdx + 2}` : 'End of scene'}
       </span>
       <select
         className="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-[11px] text-gray-200 disabled:opacity-60"
         value={current}
         disabled={readOnly}
         onChange={(e) => handleChange(e.target.value as BeatDirectionTransition)}
-        aria-label={`Transition from scene ${sceneIdx + 1} to scene ${sceneIdx + 2}`}
+        aria-label={
+          nextScene
+            ? `Transition from scene ${sceneIdx + 1} to scene ${sceneIdx + 2}`
+            : `End of scene ${sceneIdx + 1}`
+        }
       >
         {SCENE_TRANSITION_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>

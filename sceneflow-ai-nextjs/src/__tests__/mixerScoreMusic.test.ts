@@ -2,9 +2,11 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'fs'
 import path from 'path'
 import {
+  foldScoreStemFades,
   mapMixerPlaybackSegments,
   mixerMusicClipsToRenderPayload,
   resolveMixerMusicClips,
+  scoreStemEnvelopeGain,
 } from '@/lib/scene/mixerScoreMusic'
 import type { AudioTrackConfig } from '@/components/vision/scene-production/types'
 import type { SceneSegment } from '@/components/vision/scene-production/types'
@@ -203,10 +205,32 @@ describe('mixerMusicClipsToRenderPayload', () => {
         volume: 0.2,
         loop: false,
         fadeInSec: 1.5,
-        fadeOutSec: 0,
+        fadeOutSec: 2,
         playbackRate: 1,
       },
     ])
+  })
+})
+
+describe('score stem fades', () => {
+  it('ramps in from the score start and out into the score end', () => {
+    expect(scoreStemEnvelopeGain(0, 0, 10, 2, 2)).toBe(0)
+    expect(scoreStemEnvelopeGain(1, 0, 10, 2, 2)).toBe(0.5)
+    expect(scoreStemEnvelopeGain(5, 0, 10, 2, 2)).toBe(1)
+    expect(scoreStemEnvelopeGain(9, 0, 10, 2, 2)).toBe(0.5)
+  })
+
+  it('folds the stem fade onto each cue edge without shortening a longer cue fade', () => {
+    const folded = foldScoreStemFades(
+      [
+        { startTime: 0, duration: 8, fadeInSec: 1.5, fadeOutSec: 0 },
+        { startTime: 8, duration: 4, fadeInSec: 0, fadeOutSec: 0.5 },
+      ],
+      3,
+      2
+    )
+    expect(folded[0]).toMatchObject({ fadeInSec: 3, fadeOutSec: 0 })
+    expect(folded[1]).toMatchObject({ fadeInSec: 0, fadeOutSec: 2 })
   })
 })
 
