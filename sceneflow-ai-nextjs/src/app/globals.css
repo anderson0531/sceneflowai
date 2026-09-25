@@ -43,6 +43,18 @@
     font-size: clamp(16px, 1vw + 14px, 18px);
   }
 
+  /*
+   * Loaded from fonts.googleapis.com in the root layout. next/font/google
+   * goes through Turbopack's font replacer, which fails the Vercel build
+   * when a Google font file URL is not a single query entry.
+   */
+  :root {
+    --font-inter: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-montserrat: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+    --font-roboto-mono: 'Roboto Mono', ui-monospace, monospace;
+    --font-lora: 'Lora', ui-serif, Georgia, serif;
+  }
+
   /* Dark mode styles (default) */
   body {
     /* Global application background and text */
@@ -50,6 +62,7 @@
     /* Subtle atmospheric background */
     @apply bg-no-repeat bg-sf-radial-atmosphere;
     /* Optimized typography for dark mode */
+    font-family: var(--font-inter);
     font-size: 1rem; /* Now responsive: 16-18px */
     font-weight: 400;
     line-height: 1.7; /* Increased from 1.6 for better readability */

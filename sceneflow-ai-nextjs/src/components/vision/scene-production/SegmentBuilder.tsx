@@ -23,7 +23,7 @@ import { MAX_VEO_VIDEO_CLIP_SECONDS } from '@/lib/config/modelConfig'
 import { VEO_ABSOLUTE_CLIP_MAX_SEC, maxVeoDurationForSegment } from '@/lib/scene/dialogueSegmentSplit'
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import { isLikelyNarration } from '@/lib/script/narration'
-import { isBeatFirstPipelineEnabled, isStoryboardApproved } from '@/lib/script/beatMigration'
+import { isBeatFirstPipelineEnabled } from '@/lib/script/beatMigration'
 import {
   Sparkles,
   Loader2,
@@ -772,13 +772,6 @@ export function SegmentBuilder({
     await runDirectionsOverlayPreamble()
 
     if (isBeatFirstPipelineEnabled()) {
-      if (!isStoryboardApproved(scene)) {
-        toast.error('Approve Pre-Vis before creating segments', {
-          description: 'Review and approve all beat frames in the Pre-Visualization Review panel.',
-        })
-        setIsAnalyzing(false)
-        return
-      }
       try {
         const response = await fetch(`/api/scenes/${sceneId}/derive-segments`, {
           method: 'POST',
@@ -1556,8 +1549,7 @@ export function SegmentBuilder({
                     onClick={handleAnalyze}
                     disabled={
                       isAnalyzing ||
-                      (!isBeatFirstPipelineEnabled() && !hasSceneDirection) ||
-                      (isBeatFirstPipelineEnabled() && !isStoryboardApproved(scene))
+                      (!isBeatFirstPipelineEnabled() && !hasSceneDirection)
                     }
                     className={cn(
                       'w-full',
@@ -1566,11 +1558,9 @@ export function SegmentBuilder({
                     size="lg"
                     variant={hasExistingVideoAssets ? 'destructive' : 'default'}
                     title={
-                      isBeatFirstPipelineEnabled() && !isStoryboardApproved(scene)
-                        ? 'Approve Pre-Vis first'
-                        : !hasSceneDirection && !isBeatFirstPipelineEnabled()
-                          ? 'Generate scene direction first'
-                          : undefined
+                      !hasSceneDirection && !isBeatFirstPipelineEnabled()
+                        ? 'Generate scene direction first'
+                        : undefined
                     }
                   >
                     {isAnalyzing ? (

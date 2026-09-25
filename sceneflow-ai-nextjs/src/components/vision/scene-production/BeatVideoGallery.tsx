@@ -415,7 +415,7 @@ export function BeatVideoGallery({
               {previewVideoUrl ? (
                 <div
                   className={cn(
-                    'relative w-full bg-black',
+                    'relative mx-auto w-[80%] bg-black',
                     aspectClass,
                     isPreviewFullscreen && 'h-screen max-h-none w-full'
                   )}
@@ -481,7 +481,7 @@ export function BeatVideoGallery({
               ) : (
                 <div
                   className={cn(
-                    'relative w-full bg-black',
+                    'relative mx-auto w-[80%] bg-black',
                     aspectClass,
                     isPreviewFullscreen && 'h-screen max-h-none w-full'
                   )}

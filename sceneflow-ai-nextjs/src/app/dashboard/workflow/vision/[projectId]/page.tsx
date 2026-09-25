@@ -3832,7 +3832,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   const handleInitializeSceneProduction = useCallback(
-    async (sceneId: string, { targetDuration, generationOptions, segments: prePardsedSegments, deriveFromBeats }: { targetDuration: number; generationOptions?: any; segments?: any[]; deriveFromBeats?: boolean }) => {
+    async (sceneId: string, { targetDuration, generationOptions, segments: prePardsedSegments }: { targetDuration: number; generationOptions?: any; segments?: any[]; deriveFromBeats?: boolean }) => {
       if (!project?.id) {
         throw new Error('Project must be loaded before segmenting a scene.')
       }
@@ -3870,18 +3870,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return
       }
 
-      const scenes = scriptRef.current?.script?.scenes ?? script?.script?.scenes ?? []
-      const sceneRecord = scenes.find(
-        (s: any, i: number) => (s.id || s.sceneId || `scene-${i}`) === sceneId
-      )
       const beatFirst =
         typeof window !== 'undefined'
           ? (await import('@/lib/script/beatMigration')).isBeatFirstPipelineEnabled()
           : process.env.BEAT_FIRST_PIPELINE !== 'false'
 
-      const shouldDeriveFromBeats =
-        beatFirst &&
-        (deriveFromBeats === true || sceneRecord?.storyboardStatus === 'approved')
+      const shouldDeriveFromBeats = beatFirst
 
       if (shouldDeriveFromBeats) {
         const response = await fetch(
@@ -4051,8 +4045,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     script.script.scenes.forEach((scene: Record<string, unknown>, idx: number) => {
       const sceneId = getSceneProductionKey(scene as Scene, idx)
       const production = sceneProductionState[sceneId]
-      if (!production) return
-      if (!needsProductionDerive(scene, production.segments)) return
+      if (!needsProductionDerive(scene, production?.segments)) return
       const attemptKey = productionDeriveAttemptKey(sceneId, scene)
       if (backfillDeriveAttemptedRef.current.has(attemptKey)) return
 

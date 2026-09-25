@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, Montserrat, Roboto_Mono, Lora } from 'next/font/google'
 import './globals.css'
 
 import AuthSessionProvider from '@/components/providers/AuthSessionProvider'
@@ -25,33 +24,6 @@ import {
 } from '@/config/legal/legalCopy'
 import { LEGAL_HUB_PAGE, LEGAL_PAGES } from '@/config/legal/legalPages'
 import { HERO_VIDEO_BLOB_HOST, getLandingVideoCdnHost } from '@/config/landing/heroVideoLocales'
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-})
-
-const montserrat = Montserrat({
-  subsets: ['latin'],
-  variable: '--font-montserrat',
-  weight: ['400', '600', '700'],
-  display: 'swap',
-})
-
-const robotoMono = Roboto_Mono({
-  subsets: ['latin'],
-  variable: '--font-roboto-mono',
-  weight: ['400', '700'],
-  display: 'swap',
-})
-
-const lora = Lora({
-  subsets: ['latin'],
-  variable: '--font-lora',
-  weight: ['400', '600'],
-  display: 'swap',
-})
 
 function resolveSiteUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim()
@@ -230,6 +202,12 @@ export default function RootLayout({
     <html lang="en" dir="ltr" suppressHydrationWarning>
       <head>
         <DocumentLocaleScript />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Lora:wght@400;600&family=Montserrat:wght@400;600;700&family=Roboto+Mono:wght@400;700&display=swap"
+          rel="stylesheet"
+        />
         <link rel="preconnect" href={HERO_VIDEO_BLOB_HOST} crossOrigin="anonymous" />
         {getLandingVideoCdnHost() ? (
           <link rel="preconnect" href={getLandingVideoCdnHost()} crossOrigin="anonymous" />
@@ -244,7 +222,6 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} ${montserrat.variable} ${robotoMono.variable} ${lora.variable} ${inter.className}`}
         suppressHydrationWarning
       >
         <a
