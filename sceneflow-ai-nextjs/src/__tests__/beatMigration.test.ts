@@ -241,7 +241,7 @@ describe('beatMigration', () => {
     expect(isVideoGenerationUnlocked(outro)).toBe(true)
   })
 
-  it('keeps dramatic pending_review scenes locked even with complete frames', () => {
+  it('unlocks dramatic scenes that are still pending Pre-Vis review', () => {
     const scene = {
       heading: 'INT. LAB - NIGHT',
       storyboardStatus: 'pending_review',
@@ -256,10 +256,11 @@ describe('beatMigration', () => {
       ],
     }
     expect(sceneHasCompletePreVisFrames(scene)).toBe(true)
-    expect(isVideoGenerationUnlocked(scene)).toBe(false)
+    expect(isVideoGenerationUnlocked(scene)).toBe(true)
+    expect(stampApprovedIfVideoUnlocked(scene).stamped).toBe(false)
   })
 
-  it('keeps title sequences locked while a beat is missing a frame', () => {
+  it('unlocks title sequences even while a beat is missing a frame', () => {
     const title = {
       cinematicType: 'title',
       beats: [
@@ -279,7 +280,8 @@ describe('beatMigration', () => {
       ],
     }
     expect(sceneHasCompletePreVisFrames(title)).toBe(false)
-    expect(isVideoGenerationUnlocked(title)).toBe(false)
+    expect(isVideoGenerationUnlocked(title)).toBe(true)
+    expect(stampApprovedIfVideoUnlocked(title).stamped).toBe(false)
   })
 
   it('stamps approved when a bookend is unlocked by complete frames', () => {
@@ -332,7 +334,15 @@ describe('beatMigration', () => {
       beatIndex: 1,
     })
     expect(first.storyboardStatus).toBe('approved')
-    expect(applyExpressStoryboardStatus(title).storyboardStatus).toBe('pending_review')
+    const incomplete = applyExpressStoryboardStatus(title)
+    expect(incomplete.storyboardStatus).toBeUndefined()
+    const approved = applyExpressStoryboardStatus({
+      ...title,
+      storyboardStatus: 'approved',
+      storyboardApprovedAt: '2026-01-01T00:00:00.000Z',
+    })
+    expect(approved.storyboardStatus).toBe('approved')
+    expect(approved.storyboardApprovedAt).toBe('2026-01-01T00:00:00.000Z')
   })
 
   it('ensureSceneBeats preserves LLM beats with kind field', () => {
@@ -772,7 +782,7 @@ describe('applyBeatStoryboardImageToScene', () => {
     expect(updated.imageUrl).toBe('https://example.com/establishing.jpg')
     const storedBeats = updated.beats as SceneBeat[]
     expect(storedBeats[1].storyboardImageUrl).toBe('https://example.com/tracking.jpg')
-    expect(updated.storyboardStatus).toBe('pending_review')
+    expect(updated.storyboardStatus).toBeUndefined()
   })
 
   it('persists beat frame errors and clears them on later success', () => {

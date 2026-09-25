@@ -11,6 +11,8 @@ import {
   findSceneById,
   getVisionScriptScenes,
 } from '@/lib/script/resolveSceneById'
+import { segmentHasPlayableVideo } from '@/lib/storyboard/mediaVersions'
+import type { SceneSegment } from '@/components/vision/scene-production/types'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -66,11 +68,13 @@ export async function POST(
 
     const scene = matchedScene
     const artStyleId = resolveProjectArtStyle(metadata)
+    const storedSegments = readStoredProductionSegments(metadata, sceneId)
+    const segmentsToKeep = unionProductionSegments(storedSegments, existingSegments)
 
     const deriveOptions = {
       requireApproved: false,
       language: language ?? 'en',
-      existingSegments,
+      existingSegments: segmentsToKeep,
     }
     void skipApprovalCheck
 
@@ -110,7 +114,7 @@ export async function POST(
         .sceneDirection ??
       (workingScene as { detailedDirection?: unknown }).detailedDirection ??
       null
-    const segments = result.segments.map((seg) => {
+    const compiledSegments = result.segments.map((seg) => {
       const beat = beats.find((b) => b.beatId === seg.beatId)
       if (!beat) return seg
       const compiled = compileBeatVideoPromptFromDirection(
@@ -125,9 +129,17 @@ export async function POST(
         ...seg,
         generatedPrompt: compiled.prompt,
         videoPrompt: compiled.prompt,
-        userEditedPrompt: null,
+        userEditedPrompt: seg.userEditedPrompt ?? null,
       }
     })
+    const keptIds = new Set(compiledSegments.map((segment) => segment.segmentId))
+    const orphanClips = segmentsToKeep.filter(
+      (segment) =>
+        segment.segmentId &&
+        !keptIds.has(segment.segmentId) &&
+        segmentHasPlayableVideo(segment)
+    )
+    const segments = [...compiledSegments, ...orphanClips]
 
     return NextResponse.json({
       success: true,
@@ -144,4 +156,42 @@ export async function POST(
     console.error('[derive-segments]', message)
     return NextResponse.json({ error: message }, { status: 500 })
   }
+}
+
+function readStoredProductionSegments(
+  metadata: { visionPhase?: { production?: { scenes?: Record<string, { segments?: SceneSegment[] }> } } } | null | undefined,
+  sceneId: string
+): SceneSegment[] {
+  const stored = metadata?.visionPhase?.production?.scenes?.[sceneId]?.segments
+  return Array.isArray(stored) ? stored : []
+}
+
+/** DB rows first, then the client list. A later row fills a missing video pointer. */
+function unionProductionSegments(
+  stored: SceneSegment[],
+  client: SceneSegment[] | undefined
+): SceneSegment[] {
+  const byId = new Map<string, SceneSegment>()
+  for (const segment of [...stored, ...(client ?? [])]) {
+    if (!segment?.segmentId) continue
+    const previous = byId.get(segment.segmentId)
+    if (!previous) {
+      byId.set(segment.segmentId, segment)
+      continue
+    }
+    const takes = segment.takes?.length ? segment.takes : previous.takes
+    byId.set(segment.segmentId, {
+      ...previous,
+      ...segment,
+      takes,
+      activeAssetUrl: segment.activeAssetUrl || previous.activeAssetUrl,
+      currentTakeId: segment.currentTakeId || previous.currentTakeId,
+      assetType: segment.assetType || previous.assetType,
+      status:
+        segmentHasPlayableVideo(previous) && segment.status === 'PENDING'
+          ? previous.status
+          : (segment.status ?? previous.status),
+    })
+  }
+  return [...byId.values()]
 }

@@ -55,6 +55,8 @@ import {
   appendSegmentTake,
   assignStillUrl,
   CUSTOM_FRAME_STILL_SLOT,
+  healMissingVideoPointer,
+  segmentHasPlayableVideo,
 } from '@/lib/storyboard/mediaVersions'
 import {
   isPreVisStale,
@@ -1611,11 +1613,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const production = cloned[sceneId]
           if (production?.segments) {
             production.segments = production.segments.map((segment) => {
-              if (segment.status === 'GENERATING') {
-                console.log(`[VisionPage] Resetting stuck GENERATING status for shot ${segment.segmentId}`)
-                return { ...segment, status: 'PENDING' as const }
+              if (segment.status !== 'GENERATING') return segment
+              if (segmentHasPlayableVideo(segment)) {
+                return healMissingVideoPointer({
+                  ...segment,
+                  status: 'COMPLETE',
+                  assetType: segment.assetType || 'video',
+                })
               }
-              return segment
+              console.log(`[VisionPage] Resetting stuck GENERATING status for shot ${segment.segmentId}`)
+              return { ...segment, status: 'PENDING' as const }
             })
           }
         }

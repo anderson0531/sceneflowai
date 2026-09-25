@@ -1713,23 +1713,23 @@ export function sceneHasCompletePreVisFrames(
 }
 
 /**
- * Video Agent may generate when Pre-Vis is approved, or when a cinematic
- * bookend (title / outro / promo) already has a start frame on every beat.
+ * Beat-first clip generation does not wait on Pre-Vis approval.
+ * A scene can generate as soon as it exists.
  */
 export function isVideoGenerationUnlocked(
   scene: Record<string, unknown> | null | undefined
 ): boolean {
-  if (isStoryboardApproved(scene)) return true
-  if (!scene) return false
-  return isTitleOrCinematicScene(scene) && sceneHasCompletePreVisFrames(scene)
+  return !!scene
 }
 
-/** Stamp approved when a bookend is unlocked by complete frames. */
+/** Stamp approved when a bookend already has a start frame on every beat. */
 export function stampApprovedIfVideoUnlocked(
   scene: Record<string, unknown>
 ): { scene: Record<string, unknown>; stamped: boolean } {
   if (isStoryboardApproved(scene)) return { scene, stamped: false }
-  if (!isVideoGenerationUnlocked(scene)) return { scene, stamped: false }
+  if (!isTitleOrCinematicScene(scene) || !sceneHasCompletePreVisFrames(scene)) {
+    return { scene, stamped: false }
+  }
   return {
     scene: {
       ...scene,
@@ -1741,8 +1741,8 @@ export function stampApprovedIfVideoUnlocked(
 }
 
 /**
- * After Express writes a still: bookends with complete frames become approved;
- * everything else waits in pending_review.
+ * After Express writes a still, bookends with complete frames become approved.
+ * Other scenes keep the status they already have. Pre-Vis approval is not a clip gate.
  */
 export function applyExpressStoryboardStatus(
   scene: Record<string, unknown>
@@ -1757,11 +1757,7 @@ export function applyExpressStoryboardStatus(
           : new Date().toISOString(),
     }
   }
-  return {
-    ...scene,
-    storyboardStatus: 'pending_review',
-    storyboardApprovedAt: undefined,
-  }
+  return scene
 }
 
 export function sceneBeatsNeedStoryboard(scene: Record<string, unknown>): boolean {
