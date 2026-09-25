@@ -50,6 +50,7 @@ import {
   creditLinesJsonForPrompt,
   ensureCinematicBookends,
 } from '@/lib/script/cinematicBookends'
+import { isUnconfirmedScriptShrink } from '@/lib/script/scriptShrinkGuard'
 import {
   attachSceneDirectionsToScript,
   readScenesFromVisionMetadata,
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const { projectId } = await request.json()
+        const { projectId, confirmScriptReplace } = await request.json()
         
         if (!projectId) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
@@ -871,6 +872,25 @@ export async function POST(request: NextRequest) {
         // rather than a target the content was forced to hit. Persist it so the
         // downstream video/cost/Veo budgeting reflects the real content length.
         const derivedDuration = Math.round(totalEstimatedDuration)
+        const existingSceneCount =
+          project.metadata?.visionPhase?.script?.script?.scenes?.length || 0
+        if (
+          isUnconfirmedScriptShrink(existingSceneCount, finalScenes.length, {
+            confirmScriptReplace: confirmScriptReplace === true,
+          })
+        ) {
+          console.warn('[Script Gen V2] Refusing to replace a long script with a short one:', {
+            existingSceneCount,
+            generatedSceneCount: finalScenes.length,
+          })
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            type: 'error',
+            error: `Refusing to replace ${existingSceneCount} stored scenes with ${finalScenes.length}. Confirm script replace to overwrite.`,
+          })}\n\n`))
+          controller.close()
+          return
+        }
+
         await project.update({
           metadata: metadataToPersist,
           ...(derivedDuration > 0 ? { duration: derivedDuration } : {}),

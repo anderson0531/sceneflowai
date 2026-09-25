@@ -9169,9 +9169,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const metadata = project.metadata || {}
       const visionPhase = metadata.visionPhase || {}
       
-      // Clear scriptGenerated flag to allow regeneration
-      // Use script: null (explicit clear) — server recognizes this as intentional
-      // and won't trigger the stale-data safeguard that preserves existing script
+      // Clear scriptGenerated so generation runs. Do not null a long script first:
+      // that delete is permanent if generation then returns only a title sequence.
+      const storedSceneCount = visionPhase.script?.script?.scenes?.length || 0
       await fetch(`/api/projects/${projectId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -9181,9 +9181,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             visionPhase: {
               ...visionPhase,
               scriptGenerated: false,
-              script: null
+              ...(storedSceneCount > 10 ? {} : { script: null }),
             }
-          }
+          },
+          ...(storedSceneCount > 10 ? {} : { confirmScriptReplace: true }),
         })
       })
       
@@ -9202,8 +9203,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       }
       
-      // Now call generation with updated project
-      await initiateGeneration(updatedProj as Project)
+      // Now call generation with updated project. This button is an explicit
+      // replace; generation still refuses a short result unless this flag is set.
+      await initiateGeneration(updatedProj as Project, { confirmScriptReplace: true })
       
       // Reload to get the newly generated script
       await loadProject(true)
@@ -9219,7 +9221,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  const initiateGeneration = async (proj: Project) => {
+  const initiateGeneration = async (
+    proj: Project,
+    options?: { confirmScriptReplace?: boolean }
+  ) => {
     setIsGenerating(true)
     
     try {
@@ -9230,7 +9235,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // Wrap with execute for blocking overlay
         await execute(
           async () => {
-            await generateScript(proj)
+            await generateScript(proj, options)
           },
           { 
             message: 'Generating script... This may take 5-8 minutes for longer films.',
@@ -9286,7 +9291,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  const generateScript = async (proj: Project): Promise<{ characters: any[], scenes: any[] } | null> => {
+  const generateScript = async (
+    proj: Project,
+    options?: { confirmScriptReplace?: boolean }
+  ): Promise<{ characters: any[], scenes: any[] } | null> => {
     try {
       console.log('[Vision] Generating script with progress tracking...')
       setGenerationProgress(prev => ({ 
@@ -9297,7 +9305,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const response = await fetch('/api/vision/generate-script-v2', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: proj.id }),
+        body: JSON.stringify({
+          projectId: proj.id,
+          ...(options?.confirmScriptReplace ? { confirmScriptReplace: true } : {}),
+        }),
       })
       
       if (!response.ok) {

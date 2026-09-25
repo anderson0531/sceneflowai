@@ -15,6 +15,10 @@ import { upsertBeatSfxCueOnScene } from '@/lib/script/deriveSfxFromSceneContent'
 import { persistSceneAudioAtomic } from '@/lib/audio/persistSceneAudioAtomic'
 import { persistSceneSfxAudioAtomic } from '@/lib/sfx/persistSceneSfxAudio'
 import { mergeVisionPhaseReferences } from '@/lib/projects/mergeVisionPhaseReferences'
+import {
+  isUnconfirmedScriptShrink,
+  scenesAfterUnconfirmedShrinkGuard,
+} from '@/lib/script/scriptShrinkGuard'
 
 // Increase timeout for large project updates
 export const maxDuration = 60 // 60 seconds timeout
@@ -270,11 +274,21 @@ export async function PUT(
           mergedMetadata.visionPhase.scriptUpdatedAt = incomingScriptTimestamp
         }
         
-        // Case 1: Incoming explicitly sets script to null — intentional clear for regeneration
+        const confirmScriptReplace = body.confirmScriptReplace === true
+
+        // Case 1: Incoming explicitly sets script to null — intentional clear for regeneration.
+        // A long script is kept unless the caller confirms the replace.
         if (body.metadata.visionPhase.script === null) {
-          console.log('[Projects PUT] Script explicitly set to null (intentional clear for regeneration)')
-          // Allow it — don't preserve. The generate-script-v2 endpoint will write new script.
-          mergedMetadata.visionPhase.script = null
+          if (isUnconfirmedScriptShrink(existingSceneCount, 0, { confirmScriptReplace })) {
+            console.warn('[Projects PUT] PREVENTED SCRIPT SHRINK (null clear):', {
+              existingSceneCount,
+              preservingExistingScript: true,
+            })
+            mergedMetadata.visionPhase.script = existingScript
+          } else {
+            console.log('[Projects PUT] Script explicitly set to null (intentional clear for regeneration)')
+            mergedMetadata.visionPhase.script = null
+          }
           scriptSafeguardTriggered = true
         }
         // Case 2: Incoming has no script at all - preserve existing
@@ -321,12 +335,23 @@ export async function PUT(
               const incomingScenes = incomingScript.script.scenes
               const deletedSceneIds = body.deletedSceneIds || []
 
-              const mergedScenes = mergeSceneArraysForPersistence(
+              const shrinkGuard = scenesAfterUnconfirmedShrinkGuard(
                 existingScenes,
                 incomingScenes,
-                { deletedSceneIds }
+                { deletedSceneIds, confirmScriptReplace }
               )
+              const mergedScenes = shrinkGuard.scenes
+              if (shrinkGuard.rejectedShrink) {
+                console.warn('[Projects PUT] PREVENTED SCRIPT SHRINK:', {
+                  existingSceneCount: existingScenes.length,
+                  incomingSceneCount: incomingScenes.length,
+                  preservingExistingScript: true,
+                })
+                mergedMetadata.visionPhase.script = existingScript
+                scriptSafeguardTriggered = true
+              }
 
+              if (!scriptSafeguardTriggered) {
               mergedMetadata.visionPhase.script.script.scenes = mergedScenes
 
               const preservedScenesCount = Math.max(
@@ -345,6 +370,7 @@ export async function PUT(
 
               // Keep legacy mirror in sync with canonical script scenes
               mergedMetadata.visionPhase.scenes = mergedScenes
+              }
             }
           }
         }
