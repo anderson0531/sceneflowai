@@ -9,7 +9,7 @@ import { getSessionUserId } from '@/lib/auth/sessionUser'
 import { CreditService } from '@/services/CreditService'
 import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 import { loadScriptForAnalysis } from '@/lib/script/audienceResonance/persistReview'
-import { planSceneChunks, DEFAULT_SCENE_CHUNK_SIZE } from '@/lib/script/audienceResonance/chunkPlan'
+import { planAnalysisChunks } from '@/lib/script/audienceResonance/chunkPlan'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const chunks = planSceneChunks(sceneCount, chunkSize ?? DEFAULT_SCENE_CHUNK_SIZE)
+    const chunks = planAnalysisChunks(context.script.scenes, { maxScenesPerChunk: chunkSize })
 
     const { job, dispatched } = await createGenerationJob({
       userId,

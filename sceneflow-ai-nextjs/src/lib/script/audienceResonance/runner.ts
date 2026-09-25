@@ -4,7 +4,7 @@ import {
   resolveNarrationPolicy,
   type NarrationPolicy,
 } from '@/lib/script/narrationPolicy'
-import { DEFAULT_SCENE_CHUNK_SIZE, chunkProgress, planSceneChunks } from './chunkPlan'
+import { chunkProgress, planAnalysisChunks } from './chunkPlan'
 import { analyzeSceneChunk } from './scenePass'
 import { synthesizeReview } from './synthesisPass'
 import { applyHysteresis, resolveOverallScore } from './scoring'
@@ -113,7 +113,9 @@ export async function runAudienceResonance(
 ): Promise<AudienceResonanceReview> {
   const context = buildAnalysisContext(input)
   const totalScenes = context.scenesForAnalysis.length
-  const chunks = planSceneChunks(totalScenes, input.chunkSize ?? DEFAULT_SCENE_CHUNK_SIZE)
+  const chunks = planAnalysisChunks(context.scenesForAnalysis, {
+    maxScenesPerChunk: input.chunkSize,
+  })
   const runChunk = input.runChunk ?? (async (_name, fn) => fn())
 
   const sceneAnalysis: SceneAnalysis[] = []
@@ -151,7 +153,9 @@ export async function runAudienceResonance(
     totalScenes,
   })
 
-  const synthesis = await runChunk('synthesis', () => synthesizeReview(context, sceneAnalysis))
+  const synthesis = await runChunk('synthesis', () =>
+    synthesizeReview(context, sceneAnalysis, chunks)
+  )
 
   const categories = applyHysteresis(synthesis.categories, context.previousScores)
   const { autoScoreCap } = applyShowVsTellAutoCap(

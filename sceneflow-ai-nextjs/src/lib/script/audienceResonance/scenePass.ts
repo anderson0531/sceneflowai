@@ -2,11 +2,21 @@ import { generateText } from '@/lib/vertexai/gemini'
 import { getAudienceResonanceModel } from '@/lib/config/modelConfig'
 import { buildScriptARShowVsTellGuidance } from '@/lib/script/narrationPolicy'
 import type { AnalysisContext, SceneAnalysis } from './types'
-import type { SceneChunk } from './chunkPlan'
+import { halveSceneChunk, type SceneChunk } from './chunkPlan'
 
-/** Per-scene token allowance; recommendation count is uncapped, so keep headroom. */
-const TOKENS_PER_SCENE = 900
-const MIN_CHUNK_TOKENS = 4000
+/**
+ * Thinking tokens share max_output_tokens on Gemini 3. Reserve a block for
+ * high thinking, then budget per scene so the JSON is not cut off.
+ */
+const THINKING_RESERVE_TOKENS = 8192
+const TOKENS_PER_SCENE = 2000
+export const SCENE_PASS_OUTPUT_CAP = 32768
+
+export function scenePassOutputTokens(sceneCount: number, forceCap = false): number {
+  if (forceCap) return SCENE_PASS_OUTPUT_CAP
+  const count = Math.max(1, sceneCount)
+  return Math.min(SCENE_PASS_OUTPUT_CAP, THINKING_RESERVE_TOKENS + count * TOKENS_PER_SCENE)
+}
 
 export type ScenePassResult = {
   sceneAnalysis: SceneAnalysis[]
@@ -44,14 +54,20 @@ function buildAudienceContext(targetDemographic?: string): string {
   return `\nCRITICAL CONTEXT — TARGET AUDIENCE PROFILE:\n${trimmed}\n\nJudge every scene SPECIFICALLY for the audience above.${culturalInstruction}`
 }
 
+type ScenePassOptions = {
+  /** Single-scene retry already used the full output cap. */
+  retriedSingle?: boolean
+}
+
 /**
- * Analyzes one chunk of scenes. Every scene in the chunk gets its own entry —
- * there is no sampling and no fixed cap on recommendations per scene, because
- * each chunk is a separate request and no longer competes for one token budget.
+ * Analyzes one chunk of scenes. Every scene in the chunk gets its own entry.
+ * A truncated response is split in half and retried inside this call so a
+ * durable step recovers instead of repeating the same overflowing prompt.
  */
 export async function analyzeSceneChunk(
   context: AnalysisContext,
-  chunk: SceneChunk
+  chunk: SceneChunk,
+  options?: ScenePassOptions
 ): Promise<ScenePassResult> {
   const { scenesForAnalysis, script, narrationPolicy, targetDemographic, languageBlock } = context
   const scenes = scenesForAnalysis.slice(chunk.startIndex, chunk.endIndex)
@@ -64,6 +80,12 @@ export async function analyzeSceneChunk(
 
   const firstNumber = chunk.sceneNumbers[0]
   const lastNumber = chunk.sceneNumbers[chunk.sceneNumbers.length - 1]
+  const beatLine =
+    typeof chunk.blueprintBeatIndex === 'number'
+      ? `- Blueprint beat ${chunk.blueprintBeatIndex + 1}${
+          chunk.blueprintBeatTitle ? `: ${chunk.blueprintBeatTitle}` : ''
+        }. Score only the scenes from this beat that are listed below.`
+      : ''
 
   const prompt = `You are an expert screenplay analyst scoring individual scenes against a deduction rubric.${buildAudienceContext(targetDemographic)}
 
@@ -72,6 +94,7 @@ SCRIPT CONTEXT (for continuity only — score only the scenes listed below):
 - Logline: ${script.logline || 'No logline provided'}
 - Total scenes in script: ${scenesForAnalysis.length}
 - You are scoring scenes ${firstNumber} through ${lastNumber}.
+${beatLine}
 
 FORMAT / NARRATION CONTEXT:
 ${formatContext}
@@ -102,7 +125,7 @@ Return ONLY valid JSON:
 }
 ${languageBlock ?? ''}`
 
-  const maxOutputTokens = Math.max(MIN_CHUNK_TOKENS, scenes.length * TOKENS_PER_SCENE)
+  const maxOutputTokens = scenePassOutputTokens(scenes.length, options?.retriedSingle === true)
 
   const result = await generateText(prompt, {
     model: getAudienceResonanceModel(),
@@ -112,7 +135,7 @@ ${languageBlock ?? ''}`
     responseMimeType: 'application/json',
     timeoutMs: 180000,
     maxRetries: 1,
-    seed: context.contentSeed + chunk.index,
+    seed: context.contentSeed + chunk.index + (options?.retriedSingle ? 1 : 0),
   })
 
   if (result.finishReason === 'SAFETY') {
@@ -121,6 +144,28 @@ ${languageBlock ?? ''}`
     )
   }
   if (result.finishReason === 'MAX_TOKENS') {
+    const halves = halveSceneChunk(chunk)
+    if (halves) {
+      console.warn(
+        `[Audience Resonance] Scenes ${firstNumber}-${lastNumber} truncated; splitting into ${halves[0].sceneNumbers[0]}-${halves[0].sceneNumbers[halves[0].sceneNumbers.length - 1]} and ${halves[1].sceneNumbers[0]}-${halves[1].sceneNumbers[halves[1].sceneNumbers.length - 1]}`
+      )
+      const sceneAnalysis: SceneAnalysis[] = []
+      let modelId = result.modelId
+      let requestedModelId = result.requestedModelId
+      for (const half of halves) {
+        const part = await analyzeSceneChunk(context, half)
+        sceneAnalysis.push(...part.sceneAnalysis)
+        modelId = part.modelId ?? modelId
+        requestedModelId = part.requestedModelId ?? requestedModelId
+      }
+      return { sceneAnalysis, modelId, requestedModelId }
+    }
+    if (!options?.retriedSingle) {
+      console.warn(
+        `[Audience Resonance] Scene ${firstNumber} truncated; retrying at the output cap`
+      )
+      return analyzeSceneChunk(context, chunk, { retriedSingle: true })
+    }
     throw new Error(
       `Scene analysis for scenes ${firstNumber}-${lastNumber} was truncated. Try a smaller chunk size.`
     )

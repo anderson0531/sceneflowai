@@ -86,8 +86,11 @@ describe('runAudienceResonance orchestration', () => {
       chunkSize: 10,
     })
 
-    expect(analyzeSceneChunk).toHaveBeenCalledTimes(3)
+    expect(analyzeSceneChunk).toHaveBeenCalledTimes(7)
     expect(synthesizeReview).toHaveBeenCalledTimes(1)
+    for (const call of analyzeSceneChunk.mock.calls) {
+      expect(call[1].sceneNumbers.length).toBeLessThanOrEqual(4)
+    }
   })
 
   it('returns scene analysis in scene order even if chunks resolve out of order', async () => {
@@ -138,7 +141,14 @@ describe('runAudienceResonance orchestration', () => {
     })
 
     // Named steps are what let Inngest resume mid-analysis after a failure.
-    expect(names).toEqual(['scenes-1-10', 'scenes-11-20', 'synthesis'])
+    expect(names).toEqual([
+      'scenes-1-4',
+      'scenes-5-8',
+      'scenes-9-12',
+      'scenes-13-16',
+      'scenes-17-20',
+      'synthesis',
+    ])
   })
 
   it('records the base script timestamp for later staleness checks', async () => {

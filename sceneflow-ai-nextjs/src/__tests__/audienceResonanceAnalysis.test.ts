@@ -1,11 +1,20 @@
 import { readFileSync } from 'fs'
 import path from 'path'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import {
   DEFAULT_SCENE_CHUNK_SIZE,
+  MAX_SCENES_PER_CHUNK,
   chunkProgress,
+  planAnalysisChunks,
   planSceneChunks,
 } from '@/lib/script/audienceResonance/chunkPlan'
+import { scenePassOutputTokens, SCENE_PASS_OUTPUT_CAP } from '@/lib/script/audienceResonance/scenePass'
+import { buildBatchDigest } from '@/lib/script/audienceResonance/synthesisPass'
+
+const generateText = vi.fn()
+vi.mock('@/lib/vertexai/gemini', () => ({
+  generateText: (...args: unknown[]) => generateText(...args),
+}))
 import { isReviewStale, isStoredReviewStale } from '@/lib/script/audienceResonance/staleness'
 import {
   applyHysteresis,
@@ -99,8 +108,150 @@ describe('Scene chunk planning', () => {
   })
 
   it('defaults to a chunk size that keeps requests small', () => {
-    expect(DEFAULT_SCENE_CHUNK_SIZE).toBeGreaterThan(0)
-    expect(DEFAULT_SCENE_CHUNK_SIZE).toBeLessThanOrEqual(15)
+    expect(DEFAULT_SCENE_CHUNK_SIZE).toBe(4)
+    expect(DEFAULT_SCENE_CHUNK_SIZE).toBeLessThanOrEqual(MAX_SCENES_PER_CHUNK)
+  })
+
+  it('keeps blueprint beats together and never exceeds four scenes', () => {
+    const beats = [0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 3]
+    const scenes = Array.from({ length: 22 }, (_, i) => ({
+      blueprintBeatIndex: beats[i] ?? 4,
+      blueprintBeatTitle: `Beat ${(beats[i] ?? 4) + 1}`,
+    }))
+    const chunks = planAnalysisChunks(scenes)
+
+    expect(chunks.every((chunk) => chunk.sceneNumbers.length <= 4)).toBe(true)
+    for (const chunk of chunks) {
+      const indexes = chunk.sceneNumbers.map((n) => scenes[n - 1].blueprintBeatIndex)
+      expect(new Set(indexes).size).toBe(1)
+      expect(chunk.blueprintBeatIndex).toBe(indexes[0])
+    }
+    const covered = chunks.flatMap((chunk) => chunk.sceneNumbers)
+    expect(covered).toEqual(Array.from({ length: 22 }, (_, i) => i + 1))
+    // Beat 2 has five scenes, so it splits; a three-scene beat stays one chunk.
+    expect(chunks.find((chunk) => chunk.blueprintBeatIndex === 0)?.sceneNumbers).toEqual([1, 2, 3])
+    expect(chunks.filter((chunk) => chunk.blueprintBeatIndex === 2)).toHaveLength(2)
+  })
+
+  it('packs untagged scenes in order and does not merge across a beat', () => {
+    const scenes = [
+      {},
+      {},
+      {},
+      {},
+      {},
+      { blueprintBeatIndex: 1, blueprintBeatTitle: 'Turn' },
+      { blueprintBeatIndex: 1, blueprintBeatTitle: 'Turn' },
+      {},
+    ]
+    const chunks = planAnalysisChunks(scenes)
+
+    expect(chunks.map((chunk) => chunk.sceneNumbers)).toEqual([[1, 2, 3, 4], [5], [6, 7], [8]])
+    expect(chunks[2].blueprintBeatTitle).toBe('Turn')
+    expect(chunks[0].blueprintBeatIndex).toBeUndefined()
+  })
+
+  it('treats an explicit chunk size as a tighter cap', () => {
+    const scenes = Array.from({ length: 10 }, () => ({ blueprintBeatIndex: 0 }))
+    expect(planAnalysisChunks(scenes, { maxScenesPerChunk: 10 }).every((c) => c.sceneNumbers.length <= 4)).toBe(
+      true
+    )
+    expect(planAnalysisChunks(scenes, { maxScenesPerChunk: 2 })).toHaveLength(5)
+  })
+})
+
+describe('Scene pass output budget', () => {
+  it('reserves thinking tokens and stays under the cap', () => {
+    expect(scenePassOutputTokens(4)).toBe(8192 + 4 * 2000)
+    expect(scenePassOutputTokens(20)).toBeLessThanOrEqual(SCENE_PASS_OUTPUT_CAP)
+    expect(scenePassOutputTokens(1, true)).toBe(SCENE_PASS_OUTPUT_CAP)
+  })
+
+  it('splits a truncated multi-scene chunk and returns one entry per scene', async () => {
+    const { analyzeSceneChunk } = await import('@/lib/script/audienceResonance/scenePass')
+    generateText.mockReset()
+    generateText.mockImplementation(async (prompt: string) => {
+      const listed = [...prompt.matchAll(/Scene (\d+):/g)].map((match) => Number(match[1]))
+      if (listed.length > 1) {
+        return { text: '', finishReason: 'MAX_TOKENS', modelId: 'gemini-3.8-flash' }
+      }
+      const sceneNumber = listed[0]
+      return {
+        text: JSON.stringify({
+          sceneAnalysis: [
+            {
+              sceneNumber,
+              sceneHeading: `Scene ${sceneNumber}`,
+              score: 80,
+              pacing: 'moderate',
+              tension: 'medium',
+              characterDevelopment: 'moderate',
+              visualPotential: 'medium',
+              notes: 'ok',
+              recommendations: [],
+            },
+          ],
+        }),
+        finishReason: 'STOP',
+        modelId: 'gemini-3.8-flash',
+        requestedModelId: 'gemini-3.8-flash',
+      }
+    })
+
+    const result = await analyzeSceneChunk(
+      {
+        script: { title: 'Long', scenes: [] },
+        scenesForAnalysis: [
+          { heading: 'A', action: 'a' },
+          { heading: 'B', action: 'b' },
+          { heading: 'C', action: 'c' },
+          { heading: 'D', action: 'd' },
+        ],
+        showVsTellMetrics: { ratio: 0, narrationWords: 0, actionWords: 1, dialogueWords: 0 },
+        narrationPolicy: { mode: 'minimal', blueprintHasNarrator: false },
+        contentSeed: 1,
+      } as never,
+      {
+        index: 0,
+        startIndex: 0,
+        endIndex: 4,
+        sceneNumbers: [1, 2, 3, 4],
+        blueprintBeatIndex: 1,
+        blueprintBeatTitle: 'Crossing',
+      }
+    )
+
+    expect(result.sceneAnalysis.map((scene) => scene.sceneNumber).sort((a, b) => a - b)).toEqual([
+      1, 2, 3, 4,
+    ])
+    expect(generateText.mock.calls.length).toBeGreaterThan(1)
+  })
+})
+
+describe('Batch digest', () => {
+  it('summarizes each beat batch without dropping scene scores', () => {
+    const digest = buildBatchDigest(
+      [
+        scene(1, 90, 80),
+        scene(2, 40, 20),
+      ],
+      [
+        {
+          index: 0,
+          startIndex: 0,
+          endIndex: 2,
+          sceneNumbers: [1, 2],
+          blueprintBeatIndex: 0,
+          blueprintBeatTitle: 'Opening',
+        },
+      ]
+    )
+
+    expect(digest).toContain('Blueprint beat 1 "Opening"')
+    expect(digest).toContain('Scene 1')
+    expect(digest).toContain('score 90')
+    expect(digest).toContain('Scene 2')
+    expect(digest).toContain('score 40')
   })
 })
 

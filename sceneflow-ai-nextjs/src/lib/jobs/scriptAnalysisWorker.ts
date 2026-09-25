@@ -11,7 +11,7 @@ import {
   type ScriptAnalysisWorkerState,
 } from '@/lib/jobs/scriptAnalysisWorkerState'
 import { applyShowVsTellAutoCap } from '@/lib/script/narrationPolicy'
-import { DEFAULT_SCENE_CHUNK_SIZE, chunkProgress, planSceneChunks } from '@/lib/script/audienceResonance/chunkPlan'
+import { chunkProgress, planAnalysisChunks } from '@/lib/script/audienceResonance/chunkPlan'
 import {
   loadScriptForAnalysis,
   persistAudienceReview,
@@ -91,10 +91,9 @@ async function loadRunInputs(
     chunkSize: (payload.chunkSize as number | undefined) ?? undefined,
   })
 
-  const chunks = planSceneChunks(
-    analysisContext.scenesForAnalysis.length,
-    (payload.chunkSize as number | undefined) ?? DEFAULT_SCENE_CHUNK_SIZE
-  )
+  const chunks = planAnalysisChunks(analysisContext.scenesForAnalysis, {
+    maxScenesPerChunk: payload.chunkSize as number | undefined,
+  })
 
   return {
     analysisContext,
@@ -203,7 +202,7 @@ async function runProcessingPhase(
       const sceneAnalysis = [...worker.sceneAnalysis].sort(
         (a, b) => a.sceneNumber - b.sceneNumber
       )
-      const synthesis = await synthesizeReview(analysisContext, sceneAnalysis)
+      const synthesis = await synthesizeReview(analysisContext, sceneAnalysis, chunks)
       const review = assembleReview(
         analysisContext,
         sceneAnalysis,

@@ -4,8 +4,12 @@ import {
   applyShowVsTellAutoCap,
   buildScriptARShowVsTellGuidance,
 } from '@/lib/script/narrationPolicy'
+import type { SceneChunk } from './chunkPlan'
 import type { AnalysisContext, Deduction, ReviewRecommendation, SceneAnalysis, ScoreCategory } from './types'
 import { DEFAULT_CATEGORIES } from './scoring'
+
+const SYNTHESIS_OUTPUT_CAP = 32768
+const PRIORITY_RANK: Record<string, number> = { high: 0, medium: 1, low: 2 }
 
 export type SynthesisResult = {
   categories: ScoreCategory[]
@@ -21,23 +25,60 @@ export type SynthesisResult = {
   requestedModelId?: string
 }
 
-/** Compact digest of the scene passes, so synthesis sees the whole script cheaply. */
-function summarizeScenes(sceneAnalysis: SceneAnalysis[]): string {
+function topFixes(scene: SceneAnalysis, limit = 2): string {
+  const recs = [...(scene.recommendations || [])]
+    .filter((rec) => rec.text)
+    .sort(
+      (a, b) =>
+        (PRIORITY_RANK[a.priority] ?? 9) - (PRIORITY_RANK[b.priority] ?? 9)
+    )
+    .slice(0, limit)
+  return recs.map((rec) => `    - [${rec.priority}] ${rec.text}`).join('\n')
+}
+
+function formatSceneLine(scene: SceneAnalysis): string {
+  const recs = topFixes(scene)
+  return [
+    `  Scene ${scene.sceneNumber} (${scene.sceneHeading}) score ${scene.score}, weight ${scene.storyWeight ?? 'n/a'}`,
+    `    pacing ${scene.pacing}, tension ${scene.tension}, character ${scene.characterDevelopment}, visual ${scene.visualPotential}`,
+    scene.notes ? `    notes: ${scene.notes}` : '',
+    recs ? `    top fixes:\n${recs}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n')
+}
+
+/**
+ * Deterministic summary of each analysis batch. Full per-scene recommendations
+ * stay on the review; synthesis only needs the highest-priority fixes.
+ */
+export function buildBatchDigest(sceneAnalysis: SceneAnalysis[], chunks?: SceneChunk[]): string {
   if (!sceneAnalysis.length) return 'No scene analysis available.'
-  return sceneAnalysis
-    .map((scene) => {
-      const recs = (scene.recommendations || [])
-        .map((rec) => `    - [${rec.priority}] ${rec.text}`)
-        .join('\n')
-      return [
-        `Scene ${scene.sceneNumber} (${scene.sceneHeading}) score ${scene.score}, weight ${scene.storyWeight ?? 'n/a'}`,
-        `  pacing ${scene.pacing}, tension ${scene.tension}, character ${scene.characterDevelopment}, visual ${scene.visualPotential}`,
-        scene.notes ? `  notes: ${scene.notes}` : '',
-        recs ? `  fixes:\n${recs}` : '',
-      ]
-        .filter(Boolean)
-        .join('\n')
-    })
+
+  const byNumber = new Map(sceneAnalysis.map((scene) => [scene.sceneNumber, scene]))
+  const batches: Array<{ label: string; scenes: SceneAnalysis[] }> = []
+
+  if (chunks?.length) {
+    for (const chunk of chunks) {
+      const scenes = chunk.sceneNumbers
+        .map((n) => byNumber.get(n))
+        .filter((scene): scene is SceneAnalysis => Boolean(scene))
+      if (!scenes.length) continue
+      const range = `${scenes[0].sceneNumber}-${scenes[scenes.length - 1].sceneNumber}`
+      const beat =
+        typeof chunk.blueprintBeatIndex === 'number'
+          ? `Blueprint beat ${chunk.blueprintBeatIndex + 1}${
+              chunk.blueprintBeatTitle ? ` "${chunk.blueprintBeatTitle}"` : ''
+            } — scenes ${range}`
+          : `Scenes ${range}`
+      batches.push({ label: beat, scenes })
+    }
+  } else {
+    batches.push({ label: 'All analyzed scenes', scenes: sceneAnalysis })
+  }
+
+  return batches
+    .map((batch) => [batch.label, ...batch.scenes.map(formatSceneLine)].join('\n'))
     .join('\n')
 }
 
@@ -47,7 +88,8 @@ function summarizeScenes(sceneAnalysis: SceneAnalysis[]): string {
  */
 export async function synthesizeReview(
   context: AnalysisContext,
-  sceneAnalysis: SceneAnalysis[]
+  sceneAnalysis: SceneAnalysis[],
+  chunks?: SceneChunk[]
 ): Promise<SynthesisResult> {
   const { script, showVsTellMetrics, narrationPolicy, targetDemographic, languageBlock } = context
   const { formatContext } = buildScriptARShowVsTellGuidance(narrationPolicy)
@@ -79,8 +121,8 @@ PRE-CALCULATED METRICS:
 - Dialogue Words: ${showVsTellMetrics.dialogueWords}
 ${autoCapReason ? `- AUTO CAP: ${autoCapReason}` : ''}
 
-PER-SCENE ANALYSIS (already scored):
-${summarizeScenes(sceneAnalysis)}
+BATCHED SCENE ANALYSIS (already scored; each block is one analysis batch):
+${buildBatchDigest(sceneAnalysis, chunks)}
 
 ## EVALUATION DIMENSIONS (score each 1-100)
 
@@ -128,7 +170,7 @@ ${languageBlock ?? ''}`
   const result = await generateText(prompt, {
     model: getAudienceResonanceModel(),
     temperature: 0.15,
-    maxOutputTokens: 16000,
+    maxOutputTokens: SYNTHESIS_OUTPUT_CAP,
     thinkingLevel: 'high',
     responseMimeType: 'application/json',
     timeoutMs: 180000,
@@ -138,6 +180,9 @@ ${languageBlock ?? ''}`
 
   if (result.finishReason === 'SAFETY') {
     throw new Error('Script synthesis was blocked by safety filters.')
+  }
+  if (result.finishReason === 'MAX_TOKENS') {
+    throw new Error('Script synthesis was truncated.')
   }
 
   let jsonText = (result.text || '').trim()
