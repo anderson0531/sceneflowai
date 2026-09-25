@@ -43,6 +43,46 @@ describe('sceneProgress', () => {
     expect(getStoryboardBeatProgress(scene)).toEqual({ complete: 1, total: 2 })
   })
 
+  it('counts beat-level direction when the scene has no sceneDirection', () => {
+    const scene = {
+      id: 's1',
+      narration: 'Hello',
+      beats: [
+        { beatId: 'b1', kind: 'action', beatDirection: { shotType: 'Wide' } },
+        { beatId: 'b2', kind: 'dialogue', line: 'Hi', beatDirection: { shotType: 'Close-Up' } },
+      ],
+    }
+    expect(buildSceneProgressItem(scene, 0).hasDirection).toBe(true)
+    expect(
+      buildSceneProgressItem(
+        {
+          ...scene,
+          beats: [
+            { beatId: 'b1', kind: 'action', beatDirection: { shotType: 'Wide' } },
+            { beatId: 'b2', kind: 'dialogue', line: 'Hi' },
+          ],
+        },
+        0
+      ).hasDirection
+    ).toBe(false)
+  })
+
+  it('marks music only when a generated track exists', () => {
+    expect(
+      buildSceneProgressItem({ narration: 'Hello', sceneMusicCues: [{ cueId: 'c1', description: 'dread' }] }, 0)
+        .hasMusic
+    ).toBe(false)
+    expect(buildSceneProgressItem({ narration: 'Hello', musicAudio: 'https://example.com/score.mp3' }, 0).hasMusic).toBe(
+      true
+    )
+    expect(
+      buildSceneProgressItem(
+        { narration: 'Hello', sceneMusicCues: [{ cueId: 'c1', url: 'https://example.com/cue.mp3' }] },
+        0
+      ).hasMusic
+    ).toBe(true)
+  })
+
   it('sceneHasBeatFrames requires both frames on every segment', () => {
     expect(
       sceneHasBeatFrames({

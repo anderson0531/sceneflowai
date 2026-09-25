@@ -33,12 +33,12 @@ export function WritersRoomTopImpactPanel({
   const [showResolved, setShowResolved] = useState(false)
 
   const openIssues = useMemo(
-    () => collectTopImpactIssues(scenes, { excludeApplied: true, limit: 5 }),
+    () => collectTopImpactIssues(scenes, { excludeApplied: true, limit: 5, maxScoreExclusive: 85 }),
     [scenes]
   )
   const resolvedIssues = useMemo(
     () =>
-      collectTopImpactIssues(scenes, { excludeApplied: false, limit: 0 }).filter(
+      collectTopImpactIssues(scenes, { excludeApplied: false, limit: 0, maxScoreExclusive: 85 }).filter(
         (issue) => issue.applied
       ),
     [scenes]

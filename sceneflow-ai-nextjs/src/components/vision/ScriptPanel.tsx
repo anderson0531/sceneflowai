@@ -18,7 +18,7 @@ import { useTranslations } from 'next-intl'
 import { ASSISTANT } from '@/lib/constants/assistant'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2, GalleryHorizontal } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Trash2, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2, GalleryHorizontal } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import {
@@ -2912,32 +2912,6 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
               </Button>
             )}
 
-            <WritersRoomTopImpactPanel
-              scenes={scenes}
-              onJumpToScene={(sceneIndex) => {
-                if (onJumpToImpactScene) onJumpToImpactScene(sceneIndex)
-                else onSelectSceneIndex?.(sceneIndex)
-              }}
-              onToggleApplied={onToggleAudienceRecommendation}
-            />
-
-            {productionProgressSlot && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowProductionProgress((prev) => !prev)}
-                className={`h-8 w-8 p-0 ${
-                  showProductionProgress
-                    ? 'border-cyan-500/50 bg-cyan-500/10 hover:bg-cyan-500/20'
-                    : 'border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/10'
-                }`}
-                title={showProductionProgress ? 'Close Production Progress panel' : 'Toggle Production Progress panel'}
-                aria-label={showProductionProgress ? 'Close Production Progress panel' : 'Toggle Production Progress panel'}
-              >
-                <BarChart3 className="w-4 h-4 text-cyan-400" />
-              </Button>
-            )}
-
             {/* Production Budget Management Button */}
             <Button
               variant="outline"
@@ -3303,6 +3277,13 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       setSceneNavigationCollapsed={setSceneNavigationCollapsed}
                       sceneNavigationView={sceneNavigationView}
                       setSceneNavigationView={setSceneNavigationView}
+                      showProductionProgress={showProductionProgress}
+                      onToggleProductionProgress={() => setShowProductionProgress((prev) => !prev)}
+                      productionProgressAvailable={!!productionProgressSlot}
+                      audienceScore={audienceScore}
+                      onShowReviews={onShowReviews}
+                      isGeneratingReviews={isGeneratingReviews}
+                      onJumpToImpactScene={onJumpToImpactScene}
                       audioTimelineCollapsed={audioTimelineCollapsed}
                       setAudioTimelineCollapsed={setAudioTimelineCollapsed}
                       scenes={scenes}
@@ -3987,6 +3968,13 @@ interface SceneCardProps {
   setSceneNavigationCollapsed?: (collapsed: boolean) => void
   sceneNavigationView?: 'list' | 'timeline'
   setSceneNavigationView?: (view: 'list' | 'timeline') => void
+  showProductionProgress?: boolean
+  onToggleProductionProgress?: () => void
+  productionProgressAvailable?: boolean
+  audienceScore?: number
+  onShowReviews?: () => void
+  isGeneratingReviews?: boolean
+  onJumpToImpactScene?: (sceneIndex: number) => void
   audioTimelineCollapsed?: boolean
   setAudioTimelineCollapsed?: (collapsed: boolean) => void
   // Ken Burns toggle and script updates
@@ -4148,8 +4136,6 @@ function SceneCard({
   generatingDialogue,
   setGeneratingDialogue,
   dragHandleProps,
-  onAddScene,
-  onDeleteScene,
   onEditScene,
   onEditSceneWithRecommendations,
   onPolishScene,
@@ -4231,6 +4217,13 @@ function SceneCard({
   setSceneNavigationCollapsed,
   sceneNavigationView = 'list',
   setSceneNavigationView,
+  showProductionProgress = false,
+  onToggleProductionProgress,
+  productionProgressAvailable = false,
+  audienceScore,
+  onShowReviews,
+  isGeneratingReviews = false,
+  onJumpToImpactScene,
   audioTimelineCollapsed,
   setAudioTimelineCollapsed,
   scenes,
@@ -4348,7 +4341,6 @@ function SceneCard({
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null)
   const [editSegmentDialogOpen, setEditSegmentDialogOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  const [deleteSceneConfirmOpen, setDeleteSceneConfirmOpen] = useState(false)
   const [resetSegmentsDialogOpen, setResetSegmentsDialogOpen] = useState(false)
   const [isResettingSegments, setIsResettingSegments] = useState(false)
   
@@ -5351,6 +5343,33 @@ function SceneCard({
                 <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Next scene</TooltipContent>
               </Tooltip>
             </TooltipProvider>
+
+            {productionProgressAvailable && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onToggleProductionProgress?.()
+                      }}
+                      className={`p-1.5 rounded-full transition-colors ${
+                        showProductionProgress
+                          ? 'text-cyan-300 bg-white/10'
+                          : 'text-gray-400 hover:text-white hover:bg-white/10'
+                      }`}
+                      aria-label={showProductionProgress ? 'Close Production Progress panel' : 'Toggle Production Progress panel'}
+                    >
+                      <BarChart3 className="w-4 h-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                    {showProductionProgress ? 'Close Production Progress' : 'Production Progress'}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
             
             {totalScenes && totalScenes > 1 && (
               <TooltipProvider>
@@ -5467,41 +5486,7 @@ function SceneCard({
             </AnimatePresence>
             
             <div className="w-px h-4 bg-gray-700" />
-            
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onAddScene?.(sceneIdx)
-                    }}
-                    className="p-1 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded transition-colors cursor-pointer"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Add scene after</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setDeleteSceneConfirmOpen(true)
-                    }}
-                    className="p-1 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded transition-colors cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Delete scene</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
+
             {/* Scene timing: number, start–end, duration, script total */}
             <TooltipProvider>
               <Tooltip>
@@ -5531,6 +5516,38 @@ function SceneCard({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+
+            <WritersRoomTopImpactPanel
+              scenes={Array.isArray(scenes) ? scenes : []}
+              onJumpToScene={(sceneIndex) => {
+                if (onJumpToImpactScene) onJumpToImpactScene(sceneIndex)
+                else onNavigateScene?.(sceneIndex)
+              }}
+              onToggleApplied={onToggleAudienceRecommendation}
+            />
+
+            {onShowReviews && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onShowReviews()
+                }}
+                disabled={isGeneratingReviews}
+                className="flex items-center gap-1 rounded-full border border-purple-500/40 bg-purple-500/10 px-2 py-0.5 text-[10px] font-medium text-purple-200 hover:bg-purple-500/20 disabled:opacity-60"
+                title={typeof audienceScore === 'number' ? `Audience Resonance ${audienceScore}` : 'Audience Resonance'}
+              >
+                {isGeneratingReviews ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Target className="w-3 h-3" />
+                )}
+                <span>AR</span>
+                {typeof audienceScore === 'number' && !isGeneratingReviews && (
+                  <span className="tabular-nums font-semibold">{audienceScore}</span>
+                )}
+              </button>
+            )}
           </div>
           
           {/* Right Side: Scene Actions */}
@@ -7009,88 +7026,6 @@ function SceneCard({
             }}
           />
 
-          {/* Delete Scene Confirmation Dialog */}
-          <Dialog open={deleteSceneConfirmOpen} onOpenChange={setDeleteSceneConfirmOpen}>
-            <DialogContent className="bg-slate-900 border border-red-500/30 max-w-md">
-              <DialogHeader>
-                <DialogTitle className="text-red-400 flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5" />
-                  {tStudio('deleteScene', { number: sceneNumber })}
-                </DialogTitle>
-                <DialogDescription className="text-gray-400">
-                  {tStudio('deleteSceneDescription')}
-                </DialogDescription>
-              </DialogHeader>
-              
-              {/* Scene Preview */}
-              <div className="bg-slate-800/60 rounded-lg border border-slate-700/50 p-3 space-y-3">
-                <div className="flex items-start gap-3">
-                  {scene.imageUrl ? (
-                    <img
-                      src={scene.imageUrl}
-                      alt={`Scene ${sceneNumber}`}
-                      className="w-20 h-14 object-cover rounded-md border border-slate-600 flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-20 h-14 bg-slate-700/50 rounded-md border border-slate-600 flex-shrink-0 flex items-center justify-center">
-                      <Film className="w-5 h-5 text-slate-500" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{formattedHeading}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      Duration: {formatNavigationClock(sceneDurationSeconds)}
-                    </p>
-                  </div>
-                </div>
-                
-                {/* Assets that will be deleted */}
-                {(() => {
-                  const assets: string[] = []
-                  if (scene.imageUrl) assets.push(tStudio('assetSceneImage'))
-                  if (scene.narrationAudioUrl || scene.narrationAudio) assets.push(tStudio('assetNarrationAudio'))
-                  if (scene.descriptionAudioUrl || scene.descriptionAudio) assets.push(tStudio('assetDescriptionAudio'))
-                  if (scene.dialogue?.some((d: any) => d?.audioUrl || d?.audio)) assets.push(tStudio('assetDialogueAudio'))
-                  if (scene.sceneDirection) assets.push(tStudio('assetSceneDirection'))
-                  if (sceneProductionData?.segments?.length) assets.push(tStudio('assetBeats', { count: sceneProductionData.segments.length }))
-                  if (scene.musicUrl || scene.musicAudio) assets.push(tStudio('assetMusic'))
-                  
-                  return assets.length > 0 ? (
-                    <div className="border-t border-slate-700/50 pt-2">
-                      <p className="text-[11px] text-gray-500 uppercase tracking-wider mb-1.5">{tStudio('assetsRemoved')}</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {assets.map((asset, i) => (
-                          <span key={i} className="px-2 py-0.5 text-[11px] bg-red-500/10 text-red-300 border border-red-500/20 rounded-full">
-                            {asset}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null
-                })()}
-              </div>
-              
-              <div className="flex justify-end gap-3 mt-2">
-                <button
-                  onClick={() => setDeleteSceneConfirmOpen(false)}
-                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-white text-sm font-medium transition-colors"
-                >
-                  {tCommon('actions.cancel')}
-                </button>
-                <button
-                  onClick={() => {
-                    onDeleteScene?.(sceneIdx)
-                    setDeleteSceneConfirmOpen(false)
-                  }}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-500 border border-red-500 rounded-lg text-white text-sm font-medium transition-colors flex items-center gap-2"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  {tStudio('deleteSceneAction')}
-                </button>
-              </div>
-            </DialogContent>
-          </Dialog>
-          
           {/* Edit Segment Dialog */}
           <EditSegmentDialog
             open={editSegmentDialogOpen}

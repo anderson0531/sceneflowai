@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-25T06:45:42.587Z",
+  "generatedAt": "2026-09-25T09:23:12.107Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -768,8 +768,8 @@
       "studio.audienceResonanceRunTooltip": "7771fa743d63aae2",
       "studio.audienceResonanceViewTooltip": "09e860eb02f57c4e",
       "studio.audienceResonanceCancel": "98fb59ae65417317",
-      "studio.directScript": "7153316df3e9ab38",
-      "studio.directScriptTooltip": "dd749411b34e357c",
+      "studio.directScript": "1074fb241f008b90",
+      "studio.directScriptTooltip": "908bc55b613c4dd3",
       "studio.recommendations": "0738ee00b61bc3af",
       "studio.recommendationsTooltip": "546fdc5b773335ea",
       "studio.recommendationsDialogTitle": "0738ee00b61bc3af",
@@ -809,10 +809,10 @@
       "studio.polishCategory.redundancy": "3c1024679970968a",
       "studio.polishCategory.missing_link": "2b0f84158a571135",
       "studio.polishCategory.direction_conflict": "9c8a9579abe55bdc",
-      "studio.topImpact": "9ee67712a01c621a",
-      "studio.topImpactTooltip": "848243e96dd0b1f4",
-      "studio.topImpactDialogTitle": "9ee67712a01c621a",
-      "studio.topImpactDialogDescription": "9463541728e84892",
+      "studio.topImpact": "63cdbf0ebd1d2d8e",
+      "studio.topImpactTooltip": "caa5bf75fede2b77",
+      "studio.topImpactDialogTitle": "63cdbf0ebd1d2d8e",
+      "studio.topImpactDialogDescription": "ea00b3d55763f70b",
       "studio.topImpactAllClosed": "c36aa05847d82a3f",
       "studio.budgetTooltipView": "d9c5d37f43f454cb",
       "studio.budgetTooltipSet": "17b55feba78f9ad9",

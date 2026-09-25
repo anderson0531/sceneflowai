@@ -17180,6 +17180,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 productionProgressSlot={
                   <SceneProgressDashboard
                     scenes={sceneProgressItems}
+                    bookmarkedSceneId={sceneBookmark?.sceneId}
                     selectedSceneId={
                       selectedSceneIndex !== null
                         ? (script?.script?.scenes?.[selectedSceneIndex]?.id ||
