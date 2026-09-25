@@ -18098,7 +18098,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               ? String(scenePolishJob.job.payload.activity)
               : scenePolishJob.job?.status === 'queued'
                 ? tStudio('polishQueued')
-                : tStudio('polishWalkingShots', {
+                : tStudio('polishWalkingBeats', {
                     count: Number(scenePolishJob.job?.payload?.beatCount || 0),
                   })
           }
