@@ -1559,7 +1559,30 @@ export function DirectorConsoleRoot({
         promptChanged: isBeatFrameStale(beat) || !!segment?.isStale,
       }
     })
-    if (fromBeats.length > 0) return fromBeats
+    const orphanClips = segments
+      .filter((segment) => !used.has(segment.segmentId) && segmentHasPlayableVideo(segment))
+      .map((segment, index) => {
+        const item = queue.find((entry) => entry.segmentId === segment.segmentId)
+        const beatNumber = fromBeats.length + index + 1
+        return {
+          key: segment.segmentId,
+          beatNumber,
+          label: (item?.config.prompt || segment.userEditedPrompt || segment.generatedPrompt || `Clip ${beatNumber}`)
+            .replace(/\s+/g, ' ')
+            .trim(),
+          prompt: item?.config.prompt || segment.userEditedPrompt || segment.generatedPrompt,
+          thumbnailUrl:
+            item?.thumbnailUrl ||
+            segment.startFrameUrl ||
+            segment.references?.startFrameUrl ||
+            undefined,
+          hasStartFrame: !!(item?.thumbnailUrl || segment.startFrameUrl || segment.references?.startFrameUrl),
+          segment,
+          queueItem: item,
+          promptChanged: !!segment.isStale,
+        }
+      })
+    if (fromBeats.length > 0) return [...fromBeats, ...orphanClips]
     return queue
       .filter((item) => !used.has(item.segmentId))
       .map((item, index) => {
