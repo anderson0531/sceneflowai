@@ -267,7 +267,7 @@
       },
       {
         "them": "Manuální konzistence napříč relacemi",
-        "us": "Reference Library + Beat Frames uzamknou vizuální složku před videem"
+        "us": "Reference Library + Shot Frames uzamknou vizuální složku před videem"
       },
       {
         "them": "Žádný proces ověřování publika",
@@ -285,10 +285,10 @@
     "title": "Video pipeline řízená rytmem",
     "subtitle": "Schvalte před vykreslením – ne generování stylem výherního automatu",
     "intro": "Žádné generování metodou pokus-omyl. Vzhled si prohlédnete a schválíte ještě předtím, než SceneFlow spotřebuje kredity na finální video.",
-    "description": "SceneFlow organizuje proces vizuálního schvalování v každé fázi: Pre-vis Agent pro kontrolu, Beat Frames pro ukotvení kompozice a následně F2V pro jednotlivé doby (beaty). Vzhled tak vyladíte ještě předtím, než vyplýtváte kredity na nežádoucí odchylky a halucinace modelu.",
+    "description": "SceneFlow organizuje proces vizuálního schvalování v každé fázi: Pre-vis Agent pro kontrolu, Shot Frames pro ukotvení kompozice a následně F2V pro jednotlivé doby (beaty). Vzhled tak vyladíte ještě předtím, než vyplýtváte kredity na nežádoucí odchylky a halucinace modelu.",
     "steps": [
       "Pre-vis Agent — sdílejte audiovizuální hudební podklady k posouzení během několika minut",
-      "Beat Frames — uzamčení počáteční/koncové kompozice se zachováním kontinuity Reference Library",
+      "Shot Frames — uzamčení počáteční/koncové kompozice se zachováním kontinuity Reference Library",
       "F2V na úder – generujte video ze schválených snímků, nikoli z naslepo zadávaných promptů.",
       "Souvislý řetězec EXT – nativní kroky prodloužení o 7 sekund pro dlouhé dialogové pasáže",
       "Production Mixer — časování, zvuk a export streamu do Screening Room"
@@ -366,7 +366,7 @@
     "steps": [
       {
         "title": "Úvodní klip v délce 8 sekund",
-        "description": "Převod snímku nebo obrázku na video z schváleného zdroje Beat Frames zafixuje kompozici před zahájením pohybu."
+        "description": "Převod snímku nebo obrázku na video z schváleného zdroje Shot Frames zafixuje kompozici před zahájením pohybu."
       },
       {
         "title": "Kroky prodloužení o +7 s",
@@ -808,15 +808,15 @@
     "viewDetails": "Zobrazit podrobnosti",
     "beatFirst": {
       "title": "Video pipeline řízená rytmem",
-      "description": "Schvalte klíčové body vizualizace (pre-vis beats) a Beat Frames ještě před fází F2V – omezíte tak nutnost opakovaných generování naslepo způsobených halucinacemi či vizuálním posunem. Získáte jeden strukturovaný postup od revize až po finální klip.",
+      "description": "Schvalte klíčové body vizualizace (pre-vis beats) a Shot Frames ještě před fází F2V – omezíte tak nutnost opakovaných generování naslepo způsobených halucinacemi či vizuálním posunem. Získáte jeden strukturovaný postup od revize až po finální klip.",
       "keyFeatures": [
         "Pre-vis Agent ke kontrole – sdílení beatů před náročným renderováním",
-        "Beat Frames skladba zámku — Reference Library spojitost",
+        "Shot Frames skladba zámku — Reference Library spojitost",
         "F2V na úder – generování videa ze schválených snímků",
         "Souvislé řetězce EXT – nativní kroky po více než 7 sekundách pro dlouhé dialogy v rámci jedné sekvence",
         "Časování a datové toky mixéru – otevřete Screening Room pro sestavení a publikování"
       ],
-      "screenshotSlot": "Vložit snímek obrazovky: Beat Frames a schválení předběžné vizualizace před vygenerováním videa",
+      "screenshotSlot": "Vložit snímek obrazovky: Shot Frames a schválení předběžné vizualizace před vygenerováním videa",
       "videoSlot": "Vložit 30sekundový klip: Schvalování rytmů, fixace snímků a následné generování klipů F2V."
     },
     "screeningRoom": {
@@ -849,7 +849,7 @@
         "description": "Jediné studio, které vás provede celým procesem od nápadu až po video připravené k publikaci. Stejný výrobní postup pro školení, podcasty, zpravodajství i filmové seriály – schvalte předběžnou vizualizaci (pre-viz) ještě před investicí do finálního renderování.",
         "keyFeatures": [
           "Řada → Blueprint → Výroba → Screening Room",
-          "Schvalování po jednotlivých sekvencích (beat-first) – pre-vizualizace a Beat Frames před fází F2V",
+          "Schvalování po jednotlivých sekvencích (beat-first) – pre-vizualizace a Shot Frames před fází F2V",
           "Generování Google Vertex AI pomocí nativních řetězců rozšíření Veo",
           "Ochranné mechanismy pro důvěru a bezpečnost a potvrzený původ při dodání"
         ],

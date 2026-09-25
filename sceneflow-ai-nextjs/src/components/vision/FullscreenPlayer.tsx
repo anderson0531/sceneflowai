@@ -1138,7 +1138,7 @@ export function FullscreenPlayer({
         {currentClip?.thumbnailUrl ? (
           <img
             src={currentClip.thumbnailUrl}
-            alt={`Beat ${currentClipIndex + 1}`}
+            alt={`Shot ${currentClipIndex + 1}`}
             className={`w-full h-full object-cover ${panIntensity !== 'off' && !isInFreezeExtension ? 'kenburns-animated' : ''}`}
             style={isInFreezeExtension ? {
               transform: `scale(${freezeKenBurnsScale})`,
@@ -1296,7 +1296,7 @@ export function FullscreenPlayer({
                 size="icon"
                 onClick={skipToPreviousBeat}
                 className="text-white hover:bg-white/20"
-                title="Previous Beat"
+                title="Previous Shot"
               >
                 <SkipBack className="h-5 w-5" />
               </Button>
@@ -1319,7 +1319,7 @@ export function FullscreenPlayer({
                 size="icon"
                 onClick={skipToNextBeat}
                 className="text-white hover:bg-white/20"
-                title="Next Beat"
+                title="Next Shot"
               >
                 <SkipForward className="h-5 w-5" />
               </Button>

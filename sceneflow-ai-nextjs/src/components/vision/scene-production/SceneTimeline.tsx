@@ -887,7 +887,7 @@ export function SceneTimeline({
               e.stopPropagation()
               deleteSegmentCallback(clip.id)
             }}
-            title="Delete beat"
+            title="Delete shot"
           >
             <X className="w-2.5 h-2.5" />
           </button>
@@ -961,10 +961,10 @@ export function SceneTimeline({
         >
           <Layers className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" />
           <span className="text-[10px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-            Beats
+            Shots
           </span>
           {reorderBeatsCallback && (
-            <GripVertical className="w-3 h-3 text-gray-400 ml-auto" title="Drag beats to reorder" />
+            <GripVertical className="w-3 h-3 text-gray-400 ml-auto" title="Drag shots to reorder" />
           )}
         </div>
         <div className="flex-1 relative bg-gray-900 border-b border-gray-700">
@@ -1000,7 +1000,7 @@ export function SceneTimeline({
               className="absolute top-1/2 -translate-y-1/2 h-10 px-2 rounded bg-gray-700 hover:bg-gray-600 border border-dashed border-gray-500 hover:border-gray-400 text-gray-400 hover:text-gray-200 transition-all flex items-center gap-1 text-[10px] font-medium"
               style={{ left: addButtonLeft }}
               onClick={() => setShowAddSegmentDialog(true)}
-              title="Add new beat"
+              title="Add new shot"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add</span>
@@ -1126,7 +1126,7 @@ export function SceneTimeline({
   if (segments.length === 0) {
     return (
       <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-sm text-gray-500 dark:text-gray-400 text-center">
-        No beats yet. Initialize scene production to create beats.
+        No shots yet. Initialize scene production to create shots.
       </div>
     )
   }
@@ -1381,7 +1381,7 @@ export function SceneTimeline({
         
         const getTrackLabel = (trackType: string) => {
           switch (trackType) {
-            case 'visual': return 'Beat'
+            case 'visual': return 'Shot'
             case 'voiceover': return 'Narration'
             case 'dialogue': return 'Dialogue'
             case 'music': return 'Music'
@@ -1491,9 +1491,9 @@ export function SceneTimeline({
         <Dialog open={showAddSegmentDialog} onOpenChange={setShowAddSegmentDialog}>
           <DialogContent className="sm:max-w-[400px]">
             <DialogHeader>
-              <DialogTitle>Add Beat</DialogTitle>
+              <DialogTitle>Add Shot</DialogTitle>
               <DialogDescription>
-                Create a new visual beat to extend the scene timeline.
+                Create a new visual shot to extend the scene timeline.
               </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
@@ -1527,7 +1527,7 @@ export function SceneTimeline({
                   }
                 }}
               >
-                Add Beat
+                Add Shot
               </Button>
             </DialogFooter>
           </DialogContent>

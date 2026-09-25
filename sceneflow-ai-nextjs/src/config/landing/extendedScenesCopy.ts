@@ -10,7 +10,7 @@ export const EXTENDED_SCENES_COPY = {
   steps: [
     {
       title: '8s initial clip',
-      description: 'Frame-to-video or image-to-video from approved Beat Frames locks composition before motion.',
+      description: 'Frame-to-video or image-to-video from approved Shot Frames locks composition before motion.',
     },
     {
       title: '+7s extension steps',

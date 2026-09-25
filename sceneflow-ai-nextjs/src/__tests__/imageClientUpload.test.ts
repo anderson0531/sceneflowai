@@ -70,7 +70,7 @@ describe('image client upload wiring', () => {
   it('beat-frame and leftover vision/studio callers go through uploadAssetViaAPI', () => {
     const page = readSource('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
     expect(page).toContain('uploadAssetViaAPI(file, projectId)')
-    expect(page).toContain("toast.error(error instanceof Error ? error.message : 'Failed to upload beat frame')")
+    expect(page).toContain("toast.error(error instanceof Error ? error.message : 'Failed to upload shot frame')")
     expect(page).not.toContain("fetch('/api/upload/image'")
 
     const studio = readSource('src/app/dashboard/studio/[projectId]/StudioPageClient.tsx')

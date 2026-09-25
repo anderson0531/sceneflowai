@@ -58,7 +58,7 @@ export function BeatMusicToggle({
     ? `${formatMusicCueRange(cue)}${cue.intent ? ` — ${cue.intent}` : ''}${
         scored ? '' : ' (not generated yet)'
       }`
-    : 'Background music for this beat'
+    : 'Background music for this shot'
 
   return (
     <label
@@ -78,7 +78,7 @@ export function BeatMusicToggle({
         checked={enabled}
         onCheckedChange={handleChange}
         className="scale-75 origin-right"
-        aria-label={`Background music for beat ${beat.sequenceIndex + 1}`}
+        aria-label={`Background music for shot ${beat.sequenceIndex + 1}`}
       />
     </label>
   )

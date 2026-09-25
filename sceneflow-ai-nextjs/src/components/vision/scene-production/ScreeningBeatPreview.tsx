@@ -317,7 +317,7 @@ export function ScreeningBeatPreview({
   if (segments.length === 0) {
     return (
       <div className="w-full h-full flex items-center justify-center text-gray-500">
-        <span className="text-sm">No beat video in this scene</span>
+        <span className="text-sm">No shot video in this scene</span>
       </div>
     )
   }

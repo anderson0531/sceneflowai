@@ -248,7 +248,7 @@ describe('nested Production Studio agents report into the dock, not a freeze ove
     expect(source).not.toContain('overlayStore')
     expect(source).toContain('runWithAgentDock')
     expect(source).toContain('startAgentRun')
-    expect(source).toContain("title: 'Frame Agent'")
+    expect(source).toContain("title: 'Stills Agent'")
   })
 
   it('queues mixer cloud and headless renders as a scene_render job', () => {

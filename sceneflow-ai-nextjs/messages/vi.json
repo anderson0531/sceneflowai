@@ -267,7 +267,7 @@
       },
       {
         "them": "Tính nhất quán thủ công giữa các phiên",
-        "us": "Reference Library + Beat Frames khóa hình ảnh trước khi có video"
+        "us": "Reference Library + Shot Frames khóa hình ảnh trước khi có video"
       },
       {
         "them": "Không có quy trình xác thực đối tượng",
@@ -285,10 +285,10 @@
     "title": "Quy trình sản xuất video lấy nhịp điệu làm trọng tâm",
     "subtitle": "Phê duyệt trước khi kết xuất — thay vì tái tạo ngẫu nhiên kiểu máy đánh bạc",
     "intro": "Không cần tạo thử rồi kiểm tra lại nhiều lần. Bạn có thể xem trước và phê duyệt hình ảnh hiển thị trước khi SceneFlow sử dụng credit để tạo video hoàn chỉnh.",
-    "description": "SceneFlow thiết lập quy trình phê duyệt hình ảnh ở từng bước: Pre-vis Agent để xem xét, Beat Frames để chốt bố cục, sau đó là F2V cho từng nhịp. Bạn tinh chỉnh hình ảnh trước khi tiêu tốn credit vào các lỗi trôi hình (drift) và ảo giác (hallucination).",
+    "description": "SceneFlow thiết lập quy trình phê duyệt hình ảnh ở từng bước: Pre-vis Agent để xem xét, Shot Frames để chốt bố cục, sau đó là F2V cho từng nhịp. Bạn tinh chỉnh hình ảnh trước khi tiêu tốn credit vào các lỗi trôi hình (drift) và ảo giác (hallucination).",
     "steps": [
       "Pre-vis Agent — chia sẻ các bản beat kết hợp hình ảnh và âm thanh để đánh giá chỉ trong vài phút",
-      "Beat Frames — khóa điểm đầu/cuối của bố cục với tính liên tục của Reference Library",
+      "Shot Frames — khóa điểm đầu/cuối của bố cục với tính liên tục của Reference Library",
       "F2V theo nhịp — tạo video từ các khung hình đã được duyệt, thay vì các câu lệnh (prompt) thiếu định hướng cụ thể.",
       "Chuỗi mở rộng (EXT) liên tục — các bước mở rộng 7 giây tích hợp sẵn dành cho các phân đoạn hội thoại dài.",
       "Production Mixer — xuất dữ liệu định thời, âm thanh và luồng sang Screening Room"
@@ -366,7 +366,7 @@
     "steps": [
       {
         "title": "Đoạn clip mở đầu dài 8 giây",
-        "description": "Việc chuyển đổi từ khung hình hoặc hình ảnh sang video dựa trên nội dung Beat Frames đã được phê duyệt sẽ cố định bố cục trước khi thực hiện chuyển động."
+        "description": "Việc chuyển đổi từ khung hình hoặc hình ảnh sang video dựa trên nội dung Shot Frames đã được phê duyệt sẽ cố định bố cục trước khi thực hiện chuyển động."
       },
       {
         "title": "Các bước gia hạn +7 giây",
@@ -808,15 +808,15 @@
     "viewDetails": "Xem chi tiết",
     "beatFirst": {
       "title": "Quy trình sản xuất video lấy nhịp điệu làm trọng tâm",
-      "description": "Phê duyệt các phân đoạn tiền hình ảnh hóa (pre-vis beats) và Beat Frames trước giai đoạn F2V — giúp giảm thiểu việc tái tạo lại một cách thiếu định hướng do lỗi \"ảo giác\" (hallucination) hoặc sai lệch hình ảnh. Tạo ra một quy trình thống nhất từ khâu đánh giá đến khi hoàn thiện clip cuối cùng.",
+      "description": "Phê duyệt các phân đoạn tiền hình ảnh hóa (pre-vis beats) và Shot Frames trước giai đoạn F2V — giúp giảm thiểu việc tái tạo lại một cách thiếu định hướng do lỗi \"ảo giác\" (hallucination) hoặc sai lệch hình ảnh. Tạo ra một quy trình thống nhất từ khâu đánh giá đến khi hoàn thiện clip cuối cùng.",
       "keyFeatures": [
         "Pre-vis Agent để xem xét — chia sẻ bản nháp (beat) trước khi thực hiện render nặng",
-        "Beat Frames cấu trúc khóa — Reference Library tính liên tục",
+        "Shot Frames cấu trúc khóa — Reference Library tính liên tục",
         "F2V theo nhịp — tạo video từ các khung hình đã được duyệt",
         "Chuỗi EXT liên tục — các bước +7s tự nhiên dành cho lời thoại dài trong cùng một nhịp (beat).",
         "Thời gian và luồng Mixer — mở Screening Room để lắp ráp và xuất bản"
       ],
-      "screenshotSlot": "Chèn ảnh chụp màn hình: Beat Frames và phê duyệt bản dựng sơ bộ (pre-vis) trước khi tạo video.",
+      "screenshotSlot": "Chèn ảnh chụp màn hình: Shot Frames và phê duyệt bản dựng sơ bộ (pre-vis) trước khi tạo video.",
       "videoSlot": "Chèn đoạn clip dài 30 giây: Phê duyệt nhịp (beat), cố định khung hình, sau đó tạo các clip F2V."
     },
     "screeningRoom": {
@@ -849,7 +849,7 @@
         "description": "Một studio duy nhất thực hiện trọn gói từ khâu ý tưởng đến video hoàn thiện sẵn sàng phát hành. Quy trình thống nhất áp dụng cho video đào tạo, podcast, bản tin và các loạt phim chất lượng cao — cho phép duyệt bản dựng mô phỏng (pre-vis) trước khi đầu tư chi phí cho khâu kết xuất (render) cuối cùng.",
         "keyFeatures": [
           "Chuỗi → Blueprint → Sản xuất → Screening Room",
-          "Phê duyệt theo từng phân đoạn (beat) trước — pre-vis và Beat Frames trước giai đoạn F2V",
+          "Phê duyệt theo từng phân đoạn (beat) trước — pre-vis và Shot Frames trước giai đoạn F2V",
           "Tạo Google Vertex AI với các chuỗi mở rộng Veo nguyên bản",
           "Các cơ chế bảo vệ về độ tin cậy và an toàn cùng thông tin xác thực nguồn gốc có chữ ký khi bàn giao"
         ],

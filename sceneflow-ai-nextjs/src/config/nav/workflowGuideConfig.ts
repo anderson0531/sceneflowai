@@ -97,8 +97,8 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
     icon: 'Video',
     iconColor: 'text-red-500',
     steps: [
-      { id: 'generate-beat-frames', label: 'Build Beat Frames (start/end)', actionEventName: 'production:generate-frames' },
-      { id: 'create-video', label: 'Generate beat video (Footage)', actionEventName: 'production:generate-video' },
+      { id: 'generate-beat-frames', label: 'Build Shot Frames (start/end)', actionEventName: 'production:generate-frames' },
+      { id: 'create-video', label: 'Generate shot video (Footage)', actionEventName: 'production:generate-video' },
       { id: 'mix-scene', label: 'Preview in Mixer', actionEventName: 'production:edit-video' },
       { id: 'render-stream', label: 'Render Stream (export dialog)', actionEventName: 'production:mark-complete' },
     ],
@@ -122,7 +122,7 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
     collapsed: true,
     steps: [
       { id: 'revise-script', label: 'Unlock script & revise', actionEventName: 'production:review-analysis' },
-      { id: 'revise-frames', label: 'Re-run Frame Agent or edit Beat Frames', actionEventName: 'production:edit-frames' },
+      { id: 'revise-frames', label: 'Re-run Stills Agent or edit Shot Frames', actionEventName: 'production:edit-frames' },
       { id: 'revise-audio', label: 'Revise audio timeline', actionEventName: 'production:audio-timeline' },
     ],
   },

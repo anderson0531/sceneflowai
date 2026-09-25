@@ -104,7 +104,7 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
         id: 'ctv-ready-series',
         label: 'Vertical Mobile Drama',
         description:
-          'Imagine photoreal 9:16 hooks and serialized mobile episodes built for scroll—approve Beat Frames before render, chain native extensions for emotional beats that stop the thumb. SceneFlow outputs vertical masters ready for YouTube Shorts and mobile feeds.',
+          'Imagine photoreal 9:16 hooks and serialized mobile episodes built for scroll—approve Shot Frames before render, chain native extensions for emotional beats that stop the thumb. SceneFlow outputs vertical masters ready for YouTube Shorts and mobile feeds.',
         videoSrc: `${BLOB_DEMO}/demo/use-cases/entertainment/ctv-ready-series.mp4`,
       }),
     ],
@@ -166,7 +166,7 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
         id: 'corporate-ld',
         label: 'Corporate L&D',
         description:
-          "Imagine uploading training slides with your L&D lead's saved voice. Then instantly publishing module videos—chain native +7 second extensions for long explainers, approve Beat Frames before render.",
+          "Imagine uploading training slides with your L&D lead's saved voice. Then instantly publishing module videos—chain native +7 second extensions for long explainers, approve Shot Frames before render.",
         videoSrc: `${BLOB_DEMO}/demo/use-cases/knowledge/corporate-ld.mp4`,
       }),
       ex('knowledge', {

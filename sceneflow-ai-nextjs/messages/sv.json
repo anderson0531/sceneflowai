@@ -267,7 +267,7 @@
       },
       {
         "them": "Konsekvens i utförandet mellan sessioner",
-        "us": "Reference Library + Beat Frames låser bildsignalen före video"
+        "us": "Reference Library + Shot Frames låser bildsignalen före video"
       },
       {
         "them": "Inget arbetsflöde för validering av målgrupp",
@@ -285,10 +285,10 @@
     "title": "Videoproduktionsflöde med fokus på takten",
     "subtitle": "Godkänn före rendering – inte omgenerering likt en spelautomat",
     "intro": "Ingen generering genom gissningar och kontroll. Du förhandsgranskar och godkänner utseendet innan SceneFlow förbrukar krediter på den slutgiltiga videon.",
-    "description": "SceneFlow strukturerar det visuella godkännandet i varje steg: Pre-vis Agent för granskning, Beat Frames för att låsa kompositionen, och därefter F2V per takt. Du finjusterar det visuella innan du förbrukar krediter på avvikelser och hallucinationer.",
+    "description": "SceneFlow strukturerar det visuella godkännandet i varje steg: Pre-vis Agent för granskning, Shot Frames för att låsa kompositionen, och därefter F2V per takt. Du finjusterar det visuella innan du förbrukar krediter på avvikelser och hallucinationer.",
     "steps": [
       "Pre-vis Agent — dela audiovisuella beats för granskning på bara några minuter",
-      "Beat Frames — lås start-/slutkomposition med Reference Library-kontinuitet",
+      "Shot Frames — lås start-/slutkomposition med Reference Library-kontinuitet",
       "F2V per takt – skapa video utifrån godkända bildrutor, inte blinda prompter",
       "Kontinuerlig EXT-kedja – inbyggda förlängningssteg om +7 sekunder för långa dialogpartier",
       "Production Mixer — timing, ljud och strömexport till Screening Room"
@@ -366,7 +366,7 @@
     "steps": [
       {
         "title": "8:ans första klipp",
-        "description": "Konvertering från enskild bildruta eller bild till video, baserad på godkänd Beat Frames, låser kompositionen före rörelse."
+        "description": "Konvertering från enskild bildruta eller bild till video, baserad på godkänd Shot Frames, låser kompositionen före rörelse."
       },
       {
         "title": "Förlängningssteg på +7 s",
@@ -808,15 +808,15 @@
     "viewDetails": "Visa detaljer",
     "beatFirst": {
       "title": "Videoproduktionsflöde med fokus på takten",
-      "description": "Godkänn pre-vis-sekvenser och Beat Frames före F2V – färre genereringar i blindo orsakade av hallucinationer och visuell drift. Ett strukturerat arbetsflöde från granskning till slutgiltigt klipp.",
+      "description": "Godkänn pre-vis-sekvenser och Shot Frames före F2V – färre genereringar i blindo orsakade av hallucinationer och visuell drift. Ett strukturerat arbetsflöde från granskning till slutgiltigt klipp.",
       "keyFeatures": [
         "Pre-vis Agent för granskning – dela beats före tung rendering",
-        "Beat Frames slussammansättning — Reference Library kontinuitet",
+        "Shot Frames slussammansättning — Reference Library kontinuitet",
         "F2V per takt – skapa video från godkända bildrutor",
         "Kontinuerliga EXT-kedjor – inbyggda steg på +7 sekunder för långa dialogpartier inom en sekvens",
         "Mixertiming och strömmar – öppna Screening Room för att sammanställa och publicera"
       ],
-      "screenshotSlot": "Infoga skärmdump: Beat Frames och godkännande av förhandsvisualisering före videogenerering",
+      "screenshotSlot": "Infoga skärmdump: Shot Frames och godkännande av förhandsvisualisering före videogenerering",
       "videoSlot": "Infoga klipp på 30 sekunder: Godkänna takter, låsa bildrutor och därefter generera F2V-klipp"
     },
     "screeningRoom": {
@@ -849,7 +849,7 @@
         "description": "En enda studio som hanterar allt från idé till publiceringsklar video. Samma arbetsflöde för utbildningsmaterial, poddar, nyheter och filmiska serier – godkänn förhandsvisualiseringen innan resurser läggs på den slutgiltiga renderingen.",
         "keyFeatures": [
           "Serie → Blueprint → Produktion → Screening Room",
-          "Godkännande per sekvensdel – pre-vis och Beat Frames före F2V",
+          "Godkännande per sekvensdel – pre-vis och Shot Frames före F2V",
           "Generering av Google Vertex AI med inbyggda Veo-tilläggskedjor",
           "Skyddsmekanismer för tillit och säkerhet samt verifierat ursprung vid leverans"
         ],

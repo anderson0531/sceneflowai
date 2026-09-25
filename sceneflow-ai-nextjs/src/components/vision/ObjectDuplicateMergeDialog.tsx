@@ -26,14 +26,14 @@ import { cn } from '@/lib/utils'
 export interface ObjectDuplicateMergeDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  groups: DuplicateObjectBeatGroupsResult<VisualReference>
+  groups: DuplicateObjectShotGroupsResult<VisualReference>
   onMerge: (keepId: string, mergeIds: string[]) => void | Promise<void>
   onDeleteObjects: (ids: string[], keeperId?: string) => void | Promise<void>
   onIgnorePairs: (pairs: string[]) => void | Promise<void>
 }
 
 function collectClusterMembers(
-  groups: DuplicateObjectBeatGroupsResult<VisualReference>
+  groups: DuplicateObjectShotGroupsResult<VisualReference>
 ): Record<string, VisualReference[]> {
   const byKey: Record<string, VisualReference[]> = {}
   for (const scene of groups.scenes) {
@@ -265,7 +265,7 @@ export function ObjectDuplicateMergeDialog({
         <DialogHeader className="shrink-0 space-y-1.5 border-b px-6 py-4 text-left">
           <DialogTitle>Review duplicate objects</DialogTitle>
           <DialogDescription>
-            These beats attach more than one library still for the same prop. Keep one name,
+            These shots attach more than one library still for the same prop. Keep one name,
             merge the rest, delete extras, or mark names that are not duplicates.
           </DialogDescription>
         </DialogHeader>
@@ -291,7 +291,7 @@ export function ObjectDuplicateMergeDialog({
                     data-testid="object-duplicate-group"
                     className="rounded-md border border-border bg-background/60 p-3"
                   >
-                    <p className="text-sm font-medium text-foreground">Beat {beat.beatIndex + 1}</p>
+                    <p className="text-sm font-medium text-foreground">Shot {beat.beatIndex + 1}</p>
                     {beat.snippet ? (
                       <p className="mt-0.5 text-xs text-muted-foreground">{beat.snippet}</p>
                     ) : null}
@@ -327,9 +327,9 @@ export function ObjectDuplicateMergeDialog({
               data-testid="object-duplicate-unreferenced"
               className="rounded-lg border border-border bg-muted/20 p-3"
             >
-              <h3 className="text-sm font-semibold text-foreground">Not tagged on a beat</h3>
+              <h3 className="text-sm font-semibold text-foreground">Not tagged on a shot</h3>
               <p className="mb-3 text-xs text-muted-foreground">
-                These synonym rows are in the library but no beat prompt attaches more than one
+                These synonym rows are in the library but no shot prompt attaches more than one
                 of them.
               </p>
               <div className="space-y-4">

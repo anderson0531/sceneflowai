@@ -23,7 +23,7 @@ describe('location version overlay + persistence source guards', () => {
     const src = readSource('src/components/vision/LocationPromptBuilder.tsx')
     expect(src).toContain('buildLocationVersionPrompt')
     expect(src).toContain('versionId: version?.id')
-    expect(src).toContain('beat props belong on the frame')
+    expect(src).toContain('shot props belong on the frame')
     expect(src).toContain('mountedFixtures')
     expect(src).toContain('withMountedFixturesInLocationDescription')
   })

@@ -504,8 +504,8 @@ export function SegmentStudio({
                 className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"
                 title={
                   segment.videoChain?.chainMethod === 'extension'
-                    ? `Continuous beat: +${segment.videoChain.extensionSeconds ?? 7}s per extension step`
-                    : 'Multi-part continuous beat'
+                    ? `Continuous shot: +${segment.videoChain.extensionSeconds ?? 7}s per extension step`
+                    : 'Multi-part continuous shot'
                 }
               >
                 Continuous
@@ -554,7 +554,7 @@ export function SegmentStudio({
             ) : (
               <img
                 src={segment.activeAssetUrl}
-                alt="Beat preview"
+                alt="Shot preview"
                 className="w-full h-full object-contain"
               />
             )}
@@ -1383,7 +1383,7 @@ export function SegmentStudio({
                 <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">Establishing Shot</span>
                 {segment.shotNumber && (
                   <span className="text-[10px] bg-purple-200 dark:bg-purple-800 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded-full">
-                    Beat {segment.shotNumber}
+                    Shot {segment.shotNumber}
                   </span>
                 )}
               </div>

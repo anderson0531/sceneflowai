@@ -59,7 +59,7 @@ export function SceneWorkflowCoPilotPanel({
       case 'storyboardPreViz':
         return 'Regenerate Pre-vis'
       case 'callAction':
-        return 'Regenerate Beats'
+        return 'Regenerate Shots'
       default:
         return 'Regenerate'
     }
@@ -74,7 +74,7 @@ export function SceneWorkflowCoPilotPanel({
       case 'storyboardPreViz':
         return 'Review Pre-vis'
       case 'callAction':
-        return 'Review Beats'
+        return 'Review Shots'
       default:
         return 'Run Review'
     }

@@ -267,7 +267,7 @@
       },
       {
         "them": "Spójność ręczna między sesjami",
-        "us": "Reference Library + Beat Frames blokuje obraz przed wideo"
+        "us": "Reference Library + Shot Frames blokuje obraz przed wideo"
       },
       {
         "them": "Brak procesu weryfikacji grupy docelowej",
@@ -285,10 +285,10 @@
     "title": "Proces produkcji wideo oparty na rytmie",
     "subtitle": "Zatwierdź przed renderowaniem – zamiast losowego generowania",
     "intro": "Koniec z generowaniem metodą prób i błędów. Możesz podejrzeć i zatwierdzić wygląd, zanim SceneFlow zużyje kredyty na wygenerowanie finalnego filmu.",
-    "description": "SceneFlow porządkuje proces akceptacji wizualnej na każdym etapie: Pre-vis Agent służy do przeglądu, Beat Frames do ustalenia kompozycji, a następnie stosuje się F2V dla każdego uderzenia (beatu). Dopracowujesz wygląd, zanim zużyjesz kredyty na dryf i halucynacje modelu.",
+    "description": "SceneFlow porządkuje proces akceptacji wizualnej na każdym etapie: Pre-vis Agent służy do przeglądu, Shot Frames do ustalenia kompozycji, a następnie stosuje się F2V dla każdego uderzenia (beatu). Dopracowujesz wygląd, zanim zużyjesz kredyty na dryf i halucynacje modelu.",
     "steps": [
       "Pre-vis Agent — udostępniaj materiały audiowizualne do oceny w kilka minut",
-      "Beat Frames — zablokowanie początku/końca kompozycji z zachowaniem ciągłości Reference Library",
+      "Shot Frames — zablokowanie początku/końca kompozycji z zachowaniem ciągłości Reference Library",
       "F2V w rytm muzyki — generuj wideo z zatwierdzonych klatek, a nie na podstawie niepewnych promptów",
       "Ciągły łańcuch EXT — natywne kroki rozszerzające o 7 sekund dla długich sekwencji dialogowych",
       "Production Mixer — synchronizacja czasowa, dźwięk oraz eksport strumienia do Screening Room"
@@ -366,7 +366,7 @@
     "steps": [
       {
         "title": "Początkowy klip 8-sekundowy",
-        "description": "Konwersja pojedynczej klatki lub obrazu na wideo na podstawie zatwierdzonego elementu Beat Frames blokuje kompozycję przed rozpoczęciem ruchu."
+        "description": "Konwersja pojedynczej klatki lub obrazu na wideo na podstawie zatwierdzonego elementu Shot Frames blokuje kompozycję przed rozpoczęciem ruchu."
       },
       {
         "title": "Kroki wydłużenia o 7 sekund",
@@ -808,15 +808,15 @@
     "viewDetails": "Zobacz szczegóły",
     "beatFirst": {
       "title": "Proces produkcji wideo oparty na rytmie",
-      "description": "Zatwierdzaj kluczowe etapy prewizualizacji oraz Beat Frames przed fazą F2V — ograniczy to liczbę generowań „w ciemno” wynikających z halucynacji modelu czy dryfu wizualnego. Jedna uporządkowana ścieżka: od przeglądu do finalnego klipu.",
+      "description": "Zatwierdzaj kluczowe etapy prewizualizacji oraz Shot Frames przed fazą F2V — ograniczy to liczbę generowań „w ciemno” wynikających z halucynacji modelu czy dryfu wizualnego. Jedna uporządkowana ścieżka: od przeglądu do finalnego klipu.",
       "keyFeatures": [
         "Pre-vis Agent do weryfikacji — udostępnij bity przed czasochłonnym renderowaniem",
-        "Beat Frames skład blokady — Reference Library ciągłość",
+        "Shot Frames skład blokady — Reference Library ciągłość",
         "F2V na uderzenie — generowanie wideo z zatwierdzonych klatek",
         "Ciągłe sekwencje EXT — natywne kroki +7 s dla długich dialogów w obrębie jednego ujęcia",
         "Synchronizacja i strumienie miksera — otwórz Screening Room, aby zestawić i opublikować"
       ],
-      "screenshotSlot": "Wstaw zrzut ekranu: Beat Frames oraz zatwierdzenie wizualizacji wstępnej (pre-vis) przed wygenerowaniem wideo.",
+      "screenshotSlot": "Wstaw zrzut ekranu: Shot Frames oraz zatwierdzenie wizualizacji wstępnej (pre-vis) przed wygenerowaniem wideo.",
       "videoSlot": "Wstaw klip 00:30: zatwierdzanie bitów, blokowanie klatek, a następnie generowanie klipów F2V"
     },
     "screeningRoom": {
@@ -849,7 +849,7 @@
         "description": "Jedno studio – od pomysłu po gotowy do publikacji materiał wideo. Ten sam proces produkcji dla szkoleń, podcastów, serwisów informacyjnych i seriali filmowych – zatwierdź wizualizację wstępną (pre-vis) przed poniesieniem kosztów finalnego renderowania.",
         "keyFeatures": [
           "Seria → Blueprint → Produkcja → Screening Room",
-          "Zatwierdzanie etapami (beat-first) — prewizualizacja i Beat Frames przed F2V",
+          "Zatwierdzanie etapami (beat-first) — prewizualizacja i Shot Frames przed F2V",
           "Generowanie Google Vertex AI z wykorzystaniem natywnych łańcuchów rozszerzeń Veo",
           "Mechanizmy ochronne w zakresie zaufania i bezpieczeństwa oraz potwierdzone cyfrowo pochodzenie w momencie dostarczenia"
         ],

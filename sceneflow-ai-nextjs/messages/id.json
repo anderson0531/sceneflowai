@@ -267,7 +267,7 @@
       },
       {
         "them": "Konsistensi manual antar-sesi",
-        "us": "Reference Library + Beat Frames mengunci visual sebelum video"
+        "us": "Reference Library + Shot Frames mengunci visual sebelum video"
       },
       {
         "them": "Tidak ada alur kerja validasi audiens",
@@ -285,10 +285,10 @@
     "title": "Alur Kerja Video Berbasis Ketukan",
     "subtitle": "Setujui sebelum melakukan rendering — bukan regenerasi ala mesin slot",
     "intro": "Tidak perlu lagi membuat video dengan metode coba-coba. Anda dapat meninjau dan menyetujui tampilannya sebelum SceneFlow menggunakan kredit untuk video akhir.",
-    "description": "SceneFlow mengatur persetujuan visual di setiap tahapan: Pre-vis Agent untuk peninjauan, Beat Frames untuk mengunci komposisi, lalu F2V per *beat*. Anda menyempurnakan tampilan sebelum menghabiskan kredit untuk *drift* dan halusinasi.",
+    "description": "SceneFlow mengatur persetujuan visual di setiap tahapan: Pre-vis Agent untuk peninjauan, Shot Frames untuk mengunci komposisi, lalu F2V per *beat*. Anda menyempurnakan tampilan sebelum menghabiskan kredit untuk *drift* dan halusinasi.",
     "steps": [
       "Pre-vis Agent — bagikan beat audio-visual untuk ditinjau dalam hitungan menit",
-      "Beat Frames — mengunci awal/akhir komposisi dengan kontinuitas Reference Library",
+      "Shot Frames — mengunci awal/akhir komposisi dengan kontinuitas Reference Library",
       "F2V per ketukan — hasilkan video dari frame yang telah disetujui, bukan dari prompt buta",
       "Rantai EXT berkelanjutan — langkah ekstensi +7 detik bawaan untuk segmen dialog yang panjang",
       "Production Mixer — ekspor timing, audio, dan stream ke Screening Room"
@@ -366,7 +366,7 @@
     "steps": [
       {
         "title": "Klip awal 8 detik",
-        "description": "Konversi frame-ke-video atau gambar-ke-video dari Beat Frames yang telah disetujui mengunci komposisi sebelum gerakan dimulai."
+        "description": "Konversi frame-ke-video atau gambar-ke-video dari Shot Frames yang telah disetujui mengunci komposisi sebelum gerakan dimulai."
       },
       {
         "title": "Langkah-langkah perpanjangan +7 detik",
@@ -808,15 +808,15 @@
     "viewDetails": "Lihat Detail",
     "beatFirst": {
       "title": "Alur Kerja Video Berbasis Ketukan",
-      "description": "Setujui *pre-vis beats* dan Beat Frames sebelum F2V — mengurangi pembuatan ulang tanpa arah akibat halusinasi dan pergeseran visual. Satu alur terstruktur mulai dari peninjauan hingga klip akhir.",
+      "description": "Setujui *pre-vis beats* dan Shot Frames sebelum F2V — mengurangi pembuatan ulang tanpa arah akibat halusinasi dan pergeseran visual. Satu alur terstruktur mulai dari peninjauan hingga klip akhir.",
       "keyFeatures": [
         "Pre-vis Agent untuk ditinjau — bagikan beat sebelum proses render berat",
-        "Beat Frames komposisi kunci — Reference Library kontinuitas",
+        "Shot Frames komposisi kunci — Reference Library kontinuitas",
         "F2V per ketukan — menghasilkan video dari frame yang telah disetujui",
         "Rangkaian EXT berkelanjutan — langkah +7 detik bawaan untuk dialog panjang dalam satu *beat*",
         "Penentuan waktu dan aliran mixer — buka Screening Room untuk merakit dan memublikasikan"
       ],
-      "screenshotSlot": "Sisipkan tangkapan layar: Beat Frames dan persetujuan pra-visualisasi sebelum pembuatan video",
+      "screenshotSlot": "Sisipkan tangkapan layar: Shot Frames dan persetujuan pra-visualisasi sebelum pembuatan video",
       "videoSlot": "Sisipkan klip 00:30: Menyetujui beat, mengunci frame, lalu membuat klip F2V."
     },
     "screeningRoom": {
@@ -849,7 +849,7 @@
         "description": "Satu studio untuk seluruh proses, mulai dari gagasan hingga video siap tayang. Menggunakan alur kerja yang sama untuk materi pelatihan, siniar (podcast), berita, dan serial sinematik — serta memungkinkan persetujuan pra-visualisasi sebelum biaya *rendering* akhir dikeluarkan.",
         "keyFeatures": [
           "Seri → Blueprint → Produksi → Screening Room",
-          "Persetujuan berbasis *beat* — *pre-vis* dan Beat Frames sebelum F2V",
+          "Persetujuan berbasis *beat* — *pre-vis* dan Shot Frames sebelum F2V",
           "Pembuatan Google Vertex AI dengan rantai ekstensi Veo bawaan",
           "Mekanisme pengamanan terkait kepercayaan dan keamanan serta bukti asal-usul yang ditandatangani saat penyerahan"
         ],

@@ -58,7 +58,7 @@ export function BeatStillClipViewer({
       >
         <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
         Show still
-        {beatNumber ? ` · Beat ${beatNumber}` : ''}
+        {beatNumber ? ` · Shot ${beatNumber}` : ''}
       </button>
     )
   }
@@ -68,7 +68,7 @@ export function BeatStillClipViewer({
       <div className="flex items-center justify-between gap-2 border-b border-slate-700/40 px-2 py-1.5">
         <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
           {showClip ? 'Clip' : 'Still'}
-          {beatNumber ? ` · Beat ${beatNumber}` : ''}
+          {beatNumber ? ` · Shot ${beatNumber}` : ''}
         </p>
         <div className="flex items-center gap-2">
           {clipUrl && (

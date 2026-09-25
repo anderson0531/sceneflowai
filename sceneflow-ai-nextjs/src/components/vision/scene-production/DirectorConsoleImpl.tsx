@@ -244,7 +244,7 @@ export interface DirectorConsoleProps {
     frameType: 'start' | 'end',
     newFrameUrl: string
   ) => void
-  /** Retry this beat's start still using the Frames tab Standard | Creative mode. */
+  /** Retry this shot's start still using the Frames tab Standard | Creative mode. */
   onRegenerateStill?: (
     sceneId: string,
     segmentId: string
@@ -1088,7 +1088,7 @@ export function DirectorConsoleRoot({
       if (expressIds.length === 0) {
         import('sonner').then(({ toast }) => {
           toast.info(
-            'No eligible segments for Video Agent — need beat references or a start Beat Frame, and not already rendering.'
+            'No eligible segments for Video Agent — need shot references or a start Shot Frame, and not already rendering.'
           )
         })
         return
@@ -1537,7 +1537,7 @@ export function DirectorConsoleRoot({
         key: beat.beatId,
         beatId: beat.beatId,
         beatNumber: index + 1,
-        label: (spoken || beat.kind || `Beat ${index + 1}`).replace(/\s+/g, ' ').trim(),
+        label: (spoken || beat.kind || `Shot ${index + 1}`).replace(/\s+/g, ' ').trim(),
         prompt: item?.config.prompt || segment?.userEditedPrompt || segment?.generatedPrompt,
         thumbnailUrl: thumbnail,
         hasStartFrame: !!thumbnail,
@@ -1577,7 +1577,7 @@ export function DirectorConsoleRoot({
     return (
       <div className="p-8 text-center">
         <Clapperboard className="w-16 h-16 mx-auto mb-4 text-slate-500 opacity-30" />
-        <h3 className="!text-base !leading-normal font-semibold text-slate-300 mb-2">No Beats Available</h3>
+        <h3 className="!text-base !leading-normal font-semibold text-slate-300 mb-2">No Shots Available</h3>
         <p className="text-sm text-slate-500">
           Initialize scene production in the Frame step first to create video segments.
         </p>

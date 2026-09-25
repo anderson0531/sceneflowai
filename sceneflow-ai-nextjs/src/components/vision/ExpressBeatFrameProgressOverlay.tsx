@@ -51,7 +51,7 @@ const PHASE_LABELS: Record<ExpressOverlayPhase, string> = {
   audio: 'Audio',
   'image-plan': 'Image plan',
   'still-direct': 'Directing stills',
-  image: 'Beat frames',
+  image: 'Shot frames',
 }
 
 const PHASE_ORDER: ExpressOverlayPhase[] = [
@@ -190,7 +190,7 @@ export function ExpressBeatFrameProgressOverlay({
 
   return (
     <AgentRunDock
-      title="Frame Agent"
+      title="Stills Agent"
       subtitle={subtitle}
       tone={tone}
       phases={dockPhases}

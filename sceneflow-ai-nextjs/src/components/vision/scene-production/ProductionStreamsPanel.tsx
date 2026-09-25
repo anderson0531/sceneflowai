@@ -108,7 +108,7 @@ const STREAM_TYPE_CONFIG: Record<ProductionStreamType, StreamTypeEntry> = {
   animatic: { 
     Icon: Clapperboard, 
     label: 'Animatic', 
-    description: 'Ken Burns animation with Beat Frames'
+    description: 'Ken Burns animation with Shot Frames'
   },
   video: { 
     Icon: VideoIcon, 
@@ -794,7 +794,7 @@ export function ProductionStreamsPanel({
         {hasSegmentChanges && productionStreams.length > 0 && (
           <span className="flex items-center gap-1 text-xs text-amber-400 shrink-0">
             <AlertCircle className="w-3.5 h-3.5" />
-            Beats changed — new render recommended
+            Shots changed — new render recommended
           </span>
         )}
       </div>

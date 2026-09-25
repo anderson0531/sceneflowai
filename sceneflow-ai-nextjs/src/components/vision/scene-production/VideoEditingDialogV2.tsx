@@ -281,7 +281,7 @@ function ExtendTab({
         return {
           type: 'previous-video' as const,
           url: latestTake.lastFrameUrl || latestTake.thumbnailUrl || previousSegmentLastFrame,
-          label: `Beat ${previousSegmentInfo.segmentNumber} - Take ${previousSegmentInfo.takes.length} (Latest)`,
+          label: `Shot ${previousSegmentInfo.segmentNumber} - Take ${previousSegmentInfo.takes.length} (Latest)`,
           takeInfo: latestTake
         }
       }
@@ -304,7 +304,7 @@ function ExtendTab({
         return {
           type: 'previous-video' as const,
           url: take.lastFrameUrl || take.thumbnailUrl,
-          label: `Beat ${previousSegmentInfo?.segmentNumber} - Take ${takeIndex + 1}`,
+          label: `Shot ${previousSegmentInfo?.segmentNumber} - Take ${takeIndex + 1}`,
           takeInfo: take
         }
       }
@@ -331,9 +331,9 @@ function ExtendTab({
       <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-200 dark:border-green-800">
         <Film className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
         <div>
-          <h4 className="font-medium text-green-900 dark:text-green-100">Extend from Previous Beat</h4>
+          <h4 className="font-medium text-green-900 dark:text-green-100">Extend from Previous Shot</h4>
           <p className="text-sm text-green-700 dark:text-green-300 mt-0.5">
-            Continue your video seamlessly by using the last frame of Beat {currentSegmentIndex} as the starting point for Beat {currentSegmentIndex + 1}.
+            Continue your video seamlessly by using the last frame of Shot {currentSegmentIndex} as the starting point for Shot {currentSegmentIndex + 1}.
           </p>
         </div>
       </div>
@@ -343,7 +343,7 @@ function ExtendTab({
         <div className="space-y-3">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
             <ArrowRight className="w-4 h-4" />
-            Source Frame from Beat {currentSegmentIndex}
+            Source Frame from Shot {currentSegmentIndex}
           </label>
           
           <Select value={sourceVideoUrl || 'auto'} onValueChange={setSourceVideoUrl}>
@@ -361,7 +361,7 @@ function ExtendTab({
               {previousSegmentInfo && previousSegmentInfo.takes.length > 0 && (
                 <>
                   <div className="px-2 py-1 text-xs text-gray-500 border-t mt-1">
-                    Video Takes from Beat {previousSegmentInfo.segmentNumber}
+                    Video Takes from Shot {previousSegmentInfo.segmentNumber}
                   </div>
                   {previousSegmentInfo.takes.map((take, idx) => (
                     <SelectItem key={take.id} value={`prev-take-${idx}`}>
@@ -442,7 +442,7 @@ function ExtendTab({
         <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
           <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
           <div>
-            <h4 className="font-medium text-amber-900 dark:text-amber-100">First Beat</h4>
+            <h4 className="font-medium text-amber-900 dark:text-amber-100">First Shot</h4>
             <p className="text-sm text-amber-700 dark:text-amber-300 mt-0.5">
               This is the first segment - there's no previous segment to extend from. Use Text-to-Video or Image-to-Video mode instead.
             </p>
@@ -1228,7 +1228,7 @@ function PreviewPanel({ segment, sceneImageUrl, startFrameUrl, isGenerating }: P
       {/* Beat Info Bar */}
       <div className="mt-3 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg flex items-center justify-between text-xs">
         <div className="flex items-center gap-3">
-          <span className="text-gray-500">Beat {segment.sequenceIndex + 1}</span>
+          <span className="text-gray-500">Shot {segment.sequenceIndex + 1}</span>
           <span className="text-gray-400">|</span>
           <span className="text-gray-600 dark:text-gray-400">
             {(segment.endTime - segment.startTime).toFixed(1)}s duration

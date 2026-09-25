@@ -18,8 +18,8 @@ export function SceneScoreToggle({
       onClick={(event) => event.stopPropagation()}
       title={
         checked
-          ? 'Score plays on every beat it covers. Turn off to mute the score across those beats.'
-          : 'Turn the score on for every beat it covers.'
+          ? 'Score plays on every shot it covers. Turn off to mute the score across those shots.'
+          : 'Turn the score on for every shot it covers.'
       }
     >
       <Music className={`w-3.5 h-3.5 ${checked ? 'text-purple-300' : 'text-purple-300/50'}`} />
@@ -28,7 +28,7 @@ export function SceneScoreToggle({
         checked={checked}
         onCheckedChange={onCheckedChange}
         className="scale-90 origin-left"
-        aria-label="Score across beats"
+        aria-label="Score across shots"
       />
     </label>
   )

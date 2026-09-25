@@ -805,7 +805,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [mounted, setMounted] = useState(false)
   const [project, setProject] = useState<Project | null>(null)
   const [script, setScript] = useState<any>(null)
-  /** Session default for Frame Agent, Regen, and Direct Frame. Not persisted. */
+  /** Session default for Stills Agent, Regen, and Direct Frame. Not persisted. */
   const [frameGenerationQuality, setFrameGenerationQuality] = useState<StoryboardQuality>('draft')
   /** Session default: Standard (Google) or Creative (Kling). Not persisted. */
   const [frameGenerationMode, setFrameGenerationMode] = useState<StillGenerationMode>('standard')
@@ -1612,7 +1612,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           if (production?.segments) {
             production.segments = production.segments.map((segment) => {
               if (segment.status === 'GENERATING') {
-                console.log(`[VisionPage] Resetting stuck GENERATING status for beat ${segment.segmentId}`)
+                console.log(`[VisionPage] Resetting stuck GENERATING status for shot ${segment.segmentId}`)
                 return { ...segment, status: 'PENDING' as const }
               }
               return segment
@@ -1990,7 +1990,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
 
         if (!response.ok) {
-          throw new Error('Failed to save beat caption settings')
+          throw new Error('Failed to save shot caption settings')
         }
 
         setProject((prev) => {
@@ -2007,7 +2007,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
         })
       } catch (error) {
-        console.error('[VisionPage] Error saving beat caption settings:', error)
+        console.error('[VisionPage] Error saving shot caption settings:', error)
         throw error
       }
     },
@@ -3345,7 +3345,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         await applySceneProductionUpdate(sceneId, updatedData)
       }
       
-      toast.success(`Backdrop video added before beat #${beforeSegmentIndex + 1}`)
+      toast.success(`Backdrop video added before shot #${beforeSegmentIndex + 1}`)
     },
     [sceneProductionState, applySceneProductionUpdate]
   )
@@ -3522,7 +3522,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const segment = productionData?.segments?.find(s => s.segmentId === segmentId)
       
       if (!segment) {
-        toast.error('Beat not found')
+        toast.error('Shot not found')
         return
       }
 
@@ -3924,7 +3924,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
         try {
           const { toast } = require('sonner')
-          toast.success(`Created ${productionData.segments.length} production beats from Pre-Vis`)
+          toast.success(`Created ${productionData.segments.length} production shots from Pre-Vis`)
         } catch {}
         return
       }
@@ -4306,7 +4306,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       const inFlightKey = `${sceneId}:${segmentId}`
       if (segmentGenerateInFlightRef.current.has(inFlightKey)) {
-        const message = 'Video generation is already running for this beat.'
+        const message = 'Video generation is already running for this shot.'
         toast.info(message)
         throw new Error(message)
       }
@@ -4329,7 +4329,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             : options?.videoProvider === 'vertex'
               ? 'Gemini Omni Flash'
               : `Kling${options.klingModel ? ` (${options.klingModel})` : ''}`
-        toast.info(`Generating via ${providerLabel} · ${mode} · beat ${segmentId.slice(0, 6)}…`)
+        toast.info(`Generating via ${providerLabel} · ${mode} · shot ${segmentId.slice(0, 6)}…`)
       } catch {}
 
       try {
@@ -4337,7 +4337,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const currentProduction = sceneProductionState[sceneId]
         const segment = currentProduction?.segments.find((s) => s.segmentId === segmentId)
         if (!segment) {
-          throw new Error('Beat not found')
+          throw new Error('Shot not found')
         }
         const segmentIndexForApi = currentProduction?.segments.findIndex((s) => s.segmentId === segmentId) ?? -1
         const totalSegmentsForApi = currentProduction?.segments.length ?? 0
@@ -4408,7 +4408,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // Use prompt from options (from prompt builder) or fall back to segment prompt
         const prompt = options?.prompt || segment.userEditedPrompt || segment.generatedPrompt || ''
         if (!prompt) {
-          throw new Error('Beat prompt is required')
+          throw new Error('Shot prompt is required')
         }
 
         const sessionVideo = resolveVideoGeneration({
@@ -4768,7 +4768,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               duration: 6000,
             })
           } else {
-            toast.success(`Asset generated successfully for beat ${segmentId.slice(0, 6)}`)
+            toast.success(`Asset generated successfully for shot ${segmentId.slice(0, 6)}`)
           }
           
           // After successful I2V/FTV generation, check if the next segment's start frame
@@ -4796,7 +4796,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 
                 if (wasLinked || wasI2VRetry) {
                   const nextSegIdx = currentSegmentIndex + 2 // 1-based display
-                  toast.info(`Beat ${nextSegIdx} start frame may be out of sync`, {
+                  toast.info(`Shot ${nextSegIdx} start frame may be out of sync`, {
                     description: 'This video\'s end frame differs from the next segment\'s start keyframe. Update it for visual continuity.',
                     duration: 15000,
                     action: {
@@ -4827,7 +4827,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                           })
                           return { ...current, segments }
                         })
-                        toast.success(`Updated Beat ${nextSegIdx} start frame with this video's end frame`)
+                        toast.success(`Updated Shot ${nextSegIdx} start frame with this video's end frame`)
                       }
                     }
                   })
@@ -5004,7 +5004,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                                 : null
                               if (nextSegment?.references?.startFrameUrl) {
                                 const nextSegIdx = currentSegmentIndex + 2
-                                toast.info(`Update Beat ${nextSegIdx} start frame?`, {
+                                toast.info(`Update Shot ${nextSegIdx} start frame?`, {
                                   description: 'I2V video end frame differs from the next segment\'s start keyframe. Update for visual continuity.',
                                   duration: 15000,
                                   action: {
@@ -5024,7 +5024,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                                         })
                                         return { ...current, segments }
                                       })
-                                      toast.success(`Updated Beat ${nextSegIdx} start frame`)
+                                      toast.success(`Updated Shot ${nextSegIdx} start frame`)
                                     }
                                   }
                                 })
@@ -5260,7 +5260,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           ) {
             toast.error(errorMessage)
           } else {
-            toast.error('Generation failed - click beat for details')
+            toast.error('Generation failed - click shot for details')
           }
         } catch {}
         throw error
@@ -5398,7 +5398,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         )
 
         const { toast } = await import('sonner')
-        toast.success(`Uploaded ${file.type.startsWith('image') ? 'image' : 'video'} to beat`)
+        toast.success(`Uploaded ${file.type.startsWith('image') ? 'image' : 'video'} to shot`)
       } catch (error: any) {
         console.error('[Segment Upload] Error:', error)
         
@@ -5467,7 +5467,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       try {
         const { toast } = require('sonner')
-        toast.success(`Added new ${duration}s beat`)
+        toast.success(`Added new ${duration}s shot`)
       } catch {}
     },
     [applySceneProductionUpdate]
@@ -5551,7 +5551,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       try {
         const { toast } = require('sonner')
         const purposeLabel = newSegment.segmentPurpose ? ` ${newSegment.segmentPurpose}` : ''
-        toast.success(`Added ${duration.toFixed(1)}s${purposeLabel} beat`)
+        toast.success(`Added ${duration.toFixed(1)}s${purposeLabel} shot`)
       } catch {}
     },
     [applySceneProductionUpdate]
@@ -5577,7 +5577,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // For beat-matched mode, use AI to analyze narration
       if (type === 'beat-matched' && narrationText) {
-        toast.info('Analyzing narration for visual beats...')
+        toast.info('Analyzing narration for visual shots...')
         
         try {
           // Get character descriptions for reference
@@ -5628,7 +5628,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               const endTime = (idx + 1) * durationPerBeat
               
               return {
-                segmentId: `seg_${sceneId}_establishing_beat${idx + 1}_${Date.now()}`,
+                segmentId: `seg_${sceneId}_establishing_shot${idx + 1}_${Date.now()}`,
                 sequenceIndex: idx,
                 startTime,
                 endTime,
@@ -5670,11 +5670,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           })
           
-          toast.success(`Added ${analysis.beats.length} beat-matched establishing shot beats`)
+          toast.success(`Added ${analysis.beats.length} beat-matched establishing shots`)
           return
           
         } catch (error) {
-          console.error('Failed to analyze narration beats:', error)
+          console.error('Failed to analyze narration shots:', error)
           toast.error('Failed to analyze narration, falling back to single shot')
           // Fall through to single-shot mode
         }
@@ -6021,7 +6021,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             nextStartTime += duration
           }
           
-          toast.success(`Added ${segmentsToAdd} beat${segmentsToAdd > 1 ? 's' : ''} to cover ${totalAudioDuration.toFixed(1)}s of audio`)
+          toast.success(`Added ${segmentsToAdd} shot${segmentsToAdd > 1 ? 's' : ''} to cover ${totalAudioDuration.toFixed(1)}s of audio`)
         }
         
         // Redistribute segment timing to cover audio duration evenly
@@ -8677,7 +8677,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               })
             }
             if (beatMigration.changed) {
-              console.log('[loadProject] Beat-first migration applied:', {
+              console.log('[loadProject] Shot-first migration applied:', {
                 migratedSceneCount: beatMigration.migratedSceneCount,
               })
             }
@@ -8687,7 +8687,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               })
             }
             if (setContextMigration.changed) {
-              console.log('[loadProject] Beat set-context cleanup applied:', {
+              console.log('[loadProject] Shot set-context cleanup applied:', {
                 migratedSceneCount: setContextMigration.migratedSceneCount,
               })
             }
@@ -11665,7 +11665,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     const rawBeatIdx = resolveRawBeatIndex(scene, { beatId })
     if (rawBeatIdx === undefined || !getSceneBeats(scene)[rawBeatIdx]) {
-      try { const { toast } = require('sonner'); toast.error('Beat not found') } catch {}
+      try { const { toast } = require('sonner'); toast.error('Shot not found') } catch {}
       return
     }
 
@@ -11748,7 +11748,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const rawBeatIdx = resolveRawBeatIndex(scene, { beatId })
     const beat = rawBeatIdx === undefined ? undefined : getSceneBeats(scene)[rawBeatIdx]
     if (!beat) {
-      try { const { toast } = require('sonner'); toast.error('Beat not found') } catch {}
+      try { const { toast } = require('sonner'); toast.error('Shot not found') } catch {}
       return
     }
 
@@ -11834,7 +11834,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
     scriptRef.current = nextScript
     setScript(nextScript)
-    await persistVisionScriptScenes(updatedScenes, 'persistBeatImageSafetyError')
+    await persistVisionScriptScenes(updatedScenes, 'persistShotImageSafetyError')
   }
 
   const handleGenerateBeatStillWithPolicy = async (
@@ -11850,7 +11850,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     const rawBeatIdx = resolveRawBeatIndex(scene, { beatId: slot.beatId })
     if (typeof rawBeatIdx !== 'number') {
-      toast.error('Beat not found')
+      toast.error('Shot not found')
       return
     }
 
@@ -11971,7 +11971,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       scriptRef.current = nextScript
       setScript(nextScript)
-      const saved = await persistVisionScriptScenes(updatedScenes, 'handleGenerateBeatStillWithPolicy')
+      const saved = await persistVisionScriptScenes(updatedScenes, 'handleGenerateShotStillWithPolicy')
       if (saved && slot.beatId) {
         const sceneId =
           (scene.id as string) ||
@@ -12014,7 +12014,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         : undefined
     if (blockedByMissingSceneReferences(sceneIdx, beat)) return
     if (!slot.beatId) {
-      toast.info('Director is available on beat frames')
+      toast.info('Director is available on shot frames')
       return
     }
     setPreVisDirectorDialog({ sceneIdx, slot })
@@ -12491,7 +12491,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const scene = script.script.scenes[sceneIndex]
     const rawBeatIdx = scene ? resolveRawBeatIndex(scene, { beatId }) : undefined
     if (rawBeatIdx === undefined) {
-      try { const { toast } = require('sonner'); toast.error('Beat not found') } catch {}
+      try { const { toast } = require('sonner'); toast.error('Shot not found') } catch {}
       return
     }
 
@@ -12511,15 +12511,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (saved) {
         const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
         syncBeatStartFrameToProduction(sceneId, beatId, uploadedUrl)
-        try { const { toast } = require('sonner'); toast.success('Beat frame uploaded') } catch {}
+        try { const { toast } = require('sonner'); toast.success('Shot frame uploaded') } catch {}
       } else {
-        try { const { toast } = require('sonner'); toast.error('Failed to save beat frame') } catch {}
+        try { const { toast } = require('sonner'); toast.error('Failed to save shot frame') } catch {}
       }
     } catch (error) {
       console.error('[handleUploadBeatFrame] Error:', error)
       try {
         const { toast } = require('sonner')
-        toast.error(error instanceof Error ? error.message : 'Failed to upload beat frame')
+        toast.error(error instanceof Error ? error.message : 'Failed to upload shot frame')
       } catch {}
     }
   }
@@ -12534,7 +12534,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const scene = script.script.scenes[sceneIndex]
     const rawBeatIdx = scene ? resolveRawBeatIndex(scene, { beatId }) : undefined
     if (rawBeatIdx === undefined) {
-      try { const { toast } = require('sonner'); toast.error('Beat not found') } catch {}
+      try { const { toast } = require('sonner'); toast.error('Shot not found') } catch {}
       return
     }
 
@@ -12551,10 +12551,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       await persistVisionScriptScenes(updatedScenes, 'handleSaveEditedBeatFrame')
       const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
       syncBeatStartFrameToProduction(sceneId, beatId, newImageUrl)
-      try { const { toast } = require('sonner'); toast.success('Beat frame updated') } catch {}
+      try { const { toast } = require('sonner'); toast.success('Shot frame updated') } catch {}
     } catch (saveError) {
       console.error('[handleSaveEditedBeatFrame] Failed to save:', saveError)
-      try { const { toast } = require('sonner'); toast.error('Failed to save edited beat frame') } catch {}
+      try { const { toast } = require('sonner'); toast.error('Failed to save edited shot frame') } catch {}
     }
   }
 
@@ -12635,7 +12635,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const scene = script.script.scenes[sceneIndex]
     const rawBeatIdx = scene ? resolveRawBeatIndex(scene, { beatId }) : undefined
     if (rawBeatIdx === undefined) {
-      try { const { toast } = require('sonner'); toast.error('Beat not found') } catch {}
+      try { const { toast } = require('sonner'); toast.error('Shot not found') } catch {}
       return
     }
 
@@ -12654,10 +12654,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }))
 
     try {
-      await persistVisionScriptScenes(updatedScenes, 'handleSaveBeatKenBurns')
+      await persistVisionScriptScenes(updatedScenes, 'handleSaveShotKenBurns')
       try { const { toast } = require('sonner'); toast.success('Frame motion saved') } catch {}
     } catch (saveError) {
-      console.error('[handleSaveBeatKenBurns] Failed to save:', saveError)
+      console.error('[handleSaveShotKenBurns] Failed to save:', saveError)
       try { const { toast } = require('sonner'); toast.error('Failed to save frame motion') } catch {}
     }
   }
@@ -14299,11 +14299,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     })
 
     try {
-      await persistVisionScriptScenes(updatedScenes, 'handleReorderBeats')
-      toast.success('Beats reordered')
+      await persistVisionScriptScenes(updatedScenes, 'handleReorderShots')
+      toast.success('Shots reordered')
     } catch (error) {
-      console.error('[Vision] handleReorderBeats - Failed:', error)
-      toast.error('Failed to save the new beat order')
+      console.error('[Vision] handleReorderShots - Failed:', error)
+      toast.error('Failed to save the new shot order')
     }
   }
 
@@ -15335,11 +15335,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
         if (count > 0) {
           toast.success(
-            `Caption translations updated for ${getLanguageName(language)} (${count} beat${count === 1 ? '' : 's'})`
+            `Caption translations updated for ${getLanguageName(language)} (${count} shot${count === 1 ? '' : 's'})`
           )
         }
       } catch (err) {
-        console.warn('[Streams] Beat caption backfill failed:', err)
+        console.warn('[Streams] Shot caption backfill failed:', err)
         toast.error(`Failed to translate captions for ${getLanguageName(language)}`)
       }
 
@@ -15796,7 +15796,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           console.error('[Scene Express] Request failed:', response.status, errText)
           setExpressBeatFrameOverlay(null)
           if (reportMissingReferenceImages(response.status, errText, sceneIndex)) return
-          toast.error(`Frame Agent failed: ${response.status} ${errText.slice(0, 120)}`)
+          toast.error(`Stills Agent failed: ${response.status} ${errText.slice(0, 120)}`)
           return
         }
 
@@ -15941,7 +15941,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         }
                       : prev
                   )
-                  toast.error(event.errors?.[0] || 'Frame Agent preflight failed')
+                  toast.error(event.errors?.[0] || 'Stills Agent preflight failed')
                   failedScenes = 1
                   break
                 }
@@ -15970,7 +15970,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   break
                 case 'error':
                   console.error('[Scene Express] Stream error:', event.error)
-                  toast.error(`Frame Agent error: ${event.error}`)
+                  toast.error(`Stills Agent error: ${event.error}`)
                   break
                 default:
                   break
@@ -15987,10 +15987,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
         if (rateLimitedFailureCount > 0) {
           toast.warning(
-            `Scene ${sceneIndex + 1} Frame Agent complete with ${rateLimitedFailureCount} rate-limited frame${rateLimitedFailureCount === 1 ? '' : 's'}. Use Retry failed.`
+            `Scene ${sceneIndex + 1} Stills Agent complete with ${rateLimitedFailureCount} rate-limited frame${rateLimitedFailureCount === 1 ? '' : 's'}. Use Retry failed.`
           )
         } else if (failedScenes === 0 && successScenes > 0) {
-          toast.success(`Scene ${sceneIndex + 1} Frame Agent complete`)
+          toast.success(`Scene ${sceneIndex + 1} Stills Agent complete`)
         } else if (failedScenes > 0 && lastSceneError) {
           toast.error(lastSceneError.slice(0, 200))
         }
@@ -16004,7 +16004,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           return
         }
         console.error('[Scene Express] Unexpected error:', err)
-        toast.error(`Frame Agent error: ${err?.message || String(err)}`)
+        toast.error(`Stills Agent error: ${err?.message || String(err)}`)
         setExpressBeatFrameOverlay((prev) =>
           prev
             ? {
@@ -16801,7 +16801,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           })
         }
         if (beatResult.changed) {
-          console.log('[saveScenesToDatabase] Beat hydration:', {
+          console.log('[saveScenesToDatabase] Shot hydration:', {
             migratedSceneCount: beatResult.migratedSceneCount,
           })
         }
@@ -16811,7 +16811,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           })
         }
       } catch (segErr) {
-        console.warn('[saveScenesToDatabase] Segment/beat re-derivation failed; persisting flat shape only', segErr)
+        console.warn('[saveScenesToDatabase] Segment/shot re-derivation failed; persisting flat shape only', segErr)
       }
 
       const derivedScript = metadataToPersist?.visionPhase?.script
@@ -17291,11 +17291,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       isSegmented: false
                     }))
                     const { toast } = require('sonner')
-                    toast.success('Beats reset successfully')
+                    toast.success('Shots reset successfully')
                   } catch (error) {
-                    console.error('Failed to reset beats:', error)
+                    console.error('Failed to reset shots:', error)
                     const { toast } = require('sonner')
-                    toast.error('Failed to reset beats')
+                    toast.error('Failed to reset shots')
                   }
                 }}
                 onAddSegment={handleAddSegment}
@@ -18098,7 +18098,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               ? String(scenePolishJob.job.payload.activity)
               : scenePolishJob.job?.status === 'queued'
                 ? tStudio('polishQueued')
-                : tStudio('polishWalkingBeats', {
+                : tStudio('polishWalkingShots', {
                     count: Number(scenePolishJob.job?.payload?.beatCount || 0),
                   })
           }

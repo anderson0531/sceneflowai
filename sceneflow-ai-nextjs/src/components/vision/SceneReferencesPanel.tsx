@@ -116,7 +116,7 @@ const SOURCE_LABEL: Record<SceneReferenceRequirementSource, string> = {
 }
 
 const SOURCE_HINT: Record<SceneReferenceRequirementSource, string> = {
-  'beat-plan': "Locked in when this scene's beats were planned — this is what the frames will use.",
+  'beat-plan': "Locked in when this scene's shots were planned — this is what the frames will use.",
   'scene-assigned': 'Assigned to this scene in the Reference Library.',
   detected: 'Matched from the script. Worth a glance — remove it if this scene does not use it.',
 }
@@ -130,8 +130,8 @@ function formatSceneList(sceneNumbers: number[]): string {
 
 function formatBeatList(beats: SceneReferenceBeatUse[]): string {
   const numbers = beats.map((beat) => beat.beatNumber)
-  if (numbers.length === 1) return `Beat ${numbers[0]}`
-  return `Beats ${numbers.join(', ')}`
+  if (numbers.length === 1) return `Shot ${numbers[0]}`
+  return `Shots ${numbers.join(', ')}`
 }
 
 function childLabel(requirement: SceneReferenceRequirement, parentName: string): string {
@@ -410,7 +410,7 @@ export function SceneReferencesPanel({
           </div>
           <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
             {!needsDraw ? 'Reference ready' : drawn ? 'Needs a new still' : 'Not drawn yet'}
-            {requirement.usedInBeats?.length ? ` · ${formatBeatList(requirement.usedInBeats)}` : ''}
+            {requirement.usedInBeats?.length ? ` · ${formatShotList(requirement.usedInShots)}` : ''}
             {requirement.alsoUsedInScenes?.length
               ? ` · also needed by ${requirement.alsoUsedInScenes.length === 1 ? 'scene' : 'scenes'} ${formatSceneList(requirement.alsoUsedInScenes)}`
               : ''}
@@ -483,7 +483,7 @@ export function SceneReferencesPanel({
             </span>
           </div>
           <p className="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">
-            What this scene needs, read from its beats and script. Frames wait on these — a
+            What this scene needs, read from its shots and script. Frames wait on these — a
             reference that gets named but has no image is drawn differently in every frame.
             Gen draws a default still; customise looks in the Reference Library.
           </p>
@@ -529,7 +529,7 @@ export function SceneReferencesPanel({
 
       {requirements.length === 0 ? (
         <p className="text-xs text-gray-600 dark:text-gray-400 italic">
-          Nothing detected for this scene yet. References sharpen once the scene has beats — until
+          Nothing detected for this scene yet. References sharpen once the scene has shots — until
           then this reads from the heading and action. Add one by hand if you already know.
         </p>
       ) : (

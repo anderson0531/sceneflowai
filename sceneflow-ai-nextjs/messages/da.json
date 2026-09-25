@@ -267,7 +267,7 @@
       },
       {
         "them": "Manuel konsistens på tværs af sessioner",
-        "us": "Reference Library + Beat Frames låser billedet før videoen"
+        "us": "Reference Library + Shot Frames låser billedet før videoen"
       },
       {
         "them": "Ingen arbejdsgang for validering af målgruppe",
@@ -285,10 +285,10 @@
     "title": "Beat-baseret videopipeline",
     "subtitle": "Godkend før rendering – ikke regenerering som på en spillemaskine",
     "intro": "Ingen gæt-og-prøv-genereringer. Du får vist et eksempel og godkender udseendet, før SceneFlow bruger credits på den endelige video.",
-    "description": "SceneFlow strukturerer den visuelle godkendelse i hvert trin: Pre-vis Agent til gennemgang, Beat Frames til at fastlåse kompositionen, og derefter F2V pr. takt. Du finjusterer udtrykket, før du bruger credits på drift og hallucinationer.",
+    "description": "SceneFlow strukturerer den visuelle godkendelse i hvert trin: Pre-vis Agent til gennemgang, Shot Frames til at fastlåse kompositionen, og derefter F2V pr. takt. Du finjusterer udtrykket, før du bruger credits på drift og hallucinationer.",
     "steps": [
       "Pre-vis Agent — del audiovisuelle beats til gennemgang på få minutter",
-      "Beat Frames — lås start-/slut-sammensætning med Reference Library-kontinuitet",
+      "Shot Frames — lås start-/slut-sammensætning med Reference Library-kontinuitet",
       "F2V pr. beat – generér video ud fra godkendte frames frem for blinde prompts",
       "Kontinuerlig EXT-kæde – indbyggede forlængelsestrin på +7 sekunder til lange dialogsekvenser",
       "Production Mixer — timing, lyd og streameksport til Screening Room"
@@ -366,7 +366,7 @@
     "steps": [
       {
         "title": "8s indledende klip",
-        "description": "Frame-til-video eller billede-til-video fra godkendt Beat Frames fastlåser kompositionen før bevægelse."
+        "description": "Frame-til-video eller billede-til-video fra godkendt Shot Frames fastlåser kompositionen før bevægelse."
       },
       {
         "title": "+7s-udvidelsestrin",
@@ -808,15 +808,15 @@
     "viewDetails": "Se detaljer",
     "beatFirst": {
       "title": "Beat-baseret videopipeline",
-      "description": "Godkend pre-vis-sekvenser og Beat Frames før F2V – færre blinde regenereringer som følge af hallucinationer og visuel drift. Én struktureret proces fra gennemgang til færdigt klip.",
+      "description": "Godkend pre-vis-sekvenser og Shot Frames før F2V – færre blinde regenereringer som følge af hallucinationer og visuel drift. Én struktureret proces fra gennemgang til færdigt klip.",
       "keyFeatures": [
         "Pre-vis Agent til gennemgang – del beats før tung rendering",
-        "Beat Frames låsesammensætning — Reference Library kontinuitet",
+        "Shot Frames låsesammensætning — Reference Library kontinuitet",
         "F2V pr. takt – generér video ud fra godkendte billedrammer",
         "Sammenhængende EXT-kæder – indbyggede trin på mere end 7 sekunder til lange dialogforløb inden for en sceneenhed",
         "Mixer-timing og -streams – åbn Screening Room for at samle og udgive"
       ],
-      "screenshotSlot": "Indsæt skærmbillede: Beat Frames og godkendelse af pre-vis før videogenerering",
+      "screenshotSlot": "Indsæt skærmbillede: Shot Frames og godkendelse af pre-vis før videogenerering",
       "videoSlot": "Indsæt klip på 00:30: Godkendelse af beats, fastlåsning af frames og derefter generering af F2V-klip"
     },
     "screeningRoom": {
@@ -849,7 +849,7 @@
         "description": "Ét studie, der håndterer alt fra idé til udgivelsesklar video. Samme workflow til træningsmateriale, podcasts, nyheder og filmiske serier – godkend pre-visualiseringer, før der investeres i den endelige rendering.",
         "keyFeatures": [
           "Serie → Blueprint → Produktion → Screening Room",
-          "Godkendelse af enkelte sekvensdele (beats) først – pre-vis og Beat Frames før F2V",
+          "Godkendelse af enkelte sekvensdele (beats) først – pre-vis og Shot Frames før F2V",
           "Google Vertex AI-generering med native Veo-udvidelseskæder",
           "Retningslinjer for tillid og sikkerhed samt signeret dokumentation for oprindelse ved levering"
         ],

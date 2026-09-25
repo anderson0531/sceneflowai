@@ -216,11 +216,11 @@ export function VideoAgentConfirmDialog({
                       </span>
                       <span
                         className={`text-[10px] ${
-                          beat.isRendering
+                          shot.isRendering
                             ? 'text-indigo-300'
-                            : beat.hasVideo
+                            : shot.hasVideo
                               ? 'text-green-400'
-                              : beat.hasError
+                              : shot.hasError
                                 ? 'text-rose-400'
                                 : 'text-amber-400'
                         }`}

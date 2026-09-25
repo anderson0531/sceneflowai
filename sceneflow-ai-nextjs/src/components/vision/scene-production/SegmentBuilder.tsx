@@ -116,7 +116,7 @@ const OVERLAY_PIPELINES: Record<OverlayJob, OverlayStepDef[]> = {
     {
       id: 'timeline',
       label: 'Aligning with the audio timeline',
-      sublabel: 'Dialogue, VO, and duration context for each beat',
+      sublabel: 'Dialogue, VO, and duration context for each shot',
       progress: 0.32,
       icon: 'audio',
     },
@@ -129,7 +129,7 @@ const OVERLAY_PIPELINES: Record<OverlayJob, OverlayStepDef[]> = {
     },
     {
       id: 'timeline-build',
-      label: 'Building the beat timeline',
+      label: 'Building the shot timeline',
       sublabel: 'Stitching durations and transitions',
       progress: 0.94,
       icon: 'layers',
@@ -513,7 +513,7 @@ function enforceClientMaxDuration(segments: ProposedSegment[]): ProposedSegment[
     const dialoguePerPart = Math.ceil(seg.dialogueLineIds.length / numParts)
 
     console.log(
-      `[Client Split] Beat ${seg.id} (${seg.duration.toFixed(1)}s) → ${numParts} parts`
+      `[Client Split] Shot ${seg.id} (${seg.duration.toFixed(1)}s) → ${numParts} parts`
     )
 
     for (let i = 0; i < numParts; i++) {
@@ -783,12 +783,12 @@ export function SegmentBuilder({
           throw new Error(data.errors?.join('; ') || data.error || 'Derive segments failed')
         }
         onSegmentsGenerated(data.segments)
-        toast.success(`Created ${data.segmentCount} segments from storyboard beats`)
+        toast.success(`Created ${data.segmentCount} segments from storyboard shots`)
         setIsAnalyzing(false)
         return
       } catch (err: any) {
         setError(err?.message || String(err))
-        toast.error('Failed to derive segments from beats')
+        toast.error('Failed to derive segments from shots')
         setIsAnalyzing(false)
         return
       }
@@ -827,7 +827,7 @@ export function SegmentBuilder({
         throw new Error(
           response.ok
             ? 'Invalid JSON from segment API'
-            : `Beat API error (${response.status}): ${responseText.slice(0, 280)}`
+            : `Shot API error (${response.status}): ${responseText.slice(0, 280)}`
         )
       }
 
@@ -901,7 +901,7 @@ export function SegmentBuilder({
       setPhase('video_prompts')
       setLastGeneratedHash(sceneBible.contentHash)
 
-      toast.success(`Created ${finalBeats.length} segments — add keyframes, then generate Veo prompts (or skip).`)
+      toast.success(`Created ${finalShots.length} segments — add keyframes, then generate Veo prompts (or skip).`)
 
       setProductionStepIndex(3)
       await sleep(220)
@@ -1020,7 +1020,7 @@ export function SegmentBuilder({
             setKeyframesConfirmed(false)
             setPhase('video_prompts') // Or finalize directly? User wants to edit keyframes.
             setLastGeneratedHash(sceneBible.contentHash)
-            toast.success(`Used ${finalBeats.length} script segments — add keyframes, then generate Veo prompts (or skip).`)
+            toast.success(`Used ${finalShots.length} script segments — add keyframes, then generate Veo prompts (or skip).`)
             setProductionStepIndex(3)
             await sleep(220)
         } catch(err: any) {
@@ -1076,7 +1076,7 @@ export function SegmentBuilder({
   const handleSkipVideoPrompts = useCallback(() => {
     if (!stagedSegments?.length) return
     finalizeAndClose(stagedSegments)
-    toast.message('Beats saved without Veo prompts', {
+    toast.message('Shots saved without Veo prompts', {
       description: 'You can generate video prompts later from the segment workflow if needed.',
     })
   }, [stagedSegments, finalizeAndClose])
@@ -1121,7 +1121,7 @@ export function SegmentBuilder({
         throw new Error(
           response.ok
             ? 'Invalid JSON from segment API'
-            : `Beat API error (${response.status}): ${responseText.slice(0, 280)}`
+            : `Shot API error (${response.status}): ${responseText.slice(0, 280)}`
         )
       }
 
@@ -1176,7 +1176,7 @@ export function SegmentBuilder({
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Layers className="w-5 h-5 text-cyan-400" />
-            <h2 className="text-lg font-semibold text-white">Beat Builder</h2>
+            <h2 className="text-lg font-semibold text-white">Shot Builder</h2>
           </div>
           <Badge variant="outline" className="border-gray-600 text-gray-400">Scene {sceneNumber}</Badge>
         </div>
@@ -1352,7 +1352,7 @@ export function SegmentBuilder({
                         {/* Duration Setting */}
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <label className="text-sm font-medium text-gray-300">Target Beat Duration</label>
+                            <label className="text-sm font-medium text-gray-300">Target Shot Duration</label>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -1438,7 +1438,7 @@ export function SegmentBuilder({
                         {/* Beat Count Target */}
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <label className="text-sm font-medium text-gray-300">Beat Count</label>
+                            <label className="text-sm font-medium text-gray-300">Shot Count</label>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -1492,7 +1492,7 @@ export function SegmentBuilder({
                           </div>
                           <p className="text-xs text-gray-500">
                             {focusMode === 'balanced' && 'Balance dialogue and visual action in segments'}
-                            {focusMode === 'dialogue-focused' && 'Prioritize dialogue coverage — combine visual beats'}
+                            {focusMode === 'dialogue-focused' && 'Prioritize dialogue coverage — combine visual shots'}
                             {focusMode === 'action-focused' && 'Prioritize visual action — combine dialogue lines'}
                           </p>
                         </div>
@@ -1571,12 +1571,12 @@ export function SegmentBuilder({
                     ) : hasExistingSegments ? (
                       <>
                         <RefreshCw className="w-4 h-4 mr-2" />
-                        Regenerate Beats
+                        Regenerate Shots
                       </>
                     ) : (
                       <>
                         <Wand2 className="w-4 h-4 mr-2" />
-                        Generate Beats
+                        Generate Shots
                       </>
                     )}
                   </Button>

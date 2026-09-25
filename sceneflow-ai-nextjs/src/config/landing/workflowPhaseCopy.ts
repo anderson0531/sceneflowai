@@ -111,15 +111,15 @@ export const BEAT_FIRST_CARD = {
   id: 15,
   title: 'Beat-First Video Pipeline',
   description:
-    'Approve pre-vis beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.',
+    'Approve pre-vis beats and Shot Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.',
   keyFeatures: [
     'Pre-vis Agent for review — share beats before heavy render',
-    'Beat Frames lock composition — Reference Library continuity',
+    'Shot Frames lock composition — Reference Library continuity',
     'F2V per beat — generate video from approved frames',
     'Continuous EXT chains — native +7s steps for long dialogue within a beat',
     'Mixer timing and streams — open Screening Room to assemble and publish',
   ],
-  screenshotSlot: 'Insert screenshot: Beat Frames and pre-vis approval before video generation',
+  screenshotSlot: 'Insert screenshot: Shot Frames and pre-vis approval before video generation',
   videoSlot: 'Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips',
 } as const
 

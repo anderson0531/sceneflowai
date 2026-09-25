@@ -497,7 +497,7 @@ function ProductionTargetSelector({
               : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/60',
             !videoGenerationAvailable && 'opacity-50 cursor-not-allowed'
           )}
-          title={!videoGenerationAvailable ? 'Generate beat videos to enable Video output.' : undefined}
+          title={!videoGenerationAvailable ? 'Generate shot videos to enable Video output.' : undefined}
         >
           <Video className="w-3.5 h-3.5" />
           Video
@@ -724,7 +724,7 @@ function AudioTrackRow({
           {/* Beat Range Selector */}
           {!scoreMode && segmentCount && segmentCount > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-gray-500 uppercase w-16">Beats</span>
+              <span className="text-[10px] text-gray-500 uppercase w-16">Shots</span>
               <div className="flex items-center gap-1 flex-wrap">
                 {Array.from({ length: segmentCount }).map((_, i) => {
                   const isInRange = i >= config.startSegment && i <= effectiveEndSegment
@@ -1029,7 +1029,7 @@ function DialogueLineControls({
         <span className="text-[10px] text-gray-500">{dialogueClips.length} clips</span>
       </div>
       <p className="text-[10px] text-gray-500 leading-snug -mt-1 mb-2">
-        Speed fits each line to the cut. English from Veo is already time-fit per beat; use this mainly for translated dubs.
+        Speed fits each line to the cut. English from Veo is already time-fit per shot; use this mainly for translated dubs.
       </p>
       
       {dialogueClips.map((clip, index) => {
@@ -1246,7 +1246,7 @@ function SegmentBeatVideoControls({
             </button>
           )}
           <Video className="w-4 h-4 text-cyan-400" />
-          <span className="text-xs text-gray-400 uppercase tracking-wide">Beat Video</span>
+          <span className="text-xs text-gray-400 uppercase tracking-wide">Shot Video</span>
           <span className="text-xs text-gray-500">
             {rows.length} beats
             {excludedCount > 0 ? ` · ${excludedCount} excluded` : ''}
@@ -1267,7 +1267,7 @@ function SegmentBeatVideoControls({
       {!isCollapsed && (
         <div className="px-3 pb-3 space-y-2">
           <p className="text-[11px] text-gray-500 leading-relaxed">
-            Excluded beats stay in your project but are hidden from preview and scene render.
+            Excluded shots stay in your project but are hidden from preview and scene render.
           </p>
           {rows.map((row, i) => {
             const seg = row.segment
@@ -1291,12 +1291,12 @@ function SegmentBeatVideoControls({
                       ? 'bg-cyan-600/30 text-cyan-200 hover:bg-cyan-600/40'
                       : 'bg-gray-600/40 text-gray-400 hover:bg-gray-600/60'
                   )}
-                  title={seg ? (included ? 'Exclude from mixer' : 'Include in mixer') : 'This beat has no clip yet'}
+                  title={seg ? (included ? 'Exclude from mixer' : 'Include in mixer') : 'This shot has no clip yet'}
                 >
                   {included ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
                 <div className="flex-1 min-w-0">
-                  <span className="text-xs text-gray-300 font-medium">Beat #{i + 1}</span>
+                  <span className="text-xs text-gray-300 font-medium">Shot #{i + 1}</span>
                   {!seg ? (
                     <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-500">
                       No clip
@@ -1487,7 +1487,7 @@ function BeatTrimRangeEditor({
             onClick={onPreview}
             className="text-cyan-400 hover:text-cyan-300"
           >
-            Preview beat
+            Preview shot
           </button>
         </div>
       </div>
@@ -1542,7 +1542,7 @@ function SegmentBeatTrimControls({
             </button>
           )}
           <Scissors className="w-4 h-4 text-amber-400" />
-          <span className="text-xs text-gray-400 uppercase tracking-wide">Beat Trim</span>
+          <span className="text-xs text-gray-400 uppercase tracking-wide">Shot Trim</span>
           <span className="text-xs text-gray-500">{segments.length} beats</span>
         </div>
       </div>
@@ -1550,7 +1550,7 @@ function SegmentBeatTrimControls({
       {!isCollapsed && (
         <div className="px-3 pb-3 space-y-3">
           <p className="text-[11px] text-gray-500 leading-relaxed">
-            Set where each beat video starts and ends in the source file. Trimming is non-destructive.
+            Set where each shot video starts and ends in the source file. Trimming is non-destructive.
           </p>
           <div className="flex flex-wrap gap-2">
             {segments.map((seg, i) => {
@@ -1573,7 +1573,7 @@ function SegmentBeatTrimControls({
                       : 'bg-gray-700/40 border-gray-600/40 text-gray-400 hover:text-gray-200'
                   )}
                 >
-                  Beat #{i + 1}
+                  Shot #{i + 1}
                   {isTrimmed && (
                     <span className="ml-1 text-[9px] uppercase text-amber-400/80">Trimmed</span>
                   )}
@@ -1672,7 +1672,7 @@ function SegmentAudioControls({
             </button>
           )}
           <Film className="w-4 h-4 text-purple-400" />
-          <span className="text-xs text-gray-400 uppercase tracking-wide">Beat Audio</span>
+          <span className="text-xs text-gray-400 uppercase tracking-wide">Shot Audio</span>
           <span className="text-xs text-gray-500">{segments.length} segments</span>
         </div>
         <button
@@ -1829,7 +1829,7 @@ function SegmentWatermarkCropControls({
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-gray-300 font-medium">Beat #{i + 1}</span>
+                    <span className="text-xs text-gray-300 font-medium">Shot #{i + 1}</span>
                     <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
                       <Checkbox
                         checked={enabled}
@@ -2036,7 +2036,7 @@ export function SceneProductionMixer({
       extendAnimaticToDialogue: true,
     })
     onSegmentsChange?.(aligned)
-    toast.success('Beat timing aligned to dialogue')
+    toast.success('Shot timing aligned to dialogue')
   }, [segments, resolvedDialogueClips, probedDurations, narrationPrefix, onSegmentsChange])
 
   const handleSegmentCropChange = useCallback(
@@ -3583,7 +3583,7 @@ export function SceneProductionMixer({
           <div>
             <h3 className="!text-lg !leading-normal !mb-0 font-semibold text-white">Mixer</h3>
             <p className="text-xs text-gray-400">
-              Mix beat video or animatic keyframes with dialogue, music, and SFX — then export from the footer.
+              Mix shot video or animatic keyframes with dialogue, music, and SFX — then export from the footer.
             </p>
           </div>
         </div>
@@ -4502,7 +4502,7 @@ export function SceneProductionMixer({
                   onBeatIncludeAll={handleMixerBeatIncludeAll}
                   disabled={isRendering || !onSegmentsChange}
                   isCollapsed={collapsedSections.beatVideo}
-                  onToggleCollapse={() => toggleSection('beatVideo')}
+                  onToggleCollapse={() => toggleSection('shotVideo')}
                 />
               )}
 
@@ -4517,7 +4517,7 @@ export function SceneProductionMixer({
                   onPreviewBeat={handlePreviewTrimBeat}
                   disabled={isRendering || !onSegmentsChange}
                   isCollapsed={collapsedSections.beatTrim}
-                  onToggleCollapse={() => toggleSection('beatTrim')}
+                  onToggleCollapse={() => toggleSection('shotTrim')}
                 />
               )}
 
@@ -4748,9 +4748,9 @@ export function SceneProductionMixer({
             <Film className="w-16 h-16 mx-auto mb-4 text-gray-600 opacity-40" />
             {allBeatsExcluded ? (
               <>
-                <h4 className="text-lg font-medium text-gray-300 mb-2">All beats are excluded</h4>
+                <h4 className="text-lg font-medium text-gray-300 mb-2">All shots are excluded</h4>
                 <p className="text-sm text-gray-500 max-w-md mx-auto">
-                  Include at least one beat to preview or render. Excluded beats keep their video — they are only hidden from the mixer.
+                  Include at least one shot to preview or render. Excluded shots keep their video — they are only hidden from the mixer.
                 </p>
                 {productionTarget.streamType !== 'animatic' && (
                   <div className="max-w-md mx-auto text-left">
@@ -4769,7 +4769,7 @@ export function SceneProductionMixer({
                 <h4 className="text-lg font-medium text-gray-300 mb-2">Nothing to preview yet</h4>
                 <p className="text-sm text-gray-500 max-w-md mx-auto">
                   {animaticPreviewSegments.length > 0
-                    ? 'Use Preview output → Animatic above to preview keyframes, or generate beat videos in the Director’s Console for full video output and stitching.'
+                    ? 'Use Preview output → Animatic above to preview keyframes, or generate shot videos in the Director’s Console for full video output and stitching.'
                     : 'Generate keyframes or video segments in the Director’s Console above, then mix and render from this panel.'}
                 </p>
               </>
@@ -4972,8 +4972,8 @@ export function SceneProductionMixer({
               {!hasRenderablePreview && (
                 <p className="text-amber-300/90 leading-snug">
                   {allBeatsExcluded
-                    ? 'All beats are excluded — include at least one beat to preview or render.'
-                    : 'Mixer quick/server stitch needs generated beat videos. For animatic (keyframes), use Render in the mixer footer.'}
+                    ? 'All shots are excluded — include at least one shot to preview or render.'
+                    : 'Mixer quick/server stitch needs generated shot videos. For animatic (keyframes), use Render in the mixer footer.'}
                 </p>
               )}
             </div>

@@ -640,7 +640,7 @@ export function SceneDirectionBuilder({
                 </div>
                 
                 <div>
-                  <label className="text-xs text-gray-400">Emotional Beat</label>
+                  <label className="text-xs text-gray-400">Emotional Shot</label>
                   <Input
                     value={structure.emotionalBeat}
                     onChange={(e) => setStructure(prev => ({ ...prev, emotionalBeat: e.target.value }))}

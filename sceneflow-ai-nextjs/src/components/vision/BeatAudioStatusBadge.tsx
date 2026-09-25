@@ -20,7 +20,7 @@ export function BeatAudioStatusBadge({
     return (
       <span
         className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded flex items-center gap-1"
-        title="Beat prompt changed after this audio was generated"
+        title="Shot prompt changed after this audio was generated"
       >
         <AlertTriangle className="w-3 h-3" />
         Prompt changed

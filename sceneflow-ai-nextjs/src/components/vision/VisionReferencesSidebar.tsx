@@ -2015,7 +2015,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                       const count = objectReferences.length
                       if (
                         !window.confirm(
-                          `Remove all ${count} object reference${count === 1 ? '' : 's'} from this project? Beat prop links will be cleared. This cannot be undone.`
+                          `Remove all ${count} object reference${count === 1 ? '' : 's'} from this project? Shot prop links will be cleared. This cannot be undone.`
                         )
                       ) {
                         return

@@ -267,7 +267,7 @@
       },
       {
         "them": "Oturumlar arası manuel tutarlılık",
-        "us": "Reference Library + Beat Frames video öncesinde görselleri kilitler"
+        "us": "Reference Library + Shot Frames video öncesinde görselleri kilitler"
       },
       {
         "them": "Kitle doğrulama iş akışı yok",
@@ -285,10 +285,10 @@
     "title": "Vuruş Odaklı Video İş Akışı",
     "subtitle": "Oluşturmadan önce onaylayın; şans oyunları makinesi misali rastgele yeniden oluşturma değil.",
     "intro": "Deneme yanılma yoluyla üretim yapmaya gerek yok. SceneFlow nihai video için kredi harcamadan önce, ortaya çıkacak görüntüyü önizler ve onaylarsınız.",
-    "description": "SceneFlow, görsel onay sürecini her aşamada yapılandırır: inceleme için Pre-vis Agent, kompozisyonu sabitlemek için Beat Frames ve ardından her bir vuruş (beat) için F2V. Böylece, sapmalar (drift) ve halüsinasyonlar uğruna kredilerinizi tüketmeden önce görseli iyileştirirsiniz.",
+    "description": "SceneFlow, görsel onay sürecini her aşamada yapılandırır: inceleme için Pre-vis Agent, kompozisyonu sabitlemek için Shot Frames ve ardından her bir vuruş (beat) için F2V. Böylece, sapmalar (drift) ve halüsinasyonlar uğruna kredilerinizi tüketmeden önce görseli iyileştirirsiniz.",
     "steps": [
       "Pre-vis Agent — Görsel-işitsel beat'leri dakikalar içinde incelemeye sunun",
-      "Beat Frames — Reference Library sürekliliği ile başlangıç/bitiş kompozisyonunu kilitleme",
+      "Shot Frames — Reference Library sürekliliği ile başlangıç/bitiş kompozisyonunu kilitleme",
       "Vuruş başına F2V — körü körüne girilen komutlarla değil, onaylanmış karelerden video oluşturun",
       "Kesintisiz EXT zinciri — uzun diyalog bölümleri için yerel +7 saniyelik uzatma adımları",
       "Production Mixer — Screening Room'ye zamanlama, ses ve akış dışa aktarımı"
@@ -366,7 +366,7 @@
     "steps": [
       {
         "title": "8 saniyelik ilk klip",
-        "description": "Onaylanmış Beat Frames üzerinden kare-videoya veya görüntü-videoya dönüştürme işlemi, hareket başlamadan önce kompozisyonu kilitler."
+        "description": "Onaylanmış Shot Frames üzerinden kare-videoya veya görüntü-videoya dönüştürme işlemi, hareket başlamadan önce kompozisyonu kilitler."
       },
       {
         "title": "+7 saniyelik uzatma adımları",
@@ -808,15 +808,15 @@
     "viewDetails": "Ayrıntıları Görüntüle",
     "beatFirst": {
       "title": "Vuruş Odaklı Video İş Akışı",
-      "description": "F2V öncesinde ön görselleştirme (pre-vis) aşamalarını ve Beat Frames'i onaylayın; böylece halüsinasyon ve görsel sapma kaynaklı, ne sonuç vereceği belirsiz yeniden üretim süreçleri azalır. İncelemeden nihai klibe uzanan tek ve yapılandırılmış bir iş akışı.",
+      "description": "F2V öncesinde ön görselleştirme (pre-vis) aşamalarını ve Shot Frames'i onaylayın; böylece halüsinasyon ve görsel sapma kaynaklı, ne sonuç vereceği belirsiz yeniden üretim süreçleri azalır. İncelemeden nihai klibe uzanan tek ve yapılandırılmış bir iş akışı.",
       "keyFeatures": [
         "İnceleme için Pre-vis Agent — ağır render işleminden önce beat'leri paylaşın",
-        "Beat Frames kilitleme kompozisyonu — Reference Library süreklilik",
+        "Shot Frames kilitleme kompozisyonu — Reference Library süreklilik",
         "Vuruş başına F2V — onaylanmış karelerden video oluşturma",
         "Kesintisiz EXT zincirleri — bir sahne akışı (beat) içindeki uzun diyaloglar için doğal +7 saniyelik adımlar",
         "Mikser zamanlaması ve akışları — birleştirmek ve yayınlamak için Screening Room'yi açın"
       ],
-      "screenshotSlot": "Ekran görüntüsü ekleyin: Beat Frames ve video oluşturma öncesi ön görselleştirme (pre-vis) onayı",
+      "screenshotSlot": "Ekran görüntüsü ekleyin: Shot Frames ve video oluşturma öncesi ön görselleştirme (pre-vis) onayı",
       "videoSlot": "00:30'luk klibi ekleyin: Vuruşların onaylanması, karelerin sabitlenmesi ve ardından F2V kliplerinin oluşturulması."
     },
     "screeningRoom": {
@@ -849,7 +849,7 @@
         "description": "Fikirden yayına hazır videoya kadar tek bir stüdyo. Eğitim içerikleri, podcast'ler, haberler ve sinematik diziler için aynı üretim süreci; nihai render maliyetine girmeden önce ön görselleştirmeyi (pre-vis) onaylayın.",
         "keyFeatures": [
           "Seri → Blueprint → Üretim → Screening Room",
-          "Sahne bölümü (beat) bazlı onay — F2V öncesinde pre-vis ve Beat Frames",
+          "Sahne bölümü (beat) bazlı onay — F2V öncesinde pre-vis ve Shot Frames",
           "Yerel Veo uzantı zincirleri ile Google Vertex AI oluşturma",
           "Güven ve Güvenlik koruma mekanizmaları ve teslimat sırasında imzalı köken bilgisi"
         ],

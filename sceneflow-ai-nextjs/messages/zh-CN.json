@@ -267,7 +267,7 @@
       },
       {
         "them": "跨会话的手动一致性",
-        "us": "Reference Library + Beat Frames 在视频之前锁定画面"
+        "us": "Reference Library + Shot Frames 在视频之前锁定画面"
       },
       {
         "them": "无受众验证工作流",
@@ -285,10 +285,10 @@
     "title": "以节拍为先的视频制作流程",
     "subtitle": "渲染前先确认——切勿像老虎机那样随机生成",
     "intro": "无需反复尝试生成。在 SceneFlow 消耗点数制作最终视频之前，您可以先预览并确认视觉效果。",
-    "description": "SceneFlow 在每个环节都构建了视觉确认流程：先通过 Pre-vis Agent 进行审阅，利用 Beat Frames 锁定构图，随后针对每个节拍执行 F2V（帧到视频）生成。这样，您可以在因画面漂移或“幻觉”现象而消耗额度之前，先对视觉效果进行精细调整。",
+    "description": "SceneFlow 在每个环节都构建了视觉确认流程：先通过 Pre-vis Agent 进行审阅，利用 Shot Frames 锁定构图，随后针对每个节拍执行 F2V（帧到视频）生成。这样，您可以在因画面漂移或“幻觉”现象而消耗额度之前，先对视觉效果进行精细调整。",
     "steps": [
       "Pre-vis Agent — 分享音视频节拍，数分钟内即可完成审阅",
-      "Beat Frames — 锁定起始/结束组合，并保持 Reference Library 连续性",
+      "Shot Frames — 锁定起始/结束组合，并保持 Reference Library 连续性",
       "逐拍 F2V —— 基于已确认的画面生成视频，而非盲目依赖提示词。",
       "连续扩展链——针对长对话片段的原生 +7秒扩展步骤",
       "Production Mixer — 时序、音频及流导出至 Screening Room"
@@ -366,7 +366,7 @@
     "steps": [
       {
         "title": "8秒初始片段",
-        "description": "基于已批准的 Beat Frames 进行“单帧转视频”或“图像转视频”操作时，会在运动开始前锁定构图。"
+        "description": "基于已批准的 Shot Frames 进行“单帧转视频”或“图像转视频”操作时，会在运动开始前锁定构图。"
       },
       {
         "title": "+7秒延时步骤",
@@ -808,15 +808,15 @@
     "viewDetails": "查看详情",
     "beatFirst": {
       "title": "以节拍为先的视频制作流程",
-      "description": "在进行 F2V（视频生成）之前，先确认预演（pre-vis）的关键节点与 Beat Frames —— 从而减少因模型“幻觉”或视觉偏差导致的盲目重生成。建立从审核到最终成片的规范化流程。",
+      "description": "在进行 F2V（视频生成）之前，先确认预演（pre-vis）的关键节点与 Shot Frames —— 从而减少因模型“幻觉”或视觉偏差导致的盲目重生成。建立从审核到最终成片的规范化流程。",
       "keyFeatures": [
         "Pre-vis Agent 待审阅 —— 在进行耗时的渲染前分享节拍小样",
-        "Beat Frames 锁的构成 — Reference Library 连续性",
+        "Shot Frames 锁的构成 — Reference Library 连续性",
         "逐拍 F2V —— 基于已确认画面生成视频",
         "连续 EXT 链——针对同一节拍内长对话的原生 +7 秒步长",
         "混音器时序与流 —— 打开 Screening Room 进行组装与发布"
       ],
-      "screenshotSlot": "插入截图：Beat Frames 以及视频生成前的预演（pre-vis）审批",
+      "screenshotSlot": "插入截图：Shot Frames 以及视频生成前的预演（pre-vis）审批",
       "videoSlot": "插入 00:30 的片段：确认节拍、锁定帧，随后生成 F2V 片段。"
     },
     "screeningRoom": {
@@ -849,7 +849,7 @@
         "description": "一站式工作室，涵盖从创意构思到成片发布的完整流程。无论是培训视频、播客、新闻节目还是影视剧集，均采用统一的制作管线——在投入最终渲染成本之前，先对预演（pre-vis）进行审核确认。",
         "keyFeatures": [
           "系列 → Blueprint → 生产 → Screening Room",
-          "按情节段落（Beat）优先审批——在 F2V 之前完成预演（Pre-vis）与 Beat Frames",
+          "按情节段落（Beat）优先审批——在 F2V 之前完成预演（Pre-vis）与 Shot Frames",
           "利用原生 Veo 扩展链生成 Google Vertex AI",
           "信任与安全防护机制，以及交付时的签名溯源信息"
         ],

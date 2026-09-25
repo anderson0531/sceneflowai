@@ -85,7 +85,7 @@ export function SceneDirectionWorkbench({
         beatNumber: (typeof beat.sequenceIndex === 'number' ? beat.sequenceIndex : index) + 1,
         imageUrl: beat.storyboardImageUrl?.trim() || undefined,
         status: beat.beatDirection ? 'ready' : 'idle',
-        ariaLabel: `Beat ${index + 1}`,
+        ariaLabel: `Shot ${index + 1}`,
       })),
     [beats]
   )
@@ -159,11 +159,11 @@ export function SceneDirectionWorkbench({
 
       {beats.length === 0 ? (
         <p className="rounded-lg border border-slate-700/50 bg-slate-950/40 px-3 py-6 text-center text-sm text-slate-500">
-          No beats in this scene yet.
+          No shots in this scene yet.
         </p>
       ) : (
         <SceneBeatStage
-          railLabel="Beat direction"
+          railLabel="Shot direction"
           items={items}
           selectedId={selected?.beatId ?? null}
           onSelect={onSelectBeat}

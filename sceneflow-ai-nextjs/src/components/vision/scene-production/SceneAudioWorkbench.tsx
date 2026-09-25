@@ -88,7 +88,7 @@ function BeatContinuityWarning() {
   return (
     <span
       className="flex shrink-0 items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200"
-      title="This beat continues from the beat above it, but that is now a different shot. Re-check or re-shoot its frames."
+      title="This shot continues from the shot above it, but that is now a different shot. Re-check or re-shoot its frames."
     >
       <AlertTriangle className="h-3 w-3" />
       Continuity
@@ -169,10 +169,10 @@ export interface SceneAudioWorkbenchProps {
   projectStreams?: ProjectStream[]
   storedTranslations?: CaptionTranslations
   onSaveTranslations?: SaveCaptionTranslations
-  expressBeatStatus?: Record<string, ExpressBeatSfxStatus>
+  expressShotStatus?: Record<string, ExpressBeatSfxStatus>
   isExpressAudioRunning?: boolean
-  beatListFilters: BeatListFilterState
-  setBeatListFilters: React.Dispatch<React.SetStateAction<BeatListFilterState>>
+  shotListFilters: ShotListFilterState
+  setShotListFilters: React.Dispatch<React.SetStateAction<BeatListFilterState>>
   beatFacts: BeatListFacts[]
   productionReadiness?: {
     isAudioReady?: boolean
@@ -180,14 +180,14 @@ export interface SceneAudioWorkbenchProps {
     charactersMissingVoices?: string[]
   }
   onOpenAudioAgent?: () => void
-  hasSelectableActionBeats?: boolean
+  hasSelectableActionShots?: boolean
   sceneMusicCues: SceneMusicCue[]
-  musicCueByBeatId: Map<string, SceneMusicCue>
+  musicCueByShotId: Map<string, SceneMusicCue>
   sceneScoreOn: boolean
   onSceneScoreChange: (checked: boolean) => void
   onResyncAudioTiming?: (sceneIdx: number, language: string) => void
   resyncingAudioSceneIndex?: number | null
-  brokenContinuityBeatIds: Set<string>
+  brokenContinuityShotIds: Set<string>
   pendingSpeakerAssign?: { sceneIdx: number; dialogueIndex: number } | null
 }
 
@@ -399,7 +399,7 @@ export function SceneAudioWorkbench(props: SceneAudioWorkbenchProps & { onSaveSf
           beatNumber: Number.isFinite(beatNumber) ? beatNumber : index + 1,
           imageUrl: beat.storyboardImageUrl?.trim() || undefined,
           status: facts ? (facts.hasAudio && !facts.promptChanged && !facts.needsSpeaker ? 'ready' : facts.hasAudio ? 'attention' : 'idle') : 'idle',
-          ariaLabel: `Beat ${beatNumber}`,
+          ariaLabel: `Shot ${beatNumber}`,
         }
       }),
     [visibleBeats, beatFactsById, beats]
@@ -416,7 +416,7 @@ export function SceneAudioWorkbench(props: SceneAudioWorkbenchProps & { onSaveSf
         setBeatListFilters={setBeatListFilters}
       />
       <SceneBeatStage
-        railLabel="Audio beats"
+        railLabel="Audio shots"
         items={items}
         selectedId={selected?.beatId ?? null}
         onSelect={onSelectBeat}
@@ -424,7 +424,7 @@ export function SceneAudioWorkbench(props: SceneAudioWorkbenchProps & { onSaveSf
         reorderDisabled={filtersActive || !onReorder}
         empty={
           <div className="flex items-center justify-between gap-2 rounded-md border border-slate-700/50 px-3 py-2">
-            <p className="text-xs text-slate-400">No beats match these filters.</p>
+            <p className="text-xs text-slate-400">No shots match these filters.</p>
             <button
               type="button"
               className="text-[10px] text-slate-200 underline"
@@ -665,20 +665,20 @@ function BeatFilters({
   beatFacts,
   beatListFilters,
   setBeatListFilters,
-}: Pick<SceneAudioWorkbenchProps, 'beatFacts' | 'beatListFilters' | 'setBeatListFilters'>) {
+}: Pick<SceneAudioWorkbenchProps, 'shotFacts' | 'shotListFilters' | 'setShotListFilters'>) {
   const showTooltips: Record<BeatAttentionFilter, string> = {
-    all: 'Every beat in this scene.',
-    needs_action: 'Beats still missing audio, a speaker, or another required step.',
-    ready: 'Beats whose audio is in sync and ready to move on.',
-    prompt_changed: 'Beats whose prompt changed after the last render.',
-    no_audio: 'Spoken beats, or action beats that carry sound, with no audio yet.',
+    all: 'Every shot in this scene.',
+    needs_action: 'Shots still missing audio, a speaker, or another required step.',
+    ready: 'Shots whose audio is in sync and ready to move on.',
+    prompt_changed: 'Shots whose prompt changed after the last render.',
+    no_audio: 'Spoken shots, or action shots that carry sound, with no audio yet.',
     needs_speaker: 'Dialogue or narration that has no voice assigned.',
   }
   const typeTooltips: Record<BeatTypeFilter, string> = {
     all: 'Action, dialogue, and narration.',
-    action: 'Beats with no spoken line.',
-    dialogue: 'Beats spoken by a character.',
-    narration: 'Voiceover beats.',
+    action: 'Shots with no spoken line.',
+    dialogue: 'Shots spoken by a character.',
+    narration: 'Voiceover shots.',
   }
   const attentionChips: Array<{ id: BeatAttentionFilter; label: string }> = [
     { id: 'all', label: 'All' },
@@ -753,7 +753,7 @@ function BeatFilters({
                     setBeatListFilters((current) => ({ ...current, character: event.target.value }))
                   }
                   className="h-7 w-full truncate rounded-full border border-slate-600/50 bg-slate-800/60 px-3 text-xs text-slate-200"
-                  aria-label="Filter beats by character"
+                  aria-label="Filter shots by character"
                 >
                   <option value="all">All</option>
                   {characters.map((name) => (
@@ -908,7 +908,7 @@ function ActionBeatAudio(
       <div className="mb-1.5 flex items-center gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <span className="shrink-0 rounded-full border border-amber-700/40 bg-amber-900/50 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-amber-100">
-            Beat {beatNumber}
+            Shot {beatNumber}
           </span>
           <span className="text-xs font-semibold uppercase tracking-wide text-amber-300">Action</span>
           {beat.excluded && (
@@ -956,7 +956,7 @@ function ActionBeatAudio(
       <div className="mt-3 flex items-center">
         <BeatPerformanceDirectorControl
           beat={beat}
-          label={`Beat ${beatNumber}`}
+          label={`Shot ${beatNumber}`}
           sceneIdx={sceneIdx}
           scenes={props.scenes ?? []}
           script={props.script}
@@ -1073,7 +1073,7 @@ function SpokenBeatAudio(
           <div className="mb-1.5 flex items-center gap-2">
             <div className="flex min-w-0 flex-1 items-center gap-2">
               <span className="shrink-0 rounded-full border border-slate-600/40 bg-slate-700/50 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-slate-300">
-                Beat {beatNumber}
+                Shot {beatNumber}
               </span>
               <label className="sr-only" htmlFor={`speaker-assign-${sceneIdx}-${beat.beatId}`}>
                 Assign speaker
@@ -1314,7 +1314,7 @@ function SpokenBeatAudio(
       <div className="mt-3 flex items-center">
         <BeatPerformanceDirectorControl
           beat={beat}
-          label={`Beat ${beatNumber}`}
+          label={`Shot ${beatNumber}`}
           sceneIdx={sceneIdx}
           scenes={props.scenes ?? []}
           script={props.script}

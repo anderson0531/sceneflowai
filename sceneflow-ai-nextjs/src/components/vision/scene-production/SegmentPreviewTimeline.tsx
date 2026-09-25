@@ -88,7 +88,7 @@ function SegmentPill({ segment, isSelected, onSelect }: SegmentPillProps) {
         </TooltipTrigger>
         <TooltipContent side="bottom" className="max-w-xs">
           <div className="space-y-1">
-            <p className="font-medium">Beat {segment.sequenceIndex + 1}</p>
+            <p className="font-medium">Shot {segment.sequenceIndex + 1}</p>
             <p className="text-xs text-muted-foreground">{segment.triggerReason}</p>
             <p className="text-xs">
               Method: {segment.generationMethod} · Confidence: {segment.confidence}%
@@ -137,7 +137,7 @@ export function SegmentPreviewTimeline({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Film className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm font-medium">Beats</span>
+          <span className="text-sm font-medium">Shots</span>
           <Badge variant="outline" className="text-[10px]">
             {segments.length} segments · {formatTime(totalDuration)}
           </Badge>

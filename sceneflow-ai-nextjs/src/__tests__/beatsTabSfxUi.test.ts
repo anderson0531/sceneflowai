@@ -42,7 +42,7 @@ describe('Beats tab SFX UI', () => {
     expect(panel).toContain('<BeatAudioStatusBadge hasAudio={!!sfxAudioUrl} stale={sfxStale} />')
     expect(panel).toContain('SceneScoreToggle')
     expect(panel).toContain('StatusFilterBar')
-    expect(readSource('src/components/vision/SceneScoreToggle.tsx')).toContain('aria-label="Score across beats"')
+    expect(readSource('src/components/vision/SceneScoreToggle.tsx')).toContain('aria-label="Score across shots"')
     expect(controls).toContain('BeatAudioStatusBadge')
     expect(controls).not.toContain('Audio Ready')
     expect(mixer).toContain('BeatAudioStatusBadge')

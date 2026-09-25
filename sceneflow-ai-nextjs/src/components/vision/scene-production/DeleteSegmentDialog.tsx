@@ -95,7 +95,7 @@ export function DeleteSegmentDialog({
               : "bg-amber-500/10 border border-amber-500/30 text-amber-300"
           )}>
             {isLastBeat ? (
-              <p>{t('delete.lastBeatWarning')}</p>
+              <p>{t('delete.lastShotWarning')}</p>
             ) : (
               <p>{t('delete.shiftWarning')}</p>
             )}
@@ -125,7 +125,7 @@ export function DeleteSegmentDialog({
             ) : (
               <>
                 <Trash2 className="w-4 h-4 mr-2" />
-                {t('delete.deleteBeat')}
+                {t('delete.deleteShot')}
               </>
             )}
           </Button>

@@ -267,7 +267,7 @@
       },
       {
         "them": "Uthabiti wa mwongozo katika vipindi mbalimbali",
-        "us": "Reference Library + Beat Frames hufunga taswira kabla ya video"
+        "us": "Reference Library + Shot Frames hufunga taswira kabla ya video"
       },
       {
         "them": "Hakuna mtiririko wa kazi wa kuthibitisha hadhira",
@@ -285,10 +285,10 @@
     "title": "Mchakato wa Uzalishaji wa Video Unaozingatia Mdundo Kwanza",
     "subtitle": "Thibitisha kabla ya kuzalisha matokeo ya mwisho — siyo kuzalisha upya kwa bahati nasibu.",
     "intro": "Hakuna tena mchakato wa kubahatisha na kujaribu ili kupata matokeo. Unakagua na kuidhinisha mwonekano kabla ya SceneFlow kutumia salio lako kwa ajili ya video ya mwisho.",
-    "description": "SceneFlow hupanga utaratibu wa kuidhinisha taswira katika kila hatua: Pre-vis Agent kwa ajili ya mapitio, Beat Frames ili kudhibiti mpangilio, kisha F2V kwa kila mpigo (beat). Unaboresha mwonekano kabla ya kutumia 'credits' kwa matokeo yasiyotabirika (drift) au makosa ya mfumo (hallucinations).",
+    "description": "SceneFlow hupanga utaratibu wa kuidhinisha taswira katika kila hatua: Pre-vis Agent kwa ajili ya mapitio, Shot Frames ili kudhibiti mpangilio, kisha F2V kwa kila mpigo (beat). Unaboresha mwonekano kabla ya kutumia 'credits' kwa matokeo yasiyotabirika (drift) au makosa ya mfumo (hallucinations).",
     "steps": [
       "Pre-vis Agent — shiriki midundo yenye sauti na picha ili ikaguliwe ndani ya dakika chache",
-      "Beat Frames — funga muundo wa mwanzo/mwisho kwa mwendelezo wa Reference Library",
+      "Shot Frames — funga muundo wa mwanzo/mwisho kwa mwendelezo wa Reference Library",
       "F2V kwa kila mpigo — tengeneza video kutoka kwenye fremu zilizoidhinishwa, badala ya maelekezo yasiyo na mwongozo mahususi.",
       "Msururu endelevu wa EXT — hatua asilia za upanuzi wa sekunde +7 kwa ajili ya sehemu ndefu za mazungumzo",
       "Production Mixer — muda, sauti, na usafirishaji wa mtiririko kwenda Screening Room"
@@ -366,7 +366,7 @@
     "steps": [
       {
         "title": "Klipu ya awali ya sekunde 8",
-        "description": "Ubadilishaji wa fremu au picha kuwa video kutoka kwa Beat Frames iliyoidhinishwa hufunga muundo kabla ya mwendo kuanza."
+        "description": "Ubadilishaji wa fremu au picha kuwa video kutoka kwa Shot Frames iliyoidhinishwa hufunga muundo kabla ya mwendo kuanza."
       },
       {
         "title": "Hatua za nyongeza za sekunde 7",
@@ -808,15 +808,15 @@
     "viewDetails": "Tazama maelezo",
     "beatFirst": {
       "title": "Mchakato wa Uzalishaji wa Video Unaozingatia Mdundo Kwanza",
-      "description": "Idhinisha vipengele vya taswira ya awali (pre-vis beats) na Beat Frames kabla ya hatua ya F2V — hii hupunguza utengenezaji upya usio na mwelekeo unaotokana na makosa ya AI (hallucination) au kupotea kwa mwelekeo wa taswira. Mchakato mmoja uliopangwa vizuri kuanzia hatua ya mapitio hadi klipu ya mwisho.",
+      "description": "Idhinisha vipengele vya taswira ya awali (pre-vis beats) na Shot Frames kabla ya hatua ya F2V — hii hupunguza utengenezaji upya usio na mwelekeo unaotokana na makosa ya AI (hallucination) au kupotea kwa mwelekeo wa taswira. Mchakato mmoja uliopangwa vizuri kuanzia hatua ya mapitio hadi klipu ya mwisho.",
       "keyFeatures": [
         "Pre-vis Agent kwa ajili ya mapitio — shiriki midundo kabla ya mchakato mzito wa utoaji wa faili ya mwisho (rendering)",
-        "Beat Frames muundo wa kufuli — Reference Library mwendelezo",
+        "Shot Frames muundo wa kufuli — Reference Library mwendelezo",
         "F2V kwa kila mpigo — tengeneza video kutoka kwa fremu zilizoidhinishwa",
         "Minyororo endelevu ya EXT — hatua za asili za +7s kwa ajili ya mazungumzo marefu ndani ya 'beat'",
         "Muda na mitiririko ya kichanganyaji — fungua Screening Room ili kuunganisha na kuchapisha"
       ],
-      "screenshotSlot": "Weka picha ya skrini: Beat Frames na idhini ya taswira ya awali kabla ya kutengeneza video",
+      "screenshotSlot": "Weka picha ya skrini: Shot Frames na idhini ya taswira ya awali kabla ya kutengeneza video",
       "videoSlot": "Weka klipu ya sekunde 30: kuidhinisha midundo, kufunga fremu, kisha kutengeneza klipu za F2V."
     },
     "screeningRoom": {
@@ -849,7 +849,7 @@
         "description": "Studio moja inayoshughulikia kila hatua, kuanzia wazo hadi video iliyo tayari kuchapishwa. Mchakato mmoja unaotumika kwa mafunzo, podikasti, habari, na vipindi vya filamu — idhinisha taswira ya awali (pre-vis) kabla ya kuingia gharama za utengenezaji wa mwisho.",
         "keyFeatures": [
           "Mfululizo → Blueprint → Uzalishaji → Screening Room",
-          "Uidhinishaji wa hatua kwa hatua (beat-first) — pre-vis na Beat Frames kabla ya F2V",
+          "Uidhinishaji wa hatua kwa hatua (beat-first) — pre-vis na Shot Frames kabla ya F2V",
           "Uzalishaji wa Google Vertex AI kwa kutumia mfuatano wa viendelezi asilia vya Veo",
           "Hatua za kulinda uaminifu na usalama pamoja na uthibitisho wa asili uliotiwa saini wakati wa uwasilishaji"
         ],

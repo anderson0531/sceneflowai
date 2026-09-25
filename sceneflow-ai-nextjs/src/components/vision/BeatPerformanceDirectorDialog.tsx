@@ -53,7 +53,7 @@ export function BeatPerformanceDirectorControl({
   onGenerateStill,
   promptComposition,
 }: BeatPerformanceDirectorControlProps) {
-  const t = useTranslations('production.direction.beatDirector')
+  const t = useTranslations('production.direction.shotDirector')
   const tc = useTranslations('common.actions')
   const [open, setOpen] = useState(false)
   const [instruction, setInstruction] = useState('')
@@ -104,7 +104,7 @@ export function BeatPerformanceDirectorControl({
       setPatch(data.patch as BeatPerformancePatch)
       setRewrittenProse(typeof data.prose === 'string' ? data.prose : '')
       setRewrittenFraming(typeof data.actionFraming === 'string' ? data.actionFraming : '')
-      toast.success('Beat rewritten — save it before generating')
+      toast.success('Shot rewritten — save it before generating')
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : 'Rewrite failed')
     } finally {
@@ -125,7 +125,7 @@ export function BeatPerformanceDirectorControl({
         artStyleAnchor: promptComposition?.artStyleAnchor,
       })
       if (!applied.applied) {
-        toast.error('Beat not found')
+        toast.error('Shot not found')
         return
       }
       const updatedScenes = [...(script.script.scenes || [])]
@@ -134,7 +134,7 @@ export function BeatPerformanceDirectorControl({
         ...script,
         script: { ...script.script, scenes: updatedScenes },
       })
-      toast.success('Beat direction saved')
+      toast.success('Shot direction saved')
       setOpen(false)
       if (generate && onGenerateStill) {
         await onGenerateStill(beat.beatId)

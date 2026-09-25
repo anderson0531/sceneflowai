@@ -163,7 +163,7 @@ export function PreVisFramePromptDialog({
 
   const handleSuggestRevisions = async () => {
     if (!projectId || !slot?.beatId) {
-      toast.error('Suggestions are available on beat frames')
+      toast.error('Suggestions are available on shot frames')
       return
     }
     setIsSuggesting(true)

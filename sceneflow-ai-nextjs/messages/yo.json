@@ -265,7 +265,7 @@
       },
       {
         "them": "Mímu kí ọ̀nà iṣẹ́ wà ní ìbámu láàárín àwọn ìgbà iṣẹ́",
-        "us": "Reference Library + Beat Frames ti àwọn àwòrán mọ́ra kí fídíò tó bẹ̀rẹ̀"
+        "us": "Reference Library + Shot Frames ti àwọn àwòrán mọ́ra kí fídíò tó bẹ̀rẹ̀"
       },
       {
         "them": "Ko si ilana iṣẹ́ fun ijẹrisi awọn olugbo",
@@ -283,10 +283,10 @@
     "title": "Ilana Ṣiṣe Fidio ti o Bẹrẹ pẹlu Ilu",
     "subtitle": "Fọwọ́ sí i kí o tó ṣe é — kì í ṣe bíi ti ẹ̀rọ ayéyẹ́ tí àbájáde rẹ̀ kò ṣeé sọtẹ́lẹ̀.",
     "intro": "Ko si ṣiṣẹda nipasẹ ifoju-wọn-wo. Iwọ yoo wo awotẹlẹ ki o si fọwọsi irisi rẹ ṣaaju ki SceneFlow to lo awọn kirediti fun fidio ti o kẹhin.",
-    "description": "SceneFlow ṣeto ilana ifọwọsi fun irisi iṣẹ ni gbogbo ipele: Pre-vis Agent fun ayẹwo, Beat Frames lati fi idi eto aworan mulẹ, lẹhinna F2V fun igba orin kọọkan. O ṣe atunṣe irisi rẹ ki o to lo awọn kirediti lori awọn aṣiṣe bii iyapa kuro ni itọsọna tabi awọn aworan ti ko tọna.",
+    "description": "SceneFlow ṣeto ilana ifọwọsi fun irisi iṣẹ ni gbogbo ipele: Pre-vis Agent fun ayẹwo, Shot Frames lati fi idi eto aworan mulẹ, lẹhinna F2V fun igba orin kọọkan. O ṣe atunṣe irisi rẹ ki o to lo awọn kirediti lori awọn aṣiṣe bii iyapa kuro ni itọsọna tabi awọn aworan ti ko tọna.",
     "steps": [
       "Pre-vis Agent — pín àwọn orin (pẹ̀lú àwòrán tàbí fídíò) fún àyẹ̀wò láàrin ìṣẹ́jú díẹ̀",
-      "Beat Frames — ti ìṣẹ̀dá ìbẹ̀rẹ̀/òpin mọ́ra pẹ̀lú ìtẹ̀síwájú Reference Library",
+      "Shot Frames — ti ìṣẹ̀dá ìbẹ̀rẹ̀/òpin mọ́ra pẹ̀lú ìtẹ̀síwájú Reference Library",
       "F2V fún ìlù kọ̀ọ̀kan — ṣẹ̀dá fídíò láti ara àwọn àwòrán tí a ti fọwọ́ sí, kì í ṣe láti ara àwọn ìtọ́ni lásán.",
       "Ẹ̀wọ̀n EXT tí kò ní ìdádúró — àwọn ìgbésẹ̀ ìfàgùn \"native\" ti ìṣẹ́jú-àáyá 7 fún àwọn apá ìjíròrò gígùn.",
       "Production Mixer — ṣíṣe àtòpọ̀ àkókò, ohùn, àti fífi ṣíṣàn ìkéde ránṣẹ́ sí Screening Room"
@@ -364,7 +364,7 @@
     "steps": [
       {
         "title": "Fidio ibẹrẹ ti iṣẹju-aaya mẹjọ",
-        "description": "Yíyí fọ́ọ̀mù tàbí àwòrán padà sí fídíò nípasẹ̀ ìlànà Beat Frames tí a ti fọwọ́ sí máa ń mú kí ètò àwòrán náà dúró ṣinṣin kí ìgbé-nǹkan-lókè tàbí ìṣípayí tó bẹ̀rẹ̀."
+        "description": "Yíyí fọ́ọ̀mù tàbí àwòrán padà sí fídíò nípasẹ̀ ìlànà Shot Frames tí a ti fọwọ́ sí máa ń mú kí ètò àwòrán náà dúró ṣinṣin kí ìgbé-nǹkan-lókè tàbí ìṣípayí tó bẹ̀rẹ̀."
       },
       {
         "title": "Awọn igbesẹ lati fi iṣẹju-aaya 7 kun",
@@ -806,15 +806,15 @@
     "viewDetails": "Wo àwọn kúlẹ̀kúlẹ̀",
     "beatFirst": {
       "title": "Ilana Ṣiṣe Fidio ti o Bẹrẹ pẹlu Ilu",
-      "description": "Fọwọ́ sí àwọn ìpele àwòrán àkọ́kọ́ (pre-vis beats) àti Beat Frames kí o tó bẹ̀rẹ̀ ìpele F2V — èyí yóò dín àwọn ìgbìyànjú láti tún àwòrán ṣe láìní ìtọ́sọ́nà tó péye (tó máa ń wáyé nítorí àṣìṣe ẹ̀rọ tàbí ìyàtọ̀ nínú ìrísí) kù. Yóò sì mú kí ìlànà iṣẹ́ láti ìpele àyẹ̀wò dé ìpele àwòrán tó parí wà ní ọ̀nà kan ṣoṣo tó ní ètò tó dájú.",
+      "description": "Fọwọ́ sí àwọn ìpele àwòrán àkọ́kọ́ (pre-vis beats) àti Shot Frames kí o tó bẹ̀rẹ̀ ìpele F2V — èyí yóò dín àwọn ìgbìyànjú láti tún àwòrán ṣe láìní ìtọ́sọ́nà tó péye (tó máa ń wáyé nítorí àṣìṣe ẹ̀rọ tàbí ìyàtọ̀ nínú ìrísí) kù. Yóò sì mú kí ìlànà iṣẹ́ láti ìpele àyẹ̀wò dé ìpele àwòrán tó parí wà ní ọ̀nà kan ṣoṣo tó ní ètò tó dájú.",
       "keyFeatures": [
         "Pre-vis Agent fún àyẹ̀wò — pín àwọn ìlù náà kí o tó ṣe ìgbékalẹ̀ ikẹyìn (render) tó nira",
-        "Beat Frames ètò títìpa — Reference Library ìtẹ̀síwájú",
+        "Shot Frames ètò títìpa — Reference Library ìtẹ̀síwájú",
         "F2V fún ìlù kọ̀ọ̀kan — ṣẹ̀dá fídíò láti àwọn fúrémù tí a ti fọwọ́ sí",
         "Àwọn ìsopọ̀ EXT tí kò ní ìdádúró — àwọn ìgbésẹ̀ +7s àbínibí fún ìjíròrò gígùn láàrin ìlù kan",
         "Àkókò àti àwọn ṣíṣàn ìṣètò àdàpọ̀ — ṣí Screening Room láti ṣètò àti láti gbé e jáde"
       ],
-      "screenshotSlot": "Fi àwòrán ojú-iboju (screenshot) yìí sí i: Beat Frames àti ìfọwọ́sí àwòrán àkọ́kọ́ (pre-vis) kí a tó ṣẹ̀dá fídíò náà.",
+      "screenshotSlot": "Fi àwòrán ojú-iboju (screenshot) yìí sí i: Shot Frames àti ìfọwọ́sí àwòrán àkọ́kọ́ (pre-vis) kí a tó ṣẹ̀dá fídíò náà.",
       "videoSlot": "Fi fidio iṣẹ́jú-aaya 00:30 yii kun un: Fífọwọ́sí àwọn ìlù, títì àwọn fúrémù mọ́ra, àti ṣíṣe àwọn fidio F2V."
     },
     "screeningRoom": {
@@ -847,7 +847,7 @@
         "description": "Ile-iṣẹ kan ṣoṣo ti n ṣe ohun gbogbo lati ipele imọran titi di igba ti fidio yoo fi ṣetan fun titẹjade. Ilana iṣẹ kanna ni a n lo fun awọn fidio ikẹkọ, awọn eto ohun (podcasts), awọn iroyin, ati awọn jara fiimu — o le fọwọsi awotẹlẹ iṣẹ naa (pre-vis) ki o to nawo fun ipele ipari ti ṣiṣe fidio naa.",
         "keyFeatures": [
           "Ẹ̀ka → Blueprint → Ìṣelọ́pọ̀ → Screening Room",
-          "Fífọwọ́sí ní ìpele-ìpele (nípa ṣíṣe àwòrán ìṣẹ̀lẹ̀ kọ̀ọ̀kan) — pre-vis àti Beat Frames ṣáájú F2V",
+          "Fífọwọ́sí ní ìpele-ìpele (nípa ṣíṣe àwòrán ìṣẹ̀lẹ̀ kọ̀ọ̀kan) — pre-vis àti Shot Frames ṣáájú F2V",
           "Ṣíṣe àgbékalẹ̀ Google Vertex AI pẹ̀lú àwọn ìsopọ̀ ìfàgùn Veo àbínibí",
           "Awọn ilana aabo ati igbẹkẹle, pẹlu ẹri ti o ni ibuwọlu nipa orisun ọja naa nigba ifijiṣẹ."
         ],

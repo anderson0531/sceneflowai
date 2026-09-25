@@ -267,7 +267,7 @@
       },
       {
         "them": "Consistencia manual entre sesiones",
-        "us": "Reference Library + Beat Frames bloquean los elementos visuales antes del vídeo"
+        "us": "Reference Library + Shot Frames bloquean los elementos visuales antes del vídeo"
       },
       {
         "them": "Sin flujo de trabajo de validación de audiencia",
@@ -285,10 +285,10 @@
     "title": "Flujo de trabajo de vídeo basado en el ritmo",
     "subtitle": "Aprueba antes de renderizar: nada de regeneración tipo máquina tragamonedas.",
     "intro": "Nada de generar contenido mediante prueba y error. Puedes previsualizar y aprobar el aspecto visual antes de que SceneFlow consuma créditos para el vídeo final.",
-    "description": "SceneFlow estructura la aprobación visual en cada etapa: Pre-vis Agent para la revisión, Beat Frames para fijar la composición y, posteriormente, F2V por *beat*. Así, refinas la estética antes de consumir créditos en desviaciones y alucinaciones.",
+    "description": "SceneFlow estructura la aprobación visual en cada etapa: Pre-vis Agent para la revisión, Shot Frames para fijar la composición y, posteriormente, F2V por *beat*. Así, refinas la estética antes de consumir créditos en desviaciones y alucinaciones.",
     "steps": [
       "Pre-vis Agent — comparte pistas audiovisuales para su revisión en cuestión de minutos",
-      "Beat Frames — bloquear la composición de inicio/fin con la continuidad de Reference Library",
+      "Shot Frames — bloquear la composición de inicio/fin con la continuidad de Reference Library",
       "F2V por pulso: genera vídeo a partir de fotogramas aprobados, no de prompts a ciegas.",
       "Cadena de extensión continua: pasos de extensión nativos de +7 segundos para segmentos de diálogo largos.",
       "Production Mixer — exportación de sincronización, audio y flujo a Screening Room"
@@ -366,7 +366,7 @@
     "steps": [
       {
         "title": "Clip inicial de 8 segundos",
-        "description": "La conversión de fotograma a vídeo o de imagen a vídeo a partir del elemento Beat Frames aprobado fija la composición antes del movimiento."
+        "description": "La conversión de fotograma a vídeo o de imagen a vídeo a partir del elemento Shot Frames aprobado fija la composición antes del movimiento."
       },
       {
         "title": "Pasos de extensión de +7 s",
@@ -808,15 +808,15 @@
     "viewDetails": "Ver detalles",
     "beatFirst": {
       "title": "Flujo de trabajo de vídeo basado en el ritmo",
-      "description": "Aprueba los segmentos de previsualización y Beat Frames antes de la fase F2V: así se reducen las regeneraciones a ciegas causadas por alucinaciones y desviaciones visuales. Un flujo de trabajo estructurado desde la revisión hasta el clip final.",
+      "description": "Aprueba los segmentos de previsualización y Shot Frames antes de la fase F2V: así se reducen las regeneraciones a ciegas causadas por alucinaciones y desviaciones visuales. Un flujo de trabajo estructurado desde la revisión hasta el clip final.",
       "keyFeatures": [
         "Pre-vis Agent para revisión: compartir los beats antes del renderizado pesado",
-        "Beat Frames composición de la esclusa — Reference Library continuidad",
+        "Shot Frames composición de la esclusa — Reference Library continuidad",
         "F2V por pulso: genera vídeo a partir de fotogramas aprobados",
         "Cadenas EXT continuas: pasos nativos de +7 segundos para diálogos extensos dentro de un mismo *beat*.",
         "Sincronización y flujos del mezclador: abra Screening Room para ensamblar y publicar."
       ],
-      "screenshotSlot": "Insertar captura de pantalla: Beat Frames y aprobación de la previsualización antes de la generación del vídeo.",
+      "screenshotSlot": "Insertar captura de pantalla: Shot Frames y aprobación de la previsualización antes de la generación del vídeo.",
       "videoSlot": "Insertar clip de 00:30: aprobación de tiempos, fijación de fotogramas y posterior generación de clips F2V."
     },
     "screeningRoom": {
@@ -849,7 +849,7 @@
         "description": "Un único estudio para todo el proceso, desde la idea hasta el vídeo listo para publicar. Se utiliza el mismo flujo de trabajo para formación, pódcasts, noticias y series cinematográficas, permitiendo aprobar la previsualización antes de invertir en el renderizado final.",
         "keyFeatures": [
           "Serie → Blueprint → Producción → Screening Room",
-          "Aprobación por secuencia (beat) — previsualización y Beat Frames antes de F2V",
+          "Aprobación por secuencia (beat) — previsualización y Shot Frames antes de F2V",
           "Generación de Google Vertex AI con cadenas de extensión nativas de Veo",
           "Salvaguardas de confianza y seguridad, y procedencia firmada en la entrega"
         ],

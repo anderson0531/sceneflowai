@@ -35,8 +35,8 @@ type AudienceReviewInput = {
 } | null
 
 const REVISION_DEPTHS: Array<{ value: ScriptRevisionDepth; label: string; hint: string }> = [
-  { value: 'polish', label: 'Polish', hint: 'Refine wording. Keep scenes, beats, and runtime.' },
-  { value: 'rewrite', label: 'Rewrite', hint: 'Revise scenes in place. Add, cut, or reorder beats when needed.' },
+  { value: 'polish', label: 'Polish', hint: 'Refine wording. Keep scenes, shots, and runtime.' },
+  { value: 'rewrite', label: 'Rewrite', hint: 'Revise scenes in place. Add, cut, or reorder shots when needed.' },
   { value: 'refactor', label: 'Refactor', hint: 'Merge, cut, or add scenes to hit the direction and duration.' },
 ]
 

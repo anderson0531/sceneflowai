@@ -129,7 +129,7 @@ interface SegmentTypeConfig {
 const SEGMENT_TYPES: SegmentTypeConfig[] = [
   {
     id: 'standard',
-    name: 'Standard Beat',
+    name: 'Standard Shot',
     icon: Film,
     description: 'Scene segment with start/end keyframes for AI video generation. Full control over shot composition.',
     defaultDuration: 6,
@@ -544,7 +544,7 @@ export function AddSegmentTypeDialog({
               {/* Beat Selector (for before/after) */}
               {(insertPosition === 'before' || insertPosition === 'after') && existingSegments.length > 0 && (
                 <div className="space-y-3">
-                  <Label className="text-sm font-medium text-slate-300">{t('addType.referenceBeat')}</Label>
+                  <Label className="text-sm font-medium text-slate-300">{t('addType.referenceShot')}</Label>
                   <Select 
                     value={selectedSegmentIndex.toString()} 
                     onValueChange={(v) => setSelectedSegmentIndex(parseInt(v))}
@@ -555,7 +555,7 @@ export function AddSegmentTypeDialog({
                     <SelectContent className="bg-slate-800 border-slate-600">
                       {existingSegments.map((seg, idx) => (
                         <SelectItem key={seg.segmentId} value={idx.toString()}>
-                          {t('addType.beatOption', {
+                          {t('addType.shotOption', {
                             number: idx + 1,
                             duration: (seg.endTime - seg.startTime).toFixed(1),
                           })}

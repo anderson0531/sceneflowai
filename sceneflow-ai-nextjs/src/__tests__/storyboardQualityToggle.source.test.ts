@@ -23,7 +23,7 @@ const DIRECT = 'src/components/vision/PreVisFramePromptDialog.tsx'
 const SCRIPT_PANEL = 'src/components/vision/ScriptPanel.tsx'
 
 describe('Draft/Final Frames toolbar default', () => {
-  it('places the compact toggle immediately before Frame Agent in the toolbar', () => {
+  it('places the compact toggle immediately before Stills Agent in the toolbar', () => {
     const viewer = readSource(VIEWER)
     const toolbarStart = viewer.indexOf('{preVisStale && onSyncPreVisToScript &&')
     const toolbarEnd = viewer.indexOf('{draftFrameCount > 0 &&')
@@ -31,20 +31,20 @@ describe('Draft/Final Frames toolbar default', () => {
     expect(toolbarEnd).toBeGreaterThan(toolbarStart)
     const toolbar = viewer.slice(toolbarStart, toolbarEnd)
     const toggleIdx = toolbar.indexOf('{qualityToggle}')
-    const agentIdx = toolbar.indexOf('Frame Agent')
+    const agentIdx = toolbar.indexOf('Stills Agent')
     expect(toggleIdx).toBeGreaterThan(-1)
     expect(agentIdx).toBeGreaterThan(toggleIdx)
     expect(viewer).toContain('size="compact"')
   })
 
-  it('places the compact toggle above the empty-state Frame Agent button', () => {
+  it('places the compact toggle above the empty-state Stills Agent button', () => {
     const viewer = readSource(VIEWER)
     const emptyStart = viewer.indexOf('No pre-vis frames yet.')
     expect(emptyStart).toBeGreaterThan(-1)
     const emptyEnd = viewer.indexOf(') : (', emptyStart)
     const empty = viewer.slice(emptyStart, emptyEnd)
     const toggleIdx = empty.indexOf('{qualityToggle}')
-    const agentIdx = empty.indexOf('Frame Agent')
+    const agentIdx = empty.indexOf('Stills Agent')
     expect(toggleIdx).toBeGreaterThan(-1)
     expect(agentIdx).toBeGreaterThan(toggleIdx)
   })
@@ -59,7 +59,7 @@ describe('Draft/Final Frames toolbar default', () => {
       "const [frameGenerationQuality, setFrameGenerationQuality] = useState<StoryboardQuality>('draft')"
     )
     expect(page).toContain(
-      '/** Session default for Frame Agent, Regen, and Direct Frame. Not persisted. */'
+      '/** Session default for Stills Agent, Regen, and Direct Frame. Not persisted. */'
     )
   })
 })

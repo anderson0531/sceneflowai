@@ -267,7 +267,7 @@
       },
       {
         "them": "Cohérence manuelle entre les sessions",
-        "us": "Reference Library + Beat Frames verrouillent les visuels avant la vidéo"
+        "us": "Reference Library + Shot Frames verrouillent les visuels avant la vidéo"
       },
       {
         "them": "Aucun flux de validation d'audience",
@@ -285,10 +285,10 @@
     "title": "Chaîne de production vidéo axée sur le rythme",
     "subtitle": "Validez avant de générer — évitez la régénération façon machine à sous.",
     "intro": "Fini les générations basées sur le tâtonnement. Vous prévisualisez et validez le rendu avant que SceneFlow ne consomme des crédits pour la vidéo finale.",
-    "description": "SceneFlow structure la validation visuelle à chaque étape : Pre-vis Agent pour la révision, Beat Frames pour figer la composition, puis F2V par temps. Vous affinez le rendu avant de gaspiller des crédits dans des dérives et des hallucinations.",
+    "description": "SceneFlow structure la validation visuelle à chaque étape : Pre-vis Agent pour la révision, Shot Frames pour figer la composition, puis F2V par temps. Vous affinez le rendu avant de gaspiller des crédits dans des dérives et des hallucinations.",
     "steps": [
       "Pre-vis Agent — partagez des maquettes audiovisuelles pour validation en quelques minutes",
-      "Beat Frames — verrouiller la composition de début/fin avec la continuité Reference Library",
+      "Shot Frames — verrouiller la composition de début/fin avec la continuité Reference Library",
       "F2V par temps — générez des vidéos à partir d'images validées, et non de prompts à l'aveugle.",
       "Chaîne d'extension continue — étapes d'extension natives de +7 secondes pour les séquences de dialogue prolongées.",
       "Production Mixer — exportation du minutage, de l'audio et du flux vers Screening Room"
@@ -366,7 +366,7 @@
     "steps": [
       {
         "title": "Extrait initial de 8 secondes",
-        "description": "La conversion image-vidéo à partir de Beat Frames approuvé verrouille la composition avant le mouvement."
+        "description": "La conversion image-vidéo à partir de Shot Frames approuvé verrouille la composition avant le mouvement."
       },
       {
         "title": "Étapes d'extension de +7 s",
@@ -808,15 +808,15 @@
     "viewDetails": "Voir les détails",
     "beatFirst": {
       "title": "Chaîne de production vidéo axée sur le rythme",
-      "description": "Validez les séquences de prévisualisation et Beat Frames avant l'étape F2V : cela réduit les régénérations à l'aveugle causées par les hallucinations et les dérives visuelles. Un parcours structuré, de la phase de validation jusqu'au clip final.",
+      "description": "Validez les séquences de prévisualisation et Shot Frames avant l'étape F2V : cela réduit les régénérations à l'aveugle causées par les hallucinations et les dérives visuelles. Un parcours structuré, de la phase de validation jusqu'au clip final.",
       "keyFeatures": [
         "Pre-vis Agent pour validation — partagez les beats avant le rendu lourd",
-        "Beat Frames composition de l'écluse — Reference Library continuité",
+        "Shot Frames composition de l'écluse — Reference Library continuité",
         "F2V par temps — générer une vidéo à partir d'images validées",
         "Chaînes EXT continues — étapes natives de +7 s pour les longs dialogues au sein d'une séquence",
         "Synchronisation et flux du mélangeur — ouvrez Screening Room pour assembler et publier"
       ],
-      "screenshotSlot": "Insérer une capture d'écran : Beat Frames et validation de la prévisualisation avant la génération de la vidéo",
+      "screenshotSlot": "Insérer une capture d'écran : Shot Frames et validation de la prévisualisation avant la génération de la vidéo",
       "videoSlot": "Insertion d'un clip de 30 secondes : validation des temps forts, verrouillage des plans, puis génération de clips F2V."
     },
     "screeningRoom": {
@@ -849,7 +849,7 @@
         "description": "Un studio unique, de l'idée à la vidéo prête à être publiée. Un même processus de production pour les formations, podcasts, actualités et séries cinématographiques — validez la prévisualisation avant d'engager les coûts de rendu final.",
         "keyFeatures": [
           "Série → Blueprint → Production → Screening Room",
-          "Validation par séquence — prévisualisation et Beat Frames avant la F2V",
+          "Validation par séquence — prévisualisation et Shot Frames avant la F2V",
           "Génération Google Vertex AI avec des chaînes d'extension Veo natives",
           "Mesures de protection en matière de confiance et de sécurité, et preuve de provenance signée à la livraison"
         ],

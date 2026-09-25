@@ -95,7 +95,7 @@ export function buildFeatureStoryboardMessageItems(): FeatureStoryboardMessageIt
         'One studio from idea to publish-ready video. Same pipeline for training, podcasts, news, and cinematic series — approve pre-vis before final render spend.',
       keyFeatures: [
         'Series Studio → Blueprint Studio → Production Studio → Screening Room',
-        'Beat-first approval — pre-vis and Beat Frames before F2V',
+        'Beat-first approval — pre-vis and Shot Frames before F2V',
         'Google Vertex AI generation with native Veo extension chains',
         'Trust & Safety guardrails and signed provenance on delivery',
       ],

@@ -183,10 +183,10 @@ export const ONE_TAKE_PIPELINE = {
   intro:
     'No guess-and-check generations. You preview and approve the look before SceneFlow spends credits on final video.',
   description:
-    'SceneFlow structures visual approval at every step: Pre-vis Agent for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.',
+    'SceneFlow structures visual approval at every step: Pre-vis Agent for review, Shot Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.',
   steps: [
     'Pre-vis Agent — share audio-visual beats for review after expert prompting',
-    'Beat Frames — lock start/end composition with Reference Library continuity',
+    'Shot Frames — lock start/end composition with Reference Library continuity',
     'F2V per beat — generate video from approved frames, not blind prompts',
     'Continuous EXT chain — native +7s extension steps for long dialogue beats',
     'Production Mixer — timing, audio, and stream export to Screening Room',
@@ -203,7 +203,7 @@ export const WHY_SCENEFLOW = {
     },
     {
       them: 'Manual consistency across sessions',
-      us: 'Reference Library + Beat Frames lock visuals before video',
+      us: 'Reference Library + Shot Frames lock visuals before video',
     },
     {
       them: 'No audience validation workflow',

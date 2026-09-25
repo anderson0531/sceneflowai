@@ -35,13 +35,13 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
     id: 'welcome',
     title: `Welcome to ${STUDIO_DISPLAY_NAMES.production}`,
     description:
-      `SceneFlow is one continuous pipeline: Direction → Beats → Music → References → Pre-Vis → Video → Mixer → Streams, then Final Cut.`,
+      `SceneFlow is one continuous pipeline: Direction → Shots → Music → References → Pre-Vis → Video → Mixer → Streams, then Final Cut.`,
     icon: <Sparkles className="w-6 h-6" />,
     tip: 'The Production Progress dashboard and co-pilot always show where you are and what is next.',
   },
   {
     id: 'script-tab',
-    title: 'Step 1 - Direction, Beats, and audio',
+    title: 'Step 1 - Direction, Shots, and audio',
     description:
       'Optimize your script with the Intelligent Assistant Writer, run Audience Resonance Analysis (85+ target), generate audio, and assign voices. The Pre-Visualization panel shows what you need before running agents.',
     icon: <FileText className="w-6 h-6" />,
@@ -55,13 +55,13 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
       'Use Run All Agents for Direction → Audio → pre-vis frames. Agents compose expert prompts and generate — a scene can take several minutes. Review in the gallery, share for approval, and preview in Screening Room — Preview (live).',
     icon: <Frame className="w-6 h-6" />,
     workflowStep: 'dialogueAction',
-    tip: 'Pre-vis Frame = still image per beat. Screening Room is live preview — not an exported MP4.',
+    tip: 'Pre-vis Frame = still image per shot. Screening Room is live preview — not an exported MP4.',
   },
   {
     id: 'action-tab',
     title: 'Step 3 - Video',
     description:
-      'Video generates one clip per beat from the Pre-Vis start frame. Draft | Final and Standard | Creative match the Pre-Vis controls. Mixer and Streams follow on the same strip.',
+      'Video generates one clip per shot from the Pre-Vis start frame. Draft | Final and Standard | Creative match the Pre-Vis controls. Mixer and Streams follow on the same strip.',
     icon: <Clapperboard className="w-6 h-6" />,
     workflowStep: 'callAction',
     tip: 'Open the Video step on the same strip as Pre-Vis. Review is no longer a separate gate.',
@@ -80,13 +80,13 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
     description:
       'Pick a stream version per scene (Animatic or Video × language), assemble in Final Cut, and export your premiere. The workflow guide lists each step.',
     icon: <Film className="w-6 h-6" />,
-    tip: 'Stale streams show “Update available” when beats or audio change.',
+    tip: 'Stale streams show “Update available” when shots or audio change.',
   },
   {
     id: 'progress',
     title: 'Step 6 - Track Progress',
     description:
-      'The dashboard tracks Script, Audio, Direction, Beat Frames, Video, and Render using beat-first rules. Click any scene to jump to it.',
+      'The dashboard tracks Script, Audio, Direction, Shot Frames, Video, and Render using shot-first rules. Click any scene to jump to it.',
     icon: <CheckCircle2 className="w-6 h-6" />,
     tip: 'Share pre-vis links early — when scenes are complete, use Screening Room to assemble and publish.',
   },

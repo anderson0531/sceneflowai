@@ -30,7 +30,7 @@ describe('on-demand status filters', () => {
       expect(source).toContain('tooltip:')
     }
 
-    expect(beats).toContain('Beats whose prompt changed after the last render.')
+    expect(beats).toContain('Shots whose prompt changed after the last render.')
     expect(beats).toContain('Lines spoken by this character.')
     expect(frames).toContain('Frames with no image yet.')
     expect(frames).toContain('Frames still using a stand-in image.')

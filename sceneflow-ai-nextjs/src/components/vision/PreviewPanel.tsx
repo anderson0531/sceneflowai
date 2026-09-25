@@ -117,11 +117,11 @@ function StructuredBeatPreview({
 
         const label =
           summary.status === 'added'
-            ? 'New beat'
+            ? 'New shot'
             : summary.status === 'removed'
-              ? 'Removed beat'
+              ? 'Removed shot'
               : summary.candidate?.kind === 'action'
-                ? 'Action beat'
+                ? 'Action shot'
                 : summary.candidate?.kind === 'narration'
                   ? 'Narration'
                   : `Dialogue: ${summary.candidate?.character ?? ''}`
@@ -183,7 +183,7 @@ function StructuredBeatPreview({
                 </div>
                 {beatDirectionChanged(summary.original, summary.candidate) && (
                   <p className="text-[11px] text-blue-600 dark:text-blue-300">
-                    Beat direction updated
+                    Shot direction updated
                   </p>
                 )}
               </div>
@@ -315,7 +315,7 @@ export function PreviewPanel({
           <section>
             <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
               <Clapperboard className="w-4 h-4" />
-              Beats
+              Shots
             </h4>
             <StructuredBeatPreview
               originalScene={originalScene}
@@ -324,8 +324,8 @@ export function PreviewPanel({
               deselectedChanges={deselectedChanges}
               onToggleChange={onToggleChange}
             />
-            {!changeKeys.some((k) => k.startsWith('beat')) && (
-              <p className="text-xs text-gray-500">No beat changes in this revision.</p>
+            {!changeKeys.some((k) => k.startsWith('shot')) && (
+              <p className="text-xs text-gray-500">No shot changes in this revision.</p>
             )}
           </section>
 
@@ -359,7 +359,7 @@ export function PreviewPanel({
             <div className="rounded-lg border p-3 bg-gray-50 dark:bg-gray-800/50">
               {preserveBeatFrames ? (
                 <p className="text-xs text-gray-600 dark:text-gray-400">
-                  Beat frames preserved — existing storyboard images will be kept.
+                  Shot frames preserved — existing storyboard images will be kept.
                 </p>
               ) : framesToRegenerate.length > 0 ? (
                 <div className="space-y-1">
@@ -380,7 +380,7 @@ export function PreviewPanel({
                 </div>
               ) : (
                 <p className="text-xs text-gray-600 dark:text-gray-400">
-                  No beat frames need regeneration for the selected changes.
+                  No shot frames need regeneration for the selected changes.
                 </p>
               )}
             </div>
@@ -400,7 +400,7 @@ export function PreviewPanel({
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <p className="text-xs text-blue-800 dark:text-blue-200 flex-1">
-                      Direction is co-generated with the revised beats. Deselect individual beats
+                      Direction is co-generated with the revised shots. Deselect individual shots
                       without also skipping Direction if you want the old summary.
                     </p>
                     <ChangeControl

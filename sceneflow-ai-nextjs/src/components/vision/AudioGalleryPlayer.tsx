@@ -1390,8 +1390,8 @@ export function AudioGalleryPlayer({
             </TooltipTrigger>
             <TooltipContent>
               {hasAnyBeatVideo
-                ? 'Play beat videos continuously, the same way the Mixer previews them'
-                : 'Generate beat videos in the Mixer to enable Video review'}
+                ? 'Play shot videos continuously, the same way the Mixer previews them'
+                : 'Generate shot videos in the Mixer to enable Video review'}
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -1560,13 +1560,13 @@ export function AudioGalleryPlayer({
                   checked={beatCaptionsEnabled}
                   onCheckedChange={onBeatCaptionsEnabledChange}
                   className="scale-75"
-                  aria-label="Beat captions"
+                  aria-label="Shot captions"
                 />
-                <span className="text-[10px] text-gray-400 whitespace-nowrap">Beat captions</span>
+                <span className="text-[10px] text-gray-400 whitespace-nowrap">Shot captions</span>
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              Show on-screen beat titles and signage for this language stream
+              Show on-screen shot titles and signage for this language stream
             </TooltipContent>
           </Tooltip>
         )}
@@ -1638,7 +1638,7 @@ export function AudioGalleryPlayer({
             />
           )}
         </>
-      ) : inBeatVisual.primaryUrl ? (
+      ) : inShotVisual.primaryUrl ? (
         <>
           {crossfadeFromUrl && renderSceneImage(crossfadeFromUrl, 'previous')}
           {renderSceneImage(

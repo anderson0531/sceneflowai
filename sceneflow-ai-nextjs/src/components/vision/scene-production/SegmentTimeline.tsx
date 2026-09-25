@@ -38,7 +38,7 @@ export function SegmentTimeline({ segments, selectedSegmentId, onSelect, audioTr
   if (segments.length === 0) {
     return (
       <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-sm text-gray-500 dark:text-gray-400 text-center">
-        No beats yet. Initialize scene production to create segments and prompts.
+        No shots yet. Initialize scene production to create segments and prompts.
       </div>
     )
   }

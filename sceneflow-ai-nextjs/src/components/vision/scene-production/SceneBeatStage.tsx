@@ -122,7 +122,7 @@ export function SceneBeatStage({
   items,
   selectedId,
   onSelect,
-  railLabel = 'Beats',
+  railLabel = 'Shots',
   stage,
   detail,
   children,

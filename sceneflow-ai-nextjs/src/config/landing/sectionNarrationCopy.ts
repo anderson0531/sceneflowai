@@ -43,7 +43,7 @@ export const SECTION_NARRATIONS: SectionNarration[] = [
     id: 'why-sceneflow',
     label: 'Why SceneFlow vs prompt-and-generate tools',
     script:
-      "Tools like Gemini Studio and Google Flow are great at generating individual clips. But a finished video is so much more than a clip. SceneFlow is built around the entire production, not just the moment you hit generate. Instead of prompting in isolation, you work in structured phases with editable baselines at every step. Instead of fighting to keep your characters and scenes consistent, your Reference Library and Beat Frames lock the visuals in before any video is made. Instead of guessing what your audience will think, you validate your story with Audience Resonance, and preview it in the Screening Room before you publish. From script, to scenes, to final assembly and distribution, it all lives in one place. That is the difference between generating clips, and producing video.",
+      "Tools like Gemini Studio and Google Flow are great at generating individual clips. But a finished video is so much more than a clip. SceneFlow is built around the entire production, not just the moment you hit generate. Instead of prompting in isolation, you work in structured phases with editable baselines at every step. Instead of fighting to keep your characters and scenes consistent, your Reference Library and Shot Frames lock the visuals in before any video is made. Instead of guessing what your audience will think, you validate your story with Audience Resonance, and preview it in the Screening Room before you publish. From script, to scenes, to final assembly and distribution, it all lives in one place. That is the difference between generating clips, and producing video.",
   },
   {
     id: 'beat-first-pipeline',
@@ -73,7 +73,7 @@ export const SECTION_NARRATIONS: SectionNarration[] = [
     id: 'core-capabilities',
     label: 'Audience Resonance Analysis · SceneFlow Agents',
     script:
-      "SceneFlow gives you two superpowers before you ever spend on final video. First, Audience Resonance Analysis. Define your target audience in Blueprint, and SceneFlow scores your script for clarity, pacing, emotional arc, and persona fit — with section-level recommendations and one-click fixes, not a black-box grade. You know what lands before you invest in heavy renders. Second, SceneFlow Agents. Audio Agent, Frame Agent, and Video Agent compose expert prompts and generate pre-vis, animatics, and video beats — then you approve Beat Frames and generate final video from frames you have already locked. Intelligent automation, in one studio.",
+      "SceneFlow gives you two superpowers before you ever spend on final video. First, Audience Resonance Analysis. Define your target audience in Blueprint, and SceneFlow scores your script for clarity, pacing, emotional arc, and persona fit — with section-level recommendations and one-click fixes, not a black-box grade. You know what lands before you invest in heavy renders. Second, SceneFlow Agents. Audio Agent, Stills Agent, and Video Agent compose expert prompts and generate pre-vis, animatics, and video beats — then you approve Shot Frames and generate final video from frames you have already locked. Intelligent automation, in one studio.",
   },
   {
     id: 'pre-vis-engine',

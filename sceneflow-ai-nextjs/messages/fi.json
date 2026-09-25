@@ -267,7 +267,7 @@
       },
       {
         "them": "Manuaalinen yhdenmukaisuus istuntojen välillä",
-        "us": "Reference Library + Beat Frames lukitsee kuvan ennen videota"
+        "us": "Reference Library + Shot Frames lukitsee kuvan ennen videota"
       },
       {
         "them": "Ei yleisön vahvistusprosessia",
@@ -285,10 +285,10 @@
     "title": "Iskuun pohjautuva videotuotantoprosessi",
     "subtitle": "Hyväksy ennen renderöintiä – ei peliautomaattimaista uudelleenluontia",
     "intro": "Ei arvailuun perustuvaa kokeilua. Näet esikatselun ja hyväksyt ulkoasun, ennen kuin SceneFlow käyttää krediittejä lopulliseen videoon.",
-    "description": "SceneFlow jäsentää visuaalisen hyväksynnän jokaiseen vaiheeseen: Pre-vis Agent tarkastelua varten, Beat Frames sommittelun lukitsemiseen ja sen jälkeen F2V tahtia kohden. Viimeistelet ulkoasun, ennen kuin kulutat krediittejä ajautumiseen ja hallusinaatioihin.",
+    "description": "SceneFlow jäsentää visuaalisen hyväksynnän jokaiseen vaiheeseen: Pre-vis Agent tarkastelua varten, Shot Frames sommittelun lukitsemiseen ja sen jälkeen F2V tahtia kohden. Viimeistelet ulkoasun, ennen kuin kulutat krediittejä ajautumiseen ja hallusinaatioihin.",
     "steps": [
       "Pre-vis Agent — jaa audiovisuaalisia biittejä tarkistettavaksi minuuteissa",
-      "Beat Frames — lukitse alku-/loppukoostumus Reference Library-jatkuvuudella",
+      "Shot Frames — lukitse alku-/loppukoostumus Reference Library-jatkuvuudella",
       "F2V tahtia kohden – luo video hyväksytyistä ruuduista sokeiden kehotteiden sijaan.",
       "Jatkuva EXT-ketju – natiivit 7 sekunnin jatkoaskeleet pitkiä dialogijaksoja varten",
       "Production Mixer — ajoitus, ääni ja striimin vienti kohteeseen Screening Room"
@@ -366,7 +366,7 @@
     "steps": [
       {
         "title": "8 sekunnin aloituspätkä",
-        "description": "Hyväksytystä Beat Frames-lähteestä luotu yksittäisruudusta tai kuvasta muodostettu video lukitsee sommittelun ennen liikettä."
+        "description": "Hyväksytystä Shot Frames-lähteestä luotu yksittäisruudusta tai kuvasta muodostettu video lukitsee sommittelun ennen liikettä."
       },
       {
         "title": "+7 s:n pidennysvaiheet",
@@ -808,15 +808,15 @@
     "viewDetails": "Näytä tiedot",
     "beatFirst": {
       "title": "Iskuun pohjautuva videotuotantoprosessi",
-      "description": "Hyväksy esivisualisoinnin vaiheet ja Beat Frames ennen F2V-vaihetta – vähemmän hallusinaatioista ja visuaalisesta ryöminnästä johtuvia sokkoregenerointeja. Yksi jäsennelty polku tarkastelusta lopulliseen klippiin.",
+      "description": "Hyväksy esivisualisoinnin vaiheet ja Shot Frames ennen F2V-vaihetta – vähemmän hallusinaatioista ja visuaalisesta ryöminnästä johtuvia sokkoregenerointeja. Yksi jäsennelty polku tarkastelusta lopulliseen klippiin.",
       "keyFeatures": [
         "Pre-vis Agent tarkistettavaksi – jaa biitit ennen raskasta renderöintiä",
-        "Beat Frames lukon rakenne — Reference Library jatkuvuus",
+        "Shot Frames lukon rakenne — Reference Library jatkuvuus",
         "F2V per isku – luo video hyväksytyistä ruuduista",
         "Jatkuvat EXT-ketjut – natiivit yli 7 sekunnin askeleet pitkää dialogia varten yhden kohtausosan (beat) sisällä",
         "Mikserin ajoitus ja striimit – avaa Screening Room kokoamista ja julkaisemista varten"
       ],
-      "screenshotSlot": "Lisää kuvakaappaus: Beat Frames ja esivisualisoinnin hyväksyntä ennen videon luomista",
+      "screenshotSlot": "Lisää kuvakaappaus: Shot Frames ja esivisualisoinnin hyväksyntä ennen videon luomista",
       "videoSlot": "Lisää 00:30-mittainen pätkä: iskujen hyväksyminen, ruutujen lukitseminen ja F2V-pätkien luominen"
     },
     "screeningRoom": {
@@ -849,7 +849,7 @@
         "description": "Yksi studio hoitaa kaiken ideasta julkaisuvalmiiksi videoksi. Sama tuotantoprosessi koulutusmateriaaleille, podcasteille, uutisille ja elokuvallisille sarjoille – hyväksy esivisualisointi ennen lopulliseen renderöintiin panostamista.",
         "keyFeatures": [
           "Sarja → Blueprint → Tuotanto → Screening Room",
-          "Kohtauskohtainen hyväksyntä – esivisualisointi ja Beat Frames ennen F2V-vaihetta",
+          "Kohtauskohtainen hyväksyntä – esivisualisointi ja Shot Frames ennen F2V-vaihetta",
           "Google Vertex AI -sukupolvi natiiveilla Veo-laajennusketjuilla",
           "Luottamus- ja turvallisuusmekanismit sekä allekirjoitettu alkuperätieto toimitusvaiheessa"
         ],

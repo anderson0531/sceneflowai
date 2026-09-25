@@ -267,7 +267,7 @@
       },
       {
         "them": "Consecvență manuală între sesiuni",
-        "us": "Reference Library + Beat Frames blochează elementele vizuale înainte de video"
+        "us": "Reference Library + Shot Frames blochează elementele vizuale înainte de video"
       },
       {
         "them": "Fără flux de lucru pentru validarea audienței",
@@ -285,10 +285,10 @@
     "title": "Flux de lucru video bazat pe ritm",
     "subtitle": "Aprobă înainte de randare — nu regenerare de tip „păcănele”",
     "intro": "Fără generări bazate pe încercări și erori. Vizualizezi și aprobi aspectul înainte ca SceneFlow să consume credite pentru videoclipul final.",
-    "description": "SceneFlow structurează aprobarea vizuală la fiecare etapă: Pre-vis Agent pentru revizuire, Beat Frames pentru fixarea compoziției, apoi F2V pentru fiecare „beat”. Rafinezi aspectul vizual înainte de a consuma credite pe deriva și halucinațiile modelului.",
+    "description": "SceneFlow structurează aprobarea vizuală la fiecare etapă: Pre-vis Agent pentru revizuire, Shot Frames pentru fixarea compoziției, apoi F2V pentru fiecare „beat”. Rafinezi aspectul vizual înainte de a consuma credite pe deriva și halucinațiile modelului.",
     "steps": [
       "Pre-vis Agent — partajează secvențe audio-vizuale pentru revizuire în câteva minute",
-      "Beat Frames — blocare început/sfârșit compoziție cu continuitate Reference Library",
+      "Shot Frames — blocare început/sfârșit compoziție cu continuitate Reference Library",
       "F2V per beat — generează video din cadre aprobate, nu din prompturi oarbe",
       "Lanț EXT continuu — pași de extensie nativi de +7 secunde pentru segmente lungi de dialog",
       "Production Mixer — sincronizare, audio și export de flux către Screening Room"
@@ -366,7 +366,7 @@
     "steps": [
       {
         "title": "Clip inițial de 8 secunde",
-        "description": "Conversia cadru-la-video sau imagine-la-video din sursa aprobată Beat Frames blochează compoziția înainte de mișcare."
+        "description": "Conversia cadru-la-video sau imagine-la-video din sursa aprobată Shot Frames blochează compoziția înainte de mișcare."
       },
       {
         "title": "Pași de prelungire cu 7 secunde",
@@ -808,15 +808,15 @@
     "viewDetails": "Vezi detalii",
     "beatFirst": {
       "title": "Flux de lucru video bazat pe ritm",
-      "description": "Aprobă secvențele de pre-vizualizare și Beat Frames înainte de etapa F2V — astfel se reduc regenerările „oarbe” cauzate de halucinații și de deviațiile vizuale. Un flux structurat, de la revizuire până la clipul final.",
+      "description": "Aprobă secvențele de pre-vizualizare și Shot Frames înainte de etapa F2V — astfel se reduc regenerările „oarbe” cauzate de halucinații și de deviațiile vizuale. Un flux structurat, de la revizuire până la clipul final.",
       "keyFeatures": [
         "Pre-vis Agent pentru revizuire — partajează beat-urile înainte de randarea complexă",
-        "Beat Frames compoziția blocării — Reference Library continuitate",
+        "Shot Frames compoziția blocării — Reference Library continuitate",
         "F2V per beat — generare de video din cadre aprobate",
         "Lanțuri EXT continue — pași nativi de +7s pentru dialoguri lungi în cadrul unui „beat”",
         "Sincronizarea și fluxurile mixerului — deschideți Screening Room pentru a asambla și publica"
       ],
-      "screenshotSlot": "Inserează captură de ecran: Beat Frames și aprobarea previzualizării înainte de generarea videoclipului",
+      "screenshotSlot": "Inserează captură de ecran: Shot Frames și aprobarea previzualizării înainte de generarea videoclipului",
       "videoSlot": "Inserare clip de 30 de secunde: aprobarea secvențelor, fixarea cadrelor, apoi generarea clipurilor F2V."
     },
     "screeningRoom": {
@@ -849,7 +849,7 @@
         "description": "Un singur studio, de la idee până la videoclipul gata de publicare. Același flux de lucru pentru materiale de instruire, podcasturi, știri și seriale cinematografice — aprobi previzualizarea înainte de a investi în randarea finală.",
         "keyFeatures": [
           "Serie → Blueprint → Producție → Screening Room",
-          "Aprobare pe secvențe (beat-first) — pre-vizualizare și Beat Frames înainte de F2V",
+          "Aprobare pe secvențe (beat-first) — pre-vizualizare și Shot Frames înainte de F2V",
           "Generare Google Vertex AI cu lanțuri de extensii native Veo",
           "Măsuri de protecție privind încrederea și siguranța și confirmarea provenienței prin semnătură la livrare"
         ],

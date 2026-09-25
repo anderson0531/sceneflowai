@@ -23,7 +23,7 @@ export const GLOSSARY_TERMS = [
   'Production Studio',
   'Blueprint',
   'Production Mixer',
-  'Beat Frames',
+  'Shot Frames',
   'Audience Resonance',
   'Intelligent Assistant Director',
   'Co-Director',
@@ -35,7 +35,7 @@ export const GLOSSARY_TERMS = [
   // Agent actions plus their umbrella. These are product names, not verbs —
   // MT used to turn "Express All" into "Articulate all scenes".
   'Audio Agent',
-  'Frame Agent',
+  'Stills Agent',
   'Video Agent',
   'Clips Agent',
   'Run All Agents',

@@ -157,7 +157,7 @@ function selectionFromBeat(
 }
 
 function summarizeDirection(direction: BeatDirection | undefined): string {
-  if (!direction) return 'No beat direction yet — click to add'
+  if (!direction) return 'No shot direction yet — click to add'
   const parts = [direction.shotType, direction.cameraAngle, direction.cameraMovement].filter(Boolean)
   return parts.join(' • ') || 'Direction saved (expand to view)'
 }
@@ -505,7 +505,7 @@ export function BeatDirectionEditor({
       onClick={() => setDirectorOpen(true)}
     >
       <Clapperboard className="w-3.5 h-3.5" />
-      Direct Beat
+      Direct Shot
     </button>
   )
 
@@ -570,7 +570,7 @@ export function BeatDirectionEditor({
       ) : (
         <div className="flex items-center justify-between gap-2 px-3 pt-3">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-400/80">
-            Beat description
+            Shot description
           </p>
           <div className="flex items-center gap-2">
             <BeatExcludeToggle
@@ -593,7 +593,7 @@ export function BeatDirectionEditor({
             <p className="text-sm leading-relaxed text-slate-200">{beatProse}</p>
           ) : !hasStructuredDirection ? (
             <p className="text-sm leading-relaxed text-slate-400">
-              No direction yet. Use Direct Beat to describe the shot.
+              No direction yet. Use Direct Shot to describe the shot.
             </p>
           ) : null}
 
@@ -605,7 +605,7 @@ export function BeatDirectionEditor({
               value={
                 castInFrame === undefined
                   ? hasStructuredDirection
-                    ? 'Cast follows the beat text.'
+                    ? 'Cast follows the shot text.'
                     : undefined
                   : castInFrame.length === 0
                     ? 'No one on camera.'

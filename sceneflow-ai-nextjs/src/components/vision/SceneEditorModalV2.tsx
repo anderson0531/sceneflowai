@@ -62,7 +62,7 @@ interface SceneEditorModalProps {
 
 const REVISION_DEPTHS: Array<{ value: RevisionDepth; label: string; hint: string }> = [
   { value: 'light', label: 'Polish', hint: 'Refine wording, keep structure' },
-  { value: 'moderate', label: 'Rewrite', hint: 'Add, remove, or reorder beats as needed' },
+  { value: 'moderate', label: 'Rewrite', hint: 'Add, remove, or reorder shots as needed' },
   { value: 'deep', label: 'Restructure', hint: 'Rewrite from scratch' },
 ]
 
@@ -127,12 +127,12 @@ export function SceneEditorModal({
 
   const buildPreserveElements = useCallback((): PreserveElement[] => {
     const preserveElements: PreserveElement[] = []
-    if (preserveDialogueBeats) preserveElements.push('dialogueBeats')
-    if (preserveActionBeats) preserveElements.push('actionBeats')
+    if (preserveDialogueBeats) preserveElements.push('dialogueShots')
+    if (preserveActionBeats) preserveElements.push('actionShots')
     if (preserveMusic) preserveElements.push('music')
     if (preserveSceneDirection) preserveElements.push('sceneDirection')
     if (preserveBeatDirection) preserveElements.push('beatDirection')
-    if (preserveBeatFrames) preserveElements.push('beatFrames')
+    if (preserveBeatFrames) preserveElements.push('shotFrames')
     return preserveElements
   }, [
     preserveDialogueBeats,
