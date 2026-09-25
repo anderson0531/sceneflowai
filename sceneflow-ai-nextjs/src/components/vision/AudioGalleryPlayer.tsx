@@ -1638,7 +1638,7 @@ export function AudioGalleryPlayer({
             />
           )}
         </>
-      ) : inShotVisual.primaryUrl ? (
+      ) : inBeatVisual.primaryUrl ? (
         <>
           {crossfadeFromUrl && renderSceneImage(crossfadeFromUrl, 'previous')}
           {renderSceneImage(
