@@ -109,20 +109,12 @@ const TRANSITION_LABEL: Record<BeatDirectionTransition, string> = {
   MATCH_CUT: 'Match cut',
 }
 
-function DirectionChip({ children }: { children: string }) {
-  return (
-    <span className="rounded-full border border-slate-700/70 bg-slate-900/70 px-2.5 py-0.5 text-[11px] leading-5 text-slate-200">
-      {children}
-    </span>
-  )
-}
-
-function DirectionFact({ label, value }: { label: string; value?: string }) {
+function DirectionTile({ label, value }: { label: string; value?: string }) {
   if (!value?.trim()) return null
   return (
-    <div className="min-w-0">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
-      <p className="mt-1 text-sm leading-relaxed text-slate-200">{value}</p>
+    <div className="min-w-0 rounded-md border border-amber-900/40 bg-slate-900/50 px-2.5 py-2">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-200/70">{label}</p>
+      <p className="mt-1 text-xs leading-relaxed text-slate-200">{value}</p>
     </div>
   )
 }
@@ -255,6 +247,7 @@ export function BeatDirectionEditor({
     options?: {
       refreshPrompts?: 'recompute' | 'keep' | 'rebuild'
       referenceSelection?: BeatReferenceSelection | null
+      actionDescription?: string
     }
   ) => {
     if (!onScriptChange) return
@@ -265,6 +258,8 @@ export function BeatDirectionEditor({
     const beats = getSceneBeats(scene).map((entry) => {
       if (entry.beatId !== beat.beatId) return entry
       const patched: SceneBeat = { ...entry }
+      const actionDescription = options?.actionDescription?.trim()
+      if (actionDescription) patched.actionDescription = actionDescription
       const directionForSave =
         refreshPrompts === 'keep' ? next : stripPromptOverrides(next)
       if (directionForSave && Object.keys(directionForSave).length > 0) {
@@ -416,6 +411,7 @@ export function BeatDirectionEditor({
     if (patch.transition) next.transition = patch.transition
     persist(directionAlignedToSelection(next, referenceSelection), {
       refreshPrompts: 'recompute',
+      actionDescription: patch.actionDescription,
     })
   }
 
@@ -466,6 +462,10 @@ export function BeatDirectionEditor({
   }
 
   const castInFrame = direction?.castInFrame
+  const beatProse =
+    beat.kind === 'action'
+      ? beat.actionDescription?.trim()
+      : beat.line?.trim() || beat.actionDescription?.trim()
   const cameraChips = [
     direction?.shotType,
     direction?.cameraAngle,
@@ -568,75 +568,58 @@ export function BeatDirectionEditor({
           {directButton}
         </div>
       ) : (
-        <div className="flex items-center justify-end gap-2 px-3 pt-3">
-          <BeatExcludeToggle
-            beat={beat}
-            sceneIdx={sceneIdx}
-            scenes={scenes}
-            script={script}
-            onScriptChange={onScriptChange}
-            readOnly={readOnly}
-          />
-          {directButton}
+        <div className="flex items-center justify-between gap-2 px-3 pt-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-400/80">
+            Beat description
+          </p>
+          <div className="flex items-center gap-2">
+            <BeatExcludeToggle
+              beat={beat}
+              sceneIdx={sceneIdx}
+              scenes={scenes}
+              script={script}
+              onScriptChange={onScriptChange}
+              readOnly={readOnly}
+            />
+            {directButton}
+          </div>
         </div>
       )}
       {directorDialog}
 
       {open && (
-        <div className={layout === 'board' ? 'space-y-4 p-3' : 'space-y-4 px-3 pb-3 pt-1'}>
-          {direction?.frozenMoment?.trim() ? (
-            <p className="text-sm leading-relaxed text-slate-100">{direction.frozenMoment.trim()}</p>
+        <div className={layout === 'board' ? 'space-y-3 px-3 pb-3' : 'space-y-3 px-3 pb-3 pt-1'}>
+          {beatProse ? (
+            <p className="text-sm leading-relaxed text-slate-200">{beatProse}</p>
           ) : !hasStructuredDirection ? (
             <p className="text-sm leading-relaxed text-slate-400">
               No direction yet. Use Direct Beat to describe the shot.
             </p>
           ) : null}
 
-          {cameraChips.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {cameraChips.map((chip) => (
-                <DirectionChip key={chip}>{chip}</DirectionChip>
-              ))}
-            </div>
-          )}
-
-          {castInFrame !== undefined && (
-            <div className="space-y-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Cast</p>
-              {castInFrame.length === 0 ? (
-                <p className="text-sm text-slate-300">No one on camera.</p>
-              ) : (
-                <div className="flex flex-wrap gap-1.5">
-                  {castInFrame.map((name) => (
-                    <DirectionChip key={name}>{name}</DirectionChip>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-          {castInFrame === undefined && hasStructuredDirection && (
-            <p className="text-xs text-slate-500">Cast follows the beat text.</p>
-          )}
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <DirectionFact label="Blocking" value={direction?.blocking} />
-            <DirectionFact label="Emotion" value={direction?.emotion} />
-            <DirectionFact label="Gaze" value={direction?.gaze} />
-            <DirectionFact label="Lighting" value={direction?.lightingAccent} />
-            <DirectionFact label="Interaction" value={direction?.propInteraction} />
-            <DirectionFact label="Audio" value={direction?.audioCue} />
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <DirectionTile label="Still" value={direction?.frozenMoment} />
+            <DirectionTile label="Camera" value={cameraChips.join(' • ')} />
+            <DirectionTile
+              label="Cast"
+              value={
+                castInFrame === undefined
+                  ? hasStructuredDirection
+                    ? 'Cast follows the beat text.'
+                    : undefined
+                  : castInFrame.length === 0
+                    ? 'No one on camera.'
+                    : castInFrame.join(', ')
+              }
+            />
+            <DirectionTile label="Blocking" value={direction?.blocking} />
+            <DirectionTile label="Emotion" value={direction?.emotion} />
+            <DirectionTile label="Gaze" value={direction?.gaze} />
+            <DirectionTile label="Lighting" value={direction?.lightingAccent} />
+            <DirectionTile label="Interaction" value={direction?.propInteraction} />
+            <DirectionTile label="Audio" value={direction?.audioCue} />
+            <DirectionTile label="Props" value={direction?.keyProps?.filter(Boolean).join(', ')} />
           </div>
-
-          {(direction?.keyProps?.length ?? 0) > 0 && (
-            <div className="space-y-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Props</p>
-              <div className="flex flex-wrap gap-1.5">
-                {direction?.keyProps?.map((name) => (
-                  <DirectionChip key={name}>{name}</DirectionChip>
-                ))}
-              </div>
-            </div>
-          )}
 
           {hasReferences && (
             <div className="space-y-1.5 border-t border-slate-800 pt-3">
@@ -678,8 +661,8 @@ export function BeatDirectionEditor({
             </button>
             {promptsOpen && (
               <div className="mt-2 space-y-3">
-                <DirectionFact label="Frame prompt" value={framePreview} />
-                <DirectionFact label="Clip prompt" value={videoPreview} />
+                <DirectionTile label="Frame prompt" value={framePreview} />
+                <DirectionTile label="Clip prompt" value={videoPreview} />
               </div>
             )}
           </div>

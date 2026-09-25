@@ -346,6 +346,28 @@ Strictly Avoid: Mannequin geometry.`
     expect(framing).not.toMatch(/raises the spanner/)
   })
 
+  it('locks quoted title copy and a named subject the frozen moment left out', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_title',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription:
+        "A strike-anywhere match flares, lighting a sepia photograph of the 1893 Chicago World's Fair Ferris Wheel. Typography fades in: 'A SceneFlow Studios Production'.",
+      beatDirection: {
+        shotType: 'Macro',
+        cameraAngle: 'high angle',
+        frozenMoment:
+          'A lit match burns directly on a sepia photograph beneath glowing production credits.',
+        castInFrame: [],
+      },
+    })
+
+    expect(framing).toContain('A lit match burns directly on a sepia photograph')
+    expect(framing).toContain("'A SceneFlow Studios Production'")
+    expect(framing).toContain("1893 Chicago World's Fair Ferris Wheel")
+    expect(framing).not.toMatch(/Typography fades in/)
+  })
+
   it('puts expanded face and body tells in Action/Framing, not a two-word mood footer', () => {
     const framing = composeBeatActionFraming({
       beatId: 'bt_gideon',

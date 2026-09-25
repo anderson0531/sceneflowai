@@ -84,6 +84,7 @@ export interface StillDirectorPatch {
   emotion?: string
   propInteraction?: string
   lightingAccent?: string
+  actionDescription?: string
   cameraMovement?: string
   audioCue?: string
   transition?: BeatDirection['transition']
@@ -193,10 +194,14 @@ export function parseStillDirectorPatch(raw: unknown): StillDirectorPatch | unde
   const suggestedNotes = trimOrUndef(
     typeof record.suggestedNotes === 'string' ? record.suggestedNotes : undefined
   )
+  const actionDescription = trimOrUndef(
+    typeof record.actionDescription === 'string' ? record.actionDescription : undefined
+  )
   const patch: StillDirectorPatch = {
     ...(normalized ?? {}),
     ...(actionFraming ? { actionFraming } : {}),
     ...(suggestedNotes ? { suggestedNotes } : {}),
+    ...(actionDescription ? { actionDescription } : {}),
   }
   if (!normalized?.frozenMoment && actionFraming) {
     patch.frozenMoment = actionFraming
@@ -237,6 +242,7 @@ export function applyStillDirectorPatch(
   }
 
   const nextDirection: BeatDirection = { ...(beat.beatDirection ?? {}) }
+  const actionDescription = trimOrUndef(patch.actionDescription)
   for (const key of PATCH_STRING_KEYS) {
     const value = trimOrUndef(patch[key])
     if (value) nextDirection[key] = value
@@ -254,7 +260,11 @@ export function applyStillDirectorPatch(
   nextDirection.generatedBy = options.generatedBy
   nextDirection.updatedAt = new Date().toISOString()
 
-  const patched: SceneBeat = { ...beat, beatDirection: nextDirection }
+  const patched: SceneBeat = {
+    ...beat,
+    ...(actionDescription ? { actionDescription } : {}),
+    beatDirection: nextDirection,
+  }
   return {
     beat: syncBeatStillPromptToDirection(patched, {
       force: true,
@@ -332,9 +342,10 @@ HARD RULES:
 4. Distinct acting: each visible face gets its own expression (eyes/jaw/mouth/shoulders), not a shared two-word mood. Omit emotion and gaze when castInFrame is empty. Never write "Gaze: No characters" or "Gaze: No people".
 5. Two-shots and group shots must keep every directed person fully in frame unless the shot type is a close-up or insert.
 6. Insert/Extreme Close-Up of a limb: only the specified limb/hand. Insert/Extreme Close-Up of an object with nobody in frame: describe the instrument's settled state, not a limb, hand, or face.
-7. Do NOT write style, lighting essays, exclusions, F2V, start-frame, or appearance of library refs — code owns those.
-8. Include cameraMovement, audioCue, and transition only when the user note or the current beat calls for them. transition must be one of CUT, CONTINUE, DISSOLVE, FADE, MATCH_CUT. Omit a field to leave it unchanged.
-9. ${buildPolicySafePhrasingRules()}
+7. frozenMoment repeats locked facts from the action: any on-screen words in quotes, and what a photograph or prop actually depicts. Do not replace them with a vague label such as "production credits." actionDescription is two to four concrete sentences of the motion, with those same quoted words and depicted subjects.
+8. Do NOT write style, lighting essays, exclusions, F2V, start-frame, or appearance of library refs — code owns those.
+9. Include cameraMovement, audioCue, and transition only when the user note or the current beat calls for them. transition must be one of CUT, CONTINUE, DISSOLVE, FADE, MATCH_CUT. Omit a field to leave it unchanged.
+10. ${buildPolicySafePhrasingRules()}
 
 Output JSON only:
 {
@@ -345,7 +356,8 @@ Output JSON only:
       "actionFraming": "shot + spatial still of this instant (proper names, not person tokens)",
       "shotType": "Two-Shot",
       "cameraAngle": "low angle",
-      "frozenMoment": "one-sentence frozen instant",
+      "actionDescription": "two to four sentences naming the motion, what each object depicts, and on-screen words in quotes",
+      "frozenMoment": "one settled instant that repeats those quoted words and depicted subjects",
       "blocking": "body positions, weight, contact — omit for empty-cast object inserts unless it names a settled instrument pose",
       "gaze": "who looks at whom — omit when castInFrame is empty",
       "emotion": "Named: specific face/body tell; Other: different tell — omit when castInFrame is empty",

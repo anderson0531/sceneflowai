@@ -22,6 +22,17 @@ describe('script inception ships beat direction contracts', () => {
     expect(block.toLowerCase()).toContain('gaze')
     expect(block).toMatch(/REQUIRED whenever castInFrame is non-empty/)
     expect(block).toMatch(/jaw set/)
+    expect(block).toContain('production credits')
+    expect(block).toContain('A SceneFlow Studios Production')
+    const rules = buildBeatTimelineNarrationRules({
+      mode: 'moderate',
+      allowNarration: true,
+      allowPerSceneNarration: false,
+      maxNarrationPerScene: 0,
+      allowedPositions: [],
+      blueprintHasNarrator: false,
+    })
+    expect(rules).toContain('two to four concrete sentences')
     expect(block).toMatch(/transition/i)
     expect(block).toContain('door/hatch/vault/lockdown/valve wheels')
   })
