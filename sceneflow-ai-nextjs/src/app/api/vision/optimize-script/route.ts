@@ -9,6 +9,12 @@ import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 import { DIALOGUE_PERFORMANCE_DIRECTION_RULES } from '@/lib/prompts/dialoguePerformanceDirection'
 import { getGeminiProductModel } from '@/lib/config/modelConfig'
+import {
+  filterStructuralActions,
+  restorePreservedScenes,
+  stampPreservedScenes,
+  type ScriptRevisionDepth,
+} from '@/lib/script/directScript'
 
 export const maxDuration = 600 // 10min for large scripts with retries + parallel batches
 export const runtime = 'nodejs'
@@ -56,6 +62,11 @@ interface OptimizeScriptRequest {
   compact?: boolean
   directorReview?: Review | null
   audienceReview?: Review | null
+  revisionDepth?: ScriptRevisionDepth
+  /** Null or omitted keeps the current runtime. Ignored when depth is polish. */
+  targetDurationMinutes?: number | null
+  /** 0-based scene indexes that must be copied through unchanged. */
+  preserveSceneIndices?: number[]
 }
 
 // ============================================================
@@ -92,7 +103,18 @@ interface StructuralPlan {
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, script, instruction, characters, compact, directorReview, audienceReview }: OptimizeScriptRequest = await req.json()
+    const {
+      projectId,
+      script,
+      instruction,
+      characters,
+      compact,
+      directorReview,
+      audienceReview,
+      revisionDepth,
+      targetDurationMinutes,
+      preserveSceneIndices,
+    }: OptimizeScriptRequest = await req.json()
     
     if (!projectId || !script || !instruction) {
       return NextResponse.json(
@@ -131,13 +153,21 @@ export async function POST(req: NextRequest) {
 
     let result: any
     try {
-      result = await optimizeScript(script, instruction, characters, !!compact, directorReview, audienceReview, seriesContinuityBlock, languageBlock)
+      result = await optimizeScript(script, instruction, characters, !!compact, directorReview, audienceReview, seriesContinuityBlock, languageBlock, {
+        revisionDepth,
+        targetDurationMinutes,
+        preserveSceneIndices,
+      })
     } catch (e: any) {
       const msg = String(e?.message || '')
       const parseErr = msg.includes('Failed to parse optimization response') || msg.includes('no JSON found')
       if (parseErr && !compact) {
         console.warn('[Script Optimization] Parse failed. Retrying compact...')
-        result = await optimizeScript(script, instruction, characters, true, directorReview, audienceReview, seriesContinuityBlock, languageBlock)
+        result = await optimizeScript(script, instruction, characters, true, directorReview, audienceReview, seriesContinuityBlock, languageBlock, {
+          revisionDepth,
+          targetDurationMinutes,
+          preserveSceneIndices,
+        })
       } else {
         throw e
       }
@@ -175,7 +205,12 @@ async function optimizeScript(
   directorReview?: Review | null,
   audienceReview?: Review | null,
   seriesContinuityBlock: string = '',
-  languageBlock: string = ''
+  languageBlock: string = '',
+  options: {
+    revisionDepth?: ScriptRevisionDepth
+    targetDurationMinutes?: number | null
+    preserveSceneIndices?: number[]
+  } = {}
 ) {
   // Global deadline: 540s hard limit (60s safety margin before Vercel's 600s kill)
   const globalStartTime = Date.now()
@@ -203,7 +238,27 @@ async function optimizeScript(
   }
   
   // Build shared context once (now includes voice profiles)
-  const sharedContext = buildSharedContext(script, instruction, characters, compact, directorReview, audienceReview, voiceProfiles, seriesContinuityBlock, languageBlock)
+  const revisionDepth: ScriptRevisionDepth = options.revisionDepth || 'rewrite'
+  const preserveSceneIndices = Array.isArray(options.preserveSceneIndices)
+    ? options.preserveSceneIndices.filter((index) => Number.isInteger(index) && index >= 0)
+    : []
+  const targetDurationMinutes =
+    revisionDepth === 'polish' || typeof options.targetDurationMinutes !== 'number'
+      ? null
+      : options.targetDurationMinutes
+
+  const sharedContext = buildSharedContext(
+    script,
+    instruction,
+    characters,
+    compact,
+    directorReview,
+    audienceReview,
+    voiceProfiles,
+    seriesContinuityBlock,
+    languageBlock,
+    { revisionDepth, targetDurationMinutes }
+  )
   
   // Extract per-scene analysis data from audience review (if available)
   const sceneAnalysis: SceneAnalysis[] = (audienceReview as any)?.sceneAnalysis || []
@@ -217,19 +272,31 @@ async function optimizeScript(
   // Produces a restructuring plan (merge/cut/rewrite) that is executed
   // before the batched polish pass.
   // ================================================================
-  let workingScenes = [...(script.scenes || [])]
+  const { scenes: stampedScenes, originals: preservedOriginals } = stampPreservedScenes(
+    [...(script.scenes || [])],
+    preserveSceneIndices
+  )
+  let workingScenes = stampedScenes
   let structuralChanges: any[] = []
-  
-  if (needsStructuralPass(instruction, audienceReview)) {
+  const runStructural =
+    revisionDepth === 'refactor' ||
+    (revisionDepth !== 'polish' && needsStructuralPass(instruction, audienceReview))
+
+  if (runStructural) {
     const elapsedMs = Date.now() - globalStartTime
     const remainingMs = DEADLINE_MS - elapsedMs
     
     const plan = await generateStructuralPlan(
-      script, instruction, characters, audienceReview, sceneAnalysis, remainingMs
+      { ...script, scenes: workingScenes }, instruction, characters, audienceReview, sceneAnalysis, remainingMs
     )
     
     if (plan) {
-      const { scenes: restructuredScenes, changesSummary } = executeStructuralPlan(workingScenes, plan)
+      const preserveSceneNumbers = preserveSceneIndices.map((index) => index + 1)
+      const guardedPlan = {
+        ...plan,
+        actions: filterStructuralActions(plan.actions, preserveSceneNumbers),
+      }
+      const { scenes: restructuredScenes, changesSummary } = executeStructuralPlan(workingScenes, guardedPlan)
       workingScenes = restructuredScenes
       structuralChanges = changesSummary
       console.log(`[Script Optimization] Structural pre-pass: ${script.scenes.length} → ${workingScenes.length} scenes`)
@@ -287,8 +354,18 @@ async function optimizeScript(
           sceneAnalysis,
           audienceReview  // Pass audienceReview for inline recommendation binding
         )
-        batchResults[batchIndex] = { scenes: result.scenes, changesSummary: result.changesSummary || [] }
-        console.log(`[Script Optimization] Batch ${batchIndex + 1} complete: ${result.scenes.length} scenes optimized`)
+        const alignedScenes =
+          revisionDepth === 'polish' && result.scenes?.length !== batchScenes.length
+            ? batchScenes
+            : (result.scenes || []).map((scene: Record<string, unknown>, index: number) => {
+                const preserveId = batchScenes[index]?._directScriptPreserveId
+                if (typeof preserveId === 'string' && preservedOriginals.has(preserveId)) {
+                  return preservedOriginals.get(preserveId)
+                }
+                return scene
+              })
+        batchResults[batchIndex] = { scenes: alignedScenes, changesSummary: result.changesSummary || [] }
+        console.log(`[Script Optimization] Batch ${batchIndex + 1} complete: ${alignedScenes.length} scenes optimized`)
       } catch (error) {
         console.error(`[Script Optimization] Batch ${batchIndex + 1} failed:`, error)
         batchResults[batchIndex] = {
@@ -334,7 +411,7 @@ async function optimizeScript(
   
   return {
     optimizedScript: {
-      scenes: allOptimizedScenes
+      scenes: restorePreservedScenes(allOptimizedScenes, preservedOriginals)
     },
     changesSummary: consolidatedChanges
   }
@@ -349,7 +426,11 @@ function buildSharedContext(
   audienceReview?: Review | null,
   voiceProfiles?: Record<string, CharacterVoiceProfile>,
   seriesContinuityBlock?: string,
-  languageBlock: string = ''
+  languageBlock: string = '',
+  direction: {
+    revisionDepth?: ScriptRevisionDepth
+    targetDurationMinutes?: number | null
+  } = {}
 ): string {
   // CREATIVE REWRITE MODE: Give the model permission to make substantial changes
   // The previous approach was too conservative, resulting in minimal dialogue changes
@@ -359,19 +440,43 @@ function buildSharedContext(
     .map(line => (line || '').trim())
     .filter(line => line && line.toLowerCase() !== 'undefined')
     .join('\n') || 'Improve clarity, pacing, character depth, and visual storytelling.'
-  
-  return `You are a SCREENPLAY DOCTOR performing substantive rewrites to improve this script's Audience Resonance score.
-${seriesContinuityBlock ? `\n${seriesContinuityBlock}\nIMPORTANT: All rewrites must maintain series continuity. Do NOT contradict irreversible canon events, character statuses, or active story threads listed above.\n` : ''}
-=== RECOMMENDATIONS TO IMPLEMENT ===
-${normalizedInstruction}
 
-=== REWRITE AUTHORITY ===
+  const revisionDepth = direction.revisionDepth || 'rewrite'
+  const depthBlock =
+    revisionDepth === 'polish'
+      ? `=== HOW DETAILED ===
+POLISH ONLY. Change wording. Do not add, remove, or reorder scenes or beats. Do not change headings, character names, or plot events. Keep the current runtime.`
+      : revisionDepth === 'refactor'
+        ? `=== HOW DETAILED ===
+REFACTOR. You may add, remove, merge, split, and reorder scenes when the direction or target duration requires it.`
+        : `=== HOW DETAILED ===
+REWRITE scenes in place. You may add, remove, or reorder beats inside a scene. Do not add or remove scenes unless the direction explicitly asks for a structural change.`
+
+  const durationBlock =
+    typeof direction.targetDurationMinutes === 'number' && revisionDepth !== 'polish'
+      ? `=== TARGET DURATION ===
+Aim for about ${direction.targetDurationMinutes} minutes. Adjust scene lengths${revisionDepth === 'refactor' ? ' and scene count' : ''} toward that runtime.`
+      : ''
+
+  const authorityBlock = revisionDepth === 'polish'
+    ? `=== REWRITE AUTHORITY ===
+Do not rewrite freely. Change wording only. Keep every scene, heading, beat, and plot event.`
+    : `=== REWRITE AUTHORITY ===
 You have FULL CREATIVE LICENSE to:
 • REWRITE dialogue completely — change the actual words characters say
 • ADD new dialogue lines or physical beats within scenes
 • EXPAND scenes that need more breathing room (adjust duration accordingly)
 • REMOVE redundant or on-the-nose dialogue
-• TRANSFORM how information is conveyed (telling → showing)
+• TRANSFORM how information is conveyed (telling → showing)`
+  
+  return `You are a SCREENPLAY DOCTOR performing substantive rewrites to improve this script's Audience Resonance score.
+${depthBlock}
+${durationBlock}
+${seriesContinuityBlock ? `\n${seriesContinuityBlock}\nIMPORTANT: All rewrites must maintain series continuity. Do NOT contradict irreversible canon events, character statuses, or active story threads listed above.\n` : ''}
+=== RECOMMENDATIONS TO IMPLEMENT ===
+${normalizedInstruction}
+
+${authorityBlock}
 
 === WHAT "REWRITE" MEANS ===
 WRONG (cosmetic edit): Ben: [horrified] "The ABI is consuming them!"

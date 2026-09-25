@@ -386,7 +386,7 @@ function ReviewScoresContent({
           className="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
         >
           <Wand2 className="w-5 h-5" />
-          <span>Insights & Direction</span>
+          <span>Audience Analysis</span>
         </button>
       </div>
     </>
