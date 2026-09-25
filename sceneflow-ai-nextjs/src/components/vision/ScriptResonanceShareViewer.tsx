@@ -190,7 +190,7 @@ export function ScriptResonanceShareViewer({ token }: { token: string }) {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold text-white">{title}</h1>
-            <p className="text-sm text-gray-400">Insights & Direction — shared report</p>
+            <p className="text-sm text-gray-400">Audience Analysis — shared report</p>
           </div>
           <p className={cn('text-4xl font-bold', scoreColor(review.overallScore))}>
             {review.overallScore}

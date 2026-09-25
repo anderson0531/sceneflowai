@@ -357,7 +357,6 @@ import {
   recommendationId,
   recommendationText,
 } from '@/lib/script/audienceResonance/highImpact'
-import type { CinematicScenePlan } from '@/components/vision/ScriptReviewModal'
 const ScriptReviewModal = dynamic(
   () => import('@/components/vision/ScriptReviewModal').then((m) => ({ default: m.default })),
   { ssr: false }
@@ -16911,6 +16910,140 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     ? `${Math.floor(filmTreatment.total_duration_seconds / 60)}:${String(filmTreatment.total_duration_seconds % 60).padStart(2, '0')}`
     : null
 
+  const handleScriptOptimized = async (optimizedScript: any) => {
+          // Apply the optimized script directly
+          if (optimizedScript?.scenes) {
+            // Strip stale per-scene audienceAnalysis from previous review cycle
+            // so scene cards and scene editor don't show outdated recommendations
+            const cleanedScenes = optimizedScript.scenes.map((scene: any) => {
+              const { audienceAnalysis, ...rest } = scene || {}
+              return rest
+            })
+            
+            // RACE CONDITION FIX: Use scriptRef (latest state) instead of stale closure `script`
+            const currentScript = scriptRef.current || script
+            const updatedScript = {
+              ...currentScript,
+              script: {
+                ...currentScript?.script,
+                scenes: cleanedScenes
+              }
+            }
+            setScript(updatedScript)
+            // Immediately sync ref so downstream callers (e.g. onRegenerate) read the new script
+            scriptRef.current = updatedScript
+            
+            // Clear stale review data — prevents old recommendations from being
+            // re-displayed or re-applied before re-analysis completes
+            setAudienceReview(null)
+            setDirectorReview(null)
+            setReviewsOutdated(true)
+            
+            // Persist to database
+            // RACE CONDITION FIX: Use functional setProject to read latest project state
+            // instead of stale closure `project`, and include scriptUpdatedAt timestamp
+            // so the PUT endpoint can reject stale overwrites
+            try {
+              const scriptUpdatedAt = new Date().toISOString()
+              
+              // Build save payload from latest project state (via ref, not closure)
+              const currentProject = projectRef.current || project
+              const freshMetadata = currentProject?.metadata || {}
+              const freshVisionPhase = freshMetadata.visionPhase || {}
+
+              // Optimized script may include unsegmented (or stale-segmented)
+              // scenes; clear any segments so the migration rebuilds them
+              // from the new flat dialog/sfx/narration content.
+              const scriptForSave = (() => {
+                try {
+                  const cloned = JSON.parse(JSON.stringify(updatedScript))
+                  const sceneList = cloned.script?.scenes ?? cloned.scenes
+                  if (Array.isArray(sceneList)) {
+                    sceneList.forEach((s: any) => { if (s) s.segments = undefined })
+                  }
+                  return cloned
+                } catch {
+                  return updatedScript
+                }
+              })()
+
+              const interimMetadata = {
+                ...freshMetadata,
+                visionPhase: {
+                  ...freshVisionPhase,
+                  script: scriptForSave,
+                  scriptUpdatedAt
+                }
+              }
+              let metadataToPersist: any = interimMetadata
+              try {
+                const { migrateProjectToSegmented } = await import('@/lib/script/migrateToSegmented')
+                metadataToPersist = migrateProjectToSegmented(interimMetadata).metadata
+              } catch (segErr) {
+                console.warn('[onScriptOptimized] Segment re-derivation failed; persisting flat shape', segErr)
+              }
+
+              const saveResponse = await serializedProjectSave({
+                  metadata: metadataToPersist
+                }, 'onScriptOptimized', { mintScriptUpdatedAt: true })
+              
+              // Update project state to prevent stale metadata overwrites
+              if (saveResponse.ok) {
+                setProject(prev => {
+                  if (!prev) return prev
+                  const updated = {
+                    ...prev,
+                    metadata: {
+                      ...prev.metadata,
+                      visionPhase: {
+                        ...prev.metadata?.visionPhase,
+                        script: updatedScript,
+                        scriptUpdatedAt
+                      }
+                    }
+                  }
+                  // Sync ref immediately so concurrent operations see fresh state
+                  projectRef.current = updated
+                  return updated
+                })
+              }
+            } catch (error) {
+              console.error('[ScriptReview] Failed to save optimized script:', error)
+              toast.error('Script revised but failed to save to database')
+            }
+            
+            // Auto-regenerate direction for all scenes after full script optimization
+            // Guard: Skip if a previous optimization cycle is still generating directions.
+            // This prevents the onScriptOptimized → onRegenerate → onScriptOptimized loop
+            // from launching multiple overlapping direction generation cycles.
+            if (optimizationDirectionInFlight.current) {
+              console.log(`[AutoDirection] Skipping direction regen - previous cycle still in flight`)
+            } else {
+              optimizationDirectionInFlight.current = true
+              console.log(`[AutoDirection] Full script optimized - regenerating direction for ${cleanedScenes.length} scenes`)
+              toast.info('Updating scene directions for optimized script...', { duration: 4000 })
+              
+              // Track completion of all direction generations
+              let completedCount = 0
+              const totalScenes = cleanedScenes.length
+              
+              for (let i = 0; i < totalScenes; i++) {
+                // Stagger to avoid overwhelming the API (max 3 concurrent)
+                setTimeout(async () => {
+                  try {
+                    await handleBackgroundDirectionGeneration(i)
+                  } finally {
+                    completedCount++
+                    if (completedCount >= totalScenes) {
+                      optimizationDirectionInFlight.current = false
+                    }
+                  }
+                }, i * 2000) // 2 second stagger between scenes
+              }
+            }
+          }
+  }
+
   return (
     <div className="h-full min-h-0 flex flex-col bg-gray-50 dark:bg-sf-background overflow-hidden overflow-x-hidden max-w-full">
       {isHydratingImages && (
@@ -17019,6 +17152,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               <ScriptPanel 
                 script={script}
                 onScriptChange={handleScriptChange}
+                onScriptOptimized={handleScriptOptimized}
+                currentDurationMinutes={
+                  filmTreatment?.total_duration_seconds
+                    ? Math.max(1, Math.round(filmTreatment.total_duration_seconds / 60))
+                    : null
+                }
                 onAudioSlotSaved={handleAudioSlotSaved}
                 isGenerating={isGenerating}
                 onExpandScene={expandScene}
@@ -17550,312 +17689,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         scoreOutdated={reviewsOutdated}
         reviewHistory={project?.metadata?.visionPhase?.reviewHistory || []}
         onSceneAnalysisComplete={handleSceneAnalysisComplete}
-        onScriptOptimized={async (optimizedScript) => {
-          // Apply the optimized script directly
-          if (optimizedScript?.scenes) {
-            // Strip stale per-scene audienceAnalysis from previous review cycle
-            // so scene cards and scene editor don't show outdated recommendations
-            const cleanedScenes = optimizedScript.scenes.map((scene: any) => {
-              const { audienceAnalysis, ...rest } = scene || {}
-              return rest
-            })
-            
-            // RACE CONDITION FIX: Use scriptRef (latest state) instead of stale closure `script`
-            const currentScript = scriptRef.current || script
-            const updatedScript = {
-              ...currentScript,
-              script: {
-                ...currentScript?.script,
-                scenes: cleanedScenes
-              }
-            }
-            setScript(updatedScript)
-            // Immediately sync ref so downstream callers (e.g. onRegenerate) read the new script
-            scriptRef.current = updatedScript
-            
-            // Clear stale review data — prevents old recommendations from being
-            // re-displayed or re-applied before re-analysis completes
-            setAudienceReview(null)
-            setDirectorReview(null)
-            setReviewsOutdated(true)
-            
-            // Persist to database
-            // RACE CONDITION FIX: Use functional setProject to read latest project state
-            // instead of stale closure `project`, and include scriptUpdatedAt timestamp
-            // so the PUT endpoint can reject stale overwrites
-            try {
-              const scriptUpdatedAt = new Date().toISOString()
-              
-              // Build save payload from latest project state (via ref, not closure)
-              const currentProject = projectRef.current || project
-              const freshMetadata = currentProject?.metadata || {}
-              const freshVisionPhase = freshMetadata.visionPhase || {}
-
-              // Optimized script may include unsegmented (or stale-segmented)
-              // scenes; clear any segments so the migration rebuilds them
-              // from the new flat dialog/sfx/narration content.
-              const scriptForSave = (() => {
-                try {
-                  const cloned = JSON.parse(JSON.stringify(updatedScript))
-                  const sceneList = cloned.script?.scenes ?? cloned.scenes
-                  if (Array.isArray(sceneList)) {
-                    sceneList.forEach((s: any) => { if (s) s.segments = undefined })
-                  }
-                  return cloned
-                } catch {
-                  return updatedScript
-                }
-              })()
-
-              const interimMetadata = {
-                ...freshMetadata,
-                visionPhase: {
-                  ...freshVisionPhase,
-                  script: scriptForSave,
-                  scriptUpdatedAt
-                }
-              }
-              let metadataToPersist: any = interimMetadata
-              try {
-                const { migrateProjectToSegmented } = await import('@/lib/script/migrateToSegmented')
-                metadataToPersist = migrateProjectToSegmented(interimMetadata).metadata
-              } catch (segErr) {
-                console.warn('[onScriptOptimized] Segment re-derivation failed; persisting flat shape', segErr)
-              }
-
-              const saveResponse = await serializedProjectSave({
-                  metadata: metadataToPersist
-                }, 'onScriptOptimized', { mintScriptUpdatedAt: true })
-              
-              // Update project state to prevent stale metadata overwrites
-              if (saveResponse.ok) {
-                setProject(prev => {
-                  if (!prev) return prev
-                  const updated = {
-                    ...prev,
-                    metadata: {
-                      ...prev.metadata,
-                      visionPhase: {
-                        ...prev.metadata?.visionPhase,
-                        script: updatedScript,
-                        scriptUpdatedAt
-                      }
-                    }
-                  }
-                  // Sync ref immediately so concurrent operations see fresh state
-                  projectRef.current = updated
-                  return updated
-                })
-              }
-            } catch (error) {
-              console.error('[ScriptReview] Failed to save optimized script:', error)
-              toast.error('Script revised but failed to save to database')
-            }
-            
-            // Auto-regenerate direction for all scenes after full script optimization
-            // Guard: Skip if a previous optimization cycle is still generating directions.
-            // This prevents the onScriptOptimized → onRegenerate → onScriptOptimized loop
-            // from launching multiple overlapping direction generation cycles.
-            if (optimizationDirectionInFlight.current) {
-              console.log(`[AutoDirection] Skipping direction regen - previous cycle still in flight`)
-            } else {
-              optimizationDirectionInFlight.current = true
-              console.log(`[AutoDirection] Full script optimized - regenerating direction for ${cleanedScenes.length} scenes`)
-              toast.info('Updating scene directions for optimized script...', { duration: 4000 })
-              
-              // Track completion of all direction generations
-              let completedCount = 0
-              const totalScenes = cleanedScenes.length
-              
-              for (let i = 0; i < totalScenes; i++) {
-                // Stagger to avoid overwhelming the API (max 3 concurrent)
-                setTimeout(async () => {
-                  try {
-                    await handleBackgroundDirectionGeneration(i)
-                  } finally {
-                    completedCount++
-                    if (completedCount >= totalScenes) {
-                      optimizationDirectionInFlight.current = false
-                    }
-                  }
-                }, i * 2000) // 2 second stagger between scenes
-              }
-            }
-          }
-        }}
-        onReviseScript={(recommendations: string[]) => {
-          // Legacy fallback - opens Insights & Direction
-          const instruction = recommendations.map((rec, i) => `${i + 1}. ${rec}`).join('\n\n')
-          setReviseScriptInstruction(instruction)
-          setShowReviewModal(false)
-          toast.success('Opening Insights & Direction with review recommendations...')
-        }}
-        onCinematicScenesApply={async (cinematicScenes) => {
-          // Convert cinematic scene plans into ParsedScene objects
-          if (!script?.script?.scenes) return
-          
-          const existingScenes = [...script.script.scenes]
-          const newScenes: any[] = []
-          
-          // Process each cinematic scene plan
-          for (const plan of cinematicScenes) {
-            if (plan.type === 'title') {
-              // Title sequence goes at scene 0
-              const creditText = plan.creditLines?.map(c => 
-                c.role ? `${c.role}: ${c.name}` : c.name
-              ).join('\n') || ''
-              
-              newScenes.push({
-                id: `cinematic-title-${Date.now()}`,
-                sceneNumber: 0,
-                heading: 'INT. TITLE SEQUENCE - DAY',
-                location: 'TITLE SEQUENCE',
-                timeOfDay: 'DAY',
-                interior: true,
-                action: `[TITLE SEQUENCE]\n${creditText}\n\n${plan.notes || 'Cinematic title card with bold text overlay.'}`,
-                dialogue: [],
-                characters: [],
-                duration: plan.duration,
-                cinematicType: 'title',
-                creditLines: plan.creditLines
-              })
-            } else if (plan.type === 'outro') {
-              // Outro goes at the end (will be renumbered)
-              const creditText = plan.creditLines?.map(c => 
-                c.role ? `${c.role}: ${c.name}` : c.name
-              ).join('\n') || ''
-              
-              newScenes.push({
-                id: `cinematic-outro-${Date.now()}`,
-                sceneNumber: existingScenes.length + 1,
-                heading: 'INT. CREDITS - DAY',
-                location: 'CREDITS',
-                timeOfDay: 'DAY',
-                interior: true,
-                action: `[OUTRO / CREDITS]\n${creditText}\n\n${plan.notes || 'Professional closing sequence with credits.'}`,
-                dialogue: [],
-                characters: [],
-                duration: plan.duration,
-                cinematicType: 'outro',
-                creditLines: plan.creditLines
-              })
-            } else if (plan.type === 'establishing') {
-              // Establishing shot before the target scene
-              const targetScene = existingScenes[Math.max(0, (plan.targetScene || 1) - 1)]
-              newScenes.push({
-                id: `cinematic-establishing-${Date.now()}`,
-                sceneNumber: (plan.targetScene || 1) - 0.5,
-                heading: `EXT. ${targetScene?.location || 'LOCATION'} - ESTABLISHING - ${targetScene?.timeOfDay || 'DAY'}`,
-                location: targetScene?.location || 'LOCATION',
-                timeOfDay: targetScene?.timeOfDay || 'DAY',
-                interior: false,
-                action: `[ESTABLISHING SHOT]\nWide drone or crane shot establishing the location: ${targetScene?.location || 'the scene'}.\n\n${plan.notes || ''}`.trim(),
-                dialogue: [],
-                characters: [],
-                duration: plan.duration,
-                cinematicType: 'establishing',
-                targetScene: plan.targetScene
-              })
-            } else if (plan.type === 'broll') {
-              // B-Roll inserted within/after the target scene
-              const targetScene = existingScenes[Math.max(0, (plan.targetScene || 1) - 1)]
-              newScenes.push({
-                id: `cinematic-broll-${Date.now()}`,
-                sceneNumber: (plan.targetScene || 1) + 0.1,
-                heading: `INT/EXT. ${targetScene?.location || 'LOCATION'} - B-ROLL - ${targetScene?.timeOfDay || 'DAY'}`,
-                location: targetScene?.location || 'LOCATION',
-                timeOfDay: targetScene?.timeOfDay || 'DAY',
-                interior: targetScene?.interior ?? true,
-                action: `[B-ROLL]\nAtmospheric visual breather. Close-ups of environmental details.\n\n${plan.notes || ''}`.trim(),
-                dialogue: [],
-                characters: [],
-                duration: plan.duration,
-                cinematicType: 'broll',
-                targetScene: plan.targetScene
-              })
-            } else if (plan.type === 'match-cut') {
-              // Match cut bridge after the specified scene
-              const afterScene = existingScenes[Math.max(0, (plan.insertAfterScene || 1) - 1)]
-              const beforeScene = existingScenes[Math.min(existingScenes.length - 1, plan.insertAfterScene || 1)]
-              newScenes.push({
-                id: `cinematic-matchcut-${Date.now()}`,
-                sceneNumber: (plan.insertAfterScene || 1) + 0.5,
-                heading: 'INT/EXT. MATCH CUT TRANSITION',
-                location: 'TRANSITION',
-                timeOfDay: afterScene?.timeOfDay || 'DAY',
-                interior: true,
-                action: `[MATCH CUT BRIDGE]\nCreative visual transition from Scene ${plan.insertAfterScene} to Scene ${(plan.insertAfterScene || 1) + 1}.\n\n${plan.notes || 'Visual match connecting shapes, movements, or colors between scenes.'}`.trim(),
-                dialogue: [],
-                characters: [],
-                duration: plan.duration,
-                cinematicType: 'match-cut',
-                insertAfterScene: plan.insertAfterScene
-              })
-            }
-          }
-          
-          // Merge and sort scenes by sceneNumber; ensure beats[] for beat-first pipeline
-          const allScenes = [...existingScenes, ...newScenes]
-            .sort((a, b) => a.sceneNumber - b.sceneNumber)
-            .map((scene, idx) =>
-              ensureSceneBeats({
-                ...scene,
-                sceneNumber: idx + 1,
-              } as Record<string, unknown>)
-            )
-          
-          // Update script state
-          const currentScript = scriptRef.current || script
-          const updatedScript = {
-            ...currentScript,
-            script: {
-              ...currentScript?.script,
-              scenes: allScenes
-            }
-          }
-          setScript(updatedScript)
-          
-          // Persist to database
-          try {
-            const existingMetadata = (projectRef.current || project)?.metadata || {}
-            const existingVisionPhase = existingMetadata.visionPhase || {}
-            
-            console.log('[Cinematic] Saving cinematic scenes:', {
-              totalScenes: allScenes.length,
-              cinematicSceneIds: newScenes.map(s => s.id),
-              cinematicTypes: newScenes.map(s => s.cinematicType)
-            })
-            
-            const response = await serializedProjectSave({
-              metadata: {
-                ...existingMetadata,
-                visionPhase: {
-                  ...existingVisionPhase,
-                  script: updatedScript,
-                  cinematicScenes: cinematicScenes // Also store the plans for reference
-                }
-              }
-            }, 'onCinematicScenesApply')
-            
-            if (!response.ok) {
-              const errorText = await response.text()
-              console.error('[Cinematic] Failed to save - server error:', response.status, errorText)
-              throw new Error(`Server error: ${response.status}`)
-            }
-            
-            const result = await response.json()
-            console.log('[Cinematic] Save successful:', {
-              savedScenes: result.project?.metadata?.visionPhase?.script?.script?.scenes?.length,
-              cinematicInResult: result.project?.metadata?.visionPhase?.script?.script?.scenes?.filter((s: any) => s.cinematicType)?.length
-            })
-            
-            toast.success(`Added ${cinematicScenes.length} cinematic scene${cinematicScenes.length > 1 ? 's' : ''} to script`)
-            setShowReviewModal(false)
-          } catch (error) {
-            console.error('[Cinematic] Failed to save cinematic scenes:', error)
-            toast.error('Cinematic scenes added but failed to save to database')
-          }
-        }}
+        onScriptOptimized={handleScriptOptimized}
       />
 
       {/* Background script analysis: handoff explanation + non-blocking status */}

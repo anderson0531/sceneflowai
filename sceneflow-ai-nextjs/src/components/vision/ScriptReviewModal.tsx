@@ -1,18 +1,16 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { X, Users, Star, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Settings2, Check, Square, CheckSquare, BarChart3, MessageSquare, ListChecks, Film, Sparkles, CheckCircle2, Edit, Mic, Eye, FileText, Lightbulb, Info, Clapperboard, Plus, Trash2, GripVertical, Play, Share2 } from 'lucide-react'
+import { X, Users, RefreshCw, Loader, Volume2, VolumeX, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Square, BarChart3, ListChecks, Film, Sparkles, CheckCircle2, Lightbulb, Play, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import { OptimizeSceneDialog } from '@/components/vision/OptimizeSceneDialog'
 import {
   DIRECTOR_ASSISTANTS,
@@ -27,7 +25,6 @@ import { collectTopImpactIssues, firstHighImpactSceneIndex, sceneHasHighImpactIs
 import { useStore } from '@/store/useStore'
 import { AnimatedScore, AnimatedProgressBar } from '@/components/ui/AnimatedScore'
 import { runWithAgentDock } from '@/store/useAgentRunStore'
-import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { toast } from 'sonner'
 import {
   createScriptARShare,
@@ -43,52 +40,6 @@ import { AudienceDescriptionField } from '@/components/audience/AudienceDescript
 import { isStoredReviewStale } from '@/lib/script/audienceResonance/staleness'
 
 const SCRIPT_REVIEW_TARGET_AUDIENCE_KEY = 'sceneflow-script-review-target-audience'
-
-import { CINEMATIC_ELEMENT_TYPES, type SpecialSegmentType } from '@/components/vision/scene-production/cinematic-elements'
-
-// Common optimization templates for "You Direct" tab
-const SCRIPT_INSTRUCTION_TEMPLATES = [
-  {
-    id: 'improve-pacing',
-    label: 'Improve Overall Pacing',
-    text: 'Improve the pacing across all scenes. Tighten slow sections and expand rushed moments.'
-  },
-  {
-    id: 'strengthen-arc',
-    label: 'Strengthen Narrative Arc',
-    text: 'Strengthen the overall narrative arc. Ensure clear setup, conflict escalation, and satisfying resolution.'
-  },
-  {
-    id: 'character-consistency',
-    label: 'Character Consistency',
-    text: 'Ensure character voices and behaviors are consistent throughout the script.'
-  },
-  {
-    id: 'tone-coherence',
-    label: 'Unify Tone',
-    text: 'Unify the tone and mood across all scenes to create a cohesive viewing experience.'
-  },
-  {
-    id: 'visual-cohesion',
-    label: 'Visual Cohesion',
-    text: 'Improve visual storytelling consistency and create a unified visual style.'
-  },
-  {
-    id: 'dialogue-polish',
-    label: 'Polish All Dialogue',
-    text: 'Polish dialogue throughout the script for naturalness, subtext, and character voice.'
-  },
-  {
-    id: 'emotional-beats',
-    label: 'Emotional Beats',
-    text: 'Strengthen emotional beats and ensure proper build-up to key moments.'
-  },
-  {
-    id: 'scene-transitions',
-    label: 'Scene Transitions',
-    text: 'Improve transitions between scenes for better flow and continuity.'
-  }
-]
 
 interface Voice {
   voice_id: string
@@ -163,20 +114,6 @@ interface Review {
   generatedAt: string
 }
 
-// Helper to extract text from a recommendation
-const getRecommendationText = (rec: RecommendationItem): string => {
-  if (typeof rec === 'string') return rec
-  if (rec && typeof rec === 'object') {
-    if (typeof rec.text === 'string') return rec.text
-    const line = coerceDialogueLineText((rec as { line?: unknown }).line)
-    if (line && typeof (rec as { character?: string }).character === 'string') {
-      return `${(rec as { character: string }).character}: ${line}`
-    }
-    if (line) return line
-  }
-  return String(rec ?? '')
-}
-
 // Helper to safely extract text from any item (string, object with text, or other)
 const safeGetText = (item: any): string => {
   if (typeof item === 'string') return item
@@ -188,17 +125,6 @@ const safeGetText = (item: any): string => {
     return JSON.stringify(item)
   }
   return String(item ?? '')
-}
-
-// Helper to get priority color
-const getPriorityColor = (priority?: string): string => {
-  switch (priority) {
-    case 'critical': return 'text-red-600 bg-red-100 dark:bg-red-900/30'
-    case 'high': return 'text-orange-600 bg-orange-100 dark:bg-orange-900/30'
-    case 'medium': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30'
-    case 'optional': return 'text-gray-600 bg-gray-100 dark:bg-gray-700'
-    default: return ''
-  }
 }
 
 // Radar Chart Component for dimensional scores
@@ -374,8 +300,6 @@ interface ScriptReviewModalProps {
   audienceReview: AudienceResonanceReview | Review | null
   onRegenerate: (targetDemographic?: string) => Promise<void>
   isGenerating: boolean
-  onReviseScript?: (recommendations: string[]) => void
-  // New props for inline revision
   projectId?: string
   script?: any
   characters?: any[]
@@ -398,10 +322,6 @@ interface ScriptReviewModalProps {
       analyzedAt: string
     }
   }>) => void
-  // Callback to add cinematic scenes to the script
-  onCinematicScenesApply?: (scenes: CinematicScenePlan[]) => void
-  // Existing cinematic scenes planned
-  existingCinematicScenes?: CinematicScenePlan[]
   /** Project-level audience from Blueprint (single source of truth) */
   audienceDefinition?: AudienceDefinition | null
   /** Current script timestamp, used to detect a review that analysis outran. */
@@ -410,35 +330,7 @@ interface ScriptReviewModalProps {
   onJumpToScene?: (sceneIndex: number) => void
 }
 
-// ============================================================================
-// Cinematic Scene Planning Types
-// ============================================================================
-
-/** Credit line for Title/Outro sequences */
-export interface CreditLine {
-  id: string
-  role?: string // e.g., "Director", "Producer", "Written by" (optional for plain text)
-  name: string  // e.g., "John Smith"
-  isPrimary?: boolean // Primary credits get solo segments, secondary are 2-per-segment
-}
-
-/** Planned cinematic scene (Title, Outro, Establishing, etc.) */
-export interface CinematicScenePlan {
-  id: string
-  type: SpecialSegmentType
-  /** For Title/Outro: credit lines to display */
-  creditLines?: CreditLine[]
-  /** For Match Cut: which scene transition (e.g., "after scene 3") */
-  insertAfterScene?: number
-  /** For Establishing/B-Roll: target scene number */
-  targetScene?: number
-  /** Custom notes or context */
-  notes?: string
-  /** Estimated duration in seconds */
-  duration: number
-}
-
-type ReviewTab = 'overview' | 'analysis' | 'recommendations' | 'cinematic' | 'you-direct'
+type ReviewTab = 'overview' | 'analysis' | 'recommendations'
 
 /**
  * Inline picker for the Production Assistant voice. Replaces the previous
@@ -654,7 +546,6 @@ export default function ScriptReviewModal({
   scriptUpdatedAt,
   onRegenerate,
   isGenerating,
-  onReviseScript,
   projectId,
   script,
   characters,
@@ -662,18 +553,12 @@ export default function ScriptReviewModal({
   scoreOutdated,
   reviewHistory = [],
   onSceneAnalysisComplete,
-  onCinematicScenesApply,
-  existingCinematicScenes = [],
   audienceDefinition: projectAudienceDefinition,
   onJumpToScene,
 }: ScriptReviewModalProps) {
   const [voices, setVoices] = useState<Voice[]>([])
   const [activeTab, setActiveTab] = useState<ReviewTab>('overview')
-  
-  // Cinematic scene planning state
-  const [cinematicScenes, setCinematicScenes] = useState<CinematicScenePlan[]>(existingCinematicScenes)
-  const [editingCreditId, setEditingCreditId] = useState<string | null>(null)
-  
+
   const storedVoiceId = useStore(s => s.sidebarData.selectedVoiceId)
   const selectedAssistant = resolveAssistant(storedVoiceId)
   const selectedVoiceId = selectedAssistant.voiceId
@@ -718,10 +603,6 @@ export default function ScriptReviewModal({
   // Guard ref to prevent re-persisting the same analysis data (prevents infinite loops)
   const lastPersistedAnalysisRef = useRef<string | null>(null)
 
-  // State for inline revision with selectable recommendations
-  const [selectedRecommendationIndices, setSelectedRecommendationIndices] = useState<Set<number>>(new Set())
-  const [isRevising, setIsRevising] = useState(false)
-
   // Per-scene fix state
   const [fixingScenes, setFixingScenes] = useState<Set<number>>(new Set()) // scene numbers currently being fixed
   const [fixedScenes, setFixedScenes] = useState<Set<number>>(new Set())   // scene numbers successfully fixed
@@ -734,12 +615,6 @@ export default function ScriptReviewModal({
   // Scene Analysis generation state (separate from main review)
   const [isGeneratingSceneAnalysis, setIsGeneratingSceneAnalysis] = useState(false)
   const [localSceneAnalysis, setLocalSceneAnalysis] = useState<SceneAnalysis[] | null>(null)
-
-  // "You Direct" tab state
-  const [selectedOptimizations, setSelectedOptimizations] = useState<string[]>([])
-  const [customInstruction, setCustomInstruction] = useState('')
-  const [isOptimizingYouDirect, setIsOptimizingYouDirect] = useState(false)
-  const baseInstructionRef = useRef<string>('')
 
   const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
     createAudienceDefinition({ ...(projectAudienceDefinition || {}), source: 'script' })
@@ -790,19 +665,6 @@ export default function ScriptReviewModal({
   const handleRegenerate = async () => {
     await onRegenerate(buildAudiencePrompt())
   }
-  
-  // Speech recognition for voice input
-  const {
-    supported: sttSupported,
-    isSecure: sttSecure,
-    permission: micPermission,
-    isRecording: isMicRecording,
-    transcript: micTranscript,
-    error: micError,
-    start: startMic,
-    stop: stopMic,
-    setTranscript: setMicTranscript
-  } = useSpeechRecognition()
 
   // Review Expert voice: uses NarratorVoicePicker with curated narrator catalog
   // Default voice: Arnold (authoritative documentary narrator)
@@ -999,10 +861,6 @@ export default function ScriptReviewModal({
     setFixedScenes(new Set())
     setFixingScenes(new Set())
     setExpandedScenes(new Set())
-    // Also reset You Direct state
-    setSelectedOptimizations([])
-    setCustomInstruction('')
-    setIsOptimizingYouDirect(false)
   }, [audienceReview, isOpen])
 
   // Persist scene analysis to project when analysis completes
@@ -1040,267 +898,6 @@ export default function ScriptReviewModal({
     // Call the callback to persist to project
     onSceneAnalysisComplete(analysesToPersist)
   }, [audienceReview, onSceneAnalysisComplete])
-
-  // Initialize all recommendations as selected when review loads
-  useEffect(() => {
-    if (audienceReview && 'recommendations' in audienceReview && audienceReview.recommendations.length > 0) {
-      const allIndices = new Set(audienceReview.recommendations.map((_, i) => i))
-      setSelectedRecommendationIndices(allIndices)
-    }
-  }, [audienceReview])
-
-  // Auto-update custom instructions when optimization selections change
-  useEffect(() => {
-    const selectedTexts = SCRIPT_INSTRUCTION_TEMPLATES
-      .filter(t => selectedOptimizations.includes(t.id))
-      .map(t => t.text)
-    
-    if (selectedTexts.length > 0) {
-      setCustomInstruction(selectedTexts.join('\n\n'))
-    }
-  }, [selectedOptimizations])
-
-    // When recording starts, save the current instruction as base
-    useEffect(() => {
-      if (isMicRecording) {
-        baseInstructionRef.current = customInstruction
-      }
-    }, [isMicRecording])
-    
-    // Update instruction with voice transcript
-    // The hook accumulates finalized text across utterances, so micTranscript
-    // grows with each pause. We combine it with whatever was typed before voice.
-    useEffect(() => {
-      if (!micTranscript) return
-      
-      // Combine base instruction with current transcript
-      const base = baseInstructionRef.current.trim()
-      const newInstruction = base ? `${base} ${micTranscript}` : micTranscript
-      setCustomInstruction(newInstruction)
-    }, [micTranscript])  // Voice input toggle handler
-  const handleVoiceToggle = () => {
-    if (!sttSupported || !sttSecure) return
-    if (isMicRecording) {
-      stopMic()
-      // Keep the final transcript in the instruction
-      baseInstructionRef.current = customInstruction
-      setMicTranscript('')
-      return
-    }
-    // Save current instruction as base before starting
-    baseInstructionRef.current = customInstruction
-    setMicTranscript('')
-    startMic()
-  }
-
-  // "You Direct" revision handler
-  const handleYouDirectRevise = async () => {
-    const instruction = customInstruction.trim()
-    
-    if (!instruction && selectedOptimizations.length === 0) {
-      toast.error('Please select optimizations or enter custom instructions')
-      return
-    }
-
-    if (!projectId || !script || !onScriptOptimized) {
-      toast.error('Script optimization not available')
-      return
-    }
-    
-    setIsOptimizingYouDirect(true)
-    try {
-      await runWithAgentDock({
-        id: 'script-optimize',
-        title: 'Script Agent',
-        subtitle: 'you can keep editing',
-        itemLabel: 'Custom direction',
-      }, async () => {
-        let response = await fetch('/api/vision/optimize-script', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            projectId, 
-            script, 
-            instruction, 
-            characters: characters || []
-          })
-        })
-        if (!response.ok) {
-          if (response.status === 422) {
-            // Retry with compact response to avoid truncation/parse issues
-            toast.message('Preview was large; retrying compact version...')
-            response = await fetch('/api/vision/optimize-script', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                projectId, 
-                script, 
-                instruction, 
-                characters: characters || [], 
-                compact: true
-              })
-            })
-          }
-          if (!response.ok) throw new Error('Optimization failed')
-        }
-        const data = await response.json()
-        
-        if (data.optimizedScript) {
-          // Await so the Script Agent dock stays active until DB write completes
-          await onScriptOptimized(data.optimizedScript)
-          toast.success('Script revised with your custom direction! Re-analyzing...')
-          // Reset You Direct state after success
-          setSelectedOptimizations([])
-          setCustomInstruction('')
-          // RACE CONDITION FIX: Defer re-analysis to allow React to commit state updates
-          // from onScriptOptimized before onRegenerate reads project/script state.
-          // Without this delay, onRegenerate captures stale pre-optimization state.
-          await new Promise<void>(resolve => {
-            requestAnimationFrame(() => setTimeout(resolve, 50))
-          })
-          await handleRegenerate()
-          setActiveTab('overview')
-        } else {
-          toast.message('No changes returned for the current instruction.')
-        }
-      })
-    } catch (error: any) {
-      console.error('[You Direct] Error:', error)
-      toast.error(error.message || 'Failed to revise script')
-    } finally {
-      setIsOptimizingYouDirect(false)
-    }
-  }
-
-  // Toggle recommendation selection
-  const toggleRecommendation = (index: number) => {
-    setSelectedRecommendationIndices(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(index)) {
-        newSet.delete(index)
-      } else {
-        newSet.add(index)
-      }
-      return newSet
-    })
-  }
-
-  // Select/deselect all recommendations
-  const toggleAllRecommendations = (selectAll: boolean) => {
-    if (selectAll && audienceReview && 'recommendations' in audienceReview) {
-      setSelectedRecommendationIndices(new Set(audienceReview.recommendations.map((_, i) => i)))
-    } else {
-      setSelectedRecommendationIndices(new Set())
-    }
-  }
-
-  // Inline revision handler - calls optimize-script API directly
-  const handleInlineRevise = async () => {
-    if (!projectId || !script || !onScriptOptimized) {
-      // Fall back to legacy behavior if new props not provided
-      if (onReviseScript && audienceReview && 'recommendations' in audienceReview) {
-        const selectedRecs = audienceReview.recommendations
-          .filter((_, i) => selectedRecommendationIndices.has(i))
-          .map(r => getRecommendationText(r))
-        onReviseScript(selectedRecs)
-      }
-      return
-    }
-
-    if (selectedRecommendationIndices.size === 0) {
-      toast.error('Please select at least one recommendation to apply')
-      return
-    }
-
-    // Build instruction from selected recommendations, sorted by priority and enriched with metadata
-    const review = audienceReview as AudienceResonanceReview
-    const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, optional: 3 }
-    const selectedRecs = review.recommendations
-      .map((r, i) => ({ rec: r, originalIndex: i }))
-      .filter(({ originalIndex }) => selectedRecommendationIndices.has(originalIndex))
-      .sort((a, b) => {
-        const pa = typeof a.rec === 'object' ? (priorityOrder[a.rec.priority] ?? 3) : 3
-        const pb = typeof b.rec === 'object' ? (priorityOrder[b.rec.priority] ?? 3) : 3
-        return pa - pb
-      })
-    
-    const instruction = selectedRecs.map(({ rec }, i) => {
-      const text = getRecommendationText(rec)
-      if (typeof rec === 'object' && rec.priority) {
-        const tag = `[${rec.priority.toUpperCase()}${rec.category ? ` — ${rec.category}` : ''}]`
-        return `${i + 1}. ${tag} ${text}`
-      }
-      return `${i + 1}. ${text}`
-    }).join('\n\n')
-
-    setIsRevising(true)
-    try {
-      await runWithAgentDock({
-        id: 'script-optimize',
-        title: 'Script Agent',
-        subtitle: 'you can keep editing',
-        itemLabel: `${selectedRecs.length} recommendation${selectedRecs.length > 1 ? 's' : ''}`,
-      }, async () => {
-          let response = await fetch('/api/vision/optimize-script', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            projectId,
-            script,
-            instruction,
-            characters: characters || []
-          })
-        })
-
-        if (!response.ok) {
-          if (response.status === 422) {
-            // Retry with compact response
-            toast.message('Retrying with compact optimization...')
-            response = await fetch('/api/vision/optimize-script', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                projectId,
-                script,
-                instruction,
-                characters: characters || [],
-                compact: true
-              })
-            })
-          }
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}))
-            throw new Error(errorData.error || 'Failed to optimize script')
-          }
-        }
-
-        const data = await response.json()
-        
-        if (data.optimizedScript) {
-          // Await so the Script Agent dock stays active until DB write completes
-          await onScriptOptimized(data.optimizedScript)
-          toast.success(`Script revised with ${selectedRecs.length} recommendation${selectedRecs.length > 1 ? 's' : ''}! Re-analyzing...`)
-          // Clear selections
-          setSelectedRecommendationIndices(new Set())
-          // RACE CONDITION FIX: Defer re-analysis to allow React to commit state updates
-          // from onScriptOptimized before onRegenerate reads project/script state.
-          // Without this delay, onRegenerate captures stale pre-optimization state.
-          await new Promise<void>(resolve => {
-            requestAnimationFrame(() => setTimeout(resolve, 50))
-          })
-          await handleRegenerate()
-          setActiveTab('overview')
-        } else {
-          throw new Error('No optimized script returned')
-        }
-      })
-    } catch (err: any) {
-      console.error('[Script Revision] Error:', err)
-      toast.error(err.message || 'Failed to revise script')
-    } finally {
-      setIsRevising(false)
-    }
-  }
 
   // Generate scene-by-scene analysis via dedicated API
   const handleGenerateSceneAnalysis = async () => {
@@ -1629,9 +1226,9 @@ export default function ScriptReviewModal({
                 id="script-review-dialog-title"
                 className="dashboard-widget-title text-lg font-semibold leading-tight m-0"
               >
-                Insights & Direction
+                Audience Analysis
               </h2>
-              <span className="text-[11px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded ml-2">Analysis & Planning</span>
+              <span className="text-[11px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded ml-2">Script Analysis and Recommendations</span>
               {reviewIsStale && (
                 <span className="ml-1 inline-flex items-center gap-1 rounded bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
                   <AlertTriangle className="h-3 w-3" />
@@ -1863,7 +1460,7 @@ export default function ScriptReviewModal({
                     </Button>
                   </div>
                 )}
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger 
                     value="overview" 
                     className="flex items-center gap-1.5 text-xs sm:text-sm"
@@ -1892,27 +1489,6 @@ export default function ScriptReviewModal({
                         {sceneAnalysis.length}
                       </Badge>
                     )}
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="cinematic" 
-                    className="flex items-center gap-1.5 text-xs sm:text-sm"
-                    title="Plan cinematic elements: titles, credits, establishing shots"
-                  >
-                    <Clapperboard className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Cinematic</span>
-                    {cinematicScenes.length > 0 && (
-                      <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5 hidden sm:flex bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
-                        {cinematicScenes.length}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="you-direct" 
-                    className="flex items-center gap-1.5 text-xs sm:text-sm"
-                    title="Custom optimizations with your own direction"
-                  >
-                    <Wand2 className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">You Direct</span>
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -2369,424 +1945,6 @@ export default function ScriptReviewModal({
                   </div>
                 )}
 
-                {/* Cinematic Elements Tab */}
-                {activeTab === 'cinematic' && (
-                  <div className="space-y-6">
-                    {/* Introduction */}
-                    <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
-                      <div className="flex items-start gap-3">
-                        <Clapperboard className="w-5 h-5 text-purple-600 dark:text-purple-400 mt-0.5" />
-                        <div>
-                          <h3 className="font-medium text-purple-900 dark:text-purple-100">Cinematic Elements</h3>
-                          <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
-                            Add professional polish to your video with title sequences, establishing shots, and credits.
-                            These will be created as dedicated scenes in your script.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Add Element Buttons */}
-                    <div>
-                      <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                        <Plus className="w-4 h-4 text-purple-600" />
-                        Add Cinematic Element
-                      </h3>
-                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-                        {CINEMATIC_ELEMENT_TYPES.map((element) => {
-                          const Icon = element.icon
-                          const isDisabled = (element.id === 'title' || element.id === 'outro') && 
-                            cinematicScenes.some(s => s.type === element.id)
-                          return (
-                            <Button
-                              key={element.id}
-                              variant="outline"
-                              size="sm"
-                              disabled={isDisabled}
-                              onClick={() => {
-                                const newScene: CinematicScenePlan = {
-                                  id: `cinematic-${Date.now()}`,
-                                  type: element.id,
-                                  duration: element.defaultDuration,
-                                  creditLines: (element.id === 'title' || element.id === 'outro') 
-                                    ? [{ id: `credit-${Date.now()}`, name: '', isPrimary: true }] 
-                                    : undefined,
-                                  insertAfterScene: element.id === 'match-cut' ? 1 : undefined,
-                                  targetScene: element.id === 'establishing' || element.id === 'broll' ? 1 : undefined,
-                                }
-                                setCinematicScenes(prev => [...prev, newScene])
-                              }}
-                              className={`h-auto py-3 px-3 justify-start text-left ${
-                                isDisabled ? 'opacity-50' : 'hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300'
-                              }`}
-                              title={isDisabled ? `${element.name} already added` : element.description}
-                            >
-                              <div className="flex items-start gap-2 w-full">
-                                <Icon className="w-4 h-4 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" />
-                                <div className="text-left min-w-0">
-                                  <div className="font-medium text-xs truncate">{element.name}</div>
-                                  <div className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{element.shortDescription}</div>
-                                </div>
-                              </div>
-                            </Button>
-                          )
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Planned Cinematic Scenes */}
-                    {cinematicScenes.length > 0 && (
-                      <div>
-                        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                          <Film className="w-4 h-4 text-blue-600" />
-                          Planned Scenes ({cinematicScenes.length})
-                        </h3>
-                        <div className="space-y-3">
-                          {cinematicScenes.map((scene) => {
-                            const config = CINEMATIC_ELEMENT_TYPES.find(t => t.id === scene.type)
-                            if (!config) return null
-                            const Icon = config.icon
-                            
-                            return (
-                              <Card key={scene.id} className="border-purple-200 dark:border-purple-800">
-                                <CardContent className="p-4">
-                                  <div className="flex items-start justify-between gap-3">
-                                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                                      <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                                        <Icon className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                          <span className="font-medium text-sm">{config.name}</span>
-                                          <Badge variant="outline" className="text-xs">
-                                            {scene.duration}s
-                                          </Badge>
-                                        </div>
-                                        
-                                        {/* Title/Outro: Credit Lines Editor */}
-                                        {(scene.type === 'title' || scene.type === 'outro') && scene.creditLines && (
-                                          <div className="mt-3 space-y-2">
-                                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                                              {scene.type === 'title' ? 'Opening Credits' : 'Closing Credits'}
-                                              <span className="text-gray-400 dark:text-gray-500 ml-1">
-                                                (Primary credits = solo segment, others = 2 per segment)
-                                              </span>
-                                            </div>
-                                            {scene.creditLines.map((credit, idx) => (
-                                              <div key={credit.id} className="flex items-center gap-2">
-                                                <GripVertical className="w-3 h-3 text-gray-400 cursor-grab" />
-                                                <Input
-                                                  value={credit.role || ''}
-                                                  onChange={(e) => {
-                                                    setCinematicScenes(prev => prev.map(s => 
-                                                      s.id === scene.id 
-                                                        ? { ...s, creditLines: s.creditLines?.map(c => 
-                                                            c.id === credit.id ? { ...c, role: e.target.value } : c
-                                                          )}
-                                                        : s
-                                                    ))
-                                                  }}
-                                                  placeholder="Role (optional)"
-                                                  className="w-28 h-8 text-xs"
-                                                />
-                                                <Input
-                                                  value={credit.name}
-                                                  onChange={(e) => {
-                                                    setCinematicScenes(prev => prev.map(s => 
-                                                      s.id === scene.id 
-                                                        ? { ...s, creditLines: s.creditLines?.map(c => 
-                                                            c.id === credit.id ? { ...c, name: e.target.value } : c
-                                                          )}
-                                                        : s
-                                                    ))
-                                                  }}
-                                                  placeholder="Name"
-                                                  className="flex-1 h-8 text-xs"
-                                                />
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() => {
-                                                    setCinematicScenes(prev => prev.map(s => 
-                                                      s.id === scene.id 
-                                                        ? { ...s, creditLines: s.creditLines?.map(c => 
-                                                            c.id === credit.id ? { ...c, isPrimary: !c.isPrimary } : c
-                                                          )}
-                                                        : s
-                                                    ))
-                                                  }}
-                                                  className={`h-8 px-2 ${credit.isPrimary ? 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20' : 'text-gray-400'}`}
-                                                  title={credit.isPrimary ? 'Primary (solo segment)' : 'Secondary (paired)'}
-                                                >
-                                                  <Star className={`w-3 h-3 ${credit.isPrimary ? 'fill-current' : ''}`} />
-                                                </Button>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() => {
-                                                    setCinematicScenes(prev => prev.map(s => 
-                                                      s.id === scene.id 
-                                                        ? { ...s, creditLines: s.creditLines?.filter(c => c.id !== credit.id) }
-                                                        : s
-                                                    ))
-                                                  }}
-                                                  className="h-8 px-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                                >
-                                                  <Trash2 className="w-3 h-3" />
-                                                </Button>
-                                              </div>
-                                            ))}
-                                            <Button
-                                              variant="outline"
-                                              size="sm"
-                                              onClick={() => {
-                                                setCinematicScenes(prev => prev.map(s => 
-                                                  s.id === scene.id 
-                                                    ? { ...s, creditLines: [...(s.creditLines || []), { id: `credit-${Date.now()}`, name: '', isPrimary: false }] }
-                                                    : s
-                                                ))
-                                              }}
-                                              className="h-7 text-xs mt-1"
-                                            >
-                                              <Plus className="w-3 h-3 mr-1" />
-                                              Add Credit Line
-                                            </Button>
-                                          </div>
-                                        )}
-
-                                        {/* Match Cut: Scene Selector */}
-                                        {scene.type === 'match-cut' && (
-                                          <div className="mt-3 flex items-center gap-2">
-                                            <span className="text-xs text-gray-500">Insert after scene:</span>
-                                            <Input
-                                              type="number"
-                                              min={1}
-                                              value={scene.insertAfterScene || 1}
-                                              onChange={(e) => {
-                                                setCinematicScenes(prev => prev.map(s => 
-                                                  s.id === scene.id 
-                                                    ? { ...s, insertAfterScene: parseInt(e.target.value) || 1 }
-                                                    : s
-                                                ))
-                                              }}
-                                              className="w-16 h-7 text-xs"
-                                            />
-                                          </div>
-                                        )}
-
-                                        {/* Establishing/B-Roll: Target Scene */}
-                                        {(scene.type === 'establishing' || scene.type === 'broll') && (
-                                          <div className="mt-3 flex items-center gap-2">
-                                            <span className="text-xs text-gray-500">For scene:</span>
-                                            <Input
-                                              type="number"
-                                              min={1}
-                                              value={scene.targetScene || 1}
-                                              onChange={(e) => {
-                                                setCinematicScenes(prev => prev.map(s => 
-                                                  s.id === scene.id 
-                                                    ? { ...s, targetScene: parseInt(e.target.value) || 1 }
-                                                    : s
-                                                ))
-                                              }}
-                                              className="w-16 h-7 text-xs"
-                                            />
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                    
-                                    {/* Remove Button */}
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => {
-                                        setCinematicScenes(prev => prev.filter(s => s.id !== scene.id))
-                                      }}
-                                      className="h-8 px-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Apply Button */}
-                    {cinematicScenes.length > 0 && onCinematicScenesApply && (
-                      <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCinematicScenes([])}
-                        >
-                          Clear All
-                        </Button>
-                        <Button
-                          onClick={() => {
-                            // Validate credit lines have names
-                            const invalidScenes = cinematicScenes.filter(s => 
-                              s.creditLines?.some(c => !c.name.trim())
-                            )
-                            if (invalidScenes.length > 0) {
-                              toast.error('Please fill in all credit line names')
-                              return
-                            }
-                            onCinematicScenesApply(cinematicScenes)
-                            toast.success(`${cinematicScenes.length} cinematic scene${cinematicScenes.length > 1 ? 's' : ''} will be added to your script`)
-                          }}
-                          className="bg-purple-600 hover:bg-purple-500 text-white px-6"
-                        >
-                          <Clapperboard className="w-4 h-4 mr-2" />
-                          Apply {cinematicScenes.length} Scene{cinematicScenes.length !== 1 ? 's' : ''} to Script
-                        </Button>
-                      </div>
-                    )}
-
-                    {/* Empty State */}
-                    {cinematicScenes.length === 0 && (
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        <Clapperboard className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                        <p className="text-sm">No cinematic elements planned yet</p>
-                        <p className="text-xs mt-1">Add a title sequence, establishing shots, or credits above</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* You Direct Tab */}
-                {activeTab === 'you-direct' && (
-                  <div className="space-y-6">
-                    {/* Common Optimizations */}
-                    <div>
-                      <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                        <Wand2 className="w-4 h-4 text-blue-600" />
-                        Common Optimizations
-                      </h3>
-                      <div className="grid grid-cols-2 gap-3">
-                        {SCRIPT_INSTRUCTION_TEMPLATES.map(template => (
-                          <Button
-                            key={template.id}
-                            size="sm"
-                            variant={selectedOptimizations.includes(template.id) ? "default" : "outline"}
-                            onClick={() => {
-                              if (selectedOptimizations.includes(template.id)) {
-                                setSelectedOptimizations(prev => prev.filter(id => id !== template.id))
-                              } else {
-                                setSelectedOptimizations(prev => [...prev, template.id])
-                              }
-                            }}
-                            className={`justify-start text-left h-auto py-3 px-3 ${
-                              selectedOptimizations.includes(template.id) 
-                                ? 'bg-blue-600 text-white hover:bg-blue-500' 
-                                : 'hover:bg-blue-50 dark:hover:bg-blue-900/20'
-                            }`}
-                          >
-                            <div className="flex items-start gap-2 w-full">
-                              {selectedOptimizations.includes(template.id) && (
-                                <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                              )}
-                              <Edit className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                              <div className="text-left">
-                                <div className="font-medium text-xs">{template.label}</div>
-                              </div>
-                            </div>
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Custom Instructions */}
-                    <div>
-                      <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                        <Edit className="w-4 h-4 text-green-600" />
-                        Custom Instructions
-                      </h3>
-                      <div className="space-y-2">
-                        <div className="flex flex-col gap-2">
-                          <Textarea
-                            value={customInstruction}
-                            onChange={(e) => setCustomInstruction(e.target.value)}
-                            placeholder="Describe how you want to optimize your script...
-Examples:
-• Make the pacing more dynamic and cut unnecessary scenes
-• Strengthen the emotional arc and character development
-• Unify the visual style across all scenes
-• Polish dialogue for more natural, subtext-rich conversations"
-                            className="min-h-[180px] text-sm"
-                          />
-                          <div className="flex items-center justify-between gap-3">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={handleVoiceToggle}
-                              disabled={!sttSupported || !sttSecure}
-                              className={`flex items-center gap-2 ${isMicRecording ? 'border-red-500 text-red-400' : ''}`}
-                              aria-label={isMicRecording ? 'Stop voice input' : 'Start voice input'}
-                            >
-                              {isMicRecording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                              <span>
-                                {isMicRecording ? 'Stop Recording' : 'Voice Input'}
-                              </span>
-                            </Button>
-                            {isMicRecording && (
-                              <span className="text-xs text-red-400 animate-pulse">Listening...</span>
-                            )}
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          💡 Be specific about what to optimize. The more detailed your instructions, the better the results.
-                        </p>
-                        {!sttSupported && (
-                          <p className="text-xs text-amber-500">
-                            Voice input is unavailable in this browser. Try Chrome on HTTPS or localhost.
-                          </p>
-                        )}
-                        {sttSupported && !sttSecure && (
-                          <p className="text-xs text-amber-500">
-                            Voice input requires a secure context (HTTPS or localhost).
-                          </p>
-                        )}
-                        {micError && (
-                          <p className="text-xs text-red-500">
-                            Mic error: {micError}
-                          </p>
-                        )}
-                        {micPermission && micPermission !== 'granted' && (
-                          <p className="text-xs text-amber-400">
-                            Microphone permission: {micPermission}. Update browser settings to enable voice input.
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Revise Button */}
-                    <div className="flex gap-3 justify-end pt-2 border-t border-gray-200 dark:border-gray-700">
-                      <Button
-                        onClick={handleYouDirectRevise}
-                        disabled={isOptimizingYouDirect || (!customInstruction.trim() && selectedOptimizations.length === 0)}
-                        className="bg-purple-600 hover:bg-purple-500 text-white px-6"
-                      >
-                        {isOptimizingYouDirect ? (
-                          <>
-                            <Loader className="w-4 h-4 mr-2 animate-spin" />
-                            Revising Script...
-                          </>
-                        ) : (
-                          <>
-                            <Wand2 className="w-4 h-4 mr-2" />
-                            Revise Script with Custom Direction
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                )}
               </div>
             </Tabs>
           )}

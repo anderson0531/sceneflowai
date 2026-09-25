@@ -86,6 +86,8 @@
     "audienceResonanceRunTooltip": "Run Audience Resonance Analysis on your script",
     "audienceResonanceViewTooltip": "Audience Resonance Analysis and script insights",
     "audienceResonanceCancel": "Cancel Audience Resonance analysis",
+    "directScript": "Direct Script",
+    "directScriptTooltip": "Revise the whole script — recommendations, rewrites, and target duration",
     "recommendations": "Recommendations",
     "recommendationsTooltip": "Audience Resonance and Polish for this scene",
     "recommendationsDialogTitle": "Recommendations",
