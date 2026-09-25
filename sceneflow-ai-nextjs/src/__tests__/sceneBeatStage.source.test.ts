@@ -44,6 +44,8 @@ describe('shared scene beat stage', () => {
     const editor = readSource('src/components/vision/BeatDirectionEditor.tsx')
     expect(editor).toContain('Direct Beat')
     expect(editor).toContain('No direction yet. Use Direct Beat to describe the shot.')
+    expect(editor).toContain('Beat description')
+    expect(editor).toContain('text-amber-400/80')
     expect(editor).not.toContain('<input')
     expect(editor).not.toContain('<select')
     expect(editor).not.toContain('<textarea')

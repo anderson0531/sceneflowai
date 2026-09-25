@@ -222,7 +222,7 @@ export function buildBeatTimelineNarrationRules(
   opts?: { compact?: boolean }
 ): string {
   const antiClone =
-    '• Action beats between spoken lines must add NEW visuals (insert, cutaway, geography, non-speaker reaction) — never clone the speaker\'s blocking already covered by adjacent dialogue'
+    '• Action beats between spoken lines must add NEW visuals (insert, cutaway, geography, non-speaker reaction) — never clone the speaker\'s blocking already covered by adjacent dialogue\n• Action beats: "actionDescription" is two to four concrete sentences of what happens. Name what each visible object actually depicts, and put any on-screen words in quotes (for example \'A SceneFlow Studios Production\'). Do not leave a title, sign, or photograph as a vague label.'
   const directionLine = opts?.compact
     ? '• Every beat MUST also include a compact "beatDirection" object — shotType, frozenMoment, transition ONLY (see BEAT DIRECTION rules below)'
     : '• Every beat MUST also include a "beatDirection" object (see BEAT DIRECTION rules below)'
@@ -279,7 +279,7 @@ Field definitions:
 • "keyProps": array of prop labels — SUBSET of the scene's Key Props — that are visible and relevant in THIS beat. Omit props not in this beat. Use the exact prop labels from the scene's Key Props list. Do not list built-in architectural hardware (door/hatch/vault/lockdown/valve wheels, bolted valves) — those belong in the location establishing shot / scene.location.
 • "propInteraction": how a character physically handles a listed prop this beat (e.g., "Piper grips the journal with both hands and holds it against Gideon's sternum"). Names must match keyProps entries.
 • "lightingAccent": per-beat lighting deviation from the scene's overall lighting (e.g., "teal accent from the core underlighting Gideon's face"). Omit when scene lighting is unchanged.
-• "frozenMoment": ONE SENTENCE naming the single frozen still this beat represents — pose plus what is readable on the face/body of EACH person in castInFrame (e.g., "Piper stops Gideon mid-lean, journal pressed to his sternum, her jaw set, his eyes wide."). Prefer noun-first, concrete, one composition. Do not write "standing motionless" without the face and body that make the hold readable.
+• "frozenMoment": ONE settled instant — pose plus what is readable on the face/body of EACH person in castInFrame (e.g., "Piper stops Gideon mid-lean, journal pressed to his sternum, her jaw set, his eyes wide."). Repeat locked facts from the action: quoted on-screen words and what a photograph or prop actually shows (e.g., "A lit match lies on a sepia photograph of the 1893 Chicago World's Fair Ferris Wheel, under the title 'A SceneFlow Studios Production'."). Do not replace those facts with a vague label such as "production credits." Do not write "standing motionless" without the face and body that make the hold readable.
 • "audioCue": per-beat diegetic sound (e.g., "glitching proximity timer chirps twice", "rhythmic thrum of the core swells"). Only include for beats with a distinct in-scene sound; leave out generic ambience.
 • "transition": how this beat cuts into the NEXT beat. One of: "CUT", "CONTINUE", "DISSOLVE", "FADE", "MATCH_CUT". Default is "CUT".
 
@@ -294,7 +294,7 @@ Rules:
 • Do NOT restate the scene direction verbatim — refine it for THIS beat.
 • Do NOT put dialogue content in beatDirection fields.
 • frozenMoment is a photograph, not a video: no temporal verbs ("pulses", "walks toward"). Describe the instant.
-• Keep values short: shotType is 1–4 words; gaze, propInteraction, audioCue, lightingAccent are one clause each; blocking is one clause that still names weight/hands/shoulders for every visible person; emotion names visible tells per visible person; frozenMoment is one sentence that includes pose and face/body for the whole cast.
+• Keep camera labels short: shotType is 1–4 words; gaze, propInteraction, audioCue, lightingAccent are one clause each; blocking is one clause that still names weight/hands/shoulders for every visible person; emotion names visible tells per visible person. frozenMoment is one settled instant that includes pose, face/body for the whole cast, and any quoted on-screen words or depicted subjects from the action.
 
 ${buildPolicySafePhrasingRules()}`
 }
@@ -322,7 +322,7 @@ Every beat MUST include a "beatDirection" object with the fields below and NO ot
 
 • "castInFrame": array of the character names visible on camera in THIS beat, exactly as spelled in the scene's character list. It is the only thing that decides who appears. Use [] for a frame with no people in it. Never list NARRATOR.
 • "shotType": named shot for this beat, 1–4 words (e.g., "Wide Shot", "Medium Close-Up", "Insert Shot", "Over-the-Shoulder", "Two-Shot").
-• "frozenMoment": ONE SENTENCE naming the single frozen still this beat represents (e.g., "Piper halts Gideon mid-lean, journal pressed to his sternum, her jaw set."). Noun-first, concrete, one composition — pose plus what is readable on the face/body. It is a photograph, not a video: no temporal verbs ("pulses", "walks toward"). Do not write empty stillness ("standing motionless") without the face and body that make the hold readable.
+• "frozenMoment": ONE settled instant (e.g., "Piper halts Gideon mid-lean, journal pressed to his sternum, her jaw set."). Noun-first, concrete, one composition — pose plus what is readable on the face/body. Repeat quoted on-screen words and what a photograph or prop depicts; do not replace them with a vague label such as "production credits." It is a photograph, not a video: no temporal verbs ("pulses", "walks toward"). Do not write empty stillness ("standing motionless") without the face and body that make the hold readable.
 • "transition": how this beat cuts into the NEXT beat. One of: "CUT", "CONTINUE", "DISSOLVE", "FADE", "MATCH_CUT". Default is "CUT".${propFields}
 
 Rules:

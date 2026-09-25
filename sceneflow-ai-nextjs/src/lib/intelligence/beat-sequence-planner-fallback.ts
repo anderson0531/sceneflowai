@@ -276,6 +276,43 @@ function restatesSpokenLine(frozenMoment: string, spokenLine: string): boolean {
   return remainder === '' || remainder.split(/\s+/).length <= 3
 }
 
+/**
+ * Facts the action states that the frozen instant left out.
+ *
+ * Quoted on-screen words and a named subject (a title, a year, a proper name)
+ * are what an image model otherwise invents. The still still leads with the
+ * frozen instant; only the missing facts are appended.
+ */
+export function lockedReadableDetail(action: string, frozen: string): string {
+  const source = action.trim()
+  const held = frozen.trim()
+  if (!source || !held) return ''
+  const heldFold = held.toLowerCase()
+  const facts: string[] = []
+  const seen = new Set<string>()
+  const add = (fact: string) => {
+    const trimmed = fact.trim()
+    const key = trimmed.toLowerCase()
+    if (!trimmed || heldFold.includes(key) || seen.has(key)) return
+    if ([...seen].some((existing) => existing.includes(key))) return
+    seen.add(key)
+    facts.push(trimmed)
+  }
+
+  for (const match of source.matchAll(
+    /(?:^|[\s:(])(?:'([^'\n]{2,160})'|"([^"\n]{2,160})"|“([^”\n]{2,160})”)(?=$|[\s.,;:!?])/g
+  )) {
+    const quoted = (match[1] || match[2] || match[3] || '').trim()
+    if (quoted) add(`'${quoted}'`)
+  }
+  for (const match of source.matchAll(
+    /\b(?:\d{3,4}\s+)?[A-Z][A-Za-z0-9'’]+(?:\s+[A-Z][A-Za-z0-9'’]+){1,6}\b/g
+  )) {
+    add(match[0])
+  }
+  return facts.length > 0 ? `Readable detail: ${facts.join('; ')}.` : ''
+}
+
 /** Facets that can describe a frame without borrowing the beat's spoken words. */
 function hasVisualDirection(direction?: BeatDirection): boolean {
   if (!direction) return false
@@ -351,6 +388,9 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
   const emptyCast = Array.isArray(direction?.castInFrame) && (namedCast?.length ?? 0) === 0
 
   appendFacet(parts, policySafe(frozen || described))
+  if (frozen && described) {
+    appendFacet(parts, policySafe(lockedReadableDetail(described, frozen)))
+  }
   // "Blocking" and "Prop handling" are stage-direction words, and direction
   // written under them reads as choreography: a move, or a run of them. A still
   // can only hold one position per body, so the label asks for one and the

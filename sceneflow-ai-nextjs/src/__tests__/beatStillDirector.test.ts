@@ -414,6 +414,8 @@ describe('buildStillDirectorSystemPrompt', () => {
     expect(system).toContain('"cameraMovement"')
     expect(system).toContain('"audioCue"')
     expect(system).toContain('"transition": "CUT"')
+    expect(system).toContain('production credits')
+    expect(system).toContain('actionDescription is two to four concrete sentences')
   })
 })
 
