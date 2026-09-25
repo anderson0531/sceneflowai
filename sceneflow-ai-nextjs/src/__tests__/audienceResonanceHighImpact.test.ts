@@ -73,6 +73,31 @@ describe('High-impact audience resonance issues', () => {
     expect(all[0].applied).toBe(true)
   })
 
+  it('excludes scenes scoring 85 or higher when a score ceiling is set', () => {
+    const scenes = [
+      {
+        sceneNumber: 1,
+        audienceAnalysis: {
+          score: 85,
+          recommendations: [{ text: 'Still fine', pointsDeducted: 4 }],
+        },
+      },
+      {
+        sceneNumber: 2,
+        audienceAnalysis: {
+          score: 84,
+          recommendations: [{ text: 'Needs work', pointsDeducted: 9 }],
+        },
+      },
+      {
+        sceneNumber: 3,
+        recommendations: [{ text: 'Unscored', pointsDeducted: 12 }],
+      },
+    ]
+    const open = collectTopImpactIssues(scenes, { maxScoreExclusive: 85, limit: 5 })
+    expect(open.map((issue) => issue.rec.text)).toEqual(['Needs work'])
+  })
+
   it('preserves applied ids across a re-analysis by id or text', () => {
     const previous = {
       recommendations: [{ text: 'Raise the stakes', pointsDeducted: 12 }],
@@ -103,17 +128,15 @@ describe('High-impact audience resonance issues', () => {
     expect(panel).toContain('High impact')
     expect(panel).toContain('<WritersRoomTopImpactPanel')
     expect(panel).toContain("tStudio('audienceResonance')")
+    expect(panel).toContain('>AR<')
     expect(panel).toContain('DialogContent')
     expect(panel.indexOf('<WritersRoomTopImpactPanel')).toBeGreaterThan(
-      panel.indexOf("tStudio('audienceResonance')")
+      panel.indexOf('formatNavigationClock(scriptTotalSeconds)')
     )
-    expect(panel.indexOf('<WritersRoomTopImpactPanel')).toBeLessThan(
-      panel.indexOf('{productionProgressSlot &&')
-    )
-    expect(panel.indexOf('<WritersRoomTopImpactPanel')).toBeLessThan(
+    expect(panel.indexOf('<WritersRoomTopImpactPanel')).toBeGreaterThan(
       panel.indexOf('<BlueprintBeatGroupHeader')
     )
-    expect(panel).toContain('appliedRecommendationIds')
+    expect(page).toContain('appliedRecommendationIds')
     expect(panel).toContain('onToggleAudienceRecommendation')
 
     const impactPanel = readSource('src/components/vision/WritersRoomTopImpactPanel.tsx')

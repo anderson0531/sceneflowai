@@ -14,6 +14,8 @@ import {
   Volume2,
   Image,
   Film,
+  Music,
+  Bookmark,
   ChevronRight,
   Sparkles,
   ArrowRight,
@@ -43,6 +45,8 @@ export interface SceneProgressItem {
   hasCallAction: boolean
   /** Has audio generated */
   hasAudio: boolean
+  /** Has a generated music track */
+  hasMusic: boolean
   /** Has rendered scene video/animatic */
   hasRender: boolean
   /** Overall scene status */
@@ -54,6 +58,7 @@ export interface SceneProgressItem {
 interface SceneProgressDashboardProps {
   scenes: SceneProgressItem[]
   selectedSceneId?: string
+  bookmarkedSceneId?: string
   onSelectScene: (sceneId: string) => void
   className?: string
 }
@@ -65,9 +70,10 @@ interface SceneProgressDashboardProps {
 const STEPS = [
   { key: 'hasScript', label: 'Script', icon: FileText, color: 'green' },
   { key: 'hasAudio', label: 'Audio', icon: Volume2, color: 'blue' },
+  { key: 'hasMusic', label: 'Music', icon: Music, color: 'pink' },
   { key: 'hasDirection', label: 'Direction', icon: Compass, color: 'cyan' },
-  { key: 'hasFrame', label: 'Beat Frames', icon: Frame, color: 'purple' },
-  { key: 'hasCallAction', label: 'Video', icon: Film, color: 'amber' },
+  { key: 'hasFrame', label: 'Stills', icon: Frame, color: 'purple' },
+  { key: 'hasCallAction', label: 'Video Clips', icon: Film, color: 'amber' },
   { key: 'hasRender', label: 'Render', icon: Clapperboard, color: 'emerald' },
 ] as const
 
@@ -78,12 +84,7 @@ const COLOR_MAP: Record<string, { dot: string; bg: string; text: string; ring: s
   purple:  { dot: 'bg-purple-400',  bg: 'bg-purple-500/20',  text: 'text-purple-400',  ring: 'ring-purple-500/30' },
   amber:   { dot: 'bg-amber-400',   bg: 'bg-amber-500/20',   text: 'text-amber-400',   ring: 'ring-amber-500/30' },
   emerald: { dot: 'bg-emerald-400', bg: 'bg-emerald-500/20', text: 'text-emerald-400', ring: 'ring-emerald-500/30' },
-}
-
-function getScoreColor(score: number) {
-  if (score >= 85) return 'text-green-400'
-  if (score >= 70) return 'text-amber-400'
-  return 'text-red-400'
+  pink:    { dot: 'bg-pink-400',    bg: 'bg-pink-500/20',    text: 'text-pink-400',    ring: 'ring-pink-500/30' },
 }
 
 // ============================================================================
@@ -93,6 +94,7 @@ function getScoreColor(score: number) {
 export function SceneProgressDashboard({
   scenes,
   selectedSceneId,
+  bookmarkedSceneId,
   onSelectScene,
   className,
 }: SceneProgressDashboardProps) {
@@ -161,7 +163,7 @@ export function SceneProgressDashboard({
       <div className="px-4 py-2 border-b border-gray-800/30">
         <div className="flex items-center">
           <div className="w-16 text-[10px] text-gray-500 font-medium">Scene</div>
-          <div className="flex-1 grid grid-cols-6 gap-1">
+          <div className="flex-1 grid grid-cols-7 gap-1">
             {STEPS.map(step => {
               const colors = COLOR_MAP[step.color]
               return (
@@ -208,6 +210,9 @@ export function SceneProgressDashboard({
                 )}>
                   S{scene.sceneNumber}
                 </span>
+                {bookmarkedSceneId && scene.id === bookmarkedSceneId && (
+                  <Bookmark className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />
+                )}
                 {isComplete && <CheckCircle2 className="w-3 h-3 text-emerald-400" />}
                 {isNext && !isComplete && !isSelected && (
                   <ArrowRight className="w-3 h-3 text-cyan-400 animate-pulse" />
@@ -215,7 +220,7 @@ export function SceneProgressDashboard({
               </div>
 
               {/* Step completion dots */}
-              <div className="flex-1 grid grid-cols-6 gap-1">
+              <div className="flex-1 grid grid-cols-7 gap-1">
                 <TooltipProvider delayDuration={200}>
                   {STEPS.map(step => {
                     const completed = !!scene[step.key as keyof SceneProgressItem]
@@ -253,7 +258,7 @@ export function SceneProgressDashboard({
               {/* Score */}
               <div className="w-10 text-center">
                 {scene.score !== undefined ? (
-                  <span className={cn("text-xs font-bold", getScoreColor(scene.score))}>
+                  <span className="text-xs font-bold text-gray-200">
                     {scene.score}
                   </span>
                 ) : (

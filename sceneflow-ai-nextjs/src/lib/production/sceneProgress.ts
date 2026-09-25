@@ -3,7 +3,9 @@
  */
 
 import {
+  getSceneBeats,
   getStoryboardTimelineBeats,
+  isBeatExcluded,
   isBeatFirstPipelineEnabled,
 } from '@/lib/script/beatMigration'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
@@ -25,8 +27,26 @@ function sceneHasScript(scene: Record<string, unknown>): boolean {
   )
 }
 
+function beatHasDirection(beat: { beatDirection?: unknown }): boolean {
+  return !!beat.beatDirection && typeof beat.beatDirection === 'object'
+}
+
 function sceneHasDirection(scene: Record<string, unknown>): boolean {
-  return !!(scene.direction || scene.sceneDirection || scene.cameraDirection)
+  if (scene.direction || scene.sceneDirection || scene.cameraDirection) return true
+  const beats = getSceneBeats(scene).filter((beat) => !isBeatExcluded(beat))
+  return beats.length > 0 && beats.every(beatHasDirection)
+}
+
+function sceneHasMusic(scene: Record<string, unknown>): boolean {
+  if (typeof scene.musicAudio === 'string' && scene.musicAudio.trim()) return true
+  const musicUrl = (scene.music as { url?: string } | undefined)?.url
+  if (typeof musicUrl === 'string' && musicUrl.trim()) return true
+  const cues = scene.sceneMusicCues
+  if (!Array.isArray(cues)) return false
+  return cues.some((cue) => {
+    const url = (cue as { url?: string } | null)?.url
+    return typeof url === 'string' && url.trim().length > 0
+  })
 }
 
 function sceneHasAudio(scene: Record<string, unknown>, language = 'en'): boolean {
@@ -147,6 +167,7 @@ export function buildSceneProgressItem(
   const hasScript = sceneHasScript(scene)
   const hasDirection = sceneHasDirection(scene)
   const hasAudio = sceneHasAudio(scene, language)
+  const hasMusic = sceneHasMusic(scene)
   const hasFrame = sceneHasBeatFrames(productionData)
   const hasCallAction = sceneHasVideoSegments(productionData)
   const hasRender = sceneHasRender(productionData)
@@ -164,6 +185,7 @@ export function buildSceneProgressItem(
     hasFrame,
     hasCallAction,
     hasAudio,
+    hasMusic,
     hasRender,
     status: deriveSceneWorkflowStatus(productionData, hasFrame, hasCallAction, hasRender),
     score,

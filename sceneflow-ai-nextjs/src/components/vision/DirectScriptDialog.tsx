@@ -148,7 +148,7 @@ export function DirectScriptDialog({
           id: 'script-optimize',
           title: 'Script Agent',
           subtitle: 'you can keep editing',
-          itemLabel: 'Direct Script',
+          itemLabel: 'Script Director',
         },
         async () => {
           let response = await fetch('/api/vision/optimize-script', {

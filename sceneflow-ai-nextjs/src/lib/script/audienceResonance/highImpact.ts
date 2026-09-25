@@ -72,6 +72,7 @@ export type TopImpactSceneInput = {
   recommendations?: unknown[]
   appliedRecommendationIds?: string[]
   audienceAnalysis?: {
+    score?: number
     recommendations?: unknown[]
     appliedRecommendationIds?: string[]
   }
@@ -120,13 +121,18 @@ function recsFromScene(scene: TopImpactSceneInput): {
 /** Flatten scene recs with pointsDeducted > 0, sorted desc. Default top 5. */
 export function collectTopImpactIssues(
   scenes: TopImpactSceneInput[],
-  options?: { excludeApplied?: boolean; limit?: number }
+  options?: { excludeApplied?: boolean; limit?: number; maxScoreExclusive?: number }
 ): TopImpactIssue[] {
   const excludeApplied = options?.excludeApplied !== false
   const limit = options?.limit ?? 5
+  const maxScoreExclusive = options?.maxScoreExclusive
   const all: TopImpactIssue[] = []
 
   scenes.forEach((scene, index) => {
+    if (typeof maxScoreExclusive === 'number') {
+      const score = scene.audienceAnalysis?.score
+      if (typeof score !== 'number' || score >= maxScoreExclusive) return
+    }
     const { recs, appliedIds } = recsFromScene(scene)
     const sceneNum =
       typeof scene.sceneNumber === 'number' && scene.sceneNumber > 0 ? scene.sceneNumber : index + 1
