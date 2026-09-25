@@ -57,11 +57,18 @@ describe('video generation unlock wiring', () => {
     expect(page).toContain('storyboardStatus: \'approved\'')
   })
 
-  it('auto-derive waits for this scene production and sends stored clips', () => {
+  it('auto-derive does not wait for Pre-Vis approval and sends stored clips', () => {
     const page = readSource(PAGE)
-    expect(page).toContain('if (!production) return')
+    const builder = readSource('src/components/vision/scene-production/SegmentBuilder.tsx')
+    expect(page).toContain('const shouldDeriveFromBeats = beatFirst')
+    expect(page).not.toContain("sceneRecord?.storyboardStatus === 'approved'")
+    expect(page).toContain('needsProductionDerive(scene, production?.segments)')
+    expect(page).not.toContain('if (!production) return')
     expect(page).toContain('existingSegments: sceneProductionStateRef.current[sceneId]?.segments ?? []')
     expect(page).toContain('mergeSceneProductionData')
     expect(page).not.toContain('existingSegments: sceneProductionState[sceneId]?.segments ?? []')
+    expect(builder).not.toContain('Approve Pre-Vis before creating segments')
+    expect(builder).not.toContain('Approve Pre-Vis first')
+    expect(builder).not.toContain('isStoryboardApproved')
   })
 })

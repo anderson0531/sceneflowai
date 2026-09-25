@@ -67,6 +67,7 @@ describe('Video tab inline clip preview', () => {
     expect(stage).toContain('lg:min-w-[40rem]')
     expect(gallery).not.toContain('lg:w-auto')
     expect(frames).not.toContain('lg:w-auto')
+    expect(gallery).toContain('w-[80%]')
     expect(gallery).not.toContain('max-w-md')
     expect(gallery).toContain('Direct Beat')
     expect(gallery).toContain('onDirectBeat')

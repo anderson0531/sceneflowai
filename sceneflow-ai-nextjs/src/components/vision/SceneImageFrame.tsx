@@ -463,9 +463,9 @@ export function SceneImageFrame({
       <div
         ref={stageRef}
         className={`relative bg-black ${
-          expandable
-            ? `mx-auto aspect-video w-full max-w-md max-h-[min(36vh,16rem)] ${
-                isFullscreen ? 'h-screen w-screen max-h-none max-w-none' : ''
+          expandable || containMedia
+            ? `mx-auto aspect-video ${
+                isFullscreen ? 'h-screen w-screen max-h-none max-w-none' : 'w-[80%]'
               }`
             : 'aspect-video bg-slate-800/50'
         }`}
