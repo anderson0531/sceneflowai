@@ -365,6 +365,7 @@ def main():
         text_overlays = job_spec.get('textOverlays', [])
         watermark = job_spec.get('watermark')
         encode_quality = job_spec.get('encodeQuality') or 'delivery'
+        scene_end_transition = job_spec.get('sceneEndTransition')
         log(f"Video Segments: {len(video_segments)}")
         log(f"Encode quality: {encode_quality}")
         
@@ -388,7 +389,7 @@ def main():
             log(f"  Watermark anchor: {watermark.get('anchor')}")
         render_video_concatenation(job_id, video_segments, audio_clips, output_path_gcs, 
                                    resolution, fps, callback_url, include_segment_audio, segment_audio_volume,
-                                   text_overlays, watermark, encode_quality)
+                                   text_overlays, watermark, encode_quality, scene_end_transition)
     else:
         # Ken Burns mode (for project renders with images)
         segments = job_spec.get('segments', [])
@@ -476,7 +477,7 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
                                output_path_gcs: str, resolution: str, fps: int, callback_url: str,
                                include_segment_audio: bool = True, segment_audio_volume: float = 1.0,
                                text_overlays: list = None, watermark: dict = None,
-                               encode_quality: str = 'delivery'):
+                               encode_quality: str = 'delivery', scene_end_transition: dict = None):
     """Render by concatenating video segments with audio mixing, text overlays, and watermark."""
     
     if text_overlays is None:
@@ -519,6 +520,12 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
     if watermark and watermark.get('type') == 'image' and watermark.get('imageUrl'):
         watermark_job_at = len(download_jobs)
         download_jobs.append({'url': watermark['imageUrl'], 'asset_type': 'image', 'index': 997})
+
+    next_frame_job_at = None
+    next_frame_url = (scene_end_transition or {}).get('nextFrameUrl')
+    if (scene_end_transition or {}).get('effect') == 'dissolve' and next_frame_url:
+        next_frame_job_at = len(download_jobs)
+        download_jobs.append({'url': next_frame_url, 'asset_type': 'image', 'index': 996})
 
     downloaded = download_assets_parallel(download_jobs)
 
@@ -570,6 +577,16 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
             wm_for_cmd = dict(watermark)
             wm_for_cmd['type'] = 'text'
             wm_for_cmd['text'] = wm_for_cmd.get('text') or 'SceneFlow Studio'
+
+    end_for_cmd = dict(scene_end_transition) if scene_end_transition else None
+    if end_for_cmd and next_frame_job_at is not None:
+        next_file = downloaded[next_frame_job_at]
+        if next_file:
+            end_for_cmd['localFile'] = next_file
+        else:
+            log("Next-scene frame download failed; falling back to fade to black", 'WARN')
+            end_for_cmd['effect'] = 'fade'
+            end_for_cmd['holdSec'] = end_for_cmd.get('durationSec') or 1
     
     send_callback(callback_url, job_id, 'PROCESSING', 50)
     
@@ -596,6 +613,7 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
         text_overlays=text_overlays,
         watermark=wm_for_cmd,
         include_segment_audio=include_segment_audio,
+        scene_end_transition=end_for_cmd,
     )
     if copy_block:
         log(f"Stream copy rejected: {copy_block}")
@@ -611,6 +629,7 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
             text_overlays=text_overlays,
             watermark=wm_for_cmd,
             encode_quality=encode_quality,
+            scene_end_transition=end_for_cmd,
         )
     else:
         full_block = full_stream_copy_block_reason(

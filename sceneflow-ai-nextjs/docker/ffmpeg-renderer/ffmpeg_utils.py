@@ -851,7 +851,8 @@ def build_ffmpeg_command(
             volume = clip.get('volume', 1.0)
             pr = clip.get('playbackRate', 1.0) or 1.0
             tempo = build_atempo_filter_chain(float(pr))
-            chain = [f"adelay={delay_ms}|{delay_ms}"]
+            chain = audio_fade_filters(clip)
+            chain.append(f"adelay={delay_ms}|{delay_ms}")
             if tempo:
                 chain.append(tempo)
             chain.append(f"volume={volume}")
@@ -1012,6 +1013,7 @@ def video_stream_copy_block_reason(
     text_overlays: Optional[List[Dict[str, Any]]] = None,
     watermark: Optional[Dict[str, Any]] = None,
     include_segment_audio: bool = True,
+    scene_end_transition: Optional[Dict[str, Any]] = None,
 ) -> Optional[str]:
     """
     First reason the concat demuxer cannot copy video.
@@ -1022,6 +1024,9 @@ def video_stream_copy_block_reason(
     """
     if not video_segments:
         return 'no segments'
+    end_effect = (scene_end_transition or {}).get('effect')
+    if end_effect in ('fade', 'dissolve'):
+        return 'scene end transition'
     if len(probes) != len(video_segments):
         return 'probe count'
     if text_overlays:
@@ -1119,12 +1124,96 @@ def full_stream_copy_block_reason(
     return None
 
 
+def _clip_seconds(clip: Dict[str, Any], key: str) -> float:
+    try:
+        return max(0.0, float(clip.get(key) or 0))
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _segment_output_duration(segment: Dict[str, Any]) -> float:
+    pause = float(segment.get('pauseDuration') or 0)
+    trim_in = float(segment.get('videoTrimInSec') or 0)
+    raw_out = segment.get('videoTrimOutSec')
+    if raw_out is not None:
+        play = max(0.0, float(raw_out) - trim_in)
+    else:
+        play = float(segment.get('duration') or 0)
+        if trim_in > 0.001:
+            play = max(0.0, play - trim_in)
+    return max(0.0, play) + max(0.0, pause)
+
+
+def apply_scene_end_transition(
+    video_label: str,
+    transition: Optional[Dict[str, Any]],
+    video_duration: float,
+    width: int,
+    height: int,
+    fps: int,
+    next_input_idx: Optional[int],
+) -> Tuple[str, List[str]]:
+    """Fade to black (plus hold) or crossfade the next opening frame."""
+    effect = (transition or {}).get('effect') or 'cut'
+    try:
+        duration = float((transition or {}).get('durationSec') or 0)
+    except (TypeError, ValueError):
+        duration = 0.0
+    try:
+        hold = float((transition or {}).get('holdSec') or 0)
+    except (TypeError, ValueError):
+        hold = 0.0
+    if effect == 'cut' or duration < 0.05 or video_duration <= 0:
+        return video_label, []
+    if effect == 'dissolve' and next_input_idx is not None:
+        offset = max(0.0, video_duration - duration)
+        parts = [
+            (
+                f"[{next_input_idx}:v]scale={width}:{height}:force_original_aspect_ratio=decrease,"
+                f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:black,fps={fps},setsar=1,format=yuv420p[nextv]"
+            ),
+            (
+                f"{video_label}[nextv]xfade=transition=fade:duration={duration:.3f}:"
+                f"offset={offset:.3f}[sceneend]"
+            ),
+        ]
+        return "[sceneend]", parts
+    fade_d = min(duration, video_duration)
+    start = max(0.0, video_duration - fade_d)
+    parts = [
+        f"{video_label}fade=t=out:st={start:.3f}:d={fade_d:.3f}:color=black[sceneend]"
+    ]
+    label = "[sceneend]"
+    if hold >= 0.05:
+        parts.append(
+            f"{label}tpad=stop_mode=add:stop_duration={hold:.3f}:color=black[scenehold]"
+        )
+        label = "[scenehold]"
+    return label, parts
+
+
+def audio_fade_filters(clip: Dict[str, Any]) -> List[str]:
+    """afade in/out on the clip's own timeline, before adelay shifts it."""
+    fade_in = _clip_seconds(clip, 'fadeInSec')
+    fade_out = _clip_seconds(clip, 'fadeOutSec')
+    duration = _clip_seconds(clip, 'duration')
+    parts: List[str] = []
+    if fade_in >= 0.05:
+        fade_in_d = min(fade_in, duration) if duration > 0 else fade_in
+        parts.append(f'afade=t=in:st=0:d={fade_in_d:.3f}')
+    if fade_out >= 0.05 and duration > fade_out:
+        start = max(0.0, duration - fade_out)
+        parts.append(f'afade=t=out:st={start:.3f}:d={fade_out:.3f}')
+    return parts
+
+
 def _overlay_audio_filter(input_idx: int, clip: Dict[str, Any], label: str) -> str:
     delay_ms = int(float(clip.get('startTime', 0) or 0) * 1000)
     volume = clip.get('volume', 1.0)
     playback_rate = clip.get('playbackRate', 1.0) or 1.0
     tempo = build_atempo_filter_chain(float(playback_rate))
-    chain = [f'adelay={delay_ms}|{delay_ms}']
+    chain = audio_fade_filters(clip)
+    chain.append(f'adelay={delay_ms}|{delay_ms}')
     if tempo:
         chain.append(tempo)
     chain.append(f'volume={volume}')
@@ -1223,6 +1312,7 @@ def build_concat_ffmpeg_command(
     text_overlays: Optional[List[Dict[str, Any]]] = None,
     watermark: Optional[Dict[str, Any]] = None,
     encode_quality: Optional[str] = None,
+    scene_end_transition: Optional[Dict[str, Any]] = None,
 ) -> List[str]:
     """
     Build FFmpeg command for concatenating video segments with audio mixing.
@@ -1287,6 +1377,18 @@ def build_concat_ffmpeg_command(
     for i, clip in enumerate(audio_clips):
         audio_path = os.path.join(temp_dir, 'assets', clip['localFile'])
         cmd.extend(['-i', audio_path])
+
+    next_frame_idx = None
+    end_effect = (scene_end_transition or {}).get('effect')
+    next_file = (scene_end_transition or {}).get('localFile')
+    try:
+        end_duration = float((scene_end_transition or {}).get('durationSec') or 0)
+    except (TypeError, ValueError):
+        end_duration = 0.0
+    if end_effect == 'dissolve' and next_file and end_duration >= 0.05:
+        next_path = os.path.join(temp_dir, 'assets', next_file)
+        cmd.extend(['-loop', '1', '-t', f'{end_duration:.3f}', '-i', next_path])
+        next_frame_idx = audio_inputs_start + len(audio_clips)
     
     # Build filter complex
     filter_parts = []
@@ -1461,7 +1563,8 @@ def build_concat_ffmpeg_command(
             volume = clip.get('volume', 1.0)
             pr = clip.get('playbackRate', 1.0) or 1.0
             tempo = build_atempo_filter_chain(float(pr))
-            chain = [f"adelay={delay_ms}|{delay_ms}"]
+            chain = audio_fade_filters(clip)
+            chain.append(f"adelay={delay_ms}|{delay_ms}")
             if tempo:
                 chain.append(tempo)
             chain.append(f"volume={volume}")
@@ -1481,6 +1584,25 @@ def build_concat_ffmpeg_command(
     else:
         # No audio at all
         audio_output = None
+
+    video_duration = sum(_segment_output_duration(segment) for segment in video_segments)
+    video_output, end_filters = apply_scene_end_transition(
+        video_output,
+        scene_end_transition,
+        video_duration,
+        width,
+        height,
+        fps,
+        next_frame_idx,
+    )
+    filter_parts.extend(end_filters)
+    try:
+        hold = float((scene_end_transition or {}).get('holdSec') or 0)
+    except (TypeError, ValueError):
+        hold = 0.0
+    if hold >= 0.05 and audio_output and end_filters:
+        filter_parts.append(f"{audio_output}apad=pad_dur={hold:.3f}[sceneholda]")
+        audio_output = "[sceneholda]"
     
     # Add filter complex to command
     if filter_parts:

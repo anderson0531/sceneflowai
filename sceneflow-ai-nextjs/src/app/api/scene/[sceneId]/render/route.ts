@@ -446,6 +446,7 @@ export async function POST(
       textOverlays: textOverlays.length > 0 ? textOverlays : undefined,
       watermark,
       encodeQuality: body.encodeQuality === 'draft' ? 'draft' : 'delivery',
+      sceneEndTransition: body.sceneEndTransition,
     }
     
     console.log(`[SceneRender] Job spec created:`, {

@@ -426,6 +426,13 @@ export interface SceneRenderJobSpec {
    * `draft` uses a faster preset for iteration exports.
    */
   encodeQuality?: SceneEncodeQuality
+  /** Outgoing scene join burned into this scene's MP4. */
+  sceneEndTransition?: {
+    effect: 'fade' | 'dissolve' | 'cut'
+    durationSec: number
+    holdSec?: number
+    nextFrameUrl?: string
+  }
 }
 
 /**
@@ -579,6 +586,13 @@ export interface CreateSceneRenderJobRequest {
   streamType?: 'video' | 'animatic'
   /** Omitted means delivery. Draft is the Mixer iteration export. */
   encodeQuality?: SceneEncodeQuality
+  /** Outgoing scene join burned into this scene's MP4. */
+  sceneEndTransition?: {
+    effect: 'fade' | 'dissolve' | 'cut'
+    durationSec: number
+    holdSec?: number
+    nextFrameUrl?: string
+  }
 }
 
 /** Map Mixer POST segment payload to FFmpeg job-spec video segment. */

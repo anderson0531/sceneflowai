@@ -3,8 +3,10 @@ import {
   BEAT_DISSOLVE_SEC,
   SCENE_FADE_TO_BLACK_SEC,
   resolveBeatTransition,
+  resolveMixerSceneEnd,
   resolveSceneTransition,
   resolveTransitionEffect,
+  sceneOpeningFrameUrl,
   transitionTailSec,
 } from '@/lib/storyboard/transitions'
 
@@ -75,6 +77,31 @@ describe('resolveSceneTransition', () => {
   it('treats the generation-only hints as a cut', () => {
     expect(resolveSceneTransition('CONTINUE').effect).toBe('cut')
     expect(resolveSceneTransition('MATCH_CUT').effect).toBe('cut')
+  })
+})
+
+describe('resolveMixerSceneEnd', () => {
+  it('plays dissolve when the next scene has an opening frame', () => {
+    expect(resolveMixerSceneEnd('DISSOLVE', true)).toEqual({
+      effect: 'dissolve',
+      durationSec: SCENE_FADE_TO_BLACK_SEC,
+      holdSec: 0,
+    })
+  })
+
+  it('plays fade to black when a dissolve has nothing to cross into', () => {
+    expect(resolveMixerSceneEnd('DISSOLVE', false)).toEqual({
+      effect: 'fade',
+      durationSec: SCENE_FADE_TO_BLACK_SEC,
+      holdSec: SCENE_FADE_TO_BLACK_SEC,
+    })
+  })
+
+  it('reads an opening still from the next scene', () => {
+    expect(sceneOpeningFrameUrl({ imageUrl: ' https://cdn.example/next.jpg ' })).toBe(
+      'https://cdn.example/next.jpg'
+    )
+    expect(sceneOpeningFrameUrl(undefined)).toBeNull()
   })
 })
 

@@ -124,3 +124,46 @@ export function resolveSceneTransition(
 export function transitionTailSec(resolved: ResolvedTransition): number {
   return resolved.effect === 'fade' ? resolved.durationSec : 0
 }
+
+/** What the Mixer preview and the scene MP4 should play for this handover. */
+export interface MixerSceneEnd {
+  effect: PlayableTransition
+  durationSec: number
+  /** Extra black after a fade. Zero for dissolve and cut. */
+  holdSec: number
+}
+
+/**
+ * Dissolve needs the next scene's opening frame. Without one, play fade to
+ * black. The authored `transitionToNext` value is left unchanged.
+ */
+export function resolveMixerSceneEnd(
+  transition: BeatDirectionTransition | string | null | undefined,
+  hasNextFrame: boolean
+): MixerSceneEnd {
+  const resolved = resolveSceneTransition(transition)
+  if (resolved.effect === 'dissolve' && !hasNextFrame) {
+    const fade = resolveSceneTransition('FADE')
+    return {
+      effect: 'fade',
+      durationSec: fade.durationSec,
+      holdSec: transitionTailSec(fade),
+    }
+  }
+  return {
+    effect: resolved.effect,
+    durationSec: resolved.durationSec,
+    holdSec: transitionTailSec(resolved),
+  }
+}
+
+/** First still that can stand in for the next scene during a dissolve. */
+export function sceneOpeningFrameUrl(
+  scene: { imageUrl?: unknown; startFrameUrl?: unknown; thumbnailUrl?: unknown } | null | undefined
+): string | null {
+  if (!scene) return null
+  for (const value of [scene.imageUrl, scene.startFrameUrl, scene.thumbnailUrl]) {
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return null
+}

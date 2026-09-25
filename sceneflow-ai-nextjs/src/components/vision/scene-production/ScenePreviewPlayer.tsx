@@ -21,7 +21,11 @@ import {
   computeCueMusicGain,
 } from '@/lib/audio/loopingAudioSync'
 import { isMusicActiveInBeatWindow } from '@/lib/scene/mixerMusicTiming'
-import type { MixerMusicClip } from '@/lib/scene/mixerScoreMusic'
+import {
+  scoreSpan,
+  scoreStemEnvelopeGain,
+  type MixerMusicClip,
+} from '@/lib/scene/mixerScoreMusic'
 import { resolveBeatPreviewVolume } from '@/lib/scene/segmentAudioPreview'
 import { DEFAULT_MUSIC_FILE_DURATION_SEC } from '@/lib/storyboard/musicPlayback'
 import { getFrameCropClipPath } from '@/lib/video/segmentVideoCrop'
@@ -107,10 +111,13 @@ export function ScenePreviewPlayer({
   onMeasuredDurationsChange,
   onPlaybackTimeChange,
   musicFileDuration = DEFAULT_MUSIC_FILE_DURATION_SEC,
+  scoreStemFade = false,
   focusBeatSegmentId,
   onFocusBeatHandled,
   autoPlay = false,
   onPlaybackComplete,
+  sceneEnd,
+  nextSceneFrameUrl = null,
 }: {
   segments: SceneSegment[]
   audioTracks: MixerAudioTracks
@@ -144,6 +151,11 @@ export function ScenePreviewPlayer({
   onPlaybackTimeChange?: (time: number) => void
   /** Probed WAV length for modulo loop sync (legacy single-track fallback). */
   musicFileDuration?: number
+  /**
+   * When true, musicConfig fadeIn/fadeOut is a stem envelope across every cue.
+   * Legacy beds already store those fades on the single clip.
+   */
+  scoreStemFade?: boolean
   /** When set, jump preview to this beat (e.g. from Beat Trim panel) */
   focusBeatSegmentId?: string | null
   onFocusBeatHandled?: () => void
@@ -155,6 +167,9 @@ export function ScenePreviewPlayer({
    * Otherwise the player restarts, matching the Mixer.
    */
   onPlaybackComplete?: () => boolean | void
+  /** End-of-scene join. Fade holds black; dissolve crossfades the next opening frame. */
+  sceneEnd?: { effect: 'cut' | 'dissolve' | 'fade'; durationSec: number; holdSec: number }
+  nextSceneFrameUrl?: string | null
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -565,7 +580,17 @@ export function ScenePreviewPlayer({
           fadeInSec: clip.fadeInSec,
           fadeOutSec: clip.fadeOutSec,
         })
-        audioEl.volume = isMuted ? 0 : Math.max(0, Math.min(1, musicCfg.volume * gain))
+        const span = scoreStemFade ? scoreSpan(musicClips) : null
+        const stem = span
+          ? scoreStemEnvelopeGain(
+              currentTime,
+              span.start,
+              span.end,
+              musicCfg.fadeInSec ?? 0,
+              musicCfg.fadeOutSec ?? 0
+            )
+          : 1
+        audioEl.volume = isMuted ? 0 : Math.max(0, Math.min(1, musicCfg.volume * gain * stem))
         if (audioEl.paused) {
           audioEl.play().catch(() => {})
         }
@@ -897,6 +922,19 @@ export function ScenePreviewPlayer({
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
   
+  const sceneEndOverlay = (() => {
+    if (!sceneEnd || sceneEnd.effect === 'cut' || !(sceneEnd.durationSec > 0)) return null
+    const contentEnd = Math.max(0, totalDuration - (sceneEnd.holdSec || 0))
+    const fadeStart = Math.max(0, contentEnd - sceneEnd.durationSec)
+    if (currentTime <= fadeStart) return null
+    const progress =
+      currentTime >= contentEnd ? 1 : (currentTime - fadeStart) / sceneEnd.durationSec
+    if (sceneEnd.effect === 'dissolve' && nextSceneFrameUrl) {
+      return { kind: 'dissolve' as const, opacity: progress }
+    }
+    return { kind: 'fade' as const, opacity: progress }
+  })()
+
   return (
     <div 
       ref={containerRef}
@@ -943,6 +981,23 @@ export function ScenePreviewPlayer({
             <Film className="w-12 h-12 opacity-30" />
             <span>No video preview available</span>
           </div>
+        )}
+
+        {sceneEndOverlay?.kind === 'dissolve' && nextSceneFrameUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={nextSceneFrameUrl}
+            alt=""
+            className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+            style={{ opacity: sceneEndOverlay.opacity }}
+            draggable={false}
+          />
+        )}
+        {sceneEndOverlay?.kind === 'fade' && (
+          <div
+            className="absolute inset-0 bg-black pointer-events-none"
+            style={{ opacity: sceneEndOverlay.opacity }}
+          />
         )}
         
         {/* Overlay Info */}
