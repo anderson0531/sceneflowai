@@ -18,7 +18,7 @@ import { useTranslations } from 'next-intl'
 import { ASSISTANT } from '@/lib/constants/assistant'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2 } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2, GalleryHorizontal } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import {
@@ -180,6 +180,12 @@ import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAudioUrl } from '@/lib/audio/languageDetection'
 import { cleanupScriptAudio } from '@/lib/audio/cleanupAudio'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
+import {
+  buildSceneNavigationTimeline,
+  formatNavigationClock,
+  sceneNavigationDurationSeconds,
+  type SceneNavigationMark,
+} from '@/lib/script/sceneNavigationTiming'
 import { recommendationId, sceneHasHighImpactIssue } from '@/lib/script/audienceResonance/highImpact'
 import { WritersRoomTopImpactPanel } from './WritersRoomTopImpactPanel'
 import { uploadAssetViaAPI } from '@/lib/vision/uploads'
@@ -650,52 +656,20 @@ function getScoreColor(score: number): string {
   return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
 }
 
-// Calculate scene duration based on audio, buffer, and video clips
-function calculateSceneDuration(scene: any): number {
-  // 1. Calculate audio duration (D_audio)
-  // Average speaking rate: 150 words per minute (WPM)
-  let totalWords = 0
-  
-  // Count words in narration
-  if (scene.narration || scene.action) {
-    const narrationText = scene.narration || scene.action || ''
-    totalWords += narrationText.split(/\s+/).filter((w: string) => w.length > 0).length
-  }
-  
-  // Count words in dialogue
-  if (scene.dialogue && Array.isArray(scene.dialogue)) {
-    scene.dialogue.forEach((d: any) => {
-      const raw = d.line || d.text || d.dialogue || ''
-      if (raw) {
-        const spoken = stripDirectionBracketsForTiming(raw)
-        totalWords += spoken.split(/\s+/).filter((w: string) => w.length > 0).length
-      }
-    })
-  }
-  
-  // Convert words to seconds at 150 WPM
-  const audioDuration = (totalWords / 150) * 60
-  
-  // 2. Calculate buffer time (D_buffer)
-  // Estimate 2-4 seconds for non-vocal actions
-  // Use scene description length as a proxy for action complexity
-  const descriptionLength = (scene.action || scene.visualDescription || '').length
-  let bufferTime = 2 // Minimum 2 seconds
-  if (descriptionLength > 100) bufferTime = 3
-  if (descriptionLength > 200) bufferTime = 4
-  if (descriptionLength > 300) bufferTime = 5
-  
-  // 3. Calculate required duration
-  const requiredDuration = audioDuration + bufferTime
-  
-  // 4. Calculate number of 8-second video clips needed
-  const videoCount = Math.ceil(requiredDuration / 8)
-  
-  // 5. Calculate final scene duration
-  const sceneDuration = audioDuration + bufferTime + (videoCount * 0.5)
-  
-  // Round up to nearest multiple of 8 (for 8-second video clips)
-  return Math.ceil(sceneDuration / 8) * 8
+function sceneHeadingLabel(scene: any, index: number): string {
+  const headingText =
+    typeof scene?.heading === 'string'
+      ? scene.heading
+      : typeof scene?.heading === 'object' && scene.heading !== null
+        ? (scene.heading as { text?: string })?.text
+        : ''
+  return formatSceneHeading(headingText) || headingText || `Scene ${index + 1}`
+}
+
+function audienceScoreClass(score: number): string {
+  if (score >= 80) return 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50'
+  if (score >= 60) return 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50'
+  return 'bg-rose-500/20 text-rose-300 border-rose-400/50'
 }
 
 /** Resolved dialogue/narration duration for generate-segments (en vs en-US vs flat array + word fallback). */
@@ -731,19 +705,6 @@ function computeSceneTotalAudioSecondsForSegmentation(scene: any): number {
     }, 0)
   }
   return Math.max(nar, dialogueSum, 1) + 2
-}
-
-// Format duration as MM:SS
-function formatDuration(seconds: number): string {
-  const mins = Math.floor(seconds / 60)
-  const secs = seconds % 60
-  return `${mins}:${secs.toString().padStart(2, '0')}`
-}
-
-// Format total duration for summary panel
-function formatTotalDuration(scenes: any[]): string {
-  const totalSeconds = scenes.reduce((sum, scene) => sum + calculateSceneDuration(scene), 0)
-  return formatDuration(totalSeconds)
 }
 
 function normalizeScenes(source: any): any[] {
@@ -1057,6 +1018,12 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     }
     return false
   })
+  const [sceneNavigationView, setSceneNavigationView] = useState<'list' | 'timeline'>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('sceneNavigationView') === 'timeline' ? 'timeline' : 'list'
+    }
+    return 'list'
+  })
   const [audioTimelineCollapsed, setAudioTimelineCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('audioTimelineCollapsed')
@@ -1078,6 +1045,12 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
       localStorage.setItem('sceneNavigationCollapsed', JSON.stringify(sceneNavigationCollapsed))
     }
   }, [sceneNavigationCollapsed])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sceneNavigationView', sceneNavigationView)
+    }
+  }, [sceneNavigationView])
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -3197,7 +3170,6 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                   strategy={verticalListSortingStrategy}
                 >
                           {displayedScenes.map(({ scene, originalIndex: idx }) => {
-                            const timelineStart = scenes.slice(0, idx).reduce((total: number, s: any) => total + calculateSceneDuration(s), 0)
                             const domId = getSceneDomId(scene, idx)
                     return (
                     <SortableSceneCard
@@ -3211,7 +3183,6 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                   isExpanding={expandingScenes.has(scene.sceneNumber)}
                   audioEnabled={enabled}
                   sceneIdx={idx}
-                      timelineStart={timelineStart}
                   onGenerateImage={handleGenerateImage}
                   isGeneratingImage={generatingImageForScene === idx}
                   onOpenPromptBuilder={handleOpenSceneBuilder}
@@ -3330,6 +3301,8 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       bookmarkedSceneIndex={bookmarkedSceneIndex}
                       sceneNavigationCollapsed={sceneNavigationCollapsed}
                       setSceneNavigationCollapsed={setSceneNavigationCollapsed}
+                      sceneNavigationView={sceneNavigationView}
+                      setSceneNavigationView={setSceneNavigationView}
                       audioTimelineCollapsed={audioTimelineCollapsed}
                       setAudioTimelineCollapsed={setAudioTimelineCollapsed}
                       scenes={scenes}
@@ -3854,7 +3827,6 @@ interface SceneCardProps {
   playingAudio?: string | null
   generatingDialogue?: {sceneIdx: number, character: string, dialogueIndex?: number} | null
   setGeneratingDialogue?: (state: {sceneIdx: number, character: string, dialogueIndex?: number} | null) => void
-  timelineStart?: number
   dragHandleProps?: any
   onAddScene?: (afterIndex?: number) => void
   onDeleteScene?: (sceneIndex: number) => void
@@ -4013,6 +3985,8 @@ interface SceneCardProps {
   // Collapsible UI state
   sceneNavigationCollapsed?: boolean
   setSceneNavigationCollapsed?: (collapsed: boolean) => void
+  sceneNavigationView?: 'list' | 'timeline'
+  setSceneNavigationView?: (view: 'list' | 'timeline') => void
   audioTimelineCollapsed?: boolean
   setAudioTimelineCollapsed?: (collapsed: boolean) => void
   // Ken Burns toggle and script updates
@@ -4173,7 +4147,6 @@ function SceneCard({
   playingAudio,
   generatingDialogue,
   setGeneratingDialogue,
-  timelineStart,
   dragHandleProps,
   onAddScene,
   onDeleteScene,
@@ -4256,6 +4229,8 @@ function SceneCard({
   bookmarkedSceneIndex = -1,
   sceneNavigationCollapsed,
   setSceneNavigationCollapsed,
+  sceneNavigationView = 'list',
+  setSceneNavigationView,
   audioTimelineCollapsed,
   setAudioTimelineCollapsed,
   scenes,
@@ -4352,6 +4327,16 @@ function SceneCard({
     }
   }
   const cardRef = useRef<HTMLDivElement>(null)
+  const timelineStripRef = useRef<HTMLDivElement>(null)
+  const navigationTimeline = useMemo(
+    () => buildSceneNavigationTimeline(Array.isArray(scenes) ? scenes : []),
+    [scenes]
+  )
+  const navigationMark: SceneNavigationMark | undefined = navigationTimeline.marks[sceneIdx]
+  const sceneDurationSeconds = navigationMark?.durationSeconds ?? sceneNavigationDurationSeconds(scene)
+  const timelineStartSeconds = navigationMark?.startSeconds ?? 0
+  const timelineEndSeconds = navigationMark?.endSeconds ?? sceneDurationSeconds
+  const scriptTotalSeconds = navigationTimeline.totalSeconds
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(
     scene.workflowCompletions?.['callAction'] ? 'callAction' : 'dialogueAction'
   )
@@ -5263,6 +5248,13 @@ function SceneCard({
     el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [isRecentlyUpdated, isFocused, domId])
 
+  useEffect(() => {
+    if (sceneNavigationView !== 'timeline' || sceneNavigationCollapsed) return
+    const strip = timelineStripRef.current
+    const selected = strip?.querySelector<HTMLElement>('[data-scene-nav-selected="true"]')
+    selected?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+  }, [sceneNavigationView, sceneNavigationCollapsed, sceneIdx])
+
   const headingText =
     typeof scene?.heading === 'string'
       ? scene.heading
@@ -5360,8 +5352,35 @@ function SceneCard({
               </Tooltip>
             </TooltipProvider>
             
-            {/* Scene Jump Selector */}
             {totalScenes && totalScenes > 1 && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSceneNavigationView?.(sceneNavigationView === 'timeline' ? 'list' : 'timeline')
+                      }}
+                      className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                      aria-label={sceneNavigationView === 'timeline' ? 'Show scene list' : 'Show scene timeline'}
+                    >
+                      {sceneNavigationView === 'timeline' ? (
+                        <List className="w-4 h-4" />
+                      ) : (
+                        <GalleryHorizontal className="w-4 h-4" />
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                    {sceneNavigationView === 'timeline' ? 'Scene list' : 'Scene timeline'}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+
+            {/* Scene Jump Selector */}
+            {sceneNavigationView === 'list' && totalScenes && totalScenes > 1 && (
               <Popover>
                 <PopoverTrigger asChild>
                   <button
@@ -5374,7 +5393,7 @@ function SceneCard({
                   </button>
                 </PopoverTrigger>
                 <PopoverContent 
-                  className="w-64 max-h-80 p-2 bg-slate-900 border-slate-700"
+                  className="w-80 max-h-80 p-2 bg-slate-900 border-slate-700"
                   align="start"
                   sideOffset={8}
                   onWheel={(e) => e.stopPropagation()}
@@ -5392,6 +5411,10 @@ function SceneCard({
                     {Array.from({ length: totalScenes }, (_, i) => {
                       const isCurrentScene = i === sceneIdx
                       const isBookmarked = i === bookmarkedSceneIndex
+                      const listScene = scenes?.[i]
+                      const mark = navigationTimeline.marks[i]
+                      const score = listScene?.audienceAnalysis?.score
+                      const hasScore = typeof score === 'number'
                       return (
                         <button
                           key={i}
@@ -5412,7 +5435,20 @@ function SceneCard({
                           }`}>
                             S{i + 1}
                           </span>
-                          <span className="text-xs truncate flex-1">Scene {i + 1}</span>
+                          <span className="text-xs truncate flex-1" title={sceneHeadingLabel(listScene, i)}>
+                            {sceneHeadingLabel(listScene, i)}
+                          </span>
+                          <span className="text-[10px] tabular-nums text-gray-400 flex-shrink-0">
+                            {formatNavigationClock(mark?.durationSeconds ?? 0)}
+                          </span>
+                          <span
+                            className={`text-[10px] font-semibold tabular-nums px-1.5 py-0.5 rounded border flex-shrink-0 min-w-[28px] text-center ${
+                              hasScore ? audienceScoreClass(score) : 'bg-gray-800 text-gray-500 border-gray-700'
+                            }`}
+                            title={hasScore ? `Audience Resonance ${score}` : 'No Audience Resonance score'}
+                          >
+                            {hasScore ? score : '—'}
+                          </span>
                           {isBookmarked && (
                             <Bookmark className="w-3.5 h-3.5 text-amber-400 fill-amber-400 flex-shrink-0" />
                           )}
@@ -5466,24 +5502,31 @@ function SceneCard({
               </Tooltip>
             </TooltipProvider>
             
-            {/* Scene & Time Pill - Secondary Timeline Metadata */}
+            {/* Scene timing: number, start–end, duration, script total */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="flex items-center space-x-1.5 bg-indigo-900/30 rounded-full px-2 py-0.5 text-[10px] border border-indigo-700/50 cursor-help">
+                  <div className="flex items-center gap-1.5 bg-indigo-900/30 rounded-full px-2 py-0.5 text-[10px] border border-indigo-700/50 cursor-help">
                     <span className="text-indigo-300 font-semibold">S{sceneNumber}</span>
-                    <span className="text-gray-500">|</span>
-                    <span className="text-white/80 font-medium">{formatDuration(calculateSceneDuration(scene))}</span>
-                    <span className="text-gray-500">@</span>
-                    <span className="text-gray-400">{formatDuration(timelineStart || 0)}</span>
+                    <span className="text-gray-500">·</span>
+                    <span className="text-gray-300 tabular-nums">
+                      {formatNavigationClock(timelineStartSeconds)}–{formatNavigationClock(timelineEndSeconds)}
+                    </span>
+                    <span className="text-gray-500">·</span>
+                    <span className="text-white/80 font-medium tabular-nums">{formatNavigationClock(sceneDurationSeconds)}</span>
+                    <span className="text-gray-500">·</span>
+                    <span className="text-gray-400 tabular-nums">total {formatNavigationClock(scriptTotalSeconds)}</span>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                  <div className="text-xs">
-                    <p>Duration: {formatDuration(calculateSceneDuration(scene))}</p>
-                    <p>Starts at: {formatDuration(timelineStart || 0)}</p>
-                    <p>Est. Videos: {Math.ceil(calculateSceneDuration(scene) / 8)}</p>
-                    <p className="text-gray-400 mt-1">Rounded to 8-second clips</p>
+                  <div className="text-xs space-y-0.5">
+                    <p>
+                      {(navigationMark?.beatCount ?? 0)} {(navigationMark?.beatCount ?? 0) === 1 ? 'beat' : 'beats'} × 10s
+                    </p>
+                    <p>Duration: {formatNavigationClock(sceneDurationSeconds)}</p>
+                    <p>Starts at: {formatNavigationClock(timelineStartSeconds)}</p>
+                    <p>Ends at: {formatNavigationClock(timelineEndSeconds)}</p>
+                    <p>Script total: {formatNavigationClock(scriptTotalSeconds)}</p>
                   </div>
                 </TooltipContent>
               </Tooltip>
@@ -5529,6 +5572,62 @@ function SceneCard({
             )}
           </div>
         </div>
+
+        {!sceneNavigationCollapsed && sceneNavigationView === 'timeline' && totalScenes && totalScenes > 1 && (
+          <div
+            ref={timelineStripRef}
+            className="mt-2 w-full min-w-0 overflow-x-auto overscroll-x-contain pb-1"
+            style={{ scrollbarWidth: 'thin' }}
+            onWheel={(e) => e.stopPropagation()}
+          >
+            <div className="flex w-max gap-1.5">
+              {navigationTimeline.marks.map((mark) => {
+                const isCurrentScene = mark.index === sceneIdx
+                const listScene = scenes?.[mark.index]
+                const score = listScene?.audienceAnalysis?.score
+                const hasScore = typeof score === 'number'
+                const chipWidth = Math.max(96, mark.beatCount * 12)
+                return (
+                  <button
+                    key={mark.index}
+                    type="button"
+                    data-scene-nav-selected={isCurrentScene ? 'true' : undefined}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (onNavigateScene && !isCurrentScene) {
+                        onNavigateScene(mark.index)
+                      }
+                    }}
+                    style={{ width: chipWidth }}
+                    className={`flex-shrink-0 rounded-lg border px-2 py-1.5 text-left transition-colors ${
+                      isCurrentScene
+                        ? 'bg-purple-600/30 border-purple-500 text-purple-100'
+                        : 'bg-slate-900/60 border-white/10 text-gray-300 hover:border-white/30 hover:text-white'
+                    }`}
+                    title={sceneHeadingLabel(listScene, mark.index)}
+                  >
+                    <div className="flex items-center justify-between gap-1">
+                      <span className={`text-[10px] font-bold px-1 py-0.5 rounded ${
+                        isCurrentScene ? 'bg-purple-500 text-white' : 'bg-gray-700 text-gray-300'
+                      }`}>
+                        S{mark.index + 1}
+                      </span>
+                      <span
+                        className={`text-[10px] font-semibold tabular-nums px-1 py-0.5 rounded border ${
+                          hasScore ? audienceScoreClass(score) : 'bg-gray-800 text-gray-500 border-gray-700'
+                        }`}
+                      >
+                        {hasScore ? score : '—'}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[10px] truncate">{sceneHeadingLabel(listScene, mark.index)}</p>
+                    <p className="text-[10px] tabular-nums text-gray-400">{formatNavigationClock(mark.startSeconds)}</p>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Scene Title, Score, and Description */}
         <div 
@@ -6940,7 +7039,7 @@ function SceneCard({
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-white truncate">{formattedHeading}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      Duration: {formatDuration(calculateSceneDuration(scene))}
+                      Duration: {formatNavigationClock(sceneDurationSeconds)}
                     </p>
                   </div>
                 </div>
