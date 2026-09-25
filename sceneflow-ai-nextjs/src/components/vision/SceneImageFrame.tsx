@@ -13,6 +13,7 @@ import {
   isDisplayableImageUrl,
 } from '@/components/vision/DeferredImageSkeleton'
 import type { MediaVersion } from '@/lib/storyboard/mediaVersions'
+import { BEAT_STAGE_STILL_PREVIEW_CLASS } from '@/components/vision/scene-production/beatStageStillPreview'
 
 export interface SceneImageFrameProps {
   sceneIdx: number
@@ -464,7 +465,7 @@ export function SceneImageFrame({
         ref={stageRef}
         className={`relative bg-black ${
           expandable
-            ? `mx-auto aspect-video w-full max-w-md max-h-[min(36vh,16rem)] ${
+            ? `${BEAT_STAGE_STILL_PREVIEW_CLASS} ${
                 isFullscreen ? 'h-screen w-screen max-h-none max-w-none' : ''
               }`
             : 'aspect-video bg-slate-800/50'
