@@ -52,7 +52,7 @@ export function BeatExcludeToggle({
     <div
       className={`inline-flex shrink-0 overflow-hidden rounded border border-slate-600/70 ${className ?? ''}`}
       role="group"
-      aria-label={`Beat ${beat.sequenceIndex + 1} include or exclude`}
+      aria-label={`Shot ${beat.sequenceIndex + 1} include or exclude`}
       onClick={(e) => e.stopPropagation()}
     >
       <button
@@ -60,7 +60,7 @@ export function BeatExcludeToggle({
         disabled={readOnly}
         aria-pressed={included}
         className={`${optionClass(included)} border-r border-slate-600/70`}
-        title="Include this beat in image, video, and the Mixer"
+        title="Include this shot in image, video, and the Mixer"
         onClick={() => setIncluded(true)}
       >
         Include
@@ -70,7 +70,7 @@ export function BeatExcludeToggle({
         disabled={readOnly}
         aria-pressed={!included}
         className={optionClass(!included)}
-        title="Exclude this beat from image, video, and the Mixer"
+        title="Exclude this shot from image, video, and the Mixer"
         onClick={() => setIncluded(false)}
       >
         Exclude

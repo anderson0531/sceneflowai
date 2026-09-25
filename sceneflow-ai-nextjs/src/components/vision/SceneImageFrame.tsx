@@ -317,7 +317,7 @@ function BeatNumberPill({
     <span
       className={`shrink-0 rounded-full bg-slate-700/50 text-slate-300 border border-slate-600/40 font-medium tabular-nums ${sizeClass}`}
     >
-      Beat {beatNumber}
+      Shot {beatNumber}
     </span>
   )
 }

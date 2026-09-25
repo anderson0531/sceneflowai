@@ -90,7 +90,7 @@ export function StoryboardReviewPanel({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={beat.storyboardImageUrl}
-                  alt={`Beat ${idx + 1}`}
+                  alt={`Shot ${idx + 1}`}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -99,7 +99,7 @@ export function StoryboardReviewPanel({
                 </div>
               )}
               <span
-                className={`absolute top-1 left-1 text-[10px] px-1.5 py-0.5 rounded ${kindBadgeClass(beat.kind)}`}
+                className={`absolute top-1 left-1 text-[10px] px-1.5 py-0.5 rounded ${kindBadgeClass(shot.kind)}`}
               >
                 {kindLabel(beat.kind)}
               </span>
@@ -132,7 +132,7 @@ export function StoryboardReviewPanel({
       {!allFramesReady && (
         <div className="flex items-start gap-2 text-xs text-amber-300/90">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-          <span>Generate all beat frames via Frame Agent before approving.</span>
+          <span>Generate all shot frames via Stills Agent before approving.</span>
         </div>
       )}
 

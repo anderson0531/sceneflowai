@@ -250,7 +250,7 @@ export const USE_CASE_STORY_SCRIPTS: Record<UseCaseStoryKey, RoleStoryScript> = 
       {
         characterId: 'narrator',
         kind: 'narration',
-        text: 'Casey sets photoreal nine-sixteen in Blueprint, approves Beat Frames before render, and chains extensions for emotional beats that hold.',
+        text: 'Casey sets photoreal nine-sixteen in Blueprint, approves Shot Frames before render, and chains extensions for emotional beats that hold.',
         directorNote: 'The turn — opening up, warmer, building confidence.',
       },
       {
@@ -602,7 +602,7 @@ export const USE_CASE_STORY_SCRIPTS: Record<UseCaseStoryKey, RoleStoryScript> = 
       {
         characterId: 'narrator',
         kind: 'narration',
-        text: 'James uploads training slides with the L&D lead\'s saved voice. SceneFlow publishes module videos — Beat Frames approved before render.',
+        text: 'James uploads training slides with the L&D lead\'s saved voice. SceneFlow publishes module videos — Shot Frames approved before render.',
         directorNote: 'Decisive pivot; momentum on approval-before-render.',
       },
       {

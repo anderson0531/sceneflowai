@@ -102,9 +102,9 @@ const frameTypeLabels: Record<FrameTypeFilter, string> = {
 
 const frameTypeTooltips: Record<FrameTypeFilter, string> = {
   all: 'Action, dialogue, and narration frames.',
-  action: 'Frames for beats with no spoken line.',
-  dialogue: 'Frames for beats spoken by a character.',
-  narration: 'Frames for voiceover beats.',
+  action: 'Frames for shots with no spoken line.',
+  dialogue: 'Frames for shots spoken by a character.',
+  narration: 'Frames for voiceover shots.',
 }
 
 type EditingFrame =
@@ -361,7 +361,7 @@ function buildStoryboardSlotFrameProps(
             }
           }
         : undefined,
-    generateLabel: useExpressGenerate ? 'Frame Agent' : undefined,
+    generateLabel: useExpressGenerate ? 'Stills Agent' : undefined,
     useExpressGenerateIcon: useExpressGenerate,
     imageVersions: slot.imageVersions,
     imageVersionId: slot.imageVersionId,
@@ -695,10 +695,10 @@ export function SceneStoryboardFrameViewer({
   const sceneExpressTooltip = expressPreflightBlocks
     ? sceneExpressPreflight.errors[0]
     : expressCanDrawMissingReferences
-      ? `${referenceGateMessage} Frame Agent draws them first.`
+      ? `${referenceGateMessage} Stills Agent draws them first.`
       : sceneExpressPreflight.nothingToDo
         ? 'Scene complete — choose frames to regenerate'
-        : '~60s — Vertex AI — Direction (if needed) → Audio + beats in parallel'
+        : '~60s — Vertex AI — Direction (if needed) → Audio + shots in parallel'
 
   const openExpressSceneDialog = useCallback(() => {
     if (expressGateBlocked && onExpressGateBlocked) {
@@ -744,7 +744,7 @@ export function SceneStoryboardFrameViewer({
     if (referenceReadiness.ready) return false
     toast.error(referenceGateMessage, {
       description:
-        'Run Frame Agent to draw them first, or draw them from the References tab.',
+        'Run Stills Agent to draw them first, or draw them from the References tab.',
     })
     return true
   }, [referenceReadiness.ready, referenceGateMessage])
@@ -863,7 +863,7 @@ export function SceneStoryboardFrameViewer({
           </span>
         </TooltipTrigger>
         <TooltipContent className="max-w-xs">
-          Default for Frame Agent, Regen, and Direct Frame
+          Default for Stills Agent, Regen, and Direct Frame
         </TooltipContent>
       </Tooltip>
       <Tooltip>
@@ -976,7 +976,7 @@ export function SceneStoryboardFrameViewer({
               <p className="text-[11px] leading-relaxed text-amber-200">
                 {referenceGateMessage}{' '}
                 <span className="text-amber-300/80">
-                  Frame Agent draws them first; the References tab shows what is missing.
+                  Stills Agent draws them first; the References tab shows what is missing.
                 </span>
               </p>
             </div>
@@ -1009,7 +1009,7 @@ export function SceneStoryboardFrameViewer({
                     onClick={openExpressSceneDialog}
                   >
                     <Zap className="w-3.5 h-3.5 mr-1.5" />
-                    Frame Agent
+                    Stills Agent
                   </Button>
                 )}
               </div>
@@ -1078,8 +1078,8 @@ export function SceneStoryboardFrameViewer({
                         >
                           <Zap className="w-3 h-3 mr-0.5" />
                           {sceneExpressRunning
-                            ? `Frame Agent ${expressElapsedSec}s`
-                            : 'Frame Agent'}
+                            ? `Stills Agent ${expressElapsedSec}s`
+                            : 'Stills Agent'}
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">{sceneExpressTooltip}</TooltipContent>
@@ -1169,7 +1169,7 @@ export function SceneStoryboardFrameViewer({
               />
 
               <SceneBeatStage
-                railLabel="Beat frames"
+                railLabel="Shot frames"
                 items={visibleFrameSlots.map((slot) => ({
                   id: slot.key,
                   beatNumber: slot.beatNumber,
@@ -1181,7 +1181,7 @@ export function SceneStoryboardFrameViewer({
                         ? 'End'
                         : undefined,
                   status: slot.isMissing ? 'attention' : slot.displayImageUrl ? 'ready' : 'idle',
-                  ariaLabel: slot.label || `Beat ${slot.beatNumber ?? ''}`,
+                  ariaLabel: slot.label || `Shot ${slot.beatNumber ?? ''}`,
                 }))}
                 selectedId={selectedFrameKey}
                 onSelect={(id) => {
@@ -1208,7 +1208,7 @@ export function SceneStoryboardFrameViewer({
                           showBorder={false}
                           expandable
                           className="w-full"
-                          directorTitle="Direct Still"
+                          directorTitle="Direct Shot"
                         />
                       ) : (
                         <div className="aspect-video flex flex-col items-center justify-center">
@@ -1229,7 +1229,7 @@ export function SceneStoryboardFrameViewer({
                       <div className="flex items-center gap-2 min-w-0 flex-wrap">
                         {previewSlot.beatNumber != null && (
                           <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-slate-700/50 text-slate-300 border border-slate-600/40 font-medium tabular-nums">
-                            Beat {previewSlot.beatNumber}
+                            Shot {previewSlot.beatNumber}
                           </span>
                         )}
                         {previewSlot.beatRole && (

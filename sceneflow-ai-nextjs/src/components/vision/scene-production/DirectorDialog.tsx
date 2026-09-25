@@ -213,7 +213,7 @@ interface DirectorDialogProps {
   /** Session default from the Footage toolbar. Seeds Take when provided. */
   videoGenerationQuality?: VideoGenerationQuality
   videoGenerationMode?: VideoGenerationMode
-  /** Retry this beat's start still using the Frames tab Standard | Creative mode. */
+  /** Retry this shot's start still using the Frames tab Standard | Creative mode. */
   onRegenerateStill?: () => void
   /** Scroll the visual prompt into view when the dialog opens. */
   focusPrompt?: boolean
@@ -1516,7 +1516,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                   )}
                   <p className="text-sm text-slate-400 text-center">
                     {referenceImages.length === 0 
-                      ? `Auto-detected beat references appear here (up to ${MAX_VERTEX_GEMINI_REFERENCE_IMAGES})`
+                      ? `Auto-detected shot references appear here (up to ${MAX_VERTEX_GEMINI_REFERENCE_IMAGES})`
                       : `${referenceImages.length}/${MAX_VERTEX_GEMINI_REFERENCE_IMAGES} reference images added`
                     }
                   </p>
@@ -1695,7 +1695,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                   </div>
                 ) : (
                   <div className="rounded-lg border border-amber-500/40 bg-amber-950/20 p-4 text-sm text-amber-100">
-                    Extension continues from the previous part of this beat. Generate earlier parts in order.
+                    Extension continues from the previous part of this shot. Generate earlier parts in order.
                   </div>
                 )}
                 {continuationDialogueExcerpt ? (

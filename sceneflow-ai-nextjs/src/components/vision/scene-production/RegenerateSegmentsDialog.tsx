@@ -50,10 +50,10 @@ export function RegenerateSegmentsDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-cyan-400">
             <RefreshCw className="w-5 h-5" />
-            {t('regenerateBeats.title')}
+            {t('regenerateShots.title')}
           </DialogTitle>
           <DialogDescription className="text-slate-400">
-            {t('regenerateBeats.description')}
+            {t('regenerateShots.description')}
           </DialogDescription>
         </DialogHeader>
         
@@ -63,24 +63,24 @@ export function RegenerateSegmentsDialog({
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-400 flex items-center gap-2">
                 <Layers className="w-4 h-4" />
-                {t('regenerateBeats.beats')}
+                {t('regenerateShots.shots')}
               </span>
               <span className="text-white font-medium">{totalBeats}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-400 flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                {t('regenerateBeats.totalDuration')}
+                {t('regenerateShots.totalDuration')}
               </span>
               <span className="text-white font-medium">{totalDuration.toFixed(1)}s</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-400 flex items-center gap-2">
                 <ImageIcon className="w-4 h-4" />
-                {t('regenerateBeats.anchoredFrames')}
+                {t('regenerateShots.anchoredFrames')}
               </span>
               <span className="text-white font-medium">
-                {t('regenerateBeats.anchoredCount', { anchored: anchoredCount, total: totalBeats })}
+                {t('regenerateShots.anchoredCount', { anchored: anchoredCount, total: totalBeats })}
               </span>
             </div>
           </div>
@@ -95,12 +95,12 @@ export function RegenerateSegmentsDialog({
             {hasGeneratedAssets ? (
               <p className="flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>{t('regenerateBeats.assetsWarning')}</span>
+                <span>{t('regenerateShots.assetsWarning')}</span>
               </p>
             ) : (
               <p className="flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>{t('regenerateBeats.emptyWarning')}</span>
+                <span>{t('regenerateShots.emptyWarning')}</span>
               </p>
             )}
           </div>
@@ -109,7 +109,7 @@ export function RegenerateSegmentsDialog({
           <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-lg p-3 text-sm text-cyan-300/80">
             <p className="flex items-start gap-2">
               <Film className="w-4 h-4 mt-0.5 flex-shrink-0 text-cyan-400" />
-              <span>{t('regenerateBeats.nextHint')}</span>
+              <span>{t('regenerateShots.nextHint')}</span>
             </p>
           </div>
         </div>
@@ -135,8 +135,8 @@ export function RegenerateSegmentsDialog({
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             {hasGeneratedAssets
-              ? t('regenerateBeats.deleteAndRegenerate')
-              : t('regenerateBeats.regenerate')}
+              ? t('regenerateShots.deleteAndRegenerate')
+              : t('regenerateShots.regenerate')}
           </Button>
         </DialogFooter>
       </DialogContent>

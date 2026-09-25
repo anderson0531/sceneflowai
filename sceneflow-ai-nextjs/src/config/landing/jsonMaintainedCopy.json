@@ -145,7 +145,7 @@
             "id": "production-frames",
             "number": "5",
             "title": "Generate and edit frames",
-            "description": "Generate beat frames with Run All Agents, Frame Agent per scene, or beat by beat, then edit any frame with the Intelligent Assistant Director (IAD) — just describe the change.",
+            "description": "Generate beat frames with Run All Agents, Stills Agent per scene, or beat by beat, then edit any frame with the Intelligent Assistant Director (IAD) — just describe the change.",
             "imagePlaceholder": "Beat frames with Intelligent Assistant Director edits"
           },
           {
@@ -356,7 +356,7 @@
           {
             "icon": "express",
             "title": "Production Agents",
-            "description": "Audio Agent, Frame Agent, and Video Agent compose expert prompts from beat direction, attach the right references, and generate in parallel. A scene can take several minutes because the agent is doing the specialist work — not because the queue is slow.",
+            "description": "Audio Agent, Stills Agent, and Video Agent compose expert prompts from beat direction, attach the right references, and generate in parallel. A scene can take several minutes because the agent is doing the specialist work — not because the queue is slow.",
             "learnMore": {
               "problem": "Writing every prompt and waiting on one asset at a time turns production into babysitting — you queue a clip, watch it render, then repeat while momentum evaporates.",
               "solution": "Agents read the locked beat, build the prompt, attach identity and location refs, generate, and retry when the provider or likeness check fails — then hand you a reviewable beat.",

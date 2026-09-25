@@ -796,7 +796,7 @@ export function SegmentPromptBuilder({
     }
     
     // Emotional beat
-    if (structure.emotionalBeat) parts.push(`conveying ${structure.emotionalBeat}`)
+    if (structure.emotionalBeat) parts.push(`conveying ${structure.emotionalShot}`)
     
     // Atmosphere
     if (structure.atmosphere && structure.atmosphere !== 'neutral') {
@@ -962,7 +962,7 @@ export function SegmentPromptBuilder({
   const methodLabels: Record<VideoGenerationMethod, { label: string; description: string; icon: React.ReactNode }> = {
     'T2V': { 
       label: 'Text-to-Video', 
-      description: 'Generate video from text prompt only',
+      description: 'Generate clip from text prompt only',
       icon: <Video className="w-4 h-4" />
     },
     'I2V': { 
@@ -1012,7 +1012,7 @@ export function SegmentPromptBuilder({
             {mode === 'video' ? <Video className="w-5 h-5 text-blue-400" /> : <ImageIcon className="w-5 h-5 text-purple-400" />}
             {mode === 'video' ? 'Generate Video' : 'Generate Image'}
             <span className="text-sm font-normal text-gray-400 ml-2">
-              Beat {segment.sequenceIndex + 1} · {(segment.endTime - segment.startTime).toFixed(1)}s
+              Shot {segment.sequenceIndex + 1} · {(segment.endTime - segment.startTime).toFixed(1)}s
             </span>
           </DialogTitle>
         </DialogHeader>
@@ -1392,14 +1392,14 @@ export function SegmentPromptBuilder({
                           muted
                         />
                         <div className="absolute top-2 left-2 text-[10px] bg-green-500/80 px-2 py-0.5 rounded">
-                          Beat {selectedVideoTake.segmentIndex + 1} · Take
+                          Shot {selectedVideoTake.segmentIndex + 1} · Take
                         </div>
                       </div>
                       <div className="text-[10px] text-gray-500">This video will be used as the reference for extension</div>
                     </div>
                   ) : previousSegmentLastFrame ? (
                     <div className="space-y-2">
-                      <label className="text-xs text-gray-400">Or use Previous Beat Last Frame (default)</label>
+                      <label className="text-xs text-gray-400">Or use Previous Shot Last Frame (default)</label>
                       <div className="aspect-video max-w-xs rounded-lg border border-green-500/50 overflow-hidden">
                         <img src={previousSegmentLastFrame} alt="Previous segment last frame" className="w-full h-full object-cover" />
                       </div>
@@ -1805,7 +1805,7 @@ export function SegmentPromptBuilder({
                     Action instruction
                   </h3>
                   <p className="text-[11px] text-gray-400 leading-relaxed">
-                    Describe visible motion for this segment. Required for action-only beats; for dialogue segments,
+                    Describe visible motion for this segment. Required for action-only shots; for dialogue segments,
                     keyframes use this plus the assigned line (split automatically if longer than ~10s for Veo).
                   </p>
                   <Textarea
@@ -2065,7 +2065,7 @@ export function SegmentPromptBuilder({
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-400">Emotional Beat</label>
+                    <label className="text-xs text-gray-400">Emotional Shot</label>
                     <Input
                       value={structure.emotionalBeat}
                       onChange={(e) => setStructure(prev => ({ ...prev, emotionalBeat: e.target.value }))}
@@ -2423,7 +2423,7 @@ export function SegmentPromptBuilder({
                   return (
                     <div key={segIdx}>
                       <h3 className="text-xs font-semibold text-green-400 mb-2">
-                        Beat {segIdx + 1}
+                        Shot {segIdx + 1}
                       </h3>
                       <div className="grid grid-cols-3 gap-3">
                         {segmentTakes.map(take => (

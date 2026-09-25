@@ -40,7 +40,7 @@ export interface DirectorObject {
 export interface BeatDirectorDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  beat: SceneBeat
+  shot: SceneShot
   sceneNumber: number
   sceneIndex: number
   scenes: Array<Record<string, unknown>>
@@ -194,10 +194,10 @@ export function BeatDirectorDialog({
       <DialogContent className="flex w-[min(48rem,calc(100vw-2rem))] max-w-none min-w-0 max-h-[90vh] flex-col gap-3 overflow-x-hidden overflow-y-auto bg-slate-900 border-slate-700 text-slate-100">
         <DialogTitle className="flex min-w-0 items-center gap-2 break-words text-base font-semibold text-white">
           <Clapperboard className="h-4 w-4 shrink-0 text-teal-400" />
-          Direct Beat · Scene {sceneNumber} · Beat {beat.sequenceIndex + 1}
+          Direct Shot · Scene {sceneNumber} · Shot {beat.sequenceIndex + 1}
         </DialogTitle>
         <DialogDescription className="min-w-0 break-words text-sm text-slate-400">
-          Type or dictate how this beat should be directed. Preview the direction, then save it.
+          Type or dictate how this shot should be directed. Preview the direction, then save it.
           Still and clip prompts update with the save.
         </DialogDescription>
 
@@ -270,7 +270,7 @@ export function BeatDirectorDialog({
               </span>
             ))}
             {cast.length === 0 && !selectedLocation && connectedObjects.length === 0 && (
-              <p className="text-xs text-slate-500">No references connected to this beat yet.</p>
+              <p className="text-xs text-slate-500">No references connected to this shot yet.</p>
             )}
           </div>
         </div>
@@ -328,7 +328,7 @@ export function BeatDirectorDialog({
           <div className="max-h-48 min-w-0 space-y-1 overflow-y-auto overflow-x-hidden rounded border border-slate-800 p-2">
             {tab === 'cast' &&
               (cast.length === 0 ? (
-                <p className="text-xs text-slate-500">Cast comes from the beat direction.</p>
+                <p className="text-xs text-slate-500">Cast comes from the shot direction.</p>
               ) : (
                 cast.map((character) => (
                   <div key={character.id || character.name} className="flex min-w-0 items-center gap-2 text-xs">

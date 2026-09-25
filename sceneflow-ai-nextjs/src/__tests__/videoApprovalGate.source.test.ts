@@ -34,7 +34,7 @@ describe('video generation unlock wiring', () => {
     expect(consoleSrc).not.toContain('isVideoGenerationUnlocked')
     expect(consoleSrc).not.toContain('Approve Pre-Vis before generating video')
     expect(gallery).not.toContain('Approve Pre-Vis before generating video')
-    expect(gallery).toContain('Generate video')
+    expect(gallery).toContain('Generate clip')
     expect(gallery).not.toContain('Generate start and end frames')
     expect(gallery).not.toContain('Use previous end frame')
   })

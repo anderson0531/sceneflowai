@@ -11,7 +11,7 @@ describe('object library delete persistence', () => {
     const sidebar = readSource('src/components/vision/VisionReferencesSidebar.tsx')
     expect(sidebar).toContain('Delete all')
     expect(sidebar).toContain('onDeleteAllObjectReferences')
-    expect(sidebar).toContain('Beat prop links will be cleared')
+    expect(sidebar).toContain('Shot prop links will be cleared')
 
     const page = readSource('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
     expect(page).toContain('persistObjectLibrary')

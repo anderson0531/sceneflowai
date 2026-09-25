@@ -311,7 +311,7 @@ export function LocationPromptBuilder({
               <div className="text-xs text-amber-200">
                 <p className="font-medium mb-1">Structural set changes only</p>
                 <p className="text-amber-300/80">
-                  Structural set changes only — beat props belong on the frame, not this still.
+                  Structural set changes only — shot props belong on the frame, not this still.
                   Bake lasting architecture, doors, walls, floors, and set furniture. Ignore handheld
                   objects a character will introduce.
                 </p>
@@ -421,7 +421,7 @@ export function LocationPromptBuilder({
                   onChange={(e) => setAdditionalDetails(e.target.value)}
                   placeholder={
                     version
-                      ? 'Structural set changes only (doors, walls, flooding). Do not add beat props...'
+                      ? 'Structural set changes only (doors, walls, flooding). Do not add shot props...'
                       : 'Weather, specific set dressing, color palette, architectural details...'
                   }
                   className="min-h-[90px]"

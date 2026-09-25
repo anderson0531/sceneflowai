@@ -200,7 +200,7 @@ export function buildT2VPrompt(config: MethodPromptBuilderConfig): BuiltPrompt {
   
   // Emotional beat
   if (segment.emotionalBeat) {
-    parts.push(`Mood: ${segment.emotionalBeat}`)
+    parts.push(`Mood: ${segment.emotionalShot}`)
   }
   
   // Scene direction
@@ -267,7 +267,7 @@ export function buildI2VPrompt(config: MethodPromptBuilderConfig): BuiltPrompt {
   
   // Motion/emotion descriptors
   if (segment.emotionalBeat) {
-    parts.push(`The scene feels ${segment.emotionalBeat.toLowerCase()}`)
+    parts.push(`The scene feels ${segment.emotionalShot.toLowerCase()}`)
   }
   
   // Do NOT include:
@@ -343,7 +343,7 @@ export function buildREFPrompt(config: MethodPromptBuilderConfig): BuiltPrompt {
   
   // Emotional beat
   if (segment.emotionalBeat) {
-    parts.push(`Mood: ${segment.emotionalBeat}`)
+    parts.push(`Mood: ${segment.emotionalShot}`)
   }
   
   // Lighting/atmosphere (these are important even with refs)
@@ -409,7 +409,7 @@ export function buildEXTPrompt(config: MethodPromptBuilderConfig): BuiltPrompt {
   
   // Emotional shift
   if (segment.emotionalBeat) {
-    parts.push(`The mood shifts to ${segment.emotionalBeat.toLowerCase()}`)
+    parts.push(`The mood shifts to ${segment.emotionalShot.toLowerCase()}`)
   }
   
   // End frame description for next segment continuity

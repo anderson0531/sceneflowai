@@ -542,7 +542,7 @@ export function SceneProductionManager({
             objectRefIds: [],
           },
           takes: [],
-          generatedPrompt: seg.prompt || seg.label || `Beat ${idx + 1}`,
+          generatedPrompt: seg.prompt || seg.label || `Shot ${idx + 1}`,
         }
         currentTime += duration
         return segment
@@ -987,12 +987,12 @@ export function SceneProductionManager({
     const regenerating = Boolean(
       productionData?.isSegmented && (productionData.segments?.length ?? 0) > 0
     )
-    const runId = `beats-regenerate:${sceneId}`
+    const runId = `shots-regenerate:${sceneId}`
     if (regenerating) {
       startAgentRun({
         id: runId,
-        title: 'Beats',
-        subtitle: 'Regenerating beats — you can keep reviewing the production',
+        title: 'Shots',
+        subtitle: 'Regenerating shots — you can keep reviewing the production',
         itemLabel: `Scene ${sceneNumber}`,
       })
     } else {
@@ -1034,11 +1034,11 @@ export function SceneProductionManager({
     try {
       await onInitialize(sceneId, { targetDuration, generationOptions })
       setGenerationProgress(100)
-      toast.success('Beats generated successfully', {
+      toast.success('Shots generated successfully', {
         description: `Created intelligent video segments with cinematic prompts`
       })
       if (regenerating) {
-        finishAgentRun(runId, { subtitle: 'Beats updated' })
+        finishAgentRun(runId, { subtitle: 'Shots updated' })
       }
     } catch (error) {
       console.error('[SceneProduction] Initialize failed', error)
@@ -1100,7 +1100,7 @@ export function SceneProductionManager({
             objectRefIds: [],
           },
           takes: [],
-          generatedPrompt: `Scene ${sceneNumber} - Beat ${i + 1}/${chunkDurations.length} (${dur.toFixed(1)}s). Ready for image or video upload.`,
+          generatedPrompt: `Scene ${sceneNumber} - Shot ${i + 1}/${chunkDurations.length} (${dur.toFixed(1)}s). Ready for image or video upload.`,
         }
         t += dur
         return seg
@@ -1324,7 +1324,7 @@ export function SceneProductionManager({
             </div>
             <div>
               <DialogTitle className="text-left">
-                {isRegenerate ? 'Regenerate Scene Beats' : 'Generate Scene Beats'}
+                {isRegenerate ? 'Regenerate Shots' : 'Generate Shots'}
               </DialogTitle>
               <DialogDescription className="text-left">
                 Configure how segments are created for this scene.
@@ -1393,7 +1393,7 @@ export function SceneProductionManager({
             {/* Core timing controls in a grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Target Beat Duration</Label>
+                <Label className="text-sm font-medium">Target Shot Duration</Label>
                 <div className="flex items-center gap-2">
                   <Input
                     type="number"
@@ -1450,7 +1450,7 @@ export function SceneProductionManager({
                 
                 <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
                   <div className="flex-1">
-                    <Label className="text-sm font-medium">Add Lead-In Beat</Label>
+                    <Label className="text-sm font-medium">Add Lead-In Shot</Label>
                     <p className="text-xs text-gray-500 mt-1">
                       Insert an establishing shot before dialogue begins.
                     </p>
@@ -1617,7 +1617,7 @@ export function SceneProductionManager({
               <div className="flex flex-wrap gap-2">
                 <button 
                   type="button"
-                  onClick={() => togglePreset('reactions', 'Focus on character reactions and emotional beats')}
+                  onClick={() => togglePreset('reactions', 'Focus on character reactions and emotional shots')}
                   className={cn(
                     "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
                     activePresets.includes('reactions')
@@ -1665,7 +1665,7 @@ export function SceneProductionManager({
                 </button>
                 <button 
                   type="button"
-                  onClick={() => togglePreset('tension', 'Emphasize tension and dramatic beats')}
+                  onClick={() => togglePreset('tension', 'Emphasize tension and dramatic shots')}
                   className={cn(
                     "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
                     customInstructions.includes('tension')
@@ -1715,7 +1715,7 @@ export function SceneProductionManager({
         </Button>
         <Button onClick={handleInitialize} disabled={isInitializing}>
           <Sparkles className="w-4 h-4 mr-2" />
-          {isRegenerate ? 'Regenerate Beats' : 'Generate Beats'}
+          {isRegenerate ? 'Regenerate Shots' : 'Generate Shots'}
         </Button>
       </DialogFooter>
     </DialogContent>
@@ -1747,7 +1747,7 @@ export function SceneProductionManager({
       {/* Freeze overlay only for the first beat build — the mixer does not exist yet. */}
       <GeneratingOverlay 
         visible={freezeFirstBeats} 
-        title="Generating Intelligent Beats..." 
+        title="Generating Intelligent Shots..." 
         progress={generationProgress}
         subtext="Analyzing dialogue, scene direction, and character blocking with Gemini 3.0"
       />
@@ -1834,7 +1834,7 @@ Example format:
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Create Beats
+                  Create Shots
                 </>
               )}
             </Button>

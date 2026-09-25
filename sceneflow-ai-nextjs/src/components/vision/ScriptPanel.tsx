@@ -73,7 +73,7 @@ import { getBlueprintBeatGroup } from '@/lib/script/sceneDecomposition'
 // These components have complex initialization that can cause module load order problems
 const SegmentBuilder = dynamic(
   () => import('./scene-production/SegmentBuilder').then(mod => ({ default: mod.SegmentBuilder })),
-  { ssr: false, loading: () => <div className="p-4 text-center text-zinc-500">Loading Beat Builder...</div> }
+  { ssr: false, loading: () => <div className="p-4 text-center text-zinc-500">Loading Shot Builder...</div> }
 )
 const DirectorWorkflow = dynamic(
   () => import('./scene-production/DirectorConsole').then(mod => ({ default: mod.DirectorWorkflow })),
@@ -4557,8 +4557,8 @@ function SceneCard({
       if (broken.length > 0) {
         toast.warning(
           broken.length === 1
-            ? '1 beat now continues from a different shot — re-check its frames'
-            : `${broken.length} beats now continue from different shots — re-check their frames`
+            ? '1 shot now continues from a different shot — re-check its frames'
+            : `${broken.length} shots now continue from different shots — re-check their frames`
         )
       }
 
@@ -4768,7 +4768,7 @@ function SceneCard({
   const workflowCompletions = scene.workflowCompletions || {}
 
   const hasSelectableActionBeats = useMemo(
-    () => listSelectableActionBeats(scene as Record<string, unknown>).length > 0,
+    () => listSelectableActionShots(scene as Record<string, unknown>).length > 0,
     [scene]
   )
 
@@ -4954,7 +4954,7 @@ function SceneCard({
           const sceneBeats = getSceneBeats(scene)
           for (const beatId of selection.sfxBeatIds) {
             const beatNumber = sceneBeats.findIndex((entry) => entry.beatId === beatId) + 1
-            addItem(`sfx-${beatId}`, beatNumber > 0 ? `SFX — beat ${beatNumber}` : 'SFX', 'sfx')
+            addItem(`sfx-${beatId}`, beatNumber > 0 ? `SFX — shot ${beatNumber}` : 'SFX', 'sfx')
           }
           await dispatchExpressVeoSfx({
             projectId,
@@ -6066,8 +6066,8 @@ function SceneCard({
                             ? 'Script has changed. Re-edit the scene to refresh direction, or continue with the current summary.'
                             : preVisStale
                               ? stepStaleness.preVisPromptsOnly
-                                ? 'Frame prompts are out of date with this scene’s beat direction. Update them before regenerating frames.'
-                                : 'Script has changed since pre-vis was generated — update frame prompts before regenerating. Beat direction edits update prompts automatically.'
+                                ? 'Frame prompts are out of date with this scene’s shot direction. Update them before regenerating frames.'
+                                : 'Script has changed since pre-vis was generated — update frame prompts before regenerating. Shot direction edits update prompts automatically.'
                               : 'Direction has changed. Consider regenerating Frame.'}
                         </span>
                         <div className="ml-auto flex items-center gap-2">
@@ -6109,10 +6109,7 @@ function SceneCard({
                 {(
                   <div className="space-y-4">
                   {/* Quick Actions Bar */}
-                  <div className="sticky top-0 z-10 p-2 -mx-4 -mt-4 mb-4 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-gray-400 ml-2">Quick Actions</span>
-                    </div>
+                  <div className="sticky top-0 z-10 p-2 -mx-4 -mt-4 mb-4 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 flex items-center justify-end">
                     <div className="flex items-center gap-2 mr-2">
                       {!isOutline && onPolishScene && (
                         <TooltipProvider>
@@ -6315,7 +6312,7 @@ function SceneCard({
                             {sceneBeatsForTabs.length > 0 && (
                               <span className="text-[10px] opacity-60">
                                 ({sceneBeatsForTabs.length}
-                                {excludedBeatCount > 0 ? `, ${excludedBeatCount} excluded` : ''})
+                                {excludedBeatCount > 0 ? `, ${excludedShotCount} excluded` : ''})
                               </span>
                             )}
                           </TabsTrigger>
@@ -6679,7 +6676,7 @@ function SceneCard({
                         <div className="text-xs font-semibold text-purple-800 dark:text-purple-200 mb-2">
                           Scene track
                           <span className="ml-2 font-normal text-gray-600 dark:text-gray-400">
-                            Plays under music-enabled beats that no cue covers.
+                            Plays under music-enabled shots that no cue covers.
                           </span>
                         </div>
                       )}
@@ -6815,7 +6812,7 @@ function SceneCard({
                             readOnly={sceneBeatsForTabs.length > 0}
                             title={
                               sceneBeatsForTabs.length > 0
-                                ? 'Score length follows the beats in the Screening Room'
+                                ? 'Score length follows the shots in the Screening Room'
                                 : undefined
                             }
                             onChange={(e) => {
@@ -6883,7 +6880,7 @@ function SceneCard({
                               <TabsContent value="mixer" className="mt-3 focus-visible:outline-none">
                                 <div id={`production-mixer-${workflowSceneId}`} className="scroll-mt-4">
                                   {slots.mixerBody ?? (
-                                    <p className="text-sm text-slate-400">Mixer opens after this scene has one video clip per beat.</p>
+                                    <p className="text-sm text-slate-400">Mixer opens after this scene has one video clip per shot.</p>
                                   )}
                                 </div>
                               </TabsContent>
@@ -6976,10 +6973,10 @@ function SceneCard({
               <DialogHeader>
                 <DialogTitle className="text-red-400 flex items-center gap-2">
                   <Trash2 className="w-5 h-5" />
-                  {tStudio('deleteBeat')}
+                  {tStudio('deleteShot')}
                 </DialogTitle>
                 <DialogDescription className="text-gray-400">
-                  {tStudio('deleteBeatDescription')}
+                  {tStudio('deleteShotDescription')}
                 </DialogDescription>
               </DialogHeader>
               <div className="flex justify-end gap-3 mt-4">
@@ -7000,7 +6997,7 @@ function SceneCard({
                   }}
                   className="px-4 py-2 bg-red-600 hover:bg-red-500 border border-red-500 rounded-lg text-white text-sm font-medium transition-colors"
                 >
-                  {tStudio('deleteBeat')}
+                  {tStudio('deleteShot')}
                 </button>
               </div>
             </DialogContent>

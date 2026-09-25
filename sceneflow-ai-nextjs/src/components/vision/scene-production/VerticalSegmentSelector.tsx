@@ -150,7 +150,7 @@ const SegmentCard = memo(({ segment, isSelected, isPlaying, onSelect, onEdit, on
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (window.confirm('Delete this beat?')) onDelete();
+                  if (window.confirm('Delete this shot?')) onDelete();
                 }}
                 className="p-1 rounded bg-black/60 hover:bg-red-500/80 text-white transition-colors"
                 title="Delete segment"
@@ -222,7 +222,7 @@ export function VerticalSegmentSelector({
       <div className="h-full flex flex-col items-center justify-center p-4 text-center">
         <Film className="w-8 h-8 text-gray-300 dark:text-gray-600 mb-2" />
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          No beats yet
+          No shots yet
         </p>
       </div>
     )
@@ -234,7 +234,7 @@ export function VerticalSegmentSelector({
       <div className="flex-shrink-0 px-3 py-2 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-            Beats
+            Shots
           </span>
           <span className="text-[10px] text-gray-400">
             {segments.length}

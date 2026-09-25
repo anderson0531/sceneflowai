@@ -67,7 +67,7 @@ export function ActionBeatSfxControls({
   const sfxStale = actionBeatSfxIsStale(scene, beat, !!sfxAudio)
   const sfxSourceMeta = sfxSourceMetaList[slot.sfxIndex] as Record<string, unknown> | null | undefined
   const isVeoAction =
-    sfxSourceMeta?.source === 'veo' && sfxSourceMeta?.promptMode === 'actionBeat'
+    sfxSourceMeta?.source === 'veo' && sfxSourceMeta?.promptMode === 'actionShot'
 
   const actionText = beat.actionDescription?.trim() ?? ''
   const autoSeconds = resolveAutoSfxDuration(segmentDurationSeconds)
@@ -104,7 +104,7 @@ export function ActionBeatSfxControls({
         segmentDurationSeconds,
         durationOverride: durationPreset,
         hasExistingAudio: !!sfxAudio,
-        promptMode: 'actionBeat',
+        promptMode: 'actionShot',
       })
       await onSaveSfxAudio?.(
         sceneIdx,
@@ -116,7 +116,7 @@ export function ActionBeatSfxControls({
       )
     } catch (error) {
       if ((error as Error)?.message !== 'Insufficient credits') {
-        console.error('[ActionBeatSfxControls] Veo SFX generation failed:', error)
+        console.error('[ActionShotSfxControls] Veo SFX generation failed:', error)
       }
     } finally {
       setIsGenerating(false)

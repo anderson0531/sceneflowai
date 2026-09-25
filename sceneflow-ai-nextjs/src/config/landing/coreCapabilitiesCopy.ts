@@ -30,7 +30,7 @@ export const CORE_CAPABILITIES_COPY = {
     badge: 'Intelligent Production',
     title: 'SceneFlow Agents',
     description:
-      'Audio Agent, Frame Agent, and Video Agent compose expert prompts from beat direction, attach the right references, and generate in parallel. A scene can take several minutes because the agent is doing specialist work — then you approve Beat Frames before you spend on motion video.',
+      'Audio Agent, Stills Agent, and Video Agent compose expert prompts from beat direction, attach the right references, and generate in parallel. A scene can take several minutes because the agent is doing specialist work — then you approve Shot Frames before you spend on motion video.',
     items: [
       {
         title: 'Pre-vis Agent',

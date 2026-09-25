@@ -154,7 +154,7 @@ describe('ObjectSuggestionPanel Objects tab render', () => {
     expect(scroll?.className).toContain('overflow-y-auto')
     expect(document.body.textContent).toContain('INT. RAIL YARD - NIGHT')
     expect(document.body.textContent).toContain('INT. STUDY - NIGHT')
-    expect(document.body.textContent).toContain('Beat 1')
+    expect(document.body.textContent).toContain('Shot 1')
     expect(document.body.querySelectorAll('[data-testid="object-duplicate-group"]')).toHaveLength(2)
     expect(document.body.textContent).toContain('Thirty-Inch Iron Rail Spanner')
     expect(document.body.textContent).toContain('Water-damaged leather journal')

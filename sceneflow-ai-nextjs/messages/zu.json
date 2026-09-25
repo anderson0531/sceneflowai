@@ -265,7 +265,7 @@
       },
       {
         "them": "Ukungaguquguquki kwendlela yokusebenza ngesandla kuzo zonke izikhathi zokusebenza",
-        "us": "Reference Library + Beat Frames vala izithombe ngaphambi kwevidiyo"
+        "us": "Reference Library + Shot Frames vala izithombe ngaphambi kwevidiyo"
       },
       {
         "them": "Ayikho inqubo yokuqinisekisa izethameli",
@@ -283,10 +283,10 @@
     "title": "Inqubo Yokukhiqiza Ividiyo Eqala Ngesigqi",
     "subtitle": "Vumela ngaphambi kokukhiqiza umphumela — hhayi ukuvuselela okufana nomshini wokugembula.",
     "intro": "Akukho ukukhiqiza ngokulinganisa nokuhlola. Uyabuka kuqala bese uvumela ukubukeka kwayo ngaphambi kokuba i-SceneFlow isebenzise amakhredithi kuvidiyo yokugcina.",
-    "description": "I-SceneFlow ihlela inqubo yokugunyazwa kokubonakalayo esigabeni ngasinye: i-Pre-vis Agent yokubuyekeza, i-Beat Frames yokukhiya ukwakheka, bese kuba yi-F2V ngesigqi ngasinye. Uyawulungisa umbonakalo ngaphambi kokuchitha amakhredithi ezintweni ezingahleliwe noma amaphutha okukhiqiza (hallucinations).",
+    "description": "I-SceneFlow ihlela inqubo yokugunyazwa kokubonakalayo esigabeni ngasinye: i-Pre-vis Agent yokubuyekeza, i-Shot Frames yokukhiya ukwakheka, bese kuba yi-F2V ngesigqi ngasinye. Uyawulungisa umbonakalo ngaphambi kokuchitha amakhredithi ezintweni ezingahleliwe noma amaphutha okukhiqiza (hallucinations).",
     "steps": [
       "Pre-vis Agent — yabelana ngemigqoqo yomculo enezithombe ukuze ibuyekezwe ngemizuzu embalwa",
-      "Beat Frames — vala ukwakheka kokuqala/kokuphela ngokuhambisana nokuqhubeka kwe-Reference Library",
+      "Shot Frames — vala ukwakheka kokuqala/kokuphela ngokuhambisana nokuqhubeka kwe-Reference Library",
       "I-F2V ngesigqi — khiqiza ividiyo usebenzisa ozimele (frames) abagunyaziwe, hhayi imiyalelo engacacile.",
       "Uchungechunge oluqhubekayo lwe-EXT — izinyathelo zokwandisa ezingama-secondu angu-7 (ezakhelwe ngaphakathi) zezigaba ezinde zezingxoxo",
       "Production Mixer — ukulungiswa kwesikhathi, umsindo, kanye nokuthunyelwa kokusakazwayo ku-Screening Room"
@@ -364,7 +364,7 @@
     "steps": [
       {
         "title": "Isiqeshana sokuqala sika-8s",
-        "description": "Ukuguqula uhlaka lube yividiyo noma isithombe sibe yividiyo kusuka ku-Beat Frames ogunyaziwe kukhiya ukwakheka ngaphambi kokuba kuqale ukunyakaza."
+        "description": "Ukuguqula uhlaka lube yividiyo noma isithombe sibe yividiyo kusuka ku-Shot Frames ogunyaziwe kukhiya ukwakheka ngaphambi kokuba kuqale ukunyakaza."
       },
       {
         "title": "Izinyathelo zokwelula ngo-+7s",
@@ -806,15 +806,15 @@
     "viewDetails": "Buka imininingwane",
     "beatFirst": {
       "title": "Inqubo Yokukhiqiza Ividiyo Eqala Ngesigqi",
-      "description": "Vumela izigaba ze-pre-vis kanye ne-Beat Frames ngaphambi kwe-F2V — lokhu kunciphisa ukwenziwa kabusha okungenanjongo okubangelwa amaphutha ohlelo (njengokuzidaleela imininingwane engalungile noma ukuchezuka embonweni wokuqala). Indlela eyodwa ehlelekile kusukela ekubuyekezweni kuya esiqeshini sokugcina.",
+      "description": "Vumela izigaba ze-pre-vis kanye ne-Shot Frames ngaphambi kwe-F2V — lokhu kunciphisa ukwenziwa kabusha okungenanjongo okubangelwa amaphutha ohlelo (njengokuzidaleela imininingwane engalungile noma ukuchezuka embonweni wokuqala). Indlela eyodwa ehlelekile kusukela ekubuyekezweni kuya esiqeshini sokugcina.",
       "keyFeatures": [
         "Pre-vis Agent ukuze kubuyekezwe — yabelana ngama-beat ngaphambi kokwenza i-render enzima",
-        "Beat Frames ukwakheka kokukhiya — Reference Library ukuqhubeka",
+        "Shot Frames ukwakheka kokukhiya — Reference Library ukuqhubeka",
         "I-F2V ngesigqi ngasinye — khiqiza ividiyo kusuka kuzinhlaka ezivunyiwe",
         "Uchungechunge oluqhubekayo lwe-EXT — izinyathelo ze-native +7s zezingxoxo ezinde ngaphakathi kwesigqi",
         "Isikhathi sokuxuba kanye nemifudlana — vula i-Screening Room ukuze uhlanganise futhi ushicilele"
       ],
-      "screenshotSlot": "Faka isithombe-skrini: Beat Frames kanye nokuvunywa kokubuka kuqala ngaphambi kokukhiqizwa kwevidiyo",
+      "screenshotSlot": "Faka isithombe-skrini: Shot Frames kanye nokuvunywa kokubuka kuqala ngaphambi kokukhiqizwa kwevidiyo",
       "videoSlot": "Faka isiqeshana esithatha imizuzwana engama-30: Ukuvuma imiculo, ukukhiya amafreyimu, bese kukhiqizwa iziqeshana ze-F2V."
     },
     "screeningRoom": {
@@ -847,7 +847,7 @@
         "description": "Isitudiyo esisodwa esenza yonke into, kusukela emcabangweni kuya kuvidiyo esilungele ukushicilelwa. Kusetshenziswa inqubo efanayo yokuqeqesha, ama-podcast, izindaba, kanye nochungechunge lwamafilimu — vumela ukubuka kuqala (pre-vis) ngaphambi kokusebenzisa imali ekukhiqizweni kokugcina.",
         "keyFeatures": [
           "Uchungechunge → Blueprint → Ukukhiqiza → Screening Room",
-          "Ukugunyazwa okusekelwe ezigabeni (beat-first) — i-pre-vis kanye ne-Beat Frames ngaphambi kwe-F2V",
+          "Ukugunyazwa okusekelwe ezigabeni (beat-first) — i-pre-vis kanye ne-Shot Frames ngaphambi kwe-F2V",
           "Ukukhiqizwa kwe-Google Vertex AI kusetshenziswa amaketanga okwandisa (extension chains) e-Veo angaphakathi ohlelweni",
           "Izindlela zokuqinisekisa ukuphepha nokwethembeka kanye nobufakazi obuqinisekisiwe bemvelaphi ngesikhathi sokulethwa"
         ],

@@ -175,7 +175,7 @@ export function isExpressBeatPoolRetryable(err: unknown): boolean {
 
 /** Client aborted the Express SSE run. Remaining queued beats fail with this. */
 export const FRAME_AGENT_CANCELLED_CODE = 'FRAME_AGENT_CANCELLED'
-export const FRAME_AGENT_CANCELLED_MESSAGE = 'Frame Agent cancelled'
+export const FRAME_AGENT_CANCELLED_MESSAGE = 'Stills Agent cancelled'
 
 export function createFrameAgentCancelledError(): Error & { code: string; status: number } {
   const err = new Error(FRAME_AGENT_CANCELLED_MESSAGE) as Error & {

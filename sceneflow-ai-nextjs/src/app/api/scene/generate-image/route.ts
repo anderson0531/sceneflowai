@@ -2430,7 +2430,7 @@ async function postGenerateImage(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: `Talent beat is missing character reference images: ${missingNames} — add in Reference Library before Frame Agent.`,
+          error: `Talent beat is missing character reference images: ${missingNames} — add in Reference Library before Stills Agent.`,
           code: 'MISSING_CHARACTER_REFERENCE_IMAGES',
         },
         { status: 422 }

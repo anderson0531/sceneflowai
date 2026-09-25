@@ -47,7 +47,7 @@ export function BeatSfxToggle({
     <label
       className={`flex items-center gap-1.5 shrink-0 cursor-pointer ${className ?? ''}`}
       onClick={(e) => e.stopPropagation()}
-      title={enabled ? 'SFX plays in animatic' : 'SFX muted for this beat'}
+      title={enabled ? 'SFX plays in animatic' : 'SFX muted for this shot'}
     >
       {enabled ? (
         <Volume2 className="w-3 h-3 text-blue-300" />
@@ -61,7 +61,7 @@ export function BeatSfxToggle({
         checked={enabled}
         onCheckedChange={handleChange}
         className="scale-75 origin-right"
-        aria-label={`SFX for beat ${beat.sequenceIndex + 1}`}
+        aria-label={`SFX for shot ${beat.sequenceIndex + 1}`}
       />
     </label>
   )

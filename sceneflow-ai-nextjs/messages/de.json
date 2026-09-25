@@ -267,7 +267,7 @@
       },
       {
         "them": "Manuelle Konsistenz über Sitzungen hinweg",
-        "us": "Reference Library + Beat Frames Bildsignale vor dem Videosignal synchronisieren"
+        "us": "Reference Library + Shot Frames Bildsignale vor dem Videosignal synchronisieren"
       },
       {
         "them": "Kein Workflow zur Validierung der Zielgruppe",
@@ -285,10 +285,10 @@
     "title": "Beat-basierte Video-Pipeline",
     "subtitle": "Freigabe vor dem Rendern – statt Generierung nach dem Glücksspielprinzip",
     "intro": "Kein mühsames Ausprobieren nach dem Prinzip „Versuch und Irrtum“. Sie sehen sich eine Vorschau an und geben den Look frei, bevor SceneFlow Credits für das endgültige Video verbraucht.",
-    "description": "SceneFlow strukturiert die visuelle Freigabe in jedem Schritt: Pre-vis Agent zur Durchsicht, Beat Frames zur Festlegung der Komposition, gefolgt von F2V pro Beat. Sie verfeinern den Look, bevor Sie Credits für Drift und Halluzinationen verbrauchen.",
+    "description": "SceneFlow strukturiert die visuelle Freigabe in jedem Schritt: Pre-vis Agent zur Durchsicht, Shot Frames zur Festlegung der Komposition, gefolgt von F2V pro Beat. Sie verfeinern den Look, bevor Sie Credits für Drift und Halluzinationen verbrauchen.",
     "steps": [
       "Pre-vis Agent — Audio-visuelle Beats in Minuten zur Begutachtung teilen",
-      "Beat Frames — Fixierung der Start-/End-Zusammensetzung mit Reference Library-Kontinuität",
+      "Shot Frames — Fixierung der Start-/End-Zusammensetzung mit Reference Library-Kontinuität",
       "F2V pro Beat – Videos aus freigegebenen Frames generieren, statt aus blinden Prompts.",
       "Kontinuierliche EXT-Kette – native Erweiterungsschritte von +7 Sekunden für lange Dialogsequenzen",
       "Production Mixer — Timing, Audio und Stream-Export an Screening Room"
@@ -366,7 +366,7 @@
     "steps": [
       {
         "title": "8-sekündiger Anfangsclip",
-        "description": "Die Erstellung von Video aus Einzelbildern (Frame-to-Video oder Image-to-Video) auf Basis von freigegebenem Beat Frames-Material fixiert die Komposition vor Beginn der Bewegung."
+        "description": "Die Erstellung von Video aus Einzelbildern (Frame-to-Video oder Image-to-Video) auf Basis von freigegebenem Shot Frames-Material fixiert die Komposition vor Beginn der Bewegung."
       },
       {
         "title": "+7s-Verlängerungsschritte",
@@ -808,15 +808,15 @@
     "viewDetails": "Details anzeigen",
     "beatFirst": {
       "title": "Beat-basierte Video-Pipeline",
-      "description": "Freigabe der Pre-Vis-Sequenzen und von Beat Frames vor der F2V-Phase – weniger blinde Neu-Generierungen aufgrund von Halluzinationen oder visuellem Drift. Ein strukturierter Ablauf von der Sichtung bis zum fertigen Clip.",
+      "description": "Freigabe der Pre-Vis-Sequenzen und von Shot Frames vor der F2V-Phase – weniger blinde Neu-Generierungen aufgrund von Halluzinationen oder visuellem Drift. Ein strukturierter Ablauf von der Sichtung bis zum fertigen Clip.",
       "keyFeatures": [
         "Pre-vis Agent zur Überprüfung – Beats vor dem aufwendigen Rendering teilen",
-        "Beat Frames Sperrenzusammensetzung — Reference Library Kontinuität",
+        "Shot Frames Sperrenzusammensetzung — Reference Library Kontinuität",
         "F2V pro Beat – Video aus freigegebenen Einzelbildern generieren",
         "Durchgehende EXT-Ketten – native +7s-Schritte für lange Dialoge innerhalb eines Beats",
         "Mixer-Timing und -Streams – Screening Room öffnen, um sie zusammenzustellen und zu veröffentlichen"
       ],
-      "screenshotSlot": "Screenshot einfügen: Beat Frames und Pre-Vis-Freigabe vor der Videogenerierung",
+      "screenshotSlot": "Screenshot einfügen: Shot Frames und Pre-Vis-Freigabe vor der Videogenerierung",
       "videoSlot": "Clip (00:30) einfügen: Beats freigeben, Frames fixieren und anschließend F2V-Clips generieren"
     },
     "screeningRoom": {
@@ -849,7 +849,7 @@
         "description": "Ein Studio für den gesamten Prozess – von der Idee bis zum veröffentlichungsreifen Video. Einheitliche Pipeline für Schulungen, Podcasts, Nachrichten und Serien im Cinematic-Look – mit Freigabe der Vorvisualisierung vor der finalen Rendering-Investition.",
         "keyFeatures": [
           "Serie → Blueprint → Produktion → Screening Room",
-          "Freigabe nach Sequenzabschnitten (Beat-first) – Pre-Vis und Beat Frames vor F2V",
+          "Freigabe nach Sequenzabschnitten (Beat-first) – Pre-Vis und Shot Frames vor F2V",
           "Generierung von Google Vertex AI mit nativen Veo-Erweiterungsketten",
           "Leitplanken für Vertrauen und Sicherheit sowie signierter Herkunftsnachweis bei der Auslieferung"
         ],
@@ -1895,7 +1895,7 @@
             "number": "5",
             "title": "Frames generieren und bearbeiten",
             "description": "Generieren Sie Beat-Frames mit Run All Agents, per-scene agents oder Beat by Beat und bearbeiten Sie dann jeden Frame mit dem Intelligent Assistant Director (IAD) — beschreiben Sie einfach die Änderung.",
-            "imagePlaceholder": "Beat Frames mit Intelligent Assistant Director-Bearbeitungen"
+            "imagePlaceholder": "Shot Frames mit Intelligent Assistant Director-Bearbeitungen"
           },
           {
             "id": "production-animatic",

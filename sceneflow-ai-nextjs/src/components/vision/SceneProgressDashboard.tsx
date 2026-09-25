@@ -285,7 +285,7 @@ export function SceneProgressDashboard({
                !nextScene.hasAudio ? 'Generate audio' :
                !nextScene.hasDirection ? 'Generate direction' :
                !nextScene.hasFrame ? 'Generate keyframes' :
-               !nextScene.hasCallAction ? 'Generate video segments' :
+               !nextScene.hasCallAction ? 'Generate clip segments' :
                'Render scene'}
             </span>
           </div>

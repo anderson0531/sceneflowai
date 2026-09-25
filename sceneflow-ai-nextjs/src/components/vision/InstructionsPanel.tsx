@@ -267,7 +267,7 @@ export function InstructionsPanel({
                                 key={`${item.id}-beat-${n}`}
                                 className="inline-flex items-center rounded border border-emerald-500/30 bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-200"
                               >
-                                Beat {n}
+                                Shot {n}
                               </span>
                             ))}
                             <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${priorityClass(item.rec.priority)}`}>
@@ -369,12 +369,12 @@ export function InstructionsPanel({
             <div className="mt-3">
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <PreserveCheckbox
-                  label="Dialogue beats (+ audio)"
+                  label="Dialogue shots (+ audio)"
                   checked={preserveElements.dialogueBeats}
                   onChange={preserveElements.onDialogueBeatsChange}
                 />
                 <PreserveCheckbox
-                  label="Action beats (+ SFX audio)"
+                  label="Action shots (+ SFX audio)"
                   checked={preserveElements.actionBeats}
                   onChange={preserveElements.onActionBeatsChange}
                 />
@@ -389,12 +389,12 @@ export function InstructionsPanel({
                   onChange={preserveElements.onSceneDirectionChange}
                 />
                 <PreserveCheckbox
-                  label="Beat direction (shot, blocking, emotion…)"
+                  label="Shot direction (shot, blocking, emotion…)"
                   checked={preserveElements.beatDirection}
                   onChange={preserveElements.onBeatDirectionChange}
                 />
                 <PreserveCheckbox
-                  label="Beat frames (start/end storyboard images)"
+                  label="Shot frames (start/end storyboard images)"
                   checked={preserveElements.beatFrames}
                   onChange={preserveElements.onBeatFramesChange}
                   wide

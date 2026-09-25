@@ -267,7 +267,7 @@
       },
       {
         "them": "跨工作階段的手動一致性",
-        "us": "Reference Library + Beat Frames 在視訊前鎖定影像"
+        "us": "Reference Library + Shot Frames 在視訊前鎖定影像"
       },
       {
         "them": "無受眾驗證工作流程",
@@ -285,10 +285,10 @@
     "title": "以節拍為先的影片製作流程",
     "subtitle": "渲染前先確認——而非像吃角子老虎機那樣隨機重新生成",
     "intro": "無需憑感覺反覆嘗試生成。在 SceneFlow 消耗點數製作最終影片之前，您可以先預覽並確認畫面效果。",
-    "description": "SceneFlow 針對視覺確認流程進行了結構化安排：先透過 Pre-vis Agent 進行審閱，利用 Beat Frames 鎖定構圖，接著針對每個節拍（beat）執行 F2V。這讓您能在消耗點數處理畫面偏移（drift）或幻覺（hallucinations）問題之前，先完善視覺效果。",
+    "description": "SceneFlow 針對視覺確認流程進行了結構化安排：先透過 Pre-vis Agent 進行審閱，利用 Shot Frames 鎖定構圖，接著針對每個節拍（beat）執行 F2V。這讓您能在消耗點數處理畫面偏移（drift）或幻覺（hallucinations）問題之前，先完善視覺效果。",
     "steps": [
       "Pre-vis Agent — 在幾分鐘內分享影音節拍以供審閱",
-      "Beat Frames — 鎖定起始/結束組合與 Reference Library 的連續性",
+      "Shot Frames — 鎖定起始/結束組合與 Reference Library 的連續性",
       "逐拍 F2V — 根據已核准的影格生成影片，而非僅憑盲目提示詞。",
       "連續式 EXT 鏈 — 針對長對話段落的原生 +7 秒延展步驟",
       "Production Mixer — 時序、音訊及串流匯出至 Screening Room"
@@ -366,7 +366,7 @@
     "steps": [
       {
         "title": "8秒初始片段",
-        "description": "使用經核准的 Beat Frames 進行「單格轉影片」或「影像轉影片」作業時，會在動態產生前鎖定構圖。"
+        "description": "使用經核准的 Shot Frames 進行「單格轉影片」或「影像轉影片」作業時，會在動態產生前鎖定構圖。"
       },
       {
         "title": "+7秒延長步驟",
@@ -808,15 +808,15 @@
     "viewDetails": "查看詳情",
     "beatFirst": {
       "title": "以節拍為先的影片製作流程",
-      "description": "在進行 F2V 之前先確認預覽（pre-vis）的關鍵節點與 Beat Frames，可減少因 AI 幻覺或視覺漂移導致的盲目重新生成。從審閱到最終成片，流程井然有序。",
+      "description": "在進行 F2V 之前先確認預覽（pre-vis）的關鍵節點與 Shot Frames，可減少因 AI 幻覺或視覺漂移導致的盲目重新生成。從審閱到最終成片，流程井然有序。",
       "keyFeatures": [
         "Pre-vis Agent 待審核 —— 在進行耗時的渲染作業前先分享 Beat",
-        "Beat Frames 鎖定構成 — Reference Library 連續性",
+        "Shot Frames 鎖定構成 — Reference Library 連續性",
         "F2V（逐拍）——根據核准的影格生成影片",
         "連續 EXT 鏈 — 針對單一節拍內長對話的原生 +7 秒步進",
         "混音器時序與串流 — 開啟 Screening Room 進行組裝與發布"
       ],
-      "screenshotSlot": "插入螢幕截圖：Beat Frames 以及影片生成前的預覽視覺化（pre-vis）核准",
+      "screenshotSlot": "插入螢幕截圖：Shot Frames 以及影片生成前的預覽視覺化（pre-vis）核准",
       "videoSlot": "插入 00:30 的片段：確認節拍、鎖定影格，隨後生成 F2V 片段。"
     },
     "screeningRoom": {
@@ -849,7 +849,7 @@
         "description": "由單一工作室包辦從構思到成片發布的全程製作。無論是培訓影片、Podcast、新聞節目還是影視系列，均採用同一套製作流程——在投入最終算圖成本前，先確認預覽影像（pre-vis）。",
         "keyFeatures": [
           "系列 → Blueprint → 生產 → Screening Room",
-          "以段落（Beat）為優先的核准——在 F2V 之前進行預覽（pre-vis）與 Beat Frames",
+          "以段落（Beat）為優先的核准——在 F2V 之前進行預覽（pre-vis）與 Shot Frames",
           "使用原生 Veo 擴充鏈進行 Google Vertex AI 生成",
           "信任與安全防護機制，以及交付時附帶經簽署的來源證明"
         ],

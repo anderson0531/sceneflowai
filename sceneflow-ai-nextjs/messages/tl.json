@@ -267,7 +267,7 @@
       },
       {
         "them": "Pagkakapare-pareho sa mga sesyon gamit ang manual na pamamaraan",
-        "us": "Reference Library + Beat Frames i-lock ang mga visual bago ang video"
+        "us": "Reference Library + Shot Frames i-lock ang mga visual bago ang video"
       },
       {
         "them": "Walang daloy ng trabaho para sa pagpapatunay ng audience",
@@ -285,10 +285,10 @@
     "title": "Proseso ng Paggawa ng Video na Nakabatay sa Beat",
     "subtitle": "Aprubahan bago i-render — hindi 'yung parang slot machine na basta na lang nag-a-generate muli.",
     "intro": "Hindi na kailangan ng pagsubok-at-pagkakamali sa paggawa. Maaari mong silipin at aprubahan ang magiging hitsura nito bago gamitin ng SceneFlow ang mga credit para sa pinal na video.",
-    "description": "Inaayos ng SceneFlow ang proseso ng pag-apruba sa visual sa bawat hakbang: Pre-vis Agent para sa pagsusuri, Beat Frames para i-lock ang komposisyon, at pagkatapos ay F2V sa bawat beat. Pinipino mo ang hitsura bago ka mag-aksaya ng mga credit sa drift at hallucinations.",
+    "description": "Inaayos ng SceneFlow ang proseso ng pag-apruba sa visual sa bawat hakbang: Pre-vis Agent para sa pagsusuri, Shot Frames para i-lock ang komposisyon, at pagkatapos ay F2V sa bawat beat. Pinipino mo ang hitsura bago ka mag-aksaya ng mga credit sa drift at hallucinations.",
     "steps": [
       "Pre-vis Agent — magbahagi ng mga audio-visual beat para suriin sa loob ng ilang minuto",
-      "Beat Frames — i-lock ang simula/wakas ng komposisyon gamit ang continuity ng Reference Library",
+      "Shot Frames — i-lock ang simula/wakas ng komposisyon gamit ang continuity ng Reference Library",
       "F2V bawat beat — bumuo ng video mula sa mga aprubadong frame, hindi sa mga blind prompt",
       "Tuloy-tuloy na EXT chain — mga native na extension step na +7 segundo para sa mahahabang bahagi ng diyalogo",
       "Production Mixer — pag-export ng timing, audio, at stream patungo sa Screening Room"
@@ -366,7 +366,7 @@
     "steps": [
       {
         "title": "Paunang clip na 8 segundo",
-        "description": "Ang frame-to-video o image-to-video mula sa inaprubahang Beat Frames ay nagla-lock sa komposisyon bago ang paggalaw."
+        "description": "Ang frame-to-video o image-to-video mula sa inaprubahang Shot Frames ay nagla-lock sa komposisyon bago ang paggalaw."
       },
       {
         "title": "Mga hakbang para sa +7s extension",
@@ -808,15 +808,15 @@
     "viewDetails": "Tingnan ang mga detalye",
     "beatFirst": {
       "title": "Proseso ng Paggawa ng Video na Nakabatay sa Beat",
-      "description": "Aprubahan ang mga pre-vis beat at Beat Frames bago ang F2V — mababawasan ang mga blind regeneration na dulot ng hallucination at visual drift. Isang organisadong proseso mula sa review hanggang sa final clip.",
+      "description": "Aprubahan ang mga pre-vis beat at Shot Frames bago ang F2V — mababawasan ang mga blind regeneration na dulot ng hallucination at visual drift. Isang organisadong proseso mula sa review hanggang sa final clip.",
       "keyFeatures": [
         "Pre-vis Agent para sa pagsusuri — ibahagi ang mga beat bago ang mabigat na rendering",
-        "Beat Frames komposisyon ng lock — Reference Library pagpapatuloy",
+        "Shot Frames komposisyon ng lock — Reference Library pagpapatuloy",
         "F2V bawat beat — bumuo ng video mula sa mga inaprubahang frame",
         "Tuloy-tuloy na EXT chain — mga native na +7s step para sa mahahabang diyalogo sa loob ng isang beat",
         "Timing at mga stream ng mixer — buksan ang Screening Room upang buuin at i-publish"
       ],
-      "screenshotSlot": "Maglagay ng screenshot: Beat Frames at pag-apruba sa pre-vis bago ang pagbuo ng video",
+      "screenshotSlot": "Maglagay ng screenshot: Shot Frames at pag-apruba sa pre-vis bago ang pagbuo ng video",
       "videoSlot": "Maglagay ng 00:30 na clip: Pag-apruba sa mga beat, pag-lock sa mga frame, at pagkatapos ay pag-generate ng mga F2V clip."
     },
     "screeningRoom": {
@@ -849,7 +849,7 @@
         "description": "Isang studio lang mula sa konsepto hanggang sa video na handa nang i-publish. Parehong proseso para sa training, podcast, balita, at cinematic series — aprubahan ang pre-visualization bago gumastos para sa final rendering.",
         "keyFeatures": [
           "Serye → Blueprint → Produksyon → Screening Room",
-          "Pag-apruba batay sa beat — pre-vis at Beat Frames bago ang F2V",
+          "Pag-apruba batay sa beat — pre-vis at Shot Frames bago ang F2V",
           "Pagbuo ng Google Vertex AI gamit ang mga native na Veo extension chain",
           "Mga mekanismo para sa tiwala at kaligtasan, at patunay ng pinagmulan na may lagda sa oras ng paghahatid"
         ],

@@ -102,8 +102,8 @@ export function SceneMusicCuePanel({
             </span>
           </div>
           <p className="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">
-            Each cue scores the beats it covers. Beats outside a cue play unscored, and the
-            per-beat Music switch overrides any cue.
+            Each cue scores the shots it covers. Shots outside a cue play unscored, and the
+            per-shot Music switch overrides any cue.
           </p>
         </div>
         {unscored.length > 0 && onGenerateAllCues && (

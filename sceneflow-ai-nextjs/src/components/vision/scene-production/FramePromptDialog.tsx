@@ -961,11 +961,11 @@ export function FramePromptDialog({
     frameType === 'end'
       ? 'End frame edit instruction'
       : frameType === 'both'
-        ? 'Beat prompt'
+        ? 'Shot prompt'
         : 'Generation Prompt'
   const promptPlaceholderText =
     frameType === 'end'
-      ? 'Describe how the start frame should evolve — expressions, poses, blocking, and any deliberate framing shift for the end of this beat.'
+      ? 'Describe how the start frame should evolve — expressions, poses, blocking, and any deliberate framing shift for the end of this shot.'
       : frameType === 'both'
         ? 'Describe the shot. The start frame is generated fresh; the end frame is produced by editing that start image for continuity.'
         : 'Describe what should appear in the frame...'
@@ -1100,7 +1100,7 @@ export function FramePromptDialog({
                               Continuous Shot
                             </div>
                             <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                              Copy the exact end frame from Beat {segmentIndex} for seamless visual continuity.
+                              Copy the exact end frame from Shot {segmentIndex} for seamless visual continuity.
                             </p>
                           </div>
                         </div>
@@ -1145,7 +1145,7 @@ export function FramePromptDialog({
                         />
                         <div className="text-xs text-slate-400">
                           <span className="text-slate-300 font-medium block">Reference Frame</span>
-                          Used as the baseline for this beat's start frame.
+                          Used as the baseline for this shot's start frame.
                         </div>
                       </div>
                     )}
@@ -1436,7 +1436,7 @@ export function FramePromptDialog({
                           Use Previous Segment's End Frame
                         </Label>
                         <p className="text-xs text-slate-400 mt-1">
-                          Copy the end frame from Beat {segmentIndex} as this beat's start frame for seamless visual continuity.
+                          Copy the end frame from Shot {segmentIndex} as this shot's start frame for seamless visual continuity.
                         </p>
                         
                         {previousEndFrameUrl && (

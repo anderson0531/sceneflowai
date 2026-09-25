@@ -155,7 +155,7 @@ function SuggestionCard({ suggestion, isGenerating, onGenerate, onDismiss }: Sug
           {(suggestion.beatCount ?? 0) > 0 || suggestion.sceneNumbers.length > 0 ? (
             <p className="text-[10px] text-slate-500 mt-1">
               {(suggestion.beatCount ?? 0) > 0
-                ? `${suggestion.beatCount} beat${suggestion.beatCount === 1 ? '' : 's'}`
+                ? `${suggestion.shotCount} shot${suggestion.shotCount === 1 ? '' : 's'}`
                 : null}
               {(suggestion.beatCount ?? 0) > 0 && suggestion.sceneNumbers.length > 0 ? ' · ' : null}
               {suggestion.sceneNumbers.length > 0

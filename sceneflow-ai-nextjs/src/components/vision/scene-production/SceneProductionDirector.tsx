@@ -103,7 +103,7 @@ export function SceneProductionDirector({
         label: 'Scene Direction',
         description: hasSceneDirection 
           ? 'Camera, lighting, and talent direction configured'
-          : 'Required — AI needs direction to plan beats',
+          : 'Required — AI needs direction to plan shots',
         status: hasSceneDirection ? 'ready' : 'missing',
         icon: <Clapperboard className="w-4 h-4" />,
         action: onNavigateToDirection,
@@ -114,7 +114,7 @@ export function SceneProductionDirector({
         label: 'Scene Frame',
         description: hasSceneImage
           ? 'Reference frame available for I2V generation'
-          : 'Recommended — enables Image-to-Video for first beat',
+          : 'Recommended — enables Image-to-Video for first shot',
         status: hasSceneImage ? 'ready' : 'recommended',
         icon: <Camera className="w-4 h-4" />,
         action: onNavigateToImage,
@@ -125,7 +125,7 @@ export function SceneProductionDirector({
         label: 'Audio Generated',
         description: hasAudio
           ? 'Narration and dialogue audio ready'
-          : 'Recommended — enables audio-driven beat timing',
+          : 'Recommended — enables audio-driven shot timing',
         status: hasAudio ? 'ready' : 'recommended',
         icon: <Volume2 className="w-4 h-4" />,
         action: onNavigateToAudio,
@@ -179,7 +179,7 @@ export function SceneProductionDirector({
               <Film className="w-4 h-4 text-indigo-400" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-indigo-200">Scene {sceneNumber} — Beat Director</p>
+              <p className="text-sm font-semibold text-indigo-200">Scene {sceneNumber} — Shot Director</p>
               <p className="text-xs text-indigo-300/60">AI-powered shot breakdown and prompt generation</p>
             </div>
           </div>
@@ -342,7 +342,7 @@ export function SceneProductionDirector({
               )}
             >
               <Play className="w-4 h-4" />
-              {hasExistingSegments ? 'Start Production' : 'Generate Beats'}
+              {hasExistingSegments ? 'Start Production' : 'Generate Shots'}
             </Button>
           </div>
         </div>

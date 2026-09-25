@@ -45,7 +45,7 @@ export const USE_CASE_EXAMPLE_NARRATIONS: UseCaseExampleNarration[] = [
     exampleId: 'ctv-ready-series',
     label: 'Vertical Mobile Drama',
     script:
-      "Here's how it works. You set your nine-by-sixteen format and photoreal style in Blueprint, approve Beat Frames before any render, and extend emotional beats into longer scenes that hold attention in the scroll. SceneFlow outputs vertical masters ready for YouTube Shorts and mobile feeds. What you get is serialized mobile drama with hooks that stop the thumb — produced and approved before you spend credits on final video.",
+      "Here's how it works. You set your nine-by-sixteen format and photoreal style in Blueprint, approve Shot Frames before any render, and extend emotional beats into longer scenes that hold attention in the scroll. SceneFlow outputs vertical masters ready for YouTube Shorts and mobile feeds. What you get is serialized mobile drama with hooks that stop the thumb — produced and approved before you spend credits on final video.",
   },
   // Property (5)
   {
@@ -96,7 +96,7 @@ export const USE_CASE_EXAMPLE_NARRATIONS: UseCaseExampleNarration[] = [
     exampleId: 'corporate-ld',
     label: 'Corporate L&D',
     script:
-      "Here's how it works. You upload training slides with your L&D lead's saved voice. SceneFlow then publishes module videos — extending long explainers scene by scene, with Beat Frames approved before render. What you get is professional compliance and skills training that ships the same week your content is approved, not months after a vendor quote.",
+      "Here's how it works. You upload training slides with your L&D lead's saved voice. SceneFlow then publishes module videos — extending long explainers scene by scene, with Shot Frames approved before render. What you get is professional compliance and skills training that ships the same week your content is approved, not months after a vendor quote.",
   },
   {
     categoryId: 'knowledge',

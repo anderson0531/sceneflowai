@@ -38,7 +38,7 @@ const videoShowTooltips: Record<VideoAttentionFilter, string> = {
   in_the_can: 'Clips that finished rendering.',
   prompt_changed: 'Clips whose prompt changed after the render.',
   error: 'Clips that failed to render.',
-  no_clip: 'Beats that are still waiting on a clip.',
+  no_clip: 'Shots that are still waiting on a clip.',
 }
 
 const videoQualityLabels: Record<VideoQualityFilter, string> = {
@@ -363,11 +363,11 @@ export function BeatVideoGallery({
       {clips.length === 0 ? (
         <div className="text-center py-6 text-gray-500 text-sm">
           <Film className="w-8 h-8 mx-auto mb-2 text-gray-600" />
-          <p>No beats to generate yet.</p>
+          <p>No shots to generate yet.</p>
         </div>
       ) : (
         <SceneBeatStage
-          railLabel="Beat clips"
+          railLabel="Shot clips"
           items={visibleClips.map((clip) => {
             const complete =
               clip.queueItem?.status === 'complete' || segmentHasPlayableVideo(clip.segment)
@@ -376,7 +376,7 @@ export function BeatVideoGallery({
               beatNumber: clip.beatNumber,
               imageUrl: clip.thumbnailUrl,
               status: complete ? 'ready' as const : clip.queueItem?.status === 'error' ? 'attention' as const : 'idle' as const,
-              ariaLabel: clip.label || `Beat ${clip.beatNumber}`,
+              ariaLabel: clip.label || `Shot ${clip.beatNumber}`,
             }
           })}
           selectedId={selectedKey}
@@ -449,10 +449,10 @@ export function BeatVideoGallery({
                 <SceneImageFrame
                   sceneIdx={0}
                   sceneNumber={preview.beatNumber}
-                  label="Beat still"
-                  generateTitle={previewHasClip ? 'Regenerate' : 'Generate video'}
-                  directTitle="Direct Video"
-                  directorTitle="Direct Beat"
+                  label="Shot still"
+                  generateTitle={previewHasClip ? 'Regenerate' : 'Generate clip'}
+                  directTitle="Direct Clip"
+                  directorTitle="Direct Shot"
                   uploadTitle="Upload"
                   uploadAccept="video/*"
                   className="w-full"
@@ -560,7 +560,7 @@ export function BeatVideoGallery({
                         onClick={() => onGenerateClip(previewSegment)}
                       >
                         <Wand2 className="mr-1 h-3 w-3" />
-                        {previewHasClip ? 'Regenerate video' : 'Generate video'}
+                        {previewHasClip ? 'Regenerate clip' : 'Generate clip'}
                       </Button>
                     )}
                     {onDirectBeat && preview.beatId && (
@@ -570,7 +570,7 @@ export function BeatVideoGallery({
                         onClick={() => onDirectBeat(preview.beatId!)}
                       >
                         <Clapperboard className="h-3.5 w-3.5" />
-                        Direct Beat
+                        Direct Shot
                       </button>
                     )}
                     {onTake && (
@@ -627,7 +627,7 @@ export function BeatVideoGallery({
                 )}
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="shrink-0 rounded-full border border-slate-600/40 bg-slate-700/50 px-1.5 py-0.5 text-[10px] font-medium text-slate-300">
-                    Beat {preview.beatNumber}
+                    Shot {preview.beatNumber}
                   </span>
                   <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-200" title={preview.label}>
                     {preview.label}
@@ -659,7 +659,7 @@ export function BeatVideoGallery({
                 )}
                 {readOnlyPrompts && preview.segment && (
                   <p className="mt-1 text-[10px] text-slate-500">
-                    Auto-derived from direction — use Direct Beat to change this clip's video prompt
+                    Auto-derived from direction — use Direct Shot to change this clip's video prompt
                   </p>
                 )}
               </div>

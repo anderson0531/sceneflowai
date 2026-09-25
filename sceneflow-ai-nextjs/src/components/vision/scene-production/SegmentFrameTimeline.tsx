@@ -254,7 +254,7 @@ export function SegmentFrameTimeline({
     await runWithAgentDock(
       {
         id: `keyframe:${segment.segmentId}:${frameType}`,
-        title: 'Frame Agent',
+        title: 'Stills Agent',
         subtitle: 'you can keep editing',
         itemLabel: frameLabel,
       },
@@ -278,11 +278,11 @@ export function SegmentFrameTimeline({
     const runId = 'keyframe-express'
     startAgentRun({
       id: runId,
-      title: 'Frame Agent',
+      title: 'Stills Agent',
       subtitle: 'Composing keyframes — you can keep editing',
       items: segments.map((segment, i) => ({
         key: segment.segmentId,
-        label: `Beat ${i + 1}`,
+        label: `Shot ${i + 1}`,
         status: 'pending',
       })),
     })
@@ -321,7 +321,7 @@ export function SegmentFrameTimeline({
     const runId = 'keyframe-express-end'
     startAgentRun({
       id: runId,
-      title: 'Frame Agent',
+      title: 'Stills Agent',
       subtitle: `Composing ${targets.length} end frames — you can keep editing`,
       items: targets.map((segment) => ({
         key: segment.segmentId,
@@ -372,7 +372,7 @@ export function SegmentFrameTimeline({
     setIsDeleting(true)
     try {
       onDeleteSegment(deleteSegmentTarget.segmentId)
-      toast.success(`Beat ${deleteSegmentTarget.index + 1} deleted`)
+      toast.success(`Shot ${deleteSegmentTarget.index + 1} deleted`)
       setDeleteDialogOpen(false)
       setDeleteSegmentTarget(null)
     } catch (error) {
@@ -398,7 +398,7 @@ export function SegmentFrameTimeline({
     return (
       <div className="flex flex-col items-center justify-center py-12 text-slate-500">
         <Layers className="w-12 h-12 mb-3 opacity-30" />
-        <span className="text-sm font-medium">No beats generated</span>
+        <span className="text-sm font-medium">No shots generated</span>
         <p className="text-xs opacity-60 mt-1">Generate segments in the Call Action step first</p>
       </div>
     )
@@ -411,7 +411,7 @@ export function SegmentFrameTimeline({
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <ImageIcon className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-            <span className="text-sm font-medium text-cyan-300">Beat Frame Generation</span>
+            <span className="text-sm font-medium text-cyan-300">Shot Frame Generation</span>
             <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
               {stats.fullyAnchored}/{stats.total} ready
             </Badge>
@@ -476,7 +476,7 @@ export function SegmentFrameTimeline({
                 onClick={() => setAddSegmentDialogOpen(true)}
                 disabled={isGenerating}
                 className="h-10 px-5 text-sm font-semibold border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 hover:border-emerald-400 shadow-md hover:shadow-lg transition-all"
-                title="Add a beat clip with Beat Frames"
+                title="Add a shot clip with Shot Frames"
               >
                 <Layers className="w-5 h-5 mr-2" />
                 Add
@@ -607,7 +607,7 @@ export function SegmentFrameTimeline({
         onConfirm={() => {
           if (onDeleteSegment) {
             segments.forEach(s => onDeleteSegment(s.segmentId))
-            toast.success('Beats cleared', { description: 'Use the Beat Builder to regenerate with new settings.' })
+            toast.success('Shots cleared', { description: 'Use the Shot Builder to regenerate with new settings.' })
           }
         }}
       />

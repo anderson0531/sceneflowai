@@ -267,7 +267,7 @@
       },
       {
         "them": "Consistência do manual entre as sessões",
-        "us": "Reference Library + Beat Frames travam o visual antes do vídeo"
+        "us": "Reference Library + Shot Frames travam o visual antes do vídeo"
       },
       {
         "them": "Sem fluxo de trabalho de validação de público",
@@ -285,10 +285,10 @@
     "title": "Fluxo de produção de vídeo centrado na batida",
     "subtitle": "Aprove antes de renderizar — nada de regeneração estilo caça-níqueis",
     "intro": "Nada de gerar conteúdo na base da tentativa e erro. Você visualiza e aprova o visual antes que o SceneFlow gaste créditos com o vídeo final.",
-    "description": "SceneFlow estrutura a aprovação visual em cada etapa: Pre-vis Agent para revisão, Beat Frames para fixar a composição e, em seguida, F2V por batida. Você refina o visual antes de gastar créditos com desvios e alucinações.",
+    "description": "SceneFlow estrutura a aprovação visual em cada etapa: Pre-vis Agent para revisão, Shot Frames para fixar a composição e, em seguida, F2V por batida. Você refina o visual antes de gastar créditos com desvios e alucinações.",
     "steps": [
       "Pre-vis Agent — compartilhe trechos audiovisuais para revisão em minutos",
-      "Beat Frames — travar composição de início/fim com continuidade Reference Library",
+      "Shot Frames — travar composição de início/fim com continuidade Reference Library",
       "F2V por batida — gere vídeos a partir de quadros aprovados, não de prompts às cegas.",
       "Cadeia de extensão contínua — etapas de extensão nativas de +7 segundos para trechos longos de diálogo",
       "Production Mixer — exportação de temporização, áudio e fluxo para Screening Room"
@@ -366,7 +366,7 @@
     "steps": [
       {
         "title": "Clipe inicial de 8 segundos",
-        "description": "A conversão de quadro para vídeo ou de imagem para vídeo a partir do Beat Frames aprovado trava a composição antes do movimento."
+        "description": "A conversão de quadro para vídeo ou de imagem para vídeo a partir do Shot Frames aprovado trava a composição antes do movimento."
       },
       {
         "title": "Etapas de extensão de +7s",
@@ -808,15 +808,15 @@
     "viewDetails": "Ver detalhes",
     "beatFirst": {
       "title": "Fluxo de produção de vídeo centrado na batida",
-      "description": "Aprove as etapas de pré-visualização e Beat Frames antes da fase F2V — menos regenerações às cegas causadas por alucinações e desvios visuais. Um fluxo estruturado, da revisão ao clipe final.",
+      "description": "Aprove as etapas de pré-visualização e Shot Frames antes da fase F2V — menos regenerações às cegas causadas por alucinações e desvios visuais. Um fluxo estruturado, da revisão ao clipe final.",
       "keyFeatures": [
         "Pre-vis Agent para revisão — compartilhar batidas antes da renderização pesada",
-        "Beat Frames composição de eclusas — Reference Library continuidade",
+        "Shot Frames composição de eclusas — Reference Library continuidade",
         "F2V por batida — gerar vídeo a partir de quadros aprovados",
         "Cadeias EXT contínuas — passos nativos de +7s para diálogos longos dentro de um *beat*",
         "Temporização e fluxos do mixer — abra o Screening Room para montar e publicar"
       ],
-      "screenshotSlot": "Inserir captura de tela: Beat Frames e aprovação da pré-visualização antes da geração do vídeo",
+      "screenshotSlot": "Inserir captura de tela: Shot Frames e aprovação da pré-visualização antes da geração do vídeo",
       "videoSlot": "Inserir clipe de 00:30: Aprovar batidas, fixar quadros e, em seguida, gerar clipes F2V."
     },
     "screeningRoom": {
@@ -849,7 +849,7 @@
         "description": "Um único estúdio, da ideia ao vídeo pronto para publicação. O mesmo fluxo de trabalho para treinamentos, podcasts, notícias e séries cinematográficas — aprove a pré-visualização antes de investir na renderização final.",
         "keyFeatures": [
           "Série → Blueprint → Produção → Screening Room",
-          "Aprovação por batida (beat) — pré-visualização e Beat Frames antes da F2V",
+          "Aprovação por batida (beat) — pré-visualização e Shot Frames antes da F2V",
           "Geração Google Vertex AI com cadeias de extensão nativas do Veo",
           "Mecanismos de proteção de confiança e segurança e procedência assinada na entrega"
         ],

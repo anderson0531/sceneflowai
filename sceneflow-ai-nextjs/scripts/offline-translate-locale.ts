@@ -25,7 +25,7 @@ const BATCH_SIZE = 50
 
 const GLOSSARY_TERMS = [
   'SceneFlow Studio', 'SceneFlow', 'Blueprint Studio', 'Series Studio', 'Production Studio', 'Blueprint', 'Production Mixer',
-  'Beat Frames', 'Audience Resonance', 'Screening Room', 'Reference Library',
+  'Shot Frames', 'Audience Resonance', 'Screening Room', 'Reference Library',
   'Final Cut', 'Premiere', 'Animatic', 'Express storyboard', 'BYOK', 'Whop', 'Explorer',
   'Vertex AI', 'ElevenLabs', 'Google Cloud', 'Gemini Studio', 'Google Flow',
   'Imagen 4', 'Veo 3.1', 'Ken Burns', 'F2V', 'MP4', 'TTS', 'GDPR', 'AES-256', 'CDN', 'YouTube',

@@ -290,7 +290,7 @@ export function FrameMotionEditor({
             <div className="flex items-center justify-between rounded-lg border border-slate-700 px-3 py-2">
               <div>
                 <p className="text-sm font-medium">Enable motion</p>
-                <p className="text-xs text-slate-400">Overrides global Ken Burns for this beat</p>
+                <p className="text-xs text-slate-400">Overrides global Ken Burns for this shot</p>
               </div>
               <Switch
                 checked={settings.enabled}

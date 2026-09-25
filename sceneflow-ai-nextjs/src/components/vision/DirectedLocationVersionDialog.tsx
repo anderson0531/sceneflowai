@@ -58,7 +58,7 @@ export function directedBeatOptionsFromScene(
       sceneNumber,
       beatIndex,
       beatId: beat.beatId,
-      label: short ? `Beat ${beatIndex + 1} — ${short}` : `Beat ${beatIndex + 1}`,
+      label: short ? `Shot ${beatIndex + 1} — ${short}` : `Shot ${beatIndex + 1}`,
     }
   })
 }

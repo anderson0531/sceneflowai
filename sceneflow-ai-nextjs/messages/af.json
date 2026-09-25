@@ -265,7 +265,7 @@
       },
       {
         "them": "Konsekwentheid van die handleiding oor sessies heen",
-        "us": "Reference Library + Beat Frames sluit beeldmateriaal voor video"
+        "us": "Reference Library + Shot Frames sluit beeldmateriaal voor video"
       },
       {
         "them": "Geen werkvloei vir gehoorvalidasie nie",
@@ -283,10 +283,10 @@
     "title": "Video-werkvloei gebaseer op die ritme",
     "subtitle": "Keur goed voordat jy weergee — nie die hergenerering van 'n dobbelmasjien nie",
     "intro": "Geen generering deur raai-en-toets nie. Jy bekyk 'n voorskou en keur die voorkoms goed voordat SceneFlow krediete aan die finale video bestee.",
-    "description": "SceneFlow struktureer visuele goedkeuring by elke stap: Pre-vis Agent vir hersiening, Beat Frames om die komposisie vas te slaan, en dan F2V per maatslag. Jy verfyn die voorkoms voordat jy krediete verspil aan afwykings en hallusinasies.",
+    "description": "SceneFlow struktureer visuele goedkeuring by elke stap: Pre-vis Agent vir hersiening, Shot Frames om die komposisie vas te slaan, en dan F2V per maatslag. Jy verfyn die voorkoms voordat jy krediete verspil aan afwykings en hallusinasies.",
     "steps": [
       "Pre-vis Agent — deel oudiovisuele snitte binne minute vir hersiening",
-      "Beat Frames — sluit begin/einde van samestelling vas met Reference Library-kontinuïteit",
+      "Shot Frames — sluit begin/einde van samestelling vas met Reference Library-kontinuïteit",
       "F2V per maatslag — genereer video vanaf goedgekeurde rame, nie blinde opdragte nie",
       "Deurlopende EXT-ketting — inheemse verlengingstappe van +7 sekondes vir lang dialoogsegmente",
       "Production Mixer — tydsbepaling, oudio en stroomuitvoer na Screening Room"
@@ -364,7 +364,7 @@
     "steps": [
       {
         "title": "Agt-sekonde-aanvangsfragment",
-        "description": "Raam-na-video of beeld-na-video vanaf goedgekeurde Beat Frames sluit die komposisie voor beweging."
+        "description": "Raam-na-video of beeld-na-video vanaf goedgekeurde Shot Frames sluit die komposisie voor beweging."
       },
       {
         "title": "+7s-verlengingstappe",
@@ -806,15 +806,15 @@
     "viewDetails": "Bekyk besonderhede",
     "beatFirst": {
       "title": "Video-werkvloei gebaseer op die ritme",
-      "description": "Keur pre-vis-segmente en Beat Frames goed vóór F2V — dit lei tot minder blinde hergenererings as gevolg van hallusinasies en visuele afwyking. Een gestruktureerde proses van hersiening tot finale snit.",
+      "description": "Keur pre-vis-segmente en Shot Frames goed vóór F2V — dit lei tot minder blinde hergenererings as gevolg van hallusinasies en visuele afwyking. Een gestruktureerde proses van hersiening tot finale snit.",
       "keyFeatures": [
         "Pre-vis Agent vir hersiening — deel snitte voor swaar weergawe",
-        "Beat Frames sluitsamestelling — Reference Library kontinuïteit",
+        "Shot Frames sluitsamestelling — Reference Library kontinuïteit",
         "F2V per slag — genereer video vanaf goedgekeurde rame",
         "Deurlopende EXT-kettings — direkte +7s-stappe vir lang dialoog binne 'n 'beat'",
         "Mengertydsberekening en -strome — maak Screening Room oop om saam te stel en te publiseer"
       ],
-      "screenshotSlot": "Voeg skermskoot in: Beat Frames en goedkeuring van voorlopige visualisering voor videogenerering",
+      "screenshotSlot": "Voeg skermskoot in: Shot Frames en goedkeuring van voorlopige visualisering voor videogenerering",
       "videoSlot": "Voeg 00:30-snit in: Goedkeuring van maatslae, vaslegging van rame, en dan generering van F2V-snitte"
     },
     "screeningRoom": {
@@ -847,7 +847,7 @@
         "description": "Een ateljee vir die hele proses, van idee tot video wat gereed is vir publikasie. Dieselfde werkvloei vir opleiding, podsendings, nuus en filmiese reekse — keur die voorlopige visualisering goed voordat koste vir die finale weergawe aangegaan word.",
         "keyFeatures": [
           "Reeks → Blueprint → Produksie → Screening Room",
-          "Goedkeuring per toneel – pre-vis en Beat Frames voor F2V",
+          "Goedkeuring per toneel – pre-vis en Shot Frames voor F2V",
           "Google Vertex AI-generering met inheemse Veo-uitbreidingskettings",
           "Beskermingsmaatreëls vir vertroue en veiligheid, en gesertifiseerde herkoms by aflewering"
         ],
