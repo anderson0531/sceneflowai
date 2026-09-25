@@ -64,6 +64,16 @@ describe('locationVersionResolve', () => {
     ).toBe('ver-fire')
   })
 
+  it('ignores a version stamped past the beats that exist in the scene', () => {
+    const late = {
+      ...location,
+      versions: [{ ...door, appliesFrom: { sceneNumber: 1, beatIndex: 9 } }],
+    }
+    expect(
+      resolveLocationVersionForBeat(late, { sceneNumber: 1, beatIndex: 3, beatId: 'b3' })
+    ).toBeNull()
+  })
+
   it('honors an explicit user override', () => {
     expect(
       resolveLocationVersionForBeat(

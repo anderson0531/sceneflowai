@@ -11292,6 +11292,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     const agentLabel = referenceExpressAgentLabel(scope?.kinds, {
       sceneScoped: !!scope?.sceneIndices?.length,
+      locationScoped: !!scope?.locationIds?.length,
     })
 
     if (referenceExpressJob.isActive) {
@@ -11316,6 +11317,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           sceneIndices: scope?.sceneIndices,
           itemKeys: scope?.itemKeys,
           kinds: scope?.kinds,
+          locationIds: scope?.locationIds,
+          catalogOnly: scope?.catalogOnly === true,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -11349,7 +11352,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const count = Number(data.itemCount || 0)
       const sceneLabel = scope?.sceneIndices?.length === 1 ? ` for scene ${scope.sceneIndices[0] + 1}` : ''
       const catalogSync = data.catalogSync === 'location'
-      const description = catalogSync
+      const catalogOnly = scope?.catalogOnly === true
+      const description = catalogOnly
+        ? 'Updating locations from the script in the background.'
+        : catalogSync
         ? count > 0
           ? `Updating locations from the script, then generating ${count} reference image${count === 1 ? '' : 's'}${sceneLabel} in the background. Keep working — we'll notify you when they're ready.`
           : 'Updating locations from the script in the background. We\'ll generate any missing stills next.'
@@ -17435,6 +17441,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         isGeneratingAllSceneImages={isGeneratingAllImages}
         onAddToReferenceLibrary={handleAddToReferenceLibrary}
         locationReferences={locationReferences}
+        locationScriptFingerprint={
+          (project?.metadata?.visionPhase?.references as VisionReferencesPayload | undefined)
+            ?.locationScriptFingerprint ?? null
+        }
         onRemoveLocationReference={handleRemoveLocationReference}
         onUpdateLocationReferences={handleUpdateLocationReferences}
         onGenerateLocationImage={handleGenerateLocationImage}

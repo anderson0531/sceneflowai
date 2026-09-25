@@ -18,6 +18,8 @@ export type VisionPhaseReferencesSlice = {
   locationReferences?: VisionPhaseReferenceRow[]
   objectDuplicateIgnores?: string[]
   droppedObjectReferenceIds?: string[]
+  /** Digest of heading + beat text last used to sync location versions. */
+  locationScriptFingerprint?: string
   /**
    * PUT-only: incoming objectReferences is the full library. Omitted ids are
    * tombstoned even when the client no longer remembers them.
@@ -167,5 +169,12 @@ export function mergeVisionPhaseReferences(
     ),
     ...(Array.isArray(nextIgnores) ? { objectDuplicateIgnores: nextIgnores } : {}),
     ...(tombstones.length > 0 ? { droppedObjectReferenceIds: tombstones } : {}),
+    ...(() => {
+      const fingerprint =
+        typeof incomingSlice.locationScriptFingerprint === 'string'
+          ? incomingSlice.locationScriptFingerprint
+          : existingSlice.locationScriptFingerprint
+      return typeof fingerprint === 'string' ? { locationScriptFingerprint: fingerprint } : {}
+    })(),
   }
 }

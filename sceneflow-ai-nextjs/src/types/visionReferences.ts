@@ -158,6 +158,8 @@ export interface VisionReferencesPayload {
   objectReferences: VisualReference[]
   /** Location references for environment/setting consistency */
   locationReferences?: LocationReference[]
+  /** Digest of script headings and beat text from the last location catalog sync. */
+  locationScriptFingerprint?: string
   /**
    * Sorted `idA::idB` pairs the user marked not-a-duplicate. Cluster review
    * skips these edges so false positives stay in the library without regrouping.

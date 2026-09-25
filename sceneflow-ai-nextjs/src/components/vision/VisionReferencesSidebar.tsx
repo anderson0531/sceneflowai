@@ -159,6 +159,8 @@ export interface VisionReferencesSidebarProps extends Omit<
   isGeneratingAllSceneImages?: boolean
   /** Location references for environment consistency */
   locationReferences?: LocationReference[]
+  /** Last script digest that location versions were synced against. */
+  locationScriptFingerprint?: string | null
   /** Callback to update all location references */
   onUpdateLocationReferences?: (locations: LocationReference[]) => void | Promise<void>
   /** Callback to remove a location reference */
@@ -1298,6 +1300,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     isGeneratingAllSceneImages = false,
     // Location references
     locationReferences = [],
+    locationScriptFingerprint = null,
     onUpdateLocationReferences,
     onRemoveLocationReference,
     onGenerateLocationImage,
@@ -1951,6 +1954,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               pendingKindAgentRun={pendingKindAgentRun}
               onPendingKindAgentRunConsumed={consumePendingKindAgentRun}
               catalogPropNames={objectReferences.map((o) => o.name).filter(Boolean)}
+              locationScriptFingerprint={locationScriptFingerprint}
             />
             )}
             </>

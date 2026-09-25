@@ -58,8 +58,13 @@ describe('Reference Library next-action CTA wiring', () => {
     expect(toolbar).toContain('bg-amber-500')
 
     expect(readSource('src/components/vision/LocationLibrary.tsx')).toContain(
-      'runLocationAgentSetStills'
+      'runAllLocationsAgentSetStills'
     )
+    expect(readSource('src/components/vision/LocationLibrary.tsx')).toContain(
+      'locationIds: [locationId]'
+    )
+    expect(readSource('src/components/vision/LocationLibrary.tsx')).toContain('catalogOnly: true')
+    expect(readSource('src/components/vision/LocationLibrary.tsx')).toContain('showUpdate={showUpdateLocations}')
     expect(readSource('src/components/vision/CharacterLibrary.tsx')).toContain(
       'kindAgentToolbarLabel'
     )

@@ -630,8 +630,8 @@ export function SceneReferencesPanel({
                 e.stopPropagation()
                 setDirectedOpen(true)
               }}
-              className="text-[11px] px-2 py-1 rounded border border-dashed border-cyan-300 dark:border-cyan-700 text-cyan-800 dark:text-cyan-200 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 flex items-center gap-1"
-              title={tLocation('directedVersionHint')}
+              className="h-7 text-xs px-2 rounded border border-slate-600 bg-transparent text-slate-200 hover:bg-slate-800 flex items-center gap-1"
+              title={tLocation('addVersionTooltip')}
             >
               <Plus className="w-3 h-3" />
               {tLocation('addDirectedVersion')}

@@ -76,6 +76,15 @@ export type ReferenceExpressScope = {
    * bases-only.
    */
   includeNestedStills?: boolean
+  /**
+   * Generate stills for these location rows only. Skips the project-wide
+   * catalog sync so one location can be drawn without resyncing the library.
+   */
+  locationIds?: string[]
+  /**
+   * Update Locations: extract and sync set versions, then stop. No stills.
+   */
+  catalogOnly?: boolean
 }
 
 export type ReferenceExpressItemResult = {

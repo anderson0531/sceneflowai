@@ -80,7 +80,7 @@ describe('POST /api/vision/references/express/start', () => {
           catalogSync: 'location',
           kinds: ['location'],
           includeNestedStills: true,
-          agentLabel: 'Location Agent',
+          agentLabel: 'All Locations Agent',
         }),
       })
     )

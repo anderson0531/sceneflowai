@@ -25,6 +25,13 @@ import {
   Clapperboard,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
@@ -49,6 +56,7 @@ import {
   extractHeadingLocationsFromScenes,
   locationAgentCopyUnits,
   locationCameraStatus,
+  locationScriptFingerprint,
   toLocationReferenceFromExtracted,
 } from '@/lib/vision/libraryKindAgents'
 import type { ReferenceExpressScope, ReferenceExpressKind } from '@/lib/vision/referenceExpress/types'
@@ -68,9 +76,15 @@ import {
   mountedFixturesForLocation,
 } from '@/lib/vision/mountedSetFixtures'
 
-function buildScenesPayloadForLocationVersions(scenes: LocationLibraryProps['scenes']) {
-  return scenes.map((s, idx) => ({
-    sceneNumber: idx + 1,
+function buildScenesPayloadForLocationVersions(
+  scenes: LocationLibraryProps['scenes'],
+  allScenes: LocationLibraryProps['scenes']
+) {
+  return scenes.map((s, idx) => {
+    const scriptIndex = allScenes.indexOf(s)
+    const sceneNumber = scriptIndex >= 0 ? scriptIndex + 1 : idx + 1
+    return {
+    sceneNumber,
     heading: typeof s.heading === 'string' ? s.heading : s.heading?.text,
     action: s.action,
     visualDescription: s.visualDescription,
@@ -91,7 +105,8 @@ function buildScenesPayloadForLocationVersions(scenes: LocationLibraryProps['sce
           }))
         : undefined
     })(),
-  }))
+  }
+  })
 }
 
 function locationHasOutdatedDirection(
@@ -187,6 +202,8 @@ interface LocationLibraryProps {
   onPendingKindAgentRunConsumed?: () => void
   /** Object-library names used to strip beat props from version image prompts. */
   catalogPropNames?: string[]
+  /** Fingerprint stored when location versions were last synced from the script. */
+  locationScriptFingerprint?: string | null
 }
 
 /**
@@ -360,6 +377,7 @@ export function LocationLibrary({
   pendingKindAgentRun = null,
   onPendingKindAgentRunConsumed,
   catalogPropNames: catalogPropNamesProp = [],
+  locationScriptFingerprint: syncedLocationScriptFingerprint = null,
 }: LocationLibraryProps) {
   const t = useTranslations('production.direction.locationLibrary')
   const [expandedLocationId, setExpandedLocationId] = useState<string | null>(null)
@@ -419,7 +437,10 @@ export function LocationLibrary({
           description: location.description,
           versions: location.versions || [],
         },
-        scenes: buildScenesPayloadForLocationVersions(scenesForLocation(location, scenes)),
+        scenes: buildScenesPayloadForLocationVersions(
+          scenesForLocation(location, scenes),
+          scenes
+        ),
         screenplayContext,
       }),
     })
@@ -429,6 +450,10 @@ export function LocationLibrary({
   }
 
   const handleUpdateLocations = useCallback(async (): Promise<LocationReference[] | null> => {
+    if (onExpressGenerateReferences) {
+      await onExpressGenerateReferences({ kinds: ['location'], catalogOnly: true })
+      return null
+    }
     if (scenes.length === 0) {
       toast.error('No scenes available for analysis')
       return null
@@ -466,7 +491,15 @@ export function LocationLibrary({
     } finally {
       setIsUpdatingLocations(false)
     }
-  }, [extractMissingLocations, locationReferences, onUpdateLocations, scenes, screenplayContext, t])
+  }, [
+    extractMissingLocations,
+    locationReferences,
+    onExpressGenerateReferences,
+    onUpdateLocations,
+    scenes,
+    screenplayContext,
+    t,
+  ])
 
   /**
    * Merge: update existing refs with latest scene numbers from extraction
@@ -639,6 +672,26 @@ export function LocationLibrary({
     await onExpressGenerateReferences({ kinds: ['location'] })
   }
 
+  const handleRowLocationAgent = async (locationId: string) => {
+    if (!onExpressGenerateReferences) return
+    await onExpressGenerateReferences({ kinds: ['location'], locationIds: [locationId] })
+  }
+
+  const handleVersionStartBeat = (
+    location: LocationReference,
+    versionId: string,
+    beat: DirectedLocationBeatOption
+  ) => {
+    const next = patchLocationVersion(location, versionId, {
+      appliesFrom: {
+        sceneNumber: beat.sceneNumber,
+        beatIndex: beat.beatIndex,
+        beatId: beat.beatId,
+      },
+    })
+    void onUpdateLocations(mergedLocations.map((row) => (row.id === location.id ? next : row)))
+  }
+
   usePendingKindAgentRun(
     pendingKindAgentRun,
     'location',
@@ -650,15 +703,20 @@ export function LocationLibrary({
   const locationAgentUnits = locationAgentCopyUnits(mergedLocations)
   const locationAgentLabel =
     locationAgentCount === 0
-      ? t('locationAgent', { count: 0 })
+      ? t('allLocationsAgent')
       : locationAgentUnits.bases === 0
-        ? t('runLocationAgentSetStills', { count: locationAgentUnits.versions })
+        ? t('runAllLocationsAgentSetStills', { count: locationAgentUnits.versions })
         : locationAgentUnits.versions === 0
-          ? t('runLocationAgentLocationStills', { count: locationAgentUnits.bases })
-          : t('runLocationAgentMixed', {
+          ? t('runAllLocationsAgentLocationStills', { count: locationAgentUnits.bases })
+          : t('runAllLocationsAgentMixed', {
               bases: locationAgentUnits.bases,
               versions: locationAgentUnits.versions,
             })
+  const scriptFingerprint = useMemo(() => locationScriptFingerprint(scenes), [scenes])
+  const showUpdateLocations =
+    mergedLocations.length === 0 ||
+    !syncedLocationScriptFingerprint ||
+    syncedLocationScriptFingerprint !== scriptFingerprint
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -674,8 +732,9 @@ export function LocationLibrary({
           isUpdating={isUpdatingLocations}
           isAgentRunning={isExpressGeneratingReferences}
           agentHasWork={locationAgentCount > 0}
-          updateTitle="Extract missing locations from scene headings and sync set versions from the script"
-          agentTitle="Update locations from the script, draw missing bases, then generate set-version stills from those bases"
+          showUpdate={showUpdateLocations}
+          updateTitle="Sync set versions from the script in the background. Shown only after the script changes."
+          agentTitle="Sync every location, then draw missing bases and set-version stills"
         />
       )}
 
@@ -703,8 +762,16 @@ export function LocationLibrary({
                 className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 overflow-hidden group"
               >
                 {/* Header - always visible */}
-                <button
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setExpandedLocationId(isExpanded ? null : loc.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      setExpandedLocationId(isExpanded ? null : loc.id)
+                    }
+                  }}
                   className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
                 >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -719,7 +786,18 @@ export function LocationLibrary({
                       </span>
                     )}
                     {/* Location name */}
-                    <span className="font-medium text-sm text-white truncate">{loc.location}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="font-medium text-sm text-white truncate block">{loc.location}</span>
+                      {locationCameraStatus(loc).status !== 'ready' && (
+                        <span className="text-[10px] text-amber-300/90 truncate block">
+                          {locationCameraStatus(loc).status === 'versions-pending'
+                            ? t('cameraVersionsPending', {
+                                count: locationCameraStatus(loc).pendingVersionCount,
+                              })
+                            : t('cameraNoBase')}
+                        </span>
+                      )}
+                    </span>
                     {/* Time of day */}
                     <TimeIcon time={loc.timeOfDay} />
                     {/* Scene count */}
@@ -755,6 +833,24 @@ export function LocationLibrary({
                             ? t('cameraVersionsPending', { count: camera.pendingVersionCount })
                             : t('cameraNoBase')
                       return (
+                        <>
+                        {camera.status !== 'ready' && onExpressGenerateReferences && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            title={t('locationAgentRowTitle')}
+                            disabled={isExpressGeneratingReferences}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              void handleRowLocationAgent(loc.id)
+                            }}
+                          >
+                            <Zap className="w-3.5 h-3.5 mr-1 text-indigo-300" />
+                            {t('locationAgentRow')}
+                          </Button>
+                        )}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span className="inline-flex" title={cameraTitle}>
@@ -763,11 +859,12 @@ export function LocationLibrary({
                           </TooltipTrigger>
                           <TooltipContent>{cameraTitle}</TooltipContent>
                         </Tooltip>
+                        </>
                       )
                     })()}
                     {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                   </div>
-                </button>
+                </div>
 
                 {/* Expanded content */}
                 {isExpanded && (() => {
@@ -1053,16 +1150,19 @@ export function LocationLibrary({
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-[11px] font-medium text-slate-300">{t('versions')}</p>
                           <div className="flex gap-1">
-                            <button
+                            <Button
                               type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs"
+                              title={t('addVersionTooltip')}
                               onClick={(e) => {
                                 e.stopPropagation()
                                 setDirectedLocation(loc)
                               }}
-                              className="text-[10px] px-1.5 py-0.5 rounded text-cyan-300 hover:bg-cyan-500/10"
                             >
                               {t('addDirectedVersion')}
-                            </button>
+                            </Button>
                             <button
                               type="button"
                               onClick={(e) => {
@@ -1124,14 +1224,69 @@ export function LocationLibrary({
                                   <p className="text-[10px] text-slate-400 line-clamp-2">
                                     {version.stateNotes}
                                   </p>
-                                  {version.appliesFrom && (
-                                    <p className="text-[10px] text-slate-500">
-                                      {t('appliesFrom', {
-                                        scene: version.appliesFrom.sceneNumber,
-                                        beat: version.appliesFrom.beatIndex + 1,
-                                      })}
-                                    </p>
-                                  )}
+                                  {(() => {
+                                    const beatOptions = scenesForLocation(loc, scenes).flatMap((scene) => {
+                                      const sceneNumber = Math.max(1, scenes.indexOf(scene) + 1)
+                                      return directedBeatOptionsFromScene(
+                                        scene as Record<string, unknown>,
+                                        sceneNumber
+                                      )
+                                    })
+                                    const selected = version.appliesFrom
+                                      ? beatOptions.find(
+                                          (beat) =>
+                                            beat.sceneNumber === version.appliesFrom?.sceneNumber &&
+                                            beat.beatIndex === version.appliesFrom?.beatIndex
+                                        )
+                                      : undefined
+                                    return (
+                                      <div
+                                        className="space-y-1"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <p className="text-[10px] text-slate-500">
+                                          {t('directedVersionStartBeat')}
+                                        </p>
+                                        {beatOptions.length === 0 ? (
+                                          <p className="text-[10px] text-amber-300/80">
+                                            {version.appliesFrom
+                                              ? t('appliesFrom', {
+                                                  scene: version.appliesFrom.sceneNumber,
+                                                  beat: version.appliesFrom.beatIndex + 1,
+                                                })
+                                              : t('directedVersionNoBeats')}
+                                          </p>
+                                        ) : (
+                                          <Select
+                                            value={selected ? `${selected.sceneNumber}:${selected.beatIndex}:${selected.beatId ?? ''}` : undefined}
+                                            onValueChange={(value) => {
+                                              const beat = beatOptions.find(
+                                                (option) =>
+                                                  `${option.sceneNumber}:${option.beatIndex}:${option.beatId ?? ''}` ===
+                                                  value
+                                              )
+                                              if (!beat) return
+                                              handleVersionStartBeat(loc, version.id, beat)
+                                            }}
+                                          >
+                                            <SelectTrigger className="h-7 text-[10px] bg-slate-800 border-slate-600">
+                                              <SelectValue placeholder={t('directedVersionStartBeat')} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {beatOptions.map((beat) => (
+                                                <SelectItem
+                                                  key={`${beat.sceneNumber}:${beat.beatIndex}:${beat.beatId ?? ''}`}
+                                                  value={`${beat.sceneNumber}:${beat.beatIndex}:${beat.beatId ?? ''}`}
+                                                >
+                                                  {`Scene ${beat.sceneNumber} — ${beat.label}`}
+                                                </SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        )}
+                                      </div>
+                                    )
+                                  })()}
                                   {version.needsImageRegen && (
                                     <span className="text-[9px] text-amber-300">{t('needsRegen')}</span>
                                   )}

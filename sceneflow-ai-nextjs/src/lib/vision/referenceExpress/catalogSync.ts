@@ -8,6 +8,7 @@ import {
   applyLocationUpdateFromSyncDiff,
   collectMissingExtractedLocations,
   extractHeadingLocationsFromScenes,
+  locationScriptFingerprint,
   toLocationReferenceFromExtracted,
 } from '@/lib/vision/libraryKindAgents'
 import { filterScenesForLocation } from '@/lib/vision/mountedSetFixtures'
@@ -34,6 +35,8 @@ export type LocationCatalogSyncState = {
   status: LocationCatalogSyncStatus
   cursor: number
   locationIds: string[]
+  /** Update Locations: sync the catalog and do not plan stills. */
+  catalogOnly?: boolean
 }
 
 export type LocationCatalogSyncOutcome =
@@ -100,6 +103,10 @@ async function syncOneLocation(projectId: string, locationId: string): Promise<v
   )
   const scoped = matched.length > 0 ? matched : context.scenes
   if (scoped.length === 0) return
+  const sceneNumbers = scoped.map((scene) => {
+    const index = context.scenes.indexOf(scene)
+    return index >= 0 ? index + 1 : 1
+  })
 
   const analysis = await analyzeLocationVersionsFromScript({
     location: {
@@ -108,7 +115,7 @@ async function syncOneLocation(projectId: string, locationId: string): Promise<v
       description: location.description,
       versions: (location.versions || []) as LocationReference['versions'],
     },
-    scenes: buildLocationVersionAnalysisScenes(scoped),
+    scenes: buildLocationVersionAnalysisScenes(scoped, sceneNumbers),
     screenplayContext: context.screenplayContext,
   })
   const applied = applyLocationUpdateFromSyncDiff(
@@ -121,7 +128,20 @@ async function syncOneLocation(projectId: string, locationId: string): Promise<v
   })
 }
 
-async function planLocationItems(projectId: string): Promise<ReferenceExpressItem[]> {
+async function rememberLocationScriptFingerprint(projectId: string): Promise<void> {
+  const context = await loadReferenceExpressContext(projectId)
+  if (!context) return
+  await persistLocationCatalogPatch({
+    projectId,
+    locationScriptFingerprint: locationScriptFingerprint(context.scenes ?? []),
+  })
+}
+
+async function planLocationItems(
+  projectId: string,
+  catalogOnly?: boolean
+): Promise<ReferenceExpressItem[]> {
+  if (catalogOnly) return []
   const context = await loadReferenceExpressContext(projectId)
   if (!context) return []
   const scope: ReferenceExpressScope = {
@@ -161,9 +181,15 @@ export async function runLocationCatalogSyncStep(input: {
   if (state.status === 'pending') {
     const locationIds = await extractMissingLocations(input.projectId)
     if (locationIds.length === 0) {
-      const planned = await planLocationItems(input.projectId)
+      await rememberLocationScriptFingerprint(input.projectId)
+      const planned = await planLocationItems(input.projectId, state.catalogOnly)
       items = mergeItems(items, planned)
-      const done = { status: 'done' as const, cursor: 0, locationIds: [] }
+      const done = {
+        status: 'done' as const,
+        cursor: 0,
+        locationIds: [] as string[],
+        catalogOnly: state.catalogOnly,
+      }
       return items.length === 0
         ? { kind: 'nothing-to-generate', catalogSync: done }
         : { kind: 'continue', catalogSync: done, items }
@@ -185,12 +211,14 @@ export async function runLocationCatalogSyncStep(input: {
   }
 
   if (state.status === 'syncing' && state.cursor >= state.locationIds.length) {
-    const planned = await planLocationItems(input.projectId)
+    await rememberLocationScriptFingerprint(input.projectId)
+    const planned = await planLocationItems(input.projectId, state.catalogOnly)
     items = mergeItems(items, planned)
     const done: LocationCatalogSyncState = {
       status: 'done',
       cursor: state.cursor,
       locationIds: state.locationIds,
+      catalogOnly: state.catalogOnly,
     }
     return items.length === 0
       ? { kind: 'nothing-to-generate', catalogSync: done }

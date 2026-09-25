@@ -49,6 +49,46 @@ export function parseLocationVersionAppliesFrom(
   return { sceneNumber, beatIndex, beatId }
 }
 
+/**
+ * Map an LLM `appliesFrom` onto a real beat in that scene.
+ * `beatIndex` must be the 0-based `[Beat N]` index. A value equal to the beat
+ * count is treated as 1-based (the last beat). Anything still outside the
+ * scene is dropped so versions are not stamped onto beats that do not exist.
+ */
+export function snapLocationVersionAppliesFrom(
+  appliesFrom: LocationVersionAppliesFrom | undefined,
+  scenes: LocationAnalysisSceneInput[]
+): LocationVersionAppliesFrom | undefined {
+  if (!appliesFrom) return undefined
+  const scene = scenes.find((row) => row.sceneNumber === appliesFrom.sceneNumber)
+  if (!scene) return undefined
+  const beats = scene.beats ?? []
+  if (beats.length === 0) {
+    return { sceneNumber: appliesFrom.sceneNumber, beatIndex: 0 }
+  }
+
+  if (appliesFrom.beatId) {
+    const byId = beats.findIndex((beat) => beat.beatId === appliesFrom.beatId)
+    if (byId >= 0) {
+      return {
+        sceneNumber: appliesFrom.sceneNumber,
+        beatIndex: byId,
+        beatId: appliesFrom.beatId,
+      }
+    }
+  }
+
+  let beatIndex = Math.floor(appliesFrom.beatIndex)
+  if (beatIndex === beats.length) beatIndex -= 1
+  if (beatIndex < 0 || beatIndex >= beats.length) return undefined
+  const beat = beats[beatIndex]
+  return {
+    sceneNumber: appliesFrom.sceneNumber,
+    beatIndex,
+    beatId: beat?.beatId,
+  }
+}
+
 function headingText(scene: Record<string, unknown>): string | undefined {
   const heading = scene.heading
   if (typeof heading === 'string') return heading
@@ -61,7 +101,8 @@ function headingText(scene: Record<string, unknown>): string | undefined {
 
 /** Payload the version-sync LLM reads — one row per scene, beats included. */
 export function buildLocationVersionAnalysisScenes(
-  scenes: unknown[]
+  scenes: unknown[],
+  sceneNumbers?: number[]
 ): LocationAnalysisSceneInput[] {
   return scenes.map((raw, idx) => {
     const scene = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
@@ -69,8 +110,13 @@ export function buildLocationVersionAnalysisScenes(
       | { scene?: { location?: string; atmosphere?: string } }
       | undefined
     const beats = getSceneBeats(scene)
+    const explicit = sceneNumbers?.[idx]
+    const sceneNumber =
+      typeof explicit === 'number' && Number.isFinite(explicit) && explicit >= 1
+        ? explicit
+        : idx + 1
     return {
-      sceneNumber: idx + 1,
+      sceneNumber,
       heading: headingText(scene),
       action: typeof scene.action === 'string' ? scene.action : undefined,
       visualDescription:
@@ -142,7 +188,7 @@ RESYNC RULES:
 3. stateNotes is the COMPLETE current STRUCTURAL set state (accumulated), used for image generation. stateNotes must NOT include beat keyProps, propInteraction, or objects a character handles or introduces (journals, vellum, tools, weapons). Those belong on the beat frame, not this still.
 4. Lasting practical set changes DO include doors/windows/gates opening or shutting and practical lights/lamps going on or off — including when a character only says it ("Shut the damn door", "kill the lights"). Do NOT invent versions for mood lighting, camera, people walking, or handheld beat props.
 5. The intact base is not a version — omit it.
-6. appliesFrom is the first beat where this state is visible. Spoken commands count as that beat.
+6. appliesFrom is the first beat where this state is visible. Spoken commands count as that beat. beatIndex is the 0-based [Beat N] number inside that scene and must be less than that scene's beat count. sceneNumber is the script scene number shown on the Scene line, not a renumbered subset.
 
 For each DISTINCT version, provide name, stateNotes, sceneNumbers, appliesFrom, reason, confidence.
 
@@ -186,7 +232,12 @@ Respond with valid JSON only:
     console.error('[Location Version Sync] Raw response:', result.text)
   }
 
-  suggestions = enrichSuggestionsWithBeatLocationState(suggestions, scenes, existing)
+  suggestions = enrichSuggestionsWithBeatLocationState(suggestions, scenes, existing).map(
+    (suggestion) => ({
+      ...suggestion,
+      appliesFrom: snapLocationVersionAppliesFrom(suggestion.appliesFrom, scenes),
+    })
+  )
 
   suggestions.sort((a, b) => {
     const aFirst = a.appliesFrom?.sceneNumber ?? Math.min(...(a.sceneNumbers || [999]))

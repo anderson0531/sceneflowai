@@ -181,4 +181,13 @@ describe('mergeVisionPhaseReferences', () => {
     expect(merged.droppedObjectReferenceIds).toEqual(['old-a', 'old-b'])
     expect(merged.replaceObjectReferences).toBeUndefined()
   })
+
+  it('keeps the location script fingerprint when a later PUT omits it', () => {
+    const merged = mergeVisionPhaseReferences(
+      { locationReferences: [], locationScriptFingerprint: 'abc123' },
+      { locationReferences: [{ id: 'loc-1', location: 'FOYER' }] },
+      pickIncoming
+    )
+    expect(merged.locationScriptFingerprint).toBe('abc123')
+  })
 })

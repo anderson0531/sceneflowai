@@ -200,17 +200,23 @@ function wardrobeNeedsGeneration(
 }
 
 export function shouldIncludeNestedStills(scope: ReferenceExpressScope): boolean {
+  if (scope.catalogOnly) return false
   if (scope.includeNestedStills === true) return true
   if (scope.includeNestedStills === false) return false
-  if (scope.sceneIndices?.length) return true
+  if (scope.sceneIndices?.length || scope.locationIds?.length) return true
   return (
     scope.kinds?.length === 1 &&
     (scope.kinds[0] === 'location' || scope.kinds[0] === 'cast')
   )
 }
 
-/** Project-wide Location Agent: catalog sync runs even when no stills are planned yet. */
+/**
+ * Project-wide location catalog sync. A single-location still run skips it.
+ * Update Locations (`catalogOnly`) always syncs and then stops.
+ */
 export function wantsLocationCatalogSync(scope: ReferenceExpressScope): boolean {
+  if (scope.locationIds?.length) return false
+  if (scope.catalogOnly) return true
   return scope.kinds?.length === 1 && scope.kinds[0] === 'location' && !scope.sceneIndices?.length
 }
 
@@ -598,6 +604,14 @@ export function planSceneReferenceExpressItems(
   input: ReferenceExpressPlanInput,
   scope: ReferenceExpressScope = {}
 ): ReferenceExpressItem[] {
+  if (scope.catalogOnly) return []
+  if (scope.locationIds?.length) {
+    const ids = new Set(scope.locationIds)
+    input = {
+      ...input,
+      locations: input.locations.filter((location) => location.id && ids.has(location.id)),
+    }
+  }
   const scenes = input.scenes ?? []
   const sceneIndices = [...new Set(scope.sceneIndices ?? [])]
     .filter((index) => Number.isInteger(index) && index >= 0 && index < scenes.length)

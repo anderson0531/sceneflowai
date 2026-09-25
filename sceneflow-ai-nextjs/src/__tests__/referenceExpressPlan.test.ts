@@ -474,6 +474,8 @@ describe('wantsLocationCatalogSync', () => {
   it('is true only for a project-wide Location Agent', () => {
     expect(wantsLocationCatalogSync({ kinds: ['location'] })).toBe(true)
     expect(wantsLocationCatalogSync({ kinds: ['location'], sceneIndices: [0] })).toBe(false)
+    expect(wantsLocationCatalogSync({ kinds: ['location'], locationIds: ['loc-1'] })).toBe(false)
+    expect(wantsLocationCatalogSync({ catalogOnly: true })).toBe(true)
     expect(wantsLocationCatalogSync({ kinds: ['cast'] })).toBe(false)
     expect(wantsLocationCatalogSync({})).toBe(false)
   })

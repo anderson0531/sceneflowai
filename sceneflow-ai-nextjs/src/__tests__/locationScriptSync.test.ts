@@ -7,6 +7,10 @@ import {
   accumulateStateNotes,
   stampLocationVersionAppliesFrom,
 } from '@/lib/vision/locationScriptSync'
+import {
+  buildLocationVersionAnalysisScenes,
+  snapLocationVersionAppliesFrom,
+} from '@/lib/vision/syncLocationVersionsFromScript'
 
 describe('locationScriptSync', () => {
   const existing = [
@@ -171,5 +175,44 @@ describe('locationScriptSync', () => {
       { sceneNumber: 1, beatIndex: 9, beatId: 'b10' }
     )
     expect(stamped.versions?.[0].appliesFrom?.beatIndex).toBe(9)
+  })
+})
+
+describe('location version beat assignment', () => {
+  const scenes = [
+    {
+      sceneNumber: 3,
+      beats: [
+        { beatId: 'b0', line: 'Open' },
+        { beatId: 'b1', line: 'Shut the door' },
+        { beatId: 'b2', actionDescription: 'Door stays shut' },
+        { beatId: 'b3', line: 'Lights out' },
+      ],
+    },
+  ]
+
+  it('keeps the script scene number when the location is not the first scene', () => {
+    const full = [{ heading: 'INT. STREET' }, { heading: 'INT. HALL' }, { heading: 'INT. FOYER' }]
+    const scoped = [full[2]]
+    const payload = buildLocationVersionAnalysisScenes(scoped, [full.indexOf(scoped[0]!) + 1])
+    expect(payload[0]?.sceneNumber).toBe(3)
+    expect(payload[0]?.beats).toBeUndefined()
+  })
+
+  it('snaps a 1-based last beat and drops indices past the scene', () => {
+    expect(
+      snapLocationVersionAppliesFrom({ sceneNumber: 3, beatIndex: 4 }, scenes)
+    ).toEqual({ sceneNumber: 3, beatIndex: 3, beatId: 'b3' })
+
+    expect(
+      snapLocationVersionAppliesFrom({ sceneNumber: 3, beatIndex: 9 }, scenes)
+    ).toBeUndefined()
+
+    expect(
+      snapLocationVersionAppliesFrom(
+        { sceneNumber: 3, beatIndex: 9, beatId: 'b1' },
+        scenes
+      )
+    ).toEqual({ sceneNumber: 3, beatIndex: 1, beatId: 'b1' })
   })
 })
