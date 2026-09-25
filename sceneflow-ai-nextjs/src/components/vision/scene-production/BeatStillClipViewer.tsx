@@ -3,10 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Camera, ChevronDown, ChevronRight, Maximize2, Minimize2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-/** Fits the section without filling it, so the whole frame stays on screen. */
-const PREVIEW_STAGE =
-  'relative mx-auto aspect-video w-full max-w-md max-h-[min(36vh,16rem)] bg-black'
+import { BEAT_STAGE_STILL_PREVIEW_CLASS } from './beatStageStillPreview'
 
 interface BeatStillClipViewerProps {
   stillUrl?: string
@@ -109,7 +106,10 @@ export function BeatStillClipViewer({
       </div>
       <div
         ref={stageRef}
-        className={cn(PREVIEW_STAGE, isFullscreen && 'max-h-none max-w-none h-screen w-screen')}
+        className={cn(
+          BEAT_STAGE_STILL_PREVIEW_CLASS,
+          isFullscreen && 'h-screen max-h-none w-screen max-w-none'
+        )}
       >
         {showClip ? (
           <video
