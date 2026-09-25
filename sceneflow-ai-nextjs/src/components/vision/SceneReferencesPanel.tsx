@@ -410,7 +410,7 @@ export function SceneReferencesPanel({
           </div>
           <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
             {!needsDraw ? 'Reference ready' : drawn ? 'Needs a new still' : 'Not drawn yet'}
-            {requirement.usedInBeats?.length ? ` · ${formatShotList(requirement.usedInShots)}` : ''}
+            {requirement.usedInBeats?.length ? ` · ${formatBeatList(requirement.usedInBeats)}` : ''}
             {requirement.alsoUsedInScenes?.length
               ? ` · also needed by ${requirement.alsoUsedInScenes.length === 1 ? 'scene' : 'scenes'} ${formatSceneList(requirement.alsoUsedInScenes)}`
               : ''}

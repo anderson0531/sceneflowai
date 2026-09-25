@@ -169,10 +169,10 @@ export interface SceneAudioWorkbenchProps {
   projectStreams?: ProjectStream[]
   storedTranslations?: CaptionTranslations
   onSaveTranslations?: SaveCaptionTranslations
-  expressShotStatus?: Record<string, ExpressBeatSfxStatus>
+  expressBeatStatus?: Record<string, ExpressBeatSfxStatus>
   isExpressAudioRunning?: boolean
-  shotListFilters: ShotListFilterState
-  setShotListFilters: React.Dispatch<React.SetStateAction<BeatListFilterState>>
+  beatListFilters: BeatListFilterState
+  setBeatListFilters: React.Dispatch<React.SetStateAction<BeatListFilterState>>
   beatFacts: BeatListFacts[]
   productionReadiness?: {
     isAudioReady?: boolean
@@ -180,14 +180,14 @@ export interface SceneAudioWorkbenchProps {
     charactersMissingVoices?: string[]
   }
   onOpenAudioAgent?: () => void
-  hasSelectableActionShots?: boolean
+  hasSelectableActionBeats?: boolean
   sceneMusicCues: SceneMusicCue[]
-  musicCueByShotId: Map<string, SceneMusicCue>
+  musicCueByBeatId: Map<string, SceneMusicCue>
   sceneScoreOn: boolean
   onSceneScoreChange: (checked: boolean) => void
   onResyncAudioTiming?: (sceneIdx: number, language: string) => void
   resyncingAudioSceneIndex?: number | null
-  brokenContinuityShotIds: Set<string>
+  brokenContinuityBeatIds: Set<string>
   pendingSpeakerAssign?: { sceneIdx: number; dialogueIndex: number } | null
 }
 
@@ -665,7 +665,7 @@ function BeatFilters({
   beatFacts,
   beatListFilters,
   setBeatListFilters,
-}: Pick<SceneAudioWorkbenchProps, 'shotFacts' | 'shotListFilters' | 'setShotListFilters'>) {
+}: Pick<SceneAudioWorkbenchProps, 'beatFacts' | 'beatListFilters' | 'setBeatListFilters'>) {
   const showTooltips: Record<BeatAttentionFilter, string> = {
     all: 'Every shot in this scene.',
     needs_action: 'Shots still missing audio, a speaker, or another required step.',

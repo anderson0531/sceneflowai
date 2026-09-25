@@ -4768,7 +4768,7 @@ function SceneCard({
   const workflowCompletions = scene.workflowCompletions || {}
 
   const hasSelectableActionBeats = useMemo(
-    () => listSelectableActionShots(scene as Record<string, unknown>).length > 0,
+    () => listSelectableActionBeats(scene as Record<string, unknown>).length > 0,
     [scene]
   )
 
