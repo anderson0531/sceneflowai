@@ -1452,13 +1452,13 @@ export function AudioGalleryPlayer({
                   !hasAnyBeatVideo && 'opacity-40 cursor-not-allowed hover:text-gray-400'
                 )}
               >
-                Scene
+                Rough Cut
               </button>
             </TooltipTrigger>
             <TooltipContent>
               {hasAnyBeatVideo
-                ? 'Play the shots inside this scene, the same way the Mixer previews them'
-                : 'Generate shot videos in the Mixer to enable Scene review'}
+                ? 'Play the shot clips for review. This is not the file you ship.'
+                : 'Generate shot videos in the Mixer to enable Rough Cut'}
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -1475,13 +1475,13 @@ export function AudioGalleryPlayer({
                   !hasAnySceneVideo && 'opacity-40 cursor-not-allowed hover:text-gray-400'
                 )}
               >
-                Rough Cut
+                Scene
               </button>
             </TooltipTrigger>
             <TooltipContent>
               {hasAnySceneVideo
-                ? 'Play rendered scenes back-to-back and review transitions before the final master'
-                : 'Render at least one scene to enable Rough Cut'}
+                ? 'Play the rendered scene file you can ship, then the next rendered scene'
+                : 'Render a scene to enable Scene'}
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -1575,9 +1575,9 @@ export function AudioGalleryPlayer({
             : playbackMode === 'chapter'
             ? `${chapterTitle} ${Math.max(1, chapterSceneIndices.indexOf(currentSceneIndex) + 1)} of ${chapterSceneIndices.length}`
             : playbackMode === 'video'
-            ? `Rough Cut ${videoScenePosition} of ${videoSceneIndices.length}`
+            ? `Scene ${videoScenePosition} of ${videoSceneIndices.length}`
             : playbackMode === 'beats'
-            ? `Scene ${Math.max(1, beatSceneIndices.indexOf(currentSceneIndex) + 1)} of ${beatSceneIndices.length}`
+            ? `Rough Cut ${Math.max(1, beatSceneIndices.indexOf(currentSceneIndex) + 1)} of ${beatSceneIndices.length}`
             : `Scene ${filmIndices.indexOf(currentSceneIndex) >= 0 ? filmIndices.indexOf(currentSceneIndex) + 1 : currentSceneIndex + 1} of ${filmIndices.length || scenes.length}`}
         </span>
       </div>
