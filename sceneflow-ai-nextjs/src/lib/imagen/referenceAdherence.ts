@@ -1,7 +1,7 @@
 /**
  * Whether a generated still used the plates that were sent with it.
  *
- * An image coming back is not a match. Identity and picture-prop plates are
+ * An image coming back is not a match. Identity and handheld-prop plates are
  * scored once, after upload, and the band is what the still light shows.
  * A parse failure is not evidence of a miss — the frame stays unchecked.
  */
@@ -10,6 +10,7 @@ import { generateWithVision } from '@/lib/vertexai/gemini'
 import { safeParseJsonFromText } from '@/lib/safeJson'
 import { classifyShotScale, type LikenessShotScale } from '@/lib/imagen/likenessMismatch'
 import { isPictureProp } from '@/lib/imagen/pictureProp'
+import { isFurnitureProp } from '@/lib/imagen/propScaleClause'
 import { fetchReferenceImageAsBase64 } from '@/lib/storage/fetchReferenceImage'
 import { LIKENESS_VALIDATION_MIN_RESERVE_MS } from '@/lib/scene/sceneImageTimeBudget'
 
@@ -21,13 +22,39 @@ export interface ReferenceAdherenceResult {
 }
 
 export interface ReferenceAdherencePlate {
-  role: 'identity' | 'picture'
+  role: 'identity' | 'picture' | 'prop'
   name: string
   imageUrl: string
 }
 
 const MAX_IDENTITY_PLATES = 1
-const MAX_PICTURE_PLATES = 2
+const MAX_HELD_PROP_PLATES = 2
+
+const BAND_RANK: Record<ReferenceAdherenceBand, number> = {
+  pass: 2,
+  drift: 1,
+  miss: 0,
+}
+
+/** True when `next` is a stricter match than `current`. A tie keeps the first still. */
+export function referenceAdherenceIsBetter(
+  next: ReferenceAdherenceBand,
+  current: ReferenceAdherenceBand
+): boolean {
+  return BAND_RANK[next] > BAND_RANK[current]
+}
+
+/**
+ * Face-likeness skip is for Express drafts. A final still still gets the plate
+ * score, including Frame Agent, which always sets skipLikenessValidation.
+ */
+export function shouldScoreReferenceAdherence(args: {
+  skipLikenessValidation: boolean
+  storyboardQuality?: string | null
+}): boolean {
+  if (!args.skipLikenessValidation) return true
+  return args.storyboardQuality === 'final'
+}
 
 export const REFERENCE_ADHERENCE_VISION_OPTIONS = {
   temperature: 0.2,
@@ -57,7 +84,7 @@ export function normalizeReferenceAdherenceBand(raw: unknown): ReferenceAdherenc
   return BAND_ALIASES[value]
 }
 
-/** Identity headshot plus photograph props. Furniture and wardrobe stay out. */
+/** Identity headshot plus handheld props. Furniture and wardrobe stay out. */
 export function selectReferenceAdherencePlates(input: {
   identities?: Array<{ name?: string | null; imageUrl?: string | null }>
   objects?: Array<{ name?: string | null; description?: string | null; imageUrl?: string | null }>
@@ -72,12 +99,18 @@ export function selectReferenceAdherencePlates(input: {
     plates.push({ role: 'identity', name, imageUrl })
   }
 
+  let held = 0
   for (const object of input.objects ?? []) {
-    if (plates.filter((plate) => plate.role === 'picture').length >= MAX_PICTURE_PLATES) break
+    if (held >= MAX_HELD_PROP_PLATES) break
     const name = object.name?.trim() || ''
     const imageUrl = object.imageUrl?.trim()
-    if (!imageUrl || !isPictureProp(name, object.description)) continue
-    plates.push({ role: 'picture', name: name || 'photograph', imageUrl })
+    if (!imageUrl || isFurnitureProp(object.description, name)) continue
+    held += 1
+    plates.push({
+      role: isPictureProp(name, object.description) ? 'picture' : 'prop',
+      name: name || 'prop',
+      imageUrl,
+    })
   }
 
   return plates
@@ -87,7 +120,7 @@ function clipReason(reason: string, band: ReferenceAdherenceBand): string {
   const text = reason.replace(/\s+/g, ' ').trim()
   if (text) return text.slice(0, 240)
   if (band === 'miss') return 'A sent reference plate was not used.'
-  if (band === 'drift') return 'A photograph in the still does not match its plate.'
+  if (band === 'drift') return 'A held prop or photograph does not match its plate.'
   return 'The sent reference plates were used.'
 }
 
@@ -102,13 +135,13 @@ export function parseReferenceAdherenceResponse(raw: unknown): ReferenceAdherenc
 
 function scaleLine(scale: LikenessShotScale): string {
   if (scale === 'wide') {
-    return 'SHOT SCALE: wide. The face may be too small to judge. Do not call the actor a different person unless skin tone alone proves it. Judge picture props normally.'
+    return 'SHOT SCALE: wide. The face may be too small to judge. Do not call the actor a different person unless skin tone alone proves it. Judge held props and picture props normally.'
   }
   if (scale === 'close') {
-    return 'SHOT SCALE: close-up. The face and any held photograph are large enough to judge.'
+    return 'SHOT SCALE: close-up. The face and any held prop or photograph are large enough to judge.'
   }
   if (scale === 'medium') {
-    return 'SHOT SCALE: medium. Face and held photographs are assessable. Do not require pore-level detail.'
+    return 'SHOT SCALE: medium. Face and held props are assessable. Do not require pore-level detail.'
   }
   return 'SHOT SCALE: unstated. Judge only what is visible. If the face is too small to compare, do not treat that as a miss.'
 }
@@ -119,7 +152,10 @@ function buildAdherencePrompt(plates: ReferenceAdherencePlate[], shotType?: stri
     if (plate.role === 'identity') {
       return `IMAGE ${imageNumber}: IDENTITY of ${plate.name}. The actor in the still must be this person.`
     }
-    return `IMAGE ${imageNumber}: PICTURE PROP "${plate.name}". This is a photograph. The picture inside it must match this plate. Anyone shown belongs only inside that photograph, not as a person standing in the room.`
+    if (plate.role === 'picture') {
+      return `IMAGE ${imageNumber}: PICTURE PROP "${plate.name}". This is a photograph. The picture inside it must match this plate. Anyone shown belongs only inside that photograph, not as a person standing in the room.`
+    }
+    return `IMAGE ${imageNumber}: PROP "${plate.name}". The object in the still must match this plate. A different object is a miss. The same kind of object with the wrong shape, material, or markings is a drift.`
   })
 
   return `Compare IMAGE 1, the generated film still, with the reference plates that follow.
@@ -129,9 +165,9 @@ ${lines.join('\n')}
 ${scaleLine(classifyShotScale(shotType))}
 
 Choose exactly one band:
-- "miss": the actor is plainly a different person, OR someone who belongs only inside a picture-prop plate is standing in the room, OR a held or displayed photograph is a different picture from its plate.
-- "drift": the photograph object is present, but the picture inside it does not match the plate.
-- "pass": every sent plate was used. The actor is the same person, and each picture matches its plate.
+- "miss": the actor is plainly a different person, OR someone who belongs only inside a picture-prop plate is standing in the room, OR a held or displayed photograph is a different picture from its plate, OR a held prop is a different object from its plate.
+- "drift": the object is the right kind, but the picture inside a photograph or the details of a held prop do not match the plate.
+- "pass": every sent plate was used. The actor is the same person, and each held prop and picture matches its plate.
 
 Hair, age, or wardrobe drift on the same face is "pass". An unreadable face on a wide shot is not a miss.
 

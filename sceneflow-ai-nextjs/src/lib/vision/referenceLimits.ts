@@ -4,7 +4,7 @@ import {
   buildWardrobeReferenceLabel,
 } from '@/lib/character/characterReferenceAssembly'
 import { buildLocationReferenceLabel } from '@/lib/vision/locationReferencePrompts'
-import { propScaleClause } from '@/lib/imagen/propScaleClause'
+import { isFurnitureProp, propScaleClause } from '@/lib/imagen/propScaleClause'
 import { isFaceCloseUpShot } from '@/lib/imagen/stillFramingNormalize'
 
 export const MAX_VERTEX_GEMINI_REFERENCE_IMAGES = 8
@@ -208,6 +208,25 @@ function sendOrderPriority(
   return ROLE_PRIORITY[role]
 }
 
+/**
+ * A held prop sits after identity and before the wardrobe plate.
+ * Furniture stays with the other set pieces, after wardrobe.
+ */
+function beatFrameSendRank(
+  ref: Pick<PrioritizedReferenceImage, 'role' | 'propName' | 'propDescription'>,
+  locationLast?: boolean
+): number {
+  const base = sendOrderPriority(ref.role, locationLast)
+  if (
+    locationLast &&
+    ref.propName &&
+    !isFurnitureProp(ref.propDescription, ref.propName)
+  ) {
+    return 0.5
+  }
+  return base
+}
+
 function propRole(importance?: string): ReferencePriorityRole {
   if (importance === 'critical') return 'prop-critical'
   if (importance === 'important') return 'prop-important'
@@ -337,8 +356,7 @@ export function selectReferenceImagesInOrder(
     .filter((r) => keptUrls.has(r.imageUrl))
     .sort((a, b) => {
       if (groupByRole || locationLast) {
-        const roleDiff =
-          sendOrderPriority(a.role, locationLast) - sendOrderPriority(b.role, locationLast)
+        const roleDiff = beatFrameSendRank(a, locationLast) - beatFrameSendRank(b, locationLast)
         if (roleDiff !== 0) return roleDiff
       }
       return (a.originalOrder ?? 0) - (b.originalOrder ?? 0)

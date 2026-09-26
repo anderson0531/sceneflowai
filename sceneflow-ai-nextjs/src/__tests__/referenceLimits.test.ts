@@ -579,6 +579,47 @@ describe('referenceLimits', () => {
     expect(libraryTokenRewrites).toEqual([])
   })
 
+  it('sends a handheld prop after identity and before wardrobe on a beat frame', () => {
+    const { selected } = selectReferenceImagesInOrder(
+      [
+        ref('identity', 'Gideon identity', undefined, {
+          characterName: 'Gideon Croft',
+          refRole: 'identity',
+          promptToken: 'person [1]',
+        }),
+        ref('wardrobe', 'Gideon wardrobe', undefined, {
+          characterName: 'Gideon Croft',
+          refRole: 'wardrobe',
+        }),
+        ref('prop-critical', 'Spanner', 'critical', {
+          propName: 'Thirty-Inch Iron Rail Spanner',
+          promptToken: 'prop [1]',
+          propDescription: 'Thirty-Inch Iron Rail Spanner as handled in the script',
+        }),
+        ref('location', 'Vault plate', undefined, {
+          locationName: 'FREIGHT TUNNEL VAULT',
+          promptToken: 'location [1]',
+        }),
+      ],
+      8,
+      { groupByRole: true, locationLast: true, preserveLibraryPromptTokens: true }
+    )
+
+    expect(selected.map((item) => item.propName || item.refRole || item.locationName)).toEqual([
+      'identity',
+      'Thirty-Inch Iron Rail Spanner',
+      'wardrobe',
+      'FREIGHT TUNNEL VAULT',
+    ])
+    expect(selected.map((item) => item.promptToken)).toEqual([
+      'person [1]',
+      'prop [1]',
+      undefined,
+      'location [1]',
+    ])
+    expect(selected.map((item) => item.sendIndex)).toEqual([1, 2, 3, 4])
+  })
+
   it('remapReferenceNumbersInPrompt preserves stable subject ordinals in person tokens', () => {
     const indexMap = new Map<number, number | null>([
       [1, 1],
