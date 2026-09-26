@@ -118,6 +118,7 @@ export function ScenePreviewPlayer({
   onPlaybackComplete,
   sceneEnd,
   nextSceneFrameUrl = null,
+  fillScreen = false,
 }: {
   segments: SceneSegment[]
   audioTracks: MixerAudioTracks
@@ -170,6 +171,12 @@ export function ScenePreviewPlayer({
   /** End-of-scene join. Fade holds black; dissolve crossfades the next opening frame. */
   sceneEnd?: { effect: 'cut' | 'dissolve' | 'fade'; durationSec: number; holdSec: number }
   nextSceneFrameUrl?: string | null
+  /**
+   * Parent view is already fullscreen. Grow the picture to that stage and
+   * hide the always-on bar, segment badges, and this player's own fullscreen
+   * control so it cannot take the fullscreen element.
+   */
+  fillScreen?: boolean
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -938,10 +945,16 @@ export function ScenePreviewPlayer({
   return (
     <div 
       ref={containerRef}
-      className={`bg-black rounded-lg overflow-hidden border border-gray-700 ${isFullscreen ? 'flex flex-col' : ''}`}
+      className={`bg-black overflow-hidden ${
+        fillScreen
+          ? 'flex h-full w-full flex-col rounded-none border-0'
+          : `rounded-lg border border-gray-700 ${isFullscreen ? 'flex flex-col' : ''}`
+      }`}
     >
       {/* Video Display Area */}
-      <div className={`relative bg-gray-900 flex items-center justify-center ${isFullscreen ? 'flex-1' : 'aspect-video'}`}>
+      <div className={`relative bg-gray-900 flex items-center justify-center ${
+        fillScreen || isFullscreen ? 'min-h-0 flex-1' : 'aspect-video'
+      }`}>
         {currentSegment.segment?.activeAssetUrl ? (
           playbackKind === 'image-sequence' ? (
             <div className="relative w-full h-full">
@@ -1000,7 +1013,8 @@ export function ScenePreviewPlayer({
           />
         )}
         
-        {/* Overlay Info */}
+        {/* Overlay Info — hidden when the parent stage is the fullscreen view */}
+        {!fillScreen && (
         <div className="absolute top-3 left-3 flex items-center gap-2">
           <Badge variant="outline" className="bg-black/60 border-gray-600 text-white text-xs">
             <Clock className="w-3 h-3 mr-1" />
@@ -1016,6 +1030,7 @@ export function ScenePreviewPlayer({
             </Badge>
           )}
         </div>
+        )}
         
         {/* Text Overlays - Rendered on top of video */}
         {textOverlays.map((overlay) => {
@@ -1219,7 +1234,8 @@ export function ScenePreviewPlayer({
         </button>
       </div>
       
-      {/* Controls Bar */}
+      {/* Controls Bar — hidden in parent fullscreen so only the hover play button remains */}
+      {!fillScreen && (
       <div className="p-3 bg-gray-800/50 flex items-center gap-3">
         {/* Skip Prev */}
         <button
@@ -1291,6 +1307,7 @@ export function ScenePreviewPlayer({
           {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
         </button>
       </div>
+      )}
       
       {/* Hidden Audio Elements for sync playback */}
       {currentAudioUrls.narration && (

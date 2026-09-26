@@ -53,6 +53,7 @@ export function ScreeningBeatPreview({
   showWatermark,
   autoPlay = false,
   onPlaybackComplete,
+  fillScreen = false,
 }: {
   scene: Record<string, unknown> | null | undefined
   productionData: SceneProductionData | null | undefined
@@ -60,6 +61,8 @@ export function ScreeningBeatPreview({
   showWatermark: boolean
   autoPlay?: boolean
   onPlaybackComplete?: () => boolean | void
+  /** Parent screening stage is fullscreen; picture fills it and chrome hides. */
+  fillScreen?: boolean
 }) {
   const [measuredSegmentDurations, setMeasuredSegmentDurations] = useState<Record<string, number>>({})
   const [isMuted, setIsMuted] = useState(false)
@@ -346,6 +349,7 @@ export function ScreeningBeatPreview({
       }
       autoPlay={autoPlay}
       onPlaybackComplete={onPlaybackComplete}
+      fillScreen={fillScreen}
     />
   )
 }
