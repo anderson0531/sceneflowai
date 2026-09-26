@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest'
+import { beatStillDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
+import type { BeatDirection, SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
 import {
   beatFilterCharacters,
   beatIsReady,
   beatMatchesFilters,
   beatNeedsAction,
+  beatRailStatus,
   type BeatListFacts,
 } from '@/lib/vision/beatListFilters'
+import { directionRailStatus } from '@/lib/vision/directionRailStatus'
 import {
   frameMatchesFilters,
   frameNeedsAction,
@@ -23,7 +27,6 @@ import {
   scoreToggleBeatIds,
   setBeatsMusicEnabled,
 } from '@/lib/script/sceneMusicCues'
-import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
 import { isCuedBeatMusicEnabled } from '@/lib/storyboard/musicPlayback'
 
 function beat(partial: Partial<BeatListFacts> & Pick<BeatListFacts, 'beatId' | 'kind'>): BeatListFacts {
@@ -96,6 +99,38 @@ describe('beatListFilters', () => {
     expect(beatIsReady(silentAction)).toBe(false)
     expect(beatNeedsAction(sfxAction)).toBe(true)
     expect(beatIsReady(readySfx)).toBe(true)
+  })
+
+  it('lights audio red when a take is missing, yellow when it is stale, and green when it is in sync', () => {
+    expect(beatRailStatus(silentAction)).toEqual({ status: 'idle', label: '' })
+    expect(beatRailStatus(sfxAction)).toEqual({ status: 'action', label: 'No audio' })
+    expect(beatRailStatus(narration)).toEqual({ status: 'action', label: 'No audio' })
+    expect(beatRailStatus(silentDialogue)).toEqual({ status: 'action', label: 'No audio' })
+    expect(beatRailStatus(excluded)).toEqual({ status: 'action', label: 'No audio' })
+    expect(beatRailStatus(staleDialogue)).toEqual({ status: 'attention', label: 'Prompt changed' })
+    expect(
+      beatRailStatus(
+        beat({
+          beatId: 'd5',
+          kind: 'dialogue',
+          hasAudio: true,
+          needsSpeaker: true,
+        })
+      )
+    ).toEqual({ status: 'attention', label: 'Needs speaker' })
+    expect(
+      beatRailStatus(
+        beat({
+          beatId: 'd6',
+          kind: 'dialogue',
+          hasAudio: true,
+          promptChanged: true,
+          needsSpeaker: true,
+        })
+      )
+    ).toEqual({ status: 'attention', label: 'Prompt changed' })
+    expect(beatRailStatus(dialogue)).toEqual({ status: 'ready', label: 'Ready' })
+    expect(beatRailStatus(readySfx)).toEqual({ status: 'ready', label: 'Ready' })
   })
 
   it('keeps excluded beats out of Needs action', () => {
@@ -210,6 +245,48 @@ describe('frame and video filters', () => {
       status: 'action',
       label: 'Missing',
     })
+  })
+
+  it('lights direction red without facets, yellow when the still prompt drifted, and green when it matches', () => {
+    const direction: BeatDirection = {
+      shotType: 'Close-Up',
+      frozenMoment: 'Elara grips the journal',
+    }
+    const currentKey = beatStillDirectionFingerprint(direction)
+
+    expect(directionRailStatus({})).toEqual({ status: 'action', label: 'No direction' })
+    expect(directionRailStatus({ direction: { generatedBy: 'planner' } })).toEqual({
+      status: 'action',
+      label: 'No direction',
+    })
+    expect(
+      directionRailStatus({
+        direction: { framePrompt: 'A locked close-up of the journal.' },
+      })
+    ).toEqual({ status: 'ready', label: 'Ready' })
+    expect(
+      directionRailStatus({
+        direction,
+        stillPrompt: 'Elara grips the journal in close-up.',
+      })
+    ).toEqual({ status: 'ready', label: 'Ready' })
+    expect(
+      directionRailStatus({
+        direction,
+        stillPrompt: 'Elara grips the journal in close-up.',
+        stillPromptDirectionKey: currentKey,
+      })
+    ).toEqual({ status: 'ready', label: 'Ready' })
+    expect(
+      directionRailStatus({
+        direction,
+        stillPrompt: 'An older wide shot of the room.',
+        stillPromptDirectionKey: beatStillDirectionFingerprint({
+          ...direction,
+          shotType: 'Wide Shot',
+        }),
+      })
+    ).toEqual({ status: 'attention', label: 'Prompt changed' })
   })
 })
 

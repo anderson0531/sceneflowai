@@ -8,6 +8,7 @@ import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallba
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
 import { resolveLiveTake, segmentHasPlayableVideo } from '@/lib/storyboard/mediaVersions'
+import { directionRailStatus } from '@/lib/vision/directionRailStatus'
 import type { SceneSegment } from './types'
 import { BeatStillClipViewer } from './BeatStillClipViewer'
 import { SceneBeatStage, type SceneBeatStageItem } from './SceneBeatStage'
@@ -80,13 +81,21 @@ export function SceneDirectionWorkbench({
 
   const items = useMemo<SceneBeatStageItem[]>(
     () =>
-      beats.map((beat, index) => ({
-        id: beat.beatId,
-        beatNumber: (typeof beat.sequenceIndex === 'number' ? beat.sequenceIndex : index) + 1,
-        imageUrl: beat.storyboardImageUrl?.trim() || undefined,
-        status: beat.beatDirection ? 'ready' : 'idle',
-        ariaLabel: `Shot ${index + 1}`,
-      })),
+      beats.map((beat, index) => {
+        const rail = directionRailStatus({
+          direction: beat.beatDirection,
+          stillPrompt: beat.storyboardImagePrompt,
+          stillPromptDirectionKey: beat.storyboardImagePromptDirectionKey,
+        })
+        return {
+          id: beat.beatId,
+          beatNumber: (typeof beat.sequenceIndex === 'number' ? beat.sequenceIndex : index) + 1,
+          imageUrl: beat.storyboardImageUrl?.trim() || undefined,
+          status: rail.status,
+          statusLabel: rail.label,
+          ariaLabel: `Shot ${index + 1}`,
+        }
+      }),
     [beats]
   )
 
