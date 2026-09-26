@@ -651,6 +651,7 @@ describe('runAdaptiveBeatPool abort signal', () => {
     let inFlight = 0
     let peak = 0
     let drain = false
+    const turn = () => new Promise<void>((resolve) => setImmediate(resolve))
 
     const promise = runAdaptiveBeatPool(
       [0, 1, 2, 3, 4, 5],
@@ -675,25 +676,24 @@ describe('runAdaptiveBeatPool abort signal', () => {
       }
     )
 
-    await vi.advanceTimersByTimeAsync(0)
+    await turn()
     expect(started).toEqual([0, 1])
     expect(peak).toBe(2)
 
     release[0]()
-    await vi.advanceTimersByTimeAsync(0)
+    await turn()
     expect(started).toEqual([0, 1, 2])
     expect(inFlight).toBe(2)
     expect(peak).toBe(2)
 
     release[1]()
-    await vi.advanceTimersByTimeAsync(0)
+    await turn()
     expect(started).toEqual([0, 1, 2, 3])
     expect(inFlight).toBe(2)
     expect(peak).toBe(2)
 
     drain = true
-    for (const resolve of release) resolve()
-    await vi.runAllTimersAsync()
+    for (const resolve of release) resolve?.()
     const result = await promise
     expect(result.succeeded.size).toBe(6)
     expect(peak).toBe(2)
