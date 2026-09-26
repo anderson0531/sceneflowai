@@ -328,11 +328,10 @@ describe('Still Director contracts', () => {
     expect(dialog).not.toContain('applyStillDirectorPatch')
     expect(dialog).not.toContain('persistVision')
 
-    const director = readSource('src/components/vision/BeatStillDirectorDialog.tsx')
-    expect(director).toContain('onSave({ patch: savePatch ?? null, generate })')
-    expect(director).toContain("patch ? t('saveAndGenerate') : tp('retryStill')")
+    const director = readSource('src/components/vision/BeatDirectorDialog.tsx')
     expect(director).toContain("t('safetyOption')")
     expect(director).toContain('policyCompliance: safety')
+    expect(director).toContain('applyPolicyComplianceToPatch')
     expect(director).not.toContain('stillPolicyMode')
     expect(director).not.toContain('persistVision')
     expect(director).not.toContain('applyStillDirectorPatchToScene')
@@ -340,13 +339,13 @@ describe('Still Director contracts', () => {
 
   it('Direct Frame persist-before-generate stamps user direction and keeps no customPrompt', () => {
     const page = readSource('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
-    expect(page).toContain('handleGenerateBeatStillWithPolicy')
-    expect(page).toContain('if (payload.patch)')
     expect(page).not.toContain('void handleRequestGenerateBeatFrame(dialog.sceneIdx')
     expect(page).toContain("generatedBy: 'user'")
     expect(page).toContain("mode: options.userDirection?.trim() ? 'rewrite' : 'optimize'")
     expect(page).toContain('persistStillDirectorPatch')
-    expect(page).toContain('BeatStillDirectorDialog')
+    expect(page).toContain('BeatDirectionEditor')
+    expect(page).toContain('layout="dialog"')
+    expect(page).not.toContain('BeatStillDirectorDialog')
     expect(page).toContain('onDirectorFrame={handleOpenDirectorFrame}')
     const start = page.indexOf('const handleDirectFrameGenerate')
     const next = page.indexOf('const handleGenerateDialogueFrameImage')
@@ -363,17 +362,17 @@ describe('Still Director contracts', () => {
     expect(handler).not.toContain('stillPolicyMode: options.stillPolicyMode')
   })
 
-  it('Director generate sends the same verified beat refs as Express', () => {
+  it('Frames Direct Shot uses the shared direction dialog', () => {
     const page = readSource('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
-    const start = page.indexOf('const handleGenerateBeatStillWithPolicy')
-    const next = page.indexOf('const handleOpenDirectFrame')
-    const handler = page.slice(start, next > start ? next : undefined)
-    expect(handler).toContain('resolveVerifiedBeatRefsForApi')
-    expect(handler).toContain('characterSelectionExplicit: true')
-    expect(handler).toContain('skipObjectAutoDetection: true')
-    expect(handler).toContain('selectedCharacters: verifiedRefs.selectedCharacters')
-    expect(handler).toContain('objectReferences: verifiedRefs.objectReferences')
-    expect(handler).toContain('locationReferences: verifiedRefs.locationReferences')
+    const director = readSource('src/components/vision/BeatDirectorDialog.tsx')
+    expect(page).toContain('<BeatDirectionEditor')
+    expect(page).toContain('layout="dialog"')
+    expect(page).toContain('locationReferences={locationReferences}')
+    expect(page).toContain('objectReferences={objectReferences}')
+    expect(page).not.toContain('BeatStillDirectorDialog')
+    expect(director).toContain('policyCompliance: safety')
+    expect(director).toContain('initialSafety')
+    expect(director).toContain('Reference library')
   })
 
   it('overlay defaults are Direct Frame, Director, then Edit', () => {

@@ -108,7 +108,6 @@ import {
   explicitBeatReferenceSelection,
   mapBeatReferenceSelectionForApi,
   resolveBeatFrameGenerationContext,
-  resolveVerifiedBeatRefsForApi,
   shouldUseExplicitBeatReferences,
   toBeatReferenceSelection,
 } from '@/lib/vision/beatFrameGenerationContext'
@@ -153,10 +152,7 @@ import {
   PreVisFramePromptDialog,
   type PreVisDirectGenerationOptions,
 } from '@/components/vision/PreVisFramePromptDialog'
-import {
-  BeatStillDirectorDialog,
-  type BeatStillDirectorSavePayload,
-} from '@/components/vision/BeatStillDirectorDialog'
+import { BeatDirectionEditor } from '@/components/vision/BeatDirectionEditor'
 import {
   IMAGE_CONTENT_POLICY_BOARD_MESSAGE,
   IMAGE_CONTENT_POLICY_CODE,
@@ -11845,170 +11841,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     await persistVisionScriptScenes(updatedScenes, 'persistShotImageSafetyError')
   }
 
-  const handleGenerateBeatStillWithPolicy = async (
-    sceneIndex: number,
-    slot: StoryboardFrameSlot
-  ) => {
-    if (!slot.beatId) return
-    const scene = (scriptRef.current || script)?.script?.scenes?.[sceneIndex]
-    if (!scene) {
-      toast.error('Scene not found')
-      return
-    }
-
-    const rawBeatIdx = resolveRawBeatIndex(scene, { beatId: slot.beatId })
-    if (typeof rawBeatIdx !== 'number') {
-      toast.error('Shot not found')
-      return
-    }
-
-    const sceneNumber =
-      typeof scene.sceneNumber === 'number' ? scene.sceneNumber : sceneIndex + 1
-    const generatingKey = storyboardGeneratingSlotKey(sceneIndex, slot)
-    const startedAt = Date.now()
-    setPreVisDirectorDialog(null)
-    setDirectFrameRun({
-      visible: true,
-      sceneNumber,
-      label: slot.label,
-      generatingKey,
-      status: 'running',
-      finished: false,
-      startedAt,
-    })
-
-    const finishPolicyFrameRun = (next: {
-      status: DirectFrameRunState['status']
-      error?: string
-    }) => {
-      setDirectFrameRun((prev) => {
-        if (!prev || prev.startedAt !== startedAt) return prev
-        const finishedRun = {
-          ...prev,
-          status: next.status,
-          error: next.error,
-          finished: true,
-        }
-        if (next.status !== 'error') {
-          window.setTimeout(() => {
-            setDirectFrameRun((current) =>
-              current?.startedAt === startedAt ? null : current
-            )
-          }, 1500)
-        }
-        return finishedRun
-      })
-    }
-
-    try {
-      const beatForRefs = getSceneBeats(scene).find((row) => row.beatId === slot.beatId)
-      const verifiedRefs = beatForRefs
-        ? resolveVerifiedBeatRefsForApi({
-            beat: beatForRefs,
-            scene: scene as Record<string, unknown>,
-            sceneIndex,
-            projectCharacters: characters,
-            locationReferences,
-            objectReferences,
-            filmTitle: project?.title,
-          })
-        : null
-
-      const response = await fetch('/api/scene/generate-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          sceneIndex,
-          quality: imageQuality,
-          frameType: 'beat',
-          beatId: slot.beatId,
-          beatIndex: rawBeatIdx,
-          modelTier: resolveStoryboardGeneration({
-            storyboardQuality: frameGenerationQuality,
-          }).modelTier,
-          stillGenerationMode: frameGenerationMode,
-          stillPolicyMode: frameGenerationMode,
-          regenerate: !!slot.ownImageUrl?.trim(),
-          ...(verifiedRefs
-            ? {
-                characterSelectionExplicit: true,
-                selectedCharacters: verifiedRefs.selectedCharacters,
-                characterWardrobes: verifiedRefs.characterWardrobes,
-                locationReferences: verifiedRefs.locationReferences,
-                objectReferences: verifiedRefs.objectReferences,
-                skipObjectAutoDetection: true,
-              }
-            : {}),
-          ...GALLERY_MANUAL_GENERATE_OPTS,
-        }),
-      })
-      const data = await response.json()
-      if (!response.ok) {
-        if (
-          data?.code === IMAGE_CONTENT_POLICY_CODE ||
-          isImageContentPolicyError(data)
-        ) {
-          await persistBeatImageSafetyError(
-            sceneIndex,
-            rawBeatIdx,
-            IMAGE_CONTENT_POLICY_BOARD_MESSAGE
-          )
-          throw stillPolicyErrorWithCode(
-            IMAGE_CONTENT_POLICY_USER_MESSAGE,
-            IMAGE_CONTENT_POLICY_CODE
-          )
-        }
-        if (data?.code === IMAGE_SAFETY_CODE || isImageSafetyError(data?.error)) {
-          await persistBeatImageSafetyError(sceneIndex, rawBeatIdx)
-          throw stillPolicyErrorWithCode(IMAGE_SAFETY_USER_MESSAGE, IMAGE_SAFETY_CODE)
-        }
-        throw new Error(data?.error || 'Still generation failed')
-      }
-
-      const latestAfterGenerate = scriptRef.current || script
-      const updatedScenes = [...(latestAfterGenerate.script.scenes || [])]
-      updatedScenes[sceneIndex] = stampPreVisContentHash(
-        applyBeatStoryboardImageToScene(updatedScenes[sceneIndex], rawBeatIdx, data.imageUrl, {
-          imagePrompt: data.prompt || '',
-          referenceStatus: data.referenceStatus,
-          referenceReason: data.referenceReason,
-        })
-      )
-      const nextScript = {
-        ...latestAfterGenerate,
-        script: { ...latestAfterGenerate.script, scenes: updatedScenes },
-      }
-      scriptRef.current = nextScript
-      setScript(nextScript)
-      const saved = await persistVisionScriptScenes(updatedScenes, 'handleGenerateShotStillWithPolicy')
-      if (saved && slot.beatId) {
-        const sceneId =
-          (scene.id as string) ||
-          (scene.sceneId as string) ||
-          `scene-${sceneIndex}`
-        syncBeatStartFrameToProduction(sceneId, slot.beatId, data.imageUrl)
-      }
-      const referenceNotice = frameReferenceNotice(data.referenceStatus, data.referenceReason)
-      if (referenceNotice?.level === 'error') toast.error(referenceNotice.message)
-      else if (referenceNotice) toast.warning(referenceNotice.message)
-      else toast.success('Frame generated')
-      finishPolicyFrameRun({ status: 'done' })
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Still generation failed'
-      if (
-        !toastStillPolicyFailure({
-          error,
-          onOpenDirector: () => handleOpenDirectorFrame(sceneIndex, slot),
-          openDirectorLabel: tStillPolicy('openDirector'),
-        })
-      ) {
-        toast.error(message)
-      }
-      finishPolicyFrameRun({ status: 'error', error: message })
-    }
-  }
-
   const handleOpenDirectFrame = (sceneIdx: number, slot: StoryboardFrameSlot) => {
     const scene = script?.script?.scenes?.[sceneIdx]
     const beat =
@@ -12031,26 +11863,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
     setPreVisDirectorDialog({ sceneIdx, slot })
-  }
-
-  const handleDirectorSave = async (payload: BeatStillDirectorSavePayload) => {
-    const dialog = preVisDirectorDialog
-    if (!dialog?.slot.beatId) return
-    if (payload.patch) {
-      const ok = await persistStillDirectorPatch(
-        dialog.sceneIdx,
-        dialog.slot.beatId,
-        payload.patch
-      )
-      if (!ok) return
-      toast.success('Still prompt saved')
-    }
-    if (payload.generate) {
-      void handleGenerateBeatStillWithPolicy(
-        dialog.sceneIdx,
-        dialog.slot
-      )
-    }
   }
 
   const handleDirectFrameGenerate = async (options: PreVisDirectGenerationOptions) => {
@@ -17832,17 +17644,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           getSceneBeats(scene as Record<string, unknown>).find(
             (entry) => entry.beatId === preVisDirectorDialog.slot.beatId
           ) ?? null
+        if (!beat) return null
         return (
-          <BeatStillDirectorDialog
-            open
-            onOpenChange={(open) => {
+          <BeatDirectionEditor
+            layout="dialog"
+            directorOpen
+            onDirectorOpenChange={(open) => {
               if (!open) setPreVisDirectorDialog(null)
             }}
-            projectId={projectId}
-            sceneIndex={preVisDirectorDialog.sceneIdx}
             beat={beat}
-            label={preVisDirectorDialog.slot.label}
-            onSave={handleDirectorSave}
+            sceneIdx={preVisDirectorDialog.sceneIdx}
+            scenes={script?.script?.scenes ?? []}
+            script={script}
+            onScriptChange={handleScriptChange}
+            promptComposition={{
+              artStyleAnchor: lockedArtStyle,
+              lookbook: projectLookbook,
+            }}
+            characters={characters}
+            locationReferences={locationReferences}
+            objectReferences={objectReferences}
+            projectId={projectId}
           />
         )
       })()}

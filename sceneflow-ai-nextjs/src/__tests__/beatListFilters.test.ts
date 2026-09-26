@@ -18,6 +18,8 @@ import {
   type FrameListFacts,
 } from '@/lib/vision/frameListFilters'
 import {
+  clipFailureTooltip,
+  isContentPolicyFailureMessage,
   videoMatchesFilters,
   videoNeedsAction,
   videoRailStatus,
@@ -346,5 +348,22 @@ describe('scene score switch', () => {
     const off = setBeatsMusicEnabled(on, scoreToggleBeatIds(on, cues), false)
     expect(off.map((beat) => beat.musicEnabled)).toEqual([false, false, true])
     expect(beats[2]).toBe(off[2])
+  })
+})
+
+describe('clip failure tooltip', () => {
+  const policy =
+    'Content policy: Vertex blocked this generation. The trigger may be your text or a reference/start image. Try optional wording suggestions, remove reference images, or simplify the prompt.'
+
+  it('names the policy block and tells the user to select the shot', () => {
+    expect(isContentPolicyFailureMessage(policy)).toBe(true)
+    const tip = clipFailureTooltip(policy)
+    expect(tip).toBe(
+      'Content policy blocked. Content policy: Vertex blocked this generation. Select this shot to rewrite it.'
+    )
+  })
+
+  it('keeps a non-policy failure to its first sentence', () => {
+    expect(clipFailureTooltip('Render failed. Try again later.')).toBe('Render failed.')
   })
 })

@@ -68,6 +68,8 @@ export interface BeatDirectionEditorProps {
   /** Controlled Direct Beat dialog. Used by the Clips tab, where this editor is dialog-only. */
   directorOpen?: boolean
   onDirectorOpenChange?: (open: boolean) => void
+  /** Open Direct Shot with Safety already checked. */
+  initialSafety?: boolean
 }
 
 export interface DirectionCharacter {
@@ -178,6 +180,7 @@ export function BeatDirectionEditor({
   projectId,
   directorOpen: directorOpenProp,
   onDirectorOpenChange,
+  initialSafety = false,
 }: BeatDirectionEditorProps) {
   const [expanded, setExpanded] = useState(layout === 'board')
   const [directorOpenInternal, setDirectorOpenInternal] = useState(false)
@@ -526,6 +529,7 @@ export function BeatDirectionEditor({
       onSaveDirection={saveDirectionPreview}
       onToggleObject={toggleObject}
       onSelectLocation={selectLocation}
+      initialSafety={initialSafety}
     />
   )
 

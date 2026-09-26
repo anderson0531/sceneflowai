@@ -4378,6 +4378,7 @@ function SceneCard({
 
   const sceneBeatsForTabs = useMemo(() => getSceneBeats(scene), [scene])
   const [directBeatId, setDirectBeatId] = useState<string | null>(null)
+  const [directBeatSafety, setDirectBeatSafety] = useState(false)
   const [selectedBeatId, setSelectedBeatId] = useState<string | null>(
     () => getSceneBeats(scene)[0]?.beatId ?? null
   )
@@ -6228,7 +6229,10 @@ function SceneCard({
                           ? () => onOpenScreeningRoom(sceneIdx, 'beats')
                           : undefined
                       }
-                      onDirectBeat={setDirectBeatId}
+                      onDirectBeat={(beatId, options) => {
+                        setDirectBeatSafety(options?.safety === true)
+                        setDirectBeatId(beatId)
+                      }}
                       selectedBeatId={selectedBeatId}
                       onSelectBeat={setSelectedBeatId}
                       scene={{
@@ -6901,8 +6905,12 @@ function SceneCard({
                       <BeatDirectionEditor
                         layout="dialog"
                         directorOpen
+                        initialSafety={directBeatSafety}
                         onDirectorOpenChange={(open) => {
-                          if (!open) setDirectBeatId(null)
+                          if (!open) {
+                            setDirectBeatId(null)
+                            setDirectBeatSafety(false)
+                          }
                         }}
                         beat={sceneBeatsForTabs.find((beat) => beat.beatId === directBeatId)!}
                         sceneIdx={sceneIdx}

@@ -105,6 +105,7 @@ describe('Videos Direction wiring', () => {
     expect(consoleSrc).not.toContain('BeatVideoDirectorDialog')
     expect(consoleSrc).not.toContain('onDirection={(segment) => handleRequestTake(segment, true)}')
     expect(panel).toContain('layout="dialog"')
-    expect(panel).toContain('onDirectBeat={setDirectBeatId}')
+    expect(panel).toContain('setDirectBeatId(beatId)')
+    expect(panel).toContain('initialSafety={directBeatSafety}')
   })
 })

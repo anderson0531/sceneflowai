@@ -3,7 +3,7 @@
  *
  * Video Agent and Take each open their own HTTP request. Without a shared
  * admission lock, one Fluid instance will run every request that arrives.
- * The cap matches CONCURRENCY_DEFAULTS.VIDEO_GENERATION (one). It is not
+ * The cap matches CONCURRENCY_DEFAULTS.VIDEO_GENERATION (two). It is not
  * distributed across serverless instances.
  */
 

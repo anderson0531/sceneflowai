@@ -82,6 +82,44 @@ export function resolvePriorChainLastFrameUrl(
   return prev.references?.endFrameUrl || prev.lastFrameUrl || undefined
 }
 
+/**
+ * A continuation may start once its previous part in this batch has finished.
+ * Independent shots, and continuations whose predecessor is not in the batch, start immediately.
+ */
+export function isVideoQueueItemRunnable(
+  segment: SceneSegment | undefined,
+  batchSegmentIds: ReadonlySet<string>,
+  finishedSegmentIds: ReadonlySet<string>,
+  segments: SceneSegment[]
+): boolean {
+  if (!segment || !isVeoChainContinuation(segment)) return true
+  const previous = findPreviousChainSegment(segments, segment)
+  if (!previous) return true
+  if (!batchSegmentIds.has(previous.segmentId)) return true
+  return finishedSegmentIds.has(previous.segmentId)
+}
+
+/**
+ * Index of the next batch item a worker may start, or -1 when every remaining
+ * item is a continuation waiting on an earlier part in this batch.
+ */
+export function claimNextRunnableVideoIndex(
+  items: Array<{ segmentId: string }>,
+  segments: SceneSegment[],
+  claimed: ReadonlySet<number>,
+  finishedSegmentIds: ReadonlySet<string>
+): number {
+  const batchSegmentIds = new Set(items.map((item) => item.segmentId))
+  for (let index = 0; index < items.length; index++) {
+    if (claimed.has(index)) continue
+    const segment = segments.find((entry) => entry.segmentId === items[index].segmentId)
+    if (isVideoQueueItemRunnable(segment, batchSegmentIds, finishedSegmentIds, segments)) {
+      return index
+    }
+  }
+  return -1
+}
+
 /** Ordered segments belonging to one beat chain. */
 export function getBeatChainSegments(
   segments: SceneSegment[],

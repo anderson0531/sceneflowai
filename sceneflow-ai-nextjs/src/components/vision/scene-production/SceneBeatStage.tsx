@@ -19,6 +19,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { cn } from '@/lib/utils'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 export type SceneBeatStageStatus = 'ready' | 'attention' | 'action' | 'idle'
 
@@ -29,6 +30,8 @@ export interface SceneBeatStageItem {
   status?: SceneBeatStageStatus
   /** Spoken name for the status light, e.g. "Placeholder" or "Final". */
   statusLabel?: string
+  /** Hover text for the thumbnail. Used when a clip render failed. */
+  statusDetail?: string
   /** Short overlay, e.g. "End" on an optional end frame. */
   caption?: string
   ariaLabel: string
@@ -81,7 +84,7 @@ function BeatThumb({
   })
   const dot = statusClass(item.status)
 
-  return (
+  const button = (
     <button
       ref={setNodeRef}
       type="button"
@@ -125,6 +128,17 @@ function BeatThumb({
         />
       )}
     </button>
+  )
+
+  if (!item.statusDetail) return button
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipContent side="right" className="max-w-xs text-left">
+        {item.statusDetail}
+      </TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -259,6 +273,7 @@ export function SceneBeatStage({
   )
 
   return (
+    <TooltipProvider delayDuration={300}>
     <div className={cn('flex flex-col items-start gap-3 lg:flex-row', className)}>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         {rail}
@@ -269,5 +284,6 @@ export function SceneBeatStage({
         {detail}
       </div>
     </div>
+    </TooltipProvider>
   )
 }
