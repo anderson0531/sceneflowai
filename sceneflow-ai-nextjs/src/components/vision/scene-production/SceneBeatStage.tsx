@@ -20,13 +20,15 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { cn } from '@/lib/utils'
 
-export type SceneBeatStageStatus = 'ready' | 'attention' | 'idle'
+export type SceneBeatStageStatus = 'ready' | 'attention' | 'action' | 'idle'
 
 export interface SceneBeatStageItem {
   id: string
   beatNumber?: number
   imageUrl?: string
   status?: SceneBeatStageStatus
+  /** Spoken name for the status light, e.g. "Placeholder" or "Final". */
+  statusLabel?: string
   /** Short overlay, e.g. "End" on an optional end frame. */
   caption?: string
   ariaLabel: string
@@ -56,6 +58,7 @@ const THUMB_DRAG_THRESHOLD_PX = 6
 function statusClass(status: SceneBeatStageStatus | undefined): string | null {
   if (status === 'ready') return 'bg-emerald-400'
   if (status === 'attention') return 'bg-amber-400'
+  if (status === 'action') return 'bg-red-500'
   return null
 }
 
@@ -83,7 +86,6 @@ function BeatThumb({
       ref={setNodeRef}
       type="button"
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      aria-label={item.ariaLabel}
       onClick={() => onSelect(item.id)}
       className={cn(
         'relative aspect-video overflow-hidden rounded border bg-slate-900 text-left',
@@ -93,6 +95,7 @@ function BeatThumb({
         isDragging && 'z-10 opacity-80'
       )}
       {...(sortable && !disabled ? { ...attributes, ...listeners } : {})}
+      aria-label={item.statusLabel ? `${item.ariaLabel}, ${item.statusLabel}` : item.ariaLabel}
       aria-pressed={selected}
     >
       {item.imageUrl ? (
@@ -113,7 +116,14 @@ function BeatThumb({
           {item.caption}
         </span>
       )}
-      {dot && <span className={cn('absolute right-1 top-1 h-2 w-2 rounded-full', dot)} />}
+      {dot && (
+        <span
+          className={cn('absolute right-1 top-1 h-2 w-2 rounded-full', dot)}
+          data-status={item.status}
+          title={item.statusLabel}
+          aria-label={item.statusLabel}
+        />
+      )}
     </button>
   )
 }

@@ -56,3 +56,22 @@ export function videoMatchesFilters(
   if (quality === 'draft') return facts.imageTier === 'draft'
   return true
 }
+
+export type VideoRailStatus = 'action' | 'attention' | 'ready' | 'idle'
+
+/**
+ * Thumbnail light for one clip.
+ * Red when there is no playable clip, the render failed, or a finished clip
+ * has neither a draft nor a final still. Yellow for a draft still or a stale
+ * prompt. Green only for a finished clip on a clean final still. A clip that
+ * is still rendering has no light.
+ */
+export function videoRailStatus(facts: VideoClipFacts): { status: VideoRailStatus; label: string } {
+  if (facts.status === 'rendering') return { status: 'idle', label: '' }
+  if (facts.status === 'error') return { status: 'action', label: 'Error' }
+  if (facts.status !== 'complete') return { status: 'action', label: 'No clip' }
+  if (facts.promptChanged) return { status: 'attention', label: 'Prompt changed' }
+  if (facts.imageTier === 'draft') return { status: 'attention', label: 'Draft' }
+  if (facts.imageTier === 'final') return { status: 'ready', label: 'Final' }
+  return { status: 'action', label: 'Missing' }
+}

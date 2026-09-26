@@ -43,6 +43,7 @@ import {
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import {
   frameMatchesFilters,
+  frameRailStatus,
   type FrameAttentionFilter,
   type FrameListFacts,
   type FrameTypeFilter,
@@ -1170,19 +1171,24 @@ export function SceneStoryboardFrameViewer({
 
               <SceneBeatStage
                 railLabel="Shot frames"
-                items={visibleFrameSlots.map((slot) => ({
-                  id: slot.key,
-                  beatNumber: slot.beatNumber,
-                  imageUrl: slot.displayImageUrl,
-                  caption:
-                    screeningPosterFrameKey === slot.key
-                      ? 'Poster'
-                      : slot.frameRole === 'end'
-                        ? 'End'
-                        : undefined,
-                  status: slot.isMissing ? 'attention' : slot.displayImageUrl ? 'ready' : 'idle',
-                  ariaLabel: slot.label || `Shot ${slot.beatNumber ?? ''}`,
-                }))}
+                items={visibleFrameSlots.map((slot) => {
+                  const facts = frameFacts.find((entry) => entry.key === slot.key)
+                  const rail = facts ? frameRailStatus(facts) : undefined
+                  return {
+                    id: slot.key,
+                    beatNumber: slot.beatNumber,
+                    imageUrl: slot.displayImageUrl,
+                    caption:
+                      screeningPosterFrameKey === slot.key
+                        ? 'Poster'
+                        : slot.frameRole === 'end'
+                          ? 'End'
+                          : undefined,
+                    status: rail?.status,
+                    statusLabel: rail?.label,
+                    ariaLabel: slot.label || `Shot ${slot.beatNumber ?? ''}`,
+                  }
+                })}
                 selectedId={selectedFrameKey}
                 onSelect={(id) => {
                   setSelectedFrameKey(id)

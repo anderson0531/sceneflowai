@@ -65,3 +65,19 @@ export function frameMatchesFilters(
   if (type !== 'all' && facts.kind !== type) return false
   return true
 }
+
+export type FrameRailStatus = 'action' | 'attention' | 'ready'
+
+/**
+ * Thumbnail light for one still.
+ * Red when the shot is neither draft nor final. Yellow for a draft or a
+ * stale prompt. Green only for a clean final.
+ */
+export function frameRailStatus(facts: FrameListFacts): { status: FrameRailStatus; label: string } {
+  if (facts.isPlaceholder) return { status: 'action', label: 'Placeholder' }
+  if (facts.isMissing || !facts.hasOwnImage) return { status: 'action', label: 'Missing' }
+  if (facts.hasImageError) return { status: 'action', label: 'Error' }
+  if (facts.promptChanged) return { status: 'attention', label: 'Prompt changed' }
+  if (facts.imageTier === 'final') return { status: 'ready', label: 'Final' }
+  return { status: 'attention', label: 'Draft' }
+}

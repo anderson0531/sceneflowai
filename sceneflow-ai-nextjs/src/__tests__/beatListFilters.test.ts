@@ -9,9 +9,15 @@ import {
 import {
   frameMatchesFilters,
   frameNeedsAction,
+  frameRailStatus,
   type FrameListFacts,
 } from '@/lib/vision/frameListFilters'
-import { videoMatchesFilters, videoNeedsAction, type VideoClipFacts } from '@/lib/vision/videoClipFilters'
+import {
+  videoMatchesFilters,
+  videoNeedsAction,
+  videoRailStatus,
+  type VideoClipFacts,
+} from '@/lib/vision/videoClipFilters'
 import {
   isSceneScoreEnabled,
   scoreToggleBeatIds,
@@ -148,6 +154,62 @@ describe('frame and video filters', () => {
     expect(videoMatchesFilters(complete, 'in_the_can', 'final')).toBe(true)
     expect(videoMatchesFilters(complete, 'in_the_can', 'draft')).toBe(false)
     expect(videoMatchesFilters({ key: 'e', status: 'error', promptChanged: false }, 'error', 'all')).toBe(true)
+  })
+
+  it('lights stills red unless they are a draft, a prompt warning, or a clean final', () => {
+    const placeholder: FrameListFacts = {
+      ...finalFrame,
+      key: 'ph',
+      imageTier: undefined,
+      isPlaceholder: true,
+      hasOwnImage: false,
+    }
+    const missingFrame: FrameListFacts = {
+      ...finalFrame,
+      key: 'ms',
+      imageTier: undefined,
+      isMissing: true,
+      hasOwnImage: false,
+    }
+    const errored: FrameListFacts = { ...draftFrame, key: 'er', hasImageError: true }
+
+    expect(frameRailStatus(placeholder)).toEqual({ status: 'action', label: 'Placeholder' })
+    expect(frameRailStatus(missingFrame)).toEqual({ status: 'action', label: 'Missing' })
+    expect(frameRailStatus(errored)).toEqual({ status: 'action', label: 'Error' })
+    expect(frameRailStatus(draftFrame)).toEqual({ status: 'attention', label: 'Draft' })
+    expect(frameRailStatus({ ...draftFrame, promptChanged: true })).toEqual({
+      status: 'attention',
+      label: 'Prompt changed',
+    })
+    expect(frameRailStatus(changed)).toEqual({ status: 'attention', label: 'Prompt changed' })
+    expect(frameRailStatus(finalFrame)).toEqual({ status: 'ready', label: 'Final' })
+  })
+
+  it('lights clips red without a finished draft or final, and idle while rendering', () => {
+    expect(videoRailStatus(missing)).toEqual({ status: 'action', label: 'No clip' })
+    expect(videoRailStatus({ ...complete, status: 'queued' })).toEqual({ status: 'action', label: 'No clip' })
+    expect(videoRailStatus({ key: 'e', status: 'error', promptChanged: false, imageTier: 'final' })).toEqual({
+      status: 'action',
+      label: 'Error',
+    })
+    expect(videoRailStatus({ key: 'r', status: 'rendering', promptChanged: false, imageTier: 'final' })).toEqual({
+      status: 'idle',
+      label: '',
+    })
+    expect(videoRailStatus({ key: 'd', status: 'complete', promptChanged: false, imageTier: 'draft' })).toEqual({
+      status: 'attention',
+      label: 'Draft',
+    })
+    expect(videoRailStatus({ ...complete, promptChanged: true })).toEqual({
+      status: 'attention',
+      label: 'Prompt changed',
+    })
+    expect(videoRailStatus(stale)).toEqual({ status: 'attention', label: 'Prompt changed' })
+    expect(videoRailStatus(complete)).toEqual({ status: 'ready', label: 'Final' })
+    expect(videoRailStatus({ key: 'u', status: 'complete', promptChanged: false })).toEqual({
+      status: 'action',
+      label: 'Missing',
+    })
   })
 })
 
