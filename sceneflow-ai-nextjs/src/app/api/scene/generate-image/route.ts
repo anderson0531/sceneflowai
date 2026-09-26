@@ -41,8 +41,10 @@ import {
 } from '@/lib/imagen/sceneImageReferenceLabels'
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
 import {
+  referenceAdherenceIsBetter,
   scoreReferenceAdherence,
   selectReferenceAdherencePlates,
+  shouldScoreReferenceAdherence,
   type ReferenceAdherenceResult,
 } from '@/lib/imagen/referenceAdherence'
 import { waitForGCSURIs, checkGCSURIAccessibility } from '@/lib/storage/gcsAccessibility'
@@ -2447,6 +2449,16 @@ async function postGenerateImage(req: NextRequest) {
     let referenceAdherence: ReferenceAdherenceResult | null = null
     let likenessRound = 0
     let shouldLikenessAutoRetry = false
+    let referenceResampleRound = 0
+    let shouldReferenceResample = false
+    let firstReferenceRound: {
+      imageUrl: string
+      referenceAdherence: ReferenceAdherenceResult
+      promptForResponse: string
+      generationModelId: string
+      generationProvider: 'vertex' | 'kling'
+      validation: any
+    } | null = null
     /** Measured cost of round 0, used to decide whether a retry can finish. */
     let round0CostMs = 0
     let round0ValidationMs = 0
@@ -2503,7 +2515,14 @@ async function postGenerateImage(req: NextRequest) {
     let promptWasPolicySoftened = false
 
     do {
+      shouldReferenceResample = false
       const roundStart = Date.now()
+      if (referenceResampleRound > 0) {
+        referenceAdherence = null
+        console.log(
+          '[Scene Image] Reference resample: same prompt and plates, one more sample'
+        )
+      }
       if (likenessRound > 0) {
         // Escalation is the point of the retry, and it has to happen on every
         // path. Previously the round bailed out whenever there was no
@@ -3695,7 +3714,7 @@ async function postGenerateImage(req: NextRequest) {
       console.log('[Scene Image] Skipping likeness validation — no characters')
     }
 
-    if (likenessRound === 0) {
+    if (likenessRound === 0 && referenceResampleRound === 0) {
       round0ValidationMs = Date.now() - validationStart
       round0CostMs = Date.now() - roundStart
     }
@@ -3722,6 +3741,7 @@ async function postGenerateImage(req: NextRequest) {
 
     if (
       likenessRound === 0 &&
+      referenceResampleRound === 0 &&
       isGenuineLikenessFailure(validation) &&
       !skipLikenessValidation
     ) {
@@ -3763,13 +3783,23 @@ async function postGenerateImage(req: NextRequest) {
       }
     }
 
-    if (skipLikenessValidation) {
-      console.log('[Scene Image] Skipping reference adherence — skipLikenessValidation')
+    const scorePlates =
+      shouldScoreReferenceAdherence({
+        skipLikenessValidation,
+        storyboardQuality: resolvedGen.storyboardQuality,
+      }) && canValidateLikeness(0, remainingBudgetMs(), 0)
+    if (
+      !shouldScoreReferenceAdherence({
+        skipLikenessValidation,
+        storyboardQuality: resolvedGen.storyboardQuality,
+      })
+    ) {
+      console.log('[Scene Image] Skipping reference adherence — Express draft')
     } else if (!canValidateLikeness(0, remainingBudgetMs(), 0)) {
       console.warn(
         `[Scene Image] Skipping reference adherence — ${remainingBudgetMs()}ms left, needs ~${LIKENESS_VALIDATION_MIN_RESERVE_MS}ms`
       )
-    } else {
+    } else if (scorePlates) {
       const adherencePlates = selectReferenceAdherencePlates({
         identities: characterReferencesForImages
           .filter((ref: { name?: string; identityImageUrl?: string }) => ref?.name && ref.identityImageUrl)
@@ -3781,7 +3811,7 @@ async function postGenerateImage(req: NextRequest) {
       })
       if (adherencePlates.length === 0) {
         console.log(
-          '[Scene Image] Skipping reference adherence — no identity or picture-prop plates'
+          '[Scene Image] Skipping reference adherence — no identity or handheld-prop plates'
         )
       } else {
         try {
@@ -3808,8 +3838,61 @@ async function postGenerateImage(req: NextRequest) {
       }
     }
 
+    if (
+      referenceResampleRound === 0 &&
+      likenessRound === 0 &&
+      referenceAdherence &&
+      (referenceAdherence.band === 'drift' || referenceAdherence.band === 'miss') &&
+      canStartLikenessRetry(remainingBudgetMs(), round0CostMs)
+    ) {
+      firstReferenceRound = {
+        imageUrl,
+        referenceAdherence,
+        promptForResponse,
+        generationModelId,
+        generationProvider,
+        validation,
+      }
+      referenceResampleRound = 1
+      shouldReferenceResample = true
+      console.log(
+        `[Scene Image] Reference adherence ${referenceAdherence.band}; sampling once more`
+      )
+      continue
+    }
+    if (
+      referenceResampleRound === 0 &&
+      likenessRound === 0 &&
+      referenceAdherence &&
+      (referenceAdherence.band === 'drift' || referenceAdherence.band === 'miss')
+    ) {
+      console.log(
+        `[Scene Image] Skipping reference resample — ${remainingBudgetMs()}ms left, a retry of the ${round0CostMs}ms first round needs ~${projectLikenessRetryCostMs(round0CostMs)}ms`
+      )
+    }
+
+    if (referenceResampleRound === 1 && firstReferenceRound) {
+      const firstBand = firstReferenceRound.referenceAdherence.band
+      const secondBand = referenceAdherence?.band
+      if (secondBand && referenceAdherenceIsBetter(secondBand, firstBand)) {
+        console.log(
+          `[Scene Image] Reference resample kept second sample (${secondBand} vs ${firstBand})`
+        )
+      } else {
+        imageUrl = firstReferenceRound.imageUrl
+        referenceAdherence = firstReferenceRound.referenceAdherence
+        promptForResponse = firstReferenceRound.promptForResponse
+        generationModelId = firstReferenceRound.generationModelId
+        generationProvider = firstReferenceRound.generationProvider
+        validation = firstReferenceRound.validation
+        console.log(
+          `[Scene Image] Reference resample kept first sample (${firstBand} vs ${secondBand ?? 'unchecked'})`
+        )
+      }
+    }
+
     shouldLikenessAutoRetry = false
-    } while (shouldLikenessAutoRetry)
+    } while (shouldLikenessAutoRetry || shouldReferenceResample)
 
     // Calculate workflow sync hashes for tracking staleness
     const basedOnDirectionHash = sceneData ? generateDirectionHash(sceneData) : undefined

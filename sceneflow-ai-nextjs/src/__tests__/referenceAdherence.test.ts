@@ -4,7 +4,9 @@ import { join } from 'path'
 import {
   normalizeReferenceAdherenceBand,
   parseReferenceAdherenceResponse,
+  referenceAdherenceIsBetter,
   selectReferenceAdherencePlates,
+  shouldScoreReferenceAdherence,
 } from '@/lib/imagen/referenceAdherence'
 
 describe('selectReferenceAdherencePlates', () => {
@@ -33,6 +35,55 @@ describe('selectReferenceAdherencePlates', () => {
       { role: 'picture', name: 'Framed Photo of Sarah', imageUrl: 'https://example.com/sarah.jpg' },
     ])
   })
+
+  it('scores a handheld spanner and still drops the workbench', () => {
+    const plates = selectReferenceAdherencePlates({
+      identities: [{ name: 'Gideon Croft', imageUrl: 'https://example.com/gideon.jpg' }],
+      objects: [
+        {
+          name: 'Zinc workbench',
+          description: 'Zinc workbench as handled in the script',
+          imageUrl: 'https://example.com/bench.jpg',
+        },
+        {
+          name: 'Thirty-Inch Iron Rail Spanner',
+          description: 'Thirty-Inch Iron Rail Spanner as handled in the script',
+          imageUrl: 'https://example.com/spanner.jpg',
+        },
+      ],
+    })
+
+    expect(plates).toEqual([
+      { role: 'identity', name: 'Gideon Croft', imageUrl: 'https://example.com/gideon.jpg' },
+      {
+        role: 'prop',
+        name: 'Thirty-Inch Iron Rail Spanner',
+        imageUrl: 'https://example.com/spanner.jpg',
+      },
+    ])
+  })
+})
+
+describe('reference adherence bands', () => {
+  it('ranks pass above drift above miss, and a tie is not better', () => {
+    expect(referenceAdherenceIsBetter('pass', 'miss')).toBe(true)
+    expect(referenceAdherenceIsBetter('pass', 'drift')).toBe(true)
+    expect(referenceAdherenceIsBetter('drift', 'miss')).toBe(true)
+    expect(referenceAdherenceIsBetter('miss', 'miss')).toBe(false)
+    expect(referenceAdherenceIsBetter('drift', 'pass')).toBe(false)
+  })
+
+  it('scores Frame Agent finals and skips Express drafts', () => {
+    expect(
+      shouldScoreReferenceAdherence({ skipLikenessValidation: true, storyboardQuality: 'final' })
+    ).toBe(true)
+    expect(
+      shouldScoreReferenceAdherence({ skipLikenessValidation: true, storyboardQuality: 'draft' })
+    ).toBe(false)
+    expect(shouldScoreReferenceAdherence({ skipLikenessValidation: false, storyboardQuality: 'draft' })).toBe(
+      true
+    )
+  })
 })
 
 describe('parseReferenceAdherenceResponse', () => {
@@ -54,10 +105,14 @@ describe('parseReferenceAdherenceResponse', () => {
 })
 
 describe('reference adherence wiring', () => {
-  it('skips the check for Express and records the band on success', () => {
+  it('scores finals that skip face likeness, and resamples a miss once', () => {
     const route = readFileSync(join(process.cwd(), 'src/app/api/scene/generate-image/route.ts'), 'utf8')
-    expect(route).toContain('Skipping reference adherence — skipLikenessValidation')
-    expect(route).toContain('referenceStatus: referenceAdherence?.band ?? \'unchecked\'')
+    expect(route).toContain('shouldScoreReferenceAdherence')
+    expect(route).toContain('Skipping reference adherence — Express draft')
+    expect(route).toContain('Reference adherence ${referenceAdherence.band}; sampling once more')
+    expect(route).toContain('referenceAdherenceIsBetter')
+    expect(route).toContain('referenceResampleRound === 0')
+    expect(route).toContain("referenceStatus: referenceAdherence?.band ?? 'unchecked'")
     expect(route).toContain('Skipping likeness validation — skipLikenessValidation')
   })
 })
