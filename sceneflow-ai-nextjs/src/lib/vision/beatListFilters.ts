@@ -62,6 +62,23 @@ export function beatIsReady(facts: BeatListFacts): boolean {
   return facts.hasAudio && !facts.promptChanged && !facts.needsSpeaker
 }
 
+export type BeatRailStatus = 'action' | 'attention' | 'ready' | 'idle'
+
+/**
+ * Thumbnail light for one audio shot.
+ * Red when spoken audio or tracked SFX is missing. Yellow when a take exists
+ * but the line changed or the speaker is unassigned. Green when the take is
+ * in sync. An action shot with nothing to record has no light.
+ */
+export function beatRailStatus(facts: BeatListFacts): { status: BeatRailStatus; label: string } {
+  const expectsAudio = facts.kind !== 'action' || facts.tracksSfx
+  if (!expectsAudio) return { status: 'idle', label: '' }
+  if (!facts.hasAudio) return { status: 'action', label: 'No audio' }
+  if (facts.promptChanged) return { status: 'attention', label: 'Prompt changed' }
+  if (facts.needsSpeaker) return { status: 'attention', label: 'Needs speaker' }
+  return { status: 'ready', label: 'Ready' }
+}
+
 export function beatMatchesAttention(facts: BeatListFacts, attention: BeatAttentionFilter): boolean {
   switch (attention) {
     case 'all':
