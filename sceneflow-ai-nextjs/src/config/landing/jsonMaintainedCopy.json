@@ -402,7 +402,7 @@
           {
             "icon": "promoTrailer",
             "title": "Promotion Trailers",
-            "description": "Auto-weave a beat-selected 9:16 promo (30–60s) from your highest-resonance moments — vertical trailers ready for Shorts, Reels, and TikTok.",
+            "description": "Auto-weave a beat-selected 9:16 promo (30–60s) from your highest-resonance moments — vertical trailers ready for YouTube, Facebook, and TikTok.",
             "learnMore": {
               "problem": "Cutting vertical promos by hand means scrubbing through your master, guessing highlight windows, and rebuilding the same story three times for Shorts, Reels, and TikTok.",
               "solution": "SceneFlow selects your highest-resonance beats, weaves a 30–60 second 9:16 trailer automatically, and renders a vertical cut ready for social platforms — no manual timeline work.",
@@ -411,12 +411,12 @@
           },
           {
             "icon": "youtubePublish",
-            "title": "YouTube Publishing",
-            "description": "Per-language bundles: AI titles and descriptions, generated thumbnails, privacy and category settings, and multilanguage audio publish — from the Publishing Library.",
+            "title": "Package & Ship",
+            "description": "Ship a Scene, Chapter, Master, or Promo to YouTube, Facebook, or TikTok in 16:9 or 9:16 — or download the file. Titles, descriptions, and privacy travel with the package.",
             "learnMore": {
-              "problem": "The work is not done when the video is — thumbnails, titles, descriptions, and language tracks are their own time sink standing between your finished cut and a live upload.",
-              "solution": "The Publishing Library assembles per-language YouTube bundles: AI-generated titles and descriptions, custom thumbnails, privacy and category settings, and multilanguage audio tracks — then publishes in one flow.",
-              "outcome": "Go from final render to live on YouTube in minutes, reaching billions of viewers across languages without a separate packaging-and-upload marathon."
+              "problem": "Algorithms reward short videos, but a story worth following is longer than a clip. Packaging each scene, chapter, and master by hand splits your budget across tools.",
+              "solution": "Package & Ship sends a Scene, Chapter, Master, or Promo to YouTube, Facebook, or TikTok — widescreen or vertical — or downloads the file. Publish only as often as the month's token budget allows.",
+              "outcome": "Release the piece that is ready, learn from viewers, and either cut the next chapter or stop — without waiting on a full feature."
             }
           }
         ]

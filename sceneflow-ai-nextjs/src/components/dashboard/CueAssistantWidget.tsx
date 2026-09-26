@@ -294,7 +294,7 @@ export function CueAssistantWidget() {
         return 'Final Cut workflow: Pick streams per scene (or preset) → Preview in script order → Render Final Cut → Continue to Premiere. No timeline editing here.'
       case 'premiere':
         if (message.includes('youtube') || message.includes('publish')) {
-          return 'Use the YouTube publish wizard: confirm master → thumbnail → localized metadata (SceneFlow CTA optional) → privacy settings → publish. Connect Google OAuth when prompted.'
+          return 'Open Package & Ship: choose a Scene, Chapter, Master, or Promo, pick 16:9 or 9:16, then send it to YouTube, Facebook, or TikTok — or download it. Connect the account when prompted.'
         }
         if (message.includes('insight') || message.includes('biometric') || message.includes('score')) {
           return 'Screening insights has three tabs: Scoring (manual ratings), Biometric (camera-consent emotions), and Visual (engagement peaks). Share your /s/ link first to collect data.'

@@ -7,6 +7,7 @@ from ffmpeg_utils import (
     build_stream_copy_ffmpeg_command,
     full_stream_copy_block_reason,
     resolve_encode_settings,
+    resolve_output_size,
     video_stream_copy_block_reason,
 )
 
@@ -54,6 +55,25 @@ class EncodeSettingsTest(unittest.TestCase):
         crf_at = cmd.index('-crf')
         self.assertEqual(cmd[preset_at + 1], 'veryfast')
         self.assertEqual(cmd[crf_at + 1], '28')
+
+    def test_vertical_delivery_swaps_frame_and_pads(self):
+        self.assertEqual(resolve_output_size('1080p', '9:16'), (1080, 1920))
+        cmd = build_concat_ffmpeg_command(
+            video_segments=[{'localFile': 'a.mp4', 'audioSource': 'none', 'duration': 1}],
+            audio_clips=[],
+            output_path='/tmp/out.mp4',
+            include_segment_audio=False,
+            aspect_ratio='9:16',
+        )
+        joined = ' '.join(cmd)
+        self.assertIn('scale=1080:1920:force_original_aspect_ratio=decrease', joined)
+        self.assertIn('pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black', joined)
+        reason = video_stream_copy_block_reason(
+            [segment()],
+            [probe()],
+            aspect_ratio='9:16',
+        )
+        self.assertIn('1080x1920', reason or '')
 
 
 class StreamCopyEligibilityTest(unittest.TestCase):

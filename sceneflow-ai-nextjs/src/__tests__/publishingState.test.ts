@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   getPublishingState,
   upsertPublishingState,
+  upsertPublishUnit,
   upsertYoutubeBundle,
   computePublishingReadiness,
 } from '@/lib/publish/publishingState'
@@ -59,6 +60,22 @@ describe('publishingState', () => {
     const readiness = computePublishingReadiness(undefined, [draftStream])
     expect(readiness.readyStreamCount).toBe(0)
     expect(readiness.blockers.length).toBeGreaterThan(0)
+  })
+
+  it('upsertPublishUnit stores a prepared package on publishing state', () => {
+    const next = upsertPublishUnit({}, {
+      id: 'scene:s1:en:16:9',
+      kind: 'scene',
+      aspectRatio: '16:9',
+      language: 'en',
+      title: 'Cold open',
+      mp4Url: 'https://example.com/s1.mp4',
+      sceneId: 's1',
+    })
+    const state = getPublishingState(next)
+    expect(state.units).toHaveLength(1)
+    expect(state.units?.[0]?.mp4Url).toBe('https://example.com/s1.mp4')
+    expect(state.units?.[0]?.kind).toBe('scene')
   })
 
   it('computePublishingReadiness counts ready streams', () => {

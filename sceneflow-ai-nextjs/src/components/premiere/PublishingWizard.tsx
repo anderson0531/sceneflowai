@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { appendSceneFlowCta } from '@/lib/premiere/distributionMetadata'
+import { useSession } from 'next-auth/react'
 
 const LOCALES = [
   { id: 'en', label: 'English' },
@@ -44,6 +45,8 @@ export function PublishingWizard({
   onPublished,
   className,
 }: PublishingWizardProps) {
+  const { data: session } = useSession()
+  const userId = session?.user && 'id' in session.user ? String((session.user as { id?: string }).id || '') : ''
   const [step, setStep] = useState<WizardStep>('video')
   const [isDownloading, setIsDownloading] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
@@ -119,11 +122,15 @@ export function PublishingWizard({
     if (!projectId || !videoUrl) return
     setIsPublishing(true)
     try {
-      const res = await fetch('/api/publish/youtube', {
+      if (!userId) {
+        toast.error('Sign in to publish to YouTube')
+        return
+      }
+      const res = await fetch('/api/publish/youtube/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          projectId,
+          userId,
           videoUrl,
           title: config.title,
           description: appendSceneFlowCta(
@@ -131,24 +138,23 @@ export function PublishingWizard({
             config.locale,
             config.includeSceneFlowCta
           ),
-          locale: config.locale,
+          language: config.locale,
           privacyStatus: config.privacyStatus,
           thumbnailUrl: config.thumbnailUrl,
           tags: config.tags.split(',').map((t) => t.trim()).filter(Boolean),
           categoryId: config.categoryId,
-          madeForKids: config.madeForKids,
-          includeSceneFlowCta: config.includeSceneFlowCta,
         }),
       })
       const data = await res.json()
-      if (!res.ok && !data.job) throw new Error(data.error || 'Publish failed')
-      if (data.job?.platformUrl) {
+      if (!res.ok) throw new Error(data.error || 'Publish failed')
+      const platformUrl = data.url as string | undefined
+      if (platformUrl) {
         toast.success('Published to YouTube', {
-          action: { label: 'Open', onClick: () => window.open(data.job.platformUrl, '_blank') },
+          action: { label: 'Open', onClick: () => window.open(platformUrl, '_blank') },
         })
-        onPublished?.(data.job.platformUrl)
+        onPublished?.(platformUrl)
       } else {
-        toast.message('Publish job saved', { description: data.message || 'Connect YouTube to complete.' })
+        toast.success('Published to YouTube')
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Publish failed')
@@ -185,7 +191,14 @@ export function PublishingWizard({
             variant="outline"
             size="sm"
             className="border-zinc-700"
-            onClick={() => toast.message('YouTube connect', { description: 'Set GOOGLE_CLIENT_ID to enable OAuth.' })}
+            onClick={() => {
+              if (!userId) {
+                toast.error('Sign in to connect YouTube')
+                return
+              }
+              const returnTo = `${window.location.pathname}${window.location.search}`
+              window.location.href = `/api/publish/youtube/auth?userId=${encodeURIComponent(userId)}&returnTo=${encodeURIComponent(returnTo)}`
+            }}
           >
             <Link2 className="w-4 h-4 mr-1.5" />
             Connect channel

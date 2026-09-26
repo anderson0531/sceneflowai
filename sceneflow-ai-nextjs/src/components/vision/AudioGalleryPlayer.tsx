@@ -230,6 +230,25 @@ function getBeatSceneIndices(
     .filter((idx) => idx >= 0)
 }
 
+function getChapterSceneIndices(
+  scenes: any[],
+  currentSceneIndex: number,
+  language: string,
+  sceneProductionState?: Record<string, SceneProductionData>,
+  finalCutSelection?: FinalCutSelection | null
+): number[] {
+  const current = scenes[currentSceneIndex]
+  const beatIndex = current?.blueprintBeatIndex
+  if (typeof beatIndex !== 'number') return []
+  return scenes
+    .map((scene, idx) => {
+      if (isPromoCinematicScene(scene)) return -1
+      if (scene?.blueprintBeatIndex !== beatIndex) return -1
+      return resolveSceneVideoUrl(scene, idx, language, sceneProductionState, finalCutSelection) ? idx : -1
+    })
+    .filter((idx) => idx >= 0)
+}
+
 function getVideoSceneIndices(
   scenes: any[],
   language: string,
@@ -395,6 +414,7 @@ export function AudioGalleryPlayer({
       mode === 'animatic' ||
       mode === 'beats' ||
       mode === 'video' ||
+      mode === 'chapter' ||
       mode === 'stream' ||
       mode === 'promo'
     ) {
@@ -580,6 +600,25 @@ export function AudioGalleryPlayer({
     [scenes, selectedLanguage, sceneProductionState, finalCutSelection]
   )
 
+  const chapterSceneIndices = useMemo(
+    () =>
+      getChapterSceneIndices(
+        scenes,
+        currentSceneIndex,
+        selectedLanguage,
+        sceneProductionState,
+        finalCutSelection
+      ),
+    [scenes, currentSceneIndex, selectedLanguage, sceneProductionState, finalCutSelection]
+  )
+  const hasChapterPlayback = chapterSceneIndices.length > 0
+  const chapterTitle =
+    (typeof scenes[currentSceneIndex]?.blueprintBeatTitle === 'string' &&
+      scenes[currentSceneIndex].blueprintBeatTitle) ||
+    (typeof scenes[currentSceneIndex]?.blueprintBeatIndex === 'number'
+      ? `Chapter ${scenes[currentSceneIndex].blueprintBeatIndex + 1}`
+      : 'Chapter')
+
   const videoScenePosition = useMemo(() => {
     const pos = videoSceneIndices.indexOf(currentSceneIndex)
     return pos >= 0 ? pos + 1 : 0
@@ -613,6 +652,8 @@ export function AudioGalleryPlayer({
     const indices =
       playbackMode === 'video'
         ? videoSceneIndices
+        : playbackMode === 'chapter'
+          ? chapterSceneIndices
         : playbackMode === 'beats'
           ? beatSceneIndices
           : filmIndices
@@ -624,10 +665,11 @@ export function AudioGalleryPlayer({
         hasSceneAudio: sceneHasPlayablePreVisAudio(scene, selectedLanguage),
       }
     })
-  }, [scenes, selectedLanguage, playbackMode, videoSceneIndices, beatSceneIndices, filmIndices])
+  }, [scenes, selectedLanguage, playbackMode, videoSceneIndices, beatSceneIndices, chapterSceneIndices, filmIndices])
 
   const useVideoForCurrentScene =
-    playbackMode === 'video' && videoSceneIndices.includes(currentSceneIndex)
+    (playbackMode === 'video' && videoSceneIndices.includes(currentSceneIndex)) ||
+    (playbackMode === 'chapter' && chapterSceneIndices.includes(currentSceneIndex))
 
   const playAfterSceneChangeRef = useRef<() => void>(() => {})
   const pausePlaybackRef = useRef<() => void>(() => {})
@@ -658,8 +700,13 @@ export function AudioGalleryPlayer({
   )
 
   const goToNextScene = useCallback(() => {
-    if (playbackMode === 'video' || playbackMode === 'beats') {
-      const indices = playbackMode === 'beats' ? beatSceneIndices : videoSceneIndices
+    if (playbackMode === 'video' || playbackMode === 'beats' || playbackMode === 'chapter') {
+      const indices =
+        playbackMode === 'beats'
+          ? beatSceneIndices
+          : playbackMode === 'chapter'
+            ? chapterSceneIndices
+            : videoSceneIndices
       const next = findNextVideoSceneIndex(indices, currentSceneIndex)
       if (next != null) goToScene(next)
       return
@@ -667,7 +714,7 @@ export function AudioGalleryPlayer({
     if (playbackMode === 'stream' || playbackMode === 'promo') return
     const nextFilm = filmIndices.find((idx) => idx > currentSceneIndex)
     if (nextFilm != null) goToScene(nextFilm)
-  }, [playbackMode, videoSceneIndices, beatSceneIndices, currentSceneIndex, goToScene, filmIndices])
+  }, [playbackMode, videoSceneIndices, beatSceneIndices, chapterSceneIndices, currentSceneIndex, goToScene, filmIndices])
 
   const handleBeatPlaybackComplete = useCallback(() => {
     if (!autoAdvanceRef.current) return false
@@ -973,8 +1020,13 @@ export function AudioGalleryPlayer({
   }, [inBeatVisual.primaryUrl, inBeatVisual.overlayUrl, arrivingDissolveMs, screeningPosterUrl])
 
   const goToPrevScene = useCallback(() => {
-    if (playbackMode === 'video' || playbackMode === 'beats') {
-      const indices = playbackMode === 'beats' ? beatSceneIndices : videoSceneIndices
+    if (playbackMode === 'video' || playbackMode === 'beats' || playbackMode === 'chapter') {
+      const indices =
+        playbackMode === 'beats'
+          ? beatSceneIndices
+          : playbackMode === 'chapter'
+            ? chapterSceneIndices
+            : videoSceneIndices
       const prev = findPrevVideoSceneIndex(indices, currentSceneIndex)
       if (prev != null) goToScene(prev)
       return
@@ -982,7 +1034,7 @@ export function AudioGalleryPlayer({
     if (playbackMode === 'stream' || playbackMode === 'promo') return
     const prevFilm = [...filmIndices].reverse().find((idx) => idx < currentSceneIndex)
     if (prevFilm != null) goToScene(prevFilm)
-  }, [playbackMode, videoSceneIndices, beatSceneIndices, currentSceneIndex, goToScene, filmIndices])
+  }, [playbackMode, videoSceneIndices, beatSceneIndices, chapterSceneIndices, currentSceneIndex, goToScene, filmIndices])
 
   const sceneDisplay = useMemo(
     () =>
@@ -1023,6 +1075,11 @@ export function AudioGalleryPlayer({
       onScreeningPlaybackHintConsumed?.()
       return
     }
+    if (mode === 'chapter') {
+      setPlaybackMode('chapter')
+      onScreeningPlaybackHintConsumed?.()
+      return
+    }
     if (mode === 'animatic') {
       setPlaybackMode('animatic')
       pendingPreVisPlayRef.current = typeof sceneIndex === 'number' && sceneIndex >= 0 ? sceneIndex : 0
@@ -1051,7 +1108,10 @@ export function AudioGalleryPlayer({
     if (playbackMode === 'beats' && !hasAnyBeatVideo) {
       setPlaybackMode('animatic')
     }
-  }, [playbackMode, hasAnySceneVideo, hasAnyBeatVideo])
+    if (playbackMode === 'chapter' && !hasChapterPlayback) {
+      setPlaybackMode('animatic')
+    }
+  }, [playbackMode, hasAnySceneVideo, hasAnyBeatVideo, hasChapterPlayback])
 
   useEffect(() => {
     if (playbackMode !== 'animatic' && playbackMode !== 'video' && playbackMode !== 'beats') return
@@ -1084,7 +1144,14 @@ export function AudioGalleryPlayer({
   ])
 
   useEffect(() => {
-    const indices = playbackMode === 'video' ? videoSceneIndices : playbackMode === 'beats' ? beatSceneIndices : null
+    const indices =
+      playbackMode === 'video'
+        ? videoSceneIndices
+        : playbackMode === 'chapter'
+          ? chapterSceneIndices
+          : playbackMode === 'beats'
+            ? beatSceneIndices
+            : null
     if (!indices || indices.length === 0) return
     if (!indices.includes(currentSceneIndex)) {
       const target = findNearestForwardVideoSceneIndex(indices, currentSceneIndex)
@@ -1093,7 +1160,7 @@ export function AudioGalleryPlayer({
         onSceneChange?.(target)
       }
     }
-  }, [playbackMode, videoSceneIndices, beatSceneIndices, currentSceneIndex, onSceneChange])
+  }, [playbackMode, videoSceneIndices, beatSceneIndices, chapterSceneIndices, currentSceneIndex, onSceneChange])
 
   useEffect(() => {
     if (useMasterVideo || useVideoForCurrentScene || playbackMode === 'beats') {
@@ -1385,13 +1452,13 @@ export function AudioGalleryPlayer({
                   !hasAnyBeatVideo && 'opacity-40 cursor-not-allowed hover:text-gray-400'
                 )}
               >
-                Video
+                Scene
               </button>
             </TooltipTrigger>
             <TooltipContent>
               {hasAnyBeatVideo
-                ? 'Play shot videos continuously, the same way the Mixer previews them'
-                : 'Generate shot videos in the Mixer to enable Video review'}
+                ? 'Play the shots inside this scene, the same way the Mixer previews them'
+                : 'Generate shot videos in the Mixer to enable Scene review'}
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -1421,6 +1488,29 @@ export function AudioGalleryPlayer({
             <TooltipTrigger asChild>
               <button
                 type="button"
+                onClick={() => hasChapterPlayback && setPlaybackMode('chapter')}
+                disabled={!hasChapterPlayback}
+                className={cn(
+                  'px-2 py-0.5 rounded text-[11px] font-medium transition-colors',
+                  playbackMode === 'chapter'
+                    ? 'bg-amber-600 text-white'
+                    : 'text-gray-400 hover:text-white',
+                  !hasChapterPlayback && 'opacity-40 cursor-not-allowed hover:text-gray-400'
+                )}
+              >
+                Chapter
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {hasChapterPlayback
+                ? `Play the rendered scenes in ${chapterTitle}`
+                : 'Link this scene to a Blueprint beat and render those scenes to enable Chapter'}
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
                 onClick={() => streamReadyLanguages.length > 0 && setPlaybackMode('stream')}
                 disabled={streamReadyLanguages.length === 0}
                 className={cn(
@@ -1431,13 +1521,13 @@ export function AudioGalleryPlayer({
                   streamReadyLanguages.length === 0 && 'opacity-40 cursor-not-allowed hover:text-gray-400'
                 )}
               >
-                Final
+                Master
               </button>
             </TooltipTrigger>
             <TooltipContent>
               {streamReadyLanguages.length > 0
-                ? 'Screen the finished language master before shipping'
-                : 'Render a language master in Streams to enable Final'}
+                ? 'Screen the complete package — every scene in one file — before shipping'
+                : 'Render a language master in Streams to enable Master'}
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -1481,11 +1571,13 @@ export function AudioGalleryPlayer({
           {playbackMode === 'promo'
             ? 'Promo trailer'
             : playbackMode === 'stream'
-            ? 'Final'
+            ? 'Master'
+            : playbackMode === 'chapter'
+            ? `${chapterTitle} ${Math.max(1, chapterSceneIndices.indexOf(currentSceneIndex) + 1)} of ${chapterSceneIndices.length}`
             : playbackMode === 'video'
             ? `Rough Cut ${videoScenePosition} of ${videoSceneIndices.length}`
             : playbackMode === 'beats'
-            ? `Video ${Math.max(1, beatSceneIndices.indexOf(currentSceneIndex) + 1)} of ${beatSceneIndices.length}`
+            ? `Scene ${Math.max(1, beatSceneIndices.indexOf(currentSceneIndex) + 1)} of ${beatSceneIndices.length}`
             : `Scene ${filmIndices.indexOf(currentSceneIndex) >= 0 ? filmIndices.indexOf(currentSceneIndex) + 1 : currentSceneIndex + 1} of ${filmIndices.length || scenes.length}`}
         </span>
       </div>
@@ -1745,6 +1837,8 @@ export function AudioGalleryPlayer({
                   disabled={
                     playbackMode === 'video'
                       ? findPrevVideoSceneIndex(videoSceneIndices, currentSceneIndex) == null
+                      : playbackMode === 'chapter'
+                        ? findPrevVideoSceneIndex(chapterSceneIndices, currentSceneIndex) == null
                       : playbackMode === 'beats'
                         ? findPrevVideoSceneIndex(beatSceneIndices, currentSceneIndex) == null
                       : currentSceneIndex === 0
@@ -1783,6 +1877,8 @@ export function AudioGalleryPlayer({
                   disabled={
                     playbackMode === 'video'
                       ? findNextVideoSceneIndex(videoSceneIndices, currentSceneIndex) == null
+                      : playbackMode === 'chapter'
+                        ? findNextVideoSceneIndex(chapterSceneIndices, currentSceneIndex) == null
                       : playbackMode === 'beats'
                         ? findNextVideoSceneIndex(beatSceneIndices, currentSceneIndex) == null
                       : currentSceneIndex === scenes.length - 1

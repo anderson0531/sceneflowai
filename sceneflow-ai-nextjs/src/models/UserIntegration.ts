@@ -1,7 +1,7 @@
 import { DataTypes, Model, Optional } from 'sequelize'
 import { sequelize } from '../config/database'
 
-export type IntegrationProvider = 'youtube'
+export type IntegrationProvider = 'youtube' | 'facebook' | 'tiktok'
 
 export interface UserIntegrationAttributes {
   id: string

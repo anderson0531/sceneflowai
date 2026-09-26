@@ -3,6 +3,7 @@ import {
   mergeStreamsWithLanguages,
   type ProjectStream,
 } from '@/lib/streams/projectStreams'
+import type { PublishUnitRecord } from '@/lib/publish/publishUnits'
 import type {
   ProjectPublishingState,
   PublishingReadiness,
@@ -38,6 +39,7 @@ export function getPublishingState(metadata: unknown, project?: ProjectLike): Pr
       streams: mergedStreams,
       youtubeByLanguage: buildYoutubeFromStreams(mergedStreams),
       promo: undefined,
+      units: [],
       readiness: computePublishingReadiness(project, mergedStreams),
     }
   }
@@ -51,6 +53,7 @@ export function getPublishingState(metadata: unknown, project?: ProjectLike): Pr
     }),
     promo: raw.promo,
     youtubeByLanguage: { ...buildYoutubeFromStreams(mergedStreams), ...raw.youtubeByLanguage },
+    units: raw.units ?? [],
     readiness: raw.readiness ?? computePublishingReadiness(project, mergedStreams),
   }
 }
@@ -142,6 +145,7 @@ export function upsertPublishingState(
     streams: patch.streams ?? current.streams,
     promo: patch.promo ?? current.promo,
     youtubeByLanguage: patch.youtubeByLanguage ?? current.youtubeByLanguage,
+    units: patch.units ?? current.units,
     readiness: patch.readiness ?? current.readiness,
   }
 
@@ -195,6 +199,18 @@ export function upsertYoutubeBundle(
       [language]: { ...existing, ...bundle, language },
     },
   })
+}
+
+export function upsertPublishUnit(
+  metadata: Record<string, unknown>,
+  unit: PublishUnitRecord
+): Record<string, unknown> {
+  const state = getPublishingState(metadata)
+  const units = [...(state.units ?? [])]
+  const idx = units.findIndex((item) => item.id === unit.id)
+  if (idx >= 0) units[idx] = { ...units[idx], ...unit }
+  else units.push(unit)
+  return upsertPublishingState(metadata, { units })
 }
 
 export function resolveStreamRenderSettings(

@@ -1,10 +1,10 @@
-/** One automated pipeline — seven steps from idea to a shippable master. */
+/** One automated pipeline — eight steps from idea to a shippable scene, chapter, or master. */
 
 export const TWO_MODES_COPY = {
   eyebrow: 'One automated pipeline',
   title: 'From first idea to a world that ships.',
   subtitle:
-    'Start with a concept or a finished script. SceneFlow writes the baseline, scores it for the culture you named, then generates hundreds of beats in parallel — so you review, collaborate, and ship multilingual masters instead of waiting on one clip at a time.',
+    'Build a longform story — about 120 minutes, 45 scenes, 15 chapters — for YouTube, Facebook, and TikTok. A scene or a chapter can be ready in minutes or a few hours. Your monthly token budget follows how often you publish. Viewer response tells you to continue, or to stop.',
   steps: [
     {
       title: 'Bring the spark',
@@ -31,8 +31,12 @@ export const TWO_MODES_COPY = {
       body: 'Motion video from approved beats. Ship high-quality native-language streams, or dub when you want the lower-cost path.',
     },
     {
-      title: 'Screen. Package. Ship.',
-      body: 'Review in the Screening Room, then auto-package to YouTube or download the master.',
+      title: 'Screen',
+      body: 'Walk the story before the next render: the Blueprint, the Audience Resonance script, then the Screening Room — Pre-Vis, Scene, Chapter, Master, and Promo. Hear what lands. Change the story while the change is still cheap.',
+    },
+    {
+      title: 'Package & Ship',
+      body: 'Send a Scene, Chapter, Master, or Promo to YouTube, Facebook, or TikTok — in 16:9 or 9:16 — or download it. Publish on the rhythm your budget allows. Read the response. Cut the next chapter, or stop.',
     },
   ],
   cta: 'Launch Studio ($9)',

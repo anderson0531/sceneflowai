@@ -7,7 +7,7 @@ export const HERO_COPY = {
   availabilityBadge: 'Full access opens November 2026',
   headline: 'Build Worlds. Not Just Clips.',
   subheadline:
-    'Don\u2019t settle for isolated generations. SceneFlow maintains character continuity, persistent environments, and complex narratives from your first scene to your hundredth \u2014 then ships it as a multi-language master.',
+    'Don\u2019t settle for isolated generations. SceneFlow keeps character continuity, persistent environments, and a longform story — then lets you ship a scene, a chapter, or the master to YouTube, Facebook, and TikTok.',
   ctaPrimaryLaunch: 'Start Your Production',
   ctaSupportingLine: '',
   ctaSecondary: 'Explore How It Works',

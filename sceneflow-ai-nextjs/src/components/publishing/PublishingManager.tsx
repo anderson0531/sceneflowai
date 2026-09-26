@@ -1,13 +1,13 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react'
-import { Film, Share2, Smartphone, Youtube } from 'lucide-react'
+import { Film, Package, Share2, Smartphone } from 'lucide-react'
 import { ProductTabList } from '@/components/product/ProductTabList'
 import { PublishingReadinessBanner } from './PublishingReadinessBanner'
 import { PublishingFinalStreamsTab } from './PublishingFinalStreamsTab'
 import { PublishingScreeningTab } from './PublishingScreeningTab'
 import { PublishingPromoTab } from './PublishingPromoTab'
-import { PublishingYoutubeTab } from './PublishingYoutubeTab'
+import { PublishingPackageShipTab } from './PublishingPackageShipTab'
 import { computePublishingReadiness, getPublishingState } from '@/lib/publish/publishingState'
 import type { PublishingLibraryTab } from '@/types/publishingAssets'
 import type { ProjectStream } from '@/lib/streams/projectStreams'
@@ -63,6 +63,7 @@ export function PublishingManager({
   initialTab,
 }: PublishingManagerProps) {
   const [activeTab, setActiveTab] = useState<PublishingLibraryTab>(initialTab ?? 'streams')
+  const visibleTab = activeTab === 'youtube' ? 'ship' : activeTab
 
   useEffect(() => {
     if (initialTab) setActiveTab(initialTab)
@@ -86,9 +87,7 @@ export function PublishingManager({
   )
 
   const screeningCount = publishingState.streams.filter((s) => s.publish?.shareUrl).length
-  const youtubeConfigured = Object.values(publishingState.youtubeByLanguage).filter(
-    (b) => b.title && b.description
-  ).length
+  const packageCount = (publishingState.units ?? []).filter((unit) => unit.mp4Url).length
   const trailerReady = publishingState.promo?.trailer?.status === 'ready' ? 1 : 0
 
   const tabs = [
@@ -111,10 +110,10 @@ export function PublishingManager({
       count: trailerReady,
     },
     {
-      key: 'youtube',
-      label: 'YouTube',
-      icon: <Youtube />,
-      count: youtubeConfigured,
+      key: 'ship',
+      label: 'Package & Ship',
+      icon: <Package />,
+      count: packageCount,
     },
   ]
 
@@ -133,7 +132,7 @@ export function PublishingManager({
 
       <ProductTabList
         tabs={tabs}
-        activeKey={activeTab}
+        activeKey={visibleTab}
         onChange={(key) => setActiveTab(key as PublishingLibraryTab)}
         accent="ready"
         variant="folder"
@@ -179,13 +178,15 @@ export function PublishingManager({
             onGenerateBeatClip={onGenerateBeatClip}
           />
         ) : null}
-        {activeTab === 'youtube' ? (
-          <PublishingYoutubeTab
+        {visibleTab === 'ship' ? (
+          <PublishingPackageShipTab
             projectId={projectId}
             projectTitle={projectTitle}
             metadata={metadata}
+            script={script}
             streams={streams}
             userId={userId}
+            sceneProductionState={sceneProductionState}
             onSaveMetadata={onSaveMetadata}
           />
         ) : null}

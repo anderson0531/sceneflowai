@@ -18,6 +18,7 @@
 'use client'
 
 import { clampWatermarkCropPercent, getFrameCropSourceRect } from './segmentVideoCrop'
+import { deliveryFrameSize, type DeliveryAspectRatio } from './renderTypes'
 
 // =============================================================================
 // Canvas capture (video/mixed exports)
@@ -134,6 +135,13 @@ export interface LocalRenderConfig {
   watermark?: LocalRenderWatermark
   /** Output resolution */
   resolution: LocalRenderResolution
+  /** Delivery frame. Omitted stays 16:9. */
+  aspectRatio?: DeliveryAspectRatio
+  /**
+   * contain fits the picture and pads. cover is the historical crop-to-fill default.
+   * Package & Ship passes contain so a 16:9 clip can land in a 9:16 frame without cropping the story.
+   */
+  frameFit?: 'cover' | 'contain'
   /** Frames per second */
   fps: number
   /** Total duration in seconds */
@@ -186,12 +194,6 @@ export interface LocalRenderResult {
 // =============================================================================
 // Constants
 // =============================================================================
-
-const RESOLUTIONS: Record<LocalRenderResolution, { width: number; height: number }> = {
-  '720p': { width: 1280, height: 720 },
-  '1080p': { width: 1920, height: 1080 },
-  '4K': { width: 3840, height: 2160 },
-}
 
 /** Max duration for local rendering (seconds) - supports longer user uploads */
 export const LOCAL_RENDER_MAX_DURATION = 300
@@ -609,7 +611,7 @@ export class LocalRenderService {
       // Setup canvas with Double-Buffer pattern for reliable overlay rendering
       // This fixes race conditions in GCP/headless environments where captureStream
       // may capture frames before overlays are fully committed to the GPU buffer
-      const { width, height } = RESOLUTIONS[config.resolution] ?? RESOLUTIONS['1080p']
+      const { width, height } = deliveryFrameSize(config.resolution, config.aspectRatio ?? '16:9')
       
       // Hidden canvas: All draw operations happen here first
       this.hiddenCanvas = document.createElement('canvas')
@@ -1584,7 +1586,13 @@ export class LocalRenderService {
     const contentWidth = cropRect.sw
     const contentHeight = cropRect.sh
 
-    const scale = Math.max(width / contentWidth, height / contentHeight)
+    const fit = config.frameFit === 'contain' ? 'contain' : 'cover'
+    const scale =
+      contentWidth > 0 && contentHeight > 0
+        ? fit === 'contain'
+          ? Math.min(width / contentWidth, height / contentHeight)
+          : Math.max(width / contentWidth, height / contentHeight)
+        : 1
     const scaledWidth = contentWidth * scale
     const scaledHeight = contentHeight * scale
     const x = (width - scaledWidth) / 2

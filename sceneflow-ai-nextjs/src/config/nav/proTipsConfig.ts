@@ -174,7 +174,7 @@ export const proTipsConfig: Record<WorkflowPhase, ProTip[]> = {
     {
       id: 'publish-youtube',
       phase: 'screening-room',
-      title: 'Publish to YouTube',
+      title: 'Package & Ship',
       description: 'Localized metadata + SceneFlow CTA',
       actionLabel: 'Open publish',
       actionEventName: 'screening-room:publish',

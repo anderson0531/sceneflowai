@@ -5,6 +5,7 @@
 import type { FinalCutSceneClip } from '@/lib/types/finalCut'
 import type { StreamDeliveryResolution } from '@/types/publishingAssets'
 import type { UpscaleSettings } from '@/lib/types/finalCut'
+import type { DeliveryAspectRatio } from '@/lib/video/renderTypes'
 
 export interface StitchFinalCutClipsArgs {
   projectId: string
@@ -12,6 +13,8 @@ export interface StitchFinalCutClipsArgs {
   clips: FinalCutSceneClip[]
   onProgress?: (message: string) => void
   resolution?: StreamDeliveryResolution
+  /** Delivery frame. When set, mismatched clips are fitted and padded. */
+  aspectRatio?: DeliveryAspectRatio
   upscale?: boolean
   upscaleSettings?: UpscaleSettings
 }
@@ -22,6 +25,7 @@ export async function stitchFinalCutClips({
   clips,
   onProgress,
   resolution = '1080p',
+  aspectRatio = '16:9',
   upscale = false,
   upscaleSettings,
 }: StitchFinalCutClipsArgs): Promise<string> {
@@ -60,6 +64,8 @@ export async function stitchFinalCutClips({
         audioClips: [],
         textOverlays: [],
         resolution,
+        aspectRatio,
+        frameFit: 'contain',
         fps: 30,
         totalDuration: cursor,
         exportFormat: 'mp4',
@@ -101,6 +107,7 @@ export async function stitchFinalCutClips({
       sceneId: 'final-cut',
       sceneNumber: 0,
       resolution,
+      aspectRatio,
       upscale,
       upscaleSettings,
       audioConfig: {

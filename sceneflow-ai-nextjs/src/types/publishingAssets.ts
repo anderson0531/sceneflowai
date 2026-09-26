@@ -1,6 +1,7 @@
 import type { ProjectStream, ProjectStreamPublish } from '@/lib/streams/projectStreams'
 import type { UpscaleSettings } from '@/lib/types/finalCut'
 import type { ShortFormClipSpec } from '@/app/api/premiere/shorts/generate/route'
+import type { PublishUnitRecord } from '@/lib/publish/publishUnits'
 
 /** Delivery quality preset for master stream renders. */
 export type StreamDeliveryPreset = 'draft' | 'standard' | 'premium'
@@ -82,6 +83,8 @@ export interface ProjectPublishingState {
   promo?: ProjectPublishingPromo
   youtubeByLanguage: Record<string, YoutubePublishBundle>
   readiness?: PublishingReadiness
+  /** Prepared scene, chapter, master, and promo packages. */
+  units?: PublishUnitRecord[]
 }
 
 export const DEFAULT_STREAM_RENDER_SETTINGS: StreamRenderSettings = {
@@ -96,4 +99,4 @@ export const DELIVERY_PRESET_RESOLUTION: Record<StreamDeliveryPreset, StreamDeli
   premium: '4K',
 }
 
-export type PublishingLibraryTab = 'streams' | 'screening' | 'promo' | 'youtube'
+export type PublishingLibraryTab = 'streams' | 'screening' | 'promo' | 'youtube' | 'ship'

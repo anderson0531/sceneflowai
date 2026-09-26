@@ -27,7 +27,7 @@ import type {
   SceneRenderTextOverlay,
   SceneRenderWatermark,
 } from '@/lib/video/renderTypes'
-import { RENDER_DEFAULTS, toSceneRenderVideoSegment } from '@/lib/video/renderTypes'
+import { RENDER_DEFAULTS, deliveryFrameSize, toSceneRenderVideoSegment } from '@/lib/video/renderTypes'
 import { uploadJobSpec, getOutputPath, getRenderBucket, getSignedDownloadUrl } from '@/lib/gcs/renderStorage'
 import { isCloudRunJobsEnabled } from '@/lib/video/CloudRunJobsService'
 import { getJobStatus, getJobStatusAsync, setJobStatus } from '@/lib/render/jobStatusStore'
@@ -324,12 +324,10 @@ export async function POST(
     
     // Convert text overlays from percentage-based UI coordinates to pixels
     // Resolution lookup for pixel conversion
-    const resolutionMap = {
-      '720p': { width: 1280, height: 720 },
-      '1080p': { width: 1920, height: 1080 },
-      '4K': { width: 3840, height: 2160 },
-    }
-    const resolution = resolutionMap[body.resolution] || resolutionMap['1080p']
+    const resolution = deliveryFrameSize(
+      body.resolution,
+      body.aspectRatio === '9:16' ? '9:16' : '16:9'
+    )
     
     // Font family mapping (UI font names -> bundled FFmpeg fonts)
     const fontFamilyMap: Record<string, 'Montserrat' | 'Roboto' | 'RobotoMono' | 'Lora'> = {
@@ -433,6 +431,7 @@ export async function POST(
       sceneId,
       sceneNumber: body.sceneNumber,
       resolution: body.resolution,
+      aspectRatio: body.aspectRatio === '9:16' ? '9:16' : '16:9',
       fps: RENDER_DEFAULTS.fps,
       videoSegments,
       audioClips,

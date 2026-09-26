@@ -13,17 +13,17 @@ import {
 const ROOT = join(process.cwd())
 
 describe('one-pipeline landing section', () => {
-  it('defines seven pipeline steps and an Explorer CTA in config', () => {
+  it('defines eight pipeline steps and an Explorer CTA in config', () => {
     expect(TWO_MODES_COPY.eyebrow).toBe('One automated pipeline')
     expect(TWO_MODES_COPY.title).toBe('From first idea to a world that ships.')
-    expect(TWO_MODES_COPY.steps).toHaveLength(7)
+    expect(TWO_MODES_COPY.steps).toHaveLength(8)
     expect(TWO_MODES_COPY.cta).toBe('Launch Studio ($9)')
   })
 
   it('folds Audience Resonance, 5× pre-vis, and Screening Room into the steps', () => {
     const allBodies = TWO_MODES_COPY.steps.map((step) => `${step.title} ${step.body}`).join(' ')
-    expect(TWO_MODES_COPY.subtitle).toContain('culture you named')
-    expect(TWO_MODES_COPY.subtitle).toContain('hundreds of beats in parallel')
+    expect(TWO_MODES_COPY.subtitle).toContain('120 minutes')
+    expect(TWO_MODES_COPY.subtitle).toContain('15 chapters')
     expect(allBodies).toContain('Audience Resonance')
     expect(allBodies).toContain('not a language code')
     expect(allBodies).toContain('~30 beats')
@@ -32,7 +32,14 @@ describe('one-pipeline landing section', () => {
     expect(allBodies).toContain('native-language streams')
     expect(allBodies).toContain('lower-cost path')
     expect(TWO_MODES_COPY.steps[0].title).toBe('Bring the spark')
-    expect(TWO_MODES_COPY.steps[6].title).toBe('Screen. Package. Ship.')
+    expect(TWO_MODES_COPY.steps[6].title).toBe('Screen')
+    expect(TWO_MODES_COPY.steps[6].body).toContain('Audience Resonance')
+    expect(TWO_MODES_COPY.steps[6].body).toContain('Chapter')
+    expect(TWO_MODES_COPY.steps[6].body).toContain('Master')
+    expect(TWO_MODES_COPY.steps[7].title).toBe('Package & Ship')
+    expect(TWO_MODES_COPY.steps[7].body).toContain('Facebook')
+    expect(TWO_MODES_COPY.steps[7].body).toContain('TikTok')
+    expect(TWO_MODES_COPY.steps[7].body).toContain('9:16')
   })
 
   it('mirrors twoModes namespace in English messages', () => {
