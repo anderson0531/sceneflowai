@@ -6315,7 +6315,7 @@ function SceneCard({
                             {sceneBeatsForTabs.length > 0 && (
                               <span className="text-[10px] opacity-60">
                                 ({sceneBeatsForTabs.length}
-                                {excludedBeatCount > 0 ? `, ${excludedShotCount} excluded` : ''})
+                                {excludedBeatCount > 0 ? `, ${excludedBeatCount} excluded` : ''})
                               </span>
                             )}
                           </TabsTrigger>
@@ -6976,10 +6976,10 @@ function SceneCard({
               <DialogHeader>
                 <DialogTitle className="text-red-400 flex items-center gap-2">
                   <Trash2 className="w-5 h-5" />
-                  {tStudio('deleteShot')}
+                  {tStudio('deleteBeat')}
                 </DialogTitle>
                 <DialogDescription className="text-gray-400">
-                  {tStudio('deleteShotDescription')}
+                  {tStudio('deleteBeatDescription')}
                 </DialogDescription>
               </DialogHeader>
               <div className="flex justify-end gap-3 mt-4">
@@ -7000,7 +7000,7 @@ function SceneCard({
                   }}
                   className="px-4 py-2 bg-red-600 hover:bg-red-500 border border-red-500 rounded-lg text-white text-sm font-medium transition-colors"
                 >
-                  {tStudio('deleteShot')}
+                  {tStudio('deleteBeat')}
                 </button>
               </div>
             </DialogContent>

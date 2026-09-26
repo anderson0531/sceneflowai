@@ -518,7 +518,7 @@ function compileSceneDirectionPrompt(
   
   // Traditional talent direction (additional fallback)
   if (sceneDirection.talent?.emotionalBeat && fragments.length < 3) {
-    fragments.push(`expression: ${sceneDirection.talent.emotionalShot}`)
+    fragments.push(`expression: ${sceneDirection.talent.emotionalBeat}`)
   }
   
   return fragments.filter(Boolean).join('. ')

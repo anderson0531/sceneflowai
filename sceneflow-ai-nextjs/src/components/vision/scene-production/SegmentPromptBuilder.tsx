@@ -796,7 +796,7 @@ export function SegmentPromptBuilder({
     }
     
     // Emotional beat
-    if (structure.emotionalBeat) parts.push(`conveying ${structure.emotionalShot}`)
+    if (structure.emotionalBeat) parts.push(`conveying ${structure.emotionalBeat}`)
     
     // Atmosphere
     if (structure.atmosphere && structure.atmosphere !== 'neutral') {
