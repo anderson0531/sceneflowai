@@ -22,6 +22,8 @@ export type KlingElementSource = {
   klingElementId?: string
   type: 'character' | 'prop' | 'location'
   wardrobeId?: string
+  /** Names that may appear in the prompt for this subject. */
+  matchNames?: string[]
 }
 
 export type ResolvedKlingElements = {
@@ -197,6 +199,7 @@ export function collectKlingElementSources(args: {
       klingElementId: wardrobe?.klingElementId || char.klingElementId,
       type: 'character',
       wardrobeId: wardrobe?.id,
+      matchNames: [char.name, toCharacterPromptAlias(char.name)],
     })
   }
 
@@ -212,6 +215,7 @@ export function collectKlingElementSources(args: {
       tagId: 'o_104',
       klingElementId: (prop as VisualReference & { klingElementId?: string }).klingElementId,
       type: 'prop',
+      matchNames: [prop.name].filter((name): name is string => Boolean(name?.trim())),
     })
   }
 
@@ -229,6 +233,9 @@ export function collectKlingElementSources(args: {
           tagId: 'o_106',
           klingElementId: (loc as LocationReference & { klingElementId?: string }).klingElementId,
           type: 'location',
+          matchNames: [loc.location, loc.locationDisplay].filter(
+            (name): name is string => Boolean(name?.trim())
+          ),
         })
       }
     }
@@ -237,12 +244,11 @@ export function collectKlingElementSources(args: {
   return sources
 }
 
-export function injectElementTagsIntoPrompt(prompt: string, tags: string[]): string {
-  if (!tags.length) return prompt
-  const unique = [...new Set(tags)]
-  const suffix = unique.join(' ')
-  return prompt.trim() ? `${prompt.trim()} ${suffix}` : suffix
-}
+export {
+  buildElementPromptBindings,
+  injectElementTagsIntoPrompt,
+  type ElementPromptBinding,
+} from '@/lib/kling/elementPromptTags'
 
 /** Persist newly registered Kling element IDs back onto project reference metadata. */
 export async function persistKlingElementIdsToProject(

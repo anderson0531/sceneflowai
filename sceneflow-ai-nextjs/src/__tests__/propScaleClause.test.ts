@@ -34,16 +34,16 @@ describe('propScaleClause', () => {
     expect(propScaleClause(undefined, '12-inch Canister')).toContain('12-inch')
   })
 
-  it('appends the scale lock to prop image labels', () => {
+  it('names the prop token on the image caption and leaves scale in the task', () => {
     const label = buildSceneImagePropLabel(
       'Canister',
       3,
       'prop [3]',
       '12-inch stainless sample canister'
     )
-    expect(label).toContain('PROP prop [3] (Canister)')
-    expect(label).toContain('12-inch')
-    expect(label).toContain('do not enlarge to fill the frame')
+    expect(label).toBe('The next image is prop [3].')
+    expect(label).not.toContain('12-inch')
+    expect(label).not.toContain('do not enlarge to fill the frame')
   })
 
   it('requires real-world scale on object still prompts', () => {

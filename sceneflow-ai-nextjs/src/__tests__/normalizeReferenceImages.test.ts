@@ -120,9 +120,9 @@ describe('labeled refs reach Omni payloads', () => {
     const omniRefs = refsToOmniReferenceImages(veoRefsToPrioritized(normalized!))
 
     expect(omniRefs.map((r) => r.label)).toEqual([
-      'Identity reference 1: Elara Vance',
-      'Elara Vance — Tech-Savvy Casual — Distressed',
-      'Location reference 3: POLICE STATION',
+      'The next image is the identity of person [1].',
+      'The next image is the wardrobe of person [1].',
+      'The next image is location [1].',
     ])
     expect(omniRefs.every((r) => !/^Reference \d+$/.test(r.label))).toBe(true)
   })

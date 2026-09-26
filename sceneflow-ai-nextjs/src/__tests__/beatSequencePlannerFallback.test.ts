@@ -272,8 +272,12 @@ Strictly Avoid: Mannequin geometry.`
     })
 
     expect(prompt).toContain('[REFERENCES]')
-    expect(prompt).toContain('location [1] = FREIGHT TUNNEL VAULT - PNEUMATIC ACCESS')
-    expect(prompt).toContain('prop [2] = Brass pressure gauge')
+    expect(prompt).toContain(
+      'location [1] (FREIGHT TUNNEL VAULT - PNEUMATIC ACCESS) is the place in the location image of location [1].'
+    )
+    expect(prompt).toContain(
+      'prop [2] (Brass pressure gauge) is the object in the prop image of prop [2].'
+    )
     expect(prompt).not.toMatch(/two arms and two legs/)
     expect(prompt).not.toMatch(/only the specified limb\/hand/)
   })

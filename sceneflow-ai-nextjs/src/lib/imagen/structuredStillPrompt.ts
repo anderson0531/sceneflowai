@@ -37,6 +37,10 @@ import {
 } from '@/lib/scene/castPerformanceFraming'
 import { propScaleClause } from '@/lib/imagen/propScaleClause'
 import { extractMountedSetFixturePhrases } from '@/lib/vision/mountedSetFixtures'
+import {
+  formatImagesAboveBinding,
+  type ReferenceImageBinding,
+} from '@/lib/vision/referenceImageBinding'
 
 export const STILL_SECTION_REFERENCES = '[REFERENCES]'
 export const STILL_SECTION_TASK = '[TASK]'
@@ -267,6 +271,7 @@ export function stillTaskLines(
   const asEnvironment = consumesLocationAsEnvironment(shotType, options?.actionFraming)
   const mediumCoverage = isMediumCoverageLocationShot(shot.shotHint || shotType)
   const pairedOccupancy = options?.occupancyMode === 'paired'
+  const namedBinding = refsKnown && refs.length > 0
   const allTokenLine = pairedOccupancy ? STILL_TASK_PAIRED_TOKEN_LINE : STILL_TASK_TOKEN_LINE
   const personPropTokenLine = pairedOccupancy
     ? STILL_TASK_PAIRED_PERSON_PROP_TOKEN_LINE
@@ -285,7 +290,7 @@ export function stillTaskLines(
     ) {
       lines.push(...formatPairedIdentityLandmarkLines(refs))
     }
-    if (pairedOccupancy && (!refsKnown || refs.length > 0)) {
+    if (pairedOccupancy && !refsKnown) {
       lines.push(STILL_TASK_PAIRED_PLATES_MANDATORY_LINE)
     }
     return lines
@@ -320,19 +325,19 @@ export function stillTaskLines(
   if (refs.length === 0) return commitTaskLines()
 
   if (options?.allowTypography) {
-    lines.push(allTokenLine)
+    if (!namedBinding) lines.push(allTokenLine)
     return commitTaskLines()
   }
 
   if (emptyCast && shot.isInsertOrEcu) {
-    if (hasPropRefs) lines.push(propTokenLine)
+    if (hasPropRefs && !namedBinding) lines.push(propTokenLine)
     if (hasLocationRef) lines.push(STILL_TASK_LOCATION_NEARFIELD_LINE)
     if (hasPropRefs) lines.push(propScaleLine)
     return commitTaskLines()
   }
 
   if (shot.isDetail && !mediumCoverage) {
-    if (hasPersonRefs || hasPropRefs) {
+    if (!namedBinding && (hasPersonRefs || hasPropRefs)) {
       lines.push(hasLocationRef ? detailTokenLine : personPropTokenLine)
     } else if (hasLocationRef) {
       lines.push(STILL_TASK_LOCATION_BOKEH_LINE)
@@ -342,7 +347,7 @@ export function stillTaskLines(
   }
 
   if (hasLocationRef && asEnvironment) {
-    if (hasPersonRefs || hasPropRefs) {
+    if (!namedBinding && (hasPersonRefs || hasPropRefs)) {
       lines.push(personPropTokenLine)
     }
     lines.push(STILL_TASK_LOCATION_ENVIRONMENT_LINE)
@@ -350,7 +355,7 @@ export function stillTaskLines(
     return commitTaskLines()
   }
 
-  lines.push(allTokenLine)
+  if (!namedBinding) lines.push(allTokenLine)
   if (hasPropRefs) lines.push(propScaleLine)
   return commitTaskLines()
 }
@@ -527,6 +532,11 @@ const STILL_BOILERPLATE_LINES = [
 /** Prefixes of code-owned lines whose tail varies with the beat's references. */
 const STILL_BOILERPLATE_PREFIXES = [
   /^Also in frame:/i,
+  /^Use the images above\.?$/i,
+  /^person \[\d+\](?: \([^)]+\))? is the person in the identity/i,
+  /^Clothes of person \[\d+\]/i,
+  /^prop \[\d+\](?: \([^)]+\))? is the object in the prop image/i,
+  /^location \[\d+\](?: \([^)]+\))? is the place in the location image/i,
   /^person \[\d+\](?: \([^)]+\))? must match the IDENTITY plate/i,
   /^Garments at the collar and shoulders:/i,
 ]
@@ -1079,10 +1089,16 @@ export function formatUnboundRefsInFrameLine(
     )
   }
 
-  const tokens = unbound.map((ref) => ref.token).join(', ')
-  return unbound.length === 1
-    ? `Also in frame: ${tokens} — match it to its reference image.`
-    : `Also in frame: ${tokens} — match each to its reference image.`
+  const sentences = unbound.map((ref) => {
+    if (ref.kind === 'person') return formatPersonReferenceLegendLine(ref)
+    if (ref.kind === 'prop') {
+      const named = ref.name?.trim() ? `${ref.token} (${ref.name})` : ref.token
+      return `${named} is the object in the prop image of ${ref.token}.`
+    }
+    const named = ref.name?.trim() ? `${ref.token} (${ref.name})` : ref.token
+    return `${named} is the place in the location image of ${ref.token}.`
+  })
+  return `Also in frame: ${sentences.join(' ')}`
 }
 
 export function formatWardrobeLegendClause(description?: string | null): string | undefined {
@@ -1103,43 +1119,35 @@ export function formatWardrobeLegendClause(description?: string | null): string 
  * Pro's 560-token plates need short vision-derived landmarks that must match
  * Reference image N, not replace it.
  */
+function personBindings(ref: StillPromptBoundRef): ReferenceImageBinding[] {
+  if (ref.isComposite) {
+    return [{ role: 'character', token: ref.token, name: ref.name }]
+  }
+  const bindings: ReferenceImageBinding[] = []
+  const hasWardrobe = ref.wardrobeSendIndex != null
+  const hasIdentity = ref.identitySendIndex != null || !hasWardrobe
+  if (hasIdentity) bindings.push({ role: 'identity', token: ref.token, name: ref.name })
+  if (hasWardrobe) bindings.push({ role: 'wardrobe', token: ref.token, name: ref.name })
+  return bindings
+}
+
 export function formatPersonReferenceLegendLine(
   ref: StillPromptBoundRef,
   options?: { includeAttachedIdentityTraits?: boolean }
 ): string {
-  const named = `${ref.token} (${ref.name})`
-  const identityIdx = ref.identitySendIndex
-  const wardrobeIdx = ref.wardrobeSendIndex
-  const boundToAttachedImage = identityIdx != null || wardrobeIdx != null
-
-  const subjectParts = [named]
-  if (!boundToAttachedImage) {
-    if (ref.identityTraits) subjectParts.push(ref.identityTraits)
-    if (ref.wardrobeClause) subjectParts.push(`wearing ${ref.wardrobeClause}`)
-  }
-  const subject = subjectParts.join(', ')
-
-  let match: string
-  if (ref.isComposite && identityIdx != null) {
-    match = `matches Reference image ${identityIdx}`
-  } else if (identityIdx != null && wardrobeIdx != null) {
-    match = `matches Reference image ${identityIdx} (Identity) and Reference image ${wardrobeIdx} (Wardrobe)`
-  } else if (identityIdx != null) {
-    match = `matches Reference image ${identityIdx} (Identity)`
-  } else {
-    match = 'matches its identity reference'
-  }
-
+  const block = formatImagesAboveBinding(personBindings(ref))
+  let line = block
+    .split('\n')
+    .filter((part) => part.trim() && part.trim() !== 'Use the images above.')
+    .join(' ')
   if (
     options?.includeAttachedIdentityTraits &&
-    boundToAttachedImage &&
-    ref.identityTraits &&
-    identityIdx != null
+    ref.identityTraits?.trim() &&
+    (ref.identitySendIndex != null || ref.isComposite)
   ) {
-    match += `; facial landmarks from Reference image ${identityIdx} — ${ref.identityTraits}`
+    line += ` Facial landmarks: ${ref.identityTraits.trim()}.`
   }
-
-  return `${subject} — ${match}`
+  return line
 }
 
 export function formatStillReferencesLegend(
@@ -1152,35 +1160,20 @@ export function formatStillReferencesLegend(
   }
 ): string {
   if (refs.length === 0) return ''
-  const shot = resolveStillShotClass(shotType, options?.actionFraming)
-  const emptyCast =
-    options?.emptyCast ?? stillActionHasEmptyCast(options?.actionFraming)
+  void shotType
   const lines = refs.map((ref) => {
     if (ref.kind === 'person') {
       return formatPersonReferenceLegendLine(ref, {
         includeAttachedIdentityTraits: options?.includeAttachedIdentityTraits,
       })
     }
-    const entry = `${ref.token} = ${ref.name} — ${ref.roleLabel}`
+    const named = ref.name?.trim() ? `${ref.token} (${ref.name})` : ref.token
     if (ref.kind === 'prop') {
-      return `${entry}: ${propScaleClause(ref.description, ref.name)}`
+      return `${named} is the object in the prop image of ${ref.token}. ${propScaleClause(ref.description, ref.name)}`
     }
-    if (ref.kind === 'location' && emptyCast && shot.isInsertOrEcu) {
-      return `${entry}: match near-field materials and the mounting surface from this reference; do not pull back to a wide establishing shot`
-    }
-    if (
-      ref.kind === 'location' &&
-      shot.isDetail &&
-      !isMediumCoverageLocationShot(shot.shotHint || shotType)
-    ) {
-      return `${entry}: match ambient lighting tone and color palette in shallow-focus background bokeh`
-    }
-    if (ref.kind === 'location' && consumesLocationAsEnvironment(shotType, options?.actionFraming)) {
-      return `${entry}: match architecture, palette, and lighting as environment; not a second wide subject`
-    }
-    return ref.identityTraits ? `${entry}: ${ref.identityTraits}` : entry
+    return `${named} is the place in the location image of ${ref.token}.`
   })
-  return `${STILL_SECTION_REFERENCES}\n${lines.join('\n')}`
+  return `${STILL_SECTION_REFERENCES}\nUse the images above.\n${lines.join('\n')}`
 }
 
 /** Recover bound refs from a stored still so a rewrite does not drop [REFERENCES]. */
@@ -1215,6 +1208,23 @@ export function parseStillReferencesLegend(text?: string | null): StillPromptBou
         token: normalizePromptToken(personEq[1]),
         name: personEq[2].trim(),
         roleLabel: personEq[3].trim() || 'identity',
+      })
+      continue
+    }
+
+    const bound = line.match(
+      /^((?:prop|location)\s*\[\d+\])\s*\(([^)]+)\)\s+is the (?:object in the prop image|place in the location image)/i
+    )
+    if (bound) {
+      const token = normalizePromptToken(bound[1])
+      const kind: StillPromptRefKind = token.toLowerCase().startsWith('location')
+        ? 'location'
+        : 'prop'
+      refs.push({
+        kind,
+        token,
+        name: bound[2].trim(),
+        roleLabel: kind === 'location' ? 'library location' : 'library prop',
       })
       continue
     }
@@ -1593,7 +1603,22 @@ export function assembleStructuredStillPrompt(input: {
     ? stripTypographyExclusionLanguage(mergedExclusions)
     : mergedExclusions
 
+  const bindingLead = formatImagesAboveBinding(
+    refs.flatMap((ref) =>
+      ref.kind === 'person'
+        ? personBindings(ref)
+        : [
+            {
+              role: ref.kind,
+              token: ref.token,
+              name: ref.name,
+            } satisfies ReferenceImageBinding,
+          ]
+    )
+  )
+
   return joinPromptBlocks(
+    input.omitReferencesSection ? bindingLead : '',
     input.omitReferencesSection
       ? ''
       : formatStillReferencesLegend(refs, input.shotType, {

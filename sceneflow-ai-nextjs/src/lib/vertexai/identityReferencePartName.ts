@@ -11,6 +11,8 @@ export type ProIdentityCropStatus = 'cropped' | 'already-tight' | 'skipped'
 export function isIdentityReferencePartName(name?: string): boolean {
   if (!name) return false
   const lower = name.toLowerCase()
+  // A combined identity-and-wardrobe plate is not a face crop target.
+  if (/\bidentity\b/.test(lower) && /\bwardrobe\b/.test(lower)) return false
   if (/\bwardrobe\b/.test(lower) && !/\bidentity\b/.test(lower)) return false
   if (/\bprop\b/.test(lower) || /\blocation\b/.test(lower)) return false
   return /\bidentity\b/.test(lower)

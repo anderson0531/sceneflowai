@@ -22,8 +22,14 @@ describe('Kling primary billing + elements', () => {
       '<<<elem-1>>>',
       '<<<elem-2>>>',
     ])
-    expect(injectElementTagsIntoPrompt('Hero enters', ['<<<elem-1>>>'])).toBe(
-      'Hero enters <<<elem-1>>>'
+    expect(
+      injectElementTagsIntoPrompt('Hero enters the station', [
+        { tag: '<<<elem-1>>>', token: 'person [1]', names: ['Hero'] },
+        { tag: '<<<elem-2>>>', token: 'location [1]', names: ['station'] },
+      ])
+    ).toBe('person [1] <<<elem-1>>> enters the location [1] <<<elem-2>>>')
+    expect(injectElementTagsIntoPrompt('person [1] enters', ['<<<elem-1>>>'])).toBe(
+      '<<<elem-1>>>\nperson [1] enters'
     )
   })
 })

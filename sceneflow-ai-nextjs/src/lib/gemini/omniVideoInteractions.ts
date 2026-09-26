@@ -8,6 +8,7 @@ import {
   type VeoClipDuration,
 } from '@/lib/config/modelConfig'
 import { MAX_VERTEX_GEMINI_REFERENCE_IMAGES } from '@/lib/vision/referenceLimits'
+import { OPENING_FRAME_CAPTION } from '@/lib/vision/referenceImageBinding'
 import {
   getOmniVideoSafetySettings,
   isOmniVideoSafetySettingsEnabled,
@@ -286,6 +287,9 @@ export async function buildOmniInteractionInput(
   }
 
   if (options.startFrame) {
+    if ((options.referenceImages?.length ?? 0) > 0) {
+      parts.push({ type: 'text', text: OPENING_FRAME_CAPTION })
+    }
     const { base64, mimeType } = await resolveImageBase64(options.startFrame)
     parts.push({ type: 'image', data: base64, mime_type: mimeType })
   }

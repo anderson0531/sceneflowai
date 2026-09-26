@@ -24,6 +24,7 @@ import {
 import { shouldUseKlingLongTake, planKlingLongTake } from '@/lib/kling/longTakePlanner'
 import { isKlingConfigured, isKlingAsyncEnabled } from '@/lib/kling/config'
 import {
+  buildElementPromptBindings,
   collectKlingElementSources,
   injectElementTagsIntoPrompt,
   persistKlingElementIdsToProject,
@@ -252,8 +253,11 @@ export async function POST(
       properNouns
     )
     const prompt =
-      resolvedElements.promptTags.length > 0
-        ? injectElementTagsIntoPrompt(basePrompt, resolvedElements.promptTags)
+      resolvedElements.bindings.length > 0
+        ? injectElementTagsIntoPrompt(
+            basePrompt,
+            buildElementPromptBindings(elementSources, resolvedElements.bindings)
+          )
         : basePrompt
 
     const hasCharacterRefs = elementSources.length > 0 || !!startFrameUrl

@@ -51,8 +51,8 @@ import {
   getVisionScriptScenes,
 } from '@/lib/script/resolveSceneById'
 import {
+  buildElementPromptBindings,
   collectKlingElementSources,
-  injectElementTagsIntoPrompt,
   persistKlingElementIdsToProject,
   resolveKlingElementsFromSources,
 } from '@/lib/kling/elementRegistry'
@@ -367,6 +367,11 @@ export async function POST(
                   type: ref.type,
                   name: ref.name,
                   role: ref.role,
+                  characterName: ref.characterName,
+                  propName: ref.propName,
+                  locationName: ref.locationName,
+                  promptToken: ref.promptToken,
+                  subjectOrdinal: ref.subjectOrdinal,
                 })
               )
               console.log(
@@ -441,6 +446,7 @@ export async function POST(
       }
 
       let resolvedElementList = elementList
+      let elementBindings: ReturnType<typeof buildElementPromptBindings> | undefined
       let effectivePrompt = prompt
 
       if (resolvedVideoProvider === 'kling' && beatId && projectId) {
@@ -491,10 +497,7 @@ export async function POST(
                 ...(resolvedElementList || []),
                 ...resolvedElements.elementIds,
               ]
-              effectivePrompt = injectElementTagsIntoPrompt(
-                effectivePrompt,
-                resolvedElements.promptTags
-              )
+              elementBindings = buildElementPromptBindings(sources, resolvedElements.bindings)
             }
             if (resolvedElements.newRegistrations.length) {
               await persistKlingElementIdsToProject(
@@ -557,6 +560,7 @@ export async function POST(
         sound,
         watermarkEnabled,
         elementList: resolvedElementList,
+        elementBindings,
         voiceList,
         multiShot,
         shotType,

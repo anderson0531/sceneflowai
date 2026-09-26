@@ -22,6 +22,11 @@ import {
 } from '@/lib/vision/intelligentMethodSelection'
 import { getQualityForMethod, DEFAULT_VEO_CLIP_DURATION, type VeoClipDuration } from '@/lib/config/modelConfig'
 import { sanitizeOmniRefLabel } from '@/lib/gemini/cleanOmniRefPrompt'
+import {
+  bindingsFromReferenceRecords,
+  formatNextImageCaption,
+  isNextImageCaption,
+} from '@/lib/vision/referenceImageBinding'
 import { isVertexRateLimitMessage, VERTEX_RATE_LIMIT_RETRY_AFTER_SECONDS } from '@/lib/gemini/vertexRateLimit'
 import { neutralizeReferenceConflictPrompt } from '@/lib/gemini/neutralizeReferenceConflictPrompt'
 import { veoRefsToPrioritized } from '@/lib/video/normalizeReferenceImages'
@@ -52,6 +57,10 @@ import type {
   KlingCreativePreset,
 } from '@/lib/kling/types'
 import { resolveKlingApiModelName } from '@/lib/kling/types'
+import {
+  injectElementTagsIntoPrompt,
+  type ElementPromptBinding,
+} from '@/lib/kling/elementPromptTags'
 
 export class SegmentVideoRateLimitError extends Error {
   retryAfter: number
@@ -134,6 +143,8 @@ export interface GenerateSegmentVideoInput {
   sound?: boolean
   watermarkEnabled?: boolean
   elementList?: string[]
+  /** Kling tags placed on the subject token after the clip prompt is assembled. */
+  elementBindings?: ElementPromptBinding[]
   voiceList?: Array<{ voice_id: string; name?: string }>
   multiShot?: boolean
   shotType?: KlingShotType
@@ -271,6 +282,7 @@ export async function generateSegmentVideoCore(
     sound,
     watermarkEnabled,
     elementList,
+    elementBindings,
     voiceList,
     multiShot,
     shotType,
@@ -444,15 +456,21 @@ export async function generateSegmentVideoCore(
 
   if (method === 'REF' && referenceImages && referenceImages.length > 0) {
     const prioritized = veoRefsToPrioritized(referenceImages)
+    const bindings = bindingsFromReferenceRecords(prioritized)
 
-    videoOptions.referenceImages = referenceImages.map((img, i) => ({
-      url: img.url,
-      type: img.type,
-      label: sanitizeOmniRefLabel(
-        neutralizeReferenceConflictPrompt(img.name || prioritized[i]?.name || '')
-      ),
-      role: prioritized[i]?.role,
-    }))
+    videoOptions.referenceImages = referenceImages.map((img, i) => {
+      const binding = bindings[i]
+      const caption = binding ? formatNextImageCaption(binding) : ''
+      const rawLabel = img.name || prioritized[i]?.name || ''
+      return {
+        url: img.url,
+        type: img.type,
+        label: isNextImageCaption(caption)
+          ? caption
+          : sanitizeOmniRefLabel(neutralizeReferenceConflictPrompt(rawLabel)),
+        role: prioritized[i]?.role,
+      }
+    })
   }
 
   const built = buildSegmentEnhancedPrompt({
@@ -501,6 +519,10 @@ export async function generateSegmentVideoCore(
       )
     }
     enhancedPrompt = preflight.prompt
+  }
+
+  if (useKling && elementBindings?.length) {
+    enhancedPrompt = injectElementTagsIntoPrompt(enhancedPrompt, elementBindings)
   }
 
   let generationProvider: 'vertex' | 'fal' | 'kling' | 'aggregator' = 'kling'

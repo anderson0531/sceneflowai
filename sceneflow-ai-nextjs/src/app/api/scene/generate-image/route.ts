@@ -2949,9 +2949,10 @@ async function postGenerateImage(req: NextRequest) {
               .join(', ')}`
           )
 
-          // Flash labels carry send index + prompt token. Pro plates use
-          // interleaved `[REFERENCE: ROLE - token]` captions instead, so thinking
-          // T2I does not typeset the send-index legend onto the still.
+          // Both tiers caption each plate with "The next image is …" and the
+          // same person/prop/location token the instruction uses. Pro then
+          // omits the [REFERENCES] wall so those tokens are not typeset onto
+          // the still.
           const allReferenceImages = useInterleavedProRefs
             ? buildInterleavedReferencePairCaptions(
                 selectedReferenceImages,
@@ -2985,7 +2986,7 @@ async function postGenerateImage(req: NextRequest) {
           console.log(`[Scene Image] Labeled reference images: ${allReferenceImages.map(r => r.name).join(', ')}`)
           
           // Build multimodal prompt with explicit per-image role instructions
-          let geminiPrompt = `Generate a cinematic scene image. The following reference images are provided:\n\n`
+          let geminiPrompt = ''
           
           // Character reference instructions
           if (cappedImageReferences.length > 0) {
@@ -3355,6 +3356,14 @@ async function postGenerateImage(req: NextRequest) {
             if (avoidTerms) {
               geminiPrompt += `- AVOID: ${avoidTerms}\n`
             }
+          }
+
+          if (allReferenceImages.length > 0) {
+            geminiPrompt = joinPromptBlocks(
+              identityEscalationBlock,
+              subjectCountGuardrail,
+              structuredStill
+            )
           }
 
           if (isBeatFrame) {

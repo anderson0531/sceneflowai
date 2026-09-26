@@ -156,7 +156,7 @@ describe('identity traits in the [REFERENCES] legend', () => {
     })
 
     expect(formatStillReferencesLegend(refs)).toContain(
-      'person [1] (Gideon Croft) — matches Reference image 1 (Identity) and Reference image 2 (Wardrobe)'
+      'person [1] (Gideon Croft) is the person in the identity image of person [1]. Clothes of person [1] are the wardrobe image of person [1].'
     )
     expect(formatStillReferencesLegend(refs)).not.toMatch(/skin|hair|beard|50s|overcoat/i)
   })
@@ -182,7 +182,8 @@ describe('identity traits in the [REFERENCES] legend', () => {
     const legend = formatStillReferencesLegend(refs, undefined, {
       includeAttachedIdentityTraits: true,
     })
-    expect(legend).toContain('facial landmarks from Reference image 1')
+    expect(legend).toContain('Facial landmarks:')
+    expect(legend).not.toContain('Reference image')
     expect(legend).toMatch(/medium-brown skin/)
     expect(legend).not.toMatch(/overcoat/i)
   })
@@ -215,8 +216,8 @@ describe('identity traits in the [REFERENCES] legend', () => {
       { kind: 'location', token: 'location [3]', name: 'Harbor Office', roleLabel: 'library location' },
     ])
 
-    expect(legend).toContain('prop [2] = Brass Sextant — library prop')
-    expect(legend).toContain('location [3] = Harbor Office — library location')
+    expect(legend).toContain('prop [2] (Brass Sextant) is the object in the prop image of prop [2].')
+    expect(legend).toContain('location [3] (Harbor Office) is the place in the location image of location [3].')
     expect(legend).not.toMatch(/prop \[2\].*warm medium-brown skin/i)
     expect(legend).not.toMatch(/location \[3\]:/)
   })
@@ -228,7 +229,7 @@ describe('identity traits in the [REFERENCES] legend', () => {
     })
 
     expect(formatStillReferencesLegend(refs)).toContain(
-      'person [1] (Piper Hayes) — matches Reference image 1 (Identity)'
+      'person [1] (Piper Hayes) is the person in the identity image of person [1].'
     )
     expect(formatStillReferencesLegend(refs)).not.toContain('Identity:')
   })

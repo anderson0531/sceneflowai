@@ -4,6 +4,10 @@
  */
 
 import { buildOmniVideoReferencePrompt } from '@/lib/gemini/buildOmniVideoReferencePrompt'
+import {
+  bindingsFromReferenceRecords,
+  rewriteVisualNamesToTokens,
+} from '@/lib/vision/referenceImageBinding'
 import { neutralizeReferenceConflictPrompt } from '@/lib/gemini/neutralizeReferenceConflictPrompt'
 import {
   cleanOmniRefScenePrompt,
@@ -25,6 +29,11 @@ export type SegmentReferenceImage = {
   type: 'style' | 'character'
   name?: string
   role?: string
+  characterName?: string
+  propName?: string
+  locationName?: string
+  promptToken?: string
+  subjectOrdinal?: number
 }
 
 export interface BuildSegmentEnhancedPromptInput {
@@ -84,8 +93,12 @@ export function buildSegmentEnhancedPrompt(
 
   if (method === 'REF' && referenceImages && referenceImages.length > 0) {
     const prioritized = veoRefsToPrioritized(referenceImages)
+    const tokenizedPrompt = rewriteVisualNamesToTokens(
+      prompt,
+      bindingsFromReferenceRecords(prioritized)
+    )
     const neutralScenePrompt = neutralizeReferenceConflictPrompt(
-      cleanOmniRefScenePrompt(prompt)
+      cleanOmniRefScenePrompt(tokenizedPrompt)
     )
     const refGuidePrompt = sanitizeOmniRefGuide(guidePrompt)
     enhancedPrompt = buildOmniVideoReferencePrompt({

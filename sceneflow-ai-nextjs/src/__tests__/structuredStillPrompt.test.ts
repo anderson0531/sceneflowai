@@ -21,6 +21,7 @@ import {
   STILL_TASK_MOUNTED_FIXTURE_LINE,
   STILL_TASK_PERSON_PROP_TOKEN_LINE,
   STILL_TASK_PROP_TOKEN_LINE,
+  STILL_TASK_TOKEN_LINE,
   STILL_TASK_PRO_LEAD,
   STILL_TASK_PAIRED_PERSON_PROP_TOKEN_LINE,
   STILL_TASK_PAIRED_PROP_SCALE_LINE,
@@ -79,10 +80,15 @@ describe('assembleStructuredStillPrompt', () => {
     })
 
     expect(prompt).toContain(STILL_SECTION_REFERENCES)
-    expect(prompt).toContain("prop [3] = Arthur Pendelton's 1893 Journal — library prop")
+    expect(prompt).toContain('Use the images above.')
+    expect(prompt).toContain(
+      "prop [3] (Arthur Pendelton's 1893 Journal) is the object in the prop image of prop [3]."
+    )
     expect(prompt).toContain('do not enlarge to fill the frame')
     expect(prompt).toContain('Held props keep the physical size described in [REFERENCES]')
-    expect(prompt).toContain('person [1] (Vesper Vale) — matches its identity reference')
+    expect(prompt).toContain(
+      'person [1] (Vesper Vale) is the person in the identity image of person [1].'
+    )
     expect(prompt).toContain('interposing prop [3] between person [2]')
     expect(prompt).not.toContain("interposing Arthur Pendelton's 1893 Journal")
     expect(prompt).toContain(STILL_SECTION_STILL)
@@ -121,8 +127,16 @@ describe('assembleStructuredStillPrompt', () => {
     })
 
     expect(prompt).toContain(`${STILL_SECTION_TASK}\n${STILL_TASK_PRO_LEAD}`)
-    expect(prompt).toContain(STILL_TASK_PAIRED_PERSON_PROP_TOKEN_LINE)
-    expect(prompt).toContain(STILL_TASK_PAIRED_PLATES_MANDATORY_LINE)
+    expect(prompt).toContain('Use the images above.')
+    expect(prompt).toContain(
+      'person [1] (Piper Hayes) is the person in the identity image of person [1].'
+    )
+    expect(prompt).toContain('prop [1] (Zinc workbench) is the object in the prop image of prop [1].')
+    expect(prompt).toContain(
+      'location [1] (FREIGHT TUNNEL VAULT) is the place in the location image of location [1].'
+    )
+    expect(prompt).not.toContain(STILL_TASK_PAIRED_PERSON_PROP_TOKEN_LINE)
+    expect(prompt).not.toContain(STILL_TASK_PAIRED_PLATES_MANDATORY_LINE)
     expect(prompt).toContain(STILL_TASK_PAIRED_PROP_SCALE_LINE)
     expect(prompt).toContain(STILL_TASK_LOCATION_ENVIRONMENT_LINE)
     expect(prompt).toContain('Action/Framing:')
@@ -308,7 +322,7 @@ Strictly Avoid: Mannequin geometry.`,
       characterReferences: [],
     })
     const legend = formatStillReferencesLegend(refs)
-    expect(legend).toContain('prop [2] = Canister — library prop')
+    expect(legend).toContain('prop [2] (Canister) is the object in the prop image of prop [2].')
     expect(legend).toContain('12-inch')
     expect(legend).toContain('do not enlarge to fill the frame')
     expect(parseStillReferencesLegend(legend)).toEqual([
@@ -337,10 +351,10 @@ Strictly Avoid: Mannequin geometry.`,
 
     const legend = formatStillReferencesLegend(refs)
     expect(legend).toContain(
-      'person [1] (Gideon Croft) — matches Reference image 1 (Identity) and Reference image 3 (Wardrobe)'
+      'person [1] (Gideon Croft) is the person in the identity image of person [1]. Clothes of person [1] are the wardrobe image of person [1].'
     )
     expect(legend).toContain(
-      'person [2] (Piper Hayes) — matches Reference image 2 (Identity) and Reference image 4 (Wardrobe)'
+      'person [2] (Piper Hayes) is the person in the identity image of person [2]. Clothes of person [2] are the wardrobe image of person [2].'
     )
   })
 
@@ -365,12 +379,14 @@ Strictly Avoid: Mannequin geometry.`,
 
     const legend = formatStillReferencesLegend(refs)
     expect(legend).toContain(
-      'person [1] (Piper Hayes) — matches Reference image 1 (Identity) and Reference image 3 (Wardrobe)'
+      'person [1] (Piper Hayes) is the person in the identity image of person [1]. Clothes of person [1] are the wardrobe image of person [1].'
     )
     expect(legend).toContain(
-      'person [2] (Gideon Croft) — matches Reference image 2 (Identity) and Reference image 4 (Wardrobe)'
+      'person [2] (Gideon Croft) is the person in the identity image of person [2]. Clothes of person [2] are the wardrobe image of person [2].'
     )
-    expect(legend).toContain('prop [5] = Thirty-Inch Iron Rail Spanner')
+    expect(legend).toContain(
+      'prop [5] (Thirty-Inch Iron Rail Spanner) is the object in the prop image of prop [5].'
+    )
     expect(legend).not.toMatch(/LEFT|RIGHT|diptych|composite/i)
   })
 
@@ -392,8 +408,12 @@ Strictly Avoid: Mannequin geometry.`,
     })
 
     const legend = formatStillReferencesLegend(refs)
-    expect(legend).toContain('person [1] (Gideon Croft) — matches Reference image 1')
-    expect(legend).toContain('person [2] (Piper Hayes) — matches Reference image 2')
+    expect(legend).toContain(
+      'person [1] (Gideon Croft) is the person in the identity and wardrobe image of person [1].'
+    )
+    expect(legend).toContain(
+      'person [2] (Piper Hayes) is the person in the identity and wardrobe image of person [2].'
+    )
     expect(legend).not.toMatch(/charcoal wool overcoat|scuffed boots/i)
     expect(legend).not.toMatch(/\(Identity\)|\(Wardrobe\)/)
     expect(legend).not.toMatch(/LEFT|RIGHT|diptych|composite/i)
@@ -412,7 +432,7 @@ Strictly Avoid: Mannequin geometry.`,
         wardrobeSendIndex: 2,
       })
     ).toBe(
-      'person [1] (Gideon Croft) — matches Reference image 1 (Identity) and Reference image 2 (Wardrobe)'
+      'person [1] (Gideon Croft) is the person in the identity image of person [1]. Clothes of person [1] are the wardrobe image of person [1].'
     )
   })
 
@@ -502,7 +522,7 @@ Strictly Avoid: Mannequin geometry.`,
         occupancyMode: 'paired',
         refs: [{ kind: 'person', token: 'person [1]', name: 'Piper Hayes', roleLabel: 'identity' }],
       })
-    ).toContain(STILL_TASK_PAIRED_PLATES_MANDATORY_LINE)
+    ).not.toContain(STILL_TASK_PAIRED_PLATES_MANDATORY_LINE)
     expect(stillTaskLines('Two-Shot', { occupancyMode: 'paired' })).toContain(
       STILL_TASK_PAIRED_PLATES_MANDATORY_LINE
     )
@@ -591,11 +611,15 @@ Strictly Avoid: Mannequin geometry.`,
     })
 
     expect(prompt).toContain(STILL_SECTION_REFERENCES)
-    expect(prompt).toContain('location [1] = FREIGHT TUNNEL VAULT - PNEUMATIC ACCESS')
-    expect(prompt).toContain('prop [2] = Brass pressure gauge')
+    expect(prompt).toContain(
+      'location [1] (FREIGHT TUNNEL VAULT - PNEUMATIC ACCESS) is the place in the location image of location [1].'
+    )
+    expect(prompt).toContain(
+      'prop [2] (Brass pressure gauge) is the object in the prop image of prop [2].'
+    )
     expect(prompt).toContain(STILL_TASK_OBJECT_INSERT_LINE)
     expect(prompt).toContain(STILL_TASK_LOCATION_NEARFIELD_LINE)
-    expect(prompt).toContain(STILL_TASK_PROP_TOKEN_LINE)
+    expect(prompt).not.toContain(STILL_TASK_PROP_TOKEN_LINE)
     expect(prompt).not.toContain(STILL_TASK_INSERT_FRAMING_LINE)
     expect(prompt).not.toMatch(/two arms and two legs/)
     expect(prompt).not.toMatch(/Every token listed in \[REFERENCES\] appears/)
@@ -827,7 +851,9 @@ describe('planner still vs video split', () => {
     })
 
     expect(withRefs.startsWith(STILL_SECTION_REFERENCES)).toBe(true)
-    expect(withRefs).toContain('location [1] = FREIGHT TUNNEL VAULT - PNEUMATIC ACCESS')
+    expect(withRefs).toContain(
+      'location [1] (FREIGHT TUNNEL VAULT - PNEUMATIC ACCESS) is the place in the location image of location [1].'
+    )
     expect(parseStillPromptSource(withRefs).actionFraming).toBe(before.actionFraming)
     expect(parseStillPromptSource(withRefs).style).toBe(before.style)
   })
@@ -997,9 +1023,11 @@ describe('every [REFERENCES] token reaches the instruction body', () => {
     expect(still).toContain('Also in frame: location [3]')
     expect(still).not.toMatch(/Also in frame:[^\n]*prop \[4\]/)
     expect(still).not.toMatch(/Also in frame:[^\n]*prop \[5\]/)
-    expect(prompt).not.toContain('prop [4] = Brass cylinder')
-    expect(prompt).not.toContain('prop [5] = Machined brass cylinder')
-    expect(prompt).toContain('prop [6] = Olive-drab aluminum cylinder')
+    expect(prompt).not.toContain('prop [4] (Brass cylinder)')
+    expect(prompt).not.toContain('prop [5] (Machined brass cylinder)')
+    expect(prompt).toContain(
+      'prop [6] (Olive-drab aluminum cylinder) is the object in the prop image of prop [6].'
+    )
     expect(still).not.toMatch(/Also in frame:[^\n]*prop \[6\]/)
   })
 
@@ -1035,10 +1063,11 @@ describe('every [REFERENCES] token reaches the instruction body', () => {
 
     expect(prompt).not.toContain('Also in frame: location [1]')
     expect(prompt).toContain(STILL_TASK_LOCATION_ENVIRONMENT_LINE)
-    expect(prompt).toContain(STILL_TASK_PERSON_PROP_TOKEN_LINE)
+    expect(prompt).not.toContain(STILL_TASK_PERSON_PROP_TOKEN_LINE)
     expect(prompt).toContain(
-      'location [1] = FREIGHT TUNNEL VAULT — library location: match architecture, palette, and lighting as environment; not a second wide subject'
+      'location [1] (FREIGHT TUNNEL VAULT) is the place in the location image of location [1].'
     )
+    expect(prompt).toContain('Use the images above.')
     expect(prompt).not.toMatch(/LOCATION location \[1\].*extreme-wide establishing shot/)
     expect(prompt).not.toMatch(/Also in frame: location \[1\]/)
     expect(prompt).not.toContain(STILL_TASK_MOUNTED_FIXTURE_LINE)
@@ -1262,8 +1291,11 @@ describe('still prompt round-trips without consuming itself', () => {
     )
     expect(prompt.indexOf(STILL_SECTION_TASK)).toBeLessThan(prompt.indexOf(STILL_SECTION_STILL))
     for (const line of STILL_TASK_LINES) {
+      if (line === STILL_TASK_TOKEN_LINE) continue
       expect(prompt).toContain(line)
     }
+    expect(prompt).toContain('Use the images above.')
+    expect(prompt).not.toContain(STILL_TASK_TOKEN_LINE)
   })
 
   it('reads a stored prompt written with the old candid wording back as action', () => {
@@ -1568,11 +1600,11 @@ describe('identity traits reach every reference-bearing frame', () => {
     expect(gideonRefs()[0].wardrobeClause).toBeUndefined()
     expect(gideonRefs(6)[0].identityTraits).toBeUndefined()
     expect(formatStillReferencesLegend(gideonRefs())).toBe(
-      '[REFERENCES]\nperson [1] (Gideon Croft) — matches Reference image 1 (Identity)'
+      '[REFERENCES]\nUse the images above.\nperson [1] (Gideon Croft) is the person in the identity image of person [1].'
     )
   })
 
-  it('locks Pro stills with short vision landmarks that must match Reference image 1', () => {
+  it('locks Pro stills with short vision landmarks on the person token', () => {
     const refs = stillRefsFromAttachedImages({
       selected: [
         { sendIndex: 1, characterName: 'Gideon Croft', refRole: 'identity' },
@@ -1592,8 +1624,11 @@ describe('identity traits reach every reference-bearing frame', () => {
     expect(
       formatStillReferencesLegend(refs, undefined, { includeAttachedIdentityTraits: true })
     ).toContain(
-      'facial landmarks from Reference image 1 — warm medium-brown skin, tightly curled salt-and-pepper hair, short grizzled beard, early 50s'
+      'Facial landmarks: warm medium-brown skin, tightly curled salt-and-pepper hair, short grizzled beard, early 50s'
     )
+    expect(
+      formatStillReferencesLegend(refs, undefined, { includeAttachedIdentityTraits: true })
+    ).not.toContain('Reference image')
     expect(
       formatStillReferencesLegend(refs, undefined, { includeAttachedIdentityTraits: true })
     ).not.toMatch(/overcoat/i)
