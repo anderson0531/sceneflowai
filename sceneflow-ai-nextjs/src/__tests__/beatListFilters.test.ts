@@ -14,6 +14,7 @@ import {
   frameMatchesFilters,
   frameNeedsAction,
   frameRailStatus,
+  frameReferenceNotice,
   type FrameListFacts,
 } from '@/lib/vision/frameListFilters'
 import {
@@ -218,6 +219,32 @@ describe('frame and video filters', () => {
     })
     expect(frameRailStatus(changed)).toEqual({ status: 'attention', label: 'Prompt changed' })
     expect(frameRailStatus(finalFrame)).toEqual({ status: 'ready', label: 'Final' })
+    expect(frameRailStatus({ ...finalFrame, referenceStatus: 'pass' })).toEqual({
+      status: 'ready',
+      label: 'Final',
+    })
+    expect(frameRailStatus({ ...finalFrame, referenceStatus: 'drift' })).toEqual({
+      status: 'attention',
+      label: 'Reference drifted',
+    })
+    expect(frameRailStatus({ ...finalFrame, referenceStatus: 'miss' })).toEqual({
+      status: 'action',
+      label: 'Reference missed',
+    })
+    expect(frameNeedsAction({ ...finalFrame, referenceStatus: 'miss' })).toBe(true)
+    expect(frameNeedsAction({ ...finalFrame, referenceStatus: 'pass' })).toBe(false)
+    expect(frameMatchesFilters({ ...finalFrame, referenceStatus: 'miss' }, 'final', 'all')).toBe(false)
+    expect(
+      frameReferenceNotice('miss', 'The framed photograph is a different picture.')
+    ).toEqual({
+      level: 'error',
+      message: 'Reference missed — The framed photograph is a different picture.',
+    })
+    expect(frameReferenceNotice('drift')).toEqual({
+      level: 'warning',
+      message: 'Reference drifted',
+    })
+    expect(frameReferenceNotice('pass')).toBeNull()
   })
 
   it('lights clips red without a finished draft or final, and idle while rendering', () => {

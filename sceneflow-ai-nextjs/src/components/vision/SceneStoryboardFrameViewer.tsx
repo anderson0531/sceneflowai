@@ -527,6 +527,7 @@ export function SceneStoryboardFrameViewer({
         promptChanged: slotPromptChanged(slot),
         hasImageError: !!slot.imageError?.trim(),
         hasOwnImage: !!slot.ownImageUrl,
+        referenceStatus: slot.referenceStatus,
       })),
     [frameSlots, slotPromptChanged]
   )

@@ -198,6 +198,8 @@ function mergeBeatMedia(canonBeat: any, incomingBeat: any): any {
     if (!isUsableMediaUrl(incomingBeat.storyboardImageUrl)) {
       delete merged.storyboardImageUrl
       delete merged.storyboardImageVersionId
+      delete merged.storyboardImageReferenceStatus
+      delete merged.storyboardImageReferenceReason
     }
     if (!isUsableMediaUrl(incomingBeat.storyboardEndImageUrl)) {
       delete merged.storyboardEndImageUrl
@@ -230,7 +232,47 @@ function mergeBeatMedia(canonBeat: any, incomingBeat: any): any {
     delete merged[STILL_IMAGE_CONTENT_KEY]
   }
 
+  applyReferenceStatusForWinner(merged, incomingBeat, canonBeat, winnerUrl)
+
   return merged
+}
+
+function isReferenceStatus(value: unknown): value is 'pass' | 'drift' | 'miss' {
+  return value === 'pass' || value === 'drift' || value === 'miss'
+}
+
+/** The band belongs to the still that won, not to whichever beat was spread first. */
+function applyReferenceStatusForWinner(
+  merged: Record<string, unknown>,
+  incomingBeat: { storyboardImageUrl?: unknown; storyboardImageReferenceStatus?: unknown; storyboardImageReferenceReason?: unknown },
+  canonBeat: { storyboardImageUrl?: unknown; storyboardImageReferenceStatus?: unknown; storyboardImageReferenceReason?: unknown },
+  winnerUrl: string | undefined
+): void {
+  const incomingUrl = isValidStoryboardMediaUrl(incomingBeat.storyboardImageUrl)
+    ? String(incomingBeat.storyboardImageUrl).trim()
+    : undefined
+  const canonUrl = isValidStoryboardMediaUrl(canonBeat.storyboardImageUrl)
+    ? String(canonBeat.storyboardImageUrl).trim()
+    : undefined
+  const owner =
+    winnerUrl && incomingUrl === winnerUrl
+      ? incomingBeat
+      : winnerUrl && canonUrl === winnerUrl
+        ? canonBeat
+        : null
+  const status = owner?.storyboardImageReferenceStatus
+  if (isReferenceStatus(status)) {
+    merged.storyboardImageReferenceStatus = status
+    const reason = owner?.storyboardImageReferenceReason
+    if (typeof reason === 'string' && reason.trim()) {
+      merged.storyboardImageReferenceReason = reason.trim()
+    } else {
+      delete merged.storyboardImageReferenceReason
+    }
+    return
+  }
+  delete merged.storyboardImageReferenceStatus
+  delete merged.storyboardImageReferenceReason
 }
 
 function mergeBeatsArray(

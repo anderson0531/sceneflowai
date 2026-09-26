@@ -40,6 +40,11 @@ import {
   buildSceneImageWardrobeLabel,
 } from '@/lib/imagen/sceneImageReferenceLabels'
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
+import {
+  scoreReferenceAdherence,
+  selectReferenceAdherencePlates,
+  type ReferenceAdherenceResult,
+} from '@/lib/imagen/referenceAdherence'
 import { waitForGCSURIs, checkGCSURIAccessibility } from '@/lib/storage/gcsAccessibility'
 import { generateDirectionHash, generateImageSourceHash } from '@/lib/utils/contentHash'
 import { getServerSession } from 'next-auth'
@@ -2439,6 +2444,7 @@ async function postGenerateImage(req: NextRequest) {
     
     let imageUrl = ''
     let validation: any = null
+    let referenceAdherence: ReferenceAdherenceResult | null = null
     let likenessRound = 0
     let shouldLikenessAutoRetry = false
     /** Measured cost of round 0, used to decide whether a retry can finish. */
@@ -3683,6 +3689,10 @@ async function postGenerateImage(req: NextRequest) {
           console.error('[Scene Image] Validation failed:', error)
         }
       }
+    } else if (skipLikenessValidation) {
+      console.log('[Scene Image] Skipping likeness validation — skipLikenessValidation')
+    } else if (characterObjects.length === 0) {
+      console.log('[Scene Image] Skipping likeness validation — no characters')
     }
 
     if (likenessRound === 0) {
@@ -3750,6 +3760,51 @@ async function postGenerateImage(req: NextRequest) {
         console.log(
           `[Scene Image] Likeness auto-retry kept second attempt (${retryConfidence}% vs ${firstConfidence}%)`
         )
+      }
+    }
+
+    if (skipLikenessValidation) {
+      console.log('[Scene Image] Skipping reference adherence — skipLikenessValidation')
+    } else if (!canValidateLikeness(0, remainingBudgetMs(), 0)) {
+      console.warn(
+        `[Scene Image] Skipping reference adherence — ${remainingBudgetMs()}ms left, needs ~${LIKENESS_VALIDATION_MIN_RESERVE_MS}ms`
+      )
+    } else {
+      const adherencePlates = selectReferenceAdherencePlates({
+        identities: characterReferencesForImages
+          .filter((ref: { name?: string; identityImageUrl?: string }) => ref?.name && ref.identityImageUrl)
+          .map((ref: { name: string; identityImageUrl: string }) => ({
+            name: ref.name,
+            imageUrl: ref.identityImageUrl,
+          })),
+        objects: objectImageReferences,
+      })
+      if (adherencePlates.length === 0) {
+        console.log(
+          '[Scene Image] Skipping reference adherence — no identity or picture-prop plates'
+        )
+      } else {
+        try {
+          console.log(
+            `[Scene Image] Scoring reference adherence (${adherencePlates
+              .map((plate) => `${plate.role}:${plate.name}`)
+              .join(', ')})`
+          )
+          referenceAdherence = await scoreReferenceAdherence({
+            generatedImageUrl: imageUrl,
+            plates: adherencePlates,
+            shotType: validationShotType,
+          })
+          if (referenceAdherence) {
+            console.log(
+              `[Scene Image] Reference adherence ${referenceAdherence.band}: ${referenceAdherence.reason}`
+            )
+          } else {
+            console.warn('[Scene Image] Reference adherence returned no band — leaving the still unchecked')
+          }
+        } catch (error) {
+          console.error('[Scene Image] Reference adherence failed:', error)
+        }
       }
     }
 
@@ -3822,11 +3877,16 @@ async function postGenerateImage(req: NextRequest) {
       response.validationPassed = true  // Always pass for storyboards
       response.validationMessage = `Storyboard generated (${validation.confidence}% character similarity - informational only)`
     }
+    if (referenceAdherence) {
+      response.referenceStatus = referenceAdherence.band
+      response.referenceReason = referenceAdherence.reason
+    }
 
     console.log('[Scene Image] Generation succeeded', {
       ...logContext,
       usedAIIntelligence,
       model: generationModelId,
+      referenceStatus: referenceAdherence?.band ?? 'unchecked',
       elapsedMs: Date.now() - routeStart,
     })
 

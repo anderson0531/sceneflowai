@@ -40,6 +40,8 @@ const BEAT_MEDIA_KEYS = [
   'storyboardImageDirectionKey',
   'storyboardImageContentKey',
   'storyboardImageTier',
+  'storyboardImageReferenceStatus',
+  'storyboardImageReferenceReason',
   'storyboardImageVersions',
   'storyboardImageVersionId',
   'storyboardEndImageUrl',

@@ -15,6 +15,7 @@ import {
   type SceneBeat,
   type SceneMovement,
   type SceneMusicCue,
+  type StoryboardReferenceStatus,
   type StoryboardStatus,
 } from '@/lib/script/segmentTypes'
 import { mintLineId } from '@/lib/script/segmentScript'
@@ -261,6 +262,8 @@ const PERSISTED_BEAT_MEDIA_KEYS = [
   'storyboardImageDirectionKey',
   'storyboardImageContentKey',
   'storyboardImageTier',
+  'storyboardImageReferenceStatus',
+  'storyboardImageReferenceReason',
   'storyboardImageError',
   'storyboardImageVersions',
   'storyboardImageVersionId',
@@ -1321,6 +1324,23 @@ export interface BeatStoryboardImageExtras {
   frameRole?: 'start' | 'end'
   source?: MediaVersionSource
   restoreVersionId?: string
+  /** Pass, drift, or miss from the adherence check. Null clears a previous band. */
+  referenceStatus?: StoryboardReferenceStatus | null
+  referenceReason?: string | null
+}
+
+function referenceStatusFromExtras(
+  extras?: BeatStoryboardImageExtras
+): StoryboardReferenceStatus | undefined {
+  const status = extras?.referenceStatus
+  if (status === 'pass' || status === 'drift' || status === 'miss') return status
+  return undefined
+}
+
+function referenceReasonFromExtras(extras?: BeatStoryboardImageExtras): string | undefined {
+  if (!referenceStatusFromExtras(extras)) return undefined
+  const reason = extras?.referenceReason?.trim()
+  return reason || undefined
 }
 
 /** Persist a beat-index storyboard image to beats[] and legacy dialogue[]. */
@@ -1384,6 +1404,8 @@ export function applyBeatStoryboardImageToScene(
     ...(extras?.imagePrompt
       ? { storyboardImagePrompt: extras.imagePrompt }
       : {}),
+    storyboardImageReferenceStatus: referenceStatusFromExtras(extras),
+    storyboardImageReferenceReason: referenceReasonFromExtras(extras),
   } as SceneBeat
 
   let updated = applyBeatsToScene(scene, beats)
@@ -1612,6 +1634,8 @@ function clearBeatStoryboardFrames(beat: SceneBeat): SceneBeat {
   delete next.storyboardImageDirectionKey
   delete next.storyboardImageContentKey
   delete next.storyboardImageTier
+  delete next.storyboardImageReferenceStatus
+  delete next.storyboardImageReferenceReason
   delete next.storyboardEndImageUrl
   delete next.storyboardEndImageGcsPath
   delete next.storyboardEndImagePrompt

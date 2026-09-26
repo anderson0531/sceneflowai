@@ -18,6 +18,8 @@ const BEAT_FRAME_KEYS = [
   'storyboardImageDirectionKey',
   'storyboardImageContentKey',
   'storyboardImageTier',
+  'storyboardImageReferenceStatus',
+  'storyboardImageReferenceReason',
   'storyboardImageVersions',
   'storyboardImageVersionId',
   'storyboardEndImageUrl',

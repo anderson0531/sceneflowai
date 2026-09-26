@@ -310,7 +310,37 @@ export function lockedReadableDetail(action: string, frozen: string): string {
   )) {
     add(match[0])
   }
+  for (const clause of depictionClauses(source, heldFold)) add(clause)
   return facts.length > 0 ? `Readable detail: ${facts.join('; ')}.` : ''
+}
+
+/**
+ * What a photograph shows, when the frozen instant left it out.
+ *
+ * "a woman with a frozen smile" is true of any invented portrait. The action's
+ * "depicts …" / "photograph of …" clause is the fact that has to ride along
+ * with the frozen instant, or the still model is free to draw a different picture.
+ */
+function depictionClauses(source: string, heldFold: string): string[] {
+  const patterns: Array<{ re: RegExp; prefix: string }> = [
+    { re: /\b(?:which\s+)?depicts\s+([^,.;]+)/gi, prefix: 'the photograph depicts ' },
+    {
+      re: /\b(?:photograph|photo|picture|portrait|snapshot)\s+of\s+([^,.;]+)/gi,
+      prefix: 'photograph of ',
+    },
+  ]
+  const clauses: string[] = []
+  for (const { re, prefix } of patterns) {
+    for (const match of source.matchAll(re)) {
+      const body = (match[1] || '').replace(/\s+/g, ' ').trim()
+      if (body.length < 3 || /^(?:the|a|an|it|her|his|their)$/i.test(body)) continue
+      if (heldFold.includes(body.toLowerCase())) continue
+      const clause = `${prefix}${body}`.replace(/\s+/g, ' ').trim()
+      if (heldFold.includes(clause.toLowerCase())) continue
+      clauses.push(clause)
+    }
+  }
+  return clauses
 }
 
 /** Facets that can describe a frame without borrowing the beat's spoken words. */

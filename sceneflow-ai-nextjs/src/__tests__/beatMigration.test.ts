@@ -850,4 +850,35 @@ describe('applyBeatStoryboardImageToScene', () => {
     )
     expect(beat.storyboardImageContentKey).toBe('action|Elara raises the journal.')
   })
+
+  it('stores a reference miss and clears it when the next still is unchecked', () => {
+    const scene = {
+      beats: [
+        {
+          beatId: 'bt_0',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Gideon holds the photo.',
+          storyboardImageReferenceStatus: 'miss',
+          storyboardImageReferenceReason: 'The photograph is a different picture.',
+        },
+      ],
+    }
+
+    const missed = applyBeatStoryboardImageToScene(scene, 0, 'https://example.com/miss.jpg', {
+      imageTier: 'final',
+      referenceStatus: 'miss',
+      referenceReason: 'The photograph is a different picture.',
+    })
+    expect(getSceneBeats(missed)[0].storyboardImageReferenceStatus).toBe('miss')
+    expect(getSceneBeats(missed)[0].storyboardImageReferenceReason).toBe(
+      'The photograph is a different picture.'
+    )
+
+    const unchecked = applyBeatStoryboardImageToScene(missed, 0, 'https://example.com/next.jpg', {
+      imageTier: 'final',
+    })
+    expect(getSceneBeats(unchecked)[0].storyboardImageReferenceStatus).toBeUndefined()
+    expect(getSceneBeats(unchecked)[0].storyboardImageReferenceReason).toBeUndefined()
+  })
 })
