@@ -1,11 +1,17 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Clapperboard, ImageOff, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
+import { Checkbox } from '@/components/ui/checkbox'
 import { DictationTextarea } from '@/components/ui/DictationTextarea'
-import type { StillDirectorPatch } from '@/lib/intelligence/beat-still-director-fallback'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+  applyPolicyComplianceToPatch,
+  type StillDirectorPatch,
+} from '@/lib/intelligence/beat-still-director-fallback'
 import type { BeatReferenceSelection, SceneBeat } from '@/lib/script/segmentTypes'
 import {
   filterLocationReferences,
@@ -40,12 +46,14 @@ export interface DirectorObject {
 export interface BeatDirectorDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  shot: SceneShot
+  beat: SceneBeat
   sceneNumber: number
   sceneIndex: number
   scenes: Array<Record<string, unknown>>
   projectId?: string
   readOnly?: boolean
+  /** Open with Safety already checked, for a content-policy failure. */
+  initialSafety?: boolean
   characters: DirectorCharacter[]
   locationReferences: DirectorLocation[]
   objectReferences: DirectorObject[]
@@ -116,10 +124,20 @@ export function BeatDirectorDialog({
   onSaveDirection,
   onToggleObject,
   onSelectLocation,
+  initialSafety = false,
 }: BeatDirectorDialogProps) {
+  const t = useTranslations('production.direction.beatDirector')
   const [instruction, setInstruction] = useState('')
   const [preview, setPreview] = useState<StillDirectorPatch | null>(null)
   const [previewing, setPreviewing] = useState(false)
+  const [safety, setSafety] = useState(initialSafety)
+
+  useEffect(() => {
+    if (!open) return
+    setInstruction('')
+    setPreview(null)
+    setSafety(initialSafety)
+  }, [open, initialSafety])
   const [query, setQuery] = useState('')
   const [scope, setScope] = useState<LibrarySceneFilter>(sceneNumber)
   const [tab, setTab] = useState<ReferenceTab>('locations')
@@ -146,11 +164,16 @@ export function BeatDirectorDialog({
   const connectedObjects = objectReferences.filter((object) =>
     referenceSelection.objectRefIds.includes(object.id)
   )
-  const lines = preview ? previewLines(preview) : []
+  const displayedPreview = preview
+    ? safety
+      ? applyPolicyComplianceToPatch(preview)
+      : preview
+    : null
+  const lines = displayedPreview ? previewLines(displayedPreview) : []
 
   const previewDirection = async () => {
     const note = instruction.trim()
-    if (!note) {
+    if (!note && !safety) {
       toast.error('Write or dictate a direction note first.')
       return
     }
@@ -167,8 +190,9 @@ export function BeatDirectorDialog({
           projectId,
           sceneIndex,
           beatId: beat.beatId,
-          mode: 'rewrite',
-          userDirection: note,
+          mode: note ? 'rewrite' : 'optimize',
+          userDirection: note || undefined,
+          policyCompliance: safety || undefined,
         }),
       })
       const data = await response.json()
@@ -183,7 +207,7 @@ export function BeatDirectorDialog({
 
   const saveDirection = () => {
     if (!preview) return
-    onSaveDirection(preview)
+    onSaveDirection(safety ? applyPolicyComplianceToPatch(preview) : preview)
     setInstruction('')
     setPreview(null)
     onOpenChange(false)
@@ -212,6 +236,23 @@ export function BeatDirectorDialog({
             className="min-w-0"
           />
         </label>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <label className="inline-flex w-fit cursor-pointer items-center gap-2 text-xs text-slate-300">
+                <Checkbox
+                  checked={safety}
+                  onCheckedChange={(checked) => setSafety(checked === true)}
+                  disabled={readOnly || previewing}
+                />
+                {t('safetyOption')}
+              </label>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">{t('safetyOptionTooltip')}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        {safety && <p className="text-[11px] text-slate-500">{t('safetyHint')}</p>}
+
         <button
           type="button"
           className="inline-flex w-fit items-center gap-1 rounded border border-teal-800/80 px-3 py-1.5 text-xs text-teal-100 hover:bg-teal-950/40 disabled:opacity-50"
@@ -224,7 +265,9 @@ export function BeatDirectorDialog({
 
         {lines.length > 0 && (
           <div className="min-w-0 space-y-1 rounded border border-slate-700 bg-slate-950/70 p-3">
-            <p className="text-[10px] uppercase tracking-wide text-slate-500">Direction preview</p>
+            <p className="text-[10px] uppercase tracking-wide text-slate-500">
+              {safety ? t('safetyPreview') : 'Direction preview'}
+            </p>
             {lines.map((row) => (
               <p key={row.label} className="break-words text-xs text-slate-200">
                 <span className="text-slate-500">{row.label}. </span>

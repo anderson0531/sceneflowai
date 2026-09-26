@@ -75,3 +75,15 @@ export function videoRailStatus(facts: VideoClipFacts): { status: VideoRailStatu
   if (facts.imageTier === 'final') return { status: 'ready', label: 'Final' }
   return { status: 'action', label: 'Missing' }
 }
+
+export function isContentPolicyFailureMessage(message: string): boolean {
+  return /content policy|content safety filter|usage guidelines|safety filters/i.test(message)
+}
+
+/** Hover copy for a failed clip thumbnail. Policy failures name the next step. */
+export function clipFailureTooltip(message: string): string {
+  const trimmed = message.trim()
+  const sentence = (trimmed.match(/^.*?[.!?](?:\s|$)/)?.[0] ?? trimmed).trim()
+  if (!isContentPolicyFailureMessage(trimmed)) return sentence
+  return `Content policy blocked. ${sentence} Select this shot to rewrite it.`
+}

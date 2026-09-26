@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  claimNextRunnableVideoIndex,
+  isVideoQueueItemRunnable,
   priorSegmentSupportsVertexExt,
   resolvePriorChainLastFrameUrl,
   resolveVeoRefForExtension,
@@ -69,5 +71,54 @@ describe('veoChainQueue provider awareness', () => {
     expect(resolvePriorChainLastFrameUrl([prev, current], current)).toBe(
       'https://cdn.example.com/part-0-last.png'
     )
+  })
+})
+
+describe('video queue claim', () => {
+  const part0 = seg({
+    segmentId: 'part-0',
+    sequenceIndex: 0,
+    beatId: 'beat-1',
+    dialoguePortion: { partIndex: 0, partCount: 2, lineId: 'ln-1', excerpt: 'Part one' },
+  })
+  const part1 = seg({
+    segmentId: 'part-1',
+    sequenceIndex: 1,
+    beatId: 'beat-1',
+    dialoguePortion: { partIndex: 1, partCount: 2, lineId: 'ln-1', excerpt: 'Part two' },
+    generationMethod: 'EXT',
+  })
+  const independent = seg({
+    segmentId: 'other',
+    sequenceIndex: 2,
+    beatId: 'beat-2',
+  })
+  const segments = [part0, part1, independent]
+  const items = [
+    { segmentId: 'part-0' },
+    { segmentId: 'part-1' },
+    { segmentId: 'other' },
+  ]
+
+  it('starts an independent shot while a continuation waits on its previous part', () => {
+    const batchIds = new Set(items.map((item) => item.segmentId))
+    const finished = new Set<string>()
+    expect(isVideoQueueItemRunnable(part1, batchIds, finished, segments)).toBe(false)
+    expect(isVideoQueueItemRunnable(independent, batchIds, finished, segments)).toBe(true)
+    expect(isVideoQueueItemRunnable(part0, batchIds, finished, segments)).toBe(true)
+
+    const claimed = new Set<number>([0])
+    expect(claimNextRunnableVideoIndex(items, segments, claimed, finished)).toBe(2)
+  })
+
+  it('claims a continuation once its previous part in the batch has finished', () => {
+    const finished = new Set(['part-0'])
+    const claimed = new Set<number>([0])
+    expect(claimNextRunnableVideoIndex(items, segments, claimed, finished)).toBe(1)
+  })
+
+  it('starts a continuation immediately when its predecessor is not in this batch', () => {
+    const onlyContinuation = [{ segmentId: 'part-1' }]
+    expect(claimNextRunnableVideoIndex(onlyContinuation, segments, new Set(), new Set())).toBe(0)
   })
 })

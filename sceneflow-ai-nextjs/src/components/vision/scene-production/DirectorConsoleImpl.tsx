@@ -301,7 +301,7 @@ export interface DirectorConsoleProps {
   /** Open Screening Room Video for this scene. */
   onPlayScene?: () => void
   /** Open Direct Beat for this clip so beat direction stays the prompt source. */
-  onDirectBeat?: (beatId: string) => void
+  onDirectBeat?: (beatId: string, options?: { safety?: boolean }) => void
   /** Shared beat selection with Direction, Audio, and Pre-Vis. */
   selectedBeatId?: string | null
   onSelectBeat?: (beatId: string) => void

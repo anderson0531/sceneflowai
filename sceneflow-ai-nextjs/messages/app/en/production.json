@@ -1247,7 +1247,11 @@
       "chipMatchEnd": "Match the end frame",
       "chipMatchEndText": "Land on the end-frame composition; no camera move that would miss it.",
       "chipKeepFaces": "Keep faces",
-      "chipKeepFacesText": "Keep every directed face in frame for the whole clip."
+      "chipKeepFacesText": "Keep every directed face in frame for the whole clip.",
+      "safetyOption": "Safety",
+      "safetyOptionTooltip": "When rewriting, rephrase the shot direction, the still prompt, and the clip prompt so they conform with Google AI content policies. Aftermath instead of harm in progress, no predatory metaphors, same characters and named props. Does not choose a generation model.",
+      "safetyHint": "Rewrite the shot direction so Google AI content filters are more likely to accept the still and the clip, without changing the story shot, characters, or named props.",
+      "safetyPreview": "Safety rewrite (Google policies)"
     },
     "referenceDirector": {
       "title": "Director — {label}",

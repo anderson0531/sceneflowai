@@ -10,6 +10,8 @@ import { SceneBeatStage } from '@/components/vision/scene-production/SceneBeatSt
 import type { SceneSegment } from './types'
 import type { DirectorQueueItem } from '@/hooks/useVideoQueue'
 import {
+  clipFailureTooltip,
+  isContentPolicyFailureMessage,
   videoMatchesFilters,
   videoRailStatus,
   type VideoAttentionFilter,
@@ -128,7 +130,7 @@ interface BeatVideoGalleryProps {
   /** Open the video pre-flight dialog (Direct Video). */
   onDirectVideo?: (segment: SceneSegment) => void
   /** Open Direct Beat so beat direction stays the source of the still and clip prompts. */
-  onDirectBeat?: (beatId: string) => void
+  onDirectBeat?: (beatId: string, options?: { safety?: boolean }) => void
   /** Edit a completed clip. */
   onEditClip?: (segment: SceneSegment) => void
   /** Restore a stored take as the live clip. */
@@ -219,6 +221,17 @@ export function BeatVideoGallery({
   const preview = visibleClips.find((clip) => clip.key === selectedKey) ?? visibleClips[0]
   const previewStatus = clipStatus(preview?.queueItem)
   const previewSegment = preview?.segment
+  const previewError =
+    previewSegment?.errorMessage?.trim() || preview?.queueItem?.error?.trim() || ''
+  const previewFailed =
+    !!previewError &&
+    (preview?.queueItem?.status === 'error' || previewSegment?.status === 'ERROR')
+  const previewPolicy = previewFailed && isContentPolicyFailureMessage(previewError)
+  const suggestedWording = [
+    previewSegment?.lastContentPolicyFailure?.optionalSanitized?.prompt,
+    previewSegment?.lastContentPolicyFailure?.optionalSanitized?.guidePrompt,
+  ].filter((value): value is string => !!value?.trim())
+  const policyHints = previewSegment?.lastContentPolicyFailure?.hints?.filter((hint) => hint.trim()) ?? []
   const playableTakes = previewSegment
     ? listPlayableTakes(previewSegment.takes, previewSegment.activeAssetUrl)
     : []
@@ -372,12 +385,15 @@ export function BeatVideoGallery({
           items={visibleClips.map((clip) => {
             const facts = clipFacts.find((entry) => entry.key === clip.key)
             const rail = facts ? videoRailStatus(facts) : undefined
+            const errorText = clip.segment?.errorMessage || clip.queueItem?.error
             return {
               id: clip.key,
               beatNumber: clip.beatNumber,
               imageUrl: clip.thumbnailUrl,
               status: rail?.status,
               statusLabel: rail?.label || undefined,
+              statusDetail:
+                rail?.label === 'Error' && errorText ? clipFailureTooltip(errorText) : undefined,
               ariaLabel: clip.label || `Shot ${clip.beatNumber}`,
             }
           })}
@@ -656,6 +672,40 @@ export function BeatVideoGallery({
                     </span>
                   )}
                 </div>
+                {previewFailed && (
+                  <div className="mt-2 space-y-2 rounded-md border border-rose-500/40 bg-rose-950/40 p-2">
+                    <p className="text-xs leading-relaxed text-rose-100">{previewError}</p>
+                    {policyHints.length > 0 && (
+                      <ul className="list-disc space-y-0.5 pl-4 text-[11px] text-rose-100/90">
+                        {policyHints.map((hint) => (
+                          <li key={hint}>{hint}</li>
+                        ))}
+                      </ul>
+                    )}
+                    {suggestedWording.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-[10px] uppercase tracking-wide text-rose-200/80">
+                          Suggested wording
+                        </p>
+                        {suggestedWording.map((wording) => (
+                          <p key={wording} className="text-[11px] leading-relaxed text-rose-50">
+                            {wording}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                    {previewPolicy && onDirectBeat && preview.beatId && (
+                      <button
+                        type="button"
+                        className="inline-flex h-7 items-center gap-1 rounded bg-rose-700 px-2 text-[11px] text-white hover:bg-rose-600"
+                        onClick={() => onDirectBeat(preview.beatId!, { safety: true })}
+                      >
+                        <Clapperboard className="h-3.5 w-3.5" />
+                        Rewrite for Safety
+                      </button>
+                    )}
+                  </div>
+                )}
                 {preview.prompt?.trim() && (
                   <p className="mt-1.5 text-xs leading-relaxed text-slate-400">{preview.prompt.trim()}</p>
                 )}

@@ -82,11 +82,11 @@ describe('Google exhaust then fail — no auto-Kling, no Fal, no Hive', () => {
     expect(preVis).not.toContain('stillPolicyMode')
     expect(preVis).not.toContain('StillPolicyModeControl')
 
-    const beatDirector = readSource('src/components/vision/BeatStillDirectorDialog.tsx')
+    const beatDirector = readSource('src/components/vision/BeatDirectorDialog.tsx')
     expect(beatDirector).not.toContain('StillPolicyModeControl')
     expect(beatDirector).toContain("t('safetyOption')")
     expect(beatDirector).toContain('policyCompliance: safety')
-    expect(beatDirector).toContain('scoreBeatDirectionFidelity')
+    expect(beatDirector).toContain('applyPolicyComplianceToPatch')
   })
 
   it('board overlay uses policy vs declined-references copy, not Generation failed', () => {

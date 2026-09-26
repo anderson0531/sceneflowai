@@ -3,6 +3,8 @@
 import type { ReactNode } from 'react'
 import { AlertTriangle, Check, Loader2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { isContentPolicyFailureMessage } from '@/lib/vision/videoClipFilters'
 
 /**
  * The one shape every agent run reports through.
@@ -108,14 +110,13 @@ function AgentItemRow({ item }: { item: AgentRunItem }) {
     }
   })()
 
-  return (
+  const row = (
     <div
       className={cn(
         'flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px]',
         item.status === 'running' && 'animate-pulse',
         cls
       )}
-      title={item.error}
     >
       <span className="shrink-0">
         {item.status === 'running' && (
@@ -129,9 +130,22 @@ function AgentItemRow({ item }: { item: AgentRunItem }) {
       </span>
       <span className="flex-1 truncate">{item.label}</span>
       {item.status === 'error' && item.error && (
-        <span className="text-[10px] text-rose-200/80 truncate max-w-[100px]">{item.error}</span>
+        <span className="shrink-0 text-[10px] text-rose-200/80">
+          {isContentPolicyFailureMessage(item.error) ? 'Blocked' : 'Failed'}
+        </span>
       )}
     </div>
+  )
+
+  if (item.status !== 'error' || !item.error) return row
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{row}</TooltipTrigger>
+      <TooltipContent side="left" className="max-w-sm whitespace-pre-wrap text-left">
+        {item.error}
+      </TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -222,11 +236,13 @@ export function AgentRunDock({
           {children}
 
           {items?.length ? (
-            <div className="max-h-40 overflow-y-auto space-y-1 pr-0.5">
-              {items.map((item) => (
-                <AgentItemRow key={item.key} item={item} />
-              ))}
-            </div>
+            <TooltipProvider delayDuration={300}>
+              <div className="max-h-40 overflow-y-auto space-y-1 pr-0.5">
+                {items.map((item) => (
+                  <AgentItemRow key={item.key} item={item} />
+                ))}
+              </div>
+            </TooltipProvider>
           ) : null}
         </div>
       ) : null}

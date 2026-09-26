@@ -11,33 +11,52 @@ describe('videoGenerationGate', () => {
     resetVideoGenerationGateForTests()
   })
 
-  it('never runs more than one video generation at once', async () => {
-    expect(CONCURRENCY_DEFAULTS.VIDEO_GENERATION).toBe(1)
+  it('admits two video generations and holds the third', async () => {
+    expect(CONCURRENCY_DEFAULTS.VIDEO_GENERATION).toBe(2)
+    let started = 0
     let inFlight = 0
     let peak = 0
-    let release: (() => void) | undefined
-    const hold = new Promise<void>((resolve) => {
-      release = resolve
+    let releaseFirst: (() => void) | undefined
+    let releaseSecond: (() => void) | undefined
+    let releaseThird: (() => void) | undefined
+    const holdFirst = new Promise<void>((resolve) => {
+      releaseFirst = resolve
+    })
+    const holdSecond = new Promise<void>((resolve) => {
+      releaseSecond = resolve
+    })
+    const holdThird = new Promise<void>((resolve) => {
+      releaseThird = resolve
     })
 
-    const first = runInVideoGenerationGate(async () => {
-      inFlight += 1
-      peak = Math.max(peak, inFlight)
-      await hold
-      inFlight -= 1
-    })
-    const second = runInVideoGenerationGate(async () => {
-      inFlight += 1
-      peak = Math.max(peak, inFlight)
-      inFlight -= 1
-    })
+    const track = (hold: Promise<void>) =>
+      runInVideoGenerationGate(async () => {
+        started += 1
+        inFlight += 1
+        peak = Math.max(peak, inFlight)
+        await hold
+        inFlight -= 1
+      })
 
-    await Promise.resolve()
-    expect(getVideoGenerationGateInFlight()).toBe(1)
-    expect(inFlight).toBe(1)
-    release?.()
-    await Promise.all([first, second])
-    expect(peak).toBe(1)
+    const first = track(holdFirst)
+    const second = track(holdSecond)
+    const third = track(holdThird)
+
+    expect(started).toBe(2)
+    expect(inFlight).toBe(2)
+    expect(getVideoGenerationGateInFlight()).toBe(2)
+    expect(peak).toBe(2)
+
+    releaseFirst?.()
+    await first
+    expect(started).toBe(3)
+    expect(peak).toBe(2)
+    expect(getVideoGenerationGateInFlight()).toBe(2)
+
+    releaseSecond?.()
+    releaseThird?.()
+    await Promise.all([second, third])
+    expect(peak).toBe(2)
     expect(getVideoGenerationGateInFlight()).toBe(0)
   })
 })

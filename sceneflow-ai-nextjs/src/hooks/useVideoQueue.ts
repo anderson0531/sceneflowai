@@ -31,10 +31,10 @@ import { resolveEffectiveStartFrameUrl, resolveF2VFrameUrls, shouldAttachBeatSta
 import { deriveClipQueueStatus } from '@/lib/storyboard/mediaVersions'
 import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 import {
+  claimNextRunnableVideoIndex,
   isVeoChainContinuation,
   resolvePriorChainLastFrameUrl,
   resolveVeoRefForExtension,
-  segmentHasVeoChain,
 } from '@/lib/video/veoChainQueue'
 import { normalizeReferenceImages } from '@/lib/video/normalizeReferenceImages'
 import type {
@@ -399,18 +399,10 @@ export function useVideoQueue(
     }
 
     const { mode, priority, delayBetween, selectedIds, overrideConfigs } = options
-    const requestedConcurrency = Math.min(
+    const concurrency = Math.min(
       options.concurrency || 1,
       CONCURRENCY_DEFAULTS.VIDEO_GENERATION
     )
-    const chainInBatch = queue.some((item) => {
-      const seg = segments.find((s) => s.segmentId === item.segmentId)
-      return seg && segmentHasVeoChain(seg)
-    })
-    const concurrency = chainInBatch ? 1 : requestedConcurrency
-    if (chainInBatch && requestedConcurrency > 1) {
-      toast.info('Veo extension chain detected — rendering parts one at a time')
-    }
     
     // Filter queue based on mode
     let itemsToProcess = queue.filter((item) => {
@@ -464,10 +456,20 @@ export function useVideoQueue(
     
     toast.info(`Starting batch render of ${itemsToProcess.length} segments...`)
     
-    let currentIndex = 0
     let completed = 0
     let failed = 0
     const rateLimitRequeues = new Map<string, number>()
+    const claimed = new Set<number>()
+    const finishedSegmentIds = new Set<string>()
+    const claimWaiters: Array<() => void> = []
+    const notifyClaim = () => {
+      const pending = claimWaiters.splice(0, claimWaiters.length)
+      for (const wake of pending) wake()
+    }
+    const waitForClaim = () =>
+      new Promise<void>((resolve) => {
+        claimWaiters.push(resolve)
+      })
 
     const runItems = new Map<string, VideoRunItem>(
       itemsToProcess.map((item, idx) => [
@@ -511,23 +513,36 @@ export function useVideoQueue(
 
     report(false)
     
-    // Worker function for concurrent processing
+    // Worker function for concurrent processing.
+    // Continuation parts wait until the previous part in this batch finishes.
+    // Independent shots claim the other worker slot.
     const worker = async () => {
-      while (currentIndex < itemsToProcess.length) {
-        if (cancelRequestedRef.current) break
-        
-        const i = currentIndex++
-        const item = itemsToProcess[i]
-        
-        // Update progress and current segment (only accurate for single concurrency)
-        if (concurrency === 1) {
-          setCurrentSegmentId(item.segmentId)
-          setProgress(Math.round((i / itemsToProcess.length) * 100))
+      while (!cancelRequestedRef.current) {
+        const liveSegmentsForClaim = getSegments?.() ?? segments
+        const index = claimNextRunnableVideoIndex(
+          itemsToProcess,
+          liveSegmentsForClaim,
+          claimed,
+          finishedSegmentIds
+        )
+        if (index >= 0) {
+          claimed.add(index)
         } else {
-          // For concurrent mode, update progress based on completed items
-          setProgress(Math.round((completed / itemsToProcess.length) * 100))
+          const unclaimed = itemsToProcess.some((_, itemIndex) => !claimed.has(itemIndex))
+          const running = itemsToProcess.some(
+            (entry, itemIndex) =>
+              claimed.has(itemIndex) && !finishedSegmentIds.has(entry.segmentId)
+          )
+          if (!unclaimed || !running) break
+          await waitForClaim()
+          continue
         }
+
+        const item = itemsToProcess[index]
+        setCurrentSegmentId(item.segmentId)
+        setProgress(Math.round(((completed + failed) / itemsToProcess.length) * 100))
         markItem(item.segmentId, 'running')
+        let handedOff = false
         
         const config = overrideConfigs?.get(item.segmentId) || item.config
         const liveSegments = getSegments?.() ?? segments
@@ -718,6 +733,7 @@ export function useVideoQueue(
                 rateLimitRequeues.set(item.segmentId, requeues + 1)
                 toast.info('Rate limit cleared. Resuming queue...')
                 itemsToProcess.push(item)
+                handedOff = true
                 continue
               }
               failed++
@@ -730,13 +746,18 @@ export function useVideoQueue(
             markItem(
               item.segmentId,
               'error',
-              String(error?.message || error || 'Render failed').slice(0, 140)
+              String(error?.message || error || 'Render failed')
             )
           }
+        } finally {
+          if (!handedOff) {
+            finishedSegmentIds.add(item.segmentId)
+            notifyClaim()
+          }
         }
-        
-        // Rate limiting delay between API calls (only if not concurrent)
-        if (currentIndex < itemsToProcess.length && concurrency === 1) {
+
+        // Serial runs keep a gap between calls. Parallel runs rely on the 429 pause.
+        if (concurrency === 1 && itemsToProcess.some((_, itemIndex) => !claimed.has(itemIndex))) {
           await new Promise((resolve) => setTimeout(resolve, delayBetween))
         }
       }
