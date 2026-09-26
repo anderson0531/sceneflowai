@@ -21,11 +21,11 @@ import {
 
 const PRIORITIES: readonly PolishPriority[] = ['high', 'medium', 'low']
 
-/** Gemini 3 thinking shares this cap; 4k left high thinking with no room for JSON. */
-export const POLISH_MIN_OUTPUT_TOKENS = 16384
+/** Gemini 3 thinking shares this cap. Medium thinking plus 8k stays above the 4k floor that truncated JSON. */
+export const POLISH_MIN_OUTPUT_TOKENS = 8192
 export const POLISH_MAX_OUTPUT_TOKENS = 32768
-/** 28 beats * 800 = 22400, so long scenes lift the 16k thinking floor. */
-export const POLISH_TOKENS_PER_BEAT = 800
+/** 28 beats * 400 = 11200, so long scenes lift the 8k floor. */
+export const POLISH_TOKENS_PER_BEAT = 400
 export const POLISH_TIMEOUT_MS = 150000
 export const POLISH_BUDGET_ERROR = 'Polish ran out of output budget — retry'
 export const POLISH_EMPTY_ERROR = 'Polish returned no analysis — retry'
@@ -190,7 +190,7 @@ export async function analyzeScenePolish(
     model: getAudienceResonanceModel(),
     temperature: 0.1,
     maxOutputTokens,
-    thinkingLevel: 'high',
+    thinkingLevel: 'medium',
     responseMimeType: 'application/json',
     timeoutMs: POLISH_TIMEOUT_MS,
     maxRetries: 0,

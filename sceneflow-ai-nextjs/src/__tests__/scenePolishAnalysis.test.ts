@@ -23,8 +23,10 @@ import {
   slimPolishScene,
   POLISH_BUDGET_ERROR,
   POLISH_EMPTY_ERROR,
+  POLISH_MAX_OUTPUT_TOKENS,
   POLISH_MIN_OUTPUT_TOKENS,
   POLISH_TIMEOUT_MS,
+  POLISH_TOKENS_PER_BEAT,
 } from '@/lib/script/scenePolish'
 
 const ROOT = path.resolve(__dirname, '../..')
@@ -176,13 +178,16 @@ describe('analyzeScenePolish', () => {
 
     await analyzeScenePolish({ scene: wrenchScene() })
 
+    expect(POLISH_MIN_OUTPUT_TOKENS).toBe(8192)
+    expect(POLISH_TOKENS_PER_BEAT).toBe(400)
+    expect(POLISH_MAX_OUTPUT_TOKENS).toBe(32768)
     expect(polishOutputTokenBudget(2)).toBe(POLISH_MIN_OUTPUT_TOKENS)
     expect(polishOutputTokenBudget(30)).toBeGreaterThanOrEqual(POLISH_MIN_OUTPUT_TOKENS)
     expect(generateText).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
         maxOutputTokens: POLISH_MIN_OUTPUT_TOKENS,
-        thinkingLevel: 'high',
+        thinkingLevel: 'medium',
         timeoutMs: POLISH_TIMEOUT_MS,
         maxRetries: 0,
       })
