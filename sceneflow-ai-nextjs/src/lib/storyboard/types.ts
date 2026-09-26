@@ -234,6 +234,8 @@ export interface StoryboardFrameSlot {
   isMissing: boolean
   /** Last generation error when this slot has no image. */
   imageError?: string
+  /** Start-still plate check. End frames and older stills leave this unset. */
+  referenceStatus?: 'pass' | 'drift' | 'miss'
   /** Still history for restore (cap 10). */
   imageVersions?: import('@/lib/storyboard/mediaVersions').MediaVersion[]
   imageVersionId?: string
@@ -360,6 +362,7 @@ function buildBeatFrameSlot(
       frameRole === 'end'
         ? beat.storyboardEndImageError
         : beat.storyboardImageError,
+    referenceStatus: frameRole === 'start' ? beat.storyboardImageReferenceStatus : undefined,
     beatRole: beat.beatRole,
     storyboardImagePrompt:
       frameRole === 'end' ? beat.storyboardEndImagePrompt : beat.storyboardImagePrompt,

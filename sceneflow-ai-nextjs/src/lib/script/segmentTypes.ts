@@ -171,6 +171,9 @@ export interface BeatDirection {
   updatedAt?: string
 }
 
+/** How faithfully a start still used the identity and picture-prop plates sent with it. */
+export type StoryboardReferenceStatus = 'pass' | 'drift' | 'miss'
+
 /**
  * Atomic visual moment in a scene — source of truth for storyboard → segments.
  * Spoken beats (dialogue | narration) carry TTS; action beats are silent visuals.
@@ -213,6 +216,13 @@ export interface SceneBeat {
   storyboardImageGcsPath?: string
   /** draft = Express layout pass; final = hi-res for animatic & video */
   storyboardImageTier?: 'draft' | 'final'
+  /**
+   * Whether the start still used the identity and picture-prop plates that
+   * were sent. Absent on older rows and on Express drafts — missing is not a miss.
+   */
+  storyboardImageReferenceStatus?: StoryboardReferenceStatus
+  /** One sentence from the adherence check, shown when the status is not a pass. */
+  storyboardImageReferenceReason?: string
   /** Optional end frame for in-beat motion and FTV interpolation. */
   storyboardEndImageUrl?: string
   storyboardEndImagePrompt?: string

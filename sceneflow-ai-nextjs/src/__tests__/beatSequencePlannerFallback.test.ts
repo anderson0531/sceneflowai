@@ -365,7 +365,46 @@ Strictly Avoid: Mannequin geometry.`
     expect(framing).toContain('A lit match burns directly on a sepia photograph')
     expect(framing).toContain("'A SceneFlow Studios Production'")
     expect(framing).toContain("1893 Chicago World's Fair Ferris Wheel")
+    expect(framing).toContain("photograph of the 1893 Chicago World's Fair Ferris Wheel")
     expect(framing).not.toMatch(/Typography fades in/)
+  })
+
+  it('keeps a depiction clause the frozen moment left out', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_photo',
+      sequenceIndex: 1,
+      kind: 'action',
+      actionDescription:
+        'Gideon unpins the Framed Photo of Sarah, which depicts a woman with a frozen smile, from the wall.',
+      beatDirection: {
+        shotType: 'Medium Shot',
+        frozenMoment:
+          'Gideon Croft holds the Framed Photo of Sarah face-up over the Zinc workbench.',
+        castInFrame: ['Gideon Croft'],
+      },
+    })
+
+    expect(framing).toContain('holds the Framed Photo of Sarah face-up')
+    expect(framing).toContain('the photograph depicts a woman with a frozen smile')
+    expect(framing).not.toMatch(/unpins/)
+  })
+
+  it('does not repeat a depiction the frozen moment already states', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_photo_held',
+      sequenceIndex: 2,
+      kind: 'action',
+      actionDescription:
+        'He studies the photograph, which depicts Sarah standing beside an experimental 1893 induction coil.',
+      beatDirection: {
+        shotType: 'Close-Up',
+        frozenMoment:
+          'The photograph depicts Sarah standing beside an experimental 1893 induction coil.',
+        castInFrame: ['Gideon Croft'],
+      },
+    })
+
+    expect(framing.match(/induction coil/gi)).toHaveLength(1)
   })
 
   it('puts expanded face and body tells in Action/Framing, not a two-word mood footer', () => {

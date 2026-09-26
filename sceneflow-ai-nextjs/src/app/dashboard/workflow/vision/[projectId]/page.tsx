@@ -176,6 +176,7 @@ import {
   applyStillDirectorPatchToScene,
   type StillDirectorPatch,
 } from '@/lib/intelligence/beat-still-director-fallback'
+import { frameReferenceNotice } from '@/lib/vision/frameListFilters'
 import { toast } from 'sonner'
 import { SceneImageQuotaToast } from '@/components/vision/SceneImageQuotaToast'
 import {
@@ -11970,6 +11971,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       updatedScenes[sceneIndex] = stampPreVisContentHash(
         applyBeatStoryboardImageToScene(updatedScenes[sceneIndex], rawBeatIdx, data.imageUrl, {
           imagePrompt: data.prompt || '',
+          referenceStatus: data.referenceStatus,
+          referenceReason: data.referenceReason,
         })
       )
       const nextScript = {
@@ -11986,7 +11989,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           `scene-${sceneIndex}`
         syncBeatStartFrameToProduction(sceneId, slot.beatId, data.imageUrl)
       }
-      toast.success('Frame generated')
+      const referenceNotice = frameReferenceNotice(data.referenceStatus, data.referenceReason)
+      if (referenceNotice?.level === 'error') toast.error(referenceNotice.message)
+      else if (referenceNotice) toast.warning(referenceNotice.message)
+      else toast.success('Frame generated')
       finishPolicyFrameRun({ status: 'done' })
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Still generation failed'
@@ -12310,7 +12316,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             updatedScenes[sceneIndex],
             payload.beatIndex as number,
             data.imageUrl,
-            { imagePrompt: data.prompt || '' }
+            {
+              imagePrompt: data.prompt || '',
+              referenceStatus: data.referenceStatus,
+              referenceReason: data.referenceReason,
+            }
           )
         )
       } else if (payload.frameType === 'dialogue') {
@@ -12363,7 +12373,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           `scene-${sceneIndex}`
         syncBeatStartFrameToProduction(sceneId, payload.beatId, data.imageUrl)
       }
-      toast.success('Frame generated with Direct')
+      const directReferenceNotice = frameReferenceNotice(data.referenceStatus, data.referenceReason)
+      if (directReferenceNotice?.level === 'error') toast.error(directReferenceNotice.message)
+      else if (directReferenceNotice) toast.warning(directReferenceNotice.message)
+      else toast.success('Frame generated with Direct')
       finishDirectFrameRun({ status: 'done' })
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Direct generation failed'

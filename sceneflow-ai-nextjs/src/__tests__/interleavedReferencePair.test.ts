@@ -98,6 +98,37 @@ describe('buildInterleavedReferencePairCaptions', () => {
     expect(isIdentityReferencePartName(captions[3].name)).toBe(false)
   })
 
+  it('captions a framed photograph as a plate to copy, not the person it shows', () => {
+    const [caption] = buildInterleavedReferencePairCaptions([
+      {
+        imageUrl: 'https://example.com/sarah.jpg',
+        propName: 'Framed Photo of Sarah',
+        promptToken: 'prop [2]',
+        propDescription: "Sarah is a beautiful white woman in her 50's",
+      },
+    ])
+
+    expect(caption.name).toContain('[REFERENCE: PROP - prop [2]]')
+    expect(caption.name).toContain('copy this framed photograph exactly')
+    expect(caption.name).toContain('not in the room')
+    expect(caption.name).not.toMatch(/beautiful white woman/i)
+    expect(caption.name).not.toMatch(/Sarah is/i)
+  })
+
+  it('keeps a non-picture prop description', () => {
+    const [caption] = buildInterleavedReferencePairCaptions([
+      {
+        imageUrl: 'https://example.com/lantern.jpg',
+        propName: 'Brass lantern',
+        promptToken: 'prop [1]',
+        propDescription: 'Aged brass lantern with a glass chimney',
+      },
+    ])
+
+    expect(caption.name).toContain('Aged brass lantern with a glass chimney')
+    expect(caption.name).not.toContain('framed photograph')
+  })
+
   it('does not face-crop a combined character plate', () => {
     const [caption] = buildInterleavedReferencePairCaptions(
       [

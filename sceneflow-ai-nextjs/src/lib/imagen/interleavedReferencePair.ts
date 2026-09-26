@@ -10,6 +10,7 @@
 
 import { buildIdentityPromptToken } from '@/lib/imagen/promptOptimizer'
 import { buildIdentityTraitsClause } from '@/lib/imagen/identityTraitsClause'
+import { isPictureProp, PICTURE_PROP_OBJECT_DESCRIPTOR } from '@/lib/imagen/pictureProp'
 import { formatWardrobeLegendClause } from '@/lib/imagen/structuredStillPrompt'
 import { toCharacterPromptAlias } from '@/lib/character/characterPromptAlias'
 
@@ -139,6 +140,7 @@ function wardrobeDescriptor(character: InterleavedPairCharacter | undefined): st
 }
 
 function objectDescriptor(propName: string, description?: string | null): string {
+  if (isPictureProp(propName, description)) return PICTURE_PROP_OBJECT_DESCRIPTOR
   const usable =
     description && !SCALE_ESSAY_PATTERN.test(description)
       ? clipPairDescriptor(description)
