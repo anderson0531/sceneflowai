@@ -213,6 +213,46 @@ describe('vertexImageGate', () => {
     expect(peak).toBe(6)
   })
 
+  it('starts one replacement when the first holder finishes and one more when the second finishes', async () => {
+    const gates = Array.from({ length: 6 }, () => deferred())
+    const started: number[] = []
+    let active = 0
+    let peak = 0
+
+    const runs = gates.map((g, i) =>
+      runInVertexImageGate(async () => {
+        started.push(i)
+        active += 1
+        peak = Math.max(peak, active)
+        await g.promise
+        active -= 1
+      })
+    )
+
+    await tick()
+    expect(started).toEqual([0, 1])
+    expect(getVertexImageGateSnapshot().waiting).toBe(4)
+
+    gates[0].resolve()
+    await tick()
+    expect(started).toEqual([0, 1, 2])
+    expect(active).toBe(2)
+    expect(peak).toBe(2)
+
+    gates[1].resolve()
+    await tick()
+    expect(started).toEqual([0, 1, 2, 3])
+    expect(active).toBe(2)
+    expect(peak).toBe(2)
+    expect(getVertexImageGateSnapshot().inFlight).toBe(2)
+    expect(getVertexImageGateSnapshot().waiting).toBe(2)
+
+    for (const gate of gates) gate.resolve()
+    await Promise.all(runs)
+    expect(peak).toBe(2)
+    expect(getVertexImageGateSnapshot().inFlight).toBe(0)
+  })
+
   it('honors a raised override for dedicated capacity', async () => {
     process.env.VERTEX_IMAGE_MAX_CONCURRENCY = '8'
     expect(getVertexImageMaxConcurrency()).toBe(8)

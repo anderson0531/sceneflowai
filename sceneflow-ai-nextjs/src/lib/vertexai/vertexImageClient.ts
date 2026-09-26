@@ -5,6 +5,7 @@
  * without reference images — goes through Gemini Image on Vertex (generateContent).
  */
 
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
 import { fetchReferenceImageAsBase64 } from '@/lib/storage/fetchReferenceImage'
 import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalation'
@@ -12,7 +13,7 @@ import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import { priorityPaygoHeaders } from '@/lib/vertexai/priorityPaygo'
 import { runInVertexImageGate } from '@/lib/vertexai/vertexImageGate'
 import {
-  acquireVertexDispatchSlot,
+  acquireImageGenerationLease,
   VertexDispatchDeferredError,
 } from '@/lib/vertexai/vertexDispatchBucket'
 import { fullJitterDelayMs } from '@/lib/utils/retry'
@@ -516,32 +517,45 @@ function logPromptImageTokenUsage(
   }
 }
 
+const imageLeaseHeld = new AsyncLocalStorage<true>()
+
 /**
- * Claim a shared image start time before taking a process slot.
- * The wait must not occupy the gate: a slot held through the sleep would
- * stall every other still on this instance.
+ * Hold the shared image lease for the whole top-level call, including the
+ * start-gap sleep. Nested retries see the store and do not take a second slot.
+ * The sleep happens before `runInVertexImageGate`, so it does not occupy the
+ * process gate.
  */
-async function paceImageDispatch(options: GenerateVertexImageOptions): Promise<void> {
+async function runWithinImageLease<T>(
+  options: GenerateVertexImageOptions,
+  fn: () => Promise<T>
+): Promise<T> {
+  if (imageLeaseHeld.getStore()) return fn()
   if (options.signal?.aborted) throwAbortedByClient()
-  if (options.deadlineAt != null && Date.now() >= options.deadlineAt) return
+  if (options.deadlineAt != null && Date.now() >= options.deadlineAt) return fn()
 
   const maxWaitMs =
     options.deadlineAt != null ? Math.max(0, options.deadlineAt - Date.now()) : undefined
+  let release: () => Promise<void> = async () => {}
   try {
-    await acquireVertexDispatchSlot('image', { maxWaitMs, signal: options.signal })
-  } catch (err) {
-    if (options.signal?.aborted || (err instanceof Error && err.name === 'AbortError')) {
-      throwAbortedByClient()
+    try {
+      release = await acquireImageGenerationLease({ maxWaitMs, signal: options.signal })
+    } catch (err) {
+      if (options.signal?.aborted || (err instanceof Error && err.name === 'AbortError')) {
+        throwAbortedByClient()
+      }
+      if (err instanceof VertexDispatchDeferredError) {
+        const marker = hasIdentityReferenceImages(options)
+          ? IDENTITY_REF_RATE_LIMIT_EXHAUSTED
+          : RATE_LIMIT_FAILED_FAST
+        throw new Error(
+          `Vertex Gemini Image error 429: ${marker} after 1 attempt(s): dispatch wait ${err.retryAfterMs}ms`
+        )
+      }
+      throw err
     }
-    if (err instanceof VertexDispatchDeferredError) {
-      const marker = hasIdentityReferenceImages(options)
-        ? IDENTITY_REF_RATE_LIMIT_EXHAUSTED
-        : RATE_LIMIT_FAILED_FAST
-      throw new Error(
-        `Vertex Gemini Image error 429: ${marker} after 1 attempt(s): dispatch wait ${err.retryAfterMs}ms`
-      )
-    }
-    throw err
+    return await imageLeaseHeld.run(true, fn)
+  } finally {
+    await release()
   }
 }
 
@@ -551,20 +565,22 @@ async function paceImageDispatch(options: GenerateVertexImageOptions): Promise<v
  * Fail-fast holds the process-wide slot for the whole attempt so a sibling
  * cannot start another generateContent while this 429 is being stamped.
  * Nested re-entry (IMAGE_SAFETY escalate, retryCount reset) is reentrant on
- * the gate. Non-fail-fast still wraps only the outbound fetch so backoff
- * sleeps do not occupy a slot. The dispatch wait runs before that gate.
+ * the gate and on the image lease. Non-fail-fast still wraps only the outbound
+ * fetch so backoff sleeps do not occupy a process slot. The shared lease is
+ * the cross-instance cap and stays held until this call settles.
  */
 export async function generateVertexGeminiImage(
   options: GenerateVertexImageOptions,
   retryCount = 0
 ): Promise<VertexImageResult> {
-  await paceImageDispatch(options)
-  if (options.failFastOnRateLimit && retryCount === 0) {
-    return runInVertexImageGate(() =>
-      generateVertexGeminiImageAttempt(options, retryCount)
-    )
-  }
-  return generateVertexGeminiImageAttempt(options, retryCount)
+  return runWithinImageLease(options, () => {
+    if (options.failFastOnRateLimit && retryCount === 0) {
+      return runInVertexImageGate(() =>
+        generateVertexGeminiImageAttempt(options, retryCount)
+      )
+    }
+    return generateVertexGeminiImageAttempt(options, retryCount)
+  })
 }
 
 async function generateVertexGeminiImageAttempt(
