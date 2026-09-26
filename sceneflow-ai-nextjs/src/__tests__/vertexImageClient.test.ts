@@ -12,6 +12,10 @@ import {
   identityPlatesNeed560Warn,
   isIdentityReferencePartName,
 } from '@/lib/vertexai/vertexImageClient'
+import {
+  acquireVertexDispatchSlot,
+  resetVertexDispatchBucketForTests,
+} from '@/lib/vertexai/vertexDispatchBucket'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 
 vi.mock('@/lib/vertexai/client', () => ({
@@ -342,8 +346,48 @@ describe('generateVertexGeminiImage request shape', () => {
   })
 
   afterEach(() => {
+    vi.useRealTimers()
+    process.env.VERTEX_IMAGE_DISPATCH_INTERVAL_MS = '0'
+    resetVertexDispatchBucketForTests()
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
+  })
+
+  it('does not call Vertex when the shared image slot is past the deadline', async () => {
+    const kvBackup = {
+      KV_REST_API_URL: process.env.KV_REST_API_URL,
+      KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
+      UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+      UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+    }
+    vi.useFakeTimers()
+    vi.setSystemTime(1_700_000_000_000)
+    process.env.VERTEX_IMAGE_DISPATCH_INTERVAL_MS = '5000'
+    delete process.env.KV_REST_API_URL
+    delete process.env.UPSTASH_REDIS_REST_URL
+    delete process.env.KV_REST_API_TOKEN
+    delete process.env.UPSTASH_REDIS_REST_TOKEN
+    resetVertexDispatchBucketForTests()
+    try {
+      await acquireVertexDispatchSlot('image')
+      const fetchMock = vi.fn()
+      vi.stubGlobal('fetch', fetchMock)
+
+      await expect(
+        generateVertexGeminiImage({
+          prompt: 'SCENE PROMPT',
+          modelTier: 'eco',
+          deadlineAt: Date.now() + 1000,
+        })
+      ).rejects.toThrow(/rate limit failed fast/)
+
+      expect(fetchMock).not.toHaveBeenCalled()
+    } finally {
+      for (const [key, value] of Object.entries(kvBackup)) {
+        if (value === undefined) delete process.env[key]
+        else process.env[key] = value
+      }
+    }
   })
 
   it('keeps Flash refs labeled, prompt-last, and omits imageSize', async () => {

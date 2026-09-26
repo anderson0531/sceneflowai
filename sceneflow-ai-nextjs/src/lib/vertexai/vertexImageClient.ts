@@ -11,6 +11,11 @@ import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalat
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import { priorityPaygoHeaders } from '@/lib/vertexai/priorityPaygo'
 import { runInVertexImageGate } from '@/lib/vertexai/vertexImageGate'
+import {
+  acquireVertexDispatchSlot,
+  VertexDispatchDeferredError,
+} from '@/lib/vertexai/vertexDispatchBucket'
+import { fullJitterDelayMs } from '@/lib/utils/retry'
 import { getGeminiImageSafetySettings } from '@/lib/vertexai/safety'
 import { MAX_REFERENCE_IMAGES_ECO } from '@/lib/vision/referenceLimits'
 import { combineAbortSignals } from '@/lib/utils/abortSignals'
@@ -155,9 +160,12 @@ function escalateEcoRefusalToPro(
 }
 
 async function sleepWithBackoff(attempt: number): Promise<void> {
-  const delay = Math.min(INITIAL_RETRY_DELAY_MS * 2 ** attempt, MAX_RETRY_DELAY_MS)
-  const jitter = Math.random() * 500
-  await new Promise((r) => setTimeout(r, delay + jitter))
+  const delay = fullJitterDelayMs({
+    attempt,
+    baseMs: INITIAL_RETRY_DELAY_MS,
+    capMs: MAX_RETRY_DELAY_MS,
+  })
+  await new Promise((r) => setTimeout(r, delay))
 }
 
 function parseRetryAfterMs(response: Response): number | null {
@@ -184,9 +192,13 @@ async function sleepRateLimitBackoff(
     RATE_LIMIT_RETRY_DELAYS_MS[
       Math.min(attempt, RATE_LIMIT_RETRY_DELAYS_MS.length - 1)
     ] ?? 30_000
-  const delay = retryAfter != null ? Math.max(retryAfter, scheduled) : scheduled
-  const jitter = Math.random() * 750
-  await new Promise((r) => setTimeout(r, delay + jitter))
+  const delay = fullJitterDelayMs({
+    attempt: 0,
+    baseMs: scheduled,
+    capMs: scheduled,
+    retryAfterMs: retryAfter ?? 0,
+  })
+  await new Promise((r) => setTimeout(r, delay))
 }
 
 function getVertexImageConfig() {
@@ -505,18 +517,48 @@ function logPromptImageTokenUsage(
 }
 
 /**
+ * Claim a shared image start time before taking a process slot.
+ * The wait must not occupy the gate: a slot held through the sleep would
+ * stall every other still on this instance.
+ */
+async function paceImageDispatch(options: GenerateVertexImageOptions): Promise<void> {
+  if (options.signal?.aborted) throwAbortedByClient()
+  if (options.deadlineAt != null && Date.now() >= options.deadlineAt) return
+
+  const maxWaitMs =
+    options.deadlineAt != null ? Math.max(0, options.deadlineAt - Date.now()) : undefined
+  try {
+    await acquireVertexDispatchSlot('image', { maxWaitMs, signal: options.signal })
+  } catch (err) {
+    if (options.signal?.aborted || (err instanceof Error && err.name === 'AbortError')) {
+      throwAbortedByClient()
+    }
+    if (err instanceof VertexDispatchDeferredError) {
+      const marker = hasIdentityReferenceImages(options)
+        ? IDENTITY_REF_RATE_LIMIT_EXHAUSTED
+        : RATE_LIMIT_FAILED_FAST
+      throw new Error(
+        `Vertex Gemini Image error 429: ${marker} after 1 attempt(s): dispatch wait ${err.retryAfterMs}ms`
+      )
+    }
+    throw err
+  }
+}
+
+/**
  * Gemini Image on Vertex (multimodal generateContent).
  *
  * Fail-fast holds the process-wide slot for the whole attempt so a sibling
  * cannot start another generateContent while this 429 is being stamped.
  * Nested re-entry (IMAGE_SAFETY escalate, retryCount reset) is reentrant on
  * the gate. Non-fail-fast still wraps only the outbound fetch so backoff
- * sleeps do not occupy a slot.
+ * sleeps do not occupy a slot. The dispatch wait runs before that gate.
  */
 export async function generateVertexGeminiImage(
   options: GenerateVertexImageOptions,
   retryCount = 0
 ): Promise<VertexImageResult> {
+  await paceImageDispatch(options)
   if (options.failFastOnRateLimit && retryCount === 0) {
     return runInVertexImageGate(() =>
       generateVertexGeminiImageAttempt(options, retryCount)

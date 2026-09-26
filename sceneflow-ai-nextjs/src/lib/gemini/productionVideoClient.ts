@@ -46,6 +46,10 @@ import {
   isVertexBurstRateLimitMessage,
   isVertexRateLimitMessage,
 } from '@/lib/gemini/vertexRateLimit'
+import {
+  acquireVertexDispatchSlot,
+  VertexDispatchDeferredError,
+} from '@/lib/vertexai/vertexDispatchBucket'
 
 // ============================================================================
 // Types
@@ -476,7 +480,26 @@ export async function generateProductionVideo(
       try {
         process.env.VERTEX_PROJECT_ID = projectId
         process.env.VEO_LOCATION = region
-        
+
+        try {
+          await acquireVertexDispatchSlot('video')
+        } catch (err) {
+          if (err instanceof VertexDispatchDeferredError) {
+            const retryAfterSeconds = Math.max(1, Math.ceil(err.retryAfterMs / 1000))
+            console.warn(
+              `[Production Video] Dispatch bucket deferred ${region} for ${retryAfterSeconds}s without calling Vertex`
+            )
+            return {
+              status: 'FAILED',
+              error: `Vertex AI error 429: rate limit — retry after ${retryAfterSeconds} seconds`,
+              provider: 'vertex',
+              region,
+              projectId,
+            }
+          }
+          throw err
+        }
+
         incrementRequestCount(projectId, region)
         
         const result = await generateVideoWithVeo(prompt, videoOptions)

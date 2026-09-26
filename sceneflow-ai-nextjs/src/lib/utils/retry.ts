@@ -89,17 +89,49 @@ export function isRetryableError(error: any, status?: number): boolean {
 }
 
 /**
- * Calculate delay with exponential backoff and jitter
- * delay = min(initialDelay * 2^attempt + random(0-500ms), maxDelay)
+ * Full jitter above an optional Retry-After floor.
+ *
+ * The exponential term is the ceiling of a uniform draw, not a shared sleep.
+ * `delay = floor + random(0, min(cap, base × 2^attempt))`.
+ * Callers that wake from the same 429 therefore do not retry on one timestamp.
+ * A floor of 0 and a roll of 0 is an immediate retry; that is the short end of
+ * the window, and the long end is the cap.
+ */
+export function fullJitterDelayMs(options: {
+  attempt: number
+  baseMs: number
+  capMs: number
+  /** Google's Retry-After, already in milliseconds. Added under the random window. */
+  retryAfterMs?: number
+  /** Test seam. Defaults to Math.random. */
+  random?: () => number
+}): number {
+  const attempt = Number.isFinite(options.attempt) ? Math.max(0, Math.floor(options.attempt)) : 0
+  const baseMs = Math.max(0, options.baseMs)
+  const capMs = Math.max(0, options.capMs)
+  const exponential = baseMs * 2 ** attempt
+  const span = Math.floor(Math.min(capMs, exponential))
+  const random = options.random ?? Math.random
+  const unit = Math.min(1, Math.max(0, random()))
+  const jitter = span <= 0 ? 0 : Math.min(span, Math.floor(unit * (span + 1)))
+  const floor = Math.max(0, options.retryAfterMs ?? 0)
+  return floor + jitter
+}
+
+/**
+ * Calculate delay with exponential backoff and full jitter.
+ * delay = random(0, min(cap, initialDelay × 2^attempt))
  */
 export function calculateBackoffDelay(
   attempt: number,
   initialDelayMs: number,
   maxDelayMs: number
 ): number {
-  const exponentialDelay = initialDelayMs * Math.pow(2, attempt)
-  const jitter = Math.floor(Math.random() * 500)
-  return Math.min(exponentialDelay + jitter, maxDelayMs)
+  return fullJitterDelayMs({
+    attempt,
+    baseMs: initialDelayMs,
+    capMs: maxDelayMs,
+  })
 }
 
 // =============================================================================
@@ -108,7 +140,7 @@ export function calculateBackoffDelay(
 
 /**
  * Execute a function with automatic retry on transient failures
- * Uses exponential backoff with jitter for delay between retries
+ * Uses exponential backoff with full jitter for delay between retries
  * 
  * @example
  * ```typescript

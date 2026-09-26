@@ -29,6 +29,7 @@ import {
   resolveOmniPreviousInteractionId,
 } from '@/lib/gemini/omniVideoInteractions'
 import { parseVertexRetryAfterSeconds } from '@/lib/gemini/vertexRateLimit'
+import { fullJitterDelayMs } from '@/lib/utils/retry'
 
 /**
  * Get Google OAuth2 Bearer token for Vertex AI
@@ -1140,13 +1141,20 @@ export async function waitForVideoCompletion(
       return status
     }
 
-    const waitSeconds =
+    const retryAfterSeconds =
       typeof status.retryAfterSeconds === 'number' && status.retryAfterSeconds > 0
         ? status.retryAfterSeconds
         : pollIntervalSeconds
+    const pollWindowMs = Math.max(0, pollIntervalSeconds) * 1000
+    const delayMs = fullJitterDelayMs({
+      attempt: 0,
+      baseMs: pollWindowMs,
+      capMs: pollWindowMs,
+      retryAfterMs: retryAfterSeconds * 1000,
+    })
     const remainingMs = maxWaitMs - (Date.now() - startTime)
     if (remainingMs <= 0) break
-    await new Promise(resolve => setTimeout(resolve, Math.min(waitSeconds * 1000, remainingMs)))
+    await new Promise(resolve => setTimeout(resolve, Math.min(delayMs, remainingMs)))
   }
 
   return {

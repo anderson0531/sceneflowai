@@ -18,6 +18,7 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
 import { CONCURRENCY_DEFAULTS } from '@/lib/utils/concurrent-processor'
+import { fullJitterDelayMs } from '@/lib/utils/retry'
 import type { 
   SceneSegment, 
   VideoGenerationConfig,
@@ -676,22 +677,30 @@ export function useVideoQueue(
                              errorMessage.includes('isRateLimited')
           
           if (isRateLimit) {
-            // Extract retry time or default to 60 seconds
+            // Extract retry time or default to 60 seconds, then spread the resume
+            // across the full jitter window so parallel Clip runs do not wake together.
             const retryMatch = errorMessage.match(/(\d+)\s*seconds?/i)
             const waitSeconds = retryMatch ? parseInt(retryMatch[1], 10) : 60
+            const delayMs = fullJitterDelayMs({
+              attempt: 0,
+              baseMs: 10_000,
+              capMs: 30_000,
+              retryAfterMs: waitSeconds * 1000,
+            })
+            const jitteredSeconds = Math.max(1, Math.ceil(delayMs / 1000))
             
-            console.log(`[VideoQueue] Rate limited! Pausing for ${waitSeconds} seconds...`)
-            toast.warning(`Rate limit hit. Pausing for ${waitSeconds} seconds...`, {
+            console.log(`[VideoQueue] Rate limited! Pausing for ${jitteredSeconds} seconds...`)
+            toast.warning(`Rate limit hit. Pausing for ${jitteredSeconds} seconds...`, {
               duration: 5000
             })
             
             // Set paused state with countdown
             setIsRateLimitPaused(true)
-            setRateLimitCountdown(waitSeconds)
-            markItem(item.segmentId, 'pending', `Rate limited — retrying in ${waitSeconds}s`)
+            setRateLimitCountdown(jitteredSeconds)
+            markItem(item.segmentId, 'pending', `Rate limited — retrying in ${jitteredSeconds}s`)
             
             // Countdown timer
-            for (let sec = waitSeconds; sec > 0; sec--) {
+            for (let sec = jitteredSeconds; sec > 0; sec--) {
               if (cancelRequestedRef.current) break
               setRateLimitCountdown(sec)
               pausedFor = sec

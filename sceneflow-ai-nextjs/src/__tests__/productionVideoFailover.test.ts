@@ -18,6 +18,10 @@ import {
   getEndpointStatus,
   resetProductionVideoQuotaStateForTests,
 } from '@/lib/gemini/productionVideoClient'
+import {
+  acquireVertexDispatchSlot,
+  resetVertexDispatchBucketForTests,
+} from '@/lib/vertexai/vertexDispatchBucket'
 import { VERTEX_INTERACTIONS_TOO_MANY_REQUESTS } from '@/lib/gemini/vertexRateLimit'
 
 describe('generateProductionVideo failover', () => {
@@ -33,7 +37,10 @@ describe('generateProductionVideo failover', () => {
     delete process.env.VERTEX_PROJECT_IDS
     process.env.VEO_REGIONS = 'us-central1'
     delete process.env.USE_GEMINI_PRIMARY
+    process.env.VERTEX_VIDEO_DISPATCH_INTERVAL_MS = '0'
+    delete process.env.VERTEX_DISPATCH_MAX_WAIT_MS
     resetProductionVideoQuotaStateForTests()
+    resetVertexDispatchBucketForTests()
     vi.clearAllMocks()
   })
 
@@ -110,5 +117,42 @@ describe('generateProductionVideo failover', () => {
     expect(generateVideoWithVeo).toHaveBeenCalledTimes(2)
     expect(result.status).toBe('FAILED')
     expect(result.error).toMatch(/429/)
+  })
+
+  it('does not POST when the video dispatch wait exceeds the pacing deadline', async () => {
+    const kvBackup = {
+      KV_REST_API_URL: process.env.KV_REST_API_URL,
+      KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
+      UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+      UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+    }
+    process.env.VERTEX_VIDEO_DISPATCH_INTERVAL_MS = '30000'
+    process.env.VERTEX_DISPATCH_MAX_WAIT_MS = '1000'
+    delete process.env.KV_REST_API_URL
+    delete process.env.UPSTASH_REDIS_REST_URL
+    delete process.env.KV_REST_API_TOKEN
+    delete process.env.UPSTASH_REDIS_REST_TOKEN
+    resetVertexDispatchBucketForTests()
+    try {
+      await acquireVertexDispatchSlot('video')
+
+      const result = await generateProductionVideo('a quiet street', {
+        forceProvider: 'vertex',
+        preferOmni: true,
+      })
+
+      expect(generateVideoWithVeo).not.toHaveBeenCalled()
+      expect(result.status).toBe('FAILED')
+      expect(result.error).toMatch(/429/)
+      expect(result.error).toMatch(/rate limit/)
+      expect(result.region).toBe('global')
+      const status = getEndpointStatus(['global'])
+      expect(status['omni-failover-test-project']?.global?.rateLimited).toBe(false)
+    } finally {
+      for (const [key, value] of Object.entries(kvBackup)) {
+        if (value === undefined) delete process.env[key]
+        else process.env[key] = value
+      }
+    }
   })
 })
