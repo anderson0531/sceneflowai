@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-25T12:44:13.614Z",
+  "generatedAt": "2026-09-26T11:21:06.205Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -1719,6 +1719,10 @@
       "direction.videoDirector.chipMatchEndText": "ac590e72fd71c6ea",
       "direction.videoDirector.chipKeepFaces": "6e884b0ab407f8d5",
       "direction.videoDirector.chipKeepFacesText": "6d24202bd875152f",
+      "direction.videoDirector.safetyOption": "726d11bd5b230253",
+      "direction.videoDirector.safetyOptionTooltip": "f9ea4cecfbab4d74",
+      "direction.videoDirector.safetyHint": "90c41836a77dd8a5",
+      "direction.videoDirector.safetyPreview": "864f0029c31c0ce1",
       "direction.referenceDirector.title": "fffd8553242d57c9",
       "direction.referenceDirector.description": "493e0140829f02d9",
       "direction.referenceDirector.instructionPlaceholder": "27e2cbb85ced7be8",
