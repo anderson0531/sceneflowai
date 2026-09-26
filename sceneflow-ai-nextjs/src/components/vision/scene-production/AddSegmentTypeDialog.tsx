@@ -544,7 +544,7 @@ export function AddSegmentTypeDialog({
               {/* Beat Selector (for before/after) */}
               {(insertPosition === 'before' || insertPosition === 'after') && existingSegments.length > 0 && (
                 <div className="space-y-3">
-                  <Label className="text-sm font-medium text-slate-300">{t('addType.referenceShot')}</Label>
+                  <Label className="text-sm font-medium text-slate-300">{t('addType.referenceBeat')}</Label>
                   <Select 
                     value={selectedSegmentIndex.toString()} 
                     onValueChange={(v) => setSelectedSegmentIndex(parseInt(v))}

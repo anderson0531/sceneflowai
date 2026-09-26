@@ -707,7 +707,7 @@ export function ScenePromptBuilder({
         parts.push(structure.talentBlocking)
       }
       if (structure.emotionalBeat) {
-        parts.push(`conveying ${structure.emotionalShot}`)
+        parts.push(`conveying ${structure.emotionalBeat}`)
       }
       
       // 5. Art style suffix (from dialog controls)
@@ -776,7 +776,7 @@ export function ScenePromptBuilder({
     
     // Emotional beat (from talent direction)
     if (structure.emotionalBeat) {
-      parts.push(`conveying ${structure.emotionalShot}`)
+      parts.push(`conveying ${structure.emotionalBeat}`)
     }
     
     // Atmosphere

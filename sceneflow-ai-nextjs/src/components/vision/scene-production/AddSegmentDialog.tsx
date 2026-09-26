@@ -497,13 +497,13 @@ export function AddSegmentDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="w-5 h-5 text-primary" />
-            {t('addShot.title')}
+            {t('addBeat.title')}
             <Badge variant="outline" className="ml-2 text-xs">
-              {t('addShot.sceneBadge', { sceneNumber })}
+              {t('addBeat.sceneBadge', { sceneNumber })}
             </Badge>
           </DialogTitle>
           <DialogDescription>
-            {t('addShot.description')}
+            {t('addBeat.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -579,19 +579,19 @@ export function AddSegmentDialog({
               <div className="space-y-3">
                 <h3 className="text-sm font-medium flex items-center gap-2">
                   <Film className="w-4 h-4 text-amber-400" />
-                  {t('addShot.includeSceneDirection')}
+                  {t('addBeat.includeSceneDirection')}
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  {t('addShot.includeSceneDirectionHint')}
+                  {t('addBeat.includeSceneDirectionHint')}
                 </p>
                 
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { key: 'camera' as const, icon: Camera, label: t('addShot.directionCamera'), value: sceneDirection.camera },
-                    { key: 'lighting' as const, icon: Lightbulb, label: t('addShot.directionLighting'), value: sceneDirection.lighting },
-                    { key: 'scene' as const, icon: MapPin, label: t('addShot.directionScene'), value: sceneDirection.scene },
-                    { key: 'talent' as const, icon: Users, label: t('addShot.directionTalent'), value: sceneDirection.talent },
-                    { key: 'audio' as const, icon: Volume2, label: t('addShot.directionAudio'), value: sceneDirection.audio },
+                    { key: 'camera' as const, icon: Camera, label: t('addBeat.directionCamera'), value: sceneDirection.camera },
+                    { key: 'lighting' as const, icon: Lightbulb, label: t('addBeat.directionLighting'), value: sceneDirection.lighting },
+                    { key: 'scene' as const, icon: MapPin, label: t('addBeat.directionScene'), value: sceneDirection.scene },
+                    { key: 'talent' as const, icon: Users, label: t('addBeat.directionTalent'), value: sceneDirection.talent },
+                    { key: 'audio' as const, icon: Volume2, label: t('addBeat.directionAudio'), value: sceneDirection.audio },
                   ].map(({ key, icon: Icon, label, value }) => (
                     <div
                       key={key}
@@ -622,7 +622,7 @@ export function AddSegmentDialog({
                           )}
                           {!value && !selectedDirection[key] && (
                             <p className="text-[10px] text-muted-foreground/50 mt-0.5 italic">
-                              {t('addShot.clickToAddCustom')}
+                              {t('addBeat.clickToAddCustom')}
                             </p>
                           )}
                         </div>
@@ -634,7 +634,7 @@ export function AddSegmentDialog({
                             value={customDirection[key] || value || ''}
                             onChange={(e) => setCustomDirection(prev => ({ ...prev, [key]: e.target.value }))}
                             className="text-xs min-h-[50px] bg-background/50"
-                            placeholder={value ? t('addShot.editOrAddCustomNotes') : t('addShot.addCustomPlaceholder', { label: label.toLowerCase() })}
+                            placeholder={value ? t('addBeat.editOrAddCustomNotes') : t('addBeat.addCustomPlaceholder', { label: label.toLowerCase() })}
                             onClick={(e) => e.stopPropagation()}
                           />
                         </div>
@@ -648,13 +648,13 @@ export function AddSegmentDialog({
               <div className="space-y-3">
                 <h3 className="text-sm font-medium flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-emerald-400" />
-                  {t('addShot.dialogueLines')}
+                  {t('addBeat.dialogueLines')}
                   <Badge variant="secondary" className="text-[10px]">
-                    {t('addShot.veoSpeechBadge')}
+                    {t('addBeat.veoSpeechBadge')}
                   </Badge>
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  {t('addShot.dialogueHint')}
+                  {t('addBeat.dialogueHint')}
                 </p>
                 
                 {dialogueLines.length > 0 ? (
@@ -708,11 +708,11 @@ export function AddSegmentDialog({
                                 value={editedText}
                                 onChange={(e) => handleDialogueTextChange(line.id, e.target.value)}
                                 className="text-xs min-h-[60px] bg-background/50"
-                                placeholder={t('addShot.editDialoguePlaceholder')}
+                                placeholder={t('addBeat.editDialoguePlaceholder')}
                                 onClick={(e) => e.stopPropagation()}
                               />
                               <p className="text-[10px] text-muted-foreground mt-1">
-                                {t('addShot.editDialogueHint')}
+                                {t('addBeat.editDialogueHint')}
                               </p>
                             </div>
                           )}
@@ -722,7 +722,7 @@ export function AddSegmentDialog({
                   </div>
                 ) : (
                   <div className="text-xs text-muted-foreground/50 italic p-3 text-center border border-dashed rounded-lg">
-                    {t('addShot.noDialogue')}
+                    {t('addBeat.noDialogue')}
                   </div>
                 )}
               </div>
@@ -746,7 +746,7 @@ export function AddSegmentDialog({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <Mic className="w-3.5 h-3.5 text-blue-400" />
-                          <span className="text-xs font-medium">{t('addShot.includeNarration')}</span>
+                          <span className="text-xs font-medium">{t('addBeat.includeNarration')}</span>
                         </div>
                         {!includeNarration && (
                           <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2">
@@ -760,22 +760,22 @@ export function AddSegmentDialog({
                     {includeNarration && (
                       <div className="px-3 pb-3 space-y-3">
                         <div>
-                          <Label className="text-xs text-muted-foreground mb-1">{t('addShot.narrationText')}</Label>
+                          <Label className="text-xs text-muted-foreground mb-1">{t('addBeat.narrationText')}</Label>
                           <Textarea
                             value={editedNarrationText}
                             onChange={(e) => setEditedNarrationText(e.target.value)}
                             className="text-xs min-h-[80px] bg-background/50"
-                            placeholder={t('addShot.narrationPlaceholder')}
+                            placeholder={t('addBeat.narrationPlaceholder')}
                             onClick={(e) => e.stopPropagation()}
                           />
                           <p className="text-[10px] text-muted-foreground mt-1">
-                            {t('addShot.narrationEditHint')}
+                            {t('addBeat.narrationEditHint')}
                           </p>
                         </div>
                         
                         {/* Narrator Voice Selection */}
                         <div>
-                          <Label className="text-xs text-muted-foreground mb-1">{t('addShot.narratorVoice')}</Label>
+                          <Label className="text-xs text-muted-foreground mb-1">{t('addBeat.narratorVoice')}</Label>
                           <div onClick={(e) => e.stopPropagation()}>
                             <VoiceSelector
                               provider="elevenlabs"
@@ -790,7 +790,7 @@ export function AddSegmentDialog({
                           </div>
                           {narratorVoiceName && (
                             <p className="text-[10px] text-blue-400 mt-1">
-                              {t('addShot.selectedVoice', { name: narratorVoiceName })}
+                              {t('addBeat.selectedVoice', { name: narratorVoiceName })}
                             </p>
                           )}
                         </div>
@@ -814,7 +814,7 @@ export function AddSegmentDialog({
                       onCheckedChange={(checked) => setAutoEstimateDuration(!!checked)}
                     />
                     <Label htmlFor="auto-duration" className="text-xs text-muted-foreground">
-                      {t('addShot.autoEstimate')}
+                      {t('addBeat.autoEstimate')}
                     </Label>
                   </div>
                 </div>
@@ -836,15 +836,15 @@ export function AddSegmentDialog({
                   </Badge>
                 </div>
                 <p className="text-[10px] text-muted-foreground">
-                  {t('addShot.omniFlashMax', { seconds: MAX_VEO_VIDEO_CLIP_SECONDS })}
+                  {t('addBeat.omniFlashMax', { seconds: MAX_VEO_VIDEO_CLIP_SECONDS })}
                 </p>
               </div>
 
               {/* Additional Notes */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium">{t('addShot.additionalNotes')}</Label>
+                <Label className="text-sm font-medium">{t('addBeat.additionalNotes')}</Label>
                 <Textarea
-                  placeholder={t('addShot.additionalNotesPlaceholder')}
+                  placeholder={t('addBeat.additionalNotesPlaceholder')}
                   value={additionalNotes}
                   onChange={(e) => setAdditionalNotes(e.target.value)}
                   rows={2}
@@ -854,7 +854,7 @@ export function AddSegmentDialog({
 
               {/* Generation Method */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium">{t('addShot.generationMethod')}</Label>
+                <Label className="text-sm font-medium">{t('addBeat.generationMethod')}</Label>
                 <Select 
                   value={generationMethod} 
                   onValueChange={(v) => setGenerationMethod(v as VideoGenerationMethod)}
@@ -865,12 +865,12 @@ export function AddSegmentDialog({
                   <SelectContent>
                     <SelectItem value="T2V">
                       <span className="font-medium">T2V</span>
-                      <span className="text-xs text-muted-foreground ml-2">{t('addShot.t2v')}</span>
+                      <span className="text-xs text-muted-foreground ml-2">{t('addBeat.t2v')}</span>
                     </SelectItem>
                     <SelectItem value="I2V" disabled={!sceneFrameUrl}>
                       <span className="font-medium">I2V</span>
                       <span className="text-xs text-muted-foreground ml-2">
-                        {t('addShot.i2v')} {!sceneFrameUrl && t('addShot.noSceneImage')}
+                        {t('addBeat.i2v')} {!sceneFrameUrl && t('addBeat.noSceneImage')}
                       </span>
                     </SelectItem>
                   </SelectContent>
@@ -883,7 +883,7 @@ export function AddSegmentDialog({
           <div className="w-80 flex flex-col border-l pl-4">
             <h3 className="text-sm font-medium flex items-center gap-2 mb-3">
               <Eye className="w-4 h-4 text-primary" />
-              {t('addShot.promptPreview')}
+              {t('addBeat.promptPreview')}
             </h3>
             
             <div className="flex-1 min-h-0">
@@ -898,11 +898,11 @@ export function AddSegmentDialog({
 
             <div className="mt-4 pt-4 border-t space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">{t('addShot.startTime')}</span>
+                <span className="text-muted-foreground">{t('addBeat.startTime')}</span>
                 <span className="font-mono">{nextStartTime.toFixed(1)}s</span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">{t('addShot.endTime')}</span>
+                <span className="text-muted-foreground">{t('addBeat.endTime')}</span>
                 <span className="font-mono">{(nextStartTime + duration).toFixed(1)}s</span>
               </div>
               <div className="flex items-center justify-between text-xs">
@@ -910,11 +910,11 @@ export function AddSegmentDialog({
                 <Badge variant="secondary" className="text-[10px]">{duration}s</Badge>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">{t('addShot.method')}</span>
+                <span className="text-muted-foreground">{t('addBeat.method')}</span>
                 <Badge variant="outline" className="text-[10px]">{generationMethod}</Badge>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">{t('addShot.dialogueLines')}</span>
+                <span className="text-muted-foreground">{t('addBeat.dialogueLines')}</span>
                 <span className="font-mono">{selectedDialogueTexts.size}</span>
               </div>
             </div>
@@ -927,7 +927,7 @@ export function AddSegmentDialog({
           </Button>
           <Button onClick={handleCreate}>
             <Sparkles className="w-4 h-4 mr-2" />
-            {t('addShot.addAction')}
+            {t('addBeat.addAction')}
           </Button>
         </DialogFooter>
       </DialogContent>

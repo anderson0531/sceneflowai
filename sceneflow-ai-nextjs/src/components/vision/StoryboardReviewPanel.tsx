@@ -99,7 +99,7 @@ export function StoryboardReviewPanel({
                 </div>
               )}
               <span
-                className={`absolute top-1 left-1 text-[10px] px-1.5 py-0.5 rounded ${kindBadgeClass(shot.kind)}`}
+                className={`absolute top-1 left-1 text-[10px] px-1.5 py-0.5 rounded ${kindBadgeClass(beat.kind)}`}
               >
                 {kindLabel(beat.kind)}
               </span>
