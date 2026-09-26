@@ -11,6 +11,7 @@ import type { SceneSegment } from './types'
 import type { DirectorQueueItem } from '@/hooks/useVideoQueue'
 import {
   videoMatchesFilters,
+  videoRailStatus,
   type VideoAttentionFilter,
   type VideoClipFacts,
   type VideoQualityFilter,
@@ -369,13 +370,14 @@ export function BeatVideoGallery({
         <SceneBeatStage
           railLabel="Shot clips"
           items={visibleClips.map((clip) => {
-            const complete =
-              clip.queueItem?.status === 'complete' || segmentHasPlayableVideo(clip.segment)
+            const facts = clipFacts.find((entry) => entry.key === clip.key)
+            const rail = facts ? videoRailStatus(facts) : undefined
             return {
               id: clip.key,
               beatNumber: clip.beatNumber,
               imageUrl: clip.thumbnailUrl,
-              status: complete ? 'ready' as const : clip.queueItem?.status === 'error' ? 'attention' as const : 'idle' as const,
+              status: rail?.status,
+              statusLabel: rail?.label || undefined,
               ariaLabel: clip.label || `Shot ${clip.beatNumber}`,
             }
           })}
