@@ -100,7 +100,9 @@ Strictly Avoid: Mannequin geometry.`,
 
     expect(next.storyboardImagePrompt).toContain('[REFERENCES]')
     expect(next.storyboardImagePrompt).toContain('location [1]')
-    expect(next.storyboardImagePrompt).toContain('prop [2] = Brass pressure gauge')
+    expect(next.storyboardImagePrompt).toContain(
+      'prop [2] (Brass pressure gauge) is the object in the prop image of prop [2].'
+    )
     expect(next.storyboardImagePrompt).toContain('prop [2] needle pinned to the maximum')
   })
 

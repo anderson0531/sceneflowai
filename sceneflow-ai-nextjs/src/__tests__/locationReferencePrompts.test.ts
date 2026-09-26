@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  buildSceneImageLocationLabel,
-  LOCATION_PLATE_NAMED_HARDWARE_CLAUSE,
-} from '@/lib/imagen/sceneImageReferenceLabels'
+import { buildSceneImageLocationLabel } from '@/lib/imagen/sceneImageReferenceLabels'
 import { locationScaleClause } from '@/lib/imagen/locationScaleClause'
 import {
   LOCATION_OBJECT_INSERT_CONSUMPTION_INSTRUCTION,
@@ -195,31 +192,28 @@ describe('locationReferencePrompts', () => {
 })
 
 describe('buildSceneImageLocationLabel', () => {
-  it('keeps extreme-wide wording on an establishing beat', () => {
-    expect(buildSceneImageLocationLabel('VAULT', 3, 'location [3]', { shotType: 'Wide Shot' })).toContain(
-      'extreme-wide establishing shot'
+  it('names the location token and leaves shot rules out of the caption', () => {
+    expect(buildSceneImageLocationLabel('VAULT', 3, 'location [3]', { shotType: 'Wide Shot' })).toBe(
+      'The next image is location [3].'
     )
   })
 
-  it('labels a two-shot plate as environment, not a second wide subject', () => {
+  it('uses the location token, not the send index, on a two-shot', () => {
     const label = buildSceneImageLocationLabel('VAULT', 5, 'location [5]', {
       shotType: 'Two-Shot',
     })
-    expect(label).toContain('location [5]')
-    expect(label).toContain('Reference image 5')
-    expect(label).toContain('environment plate')
+    expect(label).toBe('The next image is location [5].')
+    expect(label).not.toContain('Reference image')
     expect(label).not.toContain('extreme-wide establishing shot')
-    expect(label).not.toContain(LOCATION_PLATE_NAMED_HARDWARE_CLAUSE)
   })
 
-  it('names built-in hardware on the location plate when the action turns a lockdown wheel', () => {
+  it('keeps mounted-hardware rules out of the location caption', () => {
     const label = buildSceneImageLocationLabel('FREIGHT TUNNEL VAULT - WORKBENCH', 4, 'location [1]', {
       shotType: 'Medium Shot',
       actionFraming:
         'person [1] pulls down hard on the handle of prop [1] attached to the Massive brass lockdown wheel.',
     })
-    expect(label).toContain('location [1]')
-    expect(label).toContain('environment plate')
-    expect(label).toContain(LOCATION_PLATE_NAMED_HARDWARE_CLAUSE)
+    expect(label).toBe('The next image is location [1].')
+    expect(label).not.toContain('lockdown')
   })
 })

@@ -33,7 +33,7 @@ describe('buildSegmentEnhancedPrompt', () => {
 
   it('builds REF multimodal preamble and reference fallback', () => {
     const { enhancedPrompt, referenceFallbackPrompt } = buildSegmentEnhancedPrompt({
-      prompt: 'Elara leans forward during an interview.',
+      prompt: 'Elara Vance leans forward during an interview.',
       guidePrompt: "ELARA says: 'It was not me.'",
       method: 'REF',
       referenceImages: [
@@ -45,11 +45,15 @@ describe('buildSegmentEnhancedPrompt', () => {
         },
       ],
     })
-    expect(enhancedPrompt).toContain('References: keep the subject')
-    expect(enhancedPrompt).toContain('Elara leans forward')
+    expect(enhancedPrompt).toContain('Use the images above.')
+    expect(enhancedPrompt).toContain(
+      'person [1] (Elara Vance) is the person in the identity image of person [1].'
+    )
+    expect(enhancedPrompt).toContain('person [1] leans forward')
     expect(enhancedPrompt).toContain("ELARA says: 'It was not me.'")
+    expect(enhancedPrompt).not.toContain('keep the subject, wardrobe, and location consistent')
     expect(referenceFallbackPrompt).toBeDefined()
-    expect(referenceFallbackPrompt).not.toContain('References: keep the subject')
+    expect(referenceFallbackPrompt).not.toContain('Use the images above.')
   })
 
   it('adds audio-visual sync context when provided', () => {

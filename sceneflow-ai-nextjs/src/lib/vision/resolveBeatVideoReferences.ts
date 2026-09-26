@@ -2,12 +2,8 @@
  * Resolve prioritized reference images for Omni REF video generation on a beat.
  */
 
-import {
-  buildIdentityReferenceLabel,
-  buildWardrobeDiptychReferenceLabel,
-  buildWardrobeReferenceLabel,
-  resolveCharacterReferencePair,
-} from '@/lib/character/characterReferenceAssembly'
+import { resolveCharacterReferencePair } from '@/lib/character/characterReferenceAssembly'
+import { formatNextImageCaption } from '@/lib/vision/referenceImageBinding'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
@@ -33,6 +29,11 @@ export type LabeledVideoReference = {
   type: 'character' | 'style'
   name: string
   role?: PrioritizedReferenceImage['role']
+  characterName?: string
+  propName?: string
+  locationName?: string
+  promptToken?: string
+  subjectOrdinal?: number
 }
 
 export type ResolvedBeatVideoReferences = {
@@ -55,6 +56,43 @@ export type ResolveBeatVideoReferencesArgs = {
   locationReferences: LocationReference[]
   objectReferences: VisualReference[]
   filmTitle?: string
+}
+
+function videoPersonToken(personTokenIndex?: number): string {
+  return personTokenIndex != null ? `person [${personTokenIndex}]` : 'person [1]'
+}
+
+function videoIdentityLabel(
+  _name: string,
+  _index: number,
+  personTokenIndex?: number
+): string {
+  return formatNextImageCaption({
+    role: 'identity',
+    token: videoPersonToken(personTokenIndex),
+  })
+}
+
+function videoWardrobeLabel(
+  _name: string,
+  _index: number,
+  personTokenIndex?: number
+): string {
+  return formatNextImageCaption({
+    role: 'wardrobe',
+    token: videoPersonToken(personTokenIndex),
+  })
+}
+
+function videoDiptychLabel(
+  _name: string,
+  _index?: number,
+  personTokenIndex?: number
+): string {
+  return formatNextImageCaption({
+    role: 'character',
+    token: videoPersonToken(personTokenIndex),
+  })
 }
 
 /** Cast, location, and key props used for both Omni REF and Kling elements. */
@@ -154,8 +192,12 @@ export function resolveBeatVideoReferences(
     characterName: string
   }> = []
 
-  const characterMeta: Array<{ name: string; hasDualReferences?: boolean; hasWardrobeDiptych?: boolean }> =
-    []
+  const characterMeta: Array<{
+    name: string
+    hasDualReferences?: boolean
+    hasWardrobeDiptych?: boolean
+    subjectOrdinal?: number
+  }> = []
 
   for (const charId of selection.characterIds ?? []) {
     const char = findCharacterById(charId, projectCharacters)
@@ -175,6 +217,7 @@ export function resolveBeatVideoReferences(
       name: char.name,
       hasDualReferences: refPair.hasDualReferences,
       hasWardrobeDiptych: sentDiptych,
+      subjectOrdinal: characterMeta.length + 1,
     })
 
     // Identity is the face the library shot. A wardrobe plate or combined sheet
@@ -235,16 +278,22 @@ export function resolveBeatVideoReferences(
   const characterRefEntries = buildCharacterReferenceEntries(
     imageReferences,
     characterMeta,
-    buildIdentityReferenceLabel,
-    buildWardrobeReferenceLabel,
+    videoIdentityLabel,
+    videoWardrobeLabel,
     0,
-    buildWardrobeDiptychReferenceLabel
+    videoDiptychLabel
   )
-  const propRefEntries = buildPropReferenceEntries(objectImageReferences, characterRefEntries.length)
+  const propRefEntries = buildPropReferenceEntries(objectImageReferences, characterRefEntries.length).map(
+    (entry, index) => ({
+      ...entry,
+      promptToken: `prop [${index + 1}]`,
+    })
+  )
   const locationRefEntry = buildLocationReferenceEntry(
     mappedLocation,
     characterRefEntries.length + propRefEntries.length
   )
+  if (locationRefEntry) locationRefEntry.promptToken = 'location [1]'
 
   const allPrioritized = [
     ...characterRefEntries,
@@ -256,9 +305,14 @@ export function resolveBeatVideoReferences(
     allPrioritized,
     MAX_VERTEX_GEMINI_REFERENCE_IMAGES,
     {
-      buildIdentityLabel: buildIdentityReferenceLabel,
-      buildWardrobeLabel: buildWardrobeReferenceLabel,
-      buildDiptychLabel: buildWardrobeDiptychReferenceLabel,
+      buildIdentityLabel: videoIdentityLabel,
+      buildWardrobeLabel: videoWardrobeLabel,
+      buildDiptychLabel: videoDiptychLabel,
+      buildPropLabel: (_propName, _sendIndex, promptToken) =>
+        formatNextImageCaption({ role: 'prop', token: promptToken || 'prop [1]' }),
+      buildLocationLabel: (_locationName, _sendIndex, promptToken) =>
+        formatNextImageCaption({ role: 'location', token: promptToken || 'location [1]' }),
+      preserveLibraryPromptTokens: true,
     }
   )
 
@@ -274,6 +328,11 @@ export function resolveBeatVideoReferences(
     type: ref.role === 'location' || ref.role.startsWith('prop-') ? 'style' : 'character',
     name: ref.name,
     role: ref.role,
+    characterName: ref.characterName,
+    propName: ref.propName,
+    locationName: ref.locationName,
+    promptToken: ref.promptToken,
+    subjectOrdinal: ref.subjectOrdinal,
   }))
 
   return {

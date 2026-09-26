@@ -79,6 +79,11 @@ export type VeoReferenceImage = {
   type: 'style' | 'character'
   name?: string
   role?: PrioritizedReferenceImage['role']
+  characterName?: string
+  propName?: string
+  locationName?: string
+  promptToken?: string
+  subjectOrdinal?: number
 }
 
 /** Accept string URLs (Director dialog) or structured labeled refs. */
@@ -99,6 +104,11 @@ export function normalizeReferenceImages(
         type: item.type === 'style' ? 'style' : 'character',
         name: item.name,
         role: item.role,
+        characterName: item.characterName,
+        propName: item.propName,
+        locationName: item.locationName,
+        promptToken: item.promptToken,
+        subjectOrdinal: item.subjectOrdinal,
       }
     })
     .filter((item): item is VeoReferenceImage => item !== null)
@@ -114,6 +124,11 @@ export function veoRefsToPrioritized(
     role:
       ref.role ??
       (ref.type === 'style' ? 'location' : 'identity'),
+    characterName: ref.characterName,
+    propName: ref.propName,
+    locationName: ref.locationName,
+    promptToken: ref.promptToken,
+    subjectOrdinal: ref.subjectOrdinal,
   }))
 }
 
@@ -144,10 +159,19 @@ type RefWithRole = {
 
 function inferRoleFromRefLabel(ref: RefWithRole): PrioritizedReferenceImage['role'] | undefined {
   const label = ref.label?.trim().toLowerCase() ?? ''
-  if (label.includes('identity reference')) return 'identity'
-  if (label.includes('location reference')) return 'location'
-  if (label.includes('prop reference')) return 'prop-other'
-  if (label.includes('wardrobe') || label.includes('diptych ref')) return 'wardrobe'
+  if (label.includes('identity and wardrobe')) return 'wardrobe'
+  if (label.includes('the next image is the identity') || label.includes('identity reference')) {
+    return 'identity'
+  }
+  if (label.includes('the next image is location') || label.includes('location reference')) {
+    return 'location'
+  }
+  if (label.includes('the next image is prop') || label.includes('prop reference')) {
+    return 'prop-other'
+  }
+  if (label.includes('the next image is the wardrobe') || label.includes('wardrobe') || label.includes('diptych ref')) {
+    return 'wardrobe'
+  }
   if (ref.type === 'style') return 'location'
   if (ref.type === 'character' && label && !label.includes('prop')) return 'wardrobe'
   return undefined

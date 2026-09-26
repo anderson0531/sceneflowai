@@ -12,7 +12,7 @@ const PIPER_VISION =
   'light-tan complexion. She has straight, shoulder-length black hair with a center part.'
 
 describe('formatInterleavedReferencePair', () => {
-  it('emits [REFERENCE: ROLE - token] then the descriptor', () => {
+  it('emits the next-image caption then the descriptor', () => {
     expect(
       formatInterleavedReferencePair({
         role: 'IDENTITY',
@@ -20,7 +20,7 @@ describe('formatInterleavedReferencePair', () => {
         descriptor: 'Facial reference for Piper Hayes: East Asian, warm light-tan complexion',
       })
     ).toBe(
-      '[REFERENCE: IDENTITY - person [1]] Facial reference for Piper Hayes: East Asian, warm light-tan complexion'
+      'The next image is the identity of person [1]. Facial reference for Piper Hayes: East Asian, warm light-tan complexion'
     )
   })
 })
@@ -73,16 +73,16 @@ describe('buildInterleavedReferencePairCaptions', () => {
     )
 
     expect(captions[0].name).toMatch(
-      /^\[REFERENCE: IDENTITY - person \[1\]\] Facial reference for Piper Hayes:/
+      /^The next image is the identity of person \[1\]\. Facial reference for Piper Hayes:/
     )
     expect(captions[0].name).toMatch(/East Asian/)
     expect(captions[1].name).toMatch(
-      /^\[REFERENCE: WARDROBE - person \[1\]\] Outfit reference:/
+      /^The next image is the wardrobe of person \[1\]\. Outfit reference:/
     )
     expect(captions[1].name).toMatch(/Subterranean Arrival/)
-    expect(captions[2].name).toMatch(/^\[REFERENCE: PROP - prop \[1\]\] Object reference:/)
+    expect(captions[2].name).toMatch(/^The next image is prop \[1\]\. Object reference:/)
     expect(captions[3].name).toMatch(
-      /^\[REFERENCE: LOCATION - location \[1\]\] Environment reference:/
+      /^The next image is location \[1\]\. Environment reference:/
     )
 
     const joined = captions.map((caption) => caption.name).join('\n')
@@ -108,7 +108,7 @@ describe('buildInterleavedReferencePairCaptions', () => {
       },
     ])
 
-    expect(caption.name).toContain('[REFERENCE: PROP - prop [2]]')
+    expect(caption.name).toContain('The next image is prop [2].')
     expect(caption.name).toContain('copy this framed photograph exactly')
     expect(caption.name).toContain('not in the room')
     expect(caption.name).not.toMatch(/beautiful white woman/i)
@@ -144,7 +144,7 @@ describe('buildInterleavedReferencePairCaptions', () => {
       [{ name: 'Piper Hayes', promptToken: 'person [1]', subjectOrdinal: 1 }]
     )
 
-    expect(caption.name).toMatch(/^\[REFERENCE: CHARACTER - person \[1\]\]/)
+    expect(caption.name).toMatch(/^The next image is the identity and wardrobe of person \[1\]\./)
     expect(isIdentityReferencePartName(caption.name)).toBe(false)
   })
 })
@@ -183,10 +183,10 @@ describe('applyInterleavedPairCaptionsToNamedImages', () => {
       }
     )
 
-    expect(captions[0].name).toContain('[REFERENCE: IDENTITY - person [1]]')
-    expect(captions[1].name).toContain('[REFERENCE: WARDROBE - person [1]]')
-    expect(captions[2].name).toContain('[REFERENCE: PROP - prop [1]]')
-    expect(captions[3].name).toContain('[REFERENCE: LOCATION - location [1]]')
+    expect(captions[0].name).toContain('The next image is the identity of person [1].')
+    expect(captions[1].name).toContain('The next image is the wardrobe of person [1].')
+    expect(captions[2].name).toContain('The next image is prop [1].')
+    expect(captions[3].name).toContain('The next image is location [1].')
     expect(captions[2].name).not.toMatch(/furniture \/ set-piece/)
     expect(captions[3].name).not.toMatch(/extreme-wide establishing/)
   })

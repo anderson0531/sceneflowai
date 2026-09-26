@@ -24,12 +24,17 @@ describe('buildOmniVideoReferencePrompt', () => {
         'ELARA VANCE speaks: "I\'m telling you, it wasn\'t me!"',
     })
 
+    expect(text).toContain('Use the images above.')
     expect(text).toContain(
-      'Slow dolly push-in on Elara Vance in an interrogation room'
+      'person [1] (Elara Vance) is the person in the identity image of person [1].'
     )
     expect(text).toContain(
-      'References: keep the subject, wardrobe, and location consistent with the provided images.'
+      'location [1] (POLICE STATION) is the place in the location image of location [1].'
     )
+    expect(text).toContain(
+      'Slow dolly push-in on person [1] in an interrogation room'
+    )
+    expect(text).not.toContain('keep the subject, wardrobe, and location consistent')
     expect(text).toContain('ELARA VANCE speaks')
 
     expect(text).not.toContain('SCENE ACTION:')
@@ -49,7 +54,7 @@ describe('buildOmniVideoReferencePrompt', () => {
     })
 
     expect(text).toBe('Wide establishing shot of the city.')
-    expect(text).not.toContain('References:')
+    expect(text).not.toContain('Use the images above.')
   })
 
   it('does not embed negative prompt in reference prompt text', () => {

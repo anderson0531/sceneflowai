@@ -1,11 +1,9 @@
 /**
- * Interleaved `[REFERENCE: ROLE - token]` captions for Gemini Pro stills.
+ * Captions for Gemini Pro stills. Each plate is the text part immediately
+ * before its image: "The next image is the identity of person [1]."
  *
- * Pro thinking T2I typeset send-index labels (`person [1]`, `prop [3]`) and the
- * `[REFERENCES]` wall onto the frame. Each plate is paired with a short
- * physical descriptor and a role-stable token (`person [1]`, `prop [1]`) so
- * action text and the image beside it use the same name. Flash keeps the
- * structured `[REFERENCES]` still.
+ * The token matches the instruction (`person [1]`, `prop [1]`, `location [1]`).
+ * A short physical descriptor may follow the sentence. Shot rules stay in the task.
  */
 
 import { buildIdentityPromptToken } from '@/lib/imagen/promptOptimizer'
@@ -13,6 +11,7 @@ import { buildIdentityTraitsClause } from '@/lib/imagen/identityTraitsClause'
 import { isPictureProp, PICTURE_PROP_OBJECT_DESCRIPTOR } from '@/lib/imagen/pictureProp'
 import { formatWardrobeLegendClause } from '@/lib/imagen/structuredStillPrompt'
 import { toCharacterPromptAlias } from '@/lib/character/characterPromptAlias'
+import { formatNextImageCaption } from '@/lib/vision/referenceImageBinding'
 
 export const PAIR_DESCRIPTOR_WORD_CAP = 18
 
@@ -67,9 +66,21 @@ export function formatInterleavedReferencePair(args: {
   token: string
   descriptor: string
 }): string {
-  const tag = `[REFERENCE: ${args.role} - ${args.token}]`
-  const descriptor = clipPairDescriptor(args.descriptor)
-  return descriptor ? `${tag} ${descriptor}` : tag
+  const role =
+    args.role === 'IDENTITY'
+      ? 'identity'
+      : args.role === 'WARDROBE'
+        ? 'wardrobe'
+        : args.role === 'CHARACTER'
+          ? 'character'
+          : args.role === 'PROP'
+            ? 'prop'
+            : 'location'
+  return formatNextImageCaption({
+    role,
+    token: args.token,
+    descriptor: clipPairDescriptor(args.descriptor),
+  })
 }
 
 function libraryKindToken(

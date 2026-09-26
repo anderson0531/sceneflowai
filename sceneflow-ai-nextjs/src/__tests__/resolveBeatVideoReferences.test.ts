@@ -64,7 +64,8 @@ describe('resolveBeatVideoReferences', () => {
     expect(resolved.urlList.length).toBeGreaterThanOrEqual(2)
     expect(resolved.urlList).toContain('https://blob.example/elara.jpg')
     expect(resolved.urlList).toContain('https://blob.example/elara-wardrobe.jpg')
-    expect(resolved.labeledRefs.some((r) => r.name.includes('Elara'))).toBe(true)
+    expect(resolved.labeledRefs.some((r) => r.name.startsWith('The next image is the identity of person [1].'))).toBe(true)
+    expect(resolved.labeledRefs.some((r) => /Char_/.test(r.name))).toBe(false)
     expect(resolved.labeledRefs.some((r) => r.role === 'location')).toBe(true)
 
     const elements = resolveBeatElementSelection({

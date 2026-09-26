@@ -433,6 +433,11 @@ export function toConfigReferenceImages(resolved: {
       type: r.type,
       name: r.name,
       role: r.role,
+      characterName: r.characterName,
+      propName: r.propName,
+      locationName: r.locationName,
+      promptToken: r.promptToken,
+      subjectOrdinal: r.subjectOrdinal,
     }))
   }
   if (resolved.referenceImages?.length) {

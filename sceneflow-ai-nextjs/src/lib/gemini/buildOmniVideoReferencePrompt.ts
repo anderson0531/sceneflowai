@@ -1,9 +1,16 @@
 /**
- * Build labeled multimodal preamble for Gemini Omni reference_to_video.
- * Keep text minimal — mirrors concise Gemini chat prompts to avoid policy false positives.
+ * Build the text portion of an Omni reference_to_video request.
+ * Image captions are separate multimodal parts. This block points backward
+ * at those images with the same person / prop / location tokens.
  */
 
 import type { PrioritizedReferenceImage } from '@/lib/vision/referenceLimits'
+import {
+  bindingsFromReferenceRecords,
+  formatImagesAboveBinding,
+  formatNextImageCaption,
+  rewriteVisualNamesToTokens,
+} from '@/lib/vision/referenceImageBinding'
 
 export interface OmniVideoReferencePromptInput {
   scenePrompt: string
@@ -16,36 +23,32 @@ export interface OmniVideoReferencePromptInput {
  * Per-image labels are sent as separate multimodal parts; keep this block concise.
  */
 export function buildOmniVideoReferencePrompt(input: OmniVideoReferencePromptInput): string {
+  const bindings = bindingsFromReferenceRecords(input.refs)
+  const scenePrompt = rewriteVisualNamesToTokens(input.scenePrompt?.trim() || '', bindings)
   const parts: string[] = []
 
-  const scenePrompt = input.scenePrompt?.trim()
-  if (scenePrompt) {
-    parts.push(scenePrompt)
-  }
+  const bindingLead = formatImagesAboveBinding(bindings)
+  if (bindingLead) parts.push(bindingLead)
 
-  if (input.refs.length > 0) {
-    if (parts.length > 0) parts.push('')
-    parts.push(
-      'References: keep the subject, wardrobe, and location consistent with the provided images.'
-    )
-  }
+  if (scenePrompt) parts.push(scenePrompt)
 
   const guide = input.guidePrompt?.trim()
-  if (guide) {
-    parts.push('')
-    parts.push(guide)
-  }
+  if (guide) parts.push(guide)
 
-  return parts.join('\n').trim()
+  return parts.join('\n\n').trim()
 }
 
 /** Map prioritized refs to Omni reference image payloads with labels. */
 export function refsToOmniReferenceImages(
   refs: PrioritizedReferenceImage[]
 ): Array<{ imageUrl: string; label: string; role: PrioritizedReferenceImage['role'] }> {
-  return refs.map((ref) => ({
-    imageUrl: ref.imageUrl,
-    label: ref.name,
-    role: ref.role,
-  }))
+  const bindings = bindingsFromReferenceRecords(refs)
+  return refs.map((ref, index) => {
+    const binding = bindings[index]
+    return {
+      imageUrl: ref.imageUrl,
+      label: binding ? formatNextImageCaption(binding) : ref.name,
+      role: ref.role,
+    }
+  })
 }

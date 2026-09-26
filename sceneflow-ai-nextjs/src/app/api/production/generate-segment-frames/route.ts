@@ -19,23 +19,16 @@ import { buildPreVisEndFrameEditInstruction } from '@/lib/vision/framePromptBase
 import { artStylePresets } from '@/constants/artStylePresets'
 import type { TransitionType, ActionType, AnchorStatus } from '@/components/vision/scene-production/types'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
-import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
-import {
-  buildIdentityReferenceLabel,
-  buildWardrobeReferenceLabel,
-  CHARACTER_IDENTITY_REFERENCE_INSTRUCTION,
-  DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
-  WARDROBE_ONLY_REFERENCE_INSTRUCTION,
-} from '@/lib/character/characterReferenceAssembly'
-import { buildLocationReferenceLabel, buildLocationReferencePromptLine } from '@/lib/vision/locationReferencePrompts'
 import {
   buildSimplifiedBeatFramePrompt,
-  buildCombinedCharacterConsumptionLine,
-  buildWardrobeDiptychReferenceLabel,
   mergeBeatFrameNegativePrompt,
   resolveSceneHeadshotsForBeatCharacters,
-  COMBINED_CHARACTER_REFERENCE_INSTRUCTION,
 } from '@/lib/character/sceneCharacterHeadshot'
+import {
+  bindingsFromReferenceRecords,
+  formatImagesAboveBinding,
+  formatNextImageCaption,
+} from '@/lib/vision/referenceImageBinding'
 import {
   composeIdentityWardrobeDiptych,
   composeIdentityWardrobePipFromDiptychUrl,
@@ -750,14 +743,19 @@ export async function POST(req: NextRequest) {
           characters: simplifiedCharacters,
           artStyleSuffix: `Cinematic quality, 8K, ${selectedStyle.promptSuffix}`,
         })
-        const perCharacterLines = headshotChars
-          .map((c) => buildCombinedCharacterConsumptionLine(c.name))
-          .join('\n')
-        startFramePrompt = sanitizeBeatStillPrompt(
-          `${startFramePrompt}\n\n${COMBINED_CHARACTER_REFERENCE_INSTRUCTION}\n${perCharacterLines}`
-        )
+        startFramePrompt = sanitizeBeatStillPrompt(startFramePrompt)
         console.log('[Generate Frames] Using simplified beat frame prompt (character reference-first)')
       }
+
+      const personTokenByName = new Map<string, string>()
+      const personTokenFor = (name: string) => {
+        const existing = personTokenByName.get(name)
+        if (existing) return existing
+        const token = `person [${personTokenByName.size + 1}]`
+        personTokenByName.set(name, token)
+        return token
+      }
+      let propOrdinal = 0
 
       for (const c of charPool) {
         const sceneHeadshotUrl = sceneHeadshotByName.get(c.name)
@@ -776,18 +774,30 @@ export async function POST(req: NextRequest) {
           if (pip) {
             allReferenceImages.push({
               imageUrl: pip.dataUrl,
-              name: buildWardrobeDiptychReferenceLabel(c.name),
+              name: formatNextImageCaption({
+              role: 'character',
+              token: personTokenFor(c.name),
+              descriptor: c.name,
+            }),
             })
             continue
           }
           allReferenceImages.push({
             imageUrl: c.referenceUrl,
-            name: buildIdentityReferenceLabel(c.name),
+            name: formatNextImageCaption({
+              role: 'identity',
+              token: personTokenFor(c.name),
+              descriptor: c.name,
+            }),
           })
           if (allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES) {
             allReferenceImages.push({
               imageUrl: c.wardrobeReferenceUrl,
-              name: buildWardrobeReferenceLabel(c.name),
+              name: formatNextImageCaption({
+                role: 'wardrobe',
+                token: personTokenFor(c.name),
+                descriptor: c.name,
+              }),
             })
           }
           continue
@@ -800,14 +810,22 @@ export async function POST(req: NextRequest) {
           })
           allReferenceImages.push({
             imageUrl: pip?.dataUrl ?? sceneHeadshotUrl,
-            name: buildWardrobeDiptychReferenceLabel(c.name),
+            name: formatNextImageCaption({
+              role: 'character',
+              token: personTokenFor(c.name),
+              descriptor: c.name,
+            }),
           })
           continue
         }
         if (!c.referenceUrl || allReferenceImages.length >= MAX_GEMINI_REFERENCE_IMAGES) continue
         allReferenceImages.push({
           imageUrl: c.referenceUrl,
-          name: buildIdentityReferenceLabel(c.name),
+          name: formatNextImageCaption({
+            role: 'identity',
+            token: personTokenFor(c.name),
+            descriptor: c.name,
+          }),
         })
       }
 
@@ -823,29 +841,12 @@ export async function POST(req: NextRequest) {
         }
         allReferenceImages.push({
           imageUrl: c.wardrobeReferenceUrl,
-          name: buildWardrobeReferenceLabel(c.name),
+          name: formatNextImageCaption({
+            role: 'wardrobe',
+            token: personTokenFor(c.name),
+            descriptor: c.name,
+          }),
         })
-      }
-
-      const dualRefChars = charPool.filter(
-        (c) => c.hasDualReferences && !sceneHeadshotByName.get(c.name)
-      )
-      const wardrobeOnlyChars = charPool.filter(
-        (c) =>
-          c.hasCostumeReference &&
-          !c.hasDualReferences &&
-          c.wardrobeReferenceUrl &&
-          !sceneHeadshotByName.get(c.name)
-      )
-      if (dualRefChars.length > 0 && startFramePrompt) {
-        startFramePrompt = `${startFramePrompt}\n\nDUAL CHARACTER REFERENCES:\n${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}\n${dualRefChars
-          .map(
-            (c) =>
-              `${c.name}: ${CHARACTER_IDENTITY_REFERENCE_INSTRUCTION} ${WARDROBE_ONLY_REFERENCE_INSTRUCTION}`
-          )
-          .join('\n')}`
-      } else if (wardrobeOnlyChars.length > 0 && startFramePrompt) {
-        startFramePrompt = `${startFramePrompt}\n\n${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION}`
       }
 
       if (mergedNegativePrompt && startFramePrompt && !startFramePrompt.includes('Avoid:')) {
@@ -859,7 +860,11 @@ export async function POST(req: NextRequest) {
         if (allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES) {
           allReferenceImages.push({
             imageUrl: loc.imageUrl!,
-            name: buildLocationReferenceLabel(loc.name, allReferenceImages.length + 1),
+            name: formatNextImageCaption({
+              role: 'location',
+              token: 'location [1]',
+              descriptor: loc.name,
+            }),
             role: 'location',
             locationName: loc.name,
             locationDescription: loc.description,
@@ -882,7 +887,11 @@ export async function POST(req: NextRequest) {
       for (const prop of propRefs) {
         allReferenceImages.push({
           imageUrl: prop.imageUrl!,
-          name: `Prop: ${prop.name}`
+          name: formatNextImageCaption({
+            role: 'prop',
+            token: `prop [${++propOrdinal}]`,
+            descriptor: prop.name,
+          }),
         })
       }
 
@@ -941,25 +950,19 @@ ${startFramePrompt}
 
 Render this scene in ${selectedStyle.name} style.`
         }
-      } else {
-        // Photorealistic: Exact appearance matching is the priority
-        if (charPool.length > 0 && !isNoTalentSegment) {
-          geminiPrompt = `Generate a cinematic frame based on this description. The character(s) shown in the reference image(s) must appear in this scene with their exact appearance preserved.\n\n${startFramePrompt}\n\nIMPORTANT: Match the character's ethnicity, facial features, hair color/style, and facial hair exactly from the reference images.`
-        } else if (referenceImageUrl) {
-          geminiPrompt = `Generate a cinematic frame based on this description. Use the provided reference image for visual style and scene continuity.\n\n${startFramePrompt}`
-        }
       }
 
-      if (!useInterleavedProRefs && locationRefs.length > 0) {
-        const loc = locationRefs[0]
-        const locRefIndex =
-          allReferenceImages.findIndex((ref) => ref.imageUrl === loc.imageUrl) + 1
-        if (locRefIndex > 0) {
-          geminiPrompt += `\n\n${buildLocationReferencePromptLine(loc.name, locRefIndex, undefined, {
-            currentSetState: Boolean((loc as { boundVersionId?: string }).boundVersionId),
-            locationDescription: loc.description,
-          })}`
-        }
+      const referenceBinding = formatImagesAboveBinding(
+        bindingsFromReferenceRecords(
+          allReferenceImages.map((ref) => ({
+            name: ref.name,
+            role: ref.role,
+            locationName: ref.locationName,
+          }))
+        )
+      )
+      if (referenceBinding) {
+        geminiPrompt = `${referenceBinding}\n\n${geminiPrompt}`
       }
 
       if (useInterleavedProRefs && !geminiPrompt.includes(STILL_SECTION_TASK)) {
