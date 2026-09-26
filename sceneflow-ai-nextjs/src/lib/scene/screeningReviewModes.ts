@@ -9,8 +9,8 @@ export type ScreeningPlaybackHint = {
 }
 
 /**
- * Pre-Vis and Scene (shot) review have no burned-in studio mark.
- * Rough Cut, Chapter, Master, and Promo default off so a render watermark is not doubled.
+ * Pre-Vis and Rough Cut (shot) review have no burned-in studio mark.
+ * Scene, Chapter, Master, and Promo default off so a render watermark is not doubled.
  */
 export function defaultPlayerWatermarkVisible(mode: ScreeningReviewMode): boolean {
   return mode === 'animatic' || mode === 'beats'
