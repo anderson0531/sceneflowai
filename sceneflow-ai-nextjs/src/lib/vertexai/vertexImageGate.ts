@@ -16,9 +16,8 @@
  * Deliberately not a replacement for the traffic cop. This is a hard ceiling
  * and nothing more — the cop still owns AIMD halving, cooldowns, the regulator,
  * and the throttle events the UI renders. Deliberately not distributed either:
- * one process is the boundary. Concurrent serverless instances still have no
- * shared view, which needs Redis and is recorded as such in
- * docs/VERTEX_CAPACITY.md.
+ * one process is the boundary. Overlapping isolates share the in-flight lease
+ * in `vertexDispatchBucket` (`acquireImageGenerationLease`).
  */
 
 import { AsyncLocalStorage } from 'node:async_hooks'

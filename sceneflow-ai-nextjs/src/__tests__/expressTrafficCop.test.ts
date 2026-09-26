@@ -225,4 +225,55 @@ describe('ExpressTrafficCop', () => {
     await pending
     expect(resolved).toBe(true)
   })
+
+  it('admits one image waiter on the first completion and one more on the second', async () => {
+    const cop = new ExpressTrafficCop({
+      laneMax: { image: 2 },
+      minSpacingMs: { image: 300 },
+    })
+    const release: Array<() => void> = []
+    const entered: number[] = []
+    let peak = 0
+    let drain = false
+
+    const tasks = Array.from({ length: 6 }, (_, i) =>
+      cop.runInLane('image', async () => {
+        entered.push(i)
+        peak = Math.max(peak, cop.getSnapshot().image.inFlight)
+        await new Promise<void>((resolve) => {
+          if (drain) {
+            resolve()
+            return
+          }
+          release[i] = resolve
+        })
+      })
+    )
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(entered).toEqual([0])
+    await vi.advanceTimersByTimeAsync(300)
+    expect(entered).toEqual([0, 1])
+    expect(cop.getSnapshot().image).toMatchObject({ inFlight: 2, max: 2, waiting: 4 })
+    expect(peak).toBe(2)
+
+    release[0]()
+    await vi.advanceTimersByTimeAsync(300)
+    expect(entered).toEqual([0, 1, 2])
+    expect(cop.getSnapshot().image).toMatchObject({ inFlight: 2, waiting: 3 })
+    expect(peak).toBe(2)
+
+    release[1]()
+    await vi.advanceTimersByTimeAsync(300)
+    expect(entered).toEqual([0, 1, 2, 3])
+    expect(cop.getSnapshot().image).toMatchObject({ inFlight: 2, waiting: 2 })
+    expect(peak).toBe(2)
+
+    drain = true
+    for (const resolve of release) resolve?.()
+    await vi.runAllTimersAsync()
+    await Promise.all(tasks)
+    expect(entered).toEqual([0, 1, 2, 3, 4, 5])
+    expect(peak).toBe(2)
+  })
 })

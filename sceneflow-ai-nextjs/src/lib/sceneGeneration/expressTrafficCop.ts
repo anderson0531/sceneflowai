@@ -23,6 +23,7 @@ export interface ExpressLaneSnapshot {
   inFlight: number
   max: number
   cooldownUntil: number | null
+  waiting: number
 }
 
 export interface ExpressTrafficCopOptions {
@@ -284,6 +285,7 @@ export class ExpressTrafficCop {
         inFlight: s.inFlight,
         max: s.max,
         cooldownUntil: s.cooldownUntil,
+        waiting: this.waiters[lane].length,
       }
     }
     return out

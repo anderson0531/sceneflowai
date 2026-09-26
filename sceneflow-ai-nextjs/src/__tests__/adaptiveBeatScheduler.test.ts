@@ -644,4 +644,58 @@ describe('runAdaptiveBeatPool abort signal', () => {
     expect(result.succeeded.size).toBe(0)
     expect(result.failed.size).toBe(2)
   })
+
+  it('starts one replacement on the first completion and one more on the second', async () => {
+    const release: Array<() => void> = []
+    const started: number[] = []
+    let inFlight = 0
+    let peak = 0
+    let drain = false
+
+    const promise = runAdaptiveBeatPool(
+      [0, 1, 2, 3, 4, 5],
+      async (beatIndex) => {
+        started.push(beatIndex)
+        inFlight += 1
+        peak = Math.max(peak, inFlight)
+        await new Promise<void>((resolve) => {
+          if (drain) {
+            resolve()
+            return
+          }
+          release[beatIndex] = resolve
+        })
+        inFlight -= 1
+      },
+      {
+        initialConcurrency: FRAME_AGENT_STILL_CONCURRENCY,
+        maxConcurrency: FRAME_AGENT_STILL_CONCURRENCY,
+        maxAttempts: 1,
+        successesToIncrease: 3,
+      }
+    )
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(started).toEqual([0, 1])
+    expect(peak).toBe(2)
+
+    release[0]()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(started).toEqual([0, 1, 2])
+    expect(inFlight).toBe(2)
+    expect(peak).toBe(2)
+
+    release[1]()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(started).toEqual([0, 1, 2, 3])
+    expect(inFlight).toBe(2)
+    expect(peak).toBe(2)
+
+    drain = true
+    for (const resolve of release) resolve()
+    await vi.runAllTimersAsync()
+    const result = await promise
+    expect(result.succeeded.size).toBe(6)
+    expect(peak).toBe(2)
+  })
 })

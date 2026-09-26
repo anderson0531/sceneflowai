@@ -976,6 +976,17 @@ function stillGenerationFields(options: ExpressOptions): Record<string, unknown>
     : {}
 }
 
+function logImageLaneAdmission(
+  trafficCop: ExpressTrafficCop,
+  beatIdx: number,
+  frameRole: 'start' | 'end'
+): void {
+  const snap = trafficCop.getSnapshot().image
+  console.log(
+    `[ExpressTrafficCop] image admit beat=${beatIdx} role=${frameRole} inFlight=${snap.inFlight} max=${snap.max} waiting=${snap.waiting}`
+  )
+}
+
 async function generateSingleBeatImage(
   ctx: SceneRunContext,
   options: ExpressOptions,
@@ -1024,6 +1035,7 @@ async function generateSingleBeatImage(
   // Emitted after the lane grants a slot, so the UI shows what is generating
   // rather than every queued beat at once.
   const result = await trafficCop.runInLane('image', () => {
+    logImageLaneAdmission(trafficCop, beatIdx, 'start')
     safeEmit(emit, {
       type: 'frame-start',
       sceneIndex,
@@ -1125,6 +1137,7 @@ async function generateSingleBeatEndImage(
   const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs?.api ?? null, characterPolicy)
 
   const result = await trafficCop.runInLane('image', () => {
+    logImageLaneAdmission(trafficCop, beatIdx, 'end')
     safeEmit(emit, {
       type: 'frame-start',
       sceneIndex,

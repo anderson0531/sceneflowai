@@ -9,6 +9,10 @@
 
 import { getKlingFallbackProvider } from '@/lib/generation/contentPolicy'
 import { CREATIVE_KLING_UNAVAILABLE_MESSAGE } from '@/lib/generation/stillPolicy'
+import {
+  VertexDispatchDeferredError,
+  withImageGenerationLease,
+} from '@/lib/vertexai/vertexDispatchBucket'
 import type { PrioritizedReferenceImage } from '@/lib/vision/referenceLimits'
 import {
   persistKlingElementIdsToProject,
@@ -60,6 +64,21 @@ export async function generateKlingOmniStill(
     throw new Error(CREATIVE_KLING_UNAVAILABLE_MESSAGE)
   }
 
+  try {
+    return await withImageGenerationLease(() => generateKlingOmniStillHeld(input))
+  } catch (err) {
+    if (err instanceof VertexDispatchDeferredError) {
+      throw new Error(
+        `Kling image error 429: rate limit failed fast after 1 attempt(s): dispatch wait ${err.retryAfterMs}ms`
+      )
+    }
+    throw err
+  }
+}
+
+async function generateKlingOmniStillHeld(
+  input: GenerateKlingOmniStillInput
+): Promise<GenerateKlingOmniStillResult> {
   const characterSources =
     input.characterSources ??
     buildKlingCharacterSourcesFromRefs({
