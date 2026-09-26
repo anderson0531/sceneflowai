@@ -18,10 +18,20 @@ describe('googleTtsRetry', () => {
     expect(parseRetryAfterMs('15')).toBe(15000)
   })
 
-  it('backoff respects attempt index bounds', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0)
-    expect(backoffMsFor429Attempt(0, null)).toBe(1250)
+  it('spreads 429 retries across the full backoff window above Retry-After', () => {
+    const random = vi.spyOn(Math, 'random')
+    random.mockReturnValue(0)
+    const immediate = backoffMsFor429Attempt(0, null)
+    expect(immediate).toBe(0)
+    expect(backoffMsFor429Attempt(0, '3')).toBe(3000)
+
+    random.mockReturnValue(1)
+    const ceiling = backoffMsFor429Attempt(0, null)
+    expect(ceiling).toBe(1250)
+    expect(ceiling).toBeGreaterThan(immediate)
+    expect(backoffMsFor429Attempt(0, '3')).toBe(4250)
     expect(backoffMsFor429Attempt(2, null)).toBe(5000)
+    expect(backoffMsFor429Attempt(10, null)).toBe(12_000)
   })
 
   it('backoffMsForPolicyAttempt grows and caps', () => {

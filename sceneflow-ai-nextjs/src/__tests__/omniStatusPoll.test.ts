@@ -64,7 +64,8 @@ describe('waitForVideoCompletion Omni status 429', () => {
     await vi.waitFor(() => expect(calls).toBe(1))
     await vi.advanceTimersByTimeAsync(59_000)
     expect(calls).toBe(1)
-    await vi.advanceTimersByTimeAsync(1_000)
+    // Retry-After is the floor (60s). Full jitter then adds up to one poll interval (20s).
+    await vi.advanceTimersByTimeAsync(21_000)
     const result = await pending
 
     expect(calls).toBe(2)

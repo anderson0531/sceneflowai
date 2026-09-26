@@ -4,6 +4,8 @@
  * @see https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429
  */
 
+import { fullJitterDelayMs } from '@/lib/utils/retry'
+
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -20,7 +22,9 @@ export function parseRetryAfterMs(header: string | null): number | undefined {
 }
 
 /**
- * Backoff for attempt 0.. after first 429 (respect Retry-When when sensible).
+ * Backoff for attempt 0.. after first 429.
+ * Retry-After is a floor. Above it, the wait is full jitter across the
+ * exponential window so callers do not resume on the same millisecond.
  */
 export function backoffMsFor429Attempt(
   attemptIndex: number,
@@ -28,11 +32,12 @@ export function backoffMsFor429Attempt(
   baseDelayMs: number = 1250,
   capMs: number = 12_000
 ): number {
-  const fromHeader = parseRetryAfterMs(retryAfterHeader)
-  const exponential = baseDelayMs * Math.pow(2, attemptIndex)
-  const jitter = Math.floor(Math.random() * 450)
-  const raw = Math.max(fromHeader ?? 0, exponential) + jitter
-  return Math.min(capMs, raw)
+  return fullJitterDelayMs({
+    attempt: attemptIndex,
+    baseMs: baseDelayMs,
+    capMs,
+    retryAfterMs: parseRetryAfterMs(retryAfterHeader) ?? 0,
+  })
 }
 
 /**

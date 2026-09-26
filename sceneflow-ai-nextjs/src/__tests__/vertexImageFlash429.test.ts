@@ -82,7 +82,8 @@ describe('flash 429 backoff uses the long ladder', () => {
     vi.unstubAllGlobals()
   })
 
-  it('waits 5s then 15s between flash 429s before a successful retry', async () => {
+  it('uses the long ladder as the ceiling of a full-jitter 429 wait', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
     const delays = captureBackoffDelays()
     const fetchMock = vi
       .fn()
@@ -103,6 +104,24 @@ describe('flash 429 backoff uses the long ladder', () => {
     expect(delays).toEqual([5_000, 15_000])
   })
 
+  it('retries immediately on the short end of full jitter when Retry-After is absent', async () => {
+    const delays = captureBackoffDelays()
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(rateLimitResponse())
+      .mockResolvedValueOnce(imageResponse())
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await generateVertexGeminiImage({
+      prompt: 'olive-drab aluminum cylinder on a studio sweep',
+      modelTier: 'eco',
+    })
+
+    expect(result.imageBase64).toBe('aW1hZ2U=')
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(delays).toEqual([])
+  })
+
   it('honors Retry-After when it is longer than the scheduled flash step', async () => {
     const delays = captureBackoffDelays()
     const fetchMock = vi
@@ -120,6 +139,7 @@ describe('flash 429 backoff uses the long ladder', () => {
   })
 
   it('does not fall back to the 2s/4s/8s generic ladder on flash', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
     const delays = captureBackoffDelays()
     const fetchMock = vi
       .fn()
@@ -132,7 +152,7 @@ describe('flash 429 backoff uses the long ladder', () => {
       modelTier: 'eco',
     })
 
-    expect(delays[0]).toBeGreaterThanOrEqual(5_000)
+    expect(delays[0]).toBe(5_000)
     expect(delays).not.toContain(2_000)
     expect(delays).not.toContain(4_000)
     expect(delays).not.toContain(8_000)

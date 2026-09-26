@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReferenceExpressItem } from '@/lib/vision/referenceExpress/types'
 
 type Row = {
@@ -86,8 +86,12 @@ const succeeded = (item: ReferenceExpressItem) =>
     imageUrl: `https://cdn/${item.targetId}.png`,
   }) as const
 
+let randomSpy: ReturnType<typeof vi.spyOn> | undefined
+
 beforeEach(() => {
   vi.clearAllMocks()
+  // Full jitter's short end is 0ms. Pin the ceiling so a 429 holds the cursor.
+  randomSpy = vi.spyOn(Math, 'random').mockReturnValue(1)
   row = {
     id: 'job-1',
     user_id: 'user-1',
@@ -100,6 +104,10 @@ beforeEach(() => {
     error: null,
   }
   mockRunItem.mockImplementation(async ({ item }) => succeeded(item))
+})
+
+afterEach(() => {
+  randomSpy?.mockRestore()
 })
 
 describe('runReferenceExpressStep', () => {

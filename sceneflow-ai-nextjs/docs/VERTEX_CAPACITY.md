@@ -106,17 +106,24 @@ Revisit once production traffic has a shape, then:
 | Global endpoint | Free | None | Implemented |
 | Burst smoothing | Free | None | Implemented |
 | Process-wide concurrency ceiling | Free | None | Implemented |
+| Shared leaky-bucket dispatcher | Free | None | Implemented |
+| Full-jitter 429 backoff | Free | None | Implemented |
 | Standard PayGo tier promotion | Free | None | Automatic with spend |
 | Priority PayGo | ~2x per-token | None | Implemented, flag off |
 | Provisioned Throughput | Fixed term fee | 1 week to 1 year, non-cancelable | Deferred to post-launch |
+| Cloud Tasks queue tuned to a provisioned QPM | New GCP queue | n/a | Rejected: these models have no QPM row to match, and Stills/Clip run inside the request |
+| Cross-region round-robin (`us-east4`, `europe-west4`) | Free | None | Rejected: image and Omni are global-only; Veo 3.1 is `us-central1` only |
 | Cloud Run / dedicated instance | Migration cost | n/a | Rejected: does not address the constraint |
 
 ## Existing handling this builds on
 
 The app already layers retry and concurrency control, which stays unchanged:
 
-- `fetchWithRetry` with exponential backoff and jitter in
-  [src/lib/utils/retry.ts](../src/lib/utils/retry.ts).
+- `fetchWithRetry` with exponential backoff and full jitter in
+  [src/lib/utils/retry.ts](../src/lib/utils/retry.ts). The random draw covers the
+  whole backoff window (`0 … min(cap, base × 2^attempt)`), and a `Retry-After`
+  header is a floor under that window, so a burst of 429s does not retry on
+  one timestamp.
 - A text model fallback chain on quota errors in
   [src/lib/vertexai/geminiTextFallback.ts](../src/lib/vertexai/geminiTextFallback.ts).
 - Per-run lane caps, AIMD halving, and a regulator in `ExpressTrafficCop`.
@@ -148,7 +155,48 @@ it on the first 429, so the same two slots turn over far more often. Read
 `[Vertex Image Gate]` log lines for what is actually open, rather than
 inferring it from the configured lane cap.
 
-One known gap remains, deliberately not addressed: the gate is per process, so
-concurrent Vercel instances still have no shared view of total outbound rate. A
-distributed limiter would need Marketplace Redis. Worth doing only if 429s
-persist after the changes above.
+## Shared dispatch (the cross-instance gap)
+
+The gate is per process. Overlapping Stills runs and Clip batches on different
+Vercel instances each honor their own cap and still arrive at Vertex together.
+
+[src/lib/vertexai/vertexDispatchBucket.ts](../src/lib/vertexai/vertexDispatchBucket.ts)
+is a leaky bucket in front of the two submits: `generateVertexGeminiImage`
+(before the image gate) and `generateProductionVideo` (before
+`generateVideoWithVeo`). One Redis key per lane stores the next allowed start.
+Each acquire claims `max(now, next)` and advances it by the lane interval, so
+simultaneous callers wait 0, interval, 2×interval, and so on. The wait happens
+before the call, which is what keeps the 429 from being issued.
+
+Redis is the Upstash REST store already used for collab
+(`KV_REST_API_URL` / `UPSTASH_REDIS_REST_URL`). If it is unset or the eval
+fails, that instance keeps its own metronome. Set the interval to `0` to
+disable a lane.
+
+| Env | Default | Meaning |
+| --- | --- | --- |
+| `VERTEX_IMAGE_DISPATCH_INTERVAL_MS` | 2000 | Minimum gap between Gemini image submits |
+| `VERTEX_VIDEO_DISPATCH_INTERVAL_MS` | 5000 | Minimum gap between Omni and Veo submits |
+| `VERTEX_DISPATCH_MAX_WAIT_MS` | 20000 | Refuse the submit, without calling Vertex, when the claimed wait is longer than this. An image call uses its remaining deadline instead when it has one. |
+
+These numbers are an empirical pace under Dynamic Shared Quota. Gemini image
+and Omni do not publish a queries-per-minute row to copy. Tighten the interval
+if 429s are still common; widen it if runs are waiting with an idle pool.
+
+A refused image submit throws the existing fail-fast rate-limit error so the
+beat is stamped and siblings continue. A refused video submit returns a 429
+rate-limit result and does not mark the region exhausted, because Vertex was
+never called. Status polls are not queued; their wait uses the same full jitter
+as the other 429 retries.
+
+### Rejected alternatives
+
+- **Cloud Tasks (or any new queue tuned to "provisioned QPM").** Stills Agent
+  and Clip run inside the request that is already showing progress. There is
+  no provisioned QPM on these models to set the queue to. A dispatcher in front
+  of the existing call is the pacing; a second control plane is not.
+- **Round-robin across `us-east4` and `europe-west4`.** Gemini image and Omni
+  are global-only, and the global endpoint is already the multi-region pool.
+  Veo 3.1 `predictLongRunning` is documented as `us-central1` only; the other
+  regions return 404. `VEO_REGIONS` stays a failover list for that regional
+  path and still defaults to `us-central1`.
