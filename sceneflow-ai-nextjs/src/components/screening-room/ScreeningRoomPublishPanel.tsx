@@ -5,11 +5,13 @@ import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { ScreeningRoomDashboard } from '@/components/screening-room/ScreeningRoomDashboard'
-import { PublishingWizard } from '@/components/premiere/PublishingWizard'
 import { PremiereInsightsPanel } from '@/components/premiere/PremiereInsightsPanel'
-import { ShortFormPublishPanel } from '@/components/premiere/ShortFormPublishPanel'
 import { ExportBundlePanel } from '@/components/premiere/ExportBundlePanel'
+import { PublishingPackageShipTab } from '@/components/publishing/PublishingPackageShipTab'
 import { usePremiereScreenings } from '@/hooks/premiere/usePremiereScreenings'
+import { getProjectStreams } from '@/lib/streams/projectStreams'
+import { stringifyProjectPut } from '@/lib/projects/slimProjectPutPayload'
+import { useSession } from 'next-auth/react'
 import { usePremiereAnalytics, type PremiereFeedback } from '@/hooks/premiere/usePremiereAnalytics'
 import { premiereSharePath } from '@/lib/premiere/screeningLookup'
 import { cn } from '@/lib/utils'
@@ -17,7 +19,7 @@ import { cn } from '@/lib/utils'
 interface ScreeningRoomPublishPanelProps {
   projectId?: string
   isDemo?: boolean
-  initialTab?: 'screenings' | 'youtube' | 'shorts' | 'bundle' | 'insights'
+  initialTab?: 'screenings' | 'youtube' | 'shorts' | 'bundle' | 'insights' | 'ship'
 }
 
 export function ScreeningRoomPublishPanel({
@@ -26,7 +28,12 @@ export function ScreeningRoomPublishPanel({
   initialTab = 'screenings',
 }: ScreeningRoomPublishPanelProps) {
   const currentProject = useStore((s) => s.currentProject)
-  const [publishTab, setPublishTab] = useState<'screenings' | 'youtube' | 'shorts' | 'bundle' | 'insights'>(initialTab)
+  const updateProject = useStore((s) => s.updateProject)
+  const { data: session } = useSession()
+  const userId = session?.user && 'id' in session.user ? String((session.user as { id?: string }).id || '') : ''
+  const [publishTab, setPublishTab] = useState<'screenings' | 'ship' | 'bundle' | 'insights'>(
+    initialTab === 'shorts' || initialTab === 'youtube' || initialTab === 'ship' ? 'ship' : initialTab
+  )
 
   const projectBillboard = useMemo(
     () =>
@@ -209,8 +216,7 @@ export function ScreeningRoomPublishPanel({
   const tabs = [
     { id: 'screenings' as const, label: 'Screenings' },
     { id: 'insights' as const, label: 'Insights' },
-    { id: 'youtube' as const, label: 'YouTube' },
-    { id: 'shorts' as const, label: 'Shorts' },
+    { id: 'ship' as const, label: 'Package & Ship' },
     { id: 'bundle' as const, label: 'Export' },
   ]
 
@@ -219,7 +225,7 @@ export function ScreeningRoomPublishPanel({
       <div className="px-4 sm:px-6 pt-4 pb-2 border-b border-zinc-800">
         <h2 className="text-lg font-semibold text-white">Publish & Distribute</h2>
         <p className="text-sm text-zinc-400 mt-1">
-          Share screenings, review audience feedback, and publish to YouTube or export bundles.
+          Share screenings, review audience feedback, and ship a Scene, Chapter, Master, or Promo.
         </p>
         <div className="flex flex-wrap gap-2 mt-4">
           {tabs.map((tab) => (
@@ -280,12 +286,23 @@ export function ScreeningRoomPublishPanel({
           />
         )}
 
-        {publishTab === 'youtube' && projectId && (
-          <PublishingWizard projectId={projectId} videoUrl={masterVideoUrl ?? undefined} title={currentProject?.title} />
-        )}
-
-        {publishTab === 'shorts' && projectId && (
-          <ShortFormPublishPanel projectId={projectId} videoUrl={masterVideoUrl ?? undefined} />
+        {publishTab === 'ship' && projectId && (
+          <PublishingPackageShipTab
+            projectId={projectId}
+            projectTitle={currentProject?.title}
+            metadata={currentProject?.metadata}
+            userId={userId || undefined}
+            streams={getProjectStreams(currentProject?.metadata)}
+            onSaveMetadata={async (next) => {
+              updateProject(projectId, { metadata: next })
+              const res = await fetch(`/api/projects/${projectId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: stringifyProjectPut({ metadata: next }),
+              })
+              if (!res.ok) throw new Error('Failed to save publishing metadata')
+            }}
+          />
         )}
 
         {publishTab === 'bundle' && projectId && (

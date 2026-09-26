@@ -14,12 +14,21 @@ import json
 import re
 from typing import List, Dict, Any, Optional, Tuple
 
-# Resolution presets
+# Resolution presets (landscape). 9:16 swaps width and height.
 RESOLUTIONS = {
     '720p': {'width': 1280, 'height': 720},
     '1080p': {'width': 1920, 'height': 1080},
     '4K': {'width': 3840, 'height': 2160},
 }
+
+
+def resolve_output_size(resolution: str = '1080p', aspect_ratio: str = '16:9') -> Tuple[int, int]:
+    """Landscape preset, or the same pixel count turned vertical for 9:16."""
+    res = RESOLUTIONS.get(resolution, RESOLUTIONS['1080p'])
+    width, height = int(res['width']), int(res['height'])
+    if aspect_ratio == '9:16':
+        return height, width
+    return width, height
 
 # Scene-stitch encode. Delivery is the historical default. Draft is opt-in.
 ENCODE_QUALITY_SETTINGS = {
@@ -1010,6 +1019,7 @@ def video_stream_copy_block_reason(
     probes: List[Optional[Dict[str, Any]]],
     resolution: str = '1080p',
     fps: int = 24,
+    aspect_ratio: str = '16:9',
     text_overlays: Optional[List[Dict[str, Any]]] = None,
     watermark: Optional[Dict[str, Any]] = None,
     include_segment_audio: bool = True,
@@ -1034,9 +1044,7 @@ def video_stream_copy_block_reason(
     if watermark and watermark.get('type'):
         return 'watermark'
 
-    target = RESOLUTIONS.get(resolution, RESOLUTIONS['1080p'])
-    target_w = int(target['width'])
-    target_h = int(target['height'])
+    target_w, target_h = resolve_output_size(resolution, aspect_ratio)
     target_fps = float(fps)
     reference: Optional[Tuple[str, str, float]] = None
 
@@ -1313,6 +1321,7 @@ def build_concat_ffmpeg_command(
     watermark: Optional[Dict[str, Any]] = None,
     encode_quality: Optional[str] = None,
     scene_end_transition: Optional[Dict[str, Any]] = None,
+    aspect_ratio: str = '16:9',
 ) -> List[str]:
     """
     Build FFmpeg command for concatenating video segments with audio mixing.
@@ -1337,8 +1346,7 @@ def build_concat_ffmpeg_command(
         FFmpeg command as list of arguments
     """
     preset, crf = resolve_encode_settings(encode_quality)
-    res = RESOLUTIONS.get(resolution, RESOLUTIONS['1080p'])
-    width, height = res['width'], res['height']
+    width, height = resolve_output_size(resolution, aspect_ratio)
     
     cmd = ['ffmpeg', '-y']  # -y = overwrite output
     

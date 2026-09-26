@@ -34,7 +34,7 @@ const EXPECTED_TITLES: Record<string, string[]> = {
     'Delivery-Quality Upscale',
     'Version Control',
     'Promotion Trailers',
-    'YouTube Publishing',
+    'Package & Ship',
   ],
 }
 

@@ -246,7 +246,7 @@ export const screeningRoomSidebarConfig: WorkflowSidebarConfig = {
     { id: 'open-preview', label: 'Preview Scenes', icon: 'Play', iconColor: 'text-green-400', action: 'event', eventName: 'screening-room:preview' },
     { id: 'open-assemble', label: 'Assemble Master', icon: 'Layers', iconColor: 'text-violet-400', action: 'event', eventName: 'screening-room:assemble' },
     { id: 'create-screening', label: 'Create Screening', icon: 'Users', iconColor: 'text-cyan-400', action: 'event', eventName: 'screening-room:create-screening' },
-    { id: 'publish-youtube', label: 'Publish YouTube', icon: 'Video', iconColor: 'text-red-400', action: 'event', eventName: 'screening-room:publish' },
+    { id: 'publish-youtube', label: 'Package & Ship', icon: 'Video', iconColor: 'text-red-400', action: 'event', eventName: 'screening-room:publish' },
     { id: 'back-production', label: 'Back to Production', icon: 'ArrowLeft', iconColor: 'text-gray-400', action: 'navigate', href: '/dashboard/workflow/vision' },
   ],
   sectionVisibility: {

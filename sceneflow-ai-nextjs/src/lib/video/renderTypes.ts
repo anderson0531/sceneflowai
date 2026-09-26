@@ -271,6 +271,21 @@ export const RESOLUTION_CONFIG = {
   '4K': { width: 3840, height: 2160 },
 } as const
 
+export type DeliveryAspectRatio = '16:9' | '9:16'
+
+/** Landscape presets, or the same pixel count turned vertical for 9:16. */
+export function deliveryFrameSize(
+  resolution: string | undefined,
+  aspectRatio: DeliveryAspectRatio = '16:9'
+): { width: number; height: number } {
+  const base =
+    RESOLUTION_CONFIG[resolution as keyof typeof RESOLUTION_CONFIG] ?? RESOLUTION_CONFIG['1080p']
+  if (aspectRatio === '9:16') {
+    return { width: base.height, height: base.width }
+  }
+  return { width: base.width, height: base.height }
+}
+
 /**
  * Default settings
  */
@@ -397,6 +412,8 @@ export interface SceneRenderJobSpec {
   sceneNumber: number
   /** Output resolution */
   resolution: '720p' | '1080p' | '4K'
+  /** Delivery frame. Omitted stays 16:9 so existing jobs keep landscape output. */
+  aspectRatio?: '16:9' | '9:16'
   /** Frames per second */
   fps: number
   /** Video segments (existing MP4s to concatenate) */
@@ -518,6 +535,8 @@ export interface CreateSceneRenderJobRequest {
   sceneId: string
   sceneNumber: number
   resolution: '720p' | '1080p' | '4K'
+  /** Delivery frame. Omitted stays 16:9. */
+  aspectRatio?: '16:9' | '9:16'
   audioConfig: SceneRenderAudioConfig
   /** Video segments from Director's Console */
   segments: Array<{

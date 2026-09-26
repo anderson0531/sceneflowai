@@ -387,9 +387,11 @@ def main():
             log(f"  Watermark type: {watermark.get('type')}")
             log(f"  Watermark text: {watermark.get('text', '')[:30]}")
             log(f"  Watermark anchor: {watermark.get('anchor')}")
+        aspect_ratio = job_spec.get('aspectRatio') or '16:9'
+        log(f"Aspect ratio: {aspect_ratio}")
         render_video_concatenation(job_id, video_segments, audio_clips, output_path_gcs, 
                                    resolution, fps, callback_url, include_segment_audio, segment_audio_volume,
-                                   text_overlays, watermark, encode_quality, scene_end_transition)
+                                   text_overlays, watermark, encode_quality, scene_end_transition, aspect_ratio)
     else:
         # Ken Burns mode (for project renders with images)
         segments = job_spec.get('segments', [])
@@ -477,7 +479,8 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
                                output_path_gcs: str, resolution: str, fps: int, callback_url: str,
                                include_segment_audio: bool = True, segment_audio_volume: float = 1.0,
                                text_overlays: list = None, watermark: dict = None,
-                               encode_quality: str = 'delivery', scene_end_transition: dict = None):
+                               encode_quality: str = 'delivery', scene_end_transition: dict = None,
+                               aspect_ratio: str = '16:9'):
     """Render by concatenating video segments with audio mixing, text overlays, and watermark."""
     
     if text_overlays is None:
@@ -610,6 +613,7 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
         probes,
         resolution=resolution,
         fps=fps,
+        aspect_ratio=aspect_ratio,
         text_overlays=text_overlays,
         watermark=wm_for_cmd,
         include_segment_audio=include_segment_audio,
@@ -630,6 +634,7 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
             watermark=wm_for_cmd,
             encode_quality=encode_quality,
             scene_end_transition=end_for_cmd,
+            aspect_ratio=aspect_ratio,
         )
     else:
         full_block = full_stream_copy_block_reason(

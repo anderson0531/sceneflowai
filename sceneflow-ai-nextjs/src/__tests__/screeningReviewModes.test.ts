@@ -9,6 +9,7 @@ describe('screening review watermark defaults', () => {
 
   it('hides the player mark on rendered review so a burned-in watermark is not doubled', () => {
     expect(defaultPlayerWatermarkVisible('video')).toBe(false)
+    expect(defaultPlayerWatermarkVisible('chapter')).toBe(false)
     expect(defaultPlayerWatermarkVisible('stream')).toBe(false)
     expect(defaultPlayerWatermarkVisible('promo')).toBe(false)
   })

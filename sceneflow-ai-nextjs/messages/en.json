@@ -402,7 +402,7 @@
           {
             "icon": "promoTrailer",
             "title": "Promotion Trailers",
-            "description": "Auto-weave a beat-selected 9:16 promo (30–60s) from your highest-resonance moments — vertical trailers ready for Shorts, Reels, and TikTok.",
+            "description": "Auto-weave a beat-selected 9:16 promo (30–60s) from your highest-resonance moments — vertical trailers ready for YouTube, Facebook, and TikTok.",
             "learnMore": {
               "problem": "Cutting vertical promos by hand means scrubbing through your master, guessing highlight windows, and rebuilding the same story three times for Shorts, Reels, and TikTok.",
               "solution": "SceneFlow selects your highest-resonance beats, weaves a 30–60 second 9:16 trailer automatically, and renders a vertical cut ready for social platforms — no manual timeline work.",
@@ -411,12 +411,12 @@
           },
           {
             "icon": "youtubePublish",
-            "title": "YouTube Publishing",
-            "description": "Per-language bundles: AI titles and descriptions, generated thumbnails, privacy and category settings, and multilanguage audio publish — from the Publishing Library.",
+            "title": "Package & Ship",
+            "description": "Ship a Scene, Chapter, Master, or Promo to YouTube, Facebook, or TikTok in 16:9 or 9:16 — or download the file. Titles, descriptions, and privacy travel with the package.",
             "learnMore": {
-              "problem": "The work is not done when the video is — thumbnails, titles, descriptions, and language tracks are their own time sink standing between your finished cut and a live upload.",
-              "solution": "The Publishing Library assembles per-language YouTube bundles: AI-generated titles and descriptions, custom thumbnails, privacy and category settings, and multilanguage audio tracks — then publishes in one flow.",
-              "outcome": "Go from final render to live on YouTube in minutes, reaching billions of viewers across languages without a separate packaging-and-upload marathon."
+              "problem": "Algorithms reward short videos, but a story worth following is longer than a clip. Packaging each scene, chapter, and master by hand splits your budget across tools.",
+              "solution": "Package & Ship sends a Scene, Chapter, Master, or Promo to YouTube, Facebook, or TikTok — widescreen or vertical — or downloads the file. Publish only as often as the month's token budget allows.",
+              "outcome": "Release the piece that is ready, learn from viewers, and either cut the next chapter or stop — without waiting on a full feature."
             }
           }
         ]
@@ -455,7 +455,7 @@
     "eyebrow": "The first AI pipeline for long-form video and series",
     "availabilityBadge": "Full access opens November 2026",
     "headline": "Build Worlds. Not Just Clips.",
-    "subheadline": "Don’t settle for isolated generations. SceneFlow maintains character continuity, persistent environments, and complex narratives from your first scene to your hundredth — then ships it as a multi-language master.",
+    "subheadline": "Don’t settle for isolated generations. SceneFlow keeps character continuity, persistent environments, and a longform story — then lets you ship a scene, a chapter, or the master to YouTube, Facebook, and TikTok.",
     "ctaPrimaryLaunch": "Start Your Production",
     "ctaSupportingLine": "",
     "ctaSecondary": "Explore How It Works",
@@ -522,7 +522,7 @@
   "twoModes": {
     "eyebrow": "One automated pipeline",
     "title": "From first idea to a world that ships.",
-    "subtitle": "Start with a concept or a finished script. SceneFlow writes the baseline, scores it for the culture you named, then generates hundreds of beats in parallel — so you review, collaborate, and ship multilingual masters instead of waiting on one clip at a time.",
+    "subtitle": "Build a longform story — about 120 minutes, 45 scenes, 15 chapters — for YouTube, Facebook, and TikTok. A scene or a chapter can be ready in minutes or a few hours. Your monthly token budget follows how often you publish. Viewer response tells you to continue, or to stop.",
     "steps": [
       {
         "title": "Bring the spark",
@@ -549,8 +549,12 @@
         "body": "Motion video from approved beats. Ship high-quality native-language streams, or dub when you want the lower-cost path."
       },
       {
-        "title": "Screen. Package. Ship.",
-        "body": "Review in the Screening Room, then auto-package to YouTube or download the master."
+        "title": "Screen",
+        "body": "Walk the story before the next render: the Blueprint, the Audience Resonance script, then the Screening Room — Pre-Vis, Scene, Chapter, Master, and Promo. Hear what lands. Change the story while the change is still cheap."
+      },
+      {
+        "title": "Package & Ship",
+        "body": "Send a Scene, Chapter, Master, or Promo to YouTube, Facebook, or TikTok — in 16:9 or 9:16 — or download it. Publish on the rhythm your budget allows. Read the response. Cut the next chapter, or stop."
       }
     ],
     "cta": "Launch Studio ($9)"
