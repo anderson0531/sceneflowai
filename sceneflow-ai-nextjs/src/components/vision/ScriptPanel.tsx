@@ -2818,15 +2818,14 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     <div className="relative rounded-3xl border border-slate-700/60 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900/60 flex-1 min-h-0 flex flex-col overflow-hidden shadow-[0_25px_80px_rgba(8,8,20,0.55)]">
       <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-sf-primary via-fuchsia-500 to-cyan-400 opacity-80" />
       {/* Header */}
-      <div className={`${studioHeaderCollapsed ? 'px-6 py-2' : 'px-6 py-4'} border-b border-white/10 flex-shrink-0 bg-slate-900/70 backdrop-blur rounded-t-3xl`}>
+      <div className="px-6 py-4 border-b border-white/10 flex-shrink-0 bg-slate-900/70 backdrop-blur rounded-t-3xl">
         {/* Title and Action Buttons - Same Line */}
-        <div className={`flex items-center justify-between ${studioHeaderCollapsed ? '' : 'mb-3'}`}>
+        <div className={`flex items-center justify-between ${!studioHeaderCollapsed && (projectTitle || projectLogline) ? 'mb-3' : ''}`}>
           <div className="flex items-center gap-3 min-w-0">
-            {!studioHeaderCollapsed && (
-              <h3 id="production-studio-page-title" className="text-xl font-bold text-white">
-                {tStudio('title')}
-              </h3>
-            )}
+            <h3 id="production-studio-page-title" className="text-xl font-bold text-white">
+              {tStudio('title')}
+            </h3>
+            {(projectTitle || projectLogline) && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -2835,7 +2834,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                     onClick={() => setStudioHeaderCollapsed((prev) => !prev)}
                     className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors shrink-0"
                     aria-expanded={!studioHeaderCollapsed}
-                    aria-controls="production-studio-page-title production-studio-header-description"
+                    aria-controls="production-studio-header-description"
                     aria-label={studioHeaderCollapsed ? tStudio('showHeader') : tStudio('hideHeader')}
                     title={studioHeaderCollapsed ? tStudio('showHeader') : tStudio('hideHeader')}
                   >
@@ -2851,6 +2850,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+            )}
             {isGenerating && (
               <span className="text-xs text-cyan-300 flex items-center gap-1.5">
                 <Loader className="w-3.5 h-3.5 animate-spin" />

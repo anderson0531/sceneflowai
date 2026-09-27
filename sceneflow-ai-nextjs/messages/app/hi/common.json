@@ -46,9 +46,9 @@
   "nav": {
     "dashboard": "डैशबोर्ड",
     "projects": "",
-    "series": "Series Studio",
-    "blueprint": "Blueprint Studio",
-    "production": "Production Studio",
+    "series": "Series Room",
+    "blueprint": "Blueprint Room",
+    "production": "Production Stage",
     "startProject": "प्रोजेक्ट शुरू करें",
     "visualizer": "विज़ुअलाइज़र",
     "screeningRoom": "Screening Room",

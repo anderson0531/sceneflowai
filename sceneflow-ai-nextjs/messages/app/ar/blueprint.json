@@ -1,20 +1,20 @@
 {
   "studio": {
-    "title": "Blueprint Studio",
+    "title": "Blueprint Room",
     "episodeBadge": "الحلقة {number}",
     "partOfSeries": "جزء من {series}",
     "showSidePanel": "أ_ظهر اللوحة الجانبية",
     "hideSidePanel": "الواجهة الجانبية",
-    "goToProduction": "انتقل إلى Production Studio",
+    "goToProduction": "انتقل إلى Production Stage",
     "goShort": "انتقل",
-    "goTooltip": "انتقل إلى Production Studio — أنشئ نصًا وابدأ خط أنابيب Production Studio",
-    "openingProduction": "Production Studio الافتتاحية...",
+    "goTooltip": "انتقل إلى Production Stage — أنشئ نصًا وابدأ خط أنابيب Production Stage",
+    "openingProduction": "Production Stage الافتتاحية...",
     "creatingConcept": "إنشاء مفهوم الفيلم الخاص بك...",
     "saving": "جارٍ الحفظ...",
     "saved": "[ترجمة المصطلح: Saved]",
     "saveFailed": "فشل الحفظ",
-    "syncedToProduction": "Blueprint تمت مزامنته مع Production Studio - قم بتجديد البرنامج النصي الخاص بك عندما يكون جاهزًا.",
-    "syncFailed": "تم تحديث Blueprint، ولكن فشلت مزامنة Production Studio",
+    "syncedToProduction": "Blueprint تمت مزامنته مع Production Stage - قم بتجديد البرنامج النصي الخاص بك عندما يكون جاهزًا.",
+    "syncFailed": "تم تحديث Blueprint، ولكن فشلت مزامنة Production Stage",
     "untitled": "بدون عنوان",
     "editHeroImage": "تعديل صورة البطل — {title}",
     "empty": {
@@ -224,9 +224,9 @@
     "generateBlueprint": "إنشاء Blueprint",
     "saveAudienceAndAnalyze": "حفظ الجمهور وتشغيل SFAIUDIENCE_RESONANCETERM",
     "applyTopFix": "تطبيق TOP Audience Resonance FIX",
-    "startProduction": "انتقل إلى Production Studio",
+    "startProduction": "انتقل إلى Production Stage",
     "reAnalyzeOrRefine": "إعادة تحليل أو تنقيح Blueprint",
-    "improveScoreOrStart": "تحسين النتيجة أو الانتقال إلى Production Studio",
+    "improveScoreOrStart": "تحسين النتيجة أو الانتقال إلى Production Stage",
     "generating": "جارٍ التوليد Blueprint..."
   },
   "sidePanel": {
@@ -349,8 +349,8 @@
     "next": "[ترجمة المصطلح: Next]",
     "getStarted": "التسجيل في المنصة",
     "welcome": {
-      "title": "مرحبًا بك في Blueprint Studio",
-      "description": "Blueprint Studio هو الأساس الإبداعي الخاص بك: إنشاء → مراجعة → متكررة → انتقل إلى Production Studio. سير عمل واحد مستمر — ليس محررين مبعثرين.",
+      "title": "مرحبًا بك في Blueprint Room",
+      "description": "Blueprint Room هو الأساس الإبداعي الخاص بك: إنشاء → مراجعة → متكررة → انتقل إلى Production Stage. سير عمل واحد مستمر — ليس محررين مبعثرين.",
       "tip": "يوضح دليل سير عمل الشريط الجانبي ومساعد الطيار خطوتك التالية في كل مرحلة."
     },
     "generate": {
@@ -456,7 +456,7 @@
       "regenerate-hero": "إعادة إنشاء صورة البطل",
       "preview-audio": "معاينة مع الصوت",
       "collaborate-export": "التعاون والتصدير",
-      "start-production": "انتقل إلى Production Studio"
+      "start-production": "انتقل إلى Production Stage"
     }
   }
 }

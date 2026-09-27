@@ -95,7 +95,7 @@ describe('Production section labels', () => {
     for (const item of productNav) {
       expect(item.label).not.toContain("Writer's Room")
     }
-    expect(productNav.map((item) => item.label)).toContain('Blueprint Studio')
+    expect(productNav.map((item) => item.label)).toContain('Blueprint Room')
 
     for (const relativePath of [
       'src/components/layout/ProductSwitcher.tsx',

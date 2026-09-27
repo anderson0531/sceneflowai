@@ -1,10 +1,10 @@
 import type { NavItem } from './types'
 
-/** @deprecated Use Series Studio tabs at /dashboard/series/[id] instead. Kept for sidebar deep-links with redirects. */
+/** @deprecated Use Series Room tabs at /dashboard/series/[id] instead. Kept for sidebar deep-links with redirects. */
 export const seriesNav = (seriesId: string): NavItem[] => [
   {
     key: 'studio',
-    label: 'Series Studio',
+    label: 'Series Room',
     href: `/dashboard/series/${seriesId}`,
   },
   {

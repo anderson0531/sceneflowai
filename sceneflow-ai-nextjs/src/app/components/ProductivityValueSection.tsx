@@ -65,7 +65,7 @@ interface Scenario {
 const SCENARIOS = [
   { id: 'solo', name: 'Solo Creator', shortVideos: 10, longVideos: 2, avgScenes: 10, avgDuration: 8 },
   { id: 'agency', name: 'Small Agency', shortVideos: 30, longVideos: 6, avgScenes: 15, avgDuration: 12 },
-  { id: 'studio', name: 'Production Studio', shortVideos: 60, longVideos: 12, avgScenes: 20, avgDuration: 15 },
+  { id: 'studio', name: 'Production Stage', shortVideos: 60, longVideos: 12, avgScenes: 20, avgDuration: 15 },
 ] as const satisfies readonly Scenario[];
 
 const ICON_MAP: Record<string, React.ElementType> = {

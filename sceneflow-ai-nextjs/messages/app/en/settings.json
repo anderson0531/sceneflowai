@@ -49,7 +49,7 @@
     "deliveryTitle": "Delivery languages",
     "deliveryDescription": "Narration, dubs, and rendered video. A single project can ship in many languages at once, so these are chosen per scene rather than per account.",
     "deliveryStartsFrom": "Starts from {language}",
-    "deliverySetInProduction": "Set in Production Studio",
+    "deliverySetInProduction": "Set in Production Stage",
     "promptsStayEnglish": "Image and video prompts stay in English regardless of these settings — the generation models produce noticeably weaker results from translated prompts.",
     "interfaceSet": "Interface language set to {language}",
     "saved": "Language preference saved",

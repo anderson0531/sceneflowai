@@ -1,8 +1,8 @@
 {
   "studio": {
-    "title": "Production Studio",
-    "hideHeader": "Hide page title and description",
-    "showHeader": "Show page title and description",
+    "title": "Production Stage",
+    "hideHeader": "Hide project title and description",
+    "showHeader": "Show project title and description",
     "chapter": "Chapter {name}",
     "sceneInChapter": "Scene {position} of {total} in this chapter",
     "prevChapter": "Prev Chapter",
@@ -19,12 +19,12 @@
     "mixer": "Production Mixer",
     "directorConsole": "Director Console",
     "initializing": "Initializing",
-    "opening": "Opening Production Studio",
+    "opening": "Opening Production Stage",
     "openingShort": "Opening Production",
     "backToBlueprint": "Back to Blueprint",
     "blueprintShort": "Blueprint",
     "productionLabel": "Production",
-    "viewsAriaLabel": "Production Studio views",
+    "viewsAriaLabel": "Production Stage views",
     "viewStudio": "Studio",
     "viewScreening": "Screening Room",
     "viewStreams": "Streams",
@@ -160,7 +160,7 @@
     "seconds": "{count}s",
     "progress": "Done",
     "progressValues": "{frames}/{beats} frames · {videos}/{beats} videos",
-    "scopeFixedHint": "Scene and shot counts come from Production Studio and are not adjustable here.",
+    "scopeFixedHint": "Scene and shot counts come from Production Stage and are not adjustable here.",
     "methodsTitle": "Production method",
     "recommended": "Recommended",
     "methods": {
@@ -227,7 +227,7 @@
     },
     "setAsProjectBudget": "Set as Project Budget ({credits} credits)",
     "saving": "Saving...",
-    "noBeatsYet": "Add scenes and shots in Production Studio to build a budget."
+    "noBeatsYet": "Add scenes and shots in Production Stage to build a budget."
   },
   "script": {
     "generateScript": "Generate Script",

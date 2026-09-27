@@ -84,7 +84,7 @@ export function SeriesContinuityPanel({
             <p className="text-sm text-gray-400 mt-1">
               Narrative overlay for {seriesTitle} — aesthetics, canon events, story threads, and
               Production→Series bible sync. Assets live in Reference Library; iterate them in
-              Production Studio.
+              Production Stage.
             </p>
           </div>
           <Link
@@ -156,7 +156,7 @@ function ContinuityAestheticsSection({ bible }: { bible: SeriesProductionBible |
       <EmptyContinuityState
         icon={<Palette className="w-12 h-12" />}
         title="No aesthetic guidelines yet"
-        hint="Visual style syncs from Production Studio when you push updates to the Series Bible."
+        hint="Visual style syncs from Production Stage when you push updates to the Series Bible."
       />
     )
   }
@@ -300,7 +300,7 @@ function ContinuityReviewUpdatesSection({
       <EmptyContinuityState
         icon={<ClipboardCheck className="w-12 h-12" />}
         title="No episodes ready to sync"
-        hint="Start an episode in Production Studio, then return here to push assets and storyline into the Series Bible."
+        hint="Start an episode in Production Stage, then return here to push assets and storyline into the Series Bible."
       />
     )
   }

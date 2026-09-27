@@ -54,7 +54,7 @@
       "Screening Room"
     ],
     "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Stage.",
     "playWithNarration": "Play with narration",
     "tapToHear": "Tap to hear",
     "fullscreen": "Fullscreen",
@@ -590,7 +590,7 @@
       "tagline": "Ein Studio. Geführte Automatisierung – oder enormer Durchsatz, wenn Sie den Stack bereits beherrschen.",
       "stages": [
         {
-          "label": "Blueprint Studio",
+          "label": "Blueprint Room",
           "detail": "Strukturierter Handlungsplan"
         },
         {
@@ -651,12 +651,12 @@
           "Definiere dein Universum einmal – Charaktere, Tonalität und Staffelbogen.",
           "Schlüssige Episodenentwürfe – automatisch generiert für die gesamte Staffel",
           "Kontinuitätsüberwachung – Abstimmung bei Staffeln mit mehreren Episoden",
-          "Synchronisierung von Serie und Episode – in Blueprint Studio und Produktion"
+          "Synchronisierung von Serie und Episode – in Blueprint Room und Produktion"
         ]
       },
       {
         "id": "Bauplan",
-        "stepLabel": "Blueprint Studio",
+        "stepLabel": "Blueprint Room",
         "subtitle": "Geschichtenentwicklung",
         "description": "Wandeln Sie Konzepte in strukturierte Treatments um – inklusive Logline, Beats, Charakteren und Tonalität. Führen Sie Audience Resonance aus und arbeiten Sie gemeinsam am Projekt, bevor aufwendige Rendering-Prozesse starten.",
         "keySteps": [
@@ -864,7 +864,7 @@
           "Definiere dein Universum einmal – Charaktere, Tonalität und Staffelbogen.",
           "Schlüssige Episodenentwürfe – automatisch generiert für die gesamte Staffel",
           "Kontinuitätsüberwachung – Abstimmung bei Staffeln mit mehreren Episoden",
-          "Synchronisierung von Serie und Episode – in Blueprint Studio und Produktion"
+          "Synchronisierung von Serie und Episode – in Blueprint Room und Produktion"
         ],
         "screenshotSlot": "Screenshot einfügen: Serienübersicht mit automatisch generierten Episoden-Handlungsbögen",
         "videoSlot": "Clip (00:30) einfügen: Erweiterung des Konzepts zu einer Staffel mit mehreren Episoden"
@@ -1349,7 +1349,7 @@
     "ctaSecondaryHref": "#key-features"
   },
   "footer": {
-    "description": "End-to-End automatisierte Videoproduktion — vom Konzept bis zum veröffentlichungsbereiten Master. Ein geführtes Studio: Series Studio → Blueprint Studio → Production Studio → Screening Room.",
+    "description": "End-to-End automatisierte Videoproduktion — vom Konzept bis zum veröffentlichungsbereiten Master. Ein geführtes Studio: Series Room → Blueprint Room → Production Stage → Screening Room.",
     "product": "Produkt-",
     "resources": "Ressourcen",
     "legal": "Trust &amp; Safety",
@@ -1399,7 +1399,7 @@
     "workflowLabel": "Solutions",
     "startProduction": "Start Your Production",
     "cta": "Start Your Production",
-    "continuityNote": "Series Studio manages continuity",
+    "continuityNote": "Series Room manages continuity",
     "resonanceNote": "Audience Resonance™ optimizes scripts",
     "videoLanguagePrompt": "Watch this production in your language",
     "videoComingSoon": "Dub coming soon",
@@ -1420,7 +1420,7 @@
             "frictionHeadline": "Character Drift & Wobbly Sets.",
             "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
             "solutionHeadline": "Locked Asset Blueprints.",
-            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
+            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Room. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
           {
             "title": "Narrative Pacing & Scene Control",
@@ -1441,7 +1441,7 @@
             "frictionHeadline": "Asset Chaos & Endless Rerolls.",
             "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
             "solutionHeadline": "Automated Studio Pipeline.",
-            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Room handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
         "screeningRoomPreview": "The Cinematic Drama — Screening Room"
@@ -1515,7 +1515,7 @@
             "frictionHeadline": "Fragmented Timeline Editing",
             "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
             "solutionHeadline": "Beat-First Documentary Pipeline",
-            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Room, delivering a fully assembled master file in one seamless pass."
           }
         ],
         "screeningRoomPreview": "Documentary Production — Screening Room"
@@ -1544,7 +1544,7 @@
             "frictionHeadline": "Dubbing Is Not Localization.",
             "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
             "solutionHeadline": "Blueprint-Level Localization.",
-            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Room before a single frame is rendered."
           },
           {
             "title": "Parallel Production Pipelines",
@@ -1603,17 +1603,17 @@
           },
           {
             "icon": "Serie",
-            "title": "Series Studio",
-            "description": "Definiere dein Universum einmal — Saisonbögen, wiederkehrende Besetzung und Kontinuitätsregeln. Die Episode skizziert die Synchronisierung mit Blueprint Studio und Production Studio, damit jede Rate auf dem Modell bleibt.",
+            "title": "Series Room",
+            "description": "Definiere dein Universum einmal — Saisonbögen, wiederkehrende Besetzung und Kontinuitätsregeln. Die Episode skizziert die Synchronisierung mit Blueprint Room und Production Stage, damit jede Rate auf dem Modell bleibt.",
             "learnMore": {
               "problem": "Serialisierte Inhalte vervielfachen die Arbeit: Jede neue Episode bedeutet, den Kontext wieder aufzubauen, die Charaktere wieder herzustellen und zu hoffen, dass die Kontinuität in einem wachsenden Katalog hält.",
-              "solution": "Series Studio erfasst Ihr Universum — Saisonbögen, Besetzung und Kontinuitätsregeln — einmal. Episodenumrisse fließen automatisch in Blueprint Studio und Production Studio ein, so dass jede Rate die gleiche gesperrte Grundlage erbt.",
+              "solution": "Series Room erfasst Ihr Universum — Saisonbögen, Besetzung und Kontinuitätsregeln — einmal. Episodenumrisse fließen automatisch in Blueprint Room und Production Stage ein, so dass jede Rate die gleiche gesperrte Grundlage erbt.",
               "outcome": "Versenden Sie konsistente Episoden pünktlich von einem Studio aus — skalieren Sie Ihren Kanal oder Ihre Franchise, ohne Ihr Chaos zu vergrößern."
             }
           },
           {
             "icon": "BLaupause",
-            "title": "Blueprint Studio",
+            "title": "Blueprint Room",
             "description": "Verwandeln Sie ein Konzept in eine strukturierte Geschichte: Beats, Charakterbögen, Publikumsdefinition und gesperrter Kunststil. Beteiligte überprüfen über Freigabelinks, bevor Sie in die Produktion eintreten.",
             "learnMore": {
               "problem": "Ein direkter Sprung in die Produktion ohne eine gesperrte Story-Struktur führt zu teuren Nacharbeiten — unklare Beats, driftender Ton und Stakeholder-Überraschungen, nachdem die Credits bereits ausgegeben wurden.",
@@ -1751,7 +1751,7 @@
   "pipeline": {
     "badge": "Was ist SceneFlow?",
     "title": "Die 3-Säulen-Pipeline-Architektur",
-    "subtitle": "Drei Phasen von der ersten Idee bis zum veröffentlichungsbereiten Master — Series Studio, Blueprint Studio und Production Studio.",
+    "subtitle": "Drei Phasen von der ersten Idee bis zum veröffentlichungsbereiten Master — Series Room, Blueprint Room und Production Stage.",
     "ui": {
       "expandFullscreen": "Vollbild anzeigen",
       "closeFullscreen": "Schließen",
@@ -1766,9 +1766,9 @@
     "pillars": [
       {
         "id": "series",
-        "tabLabel": "Series Studio",
+        "tabLabel": "Series Room",
         "number": "01",
-        "title": "Series Studio Generierung",
+        "title": "Series Room Generierung",
         "header": "Erstelle ein Universum, keinen Clip",
         "body": "Beschreibe deine Serie oder deinen YouTube-Kanal einmal, und SceneFlow baut die ganze Welt auf — Storyline, Besetzung und eine unbegrenzte Episodenliste — mit einem Shared Reference Library, das jede Episode markengerecht hält.",
         "steps": [
@@ -1797,7 +1797,7 @@
             "id": "series-reference-library",
             "number": "4",
             "title": "Überprüfen Sie die Reference Library",
-            "description": "Durchstöbern Sie die gemeinsamen Reference Library — Charaktere, Stimmen, Garderobe, Orte und Requisiten —, die über Production Studio erstellt und gepflegt und in jeder Episode wiederverwendet werden.",
+            "description": "Durchstöbern Sie die gemeinsamen Reference Library — Charaktere, Stimmen, Garderobe, Orte und Requisiten —, die über Production Stage erstellt und gepflegt und in jeder Episode wiederverwendet werden.",
             "imagePlaceholder": "Shared Reference Library — Charaktere, Stimmen, Orte, Requisiten"
           },
           {
@@ -1811,18 +1811,18 @@
             "id": "series-start-production",
             "number": "6",
             "title": "Mit einem Klick in die Produktion starten",
-            "description": "Wenn sich eine Episode richtig anfühlt, starten Sie ihre Produktion mit einem einzigen Klick und fließen Sie direkt in die geführte Production Studio-Pipeline ein.",
+            "description": "Wenn sich eine Episode richtig anfühlt, starten Sie ihre Produktion mit einem einzigen Klick und fließen Sie direkt in die geführte Production Stage-Pipeline ein.",
             "imagePlaceholder": "Ein-Klick-Start der Produktion einer ausgewählten Episode"
           }
         ]
       },
       {
         "id": "blueprint",
-        "tabLabel": "Blueprint Studio",
+        "tabLabel": "Blueprint Room",
         "number": "02",
-        "title": "Blueprint Studio",
+        "title": "Blueprint Room",
         "header": "Deine kreative DNA, eingesperrt",
-        "body": "Blueprint Studio ist Ihre Deep-Film-Behandlung — Synopse, Beats, Charaktere, Ton und Stil —, die von Audience Resonance Analysis vorab bewertet wird, damit Sie eine Geschichte genehmigen können, die vor dem Rendern eines einzelnen Frames landet.",
+        "body": "Blueprint Room ist Ihre Deep-Film-Behandlung — Synopse, Beats, Charaktere, Ton und Stil —, die von Audience Resonance Analysis vorab bewertet wird, damit Sie eine Geschichte genehmigen können, die vor dem Rendern eines einzelnen Frames landet.",
         "steps": [
           {
             "id": "blueprint-baseline",
@@ -1850,17 +1850,17 @@
             "number": "4",
             "title": "Starten Sie die Produktion, wenn Sie bereit sind",
             "description": "Sobald die Geschichte singt, starten Sie die Produktion — und die gesamte Pipeline erbt Ihre genehmigte kreative DNA ohne Drift.",
-            "imagePlaceholder": "Öffnen Sie Production Studio — Readiness Gate aus einem genehmigten Blueprint"
+            "imagePlaceholder": "Öffnen Sie Production Stage — Readiness Gate aus einem genehmigten Blueprint"
           }
         ]
       },
       {
         "id": "production",
-        "tabLabel": "Production Studio",
+        "tabLabel": "Production Stage",
         "number": "03-",
-        "title": "Production Studio",
+        "title": "Production Stage",
         "header": "Vom Skript zum veröffentlichten Master",
-        "body": "Production Studio läuft parallel, Multi-Engine-Generierung — Skript, Audio, Frames und Video — mit dem Intelligent Assistant Director, dem Screening Room und mehrsprachigen Streams, die Sie von einem genehmigten Skript zu einem veröffentlichten 4K-Master führen.",
+        "body": "Production Stage läuft parallel, Multi-Engine-Generierung — Skript, Audio, Frames und Video — mit dem Intelligent Assistant Director, dem Screening Room und mehrsprachigen Streams, die Sie von einem genehmigten Skript zu einem veröffentlichten 4K-Master führen.",
         "steps": [
           {
             "id": "production-script-ara",

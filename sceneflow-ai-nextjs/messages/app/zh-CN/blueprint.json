@@ -1,20 +1,20 @@
 {
   "studio": {
-    "title": "Blueprint Studio",
+    "title": "Blueprint Room",
     "episodeBadge": "剧集{number}",
     "partOfSeries": "{series}的一部分",
     "showSidePanel": "显示侧面板？",
     "hideSidePanel": "侧边面板",
-    "goToProduction": "前往Production Studio",
+    "goToProduction": "前往Production Stage",
     "goShort": "前往",
-    "goTooltip": "转到Production Studio -生成脚本并开始Production Studio管道",
-    "openingProduction": "正在打开Production Studio…",
+    "goTooltip": "转到Production Stage -生成脚本并开始Production Stage管道",
+    "openingProduction": "正在打开Production Stage…",
     "creatingConcept": "正在创建您的电影概念……",
     "saving": "正在保存…",
     "saved": "保存成功",
     "saveFailed": "保存失败",
-    "syncedToProduction": "SFAIBLUEPRINTERM已同步到Production Studio —准备就绪时重新生成脚本。",
-    "syncFailed": "SFAIBLUEPRINTERM已更新，但Production Studio同步失败",
+    "syncedToProduction": "SFAIBLUEPRINTERM已同步到Production Stage —准备就绪时重新生成脚本。",
+    "syncFailed": "SFAIBLUEPRINTERM已更新，但Production Stage同步失败",
     "untitled": "无标题",
     "editHeroImage": "编辑主图— {title}",
     "empty": {
@@ -224,9 +224,9 @@
     "generateBlueprint": "生成Blueprint",
     "saveAudienceAndAnalyze": "保存受众并运行Audience Resonance",
     "applyTopFix": "应用TOP Audience Resonance FIX",
-    "startProduction": "前往Production Studio",
+    "startProduction": "前往Production Stage",
     "reAnalyzeOrRefine": "重新分析或优化Blueprint",
-    "improveScoreOrStart": "提高分数或转到Production Studio",
+    "improveScoreOrStart": "提高分数或转到Production Stage",
     "generating": "正在生成Blueprint…"
   },
   "sidePanel": {
@@ -349,8 +349,8 @@
     "next": "下一頁",
     "getStarted": "开始使用",
     "welcome": {
-      "title": "欢迎来到Blueprint Studio",
-      "description": "Blueprint Studio是您的创意基础：生成→评论→迭代→转到Production Studio。一个连续的工作流程—不分散的编辑器。",
+      "title": "欢迎来到Blueprint Room",
+      "description": "Blueprint Room是您的创意基础：生成→评论→迭代→转到Production Stage。一个连续的工作流程—不分散的编辑器。",
       "tip": "侧边栏工作流程指南和副驾驶展示了您在每个阶段的下一步。"
     },
     "generate": {
@@ -456,7 +456,7 @@
       "regenerate-hero": "重新生成英雄形象",
       "preview-audio": "带音频预览",
       "collaborate-export": "协作和导出",
-      "start-production": "前往Production Studio"
+      "start-production": "前往Production Stage"
     }
   }
 }

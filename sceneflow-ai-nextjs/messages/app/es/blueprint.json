@@ -1,20 +1,20 @@
 {
   "studio": {
-    "title": "Blueprint Studio",
+    "title": "Blueprint Room",
     "episodeBadge": "Episodio {number}",
     "partOfSeries": "Parte de {series}",
     "showSidePanel": "Panel lateral",
     "hideSidePanel": "Panel lateral",
-    "goToProduction": "Ir a Production Studio",
+    "goToProduction": "Ir a Production Stage",
     "goShort": "Avanzar",
-    "goTooltip": "Ir a Production Studio — generar script y comenzar el pipeline Production Studio",
-    "openingProduction": "Abriendo Production Studio…",
+    "goTooltip": "Ir a Production Stage — generar script y comenzar el pipeline Production Stage",
+    "openingProduction": "Abriendo Production Stage…",
     "creatingConcept": "Creando su concepto de película...",
     "saving": "Guardando...",
     "saved": "Guardado",
     "saveFailed": "Fallo en guardar",
-    "syncedToProduction": "Blueprint sincronizado con Production Studio — regenera tu script cuando esté listo.",
-    "syncFailed": "Blueprint actualizado, pero Production Studio Sync falló",
+    "syncedToProduction": "Blueprint sincronizado con Production Stage — regenera tu script cuando esté listo.",
+    "syncFailed": "Blueprint actualizado, pero Production Stage Sync falló",
     "untitled": "Sin título",
     "editHeroImage": "Editar imagen de héroe — {title}",
     "empty": {
@@ -224,9 +224,9 @@
     "generateBlueprint": "Generar Blueprint",
     "saveAudienceAndAnalyze": "Guardar audiencia Y ejecutar Audience Resonance",
     "applyTopFix": "Aplicar LA solución Top Audience Resonance",
-    "startProduction": "Ir a Production Studio",
+    "startProduction": "Ir a Production Stage",
     "reAnalyzeOrRefine": "Reanalizar o refinar Blueprint",
-    "improveScoreOrStart": "Mejorar puntuación o Ir a Production Studio",
+    "improveScoreOrStart": "Mejorar puntuación o Ir a Production Stage",
     "generating": "Generando Blueprint…"
   },
   "sidePanel": {
@@ -349,8 +349,8 @@
     "next": "Siguiente",
     "getStarted": "Primeros pasos",
     "welcome": {
-      "title": "Bienvenido a Blueprint Studio",
-      "description": "Blueprint Studio es tu base creativa: Generar → Revisión → Iterar → Ir a Production Studio. Un flujo de trabajo continuo, no editores dispersos.",
+      "title": "Bienvenido a Blueprint Room",
+      "description": "Blueprint Room es tu base creativa: Generar → Revisión → Iterar → Ir a Production Stage. Un flujo de trabajo continuo, no editores dispersos.",
       "tip": "La guía de flujo de trabajo de la barra lateral y el copiloto muestran el siguiente paso en cada etapa."
     },
     "generate": {
@@ -456,7 +456,7 @@
       "regenerate-hero": "Regenerar imagen de héroe",
       "preview-audio": "Vista previa con audio",
       "collaborate-export": "Colaborar y exportar",
-      "start-production": "Ir a Production Studio"
+      "start-production": "Ir a Production Stage"
     }
   }
 }

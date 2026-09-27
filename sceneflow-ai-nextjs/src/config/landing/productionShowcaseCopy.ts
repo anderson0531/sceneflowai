@@ -30,7 +30,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
       id: 'script-ar',
       step: '2',
       title: 'Script Audience Resonance',
-      body: 'Listen through the Production Studio script report — overview, analysis, and scene notes — without applying fixes or leaving feedback.',
+      body: 'Listen through the Production Stage script report — overview, analysis, and scene notes — without applying fixes or leaving feedback.',
     },
     {
       id: 'screening-room',
@@ -42,7 +42,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
   workflowLabel: 'Solutions',
   startProduction: 'Start Your Production',
   cta: 'Start Your Production',
-  continuityNote: 'Series Studio manages continuity',
+  continuityNote: 'Series Room manages continuity',
   resonanceNote: 'Audience Resonance™ optimizes scripts',
   videoLanguagePrompt: 'Watch this production in your language',
   videoComingSoon: 'Dub coming soon',
@@ -66,7 +66,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
             'Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.',
           solutionHeadline: 'Locked Asset Blueprints.',
           solution:
-            'Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion.',
+            'Define master character profiles, environments, and visual styles up front in Blueprint Room. SceneFlow enforces visual identity across every render to preserve narrative immersion.',
         },
         {
           title: 'Narrative Pacing & Scene Control',
@@ -93,7 +93,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
             'Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.',
           solutionHeadline: 'Automated Studio Pipeline.',
           solution:
-            "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export.",
+            "From concept to final master MP4 in one unified platform. Blueprint Room handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export.",
         },
       ],
       screeningRoomPreview: 'The Cinematic Drama — Screening Room',
@@ -185,7 +185,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
             'Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.',
           solutionHeadline: 'Beat-First Documentary Pipeline',
           solution:
-            'Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass.',
+            'Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Room, delivering a fully assembled master file in one seamless pass.',
         },
       ],
       screeningRoomPreview: 'Documentary Production — Screening Room',
@@ -209,7 +209,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
             'Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.',
           solutionHeadline: 'Blueprint-Level Localization.',
           solution:
-            'Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered.',
+            'Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Room before a single frame is rendered.',
         },
         {
           title: 'Parallel Production Pipelines',

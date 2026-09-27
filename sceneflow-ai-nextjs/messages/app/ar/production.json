@@ -1,6 +1,6 @@
 {
   "studio": {
-    "title": "Production Studio",
+    "title": "Production Stage",
     "script": "نص الحوار",
     "characters": "الرموز",
     "scenes": "المواقع",
@@ -9,12 +9,12 @@
     "mixer": "Production Mixer",
     "directorConsole": "وحدة تحكم المدير",
     "initializing": "التهيئة",
-    "opening": "جارٍ فتح Production Studio",
+    "opening": "جارٍ فتح Production Stage",
     "openingShort": "افتتاح الإنتاج",
     "backToBlueprint": "العودة إلى Blueprint",
     "blueprintShort": "SFIBLUEPRINTTERM",
     "productionLabel": "إنتاج",
-    "viewsAriaLabel": "Production Studio مرات المشاهدة",
+    "viewsAriaLabel": "Production Stage مرات المشاهدة",
     "viewStudio": "استوديو",
     "viewScreening": "Screening Room",
     "viewStreams": "Streams",
@@ -1349,7 +1349,7 @@
     "seconds": "{count}s",
     "progress": "منتهي",
     "progressValues": "إطارات {frames}/{beats} · مقاطع فيديو {videos}/{beats}",
-    "scopeFixedHint": "يأتي عدد المشاهد واللقطات من Production Studio ولا يمكن تعديله هنا.",
+    "scopeFixedHint": "يأتي عدد المشاهد واللقطات من Production Stage ولا يمكن تعديله هنا.",
     "methodsTitle": "طريقة الإنتاج",
     "recommended": "مُستَحسَن",
     "methods": {
@@ -1416,6 +1416,6 @@
     },
     "setAsProjectBudget": "تعيين كميزانية المشروع (اعتمادات {credits})",
     "saving": "توفير...",
-    "noBeatsYet": "أضف المشاهد واللقطات في Production Studio لإنشاء الميزانية."
+    "noBeatsYet": "أضف المشاهد واللقطات في Production Stage لإنشاء الميزانية."
   }
 }

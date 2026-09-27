@@ -505,7 +505,7 @@ export function ShowrunnerEngineSection() {
           transition={{ duration: 0.6 }}
         >
           <div className="text-center mb-8">
-            <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">One-Off AI vs. Series Studio</h3>
+            <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">One-Off AI vs. Series Room</h3>
             <p className="text-gray-400">Why YouTube documentarians are switching to series-first production</p>
           </div>
 
@@ -523,7 +523,7 @@ export function ShowrunnerEngineSection() {
                   <th className="py-4 px-4 text-left text-sm font-semibold text-cyan-400">
                     <div className="flex items-center gap-2">
                       <Clapperboard className="w-4 h-4" />
-                      SceneFlow Series Studio
+                      SceneFlow Series Room
                     </div>
                   </th>
                 </tr>

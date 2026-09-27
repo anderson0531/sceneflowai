@@ -101,7 +101,7 @@ async function main() {
         landingPage.useCasesTabsRemoved === true &&
         Array.isArray(landingPage.studioDisplayNames) &&
         landingPage.studioDisplayNames.join(',') ===
-          'Blueprint Studio,Series Studio,Production Studio' &&
+          'Blueprint Room,Series Room,Production Stage' &&
         landingPage.heroCopy?.headline ===
           'You Direct the Story. SceneFlow Automates the Studio.' &&
         landingPage.heroCopy?.audienceMicroLineRemoved === true

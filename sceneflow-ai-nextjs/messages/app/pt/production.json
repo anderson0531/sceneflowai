@@ -9,12 +9,12 @@
     "mixer": "Production Mixer",
     "directorConsole": "Consola do Director",
     "initializing": "Inicializando",
-    "opening": "Abrindo Production Studio",
+    "opening": "Abrindo Production Stage",
     "openingShort": "Abertura da produção",
     "backToBlueprint": "Voltar para Blueprint",
     "blueprintShort": "Blueprint",
     "productionLabel": "Produção",
-    "viewsAriaLabel": "Visualizações Production Studio",
+    "viewsAriaLabel": "Visualizações Production Stage",
     "viewStudio": "Estúdio",
     "viewScreening": "Screening Room",
     "viewStreams": "Streams",
@@ -1349,7 +1349,7 @@
     "seconds": "{count}s",
     "progress": "Feito",
     "progressValues": "Quadros {frames}/{beats} · Vídeos {videos}/{beats}",
-    "scopeFixedHint": "As contagens de cenas e planos vêm de Production Studio e não são ajustáveis ​​aqui.",
+    "scopeFixedHint": "As contagens de cenas e planos vêm de Production Stage e não são ajustáveis ​​aqui.",
     "methodsTitle": "Método de produção",
     "recommended": "Recomendado",
     "methods": {
@@ -1416,6 +1416,6 @@
     },
     "setAsProjectBudget": "Definido como Orçamento do Projeto (créditos {credits})",
     "saving": "Salvando...",
-    "noBeatsYet": "Adicione cenas e planos em Production Studio para criar um orçamento."
+    "noBeatsYet": "Adicione cenas e planos em Production Stage para criar um orçamento."
   }
 }

@@ -49,7 +49,7 @@
     "deliveryTitle": "Langues de livraison",
     "deliveryDescription": "Narration, doublage et rendu vidéo. Un seul projet peut être livré en plusieurs langues à la fois, elles sont donc choisies par scène plutôt que par compte.",
     "deliveryStartsFrom": "Commence à partir de {language}",
-    "deliverySetInProduction": "Définir dans Production Studio",
+    "deliverySetInProduction": "Définir dans Production Stage",
     "promptsStayEnglish": "Les invites d'image et de vidéo restent en anglais indépendamment de ces paramètres — les modèles de génération produisent des résultats nettement plus faibles à partir des invites traduites.",
     "interfaceSet": "Langue de l'interface définie sur {language}",
     "saved": "Préférence de langue enregistrée",

@@ -32,7 +32,7 @@ export const BLUEPRINT_GLOSSARY: Record<string, GlossaryTerm> = {
     definition: `${ASSISTANT.full} — describe a change in plain words and it revises core info, story, tone, beats, or characters for you.`,
   },
   startProduction: {
-    term: 'Go to Production Studio',
+    term: 'Go to Production Stage',
     definition: `Hand off your Blueprint to generate script and begin the ${STUDIO_DISPLAY_NAMES.production} pipeline.`,
   },
 }
@@ -53,14 +53,14 @@ export const BLUEPRINT_COPY = {
   creatingVision: `Opening ${STUDIO_DISPLAY_NAMES.production}…`,
   reimagine: 'Regenerate Blueprint',
   editBlueprint: ASSISTANT.short,
-  startProduction: 'Go to Production Studio',
+  startProduction: 'Go to Production Stage',
   /**
    * Header button label. Matches the next-step banner's Go button, while
    * `startProduction` stays the destination's name for the next-step text,
    * sidebar guide, tooltips and accessible names.
    */
   startProductionShort: 'Go',
-  startProductionTooltip: `Go to Production Studio — generate script and begin the ${STUDIO_DISPLAY_NAMES.production} pipeline`,
+  startProductionTooltip: `Go to Production Stage — generate script and begin the ${STUDIO_DISPLAY_NAMES.production} pipeline`,
 } as const
 
 /** Blueprint voice/TTS menu labels (Voice Direction, not Director's notes). */

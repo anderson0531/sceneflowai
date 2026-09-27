@@ -1,20 +1,20 @@
 {
   "studio": {
-    "title": "Blueprint Studio",
+    "title": "Blueprint Room",
     "episodeBadge": "ตอนที่ {number}",
     "partOfSeries": "ส่วนหนึ่งของ {series}",
     "showSidePanel": "แ_สดงช่องด้านข้าง",
     "hideSidePanel": "ซ่อนแผงด้านข้าง",
-    "goToProduction": "ไปที่ Production Studio",
+    "goToProduction": "ไปที่ Production Stage",
     "goShort": "ค้นหา",
-    "goTooltip": "ไปที่ Production Studio — สร้างสคริปต์และเริ่มต้นไปป์ไลน์ Production Studio",
-    "openingProduction": "กำลังเปิด Production Studio…",
+    "goTooltip": "ไปที่ Production Stage — สร้างสคริปต์และเริ่มต้นไปป์ไลน์ Production Stage",
+    "openingProduction": "กำลังเปิด Production Stage…",
     "creatingConcept": "กำลังสร้างคอนเซ็ปต์ภาพยนตร์ของคุณ...",
     "saving": "กำลังบันทึก...",
     "saved": "บันทึกแล้ว",
     "saveFailed": "การบันทึกล้มเหลว",
-    "syncedToProduction": "Blueprint ซิงค์กับ Production Studio — สร้างสคริปต์ของคุณใหม่เมื่อพร้อม",
-    "syncFailed": "อัปเดต Blueprint แล้วแต่การซิงค์ Production Studio ล้มเหลว",
+    "syncedToProduction": "Blueprint ซิงค์กับ Production Stage — สร้างสคริปต์ของคุณใหม่เมื่อพร้อม",
+    "syncFailed": "อัปเดต Blueprint แล้วแต่การซิงค์ Production Stage ล้มเหลว",
     "untitled": "ยังไม่กำหนดชื่อ",
     "editHeroImage": "แก้ไขรูปภาพฮีโร่ — {title}",
     "empty": {
@@ -224,9 +224,9 @@
     "generateBlueprint": "สร้าง Blueprint",
     "saveAudienceAndAnalyze": "บันทึกผู้ชมและเรียกใช้ Audience Resonance",
     "applyTopFix": "ใช้ TOP Audience Resonance FIX",
-    "startProduction": "ไปที่ Production Studio",
+    "startProduction": "ไปที่ Production Stage",
     "reAnalyzeOrRefine": "วิเคราะห์หรือปรับแต่ง Blueprint อีกครั้ง",
-    "improveScoreOrStart": "ปรับปรุงคะแนนหรือไปที่ Production Studio",
+    "improveScoreOrStart": "ปรับปรุงคะแนนหรือไปที่ Production Stage",
     "generating": "กำลังสร้าง Blueprint..."
   },
   "sidePanel": {
@@ -349,8 +349,8 @@
     "next": "ต่อไป",
     "getStarted": "เริ่มต้น",
     "welcome": {
-      "title": "ยินดีต้อนรับสู่ Blueprint Studio",
-      "description": "Blueprint Studio เป็นรากฐานความคิดสร้างสรรค์ของคุณ: สร้าง→ →บทวิจารณ์ Iterate → ไปที่ Production Studio ขั้นตอนการทำงานต่อเนื่องหนึ่งขั้นตอน — ไม่ใช่บรรณาธิการที่กระจัดกระจาย",
+      "title": "ยินดีต้อนรับสู่ Blueprint Room",
+      "description": "Blueprint Room เป็นรากฐานความคิดสร้างสรรค์ของคุณ: สร้าง→ →บทวิจารณ์ Iterate → ไปที่ Production Stage ขั้นตอนการทำงานต่อเนื่องหนึ่งขั้นตอน — ไม่ใช่บรรณาธิการที่กระจัดกระจาย",
       "tip": "คู่มือเวิร์กโฟลว์แถบด้านข้างและนักบินร่วมจะแสดงขั้นตอนต่อไปของคุณในทุกขั้นตอน"
     },
     "generate": {
@@ -456,7 +456,7 @@
       "regenerate-hero": "สร้างอิมเมจฮีโร่ใหม่",
       "preview-audio": "ดูตัวอย่างพร้อมเสียง",
       "collaborate-export": "ทำงานร่วมกันและส่งออก",
-      "start-production": "ไปที่ Production Studio"
+      "start-production": "ไปที่ Production Stage"
     }
   }
 }

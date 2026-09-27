@@ -230,7 +230,7 @@ export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = (
 })
 
 export const HERO_VIDEO_MULTILANG_HINT =
-  'Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.'
+  'Hero dubs in 7 languages — full pipeline supports 70+ in Production Stage.'
 
 export const HERO_VIDEO_LANGUAGE_PROMPT =
   'Hear the hero in your language — same pipeline, new markets'

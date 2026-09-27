@@ -49,7 +49,7 @@
     "deliveryTitle": "Idiomas de entrega",
     "deliveryDescription": "Narração, dublagem e vídeo renderizado. Um único projeto pode ser enviado em vários idiomas ao mesmo tempo, portanto, eles são escolhidos por cena e não por conta.",
     "deliveryStartsFrom": "Começa em {language}",
-    "deliverySetInProduction": "Definido em Production Studio",
+    "deliverySetInProduction": "Definido em Production Stage",
     "promptsStayEnglish": "Os prompts de imagem e vídeo permanecem em inglês, independentemente dessas configurações — os modelos de geração produzem resultados visivelmente mais fracos a partir de prompts traduzidos.",
     "interfaceSet": "Idioma da interface definido como {language}",
     "saved": "Preferência de idioma guardada",

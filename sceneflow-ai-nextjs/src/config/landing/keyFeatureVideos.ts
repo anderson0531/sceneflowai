@@ -18,8 +18,8 @@ import {
 export const KEY_FEATURE_VIDEO_LABELS: Record<string, string> = {
   byok: 'BYOK',
   budget: 'Production Budget',
-  series: 'Series Studio',
-  blueprint: 'Blueprint Studio',
+  series: 'Series Room',
+  blueprint: 'Blueprint Room',
   writersRoom: "Writer's Room",
   ara: 'Audience Resonance Analysis',
   referenceLibrary: 'Reference Library',

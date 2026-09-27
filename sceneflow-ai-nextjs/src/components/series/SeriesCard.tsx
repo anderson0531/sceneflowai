@@ -395,13 +395,13 @@ function EpisodeRow({ episode, onStart }: EpisodeRowProps) {
               variant="outline"
               size="sm"
               onClick={onStart}
-              title="Opens Blueprint Studio"
+              title="Opens Blueprint Room"
               className="text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 text-xs h-7 px-2"
             >
               <Play className="w-3 h-3 mr-1" />
               Start episode
             </Button>
-            <span className="text-[9px] text-gray-500">Opens Blueprint Studio</span>
+            <span className="text-[9px] text-gray-500">Opens Blueprint Room</span>
           </div>
         ) : (
           <span className="text-[10px] text-gray-600">Blueprint</span>

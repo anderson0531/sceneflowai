@@ -54,7 +54,7 @@
       "Screening Room"
     ],
     "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Stage.",
     "playWithNarration": "Play with narration",
     "tapToHear": "Tap to hear",
     "fullscreen": "Fullscreen",
@@ -590,7 +590,7 @@
       "tagline": "Eén studio. Begeleide automatisering — of een hoge doorvoersnelheid als je de stack al kent.",
       "stages": [
         {
-          "label": "Blueprint Studio",
+          "label": "Blueprint Room",
           "detail": "Gestructureerd verhaalplan"
         },
         {
@@ -639,7 +639,7 @@
     "phases": [
       {
         "id": "serie",
-        "stepLabel": "Series Studio",
+        "stepLabel": "Series Room",
         "subtitle": "Showrunner Engine",
         "description": "Definieer je universum eenmalig en genereer samenhangende verhaallijnen die over meerdere afleveringen lopen. Dankzij gedeelde Reference Library blijven personages en toon gedurende het hele seizoen op elkaar afgestemd.",
         "keySteps": [
@@ -651,12 +651,12 @@
           "Definieer je universum één keer — personages, toon en seizoensboog.",
           "Samenhangende afleveringsoverzichten — automatisch gegenereerd voor het hele seizoen",
           "Bijhouden van continuïteit — afstemming van seizoenen met meerdere afleveringen",
-          "Synchronisatie tussen serie en aflevering — naar Blueprint Studio en Productie"
+          "Synchronisatie tussen serie en aflevering — naar Blueprint Room en Productie"
         ]
       },
       {
         "id": "blauwdruk",
-        "stepLabel": "Blueprint Studio",
+        "stepLabel": "Blueprint Room",
         "subtitle": "Verhaalontwikkeling",
         "description": "Zet concepten om in gestructureerde treatments, inclusief logline, verhaalmomenten, personages en toon. Voer Audience Resonance uit en werk samen voordat het zware renderproces begint.",
         "keySteps": [
@@ -864,7 +864,7 @@
           "Definieer je universum één keer — personages, toon en seizoensboog.",
           "Samenhangende afleveringsoverzichten — automatisch gegenereerd voor het hele seizoen",
           "Bijhouden van continuïteit — afstemming van seizoenen met meerdere afleveringen",
-          "Synchronisatie tussen serie en aflevering — naar Blueprint Studio en Productie"
+          "Synchronisatie tussen serie en aflevering — naar Blueprint Room en Productie"
         ],
         "screenshotSlot": "Voeg screenshot in: Serieoverzicht met automatisch gegenereerde verhaallijnen per aflevering",
         "videoSlot": "Fragment van 30 seconden invoegen: concept dat uitgroeit tot een seizoen met meerdere afleveringen"
@@ -1349,7 +1349,7 @@
     "ctaSecondaryHref": "#key-features"
   },
   "footer": {
-    "description": "End-to-end geautomatiseerde videoproductie — van concept tot publicatieklare master. Eén begeleid atelier: Series Studio → Blueprint Studio → Production Studio → Screening Room.",
+    "description": "End-to-end geautomatiseerde videoproductie — van concept tot publicatieklare master. Eén begeleid atelier: Series Room → Blueprint Room → Production Stage → Screening Room.",
     "product": "Product",
     "resources": "Hulpmiddelen",
     "legal": "trust &amp; safety",
@@ -1399,7 +1399,7 @@
     "workflowLabel": "Solutions",
     "startProduction": "Start Your Production",
     "cta": "Start Your Production",
-    "continuityNote": "Series Studio manages continuity",
+    "continuityNote": "Series Room manages continuity",
     "resonanceNote": "Audience Resonance™ optimizes scripts",
     "videoLanguagePrompt": "Watch this production in your language",
     "videoComingSoon": "Dub coming soon",
@@ -1420,7 +1420,7 @@
             "frictionHeadline": "Character Drift & Wobbly Sets.",
             "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
             "solutionHeadline": "Locked Asset Blueprints.",
-            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
+            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Room. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
           {
             "title": "Narrative Pacing & Scene Control",
@@ -1441,7 +1441,7 @@
             "frictionHeadline": "Asset Chaos & Endless Rerolls.",
             "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
             "solutionHeadline": "Automated Studio Pipeline.",
-            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Room handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
         "screeningRoomPreview": "The Cinematic Drama — Screening Room"
@@ -1515,7 +1515,7 @@
             "frictionHeadline": "Fragmented Timeline Editing",
             "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
             "solutionHeadline": "Beat-First Documentary Pipeline",
-            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Room, delivering a fully assembled master file in one seamless pass."
           }
         ],
         "screeningRoomPreview": "Documentary Production — Screening Room"
@@ -1544,7 +1544,7 @@
             "frictionHeadline": "Dubbing Is Not Localization.",
             "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
             "solutionHeadline": "Blueprint-Level Localization.",
-            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Room before a single frame is rendered."
           },
           {
             "title": "Parallel Production Pipelines",

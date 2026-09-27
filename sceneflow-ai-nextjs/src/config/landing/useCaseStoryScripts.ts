@@ -150,7 +150,7 @@ export const USE_CASE_STORY_SCRIPTS: Record<UseCaseStoryKey, RoleStoryScript> = 
       {
         characterId: 'narrator',
         kind: 'narration',
-        text: 'Series Studio syncs season arcs into Blueprint and Production automatically — every face, voice, and beat stays aligned.',
+        text: 'Series Room syncs season arcs into Blueprint and Production automatically — every face, voice, and beat stays aligned.',
         directorNote: 'The pivot — brighter, decisive momentum.',
       },
       {

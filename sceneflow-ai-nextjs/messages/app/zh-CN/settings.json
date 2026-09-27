@@ -49,7 +49,7 @@
     "deliveryTitle": "交付语言",
     "deliveryDescription": "旁白、配音和渲染视频。单个项目可以同时以多种语言发货，因此这些是按场景而不是按帐户选择的。",
     "deliveryStartsFrom": "从{language}开始",
-    "deliverySetInProduction": "在Production Studio中设置",
+    "deliverySetInProduction": "在Production Stage中设置",
     "promptsStayEnglish": "无论这些设置如何，图像和视频提示都保持英文—生成模型从翻译提示中产生的结果明显较弱。",
     "interfaceSet": "界面语言设置为{language}",
     "saved": "语言偏好已保存",

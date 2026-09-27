@@ -1,20 +1,20 @@
 {
   "studio": {
-    "title": "Blueprint Studio",
+    "title": "Blueprint Room",
     "episodeBadge": "एपिसोड {number}",
     "partOfSeries": "{series} का हिस्सा",
     "showSidePanel": "साइड पैनल दिखाएँ",
     "hideSidePanel": "साइड पैनल छिपाएँ",
-    "goToProduction": "Production Studio पर जाएँ",
+    "goToProduction": "Production Stage पर जाएँ",
     "goShort": "इस पर जाएँ",
-    "goTooltip": "Production Studio पर जाएं - स्क्रिप्ट जेनरेट करें और Production Studio पाइपलाइन शुरू करें",
-    "openingProduction": "Production Studio खोला जा रहा है...",
+    "goTooltip": "Production Stage पर जाएं - स्क्रिप्ट जेनरेट करें और Production Stage पाइपलाइन शुरू करें",
+    "openingProduction": "Production Stage खोला जा रहा है...",
     "creatingConcept": "आपकी फिल्म कॉन्सेप्ट बनाई जा रही है...",
     "saving": "तैयार.",
     "saved": "सहेजा गया",
     "saveFailed": "सहेजना असफल",
-    "syncedToProduction": "Blueprint को Production Studio से सिंक किया गया - तैयार होने पर अपनी स्क्रिप्ट को फिर से तैयार करें।",
-    "syncFailed": "Blueprint अपडेट किया गया, लेकिन Production Studio सिंक विफल रहा",
+    "syncedToProduction": "Blueprint को Production Stage से सिंक किया गया - तैयार होने पर अपनी स्क्रिप्ट को फिर से तैयार करें।",
+    "syncFailed": "Blueprint अपडेट किया गया, लेकिन Production Stage सिंक विफल रहा",
     "untitled": "शीर्षकरहित",
     "editHeroImage": "हीरो इमेज में बदलाव करें — {title}",
     "empty": {
@@ -224,9 +224,9 @@
     "generateBlueprint": "Blueprint जेनरेट करें",
     "saveAudienceAndAnalyze": "दर्शकों को सहेजें और Audience Resonance चलाएं",
     "applyTopFix": "TOP Audience Resonance FIX लागू करें",
-    "startProduction": "Production Studio पर जाएँ",
+    "startProduction": "Production Stage पर जाएँ",
     "reAnalyzeOrRefine": "Blueprint का पुन: विश्लेषण या परिष्कृत करें",
-    "improveScoreOrStart": "स्कोर में सुधार करें या Production Studio पर जाएं",
+    "improveScoreOrStart": "स्कोर में सुधार करें या Production Stage पर जाएं",
     "generating": "Blueprint जनरेट किया जा रहा है..."
   },
   "sidePanel": {
@@ -349,8 +349,8 @@
     "next": "अगला",
     "getStarted": "शुरू करें",
     "welcome": {
-      "title": "Blueprint Studio में आपका स्वागत है",
-      "description": "Blueprint Studio आपकी रचनात्मक नींव है: → समीक्षा उत्पन्न करें → Iterate Production Studio → पर जाएं। एक सतत वर्कफ़्लो — बिखरे हुए संपादक नहीं।",
+      "title": "Blueprint Room में आपका स्वागत है",
+      "description": "Blueprint Room आपकी रचनात्मक नींव है: → समीक्षा उत्पन्न करें → Iterate Production Stage → पर जाएं। एक सतत वर्कफ़्लो — बिखरे हुए संपादक नहीं।",
       "tip": "साइडबार वर्कफ़्लो गाइड और सह - पायलट हर चरण में आपका अगला चरण दिखाते हैं।"
     },
     "generate": {
@@ -456,7 +456,7 @@
       "regenerate-hero": "हीरो इमेज को फिर से जनरेट करें",
       "preview-audio": "ऑडियो के साथ पूर्वावलोकन करें",
       "collaborate-export": "सहयोग करें और एक्सपोर्ट करें",
-      "start-production": "Production Studio पर जाएँ"
+      "start-production": "Production Stage पर जाएँ"
     }
   }
 }
