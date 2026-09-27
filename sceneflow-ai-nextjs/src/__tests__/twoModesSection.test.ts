@@ -101,13 +101,17 @@ describe('one-pipeline landing section', () => {
       TWO_MODES_COPY.languages.id,
     ]).toEqual([...TWO_MODES_MEDIA_IDS])
 
+    const illustrated = new Set(['comparison', 'earn'])
     for (const id of TWO_MODES_MEDIA_IDS) {
-      expect(TWO_MODES_MEDIA[id]).toEqual({
-        imageUrl: '',
-        posterUrl: '',
-        webmUrl: '',
-        mp4Url: '',
-      })
+      const entry = TWO_MODES_MEDIA[id]
+      expect(entry.posterUrl).toBe('')
+      expect(entry.webmUrl).toBe('')
+      expect(entry.mp4Url).toBe('')
+      if (illustrated.has(id)) {
+        expect(entry.imageUrl).toBe(`/landing/two-modes/${id}.webp`)
+      } else {
+        expect(entry.imageUrl).toBe('')
+      }
     }
 
     const filled = {
