@@ -18,9 +18,7 @@
     "twoModes": "Director กับ Go"
   },
   "hero": {
-    "ctaPrimaryLaunch": "เริ่มการผลิตของคุณ",
     "ctaSupportingLine": "",
-    "ctaSecondary": "สำรวจวิธีการทำงาน",
     "languagePrompt": "ฟัง Hero ในภาษาของคุณ — ไปป์ไลน์เดียวกัน ตลาดใหม่",
     "multilangHint": "Hero พากย์ 7 ภาษา — ไปป์ไลน์เต็มรูปแบบรองรับ 70+ ภาษาใน Production Stage",
     "videoLanguageCount": "{count, plural, =1 {# ภาษา} other {# ภาษา}}"

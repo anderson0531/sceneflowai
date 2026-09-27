@@ -28,24 +28,24 @@
     "audienceResonance": "Audience Resonance"
   },
   "hero": {
-    "headline": "Build Worlds. Not Just Clips.",
-    "subheadline": "Don’t settle for isolated generations. SceneFlow maintains character continuity, persistent environments, and complex narratives from your first scene to your hundredth — then ships it as a multi-language master.",
-    "ctaPrimaryLaunch": "Start Your Production",
+    "headline": "From first spark to finished master.",
+    "subheadline": "SceneFlow is one guided pipeline. You direct the story, the cast, and the tone. It builds the Blueprint, holds continuity, plays the full animatic, and assembles the master — without prompt trials or a timeline of loose clips.",
+    "ctaPrimaryLaunch": "Launch Studio ($9)",
     "ctaSupportingLine": "",
-    "ctaSecondary": "Explore How It Works",
+    "ctaSecondary": "Explore the pipeline",
     "ctaToolStack": "See how it replaces your tool stack",
     "chips": [
       {
-        "label": "Persistent Continuity",
-        "detail": "The Reference Library locks faces, wardrobe, voices, and locations through scene 100."
+        "label": "Direct in story language",
+        "detail": "Describe action, tone, and why a character moves. SceneFlow formats the model inputs."
       },
       {
-        "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
+        "label": "Continuity that holds",
+        "detail": "The Reference Library locks faces, wardrobe, voices, and locations for the whole production."
       },
       {
-        "label": "Built for Every Audience",
-        "detail": "Ship native-language streams for each culture and region in 70+ languages — or dub when you want the lower-cost path."
+        "label": "Screen before you render",
+        "detail": "Watch the Ken Burns animatic with dialogue, score, and sound effects. Approve it, then render motion."
       }
     ],
     "pipelineSteps": [
@@ -90,7 +90,7 @@
     },
     "soon": "Soon",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}",
-    "eyebrow": "The first AI pipeline for long-form video and series",
+    "eyebrow": "Automated filmmaking for films and series",
     "availabilityBadge": "Full access opens November 2026"
   },
   "valueProp": {
@@ -1346,7 +1346,7 @@
     "subtitle": "Full access opens November 2026. Leave your email and we’ll tell you the day it does — or start directing now from the $9 Explorer plan.",
     "cta": "Explore plans",
     "ctaSecondary": "See how it works",
-    "ctaSecondaryHref": "#key-features"
+    "ctaSecondaryHref": "#two-modes"
   },
   "footer": {
     "description": "End-to-End automatisierte Videoproduktion — vom Konzept bis zum veröffentlichungsbereiten Master. Ein geführtes Studio: Series Room → Blueprint Room → Production Stage → Screening Room.",
@@ -1990,43 +1990,95 @@
     "previewLabel": "Vorschau"
   },
   "twoModes": {
-    "eyebrow": "One automated pipeline",
-    "title": "From first idea to a world that ships.",
-    "subtitle": "Start with a concept or a finished script. SceneFlow writes the baseline, scores it for the culture you named, then generates hundreds of beats in parallel — so you review, collaborate, and ship multilingual masters instead of waiting on one clip at a time.",
-    "steps": [
+    "eyebrow": "The friction we remove",
+    "title": "One pipeline. Not a stack of tools.",
+    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
+    "comingSoon": "Coming soon",
+    "comparison": {
+      "id": "comparison",
+      "caption": "Fragmented tools beside one SceneFlow pipeline.",
+      "themLabel": "Fragmented production",
+      "usLabel": "SceneFlow",
+      "rows": [
+        {
+          "them": "Prompt trial and error across tools",
+          "us": "One Blueprint locks the story and the look"
+        },
+        {
+          "them": "Hand-built treatments and formatting",
+          "us": "A film treatment and beat sheet from your premise or brief"
+        },
+        {
+          "them": "Short clips that do not share a cast",
+          "us": "Shots generated from the locked Reference Library"
+        },
+        {
+          "them": "Dragging clips into another editor",
+          "us": "Scenes, chapters, and the master assemble in the Screening Room"
+        },
+        {
+          "them": "Re-rendering to test a note",
+          "us": "Direct on the animatic, then render"
+        }
+      ]
+    },
+    "retired": [
       {
-        "title": "Bring the spark",
-        "body": "A one-line concept or a detailed brief. One film or a full series."
+        "id": "no-prompt",
+        "title": "No prompt engineering",
+        "body": "Describe action, tone, and why a character moves. SceneFlow formats the model inputs.",
+        "caption": "Direct in story language."
       },
       {
-        "title": "Auto-build the baseline",
-        "body": "High-quality series bible, Blueprint, and script generated for you — ready to direct, not start from a blank page."
+        "id": "no-stitch",
+        "title": "No manual clip stitching",
+        "body": "Stop dragging loose clips into another editor. Scenes, chapters, and the master assemble in the Screening Room.",
+        "caption": "Scenes and chapters assemble in the Screening Room."
       },
       {
-        "title": "Score it. Fix it.",
-        "body": "Audience Resonance tells you what lands for the culture you named, not a language code. Intelligent Assistant editing applies section-level fixes before you spend on pictures."
-      },
-      {
-        "title": "Pre-vis at 5×",
-        "body": "Beat audio and frames generate together. A 5-minute scene is ~30 beats; an hour is ~360. Sequential generation cannot keep up. Parallel generation can."
-      },
-      {
-        "title": "Iterate at the speed of a note",
-        "body": "Change the script with the Intelligent Assistant. Regen the beats. Screen again. Collaboration stays cheap until the story is locked."
-      },
-      {
-        "title": "Generate the picture",
-        "body": "Motion video from approved beats. Ship high-quality native-language streams, or dub when you want the lower-cost path."
-      },
-      {
-        "title": "Screen",
-        "body": "Walk the story before the next render: the Blueprint, the Audience Resonance script, then the Screening Room — Pre-Vis, Scene, Chapter, Master, and Promo. Hear what lands. Change the story while the change is still cheap."
-      },
-      {
-        "title": "Package & Ship",
-        "body": "Send a Scene, Chapter, Master, or Promo to YouTube, Facebook, or TikTok — in 16:9 or 9:16 — or download it. Publish on the rhythm your budget allows. Read the response. Cut the next chapter, or stop."
+        "id": "no-preproduction",
+        "title": "No disconnected pre-production",
+        "body": "Casting, the film treatment, and the beat sheet come from the Blueprint Board and stay in sync downstream.",
+        "caption": "The film treatment and its beats."
       }
     ],
+    "stages": [
+      {
+        "id": "series-desk",
+        "title": "Series Desk",
+        "body": "For a series or franchise. Lock recurring faces, voices, wardrobe, and locations, and pass season continuity into each episode. A single film can start on the Blueprint Board.",
+        "caption": "Series Desk — one cast across episodes."
+      },
+      {
+        "id": "blueprint-board",
+        "title": "Blueprint Board",
+        "body": "Where the film treatment lives. A sentence or a full brief becomes motivations and a beat sheet. Audience Resonance scores story, pacing, and tone for the audience you named before you spend credits. The Intelligent Assistant revises dialogue without throwing away the visual foundation. Beats exist only here.",
+        "caption": "Blueprint Board — beats live in the treatment."
+      },
+      {
+        "id": "production-stage",
+        "title": "Production Stage",
+        "body": "Each Blueprint beat becomes a chapter. Dialogue, sound, and shots generate together, a few stills and clips at a time, so a scene can finish before the master does. Full production runs five stills or clips at once. Direct camera, blocking, and transitions in story language. Approved Pre-Vis shots become motion on Google Vertex and Veo. 4K is on Pro and Studio.",
+        "caption": "Production Stage — a chapter of shots."
+      },
+      {
+        "id": "screening-room",
+        "title": "Screening Room",
+        "body": "Ken Burns Pre-Vis with multi-character dialogue, environmental sound, and score. Switch among Pre-Vis shots, scenes, chapters, the master, and promo. Ship a 3–5 minute scene or an 8–12 minute chapter from the locked timeline, or hold them for the 90-minute master. Cutdowns and teasers come off that same timeline. Review native-language and dubbed streams in 70+ languages inside the player.",
+        "caption": "Screening Room — screen it, then ship a scene."
+      }
+    ],
+    "earn": {
+      "id": "earn",
+      "title": "Earn on a scene. Finish the master when it pays.",
+      "body": "A series or a 90-minute master can run about 500 shots. Shipping that master in one pass is a lot for a YouTube budget, and still inexpensive next to a traditional independent film. Publish a 3–5 minute scene or an 8–12 minute chapter from the same locked cast and world, then keep going.",
+      "caption": "Ship a scene or a chapter. Finish the master when it pays."
+    },
+    "languages": {
+      "id": "languages",
+      "body": "Direct the studio in your language. This site is in 39 languages. Ship dialogue, dubs, or lip-sync for 70+ languages, with Audience Resonance checking the culture you named before you spend on pictures.",
+      "caption": "Direct in your language. Ship in theirs."
+    },
     "cta": "Launch Studio ($9)"
   },
   "infrastructure": {
