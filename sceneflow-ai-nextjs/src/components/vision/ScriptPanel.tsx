@@ -67,7 +67,14 @@ import {
 } from '@/lib/audio/beatAudioStale'
 import { getExpressAudioConcurrency } from '@/lib/sceneGeneration/expressTrafficCop'
 import { runExpressGenerateAll } from '@/lib/sceneGeneration/runExpressGenerateAll'
-import { getBlueprintBeatGroup } from '@/lib/script/sceneDecomposition'
+import {
+  chapterName,
+  getBlueprintBeatGroup,
+  getNeighboringChapterSceneIndices,
+  resolveChapterBeatLine,
+  treatmentBeatsFromMetadata,
+  type BlueprintBeatInput,
+} from '@/lib/script/sceneDecomposition'
 
 // Dynamic imports with ssr: false to prevent TDZ circular dependency issues
 // These components have complex initialization that can cause module load order problems
@@ -745,32 +752,87 @@ const getSceneDomId = (scene: any, index: number) => {
 function BlueprintBeatGroupHeader({
   scenes,
   sceneIdx,
+  beats = [],
+  collapsed = false,
+  onToggleCollapsed,
   onSelectSceneIndex,
 }: {
   scenes: Array<Record<string, unknown>>
   sceneIdx: number
+  beats?: BlueprintBeatInput[]
+  collapsed?: boolean
+  onToggleCollapsed?: () => void
   onSelectSceneIndex?: (index: number) => void
 }) {
+  const tStudio = useTranslations('production.studio')
   const group = useMemo(() => getBlueprintBeatGroup(scenes, sceneIdx), [scenes, sceneIdx])
+  const neighbors = useMemo(
+    () => getNeighboringChapterSceneIndices(scenes, sceneIdx),
+    [scenes, sceneIdx]
+  )
   if (!group) return null
 
-  const { beatTitle, sceneIndices, positionInGroup } = group
-  const prevIdx = positionInGroup > 1 ? sceneIndices[positionInGroup - 2] : undefined
-  const nextIdx =
-    positionInGroup < sceneIndices.length ? sceneIndices[positionInGroup] : undefined
+  const { beatIndex, sceneIndices, positionInGroup } = group
+  const rawBeatTitle = scenes[sceneIdx]?.blueprintBeatTitle
+  const storedTitle = typeof rawBeatTitle === 'string' ? rawBeatTitle.trim() : ''
+  const beatLine = resolveChapterBeatLine(beats[beatIndex], storedTitle)
+  const chapterLabel = tStudio('chapter', { name: chapterName(beatIndex) })
+  const prevIdx = neighbors.prevSceneIndex
+  const nextIdx = neighbors.nextSceneIndex
 
   return (
-    <div className="rounded-lg border border-purple-500/30 bg-purple-950/40 px-4 py-3 flex items-center justify-between gap-3">
-      <div className="min-w-0">
-        <p className="text-[10px] uppercase tracking-wide text-purple-300/80 font-medium">Blueprint Beat</p>
-        <p className="text-sm font-semibold text-white truncate" title={beatTitle}>
-          {beatTitle}
-        </p>
-        <p className="text-xs text-purple-200/70 mt-0.5">
-          Scene {positionInGroup} of {sceneIndices.length} in this beat
-        </p>
+    <div className="rounded-lg border border-purple-500/30 bg-purple-950/40 px-4 py-3 flex items-start justify-between gap-3">
+      <div className="flex items-start gap-2 min-w-0 flex-1">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={onToggleCollapsed}
+                className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors shrink-0"
+                aria-expanded={!collapsed}
+                aria-controls="production-studio-chapter-heading production-studio-chapter-description"
+                aria-label={collapsed ? tStudio('showChapter') : tStudio('hideChapter')}
+                title={collapsed ? tStudio('showChapter') : tStudio('hideChapter')}
+              >
+                {collapsed ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronUp className="w-4 h-4" />
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+              {collapsed ? tStudio('showChapter') : tStudio('hideChapter')}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        {!collapsed && (
+          <div className="min-w-0">
+            <p
+              id="production-studio-chapter-heading"
+              className="text-[10px] tracking-wide text-purple-300/80 font-medium"
+            >
+              {chapterLabel}
+            </p>
+            {beatLine ? (
+              <p
+                id="production-studio-chapter-description"
+                className="text-sm font-semibold text-white break-words"
+              >
+                {beatLine}
+              </p>
+            ) : null}
+            <p className="text-xs text-purple-200/70 mt-0.5">
+              {tStudio('sceneInChapter', {
+                position: positionInGroup,
+                total: sceneIndices.length,
+              })}
+            </p>
+          </div>
+        )}
       </div>
-      {(prevIdx !== undefined || nextIdx !== undefined) && onSelectSceneIndex && (
+      {!collapsed && onSelectSceneIndex && (
         <div className="flex items-center gap-1 shrink-0">
           <button
             type="button"
@@ -778,7 +840,7 @@ function BlueprintBeatGroupHeader({
             onClick={() => prevIdx !== undefined && onSelectSceneIndex(prevIdx)}
             className="px-2 py-1 text-xs rounded border border-purple-500/40 text-purple-200 hover:bg-purple-900/50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Prev in beat
+            {tStudio('prevChapter')}
           </button>
           <button
             type="button"
@@ -786,7 +848,7 @@ function BlueprintBeatGroupHeader({
             onClick={() => nextIdx !== undefined && onSelectSceneIndex(nextIdx)}
             className="px-2 py-1 text-xs rounded border border-purple-500/40 text-purple-200 hover:bg-purple-900/50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Next in beat
+            {tStudio('nextChapter')}
           </button>
         </div>
       )}
@@ -1038,6 +1100,24 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     }
     return false
   })
+  const [chapterSectionCollapsed, setChapterSectionCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('productionStudioChapterCollapsed')
+      return saved ? JSON.parse(saved) : false
+    }
+    return false
+  })
+  const [sceneTitleCollapsed, setSceneTitleCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('productionStudioSceneTitleCollapsed')
+      return saved ? JSON.parse(saved) : false
+    }
+    return false
+  })
+  const blueprintBeats = useMemo(
+    () => treatmentBeatsFromMetadata(projectMetadata),
+    [projectMetadata]
+  )
   
   // Persist collapsed states to localStorage
   useEffect(() => {
@@ -1063,6 +1143,18 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
       localStorage.setItem('productionStudioHeaderCollapsed', JSON.stringify(studioHeaderCollapsed))
     }
   }, [studioHeaderCollapsed])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('productionStudioChapterCollapsed', JSON.stringify(chapterSectionCollapsed))
+    }
+  }, [chapterSectionCollapsed])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('productionStudioSceneTitleCollapsed', JSON.stringify(sceneTitleCollapsed))
+    }
+  }, [sceneTitleCollapsed])
   
   // Image Edit Modal state
   const [imageEditModalOpen, setImageEditModalOpen] = useState(false)
@@ -3131,6 +3223,9 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                 <BlueprintBeatGroupHeader
                   scenes={scenes}
                   sceneIdx={displayedScenes[0].originalIndex}
+                  beats={blueprintBeats}
+                  collapsed={chapterSectionCollapsed}
+                  onToggleCollapsed={() => setChapterSectionCollapsed((prev) => !prev)}
                   onSelectSceneIndex={onSelectSceneIndex}
                 />
               )}
@@ -3275,6 +3370,8 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       bookmarkedSceneIndex={bookmarkedSceneIndex}
                       sceneNavigationCollapsed={sceneNavigationCollapsed}
                       setSceneNavigationCollapsed={setSceneNavigationCollapsed}
+                      sceneTitleCollapsed={sceneTitleCollapsed}
+                      setSceneTitleCollapsed={setSceneTitleCollapsed}
                       sceneNavigationView={sceneNavigationView}
                       setSceneNavigationView={setSceneNavigationView}
                       showProductionProgress={showProductionProgress}
@@ -3966,6 +4063,8 @@ interface SceneCardProps {
   // Collapsible UI state
   sceneNavigationCollapsed?: boolean
   setSceneNavigationCollapsed?: (collapsed: boolean) => void
+  sceneTitleCollapsed?: boolean
+  setSceneTitleCollapsed?: (collapsed: boolean) => void
   sceneNavigationView?: 'list' | 'timeline'
   setSceneNavigationView?: (view: 'list' | 'timeline') => void
   showProductionProgress?: boolean
@@ -4215,6 +4314,8 @@ function SceneCard({
   bookmarkedSceneIndex = -1,
   sceneNavigationCollapsed,
   setSceneNavigationCollapsed,
+  sceneTitleCollapsed = false,
+  setSceneTitleCollapsed,
   sceneNavigationView = 'list',
   setSceneNavigationView,
   showProductionProgress = false,
@@ -5664,9 +5765,38 @@ function SceneCard({
         >
           <div className="flex flex-col gap-1 min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-xl font-semibold text-white leading-tight">
-                SCENE {sceneNumber}: {formattedHeading}
-              </p>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSceneTitleCollapsed?.(!sceneTitleCollapsed)
+                      }}
+                      className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors shrink-0"
+                      aria-expanded={!sceneTitleCollapsed}
+                      aria-controls="production-studio-scene-title production-studio-scene-description"
+                      aria-label={sceneTitleCollapsed ? tStudio('showSceneTitle') : tStudio('hideSceneTitle')}
+                      title={sceneTitleCollapsed ? tStudio('showSceneTitle') : tStudio('hideSceneTitle')}
+                    >
+                      {sceneTitleCollapsed ? (
+                        <ChevronDown className="w-4 h-4" />
+                      ) : (
+                        <ChevronUp className="w-4 h-4" />
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                    {sceneTitleCollapsed ? tStudio('showSceneTitle') : tStudio('hideSceneTitle')}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              {!sceneTitleCollapsed && (
+                <p id="production-studio-scene-title" className="text-xl font-semibold text-white leading-tight">
+                  SCENE {sceneNumber}: {formattedHeading}
+                </p>
+              )}
             
             {/* Audience Resonance Analysis Badge - Integrated from ScriptReviewModal */}
             {!isOutline && (
@@ -5817,8 +5947,8 @@ function SceneCard({
               </div>
             )}
             </div>
-            {sceneDescriptionText && (
-              <p className="text-sm text-slate-400 leading-relaxed pr-4">
+            {!sceneTitleCollapsed && sceneDescriptionText && (
+              <p id="production-studio-scene-description" className="text-sm text-slate-400 leading-relaxed pr-4">
                 {sceneDescriptionText}
               </p>
             )}

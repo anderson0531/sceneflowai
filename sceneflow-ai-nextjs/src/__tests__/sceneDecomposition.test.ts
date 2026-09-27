@@ -2,9 +2,13 @@ import { describe, expect, it } from 'vitest'
 import {
   findSceneSplitIndex,
   getBlueprintBeatGroup,
+  getNeighboringChapterSceneIndices,
+  chapterHeading,
   formatDecompositionPromptBlock,
   planSceneDecomposition,
+  resolveChapterBeatLine,
   splitOversizedScenes,
+  treatmentBeatsFromMetadata,
   MAX_BEATS_PER_SCENE,
   TARGET_BEATS_PER_SCENE,
   AVG_BEAT_SECONDS,
@@ -122,6 +126,73 @@ describe('getBlueprintBeatGroup', () => {
     expect(group!.beatTitle).toBe('Intro')
     expect(group!.sceneIndices).toEqual([0, 1])
     expect(group!.positionInGroup).toBe(2)
+  })
+})
+
+describe('chapter headings', () => {
+  it('spells chapter numbers from the beat index', () => {
+    expect(chapterHeading(0)).toBe('Chapter One')
+    expect(chapterHeading(1)).toBe('Chapter Two')
+    expect(chapterHeading(2)).toBe('Chapter Three')
+    expect(chapterHeading(11)).toBe('Chapter Twelve')
+    expect(chapterHeading(20)).toBe('Chapter Twenty-One')
+    expect(chapterHeading(98)).toBe('Chapter Ninety-Nine')
+    expect(chapterHeading(99)).toBe('Chapter 100')
+  })
+
+  it('joins the beat name and description', () => {
+    expect(
+      resolveChapterBeatLine(
+        {
+          title: 'Subterranean Isolation',
+          synopsis:
+            "Establish Gideon's defensive isolation, his obsession with rationalizing Clara's murder as personal failure, and Piper's disruptive intrusion.",
+        },
+        'Ignored fallback'
+      )
+    ).toBe(
+      "Subterranean Isolation - Establish Gideon's defensive isolation, his obsession with rationalizing Clara's murder as personal failure, and Piper's disruptive intrusion."
+    )
+  })
+
+  it('falls back to the scene beat title when the treatment beat is missing', () => {
+    expect(resolveChapterBeatLine(undefined, 'Descent')).toBe('Descent')
+  })
+
+  it('prefers synopsis, then description, then intent', () => {
+    expect(
+      resolveChapterBeatLine({ title: 'Arrival', description: 'The dock at dusk', synopsis: 'They land.' })
+    ).toBe('Arrival - They land.')
+    expect(resolveChapterBeatLine({ title: 'Arrival', intent: 'Raise the stakes' })).toBe(
+      'Arrival - Raise the stakes'
+    )
+  })
+
+  it('reads beats from the selected treatment variant', () => {
+    const beats = treatmentBeatsFromMetadata({
+      filmTreatment: { beats: [{ title: 'Older' }] },
+      filmTreatmentVariant: { beats: [{ title: 'Current', synopsis: 'Now' }] },
+    })
+    expect(beats).toEqual([{ title: 'Current', synopsis: 'Now' }])
+    expect(
+      treatmentBeatsFromMetadata({ filmTreatment: { storyBeats: [{ title: 'Legacy' }] } })
+    ).toEqual([{ title: 'Legacy' }])
+  })
+
+  it('jumps to the first scene of the neighboring chapter', () => {
+    const scenes = [
+      { blueprintBeatIndex: 0 },
+      { blueprintBeatIndex: 0 },
+      { blueprintBeatIndex: 1 },
+      { blueprintBeatIndex: 2 },
+      { blueprintBeatIndex: 2 },
+    ]
+    expect(getNeighboringChapterSceneIndices(scenes, 1)).toEqual({ nextSceneIndex: 2 })
+    expect(getNeighboringChapterSceneIndices(scenes, 2)).toEqual({
+      prevSceneIndex: 0,
+      nextSceneIndex: 3,
+    })
+    expect(getNeighboringChapterSceneIndices(scenes, 4)).toEqual({ prevSceneIndex: 2 })
   })
 })
 
