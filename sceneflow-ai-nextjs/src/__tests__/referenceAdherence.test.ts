@@ -163,21 +163,15 @@ describe('shouldResampleReferenceAdherence', () => {
 })
 
 describe('reference adherence wiring', () => {
-  it('scores finals that skip face likeness, and resamples a miss once', () => {
+  it('does not score or resample a still after it has uploaded', () => {
     const route = readFileSync(join(process.cwd(), 'src/app/api/scene/generate-image/route.ts'), 'utf8')
-    expect(route).toContain('shouldScoreReferenceAdherence')
-    expect(route).toContain('shouldResampleReferenceAdherence')
-    expect(route).toContain('Skipping reference adherence — Express draft')
-    expect(route).toContain('Reference adherence ${referenceAdherence.band}; sampling once more')
-    expect(route).toContain(
-      'Reference adherence ${referenceAdherence.band}; keeping first sample (Express fail-fast)'
-    )
-    expect(route).toContain('Reference resample failed; keeping first sample')
-    expect(route).toContain('referenceResampleFailureKeepsFirst')
-    expect(route).toContain('referenceAdherenceIsBetter')
-    expect(route).toContain('referenceResampleRound === 0')
-    expect(route).toContain("referenceStatus: referenceAdherence?.band ?? 'unchecked'")
-    expect(route).toContain('Skipping likeness validation — skipLikenessValidation')
+    expect(route).not.toContain('shouldScoreReferenceAdherence')
+    expect(route).not.toContain('shouldResampleReferenceAdherence')
+    expect(route).not.toContain('scoreReferenceAdherence')
+    expect(route).not.toContain('validateCharacterLikeness')
+    expect(route).not.toContain('referenceResampleFailureKeepsFirst')
+    expect(route).toContain('skipLikenessValidation')
+    expect(route).toContain('The uploaded still is the result')
   })
 
   it('threads the plate band from the image route through Express persist', () => {

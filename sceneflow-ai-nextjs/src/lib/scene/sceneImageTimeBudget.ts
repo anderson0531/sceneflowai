@@ -17,8 +17,8 @@ export const LIKENESS_RETRY_MIN_RESERVE_MS = 45_000
 export const LIKENESS_RETRY_COST_MARGIN = 1.25
 /** Validation is two image fetches plus a vision call. */
 export const LIKENESS_VALIDATION_MIN_RESERVE_MS = 20_000
-/** Blob upload and likeness validation still have to run after an image returns. */
-export const POST_IMAGE_RESERVE_MS = 25_000
+/** Blob upload still has to run after an image returns. */
+export const POST_IMAGE_RESERVE_MS = 8_000
 /** Share of the remaining budget the retry's prompt step may take. */
 export const RETRY_PROMPT_BUDGET_SHARE = 0.25
 /** Below this the prompt step cannot return, so the rules-based optimizer runs. */
@@ -74,9 +74,9 @@ export function resolveRetryPromptDeadlineMs(remainingMs: number, maxDeadlineMs:
 }
 
 /**
- * Absolute cutoff for an image call, leaving room for the upload and the
- * validation that follow it. The image client shortens its own request timeout
- * and stops its retry ladder at this instant.
+ * Absolute cutoff for an image call, leaving room for the blob upload that
+ * follows it. The image client shortens its own request timeout and stops its
+ * retry ladder at this instant.
  */
 export function resolveImageDeadlineAt(routeStart: number, routeBudgetMs: number): number {
   return routeStart + routeBudgetMs - POST_IMAGE_RESERVE_MS

@@ -105,10 +105,12 @@ describe('nested 429 retry de-amplification', () => {
 })
 
 describe('express beat likeness gate', () => {
-  it('honors skipLikenessValidation and does not fail Express stills on Vision timeout', () => {
+  it('does not run a post-generation vision check that can stall Express stills', () => {
     const src = readSource('src/app/api/scene/generate-image/route.ts')
-    expect(src).toContain('shouldValidateCharacterLikeness')
-    expect(src).toContain('!skipLikenessValidation')
+    expect(src).not.toContain('shouldValidateCharacterLikeness')
+    expect(src).not.toContain('validateCharacterLikeness')
+    expect(src).not.toContain('scoreReferenceAdherence')
+    expect(src).toContain('skipLikenessValidation')
     expect(src).not.toContain('expressBeatLikenessEligible')
     expect(src).not.toContain('shouldFailExpressBeatLikeness')
     expect(src).not.toContain('failing uncharged without a second Vertex still')
