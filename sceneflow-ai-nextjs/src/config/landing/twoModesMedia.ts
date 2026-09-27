@@ -37,8 +37,10 @@ const EMPTY_MEDIA: TwoModesMediaEntry = {
   mp4Url: '',
 }
 
+const ILLUSTRATION_BASE = '/landing/two-modes'
+
 export const TWO_MODES_MEDIA: Record<TwoModesMediaId, TwoModesMediaEntry> = {
-  comparison: { ...EMPTY_MEDIA },
+  comparison: { ...EMPTY_MEDIA, imageUrl: `${ILLUSTRATION_BASE}/comparison.webp` },
   'no-prompt': { ...EMPTY_MEDIA },
   'no-stitch': { ...EMPTY_MEDIA },
   'no-preproduction': { ...EMPTY_MEDIA },
@@ -46,7 +48,7 @@ export const TWO_MODES_MEDIA: Record<TwoModesMediaId, TwoModesMediaEntry> = {
   'blueprint-board': { ...EMPTY_MEDIA },
   'production-stage': { ...EMPTY_MEDIA },
   'screening-room': { ...EMPTY_MEDIA },
-  earn: { ...EMPTY_MEDIA },
+  earn: { ...EMPTY_MEDIA, imageUrl: `${ILLUSTRATION_BASE}/earn.webp` },
   languages: { ...EMPTY_MEDIA },
 }
 
