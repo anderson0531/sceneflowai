@@ -296,3 +296,139 @@ export function getBlueprintBeatGroup(
 
   return { beatIndex, beatTitle, sceneIndices, positionInGroup }
 }
+
+const CHAPTER_ONES = [
+  'One',
+  'Two',
+  'Three',
+  'Four',
+  'Five',
+  'Six',
+  'Seven',
+  'Eight',
+  'Nine',
+  'Ten',
+  'Eleven',
+  'Twelve',
+  'Thirteen',
+  'Fourteen',
+  'Fifteen',
+  'Sixteen',
+  'Seventeen',
+  'Eighteen',
+  'Nineteen',
+] as const
+
+const CHAPTER_TENS = [
+  '',
+  '',
+  'Twenty',
+  'Thirty',
+  'Forty',
+  'Fifty',
+  'Sixty',
+  'Seventy',
+  'Eighty',
+  'Ninety',
+] as const
+
+/** Spelled chapter name for a 0-based beat index: "One", "Twenty-One", or "100". */
+export function chapterName(beatIndex: number): string {
+  const number = Math.trunc(beatIndex) + 1
+  if (!Number.isFinite(number) || number < 1) return CHAPTER_ONES[0]
+  if (number > 99) return String(number)
+  if (number < 20) return CHAPTER_ONES[number - 1]
+  const tens = Math.floor(number / 10)
+  const ones = number % 10
+  return ones === 0 ? CHAPTER_TENS[tens] : `${CHAPTER_TENS[tens]}-${CHAPTER_ONES[ones - 1]}`
+}
+
+/** "Chapter One" for beat index 0. Counts past ninety-nine stay numeric. */
+export function chapterHeading(beatIndex: number): string {
+  return `Chapter ${chapterName(beatIndex)}`
+}
+
+/** Synopsis, then description, then intent — the same order script generation uses. */
+export function resolveBlueprintBeatDescription(
+  beat: BlueprintBeatInput | undefined
+): string | undefined {
+  if (!beat) return undefined
+  const synopsis =
+    (typeof beat.synopsis === 'string' && beat.synopsis.trim()) ||
+    (typeof beat.description === 'string' && beat.description.trim()) ||
+    (typeof beat.intent === 'string' && beat.intent.trim()) ||
+    ''
+  return synopsis || undefined
+}
+
+/**
+ * "Subterranean Isolation - Establish Gideon's defensive isolation…"
+ * Treatment title wins; the scene's blueprintBeatTitle is the fallback name.
+ */
+export function resolveChapterBeatLine(
+  beat: BlueprintBeatInput | undefined,
+  fallbackTitle = ''
+): string {
+  const name =
+    (typeof beat?.title === 'string' && beat.title.trim()) || fallbackTitle.trim()
+  const description = resolveBlueprintBeatDescription(beat)
+  if (name && description && description !== name) return `${name} - ${description}`
+  return name || description || ''
+}
+
+/** Blueprint beats stored on the project, preferring the selected treatment variant. */
+export function treatmentBeatsFromMetadata(
+  metadata: Record<string, unknown> | null | undefined
+): BlueprintBeatInput[] {
+  if (!metadata) return []
+
+  const variant = metadata.filmTreatmentVariant
+  if (variant && typeof variant === 'object' && !Array.isArray(variant)) {
+    const beats = extractBlueprintBeats(variant as Record<string, unknown>)
+    if (beats.length > 0) return beats
+  }
+
+  const treatment = metadata.filmTreatment
+  if (treatment && typeof treatment === 'object' && !Array.isArray(treatment)) {
+    return extractBlueprintBeats(treatment as Record<string, unknown>)
+  }
+
+  return []
+}
+
+export interface NeighboringChapterScenes {
+  prevSceneIndex?: number
+  nextSceneIndex?: number
+}
+
+/**
+ * First scene of the previous and next chapter, in the order chapters first appear.
+ * Scene-by-scene movement stays on the scene chevrons.
+ */
+export function getNeighboringChapterSceneIndices(
+  scenes: Array<Record<string, unknown>>,
+  sceneIndex: number
+): NeighboringChapterScenes {
+  const group = getBlueprintBeatGroup(scenes, sceneIndex)
+  if (!group) return {}
+
+  const order: number[] = []
+  const firstScene = new Map<number, number>()
+  scenes.forEach((scene, index) => {
+    const beatIndex = scene?.blueprintBeatIndex
+    if (typeof beatIndex !== 'number' || firstScene.has(beatIndex)) return
+    firstScene.set(beatIndex, index)
+    order.push(beatIndex)
+  })
+
+  const position = order.indexOf(group.beatIndex)
+  if (position < 0) return {}
+
+  const prevBeat = position > 0 ? order[position - 1] : undefined
+  const nextBeat = position < order.length - 1 ? order[position + 1] : undefined
+
+  return {
+    ...(prevBeat !== undefined ? { prevSceneIndex: firstScene.get(prevBeat) } : {}),
+    ...(nextBeat !== undefined ? { nextSceneIndex: firstScene.get(nextBeat) } : {}),
+  }
+}
