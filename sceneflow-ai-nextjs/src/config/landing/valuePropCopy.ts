@@ -3,30 +3,32 @@
  */
 
 export const HERO_COPY = {
-  eyebrow: 'The first AI pipeline for long-form video and series',
+  eyebrow: 'Automated filmmaking for films and series',
   availabilityBadge: 'Full access opens November 2026',
-  headline: 'Build Worlds. Not Just Clips.',
+  headline: 'From first spark to finished master.',
   subheadline:
-    'Don\u2019t settle for isolated generations. SceneFlow keeps character continuity, persistent environments, and a longform story — then lets you ship a scene, a chapter, or the master to YouTube, Facebook, and TikTok.',
-  ctaPrimaryLaunch: 'Start Your Production',
+    'SceneFlow is one guided pipeline. You direct the story, the cast, and the tone. It builds the Blueprint, holds continuity, plays the full animatic, and assembles the master — without prompt trials or a timeline of loose clips.',
+  ctaPrimaryLaunch: 'Launch Studio ($9)',
   ctaSupportingLine: '',
-  ctaSecondary: 'Explore How It Works',
+  ctaSecondary: 'Explore the pipeline',
   ctaToolStack: 'See how it replaces your tool stack',
 } as const
 
 export const HERO_VALUE_CHIPS = [
   {
-    label: 'Persistent Continuity',
-    detail: 'The Reference Library locks faces, wardrobe, voices, and locations through scene 100.',
-  },
-  {
-    label: 'Direct Before You Render',
+    label: 'Direct in story language',
     detail:
-      'Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master.',
+      'Describe action, tone, and why a character moves. SceneFlow formats the model inputs.',
   },
   {
-    label: 'Built for Every Audience',
-    detail: 'Ship native-language streams for each culture and region in 70+ languages — or dub when you want the lower-cost path.',
+    label: 'Continuity that holds',
+    detail:
+      'The Reference Library locks faces, wardrobe, voices, and locations for the whole production.',
+  },
+  {
+    label: 'Screen before you render',
+    detail:
+      'Watch the Ken Burns animatic with dialogue, score, and sound effects. Approve it, then render motion.',
   },
 ] as const
 
@@ -236,7 +238,7 @@ export const FINAL_CTA_COPY = {
     'Full access opens November 2026. Leave your email and we\u2019ll tell you the day it does — or start directing now from the $9 Explorer plan.',
   cta: 'Explore plans',
   ctaSecondary: 'See how it works',
-  ctaSecondaryHref: '#key-features',
+  ctaSecondaryHref: '#two-modes',
 } as const
 
 /** Payment processor — name consistently for MoR compliance */

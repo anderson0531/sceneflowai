@@ -13,7 +13,6 @@ import {
   ArrowRight,
   FileText,
   Film,
-  Globe,
   Link2,
   Loader2,
 } from 'lucide-react'
@@ -42,7 +41,7 @@ function readUnmuteDismissed(): boolean {
 export function HeroSection() {
   const t = useTranslations('hero')
   const chips = t.raw('chips') as Array<{ label: string; detail: string }>
-  const chipIcons = [Link2, Film, Globe]
+  const chipIcons = [FileText, Link2, Film]
   const landingLocale = useLocale()
   const syncedVideoLocale = resolveHeroVideoLocale(landingLocale)
   const prefersReducedMotion = useReducedMotion()
@@ -116,7 +115,7 @@ export function HeroSection() {
   }, [])
 
   const scrollToHowItWorks = useCallback(() => {
-    document.getElementById('key-features')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    document.getElementById('two-modes')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [])
 
   const openTheater = useCallback(() => {

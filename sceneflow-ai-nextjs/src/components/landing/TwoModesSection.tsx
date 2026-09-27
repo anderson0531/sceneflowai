@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
+import { TwoModesMediaFrame } from '@/components/landing/TwoModesMediaFrame'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 
 export const TWO_MODES_SECTION_ID = 'two-modes'
@@ -15,9 +16,42 @@ export const TWO_MODES_HASH_ALIASES = [
   'pre-vis-engine',
 ] as const
 
+type ComparisonCopy = {
+  id: string
+  caption: string
+  themLabel: string
+  usLabel: string
+  rows: Array<{ them: string; us: string }>
+}
+
+type MediaCard = {
+  id: string
+  title: string
+  body: string
+  caption: string
+}
+
+type EarnCopy = {
+  id: string
+  title: string
+  body: string
+  caption: string
+}
+
+type LanguagesCopy = {
+  id: string
+  body: string
+  caption: string
+}
+
 export function TwoModesSection() {
   const t = useTranslations('twoModes')
-  const steps = t.raw('steps') as Array<{ title: string; body: string }>
+  const comparison = t.raw('comparison') as ComparisonCopy
+  const retired = t.raw('retired') as MediaCard[]
+  const stages = t.raw('stages') as MediaCard[]
+  const earn = t.raw('earn') as EarnCopy
+  const languages = t.raw('languages') as LanguagesCopy
+  const comingSoon = t('comingSoon')
 
   const scrollToCheckout = () => {
     window.location.href = getSignupUrlForTier('explorer')
@@ -55,26 +89,106 @@ export function TwoModesSection() {
           </p>
         </motion.div>
 
-        <ol className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
-          {steps.map((step, index) => (
+        <div className="mx-auto max-w-5xl">
+          <TwoModesMediaFrame
+            mediaId={comparison.id}
+            caption={comparison.caption}
+            comingSoon={comingSoon}
+          />
+          <div className="mt-6 hidden gap-4 text-xs font-semibold uppercase tracking-wider text-slate-500 md:grid md:grid-cols-2">
+            <p>{comparison.themLabel}</p>
+            <p>{comparison.usLabel}</p>
+          </div>
+          <ul className="mt-2 divide-y divide-white/10 rounded-2xl border border-white/10 bg-slate-900/40">
+            {comparison.rows.map((row) => (
+              <li key={row.them} className="grid gap-2 px-5 py-4 md:grid-cols-2 md:gap-4">
+                <p className="text-sm text-gray-400">
+                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-500 md:hidden">
+                    {comparison.themLabel}
+                  </span>
+                  {row.them}
+                </p>
+                <p className="text-sm text-white">
+                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-indigo-300/80 md:hidden">
+                    {comparison.usLabel}
+                  </span>
+                  {row.us}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <ul className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
+          {retired.map((card, index) => (
             <motion.li
-              key={step.title}
+              key={card.id}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.45, delay: index * 0.04 }}
-              className="flex gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-lg shadow-slate-950/40 sm:p-6"
+              className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-lg shadow-slate-950/40 sm:p-6"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-indigo-400/30 bg-indigo-500/15 text-sm font-semibold text-indigo-200">
-                {index + 1}
-              </span>
+              <TwoModesMediaFrame mediaId={card.id} caption={card.caption} comingSoon={comingSoon} />
               <div>
-                <h3 className="text-lg font-semibold text-white">{step.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-gray-400">{step.body}</p>
+                <h3 className="text-lg font-semibold text-white">{card.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-gray-400">{card.body}</p>
+              </div>
+            </motion.li>
+          ))}
+        </ul>
+
+        <ol className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
+          {stages.map((stage, index) => (
+            <motion.li
+              key={stage.id}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.45, delay: index * 0.04 }}
+              className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-lg shadow-slate-950/40 sm:p-6"
+            >
+              <TwoModesMediaFrame
+                mediaId={stage.id}
+                caption={stage.caption}
+                comingSoon={comingSoon}
+              />
+              <div>
+                <h3 className="text-lg font-semibold text-white">{stage.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-gray-400">{stage.body}</p>
               </div>
             </motion.li>
           ))}
         </ol>
+
+        <motion.div
+          className="mt-10 grid gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-lg shadow-slate-950/40 md:grid-cols-2 md:items-center md:p-6"
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.45 }}
+        >
+          <TwoModesMediaFrame mediaId={earn.id} caption={earn.caption} comingSoon={comingSoon} />
+          <div>
+            <h3 className="text-xl font-semibold text-white">{earn.title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-gray-400">{earn.body}</p>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="mt-4 grid gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-lg shadow-slate-950/40 md:grid-cols-2 md:items-center md:p-6"
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.45 }}
+        >
+          <TwoModesMediaFrame
+            mediaId={languages.id}
+            caption={languages.caption}
+            comingSoon={comingSoon}
+          />
+          <p className="text-sm leading-relaxed text-gray-300 sm:text-base">{languages.body}</p>
+        </motion.div>
 
         <motion.div
           className="mt-10 flex justify-center"

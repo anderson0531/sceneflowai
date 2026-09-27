@@ -7,14 +7,16 @@ import { HERO_COPY, HERO_PIPELINE_STEPS, HERO_VALUE_CHIPS } from '@/config/landi
 const ROOT = join(process.cwd())
 
 describe('hero section copy and UI', () => {
-  it('leads with long-form continuity rather than multi-scene framing', () => {
-    expect(HERO_COPY.headline).toBe('Build Worlds. Not Just Clips.')
-    expect(HERO_COPY.subheadline).toContain('character continuity')
+  it('leads with a finished master rather than multi-scene framing', () => {
+    expect(HERO_COPY.headline).toBe('From first spark to finished master.')
+    expect(HERO_COPY.subheadline).toContain('holds continuity')
     expect(HERO_COPY.subheadline).not.toContain('multi-scene')
-    expect(HERO_COPY.eyebrow).toContain('long-form')
-    expect(HERO_COPY.ctaPrimaryLaunch).toBe('Start Your Production')
-    expect(HERO_COPY.ctaSecondary).toBe('Explore How It Works')
+    expect(HERO_COPY.subheadline).not.toContain('ProRes')
+    expect(HERO_COPY.eyebrow).toBe('Automated filmmaking for films and series')
+    expect(HERO_COPY.ctaPrimaryLaunch).toBe('Launch Studio ($9)')
+    expect(HERO_COPY.ctaSecondary).toBe('Explore the pipeline')
     expect(HERO_VALUE_CHIPS).toHaveLength(3)
+    expect(HERO_VALUE_CHIPS.map((chip) => chip.detail).join(' ')).not.toContain('ProRes')
     expect(HERO_PIPELINE_STEPS).toEqual(['Blueprint', 'Production', 'Screening Room'])
   })
 
@@ -30,9 +32,9 @@ describe('hero section copy and UI', () => {
     }
     expect(hero.chips).toHaveLength(3)
     expect(hero.chips.map((chip) => chip.label)).toEqual([
-      'Persistent Continuity',
-      'Direct Before You Render',
-      'Built for Every Audience',
+      'Direct in story language',
+      'Continuity that holds',
+      'Screen before you render',
     ])
     expect(hero.pipelineSteps).toEqual([...HERO_PIPELINE_STEPS])
   })
@@ -49,7 +51,8 @@ describe('hero section copy and UI', () => {
     expect(hero).not.toContain("t.raw('pipelineSteps')")
     expect(hero).not.toContain('ChevronRight')
     expect(hero).toContain('scrollToHowItWorks')
-    expect(hero).toContain('key-features')
+    expect(hero).toContain("getElementById('two-modes')")
+    expect(hero).not.toContain("getElementById('key-features')")
     expect(hero).toContain('getVideoPreloadStrategy')
     expect(hero).toContain('HeroVideoBackground')
     expect(hero).toContain('min-h-[100dvh]')

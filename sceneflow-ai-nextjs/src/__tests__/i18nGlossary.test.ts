@@ -108,7 +108,9 @@ describe('sourceHash', () => {
 describe('glossary contents', () => {
   it('protects the three studio names the plan calls out', () => {
     expect(GLOSSARY_TERMS).toContain('Blueprint Room')
+    expect(GLOSSARY_TERMS).toContain('Blueprint Board')
     expect(GLOSSARY_TERMS).toContain('Series Room')
+    expect(GLOSSARY_TERMS).toContain('Series Desk')
     expect(GLOSSARY_TERMS).toContain('Production Stage')
     expect(GLOSSARY_TERMS).toContain('Intelligent Assistant Director')
     expect(GLOSSARY_TERMS).toContain('Co-Director')
@@ -129,6 +131,14 @@ describe('glossary contents', () => {
     ]) {
       expect(GLOSSARY_TERMS).toContain(term)
     }
+  })
+
+  it('keeps Blueprint Board intact rather than clipping it to Blueprint', () => {
+    const { protectedText, map } = protectGlossary('Open the Blueprint Board before Production Stage.')
+
+    expect(protectedText).not.toContain('Blueprint Board')
+    expect(protectedText).not.toContain('Blueprint')
+    expect(restoreGlossary(protectedText, map)).toContain('Blueprint Board')
   })
 
   it('keeps Co-Director intact rather than translating it as a role title', () => {

@@ -112,13 +112,7 @@ export function buildEnMessages() {
       soon: 'Soon',
       videoLanguageCount: '{count, plural, =1 {# language} other {# languages}}',
     },
-    twoModes: {
-      eyebrow: TWO_MODES_COPY.eyebrow,
-      title: TWO_MODES_COPY.title,
-      subtitle: TWO_MODES_COPY.subtitle,
-      steps: TWO_MODES_COPY.steps.map((step) => ({ title: step.title, body: step.body })),
-      cta: TWO_MODES_COPY.cta,
-    },
+    twoModes: TWO_MODES_COPY,
     infrastructure: {
       title: INFRASTRUCTURE_COPY.title,
       description: INFRASTRUCTURE_COPY.description,
