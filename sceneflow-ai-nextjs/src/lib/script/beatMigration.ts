@@ -28,8 +28,10 @@ import {
   BEAT_END_STILL_SLOT,
   BEAT_START_STILL_SLOT,
   DIALOGUE_STILL_SLOT,
+  restoredStillTier,
   SCENE_STILL_SLOT,
   type MediaVersionSource,
+  type StillSlotSpec,
 } from '@/lib/storyboard/mediaVersions'
 import {
   applySceneMovements,
@@ -1343,6 +1345,27 @@ function referenceReasonFromExtras(extras?: BeatStoryboardImageExtras): string |
   return reason || undefined
 }
 
+function stillAssignOptions(extras?: BeatStoryboardImageExtras) {
+  return {
+    source: extras?.source ?? 'generate',
+    prompt: extras?.imagePrompt,
+    restoreVersionId: extras?.restoreVersionId,
+    ...(extras?.restoreVersionId ? {} : { tier: extras?.imageTier }),
+  }
+}
+
+/** Beat-level tier follows the version that is current, including after restore. */
+function tierForAssignedStill(
+  row: Record<string, unknown>,
+  spec: StillSlotSpec,
+  extras?: BeatStoryboardImageExtras
+): 'draft' | 'final' | undefined {
+  if (extras?.restoreVersionId) {
+    return restoredStillTier(row[spec.versionsKey], extras.restoreVersionId)
+  }
+  return extras?.imageTier
+}
+
 /** Persist a beat-index storyboard image to beats[] and legacy dialogue[]. */
 export function applyBeatStoryboardImageToScene(
   scene: Record<string, unknown>,
@@ -1361,16 +1384,17 @@ export function applyBeatStoryboardImageToScene(
       beats[beatIndex] as unknown as Record<string, unknown>,
       BEAT_END_STILL_SLOT,
       imageUrl,
-      {
-        source,
-        prompt: extras?.imagePrompt,
-        restoreVersionId: extras?.restoreVersionId,
-      }
+      stillAssignOptions(extras)
+    )
+    const endTier = tierForAssignedStill(
+      stamped,
+      BEAT_END_STILL_SLOT,
+      extras
     )
     beats[beatIndex] = {
       ...stamped,
       storyboardEndImageError: undefined,
-      ...(extras?.imageTier ? { storyboardEndImageTier: extras.imageTier } : {}),
+      ...(endTier ? { storyboardEndImageTier: endTier } : {}),
       ...(extras?.imageGcsPath
         ? { storyboardEndImageGcsPath: extras.imageGcsPath }
         : {}),
@@ -1387,17 +1411,14 @@ export function applyBeatStoryboardImageToScene(
     previous as unknown as Record<string, unknown>,
     BEAT_START_STILL_SLOT,
     imageUrl,
-    {
-      source,
-      prompt: extras?.imagePrompt,
-      restoreVersionId: extras?.restoreVersionId,
-    }
+    stillAssignOptions(extras)
   )
+  const startTier = tierForAssignedStill(withVersion, BEAT_START_STILL_SLOT, extras)
   beats[beatIndex] = {
     ...withVersion,
     storyboardImageError: undefined,
     ...stamp,
-    ...(extras?.imageTier ? { storyboardImageTier: extras.imageTier } : {}),
+    ...(startTier ? { storyboardImageTier: startTier } : {}),
     ...(extras?.imageGcsPath
       ? { storyboardImageGcsPath: extras.imageGcsPath }
       : {}),
@@ -1472,6 +1493,8 @@ export function applyExpressStoryboardImageToScene(
     imagePrompt?: string
     imageGcsPath?: string
     frameRole?: 'start' | 'end'
+    referenceStatus?: StoryboardReferenceStatus | null
+    referenceReason?: string | null
   }
 ): Record<string, unknown> {
   const { imageUrl, beatIndex, dialogueIndex, imageTier, imagePrompt, imageGcsPath, frameRole } =
@@ -1485,6 +1508,8 @@ export function applyExpressStoryboardImageToScene(
         imageTier,
         frameRole,
         source: 'express',
+        referenceStatus: params.referenceStatus,
+        referenceReason: params.referenceReason,
       })
     )
   }

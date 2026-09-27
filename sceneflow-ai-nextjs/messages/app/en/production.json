@@ -367,6 +367,7 @@
     "hasImage": "Has image",
     "missing": "Missing",
     "failed": "Failed",
+    "directionChanged": "Direction changed",
     "retryFailed": "Retry failed",
     "direct": "Direct",
     "auto": "Auto",

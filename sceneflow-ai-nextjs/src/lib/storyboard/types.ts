@@ -16,7 +16,6 @@ import type {
   BeatOverlayType,
   SceneBeat,
 } from '@/lib/script/segmentTypes'
-import { resolveEffectiveStoryboardTier } from '@/lib/storyboard/storyboardQuality'
 import { NARRATOR_CHARACTER, NARRATOR_CHARACTER_ID } from '@/lib/script/segmentTypes'
 import { generateAliases, toCanonicalName } from '@/lib/character/canonical'
 import { resolveStandaloneNarrationUrl } from '@/lib/script/narration'
@@ -25,6 +24,7 @@ import {
   BEAT_END_STILL_SLOT,
   BEAT_START_STILL_SLOT,
   CUSTOM_FRAME_STILL_SLOT,
+  resolveCurrentStillTier,
   stillVersionsOnRow,
 } from '@/lib/storyboard/mediaVersions'
 import { buildStoryboardMusicClips, resolveSceneMusicFileDuration } from '@/lib/storyboard/musicPlayback'
@@ -338,6 +338,13 @@ function buildBeatFrameSlot(
   const roleSuffix = frameRole === 'end' ? ' (End)' : ''
   const ownImageUrl = opts.ownImageUrl
   const displayImageUrl = opts.displayImageUrl
+  const slotSpec = frameRole === 'end' ? BEAT_END_STILL_SLOT : BEAT_START_STILL_SLOT
+  const imageVersions = stillVersionsOnRow(
+    beat as unknown as Record<string, unknown>,
+    slotSpec
+  )
+  const imageVersionId =
+    frameRole === 'end' ? beat.storyboardEndImageVersionId : beat.storyboardImageVersionId
 
   return {
     key: beatFrameSlotKey(beat.beatId, frameRole),
@@ -351,11 +358,12 @@ function buildBeatFrameSlot(
     dialogueIndex: opts.dialogueIndex,
     ownImageUrl,
     displayImageUrl,
-    imageTier: ownImageUrl
-      ? resolveEffectiveStoryboardTier(
-          frameRole === 'end' ? beat.storyboardEndImageTier : beat.storyboardImageTier
-        )
-      : undefined,
+    imageTier: resolveCurrentStillTier({
+      url: ownImageUrl,
+      versionId: imageVersionId,
+      versions: imageVersions,
+      beatTier: frameRole === 'end' ? beat.storyboardEndImageTier : beat.storyboardImageTier,
+    }),
     isPlaceholder: !ownImageUrl && !!displayImageUrl,
     isMissing: !ownImageUrl && !displayImageUrl,
     imageError:
@@ -367,12 +375,8 @@ function buildBeatFrameSlot(
     storyboardImagePrompt:
       frameRole === 'end' ? beat.storyboardEndImagePrompt : beat.storyboardImagePrompt,
     allowTypography: beat.beatRole === 'title_reveal' || beat.beatRole === 'credit',
-    imageVersions: stillVersionsOnRow(
-      beat as unknown as Record<string, unknown>,
-      frameRole === 'end' ? BEAT_END_STILL_SLOT : BEAT_START_STILL_SLOT
-    ),
-    imageVersionId:
-      frameRole === 'end' ? beat.storyboardEndImageVersionId : beat.storyboardImageVersionId,
+    imageVersions,
+    imageVersionId,
   }
 }
 

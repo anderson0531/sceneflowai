@@ -242,9 +242,23 @@ export async function generateSceneImage(
     )
   }
 
+  const referenceStatus =
+    payload.referenceStatus === 'pass' ||
+    payload.referenceStatus === 'drift' ||
+    payload.referenceStatus === 'miss'
+      ? payload.referenceStatus
+      : undefined
+
   return {
     imageUrl: payload.imageUrl as string,
     gcsPath: payload.gcsPath ?? null,
     imagePrompt: payload.prompt ?? null,
+    ...(referenceStatus
+      ? {
+          referenceStatus,
+          referenceReason:
+            typeof payload.referenceReason === 'string' ? payload.referenceReason : null,
+        }
+      : {}),
   }
 }

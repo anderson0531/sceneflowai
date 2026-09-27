@@ -8,8 +8,31 @@ import {
   slotKeyFromBeat,
   updateBeatFrameItemStatus,
   failedExpressFrameKeys,
+  expressFrameChecklistStatus,
   hasFrameErrors,
 } from '@/lib/storyboard/expressBeatFrameProgress'
+
+describe('expressFrameChecklistStatus', () => {
+  it('does not call a stale or previous final the current still', () => {
+    expect(
+      expressFrameChecklistStatus({
+        ownImageUrl: 'https://example.com/old.jpg',
+        stale: true,
+        imageTier: 'final',
+      })
+    ).toBe('direction_changed')
+    expect(
+      expressFrameChecklistStatus({
+        ownImageUrl: 'https://example.com/current.jpg',
+        imageTier: 'draft',
+      })
+    ).toBe('draft')
+    expect(expressFrameChecklistStatus({ imageTier: 'final' })).toBe('missing')
+    expect(
+      expressFrameChecklistStatus({ imageError: 'rate limited', imageTier: 'final' })
+    ).toBe('failed')
+  })
+})
 
 describe('expressBeatFrameProgress', () => {
   const scene = {

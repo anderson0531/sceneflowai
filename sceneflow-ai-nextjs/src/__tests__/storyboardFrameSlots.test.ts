@@ -10,6 +10,61 @@ import {
 import { applyExpressStoryboardImageToScene, getStoryboardTimelineBeats } from '@/lib/script/beatMigration'
 
 describe('storyboard frame slots', () => {
+  it('reads Final from the current version, not a previous final', () => {
+    const scene = {
+      beats: [
+        {
+          beatId: 'bt_current',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'The needle rests on zero.',
+          storyboardImageUrl: 'https://example.com/current.jpg',
+          storyboardImageVersionId: 'mv_current',
+          storyboardImageTier: 'final',
+          storyboardImageVersions: [
+            {
+              id: 'mv_old',
+              url: 'https://example.com/old.jpg',
+              createdAt: '2026-01-01T00:00:00.000Z',
+              source: 'express',
+              tier: 'final',
+            },
+            {
+              id: 'mv_current',
+              url: 'https://example.com/current.jpg',
+              createdAt: '2026-06-01T00:00:00.000Z',
+              source: 'express',
+              tier: 'draft',
+            },
+          ],
+        },
+        {
+          beatId: 'bt_missing',
+          sequenceIndex: 1,
+          kind: 'action',
+          actionDescription: 'The hatch bulges.',
+          storyboardImageTier: 'final',
+          storyboardImageVersions: [
+            {
+              id: 'mv_prev',
+              url: 'https://example.com/prev.jpg',
+              createdAt: '2026-01-01T00:00:00.000Z',
+              source: 'express',
+              tier: 'final',
+            },
+          ],
+        },
+      ],
+    }
+    const slots = enumerateStoryboardFrameSlots(scene, undefined, { startFramesOnly: true })
+    const current = slots.find((slot) => slot.beatId === 'bt_current')
+    const missing = slots.find((slot) => slot.beatId === 'bt_missing')
+    expect(current?.imageTier).toBe('draft')
+    expect(missing?.ownImageUrl).toBeUndefined()
+    expect(missing?.imageTier).toBeUndefined()
+    expect(missing?.isMissing).toBe(true)
+  })
+
   it('marks dialogue line as placeholder when only establishing image exists', () => {
     const scene = {
       imageUrl: 'https://example.com/establishing.jpg',

@@ -42,8 +42,10 @@ import {
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
 import {
   referenceAdherenceIsBetter,
+  referenceResampleFailureKeepsFirst,
   scoreReferenceAdherence,
   selectReferenceAdherencePlates,
+  shouldResampleReferenceAdherence,
   shouldScoreReferenceAdherence,
   type ReferenceAdherenceResult,
 } from '@/lib/imagen/referenceAdherence'
@@ -2451,6 +2453,7 @@ async function postGenerateImage(req: NextRequest) {
     let shouldLikenessAutoRetry = false
     let referenceResampleRound = 0
     let shouldReferenceResample = false
+    let resampleKeptFirstSample = false
     let firstReferenceRound: {
       imageUrl: string
       referenceAdherence: ReferenceAdherenceResult
@@ -3540,6 +3543,26 @@ async function postGenerateImage(req: NextRequest) {
         const isRateLimitError = isExpressImageRateLimitError(error)
         const status = resolveExpressImageErrorStatus(error)
 
+        // A resample 429 must not discard the still that already uploaded.
+        if (
+          referenceResampleFailureKeepsFirst({
+            resampleRound: referenceResampleRound,
+            hasFirstSample: firstReferenceRound != null,
+            aborted: false,
+          })
+        ) {
+          console.warn('[Scene Image] Reference resample failed; keeping first sample')
+          imageUrl = firstReferenceRound!.imageUrl
+          referenceAdherence = firstReferenceRound!.referenceAdherence
+          promptForResponse = firstReferenceRound!.promptForResponse
+          generationModelId = firstReferenceRound!.generationModelId
+          generationProvider = firstReferenceRound!.generationProvider
+          validation = firstReferenceRound!.validation
+          shouldReferenceResample = false
+          resampleKeptFirstSample = true
+          break
+        }
+
         // Vertex already ran its identity-ref 429 ladder — do not outer-retry into another burst.
         if (isIdentityRefRateLimitExhausted(error)) {
           console.warn(
@@ -3600,6 +3623,12 @@ async function postGenerateImage(req: NextRequest) {
       }
     }
     
+    if (resampleKeptFirstSample) {
+      shouldLikenessAutoRetry = false
+      shouldReferenceResample = false
+      break
+    }
+
     if (!base64Image) {
       throw new Error('Failed to generate image after all retry attempts')
     }
@@ -3851,33 +3880,42 @@ async function postGenerateImage(req: NextRequest) {
       referenceResampleRound === 0 &&
       likenessRound === 0 &&
       referenceAdherence &&
-      (referenceAdherence.band === 'drift' || referenceAdherence.band === 'miss') &&
-      canStartLikenessRetry(remainingBudgetMs(), round0CostMs)
-    ) {
-      firstReferenceRound = {
-        imageUrl,
-        referenceAdherence,
-        promptForResponse,
-        generationModelId,
-        generationProvider,
-        validation,
-      }
-      referenceResampleRound = 1
-      shouldReferenceResample = true
-      console.log(
-        `[Scene Image] Reference adherence ${referenceAdherence.band}; sampling once more`
-      )
-      continue
-    }
-    if (
-      referenceResampleRound === 0 &&
-      likenessRound === 0 &&
-      referenceAdherence &&
       (referenceAdherence.band === 'drift' || referenceAdherence.band === 'miss')
     ) {
-      console.log(
-        `[Scene Image] Skipping reference resample — ${remainingBudgetMs()}ms left, a retry of the ${round0CostMs}ms first round needs ~${projectLikenessRetryCostMs(round0CostMs)}ms`
-      )
+      const canRetry = canStartLikenessRetry(remainingBudgetMs(), round0CostMs)
+      if (
+        shouldResampleReferenceAdherence({
+          failFast: !!skipLikenessValidation,
+          band: referenceAdherence.band,
+          resampleRound: referenceResampleRound,
+          likenessRound,
+          canRetry,
+        })
+      ) {
+        firstReferenceRound = {
+          imageUrl,
+          referenceAdherence,
+          promptForResponse,
+          generationModelId,
+          generationProvider,
+          validation,
+        }
+        referenceResampleRound = 1
+        shouldReferenceResample = true
+        console.log(
+          `[Scene Image] Reference adherence ${referenceAdherence.band}; sampling once more`
+        )
+        continue
+      }
+      if (skipLikenessValidation) {
+        console.log(
+          `[Scene Image] Reference adherence ${referenceAdherence.band}; keeping first sample (Express fail-fast)`
+        )
+      } else {
+        console.log(
+          `[Scene Image] Skipping reference resample — ${remainingBudgetMs()}ms left, a retry of the ${round0CostMs}ms first round needs ~${projectLikenessRetryCostMs(round0CostMs)}ms`
+        )
+      }
     }
 
     if (referenceResampleRound === 1 && firstReferenceRound) {

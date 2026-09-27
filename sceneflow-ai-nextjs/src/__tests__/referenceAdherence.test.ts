@@ -5,7 +5,9 @@ import {
   normalizeReferenceAdherenceBand,
   parseReferenceAdherenceResponse,
   referenceAdherenceIsBetter,
+  referenceResampleFailureKeepsFirst,
   selectReferenceAdherencePlates,
+  shouldResampleReferenceAdherence,
   shouldScoreReferenceAdherence,
 } from '@/lib/imagen/referenceAdherence'
 
@@ -104,15 +106,89 @@ describe('parseReferenceAdherenceResponse', () => {
   })
 })
 
+describe('shouldResampleReferenceAdherence', () => {
+  it('does not spend a second Vertex call on an Express fail-fast miss', () => {
+    expect(
+      shouldResampleReferenceAdherence({
+        failFast: true,
+        band: 'miss',
+        resampleRound: 0,
+        likenessRound: 0,
+        canRetry: true,
+      })
+    ).toBe(false)
+    expect(
+      shouldResampleReferenceAdherence({
+        failFast: false,
+        band: 'miss',
+        resampleRound: 0,
+        likenessRound: 0,
+        canRetry: true,
+      })
+    ).toBe(true)
+    expect(
+      shouldResampleReferenceAdherence({
+        failFast: false,
+        band: 'pass',
+        resampleRound: 0,
+        likenessRound: 0,
+        canRetry: true,
+      })
+    ).toBe(false)
+  })
+
+  it('keeps the uploaded still when a resample throws and the client did not abort', () => {
+    expect(
+      referenceResampleFailureKeepsFirst({
+        resampleRound: 1,
+        hasFirstSample: true,
+        aborted: false,
+      })
+    ).toBe(true)
+    expect(
+      referenceResampleFailureKeepsFirst({
+        resampleRound: 1,
+        hasFirstSample: true,
+        aborted: true,
+      })
+    ).toBe(false)
+    expect(
+      referenceResampleFailureKeepsFirst({
+        resampleRound: 0,
+        hasFirstSample: false,
+        aborted: false,
+      })
+    ).toBe(false)
+  })
+})
+
 describe('reference adherence wiring', () => {
   it('scores finals that skip face likeness, and resamples a miss once', () => {
     const route = readFileSync(join(process.cwd(), 'src/app/api/scene/generate-image/route.ts'), 'utf8')
     expect(route).toContain('shouldScoreReferenceAdherence')
+    expect(route).toContain('shouldResampleReferenceAdherence')
     expect(route).toContain('Skipping reference adherence — Express draft')
     expect(route).toContain('Reference adherence ${referenceAdherence.band}; sampling once more')
+    expect(route).toContain(
+      'Reference adherence ${referenceAdherence.band}; keeping first sample (Express fail-fast)'
+    )
+    expect(route).toContain('Reference resample failed; keeping first sample')
+    expect(route).toContain('referenceResampleFailureKeepsFirst')
     expect(route).toContain('referenceAdherenceIsBetter')
     expect(route).toContain('referenceResampleRound === 0')
     expect(route).toContain("referenceStatus: referenceAdherence?.band ?? 'unchecked'")
     expect(route).toContain('Skipping likeness validation — skipLikenessValidation')
+  })
+
+  it('threads the plate band from the image route through Express persist', () => {
+    const client = readFileSync(join(process.cwd(), 'src/lib/sceneGeneration/generateImage.ts'), 'utf8')
+    const orchestrator = readFileSync(
+      join(process.cwd(), 'src/lib/sceneGeneration/expressOrchestrator.ts'),
+      'utf8'
+    )
+    expect(client).toContain('referenceStatus')
+    expect(client).toContain('referenceReason')
+    expect(orchestrator).toContain('referenceStatus: result.referenceStatus')
+    expect(orchestrator).toContain('referenceReason: result.referenceReason')
   })
 })

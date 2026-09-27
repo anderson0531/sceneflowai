@@ -200,10 +200,12 @@ function mergeBeatMedia(canonBeat: any, incomingBeat: any): any {
       delete merged.storyboardImageVersionId
       delete merged.storyboardImageReferenceStatus
       delete merged.storyboardImageReferenceReason
+      delete merged.storyboardImageTier
     }
     if (!isUsableMediaUrl(incomingBeat.storyboardEndImageUrl)) {
       delete merged.storyboardEndImageUrl
       delete merged.storyboardEndImageVersionId
+      delete merged.storyboardEndImageTier
     }
     return merged
   }

@@ -152,9 +152,9 @@ import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import {
   applyVideoTakeSelection,
   healMissingVideoPointer,
+  resolveCurrentStillTier,
   segmentHasPlayableVideo,
 } from '@/lib/storyboard/mediaVersions'
-import { resolveEffectiveStoryboardTier } from '@/lib/storyboard/storyboardQuality'
 import { BeatVideoGallery, type BeatVideoClip } from './BeatVideoGallery'
 import type { SegmentGuideContext } from '@/lib/vision/segmentConfigBuilder'
 import { resolveEffectiveStartFrameUrl, resolveExpressGenerationMethod, resolveF2VFrameUrls, f2vStartFromPreviousEnd, STANDARD_TAKE_DURATION_SECONDS } from '@/lib/vision/segmentConfigBuilder'
@@ -1553,9 +1553,12 @@ export function DirectorConsoleRoot({
         previousEndFrameUrl,
         segment,
         queueItem: item,
-        imageTier: beat.storyboardImageUrl?.trim()
-          ? resolveEffectiveStoryboardTier(beat.storyboardImageTier)
-          : undefined,
+        imageTier: resolveCurrentStillTier({
+          url: beat.storyboardImageUrl,
+          versionId: beat.storyboardImageVersionId,
+          versions: beat.storyboardImageVersions,
+          beatTier: beat.storyboardImageTier,
+        }),
         promptChanged: isBeatFrameStale(beat) || !!segment?.isStale,
       }
     })

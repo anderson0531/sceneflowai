@@ -124,6 +124,8 @@ export interface SceneImageResult {
   imageUrl: string
   gcsPath?: string | null
   imagePrompt?: string | null
+  referenceStatus?: 'pass' | 'drift' | 'miss' | null
+  referenceReason?: string | null
 }
 
 export interface ExpressPhaseEvent {
@@ -147,6 +149,9 @@ export interface ExpressPhaseEvent {
   imageTier?: 'draft' | 'final'
   imagePrompt?: string | null
   gcsPath?: string | null
+  /** Plate check for the still this event just wrote. */
+  referenceStatus?: 'pass' | 'drift' | 'miss'
+  referenceReason?: string | null
   /** Whether this phase was skipped because output already existed. */
   skipped?: boolean
   /**

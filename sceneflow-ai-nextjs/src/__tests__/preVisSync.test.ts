@@ -84,6 +84,7 @@ describe('preVisSync', () => {
           ...baseScene.beats[0],
           actionDescription: undefined,
           description: 'A scientist drops the glowing sample.',
+          storyboardImageTier: 'final',
         },
         {
           ...baseScene.beats[1],
@@ -112,6 +113,7 @@ describe('preVisSync', () => {
     expect(promptsUpdated).toBe(2)
     expect(imagesCleared).toBeGreaterThan(0)
     expect(actionBeat.storyboardImageUrl).toBeUndefined()
+    expect(actionBeat.storyboardImageTier).toBeUndefined()
     expect(dialogueBeat.storyboardImagePrompt).toContain('Original line')
     expect(synced.storyboardStatus).toBe('pending_review')
     expect(synced[PRE_VIS_CONTENT_HASH_FIELD]).toBeUndefined()

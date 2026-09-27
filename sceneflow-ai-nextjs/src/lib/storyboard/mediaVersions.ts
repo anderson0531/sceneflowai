@@ -16,6 +16,8 @@ export interface MediaVersion {
   createdAt: string
   source: MediaVersionSource
   prompt?: string
+  /** Quality of this still. Absent on rows written before tier was versioned. */
+  tier?: 'draft' | 'final'
   /** True when createdAt was derived from a blob path, not a user write. */
   inferred?: boolean
 }
@@ -115,6 +117,7 @@ export function asMediaVersions(value: unknown): MediaVersion[] {
       ...(typeof row.prompt === 'string' && row.prompt.trim()
         ? { prompt: row.prompt.trim() }
         : {}),
+      ...(row.tier === 'draft' || row.tier === 'final' ? { tier: row.tier } : {}),
     })
   }
   return versions
@@ -139,6 +142,7 @@ export function versionFromUrl(
     createdAt?: string
     id?: string
     inferred?: boolean
+    tier?: 'draft' | 'final'
   }
 ): MediaVersion | null {
   if (!isUsableMediaUrl(url)) return null
@@ -150,6 +154,7 @@ export function versionFromUrl(
     source: options?.source ?? 'generate',
     ...(options?.inferred ? { inferred: true } : {}),
     ...(options?.prompt?.trim() ? { prompt: options.prompt.trim() } : {}),
+    ...(options?.tier === 'draft' || options?.tier === 'final' ? { tier: options.tier } : {}),
   }
 }
 
@@ -175,6 +180,7 @@ export function appendMediaVersion(
                 : version.createdAt,
             inferred: next.inferred ? version.inferred : undefined,
             ...(next.prompt ? { prompt: next.prompt } : {}),
+            ...(next.tier ? { tier: next.tier } : {}),
           }
         : version
     )
@@ -204,6 +210,40 @@ export function unionMediaVersions(
       (left, right) => (Date.parse(left.createdAt) || 0) - (Date.parse(right.createdAt) || 0)
     )
   )
+}
+
+/**
+ * Tier of the still the slot is showing.
+ *
+ * A final on an older version, or a beat-level tier left behind after the
+ * URL was cleared, does not describe the current pointer.
+ */
+export function resolveCurrentStillTier(args: {
+  url?: string | null
+  versionId?: string | null
+  versions?: MediaVersion[] | unknown
+  beatTier?: 'draft' | 'final' | null
+}): 'draft' | 'final' | undefined {
+  if (!isUsableMediaUrl(args.url)) return undefined
+  const url = args.url.trim()
+  const versions = asMediaVersions(args.versions)
+  const byId = args.versionId
+    ? versions.find((version) => version.id === args.versionId)
+    : undefined
+  const current = byId ?? versions.find((version) => version.url === url)
+  if (current && current.url !== url) return undefined
+  if (current?.tier === 'final' || current?.tier === 'draft') return current.tier
+  if (args.beatTier === 'final') return 'final'
+  return 'draft'
+}
+
+/** Tier to write onto the beat when a history row becomes current. Unstamped history is draft. */
+export function restoredStillTier(
+  versions: MediaVersion[] | unknown,
+  versionId: string | undefined
+): 'draft' | 'final' {
+  const match = asMediaVersions(versions).find((version) => version.id === versionId)
+  return match?.tier === 'final' ? 'final' : 'draft'
 }
 
 export function resolveCurrentMedia(
@@ -297,6 +337,8 @@ export interface AssignStillOptions {
   prompt?: string
   createdAt?: string
   restoreVersionId?: string
+  /** Stamped on the new version. Restore reads the version's own tier instead. */
+  tier?: 'draft' | 'final'
 }
 
 export function assignStillUrl<T extends Record<string, unknown>>(
@@ -327,6 +369,7 @@ export function assignStillUrl<T extends Record<string, unknown>>(
     source: options?.source ?? 'generate',
     prompt: options?.prompt,
     createdAt: options?.createdAt || new Date().toISOString(),
+    tier: options?.tier,
   })
   if (!next) return row
   versions = appendMediaVersion(versions, next)
