@@ -16,6 +16,35 @@ import {
 } from '@/lib/storyboard/mergeSceneMedia'
 
 describe('mergeScenePreservingMedia', () => {
+  it('drops a leftover final tier when a content change clears the current still', () => {
+    const canonical = {
+      beats: [
+        {
+          beatId: 'bt_1',
+          kind: 'action',
+          actionDescription: 'Gideon sits at the bench.',
+          storyboardImageUrl: 'https://blob.example/old.png',
+          storyboardImageTier: 'final',
+          storyboardImageVersionId: 'mv_old',
+        },
+      ],
+    }
+    const incoming = {
+      beats: [
+        {
+          beatId: 'bt_1',
+          kind: 'action',
+          actionDescription: 'Gideon stands at the hatch.',
+          storyboardImageTier: 'final',
+        },
+      ],
+    }
+    const merged = mergeScenePreservingMedia(canonical, incoming)
+    expect(merged.beats[0].storyboardImageUrl).toBeUndefined()
+    expect(merged.beats[0].storyboardImageTier).toBeUndefined()
+    expect(merged.beats[0].storyboardImageVersionId).toBeUndefined()
+  })
+
   it('preserves canonical imageUrl when incoming scene lacks it', () => {
     const canonical = {
       id: 'scene-2',

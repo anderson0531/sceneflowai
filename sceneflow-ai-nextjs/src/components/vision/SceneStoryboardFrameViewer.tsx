@@ -521,7 +521,7 @@ export function SceneStoryboardFrameViewer({
       frameSlots.map((slot) => ({
         key: slot.key,
         kind: slot.kind,
-        imageTier: slot.imageTier,
+        imageTier: slot.ownImageUrl ? slot.imageTier : undefined,
         isMissing: slot.isMissing,
         isPlaceholder: slot.isPlaceholder,
         promptChanged: slotPromptChanged(slot),

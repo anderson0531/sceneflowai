@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-27T03:56:40.196Z",
+  "generatedAt": "2026-09-27T04:51:48.749Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -1015,6 +1015,7 @@
       "expressScene.hasImage": "5e2b9b67b12ddda5",
       "expressScene.missing": "6be36ca49ee85210",
       "expressScene.failed": "031a8f0f659df890",
+      "expressScene.directionChanged": "c39a74cd3e64d3a7",
       "expressScene.retryFailed": "2630f65050626204",
       "expressScene.direct": "002c7c68468b4f55",
       "expressScene.auto": "0286249762f7c943",

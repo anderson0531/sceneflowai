@@ -14709,6 +14709,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         imagePrompt?: string
         gcsPath?: string
         frameRole?: 'start' | 'end'
+        referenceStatus?: 'pass' | 'drift' | 'miss'
+        referenceReason?: string | null
       }
     ) => {
       setScript((prev: any) => {
@@ -14722,6 +14724,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           imagePrompt: params?.imagePrompt,
           imageGcsPath: params?.gcsPath,
           frameRole: params?.frameRole,
+          referenceStatus: params?.referenceStatus,
+          referenceReason: params?.referenceReason,
         })
         const next = { ...prev, script: { ...prev.script, scenes } }
         scriptRef.current = next
@@ -14935,6 +14939,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         imagePrompt: event.imagePrompt ?? undefined,
                         gcsPath: event.gcsPath ?? undefined,
                         frameRole: event.frameRole ?? 'start',
+                        referenceStatus: event.referenceStatus,
+                        referenceReason: event.referenceReason,
                       })
                       if (typeof event.beatIndex === 'number') {
                         syncExpressBeatImageToProduction(
@@ -15697,6 +15703,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         imagePrompt: event.imagePrompt ?? undefined,
                         gcsPath: event.gcsPath ?? undefined,
                         frameRole: event.frameRole ?? 'start',
+                        referenceStatus: event.referenceStatus,
+                        referenceReason: event.referenceReason,
                       })
                       if (typeof event.beatIndex === 'number') {
                         syncExpressBeatImageToProduction(

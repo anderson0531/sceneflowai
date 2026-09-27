@@ -8,6 +8,8 @@ import {
   mergeStillSlot,
   pickCurrentMediaUrl,
   resolveCurrentMedia,
+  resolveCurrentStillTier,
+  restoredStillTier,
   unionMediaVersions,
   unionRowsById,
   versionFromUrl,
@@ -127,6 +129,69 @@ describe('assignStillUrl / mergeStillSlot', () => {
     expect((merged.storyboardImageVersions as { url: string }[]).map((v) => v.url).sort()).toEqual(
       [NEW_URL, OLD_URL].sort()
     )
+  })
+})
+
+describe('resolveCurrentStillTier', () => {
+  it('ignores a final beat tier when the current version is a draft', () => {
+    const versions = [
+      versionFromUrl(OLD_URL, {
+        id: 'mv_old',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        tier: 'final',
+      })!,
+      versionFromUrl(NEW_URL, {
+        id: 'mv_new',
+        createdAt: '2026-06-01T00:00:00.000Z',
+        tier: 'draft',
+      })!,
+    ]
+    expect(
+      resolveCurrentStillTier({
+        url: NEW_URL,
+        versionId: 'mv_new',
+        versions,
+        beatTier: 'final',
+      })
+    ).toBe('draft')
+  })
+
+  it('does not report final when the current pointer has no image', () => {
+    const versions = [
+      versionFromUrl(OLD_URL, { id: 'mv_old', tier: 'final', createdAt: '2026-01-01T00:00:00.000Z' })!,
+    ]
+    expect(
+      resolveCurrentStillTier({
+        url: '',
+        versionId: 'mv_old',
+        versions,
+        beatTier: 'final',
+      })
+    ).toBeUndefined()
+  })
+
+  it('does not apply a final tier from a version that is not the current url', () => {
+    const versions = [
+      versionFromUrl(OLD_URL, { id: 'mv_old', tier: 'final', createdAt: '2026-01-01T00:00:00.000Z' })!,
+    ]
+    expect(
+      resolveCurrentStillTier({
+        url: NEW_URL,
+        versionId: 'mv_old',
+        versions,
+        beatTier: 'final',
+      })
+    ).toBeUndefined()
+  })
+
+  it('restore of an unstamped or draft version is draft', () => {
+    const versions = [
+      versionFromUrl(OLD_URL, { id: 'mv_draft', tier: 'draft' })!,
+      versionFromUrl(NEW_URL, { id: 'mv_final', tier: 'final' })!,
+    ]
+    expect(restoredStillTier(versions, 'mv_draft')).toBe('draft')
+    expect(restoredStillTier(versions, 'mv_final')).toBe('final')
+    expect(restoredStillTier([{ ...versions[0], tier: undefined }], 'mv_draft')).toBe('draft')
   })
 })
 

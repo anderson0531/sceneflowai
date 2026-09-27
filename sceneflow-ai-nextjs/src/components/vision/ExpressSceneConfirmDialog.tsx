@@ -19,13 +19,14 @@ import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
 import {
   enumerateStoryboardFrameSlots,
   filterStoryboardSlotsForExpressChecklist,
-  type StoryboardFrameSlot,
 } from '@/lib/storyboard/types'
-import { slotEligibleForScope } from '@/lib/storyboard/expressBeatFrameProgress'
 import {
-  resolveEffectiveStoryboardTier,
-  type StoryboardQuality,
-} from '@/lib/storyboard/storyboardQuality'
+  expressFrameChecklistStatus,
+  slotEligibleForScope,
+} from '@/lib/storyboard/expressBeatFrameProgress'
+import { type StoryboardQuality } from '@/lib/storyboard/storyboardQuality'
+import { getSceneBeats } from '@/lib/script/beatMigration'
+import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import type { StillGenerationMode } from '@/lib/generation/stillPolicy'
 import {
   estimateReferenceExpress,
@@ -84,10 +85,6 @@ interface ExpressSceneConfirmDialogProps {
   defaultGenerationMode?: StillGenerationMode
 }
 
-function slotIsFinal(slot: StoryboardFrameSlot): boolean {
-  return !!slot.ownImageUrl && resolveEffectiveStoryboardTier(slot.imageTier) === 'final'
-}
-
 export function ExpressSceneConfirmDialog({
   open,
   onOpenChange,
@@ -129,6 +126,8 @@ export function ExpressSceneConfirmDialog({
       ),
     [drawableReferences]
   )
+
+  const sceneBeats = useMemo(() => getSceneBeats(scene), [scene])
 
   const allSlots = useMemo(
     () => enumerateStoryboardFrameSlots(scene, undefined, { startFramesOnly: true }),
@@ -292,7 +291,27 @@ export function ExpressSceneConfirmDialog({
               </p>
             ) : (
               <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
-                {checklistSlots.map((slot) => (
+                {checklistSlots.map((slot) => {
+                  const beat = slot.beatId
+                    ? sceneBeats.find((entry) => entry.beatId === slot.beatId)
+                    : undefined
+                  const status = expressFrameChecklistStatus({
+                    ownImageUrl: slot.ownImageUrl,
+                    imageError: slot.imageError,
+                    stale: !!beat && slot.frameRole !== 'end' && isBeatFrameStale(beat),
+                    imageTier: slot.imageTier,
+                  })
+                  const statusLabel =
+                    status === 'direction_changed'
+                      ? t('directionChanged')
+                      : status === 'failed'
+                        ? t('failed')
+                        : status === 'missing'
+                          ? t('missing')
+                          : `${t('hasImage')} · ${
+                              status === 'final' ? t('qualityFinal') : t('qualityDraft')
+                            }`
+                  return (
                   <label
                     key={slot.key}
                     className="flex items-start gap-2 rounded border border-gray-700/80 bg-gray-800/40 p-2 cursor-pointer hover:bg-gray-800/70"
@@ -310,22 +329,19 @@ export function ExpressSceneConfirmDialog({
                       </span>
                       <span
                         className={`text-[10px] ${
-                          slot.ownImageUrl
+                          status === 'final' || status === 'draft'
                             ? 'text-green-400'
-                            : slot.imageError
+                            : status === 'failed'
                               ? 'text-rose-400'
                               : 'text-amber-400'
                         }`}
                       >
-                        {slot.ownImageUrl
-                          ? `${t('hasImage')} · ${slotIsFinal(slot) ? t('qualityFinal') : t('qualityDraft')}`
-                          : slot.imageError
-                            ? t('failed')
-                            : t('missing')}
+                        {statusLabel}
                       </span>
                     </span>
                   </label>
-                ))}
+                  )
+                })}
               </div>
             )}
             {selectedFrameKeys.length > 0 && (

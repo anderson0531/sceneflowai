@@ -56,6 +56,35 @@ export function shouldScoreReferenceAdherence(args: {
   return args.storyboardQuality === 'final'
 }
 
+/**
+ * A second Vertex sample after a plate miss.
+ *
+ * Express fail-fast already spent its one attempt. Another call holds the
+ * image lane and, on 429, discards the uploaded still and stalls the shots
+ * waiting behind it. Score the first still and keep it.
+ */
+export function shouldResampleReferenceAdherence(args: {
+  failFast: boolean
+  band?: ReferenceAdherenceBand | null
+  resampleRound: number
+  likenessRound: number
+  canRetry: boolean
+}): boolean {
+  if (args.failFast) return false
+  if (args.resampleRound !== 0 || args.likenessRound !== 0) return false
+  if (!args.canRetry) return false
+  return args.band === 'drift' || args.band === 'miss'
+}
+
+/** A thrown resample must not fail the request when the first still already uploaded. */
+export function referenceResampleFailureKeepsFirst(args: {
+  resampleRound: number
+  hasFirstSample: boolean
+  aborted: boolean
+}): boolean {
+  return args.resampleRound > 0 && args.hasFirstSample && !args.aborted
+}
+
 export const REFERENCE_ADHERENCE_VISION_OPTIONS = {
   temperature: 0.2,
   timeoutMs: LIKENESS_VALIDATION_MIN_RESERVE_MS,

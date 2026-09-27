@@ -47,6 +47,7 @@ import {
   type ExpressRateLimitedFailure,
   type ExpressResult,
   type SceneAudioCounts,
+  type SceneImageResult,
 } from './types'
 import { runSceneExpressPreflight } from './sceneExpressPreflight'
 import {
@@ -1083,6 +1084,8 @@ async function generateSingleBeatImage(
     imageTier: imageParams.storyboardQuality,
     imagePrompt: result.imagePrompt ?? undefined,
     gcsPath: result.gcsPath ?? undefined,
+    ...(result.referenceStatus ? { referenceStatus: result.referenceStatus } : {}),
+    ...(result.referenceReason ? { referenceReason: result.referenceReason } : {}),
   })
   console.log(
     `[expressOrchestrator] Beat ${beatIdx + 1} scene ${sceneNumber} — ${imageParams.storyboardQuality} (${imageParams.modelTier})`
@@ -1407,7 +1410,7 @@ function persistBeatReferenceSelection(
 function writeBeatFrameToScene(
   scene: any,
   beatIndex: number,
-  result: { imageUrl: string; gcsPath?: string | null; imagePrompt?: string | null },
+  result: SceneImageResult,
   tier: StoryboardQuality
 ): void {
   const updated = applyBeatStoryboardImageToScene(scene, beatIndex, result.imageUrl, {
@@ -1415,6 +1418,8 @@ function writeBeatFrameToScene(
     imageGcsPath: result.gcsPath ?? undefined,
     imageTier: tier,
     source: 'express',
+    referenceStatus: result.referenceStatus,
+    referenceReason: result.referenceReason,
   })
   Object.assign(scene, updated)
 }
@@ -1474,7 +1479,7 @@ async function persistBeatEndFrame(
 async function persistBeatFrame(
   scene: any,
   beatIndex: number,
-  result: { imageUrl: string; gcsPath?: string | null; imagePrompt?: string | null },
+  result: SceneImageResult,
   tier: StoryboardQuality
 ): Promise<void> {
   const previous = beatPersistChains.get(scene) ?? Promise.resolve()

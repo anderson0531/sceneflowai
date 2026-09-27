@@ -38,6 +38,32 @@ export function slotEligibleForScope(
   return !slot.ownImageUrl
 }
 
+export type ExpressFrameChecklistStatus =
+  | 'missing'
+  | 'failed'
+  | 'direction_changed'
+  | 'final'
+  | 'draft'
+
+/**
+ * Checklist line for one still.
+ *
+ * Final describes the current still only. A direction rewrite keeps the
+ * previous image, and that image's final tier must not read as current.
+ */
+export function expressFrameChecklistStatus(args: {
+  ownImageUrl?: string
+  imageError?: string
+  stale?: boolean
+  imageTier?: 'draft' | 'final'
+}): ExpressFrameChecklistStatus {
+  if (!args.ownImageUrl?.trim()) {
+    return args.imageError?.trim() ? 'failed' : 'missing'
+  }
+  if (args.stale) return 'direction_changed'
+  return args.imageTier === 'final' ? 'final' : 'draft'
+}
+
 export interface BuildExpressBeatFrameItemsOptions {
   selectedFrameKeys?: string[]
   includeEndFrames?: boolean

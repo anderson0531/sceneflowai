@@ -881,4 +881,40 @@ describe('applyBeatStoryboardImageToScene', () => {
     expect(getSceneBeats(unchecked)[0].storyboardImageReferenceStatus).toBeUndefined()
     expect(getSceneBeats(unchecked)[0].storyboardImageReferenceReason).toBeUndefined()
   })
+
+  it('stamps tier on the version and restore of a draft does not keep the later final', () => {
+    const scene = {
+      beats: [
+        {
+          beatId: 'bt_0',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Gideon sits at the bench.',
+        },
+      ],
+    }
+    const drafted = applyBeatStoryboardImageToScene(scene, 0, 'https://example.com/draft.jpg', {
+      imageTier: 'draft',
+    })
+    const finalized = applyBeatStoryboardImageToScene(drafted, 0, 'https://example.com/final.jpg', {
+      imageTier: 'final',
+    })
+    const versions = getSceneBeats(finalized)[0].storyboardImageVersions as Array<{
+      id: string
+      url: string
+      tier?: string
+    }>
+    expect(versions.find((version) => version.url === 'https://example.com/final.jpg')?.tier).toBe(
+      'final'
+    )
+    const draftId = versions.find((version) => version.url === 'https://example.com/draft.jpg')!.id
+    const restored = applyBeatStoryboardImageToScene(finalized, 0, '', {
+      restoreVersionId: draftId,
+      source: 'restore',
+    })
+    const beat = getSceneBeats(restored)[0]
+    expect(beat.storyboardImageUrl).toBe('https://example.com/draft.jpg')
+    expect(beat.storyboardImageTier).toBe('draft')
+    expect(beat.storyboardImageVersionId).toBe(draftId)
+  })
 })
