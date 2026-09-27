@@ -88,8 +88,9 @@ describe('resolveRetryPromptDeadlineMs', () => {
 })
 
 describe('resolveImageDeadlineAt', () => {
-  it('stops the image call early enough for the upload and validation after it', () => {
+  it('stops the image call early enough for the blob upload after it', () => {
     const routeStart = 1_000_000
+    expect(POST_IMAGE_RESERVE_MS).toBe(8_000)
     expect(resolveImageDeadlineAt(routeStart, ROUTE_BUDGET_MS)).toBe(
       routeStart + ROUTE_BUDGET_MS - POST_IMAGE_RESERVE_MS
     )

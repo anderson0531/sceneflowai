@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import { generateImageWithVertexKlingFallback } from '@/lib/generation/vertexImageWithKlingFallback'
-import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalation'
 import {
   ContentPolicyExhaustedError,
   getKlingFallbackProvider,
@@ -19,15 +18,11 @@ import {
   isCreativeStillGeneration,
   parseStillGenerationMode,
   resolveVertexStillPolicyAttempts,
-  shouldRejectIgnoredIdentityStill,
 } from '@/lib/generation/stillPolicy'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor, buildIdentityPromptToken, sanitizePromptForIdentityRefs, filterCharactersForPromptRefs, promptPlacesCharacter, stripReferenceImageMappingBlock } from '@/lib/imagen/promptOptimizer'
 import { ethnicityKeyFeature } from '@/lib/imagen/characterKeyFeatures'
-import {
-  buildIdentityEscalationBlock,
-  buildIdentityTraitsClause,
-} from '@/lib/imagen/identityTraitsClause'
+import { buildIdentityTraitsClause } from '@/lib/imagen/identityTraitsClause'
 import {
   buildSceneImageNegativePrompt,
   ORIGINAL_ADULT_SUBJECT_REQUIREMENT,
@@ -39,16 +34,6 @@ import {
   buildSceneImagePropLabel,
   buildSceneImageWardrobeLabel,
 } from '@/lib/imagen/sceneImageReferenceLabels'
-import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
-import {
-  referenceAdherenceIsBetter,
-  referenceResampleFailureKeepsFirst,
-  scoreReferenceAdherence,
-  selectReferenceAdherencePlates,
-  shouldResampleReferenceAdherence,
-  shouldScoreReferenceAdherence,
-  type ReferenceAdherenceResult,
-} from '@/lib/imagen/referenceAdherence'
 import { waitForGCSURIs, checkGCSURIAccessibility } from '@/lib/storage/gcsAccessibility'
 import { generateDirectionHash, generateImageSourceHash } from '@/lib/utils/contentHash'
 import { getServerSession } from 'next-auth'
@@ -77,7 +62,6 @@ import {
   type CharacterContext,
   type PropContext,
   type LocationContext,
-  SCENE_IMAGE_INTELLIGENCE_DEADLINE_MS,
   type SceneImageIntelligenceRequest,
   type SceneImageIntelligenceResult,
 } from '@/lib/intelligence/scene-image-intelligence'
@@ -117,10 +101,6 @@ import {
 } from '@/lib/imagen/structuredStillPrompt'
 import { buildInterleavedReferencePairCaptions } from '@/lib/imagen/interleavedReferencePair'
 import { sanitizeBeatStillPrompt } from '@/lib/imagen/sanitizeBeatStillPrompt'
-import {
-  resolveFeaturedCharactersForValidation,
-  isGenuineLikenessFailure,
-} from '@/lib/scene/sceneImageFeaturedValidation'
 import {
   collectEntityMaskPhrases,
   detectCharactersInText,
@@ -218,15 +198,7 @@ import {
   shouldUseExplicitBeatReferences,
 } from '@/lib/vision/beatFrameGenerationContext'
 import { locationReferenceForGeneration } from '@/lib/vision/locationVersionResolve'
-import {
-  LIKENESS_VALIDATION_MIN_RESERVE_MS,
-  canStartLikenessRetry,
-  canValidateLikeness,
-  projectLikenessRetryCostMs,
-  projectLikenessValidationCostMs,
-  resolveImageDeadlineAt,
-  resolveRetryPromptDeadlineMs,
-} from '@/lib/scene/sceneImageTimeBudget'
+import { resolveImageDeadlineAt } from '@/lib/scene/sceneImageTimeBudget'
 import { englishForModelBatch, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import {
   isExpressImageRateLimitError,
@@ -238,7 +210,7 @@ import { isVertexImageAbortedByClient } from '@/lib/vertexai/vertexImageClient'
 import { runInSceneImageAdmission } from '@/lib/vertexai/vertexImageGate'
 
 export const runtime = 'nodejs'
-export const maxDuration = 300  // Two full generate + validate rounds must fit
+export const maxDuration = 300  // One still, the blob upload, and the credit charge
 
 /**
  * Wall clock this route may spend generating. The rest of `maxDuration` covers
@@ -2447,46 +2419,8 @@ async function postGenerateImage(req: NextRequest) {
     }
     
     let imageUrl = ''
-    let validation: any = null
-    let referenceAdherence: ReferenceAdherenceResult | null = null
-    let likenessRound = 0
-    let shouldLikenessAutoRetry = false
-    let referenceResampleRound = 0
-    let shouldReferenceResample = false
-    let resampleKeptFirstSample = false
-    let firstReferenceRound: {
-      imageUrl: string
-      referenceAdherence: ReferenceAdherenceResult
-      promptForResponse: string
-      generationModelId: string
-      generationProvider: 'vertex' | 'kling'
-      validation: any
-    } | null = null
-    /** Measured cost of round 0, used to decide whether a retry can finish. */
-    let round0CostMs = 0
-    let round0ValidationMs = 0
-    const remainingBudgetMs = () => ROUTE_TIME_BUDGET_MS - (Date.now() - routeStart)
     /** Nothing downstream of the image call can run if the image itself overruns. */
     const imageDeadlineAt = resolveImageDeadlineAt(routeStart, ROUTE_TIME_BUDGET_MS)
-    let firstLikenessRound: {
-      imageUrl: string
-      validation: any
-      promptForResponse: string
-      generationModelId: string
-      generationProvider: 'vertex' | 'kling'
-    } | null = null
-
-    const promptModifierContext = {
-      storyboardQuality: resolvedGen.storyboardQuality,
-      artStyle,
-      fullSceneContext,
-      characterReferences,
-      isBeatFrame,
-      beatDirectedEmotion,
-      beatSpeakerName,
-      beatForEmotion,
-      shotType: effectiveShotType,
-    }
 
     let generationModelId = 'gemini-image'
     let generationProvider: 'vertex' | 'kling' = 'vertex'
@@ -2499,122 +2433,6 @@ async function postGenerateImage(req: NextRequest) {
         .map((ref: { promptToken?: string }) => ref.promptToken)
         .filter((token): token is string => !!token)
     )
-
-    /**
-     * Identity lock added on round 1 only. Empty on round 0, so the first
-     * attempt keeps the short legend clause and does not argue with its own
-     * reference image before there is anything to argue about.
-     */
-    let identityEscalationBlock = ''
-    /**
-     * Set when the round-0 frame only existed because a content refusal was
-     * recovered from. A refused frame is the one most likely to come back with
-     * its identity references ignored — the model keeps the composition and
-     * invents a face — so the retry has to argue with the action language, not
-     * just restate who the person is.
-     */
-    let lastRoundPolicyRefusalRecovered = false
-    /** True when Director Safety pre-softened the Vertex prompt before send. */
-    let promptWasPolicySoftened = false
-
-    do {
-      shouldReferenceResample = false
-      const roundStart = Date.now()
-      if (referenceResampleRound > 0) {
-        referenceAdherence = null
-        console.log(
-          '[Scene Image] Reference resample: same prompt and plates, one more sample'
-        )
-      }
-      if (likenessRound > 0) {
-        // Escalation is the point of the retry, and it has to happen on every
-        // path. Previously the round bailed out whenever there was no
-        // intelligence request, which is exactly the persisted-lookbook and
-        // custom-prompt cases — so Express and one-click regen never retried at
-        // all, and the paths that did retried with the same prompt.
-        identityEscalationBlock = buildIdentityEscalationBlock(characterReferences)
-        if (!identityEscalationBlock) {
-          console.log(
-            '[Scene Image] Likeness auto-retry skipped — no describable identity traits to escalate'
-          )
-          break
-        }
-        console.log('[Scene Image] Likeness auto-retry: escalating identity lock and regenerating...')
-      }
-      if (likenessRound > 0 && sceneImageIntelligenceRequest) {
-        const retryPromptDeadlineMs = resolveRetryPromptDeadlineMs(
-          remainingBudgetMs(),
-          SCENE_IMAGE_INTELLIGENCE_DEADLINE_MS
-        )
-        const retryAiResult = await generateSceneImagePromptWithDeadline(
-          {
-            ...sceneImageIntelligenceRequest,
-            bustPromptCache: true,
-          },
-          retryPromptDeadlineMs
-        )
-        sceneImageAiResult = retryAiResult
-        const appliedRetry = applySceneImageAiResultToPrompt({
-          aiResult: retryAiResult,
-          characterReferences,
-          fullSceneContext: sceneImageIntelligenceRequest
-            ? bindLibraryNamesToTokens(fullSceneContext, [
-                ...(sceneImageIntelligenceRequest.props ?? []),
-                ...(sceneImageIntelligenceRequest.availableLocations ?? []),
-              ])
-            : fullSceneContext,
-          artStyle,
-          autoDetectObjects,
-          autoDetectLocations,
-          projectObjectRefs,
-          projectLocationRefs,
-          detectedObjectReferences,
-          matchedLocationReference,
-          sceneType: aiSceneType,
-          protectPhrases: [
-            ...(sceneImageIntelligenceRequest?.props ?? []).map((p) => p.name),
-            ...(sceneImageIntelligenceRequest?.availableLocations ?? []).map((l) => l.name),
-          ].filter(Boolean),
-          isBeatFrame,
-        })
-        if (appliedRetry.usedAIIntelligence) {
-          optimizedPrompt = appendSceneImagePromptModifiers(
-            appliedRetry.optimizedPrompt,
-            promptModifierContext
-          )
-          characterReferencesForImages = appliedRetry.characterReferencesForImages
-          detectedObjectReferences = appliedRetry.detectedObjectReferences
-          matchedLocationReference = appliedRetry.matchedLocationReference
-          aiNegativePromptAdditions = appliedRetry.aiNegativePromptAdditions
-        } else {
-          // A failed re-plan is not a reason to abandon the round: the escalated
-          // identity lock is carried by the request either way.
-          console.log(
-            '[Scene Image] Likeness auto-retry: AI re-plan unavailable, reusing round 0 prompt with the escalated lock'
-          )
-        }
-      }
-      if (likenessRound > 0 && lastRoundPolicyRefusalRecovered) {
-        // A frame the eco model refused outright and pro then rendered without
-        // its referenced faces did not lose the likeness for want of identity
-        // instruction — it lost it because of what the action asks for. Restating
-        // the identity harder against unchanged wording asks for the same answer.
-        const softened = escalateImagePromptForRetry(optimizedPrompt, 1, {
-          skipProductionStillFraming: isBeatFrame,
-          shotType: effectiveShotType,
-          allowTypography,
-        })
-        if (softened !== optimizedPrompt) {
-          optimizedPrompt = softened
-          console.log(
-            '[Scene Image] Likeness retry: round 0 was content-refused before it rendered; softening action language alongside the identity lock'
-          )
-        } else {
-          console.log(
-            '[Scene Image] Likeness retry: round 0 was content-refused but no action wording matched a softening rule'
-          )
-        }
-      }
 
     // An identity reference the composition never names is read the same way an
     // unnamed prop is: an image with no instruction attached, which the model
@@ -3279,11 +3097,6 @@ async function postGenerateImage(req: NextRequest) {
           if (subjectBindingSummary) {
             geminiPrompt += `${subjectBindingSummary}\n\n`
           }
-          // Above the scene prompt, because the retry is correcting who is in
-          // the frame, not what they are doing in it.
-          if (identityEscalationBlock) {
-            geminiPrompt += `${identityEscalationBlock}\n\n`
-          }
           geminiPrompt += `SCENE PROMPT:\n${structuredStill}\n\n`
           
           geminiPrompt += `CRITICAL REQUIREMENTS:\n`
@@ -3362,11 +3175,7 @@ async function postGenerateImage(req: NextRequest) {
           }
 
           if (allReferenceImages.length > 0) {
-            geminiPrompt = joinPromptBlocks(
-              identityEscalationBlock,
-              subjectCountGuardrail,
-              structuredStill
-            )
+            geminiPrompt = joinPromptBlocks(subjectCountGuardrail, structuredStill)
           }
 
           if (isBeatFrame) {
@@ -3404,18 +3213,13 @@ async function postGenerateImage(req: NextRequest) {
             generationModelId = klingResult.modelId
             generationProvider = 'kling'
             wasPolicyFallback = true
-            lastRoundPolicyRefusalRecovered = false
             promptForResponse = geminiPrompt
           } else {
             const sanitizedGeminiPrompt = isBeatFrame
               ? sanitizeBeatStillPrompt(geminiPrompt)
               : geminiPrompt
             const vertexPrompt = useInterleavedProRefs
-              ? joinPromptBlocks(
-                  identityEscalationBlock,
-                  subjectCountGuardrail,
-                  structuredStill
-                )
+              ? joinPromptBlocks(subjectCountGuardrail, structuredStill)
               : sanitizedGeminiPrompt
 
             const vertexReferenceImages = await overlayLocationScaleOnReferenceImages(
@@ -3444,8 +3248,7 @@ async function postGenerateImage(req: NextRequest) {
             generationModelId = vertexResult.modelId
             generationProvider = vertexResult.generationProvider
             wasPolicyFallback = false
-            lastRoundPolicyRefusalRecovered = vertexResult.policyRefusalRecovered === true
-            if (lastRoundPolicyRefusalRecovered) {
+            if (vertexResult.policyRefusalRecovered === true) {
               console.warn(
                 `[Scene Image] ⚠️  Frame was content-refused before it rendered; ${vertexResult.modelId} produced it from softened wording. Expect identity drift — the refused content is why references get ignored.`
               )
@@ -3543,26 +3346,6 @@ async function postGenerateImage(req: NextRequest) {
         const isRateLimitError = isExpressImageRateLimitError(error)
         const status = resolveExpressImageErrorStatus(error)
 
-        // A resample 429 must not discard the still that already uploaded.
-        if (
-          referenceResampleFailureKeepsFirst({
-            resampleRound: referenceResampleRound,
-            hasFirstSample: firstReferenceRound != null,
-            aborted: false,
-          })
-        ) {
-          console.warn('[Scene Image] Reference resample failed; keeping first sample')
-          imageUrl = firstReferenceRound!.imageUrl
-          referenceAdherence = firstReferenceRound!.referenceAdherence
-          promptForResponse = firstReferenceRound!.promptForResponse
-          generationModelId = firstReferenceRound!.generationModelId
-          generationProvider = firstReferenceRound!.generationProvider
-          validation = firstReferenceRound!.validation
-          shouldReferenceResample = false
-          resampleKeptFirstSample = true
-          break
-        }
-
         // Vertex already ran its identity-ref 429 ladder — do not outer-retry into another burst.
         if (isIdentityRefRateLimitExhausted(error)) {
           console.warn(
@@ -3623,11 +3406,6 @@ async function postGenerateImage(req: NextRequest) {
       }
     }
     
-    if (resampleKeptFirstSample) {
-      shouldLikenessAutoRetry = false
-      shouldReferenceResample = false
-      break
-    }
 
     if (!base64Image) {
       throw new Error('Failed to generate image after all retry attempts')
@@ -3641,305 +3419,9 @@ async function postGenerateImage(req: NextRequest) {
 
     console.log('[Scene Image] ✓ Image generated and uploaded')
 
-    // Validate character likeness (optional - informational only; skipped during Express batch)
-    validation = null
-    // On a retry round the route is already deep into its budget, and an
-    // unvalidated retry is discarded in favour of round 0 rather than risking
-    // the function being killed mid-call.
-    const hasBudgetForValidation = canValidateLikeness(
-      likenessRound,
-      remainingBudgetMs(),
-      round0ValidationMs
-    )
-    if (!hasBudgetForValidation) {
-      console.warn(
-        `[Scene Image] Skipping likeness validation${likenessRound === 0 ? '' : ' on retry'} — ${remainingBudgetMs()}ms left, needs ~${
-          likenessRound === 0
-            ? LIKENESS_VALIDATION_MIN_RESERVE_MS
-            : projectLikenessValidationCostMs(round0ValidationMs)
-        }ms`
-      )
-    }
-    // The validator scores facial structure, which a wide establishing frame
-    // never resolves. Beat direction wins because it framed this shot.
-    const validationShotType = beatForEmotion?.beatDirection?.shotType || effectiveShotType
-
-    const validationStart = Date.now()
-    const shouldValidateCharacterLikeness =
-      characterObjects.length > 0 &&
-      hasBudgetForValidation &&
-      !skipLikenessValidation
-
-    if (shouldValidateCharacterLikeness) {
-      console.log('[Scene Image] Validating character likeness...')
-
-      const featuredCharacters = resolveFeaturedCharactersForValidation({
-        characterObjects,
-        characterReferences,
-        optimizedPrompt,
-        fullSceneContext,
-        aiResult: sceneImageAiResult,
-        usedAIIntelligence,
-      })
-
-      if (featuredCharacters.length === 0) {
-        console.log('[Scene Image] Skipping validation - no featured character with reference image')
-      } else {
-        const primaryFeatured = featuredCharacters[0]
-        console.log(
-          `[Scene Image] Validating against ${primaryFeatured.name} (AI-featured character${featuredCharacters.length > 1 ? `, ${featuredCharacters.length} total` : ''})`
-        )
-
-        try {
-          const primaryValidationStart = Date.now()
-          validation = await validateCharacterLikeness(
-            imageUrl,
-            primaryFeatured.referenceImageUrl,
-            primaryFeatured.name,
-            { shotType: validationShotType }
-          )
-          const perSubjectValidationMs = Date.now() - primaryValidationStart
-
-          if (featuredCharacters.length > 1) {
-            for (const extraFeatured of featuredCharacters.slice(1)) {
-              // Each extra subject is another vision call. The retry decision
-              // still rides on the primary, so an extra that will not fit is
-              // dropped rather than allowed to eat the image budget.
-              if (remainingBudgetMs() < projectLikenessValidationCostMs(perSubjectValidationMs)) {
-                console.warn(
-                  `[Scene Image] Skipping likeness validation for ${extraFeatured.name} — ${remainingBudgetMs()}ms left`
-                )
-                break
-              }
-              try {
-                const extraValidation = await validateCharacterLikeness(
-                  imageUrl,
-                  extraFeatured.referenceImageUrl,
-                  extraFeatured.name,
-                  { shotType: validationShotType }
-                )
-                if (extraValidation.mismatchKind === 'identity') {
-                  console.warn(
-                    `[Scene Image] ⚠️  ${extraFeatured.name} is the wrong person at ${extraValidation.confidence}% confidence — ` +
-                      `the retry decision follows ${primaryFeatured.name}, so this frame may ship with that face.`
-                  )
-                }
-              } catch (error) {
-                console.error(`[Scene Image] Validation failed for ${extraFeatured.name}:`, error)
-              }
-            }
-          }
-
-          if (validation.matches) {
-            console.log(`[Scene Image] ✓ Character likeness validated (${validation.confidence}% confidence)`)
-          } else if (validation.mismatchKind === 'identity') {
-            console.warn(
-              `[Scene Image] ⚠️  Character likeness failed — wrong person at ${validation.confidence}% confidence.`
-            )
-            console.warn('[Scene Image] Issues:', validation.issues.join(', '))
-          } else {
-            console.log(
-              `[Scene Image] Character likeness ${validation.mismatchKind} at ${validation.confidence}% confidence (${validation.shotScale} shot) — keeping frame, not worth a regeneration.`
-            )
-          }
-        } catch (error) {
-          console.error('[Scene Image] Validation failed:', error)
-        }
-      }
-    } else if (skipLikenessValidation) {
-      console.log('[Scene Image] Skipping likeness validation — skipLikenessValidation')
-    } else if (characterObjects.length === 0) {
-      console.log('[Scene Image] Skipping likeness validation — no characters')
-    }
-
-    if (likenessRound === 0 && referenceResampleRound === 0) {
-      round0ValidationMs = Date.now() - validationStart
-      round0CostMs = Date.now() - roundStart
-    }
-
-    if (
-      shouldRejectIgnoredIdentityStill({
-        policyRefusalRecovered: lastRoundPolicyRefusalRecovered,
-        hasIdentityRefs: charactersWithImages.length > 0,
-        likenessFailed: isGenuineLikenessFailure(validation),
-      })
-    ) {
-      console.warn(
-        '[Scene Image] Policy-recovered frame ignored identity references — failing uncharged'
-      )
-      return NextResponse.json(
-        {
-          success: false,
-          error: IMAGE_SAFETY_USER_MESSAGE,
-          code: IMAGE_SAFETY_CODE,
-        },
-        { status: 422 }
-      )
-    }
-
-    if (
-      likenessRound === 0 &&
-      referenceResampleRound === 0 &&
-      isGenuineLikenessFailure(validation) &&
-      !skipLikenessValidation
-    ) {
-      if (canStartLikenessRetry(remainingBudgetMs(), round0CostMs)) {
-        firstLikenessRound = {
-          imageUrl,
-          validation,
-          promptForResponse,
-          generationModelId,
-          generationProvider,
-        }
-        shouldLikenessAutoRetry = true
-        likenessRound = 1
-        continue
-      }
-      console.log(
-        `[Scene Image] Skipping likeness auto-retry — ${remainingBudgetMs()}ms left, a retry of the ${round0CostMs}ms first round needs ~${projectLikenessRetryCostMs(round0CostMs)}ms`
-      )
-    }
-
-    if (likenessRound === 1 && firstLikenessRound) {
-      // A retry skipped for budget scores 0 and therefore loses to any measured
-      // first round, which is the safe outcome: unmeasured is not better.
-      const retryConfidence = validation?.confidence ?? 0
-      const firstConfidence = firstLikenessRound.validation?.confidence ?? 0
-      if (firstConfidence > retryConfidence) {
-        imageUrl = firstLikenessRound.imageUrl
-        validation = firstLikenessRound.validation
-        promptForResponse = firstLikenessRound.promptForResponse
-        generationModelId = firstLikenessRound.generationModelId
-        generationProvider = firstLikenessRound.generationProvider
-        console.log(
-          `[Scene Image] Likeness auto-retry kept first attempt (${firstConfidence}% vs ${retryConfidence}%)`
-        )
-      } else {
-        console.log(
-          `[Scene Image] Likeness auto-retry kept second attempt (${retryConfidence}% vs ${firstConfidence}%)`
-        )
-      }
-    }
-
-    const scorePlates =
-      shouldScoreReferenceAdherence({
-        skipLikenessValidation,
-        storyboardQuality: resolvedGen.storyboardQuality,
-      }) && canValidateLikeness(0, remainingBudgetMs(), 0)
-    if (
-      !shouldScoreReferenceAdherence({
-        skipLikenessValidation,
-        storyboardQuality: resolvedGen.storyboardQuality,
-      })
-    ) {
-      console.log('[Scene Image] Skipping reference adherence — Express draft')
-    } else if (!canValidateLikeness(0, remainingBudgetMs(), 0)) {
-      console.warn(
-        `[Scene Image] Skipping reference adherence — ${remainingBudgetMs()}ms left, needs ~${LIKENESS_VALIDATION_MIN_RESERVE_MS}ms`
-      )
-    } else if (scorePlates) {
-      const adherencePlates = selectReferenceAdherencePlates({
-        identities: characterReferencesForImages
-          .filter((ref: { name?: string; identityImageUrl?: string }) => ref?.name && ref.identityImageUrl)
-          .map((ref: { name: string; identityImageUrl: string }) => ({
-            name: ref.name,
-            imageUrl: ref.identityImageUrl,
-          })),
-        objects: objectImageReferences,
-      })
-      if (adherencePlates.length === 0) {
-        console.log(
-          '[Scene Image] Skipping reference adherence — no identity or handheld-prop plates'
-        )
-      } else {
-        try {
-          console.log(
-            `[Scene Image] Scoring reference adherence (${adherencePlates
-              .map((plate) => `${plate.role}:${plate.name}`)
-              .join(', ')})`
-          )
-          referenceAdherence = await scoreReferenceAdherence({
-            generatedImageUrl: imageUrl,
-            plates: adherencePlates,
-            shotType: validationShotType,
-          })
-          if (referenceAdherence) {
-            console.log(
-              `[Scene Image] Reference adherence ${referenceAdherence.band}: ${referenceAdherence.reason}`
-            )
-          } else {
-            console.warn('[Scene Image] Reference adherence returned no band — leaving the still unchecked')
-          }
-        } catch (error) {
-          console.error('[Scene Image] Reference adherence failed:', error)
-        }
-      }
-    }
-
-    if (
-      referenceResampleRound === 0 &&
-      likenessRound === 0 &&
-      referenceAdherence &&
-      (referenceAdherence.band === 'drift' || referenceAdherence.band === 'miss')
-    ) {
-      const canRetry = canStartLikenessRetry(remainingBudgetMs(), round0CostMs)
-      if (
-        shouldResampleReferenceAdherence({
-          failFast: !!skipLikenessValidation,
-          band: referenceAdherence.band,
-          resampleRound: referenceResampleRound,
-          likenessRound,
-          canRetry,
-        })
-      ) {
-        firstReferenceRound = {
-          imageUrl,
-          referenceAdherence,
-          promptForResponse,
-          generationModelId,
-          generationProvider,
-          validation,
-        }
-        referenceResampleRound = 1
-        shouldReferenceResample = true
-        console.log(
-          `[Scene Image] Reference adherence ${referenceAdherence.band}; sampling once more`
-        )
-        continue
-      }
-      if (skipLikenessValidation) {
-        console.log(
-          `[Scene Image] Reference adherence ${referenceAdherence.band}; keeping first sample (Express fail-fast)`
-        )
-      } else {
-        console.log(
-          `[Scene Image] Skipping reference resample — ${remainingBudgetMs()}ms left, a retry of the ${round0CostMs}ms first round needs ~${projectLikenessRetryCostMs(round0CostMs)}ms`
-        )
-      }
-    }
-
-    if (referenceResampleRound === 1 && firstReferenceRound) {
-      const firstBand = firstReferenceRound.referenceAdherence.band
-      const secondBand = referenceAdherence?.band
-      if (secondBand && referenceAdherenceIsBetter(secondBand, firstBand)) {
-        console.log(
-          `[Scene Image] Reference resample kept second sample (${secondBand} vs ${firstBand})`
-        )
-      } else {
-        imageUrl = firstReferenceRound.imageUrl
-        referenceAdherence = firstReferenceRound.referenceAdherence
-        promptForResponse = firstReferenceRound.promptForResponse
-        generationModelId = firstReferenceRound.generationModelId
-        generationProvider = firstReferenceRound.generationProvider
-        validation = firstReferenceRound.validation
-        console.log(
-          `[Scene Image] Reference resample kept first sample (${firstBand} vs ${secondBand ?? 'unchecked'})`
-        )
-      }
-    }
-
-    shouldLikenessAutoRetry = false
-    } while (shouldLikenessAutoRetry || shouldReferenceResample)
+    // The uploaded still is the result. A likeness or adherence vision call
+    // held this request after the image existed and, on drift, spent a second
+    // generation. The user can see whether the plates landed.
 
     // Calculate workflow sync hashes for tracking staleness
     const basedOnDirectionHash = sceneData ? generateDirectionHash(sceneData) : undefined
@@ -3977,7 +3459,6 @@ async function postGenerateImage(req: NextRequest) {
       // Ignore balance lookup errors
     }
 
-    // Prepare response based on validation results
     const response: any = {
       success: true,
       imageUrl,
@@ -4001,22 +3482,10 @@ async function postGenerateImage(req: NextRequest) {
       ...(isCustomFrame ? { customFrameId } : {}),
     }
 
-    // Add validation info (informational only for storyboards)
-    if (validation) {
-      response.validationConfidence = validation.confidence
-      response.validationPassed = true  // Always pass for storyboards
-      response.validationMessage = `Storyboard generated (${validation.confidence}% character similarity - informational only)`
-    }
-    if (referenceAdherence) {
-      response.referenceStatus = referenceAdherence.band
-      response.referenceReason = referenceAdherence.reason
-    }
-
     console.log('[Scene Image] Generation succeeded', {
       ...logContext,
       usedAIIntelligence,
       model: generationModelId,
-      referenceStatus: referenceAdherence?.band ?? 'unchecked',
       elapsedMs: Date.now() - routeStart,
     })
 
