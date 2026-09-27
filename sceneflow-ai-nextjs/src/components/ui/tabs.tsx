@@ -37,7 +37,7 @@ const TabsTrigger = React.forwardRef<
       "transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950",
       "disabled:pointer-events-none disabled:opacity-50",
       // colors
-      "text-gray-300 data-[state=active]:text-white",
+      "group text-gray-300 data-[state=active]:text-white",
       // active bg + bottom indicator
       "data-[state=active]:bg-gray-800",
       // size & hit area
@@ -51,7 +51,7 @@ const TabsTrigger = React.forwardRef<
       aria-hidden
       className={cn(
         "pointer-events-none absolute inset-x-2 -bottom-1 h-0.5 rounded-full bg-transparent",
-        "data-[state=active]:bg-blue-500"
+        "group-data-[state=active]:bg-emerald-400"
       )}
     />
   </TabsPrimitive.Trigger>

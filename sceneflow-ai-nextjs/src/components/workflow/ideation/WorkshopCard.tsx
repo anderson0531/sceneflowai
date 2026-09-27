@@ -37,7 +37,7 @@ export function WorkshopCard(props: WorkshopCardProps) {
     { label: 'Branding & Compliance', key: 'sr_branding', multiline: true, rows: 3, placeholder: 'Voice/tone guardrails, logo/type, legal' },
     { label: 'Objects & Continuity', key: 'sr_propsContinuity', multiline: true, rows: 2, placeholder: 'Hero objects, wardrobe, must-match' },
     { label: 'Accessibility & Localization', key: 'sr_accessibility', multiline: true, rows: 2, placeholder: 'Captions style/language, alt text, VO variants' },
-    { label: 'Pre-vis Hints', key: 'sr_storyboardHints', multiline: true, rows: 3, placeholder: 'Per-beat intents, coverage plan, B-roll, graphics, on-screen text buckets' },
+    { label: 'Pre-vis Hints', key: 'sr_storyboardHints', multiline: true, rows: 3, placeholder: 'Per-shot intents, coverage plan, B-roll, graphics, on-screen text buckets' },
   ] as const
 
   const computeReadiness = () => {

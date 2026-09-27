@@ -358,7 +358,7 @@ export function SegmentSfxCard({
       />
       {showPartialVeoHint && (
         <p className="text-[11px] text-amber-800/80 dark:text-amber-200/70 mb-2">
-          Veo ambient covers up to 8s of this beat (Auto target{' '}
+          Veo ambient covers up to 8s of this shot (Auto target{' '}
           {formatSeconds(resolveVeoSfxTargetSeconds({ segmentDurationSeconds, override: durationPreset }))}
           s → {veoAutoSeconds}s clip).
         </p>

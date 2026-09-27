@@ -567,13 +567,14 @@ export function ScenePreviewPlayer({
         const musicLocalTime = currentTime - clip.startTime
         const fileDuration =
           clip.actualDuration > 0 ? clip.actualDuration : musicFileDuration
+        const trimStart = clip.trimStart ?? 0
         const expectedAudioTime = clip.loop
           ? computeClipAudioTime(
-              { startTime: 0, trimStart: 0, loop: true },
+              { startTime: 0, trimStart, loop: true },
               musicLocalTime * rate,
               fileDuration
             )
-          : Math.min(musicLocalTime * rate, fileDuration)
+          : Math.min(trimStart + musicLocalTime * rate, fileDuration)
         const drift = clip.loop
           ? loopingDrift(expectedAudioTime, audioEl.currentTime, fileDuration)
           : Math.abs(audioEl.currentTime - expectedAudioTime)

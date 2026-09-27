@@ -41,7 +41,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
+        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -285,7 +285,7 @@
     "title": "Ροή εργασιών βίντεο με προτεραιότητα στον ρυθμό",
     "subtitle": "Έγκριση πριν από την απόδοση — όχι αναδημιουργία τύπου κουλοχέρη",
     "intro": "Όχι παραγωγή αποτελεσμάτων με τη μέθοδο της δοκιμής και του σφάλματος. Ελέγχετε την εμφάνιση και δίνετε την έγκρισή σας προτού το SceneFlow χρησιμοποιήσει μονάδες για το τελικό βίντεο.",
-    "description": "Το SceneFlow οργανώνει τη διαδικασία οπτικής έγκρισης σε κάθε στάδιο: Pre-vis Agent για επισκόπηση, Shot Frames για το κλείδωμα της σύνθεσης και, στη συνέχεια, F2V ανά χτύπο (beat). Βελτιώνετε την οπτική απόδοση προτού σπαταλήσετε credits σε αποκλίσεις και παραισθήσεις (hallucinations).",
+    "description": "Το SceneFlow οργανώνει τη διαδικασία οπτικής έγκρισης σε κάθε στάδιο: Pre-vis Agent για επισκόπηση, Shot Frames για το κλείδωμα της σύνθεσης και, στη συνέχεια, F2V ανά χτύπο (shot). Βελτιώνετε την οπτική απόδοση προτού σπαταλήσετε credits σε αποκλίσεις και παραισθήσεις (hallucinations).",
     "steps": [
       "Pre-vis Agent — μοιραστείτε οπτικοακουστικά beats για αξιολόγηση μέσα σε λίγα λεπτά",
       "Shot Frames — κλείδωμα σύνθεσης έναρξης/λήξης με τη συνέχεια της Reference Library",
@@ -684,7 +684,7 @@
         ],
         "keyFeatures": [
           "Foundation — σενάριο, φωνές, ήχος σκηνής, Audience Resonance",
-          "Προ-οπτικοποίηση (Pre-Vis) — σκηνοθεσία, ήχος και καρέ-κλειδιά (beat frames) ανά σκηνή, με συνδέσμους κοινοποίησης",
+          "Προ-οπτικοποίηση (Pre-Vis) — σκηνοθεσία, ήχος και καρέ-κλειδιά (shot frames) ανά σκηνή, με συνδέσμους κοινοποίησης",
           "Λήψη — Πλάνα, μίκτης και ροές χωρίς να βγείτε από το περιβάλλον παραγωγής.",
           "Screening Room — προεπισκόπηση σκηνών, τελική συναρμολόγηση, προβολές και δημοσίευση στο YouTube"
         ]
@@ -745,8 +745,8 @@
       {
         "id": "προ-οπτικοποίηση",
         "stepLabel": "Οπτικοποιήστε και δοκιμάστε με την προ-οπτικοποίηση",
-        "shortDescription": "Δημιουργήστε το ηχητικό των διαλόγων και τα βασικά καρέ (beat frames) σκηνή προς σκηνή. Μοιραστείτε τα animatics για έγκριση πριν από την τελική δαπάνη για το βίντεο.",
-        "detailedDescription": "Το Pre-Vis Studio παράγει σκηνοθετικές οδηγίες, ήχο και καρέ-κλειδιά (beat frames) για κάθε σκηνή — σημεία ελέγχου που ελαχιστοποιούν τις δαπανηρές επαναλήψεις εργασιών σε περίπτωση αλλαγής χαρακτήρων ή ύφους. Μοιραστείτε το πρόγραμμα αναπαραγωγής για να συνεργαστείτε, καθώς το ολοκληρωμένο animatic μπορεί να αποτελέσει το τελικό παραδοτέο για πολλά έργα.",
+        "shortDescription": "Δημιουργήστε το ηχητικό των διαλόγων και τα βασικά καρέ (shot frames) σκηνή προς σκηνή. Μοιραστείτε τα animatics για έγκριση πριν από την τελική δαπάνη για το βίντεο.",
+        "detailedDescription": "Το Pre-Vis Studio παράγει σκηνοθετικές οδηγίες, ήχο και καρέ-κλειδιά (shot frames) για κάθε σκηνή — σημεία ελέγχου που ελαχιστοποιούν τις δαπανηρές επαναλήψεις εργασιών σε περίπτωση αλλαγής χαρακτήρων ή ύφους. Μοιραστείτε το πρόγραμμα αναπαραγωγής για να συνεργαστείτε, καθώς το ολοκληρωμένο animatic μπορεί να αποτελέσει το τελικό παραδοτέο για πολλά έργα.",
         "media": "αναπαραγωγέας προ-οπτικοποίησης"
       },
       {
@@ -914,7 +914,7 @@
         "description": "Οι καρτέλες Script και Shoot καθοδηγούν τη ροή: Foundation → Pre-Vis → Footage → Mixer → Streams. Τα σημεία ελέγχου ανά σκηνή ελαχιστοποιούν τις επαναλήψεις, ενώ το Screening Room διαχειρίζεται την προεπισκόπηση, τη συναρμολόγηση και τη δημοσίευση.",
         "keyFeatures": [
           "Foundation — σενάριο, φωνές, ήχος σκηνής, Audience Resonance",
-          "Προ-οπτικοποίηση (Pre-Vis) — σκηνοθεσία, ήχος και καρέ-κλειδιά (beat frames) ανά σκηνή, με συνδέσμους κοινοποίησης",
+          "Προ-οπτικοποίηση (Pre-Vis) — σκηνοθεσία, ήχος και καρέ-κλειδιά (shot frames) ανά σκηνή, με συνδέσμους κοινοποίησης",
           "Λήψη — Πλάνα, μίκτης και ροές χωρίς να βγείτε από το περιβάλλον παραγωγής.",
           "Screening Room — προεπισκόπηση σκηνών, τελική συναρμολόγηση, προβολές και δημοσίευση στο YouTube"
         ],
@@ -1061,11 +1061,11 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
+          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
@@ -1105,7 +1105,7 @@
       "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
         "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
         "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
         "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
@@ -1449,7 +1449,7 @@
       {
         "id": "animation",
         "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {

@@ -41,7 +41,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
+        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -101,7 +101,7 @@
       },
       {
         "label": "Vor dem letzten Video genehmigen",
-        "detail": "Überprüfen Sie die Pre-Vis-Beats, bevor Sie rendern"
+        "detail": "Überprüfen Sie die Pre-Vis-Shots, bevor Sie rendern"
       },
       {
         "label": "Testen Sie zuerst Ihre Geschichte",
@@ -285,11 +285,11 @@
     "title": "Beat-basierte Video-Pipeline",
     "subtitle": "Freigabe vor dem Rendern – statt Generierung nach dem Glücksspielprinzip",
     "intro": "Kein mühsames Ausprobieren nach dem Prinzip „Versuch und Irrtum“. Sie sehen sich eine Vorschau an und geben den Look frei, bevor SceneFlow Credits für das endgültige Video verbraucht.",
-    "description": "SceneFlow strukturiert die visuelle Freigabe in jedem Schritt: Pre-vis Agent zur Durchsicht, Shot Frames zur Festlegung der Komposition, gefolgt von F2V pro Beat. Sie verfeinern den Look, bevor Sie Credits für Drift und Halluzinationen verbrauchen.",
+    "description": "SceneFlow strukturiert die visuelle Freigabe in jedem Schritt: Pre-vis Agent zur Durchsicht, Shot Frames zur Festlegung der Komposition, gefolgt von F2V pro Shot. Sie verfeinern den Look, bevor Sie Credits für Drift und Halluzinationen verbrauchen.",
     "steps": [
       "Pre-vis Agent — Audio-visuelle Beats in Minuten zur Begutachtung teilen",
       "Shot Frames — Fixierung der Start-/End-Zusammensetzung mit Reference Library-Kontinuität",
-      "F2V pro Beat – Videos aus freigegebenen Frames generieren, statt aus blinden Prompts.",
+      "F2V pro Shot – Videos aus freigegebenen Frames generieren, statt aus blinden Prompts.",
       "Kontinuierliche EXT-Kette – native Erweiterungsschritte von +7 Sekunden für lange Dialogsequenzen",
       "Production Mixer — Timing, Audio und Stream-Export an Screening Room"
     ],
@@ -684,7 +684,7 @@
         ],
         "keyFeatures": [
           "Foundation — Skript, Stimmen, Szenen-Audio, Audience Resonance",
-          "Pre-Vis – Regieanweisungen, Audio und Beat-Frames pro Szene inklusive Freigabelinks",
+          "Pre-Vis – Regieanweisungen, Audio und Shot-Frames pro Szene inklusive Freigabelinks",
           "Aufnahme – Videomaterial, Mixer und Streams, ohne die Produktion zu verlassen",
           "Screening Room — Szenenvorschau, Zusammenstellung des Masters, Vorführungen und Veröffentlichung auf YouTube"
         ]
@@ -745,8 +745,8 @@
       {
         "id": "Previsualisierung",
         "stepLabel": "Visualisieren und testen mit Pre-Visualization",
-        "shortDescription": "Erstellen Sie Dialog-Audio und Beat-Frames Szene für Szene. Legen Sie Animatics zur Freigabe vor, bevor die endgültigen Videokosten anfallen.",
-        "detailedDescription": "Pre-Vis Studio erstellt Regieanweisungen, Audio und Beat-Frames für jede Szene – Kontrollpunkte, die kostspielige Überarbeitungen bei Änderungen an Charakteren oder Tonalität minimieren. Nutzen Sie den Player für die Zusammenarbeit; bei vielen Projekten kann das fertige Animatic bereits das Endprodukt darstellen.",
+        "shortDescription": "Erstellen Sie Dialog-Audio und Shot-Frames Szene für Szene. Legen Sie Animatics zur Freigabe vor, bevor die endgültigen Videokosten anfallen.",
+        "detailedDescription": "Pre-Vis Studio erstellt Regieanweisungen, Audio und Shot-Frames für jede Szene – Kontrollpunkte, die kostspielige Überarbeitungen bei Änderungen an Charakteren oder Tonalität minimieren. Nutzen Sie den Player für die Zusammenarbeit; bei vielen Projekten kann das fertige Animatic bereits das Endprodukt darstellen.",
         "media": "Previs-Player"
       },
       {
@@ -812,7 +812,7 @@
       "keyFeatures": [
         "Pre-vis Agent zur Überprüfung – Beats vor dem aufwendigen Rendering teilen",
         "Shot Frames Sperrenzusammensetzung — Reference Library Kontinuität",
-        "F2V pro Beat – Video aus freigegebenen Einzelbildern generieren",
+        "F2V pro Shot – Video aus freigegebenen Einzelbildern generieren",
         "Durchgehende EXT-Ketten – native +7s-Schritte für lange Dialoge innerhalb eines Beats",
         "Mixer-Timing und -Streams – Screening Room öffnen, um sie zusammenzustellen und zu veröffentlichen"
       ],
@@ -914,7 +914,7 @@
         "description": "Die Reiter „Script“ und „Shoot“ führen durch die Phasen Foundation → Pre-Vis → Footage → Mixer → Streams. Prüfpunkte für jede Szene minimieren Wiederholungen; Screening Room übernimmt Vorschau, Zusammenstellung und Veröffentlichung.",
         "keyFeatures": [
           "Foundation — Skript, Stimmen, Szenen-Audio, Audience Resonance",
-          "Pre-Vis – Regieanweisungen, Audio und Beat-Frames pro Szene inklusive Freigabelinks",
+          "Pre-Vis – Regieanweisungen, Audio und Shot-Frames pro Szene inklusive Freigabelinks",
           "Aufnahme – Videomaterial, Mixer und Streams, ohne die Produktion zu verlassen",
           "Screening Room — Szenenvorschau, Zusammenstellung des Masters, Vorführungen und Veröffentlichung auf YouTube"
         ],
@@ -1061,11 +1061,11 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
+          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
@@ -1105,7 +1105,7 @@
       "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
         "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
         "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
         "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
@@ -1449,7 +1449,7 @@
       {
         "id": "animation",
         "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {
@@ -1670,10 +1670,10 @@
           {
             "icon": "Mehrere Sprachen",
             "title": "Mehrsprachige Streams",
-            "description": "Express-Audio in über 70Sprachen generieren, automatisch ausgerichtet, um Frames und Video zu schlagen. Versenden Sie synchronisierte oder lippensynchronisierte Sprachstreams von einem genehmigten Master-Schnitt.",
+            "description": "Express-Audio in über 70Sprachen generieren, automatisch auf Shot-Frames und Video ausgerichtet. Versenden Sie synchronisierte oder lippensynchronisierte Sprachstreams von einem genehmigten Master-Schnitt.",
             "learnMore": {
               "problem": "Ein globales Publikum zu erreichen bedeutet in der Regel, Sprachtalente neu aufzunehmen, jede Szene neu zu timen und das Projekt einmal pro Sprache neu aufzubauen — ein Kosten- und Koordinationsalbtraum, der die meisten Kreativen auf einem einzigen Markt hält.",
-              "solution": "Generieren Sie in wenigen Minuten Express-Audio in über 70Sprachen, automatisch ausgerichtet auf Ihre animierten Beat-Frames und Videos. Produzieren Sie synchronisierte oder lippensynchronisierte Streams aus demselben genehmigten Schnitt, ohne dass erneute Aufnahmen erforderlich sind.",
+              "solution": "Generieren Sie in wenigen Minuten Express-Audio in über 70Sprachen, automatisch ausgerichtet auf Ihre animierten Shot-Frames und Videos. Produzieren Sie synchronisierte oder lippensynchronisierte Streams aus demselben genehmigten Schnitt, ohne dass erneute Aufnahmen erforderlich sind.",
               "outcome": "Versenden Sie jede Geschichte nativ in mehr als 70 Märkte aus einer Produktion — multiplizieren Sie Ihre Reichweite und Ihren Umsatz, ohne Ihre Arbeitsbelastung zu vervielfachen."
             }
           },
@@ -1887,14 +1887,14 @@
             "id": "production-audio",
             "number": "4",
             "title": "Audio generieren",
-            "description": "Generieren Sie Dialoge, Erzählungen, SFX und Musik mit Run All Agents in allen Szenen, per-scene agents oder Beat by Beat — Voiceover in muttersprachlicher Qualität in über 70Sprachen.",
-            "imagePlaceholder": "Express-Audio — alle Szenen, einzelne Szenen oder Beat-by-Beat"
+            "description": "Generieren Sie Dialoge, Erzählungen, SFX und Musik mit Run All Agents in allen Szenen, per-scene agents oder Shot by Shot — Voiceover in muttersprachlicher Qualität in über 70Sprachen.",
+            "imagePlaceholder": "Express-Audio — alle Szenen, einzelne Szenen oder Shot-by-Shot"
           },
           {
             "id": "production-frames",
             "number": "5",
             "title": "Frames generieren und bearbeiten",
-            "description": "Generieren Sie Beat-Frames mit Run All Agents, per-scene agents oder Beat by Beat und bearbeiten Sie dann jeden Frame mit dem Intelligent Assistant Director (IAD) — beschreiben Sie einfach die Änderung.",
+            "description": "Generieren Sie Shot-Frames mit Run All Agents, per-scene agents oder Shot by Shot und bearbeiten Sie dann jeden Frame mit dem Intelligent Assistant Director (IAD) — beschreiben Sie einfach die Änderung.",
             "imagePlaceholder": "Shot Frames mit Intelligent Assistant Director-Bearbeitungen"
           },
           {
@@ -1908,7 +1908,7 @@
             "id": "production-video",
             "number": "7",
             "title": "Video erstellen",
-            "description": "Verwandeln Sie zugelassene Rahmen in Bewegung mit per-scene agents oder Beat by Beat. Wiederholen Sie jede Aufnahme mit dem Intelligent Assistant Director — keine endlosen Spielautomaten-Regenerationen.",
+            "description": "Verwandeln Sie zugelassene Rahmen in Bewegung mit per-scene agents oder Shot by Shot. Wiederholen Sie jede Aufnahme mit dem Intelligent Assistant Director — keine endlosen Spielautomaten-Regenerationen.",
             "imagePlaceholder": "Express-Videogenerierung mit IAD-Wiederholungen"
           },
           {

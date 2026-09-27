@@ -270,8 +270,11 @@ export function ScreeningBeatPreview({
         musicConfig: settings.audioTracks.music,
         legacyMusicUrl: typeof scene?.musicAudio === 'string' ? scene.musicAudio : undefined,
         musicFileDuration: DEFAULT_MUSIC_FILE_DURATION_SEC,
+        musicShotVolumes: Object.fromEntries(
+          Object.entries(settings.musicShotConfigs).map(([shotId, config]) => [shotId, config.volume])
+        ),
       }),
-    [scene, segments, playbackSegmentDuration, settings.audioTracks.music]
+    [scene, segments, playbackSegmentDuration, settings.audioTracks.music, settings.musicShotConfigs]
   )
 
   const playbackAudioUrls = useMemo(

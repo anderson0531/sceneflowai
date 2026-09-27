@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-26T11:21:06.205Z",
+  "generatedAt": "2026-09-27T01:29:10.210Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -1016,7 +1016,7 @@
       "expressScene.imageCredits": "8698b76b3f90a497",
       "expressScene.running": "4977a7e5bb3675c4",
       "expressScene.confirm": "dfddad7c34229f8c",
-      "expressGenerateAll.title": "311b290a6c2e8927",
+      "expressGenerateAll.title": "032525ccc938e6ae",
       "expressGenerateAll.description": "b9f564bd968d67a8",
       "expressGenerateAll.audioSection": "bc1b88907d3b748a",
       "expressGenerateAll.framesSection": "2c447e8d05985055",
@@ -1041,7 +1041,7 @@
       "expressGenerateAll.missing": "6be36ca49ee85210",
       "expressGenerateAll.imageCredits": "8698b76b3f90a497",
       "expressGenerateAll.running": "4977a7e5bb3675c4",
-      "expressGenerateAll.confirm": "311b290a6c2e8927",
+      "expressGenerateAll.confirm": "032525ccc938e6ae",
       "videoAgent.title": "2d82a577b0323ef1",
       "videoAgent.description": "7c1081e25ba55735",
       "videoAgent.quality": "b8c237eb0d10bc61",

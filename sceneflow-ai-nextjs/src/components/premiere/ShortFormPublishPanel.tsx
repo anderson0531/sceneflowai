@@ -64,7 +64,7 @@ export function ShortFormPublishPanel({
 
   const renderTrailer = async () => {
     if (!projectId || !videoUrl || !beatPlan?.length) {
-      toast.error('Generate a beat plan in Publishing → Promo first.')
+      toast.error('Generate a shot plan in Publishing → Promo first.')
       return
     }
     setRendering(true)
@@ -98,7 +98,7 @@ export function ShortFormPublishPanel({
       </h3>
       <p className="text-xs text-zinc-500 mb-3">
         Auto-detect highlight windows from your master for vertical platforms.
-        {beatPlan?.length ? ` Beat plan: ${beatPlan.length} beats ready to render.` : ''}
+        {beatPlan?.length ? ` Shot plan: ${beatPlan.length} shots ready to render.` : ''}
       </p>
       <div className="flex flex-wrap gap-2 mb-4">
         {PLATFORMS.map((p) => (
@@ -125,7 +125,7 @@ export function ShortFormPublishPanel({
         {beatPlan?.length ? (
           <Button size="sm" variant="outline" onClick={renderTrailer} disabled={rendering || !videoUrl}>
             {rendering ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Film className="w-4 h-4 mr-1" />}
-            Render beat trailer
+            Render shot trailer
           </Button>
         ) : null}
       </div>

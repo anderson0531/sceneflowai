@@ -39,7 +39,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
+        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -99,7 +99,7 @@
       },
       {
         "label": "Vumela ngaphambi kwevidiyo yokugcina",
-        "detail": "Bukeza izigaba zokubuka kuqala (pre-vis beats) ngaphambi kokwenza i-render."
+        "detail": "Bukeza izigaba zokubuka kuqala (pre-vis shots) ngaphambi kokwenza i-render."
       },
       {
         "label": "Hlola indaba yakho kuqala",
@@ -682,7 +682,7 @@
         ],
         "keyFeatures": [
           "Foundation — umbhalo, amazwi, umsindo wesigcawu, Audience Resonance",
-          "Ukubuka kuqala (Pre-Vis) — izinkomba, umsindo, kanye nezithombe ezibalulekile (beat frames) zesigcawu ngasinye, kanye nezixhumanisi zokwabelana",
+          "Ukubuka kuqala (Pre-Vis) — izinkomba, umsindo, kanye nezithombe ezibalulekile (shot frames) zesigcawu ngasinye, kanye nezixhumanisi zokwabelana",
           "Qopha — Izithombe, i-Mixer, kanye nokusakaza ngaphandle kokuphuma endaweni yokukhiqiza.",
           "Screening Room — ukubuka kuqala izigcawu, ukuhlanganisa okuyinhloko, ukukhombisa umphakathi, kanye nokushicilela ku-YouTube"
         ]
@@ -743,8 +743,8 @@
       {
         "id": "ukubuka kuqala",
         "stepLabel": "Bona ngeso lengqondo futhi uhlole ngokusebenzisa ukubona ngeso lengqondo kusengaphambili",
-        "shortDescription": "Khiqiza umsindo wengxoxo kanye nezithombe ezibonisa ukulandelana kwezigcawu (beat frames) ngokwezigcawu. Yabelana ngama-animatic ukuze uthole imvume ngaphambi kokusebenzisa imali yokugcina kwividiyo.",
-        "detailedDescription": "I-Pre-Vis Studio ikhiqiza izinkomba, umsindo, kanye nezithombe ezibonisa ukulandelana kwezenzo (beat frames) esigabeni ngasinye — okuyizigaba zokuhlola ezinciphisa isidingo sokuphinda umsebenzi obiza imali eningi uma kwenzeka kuba noshintsho kubalingiswa noma esimweni somoya wendaba. Yabelana ngesixhumanisi sokubuka ukuze nisebenzisane; i-animatic ephelele ingaba umkhiqizo wokugcina wamaphrojekthi amaningi.",
+        "shortDescription": "Khiqiza umsindo wengxoxo kanye nezithombe ezibonisa ukulandelana kwezigcawu (shot frames) ngokwezigcawu. Yabelana ngama-animatic ukuze uthole imvume ngaphambi kokusebenzisa imali yokugcina kwividiyo.",
+        "detailedDescription": "I-Pre-Vis Studio ikhiqiza izinkomba, umsindo, kanye nezithombe ezibonisa ukulandelana kwezenzo (shot frames) esigabeni ngasinye — okuyizigaba zokuhlola ezinciphisa isidingo sokuphinda umsebenzi obiza imali eningi uma kwenzeka kuba noshintsho kubalingiswa noma esimweni somoya wendaba. Yabelana ngesixhumanisi sokubuka ukuze nisebenzisane; i-animatic ephelele ingaba umkhiqizo wokugcina wamaphrojekthi amaningi.",
         "media": "isidlali sokubuka kuqala"
       },
       {
@@ -912,7 +912,7 @@
         "description": "Amathebhu athi \"Script\" kanye \"Shoot\" aqondisa inqubo kusukela ku-Foundation → Pre-Vis → Footage → Mixer kuya ku-Streams. Izindawo zokuhlola ngesigcawu ngasinye zinciphisa isidingo sokuphinda umsebenzi; i-Screening Room iphethe ukubuka kuqala, ukuhlanganisa, kanye nokushicilela.",
         "keyFeatures": [
           "Foundation — umbhalo, amazwi, umsindo wesigcawu, Audience Resonance",
-          "Ukubuka kuqala (Pre-Vis) — izinkomba, umsindo, kanye nezithombe ezibalulekile (beat frames) zesigcawu ngasinye, kanye nezixhumanisi zokwabelana",
+          "Ukubuka kuqala (Pre-Vis) — izinkomba, umsindo, kanye nezithombe ezibalulekile (shot frames) zesigcawu ngasinye, kanye nezixhumanisi zokwabelana",
           "Qopha — Izithombe, i-Mixer, kanye nokusakaza ngaphandle kokuphuma endaweni yokukhiqiza.",
           "Screening Room — ukubuka kuqala izigcawu, ukuhlanganisa okuyinhloko, ukukhombisa umphakathi, kanye nokushicilela ku-YouTube"
         ],
@@ -1059,11 +1059,11 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
+          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
@@ -1103,7 +1103,7 @@
       "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
         "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
         "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
         "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
@@ -1447,7 +1447,7 @@
       {
         "id": "animation",
         "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {

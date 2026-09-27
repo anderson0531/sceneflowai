@@ -41,7 +41,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
+        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -285,11 +285,11 @@
     "title": "Pipeline video basata sul ritmo",
     "subtitle": "Approva prima di renderizzare — niente rigenerazione stile slot machine",
     "intro": "Nessuna generazione basata su tentativi ed errori. Puoi visualizzare un'anteprima e approvare l'aspetto visivo prima che SceneFlow utilizzi i crediti per il video finale.",
-    "description": "SceneFlow struttura l'approvazione visiva in ogni fase: Pre-vis Agent per la revisione, Shot Frames per bloccare la composizione, e infine F2V per ogni beat. Perfezioni l'aspetto visivo prima di consumare crediti in derive e allucinazioni.",
+    "description": "SceneFlow struttura l'approvazione visiva in ogni fase: Pre-vis Agent per la revisione, Shot Frames per bloccare la composizione, e infine F2V per ogni inquadratura. Perfezioni l'aspetto visivo prima di consumare crediti in derive e allucinazioni.",
     "steps": [
       "Pre-vis Agent — condividi bozze audiovisive per la revisione in pochi minuti",
       "Shot Frames — blocca l'inizio/fine della composizione con continuità Reference Library",
-      "F2V per beat: genera video a partire da fotogrammi approvati, non da prompt alla cieca.",
+      "F2V per shot: genera video a partire da fotogrammi approvati, non da prompt alla cieca.",
       "Catena di estensione continua — passaggi di estensione nativi da +7 secondi per lunghe sequenze di dialogo",
       "Production Mixer — esportazione di timing, audio e stream verso Screening Room"
     ],
@@ -812,7 +812,7 @@
       "keyFeatures": [
         "Pre-vis Agent per revisione — condividi le basi prima del rendering pesante",
         "Shot Frames composizione del blocco — Reference Library continuità",
-        "F2V per beat — genera video a partire dai fotogrammi approvati",
+        "F2V per shot — genera video a partire dai fotogrammi approvati",
         "Catene EXT continue — step nativi da +7 secondi per dialoghi lunghi all'interno di un beat",
         "Tempistiche e flussi del mixer — apri Screening Room per assemblare e pubblicare"
       ],
@@ -1061,11 +1061,11 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
+          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
@@ -1105,7 +1105,7 @@
       "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
         "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
         "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
         "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
@@ -1449,7 +1449,7 @@
       {
         "id": "animation",
         "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {
@@ -1673,7 +1673,7 @@
             "description": "Genera rapidamente audio in oltre 70 lingue, allineato automaticamente per battere fotogrammi e video. Spedisci flussi linguistici doppiati o sincronizzati con le labbra da un taglio principale approvato.",
             "learnMore": {
               "problem": "Raggiungere un pubblico globale di solito significa ri-registrare il talento vocale, ricalcolare ogni scena e ricostruire il progetto una volta per lingua, un incubo di costi e coordinamento che mantiene la maggior parte dei creatori nel mercato unico.",
-              "solution": "Genera audio in oltre 70 lingue in pochi minuti, allineato automaticamente ai tuoi beat frame e video animati. Produci flussi doppiati o sincronizzati con le labbra dallo stesso taglio approvato, senza necessità di riprese aggiuntive.",
+              "solution": "Genera audio in oltre 70 lingue in pochi minuti, allineato automaticamente ai tuoi shot frame e video animati. Produci flussi doppiati o sincronizzati con le labbra dallo stesso taglio approvato, senza necessità di riprese aggiuntive.",
               "outcome": "Spedisci ogni storia in modo nativo in oltre 70 mercati da un'unica produzione: moltiplica la portata e le entrate senza moltiplicare il carico di lavoro."
             }
           },
@@ -1887,14 +1887,14 @@
             "id": "production-audio",
             "number": "4",
             "title": "Genera audio",
-            "description": "Genera dialoghi, narrazioni, effetti sonori e musica con Run All Agents in tutte le scene, per-scene agents o beat by beat — voiceover di qualità nativa in oltre 70 lingue.",
+            "description": "Genera dialoghi, narrazioni, effetti sonori e musica con Run All Agents in tutte le scene, per-scene agents o shot by shot — voiceover di qualità nativa in oltre 70 lingue.",
             "imagePlaceholder": "Audio espresso: tutte le scene, scena singola o battito per battito"
           },
           {
             "id": "production-frames",
             "number": "5",
             "title": "Genera e modifica frame",
-            "description": "Genera fotogrammi beat con Run All Agents, per-scene agents o beat by beat, quindi modifica qualsiasi fotogramma con l'Intelligent Assistant Director (IAD): descrivi semplicemente il cambiamento.",
+            "description": "Genera fotogrammi di inquadratura con Run All Agents, per-scene agents o shot by shot, quindi modifica qualsiasi fotogramma con l'Intelligent Assistant Director (IAD): descrivi semplicemente il cambiamento.",
             "imagePlaceholder": "Batti i fotogrammi con le modifiche di Intelligent Assistant Director"
           },
           {
@@ -1908,7 +1908,7 @@
             "id": "production-video",
             "number": "7",
             "title": "Genera video",
-            "description": "Trasforma i fotogrammi approvati in movimento con per-scene agents o beat by beat. Riprendi qualsiasi inquadratura con l'Intelligent Assistant Director: nessuna rigenerazione infinita di slot machine.",
+            "description": "Trasforma i fotogrammi approvati in movimento con per-scene agents o shot by shot. Riprendi qualsiasi inquadratura con l'Intelligent Assistant Director: nessuna rigenerazione infinita di slot machine.",
             "imagePlaceholder": "Generazione video rapida con riprese IAD"
           },
           {

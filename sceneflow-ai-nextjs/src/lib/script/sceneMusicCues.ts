@@ -900,9 +900,9 @@ export function estimateSceneBeatDuration(
   return screeningSceneSeconds(beats, scene, dynamicDurations)
 }
 
-/** Human label for a cue's beat span, 1-based for the UI. */
+/** Human label for a cue's shot span, 1-based for the UI. */
 export function formatMusicCueRange(cue: SceneMusicCue): string {
   return cue.beatStart === cue.beatEnd
-    ? `Beat ${cue.beatStart + 1}`
-    : `Beats ${cue.beatStart + 1}-${cue.beatEnd + 1}`
+    ? `Shot ${cue.beatStart + 1}`
+    : `Shots ${cue.beatStart + 1}-${cue.beatEnd + 1}`
 }

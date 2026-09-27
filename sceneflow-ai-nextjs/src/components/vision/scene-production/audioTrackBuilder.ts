@@ -740,6 +740,7 @@ export function buildAudioTracksForLanguage(
     actualDuration: clip.actualDuration,
     fadeInSec: clip.fadeInSec,
     fadeOutSec: clip.fadeOutSec,
+    ...(clip.trimStart && clip.trimStart > 0 ? { trimStart: clip.trimStart } : {}),
   }))
 
   const musicUrl = scene.musicAudio || scene.music?.url || scene.musicUrl

@@ -60,7 +60,7 @@
     "importTranslationDescription": "Cole seu script traduzido abaixo. O formato deve corresponder ao formato exportado:",
     "importTranslationFormat": "[1] TRANSLATED_LABEL: texto traduzido",
     "importTranslationPlaceholder": "Cole o script traduzido aqui...",
-    "deleteBeat": "Excluir batida",
+    "deleteBeat": "Excluir plano",
     "deleteBeatDescription": "Tem certeza de que deseja excluir este segmento? Esta ação não pode ser desfeita.",
     "deleteScene": "Excluir cena {number}",
     "deleteSceneDescription": "Isso removerá permanentemente esta cena e todos os recursos associados.",
@@ -172,7 +172,7 @@
   },
   "expressAudio": {
     "title": "Audio Agent",
-    "description": "Gere diálogos, efeitos sonoros e música para esta cena simultaneamente. O diálogo usa TTS, as batidas de ação usam áudio nativo Veo e a música usa Lyria.",
+    "description": "Gere diálogos, efeitos sonoros e música para esta cena simultaneamente. O diálogo usa TTS, as planos de ação usam áudio nativo Veo e a música usa Lyria.",
     "scope": "Escopo",
     "scopeMissing": "Faltando apenas",
     "scopeAll": "Todos (regenerar)",
@@ -217,7 +217,7 @@
     "confirm": "Stills Agent"
   },
   "expressGenerateAll": {
-    "title": "Run All Agents",
+    "title": "Scene Agent",
     "description": "Execute Audio Agent e Stills Agent em paralelo. Os padrões correspondem à seleção “somente ausente” de cada pipeline – ajuste o escopo se precisar regenerar.",
     "audioSection": "Áudio",
     "framesSection": "Molduras",
@@ -242,18 +242,18 @@
     "missing": "Ausente",
     "imageCredits": "Créditos da imagem (est.): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Correndo...",
-    "confirm": "Run All Agents"
+    "confirm": "Scene Agent"
   },
   "retake": {
     "title": "Substituir a tomada existente?",
-    "description": "Esta batida já possui um vídeo gerado. Abrir o gerador ou fazer upload adicionará um novo take e poderá consumir créditos.",
+    "description": "Esta plano já possui um vídeo gerado. Abrir o gerador ou fazer upload adicionará um novo take e poderá consumir créditos.",
     "continue": "Continuar"
   },
   "reset": {
     "title": "Redefinir a produção de cena?",
     "sceneLabel": "Cena {number}",
     "sceneHeading": "Cena {number} · {heading}",
-    "warning": "Isso remove toda a <bold>linha do tempo de batida</bold> desta cena e não pode ser desfeito. Você precisará executar a configuração do segmento novamente do zero.",
+    "warning": "Isso remove toda a <bold>linha do tempo de plano</bold> desta cena e não pode ser desfeito. Você precisará executar a configuração do segmento novamente do zero.",
     "whatYouWillLose": "O que você vai perder",
     "segmentCount": "{count, plural, one {# shot} other {# shots}}",
     "segmentDetail": "Tempo, notas de direção, avisos Veo e mapeamento de diálogo para segmento",
@@ -261,7 +261,7 @@
     "keyframeDetailAcross": "Através de {count, plural, one {# shot} other {# shots}} (quadros iniciais/finais)",
     "keyframeDetailDefault": "Quadros estáticos iniciais e finais usados ​​para geração de vídeo",
     "videoClip": "{count, plural, one {# generated video clip} other {# generated video clips}}",
-    "videoDetail": "Saídas Veo / I2V em nível de batida e tomadas ativas na linha do tempo",
+    "videoDetail": "Saídas Veo / I2V em nível de plano e tomadas ativas na linha do tempo",
     "imageClip": "{count, plural, one {# image clip} other {# image clips}}",
     "imageClipDetail": "Ativos estáticos enviados ou gerados anexados a segmentos",
     "alternateTake": "{count, plural, one {# alternate take} other {# alternate takes}}",
@@ -269,7 +269,7 @@
     "sceneRender": "Renderização de cena/fluxo de produção",
     "sceneRenderStreams": "{count, plural, one {# language or output stream} other {# language or output streams}} vinculado a esta cena",
     "sceneRenderDefault": "Saída final da cena mixada do mixer de produção",
-    "beatStructureOnly": "Apenas estrutura de batida",
+    "beatStructureOnly": "Apenas estrutura de plano",
     "beatStructureDetail": "Nenhum quadro-chave ou clipe detectado ainda, mas o progresso da segmentação ainda será apagado",
     "notDeleted": "<bold>Não excluído:</bold> texto do roteiro, diálogo da cena, narração, música/áudio SFX, imagem estática da cena e referências de personagens.",
     "resetting": "Redefinindo…",
@@ -291,7 +291,7 @@
   },
   "segments": {
     "addBeat": {
-      "title": "Adicionar batida",
+      "title": "Adicionar plano",
       "description": "Crie um prompt de geração de vídeo selecionando o tipo de cena, os elementos da cena e o diálogo. O Veo 3.1 irá gerar narração e SFX diretamente do prompt.",
       "sceneBadge": "Cena {sceneNumber}",
       "includeSceneDirection": "Incluir direção de cena",
@@ -328,7 +328,7 @@
       "startTime": "Hora de início",
       "endTime": "Hora de término",
       "method": "Método",
-      "addAction": "Adicionar batida"
+      "addAction": "Adicionar plano"
     },
     "edit": {
       "title": "Editar segmento",
@@ -344,7 +344,7 @@
       "i2vHint": "Usará o quadro da cena como imagem inicial"
     },
     "delete": {
-      "title": "Excluir batida {number}?",
+      "title": "Excluir plano {number}?",
       "description": "Esta ação não pode ser desfeita.",
       "segmentLabel": "Segmento",
       "segmentOf": "#{index} de {total}",
@@ -353,21 +353,21 @@
       "lastBeatWarning": "Aviso: Este é o único segmento da cena. Excluí-lo deixará a cena sem quadros-chave.",
       "shiftWarning": "A exclusão deste segmento deslocará todos os segmentos subsequentes. Os índices de tempo e sequência serão recalculados automaticamente.",
       "deleting": "Excluindo...",
-      "deleteBeat": "Excluir batida"
+      "deleteBeat": "Excluir plano"
     },
     "addType": {
-      "title": "Adicionar batida à cena {sceneNumber}",
+      "title": "Adicionar plano à cena {sceneNumber}",
       "description": "Adicione um segmento baseado em quadro-chave para geração de vídeo de IA. Para elementos cinematográficos (títulos, transições, B-roll), use o botão Elementos Cinematográficos.",
       "tabType": "Tipo",
       "tabPosition": "Posição",
       "tabPrompt": "Incitar",
       "defaultDuration": "Padrão {seconds}",
       "orDivider": "ou",
-      "regenerateAll": "Regenerar todas as batidas",
+      "regenerateAll": "Regenerar todas as planos",
       "regenerateAllCount": "Segmentos {count}",
       "regenerateAllHint": "Analise novamente a cena e gere novos segmentos com IA. Isso substituirá os segmentos existentes.",
       "insertPosition": "Inserir posição",
-      "referenceBeat": "Batida de referência",
+      "referenceBeat": "Plano de referência",
       "selectSegment": "Selecione o segmento",
       "beatOption": "Vença {number} ({duration}s)",
       "duration": "Duração",
@@ -389,7 +389,7 @@
       "addNamed": "Adicionar {name}",
       "types": {
         "standard": {
-          "name": "Batida padrão",
+          "name": "Plano padrão",
           "description": "Segmento de cena com quadros-chave de início/fim para geração de vídeo de IA. Controle total sobre a composição da cena."
         },
         "extend": {
@@ -570,29 +570,29 @@
         "description": "Comprimido, isolado"
       }
     },
-    "generateTitle": "Gerar batidas de cena",
-    "regenerateSceneTitle": "Regenerar batidas de cena",
+    "generateTitle": "Gerar planos de cena",
+    "regenerateSceneTitle": "Regenerar planos de cena",
     "generateDescription": "Configure como os segmentos são criados para esta cena.",
-    "beatsPreview": "batidas",
+    "beatsPreview": "planos",
     "tabTiming": "Tempo",
     "tabReferences": "Referências",
     "tabStyle": "Estilo",
     "narrationDriven": "Segmentação baseada em narração",
     "narrationDrivenHint": "Crie segmentos que se alinhem e ilustrem a narração. Cada segmento se torna um cenário cinematográfico para a narração.",
-    "targetBeatDuration": "Duração alvo da batida",
-    "addTitle": "Adicionar batida",
+    "targetBeatDuration": "Duração alvo da plano",
+    "addTitle": "Adicionar plano",
     "addNewTitle": "Adicionar novo segmento",
     "addDescription": "Crie um novo segmento visual para estender a linha do tempo da cena.",
     "addDuration": "Duração (segundos)",
     "addDurationHint": "Recomendado: 3-5 segundos para um ritmo suave",
-    "addAction": "Adicionar batida",
+    "addAction": "Adicionar plano",
     "editTitle": "Editar segmento",
     "editBadge": "Cena {sceneNumber} • Vença {beatNumber}",
     "editDescription": "Modifique as configurações de prompt, duração e geração do segmento.",
     "shotConfiguration": "Configuração de tiro",
     "shotType": "Tipo de tiro",
     "cameraMovement": "Movimento da câmera",
-    "deleteTitle": "Excluir batida {number}?",
+    "deleteTitle": "Excluir plano {number}?",
     "deleteDescription": "Esta ação não pode ser desfeita.",
     "segmentLabel": "Segmento",
     "segmentOf": "#{index} de {total}",
@@ -601,16 +601,16 @@
     "lastBeatWarning": "Aviso: Este é o único segmento da cena. Excluí-lo deixará a cena sem quadros-chave.",
     "shiftWarning": "A exclusão deste segmento deslocará todos os segmentos subsequentes. Os índices de tempo e sequência serão recalculados automaticamente.",
     "deleting": "Excluindo...",
-    "deleteBeat": "Excluir batida",
-    "regenerateTitle": "Regenerar batidas",
-    "regenerateDescription": "Limpe todos os segmentos e retorne ao Beat Builder para começar do zero.",
-    "beats": "Batidas",
+    "deleteBeat": "Excluir plano",
+    "regenerateTitle": "Regenerar planos",
+    "regenerateDescription": "Limpe todos os segmentos e retorne ao Shot Builder para começar do zero.",
+    "beats": "Planos",
     "totalDuration": "Duração total",
     "anchoredFrames": "Quadros Ancorados",
     "anchoredCount": "{anchored} / {total}",
     "regenerateAssetsWarning": "Aviso: isso excluirá todos os segmentos, incluindo quadros-chave gerados e recursos de vídeo. Esta ação não pode ser desfeita.",
-    "regenerateEmptyWarning": "Todos os segmentos atuais serão removidos. Você será levado ao Beat Builder para configurar e regenerar com novas configurações.",
-    "regenerateNextHint": "O Beat Builder será aberto com controles de duração total, contagem de segmentos, modo de foco e direção personalizada.",
+    "regenerateEmptyWarning": "Todos os segmentos atuais serão removidos. Você será levado ao Shot Builder para configurar e regenerar com novas configurações.",
+    "regenerateNextHint": "O Shot Builder será aberto com controles de duração total, contagem de segmentos, modo de foco e direção personalizada.",
     "deleteAndRegenerate": "Excluir e regenerar",
     "regenerate": "Regenerado",
     "addTypeTitle": "Adicionar segmento especial",
@@ -656,7 +656,7 @@
     "alignment": {
       "title": "Bater o alinhamento de áudio {number}",
       "description": "Alinhe este segmento com diálogos e trilhas de áudio para obter um tempo preciso.",
-      "beatTiming": "Bater o tempo",
+      "beatTiming": "Tempo do plano",
       "aligned": "Alinhado",
       "nearlyAligned": "Quase Alinhado",
       "misaligned": "Desalinhado",
@@ -718,7 +718,7 @@
     "clipDuration": "Duração: {time}",
     "alignmentTitle": "Bater o alinhamento de áudio {number}",
     "alignmentDescription": "Alinhe este segmento com diálogos e trilhas de áudio para obter um tempo preciso.",
-    "beatTiming": "Bater o tempo",
+    "beatTiming": "Tempo do plano",
     "aligned": "Alinhado",
     "nearlyAligned": "Quase Alinhado",
     "misaligned": "Desalinhado",
@@ -754,7 +754,7 @@
     "stream": {
       "title": "Fluxo de exportação",
       "description": "Cena {number} — Rápido (WebM) para rascunhos, Broadcast (MP4) para entrega ou Nuvem para cenas longas.",
-      "videoSequence": "Sequência de vídeo (batidas {count})",
+      "videoSequence": "Sequência de vídeo (planos {count})",
       "unmuteAll": "Ativar som de tudo",
       "muteAll": "Silenciar tudo",
       "beatLabel": "Vença {number}",
@@ -880,7 +880,7 @@
       }
     },
     "director": {
-      "title": "Gerar vídeo: Beat {number}",
+      "title": "Gerar vídeo: Shot {number}",
       "description": "Revise e personalize os parâmetros de geração antes da renderização.",
       "tabTextToVideo": "Texto para vídeo",
       "tabTextToVideoShort": "T2V",
@@ -937,7 +937,7 @@
       "loseEditsTitle": "Você perderá as edições manuais de produção:",
       "loseScriptTweaks": "Ajustes de linha de script ainda não bloqueados",
       "loseStoryboard": "Quadros de storyboard e ativos gerados",
-      "loseBeatAdjustments": "Ajustes de produção no nível da batida",
+      "loseBeatAdjustments": "Ajustes de produção no nível da plano",
       "artStyle": "Estilo de arte",
       "aspectRatio": "Proporção de aspecto",
       "reimagineInBlueprint": "Reimagine em Blueprint"
@@ -965,16 +965,16 @@
     },
     "beatReferences": {
       "title": "Referências de revisão - Cena {number}",
-      "description": "SceneFlow referências selecionadas automaticamente para esta batida. Confirme ou ajuste antes de gerar.",
+      "description": "SceneFlow referências selecionadas automaticamente para esta plano. Confirme ou ajuste antes de gerar.",
       "beatKindAction": "Ação",
       "beatKindNarration": "Narração",
       "beatKindDialogue": "Diálogo",
-      "beatLabel": "Batida: {kind}",
+      "beatLabel": "Plano: {kind}",
       "autoSelected": "Selecionado automaticamente: {summary}",
       "locationMatchedAssignment": "Local correspondente à atribuição de cena",
       "locationMatchedHeading": "Localização correspondente ao título da cena",
       "locationReference": "Referência de localização",
-      "pickLocation": "Escolha uma referência de ambiente para esta batida (usada para consistência visual).",
+      "pickLocation": "Escolha uma referência de ambiente para esta plano (usada para consistência visual).",
       "match": "Corresponder",
       "selectedCount": "{count} selecionado",
       "saveSelection": "Salvar seleção",
@@ -1026,15 +1026,15 @@
       "anomalyUnknown": "Origem obscura"
     },
     "regenerateBeats": {
-      "title": "Regenerar batidas",
-      "description": "Limpe todos os segmentos e retorne ao Beat Builder para começar do zero.",
-      "beats": "Batidas",
+      "title": "Regenerar planos",
+      "description": "Limpe todos os segmentos e retorne ao Shot Builder para começar do zero.",
+      "beats": "Planos",
       "totalDuration": "Duração total",
       "anchoredFrames": "Quadros Ancorados",
       "anchoredCount": "{anchored} / {total}",
       "assetsWarning": "Aviso: isso excluirá todos os segmentos, incluindo quadros-chave gerados e recursos de vídeo. Esta ação não pode ser desfeita.",
-      "emptyWarning": "Todos os segmentos atuais serão removidos. Você será levado ao Beat Builder para configurar e regenerar com novas configurações.",
-      "nextHint": "O Beat Builder será aberto com controles de duração total, contagem de segmentos, modo de foco e direção personalizada.",
+      "emptyWarning": "Todos os segmentos atuais serão removidos. Você será levado ao Shot Builder para configurar e regenerar com novas configurações.",
+      "nextHint": "O Shot Builder será aberto com controles de duração total, contagem de segmentos, modo de foco e direção personalizada.",
       "deleteAndRegenerate": "Excluir e regenerar",
       "regenerate": "Regenerado"
     },
@@ -1049,11 +1049,11 @@
       "tabDirection": "Direção de Cena",
       "audioAlignment": "Alinhamento de Áudio",
       "narrationDriven": "Orientado pela narração",
-      "narrationDrivenHint": "Alinhe os cortes às batidas da narração",
+      "narrationDrivenHint": "Alinhe os cortes às planos da narração",
       "dialogueDriven": "Orientado pelo diálogo",
       "dialogueDrivenHint": "Alinhe os cortes ao diálogo",
       "pacingStyle": "Estilo de ritmo",
-      "beatCount": "Contagem de batidas",
+      "beatCount": "Contagem de planos",
       "auto": "Auto",
       "manual": "Manual",
       "basedOnPacing": "Baseado no ritmo {pacing} e {basis}",
@@ -1093,7 +1093,7 @@
         },
         "dynamic": {
           "label": "Dinâmico (com correspondência de áudio)",
-          "description": "Varia com base nas batidas da narração/diálogo"
+          "description": "Varia com base nas planos da narração/diálogo"
         }
       },
       "shotTypes": {
@@ -1229,7 +1229,7 @@
     "retaking": "Retomando…",
     "approveAndRetake": "Aprovar e retomar",
     "keyframeRegenTitle": "Regenerar quadros-chave",
-    "keyframeRegenDescription": "Reconstrua os quadros inicial e final desta batida com direção atualizada."
+    "keyframeRegenDescription": "Reconstrua os quadros inicial e final desta plano com direção atualizada."
   },
   "budget": {
     "title": "Gestão Orçamentária de Produção",
@@ -1261,8 +1261,8 @@
     "languagesBanner": "Idiomas {count}: Original + {extra} traduzido {extra, plural, one {version} other {versions}}. Adiciona créditos de ~{credits} para tradução e re-dublagem.",
     "sceneConfiguration": "Configuração de cena",
     "numberOfScenes": "Número de cenas",
-    "beatsPerScene": "Batidas por cena",
-    "takesPerBeat": "Takes por batida (regenerações)",
+    "beatsPerScene": "Planos por cena",
+    "takesPerBeat": "Takes por plano (regenerações)",
     "videoEngine": "Mecanismo de vídeo",
     "clipDuration": "Duração do clipe (segundos)",
     "clipDurationHint": "Ajusta-se a durações válidas para o mecanismo selecionado",
@@ -1271,7 +1271,7 @@
     "forVideo": "para vídeo",
     "imagesByQuality": "Imagens por qualidade",
     "excludedByok": "Excluído (BYOK)",
-    "draftBeatFrames": "Quadros de rascunho/beat ({credits} cr)",
+    "draftBeatFrames": "Quadros de rascunho/shot ({credits} cr)",
     "retakesPerDraft": "Repetições por quadro de rascunho",
     "finalStoryboardImages": "Imagens finais do storyboard ({credits} cr)",
     "characterHeadshots": "Fotos de personagens ({credits} cr)",
@@ -1337,19 +1337,19 @@
   },
   "budgetManager": {
     "title": "Gestor de Orçamento de Produção",
-    "subtitle": "Planeje a partir de cenas e batidas fixas. Custo de rascunho versus final – a escolha do fornecedor permanece criativa.",
+    "subtitle": "Planeje a partir de cenas e planos fixas. Custo de rascunho versus final – a escolha do fornecedor permanece criativa.",
     "subtitleWithTitle": "Plano orçamentário para {title}",
     "currentBalance": "Saldo Atual",
     "creditsCount": "Créditos {count}",
     "byokTitle": "Traga sua própria chave (BYOK)",
     "byokDescription": "Exclui frames, vídeo e Topaz deste plano de orçamento. A inteligência ainda conta.",
     "scenes": "Cenas",
-    "beats": "Batidas",
+    "beats": "Planos",
     "clipDuration": "Comprimento do clipe",
     "seconds": "{count}s",
     "progress": "Feito",
     "progressValues": "Quadros {frames}/{beats} · Vídeos {videos}/{beats}",
-    "scopeFixedHint": "As contagens de cenas e batidas vêm de Production Studio e não são ajustáveis ​​aqui.",
+    "scopeFixedHint": "As contagens de cenas e planos vêm de Production Studio e não são ajustáveis ​​aqui.",
     "methodsTitle": "Método de produção",
     "recommended": "Recomendado",
     "methods": {
@@ -1380,9 +1380,9 @@
     "creditsPerFrame": "{credits} cr/quadro",
     "creditsPerClip": "{credits} cr/{seconds}s",
     "creditsZero": "0 cr",
-    "providerNote": "Kling vs Google é escolhido por batida no Studio e não altera essa previsão.",
-    "frameIterations": "Iterações de quadro / batida",
-    "videoIterations": "Iterações/beat de vídeo",
+    "providerNote": "Kling vs Google é escolhido por plano no Studio e não altera essa previsão.",
+    "frameIterations": "Iterações de quadro / plano",
+    "videoIterations": "Iterações/shot de vídeo",
     "frameIterationsHint": "O padrão é {rate} com sucesso na primeira tomada (~1,25×).",
     "videoIterationsHint": "O padrão é {rate} com sucesso na primeira tomada (~1,11×).",
     "topazTitle": "Topázio sofisticado",
@@ -1416,6 +1416,6 @@
     },
     "setAsProjectBudget": "Definido como Orçamento do Projeto (créditos {credits})",
     "saving": "Salvando...",
-    "noBeatsYet": "Adicione cenas e batidas em Production Studio para criar um orçamento."
+    "noBeatsYet": "Adicione cenas e planos em Production Studio para criar um orçamento."
   }
 }

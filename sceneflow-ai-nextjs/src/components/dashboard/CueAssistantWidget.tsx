@@ -323,7 +323,7 @@ export function CueAssistantWidget() {
         return "Spark Studio mode: Tell me to ‘rewrite my core premise’, ‘revise outline option 2’, or ‘improve my hook’ and I’ll produce concrete updates."
       }
       case 'vision':
-        return "Production mode: I can help refine your pre-vis. Ask for shot lists, transitions, beat pacing, or visual motifs."
+        return "Production mode: I can help refine your pre-vis. Ask for shot lists, transitions, shot pacing, or visual motifs."
       case 'director':
         return "Director’s Chair mode: I can draft lensing, camera movement, lighting plans, and scene directions. Try ‘Suggest lenses and movement for Scene 3.’"
       case 'screening':

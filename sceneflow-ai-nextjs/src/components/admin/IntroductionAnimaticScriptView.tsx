@@ -26,7 +26,7 @@ import {
 } from '@/lib/export/scriptDocExport'
 import { copyPlainText, copyRichText } from '@/lib/export/richTextClipboard'
 
-const BEAT_COLUMNS = ['Beat', 'Time', 'Dur.', 'Narration / Action', 'Image Illustration Prompt', 'Motion']
+const BEAT_COLUMNS = ['Shot', 'Time', 'Dur.', 'Narration / Action', 'Image Illustration Prompt', 'Motion']
 
 export function IntroductionAnimaticScriptView() {
   const [activeLocale, setActiveLocale] = useState<IntroAnimaticLocaleId>('en')
@@ -76,7 +76,7 @@ export function IntroductionAnimaticScriptView() {
       <header className="space-y-2">
         <h1 className="text-2xl font-bold">{INTRO_ANIMATIC_META.title}</h1>
         <p className="text-sm text-sf-text-secondary">
-          Beat-by-beat animatic script. One shared set of frame prompts, six narration tracks —
+          Shot-by-shot animatic script. One shared set of frame prompts, six narration tracks —
           generate the frames once and re-synthesize only the voiceover per language.
         </p>
       </header>
@@ -105,7 +105,7 @@ export function IntroductionAnimaticScriptView() {
       <section className="rounded-xl border border-sf-border bg-sf-surface p-4 space-y-3">
         <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <Stat label="Runtime" value={`~${runtime}`} />
-          <Stat label="Beats" value={String(INTRO_ANIMATIC_BEATS.length)} />
+          <Stat label="Shots" value={String(INTRO_ANIMATIC_BEATS.length)} />
           <Stat label="Narration words" value={`~${wordCount}`} />
           <Stat label="Voice" value={INTRO_ANIMATIC_META.voiceId} />
         </div>
@@ -179,10 +179,10 @@ export function IntroductionAnimaticScriptView() {
 
       <section className="space-y-5">
         <div>
-          <h2 className="font-semibold">Animatic beats</h2>
+          <h2 className="font-semibold">Animatic shots</h2>
           <p className="text-xs text-sf-text-secondary">
             Hold each frame through its narration line; Ken Burns motion as noted; cross-dissolve
-            0.5s between beats.
+            0.5s between shots.
           </p>
         </div>
 

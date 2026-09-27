@@ -39,7 +39,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
+        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -99,7 +99,7 @@
       },
       {
         "label": "Fọwọ́ sí i kí wọ́n tó ṣe fídíò tó kẹ́yìn",
-        "detail": "Ṣe àtúnyẹ̀wò àwọn apá ìṣẹ̀lẹ̀ tí a ti ṣètò tẹ́lẹ̀ (pre-vis beats) kí o tó ṣe ìgbékalẹ̀ ìkẹyìn (render)."
+        "detail": "Ṣe àtúnyẹ̀wò àwọn apá ìṣẹ̀lẹ̀ tí a ti ṣètò tẹ́lẹ̀ (pre-vis shots) kí o tó ṣe ìgbékalẹ̀ ìkẹyìn (render)."
       },
       {
         "label": "Ṣe àyẹ̀wò ìtàn rẹ kọ́kọ́",
@@ -743,7 +743,7 @@
       {
         "id": "Àwòrán àkọ́kọ́",
         "stepLabel": "Ṣe àwòrán ọkàn kí o sì dán an wò nípasẹ̀ ìṣe àwòrán tẹ́lẹ̀-tẹ́lẹ̀.",
-        "shortDescription": "Ṣe agbejade ohun fun awọn ibaraẹnisọrọ ati awọn aworan ipilẹ (beat frames) fun apakan kọọkan. Pin awọn aworan afọwọya ti o n gbe (animatics) fun ifọwọsi ṣaaju ki o to lo owo ikẹhin fun fidio naa.",
+        "shortDescription": "Ṣe agbejade ohun fun awọn ibaraẹnisọrọ ati awọn aworan ipilẹ (shot frames) fun apakan kọọkan. Pin awọn aworan afọwọya ti o n gbe (animatics) fun ifọwọsi ṣaaju ki o to lo owo ikẹhin fun fidio naa.",
         "detailedDescription": "Pre-Vis Studio n ṣẹda awọn ilana itọsọna, ohun, ati awọn fireemu akoko fun apakan kọọkan ninu iṣẹ́ naa — awọn aaye ayẹwo ti o dinku iwulo lati tun iṣẹ́ ṣe lọna ti o le jẹ́ ki o nawo pupọ ti awọn ohun kikọ tabi iṣesi iṣẹ́ naa ba yipada. Pin ohun elo wiwo naa pẹlu awọn ẹlẹgbẹ rẹ fun ifowosowopo; fidio 'animatic' ti o peye le jẹ́ ọja ikẹhin ti o fi ranṣẹ fun ọpọlọpọ awọn iṣẹ́.",
         "media": "Ẹ̀rọ ìṣàfihàn àtúnyẹ̀wò-tẹ́lẹ̀"
       },
@@ -806,7 +806,7 @@
     "viewDetails": "Wo àwọn kúlẹ̀kúlẹ̀",
     "beatFirst": {
       "title": "Ilana Ṣiṣe Fidio ti o Bẹrẹ pẹlu Ilu",
-      "description": "Fọwọ́ sí àwọn ìpele àwòrán àkọ́kọ́ (pre-vis beats) àti Shot Frames kí o tó bẹ̀rẹ̀ ìpele F2V — èyí yóò dín àwọn ìgbìyànjú láti tún àwòrán ṣe láìní ìtọ́sọ́nà tó péye (tó máa ń wáyé nítorí àṣìṣe ẹ̀rọ tàbí ìyàtọ̀ nínú ìrísí) kù. Yóò sì mú kí ìlànà iṣẹ́ láti ìpele àyẹ̀wò dé ìpele àwòrán tó parí wà ní ọ̀nà kan ṣoṣo tó ní ètò tó dájú.",
+      "description": "Fọwọ́ sí àwọn ìpele àwòrán àkọ́kọ́ (pre-vis shots) àti Shot Frames kí o tó bẹ̀rẹ̀ ìpele F2V — èyí yóò dín àwọn ìgbìyànjú láti tún àwòrán ṣe láìní ìtọ́sọ́nà tó péye (tó máa ń wáyé nítorí àṣìṣe ẹ̀rọ tàbí ìyàtọ̀ nínú ìrísí) kù. Yóò sì mú kí ìlànà iṣẹ́ láti ìpele àyẹ̀wò dé ìpele àwòrán tó parí wà ní ọ̀nà kan ṣoṣo tó ní ètò tó dájú.",
       "keyFeatures": [
         "Pre-vis Agent fún àyẹ̀wò — pín àwọn ìlù náà kí o tó ṣe ìgbékalẹ̀ ikẹyìn (render) tó nira",
         "Shot Frames ètò títìpa — Reference Library ìtẹ̀síwájú",
@@ -1059,11 +1059,11 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
+          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
@@ -1103,7 +1103,7 @@
       "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
         "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
         "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
         "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
@@ -1447,7 +1447,7 @@
       {
         "id": "animation",
         "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {

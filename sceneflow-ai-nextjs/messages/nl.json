@@ -41,7 +41,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
+        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -285,11 +285,11 @@
     "title": "Videopijplijn op basis van beats",
     "subtitle": "Goedkeuren vóór het renderen — geen regeneratie à la een gokkast",
     "intro": "Geen generaties op basis van vallen en opstaan. Je bekijkt een voorbeeld en keurt de uitstraling goed voordat SceneFlow credits verbruikt voor de uiteindelijke video.",
-    "description": "SceneFlow structureert de visuele goedkeuring in elke fase: Pre-vis Agent voor beoordeling, Shot Frames om de compositie vast te leggen, en vervolgens F2V per beat. Je verfijnt de visuele stijl voordat je credits verspilt aan drift en hallucinaties.",
+    "description": "SceneFlow structureert de visuele goedkeuring in elke fase: Pre-vis Agent voor beoordeling, Shot Frames om de compositie vast te leggen, en vervolgens F2V per shot. Je verfijnt de visuele stijl voordat je credits verspilt aan drift en hallucinaties.",
     "steps": [
       "Pre-vis Agent — deel audiovisuele beats binnen enkele minuten ter beoordeling",
       "Shot Frames — vergrendel begin-/eindsamenstelling met Reference Library-continuïteit",
-      "F2V per beat — genereer video op basis van goedgekeurde frames, niet op basis van blinde prompts",
+      "F2V per shot — genereer video op basis van goedgekeurde frames, niet op basis van blinde prompts",
       "Continue EXT-keten — native verlengingsstappen van +7 seconden voor lange dialoogfragmenten",
       "Production Mixer — timing, audio en stream-export naar Screening Room"
     ],
@@ -684,7 +684,7 @@
         ],
         "keyFeatures": [
           "Foundation — script, stemmen, scène-audio, Audience Resonance",
-          "Pre-vis — regie, audio en beat-frames per scène, inclusief deellinks",
+          "Pre-vis — regie, audio en shot-frames per scène, inclusief deellinks",
           "Opnemen — Beeldmateriaal, mixer en streams zonder de productieomgeving te verlaten",
           "Screening Room — scène-preview, montage van de master, vertoningen en publicatie op YouTube"
         ]
@@ -745,8 +745,8 @@
       {
         "id": "pre-visualisatie",
         "stepLabel": "Visualiseer en test met pre-visualisatie",
-        "shortDescription": "Genereer dialoogaudio en 'beat frames' per scène. Deel animatics ter goedkeuring voordat de definitieve uitgaven voor de video worden gedaan.",
-        "detailedDescription": "Pre-Vis Studio genereert regieaanwijzingen, audio en 'beat frames' per scène – ijkpunten die kostbaar herstelwerk minimaliseren wanneer personages of de toon van de productie veranderen. Deel de player om samen te werken; voor veel projecten kan de volledige animatic dienen als eindproduct.",
+        "shortDescription": "Genereer dialoogaudio en 'shot frames' per scène. Deel animatics ter goedkeuring voordat de definitieve uitgaven voor de video worden gedaan.",
+        "detailedDescription": "Pre-Vis Studio genereert regieaanwijzingen, audio en 'shot frames' per scène – ijkpunten die kostbaar herstelwerk minimaliseren wanneer personages of de toon van de productie veranderen. Deel de player om samen te werken; voor veel projecten kan de volledige animatic dienen als eindproduct.",
         "media": "previs-speler"
       },
       {
@@ -812,7 +812,7 @@
       "keyFeatures": [
         "Pre-vis Agent ter beoordeling — deel beats vóór zware rendering",
         "Shot Frames compositie van de vergrendeling — Reference Library continuïteit",
-        "F2V per beat — genereer video op basis van goedgekeurde frames",
+        "F2V per shot — genereer video op basis van goedgekeurde frames",
         "Doorlopende EXT-reeksen — native stappen van meer dan 7 seconden voor lange dialogen binnen een beat",
         "Mixertiming en -streams — open Screening Room om samen te stellen en te publiceren"
       ],
@@ -914,7 +914,7 @@
         "description": "De tabbladen Script en Shoot leiden door het proces: Foundation → Pre-Vis → Footage → Mixer → Streams. Controlepunten per scène beperken het overdoen van werk tot een minimum; Screening Room verzorgt de preview, montage en publicatie.",
         "keyFeatures": [
           "Foundation — script, stemmen, scène-audio, Audience Resonance",
-          "Pre-vis — regie, audio en beat-frames per scène, inclusief deellinks",
+          "Pre-vis — regie, audio en shot-frames per scène, inclusief deellinks",
           "Opnemen — Beeldmateriaal, mixer en streams zonder de productieomgeving te verlaten",
           "Screening Room — scène-preview, montage van de master, vertoningen en publicatie op YouTube"
         ],
@@ -1061,11 +1061,11 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
+          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
@@ -1105,7 +1105,7 @@
       "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
         "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
         "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
         "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
@@ -1449,7 +1449,7 @@
       {
         "id": "animation",
         "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {

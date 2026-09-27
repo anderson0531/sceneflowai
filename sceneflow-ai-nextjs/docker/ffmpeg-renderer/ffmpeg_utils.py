@@ -860,7 +860,7 @@ def build_ffmpeg_command(
             volume = clip.get('volume', 1.0)
             pr = clip.get('playbackRate', 1.0) or 1.0
             tempo = build_atempo_filter_chain(float(pr))
-            chain = audio_fade_filters(clip)
+            chain = audio_source_window_filters(clip) + audio_fade_filters(clip)
             chain.append(f"adelay={delay_ms}|{delay_ms}")
             if tempo:
                 chain.append(tempo)
@@ -1200,6 +1200,25 @@ def apply_scene_end_transition(
     return label, parts
 
 
+def audio_source_window_filters(clip: Dict[str, Any]) -> List[str]:
+    """Trim into the source so a per-shot slice continues the same cue."""
+    try:
+        trim = float(clip.get('trimStart') or 0)
+    except (TypeError, ValueError):
+        trim = 0.0
+    if trim < 0.001:
+        return []
+    try:
+        duration = float(clip.get('duration') or 0)
+    except (TypeError, ValueError):
+        duration = 0.0
+    parts = [f'atrim=start={trim:.3f}']
+    if duration > 0.001:
+        parts.append(f'atrim=end={trim + duration:.3f}')
+    parts.append('asetpts=PTS-STARTPTS')
+    return parts
+
+
 def audio_fade_filters(clip: Dict[str, Any]) -> List[str]:
     """afade in/out on the clip's own timeline, before adelay shifts it."""
     fade_in = _clip_seconds(clip, 'fadeInSec')
@@ -1220,7 +1239,7 @@ def _overlay_audio_filter(input_idx: int, clip: Dict[str, Any], label: str) -> s
     volume = clip.get('volume', 1.0)
     playback_rate = clip.get('playbackRate', 1.0) or 1.0
     tempo = build_atempo_filter_chain(float(playback_rate))
-    chain = audio_fade_filters(clip)
+    chain = audio_source_window_filters(clip) + audio_fade_filters(clip)
     chain.append(f'adelay={delay_ms}|{delay_ms}')
     if tempo:
         chain.append(tempo)
@@ -1571,7 +1590,7 @@ def build_concat_ffmpeg_command(
             volume = clip.get('volume', 1.0)
             pr = clip.get('playbackRate', 1.0) or 1.0
             tempo = build_atempo_filter_chain(float(pr))
-            chain = audio_fade_filters(clip)
+            chain = audio_source_window_filters(clip) + audio_fade_filters(clip)
             chain.append(f"adelay={delay_ms}|{delay_ms}")
             if tempo:
                 chain.append(tempo)

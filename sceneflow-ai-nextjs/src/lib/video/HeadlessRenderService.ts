@@ -46,6 +46,8 @@ export interface HeadlessRenderAudioClip {
   loop?: boolean
   fadeInSec?: number
   fadeOutSec?: number
+  /** Offset into the source file so a later shot continues the cue. */
+  trimStart?: number
 }
 
 export interface HeadlessRenderTextOverlay {

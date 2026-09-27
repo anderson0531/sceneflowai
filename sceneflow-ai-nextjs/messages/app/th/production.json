@@ -60,7 +60,7 @@
     "importTranslationDescription": "วางสคริปต์ที่แปลแล้วของคุณด้านล่างรูปแบบควรตรงกับรูปแบบที่ส่งออก:",
     "importTranslationFormat": "[1] TRANSLATED_LABEL: ข้อความที่แปลแล้ว",
     "importTranslationPlaceholder": "วางสคริปต์ที่แปลแล้วที่นี่...",
-    "deleteBeat": "ลบจังหวะ",
+    "deleteBeat": "ลบช็อต",
     "deleteBeatDescription": "คุณแน่ใจว่าต้องการลบโซนนี้หรือไม่ การดำเนินการนี้จะไม่สามารถย้อนกลับได้",
     "deleteScene": "ลบฉาก {number}",
     "deleteSceneDescription": "การดำเนินการนี้จะลบฉากนี้และเนื้อหาที่เกี่ยวข้องทั้งหมดออกอย่างถาวร",
@@ -172,7 +172,7 @@
   },
   "expressAudio": {
     "title": "Audio Agent",
-    "description": "สร้างบทสนทนาเอฟเฟกต์เสียงและเพลงสำหรับฉากนี้พร้อมกันบทสนทนาใช้ TTS จังหวะการกระทำใช้เสียงพื้นเมืองของ Veo และดนตรีใช้ Lyria",
+    "description": "สร้างบทสนทนาเอฟเฟกต์เสียงและเพลงสำหรับฉากนี้พร้อมกันบทสนทนาใช้ TTS ช็อตการกระทำใช้เสียงพื้นเมืองของ Veo และดนตรีใช้ Lyria",
     "scope": "ขอบเขต",
     "scopeMissing": "ไม่ครบเท่านั้น",
     "scopeAll": "ทั้งหมด (สร้างใหม่)",
@@ -217,7 +217,7 @@
     "confirm": "Stills Agent"
   },
   "expressGenerateAll": {
-    "title": "Run All Agents",
+    "title": "Scene Agent",
     "description": "เรียกใช้ Audio Agent และ Stills Agent ในแบบคู่ขนานค่าเริ่มต้นตรงกับการเลือก \"ขาดเท่านั้น\" ของแต่ละท่อ — ปรับขอบเขตหากคุณต้องการสร้างใหม่",
     "audioSection": "เสียง",
     "framesSection": "กรอบ",
@@ -242,18 +242,18 @@
     "missing": "สูญหาย",
     "imageCredits": "เครดิตภาพ (โดยประมาณ): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "กำลังรัน...",
-    "confirm": "Run All Agents"
+    "confirm": "Scene Agent"
   },
   "retake": {
     "title": "ต้องการเปลี่ยนเทคที่มีอยู่ใช่ไหม",
-    "description": "จังหวะนี้มีวิดีโอที่สร้างขึ้นแล้วการเปิดเครื่องกำเนิดไฟฟ้าหรือการอัปโหลดจะเป็นการเพิ่มเทคใหม่และอาจใช้เครดิต",
+    "description": "ช็อตนี้มีวิดีโอที่สร้างขึ้นแล้วการเปิดเครื่องกำเนิดไฟฟ้าหรือการอัปโหลดจะเป็นการเพิ่มเทคใหม่และอาจใช้เครดิต",
     "continue": "ดำเนินการต่อ"
   },
   "reset": {
     "title": "รีเซ็ตการผลิตฉาก?",
     "sceneLabel": "ฉาก {number}",
     "sceneHeading": "ฉาก {number} · {heading}",
-    "warning": "การดำเนินการนี้<bold>จะลบไทม์ไลน์จังหวะ</bold>ทั้งหมดของคุณสำหรับฉากนี้และไม่สามารถยกเลิกได้คุณจะต้องเรียกใช้การตั้งค่าเซกเมนต์อีกครั้งตั้งแต่เริ่มต้น",
+    "warning": "การดำเนินการนี้<bold>จะลบไทม์ไลน์ช็อต</bold>ทั้งหมดของคุณสำหรับฉากนี้และไม่สามารถยกเลิกได้คุณจะต้องเรียกใช้การตั้งค่าเซกเมนต์อีกครั้งตั้งแต่เริ่มต้น",
     "whatYouWillLose": "สิ่งที่คุณจะสูญเสีย",
     "segmentCount": "{count, plural, one {# shot} other {# shots}}",
     "segmentDetail": "การกำหนดเวลาบันทึกทิศทางการแจ้งเตือน VEO และการทำแผนที่การสนทนาต่อส่วน",
@@ -261,7 +261,7 @@
     "keyframeDetailAcross": "ข้าม {count, plural, one {# shot} other {# shots}} (เฟรมเริ่มต้น/สิ้นสุด)",
     "keyframeDetailDefault": "ภาพนิ่งเริ่มต้นและสิ้นสุดเฟรมที่ใช้สำหรับการสร้างวิดีโอ",
     "videoClip": "{count, plural, one {# generated video clip} other {# generated video clips}}",
-    "videoDetail": "เอาต์พุต Veo/I2V ระดับ Beat และใช้งานอยู่บนไทม์ไลน์",
+    "videoDetail": "เอาต์พุต Veo/I2V ระดับ Shot และใช้งานอยู่บนไทม์ไลน์",
     "imageClip": "{count, plural, one {# image clip} other {# image clips}}",
     "imageClipDetail": "สินทรัพย์ภาพนิ่งที่อัปโหลดหรือสร้างขึ้นที่แนบมากับเซกเมนต์",
     "alternateTake": "{count, plural, one {# alternate take} other {# alternate takes}}",
@@ -269,7 +269,7 @@
     "sceneRender": "การแสดงฉาก/สตรีมการผลิต",
     "sceneRenderStreams": "{count, plural, one {# language or output stream} other {# language or output streams}} เชื่อมโยงกับฉากนี้",
     "sceneRenderDefault": "ผลผลิตฉากผสมสุดท้ายจากโปรดักชั่นมิกเซอร์",
-    "beatStructureOnly": "โครงสร้างจังหวะเท่านั้น",
+    "beatStructureOnly": "โครงสร้างช็อตเท่านั้น",
     "beatStructureDetail": "ยังไม่พบคีย์เฟรมหรือคลิปแต่ความคืบหน้าในการแบ่งส่วนจะยังคงถูกล้าง",
     "notDeleted": "<bold>ไม่ถูกลบ:</bold> ข้อความสคริปต์บทสนทนาฉากคำบรรยายเพลง/เสียง SFX ภาพนิ่งของฉากและการอ้างอิงตัวละคร",
     "resetting": "กำลังรีเซ็ต...",
@@ -291,7 +291,7 @@
   },
   "segments": {
     "addBeat": {
-      "title": "เพิ่มจังหวะ",
+      "title": "เพิ่มช็อต",
       "description": "สร้างพรอมต์การสร้างวิดีโอโดยเลือกประเภทช็อตองค์ประกอบฉากและบทสนทนา Veo 3.1 จะสร้างเสียงพากย์และ SFX โดยตรงจากข้อความแจ้ง",
       "sceneBadge": "ฉาก {sceneNumber}",
       "includeSceneDirection": "รวมทิศทางของฉาก",
@@ -328,7 +328,7 @@
       "startTime": "เวลาเริ่ม",
       "endTime": "เวลาสิ้นสุด",
       "method": "วิธีการ",
-      "addAction": "เพิ่มจังหวะ"
+      "addAction": "เพิ่มช็อต"
     },
     "edit": {
       "title": "แก้ไขเซกเมนต์",
@@ -344,7 +344,7 @@
       "i2vHint": "จะใช้กรอบฉากเป็นภาพเริ่มต้น"
     },
     "delete": {
-      "title": "ลบ Beat {number} หรือไม่?",
+      "title": "ลบ Shot {number} หรือไม่?",
       "description": "การดำเนินการนี้ไม่สามารถยกเลิก ",
       "segmentLabel": "เซกเมนต์",
       "segmentOf": "# {index} ของ {total}",
@@ -353,21 +353,21 @@
       "lastBeatWarning": "คำเตือน: นี่เป็นส่วนเดียวในฉากการลบจะออกจากฉากโดยไม่มีคีย์เฟรมใดๆ",
       "shiftWarning": "การลบเซกเมนต์นี้จะเปลี่ยนเซกเมนต์ที่ตามมาทั้งหมดเวลาและลำดับดัชนีจะถูกคำนวณใหม่โดยอัตโนมัติ",
       "deleting": "การลบ ...",
-      "deleteBeat": "ลบจังหวะ"
+      "deleteBeat": "ลบช็อต"
     },
     "addType": {
-      "title": "เพิ่มจังหวะให้กับฉาก {sceneNumber}",
+      "title": "เพิ่มช็อตให้กับฉาก {sceneNumber}",
       "description": "เพิ่มส่วนที่ใช้คีย์เฟรมสำหรับการสร้างวิดีโอ AI สำหรับองค์ประกอบทางภาพยนตร์ (ชื่อเรื่องการเปลี่ยนผ่าน B-roll) ให้ใช้ปุ่มองค์ประกอบทางภาพยนตร์",
       "tabType": "ประเภท",
       "tabPosition": "ตำแหน่ง ",
       "tabPrompt": "ถาม",
       "defaultDuration": "{seconds}s ค่าเริ่มต้น",
       "orDivider": "หรือ",
-      "regenerateAll": "สร้างจังหวะทั้งหมดใหม่",
+      "regenerateAll": "สร้างช็อตทั้งหมดใหม่",
       "regenerateAllCount": "กลุ่ม {count}",
       "regenerateAllHint": "วิเคราะห์ฉากอีกครั้งและสร้างกลุ่มใหม่ด้วย AI การดำเนินการนี้จะแทนที่เซกเมนต์ที่มีอยู่",
       "insertPosition": "แทรกตำแหน่ง",
-      "referenceBeat": "จังหวะอ้างอิง",
+      "referenceBeat": "ช็อตอ้างอิง",
       "selectSegment": "เลือกเซกเมนต์",
       "beatOption": "เอาชนะ {number} ({duration}s)",
       "duration": "ระยะเวลา",
@@ -389,7 +389,7 @@
       "addNamed": "เพิ่ม {name}",
       "types": {
         "standard": {
-          "name": "จังหวะมาตรฐาน",
+          "name": "ช็อตมาตรฐาน",
           "description": "ส่วนฉากที่มีคีย์เฟรมเริ่มต้น/สิ้นสุดสำหรับการสร้างวิดีโอ AI ควบคุมองค์ประกอบช็อตได้อย่างเต็มที่"
         },
         "extend": {
@@ -570,29 +570,29 @@
         "description": "บีบอัด, แยก"
       }
     },
-    "generateTitle": "สร้างจังหวะฉาก",
-    "regenerateSceneTitle": "สร้างจังหวะฉากใหม่",
+    "generateTitle": "สร้างช็อตฉาก",
+    "regenerateSceneTitle": "สร้างช็อตฉากใหม่",
     "generateDescription": "กำหนดค่าวิธีสร้างเซกเมนต์สำหรับฉากนี้",
-    "beatsPreview": "จังหวะ",
+    "beatsPreview": "ช็อต",
     "tabTiming": "Timing",
     "tabReferences": "รายการอ้างอิง",
     "tabStyle": "สไตล์",
     "narrationDriven": "การแบ่งกลุ่มตามการบรรยาย",
     "narrationDrivenHint": "สร้างกลุ่มที่สอดคล้องกับและแสดงให้เห็นถึงคำบรรยายแต่ละเซกเมนต์กลายเป็นฉากหลังทางภาพยนตร์สำหรับการพากย์เสียง",
     "targetBeatDuration": "ระยะเวลาการโจมตีเป้าหมาย",
-    "addTitle": "เพิ่มจังหวะ",
+    "addTitle": "เพิ่มช็อต",
     "addNewTitle": "เพิ่มเซกเมนต์ใหม่",
     "addDescription": "สร้างกลุ่มภาพใหม่เพื่อขยายไทม์ไลน์ฉาก",
     "addDuration": "ระยะเวลา (วินาที)",
     "addDurationHint": "แนะนำ: 3 -5 วินาทีเพื่อการเดินที่ราบรื่น",
-    "addAction": "เพิ่มจังหวะ",
+    "addAction": "เพิ่มช็อต",
     "editTitle": "แก้ไขเซกเมนต์",
     "editBadge": "ฉาก {sceneNumber} • เอาชนะ {beatNumber}",
     "editDescription": "ปรับเปลี่ยนการตั้งค่าพรอมต์ระยะเวลาและการสร้างของเซกเมนต์",
     "shotConfiguration": "การกำหนดค่าช็อต",
     "shotType": "ประเภทช็อต",
     "cameraMovement": "การเคลื่อนไหวของกล้อง",
-    "deleteTitle": "ลบ Beat {number} หรือไม่?",
+    "deleteTitle": "ลบ Shot {number} หรือไม่?",
     "deleteDescription": "การดำเนินการนี้ไม่สามารถยกเลิก ",
     "segmentLabel": "เซกเมนต์",
     "segmentOf": "# {index} ของ {total}",
@@ -601,16 +601,16 @@
     "lastBeatWarning": "คำเตือน: นี่เป็นส่วนเดียวในฉากการลบจะออกจากฉากโดยไม่มีคีย์เฟรมใดๆ",
     "shiftWarning": "การลบเซกเมนต์นี้จะเปลี่ยนเซกเมนต์ที่ตามมาทั้งหมดเวลาและลำดับดัชนีจะถูกคำนวณใหม่โดยอัตโนมัติ",
     "deleting": "การลบ ...",
-    "deleteBeat": "ลบจังหวะ",
-    "regenerateTitle": "สร้างจังหวะใหม่",
-    "regenerateDescription": "ล้างเซกเมนต์ทั้งหมดและกลับไปที่ Beat Builder เพื่อเริ่มต้นใหม่",
-    "beats": "จังหวะ",
+    "deleteBeat": "ลบช็อต",
+    "regenerateTitle": "สร้างช็อตใหม่",
+    "regenerateDescription": "ล้างเซกเมนต์ทั้งหมดและกลับไปที่ Shot Builder เพื่อเริ่มต้นใหม่",
+    "beats": "ช็อต",
     "totalDuration": "ระยะเวลารวม",
     "anchoredFrames": "กรอบยึด",
     "anchoredCount": "{anchored}/{total}",
     "regenerateAssetsWarning": "คำเตือน: การดำเนินการนี้จะลบเซกเมนต์ทั้งหมดรวมถึงคีย์เฟรมและเนื้อหาวิดีโอที่สร้างขึ้นการดำเนินการนี้ไม่สามารถยกเลิกได้",
-    "regenerateEmptyWarning": "เซกเมนต์ปัจจุบันทั้งหมดจะถูกลบออกระบบจะนำคุณไปยัง Beat Builder เพื่อกำหนดค่าและสร้างใหม่ด้วยการตั้งค่าใหม่",
-    "regenerateNextHint": "Beat Builder จะเปิดขึ้นพร้อมตัวควบคุมสำหรับระยะเวลาทั้งหมดจำนวนเซกเมนต์โหมดโฟกัสและทิศทางที่กำหนดเอง",
+    "regenerateEmptyWarning": "เซกเมนต์ปัจจุบันทั้งหมดจะถูกลบออกระบบจะนำคุณไปยัง Shot Builder เพื่อกำหนดค่าและสร้างใหม่ด้วยการตั้งค่าใหม่",
+    "regenerateNextHint": "Shot Builder จะเปิดขึ้นพร้อมตัวควบคุมสำหรับระยะเวลาทั้งหมดจำนวนเซกเมนต์โหมดโฟกัสและทิศทางที่กำหนดเอง",
     "deleteAndRegenerate": "ลบและสร้างใหม่",
     "regenerate": "สร้างอีกครั้ง",
     "addTypeTitle": "เพิ่มเซกเมนต์พิเศษ",
@@ -654,9 +654,9 @@
       }
     },
     "alignment": {
-      "title": "การจัดตำแหน่งเสียง BEAT {number}",
+      "title": "การจัดตำแหน่งเสียง SHOT {number}",
       "description": "จัดแนวส่วนนี้ด้วยบทสนทนาและแทร็กเสียงเพื่อการกำหนดเวลาที่แม่นยำ",
-      "beatTiming": "จังหวะการเต้น",
+      "beatTiming": "ช็อตการเต้น",
       "aligned": "จัดแนวแล้ว",
       "nearlyAligned": "เกือบชิดกันแล้ว",
       "misaligned": "ไม่สอดคล้องกัน",
@@ -716,9 +716,9 @@
     "clipLabel": "คลิป {track}",
     "start": "เริ่มต้น: {time}",
     "clipDuration": "ระยะเวลา: {time}",
-    "alignmentTitle": "การจัดตำแหน่งเสียง BEAT {number}",
+    "alignmentTitle": "การจัดตำแหน่งเสียง SHOT {number}",
     "alignmentDescription": "จัดแนวส่วนนี้ด้วยบทสนทนาและแทร็กเสียงเพื่อการกำหนดเวลาที่แม่นยำ",
-    "beatTiming": "จังหวะการเต้น",
+    "beatTiming": "ช็อตการเต้น",
     "aligned": "จัดแนวแล้ว",
     "nearlyAligned": "เกือบชิดกันแล้ว",
     "misaligned": "ไม่สอดคล้องกัน",
@@ -754,7 +754,7 @@
     "stream": {
       "title": "ส่งออกสตรีม",
       "description": "ฉาก {number} — รวดเร็ว (WebM) สำหรับร่างออกอากาศ (MP4) สำหรับการจัดส่งหรือคลาวด์สำหรับฉากยาว",
-      "videoSequence": "ลำดับวิดีโอ (จังหวะ {count})",
+      "videoSequence": "ลำดับวิดีโอ (ช็อต {count})",
       "unmuteAll": "เปิดเสียงทั้งหมด",
       "muteAll": "ปิดเสียงทั้งหมด",
       "beatLabel": "เอาชนะ {number}",
@@ -880,7 +880,7 @@
       }
     },
     "director": {
-      "title": "สร้างวิดีโอ: BEAT {number}",
+      "title": "สร้างวิดีโอ: SHOT {number}",
       "description": "ตรวจสอบและปรับแต่งพารามิเตอร์การสร้างก่อนแสดงผล",
       "tabTextToVideo": "ข้อความต่อวิดีโอ",
       "tabTextToVideoShort": "T2V",
@@ -965,16 +965,16 @@
     },
     "beatReferences": {
       "title": "รีวิวอ้างอิง — ฉาก {number}",
-      "description": "SceneFlow การอ้างอิงที่เลือกโดยอัตโนมัติสำหรับจังหวะนี้ยืนยันหรือปรับเปลี่ยนก่อนสร้าง",
+      "description": "SceneFlow การอ้างอิงที่เลือกโดยอัตโนมัติสำหรับช็อตนี้ยืนยันหรือปรับเปลี่ยนก่อนสร้าง",
       "beatKindAction": "การกระทำ",
       "beatKindNarration": "คำบรรยาย",
       "beatKindDialogue": "บทสนทนา",
-      "beatLabel": "จังหวะ: {kind}",
+      "beatLabel": "ช็อต: {kind}",
       "autoSelected": "เลือกอัตโนมัติ: {summary}",
       "locationMatchedAssignment": "ตำแหน่งที่ตรงกันจากการกำหนดฉาก",
       "locationMatchedHeading": "ตำแหน่งที่ตรงกันจากหัวเรื่องฉาก",
       "locationReference": "การอ้างอิงตำแหน่งที่ตั้ง",
-      "pickLocation": "เลือกการอ้างอิงสภาพแวดล้อมหนึ่งรายการสำหรับจังหวะนี้ (ใช้สำหรับความสอดคล้องของภาพ)",
+      "pickLocation": "เลือกการอ้างอิงสภาพแวดล้อมหนึ่งรายการสำหรับช็อตนี้ (ใช้สำหรับความสอดคล้องของภาพ)",
       "match": "แมตช์",
       "selectedCount": "เลือก {count} แล้ว",
       "saveSelection": "บันทึกการเลือก",
@@ -1026,15 +1026,15 @@
       "anomalyUnknown": "ต้นทางไม่ชัดเจน"
     },
     "regenerateBeats": {
-      "title": "สร้างจังหวะใหม่",
-      "description": "ล้างเซกเมนต์ทั้งหมดและกลับไปที่ Beat Builder เพื่อเริ่มต้นใหม่",
-      "beats": "จังหวะ",
+      "title": "สร้างช็อตใหม่",
+      "description": "ล้างเซกเมนต์ทั้งหมดและกลับไปที่ Shot Builder เพื่อเริ่มต้นใหม่",
+      "beats": "ช็อต",
       "totalDuration": "ระยะเวลารวม",
       "anchoredFrames": "กรอบยึด",
       "anchoredCount": "{anchored}/{total}",
       "assetsWarning": "คำเตือน: การดำเนินการนี้จะลบเซกเมนต์ทั้งหมดรวมถึงคีย์เฟรมและเนื้อหาวิดีโอที่สร้างขึ้นการดำเนินการนี้ไม่สามารถยกเลิกได้",
-      "emptyWarning": "เซกเมนต์ปัจจุบันทั้งหมดจะถูกลบออกระบบจะนำคุณไปยัง Beat Builder เพื่อกำหนดค่าและสร้างใหม่ด้วยการตั้งค่าใหม่",
-      "nextHint": "Beat Builder จะเปิดขึ้นพร้อมตัวควบคุมสำหรับระยะเวลาทั้งหมดจำนวนเซกเมนต์โหมดโฟกัสและทิศทางที่กำหนดเอง",
+      "emptyWarning": "เซกเมนต์ปัจจุบันทั้งหมดจะถูกลบออกระบบจะนำคุณไปยัง Shot Builder เพื่อกำหนดค่าและสร้างใหม่ด้วยการตั้งค่าใหม่",
+      "nextHint": "Shot Builder จะเปิดขึ้นพร้อมตัวควบคุมสำหรับระยะเวลาทั้งหมดจำนวนเซกเมนต์โหมดโฟกัสและทิศทางที่กำหนดเอง",
       "deleteAndRegenerate": "ลบและสร้างใหม่",
       "regenerate": "สร้างอีกครั้ง"
     },
@@ -1049,7 +1049,7 @@
       "tabDirection": "ทิศทางของฉาก",
       "audioAlignment": "การจัดตำแหน่งเสียง",
       "narrationDriven": "Narration-Driven",
-      "narrationDrivenHint": "จัดแนวการตัดตามจังหวะคำบรรยาย",
+      "narrationDrivenHint": "จัดแนวการตัดตามช็อตคำบรรยาย",
       "dialogueDriven": "ขับเคลื่อนด้วยบทสนทนา",
       "dialogueDrivenHint": "จัดแนวการตัดไปยังกล่องโต้ตอบ",
       "pacingStyle": "สไตล์การเดิน",
@@ -1085,7 +1085,7 @@
         },
         "moderate": {
           "label": "ปานกลาง",
-          "description": "จังหวะที่สมดุล (4 -6s เซ็กเมนต์)"
+          "description": "ช็อตที่สมดุล (4 -6s เซ็กเมนต์)"
         },
         "fast": {
           "label": "รวดเร็วและมีไดนามิก",
@@ -1093,7 +1093,7 @@
         },
         "dynamic": {
           "label": "ไดนามิก (จับคู่เสียง)",
-          "description": "แตกต่างกันไปตามจังหวะการบรรยาย/บทสนทนา"
+          "description": "แตกต่างกันไปตามช็อตการบรรยาย/บทสนทนา"
         }
       },
       "shotTypes": {
@@ -1229,7 +1229,7 @@
     "retaking": "กำลังดำเนินการอีกครั้ง...",
     "approveAndRetake": "อนุมัติและถ่ายใหม่",
     "keyframeRegenTitle": "สร้างคีย์เฟรมใหม่",
-    "keyframeRegenDescription": "สร้างเฟรมเริ่มต้นและสิ้นสุดใหม่สำหรับจังหวะนี้ด้วยทิศทางที่อัปเดต"
+    "keyframeRegenDescription": "สร้างเฟรมเริ่มต้นและสิ้นสุดใหม่สำหรับช็อตนี้ด้วยทิศทางที่อัปเดต"
   },
   "budget": {
     "title": "การจัดการงบประมาณการผลิต",
@@ -1261,8 +1261,8 @@
     "languagesBanner": "ภาษา {count}: ต้นฉบับ + {extra} แปล {extra, plural, one {version} other {versions}} เพิ่มเครดิต ~ {credits} สำหรับการแปลและการพากย์เสียงใหม่",
     "sceneConfiguration": "การกำหนดค่าฉาก",
     "numberOfScenes": "จำนวนฉาก",
-    "beatsPerScene": "จังหวะต่อฉาก",
-    "takesPerBeat": "ใช้เวลาต่อจังหวะ (การฟื้นฟู)",
+    "beatsPerScene": "ช็อตต่อฉาก",
+    "takesPerBeat": "ใช้เวลาต่อช็อต (การฟื้นฟู)",
     "videoEngine": "เครื่องยนต์วิดีโอ",
     "clipDuration": "ระยะเวลาคลิป (วินาที)",
     "clipDurationHint": "จัดชิดตามระยะเวลาที่ถูกต้องสำหรับเครื่องยนต์ที่เลือก",
@@ -1271,7 +1271,7 @@
     "forVideo": "สำหรับวิดีโอ",
     "imagesByQuality": "รูปภาพตามคุณภาพ",
     "excludedByok": "ไม่รวม (BYOK)",
-    "draftBeatFrames": "ร่าง / จังหวะเฟรม ({credits} cr)",
+    "draftBeatFrames": "ร่าง / ช็อตเฟรม ({credits} cr)",
     "retakesPerDraft": "ทำซ้ำต่อร่างเฟรม",
     "finalStoryboardImages": "ภาพกระดานเรื่องราวขั้นสุดท้าย ({credits} cr)",
     "characterHeadshots": "ภาพเฮดช็อตของตัวละคร ({credits} cr)",
@@ -1337,7 +1337,7 @@
   },
   "budgetManager": {
     "title": "ผู้จัดการงบประมาณการผลิต",
-    "subtitle": "วางแผนจากฉากและจังหวะที่ตายตัว ต้นทุนแบบร่างเทียบกับขั้นสุดท้าย — ตัวเลือกของผู้ให้บริการยังคงความคิดสร้างสรรค์",
+    "subtitle": "วางแผนจากฉากและช็อตที่ตายตัว ต้นทุนแบบร่างเทียบกับขั้นสุดท้าย — ตัวเลือกของผู้ให้บริการยังคงความคิดสร้างสรรค์",
     "subtitleWithTitle": "แผนงบประมาณสำหรับ {title}",
     "currentBalance": "ยอดคงเหลือปัจจุบัน",
     "creditsCount": "เครดิต {count}",
@@ -1349,7 +1349,7 @@
     "seconds": "{count}",
     "progress": "เสร็จแล้ว",
     "progressValues": "เฟรม {frames}/{beats} · วิดีโอ {videos}/{beats}",
-    "scopeFixedHint": "จำนวนฉากและจังหวะมาจาก Production Studio และไม่สามารถปรับได้ที่นี่",
+    "scopeFixedHint": "จำนวนฉากและช็อตมาจาก Production Studio และไม่สามารถปรับได้ที่นี่",
     "methodsTitle": "วิธีการผลิต",
     "recommended": "ที่แนะนำ",
     "methods": {
@@ -1380,9 +1380,9 @@
     "creditsPerFrame": "{credits} cr/เฟรม",
     "creditsPerClip": "{credits} cr/{seconds}s",
     "creditsZero": "0 ล้าน",
-    "providerNote": "Kling vs Google ถูกเลือกต่อจังหวะใน Studio และไม่เปลี่ยนแปลงการคาดการณ์นี้",
-    "frameIterations": "การวนซ้ำเฟรม / จังหวะ",
-    "videoIterations": "การวนซ้ำวิดีโอ / จังหวะ",
+    "providerNote": "Kling vs Google ถูกเลือกต่อช็อตใน Studio และไม่เปลี่ยนแปลงการคาดการณ์นี้",
+    "frameIterations": "การวนซ้ำเฟรม / ช็อต",
+    "videoIterations": "การวนซ้ำวิดีโอ / ช็อต",
     "frameIterationsHint": "ค่าเริ่มต้นคือ {rate} สำเร็จครั้งแรก (~1.25×)",
     "videoIterationsHint": "ค่าเริ่มต้นคือ {rate} สำเร็จครั้งแรก (~1.11×)",
     "topazTitle": "บุษราคัมสุดหรู",
@@ -1416,6 +1416,6 @@
     },
     "setAsProjectBudget": "ตั้งเป็นงบประมาณโครงการ (เครดิต {credits})",
     "saving": "ประหยัด...",
-    "noBeatsYet": "เพิ่มฉากและจังหวะใน Production Studio เพื่อสร้างงบประมาณ"
+    "noBeatsYet": "เพิ่มฉากและช็อตใน Production Studio เพื่อสร้างงบประมาณ"
   }
 }

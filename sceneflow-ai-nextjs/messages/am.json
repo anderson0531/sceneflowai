@@ -39,7 +39,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
+        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -283,11 +283,11 @@
     "title": "በቅድሚያ በሪትም (Beat) ላይ የተመሰረተ የቪዲዮ ማቀናበሪያ ሂደት",
     "subtitle": "ከማመንጨትዎ በፊት ያጽድቁት — እንደ ቁማር ማሽን በዘፈቀደ የሚፈጠር መሆን የለበትም።",
     "intro": "በግምትና በሙከራ የሚደረግ የማመንጨት ሂደት የለም። SceneFlow ለመጨረሻው ቪዲዮ ክሬዲቶችን ከመጠቀሙ በፊት፣ ውጤቱን አስቀድመው ይመለከታሉ እንዲሁም ያጸድቃሉ።",
-    "description": "SceneFlow በእያንዳንዱ ደረጃ የእይታ ማረጋገጫ ሂደትን ያደራጃል፦ ለግምገማ Pre-vis Agent፣ የአቀራረብ ቅርጽን (composition) ለመቆለፍ Shot Frames፣ ከዚያም በእያንዳንዱ 'ቢት' (beat) ላይ F2V። በዚህም፣ ከቁጥጥር ውጭ በሆኑ ለውጦች (drift) እና በስህተት በተፈጠሩ ምስሎች (hallucinations) ላይ ክሬዲት ከማባከንዎ በፊት የምስሉን ጥራት ያስተካክላሉ።",
+    "description": "SceneFlow በእያንዳንዱ ደረጃ የእይታ ማረጋገጫ ሂደትን ያደራጃል፦ ለግምገማ Pre-vis Agent፣ የአቀራረብ ቅርጽን (composition) ለመቆለፍ Shot Frames፣ ከዚያም በእያንዳንዱ 'ቢት' (shot) ላይ F2V። በዚህም፣ ከቁጥጥር ውጭ በሆኑ ለውጦች (drift) እና በስህተት በተፈጠሩ ምስሎች (hallucinations) ላይ ክሬዲት ከማባከንዎ በፊት የምስሉን ጥራት ያስተካክላሉ።",
     "steps": [
       "Pre-vis Agent — ለግምገማ የሚሆኑ የሙዚቃ ቅንብሮችን (beats) በደቂቃዎች ውስጥ ያጋሩ",
       "Shot Frames — የቅንብር (composition) መጀመሪያ/መጨረሻን ከ Reference Library ቀጣይነት ጋር መቆለፍ",
-      "F2V በቢት (per beat) — በዘፈኑ ምት ልክ፣ ከተረጋገጡ ፍሬሞች (frames) ቪዲዮ ይፍጠሩ፤ ያለአግባብ ከሚሰጡ አጠቃላይ መመሪያዎች (blind prompts) አይደለም።",
+      "F2V በቢት (per shot) — በዘፈኑ ምት ልክ፣ ከተረጋገጡ ፍሬሞች (frames) ቪዲዮ ይፍጠሩ፤ ያለአግባብ ከሚሰጡ አጠቃላይ መመሪያዎች (blind prompts) አይደለም።",
       "ቀጣይነት ያለው የEXT ሰንሰለት — ለረጅም የውይይት ክፍሎች የሚሆኑ፣ በስርዓቱ ውስጥ የተካተቱ የ+7 ሰከንድ የማራዘሚያ ደረጃዎች",
       "Production Mixer — የጊዜ አወቃቀር፣ ኦዲዮ እና ስትሪም ወደ Screening Room መላክ"
     ],
@@ -682,7 +682,7 @@
         ],
         "keyFeatures": [
           "ፋውንዴሽን — ስክሪፕት፣ ድምፆች፣ የትዕይንት ድምፅ፣ Audience Resonance",
-          "ቅድመ-እይታ (Pre-Vis) — ለእያንዳንዱ ትዕይንት የአቅጣጫ መመሪያ፣ ድምፅ እና የቁልፍ ፍሬሞች (beat frames)፣ እንዲሁም ለማጋራት የሚያስችሉ አገናኞች",
+          "ቅድመ-እይታ (Pre-Vis) — ለእያንዳንዱ ትዕይንት የአቅጣጫ መመሪያ፣ ድምፅ እና የቁልፍ ፍሬሞች (shot frames)፣ እንዲሁም ለማጋራት የሚያስችሉ አገናኞች",
           "ከምርት ሂደቱ ሳይወጡ ቀረጻ፣ ድምፅ ቅልቅል (Mixer) እና ስርጭቶችን ያከናውኑ።",
           "Screening Room — የትዕይንት ቅድመ-እይታ፣ ዋና ስብስብ (master assembly)፣ የማሳያ ዝግጅቶች እና በዩቲዩብ ላይ ማተም"
         ]
@@ -743,8 +743,8 @@
       {
         "id": "ቅድመ-ምስላዊ እይታ",
         "stepLabel": "በቅድመ-ምስል (Pre-Visualization) አማካኝነት በዓይነ ሕሊና ይሳሉ እና ይፈትሹ።",
-        "shortDescription": "እያንዳንዱን ትዕይንት መሰረት በማድረግ የንግግር ኦዲዮ እና ቁልፍ ምስሎችን (beat frames) ያዘጋጁ። ለቪዲዮው የመጨረሻ ወጪ ከማድረግዎ በፊት፣ ለማጽደቅ እንዲቻል አኒማቲክሶችን (animatics) ያጋሩ።",
-        "detailedDescription": "Pre-Vis Studio ለእያንዳንዱ ትዕይንት የአቅጣጫ መመሪያዎችን፣ ድምፅን እና ቁልፍ የትዕይንት ፍሬሞችን (beat frames) ያዘጋጃል፤ እነዚህም ገጸ-ባህሪያት ወይም የትዕይንቱ ስሜት (tone) ሲቀየሩ ውድ ጊዜና ወጪ የሚጠይቁ ድጋሚ ሥራዎችን ለመቀነስ የሚያስችሉ ወሳኝ መለኪያዎች ናቸው። በጋራ ለመሥራት እንዲቻል የቪዲዮ ማጫወቻውን ማጋራት ይችላሉ፤ እንዲሁም ለብዙ ፕሮጀክቶች፣ የተሟላው አኒማቲክ (animatic) የመጨረሻው ውጤትዎ ሊሆን ይችላል።",
+        "shortDescription": "እያንዳንዱን ትዕይንት መሰረት በማድረግ የንግግር ኦዲዮ እና ቁልፍ ምስሎችን (shot frames) ያዘጋጁ። ለቪዲዮው የመጨረሻ ወጪ ከማድረግዎ በፊት፣ ለማጽደቅ እንዲቻል አኒማቲክሶችን (animatics) ያጋሩ።",
+        "detailedDescription": "Pre-Vis Studio ለእያንዳንዱ ትዕይንት የአቅጣጫ መመሪያዎችን፣ ድምፅን እና ቁልፍ የትዕይንት ፍሬሞችን (shot frames) ያዘጋጃል፤ እነዚህም ገጸ-ባህሪያት ወይም የትዕይንቱ ስሜት (tone) ሲቀየሩ ውድ ጊዜና ወጪ የሚጠይቁ ድጋሚ ሥራዎችን ለመቀነስ የሚያስችሉ ወሳኝ መለኪያዎች ናቸው። በጋራ ለመሥራት እንዲቻል የቪዲዮ ማጫወቻውን ማጋራት ይችላሉ፤ እንዲሁም ለብዙ ፕሮጀክቶች፣ የተሟላው አኒማቲክ (animatic) የመጨረሻው ውጤትዎ ሊሆን ይችላል።",
         "media": "ቅድመ-እይታ ማጫወቻ"
       },
       {
@@ -810,7 +810,7 @@
       "keyFeatures": [
         "ለግምገማ Pre-vis Agent — ከባድ የሬንደር (render) ሂደት ከመጀመሩ በፊት ቢትሶቹን (beats) ያጋሩ",
         "Shot Frames የመቆለፊያ አወቃቀር — Reference Library ቀጣይነት",
-        "F2V በቢት (per beat) — ከጸደቁ ፍሬሞች ቪዲዮ ማመንጨት",
+        "F2V በቢት (per shot) — ከጸደቁ ፍሬሞች ቪዲዮ ማመንጨት",
         "ቀጣይነት ያላቸው የEXT (ከቤት ውጭ) ቅደም ተከተሎች — በአንድ የትረካ ክፍል (beat) ውስጥ ለሚደረጉ ረጅም ውይይቶች የሚሆኑ፣ በቀጥታ የሚተገበሩ የ+7 ሰከንድ እርምጃዎች",
         "የማደባለቂያ (Mixer) ጊዜ አጠባበቅ እና ዥረቶች — ለማቀናበር እና ለማሰራጨት Screening Roomን ይክፈቱ።"
       ],
@@ -912,7 +912,7 @@
         "description": "የ\"Script\" እና \"Shoot\" ትሮች (tabs) ሂደቱን ከመሠረታዊ ዝግጅት (Foundation) አንስቶ እስከ ቅድመ-እይታ (Pre-Vis)፣ ጥሬ ምስል (Footage)፣ ማቀናበሪያ (Mixer) እና ስርጭት (Streams) ድረስ ይመራሉ። በእያንዳንዱ ትዕይንት ላይ የሚደረጉ የማረጋገጫ ደረጃዎች ድጋሚ ሥራን ይቀንሳሉ፤ Screening Room ደግሞ የቅድመ-እይታ፣ የአቀናባበር እና የማሰራጨት ሥራዎችን ያከናውናል።",
         "keyFeatures": [
           "ፋውንዴሽን — ስክሪፕት፣ ድምፆች፣ የትዕይንት ድምፅ፣ Audience Resonance",
-          "ቅድመ-እይታ (Pre-Vis) — ለእያንዳንዱ ትዕይንት የአቅጣጫ መመሪያ፣ ድምፅ እና የቁልፍ ፍሬሞች (beat frames)፣ እንዲሁም ለማጋራት የሚያስችሉ አገናኞች",
+          "ቅድመ-እይታ (Pre-Vis) — ለእያንዳንዱ ትዕይንት የአቅጣጫ መመሪያ፣ ድምፅ እና የቁልፍ ፍሬሞች (shot frames)፣ እንዲሁም ለማጋራት የሚያስችሉ አገናኞች",
           "ከምርት ሂደቱ ሳይወጡ ቀረጻ፣ ድምፅ ቅልቅል (Mixer) እና ስርጭቶችን ያከናውኑ።",
           "Screening Room — የትዕይንት ቅድመ-እይታ፣ ዋና ስብስብ (master assembly)፣ የማሳያ ዝግጅቶች እና በዩቲዩብ ላይ ማተም"
         ],
@@ -1059,11 +1059,11 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
+          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
@@ -1103,7 +1103,7 @@
       "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
         "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
         "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
         "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
@@ -1447,7 +1447,7 @@
       {
         "id": "animation",
         "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {

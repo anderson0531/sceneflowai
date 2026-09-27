@@ -48,7 +48,7 @@ export function SegmentTimeline({ segments, selectedSegmentId, onSelect, audioTr
       {/* Timeline Header */}
       <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 px-2">
         <span className="font-mono">Timeline: 0:00 - {formatTime(totalDuration)}</span>
-        <span className="text-gray-400">{segments.length} beat{segments.length !== 1 ? 's' : ''}</span>
+        <span className="text-gray-400">{segments.length} shot{segments.length !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Responsive Beat Cards Timeline */}

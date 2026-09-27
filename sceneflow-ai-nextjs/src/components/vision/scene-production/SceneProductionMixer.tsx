@@ -33,7 +33,14 @@ import {
   resolveMixerMusicClips,
   type MixerMusicClip,
 } from '@/lib/scene/mixerScoreMusic'
-import { DEFAULT_MUSIC_FILE_DURATION_SEC } from '@/lib/storyboard/musicPlayback'
+import { DEFAULT_MUSIC_FILE_DURATION_SEC, isCuedBeatMusicEnabled } from '@/lib/storyboard/musicPlayback'
+import { getSceneBeats } from '@/lib/script/beatMigration'
+import {
+  applySceneMusicCues,
+  isMusicCueScored,
+  parsePersistedMusicCues,
+  setBeatsMusicEnabled,
+} from '@/lib/script/sceneMusicCues'
 import {
   resolveMixerSceneEnd,
   sceneOpeningFrameUrl,
@@ -103,6 +110,7 @@ import {
   type ProjectStream,
 } from '@/lib/streams/projectStreams'
 import { MixerTimeline } from './MixerTimeline'
+import { ScoreMusicControls, type ScoreShotRow } from './ScoreMusicControls'
 import { ScenePreviewPlayer } from './ScenePreviewPlayer'
 import { ProductionSectionHeader } from './ProductionSectionHeader'
 import type { SceneRenderQueuedInfo } from '@/lib/video/sceneRenderQueue'
@@ -122,6 +130,7 @@ import type {
   AudioTrackConfig,
   MixerAudioTracks,
   MixerDialogueClipConfig,
+  MixerMusicShotConfig,
   MixerSegmentAudioConfig,
   MixerSettingsPersistPayload,
   TextOverlayTranslationsByLanguage,
@@ -552,6 +561,7 @@ function AudioTrackRow({
   onRegenerate,
   isRegenerating,
   scoreMode = false,
+  scorePanel,
 }: {
   type: 'narration' | 'dialogue' | 'music' | 'sfx'
   label: string
@@ -581,8 +591,10 @@ function AudioTrackRow({
   onToggleCollapse?: () => void
   onRegenerate?: () => void
   isRegenerating?: boolean
-  /** Score cues own beat coverage, loop, and fades — hide Mixer copies. */
+  /** Score cues own shot coverage, loop, and fades — hide Mixer copies. */
   scoreMode?: boolean
+  /** Per-track and per-shot score controls, shown under the master Score row. */
+  scorePanel?: React.ReactNode
 }) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(false)
@@ -917,6 +929,8 @@ function AudioTrackRow({
             </>
           )}
           
+          {scoreMode && scorePanel}
+
           {/* Individual Dialogue Line Controls */}
           {type === 'dialogue' && dialogueClips && dialogueClips.length > 1 && dialogueClipConfigs && onDialogueClipConfigChange && (
             <DialogueLineControls
@@ -1257,7 +1271,7 @@ function SegmentBeatVideoControls({
           <Video className="w-4 h-4 text-cyan-400" />
           <span className="text-xs text-gray-400 uppercase tracking-wide">Shot Video</span>
           <span className="text-xs text-gray-500">
-            {rows.length} beats
+            {rows.length} {rows.length === 1 ? 'shot' : 'shots'}
             {excludedCount > 0 ? ` · ${excludedCount} excluded` : ''}
           </span>
         </div>
@@ -1552,7 +1566,9 @@ function SegmentBeatTrimControls({
           )}
           <Scissors className="w-4 h-4 text-amber-400" />
           <span className="text-xs text-gray-400 uppercase tracking-wide">Shot Trim</span>
-          <span className="text-xs text-gray-500">{segments.length} beats</span>
+          <span className="text-xs text-gray-500">
+            {segments.length} {segments.length === 1 ? 'shot' : 'shots'}
+          </span>
         </div>
       </div>
 
@@ -1682,7 +1698,9 @@ function SegmentAudioControls({
           )}
           <Film className="w-4 h-4 text-purple-400" />
           <span className="text-xs text-gray-400 uppercase tracking-wide">Shot Audio</span>
-          <span className="text-xs text-gray-500">{segments.length} segments</span>
+          <span className="text-xs text-gray-500">
+            {segments.length} {segments.length === 1 ? 'shot' : 'shots'}
+          </span>
         </div>
         <button
           onClick={(e) => { e.stopPropagation(); toggleAll(); }}
@@ -1709,7 +1727,7 @@ function SegmentAudioControls({
         <span className="text-xs text-gray-400 w-10 text-right">{Math.round(masterVolume * 100)}%</span>
       </div>
       
-      {/* Individual Beat Controls */}
+      {/* Individual shot controls */}
       <div className="space-y-2">
         {segments.map((seg, i) => {
           const config = segmentConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0 }
@@ -1929,6 +1947,7 @@ export function SceneProductionMixer({
   
   // === Dialogue Clip Configs (individual line control) ===
   const [dialogueClipConfigs, setDialogueClipConfigs] = useState<Record<string, AudioClipConfig>>({})
+  const [musicShotConfigs, setMusicShotConfigs] = useState<Record<string, MixerMusicShotConfig>>({})
   
   // Handle Dialogue Clip updates from timeline (declared early to avoid TDZ in minified production builds)
   const handleDialogueClipChange = useCallback((clipId: string, newStartTime: number, newDuration?: number) => {
@@ -2092,6 +2111,50 @@ export function SceneProductionMixer({
     },
     [mixerBeatSegments, segments, onSegmentsChange]
   )
+
+  const patchScoreScene = useCallback(
+    (nextScene: Record<string, unknown>) => {
+      if (!onScriptChange || !script || !Array.isArray(scenes) || sceneIndex == null) return
+      const updatedScenes = [...scenes]
+      updatedScenes[sceneIndex] = nextScene
+      onScriptChange({
+        ...script,
+        script: { ...script.script, scenes: updatedScenes },
+      })
+    },
+    [onScriptChange, script, scenes, sceneIndex]
+  )
+
+  const handleScoreCueMixChange = useCallback(
+    (cueId: string, mix: { volume?: number; fadeInSec?: number; fadeOutSec?: number }) => {
+      const current = audioAssets.scoreScene
+      if (!current) return
+      const beats = getSceneBeats(current)
+      const cues = parsePersistedMusicCues(current.sceneMusicCues, beats).map((cue) =>
+        cue.cueId === cueId ? { ...cue, ...mix } : cue
+      )
+      const applied = applySceneMusicCues(current, cues, beats)
+      patchScoreScene({ ...applied.scene, beats: applied.beats })
+    },
+    [audioAssets.scoreScene, patchScoreScene]
+  )
+
+  const handleScoreShotEnabledChange = useCallback(
+    (beatId: string, enabled: boolean) => {
+      const current = audioAssets.scoreScene
+      if (!current) return
+      const beats = setBeatsMusicEnabled(getSceneBeats(current), [beatId], enabled)
+      patchScoreScene({ ...current, beats })
+    },
+    [audioAssets.scoreScene, patchScoreScene]
+  )
+
+  const handleScoreShotVolumeChange = useCallback((beatId: string, volume: number) => {
+    setMusicShotConfigs((prev) => ({
+      ...prev,
+      [beatId]: { volume },
+    }))
+  }, [])
 
   const [selectedTrimSegmentId, setSelectedTrimSegmentId] = useState<string | null>(null)
   const [focusBeatSegmentId, setFocusBeatSegmentId] = useState<string | null>(null)
@@ -2338,6 +2401,7 @@ export function SceneProductionMixer({
     (merged: ReturnType<typeof mergeMixerSettings>) => {
       setAudioTracks(merged.audioTracks)
       setDialogueClipConfigs(merged.dialogueClipConfigs)
+      setMusicShotConfigs(merged.musicShotConfigs)
       setMasterSegmentVolume(merged.masterSegmentVolume)
       setResolution(merged.resolution)
       setPreserveBackgroundStem(merged.preserveBackgroundStem)
@@ -2435,6 +2499,7 @@ export function SceneProductionMixer({
         audioTracks,
         segmentAudioConfigs,
         dialogueClipConfigs,
+        musicShotConfigs,
         masterSegmentVolume,
         resolution,
         preserveBackgroundStem,
@@ -2451,6 +2516,7 @@ export function SceneProductionMixer({
     audioTracks,
     segmentAudioConfigs,
     dialogueClipConfigs,
+    musicShotConfigs,
     masterSegmentVolume,
     resolution,
     preserveBackgroundStem,
@@ -2909,6 +2975,9 @@ export function SceneProductionMixer({
           probedDurations.music ??
           audioAssets.musicFileDuration ??
           DEFAULT_MUSIC_FILE_DURATION_SEC,
+        musicShotVolumes: Object.fromEntries(
+          Object.entries(musicShotConfigs).map(([shotId, config]) => [shotId, config.volume])
+        ),
       }),
     [
       audioAssets.scoreScene,
@@ -2918,8 +2987,45 @@ export function SceneProductionMixer({
       getPlaybackSegmentDuration,
       audioTracks.music,
       probedDurations.music,
+      musicShotConfigs,
     ]
   )
+
+  const scoredMusicCues = useMemo(() => {
+    const scene = audioAssets.scoreScene
+    if (!scene) return []
+    return parsePersistedMusicCues(scene.sceneMusicCues, getSceneBeats(scene)).filter(isMusicCueScored)
+  }, [audioAssets.scoreScene])
+
+  const scoreShotRows = useMemo((): ScoreShotRow[] => {
+    if (!mixerMusic.usingScore) return []
+    const scene = audioAssets.scoreScene
+    const beats = scene ? getSceneBeats(scene) : []
+    const beatIndexById = new Map(beats.map((beat, index) => [beat.beatId, index]))
+    const beatById = new Map(beats.map((beat) => [beat.beatId, beat]))
+    return previewSegments.flatMap((segment, index) => {
+      const beatId = segment.beatId
+      if (!beatId) return []
+      const beatIndex = beatIndexById.get(beatId)
+      const cue =
+        beatIndex == null
+          ? undefined
+          : scoredMusicCues.find(
+              (entry) => beatIndex >= entry.beatStart && beatIndex <= entry.beatEnd
+            )
+      const beat = beatById.get(beatId)
+      return [
+        {
+          beatId,
+          number: index + 1,
+          enabled: isCuedBeatMusicEnabled(beat),
+          covered: !!cue,
+          cueLabel: cue?.intent?.trim() || 'Score',
+          volume: musicShotConfigs[beatId]?.volume ?? 1,
+        },
+      ]
+    })
+  }, [mixerMusic.usingScore, audioAssets.scoreScene, previewSegments, scoredMusicCues, musicShotConfigs])
 
   const playbackAudioUrls = useMemo(
     () => ({
@@ -4781,6 +4887,18 @@ export function SceneProductionMixer({
                 disabled={isRendering}
                 isCollapsed={collapsedSections.music}
                 onToggleCollapse={() => toggleSection('music')}
+                scorePanel={
+                  mixerMusic.usingScore ? (
+                    <ScoreMusicControls
+                      cues={scoredMusicCues}
+                      shots={scoreShotRows}
+                      disabled={isRendering}
+                      onCueMixChange={onScriptChange ? handleScoreCueMixChange : undefined}
+                      onShotEnabledChange={onScriptChange ? handleScoreShotEnabledChange : undefined}
+                      onShotVolumeChange={handleScoreShotVolumeChange}
+                    />
+                  ) : undefined
+                }
               />
             </div>
             )}

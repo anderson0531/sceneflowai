@@ -395,6 +395,8 @@ export interface SceneRenderAudioClip {
   fadeInSec?: number
   /** Music: fade-out seconds */
   fadeOutSec?: number
+  /** Offset into the source file, seconds. */
+  trimStart?: number
 }
 
 /**
@@ -573,6 +575,8 @@ export interface CreateSceneRenderJobRequest {
       fadeInSec?: number
       fadeOutSec?: number
       playbackRate?: number
+      /** Offset into the music file so per-shot slices stay continuous. */
+      trimStart?: number
     }>
     sfx?: Array<{ url: string; startTime: number; duration: number }>
   }

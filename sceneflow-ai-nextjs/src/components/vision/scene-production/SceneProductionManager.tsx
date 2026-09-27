@@ -1334,7 +1334,7 @@ export function SceneProductionManager({
           {/* Beat count preview */}
           <div className="flex flex-col items-center justify-center px-4 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{estimatedSegmentCount}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">beats</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">shots</div>
           </div>
         </div>
       </DialogHeader>

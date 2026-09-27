@@ -39,7 +39,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
+        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -283,11 +283,11 @@
     "title": "กระบวนการผลิตวิดีโอที่ยึดจังหวะเพลงเป็นหลัก",
     "subtitle": "อนุมัติก่อนเริ่มเรนเดอร์ — ไม่ใช่การสุ่มสร้างใหม่แบบตู้สล็อต",
     "intro": "ไม่ต้องใช้วิธีสุ่มลองผิดลองถูก คุณสามารถดูตัวอย่างและอนุมัติรูปแบบงานได้ก่อนที่ SceneFlow จะใช้เครดิตเพื่อสร้างวิดีโอฉบับสมบูรณ์",
-    "description": "SceneFlow จัดระบบขั้นตอนการอนุมัติงานภาพไว้อย่างชัดเจน: เริ่มจาก Pre-vis Agent สำหรับการตรวจสอบ ตามด้วย Shot Frames เพื่อล็อกองค์ประกอบภาพ แล้วจึงทำ F2V ในแต่ละจังหวะ ช่วยให้คุณปรับแต่งรูปลักษณ์ของงานได้ก่อนที่จะต้องเสียเครดิตไปกับปัญหาภาพหลุดกรอบ (drift) หรือภาพที่ผิดเพี้ยนไปจากความเป็นจริง (hallucinations)",
+    "description": "SceneFlow จัดระบบขั้นตอนการอนุมัติงานภาพไว้อย่างชัดเจน: เริ่มจาก Pre-vis Agent สำหรับการตรวจสอบ ตามด้วย Shot Frames เพื่อล็อกองค์ประกอบภาพ แล้วจึงทำ F2V ในแต่ละช็อต ช่วยให้คุณปรับแต่งรูปลักษณ์ของงานได้ก่อนที่จะต้องเสียเครดิตไปกับปัญหาภาพหลุดกรอบ (drift) หรือภาพที่ผิดเพี้ยนไปจากความเป็นจริง (hallucinations)",
     "steps": [
       "Pre-vis Agent — แชร์บีตเพลงพร้อมภาพประกอบเพื่อขอคำแนะนำได้ภายในไม่กี่นาที",
       "Shot Frames — ล็อกองค์ประกอบส่วนต้น/ส่วนท้ายด้วยความต่อเนื่องของ Reference Library",
-      "F2V แบบรายจังหวะ — สร้างวิดีโอจากเฟรมที่ผ่านการอนุมัติ ไม่ใช่แค่การใช้คำสั่ง (prompt) แบบสุ่มเดา",
+      "F2V แบบรายช็อต — สร้างวิดีโอจากเฟรมที่ผ่านการอนุมัติ ไม่ใช่แค่การใช้คำสั่ง (prompt) แบบสุ่มเดา",
       "กระบวนการขยายระยะเวลาแบบต่อเนื่อง (Continuous EXT chain) — ขั้นตอนการขยายเวลาแบบ Native ครั้งละ 7 วินาที สำหรับช่วงบทสนทนาที่ยาว",
       "Production Mixer — การกำหนดเวลา เสียง และการส่งออกสตรีมไปยัง Screening Room"
     ],
@@ -682,7 +682,7 @@
         ],
         "keyFeatures": [
           "Foundation — บท, เสียงพากย์, เสียงประกอบฉาก, Audience Resonance",
-          "Pre-Vis — แนวทางการกำกับ เสียง และภาพกำหนดจังหวะ (beat frames) แยกตามฉาก พร้อมลิงก์สำหรับแชร์",
+          "Pre-Vis — แนวทางการกำกับ เสียง และภาพช็อต (shot frames) แยกตามฉาก พร้อมลิงก์สำหรับแชร์",
           "ถ่ายทำ — จัดการฟุตเทจ มิกเซอร์ และสตรีมได้ครบจบในขั้นตอนการผลิตเดียว",
           "Screening Room — การดูตัวอย่างฉาก, การประกอบชิ้นงานฉบับสมบูรณ์, การฉายผลงาน และการเผยแพร่บน YouTube"
         ]
@@ -743,8 +743,8 @@
       {
         "id": "การสร้างภาพจำลองเบื้องต้น (Pre-visualization)",
         "stepLabel": "สร้างภาพจำลองและทดสอบด้วย Pre-Visualization",
-        "shortDescription": "จัดทำเสียงบทสนทนาและภาพร่างลำดับเหตุการณ์ (beat frames) แบบฉากต่อฉาก พร้อมนำเสนอ Animatics เพื่อขออนุมัติก่อนเริ่มดำเนินการผลิตวิดีโอขั้นสุดท้าย",
-        "detailedDescription": "Pre-Vis Studio ช่วยสร้างแนวทางการกำกับ เสียง และภาพหลัก (beat frames) ในแต่ละฉาก ซึ่งทำหน้าที่เป็นจุดตรวจสอบสำคัญที่ช่วยลดความจำเป็นในการแก้ไขงานใหม่ที่สิ้นเปลืองค่าใช้จ่าย หากมีการปรับเปลี่ยนตัวละครหรือโทนของเรื่อง คุณสามารถแชร์ตัวเล่นวิดีโอเพื่อทำงานร่วมกับทีมได้ และในหลายโครงการ งาน Animatic ฉบับสมบูรณ์นี้ยังสามารถใช้เป็นชิ้นงานส่งมอบจริงได้อีกด้วย",
+        "shortDescription": "จัดทำเสียงบทสนทนาและภาพร่างลำดับเหตุการณ์ (shot frames) แบบฉากต่อฉาก พร้อมนำเสนอ Animatics เพื่อขออนุมัติก่อนเริ่มดำเนินการผลิตวิดีโอขั้นสุดท้าย",
+        "detailedDescription": "Pre-Vis Studio ช่วยสร้างแนวทางการกำกับ เสียง และภาพหลัก (shot frames) ในแต่ละฉาก ซึ่งทำหน้าที่เป็นจุดตรวจสอบสำคัญที่ช่วยลดความจำเป็นในการแก้ไขงานใหม่ที่สิ้นเปลืองค่าใช้จ่าย หากมีการปรับเปลี่ยนตัวละครหรือโทนของเรื่อง คุณสามารถแชร์ตัวเล่นวิดีโอเพื่อทำงานร่วมกับทีมได้ และในหลายโครงการ งาน Animatic ฉบับสมบูรณ์นี้ยังสามารถใช้เป็นชิ้นงานส่งมอบจริงได้อีกด้วย",
         "media": "โปรแกรมเล่นพรีวิส"
       },
       {
@@ -810,7 +810,7 @@
       "keyFeatures": [
         "Pre-vis Agent สำหรับตรวจสอบ — แชร์บีตก่อนเริ่มกระบวนการเรนเดอร์ที่ใช้ทรัพยากรสูง",
         "Shot Frames การล็อกองค์ประกอบภาพ — Reference Library ความต่อเนื่อง",
-        "F2V ต่อจังหวะ — สร้างวิดีโอจากเฟรมที่ผ่านการอนุมัติ",
+        "F2V ต่อช็อต — สร้างวิดีโอจากเฟรมที่ผ่านการอนุมัติ",
         "ชุดคำสั่ง EXT แบบต่อเนื่อง — ขั้นตอน native +7s สำหรับบทสนทนายาวภายในจังหวะ (beat) เดียวกัน",
         "การกำหนดเวลาและสตรีมของ Mixer — เปิด Screening Room เพื่อประกอบและเผยแพร่"
       ],
@@ -913,7 +913,7 @@
         "description": "แท็บ Script และ Shoot จะนำทางกระบวนการตั้งแต่ Foundation → Pre-Vis → Footage → Mixer ไปจนถึง Streams โดยมีจุดตรวจสอบแบบฉากต่อฉากเพื่อลดการทำงานซ้ำ ส่วน Screening Room จะทำหน้าที่จัดการด้านการดูตัวอย่าง การประกอบชิ้นงาน และการเผยแพร่",
         "keyFeatures": [
           "Foundation — บท, เสียงพากย์, เสียงประกอบฉาก, Audience Resonance",
-          "Pre-Vis — แนวทางการกำกับ เสียง และภาพกำหนดจังหวะ (beat frames) แยกตามฉาก พร้อมลิงก์สำหรับแชร์",
+          "Pre-Vis — แนวทางการกำกับ เสียง และภาพช็อต (shot frames) แยกตามฉาก พร้อมลิงก์สำหรับแชร์",
           "ถ่ายทำ — จัดการฟุตเทจ มิกเซอร์ และสตรีมได้ครบจบในขั้นตอนการผลิตเดียว",
           "Screening Room — การดูตัวอย่างฉาก, การประกอบชิ้นงานฉบับสมบูรณ์, การฉายผลงาน และการเผยแพร่บน YouTube"
         ],
@@ -1060,11 +1060,11 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
+          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
@@ -1104,7 +1104,7 @@
       "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
         "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
         "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
         "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
@@ -1524,14 +1524,14 @@
             "id": "production-audio",
             "number": "4",
             "title": "สร้างเสียง",
-            "description": "สร้างบทสนทนาคำบรรยาย SFX และเพลงด้วย Run All Agents ในทุกฉาก per-scene agents หรือเอาชนะด้วยจังหวะ — การพากย์เสียงคุณภาพระดับเจ้าของภาษาใน 70 + ภาษา",
-            "imagePlaceholder": "แสดงเสียง — ทุกฉากฉากเดียวหรือตามจังหวะ"
+            "description": "สร้างบทสนทนาคำบรรยาย SFX และเพลงด้วย Run All Agents ในทุกฉาก per-scene agents หรือเอาชนะด้วยช็อต — การพากย์เสียงคุณภาพระดับเจ้าของภาษาใน 70 + ภาษา",
+            "imagePlaceholder": "แสดงเสียง — ทุกฉากฉากเดียวหรือทีละช็อต"
           },
           {
             "id": "production-frames",
             "number": "5",
             "title": "สร้างและแก้ไขเฟรม",
-            "description": "สร้างเฟรมจังหวะด้วยการผลิตด่วนฉากด่วนหรือจังหวะตามจังหวะจากนั้นแก้ไขเฟรมใดๆด้วยผู้ช่วยผู้อำนวยการอัจฉริยะ (IAD) — เพียงอธิบายการเปลี่ยนแปลง",
+            "description": "สร้างเฟรมช็อตด้วยการผลิตด่วนฉากด่วนหรือช็อตทีละช็อตจากนั้นแก้ไขเฟรมใดๆด้วยผู้ช่วยผู้อำนวยการอัจฉริยะ (IAD) — เพียงอธิบายการเปลี่ยนแปลง",
             "imagePlaceholder": "ตีกรอบด้วยการแก้ไขผู้ช่วยผู้อำนวยการอัจฉริยะ"
           },
           {
@@ -1545,7 +1545,7 @@
             "id": "production-video",
             "number": "7",
             "title": "สร้างวิดีโอ",
-            "description": "เปลี่ยนเฟรมที่ได้รับอนุมัติให้เป็นภาพเคลื่อนไหวด้วย per-scene agents หรือ beat by beat ถ่ายภาพใหม่ด้วยผู้ช่วยผู้อำนวยการอัจฉริยะ — ไม่มีการสร้างสล็อตแมชชีนที่ไม่มีที่สิ้นสุด",
+            "description": "เปลี่ยนเฟรมที่ได้รับอนุมัติให้เป็นภาพเคลื่อนไหวด้วย per-scene agents หรือ shot by shot ถ่ายภาพใหม่ด้วยผู้ช่วยผู้อำนวยการอัจฉริยะ — ไม่มีการสร้างสล็อตแมชชีนที่ไม่มีที่สิ้นสุด",
             "imagePlaceholder": "สร้างวิดีโอด่วนด้วย IAD RETAKES"
           },
           {
@@ -1727,7 +1727,7 @@
             "description": "สร้างเสียงด่วนใน 70 + ภาษาจัดเรียงอัตโนมัติเพื่อเอาชนะเฟรมและวิดีโอจัดส่งสตรีมภาษาพากย์หรือลิปซิงค์จากมาสเตอร์คัทที่ได้รับการอนุมัติเพียงครั้งเดียว",
             "learnMore": {
               "problem": "การเข้าถึงผู้ชมทั่วโลกมักจะหมายถึงการบันทึกความสามารถด้านเสียงใหม่การตั้งเวลาใหม่ทุกฉากและการสร้างโปรเจกต์ใหม่หนึ่งครั้งต่อภาษาซึ่งเป็นฝันร้ายด้านค่าใช้จ่ายและการประสานงานที่ทำให้ครีเอเตอร์ส่วนใหญ่มีตลาดเดียว",
-              "solution": "สร้างเสียงที่ชัดเจนใน 70 + ภาษาในไม่กี่นาทีปรับให้เข้ากับกรอบจังหวะภาพเคลื่อนไหวและวิดีโอของคุณโดยอัตโนมัติผลิตสตรีมที่พากย์เสียงหรือลิปซิงค์จากการตัดที่ได้รับการอนุมัติเดียวกันโดยไม่จำเป็นต้องถ่ายภาพซ้ำ",
+              "solution": "สร้างเสียงที่ชัดเจนใน 70 + ภาษาในไม่กี่นาทีปรับให้เข้ากับกรอบช็อตภาพเคลื่อนไหวและวิดีโอของคุณโดยอัตโนมัติผลิตสตรีมที่พากย์เสียงหรือลิปซิงค์จากการตัดที่ได้รับการอนุมัติเดียวกันโดยไม่จำเป็นต้องถ่ายภาพซ้ำ",
               "outcome": "จัดส่งทุกเรื่องราวไปยังตลาดกว่า 70 แห่งจากการผลิตเดียว — ทวีคูณการเข้าถึงและรายได้ของคุณโดยไม่ต้องเพิ่มปริมาณงานของคุณเป็นทวีคูณ"
             }
           },
@@ -1872,7 +1872,7 @@
       {
         "id": "animation",
         "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {

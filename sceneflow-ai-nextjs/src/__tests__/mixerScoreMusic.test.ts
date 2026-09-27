@@ -112,15 +112,63 @@ describe('resolveMixerMusicClips', () => {
     })
 
     expect(usingScore).toBe(true)
-    expect(clips.map((clip) => clip.url)).toEqual([DREAD_URL, VIOLENCE_URL])
+    expect(clips.map((clip) => clip.url)).toEqual([DREAD_URL, DREAD_URL, VIOLENCE_URL, VIOLENCE_URL])
     expect(clips[0]).toMatchObject({
       startTime: 0,
-      duration: 20,
+      duration: 8,
+      trimStart: 0,
       label: 'rising dread',
       volume: 0.5,
       fadeInSec: 1.5,
     })
-    expect(clips[1]).toMatchObject({ startTime: 20, duration: 10, label: 'the turn into violence' })
+    expect(clips[1]).toMatchObject({ startTime: 8, duration: 12, trimStart: 8, volume: 0.5 })
+    expect(clips[1].fadeInSec).toBeUndefined()
+    expect(clips[2]).toMatchObject({ startTime: 20, duration: 6, trimStart: 0, label: 'the turn into violence' })
+    expect(clips[3]).toMatchObject({ startTime: 26, duration: 4, trimStart: 6 })
+  })
+
+  it('multiplies cue volume by the per-shot mixer level', () => {
+    const segments = [seg('bt_a1', 8), seg('bt_a2', 12)]
+    const { clips } = resolveMixerMusicClips({
+      scene: cueScene(),
+      segments,
+      getPlaybackSegmentDuration: getDur,
+      musicConfig: musicConfig(),
+      musicShotVolumes: { bt_a1: 0.5 },
+    })
+    expect(clips[0].volume).toBeCloseTo(0.25)
+    expect(clips[1].volume).toBeCloseTo(0.5)
+  })
+
+  it('leaves a muted middle shot silent and continues the file after it', () => {
+    const clips = buildProductionMusicCueClips(
+      {
+        beats: [
+          { beatId: 'bt_a1', kind: 'action' },
+          { beatId: 'bt_a2', kind: 'action', musicEnabled: false },
+          { beatId: 'bt_a3', kind: 'action' },
+        ],
+        sceneMusicCues: [
+          {
+            cueId: 'cue-0-2',
+            beatStart: 0,
+            beatEnd: 2,
+            description: 'Cinematic orchestral score, ominous mood, slow tempo',
+            intent: 'rising dread',
+            url: DREAD_URL,
+            fileDuration: 30,
+          },
+        ],
+      },
+      [
+        { beatId: 'bt_a1', startTime: 0, endTime: 10 },
+        { beatId: 'bt_a2', startTime: 10, endTime: 20 },
+        { beatId: 'bt_a3', startTime: 20, endTime: 30 },
+      ]
+    )
+    expect(clips.map((clip) => clip.startTime)).toEqual([0, 20])
+    expect(clips.map((clip) => clip.duration)).toEqual([10, 10])
+    expect(clips[1].trimStart).toBe(20)
   })
 
   it('falls back to the legacy scene track when no cue has a URL', () => {
@@ -210,6 +258,28 @@ describe('mixerMusicClipsToRenderPayload', () => {
       },
     ])
   })
+
+  it('passes a shot file offset through to the render payload', () => {
+    const payload = mixerMusicClipsToRenderPayload(
+      [
+        {
+          id: 'music-cue-0-1-bt_a2',
+          beatId: 'bt_a2',
+          url: DREAD_URL,
+          startTime: 8,
+          duration: 12,
+          trimStart: 8,
+          label: 'rising dread',
+          loop: false,
+          actualDuration: 30,
+          volume: 0.5,
+        },
+      ],
+      musicConfig()
+    )
+    expect(payload[0].trimStart).toBe(8)
+    expect(payload[0].volume).toBeCloseTo(0.2)
+  })
 })
 
 describe('score stem fades', () => {
@@ -261,7 +331,9 @@ describe('buildProductionMusicCueClips mix fields', () => {
         { beatId: 'bt_a2', startTime: 10, endTime: 20 },
       ]
     )
-    expect(clips[0]).toMatchObject({ volume: 0.25, fadeOutSec: 3 })
+    expect(clips[0]).toMatchObject({ volume: 0.25 })
+    expect(clips[0].fadeOutSec).toBeUndefined()
+    expect(clips[1]).toMatchObject({ volume: 0.25, fadeOutSec: 3 })
   })
 })
 
@@ -274,5 +346,6 @@ describe('Mixer Score wiring', () => {
     expect(mixer).toContain('resolveMixerMusicClips')
     expect(mixer).toContain('mixerMusicClipsToRenderPayload')
     expect(mixer).toContain("label={mixerMusic.usingScore ? 'Score' : 'Background Music'}")
+    expect(mixer).toContain('ScoreMusicControls')
   })
 })

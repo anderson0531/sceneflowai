@@ -138,15 +138,15 @@
             "id": "production-audio",
             "number": "4",
             "title": "Generate audio",
-            "description": "Generate dialogue, narration, SFX, and music with Run All Agents across all scenes, Audio Agent per scene, or beat by beat — native-quality voiceover in 70+ languages.",
-            "imagePlaceholder": "Audio Agent — all scenes, single scene, or beat by beat"
+            "description": "Generate dialogue, narration, SFX, and music with Run All Agents across all scenes, Audio Agent per scene, or shot by shot — native-quality voiceover in 70+ languages.",
+            "imagePlaceholder": "Audio Agent — all scenes, single scene, or shot by shot"
           },
           {
             "id": "production-frames",
             "number": "5",
             "title": "Generate and edit frames",
-            "description": "Generate beat frames with Run All Agents, Stills Agent per scene, or beat by beat, then edit any frame with the Intelligent Assistant Director (IAD) — just describe the change.",
-            "imagePlaceholder": "Beat frames with Intelligent Assistant Director edits"
+            "description": "Generate shot frames with Run All Agents, Stills Agent per scene, or shot by shot, then edit any frame with the Intelligent Assistant Director (IAD) — just describe the change.",
+            "imagePlaceholder": "Shot frames with Intelligent Assistant Director edits"
           },
           {
             "id": "production-animatic",
@@ -159,7 +159,7 @@
             "id": "production-video",
             "number": "7",
             "title": "Generate video",
-            "description": "Turn approved frames into motion with Video Agent per scene or beat by beat. Retake any shot with the Intelligent Assistant Director — no endless slot-machine regenerations.",
+            "description": "Turn approved frames into motion with Video Agent per scene or shot by shot. Retake any shot with the Intelligent Assistant Director — no endless slot-machine regenerations.",
             "imagePlaceholder": "Video Agent generation with IAD retakes"
           },
           {
@@ -346,10 +346,10 @@
           {
             "icon": "multilanguage",
             "title": "Multilanguage Streams",
-            "description": "Write natively in your story's language, then dub or lip-sync into 70+ more — auto-aligned to beat frames and published as multi-language audio tracks on a single YouTube video.",
+            "description": "Write natively in your story's language, then dub or lip-sync into 70+ more — auto-aligned to shot frames and published as multi-language audio tracks on a single YouTube video.",
             "learnMore": {
               "problem": "Reaching a global audience usually means re-recording voice talent, re-timing every scene, and rebuilding the project once per language — a cost and coordination nightmare that keeps most creators single-market.",
-              "solution": "Author dialogue and treatment natively in your story's language rather than translating English after the fact, then generate audio in 70+ languages, auto-aligned to your beat frames. Dialogue is rewritten to fit each dub's timing budget, and you can ship dubbed or lip-synced streams from the same approved cut.",
+              "solution": "Author dialogue and treatment natively in your story's language rather than translating English after the fact, then generate audio in 70+ languages, auto-aligned to your shot frames. Dialogue is rewritten to fit each dub's timing budget, and you can ship dubbed or lip-synced streams from the same approved cut.",
               "outcome": "Ship every story natively to 70+ markets from one production — multiply your reach and revenue without multiplying your workload."
             }
           },
@@ -467,7 +467,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
+        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -575,7 +575,7 @@
       },
       {
         "label": "Approve Before Final Video",
-        "detail": "Review pre-vis beats before you render"
+        "detail": "Review pre-vis shots before you render"
       },
       {
         "label": "Test Your Story First",
@@ -759,11 +759,11 @@
     "title": "Beat-First Video Pipeline",
     "subtitle": "Approve before you render — not slot-machine regeneration",
     "intro": "No guess-and-check generations. You preview and approve the look before SceneFlow spends credits on final video.",
-    "description": "SceneFlow structures visual approval at every step: Pre-vis Agent for review, Shot Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
+    "description": "SceneFlow structures visual approval at every step: Pre-vis Agent for review, Shot Frames to lock composition, then F2V per shot. You refine the look before burning credits on drift and hallucinations.",
     "steps": [
       "Pre-vis Agent — share audio-visual beats for review after expert prompting",
       "Shot Frames — lock start/end composition with Reference Library continuity",
-      "F2V per beat — generate video from approved frames, not blind prompts",
+      "F2V per shot — generate video from approved frames, not blind prompts",
       "Continuous EXT chain — native +7s extension steps for long dialogue beats",
       "Production Mixer — timing, audio, and stream export to Screening Room"
     ],
@@ -1194,7 +1194,7 @@
         ],
         "keyFeatures": [
           "Writer's Room — script, voices, scene audio, Audience Resonance Analysis",
-          "Pre-Vis — direction, audio, and beat frames per scene with share links",
+          "Pre-Vis — direction, audio, and shot frames per scene with share links",
           "Motion — Footage, Mixer, and Streams without leaving Production Studio",
           "Screening Room — scene preview, master assembly, screenings, and YouTube publish"
         ],
@@ -1257,8 +1257,8 @@
       {
         "id": "pre-vis",
         "stepLabel": "Visualize and test with Pre-Visualization",
-        "shortDescription": "Generate dialogue audio and beat frames scene by scene. Share animatics for approval before final video spend.",
-        "detailedDescription": "Pre-Vis Studio generates direction, audio, and beat frames per scene — checkpoints that minimize costly redos when characters or tone change. Share the player for collaboration; the full animatic can be your final deliverable for many projects.",
+        "shortDescription": "Generate dialogue audio and shot frames scene by scene. Share animatics for approval before final video spend.",
+        "detailedDescription": "Pre-Vis Studio generates direction, audio, and shot frames per scene — checkpoints that minimize costly redos when characters or tone change. Share the player for collaboration; the full animatic can be your final deliverable for many projects.",
         "media": "previs-player"
       },
       {
@@ -1384,7 +1384,7 @@
       {
         "id": "animation",
         "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {
@@ -1526,11 +1526,11 @@
     "beatFirst": {
       "id": 15,
       "title": "Beat-First Video Pipeline",
-      "description": "Approve pre-vis beats and Shot Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
+      "description": "Approve pre-vis shots and Shot Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
       "keyFeatures": [
         "Pre-vis Agent for review — share beats before heavy render",
         "Shot Frames lock composition — Reference Library continuity",
-        "F2V per beat — generate video from approved frames",
+        "F2V per shot — generate video from approved frames",
         "Continuous EXT chains — native +7s steps for long dialogue within a beat",
         "Mixer timing and streams — open Screening Room to assemble and publish"
       ],
@@ -1632,7 +1632,7 @@
         "description": "The Writer's Room and Motion sections guide Foundation → Pre-Vis → Footage → Mixer → Streams. Scene-by-scene checkpoints minimize redos; Screening Room handles preview, assembly, and publishing.",
         "keyFeatures": [
           "Writer's Room — script, voices, scene audio, Audience Resonance Analysis",
-          "Pre-Vis — direction, audio, and beat frames per scene with share links",
+          "Pre-Vis — direction, audio, and shot frames per scene with share links",
           "Motion — Footage, Mixer, and Streams without leaving Production Studio",
           "Screening Room — scene preview, master assembly, screenings, and YouTube publish"
         ],
@@ -1783,7 +1783,7 @@
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored beat frames per scene, prompted from locked direction and ready to share in the Screening Room.",
+          "desc": "Fully voiced, scored shot frames per scene, prompted from locked direction and ready to share in the Screening Room.",
           "time": "Quality first"
         },
         {
@@ -1823,7 +1823,7 @@
       "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
         "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
         "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
         "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]

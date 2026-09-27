@@ -4375,6 +4375,16 @@ function SceneCard({
     | 'mixer'
     | 'streams'
   const [activeSceneTab, setActiveSceneTab] = useState<ProductionWorkflowTab>('direction')
+  const sceneWorkflowSectionLabel: Record<ProductionWorkflowTab, string> = {
+    direction: 'Direction',
+    beats: 'Audio',
+    music: 'Music',
+    references: 'References',
+    previs: 'Stills',
+    video: 'Clips',
+    mixer: 'Mixer',
+    streams: 'Streams',
+  }
 
   const sceneBeatsForTabs = useMemo(() => getSceneBeats(scene), [scene])
   const [directBeatId, setDirectBeatId] = useState<string | null>(null)
@@ -5507,7 +5517,7 @@ function SceneCard({
                 <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
                   <div className="text-xs space-y-0.5">
                     <p>
-                      {(navigationMark?.beatCount ?? 0)} {(navigationMark?.beatCount ?? 0) === 1 ? 'beat' : 'beats'} × 10s
+                      {(navigationMark?.beatCount ?? 0)} {(navigationMark?.beatCount ?? 0) === 1 ? 'shot' : 'shots'} × 10s
                     </p>
                     <p>Duration: {formatNavigationClock(sceneDurationSeconds)}</p>
                     <p>Starts at: {formatNavigationClock(timelineStartSeconds)}</p>
@@ -5844,12 +5854,12 @@ function SceneCard({
                       {laneBusy ? (
                         <>
                           <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                          Run All Agents...
+                          Scene Agent...
                         </>
                       ) : (
                         <>
                           <Zap className="w-3 h-3 mr-1" />
-                          Run All Agents
+                          Scene Agent
                           {(!voicesReady || !hasNarrationVoice) && (
                             <span className="ml-1 text-amber-400">⚠</span>
                           )}
@@ -6307,13 +6317,16 @@ function SceneCard({
                       onValueChange={(v) => setActiveSceneTab(v as ProductionWorkflowTab)}
                       className="w-full"
                     >
-                      <div className="overflow-x-auto pb-1 -mx-1 px-1">
-                        <TabsList className="inline-flex h-auto w-max min-w-0 flex-nowrap gap-0.5 p-1">
-                          <TabsTrigger value="direction" className="text-xs gap-1.5 px-2.5 py-1.5">
+                      <div className="overflow-x-auto rounded-lg border border-indigo-500/40 bg-slate-950">
+                        <TabsList
+                          aria-label="Scene workflow"
+                          className="inline-flex h-auto w-max min-w-full flex-nowrap gap-0.5 border-0 bg-transparent p-1 text-slate-400"
+                        >
+                          <TabsTrigger value="direction" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
                             <Film className="w-3.5 h-3.5 shrink-0" />
                             Direction
                           </TabsTrigger>
-                          <TabsTrigger value="beats" className="text-xs gap-1.5 px-2.5 py-1.5">
+                          <TabsTrigger value="beats" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
                             <Volume2 className="w-3.5 h-3.5 shrink-0" />
                             Audio
                             {sceneBeatsForTabs.length > 0 && (
@@ -6323,11 +6336,11 @@ function SceneCard({
                               </span>
                             )}
                           </TabsTrigger>
-                          <TabsTrigger value="music" className="text-xs gap-1.5 px-2.5 py-1.5">
+                          <TabsTrigger value="music" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
                             <Music className="w-3.5 h-3.5 shrink-0" />
                             Music
                           </TabsTrigger>
-                          <TabsTrigger value="references" className="text-xs gap-1.5 px-2.5 py-1.5">
+                          <TabsTrigger value="references" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
                             <Library className="w-3.5 h-3.5 shrink-0" />
                             References
                             {sceneRequiredReferences.length > 0 && (
@@ -6339,7 +6352,7 @@ function SceneCard({
                               </span>
                             )}
                           </TabsTrigger>
-                          <TabsTrigger value="previs" className="text-xs gap-1.5 px-2.5 py-1.5">
+                          <TabsTrigger value="previs" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
                             <Clapperboard className="w-3.5 h-3.5 shrink-0" />
                             Stills
                             {preVisFrameStats.total > 0 && (
@@ -6348,19 +6361,22 @@ function SceneCard({
                               </span>
                             )}
                           </TabsTrigger>
-                          <TabsTrigger value="video" className="text-xs gap-1.5 px-2.5 py-1.5">
+                          <TabsTrigger value="video" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
                             <Film className="w-3.5 h-3.5 shrink-0" />
                             Clips
                           </TabsTrigger>
-                          <TabsTrigger value="mixer" className="text-xs gap-1.5 px-2.5 py-1.5">
+                          <TabsTrigger value="mixer" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
                             <Clapperboard className="w-3.5 h-3.5 shrink-0" />
                             Mixer
                           </TabsTrigger>
-                          <TabsTrigger value="streams" className="text-xs gap-1.5 px-2.5 py-1.5">
+                          <TabsTrigger value="streams" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
                             <ListVideo className="w-3.5 h-3.5 shrink-0" />
                             Streams
                           </TabsTrigger>
                         </TabsList>
+                        <p className="border-t border-indigo-500/25 px-3 py-1.5 text-xs font-semibold tracking-wide text-indigo-100">
+                          {sceneWorkflowSectionLabel[activeSceneTab]}
+                        </p>
                       </div>
 
                   {/* Direction */}

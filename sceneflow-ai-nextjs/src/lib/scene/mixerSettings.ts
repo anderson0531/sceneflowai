@@ -2,6 +2,7 @@ import type {
   AudioTrackConfig,
   MixerAudioTracks,
   MixerDialogueClipConfig,
+  MixerMusicShotConfig,
   MixerSegmentAudioConfig,
   SceneMixerCollapsedSections,
   SceneMixerLanguageSettings,
@@ -73,10 +74,15 @@ export const DEFAULT_MIXER_SEGMENT_AUDIO_CONFIG: MixerSegmentAudioConfig = {
   volume: 1.0,
 }
 
+export const DEFAULT_MIXER_MUSIC_SHOT_CONFIG: MixerMusicShotConfig = {
+  volume: 1,
+}
+
 export interface ResolvedMixerSettings {
   audioTracks: MixerAudioTracks
   segmentAudioConfigs: Record<string, MixerSegmentAudioConfig>
   dialogueClipConfigs: Record<string, MixerDialogueClipConfig>
+  musicShotConfigs: Record<string, MixerMusicShotConfig>
   masterSegmentVolume: number
   resolution: '720p' | '1080p' | '4K'
   preserveBackgroundStem: boolean
@@ -113,6 +119,24 @@ function mergeSegmentAudioConfigs(
     out[segmentId] = {
       ...DEFAULT_MIXER_SEGMENT_AUDIO_CONFIG,
       ...partial,
+    }
+  }
+  return out
+}
+
+function mergeMusicShotConfigs(
+  saved?: Record<string, Partial<MixerMusicShotConfig>>
+): Record<string, MixerMusicShotConfig> {
+  if (!saved) return {}
+  const out: Record<string, MixerMusicShotConfig> = {}
+  for (const [shotId, partial] of Object.entries(saved)) {
+    if (!shotId) continue
+    const volume = partial?.volume
+    out[shotId] = {
+      volume:
+        typeof volume === 'number' && Number.isFinite(volume)
+          ? Math.max(0, Math.min(1, volume))
+          : DEFAULT_MIXER_MUSIC_SHOT_CONFIG.volume,
     }
   }
   return out
@@ -159,6 +183,7 @@ export function mergeMixerSettings(saved?: SceneMixerSettings | null): ResolvedM
     audioTracks: mergeAudioTracks(saved?.audioTracks),
     segmentAudioConfigs: mergeSegmentAudioConfigs(saved?.segmentAudioConfigs),
     dialogueClipConfigs: mergeDialogueClipConfigs(saved?.dialogueClipConfigs),
+    musicShotConfigs: mergeMusicShotConfigs(saved?.musicShotConfigs),
     masterSegmentVolume: saved?.masterSegmentVolume ?? 0.8,
     resolution: saved?.resolution ?? '1080p',
     preserveBackgroundStem: saved?.preserveBackgroundStem ?? true,
@@ -187,6 +212,7 @@ export interface MixerSettingsPersistInput {
   audioTracks: MixerAudioTracks
   segmentAudioConfigs: Record<string, MixerSegmentAudioConfig>
   dialogueClipConfigs: Record<string, MixerDialogueClipConfig>
+  musicShotConfigs?: Record<string, MixerMusicShotConfig>
   masterSegmentVolume: number
   resolution: '720p' | '1080p' | '4K'
   preserveBackgroundStem: boolean
@@ -204,6 +230,7 @@ export function buildPersistedMixerSettings(input: MixerSettingsPersistInput): S
     audioTracks: input.audioTracks,
     segmentAudioConfigs: input.segmentAudioConfigs,
     dialogueClipConfigs: input.dialogueClipConfigs,
+    musicShotConfigs: input.musicShotConfigs ?? {},
     masterSegmentVolume: input.masterSegmentVolume,
     resolution: input.resolution,
     productionTarget: input.productionTarget,

@@ -41,7 +41,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
+        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -285,11 +285,11 @@
     "title": "مسار عمل فيديو يرتكز على الإيقاع",
     "subtitle": "اعتمد العمل قبل المعالجة النهائية — لا تعتمد على إعادة التوليد العشوائي (مثل ماكينات القمار)",
     "intro": "لا حاجة لعمليات توليد تعتمد على التخمين والتجربة؛ إذ يمكنك معاينة المظهر والموافقة عليه قبل أن تستهلك SceneFlow الرصيد في إنتاج الفيديو النهائي.",
-    "description": "تُنظّم SceneFlow عملية الموافقة البصرية في كل مرحلة: Pre-vis Agent للمراجعة، وShot Frames لتثبيت التكوين البصري، ثم مرحلة F2V لكل إيقاع (beat). وبذلك، يمكنك ضبط المظهر بدقة قبل استنزاف الرصيد في معالجة الانحرافات (drift) والهلوسات البصرية.",
+    "description": "تُنظّم SceneFlow عملية الموافقة البصرية في كل مرحلة: Pre-vis Agent للمراجعة، وShot Frames لتثبيت التكوين البصري، ثم مرحلة F2V لكل لقطة (shot). وبذلك، يمكنك ضبط المظهر بدقة قبل استنزاف الرصيد في معالجة الانحرافات (drift) والهلوسات البصرية.",
     "steps": [
       "Pre-vis Agent — شارك مقاطع إيقاعية (مع عناصر مرئية) للمراجعة في غضون دقائق",
       "Shot Frames — تثبيت بداية/نهاية التركيب مع استمرارية Reference Library",
-      "تحويل الإطارات إلى فيديو (F2V) لكل نبضة — إنشاء الفيديو من إطارات معتمدة، وليس من أوامر نصية عشوائية.",
+      "تحويل الإطارات إلى فيديو (F2V) لكل لقطة — إنشاء الفيديو من إطارات معتمدة، وليس من أوامر نصية عشوائية.",
       "سلسلة تمديد (EXT) متصلة — خطوات تمديد أصلية بزيادات قدرها 7 ثوانٍ لمقاطع الحوار الطويلة.",
       "Production Mixer — تصدير التوقيت والصوت والبث إلى Screening Room"
     ],
@@ -684,7 +684,7 @@
         ],
         "keyFeatures": [
           "Foundation — النص، الأصوات، صوت المشهد، Audience Resonance",
-          "التصور المسبق (Pre-Vis) — الإخراج والصوت وإطارات اللقطات المفصلية (beat frames) لكل مشهد، مع روابط للمشاركة.",
+          "التصور المسبق (Pre-Vis) — الإخراج والصوت وإطارات اللقطات المفصلية (shot frames) لكل مشهد، مع روابط للمشاركة.",
           "التصوير — اللقطات، والمزج، والبث المباشر، كل ذلك دون مغادرة بيئة الإنتاج.",
           "Screening Room — معاينة المشاهد، التجميع النهائي، العروض، والنشر على يوتيوب"
         ]
@@ -745,8 +745,8 @@
       {
         "id": "التصور المسبق",
         "stepLabel": "التصور والاختبار باستخدام التصور المسبق",
-        "shortDescription": "قم بإنشاء الصوتيات الخاصة بالحوار وإطارات المشاهد الرئيسية (beat frames) لكل مشهد على حدة. شارك النماذج الأولية المتحركة (animatics) للحصول على الموافقة قبل البدء في الإنفاق الفعلي على الفيديو النهائي.",
-        "detailedDescription": "يُنشئ Pre-Vis Studio عناصر الإخراج والصوت وإطارات التكوين الأساسية (beat frames) لكل مشهد، وهي بمثابة نقاط مرجعية تحد من الحاجة إلى إعادة العمل المكلفة عند تغيير الشخصيات أو النبرة الفنية. كما يمكنك مشاركة أداة العرض للتعاون مع الآخرين، ويمكن أن يمثل \"الأنيماتيك\" (animatic) الكامل المنتج النهائي للعديد من المشاريع.",
+        "shortDescription": "قم بإنشاء الصوتيات الخاصة بالحوار وإطارات المشاهد الرئيسية (shot frames) لكل مشهد على حدة. شارك النماذج الأولية المتحركة (animatics) للحصول على الموافقة قبل البدء في الإنفاق الفعلي على الفيديو النهائي.",
+        "detailedDescription": "يُنشئ Pre-Vis Studio عناصر الإخراج والصوت وإطارات التكوين الأساسية (shot frames) لكل مشهد، وهي بمثابة نقاط مرجعية تحد من الحاجة إلى إعادة العمل المكلفة عند تغيير الشخصيات أو النبرة الفنية. كما يمكنك مشاركة أداة العرض للتعاون مع الآخرين، ويمكن أن يمثل \"الأنيماتيك\" (animatic) الكامل المنتج النهائي للعديد من المشاريع.",
         "media": "مشغل المعاينة المسبقة"
       },
       {
@@ -808,11 +808,11 @@
     "viewDetails": "عرض التفاصيل",
     "beatFirst": {
       "title": "مسار عمل فيديو يرتكز على الإيقاع",
-      "description": "اعتمد مراحل التصور المسبق (pre-vis beats) وShot Frames قبل مرحلة F2V؛ لتقليل عمليات إعادة التوليد العشوائية الناتجة عن \"الهلوسة\" والانحراف البصري. مسار عمل واحد ومنظم يمتد من مرحلة المراجعة وحتى المقطع النهائي.",
+      "description": "اعتمد مراحل التصور المسبق (pre-vis shots) وShot Frames قبل مرحلة F2V؛ لتقليل عمليات إعادة التوليد العشوائية الناتجة عن \"الهلوسة\" والانحراف البصري. مسار عمل واحد ومنظم يمتد من مرحلة المراجعة وحتى المقطع النهائي.",
       "keyFeatures": [
         "Pre-vis Agent للمراجعة — مشاركة الإيقاعات قبل مرحلة الرندر (المعالجة) المكثفة",
         "Shot Frames تركيبة القفل — Reference Library الاستمرارية",
-        "F2V لكل نبضة — إنشاء فيديو من الإطارات المعتمدة",
+        "F2V لكل لقطة — إنشاء فيديو من الإطارات المعتمدة",
         "سلاسل EXT متصلة — خطوات +7s أصلية للحوارات الطويلة ضمن وحدة درامية (beat)",
         "توقيتات المُزج والتدفقات — افتح Screening Room للتجميع والنشر"
       ],
@@ -914,7 +914,7 @@
         "description": "تُوجِّه علامتا التبويب \"Script\" (السيناريو) و\"Shoot\" (التصوير) سير العمل عبر المراحل التالية: Foundation (الأساس) ← Pre-Vis (التصور المسبق) ← Footage (اللقطات) ← Mixer (المزج) ← Streams (البث). وتعمل نقاط التحقق الخاصة بكل مشهد على تقليل الحاجة لإعادة العمل، بينما تتولى Screening Room مهام المعاينة والتجميع والنشر.",
         "keyFeatures": [
           "Foundation — النص، الأصوات، صوت المشهد، Audience Resonance",
-          "التصور المسبق (Pre-Vis) — الإخراج والصوت وإطارات اللقطات المفصلية (beat frames) لكل مشهد، مع روابط للمشاركة.",
+          "التصور المسبق (Pre-Vis) — الإخراج والصوت وإطارات اللقطات المفصلية (shot frames) لكل مشهد، مع روابط للمشاركة.",
           "التصوير — اللقطات، والمزج، والبث المباشر، كل ذلك دون مغادرة بيئة الإنتاج.",
           "Screening Room — معاينة المشاهد، التجميع النهائي، العروض، والنشر على يوتيوب"
         ],
@@ -1061,11 +1061,11 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
+          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
@@ -1105,7 +1105,7 @@
       "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
         "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
         "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
         "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
@@ -1449,7 +1449,7 @@
       {
         "id": "animation",
         "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {

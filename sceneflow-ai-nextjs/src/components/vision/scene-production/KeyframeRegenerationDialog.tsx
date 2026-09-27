@@ -133,7 +133,7 @@ const PACING_PRESETS = [
   {
     id: 'dynamic',
     label: 'Dynamic (Audio-Matched)',
-    description: 'Varies based on narration/dialogue beats',
+    description: 'Varies based on narration/dialogue shots',
     icon: '🎵',
     segmentDuration: 0, // Auto-calculated
   },

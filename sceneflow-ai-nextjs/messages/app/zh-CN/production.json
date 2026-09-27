@@ -60,7 +60,7 @@
     "importTranslationDescription": "将翻译后的脚本粘贴到下面。格式应与导出的格式匹配：",
     "importTranslationFormat": "[1] TRANSLATED_LABEL：翻译文本",
     "importTranslationPlaceholder": "将翻译后的脚本粘贴到此处...",
-    "deleteBeat": "删除节拍",
+    "deleteBeat": "删除镜头",
     "deleteBeatDescription": "您确定要删除该片段吗？此操作无法撤消。",
     "deleteScene": "删除场景 {number}",
     "deleteSceneDescription": "这将永久删除该场景和所有相关资产。",
@@ -172,7 +172,7 @@
   },
   "expressAudio": {
     "title": "Audio Agent",
-    "description": "同时为此场景生成对话、音效和音乐。对话使用 TTS，动作节拍使用 Veo 原生音频，音乐使用 Lyria。",
+    "description": "同时为此场景生成对话、音效和音乐。对话使用 TTS，动作镜头使用 Veo 原生音频，音乐使用 Lyria。",
     "scope": "范围",
     "scopeMissing": "仅缺少",
     "scopeAll": "全部（再生）",
@@ -217,7 +217,7 @@
     "confirm": "Stills Agent"
   },
   "expressGenerateAll": {
-    "title": "Run All Agents",
+    "title": "Scene Agent",
     "description": "并行运行 Audio Agent 和 Stills Agent。默认值与每个管道的“仅缺少”选择相匹配 - 如果需要重新生成，请调整范围。",
     "audioSection": "声音的",
     "framesSection": "镜框",
@@ -242,18 +242,18 @@
     "missing": "丢失的",
     "imageCredits": "图片来源（预计）：{credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "跑步...",
-    "confirm": "Run All Agents"
+    "confirm": "Scene Agent"
   },
   "retake": {
     "title": "替换现有的镜头？",
-    "description": "该节拍已生成视频。打开生成器或上传将添加新镜头并可能消耗积分。",
+    "description": "该镜头已生成视频。打开生成器或上传将添加新镜头并可能消耗积分。",
     "continue": "继续"
   },
   "reset": {
     "title": "重置场景制作？",
     "sceneLabel": "场景{number}",
     "sceneHeading": "场景 {number} · {heading}",
-    "warning": "这将删除该场景的整个<bold>节拍时间线</bold>并且无法撤消。您将需要从头开始再次运行分段设置。",
+    "warning": "这将删除该场景的整个<bold>镜头时间线</bold>并且无法撤消。您将需要从头开始再次运行分段设置。",
     "whatYouWillLose": "你会失去什么",
     "segmentCount": "{count, plural, one {# shot} other {# shots}}",
     "segmentDetail": "计时、方向注释、Veo 提示和对话到片段映射",
@@ -261,7 +261,7 @@
     "keyframeDetailAcross": "跨越 {count, plural, one {# shot} other {# shots}}（开始/结束帧）",
     "keyframeDetailDefault": "用于视频生成的开始和结束帧静止图像",
     "videoClip": "{count, plural, one {# generated video clip} other {# generated video clips}}",
-    "videoDetail": "节拍级 Veo / I2V 输出和时间轴上的活动片段",
+    "videoDetail": "镜头级 Veo / I2V 输出和时间轴上的活动片段",
     "imageClip": "{count, plural, one {# image clip} other {# image clips}}",
     "imageClipDetail": "上传或生成的静态资产附加到分段",
     "alternateTake": "{count, plural, one {# alternate take} other {# alternate takes}}",
@@ -269,7 +269,7 @@
     "sceneRender": "场景渲染/制作流",
     "sceneRenderStreams": "{count, plural, one {# language or output stream} other {# language or output streams}} 链接到此场景",
     "sceneRenderDefault": "制作混音器的最终混合场景输出",
-    "beatStructureOnly": "仅节拍结构",
+    "beatStructureOnly": "仅镜头结构",
     "beatStructureDetail": "尚未检测到关键帧或剪辑，但分割进度仍将被清除",
     "notDeleted": "<bold>未删除：</bold>脚本文本、场景对话、旁白、音乐/SFX 音频、场景静态图像和角色参考。",
     "resetting": "正在重置...",
@@ -291,7 +291,7 @@
   },
   "segments": {
     "addBeat": {
-      "title": "添加节拍",
+      "title": "添加镜头",
       "description": "通过选择镜头类型、场景元素和对话来构建视频生成提示。 Veo 3.1 将直接根据提示生成画外音和 SFX。",
       "sceneBadge": "场景{sceneNumber}",
       "includeSceneDirection": "包括场景方向",
@@ -328,7 +328,7 @@
       "startTime": "开始时间",
       "endTime": "结束时间",
       "method": "方法",
-      "addAction": "添加节拍"
+      "addAction": "添加镜头"
     },
     "edit": {
       "title": "编辑段",
@@ -344,7 +344,7 @@
       "i2vHint": "将使用场景帧作为起始图像"
     },
     "delete": {
-      "title": "删除 Beat {number}？",
+      "title": "删除 Shot {number}？",
       "description": "此操作无法撤消。",
       "segmentLabel": "部分",
       "segmentOf": "{total} 的#{index}",
@@ -353,21 +353,21 @@
       "lastBeatWarning": "警告：这是场景中唯一的片段。删除它将使场景中没有任何关键帧。",
       "shiftWarning": "删除该段将移动所有后续段。时序和序列索引将自动重新计算。",
       "deleting": "正在删除...",
-      "deleteBeat": "删除节拍"
+      "deleteBeat": "删除镜头"
     },
     "addType": {
-      "title": "将节拍添加到场景 {sceneNumber}",
+      "title": "将镜头添加到场景 {sceneNumber}",
       "description": "添加基于关键帧的片段以用于 AI 视频生成。对于电影元素（标题、转场、B-roll），请使用“电影元素”按钮。",
       "tabType": "类型",
       "tabPosition": "位置",
       "tabPrompt": "迅速的",
       "defaultDuration": "{seconds} 默认",
       "orDivider": "或者",
-      "regenerateAll": "重新生成所有节拍",
+      "regenerateAll": "重新生成所有镜头",
       "regenerateAllCount": "{count} 段",
       "regenerateAllHint": "使用 AI 重新分析场景并生成新的片段。这将取代现有的部分。",
       "insertPosition": "插入位置",
-      "referenceBeat": "参考节拍",
+      "referenceBeat": "参考镜头",
       "selectSegment": "选择段",
       "beatOption": "击败 {number} ({duration}s)",
       "duration": "期间",
@@ -389,7 +389,7 @@
       "addNamed": "添加 {name}",
       "types": {
         "standard": {
-          "name": "标准节拍",
+          "name": "标准镜头",
           "description": "具有用于 AI 视频生成的开始/结束关键帧的场景片段。完全控制镜头构图。"
         },
         "extend": {
@@ -570,29 +570,29 @@
         "description": "压缩、隔离"
       }
     },
-    "generateTitle": "生成场景节拍",
-    "regenerateSceneTitle": "重新生成场景节拍",
+    "generateTitle": "生成场景镜头",
+    "regenerateSceneTitle": "重新生成场景镜头",
     "generateDescription": "配置如何为此场景创建片段。",
-    "beatsPreview": "节拍",
+    "beatsPreview": "镜头",
     "tabTiming": "定时",
     "tabReferences": "参考",
     "tabStyle": "风格",
     "narrationDriven": "叙述驱动的分割",
     "narrationDrivenHint": "创建与叙述相一致并说明叙述的片段。每个片段都成为画外音的电影背景。",
-    "targetBeatDuration": "目标节拍持续时间",
-    "addTitle": "添加节拍",
+    "targetBeatDuration": "目标镜头持续时间",
+    "addTitle": "添加镜头",
     "addNewTitle": "添加新段",
     "addDescription": "创建新的视觉片段以延长场景时间轴。",
     "addDuration": "持续时间（秒）",
     "addDurationHint": "建议：3-5 秒以实现平稳节奏",
-    "addAction": "添加节拍",
+    "addAction": "添加镜头",
     "editTitle": "编辑段",
     "editBadge": "场景 {sceneNumber} • 击败 {beatNumber}",
     "editDescription": "修改片段的提示、持续时间和生成设置。",
     "shotConfiguration": "镜头配置",
     "shotType": "射击类型",
     "cameraMovement": "相机运动",
-    "deleteTitle": "删除 Beat {number}？",
+    "deleteTitle": "删除 Shot {number}？",
     "deleteDescription": "此操作无法撤消。",
     "segmentLabel": "部分",
     "segmentOf": "{total} 的#{index}",
@@ -601,16 +601,16 @@
     "lastBeatWarning": "警告：这是场景中唯一的片段。删除它将使场景中没有任何关键帧。",
     "shiftWarning": "删除该段将移动所有后续段。时序和序列索引将自动重新计算。",
     "deleting": "正在删除...",
-    "deleteBeat": "删除节拍",
-    "regenerateTitle": "再生节拍",
-    "regenerateDescription": "清除所有片段并返回节拍生成器重新开始。",
-    "beats": "节拍",
+    "deleteBeat": "删除镜头",
+    "regenerateTitle": "再生镜头",
+    "regenerateDescription": "清除所有片段并返回镜头生成器重新开始。",
+    "beats": "镜头",
     "totalDuration": "总持续时间",
     "anchoredFrames": "锚定框架",
     "anchoredCount": "{anchored} / {total}",
     "regenerateAssetsWarning": "警告：这将删除所有片段，包括生成的关键帧和视频资源。此操作无法撤消。",
-    "regenerateEmptyWarning": "所有当前段都将被删除。您将被带到 Beat Builder 以使用新设置进行配置和重新生成。",
-    "regenerateNextHint": "Beat Builder 将打开，其中包含总持续时间、分段计数、焦点模式和自定义方向的控件。",
+    "regenerateEmptyWarning": "所有当前段都将被删除。您将被带到 Shot Builder 以使用新设置进行配置和重新生成。",
+    "regenerateNextHint": "Shot Builder 将打开，其中包含总持续时间、分段计数、焦点模式和自定义方向的控件。",
     "deleteAndRegenerate": "删除并重新生成",
     "regenerate": "再生",
     "addTypeTitle": "添加特殊段",
@@ -654,9 +654,9 @@
       }
     },
     "alignment": {
-      "title": "Beat {number} 音频对齐",
+      "title": "Shot {number} 音频对齐",
       "description": "将此片段与对话和音轨对齐，以实现精确的计时。",
-      "beatTiming": "节拍时间",
+      "beatTiming": "镜头时间",
       "aligned": "对齐",
       "nearlyAligned": "几乎对齐",
       "misaligned": "未对准",
@@ -716,9 +716,9 @@
     "clipLabel": "{track} 夹子",
     "start": "开始于： {time}",
     "clipDuration": "持续时间：{time}",
-    "alignmentTitle": "Beat {number} 音频对齐",
+    "alignmentTitle": "Shot {number} 音频对齐",
     "alignmentDescription": "将此片段与对话和音轨对齐，以实现精确的计时。",
-    "beatTiming": "节拍时间",
+    "beatTiming": "镜头时间",
     "aligned": "对齐",
     "nearlyAligned": "几乎对齐",
     "misaligned": "未对准",
@@ -754,7 +754,7 @@
     "stream": {
       "title": "导出流",
       "description": "场景 {number} — 用于草稿的快速 (WebM)、用于交付的广播 (MP4) 或用于长场景的云。",
-      "videoSequence": "视频序列（{count} 节拍）",
+      "videoSequence": "视频序列（{count} 镜头）",
       "unmuteAll": "全部取消静音",
       "muteAll": "全部静音",
       "beatLabel": "击败{number}",
@@ -937,7 +937,7 @@
       "loseEditsTitle": "您将丢失手动制作编辑：",
       "loseScriptTweaks": "脚本行调整尚未锁定",
       "loseStoryboard": "故事板框架和生成的资产",
-      "loseBeatAdjustments": "节拍级别制作调整",
+      "loseBeatAdjustments": "镜头级别制作调整",
       "artStyle": "艺术风格",
       "aspectRatio": "纵横比",
       "reimagineInBlueprint": "在 Blueprint 中重新构想"
@@ -965,16 +965,16 @@
     },
     "beatReferences": {
       "title": "回顾参考 — 场景 {number}",
-      "description": "SceneFlow 自动选择此节拍的参考。生成前确认或调整。",
+      "description": "SceneFlow 自动选择此镜头的参考。生成前确认或调整。",
       "beatKindAction": "行动",
       "beatKindNarration": "旁白",
       "beatKindDialogue": "对话",
-      "beatLabel": "节拍：{kind}",
+      "beatLabel": "镜头：{kind}",
       "autoSelected": "自动选择：{summary}",
       "locationMatchedAssignment": "位置与场景分配相匹配",
       "locationMatchedHeading": "位置与场景标题匹配",
       "locationReference": "位置参考",
-      "pickLocation": "为此节拍选择一个环境参考（用于视觉一致性）。",
+      "pickLocation": "为此镜头选择一个环境参考（用于视觉一致性）。",
       "match": "匹配",
       "selectedCount": "已选择 {count}",
       "saveSelection": "保存选择",
@@ -1026,15 +1026,15 @@
       "anomalyUnknown": "来源不明"
     },
     "regenerateBeats": {
-      "title": "再生节拍",
-      "description": "清除所有片段并返回节拍生成器重新开始。",
-      "beats": "节拍",
+      "title": "再生镜头",
+      "description": "清除所有片段并返回镜头生成器重新开始。",
+      "beats": "镜头",
       "totalDuration": "总持续时间",
       "anchoredFrames": "锚定框架",
       "anchoredCount": "{anchored} / {total}",
       "assetsWarning": "警告：这将删除所有片段，包括生成的关键帧和视频资源。此操作无法撤消。",
-      "emptyWarning": "所有当前段都将被删除。您将被带到 Beat Builder 以使用新设置进行配置和重新生成。",
-      "nextHint": "Beat Builder 将打开，其中包含总持续时间、分段计数、焦点模式和自定义方向的控件。",
+      "emptyWarning": "所有当前段都将被删除。您将被带到 Shot Builder 以使用新设置进行配置和重新生成。",
+      "nextHint": "Shot Builder 将打开，其中包含总持续时间、分段计数、焦点模式和自定义方向的控件。",
       "deleteAndRegenerate": "删除并重新生成",
       "regenerate": "再生"
     },
@@ -1049,11 +1049,11 @@
       "tabDirection": "场景方向",
       "audioAlignment": "音频对齐",
       "narrationDriven": "叙事驱动",
-      "narrationDrivenHint": "将剪辑与旁白节拍对齐",
+      "narrationDrivenHint": "将剪辑与旁白镜头对齐",
       "dialogueDriven": "对话驱动",
       "dialogueDrivenHint": "使剪辑与对话保持一致",
       "pacingStyle": "节奏风格",
-      "beatCount": "节拍计数",
+      "beatCount": "镜头计数",
       "auto": "汽车",
       "manual": "手动的",
       "basedOnPacing": "基于 {pacing} 起搏和 {basis}",
@@ -1093,7 +1093,7 @@
         },
         "dynamic": {
           "label": "动态（音频匹配）",
-          "description": "根据旁白/对话节拍而变化"
+          "description": "根据旁白/对话镜头而变化"
         }
       },
       "shotTypes": {
@@ -1229,7 +1229,7 @@
     "retaking": "重考…",
     "approveAndRetake": "批准并重新参加",
     "keyframeRegenTitle": "重新生成关键帧",
-    "keyframeRegenDescription": "使用更新的方向重建此节拍的开始和结束帧。"
+    "keyframeRegenDescription": "使用更新的方向重建此镜头的开始和结束帧。"
   },
   "budget": {
     "title": "生产预算管理",
@@ -1261,8 +1261,8 @@
     "languagesBanner": "{count} 语言：原文 + {extra} 翻译的 {extra, plural, one {version} other {versions}}。添加〜{credits} 翻译和重新配音学分。",
     "sceneConfiguration": "场景配置",
     "numberOfScenes": "场景数",
-    "beatsPerScene": "每个场景的节拍",
-    "takesPerBeat": "每节拍次数（再生）",
+    "beatsPerScene": "每个场景的镜头",
+    "takesPerBeat": "每镜头次数（再生）",
     "videoEngine": "视频引擎",
     "clipDuration": "剪辑持续时间（秒）",
     "clipDurationHint": "捕捉到所选引擎的有效持续时间",
@@ -1271,7 +1271,7 @@
     "forVideo": "用于视频",
     "imagesByQuality": "图像质量",
     "excludedByok": "排除 (BYOK)",
-    "draftBeatFrames": "草稿/节拍帧 ({credits} cr)",
+    "draftBeatFrames": "草稿/镜头帧 ({credits} cr)",
     "retakesPerDraft": "每个草稿框重拍次数",
     "finalStoryboardImages": "最终故事板图像 ({credits} cr)",
     "characterHeadshots": "角色头像 ({credits} cr)",
@@ -1337,19 +1337,19 @@
   },
   "budgetManager": {
     "title": "生产预算经理",
-    "subtitle": "根据固定的场景和节拍进行计划。草稿与最终版本驱动成本——提供商的选择保持创造性。",
+    "subtitle": "根据固定的场景和镜头进行计划。草稿与最终版本驱动成本——提供商的选择保持创造性。",
     "subtitleWithTitle": "{title} 预算计划",
     "currentBalance": "当前余额",
     "creditsCount": "{count} 积分",
     "byokTitle": "带上您自己的钥匙 (BYOK)",
     "byokDescription": "此预算计划不包括帧、视频和 Topaz。智力仍然很重要。",
     "scenes": "场景",
-    "beats": "节拍",
+    "beats": "镜头",
     "clipDuration": "夹子长度",
     "seconds": "{count}s",
     "progress": "完毕",
     "progressValues": "{frames}/{beats} 帧 · {videos}/{beats} 视频",
-    "scopeFixedHint": "场景和节拍计数来自 SFAIProduction_STUDIOTERM，并且在此处不可调整。",
+    "scopeFixedHint": "场景和镜头计数来自 SFAIProduction_STUDIOTERM，并且在此处不可调整。",
     "methodsTitle": "制作方法",
     "recommended": "受到推崇的",
     "methods": {
@@ -1380,9 +1380,9 @@
     "creditsPerFrame": "{credits} cr/车架",
     "creditsPerClip": "{credits} cr/{seconds}s",
     "creditsZero": "0铬",
-    "providerNote": "Kling vs Google 是在 Studio 中按节拍选择的，不会改变此预测。",
-    "frameIterations": "帧迭代/节拍",
-    "videoIterations": "视频迭代/节拍",
+    "providerNote": "Kling vs Google 是在 Studio 中按镜头选择的，不会改变此预测。",
+    "frameIterations": "帧迭代/镜头",
+    "videoIterations": "视频迭代/镜头",
     "frameIterationsHint": "默认为 {rate} 首次成功 (~1.25×)。",
     "videoIterationsHint": "默认为 {rate} 首次成功 (~1.11×)。",
     "topazTitle": "黄玉高档",
@@ -1416,6 +1416,6 @@
     },
     "setAsProjectBudget": "设置为项目预算（{credits} 学分）",
     "saving": "保存...",
-    "noBeatsYet": "在 SFAIProduction_STUDIOTERM 中添加场景和节拍以制定预算。"
+    "noBeatsYet": "在 SFAIProduction_STUDIOTERM 中添加场景和镜头以制定预算。"
   }
 }

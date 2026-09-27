@@ -41,7 +41,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
+        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -101,7 +101,7 @@
       },
       {
         "label": "Aprubahan bago ang pinal na video",
-        "detail": "Suriin ang mga pre-vis beat bago ka mag-render."
+        "detail": "Suriin ang mga pre-vis shot bago ka mag-render."
       },
       {
         "label": "Subukan muna ang iyong kuwento.",
@@ -285,11 +285,11 @@
     "title": "Proseso ng Paggawa ng Video na Nakabatay sa Beat",
     "subtitle": "Aprubahan bago i-render — hindi 'yung parang slot machine na basta na lang nag-a-generate muli.",
     "intro": "Hindi na kailangan ng pagsubok-at-pagkakamali sa paggawa. Maaari mong silipin at aprubahan ang magiging hitsura nito bago gamitin ng SceneFlow ang mga credit para sa pinal na video.",
-    "description": "Inaayos ng SceneFlow ang proseso ng pag-apruba sa visual sa bawat hakbang: Pre-vis Agent para sa pagsusuri, Shot Frames para i-lock ang komposisyon, at pagkatapos ay F2V sa bawat beat. Pinipino mo ang hitsura bago ka mag-aksaya ng mga credit sa drift at hallucinations.",
+    "description": "Inaayos ng SceneFlow ang proseso ng pag-apruba sa visual sa bawat hakbang: Pre-vis Agent para sa pagsusuri, Shot Frames para i-lock ang komposisyon, at pagkatapos ay F2V sa bawat shot. Pinipino mo ang hitsura bago ka mag-aksaya ng mga credit sa drift at hallucinations.",
     "steps": [
       "Pre-vis Agent — magbahagi ng mga audio-visual beat para suriin sa loob ng ilang minuto",
       "Shot Frames — i-lock ang simula/wakas ng komposisyon gamit ang continuity ng Reference Library",
-      "F2V bawat beat — bumuo ng video mula sa mga aprubadong frame, hindi sa mga blind prompt",
+      "F2V bawat shot — bumuo ng video mula sa mga aprubadong frame, hindi sa mga blind prompt",
       "Tuloy-tuloy na EXT chain — mga native na extension step na +7 segundo para sa mahahabang bahagi ng diyalogo",
       "Production Mixer — pag-export ng timing, audio, at stream patungo sa Screening Room"
     ],
@@ -684,7 +684,7 @@
         ],
         "keyFeatures": [
           "Foundation — iskrip, mga boses, audio ng eksena, Audience Resonance",
-          "Pre-Vis — direksyon, audio, at mga beat frame bawat eksena, kalakip ang mga link para sa pagbabahagi",
+          "Pre-Vis — direksyon, audio, at mga shot frame bawat eksena, kalakip ang mga link para sa pagbabahagi",
           "Mag-shoot — Footage, Mixer, at Streams nang hindi umaalis sa Production",
           "Screening Room — preview ng eksena, pagbuo ng master copy, mga screening, at pag-publish sa YouTube"
         ]
@@ -745,8 +745,8 @@
       {
         "id": "pre-visualization",
         "stepLabel": "I-visualize at subukan gamit ang pre-visualization",
-        "shortDescription": "Gumawa ng audio para sa mga diyalogo at mga beat frame para sa bawat eksena. Ibahagi ang mga animatic upang maaprubahan bago ilabas ang pinal na pondo para sa video.",
-        "detailedDescription": "Lumilikha ang Pre-Vis Studio ng direksyon, audio, at mga beat frame para sa bawat eksena—mga checkpoint na nagpapababa sa posibilidad ng magastos na pag-uulit sakaling magbago ang mga karakter o ang tono. Ibahagi ang player para sa kolaborasyon; ang buong animatic ay maaari na ring magsilbing pinal na output para sa maraming proyekto.",
+        "shortDescription": "Gumawa ng audio para sa mga diyalogo at mga shot frame para sa bawat eksena. Ibahagi ang mga animatic upang maaprubahan bago ilabas ang pinal na pondo para sa video.",
+        "detailedDescription": "Lumilikha ang Pre-Vis Studio ng direksyon, audio, at mga shot frame para sa bawat eksena—mga checkpoint na nagpapababa sa posibilidad ng magastos na pag-uulit sakaling magbago ang mga karakter o ang tono. Ibahagi ang player para sa kolaborasyon; ang buong animatic ay maaari na ring magsilbing pinal na output para sa maraming proyekto.",
         "media": "previs-player"
       },
       {
@@ -808,11 +808,11 @@
     "viewDetails": "Tingnan ang mga detalye",
     "beatFirst": {
       "title": "Proseso ng Paggawa ng Video na Nakabatay sa Beat",
-      "description": "Aprubahan ang mga pre-vis beat at Shot Frames bago ang F2V — mababawasan ang mga blind regeneration na dulot ng hallucination at visual drift. Isang organisadong proseso mula sa review hanggang sa final clip.",
+      "description": "Aprubahan ang mga pre-vis shot at Shot Frames bago ang F2V — mababawasan ang mga blind regeneration na dulot ng hallucination at visual drift. Isang organisadong proseso mula sa review hanggang sa final clip.",
       "keyFeatures": [
         "Pre-vis Agent para sa pagsusuri — ibahagi ang mga beat bago ang mabigat na rendering",
         "Shot Frames komposisyon ng lock — Reference Library pagpapatuloy",
-        "F2V bawat beat — bumuo ng video mula sa mga inaprubahang frame",
+        "F2V bawat shot — bumuo ng video mula sa mga inaprubahang frame",
         "Tuloy-tuloy na EXT chain — mga native na +7s step para sa mahahabang diyalogo sa loob ng isang beat",
         "Timing at mga stream ng mixer — buksan ang Screening Room upang buuin at i-publish"
       ],
@@ -914,7 +914,7 @@
         "description": "Pinapatnubayan ng mga tab na Script at Shoot ang daloy mula Foundation → Pre-Vis → Footage → Mixer → Streams. Binabawasan ng mga checkpoint sa bawat eksena ang pangangailangang ulitin ang trabaho; pinangangasiwaan naman ng Screening Room ang preview, assembly, at publishing.",
         "keyFeatures": [
           "Foundation — iskrip, mga boses, audio ng eksena, Audience Resonance",
-          "Pre-Vis — direksyon, audio, at mga beat frame bawat eksena, kalakip ang mga link para sa pagbabahagi",
+          "Pre-Vis — direksyon, audio, at mga shot frame bawat eksena, kalakip ang mga link para sa pagbabahagi",
           "Mag-shoot — Footage, Mixer, at Streams nang hindi umaalis sa Production",
           "Screening Room — preview ng eksena, pagbuo ng master copy, mga screening, at pag-publish sa YouTube"
         ],
@@ -1061,11 +1061,11 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
+          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
@@ -1105,7 +1105,7 @@
       "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
         "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
         "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
         "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
@@ -1449,7 +1449,7 @@
       {
         "id": "animation",
         "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {

@@ -609,7 +609,7 @@ export function SceneGallery({
                     ))}
                   </ul>
                 ) : isExpressRunning && expressProgress ? (
-                  `Direction → Audio → Storyboard • ${storyboardBeatProgress.complete}/${storyboardBeatProgress.total} beats • ${expressElapsedSec}s elapsed`
+                  `Direction → Audio → Storyboard • ${storyboardBeatProgress.complete}/${storyboardBeatProgress.total} shots • ${expressElapsedSec}s elapsed`
                 ) : scenesNeedingExpress === 0 ? (
                   'All scenes complete — open Run All Agents and enable Regenerate to redo'
                 ) : (

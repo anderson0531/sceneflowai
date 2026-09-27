@@ -41,7 +41,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
+        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -101,7 +101,7 @@
       },
       {
         "label": "Aprobar antes del vídeo final",
-        "detail": "Revise los ritmos previos a la visualización antes de renderizar"
+        "detail": "Revise los planos previos a la visualización antes de renderizar"
       },
       {
         "label": "Prueba tu historia primero",
@@ -285,11 +285,11 @@
     "title": "Flujo de trabajo de vídeo basado en el ritmo",
     "subtitle": "Aprueba antes de renderizar: nada de regeneración tipo máquina tragamonedas.",
     "intro": "Nada de generar contenido mediante prueba y error. Puedes previsualizar y aprobar el aspecto visual antes de que SceneFlow consuma créditos para el vídeo final.",
-    "description": "SceneFlow estructura la aprobación visual en cada etapa: Pre-vis Agent para la revisión, Shot Frames para fijar la composición y, posteriormente, F2V por *beat*. Así, refinas la estética antes de consumir créditos en desviaciones y alucinaciones.",
+    "description": "SceneFlow estructura la aprobación visual en cada etapa: Pre-vis Agent para la revisión, Shot Frames para fijar la composición y, posteriormente, F2V por plano. Así, refinas la estética antes de consumir créditos en desviaciones y alucinaciones.",
     "steps": [
       "Pre-vis Agent — comparte pistas audiovisuales para su revisión en cuestión de minutos",
       "Shot Frames — bloquear la composición de inicio/fin con la continuidad de Reference Library",
-      "F2V por pulso: genera vídeo a partir de fotogramas aprobados, no de prompts a ciegas.",
+      "F2V por plano: genera vídeo a partir de fotogramas aprobados, no de prompts a ciegas.",
       "Cadena de extensión continua: pasos de extensión nativos de +7 segundos para segmentos de diálogo largos.",
       "Production Mixer — exportación de sincronización, audio y flujo a Screening Room"
     ],
@@ -746,7 +746,7 @@
         "id": "previsualización",
         "stepLabel": "Visualiza y prueba con la previsualización",
         "shortDescription": "Genera el audio de los diálogos y los fotogramas clave escena por escena. Comparte los animatics para su aprobación antes de realizar la inversión final en el video.",
-        "detailedDescription": "Pre-Vis Studio genera indicaciones de dirección, audio y fotogramas clave (*beat frames*) para cada escena: puntos de control que minimizan las costosas repeticiones de trabajo cuando cambian los personajes o el tono. Comparte el reproductor para facilitar la colaboración; el animatic completo puede servir como entrega final en muchos proyectos.",
+        "detailedDescription": "Pre-Vis Studio genera indicaciones de dirección, audio y fotogramas clave (*shot frames*) para cada escena: puntos de control que minimizan las costosas repeticiones de trabajo cuando cambian los personajes o el tono. Comparte el reproductor para facilitar la colaboración; el animatic completo puede servir como entrega final en muchos proyectos.",
         "media": "reproductor de previsualización"
       },
       {
@@ -812,7 +812,7 @@
       "keyFeatures": [
         "Pre-vis Agent para revisión: compartir los beats antes del renderizado pesado",
         "Shot Frames composición de la esclusa — Reference Library continuidad",
-        "F2V por pulso: genera vídeo a partir de fotogramas aprobados",
+        "F2V por plano: genera vídeo a partir de fotogramas aprobados",
         "Cadenas EXT continuas: pasos nativos de +7 segundos para diálogos extensos dentro de un mismo *beat*.",
         "Sincronización y flujos del mezclador: abra Screening Room para ensamblar y publicar."
       ],
@@ -1061,11 +1061,11 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
+          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
@@ -1105,7 +1105,7 @@
       "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
         "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
         "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
         "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
@@ -1449,7 +1449,7 @@
       {
         "id": "animation",
         "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {
@@ -1673,7 +1673,7 @@
             "description": "Genera audio exprés en más de 70 idiomas, alineado automáticamente para superar los fotogramas y el vídeo. Envíe flujos de idiomas doblados o sincronizados de labios de un corte maestro aprobado.",
             "learnMore": {
               "problem": "Llegar a una audiencia global generalmente significa volver a grabar el talento de voz, volver a cronometrar cada escena y reconstruir el proyecto una vez por idioma, una pesadilla de costos y coordinación que mantiene a la mayoría de los creadores en el mercado único.",
-              "solution": "Genera audio exprés en más de 70 idiomas en minutos, alineado automáticamente con tus fotogramas de ritmo animático y vídeo. Produzca transmisiones dobladas o sincronizadas de labios a partir del mismo corte aprobado, sin necesidad de nuevas tomas.",
+              "solution": "Genera audio exprés en más de 70 idiomas en minutos, alineado automáticamente con tus fotogramas de plano animático y vídeo. Produzca transmisiones dobladas o sincronizadas de labios a partir del mismo corte aprobado, sin necesidad de nuevas tomas.",
               "outcome": "Envíe cada historia de forma nativa a más de 70 mercados desde una sola producción: multiplique su alcance y sus ingresos sin multiplicar su carga de trabajo."
             }
           },
@@ -1887,14 +1887,14 @@
             "id": "production-audio",
             "number": "4",
             "title": "Generar audio",
-            "description": "Genera diálogo, narración, SFX y música con Run All Agents en todas las escenas, per-scene agents o beat by beat: voz en off de calidad nativa en más de 70 idiomas.",
-            "imagePlaceholder": "Audio expreso: todas las escenas, escena única o ritmo a ritmo"
+            "description": "Genera diálogo, narración, SFX y música con Run All Agents en todas las escenas, per-scene agents o shot by shot: voz en off de calidad nativa en más de 70 idiomas.",
+            "imagePlaceholder": "Audio expreso: todas las escenas, escena única o plano a plano"
           },
           {
             "id": "production-frames",
             "number": "5",
             "title": "Generar y editar marcos",
-            "description": "Genere fotogramas beat con Run All Agents, per-scene agents o beat by beat, luego edite cualquier fotograma con el Asistente de Director Inteligente (IAD); solo describa el cambio.",
+            "description": "Genere fotogramas de plano con Run All Agents, per-scene agents o shot by shot, luego edite cualquier fotograma con el Asistente de Director Inteligente (IAD); solo describa el cambio.",
             "imagePlaceholder": "Batir fotogramas con ediciones de Intelligent Assistant Director"
           },
           {
@@ -1908,7 +1908,7 @@
             "id": "production-video",
             "number": "7",
             "title": "Generar vídeo",
-            "description": "Convierta los fotogramas aprobados en movimiento con per-scene agents o ritmo a ritmo. Vuelve a tomar cualquier foto con el Subdirector Inteligente, sin interminables regeneraciones de máquinas tragamonedas.",
+            "description": "Convierta los fotogramas aprobados en movimiento con per-scene agents o plano a plano. Vuelve a tomar cualquier foto con el Subdirector Inteligente, sin interminables regeneraciones de máquinas tragamonedas.",
             "imagePlaceholder": "Generación de vídeo exprés con repeticiones de IAD"
           },
           {

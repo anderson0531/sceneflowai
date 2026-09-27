@@ -40,6 +40,22 @@ export function mapMixerPlaybackSegments(
   })
 }
 
+/** Cue volume × per-shot mixer volume. Shots without a saved level stay at the cue mix. */
+export function applyMusicShotVolumes(
+  clips: MixerMusicClip[],
+  shotVolumes?: Record<string, number> | null
+): MixerMusicClip[] {
+  if (!shotVolumes) return clips
+  return clips.map((clip) => {
+    if (!clip.beatId || shotVolumes[clip.beatId] == null) return clip
+    const volume = Math.max(
+      0,
+      Math.min(1, resolveMusicCueVolume(clip.volume) * resolveMusicCueVolume(shotVolumes[clip.beatId]))
+    )
+    return { ...clip, volume }
+  })
+}
+
 export function resolveMixerMusicClips(options: {
   scene?: Record<string, unknown> | null
   segments: SceneSegment[]
@@ -47,12 +63,17 @@ export function resolveMixerMusicClips(options: {
   musicConfig: AudioTrackConfig
   legacyMusicUrl?: string
   musicFileDuration?: number
+  /** Per-shot mixer gain, keyed by shot id. */
+  musicShotVolumes?: Record<string, number> | null
 }): { clips: MixerMusicClip[]; usingScore: boolean } {
   const mapped = mapMixerPlaybackSegments(
     options.segments,
     options.getPlaybackSegmentDuration
   )
-  const scored = buildProductionMusicCueClips(options.scene, mapped)
+  const scored = applyMusicShotVolumes(
+    buildProductionMusicCueClips(options.scene, mapped),
+    options.musicShotVolumes
+  )
   if (scored.length > 0) {
     return { clips: scored, usingScore: true }
   }
@@ -182,6 +203,7 @@ export function mixerMusicClipsToRenderPayload(
   fadeInSec?: number
   fadeOutSec?: number
   playbackRate?: number
+  trimStart?: number
 }> {
   const playbackRate = clampAudioPlaybackRate(musicConfig.playbackRate)
   const faded = foldScoreStemFades(
@@ -201,5 +223,6 @@ export function mixerMusicClipsToRenderPayload(
     fadeInSec: clip.fadeInSec ?? 0,
     fadeOutSec: clip.fadeOutSec ?? 0,
     playbackRate,
+    ...(clip.trimStart && clip.trimStart > 0 ? { trimStart: clip.trimStart } : {}),
   }))
 }

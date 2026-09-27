@@ -41,7 +41,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
+        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -285,11 +285,11 @@
     "title": "以节拍为先的视频制作流程",
     "subtitle": "渲染前先确认——切勿像老虎机那样随机生成",
     "intro": "无需反复尝试生成。在 SceneFlow 消耗点数制作最终视频之前，您可以先预览并确认视觉效果。",
-    "description": "SceneFlow 在每个环节都构建了视觉确认流程：先通过 Pre-vis Agent 进行审阅，利用 Shot Frames 锁定构图，随后针对每个节拍执行 F2V（帧到视频）生成。这样，您可以在因画面漂移或“幻觉”现象而消耗额度之前，先对视觉效果进行精细调整。",
+    "description": "SceneFlow 在每个环节都构建了视觉确认流程：先通过 Pre-vis Agent 进行审阅，利用 Shot Frames 锁定构图，随后针对每个镜头执行 F2V（帧到视频）生成。这样，您可以在因画面漂移或“幻觉”现象而消耗额度之前，先对视觉效果进行精细调整。",
     "steps": [
       "Pre-vis Agent — 分享音视频节拍，数分钟内即可完成审阅",
       "Shot Frames — 锁定起始/结束组合，并保持 Reference Library 连续性",
-      "逐拍 F2V —— 基于已确认的画面生成视频，而非盲目依赖提示词。",
+      "逐镜头 F2V —— 基于已确认的画面生成视频，而非盲目依赖提示词。",
       "连续扩展链——针对长对话片段的原生 +7秒扩展步骤",
       "Production Mixer — 时序、音频及流导出至 Screening Room"
     ],
@@ -745,8 +745,8 @@
       {
         "id": "预演",
         "stepLabel": "利用预可视化进行可视化与测试",
-        "shortDescription": "逐场景生成对话音频与关键画面（beat frames）。在投入最终视频制作预算前，先提交动态分镜（animatics）以供审批。",
-        "detailedDescription": "Pre-Vis Studio 可针对每个场景生成导演构思、音频及关键帧（beat frames）——这些节点有助于在角色或基调发生变更时，将代价高昂的返工降至最低。您可以通过播放器进行协作；对于许多项目而言，完整的动态分镜（animatic）本身即可作为最终交付成果。",
+        "shortDescription": "逐场景生成对话音频与关键画面（shot frames）。在投入最终视频制作预算前，先提交动态分镜（animatics）以供审批。",
+        "detailedDescription": "Pre-Vis Studio 可针对每个场景生成导演构思、音频及关键帧（shot frames）——这些节点有助于在角色或基调发生变更时，将代价高昂的返工降至最低。您可以通过播放器进行协作；对于许多项目而言，完整的动态分镜（animatic）本身即可作为最终交付成果。",
         "media": "预演播放器"
       },
       {
@@ -812,7 +812,7 @@
       "keyFeatures": [
         "Pre-vis Agent 待审阅 —— 在进行耗时的渲染前分享节拍小样",
         "Shot Frames 锁的构成 — Reference Library 连续性",
-        "逐拍 F2V —— 基于已确认画面生成视频",
+        "逐镜头 F2V —— 基于已确认画面生成视频",
         "连续 EXT 链——针对同一节拍内长对话的原生 +7 秒步长",
         "混音器时序与流 —— 打开 Screening Room 进行组装与发布"
       ],
@@ -1061,11 +1061,11 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
+          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
@@ -1105,7 +1105,7 @@
       "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
         "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
         "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
         "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
@@ -1449,7 +1449,7 @@
       {
         "id": "animation",
         "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {

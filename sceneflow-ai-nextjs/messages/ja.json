@@ -41,7 +41,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
+        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -101,7 +101,7 @@
       },
       {
         "label": "最終動画の前に承認する",
-        "detail": "レンダリングの前に、プリビズの各シーン（ビート）を確認してください。"
+        "detail": "レンダリングの前に、プリビズの各シーン（ショット）を確認してください。"
       },
       {
         "label": "まずはストーリーをテストしましょう",
@@ -285,11 +285,11 @@
     "title": "ビート先行型動画制作パイプライン",
     "subtitle": "レンダリング前に承認を — スロットマシンのような再生成ではなく",
     "intro": "手探りで生成を繰り返す必要はありません。SceneFlowが最終動画の生成にクレジットを消費する前に、仕上がりを確認し、承認することができます。",
-    "description": "SceneFlowは、各段階でのビジュアル承認プロセスを体系化しています。具体的には、レビュー用のPre-vis Agent、構図を確定するShot Frames、そしてビートごとのF2V（フレーム・ツー・ビデオ）です。これにより、ドリフトやハルシネーション（幻覚）でクレジットを浪費する前に、映像のルックを洗練させることができます。",
+    "description": "SceneFlowは、各段階でのビジュアル承認プロセスを体系化しています。具体的には、レビュー用のPre-vis Agent、構図を確定するShot Frames、そしてショットごとのF2V（フレーム・ツー・ビデオ）です。これにより、ドリフトやハルシネーション（幻覚）でクレジットを浪費する前に、映像のルックを洗練させることができます。",
     "steps": [
       "Pre-vis Agent — 映像付きのビートを共有し、数分でレビューを受ける",
       "Shot Frames — Reference Libraryの連続性による開始／終了構成の固定",
-      "ビートごとのF2V — 確実なプロンプトではなく、承認済みフレームから動画を生成",
+      "ショットごとのF2V — 確実なプロンプトではなく、承認済みフレームから動画を生成",
       "連続EXTチェーン — 長尺のセリフのやり取りに対応する、ネイティブな7秒単位の延長ステップ",
       "Production Mixer — Screening Roomへのタイミング、オーディオ、およびストリームの書き出し"
     ],
@@ -684,7 +684,7 @@
         ],
         "keyFeatures": [
           "Foundation — スクリプト、ボイス、シーンオーディオ、Audience Resonance",
-          "プリビジュアライゼーション — シーンごとの演出、音声、ビートフレーム（共有リンク付き）",
+          "プリビジュアライゼーション — シーンごとの演出、音声、ショットフレーム（共有リンク付き）",
           "撮影 — 制作環境を離れることなく、映像収録、ミキシング、ストリーミングを実行",
           "Screening Room — シーンプレビュー、マスター編集、上映会、およびYouTube公開"
         ]
@@ -745,8 +745,8 @@
       {
         "id": "プリビズ",
         "stepLabel": "プリビジュアライゼーションで可視化とテストを行う",
-        "shortDescription": "シーンごとにセリフの音声とビートフレームを生成してください。本制作の予算を投じる前に、承認を得るためのアニマティクスを共有してください。",
-        "detailedDescription": "Pre-Vis Studioは、シーンごとに演出、音声、ビートフレームを生成します。これらは、キャラクターやトーンの変更に伴う手戻り（コストのかかる修正作業）を最小限に抑えるためのチェックポイントとなります。プレイヤーを共有して共同作業を進めることができ、プロジェクトによっては、完成したアニマティクスをそのまま最終成果物とすることも可能です。",
+        "shortDescription": "シーンごとにセリフの音声とショットフレームを生成してください。本制作の予算を投じる前に、承認を得るためのアニマティクスを共有してください。",
+        "detailedDescription": "Pre-Vis Studioは、シーンごとに演出、音声、ショットフレームを生成します。これらは、キャラクターやトーンの変更に伴う手戻り（コストのかかる修正作業）を最小限に抑えるためのチェックポイントとなります。プレイヤーを共有して共同作業を進めることができ、プロジェクトによっては、完成したアニマティクスをそのまま最終成果物とすることも可能です。",
         "media": "プレビズ・プレーヤー"
       },
       {
@@ -808,11 +808,11 @@
     "viewDetails": "詳細を見る",
     "beatFirst": {
       "title": "ビート先行型動画制作パイプライン",
-      "description": "F2V（映像生成）の前にプリビズの構成要素（ビート）とShot Framesを承認することで、ハルシネーションやビジュアルの乖離に起因する無駄な再生成を減らせます。レビューから最終クリップ完成まで、一貫したプロセスを実現します。",
+      "description": "F2V（映像生成）の前にプリビズの構成要素（ショット）とShot Framesを承認することで、ハルシネーションやビジュアルの乖離に起因する無駄な再生成を減らせます。レビューから最終クリップ完成まで、一貫したプロセスを実現します。",
       "keyFeatures": [
         "Pre-vis Agent レビュー用 — 高負荷なレンダリングの前にビートを共有",
         "Shot Frames ロック構成 — Reference Library 連続性",
-        "F2V（ビートごと） — 承認済みフレームから動画を生成",
+        "F2V（ショットごと） — 承認済みフレームから動画を生成",
         "連続EXTチェーン — ビート内で長尺のセリフに対応するネイティブな+7秒ステップ",
         "ミキサーのタイミングとストリーム — Screening Room を開いて組み立てと公開を行う"
       ],
@@ -914,7 +914,7 @@
         "description": "「Script」および「Shoot」タブが、Foundation → Pre-Vis → Footage → Mixer → Streams という工程を案内します。シーンごとのチェックポイントが手戻りを最小限に抑え、Screening Roomがプレビュー、組み立て、公開を担います。",
         "keyFeatures": [
           "Foundation — スクリプト、ボイス、シーンオーディオ、Audience Resonance",
-          "プリビジュアライゼーション — シーンごとの演出、音声、ビートフレーム（共有リンク付き）",
+          "プリビジュアライゼーション — シーンごとの演出、音声、ショットフレーム（共有リンク付き）",
           "撮影 — 制作環境を離れることなく、映像収録、ミキシング、ストリーミングを実行",
           "Screening Room — シーンプレビュー、マスター編集、上映会、およびYouTube公開"
         ],
@@ -1061,11 +1061,11 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
+          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
@@ -1105,7 +1105,7 @@
       "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
         "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
         "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
         "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
@@ -1449,7 +1449,7 @@
       {
         "id": "animation",
         "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {

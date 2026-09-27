@@ -42,6 +42,18 @@ describe('mergeMixerSettings', () => {
       volume: 0.5,
     })
   })
+
+  it('clamps per-shot score volume and defaults a missing level to unity', () => {
+    const merged = mergeMixerSettings({
+      musicShotConfigs: {
+        bt_a1: { volume: 0.25 },
+        bt_a2: { volume: 4 },
+      },
+    })
+    expect(merged.musicShotConfigs.bt_a1).toEqual({ volume: 0.25 })
+    expect(merged.musicShotConfigs.bt_a2).toEqual({ volume: 1 })
+    expect(mergeMixerSettings().musicShotConfigs).toEqual({})
+  })
 })
 
 describe('buildSegmentAudioConfigsForSegments', () => {

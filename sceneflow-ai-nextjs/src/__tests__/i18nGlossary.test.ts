@@ -122,6 +122,7 @@ describe('glossary contents', () => {
       'Location Agent',
       'Object Agent',
       'Audio Agent',
+      'Scene Agent',
       'Stills Agent',
       'Video Agent',
       'Run All Agents',

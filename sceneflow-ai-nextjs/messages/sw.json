@@ -41,7 +41,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
+        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -101,7 +101,7 @@
       },
       {
         "label": "Idhinisha kabla ya video ya mwisho",
-        "detail": "Kagua sehemu za taswira ya awali (pre-vis beats) kabla ya kufanya render."
+        "detail": "Kagua sehemu za taswira ya awali (pre-vis shots) kabla ya kufanya render."
       },
       {
         "label": "Jaribu hadithi yako kwanza",
@@ -285,7 +285,7 @@
     "title": "Mchakato wa Uzalishaji wa Video Unaozingatia Mdundo Kwanza",
     "subtitle": "Thibitisha kabla ya kuzalisha matokeo ya mwisho — siyo kuzalisha upya kwa bahati nasibu.",
     "intro": "Hakuna tena mchakato wa kubahatisha na kujaribu ili kupata matokeo. Unakagua na kuidhinisha mwonekano kabla ya SceneFlow kutumia salio lako kwa ajili ya video ya mwisho.",
-    "description": "SceneFlow hupanga utaratibu wa kuidhinisha taswira katika kila hatua: Pre-vis Agent kwa ajili ya mapitio, Shot Frames ili kudhibiti mpangilio, kisha F2V kwa kila mpigo (beat). Unaboresha mwonekano kabla ya kutumia 'credits' kwa matokeo yasiyotabirika (drift) au makosa ya mfumo (hallucinations).",
+    "description": "SceneFlow hupanga utaratibu wa kuidhinisha taswira katika kila hatua: Pre-vis Agent kwa ajili ya mapitio, Shot Frames ili kudhibiti mpangilio, kisha F2V kwa kila mpigo (shot). Unaboresha mwonekano kabla ya kutumia 'credits' kwa matokeo yasiyotabirika (drift) au makosa ya mfumo (hallucinations).",
     "steps": [
       "Pre-vis Agent — shiriki midundo yenye sauti na picha ili ikaguliwe ndani ya dakika chache",
       "Shot Frames — funga muundo wa mwanzo/mwisho kwa mwendelezo wa Reference Library",
@@ -684,7 +684,7 @@
         ],
         "keyFeatures": [
           "Foundation — hati, sauti, sauti ya tukio, Audience Resonance",
-          "Pre-Vis — mwongozo, sauti, na fremu za mpangilio wa matukio (beat frames) kwa kila tukio, pamoja na viungo vya kushiriki.",
+          "Pre-Vis — mwongozo, sauti, na fremu za mpangilio wa matukio (shot frames) kwa kila tukio, pamoja na viungo vya kushiriki.",
           "Rekodi — Picha, Mchanganyiko wa sauti, na Mitiririko bila kuondoka kwenye eneo la uzalishaji.",
           "Screening Room — hakiki ya onyesho, mkusanyiko wa mwisho, maonyesho, na kuchapisha YouTube"
         ]
@@ -745,7 +745,7 @@
       {
         "id": "taswira ya awali",
         "stepLabel": "Taswira na ujaribu kwa kutumia taswira ya awali",
-        "shortDescription": "Andaa sauti ya mazungumzo na fremu za matukio muhimu (beat frames) kwa kila eneo la video. Wasilisha michoro ya awali ya uhuishaji (animatics) ili kupata idhini kabla ya kufanya matumizi ya mwisho ya fedha kwa ajili ya video hiyo.",
+        "shortDescription": "Andaa sauti ya mazungumzo na fremu za matukio muhimu (shot frames) kwa kila eneo la video. Wasilisha michoro ya awali ya uhuishaji (animatics) ili kupata idhini kabla ya kufanya matumizi ya mwisho ya fedha kwa ajili ya video hiyo.",
         "detailedDescription": "Pre-Vis Studio huandaa mwongozo wa uelekeo, sauti, na fremu muhimu kwa kila tukio — hatua hizi hupunguza marudio ya kazi ya gharama kubwa iwapo wahusika au mtindo wa kazi utabadilika. Shirikisha kiungo cha kutazama kazi hiyo ili kurahisisha ushirikiano; toleo kamili la *animatic* linaweza kuwa ndilo bidhaa ya mwisho kwa miradi mingi.",
         "media": "kicheza-previs"
       },
@@ -808,7 +808,7 @@
     "viewDetails": "Tazama maelezo",
     "beatFirst": {
       "title": "Mchakato wa Uzalishaji wa Video Unaozingatia Mdundo Kwanza",
-      "description": "Idhinisha vipengele vya taswira ya awali (pre-vis beats) na Shot Frames kabla ya hatua ya F2V — hii hupunguza utengenezaji upya usio na mwelekeo unaotokana na makosa ya AI (hallucination) au kupotea kwa mwelekeo wa taswira. Mchakato mmoja uliopangwa vizuri kuanzia hatua ya mapitio hadi klipu ya mwisho.",
+      "description": "Idhinisha vipengele vya taswira ya awali (pre-vis shots) na Shot Frames kabla ya hatua ya F2V — hii hupunguza utengenezaji upya usio na mwelekeo unaotokana na makosa ya AI (hallucination) au kupotea kwa mwelekeo wa taswira. Mchakato mmoja uliopangwa vizuri kuanzia hatua ya mapitio hadi klipu ya mwisho.",
       "keyFeatures": [
         "Pre-vis Agent kwa ajili ya mapitio — shiriki midundo kabla ya mchakato mzito wa utoaji wa faili ya mwisho (rendering)",
         "Shot Frames muundo wa kufuli — Reference Library mwendelezo",
@@ -914,7 +914,7 @@
         "description": "Vichupo vya Script na Shoot huongoza mchakato kuanzia Foundation → Pre-Vis → Footage → Mixer hadi Streams. Hatua za ukaguzi kwa kila tukio hupunguza marudio ya kazi; Screening Room hushughulikia uhakiki wa awali, uunganishaji, na uchapishaji.",
         "keyFeatures": [
           "Foundation — hati, sauti, sauti ya tukio, Audience Resonance",
-          "Pre-Vis — mwongozo, sauti, na fremu za mpangilio wa matukio (beat frames) kwa kila tukio, pamoja na viungo vya kushiriki.",
+          "Pre-Vis — mwongozo, sauti, na fremu za mpangilio wa matukio (shot frames) kwa kila tukio, pamoja na viungo vya kushiriki.",
           "Rekodi — Picha, Mchanganyiko wa sauti, na Mitiririko bila kuondoka kwenye eneo la uzalishaji.",
           "Screening Room — hakiki ya onyesho, mkusanyiko wa mwisho, maonyesho, na kuchapisha YouTube"
         ],
@@ -1061,11 +1061,11 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
+          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
@@ -1105,7 +1105,7 @@
       "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
         "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
         "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
         "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
@@ -1449,7 +1449,7 @@
       {
         "id": "animation",
         "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {

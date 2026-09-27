@@ -370,7 +370,7 @@
     "confirm": "Stills Agent"
   },
   "expressGenerateAll": {
-    "title": "Run All Agents",
+    "title": "Scene Agent",
     "description": "Run Audio Agent and Stills Agent in parallel. Defaults match each pipeline’s “missing only” selection — adjust scope if you need to regenerate.",
     "audioSection": "Audio",
     "framesSection": "Frames",
@@ -395,7 +395,7 @@
     "missing": "Missing",
     "imageCredits": "Image credits (est.): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Running...",
-    "confirm": "Run All Agents"
+    "confirm": "Scene Agent"
   },
   "videoAgent": {
     "title": "Clips Agent",

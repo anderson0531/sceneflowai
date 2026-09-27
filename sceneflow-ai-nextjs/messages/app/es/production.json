@@ -60,7 +60,7 @@
     "importTranslationDescription": "Pega tu guión traducido a continuación. El formato debe coincidir con el formato exportado:",
     "importTranslationFormat": "[1] TRANSLATED_LABEL: texto traducido",
     "importTranslationPlaceholder": "Pegue el guión traducido aquí...",
-    "deleteBeat": "Eliminar ritmo",
+    "deleteBeat": "Eliminar plano",
     "deleteBeatDescription": "¿Está seguro de que desea eliminar este segmento? Esta acción no se puede deshacer.",
     "deleteScene": "Eliminar escena {number}",
     "deleteSceneDescription": "Esto eliminará permanentemente esta escena y todos los recursos asociados.",
@@ -86,7 +86,7 @@
     "audienceResonanceCancel": "Cancelar el análisis Audience Resonance",
     "budgetTooltipView": "Ver o ajustar el presupuesto de crédito del proyecto",
     "budgetTooltipSet": "Calcule y establezca un presupuesto de crédito predeterminado a partir de su guión",
-    "budgetDescription": "Planifica el gasto de créditos a partir de tus escenas y beats, rastrea lo real y pronostica el costo para completar."
+    "budgetDescription": "Planifica el gasto de créditos a partir de tus escenas y shots, rastrea lo real y pronostica el costo para completar."
   },
   "script": {
     "generateScript": "Generar secuencia de comandos",
@@ -172,7 +172,7 @@
   },
   "expressAudio": {
     "title": "Audio Agent",
-    "description": "Genere diálogos, efectos de sonido y música para esta escena al mismo tiempo. Los diálogos usan TTS, los ritmos de acción usan audio nativo de Veo y la música usa Lyria.",
+    "description": "Genere diálogos, efectos de sonido y música para esta escena al mismo tiempo. Los diálogos usan TTS, los planos de acción usan audio nativo de Veo y la música usa Lyria.",
     "scope": "Alcance",
     "scopeMissing": "Sólo falta",
     "scopeAll": "Todos (regenerar)",
@@ -217,7 +217,7 @@
     "confirm": "Stills Agent"
   },
   "expressGenerateAll": {
-    "title": "Run All Agents",
+    "title": "Scene Agent",
     "description": "Ejecute Audio Agent y Stills Agent en paralelo. Los valores predeterminados coinciden con la selección \"solo faltante\" de cada canalización; ajuste el alcance si necesita regenerar.",
     "audioSection": "Audio",
     "framesSection": "Marcos",
@@ -242,18 +242,18 @@
     "missing": "Desaparecido",
     "imageCredits": "Créditos de imagen (est.): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Correr...",
-    "confirm": "Run All Agents"
+    "confirm": "Scene Agent"
   },
   "retake": {
     "title": "¿Reemplazar la toma existente?",
-    "description": "Este beat ya tiene un vídeo generado. Abrir el generador o cargarla agregará una nueva toma y puede consumir créditos.",
+    "description": "Este shot ya tiene un vídeo generado. Abrir el generador o cargarla agregará una nueva toma y puede consumir créditos.",
     "continue": "Continuar"
   },
   "reset": {
     "title": "¿Reiniciar la producción de la escena?",
     "sceneLabel": "Escena {number}",
     "sceneHeading": "Escena {number} · {heading}",
-    "warning": "Esto elimina toda la <bold>línea de tiempo de ritmo</bold> para esta escena y no se puede deshacer. Deberá ejecutar la configuración del segmento nuevamente desde cero.",
+    "warning": "Esto elimina toda la <bold>línea de tiempo de plano</bold> para esta escena y no se puede deshacer. Deberá ejecutar la configuración del segmento nuevamente desde cero.",
     "whatYouWillLose": "lo que perderás",
     "segmentCount": "{count, plural, one {# shot} other {# shots}}",
     "segmentDetail": "Temporización, notas de dirección, indicaciones de Veo y mapeo de diálogo a segmento",
@@ -261,7 +261,7 @@
     "keyframeDetailAcross": "A través de {count, plural, one {# shot} other {# shots}} (cuadros de inicio/final)",
     "keyframeDetailDefault": "Imágenes fijas de inicio y final utilizadas para la generación de video",
     "videoClip": "{count, plural, one {# generated video clip} other {# generated video clips}}",
-    "videoDetail": "Salidas Veo/I2V a nivel de ritmo y tomas activas en la línea de tiempo.",
+    "videoDetail": "Salidas Veo/I2V a nivel de plano y tomas activas en la línea de tiempo.",
     "imageClip": "{count, plural, one {# image clip} other {# image clips}}",
     "imageClipDetail": "Activos fijos cargados o generados adjuntos a segmentos",
     "alternateTake": "{count, plural, one {# alternate take} other {# alternate takes}}",
@@ -291,7 +291,7 @@
   },
   "segments": {
     "addBeat": {
-      "title": "Agregar ritmo",
+      "title": "Agregar plano",
       "description": "Cree un mensaje de generación de video seleccionando el tipo de toma, los elementos de la escena y el diálogo. Veo 3.1 generará voz en off y SFX directamente desde el mensaje.",
       "sceneBadge": "Escena {sceneNumber}",
       "includeSceneDirection": "Incluir dirección de escena",
@@ -328,7 +328,7 @@
       "startTime": "Hora de inicio",
       "endTime": "Hora de finalización",
       "method": "Método",
-      "addAction": "Agregar ritmo"
+      "addAction": "Agregar plano"
     },
     "edit": {
       "title": "Editar segmento",
@@ -344,7 +344,7 @@
       "i2vHint": "Utilizará el marco de la escena como imagen inicial."
     },
     "delete": {
-      "title": "¿Eliminar Beat {number}?",
+      "title": "¿Eliminar Shot {number}?",
       "description": "Esta acción no se puede deshacer.",
       "segmentLabel": "Segmento",
       "segmentOf": "#{index} de {total}",
@@ -353,21 +353,21 @@
       "lastBeatWarning": "Advertencia: este es el único segmento de la escena. Al eliminarlo, la escena quedará sin fotogramas clave.",
       "shiftWarning": "Al eliminar este segmento se desplazarán todos los segmentos posteriores. Los índices de tiempo y secuencia se recalcularán automáticamente.",
       "deleting": "Eliminando...",
-      "deleteBeat": "Eliminar ritmo"
+      "deleteBeat": "Eliminar plano"
     },
     "addType": {
-      "title": "Agregar ritmo a la escena {sceneNumber}",
+      "title": "Agregar plano a la escena {sceneNumber}",
       "description": "Agregue un segmento basado en fotogramas clave para la generación de videos con IA. Para elementos cinematográficos (títulos, transiciones, B-roll), utilice el botón Elementos cinematográficos.",
       "tabType": "Tipo",
       "tabPosition": "Posición",
       "tabPrompt": "Inmediato",
       "defaultDuration": "{seconds} predeterminado",
       "orDivider": "o",
-      "regenerateAll": "Regenerar todos los ritmos",
+      "regenerateAll": "Regenerar todos los planos",
       "regenerateAllCount": "Segmentos {count}",
       "regenerateAllHint": "Vuelve a analizar la escena y genera nuevos segmentos con IA. Esto reemplazará los segmentos existentes.",
       "insertPosition": "Insertar posición",
-      "referenceBeat": "Ritmo de referencia",
+      "referenceBeat": "Plano de referencia",
       "selectSegment": "Seleccionar segmento",
       "beatOption": "Derrota a {number} ({duration}s)",
       "duration": "Duración",
@@ -389,7 +389,7 @@
       "addNamed": "Añadir {name}",
       "types": {
         "standard": {
-          "name": "Ritmo estándar",
+          "name": "Plano estándar",
           "description": "Segmento de escena con fotogramas clave de inicio/final para la generación de vídeo con IA. Control total sobre la composición de la toma."
         },
         "extend": {
@@ -570,8 +570,8 @@
         "description": "Comprimido, aislado"
       }
     },
-    "generateTitle": "Generar ritmos de escena",
-    "regenerateSceneTitle": "Regenerar ritmos de escena",
+    "generateTitle": "Generar planos de escena",
+    "regenerateSceneTitle": "Regenerar planos de escena",
     "generateDescription": "Configure cómo se crean los segmentos para esta escena.",
     "beatsPreview": "late",
     "tabTiming": "Momento",
@@ -579,20 +579,20 @@
     "tabStyle": "Estilo",
     "narrationDriven": "Segmentación basada en la narración",
     "narrationDrivenHint": "Cree segmentos que se alineen con la narración e ilustren. Cada segmento se convierte en un telón de fondo cinematográfico para la voz en off.",
-    "targetBeatDuration": "Duración del ritmo objetivo",
-    "addTitle": "Agregar ritmo",
+    "targetBeatDuration": "Duración del plano objetivo",
+    "addTitle": "Agregar plano",
     "addNewTitle": "Agregar nuevo segmento",
     "addDescription": "Cree un nuevo segmento visual para ampliar la línea de tiempo de la escena.",
     "addDuration": "Duración (segundos)",
     "addDurationHint": "Recomendado: 3-5 segundos para un ritmo suave",
-    "addAction": "Agregar ritmo",
+    "addAction": "Agregar plano",
     "editTitle": "Editar segmento",
     "editBadge": "Escena {sceneNumber} • Beat {beatNumber}",
     "editDescription": "Modifique la configuración de aviso, duración y generación del segmento.",
     "shotConfiguration": "Configuración de disparo",
     "shotType": "Tipo de disparo",
     "cameraMovement": "Movimiento de la cámara",
-    "deleteTitle": "¿Eliminar Beat {number}?",
+    "deleteTitle": "¿Eliminar Shot {number}?",
     "deleteDescription": "Esta acción no se puede deshacer.",
     "segmentLabel": "Segmento",
     "segmentOf": "#{index} de {total}",
@@ -601,16 +601,16 @@
     "lastBeatWarning": "Advertencia: este es el único segmento de la escena. Al eliminarlo, la escena quedará sin fotogramas clave.",
     "shiftWarning": "Al eliminar este segmento se desplazarán todos los segmentos posteriores. Los índices de tiempo y secuencia se recalcularán automáticamente.",
     "deleting": "Eliminando...",
-    "deleteBeat": "Eliminar ritmo",
-    "regenerateTitle": "Regenerar ritmos",
-    "regenerateDescription": "Borre todos los segmentos y regrese al Beat Builder para comenzar de nuevo.",
-    "beats": "Latidos",
+    "deleteBeat": "Eliminar plano",
+    "regenerateTitle": "Regenerar planos",
+    "regenerateDescription": "Borre todos los segmentos y regrese al Shot Builder para comenzar de nuevo.",
+    "beats": "Planos",
     "totalDuration": "Duración total",
     "anchoredFrames": "Marcos anclados",
     "anchoredCount": "{anchored} / {total}",
     "regenerateAssetsWarning": "Advertencia: esto eliminará todos los segmentos, incluidos los fotogramas clave generados y los recursos de video. Esta acción no se puede deshacer.",
-    "regenerateEmptyWarning": "Se eliminarán todos los segmentos actuales. Serás llevado al Beat Builder para configurarlo y regenerarlo con nuevas configuraciones.",
-    "regenerateNextHint": "Beat Builder se abrirá con controles para la duración total, el recuento de segmentos, el modo de enfoque y la dirección personalizada.",
+    "regenerateEmptyWarning": "Se eliminarán todos los segmentos actuales. Serás llevado al Shot Builder para configurarlo y regenerarlo con nuevas configuraciones.",
+    "regenerateNextHint": "Shot Builder se abrirá con controles para la duración total, el recuento de segmentos, el modo de enfoque y la dirección personalizada.",
     "deleteAndRegenerate": "Eliminar y regenerar",
     "regenerate": "Regenerado",
     "addTypeTitle": "Agregar segmento especial",
@@ -656,7 +656,7 @@
     "alignment": {
       "title": "Supere la alineación de audio {number}",
       "description": "Alinee este segmento con diálogos y pistas de audio para una sincronización precisa.",
-      "beatTiming": "Tiempo de ritmo",
+      "beatTiming": "Tiempo de plano",
       "aligned": "Alineado",
       "nearlyAligned": "Casi alineado",
       "misaligned": "Desalineado",
@@ -718,7 +718,7 @@
     "clipDuration": "Duración: {time}",
     "alignmentTitle": "Supere la alineación de audio {number}",
     "alignmentDescription": "Alinee este segmento con diálogos y pistas de audio para una sincronización precisa.",
-    "beatTiming": "Tiempo de ritmo",
+    "beatTiming": "Tiempo de plano",
     "aligned": "Alineado",
     "nearlyAligned": "Casi alineado",
     "misaligned": "Desalineado",
@@ -754,7 +754,7 @@
     "stream": {
       "title": "Flujo de exportación",
       "description": "Escena {number}: Rápido (WebM) para borradores, Transmisión (MP4) para entrega o Nube para escenas largas.",
-      "videoSequence": "Secuencia de vídeo ({count} Beats)",
+      "videoSequence": "Secuencia de vídeo ({count} Shots)",
       "unmuteAll": "Dejar de silenciar a todos",
       "muteAll": "Silenciar todo",
       "beatLabel": "Vence a {number}",
@@ -880,7 +880,7 @@
       }
     },
     "director": {
-      "title": "Generar vídeo: Beat {number}",
+      "title": "Generar vídeo: Shot {number}",
       "description": "Revise y personalice los parámetros de generación antes de renderizar.",
       "tabTextToVideo": "Texto a vídeo",
       "tabTextToVideoShort": "T2V",
@@ -937,7 +937,7 @@
       "loseEditsTitle": "Perderá las ediciones manuales de producción:",
       "loseScriptTweaks": "Los ajustes de la línea de script aún no están bloqueados",
       "loseStoryboard": "Marcos de guiones gráficos y recursos generados.",
-      "loseBeatAdjustments": "Ajustes de producción a nivel de ritmo",
+      "loseBeatAdjustments": "Ajustes de producción a nivel de plano",
       "artStyle": "estilo de arte",
       "aspectRatio": "relación de aspecto",
       "reimagineInBlueprint": "Reimaginar en Blueprint"
@@ -965,11 +965,11 @@
     },
     "beatReferences": {
       "title": "Referencias de reseñas — Escena {number}",
-      "description": "Referencias seleccionadas automáticamente por SceneFlow para este ritmo. Confirme o ajuste antes de generar.",
+      "description": "Referencias seleccionadas automáticamente por SceneFlow para este plano. Confirme o ajuste antes de generar.",
       "beatKindAction": "Acción",
       "beatKindNarration": "Narración",
       "beatKindDialogue": "Diálogo",
-      "beatLabel": "Beat: {kind}",
+      "beatLabel": "Shot: {kind}",
       "autoSelected": "Seleccionado automáticamente: {summary}",
       "locationMatchedAssignment": "Ubicación coincidente con la asignación de escena",
       "locationMatchedHeading": "Ubicación coincidente con el encabezado de la escena",
@@ -978,7 +978,7 @@
       "saveSelection": "Guardar selección",
       "generating": "Generando…",
       "generateFrame": "Generar marco",
-      "pickLocation": "Elija una referencia de entorno para este ritmo (usada para lograr coherencia visual).",
+      "pickLocation": "Elija una referencia de entorno para este plano (usada para lograr coherencia visual).",
       "match": "Fósforo"
     },
     "analysisHandoff": {
@@ -1026,15 +1026,15 @@
       "anomalyUnknown": "Origen poco claro"
     },
     "regenerateBeats": {
-      "title": "Regenerar ritmos",
-      "description": "Borre todos los segmentos y regrese al Beat Builder para comenzar de nuevo.",
-      "beats": "Latidos",
+      "title": "Regenerar planos",
+      "description": "Borre todos los segmentos y regrese al Shot Builder para comenzar de nuevo.",
+      "beats": "Planos",
       "totalDuration": "Duración total",
       "anchoredFrames": "Marcos anclados",
       "anchoredCount": "{anchored} / {total}",
       "assetsWarning": "Advertencia: esto eliminará todos los segmentos, incluidos los fotogramas clave generados y los recursos de video. Esta acción no se puede deshacer.",
-      "emptyWarning": "Se eliminarán todos los segmentos actuales. Serás llevado al Beat Builder para configurarlo y regenerarlo con nuevas configuraciones.",
-      "nextHint": "Beat Builder se abrirá con controles para la duración total, el recuento de segmentos, el modo de enfoque y la dirección personalizada.",
+      "emptyWarning": "Se eliminarán todos los segmentos actuales. Serás llevado al Shot Builder para configurarlo y regenerarlo con nuevas configuraciones.",
+      "nextHint": "Shot Builder se abrirá con controles para la duración total, el recuento de segmentos, el modo de enfoque y la dirección personalizada.",
       "deleteAndRegenerate": "Eliminar y regenerar",
       "regenerate": "Regenerado"
     },
@@ -1049,7 +1049,7 @@
       "tabDirection": "Dirección de escena",
       "audioAlignment": "Alineación de audio",
       "narrationDriven": "Impulsado por la narración",
-      "narrationDrivenHint": "Alinear cortes con los ritmos de la narración.",
+      "narrationDrivenHint": "Alinear cortes con los planos de la narración.",
       "dialogueDriven": "Impulsado por el diálogo",
       "dialogueDrivenHint": "Alinear los recortes al diálogo",
       "pacingStyle": "Estilo de ritmo",
@@ -1093,7 +1093,7 @@
         },
         "dynamic": {
           "label": "Dinámico (audio coincidente)",
-          "description": "Varía según los ritmos de la narración/diálogo."
+          "description": "Varía según los planos de la narración/diálogo."
         }
       },
       "shotTypes": {
@@ -1229,7 +1229,7 @@
     "retaking": "Retomando…",
     "approveAndRetake": "Aprobar y retomar",
     "keyframeRegenTitle": "Regenerar fotogramas clave",
-    "keyframeRegenDescription": "Reconstruya los fotogramas inicial y final de este ritmo con la dirección actualizada."
+    "keyframeRegenDescription": "Reconstruya los fotogramas inicial y final de este plano con la dirección actualizada."
   },
   "budget": {
     "title": "Gestión del presupuesto de producción",
@@ -1261,8 +1261,8 @@
     "languagesBanner": "Idiomas {count}: Original + {extra} traducido {extra, plural, one {version} other {versions}}. Agrega ~{credits} créditos para traducción y nueva voz.",
     "sceneConfiguration": "Configuración de escena",
     "numberOfScenes": "Número de escenas",
-    "beatsPerScene": "Latidos por escena",
-    "takesPerBeat": "Tomas por latido (regeneraciones)",
+    "beatsPerScene": "Planos por escena",
+    "takesPerBeat": "Tomas por plano (regeneraciones)",
     "videoEngine": "Motor de vídeo",
     "clipDuration": "Duración del clip (segundos)",
     "clipDurationHint": "Se ajusta a duraciones válidas para el motor seleccionado",
@@ -1271,7 +1271,7 @@
     "forVideo": "para vídeo",
     "imagesByQuality": "Imágenes por calidad",
     "excludedByok": "Excluido (BYOK)",
-    "draftBeatFrames": "Fotogramas de borrador / beat ({credits} cr)",
+    "draftBeatFrames": "Fotogramas de borrador / shot ({credits} cr)",
     "retakesPerDraft": "Repeticiones por fotograma borrador",
     "finalStoryboardImages": "Imágenes finales del storyboard ({credits} cr)",
     "characterHeadshots": "Retratos de personajes ({credits} cr)",
@@ -1337,14 +1337,14 @@
   },
   "budgetManager": {
     "title": "Gestor de presupuesto de producción",
-    "subtitle": "Planifica a partir de escenas y ritmos fijos. Costo de las transmisiones preliminares versus finales: la elección del proveedor sigue siendo creativa.",
+    "subtitle": "Planifica a partir de escenas y planos fijos. Costo de las transmisiones preliminares versus finales: la elección del proveedor sigue siendo creativa.",
     "subtitleWithTitle": "Plan presupuestario para {title}",
     "currentBalance": "Saldo actual",
     "creditsCount": "Créditos {count}",
     "byokTitle": "Traiga su propia llave (BYOK)",
     "byokDescription": "Se excluyen fotogramas, vídeos y Topaz de este plan presupuestario. La inteligencia todavía cuenta.",
     "scenes": "Escenas",
-    "beats": "Latidos",
+    "beats": "Planos",
     "clipDuration": "Longitud del clip",
     "seconds": "{count}s",
     "progress": "Hecho",
@@ -1380,7 +1380,7 @@
     "creditsPerFrame": "{credits} cr/marco",
     "creditsPerClip": "{credits} cr/{seconds}s",
     "creditsZero": "0 cr",
-    "providerNote": "Kling vs Google se elige por latido en Studio y no cambia este pronóstico.",
+    "providerNote": "Kling vs Google se elige por plano en Studio y no cambia este pronóstico.",
     "frameIterations": "Iteraciones de cuadros/tiempo",
     "videoIterations": "Iteraciones de vídeo/tiempo",
     "frameIterationsHint": "El valor predeterminado es {rate} éxito en la primera toma (~1,25×).",
@@ -1416,6 +1416,6 @@
     },
     "setAsProjectBudget": "Establecer como presupuesto del proyecto (créditos {credits})",
     "saving": "Ahorro...",
-    "noBeatsYet": "Agregue escenas y ritmos en Production Studio para crear un presupuesto."
+    "noBeatsYet": "Agregue escenas y planos en Production Studio para crear un presupuesto."
   }
 }

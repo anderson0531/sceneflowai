@@ -77,6 +77,8 @@ export interface LocalRenderAudioClip {
   fadeInSec?: number
   /** Music: fade-out seconds */
   fadeOutSec?: number
+  /** Offset into the source file so a later shot continues the cue. */
+  trimStart?: number
 }
 
 export interface LocalRenderTextOverlay {
@@ -507,30 +509,43 @@ function scheduleMusicClipInContext(
   const clipDuration = Math.min(clip.duration, Math.max(0, compositionDuration - clipStart))
   if (clipDuration <= 0) return
 
-  const bufferWallDuration = buffer.duration / rate
   const masterGain = ctx.createGain()
   applyMusicGainEnvelope(masterGain, clipStart, clipDuration, clip.volume, fadeIn, fadeOut)
   masterGain.connect(destination)
 
+  const trim = Math.max(0, clip.trimStart ?? 0)
   let cursor = 0
+  let fileOffset = trim
+  let guard = 0
   do {
-    const remaining = clipDuration - cursor
-    const playWall = loop
-      ? Math.min(bufferWallDuration, remaining)
-      : Math.min(bufferWallDuration, remaining)
-    if (playWall <= 0) break
+    const remainingWall = clipDuration - cursor
+    if (remainingWall <= 0.001) break
+    const offset =
+      buffer.duration > 0
+        ? ((fileOffset % buffer.duration) + buffer.duration) % buffer.duration
+        : 0
+    const availableSrc = buffer.duration - offset
+    if (availableSrc <= 0.001) {
+      fileOffset = 0
+      guard += 1
+      if (!loop || guard > 8) break
+      continue
+    }
+    const playSrc = loop ? availableSrc : Math.min(availableSrc, remainingWall * rate)
+    const playWall = Math.min(playSrc / rate, remainingWall)
+    if (playWall <= 0.001) break
 
     const source = ctx.createBufferSource()
     source.buffer = buffer
     source.playbackRate.value = rate
     source.connect(masterGain)
-
-    const when = clipStart + cursor
-    const srcDuration = Math.min(buffer.duration, playWall * rate)
-    source.start(when, 0, srcDuration)
+    source.start(clipStart + cursor, offset, Math.min(playSrc, playWall * rate))
 
     cursor += playWall
-  } while (loop && cursor < clipDuration)
+    fileOffset += playWall * rate
+    guard += 1
+    if (!loop) break
+  } while (cursor < clipDuration - 0.001 && guard < 10000)
 }
 
 // =============================================================================

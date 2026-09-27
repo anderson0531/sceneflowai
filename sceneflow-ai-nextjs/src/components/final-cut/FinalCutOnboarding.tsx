@@ -21,7 +21,7 @@ const TOUR_STEPS = [
     id: 'welcome',
     title: 'Welcome to Final Cut',
     description:
-      'Final Cut stitches finished Production streams into one master video. Edit beats, audio, and visuals in the Production Mixer — not here.',
+      'Final Cut stitches finished Production streams into one master video. Edit shots, audio, and visuals in the Production Mixer — not here.',
     icon: <Film className="w-6 h-6" />,
   },
   {

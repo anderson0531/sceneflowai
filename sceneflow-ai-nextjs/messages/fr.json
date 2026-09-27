@@ -41,7 +41,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
+        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -101,7 +101,7 @@
       },
       {
         "label": "Approuver avant la vidéo finale",
-        "detail": "Passez en revue les rythmes pré-visites avant le rendu"
+        "detail": "Passez en revue les plans de pré-vis avant le rendu"
       },
       {
         "label": "Testez d'abord votre histoire",
@@ -745,8 +745,8 @@
       {
         "id": "prévisualisation",
         "stepLabel": "Visualisez et testez grâce à la prévisualisation",
-        "shortDescription": "Générez l'audio des dialogues et les images clés (beat frames) scène par scène. Partagez les animatiques pour validation avant d'engager les dépenses finales pour la vidéo.",
-        "detailedDescription": "Pre-Vis Studio génère des indications de mise en scène, de l'audio et des images clés (« beat frames ») pour chaque scène — autant de points de contrôle qui minimisent les reprises coûteuses en cas de changement de personnage ou de ton. Partagez le lecteur pour collaborer ; l'animatique complet peut constituer le livrable final pour de nombreux projets.",
+        "shortDescription": "Générez l'audio des dialogues et les images clés (shot frames) scène par scène. Partagez les animatiques pour validation avant d'engager les dépenses finales pour la vidéo.",
+        "detailedDescription": "Pre-Vis Studio génère des indications de mise en scène, de l'audio et des images clés (« shot frames ») pour chaque scène — autant de points de contrôle qui minimisent les reprises coûteuses en cas de changement de personnage ou de ton. Partagez le lecteur pour collaborer ; l'animatique complet peut constituer le livrable final pour de nombreux projets.",
         "media": "lecteur de prévisualisation"
       },
       {
@@ -1061,11 +1061,11 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
+          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
@@ -1105,7 +1105,7 @@
       "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
         "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
         "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
         "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
@@ -1449,7 +1449,7 @@
       {
         "id": "animation",
         "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {
@@ -1673,7 +1673,7 @@
             "description": "Générez de l'audio express dans plus de 70 langues, auto-aligné pour battre les images et la vidéo. Expédier des flux linguistiques doublés ou synchronisés sur les lèvres à partir d'une coupe principale approuvée.",
             "learnMore": {
               "problem": "Atteindre un public mondial signifie généralement réenregistrer les talents vocaux, reprogrammer chaque scène et reconstruire le projet une fois par langue — un cauchemar en matière de coûts et de coordination qui maintient la plupart des créateurs sur un seul marché.",
-              "solution": "Générez de l'audio express dans plus de 70 langues en quelques minutes, automatiquement aligné sur vos rythmes animés et votre vidéo. Produisez des flux doublés ou synchronisés sur les lèvres à partir de la même coupe approuvée, aucune nouvelle pousse requise.",
+              "solution": "Générez de l'audio express dans plus de 70 langues en quelques minutes, automatiquement aligné sur vos plans animés et votre vidéo. Produisez des flux doublés ou synchronisés sur les lèvres à partir de la même coupe approuvée, aucune nouvelle pousse requise.",
               "outcome": "Livrez chaque histoire nativement à plus de 70 marchés à partir d'une seule production — multipliez votre portée et vos revenus sans multiplier votre charge de travail."
             }
           },
@@ -1887,14 +1887,14 @@
             "id": "production-audio",
             "number": "4",
             "title": "Générer de l'audio",
-            "description": "Générez du dialogue, de la narration, du SFX et de la musique avec Run All Agents sur toutes les scènes, per-scene agents ou beat by beat — voix off de qualité native dans plus de 70 langues.",
-            "imagePlaceholder": "Audio express — toutes les scènes, une seule scène ou battement par battement"
+            "description": "Générez du dialogue, de la narration, du SFX et de la musique avec Run All Agents sur toutes les scènes, per-scene agents ou shot by shot — voix off de qualité native dans plus de 70 langues.",
+            "imagePlaceholder": "Audio express — toutes les scènes, une seule scène ou plan par plan"
           },
           {
             "id": "production-frames",
             "number": "5",
             "title": "Générer et éditer des cadres",
-            "description": "Générez des trames de battement avec Run All Agents, per-scene agents ou battement par battement, puis modifiez n'importe quelle trame avec le directeur adjoint intelligent (IAD) — décrivez simplement le changement.",
+            "description": "Générez des plans avec Run All Agents, per-scene agents ou plan par plan, puis modifiez n'importe quelle trame avec le directeur adjoint intelligent (IAD) — décrivez simplement le changement.",
             "imagePlaceholder": "Battez les cadres avec des modifications de directeur assistant intelligent"
           },
           {
@@ -1908,7 +1908,7 @@
             "id": "production-video",
             "number": "7",
             "title": "Générer à partir de la vidéo",
-            "description": "Transformez les images approuvées en mouvement avec per-scene agents ou battez par battement. Reprenez n'importe quelle prise de vue avec l'assistant directeur intelligent — pas de régénération sans fin de la machine à sous.",
+            "description": "Transformez les images approuvées en mouvement avec per-scene agents ou plan par plan. Reprenez n'importe quelle prise de vue avec l'assistant directeur intelligent — pas de régénération sans fin de la machine à sous.",
             "imagePlaceholder": "Génération de vidéos express avec reprises IAD"
           },
           {

@@ -60,7 +60,7 @@
     "importTranslationDescription": "الصق النص المترجم الخاص بك أدناه. يجب أن يتطابق التنسيق مع التنسيق المُصدَّر:",
     "importTranslationFormat": "[1] TRANSLATED_LABEL: نص مترجم",
     "importTranslationPlaceholder": "الصق النص المترجم هنا...",
-    "deleteBeat": "حذف فوز",
+    "deleteBeat": "حذف لقطة",
     "deleteBeatDescription": "هل أنت متأكد أنك تريد حذف هذا الجزء؟ لا يمكن التراجع عن هذا الإجراء.",
     "deleteScene": "حذف المشهد {number}",
     "deleteSceneDescription": "سيؤدي هذا إلى إزالة هذا المشهد وجميع الأصول المرتبطة به نهائيًا.",
@@ -172,7 +172,7 @@
   },
   "expressAudio": {
     "title": "Audio Agent",
-    "description": "قم بإنشاء حوار ومؤثرات صوتية وموسيقى لهذا المشهد في نفس الوقت. يستخدم الحوار TTS، وتستخدم إيقاعات الحركة صوت Veo الأصلي، وتستخدم الموسيقى Lyria.",
+    "description": "قم بإنشاء حوار ومؤثرات صوتية وموسيقى لهذا المشهد في نفس الوقت. يستخدم الحوار TTS، وتستخدم لقطات الحركة صوت Veo الأصلي، وتستخدم الموسيقى Lyria.",
     "scope": "نِطَاق",
     "scopeMissing": "مفقودة فقط",
     "scopeAll": "الكل (تجديد)",
@@ -217,7 +217,7 @@
     "confirm": "Stills Agent"
   },
   "expressGenerateAll": {
-    "title": "Run All Agents",
+    "title": "Scene Agent",
     "description": "قم بتشغيل Audio Agent وStills Agent بالتوازي. تتطابق الإعدادات الافتراضية مع التحديد \"المفقود فقط\" لكل خط أنابيب - اضبط النطاق إذا كنت بحاجة إلى التجديد.",
     "audioSection": "صوتي",
     "framesSection": "إطارات",
@@ -242,18 +242,18 @@
     "missing": "مفتقد",
     "imageCredits": "اعتمادات الصورة (تقديريًا): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "جري...",
-    "confirm": "Run All Agents"
+    "confirm": "Scene Agent"
   },
   "retake": {
     "title": "هل تريد استبدال اللقطة الحالية؟",
-    "description": "يحتوي هذا الإيقاع بالفعل على فيديو تم إنشاؤه. سيؤدي فتح المولد أو التحميل إلى إضافة مقطع جديد وقد يستهلك الاعتمادات.",
+    "description": "يحتوي هذه اللقطة بالفعل على فيديو تم إنشاؤه. سيؤدي فتح المولد أو التحميل إلى إضافة مقطع جديد وقد يستهلك الاعتمادات.",
     "continue": "يكمل"
   },
   "reset": {
     "title": "إعادة ضبط إنتاج المشهد؟",
     "sceneLabel": "المشهد {number}",
     "sceneHeading": "المشهد {number} · {heading}",
-    "warning": "يؤدي هذا إلى إزالة <bold>المخطط الزمني للإيقاع</bold> بالكامل لهذا المشهد ولا يمكن التراجع عن ذلك. سوف تحتاج إلى تشغيل إعداد المقطع مرة أخرى من البداية.",
+    "warning": "يؤدي هذا إلى إزالة <bold>المخطط الزمني للقطة</bold> بالكامل لهذا المشهد ولا يمكن التراجع عن ذلك. سوف تحتاج إلى تشغيل إعداد المقطع مرة أخرى من البداية.",
     "whatYouWillLose": "ما سوف تخسره",
     "segmentCount": "{count, plural, one {# shot} other {# shots}}",
     "segmentDetail": "التوقيت، وملاحظات الاتجاه، ومطالبات Veo، ورسم خرائط الحوار إلى المقطع",
@@ -261,7 +261,7 @@
     "keyframeDetailAcross": "عبر {count, plural, one {# shot} other {# shots}} (إطارات البداية/النهاية)",
     "keyframeDetailDefault": "لقطات إطار البداية والنهاية المستخدمة لإنشاء الفيديو",
     "videoClip": "{count, plural, one {# generated video clip} other {# generated video clips}}",
-    "videoDetail": "مخرجات Veo / I2V على مستوى الإيقاع والمؤثرات النشطة على المخطط الزمني",
+    "videoDetail": "مخرجات Veo / I2V على مستوى اللقطات والمؤثرات النشطة على المخطط الزمني",
     "imageClip": "{count, plural, one {# image clip} other {# image clips}}",
     "imageClipDetail": "الأصول الثابتة التي تم تحميلها أو إنشاؤها والمرتبطة بالقطاعات",
     "alternateTake": "{count, plural, one {# alternate take} other {# alternate takes}}",
@@ -269,7 +269,7 @@
     "sceneRender": "تقديم المشهد / تيار الإنتاج",
     "sceneRenderStreams": "{count, plural, one {# language or output stream} other {# language or output streams}} مرتبط بهذا المشهد",
     "sceneRenderDefault": "إخراج المشهد المختلط النهائي من خلاط الإنتاج",
-    "beatStructureOnly": "هيكل الفوز فقط",
+    "beatStructureOnly": "هيكل اللقطة فقط",
     "beatStructureDetail": "لم يتم اكتشاف أي إطارات رئيسية أو مقاطع حتى الآن، ولكن سيتم مسح تقدم التجزئة",
     "notDeleted": "<bold>لم يتم حذفه:</bold> نص البرنامج النصي، وحوار المشهد، والسرد، والموسيقى/صوت SFX، وصورة المشهد الثابتة، ومراجع الشخصيات.",
     "resetting": "إعادة الضبط…",
@@ -291,7 +291,7 @@
   },
   "segments": {
     "addBeat": {
-      "title": "أضف فوز",
+      "title": "أضف لقطة",
       "description": "أنشئ موجهًا لإنشاء الفيديو عن طريق تحديد نوع اللقطة وعناصر المشهد والحوار. سيقوم Veo 3.1 بإنشاء تعليق صوتي ومؤثرات صوتية مباشرة من الموجه.",
       "sceneBadge": "المشهد {sceneNumber}",
       "includeSceneDirection": "تضمين اتجاه المشهد",
@@ -328,7 +328,7 @@
       "startTime": "وقت البدء",
       "endTime": "وقت النهاية",
       "method": "طريقة",
-      "addAction": "أضف فوز"
+      "addAction": "أضف لقطة"
     },
     "edit": {
       "title": "تحرير المقطع",
@@ -344,7 +344,7 @@
       "i2vHint": "سيتم استخدام إطار المشهد كصورة البداية"
     },
     "delete": {
-      "title": "هل تريد حذف Beat {number}؟",
+      "title": "هل تريد حذف Shot {number}؟",
       "description": "لا يمكن التراجع عن هذا الإجراء.",
       "segmentLabel": "شريحة",
       "segmentOf": "#{index} من {total}",
@@ -353,21 +353,21 @@
       "lastBeatWarning": "تحذير: هذا هو المقطع الوحيد في المشهد. سيؤدي حذفه إلى ترك المشهد بدون أي إطارات رئيسية.",
       "shiftWarning": "سيؤدي حذف هذا المقطع إلى تحويل جميع المقاطع اللاحقة. سيتم إعادة حساب مؤشرات التوقيت والتسلسل تلقائيًا.",
       "deleting": "جارٍ الحذف...",
-      "deleteBeat": "حذف فوز"
+      "deleteBeat": "حذف لقطة"
     },
     "addType": {
-      "title": "أضف إيقاعًا إلى المشهد {sceneNumber}",
+      "title": "أضف لقطةًا إلى المشهد {sceneNumber}",
       "description": "أضف مقطعًا يعتمد على الإطار الرئيسي لإنشاء فيديو بتقنية الذكاء الاصطناعي. بالنسبة للعناصر السينمائية (العناوين، والانتقالات، وB-roll)، استخدم زر العناصر السينمائية.",
       "tabType": "يكتب",
       "tabPosition": "موضع",
       "tabPrompt": "اِسْتَدْعَى",
       "defaultDuration": "{seconds}s الافتراضي",
       "orDivider": "أو",
-      "regenerateAll": "تجديد جميع يدق",
+      "regenerateAll": "تجديد جميع لقطات",
       "regenerateAllCount": "شرائح {count}",
       "regenerateAllHint": "أعد تحليل المشهد وأنشئ مقاطع جديدة باستخدام الذكاء الاصطناعي. سيحل هذا محل القطاعات الموجودة.",
       "insertPosition": "إدراج الموقف",
-      "referenceBeat": "فوز المرجعية",
+      "referenceBeat": "لقطة المرجعية",
       "selectSegment": "حدد المقطع",
       "beatOption": "فاز {number} ({duration}s)",
       "duration": "مدة",
@@ -389,7 +389,7 @@
       "addNamed": "إضافة {name}",
       "types": {
         "standard": {
-          "name": "فوز قياسي",
+          "name": "لقطة قياسي",
           "description": "مقطع المشهد مع الإطارات الرئيسية للبداية/النهاية لإنشاء فيديو بتقنية الذكاء الاصطناعي. السيطرة الكاملة على تكوين اللقطة."
         },
         "extend": {
@@ -570,29 +570,29 @@
         "description": "مضغوطة ومعزولة"
       }
     },
-    "generateTitle": "توليد إيقاعات المشهد",
-    "regenerateSceneTitle": "تجديد إيقاعات المشهد",
+    "generateTitle": "توليد لقطات المشهد",
+    "regenerateSceneTitle": "تجديد لقطات المشهد",
     "generateDescription": "قم بتكوين كيفية إنشاء المقاطع لهذا المشهد.",
-    "beatsPreview": "يدق",
+    "beatsPreview": "لقطات",
     "tabTiming": "توقيت",
     "tabReferences": "مراجع",
     "tabStyle": "أسلوب",
     "narrationDriven": "التقسيم القائم على السرد",
     "narrationDrivenHint": "قم بإنشاء مقاطع تتوافق مع السرد وتوضحه. يصبح كل مقطع خلفية سينمائية للتعليق الصوتي.",
     "targetBeatDuration": "مدة الضربة المستهدفة",
-    "addTitle": "أضف فوز",
+    "addTitle": "أضف لقطة",
     "addNewTitle": "إضافة شريحة جديدة",
     "addDescription": "قم بإنشاء مقطع مرئي جديد لتوسيع المخطط الزمني للمشهد.",
     "addDuration": "المدة (ثواني)",
     "addDurationHint": "الموصى بها: 3-5 ثواني لإيقاع سلس",
-    "addAction": "أضف فوز",
+    "addAction": "أضف لقطة",
     "editTitle": "تحرير المقطع",
     "editBadge": "المشهد {sceneNumber} • فاز على {beatNumber}",
     "editDescription": "قم بتعديل إعدادات المطالبة والمدة والإنشاء الخاصة بالمقطع.",
     "shotConfiguration": "تكوين النار",
     "shotType": "نوع اللقطة",
     "cameraMovement": "حركة الكاميرا",
-    "deleteTitle": "هل تريد حذف Beat {number}؟",
+    "deleteTitle": "هل تريد حذف Shot {number}؟",
     "deleteDescription": "لا يمكن التراجع عن هذا الإجراء.",
     "segmentLabel": "شريحة",
     "segmentOf": "#{index} من {total}",
@@ -601,16 +601,16 @@
     "lastBeatWarning": "تحذير: هذا هو المقطع الوحيد في المشهد. سيؤدي حذفه إلى ترك المشهد بدون أي إطارات رئيسية.",
     "shiftWarning": "سيؤدي حذف هذا المقطع إلى تحويل جميع المقاطع اللاحقة. سيتم إعادة حساب مؤشرات التوقيت والتسلسل تلقائيًا.",
     "deleting": "جارٍ الحذف...",
-    "deleteBeat": "حذف فوز",
-    "regenerateTitle": "تجديد يدق",
-    "regenerateDescription": "امسح جميع المقاطع وارجع إلى Beat Builder للبدء من جديد.",
-    "beats": "يدق",
+    "deleteBeat": "حذف لقطة",
+    "regenerateTitle": "تجديد لقطات",
+    "regenerateDescription": "امسح جميع المقاطع وارجع إلى Shot Builder للبدء من جديد.",
+    "beats": "لقطات",
     "totalDuration": "المدة الإجمالية",
     "anchoredFrames": "إطارات مثبتة",
     "anchoredCount": "{anchored} / {total}",
     "regenerateAssetsWarning": "تحذير: سيؤدي هذا إلى حذف جميع الشرائح بما في ذلك الإطارات الرئيسية وأصول الفيديو التي تم إنشاؤها. لا يمكن التراجع عن هذا الإجراء.",
-    "regenerateEmptyWarning": "ستتم إزالة كافة الشرائح الحالية. سيتم نقلك إلى Beat Builder لتكوين الإعدادات الجديدة وإعادة إنشائها.",
-    "regenerateNextHint": "سيتم فتح Beat Builder مع عناصر التحكم في المدة الإجمالية وعدد المقاطع ووضع التركيز والاتجاه المخصص.",
+    "regenerateEmptyWarning": "ستتم إزالة كافة الشرائح الحالية. سيتم نقلك إلى Shot Builder لتكوين الإعدادات الجديدة وإعادة إنشائها.",
+    "regenerateNextHint": "سيتم فتح Shot Builder مع عناصر التحكم في المدة الإجمالية وعدد المقاطع ووضع التركيز والاتجاه المخصص.",
     "deleteAndRegenerate": "حذف وتجديد",
     "regenerate": "تجديد",
     "addTypeTitle": "إضافة شريحة خاصة",
@@ -656,7 +656,7 @@
     "alignment": {
       "title": "فاز على محاذاة الصوت {number}",
       "description": "قم بمحاذاة هذا المقطع مع الحوار والمسارات الصوتية للحصول على توقيت دقيق.",
-      "beatTiming": "توقيت الفوز",
+      "beatTiming": "توقيت اللقطة",
       "aligned": "محاذاة",
       "nearlyAligned": "محاذاة تقريبًا",
       "misaligned": "منحرفة",
@@ -718,7 +718,7 @@
     "clipDuration": "المدة: {time}",
     "alignmentTitle": "فاز على محاذاة الصوت {number}",
     "alignmentDescription": "قم بمحاذاة هذا المقطع مع الحوار والمسارات الصوتية للحصول على توقيت دقيق.",
-    "beatTiming": "توقيت الفوز",
+    "beatTiming": "توقيت اللقطة",
     "aligned": "محاذاة",
     "nearlyAligned": "محاذاة تقريبًا",
     "misaligned": "منحرفة",
@@ -937,7 +937,7 @@
       "loseEditsTitle": "ستفقد تعديلات الإنتاج اليدوية:",
       "loseScriptTweaks": "تعديلات سطر البرنامج النصي لم يتم قفلها بعد",
       "loseStoryboard": "إطارات القصة المصورة والأصول المولدة",
-      "loseBeatAdjustments": "تعديلات الإنتاج على مستوى الفوز",
+      "loseBeatAdjustments": "تعديلات الإنتاج على مستوى اللقطة",
       "artStyle": "أسلوب الفن",
       "aspectRatio": "نسبة الارتفاع",
       "reimagineInBlueprint": "إعادة تصور في Blueprint"
@@ -965,16 +965,16 @@
     },
     "beatReferences": {
       "title": "مراجعة المراجع — المشهد {number}",
-      "description": "SceneFlow المراجع المحددة تلقائيًا لهذه الإيقاع. قم بالتأكيد أو التعديل قبل الإنشاء.",
+      "description": "SceneFlow المراجع المحددة تلقائيًا لهذه اللقطة. قم بالتأكيد أو التعديل قبل الإنشاء.",
       "beatKindAction": "فعل",
       "beatKindNarration": "السرد",
       "beatKindDialogue": "حوار",
-      "beatLabel": "فوز: {kind}",
+      "beatLabel": "لقطة: {kind}",
       "autoSelected": "تم التحديد تلقائيًا: {summary}",
       "locationMatchedAssignment": "الموقع المطابق من مهمة المشهد",
       "locationMatchedHeading": "الموقع مطابق من عنوان المشهد",
       "locationReference": "مرجع الموقع",
-      "pickLocation": "اختر مرجعًا بيئيًا واحدًا لهذه الإيقاع (يستخدم للاتساق البصري).",
+      "pickLocation": "اختر مرجعًا بيئيًا واحدًا لهذه اللقطة (يستخدم للاتساق البصري).",
       "match": "مباراة",
       "selectedCount": "تم تحديد {count}",
       "saveSelection": "حفظ التحديد",
@@ -1026,15 +1026,15 @@
       "anomalyUnknown": "الأصل غير واضح"
     },
     "regenerateBeats": {
-      "title": "تجديد يدق",
-      "description": "امسح جميع المقاطع وارجع إلى Beat Builder للبدء من جديد.",
-      "beats": "يدق",
+      "title": "تجديد لقطات",
+      "description": "امسح جميع المقاطع وارجع إلى Shot Builder للبدء من جديد.",
+      "beats": "لقطات",
       "totalDuration": "المدة الإجمالية",
       "anchoredFrames": "إطارات مثبتة",
       "anchoredCount": "{anchored} / {total}",
       "assetsWarning": "تحذير: سيؤدي هذا إلى حذف جميع الشرائح بما في ذلك الإطارات الرئيسية وأصول الفيديو التي تم إنشاؤها. لا يمكن التراجع عن هذا الإجراء.",
-      "emptyWarning": "ستتم إزالة كافة الشرائح الحالية. سيتم نقلك إلى Beat Builder لتكوين الإعدادات الجديدة وإعادة إنشائها.",
-      "nextHint": "سيتم فتح Beat Builder مع عناصر التحكم في المدة الإجمالية وعدد المقاطع ووضع التركيز والاتجاه المخصص.",
+      "emptyWarning": "ستتم إزالة كافة الشرائح الحالية. سيتم نقلك إلى Shot Builder لتكوين الإعدادات الجديدة وإعادة إنشائها.",
+      "nextHint": "سيتم فتح Shot Builder مع عناصر التحكم في المدة الإجمالية وعدد المقاطع ووضع التركيز والاتجاه المخصص.",
       "deleteAndRegenerate": "حذف وتجديد",
       "regenerate": "تجديد"
     },
@@ -1093,7 +1093,7 @@
         },
         "dynamic": {
           "label": "ديناميكي (مطابق للصوت)",
-          "description": "يختلف بناءً على إيقاعات السرد/الحوار"
+          "description": "يختلف بناءً على لقطات السرد/الحوار"
         }
       },
       "shotTypes": {
@@ -1229,7 +1229,7 @@
     "retaking": "استعادة…",
     "approveAndRetake": "الموافقة وإعادة الالتقاط",
     "keyframeRegenTitle": "إعادة إنشاء الإطارات الرئيسية",
-    "keyframeRegenDescription": "أعد بناء إطارات البداية والنهاية لهذه الإيقاع بالاتجاه المحدث."
+    "keyframeRegenDescription": "أعد بناء إطارات البداية والنهاية لهذه اللقطة بالاتجاه المحدث."
   },
   "budget": {
     "title": "إدارة ميزانية الإنتاج",
@@ -1261,7 +1261,7 @@
     "languagesBanner": "لغات {count}: أصلية + {extra} مترجمة إلى {extra, plural, one {version} other {versions}}. يضيف أرصدة ~ {credits} للترجمة وإعادة الصوت.",
     "sceneConfiguration": "تكوين المشهد",
     "numberOfScenes": "عدد المشاهد",
-    "beatsPerScene": "يدق لكل مشهد",
+    "beatsPerScene": "لقطات لكل مشهد",
     "takesPerBeat": "يأخذ لكل نبضة (التجديدات)",
     "videoEngine": "محرك الفيديو",
     "clipDuration": "مدة المقطع (بالثواني)",
@@ -1271,7 +1271,7 @@
     "forVideo": "للفيديو",
     "imagesByQuality": "الصور حسب الجودة",
     "excludedByok": "مستبعد (BYOK)",
-    "draftBeatFrames": "إطارات المسودة / الإيقاع ({credits} cr)",
+    "draftBeatFrames": "إطارات المسودة / اللقطات ({credits} cr)",
     "retakesPerDraft": "عمليات إعادة الالتقاط لكل مسودة إطار",
     "finalStoryboardImages": "صور القصة المصورة النهائية ({credits} cr)",
     "characterHeadshots": "لقطات شخصية للشخصية ({credits} cr)",
@@ -1337,19 +1337,19 @@
   },
   "budgetManager": {
     "title": "مدير ميزانية الإنتاج",
-    "subtitle": "التخطيط من المشاهد والإيقاعات الثابتة. تكلفة المسودة مقابل محركات الأقراص النهائية - يظل اختيار الموفر مبدعًا.",
+    "subtitle": "التخطيط من المشاهد واللقطات الثابتة. تكلفة المسودة مقابل محركات الأقراص النهائية - يظل اختيار الموفر مبدعًا.",
     "subtitleWithTitle": "خطة الميزانية لـ {title}",
     "currentBalance": "الرصيد الحالي",
     "creditsCount": "اعتمادات {count}",
     "byokTitle": "أحضر مفتاحك الخاص (BYOK)",
     "byokDescription": "لا يشمل الإطارات والفيديو والتوباز من خطة الميزانية هذه. الذكاء لا يزال يهم.",
     "scenes": "مشاهد",
-    "beats": "يدق",
+    "beats": "لقطات",
     "clipDuration": "طول المقطع",
     "seconds": "{count}s",
     "progress": "منتهي",
     "progressValues": "إطارات {frames}/{beats} · مقاطع فيديو {videos}/{beats}",
-    "scopeFixedHint": "يأتي عدد المشاهد والإيقاعات من Production Studio ولا يمكن تعديله هنا.",
+    "scopeFixedHint": "يأتي عدد المشاهد واللقطات من Production Studio ولا يمكن تعديله هنا.",
     "methodsTitle": "طريقة الإنتاج",
     "recommended": "مُستَحسَن",
     "methods": {
@@ -1380,9 +1380,9 @@
     "creditsPerFrame": "{credits} كر/إطار",
     "creditsPerClip": "{credits} cr/{seconds}s",
     "creditsZero": "0كر",
-    "providerNote": "يتم اختيار Kling vs Google لكل إيقاع في الاستوديو ولا يغير هذه التوقعات.",
-    "frameIterations": "تكرارات الإطار / فوز",
-    "videoIterations": "تكرارات الفيديو / فوز",
+    "providerNote": "يتم اختيار Kling vs Google لكل لقطة في الاستوديو ولا يغير هذه التوقعات.",
+    "frameIterations": "تكرارات الإطار / لقطة",
+    "videoIterations": "تكرارات الفيديو / لقطة",
     "frameIterationsHint": "الإعدادات الافتراضية هي نجاح {rate} (~1.25×).",
     "videoIterationsHint": "الإعدادات الافتراضية هي نجاح {rate} (~1.11×).",
     "topazTitle": "التوباز الراقي",
@@ -1416,6 +1416,6 @@
     },
     "setAsProjectBudget": "تعيين كميزانية المشروع (اعتمادات {credits})",
     "saving": "توفير...",
-    "noBeatsYet": "أضف المشاهد والإيقاعات في Production Studio لإنشاء الميزانية."
+    "noBeatsYet": "أضف المشاهد واللقطات في Production Studio لإنشاء الميزانية."
   }
 }

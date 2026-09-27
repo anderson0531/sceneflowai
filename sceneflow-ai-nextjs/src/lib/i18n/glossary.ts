@@ -35,6 +35,7 @@ export const GLOSSARY_TERMS = [
   // Agent actions plus their umbrella. These are product names, not verbs —
   // MT used to turn "Express All" into "Articulate all scenes".
   'Audio Agent',
+  'Scene Agent',
   'Stills Agent',
   'Video Agent',
   'Clips Agent',

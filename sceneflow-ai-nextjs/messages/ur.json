@@ -41,7 +41,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
+        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -285,7 +285,7 @@
     "title": "بیٹ (Beat) کو ترجیح دینے والا ویڈیو پائپ لائن",
     "subtitle": "رینڈر (render) کرنے سے پہلے منظوری دیں — نہ کہ سلاٹ مشین کی طرح خودکار دوبارہ تخلیق۔",
     "intro": "اس میں اندازے لگا کر اور آزما کر (guess-and-check) مواد تیار کرنے کی ضرورت نہیں ہے۔ SceneFlow کی جانب سے حتمی ویڈیو پر کریڈٹس خرچ کیے جانے سے پہلے، آپ اس کی ظاہری شکل کا پیشگی جائزہ لیتے ہیں اور اسے منظور کرتے ہیں۔",
-    "description": "SceneFlow ہر مرحلے پر بصری منظوری کے عمل کو منظم کرتا ہے: جائزے کے لیے Pre-vis Agent، کمپوزیشن کو حتمی شکل دینے کے لیے Shot Frames، اور پھر ہر بیٹ (beat) پر F2V۔ یوں آپ 'ڈرفٹ' (drift) اور 'ہیلوسینیشنز' (hallucinations) پر کریڈٹس ضائع کرنے سے پہلے ہی منظر کو بہتر اور درست کر لیتے ہیں۔",
+    "description": "SceneFlow ہر مرحلے پر بصری منظوری کے عمل کو منظم کرتا ہے: جائزے کے لیے Pre-vis Agent، کمپوزیشن کو حتمی شکل دینے کے لیے Shot Frames، اور پھر ہر بیٹ (shot) پر F2V۔ یوں آپ 'ڈرفٹ' (drift) اور 'ہیلوسینیشنز' (hallucinations) پر کریڈٹس ضائع کرنے سے پہلے ہی منظر کو بہتر اور درست کر لیتے ہیں۔",
     "steps": [
       "Pre-vis Agent — جائزہ لینے کے لیے آڈیو ویژول بیٹس (beats) منٹوں میں شیئر کریں۔",
       "Shot Frames — Reference Library تسلسل کے ساتھ آغاز/اختتام کی ترکیب (composition) کو مقفل کریں",
@@ -745,8 +745,8 @@
       {
         "id": "پیشِ بصری نمائش",
         "stepLabel": "پری ویژولائزیشن (Pre-Visualization) کے ذریعے تصور کریں اور جانچ کریں۔",
-        "shortDescription": "ہر منظر کے لیے مکالموں کی آڈیو اور 'بیٹ فریمز' (beat frames) تیار کریں۔ ویڈیو کی تیاری پر حتمی اخراجات کرنے سے پہلے منظوری کے لیے 'اینیمیٹکس' (animatics) شیئر کریں۔",
-        "detailedDescription": "Pre-Vis Studio ہر منظر کے لیے ڈائریکشن، آڈیو اور 'بیٹ فریمز' (beat frames) تیار کرتا ہے — یہ ایسے اہم سنگِ میل ہیں جو کرداروں یا انداز (tone) میں تبدیلی کی صورت میں مہنگے دوبارہ کام (redos) کی ضرورت کو کم کرتے ہیں۔ باہمی تعاون کے لیے پلیئر کا اشتراک کریں؛ مکمل 'اینی میٹک' (animatic) کئی پروجیکٹس کے لیے آپ کی حتمی پروڈکٹ یا ڈیلیوریبل ہو سکتا ہے۔",
+        "shortDescription": "ہر منظر کے لیے مکالموں کی آڈیو اور 'بیٹ فریمز' (shot frames) تیار کریں۔ ویڈیو کی تیاری پر حتمی اخراجات کرنے سے پہلے منظوری کے لیے 'اینیمیٹکس' (animatics) شیئر کریں۔",
+        "detailedDescription": "Pre-Vis Studio ہر منظر کے لیے ڈائریکشن، آڈیو اور 'بیٹ فریمز' (shot frames) تیار کرتا ہے — یہ ایسے اہم سنگِ میل ہیں جو کرداروں یا انداز (tone) میں تبدیلی کی صورت میں مہنگے دوبارہ کام (redos) کی ضرورت کو کم کرتے ہیں۔ باہمی تعاون کے لیے پلیئر کا اشتراک کریں؛ مکمل 'اینی میٹک' (animatic) کئی پروجیکٹس کے لیے آپ کی حتمی پروڈکٹ یا ڈیلیوریبل ہو سکتا ہے۔",
         "media": "پری وِز پلیئر"
       },
       {
@@ -1061,11 +1061,11 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
+          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
@@ -1105,7 +1105,7 @@
       "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
         "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
         "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
         "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
@@ -1449,7 +1449,7 @@
       {
         "id": "animation",
         "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {

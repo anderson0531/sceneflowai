@@ -179,7 +179,7 @@ export function PublishingPromoTab({
       })
       setBeatPlan(result.beatPlan)
       toast.success(
-        `Beat plan: ${result.beatPlan.length} beats · ~${Math.round(result.totalDurationSec)}s`
+        `Shot plan: ${result.beatPlan.length} shots · ~${Math.round(result.totalDurationSec)}s`
       )
     } finally {
       setPlanning(false)
@@ -274,7 +274,7 @@ export function PublishingPromoTab({
           }).beatPlan
 
     if (plan.length === 0) {
-      toast.error('Generate a beat plan or promo scene first.')
+      toast.error('Generate a shot plan or promo scene first.')
       return
     }
 
@@ -362,7 +362,7 @@ export function PublishingPromoTab({
           9:16 Promo Trailer
         </h3>
         <p className="text-xs text-zinc-500 mb-4">
-          Build a captivating ~{targetDuration}s trailer from existing beats, frames, and clips.
+          Build a captivating ~{targetDuration}s trailer from existing shots, frames, and clips.
           Promo-specific narration and music stay on the promo scene.
         </p>
 
@@ -391,7 +391,7 @@ export function PublishingPromoTab({
             ) : (
               <Sparkles className="w-4 h-4 mr-1" />
             )}
-            Plan beats
+            Plan shots
           </Button>
           <Button
             size="sm"
@@ -468,7 +468,7 @@ export function PublishingPromoTab({
         {timelineRows.length > 0 && (
           <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
             <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">
-              Beat timeline ({timelineRows.length} beats)
+              Shot timeline ({timelineRows.length} shots)
             </p>
             <p className="text-[11px] text-zinc-400 mb-2">
               {readyClipCount} of {timelineRows.length} clips
@@ -524,7 +524,7 @@ export function PublishingPromoTab({
                         title={
                           media.segmentId
                             ? 'Generate clip'
-                            : 'This beat needs a Studio segment first'
+                            : 'This shot needs a Studio segment first'
                         }
                         onClick={() =>
                           void handleGenerateBeatClip(

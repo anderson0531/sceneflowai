@@ -1246,7 +1246,7 @@ const AnimatedProcessingOverlay = () => {
               <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-xs text-slate-400 whitespace-nowrap">
                 {progress < 15 ? '📋 Reading scene script...' : 
                  progress < 35 ? '🔍 Examining dialogue...' :
-                 progress < 55 ? '🎬 Analyzing action beats...' :
+                 progress < 55 ? '🎬 Analyzing action shots...' :
                  progress < 75 ? '🎭 Evaluating character dynamics...' :
                  progress < 90 ? '💡 Generating insights...' :
                  '✓ Completing analysis...'}

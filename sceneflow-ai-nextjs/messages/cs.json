@@ -41,7 +41,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
+        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -285,7 +285,7 @@
     "title": "Video pipeline řízená rytmem",
     "subtitle": "Schvalte před vykreslením – ne generování stylem výherního automatu",
     "intro": "Žádné generování metodou pokus-omyl. Vzhled si prohlédnete a schválíte ještě předtím, než SceneFlow spotřebuje kredity na finální video.",
-    "description": "SceneFlow organizuje proces vizuálního schvalování v každé fázi: Pre-vis Agent pro kontrolu, Shot Frames pro ukotvení kompozice a následně F2V pro jednotlivé doby (beaty). Vzhled tak vyladíte ještě předtím, než vyplýtváte kredity na nežádoucí odchylky a halucinace modelu.",
+    "description": "SceneFlow organizuje proces vizuálního schvalování v každé fázi: Pre-vis Agent pro kontrolu, Shot Frames pro ukotvení kompozice a následně F2V pro jednotlivé záběry (shots). Vzhled tak vyladíte ještě předtím, než vyplýtváte kredity na nežádoucí odchylky a halucinace modelu.",
     "steps": [
       "Pre-vis Agent — sdílejte audiovizuální hudební podklady k posouzení během několika minut",
       "Shot Frames — uzamčení počáteční/koncové kompozice se zachováním kontinuity Reference Library",
@@ -745,8 +745,8 @@
       {
         "id": "pre-vizualizace",
         "stepLabel": "Vizualizujte a testujte pomocí předběžné vizualizace",
-        "shortDescription": "Vygenerujte zvuk dialogů a klíčové snímky (beat frames) pro jednotlivé scény. Před vynaložením konečných nákladů na video předložte k schválení animatiky.",
-        "detailedDescription": "Pre-Vis Studio vytváří pro každou scénu režijní pokyny, zvukovou stopu a klíčové záběry (tzv. beat frames) – kontrolní body, které minimalizují nákladné předělávky v případě změn postav či celkového ladění. Přehrávač můžete sdílet a spolupracovat na projektu; kompletní animatik pak může u mnoha projektů sloužit jako finální výstup.",
+        "shortDescription": "Vygenerujte zvuk dialogů a klíčové snímky (shot frames) pro jednotlivé scény. Před vynaložením konečných nákladů na video předložte k schválení animatiky.",
+        "detailedDescription": "Pre-Vis Studio vytváří pro každou scénu režijní pokyny, zvukovou stopu a klíčové záběry (tzv. shot frames) – kontrolní body, které minimalizují nákladné předělávky v případě změn postav či celkového ladění. Přehrávač můžete sdílet a spolupracovat na projektu; kompletní animatik pak může u mnoha projektů sloužit jako finální výstup.",
         "media": "přehrávač previsualizace"
       },
       {
@@ -808,7 +808,7 @@
     "viewDetails": "Zobrazit podrobnosti",
     "beatFirst": {
       "title": "Video pipeline řízená rytmem",
-      "description": "Schvalte klíčové body vizualizace (pre-vis beats) a Shot Frames ještě před fází F2V – omezíte tak nutnost opakovaných generování naslepo způsobených halucinacemi či vizuálním posunem. Získáte jeden strukturovaný postup od revize až po finální klip.",
+      "description": "Schvalte klíčové body vizualizace (pre-vis shots) a Shot Frames ještě před fází F2V – omezíte tak nutnost opakovaných generování naslepo způsobených halucinacemi či vizuálním posunem. Získáte jeden strukturovaný postup od revize až po finální klip.",
       "keyFeatures": [
         "Pre-vis Agent ke kontrole – sdílení beatů před náročným renderováním",
         "Shot Frames skladba zámku — Reference Library spojitost",
@@ -1061,11 +1061,11 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
+          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
@@ -1105,7 +1105,7 @@
       "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
         "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
         "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
         "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
@@ -1449,7 +1449,7 @@
       {
         "id": "animation",
         "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {

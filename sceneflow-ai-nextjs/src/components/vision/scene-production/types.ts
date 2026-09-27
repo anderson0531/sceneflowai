@@ -1683,6 +1683,12 @@ export interface MixerSegmentAudioConfig {
   postSegmentPause?: number
 }
 
+/** Per-shot score level in the Production Mixer. Mute lives on the shot itself. */
+export interface MixerMusicShotConfig {
+  /** 0–1. Absent on a shot means unity. */
+  volume: number
+}
+
 /** Per-dialogue-line control in the Production Mixer (not timeline AudioClipConfig) */
 export interface MixerDialogueClipConfig {
   id: string
@@ -1712,6 +1718,8 @@ export interface SceneMixerSettings {
   audioTracks?: Partial<MixerAudioTracks>
   segmentAudioConfigs?: Record<string, Partial<MixerSegmentAudioConfig>>
   dialogueClipConfigs?: Record<string, Partial<MixerDialogueClipConfig>>
+  /** Per-shot score volume, keyed by shot id. */
+  musicShotConfigs?: Record<string, Partial<MixerMusicShotConfig>>
   masterSegmentVolume?: number
   resolution?: '720p' | '1080p' | '4K'
   productionTarget?: ProductionTarget

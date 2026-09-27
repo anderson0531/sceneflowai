@@ -265,7 +265,7 @@ export function VerticalSegmentSelector({
             className="w-full h-12 border-dashed flex items-center justify-center gap-2 text-gray-400 hover:text-gray-600"
           >
             <Plus className="w-4 h-4" />
-            <span>Add Beat</span>
+            <span>Add Shot</span>
           </Button>
         )} */}
       </div>

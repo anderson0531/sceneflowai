@@ -41,7 +41,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
+        "detail": "Iterate direction cheaply on Pre-Vis shot frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -285,7 +285,7 @@
     "title": "Alur Kerja Video Berbasis Ketukan",
     "subtitle": "Setujui sebelum melakukan rendering — bukan regenerasi ala mesin slot",
     "intro": "Tidak perlu lagi membuat video dengan metode coba-coba. Anda dapat meninjau dan menyetujui tampilannya sebelum SceneFlow menggunakan kredit untuk video akhir.",
-    "description": "SceneFlow mengatur persetujuan visual di setiap tahapan: Pre-vis Agent untuk peninjauan, Shot Frames untuk mengunci komposisi, lalu F2V per *beat*. Anda menyempurnakan tampilan sebelum menghabiskan kredit untuk *drift* dan halusinasi.",
+    "description": "SceneFlow mengatur persetujuan visual di setiap tahapan: Pre-vis Agent untuk peninjauan, Shot Frames untuk mengunci komposisi, lalu F2V per shot. Anda menyempurnakan tampilan sebelum menghabiskan kredit untuk *drift* dan halusinasi.",
     "steps": [
       "Pre-vis Agent — bagikan beat audio-visual untuk ditinjau dalam hitungan menit",
       "Shot Frames — mengunci awal/akhir komposisi dengan kontinuitas Reference Library",
@@ -684,7 +684,7 @@
         ],
         "keyFeatures": [
           "Foundation — naskah, pengisi suara, audio adegan, Audience Resonance",
-          "Pre-Vis — arahan, audio, dan *beat frame* per adegan beserta tautan berbagi",
+          "Pre-Vis — arahan, audio, dan *shot frame* per adegan beserta tautan berbagi",
           "Rekam — Footage, Mixer, dan Stream tanpa meninggalkan area produksi.",
           "Screening Room — pratinjau adegan, perakitan master, pemutaran, dan publikasi YouTube"
         ]
@@ -745,8 +745,8 @@
       {
         "id": "pra-visualisasi",
         "stepLabel": "Visualisasikan dan uji dengan pra-visualisasi",
-        "shortDescription": "Buat audio dialog dan *beat frame* untuk setiap adegan. Bagikan *animatic* untuk mendapatkan persetujuan sebelum melakukan pengeluaran biaya untuk video final.",
-        "detailedDescription": "Pre-Vis Studio menghasilkan arahan, audio, dan *beat frame* untuk setiap adegan—titik pemeriksaan yang meminimalkan pengerjaan ulang berbiaya tinggi saat terjadi perubahan karakter atau nuansa. Bagikan pemutar (*player*) untuk keperluan kolaborasi; *animatic* lengkap tersebut bahkan dapat menjadi hasil akhir bagi banyak proyek.",
+        "shortDescription": "Buat audio dialog dan *shot frame* untuk setiap adegan. Bagikan *animatic* untuk mendapatkan persetujuan sebelum melakukan pengeluaran biaya untuk video final.",
+        "detailedDescription": "Pre-Vis Studio menghasilkan arahan, audio, dan *shot frame* untuk setiap adegan—titik pemeriksaan yang meminimalkan pengerjaan ulang berbiaya tinggi saat terjadi perubahan karakter atau nuansa. Bagikan pemutar (*player*) untuk keperluan kolaborasi; *animatic* lengkap tersebut bahkan dapat menjadi hasil akhir bagi banyak proyek.",
         "media": "pemutar pra-visualisasi"
       },
       {
@@ -808,7 +808,7 @@
     "viewDetails": "Lihat Detail",
     "beatFirst": {
       "title": "Alur Kerja Video Berbasis Ketukan",
-      "description": "Setujui *pre-vis beats* dan Shot Frames sebelum F2V — mengurangi pembuatan ulang tanpa arah akibat halusinasi dan pergeseran visual. Satu alur terstruktur mulai dari peninjauan hingga klip akhir.",
+      "description": "Setujui *pre-vis shots* dan Shot Frames sebelum F2V — mengurangi pembuatan ulang tanpa arah akibat halusinasi dan pergeseran visual. Satu alur terstruktur mulai dari peninjauan hingga klip akhir.",
       "keyFeatures": [
         "Pre-vis Agent untuk ditinjau — bagikan beat sebelum proses render berat",
         "Shot Frames komposisi kunci — Reference Library kontinuitas",
@@ -914,7 +914,7 @@
         "description": "Tab Script dan Shoot memandu alur Foundation → Pre-Vis → Footage → Mixer → Streams. Titik pemeriksaan per adegan meminimalkan pengulangan kerja; Screening Room menangani pratinjau, perakitan, dan publikasi.",
         "keyFeatures": [
           "Foundation — naskah, pengisi suara, audio adegan, Audience Resonance",
-          "Pre-Vis — arahan, audio, dan *beat frame* per adegan beserta tautan berbagi",
+          "Pre-Vis — arahan, audio, dan *shot frame* per adegan beserta tautan berbagi",
           "Rekam — Footage, Mixer, dan Stream tanpa meninggalkan area produksi.",
           "Screening Room — pratinjau adegan, perakitan master, pemutaran, dan publikasi YouTube"
         ],
@@ -1061,11 +1061,11 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
+          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
@@ -1105,7 +1105,7 @@
       "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
         "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
         "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
         "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
@@ -1449,7 +1449,7 @@
       {
         "id": "animation",
         "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {

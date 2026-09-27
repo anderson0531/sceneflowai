@@ -63,19 +63,34 @@ describe('buildProductionMusicCueClips', () => {
   it('spans each cue across the segments carrying its beats', () => {
     const clips = buildProductionMusicCueClips(cueScene(), beatSegments())
 
-    expect(clips).toHaveLength(2)
+    expect(clips).toHaveLength(4)
     expect(clips[0]).toMatchObject({
-      id: 'music-cue-0-1',
+      id: 'music-cue-0-1-bt_a1',
       url: DREAD_URL,
       startTime: 0,
-      duration: 20,
+      duration: 10,
+      trimStart: 0,
       label: 'rising dread',
     })
     expect(clips[1]).toMatchObject({
-      id: 'music-cue-2-3',
+      id: 'music-cue-0-1-bt_a2',
+      startTime: 10,
+      duration: 10,
+      trimStart: 10,
+      url: DREAD_URL,
+    })
+    expect(clips[2]).toMatchObject({
+      id: 'music-cue-2-3-bt_a3',
       url: VIOLENCE_URL,
       startTime: 20,
-      duration: 20,
+      duration: 10,
+      trimStart: 0,
+    })
+    expect(clips[3]).toMatchObject({
+      startTime: 30,
+      duration: 10,
+      trimStart: 10,
+      url: VIOLENCE_URL,
     })
   })
 
@@ -90,8 +105,10 @@ describe('buildProductionMusicCueClips', () => {
 
     const clips = buildProductionMusicCueClips(cueScene(), reordered)
 
-    const dread = clips.find((clip) => clip.url === DREAD_URL)
-    expect(dread).toMatchObject({ startTime: 20, duration: 20 })
+    const dread = clips.filter((clip) => clip.url === DREAD_URL)
+    expect(dread).toHaveLength(2)
+    expect(dread[0]).toMatchObject({ startTime: 20, duration: 10, trimStart: 0 })
+    expect(dread[1]).toMatchObject({ startTime: 30, duration: 10, trimStart: 10 })
   })
 
   it('loops a cue whose window outruns its file', () => {
@@ -112,9 +129,11 @@ describe('buildProductionMusicCueClips', () => {
       beatSegments()
     )
 
-    expect(clips).toHaveLength(1)
-    expect(clips[0].duration).toBe(40)
-    expect(clips[0].loop).toBe(true)
+    expect(clips).toHaveLength(4)
+    expect(clips.reduce((sum, clip) => sum + clip.duration, 0)).toBe(40)
+    expect(clips[0].loop).toBe(false)
+    expect(clips[3].loop).toBe(true)
+    expect(clips[3].trimStart).toBe(30)
   })
 
   it('drops a beat the user switched off and keeps the rest of the cue', () => {
@@ -164,11 +183,22 @@ describe('production Screening Room music tracks', () => {
     })
 
     expect(tracks.music).toBeNull()
-    expect(tracks.musicCues.map((clip) => clip.url)).toEqual([DREAD_URL, VIOLENCE_URL])
+    expect(tracks.musicCues.map((clip) => clip.url)).toEqual([
+      DREAD_URL,
+      DREAD_URL,
+      VIOLENCE_URL,
+      VIOLENCE_URL,
+    ])
+    expect(tracks.musicCues[1]?.trimStart).toBe(10)
 
     const flattened = flattenAudioTracks(tracks)
     const musicClips = flattened.filter((clip) => clip.id.startsWith('music'))
-    expect(musicClips.map((clip) => clip.url)).toEqual([DREAD_URL, VIOLENCE_URL])
+    expect(musicClips.map((clip) => clip.url)).toEqual([
+      DREAD_URL,
+      DREAD_URL,
+      VIOLENCE_URL,
+      VIOLENCE_URL,
+    ])
   })
 
   it('keeps the single looping track for a scene written before cues existed', () => {
@@ -224,7 +254,7 @@ describe('production Screening Room music tracks', () => {
     )
 
     expect(tracks.music).toBeNull()
-    expect(tracks.musicCues).toHaveLength(2)
+    expect(tracks.musicCues).toHaveLength(4)
   })
 
   it('falls back to the legacy loop when the player has no segments yet', () => {

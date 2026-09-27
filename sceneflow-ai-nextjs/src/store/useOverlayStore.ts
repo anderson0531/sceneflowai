@@ -113,7 +113,7 @@ export const OPERATION_CONFIGS: Record<OperationType, OperationConfig> = {
       { id: 'init', label: 'Preparing analysis...', progress: 8 },
       { id: 'parse', label: 'Parsing scene structure...', progress: 18 },
       { id: 'analyze-dialogue', label: 'Reviewing dialogue...', progress: 32 },
-      { id: 'analyze-action', label: 'Examining action beats...', progress: 48 },
+      { id: 'analyze-action', label: 'Examining action shots...', progress: 48 },
       { id: 'audience-feedback', label: 'Simulating audience response...', progress: 65 },
       { id: 'recommendations', label: 'Generating recommendations...', progress: 82 },
       { id: 'scoring', label: 'Calculating resonance score...', progress: 92 },
@@ -231,7 +231,7 @@ export const OPERATION_CONFIGS: Record<OperationType, OperationConfig> = {
     ]
   },
   'storyboard-production': {
-    title: 'Beat Frame',
+    title: 'Shot Frame',
     animationType: 'storyboard',
     phases: [
       { id: 'analyze', label: 'Reading scene description...', progress: 10 },

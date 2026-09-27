@@ -687,8 +687,8 @@ describe('cue helpers', () => {
   })
 
   it('labels a cue’s span 1-based for the UI', () => {
-    expect(formatMusicCueRange(cue)).toBe('Beats 4-7')
-    expect(formatMusicCueRange({ ...cue, beatStart: 2, beatEnd: 2 })).toBe('Beat 3')
+    expect(formatMusicCueRange(cue)).toBe('Shots 4-7')
+    expect(formatMusicCueRange({ ...cue, beatStart: 2, beatEnd: 2 })).toBe('Shot 3')
   })
 
   it('steers the video prompt with the emotion and never with the music', () => {
