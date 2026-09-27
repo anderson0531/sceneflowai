@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-27T03:23:58.096Z",
+  "generatedAt": "2026-09-27T03:56:40.196Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -709,7 +709,7 @@
       "studio.blueprintShort": "696f52e5d1794d1b",
       "studio.productionLabel": "13a7c655a7d4213c",
       "studio.viewsAriaLabel": "223ad59246b434ba",
-      "studio.viewStudio": "0aa91af2ec4c1fd7",
+      "studio.viewStudio": "de838855e4a6e04e",
       "studio.viewScreening": "e795b45c5d269192",
       "studio.viewStreams": "bfd297afbf9e7430",
       "studio.loadingImages": "505c087664af8c70",
