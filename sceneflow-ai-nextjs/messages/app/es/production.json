@@ -1,6 +1,6 @@
 {
   "studio": {
-    "title": "Production Studio",
+    "title": "Production Stage",
     "script": "Script",
     "characters": "Personajes",
     "scenes": "Scenes",
@@ -9,12 +9,12 @@
     "mixer": "Production Mixer",
     "directorConsole": "Consola del director",
     "initializing": "Inicializando",
-    "opening": "Apertura Production Studio",
+    "opening": "Apertura Production Stage",
     "openingShort": "Producción de apertura",
     "backToBlueprint": "Volver a Blueprint",
     "blueprintShort": "Blueprint",
     "productionLabel": "Producción",
-    "viewsAriaLabel": "Vistas de Production Studio",
+    "viewsAriaLabel": "Vistas de Production Stage",
     "viewStudio": "Estudio",
     "viewScreening": "Screening Room",
     "viewStreams": "Streams",
@@ -1349,7 +1349,7 @@
     "seconds": "{count}s",
     "progress": "Hecho",
     "progressValues": "Marcos {frames}/{beats} · Vídeos {videos}/{beats}",
-    "scopeFixedHint": "Los recuentos de escenas y tiempos provienen de Production Studio y no se pueden ajustar aquí.",
+    "scopeFixedHint": "Los recuentos de escenas y tiempos provienen de Production Stage y no se pueden ajustar aquí.",
     "methodsTitle": "Método de producción",
     "recommended": "Recomendado",
     "methods": {
@@ -1416,6 +1416,6 @@
     },
     "setAsProjectBudget": "Establecer como presupuesto del proyecto (créditos {credits})",
     "saving": "Ahorro...",
-    "noBeatsYet": "Agregue escenas y planos en Production Studio para crear un presupuesto."
+    "noBeatsYet": "Agregue escenas y planos en Production Stage para crear un presupuesto."
   }
 }

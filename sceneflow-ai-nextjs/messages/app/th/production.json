@@ -1,6 +1,6 @@
 {
   "studio": {
-    "title": "Production Studio",
+    "title": "Production Stage",
     "script": "สคริปต์",
     "characters": "ตัวละคร",
     "scenes": "ฉาก",
@@ -9,12 +9,12 @@
     "mixer": "Production Mixer",
     "directorConsole": "คอนโซลผู้อำนวยการ",
     "initializing": "กำลังเตรียมใช้งาน",
-    "opening": "การเปิดตัว Production Studio",
+    "opening": "การเปิดตัว Production Stage",
     "openingShort": "การเปิดการผลิต",
     "backToBlueprint": "กลับไปที่ Blueprint",
     "blueprintShort": "Blueprint",
     "productionLabel": "Production",
-    "viewsAriaLabel": "Production Studio VIEWS",
+    "viewsAriaLabel": "Production Stage VIEWS",
     "viewStudio": "สตูดิโอ",
     "viewScreening": "Screening Room",
     "viewStreams": "สตรีม",
@@ -1349,7 +1349,7 @@
     "seconds": "{count}",
     "progress": "เสร็จแล้ว",
     "progressValues": "เฟรม {frames}/{beats} · วิดีโอ {videos}/{beats}",
-    "scopeFixedHint": "จำนวนฉากและช็อตมาจาก Production Studio และไม่สามารถปรับได้ที่นี่",
+    "scopeFixedHint": "จำนวนฉากและช็อตมาจาก Production Stage และไม่สามารถปรับได้ที่นี่",
     "methodsTitle": "วิธีการผลิต",
     "recommended": "ที่แนะนำ",
     "methods": {
@@ -1416,6 +1416,6 @@
     },
     "setAsProjectBudget": "ตั้งเป็นงบประมาณโครงการ (เครดิต {credits})",
     "saving": "ประหยัด...",
-    "noBeatsYet": "เพิ่มฉากและช็อตใน Production Studio เพื่อสร้างงบประมาณ"
+    "noBeatsYet": "เพิ่มฉากและช็อตใน Production Stage เพื่อสร้างงบประมาณ"
   }
 }

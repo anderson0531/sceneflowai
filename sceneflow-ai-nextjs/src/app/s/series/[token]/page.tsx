@@ -122,7 +122,7 @@ export default function SharedSeriesBiblePage({
         ) : null}
 
         <p className="text-center text-xs text-gray-600 pt-4">
-          Shared via SceneFlow Series Studio · read-only view
+          Shared via SceneFlow Series Room · read-only view
         </p>
       </div>
     </div>

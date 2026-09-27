@@ -16,8 +16,8 @@ describe('Production hand-off label', () => {
   })
 
   it('keeps the full destination name for labels and tooltips', () => {
-    expect(BLUEPRINT_COPY.startProduction).toBe('Go to Production Studio')
-    expect(BLUEPRINT_COPY.startProductionTooltip).toContain('Go to Production Studio')
+    expect(BLUEPRINT_COPY.startProduction).toBe('Go to Production Stage')
+    expect(BLUEPRINT_COPY.startProductionTooltip).toContain('Go to Production Stage')
   })
 
   it('leaves the next-step label as the destination, not Go', () => {
@@ -32,15 +32,15 @@ describe('Production hand-off label', () => {
     expect(progress).not.toContain("'goShort'")
 
     const catalog = JSON.parse(readSource('messages/app/en/blueprint.json'))
-    expect(catalog.nextStep.startProduction).toBe('Go to Production Studio')
+    expect(catalog.nextStep.startProduction).toBe('Go to Production Stage')
   })
 
   it('uses the short label only on the Studio header button', () => {
-    const page = readSource('src/app/dashboard/studio/[projectId]/StudioPageClient.tsx')
-    // The header button copy moved to the blueprint catalog (studio.goShort).
-    expect(page).toContain("t('goShort')")
+    const page = readSource('src/components/blueprint/BlueprintNextStepBanner.tsx')
+    // The header button copy lives in the blueprint catalog (studio.goShort).
+    expect(page).toContain("tStudio('goShort')")
     // A bare "Go" needs the destination in its accessible name.
-    expect(page).toContain("aria-label={t('goToProduction')}")
+    expect(page).toContain("aria-label={tStudio('goToProduction')}")
   })
 
   it('keeps the full name in the dialog, sidebar guide and card toolbar', () => {
@@ -54,7 +54,7 @@ describe('Production hand-off label', () => {
   })
 })
 
-describe('Leaving Blueprint Studio is confirmed', () => {
+describe('Leaving Blueprint Room is confirmed', () => {
   const hook = readSource('src/hooks/studio/useStartProduction.ts')
 
   it('REGRESSION: never hands off straight from the request', () => {
@@ -80,7 +80,7 @@ describe('Leaving Blueprint Studio is confirmed', () => {
     const dialog = readSource('src/components/blueprint/StartProductionDialog.tsx')
     expect(dialog).toContain('STUDIO_DISPLAY_NAMES.blueprint')
     expect(dialog).toContain('STUDIO_DISPLAY_NAMES.production')
-    expect(STUDIO_DISPLAY_NAMES.blueprint).toBe('Blueprint Studio')
+    expect(STUDIO_DISPLAY_NAMES.blueprint).toBe('Blueprint Room')
   })
 
   it('offers staying put rather than a bare Cancel', () => {

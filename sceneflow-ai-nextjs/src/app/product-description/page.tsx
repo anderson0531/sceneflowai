@@ -141,7 +141,7 @@ SceneFlow Studio provides an integrated platform that:
 
 ---
 
-## Series Studio (Multi-Episode Production)
+## Series Room (Multi-Episode Production)
 
 ### Reference Library System
 Create and manage multi-episode video series with AI-generated reference librarys:
@@ -481,7 +481,7 @@ export default function ProductDescriptionPage() {
               { icon: Palette, title: 'Image Generation', desc: 'Imagen 3 for photorealistic visuals with character consistency', color: 'cyan' },
               { icon: Video, title: 'Video Generation', desc: 'Veo 2 for cinematic video clips with smart prompt modules', color: 'blue' },
               { icon: Mic2, title: 'Voice Synthesis', desc: 'ElevenLabs integration with multiple voices and voice cloning', color: 'green' },
-              { icon: Users, title: 'Series Studio', desc: 'Multi-episode production with AI-generated reference librarys', color: 'purple' },
+              { icon: Users, title: 'Series Room', desc: 'Multi-episode production with AI-generated reference librarys', color: 'purple' },
               { icon: Share2, title: 'Collaboration', desc: 'Screening room, stakeholder review, and feedback integration', color: 'pink' },
             ].map((feature, i) => (
               <div 

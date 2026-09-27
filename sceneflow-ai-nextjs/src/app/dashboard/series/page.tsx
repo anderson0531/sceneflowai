@@ -195,7 +195,7 @@ export default function SeriesPage() {
         <ProductPageHeader
           icon={<Clapperboard className="h-6 w-6" />}
           eyebrow="SERIES STUDIO"
-          title="Series Studio"
+          title="Series Room"
           subtitle="Plan a multi-episode arc once, then produce each episode against it. Continuity holds across the whole series."
           accent="product"
           primaryAction={

@@ -18,8 +18,8 @@ const EXPECTED_TITLES: Record<string, string[]> = {
   create: [
     'Bring Your Own Key (BYOK)',
     'Production Budget Management',
-    'Series Studio',
-    'Blueprint Studio',
+    'Series Room',
+    'Blueprint Room',
   ],
   direct: [
     "Writer's Room",

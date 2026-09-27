@@ -36,7 +36,7 @@ const SIGNUP_URL = getLoginUrl({ mode: 'signup' })
 const modules = [
   {
     id: 'series',
-    name: 'Series Studio',
+    name: 'Series Room',
     phase: 'Showrunner',
     icon: Clapperboard,
     color: 'from-purple-500 to-cyan-600',
@@ -46,7 +46,7 @@ const modules = [
     textColor: 'text-purple-400',
     accentColor: 'purple',
     standaloneValue: 'The AI Showrunner Engine',
-    standaloneDescription: 'Transform a single idea into a multi-episode franchise. The Series Studio acts as the "Brain" of your production, managing long-form narrative arcs and maintaining total visual continuity across up to 40 episodes.',
+    standaloneDescription: 'Transform a single idea into a multi-episode franchise. The Series Room acts as the "Brain" of your production, managing long-form narrative arcs and maintaining total visual continuity across up to 40 episodes.',
     standaloneFeatures: [
       { icon: BookOpen, text: 'Shared Reference Library' },
       { icon: Layers, text: 'Season-at-a-Glance (40 episodes)' },

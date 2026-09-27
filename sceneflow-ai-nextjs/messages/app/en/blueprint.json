@@ -1,20 +1,20 @@
 {
   "studio": {
-    "title": "Blueprint Studio",
+    "title": "Blueprint Room",
     "episodeBadge": "Episode {number}",
     "partOfSeries": "Part of {series}",
     "showSidePanel": "Show Side Panel",
     "hideSidePanel": "Hide Side Panel",
-    "goToProduction": "Go to Production Studio",
+    "goToProduction": "Go to Production Stage",
     "goShort": "Go",
-    "goTooltip": "Go to Production Studio — generate script and begin the Production Studio pipeline",
-    "openingProduction": "Opening Production Studio…",
+    "goTooltip": "Go to Production Stage — generate script and begin the Production Stage pipeline",
+    "openingProduction": "Opening Production Stage…",
     "creatingConcept": "Creating your Film Concept…",
     "saving": "Saving...",
     "saved": "Saved",
     "saveFailed": "Save failed",
-    "syncedToProduction": "Blueprint synced to Production Studio — regenerate your script when ready.",
-    "syncFailed": "Blueprint updated, but Production Studio sync failed",
+    "syncedToProduction": "Blueprint synced to Production Stage — regenerate your script when ready.",
+    "syncFailed": "Blueprint updated, but Production Stage sync failed",
     "untitled": "Untitled",
     "editHeroImage": "Edit Hero Image — {title}",
     "empty": {
@@ -282,9 +282,9 @@
     "generateBlueprint": "Generate Blueprint",
     "saveAudienceAndAnalyze": "Save audience & run Audience Resonance",
     "applyTopFix": "Apply top Audience Resonance fix",
-    "startProduction": "Go to Production Studio",
+    "startProduction": "Go to Production Stage",
     "reAnalyzeOrRefine": "Re-analyze or refine Blueprint",
-    "improveScoreOrStart": "Improve score or Go to Production Studio",
+    "improveScoreOrStart": "Improve score or Go to Production Stage",
     "generating": "Generating Blueprint…"
   },
   "sidePanel": {
@@ -441,8 +441,8 @@
     "next": "Next",
     "getStarted": "Get started",
     "welcome": {
-      "title": "Welcome to Blueprint Studio",
-      "description": "Blueprint Studio is your creative foundation: Generate → Review → Iterate → Go to Production Studio. One continuous workflow — not scattered editors.",
+      "title": "Welcome to Blueprint Room",
+      "description": "Blueprint Room is your creative foundation: Generate → Review → Iterate → Go to Production Stage. One continuous workflow — not scattered editors.",
       "tip": "The sidebar workflow guide and co-pilot show your next step at every stage."
     },
     "generate": {
@@ -548,7 +548,7 @@
       "regenerate-hero": "Regenerate hero image",
       "preview-audio": "Preview with audio",
       "collaborate-export": "Collaborate & export",
-      "start-production": "Go to Production Studio"
+      "start-production": "Go to Production Stage"
     }
   }
 }

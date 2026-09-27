@@ -6,16 +6,21 @@ function readSource(relativePath: string): string {
   return readFileSync(join(process.cwd(), relativePath), 'utf8')
 }
 
-describe('Production Studio header hide control', () => {
-  it('persists collapse and gates title plus description rows', () => {
+describe('Production Stage header hide control', () => {
+  it('persists collapse and gates the project title, not the page title', () => {
     const panel = readSource('src/components/vision/ScriptPanel.tsx')
     expect(panel).toContain("localStorage.getItem('productionStudioHeaderCollapsed')")
     expect(panel).toContain("localStorage.setItem('productionStudioHeaderCollapsed'")
-    expect(panel).toContain('!studioHeaderCollapsed && (')
-    expect(panel).toContain('{tStudio(\'title\')}')
-    expect(panel).toContain("id=\"production-studio-header-description\"")
-    expect(panel).toContain('tStudio(\'hideHeader\')')
-    expect(panel).toContain('tStudio(\'showHeader\')')
+    expect(panel).toContain('id="production-studio-page-title"')
+    expect(panel).toContain("{tStudio('title')}")
+    expect(panel).not.toContain('!studioHeaderCollapsed && (\n              <h3 id="production-studio-page-title"')
+    expect(panel).toContain('!studioHeaderCollapsed && (projectTitle || projectLogline)')
+    expect(panel).toContain('(projectTitle || projectLogline) && (')
+    expect(panel).toContain('id="production-studio-header-description"')
+    expect(panel).toContain('aria-controls="production-studio-header-description"')
+    expect(panel).not.toContain('production-studio-page-title production-studio-header-description')
+    expect(panel).toContain("tStudio('hideHeader')")
+    expect(panel).toContain("tStudio('showHeader')")
     expect(panel).toContain('aria-expanded={!studioHeaderCollapsed}')
   })
 
@@ -23,8 +28,9 @@ describe('Production Studio header hide control', () => {
     const en = JSON.parse(
       readSource('messages/app/en/production.json')
     ) as { studio: Record<string, string> }
-    expect(en.studio.hideHeader).toBe('Hide page title and description')
-    expect(en.studio.showHeader).toBe('Show page title and description')
+    expect(en.studio.title).toBe('Production Stage')
+    expect(en.studio.hideHeader).toBe('Hide project title and description')
+    expect(en.studio.showHeader).toBe('Show project title and description')
   })
 
   it('presents blueprint beats as chapters with hide controls', () => {

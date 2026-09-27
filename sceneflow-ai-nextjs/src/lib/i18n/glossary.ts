@@ -3,7 +3,7 @@
  *
  * Two things must survive a round trip through a translation engine untouched:
  *
- *  - **Glossary terms** — product and vendor names. "Blueprint Studio" becoming
+ *  - **Glossary terms** — product and vendor names. "Blueprint Room" becoming
  *    "Estudio de planos" makes the UI incoherent with the docs, the marketing
  *    site, and every support conversation.
  *  - **ICU placeholders** — `{count}`, `{count, plural, ...}`. These were
@@ -18,9 +18,9 @@
 export const GLOSSARY_TERMS = [
   'SceneFlow Studio',
   'SceneFlow',
-  'Blueprint Studio',
-  'Series Studio',
-  'Production Studio',
+  'Blueprint Room',
+  'Series Room',
+  'Production Stage',
   'Blueprint',
   'Production Mixer',
   'Shot Frames',

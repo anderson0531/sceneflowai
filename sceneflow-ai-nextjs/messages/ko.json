@@ -54,7 +54,7 @@
       "Screening Room"
     ],
     "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Stage.",
     "playWithNarration": "Play with narration",
     "tapToHear": "Tap to hear",
     "fullscreen": "Fullscreen",
@@ -590,7 +590,7 @@
       "tagline": "하나의 스튜디오. 가이드가 제공되는 자동화, 또는 해당 기술 스택에 능숙하다면 압도적인 처리량까지.",
       "stages": [
         {
-          "label": "Blueprint Studio",
+          "label": "Blueprint Room",
           "detail": "체계적인 스토리 구성안"
         },
         {
@@ -651,12 +651,12 @@
           "등장인물, 톤, 시즌 전체의 서사 구조 등 작품의 세계관을 한 번 확실하게 정립하세요.",
           "시즌 전체에 걸쳐 자동 생성되는 일관성 있는 에피소드 개요",
           "연속성 추적 — 다수의 에피소드로 구성된 시즌 간 정합성 유지",
-          "시리즈-에피소드 간 동기화 — Blueprint 스튜디오 및 프로덕션 연동"
+          "시리즈-에피소드 간 동기화 — Blueprint Room 및 Production Stage 연동"
         ]
       },
       {
         "id": "청사진",
-        "stepLabel": "Blueprint Studio",
+        "stepLabel": "Blueprint Room",
         "subtitle": "스토리 개발",
         "description": "로그라인, 비트, 캐릭터, 톤을 포함하여 콘셉트를 체계적인 트리트먼트로 발전시키세요. 본격적인 렌더링에 앞서 Audience Resonance를 실행하고 협업을 진행하세요.",
         "keySteps": [
@@ -864,7 +864,7 @@
           "등장인물, 톤, 시즌 전체의 서사 구조 등 작품의 세계관을 한 번 확실하게 정립하세요.",
           "시즌 전체에 걸쳐 자동 생성되는 일관성 있는 에피소드 개요",
           "연속성 추적 — 다수의 에피소드로 구성된 시즌 간 정합성 유지",
-          "시리즈-에피소드 간 동기화 — Blueprint 스튜디오 및 프로덕션 연동"
+          "시리즈-에피소드 간 동기화 — Blueprint Room 및 Production Stage 연동"
         ],
         "screenshotSlot": "스크린샷 삽입: 자동 생성된 에피소드 아크를 포함한 시리즈 개요",
         "videoSlot": "00:30 분량의 영상 삽입: 다수의 에피소드로 구성된 시즌으로 확장되는 콘셉트"
@@ -1349,7 +1349,7 @@
     "ctaSecondaryHref": "#key-features"
   },
   "footer": {
-    "description": "개념부터 게시 준비 마스터에 이르기까지 엔드 투 엔드 자동 동영상 제작. 원 가이드 스튜디오: Series Studio → Blueprint Studio → Production Studio → Screening Room.",
+    "description": "개념부터 게시 준비 마스터에 이르기까지 엔드 투 엔드 자동 동영상 제작. 원 가이드 스튜디오: Series Room → Blueprint Room → Production Stage → Screening Room.",
     "product": "제품",
     "resources": "자원",
     "legal": "신뢰 및 안전",
@@ -1399,7 +1399,7 @@
     "workflowLabel": "Solutions",
     "startProduction": "Start Your Production",
     "cta": "Start Your Production",
-    "continuityNote": "Series Studio manages continuity",
+    "continuityNote": "Series Room manages continuity",
     "resonanceNote": "Audience Resonance™ optimizes scripts",
     "videoLanguagePrompt": "Watch this production in your language",
     "videoComingSoon": "Dub coming soon",
@@ -1420,7 +1420,7 @@
             "frictionHeadline": "Character Drift & Wobbly Sets.",
             "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
             "solutionHeadline": "Locked Asset Blueprints.",
-            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
+            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Room. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
           {
             "title": "Narrative Pacing & Scene Control",
@@ -1441,7 +1441,7 @@
             "frictionHeadline": "Asset Chaos & Endless Rerolls.",
             "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
             "solutionHeadline": "Automated Studio Pipeline.",
-            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Room handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
         "screeningRoomPreview": "The Cinematic Drama — Screening Room"
@@ -1515,7 +1515,7 @@
             "frictionHeadline": "Fragmented Timeline Editing",
             "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
             "solutionHeadline": "Beat-First Documentary Pipeline",
-            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Room, delivering a fully assembled master file in one seamless pass."
           }
         ],
         "screeningRoomPreview": "Documentary Production — Screening Room"
@@ -1544,7 +1544,7 @@
             "frictionHeadline": "Dubbing Is Not Localization.",
             "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
             "solutionHeadline": "Blueprint-Level Localization.",
-            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Room before a single frame is rendered."
           },
           {
             "title": "Parallel Production Pipelines",

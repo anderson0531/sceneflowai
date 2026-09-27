@@ -1,6 +1,6 @@
 {
   "studio": {
-    "title": "Production Studio",
+    "title": "Production Stage",
     "script": "脚本",
     "characters": "人物",
     "scenes": "场景",
@@ -14,7 +14,7 @@
     "backToBlueprint": "返回 Blueprint",
     "blueprintShort": "SFAI蓝图条款",
     "productionLabel": "生产",
-    "viewsAriaLabel": "Production Studio 视图",
+    "viewsAriaLabel": "Production Stage 视图",
     "viewStudio": "工作室",
     "viewScreening": "SFAISCRENING_ROOMTERM",
     "viewStreams": "Streams",

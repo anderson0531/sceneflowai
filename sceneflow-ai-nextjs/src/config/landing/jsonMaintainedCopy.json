@@ -2,7 +2,7 @@
   "pipeline": {
     "badge": "What is SceneFlow?",
     "title": "The 3-Pillar Pipeline Architecture",
-    "subtitle": "Three phases from first idea to publish-ready master — Series Studio, Blueprint Studio, and Production Studio.",
+    "subtitle": "Three phases from first idea to publish-ready master — Series Room, Blueprint Room, and Production Stage.",
     "ui": {
       "expandFullscreen": "View fullscreen",
       "closeFullscreen": "Close",
@@ -17,9 +17,9 @@
     "pillars": [
       {
         "id": "series",
-        "tabLabel": "Series Studio",
+        "tabLabel": "Series Room",
         "number": "01",
-        "title": "Series Studio Generation",
+        "title": "Series Room Generation",
         "header": "Build a Universe, Not a Clip",
         "body": "Describe your series or YouTube channel once, and SceneFlow builds the whole world — storyline, cast, and an unlimited episode slate — with a Shared Reference Library that keeps every episode on-brand.",
         "steps": [
@@ -48,7 +48,7 @@
             "id": "series-reference-library",
             "number": "4",
             "title": "Review the Reference Library",
-            "description": "Browse the shared Reference Library — characters, voices, wardrobe, locations, and props — created and maintained through Production Studio and reused across every episode.",
+            "description": "Browse the shared Reference Library — characters, voices, wardrobe, locations, and props — created and maintained through Production Stage and reused across every episode.",
             "imagePlaceholder": "Shared Reference Library — characters, voices, locations, props"
           },
           {
@@ -62,18 +62,18 @@
             "id": "series-start-production",
             "number": "6",
             "title": "Start production in one click",
-            "description": "When an episode feels right, start its production with a single click and flow straight into the guided Production Studio pipeline.",
+            "description": "When an episode feels right, start its production with a single click and flow straight into the guided Production Stage pipeline.",
             "imagePlaceholder": "One-click start production on a selected episode"
           }
         ]
       },
       {
         "id": "blueprint",
-        "tabLabel": "Blueprint Studio",
+        "tabLabel": "Blueprint Room",
         "number": "02",
-        "title": "Blueprint Studio",
+        "title": "Blueprint Room",
         "header": "Your Creative DNA, Locked In",
-        "body": "Blueprint Studio is your deep film treatment — synopsis, beats, characters, tone, and style — pre-scored by Audience Resonance Analysis so you approve a story that lands before a single frame renders.",
+        "body": "Blueprint Room is your deep film treatment — synopsis, beats, characters, tone, and style — pre-scored by Audience Resonance Analysis so you approve a story that lands before a single frame renders.",
         "steps": [
           {
             "id": "blueprint-baseline",
@@ -101,17 +101,17 @@
             "number": "4",
             "title": "Start production when ready",
             "description": "Once the story sings, start production — and the entire pipeline inherits your approved creative DNA with no drift.",
-            "imagePlaceholder": "Open Production Studio — readiness gate from an approved blueprint"
+            "imagePlaceholder": "Open Production Stage — readiness gate from an approved blueprint"
           }
         ]
       },
       {
         "id": "production",
-        "tabLabel": "Production Studio",
+        "tabLabel": "Production Stage",
         "number": "03",
-        "title": "Production Studio",
+        "title": "Production Stage",
         "header": "From Script to Published Master",
-        "body": "Production Studio runs concurrent, multi-engine generation — script, audio, frames, and video — with the Intelligent Assistant Director, the Screening Room, and multilanguage streams carrying you from approved script to a published 4K master.",
+        "body": "Production Stage runs concurrent, multi-engine generation — script, audio, frames, and video — with the Intelligent Assistant Director, the Screening Room, and multilanguage streams carrying you from approved script to a published 4K master.",
         "steps": [
           {
             "id": "production-script-ara",
@@ -279,17 +279,17 @@
           },
           {
             "icon": "series",
-            "title": "Series Studio",
-            "description": "Define your universe once — season arcs, recurring cast, and continuity rules. Episode outlines sync into Blueprint Studio and Production Studio so every installment stays on-model.",
+            "title": "Series Room",
+            "description": "Define your universe once — season arcs, recurring cast, and continuity rules. Episode outlines sync into Blueprint Room and Production Stage so every installment stays on-model.",
             "learnMore": {
               "problem": "Serialized content multiplies the work: every new episode means rebuilding context, re-establishing characters, and hoping continuity holds across a growing catalog.",
-              "solution": "Series Studio captures your universe — season arcs, cast, and continuity rules — once. Episode outlines flow automatically into Blueprint Studio and Production Studio, so each installment inherits the same locked foundation.",
+              "solution": "Series Room captures your universe — season arcs, cast, and continuity rules — once. Episode outlines flow automatically into Blueprint Room and Production Stage, so each installment inherits the same locked foundation.",
               "outcome": "Ship consistent episodes on schedule from one studio — scale your channel or franchise without scaling your chaos."
             }
           },
           {
             "icon": "blueprint",
-            "title": "Blueprint Studio",
+            "title": "Blueprint Room",
             "description": "Turn a concept into a structured story: beats, character arcs, audience definition, and locked art style. Collaborators review via share links before you enter Production.",
             "learnMore": {
               "problem": "Jumping straight into production without a locked story structure leads to expensive rework — unclear beats, drifting tone, and stakeholder surprises after credits are already spent.",

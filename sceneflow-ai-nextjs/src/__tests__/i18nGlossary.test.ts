@@ -14,9 +14,9 @@ import { sourceHash } from '@/lib/i18n/contentHash'
 
 describe('glossary protection', () => {
   it('round-trips product names', () => {
-    const source = 'Open Blueprint Studio and sync to Production Studio.'
+    const source = 'Open Blueprint Room and sync to Production Stage.'
     const { protectedText, map } = protectGlossary(source)
-    expect(protectedText).not.toContain('Blueprint Studio')
+    expect(protectedText).not.toContain('Blueprint Room')
     expect(restoreGlossary(protectedText, map)).toBe(source)
   })
 
@@ -28,9 +28,9 @@ describe('glossary protection', () => {
   })
 
   it('survives an engine injecting whitespace into the placeholder', () => {
-    const { map } = protectGlossary('Welcome to Blueprint Studio')
-    const mangled = 'Bienvenido a SFAI BLUEPRINT_STUDIO TERM'
-    expect(restoreGlossary(mangled, map)).toContain('Blueprint Studio')
+    const { map } = protectGlossary('Welcome to Blueprint Room')
+    const mangled = 'Bienvenido a SFAI BLUEPRINT_ROOM TERM'
+    expect(restoreGlossary(mangled, map)).toContain('Blueprint Room')
   })
 
   it('accepts per-request names such as series characters', () => {
@@ -66,9 +66,9 @@ describe('ICU protection', () => {
   })
 
   it('round-trips glossary and ICU together', () => {
-    const source = 'Blueprint Studio supports {count, plural, =1 {# language} other {# languages}}'
+    const source = 'Blueprint Room supports {count, plural, =1 {# language} other {# languages}}'
     const { protectedText, glossary, icu } = protectAll(source)
-    expect(protectedText).not.toContain('Blueprint Studio')
+    expect(protectedText).not.toContain('Blueprint Room')
     expect(protectedText).not.toContain('plural')
     expect(restoreAll(protectedText, glossary, icu)).toBe(source)
   })
@@ -107,9 +107,9 @@ describe('sourceHash', () => {
 
 describe('glossary contents', () => {
   it('protects the three studio names the plan calls out', () => {
-    expect(GLOSSARY_TERMS).toContain('Blueprint Studio')
-    expect(GLOSSARY_TERMS).toContain('Series Studio')
-    expect(GLOSSARY_TERMS).toContain('Production Studio')
+    expect(GLOSSARY_TERMS).toContain('Blueprint Room')
+    expect(GLOSSARY_TERMS).toContain('Series Room')
+    expect(GLOSSARY_TERMS).toContain('Production Stage')
     expect(GLOSSARY_TERMS).toContain('Intelligent Assistant Director')
     expect(GLOSSARY_TERMS).toContain('Co-Director')
   })

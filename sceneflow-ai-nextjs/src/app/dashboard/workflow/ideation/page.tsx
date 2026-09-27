@@ -6,7 +6,7 @@ import { useEnhancedStore } from '@/store/enhancedStore'
 import { Loader2 } from 'lucide-react'
 
 /**
- * Legacy ideation route — redirects to canonical Blueprint Studio.
+ * Legacy ideation route — redirects to canonical Blueprint Room.
  */
 export default function IdeationRedirectPage() {
   const router = useRouter()
@@ -29,7 +29,7 @@ export default function IdeationRedirectPage() {
   return (
     <div className="flex min-h-[40vh] items-center justify-center text-gray-400">
       <Loader2 className="w-6 h-6 animate-spin mr-2" />
-      Opening Blueprint Studio…
+      Opening Blueprint Room…
     </div>
   )
 }

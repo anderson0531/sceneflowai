@@ -46,9 +46,9 @@
   "nav": {
     "dashboard": "แดชบอร์ด",
     "projects": "ทุน",
-    "series": "Series Studio",
-    "blueprint": "Blueprint Studio",
-    "production": "Production Studio",
+    "series": "Series Room",
+    "blueprint": "Blueprint Room",
+    "production": "Production Stage",
     "startProject": "เริ่มโครงการ",
     "visualizer": "วิชวลไลเซอร์",
     "screeningRoom": "Screening Room",

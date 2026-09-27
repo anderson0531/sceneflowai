@@ -49,7 +49,7 @@
     "deliveryTitle": "डिलीवरी की भाषाएँ",
     "deliveryDescription": "कथन, डब और रेंडर किया गया वीडियो। एक ही प्रोजेक्ट कई भाषाओं में एक साथ शिप किया जा सकता है, इसलिए इन्हें हर अकाउंट के बजाय हर सीन के हिसाब से चुना जाता है।",
     "deliveryStartsFrom": "{language} से शुरू होता है",
-    "deliverySetInProduction": "Production Studio में सेट करें",
+    "deliverySetInProduction": "Production Stage में सेट करें",
     "promptsStayEnglish": "इन सेटिंग्स की परवाह किए बिना इमेज और वीडियो प्रॉम्प्ट अंग्रेजी में रहते हैं — जेनरेशन मॉडल अनुवादित प्रॉम्प्ट से काफी कमजोर परिणाम उत्पन्न करते हैं।",
     "interfaceSet": "{language} पर इंटरफ़ेस भाषा सेट है",
     "saved": "भाषा की पसंद सेव की गई",

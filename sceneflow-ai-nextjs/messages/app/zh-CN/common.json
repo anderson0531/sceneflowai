@@ -46,9 +46,9 @@
   "nav": {
     "dashboard": "仪表板",
     "projects": "项目",
-    "series": "Series Studio",
-    "blueprint": "Blueprint Studio",
-    "production": "Production Studio",
+    "series": "Series Room",
+    "blueprint": "Blueprint Room",
+    "production": "Production Stage",
     "startProject": "项目开始",
     "visualizer": "Visualizer",
     "screeningRoom": "Screening Room",

@@ -1,6 +1,6 @@
 {
   "studio": {
-    "title": "Production Studio",
+    "title": "Production Stage",
     "script": "आलेख",
     "characters": "वर्ण",
     "scenes": "पर्दे",
@@ -9,12 +9,12 @@
     "mixer": "Production Mixer",
     "directorConsole": "डायरेक्टर कंसोल",
     "initializing": "शुरू हो रहा है",
-    "opening": "Production Studio खोलना",
+    "opening": "Production Stage खोलना",
     "openingShort": "ओपनिंग प्रोडक्शन",
     "backToBlueprint": "Blueprint पर वापस जाएँ",
     "blueprintShort": "Blueprint",
     "productionLabel": "उत्पादन ",
-    "viewsAriaLabel": "Production Studio व्यू",
+    "viewsAriaLabel": "Production Stage व्यू",
     "viewStudio": "स्टूडियो",
     "viewScreening": "Screening Room",
     "viewStreams": "Streams",
@@ -1349,7 +1349,7 @@
     "seconds": "{count}s",
     "progress": "हो गया",
     "progressValues": "{frames}/{beats} फ़्रेम · {videos}/{beats} वीडियो",
-    "scopeFixedHint": "दृश्य और शॉट गणना Production Studio से आती हैं और यहां समायोज्य नहीं हैं।",
+    "scopeFixedHint": "दृश्य और शॉट गणना Production Stage से आती हैं और यहां समायोज्य नहीं हैं।",
     "methodsTitle": "उत्पाद विधि",
     "recommended": "अनुशंसित",
     "methods": {
@@ -1416,6 +1416,6 @@
     },
     "setAsProjectBudget": "प्रोजेक्ट बजट के रूप में सेट करें ({credits} क्रेडिट)",
     "saving": "सहेजा जा रहा है...",
-    "noBeatsYet": "बजट बनाने के लिए Production Studio में दृश्य और शॉट्स जोड़ें।"
+    "noBeatsYet": "बजट बनाने के लिए Production Stage में दृश्य और शॉट्स जोड़ें।"
   }
 }

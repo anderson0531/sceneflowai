@@ -49,7 +49,7 @@
     "deliveryTitle": "لغات التسليم",
     "deliveryDescription": "السرد والدبلجة والفيديو المقدم. يمكن شحن مشروع واحد بالعديد من اللغات في وقت واحد، لذلك يتم اختيارها لكل مشهد بدلاً من كل حساب.",
     "deliveryStartsFrom": "يبدأ من {language}",
-    "deliverySetInProduction": "تعيين في Production Studio",
+    "deliverySetInProduction": "تعيين في Production Stage",
     "promptsStayEnglish": "تبقى مطالبات الصور والفيديو باللغة الإنجليزية بغض النظر عن هذه الإعدادات — تنتج نماذج الجيل نتائج أضعف بشكل ملحوظ من المطالبات المترجمة.",
     "interfaceSet": "تعيين لغة الواجهة على {language}",
     "saved": "تم حفظ تفضيلات اللغة",

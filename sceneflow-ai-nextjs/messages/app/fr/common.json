@@ -46,9 +46,9 @@
   "nav": {
     "dashboard": "Tableau de bord",
     "projects": "PROJETS",
-    "series": "Series Studio",
-    "blueprint": "Blueprint Studio",
-    "production": "Production Studio",
+    "series": "Series Room",
+    "blueprint": "Blueprint Room",
+    "production": "Production Stage",
     "startProject": "Commencer un projet",
     "visualizer": "Visualiseur",
     "screeningRoom": "Screening Room",

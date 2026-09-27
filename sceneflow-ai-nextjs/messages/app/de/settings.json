@@ -49,7 +49,7 @@
     "deliveryTitle": "Liefersprachen",
     "deliveryDescription": "Narration, Dubs und gerendertes Video. Ein einzelnes Projekt kann in mehreren Sprachen gleichzeitig ausgeliefert werden, sodass diese pro Szene und nicht pro Konto ausgewählt werden.",
     "deliveryStartsFrom": "Beginnt ab {language}",
-    "deliverySetInProduction": "In Production Studio einstellen",
+    "deliverySetInProduction": "In Production Stage einstellen",
     "promptsStayEnglish": "Bild- und Videoaufforderungen bleiben unabhängig von diesen Einstellungen in englischer Sprache — die Generierungsmodelle produzieren spürbar schwächere Ergebnisse aus übersetzten Aufforderungen.",
     "interfaceSet": "Schnittstellensprache eingestellt auf {language}",
     "saved": "Spracheinstellung gespeichert",

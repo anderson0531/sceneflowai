@@ -46,9 +46,9 @@
   "nav": {
     "dashboard": "لوحة القيادة",
     "projects": "مشروع",
-    "series": "Series Studio",
-    "blueprint": "Blueprint Studio",
-    "production": "Production Studio",
+    "series": "Series Room",
+    "blueprint": "Blueprint Room",
+    "production": "Production Stage",
     "startProject": "بدء المشروع",
     "visualizer": "فيجواليزر",
     "screeningRoom": "Screening Room",

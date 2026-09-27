@@ -90,7 +90,7 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
         id: 'episodic-youtube-series',
         label: 'Episodic YouTube Series',
         description:
-          'Imagine auto-generated season arcs in Series Studio—episode outlines sync into Blueprint and Production so every face, voice, and beat stays aligned across a growing channel.',
+          'Imagine auto-generated season arcs in Series Room—episode outlines sync into Blueprint and Production so every face, voice, and beat stays aligned across a growing channel.',
         videoSrc: `${BLOB_DEMO}/demo/use-cases/entertainment/episodic-youtube-series.mp4`,
       }),
       ex('entertainment', {

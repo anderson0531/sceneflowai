@@ -1,6 +1,6 @@
 {
   "studio": {
-    "title": "Production Studio",
+    "title": "Production Stage",
     "script": "Skript",
     "characters": "Buchstaben",
     "scenes": "Scenes (Szenen)",
@@ -9,12 +9,12 @@
     "mixer": "Production Mixer",
     "directorConsole": "Director Console",
     "initializing": "Initialisierung",
-    "opening": "Eröffnung von Production Studio",
+    "opening": "Eröffnung von Production Stage",
     "openingShort": "Eröffnung der Produktion",
     "backToBlueprint": "Zurück zu Blueprint",
     "blueprintShort": "Blueprint",
     "productionLabel": "Produktion",
-    "viewsAriaLabel": "Production Studio-Ansichten",
+    "viewsAriaLabel": "Production Stage-Ansichten",
     "viewStudio": "Studio",
     "viewScreening": "Screening Room",
     "viewStreams": "Streams",
@@ -1349,7 +1349,7 @@
     "seconds": "{count}s",
     "progress": "Erledigt",
     "progressValues": "{frames}/{beats}-Frames · {videos}/{beats}-Videos",
-    "scopeFixedHint": "Die Anzahl der Szenen und Shots stammt von Production Studio und kann hier nicht angepasst werden.",
+    "scopeFixedHint": "Die Anzahl der Szenen und Shots stammt von Production Stage und kann hier nicht angepasst werden.",
     "methodsTitle": "Produktionsmethode",
     "recommended": "Empfohlen",
     "methods": {
@@ -1416,6 +1416,6 @@
     },
     "setAsProjectBudget": "Als Projektbudget festlegen ({credits} Credits)",
     "saving": "Sparen...",
-    "noBeatsYet": "Fügen Sie Szenen und Shots in Production Studio hinzu, um ein Budget zu erstellen."
+    "noBeatsYet": "Fügen Sie Szenen und Shots in Production Stage hinzu, um ein Budget zu erstellen."
   }
 }

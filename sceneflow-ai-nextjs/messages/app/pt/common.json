@@ -46,8 +46,8 @@
   "nav": {
     "dashboard": "Painel",
     "projects": "Projectos",
-    "series": "Series Studio",
-    "blueprint": "Blueprint Studio",
+    "series": "Series Room",
+    "blueprint": "Blueprint Room",
     "production": "SFAIPRODUÇÃO_STUDIOTERM",
     "startProject": "PROJETO DE INÍCIO DE POÇO",
     "visualizer": "Visualizador",

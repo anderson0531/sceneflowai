@@ -24,7 +24,7 @@ const LOCALE_GOOGLE: Record<string, string> = { th: 'th', es: 'es' }
 const BATCH_SIZE = 50
 
 const GLOSSARY_TERMS = [
-  'SceneFlow Studio', 'SceneFlow', 'Blueprint Studio', 'Series Studio', 'Production Studio', 'Blueprint', 'Production Mixer',
+  'SceneFlow Studio', 'SceneFlow', 'Blueprint Room', 'Series Room', 'Production Stage', 'Blueprint', 'Production Mixer',
   'Shot Frames', 'Audience Resonance', 'Screening Room', 'Reference Library',
   'Final Cut', 'Premiere', 'Animatic', 'Express storyboard', 'BYOK', 'Whop', 'Explorer',
   'Vertex AI', 'ElevenLabs', 'Google Cloud', 'Gemini Studio', 'Google Flow',
