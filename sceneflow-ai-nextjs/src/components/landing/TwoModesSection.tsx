@@ -19,9 +19,6 @@ export const TWO_MODES_HASH_ALIASES = [
 type ComparisonCopy = {
   id: string
   caption: string
-  themLabel: string
-  usLabel: string
-  rows: Array<{ them: string; us: string }>
 }
 
 type MediaCard = {
@@ -89,34 +86,12 @@ export function TwoModesSection() {
           </p>
         </motion.div>
 
-        <div className="mx-auto max-w-5xl">
+        <div className="mx-auto max-w-7xl">
           <TwoModesMediaFrame
             mediaId={comparison.id}
             caption={comparison.caption}
             comingSoon={comingSoon}
           />
-          <div className="mt-6 hidden gap-4 text-xs font-semibold uppercase tracking-wider text-slate-500 md:grid md:grid-cols-2">
-            <p>{comparison.themLabel}</p>
-            <p>{comparison.usLabel}</p>
-          </div>
-          <ul className="mt-2 divide-y divide-white/10 rounded-2xl border border-white/10 bg-slate-900/40">
-            {comparison.rows.map((row) => (
-              <li key={row.them} className="grid gap-2 px-5 py-4 md:grid-cols-2 md:gap-4">
-                <p className="text-sm text-gray-400">
-                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-500 md:hidden">
-                    {comparison.themLabel}
-                  </span>
-                  {row.them}
-                </p>
-                <p className="text-sm text-white">
-                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-indigo-300/80 md:hidden">
-                    {comparison.usLabel}
-                  </span>
-                  {row.us}
-                </p>
-              </li>
-            ))}
-          </ul>
         </div>
 
         <ul className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">

@@ -9,30 +9,6 @@ export const TWO_MODES_COPY = {
   comparison: {
     id: 'comparison',
     caption: 'Fragmented tools beside one SceneFlow pipeline.',
-    themLabel: 'Fragmented production',
-    usLabel: 'SceneFlow',
-    rows: [
-      {
-        them: 'Prompt trial and error across tools',
-        us: 'One Blueprint locks the story and the look',
-      },
-      {
-        them: 'Hand-built treatments and formatting',
-        us: 'A film treatment and beat sheet from your premise or brief',
-      },
-      {
-        them: 'Short clips that do not share a cast',
-        us: 'Shots generated from the locked Reference Library',
-      },
-      {
-        them: 'Dragging clips into another editor',
-        us: 'Scenes, chapters, and the master assemble in the Screening Room',
-      },
-      {
-        them: 'Re-rendering to test a note',
-        us: 'Direct on the animatic, then render',
-      },
-    ],
   },
   retired: [
     {

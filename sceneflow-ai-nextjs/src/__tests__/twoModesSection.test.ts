@@ -22,7 +22,10 @@ describe('one-pipeline landing section', () => {
   it('defines the friction comparison, four stages, and an Explorer CTA', () => {
     expect(TWO_MODES_COPY.eyebrow).toBe('The friction we remove')
     expect(TWO_MODES_COPY.title).toBe('One pipeline. Not a stack of tools.')
-    expect(TWO_MODES_COPY.comparison.rows).toHaveLength(5)
+    expect(TWO_MODES_COPY.comparison).toEqual({
+      id: 'comparison',
+      caption: 'Fragmented tools beside one SceneFlow pipeline.',
+    })
     expect(TWO_MODES_COPY.retired).toHaveLength(3)
     expect(TWO_MODES_COPY.stages.map((stage) => stage.title)).toEqual([
       'Series Desk',
