@@ -37,7 +37,7 @@
     "chips": [
       {
         "label": "From Concept to Feature",
-        "detail": "Expand ideas into 90-minute scripts on the Blueprint Board. Define characters, art, and beats, then let Audience Resonance analysis fine-tune your story before you shoot."
+        "detail": "Expand ideas into 90-minute scripts in the Blueprint Room. Define characters, art, and beats, then let Audience Resonance analysis fine-tune your story before you shoot."
       },
       {
         "label": "Direct With Intent, Not Prompts",
@@ -1572,7 +1572,7 @@
   "keyFeatures": {
     "badge": "Caratteristiche Chiave",
     "title": "Le caratteristiche che distinguono SceneFlow",
-    "subtitle": "Series Desk, Blueprint Board, Production Stage, and Screening Room take a story from the idea to the master.",
+    "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room.",
     "learnMoreLabel": "Scopri di più",
     "showLessLabel": "Mostra meno",
     "problemLabel": "Il problema",

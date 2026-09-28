@@ -242,8 +242,8 @@
   },
   "keyFeatures": {
     "badge": "Key Features",
-    "title": "Four rooms. One production.",
-    "subtitle": "Series Desk, Blueprint Board, Production Stage, and Screening Room take a story from the idea to the master.",
+    "title": "From the idea to the master.",
+    "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room.",
     "learnMoreLabel": "Learn more",
     "showLessLabel": "Show less",
     "problemLabel": "The Problem",
@@ -261,28 +261,28 @@
     "rooms": [
       {
         "id": "series-desk",
-        "label": "Series Desk",
+        "label": "Series Room",
         "promise": "Lock the franchise once. Season arcs, cast, tone, and world rules carry into every episode, and a single film can skip this room.",
         "features": [
           {
             "icon": "seasonUniverse",
             "title": "Season universe",
-            "description": "Define the franchise once. Season arcs, recurring cast, tone, and world rules live on the series, and every new episode inherits them instead of starting from a blank page. A single film can skip this room and open on the Blueprint Board.",
+            "description": "Define the franchise once. Season arcs, recurring cast, tone, and world rules live on the series, and every new episode inherits them instead of starting from a blank page. A single film can skip this room and open in the Blueprint Room.",
             "screenshot": "Series overview",
             "learnMore": {
               "problem": "A new episode that starts from a blank page forgets the cast, the tone, and the rules of the world.",
               "solution": "Season universe stores arcs, recurring cast, tone, and world rules on the series so every episode inherits them.",
-              "outcome": "A single film can skip Series Desk. A season keeps one franchise definition for every episode."
+              "outcome": "A single film can skip Series Room. A season keeps one franchise definition for every episode."
             }
           },
           {
             "icon": "episodeHandoff",
             "title": "Episode handoff",
-            "description": "Each episode outline, synopsis, and story beats sync into that episode’s Blueprint Board and Production Stage. Episode 12 still knows the cast, the world, and what already happened.",
+            "description": "Each episode outline, synopsis, and story beats sync into that episode’s Blueprint Room and Production Stage. Episode 12 still knows the cast, the world, and what already happened.",
             "screenshot": "Episode handoff into Blueprint and Production",
             "learnMore": {
               "problem": "Later episodes lose the thread when the outline, the synopsis, and the beats live somewhere else.",
-              "solution": "Episode handoff syncs that episode’s outline, synopsis, and story beats into its Blueprint Board and Production Stage.",
+              "solution": "Episode handoff syncs that episode’s outline, synopsis, and story beats into its Blueprint Room and Production Stage.",
               "outcome": "Episode 12 still knows the cast, the world, and what already happened."
             }
           },
@@ -312,7 +312,7 @@
       },
       {
         "id": "blueprint-board",
-        "label": "Blueprint Board",
+        "label": "Blueprint Room",
         "promise": "A sentence or a brief becomes the treatment and the only beat sheet. Score it for the audience you named, then share it before anyone spends on pictures.",
         "features": [
           {

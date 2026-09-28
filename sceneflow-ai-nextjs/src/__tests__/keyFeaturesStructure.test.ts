@@ -84,14 +84,14 @@ describe('keyFeatures structure', () => {
   const rooms = en.keyFeatures.rooms
 
   it('stacks four rooms from idea to master', () => {
-    expect(en.keyFeatures.title).toBe('Four rooms. One production.')
+    expect(en.keyFeatures.title).toBe('From the idea to the master.')
     expect(en.keyFeatures.subtitle).toBe(
-      'Series Desk, Blueprint Board, Production Stage, and Screening Room take a story from the idea to the master.'
+      'Series Room → Blueprint Room → Production Stage → Screening Room.'
     )
     expect(rooms.map((room) => room.id)).toEqual([...FEATURE_ROOM_IDS])
     expect(rooms.map((room) => room.label)).toEqual([
-      'Series Desk',
-      'Blueprint Board',
+      'Series Room',
+      'Blueprint Room',
       'Production Stage',
       'Screening Room',
     ])
