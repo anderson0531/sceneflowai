@@ -36,16 +36,20 @@
     "ctaToolStack": "See how it replaces your tool stack",
     "chips": [
       {
-        "label": "Direct in story language",
-        "detail": "Describe action, tone, and why a character moves. SceneFlow formats the model inputs."
+        "label": "From Concept to Feature",
+        "detail": "Expand ideas into 90-minute scripts on the Blueprint Board. Define characters, art, and beats, then let Audience Resonance analysis fine-tune your story before you shoot."
       },
       {
-        "label": "Continuity that holds",
-        "detail": "The Reference Library locks faces, wardrobe, voices, and locations for the whole production."
+        "label": "Direct With Intent, Not Prompts",
+        "detail": "Speak the language of film with intelligent assistants that understand your direction. The Reference Library locks your custom cast, wardrobe, and locations for absolute continuity."
       },
       {
-        "label": "Screen before you render",
-        "detail": "Watch the Ken Burns animatic with dialogue, score, and sound effects. Approve it, then render motion."
+        "label": "Agent-Driven Production",
+        "detail": "Accelerate generation 5X with intelligent agents that build 30-shot scenes in the background. Iterate freely in draft mode, then publish your final vision in stunning Hi-Res."
+      },
+      {
+        "label": "Screen, Collaborate, Ship",
+        "detail": "Share progress at every milestone—from audio animatics to the final master—in the Screening Room. Distribute as shorts or features in multiple languages for a global reach."
       }
     ],
     "pipelineSteps": [

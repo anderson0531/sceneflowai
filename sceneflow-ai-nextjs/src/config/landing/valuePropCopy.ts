@@ -16,19 +16,24 @@ export const HERO_COPY = {
 
 export const HERO_VALUE_CHIPS = [
   {
-    label: 'Direct in story language',
+    label: 'From Concept to Feature',
     detail:
-      'Describe action, tone, and why a character moves. SceneFlow formats the model inputs.',
+      'Expand ideas into 90-minute scripts on the Blueprint Board. Define characters, art, and beats, then let Audience Resonance analysis fine-tune your story before you shoot.',
   },
   {
-    label: 'Continuity that holds',
+    label: 'Direct With Intent, Not Prompts',
     detail:
-      'The Reference Library locks faces, wardrobe, voices, and locations for the whole production.',
+      'Speak the language of film with intelligent assistants that understand your direction. The Reference Library locks your custom cast, wardrobe, and locations for absolute continuity.',
   },
   {
-    label: 'Screen before you render',
+    label: 'Agent-Driven Production',
     detail:
-      'Watch the Ken Burns animatic with dialogue, score, and sound effects. Approve it, then render motion.',
+      'Accelerate generation 5X with intelligent agents that build 30-shot scenes in the background. Iterate freely in draft mode, then publish your final vision in stunning Hi-Res.',
+  },
+  {
+    label: 'Screen, Collaborate, Ship',
+    detail:
+      'Share progress at every milestone\u2014from audio animatics to the final master\u2014in the Screening Room. Distribute as shorts or features in multiple languages for a global reach.',
   },
 ] as const
 

@@ -11,9 +11,10 @@ import {
   VolumeX,
   Maximize2,
   ArrowRight,
+  Bot,
+  Clapperboard,
   FileText,
   Film,
-  Link2,
   Loader2,
 } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
@@ -41,7 +42,7 @@ function readUnmuteDismissed(): boolean {
 export function HeroSection() {
   const t = useTranslations('hero')
   const chips = t.raw('chips') as Array<{ label: string; detail: string }>
-  const chipIcons = [FileText, Link2, Film]
+  const chipIcons = [FileText, Clapperboard, Bot, Film]
   const landingLocale = useLocale()
   const syncedVideoLocale = resolveHeroVideoLocale(landingLocale)
   const prefersReducedMotion = useReducedMotion()
@@ -244,7 +245,7 @@ export function HeroSection() {
               </motion.p>
 
               <motion.div
-                className="mt-8 flex flex-col lg:flex-row items-stretch justify-center gap-3 max-w-5xl mx-auto"
+                className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-5xl mx-auto"
                 initial={{ opacity: 0, y: motionOffset ?? 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: motionDuration ?? 0.8, delay: prefersReducedMotion ? 0 : 0.28 }}
@@ -254,7 +255,7 @@ export function HeroSection() {
                   return (
                     <div
                       key={chip.label}
-                      className="flex-1 rounded-xl border border-white/10 bg-slate-950/55 px-4 py-3 text-left backdrop-blur-sm"
+                      className="rounded-xl border border-white/10 bg-slate-950/55 px-4 py-3 text-left backdrop-blur-sm"
                     >
                       <div className="mb-2 flex items-center gap-2">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-500/20 bg-cyan-500/10">
