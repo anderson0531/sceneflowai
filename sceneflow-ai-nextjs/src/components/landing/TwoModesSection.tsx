@@ -28,26 +28,10 @@ type MediaCard = {
   caption: string
 }
 
-type EarnCopy = {
-  id: string
-  title: string
-  body: string
-  caption: string
-}
-
-type LanguagesCopy = {
-  id: string
-  body: string
-  caption: string
-}
-
 export function TwoModesSection() {
   const t = useTranslations('twoModes')
   const comparison = t.raw('comparison') as ComparisonCopy
-  const retired = t.raw('retired') as MediaCard[]
   const stages = t.raw('stages') as MediaCard[]
-  const earn = t.raw('earn') as EarnCopy
-  const languages = t.raw('languages') as LanguagesCopy
   const comingSoon = t('comingSoon')
 
   const scrollToCheckout = () => {
@@ -94,25 +78,6 @@ export function TwoModesSection() {
           />
         </div>
 
-        <ul className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
-          {retired.map((card, index) => (
-            <motion.li
-              key={card.id}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.45, delay: index * 0.04 }}
-              className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-lg shadow-slate-950/40 sm:p-6"
-            >
-              <TwoModesMediaFrame mediaId={card.id} caption={card.caption} comingSoon={comingSoon} />
-              <div>
-                <h3 className="text-lg font-semibold text-white">{card.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-gray-400">{card.body}</p>
-              </div>
-            </motion.li>
-          ))}
-        </ul>
-
         <ol className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
           {stages.map((stage, index) => (
             <motion.li
@@ -135,35 +100,6 @@ export function TwoModesSection() {
             </motion.li>
           ))}
         </ol>
-
-        <motion.div
-          className="mt-10 grid gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-lg shadow-slate-950/40 md:grid-cols-2 md:items-center md:p-6"
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.45 }}
-        >
-          <TwoModesMediaFrame mediaId={earn.id} caption={earn.caption} comingSoon={comingSoon} />
-          <div>
-            <h3 className="text-xl font-semibold text-white">{earn.title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-gray-400">{earn.body}</p>
-          </div>
-        </motion.div>
-
-        <motion.div
-          className="mt-4 grid gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-lg shadow-slate-950/40 md:grid-cols-2 md:items-center md:p-6"
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.45 }}
-        >
-          <TwoModesMediaFrame
-            mediaId={languages.id}
-            caption={languages.caption}
-            comingSoon={comingSoon}
-          />
-          <p className="text-sm leading-relaxed text-gray-300 sm:text-base">{languages.body}</p>
-        </motion.div>
 
         <motion.div
           className="mt-10 flex justify-center"

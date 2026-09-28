@@ -26,7 +26,9 @@ describe('one-pipeline landing section', () => {
       id: 'comparison',
       caption: 'Fragmented tools beside one SceneFlow pipeline.',
     })
-    expect(TWO_MODES_COPY.retired).toHaveLength(3)
+    expect(TWO_MODES_COPY).not.toHaveProperty('retired')
+    expect(TWO_MODES_COPY).not.toHaveProperty('earn')
+    expect(TWO_MODES_COPY).not.toHaveProperty('languages')
     expect(TWO_MODES_COPY.stages.map((stage) => stage.title)).toEqual([
       'Series Desk',
       'Blueprint Board',
@@ -47,14 +49,12 @@ describe('one-pipeline landing section', () => {
     expect(stageText).not.toContain('production beat')
     expect(stageText).not.toContain('parallel beat')
     expect(stageText).not.toContain('hundreds')
-    expect(TWO_MODES_COPY.earn.body).toContain('500 shots')
-    expect(TWO_MODES_COPY.earn.body).toContain('3–5 minute scene')
-    expect(TWO_MODES_COPY.earn.body).toContain('8–12 minute chapter')
+    const screening = TWO_MODES_COPY.stages.find((stage) => stage.id === 'screening-room')
+    expect(screening?.body).toContain('3–5 minute scene')
+    expect(screening?.body).toContain('8–12 minute chapter')
     expect(TWO_MODES_COPY.subtitle).toContain('90-minute master')
     expect(stageText).toContain('Audience Resonance')
     expect(stageText).toContain('Screening Room')
-    expect(TWO_MODES_COPY.languages.body).toContain('39 languages')
-    expect(TWO_MODES_COPY.languages.body).toContain('70+ languages')
   })
 
   it('mirrors twoModes namespace in English messages', () => {
@@ -63,7 +63,9 @@ describe('one-pipeline landing section', () => {
     expect(enMessages.twoModes.subtitle).toBe(TWO_MODES_COPY.subtitle)
     expect(enMessages.twoModes.comparison).toEqual(TWO_MODES_COPY.comparison)
     expect(enMessages.twoModes.stages).toEqual(TWO_MODES_COPY.stages)
-    expect(enMessages.twoModes.earn).toEqual(TWO_MODES_COPY.earn)
+    expect(enMessages.twoModes).not.toHaveProperty('retired')
+    expect(enMessages.twoModes).not.toHaveProperty('earn')
+    expect(enMessages.twoModes).not.toHaveProperty('languages')
     expect(enMessages.twoModes.cta).toBe('Launch Studio ($9)')
     expect(enMessages.floatingNav.twoModes).toBe('One Pipeline')
     expect(enMessages.twoModes).not.toHaveProperty('steps')
@@ -98,13 +100,10 @@ describe('one-pipeline landing section', () => {
 
     expect([
       TWO_MODES_COPY.comparison.id,
-      ...TWO_MODES_COPY.retired.map((card) => card.id),
       ...TWO_MODES_COPY.stages.map((stage) => stage.id),
-      TWO_MODES_COPY.earn.id,
-      TWO_MODES_COPY.languages.id,
     ]).toEqual([...TWO_MODES_MEDIA_IDS])
 
-    const illustrated = new Set(['comparison', 'earn'])
+    const illustrated = new Set(['comparison'])
     for (const id of TWO_MODES_MEDIA_IDS) {
       const entry = TWO_MODES_MEDIA[id]
       expect(entry.posterUrl).toBe('')
@@ -150,7 +149,9 @@ describe('one-pipeline landing section', () => {
     expect(twoModes).toContain("t('cta')")
     expect(twoModes).toContain("t.raw('comparison')")
     expect(twoModes).toContain("t.raw('stages')")
-    expect(twoModes).toContain("t.raw('earn')")
+    expect(twoModes).not.toContain("t.raw('retired')")
+    expect(twoModes).not.toContain("t.raw('earn')")
+    expect(twoModes).not.toContain("t.raw('languages')")
     expect(twoModes).not.toContain("t.raw('steps')")
     expect(twoModes).not.toContain("t('intelligence.name')")
     expect(twoModes).not.toContain("t('speed.name')")

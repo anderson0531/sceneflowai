@@ -78,9 +78,9 @@ describe('Production Examples landing section', () => {
     const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
     expect(section).toContain("t('subtitleTagline')")
     expect(section).toContain("t('languagesBanner')")
-    expect(section).toContain("t('explorePipelineCta')")
-    expect(section).toContain('PipelineReviewWalk')
-    expect(section).toContain("t('moreProductionsLabel')")
+    expect(section).not.toContain('PipelineReviewWalk')
+    expect(section).not.toContain("t('explorePipelineCta')")
+    expect(section).not.toContain("t('moreProductionsLabel')")
   })
 
   it('uses a desktop grid and mobile accordion layout', () => {
@@ -102,12 +102,6 @@ describe('Production Examples i18n contract', () => {
       'subtitle',
       'subtitleTagline',
       'languagesBanner',
-      'explorePipelineCta',
-      'explorePipelineHint',
-      'pipelineOpenLabel',
-      'pipelineComingSoon',
-      'moreProductionsLabel',
-      'moreProductionsHint',
       'workflowLabel',
       'startProduction',
       'cta',
@@ -137,14 +131,14 @@ describe('Production Examples i18n contract', () => {
       'Long-form productions. Not clips.'
     )
     expect(enMessages.productionShowcase.subtitle).toContain('complete production')
-    expect(enMessages.productionShowcase.subtitle).toContain('three review surfaces')
+    expect(enMessages.productionShowcase.subtitle).toContain('Screening Room')
+    expect(enMessages.productionShowcase.subtitle).not.toContain('three review surfaces')
   })
 
-  it('defines the three-step pipeline walk', () => {
-    const steps = enMessages.productionShowcase.pipelineSteps
-    expect(steps).toHaveLength(3)
-    expect(steps.map((step) => step.id)).toEqual(['blueprint', 'script-ar', 'screening-room'])
-    expect(enMessages.productionShowcase.explorePipelineCta).toBe('Walk the review pipeline')
+  it('does not ship the review walk', () => {
+    expect(enMessages.productionShowcase).not.toHaveProperty('pipelineSteps')
+    expect(enMessages.productionShowcase).not.toHaveProperty('explorePipelineCta')
+    expect(enMessages.productionShowcase).not.toHaveProperty('pipelineComingSoon')
   })
 
   it('ships exactly four focused production cards', () => {
