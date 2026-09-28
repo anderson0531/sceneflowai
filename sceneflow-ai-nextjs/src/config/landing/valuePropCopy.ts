@@ -18,7 +18,7 @@ export const HERO_VALUE_CHIPS = [
   {
     label: 'From Concept to Feature',
     detail:
-      'Expand ideas into 90-minute scripts on the Blueprint Board. Define characters, art, and beats, then let Audience Resonance analysis fine-tune your story before you shoot.',
+      'Expand ideas into 90-minute scripts in the Blueprint Room. Define characters, art, and beats, then let Audience Resonance analysis fine-tune your story before you shoot.',
   },
   {
     label: 'Direct With Intent, Not Prompts',
