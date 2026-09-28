@@ -76,7 +76,7 @@ export function FeatureRoomOverview({
   return (
     <div
       ref={bandRef}
-      className="relative mb-8 min-h-[280px] overflow-hidden rounded-3xl border border-white/10 bg-slate-950"
+      className="relative mb-6 min-h-[180px] overflow-hidden rounded-3xl border border-white/10 bg-slate-950"
     >
       {hasVideo ? (
         <video
@@ -103,7 +103,7 @@ export function FeatureRoomOverview({
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950" />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950/25" />
-      <div className="relative flex min-h-[280px] flex-col justify-end p-6 sm:p-8">
+      <div className="relative flex min-h-[180px] flex-col justify-end p-5 sm:p-6">
         <h3 className="text-2xl font-bold text-white sm:text-3xl">{title}</h3>
         <p className="mt-3 max-w-3xl text-sm leading-relaxed text-gray-200 sm:text-base">{promise}</p>
         <div className="mt-5 flex flex-wrap items-center gap-3">
