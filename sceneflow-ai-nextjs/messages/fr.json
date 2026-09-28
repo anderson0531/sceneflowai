@@ -1572,7 +1572,7 @@
   "keyFeatures": {
     "badge": "Caractéristiques principales",
     "title": "Les caractéristiques qui distinguent SceneFlow",
-    "subtitle": "Le plan verrouille vos fondations — clés, budget, bible de la série et plan. Create est l'endroit où vous écrivez, référencez, générez et révisez. Release propose des masters, des versions, des promotions et des offres groupées prêtes pour YouTube.",
+    "subtitle": "Series Desk, Blueprint Board, Production Stage, and Screening Room take a story from the idea to the master.",
     "learnMoreLabel": "En savoir plus",
     "showLessLabel": "Afficher moins",
     "problemLabel": "Le problème",
@@ -1580,176 +1580,6 @@
     "outcomeLabel": "&lt;p&gt; Le gain?",
     "videoComingSoon": "Fonctionnalité bientôt disponible",
     "videoSoon": "Bientôt",
-    "categories": [
-      {
-        "id": "create",
-        "label": "Plan",
-        "features": [
-          {
-            "icon": "BYOK ",
-            "title": "Apportez votre propre clé (BYOK)",
-            "description": "Branchez vos clés API personnelles ou d'entreprise pour les fournisseurs d'images et de vidéos. Contrôlez les coûts du modèle à grande échelle tout en conservant le studio entièrement guidé.",
-            "learnMore": {
-              "problem": "Au fur et à mesure que vous évoluez, les frais de plate-forme par génération s'accumulent — et vous avez peu de contrôle sur les coûts du modèle sous-jacent qui grugent la marge de chaque production.",
-              "solution": "BYOK vous permet de brancher votre clé API personnelle ou d'entreprise pour le traitement d'images et de vidéos avec des fournisseurs pris en charge, de sorte que la génération s'exécute sur votre propre compte tout en conservant l'expérience complète de SceneFlow studio.",
-              "outcome": "Réduisez les coûts de la plate-forme et contrôlez vos dépenses à grande échelle — même pipeline guidé, votre économie."
-            }
-          },
-          {
-            "icon": "budgétées",
-            "title": "Gestion du budget de production",
-            "description": "Définissez un budget de crédits par projet, suivez les dépenses en temps réel et obtenez des conseils pour réduire les coûts avant le rendu — trames de brouillon, moins de générations, crédits complémentaires lorsque vous avez besoin de pistes.",
-            "learnMore": {
-              "problem": "Les projets créatifs sont connus pour leurs dépassements de budget silencieux — vous ne découvrez que vos crédits après coup, en cours de production et hors piste.",
-              "solution": "La gestion du budget de production calcule et suit le budget de crédit de chaque production en temps réel, avec des conseils sur les coûts de rognage — images brouillons, moins de générations de vidéos — et des crédits complémentaires chaque fois que vous avez besoin de plus de marge de manœuvre.",
-              "outcome": "Gardez le contrôle total des dépenses du premier temps à la coupe finale — pas de dépassement surprise, pas de production bloquée, des coûts prévisibles à chaque fois."
-            }
-          },
-          {
-            "icon": "series",
-            "title": "Series Room",
-            "description": "Définissez votre univers une seule fois : arcs de saison, distribution récurrente et règles de continuité. L'épisode décrit la synchronisation dans Blueprint Room et Production Stage afin que chaque versement reste sur le modèle.",
-            "learnMore": {
-              "problem": "Le contenu sérialisé multiplie le travail : chaque nouvel épisode signifie reconstruire le contexte, rétablir les personnages et espérer que la continuité tient dans un catalogue en pleine croissance.",
-              "solution": "Series Room capture votre univers — arcs de saison, casting et règles de continuité — une seule fois. Les contours des épisodes s'écoulent automatiquement dans Blueprint Room et Production Stage, de sorte que chaque versement hérite de la même fondation verrouillée.",
-              "outcome": "Livrez des épisodes cohérents dans les délais prévus à partir d'un seul studio — faites évoluer votre chaîne ou votre franchise sans mettre à l'échelle votre chaos."
-            }
-          },
-          {
-            "icon": "schéma directeur",
-            "title": "Blueprint Room",
-            "description": "Transformez un concept en une histoire structurée : battements, arcs de personnage, définition du public et style artistique verrouillé. Les collaborateurs examinent via des liens de partage avant d'entrer en production.",
-            "learnMore": {
-              "problem": "Le fait de passer directement à la production sans structure d'histoire verrouillée entraîne des reprises coûteuses — battements peu clairs, ton dérivé et surprises des parties prenantes après que les crédits ont déjà été dépensés.",
-              "solution": "Blueprint transforme un concept en un traitement structuré : battements d'histoire, arcs de personnage, public cible et style visuel verrouillé. Les liens de partage permettent aux collaborateurs d'examiner et d'approuver avant qu'une seule image ne soit générée.",
-              "outcome": "Feu vert en toute confiance — tout le monde s'aligne sur l'histoire et regarde avant que les dépenses de production ne commencent."
-            }
-          }
-        ]
-      },
-      {
-        "id": "direct",
-        "label": "Créer",
-        "features": [
-          {
-            "icon": "writersRoom",
-            "title": "Salle des écrivains",
-            "description": "Révisez les scripts scène par scène avec l'Assistant Intelligent Writer et Audience Resonance Analysis — optimisez le dialogue, le rythme et le ton avant de passer aux images et à la vidéo.",
-            "learnMore": {
-              "problem": "La page blanche est l'endroit où la plupart des projets stagnent. Les outils d'écriture génériques de l'IA crachent une copie fade qui ignore à qui vous parlez réellement — vous passez donc des heures à réécrire, ou pire, à expédier quelque chose qui ne se connecte jamais.",
-              "solution": "Writer's Room fusionne votre public cible avec une technique de scénarisation éprouvée pour rédiger et réviser une copie de script scène par scène. Dirigez chaque battement par la voix ou le texte — avec le score ARA et les correctifs en un clic intégrés.",
-              "outcome": "Des scripts adaptés au public et prêts pour la production en quelques minutes — vous entrez donc dans Pre-Vis et Motion avec une histoire qui atterrit déjà."
-            }
-          },
-          {
-            "icon": "ara",
-            "title": "Audience Resonance Analysis (ARA)",
-            "description": "Évaluez votre histoire par rapport à un public cible défini. Obtenez des recommandations précises et des révisions en un clic à travers le script et la structure avant les dépenses de production.",
-            "learnMore": {
-              "problem": "Au moment où vous découvrez qu'une histoire manque la cible, vous avez déjà brûlé des heures et des crédits pour le rendu de l'audio, des images et de la vidéo. Les devinettes créatives sont coûteuses, et les reshoots le sont encore plus.",
-              "solution": "ARA exécute un test de dépistage du public sur votre copie avant qu'un seul clip audio, une seule image ou une seule vidéo ne soit généré. Obtenez un score de résonance, des recommandations précises et des révisions en un clic à travers le script et la structure.",
-              "outcome": "Réduisez les risques de chaque projet à l'avance — ne donnez le feu vert qu'aux histoires qui atterriront et arrêtez de payer pour rendre des idées qui n'allaient jamais fonctionner."
-            }
-          },
-          {
-            "icon": "referenceLibrary",
-            "title": "Reference Library intelligent",
-            "description": "Lock characters, locations, and props once — matched to your production art style. Every generation pulls from the same references — zero drift across scenes, episodes, and series.",
-            "learnMore": {
-              "problem": "Le sale secret de la vidéo de l'IA est la dérive : le visage, la garde-robe et les paramètres de votre héros changent de tir en tir et d'épisode en épisode, brisant l'illusion et forçant des relances sans fin à rester sur le modèle.",
-              "solution": "Créez une fois des personnages, des armoires, des voix, des lieux et des accessoires assistés par l'IA ou entièrement personnalisés, puis réutilisez-les partout. Chaque génération tire parti des mêmes références verrouillées — avec une génération vocale automatique adaptée à l'image et au rôle de chaque personnage.",
-              "outcome": "Une cohérence parfaite entre les scènes, les productions et les séries entières — zéro dérive de personnage, de sorte que votre public reste immergé dans l'histoire au lieu de remarquer les coutures."
-            }
-          },
-          {
-            "icon": "iad",
-            "title": "Directeur adjoint intelligent (Dai)",
-            "description": "Éditez directement des images et des vidéos précises en clair ou en texte — pas de relance de la machine à sous. L'IAD applique des modifications chirurgicales tout en honorant votre Reference Library.",
-            "learnMore": {
-              "problem": "La plupart des outils d'IA vous obligent à relancer l'ensemble du tir et à prier quand vous voulez un petit changement — une machine à sous qui gaspille des crédits et vous donne rarement exactement ce que vous avez imaginé.",
-              "solution": "L'IAD vous permet de diriger des révisions précises d'image ou de vidéo en langage clair ou en texte — « retirer la tasse de café de la table » — et applique l'édition tout en honorant votre Reference Library pour la continuité.",
-              "outcome": "Obtenez la prise de vue exacte que vous avez envisagée avec des modifications chirurgicales au lieu de régénérations aléatoires — moins de dépenses gaspillées, plus de contrôle créatif, des coupes finales plus rapides."
-            }
-          },
-          {
-            "icon": "Multilangues",
-            "title": "Flux multilingues",
-            "description": "Générez de l'audio express dans plus de 70 langues, auto-aligné pour battre les images et la vidéo. Expédier des flux linguistiques doublés ou synchronisés sur les lèvres à partir d'une coupe principale approuvée.",
-            "learnMore": {
-              "problem": "Atteindre un public mondial signifie généralement réenregistrer les talents vocaux, reprogrammer chaque scène et reconstruire le projet une fois par langue — un cauchemar en matière de coûts et de coordination qui maintient la plupart des créateurs sur un seul marché.",
-              "solution": "Générez de l'audio express dans plus de 70 langues en quelques minutes, automatiquement aligné sur vos plans animés et votre vidéo. Produisez des flux doublés ou synchronisés sur les lèvres à partir de la même coupe approuvée, aucune nouvelle pousse requise.",
-              "outcome": "Livrez chaque histoire nativement à plus de 70 marchés à partir d'une seule production — multipliez votre portée et vos revenus sans multiplier votre charge de travail."
-            }
-          },
-          {
-            "icon": "expresse",
-            "title": "Génération express",
-            "description": "Orchestrer la génération audio, image et vidéo simultanée à travers les scènes. Une production de 30 battements en ~30 minutes au lieu d'heures d'attente séquentielle.",
-            "learnMore": {
-              "problem": "La génération d'une production un actif à la fois transforme un seul projet en une attente d'une journée entière — vous mettez en file d'attente un clip, le regardez s'afficher, puis répétez des centaines de fois pendant que l'élan s'évapore.",
-              "solution": "Production Agents exploite le cloud dédié de SceneFlow pour exécuter simultanément des générations d'audio, d'images et de vidéo sur l'ensemble de votre production, au lieu d'une tâche lente après l'autre.",
-              "outcome": "Une production de 30 battements se termine en environ 30 minutes au lieu d'environ 2,5 heures — vous répétez donc le même jour et expédiez pendant que l'idée est encore chaude."
-            }
-          },
-          {
-            "icon": "screenRoom",
-            "title": "Screening Room",
-            "description": "Preview and share the Pre-Vis, per-scene motion video, and the finished multilanguage master — one link, structured feedback, no premature exports.",
-            "learnMore": {
-              "problem": "Obtenir l'approbation signifie généralement exporter des fichiers bruts, les envoyer par e-mail et assembler des commentaires dispersés à partir d'une douzaine de fils de discussion — lents, désordonnés et faciles à perdre de vue.",
-              "solution": "The Screening Room lets you preview and share Pre-Vis, per-scene motion video, and multilanguage streams from one link. Viewers get real playback controls; reviewers leave structured feedback right on the cut.",
-              "outcome": "Verrouillez les approbations plus rapidement avec les commentaires des parties prenantes au même endroit — pas d'exportations prématurées, pas de notes perdues, pas de confusion de version."
-            }
-          }
-        ]
-      },
-      {
-        "id": "ship",
-        "label": "Libérer",
-        "features": [
-          {
-            "icon": "Upscale",
-            "title": "Livraison - Qualité haut de gamme",
-            "description": "Rendu des maîtres de livraison en 720p, 1080p ou 4K — avec mise à l'échelle Topaz en option lorsque les informations d'identification sont connectées. Un seul point, qualité prête pour la sérigraphie.",
-            "learnMore": {
-              "problem": "La qualité de l'exportation est souvent une réflexion après coup : vous assemblez un fichier maître quelle que soit la résolution par défaut du pipeline, puis vous découvrez qu'il n'est pas assez net pour YouTube, la diffusion ou la livraison par le client.",
-              "solution": "Choisissez un niveau de livraison — Brouillon (720p), Standard (1080p) ou Premium (4K) — lorsque vous rendez votre master de langue. La mise à l'échelle optionnelle de Topaz affine la coupe finale lorsque vos informations d'identification sont connectées.",
-              "outcome": "Expédier des masters prêts pour la projection à la qualité attendue par votre public et votre plateforme — pas de recousage, pas de compromis."
-            }
-          },
-          {
-            "icon": "versionControl",
-            "title": "Contrôle de la version ",
-            "description": "Conservez chaque prise pour chaque flux. Comparez les versions, épinglez les favoris et itérez sans perdre la coupe que tout le monde aimait il y a deux modifications.",
-            "learnMore": {
-              "problem": "L'itération créative est désordonnée : la meilleure prise est écrasée, les alternatives disparaissent et vous ne pouvez jamais revenir à la version que tout le monde aimait il y a deux modifications.",
-              "solution": "Le contrôle de version conserve chaque prise générée pour chaque flux. Comparez les versions côte à côte, épinglez les favoris et continuez à itérer — l'historique complet de chaque scène reste intact.",
-              "outcome": "Explorez hardiment sans craindre de perdre votre meilleur travail — récupérez toujours la prise parfaite et prenez des décisions finales en toute confiance."
-            }
-          },
-          {
-            "icon": "promoTrailer",
-            "title": "Bandes-annonces promotionnelles",
-            "description": "Tissez automatiquement une promotion de 9:16 (30-60s) sélectionnée à partir de vos moments de plus haute résonance — des remorques verticales prêtes pour les Shorts, les Reels et le TikTok.",
-            "learnMore": {
-              "problem": "Couper les promos verticales à la main signifie parcourir votre maître, deviner les fenêtres en surbrillance et reconstruire la même histoire trois fois pour Shorts, Reels et TikTok.",
-              "solution": "SceneFlow sélectionne vos battements de plus haute résonance, tisse automatiquement une bande-annonce de 30 à 60 secondes à 9:16, et rend une coupe verticale prête pour les plateformes sociales — pas de travail manuel de chronologie.",
-              "outcome": "Lancez chaque production avec une promotion d'arrêt de défilement le jour même où votre maître est prêt — multipliez la découverte sans multiplier le temps d'édition."
-            }
-          },
-          {
-            "icon": "youtubePublish",
-            "title": "Publication YouTube",
-            "description": "Packs par langue : titres et descriptions AI, vignettes générées, paramètres de confidentialité et de catégorie, et publication audio multilingue — à partir de la bibliothèque de publication.",
-            "learnMore": {
-              "problem": "Le travail n'est pas terminé lorsque la vidéo est — les vignettes, les titres, les descriptions et les pistes de langue sont leur propre puits de temps entre votre coupe terminée et un téléchargement en direct.",
-              "solution": "La bibliothèque de publication assemble des ensembles YouTube par langue : titres et descriptions générés par l'IA, vignettes personnalisées, paramètres de confidentialité et de catégorie et pistes audio multilingues, puis publie en un seul flux.",
-              "outcome": "Passez du rendu final à la diffusion en direct sur YouTube en quelques minutes, atteignant des milliards de téléspectateurs dans toutes les langues sans un marathon distinct d'emballage et de téléchargement."
-            }
-          }
-        ]
-      }
-    ],
     "landingUiLanguagesLabel": "Produce and dub in 70+ languages. This site is available in these 39:"
   },
   "pipeline": {
@@ -2026,32 +1856,6 @@
         }
       ]
     },
-    "stages": [
-      {
-        "id": "series-desk",
-        "title": "Series Desk",
-        "body": "For a series or franchise. Lock recurring faces, voices, wardrobe, and locations, and pass season continuity into each episode. A single film can start on the Blueprint Board.",
-        "caption": "Series Desk — one cast across episodes."
-      },
-      {
-        "id": "blueprint-board",
-        "title": "Blueprint Board",
-        "body": "Where the film treatment lives. A sentence or a full brief becomes motivations and a beat sheet. Audience Resonance scores story, pacing, and tone for the audience you named before you spend credits. The Intelligent Assistant revises dialogue without throwing away the visual foundation. Beats exist only here.",
-        "caption": "Blueprint Board — beats live in the treatment."
-      },
-      {
-        "id": "production-stage",
-        "title": "Production Stage",
-        "body": "Each Blueprint beat becomes a chapter. Dialogue, sound, and shots generate together, a few stills and clips at a time, so a scene can finish before the master does. Full production runs five stills or clips at once. Direct camera, blocking, and transitions in story language. Approved Pre-Vis shots become motion on Google Vertex and Veo. 4K is on Pro and Studio.",
-        "caption": "Production Stage — a chapter of shots."
-      },
-      {
-        "id": "screening-room",
-        "title": "Screening Room",
-        "body": "Ken Burns Pre-Vis with multi-character dialogue, environmental sound, and score. Switch among Pre-Vis shots, scenes, chapters, the master, and promo. Ship a 3–5 minute scene or an 8–12 minute chapter from the locked timeline, or hold them for the 90-minute master. Cutdowns and teasers come off that same timeline. Review native-language and dubbed streams in 70+ languages inside the player.",
-        "caption": "Screening Room — screen it, then ship a scene."
-      }
-    ],
     "cta": "Launch Studio ($9)"
   },
   "infrastructure": {

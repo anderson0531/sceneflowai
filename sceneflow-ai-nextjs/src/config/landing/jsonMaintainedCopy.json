@@ -242,8 +242,8 @@
   },
   "keyFeatures": {
     "badge": "Key Features",
-    "title": "The Features That Set SceneFlow Apart",
-    "subtitle": "Plan locks your foundation — keys, budget, series bible, and blueprint. Create is where you write, reference, generate, and review. Release delivers masters, versions, promos, and YouTube-ready bundles.",
+    "title": "Four rooms. One production.",
+    "subtitle": "Series Desk, Blueprint Board, Production Stage, and Screening Room take a story from the idea to the master.",
     "learnMoreLabel": "Learn more",
     "showLessLabel": "Show less",
     "problemLabel": "The Problem",
@@ -251,172 +251,347 @@
     "outcomeLabel": "The Payoff",
     "videoComingSoon": "Feature demo coming soon",
     "videoSoon": "Soon",
-    "landingUiLanguagesLabel": "Produce and dub in 70+ languages. This site is available in these 39:",
-    "categories": [
+    "overviewComingSoon": "Overview coming soon",
+    "pauseOverview": "Pause overview",
+    "playOverview": "Play overview",
+    "muteOverview": "Mute overview",
+    "unmuteOverview": "Unmute overview",
+    "screenshotLabel": "Screenshot",
+    "landingUiLanguagesLabel": "Produce and dub in 44 languages. This site is available in these 39:",
+    "rooms": [
       {
-        "id": "create",
-        "label": "Plan",
+        "id": "series-desk",
+        "label": "Series Desk",
+        "promise": "Lock the franchise once. Season arcs, cast, tone, and world rules carry into every episode, and a single film can skip this room.",
         "features": [
           {
-            "icon": "byok",
-            "title": "Bring Your Own Key (BYOK)",
-            "description": "Plug in your personal or corporate API keys for image and video providers. Control model costs at scale while keeping the full guided studio.",
+            "icon": "seasonUniverse",
+            "title": "Season universe",
+            "description": "Define the franchise once. Season arcs, recurring cast, tone, and world rules live on the series, and every new episode inherits them instead of starting from a blank page. A single film can skip this room and open on the Blueprint Board.",
+            "screenshot": "Series overview",
             "learnMore": {
-              "problem": "As you scale, per-generation platform fees stack up — and you have little control over the underlying model costs eating into every production's margin.",
-              "solution": "BYOK lets you plug in your personal or corporate API key for image and video processing with supported providers, so generation runs on your own account while you keep the full SceneFlow studio experience.",
-              "outcome": "Cut platform costs and control your spend at scale — same guided pipeline, your economics."
+              "problem": "A new episode that starts from a blank page forgets the cast, the tone, and the rules of the world.",
+              "solution": "Season universe stores arcs, recurring cast, tone, and world rules on the series so every episode inherits them.",
+              "outcome": "A single film can skip Series Desk. A season keeps one franchise definition for every episode."
             }
           },
           {
-            "icon": "budget",
-            "title": "Production Budget Management",
-            "description": "Set a credit budget per project, track spend in real time, and get guidance to trim cost before you render — draft frames, fewer generations, add-on credits when you need runway.",
+            "icon": "episodeHandoff",
+            "title": "Episode handoff",
+            "description": "Each episode outline, synopsis, and story beats sync into that episode’s Blueprint Board and Production Stage. Episode 12 still knows the cast, the world, and what already happened.",
+            "screenshot": "Episode handoff into Blueprint and Production",
             "learnMore": {
-              "problem": "Creative projects are notorious for silent budget overruns — you only discover you have blown through your credits after the fact, mid-production and out of runway.",
-              "solution": "Production Budget Management calculates and tracks each production's credit budget in real time, with guidance on trimming costs — draft frames, fewer video generations — and add-on credits whenever you need more headroom.",
-              "outcome": "Stay in full control of spend from first beat to final cut — no surprise overruns, no stalled productions, predictable costs every time."
+              "problem": "Later episodes lose the thread when the outline, the synopsis, and the beats live somewhere else.",
+              "solution": "Episode handoff syncs that episode’s outline, synopsis, and story beats into its Blueprint Board and Production Stage.",
+              "outcome": "Episode 12 still knows the cast, the world, and what already happened."
             }
           },
           {
-            "icon": "series",
-            "title": "Series Room",
-            "description": "Define your universe once — season arcs, recurring cast, and continuity rules. Episode outlines sync into Blueprint Room and Production Stage so every installment stays on-model.",
+            "icon": "reshapeSeries",
+            "title": "Reshape · with Direction",
+            "description": "The series edit dialog. Speak or type what should change — a more sympathetic antagonist, a new subplot, a different climax — and optionally focus the edit on plot, characters, episode content, tone, or setting. The revision is targeted. Unrelated parts of the storyline stay put, and you apply the change yourself.",
+            "screenshot": "Reshape dialog",
             "learnMore": {
-              "problem": "Serialized content multiplies the work: every new episode means rebuilding context, re-establishing characters, and hoping continuity holds across a growing catalog.",
-              "solution": "Series Room captures your universe — season arcs, cast, and continuity rules — once. Episode outlines flow automatically into Blueprint Room and Production Stage, so each installment inherits the same locked foundation.",
-              "outcome": "Ship consistent episodes on schedule from one studio — scale your channel or franchise without scaling your chaos."
+              "problem": "A broad rewrite of the series can change plot, cast, and setting you meant to keep.",
+              "solution": "Reshape · with Direction takes a spoken or typed note and can focus the edit on plot, characters, episode content, tone, or setting. You preview it and apply it yourself.",
+              "outcome": "Unrelated parts of the storyline stay put. Nothing is rewritten until you accept the change."
             }
           },
           {
-            "icon": "blueprint",
-            "title": "Blueprint Room",
-            "description": "Turn a concept into a structured story: beats, character arcs, audience definition, and locked art style. Collaborators review via share links before you enter Production.",
+            "icon": "directEpisode",
+            "title": "Direct this episode",
+            "description": "The series-episode edit. On one episode, dictate the change (raise the stakes, deepen the B-story) and apply it to that episode only. The rest of the season is left alone.",
+            "screenshot": "Direct this episode",
             "learnMore": {
-              "problem": "Jumping straight into production without a locked story structure leads to expensive rework — unclear beats, drifting tone, and stakeholder surprises after credits are already spent.",
-              "solution": "Blueprint transforms a concept into a structured treatment: story beats, character arcs, target audience, and locked visual style. Share links let collaborators review and approve before a single frame is generated.",
-              "outcome": "Greenlight with confidence — everyone aligns on the story and look before production spend begins."
+              "problem": "A note about one episode should not rewrite the rest of the season.",
+              "solution": "Direct this episode takes the change you dictate and applies it to that episode only, after you accept it.",
+              "outcome": "The rest of the season is left alone."
             }
           }
         ]
       },
       {
-        "id": "direct",
-        "label": "Create",
+        "id": "blueprint-board",
+        "label": "Blueprint Board",
+        "promise": "A sentence or a brief becomes the treatment and the only beat sheet. Score it for the audience you named, then share it before anyone spends on pictures.",
         "features": [
           {
-            "icon": "writersRoom",
-            "title": "Writer's Room",
-            "description": "Revise scripts scene by scene with the Intelligent Assistant Writer and Audience Resonance Analysis — optimize dialogue, pacing, and tone before you spend on frames and video.",
+            "icon": "treatment",
+            "title": "Treatment and beat sheet",
+            "description": "A sentence or a full brief becomes the film treatment: motivations, characters, art direction, and a beat sheet. Beats exist only here. Production Stage turns each beat into a chapter; it does not invent a second beat sheet.",
+            "screenshot": "Treatment board",
             "learnMore": {
-              "problem": "The blank page is where most projects stall. Generic AI writing tools spit out bland copy that ignores who you are actually talking to — so you spend hours rewriting, or worse, ship something that never connects.",
-              "solution": "Writer's Room fuses your target audience with proven screenwriting technique to draft and revise scene-by-scene script copy. Steer every beat by plain voice or text — with ARA scoring and one-click fixes built in.",
-              "outcome": "Audience-tuned, production-ready scripts in minutes — so you enter Pre-Vis and Motion with a story that already lands."
+              "problem": "A second beat sheet in production splits the story from the treatment you already locked.",
+              "solution": "Treatment and beat sheet turns a sentence or a full brief into motivations, characters, art direction, and the only beat sheet.",
+              "outcome": "Production Stage turns each beat into a chapter. It does not invent another beat sheet."
             }
           },
           {
-            "icon": "ara",
-            "title": "Audience Resonance Analysis (ARA)",
-            "description": "Score your story against a defined target audience. Get pinpoint recommendations and one-click revisions across script and structure before production spend.",
+            "icon": "blueprintResonance",
+            "title": "Audience Resonance",
+            "description": "Score concept, tone, characters, and beats against the audience you named, before anyone spends on pictures. You see the score and the recommendations, then decide what to revise.",
+            "screenshot": "Audience Resonance scores",
             "learnMore": {
-              "problem": "By the time you find out a story misses the mark, you have already burned hours and credits rendering audio, frames, and video. Creative guesswork is expensive, and reshoots are even more so.",
-              "solution": "ARA runs a test-audience screening on your copy before a single audio clip, frame, or video is generated. Get a resonance score, pinpointed recommendations, and one-click revisions across script and structure.",
-              "outcome": "De-risk every project up front — greenlight only the stories that will land, and stop paying to render ideas that were never going to work."
+              "problem": "Picture spend starts before you know whether the concept, tone, characters, or beats fit the audience.",
+              "solution": "Audience Resonance scores those parts against the audience you named and shows the recommendations.",
+              "outcome": "You decide what to revise before anyone spends on pictures."
             }
           },
           {
-            "icon": "referenceLibrary",
-            "title": "Intelligent Reference Library",
-            "description": "Lock characters, locations, and props once — matched to your production art style. Every generation pulls from the same references — zero drift across scenes, episodes, and series.",
+            "icon": "blueprintDirector",
+            "title": "Co-Director · Blueprint",
+            "description": "The Blueprint edit dialog (Co-Director · Blueprint). Describe the change in plain words. Preview the rewrite, keep the parts you want, and apply it without throwing away the visual foundation already locked in the treatment.",
+            "screenshot": "Co-Director · Blueprint",
             "learnMore": {
-              "problem": "AI video's dirty secret is drift: your hero's face, wardrobe, and settings mutate shot to shot and episode to episode, shattering the illusion and forcing endless re-rolls to stay on-model.",
-              "solution": "Build AI-assisted or fully custom characters, wardrobes, voices, locations, and props once, then reuse them everywhere. Every generation pulls from the same locked references — with auto voice generation matched to each character's image and role.",
-              "outcome": "Perfect consistency across scenes, productions, and entire series — zero character drift, so your audience stays immersed in the story instead of noticing the seams."
+              "problem": "A rewrite of the treatment can throw away art direction you already locked.",
+              "solution": "Co-Director · Blueprint takes the change in plain words, shows a preview, and lets you keep the parts you want.",
+              "outcome": "You apply the rewrite without throwing away the visual foundation. Nothing changes until you accept it."
             }
           },
           {
-            "icon": "iad",
-            "title": "Intelligent Assistant Director (IAD)",
-            "description": "Direct precise frame and video edits in plain speech or text — no slot-machine re-rolls. IAD applies surgical changes while honoring your Reference Library.",
+            "icon": "stakeholderReview",
+            "title": "Stakeholder review",
+            "description": "Share the treatment as a read-and-listen link. Collaborators hear the narration and see the same board you do. Their notes come back as guided revision, not a new document in another tool.",
+            "screenshot": "Share link",
             "learnMore": {
-              "problem": "Most AI tools force you to re-roll the entire shot and pray when you want one small change — a slot machine that wastes credits and rarely gives you exactly what you pictured.",
-              "solution": "IAD lets you direct precise frame or video revisions in plain speech or text — 'remove the coffee mug from the table' — and applies the edit while honoring your Reference Library for continuity.",
-              "outcome": "Get the exact shot you envisioned with surgical edits instead of random regenerations — less wasted spend, more creative control, faster final cuts."
-            }
-          },
-          {
-            "icon": "multilanguage",
-            "title": "Multilanguage Streams",
-            "description": "Write natively in your story's language, then dub or lip-sync into 70+ more — auto-aligned to beat frames and published as multi-language audio tracks on a single YouTube video.",
-            "learnMore": {
-              "problem": "Reaching a global audience usually means re-recording voice talent, re-timing every scene, and rebuilding the project once per language — a cost and coordination nightmare that keeps most creators single-market.",
-              "solution": "Author dialogue and treatment natively in your story's language rather than translating English after the fact, then generate audio in 70+ languages, auto-aligned to your beat frames. Dialogue is rewritten to fit each dub's timing budget, and you can ship dubbed or lip-synced streams from the same approved cut.",
-              "outcome": "Ship every story natively to 70+ markets from one production — multiply your reach and revenue without multiplying your workload."
-            }
-          },
-          {
-            "icon": "express",
-            "title": "Production Agents",
-            "description": "Audio Agent, Stills Agent, and Video Agent compose expert prompts from beat direction, attach the right references, and generate in parallel. A scene can take several minutes because the agent is doing the specialist work — not because the queue is slow.",
-            "learnMore": {
-              "problem": "Writing every prompt and waiting on one asset at a time turns production into babysitting — you queue a clip, watch it render, then repeat while momentum evaporates.",
-              "solution": "Agents read the locked beat, build the prompt, attach identity and location refs, generate, and retry when the provider or likeness check fails — then hand you a reviewable beat.",
-              "outcome": "You direct and approve. The agents prompt and generate. Quality first; time is the cost of that quality."
-            }
-          },
-          {
-            "icon": "screeningRoom",
-            "title": "Screening Room",
-            "description": "Preview and share the Pre-Vis, per-scene motion video, and the finished multilanguage master — one link, structured feedback, no premature exports.",
-            "learnMore": {
-              "problem": "Getting sign-off usually means exporting rough files, emailing them around, and stitching together scattered feedback from a dozen threads — slow, messy, and easy to lose track of.",
-              "solution": "The Screening Room lets you preview and share Pre-Vis, per-scene motion video, and multilanguage streams from one link. Viewers get real playback controls; reviewers leave structured feedback right on the cut.",
-              "outcome": "Lock approvals faster with stakeholder feedback in one place — no premature exports, no lost notes, no version confusion."
+              "problem": "Feedback that arrives as a separate document has to be retyped into the treatment.",
+              "solution": "Stakeholder review shares a read-and-listen link. Collaborators hear the narration and see the same board.",
+              "outcome": "Their notes come back as guided revision on the board you already have."
             }
           }
         ]
       },
       {
-        "id": "ship",
-        "label": "Release",
+        "id": "production-stage",
+        "label": "Production Stage",
+        "promise": "Write the script, spend with your own keys and a budget, generate with locked references, mix the scene, and deploy languages, 4K, versions, and trailers.",
+        "spend": {
+          "label": "Spend",
+          "features": [
+            {
+              "icon": "byok",
+              "title": "Bring Your Own Key",
+              "description": "Connect your own image and video provider keys. Generation runs on your account, with your rates, while the guided studio — agents, references, Mixer, and Screening Room — stays in place. You are not choosing between cost control and the pipeline.",
+              "screenshot": "BYOK keys",
+              "learnMore": {
+                "problem": "Controlling model cost often means leaving the guided studio for a raw provider account.",
+                "solution": "Bring Your Own Key connects your image and video provider keys so generation runs on your account, at your rates.",
+                "outcome": "Agents, references, the Mixer, and Screening Room stay in place. Cost control and the pipeline are the same studio."
+              }
+            },
+            {
+              "icon": "budget",
+              "title": "Budget Manager",
+              "description": "Set a credit budget for the project and watch it move as audio, stills, and clips are generated. Guidance points at the cheap cuts first: draft frames, fewer generations, add-on credits when you need more runway. You see the overrun before the render, not after.",
+              "screenshot": "Budget panel",
+              "learnMore": {
+                "problem": "Credit overruns show up after the render, when the runway is already gone.",
+                "solution": "Budget Manager tracks a project credit budget as audio, stills, and clips are generated, and points at draft frames, fewer generations, or add-on credits first.",
+                "outcome": "You see the overrun before the render."
+              }
+            }
+          ]
+        },
+        "groups": [
+          {
+            "id": "script",
+            "label": "Script",
+            "features": [
+              {
+                "icon": "writersRoom",
+                "title": "Writer's Room",
+                "description": "The production script, scene by scene, in the language of the story. Dialogue, pacing, and tone are revised here, with Audience Resonance scoring beside the page, before a frame is spent.",
+                "screenshot": "Writer's Room",
+                "learnMore": {
+                  "problem": "Dialogue, pacing, and tone get revised after frames are already paid for.",
+                  "solution": "Writer's Room holds the production script scene by scene, with Audience Resonance scoring beside the page.",
+                  "outcome": "You revise the page before a frame is spent."
+                }
+              },
+              {
+                "icon": "scriptResonance",
+                "title": "Script Audience Resonance",
+                "description": "A test-audience read of the script: overview, analysis, and scene notes, with section scores and recommendations. You choose which notes to act on. Nothing is rewritten until you open a director dialog and apply it.",
+                "screenshot": "Script report",
+                "learnMore": {
+                  "problem": "A test-audience note that rewrites the script on its own can change scenes you meant to keep.",
+                  "solution": "Script Audience Resonance shows an overview, analysis, scene notes, section scores, and recommendations. You choose which notes to act on.",
+                  "outcome": "Nothing is rewritten until you open a director dialog and apply it."
+                }
+              },
+              {
+                "icon": "sceneDirector",
+                "title": "Scene Director",
+                "description": "The script-scene dialog, titled Scene Director · Scene N, opened from a scene’s Audience Resonance recommendations (Direct Scene, or Direct Scene & Apply). You direct that scene, preview the changes, and select which changes to keep. The rest of the script stays as you left it.",
+                "screenshot": "Scene Director",
+                "learnMore": {
+                  "problem": "A note about one scene should not rewrite the rest of the script.",
+                  "solution": "Scene Director opens from a scene’s Audience Resonance recommendations — Direct Scene, or Direct Scene & Apply. You direct that scene, preview the changes, and select which to keep.",
+                  "outcome": "The rest of the script stays as you left it. The scene changes only when you apply them."
+                }
+              },
+              {
+                "icon": "scriptDirector",
+                "title": "Script Director",
+                "description": "The whole-script dialog. Revise the full script from Audience Resonance recommendations, preview the new draft, and apply it only when you accept it. Use this when the note is about the film, and Scene Director when the note is about one scene.",
+                "screenshot": "Script Director",
+                "learnMore": {
+                  "problem": "A note about the whole film is the wrong job for a single-scene edit, and a whole-script rewrite should not apply itself.",
+                  "solution": "Script Director revises the full script from Audience Resonance recommendations and shows the new draft first.",
+                  "outcome": "You apply it only when you accept it. Use Scene Director when the note is about one scene."
+                }
+              }
+            ]
+          },
+          {
+            "id": "production",
+            "label": "Production",
+            "features": [
+              {
+                "icon": "referenceLibrary",
+                "title": "Reference Library",
+                "description": "Lock cast, wardrobe, voices, locations, and props to the production’s art style. Every still and clip asks this library for the same faces and places, so a later scene does not recast the lead.",
+                "screenshot": "Reference Library",
+                "learnMore": {
+                  "problem": "A later scene recasts the lead when faces, wardrobe, and places are not locked to the art style.",
+                  "solution": "Reference Library locks cast, wardrobe, voices, locations, and props. Every still and clip asks that library for the same faces and places.",
+                  "outcome": "The lead stays the lead from scene to scene."
+                }
+              },
+              {
+                "icon": "productionAgents",
+                "title": "Production Agents",
+                "description": "Audio, Stills, and Video agents read the locked direction, attach the right references, and build the scene in the background. You iterate in draft, then render motion. Standard clips use Veo 3.1, which delivers 4K. Longer Omni preview clips are a separate model; their 4K option is not on yet. You direct and approve; the agents prompt and generate.",
+                "screenshot": "Agent run",
+                "learnMore": {
+                  "problem": "Prompting each still and clip by hand drops the locked direction and the references that belong on the shot.",
+                  "solution": "Audio, Stills, and Video agents read the locked direction, attach the right references, and build the scene in the background. Standard clips use Veo 3.1, which delivers 4K. Longer Omni preview clips are a separate model, and their 4K option is not on yet.",
+                  "outcome": "You iterate in draft, then render motion. You direct and approve; the agents prompt and generate."
+                }
+              },
+              {
+                "icon": "directShot",
+                "title": "Direct Shot",
+                "description": "The shot dialog, titled Direct Shot · Scene N · Shot N. You direct the shot in plain language, preview the direction, and save it. The preview spells out the shot you are approving: frozen moment and action, camera (shot, angle, movement, transition), blocking, emotion, gaze, lighting, props, and audio. Connected references — cast, locations, and objects — stay attached to that shot. Saving updates the still prompt and the clip prompt together. You can also steer a clip with the video-direction chips: Camera move, Action shots, Hold the start frame, Match the end frame, and Keep faces.",
+                "screenshot": "Direct Shot with camera and references",
+                "learnMore": {
+                  "problem": "A shot direction that hides the camera, the blocking, or the references makes you approve a prompt you cannot see.",
+                  "solution": "Direct Shot · Scene N · Shot N takes plain language, then previews frozen moment and action, camera (shot, angle, movement, transition), blocking, emotion, gaze, lighting, props, and audio. Connected cast, locations, and objects stay attached. Saving updates the still prompt and the clip prompt together.",
+                  "outcome": "You can also steer a clip with Camera move, Action shots, Hold the start frame, Match the end frame, and Keep faces. The shot is saved when you save it."
+                }
+              },
+              {
+                "icon": "preVis",
+                "title": "Pre-Vis before motion",
+                "description": "A Ken Burns animatic with dialogue, score, and sound effects, built from the approved stills. Watch the scene, change direction with Direct Shot if it is wrong, and only then render motion.",
+                "screenshot": "Animatic player",
+                "learnMore": {
+                  "problem": "Motion renders get spent on a scene whose staging is still wrong.",
+                  "solution": "Pre-Vis before motion builds a Ken Burns animatic with dialogue, score, and sound effects from the approved stills.",
+                  "outcome": "Watch the scene, change it with Direct Shot if it is wrong, and only then render motion."
+                }
+              },
+              {
+                "icon": "mixer",
+                "title": "Mixer",
+                "description": "The scene finish inside Production Stage. Balance dialogue, narration, score, and effects, include or drop individual shots, and render the scene with its audio. Language Streams are prepared from this same Mixer, and the rendered scene is what Screening Room plays.",
+                "screenshot": "Mixer",
+                "learnMore": {
+                  "problem": "Dialogue, narration, score, and effects get finished in a separate editor, then the picture and the dub drift apart.",
+                  "solution": "Mixer balances those tracks, includes or drops individual shots, and renders the scene with its audio. Language Streams are prepared from this same Mixer.",
+                  "outcome": "Screening Room plays the rendered scene."
+                }
+              }
+            ]
+          },
+          {
+            "id": "deployment",
+            "label": "Deployment",
+            "features": [
+              {
+                "icon": "languageStreams",
+                "title": "Language Streams",
+                "description": "A language version of the scene, not a new production. Gemini TTS speaks the dub in 44 languages. For a non-English stream you can keep the original ambience and turn on Kling lip-sync so the dubbed dialogue is performed on the picture, or ship the dub on the existing shots. Add a language from the Mixer and generate that stream without rebuilding the cut.",
+                "screenshot": "Language Streams with the lip-sync switch",
+                "learnMore": {
+                  "problem": "A dub that requires a new production rebuilds the cut for every language.",
+                  "solution": "Language Streams is a language version of the scene. Gemini TTS speaks the dub in 44 languages. For a non-English stream you can keep the original ambience and turn on Kling lip-sync, or ship the dub on the existing shots.",
+                  "outcome": "Add a language from the Mixer and generate that stream without rebuilding the cut."
+                }
+              },
+              {
+                "icon": "deliveryResolution",
+                "title": "Delivery resolution",
+                "description": "Veo 3.1 renders the master in 4K. That is a native render, not an upscale. Choose the delivery tier when you stitch the language master; optional Topaz upscaling still sharpens a cut when those credentials are connected. Omni stays in preview. Its 4K control is expected in January 2027.",
+                "screenshot": "Veo 3.1 4K delivery settings",
+                "learnMore": {
+                  "problem": "An upscale is not the same as a master rendered at 4K, and a preview model is not the model that delivers it.",
+                  "solution": "Veo 3.1 renders the master in 4K as a native render. Choose the delivery tier when you stitch the language master. Optional Topaz upscaling still sharpens a cut when those credentials are connected.",
+                  "outcome": "Omni stays in preview. Its 4K control is expected in January 2027."
+                }
+              },
+              {
+                "icon": "versionControl",
+                "title": "Version control",
+                "description": "Every take of a stream is kept. Compare them, pin the one people liked, and come back to it after later edits. A new generation does not erase the previous cut.",
+                "screenshot": "Version list",
+                "learnMore": {
+                  "problem": "A new generation replaces the take people already liked.",
+                  "solution": "Version control keeps every take of a stream so you can compare them and pin one.",
+                  "outcome": "You can come back to that take after later edits. A new generation does not erase the previous cut."
+                }
+              },
+              {
+                "icon": "promoTrailer",
+                "title": "Promotion trailers",
+                "description": "Promotion trailers weave a 30–60 second 9:16 promo from the strongest beats. It is ready for Shorts, Reels, and TikTok, and it is cut from the same locked timeline as the master.",
+                "screenshot": "Trailer cut",
+                "learnMore": {
+                  "problem": "A promo cut in another tool drifts away from the locked timeline.",
+                  "solution": "Promotion trailers weave a 30–60 second 9:16 promo from the strongest beats.",
+                  "outcome": "The trailer is ready for Shorts, Reels, and TikTok, and it is cut from the same locked timeline as the master."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "screening-room",
+        "label": "Screening Room",
+        "promise": "Watch the cut the Mixer rendered, review it on one link, and publish a scene, a chapter, the master, or a promo when that piece is ready.",
         "features": [
           {
-            "icon": "upscale",
-            "title": "Delivery-Quality Upscale",
-            "description": "Render delivery masters at 720p, 1080p, or 4K — with optional Topaz upscaling when credentials are connected. One stitch, screening-ready quality.",
+            "icon": "screeningPlayer",
+            "title": "One player",
+            "description": "Switch among Pre-Vis, scenes, chapters, the master, and promo. Pick a Language Stream and hear that dub, including a lip-synced version when you generated one. The player is the same cut the Mixer rendered.",
+            "screenshot": "Screening Room player",
             "learnMore": {
-              "problem": "Export quality is often an afterthought — you stitch a master at whatever resolution the pipeline defaulted to, then discover it is not sharp enough for YouTube, broadcast, or client delivery.",
-              "solution": "Choose a delivery tier — Draft (720p), Standard (1080p), or Premium (4K) — when you render your language master. Optional Topaz upscaling sharpens the final cut when your credentials are connected.",
-              "outcome": "Ship screening-ready masters at the quality your audience and platform expect — no re-stitching, no compromise."
+              "problem": "Pre-Vis, scenes, chapters, the master, the promo, and the dubs end up in different players.",
+              "solution": "One player switches among those cuts. Pick a Language Stream and hear that dub, including a lip-synced version when you generated one.",
+              "outcome": "The player is the same cut the Mixer rendered."
             }
           },
           {
-            "icon": "versionControl",
-            "title": "Version Control",
-            "description": "Keep every take for each stream. Compare versions, pin favorites, and iterate without losing the cut everyone loved two edits ago.",
+            "icon": "screeningCollab",
+            "title": "Collaborate on the cut",
+            "description": "Share one link. Reviewers watch with real playback and leave notes on the picture. You are not exporting a rough file into email to collect feedback.",
+            "screenshot": "Shared review",
             "learnMore": {
-              "problem": "Creative iteration is messy: the best take gets overwritten, alternates vanish, and you can never quite get back to the version everyone loved two edits ago.",
-              "solution": "Version Control keeps every generated take for each stream. Compare versions side by side, pin favorites, and keep iterating — the full history of every scene stays intact.",
-              "outcome": "Explore boldly without fear of losing your best work — always recover the perfect take and make confident final decisions."
+              "problem": "Exporting a rough file into email is how notes get lost and versions fork.",
+              "solution": "Collaborate on the cut shares one link. Reviewers watch with real playback and leave notes on the picture.",
+              "outcome": "Feedback stays on the cut, in the player."
             }
           },
           {
-            "icon": "promoTrailer",
-            "title": "Promotion Trailers",
-            "description": "Auto-weave a beat-selected 9:16 promo (30–60s) from your highest-resonance moments — vertical trailers ready for YouTube, Facebook, and TikTok.",
+            "icon": "packageShip",
+            "title": "Release when it is ready",
+            "description": "Publish a 3–5 minute scene, an 8–12 minute chapter, the master, or a promo to YouTube, Facebook, or TikTok, in 16:9 or 9:16, or download the file. Titles, description, and privacy travel with the package. Ship the piece that is finished; keep building the rest.",
+            "screenshot": "Publish package",
             "learnMore": {
-              "problem": "Cutting vertical promos by hand means scrubbing through your master, guessing highlight windows, and rebuilding the same story three times for Shorts, Reels, and TikTok.",
-              "solution": "SceneFlow selects your highest-resonance beats, weaves a 30–60 second 9:16 trailer automatically, and renders a vertical cut ready for social platforms — no manual timeline work.",
-              "outcome": "Launch every production with a scroll-stopping promo the same day your master is ready — multiply discovery without multiplying edit time."
-            }
-          },
-          {
-            "icon": "youtubePublish",
-            "title": "Package & Ship",
-            "description": "Ship a Scene, Chapter, Master, or Promo to YouTube, Facebook, or TikTok in 16:9 or 9:16 — or download the file. Titles, descriptions, and privacy travel with the package.",
-            "learnMore": {
-              "problem": "Algorithms reward short videos, but a story worth following is longer than a clip. Packaging each scene, chapter, and master by hand splits your budget across tools.",
-              "solution": "Package & Ship sends a Scene, Chapter, Master, or Promo to YouTube, Facebook, or TikTok — widescreen or vertical — or downloads the file. Publish only as often as the month's token budget allows.",
-              "outcome": "Release the piece that is ready, learn from viewers, and either cut the next chapter or stop — without waiting on a full feature."
+              "problem": "Waiting on the full master delays a scene or a chapter that is already finished.",
+              "solution": "Release when it is ready publishes a 3–5 minute scene, an 8–12 minute chapter, the master, or a promo to YouTube, Facebook, or TikTok, in 16:9 or 9:16, or downloads the file. Titles, description, and privacy travel with the package.",
+              "outcome": "Ship the piece that is finished and keep building the rest."
             }
           }
         ]

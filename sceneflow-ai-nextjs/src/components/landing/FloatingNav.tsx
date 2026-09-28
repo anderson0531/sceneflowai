@@ -11,8 +11,8 @@ export function FloatingNav() {
   const sections = useMemo(
     () => [
       { id: 'two-modes', label: t('twoModes'), icon: Layers },
-      { id: 'production-examples', label: t('productionExamples'), icon: Clapperboard },
       { id: 'key-features', label: t('keyFeatures'), icon: Sparkles },
+      { id: 'production-examples', label: t('productionExamples'), icon: Clapperboard },
       { id: 'pricing', label: t('pricing'), icon: DollarSign },
       { id: 'trust-safety', label: t('trustSafety'), icon: Shield },
     ],

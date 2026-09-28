@@ -19,7 +19,7 @@ import {
 const ROOT = join(process.cwd())
 
 describe('one-pipeline landing section', () => {
-  it('defines the friction comparison, four stages, and an Explorer CTA', () => {
+  it('defines the friction comparison and an Explorer CTA', () => {
     expect(TWO_MODES_COPY.eyebrow).toBe('The friction we remove')
     expect(TWO_MODES_COPY.title).toBe('One pipeline. Not a stack of tools.')
     expect(TWO_MODES_COPY.comparison).toEqual({
@@ -29,32 +29,9 @@ describe('one-pipeline landing section', () => {
     expect(TWO_MODES_COPY).not.toHaveProperty('retired')
     expect(TWO_MODES_COPY).not.toHaveProperty('earn')
     expect(TWO_MODES_COPY).not.toHaveProperty('languages')
-    expect(TWO_MODES_COPY.stages.map((stage) => stage.title)).toEqual([
-      'Series Desk',
-      'Blueprint Board',
-      'Production Stage',
-      'Screening Room',
-    ])
-    expect(TWO_MODES_COPY.cta).toBe('Launch Studio ($9)')
-  })
-
-  it('keeps beats in the Blueprint and ships scenes or chapters from the master', () => {
-    const stageText = TWO_MODES_COPY.stages.map((stage) => `${stage.title} ${stage.body}`).join(' ')
-    const blueprint = TWO_MODES_COPY.stages.find((stage) => stage.id === 'blueprint-board')
-    const production = TWO_MODES_COPY.stages.find((stage) => stage.id === 'production-stage')
-    expect(blueprint?.body).toContain('Beats exist only here')
-    expect(production?.body).toContain('Each Blueprint beat becomes a chapter')
-    expect(production?.body).toContain('five stills or clips at once')
-    expect(production?.body).not.toContain('beat frames')
-    expect(stageText).not.toContain('production beat')
-    expect(stageText).not.toContain('parallel beat')
-    expect(stageText).not.toContain('hundreds')
-    const screening = TWO_MODES_COPY.stages.find((stage) => stage.id === 'screening-room')
-    expect(screening?.body).toContain('3–5 minute scene')
-    expect(screening?.body).toContain('8–12 minute chapter')
+    expect(TWO_MODES_COPY).not.toHaveProperty('stages')
     expect(TWO_MODES_COPY.subtitle).toContain('90-minute master')
-    expect(stageText).toContain('Audience Resonance')
-    expect(stageText).toContain('Screening Room')
+    expect(TWO_MODES_COPY.cta).toBe('Launch Studio ($9)')
   })
 
   it('mirrors twoModes namespace in English messages', () => {
@@ -62,7 +39,7 @@ describe('one-pipeline landing section', () => {
     expect(enMessages.twoModes.title).toBe(TWO_MODES_COPY.title)
     expect(enMessages.twoModes.subtitle).toBe(TWO_MODES_COPY.subtitle)
     expect(enMessages.twoModes.comparison).toEqual(TWO_MODES_COPY.comparison)
-    expect(enMessages.twoModes.stages).toEqual(TWO_MODES_COPY.stages)
+    expect(enMessages.twoModes).not.toHaveProperty('stages')
     expect(enMessages.twoModes).not.toHaveProperty('retired')
     expect(enMessages.twoModes).not.toHaveProperty('earn')
     expect(enMessages.twoModes).not.toHaveProperty('languages')
@@ -98,10 +75,7 @@ describe('one-pipeline landing section', () => {
     expect(background).toContain('type="video/webm"')
     expect(background).toContain('type="video/mp4"')
 
-    expect([
-      TWO_MODES_COPY.comparison.id,
-      ...TWO_MODES_COPY.stages.map((stage) => stage.id),
-    ]).toEqual([...TWO_MODES_MEDIA_IDS])
+    expect([TWO_MODES_COPY.comparison.id]).toEqual([...TWO_MODES_MEDIA_IDS])
 
     const illustrated = new Set(['comparison'])
     for (const id of TWO_MODES_MEDIA_IDS) {
@@ -129,7 +103,7 @@ describe('one-pipeline landing section', () => {
     expect(twoModesStillSrc(filled)).toMatch(/\.webp$/)
   })
 
-  it('renders numbered steps with hash aliases and a single Explorer CTA', () => {
+  it('renders the comparison, hash aliases, and a single Explorer CTA', () => {
     const landing = readFileSync(join(ROOT, 'src/app/LandingPageClient.tsx'), 'utf8')
     const twoModes = readFileSync(join(ROOT, 'src/components/landing/TwoModesSection.tsx'), 'utf8')
     const nav = readFileSync(join(ROOT, 'src/components/landing/FloatingNav.tsx'), 'utf8')
@@ -148,7 +122,7 @@ describe('one-pipeline landing section', () => {
     expect(twoModes).toContain("t('eyebrow')")
     expect(twoModes).toContain("t('cta')")
     expect(twoModes).toContain("t.raw('comparison')")
-    expect(twoModes).toContain("t.raw('stages')")
+    expect(twoModes).not.toContain("t.raw('stages')")
     expect(twoModes).not.toContain("t.raw('retired')")
     expect(twoModes).not.toContain("t.raw('earn')")
     expect(twoModes).not.toContain("t.raw('languages')")
