@@ -15,7 +15,7 @@ describe('hero section copy and UI', () => {
     expect(HERO_COPY.eyebrow).toBe('Automated filmmaking for films and series')
     expect(HERO_COPY.ctaPrimaryLaunch).toBe('Launch Studio ($9)')
     expect(HERO_COPY.ctaSecondary).toBe('Explore the pipeline')
-    expect(HERO_VALUE_CHIPS).toHaveLength(3)
+    expect(HERO_VALUE_CHIPS).toHaveLength(4)
     expect(HERO_VALUE_CHIPS.map((chip) => chip.detail).join(' ')).not.toContain('ProRes')
     expect(HERO_PIPELINE_STEPS).toEqual(['Blueprint', 'Production', 'Screening Room'])
   })
@@ -30,11 +30,12 @@ describe('hero section copy and UI', () => {
       chips: Array<{ label: string; detail: string }>
       pipelineSteps: string[]
     }
-    expect(hero.chips).toHaveLength(3)
+    expect(hero.chips).toHaveLength(4)
     expect(hero.chips.map((chip) => chip.label)).toEqual([
-      'Direct in story language',
-      'Continuity that holds',
-      'Screen before you render',
+      'From Concept to Feature',
+      'Direct With Intent, Not Prompts',
+      'Agent-Driven Production',
+      'Screen, Collaborate, Ship',
     ])
     expect(hero.pipelineSteps).toEqual([...HERO_PIPELINE_STEPS])
   })
@@ -48,6 +49,7 @@ describe('hero section copy and UI', () => {
   it('renders value chips without the pipeline strip in HeroSection', () => {
     const hero = readFileSync(join(ROOT, 'src/app/components/HeroSection.tsx'), 'utf8')
     expect(hero).toContain("t.raw('chips')")
+    expect(hero).toContain('grid grid-cols-1 sm:grid-cols-2')
     expect(hero).not.toContain("t.raw('pipelineSteps')")
     expect(hero).not.toContain('ChevronRight')
     expect(hero).toContain('scrollToHowItWorks')
