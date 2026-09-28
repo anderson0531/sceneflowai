@@ -6,15 +6,10 @@
 
 export const TWO_MODES_MEDIA_IDS = [
   'comparison',
-  'no-prompt',
-  'no-stitch',
-  'no-preproduction',
   'series-desk',
   'blueprint-board',
   'production-stage',
   'screening-room',
-  'earn',
-  'languages',
 ] as const
 
 export type TwoModesMediaId = (typeof TWO_MODES_MEDIA_IDS)[number]
@@ -41,15 +36,10 @@ const ILLUSTRATION_BASE = '/landing/two-modes'
 
 export const TWO_MODES_MEDIA: Record<TwoModesMediaId, TwoModesMediaEntry> = {
   comparison: { ...EMPTY_MEDIA, imageUrl: `${ILLUSTRATION_BASE}/comparison.webp` },
-  'no-prompt': { ...EMPTY_MEDIA },
-  'no-stitch': { ...EMPTY_MEDIA },
-  'no-preproduction': { ...EMPTY_MEDIA },
   'series-desk': { ...EMPTY_MEDIA },
   'blueprint-board': { ...EMPTY_MEDIA },
   'production-stage': { ...EMPTY_MEDIA },
   'screening-room': { ...EMPTY_MEDIA },
-  earn: { ...EMPTY_MEDIA, imageUrl: `${ILLUSTRATION_BASE}/earn.webp` },
-  languages: { ...EMPTY_MEDIA },
 }
 
 export function getTwoModesMedia(id: string): TwoModesMediaEntry {
