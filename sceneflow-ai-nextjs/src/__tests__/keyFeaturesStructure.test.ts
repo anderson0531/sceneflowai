@@ -1,117 +1,215 @@
-import { readFileSync } from 'fs'
+import { readFileSync, readdirSync } from 'fs'
 import path from 'path'
 import { describe, it, expect } from 'vitest'
 import { FEATURE_ICONS } from '@/components/landing/keyFeatureIcons'
+import { FEATURE_ROOM_IDS } from '@/config/landing/featureRoomMedia'
 
 const ROOT = path.resolve(__dirname, '../..')
 
-function loadKeyFeaturesCategories(): Array<{
+type Feature = {
+  icon: string
+  title: string
+  description: string
+  screenshot: string
+  learnMore?: { problem?: string; solution?: string; outcome?: string }
+}
+
+type Room = {
   id: string
   label: string
-  features: Array<{ icon: string; title: string }>
-}> {
-  const en = JSON.parse(readFileSync(path.join(ROOT, 'messages/en.json'), 'utf8'))
-  return en.keyFeatures.categories
+  promise: string
+  features?: Feature[]
+  spend?: { label: string; features: Feature[] }
+  groups?: Array<{ id: string; label: string; features: Feature[] }>
+}
+
+function loadEnglish(): {
+  keyFeatures: {
+    title: string
+    subtitle: string
+    landingUiLanguagesLabel: string
+    rooms: Room[]
+  }
+} {
+  return JSON.parse(readFileSync(path.join(ROOT, 'messages/en.json'), 'utf8'))
+}
+
+function featuresOf(room: Room): Feature[] {
+  return [
+    ...(room.features ?? []),
+    ...(room.spend?.features ?? []),
+    ...(room.groups ?? []).flatMap((group) => group.features),
+  ]
 }
 
 const EXPECTED_TITLES: Record<string, string[]> = {
-  create: [
-    'Bring Your Own Key (BYOK)',
-    'Production Budget Management',
-    'Series Room',
-    'Blueprint Room',
+  'series-desk': [
+    'Season universe',
+    'Episode handoff',
+    'Reshape · with Direction',
+    'Direct this episode',
   ],
-  direct: [
+  'blueprint-board': [
+    'Treatment and beat sheet',
+    'Audience Resonance',
+    'Co-Director · Blueprint',
+    'Stakeholder review',
+  ],
+  'production-stage': [
+    'Bring Your Own Key',
+    'Budget Manager',
     "Writer's Room",
-    'Audience Resonance Analysis (ARA)',
-    'Intelligent Reference Library',
-    'Intelligent Assistant Director (IAD)',
-    'Multilanguage Streams',
+    'Script Audience Resonance',
+    'Scene Director',
+    'Script Director',
+    'Reference Library',
     'Production Agents',
-    'Screening Room',
+    'Direct Shot',
+    'Pre-Vis before motion',
+    'Mixer',
+    'Language Streams',
+    'Delivery resolution',
+    'Version control',
+    'Promotion trailers',
   ],
-  ship: [
-    'Delivery-Quality Upscale',
-    'Version Control',
-    'Promotion Trailers',
-    'Package & Ship',
+  'screening-room': [
+    'One player',
+    'Collaborate on the cut',
+    'Release when it is ready',
   ],
 }
 
 describe('keyFeatures structure', () => {
-  const categories = loadKeyFeaturesCategories()
+  const en = loadEnglish()
+  const rooms = en.keyFeatures.rooms
 
-  it('has Plan, Create, and Release category labels in order', () => {
-    expect(categories.map((c) => c.id)).toEqual(['create', 'direct', 'ship'])
-    expect(categories.map((c) => c.label)).toEqual(['Plan', 'Create', 'Release'])
+  it('stacks four rooms from idea to master', () => {
+    expect(en.keyFeatures.title).toBe('Four rooms. One production.')
+    expect(en.keyFeatures.subtitle).toBe(
+      'Series Desk, Blueprint Board, Production Stage, and Screening Room take a story from the idea to the master.'
+    )
+    expect(rooms.map((room) => room.id)).toEqual([...FEATURE_ROOM_IDS])
+    expect(rooms.map((room) => room.label)).toEqual([
+      'Series Desk',
+      'Blueprint Board',
+      'Production Stage',
+      'Screening Room',
+    ])
+    expect(en.keyFeatures).not.toHaveProperty('categories')
   })
 
-  it('has 4, 7, and 4 features per category', () => {
-    expect(categories.map((c) => c.features.length)).toEqual([4, 7, 4])
-  })
-
-  it('matches intended feature titles per category', () => {
-    for (const category of categories) {
-      const titles = category.features.map((f) => f.title)
-      expect(titles).toEqual(EXPECTED_TITLES[category.id])
+  it('matches the room feature titles, including Production Stage groups', () => {
+    const production = rooms.find((room) => room.id === 'production-stage')
+    expect(production?.spend?.label).toBe('Spend')
+    expect(production?.groups?.map((group) => group.label)).toEqual([
+      'Script',
+      'Production',
+      'Deployment',
+    ])
+    for (const room of rooms) {
+      expect(featuresOf(room).map((feature) => feature.title)).toEqual(
+        EXPECTED_TITLES[room.id]
+      )
     }
   })
 
   it('maps every feature icon key to FEATURE_ICONS', () => {
-    const icons = categories.flatMap((c) => c.features.map((f) => f.icon))
+    const icons = rooms.flatMap((room) => featuresOf(room).map((feature) => feature.icon))
     for (const icon of icons) {
       expect(FEATURE_ICONS[icon]).toBeDefined()
     }
     expect(Object.keys(FEATURE_ICONS).sort()).toEqual([...new Set(icons)].sort())
   })
 
-  it('includes learnMore on every English feature', () => {
-    const en = JSON.parse(readFileSync(path.join(ROOT, 'messages/en.json'), 'utf8'))
-    for (const category of en.keyFeatures.categories) {
-      for (const feature of category.features) {
-        expect(feature.learnMore?.problem).toBeTruthy()
-        expect(feature.learnMore?.solution).toBeTruthy()
-        expect(feature.learnMore?.outcome).toBeTruthy()
+  it('gives every card a detailed description, a screenshot, and collapsed learn-more', () => {
+    for (const feature of rooms.flatMap(featuresOf)) {
+      expect(feature.description.split(/[.?!]/).filter((part) => part.trim()).length).toBeGreaterThanOrEqual(2)
+      expect(feature.screenshot).toBeTruthy()
+      expect(feature.learnMore?.problem).toBeTruthy()
+      expect(feature.learnMore?.solution).toBeTruthy()
+      expect(feature.learnMore?.outcome).toBeTruthy()
+    }
+  })
+
+  it('keeps beats on the Blueprint and ships finished pieces from Screening Room', () => {
+    const text = JSON.stringify(en.keyFeatures.rooms)
+    expect(text).toContain('Beats exist only here')
+    expect(text).toContain('Production Stage turns each beat into a chapter')
+    expect(text).toContain('3–5 minute scene')
+    expect(text).toContain('8–12 minute chapter')
+    expect(text).toContain('Scene Director · Scene N')
+    expect(text).toContain('Direct Shot · Scene N · Shot N')
+    expect(text).toContain('Gemini TTS speaks the dub in 44 languages')
+    expect(text).toContain('Veo 3.1 renders the master in 4K')
+    expect(text).toContain('January 2027')
+    expect(text).not.toContain('70+')
+    expect(text).not.toContain('Google AI Studio')
+    expect(text).not.toContain('Omni already')
+  })
+
+  it('mirrors keyFeatures into the JSON-maintained English source', () => {
+    const maintained = JSON.parse(
+      readFileSync(path.join(ROOT, 'src/config/landing/jsonMaintainedCopy.json'), 'utf8')
+    )
+    expect(maintained.keyFeatures).toEqual(en.keyFeatures)
+  })
+
+  it('replaces locale category lists so Plan / Create / Release cannot override the rooms', () => {
+    for (const name of readdirSync(path.join(ROOT, 'messages'))) {
+      if (!name.endsWith('.json') || name === 'en.json') continue
+      const locale = JSON.parse(readFileSync(path.join(ROOT, 'messages', name), 'utf8'))
+      expect(locale.keyFeatures?.categories, name).toBeUndefined()
+      expect(locale.twoModes?.stages, name).toBeUndefined()
+      if (locale.keyFeatures) {
+        expect(locale.keyFeatures.subtitle, name).toBe(en.keyFeatures.subtitle)
       }
     }
   })
 
-  it('mounts a multi-language video player on every feature card', () => {
+  it('renders stacked room overviews and screenshot placeholders instead of per-card videos', () => {
     const section = readFileSync(
       path.join(ROOT, 'src/components/landing/KeyFeaturesSection.tsx'),
       'utf8'
     )
-    expect(section).toContain('MultiLanguageVideoPlayer')
-    expect(section).toContain('getKeyFeatureVideoLocales(feature.icon)')
-    expect(section).toContain("t('videoComingSoon')")
-    expect(section).toContain("t('videoSoon')")
-  })
+    const overview = readFileSync(
+      path.join(ROOT, 'src/components/landing/FeatureRoomOverview.tsx'),
+      'utf8'
+    )
 
-  it('lists landing UI languages inside the multilanguage Learn more panel', () => {
-    const section = readFileSync(
-      path.join(ROOT, 'src/components/landing/KeyFeaturesSection.tsx'),
-      'utf8'
-    )
-    const en = JSON.parse(readFileSync(path.join(ROOT, 'messages/en.json'), 'utf8'))
-    // Production/dubbing (70+) and site interface (39) are different counts and
-    // must not be conflated into a single claim.
-    expect(en.keyFeatures.landingUiLanguagesLabel).toContain('70+ languages')
-    expect(en.keyFeatures.landingUiLanguagesLabel).toContain('39')
-    expect(en.keyFeatures.landingUiLanguagesLabel).not.toContain(
-      'UI and Productions Available in 39 Languages'
-    )
-    expect(section).toContain('LANDING_TRANSLATE_LANGUAGES')
-    expect(section).toContain("feature.icon === 'multilanguage'")
+    expect(section).toContain("const SECTION_ID = 'key-features'")
+    expect(section).toContain('id={room.id}')
+    expect(section).toContain("t.raw('rooms')")
+    expect(section).toContain('<FeatureRoomOverview')
+    expect(section).toContain("t('overviewComingSoon')")
+    expect(section).toContain('feature.screenshot')
+    expect(section).toContain('aspect-video')
+    expect(section).not.toContain('MultiLanguageVideoPlayer')
+    expect(section).not.toContain("t.raw('categories')")
+    expect(section).toContain("feature.icon === 'languageStreams'")
     expect(section).toContain("t('landingUiLanguagesLabel')")
     expect(section).toContain("t('outcomeLabel')")
+    expect(section).toContain('LANDING_TRANSLATE_LANGUAGES')
 
     const descriptionEnd = section.indexOf('{feature.description}')
-    const videoStart = section.indexOf('<MultiLanguageVideoPlayer')
+    const screenshotStart = section.indexOf('feature.screenshot')
+    const outcomeRow = section.indexOf('label={outcomeLabel}')
     const languagesBlock = section.indexOf('<LandingUiLanguagesBlock')
     expect(descriptionEnd).toBeGreaterThan(-1)
-    expect(videoStart).toBeGreaterThan(descriptionEnd)
-    expect(languagesBlock).toBeGreaterThan(section.indexOf("t('outcomeLabel')"))
-    const betweenDescriptionAndVideo = section.slice(descriptionEnd, videoStart)
-    expect(betweenDescriptionAndVideo).not.toContain('LandingUiLanguagesBlock')
+    expect(screenshotStart).toBeGreaterThan(descriptionEnd)
+    expect(outcomeRow).toBeGreaterThan(-1)
+    expect(languagesBlock).toBeGreaterThan(outcomeRow)
+    expect(section.slice(descriptionEnd, screenshotStart)).not.toContain('LandingUiLanguagesBlock')
+
+    expect(en.keyFeatures.landingUiLanguagesLabel).toContain('44 languages')
+    expect(en.keyFeatures.landingUiLanguagesLabel).toContain('39')
+    expect(en.keyFeatures.landingUiLanguagesLabel).not.toContain('70+')
+
+    const webmAt = overview.indexOf('type="video/webm"')
+    const mp4At = overview.indexOf('type="video/mp4"')
+    expect(webmAt).toBeGreaterThan(-1)
+    expect(mp4At).toBeGreaterThan(webmAt)
+    expect(overview).toContain('IntersectionObserver')
+    expect(overview).toContain('useReducedMotion')
+    expect(overview).toContain('comingSoonLabel')
   })
 })

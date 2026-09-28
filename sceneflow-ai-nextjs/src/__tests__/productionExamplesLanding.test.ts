@@ -32,15 +32,23 @@ function readSource(relativePath: string): string {
 }
 
 describe('Production Examples landing section', () => {
-  it('renders on the landing page directly after the pre-vis section', () => {
+  it('renders on the landing page after Key Features', () => {
     const source = readSource('src/app/LandingPageClient.tsx')
 
     expect(source).toContain("import('@/components/landing/ProductionExamplesSection')")
     expect(source).not.toContain('<UseCasesSection />')
-    expect(source.indexOf('<ProductionExamplesSection />')).toBeLessThan(
-      source.indexOf('<KeyFeaturesSection />')
+    expect(source.indexOf('<KeyFeaturesSection />')).toBeLessThan(
+      source.indexOf('<ProductionExamplesSection />')
     )
     expect(source).not.toContain('<PipelinePillarsSection />')
+
+    for (const relativePath of [
+      'src/components/landing/FloatingNav.tsx',
+      'src/app/components/Header.tsx',
+    ]) {
+      const nav = readSource(relativePath)
+      expect(nav.indexOf('key-features')).toBeLessThan(nav.indexOf('production-examples'))
+    }
   })
 
   it('uses the production-examples anchor that the nav scrolls to', () => {

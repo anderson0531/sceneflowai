@@ -21,17 +21,9 @@ type ComparisonCopy = {
   caption: string
 }
 
-type MediaCard = {
-  id: string
-  title: string
-  body: string
-  caption: string
-}
-
 export function TwoModesSection() {
   const t = useTranslations('twoModes')
   const comparison = t.raw('comparison') as ComparisonCopy
-  const stages = t.raw('stages') as MediaCard[]
   const comingSoon = t('comingSoon')
 
   const scrollToCheckout = () => {
@@ -77,29 +69,6 @@ export function TwoModesSection() {
             comingSoon={comingSoon}
           />
         </div>
-
-        <ol className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
-          {stages.map((stage, index) => (
-            <motion.li
-              key={stage.id}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.45, delay: index * 0.04 }}
-              className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-lg shadow-slate-950/40 sm:p-6"
-            >
-              <TwoModesMediaFrame
-                mediaId={stage.id}
-                caption={stage.caption}
-                comingSoon={comingSoon}
-              />
-              <div>
-                <h3 className="text-lg font-semibold text-white">{stage.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-gray-400">{stage.body}</p>
-              </div>
-            </motion.li>
-          ))}
-        </ol>
 
         <motion.div
           className="mt-10 flex justify-center"
