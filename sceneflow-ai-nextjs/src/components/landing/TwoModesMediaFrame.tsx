@@ -39,8 +39,8 @@ export function TwoModesMediaFrame({
         <NextImage
           src={media.imageUrl}
           alt={caption}
-          width={1280}
-          height={720}
+          width={2400}
+          height={1340}
           className="h-full w-full object-cover"
         />
       </div>
