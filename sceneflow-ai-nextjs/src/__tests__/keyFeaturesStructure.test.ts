@@ -166,7 +166,7 @@ describe('keyFeatures structure', () => {
     }
   })
 
-  it('renders stacked room overviews and screenshot placeholders instead of per-card videos', () => {
+  it('shows one room tab, one overview, and the selected feature screenshot', () => {
     const section = readFileSync(
       path.join(ROOT, 'src/components/landing/KeyFeaturesSection.tsx'),
       'utf8'
@@ -179,9 +179,14 @@ describe('keyFeatures structure', () => {
     expect(section).toContain("const SECTION_ID = 'key-features'")
     expect(section).toContain('id={room.id}')
     expect(section).toContain("t.raw('rooms')")
-    expect(section).toContain('<FeatureRoomOverview')
+    expect(section).toContain('hashchange')
+    expect(section.split('<FeatureRoomOverview').length - 1).toBe(1)
     expect(section).toContain("t('overviewComingSoon')")
-    expect(section).toContain('feature.screenshot')
+    expect(section).toContain('room.spend')
+    expect(section).toContain('room.groups')
+    expect(section).toContain('key-feature-group-')
+    expect(section).toContain('lg:grid')
+    expect(section.split('feature.screenshot').length - 1).toBe(1)
     expect(section).toContain('aspect-video')
     expect(section).not.toContain('MultiLanguageVideoPlayer')
     expect(section).not.toContain("t.raw('categories')")
@@ -208,6 +213,8 @@ describe('keyFeatures structure', () => {
     const mp4At = overview.indexOf('type="video/mp4"')
     expect(webmAt).toBeGreaterThan(-1)
     expect(mp4At).toBeGreaterThan(webmAt)
+    expect(overview).toContain('min-h-[180px]')
+    expect(overview).not.toContain('min-h-[280px]')
     expect(overview).toContain('IntersectionObserver')
     expect(overview).toContain('useReducedMotion')
     expect(overview).toContain('comingSoonLabel')
