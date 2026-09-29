@@ -723,11 +723,11 @@
   },
   "publishCut": {
     "eyebrow": "The cut you publish",
-    "title": "Ship a scene, a short, or the full master.",
-    "subtitle": "Publish a finished scene or chapter to YouTube, Facebook, or TikTok without waiting on the whole film. Cut a 30–60 second vertical promo from the same timeline for Shorts, Reels, and TikTok. When the story is a feature or a season, the Screening Room still plays the animatic and the master.",
+    "title": "Flexible Distribution, Direct from SceneFlow Studio",
+    "subtitle": "Release a complete 90-minute master or monetize as you go. SceneFlow Studio lets you publish finished scenes and chapters to YouTube, Facebook, or TikTok without waiting on the whole cut—generating revenue and audience momentum from day one. Before anything hits the public feed, run scene-level drafts or your final master through the Screening Room for private review and targeted feedback.",
     "comparison": {
       "id": "publish",
-      "caption": "A scene, a vertical promo, and the master from one timeline."
+      "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
     },
     "cta": "Launch Studio ($9)"
   },
