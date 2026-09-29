@@ -46,15 +46,19 @@ describe('primary value sections', () => {
     expect(nav).toContain("t('publishCut')")
   })
 
-  it('leaves background videos empty until a matching walkthrough exists', () => {
+  it('registers direction walkthrough encodes and leaves publish empty', () => {
     expect([...PRIMARY_VALUE_MEDIA_IDS]).toEqual(['direction', 'publish'])
-    for (const id of PRIMARY_VALUE_MEDIA_IDS) {
-      expect(PRIMARY_VALUE_MEDIA[id]).toEqual({
-        imageUrl: '',
-        posterUrl: '',
-        webmUrl: '',
-        mp4Url: '',
-      })
-    }
+    expect(PRIMARY_VALUE_MEDIA.direction).toEqual({
+      imageUrl: '',
+      posterUrl: '/landing/primary-value/direction.webp',
+      webmUrl: '/landing/primary-value/direction.webm',
+      mp4Url: '/landing/primary-value/direction.mp4',
+    })
+    expect(PRIMARY_VALUE_MEDIA.publish).toEqual({
+      imageUrl: '',
+      posterUrl: '',
+      webmUrl: '',
+      mp4Url: '',
+    })
   })
 })
