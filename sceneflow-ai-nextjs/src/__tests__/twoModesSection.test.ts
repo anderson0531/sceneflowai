@@ -59,7 +59,7 @@ describe('one-pipeline landing section', () => {
     expect(enMessages.hero.ctaSecondary).toBe('Explore the pipeline')
   })
 
-  it('plays a walkthrough as a muted looping background without touching the hero video', () => {
+  it('plays the comparison as a muted looping background without touching the hero video', () => {
     const frame = readFileSync(join(ROOT, 'src/components/landing/TwoModesMediaFrame.tsx'), 'utf8')
     const background = readFileSync(
       join(ROOT, 'src/components/landing/HeroVideoBackground.tsx'),
@@ -90,10 +90,10 @@ describe('one-pipeline landing section', () => {
 
     for (const id of TWO_MODES_MEDIA_IDS) {
       const entry = TWO_MODES_MEDIA[id]
-      expect(entry.posterUrl).toBe('')
-      expect(entry.webmUrl).toBe('')
-      expect(entry.mp4Url).toBe('')
-      expect(entry.imageUrl).toBe(`/landing/two-modes/${id}.webp`)
+      expect(entry.imageUrl).toBe('')
+      expect(entry.posterUrl).toBe(`/landing/two-modes/${id}.webp`)
+      expect(entry.webmUrl).toBe(`/landing/two-modes/${id}.webm`)
+      expect(entry.mp4Url).toBe(`/landing/two-modes/${id}.mp4`)
     }
 
     const filled = {
