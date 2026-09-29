@@ -1,7 +1,7 @@
 'use client'
 
 import { PrimaryValueBackdrop } from '@/components/landing/PrimaryValueBackdrop'
-import { getTwoModesMedia } from '@/config/landing/twoModesMedia'
+import { getTwoModesMedia, getTwoModesVideoLocales } from '@/config/landing/twoModesMedia'
 
 export const TWO_MODES_SECTION_ID = 'two-modes'
 
@@ -19,6 +19,7 @@ export function TwoModesSection() {
       namespace="twoModes"
       hashAliases={TWO_MODES_HASH_ALIASES}
       getMedia={getTwoModesMedia}
+      videoLocales={getTwoModesVideoLocales()}
     />
   )
 }

@@ -6,7 +6,10 @@ import { ArrowRight, Loader2, Maximize2, Pause, Play, Volume2, VolumeX } from 'l
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
 import { TwoModesTheaterModal } from '@/components/landing/TwoModesTheaterModal'
-import type { TwoModesMediaEntry } from '@/config/landing/twoModesMedia'
+import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
+import type { TwoModesMediaEntry, TwoModesVideoLocale } from '@/config/landing/twoModesMedia'
+import type { VideoLocaleId } from '@/config/landing/videoLocales'
+import { useLandingVideoLocale } from '@/i18n/useLandingVideoLocale'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 
@@ -22,18 +25,35 @@ export function PrimaryValueBackdrop({
   namespace,
   hashAliases = [],
   getMedia,
+  videoLocales,
 }: {
   sectionId: string
   namespace: PrimaryValueNamespace
   hashAliases?: readonly string[]
   getMedia: (id: string) => TwoModesMediaEntry
+  /** When set, the section plays a dubbed clip and shows the hero language control. */
+  videoLocales?: TwoModesVideoLocale[]
 }) {
   const t = useTranslations(namespace)
   const tHero = useTranslations('hero')
   const tCommon = useTranslations('common')
   const comparison = t.raw('comparison') as ComparisonCopy
-  const media = getMedia(comparison.id)
+  const syncedLocaleId = useLandingVideoLocale(videoLocales)
+  const [activeLocaleId, setActiveLocaleId] = useState<VideoLocaleId>(syncedLocaleId)
+  const activeLocale = videoLocales?.find(
+    (locale) => locale.id === activeLocaleId && locale.available
+  )
+  const fallbackMedia = getMedia(comparison.id)
+  const media: TwoModesMediaEntry = activeLocale
+    ? {
+        imageUrl: '',
+        posterUrl: activeLocale.poster ?? fallbackMedia.posterUrl,
+        webmUrl: activeLocale.webmUrl,
+        mp4Url: activeLocale.mp4Url || activeLocale.src,
+      }
+    : fallbackMedia
   const hasVideo = Boolean(media.webmUrl || media.mp4Url)
+  const hasLocalePicker = Boolean(videoLocales?.length)
   const prefersReducedMotion = useReducedMotion()
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isPlaying, setIsPlaying] = useState(!prefersReducedMotion)
@@ -51,6 +71,21 @@ export function PrimaryValueBackdrop({
   }, [prefersReducedMotion])
 
   useEffect(() => {
+    setActiveLocaleId(syncedLocaleId)
+    if (hasLocalePicker) setIsBuffering(true)
+  }, [syncedLocaleId, hasLocalePicker])
+
+  const selectLocale = useCallback(
+    (id: VideoLocaleId) => {
+      const entry = videoLocales?.find((locale) => locale.id === id)
+      if (!entry?.available) return
+      setActiveLocaleId(id)
+      setIsBuffering(true)
+    },
+    [videoLocales]
+  )
+
+  useEffect(() => {
     const video = videoRef.current
     if (!video || !hasVideo) return
 
@@ -62,7 +97,16 @@ export function PrimaryValueBackdrop({
     }
 
     void video.play().catch(() => {})
-  }, [hasVideo, isMuted, isPlaying, isTheaterOpen, prefersReducedMotion])
+  }, [
+    hasVideo,
+    isMuted,
+    isPlaying,
+    isTheaterOpen,
+    prefersReducedMotion,
+    activeLocaleId,
+    media.mp4Url,
+    media.webmUrl,
+  ])
 
   const unmuteWithSound = useCallback(() => {
     const video = videoRef.current
@@ -132,6 +176,7 @@ export function PrimaryValueBackdrop({
         {hasVideo ? (
           <div className="absolute inset-0 overflow-hidden">
             <video
+              key={videoLocales ? activeLocaleId : 'single'}
               ref={videoRef}
               className="absolute inset-0 h-full w-full bg-black object-cover"
               autoPlay={!prefersReducedMotion}
@@ -172,55 +217,67 @@ export function PrimaryValueBackdrop({
         )}
 
         {hasVideo && (
-          <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-end gap-2 bg-gradient-to-b from-black/80 to-transparent px-4 pt-3 pb-8">
-            {isMuted && !isBuffering && (
-              showUnmutePrompt ? (
-                <button
-                  type="button"
-                  onClick={unmuteWithSound}
-                  className="flex items-center gap-2 rounded-full border border-cyan-400/40 bg-black/70 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-cyan-500/20 transition-colors hover:border-cyan-400/60 hover:bg-black/85 sm:text-sm"
-                >
-                  <Volume2 className="h-4 w-4 text-cyan-400" aria-hidden />
-                  {tHero('playWithNarration')}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={unmuteWithSound}
-                  className="flex items-center gap-1.5 rounded-full border border-white/20 bg-black/60 px-3 py-2 text-xs font-medium text-gray-200 transition-colors hover:border-cyan-400/40 hover:text-white"
-                  aria-label={tHero('tapToHear')}
-                >
-                  <VolumeX className="h-4 w-4 text-cyan-400" aria-hidden />
-                  {tHero('tapToHear')}
-                </button>
-              )
-            )}
+          <div className="absolute inset-x-0 top-0 z-20 flex items-center gap-2 bg-gradient-to-b from-black/80 to-transparent px-4 pt-3 pb-8">
+            {videoLocales ? (
+              <VideoLanguageControl
+                locales={videoLocales}
+                activeLocaleId={activeLocaleId}
+                onSelect={selectLocale}
+                soonLabel={tHero('soon')}
+                variant="inline"
+                align="start"
+              />
+            ) : null}
+            <div className="ms-auto flex items-center gap-2">
+              {isMuted && !isBuffering && (
+                showUnmutePrompt ? (
+                  <button
+                    type="button"
+                    onClick={unmuteWithSound}
+                    className="flex items-center gap-2 rounded-full border border-cyan-400/40 bg-black/70 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-cyan-500/20 transition-colors hover:border-cyan-400/60 hover:bg-black/85 sm:text-sm"
+                  >
+                    <Volume2 className="h-4 w-4 text-cyan-400" aria-hidden />
+                    {tHero('playWithNarration')}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={unmuteWithSound}
+                    className="flex items-center gap-1.5 rounded-full border border-white/20 bg-black/60 px-3 py-2 text-xs font-medium text-gray-200 transition-colors hover:border-cyan-400/40 hover:text-white"
+                    aria-label={tHero('tapToHear')}
+                  >
+                    <VolumeX className="h-4 w-4 text-cyan-400" aria-hidden />
+                    {tHero('tapToHear')}
+                  </button>
+                )
+              )}
 
-            <button
-              type="button"
-              onClick={togglePlay}
-              className="p-1 text-white transition hover:text-cyan-400"
-              aria-label={isPlaying ? tHero('pauseBackgroundVideo') : tHero('playBackgroundVideo')}
-            >
-              {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-            </button>
-            <button
-              type="button"
-              onClick={toggleMute}
-              className="p-1 text-white transition hover:text-cyan-400"
-              aria-label={isMuted ? tCommon('unmute') : tCommon('mute')}
-            >
-              {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-            </button>
-            <button
-              type="button"
-              onClick={openTheater}
-              className="flex items-center gap-1.5 rounded-lg border border-white/15 bg-black/50 px-2.5 py-1.5 text-xs font-medium text-gray-200 transition-colors hover:border-cyan-400/40 hover:text-white"
-              aria-label={tHero('fullscreen')}
-            >
-              <Maximize2 className="h-3.5 w-3.5" aria-hidden />
-              <span className="hidden sm:inline">{tHero('fullscreen')}</span>
-            </button>
+              <button
+                type="button"
+                onClick={togglePlay}
+                className="p-1 text-white transition hover:text-cyan-400"
+                aria-label={isPlaying ? tHero('pauseBackgroundVideo') : tHero('playBackgroundVideo')}
+              >
+                {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+              </button>
+              <button
+                type="button"
+                onClick={toggleMute}
+                className="p-1 text-white transition hover:text-cyan-400"
+                aria-label={isMuted ? tCommon('unmute') : tCommon('mute')}
+              >
+                {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+              </button>
+              <button
+                type="button"
+                onClick={openTheater}
+                className="flex items-center gap-1.5 rounded-lg border border-white/15 bg-black/50 px-2.5 py-1.5 text-xs font-medium text-gray-200 transition-colors hover:border-cyan-400/40 hover:text-white"
+                aria-label={tHero('fullscreen')}
+              >
+                <Maximize2 className="h-3.5 w-3.5" aria-hidden />
+                <span className="hidden sm:inline">{tHero('fullscreen')}</span>
+              </button>
+            </div>
           </div>
         )}
 
@@ -272,6 +329,10 @@ export function PrimaryValueBackdrop({
           playLabel={tCommon('play')}
           muteLabel={tCommon('mute')}
           unmuteLabel={tCommon('unmute')}
+          videoLocales={videoLocales}
+          activeLocaleId={activeLocaleId}
+          onSelectLocale={selectLocale}
+          soonLabel={tHero('soon')}
         />
       )}
     </>
