@@ -126,13 +126,14 @@ describe('one-pipeline landing section', () => {
     expect(locales.filter((locale) => locale.available).map((locale) => locale.id)).toEqual([
       'en',
       'es',
+      'pt',
     ])
     expect(locales.find((locale) => locale.id === 'en')?.mp4Url).toBe(english.mp4Url)
     expect(locales.find((locale) => locale.id === 'en')?.webmUrl).toBe('')
     for (const id of VIDEO_LOCALE_ORDER) {
       expect(TWO_MODES_VIDEO_BLOB_PATHS[id]).toBe(twoModesVideoBlobPath(id))
       const locale = locales.find((entry) => entry.id === id)
-      if (id === 'en' || id === 'es') {
+      if (id === 'en' || id === 'es' || id === 'pt') {
         expect(locale?.available).toBe(true)
         expect(locale?.mp4Url).toBe(videoUrl(TWO_MODES_VIDEO_BLOB_PATHS[id]))
         continue

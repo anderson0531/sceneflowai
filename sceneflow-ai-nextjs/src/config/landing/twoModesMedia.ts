@@ -68,7 +68,7 @@ export function twoModesVideoBlobPath(locale: VideoLocaleId): string {
 }
 
 /** Locales whose Blob master is published. Others render as disabled "Soon" pills. */
-const PRODUCED_LOCALES = new Set<VideoLocaleId>(['en', 'es'])
+const PRODUCED_LOCALES = new Set<VideoLocaleId>(['en', 'es', 'pt'])
 
 function localeMedia(id: VideoLocaleId): TwoModesMediaEntry {
   if (!PRODUCED_LOCALES.has(id)) return EMPTY_MEDIA
