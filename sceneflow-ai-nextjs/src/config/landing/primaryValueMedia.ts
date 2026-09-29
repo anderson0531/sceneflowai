@@ -1,7 +1,6 @@
 /**
  * Background slots for the two value sections under friction.
- * Direction plays from public encodes (WebM first, MP4 fallback).
- * Publish stays empty until a matching walkthrough exists.
+ * Direction and publish play from public encodes (WebM first, MP4 fallback).
  */
 
 import type { TwoModesMediaEntry } from '@/config/landing/twoModesMedia'
@@ -26,7 +25,12 @@ export const PRIMARY_VALUE_MEDIA: Record<PrimaryValueMediaId, TwoModesMediaEntry
     webmUrl: `${ILLUSTRATION_BASE}/direction.webm`,
     mp4Url: `${ILLUSTRATION_BASE}/direction.mp4`,
   },
-  publish: { ...EMPTY_MEDIA },
+  publish: {
+    ...EMPTY_MEDIA,
+    posterUrl: `${ILLUSTRATION_BASE}/publish.webp`,
+    webmUrl: `${ILLUSTRATION_BASE}/publish.webm`,
+    mp4Url: `${ILLUSTRATION_BASE}/publish.mp4`,
+  },
 }
 
 export function getPrimaryValueMedia(id: string): TwoModesMediaEntry {

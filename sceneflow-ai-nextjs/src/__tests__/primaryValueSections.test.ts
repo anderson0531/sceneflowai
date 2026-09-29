@@ -47,7 +47,7 @@ describe('primary value sections', () => {
     expect(nav).toContain("t('publishCut')")
   })
 
-  it('registers direction walkthrough encodes and leaves publish empty', () => {
+  it('registers direction and publish walkthrough encodes', () => {
     expect([...PRIMARY_VALUE_MEDIA_IDS]).toEqual(['direction', 'publish'])
     expect(PRIMARY_VALUE_MEDIA.direction).toEqual({
       imageUrl: '',
@@ -57,9 +57,9 @@ describe('primary value sections', () => {
     })
     expect(PRIMARY_VALUE_MEDIA.publish).toEqual({
       imageUrl: '',
-      posterUrl: '',
-      webmUrl: '',
-      mp4Url: '',
+      posterUrl: '/landing/primary-value/publish.webp',
+      webmUrl: '/landing/primary-value/publish.webm',
+      mp4Url: '/landing/primary-value/publish.mp4',
     })
   })
 })
