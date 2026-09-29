@@ -2,7 +2,7 @@
 /**
  * Encode the direct-control (direction) landing walkthrough for git + CDN.
  *
- * Default source: public Blob `Demo.mp4` (upload a replacement before re-running).
+ * Default source: public Blob `gemini_generated_video_1d48a8db.mp4`.
  *
  * Writes:
  *   public/landing/primary-value/direction.webm  (1080p VP9 + Opus)
@@ -25,7 +25,7 @@ import { pipeline } from 'stream/promises'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
 const BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
-const DEFAULT_BLOB_PATH = 'Demo.mp4'
+const DEFAULT_BLOB_PATH = 'gemini_generated_video_1d48a8db.mp4'
 const OUT_DIR = join(ROOT, 'public', 'landing', 'primary-value')
 const MAX_VIDEO_BYTES = 95 * 1024 * 1024
 
