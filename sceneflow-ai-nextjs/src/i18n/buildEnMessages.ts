@@ -39,6 +39,8 @@ import {
 import { INFRASTRUCTURE_COPY } from '@/config/landing/infrastructureCopy'
 import { ENGINEERING_TRUST_COPY } from '@/config/landing/engineeringTrustCopy'
 import { TWO_MODES_COPY } from '@/config/landing/twoModesCopy'
+import { DIRECT_CONTROL_COPY } from '@/config/landing/directControlCopy'
+import { PUBLISH_CUT_COPY } from '@/config/landing/publishCutCopy'
 import { TRUST_SAFEGUARD_COPY } from '@/config/landing/trustSafeguardCopy'
 import { EXTENDED_SCENES_COPY } from '@/config/landing/extendedScenesCopy'
 import { CORE_CAPABILITIES_COPY } from '@/config/landing/coreCapabilitiesCopy'
@@ -89,6 +91,8 @@ export function buildEnMessages() {
     floatingNav: {
       productionExamples: 'Examples',
       twoModes: 'One Pipeline',
+      directControl: 'Direct',
+      publishCut: 'Publish',
       keyFeatures: 'Key Features',
       audienceResonance: 'Audience Resonance',
       preVisEngine: 'Pre-Vis Engine',
@@ -113,6 +117,8 @@ export function buildEnMessages() {
       videoLanguageCount: '{count, plural, =1 {# language} other {# languages}}',
     },
     twoModes: TWO_MODES_COPY,
+    directControl: DIRECT_CONTROL_COPY,
+    publishCut: PUBLISH_CUT_COPY,
     infrastructure: {
       title: INFRASTRUCTURE_COPY.title,
       description: INFRASTRUCTURE_COPY.description,

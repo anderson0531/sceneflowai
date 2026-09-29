@@ -60,7 +60,8 @@ describe('one-pipeline landing section', () => {
   })
 
   it('plays the comparison behind the copy with hero playback controls', () => {
-    const section = readFileSync(join(ROOT, 'src/components/landing/TwoModesSection.tsx'), 'utf8')
+    const section = readFileSync(join(ROOT, 'src/components/landing/PrimaryValueBackdrop.tsx'), 'utf8')
+    const twoModesSection = readFileSync(join(ROOT, 'src/components/landing/TwoModesSection.tsx'), 'utf8')
     const theater = readFileSync(
       join(ROOT, 'src/components/landing/TwoModesTheaterModal.tsx'),
       'utf8'
@@ -94,6 +95,8 @@ describe('one-pipeline landing section', () => {
     expect(section).toContain("tCommon('mute')")
     expect(section).toContain("tCommon('unmute')")
     expect(section).not.toContain('TwoModesMediaFrame')
+    expect(twoModesSection).toContain('PrimaryValueBackdrop')
+    expect(twoModesSection).toContain('namespace="twoModes"')
     expect(section).not.toContain('controls')
     expect(section).not.toMatch(/\.png|\.jpe?g/i)
     expect(background).toContain('type="video/webm"')
@@ -133,16 +136,22 @@ describe('one-pipeline landing section', () => {
     expect(landing).toContain('TrustSafeguardSection')
     expect(landing).not.toContain('CoreCapabilitiesSection')
     expect(landing).not.toContain('PreVisEngineSection')
-    expect(twoModes).toContain("id={TWO_MODES_SECTION_ID}")
+    expect(twoModes).toContain('sectionId={TWO_MODES_SECTION_ID}')
     expect(twoModes).toContain("'two-modes'")
     expect(twoModes).toContain("'core-capabilities'")
     expect(twoModes).toContain("'audience-resonance'")
     expect(twoModes).toContain("'pre-vis-engine'")
-    expect(twoModes).toContain("t('eyebrow')")
-    expect(twoModes).toContain("t('cta')")
-    expect(twoModes).toContain('TwoModesTheaterModal')
+    expect(twoModes).toContain('PrimaryValueBackdrop')
+    expect(twoModes).toContain('namespace="twoModes"')
     expect(twoModes).not.toContain('TwoModesMediaFrame')
-    expect(twoModes).toContain("t.raw('comparison')")
+    const backdrop = readFileSync(
+      join(ROOT, 'src/components/landing/PrimaryValueBackdrop.tsx'),
+      'utf8'
+    )
+    expect(backdrop).toContain("t('eyebrow')")
+    expect(backdrop).toContain("t('cta')")
+    expect(backdrop).toContain('TwoModesTheaterModal')
+    expect(backdrop).toContain("t.raw('comparison')")
     expect(twoModes).not.toContain("t.raw('stages')")
     expect(twoModes).not.toContain("t.raw('retired')")
     expect(twoModes).not.toContain("t.raw('earn')")
