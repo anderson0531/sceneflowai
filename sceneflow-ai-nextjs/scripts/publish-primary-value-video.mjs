@@ -1,18 +1,17 @@
 #!/usr/bin/env node
 /**
- * Encode the direct-control (direction) landing walkthrough for git + CDN.
+ * Encode primary-value landing walkthroughs for git + CDN.
  *
- * Default source: public Blob `gemini_generated_video_1d48a8db.mp4`.
+ * Slots:
+ *   direction — direct-control (default Blob gemini_generated_video_1d48a8db.mp4)
+ *   publish   — cut-you-publish (default Blob gemini_generated_video_de9e365a.mp4)
  *
- * Writes:
- *   public/landing/primary-value/direction.webm  (1080p VP9 + Opus)
- *   public/landing/primary-value/direction.mp4   (1080p H.264 + AAC)
- *   public/landing/primary-value/direction.webp  (poster at 2s)
+ * Writes under public/landing/primary-value/{slot}.{webm,mp4,webp}
  *
  * Usage:
  *   node scripts/publish-primary-value-video.mjs
- *   node scripts/publish-primary-value-video.mjs --source ./master.mp4
- *   node scripts/publish-primary-value-video.mjs --source-url https://example.com/clip.mp4
+ *   node scripts/publish-primary-value-video.mjs --slot publish
+ *   node scripts/publish-primary-value-video.mjs --slot publish --source-url https://...
  */
 
 import { createWriteStream, existsSync, mkdirSync, statSync } from 'fs'
@@ -25,14 +24,25 @@ import { pipeline } from 'stream/promises'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
 const BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
-const DEFAULT_BLOB_PATH = 'gemini_generated_video_1d48a8db.mp4'
 const OUT_DIR = join(ROOT, 'public', 'landing', 'primary-value')
 const MAX_VIDEO_BYTES = 95 * 1024 * 1024
 
+const SLOTS = {
+  direction: {
+    blobPath: 'gemini_generated_video_1d48a8db.mp4',
+  },
+  publish: {
+    blobPath: 'gemini_generated_video_de9e365a.mp4',
+  },
+}
+
 function parseArgs(argv) {
+  const slotIdx = argv.indexOf('--slot')
   const sourceIdx = argv.indexOf('--source')
   const urlIdx = argv.indexOf('--source-url')
+  const slot = slotIdx >= 0 ? argv[slotIdx + 1] : 'direction'
   return {
+    slot,
     localSource: sourceIdx >= 0 ? argv[sourceIdx + 1] : undefined,
     sourceUrl: urlIdx >= 0 ? argv[urlIdx + 1] : undefined,
   }
@@ -71,24 +81,25 @@ async function downloadToTemp(url, dest) {
   await pipeline(Readable.fromWeb(res.body), createWriteStream(dest))
 }
 
-async function resolveInput({ localSource, sourceUrl }) {
+async function resolveInput({ slot, localSource, sourceUrl }) {
   if (localSource) {
     const path = join(ROOT, localSource)
     if (!existsSync(path)) throw new Error(`Missing --source file: ${path}`)
     return path
   }
-  const url =
-    sourceUrl ?? `${BLOB_HOST}/${encodeURI(DEFAULT_BLOB_PATH)}`
-  const tmp = join(ROOT, 'tmp', 'primary-value-source.mp4')
+  const config = SLOTS[slot]
+  if (!config) throw new Error(`Unknown --slot ${slot}. Use: ${Object.keys(SLOTS).join(', ')}`)
+  const url = sourceUrl ?? `${BLOB_HOST}/${encodeURI(config.blobPath)}`
+  const tmp = join(ROOT, 'tmp', `primary-value-${slot}-source.mp4`)
   await downloadToTemp(url, tmp)
   return tmp
 }
 
-function encodeAll(inputPath) {
+function encodeAll(inputPath, slot) {
   mkdirSync(OUT_DIR, { recursive: true })
-  const mp4 = join(OUT_DIR, 'direction.mp4')
-  const webm = join(OUT_DIR, 'direction.webm')
-  const poster = join(OUT_DIR, 'direction.webp')
+  const mp4 = join(OUT_DIR, `${slot}.mp4`)
+  const webm = join(OUT_DIR, `${slot}.webm`)
+  const poster = join(OUT_DIR, `${slot}.webp`)
 
   runFfmpeg(
     [
@@ -173,8 +184,9 @@ function encodeAll(inputPath) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2))
+  console.log(`\n=== slot: ${args.slot} ===`)
   const inputPath = await resolveInput(args)
-  encodeAll(inputPath)
+  encodeAll(inputPath, args.slot)
   console.log('\nDone. URLs are registered in src/config/landing/primaryValueMedia.ts')
 }
 
