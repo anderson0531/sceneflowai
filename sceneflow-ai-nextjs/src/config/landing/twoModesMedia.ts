@@ -1,7 +1,7 @@
 /**
- * Empty media slots for the section under the hero.
+ * Media for the section under the hero.
  * Stills and posters are WebP. Walkthroughs are WebM, then an MP4 fallback.
- * URLs stay empty until a Blob file exists — do not commit binaries here.
+ * Comparison stays a still until comparison.webm and comparison.mp4 exist.
  */
 
 export const TWO_MODES_MEDIA_IDS = ['comparison'] as const

@@ -59,7 +59,7 @@ describe('one-pipeline landing section', () => {
     expect(enMessages.hero.ctaSecondary).toBe('Explore the pipeline')
   })
 
-  it('renders empty WebP and WebM slots without touching the hero video', () => {
+  it('plays a walkthrough as a muted looping background without touching the hero video', () => {
     const frame = readFileSync(join(ROOT, 'src/components/landing/TwoModesMediaFrame.tsx'), 'utf8')
     const background = readFileSync(
       join(ROOT, 'src/components/landing/HeroVideoBackground.tsx'),
@@ -71,23 +71,29 @@ describe('one-pipeline landing section', () => {
     expect(webmAt).toBeGreaterThan(-1)
     expect(mp4At).toBeGreaterThan(webmAt)
     expect(frame).toContain("from 'next/image'")
+    expect(frame).toContain('loop')
+    expect(frame).toContain('muted={isMuted}')
+    expect(frame).toContain('useReducedMotion')
+    expect(frame).toContain("preload={prefersReducedMotion ? 'none' : 'metadata'}")
+    expect(frame).toContain('Pause')
+    expect(frame).toContain('VolumeX')
+    expect(frame).toContain("t('pause')")
+    expect(frame).toContain("t('play')")
+    expect(frame).toContain("t('mute')")
+    expect(frame).toContain("t('unmute')")
+    expect(frame).not.toContain('controls')
     expect(frame).not.toMatch(/\.png|\.jpe?g/i)
     expect(background).toContain('type="video/webm"')
     expect(background).toContain('type="video/mp4"')
 
     expect([TWO_MODES_COPY.comparison.id]).toEqual([...TWO_MODES_MEDIA_IDS])
 
-    const illustrated = new Set(['comparison'])
     for (const id of TWO_MODES_MEDIA_IDS) {
       const entry = TWO_MODES_MEDIA[id]
       expect(entry.posterUrl).toBe('')
       expect(entry.webmUrl).toBe('')
       expect(entry.mp4Url).toBe('')
-      if (illustrated.has(id)) {
-        expect(entry.imageUrl).toBe(`/landing/two-modes/${id}.webp`)
-      } else {
-        expect(entry.imageUrl).toBe('')
-      }
+      expect(entry.imageUrl).toBe(`/landing/two-modes/${id}.webp`)
     }
 
     const filled = {
