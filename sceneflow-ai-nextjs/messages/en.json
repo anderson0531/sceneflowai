@@ -620,6 +620,8 @@
   "floatingNav": {
     "productionExamples": "Examples",
     "twoModes": "One Pipeline",
+    "directControl": "Direct",
+    "publishCut": "Publish",
     "keyFeatures": "Key Features",
     "audienceResonance": "Audience Resonance",
     "preVisEngine": "Pre-Vis Engine",
@@ -706,6 +708,26 @@
     "comparison": {
       "id": "comparison",
       "caption": "Fragmented tools beside one SceneFlow pipeline."
+    },
+    "cta": "Launch Studio ($9)"
+  },
+  "directControl": {
+    "eyebrow": "The control you keep",
+    "title": "Direct the story. Let agents do the prompting.",
+    "subtitle": "You set the cast, the beat, and the shot in plain language. Audio, Stills, and Video Agents attach the Reference Library and generate in the background. Watch the animatic, change a shot if it is wrong, and only then spend on motion.",
+    "comparison": {
+      "id": "direction",
+      "caption": "A director note beside agents building the scene."
+    },
+    "cta": "Launch Studio ($9)"
+  },
+  "publishCut": {
+    "eyebrow": "The cut you publish",
+    "title": "Ship a scene, a short, or the full master.",
+    "subtitle": "Publish a finished scene or chapter to YouTube, Facebook, or TikTok without waiting on the whole film. Cut a 30–60 second vertical promo from the same timeline for Shorts, Reels, and TikTok. When the story is a feature or a season, the Screening Room still plays the animatic and the master.",
+    "comparison": {
+      "id": "publish",
+      "caption": "A scene, a vertical promo, and the master from one timeline."
     },
     "cta": "Launch Studio ($9)"
   },

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { DollarSign, Sparkles, Clapperboard, Shield, Layers } from 'lucide-react'
+import { DollarSign, Sparkles, Clapperboard, Shield, Layers, Bot, Share2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useExpandLandingSection } from '@/components/landing/LandingSectionCollapse'
 
@@ -11,6 +11,8 @@ export function FloatingNav() {
   const sections = useMemo(
     () => [
       { id: 'two-modes', label: t('twoModes'), icon: Layers },
+      { id: 'direct-control', label: t('directControl'), icon: Bot },
+      { id: 'publish-cut', label: t('publishCut'), icon: Share2 },
       { id: 'key-features', label: t('keyFeatures'), icon: Sparkles },
       { id: 'production-examples', label: t('productionExamples'), icon: Clapperboard },
       { id: 'pricing', label: t('pricing'), icon: DollarSign },

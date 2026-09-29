@@ -4,6 +4,8 @@ import dynamic from 'next/dynamic'
 import { Header } from './components/Header'
 import { HeroSection } from './components/HeroSection'
 import { TwoModesSection } from '@/components/landing/TwoModesSection'
+import { DirectControlSection } from '@/components/landing/DirectControlSection'
+import { PublishCutSection } from '@/components/landing/PublishCutSection'
 import { LandingSectionCollapseProvider } from '@/components/landing/LandingSectionCollapse'
 import { PersistLandingLocale } from '@/components/i18n/PersistLandingLocale'
 
@@ -37,6 +39,8 @@ export default function LandingPageClient() {
 
       <HeroSection />
       <TwoModesSection />
+      <DirectControlSection />
+      <PublishCutSection />
 
       <LandingSectionCollapseProvider>
         <FloatingNav />
