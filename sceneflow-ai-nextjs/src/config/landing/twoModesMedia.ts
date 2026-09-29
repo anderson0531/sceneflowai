@@ -1,7 +1,7 @@
 /**
  * Media for the section under the hero.
- * Stills and posters are WebP. Walkthroughs are WebM, then an MP4 fallback.
- * Comparison stays a still until comparison.webm and comparison.mp4 exist.
+ * The comparison slot is a public WebM background with an MP4 fallback.
+ * Posters are WebP. WebM is listed before MP4 in the player.
  */
 
 export const TWO_MODES_MEDIA_IDS = ['comparison'] as const
@@ -29,7 +29,12 @@ const EMPTY_MEDIA: TwoModesMediaEntry = {
 const ILLUSTRATION_BASE = '/landing/two-modes'
 
 export const TWO_MODES_MEDIA: Record<TwoModesMediaId, TwoModesMediaEntry> = {
-  comparison: { ...EMPTY_MEDIA, imageUrl: `${ILLUSTRATION_BASE}/comparison.webp` },
+  comparison: {
+    ...EMPTY_MEDIA,
+    posterUrl: `${ILLUSTRATION_BASE}/comparison.webp`,
+    webmUrl: `${ILLUSTRATION_BASE}/comparison.webm`,
+    mp4Url: `${ILLUSTRATION_BASE}/comparison.mp4`,
+  },
 }
 
 export function getTwoModesMedia(id: string): TwoModesMediaEntry {
