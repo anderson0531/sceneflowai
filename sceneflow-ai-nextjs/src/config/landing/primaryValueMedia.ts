@@ -1,7 +1,7 @@
 /**
  * Background slots for the two value sections under friction.
- * No direction or publish walkthrough is in the repo or on Blob yet.
- * URLs stay empty so the sections show copy without a mismatched clip.
+ * Direction plays from public encodes (WebM first, MP4 fallback).
+ * Publish stays empty until a matching walkthrough exists.
  */
 
 import type { TwoModesMediaEntry } from '@/config/landing/twoModesMedia'
@@ -9,6 +9,8 @@ import type { TwoModesMediaEntry } from '@/config/landing/twoModesMedia'
 export const PRIMARY_VALUE_MEDIA_IDS = ['direction', 'publish'] as const
 
 export type PrimaryValueMediaId = (typeof PRIMARY_VALUE_MEDIA_IDS)[number]
+
+const ILLUSTRATION_BASE = '/landing/primary-value'
 
 const EMPTY_MEDIA: TwoModesMediaEntry = {
   imageUrl: '',
@@ -18,7 +20,12 @@ const EMPTY_MEDIA: TwoModesMediaEntry = {
 }
 
 export const PRIMARY_VALUE_MEDIA: Record<PrimaryValueMediaId, TwoModesMediaEntry> = {
-  direction: { ...EMPTY_MEDIA },
+  direction: {
+    ...EMPTY_MEDIA,
+    posterUrl: `${ILLUSTRATION_BASE}/direction.webp`,
+    webmUrl: `${ILLUSTRATION_BASE}/direction.webm`,
+    mp4Url: `${ILLUSTRATION_BASE}/direction.mp4`,
+  },
   publish: { ...EMPTY_MEDIA },
 }
 
