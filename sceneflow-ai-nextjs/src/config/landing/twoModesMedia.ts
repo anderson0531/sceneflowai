@@ -53,22 +53,22 @@ const LOCALE_FILENAME_LABELS: Record<VideoLocaleId, string> = {
 }
 
 /** Reserved Blob object for each dub. Enable a locale by adding it to PRODUCED_LOCALES. */
-export function twoModesVideoBlobPath(locale: VideoLocaleId): string {
-  return `Front Page/You Direct (${LOCALE_FILENAME_LABELS[locale]}).mp4`
+export const TWO_MODES_VIDEO_BLOB_PATHS: Record<VideoLocaleId, string> = {
+  en: 'Front Page/You Direct (English).mp4',
+  es: 'The Friction (Spanish).mp4',
+  pt: `The Friction (${LOCALE_FILENAME_LABELS.pt}).mp4`,
+  hi: `The Friction (${LOCALE_FILENAME_LABELS.hi}).mp4`,
+  zh: `The Friction (${LOCALE_FILENAME_LABELS.zh}).mp4`,
+  ar: `The Friction (${LOCALE_FILENAME_LABELS.ar}).mp4`,
+  th: `The Friction (${LOCALE_FILENAME_LABELS.th}).mp4`,
 }
 
-export const TWO_MODES_VIDEO_BLOB_PATHS: Record<VideoLocaleId, string> = {
-  en: twoModesVideoBlobPath('en'),
-  es: twoModesVideoBlobPath('es'),
-  pt: twoModesVideoBlobPath('pt'),
-  hi: twoModesVideoBlobPath('hi'),
-  zh: twoModesVideoBlobPath('zh'),
-  ar: twoModesVideoBlobPath('ar'),
-  th: twoModesVideoBlobPath('th'),
+export function twoModesVideoBlobPath(locale: VideoLocaleId): string {
+  return TWO_MODES_VIDEO_BLOB_PATHS[locale]
 }
 
 /** Locales whose Blob master is published. Others render as disabled "Soon" pills. */
-const PRODUCED_LOCALES = new Set<VideoLocaleId>(['en'])
+const PRODUCED_LOCALES = new Set<VideoLocaleId>(['en', 'es'])
 
 function localeMedia(id: VideoLocaleId): TwoModesMediaEntry {
   if (!PRODUCED_LOCALES.has(id)) return EMPTY_MEDIA
