@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Loader2, Pause, Play, Volume2, VolumeX, X } from 'lucide-react'
+import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import { getModalVideoPreload } from '@/lib/landing/videoPreload'
 import { cn } from '@/lib/utils'
-import type { TwoModesMediaEntry } from '@/config/landing/twoModesMedia'
+import type { TwoModesMediaEntry, TwoModesVideoLocale } from '@/config/landing/twoModesMedia'
+import type { VideoLocaleId } from '@/config/landing/videoLocales'
 
 type TwoModesTheaterModalProps = {
   open: boolean
@@ -16,6 +18,10 @@ type TwoModesTheaterModalProps = {
   playLabel: string
   muteLabel: string
   unmuteLabel: string
+  videoLocales?: TwoModesVideoLocale[]
+  activeLocaleId?: VideoLocaleId
+  onSelectLocale?: (id: VideoLocaleId) => void
+  soonLabel?: string
 }
 
 export function TwoModesTheaterModal({
@@ -27,6 +33,10 @@ export function TwoModesTheaterModal({
   playLabel,
   muteLabel,
   unmuteLabel,
+  videoLocales,
+  activeLocaleId,
+  onSelectLocale,
+  soonLabel,
 }: TwoModesTheaterModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isPlaying, setIsPlaying] = useState(true)
@@ -63,7 +73,7 @@ export function TwoModesTheaterModal({
     if (!video) return
     video.muted = isMuted
     void video.play().catch(() => {})
-  }, [open, isMuted])
+  }, [open, isMuted, activeLocaleId, media.mp4Url, media.webmUrl])
 
   const toggleMute = useCallback(() => {
     const video = videoRef.current
@@ -102,6 +112,7 @@ export function TwoModesTheaterModal({
             exit={{ opacity: 0 }}
           >
             <video
+              key={activeLocaleId ?? 'single'}
               ref={videoRef}
               poster={media.posterUrl || undefined}
               loop
@@ -130,6 +141,17 @@ export function TwoModesTheaterModal({
                 <Loader2 className="h-12 w-12 animate-spin text-cyan-400/80" />
               </div>
             )}
+
+            {videoLocales && activeLocaleId && onSelectLocale && soonLabel ? (
+              <VideoLanguageControl
+                locales={videoLocales}
+                activeLocaleId={activeLocaleId}
+                onSelect={onSelectLocale}
+                soonLabel={soonLabel}
+                variant="overlay"
+                align="start"
+              />
+            ) : null}
 
             <button
               type="button"

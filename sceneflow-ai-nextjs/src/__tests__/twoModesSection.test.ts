@@ -7,9 +7,14 @@ import { TWO_MODES_COPY } from '@/config/landing/twoModesCopy'
 import {
   TWO_MODES_MEDIA,
   TWO_MODES_MEDIA_IDS,
+  TWO_MODES_VIDEO_BLOB_PATHS,
+  getTwoModesMedia,
+  getTwoModesVideoLocales,
   twoModesStillSrc,
+  twoModesVideoBlobPath,
   twoModesVideoSources,
 } from '@/config/landing/twoModesMedia'
+import { VIDEO_LOCALE_ORDER, videoUrl } from '@/config/landing/videoLocales'
 import {
   COLLAPSIBLE_LANDING_SECTION_IDS,
   DEFAULT_EXPANDED_LANDING_SECTION_IDS,
@@ -102,15 +107,40 @@ describe('one-pipeline landing section', () => {
     expect(background).toContain('type="video/webm"')
     expect(background).toContain('type="video/mp4"')
 
+    expect(section).toContain('VideoLanguageControl')
+    expect(theater).toContain('VideoLanguageControl')
+    expect(twoModesSection).toContain('videoLocales={getTwoModesVideoLocales()}')
+
     expect([TWO_MODES_COPY.comparison.id]).toEqual([...TWO_MODES_MEDIA_IDS])
 
-    for (const id of TWO_MODES_MEDIA_IDS) {
-      const entry = TWO_MODES_MEDIA[id]
-      expect(entry.imageUrl).toBe('')
-      expect(entry.posterUrl).toBe(`/landing/two-modes/${id}.webp`)
-      expect(entry.webmUrl).toBe(`/landing/two-modes/${id}.webm`)
-      expect(entry.mp4Url).toBe(`/landing/two-modes/${id}.mp4`)
+    const english = TWO_MODES_MEDIA.comparison
+    expect(english.imageUrl).toBe('')
+    expect(english.posterUrl).toBe('/landing/two-modes/comparison.webp')
+    expect(english.webmUrl).toBe('')
+    expect(english.mp4Url).toBe(videoUrl('Front Page/You Direct (English).mp4'))
+    expect(english.mp4Url).toContain('You%20Direct%20(English).mp4')
+    expect(getTwoModesMedia('comparison')).toEqual(english)
+
+    const locales = getTwoModesVideoLocales()
+    expect(locales.map((locale) => locale.id)).toEqual([...VIDEO_LOCALE_ORDER])
+    expect(locales.filter((locale) => locale.available).map((locale) => locale.id)).toEqual(['en'])
+    expect(locales.find((locale) => locale.id === 'en')?.mp4Url).toBe(english.mp4Url)
+    expect(locales.find((locale) => locale.id === 'en')?.webmUrl).toBe('')
+    for (const id of VIDEO_LOCALE_ORDER) {
+      expect(TWO_MODES_VIDEO_BLOB_PATHS[id]).toBe(twoModesVideoBlobPath(id))
+      if (id === 'en') continue
+      const locale = locales.find((entry) => entry.id === id)
+      expect(locale?.available).toBe(false)
+      expect(locale?.src).toBe('')
+      expect(locale?.mp4Url).toBe('')
+      expect(locale?.webmUrl).toBe('')
     }
+    expect(twoModesVideoBlobPath('es')).toBe('Front Page/You Direct (Spanish).mp4')
+    expect(twoModesVideoBlobPath('pt')).toBe('Front Page/You Direct (Portuguese).mp4')
+    expect(twoModesVideoBlobPath('hi')).toBe('Front Page/You Direct (Hindi).mp4')
+    expect(twoModesVideoBlobPath('zh')).toBe('Front Page/You Direct (Chinese).mp4')
+    expect(twoModesVideoBlobPath('ar')).toBe('Front Page/You Direct (Arabic).mp4')
+    expect(twoModesVideoBlobPath('th')).toBe('Front Page/You Direct (Thai).mp4')
 
     const filled = {
       imageUrl: 'https://cdn.example/still.webp',
