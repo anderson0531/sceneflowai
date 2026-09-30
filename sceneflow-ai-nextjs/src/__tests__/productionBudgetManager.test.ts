@@ -15,8 +15,10 @@ import {
   DEFAULT_SCHEDULE_WEEKDAYS,
   DEFAULT_VIDEO_ITERATIONS,
   estimateProductionBudget,
+  formatPlanDate,
   getFrameUnitCost,
   getVideoUnitCost,
+  latestScheduleDate,
   intelligencePackageCredits,
   productionScheduleStatus,
   PRODUCTION_METHODS,
@@ -488,6 +490,18 @@ describe('Production Budget Manager engine', () => {
       '2026-10-07',
       '2026-10-08',
     ])
+    expect(formatPlanDate('2027-10-22')).toBe('Oct. 22, 2027')
+    expect(
+      latestScheduleDate({
+        entries: [
+          { date: '2027-01-04' },
+          { date: '2027-10-22' },
+          {},
+        ],
+      })
+    ).toBe('2027-10-22')
+    expect(latestScheduleDate(undefined)).toBeNull()
+
     expect(status).toMatchObject({
       scenesPlanned: 3,
       scenesFinished: 1,

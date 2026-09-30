@@ -1137,6 +1137,25 @@ export interface ProductionScheduleStatus {
 }
 
 /** Compare finished scenes and charged credits with the plan through `today`. */
+export function latestScheduleDate(
+  schedule: { entries?: Array<{ date?: string }> } | null | undefined
+): string | null {
+  const dates = (schedule?.entries ?? [])
+    .map((entry) => entry.date)
+    .filter((date): date is string => Boolean(date))
+    .sort()
+  return dates[dates.length - 1] ?? null
+}
+
+/** `2027-10-22` → `Oct. 22, 2027`. */
+export function formatPlanDate(iso: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
+  if (!match) return iso
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])))
+  const month = date.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' })
+  return `${month}. ${Number(match[3])}, ${match[1]}`
+}
+
 export function productionScheduleStatus(args: {
   entries: Array<{ sceneId: string; date?: string }>
   byDate: ScheduleDateTotal[]

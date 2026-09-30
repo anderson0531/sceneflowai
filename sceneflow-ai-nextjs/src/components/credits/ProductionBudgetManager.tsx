@@ -30,6 +30,7 @@ import {
   DEFAULT_SCHEDULE_WEEKDAYS,
   DEFAULT_VIDEO_ITERATIONS,
   estimateProductionBudget,
+  formatPlanDate,
   getFrameUnitCost,
   getVideoUnitCost,
   parseCreditsBudgetParamsV2,
@@ -93,6 +94,115 @@ function monthCells(monthKey: string): Array<string | null> {
 type PrimaryTab = 'budget' | 'schedule'
 type BudgetSection = 'plan' | 'rollup' | 'breakdown' | 'savings'
 type ScheduleSection = 'plan' | 'calendar' | 'status'
+
+function ByokKeyField({
+  endpoint,
+  label,
+  steps,
+  linkHref,
+  linkLabel,
+  placeholder,
+  saveLabel,
+  savingLabel,
+  storedHint,
+  errorLabel,
+  onSaved,
+}: {
+  endpoint: string
+  label: string
+  steps: string
+  linkHref: string
+  linkLabel: string
+  placeholder: string
+  saveLabel: string
+  savingLabel: string
+  storedHint: (hint: string) => string
+  errorLabel: string
+  onSaved: () => void
+}) {
+  const [value, setValue] = useState('')
+  const [hint, setHint] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    void fetch(endpoint)
+      .then(async (response) => {
+        if (!response.ok) return null
+        return response.json()
+      })
+      .then((body) => {
+        if (cancelled || !body?.configured || typeof body.keyHint !== 'string') return
+        setHint(body.keyHint)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [endpoint])
+
+  const save = async () => {
+    setSaving(true)
+    setError(false)
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey: value }),
+      })
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        setError(true)
+        return
+      }
+      setValue('')
+      if (typeof body.keyHint === 'string') setHint(body.keyHint)
+      onSaved()
+    } catch {
+      setError(true)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="space-y-2 rounded-xl border border-slate-700/50 bg-slate-800/50 p-4">
+      <label className="text-sm font-medium text-white">{label}</label>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input
+          type="password"
+          autoComplete="off"
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          placeholder={placeholder}
+          className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white"
+        />
+        <button
+          type="button"
+          disabled={saving || !value.trim()}
+          onClick={() => void save()}
+          className="shrink-0 rounded-lg bg-cyan-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-40"
+        >
+          {saving ? savingLabel : saveLabel}
+        </button>
+      </div>
+      {hint ? <p className="text-xs text-gray-400">{storedHint(hint)}</p> : null}
+      <p className="text-xs text-gray-400">
+        {steps}{' '}
+        <a
+          href={linkHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-cyan-300 hover:underline"
+        >
+          {linkLabel}
+        </a>
+      </p>
+      {error ? <p className="text-xs text-red-400">{errorLabel}</p> : null}
+    </div>
+  )
+}
 
 function TabRow({
   tabs,
@@ -457,6 +567,20 @@ export function ProductionBudgetManager({
             </div>
           </div>
 
+          <p className="mt-4 text-center text-sm text-gray-300">
+            {masterEndDate
+              ? t('scheduleSummary', {
+                  date: formatPlanDate(masterEndDate),
+                  credits: formatCredits(
+                    scheduleTotals[scheduleTotals.length - 1]?.cumulativeCredits ?? 0
+                  ),
+                  pace: scheduleStatus
+                    ? t(`pace.${scheduleStatus.schedulePace}`)
+                    : t('pace.on_pace'),
+                })
+              : t('scheduleSummaryEmpty')}
+          </p>
+
           <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-gray-300">
             <span>
               {t('progressFrames', {
@@ -564,6 +688,32 @@ export function ProductionBudgetManager({
             <p className="text-xs text-gray-400 mt-1">{t('byokDescription')}</p>
           </div>
         </label>
+        <ByokKeyField
+          endpoint="/api/settings/byok/vertex"
+          label={t('byokGoogleLabel')}
+          steps={t('byokGoogleSteps')}
+          linkHref="https://console.cloud.google.com/apis/credentials"
+          linkLabel={t('byokGoogleLink')}
+          placeholder={t('byokKeyPlaceholder')}
+          saveLabel={t('byokSaveKey')}
+          savingLabel={t('byokSavingKey')}
+          storedHint={(hint) => t('byokStoredHint', { hint })}
+          errorLabel={t('byokKeyError')}
+          onSaved={() => setByokExcludeMedia(true)}
+        />
+        <ByokKeyField
+          endpoint="/api/settings/byok/kling"
+          label={t('byokKlingLabel')}
+          steps={t('byokKlingSteps')}
+          linkHref="https://app.klingai.com/global/dev"
+          linkLabel={t('byokKlingLink')}
+          placeholder={t('byokKeyPlaceholder')}
+          saveLabel={t('byokSaveKey')}
+          savingLabel={t('byokSavingKey')}
+          storedHint={(hint) => t('byokStoredHint', { hint })}
+          errorLabel={t('byokKeyError')}
+          onSaved={() => setByokExcludeMedia(true)}
+        />
 
         <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500">
           <span>

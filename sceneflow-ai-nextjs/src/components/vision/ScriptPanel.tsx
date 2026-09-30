@@ -205,6 +205,8 @@ import {
   buildProductionBudgetParams,
   DEFAULT_PRODUCTION_METHOD,
   estimateProductionBudget,
+  formatPlanDate,
+  latestScheduleDate,
   parseCreditsBudgetParamsV2,
   readProjectBudgetScope,
 } from '@/lib/credits/productionBudgetManager'
@@ -934,6 +936,11 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     () => getProjectCreditsBudget(budgetMetadata),
     [budgetMetadata]
   )
+  const planFinishDate = useMemo(() => {
+    const saved = parseCreditsBudgetParamsV2(budgetMetadata?.creditsBudgetParams)
+    const iso = latestScheduleDate(saved?.schedule)
+    return iso ? formatPlanDate(iso) : null
+  }, [budgetMetadata])
 
   /**
    * What the Frame Agent composes prompts with. A direction edit recomposes the
@@ -2880,7 +2887,14 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
               )}
               <span className="text-sm hidden sm:inline">
                 {creditsBudget > 0
-                  ? tStudio('budgetAmount', { amount: creditsBudget.toLocaleString() })
+                  ? planFinishDate
+                    ? tStudio('budgetAmount', {
+                        amount: creditsBudget.toLocaleString(),
+                        date: planFinishDate,
+                      })
+                    : tStudio('budgetAmountNoDate', {
+                        amount: creditsBudget.toLocaleString(),
+                      })
                   : tStudio('setBudget')}
               </span>
             </Button>

@@ -140,7 +140,7 @@ export class AIProviderFactory {
    * @returns AIProvider[] - Array of supported provider types
    */
   static getSupportedProviders(): AIProvider[] {
-    return Object.values(AIProvider)
+    return Object.values(AIProvider).filter((provider) => provider !== AIProvider.KLING)
   }
 
   /**
