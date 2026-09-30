@@ -140,5 +140,15 @@ describe('app update prompt', () => {
     expect(swRoute).toContain("swSrc: 'src/sw.ts'")
     expect(registration).toContain("type: 'module'")
     expect(existsSync(join(ROOT, 'public/sw.js'))).toBe(false)
+
+    const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as {
+      dependencies?: Record<string, string>
+    }
+    const esbuildPkg = JSON.parse(
+      readFileSync(join(ROOT, 'node_modules/esbuild/package.json'), 'utf8')
+    ) as { version: string }
+    const minor = Number(esbuildPkg.version.split('.')[1])
+    expect(pkg.dependencies?.esbuild).toBeTruthy()
+    expect(minor).toBeGreaterThanOrEqual(25)
   })
 })
