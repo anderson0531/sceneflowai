@@ -5,7 +5,9 @@ import { signOut } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
 import { Bell, CalendarDays, Loader2, LogOut, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { AppInstallCard } from '@/components/pwa/AppInstallCard'
 import type { CompanionPlanCard } from '@/lib/companion/planCard'
+import { appServiceWorkerRegistration } from '@/lib/pwa/appServiceWorker'
 
 type TabId = 'inbox' | 'feedback' | 'plan'
 
@@ -175,7 +177,7 @@ export function MobileCompanion() {
     const configRes = await fetch('/api/push/config')
     const config = await configRes.json()
     if (!config.enabled || !config.publicKey) return
-    const registration = await navigator.serviceWorker.register('/companion-sw.js')
+    const registration = await appServiceWorkerRegistration()
     const existing = await registration.pushManager.getSubscription()
     const subscription =
       existing ||
@@ -342,6 +344,7 @@ export function MobileCompanion() {
       </header>
 
       <main className="min-h-0 flex-1 overflow-y-auto px-4 py-4 pb-24">
+        <AppInstallCard surface="phone-companion" authStatus="authenticated" pathname="/dashboard" />
         {pushState === 'offer' ? (
           <button
             type="button"

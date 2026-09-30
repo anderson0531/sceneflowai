@@ -7,6 +7,7 @@ import { Monitor, Smartphone } from 'lucide-react'
 import { useIsDesktopOrTablet } from '@/hooks/useScreenSize'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
 import { MobileCompanion } from '@/components/mobile/MobileCompanion'
+import { AppInstallCard } from '@/components/pwa/AppInstallCard'
 
 interface MobileAppGateProps {
   children: React.ReactNode
@@ -44,6 +45,9 @@ function PhoneSignIn() {
         >
           {tNav('signIn')}
         </a>
+        <div className="mt-6 text-left">
+          <AppInstallCard surface="phone-sign-in" authStatus="unauthenticated" pathname={pathname} />
+        </div>
       </div>
     </div>
   )

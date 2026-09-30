@@ -124,6 +124,10 @@ const nextConfig = {
     const locale = "en|es|pt|hi|zh|ar|th";
     return [
       {
+        source: "/sw.js",
+        destination: "/serwist/sw.js",
+      },
+      {
         source: `/videos/hero-:locale(${locale}).mp4`,
         destination: `${blob}/landing/hero/sceneflow-hero-:locale-1080p.mp4`,
       },
