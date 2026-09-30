@@ -861,28 +861,236 @@ export function rollupProductionBudget(args: {
 export interface SceneScheduleEntry {
   sceneId: string
   day: number
+  /** ISO date (YYYY-MM-DD) when the schedule has a start date. */
+  date?: string
   pinned: boolean
+}
+
+/** Index 0 is Sunday, matching Date UTC weekday. Default is Monday–Friday. */
+export const DEFAULT_SCHEDULE_WEEKDAYS: boolean[] = [
+  false,
+  true,
+  true,
+  true,
+  true,
+  true,
+  false,
+]
+
+export interface ScheduleDateTotal {
+  date: string
+  sceneIds: string[]
+  credits: number
+  cumulativeCredits: number
+}
+
+export interface ScheduleChapterEnd {
+  key: string
+  title: string
+  date: string
 }
 
 export interface ProductionSchedule {
   workDays: number
   scenesPerDay: number
+  startDate?: string
+  weekdays?: boolean[]
   entries: SceneScheduleEntry[]
+}
+
+export interface SceneScheduleResult {
+  entries: SceneScheduleEntry[]
+  daysUsed: number
+  extended: boolean
+  endDate: string | null
+  byDate: ScheduleDateTotal[]
+  chapterEnds: ScheduleChapterEnd[]
+  masterEndDate: string | null
+}
+
+function parseIsoDate(iso: string): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
+  if (!match) return null
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])))
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function formatIsoDate(date: Date): string {
+  return date.toISOString().slice(0, 10)
+}
+
+function addUtcDays(date: Date, days: number): Date {
+  const next = new Date(date.getTime())
+  next.setUTCDate(next.getUTCDate() + days)
+  return next
+}
+
+function normalizeWeekdays(weekdays: boolean[] | undefined): boolean[] {
+  if (!weekdays || weekdays.length !== 7 || !weekdays.some(Boolean)) {
+    return DEFAULT_SCHEDULE_WEEKDAYS
+  }
+  return weekdays
+}
+
+/** 1-based workday on or after startDate. Day 1 is the first selected weekday. */
+export function nthWorkDate(
+  startDate: string,
+  weekdays: boolean[] | undefined,
+  workday: number
+): string | null {
+  const start = parseIsoDate(startDate)
+  if (!start || workday < 1) return null
+  const active = normalizeWeekdays(weekdays)
+  let cursor = start
+  let seen = 0
+  for (let step = 0; step < 4000; step += 1) {
+    if (active[cursor.getUTCDay()]) {
+      seen += 1
+      if (seen === workday) return formatIsoDate(cursor)
+    }
+    cursor = addUtcDays(cursor, 1)
+  }
+  return null
+}
+
+function datedSchedule(
+  args: {
+    sceneIds: string[]
+    scenesPerDay: number
+    startDate: string
+    weekdays?: boolean[]
+    pinned?: Array<{ sceneId: string; day?: number; date?: string }>
+    sceneCredits?: Record<string, number>
+    chapters?: Array<{ key: string; title: string; sceneIds: string[] }>
+  }
+): SceneScheduleResult {
+  const perDay = Math.max(1, Math.floor(args.scenesPerDay) || 1)
+  const weekdays = normalizeWeekdays(args.weekdays)
+  const known = new Set(args.sceneIds)
+  const pinnedDate = new Map<string, string>()
+  for (const entry of args.pinned ?? []) {
+    if (!known.has(entry.sceneId)) continue
+    if (entry.date && parseIsoDate(entry.date)) {
+      pinnedDate.set(entry.sceneId, entry.date)
+      continue
+    }
+    if (entry.day != null && entry.day >= 1) {
+      const mapped = nthWorkDate(args.startDate, weekdays, entry.day)
+      if (mapped) pinnedDate.set(entry.sceneId, mapped)
+    }
+  }
+
+  const occupancy = new Map<string, number>()
+  for (const date of pinnedDate.values()) {
+    occupancy.set(date, (occupancy.get(date) ?? 0) + 1)
+  }
+
+  const firstOpenWorkDate = (): string => {
+    let index = 1
+    for (;;) {
+      const date = nthWorkDate(args.startDate, weekdays, index)
+      if (!date) return args.startDate
+      if ((occupancy.get(date) ?? 0) < perDay) return date
+      index += 1
+      if (index > 4000) return date
+    }
+  }
+
+  const workdayIndex = (date: string): number => {
+    let index = 1
+    for (;;) {
+      const cursor = nthWorkDate(args.startDate, weekdays, index)
+      if (!cursor || cursor > date) return index
+      if (cursor === date) return index
+      index += 1
+      if (index > 4000) return index
+    }
+  }
+
+  const entries: SceneScheduleEntry[] = []
+  for (const sceneId of args.sceneIds) {
+    const pinned = pinnedDate.get(sceneId)
+    if (pinned) {
+      entries.push({
+        sceneId,
+        day: workdayIndex(pinned),
+        date: pinned,
+        pinned: true,
+      })
+      continue
+    }
+    const date = firstOpenWorkDate()
+    occupancy.set(date, (occupancy.get(date) ?? 0) + 1)
+    entries.push({ sceneId, day: workdayIndex(date), date, pinned: false })
+  }
+
+  const creditsOf = (sceneId: string) => {
+    const credits = args.sceneCredits?.[sceneId]
+    return typeof credits === 'number' && Number.isFinite(credits) ? Math.max(0, credits) : 0
+  }
+  const dates = [...new Set(entries.map((entry) => entry.date).filter((date): date is string => Boolean(date)))]
+  dates.sort()
+  let running = 0
+  const byDate: ScheduleDateTotal[] = dates.map((date) => {
+    const sceneIds = entries.filter((entry) => entry.date === date).map((entry) => entry.sceneId)
+    const credits = sceneIds.reduce((sum, sceneId) => sum + creditsOf(sceneId), 0)
+    running += credits
+    return { date, sceneIds, credits, cumulativeCredits: running }
+  })
+
+  const dateOf = new Map(entries.map((entry) => [entry.sceneId, entry.date]))
+  const chapterEnds: ScheduleChapterEnd[] = []
+  for (const chapter of args.chapters ?? []) {
+    const chapterDates = chapter.sceneIds
+      .map((sceneId) => dateOf.get(sceneId))
+      .filter((date): date is string => Boolean(date))
+      .sort()
+    const date = chapterDates[chapterDates.length - 1]
+    if (date) chapterEnds.push({ key: chapter.key, title: chapter.title, date })
+  }
+
+  const daysUsed = new Set(entries.map((entry) => entry.date)).size
+  const endDate = dates[dates.length - 1] ?? null
+  return {
+    entries,
+    daysUsed,
+    extended: false,
+    endDate,
+    byDate,
+    chapterEnds,
+    masterEndDate: endDate,
+  }
 }
 
 export function buildSceneSchedule(args: {
   sceneIds: string[]
-  workDays: number
+  workDays?: number
   scenesPerDay: number
-  pinned?: Array<{ sceneId: string; day: number }>
-}): { entries: SceneScheduleEntry[]; daysUsed: number; extended: boolean } {
+  startDate?: string
+  weekdays?: boolean[]
+  pinned?: Array<{ sceneId: string; day?: number; date?: string }>
+  sceneCredits?: Record<string, number>
+  chapters?: Array<{ key: string; title: string; sceneIds: string[] }>
+}): SceneScheduleResult {
+  if (args.startDate && parseIsoDate(args.startDate)) {
+    return datedSchedule({
+      sceneIds: args.sceneIds,
+      scenesPerDay: args.scenesPerDay,
+      startDate: args.startDate,
+      weekdays: args.weekdays,
+      pinned: args.pinned,
+      sceneCredits: args.sceneCredits,
+      chapters: args.chapters,
+    })
+  }
+
   const perDay = Math.max(1, Math.floor(args.scenesPerDay) || 1)
-  const requestedDays = Math.max(1, Math.floor(args.workDays) || 1)
+  const requestedDays = Math.max(1, Math.floor(args.workDays ?? 1) || 1)
   const known = new Set(args.sceneIds)
   const pinned = new Map<string, number>()
   for (const entry of args.pinned ?? []) {
     if (!known.has(entry.sceneId)) continue
-    if (!Number.isFinite(entry.day) || entry.day < 1) continue
+    if (entry.day == null || !Number.isFinite(entry.day) || entry.day < 1) continue
     pinned.set(entry.sceneId, Math.floor(entry.day))
   }
 
@@ -909,6 +1117,53 @@ export function buildSceneSchedule(args: {
     entries,
     daysUsed,
     extended: daysUsed > requestedDays,
+    endDate: null,
+    byDate: [],
+    chapterEnds: [],
+    masterEndDate: null,
+  }
+}
+
+export type SchedulePace = 'ahead' | 'on_pace' | 'behind'
+export type SpendPace = 'under' | 'on_budget' | 'over'
+
+export interface ProductionScheduleStatus {
+  scenesPlanned: number
+  scenesFinished: number
+  schedulePace: SchedulePace
+  plannedCredits: number
+  creditsUsed: number
+  spendPace: SpendPace
+}
+
+/** Compare finished scenes and charged credits with the plan through `today`. */
+export function productionScheduleStatus(args: {
+  entries: Array<{ sceneId: string; date?: string }>
+  byDate: ScheduleDateTotal[]
+  finishedSceneIds: string[]
+  creditsUsed: number
+  today: string
+}): ProductionScheduleStatus | null {
+  if (!args.entries.some((entry) => entry.date)) return null
+  const scheduled = new Set(args.entries.map((entry) => entry.sceneId))
+  const scenesPlanned = args.entries.filter((entry) => entry.date && entry.date <= args.today).length
+  const scenesFinished = args.finishedSceneIds.filter((sceneId) => scheduled.has(sceneId)).length
+  const throughToday = args.byDate.filter((row) => row.date <= args.today)
+  const plannedCredits = throughToday.length
+    ? throughToday[throughToday.length - 1].cumulativeCredits
+    : 0
+  const creditsUsed = Math.max(0, Math.round(args.creditsUsed))
+  const schedulePace: SchedulePace =
+    scenesFinished > scenesPlanned ? 'ahead' : scenesFinished < scenesPlanned ? 'behind' : 'on_pace'
+  const spendPace: SpendPace =
+    creditsUsed > plannedCredits ? 'over' : creditsUsed < plannedCredits ? 'under' : 'on_budget'
+  return {
+    scenesPlanned,
+    scenesFinished,
+    schedulePace,
+    plannedCredits,
+    creditsUsed,
+    spendPace,
   }
 }
 
@@ -928,27 +1183,49 @@ export interface CreditsBudgetParamsV2 {
   schedule?: ProductionSchedule
 }
 
+function parseWeekdays(raw: unknown): boolean[] | undefined {
+  if (!Array.isArray(raw) || raw.length !== 7) return undefined
+  if (!raw.every((day) => typeof day === 'boolean')) return undefined
+  return raw.some(Boolean) ? raw : undefined
+}
+
 function parseSchedule(raw: unknown): ProductionSchedule | undefined {
   if (!raw || typeof raw !== 'object') return undefined
   const schedule = raw as Record<string, unknown>
-  const workDays = schedule.workDays
   const scenesPerDay = schedule.scenesPerDay
-  if (typeof workDays !== 'number' || typeof scenesPerDay !== 'number') return undefined
+  if (typeof scenesPerDay !== 'number') return undefined
+  const workDays = typeof schedule.workDays === 'number' ? schedule.workDays : 0
+  const startDate =
+    typeof schedule.startDate === 'string' && parseIsoDate(schedule.startDate)
+      ? schedule.startDate
+      : undefined
+  const weekdays = parseWeekdays(schedule.weekdays)
   const entries = Array.isArray(schedule.entries)
     ? schedule.entries.flatMap((entry) => {
         if (!entry || typeof entry !== 'object') return []
         const row = entry as Record<string, unknown>
-        if (typeof row.sceneId !== 'string' || typeof row.day !== 'number') return []
+        if (typeof row.sceneId !== 'string') return []
+        const day = typeof row.day === 'number' ? row.day : 0
+        const date =
+          typeof row.date === 'string' && parseIsoDate(row.date) ? row.date : undefined
+        if (day < 1 && !date) return []
         return [
           {
             sceneId: row.sceneId,
-            day: row.day,
+            day,
+            ...(date ? { date } : {}),
             pinned: Boolean(row.pinned),
           },
         ]
       })
     : []
-  return { workDays, scenesPerDay, entries }
+  return {
+    workDays,
+    scenesPerDay,
+    ...(startDate ? { startDate } : {}),
+    ...(weekdays ? { weekdays } : {}),
+    entries,
+  }
 }
 
 export function buildProductionBudgetParams(args: {
