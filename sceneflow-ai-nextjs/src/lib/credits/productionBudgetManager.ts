@@ -15,6 +15,7 @@ import {
 import { getProjectCreditsUsed } from '@/lib/credits/projectBudgetShared'
 import { getSceneProductionStateFromMetadata } from '@/lib/final-cut/projectProductionState'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
+import { BEAT_START_STILL_SLOT, stillVersionCount } from '@/lib/storyboard/mediaVersions'
 import {
   SCENEFLOW_ENGINE_ID,
   type SceneFlowQualityTierId,
@@ -354,6 +355,21 @@ function buildSuggestions(args: {
   return out
 }
 
+export interface BudgetShotActual {
+  id: string
+  label: string
+  stillAttempts: number
+  clipAttempts: number
+}
+
+export interface BudgetSceneActual {
+  sceneId: string
+  title: string
+  chapterIndex: number | null
+  chapterTitle: string
+  shots: BudgetShotActual[]
+}
+
 export interface ProjectBudgetScope {
   scenes: number
   beats: number
@@ -362,6 +378,7 @@ export interface ProjectBudgetScope {
   videosDone: number
   observedVideoTakesAvg: number | null
   creditsUsed: number
+  sceneActuals: BudgetSceneActual[]
 }
 
 function resolveScenes(scriptOrVision: unknown): Array<Record<string, unknown>> {
@@ -465,6 +482,50 @@ function sceneHasFallbackVideo(prod: Record<string, unknown>): boolean {
   )
 }
 
+function stillAttemptsForShot(
+  beat: Record<string, unknown>,
+  segment: Record<string, unknown> | null
+): number {
+  const versions = stillVersionCount(beat, BEAT_START_STILL_SLOT)
+  if (versions > 0) return versions
+  if (
+    nonEmptyUrl(beat.storyboardImageUrl) ||
+    nonEmptyUrl(beat.storyboardEndImageUrl) ||
+    segmentHasFrame(segment)
+  ) {
+    return 1
+  }
+  return 0
+}
+
+function clipAttemptsForShot(segment: Record<string, unknown> | null): number {
+  const takes = Array.isArray(segment?.takes) ? segment!.takes : []
+  const recorded = takes.filter((take) => take && typeof take === 'object').length
+  if (recorded > 0) return recorded
+  return segmentHasVideo(segment) ? 1 : 0
+}
+
+function sceneBudgetTitle(scene: Record<string, unknown>, index: number): string {
+  const heading = scene.heading ?? scene.title ?? scene.sceneHeading
+  if (typeof heading === 'string' && heading.trim()) return heading.trim()
+  return `Scene ${index + 1}`
+}
+
+function sceneChapter(scene: Record<string, unknown>): {
+  chapterIndex: number | null
+  chapterTitle: string
+} {
+  const index =
+    typeof scene.blueprintBeatIndex === 'number' && Number.isFinite(scene.blueprintBeatIndex)
+      ? scene.blueprintBeatIndex
+      : null
+  const titled =
+    typeof scene.blueprintBeatTitle === 'string' ? scene.blueprintBeatTitle.trim() : ''
+  if (titled) return { chapterIndex: index, chapterTitle: titled }
+  if (index != null) return { chapterIndex: index, chapterTitle: `Chapter ${index + 1}` }
+  return { chapterIndex: null, chapterTitle: 'Production' }
+}
+
 /**
  * Count fixed scope + actuals from Production Studio script / production metadata.
  * Planning clip duration: saved budget params → DEFAULT_PLAN_SEGMENT_DURATION_SEC (10).
@@ -492,6 +553,7 @@ export function readProjectBudgetScope(args: {
   let videosDone = 0
   let takeSum = 0
   let takeSegments = 0
+  const sceneActuals: BudgetSceneActual[] = []
 
   for (const scene of scenes) {
     const sceneId =
@@ -510,9 +572,11 @@ export function readProjectBudgetScope(args: {
 
     let sceneFrames = 0
     let sceneVideos = 0
+    const shots: BudgetShotActual[] = []
 
     sceneBeats.forEach((beat, index) => {
       const segment = findSegmentForBeat(segments, beat, index)
+      const beatRecord = beat as unknown as Record<string, unknown>
       const hasBeatFrame =
         nonEmptyUrl(beat.storyboardImageUrl) ||
         nonEmptyUrl(beat.storyboardEndImageUrl) ||
@@ -531,6 +595,16 @@ export function readProjectBudgetScope(args: {
           takeSegments += 1
         }
       }
+
+      const clipAttempts = clipAttemptsForShot(segment)
+      shots.push({
+        id:
+          (typeof beat.beatId === 'string' && beat.beatId) ||
+          `${sceneId || 'scene'}-shot-${index + 1}`,
+        label: `Shot ${index + 1}`,
+        stillAttempts: Math.max(stillAttemptsForShot(beatRecord, segment), hasBeatFrame ? 1 : 0),
+        clipAttempts,
+      })
     })
 
     // Legacy establishing image: count toward first non-excluded beat if that beat is otherwise empty
@@ -569,6 +643,15 @@ export function readProjectBudgetScope(args: {
 
     framesDone += Math.min(sceneBeats.length, sceneFrames)
     videosDone += Math.min(sceneBeats.length || segments.length, sceneVideos)
+
+    const chapter = sceneChapter(scene)
+    sceneActuals.push({
+      sceneId: sceneId || `scene-${sceneActuals.length + 1}`,
+      title: sceneBudgetTitle(scene, sceneActuals.length),
+      chapterIndex: chapter.chapterIndex,
+      chapterTitle: chapter.chapterTitle,
+      shots,
+    })
   }
 
   // Production-only scenes (metadata keys without matching script scenes yet)
@@ -617,11 +700,220 @@ export function readProjectBudgetScope(args: {
     videosDone: Math.min(beats, videosDone),
     observedVideoTakesAvg: takeSegments > 0 ? takeSum / takeSegments : null,
     creditsUsed: getProjectCreditsUsed(metadata),
+    sceneActuals,
+  }
+}
+
+export interface BudgetShotLine {
+  id: string
+  label: string
+  stillIterations: number
+  clipIterations: number
+  credits: number
+  stillAttempts: number
+  clipAttempts: number
+}
+
+export interface BudgetSceneLine {
+  sceneId: string
+  title: string
+  shotCount: number
+  stillIterations: number
+  clipIterations: number
+  credits: number
+  stillActual: number | null
+  clipActual: number | null
+  finished: boolean
+  shots: BudgetShotLine[]
+}
+
+export interface BudgetChapterLine {
+  key: string
+  title: string
+  credits: number
+  scenes: BudgetSceneLine[]
+}
+
+export interface BudgetRollup {
+  chapters: BudgetChapterLine[]
+  mediaCredits: number
+  topazCredits: number
+  intelligenceCredits: number
+  masterCredits: number
+  completedStillActual: number | null
+  completedClipActual: number | null
+  completedSceneCount: number
+}
+
+export function sceneIsFinished(scene: BudgetSceneActual): boolean {
+  return scene.shots.length > 0 && scene.shots.every((shot) => shot.stillAttempts >= 1)
+}
+
+export function completedIterationAverages(
+  scenes: BudgetSceneActual[],
+  videoOn: boolean
+): { still: number | null; clip: number | null; sceneCount: number } {
+  const done = scenes.filter(sceneIsFinished)
+  const shotCount = done.reduce((sum, scene) => sum + scene.shots.length, 0)
+  if (shotCount === 0) return { still: null, clip: null, sceneCount: 0 }
+  const stillAttempts = done.reduce(
+    (sum, scene) => sum + scene.shots.reduce((shots, shot) => shots + shot.stillAttempts, 0),
+    0
+  )
+  const clipAttempts = done.reduce(
+    (sum, scene) => sum + scene.shots.reduce((shots, shot) => shots + shot.clipAttempts, 0),
+    0
+  )
+  return {
+    still: stillAttempts / shotCount,
+    clip: videoOn ? clipAttempts / shotCount : null,
+    sceneCount: done.length,
+  }
+}
+
+function roundIteration(n: number): number {
+  return Math.round(n * 100) / 100
+}
+
+/** Copy completed-scene averages into the planning targets. Spend is unchanged. */
+export function actualPlanningTargets(
+  scenes: BudgetSceneActual[],
+  videoOn: boolean
+): { frameIterations: number; videoIterations: number | null } | null {
+  const averages = completedIterationAverages(scenes, videoOn)
+  if (averages.still == null) return null
+  return {
+    frameIterations: roundIteration(averages.still),
+    videoIterations: averages.clip == null ? null : roundIteration(averages.clip),
+  }
+}
+
+export function rollupProductionBudget(args: {
+  scenes: BudgetSceneActual[]
+  frameIterations: number
+  videoIterations: number
+  frameUnit: number
+  videoUnit: number
+  topazCredits: number
+  intelligenceCredits: number
+  videoOn: boolean
+}): BudgetRollup {
+  const frameIterations = clampNonNeg(args.frameIterations)
+  const videoIterations = args.videoOn ? clampNonNeg(args.videoIterations) : 0
+  const shotCredits = frameIterations * args.frameUnit + videoIterations * args.videoUnit
+  const averages = completedIterationAverages(args.scenes, args.videoOn)
+
+  const chapters: BudgetChapterLine[] = []
+  const byKey = new Map<string, BudgetChapterLine>()
+
+  for (const scene of args.scenes) {
+    const key = scene.chapterIndex == null ? 'production' : `chapter-${scene.chapterIndex}`
+    let chapter = byKey.get(key)
+    if (!chapter) {
+      chapter = { key, title: scene.chapterTitle, credits: 0, scenes: [] }
+      byKey.set(key, chapter)
+      chapters.push(chapter)
+    }
+    const finished = sceneIsFinished(scene)
+    const stillSum = scene.shots.reduce((sum, shot) => sum + shot.stillAttempts, 0)
+    const clipSum = scene.shots.reduce((sum, shot) => sum + shot.clipAttempts, 0)
+    const shotCount = scene.shots.length
+    const shots: BudgetShotLine[] = scene.shots.map((shot) => ({
+      id: shot.id,
+      label: shot.label,
+      stillIterations: frameIterations,
+      clipIterations: videoIterations,
+      credits: roundCredits(shotCredits),
+      stillAttempts: shot.stillAttempts,
+      clipAttempts: shot.clipAttempts,
+    }))
+    const credits = roundCredits(shotCount * shotCredits)
+    chapter.scenes.push({
+      sceneId: scene.sceneId,
+      title: scene.title,
+      shotCount,
+      stillIterations: frameIterations,
+      clipIterations: videoIterations,
+      credits,
+      stillActual: finished && shotCount > 0 ? stillSum / shotCount : null,
+      clipActual: finished && args.videoOn && shotCount > 0 ? clipSum / shotCount : null,
+      finished,
+      shots,
+    })
+    chapter.credits += credits
+  }
+
+  const mediaCredits = chapters.reduce((sum, chapter) => sum + chapter.credits, 0)
+  const topazCredits = roundCredits(args.topazCredits)
+  const intelligenceCredits = roundCredits(args.intelligenceCredits)
+  return {
+    chapters,
+    mediaCredits,
+    topazCredits,
+    intelligenceCredits,
+    masterCredits: mediaCredits + topazCredits + intelligenceCredits,
+    completedStillActual: averages.still,
+    completedClipActual: averages.clip,
+    completedSceneCount: averages.sceneCount,
+  }
+}
+
+export interface SceneScheduleEntry {
+  sceneId: string
+  day: number
+  pinned: boolean
+}
+
+export interface ProductionSchedule {
+  workDays: number
+  scenesPerDay: number
+  entries: SceneScheduleEntry[]
+}
+
+export function buildSceneSchedule(args: {
+  sceneIds: string[]
+  workDays: number
+  scenesPerDay: number
+  pinned?: Array<{ sceneId: string; day: number }>
+}): { entries: SceneScheduleEntry[]; daysUsed: number; extended: boolean } {
+  const perDay = Math.max(1, Math.floor(args.scenesPerDay) || 1)
+  const requestedDays = Math.max(1, Math.floor(args.workDays) || 1)
+  const known = new Set(args.sceneIds)
+  const pinned = new Map<string, number>()
+  for (const entry of args.pinned ?? []) {
+    if (!known.has(entry.sceneId)) continue
+    if (!Number.isFinite(entry.day) || entry.day < 1) continue
+    pinned.set(entry.sceneId, Math.floor(entry.day))
+  }
+
+  const occupancy = new Map<number, number>()
+  for (const day of pinned.values()) {
+    occupancy.set(day, (occupancy.get(day) ?? 0) + 1)
+  }
+
+  const entries: SceneScheduleEntry[] = []
+  for (const sceneId of args.sceneIds) {
+    const pinnedDay = pinned.get(sceneId)
+    if (pinnedDay != null) {
+      entries.push({ sceneId, day: pinnedDay, pinned: true })
+      continue
+    }
+    let day = 1
+    while ((occupancy.get(day) ?? 0) >= perDay) day += 1
+    occupancy.set(day, (occupancy.get(day) ?? 0) + 1)
+    entries.push({ sceneId, day, pinned: false })
+  }
+
+  const daysUsed = entries.reduce((max, entry) => Math.max(max, entry.day), 0)
+  return {
+    entries,
+    daysUsed,
+    extended: daysUsed > requestedDays,
   }
 }
 
 export interface CreditsBudgetParamsV2 {
-  version: 2
+  version: 2 | 3
   method: ProductionMethodId
   frameQuality: FrameQuality
   videoQuality: VideoQuality
@@ -633,6 +925,30 @@ export interface CreditsBudgetParamsV2 {
   segmentDuration: number
   engine: VideoEngineId
   qualityTier?: SceneFlowQualityTierId
+  schedule?: ProductionSchedule
+}
+
+function parseSchedule(raw: unknown): ProductionSchedule | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const schedule = raw as Record<string, unknown>
+  const workDays = schedule.workDays
+  const scenesPerDay = schedule.scenesPerDay
+  if (typeof workDays !== 'number' || typeof scenesPerDay !== 'number') return undefined
+  const entries = Array.isArray(schedule.entries)
+    ? schedule.entries.flatMap((entry) => {
+        if (!entry || typeof entry !== 'object') return []
+        const row = entry as Record<string, unknown>
+        if (typeof row.sceneId !== 'string' || typeof row.day !== 'number') return []
+        return [
+          {
+            sceneId: row.sceneId,
+            day: row.day,
+            pinned: Boolean(row.pinned),
+          },
+        ]
+      })
+    : []
+  return { workDays, scenesPerDay, entries }
 }
 
 export function buildProductionBudgetParams(args: {
@@ -645,6 +961,7 @@ export function buildProductionBudgetParams(args: {
   intelligenceEnabled: boolean
   byokExcludeMedia?: boolean
   segmentDurationSec: number
+  schedule?: ProductionSchedule
 }): CreditsBudgetParamsV2 {
   const qualityTier: SceneFlowQualityTierId | undefined =
     args.videoQuality === 'draft'
@@ -654,7 +971,7 @@ export function buildProductionBudgetParams(args: {
         : undefined
 
   return {
-    version: 2,
+    version: 3,
     method: args.method,
     frameQuality: args.frameQuality,
     videoQuality: args.videoQuality,
@@ -668,6 +985,7 @@ export function buildProductionBudgetParams(args: {
     segmentDuration: Math.min(15, Math.max(3, Math.round(args.segmentDurationSec) || 10)),
     engine: SCENEFLOW_ENGINE_ID,
     ...(qualityTier ? { qualityTier } : {}),
+    ...(args.schedule ? { schedule: args.schedule } : {}),
   }
 }
 
@@ -679,8 +997,9 @@ export function parseCreditsBudgetParamsV2(
   const method = o.method
   const frameQuality = o.frameQuality
   const videoQuality = o.videoQuality
+  const schedule = parseSchedule(o.schedule)
   return {
-    version: 2,
+    version: o.version === 3 ? 3 : 2,
     ...(typeof method === 'string' && method in PRODUCTION_METHODS
       ? { method: method as ProductionMethodId }
       : {}),
@@ -700,6 +1019,7 @@ export function parseCreditsBudgetParamsV2(
       ? { byokExcludeMedia: o.byokExcludeMedia }
       : {}),
     ...(typeof o.segmentDuration === 'number' ? { segmentDuration: o.segmentDuration } : {}),
+    ...(schedule ? { schedule } : {}),
   }
 }
 

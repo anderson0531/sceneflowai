@@ -7,18 +7,22 @@ import {
   Brain,
   Calculator,
   Check,
+  ChevronDown,
   Clapperboard,
   Film,
   Image as ImageIcon,
   Key,
   Lightbulb,
+  Pin,
   Sparkles,
   Video,
   Zap,
 } from 'lucide-react'
 import {
+  actualPlanningTargets,
   applyMethodDefaults,
   buildProductionBudgetParams,
+  buildSceneSchedule,
   DEFAULT_PRODUCTION_METHOD,
   DEFAULT_FRAME_ITERATIONS,
   DEFAULT_VIDEO_ITERATIONS,
@@ -28,8 +32,10 @@ import {
   parseCreditsBudgetParamsV2,
   PRODUCTION_METHODS,
   readProjectBudgetScope,
+  rollupProductionBudget,
   type FrameQuality,
   type ProductionMethodId,
+  type SceneScheduleEntry,
   type SuggestionId,
   type VideoQuality,
 } from '@/lib/credits/productionBudgetManager'
@@ -135,6 +141,12 @@ export function ProductionBudgetManager({
     Boolean(saved?.byokExcludeMedia ?? initialByokExcludeMedia)
   )
   const [isSaving, setIsSaving] = useState(false)
+  const [workDays, setWorkDays] = useState(saved?.schedule?.workDays ?? 5)
+  const [scenesPerDay, setScenesPerDay] = useState(saved?.schedule?.scenesPerDay ?? 2)
+  const [scheduleEntries, setScheduleEntries] = useState<SceneScheduleEntry[]>(
+    saved?.schedule?.entries ?? []
+  )
+  const [openScenes, setOpenScenes] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     setByokExcludeMedia(Boolean(saved?.byokExcludeMedia ?? initialByokExcludeMedia))
@@ -189,6 +201,40 @@ export function ProductionBudgetManager({
 
   const frameUnit = getFrameUnitCost(frameQuality)
   const videoUnit = getVideoUnitCost(videoQuality, scope.segmentDurationSec)
+  const videoOn = videoQuality !== 'none'
+  const shotCredits = byokExcludeMedia
+    ? 0
+    : frameIterations * frameUnit + (videoOn ? videoIterations * videoUnit : 0)
+  const rollup = useMemo(
+    () =>
+      rollupProductionBudget({
+        scenes: scope.sceneActuals,
+        frameIterations,
+        videoIterations: videoOn ? videoIterations : 0,
+        frameUnit: byokExcludeMedia ? 0 : frameUnit,
+        videoUnit: byokExcludeMedia ? 0 : videoUnit,
+        topazCredits: estimate.topaz.credits,
+        intelligenceCredits: estimate.intelligence.credits,
+        videoOn,
+      }),
+    [
+      scope.sceneActuals,
+      frameIterations,
+      videoIterations,
+      frameUnit,
+      videoUnit,
+      estimate.topaz.credits,
+      estimate.intelligence.credits,
+      videoOn,
+      byokExcludeMedia,
+    ]
+  )
+  const actualTargets = actualPlanningTargets(scope.sceneActuals, videoOn)
+  const scheduleById = useMemo(
+    () => new Map(scheduleEntries.map((entry) => [entry.sceneId, entry])),
+    [scheduleEntries]
+  )
+  const daysUsed = scheduleEntries.reduce((max, entry) => Math.max(max, entry.day), 0)
 
   const suggestionText = (id: SuggestionId): string => {
     switch (id) {
@@ -223,6 +269,11 @@ export function ProductionBudgetManager({
         intelligenceEnabled,
         byokExcludeMedia,
         segmentDurationSec: scope.segmentDurationSec,
+        schedule: {
+          workDays,
+          scenesPerDay,
+          entries: scheduleEntries,
+        },
       })
       await onSetBudget(estimate.plannedTotal, params)
     } finally {
@@ -474,47 +525,44 @@ export function ProductionBudgetManager({
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <div className="flex justify-between mb-2">
-              <label className="text-sm text-gray-300">{t('frameIterations')}</label>
-              <span className="text-sm font-medium text-white">
-                {frameIterations.toFixed(2)}×
-              </span>
-            </div>
+            <label className="text-sm text-gray-300" htmlFor="still-iterations">
+              {t('frameIterations')}
+            </label>
             <input
-              type="range"
+              id="still-iterations"
+              type="number"
               min={1}
-              max={3}
-              step={0.05}
+              max={5}
+              step={0.1}
               value={frameIterations}
-              onChange={(e) => setFrameIterations(Number(e.target.value))}
-              className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+              onChange={(e) => setFrameIterations(Math.min(5, Math.max(1, Number(e.target.value) || 1)))}
+              className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm tabular-nums text-white"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              {t('frameIterationsHint', { rate: '80%' })}
-            </p>
           </div>
           <div>
-            <div className="flex justify-between mb-2">
-              <label className="text-sm text-gray-300">{t('videoIterations')}</label>
-              <span className="text-sm font-medium text-white">
-                {videoQuality === 'none' ? '—' : `${videoIterations.toFixed(2)}×`}
-              </span>
-            </div>
+            <label className="text-sm text-gray-300" htmlFor="clip-iterations">
+              {t('videoIterations')}
+            </label>
             <input
-              type="range"
+              id="clip-iterations"
+              type="number"
               min={1}
-              max={3}
-              step={0.05}
-              disabled={videoQuality === 'none'}
-              value={videoQuality === 'none' ? 1 : videoIterations}
-              onChange={(e) => setVideoIterations(Number(e.target.value))}
-              className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500 disabled:opacity-40"
+              max={5}
+              step={0.1}
+              disabled={!videoOn}
+              value={videoOn ? videoIterations : 0}
+              onChange={(e) => setVideoIterations(Math.min(5, Math.max(1, Number(e.target.value) || 1)))}
+              className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm tabular-nums text-white disabled:opacity-40"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              {t('videoIterationsHint', { rate: '90%' })}
-            </p>
           </div>
         </div>
+        <p className="text-sm text-gray-300 -mt-2">
+          {t('shotPrice', {
+            stills: frameIterations.toFixed(1),
+            clips: videoOn ? videoIterations.toFixed(1) : '0',
+            credits: formatCredits(shotCredits),
+          })}
+        </p>
 
         <div className="grid sm:grid-cols-2 gap-3">
           <label
@@ -557,6 +605,228 @@ export function ProductionBudgetManager({
             </div>
           </label>
         </div>
+
+        <section className="space-y-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-white">{t('rollupTitle')}</h3>
+              <p className="text-sm tabular-nums text-gray-300">
+                {t('masterTotal', { credits: formatCredits(rollup.masterCredits) })}
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={!actualTargets}
+              onClick={() => {
+                if (!actualTargets) return
+                setFrameIterations(actualTargets.frameIterations)
+                if (actualTargets.videoIterations != null) {
+                  setVideoIterations(actualTargets.videoIterations)
+                }
+              }}
+              className="rounded-lg border border-cyan-500/40 px-3 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {t('useActuals')}
+            </button>
+          </div>
+          <p className="text-xs text-gray-400">
+            {actualTargets
+              ? t('useActualsConfirm', {
+                  stills: actualTargets.frameIterations.toFixed(1),
+                  clips:
+                    actualTargets.videoIterations == null
+                      ? '0'
+                      : actualTargets.videoIterations.toFixed(1),
+                })
+              : t('noFinishedScenes')}
+          </p>
+          {rollup.chapters.length === 0 ? (
+            <p className="text-sm text-gray-400">{t('noBeatsYet')}</p>
+          ) : (
+            <div className="space-y-4">
+              {rollup.chapters.map((chapter) => (
+                <div key={chapter.key} className="rounded-xl border border-slate-700/60">
+                  <div className="flex items-center justify-between px-3 py-2 text-sm">
+                    <span className="font-medium text-white">{chapter.title}</span>
+                    <span className="tabular-nums text-gray-300">{formatCredits(chapter.credits)}</span>
+                  </div>
+                  <div className="divide-y divide-slate-800">
+                    {chapter.scenes.map((scene) => {
+                      const open = Boolean(openScenes[scene.sceneId])
+                      return (
+                        <div key={scene.sceneId} className="px-3 py-2">
+                          <button
+                            type="button"
+                            className="flex w-full items-start justify-between gap-3 text-left"
+                            onClick={() =>
+                              setOpenScenes((prev) => ({
+                                ...prev,
+                                [scene.sceneId]: !prev[scene.sceneId],
+                              }))
+                            }
+                          >
+                            <span className="min-w-0">
+                              <span className="flex items-center gap-1 text-sm text-white">
+                                <ChevronDown
+                                  className={`h-4 w-4 shrink-0 text-gray-400 transition ${open ? 'rotate-180' : ''}`}
+                                />
+                                {scene.title}
+                              </span>
+                              <span className="mt-1 block text-xs text-gray-400">
+                                {t('sceneRates', {
+                                  stills: scene.stillIterations.toFixed(1),
+                                  clips: videoOn ? scene.clipIterations.toFixed(1) : '0',
+                                })}
+                                {scene.finished && scene.stillActual != null && (
+                                  <>
+                                    {' · '}
+                                    <span
+                                      className={
+                                        scene.stillActual > scene.stillIterations ||
+                                        (scene.clipActual != null &&
+                                          scene.clipActual > scene.clipIterations)
+                                          ? 'text-amber-300'
+                                          : undefined
+                                      }
+                                    >
+                                      {t('sceneActuals', {
+                                        stills: scene.stillActual.toFixed(1),
+                                        clips:
+                                          scene.clipActual == null
+                                            ? '0'
+                                            : scene.clipActual.toFixed(1),
+                                      })}
+                                    </span>
+                                  </>
+                                )}
+                              </span>
+                            </span>
+                            <span className="shrink-0 text-sm tabular-nums text-white">
+                              {formatCredits(scene.credits)}
+                            </span>
+                          </button>
+                          {open && (
+                            <ul className="mt-2 space-y-1 pl-5">
+                              {scene.shots.map((shot) => (
+                                <li
+                                  key={shot.id}
+                                  className="flex items-center justify-between text-xs text-gray-400"
+                                >
+                                  <span>{shot.label}</span>
+                                  <span className="tabular-nums">
+                                    {t('shotAttempts', {
+                                      stills: shot.stillAttempts,
+                                      clips: shot.clipAttempts,
+                                      credits: formatCredits(shot.credits),
+                                    })}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="space-y-3">
+          <h3 className="text-sm font-medium text-white">{t('scheduleTitle')}</h3>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="text-sm text-gray-300">
+              {t('workDays')}
+              <input
+                type="number"
+                min={1}
+                value={workDays}
+                onChange={(e) => setWorkDays(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
+                className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm tabular-nums text-white"
+              />
+            </label>
+            <label className="text-sm text-gray-300">
+              {t('scenesPerDay')}
+              <input
+                type="number"
+                min={1}
+                value={scenesPerDay}
+                onChange={(e) =>
+                  setScenesPerDay(Math.max(1, Math.floor(Number(e.target.value) || 1)))
+                }
+                className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm tabular-nums text-white"
+              />
+            </label>
+          </div>
+          <button
+            type="button"
+            disabled={scope.sceneActuals.length === 0}
+            onClick={() => {
+              const built = buildSceneSchedule({
+                sceneIds: scope.sceneActuals.map((scene) => scene.sceneId),
+                workDays,
+                scenesPerDay,
+                pinned: scheduleEntries
+                  .filter((entry) => entry.pinned)
+                  .map((entry) => ({ sceneId: entry.sceneId, day: entry.day })),
+              })
+              setScheduleEntries(built.entries)
+            }}
+            className="rounded-lg border border-slate-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-40"
+          >
+            {t('buildSchedule')}
+          </button>
+          {scheduleEntries.length > 0 && daysUsed > workDays && (
+            <p className="text-xs text-amber-300">
+              {t('scheduleExtended', { days: daysUsed })}
+            </p>
+          )}
+          {scope.sceneActuals.length === 0 ? (
+            <p className="text-sm text-gray-400">{t('noBeatsYet')}</p>
+          ) : (
+            <ul className="space-y-2">
+              {scope.sceneActuals.map((scene) => {
+                const entry = scheduleById.get(scene.sceneId)
+                return (
+                  <li
+                    key={scene.sceneId}
+                    className="flex flex-col gap-2 rounded-lg bg-slate-800/50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <span className="flex items-center gap-2 text-sm text-white">
+                      {scene.title}
+                      {entry?.pinned && <Pin className="h-3.5 w-3.5 text-cyan-300" aria-hidden />}
+                    </span>
+                    <label className="text-xs text-gray-400">
+                      {t('workDay')}
+                      <select
+                        value={entry?.day ?? ''}
+                        onChange={(e) => {
+                          const day = Number(e.target.value)
+                          if (!day) return
+                          setScheduleEntries((prev) => {
+                            const next = prev.filter((row) => row.sceneId !== scene.sceneId)
+                            next.push({ sceneId: scene.sceneId, day, pinned: true })
+                            return next
+                          })
+                        }}
+                        className="ml-2 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-white"
+                      >
+                        <option value="">{t('unscheduled')}</option>
+                        {Array.from({ length: Math.max(daysUsed, workDays, entry?.day ?? 1) }, (_, index) => (
+                          <option key={index + 1} value={index + 1}>
+                            {index + 1}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </section>
 
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-gray-300">{t('breakdown')}</h3>
