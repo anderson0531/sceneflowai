@@ -1,7 +1,9 @@
 export enum AIProvider {
   GOOGLE_VEO = 'GOOGLE_VEO',
   RUNWAY = 'RUNWAY',
-  STABILITY_AI = 'STABILITY_AI'
+  STABILITY_AI = 'STABILITY_AI',
+  /** Stored key only. Not a video-generation adapter. */
+  KLING = 'KLING',
 }
 
 export interface StandardVideoRequest {
