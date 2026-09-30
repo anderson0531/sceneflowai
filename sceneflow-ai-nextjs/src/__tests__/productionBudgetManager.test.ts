@@ -7,8 +7,10 @@ import {
   getKlingCreditsForGeneration,
 } from '@/lib/credits/creditCosts'
 import {
+  actualPlanningTargets,
   applyMethodDefaults,
   buildProductionBudgetParams,
+  buildSceneSchedule,
   DEFAULT_FRAME_ITERATIONS,
   DEFAULT_VIDEO_ITERATIONS,
   estimateProductionBudget,
@@ -17,6 +19,7 @@ import {
   intelligencePackageCredits,
   PRODUCTION_METHODS,
   readProjectBudgetScope,
+  rollupProductionBudget,
 } from '@/lib/credits/productionBudgetManager'
 
 describe('Production Budget Manager engine', () => {
@@ -146,7 +149,7 @@ describe('Production Budget Manager engine', () => {
       byokExcludeMedia: false,
       segmentDurationSec: 10,
     })
-    expect(params.version).toBe(2)
+    expect(params.version).toBe(3)
     expect(params.engine).toBe('sceneflow')
     expect(params.qualityTier).toBe('cinematic')
     expect(params.frameQuality).toBe('final')
@@ -279,5 +282,147 @@ describe('Production Budget Manager engine', () => {
     expect(scope.videosDone).toBe(2)
     expect(scope.creditsUsed).toBe(2450)
     expect(scope.segmentDurationSec).toBe(10)
+  })
+
+  it('rolls shot targets up to scene, chapter, and master', () => {
+    const scope = readProjectBudgetScope({
+      script: {
+        scenes: [
+          {
+            id: 's1',
+            heading: 'Open',
+            blueprintBeatIndex: 0,
+            blueprintBeatTitle: 'Chapter One',
+            beats: [
+              { beatId: 'a', sequenceIndex: 0, kind: 'action' },
+              { beatId: 'b', sequenceIndex: 1, kind: 'action' },
+            ],
+          },
+          {
+            id: 's2',
+            heading: 'Close',
+            blueprintBeatIndex: 0,
+            blueprintBeatTitle: 'Chapter One',
+            beats: [{ beatId: 'c', sequenceIndex: 0, kind: 'action' }],
+          },
+        ],
+      },
+    })
+    const frameUnit = IMAGE_CREDITS.FRAME_GENERATION
+    const rollup = rollupProductionBudget({
+      scenes: scope.sceneActuals,
+      frameIterations: 1.2,
+      videoIterations: 1.4,
+      frameUnit,
+      videoUnit: 0,
+      topazCredits: 50,
+      intelligenceCredits: 10,
+      videoOn: false,
+    })
+
+    expect(rollup.chapters).toHaveLength(1)
+    expect(rollup.chapters[0].title).toBe('Chapter One')
+    expect(rollup.chapters[0].scenes.map((scene) => scene.shotCount)).toEqual([2, 1])
+    const shotCredits = Math.round(1.2 * frameUnit)
+    expect(rollup.chapters[0].scenes[0].credits).toBe(Math.round(2 * 1.2 * frameUnit))
+    expect(rollup.chapters[0].scenes[0].shots[0].credits).toBe(shotCredits)
+    expect(rollup.masterCredits).toBe(rollup.mediaCredits + 50 + 10)
+  })
+
+  it('resets planning targets from three finished scenes to 1.5 stills and 2.2 clips', () => {
+    const stills = (count: number, prefix: string) =>
+      Array.from({ length: count }, (_, index) => ({
+        url: `https://cdn.example/${prefix}-${index}.jpg`,
+      }))
+    const clips = (count: number) =>
+      Array.from({ length: count }, (_, index) => ({ assetUrl: `https://cdn.example/c-${index}.mp4` }))
+
+    const scope = readProjectBudgetScope({
+      script: {
+        scenes: [
+          {
+            id: 's1',
+            beats: [
+              { beatId: 'a1', sequenceIndex: 0, kind: 'action', storyboardImageVersions: stills(1, 'a1') },
+              { beatId: 'a2', sequenceIndex: 1, kind: 'action', storyboardImageVersions: stills(1, 'a2') },
+              { beatId: 'a3', sequenceIndex: 2, kind: 'action', storyboardImageVersions: stills(2, 'a3') },
+              { beatId: 'a4', sequenceIndex: 3, kind: 'action', storyboardImageVersions: stills(2, 'a4') },
+            ],
+          },
+          {
+            id: 's2',
+            beats: [
+              { beatId: 'b1', sequenceIndex: 0, kind: 'action', storyboardImageVersions: stills(1, 'b1') },
+              { beatId: 'b2', sequenceIndex: 1, kind: 'action', storyboardImageVersions: stills(2, 'b2') },
+              { beatId: 'b3', sequenceIndex: 2, kind: 'action', storyboardImageVersions: stills(1, 'b3') },
+            ],
+          },
+          {
+            id: 's3',
+            beats: [
+              { beatId: 'c1', sequenceIndex: 0, kind: 'action', storyboardImageVersions: stills(2, 'c1') },
+              { beatId: 'c2', sequenceIndex: 1, kind: 'action', storyboardImageVersions: stills(2, 'c2') },
+              { beatId: 'c3', sequenceIndex: 2, kind: 'action', storyboardImageVersions: stills(1, 'c3') },
+            ],
+          },
+        ],
+      },
+      metadata: {
+        visionPhase: {
+          production: {
+            scenes: {
+              s1: {
+                segments: [
+                  { beatId: 'a1', takes: clips(2), activeAssetUrl: 'v' },
+                  { beatId: 'a2', takes: clips(2), activeAssetUrl: 'v' },
+                  { beatId: 'a3', takes: clips(2), activeAssetUrl: 'v' },
+                  { beatId: 'a4', takes: clips(3), activeAssetUrl: 'v' },
+                ],
+              },
+              s2: {
+                segments: [
+                  { beatId: 'b1', takes: clips(2), activeAssetUrl: 'v' },
+                  { beatId: 'b2', takes: clips(2), activeAssetUrl: 'v' },
+                  { beatId: 'b3', takes: clips(2), activeAssetUrl: 'v' },
+                ],
+              },
+              s3: {
+                segments: [
+                  { beatId: 'c1', takes: clips(2), activeAssetUrl: 'v' },
+                  { beatId: 'c2', takes: clips(3), activeAssetUrl: 'v' },
+                  { beatId: 'c3', takes: clips(2), activeAssetUrl: 'v' },
+                ],
+              },
+            },
+          },
+        },
+      },
+    })
+
+    const targets = actualPlanningTargets(scope.sceneActuals, true)
+    expect(targets).toEqual({ frameIterations: 1.5, videoIterations: 2.2 })
+  })
+
+  it('keeps a pinned scene day when the schedule is rebuilt', () => {
+    const first = buildSceneSchedule({
+      sceneIds: ['a', 'b', 'c', 'd'],
+      workDays: 2,
+      scenesPerDay: 2,
+    })
+    expect(first.entries.map((entry) => entry.day)).toEqual([1, 1, 2, 2])
+    expect(first.extended).toBe(false)
+
+    const rebuilt = buildSceneSchedule({
+      sceneIds: ['a', 'b', 'c', 'd'],
+      workDays: 2,
+      scenesPerDay: 2,
+      pinned: [{ sceneId: 'c', day: 1 }],
+    })
+    const byId = Object.fromEntries(rebuilt.entries.map((entry) => [entry.sceneId, entry]))
+    expect(byId.c).toEqual({ sceneId: 'c', day: 1, pinned: true })
+    expect(byId.a.day).toBe(1)
+    expect(byId.a.pinned).toBe(false)
+    expect(byId.b.day).toBe(2)
+    expect(byId.d.day).toBe(2)
   })
 })
