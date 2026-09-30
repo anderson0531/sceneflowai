@@ -15,6 +15,10 @@ export const INFINITY_SOURCE_JPG = join(
 
 const PNG = { compressionLevel: 9, palette: false }
 const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 }
+/** Brand navy #050A18 — same as the PWA theme color. */
+const NAVY = { r: 5, g: 10, b: 24, alpha: 1 }
+/** Keep the infinity inside a circular mask. */
+export const APP_ICON_MARK_SCALE = 0.72
 
 /** Dark plate + low-chroma bokeh → transparent; keep cyan–purple film strip. */
 export function shouldKeyOutPixel(r, g, b) {
@@ -153,6 +157,42 @@ export async function renderInfinityLogoPng(width, height, sourcePath) {
  */
 export async function writeInfinityLogoPng(outPath, width, height, sourcePath) {
   const buf = await renderInfinityLogoPng(width, height, sourcePath)
+  await sharp(buf).toFile(outPath)
+}
+
+/**
+ * Square app icon: infinity centered at {@link APP_ICON_MARK_SCALE} on navy.
+ * @param {number} size
+ * @param {string} [sourcePath]
+ */
+export async function renderAppIconPng(size, sourcePath) {
+  const mark = await getTrimmedMarkBuffer(sourcePath)
+  const inner = Math.max(1, Math.round(size * APP_ICON_MARK_SCALE))
+  const resized = await sharp(mark)
+    .resize(inner, inner, { fit: 'contain', background: TRANSPARENT })
+    .png()
+    .toBuffer()
+
+  return sharp({
+    create: {
+      width: size,
+      height: size,
+      channels: 4,
+      background: NAVY,
+    },
+  })
+    .composite([{ input: resized, gravity: 'center' }])
+    .png(PNG)
+    .toBuffer()
+}
+
+/**
+ * @param {string} outPath
+ * @param {number} size
+ * @param {string} [sourcePath]
+ */
+export async function writeAppIconPng(outPath, size, sourcePath) {
+  const buf = await renderAppIconPng(size, sourcePath)
   await sharp(buf).toFile(outPath)
 }
 
