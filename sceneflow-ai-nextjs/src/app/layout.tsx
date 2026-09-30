@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 import AuthSessionProvider from '@/components/providers/AuthSessionProvider'
+import AppUpdatePrompt from '@/components/pwa/AppUpdatePrompt'
 import InstallPrompt from '@/components/pwa/InstallPrompt'
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
 import { GlobalHeader } from '@/components/layout/GlobalHeader'
@@ -249,6 +250,7 @@ export default function RootLayout({
                     target language's endonym instead. */}
                 <LocaleSwitchOverlay />
                 <InstallPrompt />
+                <AppUpdatePrompt />
                 <Toaster
                   position="top-right"
                   richColors
