@@ -127,6 +127,7 @@ describe('one-pipeline landing section', () => {
       'en',
       'es',
       'pt',
+      'hi',
     ])
     expect(locales.find((locale) => locale.id === 'en')?.mp4Url).toBe(english.mp4Url)
     expect(locales.find((locale) => locale.id === 'en')?.webmUrl).toBe('')
@@ -135,7 +136,23 @@ describe('one-pipeline landing section', () => {
       const locale = locales.find((entry) => entry.id === id)
       if (id === 'en' || id === 'es' || id === 'pt') {
         expect(locale?.available).toBe(true)
+        expect(locale?.webmUrl).toBe('')
         expect(locale?.mp4Url).toBe(videoUrl(TWO_MODES_VIDEO_BLOB_PATHS[id]))
+        continue
+      }
+      if (id === 'hi') {
+        expect(locale?.available).toBe(true)
+        expect(locale?.webmUrl).toBe('/landing/two-modes/friction-hi.webm')
+        expect(locale?.mp4Url).toBe('/landing/two-modes/friction-hi.mp4')
+        expect(locale?.src).toBe('/landing/two-modes/friction-hi.mp4')
+        expect(
+          twoModesVideoSources({
+            imageUrl: '',
+            posterUrl: '',
+            webmUrl: locale.webmUrl,
+            mp4Url: locale.mp4Url,
+          }).map((source) => source.type)
+        ).toEqual(['video/webm', 'video/mp4'])
         continue
       }
       expect(locale?.available).toBe(false)
