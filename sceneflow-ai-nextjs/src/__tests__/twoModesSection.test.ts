@@ -116,9 +116,8 @@ describe('one-pipeline landing section', () => {
     const english = TWO_MODES_MEDIA.comparison
     expect(english.imageUrl).toBe('')
     expect(english.posterUrl).toBe('/landing/two-modes/comparison.webp')
-    expect(english.webmUrl).toBe('')
-    expect(english.mp4Url).toBe(videoUrl('Front Page/You Direct (English).mp4'))
-    expect(english.mp4Url).toContain('You%20Direct%20(English).mp4')
+    expect(english.webmUrl).toBe('/landing/two-modes/friction-en.webm')
+    expect(english.mp4Url).toBe('/landing/two-modes/friction-en.mp4')
     expect(getTwoModesMedia('comparison')).toEqual(english)
 
     const locales = getTwoModesVideoLocales()
@@ -133,17 +132,19 @@ describe('one-pipeline landing section', () => {
       'th',
     ])
     expect(locales.find((locale) => locale.id === 'en')?.mp4Url).toBe(english.mp4Url)
-    expect(locales.find((locale) => locale.id === 'en')?.webmUrl).toBe('')
+    expect(locales.find((locale) => locale.id === 'en')?.webmUrl).toBe(
+      '/landing/two-modes/friction-en.webm'
+    )
     for (const id of VIDEO_LOCALE_ORDER) {
       expect(TWO_MODES_VIDEO_BLOB_PATHS[id]).toBe(twoModesVideoBlobPath(id))
       const locale = locales.find((entry) => entry.id === id)
-      if (id === 'en' || id === 'es' || id === 'pt') {
+      if (id === 'es' || id === 'pt') {
         expect(locale?.available).toBe(true)
         expect(locale?.webmUrl).toBe('')
         expect(locale?.mp4Url).toBe(videoUrl(TWO_MODES_VIDEO_BLOB_PATHS[id]))
         continue
       }
-      if (id === 'hi' || id === 'zh' || id === 'ar' || id === 'th') {
+      if (id === 'en' || id === 'hi' || id === 'zh' || id === 'ar' || id === 'th') {
         expect(locale?.available).toBe(true)
         expect(locale?.webmUrl).toBe(`/landing/two-modes/friction-${id}.webm`)
         expect(locale?.mp4Url).toBe(`/landing/two-modes/friction-${id}.mp4`)
@@ -163,6 +164,7 @@ describe('one-pipeline landing section', () => {
       expect(locale?.mp4Url).toBe('')
       expect(locale?.webmUrl).toBe('')
     }
+    expect(twoModesVideoBlobPath('en')).toBe('demo/The Friction (English).mp4')
     expect(twoModesVideoBlobPath('es')).toBe('The Friction (Spanish).mp4')
     expect(twoModesVideoBlobPath('pt')).toBe('The Friction (Portuguese).mp4')
     expect(twoModesVideoBlobPath('hi')).toBe('The Friction (Hindi).mp4')
