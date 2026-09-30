@@ -129,6 +129,7 @@ describe('one-pipeline landing section', () => {
       'pt',
       'hi',
       'zh',
+      'ar',
     ])
     expect(locales.find((locale) => locale.id === 'en')?.mp4Url).toBe(english.mp4Url)
     expect(locales.find((locale) => locale.id === 'en')?.webmUrl).toBe('')
@@ -141,7 +142,7 @@ describe('one-pipeline landing section', () => {
         expect(locale?.mp4Url).toBe(videoUrl(TWO_MODES_VIDEO_BLOB_PATHS[id]))
         continue
       }
-      if (id === 'hi' || id === 'zh') {
+      if (id === 'hi' || id === 'zh' || id === 'ar') {
         expect(locale?.available).toBe(true)
         expect(locale?.webmUrl).toBe(`/landing/two-modes/friction-${id}.webm`)
         expect(locale?.mp4Url).toBe(`/landing/two-modes/friction-${id}.mp4`)
