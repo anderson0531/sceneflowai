@@ -1,9 +1,9 @@
 /**
  * Media for the section under the hero.
  * The comparison slot is a dubbed background: WebM first when present, then MP4.
- * English, Spanish, and Portuguese play Blob masters. Hindi plays a 1080p WebM
- * (MP4 fallback) encoded from the Blob master. Other locales stay unavailable
- * until their files land.
+ * English, Spanish, and Portuguese play Blob masters. Hindi and Chinese play a
+ * 1080p WebM (MP4 fallback) encoded from the Blob master. Other locales stay
+ * unavailable until their files land.
  */
 
 import {
@@ -70,11 +70,11 @@ export function twoModesVideoBlobPath(locale: VideoLocaleId): string {
 }
 
 /** Locales whose video is published. Others render as disabled "Soon" pills. */
-const PRODUCED_LOCALES = new Set<VideoLocaleId>(['en', 'es', 'pt', 'hi'])
+const PRODUCED_LOCALES = new Set<VideoLocaleId>(['en', 'es', 'pt', 'hi', 'zh'])
 
 /**
- * 1080p encodes shipped with the app. Hindi was transcoded from
- * `The Friction (Hindi).mp4` on Blob (4K master, ~87MB).
+ * 1080p encodes shipped with the app. Hindi and Chinese were transcoded from
+ * their 4K Blob masters (`The Friction (Hindi).mp4`, `The Friction (Chinese).mp4`).
  */
 const LOCAL_ENCODED_MEDIA: Partial<
   Record<VideoLocaleId, { webmUrl: string; mp4Url: string }>
@@ -82,6 +82,10 @@ const LOCAL_ENCODED_MEDIA: Partial<
   hi: {
     webmUrl: '/landing/two-modes/friction-hi.webm',
     mp4Url: '/landing/two-modes/friction-hi.mp4',
+  },
+  zh: {
+    webmUrl: '/landing/two-modes/friction-zh.webm',
+    mp4Url: '/landing/two-modes/friction-zh.mp4',
   },
 }
 
