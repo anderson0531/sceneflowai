@@ -11,26 +11,31 @@ if (!fs.existsSync(outputDir)) {
 }
 
 async function generateIcons() {
-  const { writeInfinityLogoPng } = await import('./lib/infinityLogoPng.mjs')
+  const { writeAppIconPng } = await import('./lib/infinityLogoPng.mjs')
 
-  console.log('Generating app icons from the film-strip infinity (transparent)...')
+  console.log('Generating app icons from the film-strip infinity on navy...')
 
   for (const size of sizes) {
     const outputPath = path.join(outputDir, `icon-${size}x${size}.png`)
     try {
-      await writeInfinityLogoPng(outputPath, size, size)
+      await writeAppIconPng(outputPath, size)
       console.log(`Generated: icon-${size}x${size}.png`)
     } catch (error) {
       console.error(`Failed to generate ${size}x${size}:`, error.message)
     }
   }
 
-  try {
-    const appleIconPath = path.join(__dirname, '../public/apple-touch-icon.png')
-    await writeInfinityLogoPng(appleIconPath, 180, 180)
-    console.log('Generated: apple-touch-icon.png (180x180)')
-  } catch (error) {
-    console.error('Failed to generate apple-touch-icon:', error.message)
+  const extras = [
+    [path.join(__dirname, '../public/apple-touch-icon.png'), 180, 'apple-touch-icon.png'],
+    [path.join(__dirname, '../public/favicon-32.png'), 32, 'favicon-32.png'],
+  ]
+  for (const [outputPath, size, label] of extras) {
+    try {
+      await writeAppIconPng(outputPath, size)
+      console.log(`Generated: ${label} (${size}x${size})`)
+    } catch (error) {
+      console.error(`Failed to generate ${label}:`, error.message)
+    }
   }
 
   console.log('\nIcon generation complete.')
