@@ -4,8 +4,9 @@ import {
   IMAGE_CREDITS,
   TEXT_CREDITS,
   VIDEO_CREDITS,
-  getKlingCreditsForGeneration,
+  byokMediaCredits,
 } from '@/lib/credits/creditCosts'
+import { quoteGenerationCredits } from '@/lib/credits/quoteGenerationCredits'
 import {
   actualPlanningTargets,
   applyMethodDefaults,
@@ -32,13 +33,25 @@ describe('Production Budget Manager engine', () => {
     expect(getFrameUnitCost('final')).toBe(IMAGE_CREDITS.FAL_KLING_IMAGE)
   })
 
-  it('prices video Draft/Final with Kling std/pro proxy by duration', () => {
+  it('prices video Draft/Final with the Standard Omni quote', () => {
     expect(getVideoUnitCost('none', 10)).toBe(0)
     expect(getVideoUnitCost('draft', 10)).toBe(
-      getKlingCreditsForGeneration({ quality: 'std', durationSeconds: 10 })
+      quoteGenerationCredits({
+        kind: 'clip',
+        provider: 'google_vertex',
+        resolution: '720p',
+        durationSeconds: 10,
+        audio: true,
+      }).credits
     )
     expect(getVideoUnitCost('final', 10)).toBe(
-      getKlingCreditsForGeneration({ quality: 'pro', durationSeconds: 10 })
+      quoteGenerationCredits({
+        kind: 'clip',
+        provider: 'google_vertex',
+        resolution: '1080p',
+        durationSeconds: 10,
+        audio: true,
+      }).credits
     )
   })
 
@@ -73,7 +86,7 @@ describe('Production Budget Manager engine', () => {
     expect(PRODUCTION_METHODS.express_sprint.videoIterations).toBe(1.2)
   })
 
-  it('BYOK zeros frames/video/topaz but keeps intelligence', () => {
+  it('BYOK charges 20% of frames and video and keeps Topaz and intelligence', () => {
     const full = estimateProductionBudget({
       scenes: 5,
       beats: 10,
@@ -90,11 +103,13 @@ describe('Production Budget Manager engine', () => {
       byokExcludeMedia: true,
     })
 
-    expect(byok.frames.credits).toBe(0)
-    expect(byok.videos.credits).toBe(0)
-    expect(byok.topaz.credits).toBe(0)
+    expect(byok.frames.credits).toBe(byokMediaCredits(full.frames.credits))
+    expect(byok.videos.credits).toBe(byokMediaCredits(full.videos.credits))
+    expect(byok.topaz.credits).toBe(full.topaz.credits)
     expect(byok.intelligence.credits).toBe(full.intelligence.credits)
-    expect(byok.plannedTotal).toBe(full.intelligence.credits)
+    expect(byok.plannedTotal).toBe(
+      byok.frames.credits + byok.videos.credits + byok.topaz.credits + byok.intelligence.credits
+    )
   })
 
   it('intelligence package matches AR + script + optimize + refine', () => {

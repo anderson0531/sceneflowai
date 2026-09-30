@@ -75,6 +75,12 @@ export function calculateBYOKCredits(standardCredits: number): number {
   return Math.max(1, Math.ceil(standardCredits * BYOK_PLATFORM_FEE_PERCENT));
 }
 
+/** 20% platform fee for a still or clip total. Zero stays zero. */
+export function byokMediaCredits(standardCredits: number): number {
+  if (!(standardCredits > 0)) return 0
+  return Math.max(1, Math.ceil(standardCredits * BYOK_PLATFORM_FEE_PERCENT))
+}
+
 /**
  * Get the appropriate credit cost based on BYOK status.
  * The platform fee applies only to reference, still, and clip generations,

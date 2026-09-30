@@ -21,6 +21,7 @@ import {
   estimateStorageSize,
   PLATFORM_OVERHEAD_COSTS,
   calculateModerationCost,
+  byokMediaCredits,
 } from './creditCosts';
 
 import {
@@ -131,7 +132,7 @@ export interface FullProjectParameters {
 }
 
 export interface ProjectCostOptions {
-  /** When true, image + video credits are excluded from the budget total (BYOK). */
+  /** When true, image and video credits are the 20% BYOK platform fee. */
   byokExcludeMedia?: boolean;
 }
 
@@ -380,10 +381,11 @@ export function calculateDetailedProjectCost(
   const totalTakes = totalSegments * safeParams.scenes.takesPerSegment;
   const videoCreditsRaw = totalTakes * clipEstimate.creditsEach;
 
+  const billedVideoCredits = byokExcludeMedia ? byokMediaCredits(videoCreditsRaw) : videoCreditsRaw
   const video: CategoryCost = {
-    credits: byokExcludeMedia ? 0 : videoCreditsRaw,
-    usdCost: (byokExcludeMedia ? 0 : videoCreditsRaw) / CREDIT_EXCHANGE_RATE,
-    excluded: byokExcludeMedia,
+    credits: billedVideoCredits,
+    usdCost: billedVideoCredits / CREDIT_EXCHANGE_RATE,
+    excluded: false,
     preExclusionCredits: videoCreditsRaw,
     items: [
       {
@@ -406,10 +408,11 @@ export function calculateDetailedProjectCost(
   const imageCreditsRaw = draftCredits + finalCredits + headshotCredits;
   const totalImages = draftFrameQty + finalQty + headshotQty;
 
+  const billedImageCredits = byokExcludeMedia ? byokMediaCredits(imageCreditsRaw) : imageCreditsRaw
   const images: CategoryCost = {
-    credits: byokExcludeMedia ? 0 : imageCreditsRaw,
-    usdCost: (byokExcludeMedia ? 0 : imageCreditsRaw) / CREDIT_EXCHANGE_RATE,
-    excluded: byokExcludeMedia,
+    credits: billedImageCredits,
+    usdCost: billedImageCredits / CREDIT_EXCHANGE_RATE,
+    excluded: false,
     preExclusionCredits: imageCreditsRaw,
     items: [
       {

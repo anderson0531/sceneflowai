@@ -20,6 +20,7 @@ import {
   Video,
   Zap,
 } from 'lucide-react'
+import { byokMediaCredits } from '@/lib/credits/creditCosts'
 import {
   actualPlanningTargets,
   applyMethodDefaults,
@@ -396,17 +397,18 @@ export function ProductionBudgetManager({
     draftClipCost + topazMinutes(1, scope.segmentDurationSec) * TOPAZ_CREDITS_PER_MINUTE
   const finalPremium = Math.max(0, finalClipCost - draftClipCost)
   const upscaleGap = finalClipCost - upscaleClipCost
-  const shotCredits = byokExcludeMedia
-    ? 0
-    : frameIterations * frameUnit + (videoOn ? videoIterations * videoUnit : 0)
+  const billedFrameUnit = byokExcludeMedia ? byokMediaCredits(frameUnit) : frameUnit
+  const billedVideoUnit = byokExcludeMedia ? byokMediaCredits(videoUnit) : videoUnit
+  const shotCredits =
+    frameIterations * billedFrameUnit + (videoOn ? videoIterations * billedVideoUnit : 0)
   const rollup = useMemo(
     () =>
       rollupProductionBudget({
         scenes: scope.sceneActuals,
         frameIterations,
         videoIterations: videoOn ? videoIterations : 0,
-        frameUnit: byokExcludeMedia ? 0 : frameUnit,
-        videoUnit: byokExcludeMedia ? 0 : videoUnit,
+        frameUnit: billedFrameUnit,
+        videoUnit: billedVideoUnit,
         topazCredits: estimate.topaz.credits,
         intelligenceCredits: estimate.intelligence.credits,
         videoOn,
