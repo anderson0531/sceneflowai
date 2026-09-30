@@ -3,7 +3,9 @@ import GenerationJob, {
   type GenerationJobStatus,
   type GenerationJobType,
 } from '@/models/GenerationJob'
-import Notification from '@/models/Notification'
+import Notification, { type NotificationType } from '@/models/Notification'
+import { companionOpenPath } from '@/lib/companion/feedbackNotification'
+import { sendWebPushToUser } from '@/lib/notifications/webPush'
 import { inngest } from '@/inngest/client'
 import { sequelize } from '@/config/database'
 import { ACTIVE_JOB_STATUSES } from '@/lib/jobs/jobStatus'
@@ -182,7 +184,7 @@ export async function notifyUser(input: {
   userId: string
   projectId?: string
   jobId?: string
-  type: 'job_completed' | 'job_failed' | 'job_progress' | 'info'
+  type: NotificationType
   title: string
   message: string
   metadata?: Record<string, unknown>
@@ -198,6 +200,19 @@ export async function notifyUser(input: {
     metadata: input.metadata ?? null,
     read: false,
   })
+  try {
+    await sendWebPushToUser(input.userId, {
+      title: input.title,
+      message: input.message,
+      url: companionOpenPath({
+        type: input.type,
+        projectId: input.projectId,
+        metadata: input.metadata,
+      }),
+    })
+  } catch (error) {
+    console.error('[notifyUser] web push failed', error)
+  }
 }
 
 /** Mark stuck queued/processing jobs as failed so new work can start. */

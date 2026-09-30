@@ -15,6 +15,8 @@ const eslintConfig = [
     files: [
       'src/components/i18n/**/*.tsx',
       'src/components/layout/GlobalHeader.tsx',
+      'src/components/layout/MobileAppGate.tsx',
+      'src/components/mobile/MobileCompanion.tsx',
       'src/app/dashboard/settings/SettingsLayoutClient.tsx',
       'src/app/dashboard/settings/profile/page.tsx',
       // Blueprint Studio chrome. The wildcard stands in for [projectId]: in a

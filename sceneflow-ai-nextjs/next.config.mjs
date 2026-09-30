@@ -37,7 +37,7 @@ const nextConfig = {
     root: repoRoot,
   },
   reactStrictMode: true,
-  serverExternalPackages: ["ffmpeg-static", "ffprobe-static"],
+  serverExternalPackages: ["ffmpeg-static", "ffprobe-static", "web-push"],
   outputFileTracingIncludes: {
     "/api/sfx/generate-veo-audio": ["./node_modules/ffmpeg-static/ffmpeg"],
     "/api/tts/google/voice-clone": ["./node_modules/ffmpeg-static/ffmpeg"],

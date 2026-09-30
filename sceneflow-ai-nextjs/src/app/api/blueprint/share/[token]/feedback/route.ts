@@ -6,6 +6,8 @@ import { isBlueprintFeedbackAllowed } from '@/lib/blueprint/shareSettings'
 import { requireOwnerForSession, validateParticipant, sessionDbId } from '@/lib/blueprint/shareAuth'
 import type { BlueprintStructuredFeedbackInput } from '@/lib/blueprint/shareTypes'
 import { ensureCollabBlueprintFeedbackTable } from '@/lib/blueprint/ensureCollabBlueprintSchema'
+import { buildFeedbackNotification, feedbackExcerpt } from '@/lib/companion/feedbackNotification'
+import { notifyUser } from '@/lib/jobs/jobService'
 
 export const runtime = 'nodejs'
 
@@ -96,6 +98,25 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       sections: body.sections || null,
       freeformNotes: body.freeformNotes?.slice(0, 5000) || null,
     })
+
+    const ownerId = (session as { owner_user_id?: string }).owner_user_id
+    const projectId = (session as { project_id?: string }).project_id
+    if (ownerId && projectId) {
+      try {
+        await notifyUser(
+          buildFeedbackNotification({
+            userId: ownerId,
+            projectId,
+            source: 'blueprint',
+            reviewer: row.reviewerName,
+            excerpt: feedbackExcerpt(row.freeformNotes || 'New blueprint review'),
+            feedbackId: row.id,
+          })
+        )
+      } catch (error) {
+        console.error('[blueprint feedback] notify failed', error)
+      }
+    }
 
     return NextResponse.json({
       success: true,
