@@ -17,6 +17,32 @@ let migrationDone = false
 export async function ensurePricingAdminSchema(): Promise<void> {
   if (migrationDone) return
   await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS credit_pricing (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      provider VARCHAR(50) NOT NULL,
+      category VARCHAR(50) NOT NULL,
+      operation VARCHAR(100) NOT NULL,
+      model VARCHAR(100) NOT NULL,
+      metric VARCHAR(50) NOT NULL,
+      credits_per_unit INTEGER NOT NULL,
+      provider_cost_usd DECIMAL(10, 4) NOT NULL,
+      margin_percent DECIMAL(5, 2) NOT NULL DEFAULT 0,
+      is_active BOOLEAN NOT NULL DEFAULT true,
+      effective_from TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      effective_to TIMESTAMPTZ,
+      notes TEXT,
+      resolution VARCHAR(20),
+      has_audio BOOLEAN,
+      markup DECIMAL(6, 3) DEFAULT 1.800,
+      credits_override INTEGER,
+      source_url TEXT,
+      fetched_at TIMESTAMPTZ,
+      rate_status VARCHAR(20) NOT NULL DEFAULT 'published',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `)
+  await sequelize.query(`
     ALTER TABLE credit_pricing
       ADD COLUMN IF NOT EXISTS resolution VARCHAR(20),
       ADD COLUMN IF NOT EXISTS has_audio BOOLEAN,
