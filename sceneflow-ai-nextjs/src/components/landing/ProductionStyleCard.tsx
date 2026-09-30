@@ -123,7 +123,7 @@ function SolutionPillarBody({
           <AlertCircle className="h-4 w-4 shrink-0" />
           {frictionLabel}
         </div>
-        <p className="text-base leading-relaxed text-gray-300 md:text-sm">
+        <p className="text-sm leading-relaxed text-gray-300">
           <span className="font-semibold text-white">{pillar.frictionHeadline}</span>{' '}
           {pillar.friction}
         </p>
@@ -134,7 +134,7 @@ function SolutionPillarBody({
           <Sparkles className="h-4 w-4 shrink-0" />
           {solutionPillarLabel}
         </div>
-        <p className="text-base leading-relaxed text-gray-300 md:text-sm">
+        <p className="text-sm leading-relaxed text-gray-300">
           <span className="font-semibold text-white">{pillar.solutionHeadline}</span>{' '}
           {pillar.solution}
         </p>
@@ -205,7 +205,7 @@ export function ProductionStyleCard({
         </div>
         <div>
           <h3 className="mb-1 text-lg font-bold text-white">{card.title}</h3>
-          <p className="text-base text-gray-400 md:text-sm">{card.subtitle}</p>
+          <p className="text-sm text-gray-400">{card.subtitle}</p>
         </div>
       </div>
 
@@ -273,7 +273,7 @@ export function ProductionStyleCard({
                     className="overflow-hidden rounded-lg border border-gray-700/30 bg-gray-900/40 px-3 border-b-0"
                   >
                     <AccordionTrigger
-                      className={`py-3 text-base font-semibold hover:no-underline md:text-sm ${style.accent}`}
+                      className={`py-3 text-sm font-semibold hover:no-underline ${style.accent}`}
                     >
                       {pillar.title}
                     </AccordionTrigger>
@@ -290,7 +290,7 @@ export function ProductionStyleCard({
             ) : (
               <ol className="space-y-2">
                 {(card.workflow ?? []).map((step, stepIndex) => (
-                  <li key={step} className="flex items-start gap-2 text-base md:text-sm">
+                  <li key={step} className="flex items-start gap-2 text-sm">
                     <span
                       className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${style.badge}`}
                     >
@@ -309,7 +309,7 @@ export function ProductionStyleCard({
         <div className="mt-auto border-t border-white/10 pt-4">
           <div className="flex items-center gap-2">
             <Target className={`h-4 w-4 shrink-0 ${style.accent}`} />
-            <p className={`text-base font-medium md:text-sm ${style.accent}`}>{card.benefit}</p>
+            <p className={`text-sm font-medium ${style.accent}`}>{card.benefit}</p>
           </div>
         </div>
       ) : (

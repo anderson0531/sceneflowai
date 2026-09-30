@@ -67,7 +67,7 @@ function MobileAccordion({
             <div className="flex items-center gap-3 pr-4">
               <Clapperboard className="h-5 w-5 shrink-0 text-cyan-400" />
               <div className="min-w-0">
-                <p className="truncate text-base font-bold text-white md:text-sm">{card.title}</p>
+                <p className="truncate text-sm font-bold text-white">{card.title}</p>
                 <p className="mt-0.5 truncate text-xs text-gray-400">{card.badge}</p>
               </div>
             </div>
@@ -125,7 +125,7 @@ export default function ProductionExamplesSection() {
           <p className="mx-auto mt-4 max-w-3xl text-lg font-semibold text-white">
             {t('subtitleTagline')}
           </p>
-          <p className="mx-auto mt-3 max-w-3xl text-base text-gray-400 md:text-sm">{t('languagesBanner')}</p>
+          <p className="mx-auto mt-3 max-w-3xl text-sm text-gray-400">{t('languagesBanner')}</p>
         </motion.div>
 
         {/* Desktop: 2-column grid */}
@@ -148,12 +148,12 @@ export default function ProductionExamplesSection() {
           <div className="inline-flex flex-wrap items-center justify-center gap-4 rounded-xl border border-gray-700/50 bg-gray-800/50 p-4 md:gap-6">
             <div className="flex items-center gap-2">
               <Clapperboard className="h-5 w-5 shrink-0 text-purple-400" />
-              <span className="text-base text-gray-300 md:text-sm">{t('continuityNote')}</span>
+              <span className="text-sm text-gray-300">{t('continuityNote')}</span>
             </div>
             <div className="hidden h-6 w-px bg-gray-700 md:block" />
             <div className="flex items-center gap-2">
               <Target className="h-5 w-5 shrink-0 text-cyan-400" />
-              <span className="text-base text-gray-300 md:text-sm">{t('resonanceNote')}</span>
+              <span className="text-sm text-gray-300">{t('resonanceNote')}</span>
             </div>
             <div className="hidden h-6 w-px bg-gray-700 md:block" />
             <Button

@@ -143,7 +143,7 @@ function LearnMoreRow({
         <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
           {label}
         </div>
-        <p className="text-base leading-relaxed text-gray-300 md:text-sm">{text}</p>
+        <p className="text-gray-300 text-sm leading-relaxed">{text}</p>
       </div>
     </div>
   )
@@ -179,7 +179,7 @@ function FeatureDetail({
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 sm:p-6">
       <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
-      <p className="text-base leading-relaxed text-gray-400 md:text-sm">{feature.description}</p>
+      <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
 
       <div className="relative mt-4 aspect-video overflow-hidden rounded-xl border border-dashed border-slate-700 bg-slate-950/70">
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center">
@@ -421,7 +421,7 @@ export default function KeyFeaturesSection() {
                     setExpandedFeature(null)
                   }}
                   className={cn(
-                    'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-base transition-colors md:text-sm lg:col-start-1 lg:order-none',
+                    'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors lg:col-start-1 lg:order-none',
                     FEATURE_ROW_ORDER[index],
                     FEATURE_ROW_START[index],
                     isSelected

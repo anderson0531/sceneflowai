@@ -236,7 +236,7 @@ export function HeroSection() {
               </motion.h1>
 
               <motion.p
-                className="mt-6 max-w-3xl mx-auto text-lg text-gray-100"
+                className="mt-6 max-w-3xl mx-auto text-base sm:text-lg text-gray-100"
                 initial={{ opacity: 0, y: motionOffset ?? 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: motionDuration ?? 0.8, delay: prefersReducedMotion ? 0 : 0.25 }}
@@ -261,9 +261,9 @@ export function HeroSection() {
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-500/20 bg-cyan-500/10">
                           <Icon className="h-4 w-4 text-cyan-400" aria-hidden />
                         </div>
-                        <p className="text-base font-semibold text-white md:text-sm">{chip.label}</p>
+                        <p className="text-sm font-semibold text-white">{chip.label}</p>
                       </div>
-                      <p className="text-base text-gray-300 leading-relaxed md:text-sm">{chip.detail}</p>
+                      <p className="text-sm text-gray-300 leading-relaxed">{chip.detail}</p>
                     </div>
                   )
                 })}
@@ -292,7 +292,7 @@ export function HeroSection() {
                   {t('ctaSecondary')}
                 </Button>
                 {t('ctaSupportingLine') && (
-                  <p className="max-w-md text-base text-gray-300 md:text-sm">{t('ctaSupportingLine')}</p>
+                  <p className="max-w-md text-sm text-gray-300">{t('ctaSupportingLine')}</p>
                 )}
               </motion.div>
 

@@ -41,7 +41,7 @@ export function PricingTierGrid({
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-2">
             <div>
               <h3 className="text-xl font-bold text-white mb-1">{tPlans('explorer.name')}</h3>
-              <p className="text-base text-gray-400 md:text-sm">{tPlans('explorer.description')}</p>
+              <p className="text-sm text-gray-400">{tPlans('explorer.description')}</p>
             </div>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
@@ -63,7 +63,7 @@ export function PricingTierGrid({
           <div className="mt-4 pt-4 border-t border-gray-800">
             <div className="flex flex-wrap gap-3">
               {(tPlans.raw('explorer.features') as string[]).slice(0, 4).map((feature, idx) => (
-                <div key={idx} className="flex items-center gap-1.5 text-sm text-gray-400 md:text-xs">
+                <div key={idx} className="flex items-center gap-1.5 text-xs text-gray-400">
                   <Check className="w-3 h-3 text-amber-400" />
                   <span>{feature}</span>
                 </div>
@@ -99,7 +99,7 @@ export function PricingTierGrid({
 
             <div className="mb-6">
               <h3 className="text-xl font-bold text-white mb-1">{tPlans(`subscriptions.${planIndex}.name`)}</h3>
-              <p className="text-base text-gray-400 md:text-sm">{tPlans(`subscriptions.${planIndex}.description`)}</p>
+              <p className="text-sm text-gray-400">{tPlans(`subscriptions.${planIndex}.description`)}</p>
             </div>
 
             <div className="mb-6">
@@ -130,7 +130,7 @@ export function PricingTierGrid({
               {(tPlans.raw(`subscriptions.${planIndex}.features`) as string[]).map((feature, fIndex) => (
                 <div key={fIndex} className="flex items-start gap-3">
                   <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span className="text-base text-gray-300 md:text-sm">{feature}</span>
+                  <span className="text-sm text-gray-300">{feature}</span>
                 </div>
               ))}
             </div>

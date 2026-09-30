@@ -29,7 +29,7 @@ export function InfrastructureSection() {
           </div>
 
           <h2 className="mb-4 text-2xl font-bold text-white sm:text-3xl">{t('title')}</h2>
-          <p className="mx-auto mb-8 max-w-3xl text-lg text-gray-400">
+          <p className="mx-auto mb-8 max-w-3xl text-base text-gray-400 sm:text-lg">
             {t('description')}
           </p>
 
