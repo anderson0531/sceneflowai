@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { GlobalSidebarUnified } from '@/components/layout/GlobalSidebarUnified';
-import { MobileRestrictionGuard } from '@/components/layout/MobileRestrictionGuard';
+import { MobileAppGate } from '@/components/layout/MobileAppGate';
 import { PageTranslateControl } from '@/components/i18n/PageTranslateControl';
 import { isPublicRoute } from '@/constants/publicRoutes';
 import { allowsGoogleTranslate } from '@/config/i18n/gtSurfaces';
@@ -39,15 +39,12 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
     );
   }
 
-  // For all other pages, render with unified sidebar
-  // The sidebar automatically configures itself based on the current route
-  // MobileRestrictionGuard blocks access on screens < 1024px
+  // Phones get the companion. Wider screens keep the studio sidebar.
   return (
-    <MobileRestrictionGuard>
+    <MobileAppGate translateControl={translateControl}>
       <GlobalSidebarUnified>
         {children}
       </GlobalSidebarUnified>
-      {translateControl}
-    </MobileRestrictionGuard>
+    </MobileAppGate>
   );
 }

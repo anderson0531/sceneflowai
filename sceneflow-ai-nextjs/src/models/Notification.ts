@@ -1,7 +1,12 @@
 import { DataTypes, Model, Optional } from 'sequelize'
 import { sequelize } from '../config/database'
 
-export type NotificationType = 'job_completed' | 'job_failed' | 'job_progress' | 'info'
+export type NotificationType =
+  | 'job_completed'
+  | 'job_failed'
+  | 'job_progress'
+  | 'info'
+  | 'feedback'
 
 export interface NotificationAttributes {
   id: string

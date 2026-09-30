@@ -29,6 +29,7 @@ import PaymentWebhookEvent from './PaymentWebhookEvent'
 import UserIntegration from './UserIntegration'
 import GenerationJob from './GenerationJob'
 import Notification from './Notification'
+import PushSubscription from './PushSubscription'
 import ReferenceAsset from './ReferenceAsset'
 import ReferenceAssetLink from './ReferenceAssetLink'
 
@@ -223,6 +224,7 @@ export {
   UserIntegration,
   GenerationJob,
   Notification,
+  PushSubscription,
   ReferenceAsset,
   ReferenceAssetLink,
 }
@@ -260,6 +262,7 @@ export default {
   UserIntegration,
   GenerationJob,
   Notification,
+  PushSubscription,
   ReferenceAsset,
   ReferenceAssetLink,
 }

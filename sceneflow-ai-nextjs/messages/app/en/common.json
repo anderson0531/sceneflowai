@@ -119,6 +119,76 @@
     "scenes": "{count, plural, =1 {# scene} other {# scenes}}",
     "episodes": "{count, plural, =1 {# episode} other {# episodes}}",
     "credits": "{count, plural, =1 {# credit} other {# credits}}",
+    "creditsShort": "{count} cr",
     "languages": "{count, plural, =1 {# language} other {# languages}}"
+  },
+  "companion": {
+    "brand": "SceneFlow",
+    "signInTitle": "Sign in on your phone",
+    "signInBody": "Notifications, shared-link feedback, and your production plan are available here. Editing stays on a desktop or tablet.",
+    "desktopOnly": "Editing stays on a desktop or tablet.",
+    "creditsLabel": "Credit balance",
+    "enableAlerts": "Enable phone alerts",
+    "alertsOn": "Phone alerts are on",
+    "alertsHint": "Get a notification when feedback arrives or a job finishes.",
+    "tabs": {
+      "inbox": "Inbox",
+      "feedback": "Feedback",
+      "plan": "Plan"
+    },
+    "inbox": {
+      "empty": "No notifications yet",
+      "markAllRead": "Mark all read",
+      "activeJobs": "In progress",
+      "noJobs": "No jobs running",
+      "progress": "{progress}%"
+    },
+    "jobs": {
+      "scene_audio": "Scene audio",
+      "segment_frames": "Shot stills",
+      "segment_video": "Shot clips",
+      "scene_render": "Scene render",
+      "production_render": "Production render",
+      "reference_library": "Reference library",
+      "reference_express": "Reference express",
+      "kling_long_take": "Long take",
+      "script_analysis": "Script analysis",
+      "scene_polish": "Scene polish",
+      "blueprint_guided_revise": "Blueprint revise",
+      "queued": "Queued",
+      "processing": "Processing"
+    },
+    "feedback": {
+      "empty": "No shared-link feedback yet",
+      "allProjects": "All projects",
+      "filterLabel": "Project",
+      "blueprint": "Blueprint",
+      "screening": "Screening Room",
+      "resolve": "Mark resolved",
+      "resolved": "Resolved",
+      "open": "Open",
+      "inReview": "In review",
+      "score": "{score}/5"
+    },
+    "plan": {
+      "empty": "No projects yet",
+      "noSchedule": "No schedule saved",
+      "headline": "Plan: {amount}cr - {date}",
+      "amountOnly": "Plan: {amount}cr",
+      "used": "Used {amount} cr",
+      "throughToday": "Planned through today {amount} cr",
+      "scenes": "{finished} of {planned} scenes",
+      "ahead": "Ahead",
+      "onPace": "On pace",
+      "behind": "Behind",
+      "under": "Under budget",
+      "onBudget": "On budget",
+      "over": "Over budget",
+      "upcoming": "Upcoming",
+      "noUpcoming": "No upcoming work days",
+      "chapters": "Chapter ends",
+      "back": "All projects",
+      "creditsOnDate": "{amount} cr"
+    }
   }
 }

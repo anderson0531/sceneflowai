@@ -6,6 +6,10 @@ import {
   updatePremiereFeedback,
 } from '@/lib/premiere/feedback'
 import { updatePremiereScreening } from '@/lib/premiere/screenings'
+import { buildFeedbackNotification, feedbackExcerpt } from '@/lib/companion/feedbackNotification'
+import { notifyUser } from '@/lib/jobs/jobService'
+import Project from '@/models/Project'
+import '@/models'
 
 export const dynamic = 'force-dynamic'
 
@@ -71,6 +75,26 @@ export async function POST(request: NextRequest) {
       latestFeedbackAt: summary.latestFeedbackAt,
       openItems: summary.openItems,
     })
+
+    try {
+      const project = await Project.findByPk(projectId)
+      const ownerId = project?.user_id
+      if (ownerId) {
+        await notifyUser(
+          buildFeedbackNotification({
+            userId: ownerId,
+            projectId,
+            source: 'screening',
+            reviewer: item.author,
+            excerpt: feedbackExcerpt(item.comment),
+            feedbackId: item.id,
+            screeningId,
+          })
+        )
+      }
+    } catch (notifyError) {
+      console.error('[Premiere Feedback] notify failed', notifyError)
+    }
 
     return NextResponse.json({ success: true, item, summary })
   } catch (error: any) {

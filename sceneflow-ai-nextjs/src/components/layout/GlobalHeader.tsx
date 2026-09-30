@@ -53,7 +53,7 @@ export function GlobalHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur sf-brand">
+      <header className="sticky top-0 z-50 hidden w-full border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur sf-brand lg:flex">
         <div className="w-full px-4 lg:px-8 h-16 flex items-center justify-between gap-4">
           {/* Left: Logo + Mobile Menu */}
           <div className="flex items-center gap-3">
