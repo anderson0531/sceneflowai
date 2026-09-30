@@ -8,6 +8,8 @@ import {
   Calculator,
   Check,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Clapperboard,
   Film,
   Image as ImageIcon,
@@ -968,7 +970,7 @@ export function ProductionBudgetManager({
                   className="rounded border border-slate-700 px-2 py-1"
                   aria-label={t('previousMonth')}
                 >
-                  ‹
+                  <ChevronLeft className="h-4 w-4" aria-hidden />
                 </button>
                 <span className="tabular-nums">{calendarMonth}</span>
                 <button
@@ -977,7 +979,7 @@ export function ProductionBudgetManager({
                   className="rounded border border-slate-700 px-2 py-1"
                   aria-label={t('nextMonth')}
                 >
-                  ›
+                  <ChevronRight className="h-4 w-4" aria-hidden />
                 </button>
               </div>
             </div>
