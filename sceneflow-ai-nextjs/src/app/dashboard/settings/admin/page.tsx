@@ -4,7 +4,9 @@ import { authOptions } from '@/lib/auth'
 import { isAdminEmail } from '@/lib/adminUtils'
 import { CreditGrantCard } from '@/components/admin/CreditGrantCard'
 import { CreditRecalculateCard } from '@/components/admin/CreditRecalculateCard'
+import { FinanceReportCard } from '@/components/admin/FinanceReportCard'
 import { LaunchEmailCard } from '@/components/admin/LaunchEmailCard'
+import { PricingRateCard } from '@/components/admin/PricingRateCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,6 +30,8 @@ export default async function AdminPage() {
 
       {/* Admin Function Cards */}
       <div className="grid grid-cols-1 gap-6">
+        <PricingRateCard />
+        <FinanceReportCard />
         <CreditGrantCard />
         <CreditRecalculateCard />
         <LaunchEmailCard />

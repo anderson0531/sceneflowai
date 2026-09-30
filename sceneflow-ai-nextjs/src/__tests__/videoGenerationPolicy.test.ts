@@ -7,7 +7,8 @@ import {
   resolveVideoGeneration,
   SCENEFLOW_VIDEO_KLING_MODEL,
 } from '@/lib/video/videoGenerationPolicy'
-import { VIDEO_CREDITS, getKlingCreditsForGeneration } from '@/lib/credits/creditCosts'
+import { getKlingCreditsForGeneration } from '@/lib/credits/creditCosts'
+import { quoteGenerationCredits } from '@/lib/credits/quoteGenerationCredits'
 import type { VideoGenerationConfig } from '@/components/vision/scene-production/types'
 
 const baseConfig: VideoGenerationConfig = {
@@ -120,10 +121,14 @@ describe('estimateVideoAgentCredits', () => {
     )
   })
 
-  it('uses Veo lite pricing for Draft Standard', () => {
-    expect(estimateVideoAgentCredits({ count: 3, quality: 'draft', mode: 'standard' })).toBe(
-      3 * VIDEO_CREDITS.VEO_LITE
-    )
+  it('uses Omni 720p pricing for Draft Standard', () => {
+    const per = quoteGenerationCredits({
+      kind: 'clip',
+      provider: 'google_vertex',
+      resolution: '720p',
+      durationSeconds: 10,
+    }).credits
+    expect(estimateVideoAgentCredits({ count: 3, quality: 'draft', mode: 'standard' })).toBe(3 * per)
   })
 })
 

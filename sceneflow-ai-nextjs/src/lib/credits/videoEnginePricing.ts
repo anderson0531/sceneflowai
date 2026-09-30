@@ -5,10 +5,10 @@
 
 import {
   getKlingCreditsForGeneration,
-  getVideoCredits,
   type VideoQuality,
 } from './creditCosts'
 import { getAggregatorCreditsForModel } from '@/lib/aggregator/modelRegistry'
+import { OMNI_MODEL_ID, quoteGenerationCredits } from './quoteGenerationCredits'
 
 export const SCENEFLOW_ENGINE_ID = 'sceneflow' as const
 
@@ -232,12 +232,20 @@ export function estimateVideoClipCredits(
   }
 
   if (alt.provider === 'vertex') {
-    const creditsEach = getVideoCredits(video.veoQuality)
-    const qualityLabel = video.veoQuality === 'max' ? '4K' : 'Fast'
+    const resolution = video.veoQuality === 'max' ? '4k' : '1080p'
+    const creditsEach = quoteGenerationCredits({
+      kind: 'clip',
+      provider: 'google_vertex',
+      model: OMNI_MODEL_ID,
+      resolution,
+      durationSeconds: duration,
+      audio: true,
+    }).credits
+    const qualityLabel = video.veoQuality === 'max' ? '4K' : '1080p'
     return {
       creditsEach,
-      label: `Veo Natural-Dialogue (${qualityLabel}) ${duration}s`,
-      providerLabel: 'Vertex / Veo',
+      label: `Omni Natural-Dialogue (${qualityLabel}) ${duration}s`,
+      providerLabel: 'Vertex / Omni',
     }
   }
 

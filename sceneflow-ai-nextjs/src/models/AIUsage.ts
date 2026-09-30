@@ -18,11 +18,12 @@ export interface AIUsageAttributes {
   charged_credits: number
   status: 'success' | 'error'
   error_code: string | null
+  meta: Record<string, unknown> | null
   created_at: Date
   updated_at: Date
 }
 
-export interface AIUsageCreationAttributes extends Optional<AIUsageAttributes, 'id' | 'created_at' | 'updated_at' | 'request_id' | 'error_code'> {}
+export interface AIUsageCreationAttributes extends Optional<AIUsageAttributes, 'id' | 'created_at' | 'updated_at' | 'request_id' | 'error_code' | 'meta'> {}
 
 export class AIUsage extends Model<AIUsageAttributes, AIUsageCreationAttributes> implements AIUsageAttributes {
   declare id: string
@@ -41,6 +42,7 @@ export class AIUsage extends Model<AIUsageAttributes, AIUsageCreationAttributes>
   declare charged_credits: number
   declare status: 'success' | 'error'
   declare error_code: string | null
+  declare meta: Record<string, unknown> | null
   declare created_at: Date
   declare updated_at: Date
 
@@ -121,6 +123,10 @@ AIUsage.init(
     },
     error_code: {
       type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    meta: {
+      type: DataTypes.JSONB,
       allowNull: true,
     },
     created_at: {

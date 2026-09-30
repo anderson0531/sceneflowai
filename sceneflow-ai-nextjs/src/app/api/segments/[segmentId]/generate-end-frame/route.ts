@@ -4,8 +4,8 @@ import { uploadImageToBlob } from '@/lib/storage/blob'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
+import { quoteAndCharge } from '@/lib/credits/chargeQuotedGeneration'
 import { CreditService } from '@/services/CreditService'
-import { trackCost } from '@/lib/credits/costTracking'
 import { buildPreVisEndFrameEditInstruction } from '@/lib/vision/framePromptBaseline'
 import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { mergeBeatFrameNegativePrompt } from '@/lib/character/sceneCharacterHeadshot'
@@ -114,18 +114,23 @@ export async function POST(
     console.log('[Generate End Frame] Successfully generated and uploaded:', endFrameUrl)
 
     try {
-      await CreditService.charge(userId, END_FRAME_CREDIT_COST, 'ai_usage', segmentId, {
-        operation: 'end_frame_generation',
+      const charged = await quoteAndCharge({
+        userId,
         segmentId,
-        aspectRatio,
-        mode: 'edit_from_start',
+        ref: segmentId,
+        quoteInput: {
+          kind: 'still',
+          imageCount: 1,
+          floorCredits: END_FRAME_CREDIT_COST,
+        },
+        meta: {
+          label: 'end_frame_generation',
+          segmentId,
+          aspectRatio,
+          mode: 'edit_from_start',
+        },
       })
-      console.log(`[Generate End Frame] Charged ${END_FRAME_CREDIT_COST} credits to user ${userId}`)
-
-      await trackCost(userId, 'end_frame_generation', END_FRAME_CREDIT_COST, {
-        imageCount: 1,
-        segmentId,
-      })
+      console.log(`[Generate End Frame] Charged ${charged.credits} credits to user ${userId}`)
     } catch (chargeError: unknown) {
       console.error('[Generate End Frame] Failed to charge credits:', chargeError)
     }

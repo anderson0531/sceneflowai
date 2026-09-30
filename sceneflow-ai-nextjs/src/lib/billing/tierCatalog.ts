@@ -41,7 +41,7 @@ export interface TierDefinition {
 export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
   explorer: {
     name: 'explorer',
-    displayName: 'Explorer',
+    displayName: 'Explorer — Demo',
     priceUsd: 9,
     credits: 750,
     isOneTime: true,
@@ -63,7 +63,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
       'Full platform access',
       'Email support',
     ],
-    marketingDescription: 'One-time purchase to try it out',
+    marketingDescription: 'Demo — one-time purchase to try a complete production',
     marketingFeatures: [
       'One-time purchase',
       '750 credits (never expire)',
@@ -77,7 +77,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
   },
   starter: {
     name: 'starter',
-    displayName: 'Starter',
+    displayName: 'Starter — Sandbox',
     priceUsd: 49,
     credits: 4500,
     isOneTime: false,
@@ -99,7 +99,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
       '1 voice clone',
       'Priority email support',
     ],
-    marketingDescription: 'For individual creators',
+    marketingDescription: 'Sandbox — for trying ideas before a real show',
     marketingFeatures: [
       'Full platform access',
       '4,500 credits/month included',
@@ -113,7 +113,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
   },
   pro: {
     name: 'pro',
-    displayName: 'Pro',
+    displayName: 'Pro — YouTuber',
     priceUsd: 149,
     credits: 15000,
     isOneTime: false,
@@ -137,7 +137,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
       '10 collaboration seats',
       'Priority support',
     ],
-    marketingDescription: 'For professional creators',
+    marketingDescription: 'YouTuber — recurring episodes and channel videos',
     marketingFeatures: [
       'Everything in Starter, plus:',
       '15,000 credits/month included',
@@ -155,7 +155,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
   },
   studio: {
     name: 'studio',
-    displayName: 'Studio',
+    displayName: 'Studio — Indie Filmmaker',
     priceUsd: 599,
     credits: 75000,
     isOneTime: false,
@@ -180,7 +180,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
       '50 collaboration seats',
       'Dedicated support',
     ],
-    marketingDescription: 'For teams & agencies',
+    marketingDescription: 'Indie Filmmaker — independent films and series',
     marketingFeatures: [
       'Everything in Pro, plus:',
       '75,000 credits/month included',

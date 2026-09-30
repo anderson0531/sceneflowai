@@ -8,8 +8,9 @@ import {
   getPersonGenerationForMode, 
   getNegativePromptForMode 
 } from '@/lib/vision/backdropGenerator'
-import { CREDIT_COSTS, getCreditCost } from '@/lib/credits/creditCosts'
+import { getCreditCost } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
+import { quoteAndCharge } from '@/lib/credits/chargeQuotedGeneration'
 import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 export const runtime = 'nodejs'
@@ -139,13 +140,15 @@ export async function POST(req: NextRequest) {
     // Charge credits after successful generation
     let newBalance: number | undefined
     try {
-      await CreditService.charge(
+      await quoteAndCharge({
         userId,
-        CREDIT_COST,
-        'ai_usage',
-        null,
-        { operation: 'backdrop_generation', mode, sceneNumber: sourceSceneNumber }
-      )
+        quoteInput: {
+          kind: 'still',
+          imageCount: 1,
+          floorCredits: CREDIT_COST,
+        },
+        meta: { label: 'backdrop_generation', mode, sceneNumber: sourceSceneNumber },
+      })
       console.log(`[Backdrop Generation] Charged ${CREDIT_COST} credits to user ${userId}`)
       const breakdown = await CreditService.getCreditBreakdown(userId)
       newBalance = breakdown.total_credits

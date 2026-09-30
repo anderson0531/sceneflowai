@@ -17,6 +17,7 @@ export type CreditProvider =
   | 'google_vertex'     // Imagen, Veo, Gemini via Vertex AI
   | 'google_genai'      // Gemini via consumer API
   | 'elevenlabs'        // TTS, SFX, Music
+  | 'kling'             // Direct Kling video
   | 'openai'            // DALL-E, GPT (fallback)
   | 'stability'         // Stable Diffusion (future)
   | 'runway'            // Runway Gen-2 (future)
@@ -35,6 +36,7 @@ export type CreditCategory =
 
 export type CreditMetric =
   | 'per_image'         // Per image generated
+  | 'per_second'        // Per second of video
   | 'per_video_8s'      // Per 8-second video clip
   | 'per_1k_chars'      // Per 1000 characters (TTS)
   | 'per_generation'    // Per generation (SFX, music)
@@ -56,12 +58,19 @@ export interface CreditPricingAttributes {
   effective_from: Date
   effective_to: Date | null
   notes: string | null           // Admin notes for price changes
+  resolution: string | null
+  has_audio: boolean | null
+  markup: number | null
+  credits_override: number | null
+  source_url: string | null
+  fetched_at: Date | null
+  rate_status: 'draft' | 'published'
   created_at: Date
   updated_at: Date
 }
 
 export interface CreditPricingCreationAttributes extends Optional<CreditPricingAttributes, 
-  'id' | 'margin_percent' | 'effective_to' | 'notes' | 'created_at' | 'updated_at'
+  'id' | 'margin_percent' | 'effective_to' | 'notes' | 'resolution' | 'has_audio' | 'markup' | 'credits_override' | 'source_url' | 'fetched_at' | 'rate_status' | 'created_at' | 'updated_at'
 > {}
 
 export class CreditPricing extends Model<CreditPricingAttributes, CreditPricingCreationAttributes> 
@@ -79,6 +88,13 @@ export class CreditPricing extends Model<CreditPricingAttributes, CreditPricingC
   declare effective_from: Date
   declare effective_to: Date | null
   declare notes: string | null
+  declare resolution: string | null
+  declare has_audio: boolean | null
+  declare markup: number | null
+  declare credits_override: number | null
+  declare source_url: string | null
+  declare fetched_at: Date | null
+  declare rate_status: 'draft' | 'published'
   declare created_at: Date
   declare updated_at: Date
 
@@ -194,6 +210,36 @@ CreditPricing.init(
     notes: {
       type: DataTypes.TEXT,
       allowNull: true,
+    },
+    resolution: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+    },
+    has_audio: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+    },
+    markup: {
+      type: DataTypes.DECIMAL(6, 3),
+      allowNull: true,
+      defaultValue: 1.8,
+    },
+    credits_override: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    source_url: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    fetched_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    rate_status: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      defaultValue: 'published',
     },
     created_at: {
       type: DataTypes.DATE,

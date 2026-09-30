@@ -8,6 +8,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { CreditService } from '@/services/CreditService'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
+import { quoteAndCharge } from '@/lib/credits/chargeQuotedGeneration'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -72,10 +73,15 @@ export async function POST(req: NextRequest) {
 
     let newBalance: number | undefined
     try {
-      await CreditService.charge(userId, CREDIT_COST, 'ai_usage', projectId || null, {
-        operation: 'enhance_character_reference',
-        characterId,
-        model: result.model,
+      await quoteAndCharge({
+        userId,
+        projectId: projectId || null,
+        quoteInput: {
+          kind: 'reference',
+          imageCount: 1,
+          floorCredits: CREDIT_COST,
+        },
+        meta: { label: 'enhance_character_reference', characterId, model: result.model },
       })
       const breakdown = await CreditService.getCreditBreakdown(userId)
       newBalance = breakdown.total_credits

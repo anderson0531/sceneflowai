@@ -8,8 +8,9 @@ import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { CREDIT_COSTS, getCreditCost } from '@/lib/credits/creditCosts'
+import { getCreditCost } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
+import { quoteAndCharge } from '@/lib/credits/chargeQuotedGeneration'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120  // Increased for new AI image models
@@ -122,13 +123,16 @@ export async function POST(request: NextRequest) {
     // Charge credits after successful generation
     let newBalance: number | undefined
     try {
-      await CreditService.charge(
+      await quoteAndCharge({
         userId,
-        CREDIT_COST,
-        'ai_usage',
         projectId,
-        { operation: 'scene_image_regenerate', sceneNumber, model: 'imagen-3' }
-      )
+        quoteInput: {
+          kind: 'still',
+          imageCount: 1,
+          floorCredits: CREDIT_COST,
+        },
+        meta: { label: 'scene_image_regenerate', sceneNumber, model: 'imagen-3' },
+      })
       console.log(`[Regenerate Scene] Charged ${CREDIT_COST} credits to user ${userId}`)
       const breakdown = await CreditService.getCreditBreakdown(userId)
       newBalance = breakdown.total_credits

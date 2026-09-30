@@ -10,7 +10,8 @@
  */
 
 import type { VideoGenerationConfig } from '@/components/vision/scene-production/types'
-import { VIDEO_CREDITS, getKlingCreditsForGeneration } from '@/lib/credits/creditCosts'
+import { getKlingCreditsForGeneration } from '@/lib/credits/creditCosts'
+import { OMNI_MODEL_ID, quoteGenerationCredits } from '@/lib/credits/quoteGenerationCredits'
 
 export type VideoGenerationQuality = 'draft' | 'final'
 export type VideoGenerationMode = 'standard' | 'creative'
@@ -110,7 +111,13 @@ export function estimateVideoAgentCredits(args: {
       })
     )
   }
-  const perClip =
-    policy.qualityTier === 'premium' ? VIDEO_CREDITS.VEO_FAST : VIDEO_CREDITS.VEO_LITE
+  const perClip = quoteGenerationCredits({
+    kind: 'clip',
+    provider: 'google_vertex',
+    model: OMNI_MODEL_ID,
+    resolution: policy.resolution,
+    durationSeconds,
+    audio: true,
+  }).credits
   return count * perClip
 }

@@ -1159,31 +1159,31 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow Studio and save up to 80% on platform credits.",
-      "savingsHighlight": "80% on platform credits",
+      "description": "Your API key can run reference, still, and clip generations. SceneFlow charges a 20% orchestration fee on those jobs. Hosted SceneFlow rates can be lower than a personal API account as platform volume grows.",
+      "savingsHighlight": "20% orchestration fee",
       "benefits": [
         {
-          "title": "80% SceneFlow Credit Savings",
-          "description": "Pay only a 20% platform fee for orchestration & tools"
+          "title": "References, stills, and clips",
+          "description": "BYOK applies only when your key actually runs those generations"
         },
         {
-          "title": "Leverage Corporate Plans",
-          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
+          "title": "Hosted rates can be lower",
+          "description": "SceneFlow platform pricing can undercut a personal Vertex or Kling account"
         },
         {
           "title": "Full Control",
-          "description": "Your keys, your billing, your cost management"
+          "description": "Your keys, your provider bill, plus a platform orchestration fee"
         }
       ],
       "supportedProviders": "Supported Providers",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "Imagen 4 & Veo 3.1",
+      "vertexDetail": "References, stills, and Omni clips",
       "elevenLabsName": "ElevenLabs",
       "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
-      "savingsLabel": "80% savings",
-      "onImagesVideo": "on images & video",
+      "savingsLabel": "20% fee",
+      "onImagesVideo": "on references, stills, and clips",
       "onVoiceover": "on voiceover",
-      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
+      "note": "The 20% fee is a SceneFlow orchestration charge. Provider usage bills to your account. SceneFlow-hosted generation can cost less than bringing a personal key."
     },
     "creditTopUps": {
       "title": "Need More Credits?",
@@ -1219,8 +1219,8 @@
       "voiceoverLabel": "Voiceover (minutes)",
       "byokTitle": "Bring Your Own Key (BYOK)",
       "byokBadge": "Pro & Studio",
-      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
-      "vertexToggle": "Vertex AI (Images & Video)",
+      "byokDescription": "Use your own key for references, stills, and clips. SceneFlow charges a 20% orchestration fee, and hosted rates can be lower than a personal API account.",
+      "vertexToggle": "Vertex AI (references, stills, and clips)",
       "elevenLabsToggle": "ElevenLabs (Voiceover)",
       "imageGeneration": "Image Generation",
       "videoGeneration": "Video Generation",
@@ -1232,7 +1232,7 @@
       "savePercent": "You save {percent}% on SceneFlow credits",
       "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
       "transparencyHighlight": "Full transparency:",
-      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
+      "byokDisclaimer": "BYOK Note: The platform fee applies only to reference, still, and clip generations that run on your key. SceneFlow-hosted model rates can be lower than an individual account.",
       "byokDisclaimerHighlight": "BYOK Note:",
       "presets": [
         {

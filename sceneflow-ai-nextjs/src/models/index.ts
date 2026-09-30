@@ -20,6 +20,7 @@ import CollabBlueprintFeedback from './CollabBlueprintFeedback'
 import SubscriptionTier from './SubscriptionTier'
 import RateCard from './RateCard'
 import CreditPricing from './CreditPricing'
+import PlatformInfraCost from './PlatformInfraCost'
 // Compliance Layer models
 import VoiceConsent from './VoiceConsent'
 import UserVoiceClone from './UserVoiceClone'
@@ -206,6 +207,7 @@ export {
   CreditLedger,
   AIUsage,
   CreditPricing,
+  PlatformInfraCost,
   CollabSession,
   CollabParticipant,
   CollabScore,
@@ -244,6 +246,7 @@ export default {
   CreditLedger,
   AIUsage,
   CreditPricing,
+  PlatformInfraCost,
   CollabSession,
   CollabParticipant,
   CollabScore,

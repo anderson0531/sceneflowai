@@ -4,7 +4,9 @@ import { DOLVideoRequest } from '@/services/DOL/VideoGenerationService';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { CreditService } from '@/services/CreditService';
-import { VIDEO_CREDITS, canUseVeoMax, type VideoQuality, type PlanTier } from '@/lib/credits/creditCosts';
+import { canUseVeoMax, TOP_UP_PACKS, type VideoQuality, type PlanTier } from '@/lib/credits/creditCosts';
+import { quoteAndCharge } from '@/lib/credits/chargeQuotedGeneration';
+import { resolveGenerationQuote } from '@/lib/credits/resolveGenerationQuote';
 
 // Helper to determine user's plan tier from credits
 async function getUserPlanTier(userId: string): Promise<PlanTier> {
@@ -47,7 +49,16 @@ export async function POST(request: NextRequest) {
 
     // 2. Determine video quality and credit cost
     const quality: VideoQuality = body.quality === 'max' ? 'max' : 'fast';
-    const creditCost = quality === 'max' ? VIDEO_CREDITS.VEO_QUALITY_4K : VIDEO_CREDITS.VEO_FAST;
+    const durationSeconds = Number(body.duration) || 6;
+    const preview = await resolveGenerationQuote({
+      kind: 'clip',
+      provider: 'google_vertex',
+      resolution: quality === 'max' ? '4k' : '1080p',
+      durationSeconds,
+      audio: true,
+      userKeyUsed: body.userKeyUsed === true,
+    });
+    const creditCost = preview.credits;
 
     // 3. Check plan restrictions for Veo Max
     if (quality === 'max') {
@@ -73,9 +84,9 @@ export async function POST(request: NextRequest) {
         required: creditCost,
         balance: breakdown.total_credits,
         quality,
-        suggestedTopUp: creditCost <= 2000 
-          ? { pack: 'quick_fix', name: 'Quick Fix', price: 25, credits: 2000 }
-          : { pack: 'scene_pack', name: 'Scene Pack', price: 60, credits: 6000 }
+        suggestedTopUp: creditCost <= TOP_UP_PACKS.quick_fix.credits
+          ? { pack: 'quick_fix', name: TOP_UP_PACKS.quick_fix.name, price: TOP_UP_PACKS.quick_fix.price, credits: TOP_UP_PACKS.quick_fix.credits }
+          : { pack: 'scene_pack', name: TOP_UP_PACKS.scene_pack.name, price: TOP_UP_PACKS.scene_pack.price, credits: TOP_UP_PACKS.scene_pack.credits }
       }, { status: 402 });
     }
 
@@ -105,14 +116,19 @@ export async function POST(request: NextRequest) {
 
     // 5. Charge credits after successful generation start
     try {
-      await CreditService.charge(
+      const charged = await quoteAndCharge({
         userId,
-        creditCost,
-        'ai_usage',
-        null,
-        { operation: quality === 'max' ? 'veo_max' : 'veo_fast', duration: body.duration || 6 }
-      );
-      creditsCharged = creditCost;
+        quoteInput: {
+          kind: 'clip',
+          provider: 'google_vertex',
+          resolution: quality === 'max' ? '4k' : '1080p',
+          durationSeconds,
+          audio: true,
+          userKeyUsed: body.userKeyUsed === true,
+        },
+        meta: { label: quality === 'max' ? 'veo_max' : 'veo_fast', duration: durationSeconds },
+      });
+      creditsCharged = charged.credits;
       console.log(`[DOL Video] Charged ${creditCost} credits (${quality}) to user ${userId}`);
     } catch (chargeError: any) {
       console.error('[DOL Video] Failed to charge credits:', chargeError);

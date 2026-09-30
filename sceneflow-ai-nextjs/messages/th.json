@@ -1164,7 +1164,7 @@
       "savingsHighlight": "รับเครดิตแพลตฟอร์ม 80%",
       "benefits": [
         {
-          "title": "80% SceneFlow Credit Savings",
+          "title": "References, stills, and clips",
           "description": "จ่ายค่าธรรมเนียมแพลตฟอร์มเพียง 20% สำหรับการออเคสเตรชั่นและเครื่องมือ"
         },
         {
@@ -1178,7 +1178,7 @@
       ],
       "supportedProviders": "ผู้ให้บริการที่สนับสนุน",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "Imagen 4 & Veo 3.1",
+      "vertexDetail": "References, stills, and Omni clips",
       "elevenLabsName": "ElevenLabs",
       "elevenLabsDetail": "การโคลนข้อความเป็นคำพูดและเสียงพูด",
       "savingsLabel": "ประหยัด 80%",

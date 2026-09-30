@@ -10,9 +10,11 @@
  * Usage: Call logProviderCost() after every AI API call to track actual costs
  */
 
-import { CreditLedger, AIUsage } from '@/models'
+import { Op } from 'sequelize'
+import { AIUsage } from '@/models'
 import { CREDIT_EXCHANGE_RATE, PROVIDER_COSTS_USD } from './creditCosts'
 import { getGeminiTextModel } from '@/lib/config/modelConfig'
+import { ensurePricingAdminSchema } from './rateCardStore'
 
 // =============================================================================
 // TYPES
@@ -44,6 +46,8 @@ export interface ProviderCostLog {
   // Metadata
   timestamp: Date
   requestId?: string
+  byok?: boolean
+  resolution?: string | null
 }
 
 export interface MarginAlert {
@@ -186,7 +190,8 @@ export async function logProviderCost(log: ProviderCostLog): Promise<void> {
   try {
     // Calculate margin
     log.marginPercent = calculateMargin(log.creditsCharged, log.providerCostUsd)
-    
+    await ensurePricingAdminSchema()
+
     // Log to AIUsage table (existing table, add cost fields to meta)
     await AIUsage.create({
       user_id: log.userId,
@@ -198,6 +203,8 @@ export async function logProviderCost(log: ProviderCostLog): Promise<void> {
       output_tokens: log.outputTokens || 0,
       cogs_usd: log.providerCostUsd,
       charged_credits: log.creditsCharged,
+      byok: Boolean(log.byok),
+      image_count: log.imageCount || 0,
       meta: {
         operation: log.operation,
         creditsCharged: log.creditsCharged,
@@ -209,6 +216,8 @@ export async function logProviderCost(log: ProviderCostLog): Promise<void> {
         sceneId: log.sceneId,
         segmentId: log.segmentId,
         requestId: log.requestId,
+        resolution: log.resolution ?? null,
+        byok: Boolean(log.byok),
       },
     } as any)
     
@@ -233,8 +242,8 @@ export async function logProviderCost(log: ProviderCostLog): Promise<void> {
  * Map operation names to AIUsage categories
  */
 function mapOperationToCategory(operation: string): 'text' | 'images' | 'tts' | 'video' | 'other' {
-  if (operation.includes('imagen') || operation.includes('frame')) return 'images'
-  if (operation.includes('veo') || operation.includes('video')) return 'video'
+  if (operation.includes('still') || operation.includes('imagen') || operation.includes('frame') || operation.includes('reference')) return 'images'
+  if (operation.includes('omni') || operation.includes('kling') || operation.includes('veo') || operation.includes('video')) return 'video'
   if (operation.includes('tts') || operation.includes('sfx') || operation.includes('music')) return 'tts'
   if (operation.includes('gemini') || operation.includes('script')) return 'text'
   return 'other'
@@ -251,7 +260,7 @@ export async function generateReconciliationReport(
   const usageRecords = await AIUsage.findAll({
     where: {
       created_at: {
-        [require('sequelize').Op.between]: [startDate, endDate],
+        [Op.between]: [startDate, endDate],
       },
     },
     raw: true,
@@ -270,8 +279,8 @@ export async function generateReconciliationReport(
   for (const record of usageRecords) {
     const meta = (record as any).meta || {}
     const operation = meta.operation || 'unknown'
-    const creditsCharged = meta.creditsCharged || 0
-    const providerCostUsd = Number((record as any).cost_usd) || 0
+    const creditsCharged = Number((record as any).charged_credits) || Number(meta.creditsCharged) || 0
+    const providerCostUsd = Number((record as any).cogs_usd) || 0
     
     totalCreditsCharged += creditsCharged
     totalProviderCostUsd += providerCostUsd
