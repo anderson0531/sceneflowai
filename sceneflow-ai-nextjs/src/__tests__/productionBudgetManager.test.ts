@@ -12,11 +12,13 @@ import {
   buildProductionBudgetParams,
   buildSceneSchedule,
   DEFAULT_FRAME_ITERATIONS,
+  DEFAULT_SCHEDULE_WEEKDAYS,
   DEFAULT_VIDEO_ITERATIONS,
   estimateProductionBudget,
   getFrameUnitCost,
   getVideoUnitCost,
   intelligencePackageCredits,
+  productionScheduleStatus,
   PRODUCTION_METHODS,
   readProjectBudgetScope,
   rollupProductionBudget,
@@ -424,5 +426,75 @@ describe('Production Budget Manager engine', () => {
     expect(byId.a.pinned).toBe(false)
     expect(byId.b.day).toBe(2)
     expect(byId.d.day).toBe(2)
+  })
+
+  it('places scenes on weekdays from a Monday start and keeps a pinned date', () => {
+    const weekdays = DEFAULT_SCHEDULE_WEEKDAYS
+    const built = buildSceneSchedule({
+      sceneIds: ['a', 'b', 'c', 'd'],
+      scenesPerDay: 2,
+      startDate: '2026-10-05',
+      weekdays,
+      sceneCredits: { a: 10, b: 10, c: 20, d: 5 },
+      chapters: [{ key: 'chapter-0', title: 'Chapter One', sceneIds: ['a', 'b', 'c', 'd'] }],
+    })
+
+    expect(built.entries.map((entry) => entry.date)).toEqual([
+      '2026-10-05',
+      '2026-10-05',
+      '2026-10-06',
+      '2026-10-06',
+    ])
+    expect(built.byDate.map((row) => row.cumulativeCredits)).toEqual([20, 45])
+    expect(built.masterEndDate).toBe('2026-10-06')
+    expect(built.chapterEnds).toEqual([
+      { key: 'chapter-0', title: 'Chapter One', date: '2026-10-06' },
+    ])
+
+    const rebuilt = buildSceneSchedule({
+      sceneIds: ['a', 'b', 'c', 'd'],
+      scenesPerDay: 2,
+      startDate: '2026-10-05',
+      weekdays,
+      pinned: [{ sceneId: 'c', date: '2026-10-05' }],
+      sceneCredits: { a: 10, b: 10, c: 20, d: 5 },
+    })
+    const byId = Object.fromEntries(rebuilt.entries.map((entry) => [entry.sceneId, entry]))
+    expect(byId.c).toMatchObject({ date: '2026-10-05', pinned: true })
+    expect(byId.a.date).toBe('2026-10-05')
+    expect(byId.a.pinned).toBe(false)
+    expect(rebuilt.byDate[rebuilt.byDate.length - 1].cumulativeCredits).toBe(45)
+  })
+
+  it('reports behind schedule when fewer scenes are finished than the plan through today', () => {
+    const built = buildSceneSchedule({
+      sceneIds: ['a', 'b', 'c', 'd'],
+      scenesPerDay: 1,
+      startDate: '2026-10-05',
+      weekdays: DEFAULT_SCHEDULE_WEEKDAYS,
+      sceneCredits: { a: 10, b: 10, c: 10, d: 10 },
+    })
+    const status = productionScheduleStatus({
+      entries: built.entries,
+      byDate: built.byDate,
+      finishedSceneIds: ['a'],
+      creditsUsed: 25,
+      today: '2026-10-07',
+    })
+
+    expect(built.entries.map((entry) => entry.date)).toEqual([
+      '2026-10-05',
+      '2026-10-06',
+      '2026-10-07',
+      '2026-10-08',
+    ])
+    expect(status).toMatchObject({
+      scenesPlanned: 3,
+      scenesFinished: 1,
+      schedulePace: 'behind',
+      plannedCredits: 30,
+      creditsUsed: 25,
+      spendPace: 'under',
+    })
   })
 })

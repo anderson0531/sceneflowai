@@ -25,12 +25,14 @@ import {
   buildSceneSchedule,
   DEFAULT_PRODUCTION_METHOD,
   DEFAULT_FRAME_ITERATIONS,
+  DEFAULT_SCHEDULE_WEEKDAYS,
   DEFAULT_VIDEO_ITERATIONS,
   estimateProductionBudget,
   getFrameUnitCost,
   getVideoUnitCost,
   parseCreditsBudgetParamsV2,
   PRODUCTION_METHODS,
+  productionScheduleStatus,
   readProjectBudgetScope,
   rollupProductionBudget,
   type FrameQuality,
@@ -55,6 +57,34 @@ export interface ProductionBudgetManagerProps {
     credits: number,
     budgetParams?: Record<string, unknown>
   ) => void | Promise<void>
+}
+
+const WEEKDAY_LABELS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
+
+function todayIso(): string {
+  const now = new Date()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${now.getFullYear()}-${month}-${day}`
+}
+
+function shiftMonth(monthKey: string, delta: number): string {
+  const [year, month] = monthKey.split('-').map(Number)
+  const date = new Date(Date.UTC(year, (month || 1) - 1 + delta, 1))
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+function monthCells(monthKey: string): Array<string | null> {
+  const [year, month] = monthKey.split('-').map(Number)
+  const first = new Date(Date.UTC(year, (month || 1) - 1, 1))
+  const days = new Date(Date.UTC(year, month || 1, 0)).getUTCDate()
+  const cells: Array<string | null> = Array.from({ length: first.getUTCDay() }, () => null)
+  for (let day = 1; day <= days; day += 1) {
+    cells.push(
+      `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    )
+  }
+  return cells
 }
 
 const METHOD_ORDER: ProductionMethodId[] = [
@@ -141,10 +171,16 @@ export function ProductionBudgetManager({
     Boolean(saved?.byokExcludeMedia ?? initialByokExcludeMedia)
   )
   const [isSaving, setIsSaving] = useState(false)
-  const [workDays, setWorkDays] = useState(saved?.schedule?.workDays ?? 5)
+  const [startDate, setStartDate] = useState(saved?.schedule?.startDate ?? todayIso())
+  const [weekdays, setWeekdays] = useState<boolean[]>(
+    saved?.schedule?.weekdays ?? [...DEFAULT_SCHEDULE_WEEKDAYS]
+  )
   const [scenesPerDay, setScenesPerDay] = useState(saved?.schedule?.scenesPerDay ?? 2)
   const [scheduleEntries, setScheduleEntries] = useState<SceneScheduleEntry[]>(
     saved?.schedule?.entries ?? []
+  )
+  const [calendarMonth, setCalendarMonth] = useState(
+    (saved?.schedule?.startDate ?? todayIso()).slice(0, 7)
   )
   const [openScenes, setOpenScenes] = useState<Record<string, boolean>>({})
 
@@ -235,6 +271,53 @@ export function ProductionBudgetManager({
     [scheduleEntries]
   )
   const daysUsed = scheduleEntries.reduce((max, entry) => Math.max(max, entry.day), 0)
+  const sceneCreditById = useMemo(() => {
+    const credits = new Map<string, number>()
+    for (const chapter of rollup.chapters) {
+      for (const scene of chapter.scenes) credits.set(scene.sceneId, scene.credits)
+    }
+    return credits
+  }, [rollup.chapters])
+  const scheduleTotals = useMemo(() => {
+    const dates = [
+      ...new Set(
+        scheduleEntries
+          .map((entry) => entry.date)
+          .filter((date): date is string => Boolean(date))
+      ),
+    ].sort()
+    let running = 0
+    return dates.map((date) => {
+      const sceneIds = scheduleEntries
+        .filter((entry) => entry.date === date)
+        .map((entry) => entry.sceneId)
+      const credits = sceneIds.reduce((sum, sceneId) => sum + (sceneCreditById.get(sceneId) ?? 0), 0)
+      running += credits
+      return { date, sceneIds, credits, cumulativeCredits: running }
+    })
+  }, [scheduleEntries, sceneCreditById])
+  const chapterEnds = useMemo(
+    () =>
+      rollup.chapters.flatMap((chapter) => {
+        const dates = chapter.scenes
+          .map((scene) => scheduleById.get(scene.sceneId)?.date)
+          .filter((date): date is string => Boolean(date))
+          .sort()
+        const date = dates[dates.length - 1]
+        return date ? [{ key: chapter.key, title: chapter.title, date }] : []
+      }),
+    [rollup.chapters, scheduleById]
+  )
+  const scheduleStatus = productionScheduleStatus({
+    entries: scheduleEntries,
+    byDate: scheduleTotals,
+    finishedSceneIds: rollup.chapters.flatMap((chapter) =>
+      chapter.scenes.filter((scene) => scene.finished).map((scene) => scene.sceneId)
+    ),
+    creditsUsed: scope.creditsUsed,
+    today: todayIso(),
+  })
+  const masterEndDate = scheduleTotals[scheduleTotals.length - 1]?.date
 
   const suggestionText = (id: SuggestionId): string => {
     switch (id) {
@@ -270,8 +353,10 @@ export function ProductionBudgetManager({
         byokExcludeMedia,
         segmentDurationSec: scope.segmentDurationSec,
         schedule: {
-          workDays,
+          workDays: Math.max(daysUsed, 1),
           scenesPerDay,
+          startDate,
+          weekdays,
           entries: scheduleEntries,
         },
       })
@@ -738,13 +823,17 @@ export function ProductionBudgetManager({
           <h3 className="text-sm font-medium text-white">{t('scheduleTitle')}</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="text-sm text-gray-300">
-              {t('workDays')}
+              {t('startDate')}
               <input
-                type="number"
-                min={1}
-                value={workDays}
-                onChange={(e) => setWorkDays(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
-                className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm tabular-nums text-white"
+                type="date"
+                value={startDate}
+                onChange={(e) => {
+                  const next = e.target.value
+                  if (!next) return
+                  setStartDate(next)
+                  setCalendarMonth(next.slice(0, 7))
+                }}
+                className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white"
               />
             </label>
             <label className="text-sm text-gray-300">
@@ -760,28 +849,76 @@ export function ProductionBudgetManager({
               />
             </label>
           </div>
+          <div>
+            <p className="mb-2 text-sm text-gray-300">{t('weekdays')}</p>
+            <div className="flex flex-wrap gap-1">
+              {WEEKDAY_LABELS.map((label, index) => (
+                <button
+                  key={label}
+                  type="button"
+                  aria-pressed={weekdays[index]}
+                  onClick={() =>
+                    setWeekdays((current) =>
+                      current.map((on, day) => (day === index ? !on : on))
+                    )
+                  }
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                    weekdays[index]
+                      ? 'bg-cyan-500/20 text-cyan-100'
+                      : 'bg-slate-800 text-gray-500'
+                  }`}
+                >
+                  {t(`weekday.${label}`)}
+                </button>
+              ))}
+            </div>
+          </div>
           <button
             type="button"
-            disabled={scope.sceneActuals.length === 0}
+            disabled={scope.sceneActuals.length === 0 || !weekdays.some(Boolean)}
             onClick={() => {
               const built = buildSceneSchedule({
                 sceneIds: scope.sceneActuals.map((scene) => scene.sceneId),
-                workDays,
                 scenesPerDay,
+                startDate,
+                weekdays,
                 pinned: scheduleEntries
                   .filter((entry) => entry.pinned)
-                  .map((entry) => ({ sceneId: entry.sceneId, day: entry.day })),
+                  .map((entry) => ({
+                    sceneId: entry.sceneId,
+                    day: entry.day,
+                    date: entry.date,
+                  })),
+                sceneCredits: Object.fromEntries(sceneCreditById),
+                chapters: rollup.chapters.map((chapter) => ({
+                  key: chapter.key,
+                  title: chapter.title,
+                  sceneIds: chapter.scenes.map((scene) => scene.sceneId),
+                })),
               })
               setScheduleEntries(built.entries)
+              if (built.endDate) setCalendarMonth(built.endDate.slice(0, 7))
             }}
             className="rounded-lg border border-slate-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-40"
           >
             {t('buildSchedule')}
           </button>
-          {scheduleEntries.length > 0 && daysUsed > workDays && (
-            <p className="text-xs text-amber-300">
-              {t('scheduleExtended', { days: daysUsed })}
+          {masterEndDate && (
+            <p className="text-sm text-gray-300">
+              {t('masterEnd', {
+                date: masterEndDate,
+                credits: formatCredits(scheduleTotals[scheduleTotals.length - 1]?.cumulativeCredits ?? 0),
+              })}
             </p>
+          )}
+          {chapterEnds.length > 0 && (
+            <ul className="space-y-1 text-xs text-gray-400">
+              {chapterEnds.map((chapter) => (
+                <li key={chapter.key}>
+                  {t('chapterEnd', { title: chapter.title, date: chapter.date })}
+                </li>
+              ))}
+            </ul>
           )}
           {scope.sceneActuals.length === 0 ? (
             <p className="text-sm text-gray-400">{t('noBeatsYet')}</p>
@@ -799,33 +936,113 @@ export function ProductionBudgetManager({
                       {entry?.pinned && <Pin className="h-3.5 w-3.5 text-cyan-300" aria-hidden />}
                     </span>
                     <label className="text-xs text-gray-400">
-                      {t('workDay')}
-                      <select
-                        value={entry?.day ?? ''}
+                      {t('sceneDate')}
+                      <input
+                        type="date"
+                        value={entry?.date ?? ''}
                         onChange={(e) => {
-                          const day = Number(e.target.value)
-                          if (!day) return
+                          const date = e.target.value
+                          if (!date) return
                           setScheduleEntries((prev) => {
                             const next = prev.filter((row) => row.sceneId !== scene.sceneId)
-                            next.push({ sceneId: scene.sceneId, day, pinned: true })
+                            next.push({ sceneId: scene.sceneId, day: entry?.day ?? 0, date, pinned: true })
                             return next
                           })
                         }}
                         className="ml-2 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-white"
-                      >
-                        <option value="">{t('unscheduled')}</option>
-                        {Array.from({ length: Math.max(daysUsed, workDays, entry?.day ?? 1) }, (_, index) => (
-                          <option key={index + 1} value={index + 1}>
-                            {index + 1}
-                          </option>
-                        ))}
-                      </select>
+                      />
                     </label>
                   </li>
                 )
               })}
             </ul>
           )}
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium text-white">{t('calendarTitle')}</h4>
+              <div className="flex items-center gap-2 text-sm text-gray-300">
+                <button
+                  type="button"
+                  onClick={() => setCalendarMonth((month) => shiftMonth(month, -1))}
+                  className="rounded border border-slate-700 px-2 py-1"
+                  aria-label={t('previousMonth')}
+                >
+                  ‹
+                </button>
+                <span className="tabular-nums">{calendarMonth}</span>
+                <button
+                  type="button"
+                  onClick={() => setCalendarMonth((month) => shiftMonth(month, 1))}
+                  className="rounded border border-slate-700 px-2 py-1"
+                  aria-label={t('nextMonth')}
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-gray-500">
+              {WEEKDAY_LABELS.map((label) => (
+                <div key={label}>{t(`weekday.${label}`)}</div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {monthCells(calendarMonth).map((date, index) => {
+                if (!date) return <div key={`empty-${index}`} />
+                const weekday = new Date(`${date}T00:00:00Z`).getUTCDay()
+                const isWorkday = weekdays[weekday]
+                const total = scheduleTotals.find((row) => row.date === date)
+                return (
+                  <div
+                    key={date}
+                    className={`min-h-[4rem] rounded-md border p-1 text-left ${
+                      isWorkday ? 'border-slate-700 bg-slate-800/70' : 'border-transparent bg-slate-950/40 text-gray-600'
+                    }`}
+                  >
+                    <div className="text-[11px] tabular-nums text-gray-400">{Number(date.slice(8))}</div>
+                    {(total?.sceneIds ?? []).slice(0, 2).map((sceneId) => (
+                      <div key={sceneId} className="truncate text-[10px] text-white">
+                        {scope.sceneActuals.find((scene) => scene.sceneId === sceneId)?.title}
+                      </div>
+                    ))}
+                    {total && (
+                      <div className="text-[10px] tabular-nums text-cyan-200">
+                        {formatCredits(total.cumulativeCredits)}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-700/60 p-3">
+            <h4 className="text-sm font-medium text-white">{t('statusTitle')}</h4>
+            {scheduleStatus ? (
+              <div className="mt-2 space-y-1 text-sm text-gray-300">
+                <p>
+                  {t('statusScenes', {
+                    finished: scheduleStatus.scenesFinished,
+                    planned: scheduleStatus.scenesPlanned,
+                  })}{' '}
+                  <span className={scheduleStatus.schedulePace === 'behind' ? 'text-amber-300' : 'text-cyan-200'}>
+                    {t(`pace.${scheduleStatus.schedulePace}`)}
+                  </span>
+                </p>
+                <p>
+                  {t('statusCredits', {
+                    used: formatCredits(scheduleStatus.creditsUsed),
+                    planned: formatCredits(scheduleStatus.plannedCredits),
+                  })}{' '}
+                  <span className={scheduleStatus.spendPace === 'over' ? 'text-amber-300' : 'text-cyan-200'}>
+                    {t(`spend.${scheduleStatus.spendPace}`)}
+                  </span>
+                </p>
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-gray-400">{t('statusEmpty')}</p>
+            )}
+          </div>
         </section>
 
         <div className="space-y-2">
