@@ -351,12 +351,12 @@
           {
             "icon": "stakeholderReview",
             "title": "Stakeholder review",
-            "description": "Share the treatment as a read-and-listen link. Collaborators hear the narration and see the same board you do. Their notes come back as guided revision, not a new document in another tool.",
+            "description": "Share the treatment as a read-and-listen link. Collaborators hear the narration and see the same board you do. Their notes come back as guided revision, not a new document in another tool. A new note notifies you, and you can read it on your phone.",
             "screenshot": "Share link",
             "learnMore": {
               "problem": "Feedback that arrives as a separate document has to be retyped into the treatment.",
-              "solution": "Stakeholder review shares a read-and-listen link. Collaborators hear the narration and see the same board.",
-              "outcome": "Their notes come back as guided revision on the board you already have."
+              "solution": "Stakeholder review shares a read-and-listen link. Collaborators hear the narration and see the same board. A new note notifies you, and you can read it on your phone.",
+              "outcome": "Their notes come back as guided revision on the board you already have. The studio stays on a desktop or tablet."
             }
           }
         ]
@@ -364,7 +364,7 @@
       {
         "id": "production-stage",
         "label": "Production Stage",
-        "promise": "Write the script, spend with your own keys and a budget, generate with locked references, mix the scene, and deploy languages, 4K, versions, and trailers.",
+        "promise": "Write the script, plan credits and the schedule in Production Planner, generate with locked references, mix the scene, and deploy languages, 4K, versions, and trailers. Check the plan and new notes on your phone.",
         "spend": {
           "label": "Spend",
           "features": [
@@ -381,13 +381,13 @@
             },
             {
               "icon": "budget",
-              "title": "Budget Manager",
-              "description": "Set a credit budget for the project and watch it move as audio, stills, and clips are generated. Guidance points at the cheap cuts first: draft frames, fewer generations, add-on credits when you need more runway. You see the overrun before the render, not after.",
-              "screenshot": "Budget panel",
+              "title": "Production Planner",
+              "description": "Set still and clip iterations per shot. Those targets roll up to the scene, the chapter, and the master. A start date and workdays build a dated schedule with cumulative credits, and finished scenes can reset the targets from actuals. Draft generation and dubbing are the recommended savings. On your phone, read pace, spend, and the finish date. Editing stays on a desktop or tablet.",
+              "screenshot": "Production Planner",
               "learnMore": {
-                "problem": "Credit overruns show up after the render, when the runway is already gone.",
-                "solution": "Budget Manager tracks a project credit budget as audio, stills, and clips are generated, and points at draft frames, fewer generations, or add-on credits first.",
-                "outcome": "You see the overrun before the render."
+                "problem": "A single first-take factor cannot tell you when the project finishes, or whether early scenes already cost more than you planned.",
+                "solution": "Production Planner sets still and clip iterations per shot, rolls them up to scene, chapter, and master, and schedules workdays so you can see credits by date. Reset the targets from scenes you have already finished. Draft generation and dubbing are the recommended savings.",
+                "outcome": "You see pace and spend against the plan, including on your phone, before the next render. Editing stays on a desktop or tablet."
               }
             }
           ]
@@ -575,12 +575,12 @@
           {
             "icon": "screeningCollab",
             "title": "Collaborate on the cut",
-            "description": "Share one link. Reviewers watch with real playback and leave notes on the picture. You are not exporting a rough file into email to collect feedback.",
+            "description": "Share one link. Reviewers watch with real playback and leave notes on the picture. You are not exporting a rough file into email to collect feedback. A written note notifies you, and you can read it on your phone.",
             "screenshot": "Shared review",
             "learnMore": {
               "problem": "Exporting a rough file into email is how notes get lost and versions fork.",
-              "solution": "Collaborate on the cut shares one link. Reviewers watch with real playback and leave notes on the picture.",
-              "outcome": "Feedback stays on the cut, in the player."
+              "solution": "Collaborate on the cut shares one link. Reviewers watch with real playback and leave notes on the picture. A written note notifies you, and you can read it on your phone.",
+              "outcome": "Feedback stays on the cut. The studio stays on a desktop or tablet."
             }
           },
           {
