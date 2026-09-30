@@ -97,6 +97,6 @@ export const SECTION_NARRATIONS: SectionNarration[] = [
     id: 'pricing',
     label: 'Pay for What You Create',
     script:
-      "SceneFlow pricing is designed for clarity, not surprise. One base plan gives you full platform access. Credits power AI generation — script, pre-vis, voice, and video — and you top up only when you need more. No hidden per-seat surprises, no paying for tools you do not use. Compare that to traditional pre-vis at thousands of dollars per project, or agency retainers that stretch timelines. With SceneFlow, you see credit spend at every workflow phase, cap budgets per project, and scale from a nine-dollar Explorer test flight to team plans with BYOK. Pay for what you create — and keep every dollar accountable.",
+      "SceneFlow pricing is designed for clarity, not surprise. One base plan gives you full platform access. Credits power AI generation — script, pre-vis, voice, and video — and you top up only when you need more. No hidden per-seat surprises, no paying for tools you do not use. Compare that to traditional pre-vis at thousands of dollars per project, or agency retainers that stretch timelines. With SceneFlow, Production Planner sets shot targets and a dated schedule, and you can check pace and spend on your phone. Scale from a nine-dollar Explorer test flight to team plans with BYOK. Pay for what you create — and keep every dollar accountable.",
   },
 ]
