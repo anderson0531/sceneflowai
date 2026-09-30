@@ -77,11 +77,11 @@ export function NotifyCapture({
           className
         )}
       >
-        <p className="inline-flex items-center gap-2 text-base font-semibold text-emerald-200 md:text-sm">
+        <p className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-200">
           <CheckCircle2 className="h-4 w-4" aria-hidden />
           {emailed ? t('successTitle') : t('confirmTitle')}
         </p>
-        <p className="text-base text-emerald-100/80 md:text-sm">
+        <p className="text-sm text-emerald-100/80">
           {emailed ? t('successBody') : t('confirmBody')}
         </p>
       </div>
@@ -90,10 +90,10 @@ export function NotifyCapture({
 
   return (
     <div className={cn('flex flex-col gap-2', alignment, className)}>
-      <label htmlFor={inputId} className="text-base font-semibold text-white md:text-sm">
+      <label htmlFor={inputId} className="text-sm font-semibold text-white">
         {t('heading')}
       </label>
-      <p className="max-w-md text-base text-gray-400 md:text-sm">{t('description')}</p>
+      <p className="max-w-md text-sm text-gray-400">{t('description')}</p>
       <form
         onSubmit={onSubmit}
         noValidate
@@ -139,7 +139,7 @@ export function NotifyCapture({
         </Button>
       </form>
       {error ? (
-        <p id={`${inputId}-error`} role="alert" className="text-base text-red-400 md:text-sm">
+        <p id={`${inputId}-error`} role="alert" className="text-sm text-red-400">
           {error}
         </p>
       ) : (

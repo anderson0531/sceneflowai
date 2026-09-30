@@ -72,7 +72,7 @@ export function TrustSafeguardSection() {
           {flowSteps.map((step, index) => (
             <div
               key={step.label}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-base md:text-sm"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-sm"
             >
               <span className="text-cyan-400 font-semibold">{step.label}</span>
               <span className="text-gray-400 hidden sm:inline">→</span>
@@ -98,10 +98,10 @@ export function TrustSafeguardSection() {
                 {tier.badge}
               </span>
               <h3 className="text-xl font-bold text-white mb-2">{tier.title}</h3>
-              <p className="mb-4 text-base leading-relaxed text-gray-400 md:text-sm">{tier.description}</p>
+              <p className="text-gray-400 text-sm leading-relaxed mb-4">{tier.description}</p>
               <ul className="space-y-2">
                 {tier.highlights.map((highlight) => (
-                  <li key={highlight} className="flex gap-2 text-base text-gray-300 md:text-sm">
+                  <li key={highlight} className="flex gap-2 text-sm text-gray-300">
                     <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
                     <span>{highlight}</span>
                   </li>
@@ -111,7 +111,7 @@ export function TrustSafeguardSection() {
           ))}
         </div>
 
-        <p className="mx-auto mb-8 max-w-3xl text-center text-base leading-relaxed text-gray-500 md:text-sm">
+        <p className="text-center text-gray-500 text-sm max-w-3xl mx-auto mb-8 leading-relaxed">
           {t('morNote')}
         </p>
 
