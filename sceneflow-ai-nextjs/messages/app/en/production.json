@@ -62,7 +62,7 @@
     "mergeDialogueNote": "All dialogue lines from duplicate characters will be assigned to the primary character.",
     "mergeCharacters": "Merge Characters",
     "hasVoice": "(has voice)",
-    "budgetTitle": "Production Budget Manager - {title}",
+    "budgetTitle": "Production Planner - {title}",
     "setBudget": "Set Budget",
     "budgetAmount": "Budget: {amount}",
     "importTranslation": "Import Translation",
@@ -147,7 +147,7 @@
     "budgetDescription": "Plan credit spend from your scenes and shots, track actuals, and forecast cost to complete."
   },
   "budgetManager": {
-    "title": "Production Budget Manager",
+    "title": "Production Planner",
     "subtitle": "Plan from fixed scenes and shots. Draft vs Final drives cost — provider choice stays creative.",
     "subtitleWithTitle": "Budget plan for {title}",
     "currentBalance": "Current Balance",
@@ -263,6 +263,23 @@
     "lineTopaz": "Topaz upscale",
     "lineIntelligence": "Intelligence",
     "excludedByok": "Excluded (BYOK)",
+    "tabs": {
+      "budget": "Budget Manager",
+      "schedule": "Schedule Manager",
+      "plan": "Plan",
+      "rollup": "Rollup",
+      "breakdown": "Breakdown",
+      "savings": "Savings",
+      "calendar": "Calendar",
+      "status": "Status"
+    },
+    "savingsLead": "Use lower-cost draft generations, and dub additional languages instead of generating a new clip for each language.",
+    "savingsPrevis": "Iterate and lock the script on pre-vis draft stills before any clip is generated.",
+    "savingsFinalWhenPublishing": "Generate a final-resolution clip only when that scene is being published. Pre-vis stays on draft. Final clips cost {gap} credits more each.",
+    "savingsTestDraft": "Test clip generations in draft. Start final generations only after the take is consistent.",
+    "savingsUpscale": "Upscaling a draft clip costs {upscale} credits. Generating it at final resolution costs {final}. Upscale saves {gap} credits per clip.",
+    "savingsUpscaleFinalCheaper": "Generating at final resolution costs {final} credits. Upscaling a draft costs {upscale}. Final generation saves {gap} credits per clip for this length.",
+    "savingsDub": "For each extra language, dub the locked clip instead of generating a new clip.",
     "suggestionsTitle": "Ways to lower cost",
     "suggestions": {
       "useAnimaticFirst": "Switch to Animatic First and confirm the story in Screening Room before generating video.",

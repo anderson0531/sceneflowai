@@ -33,6 +33,8 @@ import {
   getFrameUnitCost,
   getVideoUnitCost,
   parseCreditsBudgetParamsV2,
+  TOPAZ_CREDITS_PER_MINUTE,
+  topazMinutes,
   PRODUCTION_METHODS,
   productionScheduleStatus,
   readProjectBudgetScope,
@@ -40,7 +42,6 @@ import {
   type FrameQuality,
   type ProductionMethodId,
   type SceneScheduleEntry,
-  type SuggestionId,
   type VideoQuality,
 } from '@/lib/credits/productionBudgetManager'
 import { getProjectCreditsBudget } from '@/lib/credits/projectBudgetShared'
@@ -87,6 +88,42 @@ function monthCells(monthKey: string): Array<string | null> {
     )
   }
   return cells
+}
+
+type PrimaryTab = 'budget' | 'schedule'
+type BudgetSection = 'plan' | 'rollup' | 'breakdown' | 'savings'
+type ScheduleSection = 'plan' | 'calendar' | 'status'
+
+function TabRow({
+  tabs,
+  active,
+  onSelect,
+}: {
+  tabs: Array<{ id: string; label: string }>
+  active: string
+  onSelect: (id: string) => void
+}) {
+  return (
+    <div role="tablist" className="flex gap-1 overflow-x-auto">
+      {tabs.map((tab) => {
+        const selected = tab.id === active
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            onClick={() => onSelect(tab.id)}
+            className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium ${
+              selected ? 'bg-cyan-500/20 text-white' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            {tab.label}
+          </button>
+        )
+      })}
+    </div>
+  )
 }
 
 const METHOD_ORDER: ProductionMethodId[] = [
@@ -185,6 +222,9 @@ export function ProductionBudgetManager({
     (saved?.schedule?.startDate ?? todayIso()).slice(0, 7)
   )
   const [openScenes, setOpenScenes] = useState<Record<string, boolean>>({})
+  const [primaryTab, setPrimaryTab] = useState<PrimaryTab>('budget')
+  const [budgetSection, setBudgetSection] = useState<BudgetSection>('plan')
+  const [scheduleSection, setScheduleSection] = useState<ScheduleSection>('plan')
 
   useEffect(() => {
     setByokExcludeMedia(Boolean(saved?.byokExcludeMedia ?? initialByokExcludeMedia))
@@ -240,6 +280,12 @@ export function ProductionBudgetManager({
   const frameUnit = getFrameUnitCost(frameQuality)
   const videoUnit = getVideoUnitCost(videoQuality, scope.segmentDurationSec)
   const videoOn = videoQuality !== 'none'
+  const draftClipCost = getVideoUnitCost('draft', scope.segmentDurationSec)
+  const finalClipCost = getVideoUnitCost('final', scope.segmentDurationSec)
+  const upscaleClipCost =
+    draftClipCost + topazMinutes(1, scope.segmentDurationSec) * TOPAZ_CREDITS_PER_MINUTE
+  const finalPremium = Math.max(0, finalClipCost - draftClipCost)
+  const upscaleGap = finalClipCost - upscaleClipCost
   const shotCredits = byokExcludeMedia
     ? 0
     : frameIterations * frameUnit + (videoOn ? videoIterations * videoUnit : 0)
@@ -320,25 +366,6 @@ export function ProductionBudgetManager({
     today: todayIso(),
   })
   const masterEndDate = scheduleTotals[scheduleTotals.length - 1]?.date
-
-  const suggestionText = (id: SuggestionId): string => {
-    switch (id) {
-      case 'use_animatic_first':
-        return t('suggestions.useAnimaticFirst')
-      case 'stay_on_draft':
-        return t('suggestions.stayOnDraft')
-      case 'lower_frame_iterations':
-        return t('suggestions.lowerFrameIterations')
-      case 'lower_video_iterations':
-        return t('suggestions.lowerVideoIterations')
-      case 'disable_topaz':
-        return t('suggestions.disableTopaz')
-      case 'enable_byok':
-        return t('suggestions.enableByok')
-      default:
-        return id
-    }
-  }
 
   const handleSetBudget = async () => {
     if (!onSetBudget) return
@@ -476,6 +503,46 @@ export function ProductionBudgetManager({
           )}
         </div>
 
+        <TabRow
+          tabs={[
+            { id: 'budget', label: t('tabs.budget') },
+            { id: 'schedule', label: t('tabs.schedule') },
+          ]}
+          active={primaryTab}
+          onSelect={(id) => {
+            if (id === 'budget') {
+              setPrimaryTab('budget')
+              setBudgetSection('plan')
+            } else {
+              setPrimaryTab('schedule')
+              setScheduleSection('plan')
+            }
+          }}
+        />
+        <TabRow
+          tabs={
+            primaryTab === 'budget'
+              ? [
+                  { id: 'plan', label: t('tabs.plan') },
+                  { id: 'rollup', label: t('tabs.rollup') },
+                  { id: 'breakdown', label: t('tabs.breakdown') },
+                  { id: 'savings', label: t('tabs.savings') },
+                ]
+              : [
+                  { id: 'plan', label: t('tabs.plan') },
+                  { id: 'calendar', label: t('tabs.calendar') },
+                  { id: 'status', label: t('tabs.status') },
+                ]
+          }
+          active={primaryTab === 'budget' ? budgetSection : scheduleSection}
+          onSelect={(id) => {
+            if (primaryTab === 'budget') setBudgetSection(id as BudgetSection)
+            else setScheduleSection(id as ScheduleSection)
+          }}
+        />
+
+        {primaryTab === 'budget' && budgetSection === 'plan' && (
+        <>
         <label
           className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer ${
             byokExcludeMedia
@@ -692,7 +759,10 @@ export function ProductionBudgetManager({
             </div>
           </label>
         </div>
+        </>
+        )}
 
+        {primaryTab === 'budget' && budgetSection === 'rollup' && (
         <section className="space-y-3">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -820,7 +890,9 @@ export function ProductionBudgetManager({
             </div>
           )}
         </section>
+        )}
 
+        {primaryTab === 'schedule' && scheduleSection === 'plan' && (
         <section className="space-y-3">
           <h3 className="text-sm font-medium text-white">{t('scheduleTitle')}</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -959,7 +1031,10 @@ export function ProductionBudgetManager({
               })}
             </ul>
           )}
+        </section>
+        )}
 
+        {primaryTab === 'schedule' && scheduleSection === 'calendar' && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-medium text-white">{t('calendarTitle')}</h4>
@@ -1017,7 +1092,9 @@ export function ProductionBudgetManager({
               })}
             </div>
           </div>
+        )}
 
+        {primaryTab === 'schedule' && scheduleSection === 'status' && (
           <div className="rounded-xl border border-slate-700/60 p-3">
             <h4 className="text-sm font-medium text-white">{t('statusTitle')}</h4>
             {scheduleStatus ? (
@@ -1045,8 +1122,9 @@ export function ProductionBudgetManager({
               <p className="mt-2 text-sm text-gray-400">{t('statusEmpty')}</p>
             )}
           </div>
-        </section>
+        )}
 
+        {primaryTab === 'budget' && budgetSection === 'breakdown' && (
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-gray-300">{t('breakdown')}</h3>
           <div className="space-y-2">
@@ -1113,20 +1191,41 @@ export function ProductionBudgetManager({
             })}
           </div>
         </div>
+        )}
 
-        {estimate.suggestions.length > 0 && (
-          <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/50 space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-200">
-              <Lightbulb className="w-4 h-4 text-amber-300" />
-              {t('suggestionsTitle')}
+        {primaryTab === 'budget' && budgetSection === 'savings' && (
+          <div className="space-y-3 rounded-xl border border-slate-700/50 bg-slate-800/40 p-4">
+            <div className="flex items-start gap-2 text-sm font-medium text-white">
+              <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+              <p>{t('savingsLead')}</p>
             </div>
-            <ul className="space-y-1.5">
-              {estimate.suggestions.map((id) => (
-                <li key={id} className="text-xs text-gray-400 flex gap-2">
-                  <span className="text-amber-400/80">•</span>
-                  {suggestionText(id)}
+            <ul className="space-y-2 text-sm text-gray-300">
+              {videoOn && <li>{t('savingsPrevis')}</li>}
+              {videoQuality === 'final' && (
+                <li>{t('savingsFinalWhenPublishing', { gap: formatCredits(finalPremium) })}</li>
+              )}
+              {videoOn && (videoQuality === 'final' || videoIterations > 1) && (
+                <li>{t('savingsTestDraft')}</li>
+              )}
+              {videoOn && upscaleGap > 0 && (
+                <li>
+                  {t('savingsUpscale', {
+                    upscale: formatCredits(upscaleClipCost),
+                    final: formatCredits(finalClipCost),
+                    gap: formatCredits(upscaleGap),
+                  })}
                 </li>
-              ))}
+              )}
+              {videoOn && upscaleGap < 0 && (
+                <li>
+                  {t('savingsUpscaleFinalCheaper', {
+                    upscale: formatCredits(upscaleClipCost),
+                    final: formatCredits(finalClipCost),
+                    gap: formatCredits(Math.abs(upscaleGap)),
+                  })}
+                </li>
+              )}
+              {videoOn && <li>{t('savingsDub')}</li>}
             </ul>
           </div>
         )}
