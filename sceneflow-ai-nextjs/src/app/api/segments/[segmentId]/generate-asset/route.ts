@@ -14,11 +14,14 @@ import {
   KlingSafetyGuardBlockedError,
 } from '@/lib/video/generateSegmentVideo'
 import { runInVideoGenerationGate } from '@/lib/video/videoGenerationGate'
-import { getAggregatorCreditsForModel } from '@/lib/aggregator/modelRegistry'
+import { getAggregatorCreditsForModel, getAggregatorModel } from '@/lib/aggregator/modelRegistry'
 import { isAggregatorEnabled } from '@/lib/aggregator/config'
 import { buildAggregatorRouteProbeResult, buildRoutingTrace } from '@/lib/aggregator/routeProbe'
 import { CreditService } from '@/services/CreditService'
-import { VIDEO_CREDITS, getKlingCreditsForGeneration } from '@/lib/credits/creditCosts'
+import { IMAGE_CREDITS, VIDEO_CREDITS } from '@/lib/credits/creditCosts'
+import { logProviderCost } from '@/lib/credits/costTracking'
+import { quoteAndCharge } from '@/lib/credits/chargeQuotedGeneration'
+import { resolveGenerationQuote } from '@/lib/credits/resolveGenerationQuote'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { isBeatFirstPipelineEnabled, getSceneBeats } from '@/lib/script/beatMigration'
@@ -131,6 +134,8 @@ interface GenerateAssetRequest {
   useBeatFrameAsStart?: boolean
   /** When true, verify aggregator routing without generating video or charging credits. */
   routeProbe?: boolean
+  /** True only when this request ran on the user's own provider key. */
+  userKeyUsed?: boolean
 }
 
 export async function POST(
@@ -203,7 +208,9 @@ export async function POST(
       expressMode,
       useBeatFrameAsStart,
       routeProbe,
+      userKeyUsed: userKeyUsedBody,
     } = body
+    const userKeyUsed = userKeyUsedBody === true
 
     // Get user session for authentication
     const session = await getServerSession(authOptions)
@@ -511,6 +518,45 @@ export async function POST(
         }
       }
 
+      const referenceImageCount = referenceImages?.length ?? 0
+      const previewDuration = duration ?? 10
+      const previewQuote = resolvedVideoProvider === 'kling'
+        ? await resolveGenerationQuote({
+            kind: 'clip',
+            provider: 'kling',
+            model: klingModel,
+            resolution: klingQuality === 'std' ? '720p' : klingQuality === '4k' ? '4k' : resolution || '1080p',
+            durationSeconds: previewDuration,
+            audio: sound !== false,
+            referenceImageCount,
+            userKeyUsed,
+          })
+        : resolvedVideoProvider === 'vertex'
+          ? await resolveGenerationQuote({
+              kind: 'clip',
+              provider: 'google_vertex',
+              resolution: resolution || (qualityTier === 'premium' ? '1080p' : '720p'),
+              durationSeconds: previewDuration,
+              audio: true,
+              referenceImageCount,
+              userKeyUsed,
+            })
+          : null
+      const previewCredits = previewQuote
+        ? previewQuote.credits
+        : getAggregatorCreditsForModel(videoModel || '', previewDuration)
+      const hasPreviewCredits = await CreditService.ensureCredits(String(session.user.id), previewCredits)
+      if (!hasPreviewCredits) {
+        return NextResponse.json(
+          {
+            error: 'Insufficient credits',
+            code: 'INSUFFICIENT_CREDITS',
+            required: previewCredits,
+          },
+          { status: 402 }
+        )
+      }
+
       const videoResult = await runInVideoGenerationGate(() => generateSegmentVideoCore({
         segmentId,
         projectId,
@@ -592,56 +638,101 @@ export async function POST(
       effectiveModel = videoResult.effectiveAggregatorType
       upgradeLabel = videoResult.upgradeLabel
 
+      const billedDuration = requestedVideoDurationSeconds ?? duration ?? 10
+      const billedUserId = String(session.user.id)
+
       if (generationProvider === 'kling' && !videoResult.wasVeoFallback) {
-        const klingCredits = getKlingCreditsForGeneration({
-          model: videoResult.klingModel || klingModel,
-          quality: klingQuality || 'pro',
-          durationSeconds: requestedVideoDurationSeconds ?? duration ?? 10,
-        })
-        await CreditService.charge(String(session.user.id), klingCredits, 'ai_usage', projectId, {
-          operation: 'direct_kling_video',
+        await quoteAndCharge({
+          userId: billedUserId,
+          projectId,
           segmentId,
-          generationProvider: 'kling',
-          klingModel: videoResult.klingModel || klingModel,
+          quoteInput: {
+            kind: 'clip',
+            provider: 'kling',
+            model: videoResult.klingModel || klingModel,
+            resolution: klingQuality === 'std' ? '720p' : klingQuality === '4k' ? '4k' : resolution || '1080p',
+            durationSeconds: billedDuration,
+            audio: sound !== false,
+            referenceImageCount,
+            userKeyUsed,
+          },
+          meta: {
+            generationProvider: 'kling',
+            klingModel: videoResult.klingModel || klingModel,
+          },
         })
       }
 
       if (wasPolicyFallback && generationProvider !== 'kling') {
         const klingCredits =
-          (requestedVideoDurationSeconds ?? duration ?? 5) >= 8
+          billedDuration >= 8
             ? VIDEO_CREDITS.KLING_VIDEO_10S
             : VIDEO_CREDITS.KLING_VIDEO_5S
-        await CreditService.charge(String(session.user.id), klingCredits, 'ai_usage', projectId, {
-          operation:
-            generationProvider === 'kling' ? 'direct_kling_video' : 'fal_kling_video',
+        await CreditService.charge(billedUserId, klingCredits, 'ai_usage', projectId, {
+          operation: 'fal_kling_video',
           segmentId,
           generationProvider: generationProvider ?? 'fal',
+        })
+        await logProviderCost({
+          userId: billedUserId,
+          operation: 'fal_kling_video',
+          provider: 'sceneflow-ai',
+          model: 'fal-kling',
+          creditsCharged: klingCredits,
+          providerCostUsd: billedDuration >= 8 ? 1.1 : 0.65,
+          marginPercent: 0,
+          videoDurationSec: billedDuration,
+          projectId,
+          segmentId,
+          timestamp: new Date(),
         })
       }
 
       if (generationProvider === 'aggregator' && videoModel) {
         const creditsModelId = billingModelId ?? videoModel
-        const aggCredits = getAggregatorCreditsForModel(
-          creditsModelId,
-          requestedVideoDurationSeconds ?? duration ?? 8
-        )
-        await CreditService.charge(String(session.user.id), aggCredits, 'ai_usage', projectId, {
+        const aggCredits = getAggregatorCreditsForModel(creditsModelId, billedDuration)
+        const aggModel = getAggregatorModel(creditsModelId)
+        await CreditService.charge(billedUserId, aggCredits, 'ai_usage', projectId, {
           operation: 'aggregator_video',
           segmentId,
           videoModel: creditsModelId,
           generationProvider: 'aggregator',
           ...(modelUpgraded ? { modelUpgraded: true, selectedVideoModel: videoModel } : {}),
         })
+        await logProviderCost({
+          userId: billedUserId,
+          operation: 'aggregator_video',
+          provider: 'sceneflow-ai',
+          model: creditsModelId,
+          creditsCharged: aggCredits,
+          providerCostUsd: (aggModel?.costPerSecondUsd ?? 0.08) * Math.max(4, billedDuration),
+          marginPercent: 0,
+          videoDurationSec: billedDuration,
+          projectId,
+          segmentId,
+          timestamp: new Date(),
+        })
       }
 
       if (generationProvider === 'vertex' && !wasPolicyFallback) {
-        const vertexCredits =
-          qualityTier === 'premium' ? VIDEO_CREDITS.VEO_FAST : VIDEO_CREDITS.VEO_LITE
-        await CreditService.charge(String(session.user.id), vertexCredits, 'ai_usage', projectId, {
-          operation: 'vertex_video',
+        await quoteAndCharge({
+          userId: billedUserId,
+          projectId,
           segmentId,
-          generationProvider: 'vertex',
-          qualityTier: qualityTier || 'fast',
+          quoteInput: {
+            kind: 'clip',
+            provider: 'google_vertex',
+            model: responseVideoModel || undefined,
+            resolution: resolution || (qualityTier === 'premium' ? '1080p' : '720p'),
+            durationSeconds: billedDuration,
+            audio: true,
+            referenceImageCount,
+            userKeyUsed,
+          },
+          meta: {
+            generationProvider: 'vertex',
+            qualityTier: qualityTier || 'fast',
+          },
         })
       }
 
@@ -659,6 +750,23 @@ export async function POST(
         `segments/${segmentId}-${Date.now()}.png`
       )
       assetType = 'image'
+
+      try {
+        await quoteAndCharge({
+          userId: String(session.user.id),
+          projectId,
+          segmentId,
+          quoteInput: {
+            kind: 'still',
+            imageCount: 1,
+            floorCredits: IMAGE_CREDITS.IMAGEN_4,
+            userKeyUsed,
+          },
+          meta: { label: 'segment_still' },
+        })
+      } catch (chargeError: unknown) {
+        console.error('[Segment Asset Generation] Failed to charge still credits:', chargeError)
+      }
 
     } else {
       return NextResponse.json(

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { CreditService } from '@/services/CreditService'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
+import { quoteAndCharge } from '@/lib/credits/chargeQuotedGeneration'
 import {
   buildSceneCharacterHeadshotPrompt,
   generateAndUploadFullBodyWardrobe,
@@ -160,10 +161,15 @@ export async function POST(req: NextRequest) {
       const result = await generateAndUploadFullBodyWardrobe(fullBodyInput, blobPath)
 
       try {
-        await CreditService.charge(userId, CREDIT_COST, 'ai_usage', projectId || null, {
-          operation: 'character_full_body_wardrobe',
-          characterId,
-          characterName,
+        await quoteAndCharge({
+          userId,
+          projectId: projectId || null,
+          quoteInput: {
+            kind: 'reference',
+            imageCount: 1,
+            floorCredits: CREDIT_COST,
+          },
+          meta: { label: 'character_full_body_wardrobe', characterId, characterName },
         })
       } catch (chargeError: unknown) {
         console.error('[Scene Headshot] Failed to charge credits:', chargeError)
@@ -222,10 +228,15 @@ export async function POST(req: NextRequest) {
     const result = await generateAndUploadSceneCharacterHeadshot(headshotInput, blobPath)
 
     try {
-      await CreditService.charge(userId, CREDIT_COST, 'ai_usage', projectId || null, {
-        operation: 'scene_character_headshot',
-        characterId,
-        characterName,
+      await quoteAndCharge({
+        userId,
+        projectId: projectId || null,
+        quoteInput: {
+          kind: 'reference',
+          imageCount: 1,
+          floorCredits: CREDIT_COST,
+        },
+        meta: { label: 'scene_character_headshot', characterId, characterName },
       })
     } catch (chargeError: unknown) {
       console.error('[Scene Headshot] Failed to charge credits:', chargeError)

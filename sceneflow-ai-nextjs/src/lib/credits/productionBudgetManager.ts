@@ -1,8 +1,9 @@
 /**
  * Production Budget Manager — estimate engine.
  *
- * Plans credit spend from fixed scene/beat counts + Draft/Final resolution
- * (provider is not a budget factor). Reconciles against live actuals.
+ * Plans credit spend from fixed scene/beat counts + Draft/Final resolution.
+ * Video follows the default Standard charge: Omni 720p for Draft, Omni 1080p
+ * for Final. Reconciles against live actuals.
  */
 
 import {
@@ -10,8 +11,9 @@ import {
   IMAGE_CREDITS,
   TEXT_CREDITS,
   VIDEO_CREDITS,
-  getKlingCreditsForGeneration,
+  byokMediaCredits,
 } from '@/lib/credits/creditCosts'
+import { OMNI_MODEL_ID, quoteGenerationCredits } from '@/lib/credits/quoteGenerationCredits'
 import { getProjectCreditsUsed } from '@/lib/credits/projectBudgetShared'
 import { getSceneProductionStateFromMetadata } from '@/lib/final-cut/projectProductionState'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
@@ -116,10 +118,14 @@ export function getVideoUnitCost(
 ): number {
   if (quality === 'none') return 0
   const duration = Math.min(15, Math.max(3, Math.round(segmentDurationSec) || 10))
-  return getKlingCreditsForGeneration({
-    quality: quality === 'draft' ? 'std' : 'pro',
+  return quoteGenerationCredits({
+    kind: 'clip',
+    provider: 'google_vertex',
+    model: OMNI_MODEL_ID,
+    resolution: quality === 'draft' ? '720p' : '1080p',
     durationSeconds: duration,
-  })
+    audio: true,
+  }).credits
 }
 
 export function intelligencePackageCredits(scenes: number): number {
@@ -217,9 +223,9 @@ export function estimateProductionBudget(
     ? intelligencePackageCredits(scenes)
     : 0
 
-  const framesCredits = byok ? 0 : roundCredits(framesRaw)
-  const videosCredits = byok ? 0 : roundCredits(videosRaw)
-  const topazCredits = byok ? 0 : roundCredits(topazRaw)
+  const framesCredits = byok ? byokMediaCredits(roundCredits(framesRaw)) : roundCredits(framesRaw)
+  const videosCredits = byok ? byokMediaCredits(roundCredits(videosRaw)) : roundCredits(videosRaw)
+  const topazCredits = roundCredits(topazRaw)
   const intelligenceCredits = roundCredits(intelligenceRaw)
 
   const plannedTotal =
@@ -242,18 +248,13 @@ export function estimateProductionBudget(
         ? Math.max(videoIterations, observed)
         : videoIterations
 
-  const remainingFrameCredits = byok
-    ? 0
-    : roundCredits(remainingFrames * effectiveFrameIterations * frameUnit)
-  // For remaining videos: charge remaining beats × effective iterations × unit,
-  // but subtract takes already paid if we only count incomplete beats.
-  // Simpler: remaining beats still need effectiveVideoIterations takes each.
-  const remainingVideoCredits = byok
-    ? 0
-    : roundCredits(remainingVideos * effectiveVideoIterations * videoUnit)
-  const remainingTopaz = byok
-    ? 0
-    : input.topazEnabled && remainingVideos > 0
+  const remainingFrameStandard = roundCredits(remainingFrames * effectiveFrameIterations * frameUnit)
+  const remainingFrameCredits = byok ? byokMediaCredits(remainingFrameStandard) : remainingFrameStandard
+  // Remaining beats still need effectiveVideoIterations takes each.
+  const remainingVideoStandard = roundCredits(remainingVideos * effectiveVideoIterations * videoUnit)
+  const remainingVideoCredits = byok ? byokMediaCredits(remainingVideoStandard) : remainingVideoStandard
+  const remainingTopaz =
+    input.topazEnabled && remainingVideos > 0
       ? roundCredits(topazMinutes(remainingVideos, duration) * TOPAZ_CREDITS_PER_MINUTE)
       : 0
   // Intelligence is front-loaded; if already spent some credits, don't re-add full package
@@ -287,21 +288,20 @@ export function estimateProductionBudget(
   return {
     frames: {
       credits: framesCredits,
-      unitCost: frameUnit,
+      unitCost: byok ? byokMediaCredits(frameUnit) : frameUnit,
       quantity: frameQty,
-      excluded: byok,
     },
     videos: {
       credits: videosCredits,
-      unitCost: videoUnit,
+      unitCost: byok ? byokMediaCredits(videoUnit) : videoUnit,
       quantity: videoQty,
-      excluded: byok || input.videoQuality === 'none',
+      excluded: input.videoQuality === 'none',
     },
     topaz: {
       credits: topazCredits,
       unitCost: TOPAZ_CREDITS_PER_MINUTE,
       quantity: topazMins,
-      excluded: byok || !input.topazEnabled,
+      excluded: !input.topazEnabled,
     },
     intelligence: {
       credits: intelligenceCredits,

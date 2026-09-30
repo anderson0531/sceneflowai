@@ -38,8 +38,8 @@ import {
   recomposeCombinedCharacterRefsForCast,
   wardrobeExpectedFingerprint,
 } from '@/lib/character/combinedCharacterRef'
-import { CreditService } from '@/services/CreditService'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
+import { quoteAndCharge } from '@/lib/credits/chargeQuotedGeneration'
 
 const hasImage = (url?: string): boolean => Boolean(url && url.trim())
 
@@ -369,11 +369,20 @@ async function runWardrobeItem(input: {
   )
 
   try {
-    await CreditService.charge(userId, IMAGE_CREDITS.SCENE_CHARACTER_HEADSHOT, 'ai_usage', projectId, {
-      operation: 'character_full_body_wardrobe',
-      characterId: item.targetId,
-      characterName: character.name,
-      wardrobeId: wardrobe.id,
+    await quoteAndCharge({
+      userId,
+      projectId,
+      quoteInput: {
+        kind: 'reference',
+        imageCount: 1,
+        floorCredits: IMAGE_CREDITS.SCENE_CHARACTER_HEADSHOT,
+      },
+      meta: {
+        label: 'character_full_body_wardrobe',
+        characterId: item.targetId,
+        characterName: character.name,
+        wardrobeId: wardrobe.id,
+      },
     })
   } catch (chargeError: unknown) {
     console.error('[ReferenceExpress] Failed to charge wardrobe credits:', chargeError)

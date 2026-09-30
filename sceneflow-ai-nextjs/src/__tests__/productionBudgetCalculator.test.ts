@@ -4,7 +4,7 @@ import {
   DEFAULT_PROJECT_PARAMS,
   mergeProjectParameters,
 } from '@/lib/credits/projectCalculator'
-import { IMAGE_CREDITS, TEXT_CREDITS, BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
+import { IMAGE_CREDITS, TEXT_CREDITS, BLUEPRINT_CREDITS, byokMediaCredits } from '@/lib/credits/creditCosts'
 import { estimateVideoClipCredits, normalizeVideoParameters } from '@/lib/credits/videoEnginePricing'
 import { readFileSync } from 'fs'
 import { join } from 'path'
@@ -74,23 +74,27 @@ describe('Production Budget Management calculator', () => {
     expect(breakdown.video.items[0]?.creditsEach).toBe(clip.creditsEach)
   })
 
-  it('BYOK exclude-media zeros image and video but keeps intelligence and audio', () => {
+  it('BYOK charges 20% of image and video credits and keeps intelligence and audio', () => {
     const full = calculateDetailedProjectCost(DEFAULT_PROJECT_PARAMS)
     const byok = calculateDetailedProjectCost(DEFAULT_PROJECT_PARAMS, {
       byokExcludeMedia: true,
     })
 
-    expect(byok.images.credits).toBe(0)
-    expect(byok.video.credits).toBe(0)
-    expect(byok.images.excluded).toBe(true)
-    expect(byok.video.excluded).toBe(true)
+    expect(byok.images.credits).toBe(byokMediaCredits(full.images.credits))
+    expect(byok.video.credits).toBe(byokMediaCredits(full.video.credits))
+    expect(byok.images.excluded).toBe(false)
+    expect(byok.video.excluded).toBe(false)
     expect(byok.images.preExclusionCredits).toBe(full.images.credits)
     expect(byok.video.preExclusionCredits).toBe(full.video.credits)
     expect(byok.intelligence.credits).toBe(full.intelligence.credits)
     expect(byok.audio.credits).toBe(full.audio.credits)
-    expect(byok.total.credits).toBeLessThan(full.total.credits)
+    expect(byok.upscale.credits).toBe(full.upscale.credits)
     expect(byok.total.credits).toBe(
-      full.total.credits - full.images.credits - full.video.credits
+      full.total.credits -
+        full.images.credits -
+        full.video.credits +
+        byok.images.credits +
+        byok.video.credits
     )
   })
 

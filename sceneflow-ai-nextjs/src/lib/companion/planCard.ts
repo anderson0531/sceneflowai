@@ -16,6 +16,7 @@ import {
   type SpendPace,
 } from '@/lib/credits/productionBudgetManager'
 import { getProjectCreditsBudget, getProjectCreditsUsed } from '@/lib/credits/projectBudgetShared'
+import { byokMediaCredits } from '@/lib/credits/creditCosts'
 
 export interface CompanionPlanDate {
   date: string
@@ -93,8 +94,12 @@ export function buildCompanionPlanCard(args: {
     scenes: scope.sceneActuals,
     frameIterations,
     videoIterations: videoOn ? videoIterations : 0,
-    frameUnit: byokExcludeMedia ? 0 : getFrameUnitCost(frameQuality),
-    videoUnit: byokExcludeMedia ? 0 : getVideoUnitCost(videoQuality, scope.segmentDurationSec),
+    frameUnit: byokExcludeMedia
+      ? byokMediaCredits(getFrameUnitCost(frameQuality))
+      : getFrameUnitCost(frameQuality),
+    videoUnit: byokExcludeMedia
+      ? byokMediaCredits(getVideoUnitCost(videoQuality, scope.segmentDurationSec))
+      : getVideoUnitCost(videoQuality, scope.segmentDurationSec),
     topazCredits: estimate.topaz.credits,
     intelligenceCredits: estimate.intelligence.credits,
     videoOn,

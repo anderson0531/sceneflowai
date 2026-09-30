@@ -40,6 +40,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { CreditService } from '@/services/CreditService'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
+import { quoteAndCharge } from '@/lib/credits/chargeQuotedGeneration'
 import Project from '../../../../models/Project'
 import { ensureDatabaseConnection } from '../../../../config/database'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
@@ -904,13 +905,16 @@ async function postGenerateImage(req: NextRequest) {
           )
 
           try {
-            await CreditService.charge(
-              userId!,
-              IMAGE_CREDITS.FRAME_GENERATION,
-              'ai_usage',
-              projectId || null,
-              { operation: 'beat_end_frame', sceneIndex, beatIndex: effectiveBeatIndex }
-            )
+            await quoteAndCharge({
+              userId: userId!,
+              projectId: projectId || null,
+              quoteInput: {
+                kind: 'still',
+                imageCount: 1,
+                floorCredits: IMAGE_CREDITS.FRAME_GENERATION,
+              },
+              meta: { label: 'beat_end_frame', sceneIndex, beatIndex: effectiveBeatIndex },
+            })
           } catch (chargeError: unknown) {
             console.error('[Scene Image] Failed to charge end-frame credits:', chargeError)
           }
@@ -3429,21 +3433,23 @@ async function postGenerateImage(req: NextRequest) {
 
     // 3. Charge credits after successful generation
     try {
-      await CreditService.charge(
-        userId!,
-        CREDIT_COST,
-        'ai_usage',
-        projectId || null,
-        {
-          operation:
-            generationProvider === 'kling' ? 'kling_image_generate' : 'vertex_image_generate',
+      const charged = await quoteAndCharge({
+        userId: userId!,
+        projectId: projectId || null,
+        quoteInput: {
+          kind: 'still',
+          imageCount: 1,
+          floorCredits: CREDIT_COST,
+        },
+        meta: {
+          label: generationProvider === 'kling' ? 'kling_image_generate' : 'vertex_image_generate',
           sceneIndex,
           model: generationModelId,
           provider: generationProvider,
           stillPolicyMode: stillGenerationMode ?? 'auto',
-        }
-      )
-      creditsCharged = CREDIT_COST
+        },
+      })
+      creditsCharged = charged.credits
       console.log(`[Scene Image] Charged ${CREDIT_COST} credits to user ${userId}`)
     } catch (chargeError: any) {
       console.error('[Scene Image] Failed to charge credits:', chargeError)

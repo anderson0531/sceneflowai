@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { videoGenerationIntegrationService, VideoGenerationRequest } from '@/services/DOL/VideoGenerationIntegrationService';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { CREDIT_COSTS, getCreditCost, SUBSCRIPTION_PLANS } from '@/lib/credits/creditCosts';
 import { CreditService } from '@/services/CreditService';
+import { chargeQuotedGeneration } from '@/lib/credits/chargeQuotedGeneration';
+import { resolveGenerationQuote } from '@/lib/credits/resolveGenerationQuote';
 import User from '@/models/User';
 
 export async function POST(request: NextRequest) {
@@ -17,9 +18,25 @@ export async function POST(request: NextRequest) {
     const body: VideoGenerationRequest = await request.json();
     
     // Determine credit cost based on quality
-    const quality = body.generationSettings?.quality || 'fast';
-    const isVeoMax = quality === 'max' || quality === 'highest' || quality === 'veo_max';
-    const CREDIT_COST = isVeoMax ? getCreditCost('VEO_QUALITY_4K') : getCreditCost('VEO_FAST');
+    const quality = body.generationSettings?.quality || '1080p';
+    const isVeoMax = quality === '4K' || quality === '8K';
+    const sceneCount = body.sceneDirections?.length || 1;
+    const durationSeconds = Math.max(
+      1,
+      Math.round(
+        (body.sceneDirections || []).reduce((sum, scene) => sum + (Number(scene.duration) || 0), 0) /
+          sceneCount
+      ) || 8
+    );
+    const perClip = await resolveGenerationQuote({
+      kind: 'clip',
+      provider: 'google_vertex',
+      resolution: isVeoMax ? '4k' : '1080p',
+      durationSeconds,
+      audio: true,
+      userKeyUsed: (body as { userKeyUsed?: boolean }).userKeyUsed === true,
+    });
+    const CREDIT_COST = perClip.credits;
 
     // Veo Max tier restriction: block for trial and starter plans
     if (isVeoMax) {
@@ -82,19 +99,24 @@ export async function POST(request: NextRequest) {
       // Charge credits after successful generation
       let newBalance: number | undefined;
       try {
-        await CreditService.charge(
+        const charged = await chargeQuotedGeneration({
           userId,
-          totalCreditCost,
-          'ai_usage',
-          body.projectId,
-          { 
-            operation: isVeoMax ? 'veo_max_integrated' : 'veo_fast_integrated', 
-            clipCount, 
+          projectId: body.projectId,
+          quote: {
+            ...perClip,
+            credits: perClip.credits * clipCount,
+            standardCredits: perClip.standardCredits * clipCount,
+            providerUsd: perClip.providerUsd * clipCount,
+            cogsUsd: perClip.cogsUsd * clipCount,
+          },
+          meta: {
+            label: isVeoMax ? 'veo_max_integrated' : 'veo_fast_integrated',
+            clipCount,
             quality,
-            generationId: result.generationId
-          }
-        );
-        console.log(`[DOL Video] Charged ${totalCreditCost} credits (${CREDIT_COST} × ${clipCount}) to user ${userId}`);
+            generationId: result.generationId,
+          },
+        });
+        console.log(`[DOL Video] Charged ${charged.credits} credits (${CREDIT_COST} × ${clipCount}) to user ${userId}`);
         const breakdown = await CreditService.getCreditBreakdown(userId);
         newBalance = breakdown.total_credits;
       } catch (chargeError: any) {

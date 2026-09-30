@@ -10,7 +10,8 @@ import {
   normalizeVideoParameters,
 } from '@/lib/credits/videoEnginePricing'
 import { getVeoCostEstimate } from '@/lib/config/modelConfig'
-import { VIDEO_CREDITS } from '@/lib/credits/creditCosts'
+import { getKlingCreditsForGeneration } from '@/lib/credits/creditCosts'
+import { quoteGenerationCredits } from '@/lib/credits/quoteGenerationCredits'
 
 describe('videoEnginePricing', () => {
   it('charges Kling tiers per-second with cinematic > standard and ultra-4k > cinematic', () => {
@@ -41,19 +42,19 @@ describe('videoEnginePricing', () => {
     )
 
     expect(standard.creditsEach).toBe(
-      Math.round((VIDEO_CREDITS.KLING_V3_OMNI_STD_10S / 10) * duration)
+      getKlingCreditsForGeneration({ quality: 'std', durationSeconds: duration })
     )
     expect(cinematic.creditsEach).toBe(
-      Math.round((VIDEO_CREDITS.KLING_V3_OMNI_PRO_10S / 10) * duration)
+      getKlingCreditsForGeneration({ quality: 'pro', durationSeconds: duration })
     )
     expect(ultra4k.creditsEach).toBe(
-      Math.round((VIDEO_CREDITS.KLING_V3_OMNI_4K_10S / 10) * duration)
+      getKlingCreditsForGeneration({ quality: '4k', durationSeconds: duration })
     )
     expect(cinematic.creditsEach).toBeGreaterThan(standard.creditsEach)
     expect(ultra4k.creditsEach).toBeGreaterThan(cinematic.creditsEach)
   })
 
-  it('charges Veo natural-dialogue with flat per-clip credits', () => {
+  it('charges Omni natural-dialogue by duration and resolution', () => {
     const fast = estimateVideoClipCredits(
       normalizeVideoParameters({
         engine: 'natural-dialogue',
@@ -70,8 +71,22 @@ describe('videoEnginePricing', () => {
       })
     )
 
-    expect(fast.creditsEach).toBe(VIDEO_CREDITS.VEO_FAST)
-    expect(max.creditsEach).toBe(VIDEO_CREDITS.VEO_QUALITY_4K)
+    expect(fast.creditsEach).toBe(
+      quoteGenerationCredits({
+        kind: 'clip',
+        provider: 'google_vertex',
+        resolution: '1080p',
+        durationSeconds: 8,
+      }).credits
+    )
+    expect(max.creditsEach).toBe(
+      quoteGenerationCredits({
+        kind: 'clip',
+        provider: 'google_vertex',
+        resolution: '4k',
+        durationSeconds: 8,
+      }).credits
+    )
   })
 
   it('maps legacy veo_fast and veo_quality_4k params', () => {
@@ -86,8 +101,22 @@ describe('videoEnginePricing', () => {
     const normalizedMax = normalizeVideoParameters({ model: 'veo_quality_4k', segmentDuration: 8 })
 
     expect(normalizedFast.engine).toBe('natural-dialogue')
-    expect(estimateVideoClipCredits(normalizedFast).creditsEach).toBe(VIDEO_CREDITS.VEO_FAST)
-    expect(estimateVideoClipCredits(normalizedMax).creditsEach).toBe(VIDEO_CREDITS.VEO_QUALITY_4K)
+    expect(estimateVideoClipCredits(normalizedFast).creditsEach).toBe(
+      quoteGenerationCredits({
+        kind: 'clip',
+        provider: 'google_vertex',
+        resolution: '1080p',
+        durationSeconds: 8,
+      }).credits
+    )
+    expect(estimateVideoClipCredits(normalizedMax).creditsEach).toBe(
+      quoteGenerationCredits({
+        kind: 'clip',
+        provider: 'google_vertex',
+        resolution: '4k',
+        durationSeconds: 8,
+      }).credits
+    )
   })
 })
 
@@ -124,8 +153,8 @@ describe('calculateDetailedProjectCost engine-aware video', () => {
     )
 
     const clipCount = 2 * 2 * 2
-    const cinematicPerClip = Math.round((VIDEO_CREDITS.KLING_V3_OMNI_PRO_10S / 10) * duration)
-    const standardPerClip = Math.round((VIDEO_CREDITS.KLING_V3_OMNI_STD_10S / 10) * duration)
+    const cinematicPerClip = getKlingCreditsForGeneration({ quality: 'pro', durationSeconds: duration })
+    const standardPerClip = getKlingCreditsForGeneration({ quality: 'std', durationSeconds: duration })
 
     expect(cinematic.video.credits).toBe(clipCount * cinematicPerClip)
     expect(standard.video.credits).toBe(clipCount * standardPerClip)
@@ -164,7 +193,7 @@ describe('quick default budget from script-derived params', () => {
   it('defaults to SceneFlow cinematic when using DEFAULT_PROJECT_PARAMS', () => {
     const breakdown = calculateDetailedProjectCost(DEFAULT_PROJECT_PARAMS)
     const snappedDuration = 7
-    const perClip = Math.round((VIDEO_CREDITS.KLING_V3_OMNI_PRO_10S / 10) * snappedDuration)
+    const perClip = getKlingCreditsForGeneration({ quality: 'pro', durationSeconds: snappedDuration })
     const clipCount =
       DEFAULT_PROJECT_PARAMS.scenes.count *
       DEFAULT_PROJECT_PARAMS.scenes.segmentsPerScene *

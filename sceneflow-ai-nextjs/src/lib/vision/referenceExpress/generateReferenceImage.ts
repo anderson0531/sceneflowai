@@ -15,7 +15,7 @@
 import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibraryStorage'
 import { getCreditCost, IMAGE_CREDITS } from '@/lib/credits/creditCosts'
-import { CreditService } from '@/services/CreditService'
+import { quoteAndCharge } from '@/lib/credits/chargeQuotedGeneration'
 import { englishForModel } from '@/i18n/server/requestLocale'
 import {
   buildLocationBasePrompt,
@@ -152,13 +152,18 @@ export async function generateLocationReferenceImage(
     projectId || 'default'
   )
 
-  await CreditService.charge(userId, creditCost, 'ai_usage', null, {
-    provider: 'gemini',
-    category: 'images',
-    operation: `Location reference: ${locationName}`,
+  const charged = await quoteAndCharge({
+    userId,
+    projectId: projectId || null,
+    quoteInput: {
+      kind: 'reference',
+      imageCount: 1,
+      floorCredits: creditCost,
+    },
+    meta: { label: `Location reference: ${locationName}` },
   })
 
-  return { imageUrl, prompt, creditCost }
+  return { imageUrl, prompt, creditCost: charged.credits }
 }
 
 export type GenerateLocationVersionImageInput = GenerateLocationImageInput & {
@@ -249,13 +254,18 @@ export async function generateLocationVersionReferenceImage(
     projectId || 'default'
   )
 
-  await CreditService.charge(userId, creditCost, 'ai_usage', null, {
-    provider: 'gemini',
-    category: 'images',
-    operation: `Location version: ${locationName}`,
+  const charged = await quoteAndCharge({
+    userId,
+    projectId: projectId || null,
+    quoteInput: {
+      kind: 'reference',
+      imageCount: 1,
+      floorCredits: creditCost,
+    },
+    meta: { label: `Location version: ${locationName}` },
   })
 
-  return { imageUrl, prompt, creditCost }
+  return { imageUrl, prompt, creditCost: charged.credits }
 }
 
 // ---------------------------------------------------------------------------
@@ -333,7 +343,7 @@ export async function generateObjectReferenceImage(
     )
   }
 
-  const creditCost = getCreditCost('IMAGE_GENERATION')
+  let creditCost = getCreditCost('IMAGE_GENERATION')
 
   // Typed in the creator's language; the image model needs English.
   const prompt = await englishForModel(enteredPrompt, locale.storyLocale, [
@@ -379,11 +389,16 @@ export async function generateObjectReferenceImage(
 
   // A charge failure must not discard a generated image the user can still use.
   try {
-    await CreditService.charge(userId, creditCost, 'ai_usage', null, {
-      provider: 'gemini',
-      category: 'images',
-      operation: `Object reference: ${name}`,
+    const charged = await quoteAndCharge({
+      userId,
+      quoteInput: {
+        kind: 'reference',
+        imageCount: 1,
+        floorCredits: creditCost,
+      },
+      meta: { label: `Object reference: ${name}` },
     })
+    creditCost = charged.credits
   } catch (creditError) {
     console.error('[Key Props Generation] Credit charge failed:', creditError)
   }
@@ -488,13 +503,24 @@ export async function generateCastReferenceImage(
     }
   }
 
+  let chargedCredits = CAST_IMAGE_CREDIT_COST
   try {
-    await CreditService.charge(userId, CAST_IMAGE_CREDIT_COST, 'ai_usage', projectId || null, {
-      operation: 'character_identity_with_enhance',
-      characterId,
-      model: ENHANCE_IDENTITY_MODEL,
-      autoEnhanced,
+    const charged = await quoteAndCharge({
+      userId,
+      projectId: projectId || null,
+      quoteInput: {
+        kind: 'reference',
+        imageCount: 1,
+        floorCredits: CAST_IMAGE_CREDIT_COST,
+      },
+      meta: {
+        label: 'character_identity_with_enhance',
+        characterId,
+        model: ENHANCE_IDENTITY_MODEL,
+        autoEnhanced,
+      },
     })
+    chargedCredits = charged.credits
   } catch (chargeError: unknown) {
     console.error('[Character Image] Failed to charge credits:', chargeError)
   }
@@ -504,6 +530,6 @@ export async function generateCastReferenceImage(
     visionDescription,
     autoEnhanced,
     model: ENHANCE_IDENTITY_MODEL,
-    creditCost: CAST_IMAGE_CREDIT_COST,
+    creditCost: chargedCredits,
   }
 }

@@ -34,6 +34,7 @@ import {
   type PlanTier,
   canUseVeoMax,
   getVideoCredits,
+  TOP_UP_PACKS,
 } from './creditCosts'
 import { isProjectIdRef } from './projectBudgetShared'
 
@@ -338,13 +339,28 @@ interface TopUpSuggestion {
 }
 
 function getSuggestedTopUp(creditsNeeded: number): TopUpSuggestion {
-  if (creditsNeeded <= 2000) {
-    return { pack: 'quick_fix', name: 'Quick Fix', price: 25, credits: 2000 }
+  if (creditsNeeded <= TOP_UP_PACKS.quick_fix.credits) {
+    return {
+      pack: 'quick_fix',
+      name: TOP_UP_PACKS.quick_fix.name,
+      price: TOP_UP_PACKS.quick_fix.price,
+      credits: TOP_UP_PACKS.quick_fix.credits,
+    }
   }
-  if (creditsNeeded <= 6000) {
-    return { pack: 'scene_pack', name: 'Scene Pack', price: 60, credits: 6000 }
+  if (creditsNeeded <= TOP_UP_PACKS.scene_pack.credits) {
+    return {
+      pack: 'scene_pack',
+      name: TOP_UP_PACKS.scene_pack.name,
+      price: TOP_UP_PACKS.scene_pack.price,
+      credits: TOP_UP_PACKS.scene_pack.credits,
+    }
   }
-  return { pack: 'feature_boost', name: 'Feature Boost', price: 180, credits: 20000 }
+  return {
+    pack: 'feature_boost',
+    name: TOP_UP_PACKS.feature_boost.name,
+    price: TOP_UP_PACKS.feature_boost.price,
+    credits: TOP_UP_PACKS.feature_boost.credits,
+  }
 }
 
 // =============================================================================

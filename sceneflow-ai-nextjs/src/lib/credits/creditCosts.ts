@@ -17,6 +17,8 @@
  * - FFMPEG/GCP Render: ~$0.05/render
  */
 
+import { quoteGenerationCredits } from './quoteGenerationCredits'
+
 // =============================================================================
 // SCENECREDIT CURRENCY
 // =============================================================================
@@ -73,15 +75,25 @@ export function calculateBYOKCredits(standardCredits: number): number {
   return Math.max(1, Math.ceil(standardCredits * BYOK_PLATFORM_FEE_PERCENT));
 }
 
+/** 20% platform fee for a still or clip total. Zero stays zero. */
+export function byokMediaCredits(standardCredits: number): number {
+  if (!(standardCredits > 0)) return 0
+  return Math.max(1, Math.ceil(standardCredits * BYOK_PLATFORM_FEE_PERCENT))
+}
+
 /**
- * Get the appropriate credit cost based on BYOK status
- * 
- * @param standardCredits - The standard credit cost
- * @param hasBYOK - Whether the user is using their own API key
- * @returns The credit cost to charge
+ * Get the appropriate credit cost based on BYOK status.
+ * The platform fee applies only to reference, still, and clip generations,
+ * and only when the caller confirms the user's own key was used.
  */
-export function getEffectiveCredits(standardCredits: number, hasBYOK: boolean = false): number {
-  return hasBYOK ? calculateBYOKCredits(standardCredits) : standardCredits;
+export function getEffectiveCredits(
+  standardCredits: number,
+  hasBYOK: boolean = false,
+  kind?: 'reference' | 'still' | 'clip'
+): number {
+  if (!hasBYOK) return standardCredits
+  if (kind !== 'reference' && kind !== 'still' && kind !== 'clip') return standardCredits
+  return calculateBYOKCredits(standardCredits)
 }
 
 // =============================================================================
@@ -191,6 +203,7 @@ export function getKlingCreditsForGeneration(args: {
   quality?: KlingCreditQuality
   durationSeconds?: number
   operation?: 'video' | 'lipsync'
+  audio?: boolean
 }): number {
   const duration = Math.max(3, args.durationSeconds ?? 10)
   const quality = args.quality ?? 'pro'
@@ -200,18 +213,20 @@ export function getKlingCreditsForGeneration(args: {
     return duration >= 8 ? VIDEO_CREDITS.KLING_LIPSYNC_10S : Math.round(VIDEO_CREDITS.KLING_LIPSYNC_10S * 0.6)
   }
 
-  if (quality === '4k' || model.includes('4k')) {
-    return Math.max(VIDEO_GUARDRAIL_MIN_CREDITS_PER_8S, Math.round((VIDEO_CREDITS.KLING_V3_OMNI_4K_10S / 10) * duration))
-  }
-  if (quality === 'std') {
-    return Math.max(VIDEO_GUARDRAIL_MIN_CREDITS_PER_8S, Math.round((VIDEO_CREDITS.KLING_V3_OMNI_STD_10S / 10) * duration))
+  const usesOmniRate = quality === '4k' || model.includes('4k') || model.includes('v3') || model.includes('omni')
+  if (!usesOmniRate) {
+    return duration >= 8 ? VIDEO_CREDITS.KLING_VIDEO_10S : VIDEO_CREDITS.KLING_VIDEO_5S
   }
 
-  if (model.includes('v3-omni') || model.includes('v3')) {
-    return Math.max(VIDEO_GUARDRAIL_MIN_CREDITS_PER_8S, Math.round((VIDEO_CREDITS.KLING_V3_OMNI_PRO_10S / 10) * duration))
-  }
-
-  return duration >= 8 ? VIDEO_CREDITS.KLING_VIDEO_10S : VIDEO_CREDITS.KLING_VIDEO_5S
+  const resolution = quality === '4k' || model.includes('4k') ? '4k' : quality === 'std' ? '720p' : '1080p'
+  return quoteGenerationCredits({
+    kind: 'clip',
+    provider: 'kling',
+    model,
+    resolution,
+    durationSeconds: duration,
+    audio: args.audio !== false,
+  }).credits
 }
 
 export function getKlingLongTakeCredits(args: {
@@ -627,31 +642,34 @@ export const SUBSCRIPTION_PLANS = {
 
 export const TOP_UP_PACKS = {
   quick_fix: {
-    name: 'Quick Fix',
+    name: '$25 Add-on',
     price: 25,
     credits: 2000,
     costPerCredit: 0.0125,
     profitMargin: 0.40,
-    dailyLimit: 3, // Max purchases per day
-    description: '1-2 Quality (4K) finals or ~12 Fast drafts',
+    dailyLimit: null,
+    whopPlanEnvKey: 'WHOP_PLAN_ADDON_25',
+    description: '2,000 credits. Buy as often as you need.',
   },
   scene_pack: {
-    name: 'Scene Pack',
-    price: 60,
-    credits: 6000,
-    costPerCredit: 0.01,
+    name: '$100 Add-on',
+    price: 100,
+    credits: 9000,
+    costPerCredit: 0.0111,
     profitMargin: 0.35,
-    dailyLimit: 5,
-    description: '~40 Veo Fast scenes + revisions',
+    dailyLimit: null,
+    whopPlanEnvKey: 'WHOP_PLAN_ADDON_100',
+    description: '9,000 credits. Buy as often as you need.',
   },
   feature_boost: {
-    name: 'Feature Boost',
-    price: 180,
-    credits: 20000,
-    costPerCredit: 0.009,
+    name: '$250 Add-on',
+    price: 250,
+    credits: 25000,
+    costPerCredit: 0.01,
     profitMargin: 0.30,
-    dailyLimit: 10,
-    description: 'Complete a major movie sequence',
+    dailyLimit: null,
+    whopPlanEnvKey: 'WHOP_PLAN_ADDON_250',
+    description: '25,000 credits. Buy as often as you need.',
   },
 } as const;
 
@@ -1023,22 +1041,22 @@ export const SUBSCRIPTION_TIERS = {
  */
 export const TOPUP_PACKS = [
   { 
-    name: 'Quick Fix',
-    credits: 10000, 
-    price: 15,
-    description: 'Perfect for quick scene revisions',
+    name: '$25 Add-on',
+    credits: 2000, 
+    price: 25,
+    description: '2,000 credits. Buy as often as you need.',
   },
   { 
-    name: 'Scene Pack',
-    credits: 50000, 
-    price: 65,
-    description: 'Complete a few additional scenes',
+    name: '$100 Add-on',
+    credits: 9000, 
+    price: 100,
+    description: '9,000 credits. Buy as often as you need.',
   },
   { 
-    name: 'Feature Boost',
-    credits: 200000, 
-    price: 220,
-    description: 'Major project expansion',
+    name: '$250 Add-on',
+    credits: 25000, 
+    price: 250,
+    description: '25,000 credits. Buy as often as you need.',
   },
 ] as const;
 
