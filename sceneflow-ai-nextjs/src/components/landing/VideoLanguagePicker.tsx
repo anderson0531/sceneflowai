@@ -83,8 +83,10 @@ export function VideoLanguageControl({
             onPointerDown={stopPointerPropagation}
             onClick={stopPointerPropagation}
             className={cn(
-              'flex items-center gap-1.5 rounded-lg border border-white/15 bg-black/50 px-2.5 py-1.5 text-xs font-medium text-gray-200 transition-colors hover:border-cyan-400/40 hover:text-white',
-              variant === 'inline' && 'w-full max-w-xs'
+              'flex min-w-0 items-center gap-1.5 rounded-lg border border-white/15 bg-black/50 text-xs font-medium text-gray-200 transition-colors hover:border-cyan-400/40 hover:text-white',
+              variant === 'inline'
+                ? 'w-auto max-w-[9rem] shrink px-2 py-1 sm:max-w-xs'
+                : 'px-2.5 py-1.5'
             )}
           >
             <Languages className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden />

@@ -308,7 +308,7 @@ export function HeroSection() {
           </div>
         </div>
 
-        <div className="absolute inset-x-0 top-16 z-20 flex items-center gap-3 bg-gradient-to-b from-black/80 to-transparent px-4 pt-3 pb-8 lg:top-20">
+        <div className="absolute inset-x-0 top-16 z-20 flex items-center gap-1.5 bg-gradient-to-b from-black/80 to-transparent px-4 pt-3 pb-8 sm:gap-3 lg:top-20">
           <VideoLanguageControl
             locales={heroLocales}
             activeLocaleId={activeLocale}
@@ -319,28 +319,29 @@ export function HeroSection() {
             markAsHeroControl
           />
 
-          <div className="ms-auto flex items-center gap-2">
+          <div className="ms-auto flex items-center gap-1.5 sm:gap-2">
             {isMuted && !isBuffering && (
               showUnmutePrompt ? (
                 <button
                   type="button"
                   data-hero-control
                   onClick={unmuteWithSound}
-                  className="flex items-center gap-2 rounded-full bg-black/70 border border-cyan-400/40 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 hover:bg-black/85 hover:border-cyan-400/60 transition-colors"
+                  aria-label={t('playWithNarration')}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center gap-1.5 rounded-full border border-cyan-400/40 bg-black/70 text-xs font-semibold text-white shadow-lg shadow-cyan-500/20 transition-colors hover:border-cyan-400/60 hover:bg-black/85 sm:h-auto sm:w-auto sm:px-2 sm:py-1 sm:text-sm"
                 >
-                  <Volume2 className="h-4 w-4 text-cyan-400" aria-hidden />
-                  {t('playWithNarration')}
+                  <Volume2 className="h-4 w-4 shrink-0 text-cyan-400" aria-hidden />
+                  <span className="hidden whitespace-nowrap sm:inline">{t('playWithNarration')}</span>
                 </button>
               ) : (
                 <button
                   type="button"
                   data-hero-control
                   onClick={unmuteWithSound}
-                  className="flex items-center gap-1.5 rounded-full bg-black/60 border border-white/20 px-3 py-2 text-xs font-medium text-gray-200 hover:text-white hover:border-cyan-400/40 transition-colors"
                   aria-label={t('tapToHear')}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/20 bg-black/60 text-xs font-medium text-gray-200 transition-colors hover:border-cyan-400/40 hover:text-white sm:h-auto sm:w-auto sm:px-2 sm:py-1"
                 >
-                  <VolumeX className="h-4 w-4 text-cyan-400" aria-hidden />
-                  {t('tapToHear')}
+                  <VolumeX className="h-4 w-4 shrink-0 text-cyan-400" aria-hidden />
+                  <span className="hidden whitespace-nowrap sm:inline">{t('tapToHear')}</span>
                 </button>
               )
             )}
@@ -349,29 +350,29 @@ export function HeroSection() {
               type="button"
               data-hero-control
               onClick={togglePlay}
-              className="text-white hover:text-cyan-400 transition p-1"
+              className="flex h-8 w-8 shrink-0 items-center justify-center text-white transition hover:text-cyan-400"
               aria-label={isPlaying ? t('pauseBackgroundVideo') : t('playBackgroundVideo')}
             >
-              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             </button>
             <button
               type="button"
               data-hero-control
               onClick={toggleMute}
-              className="text-white hover:text-cyan-400 transition p-1"
+              className="flex h-8 w-8 shrink-0 items-center justify-center text-white transition hover:text-cyan-400"
               aria-label={isMuted ? 'Unmute' : 'Mute'}
             >
-              {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
             </button>
             <button
               type="button"
               data-hero-control
               onClick={openTheater}
-              className="flex items-center gap-1.5 rounded-lg bg-black/50 border border-white/15 px-2.5 py-1.5 text-xs font-medium text-gray-200 hover:text-white hover:border-cyan-400/40 transition-colors"
+              className="flex h-8 w-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-white/15 bg-black/50 text-xs font-medium text-gray-200 transition-colors hover:border-cyan-400/40 hover:text-white sm:h-auto sm:w-auto sm:px-2 sm:py-1"
               aria-label={t('fullscreen')}
             >
-              <Maximize2 className="h-3.5 w-3.5" aria-hidden />
-              <span className="hidden sm:inline">{t('fullscreen')}</span>
+              <Maximize2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span className="hidden whitespace-nowrap sm:inline">{t('fullscreen')}</span>
             </button>
           </div>
         </div>
