@@ -295,7 +295,7 @@ export function PrimaryValueBackdrop({
             <h2 className="mx-auto max-w-4xl text-balance text-3xl font-bold text-white md:text-4xl lg:text-5xl">
               {t('title')}
             </h2>
-            <p className="mx-auto mt-5 max-w-3xl text-balance text-base text-gray-100 sm:text-lg">
+            <p className="mx-auto mt-5 max-w-3xl text-balance text-lg text-gray-100">
               {t('subtitle')}
             </p>
           </motion.div>

@@ -105,7 +105,7 @@ export function FeatureRoomOverview({
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950/25" />
       <div className="relative flex min-h-[180px] flex-col justify-end p-5 sm:p-6">
         <h3 className="text-2xl font-bold text-white sm:text-3xl">{title}</h3>
-        <p className="mt-3 max-w-3xl text-sm leading-relaxed text-gray-200 sm:text-base">{promise}</p>
+        <p className="mt-3 max-w-3xl text-base leading-relaxed text-gray-200">{promise}</p>
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <button
             type="button"

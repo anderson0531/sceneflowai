@@ -54,7 +54,7 @@ export function PricingCredits() {
           </h2>
 
           <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-4">{t('subtitle')}</p>
-          <p className="text-sm text-indigo-300/80 max-w-xl mx-auto">{t('explorerHighlight')}</p>
+          <p className="mx-auto max-w-xl text-base text-indigo-300/80 md:text-sm">{t('explorerHighlight')}</p>
         </motion.div>
 
         <div className="mb-14">
@@ -76,7 +76,7 @@ export function PricingCredits() {
                   className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3"
                 >
                   <Icon className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span className="text-sm text-gray-300">{badge}</span>
+                  <span className="text-base text-gray-300 md:text-sm">{badge}</span>
                 </div>
               )
             })}
@@ -89,7 +89,7 @@ export function PricingCredits() {
           viewport={{ once: true }}
           className="text-center"
         >
-          <div className="inline-flex flex-wrap justify-center gap-6 text-sm text-gray-400">
+          <div className="inline-flex flex-wrap justify-center gap-6 text-base text-gray-400 md:text-sm">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-emerald-400" />
               <span>{t('trust.cancelAnytime')}</span>
