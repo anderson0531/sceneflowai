@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ExternalLink, Play } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { StoryboardEmbedPlayer } from '@/components/vision/StoryboardEmbedPlayer'
 
@@ -54,13 +54,6 @@ export function ScreeningRoomPreview({ previewTitle, embedSlug }: ScreeningRoomP
               {t('previewLabel')}
             </p>
             <h4 className="text-lg md:text-xl font-semibold text-white max-w-md">{previewTitle}</h4>
-            <button
-              type="button"
-              className="absolute bottom-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600/80 text-white hover:bg-indigo-500 transition-colors"
-              aria-label="Play preview"
-            >
-              <Play className="w-4 h-4 ml-0.5" />
-            </button>
           </div>
         </div>
       )}

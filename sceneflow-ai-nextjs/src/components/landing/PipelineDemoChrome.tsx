@@ -3,10 +3,13 @@
 import Link from 'next/link'
 import {
   PIPELINE_DEMO_STAGES,
-  getPipelineDemoHref,
+  SCREENING_CUTS,
   getPipelineDemoNextStage,
-  matchPipelineDemoStage,
+  getScreeningCutHref,
+  getWalkStageHref,
+  matchPipelineWalk,
   type PipelineDemoStageId,
+  type ScreeningCut,
 } from '@/config/landing/productionPipelineDemo'
 
 const STAGE_LABELS: Record<PipelineDemoStageId, string> = {
@@ -15,23 +18,32 @@ const STAGE_LABELS: Record<PipelineDemoStageId, string> = {
   'screening-room': 'Screening Room',
 }
 
-type Props = {
-  tokenOrSlug: string
+const CUT_LABELS: Record<ScreeningCut, string> = {
+  previs: 'Pre-Vis',
+  scenes: 'Scenes',
+  trailer: 'Trailer',
+  final: 'Final',
 }
 
-export function PipelineDemoChrome({ tokenOrSlug }: Props) {
-  const stage = matchPipelineDemoStage(tokenOrSlug)
-  if (!stage) return null
+type Props = {
+  tokenOrSlug: string
+  activeCut?: ScreeningCut | null
+}
 
+export function PipelineDemoChrome({ tokenOrSlug, activeCut = null }: Props) {
+  const match = matchPipelineWalk(tokenOrSlug)
+  if (!match) return null
+
+  const { walkId, stage } = match
   const next = getPipelineDemoNextStage(stage)
-  const nextHref = next ? getPipelineDemoHref(next) : null
+  const nextHref = next ? getWalkStageHref(walkId, next) : null
 
   return (
     <div className="border-b border-cyan-500/20 bg-slate-950/90">
       <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-2">
         <nav aria-label="Pipeline review walk" className="flex flex-wrap items-center gap-2">
           {PIPELINE_DEMO_STAGES.map((id, index) => {
-            const href = getPipelineDemoHref(id)
+            const href = getWalkStageHref(walkId, id)
             const current = id === stage
             const className = current
               ? 'rounded-full border border-cyan-400/50 bg-cyan-500/15 px-2.5 py-1 text-xs font-medium text-cyan-200'
@@ -64,6 +76,32 @@ export function PipelineDemoChrome({ tokenOrSlug }: Props) {
           </Link>
         )}
       </div>
+      {stage === 'screening-room' ? (
+        <nav
+          aria-label="Screening Room cuts"
+          className="mx-auto flex max-w-4xl flex-wrap gap-2 px-4 pb-2"
+        >
+          {SCREENING_CUTS.map((cut) => {
+            const href = getScreeningCutHref(walkId, cut)
+            if (!href) return null
+            const current = activeCut === cut || (activeCut == null && cut === 'final')
+            return (
+              <Link
+                key={cut}
+                href={href}
+                aria-current={current ? 'page' : undefined}
+                className={
+                  current
+                    ? 'rounded-full bg-white/15 px-2.5 py-1 text-xs font-medium text-white'
+                    : 'rounded-full px-2.5 py-1 text-xs text-slate-400 hover:text-white'
+                }
+              >
+                {CUT_LABELS[cut]}
+              </Link>
+            )
+          })}
+        </nav>
+      ) : null}
     </div>
   )
 }

@@ -7,7 +7,12 @@ import { Sparkles, ChevronDown, ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FEATURE_ICONS } from './keyFeatureIcons'
 import { FeatureRoomOverview } from '@/components/landing/FeatureRoomOverview'
+import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import { LANDING_TRANSLATE_LANGUAGES } from '@/config/landingTranslateLanguages'
+import { standaloneDemoKey } from '@/config/landing/keyFeatureChapterMap'
+import { getKeyFeatureVideoLocales } from '@/config/landing/keyFeatureVideos'
+import { useLandingVideoLocale } from '@/i18n/useLandingVideoLocale'
+import type { VideoLocaleId } from '@/config/landing/videoLocales'
 
 const SECTION_ID = 'key-features'
 
@@ -161,6 +166,7 @@ function FeatureDetail({
   showLessLabel,
   screenshotLabel,
   landingUiLanguagesLabel,
+  videoSoonLabel,
 }: {
   feature: FeatureData
   gradient: string
@@ -170,8 +176,24 @@ function FeatureDetail({
   showLessLabel: string
   screenshotLabel: string
   landingUiLanguagesLabel: string
+  videoSoonLabel: string
 }) {
   const panelId = `key-feature-panel-${feature.icon}`
+  const demoKey = standaloneDemoKey(feature.icon)
+  const videoLocales = useMemo(
+    () => (demoKey ? getKeyFeatureVideoLocales(demoKey) : []),
+    [demoKey]
+  )
+  const syncedLocaleId = useLandingVideoLocale(videoLocales)
+  const [demoLocaleId, setDemoLocaleId] = useState<VideoLocaleId>(syncedLocaleId)
+  const producedLocales = videoLocales.filter((locale) => locale.available && locale.src)
+  const activeDemo =
+    producedLocales.find((locale) => locale.id === demoLocaleId) ?? producedLocales[0]
+  const demoSrc = activeDemo?.src ?? ''
+
+  useEffect(() => {
+    setDemoLocaleId(syncedLocaleId)
+  }, [syncedLocaleId, feature.icon])
 
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 sm:p-6">
@@ -179,13 +201,44 @@ function FeatureDetail({
       <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
 
       <div className="relative mt-4 aspect-video overflow-hidden rounded-xl border border-dashed border-slate-700 bg-slate-950/70">
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center">
-          <ImageIcon className="h-5 w-5 text-slate-600" aria-hidden="true" />
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-            {screenshotLabel}
-          </p>
-          <p className="text-xs leading-relaxed text-slate-400">{feature.screenshot}</p>
-        </div>
+        {demoSrc ? (
+          <>
+            <video
+              key={demoSrc}
+              src={demoSrc}
+              className="absolute inset-0 h-full w-full object-contain bg-black"
+              autoPlay
+              muted
+              controls
+              playsInline
+              preload="metadata"
+              controlsList="nodownload"
+              onContextMenu={(event) => event.preventDefault()}
+              aria-label={feature.title}
+            />
+            {producedLocales.length > 1 ? (
+              <VideoLanguageControl
+                locales={videoLocales}
+                activeLocaleId={activeDemo?.id ?? demoLocaleId}
+                onSelect={(id) => {
+                  if (!producedLocales.some((locale) => locale.id === id)) return
+                  setDemoLocaleId(id)
+                }}
+                soonLabel={videoSoonLabel}
+                variant="overlay"
+                align="start"
+              />
+            ) : null}
+          </>
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center">
+            <ImageIcon className="h-5 w-5 text-slate-600" aria-hidden="true" />
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              {screenshotLabel}
+            </p>
+            <p className="text-xs leading-relaxed text-slate-400">{feature.screenshot}</p>
+          </div>
+        )}
       </div>
 
       {feature.learnMore && (
@@ -296,6 +349,7 @@ export default function KeyFeaturesSection() {
     showLessLabel: t('showLessLabel'),
     screenshotLabel: t('screenshotLabel'),
     landingUiLanguagesLabel: t('landingUiLanguagesLabel'),
+    videoSoonLabel: t('videoSoon'),
   }
 
   if (!activeRoom || !selected) return null
@@ -363,6 +417,12 @@ export default function KeyFeaturesSection() {
             playLabel={t('playOverview')}
             muteLabel={t('muteOverview')}
             unmuteLabel={t('unmuteOverview')}
+            watchLongformHref={
+              activeRoom.id === 'screening-room' ? '#production-examples' : undefined
+            }
+            watchLongformLabel={
+              activeRoom.id === 'screening-room' ? t('watchLongformLabel') : undefined
+            }
           />
 
           {panes.length > 0 ? (

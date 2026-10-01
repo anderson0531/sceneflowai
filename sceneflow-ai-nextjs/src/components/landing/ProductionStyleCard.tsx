@@ -11,7 +11,6 @@ import {
   Film,
   Globe,
   Palette,
-  Rocket,
   Sparkles,
   Target,
 } from 'lucide-react'
@@ -22,10 +21,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import { ScreeningRoomPreview } from '@/components/landing/ScreeningRoomPreview'
-import type { VideoLocale, VideoLocaleId } from '@/config/landing/videoLocales'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
-import { getProductionShowcaseScreeningSlug } from '@/config/landing/productionShowcaseScreening'
+import {
+  getProductionExampleMedia,
+  type ProductionExampleDoor,
+} from '@/config/landing/productionPipelineDemo'
 
 export type SolutionPillar = {
   title: string
@@ -107,6 +107,56 @@ const FALLBACK_STYLE: CardStyle = {
   ctaGradient: 'from-slate-500 to-slate-600',
 }
 
+function TrailerEntry({ src, label }: { src: string | null; label: string }) {
+  return (
+    <figure className="mb-4 min-w-0">
+      <figcaption className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+        {label}
+      </figcaption>
+      {src ? (
+        <video
+          key={src}
+          src={src}
+          className="aspect-video w-full rounded-xl bg-black object-contain"
+          controls
+          playsInline
+          preload="metadata"
+          controlsList="nodownload"
+          onContextMenu={(event) => event.preventDefault()}
+          aria-label={label}
+        />
+      ) : (
+        <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-slate-700/50 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950">
+          <p className="text-sm font-medium text-slate-300">{label}</p>
+        </div>
+      )}
+    </figure>
+  )
+}
+
+function PipelineDoors({
+  doors,
+  labels,
+}: {
+  doors: ProductionExampleDoor[]
+  labels: Record<ProductionExampleDoor['id'], string>
+}) {
+  if (doors.length === 0) return null
+  return (
+    <nav aria-label="Production pipeline" className="mb-4 flex flex-wrap gap-2">
+      {doors.map((door) => (
+        <a
+          key={door.id}
+          href={door.href}
+          className="rounded-full border border-slate-600/80 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-cyan-400/50 hover:text-white"
+        >
+          {labels[door.id]}
+        </a>
+      ))}
+    </nav>
+  )
+}
+
 function SolutionPillarBody({
   pillar,
   frictionLabel,
@@ -153,7 +203,14 @@ export function ProductionStyleCard({
   solutionPillarLabel,
   showSolutionsSectionLabel,
   hideSolutionsSectionLabel,
-  screeningEmbedSlug,
+  trailerLabel,
+  watchLongformLabel,
+  blueprintDoorLabel,
+  scriptArDoorLabel,
+  previsDoorLabel,
+  scenesDoorLabel,
+  finalDoorLabel,
+  explorerHandoff,
 }: {
   card: ProductionStyleCardData
   index: number
@@ -164,16 +221,33 @@ export function ProductionStyleCard({
   solutionPillarLabel?: string
   showSolutionsSectionLabel?: string
   hideSolutionsSectionLabel?: string
-  screeningEmbedSlug?: string | null
+  trailerLabel: string
+  watchLongformLabel: string
+  blueprintDoorLabel: string
+  scriptArDoorLabel: string
+  previsDoorLabel: string
+  scenesDoorLabel: string
+  finalDoorLabel: string
+  explorerHandoff: string
 }) {
   const style = CARD_STYLES[card.id] ?? FALLBACK_STYLE
   const Icon = style.icon
   const [solutionsSectionOpen, setSolutionsSectionOpen] = useState(false)
   const [activeLocale, setActiveLocale] = useState(card.locales?.[0]?.id ?? '')
 
-  const resolvedSlug = card.localeToggle && card.locales
-    ? getProductionShowcaseScreeningSlug(`${card.id}-${activeLocale}`)
-    : screeningEmbedSlug
+  const walkLocale = card.localeToggle ? activeLocale : undefined
+  const media = getProductionExampleMedia(card.id, walkLocale)
+  const watchLabel = media.longformRuntimeLabel
+    ? `${watchLongformLabel} · ${media.longformRuntimeLabel}`
+    : watchLongformLabel
+  const doorLabels: Record<ProductionExampleDoor['id'], string> = {
+    blueprint: blueprintDoorLabel,
+    'script-ar': scriptArDoorLabel,
+    previs: previsDoorLabel,
+    scenes: scenesDoorLabel,
+    trailer: trailerLabel,
+    final: finalDoorLabel,
+  }
 
   const startProduction = () => {
     window.location.href = getLoginUrl({
@@ -198,6 +272,21 @@ export function ProductionStyleCard({
         <Sparkles className="h-3 w-3" />
         {card.badge}
       </div>
+
+      {media.isFlagship ? (
+        <div className="pt-6 sm:pt-0">
+          <TrailerEntry src={media.trailerSrc} label={trailerLabel} />
+          {media.longformHref ? (
+            <a
+              href={media.longformHref}
+              className={`mb-4 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r px-4 py-3 text-sm font-semibold text-white ${style.ctaGradient}`}
+            >
+              {watchLabel}
+            </a>
+          ) : null}
+          <PipelineDoors doors={media.doors} labels={doorLabels} />
+        </div>
+      ) : null}
 
       <div className="mb-4 flex items-start gap-4 pt-6 sm:pt-0 sm:pr-28">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-900/50">
@@ -229,17 +318,11 @@ export function ProductionStyleCard({
         </div>
       )}
 
-      {/* Screening Room player */}
-      <div className="mb-2 min-w-0">
-        <ScreeningRoomPreview
-          previewTitle={card.screeningRoomPreview}
-          embedSlug={resolvedSlug}
-        />
-      </div>
+      {!media.isFlagship ? <PipelineDoors doors={media.doors} labels={doorLabels} /> : null}
 
-      {screeningRoomInstruction && (
+      {screeningRoomInstruction && media.isFlagship ? (
         <p className="mb-4 text-xs text-gray-500 italic">{screeningRoomInstruction}</p>
-      )}
+      ) : null}
 
       {/* Collapsible solutions */}
       <div className="mb-4 min-w-0">
@@ -315,6 +398,10 @@ export function ProductionStyleCard({
       ) : (
         <div className="mt-auto" />
       )}
+
+      {media.isFlagship ? (
+        <p className="text-xs leading-relaxed text-gray-400">{explorerHandoff}</p>
+      ) : null}
 
       <Button
         onClick={startProduction}

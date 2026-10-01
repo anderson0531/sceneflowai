@@ -15,8 +15,27 @@ import {
   ProductionStyleCard,
   type ProductionStyleCardData,
 } from '@/components/landing/ProductionStyleCard'
-import { getProductionShowcaseScreeningSlug } from '@/config/landing/productionShowcaseScreening'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
+
+function exampleLabels(t: ReturnType<typeof useTranslations<'productionShowcase'>>) {
+  return {
+    workflowLabel: t('workflowLabel'),
+    ctaLabel: t('startProduction'),
+    screeningRoomInstruction: t('screeningRoomInstruction'),
+    frictionLabel: t('frictionLabel'),
+    solutionPillarLabel: t('solutionPillarLabel'),
+    showSolutionsSectionLabel: t('showSolutionsSection'),
+    hideSolutionsSectionLabel: t('hideSolutionsSection'),
+    trailerLabel: t('trailerLabel'),
+    watchLongformLabel: t('watchLongform'),
+    blueprintDoorLabel: t('blueprintDoor'),
+    scriptArDoorLabel: t('scriptArDoor'),
+    previsDoorLabel: t('previsDoor'),
+    scenesDoorLabel: t('scenesDoor'),
+    finalDoorLabel: t('finalDoor'),
+    explorerHandoff: t('explorerHandoff'),
+  }
+}
 
 export const PRODUCTION_EXAMPLES_SECTION_ID = 'production-examples'
 
@@ -34,14 +53,7 @@ function CardGrid({
           key={card.id}
           card={card}
           index={index}
-          workflowLabel={t('workflowLabel')}
-          ctaLabel={t('startProduction')}
-          screeningRoomInstruction={t('screeningRoomInstruction')}
-          frictionLabel={t('frictionLabel')}
-          solutionPillarLabel={t('solutionPillarLabel')}
-          showSolutionsSectionLabel={t('showSolutionsSection')}
-          hideSolutionsSectionLabel={t('hideSolutionsSection')}
-          screeningEmbedSlug={getProductionShowcaseScreeningSlug(card.id)}
+          {...exampleLabels(t)}
         />
       ))}
     </div>
@@ -76,14 +88,7 @@ function MobileAccordion({
             <ProductionStyleCard
               card={card}
               index={index}
-              workflowLabel={t('workflowLabel')}
-              ctaLabel={t('startProduction')}
-              screeningRoomInstruction={t('screeningRoomInstruction')}
-              frictionLabel={t('frictionLabel')}
-              solutionPillarLabel={t('solutionPillarLabel')}
-              showSolutionsSectionLabel={t('showSolutionsSection')}
-              hideSolutionsSectionLabel={t('hideSolutionsSection')}
-              screeningEmbedSlug={getProductionShowcaseScreeningSlug(card.id)}
+              {...exampleLabels(t)}
             />
           </AccordionContent>
         </AccordionItem>
@@ -126,6 +131,7 @@ export default function ProductionExamplesSection() {
             {t('subtitleTagline')}
           </p>
           <p className="mx-auto mt-3 max-w-3xl text-sm text-gray-400">{t('languagesBanner')}</p>
+          <p className="mx-auto mt-3 max-w-3xl text-sm text-gray-300">{t('explorerHandoff')}</p>
         </motion.div>
 
         {/* Desktop: 2-column grid */}

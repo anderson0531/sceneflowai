@@ -1,6 +1,10 @@
 /**
- * Dubbed demo videos for the Production Examples cards. A card/locale absent
- * from PRODUCED_VIDEOS renders as a disabled "Soon" pill.
+ * Dubbed promo files for Production Examples. A card/locale absent from
+ * PRODUCED_VIDEOS renders as a disabled "Soon" pill.
+ *
+ * These files are not the longform master and are not the card trailer.
+ * The card plays a confirmed trailer only after Screening Room Final exists.
+ * See productionPipelineDemo.ts.
  */
 
 import {
