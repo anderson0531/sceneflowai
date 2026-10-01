@@ -1294,7 +1294,11 @@
       "chipHold": "Hold the feeling",
       "chipHoldText": "Hold one emotion through the shot. Don't let it flip halfway.",
       "chipAction": "Clearer action",
-      "chipActionText": "Name the physical action so a camera can see it in one instant."
+      "chipActionText": "Name the physical action so a camera can see it in one instant.",
+      "safetyOption": "Safety",
+      "safetyOptionTooltip": "When rewriting, rephrase the shot direction, the still prompt, and the clip prompt so they conform with Google AI content policies. Aftermath instead of harm in progress, no predatory metaphors, same characters and named props. Does not choose a generation model.",
+      "safetyHint": "Rewrite the shot direction so Google AI content filters are more likely to accept the still and the clip, without changing the story shot, characters, or named props.",
+      "safetyPreview": "Safety rewrite (Google policies)"
     },
     "musicDirector": {
       "title": "Direct score — {label}",

@@ -2107,6 +2107,11 @@ export function SceneProductionMixer({
     [dialogueClipConfigs]
   )
 
+  // Before shotMethodFor. Its dependency array reads this binding during render.
+  // A later const is a temporal dead zone and crashes the Mixer
+  // (`Cannot access '…' before initialization`).
+  const [klingLipsyncEnabled, setKlingLipsyncEnabled] = useState(false)
+
   const shotMethodFor = useCallback(
     (segmentId: string) =>
       isEnglish
@@ -2502,7 +2507,6 @@ export function SceneProductionMixer({
 
   const [preserveBackgroundStem, setPreserveBackgroundStem] = useState(true)
   const [includeSpeechStem, setIncludeSpeechStem] = useState(false)
-  const [klingLipsyncEnabled, setKlingLipsyncEnabled] = useState(false)
   const [masterSegmentVolume, setMasterSegmentVolume] = useState(0.8)
   
   const toggleSection = useCallback((section: keyof typeof collapsedSections) => {
