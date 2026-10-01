@@ -11,6 +11,12 @@ import type {
 } from '@/components/vision/scene-production/types'
 import { getNextProductionStreamVersion } from '@/components/vision/scene-production/defaults'
 import { resolveSegmentEmbedAudioForRender } from '@/lib/scene/segmentAudioPreview'
+import {
+  languageShotVideoUrl,
+  resolveLanguageShotMethod,
+  resolveShotVideoPlaybackRate,
+} from '@/lib/scene/languageShotLocalize'
+import { getMixerSettingsForLanguage } from '@/lib/scene/mixerSettings'
 import type { CreateSceneRenderJobRequest } from '@/lib/video/renderTypes'
 import type { StreamStemMode } from '@/lib/streams/projectStreams'
 
@@ -32,6 +38,8 @@ export interface BuildSceneDubRenderRequestArgs {
   stemMode: StreamStemMode
   lipsyncedVideoBySegment?: Record<string, string>
   resolution?: '720p' | '1080p' | '4K'
+  /** Saved localize tier. Lip-sync applies only to shots that have no per-shot choice yet. */
+  legacyLocalizeLipsync?: boolean
 }
 
 function videoSegmentsForRender(sceneProduction: SceneProductionData): SceneSegment[] {
@@ -68,9 +76,11 @@ export function buildSceneDubRenderRequest({
   stemMode,
   lipsyncedVideoBySegment = {},
   resolution = '1080p',
+  legacyLocalizeLipsync = false,
 }: BuildSceneDubRenderRequestArgs): CreateSceneRenderJobRequest | null {
   const segments = videoSegmentsForRender(sceneProduction)
   if (segments.length === 0) return null
+  const mixerSettings = getMixerSettingsForLanguage(sceneProduction, language)
 
   const playbackRate = clampStreamLocalizeSpeed(speed)
   const useStemDubbingPolicy = stemMode === 'keep-background' && language !== 'en'
@@ -98,12 +108,20 @@ export function buildSceneDubRenderRequest({
       }
     )
     const dur = segmentDurationSec(seg)
+    const method = resolveLanguageShotMethod({
+      config: mixerSettings?.languageShotConfigs?.[seg.segmentId],
+      klingLipsyncEnabled: mixerSettings?.klingLipsyncEnabled,
+      legacyLocalizeLipsync,
+    })
+    const videoRate = resolveShotVideoPlaybackRate(mixerSettings?.languageShotConfigs?.[seg.segmentId])
     return {
       segmentId: seg.segmentId,
       sequenceIndex: seg.sequenceIndex,
-      videoUrl: lipsyncedVideoBySegment[seg.segmentId] || seg.activeAssetUrl!,
+      videoUrl:
+        languageShotVideoUrl(seg, language, method, lipsyncedVideoBySegment) || seg.activeAssetUrl!,
       startTime: seg.startTime ?? 0,
       endTime: (seg.startTime ?? 0) + dur,
+      playbackRate: videoRate,
       audioSource: embedAudio.audioSource,
       audioVolume: embedAudio.audioVolume,
       pauseDuration: 0,
@@ -273,9 +291,11 @@ export function mapDialogueUrlToSegment(
 export function collectLipsyncSegmentInputs(
   scriptScene: Record<string, unknown>,
   sceneProduction: SceneProductionData,
-  language: string
+  language: string,
+  options?: { legacyLocalizeLipsync?: boolean }
 ): Array<{ segmentId: string; videoUrl: string; dialogueAudioUrl?: string; audioDurationSeconds?: number }> {
   const segments = videoSegmentsForRender(sceneProduction)
+  const mixerSettings = getMixerSettingsForLanguage(sceneProduction, language)
   const tracks = buildAudioTracksWithBaselineTiming(scriptScene, language, 'en', {
     packDialogueToSegmentTimeline: true,
     segmentPlaybackOffsetSeconds: SEGMENT_PLAYBACK_OFFSET_SEC,
@@ -284,6 +304,14 @@ export function collectLipsyncSegmentInputs(
 
   return segments
     .filter((seg) => dialogueBySegment.has(seg.segmentId))
+    .filter(
+      (seg) =>
+        resolveLanguageShotMethod({
+          config: mixerSettings?.languageShotConfigs?.[seg.segmentId],
+          klingLipsyncEnabled: mixerSettings?.klingLipsyncEnabled,
+          legacyLocalizeLipsync: options?.legacyLocalizeLipsync,
+        }) === 'lipsync'
+    )
     .map((seg) => {
       const dialogueUrl = dialogueBySegment.get(seg.segmentId)!
       const clip = tracks.dialogue.find((d) => d.url === dialogueUrl)

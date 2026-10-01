@@ -399,13 +399,13 @@
             "features": [
               {
                 "icon": "writersRoom",
-                "title": "Writer's Room",
-                "description": "The production script, scene by scene, in the language of the story. Dialogue, pacing, and tone are revised here, with Audience Resonance scoring beside the page, before a frame is spent.",
-                "screenshot": "Writer's Room",
+                "title": "Script",
+                "description": "The Script tab holds the scene and the shot-by-shot script, plus dialogue and SFX. Direction, Music, References, and Stills sit beside it so Audience Resonance and Pre-Vis review happen before a clip is spent.",
+                "screenshot": "Script",
                 "learnMore": {
                   "problem": "Dialogue, pacing, and tone get revised after frames are already paid for.",
-                  "solution": "Writer's Room holds the production script scene by scene, with Audience Resonance scoring beside the page.",
-                  "outcome": "You revise the page before a frame is spent."
+                  "solution": "Script holds the scene and the shot-by-shot script, with dialogue, SFX, and Audience Resonance scoring beside the page.",
+                  "outcome": "You revise the page before a clip is spent."
                 }
               },
               {
@@ -511,11 +511,11 @@
               {
                 "icon": "languageStreams",
                 "title": "Language Streams",
-                "description": "A language version of the scene, not a new production. Gemini TTS speaks the dub in 44 languages. For a non-English stream you can keep the original ambience and turn on Kling lip-sync so the dubbed dialogue is performed on the picture, or ship the dub on the existing shots. Add a language from the Mixer and generate that stream without rebuilding the cut.",
-                "screenshot": "Language Streams with the lip-sync switch",
+                "description": "A language version of the scene, not a new production. Gemini TTS speaks the dub in 44 languages. On each shot, choose Double to overlay the dubbed voice, Lip-sync to perform it on the picture, or Regenerate to build a new clip from the translated line. Video speed is saved on that language version, because a translation is often 10–30% longer than the master.",
+                "screenshot": "Language Streams with per-shot Double, Lip-sync, and Regenerate",
                 "learnMore": {
                   "problem": "A dub that requires a new production rebuilds the cut for every language.",
-                  "solution": "Language Streams is a language version of the scene. Gemini TTS speaks the dub in 44 languages. For a non-English stream you can keep the original ambience and turn on Kling lip-sync, or ship the dub on the existing shots.",
+                  "solution": "Language Streams is a language version of the scene. Each shot can be doubled, lip-synced, or regenerated from the translated line. Video speed belongs to that language version.",
                   "outcome": "Add a language from the Mixer and generate that stream without rebuilding the cut."
                 }
               },
@@ -564,11 +564,11 @@
           {
             "icon": "screeningPlayer",
             "title": "One player",
-            "description": "Switch among Pre-Vis, scenes, chapters, the master, and promo. Pick a Language Stream and hear that dub, including a lip-synced version when you generated one. The player is the same cut the Mixer rendered.",
+            "description": "Switch among Pre-Vis, scenes, chapters, the master, and promo. Pick a Language Stream and hear that version — doubled, lip-synced, or regenerated shot by shot. The player is the same cut the Mixer rendered.",
             "screenshot": "Screening Room player",
             "learnMore": {
               "problem": "Pre-Vis, scenes, chapters, the master, the promo, and the dubs end up in different players.",
-              "solution": "One player switches among those cuts. Pick a Language Stream and hear that dub, including a lip-synced version when you generated one.",
+              "solution": "One player switches among those cuts. Pick a Language Stream and hear that version, doubled, lip-synced, or regenerated shot by shot.",
               "outcome": "The player is the same cut the Mixer rendered."
             }
           },
@@ -1356,19 +1356,19 @@
       {
         "id": "production",
         "stepLabel": "Production Stage",
-        "subtitle": "Writer's Room to Screening Room",
-        "description": "The Writer's Room and Motion sections guide Foundation → Pre-Vis → Footage → Mixer → Streams. Scene-by-scene checkpoints minimize redos; Screening Room handles preview, assembly, and publishing.",
+        "subtitle": "Direction through Streams",
+        "description": "Direction, Script, Music, References, and Stills optimize the script with Audience Resonance and Pre-Vis review. Clips, Mixer, and Streams generate the video for each shot. Screening Room handles preview, assembly, and publishing.",
         "keySteps": [
           "Lock script, voices, and scene audio",
-          "Pre-Vis scene by scene — gallery and share for review",
-          "Motion — Footage → Mixer → Streams per scene",
+          "Pre-Vis scene by scene — Stills and share for review",
+          "Clips, Mixer, and Streams — generate each shot",
           "Production Planner — shot targets, a dated schedule, and phone status",
           "Screening Room — preview, assemble master, publish"
         ],
         "keyFeatures": [
-          "Writer's Room — script, voices, scene audio, Audience Resonance Analysis",
-          "Pre-Vis — direction, audio, and beat frames per scene with share links",
-          "Motion — Footage, Mixer, and Streams without leaving Production Stage",
+          "Direction, Script, Music, References, and Stills — script, voices, scene audio, Audience Resonance Analysis",
+          "Stills — direction, audio, and beat frames per scene with share links",
+          "Clips, Mixer, and Streams — generate each shot without leaving Production Stage",
           "Production Planner — shot targets, a dated schedule, and phone status",
           "Screening Room — scene preview, master assembly, screenings, and YouTube publish"
         ],
@@ -1438,13 +1438,13 @@
       {
         "id": "shoot",
         "stepLabel": "Shoot your production",
-        "shortDescription": "Generate beat-level video, mix audio and overlays, and export full scene streams — Footage, Mixer, and Streams in one Motion section.",
-        "detailedDescription": "The Motion section in Production is your on-set: generate video from approved Pre-Vis frames (Footage), fine-tune timing, watermarks, and audio in the Mixer, then render complete scene MP4s in Streams.",
+        "shortDescription": "Generate each shot in Clips, mix audio in the Mixer, and export language versions in Streams.",
+        "detailedDescription": "Clips generate the video for each shot from approved Stills. The Mixer sets timing, watermarks, and audio. Streams are the language versions of the scene.",
         "media": "video",
         "subPoints": [
-          "Footage — beat-by-beat video generation from Pre-Vis start and end frames",
+          "Clips — shot video from approved Stills",
           "Mixer — watermark, text overlay, and audio timing per scene",
-          "Streams — full rendered scene video (all beats) ready for Screening Room"
+          "Streams — language versions of the scene, ready for Screening Room"
         ]
       },
       {
@@ -1524,7 +1524,7 @@
             "frictionHeadline": "Asset Chaos & Endless Rerolls.",
             "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
             "solutionHeadline": "Automated Studio Pipeline.",
-            "solution": "From concept to final master MP4 in one unified platform. Blueprint Room handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Room handles story setup, Production Stage runs Direction through Streams, and Screening Room delivers your final export."
           }
         ],
         "screeningRoomPreview": "The Cinematic Drama — Screening Room"
@@ -1665,7 +1665,7 @@
       },
       {
         "id": "produce-publish",
-        "label": "Produce and publish — Motion to Screening Room",
+        "label": "Produce and publish — Clips to Screening Room",
         "defaultExpanded": false
       }
     ],
@@ -1777,16 +1777,16 @@
       {
         "id": "11",
         "title": "Production Stage Automation",
-        "description": "The Writer's Room and Motion sections guide Foundation → Pre-Vis → Footage → Mixer → Streams. Scene-by-scene checkpoints minimize redos; Screening Room handles preview, assembly, and publishing.",
+        "description": "Direction, Script, Music, References, and Stills optimize the script with Audience Resonance and Pre-Vis review. Clips, Mixer, and Streams generate the video for each shot. Screening Room handles preview, assembly, and publishing.",
         "keyFeatures": [
-          "Writer's Room — script, voices, scene audio, Audience Resonance Analysis",
-          "Pre-Vis — direction, audio, and beat frames per scene with share links",
-          "Motion — Footage, Mixer, and Streams without leaving Production Stage",
+          "Direction, Script, Music, References, and Stills — script, voices, scene audio, Audience Resonance Analysis",
+          "Stills — direction, audio, and beat frames per scene with share links",
+          "Clips, Mixer, and Streams — generate each shot without leaving Production Stage",
           "Production Planner — shot targets, a dated schedule, and phone status",
           "Screening Room — scene preview, master assembly, screenings, and YouTube publish"
         ],
-        "screenshotSlot": "Insert screenshot: Production dashboard showing Writer's Room, Motion, and Pre-Vis",
-        "videoSlot": "Insert 00:60 clip: Lock script → Pre-vis Agent per scene → Motion Footage → Mixer → Streams"
+        "screenshotSlot": "Insert screenshot: Production dashboard showing Direction, Script, Stills, Clips, Mixer, and Streams",
+        "videoSlot": "Insert 00:60 clip: Lock script → Stills per scene → Clips → Mixer → Streams"
       },
       {
         "id": "14",

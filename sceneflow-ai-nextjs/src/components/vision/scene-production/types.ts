@@ -1702,6 +1702,20 @@ export interface MixerMusicShotConfig {
   volume: number
 }
 
+/**
+ * How a non-English stream treats one shot.
+ * Double overlays dubbed dialogue. Lip-sync sends that shot through Kling.
+ * Regenerate plays the language clip generated from the translated line.
+ */
+export type LanguageShotMethod = 'double' | 'lipsync' | 'regenerate'
+
+/** Per-shot language treatment, keyed by segment id inside a language mixer snapshot. */
+export interface MixerLanguageShotConfig {
+  method?: LanguageShotMethod
+  /** Picture speed for this language only. 0.5–1.5. Absent means 1. */
+  videoPlaybackRate?: number
+}
+
 /** Per-dialogue-line control in the Production Mixer (not timeline AudioClipConfig) */
 export interface MixerDialogueClipConfig {
   id: string
@@ -1733,6 +1747,8 @@ export interface SceneMixerSettings {
   dialogueClipConfigs?: Record<string, Partial<MixerDialogueClipConfig>>
   /** Per-shot score volume, keyed by shot id. */
   musicShotConfigs?: Record<string, Partial<MixerMusicShotConfig>>
+  /** Per-shot language method and video speed, keyed by segment id. */
+  languageShotConfigs?: Record<string, MixerLanguageShotConfig>
   masterSegmentVolume?: number
   resolution?: '720p' | '1080p' | '4K'
   productionTarget?: ProductionTarget

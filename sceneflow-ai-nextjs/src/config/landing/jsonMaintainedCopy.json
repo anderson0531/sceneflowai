@@ -399,13 +399,13 @@
             "features": [
               {
                 "icon": "writersRoom",
-                "title": "Writer's Room",
-                "description": "The production script, scene by scene, in the language of the story. Dialogue, pacing, and tone are revised here, with Audience Resonance scoring beside the page, before a frame is spent.",
-                "screenshot": "Writer's Room",
+                "title": "Script",
+                "description": "The Script tab holds the scene and the shot-by-shot script, plus dialogue and SFX. Direction, Music, References, and Stills sit beside it so Audience Resonance and Pre-Vis review happen before a clip is spent.",
+                "screenshot": "Script",
                 "learnMore": {
                   "problem": "Dialogue, pacing, and tone get revised after frames are already paid for.",
-                  "solution": "Writer's Room holds the production script scene by scene, with Audience Resonance scoring beside the page.",
-                  "outcome": "You revise the page before a frame is spent."
+                  "solution": "Script holds the scene and the shot-by-shot script, with dialogue, SFX, and Audience Resonance scoring beside the page.",
+                  "outcome": "You revise the page before a clip is spent."
                 }
               },
               {
@@ -511,11 +511,11 @@
               {
                 "icon": "languageStreams",
                 "title": "Language Streams",
-                "description": "A language version of the scene, not a new production. Gemini TTS speaks the dub in 44 languages. For a non-English stream you can keep the original ambience and turn on Kling lip-sync so the dubbed dialogue is performed on the picture, or ship the dub on the existing shots. Add a language from the Mixer and generate that stream without rebuilding the cut.",
-                "screenshot": "Language Streams with the lip-sync switch",
+                "description": "A language version of the scene, not a new production. Gemini TTS speaks the dub in 44 languages. On each shot, choose Double to overlay the dubbed voice, Lip-sync to perform it on the picture, or Regenerate to build a new clip from the translated line. Video speed is saved on that language version, because a translation is often 10–30% longer than the master.",
+                "screenshot": "Language Streams with per-shot Double, Lip-sync, and Regenerate",
                 "learnMore": {
                   "problem": "A dub that requires a new production rebuilds the cut for every language.",
-                  "solution": "Language Streams is a language version of the scene. Gemini TTS speaks the dub in 44 languages. For a non-English stream you can keep the original ambience and turn on Kling lip-sync, or ship the dub on the existing shots.",
+                  "solution": "Language Streams is a language version of the scene. Each shot can be doubled, lip-synced, or regenerated from the translated line. Video speed belongs to that language version.",
                   "outcome": "Add a language from the Mixer and generate that stream without rebuilding the cut."
                 }
               },
@@ -564,11 +564,11 @@
           {
             "icon": "screeningPlayer",
             "title": "One player",
-            "description": "Switch among Pre-Vis, scenes, chapters, the master, and promo. Pick a Language Stream and hear that dub, including a lip-synced version when you generated one. The player is the same cut the Mixer rendered.",
+                "description": "Switch among Pre-Vis, scenes, chapters, the master, and promo. Pick a Language Stream and hear that version — doubled, lip-synced, or regenerated shot by shot. The player is the same cut the Mixer rendered.",
             "screenshot": "Screening Room player",
             "learnMore": {
               "problem": "Pre-Vis, scenes, chapters, the master, the promo, and the dubs end up in different players.",
-              "solution": "One player switches among those cuts. Pick a Language Stream and hear that dub, including a lip-synced version when you generated one.",
+                  "solution": "One player switches among those cuts. Pick a Language Stream and hear that version, doubled, lip-synced, or regenerated shot by shot.",
               "outcome": "The player is the same cut the Mixer rendered."
             }
           },

@@ -56,6 +56,8 @@ export interface LocalRenderSegment {
   videoTrimInSec?: number
   /** Seconds into source MP4 where beat playback ends */
   videoTrimOutSec?: number
+  /** Picture speed for this language version. 1 leaves source time unchanged. */
+  playbackRate?: number
 }
 
 export interface LocalRenderAudioClip {
@@ -879,7 +881,18 @@ export class LocalRenderService {
               
               // Schedule at the segment's start time (respect source trim window)
               const trimIn = segment.videoTrimInSec ?? 0
-              source.start(segment.startTime, trimIn, segment.duration)
+              const rate =
+                segment.playbackRate != null &&
+                Number.isFinite(segment.playbackRate) &&
+                segment.playbackRate > 0
+                  ? Math.min(1.5, Math.max(0.5, segment.playbackRate))
+                  : 1
+              source.playbackRate.value = rate
+              const sourceSpan =
+                segment.videoTrimOutSec != null
+                  ? Math.max(0, segment.videoTrimOutSec - trimIn)
+                  : segment.duration * rate
+              source.start(segment.startTime, trimIn, sourceSpan)
               
               console.log('[LocalRender] Video audio scheduled in offline context:', {
                 segmentId: segment.segmentId,
@@ -1565,9 +1578,14 @@ export class LocalRenderService {
         (Number.isFinite(asset.duration) && asset.duration > 0
           ? asset.duration
           : trimIn + segment.duration)
-      const dur = segment.duration
+      const rate =
+        segment.playbackRate != null &&
+        Number.isFinite(segment.playbackRate) &&
+        segment.playbackRate > 0
+          ? Math.min(1.5, Math.max(0.5, segment.playbackRate))
+          : 1
       const localSeek = Math.min(
-        Math.max(trimIn + localTime, trimIn),
+        Math.max(trimIn + localTime * rate, trimIn),
         Math.max(trimIn, trimOut - 0.001)
       )
       if (Math.abs(asset.currentTime - localSeek) > 0.04) {

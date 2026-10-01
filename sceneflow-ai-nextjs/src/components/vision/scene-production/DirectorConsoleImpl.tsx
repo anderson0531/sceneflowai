@@ -1830,6 +1830,9 @@ export function DirectorConsoleRoot({
         sceneIndex={sceneIndex}
         onGenerateSceneAudio={onGenerateSceneAudio}
         onGenerateLanguageStream={onGenerateLanguageStream}
+        onGenerateLanguageVersion={(segment) => {
+          void handleGenerateLanguageVersion(segment)
+        }}
         isGeneratingAudio={isGeneratingAudio}
         productionTarget={productionTarget}
         onProductionTargetChange={setProductionTarget}

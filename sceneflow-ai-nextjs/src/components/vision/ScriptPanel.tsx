@@ -4492,7 +4492,7 @@ function SceneCard({
   const [activeSceneTab, setActiveSceneTab] = useState<ProductionWorkflowTab>('direction')
   const sceneWorkflowSectionLabel: Record<ProductionWorkflowTab, string> = {
     direction: 'Direction',
-    beats: 'Audio',
+    beats: 'Script',
     music: 'Music',
     references: 'References',
     previs: 'Stills',
@@ -6471,9 +6471,9 @@ function SceneCard({
                             <Film className="w-3.5 h-3.5 shrink-0" />
                             Direction
                           </TabsTrigger>
-                          <TabsTrigger value="beats" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-                            <Volume2 className="w-3.5 h-3.5 shrink-0" />
-                            Audio
+                          <TabsTrigger value="beats" title="Scene and shot script, dialogue, and SFX" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+                            <FileText className="w-3.5 h-3.5 shrink-0" />
+                            Script
                             {sceneBeatsForTabs.length > 0 && (
                               <span className="text-[10px] opacity-60">
                                 ({sceneBeatsForTabs.length}

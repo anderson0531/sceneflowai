@@ -58,7 +58,7 @@ const EXPECTED_TITLES: Record<string, string[]> = {
   'production-stage': [
     'Bring Your Own Key',
     'Production Planner',
-    "Writer's Room",
+    'Script',
     'Script Audience Resonance',
     'Scene Director',
     'Script Director',

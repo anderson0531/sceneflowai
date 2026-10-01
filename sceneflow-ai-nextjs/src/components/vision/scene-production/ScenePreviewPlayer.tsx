@@ -33,6 +33,7 @@ import {
   resolveSegmentSourceDurationSec,
   resolveVideoTrimWindow,
 } from '@/lib/video/segmentVideoTrim'
+import { videoWallDurationSec } from '@/lib/scene/languageShotLocalize'
 import type {
   MixerAudioTracks,
   MixerDialogueClipConfig,
@@ -106,6 +107,7 @@ export function ScenePreviewPlayer({
   playbackKind = 'video',
   dialogueClipConfigs,
   getPlaybackSegmentDuration,
+  getVideoPlaybackRate,
   getSegmentDuration,
   measuredSegmentDurations,
   onMeasuredDurationsChange,
@@ -146,6 +148,8 @@ export function ScenePreviewPlayer({
   dialogueClipConfigs?: Record<string, AudioClipConfig>
   /** Lifted helpers and state for consistency */
   getPlaybackSegmentDuration: (segment: SceneSegment) => number
+  /** Picture speed for the selected language. Omitted means 1. */
+  getVideoPlaybackRate?: (segmentId: string) => number
   getSegmentDuration: (segment: SceneSegment) => number
   measuredSegmentDurations: Record<string, number>
   onMeasuredDurationsChange: (durations: Record<string, number>) => void
@@ -370,8 +374,10 @@ export function ScenePreviewPlayer({
 
       const config = segmentAudioConfigs[segments[currentSegmentIndex].segmentId]
       const trim = getTrimForSegment(segments[currentSegmentIndex])
+      const videoRate = getVideoPlaybackRate?.(segments[currentSegmentIndex].segmentId) ?? 1
+      const videoWall = videoWallDurationSec(trim.playableSec, videoRate)
       const autoPauseVal = audioTracks?.dialogue?.enabled
-        ? Math.max(0, getPlaybackSegmentDuration(segments[currentSegmentIndex]) - trim.playableSec)
+        ? Math.max(0, getPlaybackSegmentDuration(segments[currentSegmentIndex]) - videoWall)
         : 0.0
       const pauseDuration = (config?.postSegmentPause || 0) + autoPauseVal
 
@@ -473,8 +479,12 @@ export function ScenePreviewPlayer({
       
       const seg = segments[currentSegmentIndex]
       const trim = getTrimForSegment(seg)
-      // Calculate global time based on segment position + trimmed local time
-      const globalTime = segmentStartTime + Math.max(0, video.currentTime - trim.inSec)
+      const videoRate = getVideoPlaybackRate?.(seg.segmentId) ?? 1
+      if (Math.abs(video.playbackRate - videoRate) > 0.01) {
+        video.playbackRate = videoRate
+      }
+      // Source time advances at `videoRate`; the timeline stays in wall-clock seconds.
+      const globalTime = segmentStartTime + Math.max(0, video.currentTime - trim.inSec) / videoRate
       setCurrentTime(globalTime)
 
       if (video.currentTime >= trim.outSec - 0.05 && !isVideoFrozen) {
@@ -508,6 +518,7 @@ export function ScenePreviewPlayer({
     currentTime,
     segmentAudioConfigs,
     getPlaybackSegmentDuration,
+    getVideoPlaybackRate,
     getSegmentStartTime,
     getTrimForSegment,
     finishPlayback,
@@ -696,6 +707,8 @@ export function ScenePreviewPlayer({
       const seekToTrimIn = () => {
         if (!currentSegment.segment) return
         const trim = getTrimForSegment(currentSegment.segment)
+        const videoRate = getVideoPlaybackRate?.(currentSegment.segment.segmentId) ?? 1
+        video.playbackRate = videoRate
         video.currentTime = trim.inSec
       }
       if (isNewUrl) {
@@ -721,7 +734,7 @@ export function ScenePreviewPlayer({
         video.play().catch(() => {})
       }
     }
-  }, [playbackKind, currentSegmentIndex, currentSegment.segment, isPlaying, isVideoFrozen, getTrimForSegment])
+  }, [playbackKind, currentSegmentIndex, currentSegment.segment, isPlaying, isVideoFrozen, getTrimForSegment, getVideoPlaybackRate])
 
   useEffect(() => {
     if (!focusBeatSegmentId || playbackKind === 'image-sequence') return

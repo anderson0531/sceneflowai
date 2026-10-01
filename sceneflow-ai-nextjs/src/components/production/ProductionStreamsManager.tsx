@@ -403,7 +403,7 @@ function StreamCard({
           <div className="mb-3">
             <h4 className="text-sm font-semibold text-white">Localize Video</h4>
             <p className="text-xs text-zinc-400 mt-0.5">
-              Dub or lip-sync each scene, then stitch a localized master for this language.
+              Each shot uses the Mixer choice for this language — double, lip-sync, or regenerate — then stitch a localized master.
             </p>
           </div>
           <StreamLocalizePanel
