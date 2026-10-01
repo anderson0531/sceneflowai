@@ -3,13 +3,20 @@ import path from 'path'
 import { describe, it, expect } from 'vitest'
 import { FEATURE_ICONS } from '@/components/landing/keyFeatureIcons'
 import {
+  FEATURE_ROOM_COLD_OPEN_SECONDS,
+  FEATURE_ROOM_FILM_MAX_SECONDS,
+  FEATURE_ROOM_FILM_MIN_SECONDS,
   FEATURE_ROOM_IDS,
-  FEATURE_ROOM_OVERVIEW_SECONDS,
   featureRoomHasVideo,
   featureRoomVideoSources,
   getFeatureRoomMedia,
   getFeatureRoomVideoLocales,
 } from '@/config/landing/featureRoomMedia'
+import {
+  FEATURE_CHAPTER_MAP,
+  FEATURE_DEMO_SECONDS,
+  chapterMapCoversEveryRoom,
+} from '@/config/landing/keyFeatureChapterMap'
 import { VIDEO_LOCALE_ORDER } from '@/config/landing/videoLocales'
 
 const ROOT = path.resolve(__dirname, '../..')
@@ -152,8 +159,16 @@ describe('keyFeatures structure', () => {
     }
   })
 
-  it('reserves a 30-second WebM overview in seven languages for each room', () => {
-    expect(FEATURE_ROOM_OVERVIEW_SECONDS).toBe(30)
+  it('reserves a room film in seven languages and a 30-second feature demo', () => {
+    expect(FEATURE_DEMO_SECONDS).toBe(30)
+    expect(FEATURE_ROOM_COLD_OPEN_SECONDS).toBe(8)
+    expect(FEATURE_ROOM_FILM_MIN_SECONDS).toBe(60)
+    expect(FEATURE_ROOM_FILM_MAX_SECONDS).toBe(90)
+    expect(chapterMapCoversEveryRoom()).toBe(true)
+    for (const room of FEATURE_CHAPTER_MAP) {
+      expect(room.filmSeconds).toBeGreaterThanOrEqual(FEATURE_ROOM_FILM_MIN_SECONDS)
+      expect(room.filmSeconds).toBeLessThanOrEqual(FEATURE_ROOM_FILM_MAX_SECONDS)
+    }
     for (const roomId of FEATURE_ROOM_IDS) {
       const locales = getFeatureRoomVideoLocales(roomId)
       expect(locales.map((locale) => locale.id)).toEqual([...VIDEO_LOCALE_ORDER])
@@ -226,6 +241,8 @@ describe('keyFeatures structure', () => {
     expect(section.split('feature.screenshot').length - 1).toBe(1)
     expect(section).toContain('aspect-video')
     expect(section).not.toContain('MultiLanguageVideoPlayer')
+    expect(section).not.toContain('Chapter map')
+    expect(section).toContain('standaloneDemoKey')
     expect(section).not.toContain("t.raw('categories')")
     expect(section).toContain("feature.icon === 'languageStreams'")
     expect(section).toContain("t('landingUiLanguagesLabel')")
@@ -256,6 +273,7 @@ describe('keyFeatures structure', () => {
     expect(mp4At).toBeGreaterThan(webmAt)
     expect(overview).toContain('min-h-[180px]')
     expect(overview).not.toContain('min-h-[280px]')
+    expect(overview).toContain('FEATURE_ROOM_COLD_OPEN_SECONDS')
     expect(overview).toContain('IntersectionObserver')
     expect(overview).toContain('useReducedMotion')
     expect(overview).toContain('comingSoonLabel')

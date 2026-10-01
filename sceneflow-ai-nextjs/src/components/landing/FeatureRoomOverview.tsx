@@ -6,6 +6,7 @@ import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { useLandingVideoLocale } from '@/i18n/useLandingVideoLocale'
 import {
+  FEATURE_ROOM_COLD_OPEN_SECONDS,
   featureRoomHasVideo,
   getFeatureRoomMedia,
   getFeatureRoomVideoLocales,
@@ -22,6 +23,8 @@ type FeatureRoomOverviewProps = {
   playLabel: string
   muteLabel: string
   unmuteLabel: string
+  watchLongformHref?: string
+  watchLongformLabel?: string
 }
 
 export function FeatureRoomOverview({
@@ -34,6 +37,8 @@ export function FeatureRoomOverview({
   playLabel,
   muteLabel,
   unmuteLabel,
+  watchLongformHref,
+  watchLongformLabel,
 }: FeatureRoomOverviewProps) {
   const videoLocales = useMemo(() => getFeatureRoomVideoLocales(roomId), [roomId])
   const pageLocaleId = useLandingVideoLocale()
@@ -48,6 +53,7 @@ export function FeatureRoomOverview({
   const [pausedByUser, setPausedByUser] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isMuted, setIsMuted] = useState(true)
+  const [filmEngaged, setFilmEngaged] = useState(false)
 
   const media = getFeatureRoomMedia(roomId, activeLocaleId)
   const hasVideo = featureRoomHasVideo(media)
@@ -58,6 +64,8 @@ export function FeatureRoomOverview({
 
   useEffect(() => {
     setPausedByUser(false)
+    setFilmEngaged(false)
+    setIsMuted(true)
   }, [roomId])
 
   useEffect(() => {
@@ -74,10 +82,13 @@ export function FeatureRoomOverview({
   useEffect(() => {
     const video = videoRef.current
     if (!video || !hasVideo) return
-    const shouldPlay = inView && !prefersReducedMotion && !pausedByUser
-    if (!shouldPlay) {
+    const holdColdOpen = !filmEngaged && (prefersReducedMotion || !inView || pausedByUser)
+    if (holdColdOpen || (filmEngaged && (!inView || pausedByUser))) {
       video.pause()
       return
+    }
+    if (!filmEngaged) {
+      video.muted = true
     }
     void video.play().catch(() => {})
   }, [
@@ -85,20 +96,53 @@ export function FeatureRoomOverview({
     inView,
     pausedByUser,
     prefersReducedMotion,
+    filmEngaged,
     activeLocaleId,
     media.webmUrl,
     media.mp4Url,
   ])
 
+  const engageFilm = () => {
+    const video = videoRef.current
+    if (!video || !hasVideo) return
+    setFilmEngaged(true)
+    setPausedByUser(false)
+    setIsMuted(false)
+    video.currentTime = 0
+    video.muted = false
+    void video.play().catch(() => {})
+  }
+
   const togglePlay = () => {
     const video = videoRef.current
     if (!video || !hasVideo) return
+    if (!filmEngaged) {
+      engageFilm()
+      return
+    }
     if (video.paused) {
       setPausedByUser(false)
       void video.play().catch(() => {})
     } else {
       setPausedByUser(true)
       video.pause()
+    }
+  }
+
+  const toggleMute = () => {
+    if (!hasVideo) return
+    if (!filmEngaged) {
+      engageFilm()
+      return
+    }
+    setIsMuted((muted) => !muted)
+  }
+
+  const onTimeUpdate = () => {
+    const video = videoRef.current
+    if (!video || filmEngaged) return
+    if (video.currentTime >= FEATURE_ROOM_COLD_OPEN_SECONDS) {
+      video.currentTime = 0
     }
   }
 
@@ -116,17 +160,23 @@ export function FeatureRoomOverview({
     >
       {hasVideo ? (
         <video
-          key={activeLocaleId}
+          key={`${roomId}-${activeLocaleId}`}
           ref={videoRef}
           poster={media.posterUrl || undefined}
-          autoPlay={!prefersReducedMotion}
-          loop
+          autoPlay={!prefersReducedMotion && !filmEngaged}
           muted={isMuted}
           playsInline
           preload={prefersReducedMotion ? 'none' : 'metadata'}
           className="absolute inset-0 h-full w-full object-cover"
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
+          onTimeUpdate={onTimeUpdate}
+          onEnded={() => {
+            const video = videoRef.current
+            if (!video || filmEngaged) return
+            video.currentTime = 0
+            void video.play().catch(() => {})
+          }}
         >
           {media.webmUrl ? <source src={media.webmUrl} type="video/webm" /> : null}
           {media.mp4Url ? <source src={media.mp4Url} type="video/mp4" /> : null}
@@ -149,14 +199,14 @@ export function FeatureRoomOverview({
             onClick={togglePlay}
             disabled={!hasVideo}
             className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/60 px-3 py-2 text-xs font-medium text-white transition hover:border-cyan-400/40 disabled:cursor-not-allowed disabled:opacity-70"
-            aria-label={isPlaying ? pauseLabel : playLabel}
+            aria-label={filmEngaged && isPlaying ? pauseLabel : playLabel}
           >
-            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            {hasVideo ? (isPlaying ? pauseLabel : playLabel) : comingSoonLabel}
+            {filmEngaged && isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            {hasVideo ? (filmEngaged && isPlaying ? pauseLabel : playLabel) : comingSoonLabel}
           </button>
           <button
             type="button"
-            onClick={() => setIsMuted((muted) => !muted)}
+            onClick={toggleMute}
             disabled={!hasVideo}
             className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/60 px-3 py-2 text-xs font-medium text-white transition hover:border-cyan-400/40 disabled:cursor-not-allowed disabled:opacity-70"
             aria-label={isMuted ? unmuteLabel : muteLabel}
@@ -164,6 +214,14 @@ export function FeatureRoomOverview({
             {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
             {isMuted ? unmuteLabel : muteLabel}
           </button>
+          {watchLongformHref && watchLongformLabel ? (
+            <a
+              href={watchLongformHref}
+              className="inline-flex items-center rounded-full border border-amber-300/40 bg-amber-500/20 px-3 py-2 text-xs font-medium text-amber-100 transition hover:border-amber-200/70"
+            >
+              {watchLongformLabel}
+            </a>
+          ) : null}
         </div>
       </div>
       <VideoLanguageControl

@@ -6,11 +6,31 @@ import { ScreeningRoomV2 } from '@/components/vision/ScreeningRoomV2'
 import { readFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
 import { Loader, AlertCircle } from 'lucide-react'
 import { PipelineDemoChrome } from '@/components/landing/PipelineDemoChrome'
+import {
+  getPipelineTrailerSrc,
+  type ScreeningCut,
+} from '@/config/landing/productionPipelineDemo'
 
 function parsePlaybackMode(value: string | null): 'animatic' | 'video' | 'auto' {
   if (value === 'animatic' || value === 'video' || value === 'auto') return value
   if (value === 'stream') return 'video'
   return 'auto'
+}
+
+function parseScreeningCut(value: string | null): ScreeningCut | null {
+  if (value === 'previs' || value === 'scenes' || value === 'trailer' || value === 'final') {
+    return value
+  }
+  return null
+}
+
+function playbackForCut(
+  cut: ScreeningCut | null,
+  playbackParam: string | null
+): 'animatic' | 'video' | 'auto' {
+  if (cut === 'previs') return 'animatic'
+  if (cut === 'scenes' || cut === 'final') return 'video'
+  return parsePlaybackMode(playbackParam)
 }
 
 export default function SharedScreeningRoomPage({ params }: { params: Promise<{ shareToken: string }> }) {
@@ -36,9 +56,16 @@ function SharedScreeningRoomPageInner({ params }: { params: Promise<{ shareToken
   const [showSharedHint, setShowSharedHint] = useState(false)
 
   const initialLanguage = searchParams.get('lang') || undefined
-  const playbackMode = parsePlaybackMode(searchParams.get('playback'))
+  const activeCut = parseScreeningCut(searchParams.get('cut'))
+  const playbackMode = playbackForCut(activeCut, searchParams.get('playback'))
+  const trailerSrc = activeCut === 'trailer' ? getPipelineTrailerSrc(shareToken) : null
 
   useEffect(() => {
+    if (trailerSrc) {
+      setLoading(false)
+      return
+    }
+
     async function loadSharedProject() {
       try {
         const response = await fetch(`/api/vision/shared-project/${shareToken}`)
@@ -58,12 +85,32 @@ function SharedScreeningRoomPageInner({ params }: { params: Promise<{ shareToken
     }
 
     loadSharedProject()
-  }, [shareToken])
+  }, [shareToken, trailerSrc])
 
   const finalCutSelection = useMemo(
     () => (projectData ? readFinalCutSelection(projectData.metadata) : null),
     [projectData]
   )
+
+  if (trailerSrc) {
+    return (
+      <div className="min-h-screen bg-black">
+        <div className="relative z-[60]">
+          <PipelineDemoChrome tokenOrSlug={shareToken} activeCut="trailer" />
+        </div>
+        <div className="flex min-h-[70vh] items-center justify-center p-4">
+          <video
+            key={trailerSrc}
+            src={trailerSrc}
+            controls
+            playsInline
+            className="max-h-[80vh] w-full max-w-5xl rounded-lg"
+            aria-label="Trailer"
+          />
+        </div>
+      </div>
+    )
+  }
 
   if (loading) {
     return (
@@ -102,7 +149,7 @@ function SharedScreeningRoomPageInner({ params }: { params: Promise<{ shareToken
   return (
     <div className="min-h-screen bg-black">
       <div className="relative z-[60]">
-        <PipelineDemoChrome tokenOrSlug={shareToken} />
+        <PipelineDemoChrome tokenOrSlug={shareToken} activeCut={activeCut} />
       </div>
 
       {showSharedHint ? (

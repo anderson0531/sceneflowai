@@ -19,10 +19,15 @@ import { PRODUCTION_SHOWCASE_SCREENING_SLUGS } from '@/config/landing/production
 import { LANDING_SAMPLE } from '@/config/landingSamples'
 import {
   PRODUCTION_PIPELINE_DEMO,
+  PRODUCTION_WALK_IDS,
+  buildProductionExampleMedia,
   getPipelineDemoBlueprintHref,
   getPipelineDemoScriptARHref,
   getPipelineDemoScreeningHref,
+  getProductionExampleMedia,
   matchPipelineDemoStage,
+  type ProductionPipelineWalk,
+  type ProductionWalkId,
 } from '@/config/landing/productionPipelineDemo'
 
 const ROOT = path.resolve(__dirname, '../..')
@@ -416,14 +421,17 @@ describe('Production showcase videos', () => {
     }
   })
 
-  it('shows Screening Room player directly without tabs', () => {
+  it('opens the flagship card on a trailer and keeps the longform out of the grid', () => {
     const card = readSource('src/components/landing/ProductionStyleCard.tsx')
 
     expect(card).not.toContain('TabsTrigger')
     expect(card).not.toContain('TabsContent')
-    expect(card).toContain('ScreeningRoomPreview')
-    expect(card).toContain('screeningEmbedSlug')
+    expect(card).not.toContain('ScreeningRoomPreview')
+    expect(card).not.toContain('getProductionShowcaseVideoLocales')
+    expect(card).toContain('TrailerEntry')
+    expect(card).toContain('media.longformHref')
     expect(card).toContain('screeningRoomInstruction')
+    expect(card).not.toContain('aria-label="Play preview"')
   })
 
   it('provides the video player copy the section reads', () => {
@@ -440,8 +448,8 @@ describe('Production showcase videos', () => {
     expect(card).toContain('aria-expanded={solutionsSectionOpen}')
     expect(card).toContain('showSolutionsSectionLabel')
     expect(card).toContain('hideSolutionsSectionLabel')
-    expect(card).toContain('ScreeningRoomPreview')
-    expect(card).toContain('screeningEmbedSlug')
+    expect(card).toContain('TrailerEntry')
+    expect(card).toContain('explorerHandoff')
     expect(card).toContain('Accordion')
     expect(card).toContain('type="single"')
     expect(card).toContain('collapsible')
@@ -453,7 +461,9 @@ describe('Production showcase videos', () => {
     expect(section).toContain('solutionPillarLabel')
     expect(section).toContain("t('showSolutionsSection')")
     expect(section).toContain("t('hideSolutionsSection')")
-    expect(section).toContain('getProductionShowcaseScreeningSlug')
+    expect(section).toContain("t('explorerHandoff')")
+    expect(section).toContain("t('watchLongform')")
+    expect(section).toContain("t('trailerLabel')")
   })
 })
 
@@ -476,6 +486,72 @@ describe('Production showcase screening embeds', () => {
   it('does not fetch the expired White House Waltz share', () => {
     expect(PRODUCTION_SHOWCASE_SCREENING_SLUGS.drama).toBe('')
     expect(LANDING_SAMPLE.storyboardShareSlug).toBe('')
+  })
+
+  it('ships the drama walk first and hides later play until that master exists', () => {
+    expect(getProductionExampleMedia('drama').isFlagship).toBe(true)
+    expect(getProductionExampleMedia('drama').trailerSrc).toBeNull()
+    expect(getProductionExampleMedia('drama').longformHref).toBeNull()
+    expect(getProductionExampleMedia('animation').isFlagship).toBe(false)
+    expect(getProductionExampleMedia('documentary').trailerSrc).toBeNull()
+    expect(getProductionExampleMedia('localization', 'houston').longformHref).toBeNull()
+    expect([...PRODUCTION_WALK_IDS]).toEqual([
+      'drama',
+      'animation',
+      'documentary',
+      'localization-houston',
+      'localization-saopaulo',
+    ])
+
+    const empty: ProductionPipelineWalk = {
+      blueprintShareToken: '',
+      scriptResonanceShareToken: '',
+      screeningRoomSlug: '',
+      trailerSrc: '',
+      longformRuntimeLabel: '',
+      longformPublished: false,
+    }
+    const walks = Object.fromEntries(
+      PRODUCTION_WALK_IDS.map((id) => [id, { ...empty }])
+    ) as Record<ProductionWalkId, ProductionPipelineWalk>
+    walks.animation = {
+      ...empty,
+      trailerSrc: 'https://example.com/animation-trailer.mp4',
+      screeningRoomSlug: 'animation-master',
+      longformRuntimeLabel: '22 min',
+      longformPublished: true,
+    }
+    expect(buildProductionExampleMedia(walks, 'animation').trailerSrc).toBeNull()
+    expect(buildProductionExampleMedia(walks, 'animation').longformHref).toBeNull()
+
+    walks.drama = {
+      ...empty,
+      trailerSrc: 'https://example.com/drama-trailer.mp4',
+      screeningRoomSlug: 'drama-master',
+      longformRuntimeLabel: '38 min',
+      longformPublished: true,
+      blueprintShareToken: 'blueprint-token',
+      scriptResonanceShareToken: 'script-token',
+    }
+    const drama = buildProductionExampleMedia(walks, 'drama')
+    expect(drama.trailerSrc).toBe('https://example.com/drama-trailer.mp4')
+    expect(drama.longformHref).toBe(
+      '/share/screening-room/drama-master?playback=video&cut=final'
+    )
+    expect(drama.longformRuntimeLabel).toBe('38 min')
+    expect(drama.doors.map((door) => door.id)).toEqual([
+      'blueprint',
+      'script-ar',
+      'previs',
+      'scenes',
+      'trailer',
+    ])
+
+    const animation = buildProductionExampleMedia(walks, 'animation')
+    expect(animation.trailerSrc).toBe('https://example.com/animation-trailer.mp4')
+    expect(animation.longformHref).toBe(
+      '/share/screening-room/animation-master?playback=video&cut=final'
+    )
   })
 
   it('keeps pipeline demo shares empty until listen-only tokens are published', () => {
