@@ -1,8 +1,8 @@
 /**
  * Background slots for the two value sections under friction.
- * Publish plays one public encode (WebM first, MP4 fallback).
- * Direction ("The control you keep") plays a dubbed WebM per language,
- * with an H.264 MP4 fallback, encoded from the Blob master.
+ * Direction ("The control you keep") and publish ("The cut you publish")
+ * each play a dubbed WebM per language, with an H.264 MP4 fallback,
+ * encoded from the Blob master.
  */
 
 import type { TwoModesMediaEntry, TwoModesVideoLocale } from '@/config/landing/twoModesMedia'
@@ -17,6 +17,7 @@ export type PrimaryValueMediaId = (typeof PRIMARY_VALUE_MEDIA_IDS)[number]
 
 const ILLUSTRATION_BASE = '/landing/primary-value'
 const DIRECTION_POSTER = `${ILLUSTRATION_BASE}/direction.webp`
+const PUBLISH_POSTER = `${ILLUSTRATION_BASE}/publish.webp`
 
 const EMPTY_MEDIA: TwoModesMediaEntry = {
   imageUrl: '',
@@ -95,14 +96,66 @@ function directionMedia(id: VideoLocaleId): TwoModesMediaEntry {
   }
 }
 
+/** Blob master for each Cut dub. */
+export const PUBLISH_CUT_VIDEO_BLOB_PATHS: Record<VideoLocaleId, string> = {
+  en: 'The Cut (English).mp4',
+  es: 'The Cut (Spanish).mp4',
+  pt: `The Cut (${LOCALE_FILENAME_LABELS.pt}).mp4`,
+  hi: `The Cut (${LOCALE_FILENAME_LABELS.hi}).mp4`,
+  zh: `The Cut (${LOCALE_FILENAME_LABELS.zh}).mp4`,
+  ar: `The Cut (${LOCALE_FILENAME_LABELS.ar}).mp4`,
+  th: `The Cut (${LOCALE_FILENAME_LABELS.th}).mp4`,
+}
+
+export function publishCutVideoBlobPath(locale: VideoLocaleId): string {
+  return PUBLISH_CUT_VIDEO_BLOB_PATHS[locale]
+}
+
+/** 720p encodes shipped with the app, transcoded from each locale's Blob master. */
+const PUBLISH_CUT_LOCAL_MEDIA: Record<VideoLocaleId, { webmUrl: string; mp4Url: string }> = {
+  en: {
+    webmUrl: `${ILLUSTRATION_BASE}/publish-en.webm`,
+    mp4Url: `${ILLUSTRATION_BASE}/publish-en.mp4`,
+  },
+  es: {
+    webmUrl: `${ILLUSTRATION_BASE}/publish-es.webm`,
+    mp4Url: `${ILLUSTRATION_BASE}/publish-es.mp4`,
+  },
+  pt: {
+    webmUrl: `${ILLUSTRATION_BASE}/publish-pt.webm`,
+    mp4Url: `${ILLUSTRATION_BASE}/publish-pt.mp4`,
+  },
+  hi: {
+    webmUrl: `${ILLUSTRATION_BASE}/publish-hi.webm`,
+    mp4Url: `${ILLUSTRATION_BASE}/publish-hi.mp4`,
+  },
+  zh: {
+    webmUrl: `${ILLUSTRATION_BASE}/publish-zh.webm`,
+    mp4Url: `${ILLUSTRATION_BASE}/publish-zh.mp4`,
+  },
+  ar: {
+    webmUrl: `${ILLUSTRATION_BASE}/publish-ar.webm`,
+    mp4Url: `${ILLUSTRATION_BASE}/publish-ar.mp4`,
+  },
+  th: {
+    webmUrl: `${ILLUSTRATION_BASE}/publish-th.webm`,
+    mp4Url: `${ILLUSTRATION_BASE}/publish-th.mp4`,
+  },
+}
+
+function publishMedia(id: VideoLocaleId): TwoModesMediaEntry {
+  const local = PUBLISH_CUT_LOCAL_MEDIA[id]
+  return {
+    ...EMPTY_MEDIA,
+    posterUrl: id === 'en' ? PUBLISH_POSTER : '',
+    webmUrl: local.webmUrl,
+    mp4Url: local.mp4Url,
+  }
+}
+
 export const PRIMARY_VALUE_MEDIA: Record<PrimaryValueMediaId, TwoModesMediaEntry> = {
   direction: directionMedia('en'),
-  publish: {
-    ...EMPTY_MEDIA,
-    posterUrl: `${ILLUSTRATION_BASE}/publish.webp`,
-    webmUrl: `${ILLUSTRATION_BASE}/publish.webm`,
-    mp4Url: `${ILLUSTRATION_BASE}/publish.mp4`,
-  },
+  publish: publishMedia('en'),
 }
 
 export function getPrimaryValueMedia(id: string): TwoModesMediaEntry {
@@ -116,6 +169,21 @@ export function getPrimaryValueMedia(id: string): TwoModesMediaEntry {
 export function getDirectControlVideoLocales(): TwoModesVideoLocale[] {
   return VIDEO_LOCALE_ORDER.map((id) => {
     const media = directionMedia(id)
+    return {
+      id,
+      src: media.mp4Url,
+      poster: media.posterUrl || undefined,
+      available: Boolean(media.mp4Url || media.webmUrl),
+      webmUrl: media.webmUrl,
+      mp4Url: media.mp4Url,
+    }
+  })
+}
+
+/** Language versions of The Cut You Publish backdrop. */
+export function getPublishCutVideoLocales(): TwoModesVideoLocale[] {
+  return VIDEO_LOCALE_ORDER.map((id) => {
+    const media = publishMedia(id)
     return {
       id,
       src: media.mp4Url,
