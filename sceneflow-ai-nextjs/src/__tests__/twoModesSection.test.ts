@@ -14,7 +14,7 @@ import {
   twoModesVideoBlobPath,
   twoModesVideoSources,
 } from '@/config/landing/twoModesMedia'
-import { VIDEO_LOCALE_ORDER, videoUrl } from '@/config/landing/videoLocales'
+import { VIDEO_LOCALE_ORDER } from '@/config/landing/videoLocales'
 import {
   COLLAPSIBLE_LANDING_SECTION_IDS,
   DEFAULT_EXPANDED_LANDING_SECTION_IDS,
@@ -138,31 +138,19 @@ describe('one-pipeline landing section', () => {
     for (const id of VIDEO_LOCALE_ORDER) {
       expect(TWO_MODES_VIDEO_BLOB_PATHS[id]).toBe(twoModesVideoBlobPath(id))
       const locale = locales.find((entry) => entry.id === id)
-      if (id === 'es' || id === 'pt') {
-        expect(locale?.available).toBe(true)
-        expect(locale?.webmUrl).toBe('')
-        expect(locale?.mp4Url).toBe(videoUrl(TWO_MODES_VIDEO_BLOB_PATHS[id]))
-        continue
-      }
-      if (id === 'en' || id === 'hi' || id === 'zh' || id === 'ar' || id === 'th') {
-        expect(locale?.available).toBe(true)
-        expect(locale?.webmUrl).toBe(`/landing/two-modes/friction-${id}.webm`)
-        expect(locale?.mp4Url).toBe(`/landing/two-modes/friction-${id}.mp4`)
-        expect(locale?.src).toBe(`/landing/two-modes/friction-${id}.mp4`)
-        expect(
-          twoModesVideoSources({
-            imageUrl: '',
-            posterUrl: '',
-            webmUrl: locale.webmUrl,
-            mp4Url: locale.mp4Url,
-          }).map((source) => source.type)
-        ).toEqual(['video/webm', 'video/mp4'])
-        continue
-      }
-      expect(locale?.available).toBe(false)
-      expect(locale?.src).toBe('')
-      expect(locale?.mp4Url).toBe('')
-      expect(locale?.webmUrl).toBe('')
+      if (!locale) throw new Error(`missing friction locale ${id}`)
+      expect(locale.available).toBe(true)
+      expect(locale.webmUrl).toBe(`/landing/two-modes/friction-${id}.webm`)
+      expect(locale.mp4Url).toBe(`/landing/two-modes/friction-${id}.mp4`)
+      expect(locale.src).toBe(`/landing/two-modes/friction-${id}.mp4`)
+      expect(
+        twoModesVideoSources({
+          imageUrl: '',
+          posterUrl: '',
+          webmUrl: locale.webmUrl,
+          mp4Url: locale.mp4Url,
+        }).map((source) => source.type)
+      ).toEqual(['video/webm', 'video/mp4'])
     }
     expect(twoModesVideoBlobPath('en')).toBe('demo/The Friction (English).mp4')
     expect(twoModesVideoBlobPath('es')).toBe('The Friction (Spanish).mp4')
