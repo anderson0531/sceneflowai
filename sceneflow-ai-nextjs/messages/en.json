@@ -246,9 +246,6 @@
     "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room.",
     "learnMoreLabel": "Learn more",
     "showLessLabel": "Show less",
-    "problemLabel": "The Problem",
-    "solutionLabel": "The Solution",
-    "outcomeLabel": "The Payoff",
     "videoComingSoon": "Feature demo coming soon",
     "videoSoon": "Soon",
     "overviewComingSoon": "Overview coming soon",
@@ -262,7 +259,7 @@
       {
         "id": "series-desk",
         "label": "Series Room",
-        "promise": "Lock the franchise once. Season arcs, cast, tone, and world rules carry into every episode, and a single film can skip this room.",
+        "promise": "The Series Room is your franchise command center for long-form AI production. It establishes your universe’s core architecture to guarantee perfect continuity. Lock the franchise once. Season arcs, cast, tone, and world rules automatically carry into every episode, eliminating repetitive setup and ensuring persistent world-building. A single film can skip this room.",
         "features": [
           {
             "icon": "seasonUniverse",
@@ -270,9 +267,20 @@
             "description": "Define the franchise once. Season arcs, recurring cast, tone, and world rules live on the series, and every new episode inherits them instead of starting from a blank page. A single film can skip this room and open in the Blueprint Room.",
             "screenshot": "Series overview",
             "learnMore": {
-              "problem": "A new episode that starts from a blank page forgets the cast, the tone, and the rules of the world.",
-              "solution": "Season universe stores arcs, recurring cast, tone, and world rules on the series so every episode inherits them.",
-              "outcome": "A single film can skip Series Room. A season keeps one franchise definition for every episode."
+              "items": [
+                {
+                  "title": "Franchise lock",
+                  "description": "Season arcs, recurring cast, tone, and world rules live on the series."
+                },
+                {
+                  "title": "Inherited episodes",
+                  "description": "Every new episode starts from that franchise instead of a blank page."
+                },
+                {
+                  "title": "Single film",
+                  "description": "A film with no season skips this room and opens in the Blueprint Room."
+                }
+              ]
             }
           },
           {
@@ -281,9 +289,16 @@
             "description": "Each episode outline, synopsis, and story beats sync into that episode’s Blueprint Room and Production Stage. Episode 12 still knows the cast, the world, and what already happened.",
             "screenshot": "Episode handoff into Blueprint and Production",
             "learnMore": {
-              "problem": "Later episodes lose the thread when the outline, the synopsis, and the beats live somewhere else.",
-              "solution": "Episode handoff syncs that episode’s outline, synopsis, and story beats into its Blueprint Room and Production Stage.",
-              "outcome": "Episode 12 still knows the cast, the world, and what already happened."
+              "items": [
+                {
+                  "title": "Outline sync",
+                  "description": "Each episode’s outline, synopsis, and story beats sync into that episode’s Blueprint Room and Production Stage."
+                },
+                {
+                  "title": "Continuity",
+                  "description": "Episode 12 still knows the cast, the world, and what already happened."
+                }
+              ]
             }
           },
           {
@@ -292,9 +307,20 @@
             "description": "The series edit dialog. Speak or type what should change — a more sympathetic antagonist, a new subplot, a different climax — and optionally focus the edit on plot, characters, episode content, tone, or setting. The revision is targeted. Unrelated parts of the storyline stay put, and you apply the change yourself.",
             "screenshot": "Reshape dialog",
             "learnMore": {
-              "problem": "A broad rewrite of the series can change plot, cast, and setting you meant to keep.",
-              "solution": "Reshape · with Direction takes a spoken or typed note and can focus the edit on plot, characters, episode content, tone, or setting. You preview it and apply it yourself.",
-              "outcome": "Unrelated parts of the storyline stay put. Nothing is rewritten until you accept the change."
+              "items": [
+                {
+                  "title": "Spoken or typed note",
+                  "description": "Say or type the change, such as a more sympathetic antagonist, a new subplot, or a different climax."
+                },
+                {
+                  "title": "Focused edit",
+                  "description": "Optionally limit the revision to plot, characters, episode content, tone, or setting."
+                },
+                {
+                  "title": "You apply it",
+                  "description": "Unrelated parts of the storyline stay put, and nothing changes until you accept it."
+                }
+              ]
             }
           },
           {
@@ -303,9 +329,16 @@
             "description": "The series-episode edit. On one episode, dictate the change (raise the stakes, deepen the B-story) and apply it to that episode only. The rest of the season is left alone.",
             "screenshot": "Direct this episode",
             "learnMore": {
-              "problem": "A note about one episode should not rewrite the rest of the season.",
-              "solution": "Direct this episode takes the change you dictate and applies it to that episode only, after you accept it.",
-              "outcome": "The rest of the season is left alone."
+              "items": [
+                {
+                  "title": "One episode",
+                  "description": "Dictate the change, such as raising the stakes or deepening the B-story, and apply it to that episode only."
+                },
+                {
+                  "title": "Season stays",
+                  "description": "The rest of the season is left alone."
+                }
+              ]
             }
           }
         ]
@@ -313,7 +346,7 @@
       {
         "id": "blueprint-board",
         "label": "Blueprint Room",
-        "promise": "A sentence or a brief becomes the treatment and the only beat sheet. Score it for the audience you named, then share it before anyone spends on pictures.",
+        "promise": "The Blueprint Room is where a sentence or a brief becomes the film. It writes the treatment and the only beat sheet, so motivations, characters, art direction, and story beats are locked before production. Score that board for the audience you named, then share it as a read-and-listen link. Picture spend starts only after you decide what to revise. Production Stage turns each beat into a chapter and does not invent a second beat sheet.",
         "features": [
           {
             "icon": "treatment",
@@ -321,9 +354,20 @@
             "description": "A sentence or a full brief becomes the film treatment: motivations, characters, art direction, and a beat sheet. Beats exist only here. Production Stage turns each beat into a chapter; it does not invent a second beat sheet.",
             "screenshot": "Treatment board",
             "learnMore": {
-              "problem": "A second beat sheet in production splits the story from the treatment you already locked.",
-              "solution": "Treatment and beat sheet turns a sentence or a full brief into motivations, characters, art direction, and the only beat sheet.",
-              "outcome": "Production Stage turns each beat into a chapter. It does not invent another beat sheet."
+              "items": [
+                {
+                  "title": "From a sentence or a brief",
+                  "description": "The treatment covers motivations, characters, art direction, and the beat sheet."
+                },
+                {
+                  "title": "One beat sheet",
+                  "description": "Beats exist only here."
+                },
+                {
+                  "title": "Chapters, not a second sheet",
+                  "description": "Production Stage turns each beat into a chapter."
+                }
+              ]
             }
           },
           {
@@ -332,9 +376,16 @@
             "description": "Score concept, tone, characters, and beats against the audience you named, before anyone spends on pictures. You see the score and the recommendations, then decide what to revise.",
             "screenshot": "Audience Resonance scores",
             "learnMore": {
-              "problem": "Picture spend starts before you know whether the concept, tone, characters, or beats fit the audience.",
-              "solution": "Audience Resonance scores those parts against the audience you named and shows the recommendations.",
-              "outcome": "You decide what to revise before anyone spends on pictures."
+              "items": [
+                {
+                  "title": "Before picture spend",
+                  "description": "Score concept, tone, characters, and beats against the audience you named."
+                },
+                {
+                  "title": "You decide",
+                  "description": "The score and the recommendations are shown, and you choose what to revise."
+                }
+              ]
             }
           },
           {
@@ -343,9 +394,16 @@
             "description": "The Blueprint edit dialog (Co-Director · Blueprint). Describe the change in plain words. Preview the rewrite, keep the parts you want, and apply it without throwing away the visual foundation already locked in the treatment.",
             "screenshot": "Co-Director · Blueprint",
             "learnMore": {
-              "problem": "A rewrite of the treatment can throw away art direction you already locked.",
-              "solution": "Co-Director · Blueprint takes the change in plain words, shows a preview, and lets you keep the parts you want.",
-              "outcome": "You apply the rewrite without throwing away the visual foundation. Nothing changes until you accept it."
+              "items": [
+                {
+                  "title": "Plain words",
+                  "description": "Describe the change, preview the rewrite, and keep the parts you want."
+                },
+                {
+                  "title": "Locked art",
+                  "description": "Apply it without throwing away the visual foundation already in the treatment."
+                }
+              ]
             }
           },
           {
@@ -354,9 +412,20 @@
             "description": "Share the treatment as a read-and-listen link. Collaborators hear the narration and see the same board you do. Their notes come back as guided revision, not a new document in another tool. A new note notifies you, and you can read it on your phone.",
             "screenshot": "Share link",
             "learnMore": {
-              "problem": "Feedback that arrives as a separate document has to be retyped into the treatment.",
-              "solution": "Stakeholder review shares a read-and-listen link. Collaborators hear the narration and see the same board. A new note notifies you, and you can read it on your phone.",
-              "outcome": "Their notes come back as guided revision on the board you already have. The studio stays on a desktop or tablet."
+              "items": [
+                {
+                  "title": "Read and listen",
+                  "description": "Collaborators hear the narration and see the same board."
+                },
+                {
+                  "title": "Guided revision",
+                  "description": "Notes come back on the board, not as a new document."
+                },
+                {
+                  "title": "Phone notes",
+                  "description": "A new note notifies you, and you can read it on your phone while the studio stays on a desktop or tablet."
+                }
+              ]
             }
           }
         ]
@@ -364,7 +433,7 @@
       {
         "id": "production-stage",
         "label": "Production Stage",
-        "promise": "Write the script, plan credits and the schedule in Production Planner, generate with locked references, mix the scene, and deploy languages, 4K, versions, and trailers. Check the plan and new notes on your phone.",
+        "promise": "The Production Stage is where the locked story becomes picture and sound. Write the shot-by-shot script, plan credits and the schedule, and generate from a locked Reference Library so faces and places stay consistent. Mix the scene, then deploy language versions, a native 4K master, saved takes, and promotion trailers. Check pace, spend, and new notes on your phone. Editing stays on a desktop or tablet.",
         "spend": {
           "label": "Spend",
           "features": [
@@ -374,9 +443,16 @@
               "description": "Connect your own image and video provider keys. Generation runs on your account, with your rates, while the guided studio — agents, references, Mixer, and Screening Room — stays in place. You are not choosing between cost control and the pipeline.",
               "screenshot": "BYOK keys",
               "learnMore": {
-                "problem": "Controlling model cost often means leaving the guided studio for a raw provider account.",
-                "solution": "Bring Your Own Key connects your image and video provider keys so generation runs on your account, at your rates.",
-                "outcome": "Agents, references, the Mixer, and Screening Room stay in place. Cost control and the pipeline are the same studio."
+                "items": [
+                  {
+                    "title": "Your keys",
+                    "description": "Connect image and video provider keys so generation runs on your account, at your rates."
+                  },
+                  {
+                    "title": "Same studio",
+                    "description": "Agents, references, the Mixer, and Screening Room stay in place."
+                  }
+                ]
               }
             },
             {
@@ -385,9 +461,28 @@
               "description": "Set still and clip iterations per shot. Those targets roll up to the scene, the chapter, and the master. A start date and workdays build a dated schedule with cumulative credits, and finished scenes can reset the targets from actuals. Draft generation and dubbing are the recommended savings. On your phone, read pace, spend, and the finish date. Editing stays on a desktop or tablet.",
               "screenshot": "Production Planner",
               "learnMore": {
-                "problem": "A single first-take factor cannot tell you when the project finishes, or whether early scenes already cost more than you planned.",
-                "solution": "Production Planner sets still and clip iterations per shot, rolls them up to scene, chapter, and master, and schedules workdays so you can see credits by date. Reset the targets from scenes you have already finished. Draft generation and dubbing are the recommended savings.",
-                "outcome": "You see pace and spend against the plan, including on your phone, before the next render. Editing stays on a desktop or tablet."
+                "items": [
+                  {
+                    "title": "Shot targets",
+                    "description": "Set still and clip iterations per shot, and roll them up to the scene, the chapter, and the master."
+                  },
+                  {
+                    "title": "Dated schedule",
+                    "description": "A start date and workdays build a schedule with cumulative credits."
+                  },
+                  {
+                    "title": "Reset from actuals",
+                    "description": "Finished scenes can reset the targets from what they actually cost."
+                  },
+                  {
+                    "title": "Recommended savings",
+                    "description": "Draft generation and dubbing are the recommended savings."
+                  },
+                  {
+                    "title": "Phone status",
+                    "description": "Read pace, spend, and the finish date on your phone, while editing stays on a desktop or tablet."
+                  }
+                ]
               }
             }
           ]
@@ -403,9 +498,16 @@
                 "description": "The Script tab holds the scene and the shot-by-shot script, plus dialogue and SFX. Direction, Music, References, and Stills sit beside it so Audience Resonance and Pre-Vis review happen before a clip is spent.",
                 "screenshot": "Script",
                 "learnMore": {
-                  "problem": "Dialogue, pacing, and tone get revised after frames are already paid for.",
-                  "solution": "Script holds the scene and the shot-by-shot script, with dialogue, SFX, and Audience Resonance scoring beside the page.",
-                  "outcome": "You revise the page before a clip is spent."
+                  "items": [
+                    {
+                      "title": "Page before spend",
+                      "description": "The Script tab holds the scene and the shot-by-shot script, plus dialogue and SFX."
+                    },
+                    {
+                      "title": "Beside the page",
+                      "description": "Direction, Music, References, and Stills sit beside it so Audience Resonance and Pre-Vis review happen before a clip is spent."
+                    }
+                  ]
                 }
               },
               {
@@ -414,9 +516,16 @@
                 "description": "A test-audience read of the script: overview, analysis, and scene notes, with section scores and recommendations. You choose which notes to act on. Nothing is rewritten until you open a director dialog and apply it.",
                 "screenshot": "Script report",
                 "learnMore": {
-                  "problem": "A test-audience note that rewrites the script on its own can change scenes you meant to keep.",
-                  "solution": "Script Audience Resonance shows an overview, analysis, scene notes, section scores, and recommendations. You choose which notes to act on.",
-                  "outcome": "Nothing is rewritten until you open a director dialog and apply it."
+                  "items": [
+                    {
+                      "title": "Test-audience read",
+                      "description": "It shows an overview, analysis, and scene notes, with section scores and recommendations."
+                    },
+                    {
+                      "title": "You choose",
+                      "description": "Nothing is rewritten until you open a director dialog and apply it."
+                    }
+                  ]
                 }
               },
               {
@@ -425,9 +534,20 @@
                 "description": "The script-scene dialog, titled Scene Director · Scene N, opened from a scene’s Audience Resonance recommendations (Direct Scene, or Direct Scene & Apply). You direct that scene, preview the changes, and select which changes to keep. The rest of the script stays as you left it.",
                 "screenshot": "Scene Director",
                 "learnMore": {
-                  "problem": "A note about one scene should not rewrite the rest of the script.",
-                  "solution": "Scene Director opens from a scene’s Audience Resonance recommendations — Direct Scene, or Direct Scene & Apply. You direct that scene, preview the changes, and select which to keep.",
-                  "outcome": "The rest of the script stays as you left it. The scene changes only when you apply them."
+                  "items": [
+                    {
+                      "title": "One scene",
+                      "description": "Scene Director · Scene N opens from a scene’s Audience Resonance recommendations, Direct Scene or Direct Scene & Apply."
+                    },
+                    {
+                      "title": "Preview and keep",
+                      "description": "Direct that scene, preview the changes, and select which to keep."
+                    },
+                    {
+                      "title": "Rest of the script",
+                      "description": "The rest of the script stays as you left it."
+                    }
+                  ]
                 }
               },
               {
@@ -436,9 +556,20 @@
                 "description": "The whole-script dialog. Revise the full script from Audience Resonance recommendations, preview the new draft, and apply it only when you accept it. Use this when the note is about the film, and Scene Director when the note is about one scene.",
                 "screenshot": "Script Director",
                 "learnMore": {
-                  "problem": "A note about the whole film is the wrong job for a single-scene edit, and a whole-script rewrite should not apply itself.",
-                  "solution": "Script Director revises the full script from Audience Resonance recommendations and shows the new draft first.",
-                  "outcome": "You apply it only when you accept it. Use Scene Director when the note is about one scene."
+                  "items": [
+                    {
+                      "title": "Whole film",
+                      "description": "Revise the full script from Audience Resonance recommendations and preview the new draft."
+                    },
+                    {
+                      "title": "You accept it",
+                      "description": "The draft applies only when you accept it."
+                    },
+                    {
+                      "title": "Scene vs film",
+                      "description": "Use Scene Director when the note is about one scene."
+                    }
+                  ]
                 }
               }
             ]
@@ -453,9 +584,16 @@
                 "description": "Lock cast, wardrobe, voices, locations, and props to the production’s art style. Every still and clip asks this library for the same faces and places, so a later scene does not recast the lead.",
                 "screenshot": "Reference Library",
                 "learnMore": {
-                  "problem": "A later scene recasts the lead when faces, wardrobe, and places are not locked to the art style.",
-                  "solution": "Reference Library locks cast, wardrobe, voices, locations, and props. Every still and clip asks that library for the same faces and places.",
-                  "outcome": "The lead stays the lead from scene to scene."
+                  "items": [
+                    {
+                      "title": "Locked look",
+                      "description": "Lock cast, wardrobe, voices, locations, and props to the production’s art style."
+                    },
+                    {
+                      "title": "Same faces",
+                      "description": "Every still and clip asks this library for the same faces and places, so a later scene does not recast the lead."
+                    }
+                  ]
                 }
               },
               {
@@ -464,9 +602,28 @@
                 "description": "Audio, Stills, and Video agents read the locked direction, attach the right references, and build the scene in the background. You iterate in draft, then render motion. Standard clips use Veo 3.1, which delivers 4K. Longer Omni preview clips are a separate model; their 4K option is not on yet. You direct and approve; the agents prompt and generate.",
                 "screenshot": "Agent run",
                 "learnMore": {
-                  "problem": "Prompting each still and clip by hand drops the locked direction and the references that belong on the shot.",
-                  "solution": "Audio, Stills, and Video agents read the locked direction, attach the right references, and build the scene in the background. Standard clips use Veo 3.1, which delivers 4K. Longer Omni preview clips are a separate model, and their 4K option is not on yet.",
-                  "outcome": "You iterate in draft, then render motion. You direct and approve; the agents prompt and generate."
+                  "items": [
+                    {
+                      "title": "Background build",
+                      "description": "Audio, Stills, and Video agents read the locked direction, attach the right references, and build the scene in the background."
+                    },
+                    {
+                      "title": "Draft then motion",
+                      "description": "You iterate in draft, then render motion."
+                    },
+                    {
+                      "title": "Veo 3.1",
+                      "description": "Standard clips use Veo 3.1, which delivers 4K."
+                    },
+                    {
+                      "title": "Omni preview",
+                      "description": "Longer Omni preview clips are a separate model, and their 4K option is not on yet."
+                    },
+                    {
+                      "title": "You approve",
+                      "description": "You direct and approve; the agents prompt and generate."
+                    }
+                  ]
                 }
               },
               {
@@ -475,9 +632,28 @@
                 "description": "The shot dialog, titled Direct Shot · Scene N · Shot N. You direct the shot in plain language, preview the direction, and save it. The preview spells out the shot you are approving: frozen moment and action, camera (shot, angle, movement, transition), blocking, emotion, gaze, lighting, props, and audio. Connected references — cast, locations, and objects — stay attached to that shot. Saving updates the still prompt and the clip prompt together. You can also steer a clip with the video-direction chips: Camera move, Action shots, Hold the start frame, Match the end frame, and Keep faces.",
                 "screenshot": "Direct Shot with camera and references",
                 "learnMore": {
-                  "problem": "A shot direction that hides the camera, the blocking, or the references makes you approve a prompt you cannot see.",
-                  "solution": "Direct Shot · Scene N · Shot N takes plain language, then previews frozen moment and action, camera (shot, angle, movement, transition), blocking, emotion, gaze, lighting, props, and audio. Connected cast, locations, and objects stay attached. Saving updates the still prompt and the clip prompt together.",
-                  "outcome": "You can also steer a clip with Camera move, Action shots, Hold the start frame, Match the end frame, and Keep faces. The shot is saved when you save it."
+                  "items": [
+                    {
+                      "title": "Named shot",
+                      "description": "Direct Shot · Scene N · Shot N takes plain language and shows a preview before you save."
+                    },
+                    {
+                      "title": "What you approve",
+                      "description": "The preview spells out frozen moment and action, camera, blocking, emotion, gaze, lighting, props, and audio."
+                    },
+                    {
+                      "title": "References stay",
+                      "description": "Connected cast, locations, and objects stay attached to that shot."
+                    },
+                    {
+                      "title": "Both prompts",
+                      "description": "Saving updates the still prompt and the clip prompt together."
+                    },
+                    {
+                      "title": "Clip chips",
+                      "description": "Steer a clip with Camera move, Action shots, Hold the start frame, Match the end frame, and Keep faces."
+                    }
+                  ]
                 }
               },
               {
@@ -486,9 +662,16 @@
                 "description": "A Ken Burns animatic with dialogue, score, and sound effects, built from the approved stills. Watch the scene, change direction with Direct Shot if it is wrong, and only then render motion.",
                 "screenshot": "Animatic player",
                 "learnMore": {
-                  "problem": "Motion renders get spent on a scene whose staging is still wrong.",
-                  "solution": "Pre-Vis before motion builds a Ken Burns animatic with dialogue, score, and sound effects from the approved stills.",
-                  "outcome": "Watch the scene, change it with Direct Shot if it is wrong, and only then render motion."
+                  "items": [
+                    {
+                      "title": "Animatic",
+                      "description": "A Ken Burns animatic with dialogue, score, and sound effects, built from the approved stills."
+                    },
+                    {
+                      "title": "Then motion",
+                      "description": "Watch the scene, change it with Direct Shot if it is wrong, and only then render motion."
+                    }
+                  ]
                 }
               },
               {
@@ -497,9 +680,20 @@
                 "description": "The scene finish inside Production Stage. Balance dialogue, narration, score, and effects, include or drop individual shots, and render the scene with its audio. Language Streams are prepared from this same Mixer, and the rendered scene is what Screening Room plays.",
                 "screenshot": "Mixer",
                 "learnMore": {
-                  "problem": "Dialogue, narration, score, and effects get finished in a separate editor, then the picture and the dub drift apart.",
-                  "solution": "Mixer balances those tracks, includes or drops individual shots, and renders the scene with its audio. Language Streams are prepared from this same Mixer.",
-                  "outcome": "Screening Room plays the rendered scene."
+                  "items": [
+                    {
+                      "title": "Scene finish",
+                      "description": "Balance dialogue, narration, score, and effects, include or drop shots, and render the scene with its audio."
+                    },
+                    {
+                      "title": "Same Mixer",
+                      "description": "Language Streams are prepared from this Mixer."
+                    },
+                    {
+                      "title": "What plays",
+                      "description": "Screening Room plays the rendered scene."
+                    }
+                  ]
                 }
               }
             ]
@@ -514,9 +708,20 @@
                 "description": "A language version of the scene, not a new production. Gemini TTS speaks the dub in 44 languages. On each shot, choose Double to overlay the dubbed voice, Lip-sync to perform it on the picture, or Regenerate to build a new clip from the translated line. Video speed is saved on that language version, because a translation is often 10–30% longer than the master.",
                 "screenshot": "Language Streams with per-shot Double, Lip-sync, and Regenerate",
                 "learnMore": {
-                  "problem": "A dub that requires a new production rebuilds the cut for every language.",
-                  "solution": "Language Streams is a language version of the scene. Each shot can be doubled, lip-synced, or regenerated from the translated line. Video speed belongs to that language version.",
-                  "outcome": "Add a language from the Mixer and generate that stream without rebuilding the cut."
+                  "items": [
+                    {
+                      "title": "A version, not a new production",
+                      "description": "Gemini TTS speaks the dub in 44 languages."
+                    },
+                    {
+                      "title": "Per shot",
+                      "description": "On each shot, choose Double, Lip-sync, or Regenerate from the translated line."
+                    },
+                    {
+                      "title": "Timing",
+                      "description": "Video speed is saved on that language version, because a translation is often 10–30% longer than the master."
+                    }
+                  ]
                 }
               },
               {
@@ -525,9 +730,24 @@
                 "description": "Veo 3.1 renders the master in 4K. That is a native render, not an upscale. Choose the delivery tier when you stitch the language master; optional Topaz upscaling still sharpens a cut when those credentials are connected. Omni stays in preview. Its 4K control is expected in January 2027.",
                 "screenshot": "Veo 3.1 4K delivery settings",
                 "learnMore": {
-                  "problem": "An upscale is not the same as a master rendered at 4K, and a preview model is not the model that delivers it.",
-                  "solution": "Veo 3.1 renders the master in 4K as a native render. Choose the delivery tier when you stitch the language master. Optional Topaz upscaling still sharpens a cut when those credentials are connected.",
-                  "outcome": "Omni stays in preview. Its 4K control is expected in January 2027."
+                  "items": [
+                    {
+                      "title": "Native 4K",
+                      "description": "Veo 3.1 renders the master in 4K as a native render, not an upscale."
+                    },
+                    {
+                      "title": "Delivery tier",
+                      "description": "Choose the delivery tier when you stitch the language master."
+                    },
+                    {
+                      "title": "Topaz",
+                      "description": "Optional Topaz upscaling still sharpens a cut when those credentials are connected."
+                    },
+                    {
+                      "title": "Omni",
+                      "description": "Omni stays in preview, and its 4K control is expected in January 2027."
+                    }
+                  ]
                 }
               },
               {
@@ -536,9 +756,20 @@
                 "description": "Every take of a stream is kept. Compare them, pin the one people liked, and come back to it after later edits. A new generation does not erase the previous cut.",
                 "screenshot": "Version list",
                 "learnMore": {
-                  "problem": "A new generation replaces the take people already liked.",
-                  "solution": "Version control keeps every take of a stream so you can compare them and pin one.",
-                  "outcome": "You can come back to that take after later edits. A new generation does not erase the previous cut."
+                  "items": [
+                    {
+                      "title": "Every take",
+                      "description": "Every take of a stream is kept."
+                    },
+                    {
+                      "title": "Pin one",
+                      "description": "Compare them, pin the one people liked, and come back to it after later edits."
+                    },
+                    {
+                      "title": "No erase",
+                      "description": "A new generation does not erase the previous cut."
+                    }
+                  ]
                 }
               },
               {
@@ -547,9 +778,16 @@
                 "description": "Promotion trailers weave a 30–60 second 9:16 promo from the strongest beats. It is ready for Shorts, Reels, and TikTok, and it is cut from the same locked timeline as the master.",
                 "screenshot": "Trailer cut",
                 "learnMore": {
-                  "problem": "A promo cut in another tool drifts away from the locked timeline.",
-                  "solution": "Promotion trailers weave a 30–60 second 9:16 promo from the strongest beats.",
-                  "outcome": "The trailer is ready for Shorts, Reels, and TikTok, and it is cut from the same locked timeline as the master."
+                  "items": [
+                    {
+                      "title": "30–60 seconds",
+                      "description": "It weaves a 30–60 second 9:16 promo from the strongest beats."
+                    },
+                    {
+                      "title": "Same timeline",
+                      "description": "It is ready for Shorts, Reels, and TikTok, and it is cut from the same locked timeline as the master."
+                    }
+                  ]
                 }
               }
             ]
@@ -559,7 +797,7 @@
       {
         "id": "screening-room",
         "label": "Screening Room",
-        "promise": "Watch the cut the Mixer rendered, review it on one link, and publish a scene, a chapter, the master, or a promo when that piece is ready.",
+        "promise": "The Screening Room is where the finished cut is watched, reviewed, and released. One player holds Pre-Vis, scenes, chapters, the master, the promo, and each Language Stream, so the dub is the same cut the Mixer rendered. Share one link for playback and notes on the picture. Publish a 3–5 minute scene, an 8–12 minute chapter, the master, or a promo when that piece is ready, and keep building the rest.",
         "features": [
           {
             "icon": "screeningPlayer",
@@ -567,9 +805,20 @@
             "description": "Switch among Pre-Vis, scenes, chapters, the master, and promo. Pick a Language Stream and hear that version — doubled, lip-synced, or regenerated shot by shot. The player is the same cut the Mixer rendered.",
             "screenshot": "Screening Room player",
             "learnMore": {
-              "problem": "Pre-Vis, scenes, chapters, the master, the promo, and the dubs end up in different players.",
-              "solution": "One player switches among those cuts. Pick a Language Stream and hear that version, doubled, lip-synced, or regenerated shot by shot.",
-              "outcome": "The player is the same cut the Mixer rendered."
+              "items": [
+                {
+                  "title": "One surface",
+                  "description": "Switch among Pre-Vis, scenes, chapters, the master, and promo."
+                },
+                {
+                  "title": "Language Stream",
+                  "description": "Pick a version and hear it doubled, lip-synced, or regenerated shot by shot."
+                },
+                {
+                  "title": "Same cut",
+                  "description": "The player is the cut the Mixer rendered."
+                }
+              ]
             }
           },
           {
@@ -578,9 +827,20 @@
             "description": "Share one link. Reviewers watch with real playback and leave notes on the picture. You are not exporting a rough file into email to collect feedback. A written note notifies you, and you can read it on your phone.",
             "screenshot": "Shared review",
             "learnMore": {
-              "problem": "Exporting a rough file into email is how notes get lost and versions fork.",
-              "solution": "Collaborate on the cut shares one link. Reviewers watch with real playback and leave notes on the picture. A written note notifies you, and you can read it on your phone.",
-              "outcome": "Feedback stays on the cut. The studio stays on a desktop or tablet."
+              "items": [
+                {
+                  "title": "One link",
+                  "description": "Reviewers watch with real playback and leave notes on the picture."
+                },
+                {
+                  "title": "No email rough cut",
+                  "description": "You are not exporting a rough file into email to collect feedback."
+                },
+                {
+                  "title": "Phone notes",
+                  "description": "A written note notifies you, and you can read it on your phone, while the studio stays on a desktop or tablet."
+                }
+              ]
             }
           },
           {
@@ -589,9 +849,24 @@
             "description": "Publish a 3–5 minute scene, an 8–12 minute chapter, the master, or a promo to YouTube, Facebook, or TikTok, in 16:9 or 9:16, or download the file. Titles, description, and privacy travel with the package. Ship the piece that is finished; keep building the rest.",
             "screenshot": "Publish package",
             "learnMore": {
-              "problem": "Waiting on the full master delays a scene or a chapter that is already finished.",
-              "solution": "Release when it is ready publishes a 3–5 minute scene, an 8–12 minute chapter, the master, or a promo to YouTube, Facebook, or TikTok, in 16:9 or 9:16, or downloads the file. Titles, description, and privacy travel with the package.",
-              "outcome": "Ship the piece that is finished and keep building the rest."
+              "items": [
+                {
+                  "title": "Ship a piece",
+                  "description": "Publish a 3–5 minute scene, an 8–12 minute chapter, the master, or a promo."
+                },
+                {
+                  "title": "Destinations",
+                  "description": "Publish to YouTube, Facebook, or TikTok, in 16:9 or 9:16, or download the file."
+                },
+                {
+                  "title": "Package",
+                  "description": "Titles, description, and privacy travel with the package."
+                },
+                {
+                  "title": "Keep building",
+                  "description": "Ship the piece that is finished and keep building the rest."
+                }
+              ]
             }
           }
         ]
