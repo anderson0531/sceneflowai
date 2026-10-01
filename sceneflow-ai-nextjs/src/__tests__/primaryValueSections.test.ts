@@ -8,8 +8,11 @@ import {
   DIRECT_CONTROL_VIDEO_BLOB_PATHS,
   PRIMARY_VALUE_MEDIA,
   PRIMARY_VALUE_MEDIA_IDS,
+  PUBLISH_CUT_VIDEO_BLOB_PATHS,
   directControlVideoBlobPath,
   getDirectControlVideoLocales,
+  getPublishCutVideoLocales,
+  publishCutVideoBlobPath,
 } from '@/config/landing/primaryValueMedia'
 import { VIDEO_LOCALE_ORDER } from '@/config/landing/videoLocales'
 import { twoModesVideoSources } from '@/config/landing/twoModesMedia'
@@ -63,14 +66,14 @@ describe('primary value sections', () => {
     expect(PRIMARY_VALUE_MEDIA.publish).toEqual({
       imageUrl: '',
       posterUrl: '/landing/primary-value/publish.webp',
-      webmUrl: '/landing/primary-value/publish.webm',
-      mp4Url: '/landing/primary-value/publish.mp4',
+      webmUrl: '/landing/primary-value/publish-en.webm',
+      mp4Url: '/landing/primary-value/publish-en.mp4',
     })
 
     const direct = readFileSync(join(ROOT, 'src/components/landing/DirectControlSection.tsx'), 'utf8')
     const publish = readFileSync(join(ROOT, 'src/components/landing/PublishCutSection.tsx'), 'utf8')
     expect(direct).toContain('videoLocales={getDirectControlVideoLocales()}')
-    expect(publish).not.toContain('videoLocales')
+    expect(publish).toContain('videoLocales={getPublishCutVideoLocales()}')
 
     const locales = getDirectControlVideoLocales()
     expect(locales.map((locale) => locale.id)).toEqual([...VIDEO_LOCALE_ORDER])
@@ -98,5 +101,32 @@ describe('primary value sections', () => {
     expect(directControlVideoBlobPath('zh')).toBe('The Control (Chinese).mp4')
     expect(directControlVideoBlobPath('ar')).toBe('The Control (Arabic).mp4')
     expect(directControlVideoBlobPath('th')).toBe('The Control (Thai).mp4')
+
+    const publishLocales = getPublishCutVideoLocales()
+    expect(publishLocales.map((locale) => locale.id)).toEqual([...VIDEO_LOCALE_ORDER])
+    for (const id of VIDEO_LOCALE_ORDER) {
+      expect(PUBLISH_CUT_VIDEO_BLOB_PATHS[id]).toBe(publishCutVideoBlobPath(id))
+      const locale = publishLocales.find((entry) => entry.id === id)
+      if (!locale) throw new Error(`missing cut locale ${id}`)
+      expect(locale.available).toBe(true)
+      expect(locale.webmUrl).toBe(`/landing/primary-value/publish-${id}.webm`)
+      expect(locale.mp4Url).toBe(`/landing/primary-value/publish-${id}.mp4`)
+      expect(locale.src).toBe(`/landing/primary-value/publish-${id}.mp4`)
+      expect(
+        twoModesVideoSources({
+          imageUrl: '',
+          posterUrl: '',
+          webmUrl: locale.webmUrl,
+          mp4Url: locale.mp4Url,
+        }).map((source) => source.type)
+      ).toEqual(['video/webm', 'video/mp4'])
+    }
+    expect(publishCutVideoBlobPath('en')).toBe('The Cut (English).mp4')
+    expect(publishCutVideoBlobPath('es')).toBe('The Cut (Spanish).mp4')
+    expect(publishCutVideoBlobPath('pt')).toBe('The Cut (Portuguese).mp4')
+    expect(publishCutVideoBlobPath('hi')).toBe('The Cut (Hindi).mp4')
+    expect(publishCutVideoBlobPath('zh')).toBe('The Cut (Chinese).mp4')
+    expect(publishCutVideoBlobPath('ar')).toBe('The Cut (Arabic).mp4')
+    expect(publishCutVideoBlobPath('th')).toBe('The Cut (Thai).mp4')
   })
 })
