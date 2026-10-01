@@ -523,8 +523,8 @@ export function ProductionStreamsManager({
               <h2 className="text-lg font-semibold text-white">Production Streams</h2>
             </div>
             <p className="text-sm text-zinc-400 mt-1 max-w-2xl">
-              Manage per-language masters — add languages, render stitched MP4s, and publish each
-              stream independently.
+              A stream is a language version of the film. Add a language, generate clips in Clips,
+              mix it in the Mixer, then render the master.
             </p>
           </div>
           <Button

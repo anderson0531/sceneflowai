@@ -23,7 +23,7 @@ export interface ProductionSectionHeaderProps {
 }
 
 /**
- * Shared section header aligned with Language Streams in Scene Production Mixer:
+ * Shared section header aligned with the Stream block in Scene Production Mixer:
  * purple accent icon, white title, outline badge, optional right action/hint.
  */
 function ProductionSectionHeaderImpl({

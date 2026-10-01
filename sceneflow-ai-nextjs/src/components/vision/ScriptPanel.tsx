@@ -6454,6 +6454,7 @@ function SceneCard({
                       onVideoGenerationModeChange={onVideoGenerationModeChange}
                       projectAspectRatio={projectAspectRatio}
                       projectStreams={projectStreams}
+                      sceneTranslations={storedTranslations}
                     >
                     {(slots) => (
                     <Tabs
@@ -6513,7 +6514,7 @@ function SceneCard({
                             <Clapperboard className="w-3.5 h-3.5 shrink-0" />
                             Mixer
                           </TabsTrigger>
-                          <TabsTrigger value="streams" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+                          <TabsTrigger value="streams" title="Language versions of this scene" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
                             <ListVideo className="w-3.5 h-3.5 shrink-0" />
                             Streams
                           </TabsTrigger>

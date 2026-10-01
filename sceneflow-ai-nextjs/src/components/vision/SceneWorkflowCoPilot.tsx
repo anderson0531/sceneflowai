@@ -102,7 +102,7 @@ export const guidanceContent: Record<WorkflowStep, {
       'Shot Frames: generate start/end pairs per shot clip (renamed from keyframes)',
       'Director Console: generate AI video shots (FTV recommended)',
       'Production Mixer: one Output control (Animatic | Video × language), elastic timing',
-      'Production Streams — Export (MP4): review renders, re-render when shots change',
+      'Language versions: each stream is a language of this scene. Review finished MP4s and re-render when shots change',
     ],
     toolsAndTips: [
       'Output selector syncs Mixer and Streams panel',

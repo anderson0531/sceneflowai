@@ -155,6 +155,18 @@ import {
   resolveCurrentStillTier,
   segmentHasPlayableVideo,
 } from '@/lib/storyboard/mediaVersions'
+import {
+  isMasterStreamLanguage,
+  keepLanguageClipVersions,
+  withSelectedLanguageClip,
+} from '@/lib/scene/languageClipVersions'
+import {
+  composeLanguageClipPrompt,
+  englishSpokenLine,
+  preferStoredSpokenTranslation,
+} from '@/lib/scene/languageClipPrompt'
+import { translateGuideDialogueLine } from '@/lib/scene/translateGuideDialogue'
+import { mergeStreamSelectorLanguages } from '@/lib/streams/projectStreams'
 import { BeatVideoGallery, type BeatVideoClip } from './BeatVideoGallery'
 import type { SegmentGuideContext } from '@/lib/vision/segmentConfigBuilder'
 import { resolveEffectiveStartFrameUrl, resolveExpressGenerationMethod, resolveF2VFrameUrls, f2vStartFromPreviousEnd, STANDARD_TAKE_DURATION_SECONDS } from '@/lib/vision/segmentConfigBuilder'
@@ -217,9 +229,13 @@ export interface DirectorConsoleProps {
       negativePrompt?: string
       duration?: number
       aspectRatio?: '16:9' | '9:16'
-      resolution?: '720p' | '1080p'
+      resolution?: '360p' | '720p' | '1080p' | '4k' | '4K'
+      duration?: number
+      guidePrompt?: string
       generationMethod?: VideoGenerationMethod
       videoProvider?: 'kling' | 'vertex' | 'aggregator'
+      /** Store the finished clip on this language stream instead of the English master. */
+      clipLanguage?: string
     }
   ) => Promise<void>
   onSegmentUpload?: (segmentId: string, file: File) => void
@@ -305,6 +321,8 @@ export interface DirectorConsoleProps {
   /** Shared beat selection with Direction, Audio, and Pre-Vis. */
   selectedBeatId?: string | null
   onSelectBeat?: (beatId: string) => void
+  /** Stored scene translations keyed by language, then scene index. */
+  sceneTranslations?: Record<string, Record<number, { dialogue?: string[]; narration?: string }>>
 }
 
 /** Slots for splitting Video / Mixer / Streams across parent section cards (ScriptPanel). */
@@ -384,6 +402,7 @@ export function DirectorConsoleRoot({
   onDirectBeat,
   selectedBeatId = null,
   onSelectBeat,
+  sceneTranslations,
   children,
 }: DirectorConsoleProps & {
   children?: (slots: DirectorWorkflowSlots) => React.ReactNode
@@ -556,6 +575,7 @@ export function DirectorConsoleRoot({
   const [streamUploadError, setStreamUploadError] = useState<string | null>(null)
   const [isDesignatingScreening, setIsDesignatingScreening] = useState(false)
   const [productionTarget, setProductionTarget] = useState<ProductionTarget>({ streamType: 'video', language: 'en' })
+  const [languageClipBusyId, setLanguageClipBusyId] = useState<string | null>(null)
   const hydratedProductionTargetRef = useRef<string | null>(null)
   const prevProductionLanguageRef = useRef(productionTarget.language)
   const currentProject = useStore((s) => s.currentProject)
@@ -737,9 +757,10 @@ export function DirectorConsoleRoot({
           console.warn('[DirectorConsole] Language re-derive failed:', data.errors || data.error)
           return
         }
+        const derived = (data.segments || productionData.segments) as SceneSegment[]
         onProductionDataChange({
           ...productionData,
-          segments: data.segments || productionData.segments,
+          segments: keepLanguageClipVersions(derived, productionData.segments),
           lastGeneratedAt: new Date().toISOString(),
         })
         const languageInfo = SUPPORTED_LANGUAGES.find((l) => l.code === language)
@@ -1507,6 +1528,135 @@ export function DirectorConsoleRoot({
     })
   }, [onProductionDataChange, productionData])
 
+  const handleRestoreLanguageVersion = useCallback((segmentId: string, takeId: string) => {
+    if (!onProductionDataChange || !productionData) return
+    if (isMasterStreamLanguage(productionTarget.language)) {
+      handleRestoreVideoTake(segmentId, takeId)
+      return
+    }
+    onProductionDataChange({
+      ...productionData,
+      segments: productionData.segments.map((segment) =>
+        segment.segmentId === segmentId
+          ? withSelectedLanguageClip(segment, productionTarget.language, takeId)
+          : segment
+      ),
+    })
+  }, [onProductionDataChange, productionData, productionTarget.language, handleRestoreVideoTake])
+
+  const handleStreamLanguageChange = useCallback((language: string) => {
+    const next = { ...productionTarget, language }
+    setProductionTarget(next)
+    if (!onProductionDataChange || !productionData) return
+    const saved = productionData.mixerSettings?.productionTarget
+    if (saved?.language === next.language && saved?.streamType === next.streamType) return
+    onProductionDataChange({
+      ...productionData,
+      mixerSettings: {
+        ...productionData.mixerSettings,
+        productionTarget: next,
+      },
+    })
+  }, [onProductionDataChange, productionData, productionTarget])
+
+  const streamLanguages = useMemo(() => {
+    const langs = new Set<string>()
+    const dialogueAudio = scene?.dialogueAudio
+    if (dialogueAudio && !Array.isArray(dialogueAudio)) {
+      Object.keys(dialogueAudio).forEach((code) => langs.add(code))
+    }
+    const narrationAudio = scene?.narrationAudio
+    if (narrationAudio) Object.keys(narrationAudio).forEach((code) => langs.add(code))
+    for (const segment of segments) {
+      Object.keys(segment.languageVersions || {}).forEach((code) => langs.add(code))
+    }
+    if (productionTarget.language) langs.add(productionTarget.language)
+    return mergeStreamSelectorLanguages(projectStreams, langs)
+  }, [scene?.dialogueAudio, scene?.narrationAudio, segments, projectStreams, productionTarget.language])
+
+  const languagesNotYetGenerated = useMemo(
+    () => SUPPORTED_LANGUAGES.map((lang) => lang.code).filter((code) => !streamLanguages.includes(code)),
+    [streamLanguages]
+  )
+
+  const handleGenerateLanguageVersion = useCallback(async (segment: SceneSegment) => {
+    const language = productionTarget.language
+    if (isMasterStreamLanguage(language)) return
+    const beat = getSceneBeats((scene as Record<string, unknown> | undefined) ?? null).find(
+      (entry) => entry.beatId === segment.beatId
+    )
+    const englishLine = englishSpokenLine({
+      excerpt: segment.dialoguePortion?.excerpt,
+      beatLine: beat?.line,
+      dialogueLines: segment.dialogueLines,
+    })
+    const stored = preferStoredSpokenTranslation({
+      translation: sceneIndex != null ? sceneTranslations?.[language]?.[sceneIndex] : undefined,
+      kind: beat?.kind,
+      lineId: beat?.lineId || segment.dialoguePortion?.lineId,
+      dialogue: scene?.dialogue,
+      englishLine,
+      isExcerpt: !!segment.dialoguePortion?.excerpt?.trim(),
+    })
+    setLanguageClipBusyId(segment.segmentId)
+    try {
+      let translated = stored
+      if (!translated && englishLine.trim()) {
+        try {
+          translated = await translateGuideDialogueLine(englishLine, language)
+        } catch (error) {
+          const { toast } = await import('sonner')
+          toast.error(error instanceof Error ? error.message : 'Could not translate this shot')
+          return
+        }
+      }
+      const queueItem = getQueueItem(segment.segmentId)
+      const sourcePrompt =
+        segment.userEditedPrompt || segment.generatedPrompt || queueItem?.config.prompt || ''
+      const composed = composeLanguageClipPrompt({
+        sourcePrompt,
+        guidePrompt: queueItem?.config.guidePrompt,
+        character: beat?.character || segment.dialogueLines?.[0]?.character,
+        kind: beat?.kind,
+        englishLine,
+        translatedLine: translated,
+      })
+      const config = queueItem?.config
+      const startFrameUrl =
+        resolveEffectiveStartFrameUrl(
+          segment,
+          scene as Record<string, unknown> | undefined,
+          sceneImageUrl
+        ) || config?.startFrameUrl || undefined
+      const mode = config?.mode === 'T2V' ? 'T2V' : 'I2V'
+      await onGenerate(sceneId, segment.segmentId, mode, {
+        prompt: composed.prompt || sourcePrompt,
+        guidePrompt: composed.guidePrompt,
+        negativePrompt: config?.negativePrompt || undefined,
+        startFrameUrl: startFrameUrl || undefined,
+        generationMethod: mode,
+        videoProvider: config?.videoProvider,
+        aspectRatio: config?.aspectRatio,
+        resolution: config?.resolution,
+        duration: config?.duration,
+        clipLanguage: language,
+      })
+    } catch {
+      // The generate handler already reports the failure.
+    } finally {
+      setLanguageClipBusyId(null)
+    }
+  }, [
+    productionTarget.language,
+    scene,
+    sceneIndex,
+    sceneTranslations,
+    getQueueItem,
+    sceneImageUrl,
+    onGenerate,
+    sceneId,
+  ])
+
   const videoClips = useMemo<BeatVideoClip[]>(() => {
     const beats = getSceneBeats((scene as Record<string, unknown> | undefined) ?? null).filter(
       (beat) => !isBeatExcluded(beat)
@@ -1633,6 +1783,8 @@ export function DirectorConsoleRoot({
         setProductionTarget((prev) => ({ ...prev, streamType }))
       }
       onRenderAnimatic={undefined}
+      streamLanguages={streamLanguages}
+      onLanguageChange={handleStreamLanguageChange}
       onDeleteStream={handleDeleteStream}
       onReRenderStream={handleReRenderStream}
       onPreviewStream={handlePreviewStream}
@@ -1886,6 +2038,16 @@ export function DirectorConsoleRoot({
         onTake={handleRequestTake}
         onUpload={onSegmentUpload}
         onRetake={(segment) => setRetakeSegment(segment)}
+        streamLanguage={productionTarget.language}
+        streamLanguages={streamLanguages}
+        onStreamLanguageChange={handleStreamLanguageChange}
+        onAddStreamLanguage={onGenerateLanguageStream}
+        languagesNotYetGenerated={languagesNotYetGenerated}
+        onGenerateLanguageVersion={(segment) => {
+          void handleGenerateLanguageVersion(segment)
+        }}
+        onRestoreLanguageVersion={handleRestoreLanguageVersion}
+        generatingLanguageClipId={languageClipBusyId}
         onGenerateClip={(segment) => {
           const item = queue.find((entry) => entry.segmentId === segment.segmentId)
           if (!item) {
@@ -1938,9 +2100,9 @@ export function DirectorConsoleRoot({
       <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
         <ProductionSectionHeader
           icon={ListVideo}
-          title="Streams — Export (MP4)"
+          title="Language versions"
           badge={productionStreams.length}
-          rightHint="Finished MP4 library — not live preview"
+          rightHint="Finished MP4s for the selected stream"
           collapsible
           expanded={!streamsCollapsed}
           onToggle={() => setStreamsCollapsed((c) => !c)}

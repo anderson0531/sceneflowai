@@ -51,6 +51,7 @@ import {
 import { audioSourceFingerprintForSpoken } from '@/lib/audio/beatAudioStale'
 import { resolveLineVoiceDirection } from '@/lib/tts/dialogueDirectorNotes'
 import { resolveStoryboardScenes, totalStoryboardMediaScore } from '@/lib/storyboard/resolveStoryboardScenes'
+import { applyGeneratedClipTake, isLanguageClipTarget } from '@/lib/scene/languageClipVersions'
 import {
   appendSegmentTake,
   assignStillUrl,
@@ -4302,11 +4303,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         allowVeoFallback?: boolean
         expressMode?: boolean
         useBeatFrameAsStart?: boolean
+        /** When set to a non-English stream, the finished clip is stored as that stream's version. */
+        clipLanguage?: string
       }
     ) => {
       if (!project?.id) {
         throw new Error('Project must be loaded before generating assets.')
       }
+      const clipLanguage = options?.clipLanguage
+      const languageClip = isLanguageClipTarget(clipLanguage)
 
       const inFlightKey = `${sceneId}:${segmentId}`
       if (segmentGenerateInFlightRef.current.has(inFlightKey)) {
@@ -4317,7 +4322,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       segmentGenerateInFlightRef.current.add(inFlightKey)
 
       try {
-      // Update status to GENERATING
+      // Language-stream clips must not mark the English master as rolling.
+      if (!languageClip) {
       applySceneProductionUpdate(sceneId, (current) => {
         if (!current) return current
         const segments = current.segments.map((segment) =>
@@ -4325,6 +4331,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         )
         return { ...current, segments }
       })
+      }
 
       try {
         const providerLabel =
@@ -4716,7 +4723,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               assetUrl: data.assetUrl,
               // For images, use the image itself as thumbnail. For videos, use the extracted last frame.
               thumbnailUrl: data.assetType === 'image' ? data.assetUrl : (lastFrameUrl || undefined),
-              status: data.status === 'COMPLETE' ? 'COMPLETE' : 'GENERATING',
+              status: data.status === 'COMPLETE' ? 'COMPLETE' as const : 'GENERATING' as const,
               durationSec: measuredDuration ?? segment.endTime - segment.startTime,
               // Store Veo video reference for future video extension
               veoVideoRef: data.veoVideoRef,
@@ -4729,6 +4736,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   }
                 : undefined,
             }
+
+            const languageVersion = applyGeneratedClipTake(segment, newTake, clipLanguage)
+            if (languageVersion) return languageVersion
 
             return {
               ...segment,
@@ -4771,6 +4781,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               description: 'Primary video engine was unavailable; a backup model completed this clip.',
               duration: 6000,
             })
+          } else if (languageClip) {
+            toast.success('Language version ready')
           } else {
             toast.success(`Asset generated successfully for shot ${segmentId.slice(0, 6)}`)
           }
@@ -4798,7 +4810,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 // since the video end frame will differ from the pre-generated keyframe
                 const wasI2VRetry = options?.generationMethod === 'I2V' && nextStartFrame
                 
-                if (wasLinked || wasI2VRetry) {
+                if (!languageClip && (wasLinked || wasI2VRetry)) {
                   const nextSegIdx = currentSegmentIndex + 2 // 1-based display
                   toast.info(`Shot ${nextSegIdx} start frame may be out of sync`, {
                     description: 'This video\'s end frame differs from the next segment\'s start keyframe. Update it for visual continuity.',
@@ -4846,7 +4858,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // Extract structured content policy data if available
         const contentPolicyData = (error as any)?.contentPolicyData
         
-        // Update status to ERROR and store error message + content policy metadata
+        // Language-stream failures stay off the English master.
+        if (!languageClip) {
         applySceneProductionUpdate(sceneId, (current) => {
           if (!current) return current
           const segments = current.segments.map((segment) =>
@@ -4870,6 +4883,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           )
           return { ...current, segments }
         })
+        }
 
         // Show toast with action button for content policy violations
         try {
@@ -4901,7 +4915,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     console.log('[I2V Retry] Retrying FTV content policy failure with I2V mode')
                     console.log('[I2V Retry] Start frame:', i2vStartFrame)
                     
-                    // Reset segment status before retry
+                    if (!languageClip) {
                     applySceneProductionUpdate(sceneId, (current) => {
                       if (!current) return current
                       const segments = current.segments.map((seg) =>
@@ -4911,6 +4925,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       )
                       return { ...current, segments }
                     })
+                    }
                     
                     toast.loading('Retrying with I2V (start frame only)...', { id: 'retry-i2v' })
                     const retryProduction = sceneProductionState[sceneId]
@@ -4971,6 +4986,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                                     }
                                   : undefined,
                               }
+                              const languageVersion = applyGeneratedClipTake(seg, newTake, clipLanguage)
+                              if (languageVersion) return languageVersion
                               return {
                                 ...seg,
                                 status: 'COMPLETE' as const,
@@ -4997,7 +5014,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                           })
                           
                           // After successful I2V retry, offer to update next segment's start frame
-                          if (retryData.lastFrameUrl) {
+                          if (!languageClip && retryData.lastFrameUrl) {
                             const currentProduction = sceneProductionState[sceneId]
                             if (currentProduction?.segments) {
                               const currentSegmentIndex = currentProduction.segments.findIndex(
@@ -5037,6 +5054,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                           }
                         } else {
                           toast.info('I2V retry accepted — video is being generated')
+                          if (!languageClip) {
                           applySceneProductionUpdate(sceneId, (current) => {
                             if (!current) return current
                             const segments = current.segments.map((seg) =>
@@ -5046,6 +5064,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             )
                             return { ...current, segments }
                           })
+                          }
                         }
                       } else {
                         const errorData = await retryResponse.json().catch(() => ({ error: 'I2V retry failed' }))
@@ -5053,6 +5072,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                           description: errorData.error || 'Please try editing the prompt manually.',
                           duration: 10000,
                         })
+                        if (!languageClip) {
                         applySceneProductionUpdate(sceneId, (current) => {
                           if (!current) return current
                           const segments = current.segments.map((seg) =>
@@ -5062,6 +5082,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                           )
                           return { ...current, segments }
                         })
+                        }
                       }
                     }).catch(() => {
                       toast.dismiss('retry-i2v')
@@ -5084,7 +5105,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   
                   if (wasModified) {
                     console.log('[Sanitize & Retry] Fixed terms:', changes)
-                    // Update the segment's prompt with sanitized version
+                    if (!languageClip) {
                     applySceneProductionUpdate(sceneId, (current) => {
                       if (!current) return current
                       const segments = current.segments.map((seg) =>
@@ -5094,6 +5115,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       )
                       return { ...current, segments }
                     })
+                    }
                     
                     // Show info about what was changed
                     toast.info(`Fixed ${changes.length} term(s): ${changes.slice(0, 2).join(', ')}${changes.length > 2 ? '...' : ''}`, {
@@ -5162,6 +5184,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                                     }
                                   : undefined,
                               }
+                              const languageVersion = applyGeneratedClipTake(seg, newTake, clipLanguage)
+                              if (languageVersion) return languageVersion
                               return {
                                 ...seg,
                                 status: 'COMPLETE' as const,
@@ -5184,6 +5208,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         } else if (retryData.success) {
                           // API accepted but video not complete yet
                           toast.info('Retry accepted \u2014 video is being generated with sanitized prompt')
+                          if (!languageClip) {
                           applySceneProductionUpdate(sceneId, (current) => {
                             if (!current) return current
                             const segments = current.segments.map((seg) =>
@@ -5193,6 +5218,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             )
                             return { ...current, segments }
                           })
+                          }
                         } else {
                           // API returned success:false \u2014 real error
                           const isContentError = retryData.error?.includes('Content') || retryData.error?.includes('safety') || retryData.error?.includes('filtered')
@@ -5204,6 +5230,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                           } else {
                             toast.error(retryData.error || 'Retry failed')
                           }
+                          if (!languageClip) {
                           applySceneProductionUpdate(sceneId, (current) => {
                             if (!current) return current
                             const segments = current.segments.map((seg) =>
@@ -5213,6 +5240,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             )
                             return { ...current, segments }
                           })
+                          }
                         }
                       } else {
                         const errorData = await retryResponse.json().catch(() => ({ error: 'Retry failed' }))
@@ -5226,6 +5254,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         } else {
                           toast.error(errorMsg)
                         }
+                        if (!languageClip) {
                         applySceneProductionUpdate(sceneId, (current) => {
                           if (!current) return current
                           const segments = current.segments.map((seg) =>
@@ -5235,10 +5264,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                           )
                           return { ...current, segments }
                         })
+                        }
                       }
                     }).catch(() => {
                       toast.dismiss('retry-sanitized')
                       toast.error('Retry failed \u2014 please try again')
+                      if (!languageClip) {
                       applySceneProductionUpdate(sceneId, (current) => {
                         if (!current) return current
                         const segments = current.segments.map((seg) =>
@@ -5248,6 +5279,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         )
                         return { ...current, segments }
                       })
+                      }
                     })
                   } else {
                     // Prompt moderator didn't find known trigger words - suggest AI rephrase
@@ -5264,7 +5296,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           ) {
             toast.error(errorMessage)
           } else {
-            toast.error('Generation failed - click shot for details')
+            toast.error(languageClip ? errorMessage : 'Generation failed - click shot for details')
           }
         } catch {}
         throw error
