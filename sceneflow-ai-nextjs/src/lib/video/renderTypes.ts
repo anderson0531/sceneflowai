@@ -342,6 +342,8 @@ export interface SceneRenderVideoSegment {
   videoTrimInSec?: number
   /** Seconds into source MP4 where beat playback ends */
   videoTrimOutSec?: number
+  /** Picture speed. 1 is unchanged. Wall time of the source window is playable / rate. */
+  playbackRate?: number
 }
 
 /**
@@ -556,6 +558,7 @@ export interface CreateSceneRenderJobRequest {
     watermarkCropPercent?: number
     videoTrimInSec?: number
     videoTrimOutSec?: number
+    playbackRate?: number
   }>
   /** Audio tracks with timing */
   audioTracks: {
@@ -638,6 +641,7 @@ export function toSceneRenderVideoSegment(
     watermarkCropPercent: seg.watermarkCropPercent,
     videoTrimInSec: seg.videoTrimInSec,
     videoTrimOutSec: seg.videoTrimOutSec,
+    playbackRate: seg.playbackRate,
   }
 }
 

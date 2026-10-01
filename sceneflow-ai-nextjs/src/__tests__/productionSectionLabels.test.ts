@@ -36,20 +36,14 @@ const SECTION_COPY_SOURCES = [
 const RETIRED_SECTION_NAMES = ['Script tab', 'Action tab', 'Shoot tab']
 
 describe('Production section labels', () => {
-  it("names the two sections Writer's Room and Motion", () => {
-    expect(PRODUCTION_SECTION_LABELS.dialogueAction).toBe("Writer's Room")
-    expect(PRODUCTION_SECTION_LABELS.callAction).toBe('Motion')
+  it('names the script and clip phases', () => {
+    expect(PRODUCTION_SECTION_LABELS.dialogueAction).toBe('Script')
+    expect(PRODUCTION_SECTION_LABELS.callAction).toBe('Clips')
   })
 
-  it('uses the straight apostrophe that marketing copy uses', () => {
-    // A curly apostrophe (U+2019) would not match the landing page strings.
-    expect(PRODUCTION_SECTION_LABELS.dialogueAction).toContain('\u0027')
-    expect(PRODUCTION_SECTION_LABELS.dialogueAction).not.toContain('\u2019')
-  })
-
-  it('matches the canonical spelling used in landing copy', () => {
+  it('matches the production stage vocabulary on the landing page', () => {
     const showcase = readSource('src/config/landing/productionShowcaseCopy.ts')
-    expect(showcase).toContain(PRODUCTION_SECTION_LABELS.dialogueAction)
+    expect(showcase).toContain('Direction through Streams')
   })
 
   it('names the Assistant and Audience Resonance Analysis in the section description', () => {
@@ -84,10 +78,10 @@ describe('Production section labels', () => {
     expect(foundation?.title).toContain('Direction')
 
     const motion = productionWorkflowGroups.find((group) => group.id === 'production-shoot')
-    expect(motion?.title).toContain('Video')
+    expect(motion?.title).toContain('Clips')
 
     expect(guidanceContent.dialogueAction.title).toContain('Direction')
-    expect(guidanceContent.callAction.title).toContain('Video')
+    expect(guidanceContent.callAction.title).toContain('Clips')
   })
 
   it("reserves Writer's Room for the Production section, not the Blueprint entry point", () => {

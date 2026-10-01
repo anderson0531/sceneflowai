@@ -3,6 +3,7 @@
  */
 import type { AudioTrackClipV2, SceneSegment } from '@/components/vision/scene-production/types'
 import { clipMatchesDialogueLineId } from '@/components/vision/scene-production/audioTrackBuilder'
+import { clampVideoPlaybackRate } from '@/lib/scene/languageShotLocalize'
 import { resolveVideoTrimWindow, resolveSegmentSourceDurationSec } from '@/lib/video/segmentVideoTrim'
 
 export { clipMatchesDialogueLineId } from '@/components/vision/scene-production/audioTrackBuilder'
@@ -74,6 +75,8 @@ export interface SegmentDurationInput {
   dialogueEnabled?: boolean
   narrationPrefix?: number
   getPlaybackRate?: (clipId: string) => number
+  /** Picture speed for this language version. 1 leaves the master timing unchanged. */
+  videoPlaybackRate?: number
 }
 
 /** Content duration (visual vs dialogue), before post-dialogue pause. */
@@ -86,12 +89,12 @@ export function computeSegmentContentDuration(input: SegmentDurationInput): numb
     dialogueEnabled = true,
     narrationPrefix = 0,
     getPlaybackRate,
+    videoPlaybackRate,
   } = input
 
-  const visual = Math.max(
-    MIXER_MIN_SEGMENT_VISUAL_SEC,
-    getVisualBaseDuration(segment, measuredVideoDuration)
-  )
+  const visual =
+    Math.max(MIXER_MIN_SEGMENT_VISUAL_SEC, getVisualBaseDuration(segment, measuredVideoDuration)) /
+    clampVideoPlaybackRate(videoPlaybackRate)
 
   if (!dialogueEnabled) return visual
 

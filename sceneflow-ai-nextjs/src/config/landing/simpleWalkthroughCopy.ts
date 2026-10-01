@@ -71,14 +71,14 @@ export const SIMPLE_WALKTHROUGH_STEPS: SimpleWalkthroughStep[] = [
     id: 'shoot',
     stepLabel: 'Shoot your production',
     shortDescription:
-      'Generate beat-level video, mix audio and overlays, and export full scene streams — Footage, Mixer, and Streams in one Motion section.',
+      'Generate each shot in Clips, mix audio in the Mixer, and export language versions in Streams.',
     detailedDescription:
-      'The Motion section in Production is your on-set: generate video from approved Pre-Vis frames (Footage), fine-tune timing, watermarks, and audio in the Mixer, then render complete scene MP4s in Streams.',
+      'Clips generate the video for each shot from approved Stills. The Mixer sets timing, watermarks, and audio. Streams are the language versions of the scene.',
     media: 'video',
     subPoints: [
-      'Footage — beat-by-beat video generation from Pre-Vis start and end frames',
+      'Clips — shot video from approved Stills',
       'Mixer — watermark, text overlay, and audio timing per scene',
-      'Streams — full rendered scene video (all beats) ready for Screening Room',
+      'Streams — language versions of the scene, ready for Screening Room',
     ],
   },
   {

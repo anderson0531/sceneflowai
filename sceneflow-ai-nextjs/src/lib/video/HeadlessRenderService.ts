@@ -34,6 +34,7 @@ export interface HeadlessRenderSegment {
   watermarkCropPercent?: number
   videoTrimInSec?: number
   videoTrimOutSec?: number
+  playbackRate?: number
 }
 
 export interface HeadlessRenderAudioClip {
@@ -576,7 +577,15 @@ export class HeadlessRenderService {
           if (video) {
             // Seek video to exact frame (respect source trim in-point)
             const trimIn = activeSegment.videoTrimInSec || 0;
-            video.currentTime = trimIn + localTime;
+            const rate =
+              activeSegment.playbackRate > 0
+                ? Math.min(1.5, Math.max(0.5, activeSegment.playbackRate))
+                : 1;
+            let sourceTime = trimIn + localTime * rate;
+            if (activeSegment.videoTrimOutSec) {
+              sourceTime = Math.min(sourceTime, activeSegment.videoTrimOutSec - 0.001);
+            }
+            video.currentTime = sourceTime;
             
             // Wait for seek to complete
             await new Promise(resolve => {

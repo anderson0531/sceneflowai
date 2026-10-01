@@ -142,14 +142,15 @@ async function ensureSegmentStems(args: {
 function estimateLipsyncCredits(
   script: unknown,
   sceneProductionState: Record<string, SceneProductionData>,
-  language: string
+  language: string,
+  legacyLocalizeLipsync: boolean
 ): number {
   const scenes = readScriptScenesFromProject(script)
   let total = 0
   for (const { sceneId, scene } of scenes) {
     const prod = sceneProductionState[sceneId]
     if (!prod) continue
-    const inputs = collectLipsyncSegmentInputs(scene, prod, language)
+    const inputs = collectLipsyncSegmentInputs(scene, prod, language, { legacyLocalizeLipsync })
     for (const input of inputs) {
       total += getKlingCreditsForGeneration({
         operation: 'lipsync',
@@ -244,7 +245,8 @@ export function useStreamLocalize({
   const estimatedLipsyncCredits = estimateLipsyncCredits(
     script,
     sceneProductionState,
-    stream.language
+    stream.language,
+    localizeDraft.mode === 'lipsync'
   )
 
   const runLocalize = useCallback(async () => {
@@ -256,11 +258,8 @@ export function useStreamLocalize({
     const speed = localizeDraft.speed
     const stemMode = localizeDraft.stemMode
     const language = stream.language
-    const toastId = toast.loading(
-      mode === 'lipsync'
-        ? `Localizing ${language} with lip-sync…`
-        : `Localizing ${language} (dub)…`
-    )
+    const legacyLocalizeLipsync = mode === 'lipsync'
+    const toastId = toast.loading(`Localizing ${language}…`)
 
     try {
       await persistStreamLocalize({
@@ -290,10 +289,6 @@ export function useStreamLocalize({
         productionState = await reloadSceneProduction()
       }
 
-      if (mode === 'lipsync') {
-        await persistStreamLocalize({ status: 'lipsyncing' })
-      }
-
       await persistStreamLocalize({ status: 'rendering' })
 
       for (const { sceneId, scene, sceneNumber } of scriptScenes) {
@@ -304,20 +299,20 @@ export function useStreamLocalize({
         }
 
         let lipsyncedVideoBySegment: Record<string, string> | undefined
-        if (mode === 'lipsync') {
-          const inputs = collectLipsyncSegmentInputs(scene, prod, language)
-          if (inputs.length > 0) {
-            await updateSceneStatus(sceneId, { status: 'lipsyncing' })
-            lipsyncedVideoBySegment = await lipsyncSegmentVideosForLanguage({
-              segments: inputs,
-              projectId,
-              sceneId,
-              language,
-              onProgress: (segmentId) => {
-                void updateSceneStatus(sceneId, { status: `lipsyncing:${segmentId}` })
-              },
-            })
-          }
+        const inputs = collectLipsyncSegmentInputs(scene, prod, language, {
+          legacyLocalizeLipsync,
+        })
+        if (inputs.length > 0) {
+          await updateSceneStatus(sceneId, { status: 'lipsyncing' })
+          lipsyncedVideoBySegment = await lipsyncSegmentVideosForLanguage({
+            segments: inputs,
+            projectId,
+            sceneId,
+            language,
+            onProgress: (segmentId) => {
+              void updateSceneStatus(sceneId, { status: `lipsyncing:${segmentId}` })
+            },
+          })
         }
 
         const renderBody = buildSceneDubRenderRequest({
@@ -330,6 +325,7 @@ export function useStreamLocalize({
           speed,
           stemMode,
           lipsyncedVideoBySegment,
+          legacyLocalizeLipsync,
         })
         if (!renderBody) {
           await updateSceneStatus(sceneId, { status: 'skipped', error: 'No video segments' })

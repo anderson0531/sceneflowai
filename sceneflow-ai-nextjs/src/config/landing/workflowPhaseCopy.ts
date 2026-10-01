@@ -54,20 +54,20 @@ export const WORKFLOW_PHASES: WorkflowPhaseCopy[] = [
   {
     id: 'production',
     stepLabel: 'Production Stage',
-    subtitle: "Writer's Room to Screening Room",
+    subtitle: 'Direction through Streams',
     description:
-      "The Writer's Room and Motion sections guide Foundation → Pre-Vis → Footage → Mixer → Streams. Scene-by-scene checkpoints minimize redos; Screening Room handles preview, assembly, and publishing.",
+      'Direction, Script, Music, References, and Stills optimize the script with Audience Resonance and Pre-Vis review. Clips, Mixer, and Streams generate the video for each shot. Screening Room handles preview, assembly, and publishing.',
     keySteps: [
       'Lock script, voices, and scene audio',
-      'Pre-Vis scene by scene — gallery and share for review',
-      'Motion — Footage → Mixer → Streams per scene',
+      'Pre-Vis scene by scene — Stills and share for review',
+      'Clips, Mixer, and Streams — generate each shot',
       'Production Planner — shot targets, a dated schedule, and phone status',
       'Screening Room — preview, assemble master, publish',
     ],
     keyFeatures: [
-      "Writer's Room — script, voices, scene audio, Audience Resonance Analysis",
-      'Pre-Vis — direction, audio, and beat frames per scene with share links',
-      'Motion — Footage, Mixer, and Streams without leaving Production Stage',
+      'Direction, Script, Music, References, and Stills — script, voices, scene audio, Audience Resonance Analysis',
+      'Stills — direction, audio, and beat frames per scene with share links',
+      'Clips, Mixer, and Streams — generate each shot without leaving Production Stage',
       'Production Planner — shot targets, a dated schedule, and phone status',
       'Screening Room — scene preview, master assembly, screenings, and YouTube publish',
     ],

@@ -1,7 +1,9 @@
+import { mergeLanguageShotConfigs } from '@/lib/scene/languageShotLocalize'
 import type {
   AudioTrackConfig,
   MixerAudioTracks,
   MixerDialogueClipConfig,
+  MixerLanguageShotConfig,
   MixerMusicShotConfig,
   MixerSegmentAudioConfig,
   SceneMixerCollapsedSections,
@@ -83,6 +85,7 @@ export interface ResolvedMixerSettings {
   segmentAudioConfigs: Record<string, MixerSegmentAudioConfig>
   dialogueClipConfigs: Record<string, MixerDialogueClipConfig>
   musicShotConfigs: Record<string, MixerMusicShotConfig>
+  languageShotConfigs: Record<string, MixerLanguageShotConfig>
   masterSegmentVolume: number
   resolution: '720p' | '1080p' | '4K'
   preserveBackgroundStem: boolean
@@ -184,6 +187,7 @@ export function mergeMixerSettings(saved?: SceneMixerSettings | null): ResolvedM
     segmentAudioConfigs: mergeSegmentAudioConfigs(saved?.segmentAudioConfigs),
     dialogueClipConfigs: mergeDialogueClipConfigs(saved?.dialogueClipConfigs),
     musicShotConfigs: mergeMusicShotConfigs(saved?.musicShotConfigs),
+    languageShotConfigs: mergeLanguageShotConfigs(saved?.languageShotConfigs),
     masterSegmentVolume: saved?.masterSegmentVolume ?? 0.8,
     resolution: saved?.resolution ?? '1080p',
     preserveBackgroundStem: saved?.preserveBackgroundStem ?? true,
@@ -213,6 +217,7 @@ export interface MixerSettingsPersistInput {
   segmentAudioConfigs: Record<string, MixerSegmentAudioConfig>
   dialogueClipConfigs: Record<string, MixerDialogueClipConfig>
   musicShotConfigs?: Record<string, MixerMusicShotConfig>
+  languageShotConfigs?: Record<string, MixerLanguageShotConfig>
   masterSegmentVolume: number
   resolution: '720p' | '1080p' | '4K'
   preserveBackgroundStem: boolean
@@ -231,6 +236,7 @@ export function buildPersistedMixerSettings(input: MixerSettingsPersistInput): S
     segmentAudioConfigs: input.segmentAudioConfigs,
     dialogueClipConfigs: input.dialogueClipConfigs,
     musicShotConfigs: input.musicShotConfigs ?? {},
+    languageShotConfigs: input.languageShotConfigs ?? {},
     masterSegmentVolume: input.masterSegmentVolume,
     resolution: input.resolution,
     productionTarget: input.productionTarget,

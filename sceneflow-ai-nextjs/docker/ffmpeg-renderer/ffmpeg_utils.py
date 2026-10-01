@@ -991,8 +991,21 @@ def _rates_match(left: float, right: float) -> bool:
     return abs(left - right) <= FPS_MATCH_TOLERANCE
 
 
+def clamp_video_playback_rate(value: Any) -> float:
+    """Picture speed. Matches the Mixer range of 0.5–1.5. Invalid values stay at 1."""
+    try:
+        rate = float(value)
+    except (TypeError, ValueError):
+        return 1.0
+    if rate != rate or rate <= 0:
+        return 1.0
+    return min(1.5, max(0.5, rate))
+
+
 def _segment_video_filter_reason(segment: Dict[str, Any]) -> Optional[str]:
     """Reason this beat needs a video filter, or None when the frames can be copied."""
+    if abs(clamp_video_playback_rate(segment.get('playbackRate')) - 1.0) > 0.001:
+        return 'playback rate'
     trim_in = float(segment.get('videoTrimInSec') or 0)
     if trim_in > 0.001 or segment.get('videoTrimOutSec') is not None:
         return 'trim'
@@ -1149,7 +1162,8 @@ def _segment_output_duration(segment: Dict[str, Any]) -> float:
         play = float(segment.get('duration') or 0)
         if trim_in > 0.001:
             play = max(0.0, play - trim_in)
-    return max(0.0, play) + max(0.0, pause)
+    rate = clamp_video_playback_rate(segment.get('playbackRate'))
+    return max(0.0, play) / rate + max(0.0, pause)
 
 
 def apply_scene_end_transition(
@@ -1446,11 +1460,16 @@ def build_concat_ffmpeg_command(
         if trim_in > 0.001 or raw_trim_out is not None:
             end_clause = f":end={float(raw_trim_out)}" if raw_trim_out is not None else ""
             trim_filter = f"trim=start={trim_in}{end_clause},"
+
+        playback_rate = clamp_video_playback_rate(segment.get('playbackRate'))
+        speed_filter = ""
+        if abs(playback_rate - 1.0) > 0.001:
+            speed_filter = f"setpts=PTS/{playback_rate:.4f},"
         
         # Scale to target resolution and set framerate
         # setpts=PTS-STARTPTS resets video timestamps to start at 0 for proper concatenation sync
         filter_str = (
-            f"[{i}:v]{trim_filter}setpts=PTS-STARTPTS,{crop_filter}scale={width}:{height}:force_original_aspect_ratio=decrease,"
+            f"[{i}:v]{trim_filter}setpts=PTS-STARTPTS,{speed_filter}{crop_filter}scale={width}:{height}:force_original_aspect_ratio=decrease,"
             f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:black,"
             f"fps={fps},setsar=1{tpad_str}[v{i}]"
         )
@@ -1477,12 +1496,15 @@ def build_concat_ffmpeg_command(
             if trim_in > 0.001 or raw_trim_out is not None:
                 end_clause = f":end={float(raw_trim_out)}" if raw_trim_out is not None else ""
                 atrim_clause = f"atrim=start={trim_in}{end_clause},"
-            audio_filter = f"[{i}:a]{atrim_clause}asetpts=PTS-STARTPTS,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo{apad_str}"
+            atempo = ""
+            if abs(playback_rate - 1.0) > 0.001:
+                atempo = f"atempo={playback_rate:.4f},"
+            audio_filter = f"[{i}:a]{atrim_clause}asetpts=PTS-STARTPTS,{atempo}aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo{apad_str}"
             if seg_audio_volume != 1.0:
                 audio_filter += f",volume={seg_audio_volume}"
             audio_filter += f"[seg_audio_{i}]"
             filter_parts.append(audio_filter)
-            segment_audio_streams.append((f"[seg_audio_{i}]", duration + pause_duration))
+            segment_audio_streams.append((f"[seg_audio_{i}]", (duration / playback_rate) + pause_duration))
         elif audio_source == 'voiceover' and i in voiceover_input_map:
             # Use voiceover audio (with optional time slicing)
             voiceover_input_idx = voiceover_input_map[i]

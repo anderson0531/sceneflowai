@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import { Coins, Loader2, Mic, Sparkles, Volume2 } from 'lucide-react'
+import { Loader2, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
@@ -12,7 +12,6 @@ import {
 import {
   getLocalizeState,
   type ProjectStream,
-  type StreamLocalizeMode,
   type StreamStemMode,
 } from '@/lib/streams/projectStreams'
 import { useStreamLocalize } from '@/hooks/streams/useStreamLocalize'
@@ -79,11 +78,9 @@ export function StreamLocalizePanel({
   const {
     running,
     localizeDraft,
-    setMode,
     setSpeed,
     setStemMode,
     runLocalize,
-    estimatedLipsyncCredits,
   } = useStreamLocalize({
     projectId,
     projectTitle,
@@ -101,51 +98,14 @@ export function StreamLocalizePanel({
   const scriptScenes = useMemo(() => readScriptScenesFromProject(script), [script])
   const activeLocalize = running ? localizeDraft : persisted
 
-  const tier: StreamLocalizeMode = localizeDraft.mode === 'off' ? 'dub' : localizeDraft.mode
-
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium mr-1">
-          Tier
-        </span>
-        <Button
-          size="sm"
-          type="button"
-          variant={tier === 'dub' ? 'default' : 'outline'}
-          className={cn(
-            tier === 'dub'
-              ? 'bg-violet-600 hover:bg-violet-500 text-white'
-              : 'border-zinc-700 text-zinc-200'
-          )}
-          disabled={running}
-          onClick={() => setMode('dub')}
-        >
-          <Volume2 className="w-3.5 h-3.5 mr-1.5" />
-          Dub
-        </Button>
-        <Button
-          size="sm"
-          type="button"
-          variant={tier === 'lipsync' ? 'default' : 'outline'}
-          className={cn(
-            tier === 'lipsync'
-              ? 'bg-violet-600 hover:bg-violet-500 text-white'
-              : 'border-zinc-700 text-zinc-200'
-          )}
-          disabled={running}
-          onClick={() => setMode('lipsync')}
-        >
-          <Mic className="w-3.5 h-3.5 mr-1.5" />
-          Lip-sync
-        </Button>
-        {tier === 'lipsync' ? (
-          <span className="inline-flex items-center gap-1 text-xs text-amber-200/90 ml-1">
-            <Coins className="w-3.5 h-3.5" />
-            ~{estimatedLipsyncCredits} credits
-          </span>
-        ) : null}
-      </div>
+      <p className="text-[11px] text-zinc-400 leading-relaxed">
+        Shot treatment comes from the Mixer for this language. Double overlays the dubbed voice,
+        Lip-sync performs it on that shot, and Regenerate uses the translated clip. Translated
+        dialogue is often 10–30% longer than the master — adjust dialogue speed here, and video
+        speed per shot in the Mixer.
+      </p>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/40 p-3">

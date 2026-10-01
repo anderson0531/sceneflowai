@@ -56,12 +56,12 @@ export interface WorkflowGuidePhaseConfig {
 export const productionWorkflowGroups: WorkflowGroup[] = [
   {
     id: 'foundation-script',
-    title: 'Direction, Beats, and audio',
+    title: 'Direction, Script, and audio',
     icon: 'FileText',
     iconColor: 'text-blue-500',
     steps: [
       { id: 'update-review-score', label: 'Run Audience Resonance Analysis', actionEventName: 'production:update-reviews' },
-      { id: 'review-analysis', label: "Revise script (Writer's Room)", actionEventName: 'production:review-analysis' },
+      { id: 'review-analysis', label: 'Revise script (Script)', actionEventName: 'production:review-analysis' },
       { id: 'lock-script', label: 'Lock script for production', description: 'Draft → Reviewed → Locked' },
       { id: 'assign-voices', label: 'Assign voices (Reference Library)', actionEventName: 'production:assign-voices' },
       { id: 'create-scene-audio', label: 'Generate scene audio', actionEventName: 'production:generate-audio' },
@@ -93,12 +93,12 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
   },
   {
     id: 'production-shoot',
-    title: 'Video, Mixer, and Streams',
+    title: 'Clips, Mixer, and Streams',
     icon: 'Video',
     iconColor: 'text-red-500',
     steps: [
       { id: 'generate-beat-frames', label: 'Build Shot Frames (start/end)', actionEventName: 'production:generate-frames' },
-      { id: 'create-video', label: 'Generate shot video (Footage)', actionEventName: 'production:generate-video' },
+      { id: 'create-video', label: 'Generate shot video (Clips)', actionEventName: 'production:generate-video' },
       { id: 'mix-scene', label: 'Preview in Mixer', actionEventName: 'production:edit-video' },
       { id: 'render-stream', label: 'Render Stream (export dialog)', actionEventName: 'production:mark-complete' },
     ],
