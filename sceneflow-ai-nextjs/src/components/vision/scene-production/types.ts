@@ -503,6 +503,14 @@ export interface AudioAnchor {
  */
 export type DurationMode = 'manual' | 'fill-to-next' | 'match-audio' | 'split-even'
 
+/** Versioned clips for one non-English stream. Capped independently of the master. */
+export interface LanguageClipVersionSet {
+  takes: SceneSegmentTake[]
+  currentTakeId?: string
+}
+
+export type LanguageClipVersions = Record<string, LanguageClipVersionSet>
+
 export interface SceneSegmentTake {
   id: string
   createdAt: string
@@ -560,6 +568,11 @@ export interface SceneSegment {
   takes: SceneSegmentTake[]
   /** Explicit restore pointer; fallback is the latest COMPLETE take. */
   currentTakeId?: string
+  /**
+   * Clip versions for a non-English stream. The English master stays on
+   * `takes` and `activeAssetUrl`.
+   */
+  languageVersions?: LanguageClipVersions
   // Shot Metadata
   shotType?: string
   cameraAngle?: string

@@ -45,6 +45,8 @@ export interface GroupedLanguageSelectorProps {
   disabled?: boolean
   placeholder?: string
   renderItemSuffix?: (lang: SupportedLanguage) => React.ReactNode
+  /** Override the visible name. Search still uses the catalog name. */
+  formatName?: (lang: SupportedLanguage) => string
 }
 
 export function GroupedLanguageSelector({
@@ -58,6 +60,7 @@ export function GroupedLanguageSelector({
   disabled = false,
   placeholder,
   renderItemSuffix,
+  formatName,
 }: GroupedLanguageSelectorProps) {
   const [open, setOpen] = React.useState(false)
 
@@ -74,8 +77,9 @@ export function GroupedLanguageSelector({
     return null
   }, [groups, value])
 
+  const nameOf = (lang: SupportedLanguage) => formatName?.(lang) ?? lang.name
   const selectedDisplay = selectedLang
-    ? `${showFlags ? (FLAG_EMOJIS[selectedLang.code] ?? '') : ''} ${selectedLang.name}`.trim()
+    ? `${showFlags ? (FLAG_EMOJIS[selectedLang.code] ?? '') : ''} ${nameOf(selectedLang)}`.trim()
     : undefined
 
   const defaultPlaceholder = intent === 'generate' ? 'Generate language...' : 'View language...'
@@ -147,7 +151,7 @@ export function GroupedLanguageSelector({
                     >
                       <div className="flex items-center gap-2">
                         {flag && <span className="text-base leading-none">{flag}</span>}
-                        <span>{lang.name}</span>
+                        <span>{nameOf(lang)}</span>
                         {renderItemSuffix?.(lang)}
                       </div>
                       {value === lang.code && (

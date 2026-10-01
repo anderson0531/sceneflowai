@@ -103,6 +103,7 @@ import {
 } from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
+import { presentSegmentForStream, streamLanguageLabel } from '@/lib/scene/languageClipVersions'
 import { cn, forceDownload } from '@/lib/utils'
 import { SUPPORTED_LANGUAGES, FLAG_EMOJIS } from '@/constants/languages'
 import {
@@ -532,6 +533,7 @@ function ProductionTargetSelector({
           disabled={disabled}
           className="min-w-[140px]"
           placeholder="Select language..."
+          formatName={(lang) => streamLanguageLabel(lang.code, lang.name)}
         />
       )}
     </div>
@@ -2596,8 +2598,9 @@ export function SceneProductionMixer({
     if (audioAssets.dialogueAudio) {
       Object.keys(audioAssets.dialogueAudio).forEach((l) => langs.add(l))
     }
+    if (selectedLanguage) langs.add(selectedLanguage)
     return mergeStreamSelectorLanguages(projectStreams, langs)
-  }, [audioAssets, projectStreams])
+  }, [audioAssets, projectStreams, selectedLanguage])
 
   const languagesNotYetGenerated = useMemo(
     () =>
@@ -2940,8 +2943,13 @@ export function SceneProductionMixer({
   
   // Video-only segments for Video render mode (excludes image-only segments)
   const videoSegments = useMemo(
-    () => listIncludedBeatVideos(mixerBeatSegments),
-    [mixerBeatSegments]
+    () =>
+      listIncludedBeatVideos(
+        mixerBeatSegments.map((segment) =>
+          presentSegmentForStream(segment, productionTarget.language)
+        )
+      ),
+    [mixerBeatSegments, productionTarget.language]
   )
 
   const canMixerStitchRender = videoSegments.length > 0
@@ -4695,12 +4703,12 @@ export function SceneProductionMixer({
                 />
               )}
               
-              {/* Language Streams Status — shows available languages and their audio status */}
-              {availableLanguages.length > 1 && (
+              {/* Stream — the language version Clips and Streams share with this mix */}
+              {availableLanguages.length > 0 && (
                 <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg">
                   <ProductionSectionHeader
                     icon={Languages}
-                    title="Language Streams"
+                    title="Stream"
                     badge={availableLanguages.length}
                     rightAction={
                       onGenerateLanguageStream && languagesNotYetGenerated.length > 0 ? (
@@ -4720,6 +4728,11 @@ export function SceneProductionMixer({
                       ) : undefined
                     }
                   />
+                  <p className="px-3 pb-2 text-[11px] text-gray-400">
+                    {selectedLanguage === 'en'
+                      ? 'Mixing the English master — dialogue, sound effects, and music.'
+                      : `Dubbing the ${languageLabel} version — dialogue, sound effects, and music.`}
+                  </p>
                   <div className="px-3 pb-3 flex flex-wrap gap-1.5">
                     {(availableLanguages.length <= 5 ? availableLanguages : availableLanguages.slice(0, 4)).map(langCode => {
                       const langInfo = SUPPORTED_LANGUAGES.find(l => l.code === langCode)
@@ -4738,7 +4751,7 @@ export function SceneProductionMixer({
                           }`}
                         >
                           <span>{FLAG_EMOJIS[langCode] || '🌐'}</span>
-                          <span>{langInfo?.name || langCode}</span>
+                          <span>{streamLanguageLabel(langCode, langInfo?.name)}</span>
                           <div className="flex gap-0.5 ml-0.5">
                             <span className={`w-1.5 h-1.5 rounded-full ${hasDialogue ? 'bg-blue-400' : 'bg-gray-600'}`} title={hasDialogue ? 'Dialogue ready' : 'No dialogue'} />
                           </div>

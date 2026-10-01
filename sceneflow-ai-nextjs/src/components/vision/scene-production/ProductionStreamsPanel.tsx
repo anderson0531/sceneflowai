@@ -23,7 +23,9 @@ import {
   Check,
   MonitorPlay,
 } from 'lucide-react'
-import { FLAG_EMOJIS } from '@/constants/languages'
+import { FLAG_EMOJIS, SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
+import { streamLanguageLabel } from '@/lib/scene/languageClipVersions'
 import type { FinalCutSelection } from '@/lib/types/finalCut'
 import type {
   ProductionStream,
@@ -43,6 +45,9 @@ interface ProductionStreamsPanelProps {
   productionStreams: ProductionStream[]
   /** Currently selected language for audio tracks (synced with mixer output target) */
   selectedLanguage: string
+  /** Languages available on this production. Selecting one updates Clips and the Mixer. */
+  streamLanguages?: string[]
+  onLanguageChange?: (language: string) => void
   /** Callback to render a new animatic production stream */
   onRenderAnimatic?: (language: string, resolution: '720p' | '1080p' | '4K', settings: AnimaticRenderSettings) => Promise<void>
   /** Legacy callback for backwards compatibility - renders as animatic */
@@ -658,6 +663,8 @@ function ProductionStreamCard({
 export function ProductionStreamsPanel({
   productionStreams,
   selectedLanguage,
+  streamLanguages,
+  onLanguageChange,
   onRenderAnimatic: _onRenderAnimatic,
   onRenderProduction: _onRenderProduction, // Legacy - maps to onRenderAnimatic
   onDeleteStream,
@@ -747,14 +754,14 @@ export function ProductionStreamsPanel({
   )
   
   const currentStreams = useMemo(() => {
-    return [...videoStreams].sort((a, b) => {
-      const lang = a.language.localeCompare(b.language)
-      if (lang !== 0) return lang
-      const dv = (b.streamVersion ?? 1) - (a.streamVersion ?? 1)
-      if (dv !== 0) return dv
-      return new Date(b.completedAt || b.createdAt || 0).getTime() - new Date(a.completedAt || a.createdAt || 0).getTime()
-    })
-  }, [videoStreams])
+    return [...videoStreams]
+      .filter((stream) => stream.language === selectedLanguage)
+      .sort((a, b) => {
+        const dv = (b.streamVersion ?? 1) - (a.streamVersion ?? 1)
+        if (dv !== 0) return dv
+        return new Date(b.completedAt || b.createdAt || 0).getTime() - new Date(a.completedAt || a.createdAt || 0).getTime()
+      })
+  }, [videoStreams, selectedLanguage])
 
   const isStreamScreeningVersion = useCallback(
     (stream: ProductionStream) => {
@@ -778,7 +785,7 @@ export function ProductionStreamsPanel({
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-sm font-medium text-white tracking-tight">
-                Streams — Export (MP4)
+                Language versions
               </h3>
               {productionStreams.length > 0 && (
                 <span className="px-2 py-0.5 text-xs font-medium bg-purple-500/20 text-purple-200 rounded-md border border-purple-500/25">
@@ -787,22 +794,50 @@ export function ProductionStreamsPanel({
               )}
             </div>
             <p className="text-xs text-slate-500 mt-1 max-w-2xl">
-              Finished MP4 exports for this scene by language and type. Preview live work in Screening Room or the Mixer — review finished files here.
+              Each stream is a language version of this scene. Clips and the Mixer follow the stream selected here. Finished MP4s are versioned per language.
             </p>
           </div>
         </div>
-        {hasSegmentChanges && productionStreams.length > 0 && (
-          <span className="flex items-center gap-1 text-xs text-amber-400 shrink-0">
-            <AlertCircle className="w-3.5 h-3.5" />
-            Shots changed — new render recommended
-          </span>
-        )}
+        <div className="flex flex-col items-start gap-2 sm:items-end">
+          {onLanguageChange && (streamLanguages?.length ?? 0) > 0 ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500">Stream</span>
+              <GroupedLanguageSelector
+                value={selectedLanguage}
+                onValueChange={onLanguageChange}
+                filterCodes={streamLanguages}
+                size="xs"
+                intent="navigate"
+                showFlags
+                formatName={(lang) => streamLanguageLabel(lang.code, lang.name)}
+                placeholder="Select language..."
+                className="h-7 min-w-[140px] text-[11px]"
+              />
+            </div>
+          ) : (
+            <span className="text-xs text-slate-500">
+              {selectedLanguageFlag} Stream:{' '}
+              <span className="text-slate-300">
+                {streamLanguageLabel(
+                  selectedLanguage,
+                  SUPPORTED_LANGUAGES.find((lang) => lang.code === selectedLanguage)?.name
+                )}
+              </span>
+            </span>
+          )}
+          {hasSegmentChanges && productionStreams.length > 0 && (
+            <span className="flex items-center gap-1 text-xs text-amber-400 shrink-0">
+              <AlertCircle className="w-3.5 h-3.5" />
+              Shots changed — new render recommended
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Video exports for this scene */}
       <div className="flex items-center gap-2 text-xs text-slate-400">
         <VideoIcon className="w-3.5 h-3.5 text-indigo-400" />
-        <span>Showing <span className="text-indigo-200 font-medium">Video</span> exports for this scene</span>
+        <span>Showing <span className="text-indigo-200 font-medium">Video</span> versions for this stream</span>
       </div>
 
       {onUploadStream && (
@@ -832,7 +867,7 @@ export function ProductionStreamsPanel({
               {isUploadingStream ? 'Uploading…' : 'Upload Video MP4'}
             </Button>
             <span className="text-xs text-slate-500">
-              {selectedLanguageFlag} Mixer language: <span className="text-slate-300">{selectedLanguage}</span>
+              Saved on the selected stream
             </span>
           </div>
           <p className="text-[11px] text-slate-500">
@@ -866,7 +901,13 @@ export function ProductionStreamsPanel({
         />
       )}
       
-      {/* Existing Streams (filtered by type) */}
+      {selectedStreamType === 'video' && currentStreams.length === 0 && (
+        <p className="text-xs text-slate-500">
+          No finished MP4 for this stream yet. Render it from the Mixer to add a version.
+        </p>
+      )}
+
+      {/* Existing Streams (filtered by type and the selected language) */}
       {currentStreams.length > 0 && (
         <div className="space-y-2">
           {currentStreams.map(stream => (

@@ -105,7 +105,7 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
   },
   {
     id: 'production-streams',
-    title: 'Streams — Export (MP4)',
+    title: 'Language versions',
     icon: 'Play',
     iconColor: 'text-green-500',
     steps: [

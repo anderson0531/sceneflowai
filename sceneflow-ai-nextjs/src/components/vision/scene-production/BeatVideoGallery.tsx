@@ -2,6 +2,8 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, Camera, Clapperboard, Film, Maximize2, Minimize2, Pause, PlayCircle, Settings2, Upload, Wand2 } from 'lucide-react'
+import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { SceneImageFrame } from '@/components/vision/SceneImageFrame'
@@ -25,6 +27,15 @@ import {
   segmentHasPlayableVideo,
   type PlayableTake,
 } from '@/lib/storyboard/mediaVersions'
+import {
+  isMasterStreamLanguage,
+  languageClipSelectionValue,
+  latestLanguageClipOption,
+  listLanguageClipVersionOptions,
+  normalizeStreamLanguage,
+  resolveLanguageClipPlayback,
+  streamLanguageLabel,
+} from '@/lib/scene/languageClipVersions'
 
 const videoShowLabels: Record<VideoAttentionFilter, string> = {
   all: 'All',
@@ -140,6 +151,15 @@ interface BeatVideoGalleryProps {
   /** Shared beat selection with Direction, Audio, and Pre-Vis. */
   selectedBeatId?: string | null
   onSelectBeat?: (beatId: string) => void
+  /** Language stream shared with the Mixer and Streams. English is the master. */
+  streamLanguage?: string
+  streamLanguages?: string[]
+  onStreamLanguageChange?: (language: string) => void
+  onAddStreamLanguage?: (language: string) => void
+  languagesNotYetGenerated?: string[]
+  onGenerateLanguageVersion?: (segment: SceneSegment) => void
+  onRestoreLanguageVersion?: (segmentId: string, takeId: string) => void
+  generatingLanguageClipId?: string | null
 }
 
 export function BeatVideoGallery({
@@ -166,6 +186,14 @@ export function BeatVideoGallery({
   generatingClipId,
   selectedBeatId = null,
   onSelectBeat,
+  streamLanguage = 'en',
+  streamLanguages = [],
+  onStreamLanguageChange,
+  onAddStreamLanguage,
+  languagesNotYetGenerated = [],
+  onGenerateLanguageVersion,
+  onRestoreLanguageVersion,
+  generatingLanguageClipId = null,
 }: BeatVideoGalleryProps) {
   const [selectedKey, setSelectedKey] = useState<string | null>(clips[0]?.key ?? null)
   const [attention, setAttention] = useState<VideoAttentionFilter>('all')
@@ -232,18 +260,40 @@ export function BeatVideoGallery({
     previewSegment?.lastContentPolicyFailure?.optionalSanitized?.guidePrompt,
   ].filter((value): value is string => !!value?.trim())
   const policyHints = previewSegment?.lastContentPolicyFailure?.hints?.filter((hint) => hint.trim()) ?? []
-  const playableTakes = previewSegment
-    ? listPlayableTakes(previewSegment.takes, previewSegment.activeAssetUrl)
+  const languageStream = !isMasterStreamLanguage(streamLanguage)
+  const streamCode = normalizeStreamLanguage(streamLanguage)
+  const languageName =
+    streamLanguageLabel(
+      streamCode,
+      SUPPORTED_LANGUAGES.find((lang) => lang.code === streamCode)?.name
+    ).replace(' (master)', '')
+  const languageOptions = languageStream
+    ? listLanguageClipVersionOptions(previewSegment?.languageVersions?.[streamCode])
     : []
-  const liveTake = previewSegment
-    ? resolveLiveTake(
-        previewSegment.takes,
-        previewSegment.currentTakeId,
-        previewSegment.activeAssetUrl
-      )
+  const languagePlayback = previewSegment
+    ? resolveLanguageClipPlayback(previewSegment, streamLanguage)
     : undefined
-  const previewVideoUrl = liveTake?.url
+  const playableTakes = languageStream
+    ? listPlayableTakes(previewSegment?.languageVersions?.[streamCode]?.takes, undefined)
+    : previewSegment
+      ? listPlayableTakes(previewSegment.takes, previewSegment.activeAssetUrl)
+      : []
+  const liveTake = languageStream
+    ? undefined
+    : previewSegment
+      ? resolveLiveTake(
+          previewSegment.takes,
+          previewSegment.currentTakeId,
+          previewSegment.activeAssetUrl
+        )
+      : undefined
+  const previewVideoUrl = languageStream ? languagePlayback?.url : liveTake?.url
+  const showingMasterFallback = languageStream && !!languagePlayback?.usingMaster && !!previewVideoUrl
   const previewHasClip = !!previewVideoUrl
+  const languageVersionValue = languageClipSelectionValue(languageOptions)
+  const generatingLanguageClip = !!previewSegment && generatingLanguageClipId === previewSegment.segmentId
+  const formatStreamName = (lang: { code: string; name: string }) =>
+    streamLanguageLabel(lang.code, lang.name)
   const versionStrip = [...playableTakes].sort((a, b) => {
     const aTime = Date.parse(a.createdAt || '')
     const bTime = Date.parse(b.createdAt || '')
@@ -405,6 +455,67 @@ export function BeatVideoGallery({
           }}
         >
           <div className="sticky top-2 flex w-full min-w-0 max-w-full flex-1 flex-col gap-2 self-start lg:min-w-[40rem]">
+            {onStreamLanguageChange && streamLanguages.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 px-1">
+                <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                  Stream
+                </span>
+                <GroupedLanguageSelector
+                  value={streamCode}
+                  onValueChange={onStreamLanguageChange}
+                  filterCodes={streamLanguages}
+                  size="xs"
+                  intent="navigate"
+                  showFlags
+                  formatName={formatStreamName}
+                  placeholder="Select language..."
+                  className="h-7 min-w-[140px] border-slate-600 bg-slate-900/80 text-[11px]"
+                />
+                {onAddStreamLanguage && languagesNotYetGenerated.length > 0 && (
+                  <GroupedLanguageSelector
+                    value=""
+                    onValueChange={(code) => {
+                      onStreamLanguageChange(code)
+                      void onAddStreamLanguage(code)
+                    }}
+                    filterCodes={languagesNotYetGenerated}
+                    size="xs"
+                    intent="generate"
+                    placeholder="+ Add Language"
+                    className="h-7 w-auto min-w-[110px] border-purple-500/40 bg-gray-700/30 text-[11px] text-purple-200"
+                  />
+                )}
+                {languageStream && languageOptions.length > 0 && (
+                  <label className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                    Version
+                    <select
+                      aria-label="Stream version"
+                      className="h-7 rounded border border-slate-600 bg-slate-900 px-1.5 text-[11px] text-slate-200"
+                      value={languageVersionValue}
+                      onChange={(event) => {
+                        if (!previewSegment) return
+                        const value = event.target.value
+                        const newest = latestLanguageClipOption(languageOptions)
+                        const takeId = value === 'latest' ? newest?.id : value
+                        if (takeId) onRestoreLanguageVersion?.(previewSegment.segmentId, takeId)
+                      }}
+                    >
+                      <option value="latest">Latest</option>
+                      {[...languageOptions].reverse().map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </div>
+            )}
+            {showingMasterFallback && (
+              <p className="px-1 text-[11px] text-amber-200/90">
+                No {languageName} clip yet. This preview is the English master.
+              </p>
+            )}
             <p className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
               {previewVideoUrl ? 'Clip preview' : 'Start frame'}
             </p>
@@ -468,7 +579,15 @@ export function BeatVideoGallery({
                   sceneIdx={0}
                   sceneNumber={preview.beatNumber}
                   label="Shot still"
-                  generateTitle={previewHasClip ? 'Regenerate' : 'Generate clip'}
+                  generateTitle={
+                    languageStream
+                      ? languageOptions.length > 0
+                        ? `New ${languageName} version`
+                        : `Generate ${languageName} version`
+                      : previewHasClip
+                        ? 'Regenerate'
+                        : 'Generate clip'
+                  }
                   directTitle="Direct Clip"
                   directorTitle="Direct Shot"
                   uploadTitle="Upload"
@@ -481,15 +600,25 @@ export function BeatVideoGallery({
                   alwaysShowControls
                   showBorder={false}
                   containMedia
-                  isGenerating={generatingClipId === previewSegment.segmentId}
-                  onGenerate={() => onGenerateClip?.(previewSegment)}
+                  isGenerating={
+                    generatingLanguageClip || generatingClipId === previewSegment.segmentId
+                  }
+                  onGenerate={() =>
+                    languageStream
+                      ? onGenerateLanguageVersion?.(previewSegment)
+                      : onGenerateClip?.(previewSegment)
+                  }
                   onDirect={onDirectVideo ? () => onDirectVideo(previewSegment) : undefined}
                   onDirector={
                     onDirectBeat && preview.beatId
                       ? () => onDirectBeat(preview.beatId)
                       : undefined
                   }
-                  onUpload={(file) => onUpload?.(previewSegment.segmentId, file)}
+                  onUpload={
+                    languageStream
+                      ? undefined
+                      : (file) => onUpload?.(previewSegment.segmentId, file)
+                  }
                   onEdit={
                     onEditClip && previewHasClip
                       ? () => onEditClip(previewSegment)
@@ -521,15 +650,21 @@ export function BeatVideoGallery({
                   onClick={(event) => event.stopPropagation()}
                 >
                   {versionStrip.map((version, index) => {
-                    const isCurrent =
-                      version.id === previewSegment.currentTakeId || version.url === previewVideoUrl
+                    const isCurrent = languageStream
+                      ? version.id === languagePlayback?.takeId || version.url === previewVideoUrl
+                      : version.id === previewSegment.currentTakeId || version.url === previewVideoUrl
                     return (
                       <button
                         key={version.id}
                         type="button"
                         onClick={(event) => {
                           event.stopPropagation()
-                          if (!isCurrent) onRestoreTake?.(previewSegment.segmentId, version.id)
+                          if (isCurrent) return
+                          if (languageStream) {
+                            onRestoreLanguageVersion?.(previewSegment.segmentId, version.id)
+                            return
+                          }
+                          onRestoreTake?.(previewSegment.segmentId, version.id)
                         }}
                         className={`relative h-8 w-12 shrink-0 overflow-hidden rounded border ${
                           isCurrent
@@ -569,7 +704,7 @@ export function BeatVideoGallery({
                         {isPreviewPlaying ? 'Pause' : 'Play'}
                       </Button>
                     )}
-                    {onGenerateClip && (
+                    {onGenerateClip && !languageStream && (
                       <Button
                         type="button"
                         size="sm"
@@ -579,6 +714,23 @@ export function BeatVideoGallery({
                       >
                         <Wand2 className="mr-1 h-3 w-3" />
                         {previewHasClip ? 'Regenerate clip' : 'Generate clip'}
+                      </Button>
+                    )}
+                    {languageStream && onGenerateLanguageVersion && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-7 border-indigo-500/40 text-[10px] text-indigo-200"
+                        disabled={generatingLanguageClip}
+                        onClick={() => onGenerateLanguageVersion(previewSegment)}
+                      >
+                        <Wand2 className="mr-1 h-3 w-3" />
+                        {generatingLanguageClip
+                          ? `Generating ${languageName} version…`
+                          : languageOptions.length > 0
+                            ? `New ${languageName} version`
+                            : `Generate ${languageName} version`}
                       </Button>
                     )}
                     {onDirectBeat && preview.beatId && (
@@ -591,7 +743,7 @@ export function BeatVideoGallery({
                         Direct Shot
                       </button>
                     )}
-                    {onTake && (
+                    {onTake && !languageStream && (
                       <Button
                         type="button"
                         size="sm"
@@ -603,7 +755,7 @@ export function BeatVideoGallery({
                         Take ({previewSegment.takes?.length || 1})
                       </Button>
                     )}
-                    {onUpload && (
+                    {onUpload && !languageStream && (
                       <>
                         <input
                           type="file"
@@ -630,7 +782,7 @@ export function BeatVideoGallery({
                         </Button>
                       </>
                     )}
-                    {onRetake && previewHasClip && (
+                    {onRetake && !languageStream && previewHasClip && (
                       <Button
                         type="button"
                         size="sm"

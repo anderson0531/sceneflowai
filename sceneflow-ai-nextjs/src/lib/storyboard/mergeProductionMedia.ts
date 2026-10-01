@@ -10,6 +10,7 @@ import type {
   SceneSegmentReferences,
   SceneSegmentTake,
 } from '@/components/vision/scene-production/types'
+import { mergeLanguageClipVersions } from '@/lib/scene/languageClipVersions'
 import {
   END_FRAME_STILL_SLOT,
   START_FRAME_STILL_SLOT,
@@ -45,11 +46,16 @@ export function mergeProductionSegment(
     incoming.activeAssetUrl ?? existing.activeAssetUrl
   )
   const currentTake = takes.find((take) => take.id === currentTakeId)
+  const languageVersions = mergeLanguageClipVersions(
+    incoming.languageVersions,
+    existing.languageVersions
+  )
   const merged: SceneSegment = {
     ...existing,
     ...incoming,
     takes,
     currentTakeId,
+    ...(languageVersions ? { languageVersions } : { languageVersions: undefined }),
     activeAssetUrl:
       currentTake?.assetUrl ||
       currentTake?.videoUrl ||
