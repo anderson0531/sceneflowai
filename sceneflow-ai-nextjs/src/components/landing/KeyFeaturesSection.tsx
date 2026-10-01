@@ -11,10 +11,13 @@ import { LANDING_TRANSLATE_LANGUAGES } from '@/config/landingTranslateLanguages'
 
 const SECTION_ID = 'key-features'
 
+type FeatureLearnMoreItem = {
+  title: string
+  description: string
+}
+
 type FeatureLearnMore = {
-  problem: string
-  solution: string
-  outcome: string
+  items: FeatureLearnMoreItem[]
 }
 
 type FeatureData = {
@@ -156,9 +159,6 @@ function FeatureDetail({
   onToggle,
   learnMoreLabel,
   showLessLabel,
-  problemLabel,
-  solutionLabel,
-  outcomeLabel,
   screenshotLabel,
   landingUiLanguagesLabel,
 }: {
@@ -168,9 +168,6 @@ function FeatureDetail({
   onToggle: () => void
   learnMoreLabel: string
   showLessLabel: string
-  problemLabel: string
-  solutionLabel: string
-  outcomeLabel: string
   screenshotLabel: string
   landingUiLanguagesLabel: string
 }) {
@@ -224,21 +221,14 @@ function FeatureDetail({
                 className="overflow-hidden"
               >
                 <div className="mt-4 space-y-4 border-t border-slate-800 pt-4">
-                  <LearnMoreRow
-                    gradient={gradient}
-                    label={problemLabel}
-                    text={feature.learnMore.problem}
-                  />
-                  <LearnMoreRow
-                    gradient={gradient}
-                    label={solutionLabel}
-                    text={feature.learnMore.solution}
-                  />
-                  <LearnMoreRow
-                    gradient={gradient}
-                    label={outcomeLabel}
-                    text={feature.learnMore.outcome}
-                  />
+                  {feature.learnMore.items.map((item) => (
+                    <LearnMoreRow
+                      key={item.title}
+                      gradient={gradient}
+                      label={item.title}
+                      text={item.description}
+                    />
+                  ))}
                   {feature.icon === 'languageStreams' ? (
                     <LandingUiLanguagesBlock label={landingUiLanguagesLabel} />
                   ) : null}
@@ -304,9 +294,6 @@ export default function KeyFeaturesSection() {
   const detailLabels = {
     learnMoreLabel: t('learnMoreLabel'),
     showLessLabel: t('showLessLabel'),
-    problemLabel: t('problemLabel'),
-    solutionLabel: t('solutionLabel'),
-    outcomeLabel: t('outcomeLabel'),
     screenshotLabel: t('screenshotLabel'),
     landingUiLanguagesLabel: t('landingUiLanguagesLabel'),
   }
@@ -371,6 +358,7 @@ export default function KeyFeaturesSection() {
             title={activeRoom.label}
             promise={activeRoom.promise}
             comingSoonLabel={t('overviewComingSoon')}
+            soonLabel={t('videoSoon')}
             pauseLabel={t('pauseOverview')}
             playLabel={t('playOverview')}
             muteLabel={t('muteOverview')}

@@ -2,7 +2,15 @@ import { readFileSync, readdirSync } from 'fs'
 import path from 'path'
 import { describe, it, expect } from 'vitest'
 import { FEATURE_ICONS } from '@/components/landing/keyFeatureIcons'
-import { FEATURE_ROOM_IDS } from '@/config/landing/featureRoomMedia'
+import {
+  FEATURE_ROOM_IDS,
+  FEATURE_ROOM_OVERVIEW_SECONDS,
+  featureRoomHasVideo,
+  featureRoomVideoSources,
+  getFeatureRoomMedia,
+  getFeatureRoomVideoLocales,
+} from '@/config/landing/featureRoomMedia'
+import { VIDEO_LOCALE_ORDER } from '@/config/landing/videoLocales'
 
 const ROOT = path.resolve(__dirname, '../..')
 
@@ -11,7 +19,12 @@ type Feature = {
   title: string
   description: string
   screenshot: string
-  learnMore?: { problem?: string; solution?: string; outcome?: string }
+  learnMore?: { items?: Array<{ title?: string; description?: string }> }
+}
+
+function sentenceCount(text: string): number {
+  const withoutDecimals = text.replace(/\d+\.\d+/g, (match) => match.replace('.', ''))
+  return withoutDecimals.split(/[.?!]/).filter((part) => part.trim()).length
 }
 
 type Room = {
@@ -121,13 +134,37 @@ describe('keyFeatures structure', () => {
     expect(Object.keys(FEATURE_ICONS).sort()).toEqual([...new Set(icons)].sort())
   })
 
-  it('gives every card a detailed description, a screenshot, and collapsed learn-more', () => {
+  it('gives every card a detailed description, a screenshot, and a one-sentence feature list', () => {
+    expect(en.keyFeatures).not.toHaveProperty('problemLabel')
+    expect(en.keyFeatures).not.toHaveProperty('solutionLabel')
+    expect(en.keyFeatures).not.toHaveProperty('outcomeLabel')
     for (const feature of rooms.flatMap(featuresOf)) {
-      expect(feature.description.split(/[.?!]/).filter((part) => part.trim()).length).toBeGreaterThanOrEqual(2)
+      expect(sentenceCount(feature.description)).toBeGreaterThanOrEqual(2)
       expect(feature.screenshot).toBeTruthy()
-      expect(feature.learnMore?.problem).toBeTruthy()
-      expect(feature.learnMore?.solution).toBeTruthy()
-      expect(feature.learnMore?.outcome).toBeTruthy()
+      expect(feature.learnMore?.items?.length).toBeGreaterThan(0)
+      expect(feature.learnMore).not.toHaveProperty('problem')
+      expect(feature.learnMore).not.toHaveProperty('solution')
+      expect(feature.learnMore).not.toHaveProperty('outcome')
+      for (const item of feature.learnMore?.items ?? []) {
+        expect(item.title).toBeTruthy()
+        expect(sentenceCount(item.description ?? '')).toBe(1)
+      }
+    }
+  })
+
+  it('reserves a 30-second WebM overview in seven languages for each room', () => {
+    expect(FEATURE_ROOM_OVERVIEW_SECONDS).toBe(30)
+    for (const roomId of FEATURE_ROOM_IDS) {
+      const locales = getFeatureRoomVideoLocales(roomId)
+      expect(locales.map((locale) => locale.id)).toEqual([...VIDEO_LOCALE_ORDER])
+      expect(locales.every((locale) => !locale.available)).toBe(true)
+      expect(featureRoomHasVideo(getFeatureRoomMedia(roomId))).toBe(false)
+      for (const locale of VIDEO_LOCALE_ORDER) {
+        const sources = featureRoomVideoSources(roomId, locale)
+        expect(sources.map((source) => source.type)).toEqual(['video/webm', 'video/mp4'])
+        expect(sources[0].src).toBe(`/landing/key-features/rooms/${roomId}-${locale}.webm`)
+        expect(sources[1].src).toBe(`/landing/key-features/rooms/${roomId}-${locale}.mp4`)
+      }
     }
   })
 
@@ -192,17 +229,21 @@ describe('keyFeatures structure', () => {
     expect(section).not.toContain("t.raw('categories')")
     expect(section).toContain("feature.icon === 'languageStreams'")
     expect(section).toContain("t('landingUiLanguagesLabel')")
-    expect(section).toContain("t('outcomeLabel')")
+    expect(section).not.toContain('outcomeLabel')
+    expect(section).not.toContain('problemLabel')
+    expect(section).not.toContain('solutionLabel')
+    expect(section).toContain('learnMore.items')
+    expect(section).toContain("t('videoSoon')")
     expect(section).toContain('LANDING_TRANSLATE_LANGUAGES')
 
     const descriptionEnd = section.indexOf('{feature.description}')
     const screenshotStart = section.indexOf('feature.screenshot')
-    const outcomeRow = section.indexOf('label={outcomeLabel}')
+    const featureList = section.indexOf('learnMore.items')
     const languagesBlock = section.indexOf('<LandingUiLanguagesBlock')
     expect(descriptionEnd).toBeGreaterThan(-1)
     expect(screenshotStart).toBeGreaterThan(descriptionEnd)
-    expect(outcomeRow).toBeGreaterThan(-1)
-    expect(languagesBlock).toBeGreaterThan(outcomeRow)
+    expect(featureList).toBeGreaterThan(screenshotStart)
+    expect(languagesBlock).toBeGreaterThan(featureList)
     expect(section.slice(descriptionEnd, screenshotStart)).not.toContain('LandingUiLanguagesBlock')
 
     expect(en.keyFeatures.landingUiLanguagesLabel).toContain('44 languages')
@@ -218,5 +259,8 @@ describe('keyFeatures structure', () => {
     expect(overview).toContain('IntersectionObserver')
     expect(overview).toContain('useReducedMotion')
     expect(overview).toContain('comingSoonLabel')
+    expect(overview).toContain('useLandingVideoLocale')
+    expect(overview).toContain('VideoLanguageControl')
+    expect(overview).toContain('soonLabel')
   })
 })

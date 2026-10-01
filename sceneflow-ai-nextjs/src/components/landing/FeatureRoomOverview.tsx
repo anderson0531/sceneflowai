@@ -1,18 +1,23 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { Pause, Play, Volume2, VolumeX } from 'lucide-react'
+import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { useLandingVideoLocale } from '@/i18n/useLandingVideoLocale'
 import {
   featureRoomHasVideo,
   getFeatureRoomMedia,
+  getFeatureRoomVideoLocales,
 } from '@/config/landing/featureRoomMedia'
+import type { VideoLocaleId } from '@/config/landing/videoLocales'
 
 type FeatureRoomOverviewProps = {
   roomId: string
   title: string
   promise: string
   comingSoonLabel: string
+  soonLabel: string
   pauseLabel: string
   playLabel: string
   muteLabel: string
@@ -24,20 +29,36 @@ export function FeatureRoomOverview({
   title,
   promise,
   comingSoonLabel,
+  soonLabel,
   pauseLabel,
   playLabel,
   muteLabel,
   unmuteLabel,
 }: FeatureRoomOverviewProps) {
-  const media = getFeatureRoomMedia(roomId)
-  const hasVideo = featureRoomHasVideo(media)
+  const videoLocales = useMemo(() => getFeatureRoomVideoLocales(roomId), [roomId])
+  const pageLocaleId = useLandingVideoLocale()
+  const playerLocaleId = useLandingVideoLocale(videoLocales)
+  const anyAvailable = videoLocales.some((locale) => locale.available)
+  const syncedLocaleId = anyAvailable ? playerLocaleId : pageLocaleId
   const prefersReducedMotion = useReducedMotion()
   const bandRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const [activeLocaleId, setActiveLocaleId] = useState<VideoLocaleId>(syncedLocaleId)
   const [inView, setInView] = useState(false)
   const [pausedByUser, setPausedByUser] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isMuted, setIsMuted] = useState(true)
+
+  const media = getFeatureRoomMedia(roomId, activeLocaleId)
+  const hasVideo = featureRoomHasVideo(media)
+
+  useEffect(() => {
+    setActiveLocaleId(syncedLocaleId)
+  }, [syncedLocaleId])
+
+  useEffect(() => {
+    setPausedByUser(false)
+  }, [roomId])
 
   useEffect(() => {
     const band = bandRef.current
@@ -59,7 +80,15 @@ export function FeatureRoomOverview({
       return
     }
     void video.play().catch(() => {})
-  }, [hasVideo, inView, pausedByUser, prefersReducedMotion])
+  }, [
+    hasVideo,
+    inView,
+    pausedByUser,
+    prefersReducedMotion,
+    activeLocaleId,
+    media.webmUrl,
+    media.mp4Url,
+  ])
 
   const togglePlay = () => {
     const video = videoRef.current
@@ -73,6 +102,13 @@ export function FeatureRoomOverview({
     }
   }
 
+  const selectLocale = (id: VideoLocaleId) => {
+    const entry = videoLocales.find((locale) => locale.id === id)
+    if (!entry?.available) return
+    setActiveLocaleId(id)
+    setPausedByUser(false)
+  }
+
   return (
     <div
       ref={bandRef}
@@ -80,6 +116,7 @@ export function FeatureRoomOverview({
     >
       {hasVideo ? (
         <video
+          key={activeLocaleId}
           ref={videoRef}
           poster={media.posterUrl || undefined}
           autoPlay={!prefersReducedMotion}
@@ -103,7 +140,7 @@ export function FeatureRoomOverview({
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950" />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950/25" />
-      <div className="relative flex min-h-[180px] flex-col justify-end p-5 sm:p-6">
+      <div className="relative flex min-h-[180px] flex-col justify-end px-5 pb-5 pt-14 sm:px-6 sm:pb-6 sm:pt-16">
         <h3 className="text-2xl font-bold text-white sm:text-3xl">{title}</h3>
         <p className="mt-3 max-w-3xl text-sm leading-relaxed text-gray-200 sm:text-base">{promise}</p>
         <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -129,6 +166,14 @@ export function FeatureRoomOverview({
           </button>
         </div>
       </div>
+      <VideoLanguageControl
+        locales={videoLocales}
+        activeLocaleId={activeLocaleId}
+        onSelect={selectLocale}
+        soonLabel={soonLabel}
+        variant="overlay"
+        align="start"
+      />
     </div>
   )
 }
