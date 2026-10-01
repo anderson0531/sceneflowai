@@ -5,9 +5,14 @@ import enMessages from '../../messages/en.json'
 import { DIRECT_CONTROL_COPY } from '@/config/landing/directControlCopy'
 import { PUBLISH_CUT_COPY } from '@/config/landing/publishCutCopy'
 import {
+  DIRECT_CONTROL_VIDEO_BLOB_PATHS,
   PRIMARY_VALUE_MEDIA,
   PRIMARY_VALUE_MEDIA_IDS,
+  directControlVideoBlobPath,
+  getDirectControlVideoLocales,
 } from '@/config/landing/primaryValueMedia'
+import { VIDEO_LOCALE_ORDER } from '@/config/landing/videoLocales'
+import { twoModesVideoSources } from '@/config/landing/twoModesMedia'
 
 const ROOT = join(process.cwd())
 
@@ -52,8 +57,8 @@ describe('primary value sections', () => {
     expect(PRIMARY_VALUE_MEDIA.direction).toEqual({
       imageUrl: '',
       posterUrl: '/landing/primary-value/direction.webp',
-      webmUrl: '/landing/primary-value/direction.webm',
-      mp4Url: '/landing/primary-value/direction.mp4',
+      webmUrl: '/landing/primary-value/direction-en.webm',
+      mp4Url: '/landing/primary-value/direction-en.mp4',
     })
     expect(PRIMARY_VALUE_MEDIA.publish).toEqual({
       imageUrl: '',
@@ -61,5 +66,37 @@ describe('primary value sections', () => {
       webmUrl: '/landing/primary-value/publish.webm',
       mp4Url: '/landing/primary-value/publish.mp4',
     })
+
+    const direct = readFileSync(join(ROOT, 'src/components/landing/DirectControlSection.tsx'), 'utf8')
+    const publish = readFileSync(join(ROOT, 'src/components/landing/PublishCutSection.tsx'), 'utf8')
+    expect(direct).toContain('videoLocales={getDirectControlVideoLocales()}')
+    expect(publish).not.toContain('videoLocales')
+
+    const locales = getDirectControlVideoLocales()
+    expect(locales.map((locale) => locale.id)).toEqual([...VIDEO_LOCALE_ORDER])
+    for (const id of VIDEO_LOCALE_ORDER) {
+      expect(DIRECT_CONTROL_VIDEO_BLOB_PATHS[id]).toBe(directControlVideoBlobPath(id))
+      const locale = locales.find((entry) => entry.id === id)
+      if (!locale) throw new Error(`missing control locale ${id}`)
+      expect(locale.available).toBe(true)
+      expect(locale.webmUrl).toBe(`/landing/primary-value/direction-${id}.webm`)
+      expect(locale.mp4Url).toBe(`/landing/primary-value/direction-${id}.mp4`)
+      expect(locale.src).toBe(`/landing/primary-value/direction-${id}.mp4`)
+      expect(
+        twoModesVideoSources({
+          imageUrl: '',
+          posterUrl: '',
+          webmUrl: locale.webmUrl,
+          mp4Url: locale.mp4Url,
+        }).map((source) => source.type)
+      ).toEqual(['video/webm', 'video/mp4'])
+    }
+    expect(directControlVideoBlobPath('en')).toBe('The Control (English).mp4')
+    expect(directControlVideoBlobPath('es')).toBe('The Control (Spanish).mp4')
+    expect(directControlVideoBlobPath('pt')).toBe('The Control (Portuguese).mp4')
+    expect(directControlVideoBlobPath('hi')).toBe('The Control (Hindi).mp4')
+    expect(directControlVideoBlobPath('zh')).toBe('The Control (Chinese).mp4')
+    expect(directControlVideoBlobPath('ar')).toBe('The Control (Arabic).mp4')
+    expect(directControlVideoBlobPath('th')).toBe('The Control (Thai).mp4')
   })
 })
