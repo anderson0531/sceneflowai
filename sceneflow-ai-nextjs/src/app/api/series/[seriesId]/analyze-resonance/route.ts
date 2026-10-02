@@ -18,6 +18,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { getGeminiProductModel } from '@/lib/config/modelConfig'
 import {
   createAudienceDefinition,
+  buildAudienceLocalizationDirective,
   buildCulturalAnalysisDirective,
   type AudienceDefinition,
 } from '@/lib/types/audienceResonance'
@@ -208,6 +209,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // analysis has to be written in the language the series is written in.
     const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, { seriesId })
 
+    const requestAudience = audienceDefinition
+      ? createAudienceDefinition({
+          ...(audienceDefinition as Partial<AudienceDefinition>),
+          source: 'series',
+        })
+      : targetAudience
+        ? createAudienceDefinition({ description: String(targetAudience), source: 'series' })
+        : undefined
+
     const analysisPrompt = buildAnalysisPrompt(
       series, bible, episodes, characters, locations,
       {
@@ -220,7 +230,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       localeDirective(storyLocale, {
         properNouns,
         note: 'Every JSON key stays exactly as specified, as do the "impactLevel" and "demandOutlook" enum values.',
-      })
+      }),
+      requestAudience
     )
     
     const response = await callLLM(
@@ -337,16 +348,21 @@ function buildAnalysisPrompt(
     appliedFixDetails?: SeriesAppliedFixDetail[]
     previousInsights?: SeriesResonanceInsight[]
   },
-  languageBlock: string = ''
+  languageBlock: string = '',
+  requestAudience?: AudienceDefinition
 ): string {
   const meta = series.metadata as Record<string, unknown> | null;
   const format = (meta?.format as string) || 'narrative';
 
-  // Cultural authenticity directive derived from the shared audience definition
-  const audienceDefinition = meta?.audienceDefinition as AudienceDefinition | undefined
+  const storedAudience = meta?.audienceDefinition as AudienceDefinition | undefined
+  const audienceDefinition = requestAudience
+    ?? (storedAudience ? createAudienceDefinition({ ...storedAudience, source: 'series' }) : undefined)
+  const audienceDescription =
+    audienceDefinition?.description?.trim() || series.target_audience || ''
   const culturalDirective = audienceDefinition
-    ? buildCulturalAnalysisDirective(createAudienceDefinition(audienceDefinition))
+    ? buildCulturalAnalysisDirective(audienceDefinition)
     : ''
+  const localizationDirective = buildAudienceLocalizationDirective(audienceDescription)
 
   // Episode summaries with story threads
   const episodeSummaries = episodes.map(ep => {
@@ -430,9 +446,10 @@ ${contextSection}
 SERIES/PRODUCTION: ${series.title}
 FORMAT: ${format}
 GENRE: ${series.genre || 'Drama'}
-TARGET AUDIENCE: ${series.target_audience || 'General'}
+TARGET AUDIENCE: ${audienceDescription || 'General'}
 TARGET MARKETS: ${meta?.targetMarkets ? (meta.targetMarkets as string[]).join(', ') : 'Global'}
 LOGLINE: ${series.logline || bible.logline || 'Not specified'}
+${localizationDirective ? `\n${localizationDirective}\n` : ''}
 ${culturalDirective ? `\n${culturalDirective}\n` : ''}
 
 SYNOPSIS:

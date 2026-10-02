@@ -35,6 +35,10 @@ import {
   getLocationUsageEpisodes,
   resolveAssetAuthorProjectId,
 } from '@/lib/series/seriesHealth'
+import {
+  resolveLibraryImage,
+  type ProductionReferenceImages,
+} from '@/lib/series/referenceTransfer'
 
 interface EpisodeProjectOption {
   projectId: string
@@ -79,6 +83,25 @@ export function SeriesReferenceLibraryPanel({
   const [exportOpen, setExportOpen] = useState(false)
   const [userProjects, setUserProjects] = useState<Array<{ id: string; title: string }>>([])
   const [loadingProjects, setLoadingProjects] = useState(false)
+  const [productionImages, setProductionImages] = useState<ProductionReferenceImages>({
+    characters: {},
+    locations: {},
+    props: {},
+  })
+
+  useEffect(() => {
+    let cancelled = false
+    fetch(`/api/series/${seriesId}/production-references`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (cancelled || !data.success || !data.images) return
+        setProductionImages(data.images)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [seriesId])
 
   useEffect(() => {
     if (!userId) return
@@ -225,6 +248,7 @@ export function SeriesReferenceLibraryPanel({
         <SeriesCastSection
           characters={bible?.characters || []}
           episodeBlueprints={episodeBlueprints}
+          productionImages={productionImages.characters}
           onRegenerate={onRegenerateCharacters}
           isGenerating={isGenerating}
         />
@@ -233,12 +257,17 @@ export function SeriesReferenceLibraryPanel({
         <SeriesLocationsSection
           locations={bible?.locations || []}
           episodeBlueprints={episodeBlueprints}
+          productionImages={productionImages.locations}
           onRegenerate={onRegenerateLocations}
           isGenerating={isGenerating}
         />
       )}
       {subTab === 'props' && (
-        <SeriesPropsSection props={bible?.props || []} episodeBlueprints={episodeBlueprints} />
+        <SeriesPropsSection
+          props={bible?.props || []}
+          episodeBlueprints={episodeBlueprints}
+          productionImages={productionImages.props}
+        />
       )}
       {subTab === 'settings' && (
         <SeriesSettingsSection
@@ -280,11 +309,13 @@ export function SeriesReferenceLibraryPanel({
 function SeriesCastSection({
   characters,
   episodeBlueprints,
+  productionImages,
   onRegenerate,
   isGenerating,
 }: {
   characters: SeriesCharacterResponse[]
   episodeBlueprints: EpisodeBlueprintResponse[]
+  productionImages: Record<string, string>
   onRegenerate: () => void
   isGenerating: boolean
 }) {
@@ -310,14 +341,16 @@ function SeriesCastSection({
       </div>
       {characters.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {characters.map((char) => (
+          {characters.map((char) => {
+            const imageUrl = resolveLibraryImage(char.name, char.referenceImageUrl, productionImages)
+            return (
             <div
               key={char.id}
               className="bg-gray-800 rounded-xl border border-gray-700 p-4 flex gap-4"
             >
-              {char.referenceImageUrl ? (
+              {imageUrl ? (
                 <img
-                  src={char.referenceImageUrl}
+                  src={imageUrl}
                   alt=""
                   className="w-14 h-14 rounded-lg object-cover"
                 />
@@ -345,7 +378,8 @@ function SeriesCastSection({
                 ) : null}
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       ) : (
         <EmptyState
@@ -360,11 +394,13 @@ function SeriesCastSection({
 function SeriesLocationsSection({
   locations,
   episodeBlueprints,
+  productionImages,
   onRegenerate,
   isGenerating,
 }: {
   locations: SeriesLocationResponse[]
   episodeBlueprints: EpisodeBlueprintResponse[]
+  productionImages: Record<string, string>
   onRegenerate: () => void
   isGenerating: boolean
 }) {
@@ -388,8 +424,18 @@ function SeriesLocationsSection({
       </div>
       {locations.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {locations.map((loc) => (
-            <div key={loc.id} className="bg-gray-800 rounded-xl border border-gray-700 p-5">
+          {locations.map((loc) => {
+            const imageUrl = resolveLibraryImage(loc.name, loc.referenceImageUrl, productionImages)
+            return (
+            <div key={loc.id} className="bg-gray-800 rounded-xl border border-gray-700 p-5 flex gap-4">
+              {imageUrl ? (
+                <img src={imageUrl} alt="" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+              ) : (
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-gray-700">
+                  <MapPin className="h-6 w-6 text-gray-500" />
+                </div>
+              )}
+              <div className="min-w-0">
               <h4 className="font-semibold text-white mb-1">{loc.name}</h4>
               <p className="text-sm text-gray-400">{loc.description}</p>
               <AssetUsageMeta
@@ -399,8 +445,10 @@ function SeriesLocationsSection({
                   return text.includes(loc.name.toLowerCase())
                 })}
               />
+              </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       ) : (
         <EmptyState icon={<MapPin className="w-12 h-12" />} message="No locations yet." />
@@ -412,9 +460,11 @@ function SeriesLocationsSection({
 function SeriesPropsSection({
   props,
   episodeBlueprints,
+  productionImages,
 }: {
   props: SeriesProp[]
   episodeBlueprints: EpisodeBlueprintResponse[]
+  productionImages: Record<string, string>
 }) {
   return (
     <div>
@@ -424,10 +474,12 @@ function SeriesPropsSection({
       </div>
       {props.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {props.map((prop) => (
+          {props.map((prop) => {
+            const imageUrl = resolveLibraryImage(prop.name, prop.referenceImageUrl, productionImages)
+            return (
             <div key={prop.id} className="bg-gray-800 rounded-xl border border-gray-700 p-4 flex gap-4">
-              {prop.referenceImageUrl ? (
-                <img src={prop.referenceImageUrl} alt="" className="w-12 h-12 rounded object-cover" />
+              {imageUrl ? (
+                <img src={imageUrl} alt="" className="w-12 h-12 rounded object-cover" />
               ) : (
                 <div className="w-12 h-12 rounded bg-gray-700 flex items-center justify-center">
                   <Package className="w-5 h-5 text-gray-500" />
@@ -446,7 +498,8 @@ function SeriesPropsSection({
                 />
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       ) : (
         <EmptyState
