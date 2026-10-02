@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { Series } from '@/models/Series'
+import CollabBlueprintFeedback from '@/models/CollabBlueprintFeedback'
+import CollabChatMessage from '@/models/CollabChatMessage'
+import CollabComment from '@/models/CollabComment'
+import CollabParticipant from '@/models/CollabParticipant'
+import CollabRecommendation from '@/models/CollabRecommendation'
+import CollabScore from '@/models/CollabScore'
+import CollabSession from '@/models/CollabSession'
 import { sequelize } from '@/config/database'
-import { resetEpisodesForMissingProjects } from '@/lib/series/seriesHealth'
+import {
+  deleteProjectWithDependents,
+  type CollabCleanupStep,
+  type DeleteProjectGraphDeps,
+} from '@/lib/projects/deleteProjectGraph'
 import { loadProjectForRead } from '@/lib/projects/loadProjectRead'
 import { calculateBase64Size } from '@/lib/storage/mediaStorage'
 import {
@@ -693,6 +704,38 @@ export async function PATCH(
   }
 }
 
+const COLLAB_CLEANUP_MODELS: Record<
+  CollabCleanupStep,
+  { destroy: (options: { where: Record<string, string[]>; transaction: unknown }) => Promise<unknown> }
+> = {
+  blueprintFeedback: CollabBlueprintFeedback,
+  scores: CollabScore,
+  comments: CollabComment,
+  recommendations: CollabRecommendation,
+  chatMessages: CollabChatMessage,
+  participants: CollabParticipant,
+  sessions: CollabSession,
+}
+
+function projectDeleteDeps(): DeleteProjectGraphDeps {
+  return {
+    transaction: (work) => sequelize.transaction(work),
+    findCollabSessionIds: async (projectId, transaction) => {
+      const rows = await CollabSession.findAll({
+        where: { project_id: projectId },
+        attributes: ['id'],
+        transaction,
+      })
+      return rows.map((row) => row.id)
+    },
+    destroyCollabStep: (step, where, transaction) =>
+      COLLAB_CLEANUP_MODELS[step].destroy({ where, transaction }),
+    findProject: (projectId, transaction) => Project.findByPk(projectId, { transaction }),
+    findSeries: async (seriesId, transaction) => Series.findByPk(seriesId, { transaction }),
+    destroyProject: (projectId, transaction) => Project.destroy({ where: { id: projectId }, transaction }),
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -721,28 +764,7 @@ export async function DELETE(
     
     console.log(`[${timestamp}] [DELETE /api/projects/[id]] Attempting to delete project:`, id)
 
-    const project = await Project.findByPk(id)
-    if (project?.series_id) {
-      const series = await Series.findByPk(project.series_id)
-      if (series) {
-        const remainingProjectIds = new Set(
-          (series.episode_blueprints || [])
-            .map((episode) => episode.projectId)
-            .filter((projectId): projectId is string => Boolean(projectId) && projectId !== id)
-        )
-        const released = resetEpisodesForMissingProjects(
-          series.episode_blueprints || [],
-          remainingProjectIds
-        )
-        if (released.changed) {
-          series.episode_blueprints = released.episodes
-          series.changed('episode_blueprints', true)
-          await series.save()
-        }
-      }
-    }
-
-    const deleted = await Project.destroy({ where: { id } })
+    const deleted = await deleteProjectWithDependents(id, projectDeleteDeps())
     console.log(`[${timestamp}] [DELETE /api/projects/[id]] Deleted count:`, deleted)
     
     if (deleted === 0) {
