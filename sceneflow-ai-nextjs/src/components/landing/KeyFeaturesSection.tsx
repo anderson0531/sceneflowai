@@ -417,6 +417,8 @@ export default function KeyFeaturesSection() {
             playLabel={t('playOverview')}
             muteLabel={t('muteOverview')}
             unmuteLabel={t('unmuteOverview')}
+            enterFullscreenLabel={t('enterFullscreenOverview')}
+            exitFullscreenLabel={t('exitFullscreenOverview')}
             watchLongformHref={
               activeRoom.id === 'screening-room' ? '#production-examples' : undefined
             }
