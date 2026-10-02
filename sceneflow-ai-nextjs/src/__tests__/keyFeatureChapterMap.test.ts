@@ -16,7 +16,7 @@ describe('key feature chapter map', () => {
       'production-stage',
       'screening-room',
     ])
-    expect(source.map((room) => room.filmSeconds)).toEqual([75, 75, 90, 60])
+    expect(source.map((room) => room.filmSeconds)).toEqual([90, 75, 90, 60])
   })
 
   it('gives shared gestures one demo and leaves deploy inside the room film', () => {

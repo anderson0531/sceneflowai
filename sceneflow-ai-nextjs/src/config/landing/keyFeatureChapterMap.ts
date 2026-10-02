@@ -29,7 +29,7 @@ export type FeatureRoomChapterPlan = {
 export const FEATURE_CHAPTER_MAP: readonly FeatureRoomChapterPlan[] = [
   {
     roomId: 'series-desk',
-    filmSeconds: 75,
+    filmSeconds: 90,
     beats: [
       { id: 'season-universe', demoIcons: ['seasonUniverse'], standaloneDemo: true },
       { id: 'episode-handoff', demoIcons: ['episodeHandoff'], standaloneDemo: true },
