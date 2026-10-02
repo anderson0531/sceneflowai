@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import { describe, expect, it } from 'vitest'
-import { getEpisodeDriftWarnings } from '@/lib/series/seriesHealth'
+import { getEpisodeDriftWarnings, resetEpisodesForMissingProjects } from '@/lib/series/seriesHealth'
 import {
   collectProductionReferenceImages,
   resolveLibraryImage,
@@ -58,6 +58,24 @@ describe('getEpisodeDriftWarnings', () => {
       bible
     )
     expect(warnings).toEqual([])
+  })
+})
+
+describe('resetEpisodesForMissingProjects', () => {
+  it('returns a started episode to blueprint when its project is gone', () => {
+    const { episodes, changed } = resetEpisodesForMissingProjects(
+      [
+        { id: 'ep-1', projectId: 'gone', status: 'in_progress' },
+        { id: 'ep-2', projectId: 'kept', status: 'completed' },
+        { id: 'ep-3', status: 'blueprint' },
+      ],
+      new Set(['kept'])
+    )
+    expect(changed).toBe(true)
+    expect(episodes[0]).toEqual({ id: 'ep-1', status: 'blueprint' })
+    expect(episodes[1].status).toBe('completed')
+    expect(episodes[1].projectId).toBe('kept')
+    expect(episodes[2].status).toBe('blueprint')
   })
 })
 

@@ -57,6 +57,21 @@ export function computeContinuityStats(bible: SeriesProductionBible | null | und
   }
 }
 
+/** A deleted project leaves the episode not started. */
+export function resetEpisodesForMissingProjects<
+  T extends { projectId?: string; status: string }
+>(episodes: T[], existingProjectIds: ReadonlySet<string>): { episodes: T[]; changed: boolean } {
+  let changed = false
+  const next = episodes.map((episode) => {
+    if (!episode.projectId || existingProjectIds.has(episode.projectId)) return episode
+    changed = true
+    const released = { ...episode, status: 'blueprint' }
+    delete released.projectId
+    return released
+  })
+  return { episodes: next, changed }
+}
+
 export function computeSlateStats(episodes: EpisodeBlueprintResponse[]) {
   const blueprint = episodes.filter((e) => e.status === 'blueprint').length
   const inProgress = episodes.filter((e) => e.status === 'in_progress').length

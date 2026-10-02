@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
+import { Series } from '@/models/Series'
 import { sequelize } from '@/config/database'
+import { resetEpisodesForMissingProjects } from '@/lib/series/seriesHealth'
 import { loadProjectForRead } from '@/lib/projects/loadProjectRead'
 import { calculateBase64Size } from '@/lib/storage/mediaStorage'
 import {
@@ -718,6 +720,27 @@ export async function DELETE(
     console.log(`[${timestamp}] [DELETE /api/projects/[id]] Database authenticated`)
     
     console.log(`[${timestamp}] [DELETE /api/projects/[id]] Attempting to delete project:`, id)
+
+    const project = await Project.findByPk(id)
+    if (project?.series_id) {
+      const series = await Series.findByPk(project.series_id)
+      if (series) {
+        const remainingProjectIds = new Set(
+          (series.episode_blueprints || [])
+            .map((episode) => episode.projectId)
+            .filter((projectId): projectId is string => Boolean(projectId) && projectId !== id)
+        )
+        const released = resetEpisodesForMissingProjects(
+          series.episode_blueprints || [],
+          remainingProjectIds
+        )
+        if (released.changed) {
+          series.episode_blueprints = released.episodes
+          series.changed('episode_blueprints', true)
+          await series.save()
+        }
+      }
+    }
 
     const deleted = await Project.destroy({ where: { id } })
     console.log(`[${timestamp}] [DELETE /api/projects/[id]] Deleted count:`, deleted)
