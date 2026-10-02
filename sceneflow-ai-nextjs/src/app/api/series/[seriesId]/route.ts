@@ -4,6 +4,7 @@ import { Series, ABSOLUTE_MAX_EPISODES, SeriesEpisodeBlueprint } from '@/models/
 import { Project } from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { resolveUser } from '@/lib/userHelper'
+import { resetEpisodesForMissingProjects } from '@/lib/series/seriesHealth'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -40,6 +41,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         where: { id: projectIds },
         attributes: ['id', 'title', 'status', 'current_step', 'step_progress', 'updated_at', 'metadata']
       })
+    }
+
+    const existingProjectIds = new Set(episodeProjects.map((project) => project.id as string))
+    const released = resetEpisodesForMissingProjects(
+      series.episode_blueprints || [],
+      existingProjectIds
+    )
+    if (released.changed) {
+      series.episode_blueprints = released.episodes
+      series.changed('episode_blueprints', true)
+      await series.save()
     }
     
     const response = NextResponse.json({

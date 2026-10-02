@@ -544,9 +544,20 @@ export default function SeriesStudioPage() {
   }, [series, refreshSeries, executeWithOverlay, resonanceAnalysis])
 
   // Edit Storyline handler - for directed changes without full regeneration
-  const handleEditStoryline = useCallback(async (opts?: { targetEpisodes?: number[]; instruction?: string }) => {
+  const savedTargetAudience = (() => {
+    const definition = series?.metadata?.audienceDefinition as { description?: string } | undefined
+    const fromDefinition = definition?.description?.trim()
+    return fromDefinition || series?.targetAudience?.trim() || ''
+  })()
+
+  const handleEditStoryline = useCallback(async (opts?: {
+    targetEpisodes?: number[]
+    instruction?: string
+    targetAspect?: string
+  }) => {
     const instruction = (opts?.instruction ?? editInstruction).trim()
-    const targetEpisodes = opts?.targetEpisodes ?? editTargetEpisodes
+    const targetEpisodes = opts && 'targetEpisodes' in opts ? opts.targetEpisodes : editTargetEpisodes
+    const targetAspect = opts?.targetAspect ?? editTargetAspect
     if (!series || !instruction) {
       toast.error('Please enter an instruction')
       return
@@ -561,7 +572,7 @@ export default function SeriesStudioPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             instruction,
-            targetAspect: editTargetAspect,
+            targetAspect,
             targetEpisodes,
           })
         })
@@ -573,7 +584,7 @@ export default function SeriesStudioPage() {
         
         return response.json()
       }, {
-        message: `Applying "${editInstruction.slice(0, 50)}${editInstruction.length > 50 ? '...' : ''}" to storyline...`,
+        message: `Applying "${instruction.slice(0, 50)}${instruction.length > 50 ? '...' : ''}" to storyline...`,
         estimatedDuration: 30,
         operationType: 'series-edit'
       })
@@ -590,6 +601,15 @@ export default function SeriesStudioPage() {
       setIsEditingStoryline(false)
     }
   }, [series, editInstruction, editTargetAspect, editTargetEpisodes, executeWithOverlay, refreshSeries])
+
+  const updateSeriesForAudience = () => {
+    if (!savedTargetAudience) return
+    void handleEditStoryline({
+      targetAspect: 'all',
+      targetEpisodes: undefined,
+      instruction: `Update the storyline, characters, and locations so they match this target audience: "${savedTargetAudience}". Localize names, identities, settings, and episode events. Keep the episode count and the core dramatic structure.`,
+    })
+  }
 
   const openReshapeDialog = useCallback((episodeNumber?: number) => {
     setEditTargetEpisodes(episodeNumber ? [episodeNumber] : undefined)
@@ -1067,6 +1087,23 @@ export default function SeriesStudioPage() {
               </Select>
               <p className="text-xs text-gray-500 mt-1">
                 Selecting a focus area helps preserve unrelated content.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-gray-950/40 p-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={updateSeriesForAudience}
+                disabled={!savedTargetAudience || isEditingStoryline}
+                className="w-full border-amber-400/40 text-amber-100 hover:bg-amber-500/10"
+              >
+                Update for target audience
+              </Button>
+              <p className="mt-2 text-xs text-gray-400">
+                {savedTargetAudience
+                  ? savedTargetAudience
+                  : 'Set the audience in Audience Resonance first.'}
               </p>
             </div>
 

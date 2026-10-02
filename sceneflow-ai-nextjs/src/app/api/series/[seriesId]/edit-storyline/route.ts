@@ -27,6 +27,25 @@ interface RouteParams {
 
 const EPISODE_BATCH_SIZE = 2
 
+function keepLocationIds(
+  existing: Array<{ id?: string; name?: string }> | undefined,
+  incoming: Array<Record<string, unknown>>
+) {
+  return incoming.map((location, index) => {
+    const returnedId = typeof location.id === 'string' ? location.id : ''
+    const name = typeof location.name === 'string' ? location.name : ''
+    const prior =
+      existing?.find((item) => item.id && item.id === returnedId) ||
+      existing?.find((item) => item.name && item.name === name) ||
+      existing?.[index]
+    return {
+      ...(prior || {}),
+      ...location,
+      id: returnedId || prior?.id || `loc_${index + 1}`,
+    }
+  })
+}
+
 /**
  * Safe JSON parse with repair - handles truncated responses, markdown wrapping, and common LLM issues
  */
@@ -196,13 +215,14 @@ Logline: ${series.logline}
 Synopsis: ${currentBible.synopsis || 'Not set'}
 Protagonist: ${JSON.stringify(currentBible.protagonist || {})}
 Characters: ${JSON.stringify((currentBible.characters || []).slice(0, 6))}
+Locations: ${JSON.stringify((currentBible.locations || []).slice(0, 8))}
 
 TASK: Apply the instruction to the TARGET ASPECT and related fields only.
 - plot/all: logline + synopsis
 - characters/all: protagonist + characters array
 - tone/all: toneGuidelines + visualGuidelines (return as toneGuidelines, visualGuidelines keys)
-- setting/all: setting field
-- all: update everything consistently
+- setting/all: setting field and locations array
+- all: update everything consistently, including locations
 
 ${SERIES_CHARACTER_NAMING_BLOCK}
 
@@ -227,6 +247,14 @@ Return ONLY valid JSON (no markdown, no explanation):
       "description": "Background, motivation, arc",
       "appearance": "Physical description",
       "personality": "Key personality traits"
+    }
+  ],
+  "locations": [
+    {
+      "id": "loc_1",
+      "name": "Location name",
+      "description": "What this place is",
+      "visualDescription": "How it looks"
     }
   ],
   "changesApplied": ["Specific change 1", "Specific change 2"]
@@ -465,6 +493,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         : {}),
       ...(bibleUpdates.setting && ['all', 'setting'].includes(targetAspect)
         ? { setting: bibleUpdates.setting }
+        : {}),
+      ...(Array.isArray(bibleUpdates.locations) && ['all', 'setting'].includes(targetAspect)
+        ? { locations: keepLocationIds(currentBible.locations, bibleUpdates.locations) }
         : {}),
       ...(bibleUpdates.toneGuidelines && ['all', 'tone'].includes(targetAspect)
         ? { toneGuidelines: bibleUpdates.toneGuidelines }
