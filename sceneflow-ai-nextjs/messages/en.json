@@ -253,6 +253,8 @@
     "playOverview": "Play overview",
     "muteOverview": "Mute overview",
     "unmuteOverview": "Unmute overview",
+    "enterFullscreenOverview": "Fullscreen",
+    "exitFullscreenOverview": "Exit fullscreen",
     "watchLongformLabel": "Watch the longform",
     "screenshotLabel": "Screenshot",
     "landingUiLanguagesLabel": "Produce and dub in 44 languages. This site is available in these 39:",
