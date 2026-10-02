@@ -18,8 +18,6 @@ import { getGeminiProductModel } from '@/lib/config/modelConfig'
 
 // Maximum episodes to generate in a single batch (5 for reliable JSON parsing)
 const BATCH_SIZE = 5
-const ABSOLUTE_MAX_EPISODES = 40
-
 interface RouteParams {
   params: Promise<{ seriesId: string }>
 }
@@ -208,24 +206,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
     
     const body = await request.json()
-    const requestedCount = Math.min(body.count || BATCH_SIZE, 20) // Max 20 per request (will batch internally)
+    const requestedCount = Math.max(1, Number(body.count || BATCH_SIZE) || BATCH_SIZE)
     
     const currentEpisodes = series.episode_blueprints || []
     const currentCount = currentEpisodes.length
-    const maxAllowed = series.max_episodes || ABSOLUTE_MAX_EPISODES
-    
-    // Check if we can add more episodes
-    if (currentCount >= maxAllowed) {
-      return NextResponse.json({
-        success: false,
-        error: `Series already has maximum ${maxAllowed} episodes`,
-        currentCount,
-        maxAllowed
-      }, { status: 400 })
-    }
-    
-    // Calculate how many we can actually add
-    const canAdd = Math.min(requestedCount, maxAllowed - currentCount)
+    const canAdd = requestedCount
     const startEpisodeNumber = currentCount + 1
     
     console.log(`[${timestamp}] [POST /api/series/${seriesId}/episodes/add] Adding ${canAdd} episodes starting at ${startEpisodeNumber}`)
@@ -278,9 +263,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       success: true,
       added: newEpisodes.length,
       totalEpisodes: updatedEpisodes.length,
-      maxEpisodes: maxAllowed,
+      maxEpisodes: updatedEpisodes.length,
       newEpisodes: newEpisodes,
-      canAddMore: updatedEpisodes.length < maxAllowed
+      canAddMore: true
     })
     
   } catch (error) {
@@ -309,13 +294,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
     
     const currentCount = series.episode_blueprints?.length || 0
-    const maxAllowed = series.max_episodes || ABSOLUTE_MAX_EPISODES
     
     return NextResponse.json({
       success: true,
       currentEpisodes: currentCount,
-      maxEpisodes: maxAllowed,
-      canAdd: maxAllowed - currentCount,
+      maxEpisodes: null,
+      canAdd: null,
       recommendedBatchSize: BATCH_SIZE
     })
     

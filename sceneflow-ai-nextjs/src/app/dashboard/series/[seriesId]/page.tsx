@@ -666,11 +666,6 @@ export default function SeriesStudioPage() {
 
   const bible = series.productionBible
   const episodes = series.episodeBlueprints || []
-  const resonanceAnalyzedAt =
-    (series.metadata as Record<string, unknown> | undefined)?.resonance_analyzed_at as
-      | string
-      | undefined
-
   const navigateTab = (tab: string) => {
     setActiveTab(tab)
     router.replace(`/dashboard/series/${series.id}?tab=${tab}`, { scroll: false })
@@ -767,7 +762,6 @@ export default function SeriesStudioPage() {
             bible={bible}
             episodes={episodes}
             resonanceAnalysis={resonanceAnalysis}
-            resonanceAnalyzedAt={resonanceAnalyzedAt}
             onNavigate={(tab) => navigateTab(tab)}
             onAnalyzeResonance={() => setIsResonancePanelOpen(true)}
           />
@@ -822,7 +816,6 @@ export default function SeriesStudioPage() {
               onEditEpisode={handleEditSpecificEpisode}
               selectedEpisodeId={selectedEpisodeId}
               isStarting={isStartingEpisode}
-              maxEpisodes={series.maxEpisodes}
               onAddMoreEpisodes={handleAddMoreEpisodes}
               isAddingEpisodes={isAddingEpisodes}
               onReshapeEpisode={(episodeNumber, instruction) => {
@@ -918,16 +911,13 @@ export default function SeriesStudioPage() {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Number of Episodes
                 </label>
-                <Select value={String(episodeCount)} onValueChange={(v) => setEpisodeCount(Number(v))}>
-                  <SelectTrigger className="bg-gray-800 border-gray-700 focus:border-cyan-500/50">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700">
-                    {[5, 8, 10, 12, 15, 20].map((n) => (
-                      <SelectItem key={n} value={String(n)}>{n} episodes</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  type="number"
+                  min={1}
+                  value={episodeCount}
+                  onChange={(event) => setEpisodeCount(Math.max(1, Number(event.target.value) || 1))}
+                  className="bg-gray-800 border-gray-700 text-white"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -1247,6 +1237,37 @@ interface OverviewPanelProps {
 const overviewCardClass = 'rounded-xl border border-white/10 bg-gray-950/40 p-6'
 const overviewHeadingClass = 'text-sm font-bold text-white'
 
+function resonanceScoreClass(score: number | undefined): string {
+  if (score == null) return 'text-gray-500'
+  if (score >= 90) return 'text-emerald-400'
+  if (score >= 70) return 'text-amber-400'
+  return 'text-red-400'
+}
+
+function resonanceBarClass(score: number): string {
+  if (score >= 90) return 'bg-emerald-500'
+  if (score >= 70) return 'bg-amber-500'
+  return 'bg-red-500'
+}
+
+function ResonanceScoreBar({ label, score }: { label: string; score?: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="w-28 shrink-0 truncate text-xs text-gray-300" title={label}>
+        {label}
+      </span>
+      <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-700">
+        {score != null ? (
+          <div className={`h-full rounded-full ${resonanceBarClass(score)}`} style={{ width: `${Math.max(0, Math.min(100, score))}%` }} />
+        ) : null}
+      </div>
+      <span className={`w-7 shrink-0 text-right text-xs font-bold ${resonanceScoreClass(score)}`}>
+        {score ?? ''}
+      </span>
+    </div>
+  )
+}
+
 function OverviewPanel({
   series,
   resonanceAnalysis,
@@ -1501,18 +1522,19 @@ function OverviewPanel({
 
         <div className={overviewCardClass}>
           <h3 className={`mb-4 ${overviewHeadingClass}`}>Audience Resonance</h3>
-          <div className="flex items-baseline justify-between text-sm">
-            <span className="font-bold text-white">Total</span>
-            <span className="text-white">{resonanceAnalysis?.greenlightScore?.score ?? ''}</span>
-          </div>
-          <div className="mt-4 space-y-3">
+          <div className="space-y-2">
+            <ResonanceScoreBar
+              label="Target Audience Resonance"
+              score={resonanceAnalysis?.greenlightScore?.score}
+            />
             {OVERVIEW_AR_AXES.map((axisId) => {
               const axis = resonanceAnalysis?.axes?.find((item) => item.id === axisId)
               return (
-                <div key={axisId}>
-                  <p className="text-sm font-bold text-white">{axisDisplayLabel(axisId)}</p>
-                  <p className="text-sm text-gray-300">{axis?.score ?? ''}</p>
-                </div>
+                <ResonanceScoreBar
+                  key={axisId}
+                  label={axisDisplayLabel(axisId)}
+                  score={axis?.score}
+                />
               )
             })}
           </div>
@@ -1592,7 +1614,7 @@ function OverviewPanel({
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-400">Episodes</span>
-              <span className="text-white">{series.episodeCount}/{series.maxEpisodes}</span>
+              <span className="text-white">{series.episodeCount}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">In Progress</span>
@@ -1620,7 +1642,6 @@ function OverviewPanel({
 interface EpisodesPanelProps {
   episodes: EpisodeBlueprintResponse[]
   seriesId: string
-  maxEpisodes: number
   bible?: SeriesProductionBible | null
   onStartEpisode: (episodeId: string) => void
   onSelectEpisode: (episodeId: string | null) => void
@@ -1638,7 +1659,6 @@ type EpisodeSort = 'episode' | 'status'
 function EpisodesPanel({
   episodes,
   seriesId,
-  maxEpisodes,
   bible,
   onStartEpisode,
   onSelectEpisode,
@@ -1679,7 +1699,7 @@ function EpisodesPanel({
   }, [bible, episodes, filteredEpisodes])
 
   const selectedEpisode = episodes.find(ep => ep.id === selectedEpisodeId)
-  const canAddMore = episodes.length < maxEpisodes
+  const canAddMore = true
 
   // --- TTS State & Logic ---
   const [isPlaying, setIsPlaying] = useState(false)
@@ -1780,7 +1800,7 @@ function EpisodesPanel({
         <div className="p-4 border-b border-gray-700">
           <div className="flex items-center justify-between mb-1">
             <h3 className="font-semibold">Episode Blueprints</h3>
-            <span className="text-xs text-gray-500">{episodes.length}/{maxEpisodes}</span>
+            <span className="text-xs text-gray-500">{episodes.length}</span>
           </div>
           <div className="flex flex-wrap gap-1.5 mt-3 mb-2">
             {(['all', 'blueprint', 'in_progress', 'completed'] as EpisodeStatusFilter[]).map((f) => (

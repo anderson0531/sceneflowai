@@ -207,9 +207,8 @@ Series.init(
       defaultValue: DEFAULT_MAX_EPISODES,
       validate: {
         min: 1,
-        max: ABSOLUTE_MAX_EPISODES,
       },
-      comment: 'Maximum number of episodes (default 20, max 30)',
+      comment: 'Planned episode count. There is no maximum.',
     },
     production_bible: {
       type: DataTypes.JSONB,

@@ -279,6 +279,126 @@ export function collectProductionReferenceImages(
   return { characters, locations, props }
 }
 
+export type DisplayReference = {
+  id: string
+  name: string
+  role?: string
+  description?: string
+  imageUrl?: string
+  libraryAssetId?: string
+}
+
+export type ReferenceGroups = {
+  characters: DisplayReference[]
+  locations: DisplayReference[]
+  props: DisplayReference[]
+}
+
+export function referencesFromProjectMetadata(
+  metadata: Record<string, any> | null | undefined
+): ReferenceGroups {
+  if (!metadata) return { characters: [], locations: [], props: [] }
+  const proj = getProjectReferences(metadata)
+  return {
+    characters: proj.characters.map((character: any) => ({
+      id: String(character.id || character.name || ''),
+      name: character.name || 'Character',
+      role: character.role,
+      description: character.description || character.appearance || '',
+      imageUrl: character.referenceUrl || character.referenceImage || undefined,
+      libraryAssetId: character.libraryAssetId,
+    })),
+    locations: extractLocationsFromProject(metadata).map((location) => ({
+      id: location.id,
+      name: location.name,
+      description: location.description,
+      imageUrl: location.referenceImageUrl,
+    })),
+    props: proj.objectReferences.map((object) => ({
+      id: object.id,
+      name: object.name,
+      description: object.description,
+      imageUrl: object.imageUrl,
+      libraryAssetId: object.libraryAssetId,
+    })),
+  }
+}
+
+function hasReferenceImage(groups: ReferenceGroups): boolean {
+  return [...groups.characters, ...groups.locations, ...groups.props].some((asset) =>
+    Boolean(asset.imageUrl?.trim())
+  )
+}
+
+function findSharedImage(
+  asset: DisplayReference,
+  library: DisplayReference[]
+): string | undefined {
+  const byId = asset.libraryAssetId
+    ? library.find((item) => item.id === asset.libraryAssetId || item.libraryAssetId === asset.libraryAssetId)
+    : undefined
+  const byName = library.find(
+    (item) => normalizeReferenceName(item.name) === normalizeReferenceName(asset.name)
+  )
+  return byId?.imageUrl?.trim() || byName?.imageUrl?.trim() || undefined
+}
+
+function withPictureFallback(
+  asset: DisplayReference,
+  library: DisplayReference[],
+  series: DisplayReference[]
+): DisplayReference {
+  const seriesMatch = series.find(
+    (item) => normalizeReferenceName(item.name) === normalizeReferenceName(asset.name)
+  )
+  return {
+    ...asset,
+    imageUrl: asset.imageUrl?.trim() || findSharedImage(asset, library) || seriesMatch?.imageUrl?.trim(),
+  }
+}
+
+/**
+ * Production assets with pictures replace the series list.
+ * A recurring character still inherits the shared library picture when this episode has none.
+ * Series bible assets are the last fallback.
+ */
+export function selectEpisodeReferences(input: {
+  production: ReferenceGroups
+  library: ReferenceGroups
+  series: ReferenceGroups
+  episodeCharacterIds?: string[]
+}): { source: 'production' | 'series' } & ReferenceGroups {
+  const { production, library, series } = input
+  if (hasReferenceImage(production)) {
+    return {
+      source: 'production',
+      characters: production.characters.map((asset) =>
+        withPictureFallback(asset, library.characters, series.characters)
+      ),
+      locations: production.locations.map((asset) =>
+        withPictureFallback(asset, library.locations, series.locations)
+      ),
+      props: production.props.map((asset) => withPictureFallback(asset, library.props, series.props)),
+    }
+  }
+
+  const ids = new Set((input.episodeCharacterIds || []).filter(Boolean))
+  const matched = series.characters.filter((character) => ids.has(character.id))
+  const preferLibrary = (asset: DisplayReference, libraryAssets: DisplayReference[]) => ({
+    ...asset,
+    imageUrl: findSharedImage(asset, libraryAssets) || asset.imageUrl?.trim(),
+  })
+  const characters = (matched.length > 0 ? matched : series.characters).map((asset) =>
+    preferLibrary(asset, library.characters)
+  )
+  return {
+    source: 'series',
+    characters,
+    locations: series.locations.map((asset) => preferLibrary(asset, library.locations)),
+    props: series.props.map((asset) => preferLibrary(asset, library.props)),
+  }
+}
+
 /** Production pictures are the bible. Fall back to the series copy only when Production has none. */
 export function resolveLibraryImage(
   name: string | undefined,

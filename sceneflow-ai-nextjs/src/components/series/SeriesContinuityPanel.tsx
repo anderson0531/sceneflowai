@@ -74,19 +74,13 @@ export function SeriesContinuityPanel({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-purple-500/20 bg-gradient-to-r from-purple-500/5 to-pink-500/5 p-5">
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <GitBranch className="w-5 h-5 text-purple-400" />
-              Continuity Engine
-            </h2>
-            <p className="text-sm text-gray-400 mt-1">
-              Narrative overlay for {seriesTitle} — aesthetics, canon events, story threads, and
-              Production→Series bible sync. Assets live in Reference Library; iterate them in
-              Production Stage.
-            </p>
-          </div>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-sm font-bold text-white">Continuity</h2>
+          <p className="mt-1 text-sm text-gray-400">
+            Aesthetics, canon events, and story threads for {seriesTitle}.
+          </p>
+        </div>
           <Link
             href={`/dashboard/series/${seriesId}?tab=reference-library`}
             className="text-sm text-amber-400 hover:text-amber-300 inline-flex items-center gap-1"
@@ -94,7 +88,6 @@ export function SeriesContinuityPanel({
             Cast, locations & props in Reference Library
             <ExternalLink className="w-3.5 h-3.5" />
           </Link>
-        </div>
       </div>
 
       {bibleEvents.length > 0 ? (

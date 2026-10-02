@@ -18,11 +18,7 @@ export const maxDuration = 600 // Allow 10 minutes for full series generation
 const EPISODE_BATCH_SIZE = 2 // Reduced from 5 to 2 to prevent Vercel out-of-memory errors
 const MAX_OUTPUT_TOKENS = 16384 // Token limit for series generation
 const GENERATION_TIMEOUT_MS = 90000 // 90 second timeout per batch
-/** Full storyline generation is memory-heavy; cap episodes per request on serverless (override via env). */
-const PER_REQUEST_MAX_FULL_GENERATE_EPISODES = Math.min(
-  20,
-  Math.max(5, parseInt(process.env.SERIES_GENERATE_MAX_EPISODES || '5', 10) || 5)
-)
+/** Full storyline generation is memory-heavy; batches stay small inside the request. */
 
 /**
  * Safely parse JSON from LLM responses
@@ -154,7 +150,7 @@ interface RouteParams {
  * 
  * Body:
  * - topic: Required. The topic/concept for the series
- * - episodeCount: Optional. Number of episodes to generate (default: series.max_episodes, max: 20)
+ * - episodeCount: Optional. Number of episodes to generate (default: series.max_episodes)
  * - regenerateField: Optional. Specific field to regenerate ('title', 'logline', 'synopsis', 'protagonist', 'antagonist', 'setting', 'episodes', 'characters')
  * - preserveExisting: Optional. Whether to preserve existing data when regenerating (default: false)
  * - genre: Optional. Genre hint for generation
@@ -190,29 +186,19 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }, { status: 400 })
     }
     
-    const rawRequestedEpisodes = Math.min(
-      episodeCount ?? series.max_episodes ?? DEFAULT_MAX_EPISODES,
-      DEFAULT_MAX_EPISODES
+    const rawRequestedEpisodes = Math.max(
+      1,
+      Number(episodeCount ?? series.max_episodes ?? DEFAULT_MAX_EPISODES) || 1
     )
-  const targetEpisodeCount = regenerateField
-    ? rawRequestedEpisodes
-    : Math.min(rawRequestedEpisodes, PER_REQUEST_MAX_FULL_GENERATE_EPISODES)
+  const targetEpisodeCount = rawRequestedEpisodes
   
   // Clean up global references to hint V8 GC before heavy generation
   if (global.gc) {
     global.gc()
   }
-    const episodesCapped =
-      !regenerateField && rawRequestedEpisodes > targetEpisodeCount
-
-    if (episodesCapped) {
-      console.warn(
-        `[${timestamp}] [POST /api/series/${seriesId}/generate] Capping episodes ${rawRequestedEpisodes} → ${targetEpisodeCount} (PER_REQUEST_MAX_FULL_GENERATE_EPISODES=${PER_REQUEST_MAX_FULL_GENERATE_EPISODES})`
-      )
-    }
 
     console.log(
-      `[${timestamp}] [POST /api/series/${seriesId}/generate] Generating storyline for topic: "${topic}", episodes: ${targetEpisodeCount}${episodesCapped ? ` (requested ${rawRequestedEpisodes})` : ''}`
+      `[${timestamp}] [POST /api/series/${seriesId}/generate] Generating storyline for topic: "${topic}", episodes: ${targetEpisodeCount}`
     )
     
     const { storyLocale } = await resolveStoryLocale({
@@ -280,7 +266,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           topic,
           regenerateField,
           episodeCount: targetEpisodeCount,
-          ...(episodesCapped ? { requestedEpisodeCount: rawRequestedEpisodes } : {})
+          requestedEpisodeCount: rawRequestedEpisodes
         }
       }
     }
@@ -314,8 +300,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         model: getGeminiProductModel('series'),
         batchSize: EPISODE_BATCH_SIZE,
         requestedEpisodeCount: rawRequestedEpisodes,
-        perRequestEpisodeCap: PER_REQUEST_MAX_FULL_GENERATE_EPISODES,
-        wasCapped: episodesCapped
+        wasCapped: false
       }
     })
     
