@@ -104,7 +104,7 @@ export function SeriesResonancePanel({
   const audioRef = useRef<HTMLAudioElement | null>(null)
   
   // Market config state
-  const [showConfig, setShowConfig] = useState(!savedAnalysis)
+  const [audienceExpanded, setAudienceExpanded] = useState(!savedAnalysis)
   const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
     createAudienceDefinition({
       ...(series.metadata?.audienceDefinition || {}),
@@ -121,7 +121,7 @@ export function SeriesResonancePanel({
     if (savedAnalysis) {
       const normalized = normalizeSeriesResonanceAnalysis(savedAnalysis)
       setAnalysis(normalized)
-      setShowConfig(false)
+      setAudienceExpanded(false)
       if (normalized.appliedFixes) {
         setAppliedFixes(normalized.appliedFixes)
       }
@@ -168,7 +168,7 @@ export function SeriesResonancePanel({
       })
       const normalized = normalizeSeriesResonanceAnalysis(result)
       setAnalysis(normalized)
-      setShowConfig(false)
+      setAudienceExpanded(false)
       if (normalized.appliedFixes) {
         setAppliedFixes(normalized.appliedFixes)
       }
@@ -288,10 +288,10 @@ export function SeriesResonancePanel({
         <div>
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">
             <Target className="w-5 h-5 text-cyan-400" />
-            Series Resonance Analysis
+            Audience Resonance
           </h3>
           <p className="text-sm text-gray-400 mt-1">
-            Evaluate audience engagement and commercial viability
+            Score the storyline against the target audience
           </p>
         </div>
         
@@ -351,13 +351,75 @@ export function SeriesResonancePanel({
           ) : (
             <>
               <Sparkles className="w-4 h-4 mr-2" />
-              Analyze Series
+              Audience Resonance
             </>
           )}
         </Button>
         </div>
       </div>
       
+      <div className="rounded-xl border border-white/10 bg-slate-900/40 p-4">
+        <button
+          type="button"
+          onClick={() => setAudienceExpanded((open) => !open)}
+          className="flex w-full items-center justify-between text-left"
+          aria-expanded={audienceExpanded}
+        >
+          <span className="text-sm font-bold text-white">Target audience</span>
+          <ChevronDown
+            className={`h-4 w-4 text-gray-400 transition-transform ${audienceExpanded ? 'rotate-180' : ''}`}
+          />
+        </button>
+        {!audienceExpanded ? (
+          <p className="mt-2 line-clamp-2 text-xs text-gray-500">
+            {targetAudience.trim() || 'Describe the audience before running Audience Resonance.'}
+          </p>
+        ) : (
+          <div className="mt-4 space-y-6 text-left">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-400">Target Audience</label>
+              <AudienceDescriptionField
+                value={audienceDef}
+                onChange={setAudienceDef}
+                context={{
+                  title: series.title,
+                  genre: series.genre,
+                  logline: series.logline,
+                }}
+                rows={3}
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-400">Target Markets</label>
+              <div className="flex flex-wrap gap-2">
+                {['Global', 'North America', 'Europe', 'Asia-Pacific', 'Latin America', 'Middle East & Africa'].map((market) => (
+                  <button
+                    key={market}
+                    type="button"
+                    onClick={() => {
+                      setTargetMarkets((prev) => {
+                        if (market === 'Global') return ['Global']
+                        const newMarkets = prev.includes(market)
+                          ? prev.filter((item) => item !== market)
+                          : [...prev.filter((item) => item !== 'Global'), market]
+                        return newMarkets.length ? newMarkets : ['Global']
+                      })
+                    }}
+                    className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                      targetMarkets.includes(market)
+                        ? 'border-cyan-400 bg-cyan-500/20 text-cyan-200'
+                        : 'border-slate-600 bg-slate-900 text-gray-400 hover:border-slate-400'
+                    }`}
+                  >
+                    {market}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Error Display */}
       {error && (
         <motion.div
@@ -916,66 +978,9 @@ export function SeriesResonancePanel({
       
       {/* Empty State / Configuration Form */}
       {!analysis && !isAnalyzing && (
-        <div className="bg-slate-800/30 border border-slate-700/30 border-dashed rounded-xl p-8 text-center max-w-2xl mx-auto">
-          <Target className="w-12 h-12 text-cyan-400/50 mx-auto mb-4" />
-          <h4 className="text-lg font-medium text-gray-300 mb-2">
-            Target Market & Audience
-          </h4>
-          <p className="text-sm text-gray-500 mb-8">
-            Define your commercial targets before running the resonance analysis. This helps the AI evaluate your series' market viability.
-          </p>
-          
-          <div className="space-y-6 text-left mb-8">
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Target Audience</label>
-              <AudienceDescriptionField
-                value={audienceDef}
-                onChange={setAudienceDef}
-                context={{
-                  title: series.title,
-                  genre: series.genre,
-                  logline: series.logline,
-                }}
-                rows={3}
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Target Markets</label>
-              <div className="flex flex-wrap gap-2">
-                {['Global', 'North America', 'Europe', 'Asia-Pacific', 'Latin America', 'Middle East & Africa'].map(market => (
-                  <button
-                    key={market}
-                    onClick={() => {
-                      setTargetMarkets(prev => {
-                        if (market === 'Global') return ['Global']
-                        const newMarkets = prev.includes(market) 
-                          ? prev.filter(m => m !== market)
-                          : [...prev.filter(m => m !== 'Global'), market]
-                        return newMarkets.length ? newMarkets : ['Global']
-                      })
-                    }}
-                    className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                      targetMarkets.includes(market)
-                        ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
-                        : 'bg-slate-900 border-slate-700 text-gray-400 hover:border-slate-500'
-                    }`}
-                  >
-                    {market}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-          
-          <Button
-            onClick={handleAnalyze}
-            className="bg-gradient-to-r from-cyan-500 to-purple-600 w-full"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            Start Analysis
-          </Button>
-        </div>
+        <p className="text-sm text-gray-500">
+          Describe the audience, then run Audience Resonance.
+        </p>
       )}
 
       <VoiceSelectionDialog

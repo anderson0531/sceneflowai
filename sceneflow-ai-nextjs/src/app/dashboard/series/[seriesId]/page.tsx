@@ -24,6 +24,7 @@ import {
   GitBranch
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Input } from '@/components/ui/Input'
 import { DictationTextarea } from '@/components/ui/DictationTextarea'
 import { Badge } from '@/components/ui/badge'
@@ -61,12 +62,21 @@ import { SeriesHeroHealthStrip } from '@/components/series/SeriesHeroHealthStrip
 import { SeriesContinuityPanel } from '@/components/series/SeriesContinuityPanel'
 import { getEpisodeDriftWarnings } from '@/lib/series/seriesHealth'
 import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
-import { applyOptimisticScoreDelta, normalizeSeriesResonanceAnalysis } from '@/lib/series/resonanceScoring'
+import { applyOptimisticScoreDelta, axisDisplayLabel, normalizeSeriesResonanceAnalysis } from '@/lib/series/resonanceScoring'
 import { ensureSeasons, groupEpisodesBySeason } from '@/lib/series/seasons'
 import type {
   EpisodeBlueprintResponse,
   SeriesProductionBible,
+  SeriesResonanceAxis,
 } from '@/types/series'
+
+const OVERVIEW_AR_AXES: SeriesResonanceAxis['id'][] = [
+  'concept-originality',
+  'character-depth',
+  'episode-engagement',
+  'story-arc-coherence',
+  'commercial-viability',
+]
 
 // Common optimization templates for Edit Storyline
 const STORYLINE_INSTRUCTION_TEMPLATES = [
@@ -674,7 +684,13 @@ export default function SeriesStudioPage() {
       archived: 'Archived',
     }[series.status] ?? series.status
 
-  const outlineActionClass = 'border-white/15 text-gray-200 hover:bg-white/5'
+  const idleActionClass = 'border border-white/25 text-gray-200 hover:bg-white/5'
+  const directionActionClass = isEditStorylineOpen
+    ? 'border border-amber-400 bg-amber-500/10 text-amber-100 hover:bg-amber-500/15'
+    : idleActionClass
+  const resonanceActionClass = isResonancePanelOpen
+    ? 'border border-cyan-400 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/15'
+    : idleActionClass
   const seriesTabClass =
     'text-gray-400 data-[state=active]:bg-white/10 data-[state=active]:text-amber-400'
 
@@ -722,19 +738,21 @@ export default function SeriesStudioPage() {
                 <Button
                   variant="outline"
                   onClick={() => openReshapeDialog()}
-                  className={outlineActionClass}
+                  className={directionActionClass}
+                  aria-pressed={isEditStorylineOpen}
                 >
-                  Reshape with direction
+                  Series Direction
                 </Button>
               ) : null}
               <Button
                 variant="outline"
                 onClick={() => setIsResonancePanelOpen(true)}
-                className={outlineActionClass}
+                className={resonanceActionClass}
+                aria-pressed={isResonancePanelOpen}
               >
                 {resonanceAnalysis?.greenlightScore?.score
-                  ? `Analyze series · ${resonanceAnalysis.greenlightScore.score}`
-                  : 'Analyze series'}
+                  ? `Audience Resonance · ${resonanceAnalysis.greenlightScore.score}`
+                  : 'Audience Resonance'}
               </Button>
               <Button
                 onClick={() => setIsIdeateDialogOpen(true)}
@@ -783,6 +801,7 @@ export default function SeriesStudioPage() {
           <TabsContent value="overview">
             <OverviewPanel
               series={series}
+              resonanceAnalysis={resonanceAnalysis}
               onRegenerate={handleRegenerateField}
               isGenerating={isGenerating}
               onOpenBibleSync={() => {
@@ -991,8 +1010,7 @@ export default function SeriesStudioPage() {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-600/20 flex items-center justify-center border border-amber-500/30">
                 <Edit2 className="w-4 h-4 text-amber-400" />
               </div>
-              <span>Reshape</span>
-              <span className="text-gray-500 font-normal">· with Direction</span>
+              <span>Series Director</span>
             </DialogTitle>
             <DialogDescription className="text-gray-400 text-sm mt-2">
               Speak or type direction to reshape the series{editTargetEpisodes?.length ? ` (episode ${editTargetEpisodes.join(', ')})` : ''}. Targeted edits without regenerating everything.
@@ -1220,35 +1238,25 @@ export default function SeriesStudioPage() {
 
 interface OverviewPanelProps {
   series: any
+  resonanceAnalysis: SeriesResonanceAnalysis | null
   onRegenerate: (field: string) => void
   isGenerating: boolean
   onOpenBibleSync?: () => void
 }
 
-const overviewCardClass = 'rounded-xl border border-white/10 bg-gray-900/50 p-6'
+const overviewCardClass = 'rounded-xl border border-white/10 bg-gray-950/40 p-6'
+const overviewHeadingClass = 'text-sm font-bold text-white'
 
-function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: OverviewPanelProps) {
+function OverviewPanel({
+  series,
+  resonanceAnalysis,
+  onRegenerate,
+  isGenerating,
+  onOpenBibleSync,
+}: OverviewPanelProps) {
   const bible = series.productionBible
-  const [budgetSummary, setBudgetSummary] = useState<{ used: number; budget: number } | null>(null)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isSharing, setIsSharing] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-    fetch(`/api/series/${series.id}/budget`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (cancelled || !data.success) return
-        setBudgetSummary({
-          used: data.totalCreditsUsed ?? 0,
-          budget: data.totalCreditsBudget ?? 0,
-        })
-      })
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
-  }, [series.id])
 
   const handleShareBible = async () => {
     setIsSharing(true)
@@ -1472,11 +1480,10 @@ function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: 
         </div>
       </div>
 
-      {/* Sidebar */}
-      <div className="space-y-6">
+      <div className="space-y-4 rounded-2xl bg-gray-900/60 p-4 shadow-lg shadow-black/40">
         {onOpenBibleSync ? (
           <div className={overviewCardClass}>
-            <h3 className="mb-3 font-semibold">Series Bible Sync</h3>
+            <h3 className={`mb-3 ${overviewHeadingClass}`}>Series Bible Sync</h3>
             <p className="text-sm text-gray-400 mb-4">
               Production-authored assets and storylines push up to the Series Bible through Review
               Updates. Approve diffs before they merge into the shared library.
@@ -1492,18 +1499,27 @@ function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: 
           </div>
         ) : null}
 
-        {budgetSummary ? (
-          <div className={overviewCardClass}>
-            <h3 className="mb-3 font-semibold">Series Budget</h3>
-            <p className="text-2xl font-bold text-white">{budgetSummary.used} credits used</p>
-            {budgetSummary.budget > 0 ? (
-              <p className="mt-1 text-xs text-gray-500">{budgetSummary.budget} credits budgeted</p>
-            ) : null}
+        <div className={overviewCardClass}>
+          <h3 className={`mb-4 ${overviewHeadingClass}`}>Audience Resonance</h3>
+          <div className="flex items-baseline justify-between text-sm">
+            <span className="font-bold text-white">Total</span>
+            <span className="text-white">{resonanceAnalysis?.greenlightScore?.score ?? ''}</span>
           </div>
-        ) : null}
+          <div className="mt-4 space-y-3">
+            {OVERVIEW_AR_AXES.map((axisId) => {
+              const axis = resonanceAnalysis?.axes?.find((item) => item.id === axisId)
+              return (
+                <div key={axisId}>
+                  <p className="text-sm font-bold text-white">{axisDisplayLabel(axisId)}</p>
+                  <p className="text-sm text-gray-300">{axis?.score ?? ''}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
 
         <div className={overviewCardClass}>
-          <h3 className="font-semibold mb-2">Share Series Bible</h3>
+          <h3 className={`mb-2 ${overviewHeadingClass}`}>Share Series Room</h3>
           <p className="text-sm text-gray-400 mb-4">
             Create a read-only link for collaborators or stakeholders.
           </p>
@@ -1521,7 +1537,7 @@ function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: 
         {/* Protagonist */}
         <div className={overviewCardClass}>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">Protagonist</h3>
+            <h3 className={overviewHeadingClass}>Protagonist</h3>
             <Button
               variant="ghost"
               size="sm"
@@ -1548,7 +1564,7 @@ function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: 
         {/* Antagonist / Conflict */}
         <div className={overviewCardClass}>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">Antagonist / Conflict</h3>
+            <h3 className={overviewHeadingClass}>Antagonist / Conflict</h3>
             <Button
               variant="ghost"
               size="sm"
@@ -1571,9 +1587,8 @@ function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: 
           )}
         </div>
 
-        {/* Quick Stats */}
         <div className={overviewCardClass}>
-          <h3 className="mb-4 font-semibold">Quick Stats</h3>
+          <h3 className={`mb-4 ${overviewHeadingClass}`}>Episode Progress</h3>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-400">Episodes</span>
@@ -1844,10 +1859,16 @@ function EpisodesPanel({
                         <p className="text-xs text-gray-500 truncate">{ep.logline}</p>
                       </div>
                       {drift.length > 0 ? (
-                        <AlertTriangle
-                          className="w-4 h-4 text-orange-400 shrink-0"
-                          title={drift.join('; ')}
-                        />
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex shrink-0" aria-label={drift.join('; ')}>
+                                <AlertTriangle className="h-4 w-4 text-orange-400" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>{drift.join('; ')}</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       ) : null}
                       <EpisodeStatusBadge status={ep.status} />
                     </div>

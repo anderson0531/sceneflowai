@@ -9,6 +9,7 @@ import {
   createAudienceDefinition,
   formatAudienceDefinitionForPrompt,
   formatCulturalSignalsForPrompt,
+  buildAudienceLocalizationDirective,
   buildCulturalAnalysisDirective,
   normalizeCulturalSignals,
   hasCulturalSignals,
@@ -156,5 +157,21 @@ describe('buildCulturalAnalysisDirective', () => {
     })
     expect(buildCulturalAnalysisDirective(def)).toBe('')
     expect(formatCulturalSignalsForPrompt(def.culturalSignals)).toBe('')
+  })
+})
+
+describe('buildAudienceLocalizationDirective', () => {
+  it('requires localization when the audience description names a culture', () => {
+    const directive = buildAudienceLocalizationDirective('Thai viewers in Bangkok')
+    expect(directive).toContain('AUDIENCE LOCALIZATION')
+    expect(directive).toContain('Thai')
+    expect(directive).toContain('American character names')
+    expect(directive).toContain('culturalAdaptationNotes')
+    expect(directive).toContain('fixSuggestion')
+  })
+
+  it('returns nothing for a blank audience', () => {
+    expect(buildAudienceLocalizationDirective('   ')).toBe('')
+    expect(buildAudienceLocalizationDirective(undefined)).toBe('')
   })
 })

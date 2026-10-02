@@ -36,7 +36,7 @@ export function BlueprintResonanceStrip({
         )}
       >
         <Radar className="w-3.5 h-3.5" />
-        {t('run', { feature: BLUEPRINT_COPY.audienceResonance })}
+        {BLUEPRINT_COPY.audienceResonance}
       </button>
     )
   }

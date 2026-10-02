@@ -237,6 +237,60 @@ export function extractLocationsFromProject(metadata: Record<string, any>): Seri
   return locations
 }
 
+export type ProductionReferenceImages = {
+  characters: Record<string, string>
+  locations: Record<string, string>
+  props: Record<string, string>
+}
+
+export function normalizeReferenceName(name: string | undefined | null): string {
+  return (name || '').trim().toLowerCase()
+}
+
+function rememberImage(bucket: Record<string, string>, name: string | undefined, url: string | undefined) {
+  const key = normalizeReferenceName(name)
+  const picture = url?.trim()
+  if (!key || !picture) return
+  bucket[key] = picture
+}
+
+/** Pictures stored on Production Stage projects, keyed by normalized asset name. Later projects win. */
+export function collectProductionReferenceImages(
+  projectMetadatas: Array<Record<string, any> | null | undefined>
+): ProductionReferenceImages {
+  const characters: Record<string, string> = {}
+  const locations: Record<string, string> = {}
+  const props: Record<string, string> = {}
+
+  for (const metadata of projectMetadatas) {
+    if (!metadata) continue
+    const proj = getProjectReferences(metadata)
+    for (const character of proj.characters) {
+      rememberImage(characters, character.name, character.referenceUrl || character.referenceImage)
+    }
+    for (const location of extractLocationsFromProject(metadata)) {
+      rememberImage(locations, location.name, location.referenceImageUrl)
+    }
+    for (const object of proj.objectReferences) {
+      rememberImage(props, object.name, object.imageUrl)
+    }
+  }
+
+  return { characters, locations, props }
+}
+
+/** Production pictures are the bible. Fall back to the series copy only when Production has none. */
+export function resolveLibraryImage(
+  name: string | undefined,
+  seriesUrl: string | undefined,
+  production: Record<string, string> | undefined
+): string | undefined {
+  const fromProduction = production?.[normalizeReferenceName(name)]
+  if (fromProduction) return fromProduction
+  const stored = seriesUrl?.trim()
+  return stored || undefined
+}
+
 export function buildTransferCatalog(
   bible: SeriesProductionBible,
   projectMetadata: Record<string, any>,
@@ -257,11 +311,24 @@ export function buildTransferCatalog(
       id: w.id,
       name: w.name,
     }))
+    const productionMatch = proj.characters.find(
+      (pc: any) =>
+        pc.id === c.id || normalizeReferenceName(pc.name) === normalizeReferenceName(c.name)
+    )
     characters.push({
       id: c.id,
       name: c.name,
       role: c.role,
-      referenceImageUrl: c.referenceImageUrl,
+      referenceImageUrl: resolveLibraryImage(
+        c.name,
+        c.referenceImageUrl,
+        productionMatch
+          ? {
+              [normalizeReferenceName(c.name)]:
+                productionMatch.referenceUrl || productionMatch.referenceImage || '',
+            }
+          : undefined
+      ),
       voiceId: c.voiceId,
       wardrobes,
       provenance: 'series',
@@ -269,7 +336,14 @@ export function buildTransferCatalog(
   }
 
   for (const pc of proj.characters) {
-    if (seriesCharIds.has(pc.id)) continue
+    if (
+      seriesCharIds.has(pc.id) ||
+      (bible.characters || []).some(
+        (c) => normalizeReferenceName(c.name) === normalizeReferenceName(pc.name)
+      )
+    ) {
+      continue
+    }
     const wardrobes = (pc.wardrobes || []).map((w: SeriesCharacterWardrobe) => ({
       key: `${pc.id}:${w.id}`,
       id: w.id,
@@ -287,16 +361,34 @@ export function buildTransferCatalog(
   }
 
   const locations: TransferCatalogLocation[] = []
+  const projectLocations = extractLocationsFromProject(projectMetadata)
   for (const l of bible.locations || []) {
+    const productionMatch = projectLocations.find(
+      (item) =>
+        item.id === l.id || normalizeReferenceName(item.name) === normalizeReferenceName(l.name)
+    )
     locations.push({
       id: l.id,
       name: l.name,
-      referenceImageUrl: l.referenceImageUrl,
+      referenceImageUrl: resolveLibraryImage(
+        l.name,
+        l.referenceImageUrl,
+        productionMatch?.referenceImageUrl
+          ? { [normalizeReferenceName(l.name)]: productionMatch.referenceImageUrl }
+          : undefined
+      ),
       provenance: 'series',
     })
   }
-  for (const l of extractLocationsFromProject(projectMetadata)) {
-    if (seriesLocIds.has(l.id)) continue
+  for (const l of projectLocations) {
+    if (
+      seriesLocIds.has(l.id) ||
+      (bible.locations || []).some(
+        (item) => normalizeReferenceName(item.name) === normalizeReferenceName(l.name)
+      )
+    ) {
+      continue
+    }
     locations.push({
       id: l.id,
       name: l.name,
@@ -307,15 +399,32 @@ export function buildTransferCatalog(
 
   const props: TransferCatalogProp[] = []
   for (const p of bible.props || []) {
+    const productionMatch = proj.objectReferences.find(
+      (item) =>
+        item.id === p.id || normalizeReferenceName(item.name) === normalizeReferenceName(p.name)
+    )
     props.push({
       id: p.id,
       name: p.name,
-      referenceImageUrl: p.referenceImageUrl,
+      referenceImageUrl: resolveLibraryImage(
+        p.name,
+        p.referenceImageUrl,
+        productionMatch?.imageUrl
+          ? { [normalizeReferenceName(p.name)]: productionMatch.imageUrl }
+          : undefined
+      ),
       provenance: 'series',
     })
   }
   for (const o of proj.objectReferences) {
-    if (seriesPropIds.has(o.id)) continue
+    if (
+      seriesPropIds.has(o.id) ||
+      (bible.props || []).some(
+        (item) => normalizeReferenceName(item.name) === normalizeReferenceName(o.name)
+      )
+    ) {
+      continue
+    }
     props.push({
       id: o.id,
       name: o.name,

@@ -942,6 +942,25 @@ export function buildCulturalAnalysisDirective(
   return lines.join('\n')
 }
 
+/**
+ * Audience-fit rules for any non-empty target description, including text that
+ * has not been enhanced into cultural signals.
+ */
+export function buildAudienceLocalizationDirective(
+  description: string | null | undefined
+): string {
+  const text = description?.trim()
+  if (!text) return ''
+  return [
+    `AUDIENCE LOCALIZATION (target audience: ${text}):`,
+    'Score the storyline and the concrete characters, names, and settings against this audience, not against a generic viewer.',
+    'When the story world does not match the audience, treat that mismatch as a weakness.',
+    'Example: American character names and American settings for a Thai audience require recommendations that localize the characters, the settings, and the storyline. Name the element to change.',
+    'Fill summary.marketAnalysis.culturalAdaptationNotes with those changes.',
+    'Emit actionable insights with category "characters", "locations", or "story" and a fixSuggestion that names the element to change.',
+  ].join('\n')
+}
+
 /** Render extracted cultural signals as prompt lines */
 export function formatCulturalSignalsForPrompt(
   signals?: AudienceCulturalSignals | null

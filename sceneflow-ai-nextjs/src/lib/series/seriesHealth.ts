@@ -64,6 +64,11 @@ export function computeSlateStats(episodes: EpisodeBlueprintResponse[]) {
   return { total: episodes.length, blueprint, inProgress, completed }
 }
 
+/** Prompt placeholders such as char_1 are not persisted bible ids. */
+function isPlaceholderCharacterId(id: string): boolean {
+  return /^char_\d+$/i.test(id.trim())
+}
+
 export function getEpisodeDriftWarnings(
   episode: EpisodeBlueprintResponse,
   bible: SeriesProductionBible | null | undefined
@@ -72,20 +77,15 @@ export function getEpisodeDriftWarnings(
   if (!bible) return warnings
 
   const bibleCharIds = new Set((bible.characters ?? []).map((c) => c.id))
-  const bibleThreadIds = new Set((bible.storyThreads ?? []).map((t) => t.id))
-
-  const unknownChars = (episode.characters ?? []).filter(
-    (c) => c.characterId && !bibleCharIds.has(c.characterId)
-  )
-  if (unknownChars.length > 0) {
-    warnings.push(`${unknownChars.length} character(s) not in Series Bible`)
-  }
-
-  const unknownThreads = (episode.storyThreads ?? []).filter(
-    (t) => t.id && !bibleThreadIds.has(t.id)
-  )
-  if (unknownThreads.length > 0) {
-    warnings.push(`${unknownThreads.length} story thread(s) not in bible`)
+  const missingCast = (episode.characters ?? []).filter((c) => {
+    const id = c.characterId?.trim()
+    if (!id || bibleCharIds.has(id) || isPlaceholderCharacterId(id)) return false
+    return true
+  })
+  if (missingCast.length > 0) {
+    warnings.push(
+      `${missingCast.length} character${missingCast.length === 1 ? '' : 's'} no longer in the series cast`
+    )
   }
 
   return warnings
