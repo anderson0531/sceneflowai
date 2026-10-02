@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
   Library,
   Plus,
@@ -10,15 +10,9 @@ import {
   Filter,
   Grid,
   List,
-  BookOpen,
   Users,
-  MapPin,
-  Film,
   Sparkles,
-  ArrowRight,
-  X,
   Clapperboard,
-  Rocket
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -44,12 +38,11 @@ import {
   type AudienceDefinition,
 } from '@/lib/types/audienceResonance'
 import { ProductPageShell, ProductPageHeader, ProductEmptyState } from '@/components/product'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 import { useSeriesList, useEpisode } from '@/hooks/useSeries'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import Link from 'next/link'
-import { DEFAULT_MAX_EPISODES, ABSOLUTE_MAX_EPISODES } from '@/types/series'
 import { SERIES_TEMPLATES, type SeriesTemplateId } from '@/config/series/seriesTemplates'
 
 export default function SeriesPage() {
@@ -194,10 +187,9 @@ export default function SeriesPage() {
     <ProductPageShell>
         <ProductPageHeader
           icon={<Clapperboard className="h-6 w-6" />}
-          eyebrow="SERIES STUDIO"
-          title="Series Room"
+          title={STUDIO_DISPLAY_NAMES.series}
           subtitle="Plan a multi-episode arc once, then produce each episode against it. Continuity holds across the whole series."
-          accent="product"
+          accent="series"
           primaryAction={
             <Button variant="primary" onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
@@ -205,46 +197,6 @@ export default function SeriesPage() {
             </Button>
           }
         />
-
-        {/* Feature Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-gradient-to-r from-cyan-900/20 via-purple-900/20 to-pink-900/20 border border-cyan-700/30 rounded-xl p-6 mb-8"
-        >
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Rocket className="w-5 h-5 text-cyan-400" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-cyan-300 mb-2">Start Your Next Production</h2>
-              <p className="text-gray-300 text-sm mb-4">
-                Ideate a topic and let AI generate your complete series storyline — title, logline, 
-                setting, protagonist, antagonist, and up to {DEFAULT_MAX_EPISODES} episodes with beats and characters.
-                Each series has a shared Reference Library for character and visual consistency across all episodes.
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="flex items-center gap-2 text-sm text-gray-400">
-                  <BookOpen className="w-4 h-4 text-cyan-400" />
-                  <span>Reference Library</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-400">
-                  <Users className="w-4 h-4 text-purple-400" />
-                  <span>Shared Characters</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-400">
-                  <MapPin className="w-4 h-4 text-green-400" />
-                  <span>Consistent Locations</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-400">
-                  <Film className="w-4 h-4 text-pink-400" />
-                  <span>Episode Blueprints</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
 
         {/* Filters and View Toggle */}
         <motion.div
@@ -381,22 +333,13 @@ export default function SeriesPage() {
           </div>
         )}
 
-        {/* Back to Dashboard */}
-        <div className="mt-8">
-          <Link href="/dashboard">
-            <Button variant="ghost" className="text-gray-400 hover:text-white">
-              ← Back to Dashboard
-            </Button>
-          </Link>
-        </div>
-
       {/* Create Series Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-xl">
           <DialogHeader>
             <DialogTitle className="text-xl">Create New Series</DialogTitle>
             <DialogDescription className="text-gray-400">
-              Describe your series concept and AI will generate the complete storyline with episodes.
+              Lock the series bible, then produce each episode against it.
             </DialogDescription>
           </DialogHeader>
           

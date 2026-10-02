@@ -7,24 +7,16 @@ import {
   Sparkles,
   ChevronRight,
   Play,
-  Users,
-  MapPin,
   Film,
   Edit2,
   RefreshCw,
   Check,
   X,
   Loader2,
-  ArrowLeft,
   Plus,
   GripVertical,
   LayoutGrid,
-  Clapperboard,
-  Trophy,
-  TrendingUp,
   Clock,
-  Star,
-  Target,
   Square,
   Volume2,
   Mic,
@@ -68,6 +60,7 @@ import { ReferenceTransferDialog } from '@/components/series/ReferenceTransferDi
 import { SeriesHeroHealthStrip } from '@/components/series/SeriesHeroHealthStrip'
 import { SeriesContinuityPanel } from '@/components/series/SeriesContinuityPanel'
 import { getEpisodeDriftWarnings } from '@/lib/series/seriesHealth'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 import { applyOptimisticScoreDelta, normalizeSeriesResonanceAnalysis } from '@/lib/series/resonanceScoring'
 import { ensureSeasons, groupEpisodesBySeason } from '@/lib/series/seasons'
 import type {
@@ -673,106 +666,81 @@ export default function SeriesStudioPage() {
     router.replace(`/dashboard/series/${series.id}?tab=${tab}`, { scroll: false })
   }
 
+  const seriesStatusLabel =
+    {
+      draft: 'Draft',
+      active: 'Active',
+      completed: 'Completed',
+      archived: 'Archived',
+    }[series.status] ?? series.status
+
+  const outlineActionClass = 'border-white/15 text-gray-200 hover:bg-white/5'
+  const seriesTabClass =
+    'text-gray-400 data-[state=active]:bg-white/10 data-[state=active]:text-amber-400'
+
   return (
     <div className="min-h-full bg-gray-950 text-white">
-      {/* Hero Header with Gradient */}
-      <div className="relative overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-900/30 via-orange-900/20 to-gray-950" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
-        
-        {/* Top navigation bar */}
-        <div className="relative border-b border-amber-800/30 bg-gray-900/50 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Link href="/dashboard/series">
-                  <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white hover:bg-white/10">
-                    <ArrowLeft className="w-4 h-4 mr-1" />
-                    All Series
-                  </Button>
-                </Link>
-                <div className="h-5 w-px bg-gray-700" />
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 border border-amber-500/30">
-                    <Clapperboard className="w-3 h-3 inline mr-1" />
-                    SERIES STUDIO
-                  </span>
-                </div>
-              </div>
+      <div className="border-b border-white/10 bg-gray-950">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-2 text-sm text-gray-400">
+            <Link href="/dashboard/series" className="hover:text-white">
+              {STUDIO_DISPLAY_NAMES.series}
+            </Link>
+            <span aria-hidden="true">/</span>
+            <span className="truncate text-gray-200">{series.title}</span>
+          </nav>
 
-            </div>
-          </div>
-        </div>
-
-        {/* Main hero content */}
-        <div className="relative max-w-7xl mx-auto px-4 py-8">
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-            {/* Left: Title and info */}
-            <div className="flex items-start gap-5">
-              {/* Series icon */}
-              <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/25 flex-shrink-0">
-                <BookOpen className="w-8 h-8 text-white" />
-              </div>
-              
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  {series.genre && (
-                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-800 text-gray-300 border border-gray-700">
-                      {series.genre}
-                    </span>
-                  )}
-                  <span className="text-xs text-gray-500">
-                    Bible v{bible?.version || '1.0.0'}
+            <div className="min-w-0">
+              <div className="mb-2 flex items-center gap-3">
+                {series.genre ? (
+                  <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-medium text-gray-300">
+                    {series.genre}
                   </span>
-                </div>
-                <div className="group flex items-center gap-2 mb-2">
-                  <h1 className="text-3xl lg:text-4xl font-bold text-white">
-                    {series.title}
-                  </h1>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={handleOpenEditTitle}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 rounded-full bg-gray-800/50 hover:bg-gray-700"
-                  >
-                    <Edit2 className="w-4 h-4 text-gray-400 hover:text-white" />
-                  </Button>
-                </div>
-                <p className="text-gray-400 text-sm max-w-xl line-clamp-2">
-                  {bible?.logline || series.logline || 'Generate a storyline to get started with your series.'}
-                </p>
+                ) : null}
+                <span className="text-xs text-gray-400">{seriesStatusLabel}</span>
               </div>
+              <div className="group mb-2 flex items-center gap-2">
+                <h1 className="text-3xl font-bold text-white lg:text-4xl">{series.title}</h1>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleOpenEditTitle}
+                  className="h-8 w-8 rounded-full opacity-0 transition-opacity hover:bg-white/10 group-hover:opacity-100"
+                  aria-label="Edit series title"
+                >
+                  <Edit2 className="h-4 w-4 text-gray-400" />
+                </Button>
+              </div>
+              <p className="max-w-xl text-sm text-gray-400 line-clamp-2">
+                {bible?.logline || series.logline || 'Generate a storyline to get started with your series.'}
+              </p>
             </div>
 
-            {/* Right: CTA buttons */}
-            <div className="flex flex-wrap items-center gap-3 flex-shrink-0">
+            <div className="flex flex-shrink-0 flex-wrap items-center gap-3">
               {bible?.synopsis ? (
                 <Button
                   variant="outline"
                   onClick={() => openReshapeDialog()}
-                  className="border-amber-500/50 text-amber-400 hover:bg-amber-500/10"
+                  className={outlineActionClass}
                 >
-                  <Mic className="w-4 h-4 mr-2" />
-                  Reshape with Direction
+                  Reshape with direction
                 </Button>
               ) : null}
               <Button
                 variant="outline"
                 onClick={() => setIsResonancePanelOpen(true)}
-                className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 shadow-sm"
+                className={outlineActionClass}
               >
-                <Target className="w-4 h-4 mr-2" />
                 {resonanceAnalysis?.greenlightScore?.score
-                  ? `Score: ${resonanceAnalysis.greenlightScore.score}`
-                  : 'Analyze Series'}
+                  ? `Analyze series · ${resonanceAnalysis.greenlightScore.score}`
+                  : 'Analyze series'}
               </Button>
               <Button
                 onClick={() => setIsIdeateDialogOpen(true)}
-                className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg shadow-amber-500/25"
+                className="bg-amber-500 text-gray-950 hover:bg-amber-400"
               >
-                <Sparkles className="w-4 h-4 mr-2" />
-                {bible?.synopsis ? 'Regenerate Storyline' : 'Generate Storyline'}
+                {bible?.synopsis ? 'Regenerate storyline' : 'Generate storyline'}
               </Button>
             </div>
           </div>
@@ -791,33 +759,21 @@ export default function SeriesStudioPage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-gray-800/50 border border-gray-700/50 mb-6 p-1">
-            <TabsTrigger 
-              value="overview" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/20 data-[state=active]:to-orange-500/20 data-[state=active]:text-amber-400 data-[state=active]:border-amber-500/30 gap-2"
-            >
+          <TabsList className="mb-6 h-auto border-white/10 bg-gray-900/50 p-1">
+            <TabsTrigger value="overview" className={seriesTabClass}>
               <LayoutGrid className="w-4 h-4" />
               Overview
             </TabsTrigger>
-            <TabsTrigger 
-              value="episodes" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border-cyan-500/30 gap-2"
-            >
+            <TabsTrigger value="episodes" className={seriesTabClass}>
               <Film className="w-4 h-4" />
               Episodes
-              <span className="text-xs bg-gray-700 px-1.5 py-0.5 rounded-full">{series.episodeCount}</span>
+              <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-xs">{series.episodeCount}</span>
             </TabsTrigger>
-            <TabsTrigger
-              value="continuity"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500/20 data-[state=active]:to-pink-500/20 data-[state=active]:text-purple-300 data-[state=active]:border-purple-500/30 gap-2"
-            >
+            <TabsTrigger value="continuity" className={seriesTabClass}>
               <GitBranch className="w-4 h-4" />
               Continuity
             </TabsTrigger>
-            <TabsTrigger
-              value="reference-library"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/20 data-[state=active]:to-orange-500/20 data-[state=active]:text-amber-400 data-[state=active]:border-amber-500/30 gap-2"
-            >
+            <TabsTrigger value="reference-library" className={seriesTabClass}>
               <BookOpen className="w-4 h-4" />
               Reference Library
             </TabsTrigger>
@@ -901,7 +857,7 @@ export default function SeriesStudioPage() {
               <span className="text-gray-500 font-normal">· Series Storyline</span>
             </DialogTitle>
             <DialogDescription className="text-gray-400 text-sm mt-2">
-              Describe your series concept and AI will generate the complete storyline with episodes.
+              Lock the series bible, then produce each episode against it.
             </DialogDescription>
           </DialogHeader>
 
@@ -1269,6 +1225,8 @@ interface OverviewPanelProps {
   onOpenBibleSync?: () => void
 }
 
+const overviewCardClass = 'rounded-xl border border-white/10 bg-gray-900/50 p-6'
+
 function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: OverviewPanelProps) {
   const bible = series.productionBible
   const [budgetSummary, setBudgetSummary] = useState<{ used: number; budget: number } | null>(null)
@@ -1401,14 +1359,9 @@ function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: 
       {/* Main Overview */}
       <div className="lg:col-span-2 space-y-6">
         {/* Title & Logline */}
-        <div className="bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-6 border border-gray-700/50 shadow-lg">
+        <div className={overviewCardClass}>
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center">
-                <Star className="w-5 h-5 text-amber-400" />
-              </div>
-              <h3 className="font-semibold text-lg">Series Overview</h3>
-            </div>
+            <h3 className="font-semibold text-lg">Series Overview</h3>
             
             <div className="flex items-center gap-2">
               <div className="flex items-center bg-gray-900/50 rounded-lg border border-gray-700/50 p-1">
@@ -1494,14 +1447,9 @@ function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: 
         />
 
         {/* Setting */}
-        <div className="bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-6 border border-gray-700/50">
+        <div className={overviewCardClass}>
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-green-400" />
-              </div>
-              <h3 className="font-semibold text-lg">Setting</h3>
-            </div>
+            <h3 className="font-semibold text-lg">Setting</h3>
             <Button
               variant="ghost"
               size="sm"
@@ -1527,13 +1475,8 @@ function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: 
       {/* Sidebar */}
       <div className="space-y-6">
         {onOpenBibleSync ? (
-          <div className="bg-gradient-to-br from-teal-900/20 to-cyan-900/10 rounded-xl p-6 border border-teal-700/30">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 bg-teal-500/20 rounded-lg flex items-center justify-center">
-                <GitBranch className="w-4 h-4 text-teal-400" />
-              </div>
-              <h3 className="font-semibold">Series Bible Sync</h3>
-            </div>
+          <div className={overviewCardClass}>
+            <h3 className="mb-3 font-semibold">Series Bible Sync</h3>
             <p className="text-sm text-gray-400 mb-4">
               Production-authored assets and storylines push up to the Series Bible through Review
               Updates. Approve diffs before they merge into the shared library.
@@ -1542,7 +1485,7 @@ function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: 
               variant="outline"
               size="sm"
               onClick={onOpenBibleSync}
-              className="border-teal-500/40 text-teal-300 hover:bg-teal-500/10 w-full"
+              className="w-full border-white/15 text-gray-200 hover:bg-white/5"
             >
               Open Review Updates
             </Button>
@@ -1550,23 +1493,16 @@ function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: 
         ) : null}
 
         {budgetSummary ? (
-          <div className="bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-6 border border-gray-700/50">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                <Trophy className="w-4 h-4 text-blue-400" />
-              </div>
-              <h3 className="font-semibold">Series Budget</h3>
-            </div>
-            <p className="text-2xl font-bold text-white">{budgetSummary.used} credits</p>
-            <p className="text-xs text-gray-500 mt-1">
-              {budgetSummary.budget > 0
-                ? `${budgetSummary.budget} credits budgeted across episode projects`
-                : 'Aggregated from episode production projects + resonance analysis'}
-            </p>
+          <div className={overviewCardClass}>
+            <h3 className="mb-3 font-semibold">Series Budget</h3>
+            <p className="text-2xl font-bold text-white">{budgetSummary.used} credits used</p>
+            {budgetSummary.budget > 0 ? (
+              <p className="mt-1 text-xs text-gray-500">{budgetSummary.budget} credits budgeted</p>
+            ) : null}
           </div>
         ) : null}
 
-        <div className="bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-6 border border-gray-700/50">
+        <div className={overviewCardClass}>
           <h3 className="font-semibold mb-2">Share Series Bible</h3>
           <p className="text-sm text-gray-400 mb-4">
             Create a read-only link for collaborators or stakeholders.
@@ -1583,14 +1519,9 @@ function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: 
         </div>
 
         {/* Protagonist */}
-        <div className="bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-6 border border-gray-700/50">
+        <div className={overviewCardClass}>
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                <Users className="w-4 h-4 text-emerald-400" />
-              </div>
-              <h3 className="font-semibold">Protagonist</h3>
-            </div>
+            <h3 className="font-semibold">Protagonist</h3>
             <Button
               variant="ghost"
               size="sm"
@@ -1605,9 +1536,9 @@ function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: 
             <div className="space-y-2">
               <p className="text-white font-medium text-lg">{bible.protagonist.name}</p>
               <p className="text-gray-400 text-sm">{bible.protagonist.goal}</p>
-              {bible.protagonist.flaw && (
-                <p className="text-gray-500 text-xs bg-gray-700/50 rounded-lg px-3 py-2">💔 Flaw: {bible.protagonist.flaw}</p>
-              )}
+              {bible.protagonist.flaw ? (
+                <p className="text-sm text-gray-400">Flaw: {bible.protagonist.flaw}</p>
+              ) : null}
             </div>
           ) : (
             <p className="text-gray-500 text-sm">No protagonist defined yet.</p>
@@ -1615,14 +1546,9 @@ function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: 
         </div>
 
         {/* Antagonist / Conflict */}
-        <div className="bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-6 border border-gray-700/50">
+        <div className={overviewCardClass}>
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-red-400" />
-              </div>
-              <h3 className="font-semibold">Antagonist / Conflict</h3>
-            </div>
+            <h3 className="font-semibold">Antagonist / Conflict</h3>
             <Button
               variant="ghost"
               size="sm"
@@ -1646,13 +1572,8 @@ function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: 
         </div>
 
         {/* Quick Stats */}
-        <div className="bg-gradient-to-br from-amber-900/20 to-orange-900/10 rounded-xl p-6 border border-amber-700/30">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 bg-amber-500/20 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-amber-400" />
-            </div>
-            <h3 className="font-semibold">Quick Stats</h3>
-          </div>
+        <div className={overviewCardClass}>
+          <h3 className="mb-4 font-semibold">Quick Stats</h3>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-400">Episodes</span>
@@ -1660,11 +1581,11 @@ function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: 
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">In Progress</span>
-              <span className="text-blue-400">{series.startedCount}</span>
+              <span className="text-white">{series.startedCount}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Completed</span>
-              <span className="text-green-400">{series.completedCount}</span>
+              <span className="text-white">{series.completedCount}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Characters</span>

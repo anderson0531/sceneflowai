@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import { describe, it, expect } from 'vitest'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 const ROOT = join(process.cwd())
 const STUDIO_PAGE = join(ROOT, 'src/app/dashboard/series/[seriesId]/page.tsx')
@@ -32,5 +33,19 @@ describe('Series Studio in-box dictation', () => {
     expect(source).not.toContain("from '@/components/ui/textarea'")
     expect(source).toContain('Topic / Concept')
     expect(source).toContain('<DictationTextarea')
+  })
+})
+
+describe('Series Room naming', () => {
+  it('renders Series Room on the library and series pages', () => {
+    const hub = readFileSync(HUB_PAGE, 'utf8')
+    const detail = readFileSync(STUDIO_PAGE, 'utf8')
+
+    expect(STUDIO_DISPLAY_NAMES.series).toBe('Series Room')
+    expect(hub).toContain('STUDIO_DISPLAY_NAMES.series')
+    expect(detail).toContain('STUDIO_DISPLAY_NAMES.series')
+    expect(hub).not.toContain('SERIES STUDIO')
+    expect(detail).not.toContain('SERIES STUDIO')
+    expect(hub).toContain('Lock the series bible, then produce each episode against it.')
   })
 })
