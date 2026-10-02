@@ -183,12 +183,17 @@ Generate once. Lock them before any still plate. Prompts below call these
 tokens. The still prompt restates the visible facts so Omni does not depend on
 the token alone.
 
-**REF: CHAR_ANA** — Ana, 32. Mixed heritage. Warm brown eyes, faint freckles
-across the nose, dark curly hair loosely pulled back with two strands at the
-temple. Olive-green field jacket over a slate turtleneck. Thin silver ring on
-the right index finger. Calm, not performing. Reference sheet: portrait,
-three-quarter, both hands open, full body. Neutral soft key, plain background.
-This face speaks only in Block 01.
+**REF: CHAR_ANA** — Ana, 32. Mixed heritage. Medium-deep skin, warm brown
+eyes, faint freckles across the nose and cheeks, dark curly hair worn up with
+loose strands at the temples. Olive-green field jacket with flap pockets, slate
+turtleneck, navy straight trousers, brown leather lace-up boots. Thin silver
+ring on the **left ring finger**. The right hand wears no ring. Calm, not
+performing. Locked reference:
+[`references/char-ana-reference.jpg`](./references/char-ana-reference.jpg)
+(portrait, three-quarter, full body, plain background). Match that sheet. Do
+not move the ring to the right index finger. This face speaks only in Block 01
+of this film. The same Ana, same wardrobe, and same voice carry the three
+value films.
 
 **REF: CHAR_LENA** — Lena, 35. Long dark hair worn down, deep-set eyes, worn
 navy trench coat, silver locket on a short chain. This is the drama subject.
@@ -254,7 +259,7 @@ Photographed cinematic live action, 16:9, 35mm film grain, warm amber key and co
 
 Shot: 50mm, T2.0, camera locked at Ana's eye height, medium close-up. She fills the center third. The city behind her is out of focus.
 
-Cast: Exactly one person, Ana, 32, warm brown eyes, faint freckles, dark curly hair loosely pulled back with two strands at the temple, olive-green field jacket, slate turtleneck, thin silver ring on the right index finger. Two arms, two hands. Mouth closed, lips together, jaw relaxed. Eyes aimed just left of the lens, not at it yet.
+Cast: Exactly one person, Ana, 32, medium-deep skin, warm brown eyes, faint freckles across the nose and cheeks, dark curly hair worn up with loose strands at the temples, olive-green field jacket with flap pockets, slate turtleneck. Two arms, two hands. Mouth closed, lips together, jaw relaxed. Eyes aimed just left of the lens, not at it yet. Right hand holds the match and wears no ring. Left hand rests on the parapet, thin silver ring on the left ring finger.
 
 Set inventory: Rain-wet concrete rooftop, one parapet behind her, one overhead service lamp, distant blurred city lights. No other people. No skyline signs. One wooden match, already burning, held in her right hand at chest height. The flame is attached to the match head and sits below her chin, clear of her mouth. Her left hand rests on the parapet. Rain is visible in the lamp beam and on her jacket shoulders.
 
@@ -275,7 +280,7 @@ First frame is the approved Block 01 still. Change only the motion described her
 
 Shot: Camera stays locked. 50mm. Do not dolly, pan, or zoom.
 
-Cast: The same Ana, same jacket, same hair, same ring. Exactly one person. Right hand keeps the lit match at chest height for the full 10 seconds. The stick does not travel toward her mouth. Left hand stays on the parapet. Two hands, five fingers on each, the right index finger wearing the silver ring.
+Cast: The same Ana, same jacket, same hair. Exactly one person. Right hand keeps the lit match at chest height for the full 10 seconds and wears no ring. The stick does not travel toward her mouth. Left hand stays on the parapet, thin silver ring on the left ring finger. Two hands, five fingers on each.
 
 Action: From 0 to 2 seconds she holds the still pose, mouth closed, eyes just off the lens. From 2 to 3 seconds she turns her head slowly to look directly into the lens. Mouth stays closed during the turn. From 3 to 7 seconds she speaks one line and only this line, in this language: "It starts with a spark. This is your film." Natural jaw, a consistent tooth line, lips returning to rest between the two sentences. From 7 to 10 seconds her mouth closes and stays closed. She holds the look into the lens. A small breath is allowed. Rain keeps falling downward. The flame stays on the match head and flickers no larger than the match head. Her feet do not move.
 
@@ -317,7 +322,7 @@ Photographed cinematic live action, 16:9, 35mm film grain, warm amber key and co
 
 Shot: 50mm, T2.8, camera locked, close on a cork board. The board fills the frame.
 
-Cast: No living face. One right hand at the bottom edge of frame, resting, not yet lifting. Olive-green sleeve, thin silver ring on the index finger, five fingers. The hand belongs to Ana. Her face is out of frame.
+Cast: No living face. One left hand at the bottom edge of frame, resting, not yet lifting. Olive-green sleeve, thin silver ring on the left ring finger, five fingers. The hand belongs to Ana. Her face is out of frame.
 
 Set inventory: Exactly three photographic prints pinned to the cork with one pin each. Each print is matte paper with a white border and a still image, not a living person. Print A, left: Lena, long dark hair worn down, navy trench coat, silver locket. Print B, center: the same Lena with her hair tied back and a grey coat, the mismatch. Print C, right: Lena again, hair down, navy coat, matching Print A. No fourth print. No writing on the borders. No other objects.
 
@@ -335,7 +340,7 @@ First frame is the approved Block 02 still. Change only the motion described her
 
 Shot: Camera stays locked.
 
-Cast: Only Ana's right hand and olive-green sleeve. Face stays out of frame. Five fingers, silver ring on the index finger.
+Cast: Only Ana's left hand and olive-green sleeve. Face stays out of frame. Five fingers, thin silver ring on the ring finger.
 
 Set inventory: The same three prints. They remain flat paper. The images inside them do not blink, talk, or change.
 
@@ -363,7 +368,7 @@ Photographed cinematic live action, 16:9, 35mm film grain, warm amber key and co
 
 Shot: 40mm, T2.8, slow-dolly start position, medium shot of Ana at a wood table. Camera at seated eye height.
 
-Cast: Exactly one person, Ana, same face, hair, olive-green jacket, slate turtleneck, and silver ring as Block 01. She is standing beside the table, both feet on the floor, mouth closed. Both hands are above a stack of prints, not yet touching it.
+Cast: Exactly one person, Ana, same face, hair, olive-green flap-pocket jacket, slate turtleneck, navy straight trousers, brown lace-up boots, and silver ring on the left ring finger as Block 01. She is standing beside the table, both feet on the floor, mouth closed. Both hands are above a stack of prints, not yet touching it. The right hand wears no ring.
 
 Set inventory: One wood table, one shallow wood tray on the right side of the table, one desk lamp switched on, one window with rain on the glass. Exactly six loose photographic prints in a stack, image side down, so no faces are visible. No monitors, no phones, no mugs, no extra paper.
 
@@ -411,7 +416,7 @@ Photographed cinematic live action, 16:9, 35mm film grain, warm amber key and co
 
 Shot: 50mm, T2.8, camera locked, slightly above the table, three-quarter view. Ana is seated, face in the upper left, soft but recognizable, mouth closed.
 
-Cast: Exactly one person, Ana, same wardrobe and ring. Both hands visible. Right hand holds a clear glass paperweight just above the center card, not yet touching it.
+Cast: Exactly one person, Ana, same wardrobe. Navy trousers visible at the bottom of frame. Both hands visible. Right hand holds a clear glass paperweight just above the center card, not yet touching it, and wears no ring. Left hand rests near the cards, thin silver ring on the left ring finger.
 
 Set inventory: On the wood table, left to right: one blank cream card, one blank cream card in the center, one blank cream card. Above the center card, one small location photograph of the empty rooftop with no person in it. To the right, one navy fabric swatch. No writing, no letters, no diagrams on the cards. No laptop.
 
@@ -429,7 +434,7 @@ First frame is the approved Block 04 still. Change only the motion described her
 
 Shot: Camera stays locked.
 
-Cast: Ana, mouth closed the entire time. Right hand only does the work. Left hand rests on the table.
+Cast: Ana, mouth closed the entire time. Right hand only sets the paperweight and wears no ring. Left hand rests on the table, thin silver ring on the ring finger.
 
 Set inventory: Three blank cards, one empty-rooftop photo, one navy swatch, one glass paperweight. Nothing new appears.
 
@@ -459,7 +464,7 @@ Photographed cinematic live action, 16:9, 35mm film grain, warm amber key and co
 
 Shot: 35mm, T2.8, camera locked, medium-wide on a studio wall.
 
-Cast: Ana's right hand and forearm only, olive-green sleeve, silver ring, five fingers, holding an open metal binder clip just in front of a portrait. Her face is out of frame. No living Lena.
+Cast: Ana's left hand and forearm only, olive-green sleeve, thin silver ring on the ring finger, five fingers, holding an open metal binder clip just in front of a portrait. Her face is out of frame. No living Lena.
 
 Set inventory: One cork wall. Pinned on it: one portrait photograph of Lena, long dark hair down, navy trench, silver locket. One wooden hanger on a hook with the real navy trench coat hanging from it, sleeves down, hem above the floor. One location photo of the empty hallway, no person in that photo. One small black voice recorder standing on a shelf. No labels, no notes.
 
@@ -477,7 +482,7 @@ First frame is the approved Block 05A still. Change only the motion described he
 
 Shot: Camera stays locked.
 
-Cast: One hand only. Five fingers. Ring visible.
+Cast: One left hand only. Five fingers. Thin silver ring on the ring finger.
 
 Set inventory: Portrait, coat on hanger, hallway photo, recorder. All stay where they are except the binder clip.
 
@@ -564,7 +569,7 @@ First frame is the approved Block 06 still. Change only the motion described her
 
 Shot: Camera stays absolutely locked. The framing of Lena does not drift.
 
-Cast: Lena holds her pose, mouth closed, same hair, same coat, same locket, same face. At 3 seconds Ana's right hand and olive-green sleeve enter from frame left. Five fingers, silver ring. The hand flips the switch and leaves. Lena does not become Ana.
+Cast: Lena holds her pose, mouth closed, same hair, same coat, same locket, same face. At 3 seconds Ana's left hand and olive-green sleeve enter from frame left. Five fingers, thin silver ring on the ring finger. The hand flips the switch and leaves. Lena does not become Ana.
 
 Set inventory: Work light, service lamp, switch box, rain. No new objects.
 
@@ -633,7 +638,7 @@ Photographed cinematic live action, 16:9, 35mm film grain, warm amber key and co
 
 Shot: 35mm, T2.8, camera locked, medium-wide.
 
-Cast: Exactly one person, Ana, same face and olive-green jacket. She stands beside a table, mouth closed, one hand resting on the tabletop. This is an adult in an empty room, not a classroom full of students.
+Cast: Exactly one person, Ana, same face, olive-green flap-pocket jacket, slate turtleneck, navy straight trousers, brown lace-up boots. She stands beside a table, mouth closed, left hand resting on the tabletop, thin silver ring on the left ring finger. This is an adult in an empty room, not a classroom full of students.
 
 Set inventory: One table, one blank whiteboard with no marks, one window. No chairs occupied. No posters. No writing.
 
@@ -809,7 +814,7 @@ right to left. The picture is not mirrored.
 
 ## PRODUCTION CHECKLIST
 
-- [ ] Lock CHAR_ANA and CHAR_LENA reference sheets before any still.
+- [ ] Lock CHAR_ANA to `references/char-ana-reference.jpg` and CHAR_LENA before any still. Ring stays on the left ring finger.
 - [ ] Lock the rooftop, studio, hallway, doorway, training room, and street.
 - [ ] Approve every still for finger count, object count, and identity before
       image-to-video.
