@@ -7,6 +7,7 @@ import {
   FEATURE_ROOM_FILM_MAX_SECONDS,
   FEATURE_ROOM_FILM_MIN_SECONDS,
   FEATURE_ROOM_IDS,
+  SERIES_OVERVIEW_EN_MP4,
   featureRoomHasVideo,
   featureRoomVideoSources,
   getFeatureRoomMedia,
@@ -172,9 +173,23 @@ describe('keyFeatures structure', () => {
     for (const roomId of FEATURE_ROOM_IDS) {
       const locales = getFeatureRoomVideoLocales(roomId)
       expect(locales.map((locale) => locale.id)).toEqual([...VIDEO_LOCALE_ORDER])
-      expect(locales.every((locale) => !locale.available)).toBe(true)
-      expect(featureRoomHasVideo(getFeatureRoomMedia(roomId))).toBe(false)
+      if (roomId === 'series-desk') {
+        const english = locales.find((locale) => locale.id === 'en')
+        expect(english?.available).toBe(true)
+        expect(english?.src).toBe(SERIES_OVERVIEW_EN_MP4)
+        expect(featureRoomHasVideo(getFeatureRoomMedia(roomId, 'en'))).toBe(true)
+        expect(featureRoomVideoSources(roomId, 'en')).toEqual([
+          { src: SERIES_OVERVIEW_EN_MP4, type: 'video/mp4' },
+        ])
+        expect(locales.filter((locale) => locale.id !== 'en').every((locale) => !locale.available)).toBe(
+          true
+        )
+      } else {
+        expect(locales.every((locale) => !locale.available)).toBe(true)
+        expect(featureRoomHasVideo(getFeatureRoomMedia(roomId))).toBe(false)
+      }
       for (const locale of VIDEO_LOCALE_ORDER) {
+        if (roomId === 'series-desk' && locale === 'en') continue
         const sources = featureRoomVideoSources(roomId, locale)
         expect(sources.map((source) => source.type)).toEqual(['video/webm', 'video/mp4'])
         expect(sources[0].src).toBe(`/landing/key-features/rooms/${roomId}-${locale}.webm`)

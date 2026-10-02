@@ -3,7 +3,7 @@
  * Each film defines the room and walks its workflow (60–90 seconds).
  * The in-page band loops an 8-second muted cold open until the visitor
  * plays the film with sound. English ships before any dub.
- * WebM is listed before the MP4 fallback. Slots stay empty until a file exists.
+ * WebM is listed before the MP4 fallback. A room stays empty until its English film is set.
  */
 
 import {
@@ -47,18 +47,26 @@ const EMPTY_ROOM_MEDIA: FeatureRoomMediaEntry = {
 }
 
 /**
- * Locales whose room film is published.
- * Leave empty until the English WebM and MP4 exist at the reserved paths.
- * A dub is ignored until English is in this set.
+ * English Series overview. The published master is an MP4. The player uses it
+ * until a WebM encode of the same cut is added beside it.
+ * A dub for a room is ignored until that room's English film is in this map.
  */
-const PRODUCED_LOCALES = new Set<VideoLocaleId>([])
+export const SERIES_OVERVIEW_EN_MP4 =
+  'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Series%20Overview.mp4'
 
-function roomFilmLocaleReady(locale: VideoLocaleId): boolean {
-  if (!PRODUCED_LOCALES.has('en')) return false
-  return PRODUCED_LOCALES.has(locale)
+const PRODUCED_ROOM_FILMS: Partial<
+  Record<FeatureRoomId, Partial<Record<VideoLocaleId, FeatureRoomMediaEntry>>>
+> = {
+  'series-desk': {
+    en: {
+      posterUrl: '',
+      webmUrl: '',
+      mp4Url: SERIES_OVERVIEW_EN_MP4,
+    },
+  },
 }
 
-/** Reserved site path. Not requested until the locale is in PRODUCED_LOCALES. */
+/** Reserved site path for a room film that is not published yet. */
 export function featureRoomOverviewPath(
   roomId: string,
   locale: VideoLocaleId,
@@ -68,12 +76,15 @@ export function featureRoomOverviewPath(
 }
 
 function localeMedia(roomId: string, locale: VideoLocaleId): FeatureRoomMediaEntry {
-  if (!roomFilmLocaleReady(locale)) return { ...EMPTY_ROOM_MEDIA }
-  return {
-    posterUrl: '',
-    webmUrl: featureRoomOverviewPath(roomId, locale, 'webm'),
-    mp4Url: featureRoomOverviewPath(roomId, locale, 'mp4'),
+  if (!(FEATURE_ROOM_IDS as readonly string[]).includes(roomId)) {
+    return { ...EMPTY_ROOM_MEDIA }
   }
+  const room = PRODUCED_ROOM_FILMS[roomId as FeatureRoomId]
+  const english = room?.en
+  if (!english?.webmUrl && !english?.mp4Url) return { ...EMPTY_ROOM_MEDIA }
+  const produced = room?.[locale]
+  if (!produced?.webmUrl && !produced?.mp4Url) return { ...EMPTY_ROOM_MEDIA }
+  return { ...produced }
 }
 
 export const FEATURE_ROOM_MEDIA: Record<FeatureRoomId, FeatureRoomMediaEntry> = {
@@ -108,11 +119,16 @@ export function getFeatureRoomVideoLocales(roomId: string): FeatureRoomVideoLoca
   })
 }
 
-/** Reserved source order once a locale is produced: WebM, then MP4. */
+/** Produced sources when a film exists, otherwise the reserved WebM then MP4 paths. */
 export function featureRoomVideoSources(
   roomId: string,
   locale: VideoLocaleId
 ): Array<{ src: string; type: 'video/webm' | 'video/mp4' }> {
+  const media = localeMedia(roomId, locale)
+  const sources: Array<{ src: string; type: 'video/webm' | 'video/mp4' }> = []
+  if (media.webmUrl) sources.push({ src: media.webmUrl, type: 'video/webm' })
+  if (media.mp4Url) sources.push({ src: media.mp4Url, type: 'video/mp4' })
+  if (sources.length > 0) return sources
   return [
     { src: featureRoomOverviewPath(roomId, locale, 'webm'), type: 'video/webm' },
     { src: featureRoomOverviewPath(roomId, locale, 'mp4'), type: 'video/mp4' },
