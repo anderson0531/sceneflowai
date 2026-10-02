@@ -8,6 +8,8 @@ import { SERIES_CHARACTER_NAMING_BLOCK } from '@/lib/character/characterNamingPr
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { localeDirective } from '@/lib/prompts/localeDirective'
 import { getGeminiProductModel } from '@/lib/config/modelConfig'
+import { keepCharacterIds, keepLocationIds } from '@/lib/series/keepStorylineIds'
+import { alignEpisodeCharacters } from '@/lib/series/seriesHealth'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300 // 5 minutes for comprehensive storyline refactor
@@ -27,23 +29,28 @@ interface RouteParams {
 
 const EPISODE_BATCH_SIZE = 2
 
-function keepLocationIds(
-  existing: Array<{ id?: string; name?: string }> | undefined,
-  incoming: Array<Record<string, unknown>>
+function applyEpisodeTextUpdate(
+  original: any,
+  update: any,
+  bibleCharacters: Array<{ id: string; name: string; role?: string }>
 ) {
-  return incoming.map((location, index) => {
-    const returnedId = typeof location.id === 'string' ? location.id : ''
-    const name = typeof location.name === 'string' ? location.name : ''
-    const prior =
-      existing?.find((item) => item.id && item.id === returnedId) ||
-      existing?.find((item) => item.name && item.name === name) ||
-      existing?.[index]
-    return {
-      ...(prior || {}),
-      ...location,
-      id: returnedId || prior?.id || `loc_${index + 1}`,
-    }
-  })
+  let characters = original.characters
+  if (Array.isArray(update.characters) && update.characters.length) {
+    const aligned = alignEpisodeCharacters(update.characters, bibleCharacters)
+    if (aligned.length) characters = aligned
+  }
+  const beats = Array.isArray(update.beats) && update.beats.length ? update.beats : original.beats
+  return {
+    ...original,
+    title: update.title || original.title,
+    logline: update.logline || original.logline,
+    synopsis: update.synopsis || original.synopsis,
+    beats,
+    characters,
+    id: original.id,
+    projectId: original.projectId,
+    status: original.status,
+  }
 }
 
 /**
@@ -283,7 +290,8 @@ async function refactorEpisodes(
   series: any,
   updatedBible: any,
   languageBlock: string = '',
-  targetEpisodes?: number[]
+  targetEpisodes?: number[] | undefined,
+  bibleCharacters: Array<{ id: string; name: string; role?: string }> = []
 ): Promise<any[]> {
   let episodes = series.episode_blueprints || []
   if (targetEpisodes?.length) {
@@ -314,6 +322,9 @@ ${protagonistDesc ? `Goal: ${protagonistDesc}` : ''}
 
 NEW SYNOPSIS CONTEXT: ${updatedBible?.synopsis?.slice(0, 500) || 'Not available'}
 
+CURRENT SERIES CAST (use these ids and names):
+${bibleCharacters.map((character) => `- ${character.id}: ${character.name}${character.role ? ` (${character.role})` : ''}`).join('\n') || 'None'}
+
 EPISODES TO UPDATE:
 ${batch.map((ep: any) => `
 Episode ${ep.episodeNumber}: "${ep.title}"
@@ -329,7 +340,9 @@ Return ONLY a valid JSON array (no markdown):
     "episodeNumber": ${batch[0]?.episodeNumber || 1},
     "title": "Updated episode title",
     "logline": "Updated logline reflecting the change",
-    "synopsis": "Updated synopsis with new character/plot"
+    "synopsis": "Updated synopsis with new character/plot",
+    "characters": [{ "name": "Character name from the current series cast", "role": "protagonist" }],
+    "beats": [{ "beatNumber": 1, "act": 1, "title": "Beat title", "description": "What happens" }]
   }
 ]
 ${languageBlock}`
@@ -350,13 +363,7 @@ ${languageBlock}`
         for (const update of parsed) {
           const original = batch.find((ep: any) => ep.episodeNumber === update.episodeNumber)
           if (original) {
-            updatedEpisodes.push({
-              ...original,
-              title: update.title || original.title,
-              logline: update.logline || original.logline,
-              synopsis: update.synopsis || original.synopsis,
-              id: original.id // Preserve original ID
-            })
+            updatedEpisodes.push(applyEpisodeTextUpdate(original, update, bibleCharacters))
           }
         }
       } else if (parsed && typeof parsed === 'object') {
@@ -364,13 +371,7 @@ ${languageBlock}`
         const epNum = parsed.episodeNumber || batch[0]?.episodeNumber
         const original = batch.find((ep: any) => ep.episodeNumber === epNum)
         if (original) {
-          updatedEpisodes.push({
-            ...original,
-            title: parsed.title || original.title,
-            logline: parsed.logline || original.logline,
-            synopsis: parsed.synopsis || original.synopsis,
-            id: original.id
-          })
+          updatedEpisodes.push(applyEpisodeTextUpdate(original, parsed, bibleCharacters))
         }
       }
     } catch (err) {
@@ -443,6 +444,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     console.log(`[${timestamp}] Phase 1 complete. Changes: ${bibleUpdates.changesApplied?.join(', ') || 'none listed'}`)
     
     // ========== PHASE 2: Refactor All Episodes ==========
+    const currentBible = series.production_bible || {}
+    const castForEpisodes =
+      Array.isArray(bibleUpdates.characters) && ['all', 'characters'].includes(targetAspect)
+        ? keepCharacterIds(currentBible.characters, bibleUpdates.characters)
+        : currentBible.characters || []
+
     const shouldUpdateEpisodes =
       ['all', 'episodes', 'plot'].includes(targetAspect) &&
       (series.episode_blueprints?.length || 0) > 0
@@ -455,7 +462,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         series,
         bibleUpdates,
         languageBlock,
-        targetEpisodes
+        targetEpisodes,
+        castForEpisodes
       )
       console.log(`[${timestamp}] Phase 2 complete. Updated ${updatedEpisodes.length} episodes`)
     } else {
@@ -479,7 +487,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
     
     // ========== PHASE 3: Apply Updates to Database ==========
-    const currentBible = series.production_bible || {}
     const updatedBible = {
       ...currentBible,
       ...(bibleUpdates.synopsis && ['all', 'plot', 'episodes'].includes(targetAspect)
@@ -489,7 +496,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         ? { protagonist: bibleUpdates.protagonist }
         : {}),
       ...(bibleUpdates.characters && ['all', 'characters'].includes(targetAspect)
-        ? { characters: bibleUpdates.characters }
+        ? { characters: castForEpisodes }
         : {}),
       ...(bibleUpdates.setting && ['all', 'setting'].includes(targetAspect)
         ? { setting: bibleUpdates.setting }

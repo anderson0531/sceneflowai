@@ -1,8 +1,48 @@
+import { toCanonicalName } from '@/lib/character/canonical'
 import type {
   EpisodeBlueprintResponse,
+  SeriesEpisodeCharacter,
   SeriesProductionBible,
   SeriesResonanceAnalysis,
 } from '@/types/series'
+
+export const UPDATE_EPISODE_CAST_INSTRUCTION =
+  'Replace featured characters that are no longer in the series cast with characters from the current series cast. Rewrite this episode\'s logline, synopsis, and beats so they use the current cast. Keep the episode number and the core dramatic turn.'
+
+const EPISODE_ROLES = new Set(['protagonist', 'antagonist', 'supporting', 'guest'])
+
+function episodeRole(value: unknown, fallback?: string): SeriesEpisodeCharacter['role'] {
+  if (typeof value === 'string' && EPISODE_ROLES.has(value)) return value as SeriesEpisodeCharacter['role']
+  if (fallback && EPISODE_ROLES.has(fallback)) return fallback as SeriesEpisodeCharacter['role']
+  return 'supporting'
+}
+
+/** Map a director rewrite onto bible character ids. Unknown names are dropped. */
+export function alignEpisodeCharacters(
+  incoming: Array<{ characterId?: string; id?: string; name?: string; role?: string; episodeArc?: string }>,
+  bibleCharacters: Array<{ id: string; name: string; role?: string }>
+): SeriesEpisodeCharacter[] {
+  const byId = new Map(bibleCharacters.map((character) => [character.id, character]))
+  const byName = new Map(
+    bibleCharacters
+      .filter((character) => toCanonicalName(character.name))
+      .map((character) => [toCanonicalName(character.name), character])
+  )
+  const aligned: SeriesEpisodeCharacter[] = []
+  for (const item of incoming) {
+    const id = item.characterId || item.id
+    const match =
+      (id && byId.get(id)) ||
+      (item.name ? byName.get(toCanonicalName(item.name)) : undefined)
+    if (!match || aligned.some((row) => row.characterId === match.id)) continue
+    aligned.push({
+      characterId: match.id,
+      role: episodeRole(item.role, match.role),
+      ...(item.episodeArc ? { episodeArc: item.episodeArc } : {}),
+    })
+  }
+  return aligned
+}
 
 const BIBLE_COMPLETENESS_CHECKS: Array<{
   key: keyof SeriesProductionBible | 'protagonist' | 'antagonistConflict'

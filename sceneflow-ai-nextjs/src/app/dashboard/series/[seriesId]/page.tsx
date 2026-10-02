@@ -21,7 +21,9 @@ import {
   Volume2,
   Mic,
   AlertTriangle,
-  GitBranch
+  GitBranch,
+  RotateCcw,
+  Link2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -39,6 +41,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogDescription
@@ -60,7 +63,7 @@ import { SeriesReferenceLibraryPanel } from '@/components/series/SeriesReference
 import { ReferenceTransferDialog } from '@/components/series/ReferenceTransferDialog'
 import { SeriesHeroHealthStrip } from '@/components/series/SeriesHeroHealthStrip'
 import { SeriesContinuityPanel } from '@/components/series/SeriesContinuityPanel'
-import { getEpisodeDriftWarnings } from '@/lib/series/seriesHealth'
+import { getEpisodeDriftWarnings, UPDATE_EPISODE_CAST_INSTRUCTION } from '@/lib/series/seriesHealth'
 import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 import { applyOptimisticScoreDelta, axisDisplayLabel, normalizeSeriesResonanceAnalysis } from '@/lib/series/resonanceScoring'
 import { ensureSeasons, groupEpisodesBySeason } from '@/lib/series/seasons'
@@ -157,6 +160,7 @@ export default function SeriesStudioPage() {
   const [tone, setTone] = useState('any')
   const [format, setFormat] = useState('narrative')
   const [isIdeateDialogOpen, setIsIdeateDialogOpen] = useState(false)
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false)
   const [isResonancePanelOpen, setIsResonancePanelOpen] = useState(false)
   
   // Get initial analysis from series if available
@@ -756,7 +760,7 @@ export default function SeriesStudioPage() {
                   className={directionActionClass}
                   aria-pressed={isEditStorylineOpen}
                 >
-                  Series Direction
+                  Series Director
                 </Button>
               ) : null}
               <Button
@@ -769,12 +773,31 @@ export default function SeriesStudioPage() {
                   ? `Audience Resonance · ${resonanceAnalysis.greenlightScore.score}`
                   : 'Audience Resonance'}
               </Button>
-              <Button
-                onClick={() => setIsIdeateDialogOpen(true)}
-                className="bg-amber-500 text-gray-950 hover:bg-amber-400"
-              >
-                {bible?.synopsis ? 'Regenerate storyline' : 'Generate storyline'}
-              </Button>
+              {bible?.synopsis ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setIsResetConfirmOpen(true)}
+                        className={idleActionClass}
+                        aria-label="Reset Series"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Reset Series</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <Button
+                  onClick={() => setIsIdeateDialogOpen(true)}
+                  className="bg-amber-500 text-gray-950 hover:bg-amber-400"
+                >
+                  Generate storyline
+                </Button>
+              )}
             </div>
           </div>
 
@@ -841,6 +864,9 @@ export default function SeriesStudioPage() {
               onReshapeEpisode={(episodeNumber, instruction) => {
                 void handleEditStoryline({ targetEpisodes: [episodeNumber], instruction })
               }}
+              userId={userId}
+              isDirecting={isEditingStoryline}
+              onConnected={refreshSeries}
             />
           </TabsContent>
 
@@ -876,6 +902,31 @@ export default function SeriesStudioPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={isResetConfirmOpen} onOpenChange={setIsResetConfirmOpen}>
+        <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset Series?</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              This replaces the series bible and episode list. Projects already started on those episodes will be unlinked. Use Series Director to edit the storyline without starting over.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setIsResetConfirmOpen(false)} className="border-gray-600">
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                setIsResetConfirmOpen(false)
+                setIsIdeateDialogOpen(true)
+              }}
+              className="bg-amber-500 text-gray-950 hover:bg-amber-400"
+            >
+              Continue
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Ideate Dialog */}
       <Dialog open={isIdeateDialogOpen} onOpenChange={handleIdeateDialogOpenChange}>
@@ -1688,6 +1739,9 @@ interface EpisodesPanelProps {
   isAddingEpisodes: boolean
   onEditEpisode?: (episodeNumber: number) => void
   onReshapeEpisode?: (episodeNumber: number, instruction: string) => void
+  userId?: string | null
+  isDirecting?: boolean
+  onConnected?: () => Promise<unknown> | void
 }
 
 type EpisodeStatusFilter = 'all' | 'blueprint' | 'in_progress' | 'completed'
@@ -1704,9 +1758,16 @@ function EpisodesPanel({
   isStarting,
   isAddingEpisodes,
   onEditEpisode,
-  onReshapeEpisode
+  onReshapeEpisode,
+  userId,
+  isDirecting = false,
+  onConnected,
 }: EpisodesPanelProps) {
   const [statusFilter, setStatusFilter] = useState<EpisodeStatusFilter>('all')
+  const [connectEpisodeId, setConnectEpisodeId] = useState<string | null>(null)
+  const [connectProjects, setConnectProjects] = useState<Array<{ id: string; title: string; preferred: boolean }>>([])
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false)
+  const [isConnecting, setIsConnecting] = useState(false)
   const [sortBy, setSortBy] = useState<EpisodeSort>('episode')
   const [episodeDirection, setEpisodeDirection] = useState('')
 
@@ -1781,6 +1842,49 @@ function EpisodesPanel({
       }
     }
   }, [selectedEpisodeId])
+
+  const openConnect = async (episodeId: string) => {
+    if (!userId) {
+      toast.error('Sign in to connect a project')
+      return
+    }
+    setConnectEpisodeId(episodeId)
+    setIsLoadingProjects(true)
+    try {
+      const response = await fetch(
+        `/api/series/${seriesId}/episodes/${episodeId}/link?userId=${encodeURIComponent(userId)}`
+      )
+      const data = await response.json()
+      if (!data.success) throw new Error(data.error || 'Failed to list projects')
+      setConnectProjects(data.projects || [])
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to list projects')
+      setConnectEpisodeId(null)
+    } finally {
+      setIsLoadingProjects(false)
+    }
+  }
+
+  const connectProject = async (projectId: string) => {
+    if (!userId || !connectEpisodeId) return
+    setIsConnecting(true)
+    try {
+      const response = await fetch(`/api/series/${seriesId}/episodes/${connectEpisodeId}/link`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, projectId }),
+      })
+      const data = await response.json()
+      if (!data.success) throw new Error(data.error || 'Failed to connect project')
+      toast.success('Connected the project to this episode')
+      setConnectEpisodeId(null)
+      await onConnected?.()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to connect project')
+    } finally {
+      setIsConnecting(false)
+    }
+  }
 
   const handlePlayAudio = async () => {
     if (isPlaying) {
@@ -1977,6 +2081,16 @@ function EpisodesPanel({
                     Start Project
                   </Button>
                 )}
+                {!selectedEpisode.projectId && (
+                  <Button
+                    variant="outline"
+                    onClick={() => void openConnect(selectedEpisode.id)}
+                    className="border-white/25 text-gray-200 hover:bg-white/5"
+                  >
+                    <Link2 className="w-4 h-4 mr-2" />
+                    Connect existing project
+                  </Button>
+                )}
                 {selectedEpisode.projectId && (
                   <Link href={`/dashboard/studio/${selectedEpisode.projectId}`}>
                     <Button className="bg-blue-600 hover:bg-blue-700">
@@ -2026,6 +2140,36 @@ function EpisodesPanel({
                 </div>
               </div>
             </div>
+
+            {(() => {
+              const drift = getEpisodeDriftWarnings(selectedEpisode, bible ?? null)
+              if (drift.length === 0) return null
+              return (
+                <div className="mb-6 rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex gap-2">
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-orange-400" />
+                      <div className="space-y-1">
+                        {drift.map((warning) => (
+                          <p key={warning} className="text-sm text-orange-100">{warning}</p>
+                        ))}
+                      </div>
+                    </div>
+                    {onReshapeEpisode ? (
+                      <Button
+                        size="sm"
+                        disabled={isDirecting}
+                        onClick={() => onReshapeEpisode(selectedEpisode.episodeNumber, UPDATE_EPISODE_CAST_INSTRUCTION)}
+                        className="shrink-0 bg-orange-500 text-gray-950 hover:bg-orange-400"
+                      >
+                        {isDirecting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Update cast
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* Synopsis */}
             <div className="mb-6">
@@ -2110,6 +2254,42 @@ function EpisodesPanel({
             <p className="text-gray-500 text-sm">Click on an episode to view its details and beats.</p>
           </div>
         )}
+
+        <Dialog open={Boolean(connectEpisodeId)} onOpenChange={(open) => { if (!open) setConnectEpisodeId(null) }}>
+          <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-md">
+            <DialogHeader>
+              <DialogTitle>Connect existing project</DialogTitle>
+              <DialogDescription className="text-gray-400">
+                The project title and description are updated from this episode blueprint. Its reference library is connected to the series cast instead of copied.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="max-h-72 space-y-2 overflow-y-auto">
+              {isLoadingProjects ? (
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading projects
+                </div>
+              ) : connectProjects.length === 0 ? (
+                <p className="text-sm text-gray-400">No available projects to connect.</p>
+              ) : (
+                connectProjects.map((project) => (
+                  <button
+                    key={project.id}
+                    type="button"
+                    disabled={isConnecting}
+                    onClick={() => void connectProject(project.id)}
+                    className="flex w-full items-center justify-between gap-3 rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-left hover:border-amber-500/40 disabled:opacity-60"
+                  >
+                    <span className="truncate text-sm text-white">{project.title}</span>
+                    {project.preferred ? (
+                      <span className="shrink-0 text-xs text-amber-300">This series</span>
+                    ) : null}
+                  </button>
+                ))
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Voice Selector Dialog */}
         <VoiceSelectionDialog
