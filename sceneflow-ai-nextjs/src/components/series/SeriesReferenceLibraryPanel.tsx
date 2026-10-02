@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import {
-  BookOpen,
   Users,
   MapPin,
   Package,
@@ -37,7 +36,9 @@ import {
 } from '@/lib/series/seriesHealth'
 import {
   resolveLibraryImage,
-  type ProductionReferenceImages,
+  selectEpisodeReferences,
+  type DisplayReference,
+  type ReferenceGroups,
 } from '@/lib/series/referenceTransfer'
 
 interface EpisodeProjectOption {
@@ -83,25 +84,39 @@ export function SeriesReferenceLibraryPanel({
   const [exportOpen, setExportOpen] = useState(false)
   const [userProjects, setUserProjects] = useState<Array<{ id: string; title: string }>>([])
   const [loadingProjects, setLoadingProjects] = useState(false)
-  const [productionImages, setProductionImages] = useState<ProductionReferenceImages>({
-    characters: {},
-    locations: {},
-    props: {},
-  })
+  const emptyGroups = useMemo<ReferenceGroups>(
+    () => ({ characters: [], locations: [], props: [] }),
+    []
+  )
+  const [libraryGroups, setLibraryGroups] = useState<ReferenceGroups>(emptyGroups)
+  const [productionByProject, setProductionByProject] = useState<Record<string, ReferenceGroups>>({})
+  const [selectedEpisodeId, setSelectedEpisodeId] = useState('')
 
   useEffect(() => {
     let cancelled = false
     fetch(`/api/series/${seriesId}/production-references`)
       .then((response) => response.json())
       .then((data) => {
-        if (cancelled || !data.success || !data.images) return
-        setProductionImages(data.images)
+        if (cancelled || !data.success) return
+        setLibraryGroups(data.library || emptyGroups)
+        setProductionByProject(data.byProjectId || {})
       })
       .catch(() => {})
     return () => {
       cancelled = true
     }
-  }, [seriesId])
+  }, [seriesId, emptyGroups])
+
+  const orderedEpisodes = useMemo(
+    () => [...episodeBlueprints].sort((a, b) => a.episodeNumber - b.episodeNumber),
+    [episodeBlueprints]
+  )
+
+  useEffect(() => {
+    if (!selectedEpisodeId && orderedEpisodes[0]) {
+      setSelectedEpisodeId(orderedEpisodes[0].id)
+    }
+  }, [orderedEpisodes, selectedEpisodeId])
 
   useEffect(() => {
     if (!userId) return
@@ -157,39 +172,71 @@ export function SeriesReferenceLibraryPanel({
     ? new Date(bible.lastUpdated).toLocaleDateString()
     : null
 
+  const selectedBlueprint =
+    orderedEpisodes.find((episode) => episode.id === selectedEpisodeId) || orderedEpisodes[0]
+  const seriesGroups = useMemo<ReferenceGroups>(
+    () => ({
+      characters: (bible?.characters || []).map((character) => ({
+        id: character.id,
+        name: character.name,
+        role: character.role,
+        description: character.description,
+        imageUrl: character.referenceImageUrl,
+      })),
+      locations: (bible?.locations || []).map((location) => ({
+        id: location.id,
+        name: location.name,
+        description: location.description,
+        imageUrl: location.referenceImageUrl,
+      })),
+      props: (bible?.props || []).map((prop) => ({
+        id: prop.id,
+        name: prop.name,
+        description: prop.description,
+        imageUrl: prop.referenceImageUrl,
+      })),
+    }),
+    [bible]
+  )
+  const episodeView = useMemo(
+    () =>
+      selectEpisodeReferences({
+        production: selectedBlueprint?.projectId
+          ? productionByProject[selectedBlueprint.projectId] || emptyGroups
+          : emptyGroups,
+        library: libraryGroups,
+        series: seriesGroups,
+        episodeCharacterIds: (selectedBlueprint?.characters || []).map((character) => character.characterId),
+      }),
+    [selectedBlueprint, productionByProject, libraryGroups, seriesGroups, emptyGroups]
+  )
+  const castForEpisode = episodeView.characters.map(toSeriesCharacter)
+  const locationsForEpisode = episodeView.locations.map(toSeriesLocation)
+  const propsForEpisode = episodeView.props.map(toSeriesProp)
+
   const subTabs: { key: RefSubTab; label: string; icon: React.ReactNode; count: number }[] = [
-    { key: 'cast', label: 'Cast', icon: <Users className="w-3.5 h-3.5" />, count: bible?.characters?.length || 0 },
+    { key: 'cast', label: 'Cast', icon: <Users className="w-3.5 h-3.5" />, count: castForEpisode.length },
     {
       key: 'locations',
       label: 'Locations',
       icon: <MapPin className="w-3.5 h-3.5" />,
-      count: bible?.locations?.length || 0,
+      count: locationsForEpisode.length,
     },
-    { key: 'props', label: 'Objects', icon: <Package className="w-3.5 h-3.5" />, count: bible?.props?.length || 0 },
+    { key: 'props', label: 'Objects', icon: <Package className="w-3.5 h-3.5" />, count: propsForEpisode.length },
     { key: 'settings', label: 'Settings', icon: <Palette className="w-3.5 h-3.5" />, count: bible?.aesthetic ? 1 : 0 },
   ]
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-amber-500/20 bg-gradient-to-r from-amber-500/5 to-orange-500/5 p-5">
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="w-11 h-11 rounded-xl bg-amber-500/20 flex items-center justify-center border border-amber-500/30">
-              <BookOpen className="w-5 h-5 text-amber-400" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-white">Reference Library</h2>
-              <p className="text-sm text-gray-400">{seriesTitle}</p>
-              <p className="text-xs text-gray-500 mt-1">
-                {bible?.version ? `v${bible.version}` : 'v1.0.0'}
-                {lastUpdated ? ` · Updated ${lastUpdated}` : ''}
-              </p>
-              <p className="text-xs text-gray-500 mt-2 max-w-xl">
-                Shared cast, locations, and objects for this series. Assets are authored in Production
-                Studio and synced here — use Edit in Production to iterate, not this panel.
-              </p>
-            </div>
-          </div>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-sm font-bold text-white">Reference Library</h2>
+          <p className="mt-1 text-sm text-gray-400">
+            {seriesTitle}
+            {bible?.version ? ` · v${bible.version}` : ''}
+            {lastUpdated ? ` · Updated ${lastUpdated}` : ''}
+          </p>
+        </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center shrink-0">
             <Button
               onClick={() => setImportOpen(true)}
@@ -229,8 +276,29 @@ export function SeriesReferenceLibraryPanel({
               </>
             ) : null}
           </div>
-        </div>
       </div>
+
+      {orderedEpisodes.length > 0 ? (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {orderedEpisodes.map((episode) => {
+            const active = episode.id === (selectedBlueprint?.id || '')
+            return (
+              <button
+                key={episode.id}
+                type="button"
+                onClick={() => setSelectedEpisodeId(episode.id)}
+                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold ${
+                  active
+                    ? 'border-amber-400 bg-amber-500/15 text-amber-100'
+                    : 'border-white/15 text-gray-300 hover:border-white/30'
+                }`}
+              >
+                EP {episode.episodeNumber}
+              </button>
+            )
+          })}
+        </div>
+      ) : null}
 
       <ProductTabList
         tabs={subTabs.map((t) => ({
@@ -246,27 +314,27 @@ export function SeriesReferenceLibraryPanel({
 
       {subTab === 'cast' && (
         <SeriesCastSection
-          characters={bible?.characters || []}
+          characters={castForEpisode}
           episodeBlueprints={episodeBlueprints}
-          productionImages={productionImages.characters}
+          productionImages={{}}
           onRegenerate={onRegenerateCharacters}
           isGenerating={isGenerating}
         />
       )}
       {subTab === 'locations' && (
         <SeriesLocationsSection
-          locations={bible?.locations || []}
+          locations={locationsForEpisode}
           episodeBlueprints={episodeBlueprints}
-          productionImages={productionImages.locations}
+          productionImages={{}}
           onRegenerate={onRegenerateLocations}
           isGenerating={isGenerating}
         />
       )}
       {subTab === 'props' && (
         <SeriesPropsSection
-          props={bible?.props || []}
+          props={propsForEpisode}
           episodeBlueprints={episodeBlueprints}
-          productionImages={productionImages.props}
+          productionImages={{}}
         />
       )}
       {subTab === 'settings' && (
@@ -306,6 +374,41 @@ export function SeriesReferenceLibraryPanel({
   )
 }
 
+function toSeriesCharacter(asset: DisplayReference): SeriesCharacterResponse {
+  return {
+    id: asset.id,
+    name: asset.name,
+    role: (asset.role as SeriesCharacterResponse['role']) || 'supporting',
+    description: asset.description || '',
+    appearance: '',
+    referenceImageUrl: asset.imageUrl,
+    createdAt: '',
+    updatedAt: '',
+  }
+}
+
+function toSeriesLocation(asset: DisplayReference): SeriesLocationResponse {
+  return {
+    id: asset.id,
+    name: asset.name,
+    description: asset.description || '',
+    referenceImageUrl: asset.imageUrl,
+    createdAt: '',
+    updatedAt: '',
+  }
+}
+
+function toSeriesProp(asset: DisplayReference): SeriesProp {
+  return {
+    id: asset.id,
+    name: asset.name,
+    description: asset.description || '',
+    referenceImageUrl: asset.imageUrl,
+    createdAt: '',
+    updatedAt: '',
+  }
+}
+
 function SeriesCastSection({
   characters,
   episodeBlueprints,
@@ -323,7 +426,7 @@ function SeriesCastSection({
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-xl font-bold text-white">Cast</h3>
+          <h3 className="text-sm font-bold text-white">Cast</h3>
           <p className="text-sm text-gray-500">
             Characters with reference image, wardrobe, and voice
           </p>
@@ -408,7 +511,7 @@ function SeriesLocationsSection({
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-xl font-bold text-white">Locations</h3>
+          <h3 className="text-sm font-bold text-white">Locations</h3>
           <p className="text-sm text-gray-500">Recurring environments in the series</p>
         </div>
         <Button
@@ -469,7 +572,7 @@ function SeriesPropsSection({
   return (
     <div>
       <div className="mb-6">
-        <h3 className="text-xl font-bold text-white">Objects</h3>
+        <h3 className="text-sm font-bold text-white">Objects</h3>
         <p className="text-sm text-gray-500">Named objects with cross-episode continuity</p>
       </div>
       {props.length > 0 ? (

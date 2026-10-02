@@ -6,10 +6,8 @@ import type {
   SeriesResonanceAnalysis,
 } from '@/types/series'
 import {
-  computeBibleCompleteness,
   computeContinuityStats,
   computeSlateStats,
-  formatResonanceFreshness,
 } from '@/lib/series/seriesHealth'
 
 export type SeriesHealthTab = 'overview' | 'episodes' | 'continuity' | 'reference-library'
@@ -18,7 +16,6 @@ interface SeriesHeroHealthStripProps {
   bible: SeriesProductionBible | null | undefined
   episodes: EpisodeBlueprintResponse[]
   resonanceAnalysis: SeriesResonanceAnalysis | null
-  resonanceAnalyzedAt?: string | null
   onNavigate: (tab: SeriesHealthTab) => void
   onAnalyzeResonance: () => void
 }
@@ -27,14 +24,21 @@ export function SeriesHeroHealthStrip({
   bible,
   episodes,
   resonanceAnalysis,
-  resonanceAnalyzedAt,
   onNavigate,
   onAnalyzeResonance,
 }: SeriesHeroHealthStripProps) {
-  const bibleHealth = computeBibleCompleteness(bible)
   const continuity = computeContinuityStats(bible)
   const slate = computeSlateStats(episodes)
-  const resonance = formatResonanceFreshness(resonanceAnalysis, resonanceAnalyzedAt)
+
+  const resonanceScore = resonanceAnalysis?.greenlightScore?.score
+  const resonanceScoreClass =
+    resonanceScore == null
+      ? 'text-gray-400'
+      : resonanceScore >= 90
+        ? 'text-emerald-400'
+        : resonanceScore >= 70
+          ? 'text-amber-400'
+          : 'text-red-400'
 
   const chips: Array<{
     id: string
@@ -42,17 +46,19 @@ export function SeriesHeroHealthStrip({
     detail: string
     tab?: SeriesHealthTab
     action?: () => void
+    score?: number
   }> = [
     {
-      id: 'bible',
-      label: 'Series Bible',
-      detail: `${bibleHealth.filled} of ${bibleHealth.total} fields`,
-      tab: 'continuity',
+      id: 'episodes',
+      label: 'Active Episodes',
+      detail: `${slate.inProgress} of ${slate.total}`,
+      tab: 'episodes',
     },
     {
       id: 'resonance',
-      label: 'Resonance',
-      detail: resonance.label,
+      label: 'Audience Resonance',
+      detail: '',
+      score: resonanceScore,
       action: onAnalyzeResonance,
     },
     {
@@ -79,7 +85,13 @@ export function SeriesHeroHealthStrip({
           className="rounded-xl border border-white/10 bg-gray-900/50 p-4 text-left transition-colors hover:bg-gray-900"
         >
           <p className="text-xs font-medium text-gray-400">{chip.label}</p>
-          <p className="mt-1 text-sm text-white">{chip.detail}</p>
+          {chip.id === 'resonance' ? (
+            <p className={`mt-1 text-sm font-bold ${resonanceScoreClass}`}>
+              {chip.score ?? 'Not analyzed'}
+            </p>
+          ) : (
+            <p className="mt-1 text-sm text-white">{chip.detail}</p>
+          )}
         </button>
       ))}
     </div>

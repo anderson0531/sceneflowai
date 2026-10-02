@@ -359,22 +359,27 @@ export function SeriesResonancePanel({
       </div>
       
       <div className="rounded-xl border border-white/10 bg-slate-900/40 p-4">
-        <button
-          type="button"
-          onClick={() => setAudienceExpanded((open) => !open)}
-          className="flex w-full items-center justify-between text-left"
-          aria-expanded={audienceExpanded}
-        >
-          <span className="text-sm font-bold text-white">Target audience</span>
-          <ChevronDown
-            className={`h-4 w-4 text-gray-400 transition-transform ${audienceExpanded ? 'rotate-180' : ''}`}
-          />
-        </button>
-        {!audienceExpanded ? (
-          <p className="mt-2 line-clamp-2 text-xs text-gray-500">
-            {targetAudience.trim() || 'Describe the audience before running Audience Resonance.'}
-          </p>
-        ) : (
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-white">Target audience</p>
+            {!audienceExpanded ? (
+              <p className="mt-2 line-clamp-2 text-xs text-gray-500">
+                {targetAudience.trim() || 'Describe the audience before running Audience Resonance.'}
+              </p>
+            ) : null}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setAudienceExpanded((open) => !open)}
+            aria-expanded={audienceExpanded}
+            className="shrink-0 border-white/20 text-gray-200"
+          >
+            {audienceExpanded ? 'Done' : 'Edit audience'}
+          </Button>
+        </div>
+        {audienceExpanded ? (
           <div className="mt-4 space-y-6 text-left">
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-400">Target Audience</label>
@@ -417,7 +422,7 @@ export function SeriesResonancePanel({
               </div>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Error Display */}

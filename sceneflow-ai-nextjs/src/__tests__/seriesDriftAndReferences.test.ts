@@ -5,6 +5,7 @@ import { getEpisodeDriftWarnings } from '@/lib/series/seriesHealth'
 import {
   collectProductionReferenceImages,
   resolveLibraryImage,
+  selectEpisodeReferences,
 } from '@/lib/series/referenceTransfer'
 import type { EpisodeBlueprintResponse, SeriesProductionBible } from '@/types/series'
 
@@ -93,6 +94,67 @@ describe('production reference images', () => {
     expect(resolveLibraryImage('Maya', 'https://cdn.example/series.jpg', {})).toBe(
       'https://cdn.example/series.jpg'
     )
+  })
+})
+
+describe('selectEpisodeReferences', () => {
+  const series = {
+    characters: [{ id: 'char-maya', name: 'Maya', imageUrl: 'https://cdn.example/series-maya.jpg' }],
+    locations: [{ id: 'loc-1', name: 'Apartment', imageUrl: 'https://cdn.example/series-apt.jpg' }],
+    props: [],
+  }
+  const library = {
+    characters: [{ id: 'lib-maya', name: 'Maya', imageUrl: 'https://cdn.example/library-maya.jpg' }],
+    locations: [],
+    props: [],
+  }
+
+  it('shows Production assets when the episode has pictures', () => {
+    const view = selectEpisodeReferences({
+      production: {
+        characters: [
+          {
+            id: 'ep-maya',
+            name: 'Maya',
+            imageUrl: 'https://cdn.example/episode-maya.jpg',
+            libraryAssetId: 'lib-maya',
+          },
+        ],
+        locations: [],
+        props: [],
+      },
+      library,
+      series,
+      episodeCharacterIds: ['char-maya'],
+    })
+    expect(view.source).toBe('production')
+    expect(view.characters[0].imageUrl).toBe('https://cdn.example/episode-maya.jpg')
+  })
+
+  it('uses the shared library picture for a recurring character without an episode image', () => {
+    const view = selectEpisodeReferences({
+      production: {
+        characters: [{ id: 'ep-maya', name: 'Maya', libraryAssetId: 'lib-maya' }],
+        locations: [],
+        props: [],
+      },
+      library,
+      series,
+    })
+    expect(view.source).toBe('series')
+    expect(view.characters[0].imageUrl).toBe('https://cdn.example/library-maya.jpg')
+  })
+
+  it('falls back to the series bible when Production has no images', () => {
+    const view = selectEpisodeReferences({
+      production: { characters: [], locations: [], props: [] },
+      library: { characters: [], locations: [], props: [] },
+      series,
+      episodeCharacterIds: ['char-maya'],
+    })
+    expect(view.source).toBe('series')
+    expect(view.characters[0].imageUrl).toBe('https://cdn.example/series-maya.jpg')
+    expect(view.locations[0].name).toBe('Apartment')
   })
 })
 

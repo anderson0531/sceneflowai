@@ -112,6 +112,7 @@ export default function SeriesPage() {
       const newSeries = await createSeries({
         userId,
         title: workingTitle || 'Untitled Series',
+        maxEpisodes: episodeCount,
         targetAudience: hasAudience ? audienceDef.description.trim() : undefined,
         metadata: {
           ideaTopic,
@@ -407,16 +408,13 @@ export default function SeriesPage() {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Number of Episodes
                 </label>
-                <Select value={String(episodeCount)} onValueChange={(v) => setEpisodeCount(Number(v))}>
-                  <SelectTrigger className="bg-gray-800 border-gray-700 focus:border-cyan-500/50">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700">
-                    {[5, 8, 10, 12, 15, 20].map((n) => (
-                      <SelectItem key={n} value={String(n)}>{n} episodes</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  type="number"
+                  min={1}
+                  value={episodeCount}
+                  onChange={(event) => setEpisodeCount(Math.max(1, Number(event.target.value) || 1))}
+                  className="bg-gray-800 border-gray-700 text-white"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">

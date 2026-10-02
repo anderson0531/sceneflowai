@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import '@/models' // Import all models to register associations
-import { Series, DEFAULT_MAX_EPISODES, ABSOLUTE_MAX_EPISODES } from '@/models/Series'
+import { Series, DEFAULT_MAX_EPISODES } from '@/models/Series'
 import { Project } from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { resolveUser } from '@/lib/userHelper'
@@ -172,23 +172,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
     }
     
-    // Validate maxEpisodes with soft/hard limits
     let validatedMaxEpisodes = DEFAULT_MAX_EPISODES
     if (maxEpisodes !== undefined) {
       const requestedMax = Number(maxEpisodes)
-      if (requestedMax > ABSOLUTE_MAX_EPISODES) {
+      if (!Number.isFinite(requestedMax) || requestedMax < 1) {
         return NextResponse.json({
           success: false,
-          error: `Maximum episode limit is ${ABSOLUTE_MAX_EPISODES}`,
-          requestedMaxEpisodes: requestedMax,
-          absoluteMax: ABSOLUTE_MAX_EPISODES
+          error: 'Episode count must be at least 1',
         }, { status: 400 })
       }
-      if (requestedMax > DEFAULT_MAX_EPISODES) {
-        // Allow but warn - client should have shown confirmation
-        console.log(`[${timestamp}] [POST /api/series] User requested ${requestedMax} episodes (above soft limit of ${DEFAULT_MAX_EPISODES})`)
-      }
-      validatedMaxEpisodes = Math.max(1, Math.min(ABSOLUTE_MAX_EPISODES, requestedMax))
+      validatedMaxEpisodes = Math.floor(requestedMax)
     }
     
     // Validate episode blueprints count

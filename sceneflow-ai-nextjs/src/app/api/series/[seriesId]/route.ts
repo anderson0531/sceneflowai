@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import '@/models'
-import { Series, ABSOLUTE_MAX_EPISODES, SeriesEpisodeBlueprint } from '@/models/Series'
+import { Series, SeriesEpisodeBlueprint } from '@/models/Series'
 import { Project } from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { resolveUser } from '@/lib/userHelper'
@@ -115,21 +115,13 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     
     if (maxEpisodes !== undefined) {
       const newMax = Number(maxEpisodes)
-      if (newMax > ABSOLUTE_MAX_EPISODES) {
+      if (!Number.isFinite(newMax) || newMax < 1) {
         return NextResponse.json({
           success: false,
-          error: `Maximum episode limit is ${ABSOLUTE_MAX_EPISODES}`
+          error: 'Episode count must be at least 1',
         }, { status: 400 })
       }
-      // Check if reducing below current episode count
-      const currentCount = series.episode_blueprints?.length || 0
-      if (newMax < currentCount) {
-        return NextResponse.json({
-          success: false,
-          error: `Cannot reduce max episodes below current count (${currentCount})`
-        }, { status: 400 })
-      }
-      updates.max_episodes = Math.max(1, newMax)
+      updates.max_episodes = Math.floor(newMax)
     }
     
     // Merge reference library (partial update)
@@ -145,13 +137,6 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     
     // Replace episode blueprints (full replacement)
     if (episodeBlueprints !== undefined) {
-      const max = updates.max_episodes || series.max_episodes
-      if (episodeBlueprints.length > max) {
-        return NextResponse.json({
-          success: false,
-          error: `Episode blueprints (${episodeBlueprints.length}) exceed max episodes (${max})`
-        }, { status: 400 })
-      }
       updates.episode_blueprints = episodeBlueprints
     }
     
