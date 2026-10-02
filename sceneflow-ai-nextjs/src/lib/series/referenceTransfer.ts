@@ -2,6 +2,7 @@
  * Asset-level reference library transfer between Series production_bible and Project visionPhase.
  */
 
+import { toCanonicalName } from '@/lib/character/canonical'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
 import type {
   SeriesCharacter,
@@ -93,6 +94,20 @@ export interface ReferenceTransferDiff {
     updatedCount: number
     skippedCount: number
   }
+}
+
+function sameAssetName(a?: string, b?: string): boolean {
+  const left = toCanonicalName(a || '')
+  const right = toCanonicalName(b || '')
+  return Boolean(left) && left === right
+}
+
+function matchExisting<T extends { id: string; name?: string }>(
+  items: T[],
+  id: string,
+  name?: string
+): T | undefined {
+  return items.find((item) => item.id === id) || items.find((item) => sameAssetName(item.name, name))
 }
 
 function incrementVersion(version: string): string {
@@ -235,6 +250,15 @@ export function extractLocationsFromProject(metadata: Record<string, any>): Seri
     }
   }
   return locations
+}
+
+export function projectReferenceSelection(metadata: Record<string, any>): ReferenceAssetSelection {
+  const proj = getProjectReferences(metadata)
+  return {
+    characterIds: proj.characters.map((character) => character.id).filter(Boolean),
+    locationIds: extractLocationsFromProject(metadata).map((location) => location.id).filter(Boolean),
+    propIds: proj.objectReferences.map((prop) => prop.id).filter(Boolean),
+  }
 }
 
 export type ProductionReferenceImages = {
@@ -671,15 +695,16 @@ function mergeCharacters(
       incoming.wardrobes = incoming.wardrobes.filter((w) => wids.includes(w.id))
     }
 
-    const existing = bibleMap.get(pc.id)
+    const existing = matchExisting(merged, pc.id, incoming.name)
+    const matchedByName = Boolean(existing && existing.id !== pc.id)
     if (!existing) {
       merged.push(incoming)
       changes.added.push(incoming)
-    } else if (strategy === 'add_new_only') {
+    } else if (strategy === 'add_new_only' && !matchedByName) {
       continue
     } else {
       const updatedFields: string[] = []
-      const next = { ...existing }
+      const next = { ...existing, id: existing.id, name: existing.name }
       if (incoming.appearance && incoming.appearance !== existing.appearance) {
         next.appearance = incoming.appearance
         updatedFields.push('appearance')
@@ -709,9 +734,9 @@ function mergeCharacters(
       }
       if (updatedFields.length > 0) {
         next.updatedAt = new Date().toISOString()
-        const idx = merged.findIndex((c) => c.id === pc.id)
+        const idx = merged.findIndex((c) => c.id === existing.id)
         merged[idx] = next
-        changes.updated.push({ id: pc.id, fields: updatedFields })
+        changes.updated.push({ id: existing.id, fields: updatedFields })
       }
     }
   }
@@ -729,16 +754,16 @@ function mergeLocations(
   const selectedSet = new Set(selectedIds)
   const toMerge = projectLocs.filter((l) => selectedSet.has(l.id))
   let merged = strategy === 'replace' ? [] : [...bibleLocs]
-  const bibleMap = new Map(merged.map((l) => [l.id, l]))
 
   for (const pl of toMerge) {
-    const existing = bibleMap.get(pl.id)
+    const existing = matchExisting(merged, pl.id, pl.name)
+    const matchedByName = Boolean(existing && existing.id !== pl.id)
     if (!existing) {
       merged.push(pl)
       changes.added.push(pl)
-    } else if (strategy === 'merge') {
+    } else if ((strategy === 'merge' || matchedByName) && strategy !== 'replace') {
       const updatedFields: string[] = []
-      const next = { ...existing }
+      const next = { ...existing, id: existing.id, name: existing.name }
       if (pl.referenceImageUrl && pl.referenceImageUrl !== existing.referenceImageUrl) {
         next.referenceImageUrl = pl.referenceImageUrl
         updatedFields.push('referenceImageUrl')
@@ -749,9 +774,9 @@ function mergeLocations(
       }
       if (updatedFields.length > 0) {
         next.updatedAt = new Date().toISOString()
-        const idx = merged.findIndex((l) => l.id === pl.id)
+        const idx = merged.findIndex((l) => l.id === existing.id)
         merged[idx] = next
-        changes.updated.push({ id: pl.id, fields: updatedFields })
+        changes.updated.push({ id: existing.id, fields: updatedFields })
       }
     }
   }
@@ -768,25 +793,29 @@ function mergeProps(
   const selectedSet = new Set(selectedIds)
   const toMerge = projectProps.filter((p) => selectedSet.has(p.id))
   let merged = strategy === 'replace' ? [] : [...bibleProps]
-  const bibleMap = new Map(merged.map((p) => [p.id, p]))
 
   for (const pp of toMerge) {
-    if (!bibleMap.has(pp.id)) {
+    const existing = matchExisting(merged, pp.id, pp.name)
+    const matchedByName = Boolean(existing && existing.id !== pp.id)
+    if (!existing) {
       merged.push(pp)
       changes.added.push(pp)
-    } else if (strategy === 'merge') {
-      const existing = bibleMap.get(pp.id)!
+    } else if ((strategy === 'merge' || matchedByName) && strategy !== 'replace') {
       const updatedFields: string[] = []
-      const next = { ...existing }
+      const next = { ...existing, id: existing.id, name: existing.name }
       if (pp.referenceImageUrl && pp.referenceImageUrl !== existing.referenceImageUrl) {
         next.referenceImageUrl = pp.referenceImageUrl
         updatedFields.push('referenceImageUrl')
       }
+      if (pp.description && pp.description !== existing.description) {
+        next.description = pp.description
+        updatedFields.push('description')
+      }
       if (updatedFields.length > 0) {
         next.updatedAt = new Date().toISOString()
-        const idx = merged.findIndex((p) => p.id === pp.id)
+        const idx = merged.findIndex((p) => p.id === existing.id)
         merged[idx] = next
-        changes.updated.push({ id: pp.id, fields: updatedFields })
+        changes.updated.push({ id: existing.id, fields: updatedFields })
       }
     }
   }
