@@ -6,6 +6,7 @@ import { CreditGrantCard } from '@/components/admin/CreditGrantCard'
 import { CreditRecalculateCard } from '@/components/admin/CreditRecalculateCard'
 import { FinanceReportCard } from '@/components/admin/FinanceReportCard'
 import { LaunchEmailCard } from '@/components/admin/LaunchEmailCard'
+import { ModelVersionsCard } from '@/components/admin/ModelVersionsCard'
 import { PricingRateCard } from '@/components/admin/PricingRateCard'
 
 export const dynamic = 'force-dynamic'
@@ -30,6 +31,7 @@ export default async function AdminPage() {
 
       {/* Admin Function Cards */}
       <div className="grid grid-cols-1 gap-6">
+        <ModelVersionsCard />
         <PricingRateCard />
         <FinanceReportCard />
         <CreditGrantCard />
