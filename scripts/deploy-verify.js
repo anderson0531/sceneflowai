@@ -118,7 +118,7 @@ async function main() {
       const heroVideoOk =
         Array.isArray(heroVideoLocales) &&
         heroVideoLocales.join(',') === 'en,es,pt,hi,zh,ar,th' &&
-        heroVideo.englishBlob === 'SceneFlow Hero Video.mp4' &&
+        heroVideo.englishBlob === 'Hero Video (English).mp4' &&
         heroVideo.spanishBlob === 'Hero Video (Spanish).mp4' &&
         heroVideo.portugueseBlob === 'Hero Video (Portuguese).mp4' &&
         heroVideo.hindiBlob === 'Hero Video (Hindi).mp4' &&

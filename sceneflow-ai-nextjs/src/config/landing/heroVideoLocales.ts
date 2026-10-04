@@ -79,7 +79,7 @@ export function getHeroVideoFallbackMp4Url(locale: HeroVideoLocaleId): string | 
 
 /** Blob master filename for each locale once produced. */
 export const HERO_VIDEO_BLOB_PATHS: Record<HeroVideoLocaleId, string> = {
-  en: 'SceneFlow Hero Video.mp4',
+  en: 'Hero Video (English).mp4',
   es: 'Hero Video (Spanish).mp4',
   pt: 'Hero Video (Portuguese).mp4',
   hi: 'Hero Video (Hindi).mp4',
@@ -130,12 +130,25 @@ export const DEFAULT_HERO_VIDEO_LOCALE: HeroVideoLocaleId = 'en'
 /** Site-public progressive files for the full-viewport hero player. */
 export const HERO_PUBLIC_POSTER_FALLBACK = '/images/hero-poster.webp'
 
+/**
+ * Query added when a locale's public hero file changes but the path stays the same.
+ * The previous Blob response was cached for 30 days.
+ */
+const HERO_PUBLIC_MEDIA_VERSION: Partial<Record<HeroVideoLocaleId, string>> = {
+  en: '20261004',
+}
+
+function withHeroMediaVersion(path: string, locale: HeroVideoLocaleId): string {
+  const version = HERO_PUBLIC_MEDIA_VERSION[locale]
+  return version ? `${path}?v=${version}` : path
+}
+
 export function getHeroPublicWebmUrl(locale: HeroVideoLocaleId): string {
-  return `/videos/hero-${locale}.webm`
+  return withHeroMediaVersion(`/videos/hero-${locale}.webm`, locale)
 }
 
 export function getHeroPublicMp4Url(locale: HeroVideoLocaleId): string {
-  return `/videos/hero-${locale}.mp4`
+  return withHeroMediaVersion(`/videos/hero-${locale}.mp4`, locale)
 }
 
 export function getHeroPublicPosterUrl(locale: HeroVideoLocaleId): string {

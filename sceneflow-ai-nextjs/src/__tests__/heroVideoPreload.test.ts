@@ -74,9 +74,9 @@ describe('hero video CDN config', () => {
     })
 
     expect(mobile?.mp4Src).toContain('sceneflow-hero-en-720p.mp4')
-    expect(mobile?.mp4SrcFallback).toContain('SceneFlow%20Hero%20Video.mp4')
+    expect(mobile?.mp4SrcFallback).toContain('Hero%20Video%20(English).mp4')
     expect(desktop?.mp4Src).toContain('sceneflow-hero-en-1080p.mp4')
-    expect(desktop?.mp4SrcFallback).toContain('SceneFlow%20Hero%20Video.mp4')
+    expect(desktop?.mp4SrcFallback).toContain('Hero%20Video%20(English).mp4')
   })
 
   it('treats Save-Data and slow networks as lean even on desktop', () => {

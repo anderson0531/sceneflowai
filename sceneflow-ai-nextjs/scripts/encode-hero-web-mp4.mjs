@@ -35,7 +35,7 @@ const BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
 
 /** Must match HERO_VIDEO_BLOB_PATHS in src/config/landing/heroVideoLocales.ts */
 export const LOCALE_SOURCE_PATHS = {
-  en: 'SceneFlow Hero Video.mp4',
+  en: 'Hero Video (English).mp4',
   es: 'Hero Video (Spanish).mp4',
   pt: 'Hero Video (Portuguese).mp4',
   hi: 'Hero Video (Hindi).mp4',

@@ -53,7 +53,7 @@ const POSTER_TIMESTAMP = '00:00:02'
 
 /** Must match HERO_VIDEO_BLOB_PATHS in src/config/landing/heroVideoLocales.ts */
 const MASTERS = {
-  en: 'SceneFlow Hero Video.mp4',
+  en: 'Hero Video (English).mp4',
   es: 'Hero Video (Spanish).mp4',
   pt: 'Hero Video (Portuguese).mp4',
   hi: 'Hero Video (Hindi).mp4',
