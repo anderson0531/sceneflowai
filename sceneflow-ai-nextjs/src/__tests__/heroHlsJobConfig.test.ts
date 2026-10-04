@@ -38,7 +38,7 @@ describe('hero HLS Transcoder job', () => {
 describe('hero web-encode script paths', () => {
   it('downloads the live 4K Blob masters, not the unused English 720p cut', () => {
     expect(LOCALE_SOURCE_PATHS).toEqual(HERO_VIDEO_BLOB_PATHS)
-    expect(LOCALE_SOURCE_PATHS.en).toBe('SceneFlow Hero Video.mp4')
+    expect(LOCALE_SOURCE_PATHS.en).toBe('Hero Video (English).mp4')
     expect(WEB_ENCODE_PATHS[720]).toEqual(HERO_VIDEO_WEB_720P_PATHS)
   })
 })

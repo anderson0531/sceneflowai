@@ -27,7 +27,7 @@ describe('Hero video locales', () => {
     const available = getAvailableHeroVideoLocales().map((locale) => locale.id)
 
     expect(available).toEqual(VIDEO_LOCALE_ORDER)
-    expect(getDefaultHeroVideoSrc()).toContain('SceneFlow%20Hero%20Video.mp4')
+    expect(getDefaultHeroVideoSrc()).toContain('Hero%20Video%20(English).mp4')
     expect(getHeroVideoLocale('es')?.src).toContain('Hero%20Video%20(Spanish).mp4')
     expect(getHeroVideoLocale('pt')?.src).toContain('Hero%20Video%20(Portuguese).mp4')
     expect(getHeroVideoLocale('hi')?.src).toContain('Hero%20Video%20(Hindi).mp4')
@@ -46,7 +46,7 @@ describe('Hero video locales', () => {
   })
 
   it('reserves predictable Blob paths for hero dubs', () => {
-    expect(HERO_VIDEO_BLOB_PATHS.en).toBe('SceneFlow Hero Video.mp4')
+    expect(HERO_VIDEO_BLOB_PATHS.en).toBe('Hero Video (English).mp4')
     expect(HERO_VIDEO_BLOB_PATHS.es).toBe('Hero Video (Spanish).mp4')
     expect(HERO_VIDEO_BLOB_PATHS.pt).toBe('Hero Video (Portuguese).mp4')
     expect(HERO_VIDEO_BLOB_PATHS.hi).toBe('Hero Video (Hindi).mp4')
@@ -84,8 +84,12 @@ describe('public hero playback sources', () => {
   it('points every locale at same-origin WebM + MP4 paths and a localized poster', () => {
     for (const locale of HERO_VIDEO_LOCALES) {
       const sources = getHeroPublicVideoSources(locale.id)
-      expect(sources.webmSrc).toBe(`/videos/hero-${locale.id}.webm`)
-      expect(sources.mp4Src).toBe(`/videos/hero-${locale.id}.mp4`)
+      expect(sources.webmSrc).toBe(
+        locale.id === 'en' ? '/videos/hero-en.webm?v=20261004' : `/videos/hero-${locale.id}.webm`
+      )
+      expect(sources.mp4Src).toBe(
+        locale.id === 'en' ? '/videos/hero-en.mp4?v=20261004' : `/videos/hero-${locale.id}.mp4`
+      )
       expect(sources.poster).toBe(`/images/hero-poster-${locale.id}.webp`)
     }
     expect(HERO_PUBLIC_POSTER_FALLBACK).toBe('/images/hero-poster.webp')
@@ -99,6 +103,9 @@ describe('public hero playback sources', () => {
     expect(config).toContain('sceneflow-hero-:locale.webm')
     expect(config).toContain('sceneflow-hero-:locale-1080p.mp4')
     expect(config).not.toContain('sceneflow-hero-:locale.mp4')
+    expect(config).toContain('const blobHeroLocales = "es|pt|hi|zh|ar|th"')
+    expect(config).toContain('hero-:locale(${blobHeroLocales}).webm')
+    expect(config).toContain('hero-:locale(${blobHeroLocales}).mp4')
   })
 
   it('uploads latest WebM and 1080p MP4 from the 4K masters, not the watermarked files', () => {
