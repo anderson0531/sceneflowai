@@ -1,9 +1,10 @@
-Hero video files are **not** committed here, except the English and Spanish landing cuts. Vercel NFT packed `public/videos/*.mp4` into serverless functions (618MB vs 250MB limit). `outputFileTracingExcludes` keeps `*.webm` and `*.mp4` out of serverless functions.
+Hero video files are **not** committed here, except the English, Spanish, and Portuguese landing cuts. Vercel NFT packed `public/videos/*.mp4` into serverless functions (618MB vs 250MB limit). `outputFileTracingExcludes` keeps `*.webm` and `*.mp4` out of serverless functions.
 
 The player requests:
 
 - `/videos/hero-en.webm` and `/videos/hero-en.mp4` — committed files from Blob `Hero Video (English).mp4`. These paths are not rewritten.
 - `/videos/hero-es.webm` and `/videos/hero-es.mp4` — committed files from Blob `Hero Video (Spanish).mp4`. These paths are not rewritten.
+- `/videos/hero-pt.webm` and `/videos/hero-pt.mp4` — committed files from Blob `Hero Video (Portuguese).mp4`. These paths are not rewritten.
 - `/videos/hero-{lang}.webm` for other locales — rewritten to Blob `landing/hero/sceneflow-hero-{lang}.webm` (1080p VP9 from the live master)
 - `/videos/hero-{lang}.mp4` for other locales — rewritten to Blob `landing/hero/sceneflow-hero-{lang}-1080p.mp4` (Safari / MP4 fallback)
 

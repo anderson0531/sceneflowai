@@ -5,9 +5,27 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Loader2, Pause, Play, Volume2, VolumeX, X } from 'lucide-react'
 import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import { getModalVideoPreload } from '@/lib/landing/videoPreload'
+import {
+  enterPhoneVideoFullscreen,
+  isPhoneViewport,
+} from '@/lib/landing/phoneVideoFullscreen'
 import { cn } from '@/lib/utils'
 import type { TwoModesMediaEntry, TwoModesVideoLocale } from '@/config/landing/twoModesMedia'
 import type { VideoLocaleId } from '@/config/landing/videoLocales'
+
+/** Phones play the inline video natively so it can rotate to landscape. */
+export function openTwoModesOnPhoneOrTheater(
+  video: HTMLVideoElement | null,
+  openModal: () => void
+): boolean {
+  if (video && isPhoneViewport()) {
+    video.muted = false
+    if (enterPhoneVideoFullscreen(video)) return true
+  }
+  if (video) video.muted = true
+  openModal()
+  return false
+}
 
 type TwoModesTheaterModalProps = {
   open: boolean
