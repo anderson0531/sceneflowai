@@ -86,6 +86,7 @@ describe('hero section copy and UI', () => {
       'utf8'
     )
     const theater = readFileSync(join(ROOT, 'src/components/landing/HeroTheaterModal.tsx'), 'utf8')
+    const hero = readFileSync(join(ROOT, 'src/app/components/HeroSection.tsx'), 'utf8')
 
     expect(background).toContain('type="video/webm"')
     expect(background).toContain('type="video/mp4"')
@@ -98,5 +99,7 @@ describe('hero section copy and UI', () => {
     expect(theater).toContain('getHeroPublicVideoSources')
     expect(theater).toContain('type="video/webm"')
     expect(theater).not.toContain('useAdaptiveVideoSource')
+    expect(hero).toContain('enterPhoneVideoFullscreen')
+    expect(hero).toContain('isPhoneViewport')
   })
 })

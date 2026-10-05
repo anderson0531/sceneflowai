@@ -103,9 +103,35 @@ describe('shouldShowInstallOffer', () => {
 })
 
 describe('app update prompt', () => {
-  it('shows only while a newer worker is waiting', () => {
-    expect(shouldShowAppUpdatePrompt(false)).toBe(false)
-    expect(shouldShowAppUpdatePrompt(true)).toBe(true)
+  it('shows only in the installed app while a newer worker is waiting', () => {
+    expect(
+      shouldShowAppUpdatePrompt({
+        hasWaitingWorker: false,
+        standalone: true,
+        dismissed: false,
+      })
+    ).toBe(false)
+    expect(
+      shouldShowAppUpdatePrompt({
+        hasWaitingWorker: true,
+        standalone: false,
+        dismissed: false,
+      })
+    ).toBe(false)
+    expect(
+      shouldShowAppUpdatePrompt({
+        hasWaitingWorker: true,
+        standalone: true,
+        dismissed: true,
+      })
+    ).toBe(false)
+    expect(
+      shouldShowAppUpdatePrompt({
+        hasWaitingWorker: true,
+        standalone: true,
+        dismissed: false,
+      })
+    ).toBe(true)
   })
 
   it('recognizes the old phone worker that must not stay in control', () => {
@@ -136,6 +162,9 @@ describe('app update prompt', () => {
     expect(worker).toContain('skipWaiting: false')
     expect(update).toContain('messageSkipWaiting')
     expect(update).toContain("addEventListener('waiting'")
+    expect(update).toContain('display-mode: standalone')
+    expect(update).toContain('Not now')
+    expect(update).toContain('APP_UPDATE_DISMISS_KEY')
     expect(nextConfig).toContain('destination: "/serwist/sw.js"')
     expect(swRoute).toContain("swSrc: 'src/sw.ts'")
     expect(registration).toContain("type: 'module'")

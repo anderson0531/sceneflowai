@@ -6,7 +6,7 @@
   "display": "standalone",
   "background_color": "#050A18",
   "theme_color": "#050A18",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "scope": "/",
   "lang": "en",
   "categories": ["productivity", "video", "ai", "creativity"],

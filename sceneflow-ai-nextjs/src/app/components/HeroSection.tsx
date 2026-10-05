@@ -32,6 +32,10 @@ import { NotifyCapture } from '@/components/landing/NotifyCapture'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { getVideoPreloadStrategy, type VideoPreloadValue } from '@/lib/landing/videoPreload'
 import { readHeroNetworkContext } from '@/lib/landing/heroPlaybackPolicy'
+import {
+  enterPhoneVideoFullscreen,
+  isPhoneViewport,
+} from '@/lib/landing/phoneVideoFullscreen'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 function readUnmuteDismissed(): boolean {
@@ -121,6 +125,12 @@ export function HeroSection() {
 
   const openTheater = useCallback(() => {
     const video = videoRef.current
+    if (video && isPhoneViewport()) {
+      video.muted = false
+      setIsMuted(false)
+      setShowUnmutePrompt(false)
+      if (enterPhoneVideoFullscreen(video)) return
+    }
     if (video) {
       video.muted = true
     }

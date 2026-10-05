@@ -5,7 +5,10 @@ import { motion } from 'framer-motion'
 import { ArrowRight, Loader2, Maximize2, Pause, Play, Volume2, VolumeX } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
-import { TwoModesTheaterModal } from '@/components/landing/TwoModesTheaterModal'
+import {
+  openTwoModesOnPhoneOrTheater,
+  TwoModesTheaterModal,
+} from '@/components/landing/TwoModesTheaterModal'
 import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import type { TwoModesMediaEntry, TwoModesVideoLocale } from '@/config/landing/twoModesMedia'
 import type { VideoLocaleId } from '@/config/landing/videoLocales'
@@ -143,9 +146,11 @@ export function PrimaryValueBackdrop({
   }
 
   const openTheater = useCallback(() => {
-    const video = videoRef.current
-    if (video) video.muted = true
-    setIsTheaterOpen(true)
+    const openedNative = openTwoModesOnPhoneOrTheater(videoRef.current, () => setIsTheaterOpen(true))
+    if (openedNative) {
+      setIsMuted(false)
+      setShowUnmutePrompt(false)
+    }
   }, [])
 
   const closeTheater = useCallback(() => {
