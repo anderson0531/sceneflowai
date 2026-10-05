@@ -35,11 +35,13 @@ google-cloud-cli*.tar.gz
 
 # Hero video encodes are served from Vercel Blob via next.config rewrites.
 # Shipping them in public/ made serverless NFT 618MB (limit 250MB).
-# English landing cut is committed: public/videos/hero-en.webm and hero-en.mp4.
+# English and Spanish landing cuts are committed under public/videos/.
 /public/videos/*.mp4
 /public/videos/*.webm
 !/public/videos/hero-en.webm
 !/public/videos/hero-en.mp4
+!/public/videos/hero-es.webm
+!/public/videos/hero-es.mp4
 
 # debug
 npm-debug.log*

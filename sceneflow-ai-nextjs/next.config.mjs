@@ -121,9 +121,10 @@ const nextConfig = {
   },
   async rewrites() {
     const blob = "https://xxavfkdhdebrqida.public.blob.vercel-storage.com";
-    // English WebM and 1080p MP4 are committed under public/videos/. Leaving
-    // them out of these rewrites keeps /videos/hero-en.* on those files.
-    const blobHeroLocales = "es|pt|hi|zh|ar|th";
+    // English and Spanish WebM and 1080p MP4 are committed under public/videos/.
+    // Leaving them out of these rewrites keeps /videos/hero-en.* and
+    // /videos/hero-es.* on those files.
+    const blobHeroLocales = "pt|hi|zh|ar|th";
     return [
       {
         source: "/sw.js",
