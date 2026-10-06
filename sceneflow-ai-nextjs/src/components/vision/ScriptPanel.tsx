@@ -18,7 +18,7 @@ import { useTranslations } from 'next-intl'
 import { ASSISTANT } from '@/lib/constants/assistant'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Trash2, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2, GalleryHorizontal } from 'lucide-react'
+import { FileText, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Trash2, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2, GalleryHorizontal } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import {
@@ -4490,16 +4490,10 @@ function SceneCard({
     | 'mixer'
     | 'streams'
   const [activeSceneTab, setActiveSceneTab] = useState<ProductionWorkflowTab>('direction')
-  const sceneWorkflowSectionLabel: Record<ProductionWorkflowTab, string> = {
-    direction: 'Direction',
-    beats: 'Script',
-    music: 'Music',
-    references: 'References',
-    previs: 'Stills',
-    video: 'Clips',
-    mixer: 'Mixer',
-    streams: 'Streams',
-  }
+  const sceneToolbarControl =
+    'h-8 px-2.5 text-xs rounded-md inline-flex items-center gap-1.5 transition-colors disabled:opacity-50'
+  const sceneTabTriggerClass =
+    'inline-flex h-8 items-center gap-1.5 px-2.5 py-0 text-xs font-medium text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-sm data-[state=active]:font-bold data-[state=active]:text-white'
 
   const sceneBeatsForTabs = useMemo(() => getSceneBeats(scene), [scene])
   const [directBeatId, setDirectBeatId] = useState<string | null>(null)
@@ -5772,13 +5766,13 @@ function SceneCard({
           </div>
         )}
 
-        {/* Scene Title, Score, and Description */}
-        <div 
-          className="mt-2 flex items-start justify-between cursor-pointer hover:bg-white/5 -mx-2 px-2 py-1 rounded-lg transition-colors"
-          onClick={toggleOpen}
-        >
-          <div className="flex flex-col gap-1 min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
+        {/* Scene title, then one action row: score, recommendations, Polish, Scene Director, language, Scene Agent */}
+        <div className="mt-2 flex flex-col gap-1.5">
+          {!sceneTitleCollapsed && (
+            <div
+              className="flex items-start gap-2 min-w-0 cursor-pointer hover:bg-white/5 -mx-2 px-2 py-1 rounded-lg transition-colors"
+              onClick={toggleOpen}
+            >
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -5791,114 +5785,141 @@ function SceneCard({
                       className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors shrink-0"
                       aria-expanded={!sceneTitleCollapsed}
                       aria-controls="production-studio-scene-title production-studio-scene-description"
-                      aria-label={sceneTitleCollapsed ? tStudio('showSceneTitle') : tStudio('hideSceneTitle')}
-                      title={sceneTitleCollapsed ? tStudio('showSceneTitle') : tStudio('hideSceneTitle')}
+                      aria-label={tStudio('hideSceneTitle')}
+                      title={tStudio('hideSceneTitle')}
                     >
-                      {sceneTitleCollapsed ? (
-                        <ChevronDown className="w-4 h-4" />
-                      ) : (
-                        <ChevronUp className="w-4 h-4" />
-                      )}
+                      <ChevronUp className="w-4 h-4" />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                    {sceneTitleCollapsed ? tStudio('showSceneTitle') : tStudio('hideSceneTitle')}
+                    {tStudio('hideSceneTitle')}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              {!sceneTitleCollapsed && (
+              <div className="min-w-0 flex-1">
                 <p id="production-studio-scene-title" className="text-xl font-semibold text-white leading-tight">
                   SCENE {sceneNumber}: {formattedHeading}
                 </p>
+                {sceneDescriptionText && (
+                  <p id="production-studio-scene-description" className="text-sm text-slate-400 leading-relaxed pr-4">
+                    {sceneDescriptionText}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {(sceneTitleCollapsed || !isOutline) && (
+            <div
+              className={`flex flex-wrap items-center gap-2 ${sceneTitleCollapsed ? 'cursor-pointer' : ''}`}
+              onClick={sceneTitleCollapsed ? toggleOpen : undefined}
+            >
+              {sceneTitleCollapsed && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSceneTitleCollapsed?.(!sceneTitleCollapsed)
+                        }}
+                        className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors shrink-0"
+                        aria-expanded={!sceneTitleCollapsed}
+                        aria-controls="production-studio-scene-title production-studio-scene-description"
+                        aria-label={tStudio('showSceneTitle')}
+                        title={tStudio('showSceneTitle')}
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                      {tStudio('showSceneTitle')}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
-            
-            {/* Audience Resonance Analysis Badge - Integrated from ScriptReviewModal */}
-            {!isOutline && (
-              <div className="flex items-center gap-2">
-                {scene.audienceAnalysis?.score !== undefined ? (
-                  <>
-                    {/* Audience Analysis Score Badge */}
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span
-                            className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg font-semibold border shadow-sm ${
-                              scene.audienceAnalysis.score >= 80 
-                                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50' 
-                                : scene.audienceAnalysis.score >= 60 
-                                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50' 
-                                  : 'bg-rose-500/20 text-rose-300 border-rose-400/50'
-                            }`}
-                          >
-                            <Users className="w-3.5 h-3.5" />
-                            <span className="tabular-nums">{scene.audienceAnalysis.score}</span>
-                            {scene.audienceAnalysis.previousScore !== undefined && scene.audienceAnalysis.previousScore !== scene.audienceAnalysis.score && (() => {
-                              const delta = scene.audienceAnalysis.score - scene.audienceAnalysis.previousScore!
-                              return (
-                                <span className={`text-[10px] font-bold tabular-nums ${delta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                  {delta > 0 ? `▲+${delta}` : `▼${delta}`}
-                                </span>
-                              )
-                            })()}
-                            {hasHighImpactIssue && (
-                              <span className="flex items-center justify-center ml-0.5 h-4 px-1.5 text-[9px] font-bold uppercase tracking-wide bg-rose-500/30 text-rose-200 border border-rose-400/50 rounded-full">
-                                High impact
-                              </span>
-                            )}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-900/95 backdrop-blur-sm text-white border border-gray-700/50 max-w-xs shadow-xl">
-                          <div className="space-y-2 p-1">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-semibold">Audience Resonance: {scene.audienceAnalysis.score}/100</p>
+
+              {!isOutline && (
+                <>
+                  <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    {scene.audienceAnalysis?.score !== undefined ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span
+                              className={`${sceneToolbarControl} font-semibold border ${
+                                scene.audienceAnalysis.score >= 80
+                                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50'
+                                  : scene.audienceAnalysis.score >= 60
+                                    ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50'
+                                    : 'bg-rose-500/20 text-rose-300 border-rose-400/50'
+                              }`}
+                            >
+                              <Users className="w-3.5 h-3.5" />
+                              <span className="tabular-nums">{scene.audienceAnalysis.score}</span>
                               {scene.audienceAnalysis.previousScore !== undefined && scene.audienceAnalysis.previousScore !== scene.audienceAnalysis.score && (() => {
                                 const delta = scene.audienceAnalysis.score - scene.audienceAnalysis.previousScore!
                                 return (
-                                  <span className={`text-xs font-bold ${delta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                    ({delta > 0 ? `+${delta}` : delta} from {scene.audienceAnalysis.previousScore})
+                                  <span className={`text-[10px] font-bold tabular-nums ${delta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                    {delta > 0 ? `▲+${delta}` : `▼${delta}`}
                                   </span>
                                 )
                               })()}
+                              {hasHighImpactIssue && (
+                                <span className="flex items-center justify-center h-4 px-1.5 text-[9px] font-bold uppercase tracking-wide bg-rose-500/30 text-rose-200 border border-rose-400/50 rounded-full">
+                                  High impact
+                                </span>
+                              )}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-900/95 backdrop-blur-sm text-white border border-gray-700/50 max-w-xs shadow-xl">
+                            <div className="space-y-2 p-1">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-semibold">Audience Resonance: {scene.audienceAnalysis.score}/100</p>
+                                {scene.audienceAnalysis.previousScore !== undefined && scene.audienceAnalysis.previousScore !== scene.audienceAnalysis.score && (() => {
+                                  const delta = scene.audienceAnalysis.score - scene.audienceAnalysis.previousScore!
+                                  return (
+                                    <span className={`text-xs font-bold ${delta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                      ({delta > 0 ? `+${delta}` : delta} from {scene.audienceAnalysis.previousScore})
+                                    </span>
+                                  )
+                                })()}
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-700/50 text-gray-300">
+                                  Pacing: {scene.audienceAnalysis.pacing}
+                                </span>
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-700/50 text-gray-300">
+                                  Tension: {scene.audienceAnalysis.tension}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-gray-400 leading-relaxed">{scene.audienceAnalysis.notes}</p>
                             </div>
-                            <div className="flex flex-wrap gap-1.5">
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-700/50 text-gray-300">
-                                Pacing: {scene.audienceAnalysis.pacing}
-                              </span>
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-700/50 text-gray-300">
-                                Tension: {scene.audienceAnalysis.tension}
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-gray-400 leading-relaxed">{scene.audienceAnalysis.notes}</p>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    
-                    {/* Optimize and Re-analyze buttons moved to expandable recommendations panel for cleaner header */}
-                  </>
-                ) : (
-                  /* No analysis yet - show Analyze and Edit buttons */
-                  <div className="flex items-center gap-1.5">
-                    {onAnalyzeScene && (
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : onAnalyzeScene ? (
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
+                              type="button"
                               onClick={(e) => {
                                 e.stopPropagation()
                                 onAnalyzeScene(sceneIdx)
                               }}
                               disabled={analyzingSceneIndex === sceneIdx}
-                              className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg font-medium border transition-all bg-indigo-500/20 text-indigo-300 border-indigo-400/50 hover:bg-indigo-500/30 hover:border-indigo-400/70 disabled:opacity-50 shadow-sm"
+                              className={`${sceneToolbarControl} font-medium border border-indigo-400/50 bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 hover:border-indigo-400/70`}
                             >
                               {analyzingSceneIndex === sceneIdx ? (
                                 <>
-                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                   <span>Analyzing...</span>
                                 </>
                               ) : (
                                 <>
-                                  <Users className="w-3 h-3" />
+                                  <Users className="w-3.5 h-3.5" />
                                   <span>Analyze</span>
                                 </>
                               )}
@@ -5909,138 +5930,164 @@ function SceneCard({
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
+                    ) : null}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onRecommendationsOpenChange?.(true)
+                            }}
+                            className={`${sceneToolbarControl} font-medium border border-violet-400/50 bg-violet-500/20 text-violet-200 hover:bg-violet-500/30 hover:border-violet-400/70`}
+                          >
+                            <Lightbulb className="w-3.5 h-3.5" />
+                            <span>{tStudio('recommendations')}</span>
+                            {pendingRecommendationCount(scene.audienceAnalysis, scene.polishAnalysis) > 0 && (
+                              <span className="flex items-center justify-center h-4 min-w-4 px-1 text-[10px] font-bold bg-violet-500/40 text-violet-100 rounded-full tabular-nums">
+                                {pendingRecommendationCount(scene.audienceAnalysis, scene.polishAnalysis)}
+                              </span>
+                            )}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-900 text-white border border-gray-700">
+                          <p className="text-xs">{tStudio('recommendationsTooltip')}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+
+                  <div className="ml-auto flex flex-wrap items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                    {onPolishScene && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                void handlePolishClick()
+                              }}
+                              disabled={polishingSceneIndex === sceneIdx}
+                              className={`${sceneToolbarControl} font-medium border border-emerald-400/60 text-emerald-200 hover:bg-emerald-900/30`}
+                            >
+                              {polishingSceneIndex === sceneIdx ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Sparkles className="w-3.5 h-3.5" />
+                              )}
+                              {tStudio('polish')}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                            {tStudio('polishRunTooltip')}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
                     {onEditScene && (
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
+                              type="button"
                               onClick={(e) => {
                                 e.stopPropagation()
                                 onEditScene(sceneIdx)
                               }}
-                              className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg font-medium border transition-all bg-gray-700/40 text-gray-300 border-gray-600/50 hover:bg-gray-700/60 hover:border-gray-500/70 hover:text-white shadow-sm"
+                              className={`${sceneToolbarControl} font-medium border border-blue-400/60 text-blue-200 hover:bg-blue-900/30`}
                             >
-                              <Pencil className="w-3 h-3" />
-                              <span>Direct Scene</span>
+                              <Pencil className="w-3.5 h-3.5" />
+                              Scene Director
                             </button>
                           </TooltipTrigger>
-                          <TooltipContent className="bg-gray-900 text-white border border-gray-700">
-                            <p className="text-xs">{ASSISTANT.tooltip}</p>
+                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                            {ASSISTANT.tooltip}
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     )}
-                  </div>
-                )}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onRecommendationsOpenChange?.(true)
-                        }}
-                        className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg font-medium border transition-all bg-violet-500/20 text-violet-200 border-violet-400/50 hover:bg-violet-500/30 hover:border-violet-400/70 shadow-sm"
-                      >
-                        <Lightbulb className="w-3 h-3" />
-                        <span>{tStudio('recommendations')}</span>
-                        {pendingRecommendationCount(scene.audienceAnalysis, scene.polishAnalysis) > 0 && (
-                          <span className="flex items-center justify-center h-4 min-w-4 px-1 text-[10px] font-bold bg-violet-500/40 text-violet-100 rounded-full tabular-nums">
-                            {pendingRecommendationCount(scene.audienceAnalysis, scene.polishAnalysis)}
-                          </span>
-                        )}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-gray-900 text-white border border-gray-700">
-                      <p className="text-xs">{tStudio('recommendationsTooltip')}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            )}
-            </div>
-            {!sceneTitleCollapsed && sceneDescriptionText && (
-              <p id="production-studio-scene-description" className="text-sm text-slate-400 leading-relaxed pr-4">
-                {sceneDescriptionText}
-              </p>
-            )}
-          </div>
-          
-          {/* Generate All — audio + frames in parallel */}
-          {!isOutline && activeStep && (
-            <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                {(() => {
-                  const voicesReady = productionReadiness?.isAudioReady ?? true
-                  const hasNarrationVoice = productionReadiness?.hasNarrationVoice ?? true
-                  const missingVoices = productionReadiness?.charactersMissingVoices || []
-                  const laneBusy = isExpressAudioRunning || !!isExpressRunning
-                  const canOpen =
-                    !laneBusy &&
-                    voicesReady &&
-                    hasNarrationVoice &&
-                    (!!onExpressSceneGenerate || expressAudioItems.length > 0)
-                  const isDisabled = !canOpen
-
-                  const button = (
-                    <Button
-                      type="button"
+                    <GroupedLanguageSelector
+                      value={selectedLanguage}
+                      onValueChange={(code) => onLanguageChange?.(code)}
                       size="sm"
-                      variant="outline"
-                      className="h-7 text-xs border-sky-400/60 text-sky-200 hover:bg-sky-900/30"
-                      disabled={isDisabled}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (canOpen) setExpressGenerateAllDialogOpen(true)
-                      }}
-                    >
-                      {laneBusy ? (
-                        <>
-                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                          Scene Agent...
-                        </>
-                      ) : (
-                        <>
-                          <Zap className="w-3 h-3 mr-1" />
-                          Scene Agent
-                          {(!voicesReady || !hasNarrationVoice) && (
-                            <span className="ml-1 text-amber-400">⚠</span>
+                      intent="generate"
+                      placeholder="Generate language..."
+                      className="border-slate-600 bg-transparent text-slate-200"
+                    />
+                    {/* Generate All — audio + frames in parallel */}
+                    {activeStep && (() => {
+                      const voicesReady = productionReadiness?.isAudioReady ?? true
+                      const hasNarrationVoice = productionReadiness?.hasNarrationVoice ?? true
+                      const missingVoices = productionReadiness?.charactersMissingVoices || []
+                      const laneBusy = isExpressAudioRunning || !!isExpressRunning
+                      const canOpen =
+                        !laneBusy &&
+                        voicesReady &&
+                        hasNarrationVoice &&
+                        (!!onExpressSceneGenerate || expressAudioItems.length > 0)
+                      const isDisabled = !canOpen
+
+                      const button = (
+                        <button
+                          type="button"
+                          disabled={isDisabled}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (canOpen) setExpressGenerateAllDialogOpen(true)
+                          }}
+                          className={`${sceneToolbarControl} font-medium bg-sky-600 text-white hover:bg-sky-500`}
+                        >
+                          {laneBusy ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              Scene Agent...
+                            </>
+                          ) : (
+                            <>
+                              <Zap className="w-3.5 h-3.5" />
+                              Scene Agent
+                              {(!voicesReady || !hasNarrationVoice) && (
+                                <span className="text-amber-200">⚠</span>
+                              )}
+                            </>
                           )}
-                        </>
-                      )}
-                    </Button>
-                  )
+                        </button>
+                      )
 
-                  if (!voicesReady || !hasNarrationVoice) {
-                    return (
-                      <TooltipProvider delayDuration={200}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>{button}</TooltipTrigger>
-                          <TooltipContent side="bottom" className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-xs">
-                            <div className="space-y-1">
-                              <p className="font-medium text-amber-400 flex items-center gap-1.5">
-                                <AlertTriangle className="w-3.5 h-3.5" />
-                                Voice Setup Required
-                              </p>
-                              {!hasNarrationVoice && (
-                                <p className="text-xs text-gray-300">• Assign a narrator voice</p>
-                              )}
-                              {missingVoices.length > 0 && (
-                                <p className="text-xs text-gray-300">
-                                  • Assign voices to: {missingVoices.slice(0, 3).join(', ')}
-                                  {missingVoices.length > 3 && ` +${missingVoices.length - 3} more`}
-                                </p>
-                              )}
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )
-                  }
+                      if (!voicesReady || !hasNarrationVoice) {
+                        return (
+                          <TooltipProvider delayDuration={200}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>{button}</TooltipTrigger>
+                              <TooltipContent side="bottom" className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-xs">
+                                <div className="space-y-1">
+                                  <p className="font-medium text-amber-400 flex items-center gap-1.5">
+                                    <AlertTriangle className="w-3.5 h-3.5" />
+                                    Voice Setup Required
+                                  </p>
+                                  {!hasNarrationVoice && (
+                                    <p className="text-xs text-gray-300">• Assign a narrator voice</p>
+                                  )}
+                                  {missingVoices.length > 0 && (
+                                    <p className="text-xs text-gray-300">
+                                      • Assign voices to: {missingVoices.slice(0, 3).join(', ')}
+                                      {missingVoices.length > 3 && ` +${missingVoices.length - 3} more`}
+                                    </p>
+                                  )}
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )
+                      }
 
-                  return button
-                })()}
+                      return button
+                    })()}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -6263,105 +6310,29 @@ function SceneCard({
                 
                 {(
                   <div className="space-y-4">
-                  {/* Quick Actions Bar */}
-                  <div className="sticky top-0 z-10 p-2 -mx-4 -mt-4 mb-4 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 flex items-center justify-end">
-                    <div className="flex items-center gap-2 mr-2">
-                      {!isOutline && onPolishScene && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  void handlePolishClick()
-                                }}
-                                disabled={polishingSceneIndex === sceneIdx}
-                                className="px-3 py-1.5 text-xs font-medium rounded-md flex items-center gap-1.5 transition-all shadow-sm bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50"
-                              >
-                                {polishingSceneIndex === sceneIdx ? (
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                ) : (
-                                  <Sparkles className="w-3 h-3" />
-                                )}
-                                {tStudio('polish')}
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                              {tStudio('polishRunTooltip')}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                      {/* Edit Script Button */}
-                      {!isOutline && onEditScene && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  onEditScene(sceneIdx)
-                                }}
-                                className="px-3 py-1.5 text-xs font-medium rounded-md flex items-center gap-1.5 transition-all shadow-sm bg-blue-600 hover:bg-blue-500 text-white"
-                              >
-                                <Edit className="w-3 h-3" />
-                                Direct Scene
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">{ASSISTANT.tooltip}</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                      {/* Audio generation has moved to the "Generate Audio" button in the Scene Beats card */}
-                      {/* Language Stream Selector */}
-                      <div className="flex items-center gap-1.5">
-                        <GroupedLanguageSelector
-                          value={selectedLanguage}
-                          onValueChange={(code) => onLanguageChange?.(code)}
-                          size="xs"
-                          intent="generate"
-                          placeholder="Generate language..."
-                          className="bg-gray-800 border-blue-500/30 text-gray-200"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Scene Emotional Context Header */}
-                  {(scene.sceneDirection?.mood || scene.mood || scene.sceneDirection?.tone || scene.tone || scene.sceneDirection?.pacing || scene.pacing) && (
-                    <div className="p-3 bg-gradient-to-r from-indigo-900/30 via-purple-900/20 to-fuchsia-900/20 rounded-lg border border-indigo-500/30">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Sparkles className="w-4 h-4 text-indigo-400" />
-                        <span className="text-xs font-semibold text-indigo-200">Scene Context</span>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {(scene.sceneDirection?.mood || scene.mood) && (
-                          <div className="flex flex-col gap-1">
-                            <span className="text-[10px] uppercase tracking-wider text-indigo-400/70">Mood</span>
-                            <span className="text-sm text-white/90 font-medium">{scene.sceneDirection?.mood || scene.mood}</span>
-                          </div>
-                        )}
-                        {(scene.sceneDirection?.intent || scene.objective) && (
-                          <div className="flex flex-col gap-1">
-                            <span className="text-[10px] uppercase tracking-wider text-purple-400/70">Intent</span>
-                            <span className="text-sm text-white/90 font-medium truncate">{scene.sceneDirection?.intent || scene.objective}</span>
-                          </div>
-                        )}
-                        {(scene.sceneDirection?.pacing || scene.pacing) && (
-                          <div className="flex flex-col gap-1">
-                            <span className="text-[10px] uppercase tracking-wider text-fuchsia-400/70">Pacing</span>
-                            <span className="text-sm text-white/90 font-medium capitalize">{scene.sceneDirection?.pacing || scene.pacing}</span>
-                          </div>
-                        )}
-                        {(scene.sceneDirection?.tone || scene.tone) && (
-                          <div className="flex flex-col gap-1">
-                            <span className="text-[10px] uppercase tracking-wider text-amber-400/70">Tone</span>
-                            <span className="text-sm text-white/90 font-medium">{scene.sceneDirection?.tone || scene.tone}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  {(() => {
+                    const mood = scene.sceneDirection?.mood || scene.mood
+                    const intent = scene.sceneDirection?.intent || scene.objective
+                    const pacing = scene.sceneDirection?.pacing || scene.pacing
+                    const tone = scene.sceneDirection?.tone || scene.tone
+                    const contextBits = [
+                      mood ? { label: 'Mood', value: String(mood) } : null,
+                      intent ? { label: 'Intent', value: String(intent) } : null,
+                      pacing ? { label: 'Pacing', value: String(pacing), capitalize: true } : null,
+                      tone ? { label: 'Tone', value: String(tone) } : null,
+                    ].filter((bit): bit is { label: string; value: string; capitalize?: boolean } => bit !== null)
+                    if (contextBits.length === 0) return null
+                    return (
+                      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
+                        {contextBits.map((bit) => (
+                          <span key={bit.label} className="inline-flex min-w-0 items-center gap-1">
+                            <span className="text-[10px] uppercase tracking-wide text-slate-500">{bit.label}</span>
+                            <span className={`truncate text-slate-300 ${bit.capitalize ? 'capitalize' : ''}`}>{bit.value}</span>
+                          </span>
+                        ))}
+                      </p>
+                    )
+                  })()}
 
                   {(() => {
                     const workflowSceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
@@ -6465,63 +6436,60 @@ function SceneCard({
                       <div className="overflow-x-auto rounded-lg border border-indigo-500/40 bg-slate-950">
                         <TabsList
                           aria-label="Scene workflow"
-                          className="inline-flex h-auto w-max min-w-full flex-nowrap gap-0.5 border-0 bg-transparent p-1 text-slate-400"
+                          className="inline-flex h-auto w-max min-w-full flex-nowrap items-center gap-0.5 border-0 bg-transparent p-1 text-slate-400"
                         >
-                          <TabsTrigger value="direction" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+                          <TabsTrigger value="direction" className={sceneTabTriggerClass}>
                             <Film className="w-3.5 h-3.5 shrink-0" />
                             Direction
                           </TabsTrigger>
-                          <TabsTrigger value="beats" title="Scene and shot script, dialogue, and SFX" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+                          <TabsTrigger value="beats" title="Dialogue, narration, and sound effects for each shot" className={sceneTabTriggerClass}>
                             <FileText className="w-3.5 h-3.5 shrink-0" />
-                            Script
+                            Audio
                             {sceneBeatsForTabs.length > 0 && (
-                              <span className="text-[10px] opacity-60">
+                              <span className="text-[10px] font-medium opacity-60">
                                 ({sceneBeatsForTabs.length}
                                 {excludedBeatCount > 0 ? `, ${excludedBeatCount} excluded` : ''})
                               </span>
                             )}
                           </TabsTrigger>
-                          <TabsTrigger value="music" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+                          <TabsTrigger value="music" className={sceneTabTriggerClass}>
                             <Music className="w-3.5 h-3.5 shrink-0" />
                             Music
                           </TabsTrigger>
-                          <TabsTrigger value="references" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+                          <TabsTrigger value="references" className={sceneTabTriggerClass}>
                             <Library className="w-3.5 h-3.5 shrink-0" />
                             References
                             {sceneRequiredReferences.length > 0 && (
                               <span
-                                className={`text-[10px] ${missingSceneReferenceCount > 0 ? 'text-amber-500' : 'opacity-60'}`}
+                                className={`text-[10px] font-medium ${missingSceneReferenceCount > 0 ? 'text-amber-500' : 'opacity-60'}`}
                               >
                                 ({sceneRequiredReferences.length - missingSceneReferenceCount}/
                                 {sceneRequiredReferences.length})
                               </span>
                             )}
                           </TabsTrigger>
-                          <TabsTrigger value="previs" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+                          <TabsTrigger value="previs" className={sceneTabTriggerClass}>
                             <Clapperboard className="w-3.5 h-3.5 shrink-0" />
                             Stills
                             {preVisFrameStats.total > 0 && (
-                              <span className="text-[10px] opacity-60">
+                              <span className="text-[10px] font-medium opacity-60">
                                 ({preVisFrameStats.withImage}/{preVisFrameStats.total})
                               </span>
                             )}
                           </TabsTrigger>
-                          <TabsTrigger value="video" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+                          <TabsTrigger value="video" className={sceneTabTriggerClass}>
                             <Film className="w-3.5 h-3.5 shrink-0" />
                             Clips
                           </TabsTrigger>
-                          <TabsTrigger value="mixer" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+                          <TabsTrigger value="mixer" className={sceneTabTriggerClass}>
                             <Clapperboard className="w-3.5 h-3.5 shrink-0" />
                             Mixer
                           </TabsTrigger>
-                          <TabsTrigger value="streams" title="Language versions of this scene" className="text-xs gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+                          <TabsTrigger value="streams" title="Language versions of this scene" className={sceneTabTriggerClass}>
                             <ListVideo className="w-3.5 h-3.5 shrink-0" />
                             Streams
                           </TabsTrigger>
                         </TabsList>
-                        <p className="border-t border-indigo-500/25 px-3 py-1.5 text-xs font-semibold tracking-wide text-indigo-100">
-                          {sceneWorkflowSectionLabel[activeSceneTab]}
-                        </p>
                       </div>
 
                   {/* Direction */}

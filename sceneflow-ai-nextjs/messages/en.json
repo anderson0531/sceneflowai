@@ -534,13 +534,13 @@
               {
                 "icon": "sceneDirector",
                 "title": "Scene Director",
-                "description": "The script-scene dialog, titled Scene Director · Scene N, opened from a scene’s Audience Resonance recommendations (Direct Scene, or Direct Scene & Apply). You direct that scene, preview the changes, and select which changes to keep. The rest of the script stays as you left it.",
+                "description": "The script-scene dialog, titled Scene Director · Scene N, opened from a scene’s Audience Resonance recommendations (Scene Director, or Scene Director & Apply). You direct that scene, preview the changes, and select which changes to keep. The rest of the script stays as you left it.",
                 "screenshot": "Scene Director",
                 "learnMore": {
                   "items": [
                     {
                       "title": "One scene",
-                      "description": "Scene Director · Scene N opens from a scene’s Audience Resonance recommendations, Direct Scene or Direct Scene & Apply."
+                      "description": "Scene Director · Scene N opens from a scene’s Audience Resonance recommendations, Scene Director or Scene Director & Apply."
                     },
                     {
                       "title": "Preview and keep",

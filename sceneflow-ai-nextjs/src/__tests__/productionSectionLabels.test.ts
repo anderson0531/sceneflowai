@@ -81,6 +81,7 @@ describe('Production section labels', () => {
     expect(motion?.title).toContain('Clips')
 
     expect(guidanceContent.dialogueAction.title).toContain('Direction')
+    expect(guidanceContent.dialogueAction.tip).toContain('Audio')
     expect(guidanceContent.callAction.title).toContain('Clips')
   })
 

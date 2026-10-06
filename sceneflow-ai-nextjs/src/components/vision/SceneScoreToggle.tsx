@@ -14,7 +14,7 @@ export function SceneScoreToggle({
 }) {
   return (
     <label
-      className={`flex items-center gap-1.5 shrink-0 cursor-pointer ${className ?? ''}`}
+      className={`flex h-8 items-center gap-1.5 shrink-0 cursor-pointer ${className ?? ''}`}
       onClick={(event) => event.stopPropagation()}
       title={
         checked
