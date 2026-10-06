@@ -81,6 +81,8 @@ export async function attachSceneDirectionsToScript(
           narration: scene.narration,
           dialogue: scene.dialogue,
           characters: scene.characters,
+          beats: scene.beats,
+          sceneMovements: scene.sceneMovements,
         },
         sceneIndex: index,
       })

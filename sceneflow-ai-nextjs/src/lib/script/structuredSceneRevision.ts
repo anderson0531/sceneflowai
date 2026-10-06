@@ -64,6 +64,9 @@ function formatBeatDirectionForPrompt(beat: SceneBeat): string {
   const d = beat.beatDirection
   if (!d) return ''
   const parts: string[] = []
+  if (d.coveragePurpose) parts.push(`coverage: ${d.coveragePurpose}`)
+  if (d.lensEnergy) parts.push(`lens: ${d.lensEnergy}`)
+  if (d.spatialRelationship) parts.push(`space: ${d.spatialRelationship}`)
   if (d.shotType) parts.push(`shot: ${d.shotType}`)
   if (d.cameraAngle) parts.push(`angle: ${d.cameraAngle}`)
   if (d.cameraMovement) parts.push(`move: ${d.cameraMovement}`)

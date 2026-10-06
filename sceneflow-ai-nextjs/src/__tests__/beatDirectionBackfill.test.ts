@@ -47,9 +47,9 @@ function actionBeat(overrides: Partial<SceneBeat> = {}): SceneBeat {
 }
 
 describe('deriveBeatDirection', () => {
-  it('fills shotType from scene direction camera shots by beat index', () => {
+  it('does not copy a scene shot list onto a beat by index', () => {
     const derived = deriveBeatDirection(actionBeat(), 1, { sceneDirection })
-    expect(derived?.shotType).toBe('Medium Close-Up')
+    expect(derived?.shotType).toBeUndefined()
   })
 
   it('fills blocking/emotion/lighting from scene direction metadata', () => {
@@ -247,8 +247,8 @@ describe('backfillBeatDirectionsOnScene', () => {
     const beats = backfillBeatDirectionsOnScene(scene)
     expect(beats[0].beatDirection).toBeDefined()
     expect(beats[1].beatDirection).toBeDefined()
-    expect(beats[0].beatDirection?.shotType).toBe('Wide Establishing')
-    expect(beats[1].beatDirection?.shotType).toBe('Medium Close-Up')
+    expect(beats[0].beatDirection?.shotType).toBeUndefined()
+    expect(beats[1].beatDirection?.shotType).toBeUndefined()
   })
 
   it('leaves already-authored direction fields untouched', () => {
@@ -301,7 +301,7 @@ describe('migrateProjectBeatDirection', () => {
     const nextScene =
       (result.metadata as any).visionPhase.script.script.scenes[0]
     expect(nextScene.beats[0].beatDirection).toBeDefined()
-    expect(nextScene.beats[0].beatDirection.shotType).toBe('Wide Establishing')
+    expect(nextScene.beats[0].beatDirection.shotType).toBeUndefined()
   })
 
   it('is idempotent — running again does not change beats', () => {

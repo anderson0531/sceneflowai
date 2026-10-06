@@ -141,6 +141,9 @@ function sceneDirectionMotionHints(
   const parts: string[] = []
   const camera = direction.camera
   if (!omitCamera) {
+    if (camera?.coveragePhilosophy && !tokenAlreadyInPrompt(String(camera.coveragePhilosophy), videoPrompt)) {
+      parts.push(String(camera.coveragePhilosophy))
+    }
     if (camera?.movement && !tokenAlreadyInPrompt(String(camera.movement), videoPrompt)) {
       parts.push(String(camera.movement))
     }
@@ -178,6 +181,9 @@ function directionClauses(beat: SceneBeat, existing: string): string[] {
   const direction = beat.beatDirection
   if (!direction) return []
   const clauses: string[] = []
+  pushClause(clauses, existing, 'Coverage', direction.coveragePurpose)
+  pushClause(clauses, existing, 'Lens', direction.lensEnergy)
+  pushClause(clauses, existing, 'Space', direction.spatialRelationship)
   pushClause(clauses, existing, 'Shot', direction.shotType)
   pushClause(clauses, existing, 'Angle', direction.cameraAngle)
   pushClause(clauses, existing, 'Camera', direction.cameraMovement)

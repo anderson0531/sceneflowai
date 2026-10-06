@@ -75,7 +75,9 @@ export async function POST(request: NextRequest) {
             visualDescription: scene.visualDescription,
             narration: scene.narration,
             dialogue: scene.dialogue,
-            characters: scene.characters
+            characters: scene.characters,
+            beats: scene.beats,
+            sceneMovements: scene.sceneMovements,
           }
           
           // Generate direction via internal API call

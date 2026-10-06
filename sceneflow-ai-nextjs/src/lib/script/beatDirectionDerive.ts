@@ -120,65 +120,20 @@ function collectCastInFrameForBeat(
   return found.length > 0 ? found : undefined
 }
 
-const DISTINCT_SHOT_SCALES = [
-  'Wide Shot',
-  'Medium Shot',
-  'Close-Up',
-  'Over-the-Shoulder',
-  'Medium Close-Up',
-  'Insert Shot',
-]
-
 /**
- * Pad a short camera.shots list to one distinct scale per beat.
- * Never cycle the last listed shot onto leftover beats.
+ * Best-effort framing hint from this beat's own words and coverage.
+ * A short scene-level shot list is not copied onto later beats.
  */
-export function padCameraShotsToBeatCount(
-  shots: string[] | undefined,
-  beatCount: number
-): string[] {
-  const existing = (shots ?? []).map((shot) => String(shot).trim()).filter(Boolean)
-  if (beatCount <= 0) return existing
-  if (existing.length >= beatCount) return existing
-  const padded = [...existing]
-  while (padded.length < beatCount) {
-    const prev = padded[padded.length - 1] || ''
-    const candidate =
-      DISTINCT_SHOT_SCALES[padded.length % DISTINCT_SHOT_SCALES.length] ||
-      DISTINCT_SHOT_SCALES[0]
-    const next =
-      candidate.toLowerCase() === prev.toLowerCase()
-        ? DISTINCT_SHOT_SCALES[(padded.length + 1) % DISTINCT_SHOT_SCALES.length]
-        : candidate
-    padded.push(next)
-  }
-  return padded
-}
-
-/**
- * Best-effort inference of camera framing hint for THIS beat, prefer scene
- * camera shots array position, else the beat's own shot vocab, else the
- * scene-level framing hint.
- *
- * When the scene lists fewer shots than it has beats, leftover beats do not
- * cycle the listed scales — cycling made long scenes read as one repeated image.
- */
-function inferShotType(
-  beat: SceneBeat,
-  beatIndex: number,
-  sceneDirection: Record<string, any> | undefined,
-  fallbackFraming?: string
-): string | undefined {
-  const shots =
-    Array.isArray(sceneDirection?.camera?.shots) && sceneDirection?.camera?.shots.length > 0
-      ? (sceneDirection.camera.shots as string[])
-      : []
-  if (shots.length > 0) {
-    const raw = shots[beatIndex]
-    const trimmed = raw?.trim()
-    if (trimmed) return trimmed
-  }
-  const beatText = (beat.actionDescription ?? beat.line ?? '').toLowerCase()
+function inferShotType(beat: SceneBeat): string | undefined {
+  const beatText = [
+    beat.actionDescription ?? '',
+    beat.line ?? '',
+    beat.beatDirection?.coveragePurpose ?? '',
+    beat.beatDirection?.spatialRelationship ?? '',
+    beat.beatDirection?.shotType ?? '',
+  ]
+    .join(' ')
+    .toLowerCase()
   if (beatText) {
     if (/extreme close-?up|extreme close/.test(beatText)) return 'Extreme Close-Up'
     if (/insert(?:\s+shot)?/.test(beatText)) return 'Insert Shot'
@@ -188,17 +143,7 @@ function inferShotType(
     if (/wide|establishing/.test(beatText)) return 'Wide Shot'
     if (/medium/.test(beatText)) return 'Medium Shot'
   }
-  return fallbackFraming ? capitalizeShot(fallbackFraming) : undefined
-}
-
-function capitalizeShot(input: string): string {
-  return input
-    .split(/[\s-]+/)
-    .map((word) =>
-      word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : ''
-    )
-    .join(' ')
-    .replace(/Ots/g, 'OTS')
+  return undefined
 }
 
 function inferGaze(beat: SceneBeat): string | undefined {
@@ -254,7 +199,7 @@ export function deriveBeatDirection(
   const derived: BeatDirection = { ...existing }
 
   if (!derived.shotType) {
-    const shot = inferShotType(beat, beatIndex, sceneDirection, meta.framingHint)
+    const shot = inferShotType(beat)
     if (shot) derived.shotType = shot
   }
   if (!derived.cameraAngle) {
@@ -329,6 +274,56 @@ function directionFieldsChanged(before: BeatDirection, after: BeatDirection): bo
   const { updatedAt: _beforeStamp, ...beforeFields } = before
   const { updatedAt: _afterStamp, ...afterFields } = after
   return JSON.stringify(beforeFields) !== JSON.stringify(afterFields)
+}
+
+interface CoverageRow {
+  coveragePurpose?: string
+  lensEnergy?: string
+  spatialRelationship?: string
+  shotType?: string
+}
+
+/**
+ * Stamp scene-direction coverage onto each beat.
+ *
+ * Derived and earlier direction camera fields are replaced so a recycled scale
+ * does not survive a new pass. User-authored beat direction is left alone.
+ * A coverage row with no shotType clears a previous scale instead of keeping it.
+ */
+export function applyDirectionCoverageToBeats(
+  scene: Record<string, unknown>,
+  beats: SceneBeat[]
+): SceneBeat[] {
+  const direction = scene.sceneDirection
+  if (!direction || typeof direction !== 'object') return beats
+  const raw = (direction as { beatCoverage?: unknown }).beatCoverage
+  if (!Array.isArray(raw) || raw.length === 0) return beats
+
+  return beats.map((beat, index) => {
+    const row = raw[index] as CoverageRow | undefined
+    if (!row || typeof row !== 'object') return beat
+    const existing = beat.beatDirection
+    if (existing?.generatedBy === 'user') return beat
+
+    const purpose = row.coveragePurpose?.trim()
+    const energy = row.lensEnergy?.trim()
+    const space = row.spatialRelationship?.trim()
+    const shot = row.shotType?.trim()
+    if (!purpose && !energy && !space && !shot) return beat
+
+    const next: BeatDirection = { ...(existing ?? {}) }
+    if (purpose) next.coveragePurpose = purpose
+    if (energy) {
+      next.lensEnergy = energy
+      next.cameraMovement = energy
+    }
+    if (space) next.spatialRelationship = space
+    if (shot) next.shotType = shot
+    else delete next.shotType
+    if (!next.generatedBy || next.generatedBy === 'derived') next.generatedBy = 'derived'
+    next.updatedAt = new Date().toISOString()
+    return { ...beat, beatDirection: next }
+  })
 }
 
 /**

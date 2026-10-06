@@ -11,7 +11,6 @@ import {
 import type { VideoGenerationOptions } from '@/lib/gemini/videoClient'
 import { isVertexContentPolicyError } from '@/lib/generation/contentPolicy'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
-import { filterRefsForPolicyRetry } from '@/lib/video/normalizeReferenceImages'
 import type { VideoGenerationMethod } from '@/lib/vision/intelligentMethodSelection'
 import {
   getKlingDefaultModel,
@@ -160,11 +159,7 @@ function prepareKlingRetry(
     return { method, prompt, options }
   }
 
-  if (attempt === 2 && method === 'REF' && options.referenceImages?.length) {
-    options = {
-      ...options,
-      referenceImages: filterRefsForPolicyRetry(options.referenceImages, 'core'),
-    }
+  if (attempt === 2 && method === 'REF') {
     const sp = autoSanitizePrompt(prompt, { logChanges: true })
     if (sp.wasModified) prompt = sp.sanitizedPrompt
     return { method, prompt, options }
@@ -173,33 +168,15 @@ function prepareKlingRetry(
   if (attempt === 3 && method === 'REF') {
     if (options.startFrame) {
       method = 'I2V'
-      const sp = autoSanitizePrompt(prompt, { logChanges: true })
-      if (sp.wasModified) prompt = sp.sanitizedPrompt
-      return { method, prompt, options }
     }
-    if (ctx.referenceFallbackPrompt) {
-      method = 'T2V'
-      const sp = autoSanitizePrompt(ctx.referenceFallbackPrompt, { logChanges: true })
-      prompt = sp.wasModified ? sp.sanitizedPrompt : ctx.referenceFallbackPrompt
-      options = {
-        ...options,
-        referenceImages: undefined,
-        sourceVideo: undefined,
-        sourceVideoUrl: undefined,
-      }
-      return { method, prompt, options }
-    }
+    const sp = autoSanitizePrompt(prompt, { logChanges: true })
+    if (sp.wasModified) prompt = sp.sanitizedPrompt
+    return { method, prompt, options }
   }
 
-  const prev = method
   const next = downgradeMethod(method, { hasStartFrame: !!options.startFrame })
-  if (next !== method) {
+  if (next !== method && method !== 'REF') {
     method = next
-    if (prev === 'REF' && next === 'T2V' && ctx.referenceFallbackPrompt) {
-      const sp = autoSanitizePrompt(ctx.referenceFallbackPrompt, { logChanges: true })
-      prompt = sp.wasModified ? sp.sanitizedPrompt : ctx.referenceFallbackPrompt
-      options = { ...options, referenceImages: undefined }
-    }
   }
 
   return { method, prompt, options }

@@ -122,8 +122,14 @@ export interface SceneMusicCue {
  * back to the pre-existing prose/heuristic logic in each consumer.
  */
 export interface BeatDirection {
-  /** Named shot (e.g., "Medium Wide Shot", "Extreme Close-Up"). */
+  /** Named shot (e.g., "Medium Wide Shot", "Extreme Close-Up"). Optional; coverage fields lead. */
   shotType?: string
+  /** Why this image exists (establish geography, isolate the reaction, pay off the prop). */
+  coveragePurpose?: string
+  /** How the camera behaves (hold, push-in, lock-off, drift). */
+  lensEnergy?: string
+  /** Who and what is where in the frame. */
+  spatialRelationship?: string
   /** Camera angle (e.g., "eye-level", "low", "high", "Dutch"). */
   cameraAngle?: string
   /** Camera movement (e.g., "static", "handheld push-in", "Steadicam creep"). */

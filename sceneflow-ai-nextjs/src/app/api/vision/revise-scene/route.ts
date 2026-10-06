@@ -28,9 +28,10 @@ import {
   buildRevisionBeatVolumeBlock,
   buildScriptCraftPromptBlock,
 } from '@/lib/script/scriptCraftPrompt'
-import { MAX_BEATS_PER_SCENE, TARGET_BEATS_PER_SCENE } from '@/lib/script/sceneDecomposition'
+import { MAX_BEATS_PER_SCENE } from '@/lib/script/sceneDecomposition'
 import {
   clampSceneBeatTarget,
+  hasStoredSceneBeatTarget,
   resolveSceneTargetBeatCount,
 } from '@/lib/script/sceneBeatTarget'
 
@@ -144,11 +145,13 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // A request value wins so the dialog's control takes effect immediately;
-    // otherwise the scene decides, which keeps an earlier choice in force and
-    // a title scene off the script-wide figure.
+    // A chosen density wins. A stored scene target stays in force. With neither,
+    // the story decides length — do not fall back to the script-wide 20.
     const targetBeats =
-      clampSceneBeatTarget(targetBeatCount) ?? resolveSceneTargetBeatCount(currentScene)
+      clampSceneBeatTarget(targetBeatCount) ??
+      (hasStoredSceneBeatTarget(currentScene)
+        ? resolveSceneTargetBeatCount(currentScene)
+        : undefined)
 
     console.log('[Scene Revision] Revising scene:', sceneIndex, 'mode:', revisionMode)
 
@@ -204,7 +207,7 @@ async function generateRevisedScene({
   targetDemographic,
   preserveElements,
   revisionDepth,
-  targetBeats = TARGET_BEATS_PER_SCENE,
+  targetBeats,
   context,
   languageBlock = ''
 }: {
@@ -217,7 +220,7 @@ async function generateRevisedScene({
   targetDemographic: string
   preserveElements: PreserveElementInput[]
   revisionDepth: 'light' | 'moderate' | 'deep'
-  /** Resolved and clamped by the caller. */
+  /** Set only when the author picked a coverage density or the scene stored one. */
   targetBeats?: number
   context: any
   languageBlock?: string
@@ -243,11 +246,17 @@ async function generateRevisedScene({
   // Build the revision instruction based on mode and depth
   let revisionInstruction = ''
   
-  const depthGuidance = {
-    light: 'Make targeted polish edits. Keep the core structure and flow intact. Focus on wording refinements. Hold the beat count roughly where it is.',
-    moderate: `REWRITE the scene to fully address each issue. Make substantive changes to dialogue, action, and flow—not just surface-level rewording. Add, remove, and reorder beats as needed. Where the story needs more room, work toward the ~${targetBeats}-beat target for this scene.`,
-    deep: `COMPLETELY RESTRUCTURE this scene. Rewrite from scratch if necessary to achieve the goals. Transform the dialogue, pacing, and visual storytelling. Do not be constrained by the original structure—reimagine how this scene should unfold. A restructure is free to depart from the original beat count: write to the ~${targetBeats}-beat target for this scene, and never exceed ${MAX_BEATS_PER_SCENE} beats.`
-  }[revisionDepth]
+  const depthGuidance = (typeof targetBeats === 'number'
+    ? {
+        light: 'Make targeted polish edits. Keep the core structure and flow intact. Focus on wording refinements. Hold the beat count roughly where it is.',
+        moderate: `REWRITE the scene to fully address each issue. Make substantive changes to dialogue, action, and flow—not just surface-level rewording. Add, remove, and reorder beats as needed. Where the story needs more room, work toward the ~${targetBeats}-beat target for this scene.`,
+        deep: `COMPLETELY RESTRUCTURE this scene. Rewrite from scratch if necessary to achieve the goals. Transform the dialogue, pacing, and visual storytelling. Do not be constrained by the original structure—reimagine how this scene should unfold. A restructure is free to depart from the original beat count: write to the ~${targetBeats}-beat target for this scene, and never exceed ${MAX_BEATS_PER_SCENE} beats.`,
+      }
+    : {
+        light: 'Make targeted polish edits. Keep the core structure and flow intact. Focus on wording refinements. Hold the beat count roughly where it is.',
+        moderate: 'REWRITE the scene to fully address each issue. Make substantive changes to dialogue, action, and flow—not just surface-level rewording. Add, remove, and reorder beats as the story needs. Do not chase a beat-count target.',
+        deep: 'COMPLETELY RESTRUCTURE this scene. Rewrite from scratch if necessary to achieve the goals. Transform the dialogue, pacing, and visual storytelling. Do not be constrained by the original structure—reimagine how this scene should unfold. A restructure is free to depart from the original beat count. Coverage follows the story, not a quota.',
+      })[revisionDepth]
   
   if (revisionMode === 'recommendations' && selectedRecommendations.length > 0) {
     const allRecs = [...structuralRecs, ...polishRecs]
@@ -305,7 +314,7 @@ For each recommendation, make the necessary STRUCTURAL or CONTENT changes. Do NO
     const cacheableContext = `${audienceContext}CURRENT SCENE (structured beats timeline — edit this directly):
 Heading: ${currentScene.heading || 'Untitled Scene'}
 
-BEATS (${currentBeats.length} in the current scene, target ${targetBeats}; ordered timeline — keep beatId for kept/edited beats, omit for new beats, drop removed beats):
+BEATS (${currentBeats.length} in the current scene${typeof targetBeats === 'number' ? `, target ${targetBeats}` : ''}; ordered timeline — keep beatId for kept/edited beats, omit for new beats, drop removed beats):
 ${beatsText}
 
 Legacy flat fields (derived from beats — do not output these separately):
@@ -379,7 +388,7 @@ REWRITE REQUIREMENTS:
 5. REPLACE on-the-nose dialogue with subtext-rich alternatives
 6. CONVERT "telling" narration to "showing" through visual action beats
 7. Make dialogue natural and character-appropriate with EMOTIONAL TAGS
-8. The rewritten scene may be shorter OR longer than the original if that serves the story — land near the ~${targetBeats}-beat target set for this scene rather than mirroring the original length
+8. The rewritten scene may be shorter OR longer than the original if that serves the story — ${typeof targetBeats === 'number' ? `land near the ~${targetBeats}-beat target set for this scene rather than mirroring the original length` : 'let the story decide the length rather than mirroring the original or aiming at a beat count'}
 
 Output the REWRITTEN scene as JSON with this exact structure:
 {
@@ -388,7 +397,7 @@ Output the REWRITTEN scene as JSON with this exact structure:
       "beatId": "existing-id",
       "kind": "action",
       "actionDescription": "Visual beat description",
-      "beatDirection": {"castInFrame": [], "shotType": "Medium Wide", "cameraMovement": "handheld drift", "blocking": "one-clause blocking", "gaze": "toward the door", "keyProps": ["Water-damaged leather journal"], "propInteraction": "grip in left hand", "frozenMoment": "One-sentence still.", "audioCue": "core thrum swells", "transition": "CUT"}
+      "beatDirection": {"castInFrame": [], "coveragePurpose": "pay off the journal in her hand", "lensEnergy": "handheld drift that settles", "spatialRelationship": "journal large in the foreground, door soft behind", "cameraMovement": "handheld drift", "blocking": "one-clause blocking", "gaze": "toward the door", "keyProps": ["Water-damaged leather journal"], "propInteraction": "grip in left hand", "frozenMoment": "One-sentence still.", "audioCue": "core thrum swells", "transition": "CUT"}
     },
     {
       "beatId": "existing-id",
@@ -396,25 +405,29 @@ Output the REWRITTEN scene as JSON with this exact structure:
       "character": "CHARACTER NAME",
       "line": "[emotion] One sentence of dialogue",
       "voiceDirection": "1-2 sentences of actor-facing direction for this take.",
-      "beatDirection": {"castInFrame": ["CHARACTER NAME"], "shotType": "Medium Close-Up", "blocking": "speaker turns to face listener", "emotion": "guarded honesty", "gaze": "into listener's eyes", "frozenMoment": "Speaker mid-word.", "transition": "CUT"}
+      "beatDirection": {"castInFrame": ["CHARACTER NAME"], "coveragePurpose": "isolate the confession", "lensEnergy": "hold", "spatialRelationship": "speaker turns toward the listener, listener at frame edge", "blocking": "speaker turns to face listener", "emotion": "guarded honesty", "gaze": "into listener's eyes", "frozenMoment": "Speaker mid-word.", "transition": "CUT"}
     },
     {
       "kind": "narration",
       "character": "NARRATOR",
       "line": "[calm] Narration line",
-      "beatDirection": {"castInFrame": [], "shotType": "Wide", "cameraMovement": "slow drift", "blocking": "on-screen subject continues silent action", "frozenMoment": "Landscape hold under narration.", "transition": "CUT"}
+      "beatDirection": {"castInFrame": [], "coveragePurpose": "hold the place under the narration", "lensEnergy": "slow drift", "spatialRelationship": "landscape fills the frame, no people", "cameraMovement": "slow drift", "blocking": "on-screen subject continues silent action", "frozenMoment": "Landscape hold under narration.", "transition": "CUT"}
     }
   ],
   "music": "Music specification or empty string",
   "sfx": ["Sound effect 1", "Sound effect 2"]
 }
 
-${buildRevisionBeatVolumeBlock(targetBeats)}
+${typeof targetBeats === 'number' ? buildRevisionBeatVolumeBlock(targetBeats) : `COVERAGE (STORY DECIDES LENGTH):
+• Write as many beats as the scene needs to land. Do not aim for a beat count and do not cut the scene to look shorter.
+• Never condense, shorten, or paraphrase quoted dialogue. A long line continues across later beats.
+• Each beat needs a cinematic reason: coveragePurpose, lensEnergy, and spatialRelationship. A shot scale is optional.
+• Intervening action beats only when they add NEW visual information.`}
 
 STRUCTURED BEATS RULES:
-- Return the FULL ordered beats[] array for the revised scene (~${targetBeats} beats is the target for this scene; MAX ${MAX_BEATS_PER_SCENE} beats — scenes cannot exceed this cap).
+- Return the FULL ordered beats[] array for the revised scene (${typeof targetBeats === 'number' ? `~${targetBeats} beats is the target for this scene; MAX ${MAX_BEATS_PER_SCENE} beats — scenes cannot exceed this cap` : 'as many beats as the story needs'}).
 - Keep beatId for beats you keep or edit; omit beatId for new beats; remove beats that should be deleted.
-- Every beat MUST include a "beatDirection" object with as many of the following fields as apply: castInFrame, shotType, cameraAngle, cameraMovement, blocking, emotion, gaze, keyProps (subset of scene Key Props), propInteraction, lightingAccent, frozenMoment, audioCue, transition (one of CUT|CONTINUE|DISSOLVE|FADE|MATCH_CUT).
+- Every beat MUST include a "beatDirection" object with coveragePurpose, lensEnergy, and spatialRelationship, plus as many of the following as apply: castInFrame, shotType (optional free-text scale), cameraAngle, cameraMovement, blocking, emotion, gaze, keyProps (subset of scene Key Props), propInteraction, lightingAccent, frozenMoment, audioCue, transition (one of CUT|CONTINUE|DISSOLVE|FADE|MATCH_CUT).
 - "castInFrame" is REQUIRED on every beat and is the only thing that decides who appears on camera: the character names visible in THIS beat, spelled as in the scene's character list, or [] for a frame with no people in it. Never NARRATOR.
 - When you keep a beat verbatim, you MAY reuse its prior beatDirection unchanged. When you rewrite a beat, refresh its beatDirection to match the new content.
 - One sentence per spoken line (dialogue/narration).
@@ -440,12 +453,16 @@ CRITICAL SUCCESS CRITERIA:
     const userPrompt = `REWRITE INSTRUCTIONS:
 ${revisionInstruction}
 
-BEAT COUNT: this scene currently has ${currentBeats.length} beats. The target is ~${targetBeats} and the hard cap is ${MAX_BEATS_PER_SCENE}. ${
-      currentBeats.length < targetBeats
-        ? 'It sits under the target, so treat that gap as room you are free to use — not a length to preserve.'
-        : currentBeats.length > targetBeats
-          ? 'It sits over the target, so cut the beats that carry the least: merge, drop, or condense rather than trimming every beat evenly.'
-          : 'It is already at the target, so change what the beats contain rather than how many there are.'
+BEAT COUNT: this scene currently has ${currentBeats.length} beats. ${
+      typeof targetBeats === 'number'
+        ? `The target is ~${targetBeats} and the hard cap is ${MAX_BEATS_PER_SCENE}. ${
+            currentBeats.length < targetBeats
+              ? 'It sits under the target, so treat that gap as room you are free to use — not a length to preserve.'
+              : currentBeats.length > targetBeats
+                ? 'It sits over the target, so cut the beats that carry the least: merge, drop, or condense rather than trimming every beat evenly.'
+                : 'It is already at the target, so change what the beats contain rather than how many there are.'
+          }`
+        : 'Story decides the length. Do not pad toward a number and do not cut beats just to make the scene shorter.'
     }
 
 ${preserveInstructions ? `PRESERVATION REQUIREMENTS: ${preserveInstructions}` : ''}

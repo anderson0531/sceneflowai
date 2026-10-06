@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { generateSceneDirection } from '@/lib/sceneGeneration/generateDirection'
+import { mergeSceneForDirection } from '@/lib/sceneGeneration/mergeSceneForDirection'
 import { ensureSceneBeats } from '@/lib/script/beatMigration'
 
 export const maxDuration = 300
@@ -55,9 +56,18 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    const dbScene = initialScriptScenes[sceneIndex] as Record<string, unknown>
+    const sceneForDirection = mergeSceneForDirection(
+      dbScene,
+      scene as Record<string, unknown>
+    )
+
     let sceneDirection
     try {
-      const result = await generateSceneDirection({ scene, sceneIndex })
+      const result = await generateSceneDirection({
+        scene: sceneForDirection,
+        sceneIndex,
+      })
       sceneDirection = result.sceneDirection
     } catch (error: any) {
       console.error('[Scene Direction] Generation error:', error)

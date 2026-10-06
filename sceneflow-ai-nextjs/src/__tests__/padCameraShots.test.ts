@@ -1,19 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  applyDirectionCoverageToBeats,
   deriveBeatDirection,
-  padCameraShotsToBeatCount,
 } from '@/lib/script/beatDirectionDerive'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
-
-describe('padCameraShotsToBeatCount', () => {
-  it('pads a short shot list with distinct scales instead of cycling', () => {
-    const padded = padCameraShotsToBeatCount(['Wide Shot'], 4)
-    expect(padded).toHaveLength(4)
-    expect(padded[0]).toBe('Wide Shot')
-    expect(new Set(padded).size).toBeGreaterThan(1)
-    expect(padded.filter((shot) => shot === 'Wide Shot')).toHaveLength(1)
-  })
-})
 
 describe('deriveBeatDirection shot coverage', () => {
   it('does not cycle a short camera.shots list onto later beats', () => {
@@ -28,5 +18,49 @@ describe('deriveBeatDirection shot coverage', () => {
       sceneDirection: { camera: { shots: ['Wide Shot'] } },
     })
     expect(direction?.shotType).toMatch(/close/i)
+  })
+})
+
+describe('applyDirectionCoverageToBeats', () => {
+  it('replaces a recycled derived scale and leaves a user scale', () => {
+    const beats: SceneBeat[] = [
+      {
+        beatId: 'bt_1',
+        sequenceIndex: 0,
+        kind: 'action',
+        actionDescription: 'He looks at the photograph.',
+        beatDirection: { shotType: 'Wide Shot', generatedBy: 'derived' },
+      },
+      {
+        beatId: 'bt_2',
+        sequenceIndex: 1,
+        kind: 'action',
+        actionDescription: 'The photograph fills the frame.',
+        beatDirection: { shotType: 'Wide Shot', generatedBy: 'user' },
+      },
+    ]
+    const next = applyDirectionCoverageToBeats(
+      {
+        sceneDirection: {
+          beatCoverage: [
+            {
+              coveragePurpose: 'pay off the photograph',
+              lensEnergy: 'lock-off',
+              spatialRelationship: 'photograph beside his cheek',
+            },
+            {
+              coveragePurpose: 'should not replace the user',
+              lensEnergy: 'push-in',
+              spatialRelationship: 'face only',
+            },
+          ],
+        },
+      },
+      beats
+    )
+    expect(next[0].beatDirection?.coveragePurpose).toBe('pay off the photograph')
+    expect(next[0].beatDirection?.shotType).toBeUndefined()
+    expect(next[1].beatDirection?.shotType).toBe('Wide Shot')
+    expect(next[1].beatDirection?.coveragePurpose).toBeUndefined()
   })
 })
