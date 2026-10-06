@@ -55,6 +55,10 @@ export interface CompileBeatVideoPromptOptions {
   characterName?: string
   /** Cue scoring this beat, if any; enters as tonal direction, never as audio. */
   musicCue?: SceneMusicCue
+  /** Previous beat in running order — incoming screen direction for continuity. */
+  previousBeat?: SceneBeat | null
+  /** True when this clip continues a split spoken line. */
+  continuesSameLine?: boolean
 }
 
 function normalizeLine(text: string): string {
@@ -268,6 +272,26 @@ function leadForBeat(beat: SceneBeat, options?: CompileBeatVideoPromptOptions): 
   return `${speakerAlias} speaks naturally: "${cleanLine}".${delivery}`
 }
 
+function incomingContinuityClause(options?: CompileBeatVideoPromptOptions): string {
+  if (options?.continuesSameLine) {
+    return 'Continues the same spoken line and eyeline from the previous shot without resetting blocking'
+  }
+  const prev = options?.previousBeat
+  if (!prev) return ''
+  const parts: string[] = []
+  const prevShot = prev.beatDirection?.shotType?.trim()
+  if (prevShot) parts.push(`Incoming continuity from ${prevShot}`)
+  const prevCast = Array.isArray(prev.beatDirection?.castInFrame)
+    ? prev.beatDirection.castInFrame.map((name) => name.trim()).filter(Boolean)
+    : []
+  if (prevCast.length) parts.push(`same people already in frame: ${prevCast.join(', ')}`)
+  const prevProps = Array.isArray(prev.beatDirection?.keyProps)
+    ? prev.beatDirection.keyProps.map((name) => name.trim()).filter(Boolean)
+    : []
+  if (prevProps.length) parts.push(`props remain: ${prevProps.join(', ')}`)
+  return parts.join('. ')
+}
+
 function withMotionWhenUnstated(beat: SceneBeat, core: string): string {
   if (beat.kind === 'dialogue') return core
   if (beat.beatDirection?.cameraMovement?.trim()) return core
@@ -282,10 +306,14 @@ function finishVideoPrompt(args: {
   styleSuffix: string
   styleNegative: string
   spokenLine?: string
+  continuity?: string
 }): BeatVideoPromptResult {
   let core = args.core.trim()
   if (args.steer && !tokenAlreadyInPrompt(args.steer, core)) {
     core = normalizePromptJoin(core, args.steer)
+  }
+  if (args.continuity && !tokenAlreadyInPrompt(args.continuity, core)) {
+    core = normalizePromptJoin(core, args.continuity)
   }
   const fidelity = beatVideoFidelityClose(args.beat, { spokenLine: args.spokenLine })
   if (fidelity && !tokenAlreadyInPrompt(fidelity, core)) {
@@ -326,6 +354,7 @@ export function compileBeatVideoPrompt(
     styleSuffix,
     styleNegative,
     spokenLine,
+    continuity: incomingContinuityClause(options),
   })
 }
 
@@ -366,6 +395,7 @@ function compileOwnedBeatVideoPrompt(
     styleSuffix,
     styleNegative,
     spokenLine,
+    continuity: incomingContinuityClause(options),
   })
 }
 
@@ -387,8 +417,12 @@ export function compileBeatVideoPromptFromDirection(
   const steer = formatMusicCueSteer(options?.musicCue)
   const stored = beat.beatDirection?.videoPrompt?.trim()
   if (stored) {
+    const continuity = incomingContinuityClause(options)
     return {
-      prompt: stored,
+      prompt:
+        continuity && !tokenAlreadyInPrompt(continuity, stored)
+          ? normalizePromptJoin(stored, continuity)
+          : stored,
       negativePrompt: videoNegatives(beat, styleNegative),
     }
   }
@@ -424,6 +458,7 @@ export function compileBeatVideoPromptFromDirection(
       styleSuffix,
       styleNegative,
       spokenLine,
+      continuity: incomingContinuityClause(options),
     })
   }
 
@@ -439,5 +474,6 @@ export function compileBeatVideoPromptFromDirection(
     styleSuffix,
     styleNegative,
     spokenLine,
+    continuity: incomingContinuityClause(options),
   })
 }

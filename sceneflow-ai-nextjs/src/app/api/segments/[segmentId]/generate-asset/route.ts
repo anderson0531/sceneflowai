@@ -36,8 +36,10 @@ import type { DetailedSceneDirection } from '@/types/scene-direction'
 import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
+import { resolveUserId } from '@/lib/userHelper'
 import {
-  VideoGenerationMethod,
+  type VideoGenerationMethod,
+  promoteMethodForResolvedRefs,
   type MethodSelectionResult,
 } from '@/lib/vision/intelligentMethodSelection'
 import type { StemSeparationResult } from '@/lib/audio/stemSeparation'
@@ -217,6 +219,13 @@ export async function POST(
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    let dbUserId = String(session.user.id)
+    try {
+      dbUserId = await resolveUserId(dbUserId)
+    } catch {
+      // Keep the session key. Provenance/cost inserts skip non-UUID values.
+    }
+    let resolvedGenerationMethod = generationMethod as VideoGenerationMethod | undefined
 
     const resolvedVideoProvider =
       videoProvider === 'aggregator'
@@ -317,7 +326,11 @@ export async function POST(
           const compiled = compileBeatVideoPromptFromDirection(
             beat,
             sceneDirection as DetailedSceneDirection | null,
-            { artStyleId, ...(musicCue ? { musicCue } : {}) }
+            {
+              artStyleId,
+              previousBeat: beatIndex > 0 ? beats[beatIndex - 1] : undefined,
+              ...(musicCue ? { musicCue } : {}),
+            }
           )
           prompt = compiled.prompt
           negativePrompt = negativePrompt || compiled.negativePrompt
@@ -354,9 +367,14 @@ export async function POST(
             projectForRefs &&
             shouldReplaceClientVideoReferences(beat, referenceImages)
           ) {
+            const scenesForIndex = getVisionScriptScenes(
+              projectForRefs?.metadata?.visionPhase as Record<string, unknown> | undefined
+            )
+            const sceneIndex = findSceneById(scenesForIndex, sceneId).index
             const resolved = resolveBeatVideoReferences({
               scene: sceneForRefs,
               beat,
+              sceneIndex: sceneIndex >= 0 ? sceneIndex : undefined,
               projectCharacters:
                 projectForRefs?.metadata?.visionPhase?.characters ||
                 projectForRefs?.metadata?.characters ||
@@ -395,7 +413,15 @@ export async function POST(
       }
     }
 
-    console.log('[Segment Asset Generation] Generating asset for segment:', segmentId, 'Type:', genType)
+    resolvedGenerationMethod = promoteMethodForResolvedRefs(
+      resolvedGenerationMethod,
+      genType,
+      referenceImages?.length ?? 0
+    )
+
+    console.log(
+      `[Segment Asset Generation] Generating asset for segment: ${segmentId} Type: ${genType} method: ${resolvedGenerationMethod || genType} refs: ${referenceImages?.length ?? 0}`
+    )
 
     let assetUrl: string
     let assetType: 'video' | 'image'
@@ -463,7 +489,7 @@ export async function POST(
           const scenesForElements = getVisionScriptScenes(
             projectForElements?.metadata?.visionPhase as Record<string, unknown> | undefined
           )
-          const { scene: sceneForElements } = findSceneById(scenesForElements, sceneId)
+          const { scene: sceneForElements, index: elementSceneIndex } = findSceneById(scenesForElements, sceneId)
           const beats = sceneForElements
             ? getSceneBeats(sceneForElements as Record<string, unknown>)
             : []
@@ -480,6 +506,7 @@ export async function POST(
             const elementSelection = resolveBeatElementSelection({
               scene: sceneForElements,
               beat,
+              sceneIndex: elementSceneIndex >= 0 ? elementSceneIndex : undefined,
               projectCharacters:
                 (visionMeta.characters as Array<{ id?: string; name?: string }>) || [],
               locationReferences: (references.locationReferences || []) as never[],
@@ -545,7 +572,7 @@ export async function POST(
       const previewCredits = previewQuote
         ? previewQuote.credits
         : getAggregatorCreditsForModel(videoModel || '', previewDuration)
-      const hasPreviewCredits = await CreditService.ensureCredits(String(session.user.id), previewCredits)
+      const hasPreviewCredits = await CreditService.ensureCredits(dbUserId, previewCredits)
       if (!hasPreviewCredits) {
         return NextResponse.json(
           {
@@ -561,11 +588,11 @@ export async function POST(
         segmentId,
         projectId,
         sceneId,
-        userId: String(session.user.id),
+        userId: dbUserId,
         prompt: effectivePrompt,
         negativePrompt,
         genType,
-        generationMethod: generationMethod as VideoGenerationMethod | undefined,
+        generationMethod: resolvedGenerationMethod,
         startFrameUrl,
         endFrameUrl,
         sourceVideoUrl,
@@ -592,7 +619,7 @@ export async function POST(
         existingStemStatus,
         existingStemJobId,
         requireVeoRefForExt:
-          generationMethod === 'EXT' &&
+          resolvedGenerationMethod === 'EXT' &&
           !sourceVideoUrl &&
           !previousSegmentVeoRef &&
           resolvedVideoProvider === 'vertex',
@@ -639,7 +666,7 @@ export async function POST(
       upgradeLabel = videoResult.upgradeLabel
 
       const billedDuration = requestedVideoDurationSeconds ?? duration ?? 10
-      const billedUserId = String(session.user.id)
+      const billedUserId = dbUserId
 
       if (generationProvider === 'kling' && !videoResult.wasVeoFallback) {
         await quoteAndCharge({
@@ -753,7 +780,7 @@ export async function POST(
 
       try {
         await quoteAndCharge({
-          userId: String(session.user.id),
+          userId: dbUserId,
           projectId,
           segmentId,
           quoteInput: {

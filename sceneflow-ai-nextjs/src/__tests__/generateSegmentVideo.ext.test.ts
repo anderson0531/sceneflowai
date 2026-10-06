@@ -225,4 +225,62 @@ describe('generateSegmentVideoCore REF start frame', () => {
       })
     )
   })
+
+  it('promotes T2V with labeled refs to REF and attaches the images', async () => {
+    await generateSegmentVideoCore({
+      segmentId: 'seg-t2v-refs',
+      projectId: 'proj-1',
+      sceneId: 'scene-1',
+      userId: 'user-1',
+      prompt: 'Gideon rests his face against the stone beside a framed photograph.',
+      genType: 'T2V',
+      generationMethod: 'T2V',
+      referenceImages: [
+        { url: 'https://cdn.example.com/gideon.jpg', type: 'character', name: 'Gideon Croft' },
+        { url: 'https://cdn.example.com/vault.jpg', type: 'style', name: 'FREIGHT TUNNEL VAULT' },
+        { url: 'https://cdn.example.com/photo.jpg', type: 'style', name: 'Framed Photo of Sarah' },
+      ],
+      videoProvider: 'vertex',
+      duration: 10,
+    })
+
+    expect(generateVideoWithVeoKlingFallback).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: 'REF',
+        videoOptions: expect.objectContaining({
+          referenceImages: expect.arrayContaining([
+            expect.objectContaining({ url: 'https://cdn.example.com/gideon.jpg' }),
+            expect.objectContaining({ url: 'https://cdn.example.com/vault.jpg' }),
+          ]),
+        }),
+      })
+    )
+  })
+
+  it('promotes location/prop-only refs to REF', async () => {
+    await generateSegmentVideoCore({
+      segmentId: 'seg-style-refs',
+      projectId: 'proj-1',
+      sceneId: 'scene-1',
+      userId: 'user-1',
+      prompt: 'The vault interior holds in low-key light.',
+      genType: 'T2V',
+      referenceImages: [
+        { url: 'https://cdn.example.com/vault.jpg', type: 'style', name: 'FREIGHT TUNNEL VAULT' },
+      ],
+      videoProvider: 'vertex',
+      duration: 10,
+    })
+
+    expect(generateVideoWithVeoKlingFallback).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: 'REF',
+        videoOptions: expect.objectContaining({
+          referenceImages: expect.arrayContaining([
+            expect.objectContaining({ url: 'https://cdn.example.com/vault.jpg' }),
+          ]),
+        }),
+      })
+    )
+  })
 })

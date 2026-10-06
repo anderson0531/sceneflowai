@@ -98,7 +98,7 @@ describe('deriveSegmentsFromBeats', () => {
     expect(result.errors[0]).toMatch(/approved/i)
   })
 
-  it('keeps long dialogue as a single segment (Kling-first, no Veo EXT chain)', () => {
+  it('splits long dialogue across shots instead of shortening the line', () => {
     const longLine =
       'We have to move now before they find us at the warehouse loading dock tonight. '.repeat(2)
     const scene = approvedScene([
@@ -114,15 +114,16 @@ describe('deriveSegmentsFromBeats', () => {
     ])
     const result = applyBeatSplitAndDerive(scene, 'bt_dialogue')
     expect(result.errors).toHaveLength(0)
-    expect(result.segments).toHaveLength(1)
+    expect(result.segments.length).toBeGreaterThan(1)
     expect(result.segments[0].beatId).toBe('bt_dialogue')
     expect(result.segments[0].generationMethod).toBe('REF')
-    expect(result.segments[0].veoTimelineContinuation).toBe(false)
-    expect(result.segments.some((s) => s.generationMethod === 'EXT')).toBe(false)
-    expect(result.segments[0].dialogueLines?.[0]?.line).toBe(longLine)
+    expect(result.segments.slice(1).every((s) => s.generationMethod === 'EXT')).toBe(true)
+    expect(result.segments.slice(1).every((s) => s.transitionType === 'CONTINUE')).toBe(true)
+    const joined = result.segments.map((s) => s.dialoguePortion?.excerpt ?? '').join(' ')
+    expect(joined.replace(/\s+/g, ' ').trim()).toBe(longLine.replace(/\s+/g, ' ').trim())
   })
 
-  it('does not auto-split long dialogue without manual extendBeatId', () => {
+  it('auto-splits long dialogue so spoken text is not stuffed into one 10s clip', () => {
     const longLine =
       'This is a long spoken line that should exceed eight seconds of dialogue when read at a natural pace. '.repeat(
         4
@@ -140,11 +141,10 @@ describe('deriveSegmentsFromBeats', () => {
       ])
     )
     expect(result.errors).toHaveLength(0)
-    expect(result.segments).toHaveLength(1)
+    expect(result.segments.length).toBeGreaterThan(1)
     expect(result.segments[0].generationMethod).toBe('REF')
-    expect(result.segments[0].veoTimelineContinuation).toBe(false)
-    expect(result.segments.some((s) => s.generationMethod === 'EXT')).toBe(false)
-  })
+      expect(result.segments.some((s) => s.generationMethod === 'EXT')).toBe(true)
+    })
 
   it('returns draft-frame warning when beats are not final', () => {
     const result = deriveSegmentsFromBeats(
@@ -163,7 +163,7 @@ describe('deriveSegmentsFromBeats', () => {
     expect(result.warnings?.[0]).toMatch(/Finalize/i)
   })
 
-  it('applyBeatSplitAndDerive returns one segment per beat (extendBeatId ignored)', () => {
+  it('applyBeatSplitAndDerive splits a long spoken beat (extendBeatId ignored)', () => {
     const longLine =
       'We have to move now before they find us at the warehouse loading dock tonight. '.repeat(3)
     const scene = approvedScene([
@@ -178,11 +178,11 @@ describe('deriveSegmentsFromBeats', () => {
     ])
     const result = applyBeatSplitAndDerive(scene, 'bt_long')
     expect(result.errors).toHaveLength(0)
-    expect(result.segments).toHaveLength(1)
+    expect(result.segments.length).toBeGreaterThan(1)
     expect(result.updatedScene).toBeUndefined()
   })
 
-  it('uses TTS duration for active language but keeps one segment per beat', () => {
+  it('uses TTS duration for active language but does not split a short line', () => {
     const line = 'Hello there.'
     const scene = approvedScene([
       {
@@ -207,7 +207,6 @@ describe('deriveSegmentsFromBeats', () => {
     expect(esResult.segments).toHaveLength(1)
     expect(esResult.segments[0].generationMethod).toBe('REF')
     expect(esResult.segments.some((s) => s.generationMethod === 'EXT')).toBe(false)
-    expect(esResult.segments[0].endTime - esResult.segments[0].startTime).toBeGreaterThan(10)
   })
 })
 
@@ -369,6 +368,26 @@ describe('needsProductionDerive', () => {
         { ...segment, segmentId: 'seg_extra', dialoguePortion: { lineId: 'ln', partIndex: 1, partCount: 2, excerpt: 'x' } },
       ])
     ).toBe(true)
+  })
+
+  it('returns false when a beat already has a well-formed dialogue split', () => {
+    const longLine =
+      'This is a long spoken line that should exceed eight seconds of dialogue when read at a natural pace. '.repeat(
+        4
+      )
+    const scene = approvedScene([
+      {
+        beatId: 'bt_split',
+        sequenceIndex: 0,
+        kind: 'dialogue',
+        character: 'Alex',
+        line: longLine,
+        lineId: 'ln_split',
+      },
+    ])
+    const segments = deriveSegmentsFromBeats(scene).segments
+    expect(segments.length).toBeGreaterThan(1)
+    expect(needsProductionDerive(scene, segments)).toBe(false)
   })
 
   it('returns false when clips are already one per beat', () => {

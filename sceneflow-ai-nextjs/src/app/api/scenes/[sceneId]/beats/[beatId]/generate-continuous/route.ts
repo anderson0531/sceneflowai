@@ -6,6 +6,7 @@ import { sequelize } from '@/config/database'
 import { isBeatFirstPipelineEnabled, getSceneBeats } from '@/lib/script/beatMigration'
 import { enforceVideoGenerationUnlock } from '@/lib/script/enforceVideoGenerationUnlock'
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import { resolveUserId } from '@/lib/userHelper'
 import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
 import { resolveBeatVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
@@ -62,6 +63,12 @@ export async function POST(
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    let dbUserId = String(session.user.id)
+    try {
+      dbUserId = await resolveUserId(dbUserId)
+    } catch {
+      // Provenance/cost skip non-UUID values.
+    }
 
     await sequelize.authenticate()
     const project = await Project.findByPk(projectId)
@@ -72,7 +79,7 @@ export async function POST(
     const metadata = (project.metadata || {}) as Record<string, unknown>
     const visionPhase = metadata.visionPhase || {}
     const scenes = [...getVisionScriptScenes(visionPhase as Record<string, unknown>)]
-    const { scene: matchedScene } = findSceneById(scenes, sceneId)
+    const { scene: matchedScene, index: matchedSceneIndex } = findSceneById(scenes, sceneId)
     if (!matchedScene) {
       return NextResponse.json({ error: 'Scene not found' }, { status: 404 })
     }
@@ -108,10 +115,14 @@ export async function POST(
       (matchedScene as { sceneDirection?: unknown; detailedDirection?: unknown }).sceneDirection ??
       (matchedScene as { detailedDirection?: unknown }).detailedDirection ??
       null
+    const beatIndex = beats.findIndex((b) => b.beatId === beatId)
     const compiled = compileBeatVideoPromptFromDirection(
       beat,
       sceneDirection as DetailedSceneDirection | null,
-      { artStyleId }
+      {
+        artStyleId,
+        previousBeat: beatIndex > 0 ? beats[beatIndex - 1] : undefined,
+      }
     )
     const locationReferences =
       ((visionPhase as { references?: { locationReferences?: unknown[] } }).references
@@ -122,6 +133,7 @@ export async function POST(
     const resolvedRefs = resolveBeatVideoReferences({
       scene: matchedScene,
       beat,
+      sceneIndex: matchedSceneIndex >= 0 ? matchedSceneIndex : undefined,
       projectCharacters: characters,
       locationReferences,
       objectReferences,
@@ -174,7 +186,7 @@ export async function POST(
         segmentId: segment.segmentId,
         projectId,
         sceneId,
-        userId: String(session.user.id),
+        userId: dbUserId,
         prompt,
         negativePrompt: compiled.negativePrompt,
         genType: method === 'T2V' ? 'T2V' : 'I2V',

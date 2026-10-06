@@ -15,6 +15,7 @@ import { AIUsage } from '@/models'
 import { CREDIT_EXCHANGE_RATE, PROVIDER_COSTS_USD } from './creditCosts'
 import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { ensurePricingAdminSchema } from './rateCardStore'
+import { isUuid } from '@/lib/auth/isUuid'
 
 // =============================================================================
 // TYPES
@@ -191,6 +192,13 @@ export async function logProviderCost(log: ProviderCostLog): Promise<void> {
     // Calculate margin
     log.marginPercent = calculateMargin(log.creditsCharged, log.providerCostUsd)
     await ensurePricingAdminSchema()
+
+    if (!isUuid(log.userId)) {
+      console.warn(
+        `[CostTracking] Skipping ai_usage insert: user_id is not a UUID (${log.userId})`
+      )
+      return
+    }
 
     // Log to AIUsage table (existing table, add cost fields to meta)
     await AIUsage.create({

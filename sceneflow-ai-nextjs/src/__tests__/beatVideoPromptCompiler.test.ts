@@ -86,10 +86,32 @@ describe('compileBeatVideoPromptFromDirection', () => {
     expect(result.prompt).toContain('Wide Shot')
   })
 
-  it('falls back to compileBeatVideoPrompt when no direction bundle match', () => {
-    const fallback = compileBeatVideoPrompt(dialogueBeat)
-    const result = compileBeatVideoPromptFromDirection(dialogueBeat, null)
-    expect(result.prompt).toBe(fallback.prompt)
+  it('adds incoming continuity and continues a split spoken line', () => {
+    const previous: SceneBeat = {
+      beatId: 'beat_0',
+      sequenceIndex: 0,
+      kind: 'dialogue',
+      character: 'SARAH',
+      line: 'We need to leave now before they seal the tunnel.',
+      beatDirection: {
+        shotType: 'Medium Close-Up',
+        castInFrame: ['SARAH'],
+        keyProps: ['tunnel key'],
+      },
+    }
+    const continuation: SceneBeat = {
+      ...dialogueBeat,
+      beatId: 'beat_1',
+      sequenceIndex: 1,
+      line: 'We need to leave now before they seal the tunnel.',
+    }
+    const result = compileBeatVideoPromptFromDirection(continuation, null, {
+      excerpt: 'before they seal the tunnel.',
+      previousBeat: previous,
+      continuesSameLine: true,
+    })
+    expect(result.prompt).toContain('before they seal the tunnel.')
+    expect(result.prompt).toContain('Continues the same spoken line')
   })
 
   it('compiles a motion prompt from user beat direction and leaves the scene bundle behind', () => {

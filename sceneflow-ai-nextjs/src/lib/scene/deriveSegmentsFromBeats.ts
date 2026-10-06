@@ -1,11 +1,14 @@
 /**
  * Deterministic production segment derivation from approved storyboard beats.
- * Kling-first: one beat = one segment (no Veo extension-chain auto-split).
+ * One beat = one segment unless spoken duration exceeds the Omni 10s clip budget,
+ * in which case the line is split across continuation shots (never shortened).
  */
 
 import {
   estimateSpokenDurationSeconds,
+  planDialogueLineSplits,
   resolveBeatSpokenDuration,
+  VEO_DIALOGUE_CLIP_MAX_SEC,
 } from '@/lib/scene/dialogueSegmentSplit'
 import { parsePerformanceCue } from '@/lib/scene/performanceCues'
 import { KLING_SINGLE_CLIP_MAX_SEC } from '@/lib/kling/types'
@@ -98,9 +101,15 @@ function beatToSegment(
   opts: {
     duration?: number
     generationMethod?: VideoGenerationMethod
+    spokenExcerpt?: string
+    dialoguePortion?: SceneSegment['dialoguePortion']
+    veoTimelineContinuation?: boolean
+    videoChain?: SceneSegment['videoChain']
+    transitionType?: SceneSegment['transitionType']
   } = {}
 ): { segment: SceneSegment; duration: number } {
-  const spokenText = beat.line ?? ''
+  const fullSpoken = beat.line ?? ''
+  const spokenText = opts.spokenExcerpt ?? fullSpoken
   const duration =
     opts.duration ??
     (beat.kind === 'action'
@@ -120,7 +129,8 @@ function beatToSegment(
 
   const beatTransition = beat.beatDirection?.transition
   const segmentTransition =
-    beatTransition === 'CONTINUE' ? 'CONTINUE' : 'CUT'
+    opts.transitionType ??
+    (beatTransition === 'CONTINUE' ? 'CONTINUE' : 'CUT')
 
   const segment: SceneSegment = {
     segmentId: mintSegmentId(),
@@ -152,6 +162,7 @@ function beatToSegment(
             },
           ]
         : [],
+    ...(opts.dialoguePortion ? { dialoguePortion: opts.dialoguePortion } : {}),
     generationMethod,
     references: {
       startFrameUrl: preVisStartUrl,
@@ -169,7 +180,8 @@ function beatToSegment(
     generatedPrompt: buildVideoPrompt(beat, spokenText),
     action: beat.actionDescription ?? '',
     beatId: beat.beatId,
-    veoTimelineContinuation: false,
+    veoTimelineContinuation: opts.veoTimelineContinuation ?? false,
+    ...(opts.videoChain ? { videoChain: opts.videoChain } : {}),
   }
 
   return { segment, duration }
@@ -183,6 +195,52 @@ function appendSegmentsFromBeat(
   scene: Record<string, unknown>,
   language: string
 ): { startTime: number; sequenceIndex: number } {
+  const spokenText = beat.line ?? ''
+  const parts =
+    beat.kind !== 'action' && spokenText.trim()
+      ? planDialogueLineSplits(spokenText, VEO_DIALOGUE_CLIP_MAX_SEC)
+      : []
+
+  if (parts.length > 1) {
+    let nextStart = startTime
+    let nextIndex = sequenceIndex
+    for (const part of parts) {
+      const isContinuation = part.partIndex > 0
+      const { segment, duration } = beatToSegment(beat, nextIndex, nextStart, {
+        duration: Math.min(
+          VEO_DIALOGUE_CLIP_MAX_SEC,
+          Math.max(4, part.veoDuration)
+        ),
+        generationMethod: isContinuation ? 'EXT' : 'REF',
+        spokenExcerpt: part.excerpt,
+        dialoguePortion: {
+          lineId: beat.lineId ?? beat.beatId,
+          partIndex: part.partIndex,
+          partCount: part.partCount,
+          excerpt: part.excerpt,
+        },
+        veoTimelineContinuation: isContinuation,
+        videoChain: {
+          partIndex: part.partIndex,
+          partCount: part.partCount,
+          chainMethod: isContinuation ? 'extension' : 'initial',
+          ...(isContinuation
+            ? { extensionSeconds: part.veoDuration, extensionStep: part.partIndex }
+            : {}),
+        },
+        transitionType: isContinuation
+          ? 'CONTINUE'
+          : beat.beatDirection?.transition === 'CONTINUE'
+            ? 'CONTINUE'
+            : 'CUT',
+      })
+      segments.push(segment)
+      nextStart += duration
+      nextIndex += 1
+    }
+    return { startTime: nextStart, sequenceIndex: nextIndex }
+  }
+
   const spokenDuration = resolveBeatSpokenDuration(beat, scene, language)
   const durationOverride =
     beat.kind === 'action'
@@ -266,26 +324,60 @@ export function segmentOrderMatchesBeats(
   return beatOrder.join('|') === segmentOrder.join('|')
 }
 
-/** Exactly one production clip per active beat, in beat order, with no dialogue splits. */
+/** Production clips cover every active beat, in beat order. Dialogue splits are allowed. */
 export function segmentsAreOnePerActiveBeat(
+  scene: Record<string, unknown>,
+  segments: SceneSegment[] | null | undefined
+): boolean {
+  return segmentsCoverActiveBeats(scene, segments)
+}
+
+function segmentsCoverActiveBeats(
   scene: Record<string, unknown>,
   segments: SceneSegment[] | null | undefined
 ): boolean {
   const beatOrder = activeBeatIdOrder(scene)
   const existing = segments ?? []
-  if (existing.length !== beatOrder.length) return false
-  return existing.every((segment, index) => {
-    if (segment.beatId !== beatOrder[index]) return false
-    const partIndex = segment.dialoguePortion?.partIndex ?? 0
-    const partCount = segment.dialoguePortion?.partCount ?? 1
-    return partIndex === 0 && partCount <= 1
-  })
+  if (beatOrder.length === 0) return true
+  if (existing.length === 0) return false
+
+  const byBeat = new Map<string, SceneSegment[]>()
+  const seenOrder: string[] = []
+  for (const segment of existing) {
+    if (!segment.beatId || !beatOrder.includes(segment.beatId)) continue
+    if (!byBeat.has(segment.beatId)) {
+      byBeat.set(segment.beatId, [])
+      seenOrder.push(segment.beatId)
+    }
+    byBeat.get(segment.beatId)!.push(segment)
+  }
+
+  if (seenOrder.length !== beatOrder.length) return false
+  if (seenOrder.join('|') !== beatOrder.join('|')) return false
+
+  for (const beatId of beatOrder) {
+    const parts = [...(byBeat.get(beatId) ?? [])].sort(
+      (a, b) => (a.dialoguePortion?.partIndex ?? 0) - (b.dialoguePortion?.partIndex ?? 0)
+    )
+    if (parts.length === 0) return false
+    const partCount = parts[0].dialoguePortion?.partCount ?? 1
+    if (partCount <= 1) {
+      if (parts.length !== 1) return false
+      continue
+    }
+    if (parts.length !== partCount) return false
+    for (let i = 0; i < parts.length; i++) {
+      if ((parts[i].dialoguePortion?.partIndex ?? 0) !== i) return false
+      if ((parts[i].dialoguePortion?.partCount ?? 1) !== partCount) return false
+    }
+  }
+  return true
 }
 
 /**
  * Whether production segments should be rebuilt from beats.
  * A missing still does not block this: the Mixer still needs a row for that beat.
- * Extra clips on the same beat (legacy Veo splits or start/end pairs) count as stale.
+ * Extra clips on the same beat are stale unless they are a well-formed dialogue split.
  */
 export function needsProductionDerive(
   scene: Record<string, unknown>,
@@ -369,8 +461,18 @@ export function mergeDerivedSegmentsWithExisting(
   if (existing.length === 0) return newSegments
 
   return newSegments.map((seg) => {
+    const partIndex = seg.dialoguePortion?.partIndex ?? 0
+    const newPartCount = seg.dialoguePortion?.partCount ?? 1
     const candidates = existing.filter((existingSeg) => existingSeg.beatId === seg.beatId)
-    const match = preferExistingSegment(candidates)
+    const partMatch =
+      newPartCount > 1
+        ? existing.find(
+            (existingSeg) =>
+              existingSeg.beatId === seg.beatId &&
+              (existingSeg.dialoguePortion?.partIndex ?? 0) === partIndex
+          )
+        : undefined
+    const match = partMatch ?? preferExistingSegment(candidates)
     if (!match) return seg
     const takes = candidates.reduce(
       (rows, candidate) => unionRowsById(rows, candidate.takes, 'id'),
@@ -490,8 +592,8 @@ export function deriveSegmentsFromBeats(
 }
 
 /**
- * @deprecated Veo dialogue splits removed — delegates to deriveSegmentsFromBeats.
- * extendBeatId is ignored for backward compatibility.
+ * Split long dialogue at derive time when spoken duration exceeds the Omni 10s clip budget.
+ * extendBeatId is ignored for backward compatibility — all spoken beats are considered.
  */
 export function applyBeatSplitAndDerive(
   scene: Record<string, unknown>,
