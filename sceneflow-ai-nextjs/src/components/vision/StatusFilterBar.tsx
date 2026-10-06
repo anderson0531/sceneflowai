@@ -46,7 +46,7 @@ export function StatusFilterBar({
           <PopoverTrigger asChild>
             <button
               type="button"
-              className={`inline-flex h-7 max-w-full items-center gap-1.5 rounded-full border px-2.5 text-xs transition-colors ${
+              className={`inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border px-2.5 text-xs transition-colors ${
                 filtering
                   ? 'border-slate-200 bg-slate-200 text-slate-900'
                   : 'border-slate-600/50 bg-slate-800/60 text-slate-300 hover:border-slate-400'
@@ -116,7 +116,7 @@ export function StatusFilterBar({
               event.stopPropagation()
               onClear()
             }}
-            className="h-7 shrink-0 rounded-full px-2 text-xs text-slate-400 hover:text-slate-200"
+            className="h-8 shrink-0 rounded-full px-2 text-xs text-slate-400 hover:text-slate-200"
             aria-label="Clear filters"
           >
             Clear

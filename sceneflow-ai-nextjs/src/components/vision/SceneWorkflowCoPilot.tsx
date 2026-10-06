@@ -28,18 +28,18 @@ export const guidanceContent: Record<WorkflowStep, {
     goal: 'Finalize script, audio, and references before pre-vis and video production.',
     whyItMatters: 'Foundation work happens here: writing, Audience Resonance Analysis, voice casting, and timeline prep. Lock the script when ready so agents and production stay stable.',
     howItWorks: [
-      'Edit narration, dialogue, and action in Script',
+      'Edit narration, dialogue, and action in Audio',
       'Run Audience Resonance Analysis (aim for 85+) and apply targeted fixes with the Intelligent Assistant Director',
       'Generate scene audio and assign voices from the Reference Library',
       'Use Screening Room — Preview (live) to review the animatic before exporting MP4s',
     ],
     toolsAndTips: [
       'Pre-Vis ready checklist: assign voices and add references (shown in Pre-Visualization panel)',
-      'Run All Agents: one project-level CTA for Direction → Script → Stills',
+      'Run All Agents: one project-level CTA for Direction → Audio → Stills',
       'Screening Room = live preview; Streams = language versions of the scene',
     ],
     bestPractice: 'Assign voices and key references before running agents — the Pre-Vis panel shows what is missing.',
-    tip: 'One strip runs Direction, Script, Music, References, Stills, Clips, Mixer, and Streams.',
+    tip: 'One strip runs Direction, Audio, Music, References, Stills, Clips, Mixer, and Streams.',
   },
   directorsChair: {
     title: 'Direction',
@@ -52,7 +52,7 @@ export const guidanceContent: Record<WorkflowStep, {
       'Edit direction before re-running pre-vis generation',
     ],
     toolsAndTips: [
-      'Direction is its own tab, ahead of Script',
+      'Direction is its own tab, ahead of Audio',
       'Changes to direction may require regenerating Stills',
     ],
     bestPractice: 'Confirm direction matches your vision before building pre-vis.',
@@ -90,7 +90,7 @@ export const guidanceContent: Record<WorkflowStep, {
       'Shot = script unit; Shot Frame = start/end pair for F2V',
       'Shots is a step on the same strip as Pre-Vis and Video',
     ],
-    bestPractice: 'Edit the script in Script if shot boundaries need to change at the source.',
+    bestPractice: 'Edit the script in Audio if shot boundaries need to change at the source.',
     tip: 'Segment Builder is not a user-facing step in the simplified workflow.',
   },
   callAction: {

@@ -13,6 +13,10 @@ describe('shared scene beat stage', () => {
 
   it('labels the beats tab Audio and keeps the beats tab id', () => {
     expect(panel).toContain('Audio')
+    expect(panel).toContain('title="Dialogue, narration, and sound effects for each shot"')
+    expect(panel).toContain('Scene Director')
+    expect(panel).not.toContain('Direct Scene')
+    expect(panel).not.toContain('sceneWorkflowSectionLabel')
     expect(panel).toContain('value="beats"')
     expect(panel).not.toMatch(/>\s*Beats\s*</)
   })

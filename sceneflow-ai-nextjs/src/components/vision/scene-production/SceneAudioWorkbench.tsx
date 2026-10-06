@@ -413,11 +413,6 @@ export function SceneAudioWorkbench(props: SceneAudioWorkbenchProps & { onSaveSf
   return (
     <div className="rounded-lg border border-slate-700/50 bg-slate-900/40 p-4">
       <AudioToolbar {...props} hasSceneMusic={hasSceneMusic} />
-      <BeatFilters
-        beatFacts={beatFacts}
-        beatListFilters={beatListFilters}
-        setBeatListFilters={setBeatListFilters}
-      />
       <SceneBeatStage
         railLabel="Audio shots"
         items={items}
@@ -512,7 +507,7 @@ function AudioToolbar(
       type="button"
       size="sm"
       variant="outline"
-      className="h-7 border-violet-400/60 text-xs text-violet-200 hover:bg-violet-900/30"
+      className="h-8 border-violet-400/60 text-xs text-violet-200 hover:bg-violet-900/30"
       disabled={isDisabled}
       onClick={(e) => {
         e.stopPropagation()
@@ -535,10 +530,25 @@ function AudioToolbar(
   ) : null
 
   return (
-    <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+    <div className="mb-3 flex flex-wrap items-center gap-2">
       {hasSceneMusic && (
-        <SceneScoreToggle className="mr-auto" checked={sceneScoreOn} onCheckedChange={onSceneScoreChange} />
+        <SceneScoreToggle checked={sceneScoreOn} onCheckedChange={onSceneScoreChange} />
       )}
+      <BeatFilters
+        beatFacts={props.beatFacts}
+        beatListFilters={props.beatListFilters}
+        setBeatListFilters={props.setBeatListFilters}
+      />
+      {scene.dialogue && scene.dialogue.length > 0 && (
+        <VoiceChips
+          scene={scene}
+          sceneIdx={sceneIdx}
+          selectedLanguage={selectedLanguage}
+          onResyncAudioTiming={onResyncAudioTiming}
+          resyncingAudioSceneIndex={resyncingAudioSceneIndex}
+        />
+      )}
+      <div className="ml-auto flex items-center">
       {button && (!voicesReady || !hasNarrationVoice) ? (
         <TooltipProvider delayDuration={200}>
           <Tooltip>
@@ -564,15 +574,7 @@ function AudioToolbar(
       ) : (
         button
       )}
-      {scene.dialogue && scene.dialogue.length > 0 && (
-        <VoiceChips
-          scene={scene}
-          sceneIdx={sceneIdx}
-          selectedLanguage={selectedLanguage}
-          onResyncAudioTiming={onResyncAudioTiming}
-          resyncingAudioSceneIndex={resyncingAudioSceneIndex}
-        />
-      )}
+      </div>
     </div>
   )
 }
@@ -713,8 +715,7 @@ function BeatFilters({
     beatFacts.filter((facts) => beatMatchesFilters(facts, { ...beatListFilters, attention, type })).length
 
   return (
-    <div className="mb-3">
-      <StatusFilterBar
+    <StatusFilterBar
         activeSummary={activeSummary}
         onClear={() => setBeatListFilters(DEFAULT_BEAT_LIST_FILTERS)}
         groups={[
@@ -773,7 +774,6 @@ function BeatFilters({
           </div>
         )}
       </StatusFilterBar>
-    </div>
   )
 }
 

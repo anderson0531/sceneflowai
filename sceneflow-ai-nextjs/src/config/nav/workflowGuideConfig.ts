@@ -61,7 +61,7 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
     iconColor: 'text-blue-500',
     steps: [
       { id: 'update-review-score', label: 'Run Audience Resonance Analysis', actionEventName: 'production:update-reviews' },
-      { id: 'review-analysis', label: 'Revise script (Script)', actionEventName: 'production:review-analysis' },
+      { id: 'review-analysis', label: 'Revise script (Audio)', actionEventName: 'production:review-analysis' },
       { id: 'lock-script', label: 'Lock script for production', description: 'Draft → Reviewed → Locked' },
       { id: 'assign-voices', label: 'Assign voices (Reference Library)', actionEventName: 'production:assign-voices' },
       { id: 'create-scene-audio', label: 'Generate scene audio', actionEventName: 'production:generate-audio' },
