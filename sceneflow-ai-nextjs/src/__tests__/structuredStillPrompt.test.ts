@@ -531,6 +531,24 @@ Strictly Avoid: Mannequin geometry.`,
     )
   })
 
+  it('does not tell a location-only close-up to match an identity plate', () => {
+    const close = assembleStructuredStillPrompt({
+      actionOrStructured:
+        'Close-Up. A faint amber glow pulses from a hairline fracture in the concrete wall.',
+      refs: [
+        {
+          kind: 'location',
+          token: 'location [1]',
+          name: 'TITLE SEQUENCE',
+          roleLabel: 'library location',
+        },
+      ],
+      shotType: 'Close-Up',
+    })
+    expect(close).not.toContain(STILL_TASK_FACE_CLOSE_UP_LINES[0])
+    expect(close).not.toContain(STILL_TASK_FACE_CLOSE_UP_IDENTITY_PLATE_LINES[0])
+  })
+
   it('uses head-and-shoulders TASK on a face close-up and location as bokeh', () => {
     const close = assembleStructuredStillPrompt({
       actionOrStructured: 'Close-Up. person [1] stares at the needle.',

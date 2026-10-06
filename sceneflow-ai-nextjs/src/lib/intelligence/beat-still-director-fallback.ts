@@ -56,12 +56,25 @@ export function shouldSkipStillDirectorAuto(beat: SceneBeat): boolean {
 
 export function shouldRunStillDirectorAuto(
   beat: SceneBeat,
-  opts: { needsNewStartFrame: boolean; reusedStoredPrompt: boolean }
+  opts: {
+    needsNewStartFrame: boolean
+    reusedStoredPrompt: boolean
+    /**
+     * Title-scene beat whose direction names no library character. A matching
+     * stored prompt must not skip clarify — that is the regen that keeps
+     * sending "NO people" and drops the identity plate.
+     */
+    unnamedTitleBeat?: boolean
+  }
 ): boolean {
   if (!opts.needsNewStartFrame) return false
-  if (opts.reusedStoredPrompt) return false
   if (shouldSkipStillDirectorAuto(beat)) return false
-  return true
+  if (!opts.reusedStoredPrompt) return true
+  const statedCast = beat.beatDirection?.castInFrame
+  const explicitEmptyCast =
+    Array.isArray(statedCast) && !statedCast.some((name) => String(name ?? '').trim())
+  if (explicitEmptyCast) return false
+  return Boolean(opts.unnamedTitleBeat)
 }
 
 export interface StillDirectorOverlay {

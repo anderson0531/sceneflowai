@@ -38,6 +38,7 @@ import {
   resolveBeatCharacterPolicy,
 } from '@/lib/sceneGeneration/expressOrchestrator'
 import { parseStillPromptSource } from '@/lib/imagen/structuredStillPrompt'
+import { titleBeatNeedsCastClarify } from '@/lib/vision/beatFrameGenerationContext'
 
 const alice = {
   id: 'char-alice',
@@ -301,6 +302,57 @@ describe('resolveBeatCharacterPolicy', () => {
     expect(policy.restrictToCharacterIds).toContain('char-alice')
   })
 
+  it('asks a character-free title beat to be clarified and leaves a named or empty cast alone', () => {
+    const glow: SceneBeat = {
+      beatId: 'bt',
+      kind: 'action',
+      sequenceIndex: 0,
+      actionDescription:
+        'A faint amber glow pulses from a hairline fracture in the concrete wall.',
+    }
+    const titleScene = { heading: 'INT. TITLE SEQUENCE - DAY', cinematicType: 'title' }
+    const characters = [{ id: 'char-gideon', name: 'Gideon Croft' }]
+
+    expect(
+      titleBeatNeedsCastClarify({
+        scene: titleScene,
+        beat: glow,
+        projectCharacters: characters,
+      })
+    ).toBe(true)
+    expect(
+      titleBeatNeedsCastClarify({
+        scene: titleScene,
+        beat: {
+          ...glow,
+          actionDescription: 'Gideon Croft stands over the mail tube.',
+        },
+        projectCharacters: characters,
+      })
+    ).toBe(false)
+    expect(
+      titleBeatNeedsCastClarify({
+        scene: titleScene,
+        beat: { ...glow, beatDirection: { castInFrame: ['Gideon Croft'] } },
+        projectCharacters: characters,
+      })
+    ).toBe(false)
+    expect(
+      titleBeatNeedsCastClarify({
+        scene: titleScene,
+        beat: { ...glow, beatDirection: { castInFrame: [] } },
+        projectCharacters: characters,
+      })
+    ).toBe(false)
+    expect(
+      titleBeatNeedsCastClarify({
+        scene: { heading: 'INT. VAULT - NIGHT' },
+        beat: glow,
+        projectCharacters: characters,
+      })
+    ).toBe(false)
+  })
+
   it('reads the beat plan prompt as well as the beat text', () => {
     const policy = resolveBeatCharacterPolicy({
       ...titleSceneArgs,
@@ -417,7 +469,7 @@ describe('the route composes a beat frame from its direction', () => {
   it('reaches the composer without being asked for intelligence', () => {
     // The composer used to live inside `else if (useAIPrompt && ...)`, which
     // Express — the caller that generates every beat frame — never satisfies.
-    const composed = routeSrc.indexOf('const persistedBeatPrompt = beatForPromptCompose')
+    const composed = routeSrc.indexOf('const persistedBeatPrompt = directedFramePrompt')
     const intelligenceBranch = routeSrc.indexOf('} else if (runsSceneIntelligence) {')
     expect(composed).toBeGreaterThan(-1)
     expect(intelligenceBranch).toBeGreaterThan(composed)
@@ -446,7 +498,7 @@ describe('the route composes a beat frame from its direction', () => {
     const stamp = routeSrc.indexOf(
       'promptToken: obj.promptToken || buildPropPromptToken(index + 1)'
     )
-    const composed = routeSrc.indexOf('const persistedBeatPrompt = beatForPromptCompose')
+    const composed = routeSrc.indexOf('const persistedBeatPrompt = directedFramePrompt')
     const drop = routeSrc.indexOf('Dropping ${unnamedProps.length} prop reference(s) not named in the frame')
     expect(stamp).toBeGreaterThan(-1)
     expect(composed).toBeGreaterThan(stamp)

@@ -19,6 +19,7 @@ import { extractLocation } from '@/lib/script/formatSceneHeading'
 import { mentionsWord, propHeadNoun } from '@/lib/script/propNameMatch'
 import type { BeatReferenceSelection, SceneBeat } from '@/lib/script/segmentTypes'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
+import { isStoryboardNoCharacterScene } from '@/lib/script/sceneClassification'
 import {
   buildSceneStagingText,
   findLocationReferencesAssignedToScene,
@@ -794,6 +795,41 @@ export function detectCharactersNamedInBeat(args: {
     text,
     projectCharacters,
     characterDetectionOptions(args.filmTitle, args.objectReferences, args.locationReferences)
+  )
+}
+
+/**
+ * Title-scene beat a scoped regen must clarify before drawing.
+ *
+ * A stored prompt that still matches a character-free direction is replayed
+ * forever, and the title rule then sends the still with no identity plate.
+ * Direct Shot's empty-note optimize writes cast, frozen moment, and blocking;
+ * this is the same gap. An explicit empty `castInFrame` is a decision to
+ * leave the frame people-free, and a beat that already names someone does
+ * not need another pass.
+ */
+export function titleBeatNeedsCastClarify(args: {
+  scene: Record<string, unknown>
+  beat: SceneBeat
+  sceneNumber?: number
+  projectCharacters: ResolveBeatFrameGenerationContextArgs['projectCharacters']
+  filmTitle?: string
+  objectReferences?: VisualReference[]
+  locationReferences?: LocationReference[]
+  promptText?: string
+}): boolean {
+  if (!isStoryboardNoCharacterScene(args.scene, args.sceneNumber)) return false
+  const stated = args.beat.beatDirection?.castInFrame
+  if (Array.isArray(stated)) return false
+  return (
+    detectCharactersNamedInBeat({
+      beat: args.beat,
+      promptText: args.promptText,
+      projectCharacters: args.projectCharacters,
+      filmTitle: args.filmTitle,
+      objectReferences: args.objectReferences,
+      locationReferences: args.locationReferences,
+    }).length === 0
   )
 }
 

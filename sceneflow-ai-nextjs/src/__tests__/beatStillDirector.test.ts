@@ -215,6 +215,61 @@ describe('shouldRunStillDirectorAuto', () => {
     ).toBe(false)
   })
 
+  it('re-directs a reused title beat that names no cast', () => {
+    expect(
+      shouldRunStillDirectorAuto(
+        beat({
+          actionDescription:
+            'A faint amber glow pulses from a hairline fracture in the concrete wall.',
+        }),
+        {
+          needsNewStartFrame: true,
+          reusedStoredPrompt: true,
+          unnamedTitleBeat: true,
+        }
+      )
+    ).toBe(true)
+  })
+
+  it('does not re-direct a reused beat that already names its cast', () => {
+    expect(
+      shouldRunStillDirectorAuto(
+        beat({ beatDirection: { castInFrame: ['Gideon Croft'] } }),
+        {
+          needsNewStartFrame: true,
+          reusedStoredPrompt: true,
+          unnamedTitleBeat: false,
+        }
+      )
+    ).toBe(false)
+  })
+
+  it('does not re-direct an explicit empty cast', () => {
+    expect(
+      shouldRunStillDirectorAuto(
+        beat({ beatDirection: { castInFrame: [] } }),
+        {
+          needsNewStartFrame: true,
+          reusedStoredPrompt: true,
+          unnamedTitleBeat: true,
+        }
+      )
+    ).toBe(false)
+  })
+
+  it('does not re-direct user direction even on an unnamed title beat', () => {
+    expect(
+      shouldRunStillDirectorAuto(
+        beat({ beatDirection: { generatedBy: 'user' } }),
+        {
+          needsNewStartFrame: true,
+          reusedStoredPrompt: true,
+          unnamedTitleBeat: true,
+        }
+      )
+    ).toBe(false)
+  })
+
   it('skips when the start frame does not need generation', () => {
     expect(
       shouldRunStillDirectorAuto(beat(), {
@@ -306,6 +361,7 @@ describe('Still Director contracts', () => {
     expect(src).toContain('generatedBy: \'director\'')
     expect(src).toContain('skipIfProtected: true')
     expect(src).toContain('reusedStoredPrompt: Boolean(selectedKeys && storedPromptMatchesDirection(beat))')
+    expect(src).toContain('unnamedTitleBeat: titleBeatNeedsCastClarify(')
     expect(src).not.toMatch(/from ['"]@\/app\/api\/scene\/generate-image/)
   })
 
