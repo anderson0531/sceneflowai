@@ -62,9 +62,13 @@ function refreshSegmentList<T extends SegmentPromptRow>(
       return segment
     }
     const excerpt = segment.dialoguePortion?.excerpt?.trim()
+    const beatIndex = beats.findIndex((entry) => entry.beatId === beat.beatId)
+    const previousBeat = beatIndex > 0 ? beats[beatIndex - 1] : undefined
     const compiled = compileBeatVideoPromptFromDirection(beat, sceneDirection, {
       ...(options?.artStyleId ? { artStyleId: options.artStyleId } : {}),
       ...(excerpt ? { excerpt } : {}),
+      continuesSameLine: (segment.dialoguePortion?.partIndex ?? 0) > 0,
+      previousBeat,
       musicCue: musicCueForBeat(scene, beats, beat),
     })
     if (

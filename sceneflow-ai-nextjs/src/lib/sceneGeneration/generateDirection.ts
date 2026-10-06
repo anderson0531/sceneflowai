@@ -15,6 +15,7 @@ import {
 import { generateSceneContentHash } from '../../lib/utils/contentHash'
 import { generateText } from '@/lib/vertexai/gemini'
 import { getSceneBeats } from '@/lib/script/beatMigration'
+import { padCameraShotsToBeatCount } from '@/lib/script/beatDirectionDerive'
 import { getSceneMovements } from '@/lib/script/sceneMovements'
 import type { SceneDirectionResult } from './types'
 
@@ -372,7 +373,8 @@ ${arc.block}
 
 DIRECT THE ARC, NOT THE AVERAGE (MANDATORY):
 - "sceneDescription" MUST be exactly ${arc.movementCount} sentence(s) — ONE per movement, in movement order, each describing that movement's change in plain language.
-- "camera.shots" MUST contain exactly ${arc.beatCount} entries, one per beat in beat order. Vary shot scale across the beats of a movement; do not repeat the same shot back to back.
+- "camera.shots" MUST contain exactly ${arc.beatCount} entries, one per beat in beat order. Vary shot scale across the beats of a movement; do not repeat the same shot back to back. If storytelling needs more coverage, ADD shots — never recycle one scale for leftover beats.
+- Never condense, shorten, or paraphrase quoted dialogue. If a spoken line exceeds about 10 seconds, plan additional shots that continue the same line rather than cutting the words.
 - "talent.keyActions" MUST contain one entry per movement (${arc.movementCount} total), in movement order, naming the physical action that carries that movement.
 - "talent.blocking" MUST describe how positions CHANGE from the first movement to the last, not one static arrangement.
 `
@@ -395,6 +397,7 @@ For each dialogue line, provide specific, actionable performance direction that 
 4. EMOTIONAL TRANSITION: Map the emotional arc (e.g., "Recognition → Grief → Comfort")
 5. SUBTEXT: The character's inner motivation beneath the words
 6. PHYSIOLOGICAL: Breathing patterns, swallowing, tension (e.g., "breathing becomes shallow and heavy")
+7. DIALOGUE FIDELITY: Keep every spoken word. Split a long line across additional shots instead of shortening it to fit a 10-second clip.
 
 CRITICAL QUALITY GUIDELINES (apply to every scene):
 1. Replace generic emotions (sad, happy) with transitional sequences showing the journey
@@ -549,6 +552,13 @@ export async function generateSceneDirection(
   }
 
   sceneDirection = fillDirectionDefaults(sceneDirection)
+  const beatCount = getSceneBeats(scene as Record<string, unknown>).length
+  if (sceneDirection.camera) {
+    sceneDirection.camera.shots = padCameraShotsToBeatCount(
+      sceneDirection.camera.shots,
+      beatCount
+    )
+  }
   sceneDirection.segmentPromptBundle = normalizePromptBundle(scene, sceneDirection)
   if (sceneDirection.segmentPromptBundle.length === 0) {
     sceneDirection.segmentPromptBundle = fallbackPromptBundle(scene)

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   getMethodWithFallback,
+  promoteMethodForResolvedRefs,
   type MethodSelectionContext,
 } from '@/lib/vision/intelligentMethodSelection'
 
@@ -41,5 +42,22 @@ describe('getMethodWithFallback beat-first methods', () => {
   it('falls an invalid REF back to T2V when the only other asset is a scene image', () => {
     const result = getMethodWithFallback('REF', context({ hasSceneImage: true, hasCharacterRefs: false }))
     expect(result.method).toBe('T2V')
+  })
+})
+
+describe('promoteMethodForResolvedRefs', () => {
+  it('promotes T2V to REF when labeled refs were resolved', () => {
+    expect(promoteMethodForResolvedRefs('T2V', 'T2V', 4)).toBe('REF')
+    expect(promoteMethodForResolvedRefs(undefined, 'T2V', 4)).toBe('REF')
+  })
+
+  it('keeps frame-locked methods even when refs exist', () => {
+    expect(promoteMethodForResolvedRefs('I2V', 'I2V', 3)).toBe('I2V')
+    expect(promoteMethodForResolvedRefs('EXT', 'T2V', 3)).toBe('EXT')
+    expect(promoteMethodForResolvedRefs('FTV', 'I2V', 3)).toBe('FTV')
+  })
+
+  it('keeps T2V when no refs were resolved', () => {
+    expect(promoteMethodForResolvedRefs('T2V', 'T2V', 0)).toBe('T2V')
   })
 })

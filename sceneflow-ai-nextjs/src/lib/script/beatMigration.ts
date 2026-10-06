@@ -19,6 +19,12 @@ import {
   type StoryboardStatus,
 } from '@/lib/script/segmentTypes'
 import { mintLineId } from '@/lib/script/segmentScript'
+import {
+  applySpokenDurationMargin,
+  estimateSpokenDurationSeconds,
+  planDialogueLineSplits,
+  VEO_DIALOGUE_CLIP_MAX_SEC,
+} from '@/lib/scene/dialogueSegmentSplit'
 import { applyDerivedSfxToScene } from '@/lib/script/deriveSfxFromSceneContent'
 import { dedupeRedundantActionBeats } from '@/lib/script/actionBeatDedupe'
 import { backfillBeatDirectionsOnScene } from '@/lib/script/beatDirectionDerive'
@@ -49,7 +55,8 @@ const START_FRAME_ONLY_MIGRATION_FLAG = 'startFrameOnlyMigrationAt'
 const BEAT_DIRECTION_MIGRATION_FLAG = 'beatDirectionMigratedAt'
 const BEAT_SET_CONTEXT_MIGRATION_FLAG = 'beatSetContextMigratedAt'
 const BEAT_DURATION_SEC = 8
-const MAX_DERIVED_BEATS = 12
+/** Same ceiling as MAX_BEATS_PER_SCENE in sceneDecomposition (avoid a circular import). */
+const MAX_DERIVED_BEATS = 30
 
 /** True when a beat is excluded from image/video/render (audio preserved for spoken beats). */
 export function isBeatExcluded(beat: SceneBeat | null | undefined): boolean {
@@ -225,9 +232,34 @@ function isSpokenBeatKind(kind: BeatKind): boolean {
   return kind === 'dialogue' || kind === 'narration'
 }
 
-/** Kling-first: long dialogue is handled at generation time (long-take), not via beat splits. */
+/** Flag spoken beats that exceed the Omni 10s clip budget so they can be split, not shortened. */
 function computeSplitFlags(beat: SceneBeat): SceneBeat {
-  return { ...beat, needsSplit: false, splitRecommendation: undefined }
+  if (beat.kind === 'action') {
+    return { ...beat, needsSplit: false, splitRecommendation: undefined }
+  }
+  const text = beat.line?.trim() ?? ''
+  if (!text) {
+    return { ...beat, needsSplit: false, splitRecommendation: undefined }
+  }
+  const spoken =
+    typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0
+      ? applySpokenDurationMargin(beat.durationSeconds)
+      : applySpokenDurationMargin(estimateSpokenDurationSeconds(text))
+  if (spoken <= VEO_DIALOGUE_CLIP_MAX_SEC) {
+    return { ...beat, needsSplit: false, splitRecommendation: undefined }
+  }
+  const parts = planDialogueLineSplits(text, VEO_DIALOGUE_CLIP_MAX_SEC)
+  if (parts.length <= 1) {
+    return { ...beat, needsSplit: false, splitRecommendation: undefined }
+  }
+  return {
+    ...beat,
+    needsSplit: true,
+    splitRecommendation: {
+      partCount: parts.length,
+      excerpts: parts.map((part) => part.excerpt),
+    },
+  }
 }
 
 /** Assign stable beatIds, sequenceIndex, and split flags. */

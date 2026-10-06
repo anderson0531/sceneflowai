@@ -120,15 +120,48 @@ function collectCastInFrameForBeat(
   return found.length > 0 ? found : undefined
 }
 
+const DISTINCT_SHOT_SCALES = [
+  'Wide Shot',
+  'Medium Shot',
+  'Close-Up',
+  'Over-the-Shoulder',
+  'Medium Close-Up',
+  'Insert Shot',
+]
+
+/**
+ * Pad a short camera.shots list to one distinct scale per beat.
+ * Never cycle the last listed shot onto leftover beats.
+ */
+export function padCameraShotsToBeatCount(
+  shots: string[] | undefined,
+  beatCount: number
+): string[] {
+  const existing = (shots ?? []).map((shot) => String(shot).trim()).filter(Boolean)
+  if (beatCount <= 0) return existing
+  if (existing.length >= beatCount) return existing
+  const padded = [...existing]
+  while (padded.length < beatCount) {
+    const prev = padded[padded.length - 1] || ''
+    const candidate =
+      DISTINCT_SHOT_SCALES[padded.length % DISTINCT_SHOT_SCALES.length] ||
+      DISTINCT_SHOT_SCALES[0]
+    const next =
+      candidate.toLowerCase() === prev.toLowerCase()
+        ? DISTINCT_SHOT_SCALES[(padded.length + 1) % DISTINCT_SHOT_SCALES.length]
+        : candidate
+    padded.push(next)
+  }
+  return padded
+}
+
 /**
  * Best-effort inference of camera framing hint for THIS beat, prefer scene
  * camera shots array position, else the beat's own shot vocab, else the
  * scene-level framing hint.
  *
- * When the scene lists fewer shots than it has beats, the overflow beats cycle
- * through the list rather than all inheriting the final shot — a scene that
- * ends on fifteen identical "Close-Up" frames is the shape that made long
- * scenes read as one repeated image.
+ * When the scene lists fewer shots than it has beats, leftover beats do not
+ * cycle the listed scales — cycling made long scenes read as one repeated image.
  */
 function inferShotType(
   beat: SceneBeat,
@@ -141,7 +174,7 @@ function inferShotType(
       ? (sceneDirection.camera.shots as string[])
       : []
   if (shots.length > 0) {
-    const raw = shots[beatIndex] ?? shots[beatIndex % shots.length]
+    const raw = shots[beatIndex]
     const trimmed = raw?.trim()
     if (trimmed) return trimmed
   }

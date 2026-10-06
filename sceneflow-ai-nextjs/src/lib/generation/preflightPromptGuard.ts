@@ -39,7 +39,8 @@ const rewriteCache = new Map<string, { prompt: string; guidePrompt?: string }>()
 
 /** Extra semantic triggers not covered by promptModerator word lists */
 const SEMANTIC_RISK_PATTERNS: Array<{ pattern: RegExp; label: string; weight: number }> = [
-  { pattern: /\bframed\b/i, label: 'framed', weight: 2 },
+  // Criminal "framed me" — not "framed photograph" / "framed portrait".
+  { pattern: /\b(?:was|got|been|being)\s+framed\b|\bframed\s+me\b/i, label: 'framed', weight: 2 },
   { pattern: /\bcompromised\b/i, label: 'compromised', weight: 2 },
   { pattern: /\binnocen(?:ce|t)\b/i, label: 'innocence', weight: 1 },
   { pattern: /\binterrogat/i, label: 'interrogation', weight: 2 },

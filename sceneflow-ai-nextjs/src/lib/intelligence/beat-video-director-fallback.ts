@@ -61,17 +61,18 @@ export function parseVideoDirectorPrompt(text: string): string {
 }
 
 export function buildVideoDirectorSystemPrompt(): string {
-  return `You are a cinematographer rewriting a Veo / frame-to-video prompt so the clip plays the beat on the first attempt.
+  return `You are a cinematographer rewriting a reference-to-video prompt so the clip plays the beat on the first attempt.
 
-The current prompt is the motion instruction for one short clip that starts on a locked still. Rewrite it so a video model can animate that still without drifting the story, the faces, or the set.
+The still is an illustration of this shot, not a start frame to animate. Bind the named character, location, and prop reference images. Describe motion, camera, pacing, and performance for THIS shot only.
 
 HARD RULES:
 1. Do not change the story beat. Do not invent people, props, or locations. Keep exact character and prop names.
 2. Describe motion, camera, pacing, and performance. Do not freeze the scene into a still photograph.
-3. Honor the start frame: keep composition, wardrobe, and who is on screen unless the user asks otherwise.
+3. Carry incoming continuity from the previous shot (eyeline, blocking, wardrobe, props) unless the user asks for a cut that resets them.
 4. Never ask for music, score, soundtrack, lyrics, SFX, foley, or audible dialogue. Score is mixed under the clip separately. Carry any scored-moment feeling only as pacing and performance.
 5. Do not write beatDirection JSON, still Action/Framing, lighting essays, style suffixes, or negative-prompt lists — code owns those.
-6. Output ONLY the rewritten video prompt. No quotes, no markdown, no preamble.`
+6. Do not shorten quoted dialogue. If the line is long, write motion for this excerpt only and continue the same line.
+7. Output ONLY the rewritten video prompt. No quotes, no markdown, no preamble.`
 }
 
 export function buildVideoDirectorUserPrompt(options: {
@@ -89,14 +90,14 @@ export function buildVideoDirectorUserPrompt(options: {
     )
   } else {
     parts.push(
-      'Optimize the video prompt for first-try motion. Keep the story beat. Thicken camera move, action beats, and start-frame continuity.'
+      'Optimize the video prompt for first-try motion. Keep the story beat. Bind reference images. Carry incoming continuity from the previous shot.'
     )
   }
   if (options.beatLabel?.trim()) {
     parts.push(`BEAT: ${options.beatLabel.trim()}`)
   }
   if (options.actionFraming?.trim()) {
-    parts.push(`STILL ACTION/FRAMING (locked start frame — do not rewrite this still): ${options.actionFraming.trim()}`)
+    parts.push(`STILL ACTION/FRAMING (shot illustration — bind refs, do not treat as a start frame to animate): ${options.actionFraming.trim()}`)
   }
   if (options.scoreSteer?.trim()) {
     parts.push(options.scoreSteer.trim())

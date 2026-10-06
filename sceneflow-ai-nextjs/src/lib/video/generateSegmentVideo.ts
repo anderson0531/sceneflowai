@@ -17,6 +17,7 @@ import { extractAndStoreLastFrame } from '@/lib/videoUtils'
 import {
   getMethodWithFallback,
   buildMethodSelectionContext,
+  promoteMethodForResolvedRefs,
   type VideoGenerationMethod,
   type MethodSelectionResult,
 } from '@/lib/vision/intelligentMethodSelection'
@@ -293,6 +294,9 @@ export async function generateSegmentVideoCore(
     useBeatFrameAsStart = false,
   } = input
 
+  const labeledRefUrls =
+    referenceImages?.map((r) => r.url).filter((url): url is string => Boolean(url)) || []
+
   const methodContext = buildMethodSelectionContext(
     {
       segmentId,
@@ -302,9 +306,7 @@ export async function generateSegmentVideoCore(
       references: {
         startFrameUrl,
         endFrameUrl,
-        characterIds:
-          referenceImages?.filter((r) => r.type === 'character').map((_, i) => `char-${i}`) ||
-          [],
+        characterIds: labeledRefUrls.map((_, i) => `ref-${i}`),
       },
     },
     { imageUrl: sceneImageUrl },
@@ -315,10 +317,14 @@ export async function generateSegmentVideoCore(
         }
       : undefined,
     totalSegments,
-    referenceImages?.filter((r) => r.type === 'character').map((r) => r.url) || []
+    labeledRefUrls
   )
 
-  const requestedMethod = (generationMethod || genType) as VideoGenerationMethod
+  const requestedMethod = promoteMethodForResolvedRefs(
+    generationMethod,
+    genType,
+    labeledRefUrls.length
+  )
   const methodSelectionResult = getMethodWithFallback(requestedMethod, methodContext)
   let method = methodSelectionResult.method
 
@@ -750,6 +756,15 @@ export async function generateSegmentVideoCore(
       throw e
     }
   } else try {
+    const omniTask =
+      method === 'REF'
+        ? 'reference_to_video'
+        : method === 'I2V' || method === 'FTV'
+          ? 'image_to_video'
+          : 'text_to_video'
+    console.log(
+      `[Segment Video] requestedMethod=${generationMethod || genType || 'T2V'} effectiveMethod=${method} referenceImages=${labeledRefUrls.length} omniTask=${omniTask}`
+    )
     console.log('[Segment Video] Routing to Vertex')
     const genResult = await generateVideoWithVeoKlingFallback({
       prompt: enhancedPrompt,

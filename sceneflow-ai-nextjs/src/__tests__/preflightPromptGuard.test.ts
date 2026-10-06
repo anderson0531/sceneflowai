@@ -38,6 +38,19 @@ describe('preflightPromptGuard', () => {
     expect(score.level).toBe('low')
   })
 
+  it('does not treat a framed photograph as criminal framing', () => {
+    const score = scorePromptRisk(
+      'Beside his cheek, a cracked framed silver gelatin photograph of Sarah lies flat against the masonry.'
+    )
+    expect(score.triggers).not.toContain('framed')
+    expect(score.level).toBe('low')
+  })
+
+  it('still flags criminal framed-me dialogue', () => {
+    const score = scorePromptRisk("ELARA VANCE says: 'Someone framed me for the theft.'")
+    expect(score.triggers).toContain('framed')
+  })
+
   it('skips Flash rewrite for low-risk prompts', async () => {
     const result = await neutralizePromptForVeo({
       prompt: 'A calm walk through a park at golden hour.',

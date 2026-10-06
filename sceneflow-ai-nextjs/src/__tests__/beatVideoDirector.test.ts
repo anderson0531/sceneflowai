@@ -85,6 +85,9 @@ describe('buildVideoDirectorSystemPrompt', () => {
     expect(prompt).toMatch(/Never ask for music, score/i)
     expect(prompt).toMatch(/Do not write beatDirection JSON/)
     expect(prompt).toMatch(/video prompt/)
+    expect(prompt).toMatch(/reference/i)
+    expect(prompt).toMatch(/incoming continuity/i)
+    expect(prompt).not.toMatch(/locked still/)
   })
 })
 

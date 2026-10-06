@@ -16,6 +16,24 @@
 
 export type VideoGenerationMethod = 'T2V' | 'I2V' | 'FTV' | 'EXT' | 'REF' | 'AUTO'
 
+const FRAME_LOCKED_METHODS = new Set<VideoGenerationMethod>(['I2V', 'EXT', 'FTV'])
+
+/**
+ * Batch/API often send genType 'T2V' (legacy enum) even when labeled REF images
+ * were resolved. Promote those to REF so Omni gets reference_to_video.
+ * Explicit I2V / EXT / FTV stay frame-locked.
+ */
+export function promoteMethodForResolvedRefs(
+  requestedMethod: VideoGenerationMethod | undefined,
+  genType: 'T2V' | 'I2V' | undefined,
+  referenceCount: number
+): VideoGenerationMethod {
+  const requested = (requestedMethod || genType || 'T2V') as VideoGenerationMethod
+  if (referenceCount <= 0) return requested
+  if (FRAME_LOCKED_METHODS.has(requested)) return requested
+  return 'REF'
+}
+
 export interface MethodSelectionContext {
   segmentIndex: number
   totalSegments: number

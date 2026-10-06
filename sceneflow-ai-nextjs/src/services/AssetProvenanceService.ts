@@ -8,6 +8,7 @@ import AssetProvenanceLog, {
   type GenerationProviderSource,
 } from '@/models/AssetProvenanceLog'
 import { enqueueC2paSigning } from '@/lib/provenance/c2paWorkflow'
+import { isUuid } from '@/lib/auth/isUuid'
 
 const PROVENANCE_VERSION = '1.0'
 
@@ -116,21 +117,29 @@ export class AssetProvenanceService {
     let provenanceId: string
 
     try {
-      const record = await AssetProvenanceLog.create({
-        user_id: input.userId,
-        project_id: input.projectId,
-        scene_id: input.sceneId ?? null,
-        segment_id: input.segmentId,
-        content_hash: contentHash,
-        signature,
-        generative_model: generativeModel,
-        generation_provider: input.generationProvider,
-        was_policy_fallback: input.wasPolicyFallback,
-        vertex_policy_attempts: input.vertexPolicyAttempts ?? null,
-        c2pa_status: process.env.C2PA_SIGNING_ENABLED === 'true' ? 'pending' : 'skipped',
-        sidecar_json: sidecar,
-      })
-      provenanceId = record.id
+      if (!isUuid(input.userId) || !isUuid(input.projectId)) {
+        console.warn(
+          '[AssetProvenance] Skipping DB log: user_id/project_id must be UUID, got',
+          { userId: input.userId, projectId: input.projectId }
+        )
+        provenanceId = crypto.randomUUID()
+      } else {
+        const record = await AssetProvenanceLog.create({
+          user_id: input.userId,
+          project_id: input.projectId,
+          scene_id: input.sceneId ?? null,
+          segment_id: input.segmentId,
+          content_hash: contentHash,
+          signature,
+          generative_model: generativeModel,
+          generation_provider: input.generationProvider,
+          was_policy_fallback: input.wasPolicyFallback,
+          vertex_policy_attempts: input.vertexPolicyAttempts ?? null,
+          c2pa_status: process.env.C2PA_SIGNING_ENABLED === 'true' ? 'pending' : 'skipped',
+          sidecar_json: sidecar,
+        })
+        provenanceId = record.id
+      }
     } catch (dbErr) {
       console.warn('[AssetProvenance] DB log failed, using ephemeral id:', dbErr)
       provenanceId = crypto.randomUUID()
