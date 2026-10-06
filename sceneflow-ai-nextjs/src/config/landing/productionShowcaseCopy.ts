@@ -8,7 +8,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
     'Each example opens on a short trailer. The longform master — a complete production from Blueprint through Pre-Vis to the final cut — plays in the Screening Room.',
   subtitleTagline: 'Long-form productions. Not clips.',
   screeningRoomInstruction:
-    'Select Pre-Vis, Scenes, Trailer, or Final to experience the pipeline. Select a language to hear the dub.',
+    'Select Pre-Vis, Scenes, Trailer, or Final to experience the pipeline. Choose English, Spanish, Chinese, or Arabic to hear the dub.',
   trailerLabel: 'Trailer',
   watchLongform: 'Watch the longform',
   blueprintDoor: 'Blueprint',
@@ -19,13 +19,13 @@ export const PRODUCTION_SHOWCASE_COPY = {
   explorerHandoff:
     'These links are a finished production. Explorer is where you make your own.',
   languagesBanner:
-    'Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.',
+    'Public examples ship in 4 languages: English, Spanish, Chinese, and Arabic.',
   workflowLabel: 'Solutions',
   startProduction: 'Start Your Production',
   cta: 'Start Your Production',
   continuityNote: 'Series Room manages continuity',
   resonanceNote: 'Audience Resonance™ optimizes scripts',
-  videoLanguagePrompt: 'Watch this production in your language',
+  videoLanguagePrompt: 'Watch in English, Spanish, Chinese, or Arabic',
   videoComingSoon: 'Dub coming soon',
   videoSoon: 'Soon',
   frictionLabel: 'The Friction',

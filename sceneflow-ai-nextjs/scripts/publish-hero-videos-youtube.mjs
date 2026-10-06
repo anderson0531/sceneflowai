@@ -31,7 +31,7 @@ const OUTPUT_DIR = join(__dirname, 'output')
 config({ path: join(ROOT, '.env.local') })
 config({ path: join(ROOT, '.env.vercel.local') })
 
-const ALL_LOCALES = ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th']
+const ALL_LOCALES = ['en', 'es', 'zh', 'ar']
 const DEFAULT_CHANNEL_HANDLE = 'sceneflowaistudio'
 const DEFAULT_CHANNEL_ID = 'UCSXGf2gMfCRtktBCrFBDc0g'
 

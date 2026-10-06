@@ -29,10 +29,10 @@ describe('resolveVideoLocaleForPlayer', () => {
   it('uses mapped locale when dub is available', () => {
     const locales = buildVideoLocales({
       en: { src: 'https://example.com/en.mp4' },
-      th: { src: 'https://example.com/th.mp4' },
+      ar: { src: 'https://example.com/ar.mp4' },
     })
 
-    expect(resolveVideoLocaleForPlayer('th', locales)).toBe('th')
+    expect(resolveVideoLocaleForPlayer('ar', locales)).toBe('ar')
   })
 
   it('falls back to first available when mapped dub is missing', () => {

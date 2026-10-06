@@ -128,11 +128,8 @@ describe('one-pipeline landing section', () => {
     expect(locales.filter((locale) => locale.available).map((locale) => locale.id)).toEqual([
       'en',
       'es',
-      'pt',
-      'hi',
       'zh',
       'ar',
-      'th',
     ])
     expect(locales.find((locale) => locale.id === 'en')?.mp4Url).toBe(english.mp4Url)
     expect(locales.find((locale) => locale.id === 'en')?.webmUrl).toBe(
@@ -157,11 +154,8 @@ describe('one-pipeline landing section', () => {
     }
     expect(twoModesVideoBlobPath('en')).toBe('demo/The Friction (English).mp4')
     expect(twoModesVideoBlobPath('es')).toBe('The Friction (Spanish).mp4')
-    expect(twoModesVideoBlobPath('pt')).toBe('The Friction (Portuguese).mp4')
-    expect(twoModesVideoBlobPath('hi')).toBe('The Friction (Hindi).mp4')
     expect(twoModesVideoBlobPath('zh')).toBe('The Friction (Chinese).mp4')
     expect(twoModesVideoBlobPath('ar')).toBe('The Friction (Arabic).mp4')
-    expect(twoModesVideoBlobPath('th')).toBe('The Friction (Thai).mp4')
 
     const filled = {
       imageUrl: 'https://cdn.example/still.webp',

@@ -8,7 +8,7 @@ import {
 import { VIDEO_LOCALE_ORDER } from '@/config/landing/videoLocales'
 
 describe('Hero YouTube publish metadata', () => {
-  it('defines bundles for all seven hero locales', () => {
+  it('defines bundles for all four hero locales', () => {
     expect(HERO_YOUTUBE_PUBLISH_BUNDLES.map((bundle) => bundle.locale)).toEqual(VIDEO_LOCALE_ORDER)
   })
 

@@ -96,11 +96,8 @@ describe('primary value sections', () => {
     }
     expect(directControlVideoBlobPath('en')).toBe('The Control (English).mp4')
     expect(directControlVideoBlobPath('es')).toBe('The Control (Spanish).mp4')
-    expect(directControlVideoBlobPath('pt')).toBe('The Control (Portuguese).mp4')
-    expect(directControlVideoBlobPath('hi')).toBe('The Control (Hindi).mp4')
     expect(directControlVideoBlobPath('zh')).toBe('The Control (Chinese).mp4')
     expect(directControlVideoBlobPath('ar')).toBe('The Control (Arabic).mp4')
-    expect(directControlVideoBlobPath('th')).toBe('The Control (Thai).mp4')
 
     const publishLocales = getPublishCutVideoLocales()
     expect(publishLocales.map((locale) => locale.id)).toEqual([...VIDEO_LOCALE_ORDER])
@@ -123,10 +120,7 @@ describe('primary value sections', () => {
     }
     expect(publishCutVideoBlobPath('en')).toBe('The Cut (English).mp4')
     expect(publishCutVideoBlobPath('es')).toBe('The Cut (Spanish).mp4')
-    expect(publishCutVideoBlobPath('pt')).toBe('The Cut (Portuguese).mp4')
-    expect(publishCutVideoBlobPath('hi')).toBe('The Cut (Hindi).mp4')
     expect(publishCutVideoBlobPath('zh')).toBe('The Cut (Chinese).mp4')
     expect(publishCutVideoBlobPath('ar')).toBe('The Cut (Arabic).mp4')
-    expect(publishCutVideoBlobPath('th')).toBe('The Cut (Thai).mp4')
   })
 })

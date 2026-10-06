@@ -46,22 +46,16 @@ const ENGLISH_POSTER = `${ILLUSTRATION_BASE}/comparison.webp`
 const LOCALE_FILENAME_LABELS: Record<VideoLocaleId, string> = {
   en: 'English',
   es: 'Spanish',
-  pt: 'Portuguese',
-  hi: 'Hindi',
   zh: 'Chinese',
   ar: 'Arabic',
-  th: 'Thai',
 }
 
 /** Reserved Blob object for each dub. Enable a locale by adding it to PRODUCED_LOCALES. */
 export const TWO_MODES_VIDEO_BLOB_PATHS: Record<VideoLocaleId, string> = {
   en: 'demo/The Friction (English).mp4',
   es: 'The Friction (Spanish).mp4',
-  pt: `The Friction (${LOCALE_FILENAME_LABELS.pt}).mp4`,
-  hi: `The Friction (${LOCALE_FILENAME_LABELS.hi}).mp4`,
   zh: `The Friction (${LOCALE_FILENAME_LABELS.zh}).mp4`,
   ar: `The Friction (${LOCALE_FILENAME_LABELS.ar}).mp4`,
-  th: `The Friction (${LOCALE_FILENAME_LABELS.th}).mp4`,
 }
 
 export function twoModesVideoBlobPath(locale: VideoLocaleId): string {
@@ -69,7 +63,7 @@ export function twoModesVideoBlobPath(locale: VideoLocaleId): string {
 }
 
 /** Locales whose video is published. Others render as disabled "Soon" pills. */
-const PRODUCED_LOCALES = new Set<VideoLocaleId>(['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'])
+const PRODUCED_LOCALES = new Set<VideoLocaleId>(['en', 'es', 'zh', 'ar'])
 
 /**
  * 1080p encodes shipped with the app, transcoded from each locale's 4K Blob master.
@@ -85,14 +79,6 @@ const LOCAL_ENCODED_MEDIA: Partial<
     webmUrl: '/landing/two-modes/friction-es.webm',
     mp4Url: '/landing/two-modes/friction-es.mp4',
   },
-  pt: {
-    webmUrl: '/landing/two-modes/friction-pt.webm',
-    mp4Url: '/landing/two-modes/friction-pt.mp4',
-  },
-  hi: {
-    webmUrl: '/landing/two-modes/friction-hi.webm',
-    mp4Url: '/landing/two-modes/friction-hi.mp4',
-  },
   zh: {
     webmUrl: '/landing/two-modes/friction-zh.webm',
     mp4Url: '/landing/two-modes/friction-zh.mp4',
@@ -100,10 +86,6 @@ const LOCAL_ENCODED_MEDIA: Partial<
   ar: {
     webmUrl: '/landing/two-modes/friction-ar.webm',
     mp4Url: '/landing/two-modes/friction-ar.mp4',
-  },
-  th: {
-    webmUrl: '/landing/two-modes/friction-th.webm',
-    mp4Url: '/landing/two-modes/friction-th.mp4',
   },
 }
 

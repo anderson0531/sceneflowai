@@ -938,8 +938,8 @@
       "Production",
       "Screening Room"
     ],
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Stage.",
+    "languagePrompt": "Choose English, Spanish, Chinese, or Arabic — same pipeline, new markets",
+    "multilangHint": "Hero dubs in 4 languages — full pipeline supports 70+ in Production Stage.",
     "playWithNarration": "Play with narration",
     "tapToHear": "Tap to hear",
     "fullscreen": "Fullscreen",
@@ -954,14 +954,6 @@
         "label": "Spanish",
         "nativeLabel": "Español"
       },
-      "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
-      },
-      "hi": {
-        "label": "Hindi",
-        "nativeLabel": "हिन्दी"
-      },
       "zh": {
         "label": "Chinese",
         "nativeLabel": "中文"
@@ -969,10 +961,6 @@
       "ar": {
         "label": "Arabic",
         "nativeLabel": "العربية"
-      },
-      "th": {
-        "label": "Thai",
-        "nativeLabel": "ไทย"
       }
     },
     "soon": "Soon",
@@ -1755,7 +1743,7 @@
     "titleAccent": "in Action",
     "subtitle": "Each example opens on a short trailer. The longform master — a complete production from Blueprint through Pre-Vis to the final cut — plays in the Screening Room.",
     "subtitleTagline": "Long-form productions. Not clips.",
-    "screeningRoomInstruction": "Select Pre-Vis, Scenes, Trailer, or Final to experience the pipeline. Select a language to hear the dub.",
+    "screeningRoomInstruction": "Select Pre-Vis, Scenes, Trailer, or Final to experience the pipeline. Choose English, Spanish, Chinese, or Arabic to hear the dub.",
     "trailerLabel": "Trailer",
     "watchLongform": "Watch the longform",
     "blueprintDoor": "Blueprint",
@@ -1764,13 +1752,13 @@
     "scenesDoor": "Scenes",
     "finalDoor": "Final",
     "explorerHandoff": "These links are a finished production. Explorer is where you make your own.",
-    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "languagesBanner": "Public examples ship in 4 languages: English, Spanish, Chinese, and Arabic.",
     "workflowLabel": "Solutions",
     "startProduction": "Start Your Production",
     "cta": "Start Your Production",
     "continuityNote": "Series Room manages continuity",
     "resonanceNote": "Audience Resonance™ optimizes scripts",
-    "videoLanguagePrompt": "Watch this production in your language",
+    "videoLanguagePrompt": "Watch in English, Spanish, Chinese, or Arabic",
     "videoComingSoon": "Dub coming soon",
     "videoSoon": "Soon",
     "frictionLabel": "The Friction",

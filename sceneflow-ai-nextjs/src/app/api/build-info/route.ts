@@ -49,14 +49,11 @@ export async function GET() {
       mediaTabs: 'workflow-screening-room',
     },
     heroVideo: {
-      availableLocales: ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'],
+      availableLocales: ['en', 'es', 'zh', 'ar'],
       englishBlob: 'Hero Video (English).mp4',
       spanishBlob: 'Hero Video (Spanish).mp4',
-      portugueseBlob: 'Hero Video (Portuguese).mp4',
-      hindiBlob: 'Hero Video (Hindi).mp4',
       chineseBlob: 'Hero Video (Chinese).mp4',
       arabicBlob: 'Hero Video (Arabic).mp4',
-      thaiBlob: 'Hero Video (Thai).mp4',
     },
   }
 

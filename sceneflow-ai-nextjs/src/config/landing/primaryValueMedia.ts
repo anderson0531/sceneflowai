@@ -29,22 +29,16 @@ const EMPTY_MEDIA: TwoModesMediaEntry = {
 const LOCALE_FILENAME_LABELS: Record<VideoLocaleId, string> = {
   en: 'English',
   es: 'Spanish',
-  pt: 'Portuguese',
-  hi: 'Hindi',
   zh: 'Chinese',
   ar: 'Arabic',
-  th: 'Thai',
 }
 
 /** Blob master for each Control dub. */
 export const DIRECT_CONTROL_VIDEO_BLOB_PATHS: Record<VideoLocaleId, string> = {
   en: 'The Control (English).mp4',
   es: 'The Control (Spanish).mp4',
-  pt: `The Control (${LOCALE_FILENAME_LABELS.pt}).mp4`,
-  hi: `The Control (${LOCALE_FILENAME_LABELS.hi}).mp4`,
   zh: `The Control (${LOCALE_FILENAME_LABELS.zh}).mp4`,
   ar: `The Control (${LOCALE_FILENAME_LABELS.ar}).mp4`,
-  th: `The Control (${LOCALE_FILENAME_LABELS.th}).mp4`,
 }
 
 export function directControlVideoBlobPath(locale: VideoLocaleId): string {
@@ -64,14 +58,6 @@ const DIRECT_CONTROL_LOCAL_MEDIA: Record<
     webmUrl: `${ILLUSTRATION_BASE}/direction-es.webm`,
     mp4Url: `${ILLUSTRATION_BASE}/direction-es.mp4`,
   },
-  pt: {
-    webmUrl: `${ILLUSTRATION_BASE}/direction-pt.webm`,
-    mp4Url: `${ILLUSTRATION_BASE}/direction-pt.mp4`,
-  },
-  hi: {
-    webmUrl: `${ILLUSTRATION_BASE}/direction-hi.webm`,
-    mp4Url: `${ILLUSTRATION_BASE}/direction-hi.mp4`,
-  },
   zh: {
     webmUrl: `${ILLUSTRATION_BASE}/direction-zh.webm`,
     mp4Url: `${ILLUSTRATION_BASE}/direction-zh.mp4`,
@@ -79,10 +65,6 @@ const DIRECT_CONTROL_LOCAL_MEDIA: Record<
   ar: {
     webmUrl: `${ILLUSTRATION_BASE}/direction-ar.webm`,
     mp4Url: `${ILLUSTRATION_BASE}/direction-ar.mp4`,
-  },
-  th: {
-    webmUrl: `${ILLUSTRATION_BASE}/direction-th.webm`,
-    mp4Url: `${ILLUSTRATION_BASE}/direction-th.mp4`,
   },
 }
 
@@ -100,11 +82,8 @@ function directionMedia(id: VideoLocaleId): TwoModesMediaEntry {
 export const PUBLISH_CUT_VIDEO_BLOB_PATHS: Record<VideoLocaleId, string> = {
   en: 'The Cut (English).mp4',
   es: 'The Cut (Spanish).mp4',
-  pt: `The Cut (${LOCALE_FILENAME_LABELS.pt}).mp4`,
-  hi: `The Cut (${LOCALE_FILENAME_LABELS.hi}).mp4`,
   zh: `The Cut (${LOCALE_FILENAME_LABELS.zh}).mp4`,
   ar: `The Cut (${LOCALE_FILENAME_LABELS.ar}).mp4`,
-  th: `The Cut (${LOCALE_FILENAME_LABELS.th}).mp4`,
 }
 
 export function publishCutVideoBlobPath(locale: VideoLocaleId): string {
@@ -121,14 +100,6 @@ const PUBLISH_CUT_LOCAL_MEDIA: Record<VideoLocaleId, { webmUrl: string; mp4Url: 
     webmUrl: `${ILLUSTRATION_BASE}/publish-es.webm`,
     mp4Url: `${ILLUSTRATION_BASE}/publish-es.mp4`,
   },
-  pt: {
-    webmUrl: `${ILLUSTRATION_BASE}/publish-pt.webm`,
-    mp4Url: `${ILLUSTRATION_BASE}/publish-pt.mp4`,
-  },
-  hi: {
-    webmUrl: `${ILLUSTRATION_BASE}/publish-hi.webm`,
-    mp4Url: `${ILLUSTRATION_BASE}/publish-hi.mp4`,
-  },
   zh: {
     webmUrl: `${ILLUSTRATION_BASE}/publish-zh.webm`,
     mp4Url: `${ILLUSTRATION_BASE}/publish-zh.mp4`,
@@ -136,10 +107,6 @@ const PUBLISH_CUT_LOCAL_MEDIA: Record<VideoLocaleId, { webmUrl: string; mp4Url: 
   ar: {
     webmUrl: `${ILLUSTRATION_BASE}/publish-ar.webm`,
     mp4Url: `${ILLUSTRATION_BASE}/publish-ar.mp4`,
-  },
-  th: {
-    webmUrl: `${ILLUSTRATION_BASE}/publish-th.webm`,
-    mp4Url: `${ILLUSTRATION_BASE}/publish-th.mp4`,
   },
 }
 

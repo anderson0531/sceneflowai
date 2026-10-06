@@ -160,7 +160,7 @@ describe('keyFeatures structure', () => {
     }
   })
 
-  it('reserves a room film in seven languages and a 30-second feature demo', () => {
+  it('reserves a room film in four languages and a 30-second feature demo', () => {
     expect(FEATURE_DEMO_SECONDS).toBe(30)
     expect(FEATURE_ROOM_COLD_OPEN_SECONDS).toBe(8)
     expect(FEATURE_ROOM_FILM_MIN_SECONDS).toBe(60)
