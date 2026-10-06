@@ -72,7 +72,7 @@ Builds fail locally without `DATABASE_URL`; Vercel Production already has it con
 
 | Symptom | Fix |
 |---------|-----|
-| “No Next.js version detected” on Vercel | Set Root Directory to `sceneflow-ai-nextjs`, or ensure root `package.json` has `next` and `build` script |
+| “No Next.js version detected” on Vercel | Prefer Root Directory `sceneflow-ai-nextjs` on **sceneflow-ai-nextjs**. If the project builds from the repo root, root `vercel.json` must run `npm install` at the root (after the `--prefix sceneflow-ai-nextjs` install) so Vercel can resolve `next` from root `package.json`. |
 | Build succeeds locally but not on Vercel | Match Node 22; confirm env vars in Vercel Production |
 | Push works but site unchanged | Confirm Vercel project is linked to `anderson0531/sceneflowai` and production branch is `main` |
 | Cloud Agent cannot push | Run `bash scripts/deploy-production.sh` from your machine (GitHub credentials required) |
