@@ -70,6 +70,7 @@ export async function GET(req: NextRequest) {
         subscription_expires_at: credits.subscription_expires_at,
         addon_credits: credits.addon_credits,
         total_credits: credits.total_credits,
+        pack_expires_at: credits.pack_expires_at,
       },
       one_time_tiers_purchased: user.one_time_tiers_purchased || [],
     })

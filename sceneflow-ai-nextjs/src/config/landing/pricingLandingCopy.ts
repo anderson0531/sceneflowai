@@ -9,8 +9,8 @@ export const PRICING_LANDING_COPY = {
     'The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.',
   trustBadges: [
     'Secure payments via Whop',
-    '14-day money-back guarantee',
-    'Credits never expire (Explorer pack)',
+    '$9 Explorer to try the studio',
+    'Monthly credits expire at period end',
     'Cancel anytime',
   ],
   valueAnchor: {
@@ -64,7 +64,7 @@ export const PRICING_LANDING_COPY = {
   },
   creditTopUps: {
     title: 'Need More Credits?',
-    subtitle: 'Buy $25, $100, or $250 add-ons as often as you need. Credits never expire.',
+    subtitle: 'Buy $25, $100, or $250 add-ons as often as you need. Each pack lasts 12 months.',
     packs: [
       { label: '$25 Add-on', description: '2,000 credits. Buy as often as you need.' },
       { label: '$100 Add-on', description: '9,000 credits. Buy as often as you need.' },
@@ -121,7 +121,7 @@ export const PRICING_LANDING_COPY = {
   },
   trust: {
     cancelAnytime: 'Cancel anytime',
-    moneyBack: '14-day money-back guarantee',
-    creditsNeverExpire: 'Credits never expire (Explorer pack)',
+    moneyBack: '$9 Explorer to try the studio',
+    creditsNeverExpire: 'Explorer credits last 90 days',
   },
 } as const

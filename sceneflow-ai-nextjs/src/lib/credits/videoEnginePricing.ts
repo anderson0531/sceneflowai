@@ -1,6 +1,10 @@
 /**
  * Engine-aware video credit estimation — mirrors production charging without
  * importing UI-layer engine config.
+ *
+ * These operation costs are the current published schedule. Model savings are
+ * delivered as more credits per new dollar (see SAVINGS_DELIVERED_AS), not by
+ * lowering the credits an existing operation costs while old balances remain.
  */
 
 import {
@@ -9,6 +13,9 @@ import {
 } from './creditCosts'
 import { getAggregatorCreditsForModel } from '@/lib/aggregator/modelRegistry'
 import { OMNI_MODEL_ID, quoteGenerationCredits } from './quoteGenerationCredits'
+import { SAVINGS_DELIVERED_AS } from './creditSchedulePolicy'
+
+export const VIDEO_CREDIT_SCHEDULE_POLICY = SAVINGS_DELIVERED_AS
 
 export const SCENEFLOW_ENGINE_ID = 'sceneflow' as const
 

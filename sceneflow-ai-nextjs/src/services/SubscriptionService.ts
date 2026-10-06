@@ -6,6 +6,10 @@ import {
   normalizeTierName,
   TIER_CATALOG,
 } from '@/lib/billing/tierCatalog'
+import { ensureCreditLotsTable } from '@/lib/database/migrateCreditLots'
+import { assignBalances, loadUserLots, saveUserLots } from '@/lib/credits/creditLotStore'
+import { applyPackGrant, applySubscriptionGrant, expireDueLots } from '@/lib/credits/creditLots'
+import { writeLedgerIntents } from '@/services/CreditService'
 
 export interface SubscriptionDetails {
   tier: SubscriptionTier | null
@@ -73,172 +77,120 @@ export class SubscriptionService {
   }
 
   /**
-   * Allocate monthly credits to a user
+   * Drop subscription and pack lots whose shelf life has ended.
+   * Does not grant a new month. The next allotment arrives with a renewal payment.
+   */
+  static async expireDueCredits(
+    userId: string
+  ): Promise<{ expiredSubscription: number; expiredPack: number }> {
+    await ensureCreditLotsTable()
+    const resolvedUser = await resolveUser(userId)
+    const userUuid = resolvedUser.id
+    return await sequelize.transaction(async (tx) => {
+      const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
+      if (!user) throw new Error('User not found')
+
+      const now = new Date()
+      const loaded = await loadUserLots(user, now, tx)
+      const expired = expireDueLots(loaded.lots, now)
+      if (
+        expired.expiredSubscription === 0 &&
+        expired.expiredPack === 0 &&
+        !loaded.materialized
+      ) {
+        return { expiredSubscription: 0, expiredPack: 0 }
+      }
+
+      const starting = loaded.lots.reduce((sum, lot) => sum + lot.remaining, 0)
+      let balance = starting
+      const intents: Parameters<typeof writeLedgerIntents>[1] = []
+      if (expired.expiredSubscription > 0) {
+        const next = balance - expired.expiredSubscription
+        intents.push({
+          delta: -expired.expiredSubscription,
+          prev: balance,
+          next,
+          reason: 'subscription_expiry',
+          creditType: 'subscription',
+          meta: { expired_credits: expired.expiredSubscription },
+        })
+        balance = next
+      }
+      if (expired.expiredPack > 0) {
+        const next = balance - expired.expiredPack
+        intents.push({
+          delta: -expired.expiredPack,
+          prev: balance,
+          next,
+          reason: 'adjustment',
+          creditType: 'addon',
+          meta: { kind: 'pack_expiry', expired_credits: expired.expiredPack },
+        })
+        balance = next
+      }
+
+      await saveUserLots(userUuid, expired.lots, tx)
+      assignBalances(user, expired.lots, now)
+      if (intents.length > 0) {
+        await writeLedgerIntents(
+          userUuid,
+          intents,
+          tx,
+          `credit_expiry_${now.toISOString().slice(0, 10)}`
+        )
+      }
+      await user.save({ transaction: tx })
+      return {
+        expiredSubscription: expired.expiredSubscription,
+        expiredPack: expired.expiredPack,
+      }
+    })
+  }
+
+  /**
+   * Kept so older callers cannot mint a calendar-month grant.
+   * Renewal webhooks call activateSubscription when a payment lands.
    */
   static async allocateMonthlyCredits(userId: string): Promise<void> {
-    const resolvedUser = await resolveUser(userId)
-    const userUuid = resolvedUser.id
-    return await sequelize.transaction(async (tx) => {
-      const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
-      
-      if (!user) {
-        throw new Error('User not found')
-      }
-
-      if (user.subscription_status !== 'active') {
-        throw new Error('User does not have an active subscription')
-      }
-
-      const tier = await SubscriptionTier.findByPk(user.subscription_tier_id || '', {
-        transaction: tx,
-      })
-
-      if (!tier) {
-        throw new Error('Subscription tier not found')
-      }
-
-      const creditsToAllocate = Number(tier.included_credits_monthly)
-      
-      if (creditsToAllocate <= 0) {
-        return // No credits to allocate
-      }
-
-      // Calculate expiry date (end of current month)
-      const now = new Date()
-      const expiryDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
-
-      // Get current subscription credits (to track previous balance)
-      const prevSubscriptionCredits = Number(user.subscription_credits_monthly || 0)
-
-      // Update user's subscription credits
-      user.subscription_credits_monthly = creditsToAllocate
-      user.subscription_credits_expires_at = expiryDate
-
-      // Update total credits (add to existing subscription credits if any remain, otherwise replace)
-      const currentTotalCredits = Number(user.credits || 0)
-      const addonCredits = Number(user.addon_credits || 0)
-      
-      // New total = addon credits + new subscription credits
-      user.credits = addonCredits + creditsToAllocate
-
-      await user.save({ transaction: tx })
-
-      // Log the allocation in credit ledger
-      await CreditLedger.create(
-        {
-          user_id: userUuid,
-          delta_credits: creditsToAllocate,
-          prev_balance: currentTotalCredits,
-          new_balance: Number(user.credits),
-          reason: 'subscription_allocation',
-          credit_type: 'subscription',
-          ref: `subscription_month_${now.getFullYear()}_${now.getMonth() + 1}`,
-          meta: {
-            tier_id: tier.id,
-            tier_name: tier.name,
-            allocated_credits: creditsToAllocate,
-            expires_at: expiryDate.toISOString(),
-          },
-        } as any,
-        { transaction: tx }
-      )
-    })
+    await this.expireDueCredits(userId)
   }
 
   /**
-   * Expire subscription credits at month end
+   * Expire subscription credits at the end of the paid period.
    */
   static async expireSubscriptionCredits(userId: string): Promise<void> {
-    const resolvedUser = await resolveUser(userId)
-    const userUuid = resolvedUser.id
-    return await sequelize.transaction(async (tx) => {
-      const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
-      
-      if (!user) {
-        throw new Error('User not found')
-      }
-
-      const subscriptionCredits = Number(user.subscription_credits_monthly || 0)
-      
-      if (subscriptionCredits <= 0) {
-        return // No credits to expire
-      }
-
-      const addonCredits = Number(user.addon_credits || 0)
-      const prevTotalCredits = Number(user.credits || 0)
-      
-      // Remove expired subscription credits
-      user.subscription_credits_monthly = 0
-      user.subscription_credits_expires_at = null
-      user.credits = addonCredits // Only addon credits remain
-
-      await user.save({ transaction: tx })
-
-      // Log the expiry in credit ledger
-      await CreditLedger.create(
-        {
-          user_id: userUuid,
-          delta_credits: -subscriptionCredits,
-          prev_balance: prevTotalCredits,
-          new_balance: Number(user.credits),
-          reason: 'subscription_expiry',
-          credit_type: 'subscription',
-          ref: `subscription_expiry_${new Date().toISOString().split('T')[0]}`,
-          meta: {
-            expired_credits: subscriptionCredits,
-            remaining_addon_credits: addonCredits,
-          },
-        } as any,
-        { transaction: tx }
-      )
-    })
+    await this.expireDueCredits(userId)
   }
 
   /**
-   * Purchase add-on credit pack
+   * Purchase add-on credit pack. Each pack expires 12 months after this purchase.
    */
   static async purchaseAddonCredits(
     userId: string,
     packSize: number,
     amountPaid: number
   ): Promise<void> {
+    await ensureCreditLotsTable()
     const resolvedUser = await resolveUser(userId)
     const userUuid = resolvedUser.id
     return await sequelize.transaction(async (tx) => {
       const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
-      
-      if (!user) {
-        throw new Error('User not found')
-      }
+      if (!user) throw new Error('User not found')
 
-      const prevAddonCredits = Number(user.addon_credits || 0)
-      const prevTotalCredits = Number(user.credits || 0)
-      
-      // Add credits to addon_credits
-      user.addon_credits = prevAddonCredits + packSize
-      
-      // Update total credits
-      user.credits = Number(user.addon_credits) + Number(user.subscription_credits_monthly || 0)
-
+      const now = new Date()
+      const { lots } = await loadUserLots(user, now, tx)
+      const granted = applyPackGrant({
+        lots,
+        source: 'addon',
+        credits: packSize,
+        now,
+        ref: `addon_purchase_${now.getTime()}`,
+        meta: { pack_size: packSize, amount_paid_usd: amountPaid },
+      })
+      await saveUserLots(userUuid, granted.lots, tx)
+      assignBalances(user, granted.lots, now)
+      await writeLedgerIntents(userUuid, granted.intents, tx, granted.lots.at(-1)?.ref)
       await user.save({ transaction: tx })
-
-      // Log the purchase in credit ledger
-      await CreditLedger.create(
-        {
-          user_id: userUuid,
-          delta_credits: packSize,
-          prev_balance: prevTotalCredits,
-          new_balance: Number(user.credits),
-          reason: 'addon_purchase',
-          credit_type: 'addon',
-          ref: `addon_purchase_${Date.now()}`,
-          meta: {
-            pack_size: packSize,
-            amount_paid_usd: amountPaid,
-          },
-        } as any,
-        { transaction: tx }
-      )
     })
   }
 
@@ -356,6 +308,7 @@ export class SubscriptionService {
     const creditsToGrant = TIER_CATALOG[normalizedTier].credits
     const amountPaid = TIER_CATALOG[normalizedTier].priceUsd
 
+    await ensureCreditLotsTable()
     const resolvedUser = await resolveUser(userId)
     const userUuid = resolvedUser.id
     return await sequelize.transaction(async (tx) => {
@@ -370,26 +323,22 @@ export class SubscriptionService {
         throw new Error('One-time tier already purchased')
       }
 
-      const prevAddonCredits = Number(user.addon_credits || 0)
-      const prevTotalCredits = Number(user.credits || 0)
-
-      user.addon_credits = prevAddonCredits + creditsToGrant
-      user.credits = Number(user.addon_credits) + Number(user.subscription_credits_monthly || 0)
-      user.one_time_tiers_purchased = [...purchased, normalizedTier]
-      user.payment_provider = user.payment_provider || 'whop'
-
-      await user.save({ transaction: tx })
-
-      await CreditLedger.create({
-        user_id: userUuid,
-        delta_credits: creditsToGrant,
-        prev_balance: prevTotalCredits,
-        new_balance: Number(user.credits),
-        reason: 'addon_purchase',
-        credit_type: 'addon',
+      const now = new Date()
+      const { lots } = await loadUserLots(user, now, tx)
+      const granted = applyPackGrant({
+        lots,
+        source: normalizedTier === 'explorer' ? 'explorer' : 'addon',
+        credits: creditsToGrant,
+        now,
         ref: `${normalizedTier}_purchase`,
         meta: { tier: normalizedTier, amount_paid: amountPaid },
-      } as any, { transaction: tx })
+      })
+      user.one_time_tiers_purchased = [...purchased, normalizedTier]
+      user.payment_provider = user.payment_provider || 'whop'
+      await saveUserLots(userUuid, granted.lots, tx)
+      assignBalances(user, granted.lots, now)
+      await writeLedgerIntents(userUuid, granted.intents, tx, `${normalizedTier}_purchase`)
+      await user.save({ transaction: tx })
     })
   }
 
@@ -429,6 +378,7 @@ export class SubscriptionService {
       throw new Error(`Subscription tier "${normalizedTier}" not found in database`)
     }
 
+    await ensureCreditLotsTable()
     const resolvedUser = await resolveUser(userId)
     const userUuid = resolvedUser.id
     const creditsToGrant =
@@ -438,16 +388,16 @@ export class SubscriptionService {
       const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
       if (!user) throw new Error('User not found')
 
-      const prevCredits = Number(user.credits || 0)
+      const now = new Date()
       const endDate = options.billingPeriodEnd || (() => {
-        const date = new Date()
+        const date = new Date(now.getTime())
         date.setDate(date.getDate() + 30)
         return date
       })()
 
       user.subscription_tier_id = tier.id
       user.subscription_status = 'active'
-      user.subscription_start_date = user.subscription_start_date || new Date()
+      user.subscription_start_date = user.subscription_start_date || now
       user.subscription_end_date = endDate
       user.payment_provider = 'whop'
 
@@ -459,25 +409,21 @@ export class SubscriptionService {
       }
 
       if (creditsToGrant > 0) {
-        user.subscription_credits_monthly = creditsToGrant
-        user.subscription_credits_expires_at = endDate
-        const addonCredits = Number(user.addon_credits || 0)
-        user.credits = addonCredits + creditsToGrant
-
-        await CreditLedger.create({
-          user_id: userUuid,
-          delta_credits: creditsToGrant,
-          prev_balance: prevCredits,
-          new_balance: Number(user.credits),
-          reason: 'subscription_allocation',
-          credit_type: 'subscription',
-          ref: `whop_${normalizedTier}_${Date.now()}`,
+        const { lots } = await loadUserLots(user, now, tx)
+        const granted = applySubscriptionGrant({
+          lots,
+          credits: creditsToGrant,
+          now,
+          expiresAt: endDate,
+          ref: `whop_${normalizedTier}_${now.getTime()}`,
           meta: {
             tier: normalizedTier,
             source: options.source || 'whop_webhook',
-            expires_at: endDate.toISOString(),
           },
-        } as any, { transaction: tx })
+        })
+        await saveUserLots(userUuid, granted.lots, tx)
+        assignBalances(user, granted.lots, now)
+        await writeLedgerIntents(userUuid, granted.intents, tx, `whop_${normalizedTier}`)
       }
 
       await user.save({ transaction: tx })

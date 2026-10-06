@@ -2281,8 +2281,8 @@
     "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
       "Secure payments via Whop",
-      "14-day money-back guarantee",
-      "Credits never expire (Explorer pack)",
+      "$9 Explorer to try the studio",
+      "Monthly credits expire at period end",
       "Cancel anytime"
     ],
     "valueAnchor": {
@@ -2334,7 +2334,7 @@
     },
     "creditTopUps": {
       "title": "Need More Credits?",
-      "subtitle": "Buy $25, $100, or $250 add-ons as often as you need. Credits never expire.",
+      "subtitle": "Buy $25, $100, or $250 add-ons as often as you need. Each pack lasts 12 months.",
       "packs": [
         {
           "label": "$25 Add-on",
@@ -2409,8 +2409,8 @@
     },
     "trust": {
       "cancelAnytime": "Cancel anytime",
-      "moneyBack": "14-day money-back guarantee",
-      "creditsNeverExpire": "Credits never expire (Explorer pack)"
+      "moneyBack": "$9 Explorer to try the studio",
+      "creditsNeverExpire": "Explorer credits last 90 days"
     },
     "plans": {
       "explorer": {
@@ -2418,7 +2418,7 @@
         "description": "Demo — one-time purchase to try a complete production",
         "features": [
           "One-time purchase",
-          "750 credits (never expire)",
+          "750 credits (expire 90 days after purchase)",
           "5 GB storage (30 days)",
           "Full platform access",
           "MP4 export (any resolution)",
@@ -2433,6 +2433,7 @@
           "features": [
             "Full platform access",
             "4,500 credits/month included",
+            "Unused monthly credits expire at period end",
             "25 GB active storage",
             "MP4 export (any resolution)",
             "AI voiceover (70+ languages)",
@@ -2446,6 +2447,7 @@
           "features": [
             "Everything in Starter, plus:",
             "15,000 credits/month included",
+            "Unused monthly credits expire at period end",
             "100 GB active storage",
             "Veo 3.1 Quality (4K) access",
             "Character Consistency Engine",
@@ -2462,6 +2464,7 @@
           "features": [
             "Everything in Pro, plus:",
             "75,000 credits/month included",
+            "Unused monthly credits expire at period end",
             "500 GB active storage",
             "Veo 3.1 4K Priority Queue",
             "Unlimited Character Consistency",

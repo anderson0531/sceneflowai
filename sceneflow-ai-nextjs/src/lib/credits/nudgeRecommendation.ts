@@ -247,7 +247,7 @@ Based on your current activity, the **${recommendedPack.name}** ($${recommendedP
 |-----------------|---------------------------------------------|
 | Estimated Scenes Remaining | ~${estimatedScenesRemaining} Fast Drafts |
 
-*Pro Tip: Top-Up credits never expire! They'll stay in your account until you're ready for your next "Action!"*`
+*Pro Tip: Each add-on pack lasts 12 months from the day you buy it. Subscription credits expire at the end of the paid period.*`
 
   return {
     subject,

@@ -1,15 +1,18 @@
 /**
- * Subscription credit lifecycle cron
+ * Credit shelf-life cron.
  *
- * Runs daily via Vercel Cron:
- * - Expires subscription credits past their expiry date
- * - Allocates monthly credits for active subscribers when due
+ * Runs daily via Vercel Cron. Expires subscription allotments and purchased
+ * packs whose own dates have passed, including cancelled accounts.
+ * The next subscription allotment is granted only when a renewal payment
+ * lands (Whop payment.succeeded / membership activation). This job does not
+ * mint credits.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { Op } from 'sequelize'
-import { User } from '@/models/User'
+import { Op, QueryTypes } from 'sequelize'
+import { sequelize, User } from '@/models'
 import { SubscriptionService } from '@/services/SubscriptionService'
+import { ensureCreditLotsTable } from '@/lib/database/migrateCreditLots'
 
 const CRON_SECRET = process.env.CRON_SECRET
 
@@ -20,63 +23,60 @@ export async function GET(req: NextRequest) {
   }
 
   const stats = {
-    expired: 0,
-    allocated: 0,
+    users: 0,
+    expiredSubscription: 0,
+    expiredPack: 0,
     errors: [] as string[],
   }
 
   try {
+    await ensureCreditLotsTable()
     const now = new Date()
 
-    const expiredUsers = await User.findAll({
+    const subscriptionUsers = await User.findAll({
       where: {
-        subscription_status: 'active',
-        subscription_credits_expires_at: {
-          [Op.lt]: now,
-        },
-        subscription_credits_monthly: {
-          [Op.gt]: 0,
-        },
-      },
-      attributes: ['id'],
-    })
-
-    for (const user of expiredUsers) {
-      try {
-        await SubscriptionService.expireSubscriptionCredits(user.id)
-        await SubscriptionService.allocateMonthlyCredits(user.id)
-        stats.expired += 1
-        stats.allocated += 1
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error)
-        stats.errors.push(`expire+allocate ${user.id}: ${message}`)
-      }
-    }
-
-    const needsAllocation = await User.findAll({
-      where: {
-        subscription_status: 'active',
-        subscription_tier_id: {
-          [Op.ne]: null,
-        },
+        subscription_credits_monthly: { [Op.gt]: 0 },
         [Op.or]: [
+          { subscription_credits_expires_at: { [Op.lt]: now } },
           { subscription_credits_expires_at: null },
-          { subscription_credits_monthly: 0 },
         ],
       },
       attributes: ['id'],
-      limit: 200,
     })
 
-    for (const user of needsAllocation) {
+    const packUsers = await sequelize.query<{ user_id: string }>(
+      `SELECT DISTINCT user_id
+         FROM credit_lots
+        WHERE remaining > 0
+          AND expires_at <= NOW()`,
+      { type: QueryTypes.SELECT }
+    )
+
+    const unclockedPacks = await sequelize.query<{ id: string }>(
+      `SELECT u.id
+         FROM users u
+        WHERE u.addon_credits > 0
+          AND NOT EXISTS (
+            SELECT 1 FROM credit_lots c WHERE c.user_id = u.id
+          )
+        LIMIT 200`,
+      { type: QueryTypes.SELECT }
+    )
+
+    const ids = new Set<string>()
+    for (const user of subscriptionUsers) ids.add(user.id)
+    for (const row of packUsers) ids.add(row.user_id)
+    for (const row of unclockedPacks) ids.add(row.id)
+
+    for (const userId of ids) {
       try {
-        await SubscriptionService.allocateMonthlyCredits(user.id)
-        stats.allocated += 1
+        const expired = await SubscriptionService.expireDueCredits(userId)
+        stats.users += 1
+        stats.expiredSubscription += expired.expiredSubscription
+        stats.expiredPack += expired.expiredPack
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error)
-        if (!message.includes('does not have an active subscription')) {
-          stats.errors.push(`allocate ${user.id}: ${message}`)
-        }
+        stats.errors.push(`expire ${userId}: ${message}`)
       }
     }
 

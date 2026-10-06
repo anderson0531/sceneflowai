@@ -34,33 +34,33 @@ export default function RefundPolicyPage() {
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">2. Subscription Refunds</h2>
             
-            <h3 className="text-xl font-medium text-white mb-3">2.1 14-Day Money-Back Guarantee</h3>
+            <h3 className="text-xl font-medium text-white mb-3">2.1 Try the studio with Explorer</h3>
             <p className="text-gray-300 leading-relaxed mb-4">
-              All new subscriptions (Starter, Pro, Studio) include a <strong>14-day money-back guarantee</strong>. If you are not satisfied with the Service, you may request a full refund within 14 days of your initial purchase.
+              The $9 Explorer pack is the way to evaluate SceneFlow before a subscription. Starter, Pro, and Studio are billed for a production period. You may cancel anytime so the next renewal does not charge. Access continues until the end of the period already paid for.
             </p>
             
-            <h3 className="text-xl font-medium text-white mb-3">2.2 After 14 Days</h3>
+            <h3 className="text-xl font-medium text-white mb-3">2.2 Unused subscription credits, first 7 days</h3>
             <p className="text-gray-300 leading-relaxed mb-4">
-              After the 14-day period, subscriptions are non-refundable for the current billing period. However, you may cancel at any time to prevent future charges. Your access will continue until the end of your paid period.
+              A new monthly or annual subscription is refundable within <strong>7 days of the initial purchase only when no subscription credits from that grant have been used</strong>. After any generation spends those credits, the current period is non-refundable.
             </p>
             
-            <h3 className="text-xl font-medium text-white mb-3">2.3 Annual Subscriptions</h3>
+            <h3 className="text-xl font-medium text-white mb-3">2.3 Renewals and annual plans</h3>
             <p className="text-gray-300 leading-relaxed">
-              Annual subscriptions are eligible for a prorated refund within the first 30 days. After 30 days, annual subscriptions are non-refundable but you may continue using the Service until the end of your annual term.
+              Renewal charges are non-refundable. Annual subscriptions are not prorated. Cancel before the renewal date to stop the next term. You may keep using the Service until the end of the term already paid for.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">3. One-Time Purchases</h2>
             
-            <h3 className="text-xl font-medium text-white mb-3">3.1 Explorer ($9 Starter Pack)</h3>
+            <h3 className="text-xl font-medium text-white mb-3">3.1 Explorer ($9 pack)</h3>
             <p className="text-gray-300 leading-relaxed mb-4">
-              The Explorer one-time purchase is refundable within 7 days if no credits have been used. Once credits are consumed, refunds are not available.
+              The Explorer one-time purchase is refundable within 7 days if no credits from that pack have been used. Once credits are consumed, refunds are not available. Unused Explorer credits expire 90 days after purchase.
             </p>
             
-            <h3 className="text-xl font-medium text-white mb-3">3.2 Credit Packs</h3>
+            <h3 className="text-xl font-medium text-white mb-3">3.2 Add-on credit packs</h3>
             <p className="text-gray-300 leading-relaxed">
-              Credit pack purchases (Basic Pack, Value Pack, Pro Pack) are refundable within 7 days if no credits from the pack have been used. Partial refunds are not available for partially used packs.
+              Add-on packs ($25, $100, and $250) are refundable within 7 days if no credits from that pack have been used. Partial refunds are not available for a pack that has been used. Each pack expires 12 months after its own purchase.
             </p>
           </section>
 
@@ -68,10 +68,10 @@ export default function RefundPolicyPage() {
             <h2 className="text-2xl font-semibold text-white mb-4">4. Non-Refundable Situations</h2>
             <p className="text-gray-300 leading-relaxed mb-4">Refunds are NOT available in the following situations:</p>
             <ul className="list-disc pl-6 text-gray-300 space-y-2">
-              <li>Credits have already been used</li>
+              <li>Any credits from that subscription grant or pack have already been used</li>
               <li>Account was terminated due to Terms of Service violation</li>
-              <li>Subscription was renewed after the 14-day period</li>
-              <li>Request is made after the applicable refund window</li>
+              <li>The charge is a subscription renewal</li>
+              <li>Request is made after the 7-day window</li>
               <li>Fraudulent or abusive refund requests</li>
             </ul>
           </section>

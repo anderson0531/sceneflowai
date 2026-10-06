@@ -314,6 +314,22 @@ export default function BillingPage() {
                     <span>Add-on Credits:</span>
                     <span className="font-semibold">{subscription?.credits?.addon?.toLocaleString() || testMode?.currentSubscription?.credits?.addon?.toLocaleString() || 0}</span>
                   </div>
+                  {subscription?.credits?.subscriptionExpiresAt && (
+                    <div className="flex justify-between text-blue-200/80">
+                      <span>Monthly credits expire:</span>
+                      <span className="font-semibold">
+                        {new Date(subscription.credits.subscriptionExpiresAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+                  {subscription?.credits?.packExpiresAt && (
+                    <div className="flex justify-between text-blue-200/80">
+                      <span>Earliest pack expiry:</span>
+                      <span className="font-semibold">
+                        {new Date(subscription.credits.packExpiresAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -565,7 +581,7 @@ export default function BillingPage() {
               <div className="flex items-center justify-between p-4 bg-gray-900/80 rounded-lg border border-gray-700/60">
                 <div>
                   <h4 className="text-white font-semibold">Purchase Add-on Credits</h4>
-                  <p className="text-gray-400 text-sm">Buy additional credits that never expire</p>
+                  <p className="text-gray-400 text-sm">Each add-on pack lasts 12 months from purchase</p>
                 </div>
                 <Button variant="outline" className="border-gray-700/60 text-gray-200 hover:bg-gray-900/80 flex items-center gap-2" disabled>
                   Coming Soon

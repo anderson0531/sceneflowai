@@ -2,6 +2,7 @@ import { sequelize } from '../config/database'
 import User from './User'
 import AIPricing from './AIPricing'
 import CreditLedger from './CreditLedger'
+import CreditLotRow from './CreditLot'
 import AIUsage from './AIUsage'
 import Project from './Project'
 import Series from './Series'
@@ -205,6 +206,7 @@ export {
   APIUsageLog,
   AIPricing,
   CreditLedger,
+  CreditLotRow,
   AIUsage,
   CreditPricing,
   PlatformInfraCost,
@@ -244,6 +246,7 @@ export default {
   APIUsageLog,
   AIPricing,
   CreditLedger,
+  CreditLotRow,
   AIUsage,
   CreditPricing,
   PlatformInfraCost,

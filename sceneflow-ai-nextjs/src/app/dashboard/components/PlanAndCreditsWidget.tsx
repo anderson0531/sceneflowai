@@ -13,6 +13,8 @@ export function PlanAndCreditsWidget() {
   const [availableCredits, setAvailableCredits] = useState(0)
   const [subscriptionCredits, setSubscriptionCredits] = useState(0)
   const [addonCredits, setAddonCredits] = useState(0)
+  const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null)
+  const [packExpiresAt, setPackExpiresAt] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -28,6 +30,8 @@ export function PlanAndCreditsWidget() {
         setAvailableCredits(mapped.credits.total)
         setSubscriptionCredits(mapped.credits.subscription)
         setAddonCredits(mapped.credits.addon)
+        setSubscriptionExpiresAt(mapped.credits.subscriptionExpiresAt)
+        setPackExpiresAt(mapped.credits.packExpiresAt)
       } catch (error) {
         console.error('[PlanAndCreditsWidget] Failed to load subscription:', error)
       } finally {
@@ -82,6 +86,16 @@ export function PlanAndCreditsWidget() {
         <p className="text-xs text-gray-500 mt-2">
           {subscriptionCredits.toLocaleString()} subscription + {addonCredits.toLocaleString()} add-on credits
         </p>
+        {subscriptionExpiresAt && (
+          <p className="text-xs text-gray-500 mt-1">
+            Monthly credits expire {new Date(subscriptionExpiresAt).toLocaleDateString()}
+          </p>
+        )}
+        {packExpiresAt && (
+          <p className="text-xs text-gray-500 mt-1">
+            Earliest pack expiry {new Date(packExpiresAt).toLocaleDateString()}
+          </p>
+        )}
       </div>
 
       <div className="flex gap-3">
