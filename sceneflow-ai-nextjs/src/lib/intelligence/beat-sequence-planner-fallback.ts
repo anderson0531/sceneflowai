@@ -343,6 +343,44 @@ function depictionClauses(source: string, heldFold: string): string[] {
   return clauses
 }
 
+export const STILL_DIRECTOR_BEAT_CHUNK = 6
+
+export interface ShotDirectionRewriteCheck {
+  /** Still or clip text that must name each resolved plate. */
+  composedText?: string
+  /** Character and prop names attached as reference plates. */
+  plateNames?: string[]
+  /** Beat prose or a title-scene rule names people, and cast is not yet stated. */
+  expectsCast?: boolean
+}
+
+function textNamesSubject(text: string, name: string): boolean {
+  const trimmed = name.trim()
+  if (trimmed.length < 3) return true
+  const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`\\b${escaped}\\b`, 'i').test(text)
+}
+
+/**
+ * A shot whose first-pass direction is too thin to bind reference plates.
+ * User-locked direction is left alone. The check itself does not call a model.
+ */
+export function shotNeedsDirectionRewrite(
+  beat: SceneBeat | null | undefined,
+  check: ShotDirectionRewriteCheck = {}
+): boolean {
+  if (!beat) return false
+  if (beat.beatDirection?.generatedBy === 'user') return false
+  const direction = beat.beatDirection
+  const frozen = direction?.frozenMoment?.trim() ?? ''
+  const blocking = direction?.blocking?.trim() ?? ''
+  if (!frozen || !blocking) return true
+  const stated = direction?.castInFrame
+  if (check.expectsCast && !Array.isArray(stated)) return true
+  const text = check.composedText ?? ''
+  return (check.plateNames ?? []).some((name) => !textNamesSubject(text, name))
+}
+
 /** Facets that can describe a frame without borrowing the beat's spoken words. */
 function hasVisualDirection(direction?: BeatDirection): boolean {
   if (!direction) return false
