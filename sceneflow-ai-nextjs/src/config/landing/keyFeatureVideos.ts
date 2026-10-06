@@ -56,11 +56,8 @@ export const KEY_FEATURE_VIDEO_LABELS: Record<string, string> = {
 const LOCALE_FILENAME_LABELS: Record<VideoLocaleId, string> = {
   en: 'English',
   es: 'Spanish',
-  pt: 'Portuguese',
-  hi: 'Hindi',
   zh: 'Chinese',
   ar: 'Arabic',
-  th: 'Thai',
 }
 
 /** Predictable Blob path for upload scripts — features/{icon}/{Label} ({Language}).mp4 */
@@ -82,11 +79,8 @@ const PRODUCED_VIDEOS: Partial<
   byok: {
     en: { src: '/landing/key-features/BYOK-English.mp4?v=20260810#t=0.1' },
     es: { src: videoUrl('BYOK (Spanish).mp4', '20260810') },
-    pt: { src: videoUrl('BYOK (Portuguese).mp4', '20260810') },
-    hi: { src: videoUrl('BYOK (Hindi).mp4', '20260810') },
     zh: { src: videoUrl('BYOK (Chinese).mp4', '20260810') },
     ar: { src: videoUrl('BYOK (Arabic).mp4', '20260810') },
-    th: { src: videoUrl('BYOK (Thai).mp4', '20260810') },
   },
 }
 

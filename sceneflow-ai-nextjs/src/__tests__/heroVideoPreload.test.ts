@@ -44,7 +44,7 @@ describe('videoPreload', () => {
 
 describe('hero video CDN config', () => {
   it('serves posters from the site for every locale (regenerated from current Blob masters)', () => {
-    for (const locale of ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'] as const) {
+    for (const locale of ['en', 'es', 'zh', 'ar'] as const) {
       expect(getHeroVideoPosterUrl(locale)).toBe(`/landing/hero/sceneflow-hero-${locale}-poster.jpg`)
     }
   })
@@ -54,7 +54,7 @@ describe('hero video CDN config', () => {
   })
 
   it('exposes mp4 playback sources for every hero locale', () => {
-    for (const locale of ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'] as const) {
+    for (const locale of ['en', 'es', 'zh', 'ar'] as const) {
       const sources = getHeroVideoPlaybackSources(locale)
       expect(sources?.mp4Src).toContain('.mp4')
       expect(sources?.poster).toBe(`/landing/hero/sceneflow-hero-${locale}-poster.jpg`)

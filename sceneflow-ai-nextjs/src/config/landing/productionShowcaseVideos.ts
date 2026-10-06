@@ -20,11 +20,8 @@ const PRODUCED_VIDEOS: Record<string, Partial<Record<VideoLocaleId, ProducedVide
   drama: {
     en: { src: videoUrl('The Cinematic Drama (English).mp4') },
     es: { src: videoUrl('The Cinematic Drama (Spanish).mp4') },
-    pt: { src: videoUrl('The Cinematic Drama (Portuguese).mp4') },
-    hi: { src: videoUrl('The Cinematic Drama (Hindi).mp4') },
     zh: { src: videoUrl('The Cinematic Drama (Chinese).mp4') },
     ar: { src: videoUrl('The Cinematic Drama (Arabic).mp4') },
-    th: { src: videoUrl('The Cinematic Drama (Thai).mp4') },
   },
   animation: {
     en: { src: videoUrl('The Animated Comedy (English).mp4') },

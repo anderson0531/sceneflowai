@@ -43,11 +43,8 @@ const PRODUCED_VIDEOS: Partial<
       src: vid('Youtube Creator (Spanish).mp4'),
       poster: poster('youtube-creator-es-poster.jpg'),
     },
-    pt: { src: vid('YouTube Creator (Portuguese).mp4', '20260718') },
-    hi: { src: vid('YouTube Creator (Hindi).mp4', '20260718') },
     zh: { src: vid('YouTube Creator (Chinese).mp4', '20260718') },
     ar: { src: vid('YouTube Creator (Arabic).mp4', '20260718') },
-    th: { src: vid('YouTube Creator (Thai).mp4', '20260723') },
   },
   startupProvider: {
     en: {
@@ -56,20 +53,11 @@ const PRODUCED_VIDEOS: Partial<
     es: {
       src: vid('The Startup Provider (Spanish).mp4'),
     },
-    pt: {
-      src: vid('The Startup Provider (Portuguese).mp4'),
-    },
-    hi: {
-      src: vid('The Startup Provider (Hindi).mp4'),
-    },
     zh: {
       src: vid('The Startup Provider (Chinese).mp4', '20260720'),
     },
     ar: {
       src: vid('The Startup Provider (Arabic).mp4', '20260720'),
-    },
-    th: {
-      src: vid('The Startup Provider (Thai).mp4', '20260720'),
     },
   },
   enterprise: {
@@ -79,20 +67,11 @@ const PRODUCED_VIDEOS: Partial<
     es: {
       src: vid('Enterprise (Spanish).mp4', '20260720'),
     },
-    pt: {
-      src: vid('Enterprise (Portuguese).mp4', '20260720'),
-    },
-    hi: {
-      src: vid('Enterprise (Hindi).mp4', '20260720'),
-    },
     zh: {
       src: vid('Enterprise (Chinese).mp4', '20260720'),
     },
     ar: {
       src: vid('Enterprise (Arabic) .mp4', '20260720'),
-    },
-    th: {
-      src: vid('Enterprise (Thai).mp4', '20260720'),
     },
   },
   educator: {
@@ -102,20 +81,11 @@ const PRODUCED_VIDEOS: Partial<
     es: {
       src: vid('The Educator (Spanish).mp4'),
     },
-    pt: {
-      src: vid('The Educator (Portuguese).mp4'),
-    },
-    hi: {
-      src: vid('The Educator (Hindi).mp4'),
-    },
     zh: {
       src: vid('The Educator (Chinese).mp4'),
     },
     ar: {
       src: vid('The Educator (Arabic).mp4'),
-    },
-    th: {
-      src: vid('The Educator (Thai).mp4'),
     },
   },
 }

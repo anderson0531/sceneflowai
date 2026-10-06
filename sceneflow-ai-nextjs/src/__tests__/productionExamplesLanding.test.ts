@@ -238,7 +238,7 @@ describe('Production Examples i18n contract', () => {
 
   it('provides screening room instruction copy', () => {
     expect(enMessages.productionShowcase.screeningRoomInstruction).toContain('Pre-Vis')
-    expect(enMessages.productionShowcase.screeningRoomInstruction).toContain('language')
+    expect(enMessages.productionShowcase.screeningRoomInstruction).toContain('Arabic')
   })
 })
 
@@ -353,27 +353,19 @@ describe('Production style CTAs', () => {
 })
 
 describe('Production showcase videos', () => {
-  it('offers all seven dub languages for the Cinematic Drama card', () => {
+  it('offers all four dub languages for the Cinematic Drama card', () => {
     const locales = getProductionShowcaseVideoLocales('drama')
 
     expect(locales.map((locale) => locale.id)).toEqual(VIDEO_LOCALE_ORDER)
-    expect(locales.map((locale) => locale.id)).toEqual([
-      'en',
-      'es',
-      'pt',
-      'hi',
-      'zh',
-      'ar',
-      'th',
-    ])
+    expect(locales.map((locale) => locale.id)).toEqual(['en', 'es', 'zh', 'ar'])
   })
 
-  it('marks all seven dubs produced for the Cinematic Drama card', () => {
+  it('marks all four dubs produced for the Cinematic Drama card', () => {
     const locales = getProductionShowcaseVideoLocales('drama')
     const available = locales.filter((locale) => locale.available).map((locale) => locale.id)
     const placeholders = locales.filter((locale) => !locale.available).map((locale) => locale.id)
 
-    expect(available).toEqual(['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'])
+    expect(available).toEqual(['en', 'es', 'zh', 'ar'])
     expect(placeholders).toEqual([])
 
     for (const locale of locales) {
@@ -388,11 +380,8 @@ describe('Production showcase videos', () => {
 
     expect(byId.en).toContain('The%20Cinematic%20Drama%20(English).mp4')
     expect(byId.es).toContain('The%20Cinematic%20Drama%20(Spanish).mp4')
-    expect(byId.pt).toContain('The%20Cinematic%20Drama%20(Portuguese).mp4')
-    expect(byId.hi).toContain('The%20Cinematic%20Drama%20(Hindi).mp4')
     expect(byId.zh).toContain('The%20Cinematic%20Drama%20(Chinese).mp4')
     expect(byId.ar).toContain('The%20Cinematic%20Drama%20(Arabic).mp4')
-    expect(byId.th).toContain('The%20Cinematic%20Drama%20(Thai).mp4')
   })
 
   it('defaults to English and reports the card as having video', () => {
@@ -407,7 +396,7 @@ describe('Production showcase videos', () => {
 
     expect(locales.map((locale) => locale.id)).toEqual(VIDEO_LOCALE_ORDER)
     expect(available).toEqual(['en', 'es'])
-    expect(placeholders).toEqual(['pt', 'hi', 'zh', 'ar', 'th'])
+    expect(placeholders).toEqual(['zh', 'ar'])
 
     const english = locales.find((locale) => locale.id === 'en')
     expect(english?.src).toContain('The%20Animated%20Comedy%20(English).mp4')

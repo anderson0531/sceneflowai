@@ -19,23 +19,19 @@ import {
 import { VIDEO_LOCALE_ORDER } from '@/config/landing/videoLocales'
 
 describe('Hero video locales', () => {
-  it('lists all seven locale pills in display order', () => {
+  it('lists all four locale pills in display order', () => {
     expect(HERO_VIDEO_LOCALES.map((locale) => locale.id)).toEqual(VIDEO_LOCALE_ORDER)
   })
 
-  it('plays all seven hero Blob masters', () => {
+  it('plays all four hero Blob masters', () => {
     const available = getAvailableHeroVideoLocales().map((locale) => locale.id)
 
     expect(available).toEqual(VIDEO_LOCALE_ORDER)
     expect(getDefaultHeroVideoSrc()).toContain('Hero%20Video%20(English).mp4')
     expect(getHeroVideoLocale('es')?.src).toContain('Hero%20Video%20(Spanish).mp4')
-    expect(getHeroVideoLocale('pt')?.src).toContain('Hero%20Video%20(Portuguese).mp4')
-    expect(getHeroVideoLocale('hi')?.src).toContain('Hero%20Video%20(Hindi).mp4')
     expect(getHeroVideoLocale('zh')?.src).toContain('Hero%20Video%20(Chinese).mp4')
     expect(getHeroVideoLocale('ar')?.src).toContain('Hero%20Video%20(Arabic).mp4')
     expect(getHeroVideoLocale('ar')?.src).not.toContain('Arabic)%20.mp4')
-    expect(getHeroVideoLocale('th')?.src).toContain('Hero%20Video%20(Thai).mp4')
-    expect(getHeroVideoLocale('th')?.src).not.toContain('Thai)%20.mp4')
     expect(getHeroVideoLocale(DEFAULT_HERO_VIDEO_LOCALE)?.available).toBe(true)
 
     for (const locale of HERO_VIDEO_LOCALES) {
@@ -48,11 +44,8 @@ describe('Hero video locales', () => {
   it('reserves predictable Blob paths for hero dubs', () => {
     expect(HERO_VIDEO_BLOB_PATHS.en).toBe('Hero Video (English).mp4')
     expect(HERO_VIDEO_BLOB_PATHS.es).toBe('Hero Video (Spanish).mp4')
-    expect(HERO_VIDEO_BLOB_PATHS.pt).toBe('Hero Video (Portuguese).mp4')
-    expect(HERO_VIDEO_BLOB_PATHS.hi).toBe('Hero Video (Hindi).mp4')
     expect(HERO_VIDEO_BLOB_PATHS.zh).toBe('Hero Video (Chinese).mp4')
     expect(HERO_VIDEO_BLOB_PATHS.ar).toBe('Hero Video (Arabic).mp4')
-    expect(HERO_VIDEO_BLOB_PATHS.th).toBe('Hero Video (Thai).mp4')
   })
 
   it('reserves 720p, 1080p, and WebM web-encode paths from the live 4K masters', () => {
@@ -73,7 +66,7 @@ describe('Hero video locales', () => {
 
   it('maps hero locales into the shared video player model', () => {
     const locales = getHeroVideoLocalesAsVideoLocales()
-    expect(locales).toHaveLength(7)
+    expect(locales).toHaveLength(4)
     for (const id of VIDEO_LOCALE_ORDER) {
       expect(locales.find((locale) => locale.id === id)?.available).toBe(true)
     }
@@ -84,7 +77,7 @@ describe('public hero playback sources', () => {
   it('points every locale at same-origin WebM + MP4 paths and a localized poster', () => {
     for (const locale of HERO_VIDEO_LOCALES) {
       const sources = getHeroPublicVideoSources(locale.id)
-      const version = { en: '20261004', es: '20261005', pt: '20261005' }[locale.id]
+      const version = { en: '20261004', es: '20261005' }[locale.id]
       expect(sources.webmSrc).toBe(
         version ? `/videos/hero-${locale.id}.webm?v=${version}` : `/videos/hero-${locale.id}.webm`
       )
@@ -104,7 +97,7 @@ describe('public hero playback sources', () => {
     expect(config).toContain('sceneflow-hero-:locale.webm')
     expect(config).toContain('sceneflow-hero-:locale-1080p.mp4')
     expect(config).not.toContain('sceneflow-hero-:locale.mp4')
-    expect(config).toContain('const blobHeroLocales = "hi|zh|ar|th"')
+    expect(config).toContain('const blobHeroLocales = "zh|ar"')
     expect(config).toContain('hero-:locale(${blobHeroLocales}).webm')
     expect(config).toContain('hero-:locale(${blobHeroLocales}).mp4')
   })
@@ -136,11 +129,12 @@ describe('resolveHeroVideoLocale', () => {
   it('falls back to the English dub for UI locales without a hero file', () => {
     expect(resolveHeroVideoLocale('fr')).toBe('en')
     expect(resolveHeroVideoLocale('ja')).toBe('en')
+    expect(resolveHeroVideoLocale('th')).toBe('en')
   })
 
   it('uses the page locale ahead of the browser language', () => {
     const languages = vi.spyOn(navigator, 'language', 'get').mockReturnValue('es-MX')
-    expect(resolveHeroVideoLocale('th')).toBe('th')
+    expect(resolveHeroVideoLocale('ar')).toBe('ar')
     languages.mockRestore()
   })
 })

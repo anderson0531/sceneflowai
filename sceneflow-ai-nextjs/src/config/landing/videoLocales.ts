@@ -6,7 +6,7 @@
 
 const BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
 
-export type VideoLocaleId = 'en' | 'es' | 'pt' | 'hi' | 'zh' | 'ar' | 'th'
+export type VideoLocaleId = 'en' | 'es' | 'zh' | 'ar'
 
 export type VideoLocale = {
   id: VideoLocaleId
@@ -20,7 +20,7 @@ export type VideoLocale = {
 export type ProducedVideo = { src: string; poster?: string }
 
 /** Display/selection order for the language pills. */
-export const VIDEO_LOCALE_ORDER: VideoLocaleId[] = ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th']
+export const VIDEO_LOCALE_ORDER: VideoLocaleId[] = ['en', 'es', 'zh', 'ar']
 
 /** Blob URL for a dubbed master. `#t=0.1` skips a black first frame when supported. */
 export function videoUrl(path: string, version?: string): string {
@@ -49,7 +49,7 @@ export function defaultVideoLocale(locales: VideoLocale[]): VideoLocaleId {
   return locales.find((locale) => locale.available)?.id ?? 'en'
 }
 
-/** Map landing UI locale to the nearest dubbed video locale (7 options). */
+/** Map landing UI locale to the nearest dubbed video locale (4 options). */
 export function landingLocaleToVideoLocale(landingLocale: string): VideoLocaleId {
   if (landingLocale === 'zh-CN' || landingLocale === 'zh-TW') return 'zh'
   if (VIDEO_LOCALE_ORDER.includes(landingLocale as VideoLocaleId)) {
