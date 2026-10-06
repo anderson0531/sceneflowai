@@ -50,8 +50,10 @@ export default function TermsOfServicePage() {
             <h2 className="text-2xl font-semibold text-white mb-4">4. Credits and Payments</h2>
             <p className="text-gray-300 leading-relaxed mb-4">The Service operates on a credit-based system:</p>
             <ul className="list-disc pl-6 text-gray-300 space-y-2">
-              <li><strong>Subscription Credits:</strong> Monthly credits expire 30 days after issuance if unused</li>
-              <li><strong>One-time Purchase Credits:</strong> Credits from packs (Explorer, Basic Pack, Value Pack, Pro Pack) never expire</li>
+              <li><strong>Subscription Credits:</strong> Credits included with a paid plan expire at the end of the billing period they were issued for. Unused subscription credits do not roll over. The next allotment is added only when a renewal payment succeeds.</li>
+              <li><strong>Explorer Credits:</strong> The $9 Explorer pack expires 90 days after purchase.</li>
+              <li><strong>Add-on Credits:</strong> Each add-on pack ($25, $100, or $250) expires 12 months after that purchase. Buying another pack does not extend an older pack.</li>
+              <li><strong>Credit Schedule:</strong> Operations spend credits at the schedule in effect when you use them. That schedule can change as model capability and cost change. When models make it possible to offer more for less, the improvement is more credits on purchases and renewals made after the change. Credits already in your account are not repriced into a larger amount of output, and a newer, more expensive model can cost more credits from the day it is offered.</li>
               <li><strong>Payment Processing:</strong> Payments are processed securely by Whop, our Merchant of Record payment partner</li>
               <li><strong>Pricing:</strong> All prices are in USD and include applicable taxes calculated at checkout</li>
               <li><strong>Automatic Renewal:</strong> Subscriptions renew automatically unless cancelled before the renewal date</li>

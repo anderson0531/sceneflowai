@@ -40,7 +40,7 @@ export async function migrateWhopPayment(): Promise<void> {
         max_scenes_per_project = 20,
         features = ARRAY[
           '750 credits (one-time)',
-          'Credits never expire',
+          'Credits expire 90 days after purchase',
           '5 GB storage',
           '1080p max resolution',
           'Full platform access',

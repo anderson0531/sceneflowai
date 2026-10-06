@@ -23,7 +23,7 @@ export interface UserAttributes {
   subscription_end_date?: Date | null
   subscription_credits_monthly: number // Bundled credits from subscription
   subscription_credits_expires_at?: Date | null // Monthly expiry
-  addon_credits: number // Purchased top-up credits (never expire)
+  addon_credits: number // Sum of unexpired Explorer and add-on lots
   storage_used_gb: number
   paddle_customer_id?: string | null
   paddle_subscription_id?: string | null

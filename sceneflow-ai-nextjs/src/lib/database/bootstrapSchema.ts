@@ -36,6 +36,7 @@ import { migrateUsersSubscriptionColumns } from '@/lib/database/migrateUsersSubs
 import { migrateCreditLedger } from '@/lib/database/migrateCreditLedger'
 import { migrateRateCard } from '@/lib/database/migrateRateCard'
 import { ensureWhopUserColumns } from '@/lib/database/migrateWhopPayment'
+import { ensureCreditLotsTable } from '@/lib/database/migrateCreditLots'
 import {
   ensureContentTranslationsTable,
   ensureUserLocaleColumns,
@@ -98,6 +99,15 @@ export async function bootstrapDatabaseSchema(): Promise<{
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error)
       logs.push(`⚠️ Migration note: ${msg}`)
+    }
+
+    logs.push('4a2. Running credit lots table migration...')
+    try {
+      await ensureCreditLotsTable()
+      logs.push('✅ Credit lots table ready')
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error)
+      logs.push(`⚠️ Credit lots migration note: ${msg}`)
     }
 
     logs.push('4b. Running Whop user columns migration...')

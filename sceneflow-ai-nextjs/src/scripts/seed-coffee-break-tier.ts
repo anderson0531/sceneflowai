@@ -30,7 +30,7 @@ export async function seedTrialTier() {
       max_scenes_per_project: 20,
       features: [
         '1,000 credits (one-time)',
-        'Credits never expire',
+        'Credits expire 90 days after purchase',
         '$10 value for $5',
         '10 GB storage',
         '720p max resolution',

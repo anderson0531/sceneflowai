@@ -16,8 +16,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { User, SubscriptionTier, CreditLedger, sequelize } from '@/models';
+import { User, SubscriptionTier, sequelize } from '@/models';
 import { resolveUser } from '@/lib/userHelper';
+import { ensureCreditLotsTable } from '@/lib/database/migrateCreditLots';
+import { assignBalances, loadUserLots, saveUserLots } from '@/lib/credits/creditLotStore';
+import { applyPackGrant, applySubscriptionGrant } from '@/lib/credits/creditLots';
+import { writeLedgerIntents } from '@/services/CreditService';
 
 // Valid tier names
 const VALID_TIERS = ['explorer', 'trial', 'starter', 'pro', 'studio', 'enterprise'] as const;
@@ -113,6 +117,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    await ensureCreditLotsTable();
+
     // Update user's subscription in a transaction
     const result = await sequelize.transaction(async (tx) => {
       const user = await User.findByPk(userId, { 
@@ -125,7 +131,6 @@ export async function POST(request: NextRequest) {
       }
 
       const prevTierId = user.subscription_tier_id;
-      const prevCredits = Number(user.credits || 0);
 
       // Update subscription fields
       user.subscription_tier_id = tier.id;
@@ -137,37 +142,33 @@ export async function POST(request: NextRequest) {
       endDate.setDate(endDate.getDate() + 30);
       user.subscription_end_date = endDate;
 
-      // Optionally grant credits
+      // Optionally grant credits on the same shelf-life rules as production.
       let creditsGranted = 0;
       if (grantCredits) {
         creditsGranted = TIER_CREDITS[tierName] || Number(tier.included_credits_monthly) || 0;
-        
-        // Set subscription credits
-        user.subscription_credits_monthly = creditsGranted;
-        
-        // Set expiration to end of billing period
-        user.subscription_credits_expires_at = endDate;
-        
-        // Update total credits (keep addon credits, replace subscription credits)
-        const addonCredits = Number(user.addon_credits || 0);
-        user.credits = addonCredits + creditsGranted;
-
-        // Log credit grant
-        await CreditLedger.create({
-          user_id: userId,
-          delta_credits: creditsGranted,
-          prev_balance: prevCredits,
-          new_balance: Number(user.credits),
-          reason: 'adjustment',
-          credit_type: 'subscription',
-          ref: `test_plan_switch_${tierName}`,
-          meta: { 
-            tier: tierName, 
-            test_mode: true,
-            previous_tier_id: prevTierId,
-            type: 'subscription_allocation',
-          } as any,
-        }, { transaction: tx });
+        const now = new Date();
+        const { lots } = await loadUserLots(user, now, tx);
+        const isPack = tierName === 'explorer' || tierName === 'trial';
+        const granted = isPack
+          ? applyPackGrant({
+              lots,
+              source: 'explorer',
+              credits: creditsGranted,
+              now,
+              ref: `test_plan_switch_${tierName}`,
+              meta: { tier: tierName, test_mode: true, previous_tier_id: prevTierId },
+            })
+          : applySubscriptionGrant({
+              lots,
+              credits: creditsGranted,
+              now,
+              expiresAt: endDate,
+              ref: `test_plan_switch_${tierName}`,
+              meta: { tier: tierName, test_mode: true, previous_tier_id: prevTierId },
+            });
+        await saveUserLots(userId, granted.lots, tx);
+        assignBalances(user, granted.lots, now);
+        await writeLedgerIntents(userId, granted.intents, tx, `test_plan_switch_${tierName}`);
       }
 
       await user.save({ transaction: tx });

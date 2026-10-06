@@ -46,6 +46,23 @@ function extractMetadata(event: WhopWebhookEvent): {
   return { userId, tierName, applicationId }
 }
 
+function extractBillingPeriodEnd(data: Record<string, unknown>): Date | undefined {
+  const membership = data.membership as Record<string, unknown> | undefined
+  const candidates = [
+    data.renewal_period_end,
+    data.renewal_period_end_at,
+    data.expires_at,
+    membership?.renewal_period_end,
+    membership?.expires_at,
+  ]
+  for (const value of candidates) {
+    if (typeof value !== 'string' && typeof value !== 'number') continue
+    const date = new Date(value)
+    if (!Number.isNaN(date.getTime()) && date.getTime() > Date.now()) return date
+  }
+  return undefined
+}
+
 function extractPlanId(event: WhopWebhookEvent): string | undefined {
   const data = event.data || {}
   const plan =
@@ -104,6 +121,13 @@ async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
       }
       if (resolvedTier && isOneTimeTier(resolvedTier)) {
         await fulfillExplorerPurchase(metadataUserId)
+      } else if (resolvedTier) {
+        await SubscriptionService.activateSubscription(metadataUserId, resolvedTier, {
+          whopMembershipId: membershipId,
+          whopUserId,
+          billingPeriodEnd: extractBillingPeriodEnd(event.data),
+          source: eventType,
+        })
       }
       break
     }

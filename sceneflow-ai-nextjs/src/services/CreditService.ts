@@ -1,7 +1,18 @@
+import type { Transaction } from 'sequelize'
 import { sequelize, AIPricing, CreditLedger, User, AIUsage } from '@/models'
 import { migrateUsersSubscriptionColumns } from '@/lib/database/migrateUsersSubscription'
 import { migrateCreditLedger } from '@/lib/database/migrateCreditLedger'
 import { ensureWhopUserColumns } from '@/lib/database/migrateWhopPayment'
+import { ensureCreditLotsTable } from '@/lib/database/migrateCreditLots'
+import { assignBalances, loadUserLots, readStoredLots, saveUserLots } from '@/lib/credits/creditLotStore'
+import {
+  applyCreditRestore,
+  applyCreditSpend,
+  applyPackGrant,
+  balancesFromLots,
+  type CreditLedgerIntent,
+  type CreditLotLedgerReason,
+} from '@/lib/credits/creditLots'
 import { resolveUser } from '@/lib/userHelper'
 import {
   incrementProjectCreditsUsed,
@@ -180,6 +191,48 @@ async function findUserWithAutoMigration(userIdOrEmail: string, options?: any) {
   }
 }
 
+export async function writeLedgerIntents(
+  userId: string,
+  intents: CreditLedgerIntent[],
+  tx: Transaction,
+  ref?: string | null
+): Promise<void> {
+  for (const intent of intents) {
+    try {
+      await CreditLedger.create(
+        {
+          user_id: userId,
+          delta_credits: intent.delta,
+          prev_balance: intent.prev,
+          new_balance: intent.next,
+          reason: intent.reason,
+          credit_type: intent.creditType,
+          ref: ref || null,
+          meta: intent.meta,
+        } as any,
+        { transaction: tx }
+      )
+    } catch (error: any) {
+      if (error.message?.includes('credit_type') || error.message?.includes('does not exist')) {
+        await CreditLedger.create(
+          {
+            user_id: userId,
+            delta_credits: intent.delta,
+            prev_balance: intent.prev,
+            new_balance: intent.next,
+            reason: intent.reason,
+            ref: ref || null,
+            meta: { ...(intent.meta || {}), credit_type: intent.creditType },
+          } as any,
+          { transaction: tx }
+        )
+      } else {
+        throw error
+      }
+    }
+  }
+}
+
 export class CreditService {
   static async getPricing(provider: 'openai', category: PricingCategory, model: string, variant: string) {
     const row = await AIPricing.findOne({ where: { provider, category, model, variant, is_active: true } })
@@ -211,45 +264,27 @@ export class CreditService {
     // (guided-revise start hung after "Auto-running credit_ledger migration...").
     await ensureMigrationRan()
     await ensureCreditLedgerMigrationRan()
-    const result = await sequelize.transaction(async (tx) => {
+    await ensureCreditLotsTable()
+    const spent = await sequelize.transaction(async (tx) => {
       const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
       if (!user) throw new Error('User not found')
-      const prev = Number(user.credits ?? 0)
-      if (prev < chargeCredits) throw new Error('INSUFFICIENT_CREDITS')
-      const next = prev - chargeCredits
-      user.credits = next
+      const now = new Date()
+      const { lots } = await loadUserLots(user, now, tx)
+      const result = applyCreditSpend({
+        lots,
+        amount: chargeCredits,
+        now,
+        reason: reason as CreditLotLedgerReason,
+        meta,
+      })
+      await saveUserLots(userUuid, result.lots, tx)
+      assignBalances(user, result.lots, now)
+      await writeLedgerIntents(userUuid, result.intents, tx, ref)
       await user.save({ transaction: tx })
-
-      // Log the charge in credit ledger
-      try {
-        await CreditLedger.create({
-          user_id: userUuid,
-          delta_credits: -chargeCredits,
-          prev_balance: prev,
-          new_balance: next,
-          reason,
-          ref: ref || null,
-          meta: meta || null,
-        } as any, { transaction: tx })
-      } catch (error: any) {
-        // If credit_type column doesn't exist, create without it
-        if (error.message?.includes('credit_type') || error.message?.includes('does not exist')) {
-          console.warn('[CreditService] credit_type column not available, creating ledger entry without it')
-          await CreditLedger.create({
-            user_id: userUuid,
-            delta_credits: -chargeCredits,
-            prev_balance: prev,
-            new_balance: next,
-            reason,
-            ref: ref || null,
-            meta: meta || null,
-          } as any, { transaction: tx })
-        } else {
-          throw error
-        }
-      }
-      return { prev, next }
+      return result
     })
+    if (!spent.ok) throw new Error('INSUFFICIENT_CREDITS')
+    const result = { prev: spent.startingBalance, next: spent.endingBalance }
 
     const projectId = resolveProjectIdFromCharge(ref, meta)
     if (projectId) {
@@ -281,20 +316,45 @@ export class CreditService {
     subscription_expires_at: Date | null
     addon_credits: number
     total_credits: number
+    pack_expires_at: Date | null
   }> {
     const user = await findUserWithAutoMigration(userId)
     if (!user) throw new Error('User not found')
 
+    let packExpiresAt: Date | null = null
+    let subscriptionCredits = Number(user.subscription_credits_monthly || 0)
+    let addonCredits = Number(user.addon_credits || 0)
+    let totalCredits = Number(user.credits || 0)
+    let subscriptionExpiresAt = user.subscription_credits_expires_at || null
+
+    try {
+      await ensureCreditLotsTable()
+      const stored = await readStoredLots(user.id)
+      if (stored.length > 0) {
+        const balances = balancesFromLots(stored, new Date())
+        subscriptionCredits = balances.subscription
+        addonCredits = balances.addon
+        totalCredits = balances.total
+        subscriptionExpiresAt = balances.subscriptionExpiresAt
+          ? new Date(balances.subscriptionExpiresAt)
+          : null
+        packExpiresAt = balances.soonestPackExpiresAt ? new Date(balances.soonestPackExpiresAt) : null
+      }
+    } catch (error) {
+      console.warn('[CreditService] credit lot breakdown skipped:', error)
+    }
+
     return {
-      subscription_credits: Number(user.subscription_credits_monthly || 0),
-      subscription_expires_at: user.subscription_credits_expires_at || null,
-      addon_credits: Number(user.addon_credits || 0),
-      total_credits: Number(user.credits || 0),
+      subscription_credits: subscriptionCredits,
+      subscription_expires_at: subscriptionExpiresAt,
+      addon_credits: addonCredits,
+      total_credits: totalCredits,
+      pack_expires_at: packExpiresAt,
     }
   }
 
   /**
-   * Charge with priority: use addon credits first, then subscription credits
+   * Spend soonest-expiring lots first (subscription allotment, then older packs).
    */
   static async chargeWithPriority(
     userId: string,
@@ -320,97 +380,32 @@ export class CreditService {
     // See charge(): ledger probe must not run while the tx holds the only pool slot.
     await ensureMigrationRan()
     await ensureCreditLedgerMigrationRan()
-    const result = await sequelize.transaction(async (tx) => {
+    await ensureCreditLotsTable()
+    const spent = await sequelize.transaction(async (tx) => {
       const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
       if (!user) throw new Error('User not found')
-
-      const prevTotal = Number(user.credits ?? 0)
-      if (prevTotal < credits) throw new Error('INSUFFICIENT_CREDITS')
-
-      // Get current breakdown
-      let addonCredits = Number(user.addon_credits || 0)
-      let subscriptionCredits = Number(user.subscription_credits_monthly || 0)
-
-      // Use addon credits first, then subscription credits
-      let remainingToCharge = credits
-      let usedAddon = 0
-      let usedSubscription = 0
-
-      // First, use addon credits
-      if (addonCredits > 0 && remainingToCharge > 0) {
-        usedAddon = Math.min(addonCredits, remainingToCharge)
-        addonCredits -= usedAddon
-        remainingToCharge -= usedAddon
-      }
-
-      // Then, use subscription credits
-      if (subscriptionCredits > 0 && remainingToCharge > 0) {
-        usedSubscription = Math.min(subscriptionCredits, remainingToCharge)
-        subscriptionCredits -= usedSubscription
-        remainingToCharge -= usedSubscription
-      }
-
-      // Update user credits
-      user.addon_credits = addonCredits
-      user.subscription_credits_monthly = subscriptionCredits
-      user.credits = addonCredits + subscriptionCredits
-
+      const now = new Date()
+      const { lots } = await loadUserLots(user, now, tx)
+      const result = applyCreditSpend({
+        lots,
+        amount: credits,
+        now,
+        reason: reason as CreditLotLedgerReason,
+        meta: { ...(meta || {}), hasBYOK },
+      })
+      await saveUserLots(userUuid, result.lots, tx)
+      assignBalances(user, result.lots, now)
+      await writeLedgerIntents(userUuid, result.intents, tx, ref)
       await user.save({ transaction: tx })
-
-      // Determine credit type for ledger
-      const creditType: 'addon' | 'subscription' | null = 
-        usedAddon > 0 && usedSubscription === 0 ? 'addon' :
-        usedAddon === 0 && usedSubscription > 0 ? 'subscription' :
-        null // Mixed usage
-
-      // Log the charge in credit ledger
-      try {
-        await CreditLedger.create({
-          user_id: userUuid,
-          delta_credits: -credits,
-          prev_balance: prevTotal,
-          new_balance: Number(user.credits),
-          reason,
-          credit_type: creditType,
-          ref: ref || null,
-          meta: {
-            ...(meta || {}),
-            hasBYOK,
-            usedAddon,
-            usedSubscription,
-          },
-        } as any, { transaction: tx })
-      } catch (error: any) {
-        // If credit_type column doesn't exist, create without it
-        if (error.message?.includes('credit_type') || error.message?.includes('does not exist')) {
-          console.warn('[CreditService] credit_type column not available, creating ledger entry without it')
-          await CreditLedger.create({
-            user_id: userUuid,
-            delta_credits: -credits,
-            prev_balance: prevTotal,
-            new_balance: Number(user.credits),
-            reason,
-            ref: ref || null,
-            meta: {
-              ...(meta || {}),
-              hasBYOK,
-              usedAddon,
-              usedSubscription,
-              credit_type: creditType, // Store in meta as fallback
-            },
-          } as any, { transaction: tx })
-        } else {
-          throw error
-        }
-      }
-
-      return {
-        prev: prevTotal,
-        next: Number(user.credits),
-        usedAddon,
-        usedSubscription,
-      }
+      return result
     })
+    if (!spent.ok) throw new Error('INSUFFICIENT_CREDITS')
+    const result = {
+      prev: spent.startingBalance,
+      next: spent.endingBalance,
+      usedAddon: spent.usedAddon,
+      usedSubscription: spent.usedSubscription,
+    }
 
     const projectId = resolveProjectIdFromCharge(ref, meta)
     if (projectId) {
@@ -422,8 +417,48 @@ export class CreditService {
   }
 
   /**
-   * Grant credits to a user (admin function)
-   * Adds credits to addon_credits (never expire)
+   * Put credits back after a failed generation. Restores the soonest-expiring
+   * lots up to their original grant, then opens a 12-month add-on lot for the rest.
+   */
+  static async restoreCredits(
+    userId: string,
+    credits: number,
+    reason: string,
+    ref?: string | null,
+    meta?: any
+  ): Promise<{ prev: number; next: number }> {
+    if (credits <= 0) {
+      throw new Error('Credits amount must be positive')
+    }
+
+    const resolvedUser = await findUserWithAutoMigration(userId)
+    const userUuid = resolvedUser.id
+    await ensureMigrationRan()
+    await ensureCreditLedgerMigrationRan()
+    await ensureCreditLotsTable()
+
+    return await sequelize.transaction(async (tx) => {
+      const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
+      if (!user) throw new Error('User not found')
+      const now = new Date()
+      const { lots } = await loadUserLots(user, now, tx)
+      const restored = applyCreditRestore({
+        lots,
+        amount: credits,
+        now,
+        meta: { ...(meta || {}), reason },
+      })
+      await saveUserLots(userUuid, restored.lots, tx)
+      assignBalances(user, restored.lots, now)
+      await writeLedgerIntents(userUuid, restored.intents, tx, ref)
+      await user.save({ transaction: tx })
+      return { prev: restored.startingBalance, next: restored.endingBalance }
+    })
+  }
+
+  /**
+   * Grant credits to a user (admin function).
+   * Admin grants are add-on lots and expire 12 months after the grant.
    */
   static async grantCredits(
     userId: string,
@@ -442,67 +477,30 @@ export class CreditService {
     // See charge(): ledger probe must not run while the tx holds the only pool slot.
     await ensureMigrationRan()
     await ensureCreditLedgerMigrationRan()
+    await ensureCreditLotsTable()
 
     return await sequelize.transaction(async (tx) => {
       const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
       if (!user) throw new Error('User not found')
-
-      const prevTotal = Number(user.credits ?? 0)
-      const prevAddonCredits = Number(user.addon_credits || 0)
-
-      // Add credits to addon_credits (never expire)
-      const newAddonCredits = prevAddonCredits + credits
-      user.addon_credits = newAddonCredits
-
-      // Update total credits
-      const subscriptionCredits = Number(user.subscription_credits_monthly || 0)
-      user.credits = newAddonCredits + subscriptionCredits
-
+      const now = new Date()
+      const { lots } = await loadUserLots(user, now, tx)
+      const granted = applyPackGrant({
+        lots,
+        source: 'addon',
+        credits,
+        now,
+        ref: ref || 'admin_grant',
+        ledgerReason: 'adjustment',
+        meta: { ...(meta || {}), reason, grantedBy: 'admin' },
+      })
+      await saveUserLots(userUuid, granted.lots, tx)
+      const balances = assignBalances(user, granted.lots, now)
+      await writeLedgerIntents(userUuid, granted.intents, tx, ref)
       await user.save({ transaction: tx })
-
-      // Log the grant in credit ledger
-      try {
-        await CreditLedger.create({
-          user_id: userUuid,
-          delta_credits: credits,
-          prev_balance: prevTotal,
-          new_balance: Number(user.credits),
-          reason: 'adjustment' as CreditLedger['reason'],
-          credit_type: 'addon',
-          ref: ref || null,
-          meta: {
-            ...(meta || {}),
-            reason,
-            grantedBy: 'admin',
-          },
-        } as any, { transaction: tx })
-      } catch (error: any) {
-        // If credit_type column doesn't exist, create without it
-        if (error.message?.includes('credit_type') || error.message?.includes('does not exist')) {
-          console.warn('[CreditService] credit_type column not available, creating ledger entry without it')
-          await CreditLedger.create({
-            user_id: userUuid,
-            delta_credits: credits,
-            prev_balance: prevTotal,
-            new_balance: Number(user.credits),
-            reason: 'adjustment' as CreditLedger['reason'],
-            ref: ref || null,
-            meta: {
-              ...(meta || {}),
-              reason,
-              grantedBy: 'admin',
-              credit_type: 'addon', // Store in meta as fallback
-            },
-          } as any, { transaction: tx })
-        } else {
-          throw error
-        }
-      }
-
       return {
-        prev: prevTotal,
-        next: Number(user.credits),
-        addonCredits: newAddonCredits,
+        prev: granted.startingBalance,
+        next: granted.endingBalance,
+        addonCredits: balances.addon,
       }
     })
   }

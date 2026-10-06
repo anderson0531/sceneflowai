@@ -19,6 +19,8 @@ export interface MappedSubscriptionData {
     total: number
     subscription: number
     addon: number
+    subscriptionExpiresAt: string | null
+    packExpiresAt: string | null
   }
   oneTimeTiersPurchased: string[]
 }
@@ -39,6 +41,14 @@ export function mapSubscriptionStatus(raw: Record<string, unknown>): MappedSubsc
       total: Number(credits.total_credits ?? credits.total ?? 0),
       subscription: Number(credits.subscription_credits ?? credits.subscription ?? 0),
       addon: Number(credits.addon_credits ?? credits.addon ?? 0),
+      subscriptionExpiresAt:
+        (credits.subscription_expires_at as string | null | undefined) ??
+        (credits.subscriptionExpiresAt as string | null | undefined) ??
+        null,
+      packExpiresAt:
+        (credits.pack_expires_at as string | null | undefined) ??
+        (credits.packExpiresAt as string | null | undefined) ??
+        null,
     },
     oneTimeTiersPurchased: Array.isArray(raw.one_time_tiers_purchased)
       ? (raw.one_time_tiers_purchased as string[])

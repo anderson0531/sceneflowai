@@ -317,14 +317,10 @@ export async function refundCredits(
   amount: number,
   reason: string
 ): Promise<void> {
-  // Use negative charge (add credits back)
-  await CreditService.charge(
-    userId,
-    -amount, // Negative to add credits
-    'refund',
-    null,
-    { reason, timestamp: new Date().toISOString() }
-  )
+  await CreditService.restoreCredits(userId, amount, reason, null, {
+    reason,
+    timestamp: new Date().toISOString(),
+  })
 }
 
 // =============================================================================

@@ -197,7 +197,7 @@ export function LowCreditModal({
             <div className="px-6 pb-6">
               <div className="p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
                 <p className="text-xs text-emerald-400">
-                  💡 <strong>Pro Tip:</strong> Top-Up credits never expire! They stay in your account until you use them.
+                  💡 <strong>Pro Tip:</strong> Each add-on pack lasts 12 months from purchase. Monthly credits expire at the end of the paid period.
                 </p>
               </div>
             </div>

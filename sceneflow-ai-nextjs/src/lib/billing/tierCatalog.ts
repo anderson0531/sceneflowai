@@ -2,6 +2,12 @@
  * Single source of truth for SceneFlow billing tiers and Whop plan mapping.
  */
 
+import {
+  EXPLORER_CREDIT_FEATURE_COPY,
+  EXPLORER_CREDIT_PACK_COPY,
+  SUBSCRIPTION_CREDIT_EXPIRY_COPY,
+} from '@/lib/credits/creditLots'
+
 export type BillingTierName =
   | 'explorer'
   | 'starter'
@@ -57,7 +63,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
     processingPriority: 'standard',
     features: [
       '750 credits (one-time)',
-      'Credits never expire',
+      EXPLORER_CREDIT_FEATURE_COPY,
       '5 GB storage',
       '1080p max resolution',
       'Full platform access',
@@ -66,7 +72,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
     marketingDescription: 'Demo — one-time purchase to try a complete production',
     marketingFeatures: [
       'One-time purchase',
-      '750 credits (never expire)',
+      EXPLORER_CREDIT_PACK_COPY,
       '5 GB storage (30 days)',
       'Full platform access',
       'MP4 export (any resolution)',
@@ -93,6 +99,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
     processingPriority: 'standard',
     features: [
       '4,500 credits/month',
+      SUBSCRIPTION_CREDIT_EXPIRY_COPY,
       '25 GB storage',
       '1080p max resolution',
       'Veo 3.1 Fast',
@@ -103,6 +110,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
     marketingFeatures: [
       'Full platform access',
       '4,500 credits/month included',
+      SUBSCRIPTION_CREDIT_EXPIRY_COPY,
       '25 GB active storage',
       'MP4 export (any resolution)',
       'AI voiceover (70+ languages)',
@@ -129,6 +137,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
     processingPriority: 'priority',
     features: [
       '15,000 credits/month',
+      SUBSCRIPTION_CREDIT_EXPIRY_COPY,
       '100 GB storage',
       '4K max resolution (Veo 3.1 Quality)',
       '5 voice clones',
@@ -141,6 +150,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
     marketingFeatures: [
       'Everything in Starter, plus:',
       '15,000 credits/month included',
+      SUBSCRIPTION_CREDIT_EXPIRY_COPY,
       '100 GB active storage',
       'Veo 3.1 Quality (4K) access',
       'Character Consistency Engine',
@@ -171,6 +181,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
     processingPriority: 'high',
     features: [
       '75,000 credits/month',
+      SUBSCRIPTION_CREDIT_EXPIRY_COPY,
       '500 GB storage',
       '4K+ max resolution',
       'Premium + Beta AI models',
@@ -184,6 +195,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
     marketingFeatures: [
       'Everything in Pro, plus:',
       '75,000 credits/month included',
+      SUBSCRIPTION_CREDIT_EXPIRY_COPY,
       '500 GB active storage',
       'Veo 3.1 4K Priority Queue',
       'Unlimited Character Consistency',
