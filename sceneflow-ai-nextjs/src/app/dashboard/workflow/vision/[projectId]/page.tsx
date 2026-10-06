@@ -397,7 +397,7 @@ import type { ModerationReport } from '@/lib/moderation/moderationPipeline'
 import { useSidebarData, useSidebarQuickActions } from '@/hooks/useSidebarData'
 import { DetailedSceneDirection } from '@/types/scene-direction'
 import { cn } from '@/lib/utils'
-import { getScriptDirectionReadiness, isDirectionStale } from '@/lib/utils/contentHash'
+import { getScriptDirectionReadiness } from '@/lib/utils/contentHash'
 import { DirectionReadinessBanner } from '@/components/vision/DirectionReadinessBanner'
 import { sanitizeReturnTo } from '@/lib/navigation/sanitizeReturnTo'
 import { ReferenceLibraryDialog, type ReferenceLibraryTab } from '@/components/vision/ReferenceLibraryDialog'
@@ -12889,7 +12889,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             visualDescription: scene.visualDescription,
             narration: scene.narration,
             dialogue: scene.dialogue,
-            characters: scene.characters
+            characters: scene.characters,
+            beats: scene.beats,
+            sceneMovements: scene.sceneMovements,
           }
         })
       })
@@ -12977,16 +12979,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   const handleUpdateAllDirections = async () => {
     const scenes = script?.script?.scenes || []
-    const scenesNeedingDirection = scenes
-      .map((scene: any, idx: number) => ({ scene, idx }))
-      .filter(
-        ({ scene }: { scene: any }) => !scene?.sceneDirection || isDirectionStale(scene)
-      )
+    const scenesNeedingDirection = scenes.map((scene: any, idx: number) => ({ scene, idx }))
 
     if (scenesNeedingDirection.length === 0) {
       try {
         const { toast } = require('sonner')
-        toast.info('All scene directions are already up to date')
+        toast.info('No scenes to direct')
       } catch {}
       return
     }
@@ -13039,6 +13037,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 narration: scene.narration,
                 dialogue: scene.dialogue,
                 characters: scene.characters,
+                beats: scene.beats,
+                sceneMovements: scene.sceneMovements,
               },
             }),
           })

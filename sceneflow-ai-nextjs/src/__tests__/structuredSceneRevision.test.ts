@@ -117,7 +117,8 @@ describe('revise-scene beat volume prompt', () => {
 
   it('feeds the shared beat volume block into the revision prompt', () => {
     expect(source).toContain('buildRevisionBeatVolumeBlock')
-    expect(source).toContain('${buildRevisionBeatVolumeBlock(targetBeats)}')
+    expect(source).toContain('buildRevisionBeatVolumeBlock(targetBeats)')
+    expect(source).toContain('COVERAGE (STORY DECIDES LENGTH)')
   })
 
   it('no longer states the ceiling as the only beat-count instruction', () => {
@@ -159,7 +160,8 @@ describe('revise-scene beat volume prompt', () => {
   })
 
   it('resolves the target from the request, then the scene', () => {
-    expect(source).toContain('clampSceneBeatTarget(targetBeatCount) ?? resolveSceneTargetBeatCount')
+    expect(source).toContain('clampSceneBeatTarget(targetBeatCount)')
+    expect(source).toContain('hasStoredSceneBeatTarget(currentScene)')
     expect(source).toContain('targetBeatCount?: number')
   })
 

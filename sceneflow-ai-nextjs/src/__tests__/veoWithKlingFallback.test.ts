@@ -127,12 +127,11 @@ describe('generateVideoWithVeoKlingFallback', () => {
     ).rejects.toBeInstanceOf(ContentPolicyExhaustedError)
 
     expect(calls.length).toBe(4)
-    expect(calls[0].options.referenceImages?.length).toBe(2)
-    expect(calls[1].options.referenceImages?.length).toBe(2)
-    expect(calls[2].options.referenceImages?.length).toBe(1)
-    expect(calls[2].options.referenceImages?.[0].label).toContain('Identity reference')
-    expect(calls[3].options.referenceImages).toBeUndefined()
-    expect(calls[3].prompt).toContain('Neutral scene without references')
+    const urls = ['https://example.com/id.png', 'https://example.com/prop.png']
+    for (const call of calls) {
+      expect(call.options.referenceImages?.map((ref) => ref.url)).toEqual(urls)
+    }
+    expect(calls[3].prompt).not.toContain('Neutral scene without references')
   })
 
   it('uses direct Kling when configured', async () => {

@@ -257,6 +257,38 @@ describe('generateSegmentVideoCore REF start frame', () => {
     )
   })
 
+  it('attaches labeled refs on I2V instead of dropping them', async () => {
+    await generateSegmentVideoCore({
+      segmentId: 'seg-i2v-refs',
+      projectId: 'proj-1',
+      sceneId: 'scene-1',
+      userId: 'user-1',
+      prompt: 'Gideon rests his face against the stone beside a framed photograph.',
+      genType: 'I2V',
+      generationMethod: 'I2V',
+      startFrameUrl: 'https://cdn.example.com/still.png',
+      referenceImages: [
+        { url: 'https://cdn.example.com/gideon.jpg', type: 'character', name: 'Gideon Croft' },
+        { url: 'https://cdn.example.com/photo.jpg', type: 'style', name: 'Framed Photo of Sarah' },
+      ],
+      videoProvider: 'vertex',
+      duration: 10,
+    })
+
+    expect(generateVideoWithVeoKlingFallback).toHaveBeenCalledWith(
+      expect.objectContaining({
+        videoOptions: expect.objectContaining({
+          requiredReferenceCount: 2,
+          startFrame: 'https://cdn.example.com/still.png',
+          referenceImages: expect.arrayContaining([
+            expect.objectContaining({ url: 'https://cdn.example.com/gideon.jpg' }),
+            expect.objectContaining({ url: 'https://cdn.example.com/photo.jpg' }),
+          ]),
+        }),
+      })
+    )
+  })
+
   it('promotes location/prop-only refs to REF', async () => {
     await generateSegmentVideoCore({
       segmentId: 'seg-style-refs',

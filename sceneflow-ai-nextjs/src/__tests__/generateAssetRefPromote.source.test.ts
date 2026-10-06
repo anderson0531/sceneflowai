@@ -21,8 +21,9 @@ describe('scene direction shot coverage', () => {
     'utf8'
   )
 
-  it('asks for extra shots instead of shortened dialogue', () => {
+  it('asks for coverage per beat instead of a padded shot list', () => {
     expect(source).toContain('Never condense, shorten, or paraphrase quoted dialogue')
-    expect(source).toContain('padCameraShotsToBeatCount')
+    expect(source).toContain('beatCoverage')
+    expect(source).not.toContain('padCameraShotsToBeatCount')
   })
 })

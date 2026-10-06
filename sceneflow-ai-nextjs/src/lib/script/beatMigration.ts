@@ -27,7 +27,10 @@ import {
 } from '@/lib/scene/dialogueSegmentSplit'
 import { applyDerivedSfxToScene } from '@/lib/script/deriveSfxFromSceneContent'
 import { dedupeRedundantActionBeats } from '@/lib/script/actionBeatDedupe'
-import { backfillBeatDirectionsOnScene } from '@/lib/script/beatDirectionDerive'
+import {
+  applyDirectionCoverageToBeats,
+  backfillBeatDirectionsOnScene,
+} from '@/lib/script/beatDirectionDerive'
 import { beatStillImageStamp } from '@/lib/script/beatDirectionFingerprint'
 import {
   assignStillUrl,
@@ -164,6 +167,15 @@ export function normalizeBeatDirection(raw: unknown): BeatDirection | undefined 
 
   const shotType = trimmedString(b.shotType ?? b.shot ?? b.shot_type)
   if (shotType) direction.shotType = shotType
+
+  const coveragePurpose = trimmedString(b.coveragePurpose ?? b.coverage_purpose)
+  if (coveragePurpose) direction.coveragePurpose = coveragePurpose
+  const lensEnergy = trimmedString(b.lensEnergy ?? b.lens_energy)
+  if (lensEnergy) direction.lensEnergy = lensEnergy
+  const spatialRelationship = trimmedString(
+    b.spatialRelationship ?? b.spatial_relationship
+  )
+  if (spatialRelationship) direction.spatialRelationship = spatialRelationship
 
   const cameraAngle = trimmedString(b.cameraAngle ?? b.camera_angle ?? b.angle)
   if (cameraAngle) direction.cameraAngle = cameraAngle
@@ -2354,9 +2366,10 @@ export function ensureSceneBeats(scene: Record<string, unknown>): Record<string,
   // The arc is resolved before direction backfill so per-beat direction can be
   // scoped to the movement the beat belongs to instead of the whole scene.
   const withArc = ensureSceneMovements(withSfx, beats)
+  const coveredBeats = applyDirectionCoverageToBeats(withArc.scene, withArc.beats)
   const beatsWithDirection = backfillBeatDirectionsOnScene({
     ...withArc.scene,
-    beats: withArc.beats,
+    beats: coveredBeats,
   })
   // Cues read the emotion the direction backfill writes onto each beat, so
   // they are placed last. Run before it, the first pass sees no emotion and

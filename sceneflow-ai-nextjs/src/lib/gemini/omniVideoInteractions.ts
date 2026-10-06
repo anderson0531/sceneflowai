@@ -54,6 +54,12 @@ export interface OmniInteractionBuildOptions {
   referencePromptPreamble?: string
   /** Prior interaction id for EXT / conversational continuation */
   previousInteractionId?: string
+  /**
+   * Labeled reference plates that must appear as image parts. When this is
+   * greater than the reference image parts in the built body, generation throws
+   * instead of sending text_to_video.
+   */
+  requiredReferenceCount?: number
 }
 
 export type OmniInteractionInput =
@@ -256,6 +262,42 @@ export function appendNegativePrompt(prompt: string, negativePrompt?: string): s
   const compact = compactOmniNegativePrompt(negativePrompt)
   if (!compact) return prompt
   return `${prompt.trim()}\n\nNegative prompt (exclude): ${compact}`
+}
+
+/** Image parts that are reference plates, not the start or end frame. */
+export function countOmniReferenceImageParts(
+  input: unknown,
+  options: { startFrame?: string; lastFrame?: string } = {}
+): number {
+  if (!Array.isArray(input)) return 0
+  const images = input.filter(
+    (part) =>
+      part &&
+      typeof part === 'object' &&
+      (part as { type?: string }).type === 'image'
+  ).length
+  let reserved = 0
+  if (options.startFrame) reserved += 1
+  if (options.lastFrame) reserved += 1
+  return Math.max(0, images - reserved)
+}
+
+/**
+ * Refuse a text-only Omni call when labeled references were resolved.
+ * Returns the reference image-part count that will be logged.
+ */
+export function assertOmniReferenceImagesAttached(
+  input: unknown,
+  options: OmniInteractionBuildOptions = {}
+): number {
+  const count = countOmniReferenceImageParts(input, options)
+  const required = options.requiredReferenceCount ?? 0
+  if (required > 0 && count < required) {
+    throw new Error(
+      `Omni reference images were resolved (${required}) but the Interactions body has ${count} reference image part(s). Refusing text-only generation.`
+    )
+  }
+  return count
 }
 
 function inferOmniVideoTask(options: OmniInteractionBuildOptions): string {

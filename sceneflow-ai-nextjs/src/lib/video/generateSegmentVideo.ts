@@ -460,7 +460,7 @@ export async function generateSegmentVideoCore(
 
   let referenceFallbackPrompt: string | undefined
 
-  if (method === 'REF' && referenceImages && referenceImages.length > 0) {
+  if (referenceImages && referenceImages.length > 0) {
     const prioritized = veoRefsToPrioritized(referenceImages)
     const bindings = bindingsFromReferenceRecords(prioritized)
 
@@ -477,6 +477,7 @@ export async function generateSegmentVideoCore(
         role: prioritized[i]?.role,
       }
     })
+    videoOptions.requiredReferenceCount = labeledRefUrls.length
   }
 
   const built = buildSegmentEnhancedPrompt({
@@ -756,14 +757,8 @@ export async function generateSegmentVideoCore(
       throw e
     }
   } else try {
-    const omniTask =
-      method === 'REF'
-        ? 'reference_to_video'
-        : method === 'I2V' || method === 'FTV'
-          ? 'image_to_video'
-          : 'text_to_video'
     console.log(
-      `[Segment Video] requestedMethod=${generationMethod || genType || 'T2V'} effectiveMethod=${method} referenceImages=${labeledRefUrls.length} omniTask=${omniTask}`
+      `[Segment Video] requestedMethod=${generationMethod || genType || 'T2V'} effectiveMethod=${method} referenceImages=${labeledRefUrls.length} requiredReferenceCount=${String(videoOptions.requiredReferenceCount ?? 0)}`
     )
     console.log('[Segment Video] Routing to Vertex')
     const genResult = await generateVideoWithVeoKlingFallback({

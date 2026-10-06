@@ -15,7 +15,6 @@ import {
 import { generateSceneContentHash } from '../../lib/utils/contentHash'
 import { generateText } from '@/lib/vertexai/gemini'
 import { getSceneBeats } from '@/lib/script/beatMigration'
-import { padCameraShotsToBeatCount } from '@/lib/script/beatDirectionDerive'
 import { getSceneMovements } from '@/lib/script/sceneMovements'
 import type { SceneDirectionResult } from './types'
 
@@ -117,7 +116,8 @@ function repairTruncatedJson(text: string): string {
 function fillDirectionDefaults(direction: any): DetailedSceneDirection {
   if (!direction.camera) {
     direction.camera = {
-      shots: ['Medium Shot'],
+      coveragePhilosophy: '',
+      shots: [],
       angle: 'Eye-Level',
       movement: 'Static',
       lensChoice: 'Standard (50mm)',
@@ -373,8 +373,9 @@ ${arc.block}
 
 DIRECT THE ARC, NOT THE AVERAGE (MANDATORY):
 - "sceneDescription" MUST be exactly ${arc.movementCount} sentence(s) — ONE per movement, in movement order, each describing that movement's change in plain language.
-- "camera.shots" MUST contain exactly ${arc.beatCount} entries, one per beat in beat order. Vary shot scale across the beats of a movement; do not repeat the same shot back to back. If storytelling needs more coverage, ADD shots — never recycle one scale for leftover beats.
-- Never condense, shorten, or paraphrase quoted dialogue. If a spoken line exceeds about 10 seconds, plan additional shots that continue the same line rather than cutting the words.
+- "camera.coveragePhilosophy" is how this scene is covered, in director language. Do not fill "camera.shots" with one scale per beat. A scale list is optional and sparse; omit it rather than recycling Wide / Medium / Close-Up.
+- "beatCoverage" MUST contain exactly one object per beat in the arc above, in beat order. Each object says why that image exists (coveragePurpose), how the camera behaves (lensEnergy), and who or what is where (spatialRelationship). shotType is optional free text — leave it out when a scale would be arbitrary.
+- Never condense, shorten, or paraphrase quoted dialogue. A spoken line that runs long continues across later beats. Do not cut words to fit a clip.
 - "talent.keyActions" MUST contain one entry per movement (${arc.movementCount} total), in movement order, naming the physical action that carries that movement.
 - "talent.blocking" MUST describe how positions CHANGE from the first movement to the last, not one static arrangement.
 `
@@ -397,7 +398,7 @@ For each dialogue line, provide specific, actionable performance direction that 
 4. EMOTIONAL TRANSITION: Map the emotional arc (e.g., "Recognition → Grief → Comfort")
 5. SUBTEXT: The character's inner motivation beneath the words
 6. PHYSIOLOGICAL: Breathing patterns, swallowing, tension (e.g., "breathing becomes shallow and heavy")
-7. DIALOGUE FIDELITY: Keep every spoken word. Split a long line across additional shots instead of shortening it to fit a 10-second clip.
+7. DIALOGUE FIDELITY: Keep every spoken word. Continue a long line across later beats instead of shortening it to fit a clip.
 
 CRITICAL QUALITY GUIDELINES (apply to every scene):
 1. Replace generic emotions (sad, happy) with transitional sequences showing the journey
@@ -418,12 +419,21 @@ Generate comprehensive technical direction suitable for professional film produc
       : 'A clear, plain-language narrative summary (2-4 sentences) of what happens in this scene. Describe the intent, action, and emotional arc in accessible terms that anyone can understand without film jargon. Focus on WHO does WHAT, WHY, and how the emotional tone shifts.'
   }",
   "camera": {
-    "shots": ["array of shot types, e.g., 'Wide Shot', 'Medium Close-Up', 'Insert Shot'"],
+    "coveragePhilosophy": "How this scene is covered, as a director would say it — not a checklist of shot scales",
+    "shots": ["optional sparse scale notes; omit this array rather than listing one scale per beat"],
     "angle": "camera angle, e.g., 'Eye-Level', 'Low Angle', 'High Angle', 'Over-the-Shoulder'",
     "movement": "camera movement, e.g., 'Static', 'Handheld', 'Steadicam', 'Dolly In', 'Pan Left', 'Jib Up'",
     "lensChoice": "lens specification, e.g., 'Wide-Angle (24mm) for depth', 'Standard (50mm)', 'Telephoto (85mm) for compression'",
     "focus": "focus description, e.g., 'Deep Focus', 'Shallow Depth-of-Field', 'Rack Focus from [Prop] to [Actor]'"
   },
+  "beatCoverage": [
+    {
+      "coveragePurpose": "why this beat is its own image",
+      "lensEnergy": "how the camera behaves on this beat",
+      "spatialRelationship": "who and what is where in the frame",
+      "shotType": "optional free-text scale; omit when a scale would be arbitrary"
+    }
+  ],
   "lighting": {
     "overallMood": "lighting mood, e.g., 'High-Key', 'Low-Key', 'Soft & Natural', 'Hard & Dramatic', 'Film Noir'",
     "timeOfDay": "time of day, e.g., 'Golden Hour', 'Mid-day', 'Night', 'Twilight'",
@@ -514,6 +524,24 @@ IMPORTANT:
 - Return ONLY valid JSON, no markdown formatting, no explanations`
 }
 
+function normalizeBeatCoverage(raw: unknown, beatCount: number) {
+  if (!Array.isArray(raw)) return beatCount > 0 ? [] : undefined
+  const rows = raw
+    .filter((row) => row && typeof row === 'object')
+    .map((row) => {
+      const item = row as Record<string, unknown>
+      const text = (key: string) =>
+        typeof item[key] === 'string' && item[key].trim() ? String(item[key]).trim() : undefined
+      return {
+        coveragePurpose: text('coveragePurpose'),
+        lensEnergy: text('lensEnergy'),
+        spatialRelationship: text('spatialRelationship'),
+        shotType: text('shotType'),
+      }
+    })
+  return rows.length > 0 ? rows : undefined
+}
+
 /**
  * Generate a DetailedSceneDirection for one scene.
  *
@@ -552,12 +580,12 @@ export async function generateSceneDirection(
   }
 
   sceneDirection = fillDirectionDefaults(sceneDirection)
-  const beatCount = getSceneBeats(scene as Record<string, unknown>).length
-  if (sceneDirection.camera) {
-    sceneDirection.camera.shots = padCameraShotsToBeatCount(
-      sceneDirection.camera.shots,
-      beatCount
-    )
+  sceneDirection.beatCoverage = normalizeBeatCoverage(
+    (sceneDirection as { beatCoverage?: unknown }).beatCoverage,
+    getSceneBeats(scene as Record<string, unknown>).length
+  )
+  if (sceneDirection.camera && !Array.isArray(sceneDirection.camera.shots)) {
+    sceneDirection.camera.shots = []
   }
   sceneDirection.segmentPromptBundle = normalizePromptBundle(scene, sceneDirection)
   if (sceneDirection.segmentPromptBundle.length === 0) {

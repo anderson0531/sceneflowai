@@ -14,6 +14,8 @@ import type { BeatDirection } from '@/lib/script/segmentTypes'
 
 const STILL_FINGERPRINTED_KEYS: Array<keyof BeatDirection> = [
   'shotType',
+  'coveragePurpose',
+  'spatialRelationship',
   'cameraAngle',
   'blocking',
   'gaze',
@@ -25,6 +27,7 @@ const STILL_FINGERPRINTED_KEYS: Array<keyof BeatDirection> = [
 
 const VIDEO_ONLY_FINGERPRINTED_KEYS: Array<keyof BeatDirection> = [
   'cameraMovement',
+  'lensEnergy',
   'audioCue',
   'transition',
 ]

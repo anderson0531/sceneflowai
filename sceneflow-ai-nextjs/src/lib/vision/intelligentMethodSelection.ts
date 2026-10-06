@@ -352,8 +352,21 @@ export function getMethodWithFallback(
     }
   }
   
-  // Explicit beat-first REF/T2V must not be rewritten to I2V because a scene image exists.
-  if (requestedMethod === 'REF' || requestedMethod === 'T2V') {
+  // Explicit REF stays REF. Demoting it to T2V dropped the reference images and
+  // sent Omni a prose description of the plates instead.
+  if (requestedMethod === 'REF') {
+    return {
+      method: 'REF',
+      confidence: validation.valid ? 1 : 0.7,
+      reasoning: validation.valid
+        ? 'User-selected method is valid for context'
+        : `${validation.error || 'REF requested'}. Keeping reference-to-video.`,
+      warnings: validation.error ? [validation.error] : undefined,
+    }
+  }
+
+  // Explicit beat-first T2V must not be rewritten to I2V because a scene image exists.
+  if (requestedMethod === 'T2V') {
     return {
       method: 'T2V',
       confidence: 0.7,

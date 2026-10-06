@@ -240,12 +240,13 @@ describe('scene editor beat target control', () => {
     expect(source).toContain('SCENE_BEAT_TARGET_PRESETS')
   })
 
-  it('sends the chosen target to revise-scene', () => {
-    expect(source).toContain('targetBeatCount,')
+  it('sends a density only when one is chosen', () => {
+    expect(source).toContain('typeof targetBeatCount === \'number\' ? { targetBeatCount }')
+    expect(source).toContain('Coverage density')
   })
 
-  it('re-reads the scene target on open rather than resetting to a constant', () => {
-    expect(source).toContain('setTargetBeatCount(resolveSceneTargetBeatCount(scene))')
+  it('starts from story length unless the scene stored a density', () => {
+    expect(source).toContain('hasStoredSceneBeatTarget(scene) ? resolveSceneTargetBeatCount(scene) : null')
   })
 })
 

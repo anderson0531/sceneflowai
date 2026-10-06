@@ -3,6 +3,9 @@
  */
 
 export interface CameraDirection {
+  /** Why the scene is covered this way. Shot scales are optional notes, not a beat quota. */
+  coveragePhilosophy?: string
+  /** Legacy sparse scale notes. Not a required one-per-beat list. */
   shots: string[] // e.g., ["Wide Shot", "Medium Close-Up", "Insert Shot"]
   angle: string // e.g., "Eye-Level", "Low Angle", "High Angle", "Over-the-Shoulder"
   movement: string // e.g., "Static", "Handheld", "Steadicam", "Dolly In", "Pan Left", "Jib Up"
@@ -159,6 +162,20 @@ export interface DetailedSceneDirection {
   dialogueTalentDirections?: DialogueTalentDirection[]
   /** Per-audio-line prompts used as the primary segment prompt source. */
   segmentPromptBundle?: SceneSegmentPromptBundleEntry[]
+  /**
+   * One cinematic reason per beat, in beat order. This is the coverage the
+   * director wrote. It is applied onto each beat and is not a scale checklist.
+   */
+  beatCoverage?: BeatCoverageDirection[]
+}
+
+/** Why a beat exists as an image, and how the camera relates to it. */
+export interface BeatCoverageDirection {
+  coveragePurpose?: string
+  lensEnergy?: string
+  spatialRelationship?: string
+  /** Optional free-text scale. Omit rather than inventing Wide/Medium/Close-Up. */
+  shotType?: string
 }
 
 // ============================================================================
@@ -286,7 +303,11 @@ export function createSegmentDirection(
   overrides: Partial<SegmentDirection>
 ): SegmentDirection {
   const defaultDirection: SegmentDirection = {
-    shotType: sceneDirection?.camera?.shots?.[0] || 'Medium Shot',
+    shotType:
+      sceneDirection?.beatCoverage?.[0]?.shotType ||
+      sceneDirection?.beatCoverage?.[0]?.coveragePurpose ||
+      sceneDirection?.camera?.shots?.[0] ||
+      'As the beat requires',
     cameraMovement: sceneDirection?.camera?.movement || 'Static',
     cameraAngle: sceneDirection?.camera?.angle || 'Eye-Level',
     talentAction: sceneDirection?.talent?.keyActions?.[0] || '',

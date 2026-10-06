@@ -39,9 +39,9 @@ describe('getMethodWithFallback beat-first methods', () => {
     expect(result.method).toBe('T2V')
   })
 
-  it('falls an invalid REF back to T2V when the only other asset is a scene image', () => {
+  it('keeps REF when validation fails instead of dropping to text-to-video', () => {
     const result = getMethodWithFallback('REF', context({ hasSceneImage: true, hasCharacterRefs: false }))
-    expect(result.method).toBe('T2V')
+    expect(result.method).toBe('REF')
   })
 })
 

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   appendNegativePrompt,
+  assertOmniReferenceImagesAttached,
   buildOmniInteractionRequestBody,
+  countOmniReferenceImageParts,
   compactOmniNegativePrompt,
   extractVideoFromOmniInteraction,
   formatOmniDuration,
@@ -148,6 +150,45 @@ describe('omniVideoInteractions helpers', () => {
     const parts = body.input as Array<{ type: string; text?: string }>
     expect(parts.some((p) => p.text === 'Use these references:')).toBe(true)
     expect(parts.filter((p) => p.type === 'text' && p.text?.includes('Identity reference')).length).toBe(4)
+    expect(parts.filter((p) => p.type === 'image')).toHaveLength(4)
+    expect(body.generation_config).toEqual({
+      video_config: { task: 'reference_to_video' },
+    })
+    expect(countOmniReferenceImageParts(body.input)).toBe(4)
+  })
+
+  it('keeps reference_to_video when a start frame is sent with reference plates', async () => {
+    const refs = Array.from({ length: 4 }, (_, i) => ({
+      base64Image: Buffer.from(`fake-image-${i}`).toString('base64'),
+      label: `Plate ${i}`,
+    }))
+    const body = await buildOmniInteractionRequestBody(
+      'gemini-omni-flash-preview',
+      'Scene action prompt.',
+      {
+        startFrame: 'c3RhcnRmcmFtZQ==',
+        referenceImages: refs,
+        requiredReferenceCount: 4,
+      }
+    )
+    const parts = body.input as Array<{ type: string }>
+    expect(parts.filter((p) => p.type === 'image')).toHaveLength(5)
+    expect(countOmniReferenceImageParts(body.input, { startFrame: 'c3RhcnRmcmFtZQ==' })).toBe(4)
+    expect(body.generation_config).toEqual({
+      video_config: { task: 'reference_to_video' },
+    })
+    expect(assertOmniReferenceImagesAttached(body.input, {
+      startFrame: 'c3RhcnRmcmFtZQ==',
+      requiredReferenceCount: 4,
+    })).toBe(4)
+  })
+
+  it('refuses a text-only body when reference plates were required', () => {
+    expect(() =>
+      assertOmniReferenceImagesAttached('Gideon rests beside a framed photograph.', {
+        requiredReferenceCount: 4,
+      })
+    ).toThrow(/Refusing text-only generation/)
   })
 
   it('extracts base64 video from completed interaction steps', () => {

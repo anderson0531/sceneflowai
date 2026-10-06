@@ -16,6 +16,7 @@ import {
   inferVeoPredictReferenceType,
 } from '@/lib/video/normalizeReferenceImages'
 import {
+  assertOmniReferenceImagesAttached,
   buildOmniInteractionRequestBody,
   extractVideoFromOmniInteraction,
   formatOmniDuration,
@@ -190,6 +191,8 @@ interface VideoGenerationOptions {
   startFrame?: string // Base64 or URL for I2V
   lastFrame?: string // For interpolation
   referenceImages?: ReferenceImage[] // Up to 3 for Veo 3.1
+  /** Labeled plates that must be image parts in the Omni body. 0 skips the check. */
+  requiredReferenceCount?: number
   sourceVideoUrl?: string // URL of video to extend (EXT mode) - Veo handles frame continuity automatically (legacy)
   sourceVideo?: string // Gemini Files API reference (e.g., "files/xxx") for video extension (EXT mode)
   quality?: VeoQualityTier | 'standard' // lite | fast | premium (standard → premium)
@@ -276,6 +279,7 @@ async function generateVideoWithOmniInteractions(
       lastFrame: options.lastFrame,
       referenceImages: options.referenceImages,
       previousInteractionId,
+      requiredReferenceCount: options.requiredReferenceCount,
     },
     { isFTV, isEXT, hasValidPreviousInteraction }
   )
@@ -286,6 +290,7 @@ async function generateVideoWithOmniInteractions(
     buildOptions: typeof omniBuildOptions
   ): Promise<Response> => {
     const requestBody = await buildOmniInteractionRequestBody(model, prompt, buildOptions)
+    assertOmniReferenceImagesAttached(requestBody.input, buildOptions)
     const accessToken = await getVertexAccessToken()
     return fetch(endpoint, {
       method: 'POST',
@@ -298,6 +303,7 @@ async function generateVideoWithOmniInteractions(
   }
 
   let requestBody = await buildOmniInteractionRequestBody(model, prompt, omniBuildOptions)
+  const imagePartCount = assertOmniReferenceImagesAttached(requestBody.input, omniBuildOptions)
 
   console.log(`[Omni Video] Generating via Interactions API with ${model} (quality: ${quality}) at ${location}`)
   console.log('[Omni Video] Request summary:', JSON.stringify({
@@ -311,7 +317,7 @@ async function generateVideoWithOmniInteractions(
     hasStartFrame: !!omniBuildOptions.startFrame,
     hasLastFrame: !!omniBuildOptions.lastFrame,
     hasPreviousInteraction: !!omniBuildOptions.previousInteractionId,
-    referenceImagesCount: options.referenceImages?.length || 0,
+    imagePartCount,
     personGenerationIntent: omniBuildOptions.personGeneration ?? 'allow_adult',
     personGenerationSentToInteractions: false,
     hasSafetySettings: Array.isArray(requestBody.safety_settings),
