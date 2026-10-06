@@ -302,7 +302,12 @@ export function stillTaskLines(
     } else if (shot.isInsertOrEcu) {
       lines.push(STILL_TASK_INSERT_FRAMING_LINE)
     } else if (!emptyCast && isFaceCloseUpShot(shot.shotHint || shotType)) {
-      lines.push(...faceCloseUpTaskLines(refs, refsKnown))
+      // A location-only still must not be told to match an identity plate
+      // that was never attached. That sentence is how a people-free title
+      // beat invents a face.
+      if (!refsKnown || hasPersonRefs) {
+        lines.push(...faceCloseUpTaskLines(refs, refsKnown))
+      }
     } else if (!emptyCast) {
       lines.push(...STILL_TASK_FULL_BODY_LINES)
     }

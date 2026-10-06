@@ -63,6 +63,7 @@ import {
   mapBeatReferenceSelectionForApi,
   resolveBeatFrameGenerationContext,
   shouldUseExplicitBeatReferences,
+  titleBeatNeedsCastClarify,
   toBeatReferenceSelection,
   unionBeatSelectionWithPromptText,
 } from '../vision/beatFrameGenerationContext'
@@ -1653,6 +1654,10 @@ async function runStillDirectorPhase(
     const genCtx = getBeatGenerationContext(options)
     const selectedKeys = getSelectedFrameKeySet(options)
     const beats = getSceneBeats(scene)
+    const visionPhase = project?.metadata?.visionPhase || {}
+    const references = visionPhase.references || {}
+    const projectCharacters = visionPhase.characters || []
+    const filmTitle = project?.metadata?.title || project?.title
     const eligible = beats
       .map((beat, beatIndex) => ({ beat, beatIndex }))
       .filter(({ beat }) => {
@@ -1661,6 +1666,16 @@ async function runStillDirectorPhase(
         return shouldRunStillDirectorAuto(beat, {
           needsNewStartFrame: beatFrameNeedsGeneration(beat, genCtx),
           reusedStoredPrompt: Boolean(selectedKeys && storedPromptMatchesDirection(beat)),
+          unnamedTitleBeat: titleBeatNeedsCastClarify({
+            scene,
+            beat,
+            sceneNumber,
+            projectCharacters,
+            filmTitle,
+            objectReferences: references.objectReferences || [],
+            locationReferences: references.locationReferences || [],
+            promptText: composeBeatActionFraming(beat),
+          }),
         })
       })
 
