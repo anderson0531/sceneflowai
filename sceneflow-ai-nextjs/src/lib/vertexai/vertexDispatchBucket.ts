@@ -6,9 +6,12 @@
  * 2×interval, … instead of passing Google's gateway in the same instant.
  *
  * Image stills also take a distributed in-flight lease (a Redis sorted set of
- * tokens scored by expiry). The start gap is claimed in the same eval, and the
- * token stays until the caller releases it. A crashed isolate's lease expires
- * on its own. Video keeps the start gap only.
+ * tokens scored by expiry). The start gap is claimed in the same eval. A live
+ * call heartbeats the same token so a long still stays inside the cap. The
+ * caller releases the token when Vertex has answered. A self-inflicted timeout
+ * leaves the score in place so the orphaned provider call still occupies a
+ * slot; a user cancel removes it immediately. A crashed isolate's lease
+ * expires on its own once heartbeats stop. Video keeps the start gap only.
  *
  * Redis (Upstash REST, same credentials as `src/lib/collab/kv.ts`) makes the
  * claim global across Vercel instances. When Redis is unset or errors, an
@@ -62,6 +65,17 @@ const REDIS_EVAL_TIMEOUT_MS = 2_000
 const REDIS_KEY_TTL_MS = 120_000
 /** Matches `/api/scene/generate-image` maxDuration so a dead isolate cannot pin a slot. */
 export const DEFAULT_IMAGE_LEASE_TTL_MS = 300_000
+/**
+ * Refresh a held lease well inside the TTL. A still that runs longer than the
+ * original score stays counted; a dead isolate stops heartbeating and the
+ * score expires.
+ */
+export const DEFAULT_IMAGE_LEASE_HEARTBEAT_MS = 30_000
+/**
+ * After a Vertex image 429, new admits wait this long. Same order as the
+ * Stills Agent beat-pool cooldown.
+ */
+export const DEFAULT_IMAGE_ADMISSION_COOLDOWN_MS = 15_000
 /** How often a full lease is rechecked so an early release is not missed. */
 export const IMAGE_LEASE_POLL_MS = 250
 
@@ -95,6 +109,10 @@ interface MemoryImageLease {
 }
 
 const memoryImageLeases: MemoryImageLease[] = []
+/** Tokens whose heartbeat may still refresh the score. Abandon and release clear this. */
+const heldLeaseTokens = new Set<string>()
+const heartbeatTimers = new Set<ReturnType<typeof setInterval>>()
+let memoryImageCooldownUntil = 0
 
 let redisFallbackLogged = false
 
@@ -166,6 +184,46 @@ export const VERTEX_IMAGE_LEASE_RELEASE_SCRIPT = `
 return redis.call('ZREM', KEYS[1], ARGV[1])
 `.trim()
 
+/**
+ * Extend one held token. A missing token is left missing so a release that
+ * already removed it cannot be undone by a late heartbeat.
+ */
+export const VERTEX_IMAGE_LEASE_HEARTBEAT_SCRIPT = `
+local now = tonumber(ARGV[1])
+local leaseTtl = tonumber(ARGV[2])
+local token = ARGV[3]
+if redis.call('ZSCORE', KEYS[1], token) == false then
+  return 0
+end
+redis.call('ZADD', KEYS[1], now + leaseTtl, token)
+redis.call('PEXPIRE', KEYS[1], tostring(leaseTtl))
+return 1
+`.trim()
+
+/** Push the admission pause forward. A shorter note does not shorten a longer one. */
+export const VERTEX_IMAGE_COOLDOWN_NOTE_SCRIPT = `
+local now = tonumber(ARGV[1])
+local cooldown = tonumber(ARGV[2])
+local untilTs = now + cooldown
+local current = tonumber(redis.call('GET', KEYS[1]) or '0')
+if current > untilTs then
+  untilTs = current
+end
+local ttl = untilTs - now
+if ttl < 1 then ttl = 1 end
+redis.call('SET', KEYS[1], tostring(untilTs), 'PX', tostring(math.floor(ttl)))
+return untilTs
+`.trim()
+
+export const VERTEX_IMAGE_COOLDOWN_READ_SCRIPT = `
+return redis.call('GET', KEYS[1])
+`.trim()
+
+export type ImageLeaseReleaseMode = 'release' | 'abandon'
+
+/** `release` drops the slot. `abandon` stops heartbeats and leaves the score. */
+export type ImageLeaseRelease = (mode?: ImageLeaseReleaseMode) => Promise<void>
+
 export class VertexDispatchDeferredError extends Error {
   readonly lane: VertexDispatchLane
   readonly retryAfterMs: number
@@ -186,12 +244,31 @@ export function vertexImageLeaseKey(): string {
   return 'vertex:inflight:image'
 }
 
+export function vertexImageCooldownKey(): string {
+  return 'vertex:image:cooldown-until'
+}
+
 export function getImageLeaseTtlMs(): number {
   const n = parseNonNegativeMs(
     process.env.VERTEX_IMAGE_LEASE_TTL_MS,
     DEFAULT_IMAGE_LEASE_TTL_MS
   )
   return n > 0 ? n : DEFAULT_IMAGE_LEASE_TTL_MS
+}
+
+export function getImageLeaseHeartbeatMs(): number {
+  const n = parseNonNegativeMs(
+    process.env.VERTEX_IMAGE_LEASE_HEARTBEAT_MS,
+    DEFAULT_IMAGE_LEASE_HEARTBEAT_MS
+  )
+  return n > 0 ? n : DEFAULT_IMAGE_LEASE_HEARTBEAT_MS
+}
+
+export function getImageAdmissionCooldownMs(): number {
+  return parseNonNegativeMs(
+    process.env.VERTEX_IMAGE_ADMISSION_COOLDOWN_MS,
+    DEFAULT_IMAGE_ADMISSION_COOLDOWN_MS
+  )
 }
 
 function parseNonNegativeMs(raw: string | undefined, fallback: number): number {
@@ -556,6 +633,126 @@ async function releaseImageLeaseToken(token: string): Promise<void> {
   }
 }
 
+function renewImageLeaseInProcess(token: string, now: number, leaseTtlMs: number): boolean {
+  const lease = memoryImageLeases.find((entry) => entry.token === token)
+  if (!lease) return false
+  lease.expiresAt = now + leaseTtlMs
+  return true
+}
+
+async function renewImageLeaseToken(token: string): Promise<void> {
+  if (!heldLeaseTokens.has(token)) return
+  const now = Date.now()
+  const leaseTtlMs = getImageLeaseTtlMs()
+  if (!renewImageLeaseInProcess(token, now, leaseTtlMs)) return
+  if (!heldLeaseTokens.has(token)) return
+  const redis = redisConfig()
+  if (!redis) return
+  try {
+    const response = await fetch(`${redis.url}/eval`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${redis.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        script: VERTEX_IMAGE_LEASE_HEARTBEAT_SCRIPT,
+        keys: [vertexImageLeaseKey()],
+        arguments: [String(now), String(leaseTtlMs), token],
+      }),
+      signal: AbortSignal.timeout(REDIS_EVAL_TIMEOUT_MS),
+    })
+    if (!response.ok) {
+      throw new Error(`Vertex image lease heartbeat failed: ${response.status}`)
+    }
+  } catch (err) {
+    console.warn('[Vertex Dispatch] image lease heartbeat failed', err)
+  }
+}
+
+function startImageLeaseHeartbeat(token: string): () => void {
+  heldLeaseTokens.add(token)
+  const timer = setInterval(() => {
+    void renewImageLeaseToken(token)
+  }, getImageLeaseHeartbeatMs())
+  if (typeof timer.unref === 'function') timer.unref()
+  heartbeatTimers.add(timer)
+  return () => {
+    clearInterval(timer)
+    heartbeatTimers.delete(timer)
+    heldLeaseTokens.delete(token)
+  }
+}
+
+/**
+ * Pause new image admits. The holder of a lease is unaffected; the next
+ * acquire waits. A later shorter note does not pull an existing pause forward.
+ */
+export async function noteImageGenerationCooldown(
+  cooldownMs: number = getImageAdmissionCooldownMs()
+): Promise<void> {
+  if (cooldownMs <= 0) return
+  const until = Date.now() + cooldownMs
+  memoryImageCooldownUntil = Math.max(memoryImageCooldownUntil, until)
+  const redis = redisConfig()
+  if (!redis) return
+  try {
+    const response = await fetch(`${redis.url}/eval`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${redis.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        script: VERTEX_IMAGE_COOLDOWN_NOTE_SCRIPT,
+        keys: [vertexImageCooldownKey()],
+        arguments: [String(Date.now()), String(cooldownMs)],
+      }),
+      signal: AbortSignal.timeout(REDIS_EVAL_TIMEOUT_MS),
+    })
+    if (!response.ok) {
+      throw new Error(`Vertex image cooldown note failed: ${response.status}`)
+    }
+  } catch (err) {
+    console.warn('[Vertex Dispatch] image cooldown note failed', err)
+  }
+}
+
+async function currentImageCooldownUntil(): Promise<number> {
+  const redis = redisConfig()
+  if (!redis) return memoryImageCooldownUntil
+  try {
+    const response = await fetch(`${redis.url}/eval`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${redis.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        script: VERTEX_IMAGE_COOLDOWN_READ_SCRIPT,
+        keys: [vertexImageCooldownKey()],
+        arguments: [],
+      }),
+      signal: AbortSignal.timeout(REDIS_EVAL_TIMEOUT_MS),
+    })
+    if (!response.ok) {
+      throw new Error(`Vertex image cooldown read failed: ${response.status}`)
+    }
+    const payload = (await response.json()) as { result?: unknown }
+    const raw = payload.result
+    const remote = raw == null || raw === false ? 0 : Number(raw)
+    if (Number.isFinite(remote)) {
+      memoryImageCooldownUntil = Math.max(memoryImageCooldownUntil, remote)
+    }
+  } catch (err) {
+    if (!redisFallbackLogged) {
+      redisFallbackLogged = true
+      console.warn('[Vertex Dispatch] Redis unavailable; image cooldown is local to this instance', err)
+    }
+  }
+  return memoryImageCooldownUntil
+}
+
 /**
  * Hold one shared image-still slot through the start gap and the provider call.
  * A full lease is polled until `maxWaitMs` instead of failing every sibling at
@@ -563,10 +760,12 @@ async function releaseImageLeaseToken(token: string): Promise<void> {
  * `VertexDispatchDeferredError` without taking a slot.
  * An interval of 0 or `VERTEX_IMAGE_MAX_CONCURRENCY=0` skips the lease; the
  * latter still applies the start gap.
+ * The returned function releases the slot. Pass `'abandon'` to stop the
+ * heartbeat and leave the score so a timed-out provider call still counts.
  */
 export async function acquireImageGenerationLease(
   options: AcquireVertexDispatchOptions = {}
-): Promise<() => Promise<void>> {
+): Promise<ImageLeaseRelease> {
   const intervalMs = getVertexDispatchIntervalMs('image')
   if (intervalMs <= 0) return async () => {}
 
@@ -586,6 +785,16 @@ export async function acquireImageGenerationLease(
   while (true) {
     if (options.signal?.aborted) throw abortError()
     const remaining = Math.max(0, deadline - now)
+    const cooldownUntil = await currentImageCooldownUntil()
+    if (cooldownUntil > now) {
+      const wait = cooldownUntil - now
+      if (wait > remaining) {
+        throw new VertexDispatchDeferredError('image', wait)
+      }
+      await sleepMs(wait, options.signal)
+      now = frozenNow ? now + wait : Date.now()
+      continue
+    }
     const reserved = await claimImageLeaseOnce({
       now,
       intervalMs,
@@ -595,16 +804,22 @@ export async function acquireImageGenerationLease(
       token,
     })
     if (reserved.reserved) {
+      const stopHeartbeat = startImageLeaseHeartbeat(token)
       try {
         if (reserved.waitMs > 0) {
           console.log(`[Vertex Dispatch] image lease in ${reserved.waitMs}ms`)
           await sleepMs(reserved.waitMs, options.signal)
         }
       } catch (err) {
+        stopHeartbeat()
         await releaseImageLeaseToken(token)
         throw err
       }
-      return () => releaseImageLeaseToken(token)
+      return async (mode: ImageLeaseReleaseMode = 'release') => {
+        stopHeartbeat()
+        if (mode === 'abandon') return
+        await releaseImageLeaseToken(token)
+      }
     }
     if (reserved.reason === 'gap' || remaining <= 0) {
       throw new VertexDispatchDeferredError('image', reserved.waitMs)
@@ -636,5 +851,9 @@ export function resetVertexDispatchBucketForTests(): void {
   memoryNextAt.image = 0
   memoryNextAt.video = 0
   memoryImageLeases.length = 0
+  heldLeaseTokens.clear()
+  for (const timer of heartbeatTimers) clearInterval(timer)
+  heartbeatTimers.clear()
+  memoryImageCooldownUntil = 0
   redisFallbackLogged = false
 }

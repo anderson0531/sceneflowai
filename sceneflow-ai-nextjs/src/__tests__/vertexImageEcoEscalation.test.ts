@@ -5,6 +5,7 @@ vi.mock('@/lib/vertexai/client', () => ({
 }))
 
 import { generateVertexGeminiImage } from '@/lib/vertexai/vertexImageClient'
+import { resetVertexDispatchBucketForTests } from '@/lib/vertexai/vertexDispatchBucket'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 
 function jsonResponse(body: unknown): Response {
@@ -61,6 +62,7 @@ describe('flash-to-pro escalation for identity-ref frames', () => {
   })
 
   afterEach(() => {
+    resetVertexDispatchBucketForTests()
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
   })

@@ -8,6 +8,7 @@ import {
   generateVertexGeminiImage,
   IDENTITY_REF_RATE_LIMIT_EXHAUSTED,
 } from '@/lib/vertexai/vertexImageClient'
+import { resetVertexDispatchBucketForTests } from '@/lib/vertexai/vertexDispatchBucket'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import { isExpressBeatPoolRetryable } from '@/lib/sceneGeneration/expressImageErrors'
 
@@ -78,6 +79,7 @@ describe('flash 429 backoff uses the long ladder', () => {
   })
 
   afterEach(() => {
+    resetVertexDispatchBucketForTests()
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
   })
@@ -169,6 +171,7 @@ describe('failFastOnRateLimit surrenders the lane on the first 429', () => {
   })
 
   afterEach(() => {
+    resetVertexDispatchBucketForTests()
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
   })

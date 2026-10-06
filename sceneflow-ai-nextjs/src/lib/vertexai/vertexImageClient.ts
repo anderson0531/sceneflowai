@@ -14,6 +14,7 @@ import { priorityPaygoHeaders } from '@/lib/vertexai/priorityPaygo'
 import { runInVertexImageGate } from '@/lib/vertexai/vertexImageGate'
 import {
   acquireImageGenerationLease,
+  noteImageGenerationCooldown,
   VertexDispatchDeferredError,
 } from '@/lib/vertexai/vertexDispatchBucket'
 import { fullJitterDelayMs } from '@/lib/utils/retry'
@@ -85,11 +86,37 @@ function deadlinePassed(deadlineAt?: number): boolean {
  * Per-attempt timeout, shortened to land inside the caller's deadline. Without
  * this the client's own 90s timeout plus its retry ladder can outlast the
  * serverless function that is waiting on it.
+ *
+ * Fail-fast identity-ref pro stills hold the fetch until that deadline instead
+ * of aborting at 90s. Aborting early frees the two-wide slot while Gemini is
+ * still generating.
  */
-function requestTimeoutFor(deadlineAt?: number): number {
+function requestTimeoutFor(deadlineAt: number | undefined, holdUntilDeadline: boolean): number {
   if (deadlineAt == null) return REQUEST_TIMEOUT_MS
   const remaining = deadlineAt - Date.now()
+  if (holdUntilDeadline) return Math.max(0, remaining)
   return Math.min(REQUEST_TIMEOUT_MS, Math.max(MIN_REQUEST_TIMEOUT_MS, remaining))
+}
+
+function holdProviderCallUntilDeadline(
+  options: GenerateVertexImageOptions,
+  model: string
+): boolean {
+  return (
+    options.failFastOnRateLimit === true &&
+    hasIdentityReferenceImages(options) &&
+    model.includes('pro-image')
+  )
+}
+
+/**
+ * Our own fetch abort, not a Stills Agent cancel. The provider may still be
+ * generating, so the shared slot has to stay occupied until its score expires.
+ */
+function shouldAbandonImageLease(err: unknown, signal?: AbortSignal): boolean {
+  if (signal?.aborted) return false
+  if (isVertexImageAbortedByClient(err, signal)) return false
+  return err instanceof Error && err.name === 'AbortError'
 }
 
 function referenceCountExceedsEcoCap(referenceImages?: VertexReferenceImage[]): boolean {
@@ -535,10 +562,16 @@ async function runWithinImageLease<T>(
 
   const maxWaitMs =
     options.deadlineAt != null ? Math.max(0, options.deadlineAt - Date.now()) : undefined
-  let release: () => Promise<void> = async () => {}
+  let finishLease: (mode?: 'release' | 'abandon') => Promise<void> = async () => {}
+  let finished = false
+  const finish = async (mode: 'release' | 'abandon') => {
+    if (finished) return
+    finished = true
+    await finishLease(mode)
+  }
   try {
     try {
-      release = await acquireImageGenerationLease({ maxWaitMs, signal: options.signal })
+      finishLease = await acquireImageGenerationLease({ maxWaitMs, signal: options.signal })
     } catch (err) {
       if (options.signal?.aborted || (err instanceof Error && err.name === 'AbortError')) {
         throwAbortedByClient()
@@ -553,9 +586,12 @@ async function runWithinImageLease<T>(
       }
       throw err
     }
-    return await imageLeaseHeld.run(true, fn)
-  } finally {
-    await release()
+    const result = await imageLeaseHeld.run(true, fn)
+    await finish('release')
+    return result
+  } catch (err) {
+    await finish(shouldAbandonImageLease(err, options.signal) ? 'abandon' : 'release')
+    throw err
   }
 }
 
@@ -567,7 +603,8 @@ async function runWithinImageLease<T>(
  * Nested re-entry (IMAGE_SAFETY escalate, retryCount reset) is reentrant on
  * the gate and on the image lease. Non-fail-fast still wraps only the outbound
  * fetch so backoff sleeps do not occupy a process slot. The shared lease is
- * the cross-instance cap and stays held until this call settles.
+ * the cross-instance cap. It is released when Vertex answers, and left in
+ * place on our own timeout so a disconnected generateContent still counts.
  */
 export async function generateVertexGeminiImage(
   options: GenerateVertexImageOptions,
@@ -664,7 +701,10 @@ async function generateVertexGeminiImageAttempt(
 
   const accessToken = await getVertexAIAuthToken()
   const timeoutController = new AbortController()
-  const requestTimeoutMs = requestTimeoutFor(options.deadlineAt)
+  const requestTimeoutMs = requestTimeoutFor(
+    options.deadlineAt,
+    holdProviderCallUntilDeadline(options, model)
+  )
   const timeoutId = setTimeout(() => timeoutController.abort(), requestTimeoutMs)
   const requestSignal = combineAbortSignals(timeoutController.signal, options.signal)
 
@@ -719,13 +759,15 @@ async function generateVertexGeminiImageAttempt(
 
   if (!response.ok) {
     const errorText = await response.text()
+    if (response.status === 429) {
+      await noteImageGenerationCooldown()
+    }
     if (response.status === 429 && options.failFastOnRateLimit) {
-      // Every sleep below is served while still holding the caller's image-lane
-      // slot, which on a 2-wide lane parks half the run on a frame that is
-      // doing nothing. Hand the slot back now; Frame Agent stamps the error
-      // and continues sibling beats instead of waiting to retry.
+      // The shared admission pause, not an immediate re-admit, keeps the next
+      // still off a quota that just returned 429. Sibling beats wait that
+      // pause out instead of stacking another generateContent.
       console.warn(
-        `[Vertex Gemini Image] Rate limit on ${model} — failing fast without eco fallback so the lane frees immediately`
+        `[Vertex Gemini Image] Rate limit on ${model} — failing fast without eco fallback; pausing new admits`
       )
       throw new Error(
         `Vertex Gemini Image error ${response.status}: ${
@@ -747,7 +789,7 @@ async function generateVertexGeminiImageAttempt(
           return generateVertexGeminiImage(options, retryCount + 1)
         }
         console.warn(
-          `[Vertex Gemini Image] Rate limit on ${model} with reference images — failing fast without eco fallback`
+          `[Vertex Gemini Image] Rate limit on ${model} with reference images — failing fast without eco fallback; pausing new admits`
         )
         throw new Error(
           `Vertex Gemini Image error ${response.status}: ${IDENTITY_REF_RATE_LIMIT_EXHAUSTED} after ${retryCount + 1} attempt(s): ${errorText}`

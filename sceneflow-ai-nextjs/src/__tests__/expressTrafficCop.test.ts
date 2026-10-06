@@ -121,8 +121,8 @@ describe('ExpressTrafficCop', () => {
     ).rejects.toThrow('429')
 
     expect(cop.getSnapshot().image.max).toBe(2)
-    expect(onThrottle).toHaveBeenCalledWith('image', 2, 0)
-    expect(cop.getSnapshot().image.cooldownUntil).toBeNull()
+    expect(onThrottle).toHaveBeenCalledWith('image', 2, 1000)
+    expect(cop.getSnapshot().image.cooldownUntil).toBeGreaterThan(Date.now())
   })
 
   it('spaces image dispatches so a wide burst does not land in one instant', async () => {
@@ -173,7 +173,7 @@ describe('ExpressTrafficCop', () => {
     expect(getExpressImageMinSpacingMs()).toBe(DEFAULT_EXPRESS_IMAGE_MIN_SPACING_MS)
   })
 
-  it('does not sleep cooldown after identity-ref image 429s', async () => {
+  it('waits out cooldown after identity-ref image 429s', async () => {
     const onThrottle = vi.fn()
     const cop = new ExpressTrafficCop({
       laneMax: { image: 4 },
@@ -191,11 +191,22 @@ describe('ExpressTrafficCop', () => {
     ).rejects.toThrow(/identity-ref rate limit exhausted/)
 
     expect(cop.getSnapshot().image.max).toBe(2)
-    expect(cop.getSnapshot().image.cooldownUntil).toBeNull()
-    expect(onThrottle).toHaveBeenCalledWith('image', 2, 0)
+    expect(cop.getSnapshot().image.cooldownUntil).toBeGreaterThan(Date.now())
+    expect(onThrottle).toHaveBeenCalledWith('image', 2, 1000)
+
+    let resolved = false
+    const pending = cop.runInLane('image', async () => {
+      resolved = true
+      return 'ok'
+    })
+    await vi.advanceTimersByTimeAsync(999)
+    expect(resolved).toBe(false)
+    await vi.advanceTimersByTimeAsync(1)
+    await pending
+    expect(resolved).toBe(true)
   })
 
-  it('does not sleep cooldown after a fail-fast image 429', async () => {
+  it('waits out cooldown after a fail-fast image 429', async () => {
     const onThrottle = vi.fn()
     const cop = new ExpressTrafficCop({
       laneMax: { image: 4 },
@@ -213,15 +224,17 @@ describe('ExpressTrafficCop', () => {
     ).rejects.toThrow(/failed fast/)
 
     expect(cop.getSnapshot().image.max).toBe(2)
-    expect(cop.getSnapshot().image.cooldownUntil).toBeNull()
-    expect(onThrottle).toHaveBeenCalledWith('image', 2, 0)
+    expect(cop.getSnapshot().image.cooldownUntil).toBeGreaterThan(Date.now())
+    expect(onThrottle).toHaveBeenCalledWith('image', 2, 5000)
 
     let resolved = false
     const pending = cop.runInLane('image', async () => {
       resolved = true
       return 'ok'
     })
-    await vi.advanceTimersByTimeAsync(0)
+    await vi.advanceTimersByTimeAsync(4999)
+    expect(resolved).toBe(false)
+    await vi.advanceTimersByTimeAsync(1)
     await pending
     expect(resolved).toBe(true)
   })
