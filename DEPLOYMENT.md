@@ -28,7 +28,7 @@ That makes Vercel use:
 - `sceneflow-ai-nextjs/package.json` (Node **22.x**, Next.js **16**)
 - `sceneflow-ai-nextjs/vercel.json` (function timeouts, crons, regions)
 
-The repo-root `vercel.json` is a **fallback** only if Root Directory is left empty (monorepo install/build from root). Prefer the Root Directory setting above so crons and API timeouts stay in effect.
+The repo-root `vercel.json` is read only when Root Directory is empty. Its `ignoreCommand` is `exit 0`, so Vercel skips that build (exit 0 means skip). That stops the legacy **sceneflowai** project, which has no Root Directory and no production `DATABASE_URL`, from failing GitHub checks. **sceneflow-ai-nextjs** uses `sceneflow-ai-nextjs/vercel.json`, which has no ignore command, so production and its previews still build. Prefer the Root Directory setting above so crons and API timeouts stay in effect. Do not copy production database env onto the legacy project, and do not Promote its deployments.
 
 ## Deploy command
 
@@ -72,7 +72,7 @@ Builds fail locally without `DATABASE_URL`; Vercel Production already has it con
 
 | Symptom | Fix |
 |---------|-----|
-| “No Next.js version detected” on Vercel | Prefer Root Directory `sceneflow-ai-nextjs` on **sceneflow-ai-nextjs**. If the project builds from the repo root, root `vercel.json` must run `npm install` at the root (after the `--prefix sceneflow-ai-nextjs` install) so Vercel can resolve `next` from root `package.json`. |
+| “No Next.js version detected” or `DATABASE_URL` / SIGSEGV on **Vercel – sceneflowai** | That project builds from the repo root. Root `vercel.json` skips it with `ignoreCommand: exit 0`. Do not fix it by adding production env or promoting the deployment. Confirm **sceneflow-ai-nextjs** Root Directory is `sceneflow-ai-nextjs`. |
 | Build succeeds locally but not on Vercel | Match Node 22; confirm env vars in Vercel Production |
 | Push works but site unchanged | Confirm Vercel project is linked to `anderson0531/sceneflowai` and production branch is `main` |
 | Cloud Agent cannot push | Run `bash scripts/deploy-production.sh` from your machine (GitHub credentials required) |
