@@ -100,7 +100,16 @@ import {
   type ProjectLookbook,
 } from '../intelligence/project-lookbook'
 import { parseStillPromptSource } from '../imagen/structuredStillPrompt'
+import {
+  shotNeedsDirectionRewrite,
+  STILL_DIRECTOR_BEAT_CHUNK,
+} from '../intelligence/beat-sequence-planner-fallback'
 import { directBeatStills } from '../intelligence/beat-still-director'
+import {
+  expectsUnstatedCast,
+  plateNamesFromSelection,
+  rewriteThinStillBeat,
+} from '../intelligence/shotDirectionPreflight'
 import {
   applyStillDirectorPatch,
   shouldRunStillDirectorAuto,
@@ -991,6 +1000,71 @@ function logImageLaneAdmission(
   )
 }
 
+async function ensureDirectedBeatBeforeStill(
+  ctx: SceneRunContext,
+  project: any,
+  trafficCop: ExpressTrafficCop,
+  beatIdx: number
+): Promise<void> {
+  const { scene, sceneNumber } = ctx
+  const beats = getSceneBeats(scene)
+  const beat = beats[beatIdx]
+  if (!beat || beat.beatDirection?.generatedBy === 'user') return
+
+  const visionPhase = project?.metadata?.visionPhase || {}
+  const references = visionPhase.references || {}
+  const projectCharacters = visionPhase.characters || []
+  const composed = composeBeatActionFraming(beat)
+  const previewRefs = resolveExpressBeatReferences({
+    beat,
+    scene,
+    sceneIndex: ctx.sceneIndex,
+    beatIdx,
+    sceneNumber,
+    project,
+    promptText: composed,
+  })
+  const plateNames = previewRefs
+    ? plateNamesFromSelection({
+        selectedCharacters: previewRefs.api.selectedCharacters,
+        objectReferences: previewRefs.api.objectReferences,
+        projectCharacters,
+      })
+    : []
+  const expectsCast = expectsUnstatedCast({
+    scene,
+    beat,
+    sceneNumber,
+    projectCharacters,
+    filmTitle: project?.metadata?.title || project?.title,
+    objectReferences: references.objectReferences || [],
+    locationReferences: references.locationReferences || [],
+    promptText: composed,
+  })
+  if (!shotNeedsDirectionRewrite(beat, { composedText: composed, plateNames, expectsCast })) return
+
+  try {
+    const rewritten = await trafficCop.runInLane('text', () =>
+      rewriteThinStillBeat({
+        beat,
+        beats,
+        beatIndex: beatIdx,
+        catalog: buildExpressReferenceCatalog(project),
+        check: { composedText: composed, plateNames, expectsCast },
+      })
+    )
+    if (rewritten === beat) return
+    const next = [...beats]
+    next[beatIdx] = rewritten
+    Object.assign(scene, applyBeatsToScene(scene, next))
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.warn(
+      `[expressOrchestrator] Preflight still rewrite failed for beat ${beatIdx + 1} scene ${sceneNumber}: ${message}`
+    )
+  }
+}
+
 async function generateSingleBeatImage(
   ctx: SceneRunContext,
   options: ExpressOptions,
@@ -1009,6 +1083,7 @@ async function generateSingleBeatImage(
   const { sceneIndex, sceneNumber, scene } = ctx
   const imageParams = getExpressImageParams(options)
   const sceneExcludesCharacters = isStoryboardNoCharacterScene(scene, sceneNumber)
+  await ensureDirectedBeatBeforeStill(ctx, project, trafficCop, beatIdx)
   const beats = getSceneBeats(scene)
   const beat = beats[beatIdx]
 
@@ -1693,25 +1768,40 @@ async function runStillDirectorPhase(
       return
     }
 
-    const result = await trafficCop.runInLane('text', () =>
-      directBeatStills({
-        mode: 'optimize',
-        beats: eligible.map(({ beat, beatIndex }) => ({
-          beatIndex,
-          beat,
-          previousMoment:
-            beatIndex > 0 ? composeBeatActionFraming(beats[beatIndex - 1]) : undefined,
-          nextMoment:
-            beatIndex + 1 < beats.length
-              ? composeBeatActionFraming(beats[beatIndex + 1])
-              : undefined,
-        })),
-        catalog: buildExpressReferenceCatalog(project),
-      })
-    )
+    const catalog = buildExpressReferenceCatalog(project)
+    const patches: Array<{ beatIndex: number; patch: Parameters<typeof applyStillDirectorPatch>[1] }> = []
+    let fallbackReason: string | undefined
+    for (let offset = 0; offset < eligible.length; offset += STILL_DIRECTOR_BEAT_CHUNK) {
+      const chunk = eligible.slice(offset, offset + STILL_DIRECTOR_BEAT_CHUNK)
+      try {
+        const result = await trafficCop.runInLane('text', () =>
+          directBeatStills({
+            mode: 'optimize',
+            beats: chunk.map(({ beat, beatIndex }) => ({
+              beatIndex,
+              beat,
+              previousMoment:
+                beatIndex > 0 ? composeBeatActionFraming(beats[beatIndex - 1]) : undefined,
+              nextMoment:
+                beatIndex + 1 < beats.length
+                  ? composeBeatActionFraming(beats[beatIndex + 1])
+                  : undefined,
+            })),
+            catalog,
+          })
+        )
+        patches.push(...result.patches)
+        if (result.fallbackReason) fallbackReason = result.fallbackReason
+      } catch (chunkError: unknown) {
+        fallbackReason = chunkError instanceof Error ? chunkError.message : String(chunkError)
+        console.warn(
+          `[expressOrchestrator] Still director chunk failed at beat ${chunk[0]?.beatIndex ?? offset}: ${fallbackReason}`
+        )
+      }
+    }
 
     let nextBeats = [...beats]
-    for (const directed of result.patches) {
+    for (const directed of patches) {
       const current = nextBeats[directed.beatIndex]
       if (!current) continue
       const applied = applyStillDirectorPatch(current, directed.patch, {
@@ -1739,11 +1829,11 @@ async function runStillDirectorPhase(
       sceneNumber,
       phase: 'still-direct',
       ok: true,
-      ...(result.fallbackReason ? { degraded: result.fallbackReason } : {}),
+      ...(fallbackReason ? { degraded: fallbackReason } : {}),
     })
     console.log(
-      `[expressOrchestrator] Still director rewrote ${result.patches.length} beat(s) scene ${sceneNumber}` +
-        (result.fallbackReason ? ` — ${result.fallbackReason}` : '')
+      `[expressOrchestrator] Still director rewrote ${patches.length} beat(s) scene ${sceneNumber}` +
+        (fallbackReason ? ` — ${fallbackReason}` : '')
     )
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : String(err)

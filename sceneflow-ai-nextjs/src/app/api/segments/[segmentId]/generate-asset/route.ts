@@ -24,10 +24,16 @@ import { quoteAndCharge } from '@/lib/credits/chargeQuotedGeneration'
 import { resolveGenerationQuote } from '@/lib/credits/resolveGenerationQuote'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { isBeatFirstPipelineEnabled, getSceneBeats } from '@/lib/script/beatMigration'
+import { applyBeatsToScene, isBeatFirstPipelineEnabled, getSceneBeats } from '@/lib/script/beatMigration'
 import { enforceVideoGenerationUnlock } from '@/lib/script/enforceVideoGenerationUnlock'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import { buildExpressReferenceCatalog } from '@/lib/sceneGeneration/expressOrchestrator'
+import {
+  expectsUnstatedCast,
+  plateNamesFromVideoRefs,
+  rewriteThinClipPrompt,
+} from '@/lib/intelligence/shotDirectionPreflight'
 import {
   parsePersistedMusicCues,
   resolveBeatMusicCue,
@@ -409,6 +415,75 @@ export async function POST(
         console.warn(
           '[Segment Asset Generation] Beat reference relabel failed; using client refs:',
           relabelError
+        )
+      }
+    }
+
+    if (
+      isBeatFirstPipelineEnabled() &&
+      beatId &&
+      cachedBeat &&
+      cachedScene &&
+      cachedProject &&
+      (genType === 'T2V' || genType === 'I2V' || generationMethod === 'REF')
+    ) {
+      try {
+        const visionPhase = (cachedProject.metadata?.visionPhase || {}) as Record<string, unknown>
+        const beats = getSceneBeats(cachedScene)
+        const beatIndex = beats.findIndex((candidate) => candidate.beatId === beatId)
+        const beat = beatIndex >= 0 ? beats[beatIndex] : cachedBeat
+        const references = ((visionPhase.references || {}) as {
+          objectReferences?: Array<{ name?: string; imageUrl?: string }>
+          locationReferences?: Array<{ location?: string; name?: string; imageUrl?: string }>
+        })
+        const projectCharacters =
+          (visionPhase.characters as Array<{ id?: string; name?: string }>) || []
+        const sceneDirection =
+          (cachedScene as { sceneDirection?: unknown; detailedDirection?: unknown }).sceneDirection ??
+          (cachedScene as { detailedDirection?: unknown }).detailedDirection ??
+          null
+        const artStyleId = resolveProjectArtStyle(cachedProject.metadata)
+        const musicCue = resolveBeatMusicCue(
+          parsePersistedMusicCues(cachedScene.sceneMusicCues, beats),
+          Math.max(beatIndex, 0)
+        )
+        const prepared = await rewriteThinClipPrompt({
+          beat,
+          beats,
+          beatIndex: Math.max(beatIndex, 0),
+          prompt,
+          plateNames: plateNamesFromVideoRefs(referenceImages || []),
+          expectsCast: expectsUnstatedCast({
+            scene: cachedScene,
+            beat,
+            projectCharacters,
+            filmTitle: cachedProject.metadata?.title || cachedProject.title,
+            objectReferences: references.objectReferences,
+            locationReferences: references.locationReferences,
+            promptText: prompt,
+          }),
+          sceneDirection: sceneDirection as DetailedSceneDirection | null,
+          artStyleId,
+          previousBeat: beatIndex > 0 ? beats[beatIndex - 1] : undefined,
+          ...(musicCue ? { musicCue } : {}),
+          catalog: buildExpressReferenceCatalog(cachedProject),
+        })
+        prompt = prepared.prompt
+        if (prepared.beat !== beat && beatIndex >= 0) {
+          const nextBeats = [...beats]
+          nextBeats[beatIndex] = prepared.beat
+          const scenes = getVisionScriptScenes(visionPhase)
+          const found = findSceneById(scenes, sceneId)
+          if (found.scene && found.index >= 0) {
+            scenes[found.index] = applyBeatsToScene(found.scene, nextBeats)
+            cachedProject.changed('metadata', true)
+            await cachedProject.save()
+          }
+        }
+      } catch (preflightError) {
+        console.warn(
+          '[Segment Asset Generation] Preflight clip rewrite failed; using the compiled prompt:',
+          preflightError
         )
       }
     }
