@@ -783,77 +783,77 @@ function BlueprintBeatGroupHeader({
   const nextIdx = neighbors.nextSceneIndex
 
   return (
-    <div className="rounded-lg border border-purple-500/30 bg-purple-950/40 px-4 py-3 flex items-start justify-between gap-3">
-      <div className="flex items-start gap-2 min-w-0 flex-1">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={onToggleCollapsed}
-                className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors shrink-0"
-                aria-expanded={!collapsed}
-                aria-controls="production-studio-chapter-heading production-studio-chapter-description"
-                aria-label={collapsed ? tStudio('showChapter') : tStudio('hideChapter')}
-                title={collapsed ? tStudio('showChapter') : tStudio('hideChapter')}
-              >
-                {collapsed ? (
-                  <ChevronDown className="w-4 h-4" />
-                ) : (
-                  <ChevronUp className="w-4 h-4" />
-                )}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-              {collapsed ? tStudio('showChapter') : tStudio('hideChapter')}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        {!collapsed && (
+    <div className="rounded-lg border border-purple-500/30 bg-purple-950/40 px-4 py-3 flex flex-col gap-1">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={onToggleCollapsed}
+                  className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors shrink-0"
+                  aria-expanded={!collapsed}
+                  aria-controls="production-studio-chapter-description"
+                  aria-label={collapsed ? tStudio('showChapter') : tStudio('hideChapter')}
+                  title={collapsed ? tStudio('showChapter') : tStudio('hideChapter')}
+                >
+                  {collapsed ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronUp className="w-4 h-4" />
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                {collapsed ? tStudio('showChapter') : tStudio('hideChapter')}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <div className="min-w-0">
             <p
               id="production-studio-chapter-heading"
-              className="text-[10px] tracking-wide text-purple-300/80 font-medium"
+              className="text-xs font-bold text-purple-200 truncate"
             >
               {chapterLabel}
             </p>
-            {beatLine ? (
-              <p
-                id="production-studio-chapter-description"
-                className="text-sm font-semibold text-white break-words"
-              >
-                {beatLine}
-              </p>
-            ) : null}
-            <p className="text-xs text-purple-200/70 mt-0.5">
+            <p className="text-xs text-purple-200/70">
               {tStudio('sceneInChapter', {
                 position: positionInGroup,
                 total: sceneIndices.length,
               })}
             </p>
           </div>
+        </div>
+        {onSelectSceneIndex && (
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              disabled={prevIdx === undefined}
+              onClick={() => prevIdx !== undefined && onSelectSceneIndex(prevIdx)}
+              className="px-2 py-1 text-xs rounded border border-purple-500/40 text-purple-200 hover:bg-purple-900/50 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {tStudio('prevChapter')}
+            </button>
+            <button
+              type="button"
+              disabled={nextIdx === undefined}
+              onClick={() => nextIdx !== undefined && onSelectSceneIndex(nextIdx)}
+              className="px-2 py-1 text-xs rounded border border-purple-500/40 text-purple-200 hover:bg-purple-900/50 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {tStudio('nextChapter')}
+            </button>
+          </div>
         )}
       </div>
-      {!collapsed && onSelectSceneIndex && (
-        <div className="flex items-center gap-1 shrink-0">
-          <button
-            type="button"
-            disabled={prevIdx === undefined}
-            onClick={() => prevIdx !== undefined && onSelectSceneIndex(prevIdx)}
-            className="px-2 py-1 text-xs rounded border border-purple-500/40 text-purple-200 hover:bg-purple-900/50 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {tStudio('prevChapter')}
-          </button>
-          <button
-            type="button"
-            disabled={nextIdx === undefined}
-            onClick={() => nextIdx !== undefined && onSelectSceneIndex(nextIdx)}
-            className="px-2 py-1 text-xs rounded border border-purple-500/40 text-purple-200 hover:bg-purple-900/50 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {tStudio('nextChapter')}
-          </button>
-        </div>
-      )}
+      {!collapsed && beatLine ? (
+        <p
+          id="production-studio-chapter-description"
+          className="pl-9 text-sm text-white/90 break-words"
+        >
+          {beatLine}
+        </p>
+      ) : null}
     </div>
   )
 }
