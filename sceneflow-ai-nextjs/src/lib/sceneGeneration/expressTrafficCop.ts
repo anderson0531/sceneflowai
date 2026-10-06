@@ -196,7 +196,7 @@ export class ExpressTrafficCop {
         isExpressFailFastRateLimitError(err) ||
         (lane === 'image' && isExpressImageRateLimitError(err))
       if (failFastImage429) {
-        this.reportRateLimit(lane, { cooldown: false, countTowardRegulator: false })
+        this.reportRateLimit(lane, { countTowardRegulator: false })
       } else if (isRetryableError(err)) {
         this.reportRateLimit(lane)
       }

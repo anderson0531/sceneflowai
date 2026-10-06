@@ -18,6 +18,7 @@
 import { processWithConcurrency } from '../utils/concurrent-processor'
 import {
   FRAME_AGENT_STILL_CONCURRENCY,
+  getSceneExpressBeat429CooldownMs,
   runAdaptiveBeatPool,
   type AdaptiveBeatPoolOptions,
   type AdaptiveBeatPoolResult,
@@ -641,7 +642,8 @@ function buildAdaptiveBeatPoolOptions(
       }
     },
     abortOnNonRetryableCanary: true,
-    cooldownMsAfterError: () => 0,
+    cooldownMsAfterError: (err) =>
+      isExpressImageRateLimitError(err) ? getSceneExpressBeat429CooldownMs() : 0,
     ...(signal ? { signal } : {}),
   }
 }

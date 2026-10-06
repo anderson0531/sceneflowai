@@ -1,14 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  DEFAULT_IMAGE_ADMISSION_COOLDOWN_MS,
+  DEFAULT_IMAGE_LEASE_HEARTBEAT_MS,
   DEFAULT_IMAGE_LEASE_TTL_MS,
   IMAGE_LEASE_POLL_MS,
   VERTEX_DISPATCH_EVAL_SCRIPT,
   VERTEX_IMAGE_LEASE_EVAL_SCRIPT,
+  VERTEX_IMAGE_LEASE_HEARTBEAT_SCRIPT,
   acquireImageGenerationLease,
   acquireVertexDispatchSlot,
+  getImageAdmissionCooldownMs,
+  getImageLeaseHeartbeatMs,
   getImageLeaseTtlMs,
   getVertexDispatchIntervalMs,
   getVertexDispatchMaxWaitMs,
+  noteImageGenerationCooldown,
   reserveDispatchSlot,
   reserveImageLease,
   resetVertexDispatchBucketForTests,
@@ -342,7 +348,13 @@ describe('acquireImageGenerationLease', () => {
   it('defaults the lease ttl to the generate-image route budget', () => {
     expect(DEFAULT_IMAGE_LEASE_TTL_MS).toBe(300_000)
     expect(getImageLeaseTtlMs()).toBe(300_000)
+    expect(DEFAULT_IMAGE_LEASE_HEARTBEAT_MS).toBe(30_000)
+    expect(getImageLeaseHeartbeatMs()).toBe(30_000)
+    expect(DEFAULT_IMAGE_ADMISSION_COOLDOWN_MS).toBe(15_000)
+    expect(getImageAdmissionCooldownMs()).toBe(15_000)
     expect(IMAGE_LEASE_POLL_MS).toBe(250)
+    expect(VERTEX_IMAGE_LEASE_HEARTBEAT_SCRIPT).toContain('ZSCORE')
+    expect(VERTEX_IMAGE_LEASE_HEARTBEAT_SCRIPT).toContain('ZADD')
   })
 
   it('lets the first completion start one still and the second completion start one more', async () => {
@@ -376,5 +388,89 @@ describe('acquireImageGenerationLease', () => {
     const fourth = await fourthPromise
     await third()
     await fourth()
+  })
+
+  it('keeps a long holder in the cap by heartbeating past the original ttl', async () => {
+    const first = await acquireImageGenerationLease({ maxWaitMs: 20_000 })
+    await vi.advanceTimersByTimeAsync(DEFAULT_IMAGE_LEASE_TTL_MS)
+
+    let secondStarted = false
+    let thirdStarted = false
+    const secondPromise = acquireImageGenerationLease({ maxWaitMs: 5_000 }).then((release) => {
+      secondStarted = true
+      return release
+    })
+    const thirdPromise = acquireImageGenerationLease({ maxWaitMs: 5_000 }).then((release) => {
+      thirdStarted = true
+      return release
+    })
+
+    await vi.advanceTimersByTimeAsync(1_000 + IMAGE_LEASE_POLL_MS)
+    expect(secondStarted).toBe(true)
+    expect(thirdStarted).toBe(false)
+
+    const second = await secondPromise
+    await first()
+    await second()
+    await vi.advanceTimersByTimeAsync(1_000 + IMAGE_LEASE_POLL_MS)
+    const third = await thirdPromise
+    expect(thirdStarted).toBe(true)
+    await third()
+  })
+
+  it('leaves the slot occupied after a self-timeout abandon', async () => {
+    const timedOut = await acquireImageGenerationLease({ maxWaitMs: 20_000 })
+    await timedOut('abandon')
+
+    const secondPromise = acquireImageGenerationLease({ maxWaitMs: 5_000 })
+    await vi.advanceTimersByTimeAsync(1_000)
+    const second = await secondPromise
+
+    let thirdStarted = false
+    const thirdPromise = acquireImageGenerationLease({ maxWaitMs: 5_000 }).then((release) => {
+      thirdStarted = true
+      return release
+    })
+    await vi.advanceTimersByTimeAsync(1_000 + IMAGE_LEASE_POLL_MS)
+    expect(thirdStarted).toBe(false)
+
+    await second()
+    await vi.advanceTimersByTimeAsync(1_000 + IMAGE_LEASE_POLL_MS)
+    const third = await thirdPromise
+    expect(thirdStarted).toBe(true)
+    await third()
+  })
+
+  it('frees the slot immediately when the caller releases it', async () => {
+    const cancelled = await acquireImageGenerationLease({ maxWaitMs: 20_000 })
+    await cancelled('release')
+
+    let started = false
+    const nextPromise = acquireImageGenerationLease({ maxWaitMs: 5_000 }).then((release) => {
+      started = true
+      return release
+    })
+    await vi.advanceTimersByTimeAsync(1_000)
+    const next = await nextPromise
+    expect(started).toBe(true)
+    await next()
+  })
+
+  it('does not admit the next still until a 429 cooldown elapses', async () => {
+    await noteImageGenerationCooldown(DEFAULT_IMAGE_ADMISSION_COOLDOWN_MS)
+
+    let started = false
+    const pending = acquireImageGenerationLease({ maxWaitMs: 20_000 }).then((release) => {
+      started = true
+      return release
+    })
+
+    await vi.advanceTimersByTimeAsync(DEFAULT_IMAGE_ADMISSION_COOLDOWN_MS - 1)
+    expect(started).toBe(false)
+
+    await vi.advanceTimersByTimeAsync(1 + 1_000)
+    const release = await pending
+    expect(started).toBe(true)
+    await release()
   })
 })

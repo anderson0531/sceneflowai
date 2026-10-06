@@ -67,12 +67,15 @@ describe('Frame Agent Express fail-fast contracts', () => {
     const src = readSource('src/lib/sceneGeneration/expressOrchestrator.ts')
     expect(src).toContain('maxAttempts: 1')
     expect(src).not.toContain('maxAttempts: getSceneExpressBeatMaxAttempts()')
-    expect(src).toContain('cooldownMsAfterError: () => 0')
+    expect(src).toContain(
+      'isExpressImageRateLimitError(err) ? getSceneExpressBeat429CooldownMs() : 0'
+    )
+    expect(src).not.toContain('cooldownMsAfterError: () => 0')
     expect(src).toContain('initialConcurrency: FRAME_AGENT_STILL_CONCURRENCY')
     expect(src).toContain('maxConcurrency: FRAME_AGENT_STILL_CONCURRENCY')
     expect(src).toContain('Promise.allSettled')
     expect(src).toContain('frames: frameNodes')
-    expect(src).not.toContain('getSceneExpressBeat429CooldownMs')
+    expect(src).toContain('getSceneExpressBeat429CooldownMs')
   })
 
   it('does not toast wait-60s on a Frame Agent 429', () => {
