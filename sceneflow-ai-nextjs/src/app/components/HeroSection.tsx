@@ -4,7 +4,6 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import {
-  CalendarClock,
   Play,
   Pause,
   Volume2,
@@ -30,6 +29,7 @@ import { HeroTheaterModal } from '@/components/landing/HeroTheaterModal'
 import { HeroVideoBackground } from '@/components/landing/HeroVideoBackground'
 import { NotifyCapture } from '@/components/landing/NotifyCapture'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
+import { getDistributionDestinations } from '@/lib/network/destinations'
 import { getVideoPreloadStrategy, type VideoPreloadValue } from '@/lib/landing/videoPreload'
 import { readHeroNetworkContext } from '@/lib/landing/heroPlaybackPolicy'
 import {
@@ -62,6 +62,7 @@ export function HeroSection() {
   const [isBuffering, setIsBuffering] = useState(true)
 
   const heroLocales = getHeroVideoLocalesAsVideoLocales()
+  const destinations = getDistributionDestinations(landingLocale)
   const motionOffset = prefersReducedMotion ? 0 : undefined
   const motionDuration = prefersReducedMotion ? 0 : undefined
 
@@ -230,10 +231,6 @@ export function HeroSection() {
                 <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-300/90">
                   {t('eyebrow')}
                 </p>
-                <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs font-semibold text-amber-200">
-                  <CalendarClock className="h-3.5 w-3.5" aria-hidden />
-                  {t('availabilityBadge')}
-                </span>
               </motion.div>
 
               <motion.h1
@@ -252,6 +249,15 @@ export function HeroSection() {
                 transition={{ duration: motionDuration ?? 0.8, delay: prefersReducedMotion ? 0 : 0.25 }}
               >
                 {t('subheadline')}
+              </motion.p>
+
+              <motion.p
+                className="mt-4 max-w-3xl mx-auto text-sm sm:text-base text-gray-300 leading-relaxed"
+                initial={{ opacity: 0, y: motionOffset ?? 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: motionDuration ?? 0.8, delay: prefersReducedMotion ? 0 : 0.28 }}
+              >
+                {t('ctaSupportingLine', destinations)}
               </motion.p>
 
               <motion.div
@@ -280,30 +286,35 @@ export function HeroSection() {
               </motion.div>
 
               <motion.div
-                className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+                className="mt-10 flex flex-col items-center justify-center gap-4"
                 initial={{ opacity: 0, y: motionOffset ?? 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: motionDuration ?? 0.8, delay: prefersReducedMotion ? 0 : 0.32 }}
               >
-                <Button
-                  size="lg"
-                  className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:opacity-90"
-                  onClick={scrollToCheckout}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+                  <Button
+                    size="lg"
+                    className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:opacity-90"
+                    onClick={scrollToCheckout}
+                  >
+                    {t('ctaPrimaryLaunch')}
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full sm:w-auto border-purple-500/40 text-purple-200 hover:bg-purple-500/10"
+                    onClick={scrollToHowItWorks}
+                  >
+                    {t('ctaSecondary')}
+                  </Button>
+                </div>
+                <a
+                  href={t('ctaNetworkInviteHref')}
+                  className="text-sm text-cyan-200/90 underline-offset-4 hover:underline"
                 >
-                  {t('ctaPrimaryLaunch')}
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="w-full sm:w-auto border-purple-500/40 text-purple-200 hover:bg-purple-500/10"
-                  onClick={scrollToHowItWorks}
-                >
-                  {t('ctaSecondary')}
-                </Button>
-                {t('ctaSupportingLine') && (
-                  <p className="max-w-md text-sm text-gray-300">{t('ctaSupportingLine')}</p>
-                )}
+                  {t('ctaNetworkInvite')}
+                </a>
               </motion.div>
 
               <motion.div

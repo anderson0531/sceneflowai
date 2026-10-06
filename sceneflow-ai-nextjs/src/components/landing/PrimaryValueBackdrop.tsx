@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowRight, Loader2, Maximize2, Pause, Play, Volume2, VolumeX } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { Button } from '@/components/ui/Button'
 import {
   openTwoModesOnPhoneOrTheater,
@@ -14,6 +14,7 @@ import type { TwoModesMediaEntry, TwoModesVideoLocale } from '@/config/landing/t
 import type { VideoLocaleId } from '@/config/landing/videoLocales'
 import { useLandingVideoLocale } from '@/i18n/useLandingVideoLocale'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
+import { getDistributionDestinations } from '@/lib/network/destinations'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 type ComparisonCopy = {
@@ -40,6 +41,8 @@ export function PrimaryValueBackdrop({
   const t = useTranslations(namespace)
   const tHero = useTranslations('hero')
   const tCommon = useTranslations('common')
+  const landingLocale = useLocale()
+  const destinations = getDistributionDestinations(landingLocale)
   const comparison = t.raw('comparison') as ComparisonCopy
   const syncedLocaleId = useLandingVideoLocale(videoLocales)
   const [activeLocaleId, setActiveLocaleId] = useState<VideoLocaleId>(syncedLocaleId)
@@ -299,10 +302,10 @@ export function PrimaryValueBackdrop({
               {t('eyebrow')}
             </p>
             <h2 className="mx-auto max-w-4xl text-balance text-3xl font-bold text-white md:text-4xl lg:text-5xl">
-              {t('title')}
+              {t('title', destinations)}
             </h2>
             <p className="mx-auto mt-5 max-w-3xl text-balance text-base text-gray-100 sm:text-lg">
-              {t('subtitle')}
+              {t('subtitle', destinations)}
             </p>
           </motion.div>
 

@@ -226,28 +226,32 @@ Four-step workflow:
 ## Slide 10: Go-to-Market Strategy
 
 ### Headline
-**Creator-First Distribution**
+**Studio first. Distribution as an earned upgrade.**
 
 ### Content
-**Phase 1: Community Seeding (Now - Q2 2025)**
-- Partner with 50 mid-tier creators (10K-100K followers)
-- "Made with SceneFlow" watermark on free tier
-- Creator affiliate program (30% revenue share)
+**Phase 1: Production utility (now)**
+- Market SceneFlow as the all-in-one studio to craft, export, and ship stories
+- $9 Explorer proof — download a master and publish long-form cuts or chapter trailers
+- Destinations: YouTube (哔哩哔哩 in mainland China) for masters/chapters; TikTok / Shorts (抖音) for trailers
+- Launch email list stays dateless until the campaign actually ships
 
-**Phase 2: Vertical Expansion (Q3 2025 - Q4 2025)**
-- Launch niche templates (fitness, cooking, tech review)
-- Agency partnership program
-- YouTube/TikTok creator fund integrations
+**Phase 2: Originals Seed Program (invite-only)**
+- Landing badge: “Apply for the SceneFlow Originals Seed Program”
+- Hand-pick 5–10 indie filmmakers with existing niche followings
+- Offer funded teaser ads on SceneFlow’s YouTube in exchange for an exclusive premiere window
+- Do **not** pitch an empty catalog or “50% of zero”
 
-**Phase 3: Enterprise (2026)**
-- White-label API for content platforms
-- Brand partnership for UGC campaigns
-- Self-serve B2B portal
+**Phase 3: SceneFlow Network (after titles exist)**
+- Curated SVOD, not an open marketplace
+- $3–$5 Watch SKU; 50/50 net watch-time pool + $1/month referral bounty
+- Qualified minutes, not raw views
+
+Canonical write-up: `docs/SCENEFLOW_NETWORK_PLAYBOOK.md`
 
 ### Visual
-- Three-phase timeline with milestones
-- Distribution flywheel diagram
-- Partner logo examples (creator platforms, agencies)
+- Utility-first landing → Seed application → packaged catalog
+- Destination map (YouTube / Bilibili, TikTok / Douyin)
+- Watch-time pool diagram (only after Seed titles are live)
 
 ---
 

@@ -36,6 +36,7 @@ describe('Hero YouTube publish metadata', () => {
     const zh = getHeroYouTubePublishBundle('zh')
     expect(zh.title).toContain('SceneFlow')
     expect(zh.videoUrl).toContain('Hero%20Video%20(Chinese).mp4')
+    expect(zh.description).toContain('哔哩哔哩')
   })
 
   it('looks up bundles by locale id', () => {

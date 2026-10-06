@@ -16,7 +16,7 @@ import {
 
 export const WAITLIST_BLOB_PREFIX = 'waitlist/launch-november-2026/'
 export const WAITLIST_CAMPAIGN_PATH = `${WAITLIST_BLOB_PREFIX}_campaign.json`
-export const WAITLIST_LAUNCH_SUBJECT = 'SceneFlow access opens November 2026'
+export const WAITLIST_LAUNCH_SUBJECT = 'SceneFlow is open — start your production'
 export const LAUNCH_SEND_BATCH_SIZE = 40
 
 export type WaitlistListFilter = 'all' | 'pending' | 'confirmed' | 'notified' | 'unsubscribed'
@@ -66,8 +66,8 @@ export function getDefaultLaunchCampaign(): LaunchCampaign {
   const rendered = renderLaunchCampaign(
     {
       subject: WAITLIST_LAUNCH_SUBJECT,
-      html: '<p style="margin:0 0 16px;font-size:16px;line-height:24px;color:#e2e8f0">SceneFlow studio access is opening in November 2026.</p>',
-      text: `SceneFlow studio access is opening in November 2026.\n\nSign in to start your production: ${signInUrl}`,
+      html: '<p style="margin:0 0 16px;font-size:16px;line-height:24px;color:#e2e8f0">SceneFlow studio access is open. Start your production when you are ready.</p>',
+      text: `SceneFlow studio access is open.\n\nSign in to start your production: ${signInUrl}`,
     },
     pageUrl
   )
@@ -80,11 +80,11 @@ export function getDefaultLaunchCampaign(): LaunchCampaign {
 
 export function renderLaunchCampaign(campaign: LaunchCampaign, unsubscribeUrl: string) {
   return ensureOfficialHtml(campaign.html, {
-    preheader: 'SceneFlow studio access is opening in November 2026.',
+    preheader: 'SceneFlow studio access is open. Start your production.',
     heading: campaign.subject || WAITLIST_LAUNCH_SUBJECT,
     ctaLabel: 'Start your production',
     ctaUrl: getLaunchSignInUrl(),
-    whyReceived: 'You received this because you confirmed a SceneFlow November 2026 launch notification.',
+    whyReceived: 'You received this because you confirmed a SceneFlow launch notification.',
     unsubscribeUrl,
     bodyText: campaign.text,
   })

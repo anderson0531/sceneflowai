@@ -2,6 +2,7 @@ import { readFileSync, readdirSync } from 'fs'
 import { join } from 'path'
 import { describe, it, expect } from 'vitest'
 import enMessages from '../../messages/en.json'
+import zhCNMessages from '../../messages/zh-CN.json'
 import { LANDING_TRANSLATE_LANGUAGES } from '@/config/landingTranslateLanguages'
 
 const ROOT = join(process.cwd(), 'messages')
@@ -10,6 +11,7 @@ const REQUIRED_LANDING_KEYS = [
   'hero.ctaPrimaryLaunch',
   'hero.ctaSecondary',
   'hero.ctaSupportingLine',
+  'hero.ctaNetworkInvite',
   'hero.chips.0.label',
   'hero.chips.0.detail',
   'twoModes.title',
@@ -21,9 +23,11 @@ const REQUIRED_LANDING_KEYS = [
   'finalCta.cta',
   'finalCta.subtitle',
   'finalCta.ctaSecondary',
-  'hero.availabilityBadge',
   'notify.heading',
   'notify.submit',
+  'forFilmmakers.badge',
+  'forFilmmakers.heading',
+  'forFilmmakers.submit',
 ] as const
 
 const EXPLORER_PRICE_KEYS = [
@@ -43,9 +47,11 @@ const OUTDATED_PATTERNS = [
   'Application Window Closes',
   'September cohort',
   'Early Access cohort',
-  'Founding Creator',
   '/early-access',
+  'November 2026',
 ]
+
+const FOUNDING_CREATOR_BANNED_NAMESPACES = ['hero', 'pricing', 'finalCta', 'notify', 'twoModes'] as const
 
 function hasExplorerPrice(text: string): boolean {
   return /[9۹]/.test(text)
@@ -79,7 +85,23 @@ describe('landing locale copy', () => {
     expect(String(enMessages.hero.ctaPrimaryLaunch)).toBe('Launch Studio ($9)')
     expect(String(enMessages.finalCta.cta)).toBe('Explore plans')
     expect(String(enMessages.finalCta.subtitle)).toContain('$9')
-    expect(String(enMessages.hero.availabilityBadge)).toContain('November 2026')
+    expect(enMessages.hero).not.toHaveProperty('availabilityBadge')
+    expect(String(enMessages.forFilmmakers.badge)).toContain('Originals Seed Program')
+  })
+
+  it('keeps Founding Creator out of hero, pricing, and Final CTA', () => {
+    for (const namespace of FOUNDING_CREATOR_BANNED_NAMESPACES) {
+      expect(JSON.stringify((enMessages as Record<string, unknown>)[namespace])).not.toContain(
+        'Founding Creator'
+      )
+    }
+    expect(String(enMessages.forFilmmakers.subtitle)).toContain('Founding Creator')
+  })
+
+  it('uses Bilibili and Douyin as mainland destinations via placeholders', () => {
+    expect(String(enMessages.hero.ctaSupportingLine)).toContain('{longForm}')
+    expect(String(zhCNMessages.hero.ctaSupportingLine)).toContain('{longForm}')
+    expect(String(enMessages.publishCut.subtitle)).toContain('{longForm}')
   })
 
   it('names the footer trust section Trust & Safety in English', () => {
@@ -117,6 +139,10 @@ describe('landing locale copy', () => {
       ).join('\n')
       for (const pattern of OUTDATED_PATTERNS) {
         expect(allStrings).not.toContain(pattern)
+      }
+
+      for (const namespace of FOUNDING_CREATOR_BANNED_NAMESPACES) {
+        expect(JSON.stringify(localeMessages[namespace] ?? {})).not.toContain('Founding Creator')
       }
 
       const footer = localeMessages.footer as { legal?: string; links?: { trustSafety?: string } }

@@ -1,8 +1,10 @@
+import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import { describe, it, expect } from 'vitest'
 import enMessages from '../../messages/en.json'
+import zhCNMessages from '../../messages/zh-CN.json'
 import { HERO_COPY, HERO_PIPELINE_STEPS, HERO_VALUE_CHIPS } from '@/config/landing/valuePropCopy'
+import { getDistributionDestinations, interpolateDestinations } from '@/lib/network/destinations'
 
 const ROOT = join(process.cwd())
 
@@ -20,9 +22,24 @@ describe('hero section copy and UI', () => {
     expect(HERO_PIPELINE_STEPS).toEqual(['Blueprint', 'Production', 'Screening Room'])
   })
 
-  it('states the November 2026 availability date', () => {
-    expect(HERO_COPY.availabilityBadge).toBe('Full access opens November 2026')
-    expect(String(enMessages.hero.availabilityBadge)).toBe(HERO_COPY.availabilityBadge)
+  it('does not advertise a dated full-access badge', () => {
+    expect(HERO_COPY).not.toHaveProperty('availabilityBadge')
+    expect(enMessages.hero).not.toHaveProperty('availabilityBadge')
+    expect(JSON.stringify(HERO_COPY)).not.toContain('November 2026')
+    expect(JSON.stringify(enMessages.hero)).not.toContain('November 2026')
+  })
+
+  it('pitches export-anywhere with locale destinations and a quiet Network invite', () => {
+    expect(HERO_COPY.ctaSupportingLine).toContain('{longForm}')
+    expect(HERO_COPY.ctaSupportingLine).toContain('{shorts}')
+    expect(HERO_COPY.ctaSupportingLine).toContain('Download a master')
+    expect(HERO_COPY.ctaSupportingLine).not.toContain('SceneFlow Network')
+    expect(HERO_COPY.ctaNetworkInvite).toContain('invite-only SceneFlow Network')
+    expect(HERO_COPY.ctaNetworkInviteHref).toBe('#for-filmmakers')
+    expect(interpolateDestinations(HERO_COPY.ctaSupportingLine, 'en')).toContain('YouTube')
+    expect(interpolateDestinations(HERO_COPY.ctaSupportingLine, 'zh-CN')).toContain('哔哩哔哩')
+    expect(getDistributionDestinations('zh-CN').shorts).toBe('抖音')
+    expect(String(zhCNMessages.hero.ctaSupportingLine)).toContain('{longForm}')
   })
 
   it('mirrors hero chips and pipeline steps in English messages', () => {
@@ -66,16 +83,18 @@ describe('hero section copy and UI', () => {
     expect(hero).not.toContain('role="button"')
   })
 
-  it('offers launch-notification capture in the hero', () => {
+  it('offers launch-notification capture in the hero without a dated badge', () => {
     const hero = readFileSync(join(ROOT, 'src/app/components/HeroSection.tsx'), 'utf8')
     expect(hero).toContain('NotifyCapture')
-    expect(hero).toContain("t('availabilityBadge')")
+    expect(hero).not.toContain("t('availabilityBadge')")
+    expect(hero).not.toContain('CalendarClock')
+    expect(hero).toContain("t('ctaSupportingLine'")
+    expect(hero).toContain("t('ctaNetworkInvite')")
   })
 
-  it('stacks the availability badge under the eyebrow at every breakpoint', () => {
+  it('keeps the eyebrow stacked without an availability badge', () => {
     const hero = readFileSync(join(ROOT, 'src/app/components/HeroSection.tsx'), 'utf8')
     expect(hero).toContain("t('eyebrow')")
-    expect(hero).toContain("t('availabilityBadge')")
     expect(hero).toContain('className="flex flex-col items-center gap-3"')
     expect(hero).not.toContain('flex flex-col items-center gap-3 sm:flex-row')
   })

@@ -8,6 +8,7 @@ import es from '../../../messages/es.json'
 import zh from '../../../messages/zh-CN.json'
 import ar from '../../../messages/ar.json'
 import { appendSceneFlowCta } from '@/lib/premiere/distributionMetadata'
+import { interpolateDestinations } from '@/lib/network/destinations'
 import {
   HERO_VIDEO_BLOB_PATHS,
   HERO_VIDEO_LOCALES,
@@ -58,6 +59,7 @@ function pipelineSubtitle(messages: MessagesFile): string {
 
 function landingFromMessages(
   messages: MessagesFile,
+  locale: HeroVideoLocaleId,
   sections: LandingYouTubeCopy['sections']
 ): LandingYouTubeCopy {
   return {
@@ -65,7 +67,10 @@ function landingFromMessages(
     subheadline: messages.hero.subheadline,
     multilangHint: messages.hero.multilangHint,
     ctaPrimary: messages.hero.ctaPrimaryLaunch,
-    ctaSupporting: messages.hero.ctaSupportingLine,
+    ctaSupporting: interpolateDestinations(
+      messages.hero.ctaSupportingLine,
+      locale === 'zh' ? 'zh-CN' : locale
+    ),
     pipelineSubtitle: pipelineSubtitle(messages),
     valuePills: messages.valueProp.pills,
     sections,
@@ -73,25 +78,25 @@ function landingFromMessages(
 }
 
 const LANDING_COPY: Record<HeroVideoLocaleId, LandingYouTubeCopy> = {
-  en: landingFromMessages(en, {
+  en: landingFromMessages(en, 'en', {
     whatIs: 'WHAT IS SCENEFLOW?',
     whySwitch: 'WHY CREATORS SWITCH',
     startProduction: 'START YOUR PRODUCTION',
     moreOnChannel: 'More demos & example productions on our channel',
   }),
-  es: landingFromMessages(es, {
+  es: landingFromMessages(es, 'es', {
     whatIs: '¿QUÉ ES SCENEFLOW?',
     whySwitch: 'POR QUÉ LOS CREADORES CAMBIAN',
     startProduction: 'INICIA TU PRODUCCIÓN',
     moreOnChannel: 'Más demos y producciones de ejemplo en nuestro canal',
   }),
-  zh: landingFromMessages(zh, {
+  zh: landingFromMessages(zh, 'zh', {
     whatIs: '什么是 SCENEFLOW？',
     whySwitch: '创作者为何选择 SceneFlow',
     startProduction: '开始您的制作',
     moreOnChannel: '在我们的频道观看更多演示与示例作品',
   }),
-  ar: landingFromMessages(ar, {
+  ar: landingFromMessages(ar, 'ar', {
     whatIs: 'ما هو SceneFlow؟',
     whySwitch: 'لماذا ينتقل المبدعون إلى SceneFlow',
     startProduction: 'ابدأ إنتاجك',

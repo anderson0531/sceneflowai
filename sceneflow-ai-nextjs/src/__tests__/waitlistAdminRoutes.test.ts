@@ -56,7 +56,7 @@ describe('admin waitlist routes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     readCampaignMock.mockResolvedValue({
-      subject: 'SceneFlow access opens November 2026',
+      subject: 'SceneFlow is open — start your production',
       html: '<p>Launch</p>',
       text: 'Launch',
     })
@@ -112,6 +112,7 @@ describe('admin waitlist routes', () => {
     const page = readFileSync(join(process.cwd(), 'src/app/dashboard/settings/admin/page.tsx'), 'utf8')
     const card = readFileSync(join(process.cwd(), 'src/components/admin/LaunchEmailCard.tsx'), 'utf8')
     expect(page).toContain('LaunchEmailCard')
+    expect(page).toContain('OriginalsSeedCard')
     expect(card).toContain('for (let batch = 0; batch < 50; batch++)')
     expect(card).toContain('data.cursor')
     expect(card).toContain('Preview sent')
@@ -126,7 +127,8 @@ describe('admin waitlist routes', () => {
     expect(data.fallbackFrom).toBeTruthy()
     expect(data.confirmation.subject).toContain('Confirm')
     expect(data.confirmation.html).toContain('Life Focus, LLC')
-    expect(data.campaign.subject).toContain('November 2026')
+    expect(data.campaign.subject).toContain('SceneFlow is open')
+    expect(data.campaign.subject).not.toContain('November 2026')
   })
 
   it('dry-run send-launch-all previews to the admin and does not mark waitlist notified', async () => {
