@@ -22,7 +22,7 @@ function copyFor(result: UnsubscribeWaitlistResult): { title: string; body: stri
   if (result === 'unsubscribed' || result === 'already') {
     return {
       title: 'You’re unsubscribed.',
-      body: 'We will not send SceneFlow November launch emails to this address. You can sign up again from the landing page if you change your mind.',
+      body: 'We will not send SceneFlow launch emails to this address. You can sign up again from the landing page if you change your mind.',
       ok: true,
     }
   }

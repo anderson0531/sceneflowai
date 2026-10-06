@@ -23,6 +23,10 @@ const TrustSafeguardSection = dynamic(
   () => import('@/components/landing/TrustSafeguardSection').then((m) => m.TrustSafeguardSection),
   { ssr: false }
 )
+const ForFilmmakersSection = dynamic(
+  () => import('@/components/landing/ForFilmmakersSection').then((m) => m.ForFilmmakersSection),
+  { ssr: false }
+)
 const FloatingNav = dynamic(() => import('@/components/landing/FloatingNav'), { ssr: false })
 const FloatingCTA = dynamic(() => import('@/components/landing/FloatingCTA'), { ssr: false })
 const ExitIntentPopup = dynamic(() => import('@/components/landing/ExitIntentPopup'), { ssr: false })
@@ -51,6 +55,8 @@ export default function LandingPageClient() {
         <InfrastructureSection />
         <TrustSafeguardSection />
       </LandingSectionCollapseProvider>
+
+      <ForFilmmakersSection />
 
       <FinalCTA />
 

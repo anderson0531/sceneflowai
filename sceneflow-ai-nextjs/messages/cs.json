@@ -31,7 +31,7 @@
     "headline": "From first spark to finished master.",
     "subheadline": "SceneFlow is one guided pipeline. You direct the story, the cast, and the tone. It builds the Blueprint, holds continuity, plays the full animatic, and assembles the master — without prompt trials or a timeline of loose clips.",
     "ctaPrimaryLaunch": "Launch Studio ($9)",
-    "ctaSupportingLine": "",
+    "ctaSupportingLine": "The all-in-one studio to craft, export, and distribute your stories. Download a master and ship anywhere — or publish long-form cuts and chapters to {longForm}, and promote trailers on {shorts}.",
     "ctaSecondary": "Explore the pipeline",
     "ctaToolStack": "See how it replaces your tool stack",
     "chips": [
@@ -95,7 +95,8 @@
     "soon": "Soon",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}",
     "eyebrow": "Automated filmmaking for films and series",
-    "availabilityBadge": "Full access opens November 2026"
+    "ctaNetworkInvite": "Standout projects can apply for the invite-only SceneFlow Network.",
+    "ctaNetworkInviteHref": "#for-filmmakers"
   },
   "valueProp": {
     "pills": [
@@ -1118,10 +1119,10 @@
     "ctaSubtext": "Propojte tradiční filmovou tvorbu s generativní AI"
   },
   "exitIntent": {
-    "title": "Before you go — want the launch date?",
-    "subtitle": "Full access opens November 2026. We'll email you the day it does.",
+    "title": "Before you go — want launch news?",
+    "subtitle": "Leave your email and we'll tell you when we announce.",
     "benefits": [
-      "Launch notification the day access opens",
+      "Launch notification when we announce",
       "Weekly AI filmmaking tutorials",
       "Exclusive creator discounts"
     ],
@@ -1132,14 +1133,14 @@
     "startNow": "Start directing now for just $9 →",
     "privacy": "No spam, ever. Unsubscribe anytime.",
     "successTitle": "You're on the list!",
-    "successSubtitle": "We'll email you when November access opens — plus the occasional filmmaking tip.",
+    "successSubtitle": "We'll email you when we announce — plus the occasional filmmaking tip.",
     "ctaText": "Start Exploring — $9",
     "closePopup": "Close popup"
   },
   "pricing": {
     "badge": "Simple Pricing",
     "title": "Start with Explorer — $9",
-    "subtitle": "Full access opens November 2026. Test the complete pipeline now with a frictionless $9 entry.",
+    "subtitle": "Test the complete pipeline now with a frictionless $9 entry.",
     "valueAnchor": {
       "traditionalCost": "$2,000+",
       "traditionalLabel": "Traditional pre-vis",
@@ -1347,7 +1348,7 @@
   },
   "finalCta": {
     "title": "Built for the stories that have to hold.",
-    "subtitle": "Full access opens November 2026. Leave your email and we’ll tell you the day it does — or start directing now from the $9 Explorer plan.",
+    "subtitle": "Leave your email for launch news — or start directing now from the $9 Explorer plan.",
     "cta": "Explore plans",
     "ctaSecondary": "See how it works",
     "ctaSecondaryHref": "#two-modes"
@@ -1617,23 +1618,68 @@
     }
   },
   "notify": {
-    "heading": "Get notified when access opens",
-    "description": "Studio access opens in November 2026. Leave your email and we’ll tell you the day it does.",
+    "heading": "Get launch news",
+    "description": "Leave your email and we’ll tell you when we announce. Nothing else.",
     "placeholder": "you@studio.com",
     "submit": "Notify me",
     "submitting": "Sending…",
     "successTitle": "Check your inbox.",
-    "successBody": "We sent a confirmation link. Click it to join the November launch list. Nothing else.",
+    "successBody": "We sent a confirmation link. Click it to join the launch list. Nothing else.",
     "errorEmpty": "Enter your email so we can reach you.",
     "errorInvalid": "That email doesn’t look right. Check it and try again.",
     "errorGeneric": "Something went wrong. Try again in a moment.",
     "privacy": "We email a confirmation link first. One launch note after you confirm. No spam.",
     "confirmTitle": "You’re on the list.",
-    "confirmBody": "We’ll email you as soon as November access opens. Nothing else.",
+    "confirmBody": "We’ll email you when we announce. Nothing else.",
     "confirmExpiredTitle": "That link expired.",
     "confirmExpiredBody": "Submit your email on the landing page again and we’ll send a new confirmation link.",
     "confirmInvalidTitle": "That link isn’t valid.",
     "confirmInvalidBody": "Request a new confirmation from the landing page.",
     "confirmHome": "Back to SceneFlow"
+  },
+  "forFilmmakers": {
+    "badge": "Apply for the SceneFlow Originals Seed Program",
+    "heading": "For Filmmakers: Submit your pilot for platform distribution and monetization.",
+    "subtitle": "The SceneFlow Network is a closed Founding Creator cohort — 5 to 10 hand-picked titles at launch, not an open marketplace. Revenue share starts only after paying subscribers exist. What we offer now is distribution leverage: funded teaser ads in exchange for an exclusive premiere window.",
+    "closedNote": "Applications are reviewed by editors. Submitting does not publish your film to a catalog.",
+    "fields": {
+      "email": "Email",
+      "emailPlaceholder": "you@studio.com",
+      "name": "Your name",
+      "namePlaceholder": "Director or producer name",
+      "title": "Pilot or feature title",
+      "titlePlaceholder": "Working title",
+      "logline": "Logline",
+      "loglinePlaceholder": "One or two sentences that sell the story.",
+      "audienceUrl": "Existing audience",
+      "audiencePlaceholder": "YouTube, Bilibili, festival, or social URL",
+      "exclusivePremiere": "I am open to an exclusive premiere window on SceneFlow in exchange for funded teaser ads."
+    },
+    "submit": "Submit application",
+    "submitting": "Sending…",
+    "successTitle": "Check your inbox.",
+    "successBody": "We sent a confirmation link. Click it to lock in your Seed application. Nothing else.",
+    "errorEmpty": "Fill in every field so we can review your pilot.",
+    "errorInvalidEmail": "That email doesn’t look right. Check it and try again.",
+    "errorInvalidUrl": "Add a public URL for your existing audience.",
+    "errorGeneric": "Something went wrong. Try again in a moment.",
+    "confirmTitle": "Application received.",
+    "confirmBody": "You’re in the Seed review queue. We read every submission. This is not a public catalog listing.",
+    "confirmExpiredTitle": "That link expired.",
+    "confirmExpiredBody": "Submit the filmmaker form again and we’ll send a new confirmation link.",
+    "confirmInvalidTitle": "That link isn’t valid.",
+    "confirmInvalidBody": "Request a new confirmation from the filmmaker form.",
+    "confirmHome": "Back to SceneFlow",
+    "privacy": "We email a confirmation link first. Editors only. No spam."
+  },
+  "publishCut": {
+    "eyebrow": "The cut you publish",
+    "title": "Export anywhere. Premiere on SceneFlow when you earn it.",
+    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
+    "comparison": {
+      "id": "publish",
+      "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
+    },
+    "cta": "Launch Studio ($9)"
   }
 }

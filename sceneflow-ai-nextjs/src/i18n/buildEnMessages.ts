@@ -55,6 +55,7 @@ import {
 } from '@/config/landing/featureStoryboardCopy'
 import { PRICING_LANDING_COPY } from '@/config/landing/pricingLandingCopy'
 import { PRE_VIS_ENGINE_COPY } from '@/config/landing/preVisEngineCopy'
+import { FOR_FILMMAKERS_COPY } from '@/config/landing/forFilmmakersCopy'
 import { LANDING_SECTION_COLLAPSE_COPY } from '@/config/landing/landingSectionCollapseCopy'
 import {
   SIMPLE_WALKTHROUGH_HEADER,
@@ -273,6 +274,7 @@ export function buildEnMessages() {
     },
     landingSections: LANDING_SECTION_COLLAPSE_COPY,
     notify: NOTIFY_COPY,
+    forFilmmakers: FOR_FILMMAKERS_COPY,
     finalCta: FINAL_CTA_COPY,
     footer: {
       description:

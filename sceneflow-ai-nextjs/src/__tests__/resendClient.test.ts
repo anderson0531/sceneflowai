@@ -77,7 +77,7 @@ describe('resendClient', () => {
 
     await sendEmail({
       to: 'alex@studio.com',
-      subject: 'SceneFlow access opens November 2026',
+      subject: 'SceneFlow is open — start your production',
       html: '<p>Launch</p>',
       text: 'Launch',
       replyTo: 'support@sceneflowai.studio',
@@ -110,7 +110,7 @@ describe('resendClient', () => {
 
     const result = await sendEmail({
       to: 'anderson0531@gmail.com',
-      subject: 'SceneFlow access opens November 2026',
+      subject: 'SceneFlow is open — start your production',
       html: '<p>Launch</p>',
       allowFallbackFrom: true,
     })

@@ -2,9 +2,9 @@
 
 export const PUBLISH_CUT_COPY = {
   eyebrow: 'The cut you publish',
-  title: 'Flexible Distribution, Direct from SceneFlow Studio',
+  title: 'Export anywhere. Premiere on SceneFlow when you earn it.',
   subtitle:
-    'Release a complete 90-minute master or monetize as you go. SceneFlow Studio lets you publish finished scenes and chapters to YouTube, Facebook, or TikTok without waiting on the whole cut—generating revenue and audience momentum from day one. Before anything hits the public feed, run scene-level drafts or your final master through the Screening Room for private review and targeted feedback.',
+    'Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.',
   comparison: {
     id: 'publish',
     caption: 'A finished scene or chapter, and the 90-minute master, from one studio.',

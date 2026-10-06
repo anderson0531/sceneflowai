@@ -4,12 +4,14 @@
 
 export const HERO_COPY = {
   eyebrow: 'Automated filmmaking for films and series',
-  availabilityBadge: 'Full access opens November 2026',
   headline: 'From first spark to finished master.',
   subheadline:
     'SceneFlow is one guided pipeline. You direct the story, the cast, and the tone. It builds the Blueprint, holds continuity, plays the full animatic, and assembles the master — without prompt trials or a timeline of loose clips.',
   ctaPrimaryLaunch: 'Launch Studio ($9)',
-  ctaSupportingLine: '',
+  ctaSupportingLine:
+    'The all-in-one studio to craft, export, and distribute your stories. Download a master and ship anywhere — or publish long-form cuts and chapters to {longForm}, and promote trailers on {shorts}.',
+  ctaNetworkInvite: 'Standout projects can apply for the invite-only SceneFlow Network.',
+  ctaNetworkInviteHref: '#for-filmmakers',
   ctaSecondary: 'Explore the pipeline',
   ctaToolStack: 'See how it replaces your tool stack',
 } as const
@@ -39,21 +41,21 @@ export const HERO_VALUE_CHIPS = [
 
 /** Launch-notification capture — shared by the hero and the final CTA. */
 export const NOTIFY_COPY = {
-  heading: 'Get notified when access opens',
+  heading: 'Get launch news',
   description:
-    'Studio access opens in November 2026. Leave your email and we\u2019ll tell you the day it does.',
+    'Leave your email and we\u2019ll tell you when we announce. Nothing else.',
   placeholder: 'you@studio.com',
   submit: 'Notify me',
   submitting: 'Sending\u2026',
   successTitle: 'Check your inbox.',
   successBody:
-    'We sent a confirmation link. Click it to join the November launch list. Nothing else.',
+    'We sent a confirmation link. Click it to join the launch list. Nothing else.',
   errorEmpty: 'Enter your email so we can reach you.',
   errorInvalid: 'That email doesn\u2019t look right. Check it and try again.',
   errorGeneric: 'Something went wrong. Try again in a moment.',
   privacy: 'We email a confirmation link first. One launch note after you confirm. No spam.',
   confirmTitle: 'You\u2019re on the list.',
-  confirmBody: 'We\u2019ll email you as soon as November access opens. Nothing else.',
+  confirmBody: 'We\u2019ll email you when we announce. Nothing else.',
   confirmExpiredTitle: 'That link expired.',
   confirmExpiredBody:
     'Submit your email on the landing page again and we\u2019ll send a new confirmation link.',
@@ -240,7 +242,7 @@ export const SLOT_MACHINE_HEADER = {
 export const FINAL_CTA_COPY = {
   title: 'Built for the stories that have to hold.',
   subtitle:
-    'Full access opens November 2026. Leave your email and we\u2019ll tell you the day it does — or start directing now from the $9 Explorer plan.',
+    'Leave your email for launch news — or start directing now from the $9 Explorer plan.',
   cta: 'Explore plans',
   ctaSecondary: 'See how it works',
   ctaSecondaryHref: '#two-modes',

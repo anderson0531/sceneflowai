@@ -404,7 +404,8 @@ describe('waitlist admin helpers', () => {
   it('defaults the launch campaign subject and uses the support From', () => {
     const campaign = getDefaultLaunchCampaign()
     expect(campaign.subject).toBe(WAITLIST_LAUNCH_SUBJECT)
-    expect(campaign.text).toContain('November 2026')
+    expect(campaign.text).toContain('studio access is open')
+    expect(campaign.text).not.toContain('November 2026')
     expect(campaign.html).toContain('<html')
     expect(campaign.html).toContain('Life Focus, LLC')
     expect(getResendFromEmail()).toContain('support@sceneflowai.studio')

@@ -238,9 +238,9 @@ describe('one-pipeline landing section', () => {
     expect(pricingBadges.join('\n')).not.toContain('Vertex AI generation')
   })
 
-  it('points the final CTA at the November launch list, not Early Access', () => {
+  it('points the final CTA at the launch list, not Early Access', () => {
     expect(FINAL_CTA_COPY.cta).toBe('Explore plans')
-    expect(FINAL_CTA_COPY.subtitle).toContain('November 2026')
+    expect(FINAL_CTA_COPY.subtitle).not.toContain('November 2026')
     expect(FINAL_CTA_COPY.subtitle).toContain('$9 Explorer')
     expect(FINAL_CTA_COPY.ctaSecondaryHref).not.toContain('early-access')
     expect(JSON.stringify(FINAL_CTA_COPY)).not.toContain('Founding Creator')

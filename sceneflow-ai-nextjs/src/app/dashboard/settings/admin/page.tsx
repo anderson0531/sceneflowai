@@ -6,6 +6,7 @@ import { CreditGrantCard } from '@/components/admin/CreditGrantCard'
 import { CreditRecalculateCard } from '@/components/admin/CreditRecalculateCard'
 import { FinanceReportCard } from '@/components/admin/FinanceReportCard'
 import { LaunchEmailCard } from '@/components/admin/LaunchEmailCard'
+import { OriginalsSeedCard } from '@/components/admin/OriginalsSeedCard'
 import { ModelVersionsCard } from '@/components/admin/ModelVersionsCard'
 import { PricingRateCard } from '@/components/admin/PricingRateCard'
 
@@ -37,6 +38,7 @@ export default async function AdminPage() {
         <CreditGrantCard />
         <CreditRecalculateCard />
         <LaunchEmailCard />
+        <OriginalsSeedCard />
       </div>
     </div>
   )

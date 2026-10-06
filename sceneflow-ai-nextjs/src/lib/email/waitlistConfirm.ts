@@ -134,10 +134,10 @@ export function buildWaitlistConfirmationContent(
   unsubscribeUrl: string
 ): { html: string; text: string } {
   return buildOfficialEmail({
-    preheader: 'Confirm your email to join the SceneFlow November 2026 launch list.',
+    preheader: 'Confirm your email to join the SceneFlow launch list.',
     heading: 'Confirm your SceneFlow notification',
     paragraphs: [
-      'Confirm your email to join the SceneFlow November 2026 launch list.',
+      'Confirm your email to join the SceneFlow launch list.',
       'This link expires in 48 hours. If you did not request this, you can ignore this email.',
     ],
     ctaLabel: 'Confirm email',
