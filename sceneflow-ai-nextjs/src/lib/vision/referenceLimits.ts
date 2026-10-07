@@ -104,6 +104,8 @@ export interface PrioritizedReferenceImage {
   propDescription?: string
   /** Location description; used to lock door/ceiling scale on the send-time overlay. */
   locationDescription?: string
+  /** True when this plate is a post-change location version, not the intact base. */
+  currentSetState?: boolean
   /** Person token index the scene prompt uses for this character. */
   subjectOrdinal?: number
 }
@@ -591,6 +593,7 @@ export function buildLocationReferenceEntry(
     name?: string
     description?: string
     promptToken?: string
+    boundVersionId?: string | null
   } | null | undefined,
   startIndex: number
 ): PrioritizedReferenceImage | null {
@@ -605,5 +608,6 @@ export function buildLocationReferenceEntry(
     locationName,
     locationDescription: location.description,
     promptToken: location.promptToken,
+    currentSetState: Boolean(location.boundVersionId?.trim()),
   }
 }

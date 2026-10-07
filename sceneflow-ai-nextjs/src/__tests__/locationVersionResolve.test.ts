@@ -43,6 +43,39 @@ describe('locationVersionResolve', () => {
     expect(compareBeatPosition({ sceneNumber: 1, beatIndex: 4 }, { sceneNumber: 2, beatIndex: 0 })).toBeLessThan(0)
   })
 
+  it('keeps the intact base plate on gauge shots before the cracked version', () => {
+    const cracked: LocationVersion = {
+      id: 'ver-crack',
+      name: 'Cracked pressure gauge',
+      stateNotes: 'The glass face of the brass pressure gauge is cracked down the middle',
+      appliesFrom: { sceneNumber: 1, beatIndex: 17, beatId: 'shot18' },
+      imageUrl: 'https://blob.example/cracked.png',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    }
+    const vault: LocationReference = {
+      ...location,
+      id: 'loc-vault',
+      location: 'FREIGHT TUNNEL VAULT',
+      imageUrl: 'https://blob.example/vault-base.png',
+      versions: [cracked],
+    }
+    expect(
+      resolveLocationVersionForBeat(vault, { sceneNumber: 1, beatIndex: 3, beatId: 'shot4' })
+    ).toBeNull()
+    expect(
+      resolveLocationVersionForBeat(vault, { sceneNumber: 1, beatIndex: 16, beatId: 'shot17' })
+    ).toBeNull()
+    expect(
+      resolveLocationVersionForBeat(vault, { sceneNumber: 1, beatIndex: 17, beatId: 'shot18' })?.id
+    ).toBe('ver-crack')
+    expect(locationReferenceForGeneration(vault, 'ver-crack').imageUrl).toBe(
+      'https://blob.example/cracked.png'
+    )
+    expect(locationReferenceForGeneration(vault, null).imageUrl).toBe(
+      'https://blob.example/vault-base.png'
+    )
+  })
+
   it('falls back to the base when no version has started yet', () => {
     expect(
       resolveLocationVersionForBeat(location, { sceneNumber: 1, beatIndex: 0, beatId: 'b0' })

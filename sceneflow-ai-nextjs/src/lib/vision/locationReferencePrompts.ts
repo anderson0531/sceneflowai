@@ -3,8 +3,8 @@
  */
 
 import {
-  LOCATION_STATE_KEYWORD_PATTERN,
   SET_PIECE_NOUN_PATTERN,
+  beatHasLocationStateChange,
 } from '@/lib/vision/locationStateAnalysis'
 import { isWideEstablishingShotType } from '@/lib/character/characterReferenceAssembly'
 import {
@@ -13,7 +13,13 @@ import {
   resolveStillShotClass,
 } from '@/lib/imagen/stillFramingNormalize'
 import { locationScaleClause } from '@/lib/imagen/locationScaleClause'
-import { isMountedSetFixtureCatalogName } from '@/lib/vision/mountedSetFixtures'
+import { isMountedSetFixtureCatalogName, extractMountedSetFixturePhrases } from '@/lib/vision/mountedSetFixtures'
+import {
+  formatLocationResidentInstrumentDirective,
+  isLocationResidentInstrumentName,
+  primaryLocationResidentInstrument,
+  propPlateIdentifiesInstrument,
+} from '@/lib/vision/locationResidentInstruments'
 
 export const LOCATION_REFERENCE_ASPECT_RATIO = '16:9' as const
 
@@ -111,6 +117,21 @@ export function isObjectInsertLocationShot(options?: {
   return emptyCast && shot.isInsertOrEcu
 }
 
+function closeUpLocationInstrument(options?: {
+  shotType?: string | null
+  actionFraming?: string | null
+}): string | undefined {
+  const instrument = primaryLocationResidentInstrument(options?.actionFraming)
+  if (!instrument) return undefined
+  const shot = resolveStillShotClass(options?.shotType, options?.actionFraming)
+  const hint = shot.shotHint || options?.shotType || ''
+  if (isWideEstablishingShotType(hint) && !shot.isDetail && !shot.isInsertOrEcu) return undefined
+  if (shot.isDetail || shot.isInsertOrEcu || isDetailShot(hint) || isDetailShot(options?.shotType)) {
+    return instrument
+  }
+  return undefined
+}
+
 export function buildLocationConsumptionInstruction(options?: {
   shotType?: string | null
   promptToken?: string
@@ -118,10 +139,26 @@ export function buildLocationConsumptionInstruction(options?: {
   emptyCast?: boolean
   locationDescription?: string | null
   locationName?: string | null
+  /** Library prop names attached to this frame, if any. */
+  propNames?: string[] | null
 }): string {
   const token = options?.promptToken?.trim()
   const scaleLock = locationScaleClause(options?.locationDescription, options?.locationName)
   const withScale = (instruction: string) => `${instruction} ${scaleLock}`
+  const instrument = closeUpLocationInstrument(options)
+  if (instrument) {
+    const phrases = [instrument]
+    const propPlateIdentifies = (options?.propNames ?? []).some((name) =>
+      propPlateIdentifiesInstrument(name, phrases)
+    )
+    return withScale(
+      formatLocationResidentInstrumentDirective({
+        instrument,
+        locationToken: token,
+        propPlateIdentifies,
+      })
+    )
+  }
   if (isObjectInsertLocationShot(options)) {
     if (!token) return withScale(LOCATION_OBJECT_INSERT_CONSUMPTION_INSTRUCTION)
     return withScale(
@@ -208,7 +245,8 @@ function usableCatalogPropNames(catalogPropNames?: string[]): string[] {
       (name) =>
         name.length >= 4 &&
         !isSingleStructuralNoun(name) &&
-        !isMountedSetFixtureCatalogName(name)
+        !isMountedSetFixtureCatalogName(name) &&
+        !isLocationResidentInstrumentName(name)
     )
 }
 
@@ -237,7 +275,16 @@ function stripHandheldAndCatalogFromClause(clause: string, catalogPropNames?: st
 }
 
 function clauseIsStructuralSet(clause: string): boolean {
-  return LOCATION_STATE_KEYWORD_PATTERN.test(clause) && SET_PIECE_NOUN_PATTERN.test(clause)
+  return beatHasLocationStateChange(clause)
+}
+
+/**
+ * Base room prose and character blocking are not a version. A clause stays
+ * when it is a lasting set change or mounted architecture (a hatch wheel).
+ */
+function clauseCarriesLastingSetState(clause: string): boolean {
+  if (extractMountedSetFixturePhrases(clause).length > 0) return true
+  return beatHasLocationStateChange(clause)
 }
 
 /**
@@ -253,6 +300,7 @@ export function stripBeatPropsFromLocationStateNotes(
 
   const kept: string[] = []
   for (const clause of splitStateNoteClauses(trimmed)) {
+    if (!clauseCarriesLastingSetState(clause)) continue
     const mentionsCatalog = clauseMentionsCatalogProp(clause, catalogPropNames)
     const mentionsHandheld = HANDHELD_BEAT_PROP_PATTERN.test(clause)
     if (!mentionsCatalog && !mentionsHandheld) {
@@ -358,6 +406,7 @@ export function buildLocationReferencePromptLine(
     actionFraming?: string | null
     emptyCast?: boolean
     locationDescription?: string | null
+    propNames?: string[] | null
   }
 ): string {
   const heading = label ?? `Reference image ${referenceIndex}: LOCATION REFERENCE for "${locationName}"`
@@ -369,5 +418,6 @@ export function buildLocationReferencePromptLine(
     emptyCast: options?.emptyCast,
     locationName,
     locationDescription: options?.locationDescription,
+    propNames: options?.propNames,
   })}${suffix}`
 }

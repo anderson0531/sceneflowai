@@ -14,6 +14,7 @@ import {
   isWideEstablishingShotType,
 } from '@/lib/character/characterReferenceAssembly'
 import {
+  isDetailShot,
   isFaceCloseUpShot,
   resolveStillShotClass,
   isMediumCoverageLocationShot,
@@ -36,7 +37,15 @@ import {
   recoverLeakedActionFromExclusions,
 } from '@/lib/scene/castPerformanceFraming'
 import { propScaleClause } from '@/lib/imagen/propScaleClause'
+import { LOCATION_VERSION_CONSUMPTION_SUFFIX } from '@/lib/vision/locationReferencePrompts'
 import { extractMountedSetFixturePhrases } from '@/lib/vision/mountedSetFixtures'
+import {
+  extractLocationResidentInstrumentPhrases,
+  formatLocationResidentInstrumentDirective,
+  isLocationResidentInstrumentName,
+  primaryLocationResidentInstrument,
+  propPlateIdentifiesInstrument,
+} from '@/lib/vision/locationResidentInstruments'
 import {
   formatImagesAboveBinding,
   type ReferenceImageBinding,
@@ -250,6 +259,44 @@ export function actionNamesMountedSetFixture(actionFraming?: string | null): boo
 }
 
 /**
+ * Close-up or insert of a wall-mounted instrument. A wide shot that merely
+ * mentions the gauge keeps the establishing-plate instruction.
+ */
+export function locationResidentInstrumentDirective(
+  shotType: string | null | undefined,
+  actionFraming: string | null | undefined,
+  options?: {
+    locationToken?: string | null
+    props?: Array<{ name?: string | null; token?: string | null }>
+  }
+): string | undefined {
+  if (!options?.locationToken?.trim()) return undefined
+  const shot = resolveStillShotClass(shotType, actionFraming)
+  const hint = shot.shotHint || shotType || ''
+  if (isWideEstablishingShotType(hint) && !shot.isDetail && !shot.isInsertOrEcu) return undefined
+  if (!shot.isDetail && !shot.isInsertOrEcu && !isDetailShot(hint)) return undefined
+
+  const action = actionFraming ?? ''
+  const phrases = extractLocationResidentInstrumentPhrases(action)
+  const props = options.props ?? []
+  const identified = props.filter(
+    (prop) =>
+      isLocationResidentInstrumentName(prop.name) &&
+      ((prop.token && action.includes(prop.token)) ||
+        propPlateIdentifiesInstrument(prop.name, phrases))
+  )
+  const instrument =
+    primaryLocationResidentInstrument(action) ||
+    identified.map((prop) => prop.name?.trim()).find(Boolean)
+  if (!instrument) return undefined
+  return formatLocationResidentInstrumentDirective({
+    instrument,
+    locationToken: options.locationToken,
+    propPlateIdentifies: identified.length > 0,
+  })
+}
+
+/**
  * Shot-aware TASK body. Insert/ECU with a visible limb keep limb framing.
  * Empty-cast object inserts do not ask for a hand. Title/credit inserts skip
  * anatomy so typography can be the subject. Token lines are omitted when the
@@ -268,6 +315,17 @@ export function stillTaskLines(
   const hasPersonRefs = refs.some((ref) => ref.kind === 'person')
   const hasPropRefs = refs.some((ref) => ref.kind === 'prop')
   const hasLocationRef = refs.some((ref) => ref.kind === 'location')
+  const locationToken = refs.find((ref) => ref.kind === 'location')?.token
+  const instrumentDirective = locationResidentInstrumentDirective(
+    shotType,
+    options?.actionFraming,
+    {
+      locationToken,
+      props: refs
+        .filter((ref) => ref.kind === 'prop')
+        .map((ref) => ({ name: ref.name, token: ref.token })),
+    }
+  )
   const asEnvironment = consumesLocationAsEnvironment(shotType, options?.actionFraming)
   const mediumCoverage = isMediumCoverageLocationShot(shot.shotHint || shotType)
   const pairedOccupancy = options?.occupancyMode === 'paired'
@@ -278,10 +336,16 @@ export function stillTaskLines(
     : STILL_TASK_PERSON_PROP_TOKEN_LINE
   const propTokenLine = pairedOccupancy ? STILL_TASK_PAIRED_PROP_TOKEN_LINE : STILL_TASK_PROP_TOKEN_LINE
   const propScaleLine = pairedOccupancy ? STILL_TASK_PAIRED_PROP_SCALE_LINE : STILL_TASK_PROP_SCALE_LINE
-  const detailTokenLine = `${personPropTokenLine} ${STILL_TASK_LOCATION_BOKEH_LINE}`
+  const detailTokenLine = instrumentDirective
+    ? personPropTokenLine
+    : `${personPropTokenLine} ${STILL_TASK_LOCATION_BOKEH_LINE}`
   const commitTaskLines = () => {
     if (hasLocationRef && actionNamesMountedSetFixture(options?.actionFraming)) {
       lines.push(STILL_TASK_MOUNTED_FIXTURE_LINE)
+    }
+    if (instrumentDirective) lines.push(instrumentDirective)
+    if (refs.some((ref) => ref.kind === 'location' && ref.currentSetState)) {
+      lines.push(LOCATION_VERSION_CONSUMPTION_SUFFIX)
     }
     if (
       options?.includeAttachedIdentityTraits &&
@@ -344,7 +408,7 @@ export function stillTaskLines(
   if (shot.isDetail && !mediumCoverage) {
     if (!namedBinding && (hasPersonRefs || hasPropRefs)) {
       lines.push(hasLocationRef ? detailTokenLine : personPropTokenLine)
-    } else if (hasLocationRef) {
+    } else if (hasLocationRef && !instrumentDirective) {
       lines.push(STILL_TASK_LOCATION_BOKEH_LINE)
     }
     if (hasPropRefs) lines.push(propScaleLine)
@@ -431,6 +495,8 @@ export interface StillPromptBoundRef {
   wardrobeSendIndex?: number
   /** True when identity and wardrobe share one composite/diptych slot. */
   isComposite?: boolean
+  /** Location plate is a post-change version still, not the intact base. */
+  currentSetState?: boolean
 }
 
 export function buildPropPromptToken(sendIndex: number): string {
@@ -524,6 +590,7 @@ const STILL_BOILERPLATE_LINES = [
   STILL_TASK_LOCATION_NEARFIELD_LINE,
   STILL_TASK_LOCATION_ENVIRONMENT_LINE,
   STILL_TASK_MOUNTED_FIXTURE_LINE,
+  LOCATION_VERSION_CONSUMPTION_SUFFIX,
   STILL_TASK_PROP_TOKEN_LINE,
   STILL_TASK_PAIRED_PROP_TOKEN_LINE,
   STILL_TASK_PROP_SCALE_LINE,
@@ -544,6 +611,7 @@ const STILL_BOILERPLATE_PREFIXES = [
   /^location \[\d+\](?: \([^)]+\))? is the place in the location image/i,
   /^person \[\d+\](?: \([^)]+\))? must match the IDENTITY plate/i,
   /^Garments at the collar and shoulders:/i,
+  /^The .+ in this frame is the unit mounted on location \[\d+\]/i,
 ]
 
 /**
@@ -1259,7 +1327,7 @@ function normalizePromptToken(token: string): string {
 export function stillRefsFromNamedLibrary(args: {
   people?: Array<{ name?: string; token?: string }>
   props?: Array<{ name?: string; token?: string }>
-  locations?: Array<{ name?: string; token?: string }>
+  locations?: Array<{ name?: string; token?: string; currentSetState?: boolean }>
   castInFrame?: string[] | null
 }): StillPromptBoundRef[] {
   const refs: StillPromptBoundRef[] = []
@@ -1299,6 +1367,7 @@ export function stillRefsFromNamedLibrary(args: {
       token: item.token?.trim() || buildLocationPromptToken(index + 1),
       name: item.name!.trim(),
       roleLabel: 'library location',
+      currentSetState: item.currentSetState,
     })
   })
 
@@ -1315,6 +1384,7 @@ export function stillRefsFromAttachedImages(args: {
     role?: string
     promptToken?: string
     propDescription?: string
+    currentSetState?: boolean
   }>
   characterReferences: Array<{
     name: string
@@ -1436,6 +1506,7 @@ export function stillRefsFromAttachedImages(args: {
             : (entry.promptToken as string),
         name: entry.locationName || 'Location',
         roleLabel: 'library location',
+        currentSetState: entry.currentSetState,
       })
     }
   }

@@ -1,8 +1,11 @@
 /**
  * Helpers for script location-version analysis — formats scene + beat
  * content and extracts lasting set-state changes (destruction, redress,
- * and reversible set-piece transitions such as a door shutting).
+ * reversible set-piece transitions such as a door shutting, and a
+ * wall-mounted instrument cracking or pegging).
  */
+
+import { extractLocationResidentInstrumentPhrases } from '@/lib/vision/locationResidentInstruments'
 
 export interface LocationAnalysisBeatInput {
   beatId?: string
@@ -56,12 +59,31 @@ const LIGHT_NOUN = '(?:lights?|lamps?|chandeliers?)'
 const LIGHT_ADJ = '(?:vault\\s+|room\\s+|house\\s+|practical\\s+|overhead\\s+|table\\s+)*'
 
 /**
- * Practical fixtures going on/off. Mood "lighting" adjectives are not a match.
+ * Practical fixtures going on/off. Mood "lighting" adjectives are not a match,
+ * and a bare "light on" fragment is not a lasting change.
  */
 export const PRACTICAL_LIGHTS_PATTERN = new RegExp(
-  String.raw`\b(?:(?:kill|cut|douse|switch(?:es|ed)?\s+off)\s+(?:the\s+)?${LIGHT_ADJ}${LIGHT_NOUN}|(?:the\s+)?${LIGHT_ADJ}${LIGHT_NOUN}\s+(?:go(?:es)?\s+)?(?:on|off|out|die|dies|died|dying|dead|blown))\b`,
+  String.raw`\b(?:(?:kill|cut|douse|switch(?:es|ed)?\s+off)\s+(?:the\s+)?${LIGHT_ADJ}${LIGHT_NOUN}|(?:the\s+)?${LIGHT_ADJ}${LIGHT_NOUN}\s+(?:go(?:es|ne)?\s+(?:on|off|out)|(?:out|die|dies|died|dying|dead|blown)|switch(?:es|ed)?\s+(?:on|off)))\b`,
   'i'
 )
+
+const INSTRUMENT_NOUN = '(?:gauges?|galvanometers?|manometers?|barometers?|dials?)'
+
+/**
+ * A mounted instrument's glass cracking, or its needle pegging into the red.
+ * "Cracked" is not a general destruction keyword — a cracked smile, or the
+ * shattered glass of a framed photograph, is not this.
+ */
+export const INSTRUMENT_DAMAGE_PATTERN = new RegExp(
+  String.raw`\b((?:the\s+)?(?:glass\s+face\s+of\s+(?:a\s+|an\s+|the\s+)?)?(?:(?:vintage|antique|brass|bronze|copper|steel|iron)\s+){0,3}(?:pressure\s+|steam\s+|vacuum\s+)?${INSTRUMENT_NOUN}(?:\s+glass)?(?:\s+(?!is\b|was\b|gets?\b|becomes?\b|cracked\b|cracks?\b)\S+){0,14}\s+(?:is\s+|was\s+|gets?\s+|becomes?\s+)?cracked(?:\s+down\s+the\s+middle)?|(?:the\s+)?(?:pressure\s+|steam\s+|vacuum\s+)?${INSTRUMENT_NOUN}\s+glass\s+cracks?(?:\s+down\s+the\s+middle)?)\b`,
+  'i'
+)
+
+export const INSTRUMENT_NEEDLE_RED_PATTERN =
+  /\b(needle\s+(?:pegs?|pegged|pins?|pinned)\s+into\s+the\s+red(?:\s+compression\s+arc)?)\b/i
+
+const PHOTO_GLASS_NOUN = /\b(?:photos?|photographs?|pictures?|portraits?|snapshots?|framed\s+photo)\b/i
+const ARCHITECTURAL_DAMAGE_NOUN = /\b(?:doors?|windows?|walls?|hatches?|gates?|floors?|ceilings?)\b/i
 
 export function resolveBeatActionText(beat: LocationAnalysisBeatInput): string {
   return (
@@ -85,12 +107,33 @@ export function beatSetStateText(beat: LocationAnalysisBeatInput): string {
     .join(' ')
 }
 
+/** Shattered glass of a photograph is a handheld prop, not the set. */
+export function isHandheldPhotoGlassDamage(text: string): boolean {
+  const trimmed = (text || '').trim()
+  if (!trimmed || !PHOTO_GLASS_NOUN.test(trimmed)) return false
+  if (extractLocationResidentInstrumentPhrases(trimmed).length > 0) return false
+  if (ARCHITECTURAL_DAMAGE_NOUN.test(trimmed)) return false
+  return true
+}
+
+export function beatHasInstrumentDamage(text: string): boolean {
+  const trimmed = (text || '').trim()
+  if (!trimmed) return false
+  if (INSTRUMENT_DAMAGE_PATTERN.test(trimmed)) return true
+  return (
+    INSTRUMENT_NEEDLE_RED_PATTERN.test(trimmed) &&
+    extractLocationResidentInstrumentPhrases(trimmed).length > 0
+  )
+}
+
 export function beatHasLocationStateChange(text: string): boolean {
   const trimmed = (text || '').trim()
   if (!trimmed) return false
+  if (beatHasInstrumentDamage(trimmed)) return true
   if (REVERSIBLE_APERTURE_PATTERN.test(trimmed) || PRACTICAL_LIGHTS_PATTERN.test(trimmed)) {
     return true
   }
+  if (isHandheldPhotoGlassDamage(trimmed)) return false
   return LOCATION_STATE_KEYWORD_PATTERN.test(trimmed) && SET_PIECE_NOUN_PATTERN.test(trimmed)
 }
 
@@ -181,6 +224,8 @@ export function distillLocationStateNotesFromText(text: string): string | undefi
 
   const phrases: string[] = []
   const patterns: Array<{ re: RegExp }> = [
+    { re: INSTRUMENT_DAMAGE_PATTERN },
+    { re: INSTRUMENT_NEEDLE_RED_PATTERN },
     { re: /(?:the\s+)?(?:front\s+)?doors?\s+(?:explod(?:e|es|ed)|blast(?:s|ed)|blow(?:s|n)\s+(?:out|apart|open)|shatter(?:s|ed))/i },
     { re: /(?:the\s+)?windows?\s+(?:shatter(?:s|ed)|explod(?:e|es|ed)|blow(?:s|n)\s+out)/i },
     { re: /(?:the\s+)?walls?\s+(?:collapse(?:s|d)|explod(?:e|es|ed)|cave[- ]?in)/i },
@@ -191,8 +236,14 @@ export function distillLocationStateNotesFromText(text: string): string | undefi
   ]
 
   for (const { re } of patterns) {
+    if (
+      re === INSTRUMENT_NEEDLE_RED_PATTERN &&
+      extractLocationResidentInstrumentPhrases(text).length === 0
+    ) {
+      continue
+    }
     const match = text.match(re)
-    if (match) phrases.push(match[0].trim())
+    if (match) phrases.push((match[1] || match[0]).trim())
   }
 
   if (phrases.length === 0) {
