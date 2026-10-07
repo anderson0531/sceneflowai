@@ -14,7 +14,50 @@ import {
   resolveSceneAppearanceContinuity,
 } from '@/lib/scene/performanceCues'
 
+const CINEMATIC_TAKES = [
+  {
+    line: "It's a closed loop... why won't the math close?",
+    voiceDirection:
+      'Close-mic, intimate and utterly defeated. Let the breath carry the words more than the vocal cords. Frame this as a quiet, bitter surrender to his own limitations.',
+  },
+  {
+    line: "I'm losing the thread, Clara. The current is dead.",
+    voiceDirection:
+      "Fragile and highly intimate. He is confessing his absolute failure to the only person who mattered. Let the words crack on 'dead'.",
+  },
+  {
+    line: 'Eighty pounds of drag... Ward found me.',
+    voiceDirection:
+      "Tightly coiled, processing impossible data. He isn't panicked, he's rapidly calculating the physics of the threat and arriving at a terrifying conclusion. Grounded in paranoia.",
+  },
+]
+
 describe('resolveDirectedEmotionForCharacter', () => {
+  it.each(CINEMATIC_TAKES)(
+    'stages a line with no bracket tag from its cinematic brief',
+    ({ line, voiceDirection }) => {
+      const emotion = resolveDirectedEmotionForCharacter({
+        characterName: 'Gideon',
+        beatSpeaker: 'Gideon',
+        beatLine: line,
+        voiceDirection,
+      })
+      expect(emotion).toBe(voiceDirection)
+      expect(formatDirectedEmotionLine(emotion)).toContain(voiceDirection)
+    }
+  )
+
+  it('keeps a bracket tag ahead of the cinematic brief', () => {
+    const emotion = resolveDirectedEmotionForCharacter({
+      characterName: 'Gideon',
+      beatSpeaker: 'Gideon',
+      beatLine: '[angry] Leave it.',
+      voiceDirection: CINEMATIC_TAKES[0].voiceDirection,
+    })
+    expect(emotion).toMatch(/angry/i)
+    expect(emotion).not.toContain('Close-mic')
+  })
+
   it('prefers beat line bracket cues over wardrobe appearanceNotes', () => {
     const emotion = resolveDirectedEmotionForCharacter({
       characterName: 'Elara',
@@ -280,8 +323,12 @@ describe('generate-image beat frame acting and wardrobe regression guard', () =>
     expect(source).toContain('expandLeftoverDiptychSheetsIntoDualSlots')
     expect(source).not.toContain('consolidateBeatCharacterRefsIntoPipBadges')
     expect(source).toContain('Assembled scene prompt preview')
-    expect(source).toContain('person [N] (Name)')
     expect(source).not.toContain('using ONLY "person [N]" tokens')
+    const assemblySource = readFileSync(
+      join(process.cwd(), 'src/lib/character/characterReferenceAssembly.ts'),
+      'utf8'
+    )
+    expect(assemblySource).toContain('person [N] (Name)')
   })
 
   it('keeps project characters at function scope for beat and custom frame paths', () => {

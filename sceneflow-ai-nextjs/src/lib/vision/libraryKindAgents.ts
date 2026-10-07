@@ -219,6 +219,171 @@ export function locationCameraStatus(location: LocationAgentRow): LocationCamera
   return { status: 'ready', pendingVersionCount: 0 }
 }
 
+/** What the user must do for one reference still. */
+export type ReferenceStillAction = 'add' | 'missing' | 'changed'
+
+export type ReferenceActionItem = {
+  id: string
+  /** Still the cue names: Base, Identity, a version, a wardrobe, or an object. */
+  name: string
+  action: ReferenceStillAction
+}
+
+export type ReferenceActionTone = 'action' | 'attention' | 'ready'
+
+export type ReferenceActionSummary = {
+  /** Red for add/missing, yellow for changed, green when nothing remains. */
+  tone: ReferenceActionTone
+  /** Worst action first, then the rest in source order. */
+  items: ReferenceActionItem[]
+  primary: ReferenceActionItem | null
+}
+
+const ACTION_RANK: Record<ReferenceStillAction, number> = {
+  add: 0,
+  missing: 1,
+  changed: 2,
+}
+
+function wardrobeStillUrl(wardrobe: {
+  headshotUrl?: string
+  fullBodyUrl?: string
+  previewImageUrl?: string
+  combinedCharacterRefUrl?: string
+}): string | undefined {
+  for (const field of ['headshotUrl', 'fullBodyUrl', 'previewImageUrl', 'combinedCharacterRefUrl'] as const) {
+    const value = wardrobe[field]
+    if (hasImage(value)) return value!.trim()
+  }
+  return undefined
+}
+
+function summarizeReferenceActions(items: ReferenceActionItem[]): ReferenceActionSummary {
+  const ranked = items
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => {
+      const rank = ACTION_RANK[a.item.action] - ACTION_RANK[b.item.action]
+      return rank !== 0 ? rank : a.index - b.index
+    })
+    .map((entry) => entry.item)
+  const primary = ranked[0] ?? null
+  return {
+    tone: primary ? (primary.action === 'changed' ? 'attention' : 'action') : 'ready',
+    items: ranked,
+    primary,
+  }
+}
+
+const ACTION_VERB: Record<ReferenceStillAction, string> = {
+  add: 'Add',
+  missing: 'Missing',
+  changed: 'Changed',
+}
+
+/** Visible cue: "Missing · Door blown". */
+export function formatReferenceActionCue(item: ReferenceActionItem): string {
+  const name = item.name.trim() || 'Still'
+  return `${ACTION_VERB[item.action]} · ${name}`
+}
+
+type LocationActionRow = {
+  imageUrl?: string
+  versions?: Array<{
+    id?: string
+    name?: string
+    stateNotes?: string
+    imageUrl?: string
+    needsImageRegen?: boolean
+  }>
+}
+
+/**
+ * Base stills that do not exist yet are Add. Noted set versions with no
+ * still are Missing. A drawn version flagged by script sync is Changed.
+ */
+export function locationReferenceActions(location: LocationActionRow): ReferenceActionSummary {
+  const items: ReferenceActionItem[] = []
+  if (!hasImage(location.imageUrl)) {
+    items.push({ id: 'base', name: 'Base', action: 'add' })
+  }
+  for (const [index, version] of (location.versions || []).entries()) {
+    const notes = version.stateNotes?.trim()
+    const drawn = hasImage(version.imageUrl)
+    const name = version.name?.trim() || 'Set version'
+    const id = version.id?.trim() || `version-${index}`
+    if (!drawn) {
+      if (!notes) continue
+      items.push({ id, name, action: 'missing' })
+      continue
+    }
+    if (version.needsImageRegen) {
+      items.push({ id, name, action: 'changed' })
+    }
+  }
+  return summarizeReferenceActions(items)
+}
+
+type CastActionRow = {
+  type?: string
+  referenceImage?: string
+  wardrobes?: Array<{
+    id?: string
+    name?: string
+    description?: string
+    appearanceNotes?: string
+    headshotUrl?: string
+    fullBodyUrl?: string
+    previewImageUrl?: string
+    combinedCharacterRefUrl?: string
+    needsImageRegen?: boolean
+  }>
+}
+
+/**
+ * Identity with no still is Add. A look with notes and no still is Missing.
+ * A drawn look flagged by script sync is Changed.
+ */
+export function castReferenceActions(character: CastActionRow): ReferenceActionSummary {
+  if (character.type === 'narrator' || character.type === 'description') {
+    return summarizeReferenceActions([])
+  }
+  const items: ReferenceActionItem[] = []
+  if (!hasImage(character.referenceImage)) {
+    items.push({ id: 'identity', name: 'Identity', action: 'add' })
+  }
+  for (const [index, wardrobe] of (character.wardrobes || []).entries()) {
+    const notes = wardrobe.description?.trim() || wardrobe.appearanceNotes?.trim()
+    const drawn = Boolean(wardrobeStillUrl(wardrobe))
+    const name = wardrobe.name?.trim() || 'Wardrobe'
+    const id = wardrobe.id?.trim() || `wardrobe-${index}`
+    if (!drawn) {
+      if (!notes && !wardrobe.needsImageRegen) continue
+      items.push({ id, name, action: 'missing' })
+      continue
+    }
+    if (wardrobe.needsImageRegen) {
+      items.push({ id, name, action: 'changed' })
+    }
+  }
+  return summarizeReferenceActions(items)
+}
+
+/** An object with no still is Add. Objects have no script-stale flag. */
+export function objectReferenceActions(object: {
+  id?: string
+  name?: string
+  imageUrl?: string
+}): ReferenceActionSummary {
+  if (hasImage(object.imageUrl)) return summarizeReferenceActions([])
+  return summarizeReferenceActions([
+    {
+      id: object.id?.trim() || 'object',
+      name: object.name?.trim() || 'Object',
+      action: 'add',
+    },
+  ])
+}
+
 export function countLocationAgentItems(locations: LocationAgentRow[]): number {
   let n = 0
   for (const location of locations) {

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import {
   MapPin,
@@ -48,9 +48,11 @@ import {
   countLocationAgentItems,
   extractHeadingLocationsFromScenes,
   locationAgentCopyUnits,
-  locationCameraStatus,
+  locationReferenceActions,
   toLocationReferenceFromExtracted,
+  type ReferenceActionItem,
 } from '@/lib/vision/libraryKindAgents'
+import { ReferenceActionCue } from './ReferenceActionCue'
 import type { ReferenceExpressScope, ReferenceExpressKind } from '@/lib/vision/referenceExpress/types'
 import { LibraryKindToolbar } from './LibraryKindToolbar'
 import { usePendingKindAgentRun } from './usePendingKindAgentRun'
@@ -363,6 +365,7 @@ export function LocationLibrary({
 }: LocationLibraryProps) {
   const t = useTranslations('production.direction.locationLibrary')
   const [expandedLocationId, setExpandedLocationId] = useState<string | null>(null)
+  const [focusedVersionId, setFocusedVersionId] = useState<string | null>(null)
   const [editingDescriptionId, setEditingDescriptionId] = useState<string | null>(null)
   const [descriptionText, setDescriptionText] = useState('')
   const [expandedImageUrl, setExpandedImageUrl] = useState<string | null>(null)
@@ -378,6 +381,17 @@ export function LocationLibrary({
   } | null>(null)
   const [directedLocation, setDirectedLocation] = useState<LocationReference | null>(null)
   const [directedSubmitting, setDirectedSubmitting] = useState(false)
+
+  const openLocationAction = useCallback((locationId: string, item: ReferenceActionItem) => {
+    setExpandedLocationId(locationId)
+    setFocusedVersionId(item.id === 'base' ? null : item.id)
+  }, [])
+
+  useEffect(() => {
+    if (!focusedVersionId) return
+    const el = document.getElementById(`location-version-${focusedVersionId}`)
+    el?.scrollIntoView({ block: 'nearest' })
+  }, [focusedVersionId, expandedLocationId])
 
   const extractedLocations = useMemo(
     () => extractHeadingLocationsFromScenes(scenes),
@@ -696,6 +710,29 @@ export function LocationLibrary({
             const hasImage = isDisplayableImageUrl(loc.imageUrl)
             const isDeferredImage = isDeferredImageUrl(loc.imageUrl)
             const directionOutdated = locationHasOutdatedDirection(loc, scenes)
+            const stillActions = locationReferenceActions(loc)
+            const cameraClass =
+              stillActions.tone === 'ready'
+                ? 'text-green-400'
+                : stillActions.tone === 'attention'
+                  ? 'text-amber-400'
+                  : 'text-red-500'
+            const cameraTitle = stillActions.primary
+              ? stillActions.items
+                  .map((item) =>
+                    t('actionCue', {
+                      action: t(
+                        item.action === 'add'
+                          ? 'actionAdd'
+                          : item.action === 'missing'
+                            ? 'actionMissing'
+                            : 'actionChanged'
+                      ),
+                      name: item.name,
+                    })
+                  )
+                  .join('\n')
+              : t('cameraReady')
 
             return (
               <div
@@ -703,9 +740,10 @@ export function LocationLibrary({
                 className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 overflow-hidden group"
               >
                 {/* Header - always visible */}
+                <div className="flex items-center gap-1.5 px-3 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
                 <button
                   onClick={() => setExpandedLocationId(isExpanded ? null : loc.id)}
-                  className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                  className="min-w-0 flex-1 flex items-center justify-between text-left"
                 >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     {/* INT/EXT badge */}
@@ -740,34 +778,24 @@ export function LocationLibrary({
                         </TooltipContent>
                       </Tooltip>
                     )}
-                    {(() => {
-                      const camera = locationCameraStatus(loc)
-                      const cameraClass =
-                        camera.status === 'ready'
-                          ? 'text-green-400'
-                          : camera.status === 'versions-pending'
-                            ? 'text-amber-400'
-                            : 'text-gray-500'
-                      const cameraTitle =
-                        camera.status === 'ready'
-                          ? t('cameraReady')
-                          : camera.status === 'versions-pending'
-                            ? t('cameraVersionsPending', { count: camera.pendingVersionCount })
-                            : t('cameraNoBase')
-                      return (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="inline-flex" title={cameraTitle}>
-                              <Camera className={`w-3.5 h-3.5 ${cameraClass}`} />
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>{cameraTitle}</TooltipContent>
-                        </Tooltip>
-                      )
-                    })()}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex" title={cameraTitle}>
+                          <Camera className={`w-3.5 h-3.5 ${cameraClass}`} />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs whitespace-pre-line text-left">
+                        {cameraTitle}
+                      </TooltipContent>
+                    </Tooltip>
                     {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                   </div>
                 </button>
+                <ReferenceActionCue
+                  summary={stillActions}
+                  onSelect={(item) => openLocationAction(loc.id, item)}
+                />
+                </div>
 
                 {/* Expanded content */}
                 {isExpanded && (() => {
@@ -1100,10 +1128,14 @@ export function LocationLibrary({
                                 }
                                 onGenerateLocationVersion?.(loc, version)
                               }
+                              const versionAction = stillActions.items.find((item) => item.id === version.id)
                               return (
                                 <div
                                   key={version.id}
-                                  className="rounded border border-slate-700 bg-slate-900/40 p-2 space-y-1.5"
+                                  id={`location-version-${version.id}`}
+                                  className={`rounded border border-slate-700 bg-slate-900/40 p-2 space-y-1.5 ${
+                                    focusedVersionId === version.id ? 'ring-2 ring-amber-400/80' : ''
+                                  }`}
                                 >
                                   <div className="flex items-start gap-1">
                                     <p className="text-[11px] font-medium text-white truncate flex-1">
@@ -1132,8 +1164,15 @@ export function LocationLibrary({
                                       })}
                                     </p>
                                   )}
-                                  {version.needsImageRegen && (
-                                    <span className="text-[9px] text-amber-300">{t('needsRegen')}</span>
+                                  {versionAction && (
+                                    <ReferenceActionCue
+                                      summary={{
+                                        tone: versionAction.action === 'changed' ? 'attention' : 'action',
+                                        items: [versionAction],
+                                        primary: versionAction,
+                                      }}
+                                      onSelect={() => quickGenerateVersion()}
+                                    />
                                   )}
                                   <input
                                     id={versionUploadId}

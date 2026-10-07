@@ -47,8 +47,10 @@ import {
   firstLibraryTabWithRequiredWork,
   libraryTabForPrimaryAction,
   pendingKindAgentRunForAction,
+  objectReferenceActions,
   summarizeLibraryRequiredActions,
 } from '@/lib/vision/libraryKindAgents'
+import { ReferenceActionCue } from './ReferenceActionCue'
 import type { ReferenceExpressKind } from '@/lib/vision/referenceExpress/types'
 import { ReferenceLibraryNextActionBanner } from './ReferenceLibraryNextActionBanner'
 import {
@@ -538,7 +540,17 @@ function DraggableReferenceCard({
     <>
         {/* Row 2: Name and Description */}
         <div className={splitLayout ? '' : 'mb-2'}>
-          <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">{reference.name}</div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">{reference.name}</div>
+            {isObjectCard && !hasImage ? (
+              <ReferenceActionCue
+                summary={objectReferenceActions(reference)}
+                onSelect={() => {
+                  void handleQuickGenerateObject()
+                }}
+              />
+            ) : null}
+          </div>
           {reference.description ? (
             <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-0.5">{reference.description}</div>
           ) : null}
@@ -547,11 +559,6 @@ function DraggableReferenceCard({
               <span className="px-1.5 py-0.5 rounded bg-slate-500/20 text-slate-400">
                 {beatCount} beat{beatCount === 1 ? '' : 's'}
               </span>
-              {!hasImage && (
-                <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">
-                  Needs reference
-                </span>
-              )}
             </div>
           ) : null}
         </div>

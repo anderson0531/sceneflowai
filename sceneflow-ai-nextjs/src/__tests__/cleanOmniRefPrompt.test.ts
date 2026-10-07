@@ -22,6 +22,16 @@ describe('cleanOmniRefScenePrompt', () => {
     expect(cleaned.split(/(?<=[.!?])\s+/).length).toBeLessThanOrEqual(2)
   })
 
+  it('keeps a trailing Performance brief when the scene is shortened', () => {
+    const brief =
+      'Tightly coiled, processing impossible data. Grounded in paranoia.'
+    const cleaned = cleanOmniRefScenePrompt(
+      `${BLOATED_SCENE} Performance: ${brief}`
+    )
+    expect(cleaned).toContain(`Performance: ${brief}`)
+    expect(cleaned).not.toContain('photorealistic')
+  })
+
   it('preserves core scene action and camera hint', () => {
     const cleaned = cleanOmniRefScenePrompt(BLOATED_SCENE)
 
@@ -40,6 +50,15 @@ describe('sanitizeOmniRefGuide', () => {
     expect(sanitized).not.toContain('desperate delivery')
     expect(sanitized).toContain('says:')
     expect(sanitized).toContain("I'm telling you")
+  })
+
+  it('keeps a Performance clause that stages the line', () => {
+    const brief =
+      'Close-mic, intimate and utterly defeated. Let the breath carry the words more than the vocal cords.'
+    const sanitized = sanitizeOmniRefGuide(
+      `Gideon says: 'It's a closed loop.' Performance: ${brief}`
+    )
+    expect(sanitized).toContain(`Performance: ${brief}`)
   })
 })
 

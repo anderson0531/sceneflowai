@@ -1578,6 +1578,7 @@ async function postGenerateImage(req: NextRequest) {
           beatLine: beatForEmotion.line,
           beatAction: beatForEmotion.actionDescription,
           beatDirectionEmotion: beatForEmotion.beatDirection?.emotion,
+          voiceDirection: beatForEmotion.voiceDirection,
         })
       : ''
 
@@ -1895,6 +1896,7 @@ async function postGenerateImage(req: NextRequest) {
           beatLine: beatForEmotion?.line,
           beatAction: beatForEmotion?.actionDescription,
           appearanceNotes: refPair.resolvedWardrobe?.appearanceNotes,
+          voiceDirection: beatForEmotion?.voiceDirection,
         }),
         gender: resolvedGender.gender,
         genderSource: resolvedGender.source,

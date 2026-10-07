@@ -14,4 +14,11 @@ describe('DIALOGUE_PERFORMANCE_DIRECTION_RULES', () => {
     expect(DIALOGUE_PERFORMANCE_DIRECTION_RULES).not.toMatch(/ELEVENLABS/i)
     expect(DIALOGUE_PERFORMANCE_DIRECTION_RULES).not.toContain('1-3 words')
   })
+
+  it('uses cinematic briefs that stage the body as well as the voice', () => {
+    expect(DIALOGUE_PERFORMANCE_DIRECTION_RULES).toContain('quiet, bitter surrender')
+    expect(DIALOGUE_PERFORMANCE_DIRECTION_RULES).toContain("crack on 'dead'")
+    expect(DIALOGUE_PERFORMANCE_DIRECTION_RULES).toContain('Grounded in paranoia')
+    expect(DIALOGUE_PERFORMANCE_DIRECTION_RULES).toContain('sent to stills and video as Performance')
+  })
 })

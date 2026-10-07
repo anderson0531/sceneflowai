@@ -274,14 +274,14 @@ USER NOTES are authoritative for the line, the action, and the emotion. Honor th
 
 HARD RULES:
 1. Do not change the story. Do not add plot, people, props, or locations. Keep cast labels exactly — the same character names already on the beat and in the reference library.
-2. Dialogue and narration: rewrite "line" and "voiceDirection". Do not change who is speaking.
+2. Dialogue and narration: rewrite "line" with a compact [emotion, delivery] tag and "voiceDirection" as 1-2 cinematic sentences. Cover inner state, breath, the word to land, and how to frame the face and body. That brief is sent to speech and to the picture. Do not change who is speaking.
 3. Action: rewrite "actionDescription". Do not invent a spoken line.
-4. Emotion is required. Name the feeling the note asked for, specific enough for a face and a body.
+4. Emotion is required. It is the visual frame a still can shoot — posture and face, not a one-word mood. Examples: quiet bitter surrender; the voice cracking on one word; tightly coiled calculation, not panic.
 5. Beat direction is the frozen instant a still and a clip are generated from. It must agree with the new line or action. One settled pose. No style essay.
 6. Output JSON only, no markdown:
 {
   "line": "spoken sentence, dialogue and narration only",
-  "voiceDirection": "how the line is delivered, dialogue and narration only",
+  "voiceDirection": "1-2 sentences: inner state, breath, the word to land, and how to frame the body. Dialogue and narration only",
   "actionDescription": "what is seen, action beats only",
   "emotion": "the directed feeling",
   "shotType": "Medium Shot",

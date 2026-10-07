@@ -100,7 +100,11 @@ function dedupeSimilarSegments(segments: string[]): string[] {
 export function cleanOmniRefScenePrompt(prompt: string): string {
   if (!prompt?.trim()) return prompt
 
-  let segments = splitPromptSegments(prompt)
+  const performanceMatch = prompt.match(/\bPerformance:\s*[\s\S]*$/)
+  const performance = performanceMatch?.[0].replace(/\s+/g, ' ').trim()
+  const body = performanceMatch?.index != null ? prompt.slice(0, performanceMatch.index).trim() : prompt
+
+  let segments = splitPromptSegments(body || prompt)
     .map(stripStyleTokens)
     .filter((s) => s.length > 0)
     .filter((s) => !isStyleOnlySegment(s))
@@ -116,7 +120,11 @@ export function cleanOmniRefScenePrompt(prompt: string): string {
     .replace(/\s{2,}/g, ' ')
     .trim()
 
-  return cleaned || prompt.trim()
+  const scene = cleaned || (body || prompt).trim()
+  if (performance && !/performance:/i.test(scene)) {
+    return `${scene} ${performance}`.replace(/\s{2,}/g, ' ').trim()
+  }
+  return scene
 }
 
 /** Strip verbose delivery parentheticals from dialogue guide text. */

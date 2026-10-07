@@ -10,7 +10,7 @@ import {
   resolveBeatSpokenDuration,
   VEO_DIALOGUE_CLIP_MAX_SEC,
 } from '@/lib/scene/dialogueSegmentSplit'
-import { parsePerformanceCue } from '@/lib/scene/performanceCues'
+import { formatPerformanceClause, parsePerformanceCue } from '@/lib/scene/performanceCues'
 import { KLING_SINGLE_CLIP_MAX_SEC } from '@/lib/kling/types'
 import {
   getSceneBeats,
@@ -91,7 +91,8 @@ function buildVideoPrompt(beat: SceneBeat, spokenText?: string): string {
   const deliverySuffix = parsed.deliveryProse
     ? ` Delivery: ${parsed.deliveryProse}.`
     : ''
-  return `${character} speaks with natural lip sync: "${line}".${deliverySuffix}${summarySuffix}`
+  const performance = formatPerformanceClause(beat.voiceDirection)
+  return `${character} speaks with natural lip sync: "${line}".${deliverySuffix}${performance}${summarySuffix}`
 }
 
 function beatToSegment(
@@ -159,6 +160,9 @@ function beatToSegment(
               id: beat.lineId ?? beat.beatId,
               character: beat.character ?? '',
               line: spokenText,
+              ...(beat.voiceDirection?.trim()
+                ? { voiceDirection: beat.voiceDirection.trim() }
+                : {}),
             },
           ]
         : [],

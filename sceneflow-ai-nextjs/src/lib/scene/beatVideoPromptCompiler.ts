@@ -14,7 +14,7 @@
  */
 
 import { getArtStyleNegativeTerms, getArtStyleVideoPromptSuffix } from '@/lib/vision/artStyle'
-import { parsePerformanceCue } from '@/lib/scene/performanceCues'
+import { formatPerformanceClause, parsePerformanceCue } from '@/lib/scene/performanceCues'
 import {
   correctPronounsToGender,
   type CharacterGender,
@@ -275,7 +275,8 @@ function leadForBeat(beat: SceneBeat, options?: CompileBeatVideoPromptOptions): 
     })
   }
   const delivery = parsed.deliveryProse ? ` Delivery: ${parsed.deliveryProse}` : ''
-  return `${speakerAlias} speaks naturally: "${cleanLine}".${delivery}`
+  const performance = formatPerformanceClause(beat.voiceDirection)
+  return `${speakerAlias} speaks naturally: "${cleanLine}".${delivery}${performance}`
 }
 
 function incomingContinuityClause(options?: CompileBeatVideoPromptOptions): string {
@@ -324,6 +325,10 @@ function finishVideoPrompt(args: {
   const fidelity = beatVideoFidelityClose(args.beat, { spokenLine: args.spokenLine })
   if (fidelity && !tokenAlreadyInPrompt(fidelity, core)) {
     core = normalizePromptJoin(core, fidelity)
+  }
+  const performance = formatPerformanceClause(args.beat.voiceDirection).trim()
+  if (performance && !/performance:/i.test(core)) {
+    core = normalizePromptJoin(core, performance)
   }
   const style = args.styleSuffix.trim()
   const prompt =
@@ -424,11 +429,16 @@ export function compileBeatVideoPromptFromDirection(
   const stored = beat.beatDirection?.videoPrompt?.trim()
   if (stored) {
     const continuity = incomingContinuityClause(options)
+    let prompt =
+      continuity && !tokenAlreadyInPrompt(continuity, stored)
+        ? normalizePromptJoin(stored, continuity)
+        : stored
+    const performance = formatPerformanceClause(beat.voiceDirection).trim()
+    if (performance && !/performance:/i.test(prompt)) {
+      prompt = normalizePromptJoin(prompt, performance)
+    }
     return {
-      prompt:
-        continuity && !tokenAlreadyInPrompt(continuity, stored)
-          ? normalizePromptJoin(stored, continuity)
-          : stored,
+      prompt,
       negativePrompt: videoNegatives(beat, styleNegative),
     }
   }
