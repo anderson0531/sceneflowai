@@ -441,6 +441,37 @@ describe('acquireImageGenerationLease', () => {
     await third()
   })
 
+  it('does not grant a local lease when the Redis eval fails', async () => {
+    process.env.KV_REST_API_URL = 'https://example.upstash.io'
+    process.env.KV_REST_API_TOKEN = 'token'
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('redis down'))
+
+    await expect(acquireImageGenerationLease({ maxWaitMs: 1_000 })).rejects.toBeInstanceOf(
+      VertexDispatchDeferredError
+    )
+
+    delete process.env.KV_REST_API_URL
+    delete process.env.KV_REST_API_TOKEN
+
+    const first = await acquireImageGenerationLease({ maxWaitMs: 5_000 })
+    const secondPromise = acquireImageGenerationLease({ maxWaitMs: 5_000 })
+    await vi.advanceTimersByTimeAsync(1_000)
+    const second = await secondPromise
+    let thirdStarted = false
+    const thirdPromise = acquireImageGenerationLease({ maxWaitMs: 5_000 }).then((release) => {
+      thirdStarted = true
+      return release
+    })
+    await vi.advanceTimersByTimeAsync(IMAGE_LEASE_POLL_MS + 20)
+    expect(thirdStarted).toBe(false)
+    await first()
+    await second()
+    await vi.advanceTimersByTimeAsync(IMAGE_LEASE_POLL_MS + 1_000)
+    const third = await thirdPromise
+    expect(thirdStarted).toBe(true)
+    await third()
+  })
+
   it('frees the slot immediately when the caller releases it', async () => {
     const cancelled = await acquireImageGenerationLease({ maxWaitMs: 20_000 })
     await cancelled('release')

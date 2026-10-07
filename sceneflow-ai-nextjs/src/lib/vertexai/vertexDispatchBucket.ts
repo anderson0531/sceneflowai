@@ -14,8 +14,10 @@
  * expires on its own once heartbeats stop. Video keeps the start gap only.
  *
  * Redis (Upstash REST, same credentials as `src/lib/collab/kv.ts`) makes the
- * claim global across Vercel instances. When Redis is unset or errors, an
- * in-process metronome still spaces the current instance. An interval of 0
+ * claim global across Vercel instances. When Redis is unset, an in-process
+ * metronome still spaces the current instance. An image-lease eval error
+ * refuses the admit instead of granting a private slot the next isolate cannot
+ * see. The video start gap still falls back in-process. An interval of 0
  * disables the lane, including the image lease.
  *
  * The Lua script and `reserveDispatchSlot` / `reserveImageLease` are the same
@@ -592,11 +594,11 @@ async function claimImageLeaseOnce(input: {
   try {
     return await claimImageLeaseWithRedis(input, redis)
   } catch (err) {
-    if (!redisFallbackLogged) {
-      redisFallbackLogged = true
-      console.warn('[Vertex Dispatch] Redis unavailable; image lease is local to this instance', err)
-    }
-    return claimImageLeaseInProcess(input)
+    console.warn(
+      '[Vertex Dispatch] Redis image lease eval failed; refusing a private admit',
+      err
+    )
+    throw new VertexDispatchDeferredError('image', IMAGE_LEASE_POLL_MS)
   }
 }
 
@@ -608,6 +610,7 @@ function releaseImageLeaseInProcess(token: string): void {
 
 async function releaseImageLeaseToken(token: string): Promise<void> {
   if (!token) return
+  console.log('[Vertex Dispatch] image lease released')
   releaseImageLeaseInProcess(token)
   const redis = redisConfig()
   if (!redis) return
@@ -644,7 +647,9 @@ async function renewImageLeaseToken(token: string): Promise<void> {
   if (!heldLeaseTokens.has(token)) return
   const now = Date.now()
   const leaseTtlMs = getImageLeaseTtlMs()
-  if (!renewImageLeaseInProcess(token, now, leaseTtlMs)) return
+  // A missing in-process mirror must not skip the Redis refresh. That is how
+  // a long still expired out of the global set while this isolate still counted it.
+  renewImageLeaseInProcess(token, now, leaseTtlMs)
   if (!heldLeaseTokens.has(token)) return
   const redis = redisConfig()
   if (!redis) return
@@ -675,7 +680,6 @@ function startImageLeaseHeartbeat(token: string): () => void {
   const timer = setInterval(() => {
     void renewImageLeaseToken(token)
   }, getImageLeaseHeartbeatMs())
-  if (typeof timer.unref === 'function') timer.unref()
   heartbeatTimers.add(timer)
   return () => {
     clearInterval(timer)
@@ -817,7 +821,10 @@ export async function acquireImageGenerationLease(
       }
       return async (mode: ImageLeaseReleaseMode = 'release') => {
         stopHeartbeat()
-        if (mode === 'abandon') return
+        if (mode === 'abandon') {
+          console.warn('[Vertex Dispatch] image lease abandoned')
+          return
+        }
         await releaseImageLeaseToken(token)
       }
     }

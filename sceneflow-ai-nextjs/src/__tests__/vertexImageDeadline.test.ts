@@ -71,7 +71,7 @@ describe('generateVertexGeminiImage deadlines', () => {
     expect(abortAfterMs).toBeLessThanOrEqual(30_000)
   })
 
-  it('holds a fail-fast identity-ref pro still until the route deadline', async () => {
+  it('aborts a fail-fast identity-ref pro still at 90s inside a longer route deadline', async () => {
     let abortAfterMs = -1
     const originalSetTimeout = globalThis.setTimeout
     vi.stubGlobal('setTimeout', ((fn: () => void, ms?: number) => {
@@ -88,8 +88,27 @@ describe('generateVertexGeminiImage deadlines', () => {
       deadlineAt: Date.now() + 180_000,
     })
 
-    expect(abortAfterMs).toBeGreaterThan(90_000)
-    expect(abortAfterMs).toBeLessThanOrEqual(180_000)
+    expect(abortAfterMs).toBe(90_000)
+  })
+
+  it('aborts a fail-fast draft flash still at 90s inside a longer route deadline', async () => {
+    let abortAfterMs = -1
+    const originalSetTimeout = globalThis.setTimeout
+    vi.stubGlobal('setTimeout', ((fn: () => void, ms?: number) => {
+      if (abortAfterMs < 0) abortAfterMs = ms ?? 0
+      return originalSetTimeout(fn, ms)
+    }) as typeof setTimeout)
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(imageResponse()))
+
+    await generateVertexGeminiImage({
+      prompt: 'a galvanometer needle on the zinc table',
+      modelTier: 'eco',
+      failFastOnRateLimit: true,
+      referenceImages: [{ base64Image: 'aW1hZ2U=', mimeType: 'image/png', name: 'location [1]' }],
+      deadlineAt: Date.now() + 180_000,
+    })
+
+    expect(abortAfterMs).toBe(90_000)
   })
 
   it('keeps its full timeout when no deadline is given', async () => {
@@ -200,13 +219,13 @@ describe('generateVertexGeminiImage deadlines', () => {
       modelTier: 'designer',
       failFastOnRateLimit: true,
       referenceImages: [{ base64Image: 'aW1hZ2U=', mimeType: 'image/png', name: 'identity' }],
-      deadlineAt: Date.now() + 500,
+      deadlineAt: Date.now() + 180_000,
     })
     const timeoutResult = timedOut.then(
       () => 'resolved',
       (err: unknown) => err
     )
-    await vi.advanceTimersByTimeAsync(500)
+    await vi.advanceTimersByTimeAsync(120_000)
     const timeoutError = await timeoutResult
     expect(timeoutError).toBeInstanceOf(Error)
     expect((timeoutError as Error).name).toBe('AbortError')
@@ -229,7 +248,7 @@ describe('generateVertexGeminiImage deadlines', () => {
     vi.useRealTimers()
   })
 
-  it('frees the shared slot when the Stills Agent cancels', async () => {
+  it('keeps the shared slot when the Stills Agent cancels after the provider fetch starts', async () => {
     process.env.VERTEX_IMAGE_DISPATCH_INTERVAL_MS = '1'
     resetVertexDispatchBucketForTests()
     vi.useFakeTimers()
@@ -268,21 +287,81 @@ describe('generateVertexGeminiImage deadlines', () => {
     expect(cancelError).toBeInstanceOf(Error)
     expect(String((cancelError as Error).message)).toMatch(/abortedByClient/)
 
-    let admitted = 0
-    const firstAdmit = acquireImageGenerationLease({ maxWaitMs: 1_000 }).then((release) => {
-      admitted += 1
-      return release
-    })
-    const secondAdmit = acquireImageGenerationLease({ maxWaitMs: 1_000 }).then((release) => {
-      admitted += 1
-      return release
-    })
+    const secondPromise = acquireImageGenerationLease({ maxWaitMs: 1_000 })
     await vi.advanceTimersByTimeAsync(20)
-    expect(admitted).toBe(2)
-    const releaseFirst = await firstAdmit
-    const releaseSecond = await secondAdmit
-    await releaseFirst()
-    await releaseSecond()
+    const second = await secondPromise
+    let thirdStarted = false
+    const third = acquireImageGenerationLease({ maxWaitMs: 1_000 }).then((release) => {
+      thirdStarted = true
+      return release
+    })
+    await vi.advanceTimersByTimeAsync(IMAGE_LEASE_POLL_MS + 20)
+    expect(thirdStarted).toBe(false)
+    await second()
+    await vi.advanceTimersByTimeAsync(IMAGE_LEASE_POLL_MS + 20)
+    const thirdRelease = await third
+    expect(thirdStarted).toBe(true)
+    await thirdRelease()
+    vi.useRealTimers()
+  })
+
+  it('keeps the shared slot when a timeout lands on an already-aborted parent signal', async () => {
+    process.env.VERTEX_IMAGE_DISPATCH_INTERVAL_MS = '1'
+    resetVertexDispatchBucketForTests()
+    vi.useFakeTimers()
+
+    const hangUntilAbort = vi.fn((_url: string, init?: RequestInit) => {
+      return new Promise((_resolve, reject) => {
+        const onAbort = () => {
+          const err = new Error('The operation was aborted')
+          err.name = 'AbortError'
+          reject(err)
+        }
+        if (init?.signal?.aborted) {
+          onAbort()
+          return
+        }
+        init?.signal?.addEventListener('abort', onAbort, { once: true })
+      })
+    })
+    vi.stubGlobal('fetch', hangUntilAbort)
+
+    const parent = new AbortController()
+    const timedOut = generateVertexGeminiImage({
+      prompt: 'a slow draft still',
+      modelTier: 'eco',
+      failFastOnRateLimit: true,
+      referenceImages: [{ base64Image: 'aW1hZ2U=', mimeType: 'image/png', name: 'location [1]' }],
+      deadlineAt: Date.now() + 180_000,
+      signal: parent.signal,
+    })
+    const timeoutResult = timedOut.then(
+      () => 'resolved',
+      (err: unknown) => err
+    )
+    await vi.advanceTimersByTimeAsync(20)
+    expect(hangUntilAbort).toHaveBeenCalled()
+    parent.abort()
+    await vi.advanceTimersByTimeAsync(90_000)
+    const timeoutError = await timeoutResult
+    expect(timeoutError).toBeInstanceOf(Error)
+    expect(String((timeoutError as Error).message)).toMatch(/abortedByClient/)
+
+    const secondPromise = acquireImageGenerationLease({ maxWaitMs: 1_000 })
+    await vi.advanceTimersByTimeAsync(20)
+    const second = await secondPromise
+    let thirdStarted = false
+    const third = acquireImageGenerationLease({ maxWaitMs: 1_000 }).then((release) => {
+      thirdStarted = true
+      return release
+    })
+    await vi.advanceTimersByTimeAsync(IMAGE_LEASE_POLL_MS + 20)
+    expect(thirdStarted).toBe(false)
+    await second()
+    await vi.advanceTimersByTimeAsync(IMAGE_LEASE_POLL_MS + 20)
+    const thirdRelease = await third
+    expect(thirdStarted).toBe(true)
+    await thirdRelease()
     vi.useRealTimers()
   })
 
