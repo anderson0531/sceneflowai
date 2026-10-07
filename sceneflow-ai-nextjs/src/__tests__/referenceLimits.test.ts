@@ -748,4 +748,26 @@ describe('omitWardrobePlatesForFaceCloseUp', () => {
     expect(omitWardrobePlatesForFaceCloseUp(refs, 'MCU').dropped).toEqual([])
     expect(omitWardrobePlatesForFaceCloseUp(refs, 'MCU').kept).toEqual(refs)
   })
+
+  it('drops wardrobe when Action/Framing is a close-up and shot type is only an angle', () => {
+    const refs = [
+      ref('identity', 'Gideon identity', undefined, {
+        characterName: 'Gideon Croft',
+        refRole: 'identity',
+      }),
+      ref('wardrobe', 'Gideon wardrobe', undefined, {
+        characterName: 'Gideon Croft',
+        refRole: 'wardrobe',
+      }),
+      ref('location', 'Vault', undefined, { locationName: 'Vault' }),
+      ref('prop-critical', 'Photo', undefined, { propName: 'Framed Photo of Sarah' }),
+    ]
+    const { kept, dropped } = omitWardrobePlatesForFaceCloseUp(
+      refs,
+      'high angle',
+      'Close-Up, high angle. Gideon leans over the bench.'
+    )
+    expect(dropped.map((item) => item.refRole)).toEqual(['wardrobe'])
+    expect(kept.map((item) => item.role)).toEqual(['identity', 'location', 'prop-critical'])
+  })
 })

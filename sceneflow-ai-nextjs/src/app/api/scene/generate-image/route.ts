@@ -73,6 +73,7 @@ import {
   type ProjectLookbook,
 } from '@/lib/intelligence/project-lookbook'
 import {
+  composeBeatActionFraming,
   composePersistedBeatStillPrompt,
   TITLE_BEAT_ACTION_LEAD_IN,
   stillAllowsTypography,
@@ -2718,7 +2719,11 @@ async function postGenerateImage(req: NextRequest) {
           const useInterleavedProRefs = effectiveImageTier !== 'eco'
           const { kept: refsForCap, dropped: cuWardrobeDropped } =
             useInterleavedProRefs && !isCreativeStillGeneration(stillGenerationMode)
-              ? omitWardrobePlatesForFaceCloseUp(allPrioritizedRefs, effectiveShotType)
+              ? omitWardrobePlatesForFaceCloseUp(
+                  allPrioritizedRefs,
+                  effectiveShotType,
+                  beatForEmotion ? composeBeatActionFraming(beatForEmotion) : undefined
+                )
               : { kept: allPrioritizedRefs, dropped: [] as typeof allPrioritizedRefs }
           if (cuWardrobeDropped.length > 0) {
             console.log(

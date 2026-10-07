@@ -428,13 +428,37 @@ describe('composeIdentityWardrobeDiptych', () => {
 })
 
 describe('cropIdentityPlateForPro', () => {
-  it('passes through a square or 9:16 headshot', async () => {
+  it('passes through a square or 3:4 headshot and crops a 9:16 portrait', async () => {
     expect(identityPlateNeedsFaceCrop(1024, 1024)).toBe(false)
-    expect(identityPlateNeedsFaceCrop(720, 1280)).toBe(false)
+    expect(identityPlateNeedsFaceCrop(768, 1024)).toBe(false)
+    expect(identityPlateNeedsFaceCrop(720, 1280)).toBe(true)
+    expect(identityPlateNeedsFaceCrop(1536, 2752)).toBe(true)
     const square = await solidJpeg(400, 400, { r: 180, g: 40, b: 40 })
     const result = await cropIdentityPlateForPro(square)
     expect(result.cropped).toBe(false)
     expect(result.buffer).toBe(square)
+  })
+
+  it('north-crops a tall identity plate so the face keeps the tile', async () => {
+    const top = await solidJpeg(80, 80, { r: 210, g: 30, b: 30 })
+    const bottom = await solidJpeg(80, 80, { r: 20, g: 20, b: 210 })
+    const tall = await sharp({
+      create: { width: 80, height: 160, channels: 3, background: { r: 0, g: 0, b: 0 } },
+    })
+      .composite([
+        { input: top, top: 0, left: 0 },
+        { input: bottom, top: 80, left: 0 },
+      ])
+      .jpeg()
+      .toBuffer()
+
+    const result = await cropIdentityPlateForPro(tall)
+    expect(result.cropped).toBe(true)
+    expect(result.reason).toBe('tall-portrait')
+    const { data, info } = await sharp(result.buffer).raw().toBuffer({ resolveWithObject: true })
+    const [r, , b] = pixelAt(data, info, Math.floor(info.width / 2), Math.floor(info.height / 2))
+    expect(r).toBeGreaterThan(150)
+    expect(b).toBeLessThan(80)
   })
 
   it('centre-crops a wide cinematic portrait to a 1:1 CU', async () => {

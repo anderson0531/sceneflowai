@@ -87,7 +87,10 @@ const PIP_RING_CREAM = { r: 244, g: 241, b: 234 }
 
 export function identityPlateNeedsFaceCrop(width: number, height: number): boolean {
   if (width < 16 || height < 16) return false
-  return width / height > 1.15
+  if (width / height > 1.15) return true
+  // Taller than 3:4. 9:16 identity plates were sent whole and the face lost
+  // the 560-token slot to shoulders and background.
+  return height / width > 1.5
 }
 
 export function pipBadgeExtractRegion(
@@ -149,14 +152,15 @@ export async function looksLikeComposedPipCard(buffer: Buffer): Promise<boolean>
   return cream >= 2
 }
 
-export type IdentityProCropReason = 'pip-badge' | 'wide-portrait'
+export type IdentityProCropReason = 'pip-badge' | 'wide-portrait' | 'tall-portrait'
 
 /**
  * Spend Pro's 560 visual tokens on a face CU.
  *
- * Square / 3:4 / 9:16 headshots already fill the tile — pass through.
- * Leftover PiP badges are extracted from the cream-ringed corner.
- * Other wide plates get a centre 1:1 cover crop (cinematic portraits).
+ * Square and 3:4 headshots already fill the tile — pass through.
+ * A 9:16 portrait does not: the face is a fraction of the tile, so it gets a
+ * north-weighted 1:1. Leftover PiP badges are extracted from the cream-ringed
+ * corner. Other wide plates get a centre 1:1 cover crop.
  */
 export async function cropIdentityPlateForPro(buffer: Buffer): Promise<{
   buffer: Buffer
@@ -191,17 +195,18 @@ export async function cropIdentityPlateForPro(buffer: Buffer): Promise<{
     }
   }
 
+  const tallPortrait = height / width > 1.5
   const cropped = await sharp(buffer)
     .resize(IDENTITY_PRO_CU_SIZE, IDENTITY_PRO_CU_SIZE, {
       fit: 'cover',
-      position: 'centre',
+      position: tallPortrait ? 'north' : 'centre',
     })
     .jpeg({ quality: 92 })
     .toBuffer()
   return {
     buffer: cropped,
     cropped: true,
-    reason: 'wide-portrait',
+    reason: tallPortrait ? 'tall-portrait' : 'wide-portrait',
     width: IDENTITY_PRO_CU_SIZE,
     height: IDENTITY_PRO_CU_SIZE,
   }
