@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  explicitBeatReferenceSelection,
   propsSelectionOutrunsDirection,
   resolveBeatFrameGenerationContext,
 } from '@/lib/vision/beatFrameGenerationContext'
@@ -904,5 +905,73 @@ describe('propsSelectionOutrunsDirection', () => {
         objectReferences,
       })
     ).toEqual([])
+  })
+})
+
+describe('explicitBeatReferenceSelection', () => {
+  const objectReferences: VisualReference[] = [
+    { id: 'photo', type: 'object', name: 'Framed Photo of Sarah' },
+    { id: 'bench', type: 'object', name: 'Zinc workbench' },
+    { id: 'vellum', type: 'object', name: 'Violet Ink Drafting Vellum' },
+  ]
+
+  function savedBeat(overrides: Partial<SceneBeat> = {}): SceneBeat & {
+    referenceSelection: NonNullable<SceneBeat['referenceSelection']>
+  } {
+    return actionBeat({
+      referenceSelection: {
+        characterIds: ['c1'],
+        objectRefIds: [],
+        locationRefId: 'loc-vault',
+        resolvedAt: '2026-10-07T00:00:00.000Z',
+        source: 'user',
+      },
+      ...overrides,
+    }) as SceneBeat & { referenceSelection: NonNullable<SceneBeat['referenceSelection']> }
+  }
+
+  it('attaches library props the direction names when the saved selection omitted them', () => {
+    const selection = explicitBeatReferenceSelection({
+      beat: savedBeat({
+        beatDirection: {
+          keyProps: ['Framed Photo of Sarah', 'Zinc workbench'],
+          shotType: 'Close-Up',
+        },
+      }),
+      objectReferences,
+    })
+
+    expect(selection.objectRefIds).toEqual(['photo', 'bench'])
+  })
+
+  it('keeps a prop the user already selected and appends the one the direction adds', () => {
+    const selection = explicitBeatReferenceSelection({
+      beat: savedBeat({
+        referenceSelection: {
+          characterIds: ['c1'],
+          objectRefIds: ['bench'],
+          resolvedAt: '2026-10-07T00:00:00.000Z',
+          source: 'user',
+        },
+        beatDirection: {
+          keyProps: ['Framed Photo of Sarah', 'Zinc workbench'],
+        },
+      }),
+      objectReferences,
+    })
+
+    expect(selection.objectRefIds).toEqual(['bench', 'photo'])
+  })
+
+  it('does not attach a library prop the beat never names', () => {
+    const selection = explicitBeatReferenceSelection({
+      beat: savedBeat({
+        actionDescription: 'Gideon stares at the empty vault.',
+        beatDirection: { keyProps: ['Framed Photo of Sarah'] },
+      }),
+      objectReferences,
+    })
+
+    expect(selection.objectRefIds).toEqual(['photo'])
   })
 })

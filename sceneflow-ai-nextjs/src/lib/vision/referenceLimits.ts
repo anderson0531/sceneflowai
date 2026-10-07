@@ -5,7 +5,7 @@ import {
 } from '@/lib/character/characterReferenceAssembly'
 import { buildLocationReferenceLabel } from '@/lib/vision/locationReferencePrompts'
 import { isFurnitureProp, propScaleClause } from '@/lib/imagen/propScaleClause'
-import { isFaceCloseUpShot } from '@/lib/imagen/stillFramingNormalize'
+import { isFaceCloseUpShot, resolveStillShotClass } from '@/lib/imagen/stillFramingNormalize'
 
 export const MAX_VERTEX_GEMINI_REFERENCE_IMAGES = 8
 export const MAX_REFERENCE_IMAGES_ECO = 3
@@ -240,8 +240,15 @@ function propRole(importance?: string): ReferencePriorityRole {
  */
 export function omitWardrobePlatesForFaceCloseUp<
   T extends { refRole?: CharacterRefRole; characterName?: string }
->(refs: T[], shotType?: string | null): { kept: T[]; dropped: T[] } {
-  if (!isFaceCloseUpShot(shotType)) {
+>(
+  refs: T[],
+  shotType?: string | null,
+  actionFraming?: string | null
+): { kept: T[]; dropped: T[] } {
+  // Action/Framing can open with "Close-Up, high angle" while the stored
+  // shot type is only the angle. The composed line is what the model sees.
+  const shotHint = resolveStillShotClass(shotType, actionFraming).shotHint || shotType
+  if (!isFaceCloseUpShot(shotHint)) {
     return { kept: refs, dropped: [] }
   }
 

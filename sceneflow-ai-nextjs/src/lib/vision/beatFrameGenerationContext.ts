@@ -265,6 +265,33 @@ function uniqueObjects<T extends { id?: string; name?: string }>(objects: T[]): 
 }
 
 /**
+ * Library props this beat's direction actually names.
+ *
+ * `keyProps` leads, then names found in the beat's own action and prop
+ * handling. Scene-level catalogs stay out: a prop the beat never mentions
+ * arrives with no instruction and the model invents it into the frame.
+ */
+function detectBeatNamedProps(
+  beat: SceneBeat,
+  objectReferences: VisualReference[]
+): { objects: VisualReference[]; directedIds: Set<string> } {
+  const matchText = buildBeatPropMatchText(beat)
+  const keyProps = beat.beatDirection?.keyProps ?? []
+  const directedObjects = matchObjectsBySelectedNames(keyProps, objectReferences as any[])
+  const directedIds = new Set(directedObjects.map((obj) => String(obj.id || obj.name)))
+  const objects = collapseObjectClusters(
+    uniqueObjects([
+      ...directedObjects,
+      ...findSceneObjects(matchText, objectReferences as any[], undefined, {
+        matchDescriptions: false,
+      }),
+    ]),
+    matchText
+  ).filter((obj) => !isMountedSetFixtureName(obj.name))
+  return { objects, directedIds }
+}
+
+/**
  * Cast the beat states outright, matched onto project character rows.
  *
  * Nothing falls back here. A stated name the library does not have is a name
@@ -510,22 +537,11 @@ export function resolveBeatFrameGenerationContext(
     }
   }
 
-  const matchText = buildBeatPropMatchText(beat)
   const beatDirectionKeyProps = beat.beatDirection?.keyProps ?? []
-  const directedObjects = matchObjectsBySelectedNames(
-    beatDirectionKeyProps,
-    objectReferences as any[]
+  const { objects: detectedObjects, directedIds: directedObjectIds } = detectBeatNamedProps(
+    beat,
+    objectReferences
   )
-  const directedObjectIds = new Set(directedObjects.map((o) => String(o.id || o.name)))
-  const detectedObjects = collapseObjectClusters(
-    uniqueObjects([
-      ...directedObjects,
-      ...findSceneObjects(matchText, objectReferences as any[], undefined, {
-        matchDescriptions: false,
-      }),
-    ]),
-    matchText
-  ).filter((obj) => !isMountedSetFixtureName(obj.name))
   const objectRefIds = detectedObjects.map((o) => o.id).filter(Boolean) as string[]
 
   const characterWardrobes = buildCharacterWardrobes(scene, characterIds, projectCharacters, sceneIndex)
@@ -751,17 +767,33 @@ export function explicitBeatReferenceSelection(args: {
   objectReferences?: VisualReference[]
 }): BeatReferenceSelection {
   const selection = args.beat.referenceSelection
+  const objectReferences = args.objectReferences ?? []
   const unsupported = propsSelectionOutrunsDirection({
     selection,
     beat: args.beat,
-    objectReferences: args.objectReferences ?? [],
+    objectReferences,
   })
   if (unsupported.length > 0) {
     console.warn(
       `[Beat References] Beat ${args.beat.beatId} saved selection carries ${unsupported.length} prop(s) its current direction does not mention: ${unsupported.join(', ')} — the frame will be handed a reference with no instruction attached to it`
     )
   }
-  return selection
+
+  const { objects: named } = detectBeatNamedProps(args.beat, objectReferences)
+  const present = new Set(selection.objectRefIds)
+  const added = named.filter((obj) => obj.id && !present.has(obj.id))
+  if (added.length === 0) return selection
+
+  console.log(
+    `[Beat References] Beat ${args.beat.beatId} saved selection omitted ${added.length} prop(s) its direction names: ${added
+      .map((obj) => obj.name)
+      .filter(Boolean)
+      .join(', ')} — attaching their reference images`
+  )
+  return {
+    ...selection,
+    objectRefIds: [...selection.objectRefIds, ...added.map((obj) => obj.id as string)],
+  }
 }
 
 /**
