@@ -49,6 +49,7 @@ import {
   extractHeadingLocationsFromScenes,
   locationAgentCopyUnits,
   locationReferenceActions,
+  locationVersionCamera,
   toLocationReferenceFromExtracted,
   type ReferenceActionItem,
 } from '@/lib/vision/libraryKindAgents'
@@ -63,7 +64,6 @@ import {
   isDisplayableImageUrl,
 } from '@/components/vision/DeferredImageSkeleton'
 import { ReferenceSplitPane } from './ReferenceSplitPane'
-import { isDirectionStale } from '@/lib/utils/contentHash'
 import {
   filterScenesForLocation,
   locationDescriptionWithMountedFixtures,
@@ -94,26 +94,6 @@ function buildScenesPayloadForLocationVersions(scenes: LocationLibraryProps['sce
         : undefined
     })(),
   }))
-}
-
-function locationHasOutdatedDirection(
-  loc: LocationReference,
-  scenes: LocationLibraryProps['scenes']
-): boolean {
-  const sceneNumbers =
-    loc.sceneNumbers && loc.sceneNumbers.length > 0
-      ? loc.sceneNumbers
-      : loc.sourceSceneIndex != null
-        ? [loc.sourceSceneIndex + 1]
-        : []
-
-  for (const sceneNum of sceneNumbers) {
-    const scene = scenes[sceneNum - 1]
-    if (!scene?.sceneDirection || isDirectionStale(scene)) {
-      return true
-    }
-  }
-  return false
 }
 
 function locationVersionGeneratingId(locationId: string, versionId: string): string {
@@ -366,6 +346,7 @@ export function LocationLibrary({
   const t = useTranslations('production.direction.locationLibrary')
   const [expandedLocationId, setExpandedLocationId] = useState<string | null>(null)
   const [focusedVersionId, setFocusedVersionId] = useState<string | null>(null)
+  const [focusedBaseLocationId, setFocusedBaseLocationId] = useState<string | null>(null)
   const [editingDescriptionId, setEditingDescriptionId] = useState<string | null>(null)
   const [descriptionText, setDescriptionText] = useState('')
   const [expandedImageUrl, setExpandedImageUrl] = useState<string | null>(null)
@@ -384,14 +365,23 @@ export function LocationLibrary({
 
   const openLocationAction = useCallback((locationId: string, item: ReferenceActionItem) => {
     setExpandedLocationId(locationId)
-    setFocusedVersionId(item.id === 'base' ? null : item.id)
+    if (item.id === 'base') {
+      setFocusedVersionId(null)
+      setFocusedBaseLocationId(locationId)
+      return
+    }
+    setFocusedBaseLocationId(null)
+    setFocusedVersionId(item.id)
   }, [])
 
   useEffect(() => {
-    if (!focusedVersionId) return
-    const el = document.getElementById(`location-version-${focusedVersionId}`)
-    el?.scrollIntoView({ block: 'nearest' })
-  }, [focusedVersionId, expandedLocationId])
+    if (focusedVersionId) {
+      document.getElementById(`location-version-${focusedVersionId}`)?.scrollIntoView({ block: 'nearest' })
+      return
+    }
+    if (!focusedBaseLocationId || expandedLocationId !== focusedBaseLocationId) return
+    document.getElementById(`location-base-${focusedBaseLocationId}`)?.scrollIntoView({ block: 'nearest' })
+  }, [focusedVersionId, focusedBaseLocationId, expandedLocationId])
 
   const extractedLocations = useMemo(
     () => extractHeadingLocationsFromScenes(scenes),
@@ -709,30 +699,37 @@ export function LocationLibrary({
             const isUploading = uploadingForId === loc.id
             const hasImage = isDisplayableImageUrl(loc.imageUrl)
             const isDeferredImage = isDeferredImageUrl(loc.imageUrl)
-            const directionOutdated = locationHasOutdatedDirection(loc, scenes)
             const stillActions = locationReferenceActions(loc)
+            const versionCamera = locationVersionCamera(loc)
+            const baseAction = stillActions.items.find((item) => item.id === 'base')
+            const versionsDrawnFromPreviousBase = (loc.versions || []).some(
+              (version) => Boolean(version.needsImageRegen) && Boolean(version.imageUrl?.trim())
+            )
             const cameraClass =
-              stillActions.tone === 'ready'
+              versionCamera.tone === 'ready'
                 ? 'text-green-400'
-                : stillActions.tone === 'attention'
+                : versionCamera.tone === 'attention'
                   ? 'text-amber-400'
-                  : 'text-red-500'
-            const cameraTitle = stillActions.primary
-              ? stillActions.items
-                  .map((item) =>
-                    t('actionCue', {
-                      action: t(
-                        item.action === 'add'
-                          ? 'actionAdd'
-                          : item.action === 'missing'
-                            ? 'actionMissing'
-                            : 'actionChanged'
-                      ),
-                      name: item.name,
-                    })
-                  )
-                  .join('\n')
-              : t('cameraReady')
+                  : versionCamera.tone === 'action'
+                    ? 'text-red-500'
+                    : 'text-slate-500'
+            const formatCue = (item: ReferenceActionItem) =>
+              t('actionCue', {
+                action: t(
+                  item.action === 'add'
+                    ? 'actionAdd'
+                    : item.action === 'missing'
+                      ? 'actionMissing'
+                      : 'actionChanged'
+                ),
+                name: item.name,
+              })
+            const cameraTitle =
+              versionCamera.tone === 'waiting'
+                ? t('cameraVersionsWaitOnBase')
+                : versionCamera.items.length > 0
+                  ? versionCamera.items.map(formatCue).join('\n')
+                  : t('cameraReady')
 
             return (
               <div
@@ -768,16 +765,6 @@ export function LocationLibrary({
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
-                    {directionOutdated && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          Scene direction missing or outdated for mapped scene(s)
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className="inline-flex" title={cameraTitle}>
@@ -1016,6 +1003,35 @@ export function LocationLibrary({
                     </div>
                   )
 
+                  const baseStillPanel = (
+                    <div
+                      id={`location-base-${loc.id}`}
+                      className={`space-y-1.5 ${
+                        focusedBaseLocationId === loc.id ? 'rounded-md ring-2 ring-amber-400/80' : ''
+                      }`}
+                    >
+                      {baseAction && (
+                        <ReferenceActionCue
+                          summary={{
+                            tone: 'action',
+                            items: [baseAction],
+                            primary: baseAction,
+                          }}
+                          onSelect={() => openLocationAction(loc.id, baseAction)}
+                        />
+                      )}
+                      {baseAction && (loc.versions || []).length > 0 && (
+                        <p className="text-[10px] leading-snug text-amber-200/90">{t('baseBeforeVersions')}</p>
+                      )}
+                      {hasImage && versionsDrawnFromPreviousBase && (
+                        <p className="text-[10px] leading-snug text-amber-200/90">
+                          {t('versionsDrawnFromPreviousBase')}
+                        </p>
+                      )}
+                      {locationImagePanel}
+                    </div>
+                  )
+
                   const locationDetailsPanel = (
                     <div className="space-y-2">
                       {loc.sceneNumbers && loc.sceneNumbers.length > 0 && (
@@ -1075,7 +1091,7 @@ export function LocationLibrary({
                         )}
                       </div>
 
-                      {!splitLayout && locationImagePanel}
+                      {!splitLayout && baseStillPanel}
 
                       <div className="pt-2 space-y-2">
                         <div className="flex items-center justify-between gap-2">
@@ -1171,7 +1187,17 @@ export function LocationLibrary({
                                         items: [versionAction],
                                         primary: versionAction,
                                       }}
-                                      onSelect={() => quickGenerateVersion()}
+                                      onSelect={() => {
+                                        if (!hasImage) {
+                                          openLocationAction(loc.id, {
+                                            id: 'base',
+                                            name: 'Base',
+                                            action: 'add',
+                                          })
+                                          return
+                                        }
+                                        quickGenerateVersion()
+                                      }}
                                     />
                                   )}
                                   <input
@@ -1274,7 +1300,7 @@ export function LocationLibrary({
                     <div className="px-3 pb-3 border-t border-gray-200 dark:border-gray-700">
                       {splitLayout ? (
                         <ReferenceSplitPane
-                          image={locationImagePanel}
+                          image={baseStillPanel}
                           controls={locationDetailsPanel}
                         />
                       ) : (

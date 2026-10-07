@@ -13,6 +13,7 @@ import {
   locationAgentCopyUnits,
   locationCameraStatus,
   locationReferenceActions,
+  locationVersionCamera,
   castReferenceActions,
   objectReferenceActions,
   formatReferenceActionCue,
@@ -130,6 +131,45 @@ describe('reference still actions', () => {
         versions: [{ id: 'flood', name: 'Flooded', stateNotes: 'Water', imageUrl: 'https://cdn/flood.png' }],
       }).tone
     ).toBe('ready')
+  })
+
+  it('keeps the version camera neutral while the base still is missing', () => {
+    const waiting = locationVersionCamera({
+      imageUrl: '',
+      versions: [{ id: 'door', name: 'Door blown', stateNotes: 'Door gone', imageUrl: '' }],
+    })
+    expect(waiting.tone).toBe('waiting')
+    expect(waiting.items.map((item) => item.action)).toEqual(['missing'])
+    expect(
+      locationVersionCamera({
+        imageUrl: '',
+        versions: [{ id: 'flood', name: 'Flooded', stateNotes: 'Water', imageUrl: 'https://cdn/flood.png', needsImageRegen: true }],
+      }).tone
+    ).toBe('waiting')
+  })
+
+  it('colors the version camera from set stills only after the base exists', () => {
+    expect(
+      locationVersionCamera({
+        imageUrl: 'https://cdn/foyer.png',
+        versions: [{ id: 'door', name: 'Door blown', stateNotes: 'Door gone', imageUrl: '' }],
+      }).tone
+    ).toBe('action')
+    expect(
+      locationVersionCamera({
+        imageUrl: 'https://cdn/foyer.png',
+        versions: [
+          { id: 'flood', name: 'Flooded', stateNotes: 'Water', imageUrl: 'https://cdn/flood.png', needsImageRegen: true },
+        ],
+      }).tone
+    ).toBe('attention')
+    expect(
+      locationVersionCamera({
+        imageUrl: 'https://cdn/foyer.png',
+        versions: [{ id: 'flood', name: 'Flooded', stateNotes: 'Water', imageUrl: 'https://cdn/flood.png' }],
+      }).tone
+    ).toBe('ready')
+    expect(locationVersionCamera({ imageUrl: 'https://cdn/foyer.png', versions: [] }).tone).toBe('ready')
   })
 
   it('names identity, a missing look, and a changed look', () => {
