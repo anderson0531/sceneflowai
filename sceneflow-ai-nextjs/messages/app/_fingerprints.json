@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-07T02:15:36.687Z",
+  "generatedAt": "2026-10-07T05:45:50.122Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -1127,6 +1127,7 @@
       "expressScene.scopeMissing": "6be36ca49ee85210",
       "expressScene.scopeRegenerate": "1651031bf58d8eea",
       "expressScene.scopeRegenerateHint": "7053bf067a12e7aa",
+      "expressScene.clearSelections": "83b12c2216efb4fd",
       "expressScene.scopeNotFinal": "6262696082b6a310",
       "expressScene.quality": "4b10e7304f034227",
       "expressScene.qualityDraft": "ebf12ef47cf575b3",
@@ -1198,6 +1199,7 @@
       "videoAgent.scopeMissing": "6be36ca49ee85210",
       "videoAgent.scopeRegenerate": "1651031bf58d8eea",
       "videoAgent.scopeRegenerateHint": "f20251341ff92e6b",
+      "videoAgent.clearSelections": "83b12c2216efb4fd",
       "videoAgent.beats": "2bce1f4a654f7970",
       "videoAgent.filterEmpty": "e9c59c922df8665e",
       "videoAgent.noBeats": "98a70325c912bfec",
