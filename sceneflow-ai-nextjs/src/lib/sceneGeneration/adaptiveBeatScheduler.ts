@@ -106,6 +106,12 @@ export interface AdaptiveBeatPoolOptions {
    * so a hung sibling's Vertex call can drain before the next dispatch.
    */
   cooldownMsAfterError?: (err: unknown) => number
+  /**
+   * Fired when a beat is recorded as failed, including queued beats dropped
+   * because the run aborted. Not fired for an attempt that will be retried.
+   * The dock listens here so a 90s stall leaves "processing" before siblings finish.
+   */
+  onBeatFailed?: (beatIndex: number, err: unknown) => void | Promise<void>
 }
 
 export interface AdaptiveBeatPoolResult {
@@ -184,6 +190,16 @@ export async function runAdaptiveBeatPool(
     readyAt: 0,
   }))
 
+  const inFlight = new Set<Promise<void>>()
+  const failureNotices: Promise<void>[] = []
+
+  const recordFailure = (beatIndex: number, err: unknown): void => {
+    if (succeeded.has(beatIndex) || failed.has(beatIndex)) return
+    failed.set(beatIndex, err)
+    const notice = options.onBeatFailed?.(beatIndex, err)
+    if (notice) failureNotices.push(Promise.resolve(notice))
+  }
+
   const failRemainingQueued = (err: unknown): void => {
     if (aborted) return
     aborted = {
@@ -191,9 +207,7 @@ export async function runAdaptiveBeatPool(
       error: err,
     }
     for (const entry of queue) {
-      if (!succeeded.has(entry.beatIndex) && !failed.has(entry.beatIndex)) {
-        failed.set(entry.beatIndex, err)
-      }
+      recordFailure(entry.beatIndex, err)
     }
     queue.length = 0
     stopScheduling = true
@@ -209,11 +223,9 @@ export async function runAdaptiveBeatPool(
   }
   const abortedWait = waitForAbort(runSignal)
 
-  const inFlight = new Set<Promise<void>>()
-
   const scheduleRetry = (beatIndex: number, attempt: number, err: unknown): boolean => {
     if (attempt >= maxAttempts) {
-      failed.set(beatIndex, err)
+      recordFailure(beatIndex, err)
       return false
     }
     const delay = calculateBackoffDelay(attempt - 1, baseBackoffMs, maxBackoffMs)
@@ -229,11 +241,9 @@ export async function runAdaptiveBeatPool(
     if (!canaryChecked && abortOnNonRetryableCanary && isCanaryAbort(err)) {
       canaryChecked = true
       aborted = { beatIndex, error: err }
-      failed.set(beatIndex, err)
+      recordFailure(beatIndex, err)
       for (const entry of queue) {
-        if (!succeeded.has(entry.beatIndex) && !failed.has(entry.beatIndex)) {
-          failed.set(entry.beatIndex, err)
-        }
+        recordFailure(entry.beatIndex, err)
       }
       queue.length = 0
       stopScheduling = true
@@ -252,7 +262,7 @@ export async function runAdaptiveBeatPool(
       return
     }
 
-    failed.set(beatIndex, err)
+    recordFailure(beatIndex, err)
     const cooldownMs = options.cooldownMsAfterError?.(err) ?? 0
     if (cooldownMs > 0) {
       const readyAt = Date.now() + cooldownMs
@@ -313,6 +323,9 @@ export async function runAdaptiveBeatPool(
 
   if (inFlight.size > 0) {
     await Promise.allSettled(inFlight)
+  }
+  if (failureNotices.length > 0) {
+    await Promise.all(failureNotices)
   }
 
   return { succeeded, failed, aborted }

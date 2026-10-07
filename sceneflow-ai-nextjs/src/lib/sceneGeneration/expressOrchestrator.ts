@@ -637,7 +637,8 @@ function recordRateLimitedFailure(
 function buildAdaptiveBeatPoolOptions(
   emit: ExpressEmit,
   _options: ExpressOptions,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  onBeatFailed?: AdaptiveBeatPoolOptions['onBeatFailed']
 ): AdaptiveBeatPoolOptions {
   return {
     initialConcurrency: FRAME_AGENT_STILL_CONCURRENCY,
@@ -654,6 +655,7 @@ function buildAdaptiveBeatPoolOptions(
     abortOnNonRetryableCanary: true,
     cooldownMsAfterError: (err) =>
       isExpressImageRateLimitError(err) ? getSceneExpressBeat429CooldownMs() : 0,
+    ...(onBeatFailed ? { onBeatFailed } : {}),
     ...(signal ? { signal } : {}),
   }
 }
@@ -711,7 +713,7 @@ function recordFrameNodeFromEvent(
   }
 }
 
-function emitOrphanBeatFailures(
+async function emitOrphanBeatFailures(
   emit: ExpressEmit,
   ctx: SceneRunContext,
   beatIndices: number[],
@@ -719,7 +721,7 @@ function emitOrphanBeatFailures(
   frameRole: 'start' | 'end',
   rateLimitedFailures: ExpressRateLimitedFailure[],
   onBeatFailed?: (beatIdx: number) => void
-): string | undefined {
+): Promise<string | undefined> {
   const { sceneIndex, sceneNumber } = ctx
   let lastError: string | undefined
 
@@ -727,7 +729,9 @@ function emitOrphanBeatFailures(
     if (pool.succeeded.has(beatIdx) || pool.failed.has(beatIdx)) continue
     const err = pool.aborted?.error ?? new Error('Beat generation did not run')
     onBeatFailed?.(beatIdx)
-    lastError = emitImageFailure(emit, ctx, err, beatIdx, frameRole)
+    const failure = emitImageFailure(emit, ctx, err, beatIdx, frameRole)
+    await failure.persisted
+    lastError = failure.error
     if (isExpressImageRateLimitError(err)) {
       recordRateLimitedFailure(rateLimitedFailures, {
         sceneIndex,
@@ -749,13 +753,12 @@ function emitImageFailure(
   err: unknown,
   beatIndex?: number,
   frameRole: 'start' | 'end' = 'start'
-): string {
+): { error: string; persisted: Promise<void> } {
   const { sceneIndex, sceneNumber, scene } = ctx
   const error = formatExpressImageErrorForUser(err)
   const rateLimited = isExpressImageRateLimitError(err)
-  if (typeof beatIndex === 'number') {
-    writeBeatFrameErrorToScene(scene, beatIndex, error, frameRole)
-  }
+  // SSE first. The scene write joins the persist chain so it cannot drop a
+  // sibling URL, but the dock must not wait for that chain or for other beats.
   safeEmit(emit, {
     type: 'phase-done',
     sceneIndex,
@@ -767,7 +770,11 @@ function emitImageFailure(
     frameRole,
     rateLimited,
   })
-  return error
+  const persisted =
+    typeof beatIndex === 'number'
+      ? enqueueSceneWrite(scene, () => writeBeatFrameErrorToScene(scene, beatIndex, error, frameRole))
+      : Promise.resolve()
+  return { error, persisted }
 }
 
 async function runDirectionPhase(
@@ -1332,25 +1339,25 @@ async function runSupplementalEndFrames(
       )
       lastImageUrl = result.imageUrl
     },
-    buildAdaptiveBeatPoolOptions(emit, options, ctx.signal)
+    buildAdaptiveBeatPoolOptions(emit, options, ctx.signal, (beatIdx, err) => {
+      hadFailure = true
+      const failure = emitImageFailure(emit, ctx, err, beatIdx, 'end')
+      lastError = failure.error
+      if (isExpressImageRateLimitError(err)) {
+        recordRateLimitedFailure(rateLimitedFailures, {
+          sceneIndex,
+          sceneNumber,
+          phase: 'image',
+          beatIndex: beatIdx,
+          frameRole: 'end',
+          error: failure.error,
+        })
+      }
+      return failure.persisted
+    })
   )
 
-  for (const [beatIdx, err] of pool.failed) {
-    hadFailure = true
-    lastError = emitImageFailure(emit, ctx, err, beatIdx, 'end')
-    if (isExpressImageRateLimitError(err)) {
-      recordRateLimitedFailure(rateLimitedFailures, {
-        sceneIndex,
-        sceneNumber,
-        phase: 'image',
-        beatIndex: beatIdx,
-        frameRole: 'end',
-        error: lastError,
-      })
-    }
-  }
-
-  const orphanError = emitOrphanBeatFailures(
+  const orphanError = await emitOrphanBeatFailures(
     emit,
     ctx,
     endBeatsToGenerate,
@@ -1414,26 +1421,26 @@ async function runBeatImages(
         )
         lastImageUrl = result.imageUrl
       },
-      buildAdaptiveBeatPoolOptions(emit, options, ctx.signal)
+      buildAdaptiveBeatPoolOptions(emit, options, ctx.signal, (beatIdx, err) => {
+        failedStartBeatIndices.add(beatIdx)
+        hadFailure = true
+        const failure = emitImageFailure(emit, ctx, err, beatIdx, 'start')
+        lastError = failure.error
+        if (isExpressImageRateLimitError(err)) {
+          recordRateLimitedFailure(rateLimitedFailures, {
+            sceneIndex,
+            sceneNumber,
+            phase: 'image',
+            beatIndex: beatIdx,
+            frameRole: 'start',
+            error: failure.error,
+          })
+        }
+        return failure.persisted
+      })
     )
 
-    for (const [beatIdx, err] of pool.failed) {
-      failedStartBeatIndices.add(beatIdx)
-      hadFailure = true
-      lastError = emitImageFailure(emit, ctx, err, beatIdx, 'start')
-      if (isExpressImageRateLimitError(err)) {
-        recordRateLimitedFailure(rateLimitedFailures, {
-          sceneIndex,
-          sceneNumber,
-          phase: 'image',
-          beatIndex: beatIdx,
-          frameRole: 'start',
-          error: lastError,
-        })
-      }
-    }
-
-    const orphanError = emitOrphanBeatFailures(
+    const orphanError = await emitOrphanBeatFailures(
       emit,
       ctx,
       beatsToGenerate,
@@ -1472,6 +1479,24 @@ async function runBeatImages(
 
 /** Serialize in-memory beat persist so parallel generations do not drop sibling URLs. */
 const beatPersistChains = new WeakMap<object, Promise<void>>()
+
+function enqueueSceneWrite(scene: object, write: () => void): Promise<void> {
+  const previous = beatPersistChains.get(scene) ?? Promise.resolve()
+  let release!: () => void
+  const gate = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  beatPersistChains.set(scene, previous.then(() => gate))
+  return previous.then(() => {
+    try {
+      write()
+    } catch (err) {
+      console.warn('[expressOrchestrator] Beat frame write failed:', err)
+    } finally {
+      release()
+    }
+  })
+}
 
 function persistBeatReferenceSelection(
   scene: Record<string, unknown>,

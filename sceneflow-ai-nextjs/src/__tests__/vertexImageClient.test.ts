@@ -17,6 +17,7 @@ import {
   resetVertexDispatchBucketForTests,
 } from '@/lib/vertexai/vertexDispatchBucket'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
+import * as fetchReferenceImage from '@/lib/storage/fetchReferenceImage'
 
 vi.mock('@/lib/vertexai/client', () => ({
   getVertexAIAuthToken: vi.fn().mockResolvedValue('test-token'),
@@ -179,6 +180,36 @@ describe('buildMultimodalParts Flash vs Pro layouts', () => {
     expect(parts[10]).toEqual({ text: 'SCENE PROMPT' })
     for (const part of parts) {
       expect(part).not.toHaveProperty('mediaResolution')
+    }
+  })
+
+  it('downloads reference images together and keeps their order', async () => {
+    let inFlight = 0
+    let peak = 0
+    const spy = vi
+      .spyOn(fetchReferenceImage, 'fetchReferenceImageAsBase64')
+      .mockImplementation(async (url: string) => {
+        inFlight += 1
+        peak = Math.max(peak, inFlight)
+        await new Promise((resolve) => setTimeout(resolve, 30))
+        inFlight -= 1
+        return { base64: `bytes-${url}`, mimeType: 'image/png' }
+      })
+
+    try {
+      const parts = await buildMultimodalParts('PROMPT', [
+        { imageUrl: 'https://example.com/a.png', name: 'person [1]' },
+        { imageUrl: 'https://example.com/b.png', name: 'person [2]' },
+      ])
+      expect(peak).toBe(2)
+      expect(parts[1]).toEqual({
+        inlineData: { mimeType: 'image/png', data: 'bytes-https://example.com/a.png' },
+      })
+      expect(parts[3]).toEqual({
+        inlineData: { mimeType: 'image/png', data: 'bytes-https://example.com/b.png' },
+      })
+    } finally {
+      spy.mockRestore()
     }
   })
 

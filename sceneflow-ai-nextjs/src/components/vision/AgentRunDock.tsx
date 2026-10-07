@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { AlertTriangle, Check, Loader2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { isStillCancelledFailureMessage } from '@/lib/sceneGeneration/expressImageErrors'
 import { isContentPolicyFailureMessage } from '@/lib/vision/videoClipFilters'
 
 /**
@@ -131,7 +132,11 @@ function AgentItemRow({ item }: { item: AgentRunItem }) {
       <span className="flex-1 truncate">{item.label}</span>
       {item.status === 'error' && item.error && (
         <span className="shrink-0 text-[10px] text-rose-200/80">
-          {isContentPolicyFailureMessage(item.error) ? 'Blocked' : 'Failed'}
+          {isContentPolicyFailureMessage(item.error)
+            ? 'Blocked'
+            : isStillCancelledFailureMessage(item.error)
+              ? 'Cancelled'
+              : 'Failed'}
         </span>
       )}
     </div>

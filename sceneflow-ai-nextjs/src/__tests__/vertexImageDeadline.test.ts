@@ -11,6 +11,19 @@ import {
   resetVertexDispatchBucketForTests,
 } from '@/lib/vertexai/vertexDispatchBucket'
 
+function captureScheduledDelays(): number[] {
+  const delays: number[] = []
+  const originalSetTimeout = globalThis.setTimeout
+  vi.stubGlobal(
+    'setTimeout',
+    ((fn: TimerHandler, ms?: number, ...args: unknown[]) => {
+      if (typeof ms === 'number') delays.push(ms)
+      return originalSetTimeout(fn, ms, ...(args as []))
+    }) as typeof setTimeout
+  )
+  return delays
+}
+
 function imageResponse() {
   return new Response(
     JSON.stringify({
@@ -53,12 +66,7 @@ describe('generateVertexGeminiImage deadlines', () => {
   })
 
   it('shortens its request timeout to land inside the deadline', async () => {
-    let abortAfterMs = -1
-    const originalSetTimeout = globalThis.setTimeout
-    vi.stubGlobal('setTimeout', ((fn: () => void, ms?: number) => {
-      if (abortAfterMs < 0) abortAfterMs = ms ?? 0
-      return originalSetTimeout(fn, ms)
-    }) as typeof setTimeout)
+    const delays = captureScheduledDelays()
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(imageResponse()))
 
     await generateVertexGeminiImage({
@@ -66,18 +74,15 @@ describe('generateVertexGeminiImage deadlines', () => {
       deadlineAt: Date.now() + 30_000,
     })
 
-    // The client's own 90s ceiling would have outlived the caller's 30s window.
-    expect(abortAfterMs).toBeGreaterThan(25_000)
-    expect(abortAfterMs).toBeLessThanOrEqual(30_000)
+    // Prep is capped at 20s. The provider ceiling still has to land inside
+    // the caller's 30s window rather than the model's own 90s/180s cap.
+    const providerDelays = delays.filter((ms) => ms >= 10_000)
+    expect(Math.max(...providerDelays)).toBeGreaterThan(25_000)
+    expect(Math.max(...providerDelays)).toBeLessThanOrEqual(30_000)
   })
 
-  it('aborts a fail-fast identity-ref pro still at 90s inside a longer route deadline', async () => {
-    let abortAfterMs = -1
-    const originalSetTimeout = globalThis.setTimeout
-    vi.stubGlobal('setTimeout', ((fn: () => void, ms?: number) => {
-      if (abortAfterMs < 0) abortAfterMs = ms ?? 0
-      return originalSetTimeout(fn, ms)
-    }) as typeof setTimeout)
+  it('aborts a fail-fast identity-ref pro still at 180s inside a longer route deadline', async () => {
+    const delays = captureScheduledDelays()
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(imageResponse()))
 
     await generateVertexGeminiImage({
@@ -85,19 +90,16 @@ describe('generateVertexGeminiImage deadlines', () => {
       modelTier: 'designer',
       failFastOnRateLimit: true,
       referenceImages: [{ base64Image: 'aW1hZ2U=', mimeType: 'image/png', name: 'identity' }],
-      deadlineAt: Date.now() + 180_000,
+      deadlineAt: Date.now() + 240_000,
     })
 
-    expect(abortAfterMs).toBe(90_000)
+    expect(delays).toContain(20_000)
+    expect(delays).toContain(180_000)
+    expect(delays).not.toContain(90_000)
   })
 
   it('aborts a fail-fast draft flash still at 90s inside a longer route deadline', async () => {
-    let abortAfterMs = -1
-    const originalSetTimeout = globalThis.setTimeout
-    vi.stubGlobal('setTimeout', ((fn: () => void, ms?: number) => {
-      if (abortAfterMs < 0) abortAfterMs = ms ?? 0
-      return originalSetTimeout(fn, ms)
-    }) as typeof setTimeout)
+    const delays = captureScheduledDelays()
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(imageResponse()))
 
     await generateVertexGeminiImage({
@@ -108,21 +110,18 @@ describe('generateVertexGeminiImage deadlines', () => {
       deadlineAt: Date.now() + 180_000,
     })
 
-    expect(abortAfterMs).toBe(90_000)
+    expect(delays).toContain(20_000)
+    expect(delays).toContain(90_000)
+    expect(delays).not.toContain(180_000)
   })
 
-  it('keeps its full timeout when no deadline is given', async () => {
-    let abortAfterMs = -1
-    const originalSetTimeout = globalThis.setTimeout
-    vi.stubGlobal('setTimeout', ((fn: () => void, ms?: number) => {
-      if (abortAfterMs < 0) abortAfterMs = ms ?? 0
-      return originalSetTimeout(fn, ms)
-    }) as typeof setTimeout)
+  it('keeps the pro ceiling when no deadline is given', async () => {
+    const delays = captureScheduledDelays()
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(imageResponse()))
 
     await generateVertexGeminiImage({ prompt: 'a lantern on a workbench' })
 
-    expect(abortAfterMs).toBe(90_000)
+    expect(delays).toContain(180_000)
   })
 
   it('stops retrying a 503 once the deadline has passed', async () => {
@@ -221,11 +220,22 @@ describe('generateVertexGeminiImage deadlines', () => {
       referenceImages: [{ base64Image: 'aW1hZ2U=', mimeType: 'image/png', name: 'identity' }],
       deadlineAt: Date.now() + 180_000,
     })
+    let settled = false
     const timeoutResult = timedOut.then(
-      () => 'resolved',
-      (err: unknown) => err
+      (value) => {
+        settled = true
+        return value
+      },
+      (err: unknown) => {
+        settled = true
+        return err
+      }
     )
-    await vi.advanceTimersByTimeAsync(120_000)
+    await vi.advanceTimersByTimeAsync(0)
+    expect(hangUntilAbort).toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(90_000)
+    expect(settled).toBe(false)
+    await vi.advanceTimersByTimeAsync(90_000)
     const timeoutError = await timeoutResult
     expect(timeoutError).toBeInstanceOf(Error)
     expect((timeoutError as Error).name).toBe('AbortError')

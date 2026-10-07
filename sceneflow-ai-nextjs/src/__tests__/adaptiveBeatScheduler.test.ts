@@ -593,6 +593,43 @@ describe('runAdaptiveBeatPool', () => {
 })
 
 describe('runAdaptiveBeatPool abort signal', () => {
+  it('reports a failed beat while a sibling is still running', async () => {
+    let releaseSibling: (() => void) | undefined
+    const sibling = new Promise<void>((resolve) => {
+      releaseSibling = resolve
+    })
+    const reported: number[] = []
+    let siblingFinished = false
+
+    const pending = runAdaptiveBeatPool(
+      [0, 1],
+      async (beatIndex) => {
+        if (beatIndex === 0) throw new Error('The operation was aborted')
+        await sibling
+        siblingFinished = true
+      },
+      {
+        initialConcurrency: 2,
+        maxConcurrency: 2,
+        maxAttempts: 1,
+        abortOnNonRetryableCanary: false,
+        isRetryable: () => false,
+        isCanaryAbort: () => false,
+        onBeatFailed: (beatIndex) => {
+          reported.push(beatIndex)
+        },
+      }
+    )
+
+    await vi.waitFor(() => expect(reported).toEqual([0]))
+    expect(siblingFinished).toBe(false)
+    releaseSibling?.()
+    const result = await pending
+    expect(result.succeeded.has(1)).toBe(true)
+    expect(result.failed.has(0)).toBe(true)
+  })
+
+
   it('does not start remaining beats after the signal aborts', async () => {
     const controller = new AbortController()
     let started = 0

@@ -221,55 +221,51 @@ export type CroppableIdentityReference = {
  * Wardrobe / prop / location slots pass through. Call from stills routes
  * that already import this module — never from vertexImageClient.
  */
+async function cropOneIdentityReferenceForPro<T extends CroppableIdentityReference>(
+  ref: T
+): Promise<T> {
+  if (!isIdentityReferencePartName(ref.name)) return ref
+  try {
+    let base64Data = ref.base64Image
+    let mimeType = ref.mimeType || 'image/jpeg'
+    if (!base64Data && ref.imageUrl) {
+      const downloaded = await fetchReferenceImageAsBase64(ref.imageUrl, { label: ref.name })
+      base64Data = downloaded.base64
+      mimeType = downloaded.mimeType
+    }
+    if (!base64Data) return ref
+    if (base64Data.includes(',')) base64Data = base64Data.split(',')[1] || base64Data
+    const cropped = await cropIdentityPlateForPro(Buffer.from(base64Data, 'base64'))
+    if (cropped.cropped) {
+      console.log(
+        `[Identity CU] Cropped identity plate to 1:1 CU (reason=${cropped.reason}, name=${ref.name})`
+      )
+      return {
+        ...ref,
+        base64Image: cropped.buffer.toString('base64'),
+        mimeType: 'image/jpeg',
+        proIdentityCrop: 'cropped',
+      }
+    }
+    console.log(
+      `[Identity CU] Identity plate already tight (${cropped.width}x${cropped.height}, reason=already-tight, name=${ref.name})`
+    )
+    return {
+      ...(ref.base64Image ? ref : { ...ref, base64Image: base64Data, mimeType }),
+      proIdentityCrop: 'already-tight',
+    }
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error)
+    console.warn(`[Identity CU] Identity CU crop skipped: ${reason}`)
+    return { ...ref, proIdentityCrop: 'skipped' }
+  }
+}
+
 export async function cropIdentityReferenceImagesForPro<T extends CroppableIdentityReference>(
   refs: T[]
 ): Promise<T[]> {
-  const croppedRefs: T[] = []
-  for (const ref of refs) {
-    if (!isIdentityReferencePartName(ref.name)) {
-      croppedRefs.push(ref)
-      continue
-    }
-    try {
-      let base64Data = ref.base64Image
-      let mimeType = ref.mimeType || 'image/jpeg'
-      if (!base64Data && ref.imageUrl) {
-        const downloaded = await fetchReferenceImageAsBase64(ref.imageUrl, { label: ref.name })
-        base64Data = downloaded.base64
-        mimeType = downloaded.mimeType
-      }
-      if (!base64Data) {
-        croppedRefs.push(ref)
-        continue
-      }
-      if (base64Data.includes(',')) base64Data = base64Data.split(',')[1] || base64Data
-      const cropped = await cropIdentityPlateForPro(Buffer.from(base64Data, 'base64'))
-      if (cropped.cropped) {
-        console.log(
-          `[Identity CU] Cropped identity plate to 1:1 CU (reason=${cropped.reason}, name=${ref.name})`
-        )
-        croppedRefs.push({
-          ...ref,
-          base64Image: cropped.buffer.toString('base64'),
-          mimeType: 'image/jpeg',
-          proIdentityCrop: 'cropped',
-        })
-        continue
-      }
-      console.log(
-        `[Identity CU] Identity plate already tight (${cropped.width}x${cropped.height}, reason=already-tight, name=${ref.name})`
-      )
-      croppedRefs.push({
-        ...(ref.base64Image ? ref : { ...ref, base64Image: base64Data, mimeType }),
-        proIdentityCrop: 'already-tight',
-      })
-    } catch (error) {
-      const reason = error instanceof Error ? error.message : String(error)
-      console.warn(`[Identity CU] Identity CU crop skipped: ${reason}`)
-      croppedRefs.push({ ...ref, proIdentityCrop: 'skipped' })
-    }
-  }
-  return croppedRefs
+  // Downloads overlap. Sharp crops a handful of plates at once; order is preserved.
+  return Promise.all(refs.map((ref) => cropOneIdentityReferenceForPro(ref)))
 }
 
 function columnMean(

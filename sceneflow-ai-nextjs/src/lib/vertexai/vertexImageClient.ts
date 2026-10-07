@@ -44,7 +44,21 @@ const MAX_RETRY_DELAY_MS = 10_000
  * short retries on flash then failed (production 2026-09-11 draft beats).
  */
 const RATE_LIMIT_RETRY_DELAYS_MS = [5_000, 15_000, 30_000] as const
-const REQUEST_TIMEOUT_MS = 90_000
+/**
+ * Flash image defaults to minimal thinking and should finish inside this.
+ * Pro image (`gemini-3-pro-image`) only supports thinking level HIGH, which
+ * is also its default, so Final 2K stills need a longer ceiling or they are
+ * cancelled while Gemini is still rendering. Both stay well under the 280s
+ * route budget. Do not hold the fetch until that budget — that is what stacked
+ * orphaned calls into 429s.
+ */
+const FLASH_REQUEST_TIMEOUT_MS = 90_000
+const PRO_REQUEST_TIMEOUT_MS = 180_000
+/**
+ * Reference attach and auth. Kept off the provider timer so a slow download
+ * cannot consume the render budget or cancel a call that was never sent.
+ */
+const PREP_TIMEOUT_MS = 20_000
 /** Below this there is no point issuing the request at all. */
 const MIN_REQUEST_TIMEOUT_MS = 10_000
 
@@ -84,17 +98,35 @@ function deadlinePassed(deadlineAt?: number): boolean {
 
 /**
  * Per-attempt timeout, shortened to land inside the caller's deadline. Without
- * this the client's own 90s timeout plus its retry ladder can outlast the
+ * this the client's own timeout plus its retry ladder can outlast the
  * serverless function that is waiting on it.
  *
- * Fail-fast stills, flash and pro, abort at this ceiling. Leaving the fetch
- * open until the route deadline kept Gemini generating after the beat should
- * have been cancelled, and the next admit then walked into a 429.
+ * Flash fail-fast stills abort at 90s. Pro/Final abort at 180s so HIGH thinking
+ * can finish. Leaving the fetch open until the route deadline kept Gemini
+ * generating after the beat should have been cancelled, and the next admit
+ * then walked into a 429.
  */
-function requestTimeoutFor(deadlineAt: number | undefined): number {
-  if (deadlineAt == null) return REQUEST_TIMEOUT_MS
+function boundedTimeout(ceiling: number, deadlineAt: number | undefined): number {
+  if (deadlineAt == null) return ceiling
   const remaining = deadlineAt - Date.now()
-  return Math.min(REQUEST_TIMEOUT_MS, Math.max(MIN_REQUEST_TIMEOUT_MS, remaining))
+  return Math.min(ceiling, Math.max(MIN_REQUEST_TIMEOUT_MS, remaining))
+}
+
+function providerTimeoutFor(model: string, deadlineAt: number | undefined): number {
+  const ceiling = model.includes('pro-image') ? PRO_REQUEST_TIMEOUT_MS : FLASH_REQUEST_TIMEOUT_MS
+  return boundedTimeout(ceiling, deadlineAt)
+}
+
+function logImageAttemptAbort(details: {
+  model: string
+  phase: 'attach' | 'vertex'
+  attachMs: number
+  vertexMs: number
+  timeoutMs: number
+}): void {
+  console.warn(
+    `[Vertex Gemini Image] aborted phase=${details.phase} model=${details.model} attachMs=${details.attachMs} vertexMs=${details.vertexMs} timeoutMs=${details.timeoutMs}`
+  )
 }
 
 function abortError(): Error {
@@ -104,7 +136,7 @@ function abortError(): Error {
 }
 
 /**
- * Parent cancel and our own 90s timer share one signal. A parent cancel is
+ * Parent cancel and our own provider timer share one signal. A parent cancel is
  * reported as abortedByClient; the timer stays an AbortError so the lease
  * layer can tell a pre-dispatch cancel from a provider call we disconnected.
  */
@@ -409,30 +441,31 @@ async function resolveAttachedReferenceImages(
   referenceImages: VertexReferenceImage[],
   requireAllReferenceImages?: boolean
 ): Promise<AttachedReferenceImage[]> {
-  const attached: AttachedReferenceImage[] = []
+  const resolved = await Promise.all(
+    referenceImages.map(async (ref) => {
+      let base64Data = ref.base64Image
+      let mimeType = ref.mimeType || 'image/jpeg'
 
-  for (const ref of referenceImages) {
-    let base64Data = ref.base64Image
-    let mimeType = ref.mimeType || 'image/jpeg'
-
-    if (!base64Data && ref.imageUrl) {
-      const downloaded = await fetchReferenceImageAsBase64(ref.imageUrl, { label: ref.name })
-      base64Data = downloaded.base64
-      mimeType = downloaded.mimeType
-    }
-
-    if (!base64Data) {
-      const label = ref.name || ref.imageUrl || 'unnamed reference'
-      if (requireAllReferenceImages) {
-        throw new Error(`Failed to download reference image: ${label}`)
+      if (!base64Data && ref.imageUrl) {
+        const downloaded = await fetchReferenceImageAsBase64(ref.imageUrl, { label: ref.name })
+        base64Data = downloaded.base64
+        mimeType = downloaded.mimeType
       }
-      console.warn(`[Vertex Gemini Image] Skipping reference that failed to download: ${label}`)
-      continue
-    }
-    if (base64Data.includes(',')) base64Data = base64Data.split(',')[1] || base64Data
 
-    attached.push({ mimeType, data: base64Data, name: ref.name })
-  }
+      if (!base64Data) {
+        const label = ref.name || ref.imageUrl || 'unnamed reference'
+        if (requireAllReferenceImages) {
+          throw new Error(`Failed to download reference image: ${label}`)
+        }
+        console.warn(`[Vertex Gemini Image] Skipping reference that failed to download: ${label}`)
+        return null
+      }
+      if (base64Data.includes(',')) base64Data = base64Data.split(',')[1] || base64Data
+
+      return { mimeType, data: base64Data, name: ref.name }
+    })
+  )
+  const attached = resolved.filter((item): item is AttachedReferenceImage => item != null)
 
   console.log(
     `[Vertex Gemini Image] Attached ${attached.length}/${referenceImages.length} reference image(s)`
@@ -717,73 +750,107 @@ async function generateVertexGeminiImageAttempt(
   }
 
   const proLayout = usesProImageReferenceLayout(model)
-  const timeoutController = new AbortController()
-  const requestTimeoutMs = requestTimeoutFor(options.deadlineAt)
-  const timeoutId = setTimeout(() => timeoutController.abort(), requestTimeoutMs)
-  const requestSignal = combineAbortSignals(timeoutController.signal, options.signal)
+  const attemptStarted = Date.now()
+  const prepController = new AbortController()
+  const prepTimeoutMs = boundedTimeout(PREP_TIMEOUT_MS, options.deadlineAt)
+  const prepTimeoutId = setTimeout(() => prepController.abort(), prepTimeoutMs)
+  const prepSignal = combineAbortSignals(prepController.signal, options.signal)
 
-  let response: Response
+  let parts: Awaited<ReturnType<typeof buildMultimodalParts>>
+  let accessToken: string
   try {
-    throwIfImageAborted(requestSignal, options.signal, model)
-    // The same 90s ceiling covers reference attachment. A hang here used to
-    // sit past the abort because the timer was armed only around the fetch.
-    const parts = await awaitWithAbort(
+    throwIfImageAborted(prepSignal, options.signal, model)
+    parts = await awaitWithAbort(
       buildMultimodalParts(
         fullPrompt,
         options.referenceImages,
         options.requireAllReferenceImages,
         proLayout ? 'pro' : 'flash'
       ),
-      requestSignal
+      prepSignal
     )
-    throwIfImageAborted(requestSignal, options.signal, model)
-    const effectiveImageSize = effectiveImageSizeForModel(model, options.imageSize)
-
-    const requestBody = {
-      contents: [{ role: 'user', parts }],
-      generationConfig: {
-        responseModalities: ['TEXT', 'IMAGE'],
-        ...(options.aspectRatio || effectiveImageSize
-          ? {
-              imageConfig: {
-                ...(options.aspectRatio && { aspectRatio: options.aspectRatio }),
-                ...(effectiveImageSize && { imageSize: effectiveImageSize }),
-              },
-            }
-          : {}),
-      },
-      safetySettings: getGeminiImageSafetySettings(),
-    }
-
-    const accessToken = await awaitWithAbort(getVertexAIAuthToken(), requestSignal)
-    throwIfImageAborted(requestSignal, options.signal, model)
-    const leaseAttempt = imageLeaseHeld.getStore()
-    if (leaseAttempt) leaseAttempt.providerRequestSent = true
-    // The gate holds the dispatch and nothing else. Every backoff and retry
-    // below re-enters this function, so a slot spanning them would be waited
-    // on by the call holding it — and a frame sleeping out a 429 is not
-    // generating anyway, so it must not hold capacity a ready frame could use.
-    response = await runInVertexImageGate(() =>
-      fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-          ...priorityPaygoHeaders(),
-        },
-        body: JSON.stringify(requestBody),
-        signal: requestSignal,
-      })
-    )
+    throwIfImageAborted(prepSignal, options.signal, model)
+    accessToken = await awaitWithAbort(getVertexAIAuthToken(), prepSignal)
+    throwIfImageAborted(prepSignal, options.signal, model)
   } catch (error) {
-    clearTimeout(timeoutId)
     if (error instanceof Error && error.name === 'AbortError') {
-      if (options.signal?.aborted) {
-        throwAbortedByClient(model)
+      logImageAttemptAbort({
+        model,
+        phase: 'attach',
+        attachMs: Date.now() - attemptStarted,
+        vertexMs: 0,
+        timeoutMs: prepTimeoutMs,
+      })
+      if (options.signal?.aborted) throwAbortedByClient(model)
+    }
+    throw error
+  } finally {
+    clearTimeout(prepTimeoutId)
+  }
+  const attachMs = Date.now() - attemptStarted
+
+  const effectiveImageSize = effectiveImageSizeForModel(model, options.imageSize)
+  const requestBody = {
+    contents: [{ role: 'user', parts }],
+    generationConfig: {
+      responseModalities: ['TEXT', 'IMAGE'],
+      ...(options.aspectRatio || effectiveImageSize
+        ? {
+            imageConfig: {
+              ...(options.aspectRatio && { aspectRatio: options.aspectRatio }),
+              ...(effectiveImageSize && { imageSize: effectiveImageSize }),
+            },
+          }
+        : {}),
+    },
+    safetySettings: getGeminiImageSafetySettings(),
+  }
+
+  let response: Response
+  try {
+    // The provider ceiling starts here, after refs and auth. A hang in those
+    // used to share this timer and cancel the render before Vertex was called.
+    response = await runInVertexImageGate(async () => {
+      const providerController = new AbortController()
+      const requestTimeoutMs = providerTimeoutFor(model, options.deadlineAt)
+      const timeoutId = setTimeout(() => providerController.abort(), requestTimeoutMs)
+      const requestSignal = combineAbortSignals(providerController.signal, options.signal)
+      const vertexStartedAt = Date.now()
+      try {
+        throwIfImageAborted(requestSignal, options.signal, model)
+        const leaseAttempt = imageLeaseHeld.getStore()
+        if (leaseAttempt) leaseAttempt.providerRequestSent = true
+        return await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+            ...priorityPaygoHeaders(),
+          },
+          body: JSON.stringify(requestBody),
+          signal: requestSignal,
+        })
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          logImageAttemptAbort({
+            model,
+            phase: 'vertex',
+            attachMs,
+            vertexMs: Date.now() - vertexStartedAt,
+            timeoutMs: requestTimeoutMs,
+          })
+          if (options.signal?.aborted) throwAbortedByClient(model)
+        }
+        throw error
+      } finally {
+        clearTimeout(timeoutId)
       }
+    })
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
       if (model.includes('pro-image') && canFallbackToEcoTier(options)) {
         console.warn(
-          `[Vertex Gemini Image] ${model} timed out after ${requestTimeoutMs}ms, falling back to ${GEMINI_IMAGE_TIER_CONFIG.eco.model}`
+          `[Vertex Gemini Image] ${model} timed out after ${providerTimeoutFor(model, options.deadlineAt)}ms, falling back to ${GEMINI_IMAGE_TIER_CONFIG.eco.model}`
         )
         proModelRateLimitedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS
         return generateVertexGeminiImage({ ...options, modelTier: 'eco' }, 0)
@@ -804,7 +871,6 @@ async function generateVertexGeminiImageAttempt(
     }
     throw error
   }
-  clearTimeout(timeoutId)
 
   if (!response.ok) {
     const errorText = await response.text()

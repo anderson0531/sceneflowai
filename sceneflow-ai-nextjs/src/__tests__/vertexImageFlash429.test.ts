@@ -58,7 +58,10 @@ function captureBackoffDelays() {
       typeof handler === 'function' &&
       typeof ms === 'number' &&
       ms >= 1_000 &&
-      ms < 90_000
+      ms < 90_000 &&
+      // Reference attach arms its own 20s abort. Flushing that immediately
+      // would cancel the still before Vertex is called.
+      ms !== 20_000
     ) {
       delays.push(ms)
       handler()
