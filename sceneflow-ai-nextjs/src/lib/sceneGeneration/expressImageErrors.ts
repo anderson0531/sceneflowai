@@ -196,6 +196,27 @@ export function isFrameAgentCancelledError(err: unknown): boolean {
   return String(e.message || '').includes(FRAME_AGENT_CANCELLED_MESSAGE)
 }
 
+/** Row label once a still is aborted — stall timeout or the user stopping the run. */
+export const STILL_STALL_CANCELLED_MESSAGE = 'Cancelled'
+
+export function isStillCancelledFailureMessage(message: string): boolean {
+  const msg = message.trim().toLowerCase()
+  return (
+    msg === 'cancelled' ||
+    msg.includes('stills agent cancelled') ||
+    msg.includes('the operation was aborted') ||
+    msg.includes('request aborted')
+  )
+}
+
+/** 90s/180s provider abort, or the generate-image route reporting that abort. */
+export function isStillStallAbortError(err: unknown): boolean {
+  if (isFrameAgentCancelledError(err)) return true
+  if (err instanceof Error && err.name === 'AbortError') return true
+  const msg = String((err as { message?: unknown })?.message || err || '')
+  return /the operation was aborted|request aborted|abortedbyclient/i.test(msg)
+}
+
 /** Stable code for a frame that rendered but the face is the wrong person. */
 export const CHARACTER_LIKENESS_MISMATCH_CODE = 'CHARACTER_LIKENESS_MISMATCH'
 
@@ -224,6 +245,9 @@ export function isCharacterLikenessMismatchError(err: unknown): boolean {
 
 /** Short overlay/tile copy — never dump Vertex payload text to the user. */
 export function formatExpressImageErrorForUser(err: unknown): string {
+  if (isStillStallAbortError(err)) {
+    return STILL_STALL_CANCELLED_MESSAGE
+  }
   if (isImageContentPolicyError(err)) {
     return IMAGE_CONTENT_POLICY_BOARD_MESSAGE
   }

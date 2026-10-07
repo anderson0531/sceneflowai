@@ -109,48 +109,44 @@ export async function overlayLocationScaleOnBuffer(
     .toBuffer()
 }
 
+async function overlayLocationScaleOnOneReference<T extends OverlayableLocationReference>(
+  ref: T
+): Promise<T> {
+  if (!isLocationReferencePartName(ref.name, ref.role, ref.locationName)) return ref
+  try {
+    let base64Data = ref.base64Image
+    if (!base64Data && ref.imageUrl) {
+      const downloaded = await fetchReferenceImageAsBase64(ref.imageUrl, { label: ref.name })
+      base64Data = downloaded.base64
+    }
+    if (!base64Data) return ref
+    if (base64Data.includes(',')) base64Data = base64Data.split(',')[1] || base64Data
+    const scale = extractLocationCanonicalScale(
+      ref.locationDescription,
+      ref.locationName || ref.name,
+      ref.canonicalScale
+    )
+    const overlaid = await overlayLocationScaleOnBuffer(Buffer.from(base64Data, 'base64'), scale)
+    console.log(
+      `[Location scale] Overlayed margin ticks on ${ref.name || ref.locationName || 'location'} ` +
+        `(door=${scale.doorHeightFt}ft ceiling=${scale.ceilingHeightFt}ft)`
+    )
+    return {
+      ...ref,
+      base64Image: overlaid.toString('base64'),
+      mimeType: 'image/jpeg',
+    }
+  } catch (error) {
+    console.warn(
+      `[Location scale] Overlay failed for ${ref.name || ref.locationName || 'location'}:`,
+      error
+    )
+    return ref
+  }
+}
+
 export async function overlayLocationScaleOnReferenceImages<T extends OverlayableLocationReference>(
   refs: T[]
 ): Promise<T[]> {
-  const next: T[] = []
-  for (const ref of refs) {
-    if (!isLocationReferencePartName(ref.name, ref.role, ref.locationName)) {
-      next.push(ref)
-      continue
-    }
-    try {
-      let base64Data = ref.base64Image
-      if (!base64Data && ref.imageUrl) {
-        const downloaded = await fetchReferenceImageAsBase64(ref.imageUrl, { label: ref.name })
-        base64Data = downloaded.base64
-      }
-      if (!base64Data) {
-        next.push(ref)
-        continue
-      }
-      if (base64Data.includes(',')) base64Data = base64Data.split(',')[1] || base64Data
-      const scale = extractLocationCanonicalScale(
-        ref.locationDescription,
-        ref.locationName || ref.name,
-        ref.canonicalScale
-      )
-      const overlaid = await overlayLocationScaleOnBuffer(Buffer.from(base64Data, 'base64'), scale)
-      next.push({
-        ...ref,
-        base64Image: overlaid.toString('base64'),
-        mimeType: 'image/jpeg',
-      })
-      console.log(
-        `[Location scale] Overlayed margin ticks on ${ref.name || ref.locationName || 'location'} ` +
-          `(door=${scale.doorHeightFt}ft ceiling=${scale.ceilingHeightFt}ft)`
-      )
-    } catch (error) {
-      console.warn(
-        `[Location scale] Overlay failed for ${ref.name || ref.locationName || 'location'}:`,
-        error
-      )
-      next.push(ref)
-    }
-  }
-  return next
+  return Promise.all(refs.map((ref) => overlayLocationScaleOnOneReference(ref)))
 }

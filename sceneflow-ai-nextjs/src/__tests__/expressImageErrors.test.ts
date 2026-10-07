@@ -11,6 +11,8 @@ import {
   isIdentityRefRateLimitExhausted,
   isTransientExpressImageError,
   formatExpressImageErrorForUser,
+  isStillCancelledFailureMessage,
+  STILL_STALL_CANCELLED_MESSAGE,
   IMAGE_CONTENT_POLICY_BOARD_MESSAGE,
   IMAGE_CONTENT_POLICY_CODE,
   IMAGE_SAFETY_BOARD_MESSAGE,
@@ -248,6 +250,21 @@ describe('formatExpressImageErrorForUser', () => {
         Object.assign(err('Vertex RAI exhausted', 422), { code: IMAGE_CONTENT_POLICY_CODE })
       )
     ).toBe(IMAGE_CONTENT_POLICY_BOARD_MESSAGE)
+  })
+
+  it('maps a stall abort to Cancelled', () => {
+    const aborted = new Error('The operation was aborted')
+    aborted.name = 'AbortError'
+    expect(formatExpressImageErrorForUser(aborted)).toBe(STILL_STALL_CANCELLED_MESSAGE)
+    expect(formatExpressImageErrorForUser(err('Request aborted', 499))).toBe(
+      STILL_STALL_CANCELLED_MESSAGE
+    )
+    expect(formatExpressImageErrorForUser(err('Vertex Gemini Image error: abortedByClient'))).toBe(
+      STILL_STALL_CANCELLED_MESSAGE
+    )
+    expect(isStillCancelledFailureMessage(STILL_STALL_CANCELLED_MESSAGE)).toBe(true)
+    expect(isStillCancelledFailureMessage('Stills Agent cancelled')).toBe(true)
+    expect(isStillCancelledFailureMessage('Rate limited — retry this frame')).toBe(false)
   })
 
   it('maps missing reference downloads', () => {
