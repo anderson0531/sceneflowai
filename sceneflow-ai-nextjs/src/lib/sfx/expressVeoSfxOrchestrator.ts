@@ -67,7 +67,7 @@ export async function runExpressVeoSfx(
   )
   if (!hasCredits) {
     throw new Error(
-      `Insufficient credits for Express Veo SFX (${items.length} × ${VEO_SFX_CREDIT_COST} credits required)`
+      `Insufficient credits for HiFi sound effects (${items.length} × ${VEO_SFX_CREDIT_COST} credits required)`
     )
   }
 

@@ -5,14 +5,14 @@ import { Download, Loader2, Pause, Play, RefreshCw, Volume2 } from 'lucide-react
 import { BeatAudioStatusBadge } from '@/components/vision/BeatAudioStatusBadge'
 import { toast } from 'sonner'
 import type { SfxDurationOverride } from '@/lib/elevenlabs/sfxDuration'
-import { resolveAutoSfxDuration } from '@/lib/elevenlabs/sfxDuration'
+import { resolveAutoSfxDuration, resolveSfxDuration } from '@/lib/elevenlabs/sfxDuration'
 import { saveAudioFile } from '@/lib/download/saveFile'
 import { resolveBeatSfxSlot, readBeatSfxAudio } from '@/lib/script/deriveSfxFromSceneContent'
 import { actionBeatSfxIsStale } from '@/lib/audio/beatAudioStale'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import {
   dispatchGenerateVeoSfx,
-  VEO_SFX_CREDIT_HINT,
+  HIFI_CREDIT_HINT,
 } from '@/lib/sfx/clientGenerateVeoSfx'
 import {
   resolveAutoVeoSfxDuration,
@@ -55,6 +55,7 @@ export function ActionBeatSfxControls({
   onSaveSfxAudio,
 }: ActionBeatSfxControlsProps) {
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isGeneratingElevenLabs, setIsGeneratingElevenLabs] = useState(false)
   const [durationPreset, setDurationPreset] = useState<SfxDurationOverride>('auto')
 
   const slot = useMemo(
@@ -66,8 +67,8 @@ export function ActionBeatSfxControls({
   const sfxAudio = readBeatSfxAudio(scene, slot)
   const sfxStale = actionBeatSfxIsStale(scene, beat, !!sfxAudio)
   const sfxSourceMeta = sfxSourceMetaList[slot.sfxIndex] as Record<string, unknown> | null | undefined
-  const isVeoAction =
-    sfxSourceMeta?.source === 'veo' && sfxSourceMeta?.promptMode === 'actionShot'
+  const isHifi =
+    sfxSourceMeta?.source === 'veo'
 
   const actionText = beat.actionDescription?.trim() ?? ''
   const autoSeconds = resolveAutoSfxDuration(segmentDurationSeconds)
@@ -77,11 +78,11 @@ export function ActionBeatSfxControls({
   const chips: Array<{ id: SfxDurationOverride; label: string }> = [
     {
       id: 'auto',
-      label: `Auto (${Number.isInteger(autoSeconds) ? autoSeconds : autoSeconds.toFixed(1)}s · Veo ${veoAutoSeconds}s)`,
+      label: `Auto (${Number.isInteger(autoSeconds) ? autoSeconds : autoSeconds.toFixed(1)}s)`,
     },
-    { id: 'short', label: 'Short 3s / Veo 4s' },
+    { id: 'short', label: 'Short 3s' },
     { id: 'medium', label: 'Medium 8s' },
-    { id: 'long', label: 'Long 15s / Veo 8s max' },
+    { id: 'long', label: 'Long 15s' },
   ]
 
   const handleGenerate = async () => {
@@ -104,7 +105,7 @@ export function ActionBeatSfxControls({
         segmentDurationSeconds,
         durationOverride: durationPreset,
         hasExistingAudio: !!sfxAudio,
-        promptMode: 'actionShot',
+        promptMode: 'actionBeat',
       })
       await onSaveSfxAudio?.(
         sceneIdx,
@@ -123,7 +124,56 @@ export function ActionBeatSfxControls({
     }
   }
 
-  const isBusy = isGenerating || isExpressRunning || expressStatus === 'running'
+  const isBusy = isGenerating || isGeneratingElevenLabs || isExpressRunning || expressStatus === 'running'
+
+  const handleElevenLabs = async () => {
+    if (!projectId) {
+      toast.error('Project context is missing for SFX generation.')
+      return
+    }
+    if (!actionText) {
+      toast.info('Add an action description before generating SFX.')
+      return
+    }
+    setIsGeneratingElevenLabs(true)
+    const toastId = toast.loading(sfxAudio ? 'Re-generating ElevenLabs sound...' : 'Generating ElevenLabs sound...')
+    try {
+      const durationSeconds = resolveSfxDuration({
+        segmentDurationSeconds,
+        override: durationPreset,
+      })
+      const response = await fetch('/api/tts/elevenlabs/sound-effects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sfxId: slot.sfxId,
+          sfxIndex: slot.sfxIndex,
+          text: actionText,
+          durationSeconds,
+        }),
+      })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error || `Sound effect failed (HTTP ${response.status})`)
+      }
+      const data = await response.json()
+      if (!data?.url) throw new Error('Sound effect response missing audio URL')
+      await onSaveSfxAudio?.(sceneIdx, 'sfx', data.url, slot.sfxIndex, null, {
+        beatId: beat.beatId,
+        beatDescription: actionText,
+      })
+      toast.success(sfxAudio ? 'ElevenLabs sound re-generated.' : 'ElevenLabs sound generated.', {
+        id: toastId,
+      })
+    } catch (error) {
+      toast.error(`Failed to generate sound effect: ${(error as Error)?.message || 'Unknown error'}`, {
+        id: toastId,
+      })
+    } finally {
+      setIsGeneratingElevenLabs(false)
+    }
+  }
 
   return (
     <div className="mt-3 pt-3 border-t border-amber-700/40">
@@ -134,9 +184,9 @@ export function ActionBeatSfxControls({
             Action SFX
           </span>
           <BeatAudioStatusBadge hasAudio={!!sfxAudio} stale={sfxStale} />
-          {isVeoAction && (
+          {isHifi && (
             <span className="text-[10px] px-2 py-0.5 bg-amber-500/15 text-amber-200 rounded">
-              Veo action
+              HiFi
             </span>
           )}
           {expressStatus === 'running' && (
@@ -208,25 +258,32 @@ export function ActionBeatSfxControls({
               </button>
             </>
           ) : (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                void handleGenerate()
-              }}
-              disabled={isBusy || !actionText}
-              title={VEO_SFX_CREDIT_HINT}
-              className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded disabled:opacity-50"
-            >
-              {isGenerating ? (
-                <span className="flex items-center gap-1">
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  Generating...
-                </span>
-              ) : (
-                'Generate'
-              )}
-            </button>
+            <span className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  void handleElevenLabs()
+                }}
+                disabled={isBusy || !actionText}
+                title="ElevenLabs · about 15 credits"
+                className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded disabled:opacity-50"
+              >
+                {isGeneratingElevenLabs ? 'ElevenLabs...' : 'ElevenLabs'}
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  void handleGenerate()
+                }}
+                disabled={isBusy || !actionText}
+                title={HIFI_CREDIT_HINT}
+                className="text-xs px-2 py-1 border border-amber-500/60 text-amber-100 rounded disabled:opacity-50"
+              >
+                {isGenerating ? 'HiFi...' : 'HiFi'}
+              </button>
+            </span>
           )}
         </div>
       </div>
@@ -256,12 +313,12 @@ export function ActionBeatSfxControls({
       </div>
       {showPartialVeoHint && (
         <p className="text-[10px] text-amber-200/60 mb-1">
-          Veo covers up to 8s (Auto target{' '}
+          HiFi covers up to 8s (Auto target{' '}
           {resolveVeoSfxTargetSeconds({ segmentDurationSeconds, override: durationPreset })}s →{' '}
           {veoAutoSeconds}s clip).
         </p>
       )}
-      <p className="text-[10px] text-amber-300/50">{VEO_SFX_CREDIT_HINT}</p>
+      <p className="text-[10px] text-amber-300/50">{HIFI_CREDIT_HINT}</p>
     </div>
   )
 }

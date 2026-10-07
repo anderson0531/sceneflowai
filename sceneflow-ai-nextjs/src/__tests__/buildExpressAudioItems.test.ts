@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs'
+import path from 'path'
 import { describe, expect, it } from 'vitest'
 import {
   buildExpressAudioItems,
@@ -25,6 +27,13 @@ describe('buildExpressAudioItems', () => {
           kind: 'action',
           actionDescription: 'Wind howls through the alley.',
         },
+        {
+          beatId: 'bt_action_2',
+          sequenceIndex: 2,
+          kind: 'action',
+          actionDescription: 'Alex watches the alley.',
+          beatDirection: { audioCue: 'A metal door slams' },
+        },
       ],
       dialogue: [
         {
@@ -46,6 +55,7 @@ describe('buildExpressAudioItems', () => {
       'music',
       'dialogue-0',
       'sfx-bt_action_1',
+      'sfx-bt_action_2',
     ])
     expect(items[0]).toMatchObject({
       kind: 'music',
@@ -61,7 +71,19 @@ describe('buildExpressAudioItems', () => {
       kind: 'sfx',
       beatId: 'bt_action_1',
       hasAudio: false,
+      recommended: false,
+      typeLabel: 'SFX',
     })
+    expect(items[3]).toMatchObject({
+      kind: 'sfx',
+      beatId: 'bt_action_2',
+      recommended: true,
+      label: 'A metal door slams',
+    })
+    expect(defaultExpressAudioSelection(items, 'missing')).toEqual([
+      'dialogue-0',
+      'sfx-bt_action_2',
+    ])
   })
 
   it('adds legacy scene narration when it is not represented in beats', () => {
@@ -125,7 +147,10 @@ describe('buildExpressAudioItems', () => {
     const items = buildExpressAudioItems(scene, 'en')
 
     expect(items.find((item) => item.id === 'dialogue-0')?.hasAudio).toBe(true)
-    expect(items.find((item) => item.id === 'sfx-bt_action_1')?.hasAudio).toBe(true)
+    expect(items.find((item) => item.id === 'sfx-bt_action_1')).toMatchObject({
+      hasAudio: true,
+      recommended: false,
+    })
   })
 })
 
@@ -133,7 +158,8 @@ describe('defaultExpressAudioSelection', () => {
   const items = [
     { id: 'music', kind: 'music' as const, label: 'Background music', typeLabel: 'Music (Lyria)', hasAudio: true },
     { id: 'dialogue-0', kind: 'dialogue' as const, label: 'Alex: Hi', typeLabel: 'Dialogue (TTS)', hasAudio: false },
-    { id: 'sfx-bt_1', kind: 'sfx' as const, label: 'Wind', typeLabel: 'Action SFX (Veo)', hasAudio: false, beatId: 'bt_1' },
+    { id: 'sfx-bt_1', kind: 'sfx' as const, label: 'Door slam', typeLabel: 'SFX', hasAudio: false, beatId: 'bt_1', recommended: true },
+    { id: 'sfx-bt_2', kind: 'sfx' as const, label: 'Looks around', typeLabel: 'SFX', hasAudio: false, beatId: 'bt_2', recommended: false },
   ]
 
   it('preselects only missing items for missing scope', () => {
@@ -143,7 +169,7 @@ describe('defaultExpressAudioSelection', () => {
     ])
   })
 
-  it('preselects all items for all scope', () => {
+  it('preselects recommended sound effects and leaves filler to the music bed', () => {
     expect(defaultExpressAudioSelection(items, 'all')).toEqual([
       'music',
       'dialogue-0',
@@ -168,5 +194,19 @@ describe('parseExpressAudioSelectedIds', () => {
       includeMusic: true,
       sfxBeatIds: ['bt_action_1'],
     })
+  })
+})
+
+describe('audio quality labels', () => {
+  it('does not name the video model in the audio-agent copy', () => {
+    const catalog = JSON.parse(
+      readFileSync(path.join(process.cwd(), 'messages/app/en/production.json'), 'utf8')
+    ) as { expressAudio: Record<string, string>; expressGenerateAll: Record<string, string> }
+    const leaks = ['expressAudio', 'expressGenerateAll'].flatMap((section) =>
+      Object.entries(catalog[section as 'expressAudio']).flatMap(([key, value]) =>
+        typeof value === 'string' && /\bVeo\b/.test(value) ? [`${section}.${key}`] : []
+      )
+    )
+    expect(leaks).toEqual([])
   })
 })

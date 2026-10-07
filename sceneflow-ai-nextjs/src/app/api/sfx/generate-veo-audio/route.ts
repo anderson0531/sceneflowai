@@ -23,10 +23,12 @@ interface VeoSfxRequestBody {
   sfxId?: string
   sfxIndex?: number
   promptMode?: VeoSfxPromptMode
+  voiceDirection?: string
 }
 
 function parsePromptMode(value: unknown): VeoSfxPromptMode {
-  return value === 'actionBeat' ? 'actionBeat' : 'ambient'
+  if (value === 'actionBeat' || value === 'dialogue') return value
+  return 'ambient'
 }
 
 function toClipDuration(value: number | undefined): VeoSfxClipDuration {
@@ -60,7 +62,7 @@ export async function POST(request: NextRequest) {
       const breakdown = await CreditService.getCreditBreakdown(userId).catch(() => null)
       return NextResponse.json(
         {
-          error: 'Insufficient credits for Veo ambient SFX generation',
+          error: 'Insufficient credits for HiFi audio',
           creditsRequired: VEO_SFX_CREDIT_COST,
           creditsAvailable: breakdown?.total_credits ?? 0,
           operation: 'veo_sfx',
@@ -78,6 +80,7 @@ export async function POST(request: NextRequest) {
       sfxIndex: body.sfxIndex,
       clipDurationSeconds,
       promptMode,
+      voiceDirection: body.voiceDirection,
     })
 
     try {
