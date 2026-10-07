@@ -94,4 +94,39 @@ describe('POST /api/vision/references/express/start', () => {
     expect(data.code).toBe('NOTHING_TO_GENERATE')
     expect(createGenerationJob).not.toHaveBeenCalled()
   })
+
+  it('stores a Location Agent run on the locations the checklist kept', async () => {
+    vi.mocked(CreditService.ensureCredits).mockResolvedValue(true)
+    loadContext.mockResolvedValue({
+      characters: [],
+      locations: [
+        {
+          id: 'l1',
+          location: 'Dock',
+          imageUrl: '',
+          versions: [{ id: 'v1', name: 'Door', stateNotes: 'Gone', imageUrl: '' }],
+        },
+        { id: 'l2', location: 'Lab', imageUrl: '', versions: [] },
+      ],
+      props: [],
+      scenes: [],
+      screenplayContext: {},
+    })
+
+    const res = await post({
+      projectId: 'proj-1',
+      kinds: ['location'],
+      locationIds: ['l1'],
+      itemKeys: ['location:l1', 'location:l1::v1'],
+    })
+    const data = await res.json()
+
+    expect(res.status).toBe(202)
+    expect(data.catalogSync).toBe('location')
+    const payload = createGenerationJob.mock.calls[0]?.[0]?.payload
+    expect(payload.locationIds).toEqual(['l1'])
+    expect(payload.preexistingVersionIds).toEqual(['v1'])
+    expect(payload.items.map((item: { targetId: string }) => item.targetId)).toEqual(['l1'])
+    expect(payload.items.some((item: { versionId?: string }) => item.versionId)).toBe(false)
+  })
 })

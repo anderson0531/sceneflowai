@@ -76,6 +76,17 @@ export type ReferenceExpressScope = {
    * bases-only.
    */
   includeNestedStills?: boolean
+  /**
+   * Location Agent checklist. Catalog sync and still planning stay inside
+   * these locations. Omit for a full-library Location Agent run.
+   */
+  locationIds?: string[]
+  /**
+   * Version ids that already existed on `locationIds` when the run started.
+   * A version created by catalog sync is not in this list, so it is drawn
+   * even though the user had not checked it yet.
+   */
+  preexistingVersionIds?: string[]
 }
 
 export type ReferenceExpressItemResult = {

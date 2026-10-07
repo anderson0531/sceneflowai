@@ -11345,6 +11345,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           sceneIndices: scope?.sceneIndices,
           itemKeys: scope?.itemKeys,
           kinds: scope?.kinds,
+          locationIds: scope?.locationIds,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -11378,8 +11379,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const count = Number(data.itemCount || 0)
       const sceneLabel = scope?.sceneIndices?.length === 1 ? ` for scene ${scope.sceneIndices[0] + 1}` : ''
       const catalogSync = data.catalogSync === 'location'
+      const selectedLocations = scope?.locationIds?.length ?? 0
       const description = catalogSync
-        ? count > 0
+        ? selectedLocations > 0
+          ? `Refreshing ${selectedLocations} location${selectedLocations === 1 ? '' : 's'} from the script, then generating ${count} reference image${count === 1 ? '' : 's'} in the background. Keep working — we'll notify you when they're ready.`
+          : count > 0
           ? `Updating locations from the script, then generating ${count} reference image${count === 1 ? '' : 's'}${sceneLabel} in the background. Keep working — we'll notify you when they're ready.`
           : 'Updating locations from the script in the background. We\'ll generate any missing stills next.'
         : `Generating ${count} reference image${count === 1 ? '' : 's'}${sceneLabel} in the background. Keep working — we'll notify you when they're ready.`

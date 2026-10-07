@@ -10,6 +10,7 @@ import {
   planFollowOnNestedItems,
   planReferenceExpressItems,
   planSceneReferenceExpressItems,
+  planSelectedLocationExpressItems,
   propFingerprint,
   wantsLocationCatalogSync,
   type CastSource,
@@ -17,6 +18,12 @@ import {
   type PropSource,
 } from '@/lib/vision/referenceExpress/planItems'
 import { summarizeItemResults } from '@/lib/vision/referenceExpress/types'
+import { runLocationCatalogSyncStep } from '@/lib/vision/referenceExpress/catalogSync'
+import {
+  locationAgentChecklist,
+  withRequiredBaseStill,
+} from '@/lib/vision/locationAgentSelection'
+import type { LocationReference } from '@/types/visionReferences'
 
 const cast = (over: Partial<CastSource> = {}): CastSource => ({
   id: 'c1',
@@ -386,6 +393,106 @@ describe('planFollowOnNestedItems', () => {
     )
     expect(followOns.map((item) => item.versionId)).toEqual(['v-door'])
   })
+
+  it('follows on only the versions the checklist kept, plus versions sync just created', () => {
+    const loc = location({
+      imageUrl: 'https://cdn/dock.png',
+      versions: [
+        { id: 'v-door', name: 'Door gone', stateNotes: 'Door blown out', imageUrl: '' },
+        { id: 'v-flood', name: 'Flooded', stateNotes: 'Water to the sill', imageUrl: '' },
+        { id: 'v-new', name: 'Boarded', stateNotes: 'Windows boarded', imageUrl: '' },
+      ],
+    })
+    const followOns = planFollowOnNestedItems(
+      { kind: 'location', targetId: 'l1', label: 'Dockyard', sourceFingerprint: 'x' },
+      { characters: [], locations: [loc], props: [] },
+      {
+        kinds: ['location'],
+        includeNestedStills: true,
+        locationIds: ['l1'],
+        itemKeys: ['location:l1::v-door'],
+        preexistingVersionIds: ['v-door', 'v-flood'],
+      }
+    )
+    expect(followOns.map((item) => item.versionId)).toEqual(['v-door', 'v-new'])
+  })
+})
+
+describe('planSelectedLocationExpressItems', () => {
+  const dock = location({
+    imageUrl: '',
+    versions: [
+      { id: 'v-door', name: 'Door gone', stateNotes: 'Door blown out', imageUrl: '' },
+    ],
+  })
+  const lab = location({
+    id: 'l2',
+    location: 'Lab',
+    imageUrl: 'https://cdn/lab.png',
+    versions: [
+      { id: 'v-night', name: 'Night', stateNotes: 'Lights out', imageUrl: 'https://cdn/night.png' },
+      { id: 'v-old', name: 'Old', stateNotes: 'Before', imageUrl: '' },
+    ],
+  })
+
+  it('draws the checked base and leaves every other location alone', () => {
+    const items = planSelectedLocationExpressItems(
+      { characters: [], locations: [dock, lab], props: [] },
+      {
+        kinds: ['location'],
+        locationIds: ['l1'],
+        itemKeys: ['location:l1', 'location:l1::v-door'],
+        preexistingVersionIds: ['v-door'],
+      }
+    )
+    expect(items.map((item) => item.targetId)).toEqual(['l1'])
+    expect(items[0]?.versionId).toBeUndefined()
+    expect(items[0]?.forceRegenerate).toBeUndefined()
+  })
+
+  it('force-regenerates a checked still that already has an image and skips an unchecked version', () => {
+    const items = planSelectedLocationExpressItems(
+      { characters: [], locations: [dock, lab], props: [] },
+      {
+        kinds: ['location'],
+        locationIds: ['l2'],
+        itemKeys: ['location:l2::v-night'],
+        preexistingVersionIds: ['v-night', 'v-old'],
+      }
+    )
+    expect(items).toEqual([
+      expect.objectContaining({
+        targetId: 'l2',
+        versionId: 'v-night',
+        forceRegenerate: true,
+      }),
+    ])
+  })
+
+  it('includes a set version catalog sync created on a selected location', () => {
+    const items = planSelectedLocationExpressItems(
+      {
+        characters: [],
+        locations: [
+          location({
+            imageUrl: 'https://cdn/dock.png',
+            versions: [
+              { id: 'v-door', name: 'Door gone', stateNotes: 'Door blown out', imageUrl: '' },
+              { id: 'v-new', name: 'Boarded', stateNotes: 'Windows boarded', imageUrl: '' },
+            ],
+          }),
+        ],
+        props: [],
+      },
+      {
+        kinds: ['location'],
+        locationIds: ['l1'],
+        itemKeys: ['location:l1'],
+        preexistingVersionIds: ['v-door'],
+      }
+    )
+    expect(items.map((item) => item.versionId ?? 'base')).toEqual(['base', 'v-new'])
+  })
 })
 
 describe('source fingerprints', () => {
@@ -482,5 +589,59 @@ describe('wantsLocationCatalogSync', () => {
     expect(canStartReferenceExpressJob([], { kinds: ['location'] })).toBe(true)
     expect(canStartReferenceExpressJob([], { kinds: ['prop'] })).toBe(false)
     expect(canStartReferenceExpressJob(['item'], { kinds: ['prop'] })).toBe(true)
+  })
+})
+
+describe('location catalog selection', () => {
+  it('does not extract the whole library when the run names locations', async () => {
+    const outcome = await runLocationCatalogSyncStep({
+      projectId: 'proj-1',
+      catalogSync: { status: 'pending', cursor: 0, locationIds: [] },
+      items: [],
+      selection: {
+        locationIds: ['l1'],
+        itemKeys: ['location:l1'],
+        preexistingVersionIds: [],
+      },
+    })
+    expect(outcome.kind).toBe('continue')
+    if (outcome.kind !== 'continue') return
+    expect(outcome.catalogSync).toEqual({
+      status: 'syncing',
+      cursor: 0,
+      locationIds: ['l1'],
+    })
+  })
+
+  it('checks the base still when a version is chosen and the base is missing', () => {
+    const locations = [
+      {
+        id: 'l1',
+        location: 'Dock',
+        locationDisplay: 'EXT. DOCK',
+        imageUrl: '',
+        sourceSceneIndex: 0,
+        sourceSceneHeading: 'EXT. DOCK - NIGHT',
+        pinnedAt: '',
+        sceneNumbers: [1],
+        versions: [
+          {
+            id: 'v1',
+            name: 'Door blown',
+            stateNotes: 'Door gone',
+            sceneNumbers: [1],
+            createdAt: '',
+          },
+        ],
+      },
+    ] as LocationReference[]
+    const rows = locationAgentChecklist(locations, { sceneNumber: 1, mode: 'needs-action' })
+    const version = rows.find((row) => row.versionId === 'v1')
+    expect(version?.baseMissing).toBe(true)
+    expect(withRequiredBaseStill([], rows, version!.key, true)).toEqual([
+      'location:l1::v1',
+      'location:l1',
+    ])
+    expect(rows.some((row) => row.locationId === 'l1' && !row.versionId)).toBe(true)
   })
 })
