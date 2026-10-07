@@ -22,7 +22,6 @@ import { dedupeRedundantActionBeats } from '@/lib/script/actionBeatDedupe'
 import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
 import { mintLineId } from '@/lib/script/segmentScript'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
-import { MAX_BEATS_PER_SCENE } from '@/lib/script/sceneDecomposition'
 import { clampSceneBeatTarget, SCENE_BEAT_TARGET_KEY } from '@/lib/script/sceneBeatTarget'
 import { restampPreVisHashIfScriptCurrent } from '@/lib/storyboard/preVisSync'
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
@@ -263,15 +262,6 @@ function enforceRevisionBeatCount(
   return applyBeatsToScene(scene, beats)
 }
 
-/** Cap revised scenes at MAX_BEATS_PER_SCENE. An Assistant rewrite may grow a scene to the ceiling; it must not exceed it. */
-export function enforceMaxBeatsPerScene(beats: SceneBeat[]): SceneBeat[] {
-  if (beats.length <= MAX_BEATS_PER_SCENE) return beats
-  console.warn(
-    `[Scene Revision] Revised scene has ${beats.length} beats; truncating to ${MAX_BEATS_PER_SCENE}`
-  )
-  return beats.slice(0, MAX_BEATS_PER_SCENE)
-}
-
 /** Set dialogue/beat characterId from speaker name matches. */
 export function relinkSceneCharacterIds(
   scene: Record<string, unknown>,
@@ -405,9 +395,7 @@ export function finalizeStructuredRevisedScene(
   const revisionDepth = options?.revisionDepth ?? 'moderate'
   const isDeep = revisionDepth === 'deep'
   const normalizedPreserve = normalizePreserveElements(preserveElements)
-  let beats = enforceMaxBeatsPerScene(
-    mapStructuredRevisionBeats(parsed.beats, currentScene, { revisionDepth })
-  )
+  let beats = mapStructuredRevisionBeats(parsed.beats, currentScene, { revisionDepth })
 
   if (normalizedPreserve.includes('dialogueBeats')) {
     const original = getSceneBeats(currentScene)

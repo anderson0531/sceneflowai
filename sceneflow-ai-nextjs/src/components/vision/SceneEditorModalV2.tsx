@@ -32,6 +32,8 @@ interface SceneEditorApplyOptions {
   preserveElements?: PreserveElement[]
   revisionDepth?: RevisionDepth
   appliedRecommendationIds?: string[]
+  /** Scenes inserted immediately after the edited scene when a rewrite exceeds 30 shots. */
+  continuationScenes?: any[]
 }
 
 interface SceneEditorModalProps {
@@ -89,6 +91,7 @@ export function SceneEditorModal({
   const [isGenerating, setIsGenerating] = useState(false)
   const [isApplying, setIsApplying] = useState(false)
   const [revisionHistory, setRevisionHistory] = useState<any[]>([])
+  const [continuationHistory, setContinuationHistory] = useState<any[][]>([])
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState(-1)
   const [showPreview, setShowPreview] = useState(false)
 
@@ -164,6 +167,7 @@ export function SceneEditorModal({
   useEffect(() => {
     if (isOpen && scene) {
       setRevisionHistory([scene])
+      setContinuationHistory([[]])
       setCurrentHistoryIndex(0)
       setShowPreview(false)
       setPreviewScene(null)
@@ -237,11 +241,13 @@ export function SceneEditorModal({
       }
 
       const data = await response.json()
+      const continuations = Array.isArray(data.continuationScenes) ? data.continuationScenes : []
       setPreviewScene(data.revisedScene)
       setDeselectedChanges(new Set())
 
       const newHistory = [...revisionHistory.slice(0, currentHistoryIndex + 1), data.revisedScene]
       setRevisionHistory(newHistory)
+      setContinuationHistory((prev) => [...prev.slice(0, currentHistoryIndex + 1), continuations])
       setCurrentHistoryIndex(newHistory.length - 1)
 
       setShowPreview(true)
@@ -291,6 +297,7 @@ export function SceneEditorModal({
         preserveElements: buildPreserveElements(),
         revisionDepth,
         appliedRecommendationIds,
+        continuationScenes: continuationHistory[currentHistoryIndex] ?? [],
       })
     } finally {
       setIsApplying(false)
@@ -314,6 +321,7 @@ export function SceneEditorModal({
   }
 
   const hasDirection = customInstruction.trim().length > 0
+  const pendingContinuations = continuationHistory[currentHistoryIndex] ?? []
   const previewChangeKeys = previewScene ? diffSceneChanges(scene, previewScene) : []
   const { selected: selectedPreviewChanges } = countSelectedChanges(
     previewChangeKeys,
@@ -496,6 +504,14 @@ export function SceneEditorModal({
                 ← Back to Edit
               </Button>
             </div>
+
+            {pendingContinuations.length > 0 && (
+              <p className="mb-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-950 dark:text-amber-100">
+                This rewrite runs past 30 shots. Applying inserts {pendingContinuations.length}{' '}
+                new scene{pendingContinuations.length === 1 ? '' : 's'} immediately after this one,
+                with the same cast, location, and time of day.
+              </p>
+            )}
 
             {showComparison && optimizedScene ? (
               <SceneComparisonPanel

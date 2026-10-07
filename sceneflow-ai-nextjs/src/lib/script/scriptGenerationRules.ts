@@ -734,10 +734,11 @@ export function buildScriptConstraintPrompt(settings: ScriptSettings): string {
 
 ## 1. SCENE DECOMPOSITION (Blueprint → Scenes)
 - Each Blueprint beat MUST become MULTIPLE scenes — NEVER one scene per Blueprint beat
-- Hard cap: at most ${MAX_BEATS_PER_SCENE} beats per scene
+- You are creatively unbound. Compose the exact number of beats the story needs. Do not pad to a quota and do not compress action to fit ${MAX_BEATS_PER_SCENE} beats
+- Technical limit: no stored scene exceeds ${MAX_BEATS_PER_SCENE} beats. If a logical scene needs more, split into sequential parts (Scene 1A, Scene 1B) sharing cast, location, time of day, and environment
 - Split at natural dramatic breaks: location changes, time jumps, act turns — NOT mid-conversation
 - When a Blueprint beat needs more than ${MAX_BEATS_PER_SCENE} beats, continue across consecutive scenes with the same blueprintBeatIndex
-- Each scene MUST have a beginning, middle, and end (~${TARGET_SCENE_MINUTES_LABEL} minutes / ~${TARGET_BEATS_PER_SCENE} beats target)
+- A planning hint is ~${TARGET_SCENE_MINUTES_LABEL} minutes / ~${TARGET_BEATS_PER_SCENE} beats per scene. That hint is not a quota to fill
 - Approximate total scenes: follow the per-beat decomposition budget in the prompt
 - Maximum ${settings.maxScenesPerAct} scenes per act (soft guide)
 

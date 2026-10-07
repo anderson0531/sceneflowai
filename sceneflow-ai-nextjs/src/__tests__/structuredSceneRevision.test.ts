@@ -1,11 +1,11 @@
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import { describe, expect, it } from 'vitest'
-import { enforceMaxBeatsPerScene } from '@/lib/script/structuredSceneRevision'
+import { finalizeStructuredRevisedScene } from '@/lib/script/structuredSceneRevision'
 import { buildRevisionBeatVolumeBlock } from '@/lib/script/scriptCraftPrompt'
 import { SCENE_OPTIMIZATION_TEMPLATES } from '@/lib/constants/scene-optimization'
 import { MAX_BEATS_PER_SCENE, TARGET_BEATS_PER_SCENE } from '@/lib/script/sceneDecomposition'
-import type { SceneBeat } from '@/lib/script/segmentTypes'
+import { getSceneBeats } from '@/lib/script/beatMigration'
 
 const ROOT = join(__dirname, '..', '..')
 
@@ -13,31 +13,29 @@ function readSource(relativePath: string): string {
   return readFileSync(join(ROOT, relativePath), 'utf8')
 }
 
-function makeBeats(count: number): SceneBeat[] {
-  return Array.from({ length: count }, (_, index) => ({
-    beatId: `bt_${index}`,
-    sequenceIndex: index,
-    kind: 'action' as const,
-    actionDescription: `Beat ${index}`,
-  }))
-}
-
-describe('enforceMaxBeatsPerScene', () => {
-  it('passes a scene at the ceiling through untouched', () => {
-    const beats = makeBeats(MAX_BEATS_PER_SCENE)
-    expect(enforceMaxBeatsPerScene(beats)).toBe(beats)
-  })
-
-  it('truncates a scene one beat over the ceiling', () => {
-    const kept = enforceMaxBeatsPerScene(makeBeats(MAX_BEATS_PER_SCENE + 1))
-    expect(kept).toHaveLength(MAX_BEATS_PER_SCENE)
-    expect(kept[kept.length - 1].beatId).toBe(`bt_${MAX_BEATS_PER_SCENE - 1}`)
-  })
-
-  it('does not cap a scene written to the target', () => {
-    expect(enforceMaxBeatsPerScene(makeBeats(TARGET_BEATS_PER_SCENE))).toHaveLength(
-      TARGET_BEATS_PER_SCENE
+describe('revision beat ceiling', () => {
+  it('keeps a composition past the technical ceiling so the route can split it', () => {
+    const count = MAX_BEATS_PER_SCENE + 1
+    const beats = Array.from({ length: count }, (_, index) =>
+      index % 2 === 0
+        ? {
+            kind: 'action' as const,
+            actionDescription: `Crane rises over beacon ${index} at the north ridge`,
+          }
+        : {
+            kind: 'dialogue' as const,
+            character: 'ALEX',
+            line: `[calm] Marker ${index} is the only word I trust.`,
+          }
     )
+    const scene = finalizeStructuredRevisedScene(
+      { beats },
+      { heading: 'INT. LAB - NIGHT' },
+      [],
+      {},
+      { revisionDepth: 'moderate' }
+    )
+    expect(getSceneBeats(scene)).toHaveLength(count)
   })
 })
 
@@ -46,7 +44,9 @@ describe('buildRevisionBeatVolumeBlock', () => {
     const block = buildRevisionBeatVolumeBlock()
     expect(block).toContain(`${TARGET_BEATS_PER_SCENE} beats`)
     expect(block).toContain(`${MAX_BEATS_PER_SCENE} beats`)
-    expect(block).toMatch(/never exceed that cap/i)
+    expect(block).toMatch(/creatively unbound/i)
+    expect(block).toMatch(/splits the overflow/i)
+    expect(block).not.toMatch(/never exceed that cap/i)
   })
 
   it('tells the model the original count is not a target to match', () => {
@@ -98,9 +98,11 @@ describe('buildRevisionBeatVolumeBlock', () => {
     expect(block).not.toMatch(/room to add the beats/i)
   })
 
-  it('still names the hard ceiling for a short scene', () => {
+  it('splits a short scene that still runs past the technical ceiling', () => {
     const block = buildRevisionBeatVolumeBlock(6)
-    expect(block).toContain(`never exceed ${MAX_BEATS_PER_SCENE}`)
+    expect(block).toMatch(/splits the overflow/i)
+    expect(block).toContain(`${MAX_BEATS_PER_SCENE} beats`)
+    expect(block).not.toMatch(/never exceed/i)
   })
 
   it('keeps the no-padding rule at every target below the default', () => {
@@ -149,7 +151,7 @@ describe('revise-scene beat volume prompt', () => {
     expect(source).toContain('${targetBeats} beats is the target for this scene')
     expect(source).toContain('The target is ~${targetBeats}')
     expect(source).toContain('target ${targetBeats}')
-    expect(source).toContain('(target ${targetBeats}, cap ${MAX_BEATS_PER_SCENE}')
+    expect(source).toContain('(target ${targetBeats}, split above ${MAX_BEATS_PER_SCENE}')
   })
 
   it('no longer states the script-wide constant as this scene\u2019s target', () => {
@@ -165,10 +167,11 @@ describe('revise-scene beat volume prompt', () => {
     expect(source).toContain('targetBeatCount?: number')
   })
 
-  it('steers a scene sitting over its target toward cutting, not padding', () => {
+  it('does not cut a scene down to its target or the technical ceiling', () => {
     expect(source).toContain('currentBeats.length > targetBeats')
-    expect(source).toMatch(/cut the beats that carry the least/)
+    expect(source).toMatch(/system splits the overflow/)
     expect(source).toMatch(/It sits under the target, so treat that gap as room/)
+    expect(source).not.toMatch(/cut the beats that carry the least/)
   })
 
   it('passes the target to the finalizer so the choice is persisted', () => {
@@ -181,7 +184,8 @@ describe('revise-scene beat volume prompt', () => {
   })
 
   it('leaves output headroom for a scene written to the beat target', () => {
-    expect(source).toContain('maxOutputTokens: 32768')
+    expect(source).toContain('maxOutputTokens: 65536')
+    expect(source).not.toContain('maxOutputTokens: 32768')
     expect(source).not.toContain('maxOutputTokens: 16384')
   })
 

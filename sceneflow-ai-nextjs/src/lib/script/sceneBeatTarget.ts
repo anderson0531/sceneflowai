@@ -6,8 +6,8 @@
  * beats of invented business. A scene can now carry its own target, which the
  * revision prompts read instead of the constant.
  *
- * A target, not a cap. `MAX_BEATS_PER_SCENE` is still the absolute ceiling and
- * `enforceMaxBeatsPerScene` still enforces it.
+ * A target, not a cap. A composition past `MAX_BEATS_PER_SCENE` is split into
+ * the next scene. The stored target itself still clamps to that ceiling.
  *
  * Kept free of server and AI imports so the scene editor can seed its control
  * from the same function the route resolves with.

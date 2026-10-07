@@ -1,16 +1,16 @@
 /**
  * Blueprint beat → scene decomposition and post-generation scene splitting.
  *
- * TARGET_BEATS_PER_SCENE is what planning aims for so a scene has a beginning,
- * middle, and end without being forced to fill the ceiling. MAX_BEATS_PER_SCENE
- * is the hard ceiling: split, QA, and Assistant revision truncation all read it.
+ * TARGET_BEATS_PER_SCENE is a planning hint for how many scenes to pre-allocate.
+ * MAX_BEATS_PER_SCENE is the technical per-scene ceiling: a composition that
+ * needs more beats is split into sequential scenes, never truncated.
  */
 
 import { v4 as uuidv4 } from 'uuid'
 import { applyBeatsToScene, getSceneBeats } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
-/** Hard ceiling. A scene that exceeds this is split, flagged, or truncated. */
+/** Technical ceiling. A scene that exceeds this is split into the next scene. */
 export const MAX_BEATS_PER_SCENE = 30
 /** What planning aims for. Scene count and chunk targets derive from this. */
 export const TARGET_BEATS_PER_SCENE = 20
@@ -83,8 +83,9 @@ export function formatDecompositionPromptBlock(plan: SceneDecompositionPlan): st
   const lines: string[] = [
     '=== BLUEPRINT BEAT → SCENE DECOMPOSITION (MANDATORY) ===',
     `Each Blueprint beat MUST become MULTIPLE scenes — NEVER one scene per Blueprint beat.`,
-    `Hard cap: each scene beats[] array MUST contain at most ${MAX_BEATS_PER_SCENE} beats.`,
-    `Aim for ~${TARGET_BEATS_PER_SCENE} beats per scene (~${TARGET_SCENE_SECONDS}s / ~${TARGET_SCENE_MINUTES_LABEL} min). A scene may grow up to the cap when the story earns it.`,
+    `You are creatively unbound. Compose the exact number of beats the treatment needs. Do not pad to a quota and do not compress action to fit a beat box.`,
+    `Technical limit: when a logical scene needs more than ${MAX_BEATS_PER_SCENE} beats, split it into sequential parts (Scene 1A, Scene 1B). No stored scene exceeds ${MAX_BEATS_PER_SCENE} beats. Parts share cast, location, time of day, and environment.`,
+    `A planning hint is ~${TARGET_BEATS_PER_SCENE} beats per scene (~${TARGET_SCENE_SECONDS}s / ~${TARGET_SCENE_MINUTES_LABEL} min). That hint is not a quota.`,
     `Target ~${AVG_BEAT_SECONDS}s per beat.`,
     '',
     'Per-beat scene budget:',
@@ -103,9 +104,9 @@ export function formatDecompositionPromptBlock(plan: SceneDecompositionPlan): st
     'Every main-content scene MUST include:',
     '- blueprintBeatIndex: 0-based index matching the Blueprint beat above',
     '- blueprintBeatTitle: exact title string from that Blueprint beat',
-    `- beats[]: ordered timeline with AT MOST ${MAX_BEATS_PER_SCENE} entries`,
+    `- beats[]: ordered timeline. Split into the next scene rather than cutting shots when a scene would pass ${MAX_BEATS_PER_SCENE} beats`,
     '- Split at natural dramatic breaks (location change, time jump, act turn) — not mid-conversation',
-    '- When one Blueprint beat needs more beats than fit in one scene, continue across consecutive scenes sharing the same blueprintBeatIndex'
+    '- When one Blueprint beat needs more beats than fit in one scene, continue across consecutive scenes sharing the same blueprintBeatIndex, cast, location, time of day, and environment'
   )
 
   return lines.join('\n')
@@ -178,42 +179,226 @@ function sumBeatDurations(beats: SceneBeat[], fallbackSeconds = AVG_BEAT_SECONDS
   }, 0)
 }
 
+/** Letter for a split part. 0 is A, 1 is B, 26 is AA. */
+export function scenePartLetter(partIndex: number): string {
+  let n = Math.max(0, Math.floor(partIndex))
+  let label = ''
+  do {
+    label = String.fromCharCode(65 + (n % 26)) + label
+    n = Math.floor(n / 26) - 1
+  } while (n >= 0)
+  return label
+}
+
 /**
- * Number continuation parts. Unnumbered "(cont.)" headings made every part after
- * the first identical, which downstream duplicate detection then merged back.
+ * Distinguish continuation parts. Identical headings made duplicate detection
+ * merge a deliberate split back into one scene.
  */
-function appendContinuationToHeading(heading: unknown, partIndex: number): string {
+const PART_HEADING_SUFFIX = /\s*\((?:cont\.?[^)]*|Part\s+[A-Z]+)\)\s*$/i
+
+function appendPartLabelToHeading(heading: unknown, partIndex: number): string {
   const base =
     typeof heading === 'string'
       ? heading
       : heading && typeof heading === 'object' && 'text' in heading
         ? String((heading as { text?: string }).text || 'Untitled Scene')
         : 'Untitled Scene'
-  const stripped = base.replace(/\s*\(cont\.?[^)]*\)\s*$/i, '').trim() || 'Untitled Scene'
-  return `${stripped} (cont. ${partIndex + 1})`
+  const stripped = base.replace(PART_HEADING_SUFFIX, '').trim() || 'Untitled Scene'
+  if (partIndex <= 0) return stripped
+  return `${stripped} (Part ${scenePartLetter(partIndex)})`
+}
+
+/** Scene-level playback that belongs to the original scene, not a new part. */
+const CONTINUATION_PLAYBACK_KEYS = [
+  'imageUrl',
+  'imageGcsPath',
+  'imagePrompt',
+  'imageGeneratedAt',
+  'dialogueAudio',
+  'narrationAudio',
+  'narrationAudioUrl',
+  'narrationDuration',
+  'narrationAudioGeneratedAt',
+  'descriptionAudio',
+  'descriptionAudioUrl',
+  'descriptionDuration',
+  'descriptionAudioGeneratedAt',
+  'musicAudio',
+  'musicUrl',
+  'musicDuration',
+  'musicFileDuration',
+  'sfxAudio',
+  'sfxSourceMeta',
+  'dialogueAudioGeneratedAt',
+  'audienceAnalysis',
+  'polishAnalysis',
+] as const
+
+const CUE_PLAYBACK_KEYS = ['url', 'duration', 'fileDuration', 'updatedAt'] as const
+
+function clipBeatRange(
+  beatStart: number,
+  beatEnd: number,
+  rangeStart: number,
+  rangeEnd: number
+): { beatStart: number; beatEnd: number } | null {
+  const clippedStart = Math.max(beatStart, rangeStart)
+  const clippedEnd = Math.min(beatEnd, rangeEnd - 1)
+  if (!Number.isInteger(clippedStart) || !Number.isInteger(clippedEnd) || clippedStart > clippedEnd) {
+    return null
+  }
+  return {
+    beatStart: clippedStart - rangeStart,
+    beatEnd: clippedEnd - rangeStart,
+  }
+}
+
+function sliceMusicCueList(
+  raw: unknown,
+  rangeStart: number,
+  rangeEnd: number,
+  stripPlayback: boolean
+): unknown {
+  if (!Array.isArray(raw)) return raw
+  const cues: Record<string, unknown>[] = []
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const row = item as Record<string, unknown>
+    const beatStart = Number(row.beatStart)
+    const beatEnd = Number(row.beatEnd)
+    if (!Number.isInteger(beatStart) || !Number.isInteger(beatEnd)) continue
+    const clipped = clipBeatRange(beatStart, beatEnd, rangeStart, rangeEnd)
+    if (!clipped) continue
+    const whollyInside = beatStart >= rangeStart && beatEnd <= rangeEnd - 1
+    const next: Record<string, unknown> = {
+      ...row,
+      beatStart: clipped.beatStart,
+      beatEnd: clipped.beatEnd,
+      cueId: `cue-${clipped.beatStart}-${clipped.beatEnd}`,
+    }
+    if (stripPlayback || !whollyInside) {
+      for (const key of CUE_PLAYBACK_KEYS) delete next[key]
+    }
+    cues.push(next)
+  }
+  return cues
+}
+
+function sliceMovementList(
+  raw: unknown,
+  beats: SceneBeat[],
+  rangeStart: number,
+  rangeEnd: number
+): { movements: unknown; beats: SceneBeat[] } {
+  if (!Array.isArray(raw) || raw.length === 0) return { movements: raw, beats }
+
+  const hasRanges = raw.some(
+    (item) => item && typeof item === 'object' && typeof (item as { beatStart?: unknown }).beatStart === 'number'
+  )
+  const indexMap = new Map<number, number>()
+  const movements: Record<string, unknown>[] = []
+
+  if (hasRanges) {
+    raw.forEach((item, fallbackIndex) => {
+      if (!item || typeof item !== 'object') return
+      const row = item as Record<string, unknown>
+      const beatStart = Number(row.beatStart)
+      const beatEnd = Number(row.beatEnd)
+      if (!Number.isInteger(beatStart) || !Number.isInteger(beatEnd)) return
+      const clipped = clipBeatRange(beatStart, beatEnd, rangeStart, rangeEnd)
+      if (!clipped) return
+      const oldIndex = typeof row.index === 'number' ? row.index : fallbackIndex
+      const nextIndex = movements.length
+      indexMap.set(oldIndex, nextIndex)
+      movements.push({
+        ...row,
+        index: nextIndex,
+        beatStart: clipped.beatStart,
+        beatEnd: clipped.beatEnd,
+      })
+    })
+  } else {
+    raw.forEach((item, index) => {
+      const referenced = beats.some((beat) => beat.movementIndex === index)
+      if (!referenced) return
+      indexMap.set(index, movements.length)
+      movements.push(
+        item && typeof item === 'object'
+          ? { ...(item as Record<string, unknown>), index: movements.length }
+          : { summary: String(item), index: movements.length }
+      )
+    })
+  }
+
+  const remapped = beats.map((beat) => {
+    if (typeof beat.movementIndex !== 'number') return beat
+    const next = indexMap.get(beat.movementIndex)
+    if (next === undefined) {
+      const rest = { ...beat }
+      delete rest.movementIndex
+      return rest
+    }
+    return next === beat.movementIndex ? beat : { ...beat, movementIndex: next }
+  })
+
+  return { movements, beats: remapped }
 }
 
 function rebuildSceneFromBeats(
   baseScene: Record<string, unknown>,
   beats: SceneBeat[],
-  opts: { isContinuation: boolean; partIndex: number }
+  opts: { isContinuation: boolean; partIndex: number; beatRangeStart: number }
 ): Record<string, unknown> {
-  const stripped: Record<string, unknown> = { ...baseScene }
-  delete stripped.segments
+  const rangeEnd = opts.beatRangeStart + beats.length
+  const { movements, beats: withMovementIndex } = sliceMovementList(
+    baseScene.sceneMovements ?? baseScene.movements,
+    beats,
+    opts.beatRangeStart,
+    rangeEnd
+  )
 
-  // Marks every part of a split, including the first, so consumers can tell a
-  // deliberate split apart from a duplicated scene.
+  // Spread keeps cast, location, time of day, and sceneDirection (environment)
+  // on every part. Continuation parts drop playback that belongs to part A.
+  const stripped: Record<string, unknown> = { ...baseScene }
   stripped.scenePartIndex = opts.partIndex
 
   if (opts.isContinuation) {
     const newId = uuidv4()
     stripped.id = newId
     stripped.sceneId = newId
-    stripped.heading = appendContinuationToHeading(baseScene.heading, opts.partIndex)
+    stripped.heading = appendPartLabelToHeading(baseScene.heading, opts.partIndex)
+    delete stripped.segments
+    for (const key of CONTINUATION_PLAYBACK_KEYS) delete stripped[key]
+    if (Array.isArray(stripped.sfx)) {
+      stripped.sfx = stripped.sfx.map((item) => {
+        if (!item || typeof item !== 'object') return item
+        const next = { ...(item as Record<string, unknown>) }
+        delete next.audioUrl
+        delete next.audioDuration
+        return next
+      })
+    }
   }
 
-  const withBeats = applyBeatsToScene(stripped, beats)
-  const duration = sumBeatDurations(beats)
+  if (Array.isArray(baseScene.sceneMovements) || Array.isArray(baseScene.movements)) {
+    if (Array.isArray(baseScene.sceneMovements)) stripped.sceneMovements = movements
+    if (Array.isArray(baseScene.movements)) stripped.movements = movements
+  }
+
+  const cueSources = ['sceneMusicCues', 'musicCues'] as const
+  for (const key of cueSources) {
+    if (Array.isArray(baseScene[key])) {
+      stripped[key] = sliceMusicCueList(
+        baseScene[key],
+        opts.beatRangeStart,
+        rangeEnd,
+        opts.isContinuation
+      )
+    }
+  }
+
+  const withBeats = applyBeatsToScene(stripped, withMovementIndex)
+  const duration = sumBeatDurations(withMovementIndex)
   if (duration > 0) {
     withBeats.duration = duration
   }
@@ -251,6 +436,7 @@ export function splitOversizedScenes(
         rebuildSceneFromBeats(scene, chunk, {
           isContinuation: partIndex > 0,
           partIndex,
+          beatRangeStart: start,
         })
       )
 
@@ -269,6 +455,35 @@ export function renumberScenes(scenes: Record<string, unknown>[]): Record<string
     ...scene,
     sceneNumber: idx + 1,
   }))
+}
+
+/**
+ * Replace one script scene with a revision that may have been split.
+ * Part A keeps its scene id. Later parts are inserted immediately after it.
+ */
+export function replaceSceneWithSplit(
+  scenes: Record<string, unknown>[],
+  sceneIndex: number,
+  revisedScene: Record<string, unknown>,
+  continuationScenes: Record<string, unknown>[] = []
+): Record<string, unknown>[] {
+  if (sceneIndex < 0 || sceneIndex >= scenes.length) return renumberScenes(scenes)
+  const next = scenes.slice()
+  next.splice(sceneIndex, 1, revisedScene, ...continuationScenes)
+  return renumberScenes(next)
+}
+
+/** First part replaces the edited scene. Later parts are new scenes. */
+export function splitRevisedScene(scene: Record<string, unknown>): {
+  revisedScene: Record<string, unknown>
+  continuationScenes: Record<string, unknown>[]
+} {
+  const { scenes } = splitOversizedScenes([scene])
+  const [revisedScene, ...continuationScenes] = scenes
+  return {
+    revisedScene: revisedScene ?? scene,
+    continuationScenes,
+  }
 }
 
 /** Group scenes sharing a blueprintBeatIndex (for UI navigation). */

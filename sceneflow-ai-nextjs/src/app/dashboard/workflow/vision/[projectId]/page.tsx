@@ -92,6 +92,7 @@ import {
 import { restoreIncludedMixerBeats } from '@/lib/scene/mixerBeatInclude'
 import { mergeSceneProductionData } from '@/lib/storyboard/mergeProductionMedia'
 import { invalidateChangedBeatFramesOnScene, applyDeepRestructureAssetClear, REVISION_DEPTH_SCENE_KEY, type RevisionDepth } from '@/lib/script/structuredSceneRevision'
+import { replaceSceneWithSplit } from '@/lib/script/sceneDecomposition'
 import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
 import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
 import type { StoryboardFrameSlot } from '@/lib/storyboard/types'
@@ -14303,6 +14304,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       preserveElements?: PreserveElement[]
       revisionDepth?: RevisionDepth
       appliedRecommendationIds?: string[]
+      continuationScenes?: any[]
     }
   ) => {
     if (!script) return
@@ -14398,7 +14400,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
 
     delete cleanedScene[REVISION_DEPTH_SCENE_KEY]
-    updatedScenes[sceneIndex] = cleanedScene
+
+    const continuationScenes = (options?.continuationScenes ?? []).map((scene) => {
+      let part = { ...scene }
+      delete part[REVISION_DEPTH_SCENE_KEY]
+      delete part.segments
+      if (!shouldSkipBeatRederivation(preserveElements) && !isDeepRestructure && getSceneBeats(part).length > 0) {
+        part = invalidateChangedBeatFramesOnScene(part, originalScene)
+      }
+      return part
+    })
+
+    if (continuationScenes.length > 0) {
+      const renumberedScenes = replaceSceneWithSplit(
+        updatedScenes,
+        sceneIndex,
+        cleanedScene,
+        continuationScenes
+      )
+      updatedScenes.splice(0, updatedScenes.length, ...renumberedScenes)
+    } else {
+      updatedScenes[sceneIndex] = cleanedScene
+    }
 
     // Save to database FIRST
     try {
@@ -14459,9 +14482,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Update script edit timestamp to force cache clear in ScreeningRoom
       setScriptEditedAt(Date.now())
 
-      const persistedScene = persistedScenes[sceneIndex] ?? cleanedScene
+      const insertedCount = continuationScenes.length
       if (shouldRegenerateSceneDirection(preserveElements)) {
-        void handleBackgroundDirectionGeneration(sceneIndex, persistedScene)
+        void (async () => {
+          for (let offset = 0; offset <= insertedCount; offset++) {
+            const idx = sceneIndex + offset
+            await handleBackgroundDirectionGeneration(idx, persistedScenes[idx])
+          }
+        })()
       }
 
       setIsSceneEditorOpen(false)
@@ -14480,10 +14508,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       try {
         const { toast } = require('sonner')
+        const insertedNote =
+          insertedCount > 0
+            ? ` — ${insertedCount} scene${insertedCount === 1 ? '' : 's'} inserted after this one`
+            : ''
         if (allDeletedUrls.length > 0) {
-          toast.success('Scene changes applied — use Update Audio to regenerate invalidated tracks')
+          toast.success(`Scene changes applied${insertedNote} — use Update Audio to regenerate invalidated tracks`)
         } else {
-          toast.success('Scene changes applied — existing audio preserved')
+          toast.success(`Scene changes applied${insertedNote} — existing audio preserved`)
         }
       } catch {}
 

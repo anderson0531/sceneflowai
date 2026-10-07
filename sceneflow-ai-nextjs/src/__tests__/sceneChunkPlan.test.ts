@@ -274,8 +274,8 @@ describe('consolidation preserves decomposed scenes', () => {
 
     expect(new Set(headings).size).toBe(headings.length)
     expect(headings[0]).toBe('INT. ICE SHAFT - NIGHT')
-    expect(headings[1]).toBe('INT. ICE SHAFT - NIGHT (cont. 2)')
-    expect(headings[2]).toBe('INT. ICE SHAFT - NIGHT (cont. 3)')
+    expect(headings[1]).toBe('INT. ICE SHAFT - NIGHT (Part B)')
+    expect(headings[2]).toBe('INT. ICE SHAFT - NIGHT (Part C)')
   })
 
   it('still merges a genuine duplicate scene', () => {
@@ -455,8 +455,8 @@ describe('scene chunk prompt', () => {
   it('states the exact scene count, range, and Blueprint beat index', () => {
     expect(promptStart).toBeGreaterThan(-1)
     expect(promptEnd).toBeGreaterThan(promptStart)
-    expect(promptSource).toContain('Return EXACTLY ${chunk.sceneCount} scene')
-    expect(promptSource).toContain('numbered ${sceneNumbers.join(\', \')}')
+    expect(promptSource).toContain('Return at least ${chunk.sceneCount} scene')
+    expect(promptSource).toContain('numbered from ${chunk.sceneNumberStart}')
     expect(promptSource).toContain('"blueprintBeatIndex": ${beatIndex}')
   })
 

@@ -1189,10 +1189,10 @@ function formatNeighborBeat(
 /**
  * Prompt for one chunk of scenes.
  *
- * The scene count and numbering are handed to the model rather than negotiated:
- * a single call cannot hold a longform script inside the output token budget, so
- * asking for the whole thing made the model silently compress a Blueprint beat
- * into one scene.
+ * The assigned scene count is a floor, not a beat quota. A single call cannot
+ * hold a longform script inside the output token budget, so asking for the
+ * whole thing made the model silently compress a Blueprint beat into one scene.
+ * Extra continuation scenes are kept when a logical scene must split.
  */
 function buildSceneChunkPrompt(
   shared: SharedScriptContext,
@@ -1204,10 +1204,6 @@ function buildSceneChunkPrompt(
   }
 ): string {
   const sceneNumberEnd = chunk.sceneNumberStart + chunk.sceneCount - 1
-  const sceneNumbers = Array.from(
-    { length: chunk.sceneCount },
-    (_, i) => chunk.sceneNumberStart + i
-  )
   const beatIndex = chunk.blueprintBeatIndex
   const isBeatScoped = typeof beatIndex === 'number'
 
@@ -1241,11 +1237,12 @@ function buildSceneChunkPrompt(
   const assignment = `=== YOUR ASSIGNMENT (MANDATORY) ===
 You are writing ONE SLICE of a ${opts.totalScenes}-scene script, not the whole script.
 
-• Return EXACTLY ${chunk.sceneCount} scene${chunk.sceneCount === 1 ? '' : 's'}, numbered ${sceneNumbers.join(', ')}.
+• Return at least ${chunk.sceneCount} scene${chunk.sceneCount === 1 ? '' : 's'}, numbered from ${chunk.sceneNumberStart}. Additional continuation scenes are allowed when a logical scene must split past ${MAX_BEATS_PER_SCENE} beats.
 • Blueprint beat ${isBeatScoped ? beatIndex + 1 : '—'}: ${JSON.stringify(chunk.blueprintBeatTitle)}
 ${beatIdentityLines}${partLine}
-• Aim for ~${chunk.targetBeatsPerScene} beats in each scene; never exceed ${MAX_BEATS_PER_SCENE} beats in one scene.
-• Returning fewer than ${chunk.sceneCount} scenes, or scenes with far fewer than ${chunk.targetBeatsPerScene} beats, is a FAILED response. Break the beat at location changes, time jumps, and dramatic turns to reach the count honestly — do not pad.
+• You are creatively unbound. Compose the exact number of beats each scene needs. A planning hint is ~${chunk.targetBeatsPerScene} beats. Do not pad to that hint and do not cut shots to stay under ${MAX_BEATS_PER_SCENE}.
+• If one logical scene needs more than ${MAX_BEATS_PER_SCENE} beats, emit the next part as its own scene in this response (Scene NA, Scene NB), sharing cast, location, time of day, environment, and blueprintBeatIndex. No returned scene's beats[] exceeds ${MAX_BEATS_PER_SCENE}. A single long beats[] is split by the system the same way.
+• Returning fewer than ${chunk.sceneCount} scenes is a FAILED response. Returning fewer beats than the planning hint is not. Break the beat at location changes, time jumps, and dramatic turns — do not pad.
 • Do NOT write a title sequence or closing credits. Those are added separately.
 ${beatSynopsisBlock}${neighborLines.length > 0 ? `\nADJACENT CONTEXT (do not write these — just hand off cleanly):\n${neighborLines.join('\n')}\n` : ''}`
 
@@ -1313,7 +1310,7 @@ SCHEMA RULES:
 • "beats" is the ONLY place story content goes. Do NOT emit "action", "dialogue", or "narration" fields on a scene — they are derived from beats automatically and duplicating them wastes your budget.
 • "movements" is MANDATORY on every scene, and every beat MUST carry a "movementIndex" pointing at one of them.
 • "musicCues" is OPTIONAL and is omitted entirely for scenes that play unscored.
-• Scene numbers MUST be exactly ${sceneNumbers.join(', ')} — in that order, no gaps, no extras.
+• Number the assigned scenes from ${chunk.sceneNumberStart} through ${sceneNumberEnd}, in order, with no gaps. Continuation scenes past that range are allowed when a logical scene splits, numbered after ${sceneNumberEnd}.
 • Return ONLY valid JSON - no markdown, no explanations.`
 
   return `${shared.persona} for the following production.
@@ -1421,6 +1418,12 @@ async function generateSceneChunk(
         if (recovered.length > best.length) best = recovered
         break
       }
+    }
+
+    if (scenes.length > chunk.sceneCount) {
+      console.log(
+        `[Script Gen V2] ${label} returned ${scenes.length} scenes (assigned ${chunk.sceneCount}); keeping continuation scenes`
+      )
     }
 
     if (best.length >= chunk.sceneCount) break

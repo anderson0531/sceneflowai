@@ -56,52 +56,54 @@ export function parseScriptCraftNotes(raw: unknown): string {
 }
 
 /**
- * Shared length philosophy. In `chunked` mode the scene count is assigned by the
- * caller, so the wording must not invite the model to decide its own length —
- * that licence is what let it collapse a Blueprint beat into a single scene.
+ * Shared length philosophy. In `chunked` mode the assigned scene count is a
+ * floor so a Blueprint beat is not collapsed into one scene. Beat count inside
+ * a scene is not a quota: write the shots the story needs, and split past the
+ * technical per-scene ceiling.
  */
 export function buildLongformScriptLengthBlock(opts?: { chunked?: boolean }): string {
   if (opts?.chunked) {
-    return `SCENE DEPTH (COUNT IS ASSIGNED, DEPTH IS YOURS):
-• The number of scenes in your slice is FIXED by the assignment below. Do not merge, drop, or add scenes to it.
-• Give characters, action, and story turns as much room as they need WITHIN each assigned scene.
-• Aim for ~${TARGET_BEATS_PER_SCENE} beats per scene. A scene may grow up to ${MAX_BEATS_PER_SCENE} when the story earns it, but must never exceed that cap.
-• Fill each scene to its assigned beat target — a thin scene is a failure, not a stylistic choice, and filling the ceiling is not the target.
+    return `SCENE DEPTH (COUNT IS A FLOOR, COMPOSITION IS YOURS):
+• Return at least the assigned number of scenes. You may add continuation scenes when one logical scene needs more than ${MAX_BEATS_PER_SCENE} beats. Do not merge or drop assigned scenes.
+• You are creatively unbound within each scene. Compose the exact number of beats the story needs. Do not pad to a quota and do not compress action to fit ${MAX_BEATS_PER_SCENE} beats.
+• If a logical scene needs more than ${MAX_BEATS_PER_SCENE} beats, split it into sequential parts (Scene 1A, Scene 1B) that share cast, location, time of day, and environment. No part exceeds ${MAX_BEATS_PER_SCENE} beats.
+• A planning hint is ~${TARGET_BEATS_PER_SCENE} beats per scene. Missing that hint is not a failure. Filling the ceiling is not the target.
 • JSON "duration" fields are estimates you report after writing, not targets to hit.
 • Intervening action beats only when they add NEW visual information — never to pad runtime.`
   }
   return `SCRIPT LENGTH (STORY DETERMINES LENGTH):
 • Write a complete longform script. Give characters, action, and story turns as much room as they need.
 • Decompose each Blueprint beat into multiple scenes; never collapse an entire Blueprint beat into one scene.
-• Aim for ~${TARGET_BEATS_PER_SCENE} beats per scene. Each scene MUST stay at or below ${MAX_BEATS_PER_SCENE} beats — split across consecutive scenes when a beat needs more.
-• Approximate Blueprint runtime guides beat volume (~8s per beat), not a hard seconds-per-scene target.
+• You are creatively unbound. Compose the exact number of beats the treatment needs. A planning hint is ~${TARGET_BEATS_PER_SCENE} beats per scene. That hint is not a quota to fill, and ${MAX_BEATS_PER_SCENE} beats is not a box to compress into.
+• If one logical scene needs more than ${MAX_BEATS_PER_SCENE} beats, split it into sequential parts (Scene 1A, Scene 1B) that share cast, location, time of day, and environment. No part exceeds ${MAX_BEATS_PER_SCENE} beats. A single long beats[] is split by the system the same way.
+• Approximate Blueprint runtime guides how much story there is (~8s per beat), not a hard seconds-per-scene target.
 • JSON "duration" fields are estimates you report after writing, not targets to hit.
 • Intervening action beats only when they add NEW visual information — never to pad runtime.`
 }
 
 /**
- * Beat volume for scene revision. The revision prompt used to state only the
- * ceiling; a ceiling reads as a limit rather than a goal, which left rewrites
- * anchored on whatever length the scene already had.
+ * Beat volume for scene revision.
  *
- * The "you have room to grow" framing is correct at the script-wide target and
- * wrong below it. A scene set to 6 was set there because 20 produced invented
- * business, so pushing it toward the ceiling is the failure to warn against,
- * not the one to prevent — hence two blocks rather than one with the number
- * swapped.
+ * The target is a density hint. MAX_BEATS_PER_SCENE is the technical
+ * per-scene ceiling: a composition past it is split into the next scene, not
+ * cut down to fit. A scene set below the script-wide hint was set there
+ * because the default produced invented business, so that block still forbids
+ * padding toward the hint.
  */
 export function buildRevisionBeatVolumeBlock(targetBeats = TARGET_BEATS_PER_SCENE): string {
   if (targetBeats < TARGET_BEATS_PER_SCENE) {
-    return `BEAT VOLUME (TARGET IS ${targetBeats} FOR THIS SCENE, CEILING IS ${MAX_BEATS_PER_SCENE}):
+    return `BEAT VOLUME (TARGET IS ${targetBeats} FOR THIS SCENE; OVER ${MAX_BEATS_PER_SCENE} BEATS IS SPLIT):
 • Aim for ~${targetBeats} beats in the revised scene. This scene has been set deliberately short, below the ${TARGET_BEATS_PER_SCENE}-beat figure used elsewhere in the script.
 • Do NOT pad toward ${TARGET_BEATS_PER_SCENE}. A scene of this kind does not contain that much story, and beats invented to reach a number add nothing an audience will feel.
-• Going a beat or two over is acceptable when the story genuinely needs it. Going far over is not, and never exceed ${MAX_BEATS_PER_SCENE}.
+• Going a beat or two over is acceptable when the story genuinely needs it. Do not invent a long sequence to fill a box.
+• If the honest composition exceeds ${MAX_BEATS_PER_SCENE} beats, keep those beats. The system splits the overflow into the next scene. Do not drop shots to fit the technical limit.
 • Spend the beats you have on what is worth seeing. Fewer, stronger images beat a longer sequence of filler.
 • Intervening action beats only when they add NEW visual information — never to pad runtime.`
   }
-  return `BEAT VOLUME (TARGET IS ${targetBeats}, CEILING IS ${MAX_BEATS_PER_SCENE}):
-• Aim for ~${targetBeats} beats in the revised scene. A scene may grow up to ${MAX_BEATS_PER_SCENE} beats when the story earns it, but must never exceed that cap.
-• The original beat count is NOT a target to match. Returning a thin scene because the original was thin is a failure, not a stylistic choice — and filling the ceiling is not the target either.
+  return `BEAT VOLUME (TARGET IS ${targetBeats}; OVER ${MAX_BEATS_PER_SCENE} BEATS IS SPLIT):
+• You are creatively unbound. Compose the exact number of beats this scene needs to flow. Aim near ~${targetBeats} beats when that serves the story. Do not pad to the number and do not cut action to stay under ${MAX_BEATS_PER_SCENE}.
+• The original beat count is NOT a target to match. Returning a thin scene because the original was thin is a failure when the story needed more room — and filling the ceiling is not the target either.
+• If the honest composition exceeds ${MAX_BEATS_PER_SCENE} beats, keep writing and return every beat. The system splits the overflow into the next scene (Scene NA, Scene NB) and carries cast, location, time of day, and environment forward.
 • You have room to add the beats the story needs to land: reactions, reversals, and visual turns the original skipped.
 • Intervening action beats only when they add NEW visual information — never to pad runtime.`
 }
