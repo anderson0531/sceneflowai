@@ -12,6 +12,10 @@ import {
   libraryTabForPrimaryAction,
   locationAgentCopyUnits,
   locationCameraStatus,
+  locationReferenceActions,
+  castReferenceActions,
+  objectReferenceActions,
+  formatReferenceActionCue,
   locationVersionNeedsGeneration,
   locationsThatGainedBase,
   pendingKindAgentRunForAction,
@@ -82,6 +86,91 @@ describe('locationCameraStatus', () => {
         versions: [{ stateNotes: 'Flooded', imageUrl: 'https://cdn/flood.png' }],
       })
     ).toEqual({ status: 'ready', pendingVersionCount: 0 })
+  })
+})
+
+describe('reference still actions', () => {
+  it('names the location version and whether it is missing or changed', () => {
+    const summary = locationReferenceActions({
+      imageUrl: 'https://cdn/foyer.png',
+      versions: [
+        { id: 'door', name: 'Door blown', stateNotes: 'Door gone', imageUrl: '' },
+        {
+          id: 'flood',
+          name: 'Flooded',
+          stateNotes: 'Water to the sill',
+          imageUrl: 'https://cdn/flood.png',
+          needsImageRegen: true,
+        },
+        { id: 'blank', name: 'Untitled', stateNotes: '', imageUrl: '' },
+      ],
+    })
+    expect(summary.tone).toBe('action')
+    expect(summary.primary).toEqual({ id: 'door', name: 'Door blown', action: 'missing' })
+    expect(summary.items.map((item) => formatReferenceActionCue(item))).toEqual([
+      'Missing · Door blown',
+      'Changed · Flooded',
+    ])
+  })
+
+  it('puts Add base ahead of a missing set version', () => {
+    const summary = locationReferenceActions({
+      imageUrl: '',
+      versions: [{ id: 'door', name: 'Door blown', stateNotes: 'Door gone', imageUrl: '' }],
+    })
+    expect(summary.tone).toBe('action')
+    expect(formatReferenceActionCue(summary.primary!)).toBe('Add · Base')
+    expect(summary.items).toHaveLength(2)
+  })
+
+  it('is ready when the base and noted versions are current', () => {
+    expect(
+      locationReferenceActions({
+        imageUrl: 'https://cdn/foyer.png',
+        versions: [{ id: 'flood', name: 'Flooded', stateNotes: 'Water', imageUrl: 'https://cdn/flood.png' }],
+      }).tone
+    ).toBe('ready')
+  })
+
+  it('names identity, a missing look, and a changed look', () => {
+    const summary = castReferenceActions({
+      type: 'lead',
+      referenceImage: '',
+      wardrobes: [
+        { id: 'coat', name: 'Lab coat', description: 'White coat', previewImageUrl: '' },
+        {
+          id: 'field',
+          name: 'Field jacket',
+          description: 'Worn jacket',
+          previewImageUrl: 'https://cdn/jacket.png',
+          needsImageRegen: true,
+        },
+      ],
+    })
+    expect(summary.primary).toEqual({ id: 'identity', name: 'Identity', action: 'add' })
+    expect(summary.items.map((item) => item.action)).toEqual(['add', 'missing', 'changed'])
+    expect(formatReferenceActionCue(summary.items[1])).toBe('Missing · Lab coat')
+    expect(formatReferenceActionCue(summary.items[2])).toBe('Changed · Field jacket')
+  })
+
+  it('skips narrators and drawn cast with current looks', () => {
+    expect(castReferenceActions({ type: 'narrator', referenceImage: '' }).tone).toBe('ready')
+    expect(
+      castReferenceActions({
+        type: 'lead',
+        referenceImage: 'https://cdn/mira.png',
+        wardrobes: [{ id: 'coat', name: 'Lab coat', description: 'White coat', previewImageUrl: 'https://cdn/coat.png' }],
+      }).tone
+    ).toBe('ready')
+  })
+
+  it('names an object that still needs a still', () => {
+    expect(formatReferenceActionCue(objectReferenceActions({ id: 'key', name: 'Brass key', imageUrl: '' }).primary!)).toBe(
+      'Add · Brass key'
+    )
+    expect(objectReferenceActions({ id: 'key', name: 'Brass key', imageUrl: 'https://cdn/key.png' }).tone).toBe(
+      'ready'
+    )
   })
 })
 

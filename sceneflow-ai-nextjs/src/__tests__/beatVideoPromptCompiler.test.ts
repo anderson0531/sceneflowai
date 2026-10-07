@@ -269,6 +269,47 @@ describe('compileBeatVideoPromptFromDirection', () => {
   })
 })
 
+describe('compileBeatVideoPrompt cinematic performance', () => {
+  const takes = [
+    {
+      line: "It's a closed loop... why won't the math close?",
+      voiceDirection:
+        'Close-mic, intimate and utterly defeated. Let the breath carry the words more than the vocal cords. Frame this as a quiet, bitter surrender to his own limitations.',
+    },
+    {
+      line: "I'm losing the thread, Clara. The current is dead.",
+      voiceDirection:
+        "Fragile and highly intimate. He is confessing his absolute failure to the only person who mattered. Let the words crack on 'dead'.",
+    },
+    {
+      line: 'Eighty pounds of drag... Ward found me.',
+      voiceDirection:
+        "Tightly coiled, processing impossible data. He isn't panicked, he's rapidly calculating the physics of the threat and arriving at a terrifying conclusion. Grounded in paranoia.",
+    },
+  ]
+
+  it.each(takes)('sends the acting brief with $line', ({ line, voiceDirection }) => {
+    const result = compileBeatVideoPrompt({
+      ...dialogueBeat,
+      character: 'GIDEON',
+      line,
+      voiceDirection,
+    })
+    expect(result.prompt).toContain(`Performance: ${voiceDirection}`)
+    expect(result.prompt).toContain(line.replace(/\.{2,}/g, '.'))
+  })
+
+  it('keeps a bracket-only line on Delivery and does not invent Performance', () => {
+    const result = compileBeatVideoPrompt({
+      ...dialogueBeat,
+      line: '[angry] We need to leave now.',
+    })
+    expect(result.prompt).toContain('Delivery:')
+    expect(result.prompt).toContain('We need to leave now.')
+    expect(result.prompt).not.toContain('Performance:')
+  })
+})
+
 describe('compileBeatVideoPrompt speaker alias', () => {
   it('uses Char_ aliases on speaker lines and keeps spoken text', () => {
     const result = compileBeatVideoPrompt(dialogueBeat)

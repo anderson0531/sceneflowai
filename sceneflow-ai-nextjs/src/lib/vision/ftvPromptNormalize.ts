@@ -6,7 +6,7 @@
  */
 
 import type { SceneSegment } from '@/components/vision/scene-production/types'
-import { parsePerformanceCue } from '@/lib/scene/performanceCues'
+import { formatPerformanceClause, parsePerformanceCue } from '@/lib/scene/performanceCues'
 
 /**
  * Normalize ellipsis and repeated-dot patterns before sending text to Vertex Veo.
@@ -157,7 +157,8 @@ export function buildMinimalFtvPerformPrompt(
         const spoken = parsed.spokenText.replace(/^["'\u201c\u201d]+|["'\u201c\u201d]+$/g, '')
         const raw = normalizeVeoSuspiciousPunctuation(spoken)
         const delivery = parsed.deliveryProse ? ` Delivery: ${parsed.deliveryProse}.` : ''
-        return `${name} speaks, "${escapeDialogueForDoubleQuotes(raw)}".${delivery}`
+        const performance = formatPerformanceClause(d.voiceDirection)
+        return `${name} speaks, "${escapeDialogueForDoubleQuotes(raw)}".${delivery}${performance}`
       })
     if (parts.length > 0) return normalizeVeoSuspiciousPunctuation(parts.join('\n'))
   }

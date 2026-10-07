@@ -779,6 +779,8 @@ export interface SegmentDialogueLine {
   character: string
   line: string
   covered: boolean  // User confirms this dialogue is covered by the segment
+  /** Cinematic brief forwarded into the clip prompt as Performance. */
+  voiceDirection?: string
 }
 
 // Ken Burns keyframe settings for manual animation control

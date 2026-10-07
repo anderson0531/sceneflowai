@@ -109,7 +109,14 @@ import {
   refreshCastingBriefForAppearance,
 } from "@/lib/character/applyCastingBriefUpdate";
 import { LibraryKindToolbar } from "@/components/vision/LibraryKindToolbar";
-import { countCastAgentItems, kindAgentToolbarLabel } from "@/lib/vision/libraryKindAgents";
+import {
+  castReferenceActions,
+  countCastAgentItems,
+  kindAgentToolbarLabel,
+  type ReferenceActionItem,
+  type ReferenceActionSummary,
+} from "@/lib/vision/libraryKindAgents";
+import { ReferenceActionCue } from "./ReferenceActionCue";
 import type { ReferenceExpressKind, ReferenceExpressScope } from "@/lib/vision/referenceExpress/types";
 import { usePendingKindAgentRun } from "@/components/vision/usePendingKindAgentRun";
 
@@ -1451,6 +1458,7 @@ const CharacterCard = ({
   const [editingRole, setEditingRole] = useState(false);
   type CharacterWorkflowTab = "identity" | "voice" | "wardrobe";
   const [activeTab, setActiveTab] = useState<CharacterWorkflowTab>("identity");
+  const [focusedWardrobeId, setFocusedWardrobeId] = useState<string | null>(null);
   const [editingWardrobe, setEditingWardrobe] = useState(false);
   const [editingWardrobeId, setEditingWardrobeId] = useState<string | null>(
     null,
@@ -1655,6 +1663,40 @@ const CharacterCard = ({
             },
           ]
         : [];
+
+  const stillActions = castReferenceActions({
+    type: character.type,
+    referenceImage: character.referenceImage,
+    wardrobes,
+  });
+  const identityAction = stillActions.items.find((item) => item.id === "identity");
+  const wardrobeActions: ReferenceActionSummary = {
+    tone: stillActions.items.some((item) => item.id !== "identity" && item.action !== "changed")
+      ? "action"
+      : stillActions.items.some((item) => item.id !== "identity")
+        ? "attention"
+        : "ready",
+    items: stillActions.items.filter((item) => item.id !== "identity"),
+    primary: stillActions.items.find((item) => item.id !== "identity") ?? null,
+  };
+
+  const openCastAction = (item: ReferenceActionItem) => {
+    setIsCollapsed(false);
+    if (item.id === "identity") {
+      setActiveTab("identity");
+      setFocusedWardrobeId(null);
+      return;
+    }
+    setActiveTab("wardrobe");
+    setFocusedWardrobeId(item.id);
+  };
+
+  useEffect(() => {
+    if (!focusedWardrobeId || isCollapsed || activeTab !== "wardrobe") return;
+    document.getElementById(`wardrobe-still-${focusedWardrobeId}`)?.scrollIntoView({
+      block: "nearest",
+    });
+  }, [focusedWardrobeId, isCollapsed, activeTab]);
 
   const hasCharacterReferenceForVoice =
     typeof character.referenceImage === "string" &&
@@ -3108,6 +3150,7 @@ const CharacterCard = ({
               </span>
             </div>
           </div>
+          <ReferenceActionCue summary={stillActions} onSelect={openCastAction} />
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -3613,10 +3656,14 @@ const CharacterCard = ({
               >
                 <ImageIcon className="w-3.5 h-3.5" />
                 Identity
-                {!hasImage && (
-                  <span
-                    className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"
-                    title="Reference image needed"
+                {identityAction && (
+                  <ReferenceActionCue
+                    interactive={false}
+                    summary={{
+                      tone: "action",
+                      items: [identityAction],
+                      primary: identityAction,
+                    }}
                   />
                 )}
               </TabsTrigger>
@@ -3641,11 +3688,13 @@ const CharacterCard = ({
               >
                 <Shirt className="w-3.5 h-3.5" />
                 Wardrobe
-                {wardrobes.length > 0 && (
+                {wardrobeActions.primary ? (
+                  <ReferenceActionCue interactive={false} summary={wardrobeActions} />
+                ) : wardrobes.length > 0 ? (
                   <span className="text-[10px] opacity-70 tabular-nums">
                     ({wardrobes.length})
                   </span>
-                )}
+                ) : null}
               </TabsTrigger>
             </TabsList>
 
@@ -4294,10 +4343,15 @@ const CharacterCard = ({
                 {/* Wardrobe cards with optional waist-up reference preview */}
                 {wardrobes.length > 0 && (
                   <div className="space-y-3">
-                    {wardrobes.map((w) => (
+                    {wardrobes.map((w) => {
+                      const wardrobeAction = stillActions.items.find((item) => item.id === w.id)
+                      return (
                       <div
                         key={w.id}
-                        className="rounded-lg border overflow-hidden transition-colors bg-gray-50/50 dark:bg-gray-800/10 border-gray-200 dark:border-gray-700/50"
+                        id={`wardrobe-still-${w.id}`}
+                        className={`rounded-lg border overflow-hidden transition-colors bg-gray-50/50 dark:bg-gray-800/10 border-gray-200 dark:border-gray-700/50 ${
+                          focusedWardrobeId === w.id ? "ring-2 ring-amber-400/80" : ""
+                        }`}
                       >
                         {splitLayout ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 items-start">
@@ -4310,6 +4364,16 @@ const CharacterCard = ({
                                   <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
                                     {w.name}
                                   </span>
+                                  {wardrobeAction && (
+                                    <ReferenceActionCue
+                                      summary={{
+                                        tone: wardrobeAction.action === "changed" ? "attention" : "action",
+                                        items: [wardrobeAction],
+                                        primary: wardrobeAction,
+                                      }}
+                                      onSelect={() => handleGenerateWardrobeImage(w)}
+                                    />
+                                  )}
                                   {w.sceneNumbers && w.sceneNumbers.length > 0 && (
                                     <span className="text-[10px] text-blue-700 dark:text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">
                                       Scenes {formatSceneRange(w.sceneNumbers)}
@@ -4441,6 +4505,16 @@ const CharacterCard = ({
                                   <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
                                     {w.name}
                                   </span>
+                                  {wardrobeAction && (
+                                    <ReferenceActionCue
+                                      summary={{
+                                        tone: wardrobeAction.action === "changed" ? "attention" : "action",
+                                        items: [wardrobeAction],
+                                        primary: wardrobeAction,
+                                      }}
+                                      onSelect={() => handleGenerateWardrobeImage(w)}
+                                    />
+                                  )}
                                   {w.sceneNumbers && w.sceneNumbers.length > 0 && (
                                     <span className="text-[10px] text-blue-700 dark:text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">
                                       Scenes {formatSceneRange(w.sceneNumbers)}
@@ -4592,7 +4666,8 @@ const CharacterCard = ({
                           </>
                         )}
                       </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
 

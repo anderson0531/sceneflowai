@@ -149,6 +149,15 @@ export interface ResolveDirectedEmotionOptions {
   beatLine?: string | null
   beatAction?: string | null
   appearanceNotes?: string | null
+  /** Cinematic brief. Used when the spoken line has no bracket emotion. */
+  voiceDirection?: string | null
+}
+
+/** Clause sent with a spoken line so stills and video receive the acting brief. */
+export function formatPerformanceClause(voiceDirection?: string | null): string {
+  const brief = voiceDirection?.replace(/\s+/g, ' ').trim().replace(/[.]+$/, '')
+  if (!brief) return ''
+  return ` Performance: ${brief}.`
 }
 
 function extractDirectedEmotionFromText(text: string): string {
@@ -223,7 +232,7 @@ export function resolveSceneAppearanceContinuity(appearanceNotes?: string | null
 
 /**
  * Resolve directed facial expression for a character in a beat frame.
- * Priority: beat line (speaker only) → beat action.
+ * Priority: beat line bracket (speaker only) → voiceDirection brief → beat action.
  * AppearanceNotes are NOT used for emotion (they feed sceneAppearanceContinuity instead).
  */
 export function resolveDirectedEmotionForCharacter(
@@ -235,34 +244,42 @@ export function resolveDirectedEmotionForCharacter(
     !options.characterName ||
     speaker.toLowerCase() === options.characterName.trim().toLowerCase()
 
-  const textsInOrder: string[] = []
   if (isSpeaker && options.beatLine?.trim()) {
-    textsInOrder.push(options.beatLine.trim())
-  }
-  if (options.beatAction?.trim()) {
-    textsInOrder.push(options.beatAction.trim())
+    const fromLine = extractDirectedEmotionFromText(options.beatLine.trim())
+    if (fromLine) return fromLine
   }
 
-  for (const text of textsInOrder) {
-    const emotion = extractDirectedEmotionFromText(text)
-    if (emotion) return emotion
+  if (isSpeaker) {
+    const brief = options.voiceDirection?.replace(/\s+/g, ' ').trim()
+    if (brief) return brief
+  }
+
+  if (options.beatAction?.trim()) {
+    const fromAction = extractDirectedEmotionFromText(options.beatAction.trim())
+    if (fromAction) return fromAction
   }
 
   return ''
 }
 
-/** Beat-level emotion from beat direction (preferred) or line + action. */
+/** Beat-level emotion from beat direction (preferred), then the line, the brief, then action. */
 export function resolveBeatDirectedEmotion(options: {
   beatLine?: string | null
   beatAction?: string | null
   beatDirectionEmotion?: string | null
+  voiceDirection?: string | null
 }): string {
   const authored = options.beatDirectionEmotion?.trim()
   if (authored) return authored
-  for (const text of [options.beatLine, options.beatAction]) {
-    if (!text?.trim()) continue
-    const emotion = extractDirectedEmotionFromText(text.trim())
-    if (emotion) return emotion
+  if (options.beatLine?.trim()) {
+    const fromLine = extractDirectedEmotionFromText(options.beatLine.trim())
+    if (fromLine) return fromLine
+  }
+  const brief = options.voiceDirection?.replace(/\s+/g, ' ').trim()
+  if (brief) return brief
+  if (options.beatAction?.trim()) {
+    const fromAction = extractDirectedEmotionFromText(options.beatAction.trim())
+    if (fromAction) return fromAction
   }
   return ''
 }
