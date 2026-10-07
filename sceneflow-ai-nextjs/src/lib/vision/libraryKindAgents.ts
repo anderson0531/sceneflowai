@@ -297,15 +297,8 @@ type LocationActionRow = {
   }>
 }
 
-/**
- * Base stills that do not exist yet are Add. Noted set versions with no
- * still are Missing. A drawn version flagged by script sync is Changed.
- */
-export function locationReferenceActions(location: LocationActionRow): ReferenceActionSummary {
+function locationVersionActionItems(location: LocationActionRow): ReferenceActionItem[] {
   const items: ReferenceActionItem[] = []
-  if (!hasImage(location.imageUrl)) {
-    items.push({ id: 'base', name: 'Base', action: 'add' })
-  }
   for (const [index, version] of (location.versions || []).entries()) {
     const notes = version.stateNotes?.trim()
     const drawn = hasImage(version.imageUrl)
@@ -320,7 +313,41 @@ export function locationReferenceActions(location: LocationActionRow): Reference
       items.push({ id, name, action: 'changed' })
     }
   }
+  return items
+}
+
+/**
+ * Base stills that do not exist yet are Add. Noted set versions with no
+ * still are Missing. A drawn version flagged by script sync is Changed.
+ */
+export function locationReferenceActions(location: LocationActionRow): ReferenceActionSummary {
+  const items: ReferenceActionItem[] = []
+  if (!hasImage(location.imageUrl)) {
+    items.push({ id: 'base', name: 'Base', action: 'add' })
+  }
+  items.push(...locationVersionActionItems(location))
   return summarizeReferenceActions(items)
+}
+
+/** Camera tone for set versions. Neutral until the base still exists. */
+export type LocationVersionCameraTone = ReferenceActionTone | 'waiting'
+
+export type LocationVersionCamera = {
+  tone: LocationVersionCameraTone
+  items: ReferenceActionItem[]
+}
+
+/**
+ * Version stills only. A missing base does not turn this red or yellow —
+ * the camera stays neutral until that still exists, then reports missing
+ * versions as red and script-stale versions as yellow.
+ */
+export function locationVersionCamera(location: LocationActionRow): LocationVersionCamera {
+  const summary = summarizeReferenceActions(locationVersionActionItems(location))
+  if (!hasImage(location.imageUrl)) {
+    return { tone: 'waiting', items: summary.items }
+  }
+  return { tone: summary.tone, items: summary.items }
 }
 
 type CastActionRow = {

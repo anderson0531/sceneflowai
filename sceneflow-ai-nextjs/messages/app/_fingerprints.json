@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-07T05:47:02.825Z",
+  "generatedAt": "2026-10-07T13:01:34.307Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -1936,6 +1936,9 @@
       "direction.locationLibrary.cameraNoBase": "5a3ad12a46b971d9",
       "direction.locationLibrary.cameraVersionsPending": "e7859bd52375e40d",
       "direction.locationLibrary.cameraReady": "948a51f3e690c194",
+      "direction.locationLibrary.cameraVersionsWaitOnBase": "c0abfa4399552fe0",
+      "direction.locationLibrary.baseBeforeVersions": "c557e452ed06558e",
+      "direction.locationLibrary.versionsDrawnFromPreviousBase": "fad5475bf05683c3",
       "direction.locationLibrary.actionAdd": "9fd728c66c9a256b",
       "direction.locationLibrary.actionMissing": "6be36ca49ee85210",
       "direction.locationLibrary.actionChanged": "2a6141e43be0c212",
