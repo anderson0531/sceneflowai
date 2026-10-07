@@ -12,7 +12,9 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Image as ImageIcon, Library, Loader, Zap } from 'lucide-react'
+import { StatusFilterBar } from '@/components/vision/StatusFilterBar'
 import { StoryboardQualityToggle } from './StoryboardQualityToggle'
 import { StoryboardGenerationModeToggle } from './StoryboardGenerationModeToggle'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
@@ -27,6 +29,14 @@ import {
 import { type StoryboardQuality } from '@/lib/storyboard/storyboardQuality'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
+import type { SceneBeat } from '@/lib/script/segmentTypes'
+import {
+  frameMatchesFilters,
+  type FrameAttentionFilter,
+  type FrameListFacts,
+  type FrameTypeFilter,
+} from '@/lib/vision/frameListFilters'
+import type { StoryboardFrameSlot } from '@/lib/storyboard/types'
 import type { StillGenerationMode } from '@/lib/generation/stillPolicy'
 import {
   estimateReferenceExpress,
@@ -48,6 +58,70 @@ const REFERENCE_KIND_LABEL_KEY: Record<SceneReferenceRequirementKind, string> = 
   wardrobe: 'referenceKindWardrobe',
   location: 'referenceKindLocation',
   prop: 'referenceKindProp',
+}
+
+const frameShowLabels: Record<FrameAttentionFilter, string> = {
+  all: 'All',
+  needs_action: 'Needs action',
+  final: 'Final',
+  draft: 'Draft',
+  prompt_changed: 'Prompt changed',
+  missing: 'Missing',
+  placeholder: 'Placeholder',
+}
+
+const frameShowTooltips: Record<FrameAttentionFilter, string> = {
+  all: 'Every frame in this scene.',
+  needs_action: 'Frames that are missing, still a draft, or out of date.',
+  final: 'Frames approved as final.',
+  draft: 'Frames generated as a draft.',
+  prompt_changed: 'Frames whose prompt changed after the image was made.',
+  missing: 'Frames with no image yet.',
+  placeholder: 'Frames still using a stand-in image.',
+}
+
+const frameTypeLabels: Record<FrameTypeFilter, string> = {
+  all: 'All',
+  action: 'Action',
+  dialogue: 'Dialogue',
+  narration: 'Narration',
+}
+
+const frameTypeTooltips: Record<FrameTypeFilter, string> = {
+  all: 'Action, dialogue, and narration frames.',
+  action: 'Frames for shots with no spoken line.',
+  dialogue: 'Frames for shots spoken by a character.',
+  narration: 'Frames for voiceover shots.',
+}
+
+function stillFacts(
+  slot: StoryboardFrameSlot,
+  beat: SceneBeat | undefined
+): FrameListFacts {
+  return {
+    key: slot.key,
+    kind: slot.kind,
+    imageTier: slot.imageTier,
+    isMissing: slot.isMissing,
+    isPlaceholder: slot.isPlaceholder,
+    promptChanged: !!beat && slot.frameRole !== 'end' && isBeatFrameStale(beat),
+    hasImageError: !!slot.imageError,
+    hasOwnImage: !!slot.ownImageUrl,
+    referenceStatus: slot.referenceStatus,
+  }
+}
+
+function stillDescription(slot: StoryboardFrameSlot, beat: SceneBeat | undefined): string {
+  if (!beat) return slot.label
+  if (beat.kind === 'action') return beat.actionDescription?.trim() || 'Action'
+  if (beat.kind === 'narration') return beat.line?.trim() || 'Narrator'
+  return beat.line?.trim() || String(beat.character || 'Dialogue')
+}
+
+function numberedShotLine(number: number, description: string): { visible: string; full: string } {
+  const full = description.replace(/\s+/g, ' ').trim()
+  const body = full.length > 48 ? `${full.slice(0, 48)}…` : full
+  return { visible: body ? `${number}: ${body}` : String(number), full }
 }
 
 export type ExpressSceneScope = 'missing' | 'selected'
@@ -101,6 +175,8 @@ export function ExpressSceneConfirmDialog({
   const [quality, setQuality] = useState<StoryboardQuality>(defaultQuality)
   const [generationMode, setGenerationMode] = useState<StillGenerationMode>(defaultGenerationMode)
   const [selectedFrameKeys, setSelectedFrameKeys] = useState<string[]>([])
+  const [frameAttention, setFrameAttention] = useState<FrameAttentionFilter>('all')
+  const [frameType, setFrameType] = useState<FrameTypeFilter>('all')
 
   /**
    * Split rather than filtered: Scene Ref Agent draws cast, wardrobe, location
@@ -144,17 +220,40 @@ export function ExpressSceneConfirmDialog({
     setScope('missing')
     setQuality(defaultQuality)
     setGenerationMode(defaultGenerationMode)
+    setFrameAttention('all')
+    setFrameType('all')
   }, [open, defaultQuality, defaultGenerationMode])
+
+  const frameFilterActive = frameAttention !== 'all' || frameType !== 'all'
 
   useEffect(() => {
     if (!open) return
     const selected = checklistSlots
-      .filter((slot) => slotEligibleForScope(slot, scope))
+      .filter((slot) => {
+        const beat = slot.beatId
+          ? sceneBeats.find((entry) => entry.beatId === slot.beatId)
+          : undefined
+        if (frameFilterActive) return frameMatchesFilters(stillFacts(slot, beat), frameAttention, frameType)
+        return slotEligibleForScope(slot, scope)
+      })
       .map((slot) => slot.key)
     setSelectedFrameKeys(selected)
-  }, [open, scope, checklistSlots])
+  }, [open, scope, checklistSlots, sceneBeats, frameAttention, frameType, frameFilterActive])
 
   const selectedSet = useMemo(() => new Set(selectedFrameKeys), [selectedFrameKeys])
+
+  const visibleStillSlots = useMemo(
+    () =>
+      frameFilterActive
+        ? checklistSlots.filter((slot) => {
+            const beat = slot.beatId
+              ? sceneBeats.find((entry) => entry.beatId === slot.beatId)
+              : undefined
+            return frameMatchesFilters(stillFacts(slot, beat), frameAttention, frameType)
+          })
+        : checklistSlots,
+    [checklistSlots, sceneBeats, frameAttention, frameType, frameFilterActive]
+  )
 
   const toggleSlot = (key: string, checked: boolean) => {
     setSelectedFrameKeys((prev) => {
@@ -263,7 +362,11 @@ export function ExpressSceneConfirmDialog({
                   key={value}
                   type="button"
                   disabled={isRunning}
-                  onClick={() => setScope(value)}
+                  onClick={() => {
+                    setFrameAttention('all')
+                    setFrameType('all')
+                    setScope(value)
+                  }}
                   className={`px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
                     scope === value
                       ? 'bg-amber-600 text-white'
@@ -282,16 +385,93 @@ export function ExpressSceneConfirmDialog({
           </div>
 
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-              {t('frames')}
-            </p>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                {t('frames')}
+              </p>
+              <StatusFilterBar
+                activeSummary={[
+                  frameAttention === 'all' ? '' : frameShowLabels[frameAttention],
+                  frameType === 'all' ? '' : frameTypeLabels[frameType],
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+                onClear={() => {
+                  setFrameAttention('all')
+                  setFrameType('all')
+                }}
+                groups={[
+                  {
+                    label: 'Show',
+                    onSelect: (id) => setFrameAttention(id as FrameAttentionFilter),
+                    chips: (
+                      [
+                        ['all', 'All'],
+                        ['needs_action', 'Needs action'],
+                        ['final', 'Final'],
+                        ['draft', 'Draft'],
+                        ['prompt_changed', 'Prompt changed'],
+                        ['missing', 'Missing'],
+                        ['placeholder', 'Placeholder'],
+                      ] as Array<[FrameAttentionFilter, string]>
+                    ).map(([id, label]) => ({
+                      id,
+                      label,
+                      tooltip: frameShowTooltips[id],
+                      active: frameAttention === id,
+                      count:
+                        id === 'all'
+                          ? checklistSlots.length
+                          : checklistSlots.filter((slot) => {
+                              const beat = slot.beatId
+                                ? sceneBeats.find((entry) => entry.beatId === slot.beatId)
+                                : undefined
+                              return frameMatchesFilters(stillFacts(slot, beat), id, frameType)
+                            }).length,
+                    })),
+                  },
+                  {
+                    label: 'Type',
+                    onSelect: (id) => setFrameType(id as FrameTypeFilter),
+                    chips: (
+                      [
+                        ['all', 'All'],
+                        ['action', 'Action'],
+                        ['dialogue', 'Dialogue'],
+                        ...(checklistSlots.some((slot) => slot.kind === 'narration')
+                          ? [['narration', 'Narration'] as [FrameTypeFilter, string]]
+                          : []),
+                      ] as Array<[FrameTypeFilter, string]>
+                    ).map(([id, label]) => ({
+                      id,
+                      label,
+                      tooltip: frameTypeTooltips[id],
+                      active: frameType === id,
+                      count:
+                        id === 'all'
+                          ? checklistSlots.length
+                          : checklistSlots.filter((slot) => {
+                              const beat = slot.beatId
+                                ? sceneBeats.find((entry) => entry.beatId === slot.beatId)
+                                : undefined
+                              return frameMatchesFilters(stillFacts(slot, beat), frameAttention, id)
+                            }).length,
+                    })),
+                  },
+                ]}
+              />
+            </div>
             {checklistSlots.length === 0 ? (
               <p className="text-sm text-gray-500 py-4 text-center">
                 {t('noFrames')}
               </p>
+            ) : visibleStillSlots.length === 0 ? (
+              <p className="text-sm text-gray-500 py-4 text-center">
+                {t('filterEmpty')}
+              </p>
             ) : (
               <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
-                {checklistSlots.map((slot) => {
+                {visibleStillSlots.map((slot) => {
                   const beat = slot.beatId
                     ? sceneBeats.find((entry) => entry.beatId === slot.beatId)
                     : undefined
@@ -311,6 +491,7 @@ export function ExpressSceneConfirmDialog({
                           : `${t('hasImage')} · ${
                               status === 'final' ? t('qualityFinal') : t('qualityDraft')
                             }`
+                  const line = numberedShotLine(slot.beatNumber ?? 0, stillDescription(slot, beat))
                   return (
                   <label
                     key={slot.key}
@@ -323,10 +504,19 @@ export function ExpressSceneConfirmDialog({
                       className="mt-0.5"
                     />
                     <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-1.5 text-sm text-gray-100 truncate">
-                        <ImageIcon className="w-3.5 h-3.5 shrink-0 text-amber-300/80" />
-                        {slot.label}
-                      </span>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="flex items-center gap-1.5 text-sm text-gray-100 truncate">
+                              <ImageIcon className="w-3.5 h-3.5 shrink-0 text-amber-300/80" />
+                              {line.visible}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-sm bg-gray-900 text-white border border-gray-700">
+                            {line.full}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       <span
                         className={`text-[10px] ${
                           status === 'final' || status === 'draft'

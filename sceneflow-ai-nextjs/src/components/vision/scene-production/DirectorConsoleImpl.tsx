@@ -1062,22 +1062,40 @@ export function DirectorConsoleRoot({
     [scene, sceneImageUrl]
   )
 
-  const videoAgentBeats = useMemo<VideoAgentBeatOption[]>(
-    () =>
-      queue.map((item) => {
-        const segment = segments.find((s) => s.segmentId === item.segmentId)
-        const inputs = segmentHasVideoAgentInputs(item, segment)
-        return {
-          segmentId: item.segmentId,
-          sequenceIndex: item.sequenceIndex,
-          hasVideo: item.status === 'complete',
-          isRendering: item.status === 'rendering',
-          hasError: item.status === 'error',
-          eligible: inputs.eligible,
-        }
-      }),
-    [queue, segments, segmentHasVideoAgentInputs]
-  )
+  const videoAgentBeats = useMemo<VideoAgentBeatOption[]>(() => {
+    const beats = getSceneBeats((scene as Record<string, unknown> | undefined) ?? null)
+    return queue.map((item) => {
+      const segment = segments.find((s) => s.segmentId === item.segmentId)
+      const beat = beats.find((entry) => entry.beatId === segment?.beatId)
+      const inputs = segmentHasVideoAgentInputs(item, segment)
+      const spoken = beat
+        ? beat.kind === 'action'
+          ? beat.actionDescription
+          : beat.line
+        : undefined
+      const description = (spoken || beat?.character || `Shot ${item.sequenceIndex + 1}`)
+        .replace(/\s+/g, ' ')
+        .trim()
+      return {
+        segmentId: item.segmentId,
+        sequenceIndex: item.sequenceIndex,
+        description,
+        hasVideo: item.status === 'complete',
+        isRendering: item.status === 'rendering',
+        hasError: item.status === 'error',
+        eligible: inputs.eligible,
+        promptChanged: beat ? isBeatFrameStale(beat) || !!segment?.isStale : !!segment?.isStale,
+        imageTier: beat
+          ? resolveCurrentStillTier({
+              url: beat.storyboardImageUrl,
+              versionId: beat.storyboardImageVersionId,
+              versions: beat.storyboardImageVersions,
+              beatTier: beat.storyboardImageTier,
+            })
+          : undefined,
+      }
+    })
+  }, [queue, segments, scene, segmentHasVideoAgentInputs])
 
   const applyVideoAgentPolicyToItem = useCallback(
     (item: DirectorQueueItem, options: VideoAgentConfirmOptions) => {

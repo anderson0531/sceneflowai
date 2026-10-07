@@ -12,7 +12,9 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Film, Loader, Zap } from 'lucide-react'
+import { StatusFilterBar } from '@/components/vision/StatusFilterBar'
 import { StoryboardQualityToggle } from './StoryboardQualityToggle'
 import { StoryboardGenerationModeToggle } from './StoryboardGenerationModeToggle'
 import {
@@ -21,6 +23,35 @@ import {
   type VideoGenerationQuality,
 } from '@/lib/video/videoGenerationPolicy'
 import type { StillGenerationMode } from '@/lib/generation/stillPolicy'
+import {
+  videoMatchesFilters,
+  type VideoAttentionFilter,
+  type VideoClipFacts,
+} from '@/lib/vision/videoClipFilters'
+
+const videoShowLabels: Record<VideoAttentionFilter, string> = {
+  all: 'All',
+  needs_action: 'Needs action',
+  in_the_can: 'In the Can',
+  prompt_changed: 'Prompt changed',
+  error: 'Error',
+  no_clip: 'No clip',
+}
+
+const videoShowTooltips: Record<VideoAttentionFilter, string> = {
+  all: 'Every clip in this scene.',
+  needs_action: 'Clips that are unfinished, or whose prompt changed.',
+  in_the_can: 'Clips that finished rendering.',
+  prompt_changed: 'Clips whose prompt changed after the render.',
+  error: 'Clips that failed to render.',
+  no_clip: 'Shots that are still waiting on a clip.',
+}
+
+function numberedShotLine(number: number, description: string): { visible: string; full: string } {
+  const full = description.replace(/\s+/g, ' ').trim()
+  const body = full.length > 48 ? `${full.slice(0, 48)}…` : full
+  return { visible: body ? `${number}: ${body}` : String(number), full }
+}
 
 export type VideoAgentScope = 'missing' | 'selected'
 
@@ -34,10 +65,14 @@ export interface VideoAgentConfirmOptions {
 export interface VideoAgentBeatOption {
   segmentId: string
   sequenceIndex: number
+  /** Full shot description. The row shows a numbered, truncated line. */
+  description?: string
   hasVideo: boolean
   isRendering: boolean
   hasError: boolean
   eligible: boolean
+  promptChanged?: boolean
+  imageTier?: 'draft' | 'final'
 }
 
 interface VideoAgentConfirmDialogProps {
@@ -48,6 +83,21 @@ interface VideoAgentConfirmDialogProps {
   onConfirm: (options: VideoAgentConfirmOptions) => void
   defaultQuality?: VideoGenerationQuality
   defaultGenerationMode?: VideoGenerationMode
+}
+
+function clipFacts(beat: VideoAgentBeatOption): VideoClipFacts {
+  return {
+    key: beat.segmentId,
+    status: beat.isRendering
+      ? 'rendering'
+      : beat.hasVideo
+        ? 'complete'
+        : beat.hasError
+          ? 'error'
+          : 'queued',
+    promptChanged: !!beat.promptChanged,
+    imageTier: beat.imageTier,
+  }
 }
 
 function beatEligibleForScope(beat: VideoAgentBeatOption, scope: VideoAgentScope): boolean {
@@ -72,12 +122,14 @@ export function VideoAgentConfirmDialog({
   const [generationMode, setGenerationMode] =
     useState<VideoGenerationMode>(defaultGenerationMode)
   const [selectedSegmentIds, setSelectedSegmentIds] = useState<string[]>([])
+  const [clipAttention, setClipAttention] = useState<VideoAttentionFilter>('all')
 
   useEffect(() => {
     if (!open) return
     setScope('missing')
     setQuality(defaultQuality)
     setGenerationMode(defaultGenerationMode)
+    setClipAttention('all')
   }, [open, defaultQuality, defaultGenerationMode])
 
   const checklistBeats = useMemo(
@@ -85,13 +137,19 @@ export function VideoAgentConfirmDialog({
     [beats]
   )
 
+  const clipFilterActive = clipAttention !== 'all'
+
   useEffect(() => {
     if (!open) return
     const selected = checklistBeats
-      .filter((beat) => beatEligibleForScope(beat, scope))
+      .filter((beat) =>
+        clipFilterActive
+          ? videoMatchesFilters(clipFacts(beat), clipAttention, 'all')
+          : beatEligibleForScope(beat, scope)
+      )
       .map((beat) => beat.segmentId)
     setSelectedSegmentIds(selected)
-  }, [open, scope, checklistBeats])
+  }, [open, scope, checklistBeats, clipAttention, clipFilterActive])
 
   const selectedSet = useMemo(() => new Set(selectedSegmentIds), [selectedSegmentIds])
 
@@ -108,7 +166,10 @@ export function VideoAgentConfirmDialog({
     mode: generationMode,
   })
   const nothingSelected = selectedSegmentIds.length === 0
-  const visibleBeats = checklistBeats.filter((beat) => beatEligibleForScope(beat, scope) || scope === 'selected')
+  const scopeBeats = checklistBeats.filter((beat) => beatEligibleForScope(beat, scope) || scope === 'selected')
+  const visibleBeats = clipFilterActive
+    ? checklistBeats.filter((beat) => videoMatchesFilters(clipFacts(beat), clipAttention, 'all'))
+    : scopeBeats
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -168,7 +229,10 @@ export function VideoAgentConfirmDialog({
                   key={value}
                   type="button"
                   disabled={isRunning}
-                  onClick={() => setScope(value)}
+                  onClick={() => {
+                    setClipAttention('all')
+                    setScope(value)
+                  }}
                   className={`px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
                     scope === value
                       ? 'bg-amber-600 text-white'
@@ -187,16 +251,58 @@ export function VideoAgentConfirmDialog({
           </div>
 
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-              {t('beats')}
-            </p>
-            {visibleBeats.length === 0 ? (
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                {t('beats')}
+              </p>
+              <StatusFilterBar
+                activeSummary={clipAttention === 'all' ? '' : videoShowLabels[clipAttention]}
+                onClear={() => setClipAttention('all')}
+                groups={[
+                  {
+                    label: 'Show',
+                    onSelect: (id) => setClipAttention(id as VideoAttentionFilter),
+                    chips: (
+                      [
+                        ['all', 'All'],
+                        ['needs_action', 'Needs action'],
+                        ['in_the_can', 'In the Can'],
+                        ['prompt_changed', 'Prompt changed'],
+                        ['error', 'Error'],
+                        ['no_clip', 'No clip'],
+                      ] as Array<[VideoAttentionFilter, string]>
+                    ).map(([id, label]) => ({
+                      id,
+                      label,
+                      tooltip: videoShowTooltips[id],
+                      active: clipAttention === id,
+                      count:
+                        id === 'all'
+                          ? checklistBeats.length
+                          : checklistBeats.filter((beat) =>
+                              videoMatchesFilters(clipFacts(beat), id, 'all')
+                            ).length,
+                    })),
+                  },
+                ]}
+              />
+            </div>
+            {checklistBeats.length === 0 ? (
               <p className="text-sm text-gray-500 py-4 text-center">
                 {t('noBeats')}
               </p>
+            ) : visibleBeats.length === 0 ? (
+              <p className="text-sm text-gray-500 py-4 text-center">
+                {t('filterEmpty')}
+              </p>
             ) : (
               <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
-                {visibleBeats.map((beat) => (
+                {visibleBeats.map((beat) => {
+                  const line = numberedShotLine(
+                    beat.sequenceIndex + 1,
+                    beat.description?.trim() || t('beatLabel', { number: beat.sequenceIndex + 1 })
+                  )
+                  return (
                   <label
                     key={beat.segmentId}
                     className="flex items-start gap-2 rounded border border-gray-700/80 bg-gray-800/40 p-2 cursor-pointer hover:bg-gray-800/70"
@@ -206,14 +312,27 @@ export function VideoAgentConfirmDialog({
                       onCheckedChange={(checked) =>
                         toggleBeat(beat.segmentId, checked === true)
                       }
-                      disabled={isRunning || beat.isRendering || !beatEligibleForScope(beat, scope)}
+                      disabled={
+                        isRunning ||
+                        beat.isRendering ||
+                        (!clipFilterActive && !beatEligibleForScope(beat, scope))
+                      }
                       className="mt-0.5"
                     />
                     <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-1.5 text-sm text-gray-100 truncate">
-                        <Film className="w-3.5 h-3.5 shrink-0 text-amber-300/80" />
-                        {t('beatLabel', { number: beat.sequenceIndex + 1 })}
-                      </span>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="flex items-center gap-1.5 text-sm text-gray-100 truncate">
+                              <Film className="w-3.5 h-3.5 shrink-0 text-amber-300/80" />
+                              {line.visible}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-sm bg-gray-900 text-white border border-gray-700">
+                            {line.full}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       <span
                         className={`text-[10px] ${
                           beat.isRendering
@@ -235,7 +354,8 @@ export function VideoAgentConfirmDialog({
                       </span>
                     </span>
                   </label>
-                ))}
+                  )
+                })}
               </div>
             )}
             {selectedSegmentIds.length > 0 && (
