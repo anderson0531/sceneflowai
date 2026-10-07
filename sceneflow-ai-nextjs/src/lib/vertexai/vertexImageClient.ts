@@ -87,35 +87,68 @@ function deadlinePassed(deadlineAt?: number): boolean {
  * this the client's own 90s timeout plus its retry ladder can outlast the
  * serverless function that is waiting on it.
  *
- * Fail-fast identity-ref pro stills hold the fetch until that deadline instead
- * of aborting at 90s. Aborting early frees the two-wide slot while Gemini is
- * still generating.
+ * Fail-fast stills, flash and pro, abort at this ceiling. Leaving the fetch
+ * open until the route deadline kept Gemini generating after the beat should
+ * have been cancelled, and the next admit then walked into a 429.
  */
-function requestTimeoutFor(deadlineAt: number | undefined, holdUntilDeadline: boolean): number {
+function requestTimeoutFor(deadlineAt: number | undefined): number {
   if (deadlineAt == null) return REQUEST_TIMEOUT_MS
   const remaining = deadlineAt - Date.now()
-  if (holdUntilDeadline) return Math.max(0, remaining)
   return Math.min(REQUEST_TIMEOUT_MS, Math.max(MIN_REQUEST_TIMEOUT_MS, remaining))
 }
 
-function holdProviderCallUntilDeadline(
-  options: GenerateVertexImageOptions,
-  model: string
-): boolean {
-  return (
-    options.failFastOnRateLimit === true &&
-    hasIdentityReferenceImages(options) &&
-    model.includes('pro-image')
-  )
+function abortError(): Error {
+  const aborted = new Error('The operation was aborted')
+  aborted.name = 'AbortError'
+  return aborted
 }
 
 /**
- * Our own fetch abort, not a Stills Agent cancel. The provider may still be
- * generating, so the shared slot has to stay occupied until its score expires.
+ * Parent cancel and our own 90s timer share one signal. A parent cancel is
+ * reported as abortedByClient; the timer stays an AbortError so the lease
+ * layer can tell a pre-dispatch cancel from a provider call we disconnected.
  */
-function shouldAbandonImageLease(err: unknown, signal?: AbortSignal): boolean {
-  if (signal?.aborted) return false
-  if (isVertexImageAbortedByClient(err, signal)) return false
+function throwIfImageAborted(signal: AbortSignal, parent?: AbortSignal, model?: string): void {
+  if (!signal.aborted && !parent?.aborted) return
+  if (parent?.aborted) throwAbortedByClient(model)
+  throw abortError()
+}
+
+/**
+ * Unblock when `signal` aborts. The underlying work may still be running.
+ * `Promise.resolve` covers mocks that return a bare value instead of a thenable.
+ */
+function awaitWithAbort<T>(work: Promise<T> | T, signal: AbortSignal): Promise<T> {
+  const promise = Promise.resolve(work)
+  if (signal.aborted) {
+    promise.catch(() => {})
+    return Promise.reject(abortError())
+  }
+  return new Promise<T>((resolve, reject) => {
+    let settled = false
+    const finish = (fn: () => void) => {
+      if (settled) return
+      settled = true
+      signal.removeEventListener('abort', onAbort)
+      fn()
+    }
+    const onAbort = () => finish(() => reject(abortError()))
+    signal.addEventListener('abort', onAbort, { once: true })
+    promise.then(
+      (value) => finish(() => resolve(value)),
+      (err) => finish(() => reject(err))
+    )
+  })
+}
+
+/**
+ * Once generateContent is on the wire, Gemini keeps the job after we abort.
+ * The shared slot stays occupied until its score expires. Releasing is only
+ * correct before that request is sent (a cancel while still waiting to dispatch).
+ */
+function shouldAbandonImageLease(err: unknown, providerRequestSent: boolean): boolean {
+  if (!providerRequestSent) return false
+  if (isVertexImageAbortedByClient(err)) return true
   return err instanceof Error && err.name === 'AbortError'
 }
 
@@ -544,7 +577,12 @@ function logPromptImageTokenUsage(
   }
 }
 
-const imageLeaseHeld = new AsyncLocalStorage<true>()
+/** Shared with nested retries so a fetch inside a re-entry still marks the outer lease. */
+interface ImageLeaseAttempt {
+  providerRequestSent: boolean
+}
+
+const imageLeaseHeld = new AsyncLocalStorage<ImageLeaseAttempt>()
 
 /**
  * Hold the shared image lease for the whole top-level call, including the
@@ -562,6 +600,7 @@ async function runWithinImageLease<T>(
 
   const maxWaitMs =
     options.deadlineAt != null ? Math.max(0, options.deadlineAt - Date.now()) : undefined
+  const attempt: ImageLeaseAttempt = { providerRequestSent: false }
   let finishLease: (mode?: 'release' | 'abandon') => Promise<void> = async () => {}
   let finished = false
   const finish = async (mode: 'release' | 'abandon') => {
@@ -586,11 +625,13 @@ async function runWithinImageLease<T>(
       }
       throw err
     }
-    const result = await imageLeaseHeld.run(true, fn)
+    const result = await imageLeaseHeld.run(attempt, fn)
     await finish('release')
     return result
   } catch (err) {
-    await finish(shouldAbandonImageLease(err, options.signal) ? 'abandon' : 'release')
+    await finish(
+      shouldAbandonImageLease(err, attempt.providerRequestSent) ? 'abandon' : 'release'
+    )
     throw err
   }
 }
@@ -603,8 +644,9 @@ async function runWithinImageLease<T>(
  * Nested re-entry (IMAGE_SAFETY escalate, retryCount reset) is reentrant on
  * the gate and on the image lease. Non-fail-fast still wraps only the outbound
  * fetch so backoff sleeps do not occupy a process slot. The shared lease is
- * the cross-instance cap. It is released when Vertex answers, and left in
- * place on our own timeout so a disconnected generateContent still counts.
+ * the cross-instance cap. It is released when Vertex answers. Once the
+ * generateContent request has been sent, a timeout or a disconnect leaves the
+ * lease in place so the orphaned provider call still counts.
  */
 export async function generateVertexGeminiImage(
   options: GenerateVertexImageOptions,
@@ -675,41 +717,48 @@ async function generateVertexGeminiImageAttempt(
   }
 
   const proLayout = usesProImageReferenceLayout(model)
-  const parts = await buildMultimodalParts(
-    fullPrompt,
-    options.referenceImages,
-    options.requireAllReferenceImages,
-    proLayout ? 'pro' : 'flash'
-  )
-  const effectiveImageSize = effectiveImageSizeForModel(model, options.imageSize)
-
-  const requestBody = {
-    contents: [{ role: 'user', parts }],
-    generationConfig: {
-      responseModalities: ['TEXT', 'IMAGE'],
-      ...(options.aspectRatio || effectiveImageSize
-        ? {
-            imageConfig: {
-              ...(options.aspectRatio && { aspectRatio: options.aspectRatio }),
-              ...(effectiveImageSize && { imageSize: effectiveImageSize }),
-            },
-          }
-        : {}),
-    },
-    safetySettings: getGeminiImageSafetySettings(),
-  }
-
-  const accessToken = await getVertexAIAuthToken()
   const timeoutController = new AbortController()
-  const requestTimeoutMs = requestTimeoutFor(
-    options.deadlineAt,
-    holdProviderCallUntilDeadline(options, model)
-  )
+  const requestTimeoutMs = requestTimeoutFor(options.deadlineAt)
   const timeoutId = setTimeout(() => timeoutController.abort(), requestTimeoutMs)
   const requestSignal = combineAbortSignals(timeoutController.signal, options.signal)
 
   let response: Response
   try {
+    throwIfImageAborted(requestSignal, options.signal, model)
+    // The same 90s ceiling covers reference attachment. A hang here used to
+    // sit past the abort because the timer was armed only around the fetch.
+    const parts = await awaitWithAbort(
+      buildMultimodalParts(
+        fullPrompt,
+        options.referenceImages,
+        options.requireAllReferenceImages,
+        proLayout ? 'pro' : 'flash'
+      ),
+      requestSignal
+    )
+    throwIfImageAborted(requestSignal, options.signal, model)
+    const effectiveImageSize = effectiveImageSizeForModel(model, options.imageSize)
+
+    const requestBody = {
+      contents: [{ role: 'user', parts }],
+      generationConfig: {
+        responseModalities: ['TEXT', 'IMAGE'],
+        ...(options.aspectRatio || effectiveImageSize
+          ? {
+              imageConfig: {
+                ...(options.aspectRatio && { aspectRatio: options.aspectRatio }),
+                ...(effectiveImageSize && { imageSize: effectiveImageSize }),
+              },
+            }
+          : {}),
+      },
+      safetySettings: getGeminiImageSafetySettings(),
+    }
+
+    const accessToken = await awaitWithAbort(getVertexAIAuthToken(), requestSignal)
+    throwIfImageAborted(requestSignal, options.signal, model)
+    const leaseAttempt = imageLeaseHeld.getStore()
+    if (leaseAttempt) leaseAttempt.providerRequestSent = true
     // The gate holds the dispatch and nothing else. Every backoff and retry
     // below re-enters this function, so a slot spanning them would be waited
     // on by the call holding it — and a frame sleeping out a 429 is not
