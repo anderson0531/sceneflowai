@@ -38,7 +38,8 @@ import {
   resolveSfxDuration,
   type SfxDurationOverride,
 } from '@/lib/elevenlabs/sfxDuration'
-import { dispatchExpressVeoSfx } from '@/lib/sfx/clientExpressVeoSfx'
+import { dispatchExpressElevenLabsSfx, dispatchExpressVeoSfx } from '@/lib/sfx/clientExpressVeoSfx'
+import { dispatchGenerateVeoSfx } from '@/lib/sfx/clientGenerateVeoSfx'
 import { listSelectableActionBeats } from '@/lib/sfx/resolveExpressVeoSfxItems'
 import { type ExpressBeatSfxStatus } from '@/components/vision/ActionBeatSfxControls'
 import {
@@ -4918,7 +4919,10 @@ function SceneCard({
       const lang = selectedLanguage
       const isAll = options.scope === 'all'
       const selection = parseExpressAudioSelectedIds(options.selectedIds)
-      const selectedDialogueIndices = new Set(selection.dialogueIndices)
+      const hifiDialogue = new Set(options.hifiDialogueIds ?? [])
+      const selectedDialogueIndices = new Set(
+        selection.dialogueIndices.filter((index) => !hifiDialogue.has(`dialogue-${index}`))
+      )
 
       setIsExpressAudioRunning(true)
 
@@ -5076,6 +5080,42 @@ function SceneCard({
             const beatNumber = sceneBeats.findIndex((entry) => entry.beatId === beatId) + 1
             addItem(`sfx-${beatId}`, beatNumber > 0 ? `SFX — shot ${beatNumber}` : 'SFX', 'sfx')
           }
+          const onItemStart = (beatId: string) => {
+            setExpressBeatStatus((prev) => ({ ...prev, [beatId]: 'running' }))
+            markItem(`sfx-${beatId}`, 'running')
+          }
+          const onItemError = (beatId: string, error: string) => {
+            setExpressBeatStatus((prev) => ({ ...prev, [beatId]: 'error' }))
+            markItem(`sfx-${beatId}`, 'error', String(error || 'SFX generation failed').slice(0, 140))
+          }
+          if ((options.sfxQuality ?? 'elevenlabs') === 'elevenlabs') {
+            await dispatchExpressElevenLabsSfx({
+              projectId,
+              scene: scene as Record<string, unknown>,
+              beatIds: selection.sfxBeatIds,
+              segmentDurationSeconds: scene.duration,
+              durationOverride: options.durationOverride,
+              regenerate: isAll,
+              onItemStart,
+              onItemDone: async ({ beatId, sfxIndex, url }) => {
+                setExpressBeatStatus((prev) => ({ ...prev, [beatId]: 'done' }))
+                markItem(`sfx-${beatId}`, 'done')
+                const beat = getSceneBeats(scene).find((entry) => entry.beatId === beatId)
+                await onSaveSfxAudio?.(
+                  sceneIdx,
+                  'sfx',
+                  url,
+                  sfxIndex,
+                  null,
+                  beat
+                    ? { beatId, beatDescription: beat.actionDescription?.trim() ?? '' }
+                    : undefined
+                )
+              },
+              onItemError,
+            })
+            return
+          }
           await dispatchExpressVeoSfx({
             projectId,
             sceneIndex: sceneIdx,
@@ -5113,7 +5153,74 @@ function SceneCard({
           })
         }
 
-        const laneResults = await Promise.allSettled([ttsLane(), musicLane(), sfxLane()])
+        const hifiDialogueLane = async () => {
+          if (!onScriptChange || !script || !Array.isArray(scenes)) return
+          const dialogueLines: any[] = Array.isArray(scene.dialogue) ? scene.dialogue : []
+          for (const index of selection.dialogueIndices) {
+            if (!hifiDialogue.has(`dialogue-${index}`)) continue
+            const line = dialogueLines[index]
+            if (!line?.line || !line?.character) continue
+            addItem(`dialogue-${index}`, `${index + 1}. ${line.character}`, 'tts')
+            markItem(`dialogue-${index}`, 'running')
+            try {
+              const result = await dispatchGenerateVeoSfx({
+                projectId,
+                text: String(line.line),
+                sfxIndex: index,
+                sfxId: line.lineId,
+                segmentDurationSeconds: scene.duration,
+                promptMode: 'dialogue',
+                voiceDirection:
+                  typeof line.voiceDirection === 'string' ? line.voiceDirection : undefined,
+              })
+              const updatedScenes = scenes.map((entry: any) => ({ ...entry }))
+              const target = { ...updatedScenes[sceneIdx] }
+              const language = selectedLanguage
+              const dialogueAudio = { ...(target.dialogueAudio || {}) }
+              const bucket = Array.isArray(dialogueAudio[language]) ? [...dialogueAudio[language]] : []
+              const audioEntry: Record<string, unknown> = {
+                audioUrl: result.url,
+                character: line.character,
+                dialogueIndex: index,
+                sourceFingerprint: audioSourceFingerprintForSpoken({
+                  kind: 'dialogue',
+                  character: line.character,
+                  line: line.line,
+                  voiceDirection: line.voiceDirection,
+                }),
+              }
+              if (line.lineId) audioEntry.lineId = line.lineId
+              const existingIdx = bucket.findIndex(
+                (entry: any) =>
+                  (line.lineId && entry?.lineId === line.lineId) ||
+                  (entry?.dialogueIndex === index && entry?.character === line.character)
+              )
+              if (existingIdx >= 0) bucket[existingIdx] = { ...bucket[existingIdx], ...audioEntry }
+              else bucket.push(audioEntry)
+              dialogueAudio[language] = bucket
+              target.dialogueAudio = dialogueAudio
+              updatedScenes[sceneIdx] = target
+              onScriptChange(
+                { ...script, script: { ...script.script, scenes: updatedScenes } },
+                { trustIncomingAudio: true }
+              )
+              markItem(`dialogue-${index}`, 'done')
+            } catch (error) {
+              markItem(
+                `dialogue-${index}`,
+                'error',
+                String((error as Error)?.message || 'HiFi dialogue failed').slice(0, 140)
+              )
+            }
+          }
+        }
+
+        const laneResults = await Promise.allSettled([
+          ttsLane(),
+          musicLane(),
+          sfxLane(),
+          hifiDialogueLane(),
+        ])
         const laneFailures = laneResults.filter((r) => r.status === 'rejected').length
         const itemFailures = runItems.filter((item) => item.status === 'error').length
         const failed = laneFailures + itemFailures
@@ -5145,6 +5252,9 @@ function SceneCard({
       onDeleteSceneAudio,
       onSaveSfxAudio,
       getNarrationAudioUrlForLang,
+      script,
+      scenes,
+      onScriptChange,
     ]
   )
 

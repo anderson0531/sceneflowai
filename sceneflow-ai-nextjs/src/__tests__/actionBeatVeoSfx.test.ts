@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
+  buildHifiDialoguePrompt,
   buildVeoActionBeatSfxPrompt,
   buildVeoSfxPrompt,
   distillActionBeatAudioCue,
@@ -17,6 +18,19 @@ import {
 
 const elaraCoffeeAction =
   'WIDE SHOT: Elara pushes back from her desk, knocking over her coffee mug. The mug rolls across the pristine floor, spilling a dark stain. Her posture is rigid, eyes wide, staring blankly at the now-darkened screens. The vastness of her apartment now feels isolating, overwhelming. The coffee stain is stark against the minimalist floor.'
+
+describe('buildHifiDialoguePrompt', () => {
+  it('keeps the spoken line and the acting brief, and does not name the video model', () => {
+    const { prompt, negativePrompt } = buildHifiDialoguePrompt(
+      "The current is dead.",
+      "Fragile and highly intimate. Let the words crack on 'dead'."
+    )
+    expect(prompt).toContain('The current is dead.')
+    expect(prompt).toContain("crack on 'dead'")
+    expect(prompt.toLowerCase()).not.toContain('veo')
+    expect(negativePrompt.toLowerCase()).toContain('music')
+  })
+})
 
 describe('distillActionBeatAudioCue', () => {
   it('strips shot prefix and emotional clauses from Elara coffee-mug action', () => {

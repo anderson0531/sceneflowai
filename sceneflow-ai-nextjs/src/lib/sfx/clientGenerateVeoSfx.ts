@@ -13,6 +13,7 @@ export interface GenerateVeoSfxClientParams {
   durationOverride?: SfxDurationOverride
   hasExistingAudio?: boolean
   promptMode?: VeoSfxPromptMode
+  voiceDirection?: string
 }
 
 export interface GenerateVeoSfxClientResult {
@@ -38,6 +39,7 @@ export async function dispatchGenerateVeoSfx(
     durationOverride = 'auto',
     hasExistingAudio = false,
     promptMode = 'ambient',
+    voiceDirection,
   } = params
 
   const clipDurationSeconds = resolveVeoSfxDuration({
@@ -45,15 +47,15 @@ export async function dispatchGenerateVeoSfx(
     override: durationOverride,
   })
 
-  const isActionBeat = promptMode === 'actionBeat'
+  const isDialogue = promptMode === 'dialogue'
   const toastId = toast.loading(
     hasExistingAudio
-      ? isActionBeat
-        ? 'Re-generating action beat SFX...'
-        : 'Re-generating Veo ambient SFX...'
-      : isActionBeat
-        ? 'Generating action beat SFX...'
-        : 'Generating Veo ambient SFX...'
+      ? isDialogue
+        ? 'Re-generating HiFi dialogue...'
+        : 'Re-generating HiFi sound...'
+      : isDialogue
+        ? 'Generating HiFi dialogue...'
+        : 'Generating HiFi sound...'
   )
 
   try {
@@ -67,6 +69,7 @@ export async function dispatchGenerateVeoSfx(
         text,
         durationSeconds: clipDurationSeconds,
         promptMode,
+        voiceDirection,
       }),
     })
 
@@ -81,7 +84,7 @@ export async function dispatchGenerateVeoSfx(
         const need = payload?.creditsRequired ?? VIDEO_CREDITS.VEO_LITE
         const have = payload?.creditsAvailable
         toast.error(
-          `Insufficient credits for Veo ambient SFX. Need ${need} credits${
+          `Insufficient credits for HiFi audio. Need ${need} credits${
             typeof have === 'number' ? ` (available: ${have})` : ''
           }.`,
           { id: toastId }
@@ -93,26 +96,26 @@ export async function dispatchGenerateVeoSfx(
           ? payload.error
           : payload?.error != null
             ? JSON.stringify(payload.error)
-            : null) || `Veo SFX generation failed (HTTP ${response.status})`
+            : null) || `HiFi audio failed (HTTP ${response.status})`
       )
     }
 
     const data = await response.json()
     const url: string | undefined = data?.url
     if (!url) {
-      throw new Error('Veo SFX response missing audio URL')
+      throw new Error('HiFi audio response missing audio URL')
     }
 
     const resolvedClipDuration = data?.clipDurationSeconds ?? clipDurationSeconds
     const resolvedPromptMode = (data?.promptMode as VeoSfxPromptMode | undefined) ?? promptMode
     toast.success(
       hasExistingAudio
-        ? isActionBeat
-          ? 'Action beat SFX re-generated.'
-          : 'Veo ambient SFX re-generated.'
-        : isActionBeat
-          ? 'Action beat SFX generated.'
-          : 'Veo ambient SFX generated.',
+        ? isDialogue
+          ? 'HiFi dialogue re-generated.'
+          : 'HiFi sound re-generated.'
+        : isDialogue
+          ? 'HiFi dialogue generated.'
+          : 'HiFi sound generated.',
       { id: toastId }
     )
 
@@ -128,7 +131,7 @@ export async function dispatchGenerateVeoSfx(
     }
   } catch (error) {
     if ((error as Error)?.message !== 'Insufficient credits') {
-      const label = isActionBeat ? 'action beat SFX' : 'Veo ambient SFX'
+      const label = isDialogue ? 'HiFi dialogue' : 'HiFi sound'
       toast.error(`Failed to generate ${label}: ${(error as Error)?.message || 'Unknown error'}`, {
         id: toastId,
       })
@@ -137,4 +140,7 @@ export async function dispatchGenerateVeoSfx(
   }
 }
 
-export const VEO_SFX_CREDIT_HINT = `~${VIDEO_CREDITS.VEO_LITE} credits · up to 8s continuous`
+export const HIFI_CREDIT_HINT = `~${VIDEO_CREDITS.VEO_LITE} credits · up to 8s`
+
+/** @deprecated User-facing copy uses HIFI_CREDIT_HINT. */
+export const VEO_SFX_CREDIT_HINT = HIFI_CREDIT_HINT

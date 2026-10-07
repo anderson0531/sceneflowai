@@ -2,6 +2,8 @@ import { toast } from 'sonner'
 import { VIDEO_CREDITS } from '@/lib/credits/creditCosts'
 import type { SfxDurationOverride } from '@/lib/elevenlabs/sfxDuration'
 import type { ExpressVeoSfxAttribution, ExpressVeoSfxEvent } from '@/lib/sfx/expressVeoSfxTypes'
+import { resolveSfxDuration } from '@/lib/elevenlabs/sfxDuration'
+import { resolveExpressVeoSfxItems } from '@/lib/sfx/resolveExpressVeoSfxItems'
 import { resolveVeoSfxDuration } from '@/lib/sfx/veoSfxDuration'
 
 export interface DispatchExpressVeoSfxParams {
@@ -53,7 +55,7 @@ export async function dispatchExpressVeoSfx(
     override: durationOverride,
   })
 
-  const toastId = toast.loading(`Express Veo SFX: starting ${beatIds.length} beat(s)...`)
+  const toastId = toast.loading(`HiFi sound effects: starting ${beatIds.length} shot${beatIds.length === 1 ? '' : 's'}...`)
   let completed = 0
   let total = beatIds.length
 
@@ -73,7 +75,7 @@ export async function dispatchExpressVeoSfx(
 
     if (!response.ok || !response.body) {
       const errText = await response.text().catch(() => '')
-      throw new Error(errText.slice(0, 200) || `Express Veo SFX failed (HTTP ${response.status})`)
+      throw new Error(errText.slice(0, 200) || `HiFi sound effects failed (HTTP ${response.status})`)
     }
 
     const reader = response.body.getReader()
@@ -103,7 +105,7 @@ export async function dispatchExpressVeoSfx(
           case 'start':
             total = event.total
             skipped = event.skipped
-            toast.loading(`Express Veo SFX: 0/${total} complete`, { id: toastId })
+            toast.loading(`HiFi sound effects: 0/${total} complete`, { id: toastId })
             break
           case 'item-start':
             onItemStart?.(event.beatId)
@@ -117,7 +119,7 @@ export async function dispatchExpressVeoSfx(
               url: event.url,
               attribution: event.attribution,
             })
-            toast.loading(`Express Veo SFX: ${completed}/${total} complete`, { id: toastId })
+            toast.loading(`HiFi sound effects: ${completed}/${total} complete`, { id: toastId })
             break
           case 'item-error':
             onItemError?.(event.beatId, event.error)
@@ -130,29 +132,95 @@ export async function dispatchExpressVeoSfx(
           case 'error':
             throw new Error(event.error)
           case 'throttle':
-            toast.loading(`Express Veo SFX throttled (${event.max} concurrent)...`, { id: toastId })
+            toast.loading(`HiFi sound effects paused (${event.max} at a time)...`, { id: toastId })
             break
         }
       }
     }
 
     if (success > 0 && failed === 0) {
-      toast.success(`Express Veo SFX complete (${success} beat${success === 1 ? '' : 's'}).`, {
+      toast.success(`HiFi sound effects complete (${success} shot${success === 1 ? '' : 's'}).`, {
         id: toastId,
       })
     } else if (success > 0) {
-      toast.warning(`Express Veo SFX: ${success} succeeded, ${failed} failed.`, { id: toastId })
+      toast.warning(`HiFi sound effects: ${success} succeeded, ${failed} failed.`, { id: toastId })
     } else {
-      toast.error(`Express Veo SFX failed (${failed} failed${skipped ? `, ${skipped} skipped` : ''}).`, {
+      toast.error(`HiFi sound effects failed (${failed} failed${skipped ? `, ${skipped} skipped` : ''}).`, {
         id: toastId,
       })
     }
 
     return { success, failed, skipped }
   } catch (error) {
-    toast.error(`Express Veo SFX failed: ${(error as Error)?.message || 'Unknown error'}`, {
+    toast.error(`HiFi sound effects failed: ${(error as Error)?.message || 'Unknown error'}`, {
       id: toastId,
     })
     throw error
   }
+}
+
+export async function dispatchExpressElevenLabsSfx(params: {
+  projectId: string
+  scene: Record<string, unknown>
+  beatIds: string[]
+  segmentDurationSeconds?: number
+  durationOverride?: SfxDurationOverride
+  regenerate?: boolean
+  onItemStart?: (beatId: string) => void
+  onItemDone?: (payload: { beatId: string; sfxIndex: number; url: string }) => void | Promise<void>
+  onItemError?: (beatId: string, error: string) => void
+}): Promise<DispatchExpressVeoSfxResult> {
+  const resolved = resolveExpressVeoSfxItems(params.scene, params.beatIds, {
+    regenerate: params.regenerate,
+  })
+  if (resolved.errors.length > 0) {
+    throw new Error(resolved.errors.join('; '))
+  }
+  const durationSeconds = resolveSfxDuration({
+    segmentDurationSeconds: params.segmentDurationSeconds,
+    override: params.durationOverride ?? 'auto',
+  })
+  let success = 0
+  let failed = 0
+  const toastId = toast.loading(
+    `ElevenLabs sound effects: starting ${resolved.items.length} shot${resolved.items.length === 1 ? '' : 's'}...`
+  )
+  for (const item of resolved.items) {
+    params.onItemStart?.(item.beatId)
+    try {
+      const response = await fetch('/api/tts/elevenlabs/sound-effects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: params.projectId,
+          sfxId: item.sfxId,
+          sfxIndex: item.sfxIndex,
+          text: item.text,
+          durationSeconds,
+        }),
+      })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error || `Sound effect failed (HTTP ${response.status})`)
+      }
+      const data = await response.json()
+      if (!data?.url) throw new Error('Sound effect response missing audio URL')
+      await params.onItemDone?.({ beatId: item.beatId, sfxIndex: item.sfxIndex, url: data.url })
+      success++
+      toast.loading(`ElevenLabs sound effects: ${success}/${resolved.items.length} complete`, {
+        id: toastId,
+      })
+    } catch (error) {
+      failed++
+      params.onItemError?.(item.beatId, (error as Error)?.message || 'Sound effect failed')
+    }
+  }
+  if (success > 0 && failed === 0) {
+    toast.success(`ElevenLabs sound effects complete (${success}).`, { id: toastId })
+  } else if (failed > 0) {
+    toast.error(`ElevenLabs sound effects: ${success} succeeded, ${failed} failed.`, { id: toastId })
+  } else {
+    toast.dismiss(toastId)
+  }
+  return { success, failed, skipped: resolved.skipped.length }
 }

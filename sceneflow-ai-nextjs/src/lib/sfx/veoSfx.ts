@@ -33,7 +33,7 @@ export function getVeoSfxPollIntervalSeconds(): number {
   return parsePositiveInt(process.env.VEO_SFX_POLL_INTERVAL_SECONDS, 5)
 }
 
-export type VeoSfxPromptMode = 'ambient' | 'actionBeat'
+export type VeoSfxPromptMode = 'ambient' | 'actionBeat' | 'dialogue'
 
 /** Veo tier used for SFX T2V (audio extracted from generated clip). */
 export const VEO_SFX_QUALITY = DEFAULT_VEO_SFX_QUALITY
@@ -50,8 +50,10 @@ export interface GenerateVeoSfxParams {
   sfxIndex?: number
   /** Resolved clip length (4 | 6 | 8). */
   clipDurationSeconds?: VeoSfxClipDuration
-  /** ambient = black-frame cue; actionBeat = distilled audio cue on black frame. */
+  /** ambient = black-frame cue; actionBeat = distilled audio cue; dialogue = spoken line. */
   promptMode?: VeoSfxPromptMode
+  /** Acting brief for a HiFi dialogue take. */
+  voiceDirection?: string
 }
 
 export interface GenerateVeoSfxResult {
@@ -163,10 +165,33 @@ export function buildVeoActionBeatSfxPrompt(actionDescription: string): BuildVeo
   return buildVeoSfxPrompt(sanitizedPrompt || audioCue)
 }
 
+/** One spoken take. The picture is discarded; only the voice is kept. */
+export function buildHifiDialoguePrompt(
+  line: string,
+  voiceDirection?: string
+): BuildVeoSfxPromptResult {
+  const spoken = line.trim()
+  const direction = voiceDirection?.trim()
+  const prompt = [
+    'Solid black frame. One close-mic spoken performance and nothing else in the picture.',
+    direction ? `Performance: ${direction}.` : '',
+    `The speaker says exactly: "${spoken}".`,
+    'One voice. No music. No sound effects. No second speaker.',
+  ]
+    .filter(Boolean)
+    .join(' ')
+  return {
+    prompt,
+    negativePrompt: 'music, score, soundtrack, sound effects, crowd, second voice, singing',
+  }
+}
+
 export function buildVeoSfxPromptForMode(
   text: string,
-  mode: VeoSfxPromptMode = 'ambient'
+  mode: VeoSfxPromptMode = 'ambient',
+  voiceDirection?: string
 ): BuildVeoSfxPromptResult {
+  if (mode === 'dialogue') return buildHifiDialoguePrompt(text, voiceDirection)
   return mode === 'actionBeat' ? buildVeoActionBeatSfxPrompt(text) : buildVeoSfxPrompt(text)
 }
 
@@ -236,7 +261,11 @@ export async function generateVeoSfxAudio(
   const clipDurationSeconds: VeoSfxClipDuration =
     params.clipDurationSeconds ?? resolveVeoSfxClipDuration(8)
 
-  const { prompt, negativePrompt } = buildVeoSfxPromptForMode(trimmedText, promptMode)
+  const { prompt, negativePrompt } = buildVeoSfxPromptForMode(
+    trimmedText,
+    promptMode,
+    params.voiceDirection
+  )
   const audioCue =
     promptMode === 'actionBeat' ? distillActionBeatAudioCue(trimmedText) : undefined
 

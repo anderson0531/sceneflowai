@@ -21,7 +21,7 @@ import {
 } from '@/lib/elevenlabs/sfxDuration'
 import {
   dispatchGenerateVeoSfx,
-  VEO_SFX_CREDIT_HINT,
+  HIFI_CREDIT_HINT,
 } from '@/lib/sfx/clientGenerateVeoSfx'
 import {
   resolveAutoVeoSfxDuration,
@@ -31,7 +31,7 @@ import {
 
 /**
  * One SFX cue inside a segment. The cue's description is used to drive
- * ElevenLabs `sound-generation` or Veo native-audio extraction; the resulting
+ * ElevenLabs sound-generation or the higher-quality extract; the resulting
  * GCS URL is persisted via the existing positional handlers (`scene.sfxAudio[idx]`,
  * `onDeleteSceneAudio(sceneIdx, 'sfx', undefined, idx)`) using
  * `sfx.legacyIndex` so legacy data keeps working.
@@ -245,7 +245,7 @@ export function SegmentSfxCard({
           <BeatAudioStatusBadge hasAudio={!!audioUrl} stale={sfxStale} />
           {isVeoAmbient && (
             <span className="text-xs px-2 py-0.5 bg-violet-500/15 text-violet-600 dark:text-violet-300 rounded">
-              Veo ambient
+              HiFi
             </span>
           )}
         </div>
@@ -333,17 +333,17 @@ export function SegmentSfxCard({
               void dispatchGenerateVeo()
             }}
             disabled={isGenerating}
-            title={VEO_SFX_CREDIT_HINT}
+            title={HIFI_CREDIT_HINT}
           >
             {isGeneratingVeo ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                Veo...
+                HiFi...
               </>
             ) : (
               <>
                 <Waves className="w-3.5 h-3.5 mr-1" />
-                Veo ambient
+                HiFi
               </>
             )}
           </Button>
@@ -352,18 +352,17 @@ export function SegmentSfxCard({
       <DurationPresetChips
         value={durationPreset}
         autoSeconds={autoSeconds}
-        veoAutoSeconds={veoAutoSeconds}
         onChange={setDurationPreset}
         disabled={isGenerating}
       />
       {showPartialVeoHint && (
         <p className="text-[11px] text-amber-800/80 dark:text-amber-200/70 mb-2">
-          Veo ambient covers up to 8s of this shot (Auto target{' '}
+          HiFi covers up to 8s of this shot (Auto target{' '}
           {formatSeconds(resolveVeoSfxTargetSeconds({ segmentDurationSeconds, override: durationPreset }))}
           s → {veoAutoSeconds}s clip).
         </p>
       )}
-      <p className="text-[10px] text-violet-700/70 dark:text-violet-300/60 mb-2">{VEO_SFX_CREDIT_HINT}</p>
+      <p className="text-[10px] text-violet-700/70 dark:text-violet-300/60 mb-2">{HIFI_CREDIT_HINT}</p>
       <div className="text-sm text-gray-700 dark:text-gray-300 italic">{sfx.description}</div>
     </div>
   )
@@ -372,7 +371,6 @@ export function SegmentSfxCard({
 interface DurationPresetChipsProps {
   value: SfxDurationOverride
   autoSeconds: number
-  veoAutoSeconds: number
   onChange: (next: SfxDurationOverride) => void
   disabled?: boolean
 }
@@ -380,15 +378,14 @@ interface DurationPresetChipsProps {
 function DurationPresetChips({
   value,
   autoSeconds,
-  veoAutoSeconds,
   onChange,
   disabled,
 }: DurationPresetChipsProps) {
   const chips: Array<{ id: SfxDurationOverride; label: string }> = [
-    { id: 'auto', label: `Auto (${formatSeconds(autoSeconds)}s · Veo ${veoAutoSeconds}s)` },
-    { id: 'short', label: 'Short 3s / Veo 4s' },
+    { id: 'auto', label: `Auto (${formatSeconds(autoSeconds)}s)` },
+    { id: 'short', label: 'Short 3s' },
     { id: 'medium', label: 'Medium 8s' },
-    { id: 'long', label: 'Long 15s / Veo 8s max' },
+    { id: 'long', label: 'Long 15s' },
   ]
   return (
     <div className="flex flex-wrap items-center gap-1.5 mb-2">

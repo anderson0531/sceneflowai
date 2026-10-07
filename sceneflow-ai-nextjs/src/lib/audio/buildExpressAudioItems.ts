@@ -24,13 +24,18 @@ export interface ExpressAudioItem {
   stale?: boolean
   dialogueIndex?: number
   beatId?: string
+  /**
+   * Sound-effect shots with a distinct in-scene cue. Filler action shots are
+   * listed but left to the music bed.
+   */
+  recommended?: boolean
 }
 
 const TYPE_LABELS: Record<ExpressAudioItemKind, string> = {
   music: 'Music (Lyria)',
   narration: 'Narration (TTS)',
   dialogue: 'Dialogue (TTS)',
-  sfx: 'Action SFX (Veo)',
+  sfx: 'SFX',
 }
 
 function truncate(text: string, max = 72): string {
@@ -265,14 +270,16 @@ export function buildExpressAudioItems(
         { beatId: beat.beatId, actionDescription: description, kind: 'action' },
         hasUrl
       )
+      const audioCue = beat.beatDirection?.audioCue?.trim()
       items.push({
         id: `sfx-${beat.beatId}`,
         kind: 'sfx',
-        label: truncate(description || 'Action beat'),
+        label: truncate(audioCue || description || 'Action beat'),
         typeLabel: TYPE_LABELS.sfx,
         hasAudio: hasUrl && !stale,
         stale,
         beatId: beat.beatId,
+        recommended: !!audioCue,
       })
     }
   }
@@ -280,12 +287,21 @@ export function buildExpressAudioItems(
   return items
 }
 
+/** Filler action shots stay unchecked. Music carries them. */
+export function expressAudioItemPrechecked(
+  item: ExpressAudioItem,
+  scope: ExpressAudioScope
+): boolean {
+  if (item.kind === 'sfx' && !item.recommended) return false
+  if (scope === 'all') return true
+  return !item.hasAudio
+}
+
 export function defaultExpressAudioSelection(
   items: ExpressAudioItem[],
   scope: ExpressAudioScope
 ): string[] {
-  if (scope === 'all') return items.map((item) => item.id)
-  return items.filter((item) => !item.hasAudio).map((item) => item.id)
+  return items.filter((item) => expressAudioItemPrechecked(item, scope)).map((item) => item.id)
 }
 
 export function parseExpressAudioSelectedIds(selectedIds: string[]): {
