@@ -386,9 +386,21 @@ export function ExpressSceneConfirmDialog({
 
           <div>
             <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                {t('frames')}
-              </p>
+              <div className="flex min-w-0 items-center gap-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  {t('frames')}
+                </p>
+                {scope === 'selected' && (
+                  <button
+                    type="button"
+                    disabled={isRunning || selectedFrameKeys.length === 0}
+                    onClick={() => setSelectedFrameKeys([])}
+                    className="text-[11px] font-medium text-amber-200/80 hover:text-amber-100 disabled:pointer-events-none disabled:opacity-40"
+                  >
+                    {t('clearSelections')}
+                  </button>
+                )}
+              </div>
               <StatusFilterBar
                 activeSummary={[
                   frameAttention === 'all' ? '' : frameShowLabels[frameAttention],

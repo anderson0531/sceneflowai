@@ -15,9 +15,22 @@ describe('Stills and Clips Agent shot picker', () => {
     expect(en.expressScene.scopeMissing).toBe('Missing')
     expect(en.expressScene.scopeRegenerate).toBe('Regenerate')
     expect(en.expressScene.frames).toBe('Shots')
+    expect(en.expressScene.clearSelections).toBe('Clear')
     expect(en.videoAgent.scopeMissing).toBe('Missing')
     expect(en.videoAgent.scopeRegenerate).toBe('Regenerate')
     expect(en.videoAgent.beats).toBe('Shots')
+    expect(en.videoAgent.clearSelections).toBe('Clear')
+  })
+
+  it('clears regenerate shot checks so specific shots can be chosen', () => {
+    const stills = readSource('src/components/vision/ExpressSceneConfirmDialog.tsx')
+    const clips = readSource('src/components/vision/VideoAgentConfirmDialog.tsx')
+    for (const source of [stills, clips]) {
+      expect(source).toContain("scope === 'selected'")
+      expect(source).toContain("t('clearSelections')")
+    }
+    expect(stills).toContain('setSelectedFrameKeys([])')
+    expect(clips).toContain('setSelectedSegmentIds([])')
   })
 
   it('checks shots from the same filters as the thumbnail rails', () => {
