@@ -83,6 +83,34 @@ describe('locationStateAnalysis', () => {
     expect(beatHasLocationStateChange('Moody lighting fills the room.')).toBe(false)
   })
 
+  it('treats a cracked pressure gauge as a set-state change and ignores a framed photo', () => {
+    const crack = 'The pressure gauge glass cracks when the needle pegs into the red compression arc.'
+    expect(beatHasLocationStateChange(crack)).toBe(true)
+    const notes = distillLocationStateNotesFromText(crack)
+    expect(notes).toMatch(/gauge/i)
+    expect(notes).toMatch(/crack/i)
+    expect(notes).not.toMatch(/sarah|gideon|photo/i)
+
+    const photo =
+      "Gideon's cheek resting on the stone ledge inches from the shattered glass of the Framed Photo of Sarah."
+    expect(beatHasLocationStateChange(photo)).toBe(false)
+    expect(distillLocationStateNotesFromText(photo)).toBeUndefined()
+    expect(beatHasLocationStateChange('light on')).toBe(false)
+
+    const hits = extractLocationStateHitsFromScene({
+      sceneNumber: 1,
+      beats: [
+        { beatId: 'shot4', actionDescription: 'The brass pressure gauge holds steady on the chute.' },
+        { beatId: 'shot17', actionDescription: 'He studies the intact glass of the pressure gauge.' },
+        { beatId: 'shot18', actionDescription: crack },
+      ],
+    })
+    expect(hits).toHaveLength(1)
+    expect(hits[0].beatId).toBe('shot18')
+    expect(hits[0].beatIndex).toBe(2)
+    expect(hits[0].notes).toMatch(/crack/i)
+  })
+
   it('includes spoken lines in the LLM scene dump', () => {
     const text = formatSceneForLocationVersionAnalysis(
       {

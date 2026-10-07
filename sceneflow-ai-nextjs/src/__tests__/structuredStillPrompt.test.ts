@@ -647,6 +647,106 @@ Strictly Avoid: Mannequin geometry.`,
     expect(prompt.match(/No people in frame/g)).toHaveLength(1)
     expect(prompt).toContain('near-field materials')
     expect(prompt).not.toContain('shallow-focus background bokeh')
+    expect(prompt.toLowerCase()).toContain('unit mounted on location [1]')
+    expect(prompt.toLowerCase()).toContain('prop plate identifies the instrument')
+    expect(prompt).toContain(
+      'prop [2] (Brass pressure gauge) is the object in the prop image of prop [2].'
+    )
+  })
+
+  it('keeps location bokeh on a face close-up that does not name the gauge', () => {
+    const prompt = assembleStructuredStillPrompt({
+      actionOrStructured: 'Close-Up. person [1] stares at the needle.',
+      refs: [
+        { kind: 'person', token: 'person [1]', name: 'Gideon Croft', roleLabel: 'identity' },
+        {
+          kind: 'location',
+          token: 'location [1]',
+          name: 'FREIGHT TUNNEL VAULT',
+          roleLabel: 'library location',
+        },
+      ],
+      shotType: 'Close-Up',
+    })
+    expect(prompt).toContain('shallow-focus background bokeh')
+    expect(prompt.toLowerCase()).not.toContain('unit mounted on location')
+  })
+
+  it('copies a named galvanometer from the location plate instead of treating it as bokeh', () => {
+    const prompt = assembleStructuredStillPrompt({
+      actionOrStructured:
+        'Close-Up. person [1] studies the vintage brass galvanometer mounted on the wall.',
+      refs: [
+        { kind: 'person', token: 'person [1]', name: 'Gideon Croft', roleLabel: 'identity' },
+        {
+          kind: 'location',
+          token: 'location [1]',
+          name: 'FREIGHT TUNNEL VAULT',
+          roleLabel: 'library location',
+        },
+      ],
+      shotType: 'Close-Up',
+    })
+    expect(prompt.toLowerCase()).toContain('vintage brass galvanometer')
+    expect(prompt.toLowerCase()).toContain('unit mounted on location [1]')
+    expect(prompt.toLowerCase()).toContain('any crack or damage visible there')
+    expect(prompt).not.toContain('shallow-focus background bokeh')
+    expect(prompt.toLowerCase()).not.toContain('prop plate identifies')
+    expect(prompt.match(/unit mounted on location \[1\]/gi)).toHaveLength(1)
+
+    const again = assembleStructuredStillPrompt({
+      actionOrStructured: prompt,
+      refs: [
+        { kind: 'person', token: 'person [1]', name: 'Gideon Croft', roleLabel: 'identity' },
+        {
+          kind: 'location',
+          token: 'location [1]',
+          name: 'FREIGHT TUNNEL VAULT',
+          roleLabel: 'library location',
+        },
+      ],
+      shotType: 'Close-Up',
+    })
+    expect(again).toBe(prompt)
+
+    const wide = assembleStructuredStillPrompt({
+      actionOrStructured:
+        'Wide shot. person [1] stands in the vault beside the brass pressure gauge.',
+      refs: [
+        { kind: 'person', token: 'person [1]', name: 'Gideon Croft', roleLabel: 'identity' },
+        {
+          kind: 'location',
+          token: 'location [1]',
+          name: 'FREIGHT TUNNEL VAULT',
+          roleLabel: 'library location',
+        },
+      ],
+      shotType: 'Wide Shot',
+    })
+    expect(wide.toLowerCase()).not.toContain('unit mounted on location')
+  })
+
+  it('adds the current set-state suffix when the location plate is a version', () => {
+    const prompt = assembleStructuredStillPrompt({
+      actionOrStructured:
+        'Action/Framing: Extreme Close-Up. The brass pressure gauge glass is cracked. No people in frame.',
+      refs: stillRefsFromNamedLibrary({
+        props: [{ name: 'Brass pressure gauge', token: 'prop [2]' }],
+        locations: [
+          {
+            name: 'FREIGHT TUNNEL VAULT',
+            token: 'location [1]',
+            currentSetState: true,
+          },
+        ],
+        castInFrame: [],
+      }),
+      shotType: 'Extreme Close-Up',
+    })
+    expect(prompt).toContain('CURRENT set state')
+    expect(prompt.toLowerCase()).toContain('do not restore')
+    expect(prompt.toLowerCase()).toContain('unit mounted on location [1]')
+    expect(prompt).not.toContain('shallow-focus background bokeh')
   })
 
   it('recovers a previous [REFERENCES] legend when assemble is called without refs', () => {

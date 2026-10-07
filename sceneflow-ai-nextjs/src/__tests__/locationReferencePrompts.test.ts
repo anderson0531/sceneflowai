@@ -170,6 +170,51 @@ describe('locationReferencePrompts', () => {
     expect(cleaned.toLowerCase()).not.toMatch(/vellum/)
   })
 
+  it('reduces mixed vault notes to the cracked gauge and drops the framed photo', () => {
+    const notes = [
+      'The cavernous 1906 Illinois Tunnel Company freight vault.',
+      'Damp, curved charcoal-grey masonry walls covered in chalk equations.',
+      'A single swinging filament bulb illuminates a zinc-topped drafting bench in the center.',
+      'On the wall, the glass face of a brass pressure gauge connected to an eighteen-inch pneumatic mail sorting chute is cracked down the middle.',
+      "Gideon's cheek resting on the stone ledge inches from the shattered glass of the Framed Photo of Sarah, which depicts Sarah smiling beside an experimental 1893 induction coil.",
+      'light on',
+    ].join(' ')
+    const cleaned = stripBeatPropsFromLocationStateNotes(notes, [
+      'Framed Photo of Sarah',
+      'Brass pressure gauge',
+    ])
+    expect(cleaned.toLowerCase()).toMatch(/pressure gauge/)
+    expect(cleaned.toLowerCase()).toMatch(/cracked/)
+    expect(cleaned.toLowerCase()).not.toMatch(/gideon|sarah|cavernous|cheek|light on/)
+
+    const prompt = buildLocationVersionPrompt({
+      locationName: 'FREIGHT TUNNEL VAULT',
+      stateNotes: notes,
+      catalogPropNames: ['Framed Photo of Sarah', 'Brass pressure gauge'],
+    })
+    expect(prompt.toLowerCase()).toMatch(/pressure gauge/)
+    expect(prompt.toLowerCase()).toMatch(/cracked/)
+    expect(prompt.toLowerCase()).not.toMatch(/framed photo|gideon/)
+  })
+
+  it('points a pressure-gauge close-up at the unit on the location plate', () => {
+    const instruction = buildLocationConsumptionInstruction({
+      shotType: 'Extreme Close-Up',
+      promptToken: 'location [1]',
+      actionFraming:
+        'Extreme Close-Up. The brass pressure gauge needle is pinned. No people in frame.',
+      emptyCast: true,
+      propNames: ['Brass pressure gauge'],
+    })
+    expect(instruction).toContain('location [1]')
+    expect(instruction.toLowerCase()).toContain('brass pressure gauge')
+    expect(instruction.toLowerCase()).toContain('unit mounted on location [1]')
+    expect(instruction.toLowerCase()).toContain('near-field materials')
+    expect(instruction.toLowerCase()).toContain('prop plate identifies the instrument')
+    expect(instruction.toLowerCase()).not.toContain('shallow-focus background bokeh')
+    expect(instruction.toLowerCase()).not.toContain('match architectural layout')
+  })
+
   it('does not strip a hatch wheel from version notes even if the object catalog still lists it', () => {
     const notes =
       'Heavy hatch wheel mounted on the far vault door. The floor is flooded.'
