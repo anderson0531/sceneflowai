@@ -285,7 +285,6 @@ export function ActionBeatSfxControls({
               </button>
             </span>
           )}
-          )}
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-1.5 mb-2">
