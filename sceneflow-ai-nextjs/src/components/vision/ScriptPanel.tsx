@@ -39,7 +39,7 @@ import {
   type SfxDurationOverride,
 } from '@/lib/elevenlabs/sfxDuration'
 import { dispatchExpressElevenLabsSfx, dispatchExpressVeoSfx } from '@/lib/sfx/clientExpressVeoSfx'
-import { dispatchGenerateVeoSfx } from '@/lib/sfx/clientGenerateVeoSfx'
+import { generateAndPersistHifiDialogue } from '@/lib/audio/clientPersistDialogueAudio'
 import { listSelectableActionBeats } from '@/lib/sfx/resolveExpressVeoSfxItems'
 import { type ExpressBeatSfxStatus } from '@/components/vision/ActionBeatSfxControls'
 import {
@@ -3315,6 +3315,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       generatingAllCuesFor={generatingAllCuesFor}
                       uploadAudio={uploadAudio}
                       onSaveSfxAudio={saveSceneAudio}
+                      onAudioSlotSaved={onAudioSlotSaved}
                       generatingDirectionFor={generatingDirectionFor}
                       sceneProductionData={sceneProductionData[scene.sceneId || scene.id || `scene-${idx}`] || undefined}
                       sceneProductionReferences={sceneProductionReferences[scene.sceneId || scene.id || `scene-${idx}`] || undefined}
@@ -3968,6 +3969,7 @@ interface SceneCardProps {
   generatingMusicCue?: { sceneIdx: number; cueId: string } | null
   generatingAllCuesFor?: number | null
   /** Persist a generated SFX URL through the project PATCH path. */
+  onAudioSlotSaved?: (payload: AudioSlotSavedPayload) => void
   onSaveSfxAudio?: (
     sceneIdx: number,
     audioType: 'sfx' | 'music',
@@ -4271,6 +4273,7 @@ function SceneCard({
   generatingMusicCue,
   generatingAllCuesFor,
   onSaveSfxAudio,
+  onAudioSlotSaved,
   uploadAudio,
   generatingDirectionFor,
   sceneProductionData,
@@ -5154,7 +5157,6 @@ function SceneCard({
         }
 
         const hifiDialogueLane = async () => {
-          if (!onScriptChange || !script || !Array.isArray(scenes)) return
           const dialogueLines: any[] = Array.isArray(scene.dialogue) ? scene.dialogue : []
           for (const index of selection.dialogueIndices) {
             if (!hifiDialogue.has(`dialogue-${index}`)) continue
@@ -5163,47 +5165,27 @@ function SceneCard({
             addItem(`dialogue-${index}`, `${index + 1}. ${line.character}`, 'tts')
             markItem(`dialogue-${index}`, 'running')
             try {
-              const result = await dispatchGenerateVeoSfx({
+              const existing = findDialogueAudioForLine(scene, {
+                language: selectedLanguage,
+                lineId: line.lineId,
+                dialogueIndex: index,
+                character: line.character,
+              })
+              const saved = await generateAndPersistHifiDialogue({
                 projectId,
-                text: String(line.line),
-                sfxIndex: index,
-                sfxId: line.lineId,
-                segmentDurationSeconds: scene.duration,
-                promptMode: 'dialogue',
+                sceneIndex: sceneIdx,
+                language: selectedLanguage,
+                dialogueIndex: index,
+                characterName: String(line.character),
+                line: String(line.line),
+                lineId: typeof line.lineId === 'string' ? line.lineId : undefined,
                 voiceDirection:
                   typeof line.voiceDirection === 'string' ? line.voiceDirection : undefined,
+                segmentDurationSeconds: scene.duration,
+                hasExistingAudio: !!(existing?.audioUrl || existing?.url),
+                characterId: typeof line.characterId === 'string' ? line.characterId : undefined,
               })
-              const updatedScenes = scenes.map((entry: any) => ({ ...entry }))
-              const target = { ...updatedScenes[sceneIdx] }
-              const language = selectedLanguage
-              const dialogueAudio = { ...(target.dialogueAudio || {}) }
-              const bucket = Array.isArray(dialogueAudio[language]) ? [...dialogueAudio[language]] : []
-              const audioEntry: Record<string, unknown> = {
-                audioUrl: result.url,
-                character: line.character,
-                dialogueIndex: index,
-                sourceFingerprint: audioSourceFingerprintForSpoken({
-                  kind: 'dialogue',
-                  character: line.character,
-                  line: line.line,
-                  voiceDirection: line.voiceDirection,
-                }),
-              }
-              if (line.lineId) audioEntry.lineId = line.lineId
-              const existingIdx = bucket.findIndex(
-                (entry: any) =>
-                  (line.lineId && entry?.lineId === line.lineId) ||
-                  (entry?.dialogueIndex === index && entry?.character === line.character)
-              )
-              if (existingIdx >= 0) bucket[existingIdx] = { ...bucket[existingIdx], ...audioEntry }
-              else bucket.push(audioEntry)
-              dialogueAudio[language] = bucket
-              target.dialogueAudio = dialogueAudio
-              updatedScenes[sceneIdx] = target
-              onScriptChange(
-                { ...script, script: { ...script.script, scenes: updatedScenes } },
-                { trustIncomingAudio: true }
-              )
+              onAudioSlotSaved?.(saved)
               markItem(`dialogue-${index}`, 'done')
             } catch (error) {
               markItem(
@@ -5251,6 +5233,7 @@ function SceneCard({
       generateMusic,
       onDeleteSceneAudio,
       onSaveSfxAudio,
+      onAudioSlotSaved,
       getNarrationAudioUrlForLang,
       script,
       scenes,
@@ -6852,6 +6835,7 @@ function SceneCard({
                       uploadAudio={uploadAudio}
                       onDeleteSceneAudio={onDeleteSceneAudio}
                       onSaveSfxAudio={onSaveSfxAudio}
+                      onAudioSlotSaved={onAudioSlotSaved}
                       characters={characters}
                       narrationVoice={narrationVoice}
                       script={script}

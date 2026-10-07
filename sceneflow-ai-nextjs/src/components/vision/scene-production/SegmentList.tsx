@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { ChevronDown, Clapperboard } from 'lucide-react'
 import type { ScriptSegment, DialogueLine } from '@/lib/script/segmentTypes'
 import { SegmentDialogueCard } from './SegmentDialogueCard'
+import type { AudioSlotSavedPayload } from '@/lib/audio/cleanupAudio'
 import { coerceSegmentSfxArray } from '@/lib/script/segmentScript'
 import { SegmentSfxCard } from './SegmentSfxCard'
 
@@ -55,6 +56,7 @@ export interface SegmentListProps {
   ) => Promise<void> | void
   generatingDialogue?: { sceneIdx: number; character?: string; dialogueIndex?: number; lineId?: string } | null
   setGeneratingDialogue?: (val: any) => void
+  onAudioSlotSaved?: (payload: AudioSlotSavedPayload) => void
 }
 
 export function SegmentList(props: SegmentListProps) {
@@ -230,6 +232,8 @@ function SegmentCard({
                   uploadAudio={rest.uploadAudio}
                   generatingDialogue={rest.generatingDialogue}
                   setGeneratingDialogue={rest.setGeneratingDialogue}
+                  projectId={rest.projectId}
+                  onAudioSlotSaved={rest.onAudioSlotSaved}
                 />
               ))}
             </div>

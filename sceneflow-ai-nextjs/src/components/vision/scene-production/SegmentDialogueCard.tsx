@@ -2,6 +2,9 @@
 
 import { Download, Loader, Pause, Play, RefreshCw, Trash2, Upload } from 'lucide-react'
 import { BeatAudioStatusBadge } from '@/components/vision/BeatAudioStatusBadge'
+import { DialogueQualityToggle } from '@/components/vision/DialogueQualityToggle'
+import type { AudioSlotSavedPayload } from '@/lib/audio/cleanupAudio'
+import { generateAndPersistHifiDialogue } from '@/lib/audio/clientPersistDialogueAudio'
 import { toast } from 'sonner'
 import { saveAudioFile } from '@/lib/download/saveFile'
 import { findDialogueAudioForLine } from '@/components/vision/scene-production/audioTrackBuilder'
@@ -56,6 +59,8 @@ export interface SegmentDialogueCardProps {
   ) => void | Promise<void>
   generatingDialogue?: { sceneIdx: number; character?: string; dialogueIndex?: number; lineId?: string } | null
   setGeneratingDialogue?: (val: any) => void
+  projectId?: string
+  onAudioSlotSaved?: (payload: AudioSlotSavedPayload) => void
 }
 
 export function SegmentDialogueCard({
@@ -71,6 +76,8 @@ export function SegmentDialogueCard({
   uploadAudio,
   generatingDialogue,
   setGeneratingDialogue,
+  projectId,
+  onAudioSlotSaved,
 }: SegmentDialogueCardProps) {
   const isNarrator = line.kind === 'narration'
 
@@ -216,6 +223,46 @@ export function SegmentDialogueCard({
             <div className="text-[11px] text-slate-400 mt-1 leading-snug" title={brief}>
               {brief}
             </div>
+          )}
+          {!isNarrator && dialogueIndex !== null && (
+            <DialogueQualityToggle
+              provider={typeof dialogueEntry?.provider === 'string' ? dialogueEntry.provider : undefined}
+              hasAudio={!!audioUrl}
+              disabled={isGenerating || !projectId || !lineText.trim()}
+              onLofi={() => {
+                void dispatchGenerate()
+              }}
+              onHifi={() => {
+                if (!projectId || !line.character) {
+                  toast.error('This line cannot be upgraded yet.')
+                  return
+                }
+                setGeneratingDialogue?.({
+                  sceneIdx,
+                  character: line.character,
+                  dialogueIndex: dialogueIndex ?? undefined,
+                  lineId: line.lineId,
+                })
+                void generateAndPersistHifiDialogue({
+                  projectId,
+                  sceneIndex: sceneIdx,
+                  language: selectedLanguage,
+                  dialogueIndex,
+                  characterName: line.character,
+                  line: lineText,
+                  lineId: line.lineId,
+                  voiceDirection: line.voiceDirection,
+                  segmentDurationSeconds: scene.duration,
+                  hasExistingAudio: !!audioUrl,
+                  characterId: line.characterId,
+                })
+                  .then((saved) => onAudioSlotSaved?.(saved))
+                  .catch((error) => {
+                    console.error('[SegmentDialogueCard] HiFi dialogue failed:', error)
+                  })
+                  .finally(() => setGeneratingDialogue?.(null))
+              }}
+            />
           )}
         </div>
         {audioUrl ? (

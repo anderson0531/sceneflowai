@@ -135,7 +135,7 @@ function mergeLangAudioObjectField(canonVal: unknown, incomingVal: unknown): unk
 
 export type AudioSlotSavedPayload = {
   sceneIndex: number
-  audioType: 'sfx' | 'music'
+  audioType: 'sfx' | 'music' | 'dialogue'
   audioUrl: string
   sfxIndex?: number
   sfxAttribution?: Record<string, unknown> | null
@@ -143,12 +143,79 @@ export type AudioSlotSavedPayload = {
   musicDuration?: number
   musicFileDuration?: number
   musicCueId?: string
+  language?: string
+  dialogueIndex?: number
+  characterName?: string
+  lineId?: string
+  duration?: number
+  provider?: string
+  sourceFingerprint?: string
+  lineKind?: 'narration' | 'dialogue'
+  characterId?: string
+}
+
+function applyDialogueAudioSlot(scene: any, payload: AudioSlotSavedPayload): any {
+  const language = payload.language || 'en'
+  const lineId = payload.lineId?.trim()
+  const dialogueIndex = payload.dialogueIndex
+  let dialogueAudio = scene.dialogueAudio
+  if (!dialogueAudio || Array.isArray(dialogueAudio)) {
+    dialogueAudio =
+      Array.isArray(dialogueAudio) && dialogueAudio.length > 0 ? { en: [...dialogueAudio] } : {}
+  } else {
+    dialogueAudio = { ...dialogueAudio }
+  }
+
+  const bucket = Array.isArray(dialogueAudio[language]) ? [...dialogueAudio[language]] : []
+  let existingIndex = -1
+  if (lineId) {
+    existingIndex = bucket.findIndex((entry: any) => entry?.lineId === lineId)
+  }
+  if (existingIndex < 0 && dialogueIndex !== undefined) {
+    existingIndex = bucket.findIndex((entry: any) => entry?.dialogueIndex === dialogueIndex)
+  }
+
+  const previous = existingIndex >= 0 && bucket[existingIndex] ? bucket[existingIndex] : {}
+  const nextEntry = {
+    ...previous,
+    character: payload.characterName ?? previous.character,
+    dialogueIndex: dialogueIndex ?? previous.dialogueIndex,
+    ...(lineId ? { lineId } : {}),
+    ...(payload.lineKind ? { kind: payload.lineKind } : {}),
+    ...(payload.characterId ? { characterId: payload.characterId } : {}),
+    audioUrl: payload.audioUrl,
+    ...(typeof payload.duration === 'number' ? { duration: payload.duration } : {}),
+    ...(payload.provider ? { provider: payload.provider } : {}),
+    ...(payload.sourceFingerprint
+      ? { sourceFingerprint: payload.sourceFingerprint }
+      : {}),
+    audioStale: false,
+  }
+
+  const filtered = bucket.filter((entry: any, index: number) => {
+    if (index === existingIndex) return false
+    if (lineId && entry?.lineId === lineId) return false
+    if (!lineId && dialogueIndex !== undefined && entry?.dialogueIndex === dialogueIndex) return false
+    return true
+  })
+  filtered.push(nextEntry)
+  dialogueAudio[language] = filtered
+
+  return {
+    ...scene,
+    dialogueAudio,
+    dialogueAudioGeneratedAt: new Date().toISOString(),
+  }
 }
 
 /** Apply one server-confirmed audio slot onto a scene (mirrors persistSceneAudioAtomic client-side). */
 export function applyAudioSlotToScene(scene: any, payload: AudioSlotSavedPayload): any {
   if (!scene || typeof scene !== 'object') return scene
   const updated = { ...scene }
+
+  if (payload.audioType === 'dialogue') {
+    return applyDialogueAudioSlot(updated, payload)
+  }
 
   if (payload.audioType === 'music') {
     const cueId = payload.musicCueId?.trim()
