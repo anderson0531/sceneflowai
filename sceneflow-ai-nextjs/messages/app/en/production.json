@@ -414,6 +414,24 @@
     "running": "Running...",
     "confirm": "Audio Agent ({count})"
   },
+  "locationAgent": {
+    "title": "Location Agent",
+    "description": "Choose the locations to refresh and draw. Other locations are left alone, so you can produce the film scene by scene.",
+    "scope": "Scope",
+    "scopeNeedsAction": "Needs action",
+    "scopeRegenerate": "Regenerate",
+    "scopeRegenerateHint": "Checked stills that already have an image will be drawn again.",
+    "scene": "Scene",
+    "sceneAll": "All scenes",
+    "sceneNumber": "Scene {number}",
+    "stills": "Stills",
+    "base": "Base",
+    "drawnFromBase": "Set versions are drawn from the base still.",
+    "noLocations": "No locations yet. Update locations from the script first.",
+    "filterEmpty": "No location stills match this scene.",
+    "running": "Running...",
+    "confirm": "Location Agent ({count})"
+  },
   "expressScene": {
     "title": "Stills Agent",
     "description": "Choose which pre-vis frames to generate or regenerate. Regenerating existing frames updates images only — direction and audio are left unchanged.",

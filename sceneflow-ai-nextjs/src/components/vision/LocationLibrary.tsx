@@ -53,6 +53,7 @@ import {
   type ReferenceActionItem,
 } from '@/lib/vision/libraryKindAgents'
 import { ReferenceActionCue } from './ReferenceActionCue'
+import { LocationAgentConfirmDialog } from './LocationAgentConfirmDialog'
 import type { ReferenceExpressScope, ReferenceExpressKind } from '@/lib/vision/referenceExpress/types'
 import { LibraryKindToolbar } from './LibraryKindToolbar'
 import { usePendingKindAgentRun } from './usePendingKindAgentRun'
@@ -381,6 +382,7 @@ export function LocationLibrary({
   } | null>(null)
   const [directedLocation, setDirectedLocation] = useState<LocationReference | null>(null)
   const [directedSubmitting, setDirectedSubmitting] = useState(false)
+  const [locationAgentOpen, setLocationAgentOpen] = useState(false)
 
   const openLocationAction = useCallback((locationId: string, item: ReferenceActionItem) => {
     setExpandedLocationId(locationId)
@@ -648,9 +650,23 @@ export function LocationLibrary({
     }
   }
 
-  const handleLocationAgent = async () => {
+  const handleLocationAgent = () => {
     if (!onExpressGenerateReferences) return
-    await onExpressGenerateReferences({ kinds: ['location'] })
+    setLocationAgentOpen(true)
+  }
+
+  const confirmLocationAgent = async (selection: {
+    itemKeys: string[]
+    locationIds: string[]
+  }) => {
+    if (!onExpressGenerateReferences) return
+    setLocationAgentOpen(false)
+    await onExpressGenerateReferences({
+      kinds: ['location'],
+      includeNestedStills: true,
+      itemKeys: selection.itemKeys,
+      locationIds: selection.locationIds,
+    })
   }
 
   usePendingKindAgentRun(
@@ -1608,6 +1624,13 @@ export function LocationLibrary({
         beats={directedBeats}
         isSubmitting={directedSubmitting}
         onConfirm={handleDirectedVersionConfirm}
+      />
+      <LocationAgentConfirmDialog
+        open={locationAgentOpen}
+        onOpenChange={setLocationAgentOpen}
+        locations={mergedLocations}
+        isRunning={isExpressGeneratingReferences}
+        onConfirm={(selection) => void confirmLocationAgent(selection)}
       />
     </div>
     </TooltipProvider>

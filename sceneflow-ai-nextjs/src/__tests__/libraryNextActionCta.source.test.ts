@@ -24,6 +24,9 @@ describe('Reference Library next-action CTA wiring', () => {
     }
 
     expect(readSource('src/components/vision/LocationLibrary.tsx')).toContain('handleLocationAgent')
+    expect(readSource('src/components/vision/LocationLibrary.tsx')).toContain('LocationAgentConfirmDialog')
+    expect(readSource('src/components/vision/LocationLibrary.tsx')).toContain('itemKeys: selection.itemKeys')
+    expect(readSource('src/components/vision/LocationLibrary.tsx')).toContain('locationIds: selection.locationIds')
     expect(readSource('src/components/vision/CharacterLibrary.tsx')).toContain('handleCastAgent')
     expect(readSource('src/components/vision/ObjectSuggestionPanel.tsx')).toContain('handleObjectAgent')
 
@@ -33,7 +36,8 @@ describe('Reference Library next-action CTA wiring', () => {
     expect(locationLibrary).not.toContain('await handleUpdateLocations()')
     expect(locationLibrary).not.toContain('generatePendingLocationVersions')
     expect(locationLibrary).not.toContain('isLocationAgentRunning')
-    expect(locationLibrary).toContain("onExpressGenerateReferences({ kinds: ['location'] })")
+    expect(locationLibrary).toContain("kinds: ['location']")
+    expect(locationLibrary).not.toContain("onExpressGenerateReferences({ kinds: ['location'] })")
   })
 
   it('sidebar banner sets pendingKindAgentRun and tab attention', () => {

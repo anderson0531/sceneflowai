@@ -14,6 +14,8 @@ import {
 import {
   loadReferenceExpressContext,
   planSceneReferenceExpressItems,
+  planSelectedLocationExpressItems,
+  collectPreexistingVersionIds,
   shouldIncludeNestedStills,
   wantsLocationCatalogSync,
   canStartReferenceExpressJob,
@@ -53,11 +55,12 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}))
-    const { projectId, sceneIndices, itemKeys, kinds } = body as {
+    const { projectId, sceneIndices, itemKeys, kinds, locationIds } = body as {
       projectId?: string
       sceneIndices?: unknown
       itemKeys?: unknown
       kinds?: unknown
+      locationIds?: unknown
     }
 
     if (!projectId) {
@@ -79,6 +82,9 @@ export async function POST(req: NextRequest) {
         ? itemKeys.filter((key): key is string => typeof key === 'string' && !!key.trim())
         : undefined,
       kinds: parsedKinds?.length ? parsedKinds : undefined,
+      locationIds: Array.isArray(locationIds)
+        ? [...new Set(locationIds.filter((id): id is string => typeof id === 'string' && !!id.trim()))]
+        : undefined,
     }
     scope.includeNestedStills = shouldIncludeNestedStills(scope)
     const sceneScoped = !!scope.sceneIndices?.length
@@ -94,7 +100,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
-    const items = planSceneReferenceExpressItems(context, scope)
+    if (scope.locationIds?.length) {
+      scope.preexistingVersionIds = collectPreexistingVersionIds(
+        context.locations,
+        scope.locationIds
+      )
+    }
+
+    const items = scope.locationIds?.length
+      ? planSelectedLocationExpressItems(context, scope)
+      : planSceneReferenceExpressItems(context, scope)
     const catalogSync = wantsLocationCatalogSync(scope) ? 'location' : undefined
     if (!canStartReferenceExpressJob(items, scope)) {
       return NextResponse.json(
@@ -141,6 +156,13 @@ export async function POST(req: NextRequest) {
         kinds: scope.kinds,
         includeNestedStills: scope.includeNestedStills === true,
         catalogSync,
+        ...(scope.locationIds?.length
+          ? {
+              locationIds: scope.locationIds,
+              itemKeys: scope.itemKeys,
+              preexistingVersionIds: scope.preexistingVersionIds ?? [],
+            }
+          : {}),
         agentLabel: referenceExpressAgentLabel(scope.kinds, { sceneScoped }),
       },
     })

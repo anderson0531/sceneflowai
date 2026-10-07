@@ -19,6 +19,7 @@ import {
   loadReferenceExpressContext,
   planFollowOnNestedItems,
   shouldIncludeNestedStills,
+  type LocationExpressSelection,
 } from '@/lib/vision/referenceExpress/planItems'
 import {
   getReferenceExpressMaxAttempts,
@@ -54,6 +55,12 @@ function readItems(payload: Record<string, unknown>): ReferenceExpressItem[] {
   return Array.isArray(items) ? (items as ReferenceExpressItem[]) : []
 }
 
+function readStringList(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const list = value.filter((entry): entry is string => typeof entry === 'string' && !!entry.trim())
+  return list.length > 0 ? list : undefined
+}
+
 function scopeFromPayload(payload: Record<string, unknown>): ReferenceExpressScope {
   const sceneIndices = Array.isArray(payload.sceneIndices)
     ? payload.sceneIndices.filter((index): index is number => Number.isInteger(index) && index >= 0)
@@ -67,6 +74,25 @@ function scopeFromPayload(payload: Record<string, unknown>): ReferenceExpressSco
     includeNestedStills:
       payload.includeNestedStills === true ||
       shouldIncludeNestedStills({ sceneIndices, kinds }),
+    itemKeys: readStringList(payload.itemKeys),
+    locationIds: readStringList(payload.locationIds),
+    preexistingVersionIds: Array.isArray(payload.preexistingVersionIds)
+      ? payload.preexistingVersionIds.filter((id): id is string => typeof id === 'string' && !!id.trim())
+      : undefined,
+  }
+}
+
+function locationSelectionFromPayload(
+  payload: Record<string, unknown>
+): LocationExpressSelection | undefined {
+  const locationIds = readStringList(payload.locationIds)
+  if (!locationIds) return undefined
+  return {
+    locationIds,
+    itemKeys: readStringList(payload.itemKeys) ?? [],
+    preexistingVersionIds: Array.isArray(payload.preexistingVersionIds)
+      ? payload.preexistingVersionIds.filter((id): id is string => typeof id === 'string')
+      : [],
   }
 }
 
@@ -221,6 +247,7 @@ async function runCatalogPhase(
       projectId,
       catalogSync: worker.catalogSync,
       items,
+      selection: locationSelectionFromPayload(payload),
     })
 
     if (outcome.kind === 'nothing-to-generate') {

@@ -14,6 +14,7 @@ import { filterScenesForLocation } from '@/lib/vision/mountedSetFixtures'
 import {
   loadReferenceExpressContext,
   planSceneReferenceExpressItems,
+  type LocationExpressSelection,
   type LocationSource,
 } from '@/lib/vision/referenceExpress/planItems'
 import { persistLocationCatalogPatch } from '@/lib/vision/referenceExpress/persistLocationCatalog'
@@ -121,9 +122,21 @@ async function syncOneLocation(projectId: string, locationId: string): Promise<v
   })
 }
 
-async function planLocationItems(projectId: string): Promise<ReferenceExpressItem[]> {
+async function planLocationItems(
+  projectId: string,
+  selection?: LocationExpressSelection
+): Promise<ReferenceExpressItem[]> {
   const context = await loadReferenceExpressContext(projectId)
   if (!context) return []
+  if (selection?.locationIds.length) {
+    return planSelectedLocationExpressItems(context, {
+      kinds: ['location'],
+      includeNestedStills: true,
+      locationIds: selection.locationIds,
+      itemKeys: selection.itemKeys,
+      preexistingVersionIds: selection.preexistingVersionIds,
+    })
+  }
   const scope: ReferenceExpressScope = {
     kinds: ['location'],
     includeNestedStills: true,
@@ -154,14 +167,19 @@ export async function runLocationCatalogSyncStep(input: {
   projectId: string
   catalogSync: LocationCatalogSyncState
   items: ReferenceExpressItem[]
+  /** When set, skip the full-library extract and sync only these locations. */
+  selection?: LocationExpressSelection
 }): Promise<LocationCatalogSyncOutcome> {
   let state = input.catalogSync
   let items = input.items
+  const selection = input.selection?.locationIds.length ? input.selection : undefined
 
   if (state.status === 'pending') {
-    const locationIds = await extractMissingLocations(input.projectId)
+    const locationIds = selection
+      ? selection.locationIds
+      : await extractMissingLocations(input.projectId)
     if (locationIds.length === 0) {
-      const planned = await planLocationItems(input.projectId)
+      const planned = await planLocationItems(input.projectId, selection)
       items = mergeItems(items, planned)
       const done = { status: 'done' as const, cursor: 0, locationIds: [] }
       return items.length === 0
@@ -185,7 +203,7 @@ export async function runLocationCatalogSyncStep(input: {
   }
 
   if (state.status === 'syncing' && state.cursor >= state.locationIds.length) {
-    const planned = await planLocationItems(input.projectId)
+    const planned = await planLocationItems(input.projectId, selection)
     items = mergeItems(items, planned)
     const done: LocationCatalogSyncState = {
       status: 'done',

@@ -314,6 +314,88 @@ export function planReferenceExpressItems(
   return filterExpressItemsByKinds(items, kinds)
 }
 
+export type LocationExpressSelection = {
+  locationIds: string[]
+  itemKeys: string[]
+  preexistingVersionIds?: string[]
+}
+
+export function collectPreexistingVersionIds(
+  locations: LocationSource[],
+  locationIds: string[]
+): string[] {
+  const wanted = new Set(locationIds)
+  const ids: string[] = []
+  for (const location of locations) {
+    if (!location.id || !wanted.has(location.id)) continue
+    for (const version of location.versions || []) {
+      if (version.id) ids.push(version.id)
+    }
+  }
+  return ids
+}
+
+function locationBaseItem(location: LocationSource, force: boolean): ReferenceExpressItem {
+  return {
+    kind: 'location',
+    targetId: location.id,
+    label: location.location?.trim() || location.locationDisplay?.trim() || 'Location',
+    sourceFingerprint: locationFingerprint(location),
+    ...(force ? { forceRegenerate: true } : {}),
+  }
+}
+
+/**
+ * Stills the Location Agent checklist asked for, plus set versions catalog
+ * sync just created on those locations. Versions the user left unchecked,
+ * and every other location, stay out.
+ */
+export function planSelectedLocationExpressItems(
+  input: ReferenceExpressPlanInput,
+  scope: ReferenceExpressScope
+): ReferenceExpressItem[] {
+  const locationIds = new Set((scope.locationIds ?? []).filter((id) => id.trim()))
+  if (locationIds.size === 0) return []
+  const itemKeys = new Set((scope.itemKeys ?? []).map((key) => key.trim().toLowerCase()))
+  const trackPreexisting = Array.isArray(scope.preexistingVersionIds)
+  const preexisting = new Set(scope.preexistingVersionIds ?? [])
+  const items: ReferenceExpressItem[] = []
+
+  for (const location of input.locations) {
+    if (!location.id || !locationIds.has(location.id)) continue
+    const baseKey = referenceExpressItemKey({ kind: 'location', targetId: location.id })
+    if (itemKeys.has(baseKey.toLowerCase())) {
+      items.push(locationBaseItem(location, hasImage(location.imageUrl)))
+    }
+
+    if (!hasImage(location.imageUrl)) continue
+    for (const version of location.versions || []) {
+      if (!version.id || !version.stateNotes?.trim()) continue
+      const key = referenceExpressItemKey({
+        kind: 'location',
+        targetId: location.id,
+        versionId: version.id,
+      })
+      const selected = itemKeys.has(key.toLowerCase())
+      const isNew = trackPreexisting && !preexisting.has(version.id)
+      const drawn = hasImage(version.imageUrl)
+      if (selected && drawn) {
+        items.push({ ...locationVersionItem(location, version), forceRegenerate: true })
+        continue
+      }
+      if (selected && !drawn) {
+        items.push(locationVersionItem(location, version))
+        continue
+      }
+      if (isNew && (!drawn || version.needsImageRegen)) {
+        items.push(locationVersionItem(location, version))
+      }
+    }
+  }
+
+  return items
+}
+
 function locationVersionItem(
   location: LocationSource,
   version: NonNullable<LocationSource['versions']>[number]
@@ -538,10 +620,26 @@ export function planFollowOnNestedItems(
     const location = input.locations.find((row) => row.id === item.targetId)
     if (!location?.id) return []
     const wanted = sceneRequirementVersionIds(input, scope, location.id)
+    const selectedLocation =
+      !scope.locationIds?.length || scope.locationIds.includes(location.id)
+    const itemKeys = new Set((scope.itemKeys ?? []).map((key) => key.trim().toLowerCase()))
+    const trackPreexisting = Array.isArray(scope.preexistingVersionIds)
+    const preexisting = new Set(scope.preexistingVersionIds ?? [])
     return (location.versions || [])
       .filter((version) => {
         if (!versionNeedsGeneration(location, version)) return false
         if (wanted && !wanted.has(version.id!)) return false
+        if (!selectedLocation) return false
+        if (scope.locationIds?.length) {
+          const key = referenceExpressItemKey({
+            kind: 'location',
+            targetId: location.id,
+            versionId: version.id,
+          }).toLowerCase()
+          const selected = itemKeys.has(key)
+          const isNew = trackPreexisting && !!version.id && !preexisting.has(version.id)
+          if (!selected && !isNew) return false
+        }
         return true
       })
       .map((version) => locationVersionItem(location, version))
