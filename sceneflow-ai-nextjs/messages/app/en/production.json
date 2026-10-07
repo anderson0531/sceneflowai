@@ -407,6 +407,7 @@
     "coveredByMusic": "Covered by music",
     "sfxQuality": "Sound effect quality",
     "qualityElevenLabs": "ElevenLabs",
+    "qualityLofi": "LOFI",
     "qualityHifi": "HiFi",
     "sfxDurationPreset": "SFX duration preset",
     "durationAuto": "Auto ({seconds}s · HiFi {veoSeconds}s)",

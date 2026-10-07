@@ -18,6 +18,9 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ActionBeatSfxControls, type ExpressBeatSfxStatus } from '@/components/vision/ActionBeatSfxControls'
+import { DialogueQualityToggle } from '@/components/vision/DialogueQualityToggle'
+import type { AudioSlotSavedPayload } from '@/lib/audio/cleanupAudio'
+import { generateAndPersistHifiDialogue } from '@/lib/audio/clientPersistDialogueAudio'
 import { BeatAudioStatusBadge } from '@/components/vision/BeatAudioStatusBadge'
 import { BeatCaptionControl } from '@/components/vision/BeatCaptionControl'
 import { BeatMusicToggle } from '@/components/vision/BeatMusicToggle'
@@ -159,6 +162,7 @@ export interface SceneAudioWorkbenchProps {
     sfxAttribution?: Record<string, unknown> | null,
     beatContext?: { beatId: string; beatDescription: string }
   ) => Promise<void> | void
+  onAudioSlotSaved?: (payload: AudioSlotSavedPayload) => void
   characters?: any[]
   narrationVoice?: unknown
   script?: any
@@ -1198,6 +1202,51 @@ function SpokenBeatAudio(
           )}
           {audioEntry?.duration && (
             <span className="mt-1 text-[10px] text-gray-500">Duration: {audioEntry.duration.toFixed(1)}s</span>
+          )}
+          {!isNarrationBeat && (
+            <DialogueQualityToggle
+              provider={typeof audioEntry?.provider === 'string' ? audioEntry.provider : undefined}
+              hasAudio={!!dialogueAudioUrl}
+              disabled={generating || !props.projectId || !String(d.line ?? beat.line ?? '').trim()}
+              onLofi={() => {
+                if (!props.onGenerateSceneAudio) return
+                props.setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
+                void Promise.resolve(
+                  props.onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i, props.selectedLanguage)
+                )
+                  .catch((error) => {
+                    console.error('[SceneAudioWorkbench] Dialogue generation failed:', error)
+                    toast.error(`Failed to generate dialogue for ${d.character}`)
+                  })
+                  .finally(() => props.setGeneratingDialogue?.(null))
+              }}
+              onHifi={() => {
+                const lineText = coerceDialogueLineText(d.line ?? beat.line)
+                if (!props.projectId || !lineText || !d.character) {
+                  toast.error('This line cannot be upgraded yet.')
+                  return
+                }
+                props.setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
+                void generateAndPersistHifiDialogue({
+                  projectId: props.projectId,
+                  sceneIndex: sceneIdx,
+                  language: props.selectedLanguage,
+                  dialogueIndex: i,
+                  characterName: d.character,
+                  line: lineText,
+                  lineId: d.lineId || beat.lineId,
+                  voiceDirection: d.voiceDirection ?? beat.voiceDirection,
+                  segmentDurationSeconds: scene.duration,
+                  hasExistingAudio: !!dialogueAudioUrl,
+                  characterId: d.characterId ?? beat.characterId,
+                })
+                  .then((saved) => props.onAudioSlotSaved?.(saved))
+                  .catch((error) => {
+                    console.error('[SceneAudioWorkbench] HiFi dialogue failed:', error)
+                  })
+                  .finally(() => props.setGeneratingDialogue?.(null))
+              }}
+            />
           )}
         </div>
         {dialogueAudioUrl ? (

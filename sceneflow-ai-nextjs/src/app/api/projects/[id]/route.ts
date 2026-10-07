@@ -611,6 +611,15 @@ export async function PATCH(
         musicDuration,
         musicFileDuration,
         musicCueId,
+        language,
+        dialogueIndex,
+        characterName,
+        lineId,
+        duration,
+        provider,
+        sourceFingerprint,
+        lineKind,
+        characterId,
       } = body.atomicAudioUpdate
 
       let sfxIndex = rawSfxIndex
@@ -680,6 +689,42 @@ export async function PATCH(
           beatDescription: typeof beatDescription === 'string' ? beatDescription : undefined,
         })
         console.log(`[Projects PATCH] Updated sfxAudio[${sfxIndex}] for scene ${sceneIndex}`)
+      } else if (audioType === 'dialogue') {
+        if (typeof audioUrl !== 'string' || !audioUrl.trim()) {
+          return NextResponse.json({ error: 'Dialogue audio update requires audioUrl' }, { status: 400 })
+        }
+        if (typeof dialogueIndex !== 'number' || !Number.isFinite(dialogueIndex)) {
+          return NextResponse.json(
+            { error: 'Dialogue audio update requires dialogueIndex' },
+            { status: 400 }
+          )
+        }
+        if (typeof characterName !== 'string' || !characterName.trim()) {
+          return NextResponse.json(
+            { error: 'Dialogue audio update requires characterName' },
+            { status: 400 }
+          )
+        }
+        await persistSceneAudioAtomic({
+          projectId: id,
+          sceneIndex,
+          audioType: 'dialogue',
+          audioUrl,
+          language: typeof language === 'string' && language.trim() ? language : 'en',
+          dialogueIndex,
+          characterName,
+          duration: typeof duration === 'number' ? duration : undefined,
+          provider: typeof provider === 'string' && provider.trim() ? provider : 'veo',
+          sourceFingerprint:
+            typeof sourceFingerprint === 'string' ? sourceFingerprint : undefined,
+          lineMeta: {
+            lineId: typeof lineId === 'string' ? lineId : undefined,
+            lineKind: lineKind === 'narration' ? 'narration' : 'dialogue',
+            characterId: typeof characterId === 'string' ? characterId : undefined,
+          },
+          updateScriptUpdatedAt: false,
+        })
+        console.log(`[Projects PATCH] Updated dialogueAudio for scene ${sceneIndex} line ${dialogueIndex}`)
       }
       
       return NextResponse.json({ 

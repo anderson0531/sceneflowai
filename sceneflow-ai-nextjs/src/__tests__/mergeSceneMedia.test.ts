@@ -14,6 +14,8 @@ import {
   pickDialogueAudioEntry,
   storyboardBlobUrlTimestamp,
 } from '@/lib/storyboard/mergeSceneMedia'
+import { findDialogueAudioForLine } from '@/components/vision/scene-production/audioTrackBuilder'
+import { resolveDialogueLineAudio } from '@/lib/storyboard/types'
 
 describe('mergeScenePreservingMedia', () => {
   it('drops a leftover final tier when a content change clears the current still', () => {
@@ -632,6 +634,44 @@ describe('applyAudioSlotToScene', () => {
     expect(updated.musicAudio).toBe('https://example.com/music.mp3')
     expect(updated.musicDuration).toBe(30)
     expect(updated.musicFileDuration).toBe(29.5)
+  })
+
+  it('replaces the dialogue file the shot player reads', () => {
+    const scene = {
+      id: 's1',
+      dialogue: [{ lineId: 'ln_1', character: 'Maya', line: 'I stayed.' }],
+      dialogueAudio: {
+        en: [
+          {
+            lineId: 'ln_1',
+            character: 'Maya',
+            dialogueIndex: 0,
+            audioUrl: 'https://example.com/tts.mp3',
+            duration: 3,
+          },
+        ],
+      },
+    }
+    const updated = applyAudioSlotToScene(scene, {
+      sceneIndex: 0,
+      audioType: 'dialogue',
+      audioUrl: 'https://example.com/hifi.mp3',
+      language: 'en',
+      dialogueIndex: 0,
+      characterName: 'Maya',
+      lineId: 'ln_1',
+      duration: 8,
+      provider: 'veo',
+      sourceFingerprint: 'fp',
+    })
+    expect(updated.dialogueAudio.en[0].audioUrl).toBe('https://example.com/hifi.mp3')
+    expect(updated.dialogueAudio.en[0].provider).toBe('veo')
+    expect(updated.dialogueAudio.en[0].audioStale).toBe(false)
+    expect(findDialogueAudioForLine(updated, { language: 'en', lineId: 'ln_1' })?.audioUrl).toBe(
+      'https://example.com/hifi.mp3'
+    )
+    expect(resolveDialogueLineAudio(updated, 0, 'en').url).toBe('https://example.com/hifi.mp3')
+    expect(scene.dialogueAudio.en[0].audioUrl).toBe('https://example.com/tts.mp3')
   })
 })
 

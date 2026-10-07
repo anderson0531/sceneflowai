@@ -53,7 +53,7 @@ export function BeatPerformanceDirectorControl({
   onGenerateStill,
   promptComposition,
 }: BeatPerformanceDirectorControlProps) {
-  const t = useTranslations('production.direction.shotDirector')
+  const t = useTranslations('production.direction.beatDirector')
   const tc = useTranslations('common.actions')
   const [open, setOpen] = useState(false)
   const [instruction, setInstruction] = useState('')

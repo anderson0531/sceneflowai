@@ -63,6 +63,41 @@ describe('applySceneAudioPersistToMetadata', () => {
     expect(metadata.visionPhase.scriptUpdatedAt).toBe(SCRIPT_TS)
   })
 
+  it('replaces a saved TTS clip with HiFi dialogue', () => {
+    const metadata = voiceMetadata()
+    const scene = metadata.visionPhase.script.script.scenes[0] as {
+      dialogueAudio: { en: Array<Record<string, unknown>> }
+    }
+    scene.dialogueAudio.en.push({
+      lineId: 'ln_1',
+      character: 'DR. CHEN',
+      dialogueIndex: 0,
+      audioUrl: 'https://blob.example.com/audio/tts.mp3',
+      provider: 'gemini',
+    })
+
+    applySceneAudioPersistToMetadata(metadata, {
+      projectId: 'proj',
+      sceneIndex: 0,
+      audioType: 'dialogue',
+      audioUrl: 'https://blob.example.com/audio/sfx-veo-ln_1.mp3',
+      language: 'en',
+      dialogueIndex: 0,
+      characterName: 'DR. CHEN',
+      duration: 8,
+      provider: 'veo',
+      lineMeta: { lineId: 'ln_1', lineKind: 'dialogue' },
+      sourceFingerprint: 'line-fp',
+    })
+
+    expect(scene.dialogueAudio.en).toHaveLength(1)
+    expect(scene.dialogueAudio.en[0].audioUrl).toBe('https://blob.example.com/audio/sfx-veo-ln_1.mp3')
+    expect(scene.dialogueAudio.en[0].provider).toBe('veo')
+    expect(scene.dialogueAudio.en[0].duration).toBe(8)
+    expect(scene.dialogueAudio.en[0].sourceFingerprint).toBe('line-fp')
+    expect(metadata.visionPhase.scriptUpdatedAt).toBe(SCRIPT_TS)
+  })
+
   it('writes a narration clip without changing scriptUpdatedAt', () => {
     const metadata = voiceMetadata()
     applySceneAudioPersistToMetadata(metadata, {
