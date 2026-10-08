@@ -267,6 +267,7 @@ import {
   failAgentRun,
   finishAgentRun,
   patchAgentRun,
+  setAgentRunItem,
   startAgentRun,
 } from '@/store/useAgentRunStore'
 import type { VideoQueueRunReport } from '@/lib/video/videoQueueRunReport'
@@ -410,7 +411,10 @@ import {
   getPublishingState,
   upsertPublishingState,
 } from '@/lib/publish/publishingState'
-import type { PublishingLibraryTab } from '@/types/publishingAssets'
+import type { PromoTrailerBeatPlan, PublishingLibraryTab } from '@/types/publishingAssets'
+import { resolvePromoBeatMedia } from '@/lib/publish/promoBeatMedia'
+import { slimPromoProductionState } from '@/lib/publish/promoShotCatalog'
+import { runPromoAgent } from '@/lib/publish/runPromoAgent'
 import { VisualReference, VisualReferenceType, VisionReferencesPayload, LocationReference, LocationVersion } from '@/types/visionReferences'
 import type { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production/types'
 import { patchMixerTrackVolumes } from '@/lib/scene/screeningTrackVolume'
@@ -4382,7 +4386,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       try {
         // Get the segment to get its prompt if not provided in options
-        const currentProduction = sceneProductionState[sceneId]
+        const currentProduction =
+          sceneProductionStateRef.current[sceneId] ?? sceneProductionState[sceneId]
         const segment = currentProduction?.segments.find((s) => s.segmentId === segmentId)
         if (!segment) {
           throw new Error('Shot not found')
@@ -5343,6 +5348,213 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     },
     [applySceneProductionUpdate, project?.id, sceneProductionState, script, videoGenerationQuality, videoGenerationMode]
+  )
+
+  const promoDeriveInflightRef = useRef<
+    Map<string, Promise<Array<{ segmentId?: string; beatId?: string }>>>
+  >(new Map())
+
+  const ensurePromoShotSegment = useCallback(
+    async (sceneId: string, beatId: string, durationSec?: number) => {
+      const existing = sceneProductionStateRef.current[sceneId]?.segments?.find(
+        (segment) => segment.beatId === beatId && segment.segmentId
+      )
+      if (existing?.segmentId) return existing.segmentId
+      if (!project?.id) {
+        throw new Error('Project must be loaded before generating a promo clip.')
+      }
+
+      let pending = promoDeriveInflightRef.current.get(sceneId)
+      if (!pending) {
+        pending = (async () => {
+          const response = await fetch(
+            `/api/scenes/${encodeURIComponent(sceneId)}/derive-segments`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                projectId: project.id,
+                language: 'en',
+                existingSegments: sceneProductionStateRef.current[sceneId]?.segments ?? [],
+              }),
+            }
+          )
+          const data = await response.json()
+          if (!response.ok || !data.success) {
+            const errors = Array.isArray(data.errors) ? data.errors.join('; ') : ''
+            throw new Error(errors || data.error || 'Failed to derive segments')
+          }
+          const segments = Array.isArray(data.segments) ? data.segments : []
+          const productionData: SceneProductionData = {
+            isSegmented: true,
+            targetSegmentDuration: durationSec || 5,
+            segments,
+            lastGeneratedAt: new Date().toISOString(),
+          }
+          applySceneProductionUpdate(sceneId, (current) =>
+            mergeSegmentedProductionData(current, productionData)
+          )
+          return segments as Array<{ segmentId?: string; beatId?: string }>
+        })()
+        promoDeriveInflightRef.current.set(sceneId, pending)
+        void pending.finally(() => {
+          promoDeriveInflightRef.current.delete(sceneId)
+        })
+      }
+
+      const segments = await pending
+      const live = sceneProductionStateRef.current[sceneId]?.segments?.find(
+        (segment) => segment.beatId === beatId && segment.segmentId
+      )
+      const segmentId =
+        live?.segmentId || segments.find((segment) => segment.beatId === beatId)?.segmentId
+      if (!segmentId) throw new Error('This shot has no production segment yet')
+      return segmentId
+    },
+    [applySceneProductionUpdate, project?.id]
+  )
+
+  const handleGeneratePromoBeatClip = useCallback(
+    async ({
+      sceneId,
+      beatId,
+      segmentId,
+      frameUrl,
+      durationSec,
+    }: {
+      sceneId: string
+      beatId: string
+      segmentId?: string
+      frameUrl?: string
+      durationSec?: number
+    }) => {
+      const id = segmentId || (await ensurePromoShotSegment(sceneId, beatId, durationSec))
+      const hasFrame = Boolean(frameUrl?.trim())
+      await handleSegmentGenerate(sceneId, id, hasFrame ? 'I2V' : 'T2V', {
+        startFrameUrl: frameUrl,
+        duration: durationSec,
+        aspectRatio: '9:16',
+        generationMethod: hasFrame ? 'I2V' : 'T2V',
+      })
+    },
+    [ensurePromoShotSegment, handleSegmentGenerate]
+  )
+
+  const handleRunPromoAgent = useCallback(
+    async ({
+      beatPlan,
+      targetDurationSec,
+    }: {
+      beatPlan: PromoTrailerBeatPlan[]
+      targetDurationSec: number
+    }) => {
+      if (!project?.id) throw new Error('Project must be loaded before Promo Agent runs.')
+      const runId = `promo-agent-${project.id}`
+      const shots = beatPlan.map((beat) => {
+        const media = resolvePromoBeatMedia(
+          beat,
+          sceneProductionStateRef.current as Record<string, unknown>
+        )
+        return {
+          key: `clip:${beat.sceneIndex}:${beat.beatId}`,
+          sceneId: beat.sceneId,
+          beatId: beat.beatId,
+          sceneIndex: beat.sceneIndex,
+          label: beat.label || `Scene ${beat.sceneIndex + 1}`,
+          durationSec: beat.durationSec ?? Math.max(0, beat.endSec - beat.startSec),
+          frameUrl: media.thumbnailUrl || beat.frameUrl,
+          hasClip: media.hasClip,
+          segmentId: media.segmentId,
+        }
+      })
+
+      const applyPromoScenes = (scenes: unknown[]) => {
+        setScript((prev: any) => {
+          if (!prev) return prev
+          const next = prev.script?.scenes
+            ? { ...prev, script: { ...prev.script, scenes } }
+            : { ...prev, scenes }
+          scriptRef.current = next
+          return next
+        })
+      }
+
+      const postPromo = async (
+        action: 'upsert' | 'narration' | 'music',
+        scenes?: unknown[]
+      ) => {
+        const res = await fetch('/api/publish/promo/scene', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId: project.id,
+            action,
+            targetDurationSec,
+            ...(action === 'upsert' ? { beatPlan } : {}),
+            ...(action === 'music' ? {} : { sceneProductionState: slimPromoProductionState(sceneProductionStateRef.current) }),
+            ...(scenes ? { scenes } : {}),
+          }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || `Promo ${action} failed`)
+        if (Array.isArray(data.scenes)) applyPromoScenes(data.scenes)
+      }
+
+      startAgentRun({
+        id: runId,
+        title: 'Promo Agent',
+        subtitle: 'Generating the trailer shots, narration, and music',
+        items: [
+          ...shots.map((shot) => ({
+            key: shot.key,
+            label: `S${shot.sceneIndex + 1} · ${shot.label}`,
+            status: (shot.hasClip ? 'done' : 'pending') as 'done' | 'pending',
+          })),
+          { key: 'narration', label: 'Narration', status: 'pending' as const },
+          { key: 'music', label: 'Music', status: 'pending' as const },
+        ],
+      })
+
+      try {
+        const { failed } = await runPromoAgent(shots, {
+          upsertScene: () =>
+            postPromo(
+              'upsert',
+              scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes
+            ),
+          ensureSegment: (shot) =>
+            ensurePromoShotSegment(shot.sceneId, shot.beatId, shot.durationSec),
+          generateClip: (shot, method, segmentId) =>
+            handleSegmentGenerate(shot.sceneId, segmentId, method, {
+              startFrameUrl: shot.frameUrl,
+              duration: shot.durationSec,
+              aspectRatio: '9:16',
+              generationMethod: method,
+            }),
+          generateNarration: () => postPromo('narration'),
+          generateMusic: () => postPromo('music'),
+          onStatus: (key, status, error) => {
+            setAgentRunItem(runId, key, { status, error })
+          },
+        })
+        finishAgentRun(runId, {
+          subtitle:
+            failed > 0
+              ? `Finished with ${failed} issue${failed === 1 ? '' : 's'}`
+              : 'Promo shots, narration, and music are ready',
+          tone: failed > 0 ? 'warning' : 'success',
+        })
+        if (failed > 0) {
+          toast.error(`Promo Agent finished with ${failed} issue${failed === 1 ? '' : 's'}`)
+        } else {
+          toast.success('Promo Agent finished')
+        }
+      } catch (error) {
+        failAgentRun(runId, error instanceof Error ? error.message : 'Promo Agent failed')
+        throw error
+      }
+    },
+    [project?.id, ensurePromoShotSegment, handleSegmentGenerate]
   )
 
   const handleSegmentUpload = useCallback(
@@ -17585,15 +17797,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           setPublishingLibraryOpen(false)
           setProductionViewWithUrl('studio')
         }}
-        onGenerateBeatClip={async ({ sceneId, segmentId, frameUrl, durationSec }) => {
-          const hasFrame = Boolean(frameUrl?.trim())
-          await handleSegmentGenerate(sceneId, segmentId, hasFrame ? 'I2V' : 'T2V', {
-            startFrameUrl: frameUrl,
-            duration: durationSec,
-            aspectRatio: '9:16',
-            generationMethod: hasFrame ? 'I2V' : 'T2V',
-          })
-        }}
+        onGenerateBeatClip={handleGeneratePromoBeatClip}
+        onRunPromoAgent={handleRunPromoAgent}
       />
       
       {/* Generation Progress Indicator */}

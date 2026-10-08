@@ -59,6 +59,21 @@ function matchingSegment(segments: PromoBeatSegment[] | undefined, beatId: strin
   return matches.find((segment) => segmentHasPlayableVideo(segment)) ?? matches[0]
 }
 
+/** Prefer the live production clip over a URL frozen into the plan. */
+export function promoPlanWithLiveMedia(
+  plan: PromoTrailerBeatPlan[],
+  sceneProductionState?: Record<string, unknown>
+): PromoTrailerBeatPlan[] {
+  return plan.map((beat) => {
+    const media = resolvePromoBeatMedia(beat, sceneProductionState)
+    return {
+      ...beat,
+      videoUrl: media.hasClip ? media.videoUrl : undefined,
+      frameUrl: beat.frameUrl || media.thumbnailUrl,
+    }
+  })
+}
+
 /**
  * Live production wins over a snapshotted plan videoUrl.
  * A stored segment with no playable take means the beat is missing, even if the plan still says clip.

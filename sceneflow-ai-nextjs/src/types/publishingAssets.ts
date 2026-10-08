@@ -30,6 +30,9 @@ export interface YoutubePublishBundle {
   error?: string
 }
 
+/** Editorial job of a shot inside the promo, independent of script order. */
+export type PromoTrailerRole = 'hook' | 'rise' | 'peak' | 'button'
+
 export interface PromoTrailerBeatPlan {
   sceneId: string
   beatId: string
@@ -46,6 +49,8 @@ export interface PromoTrailerBeatPlan {
   videoUrl?: string
   beatRole?: string
   beatKind?: string
+  /** Where this shot sits in the trailer: hook, rise, peak, or button. */
+  trailerRole?: PromoTrailerRole
 }
 
 export interface PromoTrailerAsset {

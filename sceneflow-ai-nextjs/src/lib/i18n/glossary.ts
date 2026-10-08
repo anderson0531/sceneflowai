@@ -38,6 +38,7 @@ export const GLOSSARY_TERMS = [
   'Scene Agent',
   'Stills Agent',
   'Video Agent',
+  'Promo Agent',
   'Clips Agent',
   'Run All Agents',
   'Library Agent',

@@ -2,7 +2,7 @@
  * Promo scene upsert + narration/music generation.
  *
  * POST /api/publish/promo/scene
- * body: { projectId, action: 'upsert' | 'narration' | 'music', ... }
+ * body: { projectId, action: 'plan' | 'upsert' | 'narration' | 'music', beatPlan?, ... }
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -11,7 +11,10 @@ import { assertProjectAccess, getAuthenticatedUserId } from '@/lib/projectAccess
 import { generateText } from '@/lib/vertexai/gemini'
 import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { getSceneProductionStateFromMetadata } from '@/lib/final-cut/projectProductionState'
+import { buildPromoShotCatalog } from '@/lib/publish/promoShotCatalog'
+import { normalizePromoModelPlan, planPromoTrailerWithModel } from '@/lib/publish/promoPlanModel'
 import { planPromoTrailer, DEFAULT_TRAILER_SEC } from '@/lib/publish/trailerPlanner'
+import type { PromoTrailerBeatPlan } from '@/types/publishingAssets'
 import {
   buildPromoSceneFromPlan,
   findPromoSceneIndex,
@@ -155,11 +158,13 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as {
       projectId?: string
-      action?: 'upsert' | 'narration' | 'music'
+      action?: 'plan' | 'upsert' | 'narration' | 'music'
       targetDurationSec?: number
       heroBeatIds?: string[]
       sceneScores?: Record<number, number>
       scenes?: unknown[]
+      beatPlan?: PromoTrailerBeatPlan[]
+      sceneProductionState?: Record<string, unknown>
     }
 
     const projectId = (body.projectId || '').trim()
@@ -185,20 +190,49 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Project has no scenes' }, { status: 400 })
     }
 
-    const productionState = getSceneProductionStateFromMetadata(metadata)
+    const productionState =
+      body.sceneProductionState && typeof body.sceneProductionState === 'object'
+        ? body.sceneProductionState
+        : getSceneProductionStateFromMetadata(metadata)
     const targetDurationSec = body.targetDurationSec ?? DEFAULT_TRAILER_SEC
     const url = new URL(request.url)
     const baseUrl = `${url.protocol}//${url.host}`
     const cookie = request.headers.get('cookie') || ''
 
-    if (action === 'upsert') {
-      const plan = planPromoTrailer({
-        scenes,
-        sceneProductionState: productionState,
-        sceneScores: body.sceneScores,
-        heroBeatIds: body.heroBeatIds,
-        targetDurationSec,
+    const planInput = {
+      scenes,
+      sceneProductionState: productionState,
+      sceneScores: body.sceneScores,
+      heroBeatIds: body.heroBeatIds,
+      targetDurationSec,
+      title: project.title,
+      logline: typeof project.description === 'string' ? project.description : undefined,
+      genre: typeof project.genre === 'string' ? project.genre : undefined,
+    }
+
+    if (action === 'plan') {
+      const plan = await planPromoTrailerWithModel(planInput)
+      return NextResponse.json({
+        success: true,
+        action: 'plan',
+        beatPlan: plan.beatPlan,
+        totalDurationSec: plan.totalDurationSec,
+        targetDurationSec: plan.targetDurationSec,
+        source: plan.source,
       })
+    }
+
+    if (action === 'upsert') {
+      const catalog = buildPromoShotCatalog(planInput)
+      const accepted =
+        Array.isArray(body.beatPlan) && body.beatPlan.length
+          ? normalizePromoModelPlan({
+              catalog,
+              picks: body.beatPlan,
+              targetDurationSec,
+            })
+          : null
+      const plan = accepted ?? (await planPromoTrailerWithModel(planInput))
 
       const existingIdx = findPromoSceneIndex(scenes)
       const existing =
@@ -261,14 +295,34 @@ export async function POST(request: NextRequest) {
       })
 
       // Rebuild with narration beat while preserving music
-      const plan =
+      const storedPlan =
         Array.isArray(promoScene.promoBeatPlan) && promoScene.promoBeatPlan.length
-          ? { beatPlan: promoScene.promoBeatPlan as import('@/types/publishingAssets').PromoTrailerBeatPlan[], targetDurationSec }
-          : planPromoTrailer({
-              scenes,
-              sceneProductionState: productionState,
-              targetDurationSec,
-            })
+          ? (promoScene.promoBeatPlan as import('@/types/publishingAssets').PromoTrailerBeatPlan[])
+          : null
+      const catalog = buildPromoShotCatalog({
+        scenes,
+        sceneProductionState: productionState,
+      })
+      const plan = storedPlan
+        ? {
+            beatPlan: storedPlan.map((beat) => {
+              const shot = catalog.find(
+                (entry) => entry.sceneIndex === beat.sceneIndex && entry.beatId === beat.beatId
+              )
+              if (!shot?.videoUrl && !shot?.frameUrl) return beat
+              return {
+                ...beat,
+                videoUrl: shot.videoUrl || beat.videoUrl,
+                frameUrl: beat.frameUrl || shot.frameUrl,
+              }
+            }),
+            targetDurationSec,
+          }
+        : planPromoTrailer({
+            scenes,
+            sceneProductionState: productionState,
+            targetDurationSec,
+          })
 
       const { scene, productionSeed } = buildPromoSceneFromPlan({
         beatPlan: plan.beatPlan,
