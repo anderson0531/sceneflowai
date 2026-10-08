@@ -1714,6 +1714,7 @@ export function DirectorConsoleRoot({
         beatNumber: index + 1,
         label: (spoken || beat.kind || `Shot ${index + 1}`).replace(/\s+/g, ' ').trim(),
         prompt: item?.config.prompt || segment?.userEditedPrompt || segment?.generatedPrompt,
+        kind: beat.kind,
         thumbnailUrl: thumbnail,
         hasStartFrame: !!thumbnail,
         f2vStartUrl: f2v.startFrameUrl,

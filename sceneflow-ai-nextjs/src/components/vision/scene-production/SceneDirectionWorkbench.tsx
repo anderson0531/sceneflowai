@@ -11,7 +11,7 @@ import { resolveLiveTake, segmentHasPlayableVideo } from '@/lib/storyboard/media
 import { directionRailStatus } from '@/lib/vision/directionRailStatus'
 import type { SceneSegment } from './types'
 import { BeatStillClipViewer } from './BeatStillClipViewer'
-import { SceneBeatStage, type SceneBeatStageItem } from './SceneBeatStage'
+import { SceneBeatStage, shotKindMarker, type SceneBeatStageItem } from './SceneBeatStage'
 
 interface SceneDirectionWorkbenchProps {
   scene: any
@@ -87,10 +87,11 @@ export function SceneDirectionWorkbench({
           stillPrompt: beat.storyboardImagePrompt,
           stillPromptDirectionKey: beat.storyboardImagePromptDirectionKey,
         })
+        const kind = shotKindMarker(beat.kind)
         return {
           id: beat.beatId,
           beatNumber: (typeof beat.sequenceIndex === 'number' ? beat.sequenceIndex : index) + 1,
-          imageUrl: beat.storyboardImageUrl?.trim() || undefined,
+          markers: kind ? [kind] : undefined,
           status: rail.status,
           statusLabel: rail.label,
           ariaLabel: `Shot ${index + 1}`,
