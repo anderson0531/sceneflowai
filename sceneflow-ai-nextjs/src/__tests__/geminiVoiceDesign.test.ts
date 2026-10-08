@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  DESIGNED_VOICE_TTS_MODEL,
   buildDesignedVoiceSynthesisBody,
   buildVoiceDesignCreateBody,
   composeVoiceDesignDescription,
@@ -40,11 +39,10 @@ describe('voice design payloads', () => {
     expect(body).not.toHaveProperty('prompted')
     expect(body).not.toHaveProperty('name')
     const voice = body.voice as {
-      model: string
       type: string
       prompted: { input: string }
     }
-    expect(voice.model).toBe(DESIGNED_VOICE_TTS_MODEL)
+    expect(voice).not.toHaveProperty('model')
     expect(voice.type).toBe('prompted')
     expect(voice.prompted.input).toContain('resonant baritone')
   })

@@ -95,7 +95,6 @@ export function buildVoiceDesignCreateBody(args: {
     store: true,
     voice: {
       displayName: args.displayName.slice(0, 80),
-      model: DESIGNED_VOICE_TTS_MODEL,
       type: 'prompted',
       languageCode: args.languageCode?.trim() || 'en-US',
       prompted: { input: args.description.trim() },
