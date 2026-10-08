@@ -31,48 +31,91 @@ export interface VoiceDesignDescriptionInput {
   voiceDescription?: string
 }
 
+const VOICE_DESIGN_PROMPT_MAX = 220
+
+function cleanPhrase(value: string | undefined): string {
+  return (value ?? '').replace(/\s+/g, ' ').replace(/[“”"']/g, '').trim()
+}
+
+/** Words before a slash, without a leading article, capped so a story paragraph stays out. */
+function shortRole(role: string | undefined): string {
+  const head = cleanPhrase(role).split('/')[0] ?? ''
+  return head
+    .replace(/^(the|a|an)\s+/i, '')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 4)
+    .join(' ')
+}
+
+function articleFor(subject: string): 'A' | 'An' {
+  return /^[aeiou]/i.test(subject) ? 'An' : 'A'
+}
+
+function capSentence(text: string): string {
+  const sentence = text.replace(/\s+/g, ' ').trim().replace(/[.,;:\s]+$/, '')
+  if (!sentence) return ''
+  if (sentence.length + 1 <= VOICE_DESIGN_PROMPT_MAX) return `${sentence}.`
+  const cut = sentence.slice(0, VOICE_DESIGN_PROMPT_MAX - 1)
+  const lastSpace = cut.lastIndexOf(' ')
+  const trimmed = (lastSpace > 40 ? cut.slice(0, lastSpace) : cut).replace(/[.,;:\s]+$/, '')
+  return `${trimmed}.`
+}
+
+/** First vocal clause of a casting brief, without the attribute tail. */
+function vocalLineFromBrief(brief: string | undefined): string {
+  const head = cleanPhrase(brief).split(/vocal qualities:/i)[0] ?? ''
+  const first = head.split(/[.!?]/)[0]?.trim() ?? ''
+  if (first.length < 12) return ''
+  return capSentence(first)
+}
+
 /**
- * One concise Voice Design description: age, gender, timbre, accent, baseline
- * delivery. Built from the portrait analysis and the character's role.
+ * One spoken-persona sentence: age, gender, a short role, timbre, accent,
+ * and how they speak. Built from the portrait analysis and the character's role.
  */
 export function composeVoiceDesignDescription(input: VoiceDesignDescriptionInput): string {
-  const gender = input.gender?.trim()
-  const age = input.apparentAge?.trim()
-  const role = input.role?.trim()
-  const timbre = input.timbre?.trim()
-  const accent = input.accent?.trim()
-  const pace = input.pace?.trim()
-  const warmth = input.warmth?.trim()
-  const authority = input.authority?.trim()
-  const baseline = input.emotionalDefault?.trim()
+  const gender = cleanPhrase(input.gender)
+  const age = cleanPhrase(input.apparentAge)
+  const role = shortRole(input.role)
+  const timbre = cleanPhrase(input.timbre)
+  const accent = cleanPhrase(input.accent)
+  const pace = cleanPhrase(input.pace)
+  const warmth = cleanPhrase(input.warmth)
+  const authority = cleanPhrase(input.authority)
+  const baseline = cleanPhrase(input.emotionalDefault)
 
-  const who = [age, gender].filter(Boolean).join(' ')
-  const clauses: string[] = []
-  if (who && role) clauses.push(`A ${who} ${role}`)
-  else if (who) clauses.push(`A ${who} speaker`)
-  else if (role) clauses.push(`A ${role}`)
+  const subject = [age, gender, role].filter(Boolean).join(' ') || 'speaker'
+  const voice = [warmth, timbre].filter(Boolean).join(', ')
+  let sentence = `${articleFor(subject)} ${subject}`
+  if (voice && accent) sentence += ` with a ${voice} voice and a ${accent} accent`
+  else if (voice) sentence += ` with a ${voice} voice`
+  else if (accent) sentence += ` with a ${accent} accent`
 
-  const vocal: string[] = []
-  if (timbre) vocal.push(timbre)
-  if (warmth) vocal.push(`${warmth} tone`)
-  if (authority) vocal.push(authority)
-  if (vocal.length > 0) clauses.push(`with a ${vocal.join(', ')} voice`)
-  if (accent) clauses.push(`${accent} accent`)
-
-  const delivery: string[] = []
-  if (pace) delivery.push(`${pace} pace`)
-  if (baseline) delivery.push(baseline)
-  if (delivery.length > 0) clauses.push(`Baseline delivery: ${delivery.join(', ')}`)
-
-  let description = clauses.join('. ').replace(/\.\./g, '.').trim()
-  if (description && !description.endsWith('.')) description += '.'
-
-  if (description.length < 24) {
-    const fallback = input.voiceDescription?.trim().split(/(?<=\.)\s+/)[0]?.trim() ?? ''
-    description = fallback
+  const standing = [authority, baseline].filter(
+    (item, index, items) =>
+      !!item && items.findIndex((entry) => entry.toLowerCase() === item.toLowerCase()) === index
+  )
+  const speaking: string[] = []
+  if (pace) {
+    const bare = pace.replace(/\s+pace$/i, '')
+    speaking.push(`at a ${bare} pace`)
   }
+  if (standing.length > 0) speaking.push(`with ${standing.join(' and ')}`)
+  if (speaking.length > 0) sentence += `, speaking ${speaking.join(' ')}`
 
-  return description.replace(/\s+/g, ' ').trim().slice(0, 400)
+  const description = capSentence(sentence)
+  if (description.length >= 24) return description
+  return vocalLineFromBrief(input.voiceDescription)
+}
+
+/** Drop the speaking clause for a second attempt after Google asks for a rephrase. */
+export function shortenVoiceDesignDescription(description: string): string {
+  const current = description.replace(/\s+/g, ' ').trim()
+  const core = current.split(/,\s*speaking\b/i)[0]?.trim().replace(/[.\s]+$/, '') ?? ''
+  if (core.length < 12) return current
+  const shorter = capSentence(core)
+  return shorter === current ? current : shorter
 }
 
 export function designedVoiceStyle(cues: Array<string | undefined | null>): string | undefined {
