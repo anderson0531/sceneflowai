@@ -1,5 +1,8 @@
+import { readFileSync } from 'fs'
+import { join } from 'path'
 import { describe, expect, it } from 'vitest'
 import {
+  DESIGNED_VOICE_TYPE,
   buildDesignedVoiceSynthesisBody,
   buildVoiceDesignCreateBody,
   composeVoiceDesignDescription,
@@ -7,6 +10,7 @@ import {
   prepareDesignedVoiceLine,
   shortenVoiceDesignDescription,
   isDesignedGeminiVoiceId,
+  voiceDesignCreateAttempts,
   voicesToEvict,
 } from '@/lib/tts/geminiVoiceDesign'
 
@@ -83,8 +87,25 @@ describe('voice design payloads', () => {
       prompted: { input: string }
     }
     expect(voice).not.toHaveProperty('model')
-    expect(voice.type).toBe('prompted')
+    expect(voice.type).toBe(DESIGNED_VOICE_TYPE)
     expect(voice.prompted.input).toContain('resonant baritone')
+  })
+
+  it('keeps the Vertex voice type when the prompt is shortened', () => {
+    const full =
+      'An early 60s male protagonist with a neutral, resonant baritone voice and a neutral American accent, speaking at a measured pace with quiet authority.'
+    const attempts = voiceDesignCreateAttempts({
+      description: full,
+      displayName: 'Julian',
+    })
+    expect(attempts).toHaveLength(2)
+    for (const body of attempts) {
+      const voice = body.voice as { type: string; prompted: { input: string } }
+      expect(voice.type).toBe('VOICE_TYPE_PROMPTED')
+      expect(voice.prompted.input.length).toBeGreaterThan(12)
+    }
+    const shorter = (attempts[1].voice as { prompted: { input: string } }).prompted.input
+    expect(shorter).not.toContain('speaking')
   })
 
   it('puts delivery only in style and cites the designed voice id', () => {
@@ -142,6 +163,21 @@ describe('voice design payloads', () => {
     expect(prepared.text).toBe('<sigh> Fine. <short pause> Have it your way.')
     expect(prepared.text).not.toContain('[')
     expect(prepared.style).toBeUndefined()
+  })
+})
+
+describe('Vertex voice create', () => {
+  it('lists and creates with VOICE_TYPE_PROMPTED, including the shorter retry', () => {
+    const source = readFileSync(
+      join(process.cwd(), 'src/lib/tts/geminiDesignedVoiceTts.ts'),
+      'utf8'
+    )
+    expect(source).toContain('DESIGNED_VOICE_TYPE')
+    expect(source).toContain('voiceDesignCreateAttempts')
+    expect(source).toContain('replaceVoiceId')
+    expect(source).toContain('The voice library is full.')
+    expect(source).not.toContain("type: 'prompted'")
+    expect(source).not.toContain('type: "prompted"')
   })
 })
 

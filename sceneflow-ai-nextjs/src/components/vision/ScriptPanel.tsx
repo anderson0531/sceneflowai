@@ -2877,17 +2877,6 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
               className="flex items-center gap-2 border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/10"
               title={
                 creditsBudget > 0
-                  ? tStudio('budgetTooltipView')
-                  : tStudio('budgetTooltipSet')
-              }
-            >
-              {isSettingBudget ? (
-                <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
-              ) : (
-                <Calculator className="w-4 h-4 text-cyan-400" />
-              )}
-              <span className="text-sm hidden sm:inline">
-                {creditsBudget > 0
                   ? planFinishDate
                     ? tStudio('budgetAmount', {
                         amount: creditsBudget.toLocaleString(),
@@ -2896,8 +2885,15 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                     : tStudio('budgetAmountNoDate', {
                         amount: creditsBudget.toLocaleString(),
                       })
-                  : tStudio('setBudget')}
-              </span>
+                  : tStudio('budgetTooltipSet')
+              }
+            >
+              {isSettingBudget ? (
+                <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
+              ) : (
+                <Calculator className="w-4 h-4 text-cyan-400" />
+              )}
+              <span className="text-sm hidden sm:inline">{tStudio('productionPlan')}</span>
             </Button>
 
             {onOpenReferences && (

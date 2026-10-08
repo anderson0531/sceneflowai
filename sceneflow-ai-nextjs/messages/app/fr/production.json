@@ -74,7 +74,7 @@
     "assetSceneDirection": "Mise en scène",
     "assetBeats": "{count, plural, one {# shot} other {# shots}}",
     "assetMusic": "Musique",
-    "reference": "Référence",
+    "reference": "Continuity",
     "referenceTooltip": "Ouvrez Continuity Library – casting, lieux et accessoires",
     "referenceNeedsDirection": "{count, plural, one {# scene needs updated direction before references} other {# scenes need updated direction before references}}",
     "publish": "Publier",

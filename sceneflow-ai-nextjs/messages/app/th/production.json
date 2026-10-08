@@ -74,7 +74,7 @@
     "assetSceneDirection": "ทิศทางของฉาก",
     "assetBeats": "{count, plural, one {# shot} other {# shots}}",
     "assetMusic": "เพลง",
-    "reference": "อ้างอิง",
+    "reference": "Continuity",
     "referenceTooltip": "เปิด Continuity Library — นักแสดง สถานที่ และอุปกรณ์ประกอบฉาก",
     "referenceNeedsDirection": "{count, plural, one {# scene needs updated direction before references} other {# scenes need updated direction before references}}",
     "publish": "เผยแพร่",

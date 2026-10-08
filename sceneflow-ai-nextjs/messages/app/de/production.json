@@ -74,7 +74,7 @@
     "assetSceneDirection": "Szenenregie",
     "assetBeats": "{count, plural, one {# shot} other {# shots}}",
     "assetMusic": "Musik",
-    "reference": "Referenz",
+    "reference": "Continuity",
     "referenceTooltip": "Öffnen Sie Continuity Library – Besetzung, Drehorte und Requisiten",
     "referenceNeedsDirection": "{count, plural, one {# scene needs updated direction before references} other {# scenes need updated direction before references}}",
     "publish": "Veröffentlichen",

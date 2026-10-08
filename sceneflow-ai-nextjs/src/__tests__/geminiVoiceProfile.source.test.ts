@@ -42,7 +42,8 @@ describe('Gemini voice profile source contracts', () => {
     expect(source).not.toContain('GeminiVoicePicker')
     expect(source).not.toContain('NarratorVoicePicker')
     expect(source).not.toContain('/api/tts/elevenlabs')
-    expect(source).toContain('mode={isNarratorCharacter ? "narrator" : "character"}')
+    expect(source).not.toContain('VoiceSelectionDialog')
+    expect(source).not.toContain('VoiceDirectionEditor')
   })
 
   it('Character Auto Match designs a Gemini voice and does not pick a base voice', () => {

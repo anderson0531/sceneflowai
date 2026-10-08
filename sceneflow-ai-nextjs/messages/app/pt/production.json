@@ -74,7 +74,7 @@
     "assetSceneDirection": "Direção de cena",
     "assetBeats": "{count, plural, one {# shot} other {# shots}}",
     "assetMusic": "Música",
-    "reference": "Referência",
+    "reference": "Continuity",
     "referenceTooltip": "Abra Continuity Library — elenco, locações e adereços",
     "referenceNeedsDirection": "{count, plural, one {# scene needs updated direction before references} other {# scenes need updated direction before references}}",
     "publish": "Publicar",

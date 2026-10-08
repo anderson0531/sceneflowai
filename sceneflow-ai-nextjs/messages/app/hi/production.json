@@ -74,7 +74,7 @@
     "assetSceneDirection": "सीन की दिशा",
     "assetBeats": "{count, plural, one {# shot} other {# shots}}",
     "assetMusic": "संगीत",
-    "reference": "संदर्भ",
+    "reference": "Continuity",
     "referenceTooltip": "Continuity Library खोलें - कास्ट, स्थान और प्रॉप्स",
     "referenceNeedsDirection": "{count, plural, one {# scene needs updated direction before references} other {# scenes need updated direction before references}}",
     "publish": "प्रकाशित करें",

@@ -14,7 +14,6 @@ import {
   Sparkles,
   Lightbulb,
   Info,
-  Volume2,
   ImageIcon,
   Edit,
   Trash2,
@@ -53,8 +52,6 @@ import { useDraggable } from "@dnd-kit/core";
 import { isVertexContentPolicyError } from "@/lib/generation/contentPolicy";
 import { CSS } from "@dnd-kit/utilities";
 import { upload } from "@vercel/blob/client";
-import { VoiceSelectionDialog } from "@/components/tts/VoiceSelectionDialog";
-import { VoiceDirectionEditor } from "@/components/tts/VoiceDirectionEditor";
 import { CharacterPromptBuilder } from "@/components/vision/CharacterPromptBuilder";
 import { ReferenceStillDirectorDialog } from "@/components/vision/ReferenceStillDirectorDialog";
 import {
@@ -528,6 +525,8 @@ interface CharacterCardProps {
   forceExpanded?: boolean;
   /** 50/50 image | controls layout */
   splitLayout?: boolean;
+  /** Designed voices still assigned to other characters. Kept when the library is full. */
+  retainVoiceIds?: string[];
 }
 
 export function CharacterLibrary({
@@ -603,7 +602,6 @@ export function CharacterLibrary({
   const [promptBuilderOpenFor, setPromptBuilderOpenFor] = useState<
     string | null
   >(null);
-  const [createVoiceDialogOpen, setCreateVoiceDialogOpen] = useState(false);
   const [addCharacterModalOpen, setAddCharacterModalOpen] = useState(false);
   const [isSyncingAllWardrobes, setIsSyncingAllWardrobes] = useState(false);
   const [isCastAgentRunning, setIsCastAgentRunning] = useState(false);
@@ -885,6 +883,12 @@ export function CharacterLibrary({
         projectId={projectId}
         forceExpanded={cardOptions?.forceExpanded}
         splitLayout={cardOptions?.splitLayout}
+        retainVoiceIds={castCharacters.flatMap((other, otherIdx) => {
+          const otherId = getCharacterId(other, otherIdx);
+          const voiceId = other.voiceConfig?.voiceId;
+          if (otherId === charId || !isDesignedGeminiVoiceId(voiceId)) return [];
+          return [voiceId as string];
+        })}
       />
     );
   };
@@ -1346,18 +1350,6 @@ export function CharacterLibrary({
         </div>
       )}
 
-      {/* Create Custom Voice Dialog */}
-      <VoiceSelectionDialog
-        open={createVoiceDialogOpen}
-        onOpenChange={setCreateVoiceDialogOpen}
-        mode="character"
-        onSelectVoice={(voiceId, voiceName) => {
-          toast.success(
-            `Voice "${voiceName}" selected! Assign it to a character.`,
-          );
-        }}
-        screenplayContext={screenplayContext as ScreenplayContext}
-      />
     </div>
   );
 }
@@ -1472,6 +1464,7 @@ const CharacterCard = ({
   projectId,
   forceExpanded = false,
   splitLayout = false,
+  retainVoiceIds = [],
 }: CharacterCardProps) => {
   const [imageError, setImageError] = useState(false); // Track if image failed to load
 
@@ -1506,8 +1499,6 @@ const CharacterCard = ({
   const [showAiAssist, setShowAiAssist] = useState(false);
   const [aiPromptText, setAiPromptText] = useState("");
   const [isGeneratingWardrobe, setIsGeneratingWardrobe] = useState(false);
-  const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
-  const [voiceProfileDialogOpen, setVoiceProfileDialogOpen] = useState(false);
   const [editingCastingBrief, setEditingCastingBrief] = useState(false);
   const [castingDirectorText, setCastingDirectorText] = useState("");
   const [isGeneratingCasting, setIsGeneratingCasting] = useState(false);
@@ -1752,10 +1743,6 @@ const CharacterCard = ({
     String(character.role || "").toLowerCase() === "narrator" ||
     String(character.name || "").toLowerCase() === "narrator";
 
-  const supportsGeminiVoiceProfileEditor = Boolean(
-    character.voiceConfig?.voiceId,
-  );
-
   // Build character context for voice recommendations
   const characterContext: CharacterContext = {
     ...vocalCharacterContext({
@@ -1854,7 +1841,7 @@ const CharacterCard = ({
       return;
     }
 
-    toast.info("Re-run Match or Direct to use Gemini TTS for this character.");
+    toast.info("Generate a voice to use Gemini TTS for this character.");
   };
 
   const fetchWardrobeVoiceAnalysis = async (): Promise<WardrobeVoiceAnalysisResult | null> => {
@@ -1867,7 +1854,7 @@ const CharacterCard = ({
 
     if (!imageUrl?.startsWith("http") && !hasNarrative) {
       toast.error(
-        "Add a character description or reference image before Auto Voice.",
+        "Add a character description or reference image before Generate.",
       );
       return null;
     }
@@ -1926,7 +1913,7 @@ const CharacterCard = ({
 
     if (!hasCharacterReferenceForVoice && !hasNarrativeForVoice) {
       toast.error(
-        "Add a character description or reference image before Auto Voice.",
+        "Add a character description or reference image before Generate.",
       );
       return;
     }
@@ -2053,12 +2040,17 @@ const CharacterCard = ({
           emotionalDefault: analysisProfile?.vocalAttributes?.emotionalDefault,
           voiceDescription: matchingBrief,
         });
+        const currentVoiceId = character.voiceConfig?.voiceId;
         const designResponse = await fetch("/api/tts/google/voice-design", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             description,
             displayName: character.name || "Character",
+            retainVoiceIds,
+            ...(isDesignedGeminiVoiceId(currentVoiceId)
+              ? { replaceVoiceId: currentVoiceId }
+              : {}),
           }),
         });
         const designed = await designResponse.json().catch(() => ({}));
@@ -3961,7 +3953,7 @@ const CharacterCard = ({
               className="mt-3 focus-visible:ring-0 space-y-3"
             >
               {character.voiceConfig?.voiceId ? (
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                   SceneFlow voice
                   {character.voiceDescription || character.voiceConfig.prompt ? (
                     <span className="text-emerald-600 dark:text-emerald-400 ml-1">
@@ -3970,13 +3962,13 @@ const CharacterCard = ({
                   ) : null}
                 </p>
               ) : (
-                <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                <p className="text-xs text-amber-600 dark:text-amber-400">
                   Create a voice profile so dialogue uses a SceneFlow voice.
                 </p>
               )}
               {!hasCharacterReferenceForVoice && !hasNarrativeForVoice ? (
-                <p className="text-[10px] text-amber-600 dark:text-amber-400">
-                  Add a character description or reference image for Match.
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  Add a character description or reference image for Generate.
                 </p>
               ) : null}
               {character.voiceConfig?.voiceName && (
@@ -3999,7 +3991,7 @@ const CharacterCard = ({
                         setEditingCastingBrief(true);
                       }}
                       className="p-1 text-gray-400 hover:text-purple-500 transition-colors"
-                      title="Direct casting brief"
+                      title="Revise casting brief"
                     >
                       <Sparkles className="w-3 h-3" />
                     </button>
@@ -4010,12 +4002,8 @@ const CharacterCard = ({
                     className="space-y-2 p-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="flex items-center gap-2 text-xs font-medium text-purple-700 dark:text-purple-300">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      Direct casting
-                    </div>
                     {character.voiceDescription?.trim() ? (
-                      <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
                         Current — {character.voiceDescription.trim()}
                       </p>
                     ) : null}
@@ -4081,26 +4069,12 @@ const CharacterCard = ({
                     text={character.voiceDescription}
                     lines={3}
                     className="text-xs text-gray-500 dark:text-gray-500 italic"
-                    empty="Direct a casting brief, or Recommend from appearance and role"
+                    empty="Add a casting brief, or Recommend from appearance and role"
                   />
                 )}
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setVoiceDialogOpen(true);
-                  }}
-                  className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    character.voiceConfig
-                      ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40"
-                      : "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40"
-                  }`}
-                >
-                  <Volume2 className="w-4 h-4" />
-                  Direct
-                </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -4110,19 +4084,19 @@ const CharacterCard = ({
                     isAutoSelectingVoice ||
                     (!hasCharacterReferenceForVoice && !hasNarrativeForVoice)
                   }
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-60"
+                  className="w-full flex items-center justify-center gap-1.5 h-7 px-3 text-xs font-medium rounded-md transition-colors bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-60"
                   title={
                     hasCharacterReferenceForVoice || hasNarrativeForVoice
-                      ? "Match a voice profile from character narrative and reference"
+                      ? "Generate a voice from the character and casting brief"
                       : "Add character description or reference image first"
                   }
                 >
                   {isAutoSelectingVoice ? (
-                    <Loader className="w-4 h-4 animate-spin" />
+                    <Loader className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <Sparkles className="w-4 h-4" />
+                    <Sparkles className="w-3.5 h-3.5" />
                   )}
-                  Match
+                  Generate
                 </button>
                 <button
                   onClick={(e) => {
@@ -4130,7 +4104,7 @@ const CharacterCard = ({
                     handlePlayAssignedVoice();
                   }}
                   disabled={!character.voiceConfig?.voiceId}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 text-cyan-700 dark:text-cyan-400 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-1.5 h-7 px-3 text-xs font-medium rounded-md transition-colors bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 text-cyan-700 dark:text-cyan-400 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 disabled:opacity-40 disabled:cursor-not-allowed"
                   title={
                     character.voiceConfig?.voiceId
                       ? isPlayingVoice
@@ -4140,31 +4114,11 @@ const CharacterCard = ({
                   }
                 >
                   {isPlayingVoice ? (
-                    <Loader className="w-4 h-4 animate-spin" />
+                    <Loader className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <Play className="w-4 h-4" />
+                    <Play className="w-3.5 h-3.5" />
                   )}
                   Play
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (!supportsGeminiVoiceProfileEditor) {
-                      toast.error("Assign a Gemini voice before editing the profile.");
-                      return;
-                    }
-                    setVoiceProfileDialogOpen(true);
-                  }}
-                  disabled={!supportsGeminiVoiceProfileEditor}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-900/40 disabled:opacity-40 disabled:cursor-not-allowed"
-                  title={
-                    supportsGeminiVoiceProfileEditor
-                      ? "Edit the casting brief, test delivery, and refine the voice profile"
-                      : "Assign a Gemini voice first"
-                  }
-                >
-                  <Settings2 className="w-4 h-4" />
-                  Edit Profile
                 </button>
               </div>
             </TabsContent>
@@ -4804,7 +4758,7 @@ const CharacterCard = ({
               <DialogTitle>Confirm character gender for voice matching</DialogTitle>
               <DialogDescription>
                 We couldn&apos;t confidently infer gender from {character.name || "this character"}&apos;s
-                profile. Pick one so Auto can match an appropriate Gemini voice.
+                profile. Pick one so Generate can assign an appropriate voice.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:justify-end">
@@ -4837,80 +4791,6 @@ const CharacterCard = ({
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        <Dialog open={voiceProfileDialogOpen} onOpenChange={setVoiceProfileDialogOpen}>
-          <DialogContent
-            className="max-w-3xl h-[85vh] max-h-[800px] p-0 overflow-hidden flex flex-col bg-gray-950 border-gray-800"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <DialogHeader className="sr-only">
-              <DialogTitle>Edit voice profile for {character.name}</DialogTitle>
-              <DialogDescription>
-                Edit the casting brief and test voice delivery for this character.
-              </DialogDescription>
-            </DialogHeader>
-            {character.voiceConfig?.voiceId ? (
-              <VoiceDirectionEditor
-                key={`${characterId}-${character.voiceConfig.voiceId}`}
-                voiceId={character.voiceConfig.voiceId}
-                voiceName={character.voiceConfig.voiceName || character.voiceConfig.voiceId}
-                initialPrompt={
-                  character.voiceDescription || character.voiceConfig.prompt || ""
-                }
-                characterContext={{
-                  ...characterContext,
-                  voiceDescription: character.voiceDescription,
-                }}
-                screenplayContext={screenplayContext}
-                onSave={(prompt) => {
-                  const nextPrompt = prompt.trim();
-                  onUpdateCharacterVoice?.(characterId, {
-                    ...character.voiceConfig,
-                    provider: character.voiceConfig.provider || "google",
-                    voiceId: character.voiceConfig.voiceId,
-                    voiceName: character.voiceConfig.voiceName,
-                    prompt: nextPrompt,
-                  });
-                  if (nextPrompt) {
-                    onUpdateCharacterAttributes?.(characterId, {
-                      voiceDescription: nextPrompt,
-                    });
-                  }
-                  setVoiceProfileDialogOpen(false);
-                  toast.success("Voice profile updated");
-                }}
-                onCancel={() => setVoiceProfileDialogOpen(false)}
-              />
-            ) : null}
-          </DialogContent>
-        </Dialog>
-        <VoiceSelectionDialog
-          open={voiceDialogOpen}
-          onOpenChange={setVoiceDialogOpen}
-          mode={isNarratorCharacter ? "narrator" : "character"}
-          selectedVoiceId={character.voiceConfig?.voiceId || ""}
-          onSelectVoice={(voiceId, voiceName, prompt) => {
-            onUpdateCharacterVoice?.(characterId, {
-              provider: "google",
-              voiceId,
-              voiceName,
-              prompt: prompt || character.voiceConfig?.prompt,
-            });
-          }}
-          characterContext={characterContext}
-          screenplayContext={screenplayContext as ScreenplayContext}
-          characterAudioSampleUrl={character.voiceTrainingAudioUrl}
-          onVoiceDescriptionGenerated={(description) => {
-            onUpdateCharacterAttributes?.(characterId, {
-              voiceDescription: description,
-            });
-          }}
-          onVoiceTrainingAudioSaved={(audioUrl) => {
-            onUpdateCharacterAttributes?.(characterId, {
-              voiceTrainingAudioUrl: audioUrl,
-            });
-          }}
-        />
-
         {/* Approve Button - Show only if image exists and not approved */}
         {hasImage && !isApproved && (
           <button
