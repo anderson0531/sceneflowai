@@ -3,6 +3,7 @@
  * Keeps the old audio URL; callers show a "Prompt changed" indicator.
  */
 
+import { distinctSfxCue } from '@/lib/audio/shotSfxTag'
 import { beatContentFingerprint, getSceneBeats } from '@/lib/script/beatMigration'
 import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
@@ -38,6 +39,14 @@ export function audioSourceFingerprintForSpoken(opts: {
 
 export function audioSourceFingerprintForAction(actionDescription?: string): string {
   return (actionDescription ?? '').trim()
+}
+
+/** The prompt ElevenLabs actually speaks: the sound cue, or the action line when the shot has none. */
+export function audioSourceFingerprintForSfxBeat(beat: {
+  actionDescription?: string
+  beatDirection?: { audioCue?: string | null } | null
+}): string {
+  return distinctSfxCue(beat) || audioSourceFingerprintForAction(beat.actionDescription)
 }
 
 const VOICE_STATE_SUFFIX = /\|\|voice:([0-9a-f]+)$/i
@@ -257,9 +266,9 @@ export function stampStaleBeatAudioOnScene(
     }
 
     if (beat.kind === 'action' && Array.isArray(next.sfx)) {
-      const currentFp = audioSourceFingerprintForAction(beat.actionDescription)
+      const currentFp = audioSourceFingerprintForSfxBeat(beat)
       const canonicalFp = canonicalBeat
-        ? audioSourceFingerprintForAction(canonicalBeat.actionDescription)
+        ? audioSourceFingerprintForSfxBeat(canonicalBeat)
         : undefined
       for (const cue of next.sfx as unknown[]) {
         if (!cue || typeof cue !== 'object' || Array.isArray(cue)) continue
@@ -275,11 +284,11 @@ export function stampStaleBeatAudioOnScene(
 
 export function actionBeatSfxIsStale(
   scene: Record<string, unknown>,
-  beat: Pick<SceneBeat, 'beatId' | 'actionDescription' | 'kind'>,
+  beat: Pick<SceneBeat, 'beatId' | 'actionDescription' | 'beatDirection' | 'kind'>,
   hasAudio: boolean
 ): boolean {
   if (!hasAudio || beat.kind !== 'action') return false
-  const currentFingerprint = audioSourceFingerprintForAction(beat.actionDescription)
+  const currentFingerprint = audioSourceFingerprintForSfxBeat(beat)
   const list = Array.isArray(scene.sfx) ? scene.sfx : []
   const cue = list.find(
     (item) =>

@@ -12,10 +12,12 @@ export function isHifiDialogueProvider(provider: unknown): boolean {
  */
 export function DialogueQualityToggle({
   disabled,
+  lofiTitle = 'Gemini TTS preview',
   onLofi,
   onGenerateClip,
 }: {
   disabled?: boolean
+  lofiTitle?: string
   onLofi: () => void
   onGenerateClip: () => void
 }) {
@@ -26,7 +28,7 @@ export function DialogueQualityToggle({
       <button
         type="button"
         disabled={disabled}
-        title="Gemini TTS preview"
+        title={lofiTitle}
         onClick={(event) => {
           event.stopPropagation()
           onLofi()

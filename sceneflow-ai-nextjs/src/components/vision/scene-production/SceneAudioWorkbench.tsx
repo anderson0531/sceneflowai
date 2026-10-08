@@ -1232,7 +1232,7 @@ function SpokenBeatAudio(
               onGenerateClip={() => {
                 window.dispatchEvent(
                   new CustomEvent('production:open-action-tab', {
-                    detail: { sceneIndex: sceneIdx },
+                    detail: { sceneIndex: sceneIdx, beatId: beat.beatId },
                   })
                 )
                 toast.message('Generate this shot’s clip. HiFi playback uses the clip’s audio.')

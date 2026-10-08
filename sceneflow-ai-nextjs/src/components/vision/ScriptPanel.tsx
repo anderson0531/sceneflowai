@@ -62,6 +62,7 @@ import {
 } from '@/lib/audio/buildExpressAudioItems'
 import {
   actionBeatSfxIsStale,
+  audioSourceFingerprintForSfxBeat,
   audioSourceFingerprintForSpoken,
   isBeatAudioStale,
 } from '@/lib/audio/beatAudioStale'
@@ -2280,7 +2281,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     audioUrl: string,
     sfxIdx?: number,
     sfxAttribution?: Record<string, unknown> | null,
-    beatContext?: { beatId: string; beatDescription: string },
+    beatContext?: { beatId?: string; beatDescription: string },
     musicDuration?: number,
     musicFileDuration?: number,
     musicCueId?: string
@@ -2306,9 +2307,9 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
       if (audioType === 'sfx' && sfxIdx !== undefined && sfxAttribution !== undefined) {
         atomicAudioUpdate.sfxAttribution = sfxAttribution
       }
-      if (audioType === 'sfx' && beatContext?.beatId) {
-        atomicAudioUpdate.beatId = beatContext.beatId
+      if (audioType === 'sfx' && beatContext?.beatDescription) {
         atomicAudioUpdate.beatDescription = beatContext.beatDescription
+        if (beatContext.beatId) atomicAudioUpdate.beatId = beatContext.beatId
       }
       if (audioType === 'music' && typeof musicDuration === 'number' && musicDuration > 0) {
         atomicAudioUpdate.musicDuration = musicDuration
@@ -3975,7 +3976,7 @@ interface SceneCardProps {
     audioUrl: string,
     sfxIdx?: number,
     sfxAttribution?: Record<string, unknown> | null,
-    beatContext?: { beatId: string; beatDescription: string }
+    beatContext?: { beatId?: string; beatDescription: string }
   ) => Promise<void> | void
   // NEW: Scene direction generation props
   generatingDirectionFor?: number | null
@@ -4863,12 +4864,13 @@ function SceneCard({
 
   React.useEffect(() => {
     const handler = (event: Event) => {
-      const detail = (event as CustomEvent<{ sceneId?: string; sceneIndex?: number }>).detail
+      const detail = (event as CustomEvent<{ sceneId?: string; sceneIndex?: number; beatId?: string }>).detail
       if (detail?.sceneIndex != null && detail.sceneIndex !== sceneIdx) return
       if (detail?.sceneId) {
         const thisSceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
         if (detail.sceneId !== thisSceneId) return
       }
+      if (detail?.beatId) setSelectedBeatId(detail.beatId)
       setActiveSceneTab('video')
       setActiveWorkflowTab('dialogueAction')
       if (!isWorkflowOpen && onWorkflowOpenChange) onWorkflowOpenChange(true)
@@ -4881,7 +4883,7 @@ function SceneCard({
     }
     window.addEventListener('production:open-action-tab', handler)
     return () => window.removeEventListener('production:open-action-tab', handler)
-  }, [sceneIdx, scene, isWorkflowOpen, onWorkflowOpenChange])
+  }, [sceneIdx, scene, isWorkflowOpen, onWorkflowOpenChange, setSelectedBeatId])
   const [showKeyframes, setShowKeyframes] = useState(false)
   
   // Determine active step for Co-Pilot
@@ -5100,7 +5102,7 @@ function SceneCard({
                 sfxIndex,
                 null,
                 beat
-                  ? { beatId, beatDescription: beat.actionDescription?.trim() ?? '' }
+                  ? { beatId, beatDescription: audioSourceFingerprintForSfxBeat(beat) }
                   : undefined
               )
             },

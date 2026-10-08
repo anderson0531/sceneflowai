@@ -20,13 +20,18 @@ describe('Beats tab SFX UI', () => {
 
   it('matches dialogue generate chrome on action-beat SFX controls', () => {
     const source = readSource('src/components/vision/ActionBeatSfxControls.tsx')
-    expect(source).toContain("Generating...")
-    expect(source).toContain("'Generate'")
+    const mixer = readSource('src/components/vision/scene-production/SegmentSfxCard.tsx')
+    expect(source).toContain('DialogueQualityToggle')
+    expect(source).toContain('lofiTitle="ElevenLabs sound effect"')
+    expect(source).toContain('beatId: beat.beatId')
     expect(source).toContain('bg-amber-600 hover:bg-amber-700')
     expect(source).toContain('RefreshCw')
     expect(source).not.toContain('Generate SFX')
     expect(source).not.toContain('Re-generate SFX')
     expect(source).not.toContain('Veo...')
+    expect(mixer).toContain('DialogueQualityToggle')
+    expect(mixer).toContain('lofiTitle="ElevenLabs sound effect"')
+    expect(readSource('src/components/vision/ScriptPanel.tsx')).toContain('if (detail?.beatId) setSelectedBeatId(detail.beatId)')
   })
 
   it('shows Prompt changed / Ready on action beat headers and SFX controls', () => {

@@ -139,7 +139,7 @@ export type AudioSlotSavedPayload = {
   audioUrl: string
   sfxIndex?: number
   sfxAttribution?: Record<string, unknown> | null
-  beatContext?: { beatId: string; beatDescription: string }
+  beatContext?: { beatId?: string; beatDescription: string }
   musicDuration?: number
   musicFileDuration?: number
   musicCueId?: string

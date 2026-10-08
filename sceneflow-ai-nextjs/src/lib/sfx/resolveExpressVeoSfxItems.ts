@@ -83,15 +83,7 @@ export function resolveExpressVeoSfxItems(
 
     if (beatHasSfxAudio(scene, beat) && !regenerate) {
       if (
-        !actionBeatSfxIsStale(
-          scene,
-          {
-            beatId: beat.beatId,
-            actionDescription: actionText,
-            kind: 'action',
-          },
-          true
-        )
+        !actionBeatSfxIsStale(scene, beat, true)
       ) {
         skipped.push({ beatId, reason: 'already has audio' })
         continue

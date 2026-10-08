@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/Button'
 import { toast } from 'sonner'
 import { saveAudioFile } from '@/lib/download/saveFile'
 import { BeatAudioStatusBadge } from '@/components/vision/BeatAudioStatusBadge'
+import { DialogueQualityToggle } from '@/components/vision/DialogueQualityToggle'
 import {
   actionBeatSfxIsStale,
   audioSourceFingerprintForAction,
+  audioSourceFingerprintForSfxBeat,
   isBeatAudioStale,
 } from '@/lib/audio/beatAudioStale'
 import { getSceneBeats } from '@/lib/script/beatMigration'
@@ -56,7 +58,8 @@ export interface SegmentSfxCardProps {
     audioType: 'sfx' | 'music',
     audioUrl: string,
     sfxIdx?: number,
-    sfxAttribution?: Record<string, unknown> | null
+    sfxAttribution?: Record<string, unknown> | null,
+    beatContext?: { beatId?: string; beatDescription: string }
   ) => Promise<void> | void
 }
 
@@ -91,6 +94,9 @@ export function SegmentSfxCard({
   const sourceBeat = sfx.sourceBeatId
     ? getSceneBeats(scene).find((beat) => beat.beatId === sfx.sourceBeatId)
     : undefined
+  const sfxPrompt =
+    (sourceBeat ? audioSourceFingerprintForSfxBeat(sourceBeat) : '').trim() ||
+    (sfx.description || '').trim()
   const sfxStale =
     sourceBeat?.kind === 'action'
       ? actionBeatSfxIsStale(scene, sourceBeat, !!audioUrl)
@@ -116,7 +122,7 @@ export function SegmentSfxCard({
       toast.error('Project context is missing for SFX generation.')
       return
     }
-    const description = (sfx.description || '').trim()
+    const description = sfxPrompt
     if (!description) {
       toast.info('Add a description for this SFX cue first.')
       return
@@ -168,7 +174,10 @@ export function SegmentSfxCard({
         throw new Error('SFX response missing audio URL')
       }
 
-      await onSaveSfxAudio?.(sceneIdx, 'sfx', url, legacyIdx, null)
+      await onSaveSfxAudio?.(sceneIdx, 'sfx', url, legacyIdx, null, {
+        ...(sourceBeat?.beatId ? { beatId: sourceBeat.beatId } : {}),
+        beatDescription: description,
+      })
       toast.success(audioUrl ? 'SFX re-generated.' : 'SFX generated.', { id: toastId })
     } catch (error: any) {
       console.error('[SegmentSfxCard] SFX generation failed:', error)
@@ -271,6 +280,24 @@ export function SegmentSfxCard({
         disabled={isGenerating}
       />
       <div className="text-sm text-gray-700 dark:text-gray-300 italic">{sfx.description}</div>
+      <DialogueQualityToggle
+        lofiTitle="ElevenLabs sound effect"
+        disabled={isGenerating || !sfxPrompt}
+        onLofi={() => {
+          void dispatchGenerateElevenLabs()
+        }}
+        onGenerateClip={() => {
+          window.dispatchEvent(
+            new CustomEvent('production:open-action-tab', {
+              detail: {
+                sceneIndex: sceneIdx,
+                ...(sourceBeat?.beatId ? { beatId: sourceBeat.beatId } : {}),
+              },
+            })
+          )
+          toast.message('Generate this shot’s clip. HiFi playback uses the clip’s audio.')
+        }}
+      />
     </div>
   )
 }
