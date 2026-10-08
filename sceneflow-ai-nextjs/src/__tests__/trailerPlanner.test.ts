@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { planPromoTrailer } from '@/lib/publish/trailerPlanner'
-import { resolvePromoBeatMedia } from '@/lib/publish/promoBeatMedia'
+import { buildPromoShotCatalog, slimPromoProductionState } from '@/lib/publish/promoShotCatalog'
+import { promoPlanWithLiveMedia, resolvePromoBeatMedia } from '@/lib/publish/promoBeatMedia'
 import {
   buildPromoSceneFromPlan,
   isPromoCinematicScene,
@@ -107,7 +108,7 @@ describe('trailerPlanner', () => {
     expect(result.targetDurationSec).toBe(60)
   })
 
-  it('prefers beats with video URLs and keeps chronological order', () => {
+  it('orders a trailer arc and still keeps a produced clip', () => {
     const result = planPromoTrailer({
       scenes,
       targetDurationSec: 45,
@@ -126,13 +127,68 @@ describe('trailerPlanner', () => {
     })
     const withVideo = result.beatPlan.filter((b) => b.videoUrl)
     expect(withVideo.length).toBeGreaterThan(0)
-    for (let i = 1; i < result.beatPlan.length; i++) {
-      const prev = result.beatPlan[i - 1]!
-      const curr = result.beatPlan[i]!
-      expect(curr.sceneIndex).toBeGreaterThanOrEqual(prev.sceneIndex)
-    }
+    const openingAt = result.beatPlan.findIndex((b) => b.beatRole === 'opening')
+    const climaxAt = result.beatPlan.findIndex((b) => b.beatRole === 'climax')
+    expect(openingAt).toBeGreaterThanOrEqual(0)
+    expect(climaxAt).toBeGreaterThan(openingAt)
+    expect(result.beatPlan[0]?.trailerRole).toBe('hook')
     const ids = result.beatPlan.map((b) => `${b.sceneIndex}:${b.beatId}`)
     expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it('lets an unproduced climax outrank weak existing clips', () => {
+    const fillers = Array.from({ length: 10 }, (_, i) => ({
+      id: `fill-${i}`,
+      heading: `INT. HALL ${i}`,
+      beats: [
+        {
+          beatId: `fill-${i}`,
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: `Walk ${i}`,
+        },
+      ],
+    }))
+    const result = planPromoTrailer({
+      targetDurationSec: 30,
+      scenes: [
+        ...fillers,
+        {
+          id: 'payoff',
+          heading: 'EXT. ROOF - DAWN',
+          beats: [
+            {
+              beatId: 'payoff',
+              sequenceIndex: 0,
+              kind: 'dialogue',
+              line: 'It ends here.',
+              beatRole: 'climax',
+            },
+          ],
+        },
+      ],
+      sceneProductionState: Object.fromEntries(
+        fillers.map((scene) => [
+          scene.id,
+          {
+            segments: [
+              {
+                beatId: scene.beats[0]!.beatId,
+                activeAssetUrl: `https://example.com/${scene.id}.mp4`,
+                startTime: 0,
+                endTime: 5,
+              },
+            ],
+          },
+        ])
+      ),
+    })
+    const payoff = result.beatPlan.find((beat) => beat.beatId === 'payoff')
+    expect(payoff).toBeDefined()
+    expect(payoff?.videoUrl).toBeUndefined()
+    expect(payoff?.frameUrl).toBeUndefined()
+    expect(result.beatPlan.some((beat) => beat.beatId === 'fill-9')).toBe(false)
+    expect(result.beatPlan.some((beat) => beat.videoUrl)).toBe(true)
   })
 
   it('prioritizes hero beat pins', () => {
@@ -173,6 +229,130 @@ describe('trailerPlanner', () => {
     ]
     const result = planPromoTrailer({ scenes: withPromo, targetDurationSec: 45 })
     expect(result.beatPlan.every((b) => b.sceneId !== 'promo-1')).toBe(true)
+  })
+})
+
+describe('buildPromoShotCatalog', () => {
+  it('lists shots that have no still and no clip, and skips promo and excluded shots', () => {
+    const catalog = buildPromoShotCatalog({
+      scenes: [
+        {
+          id: 'flat',
+          heading: 'INT. LAB - NIGHT',
+          action: 'The core overloads.',
+          imageUrl: 'https://example.com/lab.png',
+        },
+        {
+          id: 'bare',
+          beats: [
+            {
+              beatId: 'bare',
+              sequenceIndex: 0,
+              kind: 'action',
+              actionDescription: 'Silence',
+            },
+          ],
+        },
+        {
+          id: 'mixed',
+          beats: [
+            {
+              beatId: 'keep',
+              sequenceIndex: 0,
+              kind: 'action',
+              actionDescription: 'Stay',
+            },
+            {
+              beatId: 'gone',
+              sequenceIndex: 1,
+              kind: 'action',
+              actionDescription: 'Skip',
+              excluded: true,
+            },
+          ],
+        },
+        {
+          id: 'promo',
+          cinematicType: 'promo',
+          heading: 'PROMO TRAILER',
+          beats: [
+            {
+              beatId: 'promo-beat',
+              sequenceIndex: 0,
+              kind: 'action',
+              actionDescription: 'Trailer',
+            },
+          ],
+        },
+      ],
+    })
+
+    const flat = catalog.find((shot) => shot.sceneId === 'flat')
+    expect(flat?.hasStill).toBe(true)
+    expect(flat?.hasClip).toBe(false)
+    const bare = catalog.find((shot) => shot.beatId === 'bare')
+    expect(bare?.hasStill).toBe(false)
+    expect(bare?.hasClip).toBe(false)
+    expect(catalog.some((shot) => shot.beatId === 'keep')).toBe(true)
+    expect(catalog.some((shot) => shot.beatId === 'gone')).toBe(false)
+    expect(catalog.some((shot) => shot.sceneId === 'promo')).toBe(false)
+  })
+
+  it('sends only clip pointers to the planner', () => {
+    const slim = slimPromoProductionState({
+      'scene-0': {
+        segments: [
+          {
+            beatId: 'b0',
+            activeAssetUrl: 'https://example.com/v.mp4',
+            startTime: 0,
+            endTime: 5,
+            status: 'COMPLETE',
+          },
+        ],
+      },
+    })
+    expect(slim?.['scene-0']).toEqual({
+      segments: [
+        {
+          beatId: 'b0',
+          activeAssetUrl: 'https://example.com/v.mp4',
+          startTime: 0,
+          endTime: 5,
+        },
+      ],
+    })
+  })
+})
+
+describe('promoPlanWithLiveMedia', () => {
+  it('fills a plan made before production with the live clip', () => {
+    const [live] = promoPlanWithLiveMedia(
+      [
+        {
+          sceneId: 'scene-0',
+          beatId: 'b0',
+          sceneIndex: 0,
+          startSec: 0,
+          endSec: 5,
+          durationSec: 5,
+          score: 10,
+        },
+      ],
+      {
+        'scene-0': {
+          segments: [
+            {
+              segmentId: 'seg-1',
+              beatId: 'b0',
+              assetType: 'video',
+              activeAssetUrl: 'https://example.com/live.mp4',
+            },
+          ],
+        },
+      }
+    )
+    expect(live?.videoUrl).toBe('https://example.com/live.mp4')
   })
 })
 
@@ -348,6 +528,22 @@ describe('promo source guards', () => {
     expect(source).toContain('Promo')
     expect(source).toContain('promoTrailerUrl')
     expect(source).toContain('setPlaybackMode(\'promo\')')
+  })
+
+  it('plans from every shot and runs Promo Agent before clips exist', () => {
+    const tab = path.join(process.cwd(), 'src/components/publishing/PublishingPromoTab.tsx')
+    const source = readFileSync(tab, 'utf8')
+    expect(source).toContain('Promo Agent')
+    expect(source).toContain('onRunPromoAgent')
+    expect(source).not.toContain('existing shots, frames, and clips')
+    expect(source).not.toContain('This shot needs a Studio segment first')
+    const page = path.join(
+      process.cwd(),
+      'src/app/dashboard/workflow/vision/[projectId]/page.tsx'
+    )
+    const pageSource = readFileSync(page, 'utf8')
+    expect(pageSource).toContain("title: 'Promo Agent'")
+    expect(pageSource).toContain('ensurePromoShotSegment')
   })
 
   it('trailer render enables narration/music for promo', () => {

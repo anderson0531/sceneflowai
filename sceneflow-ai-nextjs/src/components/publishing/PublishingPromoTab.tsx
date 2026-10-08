@@ -4,6 +4,7 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import {
   Download,
+  Bot,
   Film,
   Loader2,
   Mic2,
@@ -14,8 +15,9 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
-import { planPromoTrailer, DEFAULT_TRAILER_SEC } from '@/lib/publish/trailerPlanner'
-import { resolvePromoBeatMedia } from '@/lib/publish/promoBeatMedia'
+import { slimPromoProductionState } from '@/lib/publish/promoShotCatalog'
+import { DEFAULT_TRAILER_SEC } from '@/lib/publish/trailerPlanner'
+import { promoPlanWithLiveMedia, resolvePromoBeatMedia } from '@/lib/publish/promoBeatMedia'
 import { getPublishingState, upsertPublishingState } from '@/lib/publish/publishingState'
 import { findPromoSceneIndex, isPromoCinematicScene } from '@/lib/publish/buildPromoScene'
 import type { PromoTrailerBeatPlan, PromoTrailerAsset } from '@/types/publishingAssets'
@@ -37,12 +39,18 @@ export interface PublishingPromoTabProps {
   onPreviewPromo?: () => void
   /** Focus the promo scene in Studio / Director Console. */
   onOpenPromoInStudio?: (sceneId: string) => void
-  /** Generate a 9:16 clip for a source beat that has a Studio segment. */
+  /** Generate a 9:16 clip for a planned shot, deriving a segment when Studio has none. */
   onGenerateBeatClip?: (input: {
     sceneId: string
-    segmentId: string
+    beatId: string
+    segmentId?: string
     frameUrl?: string
     durationSec?: number
+  }) => Promise<void>
+  /** Produce missing plan clips, narration, and music. The run lives on the page. */
+  onRunPromoAgent?: (input: {
+    beatPlan: PromoTrailerBeatPlan[]
+    targetDurationSec: number
   }) => Promise<void>
 }
 
@@ -61,6 +69,7 @@ export function PublishingPromoTab({
   onPreviewPromo,
   onOpenPromoInStudio,
   onGenerateBeatClip,
+  onRunPromoAgent,
 }: PublishingPromoTabProps) {
   const [targetDuration, setTargetDuration] = useState<(typeof TARGET_OPTIONS)[number]>(
     DEFAULT_TRAILER_SEC
@@ -72,6 +81,7 @@ export function PublishingPromoTab({
   const [composing, setComposing] = useState(false)
   const [rendering, setRendering] = useState(false)
   const [generatingBeatKey, setGeneratingBeatKey] = useState<string | null>(null)
+  const [agentRunning, setAgentRunning] = useState(false)
   const [brokenBeatKeys, setBrokenBeatKeys] = useState<Set<string>>(() => new Set())
 
   const publishingState = useMemo(() => getPublishingState(metadata), [metadata])
@@ -128,11 +138,12 @@ export function PublishingPromoTab({
       segmentId: string | undefined,
       frameUrl: string | undefined
     ) => {
-      if (!segmentId || !onGenerateBeatClip) return
+      if (!onGenerateBeatClip) return
       setGeneratingBeatKey(key)
       try {
         await onGenerateBeatClip({
           sceneId: beat.sceneId,
+          beatId: beat.beatId,
           segmentId,
           frameUrl,
           durationSec: beat.durationSec ?? Math.max(0, beat.endSec - beat.startSec),
@@ -168,23 +179,37 @@ export function PublishingPromoTab({
     [onScriptScenesUpdated, onSaveMetadata]
   )
 
-  const handleRegeneratePlan = useCallback(() => {
+  const handleRegeneratePlan = useCallback(async () => {
     setPlanning(true)
     try {
-      const result = planPromoTrailer({
-        scenes,
-        sceneProductionState,
-        sceneScores,
-        targetDurationSec: targetDuration,
+      const res = await fetch('/api/publish/promo/scene', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          action: 'plan',
+          targetDurationSec: targetDuration,
+          sceneScores,
+          scenes,
+          sceneProductionState: slimPromoProductionState(sceneProductionState),
+        }),
       })
-      setBeatPlan(result.beatPlan)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Shot plan failed')
+      const nextPlan = Array.isArray(data.beatPlan) ? data.beatPlan : []
+      setBeatPlan(nextPlan)
+      const seconds = Math.round(data.totalDurationSec ?? targetDuration)
       toast.success(
-        `Shot plan: ${result.beatPlan.length} shots · ~${Math.round(result.totalDurationSec)}s`
+        data.source === 'heuristic'
+          ? `Shot plan: ${nextPlan.length} shots · ~${seconds}s (trailer arc)`
+          : `Shot plan: ${nextPlan.length} shots · ~${seconds}s`
       )
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Shot plan failed')
     } finally {
       setPlanning(false)
     }
-  }, [scenes, sceneProductionState, sceneScores, targetDuration])
+  }, [projectId, scenes, sceneProductionState, sceneScores, targetDuration])
 
   const handleUpsertPromoScene = useCallback(async () => {
     setUpserting(true)
@@ -198,6 +223,8 @@ export function PublishingPromoTab({
           targetDurationSec: targetDuration,
           sceneScores,
           scenes,
+          sceneProductionState: slimPromoProductionState(sceneProductionState),
+          ...(timelineBeats.length ? { beatPlan: timelineBeats } : {}),
         }),
       })
       const data = await res.json()
@@ -212,7 +239,7 @@ export function PublishingPromoTab({
     } finally {
       setUpserting(false)
     }
-  }, [projectId, targetDuration, sceneScores, scenes, applyScenes])
+  }, [projectId, targetDuration, sceneScores, scenes, sceneProductionState, timelineBeats, applyScenes])
 
   const handleGenerateNarration = useCallback(async () => {
     setNarrating(true)
@@ -262,16 +289,24 @@ export function PublishingPromoTab({
     }
   }, [projectId, targetDuration, scenes, applyScenes])
 
+  const handleRunPromoAgent = useCallback(async () => {
+    if (!onRunPromoAgent || timelineBeats.length === 0) {
+      toast.error('Plan the promo shots first.')
+      return
+    }
+    setAgentRunning(true)
+    try {
+      await onRunPromoAgent({ beatPlan: timelineBeats, targetDurationSec: targetDuration })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Promo Agent failed')
+    } finally {
+      setAgentRunning(false)
+    }
+  }, [onRunPromoAgent, timelineBeats, targetDuration])
+
   const handleRenderTrailer = useCallback(async () => {
-    const plan =
-      beatPlan.length > 0
-        ? beatPlan
-        : planPromoTrailer({
-            scenes,
-            sceneProductionState,
-            sceneScores,
-            targetDurationSec: targetDuration,
-          }).beatPlan
+    const source = beatPlan.length > 0 ? beatPlan : timelineBeats
+    const plan = promoPlanWithLiveMedia(source, sceneProductionState)
 
     if (plan.length === 0) {
       toast.error('Generate a shot plan or promo scene first.')
@@ -280,7 +315,7 @@ export function PublishingPromoTab({
 
     const hasClip = plan.some((b) => b.videoUrl) || !!masterStream?.mp4Url
     if (!hasClip) {
-      toast.error('Need scene video clips or a master stream to render.')
+      toast.error('Generate the plan clips before rendering the trailer.')
       return
     }
 
@@ -340,9 +375,8 @@ export function PublishingPromoTab({
     }
   }, [
     beatPlan,
-    scenes,
+    timelineBeats,
     sceneProductionState,
-    sceneScores,
     masterStream,
     projectId,
     userId,
@@ -362,8 +396,9 @@ export function PublishingPromoTab({
           9:16 Promo Trailer
         </h3>
         <p className="text-xs text-zinc-500 mb-4">
-          Build a captivating ~{targetDuration}s trailer from existing shots, frames, and clips.
-          Promo-specific narration and music stay on the promo scene.
+          Plan the strongest ~{targetDuration}s trailer from every shot in the production, whether
+          or not stills and clips exist yet. Promo Agent then generates the missing clips,
+          narration, and music.
         </p>
 
         <div className="flex flex-wrap gap-2 mb-4">
@@ -392,6 +427,19 @@ export function PublishingPromoTab({
               <Sparkles className="w-4 h-4 mr-1" />
             )}
             Plan shots
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => void handleRunPromoAgent()}
+            disabled={agentRunning || !onRunPromoAgent || timelineBeats.length === 0}
+            className="bg-fuchsia-600 hover:bg-fuchsia-500"
+          >
+            {agentRunning ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-1" />
+            ) : (
+              <Bot className="w-4 h-4 mr-1" />
+            )}
+            Promo Agent
           </Button>
           <Button
             size="sm"
@@ -438,8 +486,8 @@ export function PublishingPromoTab({
             onClick={handleRenderTrailer}
             disabled={
               rendering ||
-              (beatPlan.length === 0 && !promoScene) ||
-              (!masterStream?.mp4Url && !beatPlan.some((b) => b.videoUrl))
+              timelineRows.length === 0 ||
+              (!masterStream?.mp4Url && readyClipCount === 0)
             }
             className="bg-fuchsia-600 hover:bg-fuchsia-500"
           >
@@ -508,8 +556,9 @@ export function PublishingPromoTab({
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-[11px] text-fuchsia-100">
-                        S{beat.sceneIndex + 1} · {durationSec}s
-                        <span className="ml-2 text-zinc-500">{hasClip ? 'Clip' : 'Missing'}</span>
+                        S{beat.sceneIndex + 1}
+                        {beat.trailerRole ? ` · ${beat.trailerRole}` : ''} · {durationSec}s
+                        <span className="ml-2 text-zinc-500">{hasClip ? 'Clip' : 'Needed'}</span>
                       </p>
                       {beat.label ? (
                         <p className="truncate text-[10px] text-zinc-500">{beat.label}</p>
@@ -520,12 +569,8 @@ export function PublishingPromoTab({
                         size="sm"
                         variant="outline"
                         className="h-7 shrink-0 px-2 text-[10px]"
-                        disabled={!media.segmentId || !onGenerateBeatClip || generating}
-                        title={
-                          media.segmentId
-                            ? 'Generate clip'
-                            : 'This shot needs a Studio segment first'
-                        }
+                        disabled={!onGenerateBeatClip || generating}
+                        title="Generate clip"
                         onClick={() =>
                           void handleGenerateBeatClip(
                             key,

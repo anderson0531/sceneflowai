@@ -9,7 +9,7 @@ import { PublishingScreeningTab } from './PublishingScreeningTab'
 import { PublishingPromoTab } from './PublishingPromoTab'
 import { PublishingPackageShipTab } from './PublishingPackageShipTab'
 import { computePublishingReadiness, getPublishingState } from '@/lib/publish/publishingState'
-import type { PublishingLibraryTab } from '@/types/publishingAssets'
+import type { PromoTrailerBeatPlan, PublishingLibraryTab } from '@/types/publishingAssets'
 import type { ProjectStream } from '@/lib/streams/projectStreams'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
 
@@ -33,9 +33,14 @@ export interface PublishingManagerProps {
   onOpenPromoInStudio?: (sceneId: string) => void
   onGenerateBeatClip?: (input: {
     sceneId: string
-    segmentId: string
+    beatId: string
+    segmentId?: string
     frameUrl?: string
     durationSec?: number
+  }) => Promise<void>
+  onRunPromoAgent?: (input: {
+    beatPlan: PromoTrailerBeatPlan[]
+    targetDurationSec: number
   }) => Promise<void>
   layout?: 'dialog' | 'inline'
   hideTitle?: boolean
@@ -58,6 +63,7 @@ export function PublishingManager({
   onScriptScenesUpdated,
   onOpenPromoInStudio,
   onGenerateBeatClip,
+  onRunPromoAgent,
   layout = 'inline',
   hideTitle = false,
   initialTab,
@@ -176,6 +182,7 @@ export function PublishingManager({
             onPreviewPromo={onPreviewPromo}
             onOpenPromoInStudio={onOpenPromoInStudio}
             onGenerateBeatClip={onGenerateBeatClip}
+            onRunPromoAgent={onRunPromoAgent}
           />
         ) : null}
         {visibleTab === 'ship' ? (
