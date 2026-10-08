@@ -92,12 +92,14 @@ export function buildVoiceDesignCreateBody(args: {
   languageCode?: string
 }): Record<string, unknown> {
   return {
-    displayName: args.displayName.slice(0, 80),
-    model: DESIGNED_VOICE_TTS_MODEL,
-    type: 'VOICE_TYPE_PROMPTED',
     store: true,
-    languageCode: args.languageCode?.trim() || 'en-US',
-    prompted: { input: args.description.trim() },
+    voice: {
+      displayName: args.displayName.slice(0, 80),
+      model: DESIGNED_VOICE_TTS_MODEL,
+      type: 'prompted',
+      languageCode: args.languageCode?.trim() || 'en-US',
+      prompted: { input: args.description.trim() },
+    },
   }
 }
 
