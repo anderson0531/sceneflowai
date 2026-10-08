@@ -109,6 +109,7 @@ export async function POST(req: NextRequest) {
     )
 
     let resultText = ''
+    let finishReason: string | undefined
 
     if (hasPortrait && imageUrl) {
       const imageResponse = await fetch(imageUrl)
@@ -137,10 +138,12 @@ export async function POST(req: NextRequest) {
         ],
         {
           model: 'gemini-2.5-flash',
+          responseMimeType: 'application/json',
           ...VOICE_ANALYSIS_GEN_OPTIONS,
         },
       )
       resultText = result.text?.trim() || ''
+      finishReason = result.finishReason
     } else {
       console.log(`[Character Voice Analysis] Narrative-only for "${characterName}"...`)
 
@@ -150,13 +153,18 @@ export async function POST(req: NextRequest) {
         ...VOICE_ANALYSIS_GEN_OPTIONS,
       })
       resultText = result.text?.trim() || ''
+      finishReason = result.finishReason
     }
 
     const parsed = parseWardrobeVoiceAnalysisJson(resultText, {
       confidence: hasPortrait ? 'vision' : 'narrative',
     })
     if (!parsed) {
-      console.error('[Character Voice Analysis] Failed to parse response:', resultText.slice(0, 300))
+      console.error(
+        '[Character Voice Analysis] Failed to parse response:',
+        finishReason ? `(finishReason: ${finishReason})` : '',
+        resultText.slice(0, 300),
+      )
       return NextResponse.json(
         { error: 'Failed to parse voice analysis' },
         { status: 502 },

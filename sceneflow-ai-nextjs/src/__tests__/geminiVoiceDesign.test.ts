@@ -35,11 +35,18 @@ describe('voice design payloads', () => {
       description: 'A late 40s male attorney with a resonant baritone.',
       displayName: 'Julian',
     })
-    expect(body.model).toBe(DESIGNED_VOICE_TTS_MODEL)
-    expect(body.type).toBe('VOICE_TYPE_PROMPTED')
     expect(body.store).toBe(true)
+    expect(body).not.toHaveProperty('type')
+    expect(body).not.toHaveProperty('prompted')
     expect(body).not.toHaveProperty('name')
-    expect((body.prompted as { input: string }).input).toContain('resonant baritone')
+    const voice = body.voice as {
+      model: string
+      type: string
+      prompted: { input: string }
+    }
+    expect(voice.model).toBe(DESIGNED_VOICE_TTS_MODEL)
+    expect(voice.type).toBe('prompted')
+    expect(voice.prompted.input).toContain('resonant baritone')
   })
 
   it('puts delivery only in style and cites the designed voice id', () => {

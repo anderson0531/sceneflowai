@@ -42,7 +42,7 @@ async function listPromptedVoices(headers: Record<string, string>): Promise<Stor
   for (let page = 0; page < 8; page++) {
     const url = new URL(voicesCollectionUrl())
     url.searchParams.set('pageSize', '50')
-    url.searchParams.append('type', 'VOICE_TYPE_PROMPTED')
+    url.searchParams.append('type', 'prompted')
     if (pageToken) url.searchParams.set('pageToken', pageToken)
     const response = await fetch(url, { headers })
     if (!response.ok) {
@@ -112,11 +112,20 @@ export async function createDesignedGeminiVoice(args: {
   let detail = ''
   if (!response.ok) {
     detail = await response.text().catch(() => '')
-    if (response.status === 400 && detail.toLowerCase().includes('type')) {
+    const voice = body.voice
+    if (
+      response.status === 400 &&
+      detail.toLowerCase().includes('type') &&
+      voice &&
+      typeof voice === 'object'
+    ) {
       response = await fetch(voicesCollectionUrl(), {
         method: 'POST',
         headers,
-        body: JSON.stringify({ ...body, type: 'prompted' }),
+        body: JSON.stringify({
+          ...body,
+          voice: { ...voice, type: 'VOICE_TYPE_PROMPTED' },
+        }),
       })
       detail = ''
     }

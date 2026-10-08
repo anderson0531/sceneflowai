@@ -457,6 +457,9 @@ export async function generateWithVision(
     topP: options.topP ?? 0.9,
     maxOutputTokens: options.maxOutputTokens ?? 8192,
   }
+  if (options.responseMimeType) {
+    generationConfig.responseMimeType = options.responseMimeType
+  }
 
   const thinkingExplicit =
     options.thinkingLevel !== undefined || options.thinkingBudget !== undefined
@@ -487,6 +490,10 @@ export async function generateWithVision(
 
     if (isThinkingModel && !isMinimal) {
       generationConfig.thinkingConfig = thinkingConfig
+    } else if (isThinkingModel && isMinimal && !isGemini3) {
+      // Omitting the config leaves Gemini 2.5 on dynamic thinking, which spends
+      // the output budget before the answer is finished.
+      generationConfig.thinkingConfig = { thinkingBudget: 0 }
     }
   }
 
