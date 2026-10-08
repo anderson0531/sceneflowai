@@ -111,11 +111,28 @@ const TRANSITION_LABEL: Record<BeatDirectionTransition, string> = {
   MATCH_CUT: 'Match cut',
 }
 
+const DIRECTION_TILE_ACCENT: Record<string, { border: string; label: string }> = {
+  Still: { border: 'border-cyan-500/50', label: 'text-cyan-300' },
+  Camera: { border: 'border-sky-500/50', label: 'text-sky-300' },
+  Cast: { border: 'border-violet-500/50', label: 'text-violet-300' },
+  Blocking: { border: 'border-amber-500/50', label: 'text-amber-300' },
+  Emotion: { border: 'border-rose-500/50', label: 'text-rose-300' },
+  Gaze: { border: 'border-teal-500/50', label: 'text-teal-300' },
+  Lighting: { border: 'border-yellow-500/50', label: 'text-yellow-300' },
+  Interaction: { border: 'border-orange-500/50', label: 'text-orange-300' },
+  Audio: { border: 'border-emerald-500/50', label: 'text-emerald-300' },
+  Props: { border: 'border-indigo-500/50', label: 'text-indigo-300' },
+}
+
 function DirectionTile({ label, value }: { label: string; value?: string }) {
   if (!value?.trim()) return null
+  const accent = DIRECTION_TILE_ACCENT[label] ?? {
+    border: 'border-slate-600/60',
+    label: 'text-slate-400',
+  }
   return (
-    <div className="min-w-0 rounded-md border border-amber-900/40 bg-slate-900/50 px-2.5 py-2">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-200/70">{label}</p>
+    <div className={`min-w-0 rounded-md border bg-slate-900/50 px-2.5 py-2 ${accent.border}`}>
+      <p className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${accent.label}`}>{label}</p>
       <p className="mt-1 text-xs leading-relaxed text-slate-200">{value}</p>
     </div>
   )
@@ -626,8 +643,8 @@ export function BeatDirectionEditor({
           </div>
 
           {hasReferences && (
-            <div className="space-y-1.5 border-t border-slate-800 pt-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">References</p>
+            <div className="space-y-1.5 rounded-md border border-zinc-500/50 bg-slate-900/50 px-2.5 py-2">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-300">References</p>
               <div className="flex flex-wrap gap-2">
                 {connectedCast.map((character) => (
                   <ReferenceChip

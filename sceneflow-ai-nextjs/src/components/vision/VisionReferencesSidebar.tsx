@@ -1750,12 +1750,15 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
           ) : null}
         </div>
 
-        <ReferenceLibraryNextActionBanner
-          summary={libraryRequiredActions}
-          onRun={handleRunPrimaryLibraryAction}
-          disabled={!onExpressGenerateReferences}
-          isRunning={isExpressGeneratingReferences || pendingKindAgentRun != null}
-        />
+        {libraryRequiredActions.primaryAction &&
+        libraryRequiredActions.primaryAction !== 'library' ? (
+          <ReferenceLibraryNextActionBanner
+            summary={libraryRequiredActions}
+            onRun={handleRunPrimaryLibraryAction}
+            disabled={!onExpressGenerateReferences}
+            isRunning={isExpressGeneratingReferences || pendingKindAgentRun != null}
+          />
+        ) : null}
 
         <ProductTabList
           tabs={referenceTabs.map((tab) => ({

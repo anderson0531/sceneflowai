@@ -43,6 +43,7 @@ describe('Reference Library next-action CTA wiring', () => {
   it('sidebar banner sets pendingKindAgentRun and tab attention', () => {
     const sidebar = readSource('src/components/vision/VisionReferencesSidebar.tsx')
     expect(sidebar).toContain('ReferenceLibraryNextActionBanner')
+    expect(sidebar).toContain("primaryAction !== 'library'")
     expect(sidebar).toContain('setPendingKindAgentRun')
     expect(sidebar).toContain('pendingKindAgentRunForAction')
     expect(sidebar).toContain('firstLibraryTabWithRequiredWork')
