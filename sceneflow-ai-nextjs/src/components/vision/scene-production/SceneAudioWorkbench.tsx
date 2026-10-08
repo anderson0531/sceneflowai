@@ -67,7 +67,12 @@ import type { ProjectStream } from '@/lib/streams/projectStreams'
 import { resolveLiveTake, segmentHasPlayableVideo } from '@/lib/storyboard/mediaVersions'
 import { findDialogueAudioForLine } from './audioTrackBuilder'
 import { BeatStillClipViewer } from './BeatStillClipViewer'
-import { SceneBeatStage, type SceneBeatStageItem } from './SceneBeatStage'
+import {
+  SceneBeatStage,
+  shotKindMarker,
+  type SceneBeatStageItem,
+  type SceneBeatStageMarker,
+} from './SceneBeatStage'
 import type { SceneSegment } from './types'
 
 type CaptionTranslations = React.ComponentProps<typeof BeatCaptionControl>['storedTranslations']
@@ -357,6 +362,7 @@ export function SceneAudioWorkbench(props: SceneAudioWorkbenchProps & { onSaveSf
     setBeatListFilters,
     beatFacts,
     brokenContinuityBeatIds,
+    musicCueByBeatId,
   } = props
 
   const beatFactsById = useMemo(() => new Map(beatFacts.map((facts) => [facts.beatId, facts])), [beatFacts])
@@ -399,16 +405,22 @@ export function SceneAudioWorkbench(props: SceneAudioWorkbenchProps & { onSaveSf
         const facts = beatFactsById.get(beat.beatId)
         const rail = facts ? beatRailStatus(facts) : undefined
         const beatNumber = (typeof beat.sequenceIndex === 'number' ? beat.sequenceIndex : beats.indexOf(beat)) + 1
+        const markers: SceneBeatStageMarker[] = []
+        const kind = shotKindMarker(facts?.kind ?? beat.kind)
+        if (kind) markers.push(kind)
+        if (facts?.excluded || beat.excluded) markers.push('Excluded')
+        if ((sfxByBeatId.get(beat.beatId)?.length ?? 0) > 0 || facts?.tracksSfx) markers.push('SFX')
+        if (musicCueByBeatId.get(beat.beatId)) markers.push('Music')
         return {
           id: beat.beatId,
           beatNumber: Number.isFinite(beatNumber) ? beatNumber : index + 1,
-          imageUrl: beat.storyboardImageUrl?.trim() || undefined,
+          markers,
           status: rail?.status,
           statusLabel: rail?.label || undefined,
           ariaLabel: `Shot ${beatNumber}`,
         }
       }),
-    [visibleBeats, beatFactsById, beats]
+    [visibleBeats, beatFactsById, beats, sfxByBeatId, musicCueByBeatId]
   )
 
   const hasSceneMusic = !!(scene.musicAudio || scene.music?.url) || props.sceneMusicCues.length > 0

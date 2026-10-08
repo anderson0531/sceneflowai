@@ -8,7 +8,11 @@ import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { SceneImageFrame } from '@/components/vision/SceneImageFrame'
 import { StatusFilterBar } from '@/components/vision/StatusFilterBar'
-import { SceneBeatStage } from '@/components/vision/scene-production/SceneBeatStage'
+import {
+  SceneBeatStage,
+  shotKindMarker,
+  type SceneBeatStageMarker,
+} from '@/components/vision/scene-production/SceneBeatStage'
 import type { SceneSegment } from './types'
 import type { DirectorQueueItem } from '@/hooks/useVideoQueue'
 import {
@@ -21,11 +25,9 @@ import {
   type VideoQualityFilter,
 } from '@/lib/vision/videoClipFilters'
 import {
-  isVideoLikeUrl,
   listPlayableTakes,
   resolveLiveTake,
   segmentHasPlayableVideo,
-  type PlayableTake,
 } from '@/lib/storyboard/mediaVersions'
 import {
   isMasterStreamLanguage,
@@ -81,31 +83,14 @@ function clipStatus(item?: DirectorQueueItem): { label: string; className: strin
   return { label: 'Ready', className: 'border-slate-500/40 bg-slate-500/15 text-slate-300' }
 }
 
-function TakeVersionThumb({ version }: { version: PlayableTake }) {
-  const thumb = version.thumbnailUrl?.trim()
-  if (thumb && !isVideoLikeUrl(thumb)) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={thumb} alt="" className="h-full w-full object-cover" />
-    )
-  }
-  return (
-    <video
-      src={version.url}
-      className="pointer-events-none h-full w-full object-cover"
-      muted
-      playsInline
-      preload="metadata"
-    />
-  )
-}
-
 export interface BeatVideoClip {
   key: string
   beatId?: string
   beatNumber: number
   label: string
   prompt?: string
+  /** Action, dialogue, or narration. Omitted for clips that are not beat-backed. */
+  kind?: 'action' | 'dialogue' | 'narration'
   thumbnailUrl?: string
   hasStartFrame: boolean
   /** Dedicated frame-to-video frames. Not the beat still. */
@@ -436,10 +421,12 @@ export function BeatVideoGallery({
             const facts = clipFacts.find((entry) => entry.key === clip.key)
             const rail = facts ? videoRailStatus(facts) : undefined
             const errorText = clip.segment?.errorMessage || clip.queueItem?.error
+            const kind = shotKindMarker(clip.kind)
+            const markers: SceneBeatStageMarker[] = kind ? [kind] : []
             return {
               id: clip.key,
               beatNumber: clip.beatNumber,
-              imageUrl: clip.thumbnailUrl,
+              markers,
               status: rail?.status,
               statusLabel: rail?.label || undefined,
               statusDetail:
@@ -666,17 +653,15 @@ export function BeatVideoGallery({
                           }
                           onRestoreTake?.(previewSegment.segmentId, version.id)
                         }}
-                        className={`relative h-8 w-12 shrink-0 overflow-hidden rounded border ${
+                        className={`shrink-0 rounded border px-2 py-1 text-[10px] font-medium tabular-nums ${
                           isCurrent
-                            ? 'border-cyan-400 ring-1 ring-cyan-400/60'
-                            : 'border-slate-600 hover:border-slate-400'
+                            ? 'border-cyan-400 bg-cyan-500/15 text-cyan-100 ring-1 ring-cyan-400/60'
+                            : 'border-slate-600 text-slate-300 hover:border-slate-400'
                         }`}
                         title={`Restore version ${index + 1}`}
+                        aria-label={`Restore version ${index + 1}`}
                       >
-                        <TakeVersionThumb version={version} />
-                        <span className="absolute bottom-0 right-0 bg-black/70 px-0.5 text-[8px] text-white">
-                          v{index + 1}
-                        </span>
+                        v{index + 1}
                       </button>
                     )
                   })}

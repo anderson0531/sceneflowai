@@ -24,7 +24,11 @@ import {
   type ExpressSceneConfirmOptions,
 } from './ExpressSceneConfirmDialog'
 import { SceneImageFrame, type SceneImageFrameProps } from './SceneImageFrame'
-import { SceneBeatStage } from './scene-production/SceneBeatStage'
+import {
+  SceneBeatStage,
+  shotKindMarker,
+  type SceneBeatStageMarker,
+} from './scene-production/SceneBeatStage'
 import type { ExpressPhaseStatus, ExpressSceneStatus } from './SceneGallery'
 import {
   countStoryboardFrameStats,
@@ -1175,16 +1179,15 @@ export function SceneStoryboardFrameViewer({
                 items={visibleFrameSlots.map((slot) => {
                   const facts = frameFacts.find((entry) => entry.key === slot.key)
                   const rail = facts ? frameRailStatus(facts) : undefined
+                  const markers: SceneBeatStageMarker[] = []
+                  const kind = shotKindMarker(facts?.kind ?? slot.kind)
+                  if (kind) markers.push(kind)
+                  if (screeningPosterFrameKey === slot.key) markers.push('Poster')
+                  if (slot.frameRole === 'end') markers.push('End')
                   return {
                     id: slot.key,
                     beatNumber: slot.beatNumber,
-                    imageUrl: slot.displayImageUrl,
-                    caption:
-                      screeningPosterFrameKey === slot.key
-                        ? 'Poster'
-                        : slot.frameRole === 'end'
-                          ? 'End'
-                          : undefined,
+                    markers,
                     status: rail?.status,
                     statusLabel: rail?.label,
                     ariaLabel: slot.label || `Shot ${slot.beatNumber ?? ''}`,

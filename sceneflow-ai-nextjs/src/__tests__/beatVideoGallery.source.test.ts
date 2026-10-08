@@ -18,7 +18,10 @@ function expectScrollableBeatPanel(source: string, label: string) {
   expect(stage).toContain('max-h-[40vh]')
   expect(stage).toContain('lg:max-h-[min(72vh,40rem)]')
   expect(stage).toContain('overflow-y-auto')
-  expect(stage).toContain('grid grid-cols-2 content-start gap-2')
+  expect(stage).toContain('flex flex-col content-start gap-1')
+  expect(stage).toContain('verticalListSortingStrategy')
+  expect(stage).not.toContain('<img')
+  expect(stage).not.toContain('grid grid-cols-2')
   expect(source).toContain('sticky top-2')
   expect(source).not.toContain('absolute left-0 top-0 bottom-0')
   expect(source).not.toContain('ml-[calc(30%+0.75rem)]')
@@ -45,6 +48,34 @@ describe('Video tab inline clip preview', () => {
   it('scrolls beat cards in a panel beside a sticky preview', () => {
     expectScrollableBeatPanel(readSource(GALLERY), 'Shot clips')
     expectScrollableBeatPanel(readSource(FRAMES), 'Shot frames')
+  })
+
+  it('lists shots by number, type, and status without rail thumbnails', () => {
+    const gallery = readSource(GALLERY)
+    const frames = readSource(FRAMES)
+    const direction = readSource('src/components/vision/scene-production/SceneDirectionWorkbench.tsx')
+    const audio = readSource('src/components/vision/scene-production/SceneAudioWorkbench.tsx')
+    const consoleSrc = readSource(CONSOLE)
+
+    expect(gallery).toContain('shotKindMarker')
+    expect(gallery).not.toContain('imageUrl: clip.thumbnailUrl')
+    expect(gallery).not.toContain('TakeVersionThumb')
+    expect(gallery).toContain('v{index + 1}')
+    expect(gallery).toContain('Restore version')
+
+    expect(frames).toContain('shotKindMarker')
+    expect(frames).toContain("markers.push('Poster')")
+    expect(frames).toContain("markers.push('End')")
+
+    expect(direction).toContain('shotKindMarker(beat.kind)')
+    expect(direction).not.toContain('imageUrl:')
+
+    expect(audio).toContain("markers.push('SFX')")
+    expect(audio).toContain("markers.push('Music')")
+    expect(audio).toContain("markers.push('Excluded')")
+    expect(audio).not.toContain('imageUrl: beat.storyboardImageUrl')
+
+    expect(consoleSrc).toContain('kind: beat.kind')
   })
 
   it('opens Screening Room Video for the scene instead of SceneVideoPlayer', () => {
