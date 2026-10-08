@@ -76,8 +76,11 @@ export interface SceneBeatStageProps {
   className?: string
 }
 
-const RAIL_CLASS =
-  'w-full max-w-[280px] shrink-0 max-h-[40vh] cursor-grab overflow-y-auto overscroll-contain rounded-lg border border-slate-700/50 bg-slate-900/40 p-1.5 active:cursor-grabbing lg:w-[280px] lg:max-h-[min(72vh,40rem)] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded [&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:hover:bg-gray-500'
+const RAIL_PANEL_CLASS =
+  'flex w-full max-w-[280px] shrink-0 max-h-[40vh] flex-col rounded-lg border border-slate-600 bg-slate-950 lg:w-[280px] lg:max-h-[min(72vh,40rem)]'
+
+const RAIL_LIST_CLASS =
+  'min-h-0 flex-1 cursor-grab overflow-y-auto overscroll-contain px-1 pb-1 active:cursor-grabbing [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded [&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:hover:bg-gray-500'
 
 const THUMB_DRAG_THRESHOLD_PX = 6
 
@@ -161,17 +164,17 @@ function ShotRow({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       onClick={() => onSelect(item.id)}
       className={cn(
-        'flex w-full items-start gap-1.5 rounded border bg-slate-900 px-1.5 py-1 text-left',
+        'flex w-full items-center gap-2 border-b border-l-2 border-b-slate-800/80 px-2 py-1.5 text-left text-xs',
         selected
-          ? 'border-indigo-400 ring-2 ring-indigo-500/50'
-          : 'border-slate-700 hover:border-slate-500',
+          ? 'border-l-cyan-400 bg-slate-800/80'
+          : 'border-l-transparent hover:bg-slate-800/40',
         isDragging && 'z-10 opacity-80'
       )}
       {...(sortable && !disabled ? { ...attributes, ...listeners } : {})}
       aria-label={rowAriaLabel(item, markers)}
       aria-pressed={selected}
     >
-      <span className="mt-0.5 w-5 shrink-0 text-center text-[11px] font-semibold tabular-nums text-slate-100">
+      <span className="w-5 shrink-0 text-center text-xs font-semibold tabular-nums text-slate-300">
         {item.beatNumber ?? ''}
       </span>
       <span className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
@@ -188,7 +191,7 @@ function ShotRow({
         ))}
       </span>
       {(dot || statusLabel) && (
-        <span className="mt-0.5 flex max-w-[46%] shrink-0 items-center gap-1">
+        <span className="flex max-w-[46%] shrink-0 items-center gap-1">
           {dot && (
             <span
               className={cn('h-2 w-2 shrink-0 rounded-full', dot)}
@@ -197,7 +200,7 @@ function ShotRow({
           )}
           {statusLabel && (
             <span
-              className={cn('truncate text-[10px] leading-tight', statusTextClass(item.status))}
+              className={cn('truncate text-xs leading-tight', statusTextClass(item.status))}
               title={statusLabel}
             >
               {statusLabel}
@@ -314,7 +317,7 @@ export function SceneBeatStage({
   }
 
   const list = (
-    <div className="flex flex-col content-start gap-1">
+    <div className="flex flex-col content-start">
       {items.length === 0 ? (
         <p className="px-1 text-[10px] text-slate-500">Nothing matches these filters.</p>
       ) : (
@@ -333,20 +336,25 @@ export function SceneBeatStage({
   )
 
   const rail = (
-    <div
-      ref={railRef}
-      role="listbox"
-      aria-label={railLabel}
-      tabIndex={0}
-      className={RAIL_CLASS}
-      style={{ scrollbarWidth: 'thin', scrollbarColor: '#4b5563 #1f2937' }}
-      onKeyDown={onRailKeyDown}
-      onPointerDown={onPointerDown}
-      onClickCapture={onClickCapture}
-    >
-      <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
-        {list}
-      </SortableContext>
+    <div className={RAIL_PANEL_CLASS}>
+      <p className="px-2.5 pb-1.5 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+        Shots
+      </p>
+      <div
+        ref={railRef}
+        role="listbox"
+        aria-label={railLabel}
+        tabIndex={0}
+        className={RAIL_LIST_CLASS}
+        style={{ scrollbarWidth: 'thin', scrollbarColor: '#4b5563 #1f2937' }}
+        onKeyDown={onRailKeyDown}
+        onPointerDown={onPointerDown}
+        onClickCapture={onClickCapture}
+      >
+        <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+          {list}
+        </SortableContext>
+      </div>
     </div>
   )
 
