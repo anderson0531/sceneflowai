@@ -5,6 +5,7 @@ import {
   buildVoiceDesignCreateBody,
   isDesignedGeminiVoiceId,
   readDesignedVoiceId,
+  shortenVoiceDesignDescription,
   voicesToEvict,
   type StoredPromptedVoice,
 } from '@/lib/tts/geminiVoiceDesign'
@@ -132,6 +133,30 @@ export async function createDesignedGeminiVoice(args: {
   }
   if (!response.ok) {
     if (!detail) detail = await response.text().catch(() => '')
+    const shorter = shortenVoiceDesignDescription(description)
+    if (
+      response.status === 400 &&
+      /did not complete|rephras/i.test(detail) &&
+      shorter !== description
+    ) {
+      console.error('[Voice Design] prompt rejected, retrying shorter:', description.slice(0, 240))
+      response = await fetch(voicesCollectionUrl(), {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(
+          buildVoiceDesignCreateBody({
+            description: shorter,
+            displayName: args.displayName,
+            languageCode: args.languageCode,
+          })
+        ),
+      })
+      detail = ''
+    }
+  }
+  if (!response.ok) {
+    if (!detail) detail = await response.text().catch(() => '')
+    console.error('[Voice Design] prompt:', description.slice(0, 240))
     throw new Error(`Voice Design failed: HTTP ${response.status} ${detail.slice(0, 400)}`)
   }
   const payload = await response.json()

@@ -4,6 +4,7 @@ import {
   buildVoiceDesignCreateBody,
   composeVoiceDesignDescription,
   designedVoiceStyle,
+  shortenVoiceDesignDescription,
   isDesignedGeminiVoiceId,
   voicesToEvict,
 } from '@/lib/tts/geminiVoiceDesign'
@@ -19,12 +20,50 @@ describe('composeVoiceDesignDescription', () => {
       pace: 'measured',
       emotionalDefault: 'quiet authority',
     })
-    expect(description).toContain('late 40s male defense attorney')
-    expect(description).toContain('resonant baritone')
-    expect(description).toContain('neutral American accent')
-    expect(description).toContain('quiet authority')
-    expect(description.length).toBeLessThan(400)
+    expect(description).toBe(
+      'A late 40s male defense attorney with a resonant baritone voice and a neutral American accent, speaking at a measured pace with quiet authority.'
+    )
+    expect(description.length).toBeLessThanOrEqual(220)
+    expect(description).not.toContain('Baseline delivery')
     expect(description).not.toContain('wardrobe')
+  })
+
+  it('uses An before a vowel and keeps only the role before a slash', () => {
+    const description = composeVoiceDesignDescription({
+      role: 'primary guide / narrator who uncovers the whole conspiracy',
+      gender: 'male',
+      apparentAge: 'early 60s',
+      timbre: 'resonant baritone',
+    })
+    expect(description.startsWith('An early 60s male primary guide')).toBe(true)
+    expect(description).toContain('resonant baritone')
+    expect(description).not.toContain('/')
+    expect(description).not.toContain('conspiracy')
+  })
+
+  it('falls back to the first vocal clause and drops the attribute tail', () => {
+    const description = composeVoiceDesignDescription({
+      voiceDescription:
+        'Intelligent male voice with a measured pace. Vocal qualities: resonant baritone timbre, low-mid pitch.',
+    })
+    expect(description).toBe('Intelligent male voice with a measured pace.')
+    expect(description).not.toContain('Vocal qualities')
+  })
+
+  it('drops the speaking clause for a rephrase retry', () => {
+    const full = composeVoiceDesignDescription({
+      role: 'guide',
+      gender: 'male',
+      apparentAge: 'late 50s',
+      timbre: 'resonant baritone',
+      accent: 'neutral American',
+      pace: 'measured',
+    })
+    const shorter = shortenVoiceDesignDescription(full)
+    expect(shorter).toBe(
+      'A late 50s male guide with a resonant baritone voice and a neutral American accent.'
+    )
+    expect(shortenVoiceDesignDescription(shorter)).toBe(shorter)
   })
 })
 
