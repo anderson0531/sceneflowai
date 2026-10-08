@@ -35,7 +35,7 @@ import {
   shouldSkipGoogleTtsForBudget,
 } from '../../../../lib/tts/googleTtsTimeBudget'
 import { buildGeminiTtsPrompt } from '../../../../lib/tts/geminiTtsPrompt'
-import { synthesizeDesignedGeminiVoiceMp3 } from '../../../../lib/tts/geminiDesignedVoiceTts'
+import { synthesizeDesignedGeminiVoiceWav } from '../../../../lib/tts/geminiDesignedVoiceTts'
 import {
   designedVoiceStyle,
   isDesignedGeminiVoiceId,
@@ -436,11 +436,16 @@ export async function POST(req: NextRequest) {
       usedVoiceId = synthesis.voiceId
       didFallback = synthesis.fallback ?? false
 
-      const blob = await put(blobPathForState(stateFor(usedVoiceId, usedProvider)), audioBuffer, {
-        access: 'public',
-        contentType: 'audio/mpeg',
-        addRandomSuffix: false, // Ensures consistent file extension
-      })
+      const isWav = audioBuffer.length >= 4 && audioBuffer.subarray(0, 4).toString('ascii') === 'RIFF'
+      const blob = await put(
+        blobPathForState(stateFor(usedVoiceId, usedProvider)).replace(/\.mp3$/, isWav ? '.wav' : '.mp3'),
+        audioBuffer,
+        {
+          access: 'public',
+          contentType: isWav ? 'audio/wav' : 'audio/mpeg',
+          addRandomSuffix: false,
+        }
+      )
       blobUrl = blob.url
       console.log(`[Scene Audio] Uploaded to Vercel Blob:`, blob.url)
     }
@@ -845,7 +850,7 @@ async function generateGoogleAudio(
     if (!spoken.trim()) {
       throw new Error('Text is empty after removing bracketed tags')
     }
-    return synthesizeDesignedGeminiVoiceMp3({
+    return synthesizeDesignedGeminiVoiceWav({
       text: spoken,
       voiceId: voiceConfig.voiceId,
       style: designedVoiceStyle(deliveryCues),

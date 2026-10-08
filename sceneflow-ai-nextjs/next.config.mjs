@@ -39,7 +39,7 @@ const nextConfig = {
   reactStrictMode: true,
   serverExternalPackages: ["ffmpeg-static", "ffprobe-static", "web-push"],
   outputFileTracingIncludes: {
-    "/api/sfx/generate-veo-audio": ["./node_modules/ffmpeg-static/ffmpeg"],
+    "/api/sfx/extract-clip-audio": ["./node_modules/ffmpeg-static/ffmpeg"],
     "/api/tts/google/voice-clone": ["./node_modules/ffmpeg-static/ffmpeg"],
   },
   // Hero MP4/WebM in public/ (or leftover local encodes) must not land in
@@ -52,6 +52,16 @@ const nextConfig = {
       "./public/videos/**",
       "**/*.mp4",
       "**/*.webm",
+    ],
+    // Scene dialogue is already at the function size ceiling. Designed voices
+    // return WAV, so this route must not ship the ffmpeg binary.
+    "/api/vision/generate-scene-audio": [
+      "node_modules/ffmpeg-static/**",
+      "./node_modules/ffmpeg-static/**",
+    ],
+    "/api/tts/google": [
+      "node_modules/ffmpeg-static/**",
+      "./node_modules/ffmpeg-static/**",
     ],
   },
   typescript: {

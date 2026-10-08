@@ -8,7 +8,6 @@ import {
   voicesToEvict,
   type StoredPromptedVoice,
 } from '@/lib/tts/geminiVoiceDesign'
-import { transcodeWavToMp3 } from '@/lib/tts/transcodeWavToMp3'
 
 const replacedVoiceIds = new Map<string, string>()
 
@@ -177,7 +176,11 @@ function voiceMissing(status: number, detail: string): boolean {
   return /not found|NOT_FOUND|voice_/i.test(detail) && status === 400
 }
 
-export async function synthesizeDesignedGeminiVoiceMp3(args: {
+/**
+ * Gemini 3.8 returns a WAV. This route leaves it as WAV so scene-audio does
+ * not trace the ffmpeg binary into an already full Vercel function.
+ */
+export async function synthesizeDesignedGeminiVoiceWav(args: {
   text: string
   voiceId: string
   style?: string
@@ -206,5 +209,5 @@ export async function synthesizeDesignedGeminiVoiceMp3(args: {
       `Designed voice TTS failed: HTTP ${result.status} ${result.detail.slice(0, 400)}`
     )
   }
-  return transcodeWavToMp3(result.audio)
+  return result.audio
 }

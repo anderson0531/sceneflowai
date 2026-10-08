@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { chunkNarrationText } from '@/lib/blueprint/sectionNarrationText'
 import { synthesizeGeminiFlashMp3, isGeminiTtsConfigured } from '@/lib/tts/geminiFlashTts'
-import { synthesizeDesignedGeminiVoiceMp3 } from '@/lib/tts/geminiDesignedVoiceTts'
+import { synthesizeDesignedGeminiVoiceWav } from '@/lib/tts/geminiDesignedVoiceTts'
 import { isDesignedGeminiVoiceId } from '@/lib/tts/geminiVoiceDesign'
 import { NARRATION_CHUNK_BYTES } from '@/lib/tts/blueprintTtsConstants'
 import type { GeminiTtsAudioType } from '@/lib/tts/geminiTtsPrompt'
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     const voice = typeof voiceId === 'string' && voiceId.trim() ? voiceId.trim() : 'gemini-Kore'
     if (isDesignedGeminiVoiceId(voice)) {
-      const designed = await synthesizeDesignedGeminiVoiceMp3({
+      const designed = await synthesizeDesignedGeminiVoiceWav({
         text: cleanText,
         voiceId: voice,
         designPrompt: typeof designPrompt === 'string' ? designPrompt : undefined,
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       return new Response(new Uint8Array(designed), {
         status: 200,
         headers: {
-          'Content-Type': 'audio/mpeg',
+          'Content-Type': 'audio/wav',
           'Cache-Control': 'no-store',
         },
       })
