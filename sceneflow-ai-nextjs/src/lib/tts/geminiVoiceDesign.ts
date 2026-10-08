@@ -8,6 +8,9 @@
 
 export const DESIGNED_VOICE_TTS_MODEL = 'gemini-3.8-flash-tts'
 
+/** Vertex CreateVoice enum. The string "prompted" is rejected as an unsupported type. */
+export const DESIGNED_VOICE_TYPE = 'VOICE_TYPE_PROMPTED'
+
 /** Stay under Google's 200 stored voices per project. */
 export const DESIGNED_VOICE_PROJECT_CAP = 180
 
@@ -212,11 +215,24 @@ export function buildVoiceDesignCreateBody(args: {
     store: true,
     voice: {
       displayName: args.displayName.slice(0, 80),
-      type: 'prompted',
+      type: DESIGNED_VOICE_TYPE,
       languageCode: args.languageCode?.trim() || 'en-US',
       prompted: { input: args.description.trim() },
     },
   }
+}
+
+/** Full persona, then the shorter retry. Both use the Vertex voice type. */
+export function voiceDesignCreateAttempts(args: {
+  description: string
+  displayName: string
+  languageCode?: string
+}): Array<Record<string, unknown>> {
+  const description = args.description.trim()
+  const full = buildVoiceDesignCreateBody({ ...args, description })
+  const shorter = shortenVoiceDesignDescription(description)
+  if (!shorter || shorter === description) return [full]
+  return [full, buildVoiceDesignCreateBody({ ...args, description: shorter })]
 }
 
 export function buildDesignedVoiceSynthesisBody(args: {

@@ -74,7 +74,7 @@
     "assetSceneDirection": "اتجاه المشهد",
     "assetBeats": "{count, plural, one {# shot} other {# shots}}",
     "assetMusic": "موسيقى",
-    "reference": "مرجع",
+    "reference": "Continuity",
     "referenceTooltip": "افتح Continuity Library - طاقم التمثيل والمواقع والدعائم",
     "referenceNeedsDirection": "{count, plural, one {# scene needs updated direction before references} other {# scenes need updated direction before references}}",
     "publish": "نشر",

@@ -85,8 +85,9 @@ describe('parseCastingBriefDirectorResponse', () => {
 describe('CharacterLibrary casting director UI', () => {
   it('uses a dictation casting prompt instead of the old textarea editor', () => {
     const source = readFileSync(characterLibraryPath, 'utf8')
-    expect(source).toContain('Direct casting')
     expect(source).toContain('castingDirectorText')
+    expect(source).not.toContain('Direct casting')
+    expect(source).not.toContain('Edit Profile')
     expect(source).toContain('requestCastingBrief')
     expect(source).toContain("from \"@/lib/character/requestCastingBrief\"")
     expect(readFileSync(requestCastingBriefPath, 'utf8')).toContain(

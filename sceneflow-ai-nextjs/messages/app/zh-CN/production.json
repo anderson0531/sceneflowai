@@ -74,7 +74,7 @@
     "assetSceneDirection": "场景方向",
     "assetBeats": "{count, plural, one {# shot} other {# shots}}",
     "assetMusic": "音乐",
-    "reference": "参考",
+    "reference": "Continuity",
     "referenceTooltip": "打开 Continuity Library — 演员、地点和道具",
     "referenceNeedsDirection": "{count, plural, one {# scene needs updated direction before references} other {# scenes need updated direction before references}}",
     "publish": "发布",

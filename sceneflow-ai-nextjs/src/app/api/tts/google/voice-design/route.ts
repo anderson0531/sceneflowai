@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
       displayName?: string
       languageCode?: string
       retainVoiceIds?: string[]
+      replaceVoiceId?: string
     }
     const description = body.description?.trim() ?? ''
     if (description.length < 12) {
@@ -30,6 +31,7 @@ export async function POST(request: NextRequest) {
       displayName: body.displayName?.trim() || 'SceneFlow character',
       languageCode: body.languageCode,
       retainVoiceIds: Array.isArray(body.retainVoiceIds) ? body.retainVoiceIds : [],
+      replaceVoiceId: typeof body.replaceVoiceId === 'string' ? body.replaceVoiceId : undefined,
     })
 
     return NextResponse.json({

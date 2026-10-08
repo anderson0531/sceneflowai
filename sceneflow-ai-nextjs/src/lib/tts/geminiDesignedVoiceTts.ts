@@ -1,11 +1,11 @@
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
 import {
   DESIGNED_VOICE_TTS_MODEL,
+  DESIGNED_VOICE_TYPE,
   buildDesignedVoiceSynthesisBody,
-  buildVoiceDesignCreateBody,
   isDesignedGeminiVoiceId,
   readDesignedVoiceId,
-  shortenVoiceDesignDescription,
+  voiceDesignCreateAttempts,
   voicesToEvict,
   type StoredPromptedVoice,
 } from '@/lib/tts/geminiVoiceDesign'
@@ -43,7 +43,7 @@ async function listPromptedVoices(headers: Record<string, string>): Promise<Stor
   for (let page = 0; page < 8; page++) {
     const url = new URL(voicesCollectionUrl())
     url.searchParams.set('pageSize', '50')
-    url.searchParams.append('type', 'prompted')
+    url.searchParams.append('type', DESIGNED_VOICE_TYPE)
     if (pageToken) url.searchParams.set('pageToken', pageToken)
     const response = await fetch(url, { headers })
     if (!response.ok) {
@@ -88,80 +88,134 @@ export async function evictOldestDesignedVoices(retainIds: Iterable<string>): Pr
   }
 }
 
+function promptRejected(status: number, detail: string): boolean {
+  return status === 400 && /did not complete|rephras/i.test(detail)
+}
+
+function voiceLibraryFull(status: number, detail: string): boolean {
+  return (
+    status === 429 ||
+    /RESOURCE_EXHAUSTED|quota exceeded|maximum active stored voice/i.test(detail)
+  )
+}
+
+async function postVoice(
+  body: Record<string, unknown>,
+  headers: Record<string, string>
+): Promise<{ ok: boolean; status: number; detail: string; payload: unknown }> {
+  const response = await fetch(voicesCollectionUrl(), {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  })
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '')
+    return { ok: false, status: response.status, detail, payload: null }
+  }
+  return { ok: true, status: response.status, detail: '', payload: await response.json() }
+}
+
+async function createFromAttempts(args: {
+  description: string
+  displayName: string
+  languageCode?: string
+  headers: Record<string, string>
+}): Promise<{ ok: boolean; status: number; detail: string; payload: unknown }> {
+  const attempts = voiceDesignCreateAttempts({
+    description: args.description,
+    displayName: args.displayName,
+    languageCode: args.languageCode,
+  })
+  let result = await postVoice(attempts[0], args.headers)
+  const shorter = attempts[1]
+  if (!result.ok && shorter && promptRejected(result.status, result.detail)) {
+    console.error('[Voice Design] prompt rejected, retrying shorter:', args.description.slice(0, 240))
+    result = await postVoice(shorter, args.headers)
+  }
+  return result
+}
+
+/** Free one stored voice so a create can proceed at the project cap. */
+async function freeOneVoiceSlot(
+  headers: Record<string, string>,
+  replaceVoiceId: string | undefined,
+  retainVoiceIds: string[]
+): Promise<boolean> {
+  const retain = new Set(retainVoiceIds)
+  if (
+    replaceVoiceId &&
+    isDesignedGeminiVoiceId(replaceVoiceId) &&
+    !retain.has(replaceVoiceId)
+  ) {
+    await deleteVoice(replaceVoiceId, headers)
+    return true
+  }
+  let voices: StoredPromptedVoice[] = []
+  try {
+    voices = await listPromptedVoices(headers)
+  } catch (error) {
+    console.warn('[Voice Design] Could not list voices to free a slot:', error)
+    return false
+  }
+  const unretained = voices.filter(
+    (voice) => isDesignedGeminiVoiceId(voice.id) && !retain.has(voice.id)
+  )
+  const [oldest] = voicesToEvict(voices, retainVoiceIds, unretained.length)
+  if (!oldest) return false
+  await deleteVoice(oldest, headers)
+  return true
+}
+
 export async function createDesignedGeminiVoice(args: {
   description: string
   displayName: string
   languageCode?: string
   retainVoiceIds?: string[]
+  /** Previous designed voice for this character. Deleted after a replacement is stored. */
+  replaceVoiceId?: string
 }): Promise<{ voiceId: string }> {
   const description = args.description.trim()
   if (description.length < 12) {
     throw new Error('Voice Design needs a description of the character’s voice')
   }
-  await evictOldestDesignedVoices(args.retainVoiceIds ?? [])
+  const retainVoiceIds = args.retainVoiceIds ?? []
+  await evictOldestDesignedVoices(retainVoiceIds)
   const headers = await vertexHeaders()
-  const body = buildVoiceDesignCreateBody({
+  let result = await createFromAttempts({
     description,
     displayName: args.displayName,
     languageCode: args.languageCode,
-  })
-  let response = await fetch(voicesCollectionUrl(), {
-    method: 'POST',
     headers,
-    body: JSON.stringify(body),
   })
-  let detail = ''
-  if (!response.ok) {
-    detail = await response.text().catch(() => '')
-    const voice = body.voice
-    if (
-      response.status === 400 &&
-      detail.toLowerCase().includes('type') &&
-      voice &&
-      typeof voice === 'object'
-    ) {
-      response = await fetch(voicesCollectionUrl(), {
-        method: 'POST',
+  if (!result.ok && voiceLibraryFull(result.status, result.detail)) {
+    const freed = await freeOneVoiceSlot(headers, args.replaceVoiceId, retainVoiceIds)
+    if (freed) {
+      result = await createFromAttempts({
+        description,
+        displayName: args.displayName,
+        languageCode: args.languageCode,
         headers,
-        body: JSON.stringify({
-          ...body,
-          voice: { ...voice, type: 'VOICE_TYPE_PROMPTED' },
-        }),
       })
-      detail = ''
     }
   }
-  if (!response.ok) {
-    if (!detail) detail = await response.text().catch(() => '')
-    const shorter = shortenVoiceDesignDescription(description)
-    if (
-      response.status === 400 &&
-      /did not complete|rephras/i.test(detail) &&
-      shorter !== description
-    ) {
-      console.error('[Voice Design] prompt rejected, retrying shorter:', description.slice(0, 240))
-      response = await fetch(voicesCollectionUrl(), {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(
-          buildVoiceDesignCreateBody({
-            description: shorter,
-            displayName: args.displayName,
-            languageCode: args.languageCode,
-          })
-        ),
-      })
-      detail = ''
+  if (!result.ok) {
+    if (voiceLibraryFull(result.status, result.detail)) {
+      throw new Error('The voice library is full.')
     }
-  }
-  if (!response.ok) {
-    if (!detail) detail = await response.text().catch(() => '')
     console.error('[Voice Design] prompt:', description.slice(0, 240))
-    throw new Error(`Voice Design failed: HTTP ${response.status} ${detail.slice(0, 400)}`)
+    throw new Error(`Voice Design failed: HTTP ${result.status} ${result.detail.slice(0, 400)}`)
   }
-  const payload = await response.json()
-  const voiceId = readDesignedVoiceId(payload)
+  const voiceId = readDesignedVoiceId(result.payload)
   if (!voiceId) throw new Error('Voice Design did not return a voice id')
+  const previous = args.replaceVoiceId?.trim()
+  if (
+    previous &&
+    previous !== voiceId &&
+    isDesignedGeminiVoiceId(previous) &&
+    !retainVoiceIds.includes(previous)
+  ) {
+    await deleteVoice(previous, headers)
+  }
   return { voiceId }
 }
 

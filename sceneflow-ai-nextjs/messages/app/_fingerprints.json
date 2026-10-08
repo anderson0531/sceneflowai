@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-08T08:32:48.472Z",
+  "generatedAt": "2026-10-08T09:23:04.498Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -804,6 +804,7 @@
       "studio.hasVoice": "7765570cd0ed9848",
       "studio.budgetTitle": "18bd20ffc878e216",
       "studio.setBudget": "291018bac25f6825",
+      "studio.productionPlan": "2f689f73ae7f35ca",
       "studio.budgetAmount": "2757d8eeb4cbfe19",
       "studio.budgetAmountNoDate": "e446f29f30c4cc15",
       "studio.importTranslation": "a51681dd09231980",
@@ -824,7 +825,7 @@
       "studio.assetSceneDirection": "29d4081ff70c7d20",
       "studio.assetBeats": "01fc29d4765df991",
       "studio.assetMusic": "6eb00b4b2614a144",
-      "studio.reference": "71bf90935fc231d2",
+      "studio.reference": "8971f58f9ccffd37",
       "studio.referenceTooltip": "434be51b63c74a35",
       "studio.referenceNeedsDirection": "c66de683005e36bd",
       "studio.publish": "859390eb495b2ead",
