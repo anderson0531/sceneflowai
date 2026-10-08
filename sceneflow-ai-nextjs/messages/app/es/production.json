@@ -75,7 +75,7 @@
     "assetBeats": "{count, plural, one {# shot} other {# shots}}",
     "assetMusic": "Música",
     "reference": "Referencia",
-    "referenceTooltip": "Abrir Reference Library: reparto, ubicaciones y accesorios",
+    "referenceTooltip": "Abrir Continuity Library: reparto, ubicaciones y accesorios",
     "referenceNeedsDirection": "{count, plural, one {# scene needs updated direction before references} other {# scenes need updated direction before references}}",
     "publish": "Publicar",
     "publishTooltip": "Biblioteca de publicaciones abierta: transmisiones, proyecciones, promociones, YouTube",
@@ -962,7 +962,7 @@
       "commonOptimizations": "Optimizaciones comunes"
     },
     "referenceLibrary": {
-      "title": "Reference Library"
+      "title": "Continuity Library"
     },
     "beatReferences": {
       "title": "Referencias de reseñas — Escena {number}",

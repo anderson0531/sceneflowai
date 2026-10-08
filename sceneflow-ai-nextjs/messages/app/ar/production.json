@@ -75,7 +75,7 @@
     "assetBeats": "{count, plural, one {# shot} other {# shots}}",
     "assetMusic": "موسيقى",
     "reference": "مرجع",
-    "referenceTooltip": "افتح Reference Library - طاقم التمثيل والمواقع والدعائم",
+    "referenceTooltip": "افتح Continuity Library - طاقم التمثيل والمواقع والدعائم",
     "referenceNeedsDirection": "{count, plural, one {# scene needs updated direction before references} other {# scenes need updated direction before references}}",
     "publish": "نشر",
     "publishTooltip": "مكتبة النشر المفتوحة — التدفقات، والعروض، والعروض الترويجية، ويوتيوب",
@@ -962,7 +962,7 @@
       "applyRecommendations": "تطبيق التوصيات"
     },
     "referenceLibrary": {
-      "title": "Reference Library"
+      "title": "Continuity Library"
     },
     "beatReferences": {
       "title": "مراجعة المراجع — المشهد {number}",

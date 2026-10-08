@@ -1,10 +1,11 @@
 'use client'
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen, Wand2, Loader2, Upload, Copy, CheckCircle2, AlertCircle, LayoutGrid, MapPin, Zap, Settings2, Download, Share2, Clapperboard } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, Wand2, Loader2, Upload, Copy, CheckCircle2, AlertCircle, LayoutGrid, MapPin, Zap, Settings2, Download, Share2, Clapperboard } from 'lucide-react'
 import { ReferenceTransferDialog } from '@/components/series/ReferenceTransferDialog'
 import type { ReferenceTransferDirection } from '@/types/series'
 import { toast } from 'sonner'
@@ -37,7 +38,7 @@ import { ImageEditModal } from './ImageEditModal'
 import { ReferenceStillDirectorDialog } from './ReferenceStillDirectorDialog'
 import { seedObjectDirectorPrompt } from '@/lib/intelligence/reference-still-director-fallback'
 import type { ReferenceExpressScope } from '@/lib/vision/referenceExpress/types'
-import { ReadinessProgress, calculateProductionReadiness, ProductionReadinessState } from '@/components/ui/StatusBadge'
+import { LibraryAgentConfirmDialog } from './LibraryAgentConfirmDialog'
 import { SceneReferenceCard } from './SceneReferenceCard'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { DetailedSceneDirection } from '@/types/scene-direction'
@@ -1163,83 +1164,6 @@ function ObjectReferencePromptDialog({
   )
 }
 
-/**
- * Production Readiness Section
- * Shows progress indicators for voice assignment, scene images, and audio generation
- */
-function ProductionReadinessSection({ readiness }: { readiness: ProductionReadinessState }) {
-  const [isExpanded, setIsExpanded] = useState(false)
-  
-  // Only show if there are items to track
-  const hasData = readiness.totalCharacters > 0 || readiness.totalScenes > 0
-  if (!hasData) return null
-  
-  return (
-    <div className="mb-3 bg-slate-800/30 border border-slate-700/50 rounded-lg overflow-hidden">
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-3 py-2 flex items-center justify-between text-left hover:bg-slate-800/50 transition-colors"
-      >
-        <span className="text-xs font-medium text-gray-400 flex items-center gap-2">
-          <Film className="w-3.5 h-3.5 text-purple-400" />
-          Production Readiness
-        </span>
-        {isExpanded ? (
-          <ChevronUp className="w-4 h-4 text-gray-500" />
-        ) : (
-          <ChevronDown className="w-4 h-4 text-gray-500" />
-        )}
-      </button>
-      
-      {isExpanded && (
-        <div className="px-3 pb-3 space-y-3">
-          {/* Voice Assignment Progress */}
-          {readiness.totalCharacters > 0 && (
-            <ReadinessProgress
-              label="Character voices"
-              current={readiness.voicesAssigned}
-              total={readiness.totalCharacters}
-              hint={readiness.charactersMissingVoices.length > 0 
-                ? `Missing: ${readiness.charactersMissingVoices.slice(0, 2).join(', ')}${readiness.charactersMissingVoices.length > 2 ? '...' : ''}`
-                : undefined
-              }
-            />
-          )}
-          
-          {/* Scene Direction Progress */}
-          {readiness.totalScenes > 0 && (
-            <ReadinessProgress
-              label="Scene direction"
-              current={readiness.scenesWithDirection}
-              total={readiness.totalScenes}
-              hint={readiness.scenesWithDirection === 0 ? 'Generate scene directions first' : undefined}
-            />
-          )}
-          
-          {/* Scene Images Progress */}
-          {readiness.totalScenes > 0 && (
-            <ReadinessProgress
-              label="Scene images"
-              current={readiness.scenesWithImages}
-              total={readiness.totalScenes}
-            />
-          )}
-          
-          {/* Audio Generation Progress */}
-          {readiness.totalScenes > 0 && (
-            <ReadinessProgress
-              label="Audio generated"
-              current={readiness.scenesWithAudio}
-              total={readiness.totalScenes}
-              hint={!readiness.isAudioReady ? 'Assign all voices first' : undefined}
-            />
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
 export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   const {
     projectId,
@@ -1287,8 +1211,9 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onUpdateReferenceImage,
     onSaveObjectPrompt,
     onEditCharacterImage,
-    showProductionReadiness = true,
     allScenes = [],
+    duplicateCastCount = 0,
+    onMergeDuplicateCast,
     // Scene reference image management props (new unified system)
     onGenerateSceneReferenceImage,
     onUploadSceneReferenceImage,
@@ -1323,6 +1248,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   } = props
 
   const splitLayout = layout === 'dialog'
+  const tLibrary = useTranslations('production.foundation.referenceLibrary')
+  const tLibraryAgent = useTranslations('production.libraryAgent')
 
   const [transferOpen, setTransferOpen] = useState(false)
   const [transferDirection, setTransferDirection] =
@@ -1364,19 +1291,12 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     }
   }, [allScenes])
 
-  // Calculate production readiness
-  const productionReadiness = useMemo(() => {
-    if (!showProductionReadiness) return null
-    return calculateProductionReadiness(
-      characters.map(c => ({
-        name: c.name || '',
-        type: c.type,
-        voiceConfig: c.voiceConfig,
-        referenceImageUrl: c.referenceImage
-      })),
-      allScenes
-    )
-  }, [characters, allScenes, showProductionReadiness])
+  const voiceChip = useMemo(() => {
+    const speaking = characters.filter((character) => character.type !== 'narrator')
+    const total = speaking.length
+    const assigned = speaking.filter((character) => character.voiceConfig).length
+    return { total, assigned, ready: total === 0 || assigned === total }
+  }, [characters])
 
   const [dialogType, setDialogType] = useState<VisualReferenceType | null>(null)
   const [isDialogOpen, setDialogOpen] = useState(false)
@@ -1631,7 +1551,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
       setPendingKindAgentRun(pending)
       return
     }
-    void onExpressGenerateReferences()
+    setReferenceExpressDialogOpen(true)
   }, [
     libraryRequiredActions,
     onExpressGenerateReferences,
@@ -1723,16 +1643,19 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
       <TooltipProvider delayDuration={300}>
       <div className={`flex flex-col flex-1 min-h-0 ${layout === 'dialog' ? 'h-full' : ''}`}>
         {/* Title / toolbar */}
-        <div className={`flex flex-col gap-2 flex-shrink-0 ${hideTitle ? 'py-2 mb-2' : 'py-3 mb-2'}`}>
+        <div className="flex flex-col gap-2 flex-shrink-0 pb-2 pr-8">
           <div className="flex items-center gap-2 flex-wrap">
-            {!hideTitle && (
-              <>
-                <BookOpen className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                <h4 className="font-bold text-xl tracking-tight text-gray-900 dark:text-white leading-none">
-                  Reference Library
-                </h4>
-              </>
-            )}
+            {layout === 'dialog' ? (
+              <DialogHeader className="flex-row items-center gap-2 space-y-0 p-0 text-left">
+                <DialogTitle className="text-lg font-bold text-white leading-none">
+                  {tLibrary('title')}
+                </DialogTitle>
+              </DialogHeader>
+            ) : !hideTitle ? (
+              <h4 className="font-bold text-lg tracking-tight text-gray-900 dark:text-white leading-none">
+                {tLibrary('title')}
+              </h4>
+            ) : null}
             {seriesId && seriesTitle ? (
               <span
                 className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[160px]"
@@ -1742,7 +1665,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               </span>
             ) : null}
             <div className="ml-auto flex items-center gap-2 flex-shrink-0">
-              {onExpressGenerateReferences && referencesExpressStats.total > 0 && (
+              {onExpressGenerateReferences && (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -1750,42 +1673,47 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                       size="sm"
                       onClick={() => setReferenceExpressDialogOpen(true)}
                       disabled={isExpressGeneratingReferences}
-                      className="h-7 text-xs relative overflow-hidden bg-gradient-to-r from-indigo-500/15 to-purple-500/15 border-indigo-500/40 hover:border-indigo-500/60"
+                      title={tLibraryAgent('tooltip')}
+                      className={`h-7 text-xs font-medium ${
+                        referencesExpressStats.total > 0
+                          ? 'bg-amber-500 text-zinc-950 border-amber-400 hover:bg-amber-400 hover:border-amber-300'
+                          : ''
+                      }`}
                     >
                       {isExpressGeneratingReferences ? (
-                        <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin text-indigo-300" />
+                        <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
                       ) : (
-                        <Zap className="w-3.5 h-3.5 mr-1 text-indigo-300" />
+                        <Zap className="w-3.5 h-3.5 mr-1" />
                       )}
                       {isExpressGeneratingReferences
                         ? 'Generating…'
-                        : `Library Agent (${referencesExpressStats.total})`}
+                        : referencesExpressStats.total > 0
+                          ? `Library Agent (${referencesExpressStats.total})`
+                          : 'Library Agent'}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs text-xs">
-                    Generate missing reference images: {referencesExpressStats.cast} cast,{' '}
-                    {referencesExpressStats.locations} locations, {referencesExpressStats.props} objects
+                    {tLibraryAgent('tooltip')}
                   </TooltipContent>
                 </Tooltip>
               )}
-              {productionReadiness && (
+              {voiceChip.total > 0 && (
                 <span
                   className={`text-xs px-2 py-0.5 rounded-full ${
-                    productionReadiness.isAudioReady
+                    voiceChip.ready
                       ? 'bg-green-500/20 text-green-400 border border-green-500/30'
                       : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                   }`}
                 >
-                  {productionReadiness.isAudioReady ? (
+                  {voiceChip.ready ? (
                     <span className="flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3" />
-                      Ready
+                      Voices ready
                     </span>
                   ) : (
                     <span className="flex items-center gap-1">
                       <AlertCircle className="w-3 h-3" />
-                      {productionReadiness.totalCharacters - productionReadiness.voicesAssigned} voices
-                      needed
+                      Voices {voiceChip.assigned}/{voiceChip.total}
                     </span>
                   )}
                 </span>
@@ -1797,11 +1725,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               <button
                 type="button"
                 onClick={() => openTransfer('series_to_project')}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
-                  seriesOutOfSync
-                    ? 'border-amber-500/50 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20'
-                    : 'border-cyan-500/40 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20'
-                }`}
+                className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium border border-zinc-600 text-zinc-200 hover:bg-zinc-800 transition-colors"
               >
                 {seriesOutOfSync ? (
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
@@ -1812,7 +1736,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               <button
                 type="button"
                 onClick={() => openTransfer('project_to_series')}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20 transition-colors"
+                className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium border border-zinc-600 text-zinc-200 hover:bg-zinc-800 transition-colors"
               >
                 <Share2 className="w-3.5 h-3.5" />
                 Share to series
@@ -1826,13 +1750,6 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
           ) : null}
         </div>
 
-        {/* Production Readiness Section - Collapsible */}
-        {showProductionReadiness && productionReadiness && productionReadiness.totalScenes > 0 && (
-          <div className="flex-shrink-0">
-            <ProductionReadinessSection readiness={productionReadiness} />
-          </div>
-        )}
-        
         <ReferenceLibraryNextActionBanner
           summary={libraryRequiredActions}
           onRun={handleRunPrimaryLibraryAction}
@@ -1865,11 +1782,19 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
           }
         />
         
-        {/* Tab Content - independent vertical scroll */}
-        <div data-vision-scroll-panel className="flex-1 overflow-y-auto min-h-0 space-y-3">
+        {/* Tab Content — cast name tabs stay put; the card scrolls */}
+        <div
+          data-vision-scroll-panel
+          className={
+            activeReferenceTab === 'cast' && layout === 'dialog'
+              ? 'flex-1 min-h-0 flex flex-col overflow-hidden gap-3'
+              : 'flex-1 overflow-y-auto min-h-0 space-y-3'
+          }
+        >
           {/* Cast Tab Content */}
           {activeReferenceTab === 'cast' && (
             <>
+            <div className="shrink-0">
             <ReferenceLibraryScopePanel
               projectId={projectId}
               seriesId={seriesId}
@@ -1877,6 +1802,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               linkedAssetIds={linkedAssetIds}
               onAddFromLibrary={handleAddCharacterFromLibrary}
             />
+            </div>
             <CharacterLibrary
               projectId={projectId}
               characters={characters}
@@ -1895,6 +1821,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               onApplyWardrobeSyncDiffs={onApplyWardrobeSyncDiffs}
               onAddCharacter={onAddCharacter}
               onRemoveCharacter={onRemoveCharacter}
+              duplicateCastCount={duplicateCastCount}
+              onMergeDuplicateCast={onMergeDuplicateCast}
               onEditCharacterImage={handleEditCharacterImage}
               voiceAssignmentProvider="google"
               ttsProvider={ttsProvider}
@@ -2163,49 +2091,21 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
         />
       )}
 
-      <Dialog open={referenceExpressDialogOpen} onOpenChange={setReferenceExpressDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Library Agent</DialogTitle>
-            <DialogDescription>
-              Batch-generate {referencesExpressStats.total} missing reference image
-              {referencesExpressStats.total === 1 ? '' : 's'}:
-            </DialogDescription>
-          </DialogHeader>
-          <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1 py-2">
-            {referencesExpressStats.cast > 0 && (
-              <li>• {referencesExpressStats.cast} cast character{referencesExpressStats.cast === 1 ? '' : 's'}</li>
-            )}
-            {referencesExpressStats.locations > 0 && (
-              <li>• {referencesExpressStats.locations} location{referencesExpressStats.locations === 1 ? '' : 's'}</li>
-            )}
-            {referencesExpressStats.props > 0 && (
-              <li>• {referencesExpressStats.props} object{referencesExpressStats.props === 1 ? '' : 's'}</li>
-            )}
-          </ul>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setReferenceExpressDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={async () => {
-                setReferenceExpressDialogOpen(false)
-                if (!onExpressGenerateReferences) return
-                try {
-                  await onExpressGenerateReferences()
-                } catch (err) {
-                  console.error('[VisionReferencesSidebar] Reference Express failed:', err)
-                }
-              }}
-              disabled={isExpressGeneratingReferences}
-              className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600"
-            >
-              <Zap className="w-4 h-4 mr-1" />
-              Library Agent ({referencesExpressStats.total})
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <LibraryAgentConfirmDialog
+        open={referenceExpressDialogOpen}
+        onOpenChange={setReferenceExpressDialogOpen}
+        characters={characters}
+        locations={locationReferences}
+        objects={objectReferences}
+        isRunning={isExpressGeneratingReferences}
+        onConfirm={(itemKeys) => {
+          setReferenceExpressDialogOpen(false)
+          if (!onExpressGenerateReferences || itemKeys.length === 0) return
+          void onExpressGenerateReferences({ itemKeys }).catch((err) => {
+            console.error('[VisionReferencesSidebar] Reference Express failed:', err)
+          })
+        }}
+      />
 
       {seriesId && projectId ? (
         <ReferenceTransferDialog

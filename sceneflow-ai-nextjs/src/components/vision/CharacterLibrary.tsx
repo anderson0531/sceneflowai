@@ -104,6 +104,7 @@ import {
   ExpandableText,
   isShortCharacterRole,
 } from "@/components/ui/ExpandableText";
+import { cn } from "@/lib/utils";
 import { requestCastingBrief } from "@/lib/character/requestCastingBrief";
 import {
   applyCastingBriefUpdate,
@@ -113,6 +114,7 @@ import { LibraryKindToolbar } from "@/components/vision/LibraryKindToolbar";
 import {
   castReferenceActions,
   countCastAgentItems,
+  formatReferenceActionCue,
   kindAgentToolbarLabel,
   type ReferenceActionItem,
   type ReferenceActionSummary,
@@ -220,6 +222,9 @@ export interface CharacterLibraryProps {
   ) => Promise<{ staleWardrobeIdsByCharacter: Record<string, string[]> } | void> | void;
   onAddCharacter?: (characterData: any) => void;
   onRemoveCharacter?: (characterName: string) => void;
+  /** Duplicate speaking roles the Cast toolbar can merge. */
+  duplicateCastCount?: number;
+  onMergeDuplicateCast?: () => void;
   /** Apply enhanced reference directly (URL + vision description) without re-upload */
   onApplyEnhancedReference?: (
     characterId: string,
@@ -544,6 +549,8 @@ export function CharacterLibrary({
   onApplyWardrobeSyncDiffs,
   onAddCharacter,
   onRemoveCharacter,
+  duplicateCastCount = 0,
+  onMergeDuplicateCast,
   onEditCharacterImage,
   onApplyEnhancedReference,
   ttsProvider,
@@ -1019,10 +1026,29 @@ export function CharacterLibrary({
 
   const castAgentCount = countCastAgentItems(castCharacters);
   const castAgentLabel = kindAgentToolbarLabel("Cast Agent", castAgentCount);
+  const mergeDuplicatesButton =
+    duplicateCastCount > 0 && onMergeDuplicateCast ? (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={onMergeDuplicateCast}
+        className="h-7 text-xs font-medium"
+      >
+        Merge duplicates ({duplicateCastCount})
+      </Button>
+    ) : null;
+  const showCastToolbar =
+    (Boolean(scenes && scenes.length > 0 && castCharacters.length > 0)) ||
+    duplicateCastCount > 0;
 
   return (
     <div
-      className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 ${compact ? "p-4" : "p-6"} h-full overflow-y-auto`}
+      className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 ${compact ? "p-4" : "p-6"} ${
+        layout === "dialog"
+          ? "flex flex-col flex-1 min-h-0 overflow-hidden"
+          : "h-full overflow-y-auto"
+      }`}
     >
       {!compact && (
         <div className={`flex items-center justify-between mb-6 gap-3 flex-wrap`}>
@@ -1044,7 +1070,7 @@ export function CharacterLibrary({
               <Info className="w-4 h-4" />
             </button>
           </div>
-          {scenes && scenes.length > 0 && castCharacters.length > 0 && (
+          {showCastToolbar && (
             <LibraryKindToolbar
               updateLabel="Update Cast"
               agentLabel={castAgentLabel}
@@ -1059,15 +1085,17 @@ export function CharacterLibrary({
                 isCastAgentRunning || isExpressGeneratingReferences
               }
               agentHasWork={castAgentCount > 0}
+              updateDisabled={!scenes?.length || castCharacters.length === 0}
               updateTitle="Rescan the script and update every character's scene looks"
               agentTitle="Update wardrobes from the script, then draw missing cast identity stills and stale looks"
+              extra={mergeDuplicatesButton}
             />
           )}
         </div>
       )}
 
-      {compact && scenes && scenes.length > 0 && castCharacters.length > 0 && (
-        <div className="mb-3">
+      {compact && showCastToolbar && (
+        <div className="mb-3 shrink-0">
           <LibraryKindToolbar
             updateLabel="Update Cast"
             agentLabel={castAgentLabel}
@@ -1082,8 +1110,10 @@ export function CharacterLibrary({
               isCastAgentRunning || isExpressGeneratingReferences
             }
             agentHasWork={castAgentCount > 0}
+            updateDisabled={!scenes?.length || castCharacters.length === 0}
             updateTitle="Rescan the script and update every character's scene looks"
             agentTitle="Update wardrobes from the script, then draw missing cast identity stills and stale looks"
+            extra={mergeDuplicatesButton}
           />
         </div>
       )}
@@ -1098,7 +1128,7 @@ export function CharacterLibrary({
           <p className={compact ? "text-sm" : ""}>No characters yet</p>
         </div>
       ) : layout === "dialog" ? (
-        <div className="flex flex-col min-h-0 gap-3">
+        <div className="flex flex-col flex-1 min-h-0 gap-3">
           <div className="flex items-center border-b border-gray-700/50 overflow-x-auto flex-shrink-0 gap-0.5 pb-px">
             {castCharacters.map((char, idx) => {
               const charId = getCharacterId(char, idx);
@@ -1144,12 +1174,14 @@ export function CharacterLibrary({
             )}
           </div>
 
+          <div className="flex-1 min-h-0 overflow-y-auto">
           {activeCharacter && activeCharacterIndex >= 0
             ? renderCharacterCard(activeCharacter, activeCharacterIndex, {
                 forceExpanded: true,
                 splitLayout: true,
               })
             : null}
+          </div>
 
           {onAddCharacter && (
             <AddCharacterModal
@@ -1680,6 +1712,12 @@ const CharacterCard = ({
     items: stillActions.items.filter((item) => item.id !== "identity"),
     primary: stillActions.items.find((item) => item.id !== "identity") ?? null,
   };
+  const stillStatusLine = [
+    ...(identityAction ? [identityAction] : []),
+    ...wardrobeActions.items,
+  ]
+    .map((item) => formatReferenceActionCue(item))
+    .join(" | ");
 
   const openCastAction = (item: ReferenceActionItem) => {
     setIsCollapsed(false);
@@ -2751,7 +2789,7 @@ const CharacterCard = ({
         });
       }
 
-      toast.success("Wardrobe description enhanced with AI-level detail");
+      toast.success("Wardrobe description updated");
     } catch (error) {
       console.error("[Enhance Wardrobe] Error:", error);
       toast.error(
@@ -3695,21 +3733,15 @@ const CharacterCard = ({
             <TabsList className="w-full grid grid-cols-3 h-9 bg-gray-100 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 p-0.5">
               <TabsTrigger
                 value="identity"
-                className="text-xs gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900"
+                className={cn(
+                  "text-xs gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900",
+                  identityAction &&
+                    "text-amber-800 dark:text-amber-100 bg-amber-400/30 data-[state=active]:bg-amber-400/40 data-[state=active]:text-amber-950 dark:data-[state=active]:text-amber-50"
+                )}
                 onClick={(e) => e.stopPropagation()}
               >
                 <ImageIcon className="w-3.5 h-3.5" />
                 Identity
-                {identityAction && (
-                  <ReferenceActionCue
-                    interactive={false}
-                    summary={{
-                      tone: "action",
-                      items: [identityAction],
-                      primary: identityAction,
-                    }}
-                  />
-                )}
               </TabsTrigger>
               <TabsTrigger
                 value="voice"
@@ -3727,20 +3759,27 @@ const CharacterCard = ({
               </TabsTrigger>
               <TabsTrigger
                 value="wardrobe"
-                className="text-xs gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900"
+                className={cn(
+                  "text-xs gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900",
+                  wardrobeActions.items.length > 0 &&
+                    "text-amber-800 dark:text-amber-100 bg-amber-400/30 data-[state=active]:bg-amber-400/40 data-[state=active]:text-amber-950 dark:data-[state=active]:text-amber-50"
+                )}
                 onClick={(e) => e.stopPropagation()}
               >
                 <Shirt className="w-3.5 h-3.5" />
                 Wardrobe
-                {wardrobeActions.primary ? (
-                  <ReferenceActionCue interactive={false} summary={wardrobeActions} />
-                ) : wardrobes.length > 0 ? (
+                {wardrobes.length > 0 ? (
                   <span className="text-[10px] opacity-70 tabular-nums">
                     ({wardrobes.length})
                   </span>
                 ) : null}
               </TabsTrigger>
             </TabsList>
+            {stillStatusLine ? (
+              <p className="mt-2 text-[11px] leading-relaxed text-amber-700 dark:text-amber-200">
+                {stillStatusLine}
+              </p>
+            ) : null}
 
             <TabsContent
               value="identity"
@@ -4157,7 +4196,7 @@ const CharacterCard = ({
                           handleUpdateWardrobesFromScript();
                         }}
                         disabled={isAnalyzingScript}
-                        className="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                        className="w-full flex items-center justify-center gap-2 h-7 px-3 text-xs font-medium rounded-md bg-amber-500 text-zinc-950 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Update wardrobes from script for each scene"
                       >
                         <FileText className="w-4 h-4" />
@@ -4265,7 +4304,7 @@ const CharacterCard = ({
                         e.stopPropagation();
                         setShowAddWardrobeForm(true);
                       }}
-                      className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs text-purple-600 dark:text-purple-300 border border-purple-500/30 rounded-lg hover:bg-purple-500/10"
+                      className="w-full flex items-center justify-center gap-2 h-7 px-3 text-xs font-medium rounded-md border border-zinc-600 text-zinc-200 hover:bg-zinc-800"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                       Direct wardrobe
@@ -4279,7 +4318,7 @@ const CharacterCard = ({
                       void handleRegenerateStaleWardrobeImages();
                     }}
                     disabled={isRegeneratingStale}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs border border-purple-500/40 text-purple-600 dark:text-purple-300 rounded-lg hover:bg-purple-500/10 disabled:opacity-50"
+                    className="w-full flex items-center justify-center gap-2 h-7 px-3 text-xs font-medium rounded-md bg-amber-500 text-zinc-950 hover:bg-amber-400 disabled:opacity-50"
                   >
                     {isRegeneratingStale ? (
                       <Loader className="w-3.5 h-3.5 animate-spin" />
@@ -4436,7 +4475,7 @@ const CharacterCard = ({
                                           generatingWardrobeImageId === w.id ||
                                           !hasCharacterReferenceForVoice
                                         }
-                                        className="p-1.5 rounded-lg text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10 disabled:opacity-50"
+                                        className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80 disabled:opacity-50"
                                         title={
                                           !hasCharacterReferenceForVoice
                                             ? "Generate character identity reference first"
@@ -4457,8 +4496,8 @@ const CharacterCard = ({
                                           handleEnhanceWardrobe(w.id);
                                         }}
                                         disabled={enhancingWardrobeId === w.id}
-                                        className="p-1.5 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 disabled:opacity-50"
-                                        title="Enhance with AI"
+                                        className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80 disabled:opacity-50"
+                                        title="Enhance"
                                       >
                                         {enhancingWardrobeId === w.id ? (
                                           <Loader className="w-3.5 h-3.5 animate-spin" />
@@ -4472,7 +4511,7 @@ const CharacterCard = ({
                                           handleSoftenWardrobe(w.id);
                                         }}
                                         disabled={softeningWardrobeId === w.id}
-                                        className="p-1.5 rounded-lg text-teal-600 dark:text-teal-400 hover:bg-teal-500/10 disabled:opacity-50"
+                                        className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80 disabled:opacity-50"
                                         title="Soften for image safety"
                                       >
                                         {softeningWardrobeId === w.id ? (
@@ -4486,7 +4525,7 @@ const CharacterCard = ({
                                           e.stopPropagation();
                                           startEditingWardrobe(w);
                                         }}
-                                        className="p-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                                        className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80"
                                         title="Edit wardrobe"
                                       >
                                         <Edit className="w-3.5 h-3.5" />
@@ -4497,7 +4536,7 @@ const CharacterCard = ({
                                             e.stopPropagation();
                                             handleDeleteWardrobe(w.id);
                                           }}
-                                          className="p-1.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-500/10"
+                                          className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80"
                                           title="Delete wardrobe"
                                         >
                                           <Trash2 className="w-3.5 h-3.5" />
@@ -4508,7 +4547,7 @@ const CharacterCard = ({
                                           e.stopPropagation();
                                           setExpandedWardrobe(w);
                                         }}
-                                        className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-500/10"
+                                        className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80"
                                         title="Expand details"
                                       >
                                         <Maximize2 className="w-3.5 h-3.5" />
@@ -4580,7 +4619,7 @@ const CharacterCard = ({
                                             generatingWardrobeImageId === w.id ||
                                             !hasCharacterReferenceForVoice
                                           }
-                                          className="p-1.5 rounded-lg text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10 disabled:opacity-50"
+                                          className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80 disabled:opacity-50"
                                           title={
                                             !hasCharacterReferenceForVoice
                                               ? "Generate character identity reference first"
@@ -4601,8 +4640,8 @@ const CharacterCard = ({
                                             handleEnhanceWardrobe(w.id);
                                           }}
                                           disabled={enhancingWardrobeId === w.id}
-                                          className="p-1.5 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 disabled:opacity-50"
-                                          title="Enhance with AI"
+                                          className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80 disabled:opacity-50"
+                                          title="Enhance"
                                         >
                                           {enhancingWardrobeId === w.id ? (
                                             <Loader className="w-3.5 h-3.5 animate-spin" />
@@ -4616,7 +4655,7 @@ const CharacterCard = ({
                                             handleSoftenWardrobe(w.id);
                                           }}
                                           disabled={softeningWardrobeId === w.id}
-                                          className="p-1.5 rounded-lg text-teal-600 dark:text-teal-400 hover:bg-teal-500/10 disabled:opacity-50"
+                                          className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80 disabled:opacity-50"
                                           title="Soften for image safety"
                                         >
                                           {softeningWardrobeId === w.id ? (
@@ -4630,7 +4669,7 @@ const CharacterCard = ({
                                             e.stopPropagation();
                                             startEditingWardrobe(w);
                                           }}
-                                          className="p-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                                          className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80"
                                           title="Edit wardrobe"
                                         >
                                           <Edit className="w-3.5 h-3.5" />
@@ -4641,7 +4680,7 @@ const CharacterCard = ({
                                               e.stopPropagation();
                                               handleDeleteWardrobe(w.id);
                                             }}
-                                            className="p-1.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-500/10"
+                                            className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80"
                                             title="Delete wardrobe"
                                           >
                                             <Trash2 className="w-3.5 h-3.5" />
@@ -4652,7 +4691,7 @@ const CharacterCard = ({
                                             e.stopPropagation();
                                             setExpandedWardrobe(w);
                                           }}
-                                          className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-500/10"
+                                          className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80"
                                           title="Expand details"
                                         >
                                           <Maximize2 className="w-3.5 h-3.5" />
@@ -5056,10 +5095,9 @@ const CharacterCard = ({
                             <Info className="w-3.5 h-3.5 text-gray-400 cursor-help" />
                             <div className="absolute right-0 bottom-full mb-1 w-56 p-2 bg-gray-900 text-gray-200 text-[10px] rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
                               More detailed descriptions produce more consistent
-                              images across scenes. Use ✨ Enhance to automatically
-                              add specifics like exact colors, materials, fit, and
-                              footwear. Soften rewrites unsafe costume language for
-                              Gemini Image.
+                              images across scenes. Enhance adds specifics like exact
+                              colors, materials, fit, and footwear. Soften rewrites
+                              unsafe costume language for image generation.
                             </div>
                           </div>
                           <button
@@ -5067,7 +5105,7 @@ const CharacterCard = ({
                               e.stopPropagation();
                               startEditingWardrobe(expandedWardrobe);
                             }}
-                            className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                            className="flex items-center gap-1 h-7 px-2 text-xs font-medium rounded-md border border-zinc-600 text-zinc-200 hover:bg-zinc-800"
                           >
                             <Sparkles className="w-3 h-3" /> Direct
                           </button>
@@ -5077,7 +5115,7 @@ const CharacterCard = ({
                               handleEnhanceWardrobe(expandedWardrobe.id);
                             }}
                             disabled={enhancingWardrobeId === expandedWardrobe.id}
-                            className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-800/40 disabled:opacity-50"
+                            className="flex items-center gap-1 h-7 px-2 text-xs font-medium rounded-md border border-zinc-600 text-zinc-200 hover:bg-zinc-800 disabled:opacity-50"
                           >
                             {enhancingWardrobeId === expandedWardrobe.id ? (
                               <>
@@ -5096,7 +5134,7 @@ const CharacterCard = ({
                               handleSoftenWardrobe(expandedWardrobe.id);
                             }}
                             disabled={softeningWardrobeId === expandedWardrobe.id}
-                            className="flex items-center gap-1 px-2 py-1 text-xs bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded-lg hover:bg-teal-200 dark:hover:bg-teal-800/40 disabled:opacity-50"
+                            className="flex items-center gap-1 h-7 px-2 text-xs font-medium rounded-md border border-zinc-600 text-zinc-200 hover:bg-zinc-800 disabled:opacity-50"
                           >
                             {softeningWardrobeId === expandedWardrobe.id ? (
                               <>
@@ -5215,10 +5253,9 @@ const CharacterCard = ({
                         <Info className="w-3.5 h-3.5 text-gray-400 cursor-help" />
                         <div className="absolute right-0 bottom-full mb-1 w-56 p-2 bg-gray-900 text-gray-200 text-[10px] rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
                           More detailed descriptions produce more consistent
-                          images across scenes. Use ✨ Enhance to automatically
-                          add specifics like exact colors, materials, fit, and
-                          footwear. Soften rewrites unsafe costume language for
-                          Gemini Image.
+                          images across scenes. Enhance adds specifics like exact
+                          colors, materials, fit, and footwear. Soften rewrites
+                          unsafe costume language for image generation.
                         </div>
                       </div>
                       <button
@@ -5226,7 +5263,7 @@ const CharacterCard = ({
                           e.stopPropagation();
                           startEditingWardrobe(expandedWardrobe);
                         }}
-                        className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                        className="flex items-center gap-1 h-7 px-2 text-xs font-medium rounded-md border border-zinc-600 text-zinc-200 hover:bg-zinc-800"
                       >
                         <Sparkles className="w-3 h-3" /> Direct
                       </button>
@@ -5236,7 +5273,7 @@ const CharacterCard = ({
                           handleEnhanceWardrobe(expandedWardrobe.id);
                         }}
                         disabled={enhancingWardrobeId === expandedWardrobe.id}
-                        className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-800/40 disabled:opacity-50"
+                        className="flex items-center gap-1 h-7 px-2 text-xs font-medium rounded-md border border-zinc-600 text-zinc-200 hover:bg-zinc-800 disabled:opacity-50"
                       >
                         {enhancingWardrobeId === expandedWardrobe.id ? (
                           <>
@@ -5255,7 +5292,7 @@ const CharacterCard = ({
                           handleSoftenWardrobe(expandedWardrobe.id);
                         }}
                         disabled={softeningWardrobeId === expandedWardrobe.id}
-                        className="flex items-center gap-1 px-2 py-1 text-xs bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded-lg hover:bg-teal-200 dark:hover:bg-teal-800/40 disabled:opacity-50"
+                        className="flex items-center gap-1 h-7 px-2 text-xs font-medium rounded-md border border-zinc-600 text-zinc-200 hover:bg-zinc-800 disabled:opacity-50"
                       >
                         {softeningWardrobeId === expandedWardrobe.id ? (
                           <>
@@ -5346,7 +5383,8 @@ const CharacterCard = ({
                     generatingWardrobeImageId === expandedWardrobe.id ||
                     !hasCharacterReferenceForVoice
                   }
-                  className="bg-cyan-600 hover:bg-cyan-700 text-white"
+                  variant="outline"
+                  className="h-7 text-xs font-medium"
                   title={
                     !hasCharacterReferenceForVoice
                       ? "Generate character identity reference first"

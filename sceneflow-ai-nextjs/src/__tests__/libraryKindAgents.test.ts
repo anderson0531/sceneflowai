@@ -351,9 +351,9 @@ describe('summarizeLibraryRequiredActions', () => {
 })
 
 describe('kindAgentToolbarLabel', () => {
-  it('promotes a count into a Run CTA and stays quiet at 0', () => {
-    expect(kindAgentToolbarLabel('Location Agent', 3)).toBe('Run Location Agent — 3 needed')
-    expect(kindAgentToolbarLabel('Location Agent', 0)).toBe('Location Agent (0)')
+  it('names the agent with its remaining count', () => {
+    expect(kindAgentToolbarLabel('Location Agent', 3)).toBe('Location Agent (3)')
+    expect(kindAgentToolbarLabel('Cast Agent', 0)).toBe('Cast Agent (0)')
   })
 })
 

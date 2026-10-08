@@ -54,7 +54,7 @@ export function ReferenceLibraryNextActionBanner({
         size="sm"
         onClick={onRun}
         disabled={disabled || isRunning}
-        className="h-7 shrink-0 text-xs bg-amber-500 text-zinc-950 border-amber-400 hover:bg-amber-400 hover:border-amber-300"
+        className="h-7 shrink-0 text-xs font-medium bg-amber-500 text-zinc-950 border-amber-400 hover:bg-amber-400 hover:border-amber-300"
       >
         {isRunning ? (
           <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />

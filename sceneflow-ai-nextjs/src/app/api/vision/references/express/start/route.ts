@@ -14,6 +14,7 @@ import {
 import {
   loadReferenceExpressContext,
   planSceneReferenceExpressItems,
+  planSelectedLibraryBaseItems,
   planSelectedLocationExpressItems,
   collectPreexistingVersionIds,
   shouldIncludeNestedStills,
@@ -107,9 +108,16 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    const selectedLibraryBases =
+      !sceneScoped &&
+      !scope.locationIds?.length &&
+      !scope.kinds?.length &&
+      !!scope.itemKeys?.length
     const items = scope.locationIds?.length
       ? planSelectedLocationExpressItems(context, scope)
-      : planSceneReferenceExpressItems(context, scope)
+      : selectedLibraryBases
+        ? planSelectedLibraryBaseItems(context, scope.itemKeys!)
+        : planSceneReferenceExpressItems(context, scope)
     const catalogSync = wantsLocationCatalogSync(scope) ? 'location' : undefined
     if (!canStartReferenceExpressJob(items, scope)) {
       return NextResponse.json(

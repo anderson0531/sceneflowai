@@ -318,7 +318,7 @@ import { Button, buttonVariants } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video, Loader2, Clapperboard, Layers, Film } from 'lucide-react'
+import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video, Loader2, Clapperboard, Layers, Film } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { resolveProjectArtStyle, resolveProjectAspectRatio, toVideoAspectRatio } from '@/lib/vision/artStyle'
 import {
@@ -399,7 +399,6 @@ import { useSidebarData, useSidebarQuickActions } from '@/hooks/useSidebarData'
 import { DetailedSceneDirection } from '@/types/scene-direction'
 import { cn } from '@/lib/utils'
 import { getScriptDirectionReadiness } from '@/lib/utils/contentHash'
-import { DirectionReadinessBanner } from '@/components/vision/DirectionReadinessBanner'
 import { sanitizeReturnTo } from '@/lib/navigation/sanitizeReturnTo'
 import { ReferenceLibraryDialog, type ReferenceLibraryTab } from '@/components/vision/ReferenceLibraryDialog'
 import type { AutoAddedObject } from '@/components/vision/ObjectSuggestionPanel'
@@ -8412,8 +8411,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     () => getScriptDirectionReadiness(script?.script?.scenes || []),
     [script?.script?.scenes]
   )
-  const audienceReviewed = audienceReview?.overallScore != null
-  
+
   const sidebarProjectStats = useMemo(() => {
     const scriptScenes = normalizeScenes(script)
     const sceneCount = Array.isArray(scriptScenes) ? scriptScenes.length : 0
@@ -17446,34 +17444,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           if (!open) setReferenceLibraryInitialTab(undefined)
         }}
         initialTab={referenceLibraryInitialTab}
-        topContent={
-          <div className="flex flex-col gap-2 shrink-0">
-            <DirectionReadinessBanner
-              directionReadiness={directionReadiness}
-              audienceReviewed={audienceReviewed}
-              isUpdatingAllDirections={isUpdatingAllDirections}
-              onUpdateAllDirections={handleUpdateAllDirections}
-              onReviewAudience={handleAudienceHeaderClick}
-            />
-            {findPotentialDuplicates(characters).length > 0 ? (
-              <Button
-                onClick={() => {
-                  const duplicates = findPotentialDuplicates(characters)
-                  if (duplicates.length > 0) {
-                    setMergePrimaryCharId(duplicates[0][0].id)
-                    setMergeDuplicateCharIds(duplicates[0].slice(1).map((c: any) => c.id))
-                    setMergeDialogOpen(true)
-                  }
-                }}
-                variant="outline"
-                className="w-full shrink-0 text-amber-600 border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-              >
-                <Users className="w-4 h-4 mr-2" />
-                Merge Duplicates ({findPotentialDuplicates(characters).reduce((sum, group) => sum + group.length - 1, 0)} duplicate{findPotentialDuplicates(characters).reduce((sum, group) => sum + group.length - 1, 0) !== 1 ? 's' : ''})
-              </Button>
-            ) : null}
-          </div>
-        }
+        duplicateCastCount={findPotentialDuplicates(characters).reduce((sum, group) => sum + group.length - 1, 0)}
+        onMergeDuplicateCast={() => {
+          const duplicates = findPotentialDuplicates(characters)
+          if (duplicates.length > 0) {
+            setMergePrimaryCharId(duplicates[0][0].id)
+            setMergeDuplicateCharIds(duplicates[0].slice(1).map((c: any) => c.id))
+            setMergeDialogOpen(true)
+          }
+        }}
         projectId={projectId}
         seriesId={project?.series_id}
         seriesTitle={seriesInfo?.seriesTitle}

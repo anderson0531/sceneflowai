@@ -75,7 +75,7 @@
     "assetBeats": "{count, plural, one {# shot} other {# shots}}",
     "assetMusic": "เพลง",
     "reference": "อ้างอิง",
-    "referenceTooltip": "เปิด Reference Library — นักแสดง สถานที่ และอุปกรณ์ประกอบฉาก",
+    "referenceTooltip": "เปิด Continuity Library — นักแสดง สถานที่ และอุปกรณ์ประกอบฉาก",
     "referenceNeedsDirection": "{count, plural, one {# scene needs updated direction before references} other {# scenes need updated direction before references}}",
     "publish": "เผยแพร่",
     "publishTooltip": "Open Publishing Library — สตรีม, การคัดกรอง, การโปรโมต, YouTube",
@@ -962,7 +962,7 @@
       "applyRecommendations": "ใช้คำแนะนำ"
     },
     "referenceLibrary": {
-      "title": "Reference Library"
+      "title": "Continuity Library"
     },
     "beatReferences": {
       "title": "รีวิวอ้างอิง — ฉาก {number}",
