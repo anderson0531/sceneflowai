@@ -56,6 +56,23 @@ describe('applyCastingBriefUpdate', () => {
     expect(applied.voiceConfig?.voiceId).toBe('gemini-Algenib')
     expect(applied.voiceConfig?.prompt).toContain('gravelly')
   })
+
+  it('keeps a designed voice id when the casting brief changes', () => {
+    const applied = applyCastingBriefUpdate(
+      {
+        name: 'Julian Ward',
+        voiceConfig: {
+          provider: 'google',
+          voiceId: 'voice_julian',
+          voiceName: 'Julian',
+          designPrompt: 'A late 50s male fixer with a dry baritone.',
+        },
+      },
+      'A new brief that must not pick a base voice.',
+    )
+    expect(applied.voiceConfig?.voiceId).toBe('voice_julian')
+    expect(applied.voiceConfig?.designPrompt).toContain('dry baritone')
+  })
 })
 
 describe('refreshCastingBriefForAppearance', () => {

@@ -82,6 +82,7 @@ import {
 } from "@/lib/character/visualGender";
 import { resolveAutoVoiceScoringGender } from "@/lib/tts/autoVoiceGender";
 import { buildGoogleVoiceAssignment } from "@/lib/tts/pickGeminiBaseVoice";
+import { composeVoiceDesignDescription, isDesignedGeminiVoiceId } from "@/lib/tts/geminiVoiceDesign";
 import {
   characterVoiceProfileFromAnalysis,
   narrativeVoiceInputs,
@@ -1801,9 +1802,12 @@ const CharacterCard = ({
       return;
     }
 
-    if (vc.provider === "google" || vc.voiceId.startsWith("gemini-")) {
+    if (vc.provider === "google" || vc.voiceId.startsWith("gemini-") || isDesignedGeminiVoiceId(vc.voiceId)) {
       try {
-        await playGeminiVoicePreview(vc.voiceId, vc.prompt);
+        await playGeminiVoicePreview(
+          vc.voiceId,
+          isDesignedGeminiVoiceId(vc.voiceId) ? undefined : vc.prompt,
+        );
       } catch (err) {
         console.warn("[Voice Preview] Playback failed:", err);
         toast.error("Could not play voice preview.");
@@ -1913,7 +1917,13 @@ const CharacterCard = ({
 
     setIsAutoSelectingVoice(true);
     let testAudioPlayed = false;
-    let assignment: ReturnType<typeof buildGoogleVoiceAssignment> | null = null;
+    let assignment: {
+      provider: "google";
+      voiceId: string;
+      voiceName: string;
+      prompt: string;
+      designPrompt?: string;
+    } | null = null;
 
     try {
       let visionAnalysis: WardrobeVoiceAnalysisResult | null = null;
@@ -1992,14 +2002,48 @@ const CharacterCard = ({
         narrativeVoiceInputs(character).matchingBrief ||
         "";
 
-      assignment = buildGoogleVoiceAssignment(matchingBrief, {
-        gender: scoringContext.gender,
-        name: character.name,
-        age: scoringContext.age,
-        role: scoringContext.role,
-        screenplayContext: screenplayContext as ScreenplayContext,
-        vocalAttributes: analysisProfile?.vocalAttributes,
-      });
+      if (!isNarratorCharacter) {
+        const description = composeVoiceDesignDescription({
+          role: character.role,
+          gender: scoringContext.gender,
+          apparentAge: visionAnalysis?.apparentAge || String(scoringContext.age ?? ""),
+          accent: analysisProfile?.vocalAttributes?.accent,
+          timbre: analysisProfile?.vocalAttributes?.timbre,
+          pace: analysisProfile?.vocalAttributes?.pace,
+          warmth: analysisProfile?.vocalAttributes?.warmth,
+          authority: analysisProfile?.vocalAttributes?.authority,
+          emotionalDefault: analysisProfile?.vocalAttributes?.emotionalDefault,
+          voiceDescription: matchingBrief,
+        });
+        const designResponse = await fetch("/api/tts/google/voice-design", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            description,
+            displayName: character.name || "Character",
+          }),
+        });
+        const designed = await designResponse.json().catch(() => ({}));
+        if (!designResponse.ok || !designed?.voiceId) {
+          throw new Error(designed?.error || "Voice Design failed");
+        }
+        assignment = {
+          provider: "google",
+          voiceId: designed.voiceId,
+          voiceName: designed.voiceName || character.name || "Designed voice",
+          prompt: description,
+          designPrompt: description,
+        };
+      } else {
+        assignment = buildGoogleVoiceAssignment(matchingBrief, {
+          gender: scoringContext.gender,
+          name: character.name,
+          age: scoringContext.age,
+          role: scoringContext.role,
+          screenplayContext: screenplayContext as ScreenplayContext,
+          vocalAttributes: analysisProfile?.vocalAttributes,
+        });
+      }
 
       if (matchingBrief && onUpdateCharacterAttributes) {
         onUpdateCharacterAttributes(characterId, {
@@ -2017,7 +2061,7 @@ const CharacterCard = ({
 
         testAudioPlayed = await playGeminiVoicePreview(
           assignment.voiceId,
-          assignment.prompt,
+          isDesignedGeminiVoiceId(assignment.voiceId) ? undefined : assignment.prompt,
           sampleText,
         );
       } catch (testErr) {

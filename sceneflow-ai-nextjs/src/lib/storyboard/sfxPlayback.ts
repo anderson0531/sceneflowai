@@ -22,6 +22,7 @@ export interface BeatAlignedSfxClip {
   duration: number
   trackType: 'sfx'
   label?: string
+  beatId?: string
 }
 
 function parseCueAtIndex(
@@ -276,6 +277,7 @@ export function buildBeatAlignedStoryboardSfxClips(
       duration,
       trackType: 'sfx',
       label,
+      ...(beatId ? { beatId } : {}),
     })
   }
 

@@ -17,6 +17,7 @@ import {
 } from '@/lib/storyboard/types'
 import { computeFadeOutDuckMultiplier } from '@/lib/storyboard/animaticSceneFade'
 import type { BeatDirectionTransition } from '@/lib/script/segmentTypes'
+import { applyHifiClipAudio, type AnimaticAudioMode } from '@/lib/storyboard/animaticAudioMode'
 import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
 import {
   buildStoryboardMusicClips,
@@ -55,6 +56,8 @@ export interface UseStoryboardPlaybackOptions {
    */
   sceneTransitionIn?: BeatDirectionTransition
   onPlaybackEnd?: () => void
+  audioMode?: AnimaticAudioMode
+  clipAudioByBeatId?: Record<string, string>
 }
 
 export interface UseStoryboardPlaybackReturn {
@@ -144,6 +147,8 @@ export function useStoryboardPlayback({
   musicIntroFade,
   sceneTransitionIn,
   onPlaybackEnd,
+  audioMode = 'lofi',
+  clipAudioByBeatId,
 }: UseStoryboardPlaybackOptions): UseStoryboardPlaybackReturn {
   const [dynamicDurations, setDynamicDurations] = useState<Record<string, number>>({})
   const fetchingUrls = useRef<Set<string>>(new Set())
@@ -299,7 +304,29 @@ export function useStoryboardPlayback({
 
   const timelineAudioClips = useMemo((): TimelineAudioClip[] => {
     const activeScene = sceneRef.current
-    const clips: TimelineAudioClip[] = voiceClips
+    const voiceEndTime =
+      voiceClips.length > 0
+        ? voiceClips[voiceClips.length - 1].startTime + voiceClips[voiceClips.length - 1].duration
+        : undefined
+    const rawSfx = activeScene
+      ? buildBeatAlignedStoryboardSfxClips(activeScene, visualFrames, {
+          voiceEndTime,
+          sceneDuration,
+          dynamicDurations,
+        })
+      : []
+    const mixed =
+      activeScene && audioMode === 'hifi'
+        ? applyHifiClipAudio({
+            voiceClips,
+            sfxClips: rawSfx,
+            visualFrames,
+            beats: getSceneBeats(activeScene),
+            clipAudioByBeatId: clipAudioByBeatId ?? {},
+          })
+        : { voiceClips, sfxClips: rawSfx }
+
+    const clips: TimelineAudioClip[] = mixed.voiceClips
       .filter((clip) => !!clip.url)
       .map((clip) => ({
         id: clip.id,
@@ -335,22 +362,11 @@ export function useStoryboardPlayback({
         }))
       )
 
-      const voiceEndTime =
-        voiceClips.length > 0
-          ? voiceClips[voiceClips.length - 1].startTime + voiceClips[voiceClips.length - 1].duration
-          : undefined
-
-      clips.push(
-        ...buildBeatAlignedStoryboardSfxClips(activeScene, visualFrames, {
-          voiceEndTime,
-          sceneDuration,
-          dynamicDurations,
-        })
-      )
+      clips.push(...mixed.sfxClips)
     }
 
     return clips
-  }, [voiceClips, visualFrames, sceneDuration, sceneAudioRevision, dynamicDurationKey])
+  }, [voiceClips, visualFrames, sceneDuration, sceneAudioRevision, dynamicDurationKey, audioMode, clipAudioByBeatId])
 
   useEffect(() => {
     const clipsByTrack = { dialogue: 0, music: 0, sfx: 0, voiceover: 0 }

@@ -14,6 +14,8 @@ import { resolveSfxDuration } from '../../lib/elevenlabs/sfxDuration'
 import { getBatchNarrationTtsText, sceneHasNarratorInDialogue } from '../../lib/script/narration'
 import { processWithConcurrency } from '../utils/concurrent-processor'
 import { isRetryableError } from '../utils/retry'
+import { beatRequiresDistinctSfx } from '../audio/shotSfxTag'
+import { getSceneBeats } from '../script/beatMigration'
 import { getExpressAudioConcurrency, type ExpressTrafficCop } from './expressTrafficCop'
 import { resolveLineVoiceDirection } from '../../lib/tts/dialogueDirectorNotes'
 import { audioSourceFingerprintForSpoken } from '../audio/beatAudioStale'
@@ -476,8 +478,15 @@ export async function generateSceneAudio(
       : Array.isArray(scene.sfxAudio)
       ? (scene.sfxAudio as string[])
       : []
+    const beats = getSceneBeats(scene)
     for (let sfxIdx = 0; sfxIdx < scene.sfx.length; sfxIdx++) {
       if (existing[sfxIdx]) continue
+      const cue = scene.sfx[sfxIdx] as { sourceBeatId?: string } | undefined
+      const sourceBeatId = typeof cue === 'object' && cue ? cue.sourceBeatId : undefined
+      const sourceBeat = sourceBeatId
+        ? beats.find((beat) => beat.beatId === sourceBeatId)
+        : undefined
+      if (!sourceBeat || !beatRequiresDistinctSfx(sourceBeat)) continue
       const sfxUrl = await generateSfxForCue(
         scene,
         projectId,

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Download, Loader2, Pause, Play, Sparkles, Trash2, Waves } from 'lucide-react'
+import { Download, Loader2, Pause, Play, Sparkles, Trash2 } from 'lucide-react'
 import { Volume2 as VolumeIcon } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { toast } from 'sonner'
@@ -19,19 +19,9 @@ import {
   resolveSfxDuration,
   type SfxDurationOverride,
 } from '@/lib/elevenlabs/sfxDuration'
-import {
-  dispatchGenerateVeoSfx,
-  HIFI_CREDIT_HINT,
-} from '@/lib/sfx/clientGenerateVeoSfx'
-import {
-  resolveAutoVeoSfxDuration,
-  resolveVeoSfxTargetSeconds,
-  veoSfxCoversFullBeat,
-} from '@/lib/sfx/veoSfxDuration'
-
 /**
  * One SFX cue inside a segment. The cue's description is used to drive
- * ElevenLabs sound-generation or the higher-quality extract; the resulting
+ * ElevenLabs sound-generation; the resulting
  * GCS URL is persisted via the existing positional handlers (`scene.sfxAudio[idx]`,
  * `onDeleteSceneAudio(sceneIdx, 'sfx', undefined, idx)`) using
  * `sfx.legacyIndex` so legacy data keeps working.
@@ -83,25 +73,15 @@ export function SegmentSfxCard({
   onSaveSfxAudio,
 }: SegmentSfxCardProps) {
   const [isGeneratingElevenLabs, setIsGeneratingElevenLabs] = useState(false)
-  const [isGeneratingVeo, setIsGeneratingVeo] = useState(false)
   const [durationPreset, setDurationPreset] = useState<SfxDurationOverride>('auto')
   const autoSeconds = resolveAutoSfxDuration(segmentDurationSeconds)
-  const veoAutoSeconds = resolveAutoVeoSfxDuration(segmentDurationSeconds)
-  const isGenerating = isGeneratingElevenLabs || isGeneratingVeo
+  const isGenerating = isGeneratingElevenLabs
 
   const legacyIdx = sfx.legacyIndex
   const audioUrl: string | undefined =
     legacyIdx !== undefined && Array.isArray(scene?.sfxAudio)
       ? scene.sfxAudio[legacyIdx]
       : undefined
-  const sfxSourceMeta =
-    legacyIdx !== undefined && Array.isArray(scene?.sfxSourceMeta)
-      ? scene.sfxSourceMeta[legacyIdx]
-      : undefined
-  const isVeoAmbient = sfxSourceMeta?.source === 'veo'
-  const showPartialVeoHint =
-    !veoSfxCoversFullBeat(segmentDurationSeconds, durationPreset)
-
   const cueRaw =
     legacyIdx !== undefined && Array.isArray(scene?.sfx) ? scene.sfx[legacyIdx] : undefined
   const cue =
@@ -198,42 +178,6 @@ export function SegmentSfxCard({
     }
   }
 
-  const dispatchGenerateVeo = async () => {
-    if (legacyIdx === undefined) {
-      toast.error('SFX cue is not linked to a legacy index yet.')
-      return
-    }
-    if (!projectId) {
-      toast.error('Project context is missing for SFX generation.')
-      return
-    }
-    const description = (sfx.description || '').trim()
-    if (!description) {
-      toast.info('Add a description for this SFX cue first.')
-      return
-    }
-
-    setIsGeneratingVeo(true)
-    try {
-      const result = await dispatchGenerateVeoSfx({
-        projectId,
-        text: description,
-        sfxId: sfx.sfxId,
-        sfxIndex: legacyIdx,
-        segmentDurationSeconds,
-        durationOverride: durationPreset,
-        hasExistingAudio: !!audioUrl,
-      })
-      await onSaveSfxAudio?.(sceneIdx, 'sfx', result.url, legacyIdx, result.attribution)
-    } catch (error: any) {
-      if ((error as Error)?.message !== 'Insufficient credits') {
-        console.error('[SegmentSfxCard] Veo SFX generation failed:', error)
-      }
-    } finally {
-      setIsGeneratingVeo(false)
-    }
-  }
-
   return (
     <div className="p-3 bg-amber-100/50 dark:bg-amber-950/30 rounded-lg border border-amber-300/50 dark:border-amber-700/50">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
@@ -243,11 +187,6 @@ export function SegmentSfxCard({
             SFX {positionInSegment + 1}
           </span>
           <BeatAudioStatusBadge hasAudio={!!audioUrl} stale={sfxStale} />
-          {isVeoAmbient && (
-            <span className="text-xs px-2 py-0.5 bg-violet-500/15 text-violet-600 dark:text-violet-300 rounded">
-              HiFi
-            </span>
-          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {audioUrl && (
@@ -323,30 +262,6 @@ export function SegmentSfxCard({
               </>
             )}
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-8 border-violet-400/60 text-violet-700 dark:text-violet-300 hover:bg-violet-100/60 dark:hover:bg-violet-900/30"
-            onClick={(e) => {
-              e.stopPropagation()
-              void dispatchGenerateVeo()
-            }}
-            disabled={isGenerating}
-            title={HIFI_CREDIT_HINT}
-          >
-            {isGeneratingVeo ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                HiFi...
-              </>
-            ) : (
-              <>
-                <Waves className="w-3.5 h-3.5 mr-1" />
-                HiFi
-              </>
-            )}
-          </Button>
         </div>
       </div>
       <DurationPresetChips
@@ -355,14 +270,6 @@ export function SegmentSfxCard({
         onChange={setDurationPreset}
         disabled={isGenerating}
       />
-      {showPartialVeoHint && (
-        <p className="text-[11px] text-amber-800/80 dark:text-amber-200/70 mb-2">
-          HiFi covers up to 8s of this shot (Auto target{' '}
-          {formatSeconds(resolveVeoSfxTargetSeconds({ segmentDurationSeconds, override: durationPreset }))}
-          s → {veoAutoSeconds}s clip).
-        </p>
-      )}
-      <p className="text-[10px] text-violet-700/70 dark:text-violet-300/60 mb-2">{HIFI_CREDIT_HINT}</p>
       <div className="text-sm text-gray-700 dark:text-gray-300 italic">{sfx.description}</div>
     </div>
   )

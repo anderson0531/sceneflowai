@@ -637,6 +637,10 @@ export interface SceneSegment {
 
   /** Beat-first pipeline: source beat id (1:1 or split continuation). */
   beatId?: string
+  /** MP3 extracted from this shot's video clip for HIFI animatic playback. */
+  clipAudioUrl?: string
+  /** activeAssetUrl the extract was taken from. A new clip invalidates it. */
+  clipAudioSourceUrl?: string
   /** True when this segment continues a split dialogue beat via EXT. */
   veoTimelineContinuation?: boolean
   /** Veo 3.1 extension chain metadata (initial 8s clip + optional +7s EXT steps). */

@@ -1,3 +1,4 @@
+import { beatRequiresDistinctSfx, distinctSfxCue } from '@/lib/audio/shotSfxTag'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { actionBeatSfxIsStale } from '@/lib/audio/beatAudioStale'
 import {
@@ -70,7 +71,12 @@ export function resolveExpressVeoSfxItems(
     }
 
     const actionText = beat.actionDescription?.trim() ?? ''
-    if (!actionText) {
+    const audioCue = distinctSfxCue(beat)
+    if (!beatRequiresDistinctSfx(beat)) {
+      skipped.push({ beatId, reason: 'score carries this shot' })
+      continue
+    }
+    if (!actionText && !audioCue) {
       skipped.push({ beatId, reason: 'missing action description' })
       continue
     }
@@ -107,7 +113,7 @@ export function resolveExpressVeoSfxItems(
       beatId,
       sfxIndex: slot.sfxIndex,
       sfxId: slot.sfxId,
-      text: actionText,
+      text: audioCue || actionText,
       promptMode: 'actionBeat',
     })
   }

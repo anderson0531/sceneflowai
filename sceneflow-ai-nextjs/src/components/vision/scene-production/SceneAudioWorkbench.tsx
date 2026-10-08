@@ -20,7 +20,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ActionBeatSfxControls, type ExpressBeatSfxStatus } from '@/components/vision/ActionBeatSfxControls'
 import { DialogueQualityToggle } from '@/components/vision/DialogueQualityToggle'
 import type { AudioSlotSavedPayload } from '@/lib/audio/cleanupAudio'
-import { generateAndPersistHifiDialogue } from '@/lib/audio/clientPersistDialogueAudio'
 import { BeatAudioStatusBadge } from '@/components/vision/BeatAudioStatusBadge'
 import { BeatCaptionControl } from '@/components/vision/BeatCaptionControl'
 import { BeatMusicToggle } from '@/components/vision/BeatMusicToggle'
@@ -1205,9 +1204,7 @@ function SpokenBeatAudio(
           )}
           {!isNarrationBeat && (
             <DialogueQualityToggle
-              provider={typeof audioEntry?.provider === 'string' ? audioEntry.provider : undefined}
-              hasAudio={!!dialogueAudioUrl}
-              disabled={generating || !props.projectId || !String(d.line ?? beat.line ?? '').trim()}
+              disabled={generating || !String(d.line ?? beat.line ?? '').trim()}
               onLofi={() => {
                 if (!props.onGenerateSceneAudio) return
                 props.setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
@@ -1220,31 +1217,13 @@ function SpokenBeatAudio(
                   })
                   .finally(() => props.setGeneratingDialogue?.(null))
               }}
-              onHifi={() => {
-                const lineText = coerceDialogueLineText(d.line ?? beat.line)
-                if (!props.projectId || !lineText || !d.character) {
-                  toast.error('This line cannot be upgraded yet.')
-                  return
-                }
-                props.setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
-                void generateAndPersistHifiDialogue({
-                  projectId: props.projectId,
-                  sceneIndex: sceneIdx,
-                  language: props.selectedLanguage,
-                  dialogueIndex: i,
-                  characterName: d.character,
-                  line: lineText,
-                  lineId: d.lineId || beat.lineId,
-                  voiceDirection: d.voiceDirection ?? beat.voiceDirection,
-                  segmentDurationSeconds: scene.duration,
-                  hasExistingAudio: !!dialogueAudioUrl,
-                  characterId: d.characterId ?? beat.characterId,
-                })
-                  .then((saved) => props.onAudioSlotSaved?.(saved))
-                  .catch((error) => {
-                    console.error('[SceneAudioWorkbench] HiFi dialogue failed:', error)
+              onGenerateClip={() => {
+                window.dispatchEvent(
+                  new CustomEvent('production:open-action-tab', {
+                    detail: { sceneIndex: sceneIdx },
                   })
-                  .finally(() => props.setGeneratingDialogue?.(null))
+                )
+                toast.message('Generate this shot’s clip. HiFi playback uses the clip’s audio.')
               }}
             />
           )}

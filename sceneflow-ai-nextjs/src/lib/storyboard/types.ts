@@ -28,6 +28,7 @@ import {
   stillVersionsOnRow,
 } from '@/lib/storyboard/mediaVersions'
 import { buildStoryboardMusicClips, resolveSceneMusicFileDuration } from '@/lib/storyboard/musicPlayback'
+import { applyHifiClipAudio, type AnimaticAudioMode } from '@/lib/storyboard/animaticAudioMode'
 import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
 import { getBeatOverlayFields } from '@/lib/storyboard/beatCaption'
 import type { BeatKenBurnsSettings } from '@/lib/storyboard/kenBurnsFrame'
@@ -2005,6 +2006,10 @@ export interface ProjectAnimaticTimelineOptions {
    * only once the ffmpeg container understands the field.
    */
   transitions?: boolean
+  /** LOFI uses authored TTS and effects. HIFI uses each shot clip's audio. */
+  audioMode?: AnimaticAudioMode
+  /** Extracted MP3 for a beat, keyed by beat id. */
+  clipAudioByBeatId?: Record<string, string>
 }
 
 /**
@@ -2073,7 +2078,47 @@ export function buildProjectAnimaticTimeline(
           visualFrames[visualFrames.length - 1].duration
         : 0
 
-    for (const clip of voiceClips) {
+    const musicFileDuration = resolveSceneMusicFileDuration(scene, dynamicDurations)
+    const musicClips = buildStoryboardMusicClips(
+      scene,
+      visualFrames,
+      sceneDuration,
+      musicFileDuration,
+      dynamicDurations
+    )
+
+    const voiceEndTime =
+      voiceClips.length > 0
+        ? voiceClips[voiceClips.length - 1].startTime + voiceClips[voiceClips.length - 1].duration
+        : undefined
+
+    const rawSfxClips = buildBeatAlignedStoryboardSfxClips(scene, visualFrames, {
+      voiceEndTime,
+      sceneDuration,
+      dynamicDurations,
+    })
+    const sceneBeats = getSceneBeats(scene)
+    const clipAudioByBeatId: Record<string, string> = {}
+    if (options?.audioMode === 'hifi') {
+      for (const beat of sceneBeats) {
+        const url =
+          options.clipAudioByBeatId?.[`${sceneIndex}:${beat.beatId}`] ||
+          options.clipAudioByBeatId?.[beat.beatId]
+        if (url) clipAudioByBeatId[beat.beatId] = url
+      }
+    }
+    const mixed =
+      options?.audioMode === 'hifi'
+        ? applyHifiClipAudio({
+            voiceClips,
+            sfxClips: rawSfxClips,
+            visualFrames,
+            beats: sceneBeats,
+            clipAudioByBeatId,
+          })
+        : { voiceClips, sfxClips: rawSfxClips }
+
+    for (const clip of mixed.voiceClips) {
       if (!clip.url) continue
       audioClips.push({
         url: clip.url,
@@ -2084,14 +2129,7 @@ export function buildProjectAnimaticTimeline(
       })
     }
 
-    const musicFileDuration = resolveSceneMusicFileDuration(scene, dynamicDurations)
-    for (const clip of buildStoryboardMusicClips(
-      scene,
-      visualFrames,
-      sceneDuration,
-      musicFileDuration,
-      dynamicDurations
-    )) {
+    for (const clip of musicClips) {
       audioClips.push({
         url: clip.url,
         startTime: globalOffset + clip.startTime,
@@ -2101,16 +2139,7 @@ export function buildProjectAnimaticTimeline(
       })
     }
 
-    const voiceEndTime =
-      voiceClips.length > 0
-        ? voiceClips[voiceClips.length - 1].startTime + voiceClips[voiceClips.length - 1].duration
-        : undefined
-
-    for (const clip of buildBeatAlignedStoryboardSfxClips(scene, visualFrames, {
-      voiceEndTime,
-      sceneDuration,
-      dynamicDurations,
-    })) {
+    for (const clip of mixed.sfxClips) {
       audioClips.push({
         url: clip.url,
         startTime: globalOffset + clip.startTime,

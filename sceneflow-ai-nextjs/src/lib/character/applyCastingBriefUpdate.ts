@@ -1,4 +1,5 @@
 import { buildGoogleVoiceAssignment } from '@/lib/tts/pickGeminiBaseVoice'
+import { isDesignedGeminiVoiceId } from '@/lib/tts/geminiVoiceDesign'
 import type { ScreenplayContext } from '@/lib/voiceRecommendation'
 import {
   requestCastingBrief,
@@ -10,6 +11,7 @@ export type CastingBriefVoiceConfig = {
   voiceId?: string
   voiceName?: string
   prompt?: string
+  designPrompt?: string
 }
 
 export type CastingBriefCharacter = {
@@ -53,6 +55,13 @@ export function applyCastingBriefUpdate(
   const voiceDescription = brief.trim()
   const existing = character.voiceConfig
   const existingId = existing?.voiceId?.trim()
+
+  if (existingId && isDesignedGeminiVoiceId(existingId)) {
+    return {
+      voiceDescription,
+      voiceConfig: existing,
+    }
+  }
 
   if (existingId) {
     const assignment = buildGoogleVoiceAssignment(voiceDescription, {

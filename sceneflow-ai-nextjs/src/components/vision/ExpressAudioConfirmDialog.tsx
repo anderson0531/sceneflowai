@@ -20,26 +20,14 @@ import {
   type ExpressAudioItem,
   type ExpressAudioScope,
 } from '@/lib/audio/buildExpressAudioItems'
-import { estimateExpressVeoSfxCredits } from '@/lib/sfx/clientExpressVeoSfx'
-import { AUDIO_CREDITS, VIDEO_CREDITS } from '@/lib/credits/creditCosts'
-import {
-  resolveAutoVeoSfxDuration,
-  resolveVeoSfxTargetSeconds,
-  veoSfxCoversFullBeat,
-} from '@/lib/sfx/veoSfxDuration'
+import { AUDIO_CREDITS } from '@/lib/credits/creditCosts'
 
 export type { ExpressAudioScope } from '@/lib/audio/buildExpressAudioItems'
-
-export type SfxQuality = 'elevenlabs' | 'hifi'
 
 export interface ExpressAudioConfirmOptions {
   scope: ExpressAudioScope
   selectedIds: string[]
   durationOverride: SfxDurationOverride
-  /** ElevenLabs is the default sound-effect quality. HiFi is the higher-cost extract. */
-  sfxQuality: SfxQuality
-  /** Dialogue lines upgraded from TTS. Empty until the creator opts in. */
-  hifiDialogueIds: string[]
 }
 
 interface ExpressAudioConfirmDialogProps {
@@ -76,15 +64,11 @@ export function ExpressAudioConfirmDialog({
   const [scope, setScope] = useState<ExpressAudioScope>('missing')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [durationPreset, setDurationPreset] = useState<SfxDurationOverride>('auto')
-  const [sfxQuality, setSfxQuality] = useState<SfxQuality>('elevenlabs')
-  const [hifiDialogueIds, setHifiDialogueIds] = useState<string[]>([])
 
   useEffect(() => {
     if (!open) return
     setDurationPreset('auto')
     setScope('missing')
-    setSfxQuality('elevenlabs')
-    setHifiDialogueIds([])
   }, [open])
 
   useEffect(() => {
@@ -98,19 +82,11 @@ export function ExpressAudioConfirmDialog({
     [items, selectedSet]
   )
   const autoSeconds = resolveAutoSfxDuration(segmentDurationSeconds)
-  const hifiClipSeconds = resolveAutoVeoSfxDuration(segmentDurationSeconds)
-  const showPartialHifiHint =
-    sfxQuality === 'hifi' && !veoSfxCoversFullBeat(segmentDurationSeconds, durationPreset)
-  const creditTotal =
-    sfxQuality === 'hifi'
-      ? estimateExpressVeoSfxCredits(selectedSfxCount)
-      : selectedSfxCount * AUDIO_CREDITS.ELEVENLABS_SFX
-  const hifiDialogueCount = hifiDialogueIds.length
+  const creditTotal = selectedSfxCount * AUDIO_CREDITS.ELEVENLABS_SFX
   const autoSecondsLabel = Number.isInteger(autoSeconds) ? autoSeconds : autoSeconds.toFixed(1)
-  const hifiDialogueSet = useMemo(() => new Set(hifiDialogueIds), [hifiDialogueIds])
 
   const chips: Array<{ id: SfxDurationOverride; label: string }> = [
-    { id: 'auto', label: t('durationAuto', { seconds: autoSecondsLabel, veoSeconds: hifiClipSeconds }) },
+    { id: 'auto', label: t('durationAuto', { seconds: autoSecondsLabel }) },
     { id: 'short', label: t('durationShort') },
     { id: 'medium', label: t('durationMedium') },
     { id: 'long', label: t('durationLong') },
@@ -121,14 +97,6 @@ export function ExpressAudioConfirmDialog({
       if (checked) return prev.includes(id) ? prev : [...prev, id]
       return prev.filter((entry) => entry !== id)
     })
-  }
-
-  const toggleHifiDialogue = (id: string, checked: boolean) => {
-    setHifiDialogueIds((prev) => {
-      if (checked) return prev.includes(id) ? prev : [...prev, id]
-      return prev.filter((entry) => entry !== id)
-    })
-    if (checked) toggleItem(id, true)
   }
 
   const nothingSelected = selectedIds.length === 0
@@ -201,30 +169,10 @@ export function ExpressAudioConfirmDialog({
                         <span className="block text-sm text-gray-100 truncate flex-1 min-w-0">
                           {item.label}
                         </span>
-                        {item.kind === 'dialogue' && (
-                          <button
-                            type="button"
-                            disabled={isRunning}
-                            onClick={(event) => {
-                              event.preventDefault()
-                              event.stopPropagation()
-                              toggleHifiDialogue(item.id, !hifiDialogueSet.has(item.id))
-                            }}
-                            className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded border ${
-                              hifiDialogueSet.has(item.id)
-                                ? 'border-violet-400 bg-violet-600 text-white'
-                                : 'border-violet-600/40 text-violet-200/80'
-                            }`}
-                          >
-                            {t('qualityHifi')}
-                          </button>
-                        )}
                         <span
                           className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded-full border ${typeBadgeClass(item.kind)}`}
                         >
-                          {item.kind === 'dialogue' && hifiDialogueSet.has(item.id)
-                            ? t('qualityHifi')
-                            : item.typeLabel}
+                          {item.typeLabel}
                         </span>
                       </span>
                       <span
@@ -238,11 +186,9 @@ export function ExpressAudioConfirmDialog({
                                 : 'text-amber-400'
                         }`}
                       >
-                        {item.kind === 'sfx' && !item.recommended
-                          ? t('coveredByMusic')
-                          : item.kind === 'sfx' && item.recommended && !item.hasAudio && !item.stale
-                            ? t('recommended')
-                            : item.stale
+                        {item.kind === 'sfx' && !item.hasAudio && !item.stale
+                          ? t('recommended')
+                          : item.stale
                               ? t('statusPromptChanged')
                               : item.hasAudio
                                 ? t('statusReady')
@@ -257,26 +203,6 @@ export function ExpressAudioConfirmDialog({
 
           {selectedSfxCount > 0 && (
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-                {t('sfxQuality')}
-              </p>
-              <div className="inline-flex rounded-md border border-violet-600/40 overflow-hidden mb-3">
-                {(['elevenlabs', 'hifi'] as SfxQuality[]).map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    disabled={isRunning}
-                    onClick={() => setSfxQuality(value)}
-                    className={`px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
-                      sfxQuality === value
-                        ? 'bg-violet-600 text-white'
-                        : 'bg-transparent text-violet-200/80 hover:bg-violet-900/30'
-                    }`}
-                  >
-                    {value === 'hifi' ? t('qualityHifi') : t('qualityElevenLabs')}
-                  </button>
-                ))}
-              </div>
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
                 {t('sfxDurationPreset')}
               </p>
@@ -297,33 +223,15 @@ export function ExpressAudioConfirmDialog({
                   </button>
                 ))}
               </div>
-              {showPartialHifiHint && (
-                <p className="text-[10px] text-amber-200/60 mt-2">
-                  {t('hifiPartialHint', {
-                    seconds: resolveVeoSfxTargetSeconds({
-                      segmentDurationSeconds,
-                      override: durationPreset,
-                    }),
-                  })}
-                </p>
-              )}
               <p className="text-[11px] text-violet-300/60 mt-2">
                 {t('sfxCredits', {
                   credits: creditTotal,
                   hint: t('creditHint', {
-                    credits: sfxQuality === 'hifi' ? VIDEO_CREDITS.VEO_LITE : AUDIO_CREDITS.ELEVENLABS_SFX,
+                    credits: AUDIO_CREDITS.ELEVENLABS_SFX,
                   }),
                 })}
               </p>
             </div>
-          )}
-          {hifiDialogueCount > 0 && (
-            <p className="text-[11px] text-violet-300/60">
-              {t('hifiDialogueCredits', {
-                credits: hifiDialogueCount * VIDEO_CREDITS.VEO_LITE,
-                count: hifiDialogueCount,
-              })}
-            </p>
           )}
         </div>
 
@@ -343,8 +251,6 @@ export function ExpressAudioConfirmDialog({
                 scope,
                 selectedIds,
                 durationOverride: durationPreset,
-                sfxQuality,
-                hifiDialogueIds,
               })
             }
             disabled={isRunning || nothingSelected}

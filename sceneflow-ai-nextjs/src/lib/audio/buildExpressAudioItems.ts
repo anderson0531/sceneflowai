@@ -4,6 +4,7 @@ import {
   audioSourceFingerprintForSpoken,
   isBeatAudioStale,
 } from '@/lib/audio/beatAudioStale'
+import { beatRequiresDistinctSfx, distinctSfxCue } from '@/lib/audio/shotSfxTag'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
@@ -258,8 +259,13 @@ export function buildExpressAudioItems(
       continue
     }
 
-    if (beat.kind === 'action' && selectableActionBeatIds.has(beat.beatId)) {
+    if (
+      beat.kind === 'action' &&
+      selectableActionBeatIds.has(beat.beatId) &&
+      beatRequiresDistinctSfx(beat)
+    ) {
       const description = beat.actionDescription?.trim() ?? ''
+      const audioCue = distinctSfxCue(beat)
       const hasUrl = beatHasSfxAudio(scene, {
         beatId: beat.beatId,
         actionDescription: description,
@@ -270,16 +276,15 @@ export function buildExpressAudioItems(
         { beatId: beat.beatId, actionDescription: description, kind: 'action' },
         hasUrl
       )
-      const audioCue = beat.beatDirection?.audioCue?.trim()
       items.push({
         id: `sfx-${beat.beatId}`,
         kind: 'sfx',
-        label: truncate(audioCue || description || 'Action beat'),
+        label: truncate(audioCue),
         typeLabel: TYPE_LABELS.sfx,
         hasAudio: hasUrl && !stale,
         stale,
         beatId: beat.beatId,
-        recommended: !!audioCue,
+        recommended: true,
       })
     }
   }

@@ -6,6 +6,7 @@ import {
 } from '@/lib/config/modelConfig'
 import { LYRIA_3_CLIP_MODEL, LYRIA_3_PRO_MODEL } from '@/lib/audio/lyriaClient'
 import { DEFAULT_GEMINI_TTS_MODEL } from '@/lib/tts/blueprintTtsConstants'
+import { DESIGNED_VOICE_TTS_MODEL } from '@/lib/tts/geminiVoiceDesign'
 import { MODEL_REGISTRY } from '@/lib/models/modelRegistry'
 
 function row(symbol: string) {
@@ -44,6 +45,9 @@ describe('model registry', () => {
     expect(row('DEFAULT_GEMINI_TTS_MODEL').map((entry) => entry.modelId)).toEqual([
       DEFAULT_GEMINI_TTS_MODEL,
     ])
+    expect(row('DESIGNED_VOICE_TTS_MODEL').map((entry) => entry.modelId)).toEqual([
+      DESIGNED_VOICE_TTS_MODEL,
+    ])
   })
 
   it('keeps those pins on live or fallback roles', () => {
@@ -61,6 +65,7 @@ describe('model registry', () => {
       'LYRIA_3_CLIP_MODEL',
       'LYRIA_3_PRO_MODEL',
       'DEFAULT_GEMINI_TTS_MODEL',
+      'DESIGNED_VOICE_TTS_MODEL',
     ]
     for (const symbol of symbols) {
       expect(['live', 'fallback']).toContain(row(symbol)[0]?.role)

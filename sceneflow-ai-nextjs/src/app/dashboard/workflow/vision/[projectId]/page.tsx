@@ -2645,6 +2645,43 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [persistSceneProduction]
   )
 
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (
+        event as CustomEvent<{
+          sceneId?: string
+          beatId?: string
+          sourceUrl?: string
+          audioUrl?: string
+        }>
+      ).detail
+      if (!detail?.sceneId || !detail.beatId || !detail.audioUrl || !detail.sourceUrl) return
+      applySceneProductionUpdate(detail.sceneId, (current) => {
+        if (!current?.segments?.length) return current
+        let changed = false
+        const segments = current.segments.map((segment) => {
+          if (segment.beatId !== detail.beatId) return segment
+          if ((segment.activeAssetUrl || '').trim() !== detail.sourceUrl) return segment
+          if (
+            segment.clipAudioUrl === detail.audioUrl &&
+            segment.clipAudioSourceUrl === detail.sourceUrl
+          ) {
+            return segment
+          }
+          changed = true
+          return {
+            ...segment,
+            clipAudioUrl: detail.audioUrl,
+            clipAudioSourceUrl: detail.sourceUrl,
+          }
+        })
+        return changed ? { ...current, segments } : current
+      })
+    }
+    window.addEventListener('sceneflow:shot-clip-audio', handler)
+    return () => window.removeEventListener('sceneflow:shot-clip-audio', handler)
+  }, [applySceneProductionUpdate])
+
   const syncBeatStartFrameToProduction = useCallback(
     (sceneId: string, beatId: string, newUrl: string) => {
       if (!beatId?.trim() || !newUrl?.trim()) return
@@ -15959,6 +15996,40 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           language: language || 'en',
           resolution: '1080p',
           scenes: script.script.scenes,
+          audioMode:
+            typeof window !== 'undefined' &&
+            window.sessionStorage.getItem('sceneflow-animatic-audio-mode') === 'hifi'
+              ? 'hifi'
+              : 'lofi',
+          clipAudioByBeatId: (() => {
+            let cache: Record<string, { audioUrl: string; sourceUrl: string }> = {}
+            try {
+              cache = JSON.parse(window.sessionStorage.getItem('sceneflow-shot-clip-audio') || '{}')
+            } catch {
+              cache = {}
+            }
+            const merged: Record<string, string> = {}
+            script.script.scenes.forEach((scene: { id?: string; sceneId?: string }, index: number) => {
+              const sceneId = scene.id || scene.sceneId || `scene-${index}`
+              const segments = sceneProductionStateRef.current[sceneId]?.segments
+              if (!Array.isArray(segments)) return
+              for (const segment of segments) {
+                const beatId = segment.beatId?.trim()
+                const videoUrl = segment.activeAssetUrl?.trim()
+                if (!beatId || !videoUrl || segment.assetType === 'image') continue
+                const stored =
+                  segment.clipAudioUrl &&
+                  (!segment.clipAudioSourceUrl || segment.clipAudioSourceUrl === videoUrl)
+                    ? segment.clipAudioUrl
+                    : undefined
+                const cached =
+                  cache[beatId]?.sourceUrl === videoUrl ? cache[beatId]?.audioUrl : undefined
+                const audioUrl = stored || cached
+                if (audioUrl) merged[`${index}:${beatId}`] = audioUrl
+              }
+            })
+            return merged
+          })(),
           settings: {
             kenBurnsIntensity: 'subtle',
             transitionStyle: 'crossfade',

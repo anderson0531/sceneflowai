@@ -35,6 +35,11 @@ import {
   shouldSkipGoogleTtsForBudget,
 } from '../../../../lib/tts/googleTtsTimeBudget'
 import { buildGeminiTtsPrompt } from '../../../../lib/tts/geminiTtsPrompt'
+import { synthesizeDesignedGeminiVoiceMp3 } from '../../../../lib/tts/geminiDesignedVoiceTts'
+import {
+  designedVoiceStyle,
+  isDesignedGeminiVoiceId,
+} from '../../../../lib/tts/geminiVoiceDesign'
 import {
   buildSceneDirection,
   type SceneDeliveryState,
@@ -57,6 +62,8 @@ interface VoiceConfig {
   similarityBoost?: number
   languageCode?: string
   prompt?: string
+  /** Short Voice Design description used to recreate an expired voice_ id. */
+  designPrompt?: string
 }
 
 function normalizeVoiceConfig(voiceConfig: VoiceConfig): VoiceConfig {
@@ -258,7 +265,8 @@ export async function POST(req: NextRequest) {
         .find((value) => value.length > 0) || undefined
 
     const useGeminiOptimizer =
-      voiceConfig.provider === 'google' && voiceConfig.voiceId.startsWith('gemini-')
+      voiceConfig.provider === 'google' &&
+      (voiceConfig.voiceId.startsWith('gemini-') || isDesignedGeminiVoiceId(voiceConfig.voiceId))
     const optimized = useGeminiOptimizer
       ? optimizeTextForGeminiTTS(textToGenerate, { voiceDirection })
       : optimizeTextForTTS(textToGenerate)
@@ -293,7 +301,17 @@ export async function POST(req: NextRequest) {
     let finalVoiceConfig = voiceConfig
     let promptSource: ReturnType<typeof resolveCharacterVoicePrompt>['source'] = 'none'
 
-    if (audioType === 'dialogue') {
+    if (audioType === 'dialogue' && isDesignedGeminiVoiceId(voiceConfig.voiceId)) {
+      const dbCharacter = await findVisionCharacter(projectId, characterId, characterName)
+      const stored = dbCharacter?.voiceConfig as { designPrompt?: string; prompt?: string } | undefined
+      const designPrompt = stored?.designPrompt?.trim() || voiceConfig.designPrompt?.trim() || stored?.prompt?.trim()
+      finalVoiceConfig = {
+        ...voiceConfig,
+        designPrompt,
+        prompt: undefined,
+      }
+      promptSource = designPrompt ? 'db' : 'none'
+    } else if (audioType === 'dialogue') {
       const dbCharacter = await findVisionCharacter(projectId, characterId, characterName)
       const resolved = resolveCharacterVoicePrompt(voiceConfig, dbCharacter as {
         voiceConfig?: { prompt?: string }
@@ -822,6 +840,19 @@ async function generateGoogleAudio(
   let accessToken: string | null = null
 
   const isGemini = voiceConfig.voiceId.startsWith('gemini-')
+  if (isDesignedGeminiVoiceId(voiceConfig.voiceId)) {
+    const spoken = finalizeTextForGeminiTts(text)
+    if (!spoken.trim()) {
+      throw new Error('Text is empty after removing bracketed tags')
+    }
+    return synthesizeDesignedGeminiVoiceMp3({
+      text: spoken,
+      voiceId: voiceConfig.voiceId,
+      style: designedVoiceStyle(deliveryCues),
+      designPrompt: voiceConfig.designPrompt,
+      displayName: voiceConfig.voiceName,
+    })
+  }
   const isCustomClone = !isGemini && !voiceConfig.voiceId.includes('-') && voiceConfig.voiceId.length > 20
   
   // Final sanitize: multiline/unicode brackets, markdown emphasis, echoed tail (see textOptimizer).

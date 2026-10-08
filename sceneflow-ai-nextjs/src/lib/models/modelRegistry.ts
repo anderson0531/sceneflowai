@@ -13,6 +13,7 @@ import {
 } from '@/lib/config/modelConfig'
 import { LYRIA_3_CLIP_MODEL, LYRIA_3_PRO_MODEL } from '@/lib/audio/lyriaClient'
 import { DEFAULT_GEMINI_TTS_MODEL } from '@/lib/tts/blueprintTtsConstants'
+import { DESIGNED_VOICE_TTS_MODEL } from '@/lib/tts/geminiVoiceDesign'
 import { KLING_MODEL_CATALOG, type KlingModelId } from '@/lib/kling/types'
 import {
   AGGREGATOR_MODEL_REGISTRY,
@@ -272,6 +273,19 @@ export const MODEL_REGISTRY: ModelRegistryEntry[] = [
     tests: [],
     envOverrides: ['GEMINI_TTS_MODEL'],
     notes: 'Cloud Text-to-Speech. Not compared to Gemini or Vertex generative model lists.',
+    analysis: 'catalog_only',
+  },
+  {
+    id: 'audio-tts-voice-design',
+    function: 'Character voice design',
+    provider: 'google',
+    api: 'vertex',
+    modelId: DESIGNED_VOICE_TTS_MODEL,
+    role: 'live',
+    symbol: 'DESIGNED_VOICE_TTS_MODEL',
+    files: ['src/lib/tts/geminiVoiceDesign.ts', 'src/lib/tts/geminiDesignedVoiceTts.ts'],
+    tests: ['src/__tests__/geminiVoiceDesign.test.ts'],
+    notes: 'Gemini 3.8 Flash TTS prompted voices. No prebuilt base voice.',
     analysis: 'catalog_only',
   },
   ...((Object.keys(KLING_MODEL_CATALOG) as KlingModelId[]).map((modelId): ModelRegistryEntry => ({

@@ -228,6 +228,7 @@ describe('Express missing-scope includes stale clips', () => {
           sequenceIndex: 0,
           kind: 'action',
           actionDescription: 'Glass shatters on the floor.',
+          beatDirection: { audioCue: 'Glass shatters' },
         },
       ],
       dialogue: [],
@@ -246,6 +247,6 @@ describe('Express missing-scope includes stale clips', () => {
     const sfx = items.find((item) => item.id === 'sfx-bt_action_1')
     expect(sfx?.stale).toBe(true)
     expect(sfx?.hasAudio).toBe(false)
-    expect(defaultExpressAudioSelection(items, 'missing')).not.toContain('sfx-bt_action_1')
+    expect(defaultExpressAudioSelection(items, 'missing')).toContain('sfx-bt_action_1')
   })
 })

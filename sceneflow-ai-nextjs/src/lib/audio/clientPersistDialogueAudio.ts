@@ -1,7 +1,5 @@
 import { toast } from 'sonner'
-import { audioSourceFingerprintForSpoken } from '@/lib/audio/beatAudioStale'
 import type { AudioSlotSavedPayload } from '@/lib/audio/cleanupAudio'
-import { dispatchGenerateVeoSfx } from '@/lib/sfx/clientGenerateVeoSfx'
 
 export interface PersistDialogueAudioInput {
   projectId: string
@@ -22,7 +20,7 @@ export interface PersistDialogueAudioInput {
 export async function persistDialogueAudioSlot(
   input: PersistDialogueAudioInput
 ): Promise<AudioSlotSavedPayload> {
-  const provider = input.provider || 'veo'
+  const provider = input.provider || 'google'
   const response = await fetch(`/api/projects/${input.projectId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -70,49 +68,4 @@ export async function persistDialogueAudioSlot(
     lineKind: input.lineKind ?? 'dialogue',
     characterId: input.characterId,
   }
-}
-
-export async function generateAndPersistHifiDialogue(params: {
-  projectId: string
-  sceneIndex: number
-  language: string
-  dialogueIndex: number
-  characterName: string
-  line: string
-  lineId?: string
-  voiceDirection?: string
-  segmentDurationSeconds?: number
-  hasExistingAudio?: boolean
-  characterId?: string
-}): Promise<AudioSlotSavedPayload> {
-  const result = await dispatchGenerateVeoSfx({
-    projectId: params.projectId,
-    text: params.line,
-    sfxIndex: params.dialogueIndex,
-    sfxId: params.lineId,
-    segmentDurationSeconds: params.segmentDurationSeconds,
-    promptMode: 'dialogue',
-    voiceDirection: params.voiceDirection,
-    hasExistingAudio: params.hasExistingAudio,
-  })
-
-  return persistDialogueAudioSlot({
-    projectId: params.projectId,
-    sceneIndex: params.sceneIndex,
-    audioUrl: result.url,
-    language: params.language,
-    dialogueIndex: params.dialogueIndex,
-    characterName: params.characterName,
-    lineId: params.lineId,
-    duration: result.clipDurationSeconds,
-    provider: 'veo',
-    sourceFingerprint: audioSourceFingerprintForSpoken({
-      kind: 'dialogue',
-      character: params.characterName,
-      line: params.line,
-      voiceDirection: params.voiceDirection,
-    }),
-    lineKind: 'dialogue',
-    characterId: params.characterId,
-  })
 }

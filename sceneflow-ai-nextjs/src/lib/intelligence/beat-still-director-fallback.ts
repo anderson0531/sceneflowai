@@ -357,7 +357,7 @@ HARD RULES:
 6. Insert/Extreme Close-Up of a limb: only the specified limb/hand. Insert/Extreme Close-Up of an object with nobody in frame: describe the instrument's settled state, not a limb, hand, or face.
 7. frozenMoment repeats locked facts from the action: any on-screen words in quotes, and what a photograph or prop actually depicts. Do not replace them with a vague label such as "production credits." actionDescription is two to four concrete sentences of the motion, with those same quoted words and depicted subjects.
 8. Do NOT write style, lighting essays, exclusions, F2V, start-frame, or appearance of library refs — code owns those.
-9. Include cameraMovement, audioCue, and transition only when the user note or the current beat calls for them. transition must be one of CUT, CONTINUE, DISSOLVE, FADE, MATCH_CUT. Omit a field to leave it unchanged.
+9. Include audioCue only for a distinct sound the score cannot carry (a slam, a mechanism, a creature, a specific device). Omit audioCue when music should carry the shot, and never use it for generic ambience. Include cameraMovement and transition only when the user note or the current beat calls for them. transition must be one of CUT, CONTINUE, DISSOLVE, FADE, MATCH_CUT. Omit a field to leave it unchanged.
 10. ${buildPolicySafePhrasingRules()}
 
 Output JSON only:

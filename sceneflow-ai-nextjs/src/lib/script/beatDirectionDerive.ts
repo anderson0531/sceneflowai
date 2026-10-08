@@ -244,10 +244,9 @@ export function deriveBeatDirection(
     const moment = firstNonEmpty(beat.actionDescription, beat.line, movementKeyAction)
     if (moment) derived.frozenMoment = moment
   }
-  if (!derived.audioCue) {
-    const audio = firstNonEmpty(sceneDirection?.audio?.priorities)
-    if (audio) derived.audioCue = audio
-  }
+  // Scene-level audio priorities are ambience. Copying them onto every beat
+  // billed an ElevenLabs effect for shots the score should carry. A distinct
+  // cue is written by direction as beatDirection.audioCue.
   if (!derived.transition) {
     derived.transition = 'CUT'
   }

@@ -280,7 +280,7 @@ Field definitions:
 • "propInteraction": how a character physically handles a listed prop this beat (e.g., "Piper grips the journal with both hands and holds it against Gideon's sternum"). Names must match keyProps entries.
 • "lightingAccent": per-beat lighting deviation from the scene's overall lighting (e.g., "teal accent from the core underlighting Gideon's face"). Omit when scene lighting is unchanged.
 • "frozenMoment": ONE settled instant — pose plus what is readable on the face/body of EACH person in castInFrame (e.g., "Piper stops Gideon mid-lean, journal pressed to his sternum, her jaw set, his eyes wide."). Repeat locked facts from the action: quoted on-screen words and what a photograph or prop actually shows (e.g., "A lit match lies on a sepia photograph of the 1893 Chicago World's Fair Ferris Wheel, under the title 'A SceneFlow Studios Production'."). Do not replace those facts with a vague label such as "production credits." Do not write "standing motionless" without the face and body that make the hold readable.
-• "audioCue": per-beat diegetic sound (e.g., "glitching proximity timer chirps twice", "rhythmic thrum of the core swells"). Only include for beats with a distinct in-scene sound; leave out generic ambience.
+• "audioCue": per-beat diegetic sound (e.g., "glitching proximity timer chirps twice", "a metal door slams"). Include it only when the shot needs a sound effect the score cannot carry. Omit it for generic ambience and for shots that music should carry.
 • "transition": how this beat cuts into the NEXT beat. One of: "CUT", "CONTINUE", "DISSOLVE", "FADE", "MATCH_CUT". Default is "CUT".
 
 Beat-kind requirements:

@@ -40,6 +40,7 @@ describe('resolveExpressVeoSfxItems', () => {
         beatId: 'bt_action_1',
         kind: 'action',
         actionDescription: 'Keyboard clacking in a quiet room.',
+        beatDirection: { audioCue: 'Keyboard clacking' },
       },
       {
         beatId: 'bt_dialogue_1',
@@ -74,6 +75,19 @@ describe('resolveExpressVeoSfxItems', () => {
     expect(regenerated.items).toHaveLength(1)
   })
 
+  it('skips shots the score carries', () => {
+    const quiet = {
+      beats: [
+        { beatId: 'bt_quiet', kind: 'action', actionDescription: 'She watches the alley.' },
+      ],
+      sfx: [],
+      sfxAudio: [],
+    } as Record<string, unknown>
+    const result = resolveExpressVeoSfxItems(quiet, ['bt_quiet'])
+    expect(result.items).toHaveLength(0)
+    expect(result.skipped[0]?.reason).toBe('score carries this shot')
+  })
+
   it('lists selectable action beats and detects existing audio', () => {
     const beats = listSelectableActionBeats(scene)
     expect(beats).toHaveLength(1)
@@ -83,9 +97,9 @@ describe('resolveExpressVeoSfxItems', () => {
   it('assigns distinct sfxIndex values for batch of new beats', () => {
     const multiBeatScene = {
       beats: [
-        { beatId: 'bt_a', kind: 'action', actionDescription: 'Wind through trees.' },
-        { beatId: 'bt_b', kind: 'action', actionDescription: 'Footsteps on gravel.' },
-        { beatId: 'bt_c', kind: 'action', actionDescription: 'Door creaking open.' },
+        { beatId: 'bt_a', kind: 'action', actionDescription: 'Wind through trees.', beatDirection: { audioCue: 'Wind through trees' } },
+        { beatId: 'bt_b', kind: 'action', actionDescription: 'Footsteps on gravel.', beatDirection: { audioCue: 'Footsteps on gravel' } },
+        { beatId: 'bt_c', kind: 'action', actionDescription: 'Door creaking open.', beatDirection: { audioCue: 'Door creaks' } },
       ],
       sfx: [],
       sfxAudio: [],
@@ -123,11 +137,13 @@ describe('runExpressVeoSfx', () => {
                     beatId: 'bt_a',
                     kind: 'action',
                     actionDescription: 'Wind through trees.',
+                    beatDirection: { audioCue: 'Wind through trees' },
                   },
                   {
                     beatId: 'bt_b',
                     kind: 'action',
                     actionDescription: 'Footsteps on gravel.',
+                    beatDirection: { audioCue: 'Footsteps on gravel' },
                   },
                 ],
                 sfx: [],

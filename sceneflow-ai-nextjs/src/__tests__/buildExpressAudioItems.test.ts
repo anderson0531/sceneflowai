@@ -54,7 +54,6 @@ describe('buildExpressAudioItems', () => {
     expect(items.map((item) => item.id)).toEqual([
       'music',
       'dialogue-0',
-      'sfx-bt_action_1',
       'sfx-bt_action_2',
     ])
     expect(items[0]).toMatchObject({
@@ -68,13 +67,6 @@ describe('buildExpressAudioItems', () => {
       label: 'Alex: We need to move now.',
     })
     expect(items[2]).toMatchObject({
-      kind: 'sfx',
-      beatId: 'bt_action_1',
-      hasAudio: false,
-      recommended: false,
-      typeLabel: 'SFX',
-    })
-    expect(items[3]).toMatchObject({
       kind: 'sfx',
       beatId: 'bt_action_2',
       recommended: true,
@@ -104,7 +96,7 @@ describe('buildExpressAudioItems', () => {
 
     const items = buildExpressAudioItems(scene, 'en')
 
-    expect(items.map((item) => item.id)).toEqual(['narration', 'sfx-bt_action_1'])
+    expect(items.map((item) => item.id)).toEqual(['narration'])
     expect(items[0]).toMatchObject({
       kind: 'narration',
       hasAudio: false,
@@ -128,6 +120,7 @@ describe('buildExpressAudioItems', () => {
           sequenceIndex: 1,
           kind: 'action',
           actionDescription: 'Radio static crackles.',
+          beatDirection: { audioCue: 'Radio static crackles' },
         },
       ],
       dialogue: [
@@ -149,7 +142,7 @@ describe('buildExpressAudioItems', () => {
     expect(items.find((item) => item.id === 'dialogue-0')?.hasAudio).toBe(true)
     expect(items.find((item) => item.id === 'sfx-bt_action_1')).toMatchObject({
       hasAudio: true,
-      recommended: false,
+      recommended: true,
     })
   })
 })

@@ -24,6 +24,7 @@ import type {
 } from '@/components/vision/scene-production/types'
 import { calculateSourceHash } from '@/types/productionStreams'
 import { buildProjectAnimaticTimeline } from '@/lib/storyboard/types'
+import type { AnimaticAudioMode } from '@/lib/storyboard/animaticAudioMode'
 import { rectToRenderKenBurns, resolveBeatKenBurnsSettings } from '@/lib/storyboard/kenBurnsFrame'
 
 export interface ProjectAnimaticRequest {
@@ -33,6 +34,8 @@ export interface ProjectAnimaticRequest {
   resolution: '720p' | '1080p' | '4K'
   scenes: Record<string, unknown>[]
   settings?: AnimaticRenderSettings
+  audioMode?: AnimaticAudioMode
+  clipAudioByBeatId?: Record<string, string>
 }
 
 export interface ProjectAnimaticResponse {
@@ -168,6 +171,8 @@ export async function POST(request: NextRequest) {
       preVisAnimatic: true,
       interSceneFadeUrl: blackUrl,
       transitions: animaticTransitionsEnabled(),
+      audioMode: body.audioMode === 'hifi' ? 'hifi' : 'lofi',
+      clipAudioByBeatId: body.clipAudioByBeatId,
     })
     if (timeline.segments.length === 0) {
       return NextResponse.json(

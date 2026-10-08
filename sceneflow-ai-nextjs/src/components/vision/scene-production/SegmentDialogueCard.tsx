@@ -4,7 +4,6 @@ import { Download, Loader, Pause, Play, RefreshCw, Trash2, Upload } from 'lucide
 import { BeatAudioStatusBadge } from '@/components/vision/BeatAudioStatusBadge'
 import { DialogueQualityToggle } from '@/components/vision/DialogueQualityToggle'
 import type { AudioSlotSavedPayload } from '@/lib/audio/cleanupAudio'
-import { generateAndPersistHifiDialogue } from '@/lib/audio/clientPersistDialogueAudio'
 import { toast } from 'sonner'
 import { saveAudioFile } from '@/lib/download/saveFile'
 import { findDialogueAudioForLine } from '@/components/vision/scene-production/audioTrackBuilder'
@@ -226,41 +225,17 @@ export function SegmentDialogueCard({
           )}
           {!isNarrator && dialogueIndex !== null && (
             <DialogueQualityToggle
-              provider={typeof dialogueEntry?.provider === 'string' ? dialogueEntry.provider : undefined}
-              hasAudio={!!audioUrl}
-              disabled={isGenerating || !projectId || !lineText.trim()}
+              disabled={isGenerating || !lineText.trim()}
               onLofi={() => {
                 void dispatchGenerate()
               }}
-              onHifi={() => {
-                if (!projectId || !line.character) {
-                  toast.error('This line cannot be upgraded yet.')
-                  return
-                }
-                setGeneratingDialogue?.({
-                  sceneIdx,
-                  character: line.character,
-                  dialogueIndex: dialogueIndex ?? undefined,
-                  lineId: line.lineId,
-                })
-                void generateAndPersistHifiDialogue({
-                  projectId,
-                  sceneIndex: sceneIdx,
-                  language: selectedLanguage,
-                  dialogueIndex,
-                  characterName: line.character,
-                  line: lineText,
-                  lineId: line.lineId,
-                  voiceDirection: line.voiceDirection,
-                  segmentDurationSeconds: scene.duration,
-                  hasExistingAudio: !!audioUrl,
-                  characterId: line.characterId,
-                })
-                  .then((saved) => onAudioSlotSaved?.(saved))
-                  .catch((error) => {
-                    console.error('[SegmentDialogueCard] HiFi dialogue failed:', error)
+              onGenerateClip={() => {
+                window.dispatchEvent(
+                  new CustomEvent('production:open-action-tab', {
+                    detail: { sceneIndex: sceneIdx },
                   })
-                  .finally(() => setGeneratingDialogue?.(null))
+                )
+                toast.message('Generate this shot’s clip. HiFi playback uses the clip’s audio.')
               }}
             />
           )}

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { chunkNarrationText } from '@/lib/blueprint/sectionNarrationText'
 import { synthesizeGeminiFlashMp3, isGeminiTtsConfigured } from '@/lib/tts/geminiFlashTts'
+import { synthesizeDesignedGeminiVoiceMp3 } from '@/lib/tts/geminiDesignedVoiceTts'
+import { isDesignedGeminiVoiceId } from '@/lib/tts/geminiVoiceDesign'
 import { NARRATION_CHUNK_BYTES } from '@/lib/tts/blueprintTtsConstants'
 import type { GeminiTtsAudioType } from '@/lib/tts/geminiTtsPrompt'
 
@@ -9,7 +11,7 @@ export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
   try {
-    const { text, voiceId, prompt, audioType } = await request.json()
+    const { text, voiceId, prompt, audioType, designPrompt } = await request.json()
 
     if (!text || typeof text !== 'string') {
       return NextResponse.json({ error: 'Missing text parameter' }, { status: 400 })
@@ -28,6 +30,21 @@ export async function POST(request: NextRequest) {
     }
 
     const voice = typeof voiceId === 'string' && voiceId.trim() ? voiceId.trim() : 'gemini-Kore'
+    if (isDesignedGeminiVoiceId(voice)) {
+      const designed = await synthesizeDesignedGeminiVoiceMp3({
+        text: cleanText,
+        voiceId: voice,
+        designPrompt: typeof designPrompt === 'string' ? designPrompt : undefined,
+        displayName: 'SceneFlow character',
+      })
+      return new Response(new Uint8Array(designed), {
+        status: 200,
+        headers: {
+          'Content-Type': 'audio/mpeg',
+          'Cache-Control': 'no-store',
+        },
+      })
+    }
     const ttsAudioType: GeminiTtsAudioType =
       audioType === 'dialogue' || audioType === 'narration' || audioType === 'music' || audioType === 'sfx'
         ? audioType

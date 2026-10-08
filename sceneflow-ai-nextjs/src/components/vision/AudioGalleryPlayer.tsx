@@ -33,6 +33,16 @@ import {
   SCENE_FADE_TO_BLACK_SEC,
 } from '@/lib/storyboard/types'
 import {
+  collectClipAudioByBeat,
+  listShotClipsNeedingExtract,
+  readAnimaticAudioMode,
+  readShotClipAudioCache,
+  writeAnimaticAudioMode,
+  writeShotClipAudioCache,
+  type AnimaticAudioMode,
+  type ShotClipAudioCache,
+} from '@/lib/storyboard/animaticAudioMode'
+import {
   computeFrameFadeIn,
   computeFrameFadeOut,
   computeSceneStartFadeBlack,
@@ -480,6 +490,74 @@ export function AudioGalleryPlayer({
   const currentScene = scenes[currentSceneIndex]
   const currentSceneId = resolveGallerySceneId(currentScene, currentSceneIndex)
   const currentProductionData = sceneProductionState?.[currentSceneId]
+  const [animaticAudioMode, setAnimaticAudioMode] = useState<AnimaticAudioMode>('lofi')
+  const [clipAudioCache, setClipAudioCache] = useState<ShotClipAudioCache>({})
+  const clipExtractAttempted = useRef(new Set<string>())
+
+  useEffect(() => {
+    setAnimaticAudioMode(readAnimaticAudioMode())
+    setClipAudioCache(readShotClipAudioCache())
+  }, [])
+
+  const clipAudioByBeatId = useMemo(
+    () => collectClipAudioByBeat(currentProductionData?.segments, clipAudioCache),
+    [currentProductionData, clipAudioCache]
+  )
+
+  useEffect(() => {
+    if (animaticAudioMode !== 'hifi') return
+    const pending = listShotClipsNeedingExtract(currentProductionData?.segments, clipAudioCache)
+    const projectId =
+      (currentScene as { projectId?: string } | undefined)?.projectId ||
+      (typeof window !== 'undefined'
+        ? window.location.pathname.split('/').filter(Boolean).pop()
+        : '')
+    if (!projectId || pending.length === 0) return
+    let cancelled = false
+    void (async () => {
+      for (const shot of pending) {
+        const attemptKey = `${shot.beatId}:${shot.videoUrl}`
+        if (clipExtractAttempted.current.has(attemptKey)) continue
+        clipExtractAttempted.current.add(attemptKey)
+        try {
+          const response = await fetch('/api/sfx/extract-clip-audio', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              projectId,
+              videoUrl: shot.videoUrl,
+              beatId: shot.beatId,
+            }),
+          })
+          const data = await response.json().catch(() => null)
+          if (cancelled || !response.ok || !data?.url) continue
+          setClipAudioCache((prev) => {
+            const next = {
+              ...prev,
+              [shot.beatId]: { audioUrl: String(data.url), sourceUrl: shot.videoUrl },
+            }
+            writeShotClipAudioCache(next)
+            return next
+          })
+          window.dispatchEvent(
+            new CustomEvent('sceneflow:shot-clip-audio', {
+              detail: {
+                sceneId: currentSceneId,
+                beatId: shot.beatId,
+                sourceUrl: shot.videoUrl,
+                audioUrl: String(data.url),
+              },
+            })
+          )
+        } catch {
+          // This shot keeps its preview bed until the clip audio can be read.
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [animaticAudioMode, currentProductionData, clipAudioCache, currentScene, currentSceneId])
   const savedSceneMix = useMemo(
     () => sceneMixerTrackVolumes(currentProductionData, selectedLanguage),
     [currentProductionData, selectedLanguage]
@@ -749,6 +827,8 @@ export function AudioGalleryPlayer({
     isMuted,
     musicIntroFade,
     onPlaybackEnd: handlePlaybackEnd,
+    audioMode: animaticAudioMode,
+    clipAudioByBeatId,
   })
 
   playAfterSceneChangeRef.current = playback.play
@@ -1443,6 +1523,33 @@ export function AudioGalleryPlayer({
             </TooltipTrigger>
             <TooltipContent>Pre-Vis frames with synced audio</TooltipContent>
           </Tooltip>
+          {playbackMode === 'animatic' && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = animaticAudioMode === 'hifi' ? 'lofi' : 'hifi'
+                    setAnimaticAudioMode(next)
+                    writeAnimaticAudioMode(next)
+                  }}
+                  className={cn(
+                    'px-2 py-0.5 rounded text-[11px] font-medium transition-colors',
+                    animaticAudioMode === 'hifi'
+                      ? 'bg-violet-600 text-white'
+                      : 'text-gray-400 hover:text-white'
+                  )}
+                >
+                  {animaticAudioMode === 'hifi' ? 'HiFi' : 'LOFI'}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {animaticAudioMode === 'hifi'
+                  ? 'Shot clip audio for dialogue and effects. Generate a clip when a shot does not have one yet.'
+                  : 'Preview mix: TTS, score, and effects only on tagged shots.'}
+              </TooltipContent>
+            </Tooltip>
+          )}
           <Tooltip>
             <TooltipTrigger asChild>
               <button
