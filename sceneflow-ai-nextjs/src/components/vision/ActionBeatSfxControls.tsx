@@ -3,13 +3,14 @@
 import { useMemo, useState } from 'react'
 import { Download, Loader2, Pause, Play, RefreshCw, Volume2 } from 'lucide-react'
 import { BeatAudioStatusBadge } from '@/components/vision/BeatAudioStatusBadge'
+import { DialogueQualityToggle } from '@/components/vision/DialogueQualityToggle'
 import { toast } from 'sonner'
 import type { SfxDurationOverride } from '@/lib/elevenlabs/sfxDuration'
 import { resolveAutoSfxDuration, resolveSfxDuration } from '@/lib/elevenlabs/sfxDuration'
 import { saveAudioFile } from '@/lib/download/saveFile'
 import { distinctSfxCue } from '@/lib/audio/shotSfxTag'
 import { resolveBeatSfxSlot, readBeatSfxAudio } from '@/lib/script/deriveSfxFromSceneContent'
-import { actionBeatSfxIsStale } from '@/lib/audio/beatAudioStale'
+import { actionBeatSfxIsStale, audioSourceFingerprintForSfxBeat } from '@/lib/audio/beatAudioStale'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 export type ExpressBeatSfxStatus = 'pending' | 'running' | 'done' | 'error'
@@ -106,7 +107,7 @@ export function ActionBeatSfxControls({
       if (!data?.url) throw new Error('Sound effect response missing audio URL')
       await onSaveSfxAudio?.(sceneIdx, 'sfx', data.url, slot.sfxIndex, null, {
         beatId: beat.beatId,
-        beatDescription: sfxText,
+        beatDescription: audioSourceFingerprintForSfxBeat(beat),
       })
       toast.success(sfxAudio ? 'ElevenLabs sound re-generated.' : 'ElevenLabs sound generated.', {
         id: toastId,
@@ -248,6 +249,21 @@ export function ActionBeatSfxControls({
         })}
       </div>
       <p className="text-[10px] text-amber-300/50">ElevenLabs · about 15 credits</p>
+      <DialogueQualityToggle
+        lofiTitle="ElevenLabs sound effect"
+        disabled={isBusy || !sfxText}
+        onLofi={() => {
+          void handleElevenLabs()
+        }}
+        onGenerateClip={() => {
+          window.dispatchEvent(
+            new CustomEvent('production:open-action-tab', {
+              detail: { sceneIndex: sceneIdx, beatId: beat.beatId },
+            })
+          )
+          toast.message('Generate this shot’s clip. HiFi playback uses the clip’s audio.')
+        }}
+      />
     </div>
   )
 }

@@ -52,7 +52,8 @@ export interface SegmentListProps {
     audioType: 'sfx' | 'music',
     audioUrl: string,
     sfxIdx?: number,
-    sfxAttribution?: Record<string, unknown> | null
+    sfxAttribution?: Record<string, unknown> | null,
+    beatContext?: { beatId?: string; beatDescription: string }
   ) => Promise<void> | void
   generatingDialogue?: { sceneIdx: number; character?: string; dialogueIndex?: number; lineId?: string } | null
   setGeneratingDialogue?: (val: any) => void

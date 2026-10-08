@@ -7,6 +7,7 @@ import type { AudioSlotSavedPayload } from '@/lib/audio/cleanupAudio'
 import { toast } from 'sonner'
 import { saveAudioFile } from '@/lib/download/saveFile'
 import { findDialogueAudioForLine } from '@/components/vision/scene-production/audioTrackBuilder'
+import { getSceneBeats } from '@/lib/script/beatMigration'
 import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import { dialogueDirectionDisplay } from '@/lib/scene/dialogueDirectionDisplay'
 import {
@@ -79,6 +80,7 @@ export function SegmentDialogueCard({
   onAudioSlotSaved,
 }: SegmentDialogueCardProps) {
   const isNarrator = line.kind === 'narration'
+  const clipBeatId = getSceneBeats(scene).find((beat) => beat.lineId && beat.lineId === line.lineId)?.beatId
 
   // Resolve audio for this line. For narrator we also fall back to the
   // whole-scene narration track for legacy projects.
@@ -232,7 +234,10 @@ export function SegmentDialogueCard({
               onGenerateClip={() => {
                 window.dispatchEvent(
                   new CustomEvent('production:open-action-tab', {
-                    detail: { sceneIndex: sceneIdx },
+                    detail: {
+                      sceneIndex: sceneIdx,
+                      ...(clipBeatId ? { beatId: clipBeatId } : {}),
+                    },
                   })
                 )
                 toast.message('Generate this shot’s clip. HiFi playback uses the clip’s audio.')

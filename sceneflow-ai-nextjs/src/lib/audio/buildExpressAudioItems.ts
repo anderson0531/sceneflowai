@@ -271,11 +271,7 @@ export function buildExpressAudioItems(
         actionDescription: description,
         kind: 'action',
       })
-      const stale = actionBeatSfxIsStale(
-        scene,
-        { beatId: beat.beatId, actionDescription: description, kind: 'action' },
-        hasUrl
-      )
+      const stale = actionBeatSfxIsStale(scene, beat, hasUrl)
       items.push({
         id: `sfx-${beat.beatId}`,
         kind: 'sfx',

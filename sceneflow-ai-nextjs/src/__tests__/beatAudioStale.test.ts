@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  actionBeatSfxIsStale,
   audioSourceFingerprintForSpoken,
   isBeatAudioStale,
   stampStaleBeatAudioOnScene,
@@ -248,5 +249,45 @@ describe('Express missing-scope includes stale clips', () => {
     expect(sfx?.stale).toBe(true)
     expect(sfx?.hasAudio).toBe(false)
     expect(defaultExpressAudioSelection(items, 'missing')).toContain('sfx-bt_action_1')
+  })
+
+  it('treats a stored sound cue as in sync when the action line is longer', () => {
+    const beat = {
+      beatId: 'bt_action_1',
+      actionDescription: 'Glass shatters on the floor.',
+      beatDirection: { audioCue: 'Glass shatters' },
+      kind: 'action' as const,
+    }
+    const scene = {
+      sfx: [
+        {
+          sourceBeatId: 'bt_action_1',
+          sourceFingerprint: 'Glass shatters',
+          audioUrl: 'https://example.com/glass.mp3',
+        },
+      ],
+      sfxAudio: ['https://example.com/glass.mp3'],
+    }
+    expect(actionBeatSfxIsStale(scene, beat, true)).toBe(false)
+  })
+
+  it('treats a stored action line as stale when the sound cue differs', () => {
+    const beat = {
+      beatId: 'bt_action_1',
+      actionDescription: 'Glass shatters on the floor.',
+      beatDirection: { audioCue: 'Glass shatters' },
+      kind: 'action' as const,
+    }
+    const scene = {
+      sfx: [
+        {
+          sourceBeatId: 'bt_action_1',
+          sourceFingerprint: 'Glass shatters on the floor.',
+          audioUrl: 'https://example.com/glass.mp3',
+        },
+      ],
+      sfxAudio: ['https://example.com/glass.mp3'],
+    }
+    expect(actionBeatSfxIsStale(scene, beat, true)).toBe(true)
   })
 })
