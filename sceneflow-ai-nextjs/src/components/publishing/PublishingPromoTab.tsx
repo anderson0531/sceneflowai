@@ -9,8 +9,10 @@ import {
   Loader2,
   Mic2,
   Music2,
+  Play,
   Smartphone,
   Sparkles,
+  Square,
   Clapperboard,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -18,7 +20,10 @@ import { cn } from '@/lib/utils'
 import { slimPromoProductionState } from '@/lib/publish/promoShotCatalog'
 import { DEFAULT_TRAILER_SEC } from '@/lib/publish/trailerPlanner'
 import { promoPlanWithLiveMedia, resolvePromoBeatMedia } from '@/lib/publish/promoBeatMedia'
+import { buildPromoPreviewSequence } from '@/lib/publish/promoPreviewSequence'
+import { parsePromoRenderBody, pollPromoRenderJob } from '@/lib/publish/promoRenderPoll'
 import { getPublishingState, upsertPublishingState } from '@/lib/publish/publishingState'
+import { PromoCutPreview } from '@/components/publishing/PromoCutPreview'
 import { findPromoSceneIndex, isPromoCinematicScene } from '@/lib/publish/buildPromoScene'
 import type { PromoTrailerBeatPlan, PromoTrailerAsset } from '@/types/publishingAssets'
 import type { ProjectStream } from '@/lib/streams/projectStreams'
@@ -80,6 +85,7 @@ export function PublishingPromoTab({
   const [narrating, setNarrating] = useState(false)
   const [composing, setComposing] = useState(false)
   const [rendering, setRendering] = useState(false)
+  const [previewing, setPreviewing] = useState(false)
   const [generatingBeatKey, setGeneratingBeatKey] = useState<string | null>(null)
   const [agentRunning, setAgentRunning] = useState(false)
   const [brokenBeatKeys, setBrokenBeatKeys] = useState<Set<string>>(() => new Set())
@@ -121,6 +127,29 @@ export function PublishingPromoTab({
   const readyClipCount = timelineRows.filter(
     (row) => row.media.hasClip && !brokenBeatKeys.has(row.key)
   ).length
+
+  const previewShots = useMemo(
+    () =>
+      buildPromoPreviewSequence(
+        timelineRows.map(({ beat, key, media }) => ({
+          key,
+          label: beat.label,
+          durationSec: beat.durationSec ?? Math.max(0, beat.endSec - beat.startSec),
+          videoUrl: media.hasClip && !brokenBeatKeys.has(key) ? media.videoUrl : undefined,
+          imageUrl: brokenBeatKeys.has(key) ? undefined : media.thumbnailUrl || beat.frameUrl,
+        }))
+      ),
+    [timelineRows, brokenBeatKeys]
+  )
+
+  const narrationAudioUrl = useMemo(() => {
+    const tracks = promoScene?.dialogueAudio as
+      | Record<string, Array<{ audioUrl?: string }>>
+      | undefined
+    return tracks?.en?.[0]?.audioUrl
+  }, [promoScene])
+
+  const musicAudioUrl = typeof promoScene?.musicAudio === 'string' ? promoScene.musicAudio : undefined
 
   const markBeatBroken = useCallback((key: string) => {
     setBrokenBeatKeys((prev) => {
@@ -319,15 +348,9 @@ export function PublishingPromoTab({
       return
     }
 
+    setPreviewing(false)
     setRendering(true)
     try {
-      const narrationAudioUrl = (() => {
-        const da = promoScene?.dialogueAudio as Record<string, Array<{ audioUrl?: string }>> | undefined
-        return da?.en?.[0]?.audioUrl
-      })()
-      const musicAudioUrl =
-        typeof promoScene?.musicAudio === 'string' ? promoScene.musicAudio : undefined
-
       const res = await fetch('/api/publish/trailer/render', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -343,13 +366,31 @@ export function PublishingPromoTab({
           promoSceneId: typeof promoScene?.id === 'string' ? promoScene.id : undefined,
         }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Trailer render failed')
+      const data = parsePromoRenderBody(res.status, await res.text())
+      if (!res.ok) throw new Error(data.error || `Trailer render failed (${res.status})`)
+
+      let mp4Url =
+        typeof data.mp4Url === 'string' && data.mp4Url.startsWith('http') ? data.mp4Url : ''
+      if (!mp4Url) {
+        const jobId = typeof data.jobId === 'string' ? data.jobId.trim() : ''
+        if (!jobId) throw new Error('Trailer stitch did not start')
+        toast.loading('Stitching the promo trailer…', { id: 'promo-render' })
+        mp4Url = await pollPromoRenderJob({
+          jobId,
+          fetchStatus: async (id) => {
+            const pollRes = await fetch(
+              `/api/publish/stream/render?jobId=${encodeURIComponent(id)}`
+            )
+            return { status: pollRes.status, body: await pollRes.text() }
+          },
+        })
+      }
+      toast.dismiss('promo-render')
 
       const trailerAsset: PromoTrailerAsset = {
-        mp4Url: data.mp4Url,
+        mp4Url,
         aspect: '9:16',
-        durationSec: data.durationSec ?? targetDuration,
+        durationSec: typeof data.durationSec === 'number' ? data.durationSec : targetDuration,
         targetDurationSec: targetDuration,
         beatPlan: plan,
         renderedAt: new Date().toISOString(),
@@ -369,6 +410,7 @@ export function PublishingPromoTab({
       setBeatPlan(plan)
       toast.success('Promo trailer rendered')
     } catch (err) {
+      toast.dismiss('promo-render')
       toast.error(err instanceof Error ? err.message : 'Trailer render failed')
     } finally {
       setRendering(false)
@@ -382,6 +424,8 @@ export function PublishingPromoTab({
     userId,
     targetDuration,
     projectTitle,
+    narrationAudioUrl,
+    musicAudioUrl,
     metadata,
     publishingState.promo,
     onSaveMetadata,
@@ -483,6 +527,20 @@ export function PublishingPromoTab({
           </Button>
           <Button
             size="sm"
+            variant="outline"
+            onClick={() => setPreviewing((current) => !current)}
+            disabled={rendering || previewShots.length === 0}
+            className="border-fuchsia-500/40 text-fuchsia-200"
+          >
+            {previewing ? (
+              <Square className="w-4 h-4 mr-1" />
+            ) : (
+              <Play className="w-4 h-4 mr-1" />
+            )}
+            {previewing ? 'Stop preview' : 'Preview'}
+          </Button>
+          <Button
+            size="sm"
             onClick={handleRenderTrailer}
             disabled={
               rendering ||
@@ -499,6 +557,14 @@ export function PublishingPromoTab({
             Render trailer
           </Button>
         </div>
+
+        <PromoCutPreview
+          playing={previewing}
+          shots={previewShots}
+          narrationUrl={narrationAudioUrl}
+          musicUrl={musicAudioUrl}
+          onEnded={() => setPreviewing(false)}
+        />
 
         {promoScene && onOpenPromoInStudio ? (
           <Button

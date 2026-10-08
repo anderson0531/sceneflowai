@@ -1,0 +1,111 @@
+'use client'
+
+import React, { useEffect, useRef, useState } from 'react'
+import type { PromoPreviewShot } from '@/lib/publish/promoPreviewSequence'
+
+export interface PromoCutPreviewProps {
+  playing: boolean
+  shots: PromoPreviewShot[]
+  narrationUrl?: string
+  musicUrl?: string
+  onEnded: () => void
+}
+
+/**
+ * Plays the planned cut in the promo tab. Clip audio stays muted so narration
+ * and music can be heard. This does not start a stitch.
+ */
+export function PromoCutPreview({
+  playing,
+  shots,
+  narrationUrl,
+  musicUrl,
+  onEnded,
+}: PromoCutPreviewProps) {
+  const [index, setIndex] = useState(0)
+  const advanced = useRef(false)
+  const narrationRef = useRef<HTMLAudioElement>(null)
+  const musicRef = useRef<HTMLAudioElement>(null)
+  const onEndedRef = useRef(onEnded)
+  onEndedRef.current = onEnded
+
+  useEffect(() => {
+    if (!playing) setIndex(0)
+  }, [playing])
+
+  useEffect(() => {
+    advanced.current = false
+  }, [index, playing])
+
+  useEffect(() => {
+    if (!playing) return
+    if (index >= shots.length) onEndedRef.current()
+  }, [playing, index, shots.length])
+
+  useEffect(() => {
+    if (!playing) return
+    const shot = shots[index]
+    if (!shot || shot.kind === 'clip') return
+    const timer = window.setTimeout(() => {
+      setIndex((current) => current + 1)
+    }, shot.durationSec * 1000)
+    return () => window.clearTimeout(timer)
+  }, [playing, index, shots])
+
+  useEffect(() => {
+    const narration = narrationRef.current
+    const music = musicRef.current
+    if (!playing) {
+      narration?.pause()
+      music?.pause()
+      if (narration) narration.currentTime = 0
+      if (music) music.currentTime = 0
+      return
+    }
+    void narration?.play().catch(() => undefined)
+    void music?.play().catch(() => undefined)
+  }, [playing, narrationUrl, musicUrl])
+
+  const shot = playing ? shots[index] : undefined
+  if (!playing || !shot) return null
+
+  const advance = () => {
+    if (advanced.current) return
+    advanced.current = true
+    setIndex((current) => current + 1)
+  }
+
+  return (
+    <div className="mb-4 flex items-start gap-3">
+      <div className="relative aspect-[9/16] w-36 shrink-0 overflow-hidden rounded-lg border border-fuchsia-500/30 bg-zinc-950">
+        {shot.kind === 'clip' && shot.videoUrl ? (
+          <video
+            key={shot.key}
+            src={shot.videoUrl}
+            muted
+            playsInline
+            autoPlay
+            className="h-full w-full object-cover"
+            onTimeUpdate={(event) => {
+              if (event.currentTarget.currentTime >= shot.durationSec - 0.05) advance()
+            }}
+            onEnded={advance}
+            onError={advance}
+          />
+        ) : shot.kind === 'still' && shot.imageUrl ? (
+          <img src={shot.imageUrl} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full items-center justify-center px-2 text-center text-[11px] text-fuchsia-100">
+            {shot.label || 'Shot'}
+          </div>
+        )}
+        <p className="absolute bottom-1 left-1 right-1 truncate text-[10px] text-white/80">
+          {index + 1}/{shots.length}
+          {shot.label ? ` · ${shot.label}` : ''}
+        </p>
+      </div>
+      {narrationUrl ? <audio ref={narrationRef} src={narrationUrl} preload="auto" /> : null}
+      {musicUrl ? <audio ref={musicRef} src={musicUrl} loop preload="auto" /> : null}
+    </div>
+  )
+}

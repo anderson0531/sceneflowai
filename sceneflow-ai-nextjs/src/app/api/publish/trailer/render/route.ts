@@ -1,7 +1,8 @@
 /**
  * Beat-woven 9:16 promo trailer render.
  *
- * Prefers per-beat videoUrl windows (and promo VO/music) over master-only stubs.
+ * Starts the stitch and returns the job id. The browser polls job status.
+ * Waiting here used to outlive the gateway and the finished file was lost.
  *
  * POST /api/publish/trailer/render
  */
@@ -12,7 +13,7 @@ import { authOptions } from '@/lib/auth'
 import type { PromoTrailerBeatPlan } from '@/types/publishingAssets'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 120
+export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
   try {
@@ -124,88 +125,87 @@ export async function POST(request: NextRequest) {
       ]
     }
 
-    let mp4Url = segments[0]?.videoUrl || fallbackVideoUrl
-    let stitchSucceeded = false
-
-    try {
-      const stitchRes = await fetch(new URL('/api/publish/stream/render', request.url).toString(), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          cookie: request.headers.get('cookie') || '',
+    const stitchRes = await fetch(new URL('/api/publish/stream/render', request.url).toString(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        cookie: request.headers.get('cookie') || '',
+      },
+      body: JSON.stringify({
+        projectId,
+        sceneId: body.promoSceneId || 'promo-trailer',
+        sceneNumber: 0,
+        resolution: '1080p',
+        aspect: '9:16',
+        audioConfig: {
+          includeNarration: !!body.narrationAudioUrl,
+          includeDialogue: false,
+          includeMusic: !!body.musicAudioUrl,
+          includeSfx: false,
+          includeSegmentAudio: true,
+          language: 'en',
+          segmentAudioVolume: 0.35,
+          narrationVolume: 1,
+          musicVolume: 0.55,
         },
-        body: JSON.stringify({
-          projectId,
-          sceneId: body.promoSceneId || 'promo-trailer',
-          sceneNumber: 0,
-          resolution: '1080p',
-          aspect: '9:16',
-          audioConfig: {
-            includeNarration: !!body.narrationAudioUrl,
-            includeDialogue: false,
-            includeMusic: !!body.musicAudioUrl,
-            includeSfx: false,
-            includeSegmentAudio: true,
-            language: 'en',
-            segmentAudioVolume: 0.35,
-            narrationVolume: 1,
-            musicVolume: 0.55,
-          },
-          segments,
-          audioTracks,
-          textOverlays: [],
-        }),
-      })
+        segments,
+        audioTracks,
+        textOverlays: [],
+      }),
+    })
 
-      if (stitchRes.ok) {
-        const stitchData = await stitchRes.json()
-        if (stitchData.jobId) {
-          for (let i = 0; i < 24; i++) {
-            await new Promise((r) => setTimeout(r, 5000))
-            const pollRes = await fetch(
-              `${new URL('/api/publish/stream/render', request.url).toString()}?jobId=${stitchData.jobId}`,
-              { headers: { cookie: request.headers.get('cookie') || '' } }
-            )
-            if (!pollRes.ok) continue
-            const pollData = await pollRes.json()
-            if (pollData.status === 'COMPLETED') {
-              mp4Url = pollData.downloadUrl || pollData.publicUrl || pollData.outputUrl || mp4Url
-              stitchSucceeded = true
-              break
-            }
-            if (pollData.status === 'FAILED' || pollData.status === 'error') break
-          }
-        } else if (stitchData.outputUrl || stitchData.publicUrl || stitchData.downloadUrl) {
-          mp4Url =
-            stitchData.outputUrl || stitchData.publicUrl || stitchData.downloadUrl || mp4Url
-          stitchSucceeded = true
-        }
-      } else {
-        console.warn('[Trailer Render] Stitch HTTP', stitchRes.status, await stitchRes.text())
-      }
-    } catch (stitchErr) {
-      console.warn('[Trailer Render] Cloud stitch unavailable:', stitchErr)
-    }
-
-    if (!stitchSucceeded && clipSegments.length === 0 && fallbackVideoUrl) {
-      // Last resort: master URL (legacy fallback) — only when no per-beat clips exist
-      mp4Url = fallbackVideoUrl
-    } else if (!stitchSucceeded && !mp4Url) {
+    const stitchText = await stitchRes.text()
+    let stitchData: {
+      jobId?: string
+      error?: string
+      downloadUrl?: string
+      publicUrl?: string
+      outputUrl?: string
+      mp4Url?: string
+    } = {}
+    try {
+      stitchData = stitchText ? JSON.parse(stitchText) : {}
+    } catch {
       return NextResponse.json(
-        { error: 'Trailer stitch failed and no playable clip URL is available' },
-        { status: 502 }
+        { error: `Trailer render failed (${stitchRes.status})` },
+        { status: stitchRes.ok ? 502 : stitchRes.status }
       )
     }
 
-    return NextResponse.json({
-      success: true,
-      mp4Url,
-      durationSec,
-      aspect: '9:16',
-      beatCount: beatPlan.length,
-      stitchSucceeded,
-      usedPerBeatClips: clipSegments.length > 0,
-    })
+    if (!stitchRes.ok) {
+      return NextResponse.json(
+        { error: stitchData.error || `Trailer render failed (${stitchRes.status})` },
+        { status: stitchRes.status }
+      )
+    }
+
+    if (typeof stitchData.jobId === 'string' && stitchData.jobId.trim()) {
+      return NextResponse.json({
+        success: true,
+        jobId: stitchData.jobId,
+        status: 'PROCESSING',
+        durationSec,
+        aspect: '9:16',
+        beatCount: beatPlan.length,
+        usedPerBeatClips: clipSegments.length > 0,
+      })
+    }
+
+    const immediate =
+      stitchData.downloadUrl || stitchData.publicUrl || stitchData.outputUrl || stitchData.mp4Url
+    if (typeof immediate === 'string' && immediate.startsWith('http')) {
+      return NextResponse.json({
+        success: true,
+        mp4Url: immediate,
+        status: 'COMPLETED',
+        durationSec,
+        aspect: '9:16',
+        beatCount: beatPlan.length,
+        usedPerBeatClips: clipSegments.length > 0,
+      })
+    }
+
+    return NextResponse.json({ error: 'Trailer stitch did not start' }, { status: 502 })
   } catch (error) {
     console.error('[Trailer Render] POST error:', error)
     return NextResponse.json(
