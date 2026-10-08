@@ -13,6 +13,9 @@ export const DESIGNED_VOICE_PROJECT_CAP = 180
 
 export const DESIGNED_VOICE_STYLE_MAX = 160
 
+/** A turn tweak, not a second persona. Long direction replaces the stored voice. */
+export const DESIGNED_VOICE_TURN_STYLE_MAX = 80
+
 export function isDesignedGeminiVoiceId(voiceId: string | null | undefined): boolean {
   return !!voiceId?.trim().startsWith('voice_')
 }
@@ -127,6 +130,77 @@ export function designedVoiceStyle(cues: Array<string | undefined | null>): stri
     .trim()
   if (!style) return undefined
   return style.slice(0, DESIGNED_VOICE_STYLE_MAX)
+}
+
+/** Sustained delivery. Gemini 3.8 speaks these if they stay in the transcript. */
+const DESIGNED_STYLE_TAGS = ['extremely fast', 'whispering', 'shouting', 'sarcasm'] as const
+
+/** Point-in-time events. Gemini 3.8 wants these as angle brackets, not square ones. */
+const DESIGNED_EVENT_TAGS = ['short pause', 'medium pause', 'long pause', 'sigh', 'uhm', 'laughing'] as const
+
+const DESIGNED_CUE_MAX = 40
+
+function normalizedBracket(inner: string): string {
+  return inner.replace(/\s+/g, ' ').trim().toLowerCase()
+}
+
+function isListedTag(tag: string, tags: readonly string[]): boolean {
+  return tags.includes(tag)
+}
+
+/**
+ * One short style phrase. The last item is joined with "and" so
+ * "whispering" plus "fragile" and "intimate" reads as a single tweak.
+ */
+function joinTurnStyle(parts: string[]): string | undefined {
+  const seen = new Set<string>()
+  const unique: string[] = []
+  for (const part of parts) {
+    const cleaned = part.replace(/\s+/g, ' ').trim().toLowerCase()
+    if (!cleaned || cleaned.length > DESIGNED_CUE_MAX) continue
+    if (seen.has(cleaned)) continue
+    seen.add(cleaned)
+    unique.push(cleaned)
+  }
+  const last = unique[unique.length - 1]
+  if (!last) return undefined
+  const phrase = unique.length === 1 ? last : `${unique.slice(0, -1).join(', ')} and ${last}`
+  if (phrase.length <= DESIGNED_VOICE_TURN_STYLE_MAX) return phrase
+  const cut = phrase.slice(0, DESIGNED_VOICE_TURN_STYLE_MAX)
+  const lastSpace = cut.lastIndexOf(' ')
+  const trimmed = (lastSpace > 24 ? cut.slice(0, lastSpace) : cut).replace(/[,\s]+$/, '')
+  return trimmed || undefined
+}
+
+/**
+ * Gemini 3.8 speaks the transcript verbatim. Square-bracket style tags
+ * (`[whispering]`) are lifted into `speechMetadata.style`. Sighs and pauses
+ * stay inline as angle brackets.
+ */
+export function prepareDesignedVoiceLine(args: {
+  text: string
+  cues?: Array<string | undefined | null>
+}): { text: string; style?: string } {
+  const lifted: string[] = []
+  const text = args.text
+    .replace(/\[([^\]]+)\]/g, (_match, inner: string) => {
+      const tag = normalizedBracket(inner)
+      if (!tag) return ' '
+      if (isListedTag(tag, DESIGNED_STYLE_TAGS)) {
+        lifted.push(tag)
+        return ' '
+      }
+      if (isListedTag(tag, DESIGNED_EVENT_TAGS)) return ` <${tag}> `
+      return ' '
+    })
+    .replace(/\s+/g, ' ')
+    .replace(/\s+([,.;!?])/g, '$1')
+    .trim()
+
+  return {
+    text,
+    style: joinTurnStyle([...lifted, ...(args.cues ?? []).map((cue) => cue ?? '')]),
+  }
 }
 
 export function buildVoiceDesignCreateBody(args: {

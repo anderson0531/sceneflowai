@@ -4,6 +4,7 @@ import {
   buildVoiceDesignCreateBody,
   composeVoiceDesignDescription,
   designedVoiceStyle,
+  prepareDesignedVoiceLine,
   shortenVoiceDesignDescription,
   isDesignedGeminiVoiceId,
   voicesToEvict,
@@ -111,6 +112,36 @@ describe('voice design payloads', () => {
     })
     const part = (body.contents as Array<{ parts: Array<Record<string, unknown>> }>)[0].parts[0]
     expect(part.speechMetadata).toBeUndefined()
+  })
+
+  it('speaks the words and keeps whisper with the line cues in style', () => {
+    const prepared = prepareDesignedVoiceLine({
+      text: "[whispering] I can't hold the baseline, Sarah. The cold is getting in.",
+      cues: ['fragile', 'intimate'],
+    })
+    const body = buildDesignedVoiceSynthesisBody({
+      text: prepared.text,
+      voiceId: 'voice_8f84d642-7a0f-4094-806d-bf1e7de1bf19',
+      style: prepared.style,
+    })
+    const part = (
+      body.contents as Array<{ parts: Array<{ text: string; speechMetadata?: { style: string } }> }>
+    )[0].parts[0]
+    expect(part.text).toBe("I can't hold the baseline, Sarah. The cold is getting in.")
+    expect(part.text).not.toContain('[')
+    expect(part.speechMetadata?.style).toBe('whispering, fragile and intimate')
+  })
+
+  it('moves pauses and sighs to angle brackets and drops a director paragraph', () => {
+    const prepared = prepareDesignedVoiceLine({
+      text: '[sigh] Fine. [short pause] Have it your way.',
+      cues: [
+        'Close-mic, private, strained. Argue with the numbers on leftover air and do not smooth this into a composed read.',
+      ],
+    })
+    expect(prepared.text).toBe('<sigh> Fine. <short pause> Have it your way.')
+    expect(prepared.text).not.toContain('[')
+    expect(prepared.style).toBeUndefined()
   })
 })
 

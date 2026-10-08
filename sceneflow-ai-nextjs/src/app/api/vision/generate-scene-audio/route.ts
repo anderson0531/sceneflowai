@@ -37,8 +37,8 @@ import {
 import { buildGeminiTtsPrompt } from '../../../../lib/tts/geminiTtsPrompt'
 import { synthesizeDesignedGeminiVoiceWav } from '../../../../lib/tts/geminiDesignedVoiceTts'
 import {
-  designedVoiceStyle,
   isDesignedGeminiVoiceId,
+  prepareDesignedVoiceLine,
 } from '../../../../lib/tts/geminiVoiceDesign'
 import {
   buildSceneDirection,
@@ -323,7 +323,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Step 4: Generate audio using specified provider with optimized text
+    // Step 4: Generate audio using specified provider with optimized text.
+    // Designed voices speak the words only. Style tags leave the transcript here
+    // so the debug line matches the body generateGoogleAudio actually sends.
+    const designedTurn = isDesignedGeminiVoiceId(finalVoiceConfig.voiceId)
+      ? prepareDesignedVoiceLine({
+          text: finalizeTextForGeminiTts(optimized.text),
+          cues: optimized.cues,
+        })
+      : null
+    const textForTts = designedTurn?.text ?? optimized.text
     console.log('[Scene Audio] ==================== TTS INPUT DEBUG ====================')
     console.log('[Scene Audio] Language:', language)
     console.log('[Scene Audio] Provider:', finalVoiceConfig.provider)
@@ -331,8 +340,11 @@ export async function POST(req: NextRequest) {
     console.log('[Scene Audio] Prompt source:', promptSource)
     console.log('[Scene Audio] Prompt length:', finalVoiceConfig.prompt?.length ?? 0)
     console.log('[Scene Audio] Prompt preview:', finalVoiceConfig.prompt?.slice(0, 80) ?? '(none)')
-    console.log('[Scene Audio] Text being sent to TTS:', optimized.text)
-    console.log('[Scene Audio] Text length:', optimized.text.length)
+    console.log('[Scene Audio] Text being sent to TTS:', textForTts)
+    console.log('[Scene Audio] Text length:', textForTts.length)
+    if (designedTurn) {
+      console.log('[Scene Audio] Designed style:', designedTurn.style ?? '(none)')
+    }
     console.log('[Scene Audio] ==================== END TTS INPUT DEBUG ====================')
     
     const characterGender =
@@ -393,10 +405,15 @@ export async function POST(req: NextRequest) {
 
     const stateFor = (voiceId: string, provider: string) =>
       characterStateHash({
-        text: optimized.text,
+        text: textForTts,
         voiceId,
         systemInstruction: finalVoiceConfig.prompt,
-        sceneDirection,
+        // Style is not in the spoken text. Include it so a whispered take
+        // does not reuse a plain reading of the same words, and so a clip
+        // synthesized with [whispering] in the transcript is not replayed.
+        sceneDirection: designedTurn?.style
+          ? `${sceneDirection}\nSTYLE: ${designedTurn.style}`
+          : sceneDirection,
         language,
         provider,
       })
@@ -846,14 +863,17 @@ async function generateGoogleAudio(
 
   const isGemini = voiceConfig.voiceId.startsWith('gemini-')
   if (isDesignedGeminiVoiceId(voiceConfig.voiceId)) {
-    const spoken = finalizeTextForGeminiTts(text)
-    if (!spoken.trim()) {
+    const prepared = prepareDesignedVoiceLine({
+      text: finalizeTextForGeminiTts(text),
+      cues: deliveryCues,
+    })
+    if (!prepared.text.trim()) {
       throw new Error('Text is empty after removing bracketed tags')
     }
     return synthesizeDesignedGeminiVoiceWav({
-      text: spoken,
+      text: prepared.text,
       voiceId: voiceConfig.voiceId,
-      style: designedVoiceStyle(deliveryCues),
+      style: prepared.style,
       designPrompt: voiceConfig.designPrompt,
       displayName: voiceConfig.voiceName,
     })
