@@ -10,6 +10,7 @@ import {
   planFollowOnNestedItems,
   planReferenceExpressItems,
   planSceneReferenceExpressItems,
+  planSelectedLibraryBaseItems,
   planSelectedLocationExpressItems,
   propFingerprint,
   wantsLocationCatalogSync,
@@ -17,7 +18,7 @@ import {
   type LocationSource,
   type PropSource,
 } from '@/lib/vision/referenceExpress/planItems'
-import { summarizeItemResults } from '@/lib/vision/referenceExpress/types'
+import { referenceExpressItemKey, summarizeItemResults } from '@/lib/vision/referenceExpress/types'
 import { runLocationCatalogSyncStep } from '@/lib/vision/referenceExpress/catalogSync'
 import {
   locationAgentChecklist,
@@ -415,6 +416,62 @@ describe('planFollowOnNestedItems', () => {
       }
     )
     expect(followOns.map((item) => item.versionId)).toEqual(['v-door', 'v-new'])
+  })
+})
+
+describe('planSelectedLibraryBaseItems', () => {
+  it('draws selected missing bases and force-regenerates selected stills that already exist', () => {
+    const items = planSelectedLibraryBaseItems(
+      {
+        characters: [
+          cast({ id: 'c1', name: 'Mira', referenceImage: '' }),
+          cast({ id: 'c2', name: 'Jon', referenceImage: 'https://cdn/jon.png' }),
+        ],
+        locations: [
+          location({ id: 'l1', imageUrl: '' }),
+          location({ id: 'l2', location: 'Lab', imageUrl: 'https://cdn/lab.png' }),
+        ],
+        props: [
+          prop({ id: 'p1', imageUrl: '' }),
+          prop({ id: 'p2', name: 'Lamp', imageUrl: 'https://cdn/lamp.png' }),
+        ],
+      },
+      ['cast:c1', 'cast:c2', 'location:l1', 'prop:p2']
+    )
+    expect(items.map((item) => referenceExpressItemKey(item))).toEqual([
+      'cast:c1',
+      'cast:c2',
+      'location:l1',
+      'prop:p2',
+    ])
+    expect(items.find((item) => item.targetId === 'c1')?.forceRegenerate).toBeUndefined()
+    expect(items.find((item) => item.targetId === 'c2')?.forceRegenerate).toBe(true)
+    expect(items.find((item) => item.targetId === 'l1')?.forceRegenerate).toBeUndefined()
+    expect(items.find((item) => item.targetId === 'p2')?.forceRegenerate).toBe(true)
+  })
+
+  it('omits unselected keys and does not draw a narrator', () => {
+    const items = planSelectedLibraryBaseItems(
+      {
+        characters: [
+          cast({ id: 'nar', type: 'narrator', referenceImage: '' }),
+          cast({ id: 'c1', referenceImage: '' }),
+        ],
+        locations: [location({ imageUrl: '' })],
+        props: [prop({ imageUrl: '' })],
+      },
+      ['cast:nar', 'location:l1']
+    )
+    expect(items.map((item) => referenceExpressItemKey(item))).toEqual(['location:l1'])
+  })
+
+  it('returns nothing when no keys are selected', () => {
+    expect(
+      planSelectedLibraryBaseItems(
+        { characters: [cast()], locations: [location()], props: [prop()] },
+        []
+      )
+    ).toEqual([])
   })
 })
 

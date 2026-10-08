@@ -41,7 +41,7 @@ export function LibraryKindToolbar({
         onClick={onUpdate}
         disabled={updateDisabled || isUpdating || isAgentRunning}
         title={updateTitle}
-        className="h-7 text-xs"
+        className="h-7 text-xs font-medium"
       >
         {isUpdating ? (
           <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
@@ -59,21 +59,21 @@ export function LibraryKindToolbar({
           disabled={agentDisabled || isUpdating || isAgentRunning}
           title={agentTitle}
           className={cn(
-            'h-7 text-xs relative overflow-hidden',
+            'h-7 text-xs font-medium',
             agentHasWork
               ? 'bg-amber-500 text-zinc-950 border-amber-400 hover:bg-amber-400 hover:border-amber-300'
-              : 'bg-gradient-to-r from-indigo-500/15 to-purple-500/15 border-indigo-500/40 hover:border-indigo-500/60'
+              : ''
           )}
         >
           {isAgentRunning ? (
             <Loader2
               className={cn(
                 'w-3.5 h-3.5 mr-1 animate-spin',
-                agentHasWork ? 'text-zinc-950' : 'text-indigo-300'
+                agentHasWork ? 'text-zinc-950' : 'text-zinc-300'
               )}
             />
           ) : (
-            <Zap className={cn('w-3.5 h-3.5 mr-1', agentHasWork ? 'text-zinc-950' : 'text-indigo-300')} />
+            <Zap className={cn('w-3.5 h-3.5 mr-1', agentHasWork ? 'text-zinc-950' : 'text-zinc-300')} />
           )}
           {isAgentRunning ? 'Generating…' : agentLabel}
         </Button>

@@ -75,7 +75,7 @@
     "assetBeats": "{count, plural, one {# shot} other {# shots}}",
     "assetMusic": "音乐",
     "reference": "参考",
-    "referenceTooltip": "打开 Reference Library — 演员、地点和道具",
+    "referenceTooltip": "打开 Continuity Library — 演员、地点和道具",
     "referenceNeedsDirection": "{count, plural, one {# scene needs updated direction before references} other {# scenes need updated direction before references}}",
     "publish": "发布",
     "publishTooltip": "开放出版库 — 流媒体、放映、宣传片、YouTube",
@@ -962,7 +962,7 @@
       "applyRecommendations": "应用建议"
     },
     "referenceLibrary": {
-      "title": "Reference Library"
+      "title": "Continuity Library"
     },
     "beatReferences": {
       "title": "回顾参考 — 场景 {number}",

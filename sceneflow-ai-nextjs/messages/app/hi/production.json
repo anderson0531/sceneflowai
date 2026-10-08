@@ -75,7 +75,7 @@
     "assetBeats": "{count, plural, one {# shot} other {# shots}}",
     "assetMusic": "संगीत",
     "reference": "संदर्भ",
-    "referenceTooltip": "Reference Library खोलें - कास्ट, स्थान और प्रॉप्स",
+    "referenceTooltip": "Continuity Library खोलें - कास्ट, स्थान और प्रॉप्स",
     "referenceNeedsDirection": "{count, plural, one {# scene needs updated direction before references} other {# scenes need updated direction before references}}",
     "publish": "प्रकाशित करें",
     "publishTooltip": "प्रकाशन लाइब्रेरी खोलें - स्ट्रीम, स्क्रीनिंग, प्रोमो, यूट्यूब",
@@ -962,7 +962,7 @@
       "applyRecommendations": "सुझाव लागू करें"
     },
     "referenceLibrary": {
-      "title": "Reference Library"
+      "title": "Continuity Library"
     },
     "beatReferences": {
       "title": "संदर्भों की समीक्षा करें — दृश्य {number}",

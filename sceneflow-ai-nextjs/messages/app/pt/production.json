@@ -75,7 +75,7 @@
     "assetBeats": "{count, plural, one {# shot} other {# shots}}",
     "assetMusic": "Música",
     "reference": "Referência",
-    "referenceTooltip": "Abra Reference Library — elenco, locações e adereços",
+    "referenceTooltip": "Abra Continuity Library — elenco, locações e adereços",
     "referenceNeedsDirection": "{count, plural, one {# scene needs updated direction before references} other {# scenes need updated direction before references}}",
     "publish": "Publicar",
     "publishTooltip": "Open Publishing Library – streams, exibição, promoção, YouTube",
@@ -962,7 +962,7 @@
       "applyRecommendations": "Aplicar recomendações"
     },
     "referenceLibrary": {
-      "title": "Reference Library"
+      "title": "Continuity Library"
     },
     "beatReferences": {
       "title": "Referências de revisão - Cena {number}",

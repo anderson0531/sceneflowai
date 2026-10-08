@@ -642,7 +642,6 @@ export function kindAgentToolbarLabel(
   agentName: 'Cast Agent' | 'Location Agent' | 'Object Agent',
   count: number
 ): string {
-  if (count > 0) return `Run ${agentName} — ${count} needed`
   return `${agentName} (${count})`
 }
 

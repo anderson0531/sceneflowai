@@ -396,6 +396,65 @@ export function planSelectedLocationExpressItems(
   return items
 }
 
+/**
+ * Base stills the Library Agent checklist named. A selected still that already
+ * has an image is redrawn. Wardrobe looks and set versions are not in this
+ * plan — those stay on Cast Agent and Location Agent.
+ */
+export function planSelectedLibraryBaseItems(
+  input: ReferenceExpressPlanInput,
+  itemKeys: string[]
+): ReferenceExpressItem[] {
+  const wanted = new Set(itemKeys.map((key) => key.trim().toLowerCase()).filter(Boolean))
+  if (wanted.size === 0) return []
+  const items: ReferenceExpressItem[] = []
+
+  input.characters.forEach((character, index) => {
+    if (character.type === 'narrator') return
+    const targetId = resolveCharacterId(character, index)
+    const key = referenceExpressItemKey({ kind: 'cast', targetId })
+    if (!wanted.has(key.toLowerCase())) return
+    const drawn = hasImage(character.referenceImage)
+    items.push({
+      kind: 'cast',
+      targetId,
+      label: character.name?.trim() || `Character ${index + 1}`,
+      sourceFingerprint: castFingerprint(character),
+      ...(drawn ? { forceRegenerate: true } : {}),
+    })
+  })
+
+  for (const location of input.locations) {
+    if (!location.id) continue
+    const key = referenceExpressItemKey({ kind: 'location', targetId: location.id })
+    if (!wanted.has(key.toLowerCase())) continue
+    const drawn = hasImage(location.imageUrl)
+    items.push({
+      kind: 'location',
+      targetId: location.id,
+      label: location.location?.trim() || location.locationDisplay?.trim() || 'Location',
+      sourceFingerprint: locationFingerprint(location),
+      ...(drawn ? { forceRegenerate: true } : {}),
+    })
+  }
+
+  for (const prop of input.props) {
+    if (!prop.id) continue
+    const key = referenceExpressItemKey({ kind: 'prop', targetId: prop.id })
+    if (!wanted.has(key.toLowerCase())) continue
+    const drawn = hasImage(prop.imageUrl)
+    items.push({
+      kind: 'prop',
+      targetId: prop.id,
+      label: prop.name?.trim() || 'Prop',
+      sourceFingerprint: propFingerprint(prop),
+      ...(drawn ? { forceRegenerate: true } : {}),
+    })
+  }
+
+  return items
+}
+
 function locationVersionItem(
   location: LocationSource,
   version: NonNullable<LocationSource['versions']>[number]
