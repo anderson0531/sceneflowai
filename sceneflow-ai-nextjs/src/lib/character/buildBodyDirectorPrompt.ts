@@ -23,31 +23,29 @@ const RESPONSE_SCHEMA = `{
 }`
 
 const SHARED_RULES = `INCLUDE:
-- Age band, ethnicity, build/stature, face shape, standing hair, eye color
+- Age band, ethnicity, build/stature, face, standing hair, eye color
 - Specific visual identity that stays stable across scenes
 
 EXCLUDE:
 - Clothing, wardrobe, jewelry, glasses, bags, hats
 - Scene makeup, bruises, blood, dirt, sweat, bandages (those belong on wardrobe scene appearance)
-- Plot, dialogue, emotion, performance, or personality as a substitute for looks
+- Plot, dialogue, emotion, and performance
 
 GUARDRAILS:
 - Keep the description concise and visually specific
-- If current appearance is provided and the director gave a change, update that identity — do not invent a replacement unless they ask to start over
 - Never copy wardrobe or costume language into appearanceDescription
 
 Return ONLY the JSON object, no additional text.`
 
-export function buildBodyDirectorPrompt(request: BodyDirectorRequest): string {
-  const current = request.currentAppearance?.trim()
-  const currentBlock = current
-    ? `
-CURRENT APPEARANCE (update this; do not invent a replacement unless the director asks to start over):
-${current}
-`
-    : ''
+const DIRECTOR_OVERRIDE_RULES = `DIRECTOR OVERRIDE:
+- Director's notes outrank the current appearance and the character age, ethnicity, and gender lines wherever they conflict.
+- Replace the conflicting detail. Do not keep both the old phrase and the new direction. Do not keep "oval face" alongside a new face direction.
+- A qualitative face or body note (handsome, striking, weathered, rugged, delicate) is physical direction. Render it as visible features and drop the old face or build phrase it replaces.
+- Keep age, ethnicity, build, hair, and eyes the notes do not mention.
+- Character facts and screenplay context fill gaps. They do not restore a feature the notes just changed.`
 
-  const identityLines = [
+function identityLines(request: BodyDirectorRequest): string {
+  return [
     `- Name: ${request.characterName}`,
     request.characterRole ? `- Role: ${request.characterRole}` : '',
     request.gender ? `- Gender: ${request.gender}` : '',
@@ -56,8 +54,10 @@ ${current}
   ]
     .filter(Boolean)
     .join('\n')
+}
 
-  const screenplay = [
+function screenplayLines(request: BodyDirectorRequest): string {
+  return [
     request.genre ? `- Genre: ${request.genre}` : '',
     request.tone ? `- Tone/Mood: ${request.tone}` : '',
     request.setting ? `- Setting/Era: ${request.setting}` : '',
@@ -66,12 +66,25 @@ ${current}
   ]
     .filter(Boolean)
     .join('\n')
+}
+
+export function buildBodyDirectorPrompt(request: BodyDirectorRequest): string {
+  const current = request.currentAppearance?.trim()
+  const identity = identityLines(request)
+  const screenplay = screenplayLines(request)
 
   if (request.recommendMode) {
+    const currentBlock = current
+      ? `
+CURRENT APPEARANCE (context only — recommend a fresh identity from the role and screenplay):
+${current}
+`
+      : ''
+
     return `You are a casting director turning notes into a standing body description for film stills. The user is the director, not a prompt engineer.
 
 CHARACTER:
-${identityLines}
+${identity}
 
 SCREENPLAY CONTEXT:
 ${screenplay || '- Not specified'}
@@ -85,22 +98,31 @@ ${RESPONSE_SCHEMA}
 ${SHARED_RULES}`
   }
 
+  const currentBlock = current
+    ? `
+CURRENT APPEARANCE (baseline — keep only the details the director's notes do not change):
+${current}
+`
+    : ''
+
   return `You are a casting director turning notes into a standing body description for film stills. The user is the director, not a prompt engineer.
 
-CHARACTER:
-${identityLines}
+CHARACTER (defaults — yield to the director's notes on conflict):
+${identity}
 ${screenplay ? `\nSCREENPLAY CONTEXT:\n${screenplay}\n` : ''}
 ${currentBlock}
 DIRECTOR'S NOTES:
 "${request.directorNotes || ''}"
 
 TASK:
-Apply the director's notes to the standing body description. If current appearance is provided, treat the notes as a change. Be specific about age, ethnicity, build, face, hair, and eyes. Do not describe clothing or wardrobe.
+Apply the director's notes. They win over the current appearance and the character facts for any feature they name, including face and build. Translate qualitative notes such as handsome into specific visible features and drop the old phrase they replace. Keep details the notes do not mention. Do not describe clothing or wardrobe.
 
 RESPONSE FORMAT (JSON):
 ${RESPONSE_SCHEMA}
 
-${SHARED_RULES}`
+${SHARED_RULES}
+
+${DIRECTOR_OVERRIDE_RULES}`
 }
 
 export function parseBodyDirectorResponse(raw: string): BodyDirectorResult {

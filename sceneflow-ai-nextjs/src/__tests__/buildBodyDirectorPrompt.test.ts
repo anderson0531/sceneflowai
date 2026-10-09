@@ -10,6 +10,10 @@ const characterLibraryPath = path.join(
   process.cwd(),
   'src/components/vision/CharacterLibrary.tsx',
 )
+const generateBodyRoutePath = path.join(
+  process.cwd(),
+  'src/app/api/character/generate-body-description/route.ts',
+)
 
 describe('buildBodyDirectorPrompt', () => {
   const base = {
@@ -37,17 +41,25 @@ describe('buildBodyDirectorPrompt', () => {
     expect(prompt).toContain('Clothing, wardrobe')
     expect(prompt).toContain('plot')
     expect(prompt).toContain('Scene makeup')
+    expect(prompt).toContain("Director's notes outrank")
+    expect(prompt).toContain('handsome')
+    expect(prompt).toContain('oval face')
+    expect(prompt).not.toContain('do not invent a replacement')
   })
 
   it('recommend mode omits director notes and still forbids clothing', () => {
     const prompt = buildBodyDirectorPrompt({
       ...base,
       recommendMode: true,
+      currentAppearance: 'Late 30s African American woman, oval face',
     })
 
     expect(prompt).toContain('Recommend a specific physical identity')
+    expect(prompt).toContain('fits the character\'s role and screenplay')
     expect(prompt).toContain('"appearanceDescription"')
     expect(prompt).not.toContain("DIRECTOR'S NOTES")
+    expect(prompt).not.toContain("Director's notes outrank")
+    expect(prompt).not.toContain('do not invent a replacement')
     expect(prompt).toContain('Do not describe clothing')
   })
 })
@@ -80,5 +92,10 @@ describe('CharacterLibrary body director UI', () => {
     expect(source).toContain('DictationTextarea')
     expect(source).not.toContain('Athletic build, tall, muscular, slim figure')
     expect(source).not.toContain('bodyDescriptionText')
+  })
+
+  it('applies director notes at a lower temperature than Recommend', () => {
+    const route = readFileSync(generateBodyRoutePath, 'utf8')
+    expect(route).toContain('body.recommendMode ? 0.7 : 0.4')
   })
 })
