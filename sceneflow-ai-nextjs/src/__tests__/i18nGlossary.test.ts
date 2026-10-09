@@ -125,6 +125,7 @@ describe('glossary contents', () => {
       'Object Agent',
       'Audio Agent',
       'Scene Agent',
+      'Shot Direction Agent',
       'Stills Agent',
       'Video Agent',
       'Promo Agent',

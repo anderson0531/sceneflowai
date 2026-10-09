@@ -203,6 +203,15 @@ import { ProductionBudgetManager } from '@/components/credits/ProductionBudgetMa
 import { getProjectCreditsBudget } from '@/lib/credits/projectBudgetShared'
 import type { DirectShotTarget } from '@/lib/vision/directShotTarget'
 import {
+  resolveBeatReferenceSelection,
+  saveDirectorPatchToScenes,
+} from '@/lib/vision/saveBeatDirection'
+import {
+  requestOptimizedShotDirection,
+  runShotDirectionAgent as runShotDirection,
+  shotsForDirectionAgent,
+} from '@/lib/vision/shotDirectionAgent'
+import {
   applyMethodDefaults,
   buildProductionBudgetParams,
   DEFAULT_PRODUCTION_METHOD,
@@ -4516,6 +4525,79 @@ function SceneCard({
     setDirectBeatId(pendingDirectShot.beatId)
     onPendingDirectShotHandled?.()
   }, [pendingDirectShot, sceneIdx, sceneBeatsForTabs, onPendingDirectShotHandled])
+  const [shotDirectionProgress, setShotDirectionProgress] = useState<{
+    done: number
+    total: number
+  } | null>(null)
+  const shotDirectionAbortRef = useRef<AbortController | null>(null)
+  useEffect(() => () => shotDirectionAbortRef.current?.abort(), [])
+  const shotDirectionRunning = shotDirectionProgress !== null
+  const runShotDirectionAgent = async () => {
+    if (shotDirectionAbortRef.current) {
+      shotDirectionAbortRef.current.abort()
+      return
+    }
+    if (!projectId || !onScriptChange) return
+    const shots = shotsForDirectionAgent(scene)
+    if (shots.length === 0) {
+      toast.error('This scene has no shots to direct.')
+      return
+    }
+    const controller = new AbortController()
+    shotDirectionAbortRef.current = controller
+    setShotDirectionProgress({ done: 0, total: shots.length })
+    let workingScenes: any[] = Array.isArray(scenes) ? scenes : []
+    try {
+      const result = await runShotDirection({
+        shots,
+        signal: controller.signal,
+        requestPatch: (shot) =>
+          requestOptimizedShotDirection({
+            projectId,
+            sceneIndex: sceneIdx,
+            beatId: shot.beatId,
+            signal: controller.signal,
+          }),
+        savePatch: (shot, patch) => {
+          const workingScene = workingScenes[sceneIdx]
+          const current = getSceneBeats(workingScene ?? {}).find((beat) => beat.beatId === shot.beatId)
+          if (!current) return
+          workingScenes = saveDirectorPatchToScenes({
+            scenes: workingScenes,
+            sceneIdx,
+            beatId: shot.beatId,
+            patch,
+            referenceSelection: resolveBeatReferenceSelection({
+              scene: workingScene,
+              beat: current,
+              sceneIdx,
+              characters,
+              locationReferences,
+              objectReferences,
+            }),
+            objectReferences,
+            promptComposition,
+          })
+          onScriptChange({ ...script, script: { ...script?.script, scenes: workingScenes } })
+        },
+        onProgress: (done, total) => setShotDirectionProgress({ done, total }),
+      })
+      if (result.cancelled) {
+        toast.info(`Shot Direction Agent stopped after ${result.optimized} of ${shots.length} shots.`)
+      } else if (result.failed > 0) {
+        toast.warning(
+          `Optimized ${result.optimized} of ${shots.length} shots. Open the other ${result.failed} in Direct Shot.`
+        )
+      } else {
+        toast.success(
+          `Optimized direction for ${result.optimized} shots. Run Stills Agent and Video Agent next.`
+        )
+      }
+    } finally {
+      shotDirectionAbortRef.current = null
+      setShotDirectionProgress(null)
+    }
+  }
   const excludedBeatCount = useMemo(
     () => sceneBeatsForTabs.filter((beat) => beat.excluded === true).length,
     [sceneBeatsForTabs]
@@ -6029,6 +6111,40 @@ function SceneCard({
                       placeholder="Generate language..."
                       className="border-slate-600 bg-transparent text-slate-200"
                     />
+                    {activeStep && projectId && onScriptChange && sceneBeatsForTabs.length > 0 && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              disabled={isExpressAudioRunning || !!isExpressRunning}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                void runShotDirectionAgent()
+                              }}
+                              className={`${sceneToolbarControl} font-medium border border-teal-500/60 text-teal-200 hover:bg-teal-900/30`}
+                            >
+                              {shotDirectionProgress ? (
+                                <>
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  Shot Direction Agent {shotDirectionProgress.done}/{shotDirectionProgress.total}
+                                </>
+                              ) : (
+                                <>
+                                  <Clapperboard className="w-3.5 h-3.5" />
+                                  Shot Direction Agent
+                                </>
+                              )}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-xs">
+                            {shotDirectionRunning
+                              ? 'Click to stop. Shots already optimized stay saved.'
+                              : 'Optimize and save every shot with Direct Shot before running Stills Agent and Video Agent.'}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                     {/* Generate All — audio + frames in parallel */}
                     {activeStep && (() => {
                       const voicesReady = productionReadiness?.isAudioReady ?? true
@@ -6037,6 +6153,7 @@ function SceneCard({
                       const laneBusy = isExpressAudioRunning || !!isExpressRunning
                       const canOpen =
                         !laneBusy &&
+                        !shotDirectionRunning &&
                         voicesReady &&
                         hasNarrationVoice &&
                         (!!onExpressSceneGenerate || expressAudioItems.length > 0)
