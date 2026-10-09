@@ -9,11 +9,11 @@ import {
 export const maxDuration = 60
 export const runtime = 'nodejs'
 
-async function callGemini(prompt: string): Promise<string> {
+async function callGemini(prompt: string, temperature: number): Promise<string> {
   console.log('[Generate Body] Calling Vertex AI Gemini...')
   const result = await generateText(prompt, {
     model: 'gemini-2.5-flash',
-    temperature: 0.7,
+    temperature,
     topP: 0.95,
     maxOutputTokens: 1024,
     responseMimeType: 'application/json',
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       body.recommendMode ? '(recommend mode)' : '(director notes)',
     )
 
-    const responseText = await callGemini(prompt)
+    const responseText = await callGemini(prompt, body.recommendMode ? 0.7 : 0.4)
 
     let appearance
     try {
