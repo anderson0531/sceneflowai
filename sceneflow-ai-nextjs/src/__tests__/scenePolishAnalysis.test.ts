@@ -146,6 +146,8 @@ describe('Scene polish prompt', () => {
     expect(prompt).toContain('already holding')
     expect(prompt).toContain('DO NOT FLAG')
     expect(prompt).toContain('Audience-craft notes')
+    expect(prompt).toContain('Write Shot, not Beat')
+    expect(prompt).toContain('Shot 2: Gideon already holds the wrench from Shot 1')
   })
 })
 
@@ -302,7 +304,7 @@ describe('Scene polish wiring', () => {
     expect(modal).toContain('polishAnalysis')
 
     const revise = readSource('src/app/api/vision/revise-scene/route.ts')
-    expect(revise).toContain('When instructions name Beat N')
+    expect(revise).toContain('When instructions name Shot N or Beat N')
 
     const dialog = readSource('src/components/vision/SceneRecommendationsDialog.tsx')
     expect(dialog).toContain("from '@/lib/script/scenePolish/formatPolishBeats'")

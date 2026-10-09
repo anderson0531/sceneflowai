@@ -325,7 +325,7 @@ export function BeatDirectorDialog({
               className="min-w-0 flex-1 rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search locations and objects"
+              placeholder="Search locations and props"
               disabled={readOnly}
             />
             <select
@@ -354,7 +354,7 @@ export function BeatDirectorDialog({
             {([
               ['cast', 'Cast'],
               ['locations', 'Locations'],
-              ['objects', 'Objects'],
+              ['objects', 'Props'],
             ] as const).map(([id, label]) => (
               <button
                 key={id}
@@ -421,7 +421,7 @@ export function BeatDirectorDialog({
               ))}
             {tab === 'objects' &&
               (visibleObjects.length === 0 ? (
-                <p className="text-xs text-slate-500">No objects in this view.</p>
+                <p className="text-xs text-slate-500">No props in this view.</p>
               ) : (
                 visibleObjects.map((object) => {
                   const checked = referenceSelection.objectRefIds.includes(object.id)

@@ -46,7 +46,7 @@ export interface ExpressBeatFrameProgressOverlayProps {
 }
 
 const PHASE_LABELS: Record<ExpressOverlayPhase, string> = {
-  references: 'References',
+  references: 'Continuity',
   direction: 'Direction',
   audio: 'Audio',
   'image-plan': 'Image plan',

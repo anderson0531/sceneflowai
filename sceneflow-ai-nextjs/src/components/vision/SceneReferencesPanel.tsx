@@ -477,13 +477,13 @@ export function SceneReferencesPanel({
   return (
     <div
       className="p-3 bg-cyan-50 dark:bg-cyan-900/20 rounded-lg border border-cyan-200 dark:border-cyan-800"
-      aria-label={`References for scene ${sceneNumber}`}
+      aria-label={`Continuity for scene ${sceneNumber}`}
     >
       <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-sm font-semibold text-cyan-800 dark:text-cyan-200">
             <Library className="w-4 h-4" />
-            References
+            Continuity
             <span className="text-xs font-normal text-gray-600 dark:text-gray-400">
               {drawnCount} of {requirements.length} drawn
             </span>
@@ -491,7 +491,7 @@ export function SceneReferencesPanel({
           <p className="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">
             What this scene needs, read from its shots and script. Frames wait on these — a
             reference that gets named but has no image is drawn differently in every frame.
-            Gen draws a default still; customise looks in the Reference Library.
+            Gen draws a default still; customise looks in the Continuity Library.
           </p>
           {!scriptReady && (
             <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-1">
@@ -533,7 +533,7 @@ export function SceneReferencesPanel({
               title="Customise references, upload your own, or adjust a description"
             >
               <Library className="w-3 h-3" />
-              Reference Library
+              Continuity Library
             </button>
           )}
         </div>
@@ -541,7 +541,7 @@ export function SceneReferencesPanel({
 
       {requirements.length === 0 ? (
         <p className="text-xs text-gray-600 dark:text-gray-400 italic">
-          Nothing detected for this scene yet. References sharpen once the scene has shots — until
+          Nothing detected for this scene yet. Continuity sharpens once the scene has shots — until
           then this reads from the heading and action. Add one by hand if you already know.
         </p>
       ) : (

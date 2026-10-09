@@ -179,7 +179,7 @@ export function formatReferenceReadinessMessage(
   }
   if (readiness.missingObjects.length > 0) {
     groups.push(
-      `${readiness.missingObjects.length} object${readiness.missingObjects.length === 1 ? '' : 's'} (${namedList(readiness.missingObjects)})`
+      `${readiness.missingObjects.length} prop${readiness.missingObjects.length === 1 ? '' : 's'} (${namedList(readiness.missingObjects)})`
     )
   }
   const lead =

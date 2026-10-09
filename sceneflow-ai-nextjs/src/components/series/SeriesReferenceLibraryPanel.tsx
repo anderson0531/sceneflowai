@@ -222,7 +222,7 @@ export function SeriesReferenceLibraryPanel({
       icon: <MapPin className="w-3.5 h-3.5" />,
       count: locationsForEpisode.length,
     },
-    { key: 'props', label: 'Objects', icon: <Package className="w-3.5 h-3.5" />, count: propsForEpisode.length },
+    { key: 'props', label: 'Props', icon: <Package className="w-3.5 h-3.5" />, count: propsForEpisode.length },
     { key: 'settings', label: 'Settings', icon: <Palette className="w-3.5 h-3.5" />, count: bible?.aesthetic ? 1 : 0 },
   ]
 

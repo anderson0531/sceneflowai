@@ -46,7 +46,7 @@ export const GLOSSARY_TERMS = [
   'Scene Ref Agent',
   'Cast Agent',
   'Location Agent',
-  'Object Agent',
+  'Prop Agent',
   'Pre-vis Agent',
   'Production Agents',
   'SceneFlow Agents',

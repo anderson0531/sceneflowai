@@ -28,12 +28,12 @@ export function ReferenceLibraryLookupBar({
         className="flex-1 rounded border border-gray-700 bg-gray-950 px-2 py-1.5 text-sm text-gray-100"
         value={query}
         onChange={(event) => onQueryChange(event.target.value)}
-        placeholder={kind === 'locations' ? 'Search locations' : 'Search objects'}
-        aria-label={kind === 'locations' ? 'Search locations' : 'Search objects'}
+        placeholder={kind === 'locations' ? 'Search locations' : 'Search props'}
+        aria-label={kind === 'locations' ? 'Search locations' : 'Search props'}
       />
       <select
         className="rounded border border-gray-700 bg-gray-950 px-2 py-1.5 text-sm text-gray-100"
-        aria-label={kind === 'locations' ? 'Filter locations by scene' : 'Filter objects by scene'}
+        aria-label={kind === 'locations' ? 'Filter locations by scene' : 'Filter props by scene'}
         value={filter === 'all' || filter === 'unassigned' ? filter : String(filter)}
         onChange={(event) => {
           const value = event.target.value

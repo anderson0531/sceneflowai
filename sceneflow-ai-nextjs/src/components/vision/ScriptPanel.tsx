@@ -6483,7 +6483,7 @@ function SceneCard({
                           </TabsTrigger>
                           <TabsTrigger value="references" className={sceneTabTriggerClass}>
                             <Library className="w-3.5 h-3.5 shrink-0" />
-                            References
+                            Continuity
                             {sceneRequiredReferences.length > 0 && (
                               <span
                                 className={`text-[10px] font-medium ${missingSceneReferenceCount > 0 ? 'text-amber-500' : 'opacity-60'}`}

@@ -47,7 +47,7 @@ export async function enqueueScenePolish(input: {
 
   const beatCount = getSceneBeats(slimScene as Record<string, unknown>).length
   if (beatCount === 0) {
-    throw new Error('Scene has no beats to polish')
+    throw new Error('Scene has no shots to polish')
   }
 
   const project = await Project.findByPk(projectId)

@@ -406,12 +406,12 @@ export function ObjectSuggestionPanel({
       }
       setSuggestions(added > 0 ? [] : combined)
       if (combined.length === 0) {
-        toast.info('No additional objects found in the script')
+        toast.info('No additional props found in the script')
       } else if (added === 0) {
-        toast.info('All suggested objects are already in the library')
+        toast.info('All suggested props are already in the library')
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to analyze script for objects')
+      setError(err.message || 'Failed to analyze script for props')
     } finally {
       setIsUpdatingObjects(false)
     }
@@ -456,7 +456,7 @@ export function ObjectSuggestionPanel({
       )
       setHasAnalyzed(true)
     } catch (err: any) {
-      setError(err.message || 'Failed to analyze script for objects')
+      setError(err.message || 'Failed to analyze script for props')
     } finally {
       setIsAnalyzing(false)
     }
@@ -467,7 +467,7 @@ export function ObjectSuggestionPanel({
     const runId = `object:${suggestion.id}`
     startAgentRun({
       id: runId,
-      title: 'Object',
+      title: 'Prop',
       subtitle: 'you can keep editing',
       itemLabel: suggestion.name,
     })
@@ -486,7 +486,7 @@ export function ObjectSuggestionPanel({
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to generate object image')
+        throw new Error(data.error || 'Failed to generate prop image')
       }
 
       const data = await response.json()
@@ -506,8 +506,8 @@ export function ObjectSuggestionPanel({
       setSuggestions(prev => prev.filter(s => s.id !== suggestion.id))
       finishAgentRun(runId, { subtitle: `${suggestion.name} ready` })
     } catch (err: any) {
-      setError(err.message || 'Failed to generate object')
-      failAgentRun(runId, err.message || 'Failed to generate object')
+      setError(err.message || 'Failed to generate prop')
+      failAgentRun(runId, err.message || 'Failed to generate prop')
     } finally {
       setGeneratingIds(prev => {
         const next = new Set(prev)
@@ -537,8 +537,8 @@ export function ObjectSuggestionPanel({
     }))
     startAgentRun({
       id: batchRunId,
-      title: 'Object Agent',
-      subtitle: 'Generating key objects — you can keep editing',
+      title: 'Prop Agent',
+      subtitle: 'Generating key props — you can keep editing',
       items,
     })
     
@@ -610,21 +610,21 @@ export function ObjectSuggestionPanel({
     // still looked like it finished.
     if (summary.failed > 0) {
       const target =
-        summary.total === 1 ? 'that object' : `any of the ${summary.total} objects`
+        summary.total === 1 ? 'that prop' : `any of the ${summary.total} props`
       setError(
         summary.succeeded === 0
           ? `Could not generate ${target}. ${summary.firstError ?? 'Please try again.'}`
-          : `${summary.failed} of ${summary.total} objects could not be generated — they are still listed below.`
+          : `${summary.failed} of ${summary.total} props could not be generated — they are still listed below.`
       )
       finishAgentRun(batchRunId, {
         tone: summary.succeeded === 0 ? 'error' : 'warning',
         subtitle:
           summary.succeeded === 0
-            ? summary.firstError || 'Could not generate objects'
-            : `${summary.failed} of ${summary.total} objects failed`,
+            ? summary.firstError || 'Could not generate props'
+            : `${summary.failed} of ${summary.total} props failed`,
       })
     } else {
-      finishAgentRun(batchRunId, { subtitle: 'Key objects generated' })
+      finishAgentRun(batchRunId, { subtitle: 'Key props generated' })
     }
 
     setIsBatchGenerating(false)
@@ -644,10 +644,10 @@ export function ObjectSuggestionPanel({
           size="sm"
           onClick={() => setMergeDialogOpen(true)}
           className="h-7 text-xs text-amber-300 border-amber-500/40 hover:bg-amber-500/10"
-          title="Merge library rows that name the same physical object"
+          title="Merge library rows that name the same physical prop"
         >
           <Copy className="w-3.5 h-3.5 mr-1" />
-          Review duplicate objects ({duplicateCount})
+          Review duplicate props ({duplicateCount})
         </Button>
         <ObjectDuplicateMergeDialog
           open={mergeDialogOpen}
@@ -664,8 +664,8 @@ export function ObjectSuggestionPanel({
   return (
     <>
       <LibraryKindToolbar
-        updateLabel="Update Objects"
-        agentLabel={kindAgentToolbarLabel('Object Agent', countObjectAgentItems(existingObjects))}
+        updateLabel="Update Props"
+        agentLabel={kindAgentToolbarLabel('Prop Agent', countObjectAgentItems(existingObjects))}
         onUpdate={() => void handleUpdateObjects()}
         onAgent={
           onExpressGenerateReferences ? () => void handleObjectAgent() : undefined
@@ -673,8 +673,8 @@ export function ObjectSuggestionPanel({
         isUpdating={isUpdatingObjects}
         isAgentRunning={isObjectAgentRunning || isExpressGeneratingReferences}
         agentHasWork={countObjectAgentItems(existingObjects) > 0}
-        updateTitle="Scan the script and add missing objects to the library without spending image credits"
-        agentTitle="Add missing objects from the script, then draw their reference stills"
+        updateTitle="Scan the script and add missing props to the library without spending image credits"
+        agentTitle="Add missing props from the script, then draw their reference stills"
         extra={
           onMergeObjects && duplicateCount > 0 ? (
             <Button
@@ -683,10 +683,10 @@ export function ObjectSuggestionPanel({
               size="sm"
               onClick={() => setMergeDialogOpen(true)}
               className="h-7 text-xs text-amber-300 border-amber-500/40 hover:bg-amber-500/10"
-              title="Merge library rows that name the same physical object"
+              title="Merge library rows that name the same physical prop"
             >
               <Copy className="w-3.5 h-3.5 mr-1" />
-              Review duplicate objects ({duplicateCount})
+              Review duplicate props ({duplicateCount})
             </Button>
           ) : null
         }
@@ -700,7 +700,7 @@ export function ObjectSuggestionPanel({
         >
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-indigo-400" />
-            <span className="text-sm font-medium text-indigo-300">Key Objects</span>
+            <span className="text-sm font-medium text-indigo-300">Key Props</span>
             {suggestions.length > 0 && (
               <span className="text-xs px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400">
                 {suggestions.length}
@@ -716,9 +716,9 @@ export function ObjectSuggestionPanel({
             <div className="flex items-start gap-2 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded text-xs text-emerald-300">
               <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <span>
-                Added {autoAddedNames.length} object{autoAddedNames.length === 1 ? '' : 's'} handled
-                in {MIN_BEATS_FOR_LIBRARY}+ beats ({autoAddedNames.join(', ')}). Generate a reference
-                below so every beat renders the same object.
+                Added {autoAddedNames.length} prop{autoAddedNames.length === 1 ? '' : 's'} handled
+                in {MIN_BEATS_FOR_LIBRARY}+ shots ({autoAddedNames.join(', ')}). Generate a reference
+                below so every shot renders the same prop.
               </span>
             </div>
           )}
@@ -727,7 +727,7 @@ export function ObjectSuggestionPanel({
           {!hasAnalyzed ? (
             <div className="text-center py-4">
               <p className="text-xs text-slate-400 mb-3">
-                Review extra suggestions to generate or dismiss. Update Objects is the primary way to add missing rows.
+                Review extra suggestions to generate or dismiss. Update Props is the primary way to add missing rows.
               </p>
               <Button
                 onClick={analyzeScenesForObjects}
@@ -752,7 +752,7 @@ export function ObjectSuggestionPanel({
             <div className="text-center py-4">
               <Package className="w-8 h-8 text-slate-600 mx-auto mb-2" />
               <p className="text-xs text-slate-400">
-                No additional objects suggested. Your script analysis is complete!
+                No additional props suggested. Your script analysis is complete!
               </p>
               <Button
                 variant="ghost"

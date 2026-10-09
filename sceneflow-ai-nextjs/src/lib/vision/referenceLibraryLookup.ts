@@ -133,7 +133,7 @@ export function libraryFilterEmptyMessage(
   filter: LibrarySceneFilter,
   query: string
 ): string {
-  const noun = kind === 'locations' ? 'locations' : 'objects'
+  const noun = kind === 'locations' ? 'locations' : 'props'
   if (typeof filter === 'number') return `No ${noun} in Scene ${filter}`
   if (filter === 'unassigned') return `No unassigned ${noun}`
   const trimmed = query.trim()

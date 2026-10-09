@@ -364,7 +364,7 @@ export function PreviewPanel({
               ) : framesToRegenerate.length > 0 ? (
                 <div className="space-y-1">
                   <p className="text-xs text-amber-700 dark:text-amber-300">
-                    {framesToRegenerate.length} beat frame
+                    {framesToRegenerate.length} shot frame
                     {framesToRegenerate.length !== 1 ? 's' : ''} will be cleared for regeneration
                     after apply.
                   </p>

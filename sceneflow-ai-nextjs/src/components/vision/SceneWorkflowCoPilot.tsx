@@ -39,7 +39,7 @@ export const guidanceContent: Record<WorkflowStep, {
       'Screening Room = live preview; Streams = language versions of the scene',
     ],
     bestPractice: 'Assign voices and key references before running agents — the Pre-Vis panel shows what is missing.',
-    tip: 'One strip runs Direction, Audio, Music, References, Stills, Clips, Mixer, and Streams.',
+    tip: 'One strip runs Direction, Audio, Music, Continuity, Stills, Clips, Mixer, and Streams.',
   },
   directorsChair: {
     title: 'Direction',

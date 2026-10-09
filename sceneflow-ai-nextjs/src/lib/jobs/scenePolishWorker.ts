@@ -102,12 +102,12 @@ async function completePolish(input: {
     type: 'job_completed',
     title: 'Polish ready',
     message: persisted.stale
-      ? 'Beats changed while Polish ran — re-run to refresh recommendations.'
+      ? 'Shots changed since last Polish — re-run to refresh recommendations.'
       : issueCount === 0
-        ? 'Beat sequence looks aligned.'
+        ? 'Shot sequence looks aligned.'
         : issueCount === 1
-          ? 'Polish found 1 beat issue.'
-          : `Polish found ${issueCount} beat issues.`,
+          ? 'Polish found 1 shot issue.'
+          : `Polish found ${issueCount} shot issues.`,
     metadata: {
       kind: 'scene_polish',
       sceneIndex: persisted.sceneIndex,

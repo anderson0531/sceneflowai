@@ -750,7 +750,7 @@ export function SceneStoryboardFrameViewer({
     if (referenceReadiness.ready) return false
     toast.error(referenceGateMessage, {
       description:
-        'Run Stills Agent to draw them first, or draw them from the References tab.',
+        'Run Stills Agent to draw them first, or draw them from the Continuity tab.',
     })
     return true
   }, [referenceReadiness.ready, referenceGateMessage])
@@ -982,7 +982,7 @@ export function SceneStoryboardFrameViewer({
               <p className="text-[11px] leading-relaxed text-amber-200">
                 {referenceGateMessage}{' '}
                 <span className="text-amber-300/80">
-                  Stills Agent draws them first; the References tab shows what is missing.
+                  Stills Agent draws them first; the Continuity tab shows what is missing.
                 </span>
               </p>
             </div>

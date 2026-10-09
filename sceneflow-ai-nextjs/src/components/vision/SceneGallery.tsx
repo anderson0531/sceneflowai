@@ -641,8 +641,8 @@ export function SceneGallery({
                 </Button>
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
-                {stalePromptCount} beat frame prompt{stalePromptCount === 1 ? '' : 's'} no longer match their
-                beat direction. Recomposes the prompts across every scene and keeps the frames you already
+                {stalePromptCount} shot frame prompt{stalePromptCount === 1 ? '' : 's'} no longer match their
+                shot direction. Recomposes the prompts across every scene and keeps the frames you already
                 generated — regenerate a frame when you want it redrawn.
               </TooltipContent>
             </Tooltip>
@@ -656,7 +656,7 @@ export function SceneGallery({
           {mode !== 'screening' && isExpressRunning && expressProgress && (
             <div className="flex items-center gap-1.5 rounded-md border border-indigo-500/40 bg-indigo-500/10 px-2 py-1 text-[11px] text-indigo-200">
               <span className="font-semibold">
-                Beats {storyboardBeatProgress.complete}/{storyboardBeatProgress.total}
+                Shots {storyboardBeatProgress.complete}/{storyboardBeatProgress.total}
               </span>
               <span className="text-indigo-300/70">·</span>
               <span>{expressElapsedSec}s</span>

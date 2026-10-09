@@ -79,7 +79,7 @@ describe('Reference Library next-action CTA wiring', () => {
       'Opening the Reference Library — use Library Agent to draw the missing references.'
     )
     expect(page).toContain(
-      'Open this scene’s References tab and run Scene Ref Agent to draw the missing stills.'
+      'Open this scene’s Continuity tab and run Scene Ref Agent to draw the missing stills.'
     )
     expect(page).toContain('blockedByMissingSceneReferences')
     expect(page).not.toContain('use Generate to draw the missing references')
