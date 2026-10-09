@@ -77,5 +77,6 @@ export function segmentWasPolicyBlocked(segment: {
 } | null | undefined): boolean {
   if (!segment || segment.status !== 'ERROR') return false
   if (segment.lastContentPolicyFailure) return true
-  return isContentPolicyFailureMessage(segment.errorMessage ?? '')
+  const message = segment.errorMessage ?? ''
+  return isContentPolicyFailureMessage(message) || /content[_ ]blocked/i.test(message)
 }
