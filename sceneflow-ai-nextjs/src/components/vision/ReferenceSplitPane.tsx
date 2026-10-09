@@ -18,8 +18,8 @@ export function ReferenceSplitPane({ image, controls, className }: ReferenceSpli
         className,
       )}
     >
-      <div className="relative min-h-[180px] max-h-[50vh] rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800">
-        {image}
+      <div className="relative h-[min(50vh,32rem)] min-h-[180px] rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800">
+        <div className="absolute inset-0">{image}</div>
       </div>
       <div className="min-w-0 flex flex-col gap-3 overflow-y-auto max-h-[50vh]">
         {controls}

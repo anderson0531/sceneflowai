@@ -20,6 +20,8 @@ import {
 import {
   parseLocationVersionRequirementId,
 } from '@/lib/vision/locationVersionResolve'
+import { filterScenesForLocation } from '@/lib/vision/mountedSetFixtures'
+import { isSceneScriptReadyForReferences } from '@/lib/vision/sceneScriptReadiness'
 
 export type CastSource = {
   id?: string
@@ -73,6 +75,7 @@ export type LocationSource = {
     imageUrl?: string
     generationPrompt?: string
     needsImageRegen?: boolean
+    sceneNumbers?: number[]
   }>
   [key: string]: unknown
 }
@@ -393,7 +396,43 @@ export function planSelectedLocationExpressItems(
     }
   }
 
-  return items
+  return retainLocationItemsForReadyScenes(items, input)
+}
+
+/**
+ * Drop location stills that only belong to scenes whose script is not ready.
+ * A location with no scene assignment is left alone — the user added it by hand.
+ * Cast and prop rows are unchanged.
+ */
+export function retainLocationItemsForReadyScenes(
+  items: ReferenceExpressItem[],
+  input: ReferenceExpressPlanInput
+): ReferenceExpressItem[] {
+  const scenes = input.scenes
+  if (!scenes?.length) return items
+  return items.filter((item) => {
+    if (item.kind !== 'location') return true
+    const location = input.locations.find((row) => row.id === item.targetId)
+    if (!location) return false
+    const version = item.versionId
+      ? (location.versions || []).find((row) => row.id === item.versionId)
+      : undefined
+    return locationStillServesReadyScene(location, version?.sceneNumbers, scenes)
+  })
+}
+
+function locationStillServesReadyScene(
+  location: LocationSource,
+  versionSceneNumbers: number[] | undefined,
+  scenes: Array<Record<string, any>>
+): boolean {
+  const versionNumbers = (versionSceneNumbers || []).filter((n) => Number.isInteger(n) && n > 0)
+  if (versionNumbers.length > 0) {
+    return versionNumbers.some((n) => isSceneScriptReadyForReferences(scenes[n - 1]))
+  }
+  const matched = filterScenesForLocation(location, scenes)
+  if (matched.length === 0) return true
+  return matched.some((scene) => isSceneScriptReadyForReferences(scene))
 }
 
 /**
@@ -778,6 +817,7 @@ export function planSceneReferenceExpressItems(
   const requirements = new Map<string, SceneReferenceRequirement>()
   for (const sceneIndex of sceneIndices) {
     const scene = scenes[sceneIndex]
+    if (!isSceneScriptReadyForReferences(scene)) continue
     const resolved = resolveSceneRequiredReferences({
       scene,
       sceneIndex,

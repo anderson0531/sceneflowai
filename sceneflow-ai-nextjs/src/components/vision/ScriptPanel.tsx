@@ -175,6 +175,7 @@ import { SceneDirectionWorkbench } from '@/components/vision/scene-production/Sc
 import { BeatDirectionEditor } from '@/components/vision/BeatDirectionEditor'
 import { ExportDialog } from './ExportDialog'
 import { isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
+import { isSceneScriptReadyForReferences } from '@/lib/vision/sceneScriptReadiness'
 import { isPreVisStale, sceneHasStalePromptKeys } from '@/lib/storyboard/preVisSync'
 import { getKenBurnsConfig, generateKenBurnsKeyframes, type KenBurnsIntensity } from '@/lib/animation/kenBurns'
 import { SceneDirectionProvider } from '@/contexts/SceneDirectionContext'
@@ -6581,6 +6582,9 @@ function SceneCard({
                         sceneNumber
                       )}
                       onAddDirectedLocationVersion={onAddDirectedLocationVersion}
+                      scriptReady={isSceneScriptReadyForReferences(
+                        scene as Record<string, unknown>
+                      )}
                     />
                   </TabsContent>
                   )}

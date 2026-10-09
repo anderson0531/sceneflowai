@@ -26,6 +26,7 @@ import type {
   ReferenceExpressScope,
 } from '@/lib/vision/referenceExpress/types'
 import { referenceExpressAgentLabel } from '@/lib/vision/libraryKindAgents'
+import { isSceneScriptReadyForReferences } from '@/lib/vision/sceneScriptReadiness'
 
 const EXPRESS_KINDS: readonly ReferenceExpressKind[] = ['cast', 'location', 'prop']
 
@@ -119,6 +120,23 @@ export async function POST(req: NextRequest) {
         ? planSelectedLibraryBaseItems(context, scope.itemKeys!)
         : planSceneReferenceExpressItems(context, scope)
     const catalogSync = wantsLocationCatalogSync(scope) ? 'location' : undefined
+    const scopedScenes = sceneScoped
+      ? (scope.sceneIndices ?? []).filter(
+          (index) => index >= 0 && index < (context.scenes?.length ?? 0)
+        )
+      : []
+    const scriptNotReady =
+      scopedScenes.length > 0 &&
+      scopedScenes.every((index) => !isSceneScriptReadyForReferences(context.scenes?.[index]))
+    if (scriptNotReady && items.length === 0) {
+      return NextResponse.json(
+        {
+          error: 'This scene’s script is not finalized yet',
+          code: 'SCRIPT_NOT_READY',
+        },
+        { status: 409 }
+      )
+    }
     if (!canStartReferenceExpressJob(items, scope)) {
       return NextResponse.json(
         {
