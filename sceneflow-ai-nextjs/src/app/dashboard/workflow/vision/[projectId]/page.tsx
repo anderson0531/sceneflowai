@@ -950,11 +950,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   useEffect(() => { scriptRef.current = script }, [script])
   useEffect(() => { projectRef.current = project }, [project])
   useEffect(() => { charactersRef.current = characters }, [characters])
-  
-  // Guard: prevents overlapping full-script direction regeneration cycles
-  // When onScriptOptimized fires direction regen for all scenes, this ref
-  // prevents a second cycle from starting before the first completes.
-  const optimizationDirectionInFlight = useRef(false)
 
   // [REVERSION-DEBUG] Helper to create script fingerprint for tracking stale writes
   const getScriptFingerprint = (s: any) => {
@@ -6728,9 +6723,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Scene score generation state
   const [generatingScoreFor, setGeneratingScoreFor] = useState<number | null>(null)
   
-  // Per-scene audience analysis state (integrated from ScriptReviewModal)
-  const [optimizingSceneIndex, setOptimizingSceneIndex] = useState<number | null>(null)
-  
   // Audio timing resync state
   const [resyncingAudioSceneIndex, setResyncingAudioSceneIndex] = useState<number | null>(null)
   const [approvingStoryboardFor, setApprovingStoryboardFor] = useState<number | null>(null)
@@ -8500,104 +8492,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       debouncedSaveSceneAnalysis(updatedScript, currentProject?.metadata, projectId)
     }
   }, [projectId, debouncedSaveSceneAnalysis])
-
-  // Handler for optimizing a single scene (called from ScriptPanel)
-  const handleOptimizeScene = useCallback(async (
-    sceneIndex: number, 
-    instruction: string, 
-    selectedRecommendations: string[]
-  ) => {
-    if (!projectId || !script?.script?.scenes?.[sceneIndex]) return
-    
-    setOptimizingSceneIndex(sceneIndex)
-    
-    try {
-      const scene = script.script.scenes[sceneIndex]
-      
-      // Build instruction from selected recommendations and custom instruction
-      const fullInstruction = [
-        instruction,
-        ...(selectedRecommendations.length > 0 
-          ? ['Apply these specific recommendations:', ...selectedRecommendations.map(r => `- ${r}`)]
-          : [])
-      ].filter(Boolean).join('\n')
-      
-      // Call the optimize-script API for a single scene
-      const response = await fetch('/api/vision/optimize-script', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          script: script.script,
-          instruction: fullInstruction,
-          selectedSceneIndices: [sceneIndex],
-          characters
-        })
-      })
-      
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to optimize scene')
-      }
-      
-      const data = await response.json()
-      
-      if (data.script?.scenes) {
-        // Update script with optimized scene and set optimizedAt timestamp
-        const previousAnalysis = script.script.scenes[sceneIndex]?.audienceAnalysis
-        const appliedFromOptimize = recIdsMatchingTexts(
-          { audienceAnalysis: previousAnalysis },
-          selectedRecommendations
-        )
-        const optimizedScene = {
-          ...data.script.scenes[0],
-          audienceAnalysis: {
-            ...previousAnalysis,
-            appliedRecommendationIds: mergeAppliedRecommendationIds(
-              previousAnalysis?.appliedRecommendationIds,
-              appliedFromOptimize
-            ),
-            optimizedAt: new Date().toISOString()  // Track optimization time for sync CTA
-          }
-        }
-        const updatedScript = {
-          ...script,
-          script: {
-            ...script.script,
-            scenes: script.script.scenes.map((s: any, idx: number) =>
-              idx === sceneIndex ? optimizedScene : s
-            )
-          }
-        }
-        setScript(updatedScript)
-        
-        // Save to database
-        try {
-          console.log('[REVERSION-DEBUG][OptimizeScene] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
-          await serializedProjectSave({
-              metadata: {
-                ...(projectRef.current || project)?.metadata,
-                visionPhase: {
-                  ...(projectRef.current || project)?.metadata?.visionPhase,
-                  script: updatedScript
-                }
-              }
-            }, 'handleOptimizeScene')
-          
-          // Auto-regenerate scene direction in background after optimization
-          console.log(`[AutoDirection] Scene ${sceneIndex + 1} optimized - triggering background direction regeneration`)
-          handleBackgroundDirectionGeneration(sceneIndex)
-        } catch (saveError) {
-          console.error('[handleOptimizeScene] Failed to save:', saveError)
-        }
-      }
-    } catch (error) {
-      console.error('[handleOptimizeScene] Error:', error)
-      throw error // Re-throw so the dialog can show error
-    } finally {
-      setOptimizingSceneIndex(null)
-    }
-  }, [projectId, script, project?.metadata, characters])
 
   // ============================================================================
   // UNIFIED SIDEBAR DATA - Populate global sidebar with Production phase data
@@ -17094,140 +16988,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     ? `${Math.floor(filmTreatment.total_duration_seconds / 60)}:${String(filmTreatment.total_duration_seconds % 60).padStart(2, '0')}`
     : null
 
-  const handleScriptOptimized = async (optimizedScript: any) => {
-          // Apply the optimized script directly
-          if (optimizedScript?.scenes) {
-            // Strip stale per-scene audienceAnalysis from previous review cycle
-            // so scene cards and scene editor don't show outdated recommendations
-            const cleanedScenes = optimizedScript.scenes.map((scene: any) => {
-              const { audienceAnalysis, ...rest } = scene || {}
-              return rest
-            })
-            
-            // RACE CONDITION FIX: Use scriptRef (latest state) instead of stale closure `script`
-            const currentScript = scriptRef.current || script
-            const updatedScript = {
-              ...currentScript,
-              script: {
-                ...currentScript?.script,
-                scenes: cleanedScenes
-              }
-            }
-            setScript(updatedScript)
-            // Immediately sync ref so downstream callers (e.g. onRegenerate) read the new script
-            scriptRef.current = updatedScript
-            
-            // Clear stale review data — prevents old recommendations from being
-            // re-displayed or re-applied before re-analysis completes
-            setAudienceReview(null)
-            setDirectorReview(null)
-            setReviewsOutdated(true)
-            
-            // Persist to database
-            // RACE CONDITION FIX: Use functional setProject to read latest project state
-            // instead of stale closure `project`, and include scriptUpdatedAt timestamp
-            // so the PUT endpoint can reject stale overwrites
-            try {
-              const scriptUpdatedAt = new Date().toISOString()
-              
-              // Build save payload from latest project state (via ref, not closure)
-              const currentProject = projectRef.current || project
-              const freshMetadata = currentProject?.metadata || {}
-              const freshVisionPhase = freshMetadata.visionPhase || {}
-
-              // Optimized script may include unsegmented (or stale-segmented)
-              // scenes; clear any segments so the migration rebuilds them
-              // from the new flat dialog/sfx/narration content.
-              const scriptForSave = (() => {
-                try {
-                  const cloned = JSON.parse(JSON.stringify(updatedScript))
-                  const sceneList = cloned.script?.scenes ?? cloned.scenes
-                  if (Array.isArray(sceneList)) {
-                    sceneList.forEach((s: any) => { if (s) s.segments = undefined })
-                  }
-                  return cloned
-                } catch {
-                  return updatedScript
-                }
-              })()
-
-              const interimMetadata = {
-                ...freshMetadata,
-                visionPhase: {
-                  ...freshVisionPhase,
-                  script: scriptForSave,
-                  scriptUpdatedAt
-                }
-              }
-              let metadataToPersist: any = interimMetadata
-              try {
-                const { migrateProjectToSegmented } = await import('@/lib/script/migrateToSegmented')
-                metadataToPersist = migrateProjectToSegmented(interimMetadata).metadata
-              } catch (segErr) {
-                console.warn('[onScriptOptimized] Segment re-derivation failed; persisting flat shape', segErr)
-              }
-
-              const saveResponse = await serializedProjectSave({
-                  metadata: metadataToPersist
-                }, 'onScriptOptimized', { mintScriptUpdatedAt: true })
-              
-              // Update project state to prevent stale metadata overwrites
-              if (saveResponse.ok) {
-                setProject(prev => {
-                  if (!prev) return prev
-                  const updated = {
-                    ...prev,
-                    metadata: {
-                      ...prev.metadata,
-                      visionPhase: {
-                        ...prev.metadata?.visionPhase,
-                        script: updatedScript,
-                        scriptUpdatedAt
-                      }
-                    }
-                  }
-                  // Sync ref immediately so concurrent operations see fresh state
-                  projectRef.current = updated
-                  return updated
-                })
-              }
-            } catch (error) {
-              console.error('[ScriptReview] Failed to save optimized script:', error)
-              toast.error('Script revised but failed to save to database')
-            }
-            
-            // Auto-regenerate direction for all scenes after full script optimization
-            // Guard: Skip if a previous optimization cycle is still generating directions.
-            // This prevents the onScriptOptimized → onRegenerate → onScriptOptimized loop
-            // from launching multiple overlapping direction generation cycles.
-            if (optimizationDirectionInFlight.current) {
-              console.log(`[AutoDirection] Skipping direction regen - previous cycle still in flight`)
-            } else {
-              optimizationDirectionInFlight.current = true
-              console.log(`[AutoDirection] Full script optimized - regenerating direction for ${cleanedScenes.length} scenes`)
-              toast.info('Updating scene directions for optimized script...', { duration: 4000 })
-              
-              // Track completion of all direction generations
-              let completedCount = 0
-              const totalScenes = cleanedScenes.length
-              
-              for (let i = 0; i < totalScenes; i++) {
-                // Stagger to avoid overwhelming the API (max 3 concurrent)
-                setTimeout(async () => {
-                  try {
-                    await handleBackgroundDirectionGeneration(i)
-                  } finally {
-                    completedCount++
-                    if (completedCount >= totalScenes) {
-                      optimizationDirectionInFlight.current = false
-                    }
-                  }
-                }, i * 2000) // 2 second stagger between scenes
-              }
-            }
-          }
-  }
-
   return (
     <div className="h-full min-h-0 flex flex-col bg-gray-50 dark:bg-sf-background overflow-hidden overflow-x-hidden max-w-full">
       {isHydratingImages && (
@@ -17336,12 +17096,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               <ScriptPanel 
                 script={script}
                 onScriptChange={handleScriptChange}
-                onScriptOptimized={handleScriptOptimized}
-                currentDurationMinutes={
-                  filmTreatment?.total_duration_seconds
-                    ? Math.max(1, Math.round(filmTreatment.total_duration_seconds / 60))
-                    : null
-                }
                 onAudioSlotSaved={handleAudioSlotSaved}
                 isGenerating={isGenerating}
                 onExpandScene={expandScene}
@@ -17417,8 +17171,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onGenerateSceneScore={handleGenerateSceneScore}
                 generatingScoreFor={generatingScoreFor}
                 getScoreColorClass={getScoreColorClass}
-                directorScore={directorReview?.overallScore}
-                audienceScore={audienceReview?.overallScore}
+                directorScore={directorReview?.overallScore}                audienceScore={audienceReview?.overallScore}
                 onGenerateReviews={handleGenerateReviews}
                 isGeneratingReviews={isGeneratingReviews}
                 onCancelReviews={() => void scriptAnalysisJob.cancel()}
@@ -17431,8 +17184,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 isUpdatingAllDirections={isUpdatingAllDirections}
                 onShowTreatmentReview={() => setShowTreatmentReview(true)}
                 onRefactorFoundation={() => handleRefactorFoundation('artStyle')}
-                directorReview={directorReview}
-                audienceReview={audienceReview}
                 hasBYOK={!!byokSettings?.videoProvider}
                 onOpenBYOK={() => setShowBYOKSettings(true)}
                 generatingDirectionFor={generatingDirectionFor}
@@ -17536,8 +17287,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onClearScriptEditorInstruction={() => setReviseScriptInstruction('')}
                 storedTranslations={storedTranslations}
                 onSaveTranslations={handleSaveTranslations}
-                onOptimizeScene={handleOptimizeScene}
-                optimizingSceneIndex={optimizingSceneIndex}
                 onResyncAudioTiming={handleResyncAudioTiming}
                 resyncingAudioSceneIndex={resyncingAudioSceneIndex}
                 onApproveStoryboard={handleApproveStoryboard}
@@ -17861,7 +17610,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         scoreOutdated={reviewsOutdated}
         reviewHistory={project?.metadata?.visionPhase?.reviewHistory || []}
         onSceneAnalysisComplete={handleSceneAnalysisComplete}
-        onScriptOptimized={handleScriptOptimized}
       />
 
       {/* Background script analysis: handoff explanation + non-blocking status */}

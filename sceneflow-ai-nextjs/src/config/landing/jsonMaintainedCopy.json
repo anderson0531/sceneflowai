@@ -552,28 +552,6 @@
                     }
                   ]
                 }
-              },
-              {
-                "icon": "scriptDirector",
-                "title": "Script Director",
-                "description": "The whole-script dialog. Revise the full script from Audience Resonance recommendations, preview the new draft, and apply it only when you accept it. Use this when the note is about the film, and Scene Director when the note is about one scene.",
-                "screenshot": "Script Director",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Whole film",
-                      "description": "Revise the full script from Audience Resonance recommendations and preview the new draft."
-                    },
-                    {
-                      "title": "You accept it",
-                      "description": "The draft applies only when you accept it."
-                    },
-                    {
-                      "title": "Scene vs film",
-                      "description": "Use Scene Director when the note is about one scene."
-                    }
-                  ]
-                }
               }
             ]
           },

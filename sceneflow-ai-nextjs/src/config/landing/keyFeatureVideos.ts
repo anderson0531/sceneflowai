@@ -41,7 +41,6 @@ export const KEY_FEATURE_VIDEO_LABELS: Record<string, string> = {
   stakeholderReview: 'Stakeholder review',
   scriptResonance: 'Script Audience Resonance',
   sceneDirector: 'Scene Director',
-  scriptDirector: 'Script Director',
   productionAgents: 'Production Agents',
   directShot: 'Direct Shot',
   preVis: 'Pre-Vis before motion',

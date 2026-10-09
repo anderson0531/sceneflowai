@@ -82,7 +82,6 @@ const EXPECTED_TITLES: Record<string, string[]> = {
     'Script',
     'Script Audience Resonance',
     'Scene Director',
-    'Script Director',
     'Reference Library',
     'Production Agents',
     'Direct Shot',
