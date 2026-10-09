@@ -12,12 +12,6 @@
     "src/app/api/vision/generate-script/route.ts": {
       "maxDuration": 300
     },
-    "src/app/api/vision/optimize-script/route.ts": {
-      "maxDuration": 600
-    },
-    "src/app/api/vision/optimize-script/batch/route.ts": {
-      "maxDuration": 120
-    },
     "src/app/api/ideation/film-treatment/route.ts": {
       "maxDuration": 300
     },

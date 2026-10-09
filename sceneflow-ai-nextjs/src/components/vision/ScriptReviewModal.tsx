@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import { OptimizeSceneDialog } from '@/components/vision/OptimizeSceneDialog'
 import {
   DIRECTOR_ASSISTANTS,
   applyAssistantStyle,
@@ -24,7 +23,6 @@ import {
 import { collectTopImpactIssues, firstHighImpactSceneIndex, sceneHasHighImpactIssue } from '@/lib/script/audienceResonance/highImpact'
 import { useStore } from '@/store/useStore'
 import { AnimatedScore, AnimatedProgressBar } from '@/components/ui/AnimatedScore'
-import { runWithAgentDock } from '@/store/useAgentRunStore'
 import { toast } from 'sonner'
 import {
   createScriptARShare,
@@ -303,7 +301,6 @@ interface ScriptReviewModalProps {
   projectId?: string
   script?: any
   characters?: any[]
-  onScriptOptimized?: (optimizedScript: any) => Promise<void> | void
   // Score outdated indicator
   scoreOutdated?: boolean
   // Review history for score trend
@@ -549,7 +546,6 @@ export default function ScriptReviewModal({
   projectId,
   script,
   characters,
-  onScriptOptimized,
   scoreOutdated,
   reviewHistory = [],
   onSceneAnalysisComplete,
@@ -603,14 +599,7 @@ export default function ScriptReviewModal({
   // Guard ref to prevent re-persisting the same analysis data (prevents infinite loops)
   const lastPersistedAnalysisRef = useRef<string | null>(null)
 
-  // Per-scene fix state
-  const [fixingScenes, setFixingScenes] = useState<Set<number>>(new Set()) // scene numbers currently being fixed
-  const [fixedScenes, setFixedScenes] = useState<Set<number>>(new Set())   // scene numbers successfully fixed
   const [expandedScenes, setExpandedScenes] = useState<Set<number>>(new Set()) // scene numbers with expanded recommendations
-
-  // Optimize Scene Dialogue state
-  const [optimizeDialogOpen, setOptimizeDialogOpen] = useState(false)
-  const [optimizeDialogScene, setOptimizeDialogScene] = useState<SceneAnalysis | null>(null)
 
   // Scene Analysis generation state (separate from main review)
   const [isGeneratingSceneAnalysis, setIsGeneratingSceneAnalysis] = useState(false)
@@ -858,8 +847,6 @@ export default function ScriptReviewModal({
 
   // Reset per-scene fix state when review changes (new analysis) or modal opens/closes
   useEffect(() => {
-    setFixedScenes(new Set())
-    setFixingScenes(new Set())
     setExpandedScenes(new Set())
   }, [audienceReview, isOpen])
 
@@ -965,185 +952,6 @@ export default function ScriptReviewModal({
     } finally {
       setIsGeneratingSceneAnalysis(false)
     }
-  }
-
-  // Per-scene fix handler — calls revise-scene API with scene-specific recommendations
-  const handleFixScene = async (sceneAnalysisItem: SceneAnalysis) => {
-    if (!projectId || !script || !onScriptOptimized) {
-      toast.error('Missing project context for scene fix')
-      return
-    }
-
-    const sceneIndex = sceneAnalysisItem.sceneNumber - 1 // Convert 1-indexed to 0-indexed
-    const currentScene = script.scenes?.[sceneIndex]
-    if (!currentScene) {
-      toast.error(`Scene ${sceneAnalysisItem.sceneNumber} not found in script`)
-      return
-    }
-
-    const recommendations = sceneAnalysisItem.recommendations || []
-    if (recommendations.length === 0) {
-      toast.error('No recommendations available for this scene')
-      return
-    }
-
-    // Mark scene as fixing
-    setFixingScenes(prev => new Set(prev).add(sceneAnalysisItem.sceneNumber))
-
-    try {
-      const previousScene = sceneIndex > 0 ? script.scenes[sceneIndex - 1] : undefined
-      const nextScene = sceneIndex < script.scenes.length - 1 ? script.scenes[sceneIndex + 1] : undefined
-
-      const response = await fetch('/api/vision/revise-scene', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          sceneIndex,
-          currentScene,
-          revisionMode: 'recommendations',
-          selectedRecommendations: recommendations,
-          targetDemographic: buildAudiencePrompt(),
-          context: {
-            characters: characters || [],
-            previousScene,
-            nextScene
-          }
-        })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || 'Failed to revise scene')
-      }
-
-      const data = await response.json()
-
-      if (data.revisedScene) {
-        // Check for legacy silent failure flag
-        if (data.revisedScene._revisionError) {
-          throw new Error('Scene revision failed — AI response could not be parsed. Try again.')
-        }
-
-        // Verify the scene actually changed (compare key fields for debug logging)
-        const dialogueChanged = JSON.stringify(currentScene.dialogue || []) !== JSON.stringify(data.revisedScene.dialogue || [])
-        const actionChanged = (currentScene.action || '') !== (data.revisedScene.action || '')
-        const narrationChanged = (currentScene.narration || '') !== (data.revisedScene.narration || '')
-        const changed = dialogueChanged || actionChanged || narrationChanged
-        
-        console.log(`[Scene Fix] Scene ${sceneAnalysisItem.sceneNumber}: dialogue=${dialogueChanged}, action=${actionChanged}, narration=${narrationChanged}`)
-
-        // Update the script in place — replace the scene at sceneIndex
-        const updatedScenes = [...script.scenes]
-        updatedScenes[sceneIndex] = data.revisedScene
-        const updatedScript = { ...script, scenes: updatedScenes }
-
-        // Await so the DB write completes before showing success
-        await onScriptOptimized(updatedScript)
-
-        // Mark scene as fixed
-        setFixedScenes(prev => new Set(prev).add(sceneAnalysisItem.sceneNumber))
-        toast.success(
-          changed
-            ? `Scene ${sceneAnalysisItem.sceneNumber} revised successfully`
-            : `Scene ${sceneAnalysisItem.sceneNumber} processed — changes were minimal`
-        )
-      } else {
-        throw new Error('No revised scene returned')
-      }
-    } catch (err: any) {
-      console.error(`[Scene Fix] Error fixing scene ${sceneAnalysisItem.sceneNumber}:`, err)
-      toast.error(err.message || `Failed to fix scene ${sceneAnalysisItem.sceneNumber}`)
-    } finally {
-      setFixingScenes(prev => {
-        const next = new Set(prev)
-        next.delete(sceneAnalysisItem.sceneNumber)
-        return next
-      })
-    }
-  }
-
-  // Open Optimize Scene Dialogue for a specific scene
-  const handleOpenOptimizeDialog = (sceneAnalysisItem: SceneAnalysis) => {
-    setOptimizeDialogScene(sceneAnalysisItem)
-    setOptimizeDialogOpen(true)
-  }
-
-  // Handle scene optimization from the dialog
-  const handleOptimizeSceneFromDialog = async (instruction: string, selectedRecommendations: string[]) => {
-    if (!optimizeDialogScene || !projectId || !script || !onScriptOptimized) {
-      toast.error('Missing context for scene optimization')
-      return
-    }
-
-    const sceneIndex = optimizeDialogScene.sceneNumber - 1
-    const currentScene = script.scenes?.[sceneIndex]
-    if (!currentScene) {
-      toast.error(`Scene ${optimizeDialogScene.sceneNumber} not found`)
-      return
-    }
-
-    // Capture scene number before closing dialog (dialog state will be cleared)
-    const sceneNumber = optimizeDialogScene.sceneNumber
-    
-    // Close dialog immediately; the dock reports the rewrite so the studio stays usable
-    setOptimizeDialogOpen(false)
-    
-    await runWithAgentDock({
-      id: `scene-revision:${sceneNumber}`,
-      title: 'Script Agent',
-      subtitle: 'you can keep editing',
-      itemLabel: `Scene ${sceneNumber}`,
-    }, async () => {
-        const previousScene = sceneIndex > 0 ? script.scenes[sceneIndex - 1] : undefined
-        const nextScene = sceneIndex < script.scenes.length - 1 ? script.scenes[sceneIndex + 1] : undefined
-
-        const response = await fetch('/api/vision/revise-scene', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            projectId,
-            sceneIndex,
-            currentScene,
-            revisionMode: instruction ? 'custom' : 'recommendations',
-            customInstruction: instruction || undefined,
-            selectedRecommendations: selectedRecommendations.length > 0 ? selectedRecommendations : undefined,
-            revisionDepth: 'moderate', // Use moderate depth for substantive rewrites
-            targetDemographic: buildAudiencePrompt(),
-            context: {
-              characters: characters || [],
-              previousScene,
-              nextScene
-            }
-          })
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          throw new Error(errorData.error || 'Failed to optimize scene')
-        }
-
-        const data = await response.json()
-
-        if (data.revisedScene) {
-          if (data.revisedScene._revisionError) {
-            throw new Error('Scene optimization failed — AI response could not be parsed.')
-          }
-
-          // Update the script
-          const updatedScenes = [...script.scenes]
-          updatedScenes[sceneIndex] = data.revisedScene
-          const updatedScript = { ...script, scenes: updatedScenes }
-
-          await onScriptOptimized(updatedScript)
-          setFixedScenes(prev => new Set(prev).add(sceneNumber))
-          setOptimizeDialogScene(null)
-          return `Scene ${sceneNumber} rewritten successfully!`
-        } else {
-          throw new Error('No optimized scene returned')
-        }
-      }
-    )
   }
 
   // Toggle expanded state for scene recommendations
@@ -1951,19 +1759,6 @@ export default function ScriptReviewModal({
         </div>
 
 
-        {/* Optimize Scene Dialogue */}
-        <OptimizeSceneDialog
-          isOpen={optimizeDialogOpen}
-          onClose={() => {
-            setOptimizeDialogOpen(false)
-            setOptimizeDialogScene(null)
-          }}
-          sceneNumber={optimizeDialogScene?.sceneNumber ?? 0}
-          sceneHeading={optimizeDialogScene?.sceneHeading ?? ''}
-          sceneAnalysis={optimizeDialogScene as any}
-          onOptimize={handleOptimizeSceneFromDialog}
-          isOptimizing={optimizeDialogScene ? fixingScenes.has(optimizeDialogScene.sceneNumber) : false}
-        />
       </div>
     </div>
   )

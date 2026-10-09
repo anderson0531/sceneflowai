@@ -5,7 +5,6 @@ import path from 'path'
 const files = [
   'src/app/api/vision/generate-script-v2/route.ts',
   'src/app/api/vision/generate-script/route.ts',
-  'src/app/api/vision/optimize-script/route.ts',
   'src/app/api/vision/optimize-scene/route.ts',
   'src/app/api/vision/revise-scene/route.ts',
   'src/app/api/vision/expand-scene/route.ts',

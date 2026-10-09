@@ -5,12 +5,12 @@ import { ReactNode } from 'react'
 
 /**
  * Shared scene optimization/revision templates
- * Used by both OptimizeSceneDialog and InstructionsPanel
+ * Used by InstructionsPanel (Scene Director).
  */
 
 export interface SceneOptimizationTemplate {
   id: string
-  icon: string        // Emoji for OptimizeSceneDialog
+  icon: string
   label: string
   description: string
   instruction: string

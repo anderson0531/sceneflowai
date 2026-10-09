@@ -59,7 +59,7 @@ export const FEATURE_CHAPTER_MAP: readonly FeatureRoomChapterPlan[] = [
       { id: 'script-resonance', demoIcons: ['scriptResonance'], standaloneDemo: true },
       {
         id: 'direct-scene',
-        demoIcons: ['sceneDirector', 'scriptDirector'],
+        demoIcons: ['sceneDirector'],
         standaloneDemo: true,
       },
       { id: 'reference-library', demoIcons: ['referenceLibrary'], standaloneDemo: true },

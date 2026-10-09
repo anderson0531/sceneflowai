@@ -24,7 +24,6 @@ describe('key feature chapter map', () => {
     expect(standaloneDemoKey('directEpisode')).toBe('reshapeSeries')
     expect(standaloneDemoKey('blueprintDirector')).toBeNull()
     expect(standaloneDemoKey('sceneDirector')).toBe('sceneDirector')
-    expect(standaloneDemoKey('scriptDirector')).toBe('sceneDirector')
     expect(standaloneDemoKey('byok')).toBe('byok')
     expect(standaloneDemoKey('budget')).toBe('byok')
     expect(standaloneDemoKey('referenceLibrary')).toBe('referenceLibrary')

@@ -64,7 +64,6 @@ const eslintConfig = [
       'src/components/vision/scene-production/SceneRenderDialog.tsx',
       'src/components/vision/scene-production/DirectionDialog.tsx',
       'src/components/vision/PreVisFramePromptDialog.tsx',
-      'src/components/vision/OptimizeSceneDialog.tsx',
       'src/components/vision/ReimagineFoundationDialog.tsx',
       'src/components/vision/ReferenceLibraryScopePanel.tsx',
       'src/components/vision/ReferenceReconcileDialog.tsx',

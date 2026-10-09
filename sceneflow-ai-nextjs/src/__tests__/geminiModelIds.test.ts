@@ -120,7 +120,6 @@ describe('product surface model source guard', () => {
     'src/app/api/vision/generate-script/route.ts',
     'src/app/api/vision/generate-script-v2/route.ts',
     'src/app/api/script/complete-gaps/route.ts',
-    'src/app/api/vision/optimize-script/route.ts',
     // audience_resonance
     'src/app/api/treatment/audience-resonance/route.ts',
     'src/lib/script/audienceResonance/scenePass.ts',
@@ -183,15 +182,9 @@ describe('product surface model source guard', () => {
       path.join(process.cwd(), 'src/app/api/vision/generate-script/route.ts'),
       'utf8'
     )
-    const optimize = readFileSync(
-      path.join(process.cwd(), 'src/app/api/vision/optimize-script/route.ts'),
-      'utf8'
-    )
     expect(v2).toContain("thinkingLevel: 'high'")
     expect(gaps).toContain("thinkingLevel: 'high'")
     expect(v1).toContain("thinkingLevel: 'medium'")
-    expect(optimize).toContain('thinkingBudget: 0')
-    expect(optimize).not.toContain("thinkingLevel: 'high'")
   })
 
   it('raises dialog-edit thinking without moving Series/Blueprint refine onto Pro', () => {

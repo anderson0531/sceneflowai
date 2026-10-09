@@ -49,7 +49,7 @@ function getNextStep(state: WorkflowState): NextStepAction | null {
   if (!state.hasScript) {
     return {
       label: 'Review & Edit Script',
-      description: 'Review the AI-generated script. Use Audience Analysis for recommendations, then Script Director to revise the whole script.',
+      description: 'Review the AI-generated script. Use Audience Analysis for recommendations, then Scene Director to revise a scene. To change the whole film, revise the blueprint and regenerate the script.',
       icon: <FileText className="w-4 h-4" />,
       targetTab: 'dialogueAction',
       actionId: 'edit-script',
