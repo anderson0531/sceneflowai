@@ -4,6 +4,7 @@ import {
   segmentHasPlayableVideo,
   type TakeRow,
 } from '@/lib/storyboard/mediaVersions'
+import { segmentWasPolicyBlocked } from '@/lib/vision/directShotTarget'
 import type { PromoTrailerBeatPlan } from '@/types/publishingAssets'
 
 export interface PromoBeatMedia {
@@ -11,6 +12,8 @@ export interface PromoBeatMedia {
   thumbnailUrl?: string
   segmentId?: string
   hasClip: boolean
+  /** Last generate of this shot failed on content policy. */
+  policyBlocked?: boolean
 }
 
 interface PromoBeatSegment {
@@ -19,6 +22,8 @@ interface PromoBeatSegment {
   activeAssetUrl?: string | null
   assetType?: string | null
   status?: string
+  errorMessage?: string | null
+  lastContentPolicyFailure?: unknown
   currentTakeId?: string
   startFrameUrl?: string | null
   visualFrame?: string
@@ -97,6 +102,7 @@ export function resolvePromoBeatMedia(
       hasClip: Boolean(videoUrl),
       videoUrl,
       thumbnailUrl: live?.thumbnailUrl || (!videoUrl ? stillUrl(beat, segment) : undefined),
+      ...(!videoUrl && segmentWasPolicyBlocked(segment) ? { policyBlocked: true } : {}),
     }
   }
 

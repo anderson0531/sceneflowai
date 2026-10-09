@@ -415,6 +415,7 @@ import type { PromoTrailerBeatPlan, PublishingLibraryTab } from '@/types/publish
 import { resolvePromoBeatMedia } from '@/lib/publish/promoBeatMedia'
 import { slimPromoProductionState } from '@/lib/publish/promoShotCatalog'
 import { runPromoAgent } from '@/lib/publish/runPromoAgent'
+import { resolveDirectShotTarget, type DirectShotTarget } from '@/lib/vision/directShotTarget'
 import { VisualReference, VisualReferenceType, VisionReferencesPayload, LocationReference, LocationVersion } from '@/types/visionReferences'
 import type { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production/types'
 import { patchMixerTrackVolumes } from '@/lib/scene/screeningTrackVolume'
@@ -6764,6 +6765,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [pendingSceneReferencesIndex, setPendingSceneReferencesIndex] = useState<number | null>(
     null
   )
+  const [pendingDirectShot, setPendingDirectShot] = useState<DirectShotTarget | null>(null)
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false)
   
   // Generation lock mechanism to prevent race conditions
@@ -17358,6 +17360,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onPendingSpeakerAssignHandled={() => setPendingSpeakerAssign(null)}
                 pendingSceneReferencesIndex={pendingSceneReferencesIndex}
                 onPendingSceneReferencesHandled={() => setPendingSceneReferencesIndex(null)}
+                pendingDirectShot={pendingDirectShot}
+                onPendingDirectShotHandled={() => setPendingDirectShot(null)}
                 narrationVoice={narrationVoice}
                 onGenerateLanguageStream={handleGenerateLanguageStream}
                 isGeneratingAudio={isGeneratingAudio}
@@ -17799,6 +17803,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }}
         onGenerateBeatClip={handleGeneratePromoBeatClip}
         onRunPromoAgent={handleRunPromoAgent}
+        onOpenDirectShot={(request) => {
+          const target = resolveDirectShotTarget(script?.script?.scenes || [], request)
+          if (!target) {
+            toast.error('That shot is no longer in the script.')
+            return
+          }
+          setPublishingLibraryOpen(false)
+          setProductionViewWithUrl('studio')
+          setSelectedSceneIndex(target.sceneIndex)
+          setPendingDirectShot(target)
+        }}
       />
       
       {/* Generation Progress Indicator */}

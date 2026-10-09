@@ -25,6 +25,11 @@ import { parsePromoRenderBody, pollPromoRenderJob } from '@/lib/publish/promoRen
 import { getPublishingState, upsertPublishingState } from '@/lib/publish/publishingState'
 import { PromoCutPreview } from '@/components/publishing/PromoCutPreview'
 import { findPromoSceneIndex, isPromoCinematicScene } from '@/lib/publish/buildPromoScene'
+import {
+  directShotNumber,
+  resolveDirectShotTarget,
+  type DirectShotRequest,
+} from '@/lib/vision/directShotTarget'
 import type { PromoTrailerBeatPlan, PromoTrailerAsset } from '@/types/publishingAssets'
 import type { ProjectStream } from '@/lib/streams/projectStreams'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
@@ -57,6 +62,8 @@ export interface PublishingPromoTabProps {
     beatPlan: PromoTrailerBeatPlan[]
     targetDurationSec: number
   }) => Promise<void>
+  /** Open this shot in Studio's Direct Shot dialog. */
+  onOpenDirectShot?: (input: DirectShotRequest) => void
 }
 
 const TARGET_OPTIONS = [30, 45, 60] as const
@@ -75,6 +82,7 @@ export function PublishingPromoTab({
   onOpenPromoInStudio,
   onGenerateBeatClip,
   onRunPromoAgent,
+  onOpenDirectShot,
 }: PublishingPromoTabProps) {
   const [targetDuration, setTargetDuration] = useState<(typeof TARGET_OPTIONS)[number]>(
     DEFAULT_TRAILER_SEC
@@ -116,12 +124,21 @@ export function PublishingPromoTab({
 
   const timelineRows = useMemo(
     () =>
-      timelineBeats.map((beat) => ({
-        beat,
-        key: `${beat.sceneIndex}-${beat.beatId}`,
-        media: resolvePromoBeatMedia(beat, sceneProductionState),
-      })),
-    [timelineBeats, sceneProductionState]
+      timelineBeats.map((beat) => {
+        const target = resolveDirectShotTarget(scenes, {
+          sceneId: beat.sceneId,
+          sceneIndex: beat.sceneIndex,
+          beatId: beat.beatId,
+        })
+        return {
+          beat,
+          key: `${beat.sceneIndex}-${beat.beatId}`,
+          media: resolvePromoBeatMedia(beat, sceneProductionState),
+          sceneNumber: (target?.sceneIndex ?? beat.sceneIndex) + 1,
+          shotNumber: target ? directShotNumber(scenes[target.sceneIndex], beat.beatId) : null,
+        }
+      }),
+    [timelineBeats, sceneProductionState, scenes]
   )
 
   const readyClipCount = timelineRows.filter(
@@ -588,7 +605,7 @@ export function PublishingPromoTab({
               {readyClipCount} of {timelineRows.length} clips
             </p>
             <div className="flex flex-col gap-1.5">
-              {timelineRows.map(({ beat, key, media }) => {
+              {timelineRows.map(({ beat, key, media, sceneNumber, shotNumber }) => {
                 const broken = brokenBeatKeys.has(key)
                 const hasClip = media.hasClip && !broken
                 const durationSec = beat.durationSec ?? beat.endSec - beat.startSec
@@ -622,14 +639,41 @@ export function PublishingPromoTab({
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-[11px] text-fuchsia-100">
-                        S{beat.sceneIndex + 1}
+                        S{sceneNumber}
+                        {shotNumber ? ` · Shot ${shotNumber}` : ''}
                         {beat.trailerRole ? ` · ${beat.trailerRole}` : ''} · {durationSec}s
-                        <span className="ml-2 text-zinc-500">{hasClip ? 'Clip' : 'Needed'}</span>
+                        <span
+                          className={cn(
+                            'ml-2',
+                            media.policyBlocked && !hasClip ? 'text-amber-300' : 'text-zinc-500'
+                          )}
+                        >
+                          {hasClip ? 'Clip' : media.policyBlocked ? 'Blocked' : 'Needed'}
+                        </span>
                       </p>
                       {beat.label ? (
                         <p className="truncate text-[10px] text-zinc-500">{beat.label}</p>
                       ) : null}
                     </div>
+                    {onOpenDirectShot ? (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 shrink-0 gap-1 px-2 text-[10px] text-teal-200 hover:text-teal-100"
+                        title="Open this shot in Direct Shot to rewrite its direction"
+                        onClick={() =>
+                          onOpenDirectShot({
+                            sceneId: beat.sceneId,
+                            sceneIndex: beat.sceneIndex,
+                            beatId: beat.beatId,
+                            safety: media.policyBlocked === true && !hasClip,
+                          })
+                        }
+                      >
+                        <Clapperboard className="h-3 w-3" />
+                        Direct Shot
+                      </Button>
+                    ) : null}
                     {!hasClip ? (
                       <Button
                         size="sm"
