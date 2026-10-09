@@ -6988,11 +6988,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     voiceConfig: VoiceConfig,
     options?: { quiet?: boolean },
   ) => {
+    const sourceCharacters = charactersRef.current
     console.log('[Character Voice] Updating:', { characterId, voiceConfig })
-    console.log('[Character Voice] Current characters:', characters.map(c => ({ id: c.id, name: c.name })))
-    
-    // Find character by ID (not by index!)
-    const characterIndex = characters.findIndex(c => c.id === characterId)
+    console.log('[Character Voice] Current characters:', sourceCharacters.map(c => ({ id: c.id, name: c.name })))
+
+    // Patch the live list. A stale render still holds the body description from
+    // before the last save, and writing that list back would restore it.
+    const characterIndex = sourceCharacters.findIndex(
+      (c, idx) => resolveCharacterId(c, idx) === characterId
+    )
     
     if (characterIndex === -1) {
       console.error('[Character Voice] Character not found with ID:', characterId)
@@ -7005,12 +7009,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     
     console.log('[Character Voice] Found character at index:', characterIndex)
     
-    const updatedCharacters = characters.map((char, idx) => 
+    const updatedCharacters = sourceCharacters.map((char, idx) => 
       idx === characterIndex
         ? { ...char, voiceConfig }
         : char
     )
-    
+
+    charactersRef.current = updatedCharacters
     console.log('[Character Voice] Updated character:', updatedCharacters[characterIndex])
     setCharacters(updatedCharacters)
     

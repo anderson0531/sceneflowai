@@ -2182,7 +2182,7 @@ const CharacterCard = ({
         throw new Error("Body description response was empty.");
       }
 
-      onUpdateAppearance(characterId, nextDescription);
+      await onUpdateAppearance(characterId, nextDescription);
       setBodyDirectorText("");
       setEditingBodyDescription(false);
       toast.success(
