@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { PROMO_AUDIO_MIX } from '@/lib/publish/promoAudioMix'
 import type { PromoPreviewShot } from '@/lib/publish/promoPreviewSequence'
 
 export interface PromoCutPreviewProps {
@@ -12,8 +13,8 @@ export interface PromoCutPreviewProps {
 }
 
 /**
- * Plays the planned cut in the promo tab. Clip audio stays muted so narration
- * and music can be heard. This does not start a stitch.
+ * Plays the planned cut in the promo tab with clip sound over the looping
+ * music, at the same mix the trailer stitch renders. This does not start a stitch.
  */
 export function PromoCutPreview({
   playing,
@@ -62,9 +63,21 @@ export function PromoCutPreview({
       if (music) music.currentTime = 0
       return
     }
+    if (narration) narration.volume = PROMO_AUDIO_MIX.narration
+    if (music) music.volume = PROMO_AUDIO_MIX.music
     void narration?.play().catch(() => undefined)
     void music?.play().catch(() => undefined)
   }, [playing, narrationUrl, musicUrl])
+
+  const startClip = useCallback((video: HTMLVideoElement | null) => {
+    if (!video) return
+    video.volume = PROMO_AUDIO_MIX.clip
+    void video.play().catch(() => {
+      // Autoplay with sound can be refused; keep the cut moving without it.
+      video.muted = true
+      void video.play().catch(() => undefined)
+    })
+  }, [])
 
   const shot = playing ? shots[index] : undefined
   if (!playing || !shot) return null
@@ -81,10 +94,9 @@ export function PromoCutPreview({
         {shot.kind === 'clip' && shot.videoUrl ? (
           <video
             key={shot.key}
+            ref={startClip}
             src={shot.videoUrl}
-            muted
             playsInline
-            autoPlay
             className="h-full w-full object-cover"
             onTimeUpdate={(event) => {
               if (event.currentTarget.currentTime >= shot.durationSec - 0.05) advance()
@@ -99,10 +111,6 @@ export function PromoCutPreview({
             {shot.label || 'Shot'}
           </div>
         )}
-        <p className="absolute bottom-1 left-1 right-1 truncate text-[10px] text-white/80">
-          {index + 1}/{shots.length}
-          {shot.label ? ` · ${shot.label}` : ''}
-        </p>
       </div>
       {narrationUrl ? <audio ref={narrationRef} src={narrationUrl} preload="auto" /> : null}
       {musicUrl ? <audio ref={musicRef} src={musicUrl} loop preload="auto" /> : null}

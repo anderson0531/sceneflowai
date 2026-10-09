@@ -12,6 +12,7 @@ import { computePublishingReadiness, getPublishingState } from '@/lib/publish/pu
 import type { PromoTrailerBeatPlan, PublishingLibraryTab } from '@/types/publishingAssets'
 import type { ProjectStream } from '@/lib/streams/projectStreams'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
+import type { DirectShotRequest } from '@/lib/vision/directShotTarget'
 
 export interface PublishingManagerProps {
   projectId: string
@@ -42,6 +43,7 @@ export interface PublishingManagerProps {
     beatPlan: PromoTrailerBeatPlan[]
     targetDurationSec: number
   }) => Promise<void>
+  onOpenDirectShot?: (input: DirectShotRequest) => void
   layout?: 'dialog' | 'inline'
   hideTitle?: boolean
   initialTab?: PublishingLibraryTab
@@ -64,6 +66,7 @@ export function PublishingManager({
   onOpenPromoInStudio,
   onGenerateBeatClip,
   onRunPromoAgent,
+  onOpenDirectShot,
   layout = 'inline',
   hideTitle = false,
   initialTab,
@@ -183,6 +186,7 @@ export function PublishingManager({
             onOpenPromoInStudio={onOpenPromoInStudio}
             onGenerateBeatClip={onGenerateBeatClip}
             onRunPromoAgent={onRunPromoAgent}
+            onOpenDirectShot={onOpenDirectShot}
           />
         ) : null}
         {visibleTab === 'ship' ? (

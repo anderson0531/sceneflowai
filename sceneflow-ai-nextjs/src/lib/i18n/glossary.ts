@@ -36,6 +36,7 @@ export const GLOSSARY_TERMS = [
   // MT used to turn "Express All" into "Articulate all scenes".
   'Audio Agent',
   'Scene Agent',
+  'Shot Direction Agent',
   'Stills Agent',
   'Video Agent',
   'Promo Agent',
