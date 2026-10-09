@@ -181,6 +181,7 @@ import {
   resolveCharacterId,
   updateCharacterInList,
 } from '@/lib/vision/updateCharacterReference'
+import { castAppearanceAfterImage } from '@/lib/character/castAppearanceAfterImage'
 import { updateObjectReferenceInList } from '@/lib/vision/updateObjectReference'
 import {
   mergeObjectDuplicateIgnores,
@@ -7146,10 +7147,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const updatedCharacters = characters.map(char => {
         const charId = char.id || characters.indexOf(char).toString()
         return charId === characterId 
-          ? { ...char, appearanceDescription: newDescription }
+          ? { ...char, appearanceDescription: newDescription, imagePrompt: null }
           : char
       })
-      
+
+      charactersRef.current = updatedCharacters
       setCharacters(updatedCharacters)
       
       // Save to database using existing projects API
@@ -10022,10 +10024,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   ) => {
     try {
       const existing = charactersRef.current.find((c, idx) => resolveCharacterId(c, idx) === characterId)
-      const castingFields = payload.visionDescription
+      const appearance = castAppearanceAfterImage({
+        existingAppearance: existing?.appearanceDescription,
+        visionDescription: payload.visionDescription,
+      })
+      const castingFields = appearance.briefAppearance
         ? await castingBriefFieldsFromAppearance(
-            { ...existing, appearanceDescription: payload.visionDescription },
-            payload.visionDescription,
+            { ...existing, appearanceDescription: appearance.briefAppearance },
+            appearance.briefAppearance,
             true,
           )
         : {}
@@ -10035,12 +10041,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         (char) => ({
           ...char,
           referenceImage: payload.referenceImageUrl,
-          ...(payload.visionDescription
-            ? {
-                visionDescription: payload.visionDescription,
-                appearanceDescription: payload.visionDescription,
-              }
-            : {}),
+          ...appearance.patch,
           ...castingFields,
           ...(payload.enhanceIterationCount != null
             ? { enhanceIterationCount: payload.enhanceIterationCount }
@@ -10124,13 +10125,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const json = await res.json()
       
       if (json?.imageUrl) {
-        const visionDescription =
-          typeof json.visionDescription === 'string' ? json.visionDescription : undefined
         const existing = charactersRef.current.find((c, idx) => resolveCharacterId(c, idx) === characterId)
-        const castingFields = visionDescription
+        const appearance = castAppearanceAfterImage({
+          existingAppearance: existing?.appearanceDescription,
+          visionDescription: json.visionDescription,
+        })
+        const castingFields = appearance.briefAppearance
           ? await castingBriefFieldsFromAppearance(
-              { ...existing, appearanceDescription: visionDescription },
-              visionDescription,
+              { ...existing, appearanceDescription: appearance.briefAppearance },
+              appearance.briefAppearance,
               true,
             )
           : {}
@@ -10141,12 +10144,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             ...char,
             referenceImage: json.imageUrl,
             imagePrompt: prompt,
-            ...(visionDescription
-              ? {
-                  visionDescription,
-                  appearanceDescription: visionDescription,
-                }
-              : {}),
+            ...appearance.patch,
             ...castingFields,
           })
         )

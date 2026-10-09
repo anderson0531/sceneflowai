@@ -1,9 +1,8 @@
 import { resolveStoryLocale } from '@/i18n/server/storyLocale'
 import { resolveCharacterId } from '@/lib/vision/updateCharacterReference'
-import {
-  buildCharacterReferencePrompt,
-  buildObjectReferencePrompt,
-} from '@/lib/vision/referenceExpressPrompts'
+import { buildObjectReferencePrompt } from '@/lib/vision/referenceExpressPrompts'
+import { resolveCastIdentityGenerationPrompt } from '@/lib/intelligence/reference-still-director-fallback'
+import { castAppearanceAfterImage } from '@/lib/character/castAppearanceAfterImage'
 import { refreshCastingBriefForAppearance } from '@/lib/character/applyCastingBriefUpdate'
 import { generateCastingBrief } from '@/lib/character/generateCastingBrief'
 import type { ScreenplayContext } from '@/lib/voiceRecommendation'
@@ -15,7 +14,6 @@ import {
   generateObjectReferenceImage,
 } from './generateReferenceImage'
 import {
-  castAgeText,
   castFingerprint,
   loadReferenceExpressContext,
   locationFingerprint,
@@ -96,14 +94,8 @@ export async function runReferenceExpressItem(input: {
       return skipped(item, 'already-generated')
     }
 
-    const storedPrompt =
-      typeof character.imagePrompt === 'string' ? character.imagePrompt.trim() : ''
-    const prompt = storedPrompt
-      ? storedPrompt
-      : buildCharacterReferencePrompt({
-          ...character,
-          age: castAgeText(character.age),
-        })
+    const resolvedPrompt = resolveCastIdentityGenerationPrompt(character)
+    const prompt = resolvedPrompt.prompt
     const usedFingerprint = castFingerprint(character)
 
     const generated = await generateCastReferenceImage({
@@ -112,15 +104,18 @@ export async function runReferenceExpressItem(input: {
       prompt,
       characterId: item.targetId,
       characterName: character.name,
-      rawMode: Boolean(storedPrompt),
+      rawMode: resolvedPrompt.rawMode,
     })
 
-    const visionDescription = generated.visionDescription || undefined
+    const appearance = castAppearanceAfterImage({
+      existingAppearance: character.appearanceDescription,
+      visionDescription: generated.visionDescription,
+    })
 
     /**
      * The portrait is saved before the Casting Brief is asked for. The brief is
-     * text metadata derived from the appearance we just wrote, so it does not
-     * belong on the path that decides whether this item's two designer-tier
+     * text metadata derived from the body description, so it does not belong
+     * on the path that decides whether this item's two designer-tier
      * generations have to be paid for again: if the isolate runs out of budget
      * during the LLM call, the retry now sees the image and skips.
      */
@@ -132,9 +127,7 @@ export async function runReferenceExpressItem(input: {
       patch: {
         referenceImage: generated.imageUrl,
         imagePrompt: prompt,
-        ...(visionDescription
-          ? { visionDescription, appearanceDescription: visionDescription }
-          : {}),
+        ...appearance.patch,
       },
     })
 
@@ -148,10 +141,10 @@ export async function runReferenceExpressItem(input: {
       wardrobes: character.wardrobes,
     })
 
-    if (visionDescription) {
+    if (appearance.briefAppearance) {
       const castingFields = await castingBriefFields({
         character,
-        appearanceDescription: visionDescription,
+        appearanceDescription: appearance.briefAppearance,
         screenplayContext: context.screenplayContext,
       })
       if (Object.keys(castingFields).length > 0) {
@@ -159,13 +152,15 @@ export async function runReferenceExpressItem(input: {
           projectId,
           kind: 'cast',
           targetId: item.targetId,
-          // The write above changed `appearanceDescription`, which the cast
-          // fingerprint covers, so comparing against the enqueue-time digest
-          // would flag every brief as stale against our own edit.
-          expectedFingerprint: castFingerprint({
-            ...character,
-            appearanceDescription: visionDescription,
-          }),
+          // Filling an empty body description changes the cast fingerprint.
+          // A description the director already saved does not, so the brief
+          // compares against the same digest as the portrait write.
+          expectedFingerprint: appearance.appearanceChanged
+            ? castFingerprint({
+                ...character,
+                appearanceDescription: appearance.briefAppearance,
+              })
+            : usedFingerprint,
           patch: castingFields,
         })
       }
@@ -280,11 +275,9 @@ export async function runReferenceExpressItem(input: {
 }
 
 /**
- * Re-derive the Casting Brief from the portrait the batch just produced.
- *
- * Mirrors what the interactive character flows do, so a background-generated
- * headshot leaves the brief consistent with the new appearance instead of
- * stranding it on the old text. A brief failure must not fail the image.
+ * Re-derive the Casting Brief from the body description that remains after
+ * the portrait. Vision analysis fills that text only when it was empty.
+ * A brief failure must not fail the image.
  */
 async function castingBriefFields(input: {
   character: CastSource

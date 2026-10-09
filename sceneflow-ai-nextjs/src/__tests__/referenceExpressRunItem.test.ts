@@ -146,10 +146,15 @@ describe('runReferenceExpressItem cast path', () => {
     expect(mockPersist.mock.calls[0]![0]!.expectedFingerprint).toBe(
       CAST_ITEM.sourceFingerprint
     )
-    // Comparing against the enqueue-time digest would flag every brief as stale
-    // against our own appearanceDescription write.
+    expect(mockBrief).toHaveBeenCalledWith(
+      expect.objectContaining({
+        appearanceDescription: CHARACTER.appearanceDescription,
+      })
+    )
+    // The saved body description is left in place, so the brief compares
+    // against the same digest as the portrait write.
     expect(mockPersist.mock.calls[1]![0]!.expectedFingerprint).toBe(
-      castFingerprint({ ...CHARACTER, appearanceDescription: VISION_DESCRIPTION } as never)
+      CAST_ITEM.sourceFingerprint
     )
     expect(mockPersist.mock.calls[1]![0]!.patch).toEqual({
       voiceDescription: 'gravelly, unhurried',
@@ -166,8 +171,72 @@ describe('runReferenceExpressItem cast path', () => {
     expect(mockPersist).toHaveBeenCalledOnce()
     expect(mockPersist.mock.calls[0]![0]!.patch).toMatchObject({
       referenceImage: 'https://cdn/mira.png',
+      visionDescription: VISION_DESCRIPTION,
+    })
+    expect(mockPersist.mock.calls[0]![0]!.patch).not.toHaveProperty('appearanceDescription')
+  })
+
+  it('fills an empty body description from the portrait analysis', async () => {
+    mockLoadContext.mockResolvedValueOnce({
+      characters: [{ ...CHARACTER, appearanceDescription: '' }],
+      locations: [],
+      props: [],
+      scenes: [],
+      screenplayContext: { genre: 'thriller' },
+    } as never)
+
+    await run()
+
+    expect(mockPersist.mock.calls[0]![0]!.patch).toMatchObject({
+      referenceImage: 'https://cdn/mira.png',
+      visionDescription: VISION_DESCRIPTION,
       appearanceDescription: VISION_DESCRIPTION,
     })
+    expect(mockBrief).toHaveBeenCalledWith(
+      expect.objectContaining({ appearanceDescription: VISION_DESCRIPTION })
+    )
+    expect(mockPersist.mock.calls[1]![0]!.expectedFingerprint).toBe(
+      castFingerprint({ ...CHARACTER, appearanceDescription: VISION_DESCRIPTION } as never)
+    )
+  })
+
+  it('draws from the saved body description when the stored plate prompt is stale', async () => {
+    mockLoadContext.mockResolvedValueOnce({
+      characters: [{ ...CHARACTER, imagePrompt: 'Old plate of a young dockhand' }],
+      locations: [],
+      props: [],
+      scenes: [],
+      screenplayContext: { genre: 'thriller' },
+    } as never)
+
+    await run()
+
+    expect(mockGenerate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rawMode: false,
+        prompt: expect.stringContaining(CHARACTER.appearanceDescription),
+      })
+    )
+  })
+
+  it('keeps a stored plate prompt that still contains the body description', async () => {
+    const stored = `Photorealistic headshot. ${CHARACTER.appearanceDescription}`
+    mockLoadContext.mockResolvedValueOnce({
+      characters: [{ ...CHARACTER, imagePrompt: stored }],
+      locations: [],
+      props: [],
+      scenes: [],
+      screenplayContext: { genre: 'thriller' },
+    } as never)
+
+    await run()
+
+    expect(mockGenerate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rawMode: true,
+        prompt: stored,
+      })
+    )
   })
 
   it('skips the brief entirely when vision analysis produced no description', async () => {
