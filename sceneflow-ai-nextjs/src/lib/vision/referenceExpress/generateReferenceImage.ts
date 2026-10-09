@@ -24,6 +24,7 @@ import {
 } from '@/lib/vision/locationReferencePrompts'
 import {
   buildCharacterIdentityReferencePrompt,
+  identityAppearanceFromPrompt,
   promptHasIdentityReferenceAnchor,
 } from '@/lib/character/characterReferencePrompts'
 import {
@@ -482,12 +483,13 @@ export async function generateCastReferenceImage(
     const enhanced = await enhanceIdentityImage({
       sourceImageUrl: draftImageUrl,
       characterName: resolvedCharacterName,
-      appearanceDescription: finalPrompt,
+      appearanceDescription: identityAppearanceFromPrompt(finalPrompt),
       characterId,
       projectId,
       iterationCount: 0,
       skipIterationGuard: true,
       skipPreAnalysis: true,
+      identitySource: 'description',
     })
     imageUrl = enhanced.enhancedImageUrl
     visionDescription = enhanced.visionDescription

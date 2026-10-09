@@ -4,7 +4,10 @@ import UserProviderConfig from '@/models/UserProviderConfig'
 import { sequelize } from '@/config/database'
 import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibraryStorage'
-import { buildCharacterIdentityReferencePromptFromCharacter } from '@/lib/character/characterReferencePrompts'
+import {
+  buildCharacterIdentityReferencePromptFromCharacter,
+  identityAppearanceFromPrompt,
+} from '@/lib/character/characterReferencePrompts'
 import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import {
   ENHANCE_IDENTITY_ASPECT_RATIO,
@@ -187,12 +190,13 @@ async function generateCharacterImage(params: {
   const enhanced = await enhanceIdentityImage({
     sourceImageUrl: draftUrl,
     characterName: params.characterName || 'Character',
-    appearanceDescription: params.prompt,
+    appearanceDescription: identityAppearanceFromPrompt(params.prompt),
     characterId: params.characterId,
     projectId: params.projectId,
     iterationCount: 0,
     skipIterationGuard: true,
     skipPreAnalysis: true,
+    identitySource: 'description',
   })
 
   return enhanced.enhancedImageUrl

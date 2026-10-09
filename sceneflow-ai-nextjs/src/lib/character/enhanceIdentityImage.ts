@@ -9,6 +9,7 @@ import { generateWithVision } from '@/lib/vertexai/gemini'
 import {
   buildEnhanceIdentityReferencePrompt,
   resolveDefaultWardrobeDescription,
+  type EnhanceIdentitySource,
 } from '@/lib/character/characterReferencePrompts'
 
 export const ENHANCE_IDENTITY_ASPECT_RATIO = '9:16' as const
@@ -39,6 +40,11 @@ export interface EnhanceIdentityImageInput {
   skipIterationGuard?: boolean
   /** Skip pre-analysis vision call for faster auto-enhance. */
   skipPreAnalysis?: boolean
+  /**
+   * description: a generated draft. The written body description wins.
+   * photo: a picture the user supplied. Keep that person.
+   */
+  identitySource?: EnhanceIdentitySource
 }
 
 export interface EnhanceIdentityImageResult {
@@ -193,6 +199,7 @@ export async function enhanceIdentityImage(
     iterationCount = 0,
     skipIterationGuard = false,
     skipPreAnalysis = false,
+    identitySource = 'photo',
   } = input
 
   if (!skipIterationGuard && iterationCount >= 3) {
@@ -229,17 +236,21 @@ export async function enhanceIdentityImage(
     )
   }
 
-  const subjectDescription = buildSubjectDescription(
-    characterName,
-    imageAnalysis.demographicAnchor,
-    imageAnalysis.physicalTraits
-  )
+  const subjectDescription =
+    identitySource === 'description'
+      ? undefined
+      : buildSubjectDescription(
+          characterName,
+          imageAnalysis.demographicAnchor,
+          imageAnalysis.physicalTraits
+        )
 
   const enhancementPrompt = buildEnhanceIdentityReferencePrompt({
     characterName,
     appearanceDescription: appearance,
     wardrobeDescription: wardrobe,
     subjectDescription,
+    identitySource,
   })
 
   const result = await generateImageWithGeminiStudio({

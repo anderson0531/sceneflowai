@@ -10106,11 +10106,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
     
     try {
+      const namedCharacter = charactersRef.current.find(
+        (c, idx) => resolveCharacterId(c, idx) === characterId
+      )
       const res = await fetch('/api/character/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt,
+          characterName: namedCharacter?.name,
           // Use builder selections if provided; remove hard-coded defaults
           artStyle: isObjectPayload ? promptOrPayload.artStyle : undefined,
           shotType: isObjectPayload ? promptOrPayload.shotType : undefined,

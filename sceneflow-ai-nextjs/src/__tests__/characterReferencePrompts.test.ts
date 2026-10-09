@@ -7,7 +7,9 @@ import {
   buildFullBodyWardrobePrompt,
   CHARACTER_IDENTITY_REFERENCE_ANCHOR,
   IDENTITY_ANTI_LIKENESS_DIRECTIVES,
+  IDENTITY_APPEARANCE_LOCK,
   IDENTITY_PHOTO_REALISM_DIRECTIVES,
+  identityAppearanceFromPrompt,
   resolveDefaultWardrobeDescription,
 } from '@/lib/character/characterReferencePrompts'
 
@@ -22,8 +24,13 @@ describe('buildCharacterIdentityReferencePrompt', () => {
     expect(prompt).toContain('Caucasian female in her late 20s')
     expect(prompt).toContain(IDENTITY_PHOTO_REALISM_DIRECTIVES)
     expect(prompt).toContain(IDENTITY_ANTI_LIKENESS_DIRECTIVES)
+    expect(prompt).toContain(IDENTITY_APPEARANCE_LOCK)
+    expect(prompt).not.toContain('even skin tone')
     expect(prompt.toLowerCase()).not.toContain('full body')
     expect(prompt).toContain('vertical 9:16 portrait')
+    expect(identityAppearanceFromPrompt(prompt)).toBe(
+      'Caucasian female in her late 20s with long wavy dark brown hair and almond-shaped eyes.'
+    )
   })
 
   it('appends default wardrobe line when provided', () => {
@@ -136,6 +143,22 @@ describe('buildEnhanceIdentityReferencePrompt', () => {
     })
     expect(prompt).toContain(IDENTITY_ANTI_LIKENESS_DIRECTIVES)
     expect(prompt).toContain('the exact person shown in the reference photo')
+    expect(prompt).toContain('Preserve the exact person in the reference photo')
     expect(prompt).not.toMatch(/Subject:\s*Winston/)
+  })
+
+  it('lets a written body description override the draft photo', () => {
+    const appearance =
+      'An African-American man in his late 50s with an oval face and a dense salt-and-pepper beard.'
+    const prompt = buildEnhanceIdentityReferencePrompt({
+      characterName: 'Photorealistic headshot to be used as a character reference.',
+      appearanceDescription: appearance,
+      identitySource: 'description',
+    })
+
+    expect(prompt).toContain('written identity overrides')
+    expect(prompt).toContain(appearance)
+    expect(prompt).not.toContain('Preserve the exact person')
+    expect(prompt).not.toContain('same face shape, bone structure, skin tone')
   })
 })

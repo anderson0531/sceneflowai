@@ -9,7 +9,7 @@ export const CHARACTER_IDENTITY_REFERENCE_ANCHOR =
 export const IDENTITY_PHOTO_REALISM_DIRECTIVES = [
   'Framing: vertical 9:16 portrait, face dominant in frame, eyes in the upper third, head-and-shoulders only — no wide establishing crop.',
   'Expression: neutral relaxed expression, mouth closed, direct eye contact.',
-  'Lighting: soft professional key light with natural catchlights in both eyes; even skin tone, no harsh shadows.',
+  'Lighting: soft professional key light with natural catchlights in both eyes; even lighting across the face, no harsh shadows.',
   'Lens: 85mm portrait lens look, shallow depth of field, natural skin texture and pores, no plastic smoothing.',
   'Background: plain neutral gray studio backdrop, no props or distractions.',
   'Style: photorealistic human photography only — no illustration, cartoon, CGI, or stylization.',
@@ -22,6 +22,27 @@ export const IDENTITY_ANTI_LIKENESS_DIRECTIVES = [
 
 export const ENHANCE_IDENTITY_REFERENCE_PREFIX =
   'Refine this portrait into a professional casting headshot. Preserve the exact person in the reference photo — same face shape, bone structure, skin tone, age, ethnicity, and hairstyle.'
+
+/** Polish a generated draft. The written body description wins over the draft photo. */
+export const ENHANCE_IDENTITY_FROM_DESCRIPTION_PREFIX =
+  'Polish this into a professional casting headshot. The written identity overrides the reference photo wherever they disagree — correct ethnicity, skin tone, age, face shape, hair, and eyes to match the description. The photo is only the starting composition.'
+
+export const IDENTITY_APPEARANCE_LOCK =
+  'Identity: depict this description exactly — ethnicity, skin tone, age, face shape, hair, facial hair, and eyes. Do not substitute a different ethnicity or skin tone.'
+
+export type EnhanceIdentitySource = 'description' | 'photo'
+
+/** Body paragraph inside a wrapped identity prompt. A bare appearance string is returned as-is. */
+export function identityAppearanceFromPrompt(prompt: string): string {
+  const trimmed = prompt.trim()
+  if (!trimmed.includes(CHARACTER_IDENTITY_REFERENCE_ANCHOR)) return trimmed
+  const afterAnchor = trimmed
+    .slice(trimmed.indexOf(CHARACTER_IDENTITY_REFERENCE_ANCHOR) + CHARACTER_IDENTITY_REFERENCE_ANCHOR.length)
+    .trim()
+  const lockAt = afterAnchor.indexOf(IDENTITY_APPEARANCE_LOCK)
+  const body = (lockAt >= 0 ? afterAnchor.slice(0, lockAt) : afterAnchor).trim()
+  return body || trimmed
+}
 
 export interface CharacterIdentityReferencePromptInput {
   appearanceDescription: string
@@ -129,6 +150,8 @@ export function buildCharacterIdentityReferencePrompt(
     '',
     appearance,
     '',
+    IDENTITY_APPEARANCE_LOCK,
+    '',
     IDENTITY_ANTI_LIKENESS_DIRECTIVES,
     '',
     IDENTITY_PHOTO_REALISM_DIRECTIVES,
@@ -159,25 +182,35 @@ export function buildEnhanceIdentityReferencePrompt(input: {
   appearanceDescription: string
   wardrobeDescription?: string | null
   subjectDescription?: string
+  /** description: written body wins. photo: keep the person already in the picture. */
+  identitySource?: EnhanceIdentitySource
 }): string {
   const appearance = input.appearanceDescription.trim()
-  const subjectLine = input.subjectDescription?.trim()
-    ? `Subject: ${input.subjectDescription}.`
-    : 'Subject: the exact person shown in the reference photo.'
+  const fromDescription = input.identitySource === 'description'
+  const subjectLine = fromDescription
+    ? `Subject: ${appearance}`
+    : input.subjectDescription?.trim()
+      ? `Subject: ${input.subjectDescription}.`
+      : 'Subject: the exact person shown in the reference photo.'
 
   const lines = [
-    ENHANCE_IDENTITY_REFERENCE_PREFIX,
+    fromDescription ? ENHANCE_IDENTITY_FROM_DESCRIPTION_PREFIX : ENHANCE_IDENTITY_REFERENCE_PREFIX,
     '',
     subjectLine,
-    '',
-    appearance,
+  ]
+  if (!fromDescription && appearance) {
+    lines.push('', appearance)
+  }
+  lines.push(
     '',
     IDENTITY_ANTI_LIKENESS_DIRECTIVES,
     '',
     IDENTITY_PHOTO_REALISM_DIRECTIVES,
     '',
-    'Transform lighting to bright professional studio quality while keeping facial features identical to the reference.',
-  ]
+    fromDescription
+      ? 'Correct ethnicity, skin tone, age, face shape, hair, and eyes to the written identity. The reference photo is only the starting composition.'
+      : 'Transform lighting to bright professional studio quality while keeping facial features identical to the reference.',
+  )
 
   const wardrobe = input.wardrobeDescription?.trim()
   if (wardrobe) {
