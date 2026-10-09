@@ -361,7 +361,7 @@ describe('useAgentRunStore', () => {
   it('keeps an item error when finishing a mixed run', () => {
     startAgentRun({
       id: 'batch',
-      title: 'Object Agent',
+      title: 'Prop Agent',
       items: [
         { key: 'a', label: 'Watch', status: 'done' },
         { key: 'b', label: 'Key', status: 'error', error: 'quota' },

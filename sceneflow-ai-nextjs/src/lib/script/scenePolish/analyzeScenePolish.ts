@@ -89,7 +89,7 @@ FLAG:
 - direction_conflict: beatDirection (props, prop-interaction, blocking, frozenMoment) contradicts the beat text
 - beats that fail to realize the intended scene description
 
-EXAMPLE (must flag): Beat 1 action "Gideon has a wrench in his hand" with prop-interaction "holds the wrench" then Beat 2 action "Gideon picks up the wrench". That is prop_state. Instruction: "Beat 2: Gideon already holds the wrench from Beat 1 — change 'picks up the wrench' to 'tightens his grip on the wrench'; keep Beat 1 as the pickup (or move the pickup to Beat 1 and start Beat 2 already holding it)."
+EXAMPLE (must flag): Shot 1 action "Gideon has a wrench in his hand" with prop-interaction "holds the wrench" then Shot 2 action "Gideon picks up the wrench". That is prop_state. Instruction: "Shot 2: Gideon already holds the wrench from Shot 1 — change 'picks up the wrench' to 'tightens his grip on the wrench'; keep Shot 1 as the pickup (or move the pickup to Shot 1 and start Shot 2 already holding it)."
 
 DO NOT FLAG:
 - Audience-craft notes (raise tension, add humor, deepen character, show-don't-tell as a theme)
@@ -98,16 +98,16 @@ DO NOT FLAG:
 - Artistic repetition that is clearly a hold or insert
 - Excluded beats
 
-Each recommendation.text is a single Co-Director instruction that NAMES the beat numbers to edit and the concrete replacement (not "fix continuity"). reason is the short gap for the card.
+Each recommendation.text is a single Co-Director instruction that NAMES the shot numbers (Shot 1, Shot 2) and the concrete replacement (not "fix continuity"). Write Shot, not Beat. reason is the short gap for the card.
 
-If the timeline is aligned, return an empty recommendations array and notes that say the beat sequence looks aligned.
+If the timeline is aligned, return an empty recommendations array and notes that say the shot sequence looks aligned.
 
 Return ONLY valid JSON:
 {
   "notes": "<one sentence>",
   "recommendations": [
     {
-      "text": "<Co-Director instruction naming Beat N>",
+      "text": "<Co-Director instruction naming Shot N>",
       "reason": "<short gap>",
       "priority": "high|medium|low",
       "category": "prop_state|action_order|spatial|dialogue_mismatch|redundancy|missing_link|direction_conflict",

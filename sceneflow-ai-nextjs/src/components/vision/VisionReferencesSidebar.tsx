@@ -293,7 +293,7 @@ function DraggableReferenceCard({
       }
 
       const result = await response.json()
-      toast.success(`${referenceType === 'scene' ? 'Scene' : 'Object'} image uploaded`)
+      toast.success(`${referenceType === 'scene' ? 'Scene' : 'Prop'} image uploaded`)
       
       // Notify parent component of the update
       if (onImageUploaded) {
@@ -328,7 +328,7 @@ function DraggableReferenceCard({
         throw new Error(data.error || 'Failed to generate image')
       }
       onImageUploaded(reference.id, 'object', data.imageUrl)
-      toast.success('Object reference image updated')
+      toast.success('Prop reference image updated')
     } catch (error) {
       console.error('[DraggableReferenceCard] Quick generate:', error)
       toast.error(error instanceof Error ? error.message : 'Generation failed')
@@ -558,7 +558,7 @@ function DraggableReferenceCard({
           {isObjectCard && beatCount && beatCount > 0 ? (
             <div className="mt-1 flex items-center gap-1.5 text-[10px]">
               <span className="px-1.5 py-0.5 rounded bg-slate-500/20 text-slate-400">
-                {beatCount} beat{beatCount === 1 ? '' : 's'}
+                {beatCount} shot{beatCount === 1 ? '' : 's'}
               </span>
             </div>
           ) : null}
@@ -916,7 +916,7 @@ function AddReferenceDialog({ open, onClose, onSubmit, onGenerateObject, type, i
     <Dialog open={open} onOpenChange={(value) => !isSubmitting && !isGeneratingImage && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add {isScene ? 'Scene' : 'Object'} Reference</DialogTitle>
+          <DialogTitle>Add {isScene ? 'Scene' : 'Prop'} Reference</DialogTitle>
           <DialogDescription>
             {isObject 
               ? 'Upload or generate a reference image to maintain visual consistency.'
@@ -1113,7 +1113,7 @@ function ObjectReferencePromptDialog({
         throw new Error(data.error || 'Failed to generate image')
       }
       onUpdateReferenceImage('object', reference.id, data.imageUrl)
-      toast.success('Object reference image updated')
+      toast.success('Prop reference image updated')
       onClose()
     } catch (error) {
       console.error('[ObjectReferencePromptDialog]', error)
@@ -1127,7 +1127,7 @@ function ObjectReferencePromptDialog({
     <Dialog open={open} onOpenChange={(value) => !value && !loading && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Regenerate object — {reference?.name}</DialogTitle>
+          <DialogTitle>Regenerate prop — {reference?.name}</DialogTitle>
           <DialogDescription>
             Adjust the prompt, then generate a new reference image (same controls as storyboard Prompt Builder).
           </DialogDescription>
@@ -1578,7 +1578,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   const referenceTabs = [
     { key: 'cast' as const, label: 'Cast', icon: <Users className="w-3.5 h-3.5" />, count: characters.length },
     { key: 'locations' as const, label: 'Locations', icon: <MapPin className="w-3.5 h-3.5" />, count: locationReferences.length },
-    { key: 'object' as const, label: 'Objects', icon: <Package className="w-3.5 h-3.5" />, count: objectReferences.length },
+    { key: 'object' as const, label: 'Props', icon: <Package className="w-3.5 h-3.5" />, count: objectReferences.length },
   ]
 
   const linkedAssetIds = useMemo(() => {
@@ -1943,7 +1943,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                   className="flex-1"
                 >
                   <Plus className="w-4 h-4 mr-1" />
-                  Add Object
+                  Add Prop
                 </Button>
                 {objectReferences.length > 0 && onDeleteAllObjectReferences && (
                   <Button
@@ -1953,7 +1953,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                       const count = objectReferences.length
                       if (
                         !window.confirm(
-                          `Remove all ${count} object reference${count === 1 ? '' : 's'} from this project? Shot prop links will be cleared. This cannot be undone.`
+                          `Remove all ${count} prop reference${count === 1 ? '' : 's'} from this project? Shot prop links will be cleared. This cannot be undone.`
                         )
                       ) {
                         return
@@ -1974,7 +1974,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               )}
               {objectReferences.length === 0 ? (
                 <div className="text-sm text-gray-500 border border-dashed border-gray-700/60 rounded-lg py-6 text-center">
-                  No objects yet. Add objects or set pieces for this scene.
+                  No props yet. Add props or set pieces for this scene.
                 </div>
               ) : visibleObjects.length === 0 ? (
                 <div className="text-sm text-gray-500 border border-dashed border-gray-700/60 rounded-lg py-6 text-center">
@@ -2048,7 +2048,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               return
             }
             onUpdateReferenceImage('object', objectDirectorTarget.id, data.imageUrl)
-            toast.success('Object reference image updated')
+            toast.success('Prop reference image updated')
           }}
         />
       )}

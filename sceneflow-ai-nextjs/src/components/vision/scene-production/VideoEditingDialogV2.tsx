@@ -453,7 +453,7 @@ function ExtendTab({
       {/* Extension Duration */}
       <div className="space-y-2">
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          New Beat Duration
+          New Shot Duration
         </label>
         <div className="flex items-center gap-2">
           <Select value={String(duration)} onValueChange={(v) => setDuration(Number(v))}>

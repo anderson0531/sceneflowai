@@ -29,7 +29,7 @@ type StepId = 'review' | 'directions' | 'references' | 'frames'
 const STEPS: { id: StepId; label: string; icon: React.ReactNode }[] = [
   { id: 'review', label: 'Review', icon: <Target className="w-3 h-3" /> },
   { id: 'directions', label: 'Directions', icon: <Compass className="w-3 h-3" /> },
-  { id: 'references', label: 'References', icon: <MapPin className="w-3 h-3" /> },
+  { id: 'references', label: 'Continuity', icon: <MapPin className="w-3 h-3" /> },
   { id: 'frames', label: 'Frames', icon: <ImageIcon className="w-3 h-3" /> },
 ]
 

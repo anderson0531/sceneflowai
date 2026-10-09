@@ -77,7 +77,7 @@ function slotToItem(slot: StoryboardFrameSlot): ExpressBeatFrameItem {
   const roleSuffix = slot.frameRole === 'end' ? ' (End)' : ''
   return {
     key: slot.key,
-    label: `Beat ${n}${roleSuffix}`,
+    label: `Shot ${n}${roleSuffix}`,
     beatIndex: slot.beatIndex ?? 0,
     frameRole: slot.frameRole ?? 'start',
     status: 'pending',

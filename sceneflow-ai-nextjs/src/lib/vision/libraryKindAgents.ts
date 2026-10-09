@@ -146,7 +146,7 @@ export function referenceExpressAgentLabel(
   if (kinds.length === 1) {
     if (kinds[0] === 'cast') return 'Cast Agent'
     if (kinds[0] === 'location') return 'Location Agent'
-    if (kinds[0] === 'prop') return 'Object Agent'
+    if (kinds[0] === 'prop') return 'Prop Agent'
   }
   return 'Library Agent'
 }
@@ -639,7 +639,7 @@ export function pendingKindAgentRunForAction(
 }
 
 export function kindAgentToolbarLabel(
-  agentName: 'Cast Agent' | 'Location Agent' | 'Object Agent',
+  agentName: 'Cast Agent' | 'Location Agent' | 'Prop Agent',
   count: number
 ): string {
   return `${agentName} (${count})`

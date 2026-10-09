@@ -42,7 +42,7 @@ describe('referenceExpressAgentLabel', () => {
   it('names the kind agents', () => {
     expect(referenceExpressAgentLabel(['cast'])).toBe('Cast Agent')
     expect(referenceExpressAgentLabel(['location'])).toBe('Location Agent')
-    expect(referenceExpressAgentLabel(['prop'])).toBe('Object Agent')
+    expect(referenceExpressAgentLabel(['prop'])).toBe('Prop Agent')
   })
 })
 

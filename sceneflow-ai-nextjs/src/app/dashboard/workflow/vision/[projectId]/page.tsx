@@ -1490,7 +1490,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (readiness.ready) return false
       toast.error(formatReferenceReadinessMessage(readiness, 'scene'), {
         description:
-          'Open this scene’s References tab and run Scene Ref Agent to draw the missing stills.',
+          'Open this scene’s Continuity tab and run Scene Ref Agent to draw the missing stills.',
       })
       focusSceneRefAgent(sceneIndex)
       return true
@@ -1515,7 +1515,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (sceneIndex != null) {
         toast.error(parsed.error || 'Generate this scene’s reference images first.', {
           description:
-            'Open this scene’s References tab and run Scene Ref Agent to draw the missing stills.',
+            'Open this scene’s Continuity tab and run Scene Ref Agent to draw the missing stills.',
         })
         focusSceneRefAgent(sceneIndex)
         return true
@@ -2889,7 +2889,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (!response.ok) {
           console.error('[handleUpdateReferenceImage] Failed to save updated image to database')
         } else if (!options?.quiet) {
-          toast.success(`${type === 'scene' ? 'Scene' : 'Object'} image updated`)
+          toast.success(`${type === 'scene' ? 'Scene' : 'Prop'} image updated`)
         }
       } catch (error) {
         console.error('[handleUpdateReferenceImage] Error saving updated image:', error)
@@ -2916,11 +2916,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           debugLabel: 'handleSaveObjectPrompt',
         })
         if (!response.ok) {
-          toast.error('Failed to save object prompt')
+          toast.error('Failed to save prop prompt')
         }
       } catch (error) {
         console.error('[handleSaveObjectPrompt]', error)
-        toast.error('Failed to save object prompt')
+        toast.error('Failed to save prop prompt')
       }
     },
     [persistObjectLibrary]
@@ -3106,7 +3106,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
 
         toast.success(
-          `Added ${additions.length} object${additions.length === 1 ? '' : 's'} to the Reference Library`
+          `Added ${additions.length} prop${additions.length === 1 ? '' : 's'} to the Continuity Library`
         )
       } catch (error) {
         console.error('[handleObjectsAutoAdded] Error saving references:', error)
@@ -3121,7 +3121,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const current = objectReferencesRef.current
       const primary = current.find((row) => row.id === primaryId)
       if (!primary) {
-        toast.error('Primary object not found')
+        toast.error('Primary prop not found')
         return
       }
 
@@ -3164,7 +3164,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
         if (!response.ok) {
           console.error('[handleMergeObjects] Failed to save merged objects')
-          toast.error('Failed to merge objects')
+          toast.error('Failed to merge props')
           return
         }
         toast.success(
@@ -3172,7 +3172,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         )
       } catch (error) {
         console.error('[handleMergeObjects] Failed to save merged objects', error)
-        toast.error('Failed to merge objects')
+        toast.error('Failed to merge props')
       }
     },
     [persistObjectLibrary]
@@ -3227,7 +3227,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
         if (!response.ok) {
           console.error('[handleDeleteDuplicateObjects] Failed to save deleted objects')
-          toast.error('Failed to delete objects')
+          toast.error('Failed to delete props')
           return
         }
         toast.success(
@@ -3235,7 +3235,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         )
       } catch (error) {
         console.error('[handleDeleteDuplicateObjects] Failed to save deleted objects', error)
-        toast.error('Failed to delete objects')
+        toast.error('Failed to delete props')
       }
     },
     [persistObjectLibrary]
@@ -5958,7 +5958,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           })
           
-          toast.success(`Added ${analysis.beats.length} beat-matched establishing shots`)
+          toast.success(`Added ${analysis.beats.length} shot-matched establishing shots`)
           return
           
         } catch (error) {

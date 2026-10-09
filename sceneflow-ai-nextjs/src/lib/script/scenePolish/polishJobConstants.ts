@@ -11,6 +11,6 @@ export function polishActivityLabel(
   if (phase === 'saving') return 'Saving polish results…'
   const n = Math.max(0, beatCount)
   return n === 1
-    ? 'Walking 1 beat for continuity…'
-    : `Walking ${n} beats for continuity…`
+    ? 'Walking 1 shot for continuity…'
+    : `Walking ${n} shots for continuity…`
 }

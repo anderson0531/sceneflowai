@@ -56,9 +56,9 @@ describe('ObjectSuggestionPanel Objects tab render', () => {
       })
     }).not.toThrow()
 
-    expect(container.textContent).toContain('Key Objects')
+    expect(container.textContent).toContain('Key Props')
     expect(container.textContent).toContain('Review suggestions')
-    expect(container.textContent).toContain('Update Objects')
+    expect(container.textContent).toContain('Update Props')
   })
 
   it('offers a duplicate checker when synonym object rows already exist', () => {
@@ -86,7 +86,7 @@ describe('ObjectSuggestionPanel Objects tab render', () => {
       )
     })
 
-    expect(container.textContent).toContain('Review duplicate objects (1)')
+    expect(container.textContent).toContain('Review duplicate props (1)')
   })
 
   it('lists every duplicate group in a scrollable review dialog', () => {
@@ -137,10 +137,10 @@ describe('ObjectSuggestionPanel Objects tab render', () => {
       )
     })
 
-    expect(container.textContent).toContain('Review duplicate objects (2)')
+    expect(container.textContent).toContain('Review duplicate props (2)')
 
     const reviewButton = Array.from(container.querySelectorAll('button')).find((button) =>
-      button.textContent?.includes('Review duplicate objects')
+      button.textContent?.includes('Review duplicate props')
     )
     expect(reviewButton).toBeTruthy()
     act(() => {

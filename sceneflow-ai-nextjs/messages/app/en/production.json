@@ -432,7 +432,7 @@
     "stills": "Stills",
     "cast": "Cast",
     "locations": "Locations",
-    "objects": "Objects",
+    "objects": "Props",
     "noReferences": "No base stills in the library yet.",
     "filterEmpty": "Nothing in this scope.",
     "clearSelections": "Clear",
@@ -1575,11 +1575,11 @@
         "missingLocationVersions": "{count, plural, one {# set still still needs an image.} other {# set stills still need images.}}",
         "missingCastIdentity": "{count, plural, one {# character still needs a reference image.} other {# characters still need a reference image.}}",
         "staleCastWardrobes": "Looks changed — run Cast Agent to refresh wardrobe stills.",
-        "missingObjects": "{count, plural, one {# object still needs a reference image.} other {# objects still need a reference image.}}",
+        "missingObjects": "{count, plural, one {# prop still needs a reference image.} other {# props still need a reference image.}}",
         "runLibraryAgent": "Library Agent",
         "runCastAgent": "Cast Agent",
         "runLocationAgent": "Location Agent",
-        "runObjectAgent": "Object Agent",
+        "runObjectAgent": "Prop Agent",
         "generating": "Generating…"
       }
     },

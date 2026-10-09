@@ -285,7 +285,7 @@ export async function generateVeoSfxAudio(
 
   const videoUrl = await withVeoSfxRetries(
     () => runVeoSfxGenerationAttempt(prompt, negativePrompt, clipDurationSeconds),
-    { label: promptMode === 'actionBeat' ? 'Action beat SFX' : 'Ambient SFX' }
+    { label: promptMode === 'actionBeat' ? 'Action shot SFX' : 'Ambient SFX' }
   )
 
   const videoBuffer = await downloadVeoVideoBuffer(videoUrl)

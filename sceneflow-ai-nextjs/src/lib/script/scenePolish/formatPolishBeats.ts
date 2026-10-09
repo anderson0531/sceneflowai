@@ -115,7 +115,7 @@ export function formatPolishBeat(beat: SceneBeat, index: number): string {
 export function formatPolishBeats(scene: PolishSceneInput | null | undefined): string {
   const beats = getSceneBeats(scene as Record<string, unknown> | null)
   if (!beats.length) {
-    return 'No beats yet — there is no beat timeline to polish.'
+    return 'No shots yet — there is no shot timeline to polish.'
   }
   return beats.map((beat, index) => formatPolishBeat(beat, index)).join('\n')
 }

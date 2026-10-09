@@ -183,7 +183,7 @@ describe('formatReferenceReadinessMessage', () => {
 
     expect(message).toContain('1 cast (Gideon Croft)')
     expect(message).toContain('2 locations (Terminal, Gantry)')
-    expect(message).toContain('1 object (Spanner)')
+    expect(message).toContain('1 prop (Spanner)')
   })
 
   it('truncates a long list rather than naming everything', () => {
@@ -199,7 +199,7 @@ describe('formatReferenceReadinessMessage', () => {
       })
     )
 
-    expect(message).toContain('5 objects (One, Two, Three +2 more)')
+    expect(message).toContain('5 props (One, Two, Three +2 more)')
   })
 
   it('does not tell a scene-level action to generate the whole library', () => {
