@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-08T09:23:04.498Z",
+  "generatedAt": "2026-10-09T11:22:20.571Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -1130,7 +1130,7 @@
       "libraryAgent.stills": "0069cf45135acff9",
       "libraryAgent.cast": "1500405573373612",
       "libraryAgent.locations": "95c61170318a2851",
-      "libraryAgent.objects": "de5236ee1561d9d4",
+      "libraryAgent.objects": "cb7141a20db92af8",
       "libraryAgent.noReferences": "fe3827521b0cec65",
       "libraryAgent.filterEmpty": "cb4fe089b2f2b0d5",
       "libraryAgent.clearSelections": "83b12c2216efb4fd",
@@ -2067,11 +2067,11 @@
       "foundation.referenceLibrary.nextAction.missingLocationVersions": "eed56356dd79b8e7",
       "foundation.referenceLibrary.nextAction.missingCastIdentity": "37188cae5cab20b6",
       "foundation.referenceLibrary.nextAction.staleCastWardrobes": "f3ae991401f33b47",
-      "foundation.referenceLibrary.nextAction.missingObjects": "73e7a1ff8afef37f",
+      "foundation.referenceLibrary.nextAction.missingObjects": "500dddfdaf880943",
       "foundation.referenceLibrary.nextAction.runLibraryAgent": "83991000c308662f",
       "foundation.referenceLibrary.nextAction.runCastAgent": "09ca7a134b0a2b9c",
       "foundation.referenceLibrary.nextAction.runLocationAgent": "d09afefefbbcb19d",
-      "foundation.referenceLibrary.nextAction.runObjectAgent": "84b4c54b467ab221",
+      "foundation.referenceLibrary.nextAction.runObjectAgent": "3427523a3c5ce221",
       "foundation.referenceLibrary.nextAction.generating": "d20a4476a0a85978",
       "foundation.beatReferences.title": "08f429ebb38a6000",
       "foundation.beatReferences.description": "9cb44d00ec3ef7cf",
