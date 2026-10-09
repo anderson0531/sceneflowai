@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { PROMO_AUDIO_MIX } from '@/lib/publish/promoAudioMix'
 import type { PromoTrailerBeatPlan } from '@/types/publishingAssets'
 
 export const dynamic = 'force-dynamic'
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
           startTime: beat.videoUrl ? 0 : beat.startSec,
           endTime: beat.videoUrl ? Math.max(0.5, duration) : beat.endSec,
           audioSource: 'original' as const,
-          audioVolume: 0.35,
+          audioVolume: PROMO_AUDIO_MIX.clip,
           pauseDuration: 0,
         }
       })
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
             startTime: beat.startSec,
             endTime: beat.endSec,
             audioSource: 'original' as const,
-            audioVolume: 0.35,
+            audioVolume: PROMO_AUDIO_MIX.clip,
             pauseDuration: 0,
           }))
 
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
           id: 'promo-narration',
           url: body.narrationAudioUrl,
           startTime: 0,
-          volume: 1,
+          volume: PROMO_AUDIO_MIX.narration,
         },
       ]
     }
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
           id: 'promo-music',
           url: body.musicAudioUrl,
           startTime: 0,
-          volume: 0.55,
+          volume: PROMO_AUDIO_MIX.music,
           loop: true,
         },
       ]
@@ -144,9 +145,9 @@ export async function POST(request: NextRequest) {
           includeSfx: false,
           includeSegmentAudio: true,
           language: 'en',
-          segmentAudioVolume: 0.35,
-          narrationVolume: 1,
-          musicVolume: 0.55,
+          segmentAudioVolume: PROMO_AUDIO_MIX.clip,
+          narrationVolume: PROMO_AUDIO_MIX.narration,
+          musicVolume: PROMO_AUDIO_MIX.music,
         },
         segments,
         audioTracks,
