@@ -14,6 +14,10 @@ const generateBodyRoutePath = path.join(
   process.cwd(),
   'src/app/api/character/generate-body-description/route.ts',
 )
+const visionPagePath = path.join(
+  process.cwd(),
+  'src/app/dashboard/workflow/vision/[projectId]/page.tsx',
+)
 
 describe('buildBodyDirectorPrompt', () => {
   const base = {
@@ -97,5 +101,24 @@ describe('CharacterLibrary body director UI', () => {
   it('applies director notes at a lower temperature than Recommend', () => {
     const route = readFileSync(generateBodyRoutePath, 'utf8')
     expect(route).toContain('body.recommendMode ? 0.7 : 0.4')
+  })
+
+  it('saves the body description before refreshing the casting brief', () => {
+    const library = readFileSync(characterLibraryPath, 'utf8')
+    const apply = library.indexOf('await onUpdateAppearance(characterId, nextDescription)')
+    const brief = library.indexOf('await syncCastingBriefFromAppearance(nextDescription)')
+    expect(apply).toBeGreaterThan(-1)
+    expect(brief).toBeGreaterThan(apply)
+  })
+
+  it('patches the live cast list when saving a voice', () => {
+    const page = readFileSync(visionPagePath, 'utf8')
+    const voiceStart = page.indexOf('const handleUpdateCharacterVoice')
+    const voiceEnd = page.indexOf('const handleUpdateCharacterEdgeVoice')
+    const voice = page.slice(voiceStart, voiceEnd)
+    expect(voice).toContain('const sourceCharacters = charactersRef.current')
+    expect(voice).toContain('charactersRef.current = updatedCharacters')
+    expect(voice).not.toContain('characters.map')
+    expect(voice).not.toContain('characters.findIndex')
   })
 })
