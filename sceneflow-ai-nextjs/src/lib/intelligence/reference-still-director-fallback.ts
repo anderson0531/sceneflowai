@@ -133,19 +133,36 @@ export function preferredStoredOrBuiltPrompt(
   return existing || built
 }
 
-export function seedCastDirectorPrompt(character: {
-  imagePrompt?: string
-  appearanceDescription?: string
-  appearance?: string
-  description?: string
-  defaultWardrobe?: string
-  wardrobeAccessories?: string
-  wardrobes?: Array<{ description?: string; accessories?: string; isDefault?: boolean }>
-}): string {
-  return preferredStoredOrBuiltPrompt(
-    character.imagePrompt,
-    buildCharacterIdentityReferencePromptFromCharacter(character)
-  )
+type CastIdentityPromptCharacter = Parameters<
+  typeof buildCharacterIdentityReferencePromptFromCharacter
+>[0] & {
+  imagePrompt?: string | null
+}
+
+/**
+ * A stored plate prompt is the director's last still instruction. It stays in
+ * force only while it still contains the current body description. A newer
+ * body description rebuilds the identity prompt instead of redrawing the old plate.
+ */
+export function resolveCastIdentityGenerationPrompt(
+  character: CastIdentityPromptCharacter
+): { prompt: string; rawMode: boolean } {
+  const stored = typeof character.imagePrompt === 'string' ? character.imagePrompt.trim() : ''
+  const appearance =
+    typeof character.appearanceDescription === 'string'
+      ? character.appearanceDescription.trim()
+      : ''
+  if (stored && (!appearance || stored.includes(appearance))) {
+    return { prompt: stored, rawMode: true }
+  }
+  return {
+    prompt: buildCharacterIdentityReferencePromptFromCharacter(character),
+    rawMode: false,
+  }
+}
+
+export function seedCastDirectorPrompt(character: CastIdentityPromptCharacter): string {
+  return resolveCastIdentityGenerationPrompt(character).prompt
 }
 
 export function seedWardrobeDirectorPrompt(input: {

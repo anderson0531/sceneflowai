@@ -10,6 +10,7 @@ import {
   overlayUserDirectionOnPrompt,
   parseReferenceStillDirectorResponse,
   preferredStoredOrBuiltPrompt,
+  resolveCastIdentityGenerationPrompt,
   seedCastDirectorPrompt,
   seedLocationDirectorPrompt,
   seedObjectDirectorPrompt,
@@ -86,12 +87,41 @@ describe('reference still director prompts', () => {
   it('prefers a stored directed prompt over a rebuilt one', () => {
     expect(preferredStoredOrBuiltPrompt('  saved plate  ', 'built')).toBe('saved plate')
     expect(preferredStoredOrBuiltPrompt('', 'built')).toBe('built')
+    const appearance = 'Late 40s, sharp cheekbones'
+    const stored = `Directed headshot of Mara. ${appearance}.`
     expect(
       seedCastDirectorPrompt({
-        imagePrompt: 'Directed headshot of Mara',
-        appearanceDescription: 'unused',
+        imagePrompt: stored,
+        appearanceDescription: appearance,
       })
-    ).toBe('Directed headshot of Mara')
+    ).toBe(stored)
+    expect(
+      resolveCastIdentityGenerationPrompt({
+        imagePrompt: stored,
+        appearanceDescription: appearance,
+      })
+    ).toEqual({ prompt: stored, rawMode: true })
+    expect(
+      resolveCastIdentityGenerationPrompt({
+        imagePrompt: 'Directed headshot of Mara',
+      })
+    ).toEqual({ prompt: 'Directed headshot of Mara', rawMode: true })
+
+    const rebuilt = resolveCastIdentityGenerationPrompt({
+      name: 'Mara',
+      imagePrompt: 'Directed headshot of Mara, early 20s',
+      appearanceDescription: appearance,
+    })
+    expect(rebuilt.rawMode).toBe(false)
+    expect(rebuilt.prompt).toContain(appearance)
+    expect(rebuilt.prompt).toContain(CHARACTER_IDENTITY_REFERENCE_ANCHOR)
+    expect(
+      seedCastDirectorPrompt({
+        name: 'Mara',
+        imagePrompt: 'Directed headshot of Mara, early 20s',
+        appearanceDescription: appearance,
+      })
+    ).toBe(rebuilt.prompt)
     expect(
       seedLocationDirectorPrompt({
         storedPrompt: 'Directed warehouse',
@@ -194,7 +224,8 @@ describe('reference still director wiring', () => {
     expect(page).toContain('rawMode')
     expect(page).toContain('handleSaveObjectPrompt')
     const express = readSource('src/lib/vision/referenceExpress/runItem.ts')
-    expect(express).toContain('rawMode: Boolean(storedPrompt)')
+    expect(express).toContain('resolveCastIdentityGenerationPrompt')
+    expect(express).toContain('rawMode: resolvedPrompt.rawMode')
     expect(express).toContain('promptOverride: wardrobe.generationPrompt')
     expect(express).toContain('location.generationPrompt')
   })

@@ -55,10 +55,10 @@ import { upload } from "@vercel/blob/client";
 import { CharacterPromptBuilder } from "@/components/vision/CharacterPromptBuilder";
 import { ReferenceStillDirectorDialog } from "@/components/vision/ReferenceStillDirectorDialog";
 import {
+  resolveCastIdentityGenerationPrompt,
   seedCastDirectorPrompt,
   seedWardrobeDirectorPrompt,
 } from "@/lib/intelligence/reference-still-director-fallback";
-import { buildCharacterIdentityReferencePromptFromCharacter } from "@/lib/character/characterReferencePrompts";
 import {
   AddCharacterModal,
   useOrphanCharacters,
@@ -814,13 +814,12 @@ export function CharacterLibrary({
         onGenerate={async () => {
           setGeneratingChars((prev) => new Set(prev).add(charId));
           try {
-            const stored = typeof char.imagePrompt === "string" ? char.imagePrompt.trim() : "";
-            const promptToUse = stored || buildCharacterIdentityReferencePromptFromCharacter(char);
+            const resolved = resolveCastIdentityGenerationPrompt(char);
             await onGenerateCharacter(
               charId,
-              stored
-                ? { characterPrompt: promptToUse, rawMode: true }
-                : promptToUse,
+              resolved.rawMode
+                ? { characterPrompt: resolved.prompt, rawMode: true }
+                : resolved.prompt,
             );
           } finally {
             setGeneratingChars((prev) => {
