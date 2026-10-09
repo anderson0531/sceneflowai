@@ -14,14 +14,16 @@ import { filterScenesForLocation } from '@/lib/vision/mountedSetFixtures'
 import {
   loadReferenceExpressContext,
   planSceneReferenceExpressItems,
+  planSelectedLocationExpressItems,
+  retainLocationItemsForReadyScenes,
   type LocationExpressSelection,
   type LocationSource,
 } from '@/lib/vision/referenceExpress/planItems'
+import { isSceneScriptReadyForReferences } from '@/lib/vision/sceneScriptReadiness'
 import { persistLocationCatalogPatch } from '@/lib/vision/referenceExpress/persistLocationCatalog'
 import {
   referenceExpressItemKey,
   type ReferenceExpressItem,
-  type ReferenceExpressScope,
 } from '@/lib/vision/referenceExpress/types'
 import {
   analyzeLocationVersionsFromScript,
@@ -99,7 +101,8 @@ async function syncOneLocation(projectId: string, locationId: string): Promise<v
     },
     context.scenes
   )
-  const scoped = matched.length > 0 ? matched : context.scenes
+  const pool = matched.length > 0 ? matched : context.scenes
+  const scoped = pool.filter((scene) => isSceneScriptReadyForReferences(scene))
   if (scoped.length === 0) return
 
   const analysis = await analyzeLocationVersionsFromScript({
@@ -128,20 +131,19 @@ async function planLocationItems(
 ): Promise<ReferenceExpressItem[]> {
   const context = await loadReferenceExpressContext(projectId)
   if (!context) return []
-  if (selection?.locationIds.length) {
-    return planSelectedLocationExpressItems(context, {
-      kinds: ['location'],
-      includeNestedStills: true,
-      locationIds: selection.locationIds,
-      itemKeys: selection.itemKeys,
-      preexistingVersionIds: selection.preexistingVersionIds,
-    })
-  }
-  const scope: ReferenceExpressScope = {
-    kinds: ['location'],
-    includeNestedStills: true,
-  }
-  return planSceneReferenceExpressItems(context, scope)
+  const planned = selection?.locationIds.length
+    ? planSelectedLocationExpressItems(context, {
+        kinds: ['location'],
+        includeNestedStills: true,
+        locationIds: selection.locationIds,
+        itemKeys: selection.itemKeys,
+        preexistingVersionIds: selection.preexistingVersionIds,
+      })
+    : planSceneReferenceExpressItems(context, {
+        kinds: ['location'],
+        includeNestedStills: true,
+      })
+  return retainLocationItemsForReadyScenes(planned, context)
 }
 
 function mergeItems(

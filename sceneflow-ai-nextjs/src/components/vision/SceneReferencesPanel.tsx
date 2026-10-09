@@ -88,6 +88,11 @@ export interface SceneReferencesPanelProps {
   onAddDirectedLocationVersion?: (
     payload: DirectedLocationVersionInput & { locationId: string }
   ) => void | Promise<void>
+  /**
+   * False while the scene is still an outline or its direction does not match
+   * the script. The agent waits; a still the user opens in the library does not.
+   */
+  scriptReady?: boolean
 }
 
 type GroupConfig = {
@@ -163,6 +168,7 @@ export function SceneReferencesPanel({
   objectReferences = [],
   beats = [],
   onAddDirectedLocationVersion,
+  scriptReady = true,
 }: SceneReferencesPanelProps) {
   const tLocation = useTranslations('production.direction.locationLibrary')
   const [addOpen, setAddOpen] = useState(false)
@@ -439,7 +445,7 @@ export function SceneReferencesPanel({
                 e.stopPropagation()
                 void onExpressReferences({ itemKeys: [key] })
               }}
-              disabled={busy}
+              disabled={busy || !scriptReady}
               className="text-[11px] px-2 py-1 bg-cyan-600 hover:bg-cyan-700 text-white rounded disabled:opacity-50"
               title={
                 drawn
@@ -487,6 +493,12 @@ export function SceneReferencesPanel({
             reference that gets named but has no image is drawn differently in every frame.
             Gen draws a default still; customise looks in the Reference Library.
           </p>
+          {!scriptReady && (
+            <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-1">
+              This scene’s script is not finalized yet. Finish the scene and its direction
+              before drawing references — generating now would be redrawn when the script changes.
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
@@ -497,7 +509,7 @@ export function SceneReferencesPanel({
                 e.stopPropagation()
                 void onExpressReferences()
               }}
-              disabled={busy}
+              disabled={busy || !scriptReady}
               className="text-xs px-2.5 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded disabled:opacity-50 flex items-center gap-1.5"
               title={`Draw the ${expressable.length} missing reference${expressable.length === 1 ? '' : 's'} this scene needs`}
             >

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { generateSceneContentHash } from '@/lib/utils/contentHash'
 
 vi.mock('@/models', () => ({}))
 vi.mock('@/models/Project', () => ({ Project: { findByPk: vi.fn() } }))
@@ -13,6 +14,7 @@ import {
   planSelectedLibraryBaseItems,
   planSelectedLocationExpressItems,
   propFingerprint,
+  retainLocationItemsForReadyScenes,
   wantsLocationCatalogSync,
   type CastSource,
   type LocationSource,
@@ -49,6 +51,18 @@ const prop = (over: Partial<PropSource> = {}): PropSource => ({
   description: 'Worn smooth by decades of pockets',
   ...over,
 })
+
+function readyScene(scene: Record<string, any>) {
+  const body = { isExpanded: true, ...scene }
+  return {
+    ...body,
+    sceneDirection: {
+      scene: { location: 'Place' },
+      ...(scene.sceneDirection || {}),
+      basedOnContentHash: generateSceneContentHash(body),
+    },
+  }
+}
 
 describe('planReferenceExpressItems', () => {
   it('plans cast before locations and props', () => {
@@ -200,8 +214,16 @@ describe('planSceneReferenceExpressItems', () => {
     locations: [DOCKYARD, ATRIUM],
     props: [KEY, LEDGER],
     scenes: [
-      { heading: 'EXT. DOCKYARD - NIGHT', sceneNumber: 1, action: 'Mira turns the brass key.' },
-      { heading: 'INT. ATRIUM - DAY', sceneNumber: 2, action: 'Bo signs the leather ledger.' },
+      readyScene({
+        heading: 'EXT. DOCKYARD - NIGHT',
+        sceneNumber: 1,
+        action: 'Mira turns the brass key.',
+      }),
+      readyScene({
+        heading: 'INT. ATRIUM - DAY',
+        sceneNumber: 2,
+        action: 'Bo signs the leather ledger.',
+      }),
     ],
   }
 
@@ -316,6 +338,78 @@ describe('planSceneReferenceExpressItems', () => {
     expect(items).toEqual([])
   })
 
+  it('skips an outline and a stale direction, and still plans a finalized scene', () => {
+    const outline = {
+      isExpanded: false,
+      summary: 'They arrive later.',
+      heading: 'EXT. DOCKYARD - NIGHT',
+      action: 'Mira turns the brass key.',
+    }
+    const fresh = readyScene({
+      heading: 'EXT. DOCKYARD - NIGHT',
+      action: 'Mira turns the brass key.',
+    })
+    const stale = {
+      ...fresh,
+      action: 'Mira drops the brass key into the water.',
+    }
+
+    expect(
+      planSceneReferenceExpressItems(
+        { ...input, scenes: [outline, input.scenes[1]] },
+        { sceneIndices: [0] }
+      )
+    ).toEqual([])
+    expect(
+      planSceneReferenceExpressItems(
+        { ...input, scenes: [stale, input.scenes[1]] },
+        { sceneIndices: [0] }
+      )
+    ).toEqual([])
+    expect(
+      planSceneReferenceExpressItems(
+        { ...input, scenes: [fresh, input.scenes[1]] },
+        { sceneIndices: [0] }
+      ).map((item) => item.targetId)
+    ).toEqual(['c1', 'l1', 'p1'])
+  })
+
+  it('does not draw a location whose scenes are not finalized', () => {
+    const dock = location({ sceneNumbers: [1] })
+    const items = [
+      { kind: 'location' as const, targetId: 'l1', label: 'Dockyard', sourceFingerprint: 'x' },
+    ]
+    const outline = {
+      isExpanded: false,
+      summary: 'Later.',
+      heading: 'EXT. DOCKYARD - NIGHT',
+      action: 'Mira waits.',
+    }
+    expect(
+      retainLocationItemsForReadyScenes(items, {
+        characters: [],
+        locations: [dock],
+        props: [],
+        scenes: [outline],
+      })
+    ).toEqual([])
+    expect(
+      retainLocationItemsForReadyScenes(items, {
+        characters: [],
+        locations: [dock],
+        props: [],
+        scenes: [readyScene({ heading: 'EXT. DOCKYARD - NIGHT', action: 'Mira waits.' })],
+      }).map((item) => item.targetId)
+    ).toEqual(['l1'])
+    expect(
+      retainLocationItemsForReadyScenes(items, {
+        characters: [],
+        locations: [dock],
+        props: [],
+      })
+    ).toEqual(items)
+  })
+
   it('filters scene-scoped items to the named kinds', () => {
     const items = planSceneReferenceExpressItems(input, {
       sceneIndices: [0],
@@ -351,9 +445,10 @@ describe('planSceneReferenceExpressItems', () => {
       locations: [dock],
       props: [],
       scenes: [
-        {
+        readyScene({
           heading: 'EXT. DOCKYARD - NIGHT',
           sceneNumber: 1,
+          action: 'Mira stands in the dockyard.',
           beats: [
             {
               beatId: 'b1',
@@ -365,7 +460,7 @@ describe('planSceneReferenceExpressItems', () => {
               },
             },
           ],
-        },
+        }),
       ],
     }
     const sceneItems = planSceneReferenceExpressItems(scoped, { sceneIndices: [0] })

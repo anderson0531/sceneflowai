@@ -400,7 +400,12 @@ import type { ModerationReport } from '@/lib/moderation/moderationPipeline'
 import { useSidebarData, useSidebarQuickActions } from '@/hooks/useSidebarData'
 import { DetailedSceneDirection } from '@/types/scene-direction'
 import { cn } from '@/lib/utils'
-import { getScriptDirectionReadiness } from '@/lib/utils/contentHash'
+import { generateSceneContentHash, getScriptDirectionReadiness } from '@/lib/utils/contentHash'
+import {
+  isSceneOutline,
+  isSceneScriptReadyForReferences,
+  sceneHasScreenplayBody,
+} from '@/lib/vision/sceneScriptReadiness'
 import { sanitizeReturnTo } from '@/lib/navigation/sanitizeReturnTo'
 import { ReferenceLibraryDialog, type ReferenceLibraryTab } from '@/components/vision/ReferenceLibraryDialog'
 import type { AutoAddedObject } from '@/components/vision/ObjectSuggestionPanel'
@@ -516,6 +521,7 @@ type ReferenceExpressStartOutcome =
   | { outcome: 'started'; itemCount: number }
   | { outcome: 'already-running' }
   | { outcome: 'nothing-to-do' }
+  | { outcome: 'script-not-ready' }
   | { outcome: 'error'; error: string }
 
 type ReferenceExpressStartOptions = {
@@ -11500,6 +11506,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       })
       const data = await res.json().catch(() => ({}))
 
+      if (res.status === 409 && data?.code === 'SCRIPT_NOT_READY') {
+        toast.info('This scene’s script is not finalized yet', {
+          description:
+            'Finish the scene script and its direction before drawing references. Generating now would be redrawn when the script changes.',
+        })
+        setIsExpressGeneratingReferences(false)
+        return { outcome: 'script-not-ready' }
+      }
       if (res.status === 409 && data?.code === 'NOTHING_TO_GENERATE') {
         toast.info(
           sceneScoped
@@ -11563,11 +11577,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
    * scene, so production does not detour through the whole library first.
    */
   const handleExpressSceneReferences = useCallback(
-    (sceneIndex: number, options?: { itemKeys?: string[] }) =>
-      handleExpressGenerateReferences({
+    (sceneIndex: number, options?: { itemKeys?: string[] }) => {
+      const scene = scriptRef.current?.script?.scenes?.[sceneIndex]
+      if (scene && !isSceneScriptReadyForReferences(scene)) {
+        toast.info('This scene’s script is not finalized yet', {
+          description:
+            'Finish the scene script and its direction before drawing references. Generating now would be redrawn when the script changes.',
+        })
+        return Promise.resolve({ outcome: 'script-not-ready' as const })
+      }
+      return handleExpressGenerateReferences({
         sceneIndices: [sceneIndex],
         itemKeys: options?.itemKeys,
-      }),
+      })
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [projectId, referenceExpressJob.isActive]
   )
@@ -15736,6 +15759,61 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       }
 
+      const refreshSceneDirectionForReferences = async (
+        index: number,
+        scene: Record<string, unknown>
+      ): Promise<Record<string, unknown> | null> => {
+        const directionResponse = await fetch('/api/scene/generate-direction', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: abortController.signal,
+          body: JSON.stringify({
+            projectId,
+            sceneIndex: index,
+            scene: {
+              heading: scene.heading,
+              action: scene.action,
+              visualDescription: scene.visualDescription,
+              narration: scene.narration,
+              dialogue: scene.dialogue,
+              characters: scene.characters,
+              beats: scene.beats,
+              sceneMovements: scene.sceneMovements,
+            },
+          }),
+        })
+        const data = await directionResponse.json().catch(() => ({}))
+        if (!directionResponse.ok || !data?.success || !data?.sceneDirection) return null
+        const nextScene = ensureSceneBeats({
+          ...scene,
+          sceneDirection: {
+            ...data.sceneDirection,
+            basedOnContentHash: generateSceneContentHash(scene),
+          },
+        } as Record<string, unknown>) as Record<string, unknown>
+        setScript((currentScript: any) => {
+          if (!currentScript?.script?.scenes) return currentScript
+          const updatedScenes = [...currentScript.script.scenes]
+          updatedScenes[index] = nextScene
+          const updatedScript = {
+            ...currentScript,
+            script: { ...currentScript.script, scenes: updatedScenes },
+          }
+          scriptRef.current = updatedScript
+          return updatedScript
+        })
+        const current = scriptRef.current
+        if (current?.script?.scenes && current.script.scenes[index] !== nextScene) {
+          const updatedScenes = [...current.script.scenes]
+          updatedScenes[index] = nextScene
+          scriptRef.current = {
+            ...current,
+            script: { ...current.script, scenes: updatedScenes },
+          }
+        }
+        return nextScene
+      }
+
       const refreshProjectScript = async () => {
         try {
           const refreshed = await fetch(`/api/projects/${projectId}?_t=${Date.now()}`, {
@@ -15757,28 +15835,82 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       try {
         /**
-         * Just-in-time references. A frame drawn against a reference that has
-         * no image invents its own appearance, differently each time, so the
-         * gaps this scene has are drawn first and the frames follow — one
-         * click, no detour through the Reference Library.
+         * Just-in-time references, after the scene script is finalized.
+         * An outline is skipped. A written scene whose direction is missing
+         * or stale is directed first, then its stills are drawn, then frames.
          */
-        const missingReferences = selectUndrawnExpressableRequirements(
-          resolveSceneRequiredReferences({
-            scene: sceneRecord,
-            sceneIndex,
-            characters,
-            locationReferences,
-            objectReferences,
-            overrides:
-              (sceneRecord.referenceOverrides as SceneReferenceOverrides | undefined) ?? null,
-          })
-        )
+        let sceneForRefs = (scriptRef.current?.script?.scenes?.[sceneIndex] ??
+          sceneRecord) as Record<string, unknown>
+        if (isSceneOutline(sceneForRefs) || !sceneHasScreenplayBody(sceneForRefs)) {
+          const missingWhileDraft = selectUndrawnExpressableRequirements(
+            resolveSceneRequiredReferences({
+              scene: sceneForRefs,
+              sceneIndex,
+              characters,
+              locationReferences,
+              objectReferences,
+              overrides:
+                (sceneForRefs.referenceOverrides as SceneReferenceOverrides | undefined) ?? null,
+            })
+          )
+          if (missingWhileDraft.length > 0) {
+            updateOverlayPhase('references', 'error')
+            finishBeatFrameOverlay({
+              preflightError: 'Finish this scene’s script before drawing references.',
+            })
+            return
+          }
+          updateOverlayPhase('references', 'done')
+        } else if (!isSceneScriptReadyForReferences(sceneForRefs)) {
+          updateOverlayPhase('direction', 'running')
+          setPhase(sceneIndex, 'direction', 'running')
+          const refreshed = await refreshSceneDirectionForReferences(sceneIndex, sceneForRefs)
+          if (abortController.signal.aborted) {
+            finishBeatFrameOverlay({ cancelled: true })
+            return
+          }
+          if (!refreshed || !isSceneScriptReadyForReferences(refreshed)) {
+            updateOverlayPhase('direction', 'error')
+            finishBeatFrameOverlay({
+              preflightError:
+                'Scene direction has to match the script before references are drawn.',
+            })
+            return
+          }
+          sceneForRefs = refreshed
+          updateOverlayPhase('direction', 'done')
+          setPhase(sceneIndex, 'direction', 'done')
+        }
+
+        const missingReferences =
+          isSceneOutline(sceneForRefs) || !sceneHasScreenplayBody(sceneForRefs)
+            ? []
+            : selectUndrawnExpressableRequirements(
+                resolveSceneRequiredReferences({
+                  scene: sceneForRefs,
+                  sceneIndex,
+                  characters,
+                  locationReferences,
+                  objectReferences,
+                  overrides:
+                    (sceneForRefs.referenceOverrides as SceneReferenceOverrides | undefined) ??
+                    null,
+                })
+              )
 
         if (missingReferences.length === 0) {
           updateOverlayPhase('references', 'done')
         } else {
           updateOverlayPhase('references', 'running')
           const started = await handleExpressSceneReferences(sceneIndex)
+
+          if (started.outcome === 'script-not-ready') {
+            updateOverlayPhase('references', 'error')
+            finishBeatFrameOverlay({
+              preflightError: 'Finish this scene’s script before drawing references.',
+            })
+            return
+          }
 
           if (started.outcome === 'error') {
             updateOverlayPhase('references', 'error')

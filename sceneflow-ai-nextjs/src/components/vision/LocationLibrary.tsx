@@ -11,8 +11,6 @@ import {
   ChevronUp,
   Trash2,
   Edit,
-  Check,
-  X,
   Image as ImageIcon,
   Maximize2,
   Wand2,
@@ -64,6 +62,8 @@ import {
   isDisplayableImageUrl,
 } from '@/components/vision/DeferredImageSkeleton'
 import { ReferenceSplitPane } from './ReferenceSplitPane'
+import { DictationTextarea } from '@/components/ui/DictationTextarea'
+import type { LocationSceneExcerpt } from '@/lib/vision/buildLocationDescriptionDirectorPrompt'
 import { isDirectionStale } from '@/lib/utils/contentHash'
 import {
   filterScenesForLocation,
@@ -129,6 +129,26 @@ function scenesForLocation(
   return matched.length > 0 ? matched : scenes
 }
 
+function locationSceneExcerpts(
+  location: LocationReference,
+  scenes: LocationLibraryProps['scenes']
+): LocationSceneExcerpt[] {
+  const matched = new Set(filterScenesForLocation(location, scenes))
+  const source = matched.size > 0 ? scenes.filter((scene) => matched.has(scene)) : []
+  return source.slice(0, 6).map((scene) => {
+    const index = scenes.indexOf(scene)
+    const heading = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text
+    const action = (scene.action || scene.visualDescription || '').trim()
+    return {
+      sceneNumber: index >= 0 ? index + 1 : undefined,
+      heading,
+      action: action ? action.slice(0, 600) : undefined,
+      location: scene.sceneDirection?.scene?.location,
+      atmosphere: scene.sceneDirection?.scene?.atmosphere,
+    }
+  })
+}
+
 interface LocationLibraryProps {
   /** Current location references */
   locationReferences: LocationReference[]
@@ -176,6 +196,7 @@ interface LocationLibraryProps {
     tone?: string
     setting?: string
     visualStyle?: string
+    logline?: string
   }
   /** 50/50 image | controls layout for Reference Library dialog */
   splitLayout?: boolean
@@ -368,9 +389,9 @@ export function LocationLibrary({
   const [expandedLocationId, setExpandedLocationId] = useState<string | null>(null)
   const [focusedVersionId, setFocusedVersionId] = useState<string | null>(null)
   const [editingDescriptionId, setEditingDescriptionId] = useState<string | null>(null)
-  const [descriptionText, setDescriptionText] = useState('')
-  const [expandedImageUrl, setExpandedImageUrl] = useState<string | null>(null)
-  const [expandedImageName, setExpandedImageName] = useState<string>('')
+  const [descriptionDirectorText, setDescriptionDirectorText] = useState('')
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false)
+  const [expandedBaseLocationId, setExpandedBaseLocationId] = useState<string | null>(null)
   const [uploadingForId, setUploadingForId] = useState<string | null>(null)
   const [promptBuilderOpenFor, setPromptBuilderOpenFor] = useState<PromptBuilderTarget | null>(null)
   const [directorTarget, setDirectorTarget] = useState<PromptBuilderTarget | null>(null)
@@ -519,6 +540,9 @@ export function LocationLibrary({
     return [...names]
   }, [catalogPropNamesProp, scenes])
 
+  const expandedBaseLocation = expandedBaseLocationId
+    ? mergedLocations.find((loc) => loc.id === expandedBaseLocationId)
+    : undefined
   const expandedVersionLocation = expandedVersionTarget
     ? mergedLocations.find((loc) => loc.id === expandedVersionTarget.locationId)
     : undefined
@@ -526,14 +550,60 @@ export function LocationLibrary({
     (version) => version.id === expandedVersionTarget?.versionId
   )
 
-  const handleSaveDescription = (locationId: string) => {
-    const updated = mergedLocations.map(loc =>
-      loc.id === locationId ? { ...loc, description: descriptionText.trim() } : loc
-    )
-    onUpdateLocations(updated)
-    setEditingDescriptionId(null)
-    setDescriptionText('')
-    toast.success('Location description updated')
+  const handleDirectDescription = async (location: LocationReference, recommendMode: boolean) => {
+    if (!recommendMode && !descriptionDirectorText.trim()) {
+      toast.error('Describe the change, or use Recommend from the screenplay.')
+      return
+    }
+    setIsGeneratingDescription(true)
+    try {
+      const response = await fetch('/api/vision/generate-location-description', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          locationName: location.location,
+          intExt: location.intExt,
+          timeOfDay: location.timeOfDay,
+          genre: screenplayContext?.genre,
+          tone: screenplayContext?.tone,
+          setting: screenplayContext?.setting,
+          logline: screenplayContext?.logline,
+          visualStyle: screenplayContext?.visualStyle,
+          currentDescription: location.description,
+          directorNotes: recommendMode ? undefined : descriptionDirectorText,
+          recommendMode,
+          scenes: locationSceneExcerpts(location, scenes),
+        }),
+      })
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(
+          (typeof body.error === 'string' && body.error) || 'Failed to generate location description'
+        )
+      }
+      const nextDescription = typeof body.description === 'string' ? body.description.trim() : ''
+      if (!nextDescription) {
+        throw new Error('Location description response was empty.')
+      }
+      const updated = mergedLocations.map((loc) =>
+        loc.id === location.id ? { ...loc, description: nextDescription } : loc
+      )
+      await onUpdateLocations(updated)
+      setDescriptionDirectorText('')
+      setEditingDescriptionId(null)
+      toast.success(
+        recommendMode
+          ? 'Location description recommended from the screenplay.'
+          : 'Location description updated.'
+      )
+    } catch (error) {
+      console.error('[Direct Location] Error:', error)
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to generate location description'
+      )
+    } finally {
+      setIsGeneratingDescription(false)
+    }
   }
 
   const handleFileUpload = async (locationId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -815,220 +885,63 @@ export function LocationLibrary({
 
                 {/* Expanded content */}
                 {isExpanded && (() => {
+                  const baseUploadId = `location-upload-${loc.id}`
                   const locationImagePanel = isDeferredImage ? (
                     <DeferredImageSkeleton className="w-full h-full rounded-md" label={`Loading ${loc.location}`} />
-                  ) : hasImage ? (
+                  ) : (
                     <div className={`relative rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700 group ${splitLayout ? 'h-full w-full' : 'aspect-video'}`}>
-                      <img
-                        src={loc.imageUrl}
-                        alt={loc.location}
-                        className={`w-full h-full ${splitLayout ? 'object-contain' : 'object-cover'}`}
-                        loading="lazy"
-                        decoding="async"
-                      />
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setExpandedImageUrl(loc.imageUrl)
-                          setExpandedImageName(loc.location)
-                        }}
-                        className="absolute top-2 right-2 z-20 p-1.5 rounded-md bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
-                        title="View full size"
-                      >
-                        <Maximize2 className="w-4 h-4" />
-                      </button>
+                      {hasImage ? (
+                        <img
+                          src={loc.imageUrl}
+                          alt={loc.location}
+                          className={`w-full h-full ${splitLayout ? 'absolute inset-0 object-contain' : 'object-cover'}`}
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 pointer-events-none">
+                          <ImageIcon className="w-8 h-8 text-gray-400 mb-1" />
+                          <span className="text-xs">
+                            {isUploading ? 'Uploading...' : isGenerating ? 'Generating...' : 'No reference image'}
+                          </span>
+                        </div>
+                      )}
+                      {hasImage && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setExpandedBaseLocationId(loc.id)
+                          }}
+                          className="absolute top-2 right-2 z-20 p-1.5 rounded-md bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+                          title="View full size"
+                        >
+                          <Maximize2 className="w-4 h-4" />
+                        </button>
+                      )}
                       <input
-                        id={`location-upload-${loc.id}`}
+                        id={baseUploadId}
                         type="file"
                         accept="image/*"
                         className="hidden"
                         onChange={(e) => handleFileUpload(loc.id, e)}
                       />
-                      <div className="absolute inset-0 z-10 bg-black/40 transition-opacity opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3">
-                        {onGenerateLocationImage && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  onGenerateLocationImage(loc)
-                                }}
-                                disabled={isGenerating}
-                                className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
-                              >
-                                {isGenerating ? (
-                                  <Loader2 className="w-5 h-5 text-white animate-spin" />
-                                ) : (
-                                  <Zap className="w-5 h-5 text-white" />
-                                )}
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent>Quick Regenerate Image</TooltipContent>
-                          </Tooltip>
-                        )}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setPromptBuilderOpenFor({ locationId: loc.id })
-                              }}
-                              disabled={isGenerating}
-                              className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
-                            >
-                              <Wand2 className="w-5 h-5 text-white" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent>Open Prompt Builder</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setDirectorTarget({ locationId: loc.id })
-                              }}
-                              disabled={isGenerating}
-                              className="p-3 bg-teal-600/90 hover:bg-teal-500 rounded-full transition-colors disabled:opacity-50"
-                            >
-                              <Clapperboard className="w-5 h-5 text-white" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent>Director</TooltipContent>
-                        </Tooltip>
-                        {onEditLocationImage && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  onEditLocationImage(loc.id, loc.imageUrl)
-                                }}
-                                className="p-3 bg-purple-600/80 hover:bg-purple-600 rounded-full transition-colors"
-                              >
-                                <Settings2 className="w-5 h-5 text-white" />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent>Edit Image</TooltipContent>
-                          </Tooltip>
-                        )}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                document.getElementById(`location-upload-${loc.id}`)?.click()
-                              }}
-                              disabled={isUploading}
-                              className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors disabled:opacity-50"
-                            >
-                              {isUploading ? (
-                                <Loader2 className="w-5 h-5 text-white animate-spin" />
-                              ) : (
-                                <Upload className="w-5 h-5 text-white" />
-                              )}
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent>Upload Image</TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className={`relative rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700 group ${splitLayout ? 'h-full w-full' : 'aspect-video'}`}>
-                      {isGenerating || isUploading ? (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                          <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
-                          <span className="text-xs text-gray-400">{isUploading ? 'Uploading...' : 'Generating...'}</span>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 pointer-events-none">
-                            <ImageIcon className="w-8 h-8 text-gray-400 mb-1" />
-                            <span className="text-xs">No reference image</span>
-                          </div>
-                          <input
-                            id={`location-upload-empty-${loc.id}`}
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => handleFileUpload(loc.id, e)}
-                          />
-                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-3">
-                            {onGenerateLocationImage && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      onGenerateLocationImage(loc)
-                                    }}
-                                    disabled={isGenerating}
-                                    className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
-                                  >
-                                    <Zap className="w-5 h-5 text-white" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>Quick Generate Image</TooltipContent>
-                              </Tooltip>
-                            )}
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setPromptBuilderOpenFor({ locationId: loc.id })
-                                  }}
-                                  disabled={isGenerating}
-                                  className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
-                                >
-                                  <Wand2 className="w-5 h-5 text-white" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>Open Prompt Builder</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setDirectorTarget({ locationId: loc.id })
-                                  }}
-                                  disabled={isGenerating}
-                                  className="p-3 bg-teal-600/90 hover:bg-teal-500 rounded-full transition-colors disabled:opacity-50"
-                                >
-                                  <Clapperboard className="w-5 h-5 text-white" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>Director</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    document.getElementById(`location-upload-empty-${loc.id}`)?.click()
-                                  }}
-                                  disabled={isUploading}
-                                  className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors disabled:opacity-50"
-                                >
-                                  <Upload className="w-5 h-5 text-white" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>Upload Image</TooltipContent>
-                            </Tooltip>
-                          </div>
-                        </>
-                      )}
+                      <LocationStillOverlay
+                        alwaysVisible
+                        isGenerating={isGenerating}
+                        isUploading={isUploading}
+                        showQuickGenerate={!!onGenerateLocationImage}
+                        showEdit={!!onEditLocationImage && hasImage}
+                        onQuickGenerate={() => onGenerateLocationImage?.(loc)}
+                        onPromptBuilder={() => setPromptBuilderOpenFor({ locationId: loc.id })}
+                        onDirector={() => setDirectorTarget({ locationId: loc.id })}
+                        onEdit={
+                          hasImage && loc.imageUrl
+                            ? () => onEditLocationImage?.(loc.id, loc.imageUrl!)
+                            : undefined
+                        }
+                        onUpload={() => document.getElementById(baseUploadId)?.click()}
+                      />
                     </div>
                   )
 
@@ -1045,49 +958,95 @@ export function LocationLibrary({
                       )}
 
                       <div className="pt-1">
-                        {editingDescriptionId === loc.id ? (
-                          <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
-                            <textarea
-                              value={descriptionText}
-                              onChange={(e) => setDescriptionText(e.target.value)}
-                              placeholder="Describe this location (e.g., Modern podcast studio with acoustic panels, professional lighting rig...)"
-                              className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
-                              rows={3}
-                              autoFocus
-                            />
-                            <div className="flex gap-2 justify-end">
-                              <button
-                                onClick={() => { setEditingDescriptionId(null); setDescriptionText('') }}
-                                className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800"
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                onClick={() => handleSaveDescription(loc.id)}
-                                className="px-2 py-1 text-xs bg-cyan-500 hover:bg-cyan-600 text-white rounded flex items-center gap-1"
-                              >
-                                <Check className="w-3 h-3" />
-                                Save
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-start gap-2">
-                            <p className="text-xs text-gray-400 italic flex-1">
-                              {loc.description || 'No description — click edit to add'}
-                            </p>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                            Description
+                          </span>
+                          {editingDescriptionId !== loc.id && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
+                                setDescriptionDirectorText('')
                                 setEditingDescriptionId(loc.id)
-                                setDescriptionText(loc.description || '')
                               }}
                               className="p-1 text-gray-400 hover:text-cyan-400 transition-colors flex-shrink-0"
                               title="Edit description"
                             >
                               <Edit className="w-3 h-3" />
                             </button>
+                          )}
+                        </div>
+                        {editingDescriptionId === loc.id ? (
+                          <div
+                            className="space-y-2 p-2 bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-700 rounded-lg"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="flex items-center gap-2 text-xs font-medium text-cyan-700 dark:text-cyan-300">
+                              <Sparkles className="w-3.5 h-3.5" />
+                              Direct description
+                            </div>
+                            {loc.description?.trim() ? (
+                              <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed">
+                                Current — {loc.description.trim()}
+                              </p>
+                            ) : null}
+                            <DictationTextarea
+                              value={descriptionDirectorText}
+                              onChange={setDescriptionDirectorText}
+                              placeholder={
+                                loc.description?.trim()
+                                  ? 'Say the change, e.g. Warmer light, keep the brick, night'
+                                  : 'Describe the place, or leave empty and Recommend from the screenplay'
+                              }
+                              rows={3}
+                              disabled={isGeneratingDescription}
+                              className="text-xs border-cyan-300 dark:border-cyan-600 bg-white dark:bg-gray-800"
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => void handleDirectDescription(loc, false)}
+                                disabled={isGeneratingDescription || !descriptionDirectorText.trim()}
+                                className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-cyan-600 text-white rounded hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {isGeneratingDescription ? (
+                                  <>
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                    Applying...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Sparkles className="w-3 h-3" />
+                                    Apply
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => void handleDirectDescription(loc, true)}
+                                disabled={isGeneratingDescription}
+                                className="px-2 py-1.5 text-xs bg-amber-500 text-white rounded hover:bg-amber-600 disabled:opacity-50"
+                                title="Recommend a description from the scenes in this location"
+                              >
+                                Recommend
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingDescriptionId(null)
+                                  setDescriptionDirectorText('')
+                                }}
+                                disabled={isGeneratingDescription}
+                                className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                              >
+                                Cancel
+                              </button>
+                            </div>
                           </div>
+                        ) : (
+                          <p className="text-xs text-gray-400 italic">
+                            {loc.description || 'Direct a description, or Recommend from the screenplay'}
+                          </p>
                         )}
                       </div>
 
@@ -1427,24 +1386,74 @@ export function LocationLibrary({
         )
       })()}
 
-      {/* Expanded Image Dialog */}
-      <Dialog open={!!expandedImageUrl} onOpenChange={() => { setExpandedImageUrl(null); setExpandedImageName('') }}>
-        <DialogContent className={`${splitLayout ? 'max-w-[50vw]' : 'max-w-[90vw]'} max-h-[90vh] p-0 bg-black border-none`}>
-          <DialogHeader className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent z-10">
-            <DialogTitle className="text-white">{expandedImageName}</DialogTitle>
-            <DialogDescription className="text-gray-300">
-              Location reference image
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex items-center justify-center w-full h-full p-4">
-            {expandedImageUrl && (
-              <img
-                src={expandedImageUrl}
-                alt={expandedImageName}
-                className="max-w-full max-h-[85vh] object-contain rounded-lg"
-              />
-            )}
-          </div>
+      {/* Expanded base still — same controls as the card and the version preview */}
+      <Dialog
+        open={!!expandedBaseLocation}
+        onOpenChange={(open) => {
+          if (!open) setExpandedBaseLocationId(null)
+        }}
+      >
+        <DialogContent className={`${splitLayout ? 'max-w-[50vw]' : 'max-w-[90vw]'} max-h-[90vh] overflow-y-auto`}>
+          {expandedBaseLocation && (() => {
+            const baseGenerating = generatingLocationId === expandedBaseLocation.id
+            const baseUploading = uploadingForId === expandedBaseLocation.id
+            const baseHasImage = isDisplayableImageUrl(expandedBaseLocation.imageUrl)
+            const lightboxUploadId = `location-lightbox-upload-${expandedBaseLocation.id}`
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-cyan-500" />
+                    <span className="truncate">{expandedBaseLocation.location}</span>
+                  </DialogTitle>
+                  <DialogDescription>Location reference image</DialogDescription>
+                </DialogHeader>
+                <div className="relative group min-h-[40vh] rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                  {baseHasImage ? (
+                    <img
+                      src={expandedBaseLocation.imageUrl}
+                      alt={expandedBaseLocation.location}
+                      className="w-full max-h-[75vh] object-contain"
+                    />
+                  ) : (
+                    <div className="w-full min-h-[40vh] flex flex-col items-center justify-center text-gray-400">
+                      <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
+                      <span className="text-xs">No reference image</span>
+                    </div>
+                  )}
+                  <input
+                    id={lightboxUploadId}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleFileUpload(expandedBaseLocation.id, e)}
+                  />
+                  <LocationStillOverlay
+                    alwaysVisible
+                    isGenerating={baseGenerating}
+                    isUploading={baseUploading}
+                    showQuickGenerate={!!onGenerateLocationImage}
+                    showEdit={!!onEditLocationImage && baseHasImage}
+                    onQuickGenerate={() => onGenerateLocationImage?.(expandedBaseLocation)}
+                    onPromptBuilder={() =>
+                      setPromptBuilderOpenFor({ locationId: expandedBaseLocation.id })
+                    }
+                    onDirector={() => setDirectorTarget({ locationId: expandedBaseLocation.id })}
+                    onEdit={
+                      baseHasImage && expandedBaseLocation.imageUrl
+                        ? () =>
+                            onEditLocationImage?.(
+                              expandedBaseLocation.id,
+                              expandedBaseLocation.imageUrl!
+                            )
+                        : undefined
+                    }
+                    onUpload={() => document.getElementById(lightboxUploadId)?.click()}
+                  />
+                </div>
+              </>
+            )
+          })()}
         </DialogContent>
       </Dialog>
 
