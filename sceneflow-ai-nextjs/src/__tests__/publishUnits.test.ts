@@ -132,6 +132,55 @@ describe('publish units', () => {
     expect(vertical.clips).toHaveLength(3)
   })
 
+  it('ships a promo in its rendered frame and fits it when the delivery frame differs', () => {
+    const landscape = resolvePublishDelivery({
+      kind: 'promo',
+      aspectRatio: '16:9',
+      language: 'en',
+      scenes: [],
+      streams: [],
+      promo: {
+        mp4Url: 'https://example.com/promo.mp4',
+        durationSec: 60,
+        status: 'ready',
+        aspect: '16:9',
+      },
+    })
+    expect(landscape.needsRender).toBe(false)
+    expect(landscape.mp4Url).toBe('https://example.com/promo.mp4')
+
+    const vertical = resolvePublishDelivery({
+      kind: 'promo',
+      aspectRatio: '9:16',
+      language: 'en',
+      scenes: [],
+      streams: [],
+      promo: {
+        mp4Url: 'https://example.com/promo.mp4',
+        durationSec: 60,
+        status: 'ready',
+        aspect: '16:9',
+      },
+    })
+    expect(vertical.needsRender).toBe(true)
+    expect(vertical.aspectNote).toContain('pads')
+
+    const legacy = resolvePublishDelivery({
+      kind: 'promo',
+      aspectRatio: '9:16',
+      language: 'en',
+      scenes: [],
+      streams: [],
+      promo: {
+        mp4Url: 'https://example.com/legacy.mp4',
+        durationSec: 45,
+        status: 'ready',
+      },
+    })
+    expect(legacy.needsRender).toBe(false)
+    expect(legacy.mp4Url).toBe('https://example.com/legacy.mp4')
+  })
+
   it('reads scene streams from production state', () => {
     const collected = collectPublishScenes(
       [

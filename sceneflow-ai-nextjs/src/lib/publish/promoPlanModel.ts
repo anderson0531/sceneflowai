@@ -30,6 +30,12 @@ export interface PromoModelPlanInput extends TrailerPlannerInput {
   title?: string
   logline?: string
   genre?: string
+  /** Audience Resonance text. Steers which shots and what pacing the model keeps. */
+  audienceText?: string
+  /** Plan Director note for this revision. */
+  directorNotes?: string
+  /** Plan the director is revising. Omitted on a first composition. */
+  currentPlan?: PromoTrailerBeatPlan[]
 }
 
 interface ModelPick {
@@ -89,7 +95,7 @@ function sumDuration(picks: ModelPick[]): number {
 
 /**
  * Keep the model's order. Drop unknown ids. Force hero shots in.
- * Each clip is 4–6s. A plan that cannot land in 30–60s is rejected.
+ * Each clip is 4–6s. A plan that cannot land in 30–120s is rejected.
  */
 export function normalizePromoModelPlan(opts: {
   catalog: PromoShotCatalogEntry[]
@@ -183,6 +189,9 @@ export function buildPromoPlanPrompt(input: {
   genre?: string
   targetDurationSec: number
   catalog: PromoShotCatalogEntry[]
+  audienceText?: string
+  directorNotes?: string
+  currentPlan?: PromoTrailerBeatPlan[]
 }): string {
   const shots = input.catalog.map((shot) => ({
     sceneIndex: shot.sceneIndex,
@@ -198,19 +207,34 @@ export function buildPromoPlanPrompt(input: {
     hasClip: shot.hasClip,
   }))
 
+  const current = input.currentPlan?.map((beat) => ({
+    sceneIndex: beat.sceneIndex,
+    beatId: beat.beatId,
+    durationSec: beat.durationSec,
+    trailerRole: beat.trailerRole,
+    label: beat.label,
+  }))
+
+  const audience = input.audienceText?.trim()
+  const notes = input.directorNotes?.trim()
+
   return `Compose the most effective cinematic promo trailer for this production.
 
 Title: ${input.title?.trim() || 'Untitled'}
 ${input.logline?.trim() ? `Logline: ${input.logline.trim()}` : ''}
 ${input.genre?.trim() ? `Genre: ${input.genre.trim()}` : ''}
-Target length: ${input.targetDurationSec} seconds (stay between 30 and 60).
-
+Target length: ${input.targetDurationSec} seconds (stay between 30 and 120).
+${audience ? `\nTarget audience:\n${audience}\n` : ''}
+${notes ? `\nDirector notes:\n${notes}\n` : ''}
+${current?.length ? `\nCurrent plan to revise:\n${JSON.stringify(current)}\n` : ''}
 Shots (every shot in the production; choose from these ids only):
 ${JSON.stringify(shots)}
 
 Rules:
 - Judge the shot by its dramatic and visual promise, not by whether a still or clip already exists.
 - hasStill and hasClip are production notes. A shot with neither can still be the best shot in the trailer.
+- Choose shots and pacing that resonate with the target audience.
+- When director notes are present, follow them and revise the current plan instead of ignoring it.
 - Order the trailer for impact: hook, then rising shots, then a peak, then a button. Do not follow screenplay order.
 - Include every shot marked hero.
 - Each durationSec is an integer from 4 to 6.
@@ -243,10 +267,13 @@ export async function planPromoTrailerWithModel(
       genre: input.genre,
       targetDurationSec,
       catalog,
+      audienceText: input.audienceText,
+      directorNotes: input.directorNotes,
+      currentPlan: input.currentPlan,
     }), {
       model: getGeminiTextModel('flash'),
       temperature: 0.4,
-      maxOutputTokens: 2048,
+      maxOutputTokens: 4096,
       responseMimeType: 'application/json',
       thinkingLevel: 'minimal',
     })

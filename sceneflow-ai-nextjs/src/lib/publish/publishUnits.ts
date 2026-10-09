@@ -53,6 +53,8 @@ export interface PublishPromoInput {
   mp4Url?: string
   durationSec?: number
   status?: string
+  /** Frame the promo was rendered in. Missing values are legacy vertical trailers. */
+  aspect?: '16:9' | '9:16'
 }
 
 export interface PublishStitchClip {
@@ -285,22 +287,24 @@ export function resolvePublishDelivery(args: {
 
   if (kind === 'promo') {
     const ready = promo?.status === 'ready' || Boolean(promo?.mp4Url)
+    const native: PublishAspectRatio = promo?.aspect === '16:9' ? '16:9' : '9:16'
     const id = publishUnitId('promo', aspectRatio, language)
+    const title = `${projectTitle || 'Promo'} · Promo`
     if (!ready || !promo?.mp4Url) {
       return {
         id,
         ...base,
-        title: `${projectTitle || 'Promo'} · Promo`,
+        title,
         clips: [],
         needsRender: false,
         blockedReason: 'Render a promo trailer before shipping it.',
       }
     }
-    if (aspectRatio === '9:16') {
+    if (aspectRatio === native) {
       return {
         id,
         ...base,
-        title: `${projectTitle || 'Promo'} · Promo`,
+        title,
         mp4Url: promo.mp4Url,
         clips: [],
         needsRender: false,
@@ -310,16 +314,16 @@ export function resolvePublishDelivery(args: {
       return {
         id,
         ...base,
-        title: `${projectTitle || 'Promo'} · Promo`,
+        title,
         clips: [],
         needsRender: true,
-        blockedReason: 'Promo length is unknown, so it cannot be padded to 16:9 yet.',
+        blockedReason: 'Promo length is unknown, so it cannot be fitted to the other frame yet.',
       }
     }
     return {
       id,
       ...base,
-      title: `${projectTitle || 'Promo'} · Promo`,
+      title,
       clips: [
         {
           sceneId: 'promo',

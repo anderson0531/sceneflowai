@@ -6,6 +6,8 @@ import { Download, Facebook, Loader2, Music2, Youtube } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { getLanguageDisplayName } from '@/lib/publish/buildLanguageAudioTrack'
+import { promoAssetForLanguage } from '@/lib/publish/promoLanguage'
+import { resolvePromoFrameAspect } from '@/lib/publish/promoFrame'
 import { getPublishingState, upsertPublishUnit } from '@/lib/publish/publishingState'
 import {
   collectPublishScenes,
@@ -112,10 +114,6 @@ export function PublishingPackageShipTab({
   }, [languages, language])
 
   useEffect(() => {
-    if (kind === 'promo') setAspect('9:16')
-  }, [kind])
-
-  useEffect(() => {
     if (!sceneId && scenes[0]) setSceneId(scenes[0].id)
   }, [sceneId, scenes])
 
@@ -124,7 +122,16 @@ export function PublishingPackageShipTab({
   }, [beatIndex, chapters])
 
   const publishingState = useMemo(() => getPublishingState(metadata), [metadata])
-  const promo = publishingState.promo?.trailer
+  const promo = promoAssetForLanguage(publishingState.promo, language)
+
+  useEffect(() => {
+    if (kind !== 'promo') return
+    if (promo?.aspect === '16:9' || promo?.aspect === '9:16') {
+      setAspect(promo.aspect)
+      return
+    }
+    setAspect(resolvePromoFrameAspect(metadata))
+  }, [kind, promo, metadata])
 
   const plan = useMemo(
     () =>
@@ -141,7 +148,12 @@ export function PublishingPackageShipTab({
           status: stream.status,
         })),
         promo: promo
-          ? { mp4Url: promo.mp4Url, durationSec: promo.durationSec, status: promo.status }
+          ? {
+              mp4Url: promo.mp4Url,
+              durationSec: promo.durationSec,
+              status: promo.status,
+              aspect: promo.aspect,
+            }
           : undefined,
         projectTitle,
       }),

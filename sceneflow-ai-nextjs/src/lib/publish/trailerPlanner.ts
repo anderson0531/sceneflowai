@@ -6,7 +6,7 @@ import {
 import type { PromoTrailerBeatPlan } from '@/types/publishingAssets'
 
 export const MIN_TRAILER_SEC = 30
-export const MAX_TRAILER_SEC = 60
+export const MAX_TRAILER_SEC = 120
 export const DEFAULT_TRAILER_SEC = 60
 
 export interface TrailerPlannerProductionScene {
@@ -93,7 +93,7 @@ function toBeatPlan(shot: PromoShotCatalogEntry, score: number): PromoTrailerBea
 }
 
 /**
- * Select shots totaling 30–60 seconds for a vertical promo trailer.
+ * Select shots totaling 30–120 seconds for a promo trailer.
  * Media is not required. Order is a trailer arc, not script order.
  */
 export function planPromoTrailer(input: TrailerPlannerInput): TrailerPlannerResult {
