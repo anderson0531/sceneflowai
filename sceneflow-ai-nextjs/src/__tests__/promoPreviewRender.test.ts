@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'fs'
 import path from 'path'
-import { buildPromoPreviewSequence } from '@/lib/publish/promoPreviewSequence'
+import {
+  buildPromoPreviewSequence,
+  promoNarrationCue,
+  promoPreviewNarrationOn,
+} from '@/lib/publish/promoPreviewSequence'
 import {
   parsePromoRenderBody,
   pollPromoRenderJob,
@@ -98,5 +102,46 @@ describe('promo preview sequence', () => {
       },
       { key: 'c', kind: 'label', durationSec: 5, label: 'Sunrise' },
     ])
+  })
+})
+
+describe('promo narration cue', () => {
+  const shots = [{ durationSec: 6 }, { durationSec: 12 }, { durationSec: 8 }]
+
+  it('stays off before the chosen shot and on for every shot after it', () => {
+    expect(promoPreviewNarrationOn(shots, 0, 6)).toBe(false)
+    expect(promoPreviewNarrationOn(shots, 1, 6)).toBe(true)
+    expect(promoPreviewNarrationOn(shots, 2, 6)).toBe(true)
+    expect(promoPreviewNarrationOn(shots, 0, 0)).toBe(true)
+  })
+
+  it('starts once, then holds across later shots even when paused or finished', () => {
+    expect(promoNarrationCue({ started: false, voiceOn: false, ended: false })).toBe('wait')
+    expect(promoNarrationCue({ started: false, voiceOn: true, ended: false })).toBe('start')
+    expect(promoNarrationCue({ started: true, voiceOn: true, ended: false })).toBe('hold')
+    expect(promoNarrationCue({ started: true, voiceOn: true, ended: true })).toBe('hold')
+    expect(promoNarrationCue({ started: true, voiceOn: false, ended: false })).toBe('hold')
+  })
+
+  it('does not start a read again because it is longer than 10 seconds', () => {
+    let started = false
+    const cues = shots.map((shot, index) => {
+      const cue = promoNarrationCue({
+        started,
+        voiceOn: promoPreviewNarrationOn(shots, index, 6),
+        ended: false,
+      })
+      if (cue === 'start') started = true
+      return cue
+    })
+    expect(shots[1]?.durationSec).toBeGreaterThan(10)
+    expect(cues).toEqual(['wait', 'start', 'hold'])
+    expect(
+      promoNarrationCue({
+        started: true,
+        voiceOn: promoPreviewNarrationOn(shots, 2, 6),
+        ended: true,
+      })
+    ).toBe('hold')
   })
 })
