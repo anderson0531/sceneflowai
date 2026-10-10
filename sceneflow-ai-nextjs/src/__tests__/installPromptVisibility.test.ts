@@ -159,7 +159,7 @@ describe('app update prompt', () => {
     expect(companion).toContain('surface="phone-companion"')
     expect(companion).toContain('appServiceWorkerRegistration')
     expect(companion).not.toContain('companion-sw.js')
-    expect(worker).toContain('skipWaiting: false')
+    expect(worker).toContain('skipWaiting: true')
     expect(update).toContain('messageSkipWaiting')
     expect(update).toContain("addEventListener('waiting'")
     expect(update).toContain('display-mode: standalone')
