@@ -38,6 +38,24 @@ export function promoPreviewNarrationOn(
   return true
 }
 
+export type PromoNarrationCue = 'wait' | 'start' | 'hold'
+
+/**
+ * One voice playhead for the whole cut.
+ * Wait until the assigned shot, start once, then hold across later shots.
+ * A paused or finished read does not start again, and a read longer than one
+ * shot stays on that same playhead.
+ */
+export function promoNarrationCue(args: {
+  started: boolean
+  voiceOn: boolean
+  ended: boolean
+}): PromoNarrationCue {
+  if (args.started || args.ended) return 'hold'
+  if (!args.voiceOn) return 'wait'
+  return 'start'
+}
+
 export function buildPromoPreviewSequence(
   shots: Array<{
     key: string

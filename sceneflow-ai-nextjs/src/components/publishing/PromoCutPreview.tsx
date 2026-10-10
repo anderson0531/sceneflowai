@@ -9,7 +9,11 @@ import {
 } from '@/lib/publish/promoAudioMix'
 import { promoFrameClass } from '@/lib/publish/promoFrame'
 import { promoStudioWatermarkPayload } from '@/lib/publish/promoTimeline'
-import { promoPreviewNarrationOn, type PromoPreviewShot } from '@/lib/publish/promoPreviewSequence'
+import {
+  promoNarrationCue,
+  promoPreviewNarrationOn,
+  type PromoPreviewShot,
+} from '@/lib/publish/promoPreviewSequence'
 import type { PromoFrameAspect } from '@/types/publishingAssets'
 import { cn } from '@/lib/utils'
 
@@ -36,9 +40,10 @@ export interface PromoCutPreviewHandle {
  * Plays the planned cut in the promo tab with clip sound over the looping
  * music, at the same mix the trailer stitch renders. This does not start a stitch.
  *
- * Narration stays on the speakers until Preview is pressed. The lowshelf is
- * attached only after the audio context is running, so a suspended graph
- * cannot silence the voice.
+ * Narration stays on the speakers until Preview is pressed. It then starts
+ * once, on the assigned shot, and keeps that playhead across later shots.
+ * The lowshelf is attached only after the audio context is running, so a
+ * suspended graph cannot silence the voice.
  */
 export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreviewProps>(
   function PromoCutPreview(
@@ -61,8 +66,32 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
     const narrationGraphRef = useRef<AudioContext | null>(null)
     const narrationSourceRef = useRef<MediaElementAudioSourceNode | null>(null)
     const narrationConnectingRef = useRef(false)
+    const narrationCueStartedRef = useRef(false)
     const onEndedRef = useRef(onEnded)
     onEndedRef.current = onEnded
+
+    const applyNarrationCue = useCallback((narration: HTMLAudioElement, voiceOn: boolean) => {
+      const cue = promoNarrationCue({
+        started: narrationCueStartedRef.current,
+        voiceOn,
+        ended: narration.ended,
+      })
+      if (cue === 'wait') {
+        narration.pause()
+        narration.currentTime = 0
+        return
+      }
+      if (cue === 'start') {
+        narrationCueStartedRef.current = true
+        narration.currentTime = 0
+        void narration.play().catch(() => undefined)
+        return
+      }
+      // Hold the playhead. Resume a browser pause, and leave a finished read finished.
+      if (narration.paused && !narration.ended) {
+        void narration.play().catch(() => undefined)
+      }
+    }, [])
 
     const connectNarrationGraph = useCallback(() => {
       const narration = narrationRef.current
@@ -108,17 +137,17 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
     const startPreviewAudio = useCallback(() => {
       const narration = narrationRef.current
       const music = musicRef.current
+      narrationCueStartedRef.current = false
       if (narration) {
         narration.currentTime = 0
-        const started = narration.play()
+        const unlock = narration.play()
         if (narrationStartSec > 0.05) {
-          void started
-            ?.then(() => {
-              narration.pause()
-              narration.currentTime = 0
-            })
-            .catch(() => undefined)
+          narration.pause()
+          narration.currentTime = 0
+        } else {
+          narrationCueStartedRef.current = true
         }
+        void unlock?.catch(() => undefined)
       }
       if (music) {
         music.currentTime = 0
@@ -135,6 +164,10 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
       if (narrationConnectingRef.current) return
       connectNarrationGraph()
     }, [connectNarrationGraph, narrationStartSec])
+
+    useEffect(() => {
+      narrationCueStartedRef.current = false
+    }, [narrationUrl])
 
     useImperativeHandle(ref, () => ({ start: startPreviewAudio }), [startPreviewAudio])
 
@@ -177,6 +210,7 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
       const narration = narrationRef.current
       const music = musicRef.current
       if (!playing) {
+        narrationCueStartedRef.current = false
         narration?.pause()
         music?.pause()
         if (narration) narration.currentTime = 0
@@ -184,17 +218,11 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
         return
       }
       if (music) music.volume = PROMO_AUDIO_MIX.music
-      const voiceOn = promoPreviewNarrationOn(shots, index, narrationStartSec)
       if (narration) {
-        if (!voiceOn) {
-          narration.pause()
-          narration.currentTime = 0
-        } else if (narration.paused) {
-          void narration.play().catch(() => undefined)
-        }
+        applyNarrationCue(narration, promoPreviewNarrationOn(shots, index, narrationStartSec))
       }
       void music?.play().catch(() => undefined)
-    }, [playing, narrationUrl, musicUrl, shots, index, narrationStartSec])
+    }, [playing, narrationUrl, musicUrl, shots, index, narrationStartSec, applyNarrationCue])
 
     useEffect(() => {
       const music = musicRef.current
