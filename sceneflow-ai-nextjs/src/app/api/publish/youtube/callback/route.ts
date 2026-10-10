@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
       userId: string
       returnTo?: string
     }
-    const tokens = await exchangeYouTubeCode(code)
+    const tokens = await exchangeYouTubeCode(code, req.nextUrl.origin)
     await saveYouTubeTokens(state.userId, tokens)
     const returnTo = state.returnTo || fallback
     const sep = returnTo.includes('?') ? '&' : '?'

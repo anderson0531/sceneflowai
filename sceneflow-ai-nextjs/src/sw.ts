@@ -23,7 +23,8 @@ const youtubeOAuthNavigation: RuntimeCaching = {
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
-  skipWaiting: false,
+  // Activate immediately so the YouTube OAuth NetworkOnly rule is not stuck behind an old worker.
+  skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
   runtimeCaching: [youtubeOAuthNavigation, ...defaultCache],

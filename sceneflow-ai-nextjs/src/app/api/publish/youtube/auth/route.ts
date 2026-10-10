@@ -5,6 +5,8 @@ import { resolveUserId } from '@/lib/userHelper'
 
 export const dynamic = 'force-dynamic'
 
+const NO_STORE = { 'Cache-Control': 'no-store' }
+
 function returnPath(raw: string | null): string {
   const cleaned = sanitizeReturnTo(raw)
   return cleaned && cleaned.startsWith('/') ? cleaned : '/dashboard'
@@ -19,15 +21,15 @@ export async function GET(req: NextRequest) {
     }
     const userId = await resolveUserId(userIdParam)
     const state = Buffer.from(JSON.stringify({ userId, returnTo })).toString('base64url')
-    const url = getYouTubeAuthUrl(state)
-    return NextResponse.redirect(url)
+    const url = getYouTubeAuthUrl(state, req.nextUrl.origin)
+    return NextResponse.redirect(url, { headers: NO_STORE })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Auth failed'
     console.error('[YouTube Auth]', err)
     if (message.includes('not configured')) {
       const dest = new URL(returnTo, req.url)
       dest.searchParams.set('youtube', 'not_configured')
-      return NextResponse.redirect(dest)
+      return NextResponse.redirect(dest, { headers: NO_STORE })
     }
     return NextResponse.json({ error: message }, { status: 500 })
   }

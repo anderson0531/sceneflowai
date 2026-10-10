@@ -24,22 +24,60 @@ export type YouTubeTokens = {
   token_type?: string
 }
 
-function getOAuthClient(): OAuth2Client {
-  const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID || process.env.GOOGLE_CLIENT_ID
-  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET
-  const redirectUri =
-    process.env.GOOGLE_OAUTH_REDIRECT_URI ||
-    `${process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}/api/publish/youtube/callback`
-
-  if (!clientId || !clientSecret) {
-    throw new Error('YouTube OAuth is not configured (GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET)')
+function envValue(...names: string[]): string {
+  for (const name of names) {
+    const value = process.env[name]?.trim()
+    if (value) return value
   }
-
-  return new OAuth2Client(clientId, clientSecret, redirectUri)
+  return ''
 }
 
-export function getYouTubeAuthUrl(state: string): string {
-  const client = getOAuthClient()
+/** Public site first. VERCEL_URL is the deployment host and is not a registered callback. */
+function youtubeAppBaseUrl(): string {
+  const explicit = envValue('NEXT_PUBLIC_APP_URL', 'NEXTAUTH_URL')
+  if (explicit) return explicit.replace(/\/$/, '')
+  const vercel = envValue('VERCEL_URL').replace(/^https?:\/\//, '')
+  if (vercel) return `https://${vercel}`
+  return 'http://localhost:3000'
+}
+
+/**
+ * Callback Google must send the user back to.
+ * An explicit redirect wins. Otherwise use the host the connect click came from,
+ * then the public app URL, then the deployment host.
+ */
+export function youtubeRedirectUri(requestOrigin?: string): string {
+  const explicit = envValue('GOOGLE_OAUTH_REDIRECT_URI')
+  if (explicit) return explicit
+  const origin = requestOrigin?.trim().replace(/\/$/, '')
+  if (origin && /^https?:\/\//i.test(origin)) {
+    return `${origin}/api/publish/youtube/callback`
+  }
+  return `${youtubeAppBaseUrl()}/api/publish/youtube/callback`
+}
+
+export function youtubeOAuthCredentials(): { clientId: string; clientSecret: string } {
+  const clientId = envValue('GOOGLE_OAUTH_CLIENT_ID', 'GOOGLE_CLIENT_ID', 'AUTH_GOOGLE_ID')
+  const clientSecret = envValue(
+    'GOOGLE_OAUTH_CLIENT_SECRET',
+    'GOOGLE_CLIENT_SECRET',
+    'AUTH_GOOGLE_SECRET'
+  )
+  if (!clientId || !clientSecret) {
+    throw new Error(
+      'YouTube OAuth is not configured (GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET)'
+    )
+  }
+  return { clientId, clientSecret }
+}
+
+function getOAuthClient(requestOrigin?: string): OAuth2Client {
+  const { clientId, clientSecret } = youtubeOAuthCredentials()
+  return new OAuth2Client(clientId, clientSecret, youtubeRedirectUri(requestOrigin))
+}
+
+export function getYouTubeAuthUrl(state: string, requestOrigin?: string): string {
+  const client = getOAuthClient(requestOrigin)
   return client.generateAuthUrl({
     access_type: 'offline',
     prompt: 'consent',
@@ -48,8 +86,11 @@ export function getYouTubeAuthUrl(state: string): string {
   })
 }
 
-export async function exchangeYouTubeCode(code: string): Promise<YouTubeTokens> {
-  const client = getOAuthClient()
+export async function exchangeYouTubeCode(
+  code: string,
+  requestOrigin?: string
+): Promise<YouTubeTokens> {
+  const client = getOAuthClient(requestOrigin)
   const { tokens } = await client.getToken(code)
   return tokens as YouTubeTokens
 }
