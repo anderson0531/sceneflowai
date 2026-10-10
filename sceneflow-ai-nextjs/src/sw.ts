@@ -17,7 +17,9 @@ declare const self: ServiceWorkerGlobalScope
 const youtubeOAuthNavigation: RuntimeCaching = {
   matcher: ({ sameOrigin, url: { pathname } }) =>
     sameOrigin &&
-    (pathname === '/api/publish/youtube/auth' || pathname === '/api/publish/youtube/callback'),
+    (pathname === '/api/publish/youtube/auth' ||
+      pathname === '/api/auth/callback/youtube' ||
+      pathname === '/api/publish/youtube/callback'),
   handler: new NetworkOnly(),
 }
 
