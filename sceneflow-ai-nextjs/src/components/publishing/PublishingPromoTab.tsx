@@ -5,6 +5,8 @@ import { toast } from 'sonner'
 import {
   Download,
   Bot,
+  ChevronDown,
+  ChevronUp,
   Film,
   Loader2,
   Play,
@@ -20,6 +22,7 @@ import { getLanguageDisplayName } from '@/lib/publish/buildLanguageAudioTrack'
 import { collectPromoPlanFindings, type PromoPlanFinding } from '@/lib/publish/promoPlanFindings'
 import { buildPromoShotCatalog, isOptimizedShotDirection, slimPromoProductionState } from '@/lib/publish/promoShotCatalog'
 import {
+  movePromoShot,
   placePromoShot,
   promoShotIncluded,
   promoShotKey,
@@ -1004,6 +1007,35 @@ export function PublishingPromoTab({
                     )}
                     title={beat.label}
                   >
+                    <span className="w-5 shrink-0 text-center text-[11px] tabular-nums text-zinc-400">
+                      {index + 1}
+                    </span>
+                    <div className="flex shrink-0 flex-col">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-4 w-5 px-0 text-zinc-400"
+                        disabled={timelineSaving || index === 0}
+                        title="Move shot earlier"
+                        onClick={() =>
+                          void commitTimeline(movePromoShot(timelineBeats, index, index - 1))
+                        }
+                      >
+                        <ChevronUp className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-4 w-5 px-0 text-zinc-400"
+                        disabled={timelineSaving || index === timelineRows.length - 1}
+                        title="Move shot later"
+                        onClick={() =>
+                          void commitTimeline(movePromoShot(timelineBeats, index, index + 1))
+                        }
+                      >
+                        <ChevronDown className="h-3 w-3" />
+                      </Button>
+                    </div>
                     <div
                       className={cn(
                         'shrink-0 overflow-hidden rounded bg-black',
@@ -1057,7 +1089,7 @@ export function PublishingPromoTab({
                         defaultValue={Math.round(durationSec)}
                         disabled={timelineSaving}
                         title="Shot length in seconds"
-                        className="h-7 w-12 rounded border border-zinc-700 bg-zinc-950 px-1 text-[11px] text-zinc-100"
+                        className="h-7 w-16 rounded border border-zinc-700 bg-zinc-950 px-1 text-center text-[11px] tabular-nums text-zinc-100 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                         onBlur={(event) => {
                           const next = Number(event.target.value)
                           if (!Number.isFinite(next) || Math.round(next) === Math.round(durationSec)) return

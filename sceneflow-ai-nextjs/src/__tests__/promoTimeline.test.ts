@@ -3,6 +3,7 @@ import path from 'path'
 import { describe, expect, it } from 'vitest'
 import type { PromoShotCatalogEntry } from '@/lib/publish/promoShotCatalog'
 import {
+  movePromoShot,
   placePromoShot,
   promoShotIncluded,
   promoStudioWatermarkPayload,
@@ -63,6 +64,14 @@ describe('promo timeline edits', () => {
     expect(next.map((beat) => beat.beatId)).toEqual(['a', 'b'])
   })
 
+  it('moves a shot earlier or later and ignores the ends', () => {
+    const plan = [row(0, 'a'), row(0, 'b'), row(0, 'c')]
+    expect(movePromoShot(plan, 2, 0).map((beat) => beat.beatId)).toEqual(['c', 'a', 'b'])
+    expect(movePromoShot(plan, 0, 1).map((beat) => beat.beatId)).toEqual(['b', 'a', 'c'])
+    expect(movePromoShot(plan, 0, -1)).toBe(plan)
+    expect(movePromoShot(plan, 2, 2)).toBe(plan)
+  })
+
   it('keeps a 4s length and an exclude flag without the planner snap', () => {
     const edited = withPromoShotIncluded(withPromoShotDuration(row(0, 'a', 5), 4), false)
     expect(edited.durationSec).toBe(4)
@@ -105,7 +114,14 @@ describe('promo watermark', () => {
     expect(preview).toContain('promoStudioWatermarkPayload().text')
     expect(tab).toContain('Watermark · SceneFlow Studio')
     expect(tab).toContain('placePromoShot')
+    expect(tab).toContain('movePromoShot')
+    expect(tab).toContain('Move shot earlier')
+    expect(tab).toContain('Move shot later')
+    expect(tab).toContain('{index + 1}')
     expect(tab).toContain("included ? 'Exclude' : 'Include'")
     expect(tab).toContain('withPromoShotDuration')
+    expect(tab).toContain('w-16')
+    expect(tab).toContain('[appearance:textfield]')
+    expect(tab).not.toContain('w-12 rounded border border-zinc-700')
   })
 })
