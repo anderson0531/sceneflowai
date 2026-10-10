@@ -96,10 +96,65 @@ function sourceDirectionOptimized(scenes: unknown[], beat: PromoTrailerBeatPlan)
   return isOptimizedShotDirection(source?.beatDirection)
 }
 
+function narrationTrackFor(
+  scene: Record<string, unknown> | null,
+  language: string
+): { audioUrl?: string; line?: string } | undefined {
+  const tracks = scene?.dialogueAudio as
+    | Record<string, Array<{ audioUrl?: string; line?: string }>>
+    | undefined
+  const track = tracks?.[language]?.[0]
+  return track && typeof track === 'object' ? track : undefined
+}
+
 function narrationUrlFor(scene: Record<string, unknown> | null, language: string): string | undefined {
-  const tracks = scene?.dialogueAudio as Record<string, Array<{ audioUrl?: string }>> | undefined
-  const url = tracks?.[language]?.[0]?.audioUrl
+  const url = narrationTrackFor(scene, language)?.audioUrl
   return typeof url === 'string' && url.trim() ? url : undefined
+}
+
+function narrationLineFor(scene: Record<string, unknown> | null, language: string): string | undefined {
+  const line = narrationTrackFor(scene, language)?.line
+  return typeof line === 'string' && line.trim() ? line.trim() : undefined
+}
+
+function PromoAudioRow({
+  label,
+  detail,
+  ready,
+  generating,
+  disabled,
+  onGenerate,
+}: {
+  label: string
+  detail?: string
+  ready: boolean
+  generating: boolean
+  disabled: boolean
+  onGenerate: () => void
+}) {
+  return (
+    <div className="flex items-center gap-2 rounded border border-zinc-800 bg-zinc-950/80 px-2 py-1.5">
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] text-zinc-100">
+          {label}
+          <span className={cn('ml-2', ready ? 'text-zinc-500' : 'text-amber-300')}>
+            {ready ? 'Ready' : 'Needed'}
+          </span>
+        </p>
+        {detail ? <p className="truncate text-[10px] text-zinc-500">{detail}</p> : null}
+      </div>
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-7 shrink-0 px-2 text-[10px]"
+        disabled={disabled}
+        title={ready ? `Regenerate ${label.toLowerCase()}` : `Generate ${label.toLowerCase()}`}
+        onClick={onGenerate}
+      >
+        {generating ? <Loader2 className="h-3 w-3 animate-spin" /> : ready ? 'Regen' : 'Generate'}
+      </Button>
+    </div>
+  )
 }
 
 export function PublishingPromoTab({
@@ -128,6 +183,7 @@ export function PublishingPromoTab({
   const [rendering, setRendering] = useState(false)
   const [previewing, setPreviewing] = useState(false)
   const [generatingBeatKey, setGeneratingBeatKey] = useState<string | null>(null)
+  const [audioGenerating, setAudioGenerating] = useState<'narration' | 'music' | null>(null)
   const [agentRunning, setAgentRunning] = useState(false)
   const [directorOpen, setDirectorOpen] = useState(false)
   const [analysis, setAnalysis] = useState<PromoPlanFinding[] | null>(null)
@@ -317,7 +373,7 @@ export function PublishingPromoTab({
   const audiencePayload = audience.description.trim() ? audience : undefined
 
   const postScene = useCallback(
-    async (action: 'plan' | 'upsert', beatPlanBody?: PromoTrailerBeatPlan[]) => {
+    async (action: 'plan' | 'upsert' | 'narration' | 'music', beatPlanBody?: PromoTrailerBeatPlan[]) => {
       const res = await fetch('/api/publish/promo/scene', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -331,7 +387,9 @@ export function PublishingPromoTab({
           sceneScores,
           scenes,
           sceneProductionState: slimPromoProductionState(sceneProductionState),
-          ...(beatPlanBody?.length ? { beatPlan: beatPlanBody } : {}),
+          ...(beatPlanBody?.length && (action === 'plan' || action === 'upsert')
+            ? { beatPlan: beatPlanBody }
+            : {}),
         }),
       })
       const data = await res.json()
@@ -390,6 +448,21 @@ export function PublishingPromoTab({
         toast.success('Plan applied')
       } finally {
         setPlanning(false)
+      }
+    },
+    [postScene]
+  )
+
+  const handleRegenAudio = useCallback(
+    async (action: 'narration' | 'music') => {
+      setAudioGenerating(action)
+      try {
+        await postScene(action)
+        toast.success(action === 'narration' ? 'Narration ready' : 'Music ready')
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : action === 'narration' ? 'Narration failed' : 'Music failed')
+      } finally {
+        setAudioGenerating(null)
       }
     },
     [postScene]
@@ -920,6 +993,22 @@ export function PublishingPromoTab({
                   </div>
                 )
               })}
+              <PromoAudioRow
+                label="Narration"
+                detail={narrationLineFor(promoScene, language)}
+                ready={Boolean(narrationAudioUrl)}
+                generating={audioGenerating === 'narration'}
+                disabled={audioGenerating !== null}
+                onGenerate={() => void handleRegenAudio('narration')}
+              />
+              <PromoAudioRow
+                label="Music"
+                detail={typeof promoScene?.music === 'string' ? promoScene.music : undefined}
+                ready={Boolean(musicAudioUrl)}
+                generating={audioGenerating === 'music'}
+                disabled={audioGenerating !== null}
+                onGenerate={() => void handleRegenAudio('music')}
+              />
             </div>
           </div>
         )}

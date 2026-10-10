@@ -269,6 +269,7 @@ describe('Shot Direction Agent', () => {
 describe('promo audio mix', () => {
   it('keeps the music bed under the clip and ducks it further for spoken shots', () => {
     expect(PROMO_AUDIO_MIX.clip).toBeGreaterThan(PROMO_AUDIO_MIX.music)
+    expect(PROMO_AUDIO_MIX.narration).toBe(PROMO_AUDIO_MIX.clip)
     expect(PROMO_AUDIO_MIX.music).toBeLessThanOrEqual(0.25)
     expect(PROMO_AUDIO_MIX.musicDucked).toBeLessThan(PROMO_AUDIO_MIX.music)
   })
