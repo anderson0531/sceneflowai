@@ -36,6 +36,7 @@ export interface PublishingManagerProps {
   onGenerateBeatClip?: (input: PromoBeatClipRequest) => Promise<void>
   onRunPromoAgent?: (input: PromoAgentRunRequest) => Promise<void>
   onOpenDirectShot?: (input: DirectShotRequest) => void
+  onOptimizeDirection?: (input: DirectShotRequest & { policyBlocked?: boolean }) => Promise<void>
   layout?: 'dialog' | 'inline'
   hideTitle?: boolean
   initialTab?: PublishingLibraryTab
@@ -59,6 +60,7 @@ export function PublishingManager({
   onGenerateBeatClip,
   onRunPromoAgent,
   onOpenDirectShot,
+  onOptimizeDirection,
   layout = 'inline',
   hideTitle = false,
   initialTab,
@@ -183,6 +185,7 @@ export function PublishingManager({
             onGenerateBeatClip={onGenerateBeatClip}
             onRunPromoAgent={onRunPromoAgent}
             onOpenDirectShot={onOpenDirectShot}
+            onOptimizeDirection={onOptimizeDirection}
           />
         ) : null}
         {visibleTab === 'ship' ? (

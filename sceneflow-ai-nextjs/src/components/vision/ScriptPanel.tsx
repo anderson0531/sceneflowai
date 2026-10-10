@@ -200,7 +200,8 @@ import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import { useCredits } from '@/contexts/CreditsContext'
 import { ProductionBudgetManager } from '@/components/credits/ProductionBudgetManager'
 import { getProjectCreditsBudget } from '@/lib/credits/projectBudgetShared'
-import type { DirectShotTarget } from '@/lib/vision/directShotTarget'
+import type { DirectShotRequest, DirectShotTarget } from '@/lib/vision/directShotTarget'
+import { isPromoCinematicScene } from '@/lib/publish/buildPromoScene'
 import {
   resolveBeatReferenceSelection,
   saveDirectorPatchToScenes,
@@ -590,6 +591,8 @@ interface ScriptPanelProps {
   onPendingSceneReferencesHandled?: () => void
   pendingDirectShot?: DirectShotTarget | null
   onPendingDirectShotHandled?: () => void
+  /** Select a source shot. Promo rows pass openDialog false so the dialog stays closed. */
+  onOpenDirectShot?: (request: DirectShotRequest) => void
   /** Language streams configured in Production → Streams. */
   projectStreams?: ProjectStream[]
 }
@@ -670,6 +673,7 @@ function getScoreColor(score: number): string {
 }
 
 function sceneHeadingLabel(scene: any, index: number): string {
+  if (isPromoCinematicScene(scene)) return 'Promo'
   const headingText =
     typeof scene?.heading === 'string'
       ? scene.heading
@@ -913,7 +917,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateLanguageStream, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onOpenScreeningRoom, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, onEditScene, onEditSceneWithRecommendations, onPolishScene, polishingSceneIndex = null, revealPolishSceneIndex = null, onTogglePolishRecommendation, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onExpressSceneReferences, isExpressGeneratingReferences = false, onOpenReferenceLibrary, onAddDirectedLocationVersion, onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, onJumpToImpactScene, onToggleAudienceRecommendation, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onAudioRunReport, onVideoRunReport, onVideoRunCancelReady, onSceneRenderQueued, onApproveStoryboard, approvingStoryboardFor = null, onReorderBeats, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onRestoreStillVersion, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onDirectorFrame, generatingDirectSlotKey = null, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, frameGenerationQuality = 'draft', onFrameGenerationQualityChange, frameGenerationMode = 'standard', onFrameGenerationModeChange, videoGenerationQuality = 'draft', onVideoGenerationQualityChange, videoGenerationMode = 'standard', onVideoGenerationModeChange, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled, pendingSceneReferencesIndex = null, onPendingSceneReferencesHandled, pendingDirectShot = null, onPendingDirectShotHandled, projectStreams = [] }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateLanguageStream, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onOpenScreeningRoom, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, onEditScene, onEditSceneWithRecommendations, onPolishScene, polishingSceneIndex = null, revealPolishSceneIndex = null, onTogglePolishRecommendation, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onExpressSceneReferences, isExpressGeneratingReferences = false, onOpenReferenceLibrary, onAddDirectedLocationVersion, onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, onJumpToImpactScene, onToggleAudienceRecommendation, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onAudioRunReport, onVideoRunReport, onVideoRunCancelReady, onSceneRenderQueued, onApproveStoryboard, approvingStoryboardFor = null, onReorderBeats, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onRestoreStillVersion, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onDirectorFrame, generatingDirectSlotKey = null, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, frameGenerationQuality = 'draft', onFrameGenerationQualityChange, frameGenerationMode = 'standard', onFrameGenerationModeChange, videoGenerationQuality = 'draft', onVideoGenerationQualityChange, videoGenerationMode = 'standard', onVideoGenerationModeChange, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled, pendingSceneReferencesIndex = null, onPendingSceneReferencesHandled, pendingDirectShot = null, onPendingDirectShotHandled, onOpenDirectShot, projectStreams = [] }: ScriptPanelProps) {
 
   const tStudio = useTranslations('production.studio')
   const tCommon = useTranslations('common')
@@ -3430,6 +3434,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       onPendingSceneReferencesHandled={onPendingSceneReferencesHandled}
                       pendingDirectShot={pendingDirectShot}
                       onPendingDirectShotHandled={onPendingDirectShotHandled}
+                      onOpenDirectShot={onOpenDirectShot}
                       storedTranslations={storedTranslations}
                       onSaveTranslations={onSaveTranslations}
                       projectStreams={projectStreams}
@@ -4101,6 +4106,7 @@ interface SceneCardProps {
   onPendingSceneReferencesHandled?: () => void
   pendingDirectShot?: DirectShotTarget | null
   onPendingDirectShotHandled?: () => void
+  onOpenDirectShot?: (request: DirectShotRequest) => void
   storedTranslations?: ProjectTranslations
   onSaveTranslations?: (langCode: string, translations: { [sceneIndex: number]: SceneTranslation }) => Promise<void>
   projectStreams?: ProjectStream[]
@@ -4322,6 +4328,7 @@ function SceneCard({
   onPendingSceneReferencesHandled,
   pendingDirectShot = null,
   onPendingDirectShotHandled,
+  onOpenDirectShot,
   storedTranslations,
   onSaveTranslations,
   projectStreams = [],
@@ -4416,8 +4423,10 @@ function SceneCard({
     if (!sceneBeatsForTabs.some((beat) => beat.beatId === pendingDirectShot.beatId)) return
     setActiveSceneTab('direction')
     setSelectedBeatId(pendingDirectShot.beatId)
-    setDirectBeatSafety(pendingDirectShot.safety === true)
-    setDirectBeatId(pendingDirectShot.beatId)
+    if (pendingDirectShot.openDialog !== false) {
+      setDirectBeatSafety(pendingDirectShot.safety === true)
+      setDirectBeatId(pendingDirectShot.beatId)
+    }
     onPendingDirectShotHandled?.()
   }, [pendingDirectShot, sceneIdx, sceneBeatsForTabs, onPendingDirectShotHandled])
   const [shotDirectionProgress, setShotDirectionProgress] = useState<{
@@ -6528,7 +6537,23 @@ function SceneCard({
                       onScriptChange={onScriptChange}
                       beats={sceneBeatsForTabs}
                       selectedBeatId={selectedBeatId}
-                      onSelectBeat={setSelectedBeatId}
+                      onSelectBeat={(beatId) => {
+                        if (isPromoCinematicScene(scene) && onOpenDirectShot) {
+                          const source = sceneBeatsForTabs.find((entry) => entry.beatId === beatId) as
+                            | { sourceSceneId?: string; sourceSceneIndex?: number; sourceBeatId?: string }
+                            | undefined
+                          if (source?.sourceBeatId && typeof source.sourceSceneIndex === 'number') {
+                            onOpenDirectShot({
+                              sceneId: source.sourceSceneId,
+                              sceneIndex: source.sourceSceneIndex,
+                              beatId: source.sourceBeatId,
+                              openDialog: false,
+                            })
+                            return
+                          }
+                        }
+                        setSelectedBeatId(beatId)
+                      }}
                       segments={sceneProductionData?.segments}
                       promptComposition={promptComposition}
                       characters={characters}

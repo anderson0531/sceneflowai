@@ -2,6 +2,7 @@
  * Unified beat-first scene progress calculator for dashboard, checklist, and next-step banner.
  */
 
+import { isPromoCinematicScene } from '@/lib/publish/buildPromoScene'
 import {
   getSceneBeats,
   getStoryboardTimelineBeats,
@@ -159,8 +160,9 @@ export function buildSceneProgressItem(
   const sceneId =
     (scene.id as string) || (scene.sceneId as string) || `scene-${sceneIndex}`
   const heading = scene.heading
-  const name =
-    typeof heading === 'string'
+  const name = isPromoCinematicScene(scene)
+    ? 'Promo'
+    : typeof heading === 'string'
       ? heading
       : (heading as { text?: string } | undefined)?.text || `Scene ${sceneIndex + 1}`
 

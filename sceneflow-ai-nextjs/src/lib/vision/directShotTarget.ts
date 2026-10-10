@@ -11,6 +11,8 @@ export interface DirectShotTarget {
   beatId: string
   /** Open with Safety checked, for a shot whose last generate was policy-blocked. */
   safety?: boolean
+  /** Select the shot without opening the Direct Shot dialog. */
+  openDialog?: boolean
 }
 
 export interface DirectShotRequest {
@@ -18,6 +20,7 @@ export interface DirectShotRequest {
   sceneIndex: number
   beatId: string
   safety?: boolean
+  openDialog?: boolean
 }
 
 function sceneKey(scene: Record<string, unknown>, index: number): string {
@@ -56,7 +59,12 @@ export function resolveDirectShotTarget(
     sceneIndex = records.findIndex((_, index) => hasBeat(index))
   }
   if (sceneIndex < 0) return null
-  return { sceneIndex, beatId, ...(request.safety ? { safety: true } : {}) }
+  return {
+    sceneIndex,
+    beatId,
+    ...(request.safety ? { safety: true } : {}),
+    ...(request.openDialog === false ? { openDialog: false } : {}),
+  }
 }
 
 /** 1-based shot number as Direct Shot titles it (`Scene N · Shot N`). */

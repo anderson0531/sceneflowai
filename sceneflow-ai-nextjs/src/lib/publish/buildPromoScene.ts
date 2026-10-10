@@ -2,7 +2,7 @@
  * Build / upsert a cinematic promo scene from a trailer beat plan.
  */
 
-import { mintBeatId } from '@/lib/script/beatMigration'
+import { getSceneBeats, mintBeatId } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { PromoTrailerBeatPlan } from '@/types/publishingAssets'
 import type { SceneSegment, SceneProductionData } from '@/components/vision/scene-production/types'
@@ -51,6 +51,22 @@ export function findPromoSceneIndex(scenes: unknown[]): number {
 
 export function filterOutPromoScenes<T>(scenes: T[]): T[] {
   return scenes.filter((s) => !isPromoCinematicScene(s))
+}
+
+/** Source shots the current promo cut points at, as `sceneIndex:beatId`. */
+export function promoSourceShotKeys(scenes: unknown[] | undefined): Set<string> {
+  const keys = new Set<string>()
+  if (!Array.isArray(scenes)) return keys
+  for (const scene of scenes) {
+    if (!isPromoCinematicScene(scene)) continue
+    for (const beat of getSceneBeats(scene as Record<string, unknown>)) {
+      const source = beat as PromoSceneBeat
+      if (source.sourceBeatId && typeof source.sourceSceneIndex === 'number') {
+        keys.add(`${source.sourceSceneIndex}:${source.sourceBeatId}`)
+      }
+    }
+  }
+  return keys
 }
 
 export function filmSceneIndices(scenes: unknown[]): number[] {

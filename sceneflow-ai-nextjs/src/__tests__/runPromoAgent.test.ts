@@ -68,6 +68,33 @@ describe('runPromoAgent', () => {
     expect(calls.at(-1)).toBe('music')
   })
 
+  it('optimizes base or blocked direction before generating, and leaves finished clips alone', async () => {
+    const calls: string[] = []
+    const flagged = shots.map((shot) =>
+      shot.beatId === 'b' ? { ...shot, optimizeDirection: true, policyBlocked: true } : shot
+    )
+    await runPromoAgent(flagged, {
+      upsertScene: async () => {
+        calls.push('upsert')
+      },
+      ensureSegment: async (shot) => `seg-${shot.beatId}`,
+      optimizeDirection: async (shot) => {
+        calls.push(`optimize:${shot.beatId}`)
+      },
+      generateClip: async (shot) => {
+        calls.push(`clip:${shot.beatId}`)
+      },
+      generateNarration: async () => {},
+      generateMusic: async () => {},
+      onStatus: () => {},
+    })
+    const optimizeAt = calls.indexOf('optimize:b')
+    const clipAt = calls.indexOf('clip:b')
+    expect(optimizeAt).toBeGreaterThanOrEqual(0)
+    expect(clipAt).toBeGreaterThan(optimizeAt)
+    expect(calls.some((call) => call === 'optimize:a')).toBe(false)
+  })
+
   it('still generates narration and music when a clip fails', async () => {
     const calls: string[] = []
     const result = await runPromoAgent(shots, {

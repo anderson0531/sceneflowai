@@ -17,7 +17,8 @@ import { cn } from '@/lib/utils'
 import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
 import { PromoPlanDirectorDialog } from '@/components/publishing/PromoPlanDirectorDialog'
 import { getLanguageDisplayName } from '@/lib/publish/buildLanguageAudioTrack'
-import { slimPromoProductionState } from '@/lib/publish/promoShotCatalog'
+import { collectPromoPlanFindings, type PromoPlanFinding } from '@/lib/publish/promoPlanFindings'
+import { isOptimizedShotDirection, slimPromoProductionState } from '@/lib/publish/promoShotCatalog'
 import { DEFAULT_TRAILER_SEC } from '@/lib/publish/trailerPlanner'
 import { resolvePromoPlayback, promoPlanForLanguage } from '@/lib/publish/promoBeatMedia'
 import { buildPromoPreviewSequence } from '@/lib/publish/promoPreviewSequence'
@@ -35,6 +36,8 @@ import {
 } from '@/lib/publish/promoLanguage'
 import { PromoCutPreview } from '@/components/publishing/PromoCutPreview'
 import { findPromoSceneIndex, isPromoCinematicScene } from '@/lib/publish/buildPromoScene'
+import { getSceneBeats } from '@/lib/script/beatMigration'
+import { treatmentBeatsFromMetadata } from '@/lib/script/sceneDecomposition'
 import { isLanguageClipTarget } from '@/lib/scene/languageClipVersions'
 import {
   directShotNumber,
@@ -68,6 +71,8 @@ export interface PublishingPromoTabProps {
   onRunPromoAgent?: (input: PromoAgentRunRequest) => Promise<void>
   /** Open this shot in Studio's Direct Shot dialog. */
   onOpenDirectShot?: (input: DirectShotRequest) => void
+  /** Rewrite a source shot with Direct Shot optimize before it is generated. */
+  onOptimizeDirection?: (input: DirectShotRequest & { policyBlocked?: boolean }) => Promise<void>
 }
 
 const TARGET_OPTIONS = [30, 45, 60, 90, 120] as const
@@ -80,6 +85,15 @@ function isPromoDuration(value: unknown): value is PromoDuration {
 function initialDuration(metadata: unknown): PromoDuration {
   const stored = getPublishingState(metadata).promo?.targetDurationSec
   return isPromoDuration(stored) ? stored : DEFAULT_TRAILER_SEC
+}
+
+function sourceDirectionOptimized(scenes: unknown[], beat: PromoTrailerBeatPlan): boolean {
+  const scene = scenes[beat.sceneIndex]
+  if (!scene || typeof scene !== 'object') return false
+  const source = getSceneBeats(scene as Record<string, unknown>).find(
+    (entry) => entry.beatId === beat.beatId
+  )
+  return isOptimizedShotDirection(source?.beatDirection)
 }
 
 function narrationUrlFor(scene: Record<string, unknown> | null, language: string): string | undefined {
@@ -103,6 +117,7 @@ export function PublishingPromoTab({
   onGenerateBeatClip,
   onRunPromoAgent,
   onOpenDirectShot,
+  onOptimizeDirection,
 }: PublishingPromoTabProps) {
   const [targetDuration, setTargetDuration] = useState<PromoDuration>(() => initialDuration(metadata))
   const [audience, setAudience] = useState<AudienceDefinition>(() => seedPromoAudience(metadata))
@@ -115,6 +130,8 @@ export function PublishingPromoTab({
   const [generatingBeatKey, setGeneratingBeatKey] = useState<string | null>(null)
   const [agentRunning, setAgentRunning] = useState(false)
   const [directorOpen, setDirectorOpen] = useState(false)
+  const [analysis, setAnalysis] = useState<PromoPlanFinding[] | null>(null)
+  const [optimizingKey, setOptimizingKey] = useState<string | null>(null)
   const [brokenBeatKeys, setBrokenBeatKeys] = useState<Set<string>>(() => new Set())
   const metadataRef = useRef(metadata)
   metadataRef.current = metadata
@@ -197,6 +214,26 @@ export function PublishingPromoTab({
     return Array.isArray(stored) ? (stored as PromoTrailerBeatPlan[]) : []
   }, [beatPlan, promoScene])
 
+  const liveFindings = useMemo(() => {
+    if (timelineBeats.length === 0) return []
+    const vision = (metadata as { visionPhase?: Record<string, unknown> } | null)?.visionPhase
+    const references = (vision?.references as Record<string, unknown> | undefined) ?? {}
+    return collectPromoPlanFindings({
+      scenes,
+      beatPlan: timelineBeats,
+      sceneProductionState: sceneProductionState as Record<string, unknown> | undefined,
+      blueprintBeats: treatmentBeatsFromMetadata(metadata as Record<string, unknown> | null),
+      characters: Array.isArray(vision?.characters) ? vision.characters : [],
+      locationReferences: Array.isArray(references.locationReferences)
+        ? references.locationReferences
+        : [],
+      objectReferences: Array.isArray(references.objectReferences)
+        ? references.objectReferences
+        : [],
+    })
+  }, [timelineBeats, scenes, sceneProductionState, metadata])
+  const directorFindings = analysis ?? liveFindings
+
   const timelineRows = useMemo(
     () =>
       timelineBeats.map((beat) => {
@@ -241,6 +278,7 @@ export function PublishingPromoTab({
           durationSec: beat.durationSec ?? Math.max(0, beat.endSec - beat.startSec),
           videoUrl: playback.hasClip && !brokenBeatKeys.has(key) ? playback.videoUrl : undefined,
           imageUrl: brokenBeatKeys.has(key) ? undefined : playback.thumbnailUrl || beat.frameUrl,
+          beatKind: beat.beatKind,
         }))
       ),
     [timelineRows, brokenBeatKeys]
@@ -299,12 +337,18 @@ export function PublishingPromoTab({
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Promo request failed')
       if (Array.isArray(data.beatPlan)) setBeatPlan(data.beatPlan)
+      if (Array.isArray(data.analysis)) setAnalysis(data.analysis as PromoPlanFinding[])
       if (Array.isArray(data.scenes)) applyScenes(data.scenes, data.metadata)
       else if (data.metadata) {
         metadataRef.current = data.metadata
         await onSaveMetadata(data.metadata)
       }
-      return data as { beatPlan?: PromoTrailerBeatPlan[]; totalDurationSec?: number; source?: string }
+      return data as {
+        beatPlan?: PromoTrailerBeatPlan[]
+        totalDurationSec?: number
+        source?: string
+        analysis?: PromoPlanFinding[]
+      }
     },
     [
       projectId,
@@ -625,7 +669,7 @@ export function PublishingPromoTab({
               </Button>
               <Button size="sm" variant="outline" onClick={() => setDirectorOpen(true)} disabled={planning}>
                 <Clapperboard className="w-4 h-4 mr-1" />
-                Plan Director
+                Promo Director
               </Button>
             </div>
           </div>
@@ -834,6 +878,33 @@ export function PublishingPromoTab({
                         Direct Shot
                       </Button>
                     ) : null}
+                    {onOptimizeDirection &&
+                    (!hasClip &&
+                      (!sourceDirectionOptimized(scenes, beat) || playback.policyBlocked)) ? (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 shrink-0 px-2 text-[10px] text-amber-200 hover:text-amber-100"
+                        title="Rewrite this shot with Optimize direction before generating it"
+                        disabled={optimizingKey === key}
+                        onClick={() => {
+                          setOptimizingKey(key)
+                          void onOptimizeDirection({
+                            sceneId: beat.sceneId,
+                            sceneIndex: beat.sceneIndex,
+                            beatId: beat.beatId,
+                            safety: playback.policyBlocked === true,
+                            policyBlocked: playback.policyBlocked === true,
+                          })
+                            .catch((error) => {
+                              toast.error(error instanceof Error ? error.message : 'Direction optimize failed')
+                            })
+                            .finally(() => setOptimizingKey(null))
+                        }}
+                      >
+                        {optimizingKey === key ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Optimize direction'}
+                      </Button>
+                    ) : null}
                     {!hasClip ? (
                       <Button
                         size="sm"
@@ -896,6 +967,8 @@ export function PublishingPromoTab({
         sceneProductionState={sceneProductionState}
         sceneScores={sceneScores}
         currentPlan={timelineBeats}
+        findings={directorFindings}
+        onAnalysis={setAnalysis}
         onApply={handleApplyDirectorPlan}
       />
     </div>

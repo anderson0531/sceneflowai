@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { PROMO_AUDIO_MIX } from '@/lib/publish/promoAudioMix'
+import { PROMO_AUDIO_MIX, promoPreviewMusicVolume } from '@/lib/publish/promoAudioMix'
 import { promoFrameClass } from '@/lib/publish/promoFrame'
 import type { PromoPreviewShot } from '@/lib/publish/promoPreviewSequence'
 import type { PromoFrameAspect } from '@/types/publishingAssets'
@@ -44,6 +44,8 @@ export function PromoCutPreview({
     advanced.current = false
   }, [index, playing])
 
+  const musicKind = shots[index]?.beatKind
+
   useEffect(() => {
     if (!playing) return
     if (index >= shots.length) onEndedRef.current()
@@ -74,6 +76,12 @@ export function PromoCutPreview({
     void narration?.play().catch(() => undefined)
     void music?.play().catch(() => undefined)
   }, [playing, narrationUrl, musicUrl])
+
+  useEffect(() => {
+    const music = musicRef.current
+    if (!music) return
+    music.volume = promoPreviewMusicVolume({ beatKind: musicKind })
+  }, [musicKind, playing])
 
   const startClip = useCallback((video: HTMLVideoElement | null) => {
     if (!video) return

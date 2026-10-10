@@ -20,8 +20,10 @@ import {
   narrationAudioPathname,
   storeNarrationAudio,
 } from '@/lib/blueprint/narrationAudioCache'
+import { analyzePromoPlan } from '@/lib/publish/analyzePromoPlan'
 import { buildPromoShotCatalog } from '@/lib/publish/promoShotCatalog'
 import { normalizePromoModelPlan, planPromoTrailerWithModel } from '@/lib/publish/promoPlanModel'
+import { treatmentBeatsFromMetadata } from '@/lib/script/sceneDecomposition'
 import { promoLanguageName, promoNarrationWordBudget } from '@/lib/publish/promoLanguage'
 import { upsertPublishingState } from '@/lib/publish/publishingState'
 import {
@@ -292,6 +294,7 @@ export async function POST(request: NextRequest) {
         : {}),
     }
 
+    const blueprintBeats = treatmentBeatsFromMetadata(metadata)
     const planInput = {
       scenes,
       sceneProductionState: productionState,
@@ -302,12 +305,39 @@ export async function POST(request: NextRequest) {
       logline: typeof project.description === 'string' ? project.description : undefined,
       genre: typeof project.genre === 'string' ? project.genre : undefined,
       audienceText,
+      blueprintBeats,
       directorNotes: typeof body.directorNotes === 'string' ? body.directorNotes : undefined,
       currentPlan: Array.isArray(body.beatPlan) ? body.beatPlan : undefined,
     }
 
+    const reviewPlan = async (beatPlan: import('@/types/publishingAssets').PromoTrailerBeatPlan[]) => {
+      const visionPhase = (metadata.visionPhase as Record<string, unknown> | undefined) ?? {}
+      const references = (visionPhase.references as Record<string, unknown> | undefined) ?? {}
+      try {
+        return await analyzePromoPlan({
+          scenes,
+          beatPlan,
+          sceneProductionState: productionState,
+          blueprintBeats,
+          characters: Array.isArray(visionPhase.characters) ? visionPhase.characters : [],
+          locationReferences: Array.isArray(references.locationReferences)
+            ? references.locationReferences
+            : [],
+          objectReferences: Array.isArray(references.objectReferences)
+            ? references.objectReferences
+            : [],
+          audienceText,
+          title: project.title,
+        })
+      } catch (error) {
+        console.warn('[Promo plan] Analysis failed:', error)
+        return []
+      }
+    }
+
     if (action === 'plan') {
       const plan = await planPromoTrailerWithModel(planInput)
+      const analysis = await reviewPlan(plan.beatPlan)
       metadata = mergePromoPublishing(metadata, promoOptions)
       project.metadata = metadata
       project.changed('metadata', true)
@@ -319,6 +349,7 @@ export async function POST(request: NextRequest) {
         totalDurationSec: plan.totalDurationSec,
         targetDurationSec: plan.targetDurationSec,
         source: plan.source,
+        analysis,
         metadata,
       })
     }
@@ -331,6 +362,7 @@ export async function POST(request: NextRequest) {
               catalog,
               picks: body.beatPlan,
               targetDurationSec,
+              directorNotes: planInput.directorNotes,
             })
           : null
       const plan = accepted ?? (await planPromoTrailerWithModel(planInput))
@@ -354,6 +386,7 @@ export async function POST(request: NextRequest) {
         productionSeed as unknown as Record<string, unknown>
       )
       metadata = mergePromoPublishing(metadata, promoOptions)
+      const analysis = await reviewPlan(plan.beatPlan)
 
       project.metadata = metadata
       project.changed('metadata', true)
@@ -366,6 +399,7 @@ export async function POST(request: NextRequest) {
         totalDurationSec: plan.totalDurationSec,
         targetDurationSec: plan.targetDurationSec,
         source: plan.source,
+        analysis,
         promoScene: scene,
         scenes,
         metadata,

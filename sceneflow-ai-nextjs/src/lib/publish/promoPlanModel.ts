@@ -8,9 +8,13 @@
 
 import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import {
+  dialogueClipDuration,
+  dropExtraIntroShots,
+  findPromoTitleCard,
+  isPromoTitleCard,
+} from '@/lib/publish/promoPlanConstraints'
+import {
   buildPromoShotCatalog,
-  MIN_PROMO_CLIP_SEC,
-  MAX_PROMO_CLIP_SEC,
   trailerRoleForBeatRole,
   type PromoShotCatalogEntry,
 } from '@/lib/publish/promoShotCatalog'
@@ -32,7 +36,9 @@ export interface PromoModelPlanInput extends TrailerPlannerInput {
   genre?: string
   /** Audience Resonance text. Steers which shots and what pacing the model keeps. */
   audienceText?: string
-  /** Plan Director note for this revision. */
+  /** Blueprint beat titles. Coverage, not screenplay order. */
+  blueprintBeats?: Array<{ title?: string; intent?: string }>
+  /** Promo Director note for this revision. */
   directorNotes?: string
   /** Plan the director is revising. Omitted on a first composition. */
   currentPlan?: PromoTrailerBeatPlan[]
@@ -50,9 +56,11 @@ function clampTarget(targetDurationSec: number | undefined): number {
   return Math.min(MAX_TRAILER_SEC, Math.max(MIN_TRAILER_SEC, target))
 }
 
-function clampClip(durationSec: number): number {
-  if (!Number.isFinite(durationSec)) return MIN_PROMO_CLIP_SEC
-  return Math.min(MAX_PROMO_CLIP_SEC, Math.max(MIN_PROMO_CLIP_SEC, Math.round(durationSec)))
+function clampClip(
+  shot: PromoShotCatalogEntry,
+  durationSec: number
+): number {
+  return dialogueClipDuration(shot, durationSec)
 }
 
 function asTrailerRole(value: unknown, beatRole?: string): PromoTrailerRole {
@@ -94,13 +102,14 @@ function sumDuration(picks: ModelPick[]): number {
 }
 
 /**
- * Keep the model's order. Drop unknown ids. Force hero shots in.
- * Each clip is 4–6s. A plan that cannot land in 30–120s is rejected.
+ * Keep the model's order. Drop unknown ids. Force the title card and hero shots in.
+ * Dialogue clips follow the spoken line. A plan that cannot land in 30–120s is rejected.
  */
 export function normalizePromoModelPlan(opts: {
   catalog: PromoShotCatalogEntry[]
   picks: unknown
   targetDurationSec?: number
+  directorNotes?: string
 }): TrailerPlannerResult | null {
   const rawPicks = readPicks(opts.picks)
   if (!rawPicks) return null
@@ -119,7 +128,7 @@ export function normalizePromoModelPlan(opts: {
       pick: {
         sceneIndex: shot.sceneIndex,
         beatId: shot.beatId,
-        durationSec: clampClip(durationSec),
+        durationSec: clampClip(shot, durationSec),
         trailerRole: asTrailerRole(trailerRole, shot.beatRole),
       },
     })
@@ -150,12 +159,31 @@ export function normalizePromoModelPlan(opts: {
     push(shot, shot.durationSec, trailerRoleForBeatRole(shot.beatRole), insertAt >= 0 ? insertAt : selected.length)
   }
 
+  const keptIntros = dropExtraIntroShots(selected, opts.directorNotes)
+  selected.length = 0
+  selected.push(...keptIntros)
+
+  const title = findPromoTitleCard(opts.catalog)
+  if (title) {
+    const titleKey = `${title.sceneIndex}:${title.beatId}`
+    const existing = selected.findIndex(
+      (item) => `${item.shot.sceneIndex}:${item.shot.beatId}` === titleKey
+    )
+    if (existing >= 0) {
+      const [item] = selected.splice(existing, 1)
+      item!.pick.trailerRole = 'button'
+      selected.push(item!)
+    } else {
+      push(title, title.durationSec, 'button', selected.length)
+    }
+  }
+
   if (selected.length === 0) return null
 
   while (sumDuration(selected.map((item) => item.pick)) > targetDurationSec) {
     let dropAt = -1
     for (let i = selected.length - 1; i >= 0; i--) {
-      if (!selected[i]!.shot.hero) {
+      if (!selected[i]!.shot.hero && !isPromoTitleCard(selected[i]!.shot)) {
         dropAt = i
         break
       }
@@ -191,6 +219,7 @@ export function buildPromoPlanPrompt(input: {
   catalog: PromoShotCatalogEntry[]
   audienceText?: string
   directorNotes?: string
+  blueprintBeats?: Array<{ title?: string; intent?: string }>
   currentPlan?: PromoTrailerBeatPlan[]
 }): string {
   const shots = input.catalog.map((shot) => ({
@@ -217,6 +246,13 @@ export function buildPromoPlanPrompt(input: {
 
   const audience = input.audienceText?.trim()
   const notes = input.directorNotes?.trim()
+  const blueprint = (input.blueprintBeats ?? [])
+    .map((beat, index) => {
+      const name = beat.title?.trim() || beat.intent?.trim()
+      return name ? `${index + 1}. ${name}` : ''
+    })
+    .filter(Boolean)
+    .join('\n')
 
   return `Compose the most effective cinematic promo trailer for this production.
 
@@ -226,6 +262,7 @@ ${input.genre?.trim() ? `Genre: ${input.genre.trim()}` : ''}
 Target length: ${input.targetDurationSec} seconds (stay between 30 and 120).
 ${audience ? `\nTarget audience:\n${audience}\n` : ''}
 ${notes ? `\nDirector notes:\n${notes}\n` : ''}
+${blueprint ? `\nBlueprint beats to cover (coverage, not screenplay order):\n${blueprint}\n` : ''}
 ${current?.length ? `\nCurrent plan to revise:\n${JSON.stringify(current)}\n` : ''}
 Shots (every shot in the production; choose from these ids only):
 ${JSON.stringify(shots)}
@@ -235,9 +272,12 @@ Rules:
 - hasStill and hasClip are production notes. A shot with neither can still be the best shot in the trailer.
 - Choose shots and pacing that resonate with the target audience.
 - When director notes are present, follow them and revise the current plan instead of ignoring it.
-- Order the trailer for impact: hook, then rising shots, then a peak, then a button. Do not follow screenplay order.
+- Order the trailer for impact: hook, then rising shots, then a peak, then the title as the button. Do not follow screenplay order.
+- Cover the blueprint beat promises. Do not replay them in screenplay order.
+- End on the title_reveal shot from the title sequence. A credit beat is not the title.
 - Include every shot marked hero.
-- Each durationSec is an integer from 4 to 6.
+- At most one introduction of each protagonist, unless the director note asks to keep another.
+- Dialogue durationSec is the spoken length, an integer from 4 to 10. Action, title, and credit shots stay between 4 and 6.
 - The durations should add up close to the target.
 - Do not invent sceneIndex or beatId values.
 - trailerRole is one of: hook, rise, peak, button.
@@ -269,6 +309,7 @@ export async function planPromoTrailerWithModel(
       catalog,
       audienceText: input.audienceText,
       directorNotes: input.directorNotes,
+      blueprintBeats: input.blueprintBeats,
       currentPlan: input.currentPlan,
     }), {
       model: getGeminiTextModel('flash'),
@@ -281,6 +322,7 @@ export async function planPromoTrailerWithModel(
       catalog,
       picks: parseModelJson(result.text),
       targetDurationSec,
+      directorNotes: input.directorNotes,
     })
     if (normalized) return normalized
   } catch (error) {
