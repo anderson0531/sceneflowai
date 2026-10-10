@@ -412,6 +412,7 @@ import type { AutoAddedObject } from '@/components/vision/ObjectSuggestionPanel'
 import {
   PublishingLibraryDialog,
 } from '@/components/publishing/PublishingLibraryDialog'
+import { PromoStudioDialog } from '@/components/publishing/PromoStudioDialog'
 import {
   computePublishingReadiness,
   getPublishingState,
@@ -815,6 +816,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const openPublishing = useCallback((tab?: PublishingLibraryTab) => {
     setPublishingInitialTab(tab)
     setPublishingLibraryOpen(true)
+  }, [])
+  const [promoStudioOpen, setPromoStudioOpen] = useState(false)
+  const openPromo = useCallback(() => {
+    setPromoStudioOpen(true)
   }, [])
   const router = useRouter()
   const { data: session } = useSession()
@@ -1847,6 +1852,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const newParams = new URLSearchParams(searchParams.toString())
       newParams.set('view', 'streams')
       window.history.replaceState({}, '', `${window.location.pathname}?${newParams}`)
+    }
+    if (searchParams.get('youtube') === 'not_configured') {
+      toast.error(
+        'YouTube is not configured. Set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET on the server.'
+      )
+      const newParams = new URLSearchParams(searchParams.toString())
+      newParams.delete('youtube')
+      const next = newParams.toString()
+      window.history.replaceState(
+        {},
+        '',
+        next ? `${window.location.pathname}?${next}` : window.location.pathname
+      )
     }
   }, [searchParams])
 
@@ -8801,6 +8819,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       'screening-room:preview': () => setProductionViewWithUrl('screening'),
       'screening-room:assemble': () => setProductionViewWithUrl('streams'),
       'screening-room:publish': () => openPublishing('youtube'),
+      'studio:open-promo': () => openPromo(),
       'screening-room:create-screening': () => openPublishing('screening'),
       'production:update-reviews': () => handlersRef.current.generateReviews(),
       'production:review-analysis': () => setShowReviewModal(true),
@@ -8838,7 +8857,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         window.removeEventListener(eventName, listener)
       })
     }
-  }, [openScreeningRoomFromVisionUi, openReferenceLibrary, openPublishing, setProductionViewWithUrl])
+  }, [openScreeningRoomFromVisionUi, openReferenceLibrary, openPublishing, openPromo, setProductionViewWithUrl])
   // ============================================================================
 
   const loadProject = async (skipAutoGeneration: boolean = false) => {
@@ -17496,6 +17515,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onCancelReviews={() => void scriptAnalysisJob.cancel()}
                 onShowReviews={handleAudienceHeaderClick}
                 onOpenReferences={() => openReferenceLibrary('cast')}
+                onOpenPromo={openPromo}
                 onOpenPublishing={() => openPublishing()}
                 publishingBlockerCount={publishingReadiness.blockers.length}
                 directionReadiness={directionReadiness}
@@ -17845,8 +17865,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           setPublishingLibraryOpen(false)
           setProductionViewWithUrl('screening')
         }}
+      />
+
+      <PromoStudioDialog
+        open={promoStudioOpen}
+        onOpenChange={setPromoStudioOpen}
+        projectId={projectId}
+        projectTitle={project?.title || script?.title}
+        metadata={project?.metadata}
+        script={script}
+        userId={getUserId()}
+        streams={projectStreams}
+        sceneProductionState={sceneProductionState}
+        onSaveMetadata={handleSavePublishingMetadata}
         onPreviewPromo={(language) => {
-          setPublishingLibraryOpen(false)
+          setPromoStudioOpen(false)
           setScreeningPlaybackHint({ mode: 'promo', language: language || 'en' })
           setProductionViewWithUrl('screening')
         }}
@@ -17866,7 +17899,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           })
         }}
         onOpenPromoInStudio={() => {
-          setPublishingLibraryOpen(false)
+          setPromoStudioOpen(false)
           setProductionViewWithUrl('studio')
         }}
         onGenerateBeatClip={handleGeneratePromoBeatClip}

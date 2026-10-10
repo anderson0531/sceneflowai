@@ -525,6 +525,41 @@ describe('resolvePromoBeatMedia', () => {
 })
 
 describe('promo source guards', () => {
+  it('opens Promo from the studio header and keeps it publishable', () => {
+    const panel = readFileSync(
+      path.join(process.cwd(), 'src/components/vision/ScriptPanel.tsx'),
+      'utf8'
+    )
+    const promo = panel.indexOf("tStudio('promo')")
+    const publish = panel.indexOf("tStudio('publish')")
+    expect(promo).toBeGreaterThan(-1)
+    expect(publish).toBeGreaterThan(promo)
+    const manager = readFileSync(
+      path.join(process.cwd(), 'src/components/publishing/PublishingManager.tsx'),
+      'utf8'
+    )
+    expect(manager).not.toContain("key: 'promo'")
+    const ship = readFileSync(
+      path.join(process.cwd(), 'src/components/publishing/PublishingPackageShipTab.tsx'),
+      'utf8'
+    )
+    expect(ship).toContain("{ id: 'promo', label: 'Promo' }")
+    const page = readFileSync(
+      path.join(process.cwd(), 'src/app/dashboard/workflow/vision/[projectId]/page.tsx'),
+      'utf8'
+    )
+    expect(page).toContain('<PromoStudioDialog')
+    expect(page).toContain("searchParams.get('youtube') === 'not_configured'")
+    const worker = readFileSync(path.join(process.cwd(), 'src/sw.ts'), 'utf8')
+    expect(worker).toContain('/api/publish/youtube/auth')
+    expect(worker).toContain('/api/publish/youtube/callback')
+    const auth = readFileSync(
+      path.join(process.cwd(), 'src/app/api/publish/youtube/auth/route.ts'),
+      'utf8'
+    )
+    expect(auth).toContain("dest.searchParams.set('youtube', 'not_configured')")
+  })
+
   it('Screening Room toolbar includes Promo mode', () => {
     const player = path.join(process.cwd(), 'src/components/vision/AudioGalleryPlayer.tsx')
     expect(existsSync(player)).toBe(true)

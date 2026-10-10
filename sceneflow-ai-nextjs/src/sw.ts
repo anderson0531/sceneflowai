@@ -2,8 +2,8 @@
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
 import { defaultCache } from '@serwist/turbopack/worker'
-import type { PrecacheEntry, SerwistGlobalConfig } from 'serwist'
-import { Serwist } from 'serwist'
+import type { PrecacheEntry, RuntimeCaching, SerwistGlobalConfig } from 'serwist'
+import { NetworkOnly, Serwist } from 'serwist'
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -13,12 +13,20 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope
 
+/** Document navigations. NetworkFirst on /api/* turns OAuth redirects into no-response. */
+const youtubeOAuthNavigation: RuntimeCaching = {
+  matcher: ({ sameOrigin, url: { pathname } }) =>
+    sameOrigin &&
+    (pathname === '/api/publish/youtube/auth' || pathname === '/api/publish/youtube/callback'),
+  handler: new NetworkOnly(),
+}
+
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: false,
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: defaultCache,
+  runtimeCaching: [youtubeOAuthNavigation, ...defaultCache],
 })
 
 serwist.addEventListeners()

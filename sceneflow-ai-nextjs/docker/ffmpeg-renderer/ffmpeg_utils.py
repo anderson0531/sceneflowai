@@ -864,6 +864,7 @@ def build_ffmpeg_command(
             chain.append(f"adelay={delay_ms}|{delay_ms}")
             if tempo:
                 chain.append(tempo)
+            chain.extend(narration_bass_filters(clip))
             chain.append(f"volume={volume}")
             chain.append("aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo")
             audio_filter = f"[{input_idx}:a]{','.join(chain)}[a{i}]"
@@ -1233,6 +1234,13 @@ def audio_source_window_filters(clip: Dict[str, Any]) -> List[str]:
     return parts
 
 
+def narration_bass_filters(clip: Dict[str, Any]) -> List[str]:
+    """Low-shelf on narration so the voice has body under the mix."""
+    if clip.get('type') != 'narration':
+        return []
+    return ['bass=g=6:f=120:w=0.5']
+
+
 def audio_fade_filters(clip: Dict[str, Any]) -> List[str]:
     """afade in/out on the clip's own timeline, before adelay shifts it."""
     fade_in = _clip_seconds(clip, 'fadeInSec')
@@ -1257,6 +1265,7 @@ def _overlay_audio_filter(input_idx: int, clip: Dict[str, Any], label: str) -> s
     chain.append(f'adelay={delay_ms}|{delay_ms}')
     if tempo:
         chain.append(tempo)
+    chain.extend(narration_bass_filters(clip))
     chain.append(f'volume={volume}')
     chain.append('aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo')
     return f'[{input_idx}:a]{",".join(chain)}{label}'
@@ -1616,6 +1625,7 @@ def build_concat_ffmpeg_command(
             chain.append(f"adelay={delay_ms}|{delay_ms}")
             if tempo:
                 chain.append(tempo)
+            chain.extend(narration_bass_filters(clip))
             chain.append(f"volume={volume}")
             chain.append("aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo")
             audio_filter = f"[{input_idx}:a]{','.join(chain)}[overlay_a{i}]"

@@ -1,19 +1,16 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react'
-import { Clapperboard, Film, Package, Share2 } from 'lucide-react'
+import { Film, Package, Share2 } from 'lucide-react'
 import { ProductTabList } from '@/components/product/ProductTabList'
 import { PublishingReadinessBanner } from './PublishingReadinessBanner'
 import { PublishingFinalStreamsTab } from './PublishingFinalStreamsTab'
 import { PublishingScreeningTab } from './PublishingScreeningTab'
-import { PublishingPromoTab } from './PublishingPromoTab'
 import { PublishingPackageShipTab } from './PublishingPackageShipTab'
 import { computePublishingReadiness, getPublishingState } from '@/lib/publish/publishingState'
-import type { PromoAgentRunRequest, PromoBeatClipRequest } from '@/lib/publish/promoLanguage'
 import type { PublishingLibraryTab } from '@/types/publishingAssets'
 import type { ProjectStream } from '@/lib/streams/projectStreams'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
-import type { DirectShotRequest } from '@/lib/vision/directShotTarget'
 
 export interface PublishingManagerProps {
   projectId: string
@@ -30,13 +27,6 @@ export interface PublishingManagerProps {
   onPreviewStream: (language: string) => void
   sceneProductionState: Record<string, SceneProductionData>
   onOpenScreeningView?: () => void
-  onPreviewPromo?: (language?: string) => void
-  onScriptScenesUpdated?: (scenes: unknown[]) => void
-  onOpenPromoInStudio?: (sceneId: string) => void
-  onGenerateBeatClip?: (input: PromoBeatClipRequest) => Promise<void>
-  onRunPromoAgent?: (input: PromoAgentRunRequest) => Promise<void>
-  onOpenDirectShot?: (input: DirectShotRequest) => void
-  onOptimizeDirection?: (input: DirectShotRequest & { policyBlocked?: boolean }) => Promise<void>
   layout?: 'dialog' | 'inline'
   hideTitle?: boolean
   initialTab?: PublishingLibraryTab
@@ -54,22 +44,17 @@ export function PublishingManager({
   onPreviewStream,
   sceneProductionState,
   onOpenScreeningView,
-  onPreviewPromo,
-  onScriptScenesUpdated,
-  onOpenPromoInStudio,
-  onGenerateBeatClip,
-  onRunPromoAgent,
-  onOpenDirectShot,
-  onOptimizeDirection,
   layout = 'inline',
   hideTitle = false,
   initialTab,
 }: PublishingManagerProps) {
-  const [activeTab, setActiveTab] = useState<PublishingLibraryTab>(initialTab ?? 'streams')
+  const libraryTab = (tab?: PublishingLibraryTab): PublishingLibraryTab =>
+    !tab || tab === 'promo' ? 'streams' : tab
+  const [activeTab, setActiveTab] = useState<PublishingLibraryTab>(libraryTab(initialTab))
   const visibleTab = activeTab === 'youtube' ? 'ship' : activeTab
 
   useEffect(() => {
-    if (initialTab) setActiveTab(initialTab)
+    if (initialTab && initialTab !== 'promo') setActiveTab(initialTab)
   }, [initialTab])
 
   const publishingState = useMemo(() => getPublishingState(metadata), [metadata])
@@ -91,11 +76,6 @@ export function PublishingManager({
 
   const screeningCount = publishingState.streams.filter((s) => s.publish?.shareUrl).length
   const packageCount = (publishingState.units ?? []).filter((unit) => unit.mp4Url).length
-  const trailerReady =
-    publishingState.promo?.trailer?.status === 'ready' ||
-    Object.values(publishingState.promo?.trailersByLanguage || {}).some((trailer) => trailer.status === 'ready')
-      ? 1
-      : 0
 
   const tabs = [
     {
@@ -109,12 +89,6 @@ export function PublishingManager({
       label: 'Screening',
       icon: <Share2 />,
       count: screeningCount,
-    },
-    {
-      key: 'promo',
-      label: 'Promo',
-      icon: <Clapperboard />,
-      count: trailerReady,
     },
     {
       key: 'ship',
@@ -167,25 +141,6 @@ export function PublishingManager({
             streams={streams}
             onSaveStreams={onSaveStreams}
             onOpenScreeningView={onOpenScreeningView}
-          />
-        ) : null}
-        {activeTab === 'promo' ? (
-          <PublishingPromoTab
-            projectId={projectId}
-            projectTitle={projectTitle}
-            metadata={metadata}
-            script={script}
-            streams={streams}
-            userId={userId}
-            sceneProductionState={sceneProductionState}
-            onSaveMetadata={onSaveMetadata}
-            onScriptScenesUpdated={onScriptScenesUpdated}
-            onPreviewPromo={onPreviewPromo}
-            onOpenPromoInStudio={onOpenPromoInStudio}
-            onGenerateBeatClip={onGenerateBeatClip}
-            onRunPromoAgent={onRunPromoAgent}
-            onOpenDirectShot={onOpenDirectShot}
-            onOptimizeDirection={onOptimizeDirection}
           />
         ) : null}
         {visibleTab === 'ship' ? (

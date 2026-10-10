@@ -59,9 +59,9 @@ describe('resolvePromoNarrationVoiceId', () => {
 })
 
 describe('promo narration level and timeline controls', () => {
-  it('puts narration at the clip level', () => {
-    expect(PROMO_AUDIO_MIX.narration).toBe(0.85)
-    expect(PROMO_AUDIO_MIX.narration).toBe(PROMO_AUDIO_MIX.clip)
+  it('puts narration above the clip level', () => {
+    expect(PROMO_AUDIO_MIX.narration).toBe(1.5)
+    expect(PROMO_AUDIO_MIX.narration).toBeGreaterThan(PROMO_AUDIO_MIX.clip)
     expect(PROMO_AUDIO_MIX.narration).toBeGreaterThan(PROMO_AUDIO_MIX.music)
   })
 

@@ -269,7 +269,8 @@ describe('Shot Direction Agent', () => {
 describe('promo audio mix', () => {
   it('keeps the music bed under the clip and ducks it further for spoken shots', () => {
     expect(PROMO_AUDIO_MIX.clip).toBeGreaterThan(PROMO_AUDIO_MIX.music)
-    expect(PROMO_AUDIO_MIX.narration).toBe(PROMO_AUDIO_MIX.clip)
+    expect(PROMO_AUDIO_MIX.narration).toBe(1.5)
+    expect(PROMO_AUDIO_MIX.narration).toBeGreaterThan(PROMO_AUDIO_MIX.clip)
     expect(PROMO_AUDIO_MIX.music).toBeLessThanOrEqual(0.25)
     expect(PROMO_AUDIO_MIX.musicDucked).toBeLessThan(PROMO_AUDIO_MIX.music)
   })
@@ -280,7 +281,10 @@ describe('promo audio mix', () => {
     expect(video).not.toMatch(/\bmuted\b/)
     expect(source).toContain('video.volume = PROMO_AUDIO_MIX.clip')
     expect(source).toContain('promoPreviewMusicVolume')
-    expect(source).toContain('narration.volume = PROMO_AUDIO_MIX.narration')
+    expect(source).toContain("shelf.type = 'lowshelf'")
+    expect(source).toContain('shelf.frequency.value = PROMO_NARRATION_BASS_HZ')
+    expect(source).toContain('shelf.gain.value = PROMO_NARRATION_BASS_DB')
+    expect(source).toContain('gain.gain.value = PROMO_AUDIO_MIX.narration')
     expect(promoPreviewMusicVolume({ beatKind: 'dialogue' })).toBe(PROMO_AUDIO_MIX.musicDucked)
     expect(promoPreviewMusicVolume({ beatKind: 'narration' })).toBe(PROMO_AUDIO_MIX.musicDucked)
     expect(promoPreviewMusicVolume({ beatKind: 'action' })).toBe(PROMO_AUDIO_MIX.music)

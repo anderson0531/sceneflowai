@@ -3,9 +3,11 @@
 import unittest
 
 from ffmpeg_utils import (
+    _overlay_audio_filter,
     build_concat_ffmpeg_command,
     build_stream_copy_ffmpeg_command,
     full_stream_copy_block_reason,
+    narration_bass_filters,
     resolve_encode_settings,
     resolve_output_size,
     video_stream_copy_block_reason,
@@ -163,6 +165,18 @@ class StreamCopyEligibilityTest(unittest.TestCase):
         self.assertEqual(cmd[cmd.index('-c:v') + 1], 'copy')
         self.assertIn('aac', cmd)
         self.assertNotIn('libx264', cmd)
+
+
+class NarrationBassTests(unittest.TestCase):
+    def test_shelf_is_only_on_narration(self):
+        self.assertEqual(narration_bass_filters({'type': 'narration'}), ['bass=g=6:f=120:w=0.5'])
+        self.assertEqual(narration_bass_filters({'type': 'music'}), [])
+
+    def test_overlay_filter_places_the_shelf_before_volume(self):
+        narration = _overlay_audio_filter(2, {'type': 'narration', 'volume': 1.5, 'startTime': 0}, '[na]')
+        music = _overlay_audio_filter(3, {'type': 'music', 'volume': 0.22, 'startTime': 0}, '[mu]')
+        self.assertIn('bass=g=6:f=120:w=0.5,volume=1.5', narration)
+        self.assertNotIn('bass=', music)
 
 
 if __name__ == '__main__':
