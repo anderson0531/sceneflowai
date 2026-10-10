@@ -24,19 +24,19 @@ export type YouTubeTokens = {
   token_type?: string
 }
 
-function envValue(...names: string[]): string {
-  for (const name of names) {
-    const value = process.env[name]?.trim()
-    if (value) return value
-  }
-  return ''
+/** Registered on the Google OAuth web client. The publish callback remains an alias. */
+export const YOUTUBE_OAUTH_CALLBACK_PATH = '/api/auth/callback/youtube'
+
+function trimEnv(value: string | undefined): string {
+  return value?.trim() || ''
 }
 
 /** Public site first. VERCEL_URL is the deployment host and is not a registered callback. */
 function youtubeAppBaseUrl(): string {
-  const explicit = envValue('NEXT_PUBLIC_APP_URL', 'NEXTAUTH_URL')
+  const explicit =
+    trimEnv(process.env.NEXT_PUBLIC_APP_URL) || trimEnv(process.env.NEXTAUTH_URL)
   if (explicit) return explicit.replace(/\/$/, '')
-  const vercel = envValue('VERCEL_URL').replace(/^https?:\/\//, '')
+  const vercel = trimEnv(process.env.VERCEL_URL).replace(/^https?:\/\//, '')
   if (vercel) return `https://${vercel}`
   return 'http://localhost:3000'
 }
@@ -47,22 +47,22 @@ function youtubeAppBaseUrl(): string {
  * then the public app URL, then the deployment host.
  */
 export function youtubeRedirectUri(requestOrigin?: string): string {
-  const explicit = envValue('GOOGLE_OAUTH_REDIRECT_URI')
+  const explicit = trimEnv(process.env.GOOGLE_OAUTH_REDIRECT_URI)
   if (explicit) return explicit
   const origin = requestOrigin?.trim().replace(/\/$/, '')
-  if (origin && /^https?:\/\//i.test(origin)) {
-    return `${origin}/api/publish/youtube/callback`
-  }
-  return `${youtubeAppBaseUrl()}/api/publish/youtube/callback`
+  const base = origin && /^https?:\/\//i.test(origin) ? origin : youtubeAppBaseUrl()
+  return `${base}${YOUTUBE_OAUTH_CALLBACK_PATH}`
 }
 
 export function youtubeOAuthCredentials(): { clientId: string; clientSecret: string } {
-  const clientId = envValue('GOOGLE_OAUTH_CLIENT_ID', 'GOOGLE_CLIENT_ID', 'AUTH_GOOGLE_ID')
-  const clientSecret = envValue(
-    'GOOGLE_OAUTH_CLIENT_SECRET',
-    'GOOGLE_CLIENT_SECRET',
-    'AUTH_GOOGLE_SECRET'
-  )
+  const clientId =
+    trimEnv(process.env.GOOGLE_OAUTH_CLIENT_ID) ||
+    trimEnv(process.env.GOOGLE_CLIENT_ID) ||
+    trimEnv(process.env.AUTH_GOOGLE_ID)
+  const clientSecret =
+    trimEnv(process.env.GOOGLE_OAUTH_CLIENT_SECRET) ||
+    trimEnv(process.env.GOOGLE_CLIENT_SECRET) ||
+    trimEnv(process.env.AUTH_GOOGLE_SECRET)
   if (!clientId || !clientSecret) {
     throw new Error(
       'YouTube OAuth is not configured (GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET)'

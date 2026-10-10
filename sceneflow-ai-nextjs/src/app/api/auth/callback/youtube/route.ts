@@ -3,7 +3,7 @@ import { handleYouTubeOAuthCallback } from '@/lib/publish/youtubeOAuthCallback'
 
 export const dynamic = 'force-dynamic'
 
-/** Alias for clients registered against the older publish callback path. */
+/** Google OAuth redirect registered for https://sceneflowai.studio. */
 export async function GET(req: NextRequest) {
   return handleYouTubeOAuthCallback(req)
 }
