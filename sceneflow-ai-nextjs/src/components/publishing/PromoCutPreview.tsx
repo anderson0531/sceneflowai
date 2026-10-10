@@ -2,7 +2,10 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { PROMO_AUDIO_MIX } from '@/lib/publish/promoAudioMix'
+import { promoFrameClass } from '@/lib/publish/promoFrame'
 import type { PromoPreviewShot } from '@/lib/publish/promoPreviewSequence'
+import type { PromoFrameAspect } from '@/types/publishingAssets'
+import { cn } from '@/lib/utils'
 
 export interface PromoCutPreviewProps {
   playing: boolean
@@ -10,6 +13,8 @@ export interface PromoCutPreviewProps {
   narrationUrl?: string
   musicUrl?: string
   onEnded: () => void
+  /** Source frame. 16:9 unless the blueprint is vertical. */
+  aspect?: PromoFrameAspect
 }
 
 /**
@@ -22,6 +27,7 @@ export function PromoCutPreview({
   narrationUrl,
   musicUrl,
   onEnded,
+  aspect = '16:9',
 }: PromoCutPreviewProps) {
   const [index, setIndex] = useState(0)
   const advanced = useRef(false)
@@ -90,14 +96,20 @@ export function PromoCutPreview({
 
   return (
     <div className="mb-4 flex items-start gap-3">
-      <div className="relative aspect-[9/16] w-36 shrink-0 overflow-hidden rounded-lg border border-fuchsia-500/30 bg-zinc-950">
+      <div
+        className={cn(
+          'relative w-full overflow-hidden rounded-lg border border-fuchsia-500/30 bg-black',
+          promoFrameClass(aspect),
+          aspect === '9:16' ? 'max-w-[220px]' : 'max-w-3xl'
+        )}
+      >
         {shot.kind === 'clip' && shot.videoUrl ? (
           <video
             key={shot.key}
             ref={startClip}
             src={shot.videoUrl}
             playsInline
-            className="h-full w-full object-cover"
+            className="h-full w-full object-contain"
             onTimeUpdate={(event) => {
               if (event.currentTarget.currentTime >= shot.durationSec - 0.05) advance()
             }}
@@ -105,7 +117,7 @@ export function PromoCutPreview({
             onError={advance}
           />
         ) : shot.kind === 'still' && shot.imageUrl ? (
-          <img src={shot.imageUrl} alt="" className="h-full w-full object-cover" />
+          <img src={shot.imageUrl} alt="" className="h-full w-full object-contain" />
         ) : (
           <div className="flex h-full items-center justify-center px-2 text-center text-[11px] text-fuchsia-100">
             {shot.label || 'Shot'}

@@ -104,6 +104,72 @@ describe('buildPromoPlanPrompt', () => {
     })
     expect(prompt).toContain('whether a still or clip already exists')
     expect(prompt).toContain('hasStill and hasClip are production notes')
+    expect(prompt).toContain('stay between 30 and 120')
     expect(prompt).toContain('"beatId":"b0"')
+  })
+
+  it('includes the audience and the director note when revising a plan', () => {
+    const prompt = buildPromoPlanPrompt({
+      title: 'Night Run',
+      targetDurationSec: 90,
+      catalog: [shot(0)],
+      audienceText: 'Parents in Bangkok who watch family dramas',
+      directorNotes: 'Open on the chase',
+      currentPlan: [
+        {
+          sceneId: 's0',
+          beatId: 'b0',
+          sceneIndex: 0,
+          startSec: 0,
+          endSec: 5,
+          score: 1,
+          trailerRole: 'hook',
+        },
+      ],
+    })
+    expect(prompt).toContain('Parents in Bangkok who watch family dramas')
+    expect(prompt).toContain('Open on the chase')
+    expect(prompt).toContain('Current plan to revise')
+    expect(prompt).toContain('resonate with the target audience')
+  })
+})
+
+describe('normalizePromoModelPlan durations', () => {
+  it('keeps a 90 second plan', () => {
+    const catalog = Array.from({ length: 18 }, (_, index) => shot(index, { durationSec: 5 }))
+    const result = normalizePromoModelPlan({
+      catalog,
+      targetDurationSec: 90,
+      picks: {
+        shots: catalog.map((entry, index) => ({
+          sceneIndex: entry.sceneIndex,
+          beatId: entry.beatId,
+          durationSec: 5,
+          trailerRole: index === 0 ? 'hook' : index === catalog.length - 1 ? 'button' : 'rise',
+        })),
+      },
+    })
+    expect(result).not.toBeNull()
+    expect(result!.totalDurationSec).toBe(90)
+    expect(result!.targetDurationSec).toBe(90)
+  })
+
+  it('trims a plan that runs past 120 seconds without dropping it', () => {
+    const catalog = Array.from({ length: 25 }, (_, index) => shot(index, { durationSec: 6 }))
+    const result = normalizePromoModelPlan({
+      catalog,
+      targetDurationSec: 120,
+      picks: {
+        shots: catalog.map((entry) => ({
+          sceneIndex: entry.sceneIndex,
+          beatId: entry.beatId,
+          durationSec: 6,
+          trailerRole: 'rise',
+        })),
+      },
+    })
+    expect(result).not.toBeNull()
+    expect(result!.totalDurationSec).toBe(120)
+    expect(result!.beatPlan).toHaveLength(20)
   })
 })

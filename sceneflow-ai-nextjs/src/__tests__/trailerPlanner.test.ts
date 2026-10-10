@@ -108,6 +108,11 @@ describe('trailerPlanner', () => {
     expect(result.targetDurationSec).toBe(60)
   })
 
+  it('accepts a 120 second target and clamps anything longer', () => {
+    expect(planPromoTrailer({ scenes, targetDurationSec: 120 }).targetDurationSec).toBe(120)
+    expect(planPromoTrailer({ scenes, targetDurationSec: 180 }).targetDurationSec).toBe(120)
+  })
+
   it('orders a trailer arc and still keeps a produced clip', () => {
     const result = planPromoTrailer({
       scenes,

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react'
-import { Film, Package, Share2, Smartphone } from 'lucide-react'
+import { Clapperboard, Film, Package, Share2 } from 'lucide-react'
 import { ProductTabList } from '@/components/product/ProductTabList'
 import { PublishingReadinessBanner } from './PublishingReadinessBanner'
 import { PublishingFinalStreamsTab } from './PublishingFinalStreamsTab'
@@ -9,7 +9,8 @@ import { PublishingScreeningTab } from './PublishingScreeningTab'
 import { PublishingPromoTab } from './PublishingPromoTab'
 import { PublishingPackageShipTab } from './PublishingPackageShipTab'
 import { computePublishingReadiness, getPublishingState } from '@/lib/publish/publishingState'
-import type { PromoTrailerBeatPlan, PublishingLibraryTab } from '@/types/publishingAssets'
+import type { PromoAgentRunRequest, PromoBeatClipRequest } from '@/lib/publish/promoLanguage'
+import type { PublishingLibraryTab } from '@/types/publishingAssets'
 import type { ProjectStream } from '@/lib/streams/projectStreams'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
 import type { DirectShotRequest } from '@/lib/vision/directShotTarget'
@@ -29,20 +30,11 @@ export interface PublishingManagerProps {
   onPreviewStream: (language: string) => void
   sceneProductionState: Record<string, SceneProductionData>
   onOpenScreeningView?: () => void
-  onPreviewPromo?: () => void
+  onPreviewPromo?: (language?: string) => void
   onScriptScenesUpdated?: (scenes: unknown[]) => void
   onOpenPromoInStudio?: (sceneId: string) => void
-  onGenerateBeatClip?: (input: {
-    sceneId: string
-    beatId: string
-    segmentId?: string
-    frameUrl?: string
-    durationSec?: number
-  }) => Promise<void>
-  onRunPromoAgent?: (input: {
-    beatPlan: PromoTrailerBeatPlan[]
-    targetDurationSec: number
-  }) => Promise<void>
+  onGenerateBeatClip?: (input: PromoBeatClipRequest) => Promise<void>
+  onRunPromoAgent?: (input: PromoAgentRunRequest) => Promise<void>
   onOpenDirectShot?: (input: DirectShotRequest) => void
   layout?: 'dialog' | 'inline'
   hideTitle?: boolean
@@ -97,7 +89,11 @@ export function PublishingManager({
 
   const screeningCount = publishingState.streams.filter((s) => s.publish?.shareUrl).length
   const packageCount = (publishingState.units ?? []).filter((unit) => unit.mp4Url).length
-  const trailerReady = publishingState.promo?.trailer?.status === 'ready' ? 1 : 0
+  const trailerReady =
+    publishingState.promo?.trailer?.status === 'ready' ||
+    Object.values(publishingState.promo?.trailersByLanguage || {}).some((trailer) => trailer.status === 'ready')
+      ? 1
+      : 0
 
   const tabs = [
     {
@@ -115,7 +111,7 @@ export function PublishingManager({
     {
       key: 'promo',
       label: 'Promo',
-      icon: <Smartphone />,
+      icon: <Clapperboard />,
       count: trailerReady,
     },
     {

@@ -417,10 +417,13 @@ import {
   getPublishingState,
   upsertPublishingState,
 } from '@/lib/publish/publishingState'
-import type { PromoTrailerBeatPlan, PublishingLibraryTab } from '@/types/publishingAssets'
-import { resolvePromoBeatMedia } from '@/lib/publish/promoBeatMedia'
+import type { PublishingLibraryTab } from '@/types/publishingAssets'
+import { resolvePromoBeatMedia, resolvePromoPlayback } from '@/lib/publish/promoBeatMedia'
+import { promoAgentShotNeedsGeneration, type PromoAgentRunRequest, type PromoBeatClipRequest } from '@/lib/publish/promoLanguage'
 import { slimPromoProductionState } from '@/lib/publish/promoShotCatalog'
 import { runPromoAgent } from '@/lib/publish/runPromoAgent'
+import { composeLanguageClipPrompt, englishSpokenLine, preferStoredSpokenTranslation } from '@/lib/scene/languageClipPrompt'
+import { translateGuideDialogueLine } from '@/lib/scene/translateGuideDialogue'
 import { resolveDirectShotTarget, type DirectShotTarget } from '@/lib/vision/directShotTarget'
 import { VisualReference, VisualReferenceType, VisionReferencesPayload, LocationReference, LocationVersion } from '@/types/visionReferences'
 import type { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production/types'
@@ -5417,57 +5420,145 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate, project?.id]
   )
 
+  const generatePromoClip = useCallback(
+    async ({
+      sceneId,
+      beatId,
+      sceneIndex,
+      segmentId,
+      frameUrl,
+      durationSec,
+      aspectRatio,
+      clipLanguage,
+      beatKind,
+    }: PromoBeatClipRequest & { segmentId: string }) => {
+      const method = frameUrl?.trim() ? 'I2V' : 'T2V'
+      const frame = aspectRatio === '9:16' ? '9:16' : '16:9'
+      if (clipLanguage && isLanguageClipTarget(clipLanguage) && beatKind === 'dialogue') {
+        const scenes = scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? []
+        const scene = scenes[sceneIndex ?? -1] as Record<string, unknown> | undefined
+        const beat = getSceneBeats(scene).find((entry) => entry.beatId === beatId)
+        const segments = sceneProductionStateRef.current[sceneId]?.segments
+        const segment =
+          segments?.find((row) => row.segmentId === segmentId) ||
+          segments?.find((row) => row.beatId === beatId)
+        const englishLine = englishSpokenLine({
+          excerpt: segment?.dialoguePortion?.excerpt,
+          beatLine: beat?.line,
+          dialogueLines: segment?.dialogueLines,
+        })
+        const stored = preferStoredSpokenTranslation({
+          translation: sceneIndex != null ? storedTranslations[clipLanguage]?.[sceneIndex] : undefined,
+          kind: beat?.kind || beatKind,
+          lineId: beat?.lineId || segment?.dialoguePortion?.lineId,
+          dialogue: Array.isArray(scene?.dialogue) ? scene.dialogue : undefined,
+          englishLine,
+          isExcerpt: !!segment?.dialoguePortion?.excerpt?.trim(),
+        })
+        let translated = stored
+        if (!translated && englishLine.trim()) {
+          translated = await translateGuideDialogueLine(englishLine, clipLanguage)
+        }
+        const sourcePrompt = segment?.userEditedPrompt || segment?.generatedPrompt || ''
+        const composed = composeLanguageClipPrompt({
+          sourcePrompt,
+          character: beat?.character || segment?.dialogueLines?.[0]?.character,
+          kind: 'dialogue',
+          englishLine,
+          translatedLine: translated,
+        })
+        await handleSegmentGenerate(sceneId, segmentId, method, {
+          prompt: composed.prompt || sourcePrompt,
+          guidePrompt: composed.guidePrompt,
+          startFrameUrl: frameUrl,
+          duration: durationSec,
+          aspectRatio: frame,
+          generationMethod: method,
+          clipLanguage,
+        })
+        return
+      }
+      await handleSegmentGenerate(sceneId, segmentId, method, {
+        startFrameUrl: frameUrl,
+        duration: durationSec,
+        aspectRatio: frame,
+        generationMethod: method,
+      })
+    },
+    [handleSegmentGenerate, storedTranslations]
+  )
+
   const handleGeneratePromoBeatClip = useCallback(
     async ({
       sceneId,
       beatId,
+      sceneIndex,
       segmentId,
       frameUrl,
       durationSec,
-    }: {
-      sceneId: string
-      beatId: string
-      segmentId?: string
-      frameUrl?: string
-      durationSec?: number
-    }) => {
+      aspectRatio,
+      clipLanguage,
+      beatKind,
+    }: PromoBeatClipRequest) => {
       const id = segmentId || (await ensurePromoShotSegment(sceneId, beatId, durationSec))
-      const hasFrame = Boolean(frameUrl?.trim())
-      await handleSegmentGenerate(sceneId, id, hasFrame ? 'I2V' : 'T2V', {
-        startFrameUrl: frameUrl,
-        duration: durationSec,
-        aspectRatio: '9:16',
-        generationMethod: hasFrame ? 'I2V' : 'T2V',
+      await generatePromoClip({
+        sceneId,
+        beatId,
+        sceneIndex,
+        segmentId: id,
+        frameUrl,
+        durationSec,
+        aspectRatio,
+        clipLanguage,
+        beatKind,
       })
     },
-    [ensurePromoShotSegment, handleSegmentGenerate]
+    [ensurePromoShotSegment, generatePromoClip]
   )
 
   const handleRunPromoAgent = useCallback(
     async ({
       beatPlan,
       targetDurationSec,
-    }: {
-      beatPlan: PromoTrailerBeatPlan[]
-      targetDurationSec: number
-    }) => {
+      language,
+      aspectRatio,
+      audienceDefinition,
+    }: PromoAgentRunRequest) => {
       if (!project?.id) throw new Error('Project must be loaded before Promo Agent runs.')
       const runId = `promo-agent-${project.id}`
+      const promoLanguage = language || 'en'
+      const frame = aspectRatio === '9:16' ? '9:16' : '16:9'
+      const dialogueClips = new Set<string>()
+      const beatKinds = new Map<string, string | undefined>()
       const shots = beatPlan.map((beat) => {
         const media = resolvePromoBeatMedia(
           beat,
           sceneProductionStateRef.current as Record<string, unknown>
         )
+        const playback = resolvePromoPlayback(
+          beat,
+          sceneProductionStateRef.current as Record<string, unknown>,
+          promoLanguage
+        )
+        const decision = promoAgentShotNeedsGeneration({
+          beatKind: beat.beatKind,
+          language: promoLanguage,
+          hasMasterClip: media.hasClip,
+          hasLanguageClip: playback.hasLanguageClip,
+        })
+        const key = `clip:${beat.sceneIndex}:${beat.beatId}`
+        if (decision.dialogue) dialogueClips.add(key)
+        beatKinds.set(key, beat.beatKind)
         return {
-          key: `clip:${beat.sceneIndex}:${beat.beatId}`,
+          key,
           sceneId: beat.sceneId,
           beatId: beat.beatId,
           sceneIndex: beat.sceneIndex,
           label: beat.label || `Scene ${beat.sceneIndex + 1}`,
           durationSec: beat.durationSec ?? Math.max(0, beat.endSec - beat.startSec),
-          frameUrl: media.thumbnailUrl || beat.frameUrl,
-          hasClip: media.hasClip,
-          segmentId: media.segmentId,
+          frameUrl: media.thumbnailUrl || playback.thumbnailUrl || beat.frameUrl,
+          hasClip: !decision.generate,
+          segmentId: media.segmentId || playback.segmentId,
         }
       })
 
@@ -5493,6 +5584,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             projectId: project.id,
             action,
             targetDurationSec,
+            language: promoLanguage,
+            aspect: frame,
+            ...(audienceDefinition?.description?.trim() ? { audienceDefinition } : {}),
             ...(action === 'upsert' ? { beatPlan } : {}),
             ...(action === 'music' ? {} : { sceneProductionState: slimPromoProductionState(sceneProductionStateRef.current) }),
             ...(scenes ? { scenes } : {}),
@@ -5527,12 +5621,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             ),
           ensureSegment: (shot) =>
             ensurePromoShotSegment(shot.sceneId, shot.beatId, shot.durationSec),
-          generateClip: (shot, method, segmentId) =>
-            handleSegmentGenerate(shot.sceneId, segmentId, method, {
-              startFrameUrl: shot.frameUrl,
-              duration: shot.durationSec,
-              aspectRatio: '9:16',
-              generationMethod: method,
+          generateClip: (shot, _method, segmentId) =>
+            generatePromoClip({
+              sceneId: shot.sceneId,
+              beatId: shot.beatId,
+              sceneIndex: shot.sceneIndex,
+              segmentId,
+              frameUrl: shot.frameUrl,
+              durationSec: shot.durationSec,
+              aspectRatio: frame,
+              beatKind: beatKinds.get(shot.key),
+              clipLanguage: dialogueClips.has(shot.key) ? promoLanguage : undefined,
             }),
           generateNarration: () => postPromo('narration'),
           generateMusic: () => postPromo('music'),
@@ -5557,7 +5656,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         throw error
       }
     },
-    [project?.id, ensurePromoShotSegment, handleSegmentGenerate]
+    [project?.id, ensurePromoShotSegment, generatePromoClip]
   )
 
   const handleSegmentUpload = useCallback(
@@ -17665,9 +17764,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           setPublishingLibraryOpen(false)
           setProductionViewWithUrl('screening')
         }}
-        onPreviewPromo={() => {
+        onPreviewPromo={(language) => {
           setPublishingLibraryOpen(false)
-          setScreeningPlaybackHint({ mode: 'promo', language: 'en' })
+          setScreeningPlaybackHint({ mode: 'promo', language: language || 'en' })
           setProductionViewWithUrl('screening')
         }}
         onScriptScenesUpdated={(scenes) => {

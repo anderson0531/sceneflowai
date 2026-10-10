@@ -1,5 +1,5 @@
 /**
- * Beat-woven 9:16 promo trailer render.
+ * Beat-woven promo trailer render in the project's source frame.
  *
  * Starts the stitch and returns the job id. The browser polls job status.
  * Waiting here used to outlive the gateway and the finished file was lost.
@@ -32,12 +32,16 @@ export async function POST(request: NextRequest) {
       narrationAudioUrl?: string
       musicAudioUrl?: string
       promoSceneId?: string
+      aspect?: '16:9' | '9:16'
+      language?: string
     }
 
     const projectId = (body.projectId || '').trim()
     const fallbackVideoUrl = (body.videoUrl || '').trim()
     const beatPlan = body.beatPlan || []
     const targetDurationSec = body.targetDurationSec || 60
+    const aspectRatio = body.aspect === '9:16' ? '9:16' : '16:9'
+    const language = body.language?.trim() || 'en'
 
     if (!projectId || beatPlan.length === 0) {
       return NextResponse.json(
@@ -137,14 +141,15 @@ export async function POST(request: NextRequest) {
         sceneId: body.promoSceneId || 'promo-trailer',
         sceneNumber: 0,
         resolution: '1080p',
-        aspect: '9:16',
+        aspect: aspectRatio,
+        aspectRatio,
         audioConfig: {
           includeNarration: !!body.narrationAudioUrl,
           includeDialogue: false,
           includeMusic: !!body.musicAudioUrl,
           includeSfx: false,
           includeSegmentAudio: true,
-          language: 'en',
+          language,
           segmentAudioVolume: PROMO_AUDIO_MIX.clip,
           narrationVolume: PROMO_AUDIO_MIX.narration,
           musicVolume: PROMO_AUDIO_MIX.music,
@@ -186,7 +191,7 @@ export async function POST(request: NextRequest) {
         jobId: stitchData.jobId,
         status: 'PROCESSING',
         durationSec,
-        aspect: '9:16',
+        aspect: aspectRatio,
         beatCount: beatPlan.length,
         usedPerBeatClips: clipSegments.length > 0,
       })
@@ -200,7 +205,7 @@ export async function POST(request: NextRequest) {
         mp4Url: immediate,
         status: 'COMPLETED',
         durationSec,
-        aspect: '9:16',
+        aspect: aspectRatio,
         beatCount: beatPlan.length,
         usedPerBeatClips: clipSegments.length > 0,
       })

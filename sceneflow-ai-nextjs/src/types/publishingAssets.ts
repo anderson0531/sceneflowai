@@ -1,5 +1,6 @@
 import type { ProjectStream, ProjectStreamPublish } from '@/lib/streams/projectStreams'
 import type { UpscaleSettings } from '@/lib/types/finalCut'
+import type { AudienceDefinition } from '@/lib/types/audienceResonance'
 import type { ShortFormClipSpec } from '@/app/api/premiere/shorts/generate/route'
 import type { PublishUnitRecord } from '@/lib/publish/publishUnits'
 
@@ -53,9 +54,13 @@ export interface PromoTrailerBeatPlan {
   trailerRole?: PromoTrailerRole
 }
 
+export type PromoFrameAspect = '16:9' | '9:16'
+
 export interface PromoTrailerAsset {
   mp4Url: string
-  aspect: '9:16'
+  aspect: PromoFrameAspect
+  /** Language stream this file belongs to. Source films use `en`. */
+  language?: string
   durationSec: number
   targetDurationSec: number
   beatPlan: PromoTrailerBeatPlan[]
@@ -65,8 +70,17 @@ export interface PromoTrailerAsset {
 }
 
 export interface ProjectPublishingPromo {
+  /** Source-language render. Kept so Screening and Ship keep a single trailer. */
   trailer?: PromoTrailerAsset
+  /** One rendered promo per language. The source language is also copied onto `trailer`. */
+  trailersByLanguage?: Record<string, PromoTrailerAsset>
   shorts?: ShortFormClipSpec[]
+  /** Audience the shot plan was composed for. Same shape as Audience Resonance. */
+  audienceDefinition?: AudienceDefinition
+  targetDurationSec?: number
+  aspect?: PromoFrameAspect
+  /** Languages the user has opened a promo stream for. */
+  languages?: string[]
 }
 
 export interface PublishingReadiness {

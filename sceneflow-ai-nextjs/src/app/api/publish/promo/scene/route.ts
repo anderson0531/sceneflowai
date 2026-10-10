@@ -11,16 +11,44 @@ import { assertProjectAccess, getAuthenticatedUserId } from '@/lib/projectAccess
 import { generateText } from '@/lib/vertexai/gemini'
 import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { getSceneProductionStateFromMetadata } from '@/lib/final-cut/projectProductionState'
+import { clampGenerationDuration } from '@/lib/audio/lyriaClient'
+import { generateMusicTrackServer } from '@/lib/audio/musicClient'
+import { chunkNarrationText } from '@/lib/blueprint/sectionNarrationText'
+import {
+  findCachedNarrationAudio,
+  hashNarrationAudio,
+  narrationAudioPathname,
+  storeNarrationAudio,
+} from '@/lib/blueprint/narrationAudioCache'
 import { buildPromoShotCatalog } from '@/lib/publish/promoShotCatalog'
 import { normalizePromoModelPlan, planPromoTrailerWithModel } from '@/lib/publish/promoPlanModel'
-import { planPromoTrailer, DEFAULT_TRAILER_SEC } from '@/lib/publish/trailerPlanner'
-import type { PromoTrailerBeatPlan } from '@/types/publishingAssets'
+import { promoLanguageName, promoNarrationWordBudget } from '@/lib/publish/promoLanguage'
+import { upsertPublishingState } from '@/lib/publish/publishingState'
+import {
+  planPromoTrailer,
+  DEFAULT_TRAILER_SEC,
+  MAX_TRAILER_SEC,
+  MIN_TRAILER_SEC,
+} from '@/lib/publish/trailerPlanner'
+import { normalizeStreamLanguage } from '@/lib/scene/languageClipVersions'
+import {
+  DEFAULT_BLUEPRINT_GEMINI_VOICE,
+  DEFAULT_GEMINI_TTS_MODEL,
+  NARRATION_CHUNK_BYTES,
+} from '@/lib/tts/blueprintTtsConstants'
+import { synthesizeGeminiFlashMp3 } from '@/lib/tts/geminiFlashTts'
+import { resolveGeminiTtsLanguageCode } from '@/lib/tts/googleTtsLocale'
+import {
+  createAudienceDefinition,
+  formatAudienceDefinitionForPrompt,
+  type AudienceDefinition,
+} from '@/lib/types/audienceResonance'
+import type { ProjectPublishingPromo, ProjectPublishingState, PromoTrailerBeatPlan } from '@/types/publishingAssets'
 import {
   buildPromoSceneFromPlan,
   findPromoSceneIndex,
   upsertPromoSceneInScenes,
 } from '@/lib/publish/buildPromoScene'
-import { generateMusicTrackServer } from '@/lib/audio/musicClient'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120
@@ -88,59 +116,109 @@ function scenesExisting(
   return scenes?.[sceneId]
 }
 
+function clampTrailerSec(value: number | undefined): number {
+  const target = typeof value === 'number' && Number.isFinite(value) ? value : DEFAULT_TRAILER_SEC
+  return Math.min(MAX_TRAILER_SEC, Math.max(MIN_TRAILER_SEC, Math.round(target)))
+}
+
+function audiencePromptText(raw: unknown): string | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const description = (raw as { description?: unknown }).description
+  if (typeof description !== 'string' || !description.trim()) return undefined
+  return formatAudienceDefinitionForPrompt(createAudienceDefinition(raw as Partial<AudienceDefinition>))
+}
+
+function readPromo(metadata: Record<string, unknown>): ProjectPublishingPromo | undefined {
+  const visionPhase = metadata.visionPhase as { publishing?: ProjectPublishingState } | undefined
+  return visionPhase?.publishing?.promo
+}
+
+function mergePromoPublishing(
+  metadata: Record<string, unknown>,
+  patch: Partial<ProjectPublishingPromo>
+): Record<string, unknown> {
+  const current = readPromo(metadata) || {}
+  const languages = Array.from(
+    new Set([...(current.languages || []), ...(patch.languages || [])].filter(Boolean))
+  )
+  const promo: ProjectPublishingPromo = {
+    ...current,
+    ...patch,
+    languages: languages.length > 0 ? languages : current.languages,
+    trailersByLanguage: patch.trailersByLanguage
+      ? { ...current.trailersByLanguage, ...patch.trailersByLanguage }
+      : current.trailersByLanguage,
+  }
+  return upsertPublishingState(metadata, { promo })
+}
+
 async function generatePromoNarrationScript(opts: {
   title: string
   logline?: string
   genre?: string
   beatLabels: string[]
+  targetDurationSec: number
+  language: string
+  audienceText?: string
 }): Promise<string> {
-  const prompt = `Write a captivating 60-second film trailer voice-over narration (2–4 short sentences, ~35–55 words).
+  const budget = promoNarrationWordBudget(opts.targetDurationSec)
+  const languageName = promoLanguageName(opts.language)
+  const prompt = `Write a captivating ${opts.targetDurationSec}-second film trailer voice-over narration (${budget.minWords}–${budget.maxWords} words).
 Title: ${opts.title}
 ${opts.logline ? `Logline: ${opts.logline}` : ''}
 ${opts.genre ? `Genre: ${opts.genre}` : ''}
-Highlight moments: ${opts.beatLabels.slice(0, 8).join('; ')}
+${opts.audienceText?.trim() ? `Target audience:\n${opts.audienceText.trim()}` : ''}
+Highlight moments: ${opts.beatLabels.slice(0, 12).join('; ')}
 
 Rules:
+- Write the narration in ${languageName}
 - Present tense, cinematic, urgent but not spoiler-heavy
+- Shape the appeal for the target audience
 - No stage directions, no character names unless essential
 - Return ONLY the narration text`
 
   const result = await generateText(prompt, {
     model: getGeminiTextModel('flash'),
     temperature: 0.7,
-    maxOutputTokens: 256,
+    maxOutputTokens: 512,
   })
   return result.text.trim().replace(/^["']|["']$/g, '')
 }
 
 async function synthesizeNarrationTts(opts: {
   text: string
-  projectId: string
-  baseUrl: string
-  cookie: string
+  language: string
 }): Promise<string | null> {
   try {
-    const res = await fetch(`${opts.baseUrl}/api/tts/google`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        cookie: opts.cookie,
-      },
-      body: JSON.stringify({
+    const languageCode = resolveGeminiTtsLanguageCode(opts.language)
+    const voiceId = DEFAULT_BLUEPRINT_GEMINI_VOICE
+    const model = process.env.GEMINI_TTS_MODEL?.trim() || DEFAULT_GEMINI_TTS_MODEL
+    const pathname = narrationAudioPathname(
+      hashNarrationAudio({
         text: opts.text,
-        voiceName: 'en-US-Chirp3-HD-Charon',
-        speakingRate: 1.05,
-        saveToBlob: true,
-        projectId: opts.projectId,
-      }),
-    })
-    if (!res.ok) {
-      // Fallback: store text-only narration without audio URL
-      console.warn('[Promo Scene] TTS failed:', await res.text().catch(() => ''))
-      return null
+        voiceId,
+        languageCode,
+        model,
+      })
+    )
+    const cached = await findCachedNarrationAudio(pathname)
+    if (cached) return cached
+
+    const chunks = chunkNarrationText(opts.text, NARRATION_CHUNK_BYTES)
+    const buffers: Buffer[] = []
+    for (const chunk of chunks) {
+      buffers.push(
+        await synthesizeGeminiFlashMp3({
+          text: chunk,
+          voiceId,
+          languageCode,
+          audioType: 'narration',
+        })
+      )
     }
-    const data = await res.json()
-    return data.url || data.audioUrl || null
+    const audio = buffers.length === 1 ? buffers[0]! : Buffer.concat(buffers)
+    if (!audio.length) return null
+    return await storeNarrationAudio(pathname, audio)
   } catch (err) {
     console.warn('[Promo Scene] TTS error:', err)
     return null
@@ -165,6 +243,10 @@ export async function POST(request: NextRequest) {
       scenes?: unknown[]
       beatPlan?: PromoTrailerBeatPlan[]
       sceneProductionState?: Record<string, unknown>
+      audienceDefinition?: Partial<AudienceDefinition>
+      directorNotes?: string
+      language?: string
+      aspect?: '16:9' | '9:16'
     }
 
     const projectId = (body.projectId || '').trim()
@@ -194,10 +276,21 @@ export async function POST(request: NextRequest) {
       body.sceneProductionState && typeof body.sceneProductionState === 'object'
         ? body.sceneProductionState
         : getSceneProductionStateFromMetadata(metadata)
-    const targetDurationSec = body.targetDurationSec ?? DEFAULT_TRAILER_SEC
+    const targetDurationSec = clampTrailerSec(body.targetDurationSec)
+    const language = normalizeStreamLanguage(body.language)
+    const audienceText = audiencePromptText(body.audienceDefinition)
     const url = new URL(request.url)
     const baseUrl = `${url.protocol}//${url.host}`
     const cookie = request.headers.get('cookie') || ''
+
+    const promoOptions: Partial<ProjectPublishingPromo> = {
+      targetDurationSec,
+      languages: [language],
+      ...(body.aspect === '16:9' || body.aspect === '9:16' ? { aspect: body.aspect } : {}),
+      ...(body.audienceDefinition && audienceText
+        ? { audienceDefinition: createAudienceDefinition(body.audienceDefinition) }
+        : {}),
+    }
 
     const planInput = {
       scenes,
@@ -208,10 +301,17 @@ export async function POST(request: NextRequest) {
       title: project.title,
       logline: typeof project.description === 'string' ? project.description : undefined,
       genre: typeof project.genre === 'string' ? project.genre : undefined,
+      audienceText,
+      directorNotes: typeof body.directorNotes === 'string' ? body.directorNotes : undefined,
+      currentPlan: Array.isArray(body.beatPlan) ? body.beatPlan : undefined,
     }
 
     if (action === 'plan') {
       const plan = await planPromoTrailerWithModel(planInput)
+      metadata = mergePromoPublishing(metadata, promoOptions)
+      project.metadata = metadata
+      project.changed('metadata', true)
+      await project.save()
       return NextResponse.json({
         success: true,
         action: 'plan',
@@ -219,6 +319,7 @@ export async function POST(request: NextRequest) {
         totalDurationSec: plan.totalDurationSec,
         targetDurationSec: plan.targetDurationSec,
         source: plan.source,
+        metadata,
       })
     }
 
@@ -252,6 +353,7 @@ export async function POST(request: NextRequest) {
         scene.id,
         productionSeed as unknown as Record<string, unknown>
       )
+      metadata = mergePromoPublishing(metadata, promoOptions)
 
       project.metadata = metadata
       project.changed('metadata', true)
@@ -263,6 +365,7 @@ export async function POST(request: NextRequest) {
         beatPlan: plan.beatPlan,
         totalDurationSec: plan.totalDurationSec,
         targetDurationSec: plan.targetDurationSec,
+        source: plan.source,
         promoScene: scene,
         scenes,
         metadata,
@@ -285,13 +388,14 @@ export async function POST(request: NextRequest) {
         logline: typeof project.description === 'string' ? project.description : undefined,
         genre: typeof project.genre === 'string' ? project.genre : undefined,
         beatLabels,
+        targetDurationSec,
+        language,
+        audienceText,
       })
 
       const audioUrl = await synthesizeNarrationTts({
         text: narrationText,
-        projectId,
-        baseUrl,
-        cookie,
+        language,
       })
 
       // Rebuild with narration beat while preserving music
@@ -332,20 +436,21 @@ export async function POST(request: NextRequest) {
         narrationLine: narrationText,
       })
 
-      if (audioUrl) {
-        scene.dialogueAudio = {
-          en: [
-            {
-              character: 'NARRATOR',
-              kind: 'narration',
-              line: narrationText,
-              audioUrl,
-            },
-          ],
-        }
-        const narrationBeat = scene.beats.find((b) => b.kind === 'narration')
-        if (narrationBeat) narrationBeat.audioUrl = audioUrl
+      const priorAudio =
+        scene.dialogueAudio && typeof scene.dialogueAudio === 'object' ? { ...scene.dialogueAudio } : {}
+      scene.dialogueAudio = {
+        ...priorAudio,
+        [language]: [
+          {
+            character: 'NARRATOR',
+            kind: 'narration',
+            line: narrationText,
+            ...(audioUrl ? { audioUrl } : {}),
+          },
+        ],
       }
+      const narrationBeat = scene.beats.find((b) => b.kind === 'narration')
+      if (narrationBeat && audioUrl) narrationBeat.audioUrl = audioUrl
 
       scenes = upsertPromoSceneInScenes(scenes, scene)
       metadata = setScenesOnMetadata(metadata, scenes)
@@ -354,6 +459,7 @@ export async function POST(request: NextRequest) {
         scene.id,
         productionSeed as unknown as Record<string, unknown>
       )
+      metadata = mergePromoPublishing(metadata, promoOptions)
       project.metadata = metadata
       project.changed('metadata', true)
       await project.save()
@@ -379,7 +485,7 @@ export async function POST(request: NextRequest) {
         baseUrl,
         {
           text: musicPrompt,
-          duration: Math.min(60, targetDurationSec),
+          duration: clampGenerationDuration(targetDurationSec),
           saveToBlob: true,
           projectId,
           sceneId: String(promoScene.id || 'promo'),
@@ -398,6 +504,7 @@ export async function POST(request: NextRequest) {
       promoScene.musicAudio = music.url
       scenes[promoIdx] = promoScene
       metadata = setScenesOnMetadata(metadata, scenes)
+      metadata = mergePromoPublishing(metadata, promoOptions)
       project.metadata = metadata
       project.changed('metadata', true)
       await project.save()

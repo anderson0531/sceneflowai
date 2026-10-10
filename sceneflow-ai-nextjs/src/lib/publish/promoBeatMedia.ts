@@ -1,3 +1,5 @@
+import type { LanguageClipVersions } from '@/components/vision/scene-production/types'
+import { resolveLanguageClipPlayback, isLanguageClipTarget } from '@/lib/scene/languageClipVersions'
 import {
   isVideoLikeUrl,
   resolveLiveTake,
@@ -29,6 +31,12 @@ interface PromoBeatSegment {
   visualFrame?: string
   references?: { startFrameUrl?: string | null }
   takes?: TakeRow[]
+  languageVersions?: LanguageClipVersions
+}
+
+export interface PromoBeatPlayback extends PromoBeatMedia {
+  hasMasterClip: boolean
+  hasLanguageClip: boolean
 }
 
 function productionForBeat(
@@ -113,4 +121,62 @@ export function resolvePromoBeatMedia(
     videoUrl: hasClip ? snapshot : undefined,
     thumbnailUrl: hasClip ? undefined : stillUrl(beat),
   }
+}
+
+function languageClipUrl(segment: PromoBeatSegment | undefined, language: string): string | undefined {
+  if (!segment || !isLanguageClipTarget(language)) return undefined
+  const playback = resolveLanguageClipPlayback(segment, language)
+  if (playback.usingMaster || !playback.url) return undefined
+  return playback.url
+}
+
+/**
+ * Picture for the active promo language.
+ * Dialogue in another language plays that language's clip, or a still until it exists.
+ * Silent shots keep the source clip.
+ */
+export function resolvePromoPlayback(
+  beat: PromoTrailerBeatPlan,
+  sceneProductionState: Record<string, unknown> | undefined,
+  language?: string
+): PromoBeatPlayback {
+  const master = resolvePromoBeatMedia(beat, sceneProductionState)
+  const segment = matchingSegment(
+    productionForBeat(beat, sceneProductionState)?.segments,
+    beat.beatId
+  )
+  const localized = languageClipUrl(segment, language || 'en')
+  const dialogue = beat.beatKind === 'dialogue' && isLanguageClipTarget(language)
+  if (dialogue) {
+    return {
+      segmentId: master.segmentId,
+      hasMasterClip: master.hasClip,
+      hasLanguageClip: Boolean(localized),
+      hasClip: Boolean(localized),
+      videoUrl: localized,
+      thumbnailUrl: master.thumbnailUrl || stillUrl(beat, segment),
+      ...(master.policyBlocked ? { policyBlocked: true } : {}),
+    }
+  }
+  return {
+    ...master,
+    hasMasterClip: master.hasClip,
+    hasLanguageClip: false,
+  }
+}
+
+/** Live media for one language, written back onto the plan for preview and render. */
+export function promoPlanForLanguage(
+  plan: PromoTrailerBeatPlan[],
+  sceneProductionState: Record<string, unknown> | undefined,
+  language?: string
+): PromoTrailerBeatPlan[] {
+  return plan.map((beat) => {
+    const playback = resolvePromoPlayback(beat, sceneProductionState, language)
+    return {
+      ...beat,
+      videoUrl: playback.videoUrl,
+      frameUrl: beat.frameUrl || playback.thumbnailUrl,
+    }
+  })
 }
