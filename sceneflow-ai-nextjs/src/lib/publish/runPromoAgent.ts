@@ -22,6 +22,9 @@ export interface PromoAgentShotInput {
   frameUrl?: string
   hasClip: boolean
   segmentId?: string
+  /** Rewrite base or policy-blocked direction before the clip is generated. */
+  optimizeDirection?: boolean
+  policyBlocked?: boolean
 }
 
 export interface PromoAgentRunDeps {
@@ -32,6 +35,8 @@ export interface PromoAgentRunDeps {
     method: PromoClipMethod,
     segmentId: string
   ) => Promise<void>
+  /** Direct Shot optimize. Only shots flagged optimizeDirection call it. */
+  optimizeDirection?: (shot: PromoAgentShotInput) => Promise<void>
   generateNarration: () => Promise<void>
   generateMusic: () => Promise<void>
   onStatus: (key: string, status: PromoAgentItemStatus, error?: string) => void
@@ -57,6 +62,9 @@ export async function runPromoAgent(
         }
         deps.onStatus(shot.key, 'running')
         try {
+          if (shot.optimizeDirection && deps.optimizeDirection) {
+            await deps.optimizeDirection(shot)
+          }
           const segmentId = shot.segmentId?.trim() || (await deps.ensureSegment(shot))
           const method: PromoClipMethod = shot.frameUrl?.trim() ? 'I2V' : 'T2V'
           await deps.generateClip(shot, method, segmentId)

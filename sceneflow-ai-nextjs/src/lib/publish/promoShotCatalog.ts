@@ -6,6 +6,10 @@
  */
 
 import { isPromoCinematicScene } from '@/lib/publish/buildPromoScene'
+import {
+  resolveBeatSpokenDuration,
+  VEO_DIALOGUE_CLIP_MAX_SEC,
+} from '@/lib/scene/dialogueSegmentSplit'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { PromoTrailerRole } from '@/types/publishingAssets'
@@ -49,6 +53,15 @@ export interface PromoShotCatalogEntry {
   frameUrl?: string
   videoUrl?: string
   durationSec: number
+  /** Spoken length for a dialogue beat, before the promo clamp. */
+  spokenDurationSec?: number
+  /** Title, outro, or story. A credit on an outro is not the title card. */
+  cinematicType?: string
+  blueprintBeatIndex?: number
+  /** Opening or character-intro subject. Repeated names are redundant intros. */
+  introCharacter?: string
+  /** Direct Shot or the shot-direction agent has rewritten this beat. */
+  directionOptimized?: boolean
 }
 
 export function isPromoHeroBeat(
@@ -73,7 +86,34 @@ export function trailerRoleForBeatRole(beatRole?: string): PromoTrailerRole {
   return 'rise'
 }
 
+/** True after Direct Shot or the shot-direction agent has saved a rewrite. */
+export function isOptimizedShotDirection(direction?: { generatedBy?: string } | null): boolean {
+  return direction?.generatedBy === 'user' || direction?.generatedBy === 'director'
+}
+
 export function snapPromoClipDuration(opts: {
+  beatRole?: string
+  beatKind?: string
+  beatDuration?: number
+  spokenDurationSec?: number
+  segmentStart?: number
+  segmentEnd?: number
+}): number {
+  const editorial = snapEditorialClip(opts)
+  if (opts.beatKind === 'dialogue') {
+    const spoken =
+      typeof opts.spokenDurationSec === 'number' && opts.spokenDurationSec > 0
+        ? opts.spokenDurationSec
+        : undefined
+    if (spoken) {
+      return Math.min(VEO_DIALOGUE_CLIP_MAX_SEC, Math.max(editorial, Math.round(spoken)))
+    }
+  }
+  return editorial
+}
+
+/** Action, title, and credit stay in the 4–6s editorial window. */
+function snapEditorialClip(opts: {
   beatRole?: string
   beatDuration?: number
   segmentStart?: number
@@ -118,6 +158,35 @@ function findSegmentForBeat(
   const segments = production?.segments
   if (!Array.isArray(segments)) return undefined
   return segments.find((segment) => segment.beatId === beatId && segment.activeAssetUrl)
+}
+
+function primarySceneCharacter(scene: Record<string, unknown>): string | undefined {
+  const listed = scene.characters
+  if (Array.isArray(listed)) {
+    for (const entry of listed) {
+      if (typeof entry === 'string' && entry.trim()) return entry.trim()
+      if (entry && typeof entry === 'object') {
+        const name = (entry as { name?: string }).name?.trim()
+        if (name) return name
+      }
+    }
+  }
+  const dialogue = scene.dialogue
+  if (Array.isArray(dialogue)) {
+    for (const line of dialogue) {
+      const name = (line as { character?: string } | null)?.character?.trim()
+      if (name) return name
+    }
+  }
+  return undefined
+}
+
+function introCharacterForBeat(beat: SceneBeat, scene: Record<string, unknown>): string | undefined {
+  if (beat.beatRole !== 'opening' && beat.beatRole !== 'character_intro') return undefined
+  const named =
+    beat.character?.trim() ||
+    beat.beatDirection?.castInFrame?.find((name) => name.trim())?.trim()
+  return named || primarySceneCharacter(scene)
 }
 
 function directionSummary(beat: SceneBeat): string | undefined {
@@ -176,6 +245,8 @@ export function buildPromoShotCatalog(input: PromoShotCatalogInput): PromoShotCa
       const videoUrl = segment?.activeAssetUrl || undefined
       const label =
         beat.line || beat.actionDescription || beat.kind || `Shot ${beatIndex + 1}`
+      const spokenDurationSec =
+        beat.kind === 'dialogue' ? resolveBeatSpokenDuration(beat, scene) : undefined
 
       catalog.push({
         sceneId,
@@ -193,9 +264,17 @@ export function buildPromoShotCatalog(input: PromoShotCatalogInput): PromoShotCa
         hasClip: Boolean(videoUrl),
         frameUrl,
         videoUrl,
+        spokenDurationSec: spokenDurationSec && spokenDurationSec > 0 ? spokenDurationSec : undefined,
+        cinematicType: typeof scene.cinematicType === 'string' ? scene.cinematicType : undefined,
+        blueprintBeatIndex:
+          typeof scene.blueprintBeatIndex === 'number' ? scene.blueprintBeatIndex : undefined,
+        introCharacter: introCharacterForBeat(beat, scene),
+        directionOptimized: isOptimizedShotDirection(beat.beatDirection),
         durationSec: snapPromoClipDuration({
           beatRole: beat.beatRole,
+          beatKind: beat.kind,
           beatDuration: beat.durationSeconds,
+          spokenDurationSec,
           segmentStart: segment?.startTime,
           segmentEnd: segment?.endTime,
         }),

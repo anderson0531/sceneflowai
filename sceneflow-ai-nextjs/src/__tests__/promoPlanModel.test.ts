@@ -106,6 +106,20 @@ describe('buildPromoPlanPrompt', () => {
     expect(prompt).toContain('hasStill and hasClip are production notes')
     expect(prompt).toContain('stay between 30 and 120')
     expect(prompt).toContain('"beatId":"b0"')
+    expect(prompt).toContain('title_reveal')
+    expect(prompt).toContain('4 to 10')
+    expect(prompt).toContain('A credit beat is not the title')
+  })
+
+  it('lists blueprint beats as coverage, not as the shot order', () => {
+    const prompt = buildPromoPlanPrompt({
+      title: 'The White City Current',
+      targetDurationSec: 60,
+      catalog: [shot(0)],
+      blueprintBeats: [{ title: 'The Current Rises' }],
+    })
+    expect(prompt).toContain('The Current Rises')
+    expect(prompt).toContain('Do not replay them in screenplay order')
   })
 
   it('includes the audience and the director note when revising a plan', () => {
@@ -171,5 +185,100 @@ describe('normalizePromoModelPlan durations', () => {
     expect(result).not.toBeNull()
     expect(result!.totalDurationSec).toBe(120)
     expect(result!.beatPlan).toHaveLength(20)
+  })
+
+  it('ends on the title card and does not treat a credit as the title', () => {
+    const catalog = [
+      ...Array.from({ length: 6 }, (_, index) => shot(index, { durationSec: 5 })),
+      shot(6, {
+        beatId: 'credit',
+        beatRole: 'credit',
+        cinematicType: 'title',
+        label: 'A SceneFlow Studio Production',
+        durationSec: 5,
+      }),
+      shot(7, {
+        beatId: 'title',
+        beatRole: 'title_reveal',
+        cinematicType: 'title',
+        label: 'The White City Current',
+        durationSec: 6,
+      }),
+    ]
+    const result = normalizePromoModelPlan({
+      catalog,
+      targetDurationSec: 45,
+      picks: {
+        shots: [
+          ...catalog.slice(0, 6).map((entry) => ({
+            sceneIndex: entry.sceneIndex,
+            beatId: entry.beatId,
+            durationSec: 5,
+            trailerRole: 'rise',
+          })),
+          { sceneIndex: 6, beatId: 'credit', durationSec: 5, trailerRole: 'button' },
+        ],
+      },
+    })
+    expect(result).not.toBeNull()
+    expect(result!.beatPlan.at(-1)?.beatId).toBe('title')
+    expect(result!.beatPlan.at(-1)?.trailerRole).toBe('button')
+    expect(result!.beatPlan.at(-1)?.label).toBe('The White City Current')
+    expect(result!.beatPlan.some((beat) => beat.beatId === 'credit')).toBe(true)
+  })
+
+  it('keeps one introduction per protagonist unless the note asks for another', () => {
+    const catalog = [
+      shot(0, { beatId: 'intro-a', introCharacter: 'Mara', beatRole: 'opening', durationSec: 5 }),
+      shot(1, { beatId: 'intro-b', introCharacter: 'Mara', beatRole: 'opening', durationSec: 5 }),
+      ...Array.from({ length: 6 }, (_, index) => shot(index + 2, { durationSec: 5 })),
+    ]
+    const picks = {
+      shots: catalog.map((entry, index) => ({
+        sceneIndex: entry.sceneIndex,
+        beatId: entry.beatId,
+        durationSec: 5,
+        trailerRole: index === 0 ? 'hook' : 'rise',
+      })),
+    }
+    const collapsed = normalizePromoModelPlan({ catalog, targetDurationSec: 45, picks })
+    expect(collapsed!.beatPlan.filter((beat) => beat.beatId.startsWith('intro'))).toHaveLength(1)
+
+    const kept = normalizePromoModelPlan({
+      catalog,
+      targetDurationSec: 45,
+      picks,
+      directorNotes: 'Keep both intros',
+    })
+    expect(kept).not.toBeNull()
+    expect(kept!.beatPlan.filter((beat) => beat.beatId.startsWith('intro'))).toHaveLength(2)
+  })
+
+  it('gives a dialogue line its spoken length instead of 5 seconds', () => {
+    const catalog = [
+      shot(0, {
+        beatId: 'line',
+        beatKind: 'dialogue',
+        spokenDurationSec: 9.2,
+        label: 'The current is still moving under the city.',
+        durationSec: 5,
+      }),
+      ...Array.from({ length: 6 }, (_, index) => shot(index + 1, { durationSec: 5 })),
+    ]
+    const result = normalizePromoModelPlan({
+      catalog,
+      targetDurationSec: 45,
+      picks: {
+        shots: catalog.map((entry) => ({
+          sceneIndex: entry.sceneIndex,
+          beatId: entry.beatId,
+          durationSec: 5,
+          trailerRole: 'rise',
+        })),
+      },
+    })
+    const line = result!.beatPlan.find((beat) => beat.beatId === 'line')
+    expect(line?.durationSec).toBe(9)
+    expect(result!.beatPlan.filter((beat) => beat.beatId !== 'line').every((beat) => beat.durationSec === 5)).toBe(true)
   })
 })

@@ -1,4 +1,9 @@
 import {
+  dropExtraIntroShots,
+  findPromoTitleCard,
+  isPromoTitleCard,
+} from '@/lib/publish/promoPlanConstraints'
+import {
   buildPromoShotCatalog,
   trailerRoleForBeatRole,
   type PromoShotCatalogEntry,
@@ -28,6 +33,8 @@ export interface TrailerPlannerInput {
   /** Beat ids the user pinned as hero beats. */
   heroBeatIds?: string[]
   targetDurationSec?: number
+  /** Kept so a revise that asks for another intro is not collapsed. */
+  directorNotes?: string
 }
 
 export interface TrailerPlannerResult {
@@ -102,7 +109,8 @@ export function planPromoTrailer(input: TrailerPlannerInput): TrailerPlannerResu
     Math.max(MIN_TRAILER_SEC, input.targetDurationSec ?? DEFAULT_TRAILER_SEC)
   )
 
-  const scored = buildPromoShotCatalog(input).map((shot) => ({
+  const catalog = buildPromoShotCatalog(input)
+  const scored = catalog.map((shot) => ({
     shot,
     score: scoreShot(shot),
   }))
@@ -144,7 +152,63 @@ export function planPromoTrailer(input: TrailerPlannerInput): TrailerPlannerResu
     }
   }
 
+  const collapsed = dropExtraIntroShots(selected, input.directorNotes)
+  selected.length = 0
+  selected.push(...collapsed)
+  totalDurationSec = selected.reduce((sum, item) => sum + item.shot.durationSec, 0)
+
+  const title = findPromoTitleCard(catalog)
+  if (title) {
+    const titleAt = selected.findIndex(
+      (item) => item.shot.sceneIndex === title.sceneIndex && item.shot.beatId === title.beatId
+    )
+    if (titleAt >= 0) {
+      const [item] = selected.splice(titleAt, 1)
+      if (item) selected.push(item)
+    } else {
+      addShot({ shot: title, score: scoreShot(title) })
+    }
+  }
+
+  const protectedShot = (shot: PromoShotCatalogEntry) => shot.hero || isPromoTitleCard(shot)
+  while (totalDurationSec > targetDurationSec) {
+    let dropAt = -1
+    for (let i = selected.length - 1; i >= 0; i--) {
+      if (!protectedShot(selected[i]!.shot)) {
+        dropAt = i
+        break
+      }
+    }
+    if (dropAt < 0) break
+    const nextTotal = totalDurationSec - selected[dropAt]!.shot.durationSec
+    if (nextTotal < MIN_TRAILER_SEC && totalDurationSec <= MAX_TRAILER_SEC) break
+    totalDurationSec = nextTotal
+    selected.splice(dropAt, 1)
+  }
+
+  if (totalDurationSec < MIN_TRAILER_SEC) {
+    for (const entry of scored) {
+      if (totalDurationSec >= MIN_TRAILER_SEC) break
+      const name = entry.shot.introCharacter?.trim().toLowerCase()
+      const duplicateIntro =
+        !!name &&
+        selected.some((item) => item.shot.introCharacter?.trim().toLowerCase() === name)
+      if (duplicateIntro) continue
+      addShot(entry)
+    }
+    totalDurationSec = selected.reduce((sum, item) => sum + item.shot.durationSec, 0)
+  }
+
   selected.sort((a, b) => compareTrailerArc(a.shot, b.shot))
+  if (title) {
+    const titleAt = selected.findIndex(
+      (item) => item.shot.sceneIndex === title.sceneIndex && item.shot.beatId === title.beatId
+    )
+    if (titleAt >= 0 && titleAt !== selected.length - 1) {
+      const [item] = selected.splice(titleAt, 1)
+      if (item) selected.push(item)
+    }
+  }
   totalDurationSec = selected.reduce((sum, item) => sum + item.shot.durationSec, 0)
 
   return {

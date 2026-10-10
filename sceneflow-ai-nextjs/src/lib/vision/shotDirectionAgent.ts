@@ -46,6 +46,8 @@ export async function requestOptimizedShotDirection(args: {
   projectId: string
   sceneIndex: number
   beatId: string
+  /** Safety rewrite for a shot whose last generate was policy-blocked. */
+  policyCompliance?: boolean
   signal?: AbortSignal
   fetchImpl?: typeof fetch
 }): Promise<StillDirectorPatch> {
@@ -57,6 +59,7 @@ export async function requestOptimizedShotDirection(args: {
       sceneIndex: args.sceneIndex,
       beatId: args.beatId,
       mode: 'optimize',
+      ...(args.policyCompliance ? { policyCompliance: true } : {}),
     }),
     signal: args.signal,
   })

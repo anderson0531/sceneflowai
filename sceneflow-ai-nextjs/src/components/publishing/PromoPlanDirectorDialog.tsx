@@ -5,6 +5,7 @@ import { Clapperboard, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { DictationTextarea } from '@/components/ui/DictationTextarea'
+import { promoRecommendationNotes, type PromoPlanFinding } from '@/lib/publish/promoPlanFindings'
 import { slimPromoProductionState } from '@/lib/publish/promoShotCatalog'
 import type { AudienceDefinition } from '@/lib/types/audienceResonance'
 import type { PromoTrailerBeatPlan } from '@/types/publishingAssets'
@@ -20,6 +21,8 @@ export interface PromoPlanDirectorDialogProps {
   sceneProductionState?: Record<string, SceneProductionData>
   sceneScores?: Record<number, number>
   currentPlan: PromoTrailerBeatPlan[]
+  findings?: PromoPlanFinding[]
+  onAnalysis?: (findings: PromoPlanFinding[]) => void
   onApply: (plan: PromoTrailerBeatPlan[]) => Promise<void>
 }
 
@@ -39,18 +42,23 @@ export function PromoPlanDirectorDialog({
   sceneProductionState,
   sceneScores,
   currentPlan,
+  findings,
+  onAnalysis,
   onApply,
 }: PromoPlanDirectorDialogProps) {
   const [note, setNote] = useState('')
   const [draft, setDraft] = useState<PromoTrailerBeatPlan[] | null>(null)
   const [turns, setTurns] = useState<DirectorTurn[]>([])
+  const [remoteFindings, setRemoteFindings] = useState<PromoPlanFinding[] | null>(null)
   const [sending, setSending] = useState(false)
   const [applying, setApplying] = useState(false)
 
   const shown = draft ?? currentPlan
+  const shownFindings = remoteFindings ?? findings ?? []
+  const recommendationNote = promoRecommendationNotes(shownFindings)
 
-  const revise = async () => {
-    const direction = note.trim()
+  const revise = async (directionText?: string) => {
+    const direction = (directionText ?? note).trim()
     if (!direction) return
     setSending(true)
     try {
@@ -73,6 +81,11 @@ export function PromoPlanDirectorDialog({
       if (!res.ok) throw new Error(data.error || 'Plan direction failed')
       const next = Array.isArray(data.beatPlan) ? (data.beatPlan as PromoTrailerBeatPlan[]) : []
       if (next.length === 0) throw new Error('The director returned an empty plan')
+      const analysis = Array.isArray(data.analysis) ? (data.analysis as PromoPlanFinding[]) : null
+      if (analysis) {
+        setRemoteFindings(analysis)
+        onAnalysis?.(analysis)
+      }
       setDraft(next)
       setTurns((current) => [
         ...current,
@@ -111,12 +124,28 @@ export function PromoPlanDirectorDialog({
       <DialogContent className="flex w-[min(42rem,calc(100vw-2rem))] max-w-none min-w-0 max-h-[90vh] flex-col gap-3 overflow-x-hidden overflow-y-auto bg-slate-900 border-slate-700 text-slate-100">
         <DialogTitle className="flex min-w-0 items-center gap-2 text-base font-semibold text-white">
           <Clapperboard className="h-4 w-4 shrink-0 text-fuchsia-300" />
-          Plan Director
+          Promo Director
         </DialogTitle>
         <DialogDescription className="text-sm text-slate-400">
-          Tell the director how this promo should play. Each note revises the shot plan. Apply
-          writes it into the promo.
+          Audience Resonance reviews this cut. Apply recommendations revises the shot plan. A
+          note does the same for anything you add.
         </DialogDescription>
+
+        {shownFindings.length > 0 ? (
+          <div className="max-h-48 space-y-1.5 overflow-y-auto">
+            {shownFindings.map((finding, index) => (
+              <div
+                key={`${finding.category}-${index}`}
+                className="rounded border border-slate-700 bg-slate-950/70 px-3 py-2"
+              >
+                <p className="text-[10px] uppercase tracking-wide text-fuchsia-300/80">
+                  {finding.category} · {finding.priority}
+                </p>
+                <p className="mt-1 text-xs text-slate-200">{finding.text}</p>
+              </div>
+            ))}
+          </div>
+        ) : null}
 
         {turns.length > 0 ? (
           <div className="space-y-2">
@@ -163,6 +192,15 @@ export function PromoPlanDirectorDialog({
         </label>
 
         <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 rounded border border-fuchsia-800/80 px-3 py-1.5 text-xs text-fuchsia-100 hover:bg-fuchsia-950/40 disabled:opacity-50"
+            disabled={sending || applying || !recommendationNote}
+            onClick={() => void revise(recommendationNote)}
+          >
+            {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+            Apply recommendations
+          </button>
           <button
             type="button"
             className="inline-flex items-center gap-1 rounded border border-fuchsia-800/80 px-3 py-1.5 text-xs text-fuchsia-100 hover:bg-fuchsia-950/40 disabled:opacity-50"

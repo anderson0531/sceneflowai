@@ -12,6 +12,8 @@ export interface PromoPreviewShot {
   label?: string
   videoUrl?: string
   imageUrl?: string
+  /** Dialogue and narration duck the music bed in the in-tab preview. */
+  beatKind?: string
 }
 
 export function promoPreviewDurationSec(durationSec: number | undefined, fallback = 5): number {
@@ -28,6 +30,7 @@ export function buildPromoPreviewSequence(
     durationSec?: number
     videoUrl?: string
     imageUrl?: string
+    beatKind?: string
   }>
 ): PromoPreviewShot[] {
   return shots.map((shot) => {
@@ -35,12 +38,14 @@ export function buildPromoPreviewSequence(
     const label = shot.label?.trim() || undefined
     const videoUrl = shot.videoUrl?.trim()
     const imageUrl = shot.imageUrl?.trim()
+    const beatKind = shot.beatKind?.trim() || undefined
+    const spoken = beatKind ? { beatKind } : {}
     if (videoUrl) {
-      return { key: shot.key, kind: 'clip', durationSec, label, videoUrl }
+      return { key: shot.key, kind: 'clip' as const, durationSec, label, videoUrl, ...spoken }
     }
     if (imageUrl) {
-      return { key: shot.key, kind: 'still', durationSec, label, imageUrl }
+      return { key: shot.key, kind: 'still' as const, durationSec, label, imageUrl, ...spoken }
     }
-    return { key: shot.key, kind: 'label', durationSec, label }
+    return { key: shot.key, kind: 'label' as const, durationSec, label, ...spoken }
   })
 }

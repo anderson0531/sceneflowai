@@ -11,6 +11,7 @@ import { resolveLiveTake, segmentHasPlayableVideo } from '@/lib/storyboard/media
 import { directionRailStatus } from '@/lib/vision/directionRailStatus'
 import type { SceneSegment } from './types'
 import { BeatStillClipViewer } from './BeatStillClipViewer'
+import { promoSourceShotKeys } from '@/lib/publish/buildPromoScene'
 import { SceneBeatStage, shotKindMarker, type SceneBeatStageItem } from './SceneBeatStage'
 
 interface SceneDirectionWorkbenchProps {
@@ -79,6 +80,7 @@ export function SceneDirectionWorkbench({
   const clipUrl = liveTake?.url
   const stillUrl = selected?.storyboardImageUrl?.trim()
 
+  const promoShots = useMemo(() => promoSourceShotKeys(scenes), [scenes])
   const items = useMemo<SceneBeatStageItem[]>(
     () =>
       beats.map((beat, index) => {
@@ -88,16 +90,18 @@ export function SceneDirectionWorkbench({
           stillPromptDirectionKey: beat.storyboardImagePromptDirectionKey,
         })
         const kind = shotKindMarker(beat.kind)
+        const markers = kind ? [kind] : []
+        if (promoShots.has(`${sceneIdx}:${beat.beatId}`)) markers.push('In promo')
         return {
           id: beat.beatId,
           beatNumber: (typeof beat.sequenceIndex === 'number' ? beat.sequenceIndex : index) + 1,
-          markers: kind ? [kind] : undefined,
+          markers: markers.length > 0 ? markers : undefined,
           status: rail.status,
           statusLabel: rail.label,
           ariaLabel: `Shot ${index + 1}`,
         }
       }),
-    [beats]
+    [beats, promoShots, sceneIdx]
   )
 
   const beatNumber =

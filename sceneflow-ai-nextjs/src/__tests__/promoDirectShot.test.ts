@@ -5,7 +5,7 @@ import type { SceneBeat } from '@/lib/script/segmentTypes'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { GLOSSARY_TERMS, protectGlossary } from '@/lib/i18n/glossary'
 import { resolvePromoBeatMedia } from '@/lib/publish/promoBeatMedia'
-import { PROMO_AUDIO_MIX } from '@/lib/publish/promoAudioMix'
+import { PROMO_AUDIO_MIX, promoPreviewMusicVolume } from '@/lib/publish/promoAudioMix'
 import {
   directShotNumber,
   resolveDirectShotTarget,
@@ -267,9 +267,10 @@ describe('Shot Direction Agent', () => {
 })
 
 describe('promo audio mix', () => {
-  it('puts clip sound above the music and narration below both', () => {
+  it('keeps the music bed under the clip and ducks it further for spoken shots', () => {
     expect(PROMO_AUDIO_MIX.clip).toBeGreaterThan(PROMO_AUDIO_MIX.music)
-    expect(PROMO_AUDIO_MIX.music).toBeGreaterThan(PROMO_AUDIO_MIX.narration)
+    expect(PROMO_AUDIO_MIX.music).toBeLessThanOrEqual(0.25)
+    expect(PROMO_AUDIO_MIX.musicDucked).toBeLessThan(PROMO_AUDIO_MIX.music)
   })
 
   it('plays clip sound in the preview with no caption over the frame', () => {
@@ -277,8 +278,11 @@ describe('promo audio mix', () => {
     const video = source.slice(source.indexOf('<video'), source.indexOf('/>', source.indexOf('<video')))
     expect(video).not.toMatch(/\bmuted\b/)
     expect(source).toContain('video.volume = PROMO_AUDIO_MIX.clip')
-    expect(source).toContain('music.volume = PROMO_AUDIO_MIX.music')
+    expect(source).toContain('promoPreviewMusicVolume')
     expect(source).toContain('narration.volume = PROMO_AUDIO_MIX.narration')
+    expect(promoPreviewMusicVolume({ beatKind: 'dialogue' })).toBe(PROMO_AUDIO_MIX.musicDucked)
+    expect(promoPreviewMusicVolume({ beatKind: 'narration' })).toBe(PROMO_AUDIO_MIX.musicDucked)
+    expect(promoPreviewMusicVolume({ beatKind: 'action' })).toBe(PROMO_AUDIO_MIX.music)
     expect(source).not.toContain('{index + 1}/{shots.length}')
   })
 

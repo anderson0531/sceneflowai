@@ -188,6 +188,7 @@ export function SceneProgressDashboard({
           return (
             <button
               key={scene.id}
+              title={scene.name}
               onClick={() => onSelectScene(scene.id)}
               className={cn(
                 "w-full flex items-center px-4 py-1.5 transition-all duration-150 border-l-2",

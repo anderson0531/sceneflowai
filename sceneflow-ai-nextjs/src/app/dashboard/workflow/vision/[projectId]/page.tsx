@@ -422,9 +422,12 @@ import { resolvePromoBeatMedia, resolvePromoPlayback } from '@/lib/publish/promo
 import { promoAgentShotNeedsGeneration, type PromoAgentRunRequest, type PromoBeatClipRequest } from '@/lib/publish/promoLanguage'
 import { slimPromoProductionState } from '@/lib/publish/promoShotCatalog'
 import { runPromoAgent } from '@/lib/publish/runPromoAgent'
+import { isOptimizedShotDirection } from '@/lib/publish/promoShotCatalog'
 import { composeLanguageClipPrompt, englishSpokenLine, preferStoredSpokenTranslation } from '@/lib/scene/languageClipPrompt'
 import { translateGuideDialogueLine } from '@/lib/scene/translateGuideDialogue'
-import { resolveDirectShotTarget, type DirectShotTarget } from '@/lib/vision/directShotTarget'
+import { resolveDirectShotTarget, type DirectShotRequest, type DirectShotTarget } from '@/lib/vision/directShotTarget'
+import { saveDirectorPatchToScenes, resolveBeatReferenceSelection } from '@/lib/vision/saveBeatDirection'
+import { requestOptimizedShotDirection } from '@/lib/vision/shotDirectionAgent'
 import { VisualReference, VisualReferenceType, VisionReferencesPayload, LocationReference, LocationVersion } from '@/types/visionReferences'
 import type { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production/types'
 import { patchMixerTrackVolumes } from '@/lib/scene/screeningTrackVolume'
@@ -5516,6 +5519,68 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [ensurePromoShotSegment, generatePromoClip]
   )
 
+  const optimizePromoSourceShot = useCallback(
+    async (shot: { sceneIndex: number; beatId: string; policyBlocked?: boolean }) => {
+      if (!project?.id) throw new Error('Project must be loaded before optimizing direction.')
+      const patch = await requestOptimizedShotDirection({
+        projectId: project.id,
+        sceneIndex: shot.sceneIndex,
+        beatId: shot.beatId,
+        policyCompliance: shot.policyBlocked === true,
+      })
+      const current = scriptRef.current
+      const scenes = current?.script?.scenes ?? current?.scenes ?? []
+      const scene = scenes[shot.sceneIndex]
+      const beat = getSceneBeats(scene).find((entry) => entry.beatId === shot.beatId)
+      if (!beat) throw new Error('That shot is no longer in the script.')
+      const nextScenes = saveDirectorPatchToScenes({
+        scenes,
+        sceneIdx: shot.sceneIndex,
+        beatId: shot.beatId,
+        patch,
+        referenceSelection: resolveBeatReferenceSelection({
+          scene,
+          beat,
+          sceneIdx: shot.sceneIndex,
+          characters: (characters || []).map(
+            (character: { id?: string; name?: string; referenceImage?: string; type?: string }) => ({
+              id: character.id,
+              name: character.name || '',
+              referenceImage: character.referenceImage,
+              type: character.type,
+            })
+          ),
+          locationReferences: locationReferencesRef.current,
+          objectReferences: objectReferencesRef.current,
+        }),
+        objectReferences: objectReferencesRef.current.map((object) => ({
+          id: object.id,
+          name: object.name,
+        })),
+      })
+      const nextScript = current?.script
+        ? { ...current, script: { ...current.script, scenes: nextScenes } }
+        : { ...current, scenes: nextScenes }
+      await handleScriptChange(nextScript)
+    },
+    [project?.id, characters, handleScriptChange]
+  )
+
+  const focusStudioShot = useCallback(
+    (request: DirectShotRequest) => {
+      const target = resolveDirectShotTarget(scriptRef.current?.script?.scenes || [], request)
+      if (!target) {
+        toast.error('That shot is no longer in the script.')
+        return
+      }
+      setPublishingLibraryOpen(false)
+      setProductionViewWithUrl('studio')
+      setSelectedSceneIndex(target.sceneIndex)
+      setPendingDirectShot(target)
+    },
+    [setProductionViewWithUrl]
+  )
+
   const handleRunPromoAgent = useCallback(
     async ({
       beatPlan,
@@ -5549,6 +5614,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const key = `clip:${beat.sceneIndex}:${beat.beatId}`
         if (decision.dialogue) dialogueClips.add(key)
         beatKinds.set(key, beat.beatKind)
+        const sourceScene = (scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? [])[
+          beat.sceneIndex
+        ]
+        const sourceBeat = getSceneBeats(sourceScene).find((entry) => entry.beatId === beat.beatId)
+        const optimizeDirection =
+          decision.generate &&
+          (media.policyBlocked === true || !isOptimizedShotDirection(sourceBeat?.beatDirection))
         return {
           key,
           sceneId: beat.sceneId,
@@ -5559,6 +5631,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           frameUrl: media.thumbnailUrl || playback.thumbnailUrl || beat.frameUrl,
           hasClip: !decision.generate,
           segmentId: media.segmentId || playback.segmentId,
+          optimizeDirection,
+          policyBlocked: media.policyBlocked === true,
         }
       })
 
@@ -5621,6 +5695,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             ),
           ensureSegment: (shot) =>
             ensurePromoShotSegment(shot.sceneId, shot.beatId, shot.durationSec),
+          optimizeDirection: (shot) =>
+            optimizePromoSourceShot({
+              sceneIndex: shot.sceneIndex,
+              beatId: shot.beatId,
+              policyBlocked: shot.policyBlocked,
+            }),
           generateClip: (shot, _method, segmentId) =>
             generatePromoClip({
               sceneId: shot.sceneId,
@@ -5656,7 +5736,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         throw error
       }
     },
-    [project?.id, ensurePromoShotSegment, generatePromoClip]
+    [project?.id, ensurePromoShotSegment, generatePromoClip, optimizePromoSourceShot]
   )
 
   const handleSegmentUpload = useCallback(
@@ -17354,6 +17434,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onPendingSceneReferencesHandled={() => setPendingSceneReferencesIndex(null)}
                 pendingDirectShot={pendingDirectShot}
                 onPendingDirectShotHandled={() => setPendingDirectShot(null)}
+                onOpenDirectShot={focusStudioShot}
                 narrationVoice={narrationVoice}
                 onGenerateLanguageStream={handleGenerateLanguageStream}
                 isGeneratingAudio={isGeneratingAudio}
@@ -17790,16 +17871,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }}
         onGenerateBeatClip={handleGeneratePromoBeatClip}
         onRunPromoAgent={handleRunPromoAgent}
-        onOpenDirectShot={(request) => {
-          const target = resolveDirectShotTarget(script?.script?.scenes || [], request)
-          if (!target) {
-            toast.error('That shot is no longer in the script.')
-            return
-          }
-          setPublishingLibraryOpen(false)
-          setProductionViewWithUrl('studio')
-          setSelectedSceneIndex(target.sceneIndex)
-          setPendingDirectShot(target)
+        onOpenDirectShot={focusStudioShot}
+        onOptimizeDirection={async (request) => {
+          await optimizePromoSourceShot({
+            sceneIndex: request.sceneIndex,
+            beatId: request.beatId,
+            policyBlocked: request.policyBlocked,
+          })
+          toast.success('Direction optimized. Generate the clip when you are ready.')
         }}
       />
       

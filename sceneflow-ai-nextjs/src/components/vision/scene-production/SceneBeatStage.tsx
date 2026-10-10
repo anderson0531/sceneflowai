@@ -32,6 +32,7 @@ export type SceneBeatStageMarker =
   | 'SFX'
   | 'Music'
   | 'Excluded'
+  | 'In promo'
 
 const KIND_MARKERS: Record<string, SceneBeatStageMarker> = {
   action: 'Action',
@@ -116,6 +117,8 @@ function markerClass(marker: string): string {
       return 'border-amber-500/40 bg-amber-500/10 text-amber-200'
     case 'Excluded':
       return 'border-slate-600/60 text-slate-500'
+    case 'In promo':
+      return 'border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-200'
     default:
       return 'border-slate-600/50 bg-slate-800/80 text-slate-300'
   }
