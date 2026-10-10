@@ -41,6 +41,8 @@ import { isBlueprintFeedbackAllowed } from '@/lib/blueprint/shareSettings'
 import type { SharedBlueprintARSnapshot } from '@/lib/blueprint/sanitizeShareAR'
 import { BlueprintShareResonancePanel } from './BlueprintShareResonancePanel'
 import { PipelineDemoChrome } from '@/components/landing/PipelineDemoChrome'
+import { PipelinePlaceholderStage } from '@/components/landing/PipelinePlaceholderStage'
+import { isPipelinePlaceholderToken } from '@/config/landing/productionPipelineDemo'
 import type { BlueprintSectionAudioEntry } from '@/lib/blueprint/shareTypes'
 
 const PARTICIPANT_KEY = (token: string) => `sf_collab_participant_${token}`
@@ -172,7 +174,13 @@ export function BlueprintShareViewer({ token }: Props) {
     }
   }, [token])
 
+  const placeholder = isPipelinePlaceholderToken(token)
+
   useEffect(() => {
+    if (placeholder) {
+      setLoading(false)
+      return
+    }
     let cancelled = false
     ;(async () => {
       setLoading(true)
@@ -187,7 +195,7 @@ export function BlueprintShareViewer({ token }: Props) {
     return () => {
       cancelled = true
     }
-  }, [loadShare])
+  }, [loadShare, placeholder])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -405,6 +413,10 @@ export function BlueprintShareViewer({ token }: Props) {
         )}
     </>
   )
+
+  if (placeholder) {
+    return <PipelinePlaceholderStage tokenOrSlug={token} />
+  }
 
   if (loading) {
     return (

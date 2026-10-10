@@ -5,6 +5,7 @@ The player requests:
 - `/videos/hero-en.webm` and `/videos/hero-en.mp4` — committed files from Blob `Hero Video (English).mp4`. These paths are not rewritten.
 - `/videos/hero-es.webm` and `/videos/hero-es.mp4` — committed files from Blob `Hero Video (Spanish).mp4`. These paths are not rewritten.
 - `/videos/hero-pt.webm` and `/videos/hero-pt.mp4` — committed files from Blob `Hero Video (Portuguese).mp4`. These paths are not rewritten.
+- `/videos/cinematic-drama-trailer.webm` — committed Feature-Length Cinematic Drama trailer. The MP4 fallback stays on Blob.
 - `/videos/hero-{lang}.webm` for other locales — rewritten to Blob `landing/hero/sceneflow-hero-{lang}.webm` (1080p VP9 from the live master)
 - `/videos/hero-{lang}.mp4` for other locales — rewritten to Blob `landing/hero/sceneflow-hero-{lang}-1080p.mp4` (Safari / MP4 fallback)
 

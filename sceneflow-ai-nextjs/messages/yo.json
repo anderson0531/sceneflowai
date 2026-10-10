@@ -1398,7 +1398,7 @@
     "titleAccent": "in Action",
     "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to the final ProRes 4K master. Walk the Screening Room to compare the Pre-Vis, per-scene motion video, and the finished master in multiple languages.",
     "subtitleTagline": "Long-form productions. Not clips.",
-    "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
+    "screeningRoomInstruction": "Select Pre-Vis, Rough Cut, Scenes, Trailer, or Final to experience the pipeline. Select a language to hear the dub.",
     "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
     "explorePipelineCta": "Explore a full production",
     "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
@@ -1527,47 +1527,41 @@
         "screeningRoomPreview": "Documentary Production — Screening Room"
       },
       {
-        "id": "localization",
-        "title": "Beyond Dubbing. Fully Localized Productions.",
-        "subtitle": "Same storyline, two cities: Houston, Texas and São Paulo, Brazil. SceneFlow doesn't just dub the audio — it localizes settings, cultural references, and on-screen text so each audience sees a production made for them.",
-        "badge": "Localized",
-        "localeToggle": true,
-        "locales": [
-          {
-            "id": "houston",
-            "label": "Houston, TX",
-            "lang": "en"
-          },
-          {
-            "id": "saopaulo",
-            "label": "São Paulo, BR",
-            "lang": "pt"
-          }
-        ],
+        "id": "training",
+        "title": "Multi-Module Training Series. One Locked Instructor.",
+        "subtitle": "Hold the instructor, classroom, and lesson graphics from the first module to the last quiz. Walk Blueprint, Audience Resonance, and the Screening Room — Pre-Vis, rough cut, scenes, and the finished course — then switch languages to hear the localized version.",
+        "badge": "Curriculum-Ready",
         "solutionPillars": [
           {
-            "title": "Cultural Adaptation, Not Translation",
-            "frictionHeadline": "Dubbing Is Not Localization.",
-            "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
-            "solutionHeadline": "Blueprint-Level Localization.",
-            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Room before a single frame is rendered."
+            "title": "Instructor & Setting Consistency",
+            "frictionHeadline": "A Different Teacher Every Module.",
+            "friction": "Generative clips reset the instructor face, wardrobe, and classroom between lessons, so a course feels like a pile of unrelated videos.",
+            "solutionHeadline": "Locked Instructor Blueprints.",
+            "solution": "Define the instructor, set, and visual system once in Blueprint Room. SceneFlow keeps that identity locked across every module."
           },
           {
-            "title": "Parallel Production Pipelines",
-            "frictionHeadline": "One Region at a Time.",
-            "friction": "Traditional localization is sequential — finish the original, then manually rebuild for each market. Months of delay per region.",
-            "solutionHeadline": "Concurrent Regional Pipelines.",
-            "solution": "Run multiple localized Blueprints in parallel. Each region gets its own production pipeline sharing the same narrative structure but with fully adapted visuals and dialogue."
+            "title": "Curriculum Pacing",
+            "frictionHeadline": "Slides Chopped into Clips.",
+            "friction": "Turning a syllabus into disconnected prompts loses the lesson arc, the worked example, and the pause before a quiz.",
+            "solutionHeadline": "Module-First Storyboarding.",
+            "solution": "Direct each module as a sequence of teaching beats — setup, demonstration, and check — before a frame is rendered."
           },
           {
-            "title": "Region-Specific Audience Resonance",
-            "frictionHeadline": "One Script for Every Culture.",
-            "friction": "Humor, pacing, and emotional beats that land in Houston may fall flat in São Paulo. A single script cannot carry both.",
-            "solutionHeadline": "Per-Region Resonance Tuning.",
-            "solution": "Audience Resonance analyzes each localized script against regional demographic profiles, flagging cultural mismatches before production begins."
+            "title": "Narration & On-Screen Teaching",
+            "frictionHeadline": "Voice That Misses the Graphic.",
+            "friction": "Narration, captions, and diagrams drift apart, so learners hear one step while the picture shows another.",
+            "solutionHeadline": "Synced Lesson Tracks.",
+            "solution": "Voice, captions, and on-screen teaching stay on the same beat, so each explanation lands with the visual that proves it."
+          },
+          {
+            "title": "Course Assembly",
+            "frictionHeadline": "Weeks in an Editor.",
+            "friction": "Stitching modules, retakes, and localized versions in a traditional timeline turns a curriculum update into a production delay.",
+            "solutionHeadline": "One Studio Pipeline.",
+            "solution": "Blueprint, Audience Resonance, and the Screening Room carry a module from outline to Pre-Vis, rough cut, scenes, and the finished course."
           }
         ],
-        "screeningRoomPreview": "Localized Production Comparison — Screening Room"
+        "screeningRoomPreview": "The Training Series — Screening Room"
       }
     ]
   },

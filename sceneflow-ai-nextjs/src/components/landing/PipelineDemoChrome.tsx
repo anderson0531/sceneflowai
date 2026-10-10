@@ -4,6 +4,7 @@ import Link from 'next/link'
 import {
   PIPELINE_DEMO_STAGES,
   SCREENING_CUTS,
+  SCREENING_CUT_LABELS,
   getPipelineDemoNextStage,
   getScreeningCutHref,
   getWalkStageHref,
@@ -16,13 +17,6 @@ const STAGE_LABELS: Record<PipelineDemoStageId, string> = {
   blueprint: 'Blueprint + AR',
   'script-ar': 'Script AR',
   'screening-room': 'Screening Room',
-}
-
-const CUT_LABELS: Record<ScreeningCut, string> = {
-  previs: 'Pre-Vis',
-  scenes: 'Scenes',
-  trailer: 'Trailer',
-  final: 'Final',
 }
 
 type Props = {
@@ -96,7 +90,7 @@ export function PipelineDemoChrome({ tokenOrSlug, activeCut = null }: Props) {
                     : 'rounded-full px-2.5 py-1 text-xs text-slate-400 hover:text-white'
                 }
               >
-                {CUT_LABELS[cut]}
+                {SCREENING_CUT_LABELS[cut]}
               </Link>
             )
           })}
