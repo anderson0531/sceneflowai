@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { PROMO_AUDIO_MIX } from '@/lib/publish/promoAudioMix'
+import { promoShotIncluded, promoStudioWatermarkPayload } from '@/lib/publish/promoTimeline'
 import type { PromoTrailerBeatPlan } from '@/types/publishingAssets'
 
 export const dynamic = 'force-dynamic'
@@ -34,6 +35,8 @@ export async function POST(request: NextRequest) {
       promoSceneId?: string
       aspect?: '16:9' | '9:16'
       language?: string
+      /** Missing or true burns in SceneFlow Studio. False leaves the file clean. */
+      watermarkEnabled?: boolean
     }
 
     const projectId = (body.projectId || '').trim()
@@ -50,7 +53,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const clipSegments = beatPlan
+    const playingPlan = beatPlan.filter((beat) => promoShotIncluded(beat))
+    const clipSegments = playingPlan
       .map((beat, idx) => {
         const videoUrl = (beat.videoUrl || fallbackVideoUrl || '').trim()
         if (!videoUrl) return null
@@ -90,7 +94,7 @@ export async function POST(request: NextRequest) {
     const segments =
       clipSegments.length > 0
         ? clipSegments
-        : beatPlan.map((beat, idx) => ({
+        : playingPlan.map((beat, idx) => ({
             segmentId: `beat-${beat.beatId}-${idx}`,
             sequenceIndex: idx,
             videoUrl: fallbackVideoUrl,
@@ -101,7 +105,7 @@ export async function POST(request: NextRequest) {
             pauseDuration: 0,
           }))
 
-    const totalBeatSec = beatPlan.reduce(
+    const totalBeatSec = playingPlan.reduce(
       (sum, b) => sum + (b.durationSec ?? b.endSec - b.startSec),
       0
     )
@@ -157,6 +161,7 @@ export async function POST(request: NextRequest) {
         segments,
         audioTracks,
         textOverlays: [],
+        ...(body.watermarkEnabled === false ? {} : { watermark: promoStudioWatermarkPayload() }),
       }),
     })
 

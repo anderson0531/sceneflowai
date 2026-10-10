@@ -52,6 +52,8 @@ export interface PromoTrailerBeatPlan {
   beatKind?: string
   /** Where this shot sits in the trailer: hook, rise, peak, or button. */
   trailerRole?: PromoTrailerRole
+  /** Missing means the shot plays. False keeps it on the timeline and out of the cut. */
+  included?: boolean
 }
 
 export type PromoFrameAspect = '16:9' | '9:16'
@@ -81,6 +83,8 @@ export interface ProjectPublishingPromo {
   aspect?: PromoFrameAspect
   /** Languages the user has opened a promo stream for. */
   languages?: string[]
+  /** Missing means the SceneFlow Studio watermark is burned into the promo. */
+  watermarkEnabled?: boolean
 }
 
 export interface PublishingReadiness {

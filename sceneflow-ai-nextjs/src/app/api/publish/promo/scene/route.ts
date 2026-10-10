@@ -2,7 +2,7 @@
  * Promo scene upsert + narration/music generation.
  *
  * POST /api/publish/promo/scene
- * body: { projectId, action: 'plan' | 'upsert' | 'narration' | 'music', beatPlan?, ... }
+ * body: { projectId, action: 'plan' | 'upsert' | 'timeline' | 'narration' | 'music', beatPlan?, ... }
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -34,6 +34,7 @@ import {
 } from '@/lib/publish/trailerPlanner'
 import { normalizeStreamLanguage } from '@/lib/scene/languageClipVersions'
 import { resolvePromoNarrationVoiceId } from '@/lib/publish/promoNarrationVoice'
+import { promoShotIncluded, sanitizePromoTimeline } from '@/lib/publish/promoTimeline'
 import {
   DEFAULT_GEMINI_TTS_MODEL,
   NARRATION_CHUNK_BYTES,
@@ -239,7 +240,7 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as {
       projectId?: string
-      action?: 'plan' | 'upsert' | 'narration' | 'music'
+      action?: 'plan' | 'upsert' | 'timeline' | 'narration' | 'music'
       targetDurationSec?: number
       heroBeatIds?: string[]
       sceneScores?: Record<number, number>
@@ -351,6 +352,54 @@ export async function POST(request: NextRequest) {
         targetDurationSec: plan.targetDurationSec,
         source: plan.source,
         analysis,
+        metadata,
+      })
+    }
+
+    if (action === 'timeline') {
+      const catalog = buildPromoShotCatalog(planInput)
+      const accepted = sanitizePromoTimeline(body.beatPlan, catalog)
+      if (!accepted) {
+        return NextResponse.json(
+          { error: 'Each promo shot must match a source shot' },
+          { status: 400 }
+        )
+      }
+      const existingIdx = findPromoSceneIndex(scenes)
+      const existing =
+        existingIdx >= 0 ? (scenes[existingIdx] as Record<string, unknown>) : null
+      const { scene, productionSeed } = buildPromoSceneFromPlan({
+        beatPlan: accepted,
+        targetDurationSec,
+        projectTitle: project.title,
+        existingPromoScene: existing,
+      })
+      scenes = upsertPromoSceneInScenes(scenes, scene)
+      metadata = setScenesOnMetadata(metadata, scenes)
+      metadata = seedProductionOnMetadata(
+        metadata,
+        scene.id,
+        productionSeed as unknown as Record<string, unknown>
+      )
+      metadata = mergePromoPublishing(metadata, promoOptions)
+      const playing = accepted.filter((beat) => promoShotIncluded(beat))
+      const analysis = await reviewPlan(playing)
+      project.metadata = metadata
+      project.changed('metadata', true)
+      await project.save()
+      const totalDurationSec = playing.reduce(
+        (sum, beat) => sum + (beat.durationSec ?? beat.endSec - beat.startSec),
+        0
+      )
+      return NextResponse.json({
+        success: true,
+        action: 'timeline',
+        beatPlan: accepted,
+        totalDurationSec,
+        targetDurationSec,
+        analysis,
+        promoScene: scene,
+        scenes,
         metadata,
       })
     }

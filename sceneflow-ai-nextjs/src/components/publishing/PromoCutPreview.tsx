@@ -8,6 +8,7 @@ import {
   promoPreviewMusicVolume,
 } from '@/lib/publish/promoAudioMix'
 import { promoFrameClass } from '@/lib/publish/promoFrame'
+import { promoStudioWatermarkPayload } from '@/lib/publish/promoTimeline'
 import type { PromoPreviewShot } from '@/lib/publish/promoPreviewSequence'
 import type { PromoFrameAspect } from '@/types/publishingAssets'
 import { cn } from '@/lib/utils'
@@ -20,6 +21,8 @@ export interface PromoCutPreviewProps {
   onEnded: () => void
   /** Source frame. 16:9 unless the blueprint is vertical. */
   aspect?: PromoFrameAspect
+  /** SceneFlow Studio mark. On unless the promo watermark is turned off. */
+  watermark?: boolean
 }
 
 /**
@@ -33,6 +36,7 @@ export function PromoCutPreview({
   musicUrl,
   onEnded,
   aspect = '16:9',
+  watermark = true,
 }: PromoCutPreviewProps) {
   const [index, setIndex] = useState(0)
   const advanced = useRef(false)
@@ -160,6 +164,11 @@ export function PromoCutPreview({
             {shot.label || 'Shot'}
           </div>
         )}
+        {watermark ? (
+          <span className="pointer-events-none absolute bottom-2 right-2 text-[10px] font-medium text-white/60 drop-shadow">
+            {promoStudioWatermarkPayload().text}
+          </span>
+        ) : null}
       </div>
     </div>
     ) : null}

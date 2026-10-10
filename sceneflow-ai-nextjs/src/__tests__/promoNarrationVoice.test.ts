@@ -70,7 +70,7 @@ describe('promo narration level and timeline controls', () => {
     expect(tab).toContain("handleRegenAudio('narration')")
     expect(tab).toContain("handleRegenAudio('music')")
     expect(tab).toContain("await postScene(action)")
-    expect(tab).toContain("'plan' | 'upsert' | 'narration' | 'music'")
+    expect(tab).toContain("'plan' | 'upsert' | 'timeline' | 'narration' | 'music'")
     const route = read('src/app/api/publish/promo/scene/route.ts')
     expect(route).toContain('resolvePromoNarrationVoiceId')
   })

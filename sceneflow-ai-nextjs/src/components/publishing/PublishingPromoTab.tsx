@@ -18,7 +18,15 @@ import { AudienceDescriptionField } from '@/components/audience/AudienceDescript
 import { PromoPlanDirectorDialog } from '@/components/publishing/PromoPlanDirectorDialog'
 import { getLanguageDisplayName } from '@/lib/publish/buildLanguageAudioTrack'
 import { collectPromoPlanFindings, type PromoPlanFinding } from '@/lib/publish/promoPlanFindings'
-import { isOptimizedShotDirection, slimPromoProductionState } from '@/lib/publish/promoShotCatalog'
+import { buildPromoShotCatalog, isOptimizedShotDirection, slimPromoProductionState } from '@/lib/publish/promoShotCatalog'
+import {
+  placePromoShot,
+  promoShotIncluded,
+  promoShotKey,
+  promoWatermarkEnabled,
+  withPromoShotDuration,
+  withPromoShotIncluded,
+} from '@/lib/publish/promoTimeline'
 import { DEFAULT_TRAILER_SEC } from '@/lib/publish/trailerPlanner'
 import { resolvePromoPlayback, promoPlanForLanguage } from '@/lib/publish/promoBeatMedia'
 import { buildPromoPreviewSequence } from '@/lib/publish/promoPreviewSequence'
@@ -189,6 +197,12 @@ export function PublishingPromoTab({
   const [analysis, setAnalysis] = useState<PromoPlanFinding[] | null>(null)
   const [optimizingKey, setOptimizingKey] = useState<string | null>(null)
   const [brokenBeatKeys, setBrokenBeatKeys] = useState<Set<string>>(() => new Set())
+  const [watermarkEnabled, setWatermarkEnabled] = useState(() =>
+    promoWatermarkEnabled(getPublishingState(metadata).promo?.watermarkEnabled)
+  )
+  const [addShotKey, setAddShotKey] = useState('')
+  const [addPosition, setAddPosition] = useState(1)
+  const [timelineSaving, setTimelineSaving] = useState(false)
   const metadataRef = useRef(metadata)
   metadataRef.current = metadata
   const saveRef = useRef(onSaveMetadata)
@@ -252,6 +266,7 @@ export function PublishingPromoTab({
         targetDurationSec: targetDuration,
         aspect,
         languages: languagesRef.current,
+        watermarkEnabled,
       }
       if (audience.description.trim()) nextPromo.audienceDefinition = audience
       else delete nextPromo.audienceDefinition
@@ -262,7 +277,7 @@ export function PublishingPromoTab({
       )
     }, 700)
     return () => window.clearTimeout(timer)
-  }, [audience, targetDuration, languageKey, aspect])
+  }, [audience, targetDuration, languageKey, aspect, watermarkEnabled])
 
   const timelineBeats = useMemo(() => {
     if (beatPlan.length > 0) return beatPlan
@@ -276,7 +291,7 @@ export function PublishingPromoTab({
     const references = (vision?.references as Record<string, unknown> | undefined) ?? {}
     return collectPromoPlanFindings({
       scenes,
-      beatPlan: timelineBeats,
+      beatPlan: timelineBeats.filter((beat) => promoShotIncluded(beat)),
       sceneProductionState: sceneProductionState as Record<string, unknown> | undefined,
       blueprintBeats: treatmentBeatsFromMetadata(metadata as Record<string, unknown> | null),
       characters: Array.isArray(vision?.characters) ? vision.characters : [],
@@ -314,11 +329,13 @@ export function PublishingPromoTab({
     [timelineBeats, sceneProductionState, scenes, language]
   )
 
-  const readyClipCount = timelineRows.filter(
+  const includedRows = timelineRows.filter((row) => promoShotIncluded(row.beat))
+
+  const readyClipCount = includedRows.filter(
     (row) => row.playback.hasClip && !brokenBeatKeys.has(row.key)
   ).length
 
-  const dialogueGaps = timelineRows.filter(
+  const dialogueGaps = includedRows.filter(
     (row) =>
       isLanguageClipTarget(language) &&
       row.beat.beatKind === 'dialogue' &&
@@ -328,7 +345,7 @@ export function PublishingPromoTab({
   const previewShots = useMemo(
     () =>
       buildPromoPreviewSequence(
-        timelineRows.map(({ beat, key, playback }) => ({
+        timelineRows.filter(({ beat }) => promoShotIncluded(beat)).map(({ beat, key, playback }) => ({
           key,
           label: beat.label,
           durationSec: beat.durationSec ?? Math.max(0, beat.endSec - beat.startSec),
@@ -373,7 +390,7 @@ export function PublishingPromoTab({
   const audiencePayload = audience.description.trim() ? audience : undefined
 
   const postScene = useCallback(
-    async (action: 'plan' | 'upsert' | 'narration' | 'music', beatPlanBody?: PromoTrailerBeatPlan[]) => {
+    async (action: 'plan' | 'upsert' | 'timeline' | 'narration' | 'music', beatPlanBody?: PromoTrailerBeatPlan[]) => {
       const res = await fetch('/api/publish/promo/scene', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -387,7 +404,8 @@ export function PublishingPromoTab({
           sceneScores,
           scenes,
           sceneProductionState: slimPromoProductionState(sceneProductionState),
-          ...(beatPlanBody?.length && (action === 'plan' || action === 'upsert')
+          ...(beatPlanBody?.length &&
+          (action === 'plan' || action === 'upsert' || action === 'timeline')
             ? { beatPlan: beatPlanBody }
             : {}),
         }),
@@ -420,6 +438,32 @@ export function PublishingPromoTab({
       applyScenes,
       onSaveMetadata,
     ]
+  )
+
+  const shotCatalog = useMemo(
+    () =>
+      buildPromoShotCatalog({
+        scenes,
+        sceneProductionState: sceneProductionState as Record<string, unknown> | undefined,
+      }),
+    [scenes, sceneProductionState]
+  )
+
+  const commitTimeline = useCallback(
+    async (next: PromoTrailerBeatPlan[]) => {
+      const previous = timelineBeats
+      setBeatPlan(next)
+      setTimelineSaving(true)
+      try {
+        await postScene('timeline', next)
+      } catch (error) {
+        setBeatPlan(previous)
+        toast.error(error instanceof Error ? error.message : 'Promo timeline save failed')
+      } finally {
+        setTimelineSaving(false)
+      }
+    },
+    [timelineBeats, postScene]
   )
 
   const handlePlan = useCallback(async () => {
@@ -506,14 +550,15 @@ export function PublishingPromoTab({
   )
 
   const handleRunPromoAgent = useCallback(async () => {
-    if (!onRunPromoAgent || timelineBeats.length === 0) {
+    const playing = timelineBeats.filter((beat) => promoShotIncluded(beat))
+    if (!onRunPromoAgent || playing.length === 0) {
       toast.error('Plan the promo first.')
       return
     }
     setAgentRunning(true)
     try {
       await onRunPromoAgent({
-        beatPlan: timelineBeats,
+        beatPlan: playing,
         targetDurationSec: targetDuration,
         language,
         aspectRatio: aspect,
@@ -527,7 +572,9 @@ export function PublishingPromoTab({
   }, [onRunPromoAgent, timelineBeats, targetDuration, language, aspect, audiencePayload])
 
   const handleRenderTrailer = useCallback(async () => {
-    const source = beatPlan.length > 0 ? beatPlan : timelineBeats
+    const source = (beatPlan.length > 0 ? beatPlan : timelineBeats).filter((beat) =>
+      promoShotIncluded(beat)
+    )
     const plan = promoPlanForLanguage(
       source,
       sceneProductionState as Record<string, unknown> | undefined,
@@ -544,7 +591,7 @@ export function PublishingPromoTab({
       )
       return
     }
-    if (timelineRows.some((row) => !row.playback.hasClip)) {
+    if (includedRows.some((row) => !row.playback.hasClip)) {
       toast.error('Generate the missing clips before rendering the promo.')
       return
     }
@@ -571,6 +618,7 @@ export function PublishingPromoTab({
           musicAudioUrl,
           aspect,
           language,
+          watermarkEnabled,
           promoSceneId: typeof promoScene?.id === 'string' ? promoScene.id : undefined,
         }),
       })
@@ -633,6 +681,8 @@ export function PublishingPromoTab({
     narrationAudioUrl,
     musicAudioUrl,
     aspect,
+    watermarkEnabled,
+    includedRows,
     promoScene,
     metadata,
     publishingState.promo,
@@ -672,6 +722,14 @@ export function PublishingPromoTab({
               </button>
             ))}
           </div>
+          <label className="mt-3 flex items-center gap-2 text-xs text-zinc-300">
+            <input
+              type="checkbox"
+              checked={watermarkEnabled}
+              onChange={(event) => setWatermarkEnabled(event.target.checked)}
+            />
+            Watermark · SceneFlow Studio
+          </label>
         </div>
 
         <div className="mb-4 grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(12rem,0.8fr)]">
@@ -796,6 +854,7 @@ export function PublishingPromoTab({
         <PromoCutPreview
           playing={previewing}
           shots={previewShots}
+          watermark={watermarkEnabled}
           narrationUrl={narrationAudioUrl}
           musicUrl={musicAudioUrl}
           aspect={aspect}
@@ -809,14 +868,15 @@ export function PublishingPromoTab({
               {languages.map((code) => {
                 const asset = promoAssetForLanguage(publishingState.promo, code)
                 const narration = narrationUrlFor(promoScene, code)
-                const playback = timelineBeats.map((beat) =>
+                const playingBeats = timelineBeats.filter((beat) => promoShotIncluded(beat))
+                const playback = playingBeats.map((beat) =>
                   resolvePromoPlayback(
                     beat,
                     sceneProductionState as Record<string, unknown> | undefined,
                     code
                   )
                 )
-                const dialogueBeats = timelineBeats.filter((beat) => beat.beatKind === 'dialogue')
+                const dialogueBeats = playingBeats.filter((beat) => beat.beatKind === 'dialogue')
                 const dialogueReady = dialogueBeats.filter((beat) =>
                   resolvePromoPlayback(
                     beat,
@@ -842,7 +902,7 @@ export function PublishingPromoTab({
                     <span>
                       {isLanguageClipTarget(code)
                         ? `${dialogueReady}/${dialogueBeats.length} dialogue clips`
-                        : `${readyForLanguage}/${timelineRows.length} clips`}
+                        : `${readyForLanguage}/${playingBeats.length} clips`}
                     </span>
                     <span>{narration ? 'Narration' : 'No narration'}</span>
                     <span>{musicAudioUrl ? 'Music' : 'No music'}</span>
@@ -865,19 +925,71 @@ export function PublishingPromoTab({
           </Button>
         ) : null}
 
-        {timelineRows.length > 0 && (
+        {(timelineRows.length > 0 || shotCatalog.length > 0) && (
           <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
             <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">
               Shot timeline ({timelineRows.length} shots)
             </p>
             <p className="text-[11px] text-zinc-400 mb-2">
-              {readyClipCount} of {timelineRows.length} clips
+              {readyClipCount} of {includedRows.length} clips
+              {timelineRows.length > includedRows.length
+                ? ` · ${timelineRows.length - includedRows.length} excluded`
+                : ''}
               {dialogueGaps > 0 ? ` · ${dialogueGaps} dialogue clips still needed in ${languageLabel}` : ''}
             </p>
+            {shotCatalog.length > 0 ? (
+              <div className="mb-2 flex flex-wrap items-end gap-2">
+                <label className="min-w-[12rem] flex-1 text-[10px] text-zinc-500">
+                  Add shot
+                  <select
+                    value={addShotKey}
+                    onChange={(event) => setAddShotKey(event.target.value)}
+                    className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-100"
+                  >
+                    <option value="">Choose a shot</option>
+                    {shotCatalog.map((shot) => {
+                      const number = shot.sceneIndex + 1
+                      const shotNumber =
+                        directShotNumber(scenes[shot.sceneIndex], shot.beatId) ?? shot.beatIndex + 1
+                      const title = shot.label?.trim()
+                      return (
+                        <option key={promoShotKey(shot)} value={promoShotKey(shot)}>
+                          {`Scene ${number} · Shot ${shotNumber}${title ? ` · ${title}` : ''}`}
+                        </option>
+                      )
+                    })}
+                  </select>
+                </label>
+                <label className="text-[10px] text-zinc-500">
+                  Position
+                  <input
+                    type="number"
+                    min={1}
+                    value={addPosition}
+                    onChange={(event) => setAddPosition(Number(event.target.value))}
+                    className="mt-1 h-7 w-16 rounded border border-zinc-700 bg-zinc-950 px-2 text-xs text-zinc-100"
+                  />
+                </label>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-[10px]"
+                  disabled={!addShotKey || timelineSaving}
+                  onClick={() => {
+                    const shot = shotCatalog.find((entry) => promoShotKey(entry) === addShotKey)
+                    if (!shot) return
+                    void commitTimeline(placePromoShot(timelineBeats, shot, addPosition))
+                  }}
+                >
+                  Add
+                </Button>
+              </div>
+            ) : null}
             <div className="flex flex-col gap-1.5">
-              {timelineRows.map(({ beat, key, playback, sceneNumber, shotNumber }) => {
+              {timelineRows.map(({ beat, key, playback, sceneNumber, shotNumber }, index) => {
                 const broken = brokenBeatKeys.has(key)
                 const hasClip = playback.hasClip && !broken
+                const included = promoShotIncluded(beat)
                 const durationSec = beat.durationSec ?? beat.endSec - beat.startSec
                 const showImage = Boolean(playback.thumbnailUrl || beat.frameUrl) && !broken && !hasClip
                 const showVideo = hasClip && Boolean(playback.videoUrl)
@@ -886,7 +998,10 @@ export function PublishingPromoTab({
                 return (
                   <div
                     key={key}
-                    className="flex items-center gap-2 rounded border border-zinc-800 bg-zinc-950/80 px-2 py-1.5"
+                    className={cn(
+                      'flex items-center gap-2 rounded border border-zinc-800 bg-zinc-950/80 px-2 py-1.5',
+                      !included && 'opacity-50'
+                    )}
                     title={beat.label}
                   >
                     <div
@@ -932,6 +1047,48 @@ export function PublishingPromoTab({
                         <p className="truncate text-[10px] text-zinc-500">{beat.label}</p>
                       ) : null}
                     </div>
+                    <label className="flex shrink-0 items-center gap-1 text-[10px] text-zinc-500">
+                      <input
+                        type="number"
+                        min={1}
+                        max={12}
+                        step={1}
+                        key={`${key}-${durationSec}`}
+                        defaultValue={Math.round(durationSec)}
+                        disabled={timelineSaving}
+                        title="Shot length in seconds"
+                        className="h-7 w-12 rounded border border-zinc-700 bg-zinc-950 px-1 text-[11px] text-zinc-100"
+                        onBlur={(event) => {
+                          const next = Number(event.target.value)
+                          if (!Number.isFinite(next) || Math.round(next) === Math.round(durationSec)) return
+                          void commitTimeline(
+                            timelineBeats.map((row, rowIndex) =>
+                              rowIndex === index ? withPromoShotDuration(row, next) : row
+                            )
+                          )
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') event.currentTarget.blur()
+                        }}
+                      />
+                      s
+                    </label>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 shrink-0 px-2 text-[10px]"
+                      disabled={timelineSaving}
+                      title={included ? 'Leave this shot out of the cut' : 'Put this shot back in the cut'}
+                      onClick={() =>
+                        void commitTimeline(
+                          timelineBeats.map((row, rowIndex) =>
+                            rowIndex === index ? withPromoShotIncluded(row, !included) : row
+                          )
+                        )
+                      }
+                    >
+                      {included ? 'Exclude' : 'Include'}
+                    </Button>
                     {onOpenDirectShot ? (
                       <Button
                         size="sm"
