@@ -33,8 +33,8 @@ import {
   MIN_TRAILER_SEC,
 } from '@/lib/publish/trailerPlanner'
 import { normalizeStreamLanguage } from '@/lib/scene/languageClipVersions'
+import { resolvePromoNarrationVoiceId } from '@/lib/publish/promoNarrationVoice'
 import {
-  DEFAULT_BLUEPRINT_GEMINI_VOICE,
   DEFAULT_GEMINI_TTS_MODEL,
   NARRATION_CHUNK_BYTES,
 } from '@/lib/tts/blueprintTtsConstants'
@@ -190,10 +190,11 @@ Rules:
 async function synthesizeNarrationTts(opts: {
   text: string
   language: string
+  voiceId: string
 }): Promise<string | null> {
   try {
     const languageCode = resolveGeminiTtsLanguageCode(opts.language)
-    const voiceId = DEFAULT_BLUEPRINT_GEMINI_VOICE
+    const voiceId = opts.voiceId
     const model = process.env.GEMINI_TTS_MODEL?.trim() || DEFAULT_GEMINI_TTS_MODEL
     const pathname = narrationAudioPathname(
       hashNarrationAudio({
@@ -427,9 +428,18 @@ export async function POST(request: NextRequest) {
         audienceText,
       })
 
+      const visionPhase = (metadata.visionPhase as Record<string, unknown> | undefined) ?? {}
+      const narrationVoice =
+        visionPhase.narrationVoice && typeof visionPhase.narrationVoice === 'object'
+          ? (visionPhase.narrationVoice as { voiceId?: string })
+          : null
       const audioUrl = await synthesizeNarrationTts({
         text: narrationText,
         language,
+        voiceId: resolvePromoNarrationVoiceId({
+          characters: Array.isArray(visionPhase.characters) ? visionPhase.characters : [],
+          narrationVoice,
+        }),
       })
 
       // Rebuild with narration beat while preserving music
