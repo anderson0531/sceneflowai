@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'fs'
 import path from 'path'
 import { PROMO_AUDIO_MIX } from '@/lib/publish/promoAudioMix'
+import {
+  buildPromoNarrationPrompt,
+  mergePromoDialogueAudio,
+  promoNarrationLineFromScene,
+  promoNarrationShotsFromPlan,
+  unwrapPromoNarrationText,
+} from '@/lib/publish/promoNarrationScript'
 import { resolvePromoNarrationVoiceId } from '@/lib/publish/promoNarrationVoice'
 import { DEFAULT_BLUEPRINT_GEMINI_VOICE } from '@/lib/tts/blueprintTtsConstants'
 
@@ -73,5 +80,65 @@ describe('promo narration level and timeline controls', () => {
     expect(tab).toContain("'plan' | 'upsert' | 'timeline' | 'narration' | 'music'")
     const route = read('src/app/api/publish/promo/scene/route.ts')
     expect(route).toContain('resolvePromoNarrationVoiceId')
+    expect(route).toContain("responseMimeType: 'text/plain'")
+    expect(route).toContain("thinkingLevel: 'minimal'")
+    expect(route).toContain('narrationLine')
+    expect(route).toContain('mergePromoDialogueAudio')
+  })
+})
+
+describe('promo narration script', () => {
+  it('writes the ordered cut as a spoken line, not JSON', () => {
+    const prompt = buildPromoNarrationPrompt({
+      title: 'The White City Current',
+      logline: 'A river keeps a city alive.',
+      shots: promoNarrationShotsFromPlan([
+        { label: 'The gates open', durationSec: 5, included: true },
+        { label: 'Leave this out', durationSec: 4, included: false },
+        { label: 'She reaches the current', durationSec: 4.2, startSec: 0, endSec: 4.2 },
+      ]),
+      targetDurationSec: 60,
+      languageName: 'English',
+      minWords: 32,
+      maxWords: 52,
+    })
+    expect(prompt).toContain('1. (5s) The gates open')
+    expect(prompt).toContain('2. (4s) She reaches the current')
+    expect(prompt).not.toContain('Leave this out')
+    expect(prompt).toContain('Return only the spoken narration')
+    expect(prompt).toContain('No JSON')
+  })
+
+  it('unwraps a JSON narration blob and keeps plain speech', () => {
+    expect(unwrapPromoNarrationText('{"narration":"The city holds its breath."}')).toBe(
+      'The city holds its breath.'
+    )
+    expect(unwrapPromoNarrationText('{"text":"She runs."}')).toBe('She runs.')
+    expect(unwrapPromoNarrationText('The river does not wait.')).toBe('The river does not wait.')
+    expect(unwrapPromoNarrationText('{"narration": "The city holds')).toBe('The city holds')
+    expect(unwrapPromoNarrationText('{"shots":[]}')).toBe('')
+    expect(unwrapPromoNarrationText('')).toBe('')
+  })
+
+  it('keeps a stored voice-over when the client scene has none', () => {
+    const stored = {
+      dialogueAudio: {
+        en: [{ line: 'The city holds its breath.', audioUrl: 'https://cdn.example/vo.mp3' }],
+      },
+    }
+    const merged = mergePromoDialogueAudio({ id: 'promo' }, stored)
+    expect(promoNarrationLineFromScene({ dialogueAudio: merged }, 'en')).toBe(
+      'The city holds its breath.'
+    )
+    expect(merged?.en?.[0]).toMatchObject({ audioUrl: 'https://cdn.example/vo.mp3' })
+
+    const client = {
+      dialogueAudio: {
+        en: [{ line: 'A newer line.', audioUrl: 'https://cdn.example/new.mp3' }],
+      },
+    }
+    expect(promoNarrationLineFromScene({ dialogueAudio: mergePromoDialogueAudio(client, stored) }, 'en')).toBe(
+      'A newer line.'
+    )
   })
 })

@@ -25,6 +25,13 @@ import { buildPromoShotCatalog } from '@/lib/publish/promoShotCatalog'
 import { normalizePromoModelPlan, planPromoTrailerWithModel } from '@/lib/publish/promoPlanModel'
 import { treatmentBeatsFromMetadata } from '@/lib/script/sceneDecomposition'
 import { promoLanguageName, promoNarrationWordBudget } from '@/lib/publish/promoLanguage'
+import {
+  buildPromoNarrationPrompt,
+  mergePromoDialogueAudio,
+  promoNarrationLineFromScene,
+  promoNarrationShotsFromPlan,
+  unwrapPromoNarrationText,
+} from '@/lib/publish/promoNarrationScript'
 import { upsertPublishingState } from '@/lib/publish/publishingState'
 import {
   planPromoTrailer,
@@ -155,37 +162,63 @@ function mergePromoPublishing(
   return upsertPublishingState(metadata, { promo })
 }
 
+function promoSceneForRebuild(
+  clientScenes: unknown[],
+  metadata: Record<string, unknown>,
+  language: string
+): { existing: Record<string, unknown> | null; narrationLine?: string } {
+  const clientIdx = findPromoSceneIndex(clientScenes)
+  const client = clientIdx >= 0 ? (clientScenes[clientIdx] as Record<string, unknown>) : null
+  const storedScenes = getScenesFromMetadata(metadata)
+  const storedIdx = findPromoSceneIndex(storedScenes)
+  const stored = storedIdx >= 0 ? (storedScenes[storedIdx] as Record<string, unknown>) : null
+  const dialogueAudio = mergePromoDialogueAudio(client, stored)
+  if (!client && !stored && !dialogueAudio) return { existing: null }
+  const existing: Record<string, unknown> = {
+    ...(stored ?? {}),
+    ...(client ?? {}),
+    ...(dialogueAudio ? { dialogueAudio } : {}),
+  }
+  return {
+    existing,
+    narrationLine: promoNarrationLineFromScene(existing, language),
+  }
+}
+
 async function generatePromoNarrationScript(opts: {
   title: string
   logline?: string
   genre?: string
-  beatLabels: string[]
+  shots: ReturnType<typeof promoNarrationShotsFromPlan>
   targetDurationSec: number
   language: string
   audienceText?: string
 }): Promise<string> {
   const budget = promoNarrationWordBudget(opts.targetDurationSec)
-  const languageName = promoLanguageName(opts.language)
-  const prompt = `Write a captivating ${opts.targetDurationSec}-second film trailer voice-over narration (${budget.minWords}–${budget.maxWords} words).
-Title: ${opts.title}
-${opts.logline ? `Logline: ${opts.logline}` : ''}
-${opts.genre ? `Genre: ${opts.genre}` : ''}
-${opts.audienceText?.trim() ? `Target audience:\n${opts.audienceText.trim()}` : ''}
-Highlight moments: ${opts.beatLabels.slice(0, 12).join('; ')}
-
-Rules:
-- Write the narration in ${languageName}
-- Present tense, cinematic, urgent but not spoiler-heavy
-- Shape the appeal for the target audience
-- No stage directions, no character names unless essential
-- Return ONLY the narration text`
+  const prompt = buildPromoNarrationPrompt({
+    title: opts.title,
+    logline: opts.logline,
+    genre: opts.genre,
+    shots: opts.shots,
+    targetDurationSec: opts.targetDurationSec,
+    languageName: promoLanguageName(opts.language),
+    audienceText: opts.audienceText,
+    minWords: budget.minWords,
+    maxWords: budget.maxWords,
+  })
 
   const result = await generateText(prompt, {
     model: getGeminiTextModel('flash'),
     temperature: 0.7,
     maxOutputTokens: 512,
+    responseMimeType: 'text/plain',
+    thinkingLevel: 'minimal',
   })
-  return result.text.trim().replace(/^["']|["']$/g, '')
+  const narrationText = unwrapPromoNarrationText(result.text)
+  if (!narrationText) {
+    throw new Error('Promo narration came back empty')
+  }
+  return narrationText
 }
 
 async function synthesizeNarrationTts(opts: {
@@ -365,14 +398,13 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
-      const existingIdx = findPromoSceneIndex(scenes)
-      const existing =
-        existingIdx >= 0 ? (scenes[existingIdx] as Record<string, unknown>) : null
+      const { existing, narrationLine } = promoSceneForRebuild(scenes, metadata, language)
       const { scene, productionSeed } = buildPromoSceneFromPlan({
         beatPlan: accepted,
         targetDurationSec,
         projectTitle: project.title,
         existingPromoScene: existing,
+        narrationLine,
       })
       scenes = upsertPromoSceneInScenes(scenes, scene)
       metadata = setScenesOnMetadata(metadata, scenes)
@@ -417,15 +449,13 @@ export async function POST(request: NextRequest) {
           : null
       const plan = accepted ?? (await planPromoTrailerWithModel(planInput))
 
-      const existingIdx = findPromoSceneIndex(scenes)
-      const existing =
-        existingIdx >= 0 ? (scenes[existingIdx] as Record<string, unknown>) : null
-
+      const { existing, narrationLine } = promoSceneForRebuild(scenes, metadata, language)
       const { scene, productionSeed } = buildPromoSceneFromPlan({
         beatPlan: plan.beatPlan,
         targetDurationSec: plan.targetDurationSec,
         projectTitle: project.title,
         existingPromoScene: existing,
+        narrationLine,
       })
 
       scenes = upsertPromoSceneInScenes(scenes, scene)
@@ -466,12 +496,16 @@ export async function POST(request: NextRequest) {
     const promoScene = { ...(scenes[promoIdx] as Record<string, unknown>) }
 
     if (action === 'narration') {
-      const beatLabels = planLabels(promoScene)
+      const fromPlan = promoNarrationShotsFromPlan(promoScene.promoBeatPlan)
+      const shots =
+        fromPlan.length > 0
+          ? fromPlan
+          : planLabels(promoScene).map((label) => ({ label, durationSec: 5 }))
       const narrationText = await generatePromoNarrationScript({
         title: project.title || 'Untitled',
         logline: typeof project.description === 'string' ? project.description : undefined,
         genre: typeof project.genre === 'string' ? project.genre : undefined,
-        beatLabels,
+        shots,
         targetDurationSec,
         language,
         audienceText,

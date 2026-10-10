@@ -84,6 +84,21 @@ export function placePromoShot(
   return next
 }
 
+/** Move a shot to another index. Out-of-range indexes leave the cut unchanged. */
+export function movePromoShot(
+  plan: PromoTrailerBeatPlan[],
+  fromIndex: number,
+  toIndex: number
+): PromoTrailerBeatPlan[] {
+  if (!Number.isInteger(fromIndex) || !Number.isInteger(toIndex)) return plan
+  if (fromIndex < 0 || fromIndex >= plan.length) return plan
+  if (toIndex < 0 || toIndex >= plan.length || toIndex === fromIndex) return plan
+  const next = [...plan]
+  const [shot] = next.splice(fromIndex, 1)
+  next.splice(toIndex, 0, shot!)
+  return next
+}
+
 /**
  * Accept a hand-edited cut. Every row must be a real source shot, once.
  * Duration becomes a whole second from 1 to 12. Included stays only when false.

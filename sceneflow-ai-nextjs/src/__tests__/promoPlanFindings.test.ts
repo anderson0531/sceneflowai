@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { analyzePromoPlan } from '@/lib/publish/analyzePromoPlan'
+import { analyzePromoPlan, parsePromoAnalysisJson } from '@/lib/publish/analyzePromoPlan'
 import {
   collectPromoPlanFindings,
   mergePromoStoryNotes,
@@ -251,6 +251,42 @@ describe('analyzePromoPlan', () => {
     )
     expect(findings.some((finding) => finding.text.includes('The White City Current'))).toBe(true)
     expect(findings.some((finding) => finding.text.includes('Let the current carry the hook'))).toBe(true)
+  })
+
+  it('keeps a story note when the model cuts the JSON string short', async () => {
+    const generate = (async () => ({
+      text: `{
+  "recommendations": [
+    {
+      "text": "Let the current carry the hook before the title`,
+    })) as unknown as typeof generateText
+
+    const parsed = parsePromoAnalysisJson(
+      `{
+  "recommendations": [
+    {
+      "text": "Let the current carry the hook before the title`
+    )
+    expect(parsed).toMatchObject({
+      recommendations: [
+        {
+          text: 'Let the current carry the hook before the title',
+          category: 'blueprint',
+        },
+      ],
+    })
+
+    const findings = await analyzePromoPlan(
+      {
+        title: 'The White City Current',
+        scenes: [],
+        beatPlan: [],
+      },
+      generate
+    )
+    expect(findings.some((finding) => finding.text.includes('Let the current carry the hook'))).toBe(
+      true
+    )
   })
 
   it('does not let a repeated story note replace a finding', () => {
