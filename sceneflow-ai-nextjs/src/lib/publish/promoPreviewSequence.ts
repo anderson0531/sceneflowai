@@ -23,6 +23,21 @@ export function promoPreviewDurationSec(durationSec: number | undefined, fallbac
   return fallback
 }
 
+/** The voice stays quiet until the preview reaches the chosen shot. */
+export function promoPreviewNarrationOn(
+  shots: Array<{ durationSec: number }>,
+  index: number,
+  startSec: number
+): boolean {
+  if (!(startSec > 0.05)) return true
+  let elapsed = 0
+  for (let i = 0; i < shots.length; i++) {
+    if (elapsed >= startSec - 0.05) return index >= i
+    elapsed += shots[i]?.durationSec ?? 0
+  }
+  return true
+}
+
 export function buildPromoPreviewSequence(
   shots: Array<{
     key: string

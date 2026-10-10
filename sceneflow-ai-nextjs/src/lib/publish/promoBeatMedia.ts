@@ -7,6 +7,7 @@ import {
   type TakeRow,
 } from '@/lib/storyboard/mediaVersions'
 import { segmentWasPolicyBlocked } from '@/lib/vision/directShotTarget'
+import { promoShotLocalizes } from '@/lib/publish/promoLanguage'
 import type { PromoTrailerBeatPlan } from '@/types/publishingAssets'
 
 export interface PromoBeatMedia {
@@ -132,8 +133,8 @@ function languageClipUrl(segment: PromoBeatSegment | undefined, language: string
 
 /**
  * Picture for the active promo language.
- * Dialogue in another language plays that language's clip, or a still until it exists.
- * Silent shots keep the source clip.
+ * Dialogue, titles, and credits play that language's clip, or a still until it exists.
+ * Action shots with no on-screen text keep the source clip.
  */
 export function resolvePromoPlayback(
   beat: PromoTrailerBeatPlan,
@@ -146,8 +147,8 @@ export function resolvePromoPlayback(
     beat.beatId
   )
   const localized = languageClipUrl(segment, language || 'en')
-  const dialogue = beat.beatKind === 'dialogue' && isLanguageClipTarget(language)
-  if (dialogue) {
+  const needsLanguageClip = promoShotLocalizes(beat) !== null && isLanguageClipTarget(language)
+  if (needsLanguageClip) {
     return {
       segmentId: master.segmentId,
       hasMasterClip: master.hasClip,

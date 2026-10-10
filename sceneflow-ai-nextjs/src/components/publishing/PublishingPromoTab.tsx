@@ -18,12 +18,14 @@ import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
 import { PromoPlanDirectorDialog } from '@/components/publishing/PromoPlanDirectorDialog'
+import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { getLanguageDisplayName } from '@/lib/publish/buildLanguageAudioTrack'
 import { collectPromoPlanFindings, type PromoPlanFinding } from '@/lib/publish/promoPlanFindings'
 import { buildPromoShotCatalog, isOptimizedShotDirection, slimPromoProductionState } from '@/lib/publish/promoShotCatalog'
 import {
   movePromoShot,
   placePromoShot,
+  promoNarrationStartSec,
   promoShotIncluded,
   promoShotKey,
   promoWatermarkEnabled,
@@ -40,6 +42,8 @@ import {
   promoAgentShotNeedsGeneration,
   promoAssetForLanguage,
   promoLanguageName,
+  promoShotLocalizes,
+  readPromoShotLocalization,
   seedPromoAudience,
   upsertPromoLanguageTrailer,
   type PromoAgentRunRequest,
@@ -55,7 +59,6 @@ import {
   resolveDirectShotTarget,
   type DirectShotRequest,
 } from '@/lib/vision/directShotTarget'
-import { LANGUAGE_CONFIGS } from '@/lib/types/finalCut'
 import type { AudienceDefinition } from '@/lib/types/audienceResonance'
 import type { PromoTrailerBeatPlan, PromoTrailerAsset, ProjectPublishingPromo } from '@/types/publishingAssets'
 import type { ProjectStream } from '@/lib/streams/projectStreams'
@@ -135,6 +138,7 @@ function PromoAudioRow({
   generating,
   disabled,
   onGenerate,
+  extra,
 }: {
   label: string
   detail?: string
@@ -142,6 +146,7 @@ function PromoAudioRow({
   generating: boolean
   disabled: boolean
   onGenerate: () => void
+  extra?: React.ReactNode
 }) {
   return (
     <div className="flex items-center gap-2 rounded border border-zinc-800 bg-zinc-950/80 px-2 py-1.5">
@@ -154,6 +159,7 @@ function PromoAudioRow({
         </p>
         {detail ? <p className="truncate text-[10px] text-zinc-500">{detail}</p> : null}
       </div>
+      {extra}
       <Button
         size="sm"
         variant="outline"
@@ -204,7 +210,11 @@ export function PublishingPromoTab({
     promoWatermarkEnabled(getPublishingState(metadata).promo?.watermarkEnabled)
   )
   const [addShotKey, setAddShotKey] = useState('')
+  const [addSceneIndex, setAddSceneIndex] = useState<number | null>(null)
   const [addPosition, setAddPosition] = useState(1)
+  const [narrationStartShotKey, setNarrationStartShotKey] = useState(
+    () => getPublishingState(metadata).promo?.narrationStartShotKey || ''
+  )
   const [timelineSaving, setTimelineSaving] = useState(false)
   const previewRef = useRef<PromoCutPreviewHandle>(null)
   const metadataRef = useRef(metadata)
@@ -250,14 +260,6 @@ export function PublishingPromoTab({
   const languagesRef = useRef(languages)
   languagesRef.current = languages
 
-  const addableLanguages = useMemo(
-    () =>
-      Object.keys(LANGUAGE_CONFIGS)
-        .filter((code) => !languages.includes(code))
-        .sort((a, b) => getLanguageDisplayName(a).localeCompare(getLanguageDisplayName(b))),
-    [languages]
-  )
-
   useEffect(() => {
     if (skipOptionPersist.current) {
       skipOptionPersist.current = false
@@ -271,7 +273,9 @@ export function PublishingPromoTab({
         aspect,
         languages: languagesRef.current,
         watermarkEnabled,
+        ...(narrationStartShotKey ? { narrationStartShotKey } : {}),
       }
+      if (!narrationStartShotKey) delete nextPromo.narrationStartShotKey
       if (audience.description.trim()) nextPromo.audienceDefinition = audience
       else delete nextPromo.audienceDefinition
       void saveRef.current(
@@ -281,7 +285,7 @@ export function PublishingPromoTab({
       )
     }, 700)
     return () => window.clearTimeout(timer)
-  }, [audience, targetDuration, languageKey, aspect, watermarkEnabled])
+  }, [audience, targetDuration, languageKey, aspect, watermarkEnabled, narrationStartShotKey])
 
   const timelineBeats = useMemo(() => {
     if (beatPlan.length > 0) return beatPlan
@@ -317,13 +321,14 @@ export function PublishingPromoTab({
           sceneIndex: beat.sceneIndex,
           beatId: beat.beatId,
         })
+        const localizedBeat = { ...beat, ...readPromoShotLocalization(scenes, beat) }
         const playback = resolvePromoPlayback(
-          beat,
+          localizedBeat,
           sceneProductionState as Record<string, unknown> | undefined,
           language
         )
         return {
-          beat,
+          beat: localizedBeat,
           key: `${beat.sceneIndex}-${beat.beatId}`,
           playback,
           sceneNumber: (target?.sceneIndex ?? beat.sceneIndex) + 1,
@@ -342,7 +347,7 @@ export function PublishingPromoTab({
   const dialogueGaps = includedRows.filter(
     (row) =>
       isLanguageClipTarget(language) &&
-      row.beat.beatKind === 'dialogue' &&
+      promoShotLocalizes(row.beat) !== null &&
       !row.playback.hasLanguageClip
   ).length
 
@@ -453,6 +458,25 @@ export function PublishingPromoTab({
     [scenes, sceneProductionState]
   )
 
+  const sceneChoices = useMemo(() => {
+    const seen = new Map<number, string>()
+    for (const shot of shotCatalog) {
+      if (seen.has(shot.sceneIndex)) continue
+      const heading = shot.heading?.trim()
+      seen.set(
+        shot.sceneIndex,
+        heading ? `Scene ${shot.sceneIndex + 1} · ${heading}` : `Scene ${shot.sceneIndex + 1}`
+      )
+    }
+    return [...seen.entries()]
+  }, [shotCatalog])
+
+  const selectedAddScene = sceneChoices.some(([index]) => index === addSceneIndex)
+    ? addSceneIndex
+    : (sceneChoices[0]?.[0] ?? null)
+
+  const addableShots = shotCatalog.filter((shot) => shot.sceneIndex === selectedAddScene)
+
   const commitTimeline = useCallback(
     async (next: PromoTrailerBeatPlan[]) => {
       const previous = timelineBeats
@@ -520,7 +544,7 @@ export function PublishingPromoTab({
     async (key: string, beat: PromoTrailerBeatPlan, playback: { segmentId?: string; thumbnailUrl?: string }) => {
       if (!onGenerateBeatClip) return
       const decision = promoAgentShotNeedsGeneration({
-        beatKind: beat.beatKind,
+        ...readPromoShotLocalization(scenes, beat),
         language,
         hasMasterClip: false,
         hasLanguageClip: false,
@@ -536,7 +560,7 @@ export function PublishingPromoTab({
           durationSec: beat.durationSec ?? Math.max(0, beat.endSec - beat.startSec),
           aspectRatio: aspect,
           beatKind: beat.beatKind,
-          clipLanguage: decision.dialogue ? language : undefined,
+          clipLanguage: decision.localized ? language : undefined,
         })
         setBrokenBeatKeys((prev) => {
           if (!prev.has(key)) return prev
@@ -550,7 +574,7 @@ export function PublishingPromoTab({
         setGeneratingBeatKey(null)
       }
     },
-    [onGenerateBeatClip, language, aspect]
+    [onGenerateBeatClip, language, aspect, scenes]
   )
 
   const handleRunPromoAgent = useCallback(async () => {
@@ -576,9 +600,9 @@ export function PublishingPromoTab({
   }, [onRunPromoAgent, timelineBeats, targetDuration, language, aspect, audiencePayload])
 
   const handleRenderTrailer = useCallback(async () => {
-    const source = (beatPlan.length > 0 ? beatPlan : timelineBeats).filter((beat) =>
-      promoShotIncluded(beat)
-    )
+    const source = (beatPlan.length > 0 ? beatPlan : timelineBeats)
+      .filter((beat) => promoShotIncluded(beat))
+      .map((beat) => ({ ...beat, ...readPromoShotLocalization(scenes, beat) }))
     const plan = promoPlanForLanguage(
       source,
       sceneProductionState as Record<string, unknown> | undefined,
@@ -591,7 +615,7 @@ export function PublishingPromoTab({
     }
     if (dialogueGaps > 0) {
       toast.error(
-        `Generate the ${promoLanguageName(language)} dialogue clips before rendering that promo.`
+        `Generate the ${promoLanguageName(language)} dialogue, title, and credit clips before rendering that promo.`
       )
       return
     }
@@ -619,6 +643,7 @@ export function PublishingPromoTab({
           targetDurationSec: targetDuration,
           title: projectTitle,
           narrationAudioUrl,
+          narrationStartSec: promoNarrationStartSec(source, narrationStartShotKey),
           musicAudioUrl,
           aspect,
           language,
@@ -683,6 +708,8 @@ export function PublishingPromoTab({
     targetDuration,
     projectTitle,
     narrationAudioUrl,
+    narrationStartShotKey,
+    scenes,
     musicAudioUrl,
     aspect,
     watermarkEnabled,
@@ -751,45 +778,20 @@ export function PublishingPromoTab({
           </div>
           <div>
             <p className="mb-2 text-[10px] uppercase tracking-wider text-zinc-500">Language</p>
-            <label className="block text-[11px] text-zinc-400">
-              Promo stream
-              <select
-                value={language}
-                onChange={(event) => setLanguage(event.target.value)}
-                className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-100"
-              >
-                {languages.map((code) => (
-                  <option key={code} value={code}>
-                    {getLanguageDisplayName(code)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {addableLanguages.length > 0 ? (
-              <label className="mt-2 block text-[11px] text-zinc-400">
-                Add language
-                <select
-                  value=""
-                  onChange={(event) => {
-                    const code = event.target.value
-                    if (!code) return
-                    setExtraLanguages((current) => (current.includes(code) ? current : [...current, code]))
-                    setLanguage(code)
-                  }}
-                  className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-100"
-                >
-                  <option value="">Choose a language</option>
-                  {addableLanguages.map((code) => (
-                    <option key={code} value={code}>
-                      {getLanguageDisplayName(code)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
+            <GroupedLanguageSelector
+              value={language}
+              onValueChange={(code) => {
+                setExtraLanguages((current) => (current.includes(code) ? current : [...current, code]))
+                setLanguage(code)
+              }}
+              size="sm"
+              intent="navigate"
+              placeholder="Promo language"
+              className="w-full"
+            />
             <p className="mt-2 text-[11px] leading-relaxed text-zinc-500">
-              Dialogue clips and narration are made for this language. Silent shots stay on the
-              source picture. Music is shared.
+              Dialogue, titles, and credits are made for this language. Action shots with no
+              on-screen text stay on the source picture. Music is shared.
             </p>
           </div>
         </div>
@@ -857,8 +859,8 @@ export function PublishingPromoTab({
             Promo Agent
           </Button>
           <p className="min-w-0 flex-1 text-[11px] leading-relaxed text-zinc-400">
-            Builds the missing clips, narration, and music for {languageLabel}. Only dialogue clips
-            are translated and regenerated. Run it again to rebuild the audio.
+            Builds the missing clips, narration, and music for {languageLabel}. Dialogue, titles,
+            and credits are translated. Action shots are shared.
           </p>
         </div>
 
@@ -868,6 +870,10 @@ export function PublishingPromoTab({
           shots={previewShots}
           watermark={watermarkEnabled}
           narrationUrl={narrationAudioUrl}
+          narrationStartSec={promoNarrationStartSec(
+            includedRows.map((row) => row.beat),
+            narrationStartShotKey
+          )}
           musicUrl={musicAudioUrl}
           aspect={aspect}
           onEnded={() => setPreviewing(false)}
@@ -888,10 +894,12 @@ export function PublishingPromoTab({
                     code
                   )
                 )
-                const dialogueBeats = playingBeats.filter((beat) => beat.beatKind === 'dialogue')
-                const dialogueReady = dialogueBeats.filter((beat) =>
+                const localizedBeats = playingBeats.filter(
+                  (beat) => promoShotLocalizes(readPromoShotLocalization(scenes, beat)) !== null
+                )
+                const dialogueReady = localizedBeats.filter((beat) =>
                   resolvePromoPlayback(
-                    beat,
+                    { ...beat, ...readPromoShotLocalization(scenes, beat) },
                     sceneProductionState as Record<string, unknown> | undefined,
                     code
                   ).hasLanguageClip
@@ -913,7 +921,7 @@ export function PublishingPromoTab({
                     <span className="font-medium text-zinc-100">{getLanguageDisplayName(code)}</span>
                     <span>
                       {isLanguageClipTarget(code)
-                        ? `${dialogueReady}/${dialogueBeats.length} dialogue clips`
+                        ? `${dialogueReady}/${localizedBeats.length} language clips`
                         : `${readyForLanguage}/${playingBeats.length} clips`}
                     </span>
                     <span>{narration ? 'Narration' : 'No narration'}</span>
@@ -947,26 +955,43 @@ export function PublishingPromoTab({
               {timelineRows.length > includedRows.length
                 ? ` · ${timelineRows.length - includedRows.length} excluded`
                 : ''}
-              {dialogueGaps > 0 ? ` · ${dialogueGaps} dialogue clips still needed in ${languageLabel}` : ''}
+              {dialogueGaps > 0 ? ` · ${dialogueGaps} language clips still needed in ${languageLabel}` : ''}
             </p>
             {shotCatalog.length > 0 ? (
               <div className="mb-2 flex flex-wrap items-end gap-2">
+                <label className="min-w-[10rem] text-[10px] text-zinc-500">
+                  Scene
+                  <select
+                    value={selectedAddScene ?? ''}
+                    onChange={(event) => {
+                      const next = Number(event.target.value)
+                      setAddSceneIndex(Number.isInteger(next) ? next : null)
+                      setAddShotKey('')
+                    }}
+                    className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-100"
+                  >
+                    {sceneChoices.map(([index, label]) => (
+                      <option key={index} value={index}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <label className="min-w-[12rem] flex-1 text-[10px] text-zinc-500">
                   Add shot
                   <select
-                    value={addShotKey}
+                    value={addableShots.some((shot) => promoShotKey(shot) === addShotKey) ? addShotKey : ''}
                     onChange={(event) => setAddShotKey(event.target.value)}
                     className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-100"
                   >
                     <option value="">Choose a shot</option>
-                    {shotCatalog.map((shot) => {
-                      const number = shot.sceneIndex + 1
+                    {addableShots.map((shot) => {
                       const shotNumber =
                         directShotNumber(scenes[shot.sceneIndex], shot.beatId) ?? shot.beatIndex + 1
                       const title = shot.label?.trim()
                       return (
                         <option key={promoShotKey(shot)} value={promoShotKey(shot)}>
-                          {`Scene ${number} · Shot ${shotNumber}${title ? ` · ${title}` : ''}`}
+                          {`Shot ${shotNumber}${title ? ` · ${title}` : ''}`}
                         </option>
                       )
                     })}
@@ -1198,6 +1223,31 @@ export function PublishingPromoTab({
                 generating={audioGenerating === 'narration'}
                 disabled={audioGenerating !== null}
                 onGenerate={() => void handleRegenAudio('narration')}
+                extra={
+                  includedRows.length > 0 ? (
+                    <label className="shrink-0 text-[10px] text-zinc-500">
+                      Starts at
+                      <select
+                        value={
+                          includedRows.some((row) => promoShotKey(row.beat) === narrationStartShotKey)
+                            ? narrationStartShotKey
+                            : ''
+                        }
+                        onChange={(event) => setNarrationStartShotKey(event.target.value)}
+                        className="ml-1 h-7 max-w-[9rem] rounded border border-zinc-700 bg-zinc-950 px-1 text-[11px] text-zinc-100"
+                      >
+                        <option value="">From the start</option>
+                        {includedRows.map((row, shotIndex) => (
+                          <option key={row.key} value={promoShotKey(row.beat)}>
+                            {`${shotIndex + 1} · S${row.sceneNumber}${
+                              row.shotNumber ? ` · Shot ${row.shotNumber}` : ''
+                            }`}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null
+                }
               />
               <PromoAudioRow
                 label="Music"

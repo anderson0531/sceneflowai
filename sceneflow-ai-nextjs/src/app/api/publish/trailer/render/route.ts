@@ -31,6 +31,8 @@ export async function POST(request: NextRequest) {
       targetDurationSec?: number
       title?: string
       narrationAudioUrl?: string
+      /** Seconds of picture before the narration voice begins. */
+      narrationStartSec?: number
       musicAudioUrl?: string
       promoSceneId?: string
       aspect?: '16:9' | '9:16'
@@ -117,7 +119,10 @@ export async function POST(request: NextRequest) {
         {
           id: 'promo-narration',
           url: body.narrationAudioUrl,
-          startTime: 0,
+          startTime:
+            typeof body.narrationStartSec === 'number' && body.narrationStartSec > 0
+              ? body.narrationStartSec
+              : 0,
           volume: PROMO_AUDIO_MIX.narration,
         },
       ]

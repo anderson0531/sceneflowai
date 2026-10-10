@@ -5,6 +5,7 @@ import type { PromoShotCatalogEntry } from '@/lib/publish/promoShotCatalog'
 import {
   movePromoShot,
   placePromoShot,
+  promoNarrationStartSec,
   promoShotIncluded,
   promoStudioWatermarkPayload,
   promoWatermarkEnabled,
@@ -72,6 +73,14 @@ describe('promo timeline edits', () => {
     expect(movePromoShot(plan, 2, 2)).toBe(plan)
   })
 
+  it('starts narration on the chosen included shot', () => {
+    const plan = [row(0, 'a', 5), withPromoShotIncluded(row(0, 'b', 4), false), row(0, 'c', 6)]
+    expect(promoNarrationStartSec(plan, '0:c')).toBe(5)
+    expect(promoNarrationStartSec(plan, '0:a')).toBe(0)
+    expect(promoNarrationStartSec(plan, '0:b')).toBe(0)
+    expect(promoNarrationStartSec(plan, undefined)).toBe(0)
+  })
+
   it('keeps a 4s length and an exclude flag without the planner snap', () => {
     const edited = withPromoShotIncluded(withPromoShotDuration(row(0, 'a', 5), 4), false)
     expect(edited.durationSec).toBe(4)
@@ -113,6 +122,10 @@ describe('promo watermark', () => {
     expect(route).toContain('promoShotIncluded')
     expect(preview).toContain('promoStudioWatermarkPayload().text')
     expect(tab).toContain('Watermark · SceneFlow Studio')
+    expect(tab).toContain('GroupedLanguageSelector')
+    expect(tab).toContain('Starts at')
+    expect(tab).toContain('narrationStartSec')
+    expect(tab).toContain('Scene\n                  <select')
     expect(tab).toContain('placePromoShot')
     expect(tab).toContain('movePromoShot')
     expect(tab).toContain('Move shot earlier')

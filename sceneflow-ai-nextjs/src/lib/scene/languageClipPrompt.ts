@@ -113,9 +113,33 @@ export function composeLanguageClipPrompt(args: {
   if (kind === 'narration' && translated && !guide.includes(translated)) {
     guide = guide ? `${guide} Narration: "${quotedSpokenLine(translated)}".` : `Narration: "${quotedSpokenLine(translated)}".`
   }
-  const speakInPicture = kind !== 'action' && kind !== 'narration' && !!translated
+  const speakInPicture = kind !== 'action' && kind !== 'narration' && kind !== 'title' && !!translated
   return {
-    prompt: speakInPicture ? buildLanguageClipPrompt(source, translated, args.character) : source,
+    prompt:
+      kind === 'title' && translated
+        ? replacePromoOnScreenText(source, english, translated)
+        : speakInPicture
+          ? buildLanguageClipPrompt(source, translated, args.character)
+          : source,
     ...(guide ? { guidePrompt: guide } : {}),
   }
+}
+
+/** Put translated title or credit copy into the shot prompt without a lip-sync line. */
+export function replacePromoOnScreenText(
+  sourcePrompt: string,
+  english: string,
+  translated: string
+): string {
+  const spoken = translated.replace(/"/g, "'").trim()
+  const source = sourcePrompt.trim()
+  const original = english.trim()
+  if (!spoken) return source
+  if (original && source.includes(original)) return source.split(original).join(spoken)
+  const quoted = source.match(/"([^"]*)"/)
+  if (quoted && (!original || quoted[1] === original)) {
+    return source.replace(/"([^"]*)"/, `"${spoken}"`)
+  }
+  const line = `On-screen text: "${spoken}".`
+  return source ? `${source} ${line}` : line
 }
